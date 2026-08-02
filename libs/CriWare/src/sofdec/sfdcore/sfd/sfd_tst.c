@@ -3,7 +3,51 @@
 
 #include <harness_catalog.h>
 
-void SFTST_Create() {}
+extern u8 lbl_eu_80619BD0[];
+extern char* strcpy(char*, const char*);
+extern unsigned long strlen(const char*);
+extern u8 lbl_eu_8051CD18[];
+
+void SFTST_Create(void* self) {
+    s32* w = (s32*)self;
+    char local[274];
+
+    memset(self, 0, 0x1D0);
+    w[0] = 1;
+    w[1] = 0;
+    w[2] = 0;
+    w[3] = 1;
+    w[4] = 10;
+    memset((u8*)self + 0x18, 0, 0xF0);
+    w[5] = 0;
+    w[67] = 0; w[66] = 0;
+    w[69] = 1; w[68] = 0;
+    w[71] = 0; w[70] = 0;
+    w[73] = 1; w[72] = 0;
+    w[75] = 0; w[74] = 0;
+    w[77] = 1; w[76] = 0;
+    w[79] = 16683; w[78] = 0;
+    w[81] = 1000000; w[80] = 0;
+    w[83] = 200000; w[82] = 0;
+    w[85] = 1000000; w[84] = 0;
+    w[87] = 0; w[86] = 0;
+    w[89] = 1000000; w[88] = 0;
+    w[91] = 0; w[90] = 0;
+    w[93] = 1000000; w[92] = 0;
+    w[95] = -1; w[94] = -1;
+    w[97] = -1; w[96] = -1;
+    w[99] = 0; w[98] = 0;
+    w[101] = 0; w[100] = 0;
+    w[102] = 1; w[103] = 1;
+    memset(w + 104, 0, 0x2C);
+    memcpy(local, lbl_eu_8051CD18, 274);
+    if (*(void**)(lbl_eu_80619BD0 + 4) != NULL) {
+        memset(*(void**)(lbl_eu_80619BD0 + 4), 0, *(u32*)lbl_eu_80619BD0);
+        *(char**)(lbl_eu_80619BD0 + 8) = strcpy((char*)(*(u32*)(lbl_eu_80619BD0 + 4)), local + 4);
+        *(u32*)(lbl_eu_80619BD0 + 8) += strlen(local + 4);
+        *(u32*)(lbl_eu_80619BD0 + 0xC) = *(u32*)(lbl_eu_80619BD0 + 8);
+    }
+}
 
 void SFTST_SetTstFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 

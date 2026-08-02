@@ -7,6 +7,9 @@
 
 #include <cstring>
 
+extern "C" const float lbl_eu_80669D38; // 0.0f
+extern "C" const float lbl_eu_80669D3C; // 1.0f
+
 /******************************************************************************
  *
  * Utility functions
@@ -56,10 +59,10 @@ Pane::Pane() {
     std::memset(mName, 0, sizeof(mName));
     std::memset(mUserData, 0, sizeof(mUserData));
 
-    mTranslate = math::VEC3(0,0,0);
-    mRotate = math::VEC3(0,0,0);
-    mScale = math::VEC2(1,1);
-    mSize = Size(0,0);
+    mTranslate = math::VEC3(lbl_eu_80669D38, lbl_eu_80669D38, lbl_eu_80669D38);
+    mRotate = math::VEC3(lbl_eu_80669D38, lbl_eu_80669D38, lbl_eu_80669D38);
+    mScale = math::VEC2(lbl_eu_80669D3C, lbl_eu_80669D3C);
+    mSize = Size(lbl_eu_80669D38, lbl_eu_80669D38);
     
     mAlpha = -1;
     mGlbAlpha = -1;

@@ -44,14 +44,14 @@ bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
 void func_80277154(){}
 void func_80277A7C(){}
 void func_80277B34(void){}
-void CChain_noop_78E00() {}
+extern "C" void CChain_noop_78E00() {}
 void func_80278F5C(){}
 void func_80278F70(){}
-void CChain_noop_795D0() {}
-void CChain_noop_79768() {}
+extern "C" void CChain_noop_795D0() {}
+extern "C" void CChain_noop_79768() {}
 void func_8027A324(){}
-void CChain_noop_A9E8() {}
-void CChain_noop_AA0C() {}
+extern "C" void CChain_noop_A9E8() {}
+extern "C" void CChain_noop_AA0C() {}
 
 void func_80276C30(){}
 void func_80276C58(){}

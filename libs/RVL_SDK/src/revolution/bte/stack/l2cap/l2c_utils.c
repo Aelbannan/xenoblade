@@ -50,6 +50,12 @@ enum {
 /* Max ACL payload the echo responder will reflect. */
 #define L2CAP_ECHO_MAX_DATA_SIZE    0x294
 
+/* TRUE/FALSE trace strings — retail .sdata locals (lbl_80665948 / lbl_80665950).
+   Non-const fixed-size arrays so MWCC keeps them in .sdata (sda21-accessed),
+   matching the retail layout: TRUE at +0x0, FALSE at +0x8, 8 bytes each. */
+static char lbl_80665948[8] = "TRUE";
+static char lbl_80665950[8] = "FALSE";
+
 /*******************************************************************************
  * Internal types (normally in l2c_int.h). Field offsets match the retail
  * layout observed in the disassembly.
@@ -1125,8 +1131,8 @@ void l2cu_device_reset (void)
 
 BOOLEAN l2cu_create_conn (tL2C_LCB *p_lcb)
 {
-    tL2C_LCB *p_lcb2;
     INT8      xx;
+    tL2C_LCB *p_lcb2;
     BOOLEAN   is_sco_active;
 
     p_lcb->link_state = LST_CONNECTING;
@@ -1142,7 +1148,7 @@ BOOLEAN l2cu_create_conn (tL2C_LCB *p_lcb)
 
         is_sco_active = btm_is_sco_active_by_bdaddr (p_lcb2->remote_bd_addr);
         L2CAP_TRACE_API1 ("l2cu_create_conn - btm_is_sco_active_by_bdaddr() is_sco_active = %s",
-                          (is_sco_active == TRUE) ? "TRUE" : "FALSE");
+                          (is_sco_active == TRUE) ? lbl_80665948 : lbl_80665950);
         if (is_sco_active == TRUE)
             continue;
 

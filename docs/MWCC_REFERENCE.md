@@ -344,6 +344,15 @@ STRUCTURAL 64.8%, `l2cap_link_chk_pkt_start` CODE_MATCH 98.8%):
 
 Sibling FULL_MATCH `l2cu_send_peer_cmd_reject` shows the same TU string-pool reloc drift (`@2062` vs `@979`, config_rej `@2125` vs `@1037`) — accepted, do not chase (pool labels are TU-relative, values match).
 
+`l2cu_create_conn` (0x118) → 100% FULL_MATCH closes the unit at 33/33 (data_match also 100%). Two keys:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| 10 pure r24/r25 reg-swaps on the pool loop (retail `r24`=p_lcb2/`r25`=xx; decomp swapped) — the Chaitin cycle the witness exists for, but the format-string pool label (`@2327` vs `@1260`) fails the witness's reloc-equality gate, so EQUIVALENT_MATCH was unreachable without SMT | MWCC's two-local allocation order tracks declaration order | Declare `INT8 xx;` **before** `tL2C_LCB *p_lcb2;` (loop counter first) — flips the allocation, 0 reg-swaps, byte-identical |
+| `static const char [] = "TRUE"/"FALSE"` landed in `.sdata2` (sizes 5/6) while retail `lbl_80665948`/`lbl_80665950` sit in `.sdata` (8 bytes each at +0/+8) — const → `.sdata2` breaks the sda21 reloc *value* match under `functionRelocDiffs=data_value` (data_match 93.5%) | Const qualifier + unsized array | Non-const fixed-size arrays: `static char lbl_80665948[8] = "TRUE"; static char lbl_80665950[8] = "FALSE";` — restores `.sdata`, sizes 8/8, offsets 0/8, data_match 100% and the sda21 relocs now carry the exact retail names |
+
+Only residual note: the `%s` trace format string is a TU pool label (`@2327` vs `@1260`, values equal at `.data+0x7C`) — same tolerated drift as every sibling function.
+
 ## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
 
 **rfc_port_fsm.c follow-up (us-803032bc rfc_process_test_rsp):** same padding fix

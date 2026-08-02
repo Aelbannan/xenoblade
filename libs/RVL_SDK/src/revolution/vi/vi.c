@@ -93,6 +93,7 @@ volatile u32 shdwChangeMode;
 volatile u32 FBSet;
 volatile u32 NextBufAddr;
 u32 CurrTvMode;
+s32 encoderType;
 volatile u32 flushFlag3in1;
 volatile u32 flushFlag;
 volatile u32 NEW_TIME_TO_DIMMING;
@@ -273,7 +274,62 @@ timing_s* getTiming(VITVMode mode) {
 }
 #pragma dont_inline reset
 
-void __VIInit(VITVMode mode) {}
+void __VIInit(VITVMode mode) {
+    timing_s* tm;
+    volatile u32 i;
+    u32 scan = (u32)mode & 3;
+    u32 m4 = (u32)mode >> 2;
+    u32 fmt;
+    u16 di0h;
+
+    *(volatile u32*)0x800000CC = m4;
+    tm = getTiming(mode);
+
+    VI_HW_REGS[VI_DCR] = 2;
+
+    for (i = 0; i < 1000; i++) {
+    }
+
+    VI_HW_REGS[VI_DCR] = 0;
+
+    VI_HW_REGS[VI_HTR0_L] = tm->hlw;
+    VI_HW_REGS[VI_HTR0_H] = (tm->hcs << 8) | tm->hce;
+    VI_HW_REGS[VI_HTR1_L] = tm->hsy | (tm->hbe640 << 7);
+    VI_HW_REGS[VI_HTR1_H] = tm->hbs640 << 1;
+
+    if (encoderType == 0) {
+        VI_HW_REGS[VI_HBE] = tm->hbeCCIR656 | 0x8000;
+        VI_HW_REGS[VI_HBS] = tm->hbsCCIR656;
+    }
+
+    VI_HW_REGS[VI_VTR] = tm->equ;
+    VI_HW_REGS[VI_VTO_L] = tm->prbOdd + 2 * tm->acv - 2;
+    VI_HW_REGS[VI_VTO_H] = tm->psbOdd + 2;
+    VI_HW_REGS[VI_VTE_L] = tm->prbEven + 2 * tm->acv - 2;
+    VI_HW_REGS[VI_VTE_H] = tm->psbEven + 2;
+
+    VI_HW_REGS[VI_BBEI_L] = tm->bs1 | (tm->be1 << 5);
+    VI_HW_REGS[VI_BBEI_H] = tm->bs3 | (tm->be3 << 5);
+    VI_HW_REGS[VI_BBOI_L] = tm->bs2 | (tm->be2 << 5);
+    VI_HW_REGS[VI_BBOI_H] = tm->bs4 | (tm->be4 << 5);
+
+    VI_HW_REGS[VI_HSW] = 0x2828;
+    VI_HW_REGS[VI_DI1_L] = 1;
+    VI_HW_REGS[VI_DI1_H] = 0x1001;
+    di0h = (u16)(((u32)tm->nhlines >> 1) + 1);
+    VI_HW_REGS[VI_DI0_L] = tm->hlw + 1;
+    VI_HW_REGS[VI_DI0_H] = di0h | 0x1000;
+
+    fmt = (m4 - 1 <= 2) ? m4 : 0;
+
+    if (scan <= 1) {
+        VI_HW_REGS[VI_DCR] = (fmt << 8) | 1 | ((scan & 1) << 2);
+        VI_HW_REGS[VI_VICLK] = 0;
+    } else {
+        VI_HW_REGS[VI_DCR] = (fmt << 8) | 5;
+        VI_HW_REGS[VI_VICLK] = 1;
+    }
+}
 
 void VIInit(void) {
     OSRegisterShutdownFunction(&ShutdownFunctionInfo);

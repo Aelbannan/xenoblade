@@ -452,30 +452,14 @@ void PORT_PortNegInd(tRFC_MCB* p_mcb, u8 dlci, tPORT_CTRL* p_port_ctrl, u16 requ
     if (p_port == NULL) {
         p_port = port_find_dlci_port(dlci);
         if (p_port == NULL) {
-            p_port->port_ctrl.fc = p_port_ctrl->fc;
-            p_port->port_ctrl.xon_char = p_port_ctrl->xon_char;
-            p_port->port_ctrl.xoff_char = p_port_ctrl->xoff_char;
-            p_port->port_ctrl.xon_chars = p_port_ctrl->xon_chars;
-            p_port->port_ctrl.xoff_chars = p_port_ctrl->xoff_chars;
-            p_port->port_ctrl.rx_buf_size = p_port_ctrl->rx_buf_size;
-            p_port->port_ctrl.field_6 = p_port_ctrl->field_6;
-            p_port->port_ctrl.field_7 = p_port_ctrl->field_7;
-            p_port->port_ctrl.field_8 = p_port_ctrl->field_8;
+            p_port->port_ctrl = *p_port_ctrl;
             RFCOMM_PortNegRsp(p_mcb, dlci, p_port_ctrl, 0);
             return;
         }
         p_mcb->port_inx[dlci] = p_port->dlci;
     }
 
-    p_port->port_ctrl.fc = p_port_ctrl->fc;
-    p_port->port_ctrl.xon_char = p_port_ctrl->xon_char;
-    p_port->port_ctrl.xoff_char = p_port_ctrl->xoff_char;
-    p_port->port_ctrl.xon_chars = p_port_ctrl->xon_chars;
-    p_port->port_ctrl.xoff_chars = p_port_ctrl->xoff_chars;
-    p_port->port_ctrl.rx_buf_size = p_port_ctrl->rx_buf_size;
-    p_port->port_ctrl.field_6 = p_port_ctrl->field_6;
-    p_port->port_ctrl.field_7 = p_port_ctrl->field_7;
-    p_port->port_ctrl.field_8 = p_port_ctrl->field_8;
+    p_port->port_ctrl = *p_port_ctrl;
     RFCOMM_PortNegRsp(p_mcb, dlci, p_port_ctrl, request);
 }
 
@@ -546,10 +530,10 @@ void PORT_ControlInd(tRFC_MCB* p_mcb, u8 dlci, tPORT_CTRL* p_port_ctrl)
         p_port->p_mgmt_cb(event, p_port->dlci);
 
     RFCOMM_TRACE_EVENT4("PORT_ControlInd DTR_DSR : %d, RTS_CTS : %d, RI : %d, DCD : %d",
-                        p_port->modem_signal & 1,
-                        (p_port->modem_signal >> 1) & 1,
-                        (p_port->modem_signal >> 2) & 1,
-                        (p_port->modem_signal >> 3) & 1);
+                        p_port->modem_signal & 0x01,
+                        (p_port->modem_signal & 0x02) >> 1,
+                        (p_port->modem_signal & 0x04) >> 2,
+                        (p_port->modem_signal & 0x08) >> 3);
 }
 
 /* ========================================================================
@@ -676,7 +660,7 @@ void PORT_DataInd(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf)
     }
 
     if (p_port->rx_queued + p_buf->len > 0x2EE0 ||
-        (u32)(p_port->rx_queue.count + 1) > p_port->rx_buf_critical) {
+        p_port->rx_queue.count + 1 > p_port->rx_buf_critical) {
         RFCOMM_TRACE_EVENT0("PORT_DataInd. Buffer over run. Dropping the buffer");
         GKI_freebuf(p_buf);
         RFCOMM_LineStatusReq(p_mcb, dlci, 2);
@@ -685,13 +669,12 @@ void PORT_DataInd(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf)
 
     if (p_port->field_4e != 0 && (p_port->mask & 0x2)) {
         u8* p = p_buf->data + p_buf->offset;
-        u16 n = p_buf->len;
-        while (n > 0) {
+        int n = p_buf->len;
+        for (; n > 0; n--) {
             if (*p++ == p_port->field_4e) {
                 event |= 0x2;
                 break;
             }
-            n--;
         }
     }
 
@@ -703,8 +686,9 @@ void PORT_DataInd(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf)
         if (event & 0x2)
             p_port->field_65 = 1;
     } else {
-        event = (event | 0x1) & p_port->mask;
-        if (event != 0 && p_port->p_mgmt_cb != NULL)
+        event |= 0x1;
+        event &= p_port->mask;
+        if (p_port->p_mgmt_cb != NULL && event != 0)
             p_port->p_mgmt_cb(event, p_port->dlci);
     }
 }

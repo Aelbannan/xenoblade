@@ -24,24 +24,33 @@ typedef struct HBMSYNVOICE {
 #define O_W16(ofs, val)  *(u16*)(out + (ofs)) = (val)
 #define O_RU32(ofs)      (*(u32*)(out + (ofs)))
 
+// All exported functions must use C linkage to match retail symbol names.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Forward declarations
 void __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(HBMSYNVOICE*);
 void __HBMSYNSetupPcm16__FP11HBMSYNVOICE(HBMSYNVOICE*);
 void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE*);
+void __HBMSYNSetupSample(HBMSYNVOICE*);
 
 // ---------------------------------------------------------------------------
 // __HBMSYNSetupSample
 // ---------------------------------------------------------------------------
 void __HBMSYNSetupSample(HBMSYNVOICE* voice)
 {
-    u32* rp = voice->pRegion;
-    u16 fmt = (u16)rp[0];
-    if (fmt == 0)
+    switch (*(u16*)voice->pRegion) {
+    case 0:
         __HBMSYNSetupAdpcm__FP11HBMSYNVOICE(voice);
-    else if (fmt == 1)
+        break;
+    case 1:
         __HBMSYNSetupPcm16__FP11HBMSYNVOICE(voice);
-    else
+        break;
+    case 2:
         __HBMSYNSetupPcm8__FP11HBMSYNVOICE(voice);
+        break;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -125,19 +134,14 @@ void __HBMSYNSetupPcm16__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 {
     u32* sp = voice->pSample;
     u8*  out = voice->pOut;
-    u32* wp = voice->pWave;
-    u32* rp = voice->pRegion;
 
-    s32 loopStart = (s32)sp[2];
-    s32 loopEnd   = (s32)sp[3];
-    s32 total     = loopStart + loopEnd;
-    s32 basePtr   = (s32)wp[7] + (s32)rp[1];
-
-    if (total != 0) {
-        s32 startAddr = basePtr + loopStart;
-        s32 endAddr   = startAddr + loopEnd - 1;
-
+    if ((s32)sp[2] + (s32)sp[3] != 0) {
         voice->active = 1;
+
+        s32 basePtr  = (s32)voice->pWave[7] + (s32)voice->pRegion[1];
+        s32 startAddr = basePtr + (s32)sp[2];
+        s32 endAddr   = startAddr + (s32)sp[3] - 1;
+
         O_WU32(0x96, 0x1000A);
         O_W32(0x9A, startAddr);
         O_W32(0x9E, endAddr);
@@ -145,12 +149,13 @@ void __HBMSYNSetupPcm16__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 
         O_W32(0xA6, 0); O_W32(0xAA, 0); O_W32(0xAE, 0); O_W32(0xB2, 0);
         O_W32(0xB6, 0); O_W32(0xBA, 0); O_W32(0xBE, 0); O_W32(0xC2, 0);
-        O_W32(0xC6, 0x800); O_W32(0xCA, 0);
+        O_W32(0xC6, 0x08000000); O_W32(0xCA, 0);
     } else {
-        s32 totalSamp = (s32)rp[2];
-        s32 endAddr   = basePtr + totalSamp - 1;
-
         voice->active = 0;
+
+        s32 basePtr = (s32)voice->pWave[7] + (s32)voice->pRegion[1];
+        s32 endAddr = basePtr + (s32)voice->pRegion[2] - 1;
+
         O_WU32(0x96, 0xA);
         O_W32(0x9A, basePtr);
         O_W32(0x9E, endAddr);
@@ -158,12 +163,12 @@ void __HBMSYNSetupPcm16__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 
         O_W32(0xA6, 0); O_W32(0xAA, 0); O_W32(0xAE, 0); O_W32(0xB2, 0);
         O_W32(0xB6, 0); O_W32(0xBA, 0); O_W32(0xBE, 0); O_W32(0xC2, 0);
-        O_W32(0xC6, 0x800); O_W32(0xCA, 0);
+        O_W32(0xC6, 0x08000000); O_W32(0xCA, 0);
     }
 
     {
         u32 f = O_RU32(0x1C);
-        f = (f & ~0x7800) | 0x40000 | 0x8400;
+        f = (f & ~0x7800) | 0x8400;
         O_WU32(0x1C, f);
     }
 }
@@ -175,19 +180,14 @@ void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 {
     u32* sp = voice->pSample;
     u8*  out = voice->pOut;
-    u32* wp = voice->pWave;
-    u32* rp = voice->pRegion;
 
-    s32 loopStart = (s32)sp[2];
-    s32 loopEnd   = (s32)sp[3];
-    s32 total     = loopStart + loopEnd;
-    s32 basePtr   = (s32)wp[8] + (s32)rp[1];
-
-    if (total != 0) {
-        s32 startAddr = basePtr + loopStart;
-        s32 endAddr   = startAddr + loopEnd - 1;
-
+    if ((s32)sp[2] + (s32)sp[3] != 0) {
         voice->active = 1;
+
+        s32 basePtr  = (s32)voice->pWave[8] + (s32)voice->pRegion[1];
+        s32 startAddr = basePtr + (s32)sp[2];
+        s32 endAddr   = startAddr + (s32)sp[3] - 1;
+
         O_WU32(0x96, 0x10019);
         O_W32(0x9A, startAddr);
         O_W32(0x9E, endAddr);
@@ -195,12 +195,13 @@ void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 
         O_W32(0xA6, 0); O_W32(0xAA, 0); O_W32(0xAE, 0); O_W32(0xB2, 0);
         O_W32(0xB6, 0); O_W32(0xBA, 0); O_W32(0xBE, 0); O_W32(0xC2, 0);
-        O_W32(0xC6, 0x100); O_W32(0xCA, 0);
+        O_W32(0xC6, 0x01000000); O_W32(0xCA, 0);
     } else {
-        s32 totalSamp = (s32)rp[2];
-        s32 endAddr   = basePtr + totalSamp - 1;
-
         voice->active = 0;
+
+        s32 basePtr = (s32)voice->pWave[8] + (s32)voice->pRegion[1];
+        s32 endAddr = basePtr + (s32)voice->pRegion[2] - 1;
+
         O_WU32(0x96, 0x19);
         O_W32(0x9A, basePtr);
         O_W32(0x9E, endAddr);
@@ -208,12 +209,16 @@ void __HBMSYNSetupPcm8__FP11HBMSYNVOICE(HBMSYNVOICE* voice)
 
         O_W32(0xA6, 0); O_W32(0xAA, 0); O_W32(0xAE, 0); O_W32(0xB2, 0);
         O_W32(0xB6, 0); O_W32(0xBA, 0); O_W32(0xBE, 0); O_W32(0xC2, 0);
-        O_W32(0xC6, 0x100); O_W32(0xCA, 0);
+        O_W32(0xC6, 0x01000000); O_W32(0xCA, 0);
     }
 
     {
         u32 f = O_RU32(0x1C);
-        f = (f & ~0x7800) | 0x40000 | 0x8400;
+        f = (f & ~0x7800) | 0x8400;
         O_WU32(0x1C, f);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

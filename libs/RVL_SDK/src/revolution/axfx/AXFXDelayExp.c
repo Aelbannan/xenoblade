@@ -342,9 +342,9 @@ static BOOL __InitParams(AXFX_DELAY_EXP* fx) {
         iir = 0.95f;
     }
 
+    fx->iirGain = (s32)(128.0f * iir);
     fx->last[0] = 0;
     fx->last[1] = 0;
-    fx->iirGain = (s32)(128.0f * iir);
     fx->last[2] = 0;
     fx->outGainI = (s32)(128.0f * fx->outGain);
     fx->sendGainI = (s32)(128.0f * fx->sendGain);

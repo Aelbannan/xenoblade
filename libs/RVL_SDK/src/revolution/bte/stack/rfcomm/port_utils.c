@@ -325,59 +325,52 @@ u32 port_get_signal_changes(RfcPort* port, u8 prev_signals, u8 signals)
 /* ========================================================================
  * port_flow_control_peer - handle peer-side flow control
  * ======================================================================== */
-void port_flow_control_peer(RfcPort* port, u8 enable, u16 credits)
+void port_flow_control_peer(RfcPort* port, u8 enable, u16 count)
 {
     if (port->mcb == NULL)
         return;
 
     if (port->mcb->field_0x72 == 2) {
         if (enable) {
-            u16 old_rx = port->credit_rx;
-            if (credits > old_rx) {
+            if (count > port->credit_rx)
                 port->credit_rx = 0;
-            } else {
-                port->credit_rx = old_rx - credits;
-            }
+            else
+                port->credit_rx -= count;
 
-            if (port->credit_rx <= port->credit_rx_low
-                && port->field_0x3D == 0
-                && port->credit_rx_max > port->credit_rx)
-            {
+            if (port->credit_rx <= port->credit_rx_low &&
+                port->field_0x3D == 0 && port->credit_rx_max > port->credit_rx) {
                 rfc_send_credit(port->mcb, port->dlci2,
-                                (u8)(port->credit_rx_max - port->credit_rx));
-                port->local_fc = 0;
+                                port->credit_rx_max - port->credit_rx);
+
                 port->credit_rx = port->credit_rx_max;
-            }
-        } else {
-            if (port->field_0x94 != 0) {
-                port->local_fc = 1;
-            } else if (port->rx_queue.count >= port->credit_rx_max) {
-                port->local_fc = 1;
-            }
-        }
-    } else {
-        if (enable) {
-            if (port->local_fc != 0 && port->field_0x40 < 0x1388 &&
-                port->rx_queue.count < 8) {
+
                 port->local_fc = 0;
-                if (port->field_0x3D == 0) {
-                    RFCOMM_FlowReq(port->mcb, port->dlci2, 1);
-                }
             }
         } else {
-            if (port->field_0x94 != 0) {
+            if (port->field_0x94 != 0)
                 port->local_fc = 1;
-                RFCOMM_FlowReq(port->mcb, port->dlci2, 0);
-            } else if (port->field_0x40 > 0x1F40 || port->rx_queue.count > 0x10) {
-                if (port->local_fc == 0) {
-                    if (rfc_cb.trace_level >= 4) {
-                        LogMsg_0(0x90003,
-                                 "PORT_DataInd Data reached HW. Sending FC set.");
-                    }
-                    port->local_fc = 1;
-                    RFCOMM_FlowReq(port->mcb, port->dlci2, 0);
-                }
-            }
+            else if (port->rx_queue.count >= port->credit_rx_max)
+                port->local_fc = 1;
         }
+    } else if (enable) {
+        if (port->local_fc != 0 && port->field_0x40 < 0x1388 &&
+            port->rx_queue.count < 8) {
+            port->local_fc = 0;
+
+            if (port->field_0x3D == 0)
+                RFCOMM_FlowReq(port->mcb, port->dlci2, 1);
+        }
+    } else if (port->field_0x94 != 0) {
+        port->local_fc = 1;
+        RFCOMM_FlowReq(port->mcb, port->dlci2, 0);
+    } else if ((port->field_0x40 > 0x1F40 ||
+                port->rx_queue.count > 0x10) &&
+               port->local_fc == 0) {
+        if (rfc_cb.trace_level >= 4) {
+            LogMsg_0(0x90003, "PORT_DataInd Data reached HW. Sending FC set.");
+        }
+
+        port->local_fc = 1;
+        RFCOMM_FlowReq(port->mcb, port->dlci2, 0);
     }
 }

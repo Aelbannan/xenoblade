@@ -406,31 +406,32 @@ tSDP_DISC_REC *add_record(tSDP_DISC_DB *p_db, BD_ADDR p_bda)
 
 UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
 {
-    tSDP_DISC_REC *p_rec;
-    UINT8 type;
-    UINT8 *p_attr;
+    UINT32 seq_len;
     UINT32 attr_len;
-    UINT32 len;
-    UINT8 *p_end_attr;
+    UINT16 attr_id;
+    UINT8 type;
+    UINT8 *p_seq_end;
+    tSDP_DISC_REC *p_rec;
 
-    type = p[0];
-    p_attr = p + 1;
-    if ((type >> 3) != 6)
+    type = *p++;
+
+    if (type >> 3 != 6)
     {
         if (sdp_cb[0x4630] >= 2)
             LogMsg_1(0xA0001, "SDP - Wrong type: 0x%02x in attr_rsp", type);
         return NULL;
     }
 
-    p_attr = sdpu_get_len_from_type(p_attr, type, &attr_len);
-    if (p_attr + attr_len > p_msg_end)
+    p = sdpu_get_len_from_type(p, type, &seq_len);
+    if (p + seq_len > p_msg_end)
     {
         if (sdp_cb[0x4630] >= 2)
-            LogMsg_1(0xA0001, "SDP - Bad len in attr_rsp %d", attr_len);
+            LogMsg_1(0xA0001, "SDP - Bad len in attr_rsp %d", seq_len);
         return NULL;
     }
 
-    p_rec = add_record((tSDP_DISC_DB *)p_ccb->p_db, p_ccb->device_address);
+    p_rec = (tSDP_DISC_REC *)add_record((tSDP_DISC_DB *)p_ccb->p_db,
+                                        p_ccb->device_address);
     if (p_rec == NULL)
     {
         if (sdp_cb[0x4630] >= 2)
@@ -438,27 +439,28 @@ UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
         return NULL;
     }
 
-    p_end_attr = p_attr + attr_len;
-    while (p_attr < p_end_attr)
-    {
-        UINT8 t;
-        UINT16 attr_id;
+    p_seq_end = p + seq_len;
 
-        t = p_attr[0];
-        p_attr = sdpu_get_len_from_type(p_attr + 1, t, &len);
-        if (((t >> 3) & 0x1F) != 1 || len != 2)
+    while (p < p_seq_end)
+    {
+        type = *p++;
+        p = sdpu_get_len_from_type(p, type, &attr_len);
+
+        if (type >> 3 != 1 || attr_len != 2)
         {
             if (sdp_cb[0x4630] >= 2)
                 LogMsg_2(0xA0001,
-                         "SDP - Bad type: 0x%02x or len: %d in attr_rsp", t,
-                         len);
+                         "SDP - Bad type: 0x%02x or len: %d in attr_rsp", type,
+                         attr_len);
             return NULL;
         }
 
-        attr_id = (UINT16)((p_attr[0] << 8) + p_attr[1]);
-        p_attr = add_attr(p_attr + 2, (tSDP_DISC_DB *)p_ccb->p_db, p_rec,
-                          attr_id, NULL, 0);
-        if (p_attr == NULL)
+        attr_id = (UINT16)((p[0] << 8) + p[1]);
+        p += 2;
+
+        p = (UINT8 *)add_attr(p, (tSDP_DISC_DB *)p_ccb->p_db, p_rec, attr_id,
+                              NULL, 0);
+        if (p == NULL)
         {
             if (sdp_cb[0x4630] >= 2)
                 LogMsg_0(0xA0001, "SDP - DB full");
@@ -466,7 +468,7 @@ UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
         }
     }
 
-    return p_attr;
+    return p;
 }
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len) {}
 void process_service_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)

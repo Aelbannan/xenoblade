@@ -52,7 +52,7 @@ extern void PORT_CloseInd(RfcMuxChannel* channel);
 extern void PORT_StartCnf(RfcMuxChannel* channel, u16 result);
 extern void PORT_StartInd(RfcMuxChannel* channel);
 extern void rfc_release_multiplexer_channel(RfcMuxChannel* channel);
-extern void rfc_save_lcid_mcb(RfcMuxChannel* channel);
+extern void rfc_save_lcid_mcb(RfcMuxChannel* channel, u16 lcid);
 extern void rfc_send_dm(RfcMuxChannel* channel, int poll, int command);
 extern void rfc_send_disc(RfcMuxChannel* channel, int poll);
 extern void rfc_send_sabme(RfcMuxChannel* channel, int poll);
@@ -112,7 +112,7 @@ void rfc_mx_sm_state_idle(RfcMuxChannel* channel, u16 event, u8* data) {
         if (lcid == 0) {
             PORT_StartCnf(channel, 1);
         } else {
-            rfc_save_lcid_mcb(channel);
+            rfc_save_lcid_mcb(channel, channel->field_0x68);
             channel->state = 1;
         }
         break;
@@ -150,6 +150,7 @@ void rfc_mx_sm_state_idle(RfcMuxChannel* channel, u16 event, u8* data) {
             channel->state = 2;
         }
         break;
+    case 0:
     case 1:
     case 2:
         break;
@@ -377,7 +378,7 @@ void rfc_mx_sm_state_disc_wait_ua(RfcMuxChannel* channel, u16 event, u8* data) {
                 PORT_StartCnf(channel, 1);
                 break;
             }
-            rfc_save_lcid_mcb(channel);
+            rfc_save_lcid_mcb(channel, channel->field_0x68);
             channel->field_0x70 = 0;
             channel->field_0x6e = 0;
             channel->field_0x6f = 0;

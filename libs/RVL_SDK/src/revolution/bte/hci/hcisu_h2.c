@@ -41,6 +41,17 @@ const UINT16 hcisu_msg_evt_table[4] = {0x0013, 0x0011, 0x0012, 0x0010};
 
 extern unsigned char hcisu_h2_cb[];
 
+/* USB configuration cookie passed to UUSB_Register/UUSB_Open; only the
+   fields this TU writes are named. */
+typedef struct {
+    UINT8 _pad0[4];   /* 0x00 */
+    UINT16 vid;       /* 0x04 */
+    UINT16 pid;       /* 0x06 */
+    UINT16 task_id;   /* 0x08 */
+    UINT8 _pad1;      /* 0x0A */
+    UINT8 cfg_byte;   /* 0x0B */
+} tUUSB_CFG;
+
 /* Externals from other BTE modules (bt_trace.h / l2cdefs.h). */
 extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
 extern BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf);
@@ -48,9 +59,9 @@ extern UINT8 l2cap_link_chk_pkt_end(void);
 
 /* USB close-event callback: reason 4 (UUSB_CLOSE_REASON_CLOSED) means the
    link dropped; forward the sign-extended result to the BTA layer. */
-void hcisu_h2_usb_cback(int type, UINT8 event) {
+void hcisu_h2_usb_cback(int type, s8 event) {
     if (type == 0x4) {
-        bta_usb_close_evt((s8)event);
+        bta_usb_close_evt(event);
     }
 }
 
@@ -223,7 +234,21 @@ void hcisu_h2_init(unsigned char arg0, unsigned char arg1, unsigned short arg2) 
     *((unsigned short *)(base + 0x12)) = arg2;
 }
 
-void hcisu_h2_open() {}
+BOOLEAN hcisu_h2_open(UINT16 *p_bd_addr) {
+    unsigned char *base = hcisu_h2_cb;
+    tUUSB_CFG cfg;
+
+    cfg.cfg_byte = 0;
+    cfg.vid = p_bd_addr[0];
+    cfg.pid = p_bd_addr[1];
+    cfg.task_id = base[0x1F];
+    base[0x1E] = 2;
+
+    UUSB_Register(&cfg);
+    UUSB_Open((s32)&cfg, hcisu_h2_usb_cback);
+
+    return TRUE;
+}
 
 void hcisu_h2_close() {
     hcisu_h2_cb[0x1e] = 0;

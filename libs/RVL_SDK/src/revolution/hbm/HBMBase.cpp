@@ -128,7 +128,7 @@ BOOL HBMIsReassignedControllers() {
 namespace homebutton {
 
 // Prototypes
-static void SimpleSyncCallback(s32 result, s32 num);
+void SimpleSyncCallback(s32 result, s32 num);
 
 struct AnmControllerTable {
     int pane; // at 0x0
@@ -1483,7 +1483,7 @@ static void RetrySimpleSyncCallback(OSAlarm* pAlarm,
     }
 }
 
-static void SimpleSyncCallback(s32 result, s32 num) {
+void SimpleSyncCallback(s32 result, s32 num) {
     if (result == WPAD_SYNC_DONE) {
         HomeButton::getInstance()->setEndSimpleSyncFlag(true);
     }
@@ -1496,12 +1496,6 @@ void HomeButton::setSimpleSyncAlarm(int type) {
     OSSetAlarmUserData(&mSimpleSyncAlarm, reinterpret_cast<void*>(type));
     OSSetAlarm(&mSimpleSyncAlarm, OS_MSEC_TO_TICKS(100),
                &RetrySimpleSyncCallback);
-}
-
-void HomeButton::callSimpleSyncCallback(s32 result, s32 num) {
-    if (mSimpleSyncCallback != NULL) {
-        mSimpleSyncCallback(result, num);
-    }
 }
 
 void HomeButton::update(const HBMControllerData* pController) {
@@ -3120,3 +3114,20 @@ void HomeButton::fadeout_sound(f32 gain) {
 }
 
 } // namespace homebutton
+
+/******************************************************************************
+ *
+ * nw4hbm::lyt::ArcResourceAccessor
+ *
+ * Retail places the ArcResourceAccessor destructor in this TU; the vtable
+ * (lyt_arcResourceAccessor.cpp) references it as the virtual dtor at slot 8.
+ *
+ ******************************************************************************/
+
+namespace nw4hbm {
+namespace lyt {
+
+ArcResourceAccessor::~ArcResourceAccessor() {}
+
+} // namespace lyt
+} // namespace nw4hbm

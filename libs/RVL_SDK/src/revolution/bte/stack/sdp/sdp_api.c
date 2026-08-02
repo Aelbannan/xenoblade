@@ -53,6 +53,7 @@ typedef struct {
     tSDP_DISC_CMPL_CB *p_cb;         /* 0x414 */
     UINT8 _pad2[0x474 - 0x418];      /* 0x418 */
     UINT8 disc_state;                /* 0x474 */
+    BOOLEAN is_attr_search;          /* 0x475 */
 } tCONN_CB;
 
 extern tSDP_CB sdp_cb;
@@ -88,7 +89,21 @@ BOOLEAN SDP_ServiceSearchRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,
 
 BOOLEAN SDP_ServiceSearchAttributeRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,
                                           tSDP_DISC_CMPL_CB *p_cb) {
-    return 0;
+    tCONN_CB *p_ccb;
+
+    /* find the SDP connection control block */
+    if ((p_ccb = sdp_conn_originate(p_bd_addr)) == NULL) {
+        return FALSE;
+    }
+
+    /* retail stores SDP_DISC_WAIT_CONN (0) here and marks the attribute
+       search flag */
+    p_ccb->disc_state = 0;
+    p_ccb->p_db = p_db;
+    p_ccb->p_cb = p_cb;
+    p_ccb->is_attr_search = TRUE;
+
+    return TRUE;
 }
 
 tSDP_DISC_ATTR *SDP_FindAttributeInRec(tSDP_DISC_REC *p_rec, UINT16 attr_id) {

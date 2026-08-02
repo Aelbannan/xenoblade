@@ -510,7 +510,21 @@ void MIXSetInput(AXVPB* vpb, s32 input) {
     ch->flags |= MIX_FLAG_INPUT;
 }
 
-void MIXSetPan() {}
+void MIXSetPan(AXVPB* vpb, s32 pan) {
+    MIXChannel* ch = &__MIXChannel[vpb->index];
+    s32 p;
+
+    if (pan < 0)
+        p = 0;
+    else if (pan > 0x7F)
+        p = 0x7F;
+    else
+        p = pan;
+
+    ch->panL = p;
+    __MIXSetPan(ch);
+    ch->flags |= MIX_FLAG_MIX;
+}
 
 void MIXSetFader(AXVPB* vpb, s32 fader) {
     MIXChannel* ch = &__MIXChannel[vpb->index];

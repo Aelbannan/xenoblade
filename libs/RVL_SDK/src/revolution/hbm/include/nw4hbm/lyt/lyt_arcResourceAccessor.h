@@ -56,6 +56,8 @@ public:
 public:
     ArcResourceAccessor();
 
+    virtual ~ArcResourceAccessor(); // at 0x8
+
     virtual void* GetResource(u32 type, const char* pName,
                               u32* pSize); // at 0xC
 

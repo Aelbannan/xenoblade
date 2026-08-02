@@ -352,7 +352,12 @@ inline void ResReadXFCmd(const u8* pPtr, u32* pOut) {
     *pOut = ResRead_u32(pPtr + 5);
 }
 
-void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value);
+static inline void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value) {
+    ResWrite_u8(pPtr + 0, GX_FIFO_CMD_LOAD_XF_REG);
+    ResWrite_u16(pPtr + 1, 0x0000); // No size (single write)
+    ResWrite_u16(pPtr + 3, addr);
+    ResWrite_u32(pPtr + 5, value);
+}
 
 /******************************************************************************
  *

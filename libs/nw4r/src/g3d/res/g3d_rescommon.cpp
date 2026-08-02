@@ -41,13 +41,6 @@ void ResWriteCPCmd(u8* pPtr, u8 addr, u32 value) {
     ResWrite_u32(pPtr + 2, value);
 }
 
-void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value) {
-    ResWrite_u8(pPtr + 0, GX_FIFO_CMD_LOAD_XF_REG);
-    ResWrite_u16(pPtr + 1, 0x0000); // No size (single write)
-    ResWrite_u16(pPtr + 3, addr);
-    ResWrite_u32(pPtr + 5, value);
-}
-
 void ResWriteSSMask(u8* pPtr, u32 value) {
     u32 orig = ResRead_u32(pPtr + 1);
 
@@ -61,5 +54,3 @@ void ResWriteSSMask(u8* pPtr, u32 value) {
 } // namespace detail
 } // namespace g3d
 } // namespace nw4r
-
-void __eq__Q34nw4r3g3d7ResNameCFQ34nw4r3g3d7ResName(){}

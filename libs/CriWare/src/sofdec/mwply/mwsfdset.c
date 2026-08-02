@@ -97,8 +97,8 @@ void mwPlySetOutVol(void* self, s32 vol) {
     if (state != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x45C);
     } else {
-        MWSST_SetOutVol(self, vol);
-        MWSFRNA_SetOutVol((u8*)self + 0x5D8, vol);
+        MWSFRNA_SetOutVol(self, vol);
+        MWSST_SetOutVol((u8*)self + 0x5D8, vol);
         MWSST_SetOutVol((u8*)self + 0x600, vol);
     }
 }

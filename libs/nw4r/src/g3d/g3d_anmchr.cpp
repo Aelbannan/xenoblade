@@ -2,6 +2,25 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <nw4r/g3d.h>
+
+namespace nw4r {
+namespace g3d {
+
+f32 AnmObjChrRes::GetFrame() const {
+    return GetFrm();
+}
+
+void AnmObjChrBlend::SetWeight(int idx, f32 weight) {
+    mpWeightArray[idx] = weight;
+}
+
+f32 AnmObjChrBlend::GetWeight(int idx) const {
+    return mpWeightArray[idx];
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void Release__Q34nw4r3g3d9AnmObjChrFv(){}
 
@@ -50,15 +69,9 @@ void Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdl
 
 void GetResult__Q34nw4r3g3d14AnmObjChrBlendFPQ34nw4r3g3d12ChrAnmResultUl(){}
 
-void SetWeight__Q34nw4r3g3d14AnmObjChrBlendFif(){}
-
-void GetWeight__Q34nw4r3g3d14AnmObjChrBlendCFi(){}
-
 void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(){}
 
 void SetFrame__Q34nw4r3g3d12AnmObjChrResFf(){}
-
-float GetFrame__Q34nw4r3g3d12AnmObjChrResCFv(void *self){ return *(float *)((char *)self + 0x10); }
 
 void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf(){}
 

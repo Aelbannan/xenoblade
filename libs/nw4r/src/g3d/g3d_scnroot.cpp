@@ -4,6 +4,16 @@
 #include <nw4r/g3d.h>
 #include <harness_catalog.h>
 using nw4r::g3d::ScnRoot;
+using nw4r::g3d::ScnObjGather;
+
+void ScnRoot::CalcMaterial() {
+    G3dProc(G3DPROC_CALC_MAT, 0, NULL);
+}
+
+void ScnObjGather::Clear() {
+    mNumScnObjXlu = 0;
+    mNumScnObjOpa = 0;
+}
 
 void Construct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPUlUlUlUlUl(){}
 
@@ -31,8 +41,6 @@ void CalcAnmScn__Q34nw4r3g3d7ScnRootFv(){}
 
 void CalcWorld__Q34nw4r3g3d7ScnRootFv(){}
 
-void CalcMaterial__Q34nw4r3g3d7ScnRootFv(){}
-
 void CalcView__Q34nw4r3g3d7ScnRootFv(){}
 
 void GatherDrawScnObj__Q34nw4r3g3d7ScnRootFv(){}
@@ -58,8 +66,6 @@ void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 
 int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
-
-void Clear__Q34nw4r3g3d12ScnObjGatherFv(){}
 
 void __dt__Q34nw4r3g3d12ScnObjGatherFv(){}
 

@@ -508,11 +508,27 @@ void UnbindAnimationLink(AnimationLinkList* pAnimList,
 } // namespace lyt
 } // namespace nw4r
 
+namespace nw4r {
+namespace lyt {
+
+AnimResource::AnimResource()
+    : mpFileHeader(NULL), mpResBlock(NULL), mpTagBlock(NULL),
+      mpShareBlock(NULL) {}
+
+int AnimResource::GetGroupNum() const {
+    return mpTagBlock != NULL ? mpTagBlock->groupNum : 0;
+}
+
+int AnimResource::GetAnimationShareInfoNum() const {
+    return mpShareBlock != NULL ? mpShareBlock->shareNum : 0;
+}
+
+} // namespace lyt
+} // namespace nw4r
+
 void Set__Q34nw4r3lyt12AnimResourceFPCv(){}
-void GetGroupNum__Q34nw4r3lyt12AnimResourceCFv(){}
 void GetGroupArray__Q34nw4r3lyt12AnimResourceCFv(){}
 void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv(){}
-void GetAnimationShareInfoNum__Q34nw4r3lyt12AnimResourceCFv(){}
 void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;

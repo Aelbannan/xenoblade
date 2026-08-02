@@ -5,6 +5,8 @@
 #include <nw4r/math.h>
 #include <nw4r/ut.h>
 
+#include <nw4r/lyt/lyt_resources.h>
+
 #include <revolution/GX.h>
 
 namespace nw4r {
@@ -151,7 +153,9 @@ inline const char* GetStrTableStr(const void* pTable, int index) {
     return pStringPool + pOffsetTbl[index];
 }
 
-bool TestFileHeader(const res::BinaryFileHeader& rHeader);
+inline bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
+    return rHeader.byteOrder == NW4R_BYTEORDER_BIG;
+}
 bool TestFileHeader(const res::BinaryFileHeader& rHeader, u32 signature);
 
 bool EqualsResName(const char* pLhs, const char* pRhs);
@@ -160,7 +164,11 @@ bool EqualsMaterialName(const char* pLhs, const char* pRhs);
 bool IsModulateVertexColor(ut::Color* pColors, u8 glbAlpha);
 
 ut::Color MultipleAlpha(ut::Color color, u8 alpha);
-void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha);
+inline void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha) {
+    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
+        pDst[i] = MultipleAlpha(pSrc[i], alpha);
+    }
+}
 
 void SetVertexFormat(bool modulate, u8 numCoord);
 

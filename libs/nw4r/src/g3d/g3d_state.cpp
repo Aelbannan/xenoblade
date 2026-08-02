@@ -2,6 +2,21 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <nw4r/g3d.h>
+
+extern "C" GXRenderModeObj lbl_eu_8061F9D4;
+
+namespace nw4r {
+namespace g3d {
+
+LightObj::LightObj() : mFlag(0) {}
+
+const GXRenderModeObj* G3DState::GetRenderModeObj() {
+    return &lbl_eu_8061F9D4;
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void EnvironmentMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
 
@@ -14,8 +29,6 @@ void DefaultMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34
 void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(){}
 
 void __dt__Q34nw4r3g3d12LightSettingFv(){}
-
-void __ct__Q34nw4r3g3d8LightObjFv(void){}
 
 void __dt__Q34nw4r3g3d8LightObjFv(){}
 
@@ -85,8 +98,6 @@ const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
 }
 
 void SetRenderModeObj__Q34nw4r3g3d8G3DStateFRC16_GXRenderModeObj(){}
-
-void* GetRenderModeObj__Q34nw4r3g3d8G3DStateFv(void){ return 0; }
 
 void Invalidate__Q34nw4r3g3d8G3DStateFUl(){}
 

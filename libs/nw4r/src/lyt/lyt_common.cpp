@@ -25,10 +25,6 @@ bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
     return std::strncmp(pLhs, pRhs, NW4R_LYT_MATERIAL_NAME_LEN) == 0;
 }
 
-bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
-    return rHeader.byteOrder == NW4R_BYTEORDER_BIG;
-}
-
 bool TestFileHeader(const res::BinaryFileHeader& rHeader, u32 signature) {
     return GetSignatureInt(rHeader.signature) == signature &&
            TestFileHeader(rHeader);
@@ -105,8 +101,6 @@ void TexCoordAry::Copy(const void* pSrc, u8 num) {
 }
 
 //unused
-void DrawLine(const math::VEC2 &pos, const Size &size, ut::Color &color) {
-}
 
 /******************************************************************************
  *
@@ -136,12 +130,6 @@ ut::Color MultipleAlpha(ut::Color color, u8 alpha) {
     }
 
     return result;
-}
-
-void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha) {
-    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
-        pDst[i] = MultipleAlpha(pSrc[i], alpha);
-    }
 }
 
 void SetVertexFormat(bool modulate, u8 numCoord) {

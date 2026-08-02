@@ -18,7 +18,7 @@ namespace g3d {
 class LightObj {
 public:
     LightObj(const LightObj& rLightObj);
-    LightObj() : mFlag(0) {}
+    LightObj();
     ~LightObj() {}
 
     LightObj& operator=(const LightObj& rOther);

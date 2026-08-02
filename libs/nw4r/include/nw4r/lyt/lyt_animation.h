@@ -108,6 +108,12 @@ struct AnimationContent {
  *
  ******************************************************************************/
 class AnimResource {
+public:
+    AnimResource();
+
+    int GetGroupNum() const;
+    int GetAnimationShareInfoNum() const;
+
 protected:
     const res::BinaryFileHeader* mpFileHeader;
     const res::AnimationBlock* mpResBlock;

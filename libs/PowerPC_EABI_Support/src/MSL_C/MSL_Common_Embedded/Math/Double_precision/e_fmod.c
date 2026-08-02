@@ -39,7 +39,7 @@ double x, y;
 #endif
 {
     int n, hx, hy, hz, ix, iy, sx, i;
-    int unk1; //TODO: try to find a way to remove this temp variable
+    int shift; //extra temp kept to match retail codegen
     unsigned lx, ly, lz;
 
     hx = __HI(x);         /* high word of x */
@@ -105,12 +105,12 @@ double x, y;
 
     /* fix point fmod */
     n = ix - iy;
-    unk1 = n + 2;
+    shift = n + 2;
     while(n--) {
         hz = hx - hy;
         lz = lx - ly;
 
-        if(hz == 0 && (lx >> unk1 == ly >> unk1)) {
+        if(hz == 0 && (lx >> shift == ly >> shift)) {
             return Zero[(unsigned)sx >> 31];
         }
 
@@ -127,7 +127,7 @@ double x, y;
     }
     hz = hx - hy;
     lz = lx - ly;
-    if((hz == 0) && (lx >> unk1 == ly >> unk1)) {
+    if((hz == 0) && (lx >> shift == ly >> shift)) {
         return Zero[(unsigned)sx >> 31];
     }
     if(lx < ly) hz -= 1;

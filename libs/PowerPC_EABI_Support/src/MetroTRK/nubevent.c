@@ -1,6 +1,8 @@
 #include "PowerPC_EABI_Support/MetroTRK/nubevent.h"
 #include "PowerPC_EABI_Support/MetroTRK/mem_TRK.h"
 
+#define MIN_EVENT_ID 256 //event IDs only increase from here
+
 typedef struct EventQueue {
     int fCount;
     int fFirst;
@@ -23,7 +25,7 @@ static inline DSError TRKInitializeMutex(void* p1) {
 DSError TRKInitializeEventQueue() {
     gTRKEventQueue.fCount = 0;
     gTRKEventQueue.fFirst = 0;
-    gTRKEventQueue.fEventID = 0x100;
+    gTRKEventQueue.fEventID = MIN_EVENT_ID;
     return kNoError;
 }
 
@@ -66,8 +68,8 @@ DSError TRKPostEvent(NubEvent* ev) {
         TRK_memcpy(&gTRKEventQueue.fEventList[evID], ev, sizeof(NubEvent));
         gTRKEventQueue.fEventList[evID].fID = gTRKEventQueue.fEventID;
 
-        if(++gTRKEventQueue.fEventID < 256) {
-            gTRKEventQueue.fEventID = 256;
+        if(++gTRKEventQueue.fEventID < MIN_EVENT_ID) {
+            gTRKEventQueue.fEventID = MIN_EVENT_ID;
         }
 
         gTRKEventQueue.fCount++;

@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 typedef struct TRKPacketSeq {
-    ui16 unk0;
+    ui16 sequence; //packet sequence counter
     ui8 unk2[6];
 } TRKPacketSeq;
 

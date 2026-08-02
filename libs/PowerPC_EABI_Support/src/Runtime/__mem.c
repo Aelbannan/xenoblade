@@ -237,20 +237,20 @@ void __fill_mem(void * dest, int val, size_t count)
     char * cdest = (char *)dest;
     int cval = (unsigned char)val;
     int * idest = (int *)dest;
-    int r0;
+    int n;
     cdest--;
     if (count >= 0x20)
     {
-        r0 = ~(int)(cdest) & 3;
+        n = ~(int)(cdest) & 3;
         
-        if (r0)
+        if (n)
         {
-            count -= r0;
+            count -= n;
             
             do
             {
                 *++cdest = cval;
-            } while(--r0);
+            } while(--n);
         }
         
         if (cval)
@@ -258,15 +258,15 @@ void __fill_mem(void * dest, int val, size_t count)
             cval = (cval << 0x18) | (cval << 0x10) | (cval << 0x8) | cval;
         }
         
-        r0 = count >> 5;
+        n = count >> 5;
         idest = (int *)(cdest - 3);
         
-        if (r0)
+        if (n)
         {
             do
             {
                 idest[1] = cval;//4
-                --r0;
+                --n;
                 idest[2] = cval;//8
                 idest[3] = cval;//c
                 idest[4] = cval;//10
@@ -274,17 +274,17 @@ void __fill_mem(void * dest, int val, size_t count)
                 idest[6] = cval;//18
                 idest[7] = cval;//1c
                 *(idest += 8) = cval;//20
-            } while (r0);
+            } while (n);
         }
         
-        r0 = (count >> 2) & 7;
+        n = (count >> 2) & 7;
         
-        if (r0)
+        if (n)
         {
             do
             {
                 *++idest = cval;
-            } while(--r0);
+            } while(--n);
         }
         
         cdest = (char *)idest + 3;

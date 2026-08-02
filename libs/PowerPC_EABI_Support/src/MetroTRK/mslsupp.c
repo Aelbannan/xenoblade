@@ -35,15 +35,15 @@ DSIOResult __write_file(__file_handle handle, ui8* buffer, size_t* count, __ref_
 
 DSIOResult __access_file(__file_handle handle, ui8* buffer, size_t* count, __ref_con ref_con, MessageCommandID id) {
     size_t countTemp;
-    ui32 r0;
+    ui32 result;
 
     if(!GetTRKConnected()) return kDSIOError;
 
     countTemp = *count;
-    r0 = TRKAccessFile(id, handle, &countTemp, buffer);
+    result = TRKAccessFile(id, handle, &countTemp, buffer);
     *count = countTemp;
 
-    switch((ui8)r0) {
+    switch((ui8)result) {
         case kDSIONoError:
             return kDSIONoError;
         case kDSIOEOF:

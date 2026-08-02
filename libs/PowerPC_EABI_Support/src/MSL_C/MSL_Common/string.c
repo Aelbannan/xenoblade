@@ -110,28 +110,28 @@ char* strncat(char* dst, const char* src, size_t n) {
 int strcmp(const char* str1, const char* str2) {
     register u8* left = (u8*)str1;
     register u8* right = (u8*)str2;
-    u32 align, l1, r1, x;
+    u32 align, lword, rword, x;
 
-    l1 = *left;
-    r1 = *right;
-    if(l1 - r1) {
-        return (l1 - r1);
+    lword = *left;
+    rword = *right;
+    if(lword - rword) {
+        return (lword - rword);
     }
 
     if((align = ((int)left & 3)) != ((int)right & 3)) {
         goto bytecopy;
     }
     if(align) {
-        if(l1 == 0) {
+        if(lword == 0) {
             return 0;
         }
         for(align = 3 - align; align; align--) {
-            l1 = *(++left);
-            r1 = *(++right);
-            if(l1 - r1) {
-                return (l1 - r1);
+            lword = *(++left);
+            rword = *(++right);
+            if(lword - rword) {
+                return (lword - rword);
             }
-            if(l1 == 0) {
+            if(lword == 0) {
                 return 0;
             }
         }
@@ -139,39 +139,39 @@ int strcmp(const char* str1, const char* str2) {
         right++;
     }
 
-    l1 = *(int*)left;
-    r1 = *(int*)right;
-    x = l1 + K2;
-    x &= ~l1;
+    lword = *(int*)left;
+    rword = *(int*)right;
+    x = lword + K2;
+    x &= ~lword;
     if(x & K1) {
         goto adjust;
     }
-    while(l1 == r1) {
-        l1 = *(++((int*)(left)));
-        r1 = *(++((int*)(right)));
-        x = l1 + K2;
+    while(lword == rword) {
+        lword = *(++((int*)(left)));
+        rword = *(++((int*)(right)));
+        x = lword + K2;
         if(x & K1) {
             goto adjust;
         }
     }
 
 adjust:
-    l1 = *left;
-    r1 = *right;
-    if(l1 - r1) {
-        return (l1 - r1);
+    lword = *left;
+    rword = *right;
+    if(lword - rword) {
+        return (lword - rword);
     }
 bytecopy:
-    if(l1 == 0) {
+    if(lword == 0) {
         return 0;
     }
     do {
-        l1 = *(++left);
-        r1 = *(++right);
-        if(l1 - r1) {
-            return (l1 - r1);
+        lword = *(++left);
+        rword = *(++right);
+        if(lword - rword) {
+            return (lword - rword);
         }
-        if(l1 == 0) {
+        if(lword == 0) {
             return 0;
         }
     } while(1);

@@ -1,5 +1,10 @@
 #include "PowerPC_EABI_Support/MetroTRK/msghndlr.h"
 #include "PowerPC_EABI_Support/MetroTRK/msgxtrct.h"
+
+#define MSG_BUF_SIZE 0x820        //max read/write-memory request size
+#define REGISTER_REPLY_LENGTH 0x468 //register-dump reply size
+#define DEFAULT_REG_COUNT 36        //GPRs + PC/LR/CR/CTR
+#define FP_REG_COUNT 33             //FPRs + FPSCR
 #include "PowerPC_EABI_Support/MetroTRK/mem_TRK.h"
 #include "PowerPC_EABI_Support/MetroTRK/dolphin_trk_glue.h"
 #include "PowerPC_EABI_Support/MetroTRK/nubevent.h"
@@ -36,7 +41,7 @@ static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandI
     reply.commandId = commandId;
     reply.msgLength = sizeof(msgbuf_t);
     reply.replyError = replyError;
-    reply.unkC = nextSequence;
+    reply.sequence = nextSequence;
     g_CurrentSequence = nextSequence + 1;
     TRK_WriteUARTN((void*)&reply, sizeof(msgbuf_t));
     return kNoError;
@@ -106,7 +111,7 @@ DSError TRKDoReadMemory(MessageBuffer* b) {
     }
 
     if(result == 0) {
-        ui8 buf[0x820] ALIGN(32);
+        ui8 buf[MSG_BUF_SIZE] ALIGN(32);
 
         size_t tempLength = length;
 
@@ -118,7 +123,7 @@ DSError TRKDoReadMemory(MessageBuffer* b) {
             reply3.replyError = result;
             reply3.msgLength = tempLength + sizeof(msgbuf_t);
             reply3.commandId = kDSReplyACK;
-            reply3.unkC = g_CurrentSequence;
+            reply3.sequence = g_CurrentSequence;
             g_CurrentSequence++;
             TRK_AppendBuffer(b, (ui8*)&reply3, sizeof(msgbuf_t));
 
@@ -184,11 +189,11 @@ DSError TRKDoWriteMemory(MessageBuffer* b) {
     }
 
     if(result == kNoError) {
-        ui8 buf[0x820] ALIGN(32);
+        ui8 buf[MSG_BUF_SIZE] ALIGN(32);
 
         size_t tempLength = length;
 
-        TRK_SetBufferPosition(b, 0x40);
+        TRK_SetBufferPosition(b, TRK_MSG_HEADER_LENGTH);
         result = TRK_ReadBuffer(b, buf, tempLength);
         result = TRKTargetAccessMemory(buf, start, &tempLength, options & DS_MSG_MEMORY_USERVIEW ? 0 : 1, false);
         TRKResetBuffer(b, 0);
@@ -198,7 +203,7 @@ DSError TRKDoWriteMemory(MessageBuffer* b) {
             reply3.msgLength = sizeof(msgbuf_t);
             reply3.commandId = kDSReplyACK;
             reply3.replyError = result;
-            reply3.unkC = g_CurrentSequence;
+            reply3.sequence = g_CurrentSequence;
             g_CurrentSequence++;
             result = TRK_AppendBuffer(b, (ui8*)&reply3, sizeof(msgbuf_t));
         }
@@ -247,7 +252,7 @@ DSError TRKDoReadRegisters(MessageBuffer* b) {
     ui16 firstRegister;
     ui16 lastRegister;
     size_t registersLength;
-    msgbuf_t local_50;
+    msgbuf_t reply;
     TRKMsgBody* msg = (TRKMsgBody*)b->fData;
 
     options = msg->options;
@@ -258,19 +263,19 @@ DSError TRKDoReadRegisters(MessageBuffer* b) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyInvalidRegisterRange);
     }
 
-    local_50.commandId = kDSReplyACK;
-    local_50.msgLength = 0x468;
-    local_50.unkC = g_CurrentSequence;
+    reply.commandId = kDSReplyACK;
+    reply.msgLength = REGISTER_REPLY_LENGTH;
+    reply.sequence = g_CurrentSequence;
     g_CurrentSequence++;
 
     TRKResetBuffer(b, 0);
-    TRKAppendBuffer_ui8(b, (ui8*)&local_50, sizeof(msgbuf_t));
+    TRKAppendBuffer_ui8(b, (ui8*)&reply, sizeof(msgbuf_t));
 
-    //???
-    error = TRKTargetAccessDefault(0, 36, b, &registersLength, true);
+    //dump 32 GPRs + PC/LR/CR/CTR
+    error = TRKTargetAccessDefault(0, DEFAULT_REG_COUNT, b, &registersLength, true);
 
     if(error == kNoError) {
-        error = TRKTargetAccessFP(0, 33, b, &registersLength, true);
+        error = TRKTargetAccessFP(0, FP_REG_COUNT, b, &registersLength, true);
     }
     if(error == kNoError) {
         error = TRKTargetAccessExtended1(0, 0x60, b, &registersLength, true);
@@ -326,7 +331,7 @@ DSError TRKDoWriteRegisters(MessageBuffer* b) {
     ui16 firstRegister;
     ui16 lastRegister;
     size_t registersLength;
-    msgbuf_t local_50;
+    msgbuf_t reply;
     TRKMsgBody* msg = (TRKMsgBody*)b->fData;
 
     options = msg->options;
@@ -339,7 +344,7 @@ DSError TRKDoWriteRegisters(MessageBuffer* b) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyInvalidRegisterRange);
     }
 
-    TRK_SetBufferPosition(b, 0x40);
+    TRK_SetBufferPosition(b, TRK_MSG_HEADER_LENGTH);
 
     switch(options) {
         case kDSRegistersDefault:
@@ -363,13 +368,13 @@ DSError TRKDoWriteRegisters(MessageBuffer* b) {
     TRKResetBuffer(b, 0);
 
     if(error == kDSReplyNoError) {
-        TRK_memset(&local_50, 0, sizeof(msgbuf_t));
-        local_50.msgLength = sizeof(msgbuf_t);
-        local_50.commandId = kDSReplyACK;
-        local_50.replyError = error;
-        local_50.unkC = g_CurrentSequence;
+        TRK_memset(&reply, 0, sizeof(msgbuf_t));
+        reply.msgLength = sizeof(msgbuf_t);
+        reply.commandId = kDSReplyACK;
+        reply.replyError = error;
+        reply.sequence = g_CurrentSequence;
         g_CurrentSequence = g_CurrentSequence + 1;
-        error = TRK_AppendBuffer(b, (ui8*)&local_50, sizeof(msgbuf_t));
+        error = TRK_AppendBuffer(b, (ui8*)&reply, sizeof(msgbuf_t));
     }
 
     //Check if there was an error, and respond accordingly

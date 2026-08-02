@@ -1,5 +1,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 #include "PowerPC_EABI_Support/MetroTRK/mem_TRK.h"
+
+#define TRK_STACK_SIZE 0x500 //stack used by the EXI interrupt context load
 #include "PowerPC_EABI_Support/MetroTRK/dolphin_trk_glue.h"
 #include "PowerPC_EABI_Support/MetroTRK/custconn/cc_gdev.h"
 #include "PowerPC_EABI_Support/MetroTRK/targimpl.h"
@@ -57,14 +59,14 @@ L_802CC250:
     b TRK_InterruptHandler
 }
 
-void TRKEXICallBack(OSInterrupt r3, OSContext* ctx){
+void TRKEXICallBack(OSInterrupt interrupt, OSContext* ctx){
     OSEnableScheduler();
-    TRKLoadContext(ctx, 0x500);
+    TRKLoadContext(ctx, TRK_STACK_SIZE);
 }
 
 int InitMetroTRKCommTable(int hwId){
     OSReport("Devkit set to : %ld\n", hwId);
-    OSReport("MetroTRK : Sizeof Reply - %ld bytes\n", 0x40);
+    OSReport("MetroTRK : Sizeof Reply - %ld bytes\n", TRK_MSG_HEADER_LENGTH);
     TRK_Use_BBA = false;
     
     if(hwId == HARDWARE_BBA){ //BBA hardware
@@ -95,8 +97,8 @@ int InitMetroTRKCommTable(int hwId){
 void TRKUARTInterruptHandler(void) {
 }
 
-UARTError TRK_InitializeIntDrivenUART(ui32 r3, ui32 r4, void* r5){
-    gDBCommTable.initialize_func(r5, TRKEXICallBack);
+UARTError TRK_InitializeIntDrivenUART(ui32 port, ui32 baudRate, void* flagOut){
+    gDBCommTable.initialize_func(flagOut, TRKEXICallBack);
     gDBCommTable.open_func();
     return kUARTNoError;
 }

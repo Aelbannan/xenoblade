@@ -20,8 +20,8 @@ typedef struct msgbuf_t {
         ui8 replyError;
         DSReplyError replyErrorInt;
     };
-    ui32 unkC;
-    ui8 unk10[0x30];
+    ui32 sequence; //message sequence (ACK replies); stop-notify reuses this slot for the faulting instruction
+    ui8 payload[0x30];
 } msgbuf_t;
 
 bool GetTRKConnected();

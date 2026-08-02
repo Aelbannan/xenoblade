@@ -189,9 +189,9 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
         } while (--i);
     }
 
+    left_shift = ((unsigned int) cps & 3) << 3;
     src_offset = ((unsigned int) cps) & 3;
 
-    left_shift = src_offset << 3;
     right_shift = 32 - left_shift;
 
     cps += 4 - src_offset;

@@ -5,7 +5,7 @@ int abs(int x) {
     return (mask ^ x) - mask;
 }
 
-//might be llabs
+//labs
 long labs(long x) {
     return x > 0 ? x : -x;
 }

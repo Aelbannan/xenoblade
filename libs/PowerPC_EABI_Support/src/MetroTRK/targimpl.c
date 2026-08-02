@@ -15,6 +15,7 @@ void TRKUARTInterruptHandler();
 #define MEM_DUMP_CHUNK          1024       // memory dump chunk read at the faulting PC
 #define MEM_PAGE_MASK           0xFFFFFC00 // 1 KiB page alignment mask
 #define MEM1_BASE_ADDR          0x80000000 // base of physical MEM1 in the CPU map
+#define NUM_GPRS                32         // general-purpose registers in the stop-notify dump
 typedef struct ExceptionStatus{
     StopInfo_PPC exceptionInfo;
     ui8 inTRK;
@@ -701,9 +702,9 @@ DSError TRKTargetInterrupt(NubEvent* event){
 
 DSError TRKTargetAddStopInfo(MessageBuffer* b){
     DSError error;
-    ui32 local_458;
-    int local_45c;
-    int auStack_460;
+    ui32 instruction; //faulting instruction at the stop PC
+    int threadId;
+    int unused; //second thread-info value; not transmitted
     size_t length;
     char writeData[MEM_DUMP_CHUNK];
     msgbuf_t reply;
@@ -712,23 +713,23 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     reply.msgLength = STOP_NOTIFY_LENGTH;
     reply.commandId = kDSNotifyStopped;
     reply.replyErrorInt = gTRKCPUState.Default.PC;
-    GetThreadInfo(&local_45c,&auStack_460);
-    *(ui32*)&reply.unk10[4] = local_45c;
-    *(ui32*)&reply.unk10[8] = *(ui32*)ConvertAddress(CURRENT_THREAD_ADDR);
+    GetThreadInfo(&threadId,&unused);
+    *(ui32*)&reply.payload[4] = threadId;
+    *(ui32*)&reply.payload[8] = *(ui32*)ConvertAddress(CURRENT_THREAD_ADDR);
     {
     DSError readError;
     size_t registersLength = sizeof(InstructionType);
-    readError = TRKTargetAccessMemory((void*)&local_458, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
+    readError = TRKTargetAccessMemory((void*)&instruction, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
     }
-    reply.unkC = local_458;
-    *(ui32*)reply.unk10 = gTRKCPUState.Extended1.exceptionID & 0xFFFF;
+    reply.sequence = instruction;
+    *(ui32*)reply.payload = gTRKCPUState.Extended1.exceptionID & 0xFFFF;
 
     error = TRKAppendBuffer_ui8(b, (ui8*)&reply, TRK_MSG_HEADER_LENGTH);
 
     if (error == kNoError) {
         int i;
 
-        for(i = 0; i < 0x20; i++) {
+        for(i = 0; i < NUM_GPRS; i++) {
             TRKAppendBuffer1_ui32(b, gTRKCPUState.Default.GPR[i]);
         }
 
@@ -764,7 +765,7 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
 }
 
 void TRKTargetAddExceptionInfo(MessageBuffer* b){
-    ui32 local_54;
+    ui32 instruction; //faulting instruction at the exception PC
     msgbuf_t reply;
     
     TRK_memset(&reply,0,sizeof(msgbuf_t));
@@ -773,10 +774,10 @@ void TRKTargetAddExceptionInfo(MessageBuffer* b){
     reply.replyErrorInt = gTRKExceptionStatus.exceptionInfo.PC;
     {
     size_t registersLength = sizeof(InstructionType);
-    TRKTargetAccessMemory((void*)&local_54,(void*)gTRKExceptionStatus.exceptionInfo.PC, &registersLength, kUserMemory, true);
+    TRKTargetAccessMemory((void*)&instruction,(void*)gTRKExceptionStatus.exceptionInfo.PC, &registersLength, kUserMemory, true);
     }
-    *(ui32*)&reply.unkC = local_54;
-    *(ui32*)reply.unk10 = gTRKExceptionStatus.exceptionInfo.exceptionID;
+    *(ui32*)&reply.sequence = instruction;
+    *(ui32*)reply.payload = gTRKExceptionStatus.exceptionInfo.exceptionID;
     TRKAppendBuffer_ui8(b,(ui8 *)&reply,sizeof(msgbuf_t));
 }
 
@@ -881,7 +882,7 @@ DSError TRKTargetSupportRequest(){
     size_t* length;
     MessageCommandID commandId;
     DSIOResult ioResult;
-    ui32 local_28;
+    ui32 position;
     NubEvent event;
 
     commandId = gTRKCPUState.Default.GPR[3];
@@ -913,8 +914,8 @@ DSError TRKTargetSupportRequest(){
         gTRKCPUState.Default.GPR[3] = ioResult;
         break;
         case kDSPositionFile:
-        local_28 = *(ui32*)gTRKCPUState.Default.GPR[5];
-        error = HandlePositionFileSupportRequest(gTRKCPUState.Default.GPR[4],&local_28,
+        position = *(ui32*)gTRKCPUState.Default.GPR[5];
+        error = HandlePositionFileSupportRequest(gTRKCPUState.Default.GPR[4],&position,
         (ui8)gTRKCPUState.Default.GPR[6],&ioResult);
 
         if (ioResult == kDSIONoError && error != kNoError) {
@@ -922,7 +923,7 @@ DSError TRKTargetSupportRequest(){
         }
 
         gTRKCPUState.Default.GPR[3] = ioResult;
-        *(ui32*)gTRKCPUState.Default.GPR[5] = local_28;
+        *(ui32*)gTRKCPUState.Default.GPR[5] = position;
         break;
         case kDSWriteFile:
         case kDSReadFile:

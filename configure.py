@@ -993,12 +993,12 @@ config.libs = [
             # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             # btm_acl.c: retail bte built with GC/3.0a5.2 (see btm_devctl / bta_dm_act
             # notes); -func_align 4 matches the bte btm family (btm_sec/discovery)
             # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 16"]),
@@ -1006,7 +1006,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte family is packed (no 16-byte fn padding); -func_align 4 packs .text into the split budget (MWCC_REFERENCE btm_devctl/btm_inq notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 removes the spurious ori nop before mtctr-counted loops and matches the bte btm family layout (MWCC_REFERENCE btm_sco notes)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently; -ipa file (default) keeps forward TU function/pool emission vs retail (dropping -ipa off; see l2c_api.c/hidh_api.c MWCC_REFERENCE)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
                                                                                                                                                                                                             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC/3.0a5.2 (bte family, see bta_dm_act/btm_devctl notes); volatile handle keeps the failure-path handle=0 store so the 0 lives in r31 across calls — FULL_MATCH

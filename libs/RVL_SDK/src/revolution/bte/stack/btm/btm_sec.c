@@ -318,20 +318,20 @@ static __inline BtmSecServRec *btm_sec_find_first_serv(UINT8 conn_type, UINT16 p
 static __inline BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
 {
     BtmSecServRec *p_srec = &btm_cb.sec_serv_rec[0];
-    int i;
     BOOLEAN found = FALSE;
+    int i;
 
     for (i = 0; i < BTM_SEC_MAX_SERVICE_RECORDS; i++, p_srec++)
     {
         if ((p_srec->security_flags & BTM_SEC_IN_USE) && (p_srec->psm == p_cur->psm))
         {
-            if (found)
-                return (p_srec);
-            if (p_srec == p_cur)
+            if (p_cur == p_srec)
             {
                 found = TRUE;
                 continue;
             }
+            if (found)
+                return (p_srec);
         }
     }
     return (NULL);
@@ -878,8 +878,10 @@ UINT8 btm_sec_l2cap_access_req(BD_ADDR bd_addr, UINT16 psm, UINT16 handle,
 
     /* If not originator of the connection, or the device's service record
        is not set, set it */
-    if (is_originator == FALSE || !p_dev_rec->p_cur_service)
+    if (!is_originator || !p_dev_rec->p_cur_service)
         p_dev_rec->p_cur_service = p_srec;
+
+    security_required = p_srec->security_flags;
 
     /* See if there is another service record with the same PSM
        (i.e. the PSM is a multiplexer) */
@@ -895,16 +897,14 @@ UINT8 btm_sec_l2cap_access_req(BD_ADDR bd_addr, UINT16 psm, UINT16 handle,
         return (BTM_SUCCESS);
     }
 
-    security_required = p_srec->security_flags;
-
     p_dev_rec->p_callback = p_callback;
     p_dev_rec->p_ref_data = NULL;
     p_dev_rec->security_required = security_required;
     p_dev_rec->is_originator = is_originator;
 
     BTM_TRACE_EVENT5("Security Manager: l2cap_access_req PSM:%d Handle:%d State:%d Flags:0x%x Required:0x%x",
-                     psm, p_dev_rec->hci_handle, p_dev_rec->sec_state, p_dev_rec->sec_flags,
-                     p_dev_rec->security_required);
+                     psm, handle, p_dev_rec->sec_state, p_dev_rec->sec_flags,
+                     security_required);
 
     if (!is_originator && (security_required & BTM_SEC_AUTHORIZED))
     {
@@ -1725,31 +1725,35 @@ void btm_sec_pin_code_request_timeout(void *p_tle)
 void btm_sec_pin_code_request(UINT8 *p_bda)
 {
     BtmSecDevRec *p_dev_rec;
-    int i;
-    int dev_rec_count = 0;
+    BtmSecDevRec *p_srec;
+    BtmCb *p_cb = &btm_cb;
     BOOLEAN reject = FALSE;
+    int dev_rec_count = 0;
 
     BTM_TRACE_EVENT6("btm_sec_pin_code_request()  BDA: %02x:%02x:%02x:%02x:%02x:%02x",
                      p_bda[0], p_bda[1], p_bda[2], p_bda[3], p_bda[4], p_bda[5]);
 
     /* If we are pairing with a fixed pin device, or the pin type is fixed,
        send the configured pin code */
-    if (!btm_cb.pairing_disabled && btm_cb.pin_type == HCI_PIN_TYPE_FIXED)
+    if (!p_cb->pairing_disabled && p_cb->pin_type == HCI_PIN_TYPE_FIXED)
     {
         if (btm_find_dev(p_bda) == NULL)
         {
-            for (; dev_rec_count < BTM_SEC_MAX_DEVICE_RECORDS; dev_rec_count++)
+            p_srec = &btm_cb.sec_dev_rec[0];
+            for (; dev_rec_count < BTM_SEC_MAX_DEVICE_RECORDS; dev_rec_count++, p_srec++)
             {
-                if (!(btm_cb.sec_dev_rec[dev_rec_count].sec_flags & BTM_SEC_IN_USE))
+                if (!(p_srec->sec_flags & BTM_SEC_IN_USE))
                     break;
             }
-            if (dev_rec_count >= BTM_SEC_MAX_DEVICE_RECORDS)
-            {
-                btsnd_hcic_pin_code_neg_reply(p_bda);
-                return;
-            }
         }
-        btsnd_hcic_pin_code_req_reply(p_bda, btm_cb.cfg_pin_code_len, btm_cb.cfg_pin_code);
+
+        if (dev_rec_count >= BTM_SEC_MAX_DEVICE_RECORDS)
+        {
+            btsnd_hcic_pin_code_neg_reply(p_bda);
+            return;
+        }
+
+        btsnd_hcic_pin_code_req_reply(p_bda, p_cb->cfg_pin_code_len, p_cb->cfg_pin_code);
         return;
     }
 
@@ -1761,13 +1765,13 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
 
     if (p_dev_rec != NULL)
     {
-        if (memcmp(p_bda, btm_cb.connecting_bda, BD_ADDR_LEN) == 0)
-            memcpy(p_dev_rec->dev_class, btm_cb.connecting_dc, DEV_CLASS_LEN);
+        if (memcmp(p_bda, p_cb->connecting_bda, BD_ADDR_LEN) == 0)
+            memcpy(p_dev_rec->dev_class, p_cb->connecting_dc, DEV_CLASS_LEN);
 
         if (p_dev_rec->security_required & BTM_SEC_BOND)
         {
             BTM_TRACE_EVENT0("btm_sec_pin_code_request bonding sending reply");
-            btsnd_hcic_pin_code_req_reply(p_bda, btm_cb.pin_code_len, btm_cb.pin_code);
+            btsnd_hcic_pin_code_req_reply(p_bda, p_cb->pin_code_len, p_cb->pin_code);
 
             /* If we were in a different security mode, restore it */
             if (btm_cb.security_mode_changed)
@@ -1777,11 +1781,8 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
                                  (btm_cb.security_mode == BTM_SEC_MODE_LINK));
                 btsnd_hcic_write_auth_enable(btm_cb.security_mode == BTM_SEC_MODE_LINK);
             }
-
-            return;
         }
-
-        if (btm_cb.pairing_disabled || !btm_cb.api.p_pin_callback
+        else if (p_cb->pairing_disabled || !p_cb->api.p_pin_callback
             || (!p_dev_rec->is_originator && (p_dev_rec->dev_class[1] & 0x1f) == 0x05
                 && (p_dev_rec->dev_class[2] & 0x40)))
         {
@@ -1789,11 +1790,11 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
         }
         else
         {
-            memcpy(btm_cb.connecting_bda, p_bda, BD_ADDR_LEN);
-            memcpy(btm_cb.connecting_dc, p_dev_rec->dev_class, DEV_CLASS_LEN);
-            btm_cb.sec_pin_code_req_tle.param = (void *)btm_sec_pin_code_request_timeout;
-            btu_start_timer(&btm_cb.sec_pin_code_req_tle, BTU_TTYPE_USER_FUNC, BTM_PIN_CODE_REQUEST_TOUT);
-            (*btm_cb.api.p_pin_callback)(p_bda, p_dev_rec->dev_class, p_dev_rec->sec_bd_name);
+            memcpy(p_cb->connecting_bda, p_bda, BD_ADDR_LEN);
+            memcpy(p_cb->connecting_dc, p_dev_rec->dev_class, DEV_CLASS_LEN);
+            p_cb->sec_pin_code_req_tle.param = (void *)btm_sec_pin_code_request_timeout;
+            btu_start_timer(&p_cb->sec_pin_code_req_tle, BTU_TTYPE_USER_FUNC, BTM_PIN_CODE_REQUEST_TOUT);
+            (*p_cb->api.p_pin_callback)(p_bda, p_dev_rec->dev_class, p_dev_rec->sec_bd_name);
         }
     }
     else
@@ -1804,7 +1805,7 @@ void btm_sec_pin_code_request(UINT8 *p_bda)
     if (reject)
     {
         BTM_TRACE_WARNING3("btm_sec_pin_code_request(): Pairing disabled:%d; PIN callback:%x, Dev Rec:%x!",
-                           btm_cb.pairing_disabled, btm_cb.api.p_pin_callback, p_dev_rec);
+                           p_cb->pairing_disabled, p_cb->api.p_pin_callback, p_dev_rec);
         btsnd_hcic_pin_code_neg_reply(p_bda);
     }
 }

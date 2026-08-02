@@ -41,7 +41,8 @@ Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
 
 Picture::~Picture() {
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
-        Layout::DeleteObj(mpMaterial);
+        mpMaterial->~Material();
+        Layout::FreeMemory(mpMaterial);
         mpMaterial = NULL;
     }
 

@@ -1018,12 +1018,13 @@ tINQ_DB_ENT *btm_inq_db_new(BD_ADDR p_bda)
 /* ------------------------------------------------------------------ */
 UINT8 btm_set_inq_event_filter (UINT8 filter_type, BD_ADDR bd_addr)
 {
+    void  *p_buf;
+    UINT8  condition_length = DEV_CLASS_LEN * 2;
     UINT8  condition_buf[DEV_CLASS_LEN * 2];
     UINT8 *p_cond = condition_buf;
-    UINT8  condition_length = DEV_CLASS_LEN * 2;
-    void  *p_buf;
 
-    if ((p_buf = GKI_getpoolbuf (HCI_CMD_POOL_ID)) != NULL)
+    p_buf = GKI_getpoolbuf (HCI_CMD_POOL_ID);
+    if (p_buf != NULL)
     {
         switch (filter_type)
         {

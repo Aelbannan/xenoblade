@@ -391,8 +391,8 @@ void BTM_SendHciReset(tBTM_CMPL_CB *p_cb)
         (*btm_cb.p_dev_status_cb)(1);
 }
 
-int BTM_IsDeviceUp(void) {
-    return (btm_cb.state == 5) ? 1 : 0;
+UINT8 BTM_IsDeviceUp(void) {
+    return (btm_cb.state == 5);
 }
 
 /* ------------------------------------------------------------------ */

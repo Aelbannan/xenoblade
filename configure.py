@@ -1000,7 +1000,7 @@ config.libs = [
             # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA: -ipa file / -func_align 16 insert scheduling NOPs before mtctr-counted loops (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),

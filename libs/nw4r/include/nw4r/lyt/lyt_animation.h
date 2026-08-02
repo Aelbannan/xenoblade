@@ -112,7 +112,9 @@ public:
     AnimResource();
 
     int GetGroupNum() const;
+    const void* GetGroupArray() const;
     int GetAnimationShareInfoNum() const;
+    bool IsDescendingBind() const;
 
 protected:
     const res::BinaryFileHeader* mpFileHeader;

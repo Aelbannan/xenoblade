@@ -523,12 +523,20 @@ int AnimResource::GetAnimationShareInfoNum() const {
     return mpShareBlock != NULL ? mpShareBlock->shareNum : 0;
 }
 
+const void* AnimResource::GetGroupArray() const {
+    return mpTagBlock != NULL
+               ? reinterpret_cast<const u8*>(mpTagBlock) + mpTagBlock->groupsOffset
+               : NULL;
+}
+
+bool AnimResource::IsDescendingBind() const {
+    return mpTagBlock != NULL ? (mpTagBlock->flag & 1) != 0 : false;
+}
+
 } // namespace lyt
 } // namespace nw4r
 
 void Set__Q34nw4r3lyt12AnimResourceFPCv(){}
-void GetGroupArray__Q34nw4r3lyt12AnimResourceCFv(){}
-void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv(){}
 void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;

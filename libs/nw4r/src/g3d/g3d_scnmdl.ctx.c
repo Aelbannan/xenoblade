@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for nw4r/src/g3d/g3d_scnmdl
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/nw4r/src/g3d/g3d_scnmdl.cpp" line 4 "harness_catalog.h" */
+/* "libs/nw4r/src/g3d/g3d_scnmdl.cpp" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -718,7 +710,7 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
+void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
 {
     unsigned char* object = static_cast<unsigned char*>(self);
     void* resource = *reinterpret_cast<void**>(object);
@@ -733,9 +725,9 @@ extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self,
     return *reinterpret_cast<void**>(object + 0x10);
 }
 
-extern "C" void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb() {}
+void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(){}
 
-extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
+void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
     struct Model {
         unsigned char pad[0x140];
         unsigned* flags;
@@ -754,46 +746,47 @@ extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self
     return access->resGenMode;
 }
 
-extern "C" void GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl() {}
+void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
-extern "C" void SetVisibilityEx__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFb() {}
+void SetVisibilityEx__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFb(){}
 
-extern "C" void __ct__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFPQ34nw4r3g3d6ScnMdlUl() {}
+void __ct__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
-extern "C" void Construct__Q34nw4r3g3d6ScnMdlFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdlUli() {}
+void Construct__Q34nw4r3g3d6ScnMdlFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdlUli(){}
 
-extern "C" void ScnMdl_G3DPROC_CALC_MAT__Q34nw4r3g3d6ScnMdlFUlPv() {}
+void ScnMdl_G3DPROC_CALC_MAT__Q34nw4r3g3d6ScnMdlFUlPv(){}
 
-extern "C" void G3dProc__Q34nw4r3g3d6ScnMdlFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d6ScnMdlFUlUlPv(){}
 
-extern "C" void SetScnObjOption__Q34nw4r3g3d6ScnMdlFUlUl() {}
+void SetScnObjOption__Q34nw4r3g3d6ScnMdlFUlUl(){}
 
-extern "C" void GetScnObjOption__Q34nw4r3g3d6ScnMdlCFUlPUl() {}
+void GetScnObjOption__Q34nw4r3g3d6ScnMdlCFUlPUl(){}
 
-extern "C" void InitBuffer__Q34nw4r3g3d6ScnMdlFv() {}
+void InitBuffer__Q34nw4r3g3d6ScnMdlFv(){}
 
-extern "C" void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl() {}
+void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl(){}
 
-extern "C" void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj() {}
+void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void __dt__Q34nw4r3g3d6ScnMdlFv() {}
+void __dt__Q34nw4r3g3d6ScnMdlFv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d6ScnMdlCFv() {}
+void GetTypeName__Q34nw4r3g3d6ScnMdlCFv(){}
 
-extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return 0; }
+extern "C" const char lbl_eu_8051D7C0[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return (void*)lbl_eu_8051D7C0; }

@@ -81,4 +81,5 @@ void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d6ScnMdlCFv(){}
 
-void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void){ return 0; }
+extern "C" const char lbl_eu_8051D7C0[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return (void*)lbl_eu_8051D7C0; }

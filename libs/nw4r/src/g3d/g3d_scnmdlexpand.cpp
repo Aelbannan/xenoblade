@@ -13,7 +13,7 @@ extern "C" const char lbl_eu_8051D640[];
 namespace nw4r { namespace g3d { class ScnObj; } }
 
 // Target 1: GetTypeObj
-const char* GetTypeObj__Q34nw4r3g3d12ScnMdlExpandCFv() {
+extern "C" const char* GetTypeObj__Q34nw4r3g3d12ScnMdlExpandCFv() {
     return (const char*)lbl_eu_8051D7D0;
 }
 

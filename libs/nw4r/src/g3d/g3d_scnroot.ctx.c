@@ -32079,7 +32079,8 @@ void IsDerivedFrom__Q34nw4r3g3d7ScnRootCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d7ScnRootCFv(){}
 
-void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void){ return 0; }
+extern "C" const char lbl_eu_8051D798[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void) { return (void*)lbl_eu_8051D798; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace nw4r { namespace g3d { class ScnObj; }}

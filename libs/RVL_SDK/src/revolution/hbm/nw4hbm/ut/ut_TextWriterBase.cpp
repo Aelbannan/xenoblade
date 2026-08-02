@@ -86,6 +86,17 @@ f32 TextWriterBase<T>::VPrintf(const T* pStr, std::va_list args) {
     return Print(pBuffer, len);
 }
 
+template <typename T>
+f32 TextWriterBase<T>::Printf(const T* pStr, ...) {
+    va_list args;
+    va_start(args, pStr);
+
+    f32 width = VPrintf(pStr, args);
+    va_end(args);
+
+    return width;
+}
+
 template <typename T> f32 TextWriterBase<T>::Print(const T* pStr, int len) {
     TextWriterBase<T> clone(*this);
 

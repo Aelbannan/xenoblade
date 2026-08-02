@@ -864,6 +864,32 @@ Also notable: the pre-SMT register-renaming witness cannot certify this pair eve
 
 Files: `libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/ut/ut_CharWriter.h`, `ut_CharWriter.cpp`, `lyt/lyt_textBox.cpp`, `configure.py`.
 
+**Correction (2026-08-03, ut_TextWriterBase batch):** claim #1 above is wrong for
+`ut_TextWriterBase.o` — the GXColor swap REGRESSES it. MWCC's struct-copy
+schedule for `TextWriterBase<T> clone(*this);` depends on the member type:
+with `ut::Color` members the blit is retail's alternating `lwz r0/stw r0` ×9
+words then pipelined pairs; with `GXColor` members it pipelines words 0–3
+first (9 structural mismatches in VPrintf/Printf/Print — verified both ways,
+same source). Retail proof: `SetupGXWithColorMapping__...FQ36nw4hbm2ut5Color`
+mangling, and the CharWriter ctor was FULL_MATCH under `Color` members
+(2026-07-31); lyt_textBox ctor matches 100% under Color too (GXColor wasn't
+needed for it). Under Color members the accepted ut_TextWriterBase targets
+Print/Printf/VPrintf/CalcLineWidth/CalcString*/… are all 100% static again.
+
+Remaining unit-level blocker with Color members: ut_TextWriterBase.o emits
+`__dt__ColorMapping/VertexColor/TextColor` (0x68+0x80+0x68) whenever the
+implicit TextWriterBase copy ctor is ODR-used — the exact bloat claim #1
+reports, but for this TU. Not suppressible by: user-defined inline copy ctors
+on TextWriterBase/CharWriter/nested structs (bloat persists or copy shape
+breaks), inline `~Color() {}` in ut_Color.h (0x150→0x120, still emitted;
+plus breaks the lyt_bounding strong `__dt__Color` emission). Likely retail
+answer is an inline-empty `~Color` visible at compile time in the SDK header
+(the nw4r twin `libs/nw4r/include/nw4r/ut/ut_Color.h` has exactly
+`~Color() {}`) + lyt_bounding emitting the 0x40 deleting wrapper via
+`__destroy_arr` address-take; requires coordinated lyt_bounding/lyt_material
+rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
+0x5ac/0x5d0) — must be matched before the 0x5470 split can fit.
+
 ## RVL_SDK hbm/mix.c — HBMMIXUpdateSettings FULL_MATCH via loop-local declaration order (Wii/1.1 `-O4,p`)
 
 `HBMMIXUpdateSettings` (us-80342970, 0xAF8, 16-channel mixer loop w/ flag switch + AX delta writes) went from HIGH_MATCH 94.2% (479 pure reg-swaps, 0 structural — witness and SMT both blocked) to **100% byte-identical** with one declaration-order change, closing the unit 15/15:

@@ -81,10 +81,10 @@ private:
             blue_ = b;
         }
 
-        bool isDone();
+        inline bool isDone();
 
         void init(int maxFrame);
-        void calc();
+        inline void calc();
         void draw();
 
         void start() {
@@ -119,7 +119,7 @@ public:
     Controller* getController(int chan) {
         return mpController[chan];
     }
-    int getVolume();
+    inline int getVolume();
     HBMSelectBtnNum getSelectBtnNum();
     const char* getFuncPaneName(int no) {
         return scFuncTouchPaneName[no];
@@ -134,14 +134,14 @@ public:
         return mpHomeButtonEventHandler;
     }
     bool isActive() const;
-    bool isUpBarActive() const;
-    bool isDownBarActive();
+    inline bool isUpBarActive() const;
+    inline bool isDownBarActive();
 
     void setAdjustFlag(int flag);
     void setEndSimpleSyncFlag(bool flag) {
         mEndSimpleSyncFlag = flag;
     }
-    void setForcusSE();
+    inline void setForcusSE();
     void setReassignedFlag(bool flag) {
         mReassignedFlag = flag;
     }
@@ -150,17 +150,17 @@ public:
         return mpSoundArchivePlayer;
     }
     */
-    void setSimpleSyncAlarm(int type);
+    inline void setSimpleSyncAlarm(int type);
     void setSimpleSyncFlag(bool flag) {
         mSimpleSyncFlag = flag;
     }
-    void setSpeakerAlarm(int chan, int msec);
-    void setVolume(int vol);
+    inline void setSpeakerAlarm(int chan, int msec);
+    inline void setVolume(int vol);
 
-    bool getVibFlag();
+    inline bool getVibFlag();
     int getPaneNo(const nw4hbm::lyt::Pane* pPane);
 
-    void setVibFlag(bool flag);
+    inline void setVibFlag(bool flag);
 
     void create();
     void init();
@@ -182,7 +182,7 @@ public:
         }
     }
 
-    void startBlackOut();
+    inline void startBlackOut();
     void setBlackOutColor(u8 r, u8 g, u8 b) {
         mFader.setColor(r, g, b);
     }
@@ -190,29 +190,28 @@ public:
 private:
     void init_battery(const HBMControllerData* pController);
     void calc_battery(int chan);
-    void reset_battery();
+    inline void reset_battery();
 
     void init_sound();
     void play_sound(int id);
-    void fadeout_sound(f32 gain);
+    inline void fadeout_sound(f32 gain);
 
-    void init_msg();
-    void init_vib();
+    inline void init_msg();
+    inline void init_vib();
     void init_volume();
 
     void set_config();
     void set_text();
 
-    void calc_fadeoutAnm();
-    void calc_letter();
+    inline void calc_fadeoutAnm();
 
     void update_controller(int id);
-    void update_posController(int id);
+    inline void update_posController(int id);
 
     void reset_btn();
-    void reset_control();
-    void reset_guiManager(int num);
-    void reset_window();
+    inline void reset_control();
+    inline void reset_guiManager(int num);
+    inline void reset_window();
 
 public:
     void update_sound();

@@ -25,6 +25,8 @@ namespace homebutton {
 void AxSoundMain(); // defined in HBMAxSound.cpp
 void SetSoundMode(u32 mode); // defined in HBMAxSound.cpp
 void PlaySeq(int seqId); // defined in HBMAxSound.cpp
+void StopAllSeq(); // defined in HBMAxSound.cpp
+void SetVolumeAllSeq(float volume); // defined in HBMAxSound.cpp
 }
 
 /******************************************************************************
@@ -755,7 +757,7 @@ void HomeButton::init() {
     mFader.mBlackOutFlag = true;
 }
 
-void HomeButton::init_msg() {
+inline void HomeButton::init_msg() {
     int i, len;
 
     for (i = 0; i < res::eFuncTextPane_Max; i++) {
@@ -801,7 +803,7 @@ void HomeButton::init_volume() {
     }
 }
 
-void HomeButton::init_vib() {
+inline void HomeButton::init_vib() {
     int idx;
 
     mVibFlag = getVibFlag();
@@ -898,7 +900,6 @@ void HomeButton::init_battery(const HBMControllerData* pController) {
     mGetPadInfoTime = 0;
 }
 
-/*
 void HomeButton::calc(const HBMControllerData* pController) {
     int i;
 
@@ -992,11 +993,6 @@ void HomeButton::calc(const HBMControllerData* pController) {
         break;
     }
 
-    case 2: {
-        calc_letter();
-        break;
-    }
-
     case 3: {
         if (!mpGroupAnmController[mSelectAnmNum]->isPlaying() &&
             mSelectAnmNum != res::eGrAnimator_optn_bar_in__close_bar_in) {
@@ -1046,6 +1042,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
         mSoundRetryCnt = 0;
         mSimpleSyncCallback = WPADSetSimpleSyncCallback(&SimpleSyncCallback);
         mEndSimpleSyncFlag = false;
+        unk93 = false;
 
         for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
             getController(i)->setEnableRumble(true);
@@ -1068,17 +1065,36 @@ void HomeButton::calc(const HBMControllerData* pController) {
         }
 
         if (mMsgCount == 0) {
-            reset_control();
+            for (i = 0; i < 5; i++) {
+                int idx = findGroupAnimator(
+                    res::eGrPane_optnBtn_00_inOut + i,
+                    res::eGrAnim_optn_btn_out);
+
+                mpGroupAnmController[idx]->start();
+            }
+
             reset_btn();
 
             mpPairGroupAnmController[res::ePairAnm_12btn_on]->setAnmType(
                 FrameController::eAnmType_Wrap);
+
             mpPairGroupAnmController[res::ePairAnm_12btn_on]->start();
         }
 
-        if (mControllerFlag[WPAD_CHAN3]) {
+        for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+            if (!mControllerFlag[i]) {
+                break;
+            }
+        }
+
+        if (i >= WPAD_MAX_CONTROLLERS) {
+            unk93 = true;
+        }
+
+        if (unk93) {
             if (mState != 6) {
-                if (getController(WPAD_CHAN3)
+                if (!getController(unk88)->isPlayReady() ||
+                    getController(unk88)
                         ->isPlayingSoundId(HBM_SE_SELECT)) {
 
                     mState = 6;
@@ -1091,14 +1107,19 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
                 mState = 6;
                 mMsgCount = iReConnectTime2;
-                break;
-            }
+            } else {
+                if (++mMsgCount <= iReConnectTime) {
+                    break;
+                }
 
-            if (++mMsgCount <= iReConnectTime) {
-                break;
-            }
+                mState = 7;
 
-            mState = 7;
+                if (!WPADStopSimpleSync()) {
+                    setSimpleSyncAlarm(eSyncType_Stop);
+                }
+
+                mEndSimpleSyncFlag = true;
+            }
         } else {
             if (++mMsgCount <= iReConnectTime) {
                 break;
@@ -1123,7 +1144,10 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
         WPADSetSimpleSyncCallback(mSimpleSyncCallback);
         mpRemoteSpk->ClearPcm();
-        reset_guiManager(-1);
+
+        for (i = 0; i < 8; i++) {
+            mpPaneManager->update(i, -10000.0f, -10000.0f, 0, 0, 0, NULL);
+        }
 
         mSelectAnmNum = res::ePairAnm_link_msg_out;
         mpPairGroupAnmController[mSelectAnmNum]->start();
@@ -1143,7 +1167,13 @@ void HomeButton::calc(const HBMControllerData* pController) {
         }
 
         if (mSelectAnmNum == res::ePairAnm_cmn_msg_rtrn) {
-            reset_window();
+            int idx = findGroupAnimator(res::eGrPane_msgBtn_00_inOut,
+                                        res::eGrAnim_cmn_msg_btn_out);
+            mpGroupAnmController[idx]->start();
+
+            idx = findGroupAnimator(res::eGrPane_msgBtn_01_inOut,
+                                    res::eGrAnim_cmn_msg_btn_out);
+            mpGroupAnmController[idx]->start();
 
             mpLayout->GetRootPane()
                 ->FindPaneByName(
@@ -1204,6 +1234,10 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
             mState = 2;
         } else if (mSequence == eSeq_Control) {
+            mpLayout->GetRootPane()
+                ->FindPaneByName("bar_00", true)
+                ->SetVisible(false);
+
             mSelectAnmNum = res::ePairAnm_cntrl_wndw_opn;
             mpPairGroupAnmController[mSelectAnmNum]->start();
 
@@ -1255,7 +1289,8 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
             if (mSelectBtnNum != HBM_SELECT_BTN3 &&
                 mpHBInfo->sound_callback != NULL) {
-                mpHBInfo->sound_callback(HBM_SOUND_RETURN_APP, mFadeOutSeTime);
+                mpHBInfo->sound_callback(
+                    HBM_SOUND_RETURN_APP, static_cast<int>(mFadeOutSeTime));
             }
         } else {
             updateTrigPane();
@@ -1290,19 +1325,23 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
         if (mSelectBtnNum != HBM_SELECT_BTN3 &&
             mpHBInfo->sound_callback != NULL) {
-            mpHBInfo->sound_callback(HBM_SOUND_RETURN_APP, mFadeOutSeTime);
+            mpHBInfo->sound_callback(
+                HBM_SOUND_RETURN_APP, static_cast<int>(mFadeOutSeTime));
         }
 
         break;
     }
 
     case 16: {
-        GroupAnmController* pAnim = mpGroupAnmController[mSelectAnmNum];
+        mAppVolume[3] = 0;
 
-        if (!pAnim->isPlaying()) {
+        if (mSequence > 2 ||
+            !mpGroupAnmController[mSelectAnmNum]->isPlaying()) {
             mState = 17;
             fadeout_sound(0.0f);
         } else {
+            GroupAnmController* pAnim =
+                mpGroupAnmController[mSelectAnmNum];
             f32 restFrame = pAnim->getMaxFrame() - pAnim->getCurrentFrame();
             fadeout_sound(restFrame / mFadeOutSeTime);
         }
@@ -1314,38 +1353,46 @@ void HomeButton::calc(const HBMControllerData* pController) {
         mState = 18;
 
         if (mSelectBtnNum != HBM_SELECT_BTN3) {
-            if (mpSoundArchivePlayer != NULL) {
-                nw4hbm::ut::detail::AutoLock<OSMutex> lock(sMutex);
-
-                for (int i = 0; i < mpSoundArchivePlayer->GetSoundPlayerCount();
-                     i++) {
-
-                    mpSoundArchivePlayer->GetSoundPlayer(i).StopAllSound(0);
-                }
-            }
+            StopAllSeq();
 
             if (mEndInitSoundFlag) {
                 AXFXReverbHiShutdown(&mAxFxReverb);
                 AXRegisterAuxACallback(mAuxCallback, mpAuxContext);
                 AXFXSetHooks(mAxFxAlloc, mAxFxFree);
 
-                AXSetAuxAReturnVolume(mAppVolume[nw4hbm::snd::AUX_A]);
-                AXSetAuxBReturnVolume(mAppVolume[nw4hbm::snd::AUX_B]);
-                AXSetAuxCReturnVolume(mAppVolume[nw4hbm::snd::AUX_C]);
+                AXSetAuxAReturnVolume(mAppVolume[0]);
+                AXSetAuxBReturnVolume(mAppVolume[1]);
+                AXSetAuxCReturnVolume(mAppVolume[2]);
             }
+
+            mEndInitSoundFlag = false;
         }
 
-        setVolume(mVolumeNum);
+        WPADSetSpeakerVolume(static_cast<u8>(12.7f * mVolumeNum));
         WPADSaveConfig(NULL);
 
+        mpRemoteSpk->ClearPcm();
         mpRemoteSpk->Stop();
         for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+            getController(i)->stopMotor();
             mpController[i]->clearCallback();
         }
 
         if (mSelectBtnNum != HBM_SELECT_BTN3 &&
             mpHBInfo->sound_callback != NULL) {
             mpHBInfo->sound_callback(HBM_SOUND_STOP, 0);
+        }
+
+        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+            mpGroupAnmController[findGroupAnimator(
+                res::eGrPane_plyr_00 + i, res::eGrAnim_btry_wht)]
+                ->stop();
+            mpGroupAnmController[findGroupAnimator(
+                res::eGrPane_plyr_00 + i, res::eGrAnim_btry_wink_gry)]
+                ->stop();
+            mpGroupAnmController[findGroupAnimator(
+                res::eGrPane_plyr_00 + i, res::eGrAnim_btry_wink)]
+                ->stop();
         }
 
         mInitFlag = false;
@@ -1407,7 +1454,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
             mState = 17;
 
-            VISetBlack(TRUE);
+            VISetBlack(unk5B8 != 0 || mFader.mBlackOutFlag == 0);
             VIFlush();
 
             fadeout_sound(0.0f);
@@ -1420,6 +1467,10 @@ void HomeButton::calc(const HBMControllerData* pController) {
     }
 
     default: {
+        break;
+    }
+
+    case 2: {
         break;
     }
     }
@@ -1442,7 +1493,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
         mBar1AnmRev = 0;
     }
 
-    if (pController != NULL) {
+    if (pController != NULL && mAppVolume[3] != 0) {
         update(pController);
     }
 
@@ -1459,9 +1510,8 @@ void HomeButton::calc(const HBMControllerData* pController) {
         mForcusSEWaitTime++;
     }
 }
-*/
 
-void HomeButton::calc_fadeoutAnm() {
+inline void HomeButton::calc_fadeoutAnm() {
     mpLayout->GetRootPane()
         ->FindPaneByName(scFuncTextPaneName[res::eFuncTextPane_T_Dialog], true)
         ->SetVisible(false);
@@ -1480,27 +1530,6 @@ void HomeButton::calc_fadeoutAnm() {
 
     if (mpHBInfo->sound_callback != NULL) {
         mpHBInfo->sound_callback(HBM_SOUND_GOTO_MENU, mFadeOutSeTime);
-    }
-}
-
-void HomeButton::calc_letter() {
-    if (mLetterFlag &&
-        !mpPairGroupAnmController[res::ePairAnm_ltrIcn_on]->isPlaying()) {
-
-        mpLayout->GetRootPane()
-            ->FindPaneByName(scFuncPaneName[res::eFuncPane_let_icn_00], true)
-            ->SetVisible(true);
-
-        mpPairGroupAnmController[res::ePairAnm_ltrIcn_on]->setAnmType(
-            FrameController::eAnmType_Wrap);
-
-        mpPairGroupAnmController[res::ePairAnm_ltrIcn_on]->start();
-    } else if (!mLetterFlag) {
-        mpLayout->GetRootPane()
-            ->FindPaneByName(scFuncPaneName[res::eFuncPane_let_icn_00], true)
-            ->SetVisible(false);
-
-        mpPairGroupAnmController[res::ePairAnm_ltrIcn_on]->stop();
     }
 }
 
@@ -1605,7 +1634,7 @@ static void MotorCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
     pController->stopMotor();
 }
 
-void HomeButton::setSpeakerAlarm(int chan, int msec) {
+inline void HomeButton::setSpeakerAlarm(int chan, int msec) {
     OSSetAlarmUserData(&mSpeakerAlarm[chan],
                        reinterpret_cast<void*>((chan << 16) | (chan + 2)));
 
@@ -1643,7 +1672,7 @@ void SimpleSyncCallback(s32 result, s32 num) {
     HomeButton::getInstance()->callSimpleSyncCallback(result, num);
 }
 
-void HomeButton::setSimpleSyncAlarm(int type) {
+inline void HomeButton::setSimpleSyncAlarm(int type) {
     OSCancelAlarm(&mSimpleSyncAlarm);
     OSSetAlarmUserData(&mSimpleSyncAlarm, reinterpret_cast<void*>(type));
     OSSetAlarm(&mSimpleSyncAlarm, OS_MSEC_TO_TICKS(100),
@@ -1989,7 +2018,7 @@ void HomeButton::update_controller(int id) {
     }
 }
 
-void HomeButton::update_posController(int id) {
+inline void HomeButton::update_posController(int id) {
     HBController* pController = mpController[id]->getController();
     nw4hbm::ut::Rect layoutRect = mpLayout->GetLayoutRect();
 
@@ -2561,8 +2590,7 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     } else {
                         play_sound(HBM_SE_VOLUME_MINUS);
@@ -2571,8 +2599,7 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     }
 
@@ -2606,8 +2633,7 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     } else {
                         play_sound(HBM_SE_VOLUME_PLUS);
@@ -2616,8 +2642,7 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     }
 
@@ -2737,8 +2762,13 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
 
                 if (mSelectBtnNum == HBM_SELECT_BTN1) {
                     play_sound(HBM_SE_GOTO_MENU);
+                    mFader.mBlackOutFlag = false;
                 } else if (mSelectBtnNum == HBM_SELECT_BTN2) {
                     play_sound(HBM_SE_RESET_APP);
+                    mFader.mBlackOutFlag = true;
+                } else if (mSelectBtnNum == HBM_SELECT_BTN4) {
+                    play_sound(HBM_SE_RESET_APP);
+                    mFader.mBlackOutFlag = false;
                 }
 
                 break;
@@ -2799,7 +2829,7 @@ void HomeButton::reset_btn() {
     }
 }
 
-void HomeButton::reset_control() {
+inline void HomeButton::reset_control() {
     int idx;
 
     for (int i = 0;
@@ -2812,7 +2842,7 @@ void HomeButton::reset_control() {
     }
 }
 
-void HomeButton::reset_window() {
+inline void HomeButton::reset_window() {
     int idx;
 
     idx = findGroupAnimator(res::eGrPane_msgBtn_00_inOut,
@@ -2824,7 +2854,7 @@ void HomeButton::reset_window() {
     mpGroupAnmController[idx]->start();
 }
 
-void HomeButton::reset_battery() {
+inline void HomeButton::reset_battery() {
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         for (int j = 0; j < res::eBatteryPane_Max; j++) {
             mpLayout->GetRootPane()
@@ -2834,7 +2864,7 @@ void HomeButton::reset_battery() {
     }
 }
 
-void HomeButton::reset_guiManager(int num) {
+inline void HomeButton::reset_guiManager(int num) {
     if (num < 0) {
         for (int i = 0; i < 8; i++) {
             mpPaneManager->update(i, -10000.0f, -10000.0f, 0, 0, 0, NULL);
@@ -2844,7 +2874,7 @@ void HomeButton::reset_guiManager(int num) {
     }
 }
 
-bool HomeButton::isUpBarActive() const {
+inline bool HomeButton::isUpBarActive() const {
     bool flag = true;
 
     if (!isActive() ||
@@ -2857,7 +2887,7 @@ bool HomeButton::isUpBarActive() const {
     return flag;
 }
 
-bool HomeButton::isDownBarActive() {
+inline bool HomeButton::isDownBarActive() {
     bool flag = true;
 
     // clang-format off
@@ -2909,7 +2939,7 @@ HBMSelectBtnNum HomeButton::getSelectBtnNum() {
     return mSelectBtnNum;
 }
 
-void HomeButton::setForcusSE() {
+inline void HomeButton::setForcusSE() {
     if (mForcusSEWaitTime <= scForcusSEWaitTime) {
         return;
     }
@@ -2945,25 +2975,25 @@ void HomeButton::setAdjustFlag(int flag) {
     }
 }
 
-void HomeButton::setVolume(int vol) {
+inline void HomeButton::setVolume(int vol) {
     // clang-format off
     WPADSetSpeakerVolume(vol *
         (WPAD_MAX_SPEAKER_VOLUME / static_cast<f32>(HBM_MAX_VOLUME)));
     // clang-format on
 }
 
-int HomeButton::getVolume() {
+inline int HomeButton::getVolume() {
     // clang-format off
     return WPADGetSpeakerVolume() * (1.0f /
         (WPAD_MAX_SPEAKER_VOLUME / static_cast<f32>(HBM_MAX_VOLUME))) + 0.9f;
     // clang-format on
 }
 
-void HomeButton::setVibFlag(bool flag) {
+inline void HomeButton::setVibFlag(bool flag) {
     WPADEnableMotor(flag);
 }
 
-bool HomeButton::getVibFlag() {
+inline bool HomeButton::getVibFlag() {
     return WPADIsMotorEnabled();
 }
 
@@ -2996,7 +3026,7 @@ void HomeButtonEventHandler::onEvent(u32 id, u32 event, void* pData) {
     }
 }
 
-void HomeButton::startBlackOut() {
+inline void HomeButton::startBlackOut() {
     if (mStartBlackOutFlag) {
         return;
     }
@@ -3070,7 +3100,7 @@ void HomeButton::startBlackOut() {
     }
 }
 
-void HomeButton::BlackFader::calc() {
+inline void HomeButton::BlackFader::calc() {
     if (state_ == 1)
         frame_++;
     else if (state_ == 2)
@@ -3082,7 +3112,7 @@ void HomeButton::BlackFader::calc() {
         frame_ = maxFrame_;
 }
 
-bool HomeButton::BlackFader::isDone() {
+inline bool HomeButton::BlackFader::isDone() {
     if (state_ == 1) {
         if (frame_ == maxFrame_)
             return true;
@@ -3179,13 +3209,13 @@ void HomeButton::update_sound() {
         mpController[i]->updateSound();
 }
 
-void HomeButton::fadeout_sound(f32 gain) {
-    if (mSelectBtnNum == HBM_SELECT_BTN3) {
-        return;
-    }
+inline void HomeButton::fadeout_sound(f32 gain) {
+    if (mSelectBtnNum != HBM_SELECT_BTN3) {
+        if (mEndInitSoundFlag) {
+            AXSetAuxAReturnVolume(static_cast<u16>(gain * AX_MAX_VOLUME));
+        }
 
-    if (mEndInitSoundFlag) {
-        AXSetAuxAReturnVolume(gain * AX_MAX_VOLUME);
+        SetVolumeAllSeq(gain);
     }
 
     /*

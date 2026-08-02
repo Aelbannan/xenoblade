@@ -684,6 +684,17 @@ All ten `vi3in1.c` setters (`__VISetYUVSEL`, `__VISetCGMS`, `__VISetWSS`, `__VIS
 `__VISetYUVSEL` reads TV format via `*(volatile u32*)0x800000CC` (OS `TV_FORMAT`, bootrom mirror at `0x800000CC`) — plain `lis`+`lwz`, no sda21 reloc; `0xE0` AVE slave addr, `WaitMicroTime(2)` per `i2c.c`.
 
 
+## RVL_SDK gx/GXTev — GXSetTevColor / GXSetTevColorS10 FULL_MATCH via BP-word computation order (US, mwcc_43_151 `-O4,p`)
+
+Both 2-word TEV-color setters (us-8031fdc0, us-8031fe20) were stuck at CODE_MATCH ~95.8-96.8% with the instruction schedule byte-identical but a **3-cycle register permutation**: retail `0xcc01=r4, 0x61=r5, w1=r6` (base=r3; S10 also folds `addr1` into base's reg) vs decomp `0xcc01=r5, 0x61=r6, w1=r4` (S10 additionally pushed `base` to r10). SMT was unavailable (`inconclusive_layout`: symbolic MMIO/FIFO CFG rejection on the `0xCC008000` WGPIPE stores), and the register-renaming witness correctly refused (`rho: gpr r4 maps to both r4 and r5` — retail reuses the dead color-pointer arg reg for `0xcc01`, decomp leaves r4 for w1, so no consistent permutation exists).
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Same opcodes/immediates/order, only registers differ; w1 (2nd BP word) lands in the dead arg register r4 instead of retail's r6 | In the original shape, `w1 = ((0xE1 + base) << 24); w1 = __rlwimi(...); w1 = __rlwimi(...);` came **after** the first `WGPIPE.c/i` write pair. MWCC creates w1's value in the IR after the volatile accesses, so its allocation slot is late and it recycles the dead color-pointer register r4 (and in S10 the base local lands in r10) | Compute **both BP words fully before any WGPIPE write**: `w0 = ((0xE0+base)<<24); w0 = __rlwimi(w0, col, 8, 24, 31); w0 = __rlwimi(w0, col, 12, 12, 19); w1 = ((0xE1+base)<<24); w1 = __rlwimi(w1, col, 24, 24, 31); w1 = __rlwimi(w1, col, 28, 12, 19);` then the four `WGPIPE.c/i` pairs. MWCC still schedules w1's `slwi` after the first `stw` (volatile ordering) — schedule unchanged — but the earlier IR creation gives retail's coloring: **0 mismatches, FULL_MATCH, no SMT needed**. Verified both targets 100.0% with `full-instruction-match` certificates; adjacent GXSetTevColorIn/Op/KColor untouched and still 0 mismatches |
+
+Do **not** use `|=`-expression packing (`(addr<<24) | (col<<8)` → `rlwinm`+`or`, +4 instructions, no rlwimi) and do not chase the `addr++` single-variable form (MWCC keeps `addr` live in a reg with `addi rX,rX,1` instead of folding `addi r0,r3,0xE1` — 9 structural). The `__rlwimi` builtin + compute-both-words-first shape is the whole fix.
+
+
 ## kyoshin/main (US) — early init + contiguous .data base
 
 US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize” path. Retail:

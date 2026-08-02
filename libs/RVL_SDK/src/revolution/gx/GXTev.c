@@ -146,22 +146,19 @@ void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
 
 void GXSetTevColor(GXTevRegID reg, GXColor color)
 {
+    u32 w1;
     u32 col = *(const u32 *)&color;
     u32 base = (u32)reg * 2;
-    u32 addr0 = 0xE0 + base;
-    u32 addr1 = 0xE1 + base;
-    u32 w0, w1;
-
-    w0 = (addr0 << 24);
+    u32 w0 = ((0xE0 + base) << 24);
     w0 = __rlwimi(w0, col,  8, 24, 31);
     w0 = __rlwimi(w0, col, 12, 12, 19);
 
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = w0;
-
-    w1 = (addr1 << 24);
+    w1 = ((0xE1 + base) << 24);
     w1 = __rlwimi(w1, col, 24, 24, 31);
     w1 = __rlwimi(w1, col, 28, 12, 19);
+
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = w0;
 
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = w1;
@@ -188,12 +185,12 @@ void GXSetTevColorS10(GXTevRegID reg, GXColorS10 color)
     w0 = __rlwimi(w0, lo, 16, 21, 31);
     w0 = __rlwimi(w0, hi, 12,  9, 19);
 
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = w0;
-
     w1 = (addr1 << 24);
     w1 = __rlwimi(w1, hi, 16, 21, 31);
     w1 = __rlwimi(w1, lo, 12,  9, 19);
+
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = w0;
 
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = w1;

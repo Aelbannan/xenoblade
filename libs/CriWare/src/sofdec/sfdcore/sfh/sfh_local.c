@@ -8,10 +8,11 @@
 // only the low 32 (or 64) bits of the shifted-in stream are kept.
 
 u32 SFHLOCAL_GetNbyteL(const u8* p, int n) {
+    int i = n - 1;
     u32 r = 0;
-    int i;
-    for (i = n; i > 0; i--) {
-        r = (r << 8) | p[i - 1];
+    while (i >= 0) {
+        r = (r << 8) | p[i];
+        i--;
     }
     return r;
 }

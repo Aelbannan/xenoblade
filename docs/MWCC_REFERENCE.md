@@ -6682,3 +6682,15 @@ each verified by hexdiff (structural 106→0→0, reg-swaps 285→285 pure→0):
 
 `MIXUpdateSettings` (same file) is a separate target sharing the sum-rotation
 patterns — operand order levers above should transfer.
+
+## CriWare sfh_local SFHLOCAL_GetNbyteL — rlwimi loop form found (US, GC/3.0a5.2 -O4,p)
+
+Prior note (line ~1213) said every loop form auto-unrolls to rlwinm+or. New
+finding: `int i = n - 1; u32 r = 0; while (i >= 0) { r = (r << 8) | p[i]; i--; }`
+**keeps the retail's mtctr/bdnz + rlwimi structure** (the 8-byte chunk loop
+with parity gate and the tail byte loop match instruction-for-instruction).
+Residual diffs: prologue `addic.`/`blt` vs `subi`+`cmpi cr1`+`ble`, the
+parity-guard overflow check (`cmpi r8,-1` vs `lis/addi/cmp` 0x7FFFFFFF), and
+register colors/role swaps in the parity block. 3.4%→6.3% (44 structural, all
+in prologue/guard/parity). Leaf function — SMT probe is the acceptance path
+(callee-free, so it unblocks the whole VER1/VER2 Anly family that calls it).

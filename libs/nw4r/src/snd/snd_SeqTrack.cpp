@@ -206,8 +206,9 @@ void SeqTrack::ReleaseAllChannel(int release) {
 void SeqTrack::PauseAllChannel(bool flag) {
     SoundThread::AutoLock lock;
 
-    for (Channel* pIt = mChannelList; pIt != NULL;
-         pIt = pIt->GetNextTrackChannel()) {
+    Channel* channelList = *(Channel**)((u8*)this + 0xC4);
+    for (Channel* pIt = channelList; pIt != NULL;
+         pIt = *(Channel**)((u8*)pIt + 0xF4)) {
 
         if (pIt->IsActive() && flag != pIt->IsPause()) {
             pIt->Pause(flag);

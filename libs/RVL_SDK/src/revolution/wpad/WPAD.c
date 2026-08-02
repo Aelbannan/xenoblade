@@ -27,6 +27,9 @@ extern const char lbl_80560608[];
 extern const char lbl_805607C4[0x9C];
 extern const char lbl_80560860[];
 extern const char lbl_805606C8[];
+extern const char lbl_8056077C[0x38];
+extern const char lbl_805607B4[0x10];
+extern const char lbl_80665D50[4];
 
 extern s32 WPADWriteExtReg(s32 chan, void* pData, u16 len, u32 addr,
                            WPADCallback pCallback);
@@ -191,7 +194,7 @@ static u8 IsAnalogChanged(s32 lhs, s32 rhs, s32 threshold) {
     return diff > threshold ? TRUE : FALSE;
 }
 
-static DECOMP_INLINE BOOL CalcAccNoise(WPADCB* p, BOOL analogChanged) {
+static DECOMP_INLINE u8 CalcAccNoise(WPADCB* p, BOOL analogChanged) {
     if (analogChanged) {
         p->filterDiffAcc++;
 
@@ -214,7 +217,7 @@ static DECOMP_INLINE BOOL CalcAccNoise(WPADCB* p, BOOL analogChanged) {
     return FALSE;
 }
 
-static DECOMP_INLINE BOOL CalcDpdNoise(WPADCB* p, BOOL analogChanged) {
+static DECOMP_INLINE u8 CalcDpdNoise(WPADCB* p, BOOL analogChanged) {
     if (analogChanged) {
         p->filterDiffDpd++;
 
@@ -237,7 +240,7 @@ static DECOMP_INLINE BOOL CalcDpdNoise(WPADCB* p, BOOL analogChanged) {
     return FALSE;
 }
 
-static DECOMP_INLINE BOOL CalcExtNoise(WPADCB* p, BOOL analogChanged) {
+static DECOMP_INLINE u8 CalcExtNoise(WPADCB* p, BOOL analogChanged) {
     if (analogChanged) {
         p->filterDiffExt++;
 
@@ -272,13 +275,13 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
             if (pRhsCR->err == WPAD_ERR_OK || pRhsCR->err == WPAD_ERR_CORRUPTED) {
                 changed = IsButtonChanged(pLhsCR->button, pRhsCR->button);
 
-                changed |= CalcAccNoise(
+                changed = (u8)(changed | CalcAccNoise(
                     p,
                     IsAnalogChanged(pLhsCR->accX, pRhsCR->accX, 12) |
                         IsAnalogChanged(pLhsCR->accY, pRhsCR->accY, 12) |
-                        IsAnalogChanged(pLhsCR->accZ, pRhsCR->accZ, 12));
+                        IsAnalogChanged(pLhsCR->accZ, pRhsCR->accZ, 12)));
 
-                changed |= CalcDpdNoise(
+                changed = (u8)(changed | CalcDpdNoise(
                     p,
                     IsAnalogChanged(pLhsCR->obj[0].x, pRhsCR->obj[0].x, 2) |
                         IsAnalogChanged(pLhsCR->obj[0].y, pRhsCR->obj[0].y, 2) |
@@ -287,13 +290,12 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
                         IsAnalogChanged(pLhsCR->obj[2].x, pRhsCR->obj[2].x, 2) |
                         IsAnalogChanged(pLhsCR->obj[2].y, pRhsCR->obj[2].y, 2) |
                         IsAnalogChanged(pLhsCR->obj[3].x, pRhsCR->obj[3].x, 2) |
-                        IsAnalogChanged(pLhsCR->obj[3].y, pRhsCR->obj[3].y, 2));
+                        IsAnalogChanged(pLhsCR->obj[3].y, pRhsCR->obj[3].y, 2)));
             }
         }
     }
 
-    if (pLhsCR->err == WPAD_ERR_OK && pRhsCR->err == WPAD_ERR_OK &&
-        p->dataFormat - WPAD_FMT_FS_BTN <= 12) {
+    if (pLhsCR->err == WPAD_ERR_OK && pRhsCR->err == WPAD_ERR_OK) {
 
         switch (p->dataFormat - WPAD_FMT_FS_BTN) {
         case 0:
@@ -302,11 +304,11 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
             WPADFSStatus* pLhsFS = (WPADFSStatus*)pLhs;
             WPADFSStatus* pRhsFS = (WPADFSStatus*)pRhs;
 
-            changed |= CalcExtNoise(
+            changed = (u8)(changed | CalcExtNoise(
                 p,
                 IsAnalogChanged(pLhsFS->fsAccX, pRhsFS->fsAccX, 12) |
                     IsAnalogChanged(pLhsFS->fsAccY, pRhsFS->fsAccY, 12) |
-                    IsAnalogChanged(pLhsFS->fsAccZ, pRhsFS->fsAccZ, 12));
+                    IsAnalogChanged(pLhsFS->fsAccZ, pRhsFS->fsAccZ, 12)));
 
             changed |= IsAnalogChanged(pLhsFS->fsStickX, pRhsFS->fsStickX, 1);
             changed |= IsAnalogChanged(pLhsFS->fsStickY, pRhsFS->fsStickY, 1);
@@ -380,12 +382,12 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
             WPADBLStatus* pLhsBL = (WPADBLStatus*)pLhs;
             WPADBLStatus* pRhsBL = (WPADBLStatus*)pRhs;
 
-            changed |= CalcExtNoise(
+            changed = (u8)(changed | CalcExtNoise(
                 p,
                 IsAnalogChanged(pLhsBL->press[0], pRhsBL->press[0], 50) |
                     IsAnalogChanged(pLhsBL->press[1], pRhsBL->press[1], 50) |
                     IsAnalogChanged(pLhsBL->press[2], pRhsBL->press[2], 50) |
-                    IsAnalogChanged(pLhsBL->press[3], pRhsBL->press[3], 50));
+                    IsAnalogChanged(pLhsBL->press[3], pRhsBL->press[3], 50)));
             break;
         }
 
@@ -397,8 +399,8 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
 
             changed |= IsButtonChanged(*(u8*)&pLhsEx->exp[2].range_x2,
                                        *(u8*)&pRhsEx->exp[2].range_x2);
-            changed |= IsAnalogChanged(pLhsEx->exp[2].range_y1,
-                                       pRhsEx->exp[2].range_y1, 32);
+            changed |= IsAnalogChanged((u16)pLhsEx->exp[2].range_y1,
+                                       (u16)pRhsEx->exp[2].range_y1, 32);
 
             for (i = 0; i < 5; i++) {
                 changed |= IsAnalogChanged(pExt[0x1B + i], pExt[0x15 + i], 32);
@@ -1053,14 +1055,10 @@ void __wpadInitConnectionCallback(s32 chan, s32 status) {
     address =
         status == WPAD_ERR_OK ? WM_ADDR_MEM_176C : WM_ADDR_MEM_DEV_CONFIG_0;
 
-    DEBUGPrint(" ==>this error means that the firmware is for NDEV %s\n",
-               p->configIndex != 0 ? "2.0" : "2.1 or later");
+    DEBUGPrint(lbl_8056077C,
+               p->configIndex != 0 ? lbl_80665D50 : lbl_805607B4);
 
-    if (p->devType == 3) {
-        port = 1;
-    } else {
-        port = (u8)(1 << chan);
-    }
+    port = (u8)(p->devType == 3 ? 1 : (1 << chan));
 
     WPADiSendSetReportType(&p->stdCmdQueue, WPAD_FMT_CORE_BTN, p->UNK_0x98E,
                            &__wpadAbortConnectionCallback);

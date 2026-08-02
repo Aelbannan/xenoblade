@@ -13,7 +13,7 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-NW4R_UT_RTTI_DEF_BASE(BasicSound);
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0(NULL);
 
 BasicSound::BasicSound(int priority, int arg)
     : mHeap(NULL),

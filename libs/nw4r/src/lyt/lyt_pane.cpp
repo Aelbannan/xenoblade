@@ -28,7 +28,7 @@ void ReverseYAxis(math::MTX34* pMtx) {
 namespace nw4r {
 namespace lyt {
 
-NW4R_UT_RTTI_DEF_BASE(Pane);
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470(NULL);
 
 namespace detail {
 

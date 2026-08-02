@@ -5,7 +5,8 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-NW4R_UT_RTTI_DEF_DERIVED(WaveSound, BasicSound);
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538(&lbl_eu_806654D0);
 
 WaveSound::WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg)
     : BasicSound(priority, arg),

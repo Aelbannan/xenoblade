@@ -5,7 +5,8 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-NW4R_UT_RTTI_DEF_DERIVED(StrmSound, BasicSound);
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520(&lbl_eu_806654D0);
 
 StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
     : BasicSound(0, 0), mManager(pManager), mTempSpecialHandle(NULL) {}

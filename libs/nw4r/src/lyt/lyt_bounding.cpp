@@ -3,7 +3,8 @@
 namespace nw4r {
 namespace lyt {
 
-NW4R_UT_RTTI_DEF_DERIVED(Bounding, Pane);
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665498(&lbl_eu_80665470);
 
 Bounding::Bounding(const res::Bounding* pRes, const ResBlockSet& rBlockSet)
     : Pane(pRes) {

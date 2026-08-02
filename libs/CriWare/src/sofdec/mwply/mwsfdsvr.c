@@ -3,7 +3,46 @@
 
 #include <harness_catalog.h>
 
-void mwsfsvr_SyncStartSst() {}
+extern s32 SFD_GetHnStat(void* self);
+extern s32 MWSST_GetStat(void* sst);
+extern void MWSST_GetTime(void* sst, s32 flag);
+extern void mwPlyPause(void* self, s32 flag);
+extern void mwPlySfdStart(void* self);
+
+typedef s32 (*SyncStartFn)(void*, s32);
+
+void mwsfsvr_SyncStartSst(void* self) {
+    void* sync;
+
+    if (SFD_GetHnStat(*(void**)((u8*)self + 0x58)) != 3)
+        return;
+
+    sync = (u8*)self + 0x5D8;
+    if (*(s32*)sync == 1) {
+        if (MWSST_GetStat(sync) != 2) {
+            void* obj = *(void**)((u8*)sync + 0x14);
+            if (((SyncStartFn)((void**)obj)[9])(obj, 1) != 0)
+                return;
+        }
+    }
+    sync = (u8*)self + 0x600;
+    if (*(s32*)sync == 1) {
+        if (MWSST_GetStat(sync) != 2) {
+            void* obj = *(void**)((u8*)sync + 0x14);
+            if (((SyncStartFn)((void**)obj)[9])(obj, 1) != 0)
+                return;
+        }
+    }
+
+    mwPlySfdStart(self);
+    if ((s8)*(u8*)((u8*)self + 0x92) != 0) {
+        mwPlyPause(self, 0);
+        if ((s8)*(u8*)((u8*)self + 0x92) != 0) {
+            MWSST_GetTime((u8*)self + 0x5D8, 0);
+            MWSST_GetTime((u8*)self + 0x600, 0);
+        }
+    }
+}
 
 void mwsfsvr_StartStream() {}
 

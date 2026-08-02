@@ -1,4 +1,5 @@
 #include <nw4r/g3d.h>
+#include <decomp.h>
 
 // XSI DCC float constants (SDA21)
 extern "C" const float lbl_eu_80669CB0; // 0.0f
@@ -259,17 +260,14 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
-static const TexSrtMtxFunc MakeTexSrtMtxTable[] = {
-    MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT,  MakeTexSrtMtx_ST, MakeTexSrtMtx_T,
-    MakeTexSrtMtx_SR,  MakeTexSrtMtx_R,   MakeTexSrtMtx_S,
-};
+extern "C" const TexSrtMtxFunc lbl_eu_8051D6F8[];
+extern "C" const TexSrtMtxFunc lbl_eu_8051D714[];
 
-static const TexSrtMtxFunc ProductTexSrtMtxTable[] = {
-    ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT,  ProductTexSrtMtx_ST, ProductTexSrtMtx_T,
-    ProductTexSrtMtx_SR,  ProductTexSrtMtx_R,   ProductTexSrtMtx_S,
-};
+
 
 } // namespace
+
+
 
 bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);
@@ -279,9 +277,9 @@ bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Fl
     }
 
     if (bSet) {
-        MakeTexSrtMtxTable[idx](pMtx, rSrt);
+        lbl_eu_8051D6F8[idx](pMtx, rSrt);
     } else {
-        ProductTexSrtMtxTable[idx](pMtx, rSrt);
+        lbl_eu_8051D714[idx](pMtx, rSrt);
     }
 
     pMtx->m[2][0] = lbl_eu_80669CB0;

@@ -281,15 +281,8 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
-static const TexSrtMtxFunc MakeTexSrtMtxTable[] = {
-    MakeTexSrtMtx_SRT, MakeTexSrtMtx_RT,  MakeTexSrtMtx_ST, MakeTexSrtMtx_T,
-    MakeTexSrtMtx_SR,  MakeTexSrtMtx_R,   MakeTexSrtMtx_S,
-};
-
-static const TexSrtMtxFunc ProductTexSrtMtxTable[] = {
-    ProductTexSrtMtx_SRT, ProductTexSrtMtx_RT,  ProductTexSrtMtx_ST, ProductTexSrtMtx_T,
-    ProductTexSrtMtx_SR,  ProductTexSrtMtx_R,   ProductTexSrtMtx_S,
-};
+extern "C" const TexSrtMtxFunc lbl_eu_8051D6C0[];
+extern "C" const TexSrtMtxFunc lbl_eu_8051D6DC[];
 
 } // namespace
 
@@ -301,9 +294,9 @@ bool CalcTexMtx_Maya(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::F
     }
 
     if (bSet) {
-        MakeTexSrtMtxTable[idx](pMtx, rSrt);
+        lbl_eu_8051D6C0[idx](pMtx, rSrt);
     } else {
-        ProductTexSrtMtxTable[idx](pMtx, rSrt);
+        lbl_eu_8051D6DC[idx](pMtx, rSrt);
     }
 
     pMtx->m[2][0] = lbl_eu_80669C98;

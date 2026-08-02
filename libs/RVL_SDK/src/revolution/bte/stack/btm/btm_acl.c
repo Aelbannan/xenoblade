@@ -260,6 +260,7 @@ void btm_acl_created(BD_ADDR bda, UINT8 *p_dc, UINT8 *p_bdn,
     tACL_CONN *p_acl = &btm_cb.acl_db[0];
     tBTM_SEC_DEV_REC_LOCAL *p_dev_rec;
     UINT16 pkt_types;
+    UINT16 base;
 
     /* If an entry for this BD address already exists, just update it. */
     p_acl = btm_bda_to_acl_local(bda);
@@ -305,11 +306,12 @@ void btm_acl_created(BD_ADDR bda, UINT8 *p_dc, UINT8 *p_bdn,
                 if (p_dev_rec->features[xx] != 0) {
                     memcpy(p_acl->features, p_dev_rec->features, 8);
 
-                    pkt_types = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
-                    pkt_types = (UINT16)(pkt_types & 0xFFFFCCF9);
+                    base = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
                     if (btm_cb.local_version[0] >= 3) {
-                        pkt_types = (UINT16)(pkt_types |
+                        pkt_types = (UINT16)(base |
                                              (btm_cb.btm_acl_pkt_types_supported & 0x3306));
+                    } else {
+                        pkt_types = (UINT16)(base & 0xFFFFCCF9);
                     }
 
                     if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {

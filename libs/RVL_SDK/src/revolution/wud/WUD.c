@@ -2357,8 +2357,8 @@ u16 _WUDGetQueuedSize(s8 handle) {
     u16 queuedSize;
     BOOL enabled = OSDisableInterrupts();
 
-    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
-        queuedSize = _dev_handle_queue_size[handle];
+    if ((u8)handle <= WUD_MAX_DEV_ENTRY - 1) {
+        queuedSize = _dev_handle_queue_size[(u8)handle];
 
     } else {
         queuedSize = 0;
@@ -2372,8 +2372,8 @@ u16 _WUDGetNotAckedSize(s8 handle) {
     u16 notAckedSize;
     BOOL enabled = OSDisableInterrupts();
 
-    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
-        notAckedSize = _dev_handle_notack_num[handle];
+    if ((u8)handle <= WUD_MAX_DEV_ENTRY - 1) {
+        notAckedSize = _dev_handle_notack_num[(u8)handle];
     } else {
         notAckedSize = 0;
     }

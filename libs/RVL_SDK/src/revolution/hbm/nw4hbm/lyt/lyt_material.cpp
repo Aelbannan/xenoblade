@@ -511,6 +511,11 @@ void Material::ReserveGXMem(u8 texMapNum, u8 texSrtNum, u8 texCoordGenNum,
     }
 }
 
+TexSRT* Material::GetTexSRTAry() {
+    return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                            CalcOffsetTexSRTAry(mGXMemCap));
+}
+
 void Material::SetTextureNum(u8 num) {
     if (num > 0) {
         TexMap* const pTexMap = GetTexMapAry();
@@ -533,6 +538,11 @@ void Material::SetTexCoordGenNum(u8 num) {
 
         mGXMemNum.texCoordGen = num;
     }
+}
+
+TexSRT* Material::GetIndTexSRTAry() {
+    return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                            CalcOffsetIndTexSRTAry(mGXMemCap));
 }
 
 void Material::SetTexture(u8 idx, const GXTexObj& rTexObj) {

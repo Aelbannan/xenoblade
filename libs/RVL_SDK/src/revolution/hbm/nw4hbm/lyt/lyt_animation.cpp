@@ -175,10 +175,11 @@ void AnimatePainSRT(Pane* pPane, const res::AnimationInfo* pAnimInfo,
 void AnimateVisibility(Pane* pPane, const res::AnimationInfo* pAnimInfo,
                        const u32* pTargetOffsetTbl, f32 frame) {
 
-    for (int i = 0; i < pAnimInfo->num; i++) {
+    const u32* pOffsets = pTargetOffsetTbl;
+    for (int i = 0; i < pAnimInfo->num; i++, pOffsets++) {
         const res::AnimationTarget* pTarget =
             detail::ConvertOffsToPtr<res::AnimationTarget>(pAnimInfo,
-                                                           pTargetOffsetTbl[i]);
+                                                           *pOffsets);
 
         const res::StepKey* pKeys = detail::ConvertOffsToPtr<res::StepKey>(
             pTarget, pTarget->keysOffset);

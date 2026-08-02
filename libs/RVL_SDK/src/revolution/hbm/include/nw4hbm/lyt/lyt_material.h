@@ -236,10 +236,7 @@ public:
         return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
                                                 CalcOffsetTexSRTAry(mGXMemCap));
     }
-    TexSRT* GetTexSRTAry() {
-        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
-                                                CalcOffsetTexSRTAry(mGXMemCap));
-    }
+    TexSRT* GetTexSRTAry();
 
     const TexCoordGen* GetTexCoordGenAry() const {
         return detail::ConvertOffsToPtr<TexCoordGen>(
@@ -308,10 +305,7 @@ public:
         return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
                                                 CalcOffsetIndTexSRTAry(mGXMemCap));
     }
-    TexSRT* GetIndTexSRTAry() {
-        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
-                                                CalcOffsetIndTexSRTAry(mGXMemCap));
-    }
+    TexSRT* GetIndTexSRTAry();
 
     const TevStage* GetTevStageAry() const {
         return detail::ConvertOffsToPtr<TevStage>(mpGXMem,

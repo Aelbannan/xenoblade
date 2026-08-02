@@ -5251,10 +5251,53 @@ inline-empty** — the dol has no `__dt__Q36nw4hbm3lyt13AnimTransformFv` and
 `AnimTransformBasic::~AnimTransformBasic` emits no base-dtor call; a pure
 `= 0` dtor without definition is wrong (derived dtor then emits an undefined
 `bl`), a pure dtor with inline definition still emits the 0x40 weak deleting
-dtor. Accept the 0x40 weak `__dt__` + weak `__vt__` (.data) as inherent MWCC
-cost (see weak-GC note above); a previous "header restructure" that dropped the
+dtor. A previous "header restructure" that dropped the
 base virtuals caused this 4-byte regression across the whole class and stale
 FULL_MATCH records.
+
+**Resolved (US lyt_animation, 3× FULL_MATCH us-8032e180 / us-8032e490 /
+us-8032e670):** the 0x40 weak `__dt__AnimTransformFv` orphan is dropped from
+lyt_animation.o via `drop_text_symbols` in `tools/postprocess_reloc_names.py`
+(standard dead-strip simulation, same as `__dt__14IGameExceptionFv`). The
+retail linker GC'd the unreferenced weak; the DOL-extracted retail .o shows
+only the surviving 11 functions, so the split budget (0xBB0) excludes it. No
+.text function references it (the derived dtor elides the base call) and the
+only .data reference sits in the equally-orphaned weak `__vt__AnimTransform`
+(linker-GC'd too), so the full `main.elf` link is clean. Result: unit .text
+0xBA8 ≤ 0xBB0, all 11 functions byte-identical, symbol offsets match retail
+exactly after the drop.
+
+**AnimationLink ctor store order (SetResource, us-8032e180):** retail's
+placement-new loop writes the inlined ctor as `stw 0; stw 4; stb 14; stw 8;
+sth 12` (node, mbDisable, mAnimTrans, mIdx). The `: mbDisable(false) {
+Reset(); }` form (Reset → Set(NULL,0,false) stores 8,12,14 in that order)
+merges the two mbDisable stores keeping the body one → `stw 0; stw 4; stw 8;
+sth 12; stb 14`. Rewriting the ctor body as `mbDisable = false;
+mAnimTrans = NULL; mIdx = 0;` (or init-list `mbDisable(false)` + body
+assignments) keeps the first mbDisable store in place → retail order, 3
+structural mismatches → 0. Only SetResource instantiates AnimationLink in the
+decomp, so the shared-header change is low-risk.
+
+**Loop-increment scheduling in AnimateVisibility (Animate(Pane), us-8032e490):**
+retail schedules the ptr increment (`addi r27,r27,4`) into the `neg→or`
+load-use gap and the counter increment at the loop bottom; MWCC placed the
+counter there. The `for (int i = 0; i < num; i++, pOffsets++)` form with a
+separate local `const u32* pOffsets = pTargetOffsetTbl;` and `*pOffsets`
+indexing restores retail's placement — 2 pure reg-swaps → 0 mismatches. (A
+`u16 stepValue` temp or explicit `pTargetOffsetTbl++` body statement did not
+help; `u32 i` breaks the signed `cmpw` loop compare.)
+
+**GetTexSRTAry/GetIndTexSRTAry must be out-of-line (Animate(Material),
+us-8032e670):** retail `lyt_material.o` defines `GetTexSRTAry` (0x14) and
+`GetIndTexSRTAry` (0x58) as text functions; the decomp header had them inline,
+so `SetTexSRTElement`/`SetIndTexSRTElement` inlined the full bitfield-offset
+chain into Animate(Material) (+0x3C, 0x314 vs retail 0x2D8, 178 structural
+mismatches). Declaring the non-const overloads out-of-line in
+`lyt_material.h` and defining them in `lyt_material.cpp` (keep the const
+overloads inline — the US retail never emits `GetTexSRTAryCFv`, so no const
+call sites exist) emits the retail `bl` calls; Animate(Material) → 100%
+byte-identical at 0x2D8, and lyt_material.o still fits its split (0x2F28 ≤
+0x3270).
 
 **Related:** `AnimateTexturePattern` — retail calls
 `Material::SetTextureNoWrap(u8, TPLPalette*)` directly from the inline body;
@@ -5405,7 +5448,7 @@ Targets `us-80325cf0` createInstance, `us-80325d40` deleteInstance,
   HBMFreeMem(spHomeButtonObj); spHomeButtonObj = NULL;` is the exact retail
   deleteInstance shape (`li r4,-1` dtor flag, store NULL) — no contortions.
 
-## RVL_SDK hbm/mix — HBMMIXInitChannel EQUIVALENT_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p`)
+## RVL_SDK hbm/mix — HBMMIXInitChannel CODE_MATCH 97%+ (US, Wii/1.1 mwcc_43_151 `-O4,p`)
 
 Target `us-80341eb0` (594 insn, size 0x948). Structural wins that took it from
 574 → 112 mismatches:
@@ -5470,3 +5513,14 @@ into `176.0f/0.0f` float pairs). Per-function source edits cannot move pool
 entries; the whole TU must be matched for FULL_MATCH. These sites are
 equivalent loads (safe for EQUIVALENT_MATCH via SMT once the certified-callee
 tree is complete).
+
+- **Path-limit wall (SMT infeasible).** Even at 97%+ fuzzy the full probe fails:
+  the 21 inlined volume lookups give ~3^21 paths (`path limit exceeded (4096)`),
+  and the renaming witness needs position-aligned same-mnemonic streams (Gate 1
+  size equality) — the retail tail materialises a mix base (`addi r3, r28, 0x3e`)
+  that MWCC refuses to reproduce from any high-level form (`AXPBMIX*` pointer,
+  volatile pointer, pointer-before-ve-stores, ve+mix pointer pairs all fold
+  back to direct vpb offsets). Remaining residue is scheduler artifacts
+  (enabled-save slot, base promotion) + 28 load-order reg-swaps inside the
+  expression trees. Keep at CODE_MATCH pending 100% (same conclusion as
+  __wpadCalcRecalibration in this file).

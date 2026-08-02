@@ -79,7 +79,8 @@ struct Size {
 class AnimationLink {
 public:
     AnimationLink() : mbDisable(false) {
-        Reset();
+        mAnimTrans = NULL;
+        mIdx = 0;
     }
 
     void Reset() {

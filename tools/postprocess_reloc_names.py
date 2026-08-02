@@ -570,6 +570,15 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">I", 0x43800000), "lbl_eu_80669DC8"),
         ),
     ),
+    "lyt_animation.o": UnitRules(
+        # MWCC emits the weak inline-virtual base dtor
+        # __dt__Q36nw4hbm3lyt13AnimTransformFv (0x40 deleting wrapper) in this
+        # TU with the AnimTransformBasic vtable; the retail linker dead-stripped
+        # it (no __dt__AnimTransform anywhere in the DOL; derived dtor elides
+        # the base call since the base dtor is inline-empty). Dropping the
+        # orphan restores the retail split layout and fits the 0xBB0 budget.
+        drop_text_symbols=("__dt__Q36nw4hbm3lyt13AnimTransformFv",),
+    ),
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
         pool_patterns=(

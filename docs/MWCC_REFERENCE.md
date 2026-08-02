@@ -5136,3 +5136,46 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   default `-O4,p`/`-O4,s` schedule interleaves independent computations, try
   `-schedule off` **before** source rewriting — check sibling functions in the
   same TU for regressions (here: none).
+
+## HBM/MIX audio mixer — scheduling patterns that killed structural mismatches (us-80342970, us-802d9590)
+
+### DELTA division constant recovery (mix.c HBMMIXUpdateSettings)
+- Retail delta codegen: `lis r3, 0x2AAB; subi r31, r3, 0x5555` (magic
+  `0x2AAAAAAB`), then `mulhw rX, magic, diff; srawi rX, rX, 4; srwi; add`.
+  `0x2AAAAAAB` = ceil(2^36 / d) with `srawi 4` ⇒ **d = 96**, NOT 24576. A
+  wrong `HBMMIX_DELTA_UNIT` (24576) produced `srawi 12` — same magic, wrong
+  shift — mismatching every delta block structurally (12+ sites).
+- Lesson: when a divide constant looks right but every site mismatches, solve
+  `d = 2^(32+s) / magic` from the `srawi` shift in the retail asm.
+
+### "Check the stored value, not the source" (register reuse across stores)
+- `vpb->pb.mix.vL = ch->vL; if (ch->vL != 0) ctrl |= ...;` makes MWCC reload
+  `ch->vL` after the store (alias analysis), shifting the check block by one
+  load and cascading structural diffs. Writing `if (vpb->pb.mix.vL != 0)`
+  (the just-stored value) makes the compiler reuse the stored register —
+  killed 72 of 76 structural mismatches in HBMMIXUpdateSettings (12 blocks × 6).
+- Same family: `pos2 = fx->curPos; fx->line[2][pos2] = ...; fx->curPos = pos2 + 1;`
+  in AXFXDelayExpCallback forced a single `curPos` load where the allocator had
+  inserted an extra reload (53→4 structural).
+
+### Last-store source order ≠ execution order
+- Retail `AXFXDelayExpCallback` executes `last[1]; last[2]; last[0]` stores but
+  the matching source order is `last[0]; last[1]; last[2]` (or `0,2,1`).
+  Brute-forcing the 6 permutations of the three last-store statements took
+  4→0 structural. Always try source-statement permutations when stores execute
+  in a different order than written.
+
+### Reg-swap acceptance wall (confirmed 3rd occurrence)
+- These loops end with 0 structural + pure reg-swaps where the retail reuses a
+  register across roles (mixChanged=r8 & delta-target=r8; delayed/mixed
+  accumulators) and the decomp allocator merges them into one register. The
+  renaming witness requires a **global injective** permutation — register
+  merging makes no bijection exist, so EQUIVALENT_MATCH is unreachable for
+  these loop-heavy functions; SMT fails on loop unroll (96-iter) / path
+  explosion (16-iter with per-channel flag branches). Recorded as stalls
+  (us-802d9590, us-802da6b0, us-80342970).
+- `Run` (OSExec, us-80358630): retail is an asm-void-shaped tail call
+  (`mtctr r31; bctr` + dead epilogue as the func return path). No high-level C
+  shape emits it (tested -O4,p/-O4,s, C/C++, do/while/for, return forms); SMT
+  blocked by the unknown indirect callee. Keep the C candidate with
+  `__sync(); __isync();` (56% static / 91.9% fuzzy).

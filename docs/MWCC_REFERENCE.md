@@ -4490,18 +4490,32 @@ BTM_ChangeEScoLinkParms → 97.5%, US):**
   Resources";` + `trace_pool + 0x8c/0x248/0x28c` reproduces the retail's
   `lis/addi r30, @1903` + offset pattern and emits an `@N` label reloc instead of
   `...data.0` + section offset (gki_buffer base-var rule; pool ≥ ~7 strings).
-- **BTM_ChangeEScoLinkParms regalloc float (STALLED, like rfc_send_test):** the
-  remaining 33 structural diffs are a pure regalloc/scheduling float on GC/3.0a5.2:
+- **BTM_ChangeEScoLinkParms regalloc float (RESOLVED → FULL_MATCH, 100%):** the
+  remaining 33 structural diffs were a pure regalloc/scheduling float on GC/3.0a5.2:
   the eSCO temp lands in r26 (retail r27) and the second trace check reuses the
   btm_cb base register kept across the LogMsg_1 call (retail reloads `lis/addi` per
-  check). Reproduced under every source shape tried (inline checks, raw/volatile
-  trace_level reads, static trace helpers, declaration orders, `#pragma scheduling
-  off` (worse), `-ipa off`, GC/3.0a3.4). Consequence: decomp saves r26-r31
-  (`_savegpr_26`) vs retail r27-r31, and the SMT memory observable flags the extra
-  r1+0x1c save slot (`stack_private` is disabled after EABI-helper calls) as
-  `different final arrays`. Callee certificates for btsnd_hcic_change_conn_type /
-  btsnd_hcic_setup_esco_conn were regenerated (stale capability sets vs current
-  checker) to get this far.
+  check). Consequence: decomp saves r26-r31 (`_savegpr_26`) vs retail r27-r31, and
+  the SMT memory observable flags the extra r1+0x1c save slot as
+  `different final arrays`. **Fix:** write the **second** of the two consecutive
+  `trace_level` checks as a direct member access on the extern global
+  (`btm_cb.trace_level`) while keeping the first as the cast-pointer macro
+  (`SCO_CB->trace_level`). The two syntactic forms stop MWCC from CSE-ing the
+  `&btm_cb` address across the intervening `LogMsg_1` call: it now reloads
+  `lis/addi` per check like retail, the eSCO temp drops into r27 (single
+  `_savegpr_27`), and the function compiles byte-identical (0/106 mismatches,
+  `full-instruction-match` cert). Same addends, same reloc symbols — only the
+  TU-local string-pool label name drifts (`@1903` vs `@1242`), which is
+  EQUIVALENT_MATCH-tolerant. This was the missing shape in the STALLED matrix
+  (inline checks / raw volatile reads / static helpers / declaration orders /
+  `#pragma scheduling off` / `-ipa off` / GC/3.0a3.4 were all tried first).
+- **btm_sco_init `lwzu` shape (same TU):** the committed `unsigned long *src =
+  btm_esco_defaults; … src[0..3]` form emitted `lis/addi` + plain `lwz` (0x48 vs
+  retail 0x44), pushing the whole unit 4 bytes over its split budget. Rewriting
+  as `unsigned long *src = btm_esco_defaults; v0 = *src++; v1 = *src++; v2 =
+  *src++; v3 = *src++;` (four locals, loads grouped before the stores) makes MWCC
+  emit retail's single `lwzu r6, @l(r3)` fold and restores the 0x44 size; the
+  remaining 15 diffs are a pure lis/addi-vs-lwzu scheduling interleave + reg-swaps
+  (function stays SMT-equivalent as before).
 
 ## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
 

@@ -92,14 +92,20 @@ extern tBTM_CB_LOCAL btm_cb;
 void btm_sco_init(void)
 {
     extern unsigned long btm_esco_defaults[];
-    unsigned long* src = btm_esco_defaults;
+    unsigned long v0, v1, v2, v3;
+    unsigned long *src = btm_esco_defaults;
     unsigned char* cb = (unsigned char*)&btm_cb;
 
+    v0 = *src++;
+    v1 = *src++;
+    v2 = *src++;
+    v3 = *src++;
+
     *(unsigned short*)(cb + 0x18f6) = 0xffff;
-    *(unsigned long*)(cb + 0x18f8) = src[0];
-    *(unsigned long*)(cb + 0x18fc) = src[1];
-    *(unsigned long*)(cb + 0x1900) = src[2];
-    *(unsigned long*)(cb + 0x1904) = src[3];
+    *(unsigned long*)(cb + 0x18f8) = v0;
+    *(unsigned long*)(cb + 0x18fc) = v1;
+    *(unsigned long*)(cb + 0x1900) = v2;
+    *(unsigned long*)(cb + 0x1904) = v3;
     cb[0x1909] = 2;
 }
 
@@ -497,7 +503,7 @@ tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parm
                      p_sco->hci_handle);
         }
 
-        if (SCO_CB->trace_level >= BT_TRACE_LEVEL_API) {
+        if (btm_cb.trace_level >= BT_TRACE_LEVEL_API) {
             LogMsg_6(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
                      TRACE_TYPE_API, trace_pool + 0x8c,
                      p_setup->tx_bw, p_setup->rx_bw, p_parms->max_latency,

@@ -30,6 +30,7 @@ private:
     const HBMDataInfo* mpHBInfo; // at 0x4
 };
 void InitAxSound(const void* data, void* ptr, unsigned long size);
+void ShutdownAxSound();
 }
 
 MEMAllocator sAllocator;
@@ -91,7 +92,9 @@ void HBMCreateSound(const void* data, void* ptr, unsigned long size){
     homebutton::InitAxSound(data, ptr, size);
 }
 
-void HBMDeleteSound(void){}
+void HBMDeleteSound(void){
+    homebutton::ShutdownAxSound();
+}
 
 }
 

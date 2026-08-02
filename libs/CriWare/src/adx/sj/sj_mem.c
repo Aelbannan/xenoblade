@@ -125,6 +125,10 @@ void SJMEM_Destroy(void *self_ptr) {
     const char* msg2 = lbl_eu_80518A68 + 0x0C;
     const char* msg3 = lbl_eu_80518A68 + 0x6B;
     const char* msg4 = lbl_eu_80518A68 + 0x33;
+    const char* msg_0x5F = lbl_eu_80518A68 + 0x5F;
+    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
+    const char* msg_0x6B = lbl_eu_80518A68 + 0x6B;
+    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
         CRICRW_Strcpy(buf1, 0x40, msg1);
@@ -147,15 +151,19 @@ void *SJMEM_GetUuid(void *self_ptr) {
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     void *r;
+    const char* msg_0x77 = lbl_eu_80518A68 + 0x77;
+    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
+    const char* msg_0x83 = lbl_eu_80518A68 + 0x83;
+    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x77);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcpy(buf1, 0x40, msg_0x77);
+        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x83);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcpy(buf2, 0x40, msg_0x83);
+        CRICRW_Strcat(buf2, 0x40, msg_0x33);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -191,14 +199,18 @@ void SJMEM_Reset(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
+    const char* msg_0x27 = lbl_eu_80518A68 + 0x27;
+    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
+    const char* msg_0x53 = lbl_eu_80518A68 + 0x53;
+    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcpy(buf1, 0x40, msg_0x27);
+        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x53);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcpy(buf2, 0x40, msg_0x53);
+        CRICRW_Strcat(buf2, 0x40, msg_0x33);
         SJERR_CallErr(buf2);
     } else {
         self->avail = self->buf_size;
@@ -393,15 +405,19 @@ int SJMEM_GetBufSize(void *self_ptr) {
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     int r;
+    const char* msg_0x137 = lbl_eu_80518A68 + 0x137;
+    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
+    const char* msg_0x143 = lbl_eu_80518A68 + 0x143;
+    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x137);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcpy(buf1, 0x40, msg_0x137);
+        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x143);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcpy(buf2, 0x40, msg_0x143);
+        CRICRW_Strcat(buf2, 0x40, msg_0x33);
         SJERR_CallErr(buf2);
         r = 0;
     } else {

@@ -2,6 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <string.h>
+
 void SFHDS_Init(void) { SFH_Init(); }
 
 
@@ -21,9 +23,53 @@ void SFHDS_FinishFhd(void* self) {
 
 void SFHDS_SetHdr() {}
 
-void SFHDS_ReprocessHdr() {}
+extern void* SFH_Create(u32 arg0, s32 arg1, void* ctx);
+extern s32 SFH_Destroy(void* ctx);
+void sfhds_DoProcessHdr(void* a, void* b);
+extern u32 SFMPS_GetConcatCnt(void* self);
+extern s32 SFLIB_SetErr(s32 val, u32 err_code);
 
-void sfhds_DoProcessHdr() {}
+s32 SFHDS_ReprocessHdr(void* self) {
+    u8* hdr = *(u8**)((u8*)self + 0x2670);
+    u8 ctx[0x18];
+    void* created;
+    u8* src;
+    s32 ret = 0;
+
+    if (hdr == NULL)
+        return 0;
+    if (SFMPS_GetConcatCnt(self) > 0)
+        return 0;
+    src = hdr + 0xC;
+    if (src == NULL)
+        return 0;
+
+    {
+        u32* d = (u32*)((u8*)self + 0x88);
+        u32* s = (u32*)src;
+        s32 n = 274;
+        do {
+            *d++ = *s++;
+            *d++ = *s++;
+        } while (--n != 0);
+        *(u32*)d = *(u32*)s;
+    }
+
+    created = SFH_Create((u32)((u8*)self + 0x11C), *(s32*)((u8*)self + 0x118), ctx);
+    if (created == NULL) {
+        ret = SFLIB_SetErr(0, 0xff000232);
+    } else {
+        sfhds_DoProcessHdr(created, (u8*)self + 0x88);
+        ret = SFH_Destroy(created);
+    }
+
+    *(s32*)((u8*)self + 0x940) = *(s32*)((u8*)self + 0xac);
+    *(s32*)((u8*)self + 0x944) = *(s32*)((u8*)self + 0xb0);
+    *(s32*)((u8*)self + 0x948) = *(s32*)((u8*)self + 0xb4);
+    return ret;
+}
+
+void sfhds_DoProcessHdr(void* a, void* b) {} // stub
 
 void sfhds_AnlyVideo() {}
 

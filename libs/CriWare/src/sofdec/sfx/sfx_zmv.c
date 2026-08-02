@@ -47,10 +47,9 @@ void SFXZ_Destroy(void* self) {
 }
 void sfxzmv_SetTagGrp();
 void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
-    SFXZmvState* state = (SFXZmvState*)self;
-    state->active = 1;
-    state->arg0 = a;
-    state->arg1 = b;
+    *(u32*)((u8*)self + 8) = 1;
+    *(u32*)((u8*)self + 12) = a;
+    *(u32*)((u8*)self + 16) = b;
     sfxzmv_SetTagGrp();
 }
 void sfxzmv_SetTagGrp() {}

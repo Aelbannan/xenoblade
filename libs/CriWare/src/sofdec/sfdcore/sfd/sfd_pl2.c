@@ -140,12 +140,14 @@ int SFPL2_Pause(void *handle, int op) {
 
 /* Enter standby state */
 int SFD_Standby(void *handle) {
+    int ret = 0;
+
     if (SFLIB_CheckHn(handle))
         return SFLIB_SetErr(NULL, 0xFF000143);
 
     fn_803CD484(handle);
-    *(u32 *)((u8 *)handle + P_SUBSTATE) = 3;
-    return 0;
+    ((u32 *)handle)[P_SUBSTATE / 4] = 3;
+    return ret;
 }
 
 /* Standby sub-operation */

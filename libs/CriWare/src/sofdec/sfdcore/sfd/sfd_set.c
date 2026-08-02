@@ -11,11 +11,75 @@ u32 SFD_GetHnStat(void* self) {
     return *(u32*)((u8*)self + 0x54);
 }
 
-void SFD_SetCond() {}
+extern u32 lbl_eu_80606E38[]; /* SFD work area */
 
-void SFSET_SetCond() {}
+s32 SFD_SetCond(void* self, u32 idx, u32 val) {
+    if (self == NULL) {
+        u32* tbl = lbl_eu_80606E38;
+        u32* p = tbl + 0x7F;
+        s32 i;
+        for (i = 0; i < 8; i++) {
+            void* h = (void*)*p++;
+            s32 ok = 1;
+            if (SFLIB_CheckHn(h) != 0)
+                continue;
+            if (idx == 6 && val == 1 && SFTRN_IsSetup(h, 3) == 0)
+                ok = 0;
+            if (ok && idx == 5 && val == 1 && SFTRN_IsSetup(h, 2) == 0)
+                ok = 0;
+            if (ok)
+                *(u32*)((u8*)h + idx * 4 + 0xA1C) = val;
+        }
+        tbl[idx] = val;
+        return 0;
+    }
 
-void SFD_GetCond() {}
+    if (SFLIB_CheckHn(self) != 0)
+        return SFLIB_SetErr(0, 0xFF000112);
+
+    {
+        s32 ok = 1;
+        if (idx == 6 && val == 1 && SFTRN_IsSetup(self, 3) == 0)
+            ok = 0;
+        if (ok && idx == 5 && val == 1 && SFTRN_IsSetup(self, 2) == 0)
+            ok = 0;
+        if (ok)
+            *(u32*)((u8*)self + idx * 4 + 0xA1C) = val;
+    }
+    {
+        s32 ok = 1;
+        if (idx == 6 && val == 1 && SFTRN_IsSetup(self, 3) == 0)
+            ok = 0;
+        if (ok && idx == 5 && val == 1 && SFTRN_IsSetup(self, 2) == 0)
+            ok = 0;
+        if (ok)
+            *(u32*)((u8*)self + idx * 4 + 0xBAC) = val;
+    }
+    return 0;
+}
+
+void SFSET_SetCond(void* self, s32 idx, s32 val) {
+    s32 ok;
+    if (idx == 6 && val == 1 && SFTRN_IsSetup(self, 3) == 0)
+        ok = 0;
+    else if (idx == 5 && val == 1 && SFTRN_IsSetup(self, 2) == 0)
+        ok = 0;
+    else
+        ok = 1;
+    if (ok)
+        *(u32*)((u8*)self + idx * 4 + 0xA1C) = val;
+}
+
+s32 SFD_GetCond(void* self, u32 idx, s32* out) {
+    if (self == NULL) {
+        *out = (s32)lbl_eu_80606E38[idx];
+        return 0;
+    }
+    if (SFLIB_CheckHn(self) != 0)
+        return SFLIB_SetErr(0, 0xFF000113);
+    *out = *(s32*)((u8*)self + idx * 4 + 0xA1C);
+    return 0;
+}
 
 u32 SFSET_GetCond(void* self, u32 idx) {
     return *(u32*)((u8*)self + 0xa1c + idx * 4);

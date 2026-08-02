@@ -15,6 +15,12 @@
 
 #include <cstring>
 
+/* First .rodata object, exactly like the retail pool (GXColor{0,0,0,255}
+ * plus a 0.0f word, one 8-byte object): naming it gives MWCC the retail base
+ * symbol (lbl_805186C8) for the r27 constant-pool base instead of a section
+ * reloc. */
+extern "C" const u32 lbl_805186C8[2] = {0x000000FF, 0x00000000};
+
 namespace homebutton {
 void AxSoundMain(); // defined in HBMAxSound.cpp
 void SetSoundMode(u32 mode); // defined in HBMAxSound.cpp
@@ -23,27 +29,14 @@ void PlaySeq(int seqId); // defined in HBMAxSound.cpp
 
 /******************************************************************************
  *
- * API
+ * Implementation details
  *
  ******************************************************************************/
 
-RVL_LIB_VERSION(HBM, "May  7 2007", "18:28:39", "0x4199_60726");
-
-enum HBMAllocatorType {
-    HBM_ALLOCATOR_APPLI,
-    HBM_ALLOCATOR_LOCAL,
-    HBM_ALLOCATOR_NW4R,
-};
-
 /* sAllocator/spAllocator are defined in HBMCommon.cpp (retail TU boundary);
- * this unit only references spAllocator (see HBMCreate). */
-extern MEMAllocator sAllocator;
-static MEMAllocator* spAllocator;
-
-DECOMP_FORCEACTIVE(HBMBase_cpp, (GXColor){0, 0, 0, 255});
-
-/* Defined in HBMCommon.cpp (retail TU boundary); declared extern here so
- * MWCC keeps the calls as bl (the retail HBMBase unit calls them). */
+ * this unit only references spAllocator (see create's inlined PaneManager
+ * ctor). HBMAllocMem/HBMFreeMem are also defined in HBMCommon.cpp. */
+extern MEMAllocator* spAllocator;
 extern void* HBMAllocMem(u32 size);
 extern void HBMFreeMem(void* pBlock);
 
@@ -64,90 +57,6 @@ struct HBMBaseAlarmView {
 extern "C" WPADInfo
     sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[WPAD_MAX_CONTROLLERS] =
         {};
-
-
-static HBMAllocatorType getAllocatorType(const HBMDataInfo* pDataInfo) {
-    if (pDataInfo->pAllocator != NULL) {
-        return HBM_ALLOCATOR_APPLI;
-    }
-
-    if (pDataInfo->mem != NULL) {
-        return HBM_ALLOCATOR_LOCAL;
-    }
-
-    return HBM_ALLOCATOR_NW4R;
-}
-
-void HBMCreate(const HBMDataInfo* pDataInfo) {
-    MEMiHeapHead* hExpHeap;
-
-    if (getAllocatorType(pDataInfo) == HBM_ALLOCATOR_LOCAL) {
-        hExpHeap = MEMCreateExpHeap(pDataInfo->mem, pDataInfo->memSize);
-        MEMInitAllocatorForExpHeap(&sAllocator, hExpHeap, 32);
-        spAllocator = &sAllocator;
-    }
-
-    switch (getAllocatorType(pDataInfo)) {
-    case HBM_ALLOCATOR_APPLI: {
-        nw4hbm::lyt::Layout::SetAllocator(pDataInfo->pAllocator);
-        spAllocator = pDataInfo->pAllocator;
-        break;
-    }
-
-    case HBM_ALLOCATOR_LOCAL: {
-        nw4hbm::lyt::Layout::SetAllocator(spAllocator);
-        break;
-    }
-
-    case HBM_ALLOCATOR_NW4R: {
-        spAllocator = nw4hbm::lyt::Layout::GetAllocator();
-        break;
-    }
-    }
-
-    homebutton::HomeButton::createInstance(pDataInfo);
-    homebutton::HomeButton::getInstance()->create();
-}
-
-void HBMInit() {
-    OSRegisterVersion(__HBMVersion);
-    homebutton::HomeButton::getInstance()->init();
-}
-
-HBMSelectBtnNum HBMCalc(const HBMControllerData* pController) {
-    homebutton::HomeButton::getInstance()->calc(pController);
-    return homebutton::HomeButton::getInstance()->getSelectBtnNum();
-}
-
-void HBMDraw() {
-    homebutton::HomeButton::getInstance()->draw();
-}
-
-HBMSelectBtnNum HBMGetSelectBtnNum() {
-    return homebutton::HomeButton::getInstance()->getSelectBtnNum();
-}
-
-void HBMSetAdjustFlag(BOOL flag) {
-    homebutton::HomeButton::getInstance()->setAdjustFlag(flag);
-}
-
-void HBMStartBlackOut() {
-    homebutton::HomeButton::getInstance()->startBlackOut();
-}
-
-void HBMSetBlackOutColor(u8 r, u8 g, u8 b) {
-    homebutton::HomeButton::getInstance()->setBlackOutColor(r, g, b);
-}
-
-BOOL HBMIsReassignedControllers() {
-    return homebutton::HomeButton::getInstance()->getReassignedFlag();
-}
-
-/******************************************************************************
- *
- * Implementation details
- *
- ******************************************************************************/
 
 namespace homebutton {
 
@@ -241,11 +150,15 @@ const char* HomeButton::scCursorRotPaneName = HBM_CURSOR_ROT_PANE_NAME;
 const char* HomeButton::scCursorSRotPaneName = HBM_CURSOR_SROT_PANE_NAME;
 
 #define X(Y) #Y,
-const char* HomeButton::scBtnName[res::eBtn_Max] = {HBM_BTN_PANE_LIST};
+/* Retail only emits three btn/txt strings (B_btnL_00/01/10,
+ * T_btnL_00/01/10); the fourth array entry stays NULL. */
+const char* HomeButton::scBtnName[res::eBtn_Max] = {"B_btnL_00", "B_btnL_01",
+                                                    "B_btnL_10", NULL};
 #undef X
 
 #define X(Y) #Y,
-const char* HomeButton::scTxtName[res::eTxt_Max] = {HBM_TXT_PANE_LIST};
+const char* HomeButton::scTxtName[res::eTxt_Max] = {"T_btnL_00", "T_btnL_01",
+                                                    "T_btnL_10", NULL};
 #undef X
 
 #define X(Y) #Y,
@@ -508,11 +421,20 @@ void HomeButton::create() {
     nw4hbm::lyt::Pane* pRootPane = mpLayout->GetRootPane();
 
     NW4R_UT_LINKLIST_FOREACH(it, pRootPane->GetChildList(), {
-        if (std::strcmp(it->GetName(), "back_01") == 0) {
-            it->SetScale(nw4hbm::math::VEC2(1.2f, 1.2f));
-            break;
+        if (std::strcmp(it->GetName(), "back_00") == 0 ||
+            std::strcmp(it->GetName(), "back_01") == 0 ||
+            std::strcmp(it->GetName(), "back_02") == 0) {
+
+            it->SetScale(nw4hbm::math::VEC2(1.5f, 1.5f));
         }
     })
+
+    mpLayout->GetRootPane()
+        ->FindPaneByName("bar_line_00", true)
+        ->SetScale(nw4hbm::math::VEC2(1.5f, 1.0f));
+    mpLayout->GetRootPane()
+        ->FindPaneByName("bar_line_10", true)
+        ->SetScale(nw4hbm::math::VEC2(1.5f, 1.0f));
 
     for (i = 0; i < mAnmNum; i++) {
         std::strcpy(anmNameBuf, mpAnmName);
@@ -617,15 +539,6 @@ void HomeButton::create() {
     }
 
     mpPaneManager->createLayoutScene(*mpLayout);
-    mpPaneManager->setAllComponentTriggerTarget(false);
-
-    for (i = 0; i < mButtonNum; i++) {
-        nw4hbm::lyt::Pane* pTouchPane =
-            mpLayout->GetRootPane()->FindPaneByName(scBtnName[i], true);
-
-        mpPaneManager->getPaneComponentByPane(pTouchPane)
-            ->setTriggerTarget(true);
-    }
 
     if (void* pMem = HBMAllocMem(sizeof(RemoteSpk))) {
         mpRemoteSpk = new (pMem) RemoteSpk(mpHBInfo->spkSeBuf);

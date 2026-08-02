@@ -189,7 +189,7 @@ static u32 lbl_80665A20[2] = { 0x8C8D8E8F, 0xACADAEAF };
 static u32 lbl_80665A28[2] = { 0x90919293, 0xB0B1B2B3 };
 static u32 lbl_80665A30[2] = { 0x94959697, 0xB4B5B6B7 };
 static u32 lbl_80665A38[2] = { 0x98999A9B, 0xB8B9BABB };
-static const u8 lbl_80665A40[] = { 0x00, 0x04, 0x01, 0x05, 0x02, 0x06, 0x00, 0x00 };
+static u8 lbl_80665A40[] = { 0x00, 0x04, 0x01, 0x05, 0x02, 0x06, 0x00, 0x00 };
 static u32 lbl_80665A48[2] = { 0x00020400, 0x01030500 };
 
 static const f32 float_8066C010[2] = { 16.0f, 0.0f };
@@ -202,7 +202,7 @@ static const f32 float_8066C030 = 0.0f;
 static const f32 float_8066C034 = 10.0f;
 static const f32 float_8066C038 = 0.0625f;
 static const f32 float_8066C03C = 0.03125f;
-static const f64 double_8066C040 = 4503602621440.0;
+static const f64 double_8066C040 = 4503601774854144.0;
 
 static const u8 GXTexTileRowShift[61] = {
     3, 3, 3, 2, 2, 2, 2, 0, 3, 3, 2, 0, 0, 0, 3, 0, 0, 3, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -215,15 +215,54 @@ static const u8 GXTexTileColShift[61] = {
 };
 
 u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap, u8 max_lod) {
-    u32 tileShiftX, tileShiftY, tileBytes;
-    u32 bufferSize, nx, ny, level;
+    u32 tileShiftX, tileShiftY, tileBytes, bufferSize;
+    u32 nx, ny;
+    u32 level;
 
-    if (format <= 0x3C) {
-        tileShiftX = GXTexTileRowShift[format];
-        tileShiftY = GXTexTileColShift[format];
-    } else {
-        tileShiftX = 0;
+    switch (format) {
+    case GX_TF_I4:
+    case GX_TF_C4:
+    case GX_TF_CMPR:
+    case GX_CTF_R4:
+    case GX_CTF_Z4:
+        tileShiftX = 3;
+        tileShiftY = 3;
+        break;
+
+    case GX_TF_I8:
+    case GX_TF_IA4:
+    case GX_TF_C8:
+    case GX_TF_Z8:
+    case GX_CTF_RA4:
+    case GX_CTF_A8:
+    case GX_CTF_R8:
+    case GX_CTF_G8:
+    case GX_CTF_B8:
+    case GX_CTF_Z8M:
+    case GX_CTF_Z8L:
+        tileShiftX = 3;
+        tileShiftY = 2;
+        break;
+
+    case GX_TF_IA8:
+    case GX_TF_RGB565:
+    case GX_TF_RGB5A3:
+    case GX_TF_RGBA8:
+    case GX_TF_C14X2:
+    case GX_TF_Z16:
+    case GX_TF_Z24X8:
+    case GX_CTF_RA8:
+    case GX_CTF_RG8:
+    case GX_CTF_GB8:
+    case GX_CTF_Z16L:
+        tileShiftX = 2;
+        tileShiftY = 2;
+        break;
+
+    default:
         tileShiftY = 0;
+        tileShiftX = 0;
+        break;
     }
 
     if (format == GX_TF_RGBA8 || format == GX_TF_Z24X8) {
@@ -245,8 +284,8 @@ u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap, u8 max_
                 break;
             }
 
-            width = (u16)((width > 1) ? (width >> 1) : 1);
-            height = (u16)((height > 1) ? (height >> 1) : 1);
+            width = (width > 1) ? (width >> 1) : 1;
+            height = (height > 1) ? (height >> 1) : 1;
         }
     } else {
         nx = (u32)((width + (1 << tileShiftX) - 1) >> tileShiftX);
@@ -323,23 +362,31 @@ void GXInitTexObj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFm
                   GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap) {
     u32 imageBase;
     u32 maxLOD;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    u32 fmt;
     u16 rowT, colT;
     u32 rowC, colC;
-
-    GX_SETUP_TEXOBJ(t, obj)
+    GXTexObjImpl* t = (GXTexObjImpl*)obj;
 
     memset(t, 0, sizeof(GXTexObjImpl));
 
-    SC_TX_SETMODE0_SET_WRAP_S(t->mode0, wrap_s);
-    SC_TX_SETMODE0_SET_WRAP_T(t->mode0, wrap_t);
-    SC_TX_SETMODE0_SET_MAG_FILTER(t->mode0, 1);
+    mode0 = t->mode0;
+    mode0 = __rlwimi(mode0, wrap_s, 0, 30, 31);
+    mode0 = __rlwimi(mode0, wrap_t, 2, 28, 29);
+    mode0 |= 0x10;
+    t->mode0 = mode0;
 
     if (mipmap) {
         t->flags |= 1;
-        if (IsCITexFmt(format)) {
-            SC_TX_SETMODE0_SET_MIN_FILTER(t->mode0, 5);
+        if ((u32)(format - 8) <= 2) {
+            mode0 = __rlwimi(mode0, 5, 5, 24, 26);
+            t->mode0 = mode0;
         } else {
-            SC_TX_SETMODE0_SET_MIN_FILTER(t->mode0, 6);
+            mode0 = __rlwimi(mode0, 6, 5, 24, 26);
+            t->mode0 = mode0;
         }
 
         if (width > height) {
@@ -347,20 +394,30 @@ void GXInitTexObj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFm
         } else {
             maxLOD = (u32)(31 - __cntlzw(height));
         }
-        SC_TX_SETMODE1_SET_MAXLOD(t->mode1, (u8)(maxLOD * 16.0f));
+
+        mode1 = t->mode1;
+        mode1 = __rlwimi(mode1, (s32)(f32)(float_8066C010[0] * (f32)maxLOD), 8, 16, 23);
+        t->mode1 = mode1;
     } else {
-        SC_TX_SETMODE0_SET_MIN_FILTER(t->mode0, 4);
+        mode0 = __rlwimi(mode0, 4, 5, 24, 26);
+        t->mode0 = mode0;
     }
 
+    fmt = format & 0xF;
+
+    image0 = t->image0;
+    image0 = __rlwimi(image0, width - 1, 0, 22, 31);
+
+    image3 = t->image3;
+    image0 = __rlwimi(image0, height - 1, 10, 12, 21);
+    image3 = __rlwimi(image3, (GX_PHY_ADDR(image_ptr)) >> 5, 0, 8, 31);
+
+    image0 = __rlwimi(image0, fmt, 20, 8, 11);
     t->fmt = format;
-    SC_TX_SETIMAGE0_SET_IMAGE_WIDTH(t->image0, (width - 1));
-    SC_TX_SETIMAGE0_SET_IMAGE_HEIGHT(t->image0, (height - 1));
-    SC_TX_SETIMAGE0_SET_FORMAT(t->image0, (format & 0xF));
+    t->image0 = image0;
+    t->image3 = image3;
 
-    imageBase = (GX_PHY_ADDR(image_ptr)) >> 5;
-    SC_TX_SETIMAGE3_SET_IMAGE_BASE(t->image3, imageBase);
-
-    switch (format & 0xF) {
+    switch (fmt) {
     case GX_TF_I4:
     case GX_TF_C4:
         t->loadFmt = 1;
@@ -510,7 +567,6 @@ void GXInitTexObjFilter(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_fil
     mode0 = __rlwimi(mode0, magBits, 31, 27, 27);
     t->mode0 = mode0;
 
-    mode0 = t->mode0;
     minHw = lbl_80665A40[min_filt];
     mode0 = __rlwimi(mode0, minHw, 5, 24, 26);
     t->mode0 = mode0;
@@ -566,7 +622,6 @@ void GXGetTexObjLODAll(GXTexObj* tex_obj, GXTexFilter* min_filt, GXTexFilter* ma
     s16 lodBiasRaw;
     const u8* filtConv;
     GXTexObjImpl* t = (GXTexObjImpl*)tex_obj;
-    union { volatile f64 d; u32 u[2]; } cvtMin, cvtMax, cvtBias;
 
     mode1 = t->mode1;
     mode0 = t->mode0;
@@ -576,19 +631,13 @@ void GXGetTexObjLODAll(GXTexObj* tex_obj, GXTexFilter* min_filt, GXTexFilter* ma
     *mag_filt = (GXTexFilter)TX_SETMODE0_GET_MAG_FILTER(mode0);
 
     minLodByte = TX_SETMODE1_GET_MINLOD(mode1);
-    cvtMin.u[0] = 0x43300000;
-    cvtMin.u[1] = (u32)minLodByte;
-    *min_lod = (f32)(cvtMin.d - double_8066C018) * float_8066C038;
+    *min_lod = (f32)(u32)minLodByte * float_8066C038;
 
     maxLodByte = TX_SETMODE1_GET_MAXLOD(mode1);
-    cvtMax.u[0] = 0x43300000;
-    cvtMax.u[1] = (u32)maxLodByte;
-    *max_lod = (f32)(cvtMax.d - double_8066C018) * float_8066C038;
+    *max_lod = (f32)(u32)maxLodByte * float_8066C038;
 
     lodBiasRaw = (s16)TX_SETMODE0_GET_LODBIAS(mode0);
-    cvtBias.u[0] = 0x43300000;
-    cvtBias.u[1] = (u32)((s32)lodBiasRaw ^ 0x8000);
-    *lod_bias = (f32)(cvtBias.d - double_8066C040) * float_8066C03C;
+    *lod_bias = (f32)(s8)lodBiasRaw * float_8066C03C;
 
     *bias_clamp = (GXBool)TX_SETMODE0_GET_LODCLAMP(mode0);
     *do_edge_lod = (GXBool)!TX_SETMODE0_GET_DIAGLOD_ENABLE(mode0);
@@ -704,11 +753,19 @@ void GXLoadTexObj(const GXTexObj* obj, GXTexMapID id) {
 }
 
 void GXInitTlutObj(GXTlutObj* tlut_obj, void* lut, GXTlutFmt fmt, u16 n_entries) {
+    u32 tlut;
+    u32 loadTlut0;
     GX_SETUP_TLUTOBJ(t, tlut_obj);
-    t->tlut = 0;
-    SC_TX_SETTLUT_SET_FORMAT(t->tlut, fmt);
-    SC_TX_LOADTLUT0_SET_TLUT_BASE(t->loadTlut0, (GX_PHY_ADDR(lut) >> 5));
-    SC_TX_LOADTLUT0_SET_RID(t->loadTlut0, 0x64);
+
+    tlut = 0;
+    tlut = __rlwimi(tlut, fmt, 10, 20, 21);
+    t->tlut = tlut;
+
+    loadTlut0 = t->loadTlut0;
+    loadTlut0 = __rlwimi(loadTlut0, (GX_PHY_ADDR(lut) >> 5), 0, 8, 31);
+    loadTlut0 = __rlwimi(loadTlut0, 0x64, 24, 0, 7);
+    t->loadTlut0 = loadTlut0;
+
     t->numEntries = n_entries;
 }
 
@@ -736,9 +793,11 @@ void GXLoadTlut(GXTlutObj* tlut_obj, u32 tlut_name) {
 void GXInitTexCacheRegion(GXTexRegion* region, GXBool is_32b_mipmap, u32 tmem_even,
                           u32 size_even, u32 tmem_odd, u32 size_odd) {
     u32 WidthExp2;
+    u32 image1;
+    u32 image2;
     GX_SETUP_TREGOBJ(t, region)
 
-    switch (size_even) {
+    switch ((s32)size_even) {
     case 0:
         WidthExp2 = 3;
         break;
@@ -752,13 +811,13 @@ void GXInitTexCacheRegion(GXTexRegion* region, GXBool is_32b_mipmap, u32 tmem_ev
         break;
     }
 
-    t->image1 = 0;
-    SC_TX_SETIMAGE1_SET_TMEM_OFFSET(t->image1, ((u32)tmem_even >> 5));
-    SC_TX_SETIMAGE1_SET_CACHE_WIDTH(t->image1, WidthExp2);
-    SC_TX_SETIMAGE1_SET_CACHE_HEIGHT(t->image1, WidthExp2);
-    SC_TX_SETIMAGE1_SET_IMAGE_TYPE(t->image1, 0);
+    image1 = 0;
+    image1 = __rlwimi(image1, tmem_even, 27, 17, 31);
+    image1 = __rlwimi(image1, WidthExp2, 15, 14, 16);
+    image1 = __rlwimi(image1, WidthExp2, 18, 11, 13);
+    t->image1 = image1;
 
-    switch (size_odd) {
+    switch ((s32)size_odd) {
     case 0:
         WidthExp2 = 3;
         break;
@@ -775,10 +834,11 @@ void GXInitTexCacheRegion(GXTexRegion* region, GXBool is_32b_mipmap, u32 tmem_ev
         break;
     }
 
-    t->image2 = 0;
-    SC_TX_SETIMAGE2_SET_TMEM_OFFSET(t->image2, ((u32)tmem_odd >> 5));
-    SC_TX_SETIMAGE2_SET_CACHE_WIDTH(t->image2, WidthExp2);
-    SC_TX_SETIMAGE2_SET_CACHE_HEIGHT(t->image2, WidthExp2);
+    image2 = 0;
+    image2 = __rlwimi(image2, tmem_odd, 27, 17, 31);
+    image2 = __rlwimi(image2, WidthExp2, 15, 14, 16);
+    image2 = __rlwimi(image2, WidthExp2, 18, 11, 13);
+    t->image2 = image2;
 
     t->is32bMipmap = (u8)is_32b_mipmap;
     t->isCached = GX_TRUE;
@@ -885,7 +945,7 @@ void __GXSetSUTexRegs(void) {
     nIndStages = ((gxdt->genMode & 0x70000) >> 16);
 
     for (i = 0; i < nIndStages; i++) {
-        switch (i + GX_INDTEXSTAGE0) {
+        switch (i) {
         case GX_INDTEXSTAGE0:
             tmap = (gxdt->ras1_iref) & 0x7;
             coord = ((gxdt->ras1_iref & 0x38) >> 3);
@@ -901,10 +961,6 @@ void __GXSetSUTexRegs(void) {
         case GX_INDTEXSTAGE3:
             tmap = ((gxdt->ras1_iref & 0x1C0000) >> 18);
             coord = ((gxdt->ras1_iref & 0xE00000) >> 21);
-            break;
-        default:
-            tmap = 0;
-            coord = 0;
             break;
         }
 

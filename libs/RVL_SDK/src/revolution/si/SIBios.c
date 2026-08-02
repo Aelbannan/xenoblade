@@ -376,10 +376,10 @@ u32 SIGetType(s32 chan) {
         }
         Type[chan] = SI_ERROR_BUSY;
         type = SI_ERROR_BUSY;
-    } else if (OS_MSEC_TO_TICKS(50) > diff && type != SI_ERROR_NOREP) {
+    } else if (diff <= OS_MSEC_TO_TICKS(50) && type != SI_ERROR_NOREP) {
         OSRestoreInterrupts(enabled);
         return type;
-    } else if (OS_MSEC_TO_TICKS(75) > diff) {
+    } else if (diff <= OS_MSEC_TO_TICKS(75)) {
         Type[chan] = SI_ERROR_BUSY;
     } else {
         type = Type[chan] = SI_ERROR_BUSY;

@@ -9,10 +9,9 @@
  * Utility functions
  *
  ******************************************************************************/
+namespace nw4r {
+namespace lyt {
 namespace {
-
-using namespace nw4r;
-using namespace nw4r::lyt;
 
 inline u8 ClampColor(s16 value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);
@@ -26,9 +25,6 @@ ut::Color GetColor(const GXColorS10& rColor16) {
 }
 
 } // namespace
-
-namespace nw4r {
-namespace lyt {
 
 NW4R_UT_RTTI_DEF_DERIVED(TextBox, Pane);
 

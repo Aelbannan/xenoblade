@@ -536,18 +536,18 @@ void MIXSetFader(AXVPB* vpb, s32 fader) {
 
 void MIXUpdateSettings(void)
 {
-    s32 i;
+    u32 i;
     u32 ctrl;
 
     if (!__init) {
         return;
     }
 
-    for (i = 0; i < __MIXMaxVoices; i++) {
-        MIXChannel* ch = &__MIXChannel[i];
-        AXVPB* vpb = ch->vpb;
+    for (i = 0; i < (u32)__MIXMaxVoices; i++) {
         s32 veChanged = 0;
         s32 mixChanged = 0;
+        MIXChannel* ch = &__MIXChannel[i];
+        AXVPB* vpb = ch->vpb;
 
         if (vpb == NULL) {
             continue;
@@ -709,111 +709,144 @@ void MIXUpdateSettings(void)
         }
 
         if (mixChanged) {
-            vpb->pb.mix.vL = ch->volLCur;
-            if (ch->volLCur != 0) {
+            // Walk pb.mix as a u16 stream (retail materialises addi r3,r4,0x3e
+            // and stores value/delta through base-relative offsets) — same
+            // trick as MIXInitChannel; plain field stores fold to direct
+            // offsets and break the match. The != 0 tests use locals because
+            // q is an opaque pointer and field tests would force reloads.
+            u16* q = &vpb->pb.mix.vL;
+            u16 cur;
+            u16 delta;
+
+            cur = ch->volLCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_L;
             }
-            vpb->pb.mix.vDeltaL = (s16)((ch->volLTgt - ch->volLCur) / 96);
-            if (vpb->pb.mix.vDeltaL != 0) {
+            delta = (u16)((ch->volLTgt - ch->volLCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA;
             }
 
-            vpb->pb.mix.vR = ch->volRCur;
-            if (ch->volRCur != 0) {
+            cur = ch->volRCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_R;
             }
-            vpb->pb.mix.vDeltaR = (s16)((ch->volRTgt - ch->volRCur) / 96);
-            if (vpb->pb.mix.vDeltaR != 0) {
+            delta = (u16)((ch->volRTgt - ch->volRCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA;
             }
 
-            vpb->pb.mix.vAuxAL = ch->volALCur;
-            if (ch->volALCur != 0) {
+            cur = ch->volALCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_AL;
             }
-            vpb->pb.mix.vDeltaAuxAL = (s16)((ch->volALTgt - ch->volALCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxAL != 0) {
+            delta = (u16)((ch->volALTgt - ch->volALCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_A;
             }
 
-            vpb->pb.mix.vAuxAR = ch->volARCur;
-            if (ch->volARCur != 0) {
+            cur = ch->volARCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_AR;
             }
-            vpb->pb.mix.vDeltaAuxAR = (s16)((ch->volARTgt - ch->volARCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxAR != 0) {
+            delta = (u16)((ch->volARTgt - ch->volARCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_A;
             }
 
-            vpb->pb.mix.vAuxBL = ch->volBLCur;
-            if (ch->volBLCur != 0) {
+            cur = ch->volBLCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_BL;
             }
-            vpb->pb.mix.vDeltaAuxBL = (s16)((ch->volBLTgt - ch->volBLCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxBL != 0) {
+            delta = (u16)((ch->volBLTgt - ch->volBLCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_B;
             }
 
-            vpb->pb.mix.vAuxBR = ch->volBRCur;
-            if (ch->volBRCur != 0) {
+            cur = ch->volBRCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_BR;
             }
-            vpb->pb.mix.vDeltaAuxBR = (s16)((ch->volBRTgt - ch->volBRCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxBR != 0) {
+            delta = (u16)((ch->volBRTgt - ch->volBRCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_B;
             }
 
-            vpb->pb.mix.vAuxCL = ch->volCLCur;
-            if (ch->volCLCur != 0) {
+            cur = ch->volCLCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_CL;
             }
-            vpb->pb.mix.vDeltaAuxCL = (s16)((ch->volCLTgt - ch->volCLCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxCL != 0) {
+            delta = (u16)((ch->volCLTgt - ch->volCLCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_C;
             }
 
-            vpb->pb.mix.vAuxCR = ch->volCRCur;
-            if (ch->volCRCur != 0) {
+            cur = ch->volCRCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_CR;
             }
-            vpb->pb.mix.vDeltaAuxCR = (s16)((ch->volCRTgt - ch->volCRCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxCR != 0) {
+            delta = (u16)((ch->volCRTgt - ch->volCRCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_C;
             }
 
-            vpb->pb.mix.vS = ch->volSCur;
-            if (ch->volSCur != 0) {
+            cur = ch->volSCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_S;
             }
-            vpb->pb.mix.vDeltaS = (s16)((ch->volSTgt - ch->volSCur) / 96);
-            if (vpb->pb.mix.vDeltaS != 0) {
+            delta = (u16)((ch->volSTgt - ch->volSCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_S;
             }
 
-            vpb->pb.mix.vAuxAS = ch->volASCur;
-            if (ch->volASCur != 0) {
+            cur = ch->volASCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_AS;
             }
-            vpb->pb.mix.vDeltaAuxAS = (s16)((ch->volASTgt - ch->volASCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxAS != 0) {
+            delta = (u16)((ch->volASTgt - ch->volASCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_AS;
             }
 
-            vpb->pb.mix.vAuxBS = ch->volBSCur;
-            if (ch->volBSCur != 0) {
+            cur = ch->volBSCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_BS;
             }
-            vpb->pb.mix.vDeltaAuxBS = (s16)((ch->volBSTgt - ch->volBSCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxBS != 0) {
+            delta = (u16)((ch->volBSTgt - ch->volBSCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_BS;
             }
 
-            vpb->pb.mix.vAuxCS = ch->volCSCur;
-            if (ch->volCSCur != 0) {
+            cur = ch->volCSCur;
+            *q++ = cur;
+            if (cur != 0) {
                 ctrl |= AX_MIXER_CTRL_CS;
             }
-            vpb->pb.mix.vDeltaAuxCS = (s16)((ch->volCSTgt - ch->volCSCur) / 96);
-            if (vpb->pb.mix.vDeltaAuxCS != 0) {
+            delta = (u16)((ch->volCSTgt - ch->volCSCur) / 96);
+            *q++ = delta;
+            if (delta != 0) {
                 ctrl |= AX_MIXER_CTRL_DELTA_CS;
             }
 

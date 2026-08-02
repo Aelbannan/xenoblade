@@ -411,7 +411,8 @@ void SeqTrack::SetPitch(f32 pitch) {
 
 volatile s16* SeqTrack::GetVariablePtr(int idx) {
     if (idx < VARIABLE_NUM) {
-        return &mTrackVariable[idx];
+        volatile s16* variables = (volatile s16*)((u8*)this + 0xA0);
+        return &variables[idx];
     }
 
     return NULL;

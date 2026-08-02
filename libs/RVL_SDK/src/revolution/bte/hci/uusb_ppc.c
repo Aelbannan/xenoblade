@@ -269,9 +269,9 @@ void uusb_WriteBulkDataCB(IPCResult result, void* arg) {
  * open the device ("oh0" / "oh1" interface), build the write queues and the
  * intr/bulk read pools, then move to READY and clear the wait-for-HCI flag. */
 void UUSB_Register(void* cb_arg) {
-    IPCResult fd;
-    u32 vid;
     u32 pid;
+    u32 vid;
+    IPCResult fd;
 
     memset(&usb, 0, sizeof(usb));
 
@@ -301,12 +301,12 @@ void UUSB_Register(void* cb_arg) {
         usb.pid = 0x305;
     }
 
+    pid = usb.pid;
+    vid = usb.vid;
     usb.field_0x10 = 0;
     usb.field_0x11 = 0;
     usb.field_0x12 = 0;
     usb.field_0x13 = 0;
-    vid = usb.vid;
-    pid = usb.pid;
 
     if (__ntd_ohci_init_flag == 1) {
         if (__ntd_ohci == 0) {

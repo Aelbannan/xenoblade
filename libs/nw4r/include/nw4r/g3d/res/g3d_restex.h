@@ -9,6 +9,8 @@
 namespace nw4r {
 namespace g3d {
 
+class ResFile;
+
 struct ResTexData {
     enum Flag {
         FLAG_CIFMT = (1 << 0),
@@ -47,9 +49,9 @@ public:
         return ref().revision;
     }
 
-    bool CheckRevision() const DECOMP_DONT_INLINE {
-        return GetRevision() == REVISION;
-    }
+    bool CheckRevision() const;
+
+    ResFile GetParent();
 
     bool GetTexObjParam(void** ppTexData, u16* pWidth, u16* pHeight,
                         GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod,

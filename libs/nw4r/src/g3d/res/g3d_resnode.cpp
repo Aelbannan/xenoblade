@@ -128,4 +128,13 @@ void ResNode::CalcChrAnmResult(ChrAnmResult* pResult) const {
 } // namespace g3d
 } // namespace nw4r
 
-void GetResUserData__Q34nw4r3g3d7ResNodeFv(){}
+namespace nw4r {
+namespace g3d {
+
+void* ResNode::GetResUserData() {
+    return ofs_to_ptr<void>(ref().toResUserData);
+}
+
+} // namespace g3d
+} // namespace nw4r
+

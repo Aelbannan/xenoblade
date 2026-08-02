@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -914,7 +906,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -1249,6 +1242,10 @@ static inline void* OSCachedToPhysical(const void* ofs) {
     return (u8*)ofs - 0x80000000;
 }
 
+static inline void* OSUncachedToPhysical(const void* ofs) {
+    return (void*)((u32)ofs & 0x3FFFFFFF);
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -1279,6 +1276,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -2156,6 +2154,71 @@ typedef enum _GXProjectionType {
     GX_PERSPECTIVE,
     GX_ORTHOGRAPHIC
 } GXProjectionType;
+
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
 
 typedef enum _GXSpotFn {
     GX_SP_OFF,
@@ -3472,12 +3535,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -5189,6 +5255,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -5209,20 +5278,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -5841,7 +5939,7 @@ void GXSetDispCopyGamma(u32);
 
 u32 GXGetNumXfbLines(u16 efbHeight, f32 scaleY);
 f32 GXGetYScaleFactor(u16 efbHeight, u16 xfbHeight);
-void GXSetDispCopyYScale(f32 scaleY);
+u32 GXSetDispCopyYScale(f32 scaleY);
 
 void GXSetCopyClear(GXColor color, u32 z);
 void GXSetCopyFilter(GXBool, const u8 sample_pattern[12][2], GXBool,
@@ -9437,7 +9535,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -9686,38 +9872,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -9736,7 +9941,14 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -9748,6 +9960,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -9919,83 +10136,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -11593,9 +11733,7 @@ public:
         return ref().revision;
     }
 
-    bool CheckRevision() const DECOMP_DONT_INLINE {
-        return GetRevision() == REVISION;
-    }
+    bool CheckRevision() const;
 
     void DCStore(bool sync);
 
@@ -12347,6 +12485,8 @@ typedef enum {
 namespace nw4r {
 namespace g3d {
 
+class ResFile;
+
 struct ResTexData {
     enum Flag {
         FLAG_CIFMT = (1 << 0),
@@ -12385,9 +12525,9 @@ public:
         return ref().revision;
     }
 
-    bool CheckRevision() const DECOMP_DONT_INLINE {
-        return GetRevision() == REVISION;
-    }
+    bool CheckRevision() const;
+
+    ResFile GetParent();
 
     bool GetTexObjParam(void** ppTexData, u16* pWidth, u16* pHeight,
                         GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod,
@@ -14945,6 +15085,8 @@ struct ResMatData {
     ResChanData chan;           // at 0x3F0
 };
 
+class ResMatFur;
+
 class ResMat : public ResCommon<ResMatData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
@@ -15016,6 +15158,12 @@ public:
 
     ResMatChan GetResMatChan() {
         return ResMatChan(&ref().chan);
+    }
+
+    ResMatFur GetResMatFur();
+
+    void* GetResUserData() {
+        return ofs_to_ptr<void>(ref().toResUserData);
     }
 };
 
@@ -15200,6 +15348,8 @@ public:
     ResNode GetPrevSibling() const {
         return ofs_to_obj<ResNode>(ref().toPrevSibling);
     }
+
+    void* GetResUserData();
 
     void EndEdit() {}
 };
@@ -15767,6 +15917,13 @@ struct ResVtxFurPosData {
 class ResVtxFurPos : public ResCommon<ResVtxFurPosData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResVtxFurPos);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    void SetArray(unsigned short idx);
+    void DCStore(bool sync);
 };
 
 /******************************************************************************
@@ -15786,6 +15943,12 @@ struct ResVtxFurVecData {
 class ResVtxFurVec : ResCommon<ResVtxFurVecData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResVtxFurVec);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    void DCStore(bool sync);
 };
 
 } // namespace g3d
@@ -16243,14 +16406,19 @@ public:
 
 #endif
 /* end "nw4r/g3d/res/g3d_resshp.h" */
-/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmdl.h" line 9 "nw4r/g3d/res/g3d_resvtx.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmdl.h" line 9 "nw4r/g3d/res/g3d_restev.h" */
+/* end "nw4r/g3d/res/g3d_restev.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmdl.h" line 10 "nw4r/g3d/res/g3d_resvtx.h" */
 /* end "nw4r/g3d/res/g3d_resvtx.h" */
 
-/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmdl.h" line 11 "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmdl.h" line 12 "nw4r/math.h" */
 /* end "nw4r/math.h" */
 
 namespace nw4r {
 namespace g3d {
+
+// Forward declaration to avoid circular dependency with g3d_resfile.h
+class ResFile;
 
 /******************************************************************************
  *
@@ -16408,7 +16576,13 @@ public:
     ResVtxTexCoord GetResVtxTexCoord(int idx) const;
     u32 GetResVtxTexCoordNumEntries() const;
 
+    ResFile GetParent();
+
     ResVtxFurPos GetResVtxFurPos(int idx) const;
+    ResVtxFurVec GetResVtxFurVec(int idx) const;
+    u32 GetResVtxFurPosNumEntries() const;
+    u32 GetResVtxFurVecNumEntries() const;
+    ResTev GetResTev(u32 idx) const;
 
     ResMat GetResMat(const char* pName) const;
     ResMat GetResMat(const ResName name) const;
@@ -16422,6 +16596,7 @@ public:
     u32 GetResShpNumEntries() const;
 
     ResTexPlttInfo GetResTexPlttInfoOffsetFromTexName(int idx) const;
+    ResTexPlttInfo GetResTexPlttInfoOffsetFromTexName(unsigned long idx) const;
     u32 GetResTexPlttInfoOffsetFromTexNameNumEntries() const;
 
     ResMdlInfo GetResMdlInfo() {
@@ -16713,6 +16888,8 @@ public:
     AnmPolicy GetAnmPolicy() const {
         return ref().info.policy;
     }
+
+    void* GetResUserData();
 };
 
 } // namespace g3d
@@ -17775,12 +17952,8 @@ public:
         return *this;
     }
 
-    Color operator|(u32 color) const {
-        return Color(ToU32() | color);
-    }
-    Color operator&(u32 color) const {
-        return Color(ToU32() & color);
-    }
+    Color operator|(u32 color) const;
+    Color operator&(u32 color) const;
 
     u32& ToU32ref() {
         return *reinterpret_cast<u32*>(this);
@@ -18459,16 +18632,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -20152,7 +20323,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() { Init(); }
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -20244,7 +20420,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -20266,6 +20441,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -22024,11 +22201,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -22045,18 +22226,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -22081,6 +22272,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -22103,25 +22296,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -22912,10 +23115,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -30506,6 +30711,8 @@ private:
     IScnObjGather* mpCollection;              // at 0xE8
     ResMdlDrawMode mDrawMode;                 // at 0xEC
     u32 mScnRootFlags;                        // at 0xF0
+
+public:
     u8 mCurrentCameraID;                      // at 0xF4
     u8 PADDING_0xF5;                          // at 0xF5
     u8 PADDING_0xF6;                          // at 0xF6
@@ -31891,11 +32098,22 @@ void ResTex::Init() {
     DC::FlushRangeNoSync(&r, r.header.size);
 }
 
+bool ResPltt::CheckRevision() const {
+    // @note retail accepts revisions 1 (current) and 3 (legacy)
+    u32 revision = GetRevision();
+    return revision == 3 || revision == 1;
+}
+
+ResFile ResTex::GetParent() {
+    return ofs_to_obj<ResFile>(ref().toResFileData);
+}
+
+bool ResTex::CheckRevision() const {
+    // @note retail accepts revisions 1 (current) and 3 (legacy)
+    u32 revision = GetRevision();
+    return revision == 3 || revision == 1;
+}
+
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void CheckRevision__Q34nw4r3g3d7ResPlttCFv() {}
-extern "C" void GetParent__Q34nw4r3g3d6ResTexFv() {}
-bool GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(const void* self, void** texData, unsigned short* width, unsigned short* height, int* format, float* minLod, float* maxLod, unsigned char* mipmap) { const unsigned char* data = *reinterpret_cast<const unsigned char* const*>(self); if ((*reinterpret_cast<const unsigned int*>(data + 0x18) & 1u) != 0u) return false; if (texData != 0) { unsigned int offset = *reinterpret_cast<const unsigned int*>(data + 0x10); *texData = offset != 0u ? const_cast<unsigned char*>(data) + offset : 0; } if (width != 0) *width = *reinterpret_cast<const unsigned short*>(data + 0x1c); if (height != 0) *height = *reinterpret_cast<const unsigned short*>(data + 0x1e); if (format != 0) *format = *reinterpret_cast<const int*>(data + 0x20); if (minLod != 0) *minLod = *reinterpret_cast<const float*>(data + 0x28); if (maxLod != 0) *maxLod = *reinterpret_cast<const float*>(data + 0x2c); if (mipmap != 0) *mipmap = static_cast<unsigned char>(*reinterpret_cast<const unsigned int*>(data + 0x24) == 1u); return true; }
-bool GetTexObjCIParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP11_GXCITexFmtPfPfPUc(const void* self, void** texObj, unsigned short* width, unsigned short* height, void* format, float* min, float* max, unsigned char* mipmaps) { const unsigned char* data = (const unsigned char*)*(const void* const*)self; if ((*(const unsigned int*)(data + 0x18) & 1) == 0) return false; if (texObj) { unsigned int offset = *(const unsigned int*)(data + 0x10); *texObj = offset ? (void*)(data + offset) : 0; } if (width) *width = *(const unsigned short*)(data + 0x1c); if (height) *height = *(const unsigned short*)(data + 0x1e); if (format) *(unsigned int*)format = *(const unsigned int*)(data + 0x20); if (min) *min = *(const float*)(data + 0x28); if (max) *max = *(const float*)(data + 0x2c); if (mipmaps) *mipmaps = (unsigned char)(*(const unsigned int*)(data + 0x24) > 1); return true; }
-extern "C" void CheckRevision__Q34nw4r3g3d6ResTexCFv() {}

@@ -171,6 +171,8 @@ public:
         return ofs_to_obj<ResNode>(ref().toPrevSibling);
     }
 
+    void* GetResUserData();
+
     void EndEdit() {}
 };
 

@@ -40,12 +40,8 @@ public:
         return *this;
     }
 
-    Color operator|(u32 color) const {
-        return Color(ToU32() | color);
-    }
-    Color operator&(u32 color) const {
-        return Color(ToU32() & color);
-    }
+    Color operator|(u32 color) const;
+    Color operator&(u32 color) const;
 
     u32& ToU32ref() {
         return *reinterpret_cast<u32*>(this);

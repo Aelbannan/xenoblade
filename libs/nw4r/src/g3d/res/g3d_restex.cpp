@@ -99,11 +99,22 @@ void ResTex::Init() {
     DC::FlushRangeNoSync(&r, r.header.size);
 }
 
+bool ResPltt::CheckRevision() const {
+    // @note retail accepts revisions 1 (current) and 3 (legacy)
+    u32 revision = GetRevision();
+    return revision == 3 || revision == 1;
+}
+
+ResFile ResTex::GetParent() {
+    return ofs_to_obj<ResFile>(ref().toResFileData);
+}
+
+bool ResTex::CheckRevision() const {
+    // @note retail accepts revisions 1 (current) and 3 (legacy)
+    u32 revision = GetRevision();
+    return revision == 3 || revision == 1;
+}
+
 } // namespace g3d
 } // namespace nw4r
 
-void CheckRevision__Q34nw4r3g3d7ResPlttCFv(){}
-void GetParent__Q34nw4r3g3d6ResTexFv(){}
-bool GetTexObjParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP9_GXTexFmtPfPfPUc(const void* self, void** texData, unsigned short* width, unsigned short* height, int* format, float* minLod, float* maxLod, unsigned char* mipmap) { const unsigned char* data = *reinterpret_cast<const unsigned char* const*>(self); if ((*reinterpret_cast<const unsigned int*>(data + 0x18) & 1u) != 0u) return false; if (texData != 0) { unsigned int offset = *reinterpret_cast<const unsigned int*>(data + 0x10); *texData = offset != 0u ? const_cast<unsigned char*>(data) + offset : 0; } if (width != 0) *width = *reinterpret_cast<const unsigned short*>(data + 0x1c); if (height != 0) *height = *reinterpret_cast<const unsigned short*>(data + 0x1e); if (format != 0) *format = *reinterpret_cast<const int*>(data + 0x20); if (minLod != 0) *minLod = *reinterpret_cast<const float*>(data + 0x28); if (maxLod != 0) *maxLod = *reinterpret_cast<const float*>(data + 0x2c); if (mipmap != 0) *mipmap = static_cast<unsigned char>(*reinterpret_cast<const unsigned int*>(data + 0x24) == 1u); return true; }
-bool GetTexObjCIParam__Q34nw4r3g3d6ResTexCFPPvPUsPUsP11_GXCITexFmtPfPfPUc(const void* self, void** texObj, unsigned short* width, unsigned short* height, void* format, float* min, float* max, unsigned char* mipmaps) { const unsigned char* data = (const unsigned char*)*(const void* const*)self; if ((*(const unsigned int*)(data + 0x18) & 1) == 0) return false; if (texObj) { unsigned int offset = *(const unsigned int*)(data + 0x10); *texObj = offset ? (void*)(data + offset) : 0; } if (width) *width = *(const unsigned short*)(data + 0x1c); if (height) *height = *(const unsigned short*)(data + 0x1e); if (format) *(unsigned int*)format = *(const unsigned int*)(data + 0x20); if (min) *min = *(const float*)(data + 0x28); if (max) *max = *(const float*)(data + 0x2c); if (mipmaps) *mipmaps = (unsigned char)(*(const unsigned int*)(data + 0x24) > 1); return true; }
-void CheckRevision__Q34nw4r3g3d6ResTexCFv(){}

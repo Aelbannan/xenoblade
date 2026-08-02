@@ -2,8 +2,21 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <nw4r/g3d.h>
 
-void TestExistence__Q34nw4r3g3d12AnmObjTexSrtCFUl(){}
+namespace nw4r {
+namespace g3d {
+
+bool AnmObjTexSrt::TestExistence(u32 idx) const {
+    return (mpBinding[idx] & (BINDING_INVALID | BINDING_UNDEFINED)) == 0;
+}
+
+f32 AnmObjTexSrtRes::GetFrame() const {
+    return GetFrm();
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void Release__Q34nw4r3g3d12AnmObjTexSrtFv(){}
 
@@ -18,8 +31,6 @@ void __dt__Q34nw4r3g3d12AnmObjTexSrtFv(){}
 void Construct__Q34nw4r3g3d15AnmObjTexSrtResFP12MEMAllocatorPUlQ34nw4r3g3d12ResAnmTexSrtQ34nw4r3g3d6ResMdlb(){}
 
 void SetFrame__Q34nw4r3g3d15AnmObjTexSrtResFf(){}
-
-float GetFrame__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self){ return *(float *)((char *)self + 0x10); }
 
 void SetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResFf(){}
 

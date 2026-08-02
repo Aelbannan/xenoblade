@@ -39,9 +39,7 @@ public:
         return ref().revision;
     }
 
-    bool CheckRevision() const DECOMP_DONT_INLINE {
-        return GetRevision() == REVISION;
-    }
+    bool CheckRevision() const;
 
     void DCStore(bool sync);
 

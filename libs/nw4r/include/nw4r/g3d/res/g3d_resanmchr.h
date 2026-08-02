@@ -280,6 +280,8 @@ public:
     AnmPolicy GetAnmPolicy() const {
         return ref().info.policy;
     }
+
+    void* GetResUserData();
 };
 
 } // namespace g3d

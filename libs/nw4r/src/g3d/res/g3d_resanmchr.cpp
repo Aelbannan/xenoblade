@@ -899,61 +899,19 @@ void ChrAnmResult::GetRotTrans(math::MTX34* pRotTrans) const {
     }
 }
 
-void ChrAnmResult::SetScale(const math::VEC3* pScale) {
-    if (pScale->x == 1.0f && pScale->y == 1.0f && pScale->z == 1.0f) {
-        flags |= FLAG_SCALE_ONE | FLAG_SCALE_UNIFORM;
+} // namespace g3d
+} // namespace nw4r
 
-        if (flags & FLAG_ROT_TRANS_ZERO) {
-            flags |= FLAG_MTX_IDENT;
-        }
-    } else {
-        flags &= ~(FLAG_MTX_IDENT | FLAG_SCALE_ONE | FLAG_SCALE_UNIFORM);
+namespace nw4r {
+namespace g3d {
 
-        if (pScale->x == pScale->y && pScale->y == pScale->z) {
-            flags |= FLAG_SCALE_UNIFORM;
-        }
-    }
-
-    s = *pScale;
-}
-
-void ChrAnmResult::SetRotTrans(const math::MTX34* pRotTrans) {
-    bool rotZero = pRotTrans->_00 == 1.0f && pRotTrans->_01 == 0.0f &&
-                   pRotTrans->_02 == 0.0f && pRotTrans->_10 == 0.0f &&
-                   pRotTrans->_11 == 1.0f && pRotTrans->_12 == 0.0f &&
-                   pRotTrans->_20 == 0.0f && pRotTrans->_21 == 0.0f &&
-                   pRotTrans->_22 == 1.0f;
-
-    bool transZero = pRotTrans->_03 == 0.0f && pRotTrans->_13 == 0.0f &&
-                     pRotTrans->_23 == 0.0f;
-
-    if (rotZero) {
-        if (transZero) {
-            flags |= FLAG_ROT_TRANS_ZERO | FLAG_ROT_ZERO | FLAG_TRANS_ZERO;
-
-            if (flags & FLAG_SCALE_ONE) {
-                flags |= FLAG_MTX_IDENT;
-            }
-        } else {
-            flags |= FLAG_ROT_ZERO;
-            flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_TRANS_ZERO);
-        }
-    } else if (transZero) {
-        flags |= FLAG_TRANS_ZERO;
-        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_ROT_ZERO);
-    } else {
-        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_ROT_ZERO |
-                   FLAG_TRANS_ZERO);
-    }
-
-    math::MTX34Copy(&rt, pRotTrans);
-    flags &= ~FLAG_ROT_RAW_FMT;
+void* ResAnmChr::GetResUserData() {
+    return ofs_to_ptr<void>(ref().toResUserData);
 }
 
 } // namespace g3d
 } // namespace nw4r
 
-void GetResUserData__Q34nw4r3g3d9ResAnmChrFv(){}
 void GetMtx__Q34nw4r3g3d12ChrAnmResultCFPQ34nw4r4math5MTX34(){}
 void SetRotateDeg__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}
 void SetTranslate__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}

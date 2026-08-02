@@ -32,7 +32,7 @@ struct MPS_WORK {
     MPS_PACKHD pack;            /* 0x18 */
     u8         pad1[0x80];      /* 0x28 (system header area) */
     MPS_PKETHD pket;            /* 0xA8 */
-    u8         pad2[0x0C];      /* 0xD0 */
+    u8         pad2[0x04];      /* 0xD0 */
     void      *dec_fn;          /* 0xD4 */
     u8         pad3[0x0C];      /* 0xD8 */
     void      *sys_fn;          /* 0xE4 */

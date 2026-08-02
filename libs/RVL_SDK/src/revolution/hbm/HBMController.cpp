@@ -17,31 +17,30 @@ Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
 bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 
 void Controller::wpadConnectCallback(s32 chan, s32 result) {
-    switch (result) {
-    case WPAD_ERR_OK: {
-        if (!sThis[chan]->mCallbackFlag) {
-            sThis[chan]->mOldExtensionCallback =
-                WPADSetExtensionCallback(chan, &wpadExtensionCallback);
+    if (sThis[chan] == NULL) {
+        return;
+    }
 
+    switch (result) {
+    case WPAD_ERR_OK:
+        if (!sThis[chan]->mCallbackFlag) {
+            WPADSetExtensionCallback(chan, &wpadExtensionCallback);
             sThis[chan]->mCallbackFlag = true;
         }
 
         WPADControlSpeaker(chan, WPAD_SPEAKER_OFF, NULL);
         break;
-    }
 
-    case WPAD_ERR_NO_CONTROLLER: {
+    case WPAD_ERR_NO_CONTROLLER:
         WPADSetExtensionCallback(chan, sThis[chan]->mOldExtensionCallback);
-        sThis[chan]->mOldExtensionCallback = NULL;
-
         sThis[chan]->mCallbackFlag = false;
         sThis[chan]->mCheckSoundTimeFlag = false;
         sThis[chan]->mCheckSoundIntervalFlag = false;
         break;
     }
-    }
 
-    if (sThis[chan]->mOldConnectCallback != NULL) {
+    if (sThis[chan]->mOldConnectCallback != NULL &&
+        sThis[chan]->mOldConnectCallback != &wpadConnectCallback) {
         sThis[chan]->mOldConnectCallback(chan, result);
     }
 }

@@ -40,9 +40,96 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 template <typename T>
 int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
                      const T* pStr, int len, f32 width, bool* pHasNextLine) {
-    // TODO: full implementation needed for matching
+    ut::PrintContext<T> context = { pWriter, pStr };
+
+    ut::CharStrmReader reader = pWriter->GetFont()->GetCharStrmReader();
+
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+
+    f32 lineWidth = 0.0f;
+    bool charSpace = false;
+    const T* pPrevStream = NULL;
+
+    pRect->top = ut::Min(0.0f, pWriter->GetLineHeight());
+    pRect->bottom = ut::Max(0.0f, pWriter->GetLineHeight());
+
     *pHasNextLine = false;
-    return len;
+    reader.Set(pStr);
+    ut::Rect prevRect = *pRect;
+    u16 ch = reader.Next();
+
+    while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
+        if (ch < ' ') {
+            ut::Rect r(lineWidth, 0.0f, 0.0f, 0.0f);
+
+            context.str = static_cast<const T*>(reader.GetCurrentPos());
+            context.flags = charSpace ? 0 : ut::PrintContext<T>::FLAGS_CHARSPACE;
+
+            pWriter->SetCursorX(lineWidth);
+
+            ut::TagProcessorBase<T>::Operation oper =
+                pWriter->GetTagProcessor()->CalcRect(&r, ch, &context);
+
+            reader.Set(context.str);
+
+            pRect->left = ut::Min(pRect->left, r.left);
+            pRect->top = ut::Min(pRect->top, r.top);
+            pRect->right = ut::Max(pRect->right, r.right);
+            pRect->bottom = ut::Max(pRect->bottom, r.bottom);
+
+            lineWidth = pWriter->GetCursorX();
+
+            if (pRect->right - pRect->left > width) {
+                *pHasNextLine = true;
+                break;
+            }
+
+            if (oper == ut::TagProcessorBase<T>::OPERATION_END_DRAW) {
+                return len;
+            }
+
+            if (oper == ut::TagProcessorBase<T>::OPERATION_NO_CHAR_SPACE) {
+                charSpace = false;
+            } else if (oper == ut::TagProcessorBase<T>::OPERATION_CHAR_SPACE) {
+                charSpace = true;
+            } else if (oper == ut::TagProcessorBase<T>::OPERATION_NEXT_LINE) {
+                break;
+            }
+        } else {
+            if (charSpace) {
+                lineWidth += pWriter->GetCharSpace();
+            }
+
+            charSpace = true;
+
+            if (pWriter->IsWidthFixed()) {
+                lineWidth += pWriter->GetFixedWidth();
+            } else {
+                lineWidth += static_cast<f32>(pWriter->GetFont()->GetCharWidth(ch)) *
+                             pWriter->GetScaleH();
+            }
+
+            pRect->left = ut::Min(pRect->left, lineWidth);
+            pRect->right = ut::Max(pRect->right, lineWidth);
+
+            if (pRect->right - pRect->left > width) {
+                *pHasNextLine = true;
+                break;
+            }
+        }
+
+        pPrevStream = static_cast<const T*>(reader.GetCurrentPos());
+        ch = reader.Next();
+        prevRect = *pRect;
+    }
+
+    if (*pHasNextLine && pPrevStream != NULL) {
+        *pRect = prevRect;
+        return static_cast<int>(pPrevStream - pStr);
+    }
+
+    return static_cast<int>(static_cast<const T*>(reader.GetCurrentPos()) - pStr);
 }
 
 template <typename T>

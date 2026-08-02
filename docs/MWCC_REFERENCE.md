@@ -854,6 +854,16 @@ Ground truth came from the retail ctor (member stores at 0x8/0x14/0xB8/0x8F/0x90
 
 Also notable: the pre-SMT register-renaming witness cannot certify this pair even at 0 structural — the retail reuses r5 (encSize in the loop AND `pcmBuffer` at the WENCGetEncodeData call) so no single global rho exists; FULL_MATCH via declaration-order regalloc was the clean path (SMT would additionally have required the WPAD callee frontier `__wpadIsBusyStream`/`WPADSendStreamData`, which was mid-edit by another agent).
 
+## RVL_SDK hbm/nw4hbm lyt_textBox — TextBox ctor FULL_MATCH; CalcLineRectImpl 99.9% (pure reg-swaps); GXColor CharWriter members kill implicit-dtor bloat (Wii/1.1 `-O4,p`)
+
+`TextBox::TextBox` (us-80335760, 0x2B4) FULL_MATCH 100% and `CalcLineRectImpl<w>` (us-80336370, 0x444) at 99.9% static / 0 structural / 5 pure reg-swaps. Two repo-wide lessons:
+
+1. **CharWriter's private nested structs must use `GXColor` members, not `ut::Color`.** Retail `ut_Color.h` declares a non-inline `~Color()` (emitted only in lyt_bounding.o, never *called* anywhere in the binary — all `__dt__Color` refs are `__construct_array`/`__destroy_arr` address args). With `Color`-typed members, every TU that copy-initializes a `WideTextWriter` (implicit copy ctor ODR-use) emits `__dt__ColorMapping`/`__dt__VertexColor`/`__dt__TextColor` (0x68+0x80+0x68 = 0x150) — lyt_textBox split went 0x15F4 vs 0x1450 budget. Switching the three nested structs to `GXColor` (identical layout, trivial dtors) removes the emissions: lyt_textBox 0x1420 PASS, ut_CharWriter improved 0xCB4→0xA74 over-budget with 22→23/26 matched. Callers must cast (`*reinterpret_cast<u32*>(&mVertexColor.lu)` for `GXColor1u32`, `u32` reinterpret for the `!= DEFAULT_COLOR_MAPPING_MIN` compares).
+2. **By-value `ut::Color` args always get caller-side dtor calls in the decomp** (retail never destroys them — its dtor was effectively trivial at call sites). With the retail-matching non-inline `~Color();` header these calls are unavoidable (~0x20 in DrawSelf), so the WIP DrawSelf keeps the unit 0x34 over at 16-byte alignment; per-unit `-func_align 4` (approved split-fit tool, cf. lyt_picture) packs it to 0x1420 ≤ 0x1450.
+3. `CalcLineRectImpl` residual is the zero-register Chaitin split (retail `li r0,0` pre-call + `li r31,0` charSpace reused for the reader NULL store; decomp keeps one `r29` across GetFont). Declaration reorders regress (5.8% → 219 structural). Witness blocked by unresolved bl relocs + indirect calls (virtual `GetTagProcessor()->CalcRect`, ptmf `reader.Next()`); all 10 callees FULL_MATCH → record `accept via --smt out-of-band`.
+
+Files: `libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/ut/ut_CharWriter.h`, `ut_CharWriter.cpp`, `lyt/lyt_textBox.cpp`, `configure.py`.
+
 ## RVL_SDK hbm/mix.c — HBMMIXUpdateSettings FULL_MATCH via loop-local declaration order (Wii/1.1 `-O4,p`)
 
 `HBMMIXUpdateSettings` (us-80342970, 0xAF8, 16-channel mixer loop w/ flag switch + AX delta writes) went from HIGH_MATCH 94.2% (479 pure reg-swaps, 0 structural — witness and SMT both blocked) to **100% byte-identical** with one declaration-order change, closing the unit 15/15:

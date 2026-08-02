@@ -1162,7 +1162,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp", extra_cflags=["-func_align 4"]),  # retail lyt_picture packed at 4-byte fn alignment (Append at 0x250 after 0x24C); 16-align + 2 WIP bodies blows the split
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp"),
+            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align + WIP DrawSelf dtor-call bloat overruns 0x1450
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat.cpp"),

@@ -56,9 +56,10 @@ const Font* CharWriter::GetFont() const {
 void CharWriter::SetupGX() {
     ResetTextureCache();
 
-    if (mColorMapping.min != DEFAULT_COLOR_MAPPING_MIN ||
-        mColorMapping.max != DEFAULT_COLOR_MAPPING_MAX) {
-        SetupGXWithColorMapping(mColorMapping.min, mColorMapping.max);
+    if (*reinterpret_cast<u32*>(&mColorMapping.min) != DEFAULT_COLOR_MAPPING_MIN ||
+        *reinterpret_cast<u32*>(&mColorMapping.max) != DEFAULT_COLOR_MAPPING_MAX) {
+        SetupGXWithColorMapping(ut::Color(mColorMapping.min),
+                                ut::Color(mColorMapping.max));
         return;
     }
 
@@ -224,19 +225,19 @@ void CharWriter::PrintGlyph(f32 x, f32 y, f32 z, const Glyph& rGlyph) {
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     {
         GXPosition3f32(x, y, z);
-        GXColor1u32(mVertexColor.lu);
+        GXColor1u32(*reinterpret_cast<u32*>(&mVertexColor.lu));
         GXTexCoord2s16(texLeft, texTop);
 
         GXPosition3f32(x2, y, z);
-        GXColor1u32(mVertexColor.ru);
+        GXColor1u32(*reinterpret_cast<u32*>(&mVertexColor.ru));
         GXTexCoord2s16(texRight, texTop);
 
         GXPosition3f32(x2, y2, z);
-        GXColor1u32(mVertexColor.rd);
+        GXColor1u32(*reinterpret_cast<u32*>(&mVertexColor.rd));
         GXTexCoord2s16(texRight, texBottom);
 
         GXPosition3f32(x, y2, z);
-        GXColor1u32(mVertexColor.ld);
+        GXColor1u32(*reinterpret_cast<u32*>(&mVertexColor.ld));
         GXTexCoord2s16(texLeft, texBottom);
     }
     GXEnd();

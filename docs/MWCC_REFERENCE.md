@@ -5340,3 +5340,32 @@ exactly at the 0x1190 split budget). Reusable insights:
 - `GX_WRITE_CP_STRM_REG` must NOT mask `vtxfmt & 0xF` — the byte store
   truncates for free; masking adds a `clrlwi` retail lacks. `SC_CP_VAT_REG_B_SET_VCACHE_ENHANCE`
   is bit 31 → `GX_BITSET(reg, 0, 1, v)`.
+
+## RVL_SDK hbm/HBMBase — 3/3 FULL_MATCH; `sizeof`-constant probe catches class-layout drift (US, Wii/1.1 mwcc_43_151 `-O4,p`)
+
+Targets `us-80325cf0` createInstance, `us-80325d40` deleteInstance,
+`us-8032dd90` update_sound — all byte-identical. Reusable insights:
+
+- **A lone `li r3, <size>` mismatch in a createInstance-style allocator is a
+  class-layout probe.** Retail `HBMAllocMem(sizeof(HomeButton))` emitted
+  `li r3, 0x740`; decomp emitted `li r3, 0x738` (8 bytes short). The retail
+  init_sound/init/dtors (`addi rX, rY, 0x5D4` reverb, `sth`/`lhz` at
+  0x5C4/0x5C6/0x5C8/0x5CA, `lwz` 0x5CC/0x5D0 hooks) fixed the true tail
+  offsets; stale header comments were shifted by a removed 16-byte sound
+  block + 12 missing retail bytes. Fix = add the real fields
+  (`int mSoundRetryCount` @0x5C0, `u16 mAppVolume[4]` @0x5C4) — sizeof became
+  0x740 and createInstance matched.
+- **Verify actual member offsets with a throwaway MWCC object, not header
+  comments.** `#define private public` + `&((T*)0)->member` printf probe,
+  compiled with the unit's exact cflags, then disassembled (capstone) to read
+  the `li r4, <offset>` immediates. Comments in HBMBase.h were consistently
+  wrong from `mpAnmController` onward (0x270 claimed vs 0x260 actual).
+- **Missing sound-main call**: `update_sound` retail calls
+  `AxSoundMain()` (homebutton-namespace free fn) before the per-controller
+  `updateSound()` loop; the stub had been commented out. A file-scope
+  `namespace homebutton { void AxSoundMain(); }` forward decl (declared in
+  HBMAxSound.cpp) reproduces the `bl AxSoundMain__10homebuttonFv` reloc
+  without adding an include path.
+- **Explicit dtor + free + NULL store**: `spHomeButtonObj->~HomeButton();
+  HBMFreeMem(spHomeButtonObj); spHomeButtonObj = NULL;` is the exact retail
+  deleteInstance shape (`li r4,-1` dtor flag, store NULL) — no contortions.

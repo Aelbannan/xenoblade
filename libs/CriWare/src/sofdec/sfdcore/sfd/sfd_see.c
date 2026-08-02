@@ -225,7 +225,7 @@ void sfsee_UpdateEByteRate(void* self) {
         s32 totalTime = *(s32*)((u8*)avplay + 0xDCC);
         
         if (fileSize > 0 && totalSize > 0) {
-            *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalSize, totalTime);
+            *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalTime, totalSize);
             return;
         }
         
@@ -245,7 +245,7 @@ void sfsee_UpdateEByteRate(void* self) {
             }
             
             if (fileSize > 0 && totalSize > 0) {
-                *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalSize, totalTime);
+                *(s32*)((u8*)avplay + 0xDA8) = UTY_MulDiv(fileSize, totalTime, totalSize);
             } else {
                 *(s32*)((u8*)avplay + 0xDA8) = headerRate;
             }

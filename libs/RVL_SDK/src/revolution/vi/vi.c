@@ -9,6 +9,12 @@
 // Defined in vi3in1.c (not yet matched in this TU).
 extern void VISetRGBModeImm(void);
 extern void __VISetGamma1_0(void);
+extern void __VISetRevolutionModeSimple(void);
+
+// Defined in this TU (retail .sbss / .sdata).
+extern void* PreCB;
+extern void* PostCB;
+const char* __VIVersion = "<< RVL_SDK - VI \trelease build: Feb 27 2009 10:04:46 (0x4302_145) >>";
 
 // TV modes missing from the public vitypes.h enum (retail VITVMode)
 #define VI_TVMODE_NTSC_3D 3
@@ -97,9 +103,24 @@ s32 encoderType;
 volatile u32 flushFlag3in1;
 volatile u32 flushFlag;
 volatile u32 NEW_TIME_TO_DIMMING;
+volatile u32 THD_TIME_TO_DVD_STOP;
+volatile u32 _gIdleCount_dvd;
 volatile s32 g_current_time_to_dim;
+volatile u32 __VIDimming_All_Clear;
+volatile u32 __VIDimmingState;
+volatile u32 __VIDVDStopFlag_Enable;
 volatile u32 __VIDimmingFlag_Enable;
 u16 shdwRegs[59];
+
+static BOOL IsInitialized = FALSE;
+s16 displayOffsetH;
+s16 displayOffsetV;
+
+u16 taps[26] = {
+    0x1F0, 0x1DC, 0x1AE, 0x174, 0x129, 0x0DB, 0x08E, 0x046, 0x00C, 0x0E2,
+    0x0CB, 0x0C0, 0x0C4, 0x0CF, 0x0DE, 0x0EC, 0x0FC, 0x008, 0x00F, 0x013,
+    0x013, 0x00F, 0x00C, 0x008, 0x001, 0x000,
+};
 
 // Index (from the top bit) of the highest set bit of a 64-bit value.
 static s32 cntlzd(u64 bit) {
@@ -331,8 +352,162 @@ void __VIInit(VITVMode mode) {
     }
 }
 
+static void ImportAdjustingValues(void) {
+    displayOffsetH = SCGetDisplayOffsetH();
+    displayOffsetV = 0;
+}
+
+#define CLAMP_VI(x, l, h) (((x) > (h)) ? (h) : (((x) < (l)) ? (l) : (x)))
+
+static void AdjustPosition(u16 acv) {
+    s32 coeff;
+    s32 frac;
+
+    HorVer.AdjustedDispPosX =
+        (u16)CLAMP_VI((s16)HorVer.DispPosX + displayOffsetH, 0, 720 - HorVer.DispSizeX);
+
+    coeff = (HorVer.FBMode == VI_XFBMODE_SF) ? 2 : 1;
+    frac = HorVer.DispPosY & 1;
+
+    HorVer.AdjustedDispPosY = (u16)MAX((s16)HorVer.DispPosY + displayOffsetV, frac);
+
+    HorVer.AdjustedDispSizeY =
+        (u16)(HorVer.DispSizeY + MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) -
+              MAX((s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV -
+                      ((s16)acv * 2 - frac),
+                  0));
+
+    HorVer.AdjustedPanPosY =
+        (u16)(HorVer.PanPosY - MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) / coeff);
+
+    HorVer.AdjustedPanSizeY =
+        (u16)(HorVer.PanSizeY + MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) / coeff -
+              MAX((s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV -
+                      ((s16)acv * 2 - frac),
+                  0) /
+                  coeff);
+}
+
+static BOOL VIEnableDVDStopMotor(BOOL enable) {
+    BOOL old = __VIDVDStopFlag_Enable;
+
+    __VIDVDStopFlag_Enable = enable;
+    return old;
+}
+
 void VIInit(void) {
+    u16 dspCfg;
+    u32 value;
+    u32 tv;
+    u32 tvInBootrom;
+
+    if (IsInitialized) {
+        return;
+    }
+
+    OSRegisterVersion(__VIVersion);
+    IsInitialized = TRUE;
+
+    if (!(VI_HW_REGS[VI_DCR] & 1)) {
+        __VIInit(VI_TVMODE_NTSC_INT);
+    }
+
+    retraceCount = 0;
+    changed = 0;
+    shdwChanged = 0;
+    changeMode = 0;
+    shdwChangeMode = 0;
+    flushFlag = 0;
+    flushFlag3in1 = 0;
+
+    VI_HW_REGS[VI_FCT0_L] = taps[0] | ((taps[1] & 0x3F) << 10);
+    VI_HW_REGS[VI_FCT0_H] = (taps[1] >> 6) | (taps[2] << 4);
+    VI_HW_REGS[VI_FCT1_L] = taps[3] | ((taps[4] & 0x3F) << 10);
+    VI_HW_REGS[VI_FCT1_H] = (taps[4] >> 6) | (taps[5] << 4);
+    VI_HW_REGS[VI_FCT2_L] = taps[6] | ((taps[7] & 0x3F) << 10);
+    VI_HW_REGS[VI_FCT2_H] = (taps[7] >> 6) | (taps[8] << 4);
+    VI_HW_REGS[VI_FCT3_L] = taps[9] | (taps[10] << 8);
+    VI_HW_REGS[VI_FCT3_H] = taps[11] | (taps[12] << 8);
+    VI_HW_REGS[VI_FCT4_L] = taps[13] | (taps[14] << 8);
+    VI_HW_REGS[VI_FCT4_H] = taps[15] | (taps[16] << 8);
+    VI_HW_REGS[VI_FCT5_L] = taps[17] | (taps[18] << 8);
+    VI_HW_REGS[VI_FCT5_H] = taps[19] | (taps[20] << 8);
+    VI_HW_REGS[VI_FCT6_L] = taps[21] | (taps[22] << 8);
+    VI_HW_REGS[VI_FCT6_H] = taps[23] | (taps[24] << 8);
+    VI_HW_REGS[VI_0x70] = 0x280;
+
+    ImportAdjustingValues();
+
+    tvInBootrom = *(u32*)OSPhysicalToCached(0xCC);
+    dspCfg = VI_HW_REGS[VI_DCR];
+    HorVer.nonInter = VIGetScanMode();
+    HorVer.tv = ((dspCfg & 0x300) >> 8);
+    if ((tvInBootrom == VI_TVFORMAT_EURGB60) ||
+        ((tvInBootrom == VI_TVFORMAT_PAL) && (HorVer.tv == VI_TVFORMAT_NTSC))) {
+        HorVer.tv = VI_TVFORMAT_EURGB60;
+    }
+
+    tv = (HorVer.tv == VI_TVFORMAT_DEBUG) ? VI_TVFORMAT_NTSC : HorVer.tv;
+    HorVer.timing = getTiming((VITVMode)VI_TVMODE(tv, HorVer.nonInter));
+    regs[1] = dspCfg;
+    CurrTiming = HorVer.timing;
+    CurrTvMode = HorVer.tv;
+    HorVer.DispSizeX = 640;
+    HorVer.DispSizeY = (u16)(CurrTiming->acv * 2);
+    HorVer.DispPosX = (u16)((720 - HorVer.DispSizeX) / 2);
+    HorVer.DispPosY = 0;
+    AdjustPosition(CurrTiming->acv);
+    HorVer.FBSizeX = 640;
+    HorVer.FBSizeY = (u16)(CurrTiming->acv * 2);
+    HorVer.PanPosX = 0;
+    HorVer.PanPosY = 0;
+    HorVer.PanSizeX = 640;
+    HorVer.PanSizeY = (u16)(CurrTiming->acv * 2);
+    HorVer.FBMode = VI_XFBMODE_SF;
+    HorVer.wordPerLine = 40;
+    HorVer.std = 40;
+    HorVer.wpl = 40;
+    HorVer.xof = 0;
+    HorVer.black = TRUE;
+    HorVer.threeD = FALSE;
+
+    OSInitThreadQueue(&retraceQueue);
+
+    value = VI_HW_REGS[VI_DI0_H];
+    value = (value & ~0x8000) | (0 << 15);
+    VI_HW_REGS[VI_DI0_H] = (u16)value;
+
+    value = VI_HW_REGS[VI_DI1_H];
+    value = (value & ~0x8000) | (0 << 15);
+    VI_HW_REGS[VI_DI1_H] = (u16)value;
+
+    PreCB = NULL;
+    PostCB = NULL;
+    __OSSetInterruptHandler(OS_INTR_PI_VI, (OSInterruptHandler)__VIRetraceHandler);
+    __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_VI));
     OSRegisterShutdownFunction(&ShutdownFunctionInfo);
+
+    switch ((u32)VIGetTvFormat()) {
+    case VI_TVFORMAT_PAL:
+        THD_TIME_TO_DIMMING = 15000;
+        NEW_TIME_TO_DIMMING = 15000;
+        THD_TIME_TO_DVD_STOP = 90000;
+        break;
+    default:
+        THD_TIME_TO_DIMMING = 18000;
+        NEW_TIME_TO_DIMMING = 18000;
+        THD_TIME_TO_DVD_STOP = 108000;
+        break;
+    }
+
+    _gIdleCount_dimming = 0;
+    _gIdleCount_dvd = 0;
+    g_current_time_to_dim = VI_DM_DEFAULT;
+    __VIDimming_All_Clear = TRUE;
+    __VIDimmingState = FALSE;
+    VIEnableDimming(TRUE);
+    VIEnableDVDStopMotor(FALSE);
+    __VISetRevolutionModeSimple();
 }
 
 void VIWaitForRetrace(void) {

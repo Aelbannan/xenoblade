@@ -639,34 +639,12 @@ void WPADiCreateKeyFor3rd(s32 chan) {
     OSRestoreInterrupts(enable);
 }
 
-void WPADiDecode(s32 chan, u8* buf, u32 len, s32 offset) {
+void WPADiDecode(s32 chan, u8* buf, u16 len, s32 offset) {
+    u16 i;
     WPADCB* cb = __rvl_p_wpadcb[chan];
-    u32 i;
 
-    if (len == 0) {
-        return;
-    }
-
-    for (i = 0; i + 8 < len; i += 8) {
-        buf[i + 0] = cb->decryptAddTable[(offset + i + 0) % 8] +
-                     (buf[i + 0] ^ cb->decryptXorTable[(offset + i + 0) % 8]);
-        buf[i + 1] = cb->decryptAddTable[(offset + i + 1) % 8] +
-                     (buf[i + 1] ^ cb->decryptXorTable[(offset + i + 1) % 8]);
-        buf[i + 2] = cb->decryptAddTable[(offset + i + 2) % 8] +
-                     (buf[i + 2] ^ cb->decryptXorTable[(offset + i + 2) % 8]);
-        buf[i + 3] = cb->decryptAddTable[(offset + i + 3) % 8] +
-                     (buf[i + 3] ^ cb->decryptXorTable[(offset + i + 3) % 8]);
-        buf[i + 4] = cb->decryptAddTable[(offset + i + 4) % 8] +
-                     (buf[i + 4] ^ cb->decryptXorTable[(offset + i + 4) % 8]);
-        buf[i + 5] = cb->decryptAddTable[(offset + i + 5) % 8] +
-                     (buf[i + 5] ^ cb->decryptXorTable[(offset + i + 5) % 8]);
-        buf[i + 6] = cb->decryptAddTable[(offset + i + 6) % 8] +
-                     (buf[i + 6] ^ cb->decryptXorTable[(offset + i + 6) % 8]);
-        buf[i + 7] = cb->decryptAddTable[(offset + i + 7) % 8] +
-                     (buf[i + 7] ^ cb->decryptXorTable[(offset + i + 7) % 8]);
-    }
-    for (; i < len; i++) {
-        buf[i] = cb->decryptAddTable[(offset + i) % 8] +
-                 (buf[i] ^ cb->decryptXorTable[(offset + i) % 8]);
+    for (i = 0; i < len; i++) {
+        buf[i] = cb->decryptAddTable[(u8)((offset + i) % 8)] +
+                 (buf[i] ^ cb->decryptXorTable[(u8)((offset + i) % 8)]);
     }
 }

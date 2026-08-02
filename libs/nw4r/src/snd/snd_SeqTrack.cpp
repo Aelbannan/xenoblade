@@ -174,14 +174,15 @@ int SeqTrack::ParseNextTick(bool doNoteOn) {
 void SeqTrack::StopAllChannel() {
     SoundThread::AutoLock lock;
 
-    for (Channel* pIt = mChannelList; pIt != NULL;
-         pIt = pIt->GetNextTrackChannel()) {
+    Channel** channelList = (Channel**)((u8*)this + 0xC4);
+    for (Channel* pIt = *channelList; pIt != NULL;
+         pIt = *(Channel**)((u8*)pIt + 0xF4)) {
 
         Channel::FreeChannel(pIt);
         pIt->Stop();
     }
 
-    mChannelList = NULL;
+    *channelList = NULL;
 }
 
 void SeqTrack::ReleaseAllChannel(int release) {
@@ -382,27 +383,28 @@ void SeqTrack::ChannelCallbackFunc(Channel* pDropChannel,
 void SeqTrack::SetMute(SeqMute mute) {
     SoundThread::AutoLock lock;
 
+    u8* muteFlag = (u8*)this + 0x48;
     switch (mute) {
     case MUTE_OFF: {
-        mParserTrackParam.muteFlag = false;
+        *muteFlag = false;
         break;
     }
 
     case MUTE_STOP: {
         StopAllChannel();
-        mParserTrackParam.muteFlag = true;
+        *muteFlag = true;
         break;
     }
 
     case MUTE_RELEASE: {
         ReleaseAllChannel(-1);
         FreeAllChannel();
-        mParserTrackParam.muteFlag = true;
+        *muteFlag = true;
         break;
     }
 
     case MUTE_NO_STOP: {
-        mParserTrackParam.muteFlag = true;
+        *muteFlag = true;
         break;
     }
     }

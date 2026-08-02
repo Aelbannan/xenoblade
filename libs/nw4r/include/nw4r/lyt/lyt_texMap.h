@@ -8,6 +8,9 @@
 namespace nw4r {
 namespace lyt {
 
+// Shared sdata2 0.0f slot used by the inlined TexMap ctor in retail.
+extern "C" const float lbl_eu_80669DA0;
+
 class TexMap {
 public:
     TexMap() {
@@ -17,7 +20,7 @@ public:
         SetWrapMode(GX_CLAMP, GX_CLAMP);
         SetMipMap(false);
         SetFilter(GX_LINEAR, GX_LINEAR);
-        SetLOD(0.0f, 0.0f);
+        SetLOD(lbl_eu_80669DA0, lbl_eu_80669DA0);
         SetLODBias(0.0f);
         SetBiasClampEnable(false);
         SetEdgeLODEnable(false);

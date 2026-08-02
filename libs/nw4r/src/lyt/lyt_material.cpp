@@ -598,82 +598,46 @@ TexSRT* Material::GetTexSRTAry() {
                                             CalcOffsetTexSRTAry(mGXMemCap));
 }
 
-const TexCoordGen* Material::GetTexCoordGenAry() const {
-    return detail::ConvertOffsToPtr<TexCoordGen>(
-        mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
-}
 TexCoordGen* Material::GetTexCoordGenAry() {
     return detail::ConvertOffsToPtr<TexCoordGen>(
         mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
 }
 
-const ChanCtrl* Material::GetChanCtrlAry() const {
-    return detail::ConvertOffsToPtr<ChanCtrl>(mpGXMem,
-                                              CalcOffsetChanCtrlAry(mGXMemCap));
-}
 ChanCtrl* Material::GetChanCtrlAry() {
     return detail::ConvertOffsToPtr<ChanCtrl>(mpGXMem,
                                               CalcOffsetChanCtrlAry(mGXMemCap));
 }
 
-const ut::Color* Material::GetMatColAry() const {
-    return detail::ConvertOffsToPtr<ut::Color>(mpGXMem,
-                                               CalcOffsetMatColAry(mGXMemCap));
-}
 ut::Color* Material::GetMatColAry() {
     return detail::ConvertOffsToPtr<ut::Color>(mpGXMem,
                                                CalcOffsetMatColAry(mGXMemCap));
 }
 
-const TevSwapMode* Material::GetTevSwapAry() const {
-    return detail::ConvertOffsToPtr<TevSwapMode>(
-        mpGXMem, CalcOffsetTevSwapAry(mGXMemCap));
-}
 TevSwapMode* Material::GetTevSwapAry() {
     return detail::ConvertOffsToPtr<TevSwapMode>(
         mpGXMem, CalcOffsetTevSwapAry(mGXMemCap));
 }
 
-const AlphaCompare* Material::GetAlphaComparePtr() const {
-    return detail::ConvertOffsToPtr<AlphaCompare>(
-        mpGXMem, CalcOffsetGetAlphaCompare(mGXMemCap));
-}
 AlphaCompare* Material::GetAlphaComparePtr() {
     return detail::ConvertOffsToPtr<AlphaCompare>(
         mpGXMem, CalcOffsetGetAlphaCompare(mGXMemCap));
 }
 
-const BlendMode* Material::GetBlendModePtr() const {
-    return detail::ConvertOffsToPtr<BlendMode>(mpGXMem,
-                                               CalcOffsetBlendMode(mGXMemCap));
-}
 BlendMode* Material::GetBlendModePtr() {
     return detail::ConvertOffsToPtr<BlendMode>(mpGXMem,
                                                CalcOffsetBlendMode(mGXMemCap));
 }
 
-const IndirectStage* Material::GetIndirectStageAry() const {
-    return detail::ConvertOffsToPtr<IndirectStage>(
-        mpGXMem, CalcOffsetIndirectStageAry(mGXMemCap));
-}
 IndirectStage* Material::GetIndirectStageAry() {
     return detail::ConvertOffsToPtr<IndirectStage>(
         mpGXMem, CalcOffsetIndirectStageAry(mGXMemCap));
 }
 
-const TexSRT* Material::GetIndTexSRTAry() const {
-    return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
-                                            CalcOffsetIndTexSRTAry(mGXMemCap));
-}
 TexSRT* Material::GetIndTexSRTAry() {
     return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
                                             CalcOffsetIndTexSRTAry(mGXMemCap));
 }
 
-const TevStage* Material::GetTevStageAry() const {
-    return detail::ConvertOffsToPtr<TevStage>(mpGXMem,
-                                              CalcOffsetTevStageAry(mGXMemCap));
-}
 TevStage* Material::GetTevStageAry() {
     return detail::ConvertOffsToPtr<TevStage>(mpGXMem,
                                               CalcOffsetTevStageAry(mGXMemCap));
@@ -691,9 +655,9 @@ void Material::SetTextureNum(u8 num) {
         for (u32 i = mGXMemNum.texMap; i < num; i++) {
             new (&pTexMap[i]) TexMap();
         }
-
-        mGXMemNum.texMap = num;
     }
+
+    mGXMemNum.texMap = num;
 }
 
 void Material::SetTexCoordGenNum(unsigned char num) {
@@ -1317,16 +1281,45 @@ unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const vo
 unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const unsigned int*)self >> 18) & 0x1F;
 }
-void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode(){}
+namespace {
+struct TexMapBits {
+    u32 textureFormat : 4;
+    u32 mipmap : 1;
+    u32 wrapS : 2;
+    u32 wrapT : 2;
+    u32 minFilter : 3;
+    u32 magFilter : 1;
+    u32 biasClampEnable : 1;
+    u32 edgeLODEnable : 1;
+    u32 anisotropy : 2;
+    u32 paletteFormat : 2;
+};
+} // namespace
+
+void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode(
+    void* self, GXTexWrapMode wrapS, GXTexWrapMode wrapT) {
+    TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
+    bits->wrapS = wrapS;
+    bits->wrapT = wrapT;
+}
 int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
     return (*(const unsigned char*)((const unsigned char*)this_ + 2)) & 3;
 }
 unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const void* p_this) {
     return ((const unsigned char*)p_this)[3] & 3;
 }
-void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter(){}
-void GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(){}
-void GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(){}
+void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter(
+    void* self, GXTexFilter minFilt, GXTexFilter magFilt) {
+    TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
+    bits->minFilter = minFilt;
+    bits->magFilter = magFilt;
+}
+int GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+    return (((((const unsigned char*)this_)[2] >> 2) & 7) + 1) & 7;
+}
+int GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+    return (((((const unsigned char*)this_)[3] >> 2) & 1) + 1) & 1;
+}
 void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(){}
 void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(){}
 void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, const void* other) {

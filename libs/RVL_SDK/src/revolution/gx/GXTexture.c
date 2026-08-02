@@ -485,16 +485,10 @@ void GXInitTexObjCI(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTex
 void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt, f32 min_lod,
                      f32 max_lod, f32 lod_bias, GXBool bias_clamp, GXBool do_edge_lod,
                      GXAnisotropy max_aniso) {
-    s32 lbias;
     s32 lmin;
     s32 lmax;
     u32 mode0;
-    u32 mode0Out;
     u32 mode1;
-    u32 magBits;
-    u32 edgeBits;
-    u8 minHw;
-    const u8* minFiltTbl;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
 
     if (lod_bias < float_8066C020) {
@@ -503,24 +497,16 @@ void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt, 
         lod_bias = float_8066C024;
     }
 
-    /* Retail: cntlzw(mag/edge) under fmuls/fctiwz latency; clear ROUND/FIELD via
-       rlwinm wrap (PPC bits 13-14 == value bits 17-18), not & 0xFFFF9FFF. */
-    magBits = __cntlzw((u32)(mag_filt - 1));
-    edgeBits = __cntlzw((u32)do_edge_lod);
-    mode0 = t->mode0;
-    minFiltTbl = (const u8*)lbl_80665A40;
-    lbias = (s32)(f32)(float_8066C02C * lod_bias);
-    mode0 = __rlwimi(mode0, (u32)lbias, 9, 15, 22);
-    mode0 = __rlwimi(mode0, magBits, 31, 27, 27);
+    mode0 = __rlwimi(t->mode0, (s32)(f32)(float_8066C02C * lod_bias), 9, 15, 22);
+    mode0 = __rlwimi(mode0, __cntlzw((u32)(mag_filt - 1)), 31, 27, 27);
     t->mode0 = mode0;
 
-    minHw = minFiltTbl[min_filt];
-    mode0 = __rlwimi(mode0, minHw, 5, 24, 26);
-    mode0 = __rlwimi(mode0, edgeBits, 3, 23, 23);
-    mode0Out = __rlwinm(mode0, 0, 15, 12);
-    mode0Out = __rlwimi(mode0Out, max_aniso, 19, 11, 12);
-    mode0Out = __rlwimi(mode0Out, bias_clamp, 21, 10, 10);
-    t->mode0 = mode0Out;
+    mode0 = __rlwimi(mode0, lbl_80665A40[min_filt], 5, 24, 26);
+    mode0 = __rlwimi(mode0, __cntlzw((u32)do_edge_lod), 3, 23, 23);
+    mode0 = __rlwinm(mode0, 0, 15, 12);
+    mode0 = __rlwimi(mode0, max_aniso, 19, 11, 12);
+    mode0 = __rlwimi(mode0, bias_clamp, 21, 10, 10);
+    t->mode0 = mode0;
 
     if (min_lod < float_8066C030) {
         min_lod = float_8066C030;

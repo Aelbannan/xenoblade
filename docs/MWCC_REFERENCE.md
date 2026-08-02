@@ -919,6 +919,7 @@ GXGetTexBufferSize (us-8031e590, 0x124) and __GXSetSUTexRegs (us-8031f260, 0x164
 4. **Direct `(f32)(u32)x` / `(f32)(s8)x` casts for 2^52 conversions** — do NOT write the union `u[0]=0x43300000; u[1]=x; (f32)(u.d - 2^52)` form. MWCC emits the 2^52 trick (stw/lfd/`fsubs`) from the direct cast; the union form emits `fsub`+`frsp` pairs (+2 instr each). For signed values use the two-step cast `(f32)(s8)lodBiasRaw` with an `s16` intermediate — emits the retail `extsh; extsb; xoris ^0x8000` sign-extension + biased-magic constant (`double_8066C040` = **4503601774854144.0 = 2^52 + 2^31**, not 4503602621440.0). GXGetTexObjLODAll went 0xe4→0xdc (retail-exact) and 55→17 mismatches.
 5. **Field-packing via `__rlwimi` on a single loaded local** (GXInitTexObj mode0/mode1/image0/image3, GXInitTlutObj, GXInitTexCacheRegion): the `SC_TX_*` read-modify-write macros on `t->field` emit lwz/rlwimi/stw per macro (+2-4 instr, and `(reg & ~m) | (v<<s)` on a local folds to rlwinm+or, NOT rlwimi). Single `u32 local = t->field; local = __rlwimi(local, v, sh, mb, me); …; t->field = local;` reproduces the retail rlwimi chain byte-for-byte. MWCC folds `v >> 5` into the rlwimi rotate (SH=27 for 8..31 fields). GXInitTlutObj (0x28) and GXInitTexCacheRegion (0xa8) are now FULL_MATCH (was 0% / 10 structural each) and the unit shrank back under split budget.
 6. **`fmt = format & 0xF` used in the format-field rlwimi** (not `format`): with `__rlwimi(image0, fmt, 20, 8, 11)`, MWCC hoists the `clrlwi` to the front of the packing block into r5 and schedules the switch's `cmplwi` early — the retail schedule. Using `format` directly leaves the clrlwi at slot 5 (r0) with cmplwi late (GXInitTexObj packing section; 2 structural swaps remain only as an independent `lwz img3`/`subi h-1` order float — MWCC_REFERENCE §345 class, 10+ orderings tried).
+7. **Fully-inline rlwimi/cntlzw expressions beat named locals for latency-fill scheduling** (GXInitTexObjLOD, us-8031e9e0, 0x104): the named-local form (`u32 magBits = __cntlzw(...); u32 edgeBits = __cntlzw(...); u32 lbias = (s32)(f32)(...); u8 minHw = tbl[min_filt]; const u8* minFiltTbl = lbl_80665A40;` then a `mode0` rlwimi chain) was stuck at 92.8% with exactly **5 structural** scheduling swaps in the setup block (retail `cntlzw r9,r0; lfs C030; fmuls; cntlzw r0,r7; lwz mode0; li tbl` vs decomp `lfs C030; cntlzw r10,r0; fmuls; lwz; li; cntlzw r7,r7` — the edgeBits cntlzw coalesced into the dead do_edge_lod param reg and sank late, breaking the rho). Rewriting every value INLINE into the rlwimi chain — `mode0 = __rlwimi(t->mode0, (s32)(f32)(float_8066C02C * lod_bias), 9, 15, 22); mode0 = __rlwimi(mode0, __cntlzw((u32)(mag_filt - 1)), 31, 27, 27); t->mode0 = mode0; mode0 = __rlwimi(mode0, lbl_80665A40[min_filt], 5, 24, 26); mode0 = __rlwimi(mode0, __cntlzw((u32)do_edge_lod), 3, 23, 23); …` (no named magBits/edgeBits/lbias/minHw/minFiltTbl locals at all) — **100.0% FULL_MATCH**, 0 structural, 0 reg-swap, `full-instruction-match` certificate. Named locals create vregs in assignment order; inline temporaries get short live ranges and the allocator colors them r0/r9/r7/r4 exactly like retail. NB this does NOT transfer to the sibling `GXLoadTexObjPreLoaded` (us-8031ece0): its inline reads force callee-saved r27 (`_savegpr_27` bl in the prologue, 0x154 size) because the six long-lived value locals + inline read temps saturate the volatile regs — keep the table-pointer + id locals there; its 17-structural prologue li/read-order fixed point stands.
 
 ## kyoshin/main (US) — early init + contiguous .data base
 
@@ -5679,6 +5680,28 @@ byte-identical at 0x2D8, and lyt_material.o still fits its split (0x2F28 ≤
 `Material::SetTextureNoWrap(u8, TPLPalette*)` directly from the inline body;
 constructing a `TexMap` temp first adds `TexMap::Set` + `TexMap::SetNoWrap`
 calls (+44 bytes in `Animate(u32, Material*)`).
+
+**Resolved (US lyt_pane, 2× FULL_MATCH us-80334ca0 / us-80334480):** the unit
+carried 0x130 of linker-GC'd weak orphans: `__dt__PaneBaseFv` (0x40 deleting
+wrapper) + the orphaned `__vt__PaneBase` it serves, the implicit
+`__dt__LinkList<Pane,4>Fv` / `__dt__LinkList<AnimationLink,0>Fv` (0x58 each),
+and the inline RTTI accessor `GetRuntimeTypeInfo__PaneCFv` (0xc). Two
+source-level wins before the drop: (1) moving `PaneBase()`/`~PaneBase()` from
+lyt_pane.cpp into the header as in-class inline bodies kills the 0x1c ctor
+standalone emission and the base-vtable store in ~Pane (the ctor needed no
+drop; the 0x40 dtor wrapper still emits because the orphaned base vtable's
+dtor slot references it and the vtable is materialized in this TU); (2) an
+explicit in-class `~LinkList() {}` on the ut_LinkList.h template is a NO-OP
+for emission (MWCC still instantiates the weak wrapper — reverted). Dropping
+the four orphans via `drop_text_symbols` + `repack_after_drop=16` restores
+0x1280 → 0x1150 exactly, matching retail offsets. `GetRuntimeTypeInfo`'s only
+live reference is Pane's vtable slot 0xc, which the DOL link resolves to the
+weak copy HBMGUIManager.o already emits (it calls it via `DynamicCast`); the
+dropped dtor's only reference sits in the equally-orphaned `__vt__PaneBase`,
+so the link stays clean. Note: concurrent edits to `lyt_types.h`
+(`AnimationLink::Reset` body) shift `UnbindAnimationSelf` codegen (retail
+erases via `Erase(Iterator)`, decomp source uses `Erase(pLink)` → structural
+mismatches remain there; unrelated to the size fix).
 
 ## RVL_SDK exi/EXIBios — retail compiled with `-schedule off` (US, 3× FULL_MATCH)
 

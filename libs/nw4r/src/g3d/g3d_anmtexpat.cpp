@@ -56,7 +56,21 @@ const char* AnmObjTexPatRes::GetTypeName() const {
 } // namespace g3d
 } // namespace nw4r
 
-void Release__Q34nw4r3g3d12AnmObjTexPatFv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjTexPat::Release() {
+    for (int i = 0; i < mNumBinding; i++) {
+        mpBinding[i] = BINDING_UNDEFINED;
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, false);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 int Attach__Q34nw4r3g3d12AnmObjTexPatFiPQ34nw4r3g3d15AnmObjTexPatRes(void) { return 0x0; }
 
@@ -64,7 +78,7 @@ int Detach__Q34nw4r3g3d12AnmObjTexPatFi(void) { return 0x0; }
 
 void DetachAll__Q34nw4r3g3d12AnmObjTexPatFv(void) {}
 
-void __dt__Q34nw4r3g3d12AnmObjTexPatFv(){}
+
 
 void Construct__Q34nw4r3g3d15AnmObjTexPatResFP12MEMAllocatorPUlQ34nw4r3g3d12ResAnmTexPatQ34nw4r3g3d6ResMdlb(){}
 

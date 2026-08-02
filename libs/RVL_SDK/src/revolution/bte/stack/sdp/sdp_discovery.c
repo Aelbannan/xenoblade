@@ -175,10 +175,12 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
     UINT8 nest;
     UINT8 flag;
     UINT32 size;
-    UINT16 value;
-    UINT8 i;
+    UINT32 value;
+    INT32 i;
 
     type_byte = *p;
+    flag = nest_level & 0x80;
+    nest = nest_level & 0x7F;
     p_val = sdpu_get_len_from_type(p + 1, type_byte, &len);
     len &= 0xFFF;
     type = (UINT8)((type_byte >> 3) & 0xF);
@@ -189,12 +191,9 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
         return NULL;
     }
 
-    flag = nest_level & 0x80;
-    nest = nest_level & 0x7F;
-
     p_attr = (tSDP_DISC_ATTR *)p_db->p_free_mem;
     p_attr->attr_id = attr_id;
-    p_attr->attr_len_type = (UINT16)((type << 12) | len);
+    p_attr->attr_len_type = (UINT16)((type << 12) | (UINT16)len);
     p_attr->p_next_attr = NULL;
 
     switch (type) {
@@ -239,10 +238,12 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
             p_val += 4;
             break;
         default:
-            for (i = 0; i < len; i++) {
-                p_attr->attr_value.v.array[i] = p_val[i];
+            {
+                UINT8 *p_dst = p_attr->attr_value.v.array;
+                for (i = 0; i < (INT32)len; i++) {
+                    *p_dst++ = *p_val++;
+                }
             }
-            p_val += len;
             break;
         }
         break;
@@ -255,64 +256,45 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
             p_val += 2;
             break;
         case 4:
-            value = (UINT16)(((UINT32)p_val[0] << 24) +
-                             ((UINT32)p_val[1] << 16) +
-                             ((UINT32)p_val[2] << 8) + p_val[3]);
+            value = (UINT32)(((UINT32)p_val[0] << 24) +
+                             ((UINT32)p_val[1] << 16)) +
+                    (p_val[3] + (UINT32)((UINT32)p_val[2] << 8));
             p_attr->attr_value.v.u32 = value;
             p_val += 4;
             if (value < 0x10000) {
                 len = 2;
-                p_attr->attr_len_type =
-                    (UINT16)((p_attr->attr_len_type & 0xF000) | 2);
-                p_attr->attr_value.v.u16 = value;
+                p_attr->attr_len_type = (UINT16)((type << 12) | len);
+                p_attr->attr_value.v.u16 =
+                    (UINT16)p_attr->attr_value.v.u32;
             }
             break;
         case 16:
             if (sdpu_is_base_uuid(p_val)) {
                 if (p_val[0] == 0 && p_val[1] == 0) {
                     p_attr->attr_len_type =
-                        (UINT16)((p_attr->attr_len_type & 0xF000) | 2);
+                        (UINT16)((p_attr->attr_len_type & ~0x0FFF) | 2);
                     p_attr->attr_value.v.u16 =
                         (UINT16)((p_val[2] << 8) + p_val[3]);
+                    p_val += 16;
                 } else {
                     p_attr->attr_len_type =
-                        (UINT16)((p_attr->attr_len_type & 0xF000) | 4);
+                        (UINT16)((p_attr->attr_len_type & ~0x0FFF) | 4);
                     p_attr->attr_value.v.u32 =
                         (UINT32)(((UINT32)p_val[0] << 24) +
-                                 ((UINT32)p_val[1] << 16) +
-                                 ((UINT32)p_val[2] << 8) + p_val[3]);
+                                 ((UINT32)p_val[1] << 16)) +
+                        (p_val[3] + (UINT32)((UINT32)p_val[2] << 8));
+                    p_val += 16;
                 }
-                p_val += 16;
             } else {
-                for (i = 0; i < len; i++) {
-                    p_attr->attr_value.v.array[i] = p_val[i];
+                UINT8 *p_dst = p_attr->attr_value.v.array;
+                for (i = 0; i < (INT32)len; i++) {
+                    *p_dst++ = *p_val++;
                 }
-                p_val += len;
             }
             break;
         default:
             if (sdp_cb[0x4630] >= 2) {
                 LogMsg_1(0xA0001, "SDP - bad len in UUID attr: %d", len);
-            }
-            return p_val + len;
-        }
-        break;
-
-    case 4:
-    case 8:
-        for (i = 0; i < len; i++) {
-            p_attr->attr_value.v.array[i] = p_val[i];
-        }
-        p_val += len;
-        break;
-
-    case 5:
-        if (len == 1) {
-            p_attr->attr_value.v.u8 = p_val[0];
-            p_val += 1;
-        } else {
-            if (sdp_cb[0x4630] >= 2) {
-                LogMsg_1(0xA0001, "SDP - bad len in boolean attr: %d", len);
             }
             return p_val + len;
         }
@@ -335,15 +317,36 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
         if (flag != 0 || attr_id == 0x0D) {
             nest |= 0x80;
         }
-        for (;;) {
+        while (p_val < p_end) {
             p_val = add_attr(p_val, p_db, p_rec, 0, p_attr,
                              (UINT8)(nest + 1));
             if (p_val == NULL) {
                 return NULL;
             }
-            if (p_val >= p_end) {
-                break;
+        }
+        break;
+
+    case 4:
+    case 8:
+        {
+            UINT8 *p_dst = p_attr->attr_value.v.array;
+            for (i = 0; i < (INT32)len; i++) {
+                *p_dst++ = *p_val++;
             }
+        }
+        break;
+
+    case 5:
+        switch (len) {
+        case 1:
+            p_attr->attr_value.v.u8 = p_val[0];
+            p_val += 1;
+            break;
+        default:
+            if (sdp_cb[0x4630] >= 2) {
+                LogMsg_1(0xA0001, "SDP - bad len in boolean attr: %d", len);
+            }
+            return p_val + len;
         }
         break;
     }

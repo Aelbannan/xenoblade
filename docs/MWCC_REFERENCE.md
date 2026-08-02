@@ -6569,3 +6569,17 @@ Root causes and fixes:
 
 Files: `libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp` (+ the
 retail-proven helper/header facts above; no header changes needed).
+
+## nw4r g3d DCC TexSrt helpers — register-scheduling wall (parked)
+
+The maya `ProductTexSrtMtx_T` etc. helpers are semantically correct but the
+retail's register allocation + schedule differ from every tested source form:
+retail keeps the m[0][3] value in-place through `fadds f2,f2,f3` and evaluates
+the m[0][3] sum before the m[1][3] sum, while MWCC emits the dependency-ready
+m[1][3] sum first and allocates a fresh register. Tried: direct `+= Tu - m03`,
+temp `diff` local, statement swap, plain `= Tu` — best is mm=7 (pure
+register/order). The SMT probe rejects the register-differing versions
+(`not_equivalent` on f2↔f3 allocation). These are FULL_MATCH-or-nothing and
+need the exact MWCC scheduling form — the per-exporter variants differ
+(3dsmax T is `-= Tu`, maya T is the `x += (y - x)` shape), so the formula must
+be reconstructed per exporter before the schedule can be chased.

@@ -230,77 +230,85 @@ void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {
     (void)ctx;
 }
 
-s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
+s32 __OSGetPlayTime(ESTicketView* ticket, s32* outType, u32* outRemaining) {
     ESTicketView aligned __attribute__((aligned(32)));
     ESTicketView* view;
     u32 hasConsumed = 0;
-    ESLpEntry entries[8];
+    ESLpEntry entries[8] __attribute__((aligned(32)));
     s32 result;
     u32 lastUnknown = 0;
     u32 i;
+    view = ticket;
     if (((u32)ticket & 31) != 0) {
         memcpy(&aligned, ticket, sizeof(ESTicketView));
         view = &aligned;
-    } else {
-        view = ticket;
     }
 
     // Probe for consumption data (NULL entries = probe only)
     result = ESP_GetConsumption(view->ticketID, NULL, &hasConsumed);
     if (result > 0) {
-        /* nothing */
-    } else if (result == 0) {
-        if (hasConsumed != 0) {
-            result = ESP_GetConsumption(view->ticketID, entries, &hasConsumed);
-        }
+        goto search_limits;
     }
-
+    if (result == 0) {
+        goto fetch_consumption;
+    }
     if (result != 0) {
-        return result;
+        goto search_limits;
     }
 
-    // Search the 8-element limits array
-    for (i = 0; i < 8; i++) {
-        u32 code = view->limits[i].code;
-        if (code == 1) {
-            *outType = 1;
-            if (hasConsumed == 0) {
-                *outRemaining = view->limits[i].limit;
-            } else {
-                u32 consumed = entries[i].limit;
-                u32 limit = view->limits[i].limit;
-                if (consumed >= limit) {
-                    *outRemaining = 0;
+fetch_consumption:
+    if (hasConsumed == 0) {
+        goto search_limits;
+    }
+    result = ESP_GetConsumption(view->ticketID, entries, &hasConsumed);
+
+search_limits:
+    if (result == 0) {
+        // Search the 8-element limits array
+        for (i = 0; i < 8; i++) {
+            u32 code = view->limits[i].code;
+            if (code == 1) {
+                *outType = 1;
+                if (hasConsumed == 0) {
+                    *outRemaining = view->limits[i].limit;
                 } else {
-                    *outRemaining = limit - consumed;
+                    u32 consumed = entries[i].limit;
+                    u32 limit = view->limits[i].limit;
+                    if (consumed >= limit) {
+                        *outRemaining = 0;
+                    } else {
+                        *outRemaining = limit - consumed;
+                    }
                 }
+                return result;
             }
+            if (code != 0) {
+                lastUnknown = i + 1;
+            }
+        }
+
+        if (lastUnknown == 0) {
+            *outType = 0;
+            *outRemaining = (u32)-1;
             return result;
         }
-        if (code != 0) {
-            lastUnknown = i + 1;
-        }
-    }
 
-    if (lastUnknown == 0) {
-        *outType = 0;
-        *outRemaining = (u32)-1;
-        return result;
-    }
-
-    // Fallback: use the last non-zero, non-one limit entry
-    i = lastUnknown - 1;
-    if (view->limits[i].code == 4) {
-        *outType = 4;
-        {
-            u32 limit = view->limits[i].limit;
-            *outRemaining = limit;
-            if (hasConsumed != 0) {
-                *outRemaining = limit - entries[i].limit;
+        // Fallback: use the last non-zero, non-one limit entry
+        i = lastUnknown - 1;
+        if (view->limits[i].code == 4) {
+            *outType = 4;
+            {
+                u32 limit = view->limits[i].limit;
+                *outRemaining = limit;
+                if (hasConsumed != 0) {
+                    *outRemaining = limit - entries[i].limit;
+                }
             }
+        } else {
+            *outType = 9;
         }
-    } else {
-        *outType = 9;
+
+        return result;
     }
 
     return result;
@@ -309,7 +317,7 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
 void __OSInitPlayTime(void) {
     ESTicketView ticketView __attribute__((aligned(32)));
     u32 remaining;
-    u32 resultType;
+    s32 resultType;
     s32 result;
 
     __OSExpireTime = 0;
@@ -317,22 +325,40 @@ void __OSInitPlayTime(void) {
     __OSExpireSetExpiredFlag = TRUE;
 
     result = ESP_InitLib();
-    if (result == 0) {
-        result = ESP_DiGetTicketView(NULL, &ticketView);
-    } else {
+    switch (result) {
+    case 0:
+        goto get_ticket_view;
+    default:
         goto close_lib;
     }
 
-    if (result == -0x3F9 || result != 0) {
+get_ticket_view:
+    result = ESP_DiGetTicketView(NULL, &ticketView);
+    if (result == -0x3F9) {
         goto check_result;
     }
+    if (result == 0) {
+        goto get_play_time;
+    }
+    if (result != 0) {
+        goto check_result;
+    }
+
+get_play_time:
     result = __OSGetPlayTime(&ticketView, &resultType, &remaining);
 
 check_result:
-    if (result == -0x3F9 || result != 0) {
+    if (result == 0) {
+        goto type_checks;
+    }
+    if (result == -0x3F9) {
+        goto close_lib;
+    }
+    if (result != 0) {
         goto close_lib;
     }
 
+type_checks:
     if (resultType == 0 || resultType != 1) {
         goto close_lib;
     }
@@ -343,19 +369,18 @@ check_result:
 
     // Set up an alarm that fires when the play time expires
     {
-        OSAlarm* alarm = &__OSExpireAlarm;
         u32 busClock;
         s64 tick;
 
-        OSCreateAlarm(alarm);
+        OSCreateAlarm(&__OSExpireAlarm);
 
         busClock = *(u32*)0x800000F8;
-        tick = (s64)(remaining + 20) * (s64)(busClock >> 2);
+        tick = ((s64)remaining + 20) * (s64)(busClock >> 2);
 
-        OSSetAlarm(alarm, tick, __OSPlayTimeAlarmExpired);
+        OSSetAlarm(&__OSExpireAlarm, tick, __OSPlayTimeAlarmExpired);
 
         // Store the alarm end time for OSPlayTimeIsLimited
-        __OSExpireTime = alarm->end;
+        __OSExpireTime = __OSExpireAlarm.end;
 
         OSReport("PlayTime: %d seconds left\n", remaining);
     }

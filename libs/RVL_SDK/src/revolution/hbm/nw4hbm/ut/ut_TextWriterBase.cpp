@@ -224,6 +224,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len) {
     f32 cursorX = GetCursorX();
     f32 cursorY = GetCursorY();
 
+    f32 textWidth;
     f32 orgCursorX = cursorX;
     f32 orgCursorY = cursorY;
 
@@ -232,7 +233,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len) {
 
     bool charSpace = false;
 
-    f32 textWidth = AdjustCursor(&cursorX, &cursorY, pStr, len);
+    textWidth = AdjustCursor(&cursorX, &cursorY, pStr, len);
 
     cursorXAdj = orgCursorX - GetCursorX();
     cursorYAdj = orgCursorY - GetCursorY();
@@ -300,7 +301,8 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len) {
 
             const Font* pFont = GetFont();
             f32 scaleV = GetScaleV();
-            MoveCursorY((f32)(-pFont->GetBaselinePos()) * scaleV);
+            f32 baseF = (f32)(-pFont->GetBaselinePos());
+            MoveCursorY(baseF * scaleV);
             CharWriter::Print(ch);
             SetCursorY(baseY);
         }

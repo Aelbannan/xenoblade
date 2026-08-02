@@ -260,22 +260,26 @@ void GXSetTevSwapModeTable(GXTevSwapSel sel, GXTevColorChan r, GXTevColorChan g,
 
 void GXSetZTexture(GXZTexOp op, GXTexFmt fmt, u32 bias)
 {
-    u32 w0, w1;
-    u32 ztype;
-
-    if (fmt == 0x11) {
-        ztype = 0;
-    } else if (fmt == 0x13) {
-        ztype = 1;
-    } else if (fmt == 0x16) {
-        ztype = 2;
-    } else {
-        ztype = 2;
-    }
+    u32 w0, w1, ztype;
 
     w0 = 0;
     w0 = __rlwimi(w0, bias, 0, 8, 31);
     w0 = __rlwimi(w0, 0xF4, 24, 0, 7);
+
+    switch (fmt) {
+    case GX_TF_Z8:
+        ztype = 0;
+        break;
+    case GX_TF_Z16:
+        ztype = 1;
+        break;
+    case GX_TF_Z24X8:
+        ztype = 2;
+        break;
+    default:
+        ztype = 2;
+        break;
+    }
 
     w1 = 0;
     w1 = __rlwimi(w1, ztype, 0, 30, 31);
@@ -295,74 +299,59 @@ void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map,
                    GXChannelID channel)
 {
     static const u32 c2r[10] = { 0, 1, 0, 1, 0, 1, 7, 5, 6, 0 };
-    u32 idx = (u32)stage;
-    u32 texMapVal = (u32)map & 0x7F;
-    u32 texCoordVal = (u32)coord;
-    u32 chanVal = (u32)channel;
-    u32 trefReg, ccSel;
-    u32 saturated;
+    u32 *ptref = &__GXData->tref[stage / 2];
+    u32 tmap, tcoord, ccSel, te;
+    u32 tref;
 
-    __GXData->texmapId[idx] = (u32)map;
+    __GXData->texmapId[stage] = map;
 
-    /* Compute texmap-saturated value: clamped to valid range */
-    {
-        u32 tmp = texMapVal;
-        u32 carry = (tmp >= 8) ? 1 : 0;
-        u32 r0 = 8 + carry;
-        saturated = texMapVal & ~(8 - r0);
-    }
+    tmap = (u32)map & ~(u32)GX_TEX_DISABLE;
+    tmap = (tmap >= GX_MAX_TEXMAP) ? GX_TEXMAP0 : tmap;
 
-    /* Enable/disable TC based on coord */
-    if (texCoordVal < 8) {
-        __GXData->tevTcEnab |= (1 << idx);
+    if (coord >= GX_MAX_TEXCOORD) {
+        tcoord = GX_TEXCOORD0;
+        __GXData->tevTcEnab &= ~(1 << stage);
     } else {
-        __GXData->tevTcEnab &= ~(1 << idx);
+        tcoord = (u32)coord;
+        __GXData->tevTcEnab |= (1 << stage);
     }
-
-    trefReg = __GXData->tref[idx >> 1];
 
     if (stage & 1) {
-        u32 r0;
-        trefReg = __rlwimi(trefReg, saturated,    12, 17, 19);
-        trefReg = __rlwimi(trefReg, texCoordVal,  15, 14, 16);
+        tref = *ptref;
+        tref = __rlwimi(tref, tmap, 12, 17, 19);
+        tref = __rlwimi(tref, tcoord, 15, 14, 16);
+        *ptref = tref;
 
-        if (chanVal == 0xFF) {
-            r0 = 7;
-        } else {
-            r0 = c2r[chanVal];
-        }
-        trefReg = __rlwimi(trefReg, r0, 19,  9, 11);
+        ccSel = (channel == GX_COLOR_NULL) ? 7 : c2r[channel];
+        tref = __rlwimi(tref, ccSel, 19, 10, 12);
+        *ptref = tref;
 
-        if (texMapVal == 0xFF) {
-            ccSel = 0;
-        } else {
-            ccSel = (texMapVal & 0x100) ? 0 : 1;
+        te = 0;
+        if (map != GX_TEXMAP_NULL && !(map & GX_TEX_DISABLE)) {
+            te = 1;
         }
-        trefReg = __rlwimi(trefReg, ccSel, 18, 13, 13);
+        tref = __rlwimi(tref, te, 18, 13, 13);
+        *ptref = tref;
     } else {
-        u32 r0;
-        trefReg = __rlwimi(trefReg, saturated,    0, 29, 31);
-        trefReg = __rlwimi(trefReg, texCoordVal,  3, 26, 28);
+        tref = *ptref;
+        tref = __rlwimi(tref, tmap, 0, 29, 31);
+        tref = __rlwimi(tref, tcoord, 3, 26, 28);
+        *ptref = tref;
 
-        if (chanVal == 0xFF) {
-            r0 = 7;
-        } else {
-            r0 = c2r[chanVal];
-        }
-        trefReg = __rlwimi(trefReg, r0, 7, 22, 24);
+        ccSel = (channel == GX_COLOR_NULL) ? 7 : c2r[channel];
+        tref = __rlwimi(tref, ccSel, 7, 22, 24);
+        *ptref = tref;
 
-        if (texMapVal == 0xFF) {
-            ccSel = 0;
-        } else {
-            ccSel = (texMapVal & 0x100) ? 0 : 1;
+        te = 0;
+        if (map != GX_TEXMAP_NULL && !(map & GX_TEX_DISABLE)) {
+            te = 1;
         }
-        trefReg = __rlwimi(trefReg, ccSel, 6, 25, 25);
+        tref = __rlwimi(tref, te, 6, 25, 25);
+        *ptref = tref;
     }
 
-    __GXData->tref[idx >> 1] = trefReg;
-
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = trefReg;
+    WGPIPE.i = *ptref;
 
     __GXData->lastWriteWasXF = 0;
     __GXData->gxDirtyFlags |= 1;

@@ -240,126 +240,126 @@ extern "C" void HBMSEQRunAudioFrame(void)
         return;
     }
     while (seq != NULL) {
-            if (seq->state == 1 || seq->state == 2) {
-                for (i = 0; i < seq->num_tracks; i++) {
-                    track = &seq->tracks[i];
-                    if (track->sub_state == 1 || track->sub_state == 2) {
-                        remaining = track->delay_count;
-                        if (track->delay > remaining) {
-                            track->delay -= remaining;
-                            continue;
+        if (seq->state == 1 || seq->state == 2) {
+            for (i = 0; i < seq->num_tracks; i++) {
+                track = &seq->tracks[i];
+                if (track->sub_state == 1 || track->sub_state == 2) {
+                    remaining = track->delay_count;
+                    if (track->delay > remaining) {
+                        track->delay -= remaining;
+                        continue;
+                    }
+                    while (remaining >= track->delay) {
+                        remaining -= track->delay;
+
+                        /* play one MIDI event */
+                        b = *track->cur;
+                        if (b >= 0x80) {
+                            track->running_status = b;
+                            track->cur++;
                         }
-                        while (remaining >= track->delay) {
-                            remaining -= track->delay;
-
-                            /* play one MIDI event */
+                        rs = track->running_status;
+                        switch (rs) {
+                        case 0xF0:
+                        case 0xF7:
+                            /* system common: skip the payload */
+                            v = HBMSEQReadVarInt(&track->cur);
+                            track->cur++;
+                            track->cur += v;
+                            break;
+                        case 0xFF:
+                            /* meta event */
                             b = *track->cur;
-                            if (b >= 0x80) {
-                                track->running_status = b;
-                                track->cur++;
-                            }
-                            rs = track->running_status;
-                            switch (rs) {
-                            case 0xF0:
-                            case 0xF7:
-                                /* system common: skip the payload */
-                                v = HBMSEQReadVarInt(&track->cur);
-                                track->cur++;
-                                track->cur += v;
-                                break;
-                            case 0xFF:
-                                /* meta event */
-                                b = *track->cur;
-                                track->cur++;
-                                switch (b) {
-                                case 0x2F:
-                                    /* end of track */
-                                    seqp = track->seq;
-                                    seqp->field_0x0C--;
-                                    track->sub_state = 0;
-                                    if (seqp->field_0x0C == 0) {
-                                        seqp->field_0x10 = 1;
-                                    }
-                                    break;
-                                case 0x51:
-                                    /* tempo change */
-                                    v = HBMSEQReadVarInt(&track->cur);
-                                    track->cur++;
-                                    b1 = *track->cur;
-                                    track->cur++;
-                                    b2 = *track->cur;
-                                    track->cur++;
-                                    b3 = *track->cur;
-                                    track->cur++;
-                                    tempo32 =
-                                        ((((u32)b1 << 8) + b2) << 8) + b3;
-                                    f = (f32)tempo32;
-                                    seqp = track->seq;
-                                    track->tempo = 1000000.0f / f;
-                                    f = 32000.0f / track->tempo;
-                                    f = f / (f32)seqp->field_0x0A;
-                                    f = 96.0f / f;
-                                    track->delay_count =
-                                        (u32)(65536.0f * f);
-                                    break;
-                                default:
-                                    v = HBMSEQReadVarInt(&track->cur);
-                                    track->cur++;
-                                    track->cur += v;
-                                    break;
-                                }
-                                break;
-                            default:
-                                /* channel voice event */
-                                data[0] = rs;
-                                v = __HBMSEQMidiEventLength[rs - 0x80];
-                                switch (v) {
-                                case 1:
-                                    data[1] = *track->cur;
-                                    track->cur++;
-                                    break;
-                                case 2:
-                                    data[1] = *track->cur;
-                                    track->cur++;
-                                    data[2] = *track->cur;
-                                    track->cur++;
-                                    break;
-                                }
-                                HBMSYNMidiInput(&seq->midi_input,
-                                                 (u8 *)data);
-                                break;
-                            }
-
-                            /* track finished? */
-                            if (track->cur >= track->end) {
+                            track->cur++;
+                            switch (b) {
+                            case 0x2F:
+                                /* end of track */
                                 seqp = track->seq;
                                 seqp->field_0x0C--;
                                 track->sub_state = 0;
                                 if (seqp->field_0x0C == 0) {
                                     seqp->field_0x10 = 1;
                                 }
-                            }
-                            if (track->sub_state == 0) {
+                                break;
+                            case 0x51:
+                                /* tempo change */
+                                v = HBMSEQReadVarInt(&track->cur);
+                                track->cur++;
+                                b1 = *track->cur;
+                                track->cur++;
+                                b2 = *track->cur;
+                                track->cur++;
+                                b3 = *track->cur;
+                                track->cur++;
+                                tempo32 =
+                                    ((((u32)b1 << 8) + b2) << 8) + b3;
+                                f = (f32)tempo32;
+                                seqp = track->seq;
+                                track->tempo = 1000000.0f / f;
+                                f = 32000.0f / track->tempo;
+                                f = f / (f32)seqp->field_0x0A;
+                                f = 96.0f / f;
+                                track->delay_count =
+                                    (u32)(65536.0f * f);
+                                break;
+                            default:
+                                v = HBMSEQReadVarInt(&track->cur);
+                                track->cur++;
+                                track->cur += v;
                                 break;
                             }
-                            v = HBMSEQReadVarInt(&track->cur);
-                            track->cur++;
-                            track->delay = v << 16;
+                            break;
+                        default:
+                            /* channel voice event */
+                            data[0] = rs;
+                            v = __HBMSEQMidiEventLength[rs - 0x80];
+                            switch (v) {
+                            case 1:
+                                data[1] = *track->cur;
+                                track->cur++;
+                                break;
+                            case 2:
+                                data[1] = *track->cur;
+                                track->cur++;
+                                data[2] = *track->cur;
+                                track->cur++;
+                                break;
+                            }
+                            HBMSYNMidiInput(&seq->midi_input,
+                                             (u8 *)data);
+                            break;
                         }
-                        track->delay -= remaining;
+
+                        /* track finished? */
+                        if (track->cur >= track->end) {
+                            seqp = track->seq;
+                            seqp->field_0x0C--;
+                            track->sub_state = 0;
+                            if (seqp->field_0x0C == 0) {
+                                seqp->field_0x10 = 1;
+                            }
+                        }
+                        if (track->sub_state == 0) {
+                            break;
+                        }
+                        v = HBMSEQReadVarInt(&track->cur);
+                        track->cur++;
+                        track->delay = v << 16;
                     }
+                    track->delay -= remaining;
                 }
             }
-            if (seq->field_0x10 != 0) {
-                if (seq->state == 2) {
-                    HBMSEQSetState(seq, 0);
-                    HBMSEQSetState(seq, 2);
-                } else {
-                    HBMSEQSetState(seq, 0);
-                }
-            }
-            seq = seq->next;
         }
+        if (seq->field_0x10 != 0) {
+            if (seq->state == 2) {
+                HBMSEQSetState(seq, 0);
+                HBMSEQSetState(seq, 2);
+            } else {
+                HBMSEQSetState(seq, 0);
+            }
+        }
+        seq = seq->next;
+    }
 }
 
 extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE *seq, u8 *data, u32 config,

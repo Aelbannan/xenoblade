@@ -87,11 +87,53 @@ void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
     }
 }
 
-void __HBMSEQReadHeader__FP15_HBMSEQSEQUENCEPUc() {}
+/* Track data begins after the 14-byte header plus the MThd body length
+   (data_size includes the 6-byte signature+length prefix). */
+void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
+{
+    u8 *track_data;
+    u8 *event_data;
+    u32 num;
+    u32 data_size;
+    u16 field_a;
 
-void HBMSEQInit() {}
+    data_size = *(u32 *)(data + 4);
+    track_data = data + 14;
+    num = *(u16 *)(data + 8);
+    field_a = *(u16 *)(data + 0xA);
 
-void HBMSEQQuit() {}
+    seq->num_tracks = field_a;
+    track_data += data_size;
+    seq->field_0x0A = *(s16 *)(data + 0xC);
+    event_data = track_data - 6;
+
+    switch (num) {
+    case 0:
+        seq->num_tracks = 1;
+        __HBMSEQInitTracks(seq, event_data, 1);
+        break;
+    case 1:
+        __HBMSEQInitTracks(seq, event_data, field_a);
+        break;
+    }
+
+    seq->field_0x0C = seq->num_tracks;
+}
+
+extern "C" void HBMSEQInit()
+{
+    if (__init != 0) {
+        return;
+    }
+    __HBMSEQSequenceList = NULL;
+    __init = 1;
+}
+
+extern "C" void HBMSEQQuit()
+{
+    __HBMSEQSequenceList = NULL;
+    __init = 0;
+}
 
 /* Reads a MIDI variable-length quantity at *pp and advances *pp past it. */
 static u32 HBMSEQReadVarInt(u8 **pp)

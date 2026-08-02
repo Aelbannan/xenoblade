@@ -1119,6 +1119,23 @@ s32 __wpadRetrieveChannel(WUDDevInfo* pInfo) {
     return result;
 }
 
+static WPADCommand WPADiBuildReadCommand(WPADCB* p) {
+    WPADCommand command;
+    u32 readAddr = WM_ADDR_MEM_1770;
+    u16 readLen = 1;
+
+    command.reportID = RPTID_READ_DATA;
+    command.dataLength = RPT17_SIZE;
+    command.cmdCB = __wpadInitConnectionCallback;
+    memcpy(&command.dataBuf[RPT17_DATA_SRC_ADDRESS], &readAddr,
+           sizeof(u32));
+    memcpy(&command.dataBuf[RPT17_DATA_LENGTH], &readLen, sizeof(u16));
+    command.dstBuf = p->wmReadDataBuf;
+    command.readLength = readLen;
+    command.readAddress = readAddr;
+    return command;
+}
+
 void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
     UINT8 devHandle = pInfo->devHandle;
     const char* pStr = lbl_80560608;
@@ -1128,7 +1145,6 @@ void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
 
     if (open) {
         WPADCB* p;
-        WPADCommand command;
 
         chan = __wpadRetrieveChannel(pInfo);
 
@@ -1164,21 +1180,8 @@ void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
         p->UNK_0x990 = p->devType;
 
         {
-            u32 readAddr = WM_ADDR_MEM_1770;
-            u16 readLen = 1;
-
-            command.reportID = RPTID_READ_DATA;
-            command.dataLength = RPT17_SIZE;
-            command.cmdCB = __wpadInitConnectionCallback;
-            memcpy(&command.dataBuf[RPT17_DATA_SRC_ADDRESS], &readAddr,
-                   sizeof(u32));
-            memcpy(&command.dataBuf[RPT17_DATA_LENGTH], &readLen,
-                   sizeof(u16));
-            command.dstBuf = p->wmReadDataBuf;
-            command.readLength = readLen;
-            command.readAddress = readAddr;
-
-            WPADiPushCommand(&p->stdCmdQueue, command);
+            WPADiPushCommand(&p->stdCmdQueue,
+                             WPADiBuildReadCommand(p));
         }
 
         __VIResetRFIdle();
@@ -2306,12 +2309,12 @@ void __wpadSendDataSub(s32 chan, WPADCommand command) {
             break;
         }
         }
-    }
 
-    p->cmdBlkCB = command.cmdCB;
-    p->lastReportID = reportID;
-    p->lastReportSendTime = __OSGetSystemTime() + OS_SEC_TO_TICKS(2);
-    p->UNK_0x910 = 0;
+        p->cmdBlkCB = command.cmdCB;
+        p->lastReportID = reportID;
+        p->lastReportSendTime = __OSGetSystemTime() + OS_SEC_TO_TICKS(2);
+        p->UNK_0x910 = 0;
+    }
 
     OSRestoreInterrupts(enabled);
 
@@ -2919,11 +2922,21 @@ void __wpadDpdCallback(s32 chan, s32 status) {
     p->wpInfo.dpd = p->pendingDpdCommand != 0;
 }
 
+static s8 WPADiBLCQueueSize(WPADCB* p) {
+    s8 queueSize = (s8)(p->stdCmdQueue.back - p->stdCmdQueue.front);
+
+    if (queueSize < 0) {
+        queueSize = (s8)(queueSize + p->stdCmdQueue.capacity);
+    }
+
+    return queueSize;
+}
+
 s32 WPADControlBLC(s32 chan, u8 command, WPADCallback pCallback) {
-    WPADCB* p = __rvl_p_wpadcb[chan];
-    BOOL enabled;
     s32 status;
+    WPADCB* p = __rvl_p_wpadcb[chan];
     BOOL handshake;
+    BOOL enabled;
     u8 buf[7];
 
     enabled = OSDisableInterrupts();
@@ -2948,10 +2961,7 @@ s32 WPADControlBLC(s32 chan, u8 command, WPADCallback pCallback) {
 
             enabled2 = OSDisableInterrupts();
 
-            queueSize = p->stdCmdQueue.back - p->stdCmdQueue.front;
-            if (queueSize < 0) {
-                queueSize = (s8)(queueSize + p->stdCmdQueue.capacity);
-            }
+            queueSize = WPADiBLCQueueSize(p);
 
             OSRestoreInterrupts(enabled2);
 

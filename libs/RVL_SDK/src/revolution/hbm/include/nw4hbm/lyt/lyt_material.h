@@ -73,8 +73,8 @@ inline u32 CalcOffsetTevSwapAry(const BitGXNums& rNums) {
 }
 
 inline u32 CalcOffsetGetAlphaCompare(const BitGXNums& rNums) {
-    return rNums.tevSwap * sizeof(TevSwapMode) +
-           CalcOffsetTevSwapAry(rNums);
+    // tevSwap entries occupy 4 bytes each in the GX memory buffer
+    return rNums.tevSwap * 4 + CalcOffsetTevSwapAry(rNums);
 }
 
 inline u32 CalcOffsetBlendMode(const BitGXNums& rNums) {
@@ -242,10 +242,7 @@ public:
         return detail::ConvertOffsToPtr<TexCoordGen>(
             mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
     }
-    TexCoordGen* GetTexCoordGenAry() {
-        return detail::ConvertOffsToPtr<TexCoordGen>(
-            mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
-    }
+    TexCoordGen* GetTexCoordGenAry();
 
     const ChanCtrl* GetChanCtrlAry() const {
         return detail::ConvertOffsToPtr<ChanCtrl>(

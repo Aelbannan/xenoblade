@@ -516,6 +516,11 @@ TexSRT* Material::GetTexSRTAry() {
                                             CalcOffsetTexSRTAry(mGXMemCap));
 }
 
+TexCoordGen* Material::GetTexCoordGenAry() {
+    return detail::ConvertOffsToPtr<TexCoordGen>(
+        mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
+}
+
 void Material::SetTextureNum(u8 num) {
     if (num > 0) {
         TexMap* const pTexMap = GetTexMapAry();

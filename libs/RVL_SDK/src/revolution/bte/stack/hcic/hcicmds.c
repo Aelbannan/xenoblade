@@ -45,20 +45,24 @@ int btsnd_hcic_inq_cancel(void)
 int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    unsigned char b0, b1, b2;
     if (p == NULL)
         return 0;
     *(unsigned short *)(p + 2) = 0xC;
     *(unsigned short *)(p + 4) = 0;
+    b2 = bd_addr[2];
     p[8] = 3;
+    b1 = bd_addr[1];
     p[9] = 4;
+    b0 = bd_addr[0];
     p[10] = 9;
     p[11] = (unsigned char)max_delay;
     p[12] = (unsigned char)(max_delay >> 8);
     p[13] = (unsigned char)min_delay;
     p[14] = (unsigned char)(min_delay >> 8);
-    p[15] = bd_addr[2];
-    p[16] = bd_addr[1];
-    p[17] = bd_addr[0];
+    p[15] = b2;
+    p[16] = b1;
+    p[17] = b0;
     p[18] = inquiry_mode;
     p[19] = inquiry_length;
     btu_hcif_send_cmd(p);

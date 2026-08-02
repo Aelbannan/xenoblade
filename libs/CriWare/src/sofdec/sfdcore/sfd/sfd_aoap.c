@@ -7,9 +7,9 @@ s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(void* h, u32 err_code);
 u32 SFSET_GetCond(void* self, u32 idx);
 s32 SFTRN_CallTrtTrif(void* self, int idx, int funcIdx, int arg4, int arg5);
-u32 SFTRN_GetPrepFlg(void* self, u32 idx);
+s32 SFTRN_GetPrepFlg(void* self, u32 idx);
 void SFTRN_SetPrepFlg(void* self, u32 idx, u32 val);
-u32 SFTRN_GetTermFlg(void* self, u32 idx);
+s32 SFTRN_GetTermFlg(void* self, u32 idx);
 void SFTRN_SetTermFlg(void* self, u32 idx, u32 val);
 int SFBUF_GetPrepFlg(void* self, int idx);
 int SFBUF_GetTermFlg(void* self, int idx);
@@ -93,11 +93,10 @@ int SFAOAP_Start(void* self) {
     }
     {
         s32 result = SFTRN_CallTrtTrif(self, 3, 6, 0, 0);
-        if (result == 0) {
-            return 0;
-        } else {
-            return result;
-        }
+        s32 ret = 0;
+        if (result != 0)
+            ret = result;
+        return ret;
     }
 }
 
@@ -107,11 +106,10 @@ int SFAOAP_Stop(void* self) {
     }
     {
         s32 result = SFTRN_CallTrtTrif(self, 3, 7, 0, 0);
-        if (result == 0) {
-            return 0;
-        } else {
-            return result;
-        }
+        s32 ret = 0;
+        if (result != 0)
+            ret = result;
+        return ret;
     }
 }
 
@@ -121,11 +119,10 @@ int SFAOAP_Pause(void* self, s32 flag) {
     }
     {
         s32 result = SFTRN_CallTrtTrif(self, 3, 8, flag, 0);
-        if (result == 0) {
-            return 0;
-        } else {
-            return result;
-        }
+        s32 ret = 0;
+        if (result != 0)
+            ret = result;
+        return ret;
     }
 }
 

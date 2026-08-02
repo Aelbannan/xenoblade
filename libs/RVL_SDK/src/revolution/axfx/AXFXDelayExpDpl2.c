@@ -13,9 +13,9 @@ u32 AXFXDelayExpGetMemSizeDpl2(const AXFX_DELAY_EXP_DPL2* fx) {
 #pragma scheduling on
 
 BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx) {
+    BOOL nested;
     u32 i;
     BOOL ok;
-    BOOL nested;
     BOOL mask = OSDisableInterrupts();
     s32** p;
 
@@ -33,8 +33,8 @@ BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx) {
         for (i = 0; i < 4; i++) {
             if (*p != NULL) {
                 __AXFXFree(*p);
+                *p = NULL;
             }
-            *p = NULL;
             p++;
         }
         OSRestoreInterrupts(nested);
@@ -65,8 +65,8 @@ alloc_done:
         for (i = 0; i < 4; i++) {
             if (*p != NULL) {
                 __AXFXFree(*p);
+                *p = NULL;
             }
-            *p = NULL;
             p++;
         }
         OSRestoreInterrupts(nested);
@@ -81,8 +81,8 @@ alloc_done:
         for (i = 0; i < 4; i++) {
             if (*p != NULL) {
                 __AXFXFree(*p);
+                *p = NULL;
             }
-            *p = NULL;
             p++;
         }
         OSRestoreInterrupts(nested);
@@ -188,6 +188,8 @@ void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx) {
 }
 
 void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL2* fx) {
+    u32 samp;
+    u32 ch;
     s32 coef;
     s32 invCoef;
     s32* input[4];
@@ -195,9 +197,6 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
     s32 mixed[4];
     s32* inBus[4];
     s32* outBus[4];
-    u32 samp;
-    u32 ch;
-    s32 in;
 
     if (fx->active != 0) {
         fx->active &= ~2;
@@ -230,8 +229,10 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
             delayed[ch] = fx->line[ch][fx->curPos];
 
             if (fx->busIn != NULL) {
-                in = *input[ch] + *inBus[ch]++;
-                mixed[ch] = invCoef * in + coef * fx->last[ch];
+                s32* bus = inBus[ch];
+                s32 in = *input[ch] + *bus;
+                inBus[ch] = bus + 1;
+                mixed[ch] = coef * fx->last[ch] + invCoef * in;
             } else {
                 mixed[ch] = invCoef * (*input[ch]) + coef * fx->last[ch];
             }

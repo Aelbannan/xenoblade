@@ -220,10 +220,170 @@ void ResTev::DCStore(bool sync) {
 } // namespace g3d
 } // namespace nw4r
 
-void GXSetTevAlphaIn__Q34nw4r3g3d6ResTevF13_GXTevStageID14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg(){}
-void GXSetTevAlphaOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID(){}
-void GXSetTevKColorSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKColorSel(){}
-void GXSetTevKAlphaSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKAlphaSel(){}
-void GXSetTevOrder__Q34nw4r3g3d6ResTevF13_GXTevStageID13_GXTexCoordID11_GXTexMapID12_GXChannelID(){}
+namespace nw4r {
+namespace g3d {
+
+void ResTev::GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a,
+                             GXTevAlphaArg b, GXTevAlphaArg c,
+                             GXTevAlphaArg d) {
+    u8* pCmd = ref()
+                   .dl.dl.var[stage / TEV_STAGES_PER_DL]
+                   .dl.alphaCalcAndSwap[stage % TEV_STAGES_PER_DL];
+
+    // clang-format off
+    detail::ResWriteBPCmd(pCmd,
+        (d << 4) | (c << 7) | (b << 10) | (a << 13) |
+        ((GX_BP_REG_TEVALPHACOMBINER0 + stage * 2)
+            << GX_BP_OPCODE_SHIFT),
+
+        ~(GX_BP_TEVCOLORCOMBINER_DEST_MASK |
+          GX_BP_TEVCOLORCOMBINER_SCALE_OR_COMPARE_MODE_MASK |
+          GX_BP_TEVCOLORCOMBINER_CLAMP_MASK |
+          GX_BP_TEVCOLORCOMBINER_OP_OR_COMPARISON_MASK |
+          GX_BP_TEVCOLORCOMBINER_BIAS_MASK |
+          0xF));
+    // clang-format on
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+void ResTev::GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
+                             GXTevScale scale, GXBool clamp, GXTevRegID reg) {
+    u8* pCmd = ref()
+                   .dl.dl.var[stage / TEV_STAGES_PER_DL]
+                   .dl.alphaCalcAndSwap[stage % TEV_STAGES_PER_DL];
+
+    u32 cmd;
+    if (op <= 1) {
+        cmd = (clamp << 19) | (bias << 16) | ((op & 1) << 18) |
+              ((stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT);
+        cmd = (reg << 22) | (scale << 20) | cmd;
+    } else {
+        cmd = (clamp << 19) | (3 << 16);
+        cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
+        cmd = (cmd & ~(3 << 20)) | (((op >> 1) & 3) << 20);
+        cmd = (cmd & ~(0x3FF << 22)) | (reg << 22);
+    }
+    cmd |= (stage * 2 + GX_BP_REG_TEVALPHACOMBINER0) << GX_BP_OPCODE_SHIFT;
+
+    detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+void ResTev::GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel) {
+    u32 n = stage / 2;
+    u8* pCmd = ref().dl.dl.var[n].dl.tevKonstantSel;
+    u32 shift = (stage & 1) ? 0xE : 4;
+    u32 mask = 0x1F << shift;
+
+    detail::ResWriteSSMask(pCmd, mask);
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ],
+        ((n + GX_BP_REG_TEVKSEL0) << GX_BP_OPCODE_SHIFT) | (sel << shift),
+        mask | (0xFF << GX_BP_OPCODE_SHIFT));
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+void ResTev::GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel) {
+    u32 n = stage / 2;
+    u8* pCmd = ref().dl.dl.var[n].dl.tevKonstantSel;
+    u32 shift = (stage & 1) ? 0x13 : 9;
+    u32 mask = 0x1F << shift;
+
+    detail::ResWriteSSMask(pCmd, mask);
+    detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ],
+        ((n + GX_BP_REG_TEVKSEL0) << GX_BP_OPCODE_SHIFT) | (sel << shift),
+        mask | (0xFF << GX_BP_OPCODE_SHIFT));
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+#pragma dont_inline on
+void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
+                           GXTexMapID map, GXChannelID channel) {
+    // Convert RAS channel ID to GX channel ID
+    static const u8 r2c[GX_RAS_MAX_CHANNEL] = {
+        GX_COLOR0A0,   GX_COLOR1A1,   GX_COLOR_NULL,  GX_COLOR_NULL,
+        GX_COLOR_NULL, GX_ALPHA_BUMP, GX_ALPHA_BUMPN, GX_COLOR_ZERO};
+
+    GXTexCoordID coord2;
+    GXTexMapID map2;
+    if (GXGetTevOrder(stage, &coord2, &map2, NULL) && coord2 != 0xFF &&
+        map2 != 0xFF) {
+        ref().texCoordToTexMapID[coord2] = 0xFF;
+    }
+
+    if (coord != 0xFF) {
+        ref().texCoordToTexMapID[coord] = static_cast<u8>(map);
+    }
+
+    u32 n = stage / 2;
+    u8* pCmd = ref().dl.dl.var[n].dl.tevOrder;
+    u32 shift = (stage & 1) ? 12 : 0;
+    u32 mask = 0x3FF << shift;
+    u32 en = (map != 0xFF && (map & 0x100) == 0) ? 1 : 0;
+
+    detail::ResWriteBPCmd(
+        pCmd,
+        ((n + 0x28) << GX_BP_OPCODE_SHIFT) |
+            ((((((coord & 7) << 3) | (map & 7)) | (en << 6)) |
+              (r2c[channel & 0xF] << 7))
+             << shift),
+        mask | (0xFF << GX_BP_OPCODE_SHIFT));
+}
+
+} // namespace g3d
+} // namespace nw4r
+#pragma dont_inline reset
+
 void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID(){}
-void SetNumTevStages__Q34nw4r3g3d6ResTevFUc(){}
+namespace nw4r {
+namespace g3d {
+
+void ResTev::SetNumTevStages(u8 num) {
+    if (num < 1) {
+        return;
+    }
+    if (num > 0x10) {
+        return;
+    }
+
+    int s;
+    ResTevData& d = ref();
+    if (d.nStages > num) {
+        for (s = num; (u32)s < d.nStages; s++) {
+            GXSetTevOrder(static_cast<GXTevStageID>(s),
+                         static_cast<GXTexCoordID>(0xFF),
+                         static_cast<GXTexMapID>(0xFF),
+                         static_cast<GXChannelID>(0xFF));
+        }
+
+        for (int n = (num + 1) / 2; n < ((d.nStages + 1u) >> 1); n++) {
+            detail::ZeroMemory16ByteBlocks(
+                d.dl.dl.var[n].data, 0x30);
+            DC::StoreRangeNoSync(d.dl.dl.var[n].data, 0x30);
+        }
+    }
+
+    d.nStages = num;
+}
+
+} // namespace g3d
+} // namespace nw4r

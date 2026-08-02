@@ -79,6 +79,18 @@ public:
     void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b,
                          GXTevColorArg c, GXTevColorArg d);
 
+    void GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a, GXTevAlphaArg b,
+                         GXTevAlphaArg c, GXTevAlphaArg d);
+    void GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
+                         GXTevScale scale, GXTevRegID reg);
+    void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
+                         GXTevScale scale, GXBool clamp, GXTevRegID reg);
+    void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel);
+    void GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel);
+    void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map,
+                       GXChannelID channel);
+    void SetNumTevStages(u8 num);
+
     void CallDisplayList(bool sync) const;
 
     ResTev CopyTo(void* pDst);

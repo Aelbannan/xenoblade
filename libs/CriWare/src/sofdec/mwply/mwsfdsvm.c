@@ -10,8 +10,8 @@ extern u32 lbl_eu_805FF1D8;
 extern int lbl_eu_805FF1DC;
 
 void MWSFSVM_Init(void) {
-    volatile u32* base;
-    base = (volatile u32*)&lbl_eu_805FF1D0;
+    u32* base;
+    base = (u32*)&lbl_eu_805FF1D0;
     SVM_Init();
     base[0] = 0;
     base[1] = 0;

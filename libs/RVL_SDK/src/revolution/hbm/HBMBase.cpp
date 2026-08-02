@@ -15,6 +15,10 @@
 
 #include <cstring>
 
+namespace homebutton {
+void AxSoundMain(); // defined in HBMAxSound.cpp
+}
+
 /******************************************************************************
  *
  * API
@@ -29,18 +33,17 @@ enum HBMAllocatorType {
     HBM_ALLOCATOR_NW4R,
 };
 
-static MEMAllocator sAllocator;
-static MEMAllocator* spAllocator = &sAllocator;
+/* sAllocator/spAllocator are defined in HBMCommon.cpp (retail TU boundary);
+ * this unit only references spAllocator (see HBMCreate). */
+extern MEMAllocator sAllocator;
+static MEMAllocator* spAllocator;
 
 DECOMP_FORCEACTIVE(HBMBase_cpp, (GXColor){0, 0, 0, 255});
 
-void* HBMAllocMem(u32 size) {
-    return MEMAllocFromAllocator(spAllocator, size);
-}
-
-void HBMFreeMem(void* pBlock) {
-    MEMFreeToAllocator(spAllocator, pBlock);
-}
+/* Defined in HBMCommon.cpp (retail TU boundary); declared extern here so
+ * MWCC keeps the calls as bl (the retail HBMBase unit calls them). */
+extern void* HBMAllocMem(u32 size);
+extern void HBMFreeMem(void* pBlock);
 
 static HBMAllocatorType getAllocatorType(const HBMDataInfo* pDataInfo) {
     if (pDataInfo->pAllocator != NULL) {
@@ -227,6 +230,22 @@ const char* HomeButton::scBatteryPaneName //
 };
 #undef X
 
+/* Minimal classes with the vtable shapes the HomeButton destructor calls
+ * through.  The objects are unknown SDK types whose deleting-destructor
+ * virtuals sit at these offsets (verified against the retail dtor assembly). */
+struct VtblObj {
+    virtual ~VtblObj();
+    virtual void v1();
+    virtual void v2();
+};
+
+/* homebutton::RemoteSpk stores its vtable pointer at +0x1F0 (see the retail
+ * RemoteSpk ctor), so the dtor call goes through that slot. */
+struct RemoteSpkDtor {
+    u8 pad[0x1F0];
+    void** vtbl;   // 0x1F0
+};
+
 HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
     : mpHBInfo(pDataInfo), mpLayout(NULL), mpPaneManager(NULL), mFader(30) {
 
@@ -261,6 +280,101 @@ HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
     mpSoundHandle = NULL;
     */
 }
+
+HomeButton::~HomeButton() {
+    // Retail-layout view of the late HomeButton fields (the reconstructed
+    // header offsets are corrected via the mpText fix in HBMBase.h).
+    typedef struct DtorView {
+        u8 pad0[0x04];
+        const HBMDataInfo* mpHBInfo;   // 0x04
+        u8 pad1[0x08];
+        s32 mState;                    // 0x10
+        u8 pad2[0x80];
+        u8 flag94;                     // 0x94
+        u8 pad3[0x1B];
+        void* pB0;                     // 0xB0
+        void* pB4;                     // 0xB4
+        u8 pad4[0xF4];
+        WPADSyncDeviceCallback cb1AC;  // 0x1AC
+        u8 pad5[0x28];
+        nw4hbm::lyt::Layout* pLayout;  // 0x1D8
+        nw4hbm::lyt::Layout* pCursorLayout[4]; // 0x1DC
+        nw4hbm::lyt::ArcResourceAccessor* pResAccessor; // 0x1EC
+        gui::Manager* pGuiManager;     // 0x1F0
+        void* pRaw1F4;                 // 0x1F4
+        nw4hbm::lyt::DrawInfo drawInfo; // 0x1F8 (0x54 bytes -> 0x24C)
+        Controller* pController[WPAD_MAX_CONTROLLERS]; // 0x24C
+        RemoteSpkDtor* pRemoteSpk;     // 0x25C (vtable at +0x1F0)
+        VtblObj* pAnmObj[12];          // 0x260 (runtime count = mState, 0..3)
+        VtblObj* pGrpObj[0x4A];        // 0x290
+        VtblObj* pPairObj[0xF];        // 0x3B8
+        u8 pad7[0x14];
+        OSAlarm mAlarm[WPAD_MAX_CONTROLLERS];        // 0x408
+        OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];  // 0x4C8
+        OSAlarm mSimpleSyncAlarm;      // 0x588
+    } DtorView;
+
+    DtorView* v = (DtorView*)this;
+    int i;
+
+    v->pResAccessor->~ArcResourceAccessor();
+    HBMFreeMem(v->pResAccessor);
+
+    v->pLayout->~Layout();
+    HBMFreeMem(v->pLayout);
+
+    if (v->mpHBInfo->cursor == 0) {
+        for (i = 0; i < 4; i++) {
+            v->pCursorLayout[i]->~Layout();
+            HBMFreeMem(v->pCursorLayout[i]);
+        }
+    }
+
+    for (i = 0; i < v->mState; i++) {
+        v->pAnmObj[i]->~VtblObj();
+        HBMFreeMem(v->pAnmObj[i]);
+    }
+
+    for (i = 0; i < 0xF; i++) {
+        v->pPairObj[i]->~VtblObj();
+        HBMFreeMem(v->pPairObj[i]);
+    }
+
+    for (i = 0; i < 0x4A; i++) {
+        v->pGrpObj[i]->~VtblObj();
+        HBMFreeMem(v->pGrpObj[i]);
+    }
+
+    HBMFreeMem(v->pRaw1F4);
+
+    v->pGuiManager->~Manager();
+    HBMFreeMem(v->pGuiManager);
+
+    for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        if (v->flag94) {
+            v->pController[i]->clearCallback();
+        }
+        v->pController[i]->~Controller();
+        HBMFreeMem(v->pController[i]);
+    }
+
+    ((void (*)(RemoteSpkDtor*, int))v->pRemoteSpk->vtbl[2])(v->pRemoteSpk, -1);
+    HBMFreeMem(v->pRemoteSpk);
+    v->pRemoteSpk = NULL;
+
+    WPADSetSimpleSyncCallback(v->cb1AC);
+
+    HBMFreeMem(v->pB0);
+    HBMFreeMem(v->pB4);
+
+    for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        OSCancelAlarm(&v->mAlarm[i]);
+        OSCancelAlarm(&v->mSpeakerAlarm[i]);
+    }
+
+    OSCancelAlarm(&v->mSimpleSyncAlarm);
+}
+
 
 void HomeButton::createInstance(const HBMDataInfo* pDataInfo) {
     if (void* pMem = HBMAllocMem(sizeof(HomeButton))) {
@@ -3064,12 +3178,7 @@ const int HomeButton::scSoundThreadPrio = 4;
 const int HomeButton::scDvdThreadPrio = 3;
 
 void HomeButton::update_sound() {
-    /*
-    if (mpSoundArchivePlayer != NULL) {
-        nw4hbm::ut::detail::AutoLock<OSMutex> lock(sMutex);
-        mpSoundArchivePlayer->Update();
-    }
-    */
+    AxSoundMain();
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++)
         mpController[i]->updateSound();

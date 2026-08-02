@@ -274,29 +274,24 @@ private:
     Controller* mpController[WPAD_MAX_CONTROLLERS];            // at 0x24C
     RemoteSpk* mpRemoteSpk;                                    // at 0x25C
 
-    GroupAnmController* mpAnmController[res::eAnimator_Max];         // at 0x270
-    GroupAnmController* mpGroupAnmController[res::eGrAnimator_Max];  // at 0x2A0
-    GroupAnmController* mpPairGroupAnmController[res::ePairAnm_Max]; // at 0x3C8
+    GroupAnmController* mpAnmController[res::eAnimator_Max];         // at 0x260
+    GroupAnmController* mpGroupAnmController[res::eGrAnimator_Max];  // at 0x290
+    GroupAnmController* mpPairGroupAnmController[res::ePairAnm_Max]; // at 0x3B8
 
-    BlackFader mFader;                                     // at 0x404
-    OSAlarm mAlarm[WPAD_MAX_CONTROLLERS];                  // at 0x418
-    OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];           // at 0x4D8
-    OSAlarm mSimpleSyncAlarm;                              // at 0x598
-    int iReConnectTime;                                    // at 0x5c8
-    int iReConnectTime2;                                   // at 0x5CC
-    //nw4hbm::snd::SoundArchivePlayer* mpSoundArchivePlayer; // at 0x5D0
-    //nw4hbm::snd::DvdSoundArchive* mpDvdSoundArchive;       // at 0x5D4
-    //nw4hbm::snd::MemorySoundArchive* mpMemorySoundArchive; // at 0x5D8
-    //nw4hbm::snd::NandSoundArchive* mpNandSoundArchive;     // at 0x5DC
-    //nw4hbm::snd::SoundHeap* mpSoundHeap;                   // at 0x5E0
-    //nw4hbm::snd::SoundHandle* mpSoundHandle;               // at 0x5E4
-    //u16 mAppVolume[nw4hbm::snd::AUX_BUS_NUM];              // at 0x5E8
-    AXFXAllocHook mAxFxAlloc;                              // at 0x5F0
-    AXFXFreeHook mAxFxFree;                                // at 0x5F4
-    AXFX_REVERBHI mAxFxReverb;                             // at 0x5F8
-    AXAuxCallback mAuxCallback;                            // at 0x758
-    void* mpAuxContext;                                    // at 0x75C
-    f32 mFadeOutSeTime;                                    // at 0x760
+    BlackFader mFader;                                     // at 0x3F4
+    OSAlarm mAlarm[WPAD_MAX_CONTROLLERS];                  // at 0x408
+    OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];           // at 0x4C8
+    OSAlarm mSimpleSyncAlarm;                              // at 0x588
+    int iReConnectTime;                                    // at 0x5B8
+    int iReConnectTime2;                                   // at 0x5BC
+    int mSoundRetryCount;                                  // at 0x5C0 (retail; sound-retry limit, init()/calc())
+    u16 mAppVolume[4];                                     // at 0x5C4 (retail; AUX return volumes + 4th latch)
+    AXFXAllocHook mAxFxAlloc;                              // at 0x5CC
+    AXFXFreeHook mAxFxFree;                                // at 0x5D0
+    AXFX_REVERBHI mAxFxReverb;                             // at 0x5D4
+    AXAuxCallback mAuxCallback;                            // at 0x734
+    void* mpAuxContext;                                    // at 0x738
+    f32 mFadeOutSeTime;                                    // at 0x73C
 
 private:
     static const int scSoundHeapSize_but2;

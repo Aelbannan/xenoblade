@@ -271,6 +271,10 @@ void btu_hcif_process_event(BT_HDR *p_msg)
     UINT8 *p = (UINT8 *)(p_msg + 1) + p_msg->offset;
     UINT8 event;
     UINT8 evt_len;
+    UINT16 hci_handle;
+    UINT16 interval;
+    UINT8 hci_status;
+    UINT8 mode;
 
     event = *p;
     evt_len = *(p + 1);
@@ -387,17 +391,16 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         l2c_link_process_num_completed_pkts(p + 2);
         break;
 
-    case HCI_MODE_CHANGE_EVT: {
-        UINT16 hci_handle = (UINT16)(p[3] + (p[4] << 8));
-        UINT8 mode = p[5];
-        UINT16 interval = (UINT16)(p[6] + (p[7] << 8));
-        UINT8 hci_status = p[2];
+    case HCI_MODE_CHANGE_EVT:
+        hci_handle = (UINT16)(p[3] + (p[4] << 8));
+        interval = (UINT16)(p[6] + (p[7] << 8));
+        mode = p[5];
+        hci_status = p[2];
 
         btm_sco_chk_pend_unpark(hci_status, hci_handle);
         btm_pm_proc_mode_change(hci_status, hci_handle, mode, interval);
         hidd_pm_proc_mode_change(hci_status, mode, interval);
         break;
-    }
 
     case HCI_RETURN_LINK_KEYS_EVT:
         if (*(p + 2) != 0) {

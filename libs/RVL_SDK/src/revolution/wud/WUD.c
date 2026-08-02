@@ -1124,9 +1124,7 @@ u8 __wudSyncPrepareSearch(void) {
     }
 
     if (p->syncSkipChecks != 0) {
-        i = 0;
-
-        while (i < WUD_MAX_DEV_ENTRY) {
+        for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
             tBTM_PM_PWR_MD block;
 
             enabled = OSDisableInterrupts();
@@ -1145,8 +1143,6 @@ u8 __wudSyncPrepareSearch(void) {
                 BTM_SetPowerMode(_wcb.pmID, pDev->devAddr, &block);
                 return 1;
             }
-
-            i++;
         }
     }
 

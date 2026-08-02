@@ -187,10 +187,11 @@ u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
 
 /* Luma DC size table */
 void mpvvlc_InitDcSizY(void) {
-    u8 *p = lbl_eu_80603400;
     int i;
+    s8 *p = (s8*)lbl_eu_80603400;
+    s8 v = 0x12;
 
-    for (i = 0; i < 32; i++) *p++ = 0x12;
+    for (i = 0; i < 32; i++) *p++ = v;
     for (i = 0; i < 32; i++) *p++ = 0x22;
     for (i = 0; i < 16; i++) *p++ = 0x03;
     for (i = 0; i < 16; i++) *p++ = 0x33;
@@ -198,12 +199,12 @@ void mpvvlc_InitDcSizY(void) {
     for (i = 0; i < 8; i++) *p++ = 0x54;
     for (i = 0; i < 4; i++) *p++ = 0x65;
     for (i = 0; i < 2; i++) *p++ = 0x76;
-    for (i = 0; i < 2; i++) *p++ = 0x87;
+    for (i = 0; i < 2; i++) *p++ = -121;
 }
 
 /* Chroma DC size table */
 void mpvvlc_InitDcSizC(void) {
-    u8 *p = lbl_eu_80603488;
+    s8 *p = (s8*)lbl_eu_80603488;
     int i;
 
     for (i = 0; i < 32; i++) *p++ = 0x02;
@@ -214,7 +215,7 @@ void mpvvlc_InitDcSizC(void) {
     for (i = 0; i < 4; i++) *p++ = 0x55;
     for (i = 0; i < 2; i++) *p++ = 0x66;
     *p++ = 0x77;
-    *p++ = 0x88;
+    *p++ = -120;
 }
 
 /* Luma DC size table (2nd form) */

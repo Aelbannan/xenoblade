@@ -246,52 +246,14 @@ BOOLEAN SDP_DeleteRecord(UINT32 handle) {
 
 BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_service_ids) {
     UINT8 buff[SDP_MAX_ATTR_LEN * 2 + 8];
-    UINT8 *p = buff;
     UINT16 num = 0;
-    if (num_services != 0) {
-        if (num_services > 8) {
-            UINT16 n = (UINT16)(num_services - 8);
-            UINT16 cnt = (UINT16)((n + 7) >> 3);
+    UINT8 *p = buff;
 
-            while (n > 0) {
-                /* 8 service class IDs per group, each as a UUID16 data element */
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[0] >> 8);
-                *p++ = (UINT8)p_service_ids[0];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[1] >> 8);
-                *p++ = (UINT8)p_service_ids[1];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[2] >> 8);
-                *p++ = (UINT8)p_service_ids[2];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[3] >> 8);
-                *p++ = (UINT8)p_service_ids[3];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[4] >> 8);
-                *p++ = (UINT8)p_service_ids[4];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[5] >> 8);
-                *p++ = (UINT8)p_service_ids[5];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[6] >> 8);
-                *p++ = (UINT8)p_service_ids[6];
-                *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-                *p++ = (UINT8)(p_service_ids[7] >> 8);
-                *p++ = (UINT8)p_service_ids[7];
-                num += 8;
-                p_service_ids += 8;
-                n = (UINT16)(n - 8);
-            }
-        }
-
-        while (num < num_services) {
-            *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
-            *p++ = (UINT8)(*p_service_ids >> 8);
-            *p++ = (UINT8)*p_service_ids;
-            num++;
-            p_service_ids++;
-        }
+    for (num = 0; num < num_services; num++) {
+        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
+        *p++ = (UINT8)(*p_service_ids >> 8);
+        *p++ = (UINT8)*p_service_ids;
+        p_service_ids++;
     }
 
     return SDP_AddAttribute(handle, 1, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);

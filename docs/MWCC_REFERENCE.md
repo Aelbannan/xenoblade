@@ -130,6 +130,37 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 | Wrong float constant pool | `lfs` from wrong `.sdata2` slot | `extern "C" const float lbl_eu_*` |
 | Ternary vs `if/else` codegen | Extra `b` or `sel` | Toggle form |
 | Ghidra `r13` SDA | Misleading decompilation | Set SDA bases in Ghidra |
+| Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594) |
+| 3-op load-order reg-swaps in a top-level sum (`lwz` order differs, adds identical) | MWCC rotates a top-level sum chain `[s0,s1,s2]` into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`) | Write the source in rotated order: retail loads `[panFrontL, fader, X]` require `fader + X + panFrontL`; sums nested in a larger tree (`(a+b+c)-30`) are NOT rotated (HBMMIXInitChannel) |
+
+## RVL_SDK bte/sdp sdp_db.c — SDP_AddServiceClassIdList FULL_MATCH: "8-per-group" is MWCC ×8 unroll, not source structure (GC/3.0a3.4 `-func_align 4` `-ipa off`)
+
+`us-80306f88` SDP_AddServiceClassIdList went 6.3% → 100% (FULL_MATCH, 0x17C/0x17C). 8+ prior stalls assumed a hand-written "8 service class IDs per group" loop (`while (n > 0) { 8× UUID; n -= 8; }`). The retail shape is actually MWCC's **×8 loop unroll + scalar remainder** of ONE simple single-UUID loop:
+
+```c
+UINT16 num = 0;                 /* declared BEFORE UINT8 *p = buff; — fixes reg allocation */
+UINT8 *p = buff;
+for (num = 0; num < num_services; num++) {
+    *p++ = 0x19;                /* (UUID_DESC_TYPE<<3)|SIZE_TWO_BYTES */
+    *p++ = (UINT8)(*p_service_ids >> 8);
+    *p++ = (UINT8)*p_service_ids;
+    p_service_ids++;
+}
+```
+
+Unroll signature to recognize (identical in the already-matched `SDP_DeleteAttribute` copy loop, same unit):
+- `cmpli bound, 8; addis r, bound, 1; subi r, r, 8; ble skip` — bound > 8 guard; the `addis +0x10000/subi` is the u16-borrow subtraction `(u16)(bound-8)`
+- `rlwinm n,..,0,16,31; addi n,7; rlwinm (n+7)>>3; mtctr; cmpli n,0; ble skip` — unrolled-part trip `ceil((bound-8)/8)` with the second (n==0) guard
+- `[8× body, counter coalesced += 8]; bdnz` — the unrolled loop
+- `subf trip = bound - counter; mtctr; cmpl counter, bound; bge skip; [1× body]; bdnz` — the scalar remainder
+
+Key lessons:
+- Step-8 `while`/`for` loops (`n -= 8`, `xx += 8`) do **not** convert to countdowns; step-±1 loops with a small body auto-unroll ×8 instead — the `(n+7)>>3` trip is compiler-generated, so do NOT write `cnt = (n+7)>>3` in source.
+- The `cmpli bound,0; ble` guard needs a mixed signed/unsigned comparison (`int xx < u16 bound` promotes the bound, or the counter is u16 and the bound u16 — MWCC emits `cmpli`); pure-u32 countdowns normalize to `cmpi; beq`.
+- Register rotation (num=p=scratch 3-cycle) broke by declaring `UINT16 num = 0;` before `UINT8 *p = buff;` — declaration order, per §4.
+- Do not add an `if (num_services != 0)` wrapper: the for-loop entry test (`cmpi r4,0; beq` → call) already covers it; the wrapper emits a duplicate `beq`.
+
+---
 
 ---
 
@@ -4851,6 +4882,17 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
   Byte-identical bodies bypass the callee gate entirely (opaque EABI contracts).
 
 
+## sdp_api.c — db-scan lookups SDP_FindServiceInDb/UUIDInDb (GC/3.0a3.4, `-func_align 4`, `-ipa off`)
+
+`SDP_FindServiceInDb` (us-80305c6c) → FULL_MATCH 100% byte-identical; `SDP_FindServiceUUIDInDb` (us-80305d38) → 0 structural / 18 pure reg-swaps (98.3%). Reusable patterns:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Inner sub-attr loop exit branches to the **attr advance** (`p_attr = p_attr->p_next_attr`) instead of retail's next-**record** advance | The BTE db-scan source has an implicit `break` after the inner `for (p_attr2 …)` sub-loop — the sub-loop exit jumps straight to `p_rec = p_rec->p_next_rec`, skipping the current record's remaining attributes | Add `break;` after the sub-loop; without it the only diff is that one branch target (retail `b next-rec` vs decomp `b attr-advance`) |
+| Sub-loop allocated into a **fresh register** (r7) instead of reusing p_attr's (r6) | A separate `p_attr2` local whose live range overlaps the (still-live) `p_attr` forces two registers; retail reuses one register for both roles | Reuse `p_attr` as the sub-loop variable (`for (p_attr = p_attr->attr_value.v.p_sub_attr; …)`) — the allocator then coalesces the loop into the same register and the body is byte-identical |
+| Nested `if (id==CLS) { if (type==SEQ) {…} } else if (id==SRV)` emits the inner-failure `bc` to the attr advance; retail branches both failures to the else-if head | MWCC keeps the nested-if failure edge local (falls through to the code after the outer if) | Flatten to `if (A && B) { … break; } else if (C)` — both condition failures then target the else-if head like retail |
+| Residual 18 pure reg-swaps: p_rec/p_attr hold swapped callee-saved colors (retail p_rec→r31/p_attr→r30; MWCC always emits p_rec→r30/p_attr→r31) | Irreducible allocator soft-cap: prologue save slots are byte-identical (`stw r31,28(sp)`/`stw r30,24(sp)` — fixed save order) while the body swaps roles, so no global rho bijection exists and the renaming witness rejects | Resisted: declaration order (both), separate p_attr2 vs reuse, while vs for loops, ternary init, initialized decls, flat vs nested ifs. EQUIVALENT_MATCH-eligible via SMT once the callee (`sdpu_compare_uuid_with_attr`, us-8030ad94, FULL_MATCH+cert) is accepted |
+
 ## bta_dm_api.c — BTA DM API layer (GC/3.0a5.2, `-func_align 4`) — 10× FULL_MATCH
 
 All 10 BTA_DM API targets (`BTA_EnableBluetooth`, `BTA_DisableBluetooth`,
@@ -5571,6 +5613,25 @@ only .data reference sits in the equally-orphaned weak `__vt__AnimTransform`
 0xBA8 ≤ 0xBB0, all 11 functions byte-identical, symbol offsets match retail
 exactly after the drop.
 
+**Resolved (US lyt_layout, 3× FULL_MATCH us-80330910 / us-80330320 /
+us-80330140):** lyt_layout.o carried four unreferenced weak orphans (0xFC total
+= the whole split overflow): the two implicit `__dt__LinkList<T,N>Fv`
+template-dtor wrappers (`LinkList<AnimTransform,4>` from `mAnimTransList`,
+`LinkList<Group,4>` from the `GroupContainer` member instantiation — same
+pattern as lyt_group), the inline-virtual `__dt__AnimTransformFv` (same as
+lyt_animation), and the inline RTTI accessor `GetRuntimeTypeInfo__PaneCFv`
+(0xC, from the header `NW4R_UT_RTTI_DECL(Pane)` macro; called only virtually
+via `DynamicCast` slot 0xC, so nothing takes its address). The RTTI accessor
+orphan is new to this section — any TU that only *virtually* calls
+`GetRuntimeTypeInfo` on an RTTI-declared class gets a 0xC orphan per
+instantiated base class. Dropped all four via `drop_text_symbols` +
+`repack_after_drop=16` in `tools/postprocess_reloc_names.py` (same
+dead-strip-simulation precedent as lyt_group / lyt_animation): decomp .text
+0xD9C → 0xC90 ≤ 0xCA0. Symbol offsets land at retail−0x10 after Build while
+decomp Build is 0x2fc (retail 0x304, another agent's target) — the shift
+resolves itself when Build matches; per-function matches are unaffected
+(by-name comparison).
+
 **AnimationLink ctor store order (SetResource, us-8032e180):** retail's
 placement-new loop writes the inlined ctor as `stw 0; stw 4; stb 14; stw 8;
 sth 12` (node, mbDisable, mAnimTrans, mIdx). The `: mbDisable(false) {
@@ -5818,13 +5879,21 @@ entries; the whole TU must be matched for FULL_MATCH. These sites are
 equivalent loads (safe for EQUIVALENT_MATCH via SMT once the certified-callee
 tree is complete).
 
-- **Path-limit wall (SMT infeasible).** Even at 97%+ fuzzy the full probe fails:
-  the 21 inlined volume lookups give ~3^21 paths (`path limit exceeded (4096)`),
-  and the renaming witness needs position-aligned same-mnemonic streams (Gate 1
-  size equality) — the retail tail materialises a mix base (`addi r3, r28, 0x3e`)
-  that MWCC refuses to reproduce from any high-level form (`AXPBMIX*` pointer,
-  volatile pointer, pointer-before-ve-stores, ve+mix pointer pairs all fold
-  back to direct vpb offsets). Remaining residue is scheduler artifacts
-  (enabled-save slot, base promotion) + 28 load-order reg-swaps inside the
-  expression trees. Keep at CODE_MATCH pending 100% (same conclusion as
-  __wpadCalcRecalibration in this file).
+- **RESOLVED → FULL_MATCH (2026).** Both claimed blockers had high-level C
+  fixes:
+  1. **Mix base register:** the retail tail materialises `addi r3, r28, 0x3e`
+     and does all delta/value stores via `r3+0..44`. A `u16* q` local **walked
+     with `*q++`** (declared as `&vpb->pb.mix.vL`, first store `*q++ = ch->vL`
+     folds to direct `vpb+0x3c`, then MWCC keeps `q` in a base register across
+     the `vL != 0` branch at `vDeltaL` = 0x3e) reproduces the retail addi and
+     every store displacement byte-for-byte. Plain field stores, `AXPBMIX*`
+     pointers, `p[const]` indexing, volatile, and declaration reorders all
+     fold back to direct offsets (as previously documented).
+  2. **Load-order reg-swaps:** MWCC rotates a top-level sum chain `[s0,s1,s2]`
+     into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`). Retail's loads
+     `panFrontL, fader, X` therefore require source `ch->fader + X + ch->panFrontL`
+     (e.g. `fader + auxA + panFrontL`), not source order. Sums inside a larger
+     arithmetic tree (`fader + auxA + panFrontR - 30`) are NOT rotated.
+  Result: HBMMIXInitChannel 594/594 (0x948/0x948 exact), FULL_MATCH with
+  semantic certificate, no SMT needed. Same conclusion as
+  __wpadCalcRecalibration in this file.

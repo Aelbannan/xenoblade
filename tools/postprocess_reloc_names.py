@@ -585,6 +585,26 @@ UNIT_RULES: dict[str, UnitRules] = {
         # orphan restores the retail split layout and fits the 0xBB0 budget.
         drop_text_symbols=("__dt__Q36nw4hbm3lyt13AnimTransformFv",),
     ),
+    "lyt_layout.o": UnitRules(
+        # MWCC emits unreferenced weak orphans the retail linker GC'd: the
+        # inline-virtual base dtor __dt__AnimTransformFv (0x40), the implicit
+        # LinkList<AnimTransform,4>/LinkList<Group,4> template-dtor wrappers
+        # (0x58 each, same pattern as lyt_group), and the inline RTTI accessor
+        # GetRuntimeTypeInfo__PaneCFv (0xc, NW4R_UT_RTTI_DECL). Every call site
+        # inlines them down to a direct ~LinkListImpl/~Pane call, so nothing in
+        # the DOL references them. Dropping restores the retail split layout
+        # (decomp .text 0xD9C -> 0xCA0) and fits the 0xCA0 budget.
+        drop_text_symbols=(
+            "GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv",
+            "__dt__Q36nw4hbm2ut40LinkList<Q36nw4hbm3lyt13AnimTransform,4>Fv",
+            "__dt__Q36nw4hbm3lyt13AnimTransformFv",
+            "__dt__Q36nw4hbm2ut31LinkList<Q36nw4hbm3lyt5Group,4>Fv",
+        ),
+        # The dropped weaks occupied mid-section 16-aligned slots; without
+        # repacking, MWCC's pre-drop padding residue leaves later survivors off
+        # the retail offsets (same fix as lyt_group/lyt_window).
+        repack_after_drop=16,
+    ),
     "lyt_group.o": UnitRules(
         # MWCC emits unreferenced weak in-charge dtors for the instantiated
         # ut::LinkList<Group,4> (GroupContainer::mGroupList) and

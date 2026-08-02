@@ -439,9 +439,9 @@ DECOMP_FORCEACTIVE(WUD_c,
                    "WUDCancelSyncDevice()\n");
 
 BOOL WUDStopSyncSimple(void) {
-    WUDCB* p = &_wcb;
-    BOOL success = FALSE;
     BOOL enabled;
+    BOOL success = FALSE;
+    WUDCB* p = &_wcb;
 
     enabled = OSDisableInterrupts();
 
@@ -463,6 +463,8 @@ BOOL WUDStopSyncSimple(void) {
 
 
 BOOL WUDSetDisableChannel(s8 afhChannel) {
+    extern char lbl_80562AE0[];
+    extern char lbl_80562AF8[];
     int first = 0;
     int last = 0;
     BOOL success = FALSE;
@@ -471,9 +473,9 @@ BOOL WUDSetDisableChannel(s8 afhChannel) {
     u32 libStatus;
     tBTM_STATUS status;
 
-    DEBUGPrint("WUDSetDisableChannel()\n");
+    DEBUGPrint(lbl_80562AE0);
 
-    if (afhChannel < 0 || 13 < afhChannel) {
+    if ((u8)afhChannel > 13) {
         return FALSE;
     }
 
@@ -499,7 +501,7 @@ BOOL WUDSetDisableChannel(s8 afhChannel) {
         }
 
         status = BTM_SetAfhChannels(first, last);
-        DEBUGPrint("BTM_SetAfhChannels() : %d\n", status);
+        DEBUGPrint(lbl_80562AF8, status);
 
         success = TRUE;
     }
@@ -3103,9 +3105,9 @@ BOOL __wudStartSyncDevice(u8 syncType, s8 syncLoopNum, u8 target,
     return success;
 }
 BOOL WUDCancelSyncDevice(void) {
-    WUDCB* p = &_wcb;
-    BOOL success = FALSE;
     BOOL enabled;
+    BOOL success = FALSE;
+    WUDCB* p = &_wcb;
 
     _wudAbortSync = TRUE;
     enabled = OSDisableInterrupts();

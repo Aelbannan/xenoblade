@@ -6792,3 +6792,46 @@ in prologue/guard/parity). Leaf function — SMT probe is the acceptance path
    - Calling a member object's virtual dtor EXPLICITLY (`mDrawInfo.~DrawInfo();`) makes MWCC emit the virtual (bcctrl) dispatch — the retail calls `__dt__DrawInfo` DIRECTLY. Removing the explicit call lets the compiler's **implicit member destruction** devirtualize it (the member's static type is known) → the exact retail `addi r3,this+0x1F8; li r4,-1; bl` sequence. If a member's dtor call must appear mid-body, structure it so the implicit destruction lands at the retail position (the retail call is the last statement before the delete-flag check).
    - Calling virtual dtors through the SDK classes (`mpLayout->~Layout()`, `mpAnmController[i]->~GroupAnmController()`) forces MWCC to emit **standalone copies of every inline virtual** of those classes (Pane `GetRuntimeTypeInfo`, `ut::LinkList` dtor, gui `setManager`/`setDrawInfo`/`setTriggerTarget`/`getPane`/`onEvent`) — ~0x88+ bytes that can overflow the split budget. Casting the call target to a **local struct with the same vtable shape** (`struct VtblObj { virtual ~VtblObj(); virtual void v1(); virtual void v2(); };` then `((VtblObj*)mpLayout)->~VtblObj();`) keeps the byte-identical vtbl[2] dispatch but suppresses the SDK-class emissions (HBMBase unit: 0x8784 → 0x8634, back under the 0x86E0 budget).
    - homebutton::RemoteSpk's vtable pointer sits at object+0x1F0 (non-standard layout the header can't express). A REAL virtual call `mpRemoteSpk->~RemoteSpk();` still compiles to the retail `lwz r12, 0x1F0(r3); lwz r12, 8(r12); mtspr ctr,r12; bcctrl` (MWCC knows the vptr offset) — use the real class, NOT a manual `vtbl[2]` function-pointer cast (which allocates the vptr load to r5 instead of r12).
+
+## RVL_SDK wud/WUD — small control functions need unit `-O4,p`; 3 source keys (US, Wii/1.1)
+
+`libs/RVL_SDK/src/revolution/wud/WUD.c`. The earlier WUD entries locked the unit to
+`-O4,s -inline on` ("no single flag set reproduces both"). **Correction (2026-08):**
+flipping the unit to `-O4,p -inline on` moved `WUDStopSyncSimple` (us-8037c2f0),
+`WUDSetDisableChannel` (us-8037c380), `WUDCancelSyncDevice` (us-8037c260), and
+`WUDIsBusy` (us-8037da80) to 100% FULL_MATCH (semantic-certified), and 6 other
+functions (`WUDiGetDevInfo`, `WUDiMoveTop/BottomSmpDevInfoPtr`,
+`WUDiMoveTop/BottomStdDevInfoPtr`, `WUDiMoveTopOfUnusedStdDevice`) also reached 100%
+— every previously-100% function stayed 100% (52→58 matched, unit split 0x6184 vs
+budget 0x6400, PASS). The unit-level `-O4,p` regressions are confined to the
+documented `-O4,s` base+IV device-scan loops: `__wudSyncPrepareSearch` 84.9%→29.1%,
+`__wudStackCheckDeviceInfo` 73.1%→13.4% (still NOT_STARTED/COMPILES, nothing accepted
+was lost). Why it works: retail WUD prologues are individual `stw` for ≤4 saved regs
+(the hcicmds rule), which only `-O4`/`-O4,p` emit; `-O4,s` forces `_savegpr_29_31`
+at 3 saved regs — structurally unmatchable. The earlier "-O4,p signatures via source
+keys under -O4,s" entry still holds for functions that need BOTH loop styles, but any
+small 3-reg control function is a unit-flag fix, not a source-key fix.
+
+Source keys that landed the last structural diffs:
+
+1. **s8 range check → single u8 compare.** `if (afhChannel < 0 || 13 < afhChannel)`
+   emits `extsb; cmpwi 0; blt; cmpli 13; bgt` (4 insns, +1 vs retail, shifts the whole
+   body → size 0xEC vs 0xE8). The retail `rlwinm rX,rX,0,24,31; cmpli 13; ble body`
+   (3 insns) comes only from **`if ((u8)afhChannel > 13) return FALSE;`** — exact
+   semantics for s8 (negative → (u8) ≥ 128 > 13), single mask+unsigned compare.
+2. **Callee-saved regs allocate from r31 DOWN in declaration order; the `li` init
+   lands right after its register's `stw`.** With `WUDCB* p = &_wcb; BOOL success =
+   FALSE; BOOL enabled;` MWCC assigns p=r31, success=r30, enabled=r29 and materializes
+   `lis/addi p` FIRST (prologue `[stw r31][lis r31][addi r31][stw r30][li r30][stw
+   r29]` vs retail `[stw r31][stw r30][li r30][stw r29][lis r29][addi r29]`). Declaring
+   **`BOOL enabled; BOOL success = FALSE; WUDCB* p = &_wcb;`** (enabled, success, p)
+   gives p=r29, success=r30, enabled=r31 — the `li success` and `lis/addi p` land
+   exactly like retail (byte-identical, only colors swap). Verify: same key fixed
+   WUDCancelSyncDevice (4→0 structural). Do NOT "assign p at first use" for these —
+   that hoists the lis/addi after the call (7 structural).
+3. **DEBUGPrint string literals on small functions are separate .data objects.**
+   `"WUDSetDisableChannel()\n"`/`"BTM_SetAfhChannels() : %d\n"` are emitted under
+   generated `@NNNN` names; retail symbols.txt names them `lbl_80562AE0`/`lbl_80562AF8`
+   (data:string, addend-identical). Approved fix (PLAN §17.6): function-scope
+   `extern char lbl_80562AE0[];` + `DEBUGPrint(lbl_80562AE0, …)` — reloc drift clears,
+   byte-identical. 99.8%→100% on cycle.

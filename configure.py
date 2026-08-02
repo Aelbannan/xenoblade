@@ -1339,7 +1339,7 @@ config.libs = [
         "wud",
         [
             Object(NonMatching, "RVL_SDK/src/revolution/wud/WUD.c",
-                   extra_cflags=["-O4,s", "-inline on"]),
+                   extra_cflags=["-O4,p", "-inline on"]),
             Object(Matching, "RVL_SDK/src/revolution/wud/WUDHidHost.c"),
             Object(Matching, "RVL_SDK/src/revolution/wud/debug_msg.c"),
         ],

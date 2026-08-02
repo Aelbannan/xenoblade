@@ -84,11 +84,13 @@ char* strcat(char* dst, const char* src)
     const u8* p = (u8*)src - 1;
     u8* q = (u8*)dst - 1;
 
+    // scan forward to the terminating NUL (MWCC idiom: empty loop body)
     while (*++q)
         ;
 
     q--;
 
+    // copy src (including its NUL) onto the end of dst
     while (*++q = *++p)
         ;
 

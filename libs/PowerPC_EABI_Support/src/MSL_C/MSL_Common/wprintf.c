@@ -707,6 +707,7 @@ return_zero:
     if (c == 5) {
         char* q = (char*)dec->sig.text + dec->sig.length;
 
+        // scan back over trailing zeros (MWCC idiom: empty loop body)
         while (--q > p && *q == '0')
             ;
         carry = (q == p) ? p[-1] & 1 : 1;

@@ -19,5 +19,5 @@ struct ResContainer {
 };
 
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
-void clearWordFlag(u32* self, u32 mask);
+extern "C" void clearWordFlag(u32* self, u32 mask);
 bool testResInfoFlag(u32 flags);

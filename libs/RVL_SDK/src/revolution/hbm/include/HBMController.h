@@ -30,7 +30,9 @@ public:
     HBController* getController();
 
     int getChan() const;
-    f32 getSpeakerVol() const;
+    f32 getSpeakerVol() const {
+        return mHBController.spVol;
+    }
     void setSpeakerVol(f32 vol);
 
     bool isRumbling() {
@@ -55,7 +57,6 @@ public:
 
     s32 getInfoAsync(WPADInfo* pInfo);
     bool isPlayReady() const;
-    bool isPlayingSound() const;
     bool isPlayingSoundId(int id) const;
 
     void setKpad(const HBMKPadData* pPadData, bool updatePos);
@@ -69,9 +70,6 @@ public:
     void initSound();
     void updateSound();
     void playSound(int id);
-
-    void soundOn();
-    void soundOff(int msec);
 
     void startMotor();
     void stopMotor();

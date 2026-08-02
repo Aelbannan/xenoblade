@@ -7,6 +7,7 @@
 
 extern "C" void* WPADIsUsedCallbackByKPAD();
 extern "C" void WPADSetCallbackByKPAD(void* callback);
+extern "C" u8 WPADGetRadioSensitivity(s32 chan);
 
 namespace homebutton {
 
@@ -76,7 +77,14 @@ void Controller::wpadExtensionCallback(s32 chan, s32 result) {
 
 void Controller::soundOnCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
     int chan = reinterpret_cast<int>(OSGetAlarmUserData(pAlarm));
-    sThis[chan]->soundOn();
+    Controller* ctrl = sThis[chan];
+
+    int c = ctrl->mHBController.chan;
+    if (WPADIsSpeakerEnabled(c)) {
+        WPADControlSpeaker(c, WPAD_SPEAKER_UNMUTE, NULL);
+    }
+
+    ctrl->mSoundOffFlag = false;
 }
 
 Controller::Controller(int chan, RemoteSpk* pSpk) {
@@ -196,12 +204,8 @@ void Controller::setInValidPos() {
     mHBController.y = lbl_80518688;
 }
 
-int Controller::getChan() const {
-    return mHBController.chan;
-}
-
 void Controller::connect() {
-    getRemoteSpk()->Connect(getChan());
+    remotespk->Connect(mHBController.chan);
 }
 
 void Controller::disconnect() {}
@@ -210,20 +214,16 @@ void Controller::setSpeakerVol(f32 vol) {
     mHBController.spVol = vol;
 }
 
-f32 Controller::getSpeakerVol() const {
-    return mHBController.spVol;
-}
-
-
 void Controller::playSound(int id) {
     if (mSoundOffFlag) {
         return;
     }
 
     // HBM_MAX_VOLUME (10.0f) scaled by speaker volume, cast to s8 for WPAD
-    getRemoteSpk()->Play(getChan(), id, (s8)(10.0f * getSpeakerVol()));
+    remotespk->Play(mHBController.chan, id,
+                    (s8)(10.0f * getSpeakerVol()));
 
-    if (WPADIsSpeakerEnabled(getChan())) {
+    if (WPADIsSpeakerEnabled(mHBController.chan)) {
         if (!mCheckSoundTimeFlag) {
             mPlaySoundTime = OSGetTime();
         }
@@ -233,16 +233,12 @@ void Controller::playSound(int id) {
     }
 }
 
-bool Controller::isPlayingSound() const {
-    return getRemoteSpk()->isPlaying(getChan());
-}
-
 bool Controller::isPlayingSoundId(int id) const {
-    if (!isPlayingSound()) {
+    if (!remotespk->isPlaying(mHBController.chan)) {
         return false;
     }
 
-    if (!getRemoteSpk()->isPlayingId(getChan(), id)) {
+    if (!remotespk->isPlayingId(mHBController.chan, id)) {
         return false;
     }
 
@@ -254,34 +250,69 @@ void Controller::initSound() {
     mCheckSoundIntervalFlag = false;
 }
 
-void Controller::soundOff(int msec) {
-    int chan = getChan();
+void Controller::updateSound() {
+    int chan = mHBController.chan;
 
-    if (!WPADIsSpeakerEnabled(chan)) {
-        return;
+    if (!remotespk->isPlaying(chan)) {
+        // Sound has stopped: arm the interval check, and once it has been
+        // silent for one second clear the sound-activity flags.
+        if (mCheckSoundTimeFlag) {
+            if (!mCheckSoundIntervalFlag) {
+                mStopSoundTime = OSGetTime();
+                mCheckSoundIntervalFlag = true;
+            } else if (OS_TICKS_TO_MSEC((u32)OSGetTime() - (u32)mStopSoundTime) >=
+                       1000) {
+                mCheckSoundTimeFlag = false;
+                mCheckSoundIntervalFlag = false;
+            }
+        }
+    } else {
+        // Sound is still playing. After a long play time, or when the
+        // remote's radio sensitivity is poor, mute the speaker briefly.
+        if (mCheckSoundTimeFlag) {
+            mCheckSoundIntervalFlag = false;
+            if (OS_TICKS_TO_MSEC((u32)OSGetTime() - (u32)mPlaySoundTime) >=
+                480000) {
+                mCheckSoundTimeFlag = false;
+                mCheckSoundIntervalFlag = false;
+
+                int chan = mHBController.chan;
+                if (WPADIsSpeakerEnabled(chan)) {
+                    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
+
+                    OSAlarm* alarm = &sAlarmSoundOff[chan];
+                    OSSetAlarmUserData(alarm, reinterpret_cast<void*>(chan));
+                    OSCancelAlarm(alarm);
+                    OSSetAlarm(alarm, OS_MSEC_TO_TICKS(1000),
+                               soundOnCallback);
+
+                    mSoundOffFlag = true;
+                }
+                return;
+            }
+        }
+
+        if (!mSoundOffFlag) {
+            if (WPADGetRadioSensitivity(chan) <= 85) {
+                int chan = mHBController.chan;
+                if (WPADIsSpeakerEnabled(chan)) {
+                    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
+
+                    OSAlarm* alarm = &sAlarmSoundOff[chan];
+                    OSSetAlarmUserData(alarm, reinterpret_cast<void*>(chan));
+                    OSCancelAlarm(alarm);
+                    OSSetAlarm(alarm, OS_MSEC_TO_TICKS(1000),
+                               soundOnCallback);
+
+                    mSoundOffFlag = true;
+                }
+            }
+        }
     }
-
-    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
-
-    OSSetAlarmUserData(&sAlarmSoundOff[chan], reinterpret_cast<void*>(chan));
-    OSCancelAlarm(&sAlarmSoundOff[chan]);
-    OSSetAlarm(&sAlarmSoundOff[chan], OS_MSEC_TO_TICKS(msec), &soundOnCallback);
-
-    mSoundOffFlag = true;
-}
-
-void Controller::soundOn() {
-    int chan = getChan();
-
-    if (WPADIsSpeakerEnabled(chan)) {
-        WPADControlSpeaker(chan, WPAD_SPEAKER_UNMUTE, NULL);
-    }
-
-    mSoundOffFlag = false;
 }
 
 bool Controller::isPlayReady() const {
-    return getRemoteSpk()->isPlayReady(getChan());
+    return remotespk->isPlayReady(mHBController.chan);
 }
 
 HBController* Controller::getController() {
@@ -297,22 +328,22 @@ void Controller::startMotor() {
 }
 
 void Controller::stopMotor() {
-    if (getChan() < WPAD_MAX_CONTROLLERS && isRumbling()) {
+    if (mHBController.chan < WPAD_MAX_CONTROLLERS && isRumbling()) {
         clrRumble();
-        WPADControlMotor(getChan(), WPAD_MOTOR_STOP);
+        WPADControlMotor(mHBController.chan, WPAD_MOTOR_STOP);
     }
 }
 
 s32 Controller::getInfoAsync(WPADInfo* pInfo) {
-    if (getChan() >= WPAD_MAX_CONTROLLERS) {
+    if (mHBController.chan >= WPAD_MAX_CONTROLLERS) {
         return -2;
     }
 
-    if (isPlayingSound() || isRumbling()) {
+    if (remotespk->isPlaying(mHBController.chan) || isRumbling()) {
         return -2;
     }
 
-    s32 chan = getChan();
+    s32 chan = mHBController.chan;
     if (chan < WPAD_MAX_CONTROLLERS) {
         sSetInfoAsync[chan] = true;
     }
@@ -330,20 +361,18 @@ void Controller::ControllerCallback(s32 chan, s32 result) {
 }
 
 bool Controller::getBatteryFlag() const {
-    if (getChan() >= 4) {
+    if (mHBController.chan >= 4) {
         return false;
     }
-    return sBatteryFlag[getChan()];
+    return sBatteryFlag[mHBController.chan];
 }
 
 void Controller::clrBatteryFlag() {
-    if (getChan() >= WPAD_MAX_CONTROLLERS) {
+    if (mHBController.chan >= WPAD_MAX_CONTROLLERS) {
         return;
     }
 
-    sBatteryFlag[getChan()] = false;
+    sBatteryFlag[mHBController.chan] = false;
 }
 
 } // namespace homebutton
-
-void updateSound__Q210homebutton10ControllerFv(){}

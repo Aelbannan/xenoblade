@@ -143,12 +143,14 @@ void hidh_search_callback(u16 result, void *p_data)
     tSDP_DISC_REC *p_rec;
     tSDP_DISC_ATTR *p_attr;
     tHID_DEV_SDP_INFO *p_sdp_info;
+    tSDP_DISCOVERY_DB *p_db;
     u16 attr_mask = 0;
     u16 len;
     tBT_UUID uuid;
 
     p_sdp_info = &hh_cb.sdp_info;
     uuid.len = LEN_UUID_16;
+    p_db = (tSDP_DISCOVERY_DB *)hh_cb.sdp_db;
     uuid.uu.uuid16 = 0x1124;
 
     hh_cb.sdp_busy = 0;
@@ -157,8 +159,7 @@ void hidh_search_callback(u16 result, void *p_data)
         return;
     }
 
-    p_rec = SDP_FindServiceUUIDInDb((tSDP_DISCOVERY_DB *)hh_cb.sdp_db,
-                                    &uuid, NULL);
+    p_rec = SDP_FindServiceUUIDInDb(p_db, &uuid, NULL);
     if (p_rec == NULL) {
         hh_cb.sdp_cback(0x0C, 0, NULL);
         return;
@@ -169,20 +170,19 @@ void hidh_search_callback(u16 result, void *p_data)
     /* HID virtual cable: the attribute value is a data element sequence
        whose second element is the cable descriptor text string. */
     p_attr = SDP_FindAttributeInRec(p_rec, 0x206);
-    if (p_attr != NULL &&
-        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == DATA_ELE_SEQ_DESC_TYPE &&
-        (p_attr = p_attr->attr_value.v.p_sub_attr) != NULL &&
-        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == DATA_ELE_SEQ_DESC_TYPE &&
-        (p_attr = p_attr->attr_value.v.p_sub_attr) != NULL &&
-        (p_attr = p_attr->p_next_attr) != NULL &&
-        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == TEXT_STR_DESC_TYPE) {
-        p_sdp_info->attr_mask = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
-        if (p_sdp_info->attr_mask != 0) {
-            p_sdp_info->viral_cable = p_attr->attr_value.v.array;
-        }
-    } else {
+    if (p_attr == NULL ||
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) != DATA_ELE_SEQ_DESC_TYPE ||
+        (p_attr = p_attr->attr_value.v.p_sub_attr) == NULL ||
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) != DATA_ELE_SEQ_DESC_TYPE ||
+        (p_attr = p_attr->attr_value.v.p_sub_attr) == NULL ||
+        (p_attr = p_attr->p_next_attr) == NULL ||
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) != TEXT_STR_DESC_TYPE) {
         hh_cb.sdp_cback(HID_ERR_HOST_UNKNOWN, 0, NULL);
         return;
+    }
+    p_sdp_info->attr_mask = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
+    if (p_sdp_info->attr_mask != 0) {
+        p_sdp_info->viral_cable = p_attr->attr_value.v.array;
     }
 
     /* Supported feature flags (HID attribute presence). */
@@ -272,12 +272,12 @@ void hidh_search_callback(u16 result, void *p_data)
     }
     p_attr = SDP_FindAttributeInRec(p_rec, 0x20C);
     if (p_attr != NULL) {
-        p_sdp_info->sdp_disable = p_attr->attr_value.v.u16;
         attr_mask |= 0x40;
+        p_sdp_info->sdp_disable = p_attr->attr_value.v.u16;
     }
 
     hh_cb.sdp_info.sdp_rec = p_rec;
-    hh_cb.sdp_cback(0, attr_mask, p_sdp_info);
+    hh_cb.sdp_cback(0, attr_mask, &hh_cb.sdp_info);
 }
 
 extern tHID_STATUS hidh_conn_initiate(u8 dev_handle);

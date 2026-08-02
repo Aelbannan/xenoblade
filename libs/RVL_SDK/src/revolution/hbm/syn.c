@@ -20,33 +20,33 @@ BOOL AXIsInit(void);
 
 // ---- BSS globals (single contiguous .bss block) ----
 extern struct HBMSYNSYNTH* __HBMSYNSynthList; // .bss:0x0 | size 4
-extern void* __HBMSYNVoice;                   // .bss:0x4 | size 4 — pointer to voice array
-extern u32 __init;                             // .bss:0x4C8 | size 4 — init flag
+extern void* __HBMSYNVoice;                   // .bss:0x4 | size 4 - pointer to voice array
+extern u32 __init;                             // .bss:0x4C8 | size 4 - init flag
 
-// ---- HBMSYNSYNTH — synthesizer instance structure ----
+// ---- HBMSYNSYNTH - synthesizer instance structure ----
 // Offsets inferred from retail ASM (syn.c, synctrl.c, synvoice.c, seq.c)
 typedef struct HBMSYNSYNTH {
-    struct HBMSYNSYNTH* next;   // 0x00 — linked-list next
-    void* dataSections[6];      // 0x04-0x18 — pointers into sound data
-    u32  field1C;               // 0x1C — playback speed param (from r5)
-    u32  field20;               // 0x20 — playback speed param (from r5 + 0x80000000)
-    u32  field24;               // 0x24 — playback speed param (from r5 << 1)
+    struct HBMSYNSYNTH* next;   // 0x00 - linked-list next
+    void* dataSections[6];      // 0x04-0x18 - pointers into sound data
+    u32  field1C;               // 0x1C - playback speed param (from r5)
+    u32  field20;               // 0x20 - playback speed param (from r5 + 0x80000000)
+    u32  field24;               // 0x24 - playback speed param (from r5 << 1)
     u8   pad28[0x68 - 0x28];   // 0x28-0x67
-    u32  masterVolume;          // 0x68 — master volume (<< 16)
+    u32  masterVolume;          // 0x68 - master volume (<< 16)
     u8   pad6C[0xFC - 0x6C];   // 0x6C-0xFB
-    u8   midiBuffer[0x300];    // 0xFC-0x3FB — MIDI input buffer
-    u8*  midiWritePtr;          // 0x3FC — current write pos in midiBuffer
-    u32  midiCount;             // 0x400 — number of MIDI bytes received
-    u32  activeVoiceFlag;       // 0x404 — non-zero when voices are active
-    u8   voiceData[0x2000];    // 0x408-0x2407 — per-voice state blocks
+    u8   midiBuffer[0x300];    // 0xFC-0x3FB - MIDI input buffer
+    u8*  midiWritePtr;          // 0x3FC - current write pos in midiBuffer
+    u32  midiCount;             // 0x400 - number of MIDI bytes received
+    u32  activeVoiceFlag;       // 0x404 - non-zero when voices are active
+    u8   voiceData[0x2000];    // 0x408-0x2407 - per-voice state blocks
 } HBMSYNSYNTH;
 
 // ---- Per-voice entry (size 0x4C) ----
 typedef struct {
     u8   pad00[0x04];          // 0x00
-    void* mixChannel;           // 0x04 — HBMMIXChannel*
-    struct HBMSYNSYNTH* synth; // 0x08 — owning synthesizer
-    u8   pad0C[0x4C - 0x0C];   // 0x0C-0x4B — rest of voice state
+    void* mixChannel;           // 0x04 - HBMMIXChannel*
+    struct HBMSYNSYNTH* synth; // 0x08 - owning synthesizer
+    u8   pad0C[0x4C - 0x0C];   // 0x0C-0x4B - rest of voice state
 } HBMSYNVoiceEntry;
 
 // ---- Function implementations ----
@@ -54,9 +54,9 @@ typedef struct {
 void __HBMSYNRemoveSynthFromList__FP11HBMSYNSYNTH(HBMSYNSYNTH* synth)
 {
     BOOL intr = OSDisableInterrupts();
-    HBMSYNSYNTH* cur = __HBMSYNSynthList;
-    HBMSYNSYNTH* last = NULL;
     HBMSYNSYNTH* first = NULL;
+    HBMSYNSYNTH* last = NULL;
+    HBMSYNSYNTH* cur = __HBMSYNSynthList;
 
     while (cur != NULL) {
         if (cur != synth) {

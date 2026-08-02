@@ -307,10 +307,18 @@ Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
 }
 
 Window::~Window() {
-    Layout::DeleteArray(mFrames, mFrameNum);
+    if (mFrames != NULL) {
+        for (int i = 0; i < mFrameNum; i++) {
+            mFrames[i].pMaterial->~Material();
+            Layout::FreeMemory(mFrames[i].pMaterial);
+        }
+
+        Layout::FreeMemory(mFrames);
+    }
 
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
-        Layout::DeleteObj(mpMaterial);
+        mpMaterial->~Material();
+        Layout::FreeMemory(mpMaterial);
         mpMaterial = NULL;
     }
 

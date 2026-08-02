@@ -608,6 +608,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         # texCoordAry.Free + __destroy_arr), so no .text/.data reference
         # survives and the retail linker dead-stripped the orphan.
         drop_text_symbols=("__dt__Q46nw4hbm3lyt6Window7ContentFv",),
+        # The dropped weak occupied a 16-aligned slot before ~Window; without
+        # repacking, MWCC's pre-drop padding residue leaves ~Window at 0x21C
+        # (retail 0x210) and the unit +0xC over budget. Re-lay survivors at
+        # align(prev_end, 16) exactly like the retail linker GC (same fix as
+        # lyt_group).
+        repack_after_drop=16,
     ),
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.

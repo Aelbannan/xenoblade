@@ -171,7 +171,11 @@ public:
     int findAnimator(int pane, int anm);
     int findGroupAnimator(int grPane, int grAnm);
 
-    void callSimpleSyncCallback(s32 result, s32 num);
+    void callSimpleSyncCallback(s32 result, s32 num) {
+        if (mSimpleSyncCallback != NULL) {
+            mSimpleSyncCallback(result, num);
+        }
+    }
 
     void startBlackOut();
     void setBlackOutColor(u8 r, u8 g, u8 b) {
@@ -213,58 +217,62 @@ private:
     static OSMutex sMutex;
 
     // TODO(kiwi) Document states
+    // Member offsets below are the retail layout (verified against the
+    // retail HBMBase object: ctor/calc/update/set_text/setAdjustFlag).
     eSeq mSequence;                                            // at 0x0
     const HBMDataInfo* mpHBInfo;                               // at 0x4
-    int mButtonNum;                                            // at 0x8
-    int mAnmNum;                                               // at 0xC
-    int mState;                                                // at 0x10
-    int mSelectAnmNum;                                         // at 0x14
-    int mMsgCount;                                             // at 0x18
-    int mPaneCounter[res::eBtn_Max + res::eFuncTouchPane_Max]; // at 0x1C
-    int mPadDrawTime[WPAD_MAX_CONTROLLERS];                    // at 0x54
-    int mForcusSEWaitTime;                                     // at 0x64
-    int mBar0AnmRev;                                           // at 0x68
-    int mBar1AnmRev;                                           // at 0x6C
-    int mBar0AnmRevHold;                                       // at 0x70
-    int mBar1AnmRevHold;                                       // at 0x74
-    int mGetPadInfoTime;                                       // at 0x78
-    bool mControllerFlag[WPAD_MAX_CONTROLLERS];                // at 0x7C
-    int mVolumeNum;                                            // at 0x80
-    bool mVibFlag;                                             // at 0x84
-    bool mControlFlag;                                         // at 0x85
-    bool mLetterFlag;                                          // at 0x86
-    bool mAdjustFlag;                                          // at 0x87
-    bool mReassignedFlag;                                      // at 0x88
-    bool mSimpleSyncFlag;                                      // at 0x89
-    bool mEndSimpleSyncFlag;                                   // at 0x8A
-    bool mInitFlag;                                            // at 0x8B
-    bool mForceSttInitProcFlag;                                // at 0x8C
-    bool mForceSttFadeInProcFlag;                              // at 0x8D
-    bool mEndInitSoundFlag;                                    // at 0x8E
-    bool mForceStopSyncFlag;                                   // at 0x8F
-    bool mForceEndMsgAnmFlag;                                  // at 0x90
-    bool mStartBlackOutFlag;                                   // at 0x91
-    int mSoundRetryCnt;                                        // at 0x94
-    int mDialogFlag[4];                                        // at 0x98
-    char* mpLayoutName;                                        // at 0xA8
-    char* mpAnmName;                                           // at 0xAC
-    HBMSelectBtnNum mSelectBtnNum;                             // at 0xB0
-    u8 unkB4[8];
-    wchar_t* mpText[7][6];                                     // at 0xBC
-    WPADInfo mWpadInfo[WPAD_MAX_CONTROLLERS];                  // at 0x15C
-    WPADSyncDeviceCallback mSimpleSyncCallback;                // at 0x1BC
-    f32 mOnPaneVibFrame[WPAD_MAX_CONTROLLERS];                 // at 0x1C0
-    f32 mOnPaneVibWaitFrame[WPAD_MAX_CONTROLLERS];             // at 0x1D0
-    int mWaitStopMotorCount;                                   // at 0x1E0
-    int mDisConnectCount;                                      // at 0x1E4
-    nw4hbm::lyt::Layout* mpLayout;                             // at 0x1E8
-    nw4hbm::lyt::Layout* mpCursorLayout[res::eCursorLyt_Max];  // at 0x1EC
-    nw4hbm::lyt::ArcResourceAccessor* mpResAccessor;           // at 0x1FC
-    gui::PaneManager* mpPaneManager;                           // at 0x200
-    HomeButtonEventHandler* mpHomeButtonEventHandler;          // at 0x204
-    nw4hbm::lyt::DrawInfo mDrawInfo;                           // at 0x208
-    Controller* mpController[WPAD_MAX_CONTROLLERS];            // at 0x25C
-    RemoteSpk* mpRemoteSpk;                                    // at 0x26C
+    int unk08;                                                 // at 0x8 (retail; zeroed in ctor, unused in this TU)
+    int mButtonNum;                                            // at 0xC
+    int mAnmNum;                                               // at 0x10
+    int mState;                                                // at 0x14
+    int mSelectAnmNum;                                         // at 0x18
+    int mMsgCount;                                             // at 0x1C
+    int mPaneCounter[res::eBtn_Max + res::eFuncTouchPane_Max]; // at 0x20
+    int mPadDrawTime[WPAD_MAX_CONTROLLERS];                    // at 0x58
+    int mForcusSEWaitTime;                                     // at 0x68
+    int mBar0AnmRev;                                           // at 0x6C
+    int mBar1AnmRev;                                           // at 0x70
+    int mBar0AnmRevHold;                                       // at 0x74
+    int mBar1AnmRevHold;                                       // at 0x78
+    int mGetPadInfoTime;                                       // at 0x7C
+    bool mControllerFlag[WPAD_MAX_CONTROLLERS];                // at 0x80
+    int mVolumeNum;                                            // at 0x84
+    int unk88;                                                 // at 0x88 (retail; connect-window channel, update()/calc())
+    bool mVibFlag;                                             // at 0x8C
+    bool mControlFlag;                                         // at 0x8D
+    bool mLetterFlag;                                          // at 0x8E
+    bool mAdjustFlag;                                          // at 0x8F
+    bool mReassignedFlag;                                      // at 0x90
+    bool mSimpleSyncFlag;                                      // at 0x91
+    bool mEndSimpleSyncFlag;                                   // at 0x92
+    bool unk93;                                                // at 0x93 (retail; "all controllers connected" latch)
+    bool mInitFlag;                                            // at 0x94
+    bool mForceSttInitProcFlag;                                // at 0x95
+    bool mForceSttFadeInProcFlag;                              // at 0x96
+    bool mEndInitSoundFlag;                                    // at 0x97
+    bool mForceStopSyncFlag;                                   // at 0x98
+    bool mForceEndMsgAnmFlag;                                  // at 0x99
+    bool mStartBlackOutFlag;                                   // at 0x9A
+    int mSoundRetryCnt;                                        // at 0x9C
+    int mDialogFlag[4];                                        // at 0xA0
+    char* mpLayoutName;                                        // at 0xB0
+    char* mpAnmName;                                           // at 0xB4
+    HBMSelectBtnNum mSelectBtnNum;                             // at 0xB8
+    wchar_t* mpText[6][6];                                     // at 0xBC (retail set_text writes rows up to [9][5])
+    WPADInfo mWpadInfo[WPAD_MAX_CONTROLLERS];                  // at 0x14C (retail keeps this as a static sWpadInfo)
+    WPADSyncDeviceCallback mSimpleSyncCallback;                // at 0x1AC
+    f32 mOnPaneVibFrame[WPAD_MAX_CONTROLLERS];                 // at 0x1B0
+    f32 mOnPaneVibWaitFrame[WPAD_MAX_CONTROLLERS];             // at 0x1C0
+    int mWaitStopMotorCount;                                   // at 0x1D0
+    int mDisConnectCount;                                      // at 0x1D4
+    nw4hbm::lyt::Layout* mpLayout;                             // at 0x1D8
+    nw4hbm::lyt::Layout* mpCursorLayout[res::eCursorLyt_Max];  // at 0x1DC
+    nw4hbm::lyt::ArcResourceAccessor* mpResAccessor;           // at 0x1EC
+    gui::PaneManager* mpPaneManager;                           // at 0x1F0
+    HomeButtonEventHandler* mpHomeButtonEventHandler;          // at 0x1F4
+    nw4hbm::lyt::DrawInfo mDrawInfo;                           // at 0x1F8
+    Controller* mpController[WPAD_MAX_CONTROLLERS];            // at 0x24C
+    RemoteSpk* mpRemoteSpk;                                    // at 0x25C
 
     GroupAnmController* mpAnmController[res::eAnimator_Max];         // at 0x270
     GroupAnmController* mpGroupAnmController[res::eGrAnimator_Max];  // at 0x2A0

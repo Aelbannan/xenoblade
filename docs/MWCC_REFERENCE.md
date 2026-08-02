@@ -690,6 +690,17 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 - `ArcResourceAccessor::~ArcResourceAccessor` (us-80325c80, emitted in HBMBase TU): a **virtual** dtor (vtable slot 8) with an **empty body** reproduces the whole retail sequence — `cmpwi this; beq` guard, `addic. r3,r3,0x24; beq` null-checked `LinkListImpl` member dtor call (`li r4,0`), base `ResourceAccessor` dtor call, then `cmpwi flag; ble; bl __dl__FPv`. Declare `virtual ~ArcResourceAccessor();` in lyt_arcResourceAccessor.h (key function stays GetResource in lyt_arcResourceAccessor.cpp; the vtable already points at this TU's dtor in retail).
 - `MIXSetPan` (us-8034e120): clamp `[0, 0x7F]` must write a **temp** (`s32 p` with `if/else-if/else`) not the param — assigning the param directly makes MWCC keep the value in r4 and emit branch-stores; the temp produces retail's single merged `stw r0, 0x18(r31)` (ch->panL).
 
+### RVL_SDK hbm/HBMBase.cpp — HomeButton retail layout vs ogws donor header (Wii/1.1 `-O4,p`)
+
+`getSelectBtnNum` (us-8032db80) and `setAdjustFlag` (us-8032dba0) were stuck at `CODE_MATCH` with 1–2 byte diffs that were pure **class-layout drift**, not codegen. The retail `homebutton::HomeButton` differs from the ogws donor header by three extra members + one removed pad:
+
+- **`int unk08` at 0x8** — pushes `mButtonNum`→0xC, `mAnmNum`→0x10, `mState`→0x14 (donor had mState at 0x10). Only the ctor writes it (zero); never read in the TU.
+- **`int unk88` at 0x88** — after `mVolumeNum` (0x84); update() stores the connect-window channel there, calc() uses it as an `mpController[]` index.
+- **`bool unk93` at 0x93** — between `mEndSimpleSyncFlag` (0x92) and `mInitFlag` (0x94); an "all controllers connected" latch set in calc().
+- **remove `u8 unkB4[8]`** — the old header used it to push `mpText` to 0xBC; with the two added ints the shift is natural, and keeping it would push `mpText` to 0xC4 (breaking `set_text` FULL_MATCH).
+
+Ground truth came from the retail ctor (member stores at 0x8/0x14/0xB8/0x8F/0x90/0x97…), `set_text` (mpText base 0xBC, row stride 0x18), `calc` (mControllerFlag 0x80, mVibFlag 0x8C, mSimpleSyncFlag 0x91, mEndSimpleSyncFlag 0x92, mInitFlag 0x94…, mOnPaneVibFrame 0x1B0), `update` (mGetPadInfoTime 0x7C, unk88 write), `setAdjustFlag` (mAdjustFlag 0x8F), `startPointEvent` (mButtonNum 0xC, mAnmNum 0x10 as the inlined findAnimator bound, mForcusSEWaitTime 0x68). Result: both targets byte-identical → `FULL_MATCH` (100%), split-size PASS. Note the donor's `at 0x…` comments are unreliable (mpLayout is 0x1D8, mDrawInfo 0x1F8, not 0x1E8/0x208); retail also keeps `WPADInfo` as a **static** `sWpadInfo` (not a member) and `mpText` is written up to `[9][5]` (60 pointers).
+
 ### RVL_SDK hbm/HBMRemoteSpk.cpp — RemoteSpk::UpdateSpeaker FULL_MATCH: mixed-sign loop guard, lazy s8 extsb, declaration-order regalloc (Wii/1.1 `-O4,p`)
 
 `RemoteSpk::UpdateSpeaker` (us-80323f80) matched byte-identical (0/155 hexdiff mismatches, `cycle` issued a `full-instruction-match` certificate). Three reusable keys:

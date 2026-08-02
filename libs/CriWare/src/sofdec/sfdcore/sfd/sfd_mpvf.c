@@ -392,9 +392,9 @@ void sfmpvf_SearchStbyFrm(void* h, void** outA, void** outB) {
     s32 count;
     s32 cnt;
     s32 i;
+    count = *(s32*)((u8*)h + 0x27ec);
     *outA = NULL;
     *outB = NULL;
-    count = *(s32*)((u8*)h + 0x27ec);
     p = (u8*)h + 0x27f8;
     cnt = 0;
     for (i = 0; i < count; i++, p += 0x110) {

@@ -11,10 +11,13 @@ typedef unsigned long ui32;
 typedef unsigned long long ui64;
 typedef unsigned char ui128[16];
 
+#ifndef __cplusplus
 typedef int bool;
 
 #define true 1
 #define false 0
+#endif
+
 #define NULL 0
 
 #ifdef __cplusplus

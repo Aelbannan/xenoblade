@@ -917,6 +917,20 @@ Earlier in this session's history (attempts #1-4): `HBMMIX_DELTA_UNIT` must be `
 
 Remaining drift: 16 pure reg-swaps (tempo path pointer chain `r5/r4/r3` vs `r3/r0/r5`) and reloc-name-only drift on the constant pool (`lbl_80518B90` vs `.rodata.0`, identical addends — pool can't be named from C). Side effect: fixing the pool order dropped `__HBMSEQInitTracks` (us-80344c60) from 14 structural to 0 structural (12 reg-swaps) without touching its control flow, and corrected the `__HBMSEQMidiEventLength` table data to the retail bytes (0x02×64, 0x01×32, 0x02×16, 00 00 02 01 …).
 
+## RVL_SDK hbm/synsample.c — `__HBMSYNSetupAdpcm` 0 structural via div-by-14 magic intermediate reuse (Wii/1.1 `-O4,p`)
+
+`__HBMSYNSetupAdpcm__FP11HBMSYNVOICE` (us-80344630, 0x214) reached **0 structural / 28 pure reg-swaps / size 0x214=0x214 exact** (98.5% static). The register-renaming witness does not apply (per-chain register rotations r8↔r9 / r6↔r7 with multi-target mappings) → record `accept via --smt out-of-band` (leaf function, no callees). Reusable levers:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Retail `mulhwu n,M; subf; srwi(1); add` (t = 4n/7 div-by-14 magic intermediate) then `srwi(3)` (q) AND `rlwinm t,1,0,27` (= (t<<1) & ~0xF) from the SAME t; writing `(n*4)/7` + `q = x>>3` emits `slwi(4n)` + a second div-by-7 magic (rlwinm/mulhwu on 4n, different shifts) | MWCC folds `(t>>3)<<4` back into the div-by-14 magic's intermediate: `q = n/14; y = q << 4` compiles to `srwi q,t,3` + `rlwinm y,t,1,0,27` — byte-identical to retail. The address formula is simply `(n%14) + (n/14)*16 + 2` (ADPCM nibble addr = 2*byte + nibblebit); the magic dance is pure codegen | Write `u32 q = n / 14; u32 m = n - q * 14; u32 a = (m + base) + ((q << 4) + 2);` — do NOT write `(n*4)/7` or `(n*4/7)<<1 & mask` |
+| Same source written with `m = n - q*14` vs `m = n % 14` — the former left 24 structural (two block chains scheduled depth-first), the latter 2 structural | MWCC's scheduler interleaves the two independent div-by-14 chains only when the remainder is written with `%`; the `n - q*14` form changes the IR temp order and disables the round-robin interleave of the two address computations | Use the `%` operator: `u32 m = n % 14;` |
+| Address adds `(m+base)+y+2` vs `base+m+y+2` — operand order and parens change the add schedule (`y+base` before `m` vs `m+base` before `y`) | MWCC preserves the parenthesised grouping | Write `(m + base) + ((q << 4) + 2)` (matches retail `subf m; add m+base; add +y; addi +2`) |
+| Flags mask: retail `rlwinm r0,r0,0,21,16` is `& ~0x7800` (mask 0xFFFF87FF, bits 21-31+0-16 MSB-relative), NOT `& 0xFFE1FFFF` (that emits `rlwinm 0,15,10`) | MSB-relative bit numbering in rlwinm masks — easy to invert when reading `.s` files | Write `(f & ~0x7800) | 0x8400` (and `| 0x40000` in the nonzero branch via `oris`); verify with capstone on the raw bytes, not the `.s` annotation (the `.s` prints `extlwi r8,r8,28,1` for raw `rlwinm r8,r8,1,0,27`) |
+| pWave/pRegion/pAdpcm must be loaded inside each branch (retail reloads them per branch, and reloads sp[2]/sp[3] after `active=1` writes — MWCC treats the store as a potential alias) | Hoisting the pointer locals to function top emits the loads before the `if`, structurally mismatching | Declare `loopStart = sp[2]` / `loopEnd = sp[3]` / `basePtr` / `ap` after `voice->active = 1;`; keep `sp`/`out` at the top |
+
+Remaining: 28 pure reg-swaps (register allocation — retail chains rotate r8/r9 and r6/r7 for the derived temps t1/q1/y1 vs t2/q2/y2; 4 source-order attempts (stmt order, 0x96 store position ×2, chain order swap) confirmed the allocation is a soft-cap). u16 tail (`lhz/sth` at 0x28/0x2A/0x2C) and `oris 0x4` exist only in the nonzero branch; the else branch copies 10 u32 only.
+
 ## RVL_SDK hbm/synvoice.c — voice-grid addend order, extern "C" linkage, regalloc soft-cap (Wii/1.1 `-O4,p`, compiled as C++)
 
 `__HBMSYNServiceVoice` (us-80344b70, 0xF0) and `__HBMSYNSetVoiceToRelease` (us-80344b60, 0xC) FULL_MATCH 100%; `__HBMSYNClearVoiceReferences` (us-80344ab0, 0xA4) soft-caps at 94.8% fuzzy / 2 structural / 4 reg-swaps (AX callback: synth = `vpb->userContext`@0x14, key = `vpb->index`@0x18, voice-table clear + `synth->0x404--`).
@@ -6404,3 +6418,13 @@ functions even at hexdiff mm=0.
   (1464B pre-existing bloat: `ScnGroup_G3DPROC_*` helpers retail inlines) and
   `g3d_scnproc` (56B: orphan `~ScnLeaf` weak copy from inline-dtor
   materialisation) stay over budget — their RTTI targets are parked.
+
+## RVL_SDK hbm/synpitch — __HBMSYNGetRelativePitch HIGH_MATCH via in-TU sibling tables + `%` division duplication (US, Wii/1.1 `-O4,p`)
+
+us-803443b0 went 4.4% → **81.6% (HIGH_MATCH, fuzzy 92%)**, size exact 0x110/0x110, split PASS. Three reusable MWCC keys:
+
+1. **`rem = v % 1200` (modulo) instead of `rem = v - (v / 1200) * 1200` forces MWCC to expand `/` and `%` as TWO adjust chains after ONE shared `mulhw`** — the retail's duplicated `srawi r9,r0,7 / srawi r0,r0,7 / rlwinm×2 / add×2` pattern. The explicit `v - (v/1200)*1200` form CSEs into a single chain (verified across ~45 variants). This alone fixed the 0xfc→0x110 size gap (the oct division duplication + `subf`-before-`lfsx` order).
+2. **Define the lookup tables as separate global (non-const) arrays IN the owning TU, in retail `.data` order** — `__HBMSYNCentsTable[100]`, `__HBMSYNOctavesTableUp[12]`, `__HBMSYNSemitonesTableUp[12]`, `__HBMSYNSemitonesTableDown[128]` — and index the sibling symbols directly (`__HBMSYNOctavesTableUp[oct]`). MWCC folds sibling-symbol addresses into constant offsets from the first symbol (`addi r5,r7,0x190`) + `lfsx` indexed loads with separate index registers — the exact retail shape (retail .o relocs confirm only the first symbol is referenced; offsets baked). Pointer-arithmetic forms (`ct + 100`) fold into `lfs d(rB)` instead (structural). Relocs anchor to `...data.0` where retail names `__HBMSYNCentsTable` — pure name drift, byte-identical data (1008/1008 bytes verified).
+3. **`if (cent != 0) { cent += 100; sem--; }` (not `cent < 0`) compiles to `subf.` + `beq`** matching retail — `cent < 0` emits plain `subf` + `bge`. Semantically identical in the `v<0` domain (cent ∈ [-99,0]); `!= 0` is the retail's exact compare.
+
+**Remaining 6 structural = 3 two-instruction scheduling-equivalent swaps, unreproducible:** (a) sem-section `srawi`(raw cent)/`rlwinm`(sem*4) order, (b) `mulli`(cent*100)/`fmuls`(oct*semUp) order, (c) negative-branch `rlwinm`(sem*4)/`neg`(-sem) order. Resists: statement/declaration orders, inline vs locals, single-expression returns, explicit index locals, `-ipa` on/off, `-O4,s`, `-opt nocse/noschedule/nopeephole`, compilers Wii/1.0/1.0a/1.1/1.3/GC-3.0a5.2, `-lang=c` (fixes (a)-adjacent ct-copy order but breaks table layout folding). Witness-blocked; SMT would certify (swaps are within-basic-block reorderings of independent ops). Candidate for `--smt` out-of-band acceptance.

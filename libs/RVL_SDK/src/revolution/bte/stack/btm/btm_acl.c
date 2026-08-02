@@ -226,7 +226,7 @@ typedef struct
 extern tBTU_CB_LOCAL btu_cb;
 
 /* Locate the ACL connection entry for a BD address (retail-inlined helper). */
-static tACL_CONN *btm_bda_to_acl_local(BD_ADDR bda);
+static __inline tACL_CONN *btm_bda_to_acl_local(BD_ADDR bda);
 
 void btm_acl_init() {
     btm_cb.btm_def_link_super_tout = 0x7d00;
@@ -633,14 +633,15 @@ void btm_read_remote_features_complete(UINT8 *p)
 {
     tACL_CONN *p_acl = &btm_cb.acl_db[0];
     tBTM_SEC_DEV_REC_LOCAL *p_dev_rec;
-    UINT16 handle;
     UINT16 pkt_types;
+    UINT16 base;
+    UINT16 handle;
     int xx;
 
     if (p[0] != HCI_SUCCESS)
         return;
 
-    handle = (UINT16)(((UINT16)p[2] << 8) + p[1]);
+    handle = (UINT16)((UINT16)p[1] + ((UINT16)p[2] << 8));
 
     /* Find the ACL entry for this handle. */
     for (xx = 0; xx < 4; xx++) {
@@ -660,13 +661,12 @@ void btm_read_remote_features_complete(UINT8 *p)
                 memcpy(p_dev_rec->features, p_acl->features, 8);
 
             /* Select the packet types based on the local features/version. */
-            {
-                UINT16 base = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
+            base = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
+            if (btm_cb.local_version[0] >= 3) {
+                pkt_types = (UINT16)(base |
+                                     (btm_cb.btm_acl_pkt_types_supported & 0x3306));
+            } else {
                 pkt_types = (UINT16)(base & 0xFFFFCCF9);
-                if (btm_cb.local_version[0] >= 3) {
-                    pkt_types = (UINT16)(base |
-                                         (btm_cb.btm_acl_pkt_types_supported & 0x3306));
-                }
             }
 
             if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {
@@ -1125,7 +1125,7 @@ void btm_read_link_quality_complete(UINT8 *p)
     }
 }
 
-static tACL_CONN *btm_bda_to_acl_local(BD_ADDR bda)
+static __inline tACL_CONN *btm_bda_to_acl_local(BD_ADDR bda)
 {
     tACL_CONN *p = &btm_cb.acl_db[0];
     UINT8 xx;
@@ -1182,12 +1182,15 @@ void btm_chg_all_acl_pkt_types(BOOLEAN is_sco_active)
                 if (btm_cb.local_version[0] >= 3)
                     pkt_mask |= 0x3300;
 
-                pkt_types = (UINT16)(pkt_mask & btm_cb.btm_acl_pkt_types_supported);
-                pkt_types = (UINT16)(pkt_types & 0xCC18);
-                pkt_types = (UINT16)(pkt_types & 0xFFFFCCF9);
-                if (btm_cb.local_version[0] >= 3) {
-                    pkt_types = (UINT16)(pkt_types |
-                                         ((pkt_mask | btm_cb.btm_acl_pkt_types_supported) & 0x3306));
+                {
+                    UINT16 base = (UINT16)((pkt_mask & btm_cb.btm_acl_pkt_types_supported) &
+                                           0xCC18);
+                    if (btm_cb.local_version[0] >= 3) {
+                        pkt_types = (UINT16)(base |
+                                             ((pkt_mask | btm_cb.btm_acl_pkt_types_supported) & 0x3306));
+                    } else {
+                        pkt_types = (UINT16)(base & 0xFFFFCCF9);
+                    }
                 }
 
                 if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {
@@ -1226,12 +1229,16 @@ void btm_chg_all_acl_pkt_types(BOOLEAN is_sco_active)
                          (UINT32)p_acl->hci_handle, (UINT32)p_acl->pkt_types_mask);
             }
 
-            pkt_types = (UINT16)(p_acl->restore_pkt_types & btm_cb.btm_acl_pkt_types_supported);
-            pkt_types = (UINT16)(pkt_types & 0xCC18);
-            pkt_types = (UINT16)(pkt_types & 0xFFFFCCF9);
-            if (btm_cb.local_version[0] >= 3) {
-                pkt_types = (UINT16)(pkt_types |
-                                     ((p_acl->restore_pkt_types | btm_cb.btm_acl_pkt_types_supported) & 0x3306));
+            {
+                UINT16 base = (UINT16)(btm_cb.btm_acl_pkt_types_supported &
+                                        p_acl->restore_pkt_types) & 0xCC18;
+                if (btm_cb.local_version[0] >= 3) {
+                    pkt_types = (UINT16)(base |
+                                         ((btm_cb.btm_acl_pkt_types_supported |
+                                           p_acl->restore_pkt_types) & 0x3306));
+                } else {
+                    pkt_types = (UINT16)(base & 0xFFFFCCF9);
+                }
             }
 
             if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {

@@ -67,10 +67,6 @@ struct HBMWork {
 
 HBMWork* sWork;
 
-// Retail anonymous-namespace rodata anchors (pool constants follow at +0x28).
-static const char WT_FILENAME[] = "wt\\HomeButtonSe.wt";
-static const char PCM_FILENAME[] = "wt\\HomeButtonSe.pcm";
-
 // Retail rodata: 28 filenames indexed by seq id (SOUND_FILENAME).
 extern "C" const char* SOUND_FILENAME[];
 
@@ -249,6 +245,10 @@ void* AudioSoundThreadProc(void* /* arg */) {
         }
     }
 }
+
+// Retail anonymous-namespace rodata anchors (mangled @unnamed@ form).
+static const char WT_FILENAME[0x14] = "wt\\HomeButtonSe.wt";
+static const char PCM_FILENAME[0x14] = "wt\\HomeButtonSe.pcm";
 
 } // namespace
 

@@ -97,11 +97,11 @@ alloc_done:
 }
 
 BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx) {
-    u32 i;
     BOOL result;
-    BOOL mask = OSDisableInterrupts();
     BOOL nested;
+    u32 i;
     s32** p;
+    BOOL mask = OSDisableInterrupts();
 
     fx->active |= 1;
 
@@ -111,8 +111,8 @@ BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx) {
     for (i = 0; i < 4; i++) {
         if (*p != NULL) {
             __AXFXFree(*p);
+            *p = NULL;
         }
-        *p = NULL;
         p++;
     }
     OSRestoreInterrupts(nested);
@@ -125,8 +125,8 @@ BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx) {
         for (i = 0; i < 4; i++) {
             if (*p != NULL) {
                 __AXFXFree(*p);
+                *p = NULL;
             }
-            *p = NULL;
             p++;
         }
         OSRestoreInterrupts(nested);

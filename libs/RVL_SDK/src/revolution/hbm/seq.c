@@ -55,7 +55,37 @@ extern HBMSEQSEQUENCE *__HBMSEQSequenceList;
 
 extern "C" void HBMSYNMidiInput(void *syn, const u8 *data);
 
-void __HBMSEQInitTracks__FP15_HBMSEQSEQUENCEPUci() {}
+void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
+{
+    HBMSEQTRACK *track;
+    u32 tag;
+    u32 len;
+    f32 f;
+
+    track = &seq->tracks[0];
+    while (count != 0) {
+    retry:
+        tag = *(u32 *)data;
+        len = *(u32 *)(data + 4);
+        data += 8;
+        if (tag == 0x4D54726B) {
+            track->seq = seq;
+            track->start = data;
+            track->end = data + len;
+            track->cur = data;
+            f = 16000.0f / (f32)(s16)seq->field_0x0A;
+            f = 96.0f / f;
+            track->field_0x18 = (u32)(65536.0f * f);
+            data += len;
+            track->sub_state = 0;
+        } else {
+            data += len;
+            goto retry;
+        }
+        count--;
+        track++;
+    }
+}
 
 void __HBMSEQReadHeader__FP15_HBMSEQSEQUENCEPUc() {}
 

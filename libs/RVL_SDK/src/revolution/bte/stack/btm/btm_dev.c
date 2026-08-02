@@ -184,7 +184,6 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
 {
     BtmSecDevRec *p_rec;
     int i;
-    u32 cnt;
     tBTM_INQ_INFO *p_inq;
 
     p_rec = NULL;
@@ -222,9 +221,7 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
 
     /* Set connection handle and timestamp */
     p_rec->hci_handle = BTM_GetHCIConnHandle(bd_addr);
-    cnt = btm_cb.dev_rec_count;
-    p_rec->timestamp = cnt;
-    btm_cb.dev_rec_count = cnt + 1;
+    p_rec->timestamp = btm_cb.dev_rec_count++;
 
     return p_rec;
 }

@@ -2,6 +2,8 @@
 
 #include <harness_catalog.h>
 
+#include <math.h>
+
 #include <revolution/AI.h>
 #include <revolution/AX.h>
 #include <revolution/OS.h>
@@ -18,6 +20,9 @@ void SetVolumeAllSeq(float volume);
 void SetSoundMode(u32 mode);
 
 } // namespace homebutton
+
+// MSL libm export referenced by retail (not declared in stl/math.h).
+extern "C" double log10(double);
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace {
@@ -62,6 +67,10 @@ struct HBMWork {
 
 HBMWork* sWork;
 
+// Retail anonymous-namespace rodata anchors (pool constants follow at +0x28).
+static const char WT_FILENAME[] = "wt\\HomeButtonSe.wt";
+static const char PCM_FILENAME[] = "wt\\HomeButtonSe.pcm";
+
 // Retail rodata: 28 filenames indexed by seq id (SOUND_FILENAME).
 extern "C" const char* SOUND_FILENAME[];
 
@@ -83,6 +92,8 @@ extern "C" void HBMMIXInit(void);
 extern "C" void HBMMIXUpdateSettings(void);
 extern "C" void HBMMIXQuit(void);
 extern "C" void HBMMIXSetSoundMode(u32 mode);
+// Retail declares (void*, int) here but the retail body ignores the volume.
+extern "C" void HBMSEQSetVolume(HBMSEQSEQUENCE* seq, int volume);
 
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;
@@ -320,9 +331,9 @@ void InitAxSound(const void* pWork, void* pWorkEnd, u32 workSize) {
     work->prevFrameCb = NULL;
 
     if (ARCInitHandle(const_cast<void*>(pWork), &work->archive) != 0) {
-        if (ARCOpen(&work->archive, "wt\\HomeButtonSe.wt", &fileInfo) != 0) {
+        if (ARCOpen(&work->archive, WT_FILENAME, &fileInfo) != 0) {
             work->seqWork1 = ARCGetStartAddrInMem(&fileInfo);
-            if (ARCOpen(&work->archive, "wt\\HomeButtonSe.pcm", &fileInfo2) != 0) {
+            if (ARCOpen(&work->archive, PCM_FILENAME, &fileInfo2) != 0) {
                 work->seqWork2 = ARCGetStartAddrInMem(&fileInfo2);
                 OSInitMessageQueue(&work->msgQueue, work->msgBuffer, 4);
                 if (OSCreateThread(
@@ -430,13 +441,42 @@ void StopAllSeq() {
 }
 #pragma dont_inline reset
 
-void SetVolumeAllSeq(float /* volume */) {}
+void SetVolumeAllSeq(float volume)
+{
+    int vol;
+    int i;
+
+    if (sWork == NULL) {
+        return;
+    }
+
+    if (volume <= 0.0f) {
+        vol = -0x388;
+    } else {
+        vol = (int)(10.0f * (20.0f * (float)log10((double)volume)));
+    }
+
+    if (vol > 0x3C) {
+        vol = 0x3C;
+    }
+    if (vol < -0x388) {
+        vol = -0x388;
+    }
+
+    for (i = 0; i < 4; i++) {
+        HBMSEQSEQUENCE* players = &sWork->players[i];
+        if (players->inUse != 0) {
+            HBMSEQSetVolume(players, vol);
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        HBMSEQSEQUENCE* players = &sWork->players[4] + i;
+        if (players->inUse != 0) {
+            HBMSEQSetVolume(players, vol);
+        }
+    }
+}
 
 void SetSoundMode(u32 mode) { HBMMIXSetSoundMode(mode); }
 
 } // namespace homebutton
-
-// Force-emit the anonymous-namespace helpers (retail references them from
-// InitAxSound via AXRegisterCallback / OSCreateThread / PlaySeq).
-DECOMP_FORCEACTIVE(HBMAxSound_cpp, GetFreePlayer, AudioFrameCallback,
-                   AudioSoundThreadProc);

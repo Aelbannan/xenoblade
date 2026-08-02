@@ -355,7 +355,7 @@ void Pane::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
         ++it;
 
         if (pAnimTrans == NULL || pLink->GetAnimTransform() == pAnimTrans) {
-            mAnimList.Erase(pLink);
+            mAnimList.Erase(mAnimList.GetIteratorFromPointer(pLink));
             pLink->Reset();
         }
     }
@@ -403,30 +403,33 @@ void Pane::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
 
 void Pane::LoadMtx(const DrawInfo& rInfo) {
     Mtx mtx;
-    const ut::Rect& rect = rInfo.GetViewRect();
+    const f32 (*pMtx)[4];
 
     if (rInfo.IsMultipleViewMtxOnDraw()) {
         PSMTXConcat(rInfo.GetViewMtx(), mGlbMtx, mtx);
 
-        if (rect.bottom - rect.top < 0.0f) {
+        if (rInfo.IsYAxisUp()) {
             mtx[0][1] = -mtx[0][1];
             mtx[1][1] = -mtx[1][1];
             mtx[2][1] = -mtx[2][1];
         }
+
+        pMtx = mtx;
     } else {
-        if (rect.bottom - rect.top < 0.0f) {
+        if (rInfo.IsYAxisUp()) {
             PSMTXCopy(mGlbMtx, mtx);
+
             mtx[0][1] = -mtx[0][1];
             mtx[1][1] = -mtx[1][1];
             mtx[2][1] = -mtx[2][1];
+
+            pMtx = mtx;
         } else {
-            GXLoadPosMtxImm(mGlbMtx, GX_PNMTX0);
-            GXSetCurrentMtx(GX_PNMTX0);
-            return;
+            pMtx = mGlbMtx;
         }
     }
 
-    GXLoadPosMtxImm(mtx, GX_PNMTX0);
+    GXLoadPosMtxImm(pMtx, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 

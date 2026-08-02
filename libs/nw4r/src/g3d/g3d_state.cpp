@@ -75,7 +75,7 @@ void LoadFog__Q34nw4r3g3d8G3DStateFi(){}
 
 void SetLightSetting__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d12LightSetting(){}
 
-void SetLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d8LightObji(){}
+
 
 // Light object array (retail global at 8061B574).
 extern char lbl_eu_8061B574[];
@@ -84,6 +84,7 @@ void* GetLightObj__Q34nw4r3g3d8G3DStateFi(int index) {
     if (index < 0 || index >= 128) return nullptr;
     return &lbl_eu_8061B574[index * 0x44 + 0x2c];
 }
+void SetLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d8LightObji(){}
 
 namespace nw4r {
 namespace g3d {
@@ -159,6 +160,7 @@ namespace nw4r {
                 void LightState::LoadLightSet(int, unsigned long*, unsigned long*, unsigned long*, unsigned long*, nw4r::g3d::AmbLightObj*) {}
                 LightState::~LightState() {}
             }
+
         }
     }
 }

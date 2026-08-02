@@ -5189,3 +5189,35 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   shape emits it (tested -O4,p/-O4,s, C/C++, do/while/for, return forms); SMT
   blocked by the unknown indirect callee. Keep the C candidate with
   `__sync(); __isync();` (56% static / 91.9% fuzzy).
+
+### RVL_SDK gx/GXInit.c — `__GXInitRevisionBits` + `GXInit` FULL_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p`)
+
+Both targets byte-identical (`us-80319bd0` 0x130, `us-80319d00` 0x504; unit `.text`
+exactly at the 0x1190 split budget). Reusable insights:
+
+- **Missing SDK inline ⇒ call instead of folded constant.** Retail folded
+  `OSUncachedToPhysical(0xCC008000)` to `lis r4,0x0C01; addi r3,r4,-0x8000`
+  (0x0C008000); decomp emitted a real `bl OSUncachedToPhysical`. Our
+  `revolution/os/OSAddress.h` only had `OSCachedToPhysical`. Adding the missing
+  `static inline void* OSUncachedToPhysical(const void* ofs) { return (void*)((u32)ofs & 0x3FFFFFFF); }`
+  made MWCC fold the constant — removed the extra `bl`, aligned the whole
+  321-instruction function (was 1-instruction-shifted from 0xCC onward).
+- **`GX_BITSET` (__rlwimi builtin) is not value-numbered ⇒ keeps registers live.**
+  For bit-field accumulators, `reg |= 1<<k` chains let MWCC fully fold the
+  variable to a constant (`li r3, 0x3F`), while the retail
+  `SC_XF_ERROR_F_SET_*`/`SC_PE_CHICKEN_SET_*` forms (GX_BITSET-based) kept
+  `reg` in r4 and emitted `ori r0,r4,0x3F` from the live zero. Match instruction
+  selection by using the GX_BITSET macros even when plain `|=` gives the same
+  value.
+- **GX_BITSET pos is MSB-relative:** LSB bit = 31-pos (e.g. bit 31 → pos 0,
+  byte at bits 24-31 → pos 0/size 8, LSB bits 23-24 → pos 23/size 2). A wrong
+  pos shows up as a different `rlwinm/rlwimi` mask (`SC_PE_COPY_CMD_SET_GAMMA`
+  was pos 16 → cleared 0xC000; retail clears 0x180 → pos 23).
+- **BP refresh registers use literal constants**, not shifted macro forms:
+  `reg = 0x69000400 | (freqBase / 2048)` and `reg = 0x46000200 | (freqBase / 4224)`
+  reproduce retail's `srwi` + `oris`/`ori` scheduling (interval in low bits,
+  RID at 24-31, enable at 10/9). The `(interval<<16)|(enable<<8)|rid` macro form
+  emits a different shift/mask shape.
+- `GX_WRITE_CP_STRM_REG` must NOT mask `vtxfmt & 0xF` — the byte store
+  truncates for free; masking adds a `clrlwi` retail lacks. `SC_CP_VAT_REG_B_SET_VCACHE_ENHANCE`
+  is bit 31 → `GX_BITSET(reg, 0, 1, v)`.

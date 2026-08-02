@@ -47,7 +47,7 @@
 #define GX_WRITE_CP_STRM_REG(addr, vtxfmt, data) \
     do { \
         WGPIPE.c = 0x08; \
-        WGPIPE.c = (u8)(((vtxfmt)&0xF) | (((addr)&0xF) << 4)); \
+        WGPIPE.c = (u8)((vtxfmt) | (((addr)&0xF) << 4)); \
         WGPIPE.i = (u32)(data); \
     } while (0)
 
@@ -59,16 +59,16 @@
     GX_CP_SET_VAT_GROUP0_BYTEDEQUANT(reg, v)
 
 #define SC_CP_VAT_REG_B_SET_VCACHE_ENHANCE(reg, v) \
-    ((reg) = GX_BITSET((reg), 31, 1, (v)))
+    ((reg) = GX_BITSET((reg), 0, 1, (v)))
 
-#define SC_XF_ERROR_F_SET_CTEX_BUG_ENABLE(reg, v) ((reg) |= (v) << 0)
-#define SC_XF_ERROR_F_SET_TFAN4_BUG_ENABLE(reg, v) ((reg) |= (v) << 1)
-#define SC_XF_ERROR_F_SET_TFAN16_BUG_ENABLE(reg, v) ((reg) |= (v) << 2)
-#define SC_XF_ERROR_F_SET_DUALTRAN_REG_ENABLE(reg, v) ((reg) |= (v) << 3)
-#define SC_XF_ERROR_F_SET_BYPASS_BUG_ENABLE(reg, v) ((reg) |= (v) << 4)
-#define SC_XF_ERROR_F_SET_FAST_MATRIX_ENABLE(reg, v) ((reg) |= (v) << 5)
+#define SC_XF_ERROR_F_SET_CTEX_BUG_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 31, 1, (v)))
+#define SC_XF_ERROR_F_SET_TFAN4_BUG_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 30, 1, (v)))
+#define SC_XF_ERROR_F_SET_TFAN16_BUG_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 29, 1, (v)))
+#define SC_XF_ERROR_F_SET_DUALTRAN_REG_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 28, 1, (v)))
+#define SC_XF_ERROR_F_SET_BYPASS_BUG_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 27, 1, (v)))
+#define SC_XF_ERROR_F_SET_FAST_MATRIX_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 26, 1, (v)))
 
-#define SC_XF_DUALTEXTRAN_F_SET_DUALTEXTRAN_ENABLE(reg, v) ((reg) |= (v) << 0)
+#define SC_XF_DUALTEXTRAN_F_SET_DUALTEXTRAN_ENABLE(reg, v) ((reg) = GX_BITSET((reg), 31, 1, (v)))
 
 #define SC_PE_CHICKEN_SET_PIWR(reg, v) ((reg) = GX_BITSET(reg, 31, 1, v))
 #define SC_PE_CHICKEN_SET_TXCPY_FMT(reg, v) ((reg) = GX_BITSET(reg, 30, 1, v))
@@ -95,19 +95,13 @@
 #define SC_PE_CMODE1_SET_RID(reg, v) GX_BP_SET_OPCODE(reg, v)
 #define SC_PE_ZMODE_SET_RID(reg, v) GX_BP_SET_OPCODE(reg, v)
 #define SC_PE_CONTROL_SET_RID(reg, v) GX_BP_SET_OPCODE(reg, v)
-#define SC_PE_COPY_CMD_SET_GAMMA(reg, v) ((reg) = GX_BITSET(reg, 16, 2, v))
+#define SC_PE_COPY_CMD_SET_GAMMA(reg, v) ((reg) = GX_BITSET(reg, 23, 2, v))
 
 #define SC_CP_STAT_SEL_REG_SET_STALLPERF_SEL(reg, v) \
     ((reg) = GX_BITSET(reg, 24, 4, v))
 
 #define STALLPERF_ZERO 0
 #define MEMPERF_ZERO 0
-
-#define TX_REFRESH(interval, enable, rid)                                       \
-    ((u32)((interval) << 16) | ((u32)(enable) << 8) | (u32)(rid))
-
-#define PE_REFRESH(interval, enable, rid)                                       \
-    ((u32)((interval) << 16) | ((u32)(enable) << 8) | (u32)(rid))
 
 #define XF_PERF0_F(a, b, c, d) 0
 #define SU_PERF(a, b, c, d, e, f, g, h, i, rid) ((u32)((u32)(rid) << 24))
@@ -273,6 +267,7 @@ static BOOL __GXShutdown(BOOL final, u32 event) {
 }
 
 void __GXInitRevisionBits(void) {
+    u32 reg;
     u32 i;
 
     for (i = 0; i < GX_MAX_VTXFMT; i++) {
@@ -281,29 +276,26 @@ void __GXInitRevisionBits(void) {
         GX_WRITE_CP_STRM_REG(CP_VAT_B, (s32)i, gxdt->vatB[i]);
     }
 
-    {
-        u32 reg1 = 0;
-        u32 reg2 = 0;
-        SC_XF_ERROR_F_SET_CTEX_BUG_ENABLE(reg1, 1);
-        SC_XF_ERROR_F_SET_TFAN4_BUG_ENABLE(reg1, 1);
-        SC_XF_ERROR_F_SET_TFAN16_BUG_ENABLE(reg1, 1);
-        SC_XF_ERROR_F_SET_DUALTRAN_REG_ENABLE(reg1, 1);
-        SC_XF_ERROR_F_SET_BYPASS_BUG_ENABLE(reg1, 1);
-        SC_XF_ERROR_F_SET_FAST_MATRIX_ENABLE(reg1, 1);
-        GX_WRITE_XF_REG(0x1000, reg1, 0);
-        SC_XF_DUALTEXTRAN_F_SET_DUALTEXTRAN_ENABLE(reg2, 1);
-        GX_WRITE_XF_REG(0x1012, reg2, 0);
-    }
+    reg = 0;
+    SC_XF_ERROR_F_SET_CTEX_BUG_ENABLE(reg, 1);
+    SC_XF_ERROR_F_SET_TFAN4_BUG_ENABLE(reg, 1);
+    SC_XF_ERROR_F_SET_TFAN16_BUG_ENABLE(reg, 1);
+    SC_XF_ERROR_F_SET_DUALTRAN_REG_ENABLE(reg, 1);
+    SC_XF_ERROR_F_SET_BYPASS_BUG_ENABLE(reg, 1);
+    SC_XF_ERROR_F_SET_FAST_MATRIX_ENABLE(reg, 1);
+    GX_WRITE_XF_REG(0x1000, reg, 0);
 
-    {
-        u32 reg = 0;
-        SC_PE_CHICKEN_SET_PIWR(reg, 1);
-        SC_PE_CHICKEN_SET_TXCPY_FMT(reg, 1);
-        SC_PE_CHICKEN_SET_TXCPY_CCV(reg, 1);
-        SC_PE_CHICKEN_SET_BLENDOP(reg, 1);
-        SC_PE_CHICKEN_SET_RID(reg, 0x58);
-        GX_WRITE_RA_REG(reg);
-    }
+    reg = 0;
+    SC_XF_DUALTEXTRAN_F_SET_DUALTEXTRAN_ENABLE(reg, 1);
+    GX_WRITE_XF_REG(0x1012, reg, 0);
+
+    reg = 0;
+    SC_PE_CHICKEN_SET_PIWR(reg, 1);
+    SC_PE_CHICKEN_SET_TXCPY_FMT(reg, 1);
+    SC_PE_CHICKEN_SET_TXCPY_CCV(reg, 1);
+    SC_PE_CHICKEN_SET_BLENDOP(reg, 1);
+    SC_PE_CHICKEN_SET_RID(reg, 0x58);
+    GX_WRITE_RA_REG(reg);
 }
 
 GXFifoObj* GXInit(void* base, u32 size) {
@@ -381,11 +373,11 @@ GXFifoObj* GXInit(void* base, u32 size) {
         u32 freqBase;
         freqBase = OS_BUS_CLOCK_SPEED / 500;
         __GXFlushTextureState();
-        reg = TX_REFRESH(freqBase / 2048, 1, 0x69);
+        reg = 0x69000400 | (freqBase / 2048);
         GX_WRITE_RA_REG(reg);
         __GXFlushTextureState();
 
-        reg = PE_REFRESH(freqBase / 4224, 1, 0x46);
+        reg = 0x46000200 | (freqBase / 4224);
         GX_WRITE_RA_REG(reg);
     }
 

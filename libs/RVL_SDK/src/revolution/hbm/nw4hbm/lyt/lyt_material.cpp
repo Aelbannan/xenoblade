@@ -11,6 +11,11 @@ Color::Color() {
     *this = WHITE;
 }
 
+/* Defined inline here so MWCC inlines away all ~Color calls in this TU
+ * (retail SetupGX/material ctor emit no dtor calls; the strong ~Color symbol
+ * lives in lyt_bounding.o per retail). */
+inline Color::~Color() {}
+
 } // namespace ut
 } // namespace nw4hbm
 
@@ -435,8 +440,29 @@ void Material::ReserveGXMem(u8 texMapNum, u8 texSrtNum, u8 texCoordGenNum,
         Layout::FreeMemory(mpGXMem);
         mpGXMem = NULL;
 
-        mGXMemCap = detail::BitGXNums();
-        mGXMemNum = detail::BitGXNums();
+        mGXMemCap.texMap = 0;
+        mGXMemCap.texSRT = 0;
+        mGXMemCap.texCoordGen = 0;
+        mGXMemCap.indSRT = 0;
+        mGXMemCap.indStage = 0;
+        mGXMemCap.tevSwap = 0;
+        mGXMemCap.tevStage = 0;
+        mGXMemCap.chanCtrl = 0;
+        mGXMemCap.matCol = 0;
+        mGXMemCap.alpComp = 0;
+        mGXMemCap.blendMode = 0;
+
+        mGXMemNum.texMap = 0;
+        mGXMemNum.texSRT = 0;
+        mGXMemNum.texCoordGen = 0;
+        mGXMemNum.indSRT = 0;
+        mGXMemNum.indStage = 0;
+        mGXMemNum.tevSwap = 0;
+        mGXMemNum.tevStage = 0;
+        mGXMemNum.chanCtrl = 0;
+        mGXMemNum.matCol = 0;
+        mGXMemNum.alpComp = 0;
+        mGXMemNum.blendMode = 0;
     }
 
     // clang-format off
@@ -724,30 +750,26 @@ bool Material::SetupGX(bool modulate, u8 alpha) {
 
     if (mGXMemNum.texMap > 0) {
         u32 tlutID = GX_TLUT0;
-        u32 bigTlutID = GX_BIGTLUT0;
 
         const TexMap* const pTexMap = GetTexMapAry();
 
         for (int i = 0; i < mGXMemNum.texMap; i++) {
-            const TexMap& rTexMap = pTexMap[i];
-
             GXTexObj texObj;
-            rTexMap.Get(&texObj);
+            pTexMap[i].Get(&texObj);
 
-            if (detail::IsCITexelFormat(rTexMap.GetTexelFormat())) {
-                u32 tlutName;
-                if (static_cast<int>(rTexMap.GetTexelFormat()) == GX_TF_C14X2) {
-                    tlutName = bigTlutID++;
-                } else {
-                    tlutName = tlutID++;
+            GXTexFmt fmt = GXGetTexObjFmt(&texObj);
+            if (fmt == GX_TF_C4 || fmt == GX_TF_C8) {
+                TPLClutHeader* const pClut =
+                    static_cast<TPLClutHeader*>(GXGetTexObjUserData(&texObj));
+
+                if (pClut != NULL) {
+                    GXTlutObj tlutObj;
+                    GXInitTlutObj(&tlutObj, pClut->data, pClut->format,
+                                  pClut->numEntries);
+                    GXLoadTlut(&tlutObj, tlutID);
+                    GXInitTexObjTlut(&texObj, tlutID);
+                    tlutID++;
                 }
-
-                GXInitTexObjTlut(&texObj, tlutName);
-
-                GXTlutObj tlutObj;
-                rTexMap.Get(&tlutObj);
-
-                GXLoadTlut(&tlutObj, tlutName);
             }
 
             GXLoadTexObj(&texObj, static_cast<GXTexMapID>(i));

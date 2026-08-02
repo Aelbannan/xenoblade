@@ -10,6 +10,7 @@ extern void mwPlyPause(void* self, s32 flag);
 extern void mwPlySfdStart(void* self);
 
 typedef s32 (*SyncStartFn)(void*, s32);
+typedef s32 (*VtableFn)(void*, void*);
 
 void mwsfsvr_SyncStartSst(void* self) {
     void* sync;
@@ -21,7 +22,7 @@ void mwsfsvr_SyncStartSst(void* self) {
     if (*(s32*)sync == 1) {
         if (MWSST_GetStat(sync) != 2) {
             void* obj = *(void**)((u8*)sync + 0x14);
-            if (((SyncStartFn)((void**)obj)[9])(obj, 1) != 0)
+            if (((SyncStartFn)(*(void***)obj)[9])(obj, 1) != 0)
                 return;
         }
     }
@@ -29,7 +30,7 @@ void mwsfsvr_SyncStartSst(void* self) {
     if (*(s32*)sync == 1) {
         if (MWSST_GetStat(sync) != 2) {
             void* obj = *(void**)((u8*)sync + 0x14);
-            if (((SyncStartFn)((void**)obj)[9])(obj, 1) != 0)
+            if (((SyncStartFn)(*(void***)obj)[9])(obj, 1) != 0)
                 return;
         }
     }
@@ -48,7 +49,47 @@ void mwsfsvr_StartStream() {}
 
 void mwlSfdExecDecSvrPlaying() {}
 
-void MWSFSVR_VsyncThrdProc() {}
+extern void* lbl_eu_805FF3A0;
+extern u8 lbl_eu_80566C70[];
+extern u8 lbl_eu_80567094[];
+extern u32 lbl_eu_805FF39C;
+extern u32 lbl_eu_806029F0;
+extern u32 lbl_eu_806029F4;
+extern void* MWSFLIB_GetLibWorkPtr(void);
+extern s32 MWSFSVM_TestAndSet(void* p);
+extern void SFD_VbIn(void);
+
+void MWSFSVR_VsyncThrdProc(void) {
+    u32 local = 0;
+    if (lbl_eu_805FF3A0 != NULL) {
+        void* obj = lbl_eu_805FF3A0;
+        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80566C70 + 4);
+    }
+    if (lbl_eu_805FF3A0 != NULL) {
+        void* obj = lbl_eu_805FF3A0;
+        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80567094 + 4);
+    }
+    if (lbl_eu_805FF39C == 1) {
+        void* w;
+        lbl_eu_806029F0++;
+        lbl_eu_806029F4++;
+        w = MWSFLIB_GetLibWorkPtr();
+        if (MWSFSVM_TestAndSet((u8*)w + 0x5C) == 1) {
+            if (lbl_eu_805FF39C == 1)
+                SFD_VbIn();
+            *(u32*)((u8*)w + 0x5C) = 0;
+        }
+    }
+    if (lbl_eu_805FF3A0 != NULL) {
+        void* obj = lbl_eu_805FF3A0;
+        ((VtableFn)(*(void***)obj)[9])(obj, lbl_eu_80567094 + 0x6C);
+    }
+    if (lbl_eu_805FF3A0 != NULL) {
+        void* obj = lbl_eu_805FF3A0;
+        *(void**)((u8*)lbl_eu_80566C70 + 0x74) = &local;
+        ((VtableFn)(*(void***)obj)[9])(obj, (u8*)lbl_eu_80566C70 + 0x6C);
+    }
+}
 
 void MWSFSVR_MainThrdProc() {}
 

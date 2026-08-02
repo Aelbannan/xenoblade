@@ -106,19 +106,77 @@ void adxm_safe_proc(void) {
     base->field_0x9D4 = 1;
 }
 
-void adxm_vsync_proc() {}
+extern u32 lbl_eu_805E26DC;
+extern void VIWaitForRetrace(void);
+extern void SVM_ExecSvrVsync(void);
 
-void adxm_fs_proc(void) {
-    struct AdxmBase* base = &lbl_eu_805F3A50;
-    while (base->field_0x9E0 == 1) {
+void adxm_vsync_proc(void) {
+    struct VsyncCb {
+        void (*fn)(void*);
+        void* obj;
+    };
+    u8* base = (u8*)&lbl_eu_805F3A50;
+    struct VsyncCb* cb = (struct VsyncCb*)(base + 0x68);
+    u32* cnt = &lbl_eu_805E26DC;
+    while (*(s32*)(base + 0x9D8) == 1) {
+        u32 a;
+        u32 b;
         VIWaitForRetrace();
-        base->field_0x50 += 1;
-        SVM_ExecSvrFs();
+        a = *(u32*)(base + 0x4C) + 1;
+        b = *cnt + 1;
+        *(u32*)(base + 0x4C) = a;
+        *cnt = b;
+        SVM_ExecSvrVsync();
+        if (*(u32*)(base + 0x390) == 0) {
+            OSResumeThread((OSThread*)(base + 0x398));
+            if (cb->fn != NULL) {
+                cb->fn(cb->obj);
+            }
+        }
     }
-    base->field_0x9E4 = 1;
+    *(u32*)(base + 0x9DC) = 1;
 }
 
-void adxm_mwidle_proc() {}
+void adxm_fs_proc(void) {
+    u8* base = (u8*)&lbl_eu_805F3A50;
+    while (*(s32*)(base + 0x9E0) == 1) {
+        VIWaitForRetrace();
+        (*(u32*)(base + 0x50))++;
+        SVM_ExecSvrFs();
+    }
+    *(u32*)(base + 0x9E4) = 1;
+}
+
+extern int SVM_ExecSvrMwIdle(void);
+
+void adxm_mwidle_proc(void) {
+    u8* base = (u8*)&lbl_eu_805F3A50;
+    u32* p16 = (u32*)(base + 0x10);
+    u32* cb = (u32*)(base + 0x68);
+    s32 r;
+    while (*(s32*)(base + 0x9E8) == 1) {
+        (*(u32*)(base + 0x54))++;
+        r = SVM_ExecSvrMwIdle();
+        if (r != 0) {
+            if (*(s32*)(base + 0x44) != 1)
+                continue;
+        }
+        if (*(s32*)(base + 0x44) == 1) {
+            *(s32*)(base + 0x44) = 0;
+            OSSetThreadPriority((OSThread*)(base + 0x398), (s32)p16[6]);
+        }
+        if ((s32)cb[0] != 0) {
+            ((void (*)(void*))cb[0])((void*)cb[1]);
+        }
+        if (r == 0) {
+            if (*(s32*)(base + 0x08) == 1) {
+                OSResumeThread((OSThread*)(base + 0x6B8));
+            }
+        }
+        OSSuspendThread((OSThread*)(base + 0x398));
+    }
+    *(s32*)(base + 0x390) = 1;
+}
 
 void ADXM_SetCbErr(void) { SVM_SetCbErr(); }
 

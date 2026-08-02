@@ -77,13 +77,30 @@ void SetLightSetting__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d12LightSetting(){}
 
 void SetLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d8LightObji(){}
 
+// Light object array (retail global at 8061B574).
+extern char lbl_eu_8061B574[];
+
 void* GetLightObj__Q34nw4r3g3d8G3DStateFi(int index) {
     if (index < 0 || index >= 128) return nullptr;
-    extern char lbl_eu_8061B574[];
     return &lbl_eu_8061B574[index * 0x44 + 0x2c];
 }
 
-void SetAmbLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d11AmbLightObji(){}
+namespace nw4r {
+namespace g3d {
+
+void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
+    if (idx < 0) {
+        return;
+    }
+    if (idx >= 0x80) {
+        return;
+    }
+    AmbLightObj* dst = reinterpret_cast<AmbLightObj*>(lbl_eu_8061B574 + idx * 4 + 0x222c);
+    *dst = rObj;
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj(){}
 

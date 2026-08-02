@@ -185,6 +185,7 @@ void SetFog(const Fog fog, int id);
 void LoadFog(int id);
 
 void SetLightSetting(const LightSetting& rSetting);
+void SetAmbLightObj(const AmbLightObj& rObj, int id);
 const LightObj* GetLightObj(int id);
 void LoadLightSet(int id, u32* pDiffColorMask, u32* pDiffAlphaMask,
                   u32* pSpecColorMask, u32* pSpecAlphaMask, AmbLightObj* pAmb);

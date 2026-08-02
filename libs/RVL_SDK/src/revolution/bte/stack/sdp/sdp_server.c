@@ -240,19 +240,19 @@ static void process_service_search(tCONN_CB *p_ccb, UINT16 trans_num,
                                    UINT16 param_len, UINT8 *p_req, UINT8 *p_req_end)
 {
     UINT16 max_handles;
-    UINT16 num_handles;
     UINT16 max_recs;
-    UINT16 xx;
+    UINT16 rem_handles;
     UINT16 start_rec;
-    UINT16 end_rec;
-    UINT8 cont = 0;
-    tSDP_RECORD *p_rec;
+    UINT16 num_handles;
+    UINT16 xx;
+    tSDP_RECORD *p_rec = NULL;
     UINT32 handles[SDP_MAX_RECORDS];
     tSDP_UUID_SEQ uid_seq;
     BT_HDR *p_buf;
     UINT8 *p_rsp;
     UINT8 *p_rsp_start;
     UINT8 *p_param_len;
+    UINT8 cont = 0;
 
     /* Extract the UUID sequence to search for */
     p_req = sdpu_extract_uid_seq(p_req, param_len, &uid_seq);
@@ -268,43 +268,41 @@ static void process_service_search(tCONN_CB *p_ccb, UINT16 trans_num,
         max_handles = SDP_MAX_RECORDS;
 
     /* Now, find all the matching records in the database */
-    num_handles = 0;
-    for (xx = 0, p_rec = NULL; xx < max_handles; xx++) {
+    for (num_handles = 0; num_handles < max_handles; ) {
         p_rec = sdp_db_service_search(p_rec, &uid_seq);
-        if (p_rec == NULL)
+        if (p_rec)
+            handles[num_handles++] = p_rec->record_handle;
+        else
             break;
-
-        handles[xx] = p_rec->record_handle;
     }
 
-    num_handles = xx;
-
     /* Check for a continuation state */
-    if (*p_req == 0) {
-        start_rec = 0;
-    } else {
-        if (*p_req != 2) {
+    if (*p_req) {
+        if (*p_req++ != 2) {
             sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
             return;
         }
 
-        start_rec = (UINT16)(((UINT16)p_req[1] << 8) + p_req[2]);
-        p_req += 3;
+        start_rec = (UINT16)(((UINT16)*p_req << 8) + *(p_req + 1));
+        p_req += 2;
         if (start_rec != p_ccb->cont_offset) {
             sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
             return;
         }
+
+        rem_handles = (UINT16)(num_handles - start_rec);
+    } else {
+        rem_handles = num_handles;
+        start_rec = 0;
     }
 
-    num_handles -= start_rec;
-
     /* Work out how many records fit in one response */
-    max_recs = (UINT16)((p_ccb->rem_mtu_size - 12) / 4 + 1);
-    if (num_handles > max_recs) {
+    max_recs = (UINT16)((p_ccb->rem_mtu_size - 12) / 4);
+    if (rem_handles <= max_recs) {
+        max_recs = rem_handles;
+    } else {
         cont = 1;
         p_ccb->cont_offset += max_recs;
-    } else {
-        max_recs = num_handles;
     }
 
     p_buf = (BT_HDR *)GKI_getpoolbuf(2);
@@ -331,8 +329,7 @@ static void process_service_search(tCONN_CB *p_ccb, UINT16 trans_num,
     *p_rsp++ = (UINT8)max_recs;
 
     /* Copy the record handles into the response */
-    end_rec = (UINT16)(start_rec + max_recs);
-    for (xx = start_rec; xx < end_rec; xx++) {
+    for (xx = start_rec; xx < start_rec + max_recs; xx++) {
         *p_rsp++ = (UINT8)(handles[xx] >> 24);
         *p_rsp++ = (UINT8)(handles[xx] >> 16);
         *p_rsp++ = (UINT8)(handles[xx] >> 8);
@@ -348,8 +345,8 @@ static void process_service_search(tCONN_CB *p_ccb, UINT16 trans_num,
         *p_rsp++ = 0;
     }
 
-    p_param_len[0] = (UINT8)(((UINT16)(p_rsp - p_param_len) - 2) >> 8);
-    p_param_len[1] = (UINT8)((UINT16)(p_rsp - p_param_len) - 2);
+    p_param_len[0] = (UINT8)(((UINT32)(p_rsp - p_param_len) - 2) >> 8);
+    p_param_len[1] = (UINT8)((p_rsp - p_param_len) - 2);
     p_buf->len = (UINT16)(p_rsp - p_rsp_start);
 
     L2CA_DataWrite(p_ccb->connection_id, p_buf);
@@ -367,24 +364,24 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 {
     UINT32 rec_handle;
     UINT16 max_list_len;
-    UINT16 xx;
-    tSDP_RECORD *p_rec;
-    tSDP_ATTR *p_attr;
     tSDP_ATTR_SEQ attr_seq;
+    tSDP_RECORD *p_rec;
     UINT8 *p_rsp;
+    UINT16 xx;
+    tSDP_ATTR *p_attr;
     UINT16 total_len;
     BT_HDR *p_buf;
     UINT8 *p_rsp_start;
     UINT8 *p_param_len;
 
     /* The record handle comes first */
+    rec_handle = ((UINT32)(*p_req) << 24) + ((UINT32)*(p_req + 1) << 16);
+    rec_handle += (((UINT32)*(p_req + 2) << 8) + (UINT32)*(p_req + 3));
+
     if ((p_req + 4) > p_req_end) {
         sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_SERV_REC_HDL, 0);
         return;
     }
-
-    rec_handle = ((UINT32)(*p_req) << 24) + ((UINT32)*(p_req + 1) << 16) +
-                 ((UINT32)*(p_req + 2) << 8) + (UINT32)*(p_req + 3);
 
     /* Then the maximum attribute list length */
     max_list_len = (UINT16)(((UINT16)*(p_req + 4) << 8) + *(p_req + 5));
@@ -494,7 +491,7 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
         *p_rsp++ = 0;
     }
 
-    p_param_len[0] = (UINT8)(((p_rsp - p_param_len) - 2) >> 8);
+    p_param_len[0] = (UINT8)(((UINT32)(p_rsp - p_param_len) - 2) >> 8);
     p_param_len[1] = (UINT8)((p_rsp - p_param_len) - 2);
     p_buf->len = (UINT16)(p_rsp - p_rsp_start);
 
@@ -606,20 +603,20 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
             p_rec = sdp_db_service_search(p_rec, &uid_seq);
         }
-    }
 
-    /* Prepend the outer data element sequence header */
-    total_len = (UINT16)(p_rsp - p_ccb->rsp_buf);
-    p_ccb->rsp_len = total_len;
-    if (total_len > 0xFF) {
-        p_ccb->rsp_buf[0] = 0x36;
-        p_ccb->rsp_buf[1] = (UINT8)((total_len - 3) >> 8);
-        p_ccb->rsp_buf[2] = (UINT8)(total_len - 3);
-    } else {
-        p_ccb->cont_offset = 1;
-        p_ccb->rsp_buf[1] = 0x35;
-        p_ccb->rsp_buf[2] = (UINT8)(total_len - 3);
-        p_ccb->rsp_len = (UINT16)(total_len - 1);
+        /* Prepend the outer data element sequence header */
+        total_len = (UINT16)(p_rsp - p_ccb->rsp_buf);
+        p_ccb->rsp_len = total_len;
+        if (total_len > 0xFF) {
+            p_ccb->rsp_buf[0] = 0x36;
+            p_ccb->rsp_buf[1] = (UINT8)((total_len - 3) >> 8);
+            p_ccb->rsp_buf[2] = (UINT8)(total_len - 3);
+        } else {
+            p_ccb->cont_offset = 1;
+            p_ccb->rsp_buf[1] = 0x35;
+            p_ccb->rsp_buf[2] = (UINT8)(total_len - 3);
+            p_ccb->rsp_len = (UINT16)(total_len - 1);
+        }
     }
 
     p_buf = (BT_HDR *)GKI_getpoolbuf(2);
@@ -661,7 +658,7 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
         *p_rsp++ = 0;
     }
 
-    p_param_len[0] = (UINT8)(((p_rsp - p_param_len) - 2) >> 8);
+    p_param_len[0] = (UINT8)(((UINT32)(p_rsp - p_param_len) - 2) >> 8);
     p_param_len[1] = (UINT8)((p_rsp - p_param_len) - 2);
     p_buf->len = (UINT16)(p_rsp - p_rsp_start);
 

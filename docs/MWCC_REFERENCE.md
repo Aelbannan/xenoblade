@@ -4788,6 +4788,44 @@ byte-exact (0/56 and 0/69, semantic-certified, split PASS). Reusable GC/3.0a5.2 
 - The `handle == 0 || num_records == 0` reset path stores num_records=0, di_primary_handle=0,
   brcm_di_registered=0 unconditionally and returns TRUE (no conditional on handle there).
 
+## RVL_SDK bte/stack/sdp/sdp_server.c — process_service_search FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+
+`process_service_search` (us-80309278, 0x410) — byte-exact 100% (0/260 mismatches,
+0 reg-swaps, semantic-certified, split PASS 0xD10/0xD10). Previously STRUCTURAL (69%)
+from four codegen-shape mistakes; all four are reusable:
+
+- **`max_recs = (UINT16)((p_ccb->rem_mtu_size - 12) / 4)` — NO `+ 1`.** GC/3.0a5.2
+  compiles signed `x/4` as `subi; srawi; addze`; the previous `(x-12)/4 + 1` added a
+  stray `addi r3,r3,1` (retail has none). `(x-12+3)/4` folds the 3 into the subi
+  (wrong constant) and `(UINT32)(x-12)/4` uses `rlwinm` (wrong opcode).
+- **Inline loop bound, no `end_rec` local: `for (xx = start_rec; xx < start_rec + max_recs; xx++)`**
+  is the ONLY shape that yields retail's compare-based 8×-unrolled copy loop
+  (`cmpw r31,r10` on the raw 32-bit bound, `subi r0,r10,8` bound, count `>8` pre-check,
+  `b` into the top-check, scalar tail `cmpw xx,end`). A `UINT16 end_rec` local or an
+  inline `(UINT16)(...)` cast makes GC derive a masked trip count and emit `mtctr`/`bdnz`
+  loops instead (structural, whole block shifts). `UINT32 end_rec` suppresses unrolling
+  entirely.
+- **`if (rem_handles <= max_recs) { max_recs = rem_handles; } else { cont=1; cont_offset += max_recs; }`**
+  — the <= polarity puts the `else` (cont) block at the bottom with `bgt` over it,
+  matching retail; the natural `if (rem > max)` puts the cont block inline and the
+  else at the bottom (branch polarities + block order mismatch).
+- **Total vs current record counts are separate registers**: the response header's
+  TotalServiceRecordCount field is the TOTAL `num_handles` (r16), while `rem_handles`
+  (r4, = num - start_rec) only drives the max_recs clamp. A single `num_handles -= start_rec`
+  writes the reduced value to the header (semantic + codegen divergence).
+- **`p_req++` before the continuation-offset read** (`if (*p_req++ != 2)`) materializes
+  the retail `addi r3, r15, 3` in the branch slot; reading `*(p_req+1)`/`*(p_req+2)`
+  leaves an immediate-offset form and shifts the whole continuation block by one.
+- **`p_rec = NULL` at declaration** (before the extract call) reproduces the retail
+  `li r19, 0` hoisted before `bl sdpu_extract_uid_seq` and the r19-based search loop
+  (`or r3,r19,r19` / `or r19,r3,r3` around `sdp_db_service_search`); the old
+  `for (xx=0, p_rec=NULL; …)` init kept p_rec in r3 (different loop, no moves).
+- **UINT16 declaration order controls BOTH register colors and stack slots**: `max_recs`
+  before `num_handles` fixes the r15/r16 color swap on the handle counters; declaring
+  `UINT8 cont = 0;` LAST (after `p_param_len`) fixes the cont/p_param_len stack-slot
+  swap (cont@sp+0x17c, p_param_len@sp+0x180 in retail). Same lever as
+  sdpu_build_n_send_error.
+
 ## RVL_SDK bte/stack/sdp/sdp_main.c — 6× FULL_MATCH, GC/3.0a5.2 family override (US)
 
 `sdp_disconnect`, `sdp_disconnect_cfm`, `sdp_conn_timeout` (previously accepted) plus

@@ -10,18 +10,13 @@
 extern "C" {
 #endif
 
-// Forward declarations of external functions in the HBM/OS/AX subsystems
-void __HBMSYNResetAllControllers(struct HBMSYNSYNTH*);
-void __HBMSYNRunInputBufferEvents(struct HBMSYNSYNTH*);
-void __HBMSYNServiceVoice(s32);
-void HBMMIXReleaseChannel(void*);
-void HBMFreeIndexByKey(void*);
-BOOL AXIsInit(void);
-
-// ---- BSS globals (single contiguous .bss block) ----
-extern struct HBMSYNSYNTH* __HBMSYNSynthList; // .bss:0x0 | size 4
-extern void* __HBMSYNVoice;                   // .bss:0x4 | size 4 - pointer to voice array
-extern u32 __init;                             // .bss:0x4C8 | size 4 - init flag
+// ---- HBMSYNVOICE - per-voice entry (size 0x4C) ----
+typedef struct HBMSYNVOICE {
+    u32 index;               // 0x00
+    AXVPB* axvpb;            // 0x04 - attached mixer channel / AX voice
+    struct HBMSYNSYNTH* synth; // 0x08 - owning synthesizer
+    u8 rest[0x4C - 0x0C];    // 0x0C-0x4B - rest of voice state
+} HBMSYNVOICE;
 
 // ---- HBMSYNSYNTH - synthesizer instance structure ----
 // Offsets inferred from retail ASM (syn.c, synctrl.c, synvoice.c, seq.c)
@@ -41,13 +36,19 @@ typedef struct HBMSYNSYNTH {
     u8   voiceData[0x2000];    // 0x408-0x2407 - per-voice state blocks
 } HBMSYNSYNTH;
 
-// ---- Per-voice entry (size 0x4C) ----
-typedef struct {
-    u8   pad00[0x04];          // 0x00
-    void* mixChannel;           // 0x04 - HBMMIXChannel*
-    struct HBMSYNSYNTH* synth; // 0x08 - owning synthesizer
-    u8   pad0C[0x4C - 0x0C];   // 0x0C-0x4B - rest of voice state
-} HBMSYNVoiceEntry;
+// ---- BSS globals (single contiguous .bss block) ----
+HBMSYNSYNTH* __HBMSYNSynthList;       // .bss:0x0 | size 4
+HBMSYNVOICE* __HBMSYNVoice;           // .bss:0x4 | size 4 - pointer to voice array
+HBMSYNVOICE __s_HBMSYNVoice[16];      // .bss:0x8 | size 0x4C0 - the voice array
+static u32 __init;                    // .bss:0x4C8 | size 4 - init flag
+
+// Forward declarations of external functions in the HBM/OS/AX subsystems
+void __HBMSYNResetAllControllers(struct HBMSYNSYNTH*);
+void __HBMSYNRunInputBufferEvents(struct HBMSYNSYNTH*);
+void __HBMSYNServiceVoice(u32);
+void HBMMIXReleaseChannel(AXVPB*);
+void HBMFreeIndexByKey(s32);
+BOOL AXIsInit(void);
 
 // ---- Function implementations ----
 
@@ -81,33 +82,24 @@ void __HBMSYNRemoveSynthFromList__FP11HBMSYNSYNTH(HBMSYNSYNTH* synth)
 
 void HBMSYNInit(void)
 {
-    u8* base = (u8*)&__HBMSYNSynthList;
+    s32 i;
 
     if (!AXIsInit()) {
         return;
     }
 
-    u32* initFlag = (u32*)(base + 0x4C8);
-
-    if (*initFlag != 0) {
+    if (__init != 0) {
         return;
     }
 
-    // __HBMSYNVoice = &__s_HBMSYNVoice (at base + 8)
-    *(void**)(base + 4) = base + 8;
+    __HBMSYNVoice = __s_HBMSYNVoice;
 
-    // Clear the synth reference in every voice (16 voices x 0x4C bytes)
-    {
-        s32 i;
-        for (i = 0; i < 16; i++) {
-            ((HBMSYNVoiceEntry*)__HBMSYNVoice)[i].synth = NULL;
-        }
+    for (i = 0; i < 16; i++) {
+        __HBMSYNVoice[i].synth = NULL;
     }
 
-    // __HBMSYNSynthList = NULL
-    *(HBMSYNSYNTH**)base = NULL;
-
-    *initFlag = 1;
+    __HBMSYNSynthList = NULL;
+    __init = 1;
 }
 
 void HBMSYNQuit(void)
@@ -182,17 +174,18 @@ void HBMSYNInitSynth(HBMSYNSYNTH* syn, u32* config, u32 param3)
 
 void HBMSYNQuitSynth(HBMSYNSYNTH* syn)
 {
-    BOOL intr = OSDisableInterrupts();
+    s32 i;
+    BOOL intr;
+
+    intr = OSDisableInterrupts();
 
     if (syn->activeVoiceFlag != 0) {
-        HBMSYNVoiceEntry* voices = (HBMSYNVoiceEntry*)__HBMSYNVoice;
-        s32 i;
         for (i = 0; i < 16; i++) {
-            HBMSYNVoiceEntry* v = &voices[i];
+            HBMSYNVOICE* v = &__HBMSYNVoice[i];
             if (v->synth == syn) {
-                HBMMIXReleaseChannel(v->mixChannel);
-                HBMFreeIndexByKey(*(void**)((u8*)v->mixChannel + 0x18));
-                AXFreeVoice((AXVPB*)v->mixChannel);
+                HBMMIXReleaseChannel(v->axvpb);
+                HBMFreeIndexByKey(v->axvpb->index);
+                AXFreeVoice(v->axvpb);
                 v->synth = NULL;
             }
         }
@@ -203,21 +196,18 @@ void HBMSYNQuitSynth(HBMSYNSYNTH* syn)
     OSRestoreInterrupts(intr);
 }
 
-void HBMSYNMidiInput(HBMSYNSYNTH* syn, const u8* data)
+void HBMSYNMidiInput(HBMSYNSYNTH* syn, u8* data)
 {
     u8* p;
     p = syn->midiWritePtr;
     *p = data[0];
-    p = syn->midiWritePtr;
-    p = p + 1;
+    p = syn->midiWritePtr + 1;
     syn->midiWritePtr = p;
     *p = data[1];
-    p = syn->midiWritePtr;
-    p = p + 1;
+    p = syn->midiWritePtr + 1;
     syn->midiWritePtr = p;
     *p = data[2];
-    p = syn->midiWritePtr;
-    p = p + 1;
+    p = syn->midiWritePtr + 1;
     syn->midiWritePtr = p;
     syn->midiCount = syn->midiCount + 1;
 }

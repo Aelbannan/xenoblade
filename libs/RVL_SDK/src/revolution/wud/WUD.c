@@ -350,43 +350,6 @@ void WUDRegisterAllocator(WUDAllocFunc pAllocFunc, WUDFreeFunc pFreeFunc) {
 }
 
 
-void WUDShutdown(void) {
-    WUDCB* p = &_wcb;
-    BOOL enabled;
-    int i;
-    WUDDevInfoList* pIt;
-
-    DEBUGPrint("WUDShutdown()\n");
-
-    WUDSetVisibility(FALSE, FALSE);
-
-    enabled = OSDisableInterrupts();
-
-    if (WUDIsBusy()) {
-        OSCancelAlarm(&p->alarm);
-    }
-
-    memset(_scArray.devices, 0,
-           sizeof(SCBtDeviceInfo) * WUD_MAX_DEV_ENTRY_FOR_STD);
-
-    for (i = 0, pIt = _wcb.stdListHead; pIt != NULL; pIt = pIt->next, i++) {
-        WUD_BDCPY(_scArray.devices[i].addr, pIt->devInfo->devAddr);
-
-        memcpy(&_scArray.devices[i].info, &pIt->devInfo->conf,
-               sizeof(SCDevInfo));
-    }
-
-    p->shutdownState = WUD_STATE_SHUTDOWN_STORE_SETTINGS;
-
-    OSCreateAlarm(&p->alarm);
-    OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(10),
-                       __wudShutdownHandler0);
-
-    p->libStatus = WUD_LIB_STATUS_4;
-
-    OSRestoreInterrupts(enabled);
-}
-
 WUDLibStatus WUDGetStatus(void) {
     WUDCB* p = &_wcb;
     BOOL enabled = OSDisableInterrupts();
@@ -1095,50 +1058,6 @@ BOOL WUDIsBusy(void) {
     return TRUE;
 }
 
-BD_ADDR_PTR _WUDGetDevAddr(UINT8 handle) {
-    BD_ADDR_PTR pAddr;
-    BOOL enabled = OSDisableInterrupts();
-
-    if (handle < WUD_MAX_DEV_ENTRY) {
-        pAddr = _dev_handle_to_bda[handle];
-
-    } else {
-        pAddr = NULL;
-    }
-
-    OSRestoreInterrupts(enabled);
-    return pAddr;
-}
-
-u16 _WUDGetQueuedSize(s8 handle) {
-    u16 queuedSize;
-    BOOL enabled = OSDisableInterrupts();
-
-    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
-        queuedSize = _dev_handle_queue_size[handle];
-
-    } else {
-        queuedSize = 0;
-    }
-
-    OSRestoreInterrupts(enabled);
-    return queuedSize;
-}
-
-u16 _WUDGetNotAckedSize(s8 handle) {
-    u16 notAckedSize;
-    BOOL enabled = OSDisableInterrupts();
-
-    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
-        notAckedSize = _dev_handle_notack_num[handle];
-    } else {
-        notAckedSize = 0;
-    }
-
-    OSRestoreInterrupts(enabled);
-    return notAckedSize;
-}
-
 u8 _WUDGetLinkNumber(void) {
     WUDCB* p = &_wcb;
     BOOL enabled = OSDisableInterrupts();
@@ -1299,6 +1218,43 @@ u8 __wudSyncTryConnect(void) {
 
     return ret;
 }
+void WUDShutdown(void) {
+    WUDCB* p = &_wcb;
+    BOOL enabled;
+    int i;
+    WUDDevInfoList* pIt;
+
+    DEBUGPrint("WUDShutdown()\n");
+
+    WUDSetVisibility(FALSE, FALSE);
+
+    enabled = OSDisableInterrupts();
+
+    if (WUDIsBusy()) {
+        OSCancelAlarm(&p->alarm);
+    }
+
+    memset(_scArray.devices, 0,
+           sizeof(SCBtDeviceInfo) * WUD_MAX_DEV_ENTRY_FOR_STD);
+
+    for (i = 0, pIt = _wcb.stdListHead; pIt != NULL; pIt = pIt->next, i++) {
+        WUD_BDCPY(_scArray.devices[i].addr, pIt->devInfo->devAddr);
+
+        memcpy(&_scArray.devices[i].info, &pIt->devInfo->conf,
+               sizeof(SCDevInfo));
+    }
+
+    p->shutdownState = WUD_STATE_SHUTDOWN_STORE_SETTINGS;
+
+    OSCreateAlarm(&p->alarm);
+    OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(10),
+                       __wudShutdownHandler0);
+
+    p->libStatus = WUD_LIB_STATUS_4;
+
+    OSRestoreInterrupts(enabled);
+}
+
 u8 __wudSyncVirginStandard(void) {
     WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
@@ -1437,23 +1393,28 @@ u8 __wudSyncVirginStandard(void) {
 u8 __wudSyncStoredDevInfoToNand(void) {
     extern char lbl_805625AC[];
     extern char lbl_80562544[];
-    WUDCB* p = &_wcb;
+    WUDCB* p;
     WUDDevInfoList* pIt;
     BOOL enabled;
-    u8 count = 0;
+    BOOL busy;
+    u8 count;
     u8 num;
+    u8 result;
 
-    if (SCCheckStatus() == SC_STATUS_BUSY) {
+    busy = (SCCheckStatus() == SC_STATUS_BUSY);
+    if (busy) {
         return WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
     }
 
     memset(&_scArray.regist, 0, sizeof(_scArray.regist));
 
     enabled = OSDisableInterrupts();
+    p = &_wcb;
     num = p->devNums;
     OSRestoreInterrupts(enabled);
 
     _scArray.numRegist = num;
+    count = 0;
 
     for (pIt = p->stdListHead; pIt != NULL; pIt = pIt->next) {
         memcpy(&_scArray.regist[count].addr, pIt->devInfo->devAddr,
@@ -1468,13 +1429,14 @@ u8 __wudSyncStoredDevInfoToNand(void) {
         return WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
     }
 
+    result = WUD_STATE_SYNC_SC_FLUSH;
     if (_linkedWBC != 0 &&
         memcmp(&_wudDiscWork, lbl_80562544, sizeof(LINK_KEY)) == 0 &&
         SCGetProductGameRegion() == 0) {
-        return 0x64;
+        result = 0x64;
     }
 
-    return WUD_STATE_SYNC_SC_FLUSH;
+    return result;
 }
 void __wudOpenWiiFitCallback(s32 result) {
     extern char lbl_805625D0[];
@@ -2380,6 +2342,50 @@ void __wudDeleteHandler0(OSAlarm* pAlarm, OSContext* pContext) {
     OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudDeleteHandler,
                     __WUDHandlerStack + sizeof(__WUDHandlerStack));
 }
+BD_ADDR_PTR _WUDGetDevAddr(UINT8 handle) {
+    BD_ADDR_PTR pAddr;
+    BOOL enabled = OSDisableInterrupts();
+
+    if (handle < WUD_MAX_DEV_ENTRY) {
+        pAddr = _dev_handle_to_bda[handle];
+
+    } else {
+        pAddr = NULL;
+    }
+
+    OSRestoreInterrupts(enabled);
+    return pAddr;
+}
+
+u16 _WUDGetQueuedSize(s8 handle) {
+    u16 queuedSize;
+    BOOL enabled = OSDisableInterrupts();
+
+    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
+        queuedSize = _dev_handle_queue_size[handle];
+
+    } else {
+        queuedSize = 0;
+    }
+
+    OSRestoreInterrupts(enabled);
+    return queuedSize;
+}
+
+u16 _WUDGetNotAckedSize(s8 handle) {
+    u16 notAckedSize;
+    BOOL enabled = OSDisableInterrupts();
+
+    if (0 <= handle && handle < WUD_MAX_DEV_ENTRY) {
+        notAckedSize = _dev_handle_notack_num[handle];
+    } else {
+        notAckedSize = 0;
+    }
+
+    OSRestoreInterrupts(enabled);
+    return notAckedSize;
+}
+
 u8 __wudStackCheckDeviceInfo(void) {
     WUDCB* p = &_wcb;
     WUDDevInfo* pDev;
@@ -3053,7 +3059,7 @@ BOOL __wudStartSyncDevice(u8 syncType, s8 syncLoopNum, u8 target,
     u32 libStatus;
 
     enabled = OSDisableInterrupts();
-    libStatus = (u32)(s8)p->libStatus;
+    libStatus = (u32)p->libStatus;
     OSRestoreInterrupts(enabled);
 
     if (libStatus == WUD_LIB_STATUS_3) {
@@ -3077,14 +3083,20 @@ BOOL __wudStartSyncDevice(u8 syncType, s8 syncLoopNum, u8 target,
             p->syncState = WUD_STATE_SYNC_PREPARE_SEARCH;
             p->syncLoopNum = syncLoopNum;
             p->syncType = syncType;
-            p->syncSkipChecks = syncSkipChecks ? TRUE : FALSE;
+            // normalize syncSkipChecks != 0 to 0/1 (retail -O4,p neg/or/rlwinm)
+            p->syncSkipChecks = (u32)(-syncSkipChecks | syncSkipChecks) >> 31;
             p->syncedNum = 0;
             p->UNK_0x748 = 0x32;
             p->UNK_0x74A = 0xc8;
 
             OSCreateAlarm(&p->alarm);
-            OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(20),
-                               __wudSyncHandler0);
+            // OS_MSEC_TO_TICKS(20): busClock/4/1000*20 via fixed-point magic
+            // (retail -O4,p codegen; -O4,s would emit divwu)
+            OSSetPeriodicAlarm(
+                &p->alarm, OSGetTime(),
+                (u32)(__mulhwu(0x10624DD3, OS_BUS_CLOCK_SPEED >> 2) >> 6) *
+                    20,
+                __wudSyncHandler0);
 
             OSRestoreInterrupts(enabled);
 

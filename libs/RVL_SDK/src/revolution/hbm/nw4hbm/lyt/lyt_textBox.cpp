@@ -9,6 +9,17 @@
  * Utility functions
  *
  ******************************************************************************/
+namespace nw4hbm {
+namespace ut {
+
+/* Defined inline here so MWCC inlines away all ~Color calls in this TU
+ * (retail DrawSelf emits no dtor calls; the strong ~Color symbol lives in
+ * lyt_bounding.o per retail). */
+inline Color::~Color() {}
+
+} // namespace ut
+} // namespace nw4hbm
+
 namespace {
 
 using namespace nw4hbm;
@@ -16,6 +27,15 @@ using namespace nw4hbm::lyt;
 
 inline u8 ClampColor(s16 value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);
+}
+
+GXColor ClampTevColor(const GXColorS10& rColor) {
+    GXColor color;
+    color.r = ClampColor(rColor.r);
+    color.g = ClampColor(rColor.g);
+    color.b = ClampColor(rColor.b);
+    color.a = ClampColor(rColor.a);
+    return color;
 }
 
 ut::Color GetColor(const GXColorS10& rColor16) {
@@ -369,17 +389,9 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     writer.SetTextColor(top, bottom);
 
     // Clamp TEV colors (GXColorS10 s16->u8) for color mapping
-    GXColorS10 tev0 = mpMaterial->GetTevColor(TEVCOLOR_REG0);
-    GXColorS10 tev1 = mpMaterial->GetTevColor(TEVCOLOR_REG1);
-
-    GXColor tev0Clamped = {
-        ClampColor(tev0.r), ClampColor(tev0.g),
-        ClampColor(tev0.b), ClampColor(tev0.a)};
-    GXColor tev1Clamped = {
-        ClampColor(tev1.r), ClampColor(tev1.g),
-        ClampColor(tev1.b), ClampColor(tev1.a)};
-
-    writer.SetColorMapping(ut::Color(tev0Clamped), ut::Color(tev1Clamped));
+    writer.SetColorMapping(
+        ut::Color(ClampTevColor(mpMaterial->GetTevColor(TEVCOLOR_REG0))),
+        ut::Color(ClampTevColor(mpMaterial->GetTevColor(TEVCOLOR_REG1))));
 
     if (mpTagProcessor != NULL) {
         writer.SetTagProcessor(mpTagProcessor);
@@ -396,90 +408,121 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
 
     writer.SetCursor(0.0f, 0.0f);
 
-    ut::WideTextWriter rectWriter = writer;
-    CalcStringRectImpl(&rect, &rectWriter, mTextBuf, mTextLen, mSize.width);
+    {
+        f32 textWidth2 = mSize.width;
+        int textLen = mTextLen;
+        const wchar_t* pText = mTextBuf;
+
+        ut::WideTextWriter rectWriter = writer;
+        CalcStringRectImpl(&rect, &rectWriter, pText, textLen, textWidth2);
+    }
 
     // Align rect within the pane using text position flags
     math::VEC2 pos = GetVtxPos();
 
     f32 magH;
-    {
-        u8 hPos = GetTextPositionH();
-        if (hPos == HORIZONTALPOSITION_CENTER) {
-            magH = 0.5f;
-        } else if (hPos == HORIZONTALPOSITION_RIGHT) {
-            magH = 1.0f;
-        } else {
-            magH = 0.0f;
-        }
+    switch ((int)GetTextPositionH()) {
+    default:
+    case HORIZONTALPOSITION_LEFT: {
+        magH = 0.0f;
+        break;
     }
+
+    case HORIZONTALPOSITION_CENTER: {
+        magH = 0.5f;
+        break;
+    }
+
+    case HORIZONTALPOSITION_RIGHT: {
+        magH = 1.0f;
+        break;
+    }
+    }
+
     f32 magV;
-    {
-        u8 vPos = GetTextPositionV();
-        if (vPos == VERTICALPOSITION_CENTER) {
-            magV = 0.5f;
-        } else if (vPos == VERTICALPOSITION_BOTTOM) {
-            magV = 1.0f;
-        } else {
-            magV = 0.0f;
-        }
+    switch ((int)GetTextPositionV()) {
+    default:
+    case VERTICALPOSITION_TOP: {
+        magV = 0.0f;
+        break;
     }
 
-    f32 textWidth = rect.right - rect.left;
+    case VERTICALPOSITION_CENTER: {
+        magV = 0.5f;
+        break;
+    }
+
+    case VERTICALPOSITION_BOTTOM: {
+        magV = 1.0f;
+        break;
+    }
+    }
+
     f32 textHeight = rect.bottom - rect.top;
+    f32 textWidth = rect.right - rect.left;
 
-    f32 offsetX = pos.x + (mSize.width - textWidth) * magH;
     f32 offsetY = pos.y + (mSize.height - textHeight) * magV;
+    f32 offsetX = pos.x + (mSize.width - textWidth) * magH;
 
-    rect.left = offsetX;
     rect.top = offsetY;
-    rect.right = offsetX + textWidth;
     rect.bottom = offsetY + textHeight;
+    rect.left = offsetX;
+    rect.right = offsetX + textWidth;
 
     // Per-line horizontal alignment factor (recomputed same way)
     f32 lineMagH;
-    {
-        u8 hPos = GetTextPositionH();
-        if (hPos == HORIZONTALPOSITION_CENTER) {
-            lineMagH = 0.5f;
-        } else if (hPos == HORIZONTALPOSITION_RIGHT) {
-            lineMagH = 1.0f;
-        } else {
-            lineMagH = 0.0f;
-        }
+    switch ((int)GetTextPositionH()) {
+    default:
+    case HORIZONTALPOSITION_LEFT: {
+        lineMagH = 0.0f;
+        break;
+    }
+
+    case HORIZONTALPOSITION_CENTER: {
+        lineMagH = 0.5f;
+        break;
+    }
+
+    case HORIZONTALPOSITION_RIGHT: {
+        lineMagH = 1.0f;
+        break;
+    }
     }
 
     f32 totalWidth = rect.right - rect.left;
 
+    const wchar_t* pStr = mTextBuf;
     writer.SetCursor(rect.left, rect.top);
 
     int remaining = mTextLen;
-    const wchar_t* pStr = mTextBuf;
 
     while (remaining > 0) {
+        f32 width = mSize.width;
+
         ut::Rect lineRect;
         lineRect.left = 0.0f;
         lineRect.top = 0.0f;
         lineRect.right = 0.0f;
         lineRect.bottom = 0.0f;
 
-        ut::WideTextWriter lineWriter = writer;
-        lineWriter.SetCursor(0.0f, 0.0f);
-
         bool hasNextLine;
-        int consumed = CalcLineRectImpl(&lineRect, &lineWriter, pStr,
-                                        remaining, mSize.width, &hasNextLine);
+        int consumed;
+        f32 lineWidth;
+        {
+            ut::WideTextWriter lineWriter = writer;
+            lineWriter.SetCursor(0.0f, 0.0f);
+            consumed = CalcLineRectImpl(&lineRect, &lineWriter, pStr,
+                                        remaining, width, &hasNextLine);
+            lineWidth = lineRect.right - lineRect.left;
+        }
 
-        f32 lineWidth = lineRect.right - lineRect.left;
-
-        // Per-line horizontal alignment
         f32 x = rect.left + (totalWidth - lineWidth) * lineMagH;
         writer.SetCursorX(x);
 
         writer.Print(pStr, consumed);
 
         if (hasNextLine) {
-            writer.Print(L"\n", 1);
+            writer.Print(L"\n");
         }
 
         pStr += consumed;

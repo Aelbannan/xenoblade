@@ -890,6 +890,57 @@ answer is an inline-empty `~Color` visible at compile time in the SDK header
 rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
 0x5ac/0x5d0) — must be matched before the 0x5470 split can fit.
 
+**DrawSelf (us-80335c50, 0x714) reconstructed 0.9% → 51.9% hexdiff / 97.0%
+objdiff fuzzy, 0x708 body, split PASS** — six reusable levers for the
+by-value-Color + writer-copy class of lyt functions:
+1. **Local `inline Color::~Color() {}` in lyt_textBox.cpp** inlines away every
+   caller-side `__dt__Color` call (SetVtxColor's by-value arg, DrawSelf's
+   MultipleAlpha/SetTextColor/SetColorMapping temps) — 8 calls × 8B saved.
+   Caveat: this TU's ctor has `__construct_array` ADDRESS-take (mTextColors),
+   so MWCC emits a weak `__dt__Color` (0x40) here (lyt_material.o never
+   address-takes it → no weak there). Net −0x8 vs emitting the calls; the
+   weak is fine (strong lives in lyt_bounding.o; refs resolve at DOL link).
+2. **Value-construction site drives slot class.** `GXColor tev0Clamped =
+   {...}` named locals get HIGH slots (sp+40/36 after the MultipleAlpha
+   results); building them INLINE in the call via an inlined helper
+   (`ut::Color(ClampTevColor(mpMaterial->GetTevColor(TEVCOLOR_REG0)))`)
+   makes them call-arg temps (sp+16/12) — the retail layout. The inline-arg
+   form also reloads mpMaterial per color (retail `lwz r3,40(r30)` twice)
+   and keeps the sequential load-clamp-load-clamp order; named `tev0/tev1`
+   locals get eagerly hoisted (both words loaded before the first clamp).
+3. **Pre-load call args into locals BEFORE a copy-initialization statement.**
+   Retail schedules CalcStringRectImpl's args (`f1/r6/r5` — registers the
+   26-word writer blit does NOT use) above the rectWriter copy; MWCC emits
+   them after unless the locals are declared first:
+   `f32 w = mSize.width; int n = mTextLen; const wchar_t* s = mTextBuf;
+   WideTextWriter c = writer; CalcStringRectImpl(&r,&c,s,n,w);` — fixed the
+   whole copy-arg region (152→128 structural).
+4. Loop-invariant `f32 width = mSize.width;` at loop top keeps the width in
+   a callee-saved FPR across the lineWriter copy (retail `lfs f30,76(r30)`
+   at loop top); loading `mSize.width` at the call site regresses.
+5. `Print(L"\n")` (1-arg `FPCw`) not `Print(L"\n",1)`; the L"\n" address
+   is materialized once before the loop into a callee-saved GPR (`lis
+   r16`), before the `remaining <= 0` pre-guard.
+6. **Split overflow 0x14DC vs 0x1450** = the 3 unreferenced weak
+   `__dt__ColorMapping/VertexColor/TextColor` (0x40 each, emitted by the
+   WideTextWriter copy ODR-use with Color members) + the weak `__dt__Color`.
+   Dropped via `drop_text_symbols` on lyt_textBox.o in
+   `tools/postprocess_reloc_names.py` — NO `repack_after_drop` here: the
+   unit's functions are 4-aligned, so a 16-byte repack re-lays survivors
+   with padding and grows .text (`repack_text grew .text`).
+Residue (138 structural, all allocation/scheduling, no source lever found
+across ~10 bounded attempts including `-ipa off`, hoists, scopes, helper
+forms): FP-scratch split (retail f28=lineMagH/f30=width vs decomp the
+reverse — the loop body is otherwise byte-identical), pos/tev stack-slot
+permutation (retail's `pos` second store pair at sp+64/68 is a NEVER-READ
+dead store; decomp's pair lands at sp+80/84 pushing tev0/tev1 down 8), the
+missing `cmpi; ble` loop pre-guard (retail peels it; decomp jumps straight to
+the loop condition — same semantics, 2 insns), and the SCM packed-arg
+preload (`lwz r0,16(sp)` hoisted into tev1.r's clamp vs at the call site).
+SMT acceptance fails closed: DrawSelf has an indirect `bcctrl` (virtual
+`LoadMtx`) and callee us-80336370 (CalcLineRectImpl) is CODE_MATCH — record
+blocker, revisit after the callee is accepted.
+
 **SOLVED (2026-08-03, ut_TextWriterBase batch — Printf<w> us-80340270 +
 AdjustCursor<c/w> us-8033ec20/us-80341620 FULL_MATCH accepted):** the dtor
 bloat is killed with GXColor members *plus user-declared copy ctors* on the

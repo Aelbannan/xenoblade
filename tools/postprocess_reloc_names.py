@@ -711,6 +711,26 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
 
+    "lyt_textBox.o": UnitRules(
+        # MWCC emits unreferenced weak in-charge dtors of CharWriter's private
+        # nested ColorMapping/VertexColor/TextColor structs (0x40 each) because
+        # this TU copy-initializes WideTextWriter (implicit copy-ctor ODR-use);
+        # every call site inlines the member destruction down to ~Color, so no
+        # .text/.data reference survives and the retail linker dead-stripped
+        # them (retail split holds only the 16 symbols; the nested structs use
+        # ut::Color members, per the ut_TextWriterBase FULL_MATCH revert).
+        # Dropping the orphans restores the retail split layout and fits the
+        # 0x1450 budget (decomp .text 0x14DC -> 0x141C).
+        drop_text_symbols=(
+            "__dt__Q46nw4hbm2ut10CharWriter12ColorMappingFv",
+            "__dt__Q46nw4hbm2ut10CharWriter11VertexColorFv",
+            "__dt__Q46nw4hbm2ut10CharWriter9TextColorFv",
+        ),
+        # The dropped weaks were contiguous 0x40 blocks after DrawSelf; the
+        # survivors stay 4-aligned (retail lyt_textBox is 4-aligned, no 16-byte
+        # repack — repack_after_drop would grow .text here).
+    ),
+
     "CItemBoxGrid.o": UnitRules(
         exact_renames=(
             ("ArrayGet12__FPCUsUc", "ArrayGet12"),

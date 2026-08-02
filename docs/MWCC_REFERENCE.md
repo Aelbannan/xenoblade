@@ -6684,6 +6684,29 @@ each verified by hexdiff (structural 106→0→0, reg-swaps 285→285 pure→0):
 `MIXUpdateSettings` (same file) is a separate target sharing the sum-rotation
 patterns — operand order levers above should transfer.
 
+### MIXUpdateSettings (us-8034e1c0): delta-computing pb.mix walk needs LOCAL cur/delta temps (162 → 2 structural, 0x1694/0x1694)
+
+Transfer verified with one extra twist: the update path **computes** each delta
+(`(tgt - cur) / 96`) instead of storing 0, and tests both stored values for the
+mixerCtrl bits. The bare stream form `*q++ = ch->volLCur; if (vpb->pb.mix.vL !=
+0) …` works for `vL` (MWCC keeps the loaded register) but **reloads** every
+value/delta stored through the opaque `q` pointer (`lhz rX, 62(r4)` reloads
+feed the `!= 0` tests → 38+ structural). Fix: name the values —
+`u16 cur = ch->volLCur; *q++ = cur; if (cur != 0) …; u16 delta = (u16)((ch->volLTgt
+- ch->volLCur) / 96); *q++ = delta; if (delta != 0) …` — MWCC tests the live
+registers (`cmpwi` on cur, `clrlwi.` on delta) and keeps the `addi r3,r4,0x3e`
+base. Also: unsigned loop compare `i < (u32)__MIXMaxVoices` (u32 index) for the
+retail `cmplw` loop bound.
+
+Remaining wall (pre-existing, survived 9 source orderings + `-schedule off`
+(105 structural — retail mix is NOT -schedule-off like EXIBios) + `-ipa off`
+(no change) + `-O4,s` (destroys the unit)): loop entry `add r5,r4,r27; lwzx
+r4,r4,r27` (retail) vs `lwzx r4,r27,r0; add r3,r0,r27` (decomp) — MWCC hoists
+the indexed vpb load above the address add; retail reuses r4 for base→vpb so
+no global injective reg bijection exists (same family as the KB reg-swap
+acceptance wall for loop-heavy mixers). Recorded for out-of-band SMT
+(scheduling category); prior probe with 162 structural hit the 4096 path limit.
+
 ## CriWare sfh_local SFHLOCAL_GetNbyteL — rlwimi loop form found (US, GC/3.0a5.2 -O4,p)
 
 Prior note (line ~1213) said every loop form auto-unrolls to rlwinm+or. New

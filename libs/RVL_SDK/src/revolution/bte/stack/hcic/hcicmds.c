@@ -8,16 +8,20 @@ extern void *GKI_getpoolbuf(unsigned char pool_id);
 int btsnd_hcic_inquiry(unsigned char *bd_addr, unsigned char inquiry_mode, unsigned char inquiry_length)
 {
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    unsigned char b0, b1, b2;
     if (p == NULL)
         return 0;
     *(unsigned short *)(p + 2) = 8;
     *(unsigned short *)(p + 4) = 0;
+    b2 = bd_addr[2];
     p[8] = 1;
+    b1 = bd_addr[1];
     p[9] = 4;
+    b0 = bd_addr[0];
     p[10] = 5;
-    p[11] = bd_addr[2];
-    p[12] = bd_addr[1];
-    p[13] = bd_addr[0];
+    p[11] = b2;
+    p[12] = b1;
+    p[13] = b0;
     p[14] = inquiry_mode;
     p[15] = inquiry_length;
     btu_hcif_send_cmd(p);

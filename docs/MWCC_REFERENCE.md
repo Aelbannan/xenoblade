@@ -3961,11 +3961,27 @@ locals:
   exactly 0x2D0 = retail budget.
 - `__copy_longs_rev_unaligned` (0xac): 20 PURE reg-swaps remain — retail coalesces
   `cps = src + n` into r4 (`add r4,r4,r5`); every tested source form (macro, direct,
-  compound `+=`, char* params, cpd-first, reset-from-params, all 9 compilers, with/
-  without -ipa) gives `add r11,r4,r5`. Best variant: reset final loop via
-  `cps = ((unsigned char*)src) + src_offset` (fixes the final add's dest to r3, 20
-  vs 21 mismatches). Size correct; does not affect the accepted aligned target or
-  the 0x2D0 unit budget.
+  compound `+=`, char* params, cpd-first, mask-between-adds, separate byte/long
+  counters, flat/scoped locals, tail via fresh local `tc = cps + src_offset`,
+  unsigned int/long types, decl order, real `-O4`/`-O4,s` rebuilds, `-ipa off`,
+  GC/3.0a5.2) gives `add r11,r4,r5` — MWCC never coalesces the src-param
+  reassignment in THIS function (the forward twin coalesces `lpd` into r4). Best
+  variant: reset final loop via `cps = ((unsigned char*)src) + src_offset` (fixes
+  the final add's dest to r3, 20 vs 21 mismatches). Size correct; does not affect
+  the accepted aligned target or the 0x2D0 unit budget.
+  **Acceptance-blocker analysis (both bars):** (1) the register-renaming witness
+  can never certify this pair — the rotation rho maps `r4→r11` (cps/counter swap)
+  and gate 5 (ABI-boundary fixedness, `docs/ppc_equiv_work/31`) requires rho to
+  fix ALL argument registers r3–r10; `cycle` confirms `inconclusive_smt_disabled`
+  instantly. (2) the full SMT probe fail-closes at the loop-iteration bound: the
+  main + tail loops are GPR counters (`subic.`/`bne`, no `mtctr`/`bdnz`) with
+  shift/memory bodies — neither the memory-loop plan (requires `mtctr`/`bdnz`
+  adjacency + pure constant-stride stores) nor the compare-affine plan (requires
+  `addi/subi` prelude + GPR-pure whitelisted body; `slw`/`srw`/memory ops excluded)
+  applies, so it unrolls to 2048× and dies at the final byte loop (`0x2bc`).
+  Raising limits just trips `max_paths`/`max_instructions`/deadline next — the
+  shape is unsummarizable by design. CODE_MATCH 96.05% (0 structural, size exact)
+  is the documented cap for both bars; do not burn probe time on it.
 
 ## CriWare Sofdec mpv_deli — CTR delimiter loops, decl-order wins + color ceiling (US)
 
@@ -5568,6 +5584,26 @@ inlines GetFrameSize into DrawSelf (retail DrawSelf 0x1d8 = the switch with
 GetFrameSize's definition into the header as an inline member made DrawSelf
 snap from 117 → 0 mismatches.
 
+**lyt_textBox — non-retail member helpers emit standalone out-of-line copies
+that blow the split budget (US, 2× FULL_MATCH us-803367c0 / us-80336900):**
+the nw4hbm TextBox retail split (16 functions, .text 0x1450) has NO
+`Init` / `GetTextDrawRect`×2 / `GetFont` / `SetFont` / `GetTextMagH/V` /
+`MakeDrawFlag` / `GetStringBufferLength` symbols — the retail ctor/dtor/SetString
+inline that logic, and the class never had the other methods (they were copied
+from the nw4r variant). Non-inline member definitions in the .cpp made MWCC emit
+every one as a standalone global symbol (+0x788 .text; unit 0x1984 vs 0x1450
+budget), even though each is fully inlined at its single call site (ctor, dtor,
+SetString all 100% static). Marking the .cpp definitions `inline` (declarations
+stay in the header) suppressed all standalone copies with ZERO call-site codegen
+change: unit .text 0x1984 → 0x11B4, 13/16 functions still byte-identical,
+AllocStringBuffer + SetString certified FULL_MATCH. Rule of thumb: when the
+retail object lacks a member-function symbol, the retail source defined it
+inline (or the body lived directly at the call site) — write it `inline` in the
+.cpp so MWCC folds it without emitting a copy. (DrawSelf us-80335c50 +
+CalcLineRectImpl us-80336370 remain unmatched; dtor us-80335a20 is
+99%/0-structural, blocked on callee tree: has_indirect_calls + `__dl__FPv`
+us-804375c4 not yet accepted.)
+
 **DrawFrame/4/8 open problem (us-80337600/80337c30/80338360, NOT matched):**
 retail DrawFrame saves f31 (stfd + psq_st) and computes the texcoord formula
 with MWCC int→double magic conversions — both signed (xoris + 2^52+2^31,
@@ -5820,6 +5856,51 @@ exactly at the 0x1190 split budget). Reusable insights:
 
 ## RVL_SDK hbm/HBMBase — 3/3 FULL_MATCH; `sizeof`-constant probe catches class-layout drift (US, Wii/1.1 mwcc_43_151 `-O4,p`)
 
+### RVL_SDK hbm/HBMBase — init/update_controller/updateTrigPane (US, Wii/1.1 `-O4,p`)
+
+`us-8032aa00` updateTrigPane → FULL_MATCH. `us-803268b0` init and
+`us-8032a120` update_controller → 0 structural / 99.9% fuzzy, witness
+`inconclusive_smt_disabled` (out-of-band SMT candidates). Reusable insights:
+
+- **Retail inlines every small helper — no standalone symbols exist** for
+  `play_sound`, `findAnimator`, `findGroupAnimator`, `isActive`,
+  `reset_guiManager`, or the `BlackFader` methods. Marking them `inline` in the
+  .cpp **before** the callsites reproduces retail inlining (definition order
+  matters — MWCC only inlines when the definition precedes the call).
+  `play_sound` is `int ret = 0; if (cb) ret = cb(HBM_SOUND_PLAY, id);
+  if (ret == 0) PlaySeq(id);` — the `PlaySeq` tail was commented out in an
+  earlier reconstruction, which both broke sound behaviour and forced a
+  non-retail out-of-line symbol.
+- **`findGroupAnimator` inlines to a 2×-unrolled `bdnz` search** (37 iters × 2
+  entries = `eGrAnimator_Max` 74) with `li r0, 0x25; mtctr`. The search pairs
+  are `(mVolumeNum + eGrPane_vol_00, sound_ylw)` stop + `sound_gry` start for
+  volume-down; mirrored for volume-up; `(optnBtn_00/01_psh, optn_btn_psh)`
+  start after the volume change.
+- **init() visibility section is 4 individual calls + 2 loops**: let_icn_00→
+  false, `"N_cntrl_01"`→ **true**, `"bar_00"`→true, `"bar_10"`→true, then
+  touch[2..6]→false and text[0..2]→false. There is **no** touch[0] call — a
+  naive reconstruction adds one and shifts the loop-setup scheduling.
+  SetVisible(false) is `rlwinm r0,0,24,30` only; SetVisible(true) adds `ori 1`.
+- **update_controller trig checks are single-bit**: press = `trig &
+  WPAD_BUTTON_HOME` only (no `PAD_BUTTON_START<<16`); volume down/up =
+  `trig & WPAD_BUTTON_MINUS` / `trig & WPAD_BUTTON_PLUS` only (no
+  `PAD_BUTTON_LEFT/RIGHT<<16`). The speaker loops call
+  `getController(i)->playSound(HBM_SPK_SE_CONNECT1)` after `setSpeakerVol`
+  (was commented out). The HOME-press branch also does
+  `FindPaneByName("bar_00", true)->SetVisible(true)` before the
+  `update(id, 0, -180, 0,0,0,NULL)` reset.
+- **Class layout drift**: `iReConnectTime` is at **0x5BC** and
+  `iReConnectTime2` at **0x5C0** (retail init stores the two divisions there;
+  the header claimed 0x5B8/0x5BC). 0x5B8 is a separate ctor/calc counter
+  (`unk5B8`). The stale names produced `stw r0, 0x5b8` vs retail `0x5bc`.
+- **`mAppVolume[3]` (0x5CA) is a u16 "sound-active" latch**: init sets it to 1
+  right after `mInitFlag`, and the `if (mEndInitSoundFlag)` block restores the
+  app's AX state (reverb shutdown, aux callback, FX hooks, AUX return vols).
+- **Remaining per-function diffs are TU-layout displacement drift** (f32/string
+  pool offsets: 0.0f at decomp 0x2E0 vs retail 0x2E4; 608.0f at 0x34C vs
+  0x35C because the unmatched create/ctor use different float heads). These
+  are equivalent loads (documented EQUIVALENT_MATCH-via-SMT case).
+
 Targets `us-80325cf0` createInstance, `us-80325d40` deleteInstance,
 `us-8032dd90` update_sound — all byte-identical. Reusable insights:
 
@@ -5986,3 +6067,110 @@ no-shift-locals). Size exact 0xac. `cycle --smt` probe inconclusive:
 byte-tail loop defeats the solver's loop bound). Registry corrected from bogus
 bulk-marked FULL_MATCH to CODE_MATCH 96.0% — do not re-mark without a real
 certificate; do not retry `--contract` variants.
+
+## RVL_SDK hbm/nw4hbm lyt_material.cpp — HBM TexMap is a raw GXTexObj; direct field writes unroll where placement-new doesn't (US, Wii/1.1 -O4,p, FULL_MATCH)
+
+`GetTextureSize` (us-80333f40), `SetTexCoordGenNum` (us-80332b30), `SetColorElement` (us-80332d80) all 100% FULL_MATCH:
+
+- **The HBM-fork `lyt::TexMap` entries stored in `Material` GX memory are raw `GXTexObj`s** (register words + userData, 32 bytes), NOT the nw4r semantic layout (image/palette/width/height/…). Proof: retail `GetTextureSize`/`SetupGX` copy the whole 32-byte entry to a stack `GXTexObj` with plain lwz/stw pairs and then call `GXGetTexObjHeight/Width/Fmt/UserData` on the copy; `SetTexture`/`SetTextureNoWrap` copy a `GXTexObj` in/out of the array directly. So `TexMap::Get(GXTexObj*)` = `*pTexObj = *reinterpret_cast<const GXTexObj*>(this);` (defined inline in the HBM lyt_texMap.h; was declared-but-undefined, which made SetupGX emit a `bl` to it before the fix).
+- **Retail `GetTextureSize` does NOT call `TexMap::GetSize()`** — it copies the entry to a stack `GXTexObj`, calls `GXInitTexObjUserData(&texObj, NULL)`, then `return Size(GXGetTexObjWidth(&texObj), GXGetTexObjHeight(&texObj));` (height evaluated first = right-to-left arg eval; u16→f32 via the 0x4330 f64 trick).
+- **`SetTexCoordGenNum` must write fields directly** (`texGenType/src/mtx/reserve` in order) — the nw4r-style `new (&pTexCoordGen[i]) TexCoordGen()` emits a NULL-check (MWCC placement-new expansion) that (a) changes store order to reserve-first and (b) blocks MWCC's ×8 auto-unroll. Direct field assignments produce the exact retail ×8-unrolled shape (`cmplwi r0,8; ble` + dead `bgt cr1` guard + 8×32-byte stb body + scalar tail `bdnz`), 0x88 → 0x154 byte-exact.
+- 3 targets certified FULL_MATCH (semantic-certified, no --smt); unit .text 0x3150/0x3270 split PASS.
+
+## PowerPC_EABI_Support split-budget overflow — 41 units fixed (US, mwcc_43_151)
+
+**Root cause (two classes):**
+
+1. **Header static functions emitted into every including TU.** `OSFastCast.h`
+   (`OSInitFastCast`, `OSf32tou8`, `OSSetGQR6/7`, …) and
+   `NdevExi2A/DebuggerDriver.h` (`__DBRead`, `__DBWriteMailbox`, …) declared
+   plain `static` functions with ASM bodies. MWCC emits unreferenced plain
+   statics (0x1B0 / 0x64 bytes per TU), so every unit including
+   `<revolution/OS.h>` (or `cc_gdev.h` → DebuggerDriver.h) overflowed its
+   split. The retail DOL contains **none** of these functions (static-lib
+   link-stripped). **Fix: `static` → `static inline`** in both headers —
+   unreferenced ones are dropped, referenced ones (ndev DebuggerDriver.c,
+   which already inlined them) are unchanged (verified 10/10 still FULL_MATCH).
+
+2. **TU sources defining functions the retail linker dropped.** The fork's
+   MSL/MetroTRK sources carry the full API (wrappers, `_s` variants, unused
+   helpers) plus `//unused` empty stubs; the retail DOL only contains the
+   used subset, so each split unit's function set is smaller than the
+   source file. **Fix per unit: emit exactly the retail split's function set**
+   (from `build/us/asm/.../*.s` `.fn` lists — the authoritative set, since the
+   split `.o` files keep some functions anonymous):
+   - Comment out dead stubs (the `//unused` pattern, as in buffer_io).
+   - Convert helpers called only by kept functions to `static inline`
+     (MWCC inlines them identically but no longer emits standalone copies):
+     `InitDefaultHeap` (GCN_mem_alloc — retail `__sys_free` has it inlined),
+     `vsscanf`/`isspace_string` (scanf — retail `sscanf` inlines them),
+     `wctomb` (mbstring — retail `wcstombs` inlines it),
+     `__pool_free`/`__init_pool_obj` (alloc), `strtol` (strtoul — retail
+     `atoi` inlines it), `TRKSendACK`/`TRKStandardACK` (msghndlr),
+     `TRK_fill_mem`/`ppc_readbyte1`/`ppc_writebyte1` (mem_TRK),
+     `ExPPC_*` destroy/delete helpers (Gecko_ExceptionPPC), `__exception_info_constants`
+     (__init_cpp_exceptions), `MWTerminateCriticalSection`-adjacent statics.
+   - Remove `DECOMP_FORCEACTIVE(CC_GDEV_c, …)` when the data is already
+     referenced by kept code (it emitted a 0x10 thunk).
+   - Comment out whole asm functions not in the split (runtime.c: `__shr2u`,
+     `__cvt_dbl_usll`, `__cvt_sll_dbl`, `__cvt_ull_dbl`, `__cvt_ull_flt`).
+
+**Result:** all 106 PowerPC_EABI units now `size: PASS` with 0 spare in most
+units; every in-range function byte-identical at the exact retail offset
+(verified by nm offset comparison against the `.s` files). Only pre-existing
+stalls remain: `__prep_buffer` (EQUIVALENT_MATCH, certified) and
+`__copy_longs_rev_unaligned` (CODE_MATCH, solver-inconclusive).
+
+**Pitfall:** functions in the remove set are often *called* by kept functions
+(sscanf→vsscanf, free→__pool_free, atoi→strtol, TRK_memset→TRK_fill_mem).
+Deleting them outright produces undefined references that only fail at link;
+the `static inline` conversion keeps the kept function byte-identical because
+MWCC was already inlining the helper — the standalone emission was the only
+difference.
+
+## RVL_SDK hbm/syn — 3× FULL_MATCH: TU-bss globals, global-array loops, alloc-order nudge (US, mwcc_43_151 `-O4,p`)
+
+`HBMSYNInit` (us-803435e0), `HBMSYNQuitSynth` (us-803438e0), `HBMSYNMidiInput`
+(us-80343990) reached 100% static (FULL_MATCH) in `libs/RVL_SDK/src/revolution/hbm/syn.c`.
+
+1. **TU-owned BSS globals → base-relative addressing.** Retail `syn.s` defines
+   `__HBMSYNSynthList`(+0), `__HBMSYNVoice`(+4), `__s_HBMSYNVoice`(+8, 0x4C0),
+   `__init`(+0x4C8, local) in one `.bss` block and most functions address them as
+   `lis r31, sym@ha; addi r31, r31, sym@l` + fixed offsets (`lwz r0, 0x4c8(r31)`).
+   The reconstruction had declared them `extern`, which made MWCC emit a separate
+   `lis/addi` per global (`lis r4, __HBMSYNVoice@ha; lwz r3, 0(r4)`), a structural
+   diff in every function. **Fix:** define the globals in the owning TU (in retail
+   `.bss` order, `__init` as `static` to match the retail local symbol) and let
+   MWCC fold offsets off the one base. `HBMSYNInit` then reproduced
+   `addi r3, r31, 8; stw r3, 4(r31)` (the `__HBMSYNVoice = __s_HBMSYNVoice`
+   assignment) and the 16× unrolled `lwz r3, 4(r31)` reload pattern exactly.
+   (Same file: `HBMSYNQuit`/`HBMSYNRunAudioFrame` kept their standalone per-global
+   `lis` — MWCC decides per function; both match.)
+
+2. **Index a global pointer array through a per-iteration local.** Retail
+   `HBMSYNQuitSynth` reloads `__HBMSYNVoice` at the top of each loop iteration
+   (`lwz r0, __HBMSYNVoice@l(r30)` + `add r26, r0, r29` with `r29 += 0x4C`) and
+   caches the computed voice address in a callee-saved register across the
+   `HBMMIXReleaseChannel`/`HBMFreeIndexByKey`/`AXFreeVoice` calls. Writing
+   `__HBMSYNVoice[i]` inline at every use made MWCC recompute load+add before
+   every use (4× per iteration, structural). **Fix:** `HBMSYNVOICE* v = &__HBMSYNVoice[i];`
+   inside the loop — the address is computed once, kept in a nonvolatile register
+   across the calls; the global VALUE is still reloaded per iteration (callees may
+   clobber it), matching retail.
+
+3. **Local declaration order shifts callee-saved allocation.** The last
+   reg-swaps were retail `intr=r27, i=r28` vs decomp `intr=r28, i=r27`.
+   Moving the declarations up-front and separating the assignment —
+   `s32 i; BOOL intr; intr = OSDisableInterrupts();` (instead of
+   `BOOL intr = OSDisableInterrupts(); s32 i;`) — flipped MWCC's allocation to
+   retail's exact r27/r28 split and the `_savegpr_25` frame. Worth trying when
+   only a small nonvolatile permutation remains.
+
+4. **`const u8*` param enables `lbz` hoisting.** `HBMSYNMidiInput` with
+   `const u8* data` made MWCC hoist the `data[1]`/`data[2]` byte loads above the
+   `midiWritePtr` store sequence and fold the `+1` into `stb …,1(r6)` (structural).
+   Dropping `const` (`u8* data`) kept each `lbz` adjacent to its `stb`, matching
+   retail byte-for-byte. Also: express the pointer advance as
+   `p = syn->midiWritePtr + 1; syn->midiWritePtr = p;` (a fresh load, then
+   add/store) rather than `p++` — that is what produces the retail reload
+   `lwz; addi; stw` shape.

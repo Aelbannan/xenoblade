@@ -121,14 +121,18 @@ void SJMEM_Destroy(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
+    const char* msg1 = lbl_eu_80518A68 + 0x5F;
+    const char* msg2 = lbl_eu_80518A68 + 0x0C;
+    const char* msg3 = lbl_eu_80518A68 + 0x6B;
+    const char* msg4 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x5F);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcpy(buf1, 0x40, msg1);
+        CRICRW_Strcat(buf1, 0x40, msg2);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x6B);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcpy(buf2, 0x40, msg3);
+        CRICRW_Strcat(buf2, 0x40, msg4);
         SJERR_CallErr(buf2);
     } else {
         memset(self, 0, 0x24);

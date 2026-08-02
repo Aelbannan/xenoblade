@@ -224,7 +224,47 @@ void sfadxt_ExcludeSilence(void *handle, u8 *buf, int size, int *out_size) {
     }
 }
 
-void sfadxt_ChkTermFlg() {}
+extern s32 ADXT_GetErrCode(void*);
+extern s32 SFSET_GetCond(void* self, u32 idx);
+extern void SFTST_SetAdjFlg(void* self, s32 val);
+extern void SFBUF_SetTermFlg(void* self, s32 idx, u32 flg);
+extern s32 SFBUF_GetTermFlg(void* self, s32 idx);
+extern s32 lbl_eu_80606E04;
+
+void sfadxt_ChkTermFlg(void* self, s32 flag_idx) {
+    void* tim = (u8*)self + 0x1098;
+    void* w = *(void**)((u8*)self + 0x20ac);
+    void* adxt = *(void**)((u8*)w);
+    s32 stat = ADXT_GetStat(adxt);
+    s32 err = ADXT_GetErrCode(adxt);
+
+    if (err != 0)
+        lbl_eu_80606E04 = err;
+
+    if (SFSET_GetCond(self, 26) == 0)
+        err = 0;
+
+    if (err != 0) {
+        if (err == -1) {
+            SFLIB_SetErr(self, 0xFF000C08);
+        } else if (err == -2) {
+            SFLIB_SetErr(self, 0xFF000C09);
+        } else {
+            SFLIB_SetErr(self, 0xFF000C07);
+        }
+    }
+
+    if ((u32)(stat - 4) <= 1)
+        SFTST_SetAdjFlg(tim, 0);
+
+    if (stat == 5 || err != 0)
+        SFBUF_SetTermFlg(self, *(s32*)((u8*)self + 0x20B8), 1);
+    if (SFBUF_GetTermFlg(self, *(s32*)((u8*)self + 0x20B4)) == 1 && flag_idx == 0) {
+        ADXT_GetStat(adxt);
+        if (*(s32*)((u8*)w + 0x48) == 0)
+            SFBUF_SetTermFlg(self, *(s32*)((u8*)self + 0x20B8), 1);
+    }
+}
 
 extern int ADXT_GetStat(void *);
 extern int ADXT_GetSfreq(void *);

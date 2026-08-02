@@ -96,4 +96,16 @@ void SFD_SetSfdHeaderFn(void* self, void* fn, void* ctx) {
     *(void**)((u8*)self + 0xd40) = ctx;
 }
 
-void SFD_GetSofdecHeader() {}
+s32 SFD_GetSofdecHeader(void* self, s32 idx, void** out) {
+    if (SFLIB_CheckHn(self) != 0)
+        return SFLIB_SetErr(0, 0xFF000117);
+    {
+        void* hdr = *(void**)((u8*)self + idx * 0x44 + 0x1FE0);
+        if (hdr == NULL) {
+            *out = NULL;
+        } else {
+            *out = *(void**)hdr;
+        }
+    }
+    return 0;
+}

@@ -266,8 +266,8 @@ void HBMMIXInit(void) {
             ch->flags = 0x50000000;
             ch->input = 0;
             ch->auxA = -960;
-            ch->pan = 64;
             ch->fader = 0;
+            ch->pan = 64;
             ch->vAuxCS = 0;
             ch->vAuxCR = 0;
             ch->vAuxCL = 0;

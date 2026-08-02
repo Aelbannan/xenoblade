@@ -204,24 +204,24 @@ void AXFXDelayExpShutdown(AXFX_DELAY_EXP* fx) {
 }
 
 void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
-    s32* inputL;
-    s32* inputR;
-    s32* inputS;
     s32* inL;
     s32* inR;
     s32* inS;
     s32* outL;
     s32* outR;
     s32* outS;
-    u32 samp;
+    s32 coef;
+    s32* inputL;
+    s32* inputR;
+    s32* inputS;
     s32 delayedL;
     s32 delayedR;
     s32 delayedS;
     s32 mixedL;
     s32 mixedR;
     s32 mixedS;
-    s32 coef;
     s32 invCoef;
+    u32 samp;
     u32 pos2;
 
     if (fx->active != 0) {
@@ -275,11 +275,11 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
         pos2 = fx->curPos;
         fx->line[2][pos2] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
 
-        fx->curPos = pos2 + 1;
-        if (fx->curPos >= fx->length) {
+        pos2++;
+        fx->curPos = pos2;
+        if (pos2 >= fx->length) {
             fx->curPos = 0;
         }
-
         *inputL++ = (delayedL * fx->outGainI) >> 7;
         *inputR++ = (delayedR * fx->outGainI) >> 7;
         *inputS++ = (delayedS * fx->outGainI) >> 7;

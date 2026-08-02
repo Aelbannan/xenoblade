@@ -4708,6 +4708,19 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
    (`btm_sec_alloc_dev`, `btsnd_hcic_*`, `LogMsg`, `l2cu_*`,
    `btm_initiate_rem_name`) are not accepted targets; `--linked` does not help
    (registry-level gate). They need FULL_MATCH or cross-unit callee acceptance.
+8. **Base-register pinning with a local pointer (btm_sec_pin_code_request_timeout,
+   us-802f0870, 66% → 100% FULL_MATCH)**: retail keeps `&btm_cb` in r31 across
+   the LogMsg_0 call (prologue `stw r0/stw r31/lis r31/addi r31` — NOT the
+   interleaved `lis r3` form used by e.g. btm_sec_collision_timeout) while the
+   memset argument gets a **fresh** `lis r3/addi r3/addi r3,0x1954` base.
+   Direct-global `btm_cb.X` accesses compile to the interleaved r3 form (per-use
+   pseudos, no cross-call merge). Fix: declare `BtmCb *p_cb = &btm_cb;` and use
+   `p_cb->` for the uses that must share the r31 base (param store + btsnd arg),
+   but keep the **direct** `btm_cb.` form for the one argument that needs the
+   independent lis/addi materialization — the two forms do not CSE together,
+   reproducing both the hoisted prologue base AND the fresh arg base. (Reloc name
+   drift on the trace string `@3377`→`@1280` is tolerated at FULL_MATCH, same as
+   the `@3519` drift on collision_timeout.)
 
 ## bta_dm_act.c — bte search/discovery (GC/3.0a5.2, `-func_align 4`)
 

@@ -198,6 +198,7 @@ void Controller::clrKpadButton() {
 
 extern const float lbl_80518684;
 extern "C" const float lbl_80518688;
+extern "C" const float lbl_8051868C;
 
 void Controller::setInValidPos() {
     mHBController.x = lbl_80518684;
@@ -219,9 +220,9 @@ void Controller::playSound(int id) {
         return;
     }
 
-    // HBM_MAX_VOLUME (10.0f) scaled by speaker volume, cast to s8 for WPAD
+    // HBM_MAX_VOLUME (lbl_8051868C) scaled by speaker volume, cast to s8 for WPAD
     remotespk->Play(mHBController.chan, id,
-                    (s8)(10.0f * getSpeakerVol()));
+                    (s8)(lbl_8051868C * getSpeakerVol()));
 
     if (WPADIsSpeakerEnabled(mHBController.chan)) {
         if (!mCheckSoundTimeFlag) {
@@ -348,7 +349,7 @@ s32 Controller::getInfoAsync(WPADInfo* pInfo) {
         sSetInfoAsync[chan] = true;
     }
 
-    return WPADGetInfoAsync(chan, pInfo, ControllerCallback);
+    return WPADGetInfoAsync(mHBController.chan, pInfo, ControllerCallback);
 }
 
 void Controller::ControllerCallback(s32 chan, s32 result) {

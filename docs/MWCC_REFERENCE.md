@@ -4893,8 +4893,31 @@ prologue) — 49 structural mismatches, same bytes otherwise.
   retail's `nu1@sp+24 / nu2@sp+8` stack slots (reverse order swaps the slots → equivalence
   inconclusive on stack-object projection).
 
-## RVL_SDK bte/stack/sdp/sdp_db.c — SDP_AddUuidSequence FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+### sdpu_build_attrib_entry + sdpu_extract_uid_seq — single-def hoist + SDK STREAM_TO_ARRAY macro (both FULL_MATCH, GC/3.0a5.2)
 
+Two previously-stalled sdp_utils functions became byte-identical (0/85 and 0/212) with
+plain high-level source restructures — the prior stall notes declared both
+"live-range split not reproducible from C":
+- **`sdpu_build_attrib_entry` (us-8030a140): hoist `p_data = p_out` OUT of the six
+  `switch (attr_len)` case bodies to a single def after the switch.** The case bodies
+  only do `*p_out++ = header;` — the compiler folds the increments into `addi rX, r3, 4/5`
+  either way, but a def inside each case gives MWCC a multi-point live range it splits
+  (default-path loop gets p_data=r5/xx=r6 while the explicit-length path keeps
+  p_data=r6/xx=r5 → 13 pure reg-swaps that the renaming witness cannot certify and SMT
+  grinds on >15min). One def after the switch unifies the range → byte-identical.
+- **`sdpu_extract_uid_seq` (us-8030a3d0): use the SDK `STREAM_TO_ARRAY(a, p, len)`
+  macro (bt_types.h) for the UUID byte copy, and move the `num_uuids >= SDPU_MAX_SEQ_ENTRIES`
+  check OUT of the `if (len valid) { } else return NULL;` block to a separate statement
+  after it.** (a) A handwritten `for (xx...) uu[xx] = *p++;` loop also unrolls into the
+  memcpy-style 8-byte copy, but hoists `offset + p_seq` (5-insn stores, 0x330 body) while
+  the macro's `register int ijk` loop reproduces retail's per-store base recompute
+  (6-insn stores, 0x350 body) — 75 structural sites gone. (b) The retail block order is
+  `[valid body + num++] → [else-NULL] → [num>=16 check] → [loop test]`; with the check
+  nested inside the if/else MWCC merges it into the valid block and schedules the `clrlwi`
+  before the `sth` (15 structural sites in the tail). Both fixes together: 138 → 0.
+  Also note the whole sdp_utils unit then hits 13/13 = 100% code match.
+
+## RVL_SDK bte/stack/sdp/sdp_db.c — SDP_AddUuidSequence FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 `SDP_AddUuidSequence` (0x80306EB0, size 0xD8) byte-exact (0/54 mismatches, split PASS):
 - **sdp_db.c needs the bte-family compiler override too**: `mw_version="GC/3.0a5.2"` +
   `extra_cflags=["-func_align 4", "-ipa off"]` (same as sdp_api.c / sdp_utils.c). Under

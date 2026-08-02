@@ -291,30 +291,25 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
         {
         case 1:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_ONE_BYTE);
-            p_data = p_out;
             break;
         case 2:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_TWO_BYTES);
-            p_data = p_out;
             break;
         case 4:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_FOUR_BYTES);
-            p_data = p_out;
             break;
         case 8:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_EIGHT_BYTES);
-            p_data = p_out;
             break;
         case 16:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_SIXTEEN_BYTES);
-            p_data = p_out;
             break;
         default:
             *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
             *p_out++ = (UINT8)p_attr->attr_len;
-            p_data = p_out;
             break;
         }
+        p_data = p_out;
 
         for (xx = 0; xx < p_attr->attr_len; xx++)
         {
@@ -487,14 +482,14 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
         {
             p_seq->uuid_entry[p_seq->num_uuids].len = (UINT16)uuid_len;
 
-            for (xx = 0; xx < uuid_len; xx++)
-                p_seq->uuid_entry[p_seq->num_uuids].uu[xx] = *p++;
+            STREAM_TO_ARRAY (p_seq->uuid_entry[p_seq->num_uuids].uu, p, uuid_len);
 
             p_seq->num_uuids++;
-            if (p_seq->num_uuids >= SDPU_MAX_SEQ_ENTRIES)
-                return (NULL);
         }
         else
+            return (NULL);
+
+        if (p_seq->num_uuids >= SDPU_MAX_SEQ_ENTRIES)
             return (NULL);
     }
 

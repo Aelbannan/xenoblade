@@ -298,7 +298,7 @@ BOOLEAN btsnd_hcic_create_conn(BD_ADDR bda, UINT16 packet_types,
 /*  btm_sec_find_first_serv -- find the first service record with the  */
 /*  specified PSM.                                                     */
 /* ------------------------------------------------------------------ */
-static BtmSecServRec *btm_sec_find_first_serv(UINT8 conn_type, UINT16 psm)
+static __inline BtmSecServRec *btm_sec_find_first_serv(UINT8 conn_type, UINT16 psm)
 {
     BtmSecServRec *p_srec = &btm_cb.sec_serv_rec[0];
     int i;
@@ -315,7 +315,7 @@ static BtmSecServRec *btm_sec_find_first_serv(UINT8 conn_type, UINT16 psm)
 /*  btm_sec_find_next_serv -- find the next service record with the    */
 /*  same PSM as p_cur.                                                 */
 /* ------------------------------------------------------------------ */
-static BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
+static __inline BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
 {
     BtmSecServRec *p_srec = &btm_cb.sec_serv_rec[0];
     int i;
@@ -341,7 +341,7 @@ static BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
 /*  btm_sec_find_mx_serv -- find the service record matching the       */
 /*  multiplexer protocol and channel.                                  */
 /* ------------------------------------------------------------------ */
-static BtmSecServRec *btm_sec_find_mx_serv(UINT16 psm, UINT8 is_originator,
+static __inline BtmSecServRec *btm_sec_find_mx_serv(UINT16 psm, UINT8 is_originator,
                                            UINT32 mx_proto_id, UINT32 mx_chan_id)
 {
     int i;

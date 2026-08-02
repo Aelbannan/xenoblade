@@ -6237,3 +6237,43 @@ difference.
    `TextWriterBase<T> clone(*this); f32 w = clone.PrintImpl(pStr, len);
    SetCursor(clone.GetCursorX(), clone.GetCursorY()); return w;` — the
    clone-copy codegen and destructor selection match byte-for-byte.
+
+## RVL_SDK hbm/seq — HBMSEQAddSequence / HBMSEQRemoveSequence 2× FULL_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p` -inline auto)
+
+`libs/RVL_SDK/src/revolution/hbm/seq.c` — both targets 100.0% static, 0 structural,
+0 reg-swap; split size 0x930 budget passes (0x28 spare).
+
+1. **`-inline auto` inlines same-TU helpers — guard with `#pragma push` /
+   `#pragma auto_inline off` / `#pragma pop`.** With `Wii/1.1 -inline auto -ipa file`,
+   MWCC auto-inlined `__HBMSEQReadHeader` (0x88) into `HBMSEQAddSequence`,
+   producing a 0xD4 body vs retail's out-of-line `bl` (0x90) and 46 structural
+   mismatches. Retail keeps `__HBMSEQReadHeader` and `__HBMSEQInitTracks` as real
+   calls. Wrap both definitions in `#pragma push` / `#pragma auto_inline off` /
+   `#pragma pop` (pragma must precede the function header; after the signature it
+   silently has no effect). `__HBMSEQReadHeader` already calls
+   `__HBMSEQInitTracks` out-of-line (size 0x88 exact), so only callers needed
+   protecting.
+
+2. **Call-site prototype ≠ definition prototype: let register flow decide.**
+   The retail `HBMSEQAddSequence` call to `HBMSYNInitSynth` sets up r3=syn+0x14,
+   r4=P3, r5=P4, r6=P5 — i.e. a **4-arg** call `(syn, config, p3, p4)` — while
+   `syn.c` defines `HBMSYNInitSynth(syn, config, param3)` (3 params). The 2nd
+   param of `HBMSEQAddSequence` (the MIDI data, later passed to
+   `__HBMSEQReadHeader`) is saved in r30 across the call, NOT forwarded.
+   Declaring the call-site prototype with 5 args made MWCC emit zero argument
+   moves (entry registers already line up) and drop the `mr r30, r4` save —
+   12 bytes short. Write the 4-arg local declaration
+   `extern "C" void HBMSYNInitSynth(void *syn, u32 config, u32 p3, u32 p4);`
+   in seq.c only (do not touch syn.c).
+
+3. **RemoveSequence alloc-order nudge:** with locals declared `u32 intr;
+   HBMSEQSEQUENCE *cur; HBMSEQSEQUENCE *next;`, MWCC put `intr` in r29 and
+   `next` in r27 (retail: intr=r27, next=r29). Declaring `next` **first**
+   (`HBMSEQSEQUENCE *next; HBMSEQSEQUENCE *cur; u32 intr;`) flips the
+   allocation to retail's exactly. `next` is read before the `cur != seq`
+   branch (`lwz r29, 0(r28)` between `cmplw` and `beq`) — keep the load before
+   the if. The inner re-insert uses a plain local
+   `u32 intr2 = OSDisableInterrupts(); ... OSRestoreInterrupts(intr2);` —
+   `OSRestoreInterrupts(OSDisableInterrupts())` nests both bl's back-to-back
+   BEFORE the list stores, which does not match retail's disable-stores-restore
+   order.

@@ -54,7 +54,11 @@ extern u32 __init;
 extern HBMSEQSEQUENCE *__HBMSEQSequenceList;
 
 extern "C" void HBMSYNMidiInput(void *syn, const u8 *data);
+extern "C" void HBMSYNInitSynth(void *syn, u32 config, u32 p3, u32 p4);
+extern "C" void HBMSYNQuitSynth(void *syn);
 
+#pragma push
+#pragma auto_inline off
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
 {
     HBMSEQTRACK *track;
@@ -119,6 +123,7 @@ void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
 
     seq->field_0x0C = seq->num_tracks;
 }
+#pragma pop
 
 extern "C" void HBMSEQInit()
 {
@@ -331,9 +336,52 @@ extern "C" void HBMSEQRunAudioFrame(void)
     }
 }
 
-void HBMSEQAddSequence() {}
+extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE *seq, u8 *data, u32 config,
+                                  u32 p3, u32 p4)
+{
+    u32 intr;
 
-void HBMSEQRemoveSequence() {}
+    HBMSYNInitSynth(&seq->midi_input, config, p3, p4);
+    seq->state = 0;
+    __HBMSEQReadHeader(seq, data);
+    intr = OSDisableInterrupts();
+    if (__HBMSEQSequenceList != NULL) {
+        seq->next = __HBMSEQSequenceList;
+    } else {
+        seq->next = NULL;
+    }
+    __HBMSEQSequenceList = seq;
+    OSRestoreInterrupts(intr);
+}
+
+extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE *seq)
+{
+    HBMSEQSEQUENCE *next;
+    HBMSEQSEQUENCE *cur;
+    u32 intr;
+
+    intr = OSDisableInterrupts();
+    cur = __HBMSEQSequenceList;
+    __HBMSEQSequenceList = NULL;
+    while (cur != NULL) {
+        next = cur->next;
+        if (cur != seq) {
+            /* Re-insert every other sequence (interrupt lock is re-taken so
+               the list rebuild is atomic with respect to the audio thread). */
+            u32 intr2 = OSDisableInterrupts();
+            if (__HBMSEQSequenceList != NULL) {
+                cur->next = __HBMSEQSequenceList;
+            } else {
+                cur->next = NULL;
+            }
+            __HBMSEQSequenceList = cur;
+            OSRestoreInterrupts(intr2);
+        }
+        cur = next;
+    }
+    OSRestoreInterrupts(intr);
+    HBMSYNQuitSynth(&seq->midi_input);
+}
 
 extern "C" u32 HBMSEQGetState(void* self) { return *(u32*)((u8*)self + 0x4); }
 

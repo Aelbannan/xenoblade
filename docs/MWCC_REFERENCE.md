@@ -390,6 +390,19 @@ with **zero regressions on the other 11 unit functions** and split still exactly
 0x52C/0x52C. Accepted FULL_MATCH (semantic-certified, no SMT needed). Keep the unit
 on `mw_version="GC/3.0a3.4"` + `extra_cflags=["-func_align 4", "-ipa off"]`.
 
+### rfc_l2cap_if.c — 10/10 FULL_MATCH: static-helper inlining un-rotates callee-save colors; hidden 2nd arg (GC/3.0a5.2 `-func_align 4`)
+
+`RFCOMM_BufDataInd` (us-803012e4) went from 73.8% (44 pure reg-swaps = one clean 4-cycle
+callee-save rotation) to 100% byte-identical with the unit's existing flags. Two reusable keys:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| 44 pure reg-swaps: retail `channel=r28 / buffer=r31 / rfc_cb=r30 / string=r29` vs decomp `channel=r31 / buffer=r30 / rfc_cb=r29 / string=r28` — 0 structural, immune to declaration order (5 permutations), `=0` initializers, an explicit `RfcControlBlock*` local, `-ipa off` (regresses 5 sibling fns), `-O4,s` (destroys unit), GC/3.0a3.4 | The lookup was originally a **static helper** (`rfc_find_lcid_mcb`) inlined by MWCC — the retail .data pool carries the orphan `"rfc_find_lcid_mcb LCID:0x%x"` strings and no standalone body. Hand-writing the inlined lookup inline changes VR creation order, and for a 4-clique interference graph {string, buffer, channel, rfc_cb} any permutation is a valid coloring — MWCC picks the rotated one | Reconstruct the helper: `static RfcMuxChannel* rfc_find_lcid_mcb(u16 lcid)` with the trace_level-checked lookup, call `channel = rfc_find_lcid_mcb(lcid);` from BufDataInd (MWCC fully inlines it — no standalone body, split stays 0x934 exact) → colors snap to retail, 0/168 mismatches |
+| Last 2 mismatches: retail `lbz r4, 5(r3); cmpwi r4, 0; ... mr r3, r27; bl rfc_inc_credit` vs decomp `lbz r0` — breaks the renaming bijection | `rfc_inc_credit` really takes **2 args** `(RfcPort*, u8 credit)` (retail body does `add r6, r0, r4`; rfc_utils.c already declares it). The credit_based load must stay live in **r4** across the compare to become arg2; a 1-arg extern let MWCC color it r0 | `extern void rfc_inc_credit(RfcPort* port, u8 credit);` + `if (rfc_cb.credit_based != 0) rfc_inc_credit(port, rfc_cb.credit_based);` — identical to the `PORT_StartCnf` hidden-arg pattern in rfc_mx_fsm.c above |
+
+`RFCOMM_CongestionStatusInd` (us-80301584) also certified FULL_MATCH (was 100% static all along).
+Unit is now 10/10 byte-identical, split 0x934/0x934 exact.
+
 ### rfc_ts_frames.c — 4/4 FULL_MATCH on **GC/3.0a3.4** (rfc_send_fcon us-80303f38, rfc_send_fcoff us-80303fbc, rfc_send_test us-8030432c, rfc_send_buf_uih us-80303cb8)
 
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c` needs `mw_version="GC/3.0a3.4"` + `extra_cflags=["-func_align 4", "-ipa off"]` — **not** the sibling `GC/3.0a5.2`:

@@ -794,7 +794,29 @@ extern RfcPort* port_find_dlci_port(u8 dlci);
 extern void rfc_send_dm(RfcMuxChannel* channel, int poll, int command);
 extern void rfc_port_sm_execute(RfcPort* port, u8 event, BT_HDR* buffer);
 extern void rfc_process_l2cap_congestion(RfcMuxChannel* channel, u8 congested);
-extern void rfc_inc_credit(RfcPort* port);
+extern void rfc_inc_credit(RfcPort* port, u8 credit);
+
+static RfcMuxChannel* rfc_find_lcid_mcb(u16 lcid) {
+    int index = (int)lcid - 0x40;
+    RfcMuxChannel* channel;
+
+    if (index >= 10) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
+        }
+        return 0;
+    }
+
+    channel = rfc_cb.mcb[index];
+    if (channel != 0 && channel->lcid != lcid) {
+        if (rfc_cb.trace_level >= 2) {
+            LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
+                     channel->lcid);
+        }
+        return 0;
+    }
+    return channel;
+}
 
 void RFCOMM_ConnectInd(u8* bd_addr, u16 lcid, u16 psm, u8 id);
 void RFCOMM_ConnectCnf(u16 lcid, u16 result);
@@ -962,26 +984,9 @@ void RFCOMM_DisconnectInd(u16 lcid, u8 response) {
 
 
 void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
-    int index = (int)lcid - 0x40;
-    RfcMuxChannel* channel;
-    RfcPort* port;
+    RfcMuxChannel* channel = rfc_find_lcid_mcb(lcid);
+    RfcPort* port = 0;
     u8 frame_type;
-
-    if (index >= 10) {
-        if (rfc_cb.trace_level >= 1) {
-            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
-        }
-        channel = 0;
-    } else {
-        channel = rfc_cb.mcb[index];
-        if (channel != 0 && channel->lcid != lcid) {
-            if (rfc_cb.trace_level >= 2) {
-                LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
-                         channel->lcid);
-            }
-            channel = 0;
-        }
-    }
 
     if (channel == 0) {
         if (rfc_cb.trace_level >= 2) {
@@ -1035,7 +1040,7 @@ void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
             GKI_freebuf(buffer);
         }
         if (rfc_cb.credit_based != 0) {
-            rfc_inc_credit(port);
+            rfc_inc_credit(port, rfc_cb.credit_based);
         }
     } else {
         rfc_port_sm_execute(port, frame_type, 0);

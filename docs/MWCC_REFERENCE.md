@@ -635,6 +635,19 @@ The dm PM unit is the same retail bte family as bta_dm_act/bta_dm_api (GC/3.0a5.
 
 Also note: `disconnect_ind`'s close-reason mapping uses `HCI_ERR_*` codes ({0x05,0x06,0x0E,0x18,0x26,0x29,0x25,0x17} → `HID_ERR_AUTH_FAILED`), and the `mx_chan_id` param is `2 - (attr>>15)` semantics (`HID_SEC_REQUIRED=0x8000`), not `HID_VIRTUAL_CABLE`.
 
+### hidh_api.c — hidh_search_callback FULL_MATCH, byte-identical (GC/3.0a5.2, `-func_align 4`)
+
+`hidh_search_callback` (us-802f655c) — 100% byte-identical after three structural fixes; the rest of the TU was already FULL_MATCH. Reusable patterns:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| sdp_db load (`lwz rN, 0x388`) lands at the call site inside the success path; retail hoists it before the result branch (and reuses it via `mr r3, r4`) | Reading `hh_cb.sdp_db` inline at the call keeps the load on the success path; MWCC never speculatively hoists a load across an indirect-call branch | Read into a local **before** the `if (result != 0)` guard: `p_db = hh_cb.sdp_db;` between the `uuid.uu.uuid16` and `hh_cb.sdp_busy = 0` assignments (this exact slot reproduces the retail `lis/addi/sth/sth/lwz/stb` ordering) |
+| Condition chain `if (a && b && …) { body } else { fail; return; }` emits success-fall-through + `b` over the fail block (+1 instruction, shifted everything after); retail is fail-fall-through with the LAST check `beq success` jumping over the fail block | MWCC lays out `if (any-fail || …) { fail; return; } body;` fail-first with the final sub-condition branching to the body — no skip jump needed | Rewrite the walk as fail-first: `if (p_attr == NULL || type != SEQ || sub == NULL || … || type != TEXT) { cback(HOST_UNKNOWN,0,0); return; }` (verified with GC/3.0a5.2 on a standalone repro: fail-first is 196 B vs 200 B for else-first) |
+| Final callback arg `p_sdp_info` reuses the long-lived r30 (`or r5,r30,r30`); retail recomputes `addi r5, r6, 0x38C` from the fresh hh_cb base it just loaded for the cback field | The local pointer stays live into the last block; passing `&hh_cb.sdp_info` forces recomputation off the reloaded base register | Call `hh_cb.sdp_cback(0, attr_mask, &hh_cb.sdp_info);` (keep `hh_cb.sdp_info.sdp_rec = p_rec;` for the `stw r31, 0x3FC(r6)` store) |
+| sdp_disable section is a pure 4-instruction reg-swap: retail `lhz r0; ori r3,r29,0x40; rlwinm r29,r3; sth r0,102` vs decomp `lhz r3; ori r0; rlwinm r29,r0; sth r3` | Statement order `store; attr_mask |= 0x40;` colors the loaded value into r3 and the OR into r0 | Write `attr_mask |= 0x40;` **before** `p_sdp_info->sdp_disable = …;` — the OR is emitted into r3 (killing the dead p_attr reg) and the load lands in r0 |
+
+Note: `p_attr->attr_value.v.array` at 0x6C is stored as `addi r0, r4, 8` (attr struct value union at offset 8); `attr_mask` field (0x68) temporarily holds the virtual-cable string length before being superseded by the feature-bit mask in r29.
+
 ### hcicmds.c — pool-buffer HCI command builders (US, `-O4`)
 
 **Flag correction (2026-08): the retail unit is `-O4`, not `-O4,s`.** The retail

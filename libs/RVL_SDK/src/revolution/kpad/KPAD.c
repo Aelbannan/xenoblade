@@ -181,7 +181,7 @@ extern void WPADSetCallbackByKPAD(s32 callback);
 extern s32 WPADControlBLC(s32 chan, u8 command, WPADCallback callback);
 extern s32 WBCSetupCalibration(void);
 extern s32 WBCGetCalibrationStatus(void);
-extern s32 WBCSetZEROPointDummy(s32 param);
+extern s32 WBCSetZEROPointDummy(void* samples, s32 count);
 extern s32 WBCGetBatteryLevel(s32 battery);
 extern s32 WBCReadDummy(KPADUnifiedWpadStatus* status, f64* pWeight, s32 count);
 extern s32 WBCGetTGCWeightDummy(f64* pTgcWeight, KPADUnifiedWpadStatus* status);
@@ -1964,7 +1964,7 @@ void KPADiSamplingCallback(s32 chan) {
             kp->acc_scale_y = 1.0f / (f32)unit.y;
             kp->acc_scale_z = 1.0f / (f32)unit.z;
         } else {
-            kp->acc_scale_x = kp->acc_scale_y = kp->acc_scale_z = 0.01f;
+            kp->acc_scale_z = kp->acc_scale_y = kp->acc_scale_x = 0.01f;
         }
         WPADGetAccGravityUnit(chan, WPAD_DEV_FREESTYLE, &unit);
         if (unit.x * unit.y * unit.z != 0) {
@@ -1972,7 +1972,7 @@ void KPADiSamplingCallback(s32 chan) {
             kp->fs_acc_scale_y = 1.0f / (f32)unit.y;
             kp->fs_acc_scale_z = 1.0f / (f32)unit.z;
         } else {
-            kp->fs_acc_scale_x = kp->fs_acc_scale_y = kp->fs_acc_scale_z = 0.005f;
+            kp->fs_acc_scale_z = kp->fs_acc_scale_y = kp->fs_acc_scale_x = 0.005f;
         }
         kp->unk_574 = 0;
     }
@@ -2027,43 +2027,46 @@ void KPADiSamplingCallback(s32 chan) {
             slot = 0;
             break;
         case WPAD_DEV_FREESTYLE:
-            slot = 1;
-            break;
-        case WPAD_DEV_CLASSIC:
             slot = 2;
             break;
-        case 0x11: /* TGC */
-            slot = 3;
-            break;
-        case 3: /* WBC */
+        case WPAD_DEV_CLASSIC:
             slot = 4;
             break;
+        case 0x11: /* TGC */
+            slot = 6;
+            break;
+        case 3: /* WBC */
+            slot = 8;
+            break;
         case 0x10: /* TR */
-            slot = 5;
+            slot = 10;
             break;
         default:
             goto out;
         }
 
-        slot = slot * 2;
         if (kp->dpd_enabled != 0) {
             slot++;
         }
-        if (table[slot][0] != (u32)(WPADIsDpdEnabled(chan) ? kp->unk_559 : 0)) {
-            if (kp->dpd_callback != NULL && kp->unk_55a == 0) {
-                kp->unk_55a = 1;
-                kp->dpd_callback(chan, 0);
-                kp->dpd_cb_state = 0;
-            }
-            if (kp->unk_558 == 0) {
-                kp->unk_558 = 1;
-                if (WPADControlDpd(chan, table[slot][0], KPADiControlDpdCallback) == 0) {
-                    kp->unk_559 = table[slot][0];
+        {
+            u32 dpd_val = (u32)(WPADIsDpdEnabled(chan) ? kp->unk_559 : 0);
+            const u8* tbl = table[slot];
+            if (dpd_val != tbl[0]) {
+                if (kp->dpd_callback != NULL && kp->unk_55a == 0) {
+                    kp->unk_55a = 1;
+                    kp->dpd_callback(chan, 0);
+                    kp->dpd_cb_state = 0;
                 }
-            }
-        } else {
-            if (entry->fmt != table[slot][1]) {
-                WPADSetDataFormat(chan, table[slot][1]);
+                if (kp->unk_558 == 0) {
+                    kp->unk_558 = 1;
+                    if (WPADControlDpd(chan, tbl[0], KPADiControlDpdCallback) == 0) {
+                        kp->unk_559 = tbl[0];
+                    }
+                }
+            } else {
+                if (entry->fmt != tbl[1]) {
+                    WPADSetDataFormat(chan, tbl[1]);
+                }
             }
         }
     }
@@ -2080,8 +2083,8 @@ void KPADiSamplingCallback(s32 chan) {
                 if (kp_wbc_issued == 0) {
                     if (WBCSetupCalibration() == 0) {
                         kp_wbc_issued = 1;
-                        goto out;
                     }
+                    goto out;
                 }
                 kp_wbc_setup = WBCGetCalibrationStatus();
                 kp_wbc_issued = kp_wbc_setup == 0;
@@ -2131,7 +2134,7 @@ void KPADiSamplingCallback(s32 chan) {
                 }
                 if ((f32)kp_wbc_ave_sample_count > kp_wbc_ave_count) {
                     kp_wbc_zero_point_done = 3;
-                    WBCSetZEROPointDummy(4);
+                    WBCSetZEROPointDummy(kp_wbc_ave_sample, 4);
                 }
             }
             break;

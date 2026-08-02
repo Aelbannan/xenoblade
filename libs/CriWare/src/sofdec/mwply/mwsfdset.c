@@ -99,7 +99,7 @@ void mwPlySetOutVol(void* self, s32 vol) {
     } else {
         MWSST_SetOutVol(self, vol);
         MWSFRNA_SetOutVol((u8*)self + 0x5D8, vol);
-        MWSFRNA_SetOutVol((u8*)self + 0x600, vol);
+        MWSST_SetOutVol((u8*)self + 0x600, vol);
     }
 }
 

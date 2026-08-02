@@ -385,4 +385,14 @@ void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color(){}
 void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
 void GetCharStrmReader__Q34nw4r2ut4FontCFv(){}
 void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(){}
-bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv(){ return false; }
+namespace nw4r {
+namespace lyt {
+
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488;
+
+const nw4r::ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {
+    return &lbl_eu_80665488;
+}
+
+} // namespace lyt
+} // namespace nw4r

@@ -558,4 +558,16 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-int GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv(){ return 0; }
+namespace nw4r {
+namespace snd {
+namespace detail {
+
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+
+const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const {
+    return &lbl_eu_806654D0;
+}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

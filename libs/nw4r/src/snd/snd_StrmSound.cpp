@@ -65,4 +65,16 @@ void StrmSound::DetachTempSpecialHandle() {
 
 void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv(){}
 void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv(){}
+namespace nw4r {
+namespace snd {
+namespace detail {
 
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520;
+
+const nw4r::ut::detail::RuntimeTypeInfo* StrmSound::GetRuntimeTypeInfo() const {
+    return &lbl_eu_80665520;
+}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

@@ -56,3 +56,16 @@ void WaveSound::DetachTempSpecialHandle() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+namespace nw4r {
+namespace snd {
+namespace detail {
+
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538;
+
+const nw4r::ut::detail::RuntimeTypeInfo* WaveSound::GetRuntimeTypeInfo() const {
+    return &lbl_eu_80665538;
+}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

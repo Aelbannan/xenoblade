@@ -68,9 +68,7 @@ inline TDerived DynamicCast(TBase* pPtr) {
  */
 #define NW4R_UT_RTTI_DECL(T)                                                   \
     virtual const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo()      \
-        const {                                                                \
-        return &typeInfo;                                                      \
-    }                                                                          \
+        const; /* defined out-of-line against the retail lbl typeInfo data */  \
                                                                                \
     static nw4r::ut::detail::RuntimeTypeInfo typeInfo;
 

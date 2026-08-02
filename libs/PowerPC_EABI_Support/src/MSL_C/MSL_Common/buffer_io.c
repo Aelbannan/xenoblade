@@ -2,12 +2,12 @@
 #include <stdio.h>
 
 //unused
-void __convert_from_newlines(){
-}
-
+//void __convert_from_newlines(){
+//}
+//
 //unused
-void __convert_to_newlines(){
-}
+//void __convert_to_newlines(){
+//}
 
 void __prep_buffer(FILE *file)
 {
@@ -20,9 +20,10 @@ void __prep_buffer(FILE *file)
     file->buffer_pos = pos;
 }
 
+
 //unused
-void __load_buffer(){
-}
+//void __load_buffer(){
+//}
 
 int __flush_buffer(FILE* file, size_t* length)
 {
@@ -50,9 +51,9 @@ int __flush_buffer(FILE* file, size_t* length)
 }
 
 //unused
-void setvbuf(){
-}
-
+//void setvbuf(){
+//}
+//
 //unused
-void setbuf(){
-}
+//void setbuf(){
+//}

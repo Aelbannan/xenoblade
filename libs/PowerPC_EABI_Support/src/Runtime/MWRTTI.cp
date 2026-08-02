@@ -32,6 +32,11 @@ extern "C"{
 
 static type_info_struct unknown_type = {"???"};
 
+// keep the retail string pool layout: the retail MWRTTI.cp compiled
+// __get_typeid (which throws std::bad_typeid) in this TU, so its RTTI
+// name string sits between unknown_type and the bad_cast throw strings.
+static const char* const bad_typeid_name = "!std::exception!!std::bad_typeid!!";
+
 static inline int strequal(const char* s1, const char* s2){
     for(; *s1 == *s2; s1++, s2++){
         if (*s1 == 0) return 0;

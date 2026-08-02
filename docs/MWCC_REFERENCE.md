@@ -5908,3 +5908,58 @@ tree is complete).
   Result: HBMMIXInitChannel 594/594 (0x948/0x948 exact), FULL_MATCH with
   semantic certificate, no SMT needed. Same conclusion as
   __wpadCalcRecalibration in this file.
+
+## PowerPC_EABI_Support MWRTTI `__dynamic_cast` — cross-split string-pool layout (US, mwcc_43_151 `-O4,p`)
+
+**Symptom:** `__dynamic_cast` (`us-802bc7f4`, 0x25C) stuck at 99.3% with one
+diff: `addi r3, r3, 39` (retail) vs `addi r3, r3, 4` (decomp) in the
+`throw std::bad_cast()` tail — a plain immediate, not a relocation. Both sides
+point at the same string (`!std::exception!!std::bad_cast!!`); the immediate
+is the string's offset inside the unit's `@stringBase0` pool.
+
+**Cause:** the retail MWRTTI.cp compiled `__get_typeid` (which throws
+`std::bad_typeid`) in the same TU, so the shared string pool is
+`'???' + '!std::exception!!std::bad_typeid!!' + '!std::exception!!std::bad_cast!!'`
+(4+35+33 = bad_cast at pool offset 39). The fork's per-split TU dropped
+`__get_typeid` (to fit the 0x2A8 split), which silently removed the bad_typeid
+string from the pool → bad_cast string moved to offset 4. The retail code for
+`__get_typeid` lives in a *different* split unit, but its pool strings stay in
+this unit's `.rodata` (the pool is a property of the original full TU).
+
+**Fix:** reference the missing string from an **unreferenced file-scope
+`static const char* const`** declared between `unknown_type` and
+`__dynamic_cast` (MWCC emits the string into the pool at first reference
+during data emission, but drops the unreferenced const object afterwards —
+verified: no extra `.sdata` object survives). Result: pool layout reproduced,
+`addi` +39, `__dynamic_cast` 3/3 unit functions byte-identical, FULL_MATCH
+with semantic certificate, split 0x2A8/0x2A8 exact.
+
+**Notes:** `std::exception`'s RTTI + `'std::exception'` string and the
+`unknown_type` object remain extra in decomp `.sdata`/`.rodata` (weak
+symbols, objdiff counts retail-side only → unit reports 100% data). `__get_typeid`
+is not in symbols.txt (no split unit owns its code in this fork).
+
+## PowerPC_EABI_Support unused-stub split overflow (buffer_io, US)
+
+**Symptom:** buffer_io decomp `.text` 0xF4 vs retail split 0xE0 (0x14 over) —
+`__prep_buffer` (0x28) + `__flush_buffer` (0xB8) match, but empty `{}` stub
+functions (`__convert_from_newlines`, `__convert_to_newlines`, `__load_buffer`,
+`setvbuf`, `setbuf`) each emit a 4-byte `blr` + padding.
+
+**Fix:** comment out unused stubs (same pattern as the stricmp 44-stub drop in
+commit baefacae). Unit now 0xE0/0xE0 exact.
+
+**`__prep_buffer` (`us-802c06ec`):** 5-instruction pure Chaitin r4↔r6 rotation,
+0 structural. Invariant across declaration order (size-first best), `unsigned
+long`/`int`/`u32` locals, no-locals inline form, and buffer-first locals →
+stays 50% hexdiff / 97.5% objdiff fuzzy. Certified EQUIVALENT_MATCH via
+`cycle --smt` (auto contract ppc-eabi, fresh semantic certificate).
+
+**`__copy_longs_rev_unaligned` (`us-802c14c0`, mem_funcs):** 20 pure reg-swaps,
+0 structural; retail coalesces `cps=src+n` into r4, every source variant gives
+r11 (also confirmed with dst-first explicit locals, macro forms, and
+no-shift-locals). Size exact 0xac. `cycle --smt` probe inconclusive:
+"loop iteration limit exceeded (2048) at 0x000002bc" (the bounded ≤3-iteration
+byte-tail loop defeats the solver's loop bound). Registry corrected from bogus
+bulk-marked FULL_MATCH to CODE_MATCH 96.0% — do not re-mark without a real
+certificate; do not retry `--contract` variants.

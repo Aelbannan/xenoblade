@@ -85,7 +85,29 @@ void MWSFSET_ExecSetCyclicFrameOutput(void *h) {
     }
 }
 
-void mwPlyGetTime() {}
+extern s32 SFD_GetTime(void* self, s32* out1, s32* out2);
+extern void MWSFLIB_SetErrCode(s32 code);
+
+void mwPlyGetTime(void* self, s32* out1, s32* out2) {
+    s32 state = (self == NULL) ? 0 : *(s32*)self;
+    *out1 = 0;
+    *out2 = 1;
+    if (state != 1) {
+        MWSFSVM_Error(lbl_eu_8051B7B0 + 0x40D);
+        return;
+    }
+    if (*(s32*)((u8*)self + 0x58) != 0) {
+        s32 ret = SFD_GetTime(self, out1, out2);
+        if (ret != 0) {
+            MWSFLIB_SetErrCode(-309);
+            MWSFSVM_Error(lbl_eu_8051B7B0 + 0x437);
+        }
+        if (*out1 < 0) {
+            *out1 = 0;
+            *out2 = 1;
+        }
+    }
+}
 
 extern char lbl_eu_8051B7B0[];
 extern void MWSFSVM_Error(const char* fmt, ...);

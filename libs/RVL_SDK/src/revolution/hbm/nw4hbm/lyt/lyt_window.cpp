@@ -146,7 +146,9 @@ static inline void GetLBFrameSize(math::VEC2* pPoint, Size* pSize, const math::V
                     const Size& rWindowSize,
                     const WindowFrameSize& rFrameSize) {
 
-    *pPoint = math::VEC2(rBase.x, rBase.y - rFrameSize.t);
+    // nw4hbm lyt uses y-down coordinates: the LB frame sits at the bottom
+    // edge rBase.y + t (the nw4r y-up form rBase.y - t is retail-different).
+    *pPoint = math::VEC2(rBase.x, rBase.y + rFrameSize.t);
 
     pSize->width = rFrameSize.l;
     pSize->height = rWindowSize.height - rFrameSize.t;
@@ -186,8 +188,9 @@ static inline void GetRBFrameSize(math::VEC2* pPoint, Size* pSize, const math::V
                     const Size& rWindowSize,
                     const WindowFrameSize& rFrameSize) {
 
+    // y-down: the RB frame sits at the bottom edge rBase.y + h - b.
     *pPoint = math::VEC2(rBase.x + rFrameSize.l,
-                         rBase.y - rWindowSize.height + rFrameSize.b);
+                         rBase.y + rWindowSize.height - rFrameSize.b);
 
     pSize->width = rWindowSize.width - rFrameSize.l;
     pSize->height = rFrameSize.b;
@@ -342,7 +345,7 @@ Material* Window::FindMaterialByName(const char* pName, bool recursive) {
 
     if (recursive) {
         NW4R_UT_LINKLIST_FOREACH (it, mChildList, {
-            Material* pMaterial = it->FindMaterialByName(pName, recursive);
+            Material* pMaterial = it->FindMaterialByName(pName, true);
             
             if (pMaterial != NULL) {
                 return pMaterial;
@@ -452,7 +455,7 @@ void Window::DrawContent(const math::VEC2& rBase,
     // clang-format off
     detail::DrawQuad(
         math::VEC2(rBase.x + rFrameSize.l - mContentInflation.l,
-                   rBase.y - rFrameSize.t + mContentInflation.t),
+                   rBase.y + rFrameSize.t - mContentInflation.t),
 
         Size(mSize.width - rFrameSize.l + mContentInflation.l - rFrameSize.r + mContentInflation.r,
              mSize.height - rFrameSize.t + mContentInflation.t - rFrameSize.b + mContentInflation.b),
@@ -470,17 +473,20 @@ void Window::DrawContent(const math::VEC2& rBase,
 void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
                        const WindowFrameSize& rFrameSize, u8 alpha) {
 
-    if (rFrame.pMaterial->GetTextureNum() == 0) {
-        return;
-    }
-
     bool useVtxColor = rFrame.pMaterial->SetupGX(
         detail::IsModulateVertexColor(NULL, alpha), alpha);
 
     detail::SetVertexFormat(useVtxColor, 1);
 
     Size texSize = detail::GetTextureSize(rFrame.pMaterial, 0);
-    ut::Color vtxColors[VERTEXCOLOR_MAX];
+    // ut::Color's ctor/dtor are out-of-line (defined in lyt_material.o /
+    // lyt_bounding.o); the retail DrawFrame* locals are POD so the WHITE
+    // init lowers to plain li/stw stores with no ctor/dtor calls.
+    u32 vtxColors[VERTEXCOLOR_MAX];
+    vtxColors[0] = 0xFFFFFFFF;
+    vtxColors[1] = 0xFFFFFFFF;
+    vtxColors[2] = 0xFFFFFFFF;
+    vtxColors[3] = 0xFFFFFFFF;
     detail::TexCoord texCoords[1];
 
     math::VEC2 point;
@@ -491,7 +497,7 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
     Get##FRAME##TexCoord(texCoords[0], size, texSize, FLIP);                   \
                                                                                \
     detail::DrawQuad(point, size, 1, texCoords,                                \
-                     useVtxColor ? vtxColors : NULL, alpha);
+                     useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha);
 
     DRAW_FRAME(LT, TEXTUREFLIP_NONE);
     DRAW_FRAME(RT, TEXTUREFLIP_H);
@@ -504,7 +510,14 @@ void Window::DrawFrame(const math::VEC2& rBase, const Frame& rFrame,
 void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
                         const WindowFrameSize& rFrameSize, u8 alpha) {
 
-    ut::Color vtxColors[VERTEXCOLOR_MAX];
+    // ut::Color's ctor/dtor are out-of-line (defined in lyt_material.o /
+    // lyt_bounding.o); the retail DrawFrame* locals are POD so the WHITE
+    // init lowers to plain li/stw stores with no ctor/dtor calls.
+    u32 vtxColors[VERTEXCOLOR_MAX];
+    vtxColors[0] = 0xFFFFFFFF;
+    vtxColors[1] = 0xFFFFFFFF;
+    vtxColors[2] = 0xFFFFFFFF;
+    vtxColors[3] = 0xFFFFFFFF;
     detail::TexCoord texCoords[1];
 
     math::VEC2 point;
@@ -513,7 +526,7 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
     bool modVtxColor = detail::IsModulateVertexColor(NULL, alpha);
 
 #define DRAW_FRAME(FRAME)                                                      \
-    if (pFrames[WINDOWFRAME_##FRAME].pMaterial->GetTextureNum() > 0) {         \
+    {                                                                          \
         bool useVtxColor = pFrames[WINDOWFRAME_##FRAME].pMaterial->SetupGX(    \
             modVtxColor, alpha);                                               \
                                                                                \
@@ -526,7 +539,7 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
                                                                                \
         detail::SetVertexFormat(useVtxColor, 1);                               \
         detail::DrawQuad(point, size, 1, texCoords,                            \
-                         useVtxColor ? vtxColors : NULL, alpha);               \
+                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha); \
     }
 
     DRAW_FRAME(LT);
@@ -540,158 +553,90 @@ void Window::DrawFrame4(const math::VEC2& rBase, const Frame* pFrames,
 void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
                         const WindowFrameSize& rFrameSize, u8 alpha) {
 
-    ut::Color vtxColors[VERTEXCOLOR_MAX] = {ut::Color::WHITE, ut::Color::WHITE,
-                                            ut::Color::WHITE,
-                                            ut::Color::WHITE};
+    // ut::Color's ctor/dtor are out-of-line (defined in lyt_material.o /
+    // lyt_bounding.o); the retail DrawFrame* locals are POD so the WHITE
+    // init lowers to plain li/stw stores with no ctor/dtor calls.
+    u32 vtxColors[VERTEXCOLOR_MAX];
+    vtxColors[0] = 0xFFFFFFFF;
+    vtxColors[1] = 0xFFFFFFFF;
+    vtxColors[2] = 0xFFFFFFFF;
+    vtxColors[3] = 0xFFFFFFFF;
     detail::TexCoord texCoords[1];
 
     Size size;
 
     bool modVtxColor = detail::IsModulateVertexColor(NULL, alpha);
 
-#define DRAW_FRAME_TC(FRAME, CORNER, SIZE, POINT)                            \
-    {                                                                        \
-        bool useVtxColor = pFrames[WINDOWFRAME_##FRAME].pMaterial->SetupGX(  \
-            modVtxColor, alpha);                                             \
-                                                                             \
-        size = SIZE;                                                         \
-                                                                             \
-        {                                                                    \
-            const TextureFlipInfo& rInfo = GetTexutreFlipInfo(               \
-                pFrames[WINDOWFRAME_##FRAME].textureFlip);                   \
-            int ix = rInfo.idx[FLIPINDEX_X];                                 \
-            int iy = rInfo.idx[FLIPINDEX_Y];                                 \
-                                                                             \
-            Size rTexSize = detail::GetTextureSize(                          \
-                pFrames[WINDOWFRAME_##FRAME].pMaterial, 0);                  \
-            math::VEC2 texSize(rTexSize.width, rTexSize.height);             \
-                                                                             \
-            DRAW_FRAME_TC_##CORNER                                           \
-        }                                                                    \
-                                                                             \
-        detail::SetVertexFormat(useVtxColor, 1);                             \
-        detail::DrawQuad(POINT, size, 1, texCoords,                          \
-                         useVtxColor ? vtxColors : NULL, alpha);             \
+#define DRAW_FRAME_EX(FRAME, TEXCOORD, SIZE, POINT)                            \
+    {                                                                          \
+        bool useVtxColor = pFrames[WINDOWFRAME_##FRAME].pMaterial->SetupGX(    \
+            modVtxColor, alpha);                                               \
+                                                                               \
+        size = SIZE;                                                           \
+                                                                               \
+        Get##TEXCOORD##TexCoord(                                               \
+            texCoords[0], size,                                                \
+            detail::GetTextureSize(pFrames[WINDOWFRAME_##FRAME].pMaterial, 0), \
+            pFrames[WINDOWFRAME_##FRAME].textureFlip);                         \
+                                                                               \
+        detail::SetVertexFormat(useVtxColor, 1);                               \
+        detail::DrawQuad(POINT, size, 1, texCoords,                            \
+                         useVtxColor ? reinterpret_cast<const ut::Color*>(vtxColors) : NULL, alpha); \
     }
 
-#define DRAW_FRAME_TC_LT                                                     \
-    texCoords[0][VERTEXCOLOR_LT][ix] = texCoords[0][VERTEXCOLOR_LB][ix] =    \
-        rInfo.coords[VERTEXCOLOR_LT][ix];                                    \
-    texCoords[0][VERTEXCOLOR_LT][iy] = texCoords[0][VERTEXCOLOR_RT][iy] =    \
-        rInfo.coords[VERTEXCOLOR_LT][iy];                                    \
-    texCoords[0][VERTEXCOLOR_RB][ix] = texCoords[0][VERTEXCOLOR_RT][ix] =    \
-        rInfo.coords[VERTEXCOLOR_LT][ix] +                                   \
-        size.width / ((rInfo.coords[VERTEXCOLOR_RT][ix] -                    \
-                       rInfo.coords[VERTEXCOLOR_LT][ix]) *                   \
-                      texSize[ix]);                                          \
-    texCoords[0][VERTEXCOLOR_RB][iy] = texCoords[0][VERTEXCOLOR_LB][iy] =    \
-        rInfo.coords[VERTEXCOLOR_LT][iy] +                                   \
-        size.height / ((rInfo.coords[VERTEXCOLOR_LB][iy] -                   \
-                        rInfo.coords[VERTEXCOLOR_LT][iy]) *                  \
-                       texSize[iy]);
-
-#define DRAW_FRAME_TC_RT                                                     \
-    texCoords[0][VERTEXCOLOR_RT][ix] = texCoords[0][VERTEXCOLOR_RB][ix] =    \
-        rInfo.coords[VERTEXCOLOR_RT][ix];                                    \
-    texCoords[0][VERTEXCOLOR_RT][iy] = texCoords[0][VERTEXCOLOR_LT][iy] =    \
-        rInfo.coords[VERTEXCOLOR_RT][iy];                                    \
-    texCoords[0][VERTEXCOLOR_LB][ix] = texCoords[0][VERTEXCOLOR_LT][ix] =    \
-        rInfo.coords[VERTEXCOLOR_RT][ix] +                                   \
-        size.width / ((rInfo.coords[VERTEXCOLOR_LT][ix] -                    \
-                       rInfo.coords[VERTEXCOLOR_RT][ix]) *                   \
-                      texSize[ix]);                                          \
-    texCoords[0][VERTEXCOLOR_LB][iy] = texCoords[0][VERTEXCOLOR_RB][iy] =    \
-        rInfo.coords[VERTEXCOLOR_RT][iy] +                                   \
-        size.height / ((rInfo.coords[VERTEXCOLOR_RB][iy] -                   \
-                        rInfo.coords[VERTEXCOLOR_RT][iy]) *                  \
-                       texSize[iy]);
-
-#define DRAW_FRAME_TC_LB                                                     \
-    texCoords[0][VERTEXCOLOR_LB][ix] = texCoords[0][VERTEXCOLOR_LT][ix] =    \
-        rInfo.coords[VERTEXCOLOR_LB][ix];                                    \
-    texCoords[0][VERTEXCOLOR_LB][iy] = texCoords[0][VERTEXCOLOR_RB][iy] =    \
-        rInfo.coords[VERTEXCOLOR_LB][iy];                                    \
-    texCoords[0][VERTEXCOLOR_RT][ix] = texCoords[0][VERTEXCOLOR_RB][ix] =    \
-        rInfo.coords[VERTEXCOLOR_LB][ix] +                                   \
-        size.width / ((rInfo.coords[VERTEXCOLOR_RB][ix] -                    \
-                       rInfo.coords[VERTEXCOLOR_LB][ix]) *                   \
-                      texSize[ix]);                                          \
-    texCoords[0][VERTEXCOLOR_RT][iy] = texCoords[0][VERTEXCOLOR_LT][iy] =    \
-        rInfo.coords[VERTEXCOLOR_LB][iy] +                                   \
-        size.height / ((rInfo.coords[VERTEXCOLOR_LT][iy] -                   \
-                        rInfo.coords[VERTEXCOLOR_LB][iy]) *                  \
-                       texSize[iy]);
-
-#define DRAW_FRAME_TC_RB                                                     \
-    texCoords[0][VERTEXCOLOR_RB][ix] = texCoords[0][VERTEXCOLOR_RT][ix] =    \
-        rInfo.coords[VERTEXCOLOR_RB][ix];                                    \
-    texCoords[0][VERTEXCOLOR_RB][iy] = texCoords[0][VERTEXCOLOR_LB][iy] =    \
-        rInfo.coords[VERTEXCOLOR_RB][iy];                                    \
-    texCoords[0][VERTEXCOLOR_LT][ix] = texCoords[0][VERTEXCOLOR_LB][ix] =    \
-        rInfo.coords[VERTEXCOLOR_RB][ix] +                                   \
-        size.width / ((rInfo.coords[VERTEXCOLOR_LB][ix] -                    \
-                       rInfo.coords[VERTEXCOLOR_RB][ix]) *                   \
-                      texSize[ix]);                                          \
-    texCoords[0][VERTEXCOLOR_LT][iy] = texCoords[0][VERTEXCOLOR_RT][iy] =    \
-        rInfo.coords[VERTEXCOLOR_RB][iy] +                                   \
-        size.height / ((rInfo.coords[VERTEXCOLOR_RT][iy] -                   \
-                        rInfo.coords[VERTEXCOLOR_RB][iy]) *                  \
-                       texSize[iy]);
+#define DRAW_FRAME(FRAME, SIZE, POINT) DRAW_FRAME_EX(FRAME, FRAME, SIZE, POINT)
 
     // clang-format off
-    DRAW_FRAME_TC(LT, LT,
+    DRAW_FRAME(LT,
                Size(rFrameSize.l,
                     rFrameSize.t),
                rBase);
 
-    DRAW_FRAME_TC(T, LT,
+    DRAW_FRAME_EX(T, LT,
                Size(mSize.width - rFrameSize.l - rFrameSize.r,
                     rFrameSize.t),
                math::VEC2(rBase.x + rFrameSize.l,
                           rBase.y));
 
-    DRAW_FRAME_TC(RT, RT,
+    DRAW_FRAME(RT,
                Size(rFrameSize.r,
                     rFrameSize.t),
                math::VEC2(rBase.x + mSize.width - rFrameSize.r,
                           rBase.y));
 
-    DRAW_FRAME_TC(R, RT,
+    DRAW_FRAME_EX(R, RT,
                Size(rFrameSize.r,
                     mSize.height - rFrameSize.t - rFrameSize.b),
                math::VEC2(rBase.x + mSize.width - rFrameSize.r,
-                          rBase.y - rFrameSize.t));
+                          rBase.y + rFrameSize.t));
 
-    DRAW_FRAME_TC(RB, RB,
+    DRAW_FRAME(RB,
                Size(rFrameSize.r,
                     rFrameSize.b),
                math::VEC2(rBase.x + mSize.width - rFrameSize.r,
-                          rBase.y - mSize.height + rFrameSize.b));
+                          rBase.y + mSize.height - rFrameSize.b));
 
-    DRAW_FRAME_TC(B, RB,
+    DRAW_FRAME_EX(B, RB,
                Size(mSize.width - rFrameSize.l - rFrameSize.r,
                     rFrameSize.b),
                math::VEC2(rBase.x + rFrameSize.l,
-                          rBase.y - mSize.height + rFrameSize.b));
+                          rBase.y + mSize.height - rFrameSize.b));
 
-    DRAW_FRAME_TC(LB, LB,
+    DRAW_FRAME(LB,
                Size(rFrameSize.l,
                     rFrameSize.b),
                math::VEC2(rBase.x,
-                          rBase.y - mSize.height + rFrameSize.b));
+                          rBase.y + mSize.height - rFrameSize.b));
 
-    DRAW_FRAME_TC(L, LB,
+    DRAW_FRAME_EX(L, LB,
                Size(rFrameSize.l,
                     mSize.height - rFrameSize.t - rFrameSize.b),
                math::VEC2(rBase.x,
-                          rBase.y - rFrameSize.t));
+                          rBase.y + rFrameSize.t));
     // clang-format on
 
-#undef DRAW_FRAME_TC
-#undef DRAW_FRAME_TC_LT
-#undef DRAW_FRAME_TC_RT
-#undef DRAW_FRAME_TC_LB
-#undef DRAW_FRAME_TC_RB
+#undef DRAW_FRAME
+#undef DRAW_FRAME_EX
 }
 
 Material* Window::GetContentMaterial() const {

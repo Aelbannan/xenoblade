@@ -122,13 +122,49 @@ void DetachAll__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
 void UpdateFrame__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
-void SetFrame__Q34nw4r3g3d13AnmObjChrNodeFf(){}
+namespace nw4r {
+namespace g3d {
 
-void GetFrame__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
+// Shared sdata2 0.0f / 1.0f slots used by the node-loop accessor defaults.
+extern "C" const float lbl_eu_80669B88; // 0.0f
+extern "C" const float lbl_eu_80669B8C; // 1.0f
 
-void SetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeFf(){}
+void AnmObjChrNode::SetFrame(f32 frame) {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            mpChildrenArray[i]->SetFrame(frame);
+        }
+    }
+}
 
-void GetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
+f32 AnmObjChrNode::GetFrame() const {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            return mpChildrenArray[i]->GetFrame();
+        }
+    }
+    return lbl_eu_80669B88;
+}
+
+void AnmObjChrNode::SetUpdateRate(f32 rate) {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            mpChildrenArray[i]->SetUpdateRate(rate);
+        }
+    }
+}
+
+f32 AnmObjChrNode::GetUpdateRate() const {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            return mpChildrenArray[i]->GetUpdateRate();
+        }
+    }
+    return lbl_eu_80669B8C;
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdl(){}
 

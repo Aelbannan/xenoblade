@@ -1129,15 +1129,15 @@ void __wpadGetExtType(s32 chan, s32 err) {
 }
 
 s32 WPADiHIDParser(u8 port, u8* p_rpt) {
-    WPADCB* cb = __rvl_p_wpadcb[port];
     WPADStatusEx* status;
+    WPADCB* cb = __rvl_p_wpadcb[port];
+    BOOL enable;
     s32 result = WPAD_ERR_OK;
 
     if ((u8)(p_rpt[0] + 0xE0) <= 0x1F) {
-        BOOL enable = OSDisableInterrupts();
+        enable = OSDisableInterrupts();
 
-        cb = __rvl_p_wpadcb[port];
-        status = (WPADStatusEx*)cb->rxBufs[cb->rxBufIndex];
+        status = (WPADStatusEx*)__rvl_p_wpadcb[port]->rxBufs[__rvl_p_wpadcb[port]->rxBufIndex];
 
         if (p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_1 && p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_2) {
             memset(status, 0, RX_BUFFER_SIZE);
@@ -1150,7 +1150,7 @@ s32 WPADiHIDParser(u8 port, u8* p_rpt) {
         }
 
         if (p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_1 && p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_2) {
-            cb->rxBufIndex = !cb->rxBufIndex;
+            __rvl_p_wpadcb[port]->rxBufIndex = !__rvl_p_wpadcb[port]->rxBufIndex;
         }
 
         OSRestoreInterrupts(enable);
@@ -1493,15 +1493,19 @@ void __a1_33_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
-    status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
-                   (s16)cb->devConfig.accX0g;
-    status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
-                   (s16)cb->devConfig.accY0g;
-    status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
-                   (s16)cb->devConfig.accZ0g;
+    {
+        WPADCB* cb2 = __rvl_p_wpadcb[chan];
+
+        status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
+                       (s16)cb2->devConfig.accX0g;
+        status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
+                       (s16)cb2->devConfig.accY0g;
+        status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
+                       (s16)cb2->devConfig.accZ0g;
+    }
 
     __parse_dpd_data(chan, &status, cb->currentDpdCommand, data + 6, 12);
 }

@@ -115,7 +115,16 @@ typedef struct {
     UINT8 _u2[0x624 - 0x566];             /* 0x566..0x623 */
     tBTM_ROLE_SWITCH_CMPL switch_role_ref_data; /* 0x624 */
     tBTM_CMPL_CB* p_switch_role_cb;       /* 0x62C */
+    UINT8 _u3[0x27C0 - 0x630];            /* 0x630..0x27BF */
+    UINT8 trace_level;                    /* 0x27C0 (see bt_trace.h BTM_TRACE macros) */
 } tBTM_CB_COMPAT;
+
+/* Retail-layout view of the tBTM_SEC_DEV_REC field used here: the SDK
+ * header places sec_flags at 0x132, but the retail binary keeps it at 0x76. */
+typedef struct {
+    UINT8 _pad[0x76];
+    UINT8 sec_flags;                      /* 0x76 */
+} tBTM_SEC_DEV_REC_COMPAT;
 
 /* The retail btm_cb global, with this unit's retail-layout view. */
 extern tBTM_CB_COMPAT btm_cb;
@@ -128,6 +137,9 @@ static int btm_pm_find_acl_ind(BD_ADDR remote_bda);
 static tBTM_PM_PWR_MD* btm_pm_compare_modes(tBTM_PM_PWR_MD* p_md1, tBTM_PM_PWR_MD* p_md2, tBTM_PM_PWR_MD* p_res);
 static tBTM_PM_MODE btm_pm_get_set_mode(UINT8 pm_id, tBTM_PM_MCB* p_cb, tBTM_PM_PWR_MD* p_mode, tBTM_PM_PWR_MD* p_res);
 static tBTM_STATUS btm_pm_snd_md_req(UINT8 pm_id, int link_ind, tBTM_PM_PWR_MD* p_mode);
+UINT8 btm_num_sco_links_active(void); /* btm_sco.c */
+BOOLEAN btsnd_hcic_set_conn_encrypt(UINT16 handle, UINT8 enable); /* hcicmds */
+BOOLEAN btsnd_hcic_switch_role(BD_ADDR remote_bda, UINT8 role);    /* hcicmds */
 
 /*******************************************************************************
  * variables
@@ -483,7 +495,11 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
         if (p->restore_pkt_types && btm_num_sco_links_active() == 0) {
             p->restore_pkt_types = 0;
 
-            BTM_TRACE(0, "btm mode change AFTER unsniffing; hci hdl 0x%x, types 0x%02x", hci_handle, p->pkt_types_mask);
+            if (btm_cb.trace_level >= BT_TRACE_LEVEL_DEBUG) {
+                LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_DEBUG,
+                         "btm mode change AFTER unsniffing; hci hdl 0x%x, types 0x%02x",
+                         hci_handle, p->pkt_types_mask);
+            }
 
             btsnd_hcic_change_conn_type(p->hci_handle, p->pkt_types_mask);
         }
@@ -509,7 +525,8 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
     }
 
     if (btm_cb.acl_db[xx].switch_role_state == BTM_ACL_SWKEY_STATE_MODE_CHANGE) {
-        if (((p_dev_rec = btm_find_dev(btm_cb.acl_db[xx].remote_addr)) != NULL) && p_dev_rec->sec_flags & BTM_SEC_ENCRYPTED) {
+        if (((p_dev_rec = btm_find_dev(btm_cb.acl_db[xx].remote_addr)) != NULL) &&
+            ((tBTM_SEC_DEV_REC_COMPAT*)p_dev_rec)->sec_flags & BTM_SEC_ENCRYPTED) {
             if (btsnd_hcic_set_conn_encrypt(hci_handle, FALSE)) {
                 btm_cb.acl_db[xx].switch_role_state = BTM_ACL_SWKEY_STATE_ENCRYPTION_OFF;
                 return;
@@ -529,6 +546,6 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
     }
 }
 
-BOOLEAN BTM_IsPowerManagerOn(void) {
-    return BTM_PWR_MGR_INCLUDED;
-}
+/* BTM_IsPowerManagerOn is not emitted by the retail btm_pm unit (it is a
+ * macro/inline elsewhere); do not define it here or the unit .text grows
+ * past the split budget. */

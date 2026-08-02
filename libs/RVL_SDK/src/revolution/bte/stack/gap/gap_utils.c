@@ -1,17 +1,56 @@
 // High-level C reconstruction of RVL_SDK/src/revolution/bte/stack/gap/gap_utils
 
 #include <revolution/BTE/stack/include/btm_api.h>
+#include <string.h>
 
-/* GAP return codes (not present in the RVL SDK headers; values recovered
- * from the retail gap_convert_btm_status jump table / data section). */
-#define GAP_SUCCESS          0x0000
-#define GAP_CMD_INITIATED    0x010B
-#define GAP_ERR_BUSY         0x0103
-#define GAP_ERR_ILLEGAL_PARAM 0x0109
-#define GAP_ERR_NOT_READY    0x010C
-#define GAP_ERR_BAD_BD_ADDR  0x010D
-#define GAP_ERR_PROCESSING   0x0114
-#define GAP_DEVICE_TIMEOUT   0x0115
+/* GAP return codes (values recovered from the retail jump tables; these are
+ * the BTE GAP_ERR_* statuses with GAP_ERR_GROUP = 0x100). */
+#define BT_PASS                 0x0000
+#define GAP_EOINQDB             0x0102
+#define GAP_ERR_BUSY            0x0103
+#define GAP_ERR_ILL_PARM        0x0109
+#define GAP_CMD_INITIATED       0x010B
+#define GAP_DEVICE_NOT_UP       0x010C
+#define GAP_BAD_BD_ADDR         0x010D
+#define GAP_ERR_PROCESSING      0x0114
+#define GAP_ERR_TIMEOUT         0x0115
+
+/* FindAddr completion event passed to the upper-layer callback. */
+#define GAP_EVT_FIND_ADDR_COMPLETE 0x0005
+
+typedef void (tGAP_CALLBACK)(UINT16 event, void *p_data);
+
+/* Result block filled in by the FindAddr-by-name search. */
+typedef struct
+{
+    UINT16      status;         /* 0x00 */
+    BD_ADDR     bd_addr;        /* 0x02 */
+    UINT8       devname[0x41];  /* 0x08 */
+} tGAP_FINDADDR_RESULTS;        /* 0x4A total */
+
+/* FindAddr control block (gap_cb+0x2C). */
+typedef struct
+{
+    tGAP_CALLBACK *p_cback;     /* 0x00 */
+    tBTM_INQ_INFO *p_cur_inq;   /* 0x04 */
+    tGAP_FINDADDR_RESULTS results; /* 0x08 */
+    BOOLEAN       in_use;       /* 0x52 */
+} tGAP_FINDADDR_CB;             /* 0x54 total */
+
+/* Retail-layout view of the gap_cb global used by this unit. */
+typedef struct
+{
+    UINT8       reserved1[0x20];              /* 0x00 */
+    void        *btm_cback[2];                /* 0x20 */
+    UINT8       trace_level;                  /* 0x28 */
+    UINT8       reserved2[3];                 /* 0x29 */
+    tGAP_FINDADDR_CB findaddr_cb;             /* 0x2C */
+    tBTM_INQ_INFO *cur_inqptr;                /* 0x80 */
+} tGAP_CB;                                    /* 0x3AC total */
+
+extern tGAP_CB gap_cb;
+
+UINT16 gap_convert_btm_status(tBTM_STATUS btm_status);
 
 /* BTM event dispatcher: index selects the GAP control block (0 or 1),
  * p_msg is the BTM event message. gap_btm_cback0/1 tail-call into it. */
@@ -30,7 +69,68 @@ void gap_btm_cback1(void *p_msg)
     btm_cback(1, p_msg);
 }
 
-void gap_find_addr_name_cb() {}
+void gap_find_addr_name_cb(tBTM_REMOTE_DEV_NAME *p)
+{
+    tGAP_FINDADDR_CB *p_cb = &gap_cb.findaddr_cb;
+    tGAP_FINDADDR_RESULTS *p_result = &p_cb->results;
+
+    if (!p_cb->in_use)
+        return;
+
+    if (p->status == BTM_SUCCESS)
+    {
+        if (gap_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+        {
+            LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
+                     "   GAP: FindAddrByName Rem Name Cmpl Evt (Status 0x%04x, Name [%s])",
+                     (UINT32)p->status, (UINT32)p->remote_bd_name);
+        }
+
+        if (!strncmp((char *)p_result->devname, (char *)p->remote_bd_name,
+                     strlen((char *)p_result->devname)))
+        {
+            memcpy(p_result->bd_addr, p_cb->p_cur_inq->results.remote_bd_addr, BD_ADDR_LEN);
+            p_result->status = BT_PASS;
+        }
+        else
+        {
+            if ((p_cb->p_cur_inq = BTM_InqDbNext(p_cb->p_cur_inq)) != NULL)
+            {
+                if (BTM_ReadRemoteDeviceName(p_cb->p_cur_inq->results.remote_bd_addr,
+                                             (tBTM_CMPL_CB *)&gap_find_addr_name_cb) == BTM_CMD_STARTED)
+                {
+                    return;
+                }
+                else
+                {
+                    p_result->status = gap_convert_btm_status((tBTM_STATUS)p->status);
+                }
+            }
+            else
+            {
+                p_result->status = GAP_EOINQDB;
+            }
+        }
+    }
+    else
+    {
+        if (gap_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+        {
+            LogMsg_1(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
+                     "   GAP: FindAddrByName Rem Name Cmpl Evt (Status 0x%04x)",
+                     (UINT32)p->status);
+        }
+        p_result->status = gap_convert_btm_status((tBTM_STATUS)p->status);
+    }
+
+    if (p_cb->p_cback)
+    {
+        (*p_cb->p_cback)(GAP_EVT_FIND_ADDR_COMPLETE, p_result);
+    }
+
+    p_cb->in_use = FALSE;
+    p_cb->p_cback = NULL;
+}
 
 void gap_find_addr_inq_cb() {}
 
@@ -38,20 +138,20 @@ UINT16 gap_convert_btm_status(tBTM_STATUS btm_status)
 {
     switch (btm_status) {
     case BTM_SUCCESS:
-        return GAP_SUCCESS;
+        return BT_PASS;
     case BTM_CMD_STARTED:
         return GAP_CMD_INITIATED;
     case BTM_BUSY:
         return GAP_ERR_BUSY;
     case BTM_MODE_UNSUPPORTED:
     case BTM_ILLEGAL_VALUE:
-        return GAP_ERR_ILLEGAL_PARAM;
+        return GAP_ERR_ILL_PARM;
     case BTM_WRONG_MODE:
-        return GAP_ERR_NOT_READY;
+        return GAP_DEVICE_NOT_UP;
     case BTM_UNKNOWN_ADDR:
-        return GAP_ERR_BAD_BD_ADDR;
+        return GAP_BAD_BD_ADDR;
     case BTM_DEVICE_TIMEOUT:
-        return GAP_DEVICE_TIMEOUT;
+        return GAP_ERR_TIMEOUT;
     default:
         return GAP_ERR_PROCESSING;
     }

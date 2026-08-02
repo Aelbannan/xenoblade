@@ -15,8 +15,6 @@ u32 PaneManager::suIDCounter = 0;
 
 void drawLine_(f32 x0, f32 y0, f32 x1, f32 y1, f32 z, u8 width,
                GXColor& rColor) {
-    static const f32 cubeScale = 1.0f;
-
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -365,13 +363,11 @@ void PaneComponent::draw() {
         return;
     }
 
-    (void)mpPane->GetTranslate();
     nw4hbm::lyt::Size size = mpPane->GetSize();
     const nw4hbm::math::MTX34& gmtx = mpPane->GetGlobalMtx();
 
-    f32 x = gmtx._03;
-    f32 y = gmtx._13;
-
+    const f32 x = gmtx._03;
+    const f32 y = gmtx._13;
     GXColor color = {255, 0, 0, 255}; // red
 
     if (mabPointed[0]) {
@@ -406,6 +402,10 @@ static bool is_visible(nw4hbm::lyt::Pane* pPane) {
 }
 
 bool PaneComponent::isVisible() {
+    // Matches retail cubeScale$8924: emitted as the last TU rodata item,
+    // after the shared line-draw constant pool {0.0f, color, 0.5f}.
+    static const f32 cubeScale = 1.0f;
+
     return is_visible(mpPane);
 }
 

@@ -85,7 +85,51 @@ void MPS_DecHd(void *handle, void *arg1, void *arg2, void *out1, void *out2) {
     fn(handle, arg1, arg2, out1, out2);
 }
 
-void MPSDEC_DecHdMpeg1() {}
+extern s32 mpsdec_DecOneHd(void* self, u8* buf, s32 size, s32* used, s32* flag);
+
+s32 MPSDEC_DecHdMpeg1(void* self, u8* buf, s32 size, s32* out_size, u32* out_flag) {
+    while (size >= 4) {
+        s32 flg;
+        s32 used;
+        s32 ret = mpsdec_DecOneHd(self, buf, size, &used, &flg);
+        *out_flag |= (u32)flg;
+        buf += used;
+        size -= used;
+        *out_size += used;
+        if (ret == 0)
+            break;
+    }
+    if ((*out_flag & 0x20000) != 0) {
+        s32 idx;
+        if (*(s32*)((u8*)self + 0x30) != 0) {
+            idx = 0;
+        } else {
+            idx = 2;
+            if (*(s32*)((u8*)self + 0x34) != 0)
+                idx = 1;
+        }
+        {
+            u8* dst = (u8*)self + (idx << 5);
+            s32 v1 = *(s32*)((u8*)self + 0x2C);
+            s32 v0 = *(s32*)((u8*)self + 0x28);
+            *(s32*)(dst + 0x48) = v0;
+            *(s32*)(dst + 0x4C) = v1;
+            v1 = *(s32*)((u8*)self + 0x34);
+            v0 = *(s32*)((u8*)self + 0x30);
+            *(s32*)(dst + 0x50) = v0;
+            *(s32*)(dst + 0x54) = v1;
+            v1 = *(s32*)((u8*)self + 0x3C);
+            v0 = *(s32*)((u8*)self + 0x38);
+            *(s32*)(dst + 0x58) = v0;
+            *(s32*)(dst + 0x5C) = v1;
+            v1 = *(s32*)((u8*)self + 0x44);
+            v0 = *(s32*)((u8*)self + 0x40);
+            *(s32*)(dst + 0x60) = v0;
+            *(s32*)(dst + 0x64) = v1;
+        }
+    }
+    return 0;
+}
 
 /*
  * MPS bit reader: `cur` holds the unread bits at the top of the register

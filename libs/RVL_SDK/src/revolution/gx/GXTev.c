@@ -76,33 +76,33 @@ void GXSetTevSwapMode(GXTevStageID stage, GXTevSwapSel rasSel, GXTevSwapSel texS
 
 void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel)
 {
-    u32 idx = (u32)stage;
-    u32 *ptr = &__GXData->tevKsel[idx >> 1];
-    u32 reg = *ptr;
+    u32 reg;
+    u32 *ptr = &__GXData->tevKsel[stage >> 1];
     if (stage & 1) {
-        reg = __rlwimi(reg, (u32)sel, 14, 13, 17);
+        reg = __rlwimi(*ptr, (u32)sel, 14, 13, 17);
+        *ptr = reg;
     } else {
-        reg = __rlwimi(reg, (u32)sel,  4, 23, 27);
+        reg = __rlwimi(*ptr, (u32)sel,  4, 23, 27);
+        *ptr = reg;
     }
-    *ptr = reg;
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = reg;
+    WGPIPE.i = *ptr;
     __GXData->lastWriteWasXF = 0;
 }
 
 void GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel)
 {
-    u32 idx = (u32)stage;
-    u32 *ptr = &__GXData->tevKsel[idx >> 1];
-    u32 reg = *ptr;
+    u32 reg;
+    u32 *ptr = &__GXData->tevKsel[stage >> 1];
     if (stage & 1) {
-        reg = __rlwimi(reg, (u32)sel, 19,  8, 12);
+        reg = __rlwimi(*ptr, (u32)sel, 19,  8, 12);
+        *ptr = reg;
     } else {
-        reg = __rlwimi(reg, (u32)sel,  9, 18, 22);
+        reg = __rlwimi(*ptr, (u32)sel,  9, 18, 22);
+        *ptr = reg;
     }
-    *ptr = reg;
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = reg;
+    WGPIPE.i = *ptr;
     __GXData->lastWriteWasXF = 0;
 }
 
@@ -238,25 +238,22 @@ void GXSetTevKColor(GXTevKColorID id, GXColor color)
 void GXSetTevSwapModeTable(GXTevSwapSel sel, GXTevColorChan r, GXTevColorChan g,
                            GXTevColorChan b, GXTevColorChan a)
 {
-    u32 *basePtr = &__GXData->tevKsel[0];
-    u32 base = (u32)sel * 2;
-    u32 reg;
+    u32 *Kreg;
+    int index = (int)sel * 2;
 
-    reg = basePtr[base + 0];
-    reg = __rlwimi(reg, (u32)r, 0, 30, 31);
-    reg = __rlwimi(reg, (u32)g, 2, 28, 29);
-    basePtr[base + 0] = reg;
+    Kreg = &__GXData->tevKsel[index];
+    *Kreg = __rlwimi(*Kreg, (u32)r, 0, 30, 31);
+    *Kreg = __rlwimi(*Kreg, (u32)g, 2, 28, 29);
 
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = reg;
+    WGPIPE.i = *Kreg;
 
-    reg = basePtr[base + 1];
-    reg = __rlwimi(reg, (u32)b, 0, 30, 31);
-    reg = __rlwimi(reg, (u32)a, 2, 28, 29);
-    basePtr[base + 1] = reg;
+    Kreg = &__GXData->tevKsel[(int)sel * 2 + 1];
+    *Kreg = __rlwimi(*Kreg, (u32)b, 0, 30, 31);
+    *Kreg = __rlwimi(*Kreg, (u32)a, 2, 28, 29);
 
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-    WGPIPE.i = reg;
+    WGPIPE.i = *Kreg;
 
     __GXData->lastWriteWasXF = 0;
 }

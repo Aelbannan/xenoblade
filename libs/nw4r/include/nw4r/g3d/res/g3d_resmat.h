@@ -620,6 +620,19 @@ public:
     }
 };
 
+struct ResMatFurData {
+    u32 size;   // at 0x0
+    u32 value;  // at 0x4
+    s32 type;   // at 0x8
+};
+
+class ResMatFur : public ResCommon<ResMatFurData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatFur);
+
+    f32 GetLyrRate(u32 layer) const;
+};
+
 } // namespace g3d
 } // namespace nw4r
 

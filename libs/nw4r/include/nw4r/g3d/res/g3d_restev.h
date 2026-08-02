@@ -82,7 +82,7 @@ public:
     void GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a, GXTevAlphaArg b,
                          GXTevAlphaArg c, GXTevAlphaArg d);
     void GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
-                         GXTevScale scale, GXTevRegID reg);
+                         GXTevScale scale, u8 clamp, GXTevRegID reg);
     void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
                          GXTevScale scale, GXBool clamp, GXTevRegID reg);
     void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel);

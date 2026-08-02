@@ -1595,7 +1595,30 @@ void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
 } // namespace g3d
 } // namespace nw4r
 
-void GetLyrRate__Q34nw4r3g3d9ResMatFurCFUl(){}
+namespace nw4r {
+namespace g3d {
+
+f32 ResMatFur::GetLyrRate(u32 layer) const {
+    if (IsValid()) {
+        u32 value = ref().value;
+
+        switch (ref().type) {
+        case 0:
+            return (f32)(layer + 1) / (f32)value;
+        case 1:
+            return (f32)pow((f32)(layer + 1) / (f32)value, 0.6);
+        default:
+            return 0.0f;
+        }
+    }
+
+    return 0.0f;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 bool GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_GXBlendFactorP10_GXLogicOp(const void* self, unsigned int* blendMode, unsigned int* srcFactor, unsigned int* dstFactor, unsigned int* logicOp) {
     const unsigned char* data = *reinterpret_cast<const unsigned char* const*>(self);
     if (data[0xA] == 0) {

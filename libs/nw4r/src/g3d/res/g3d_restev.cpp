@@ -353,7 +353,33 @@ void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
 } // namespace nw4r
 #pragma dont_inline reset
 
-void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID(){}
+namespace nw4r {
+namespace g3d {
+
+void ResTev::GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
+                             GXTevScale scale, u8 clamp, GXTevRegID reg) {
+    u8* pCmd = ref().dl.dl.var[stage / 2].dl.tevColorCalc[stage % 2];
+
+    if (op <= GX_TEV_SUB) {
+        detail::ResWriteBPCmd(pCmd,
+            (clamp << 19) | (bias << 16) | ((op & 1) << 18) | (reg << 22) |
+                (scale << 20) | ((GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
+    } else {
+        detail::ResWriteBPCmd(pCmd,
+            (clamp << 19) | 0x00030000 | ((op & 1) << 18) |
+                (((op >> 1) & 3) << 20) | (reg << 22) |
+                ((GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
+                    << GX_BP_OPCODE_SHIFT),
+            0xFFFF0000);
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 namespace nw4r {
 namespace g3d {
 

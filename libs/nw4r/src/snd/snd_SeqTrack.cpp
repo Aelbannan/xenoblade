@@ -86,8 +86,9 @@ void SeqTrack::InitParam() {
 }
 
 void SeqTrack::SetSeqData(const void* pBase, s32 offset) {
-    mParserTrackParam.baseAddr = static_cast<const u8*>(pBase);
-    mParserTrackParam.currentAddr = mParserTrackParam.baseAddr + offset;
+    const u8* base = static_cast<const u8*>(pBase);
+    *(const u8**)((u8*)this + 0x1C) = base;
+    *(const u8**)((u8*)this + 0x20) = base + offset;
 }
 
 void SeqTrack::Open() {

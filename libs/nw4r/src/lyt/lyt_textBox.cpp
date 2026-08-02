@@ -374,9 +374,13 @@ u32 TextBox::MakeDrawFlag() const {
     return flag;
 }
 
-void GetTextColor__Q34nw4r3lyt7TextBoxCFUl(){}
+ut::Color TextBox::GetTextColor(u32 idx) const {
+    return mTextColors[idx / TEXTCOLOR_MAX];
+}
 
-void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color(){}
+void TextBox::SetTextColor(u32 idx, ut::Color color) {
+    mTextColors[idx] = color;
+}
 
 } // namespace lyt
 } // namespace nw4r

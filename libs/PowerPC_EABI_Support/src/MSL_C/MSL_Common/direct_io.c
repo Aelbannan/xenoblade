@@ -11,15 +11,13 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/misc_io.h"
 
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void fread(){
 //}
 
-//unused
 //void __fread(){
 //}
 
-//unused
 //void fwrite(){
 //}
 

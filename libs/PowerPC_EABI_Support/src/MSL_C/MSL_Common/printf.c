@@ -1329,11 +1329,10 @@ static void* __StringWrite(void *pCtrl, const char *pBuffer, size_t char_num) {
     return (void*)1;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void printf(){
 //}
 
-//unused
 //void printf_s(){
 //}
 
@@ -1352,7 +1351,6 @@ static void* __StringWrite(void *pCtrl, const char *pBuffer, size_t char_num) {
 //    }
 //}
 
-//unused
 //void fprintf_s(){
 //}
 
@@ -1367,15 +1365,13 @@ int vprintf(const char *pFormat, va_list arg) {
     return ret;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void vprintf_s(){
 //}
 
-//unused
 //void vfprintf(){
 //}
 
-//unused
 //void vfprintf_s(){
 //}
 
@@ -1402,7 +1398,7 @@ int vsnprintf(char *s, size_t n, const char *format, va_list arg) {
     return end;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void vsnprintf_s(){
 //}
 
@@ -1410,7 +1406,7 @@ int vsprintf(char *s, const char *format, va_list arg) {
     return vsnprintf(s, 0xFFFFFFFF, format, arg);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void vsprintf_s(){
 //}
 
@@ -1420,7 +1416,7 @@ int snprintf(char *s, size_t n, const char *format, ...) {
     return vsnprintf(s, n, format, args);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void snprintf_s(){
 //}
 
@@ -1430,6 +1426,6 @@ int sprintf(char *s, const char *format, ...) {
     return vsnprintf(s, 0xFFFFFFFF, format, args);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void sprintf_s(){
 //}

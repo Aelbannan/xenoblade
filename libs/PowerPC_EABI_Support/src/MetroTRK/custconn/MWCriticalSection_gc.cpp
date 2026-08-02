@@ -13,7 +13,7 @@ void MWExitCriticalSection(unsigned int* section) {
     OSRestoreInterrupts(*section);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void MWTerminateCriticalSection(unsigned int* section){
 //}
 

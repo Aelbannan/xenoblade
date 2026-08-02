@@ -1,6 +1,6 @@
 #include <math.h>
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void log2(){
 //}
 
@@ -8,6 +8,6 @@ double nan(const char* arg) {
     (void)arg;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void scalbln(){
 //}

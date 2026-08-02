@@ -111,11 +111,10 @@ FILE __files[_STATIC_FILES] = {
     },
 };
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __find_unopened_file(){
 //}
 
-//unused
 //void __init_file(){
 //}
 
@@ -140,7 +139,7 @@ void __close_all(){
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __flush_line_buffered_output_files(){
 //}
 

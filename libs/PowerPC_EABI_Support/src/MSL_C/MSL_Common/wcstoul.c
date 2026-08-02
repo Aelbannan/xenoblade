@@ -154,15 +154,13 @@ unsigned long __wcstoul(int base, int max_width, wint_t (*wReadProc)(void*, wint
     return value;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __wcstoull(){
 //}
 
-//unused
 //void wcstoul(){
 //}
 
-//unused
 //void wcstoull(){
 //}
 
@@ -190,14 +188,12 @@ long wcstol(const wchar_t* str, wchar_t** end, int base)
     return svalue;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcstoll(){
 //}
 
-//unused
 //void watoi(){
 //}
 
-//unused
 //void watol(){
 //}

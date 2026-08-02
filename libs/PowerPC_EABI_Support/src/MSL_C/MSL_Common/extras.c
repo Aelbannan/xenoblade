@@ -1,11 +1,6 @@
 #include <types.h>
 #include <ctype.h>
 
-//unused
-//unused
-//unused
-//unused
-//unused
 int stricmp(const char* s1, const char* s2) {
     char c1, c2;
     do {
@@ -17,43 +12,3 @@ int stricmp(const char* s1, const char* s2) {
     return 0;
 }
 
-
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused
-//unused

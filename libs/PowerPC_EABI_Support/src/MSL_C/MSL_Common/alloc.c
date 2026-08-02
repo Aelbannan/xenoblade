@@ -120,7 +120,7 @@ static const unsigned long fix_pool_sizes[] = {4, 12, 20, 36, 52, 68};
     (_sb = (SubBlock*)((Block*)(ths) + 1)),                    \
     SubBlock_is_free(_sb) && SubBlock_size(_sb) == Block_size((ths)) - 24
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void Block_subBlock(){
 //}
 
@@ -227,11 +227,10 @@ static Block* __unlink(__mem_pool_obj* pool_obj, Block* bp) {
     return result;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void allocate_from_var_pools(){
 //}
 
-//unused
 //void soft_allocate_from_var_pools(){
 //}
 
@@ -248,7 +247,7 @@ static void deallocate_from_var_pools(__mem_pool_obj* pool_obj, void *ptr) {
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void FixBlock_construct(){
 //}
 
@@ -268,7 +267,7 @@ static __mem_pool* get_malloc_pool(void) {
     return &protopool;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void allocate_from_fixed_pools(){
 //}
 
@@ -329,31 +328,25 @@ void deallocate_from_fixed_pools(__mem_pool_obj* pool_obj, void* ptr, unsigned l
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __pool_allocate_resize(){
 //}
 
-//unused
 //void __msize(){
 //}
 
-//unused
 //void __pool_alloc(){
 //}
 
-//unused
 //void __allocate_size(){
 //}
 
-//unused
 //void __allocate(){
 //}
 
-//unused
 //void __allocate_resize(){
 //}
 
-//unused
 //void __allocate_expand(){
 //}
 
@@ -376,15 +369,13 @@ static inline void __pool_free(__mem_pool *pool, void *ptr) {
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __pool_realloc(){
 //}
 
-//unused
 //void __pool_alloc_clear(){
 //}
 
-//unused
 //void malloc(){
 //}
 
@@ -393,18 +384,15 @@ void free(void *ptr) {
 }
 
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void realloc(){
 //}
 
-//unused
 //void calloc(){
 //}
 
-//unused
 //void __pool_free_all(){
 //}
 
-//unused
 //void __malloc_free_all(){
 //}

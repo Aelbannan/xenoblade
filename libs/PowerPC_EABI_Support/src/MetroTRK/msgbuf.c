@@ -146,7 +146,7 @@ DSError TRK_ReadBuffer(MessageBuffer* buf, void* data, size_t length){
     return error;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKAppendBuffer1_ui16(MessageBuffer* buffer, const ui16 data){
 }
 
@@ -197,7 +197,7 @@ DSError TRKAppendBuffer1_ui64(MessageBuffer* buffer, const ui64 data) {
     return TRK_AppendBuffer(buffer, (const void*)bigEndianData, sizeof(data));
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKAppendBuffer1_ui128(MessageBuffer* buffer, const ui128 data){
 }
 
@@ -212,7 +212,7 @@ DSError TRKAppendBuffer_ui8(MessageBuffer *buffer, const ui8* data, int count) {
     return err;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKAppendBuffer_ui16(MessageBuffer* buffer, const ui16* data, int count){
 }
 
@@ -227,11 +227,11 @@ DSError TRKAppendBuffer_ui32(MessageBuffer *buffer, const ui32* data, int count)
     return err;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKAppendBuffer_ui64(MessageBuffer* buffer, const ui64* data, int count) {
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKAppendBuffer_ui128(MessageBuffer* buffer, const ui128* data, int count){
 }
 
@@ -239,7 +239,7 @@ DSError TRKReadBuffer1_ui8(MessageBuffer *buffer, ui8 *data) {
     return TRK_ReadBuffer(buffer, (void*)data, 1);
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKReadBuffer1_ui16(MessageBuffer* buffer, ui16* data){
 }
 
@@ -303,7 +303,7 @@ DSError TRKReadBuffer1_ui64(MessageBuffer *buffer, ui64* data) {
     return err;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKReadBuffer1_ui128(MessageBuffer* buffer, ui128 data){
 }
 
@@ -318,7 +318,7 @@ DSError TRKReadBuffer_ui8(MessageBuffer *buffer, ui8* data, int count) {
     return err;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKReadBuffer_ui16(MessageBuffer* buffer, ui16* data, int count){
 }
 
@@ -333,10 +333,10 @@ DSError TRKReadBuffer_ui32(MessageBuffer *buffer, ui32* data, int count) {
     return err;
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKReadBuffer_ui64(MessageBuffer* buffer, ui64* data, int count){
 }
 
-//unused
+// not referenced by the game; retained for binary matching
 DSError TRKReadBuffer_ui128(MessageBuffer* buffer, ui128* data, int count){
 }

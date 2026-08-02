@@ -82,40 +82,6 @@ void __TRK_set_MSR(ui32 val) {
 }
 #pragma dont_inline reset
 
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
-//unused
-
 DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions readWriteable){
     DSError err = kInvalidMemory;
     const ui8* start;
@@ -229,8 +195,6 @@ DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAcc
      gTRKExceptionStatus = tempExceptionStatus;
     return error;
 }
-
-//unused
 
 DSError TRKTargetAccessDefault(ui32 firstRegister, ui32 lastRegister, MessageBuffer* b, size_t* registersLengthPtr, bool read){
     DSError error;
@@ -400,10 +364,6 @@ DSError TRKTargetAccessExtended2(ui32 firstRegister, ui32 lastRegister, MessageB
 
     return error;
 }
-
-//unused
-
-//unused
 
 asm void TRK_InterruptHandler(ui16 exceptionNumber){
     nofralloc
@@ -982,8 +942,6 @@ DSError TRKTargetSupportRequest(){
     return error;
 }
 
-//unused
-
 bool TRKTargetStopped(){
     return gTRKState.stopped;
 }
@@ -1137,10 +1095,6 @@ void TRKTargetSetInputPendingPtr(void* ptr){
     gTRKState.inputPendingPtr = ptr;
 }
 #endif
-
-//unused
-
-//unused
 
 ui32 ConvertAddress(ui32 addr) {
     return addr | 0x80000000;

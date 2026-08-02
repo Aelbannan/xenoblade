@@ -6,14 +6,14 @@
 
 extern void PPCHalt(void);
 
-static ui32 gReadCount; //unused
-static ui32 gReadPos; //unused
-static ui32 gWritePos; //unused
+static ui32 gReadCount; // not referenced by the game; retained for binary matching
+static ui32 gReadPos; // not referenced by the game; retained for binary matching
+static ui32 gWritePos; // not referenced by the game; retained for binary matching
 static ui8 TRK_Use_BBA;
 static DBCommTable gDBCommTable;
-static ui8 gReadBuf[0x110a]; //unused
-static ui8 gWriteBuf[0x110a]; //unused
-//_MetroTRK_Has_Framing //unused
+static ui8 gReadBuf[0x110a]; // not referenced by the game; retained for binary matching
+static ui8 gWriteBuf[0x110a]; // not referenced by the game; retained for binary matching
+//_MetroTRK_Has_Framing
 
 
 asm void TRKLoadContext(OSContext* ctx, ui32 r4) {
@@ -122,11 +122,10 @@ UARTError TRK_WriteUARTN(const void* bytes, ui32 length){
     return ((-r3 | r3) >> 31);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void WriteUARTFlush(){
 //}
 
-//unused
 //void WriteUART1(){
 //}
 

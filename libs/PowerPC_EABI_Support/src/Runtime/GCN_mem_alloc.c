@@ -21,7 +21,7 @@ static inline void InitDefaultHeap(){
     OSSetArenaLo(arenaLo = arenaHi);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __sys_alloc(){
 //}
 

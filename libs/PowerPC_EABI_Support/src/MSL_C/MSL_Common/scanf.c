@@ -740,7 +740,7 @@ exit:
     return items_assigned;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __FileRead(){
 //}
 
@@ -783,27 +783,22 @@ int __StringRead(void *pPtr, int ch, int act) {
 //void fscanf(){
 //}
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void fscanf_s(){
 //}
 
-//unused
 //void vscanf(){
 //}
 
-//unused
 //void scanf(){
 //}
 
-//unused
 //void scanf_s(){
 //}
 
-//unused
 //void vfscanf(){
 //}
 
-//unused
 //void vfscanf_s(){
 //}
 
@@ -829,7 +824,7 @@ static inline int vsscanf(const char *s, const char *format, va_list arg) {
     return __sformatter(&__StringRead, (void*)&isc, format, arg, 0);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void vsscanf_s(){
 //}
 
@@ -840,6 +835,6 @@ int sscanf(const char *s, const char *pFormat, ...) {
     return vsscanf(s, pFormat, args);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void sscanf_s(){
 //}

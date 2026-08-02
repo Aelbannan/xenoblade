@@ -547,7 +547,7 @@ static inline int ExPPC_IsInSpecification(char* extype, ex_specification* spec){
     return 0;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //extern void __unexpected(CatchInfo* catchinfo){
 //    ex_specification* unexp = (ex_specification*)catchinfo->stacktop;
 //
@@ -918,7 +918,7 @@ asm void __throw(char* throwtype, void* location, void* dtor){
     blr
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __end__catch(CatchInfo* catchinfo){
 //    if (catchinfo->location && catchinfo->dtor){
 //        DTORCALL_COMPLETE(catchinfo->dtor,catchinfo->location);

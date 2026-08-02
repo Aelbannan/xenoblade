@@ -18,7 +18,7 @@ bool GetTRKConnected(){
     return IsTRKConnected;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void SetTRKConnected(bool value){
 //    IsTRKConnected = value;
 //}
@@ -42,12 +42,11 @@ static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandI
     return kNoError;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //DSError TRKDoError(MessageBuffer* b){
 //    return kNoError;
 //}
 
-//unused
 //DSError TRKDoUnsupported(MessageBuffer* b){
 //    TRKStandardACK(b,0x80,kDSReplyUnsupportedCommandError);
 //    return kNoError;

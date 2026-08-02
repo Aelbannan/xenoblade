@@ -1,11 +1,10 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/buffer_io.h"
 #include <stdio.h>
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __convert_from_newlines(){
 //}
 //
-//unused
 //void __convert_to_newlines(){
 //}
 
@@ -21,7 +20,7 @@ void __prep_buffer(FILE *file)
 }
 
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __load_buffer(){
 //}
 
@@ -50,10 +49,9 @@ int __flush_buffer(FILE* file, size_t* length)
     return 0;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void setvbuf(){
 //}
 //
-//unused
 //void setbuf(){
 //}

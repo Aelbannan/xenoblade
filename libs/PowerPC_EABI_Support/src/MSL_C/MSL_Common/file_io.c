@@ -3,27 +3,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void remove(){
 //}
 
-//unused
 //void rename(){
 //}
 
-//unused
 //void tmpnam(){
 //}
 
-//unused
 //void tmpnam_s(){
 //}
 
-//unused
 //void tmpfile(){
 //}
 
-//unused
 //void tmpfile_s(){
 //}
 
@@ -95,58 +90,45 @@ int fflush(FILE* file)
     return 0;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void fopen(){
 //}
 
-//unused
 //void fopen_s(){
 //}
 
-//unused
 //void freopen(){
 //}
 
-//unused
 //void freopen_s(){
 //}
 
-//unused
 //void __reopen(){
 //}
 
-//unused
 //void __handle_open(){
 //}
 
-//unused
 //void __handle_reopen(){
 //}
 
-//unused
 //void __get_file_modes(){
 //}
 
-//unused
 //void __set_ref_con(){
 //}
 
-//unused
 //void __set_idle_proc(){
 //}
 
-//unused
 //void __msl_strnicmp(){
 //}
 
-//unused
 //void __msl_strrev(){
 //}
 
-//unused
 //void __msl_itoa(){
 //}
 
-//unused
 //void __msl_strdup(){
 //}

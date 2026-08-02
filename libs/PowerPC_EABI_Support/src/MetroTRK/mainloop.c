@@ -4,15 +4,13 @@
 #include "PowerPC_EABI_Support/MetroTRK/mainloop.h"
 #include "PowerPC_EABI_Support/MetroTRK/serpoll.h"
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void TRK_HandleRequestEvent(void){
 //}
 
-//unused
 //void TRKHandleSupportEvent(void){
 //}
 
-//unused
 //void TRK_Idle(void){
 //}
 

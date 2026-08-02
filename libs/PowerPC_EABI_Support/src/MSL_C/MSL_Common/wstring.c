@@ -9,7 +9,7 @@ size_t wcslen(const wchar_t *str) {
     return len;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcsnlen_s(){
 //}
 
@@ -20,7 +20,7 @@ wchar_t* wcscpy(wchar_t *dest, const wchar_t *src) {
     return dest;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcscpy_s(){
 //}
 
@@ -44,23 +44,19 @@ wchar_t* wcsncpy(wchar_t *dest, const wchar_t *src, size_t num) {
     return dest;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcsncpy_s(){
 //}
 
-//unused
 //wchar_t* wcscat(wchar_t*, const wchar_t*){
 //}
 
-//unused
 //void wcscat_s(){
 //}
 
-//unused
 //void wcsncat(){
 //}
 
-//unused
 //void wcsncat_s(){
 //}
 
@@ -75,7 +71,7 @@ int wcscmp(const wchar_t *str1, const wchar_t *str2) {
     return (int)c1 - (int)c2;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcsncmp(){
 //}
 
@@ -90,34 +86,27 @@ wchar_t* wcschr(const wchar_t *s, wchar_t c) {
     return c ? NULL : (wchar_t*)p;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcscoll(){
 //}
 
-//unused
 //void wcsxfrm(){
 //}
 
-//unused
 //void wcsrchr(){
 //}
 
-//unused
 //void wcspbrk(){
 //}
 
-//unused
 //void wcsspn(){
 //}
 
-//unused
 //void wcscspn(){
 //}
 
-//unused
 //void wcstok(){
 //}
 
-//unused
 //void wcsstr(){
 //}

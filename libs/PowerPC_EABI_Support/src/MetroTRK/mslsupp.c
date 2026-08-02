@@ -22,19 +22,16 @@ DSIOResult __write_file(__file_handle handle, ui8* buffer, size_t* count, __ref_
     return __access_file(handle, buffer, count, ref_con, kDSWriteFile);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //DSIOResult __open_file(){
 //}
 
-//unused
 //DSIOResult __close_file(){
 //}
 
-//unused
 //int __position_file(){
 //}
 
-//unused
 //int convertFileMode(){
 //}
 
@@ -58,6 +55,6 @@ DSIOResult __access_file(__file_handle handle, ui8* buffer, size_t* count, __ref
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //int __open_temp_file(){
 //}

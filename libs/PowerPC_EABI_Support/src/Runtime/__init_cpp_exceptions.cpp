@@ -15,7 +15,7 @@ static inline void __exception_info_constants(void** info, char** R2) {
     *info = (void*)_eti_init_info;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //extern void __find_exception_addresses(void* param1, char* param2, void** param3, void** param4){
 //}
 

@@ -8,18 +8,15 @@ void __msl_runtime_constraint_violation_s(int param1, int param2, int param3) {
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void set_constraint_handler_s(){
 //}
 
-//unused
 //void abort_handler_s(){
 //}
 
-//unused
 //void ignore_handler_s(){
 //}
 
-//unused
 //void strict_handler_s(){
 //}

@@ -9,7 +9,7 @@ int rand()
     return ((random_next >> 16) & 0x7fff);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void srand(u32 seed)
 //{
 //    random_next = seed;

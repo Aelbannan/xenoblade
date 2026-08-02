@@ -1321,7 +1321,7 @@ static int __wpformatter(void *(*WriteProc)(void *, const wchar_t *, size_t), vo
     return chars_written;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __wFileWrite(){
 //}
 
@@ -1335,50 +1335,40 @@ void* __wStringWrite(void *wosc, const wchar_t * buffer, size_t numchars) {
     return res;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wprintf(){
 //}
 
-//unused
 //void wprintf_s(){
 //}
 
-//unused
 //void fwprintf(){
 //}
 
-//unused
 //void fwprintf_s(){
 //}
 
-//unused
 //void vwprintf(){
 //}
 
-//unused
 //void vwprintf_s(){
 //}
 
-//unused
 //void vfwprintf(){
 //}
 
-//unused
 //void vfwprintf_s(){
 //}
 
-//unused
 //int swprintf(wchar_t *s, size_t n, const wchar_t *format, ...) {
 //    va_list args;
 //    va_start(args, format);
 //    return vswprintf(s, n, format, args);
 //}
 
-//unused
 //void swprintf_s(){
 //}
 
-//unused
 //void snwprintf_s(){
 //}
 
@@ -1404,10 +1394,9 @@ int vswprintf(wchar_t *s, size_t n, const wchar_t *format, va_list arg) {
     return count;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void vswprintf_s(){
 //}
 
-//unused
 //void vsnwprintf_s(){
 //}

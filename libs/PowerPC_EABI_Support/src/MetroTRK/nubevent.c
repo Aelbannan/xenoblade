@@ -22,7 +22,7 @@ DSError TRKInitializeEventQueue() {
     return kNoError;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void TRKCopyEvent(void)
 //{
 //}

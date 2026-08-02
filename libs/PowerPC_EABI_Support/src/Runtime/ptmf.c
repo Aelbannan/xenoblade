@@ -53,12 +53,11 @@ asm long __ptmf_cmpr(PTMF *ptmf1, PTMF *ptmf2)
     blr
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __ptmf_call(void)
 //{
 //}
 
-//unused
 //void __ptmf_call4(void)
 //{
 //}
@@ -79,12 +78,11 @@ loc_0x20:
 	bctr
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __ptmf_scall4(void)
 //{
 //}
 
-//unused
 //void __ptmf_cast(void)
 //{
 //}

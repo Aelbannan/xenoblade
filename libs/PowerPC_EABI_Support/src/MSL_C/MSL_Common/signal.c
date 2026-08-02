@@ -2,7 +2,7 @@
 
 sig_func signal_funcs[7];
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void signal(){
 //}
 

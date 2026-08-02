@@ -657,7 +657,7 @@ long double __strtold(int max_width, int (*ReadProc)(void *, int, int), void* Re
     }
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void strtold(){
 //}
 
@@ -677,10 +677,9 @@ double strtod(const char* str, char** end)
     return value;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //float strtof(){
 //}
 
-//unused
 //void atof(){
 //}

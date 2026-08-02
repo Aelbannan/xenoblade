@@ -9,14 +9,12 @@ void abort(void) {
     exit(1);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void atexit(){
 //}
 
-//unused
 //void __atexit(){
 //}
 
-//unused
 //void __exit(){
 //}

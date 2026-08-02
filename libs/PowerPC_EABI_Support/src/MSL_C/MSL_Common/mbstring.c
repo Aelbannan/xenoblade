@@ -2,15 +2,13 @@
 #include <locale.h>
 #include <string.h>
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void mblen(){
 //}
 
-//unused
 //void is_utf8_complete(){
 //}
 
-//unused
 //void __utf8_to_unicode(){
 //}
 
@@ -18,11 +16,10 @@ int mbtowc(wchar_t *dest, const char *s, size_t num) {
     return _current_locale.ctype_cmpt_ptr->decode_mb(dest, s, num);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __unicode_to_UTF8(){
 //}
 
-//unused
 //void __unicode_to_UTF8_s(){
 //}
 
@@ -59,7 +56,7 @@ static inline int wctomb(char *src, wchar_t wchar) {
     return _current_locale.ctype_cmpt_ptr->encode_wc(src, wchar);
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wctomb_s(){
 //}
 
@@ -99,7 +96,7 @@ size_t mbstowcs(wchar_t *dest, const char *src, size_t num) {
     return count;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void mbstowcs_s(){
 //}
 
@@ -136,42 +133,33 @@ size_t wcstombs(char *src, const wchar_t *pwcs, size_t n) {
     return chars_written;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void wcstombs_s(){
 //}
 
-//unused
 //void mbrlen(){
 //}
 
-//unused
 //void mbrtowc(){
 //}
 
-//unused
 //void wcrtomb(){
 //}
 
-//unused
 //void wcrtomb_s(){
 //}
 
-//unused
 //void mbsrtowcs(){
 //}
 
-//unused
 //void mbsrtowcs_s(){
 //}
 
-//unused
 //void wcsrtombs(){
 //}
 
-//unused
 //void wcsrtombs_s(){
 //}
 
-//unused
 //void mbsinit(){
 //}

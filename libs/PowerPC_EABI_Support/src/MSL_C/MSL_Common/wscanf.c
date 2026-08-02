@@ -1,15 +1,13 @@
 #include <stdio.h>
 
 
-//unused
 static void parse_format(){
 }
 
-//unused
 static void __wsformatter(){
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __wFileRead(){
 //}
 
@@ -41,50 +39,39 @@ wint_t __wStringRead(void* isc, wint_t ch, int Action){
     return 0;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void fwscanf(){
 //}
 
-//unused
 //void fwscanf_s(){
 //}
 
-//unused
 //void wscanf(){
 //}
 
-//unused
 //void wscanf_s(){
 //}
 
-//unused
 //void vwscanf(){
 //}
 
-//unused
 //void vwscanf_s(){
 //}
 
-//unused
 //void vfwscanf(){
 //}
 
-//unused
 //void vfwscanf_s(){
 //}
 
-//unused
 //void vswscanf(){
 //}
 
-//unused
 //void vswscanf_s(){
 //}
 
-//unused
 //void swscanf(){
 //}
 
-//unused
 //void swscanf_s(){
 //}

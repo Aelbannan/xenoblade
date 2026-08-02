@@ -321,7 +321,7 @@ unsigned long strtoul(const char *str, char **end, int base) {
     return value;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void strtoull(){
 //}
 
@@ -351,7 +351,7 @@ static inline long strtol(const char *str, char **end, int base) {
     return svalue;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void strtoll(){
 //}
 
@@ -359,10 +359,9 @@ int atoi(const char *str) {
     return (strtol(str, 0, 10));
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void atol(){
 //}
 
-//unused
 //void atoll(){
 //}

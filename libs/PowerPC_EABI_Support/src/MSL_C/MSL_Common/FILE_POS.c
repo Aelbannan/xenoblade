@@ -49,7 +49,7 @@ int ftell(FILE* stream)
     return retval;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void fgetpos(){
 //}
 
@@ -110,7 +110,7 @@ int _fseek(FILE* file, u32 offset, int whence)
     return 0;
 }
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //int fseek(FILE* stream, u32 offset, int whence)
 //{
 //    int code;
@@ -118,10 +118,8 @@ int _fseek(FILE* file, u32 offset, int whence)
 //    return code;
 //}
 
-//unused
 //void fsetpos(){
 //}
 
-//unused
 //void rewind(){
 //}

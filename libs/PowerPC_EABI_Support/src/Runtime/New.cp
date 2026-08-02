@@ -9,21 +9,19 @@ static void dummy(){
 }
 
 /*
-//unused
+// operator new/delete overrides not present in the retail binary; kept
+// commented out for reference
 DECL_WEAK void* operator new(size_t count){
     return 0;
 }
 
-//unused
 DECL_WEAK void operator delete(void* p) throw() {
 }
 
-//unused
 DECL_WEAK void* operator new[](size_t count){
     return 0;
 }
 
-//unused
 DECL_WEAK void operator delete[](void* p) throw() {
 }
 */

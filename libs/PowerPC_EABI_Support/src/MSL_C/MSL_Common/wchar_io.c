@@ -4,55 +4,43 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h"
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void putwc(){
 //}
 
-//unused
 //void putwchar(){
 //}
 
-//unused
 //void fputwc(){
 //}
 
-//unused
 //void getwc(){
 //}
 
-//unused
 //void __getwc(){
 //}
 
-//unused
 //void __getwchar(){
 //}
 
-//unused
 //void fgetwc(){
 //}
 
-//unused
 //void __fgetwc(){
 //}
 
-//unused
 //void ungetwc(){
 //}
 
-//unused
 //void __ungetwc(){
 //}
 
-//unused
 //void fputws(){
 //}
 
-//unused
 //void fgetws(){
 //}
 
-//unused
 //void __fwide(){
 //}
 

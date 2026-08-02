@@ -1,19 +1,16 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/misc_io.h"
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/ansi_files.h"
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void clearerr(){
 //}
 
-//unused
 //void feof(){
 //}
 
-//unused
 //void ferror(){
 //}
 
-//unused
 //void perror(){
 //}
 

@@ -1,19 +1,16 @@
 #include <types.h>
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h"
 
-//unused
+// not present in the retail binary; kept commented out for reference
 //void __msl_generic_count_bits32(){
 //}
 
-//unused
 //void __msl_generic_count_bits64(){
 //}
 
-//unused
 //void __msl_relation(){
 //}
 
-//unused
 //int __signbitf(float x){
 //}
 

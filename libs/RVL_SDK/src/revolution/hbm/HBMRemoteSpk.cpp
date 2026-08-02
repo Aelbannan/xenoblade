@@ -27,24 +27,22 @@ void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) 
             BOOL intrStatus = OSDisableInterrupts();
 
             if (WPADCanSendStreamData(i)) {
-                u32 samples = (u32)pInfo->length >> 1;
-                s16* pDst = pcmBuffer;
                 u32 encSize = 40;
                 const s16* pSrc = pInfo->in_pcm;
+                s16* pDst = pcmBuffer;
+                int vol = pInfo->vol;
+                u32 samples = (u32)pInfo->length >> 1;
 
                 if (samples <= 40) {
                     encSize = samples;
                 }
 
-                if (encSize != 0) {
-                    int volInt = pInfo->vol;
-                    for (u32 j = encSize; j > 0; j--) {
-                        *pDst++ = static_cast<s16>(*pSrc++ * volInt / 10);
-                    }
+                for (int j = 0; j < encSize; j++) {
+                    *pDst++ = static_cast<s16>(*pSrc++ * vol / 10);
                 }
 
                 if (samples <= 40) {
-                    for (u32 j = 40 - samples; j > 0; j--) {
+                    for (int j = 0; j < 40 - samples; j++) {
                         *pDst++ = 0;
                     }
                 }

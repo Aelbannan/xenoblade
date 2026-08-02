@@ -174,7 +174,7 @@ void __copy_longs_unaligned(void* dst, const void* src, unsigned long n)
 void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 {
     unsigned long i, v1, v2;
-    unsigned int src_offset, left_shift, right_shift;
+    unsigned int right_shift, src_offset, left_shift;
 
     cps = ((unsigned char*) src) + n;
     cpd = ((unsigned char*) dst) + n;

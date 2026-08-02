@@ -1710,11 +1710,13 @@ void btm_sec_link_key_request(BD_ADDR p_bda)
 /* ------------------------------------------------------------------ */
 void btm_sec_pin_code_request_timeout(void *p_tle)
 {
+    BtmCb *p_cb = &btm_cb;
+
     BTM_TRACE_EVENT0("btm_sec_pin_code_request_timeout()");
 
-    btm_cb.sec_pin_code_req_tle.param = 0;
+    p_cb->sec_pin_code_req_tle.param = 0;
     memset(btm_cb.sec_pin_code_req_bd_addr, 0xff, BD_ADDR_LEN);
-    btsnd_hcic_pin_code_neg_reply(btm_cb.connecting_bda);
+    btsnd_hcic_pin_code_neg_reply(p_cb->connecting_bda);
 }
 
 /* ------------------------------------------------------------------ */

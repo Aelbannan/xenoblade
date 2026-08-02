@@ -366,24 +366,23 @@ static BOOL __InitParams(AXFX_CHORUS_EXP* fx) {
 
 static void __CalcLFO(s32* dst, AXFX_CHORUS_EXP_LFO* lfo) {
     u32 i;
-    u32 currNum;
-    u32 idx;
+    u32 phase;
     s64 value;
     s64 delta;
     s32 curr;
     s32 next;
 
     for (i = 0; i < 0x60; i++) {
-        currNum = lfo->phase & ~0xFFFFu;
+        phase = lfo->phase & ~0xFFFFu;
 
-        if (currNum != lfo->lastNum) {
-            lfo->lastNum = currNum;
-            idx = currNum >> 16;
-            curr = lfo->table[idx];
-            next = lfo->table[(idx + 1) & 0x7F];
-            delta = (s64)next - (s64)curr;
+        if (phase != lfo->lastNum) {
+            lfo->lastNum = phase;
+            phase >>= 16;
+            curr = lfo->table[phase];
+            next = lfo->table[(phase + 1) & 0x7F];
+            delta = (s64)(next - curr);
+            lfo->grad = (s32)((s64)((u64)delta * (u64)lfo->gradFactor) >> 24);
             value = ((s64)curr * lfo->depthSamp) >> 24;
-            lfo->grad = (s32)((delta * (s64)lfo->gradFactor) >> 24);
         } else {
             value = (s64)(lfo->lastValue + lfo->grad);
         }

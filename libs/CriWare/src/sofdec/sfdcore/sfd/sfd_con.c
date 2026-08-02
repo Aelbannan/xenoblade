@@ -64,11 +64,11 @@ void SFCON_UpdateConcatTime(void* h, s32 delta) {
     SFLIB_LockCs(&cs);
     s32 idx = ctx->idx;
     s32 time = ctx->time;
+    idx++;
     s32 new_time = time + delta;
     ctx->time = new_time;
-    s32 new_idx = idx + 1;
-    ctx->timeQueue[new_idx % 32] = new_time;
-    ctx->idx = new_idx;
+    ctx->timeQueue[idx % 32] = new_time;
+    ctx->idx = idx;
     SFLIB_UnlockCs(&cs);
 }
 

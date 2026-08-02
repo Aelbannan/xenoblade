@@ -48,33 +48,33 @@ static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandI
 //}
 
 //DSError TRKDoUnsupported(MessageBuffer* b){
-//    TRKStandardACK(b,0x80,kDSReplyUnsupportedCommandError);
+//    TRKStandardACK(b,kDSReplyACK,kDSReplyUnsupportedCommandError);
 //    return kNoError;
 //}
 
 DSError TRK_DoConnect(MessageBuffer* b) {
     IsTRKConnected = true;
-    return TRKStandardACK(b, 0x80, kDSReplyNoError);
+    return TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
 }
 
 DSError TRKDoDisconnect(MessageBuffer* b) {
     NubEvent event;
 
     IsTRKConnected = false;
-    TRKStandardACK(b, 0x80, kDSReplyNoError);
+    TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
     TRKConstructEvent(&event, 1);
     TRKPostEvent(&event);
     return kNoError;
 }
 
 DSError TRKDoReset(MessageBuffer* b) {
-    TRKStandardACK(b, 0x80, kDSReplyNoError);
+    TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
     __TRKreset();
     return kNoError;
 }
 
 DSError TRKDoOverride(MessageBuffer* b) {
-    TRKStandardACK(b, 0x80, kDSReplyNoError);
+    TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
     __TRK_copy_vectors();
     return kNoError;
 }

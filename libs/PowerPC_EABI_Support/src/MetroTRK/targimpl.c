@@ -10,6 +10,11 @@ void TRKUARTInterruptHandler();
 #include <revolution/os/OSThread.h>
 #include <revolution/os/OSHardware.h>
 
+#define HID2_LCACHE_ENABLE      0xA0000000 // HID2 bits enabling the locked cache
+#define STOP_NOTIFY_LENGTH      0x4E8      // total size of the notify-stopped reply
+#define MEM_DUMP_CHUNK          1024       // memory dump chunk read at the faulting PC
+#define MEM_PAGE_MASK           0xFFFFFC00 // 1 KiB page alignment mask
+#define MEM1_BASE_ADDR          0x80000000 // base of physical MEM1 in the CPU map
 typedef struct ExceptionStatus{
     StopInfo_PPC exceptionInfo;
     ui8 inTRK;
@@ -335,7 +340,7 @@ DSError TRKTargetAccessExtended2(ui32 firstRegister, ui32 lastRegister, MessageB
 
     
     TRKPPCAccessSPR(&temp2, SPR_HID2, true);
-    temp2 |= 0xA0000000;
+    temp2 |= HID2_LCACHE_ENABLE;
     TRKPPCAccessSPR(&temp2, SPR_HID2, false);
     temp2 = 0;
     TRKPPCAccessSPR(&temp2, SPR_GQR0, false);
@@ -700,11 +705,11 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     int local_45c;
     int auStack_460;
     size_t length;
-    char writeData[1024];
+    char writeData[MEM_DUMP_CHUNK];
     msgbuf_t reply;
     
     TRK_memset(&reply,0,TRK_MSG_HEADER_LENGTH);
-    reply.msgLength = 0x4e8;
+    reply.msgLength = STOP_NOTIFY_LENGTH;
     reply.commandId = kDSNotifyStopped;
     reply.replyErrorInt = gTRKCPUState.Default.PC;
     GetThreadInfo(&local_45c,&auStack_460);
@@ -751,7 +756,7 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
 
     if (error == kNoError) {
         length = sizeof(writeData);
-        error = TRKTargetAccessMemory((void*)writeData, (void*)(gTRKCPUState.Default.PC & 0xfffffc00),&length,kUserMemory,true);
+        error = TRKTargetAccessMemory((void*)writeData, (void*)(gTRKCPUState.Default.PC & MEM_PAGE_MASK),&length,kUserMemory,true);
         TRK_AppendBuffer(b,writeData,sizeof(writeData));
     }
 
@@ -1097,7 +1102,7 @@ void TRKTargetSetInputPendingPtr(void* ptr){
 #endif
 
 ui32 ConvertAddress(ui32 addr) {
-    return addr | 0x80000000;
+    return addr | MEM1_BASE_ADDR;
 }
 
 #define ACTIVE_THREAD_QUEUE (BOOTINFO + ROOT_THREAD_ADDR)       // 8 bytes

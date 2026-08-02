@@ -8,6 +8,10 @@
 //size; replies put the file handle at fData+0x8, the I/O result at
 //fData+0x10, the payload length at fData+0x14 and the file position at
 //fData+0x18.
+#define MSG_REPLY_OFFSET_FILEHANDLE 0x8
+#define MSG_REPLY_OFFSET_IORESULT 0x10
+#define MSG_REPLY_OFFSET_LENGTH 0x14
+#define MSG_REPLY_OFFSET_POSITION 0x18
 typedef struct {
     u32 msg_length;
     u8 command[4];
@@ -65,9 +69,9 @@ DSError TRK_SuppAccessFile(ui32 file_handle, ui8* data, size_t* count, DSIOResul
                     replyBuffer = TRKGetBuffer(replyBufferId);
                 }
                 replyIOResult = (ui8) * (ui32*)&replyBuffer->fData[0x10];
-                replyLength = *(ui16*)&replyBuffer->fData[0x14];
+                replyLength = *(ui16*)&replyBuffer->fData[MSG_REPLY_OFFSET_LENGTH];
                 if(read && error == kNoError && replyLength <= length) {
-                    TRK_SetBufferPosition(replyBuffer, 0x40);
+                    TRK_SetBufferPosition(replyBuffer, TRK_MSG_HEADER_LENGTH);
                     error = TRKReadBuffer_ui8(replyBuffer, data + i, replyLength);
                     if(error == kMessageBufferReadError) {
                         error = kNoError;
@@ -175,7 +179,7 @@ DSError HandleOpenFileSupportRequest(const char* path, ui8 replyError, ui32* fil
         }
 
         *ioResult = *(ui32*)(tempBuffer->fData + 0x10);
-        *fileId = *(ui32*)(tempBuffer->fData + 0x8);
+        *fileId = *(ui32*)(tempBuffer->fData + MSG_REPLY_OFFSET_FILEHANDLE);
         TRK_ReleaseBuffer(bufferId2);
     }
     TRK_ReleaseBuffer(bufferId1);
@@ -249,7 +253,7 @@ DSError HandlePositionFileSupportRequest(ui32 fileHandle, ui32* position, ui8 se
 
             if(buffer2 != NULL) {
                 *ioResult = *(ui32*)(buffer2->fData + 0x10);
-                *position = *(ui32*)(buffer2->fData + 0x18);
+                *position = *(ui32*)(buffer2->fData + MSG_REPLY_OFFSET_POSITION);
             }
         }
 

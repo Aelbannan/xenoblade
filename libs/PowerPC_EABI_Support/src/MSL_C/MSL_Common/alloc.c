@@ -88,9 +88,10 @@ static void SubBlock_merge_next(SubBlock*, SubBlock**);
 
 static const unsigned long fix_pool_sizes[] = {4, 12, 20, 36, 52, 68};
 
-#define SubBlock_size(ths) ((ths)->size & 0xFFFFFFF8)
+#define BLOCK_SIZE_MASK 0xFFFFFFF8 // size field low 3 bits hold flags
+#define SubBlock_size(ths) ((ths)->size & BLOCK_SIZE_MASK)
 #define SubBlock_block(ths) ((Block*)((unsigned long)((ths)->block) & ~0x1))
-#define Block_size(ths) ((ths)->size & 0xFFFFFFF8)
+#define Block_size(ths) ((ths)->size & BLOCK_SIZE_MASK)
 #define Block_start(ths) (*(SubBlock**)((char*)(ths) + Block_size((ths)) - sizeof(unsigned long)))
 
 #define SubBlock_set_free(ths)                                                                                                             \
@@ -101,8 +102,8 @@ static const unsigned long fix_pool_sizes[] = {4, 12, 20, 36, 52, 68};
 
 #define SubBlock_is_free(ths) !((ths)->size & 2)
 #define SubBlock_set_size(ths, sz)                                                                                                         \
-    (ths)->size &= ~0xFFFFFFF8;                                                                                                            \
-    (ths)->size |= (sz) & 0xFFFFFFF8;                                                                                                      \
+    (ths)->size &= ~BLOCK_SIZE_MASK;                                                                                                            \
+    (ths)->size |= (sz) & BLOCK_SIZE_MASK;                                                                                                      \
     if(SubBlock_is_free((ths))) *(unsigned long*)((char*)(ths) + (sz) - sizeof(unsigned long)) = (sz)
 
 #define SubBlock_from_pointer(ptr) ((SubBlock*)((char*)(ptr) - 8))
@@ -164,13 +165,13 @@ static void SubBlock_merge_next(SubBlock* pBlock, SubBlock** pStart) {
     SubBlock* next_sub_block;
     unsigned long this_cur_size;
 
-    next_sub_block = (SubBlock*)((char*)pBlock + (pBlock->size & 0xFFFFFFF8));
+    next_sub_block = (SubBlock*)((char*)pBlock + (pBlock->size & BLOCK_SIZE_MASK));
 
     if(!(next_sub_block->size & 2)) {
-        this_cur_size = (pBlock->size & 0xFFFFFFF8) + (next_sub_block->size & 0xFFFFFFF8);
+        this_cur_size = (pBlock->size & BLOCK_SIZE_MASK) + (next_sub_block->size & BLOCK_SIZE_MASK);
 
-        pBlock->size &= ~0xFFFFFFF8;
-        pBlock->size |= this_cur_size & 0xFFFFFFF8;
+        pBlock->size &= ~BLOCK_SIZE_MASK;
+        pBlock->size |= this_cur_size & BLOCK_SIZE_MASK;
 
         if(!(pBlock->size & 2)) {
             *(unsigned long*)((char*)(pBlock) + (this_cur_size)-4) = (this_cur_size);

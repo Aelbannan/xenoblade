@@ -1,4 +1,8 @@
 #include <math.h>
+
+#define NO_CONVERSION_CHAR 0xFF // marks an unsupported/invalid conversion
+#define CHAR_SET_FILL 0xFF      // scan-set table: all characters in set
+#define DEFAULT_FIELD_WIDTH 2147483647 // unlimited default field width
 #include <stdarg.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -37,7 +41,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
     const char* s = format_string;
     int c;
     int flag_found, invert;
-    scan_format f = {0, 0, normal_argument, 0, 2147483647, {0}};
+    scan_format f = {0, 0, normal_argument, 0, DEFAULT_FIELD_WIDTH, {0}};
 
     if(((c = *++s) == '%')) {
         f.conversion_char = c;
@@ -59,7 +63,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
         } while(isdigit(c));
 
         if(f.field_width == 0) {
-            f.conversion_char = 0xFF;
+            f.conversion_char = NO_CONVERSION_CHAR;
             *format = f;
             return ((const char*)s + 1);
         }
@@ -119,7 +123,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
         case 'x':
         case 'X':
             if(f.argument_options == long_double_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -136,7 +140,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
             if(f.argument_options == char_argument || f.argument_options == short_argument || f.argument_options == intmax_argument ||
                 f.argument_options == size_t_argument || f.argument_options == ptrdiff_argument ||
                 f.argument_options == long_long_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -156,7 +160,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
                 f.argument_options = wchar_argument;
             } else {
                 if(f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFF;
+                    f.conversion_char = NO_CONVERSION_CHAR;
                 }
             }
 
@@ -167,7 +171,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
                 f.argument_options = wchar_argument;
             } else {
                 if(f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFF;
+                    f.conversion_char = NO_CONVERSION_CHAR;
                 }
             }
 
@@ -176,7 +180,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
                 unsigned char* p;
 
                 for(i = sizeof(f.char_set), p = f.char_set; i; --i) {
-                    *p++ = 0xFF;
+                    *p++ = CHAR_SET_FILL;
                 }
 
                 f.char_set[1] = 0xC1;
@@ -193,7 +197,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
                 f.argument_options = wchar_argument;
             } else {
                 if(f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFF;
+                    f.conversion_char = NO_CONVERSION_CHAR;
                 }
             }
 
@@ -226,7 +230,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
             }
 
             if(!c) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -243,7 +247,7 @@ static const char* parse_format(const char* format_string, scan_format* format) 
 
             break;
         default:
-            f.conversion_char = 0xFF;
+            f.conversion_char = NO_CONVERSION_CHAR;
             break;
     }
 
@@ -677,7 +681,7 @@ static int __sformatter(int (*ReadProc)(void*, int, int), void* ReadProcArg, con
                             break;
                     }
                 continue;
-            case 0xFF:
+            case NO_CONVERSION_CHAR:
             default:
                 goto exit;
         }

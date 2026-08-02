@@ -1,4 +1,14 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/ansi_fp.h"
+
+//format-machinery constants
+#define NO_CONVERSION_CHAR 0xFF          // marks an unsupported/invalid conversion
+#define NO_CONVERSION_WCHAR 0xFFFF       // wide variant of the sentinel
+#define FORMAT_DIGITS 0x20               // decimal digit buffer size
+#define HEX_FLOAT_DEFAULT_PRECISION 0xD  // default precision for %a
+#define DOUBLE_EXP_MASK 0x7FF            // double exponent bit mask
+#define DOUBLE_EXP_BIAS 0x3FF            // double exponent bias
+#define SIZE_UNLIMITED 0xFFFFFFFF        // unbounded buffer size sentinel
+
 #include <math.h>
 #include <locale.h>
 #include <stdarg.h>
@@ -122,7 +132,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
     }
 
     if(f.field_width > 509) {
-        f.conversion_char = 0xFFFF;
+        f.conversion_char = NO_CONVERSION_WCHAR;
         *format = f;
         return ((const wchar_t*)s + 1);
     }
@@ -212,7 +222,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
         case L'F':
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument) {
-                f.conversion_char = 0xFFFF;
+                f.conversion_char = NO_CONVERSION_WCHAR;
                 break;
             }
 
@@ -224,12 +234,12 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
         case L'a':
         case L'A':
             if(!f.precision_specified) {
-                f.precision = 0xD;
+                f.precision = HEX_FLOAT_DEFAULT_PRECISION;
             }
 
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument || f.argument_options == char_argument) {
-                f.conversion_char = 0xFFFF;
+                f.conversion_char = NO_CONVERSION_WCHAR;
             }
 
             break;
@@ -244,7 +254,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
         case L'E':
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument || f.argument_options == char_argument) {
-                f.conversion_char = 0xFFFF;
+                f.conversion_char = NO_CONVERSION_WCHAR;
                 break;
             }
 
@@ -265,7 +275,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
                 f.argument_options = wchar_argument;
             } else {
                 if(f.precision_specified || f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFFFF;
+                    f.conversion_char = NO_CONVERSION_WCHAR;
                 }
             }
 
@@ -276,7 +286,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
                 f.argument_options = wchar_argument;
             } else {
                 if(f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFFFF;
+                    f.conversion_char = NO_CONVERSION_WCHAR;
                 }
             }
 
@@ -290,7 +300,7 @@ static const wchar_t* parse_format(const wchar_t* format_string, va_list* arg, p
             break;
 
         default:
-            f.conversion_char = 0xFFFF;
+            f.conversion_char = NO_CONVERSION_WCHAR;
             break;
     }
 
@@ -520,7 +530,7 @@ static wchar_t* double2hex(long double num, wchar_t* buff, print_format format) 
     }
 
     form.style = (char)0;
-    form.digits = 0x20;
+    form.digits = FORMAT_DIGITS;
     __num2dec(&form, num, &dec);
 
     switch(*dec.sig.text) {
@@ -573,7 +583,7 @@ static wchar_t* double2hex(long double num, wchar_t* buff, print_format format) 
     exp_format.conversion_char = 'd';
 
     expbits = 11;
-    expmask = 0x7FF;
+    expmask = DOUBLE_EXP_MASK;
 
     snum = ((unsigned char*)&num)[0] << 25;
     if(TARGET_FLOAT_EXP_BITS > 7) snum |= ((unsigned char*)&num)[1] << 17;
@@ -581,7 +591,7 @@ static wchar_t* double2hex(long double num, wchar_t* buff, print_format format) 
     if(TARGET_FLOAT_EXP_BITS > 23) snum |= ((unsigned char*)&num)[3] << 1;
 
     snum = (snum >> (32 - expbits)) & expmask;
-    if(snum != 0) exp = snum - 0x3FF;
+    if(snum != 0) exp = snum - DOUBLE_EXP_BIAS;
     else exp = 0;
 
     p = long2str(exp, buff, exp_format);
@@ -728,7 +738,7 @@ static wchar_t* float2str(long double num, wchar_t* wbuff, print_format format) 
     }
 
     form.style = 0;
-    form.digits = 0x20;
+    form.digits = FORMAT_DIGITS;
     __num2dec(&form, num, &dec);
     p = (char*)dec.sig.text + dec.sig.length;
 

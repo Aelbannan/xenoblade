@@ -1,4 +1,6 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/strtoul.h"
+
+#define MAX_FIELD_WIDTH 0x7FFFFFFF // unlimited input field width
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -290,7 +292,7 @@ unsigned long strtoul(const char* str, char** end, int base) {
     isc.NextChar = (char*)str;
     isc.NullCharDetected = 0;
 
-    value = __strtoul(base, 0x7FFFFFFF, &__StringRead, (void*)&isc, &count, &negative, &overflow);
+    value = __strtoul(base, MAX_FIELD_WIDTH, &__StringRead, (void*)&isc, &count, &negative, &overflow);
 
     if(end) {
         *end = (char*)str + count;
@@ -319,7 +321,7 @@ static inline long strtol(const char* str, char** end, int base) {
     isc.NextChar = (char*)str;
     isc.NullCharDetected = 0;
 
-    uvalue = __strtoul(base, 0x7FFFFFFF, &__StringRead, (void*)&isc, &count, &negative, &overflow);
+    uvalue = __strtoul(base, MAX_FIELD_WIDTH, &__StringRead, (void*)&isc, &count, &negative, &overflow);
 
     if(end) {
         *end = (char*)str + count;

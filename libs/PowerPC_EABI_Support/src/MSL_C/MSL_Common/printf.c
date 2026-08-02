@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//format-machinery constants
+#define NO_CONVERSION_CHAR 0xFF          // marks an unsupported/invalid conversion
+#define FORMAT_DIGITS 0x20               // decimal digit buffer size
+#define HEX_FLOAT_DEFAULT_PRECISION 0xD  // default precision for %a
+#define DOUBLE_EXP_MASK 0x7FF            // double exponent bit mask
+#define DOUBLE_EXP_BIAS 0x3FF            // double exponent bias
+#define SIZE_UNLIMITED 0xFFFFFFFF        // unbounded buffer size sentinel
+#define FORMAT_BUFFER_LIMIT 509          // maximum characters produced per conversion
+
+
 #define TARGET_FLOAT_BITS 64
 #define TARGET_FLOAT_BYTES (TARGET_FLOAT_BITS / 8)
 #define TARGET_FLOAT_MAX_EXP LDBL_MAX_EXP
@@ -121,8 +131,8 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
         }
     }
 
-    if(f.field_width > 509) {
-        f.conversion_char = 0xFF;
+    if(f.field_width > FORMAT_BUFFER_LIMIT) {
+        f.conversion_char = NO_CONVERSION_CHAR;
         *format = f;
         return ((const char*)s + 1);
     }
@@ -198,7 +208,7 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
         case 'x':
         case 'X':
             if(f.argument_options == long_double_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -213,7 +223,7 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
         case 'F':
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -225,12 +235,12 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
         case 'a':
         case 'A':
             if(!f.precision_specified) {
-                f.precision = 0xD;
+                f.precision = HEX_FLOAT_DEFAULT_PRECISION;
             }
 
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument || f.argument_options == char_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
             }
 
             break;
@@ -245,7 +255,7 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
         case 'E':
             if(f.argument_options == short_argument || f.argument_options == intmax_argument || f.argument_options == size_t_argument ||
                 f.argument_options == ptrdiff_argument || f.argument_options == long_long_argument || f.argument_options == char_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
                 break;
             }
 
@@ -266,7 +276,7 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
                 f.argument_options = wchar_argument;
             } else {
                 if(f.precision_specified || f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFF;
+                    f.conversion_char = NO_CONVERSION_CHAR;
                 }
             }
 
@@ -277,7 +287,7 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
                 f.argument_options = wchar_argument;
             } else {
                 if(f.argument_options != normal_argument) {
-                    f.conversion_char = 0xFF;
+                    f.conversion_char = NO_CONVERSION_CHAR;
                 }
             }
 
@@ -285,13 +295,13 @@ static const char* parse_format(const char* format_string, va_list* arg, print_f
 
         case 'n':
             if(f.argument_options == long_double_argument) {
-                f.conversion_char = 0xFF;
+                f.conversion_char = NO_CONVERSION_CHAR;
             }
 
             break;
 
         default:
-            f.conversion_char = 0xFF;
+            f.conversion_char = NO_CONVERSION_CHAR;
             break;
     }
 
@@ -379,7 +389,7 @@ static char* long2str(long num, char* buff, print_format format) {
         if(base == 16 && format.alternate_form) format.precision -= 2;
     }
 
-    if(buff - p + format.precision > 509) return (0);
+    if(buff - p + format.precision > FORMAT_BUFFER_LIMIT) return (0);
 
     while(digits < format.precision) {
         *--p = '0';
@@ -481,7 +491,7 @@ static char* longlong2str(long long num, char* pBuf, print_format fmt) {
         }
     }
 
-    if(pBuf - p + fmt.precision > 509) {
+    if(pBuf - p + fmt.precision > FORMAT_BUFFER_LIMIT) {
         return 0;
     }
 
@@ -525,12 +535,12 @@ static char* double2hex(long double num, char* buff, print_format format) {
     p = buff;
     ld = num;
 
-    if(format.precision > 509) {
+    if(format.precision > FORMAT_BUFFER_LIMIT) {
         return 0;
     }
 
     form.style = (char)0;
-    form.digits = 0x20;
+    form.digits = FORMAT_DIGITS;
     __num2dec(&form, num, &dec);
 
     switch(*dec.sig.text) {
@@ -573,7 +583,7 @@ static char* double2hex(long double num, char* buff, print_format format) {
     exp_format.conversion_char = 'd';
 
     expbits = 11;
-    expmask = 0x7FF;
+    expmask = DOUBLE_EXP_MASK;
 
     snum = ((unsigned char*)&num)[0] << 25;
     if(TARGET_FLOAT_EXP_BITS > 7) snum |= ((unsigned char*)&num)[1] << 17;
@@ -582,7 +592,7 @@ static char* double2hex(long double num, char* buff, print_format format) {
 
     snum = (snum >> (32 - expbits)) & expmask;
 
-    if(snum != 0) exp = snum - 0x3FF;
+    if(snum != 0) exp = snum - DOUBLE_EXP_BIAS;
     else exp = 0;
 
     p = long2str(exp, buff, exp_format);
@@ -721,12 +731,12 @@ static char* float2str(long double num, char* buff, print_format format) {
 
     radix_marker = *(unsigned char*)__lconv.decimal_point;
 
-    if(format.precision > 509) {
+    if(format.precision > FORMAT_BUFFER_LIMIT) {
         return 0;
     }
 
     form.style = 0;
-    form.digits = 0x20;
+    form.digits = FORMAT_DIGITS;
     __num2dec(&form, num, &dec);
     p = (char*)dec.sig.text + dec.sig.length;
 
@@ -842,7 +852,7 @@ static char* float2str(long double num, char* buff, print_format format) {
             *--p = sign;
             *--p = format.conversion_char;
 
-            if(buff - p + format.precision > 509) {
+            if(buff - p + format.precision > FORMAT_BUFFER_LIMIT) {
                 return 0;
             }
 
@@ -882,7 +892,7 @@ static char* float2str(long double num, char* buff, print_format format) {
 
             if((int_digits = dec.exp + 1) < 0) int_digits = 0;
 
-            if(int_digits + frac_digits > 509) return 0;
+            if(int_digits + frac_digits > FORMAT_BUFFER_LIMIT) return 0;
 
             q = (char*)dec.sig.text + dec.sig.length;
 
@@ -1168,7 +1178,7 @@ static int __pformatter(
                 num_chars = 1;
                 break;
 
-            case 0xFF:
+            case NO_CONVERSION_CHAR:
             default:
             conversion_error:
                 num_chars = strlen(curr_format);
@@ -1322,7 +1332,7 @@ int vsnprintf(char* s, size_t n, const char* format, va_list arg) {
 //}
 
 int vsprintf(char* s, const char* format, va_list arg) {
-    return vsnprintf(s, 0xFFFFFFFF, format, arg);
+    return vsnprintf(s, SIZE_UNLIMITED, format, arg);
 }
 
 //not present in the retail binary; kept commented out for reference
@@ -1342,7 +1352,7 @@ int snprintf(char* s, size_t n, const char* format, ...) {
 int sprintf(char* s, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    return vsnprintf(s, 0xFFFFFFFF, format, args);
+    return vsnprintf(s, SIZE_UNLIMITED, format, args);
 }
 
 //not present in the retail binary; kept commented out for reference

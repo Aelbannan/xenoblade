@@ -15,6 +15,12 @@ void EnableEXI2Interrupts();
 
 #define EXCEPTION_SIZE  0x100
 #define NUM_EXCEPTIONS  15
+#define LC_REGION_SIZE  0x1000     // locked-cache region size
+#define MEM1_SIZE       0x03000000 // 48 MB MEM1
+#define MEM1_MASK       0x3FFFFFFF
+#define MEM2_LO         0x10000000 // MEM2 starts at 256 MB
+#define MEM2_HI         0x1C000000 // MEM2 ends at 448 MB
+#define LC_BASE_ADDR    0xE0000000 // locked-cache base in the CPU map
 
 static ui32 TRK_ISR_OFFSETS[NUM_EXCEPTIONS] = {
     PPC_SYSTEMRESET,
@@ -169,14 +175,14 @@ void EnableMetroTRKInterrupts(){
 }
 
 void* TRKTargetTranslate(ui32* addr) {
-    if (addr >= lc_base && addr < &lc_base[0x1000]) {
+    if (addr >= lc_base && addr < &lc_base[LC_REGION_SIZE]) {
         if (gTRKCPUState.Extended1.DBAT2L & 3) return addr;
     }
-    if ((ui32)addr < 0x3000000) {
-        return (void*)(((ui32)addr & 0x3FFFFFFF) | BOOTINFO);
+    if ((ui32)addr < MEM1_SIZE) {
+        return (void*)(((ui32)addr & MEM1_MASK) | BOOTINFO);
     }
-    if ((ui32)addr >= 0x10000000 && 0x1C000000 > (ui32)addr) {
-        return (void*)(((ui32)addr & 0x3FFFFFFF) | MEM2_CACHED);
+    if ((ui32)addr >= MEM2_LO && MEM2_HI > (ui32)addr) {
+        return (void*)(((ui32)addr & MEM1_MASK) | MEM2_CACHED);
     }
     return addr;
 }
@@ -187,7 +193,7 @@ void __TRK_copy_vectors(){
     int i;
     ui32 data;
 
-    if((ui32)lc_base <= DB_EXCEPTION_MASK && (ui32)&lc_base[0x1000] > DB_EXCEPTION_MASK && gTRKCPUState.Extended1.DBAT2L & 0x3){
+    if((ui32)lc_base <= DB_EXCEPTION_MASK && (ui32)&lc_base[LC_REGION_SIZE] > DB_EXCEPTION_MASK && gTRKCPUState.Extended1.DBAT2L & 0x3){
         data_ptr = (ui32*)DB_EXCEPTION_MASK;
     }else{
         data_ptr = (ui32*)(BOOTINFO + DB_EXCEPTION_MASK);
@@ -217,7 +223,7 @@ void __TRK_copy_vectors(){
 DSError TRKInitializeTarget(){
     gTRKState.stopped = true;
     gTRKState.MSR = __TRK_get_MSR();
-    lc_base = (ui32*)0xE0000000;
+    lc_base = (ui32*)LC_BASE_ADDR;
     return kNoError;
 }
 

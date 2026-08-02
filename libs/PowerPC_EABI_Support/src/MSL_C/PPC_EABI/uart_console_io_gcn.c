@@ -5,9 +5,12 @@
 
 /*
  * Console I/O backend for __write_console: when the console type does not
- * carry the emulated flag (bit 0x20000000), output is routed through the
+ * carry the emulated flag (OS_CONSOLE_EMULATED), output is routed through the
  * GCN UART (InitializeUART / WriteUARTN) instead of the TRK console.
  */
+
+//OS_CONSOLE_EMULATED is not defined by the RVL headers shipped here
+#define OS_CONSOLE_EMULATED 0x20000000
 
 static BOOL initialized;
 
@@ -15,10 +18,10 @@ int __TRK_write_console(__file_handle, u8*, size_t*, __ref_con);
 
 BOOL __write_console(__file_handle handle, u8* buffer, size_t* count, __ref_con ref_con) {
 
-    if((OSGetConsoleType() & 0x20000000) == 0) {
+    if((OSGetConsoleType() & OS_CONSOLE_EMULATED) == 0) {
         int initResult = 0;
         if(initialized == FALSE) {
-            initResult = InitializeUART(0xE100);
+            initResult = InitializeUART(kBaud57600);
             if(initResult == 0) {
                 initialized = TRUE;
             }

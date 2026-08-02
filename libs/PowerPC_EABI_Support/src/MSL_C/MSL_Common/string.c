@@ -141,16 +141,16 @@ int strcmp(const char* str1, const char* str2) {
 
     l1 = *(int*)left;
     r1 = *(int*)right;
-    x = l1 + 0xFEFEFEFF;
+    x = l1 + K2;
     x &= ~l1;
-    if(x & 0x80808080) {
+    if(x & K1) {
         goto adjust;
     }
     while(l1 == r1) {
         l1 = *(++((int*)(left)));
         r1 = *(++((int*)(right)));
-        x = l1 + 0xFEFEFEFF;
-        if(x & 0x80808080) {
+        x = l1 + K2;
+        if(x & K1) {
             goto adjust;
         }
     }

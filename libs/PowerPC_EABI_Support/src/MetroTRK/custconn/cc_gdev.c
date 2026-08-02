@@ -2,7 +2,9 @@
 #include "PowerPC_EABI_Support/MetroTRK/custconn/CircleBuffer.h"
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
-static ui8 gRecvBuf[0x500];
+//receive buffer for the gdev transport
+#define GDEV_RECV_BUFFER_SIZE 0x500
+static ui8 gRecvBuf[GDEV_RECV_BUFFER_SIZE];
 static CircleBuffer gRecvCB;
 static bool gIsInitialized;
 
@@ -43,7 +45,7 @@ int gdev_cc_close() {
 int gdev_cc_read(ui8* dest, int size) {
     int sizeTemp = size;
     ui8* destTemp = dest;
-    ui8 buf[0x500];
+    ui8 buf[GDEV_RECV_BUFFER_SIZE];
     int readResult = 0;
 
     if(!gIsInitialized) {
@@ -102,7 +104,7 @@ int gdev_cc_post_stop() {
 
 int gdev_cc_peek() {
     int available = DBQueryData();
-    ui8 buf[0x500];
+    ui8 buf[GDEV_RECV_BUFFER_SIZE];
 
     if(available <= 0) {
         return 0;

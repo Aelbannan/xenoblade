@@ -1,4 +1,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/nubinit.h"
+
+#define TRK_ENDIAN_MAGIC 0x12345678        // magic value used to probe byte order
+#define TRK_ENDIAN_MAGIC_SWAPPED 0x78563412 // same value in the opposite byte order
 #include "PowerPC_EABI_Support/MetroTRK/serpoll.h"
 #include "PowerPC_EABI_Support/MetroTRK/targimpl.h"
 
@@ -49,14 +52,14 @@ bool TRK_InitializeEndian(void) {
     bool result = false;
     gTRKBigEndian = true;
 
-    bendian[0] = 0x12;
-    bendian[1] = 0x34;
-    bendian[2] = 0x56;
-    bendian[3] = 0x78;
+    bendian[0] = (TRK_ENDIAN_MAGIC >> 24) & 0xFF;
+    bendian[1] = (TRK_ENDIAN_MAGIC >> 16) & 0xFF;
+    bendian[2] = (TRK_ENDIAN_MAGIC >> 8) & 0xFF;
+    bendian[3] = TRK_ENDIAN_MAGIC & 0xFF;
 
-    if(*(ui32*)bendian == 0x12345678) {
+    if(*(ui32*)bendian == TRK_ENDIAN_MAGIC) {
         gTRKBigEndian = true;
-    } else if(*(ui32*)bendian == 0x78563412) {
+    } else if(*(ui32*)bendian == TRK_ENDIAN_MAGIC_SWAPPED) {
         gTRKBigEndian = false;
     } else {
         result = true;

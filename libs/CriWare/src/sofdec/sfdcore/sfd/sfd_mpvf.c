@@ -324,11 +324,11 @@ void SFMPVF_RefStbyFrm(void* self) {
 
 void SFMPVF_EndRefFrm(void* self) {
     if (self == NULL) return;
-    if (*(u32*)self == 4) {
-        *(u32*)self = 2;
+    if (*(s32*)self == 4) {
+        *(s32*)self = 2;
         return;
     }
-    *(u32*)self = 0;
+    *(s32*)self = 0;
 }
 
 s32 sfmpvf_IsChkFirst(void* a, void* b);

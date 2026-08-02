@@ -6,11 +6,11 @@ void AXRNA_EntryErrFunc(void* fn) { RNAERR_EntryErrFunc(fn); }
 
 
 extern u32 lbl_eu_805F2C00;
-extern u8 lbl_eu_805F2C08[0xE40];
+extern u8 lbl_eu_805F2C08[];
 
 void AXRNA_Init(void) {
     if (lbl_eu_805F2C00 == 0) {
-        memset(lbl_eu_805F2C08, 0, sizeof(lbl_eu_805F2C08));
+        memset(lbl_eu_805F2C08, 0, 0xE40);
     }
     lbl_eu_805F2C00++;
 }
@@ -31,15 +31,44 @@ void AXRNA_GetNumData() {}
 
 typedef struct AXRNA { char pad0[3]; signed char type; char pad4[0x2c]; void *objs[1]; } AXRNA; int AXRNA_GetNumRoom(AXRNA *rna) { if (rna == NULL) { return -1; } void *obj = rna->objs[rna->type - 1]; int (*func)(void *, int) = ((int (**)(void *, int))(*(void ***)obj))[9]; return (unsigned int)func(obj, 0) >> 1; }
 
-void axrna_update_play() {}
+#pragma auto_inline off
+void axrna_update_play(void* self) {}
 
-void axrna_start_trans() {}
+void axrna_start_trans(void* self) {}
 
-void criware_80399F4C() {}
+void criware_80399F4C(void* self) {}
 
-void axrna_start_flash() {}
+void axrna_start_flash(void* self) {}
+#pragma auto_inline on
 
-void AXRNA_ExecServer() {}
+extern void GCRNA_LockCs(void);
+extern void GCRNA_UnlockCs(void);
+void AXRNA_ExecServer(void) {
+    u8* rna = (u8*)lbl_eu_805F2C08;
+    s32 st;
+
+    GCRNA_LockCs();
+    if ((s32)rna[0] != 1)
+        goto end;
+    if (rna == NULL)
+        goto end;
+    st = (rna != NULL) ? ((rna[1] >> 1) & 1) : -1;
+    if (st == 1)
+        axrna_update_play(rna);
+    st = (rna != NULL) ? (s32)(rna[1] & 1) : -1;
+    if (st == 1) {
+        if (*(u32*)(rna + 0xB4) == 1)
+            criware_80399F4C(rna);
+        else
+            axrna_start_trans(rna);
+    } else {
+        st = (rna != NULL) ? (s32)((rna[1] >> 1) & 1) : -1;
+        if (st == 1 && *(u32*)(rna + 0x74) < *(u32*)(rna + 0x18))
+            axrna_start_flash(rna);
+    }
+end:
+    GCRNA_UnlockCs();
+}
 
 void AXRNA_SetNumChan(void* self, u8 numChan) {
     if (self != NULL) {

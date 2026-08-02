@@ -87,7 +87,21 @@ void MWSFSET_ExecSetCyclicFrameOutput(void *h) {
 
 void mwPlyGetTime() {}
 
-void mwPlySetOutVol() {}
+extern char lbl_eu_8051B7B0[];
+extern void MWSFSVM_Error(const char* fmt, ...);
+extern void MWSST_SetOutVol(void* sst, s32 vol);
+extern void MWSFRNA_SetOutVol(void* rna, s32 vol);
+
+void mwPlySetOutVol(void* self, s32 vol) {
+    s32 state = (self == NULL) ? 0 : *(s32*)self;
+    if (state != 1) {
+        MWSFSVM_Error(lbl_eu_8051B7B0 + 0x45C);
+    } else {
+        MWSST_SetOutVol(self, vol);
+        MWSFRNA_SetOutVol((u8*)self + 0x5D8, vol);
+        MWSFRNA_SetOutVol((u8*)self + 0x600, vol);
+    }
+}
 
 void mwPlyGetOutVol() {}
 

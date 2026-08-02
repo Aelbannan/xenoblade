@@ -303,6 +303,17 @@ mismatches are a pure allocation-order permutation (p_cmd 16→23, cmd_len 17→
 p 21→16, id 25→21 …) that declaration-order changes do not shift under
 GC/3.0a5.2.
 
+Sibling `l2c_rcv_acl_data` (0x330) is at **0 structural / 45 pure reg-swaps**
+(98.8% static). The Chaitin coloring is non-bijective — p_msg r27↔r26
+handle/rcv_cid, opcode r28→r25, and the rcv_cid/l2cap_len temp chain
+r0/r4/r5 cycle — so the register-renaming witness cannot certify (rho must be a
+bijection); the 4 reloc drifts (`@1563` string symbol vs `...data.0`, l2cb
+addend deltas) are benign object-layout artifacts (raw addends 0, field
+immediates identical). All direct callees of both functions are now
+FULL_MATCH+equivalent, so the callee gate is no longer the blocker — both
+targets are **out-of-band SMT acceptance candidates** (prologue-order diffs and
+non-bijective color cycles are scheduling/allocator-equivalent).
+
 ## RVL_SDK bte/l2cap l2c_link.c — 5× FULL_MATCH via declaration order, load-reuse order, loop-next temp, 0x10 conn-info struct, `data`-idiom regalloc (GC/3.0a5.2 `-func_align 4`)
 
 Five stubborn l2c_link targets went straight to 100% byte-identical in one

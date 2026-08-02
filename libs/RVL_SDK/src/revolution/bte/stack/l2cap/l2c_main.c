@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  L2CAP main processing — RVL retail slice reconstruction.
+ *  L2CAP main processing - RVL retail slice reconstruction.
  *
  *  High-level C reconstruction of the Broadcom BTE l2c_main module:
  *  l2c_init, l2c_rcv_acl_data, process_l2cap_cmd, l2c_process_timeout
@@ -62,7 +62,7 @@ enum {
 typedef struct t_l2c_linkcb tL2C_LCB;
 typedef struct t_l2c_rcb tL2C_RCB;
 
-/* Link control block — only the fields referenced by this TU. */
+/* Link control block - only the fields referenced by this TU. */
 struct t_l2c_linkcb {
     UINT8   pad00[0x28];
     UINT16  handle;                 /* 0x28 */
@@ -70,7 +70,7 @@ struct t_l2c_linkcb {
     void  (*p_echo_cb)(UINT8 *);    /* 0x54 */
 };
 
-/* Channel control block — size must be 0x7C (ccb_pool element size). */
+/* Channel control block - size must be 0x7C (ccb_pool element size). */
 typedef struct t_l2c_ccb {
     BOOLEAN             in_use;         /* 0x00 */
     UINT8               pad01[3];       /* 0x01 */
@@ -135,7 +135,7 @@ typedef struct {
     UINT32          pad7E4;                         /* 0x7E4 */
 } tL2C_CB;
 
-/* BTU control block — retail layout differs from btu.h; only the field
+/* BTU control block - retail layout differs from btu.h; only the field
 ** used by this TU is needed, at offset 0x7E. */
 typedef struct {
     UINT8   pad00[0x7E];

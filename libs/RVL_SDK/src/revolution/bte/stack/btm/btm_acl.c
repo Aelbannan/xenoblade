@@ -357,17 +357,10 @@ void btm_acl_created(BD_ADDR bda, UINT8 *p_dc, UINT8 *p_bdn,
 
 void btm_acl_removed(BD_ADDR bda)
 {
-    UINT8 xx = 0;
     tACL_CONN *p_acl;
 
-    for (p_acl = &btm_cb.acl_db[0]; xx < 4; xx++) {
-        if (p_acl->in_use && memcmp(p_acl->remote_addr, bda, 6) == 0)
-            goto found;
-        p_acl++;
-    }
-    p_acl = NULL;
-
-found:
+    /* Find the ACL connection for this BD address (retail-inlined helper). */
+    p_acl = btm_bda_to_acl_local(bda);
     if (p_acl != NULL) {
         p_acl->in_use = FALSE;
         if (btm_cb.p_acl_changed_cb != NULL) {
@@ -712,7 +705,6 @@ void BTM_SetDefaultLinkSuperTout(UINT16 timeout)
 
 BOOLEAN BTM_IsAclConnectionUp(BD_ADDR remote_bda)
 {
-    UINT8 xx;
     tACL_CONN *p_acl;
 
     if (btm_cb.trace_level >= BT_TRACE_LEVEL_API) {
@@ -722,14 +714,8 @@ BOOLEAN BTM_IsAclConnectionUp(BD_ADDR remote_bda)
                  (UINT32)remote_bda[3], (UINT32)remote_bda[4], (UINT32)remote_bda[5]);
     }
 
-    for (xx = 0, p_acl = &btm_cb.acl_db[0]; xx < 4; xx++) {
-        if (p_acl->in_use && memcmp(p_acl->remote_addr, remote_bda, 6) == 0)
-            goto found;
-        p_acl++;
-    }
-    p_acl = NULL;
-
-found:
+    /* Find the ACL connection for this BD address (retail-inlined helper). */
+    p_acl = btm_bda_to_acl_local(remote_bda);
     if (p_acl != NULL) {
         return TRUE;
     }

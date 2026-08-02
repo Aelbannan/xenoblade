@@ -4656,12 +4656,19 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
   `cmpwi` on the walk pointer; retail nulls the pointer on the fall-through path then checks.
   Reproduce with a structured `goto found;` + `p_acl = NULL;` after the loop. (Single labelled
   exit, not an asm-mirroring goto chain.)
-- **Retail `bne next; b found` branch split is a MWCC hard cap**: after `cmpwi r3,0` retail emits
+- **Retail `bne next; b found` branch split is a MWCC hard cap — RESOLVED (2026-08-02)**: after `cmpwi r3,0` retail emits
   `bne .next` (loop footer) + `b .found` (check); MWCC (GC 3.0a5.2 and Wii/1.1, `-O4,p`/`-O4,s`,
-  `-ipa` on/off) merges to `beq .found` from every high-level shape tried (for/while/do-while/
-  continue/goto/negated conditions). Cost: 1 instruction (4 bytes) + the whole tail shifts; the
-  semantic difference is trivial, so EQUIVALENT_MATCH still passes for callers with provable
-  callees (BTM_GetHCIConnHandle → memcmp assumed-opaque OK). Blocks FULL_MATCH only.
+  `-ipa` on/off) merges to `beq .found` **when the search is written as an inline loop**
+  (for/while/do-while/continue/goto/negated conditions — all forms fold the two branches). The
+  branch split IS reproducible by calling the same-TU helper `static __inline tACL_CONN
+  *btm_bda_to_acl_local(BD_ADDR bda) { for (...) if (p->in_use && memcmp(...)==0) return p;
+  return NULL; }` (see the btm_acl section above): the inlined `return p` lowers to an
+  unconditional `b .merge` after the `bne .next`, matching retail byte-for-byte. Verified:
+  `btm_remove_acl` (FULL_MATCH), `btm_acl_removed` (us-802e7204, was 97.8% with the inline loop →
+  100% FULL_MATCH), `BTM_IsAclConnectionUp` (us-802e7c84, was 94.3% → 100% FULL_MATCH). Cost
+  note: the helper form adds the 4-byte `b` back, so units at 0x0 split-budget spare cannot absorb
+  it (btm_acl.c sits exactly at 0x0 spare after these two fixes — BTM_GetHCIConnHandle stays on
+  the inline-loop form at EQUIVALENT_MATCH).
 - **SMT register live-outs**: for `void` functions the auto contract observes r3/r4 at exit;
   `(p[5]<<8)+p[4]` vs `p[4]+(p[5]<<8)` changes which register holds the shifted value
   (r4 = p[5]<<8 vs r4 = p[4]) and flips the verdict (`r4: 0x1 != 0x100`). Match the retail operand

@@ -30,9 +30,11 @@ namespace {
  * pool (count 3, selected for seq ids 4/0x17/0x19).
  ******************************************************************************/
 struct HBMSEQSEQUENCE {
-    u8 pad0[0x2E1C];         // 0x00000
+    u8 pad0[0x418];          // 0x00000
+    u32 finished;            // 0x418 (synth track-end flag)
+    u8 pad1[0x2E1C - 0x41C]; // 0x41C
     u8 inUse;                // 0x2E1C
-    u8 pad1[3];              // 0x2E1D
+    u8 pad2[3];              // 0x2E1D
     HBMSEQSEQUENCE* next;    // 0x2E20 (newer player)
     HBMSEQSEQUENCE* prev;    // 0x2E24 (older player)
     s32 seqId;               // 0x2E28
@@ -58,6 +60,7 @@ struct HBMWork {
 
 HBMWork* sWork;
 
+
 // Retail rodata: 28 filenames indexed by seq id (SOUND_FILENAME).
 extern "C" const char* SOUND_FILENAME[];
 
@@ -66,9 +69,14 @@ extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE* seq, const u8* data,
                                   void* synth, void* p1, u32 p2);
 extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE* seq);
 extern "C" void HBMSEQSetState(HBMSEQSEQUENCE* seq, u32 state);
+extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE* seq);
+extern "C" void HBMSEQRunAudioFrame(void);
 extern "C" void HBMSEQQuit(void);
+extern "C" void HBMSYNRunAudioFrame(void);
 extern "C" void HBMSYNQuit(void);
+extern "C" void HBMMIXUpdateSettings(void);
 extern "C" void HBMMIXQuit(void);
+extern "C" void HBMMIXSetSoundMode(u32 mode);
 
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;
@@ -140,7 +148,90 @@ void AudioFrameCallback() {
     }
 }
 
-void AudioSoundThreadProc(void* /* arg */) {}
+void* AudioSoundThreadProc(void* /* arg */) {
+    OSMessage msg = 0;
+    HBMSEQSEQUENCE* p;
+    HBMSEQSEQUENCE* p_next;
+    SeqPool* pool;
+
+    while (true) {
+        OSReceiveMessage(&sWork->msgQueue, &msg, OS_MSG_BLOCKING);
+
+        if (msg == reinterpret_cast<OSMessage>(1)) {
+            HBMSEQRunAudioFrame();
+            HBMSYNRunAudioFrame();
+            HBMMIXUpdateSettings();
+
+            if (sWork != NULL) {
+                p = sWork->pool[0].first;
+                while (p != NULL) {
+                    p_next = p->next;
+                    if (p->inUse != 0 && HBMSEQGetState(p) == 0 && p->finished == 0) {
+                        if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
+                            pool = &sWork->pool[1];
+                        } else {
+                            pool = &sWork->pool[0];
+                        }
+
+                        HBMSEQSetState(p, 0);
+                        HBMSEQRemoveSequence(p);
+                        p->inUse = 0;
+
+                        if (p->prev == NULL) {
+                            pool->first = p->next;
+                        } else {
+                            p->prev->next = p->next;
+                        }
+
+                        if (p->next == NULL) {
+                            pool->last = p->prev;
+                        } else {
+                            p->next->prev = p->prev;
+                        }
+
+                        p->next = NULL;
+                        p->prev = NULL;
+                    }
+                    p = p_next;
+                }
+
+                p = sWork->pool[1].first;
+                while (p != NULL) {
+                    p_next = p->next;
+                    if (p->inUse != 0 && HBMSEQGetState(p) == 0 && p->finished == 0) {
+                        if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
+                            pool = &sWork->pool[1];
+                        } else {
+                            pool = &sWork->pool[0];
+                        }
+
+                        HBMSEQSetState(p, 0);
+                        HBMSEQRemoveSequence(p);
+                        p->inUse = 0;
+
+                        if (p->prev == NULL) {
+                            pool->first = p->next;
+                        } else {
+                            p->prev->next = p->next;
+                        }
+
+                        if (p->next == NULL) {
+                            pool->last = p->prev;
+                        } else {
+                            p->next->prev = p->prev;
+                        }
+
+                        p->next = NULL;
+                        p->prev = NULL;
+                    }
+                    p = p_next;
+                }
+            }
+        } else if (msg == reinterpret_cast<OSMessage>(8)) {
+            return NULL;
+        }
+    }
+}
 
 } // namespace
 
@@ -210,7 +301,7 @@ void StopAllSeq() {}
 
 void SetVolumeAllSeq(float /* volume */) {}
 
-void SetSoundMode(u32 /* mode */) {}
+void SetSoundMode(u32 mode) { HBMMIXSetSoundMode(mode); }
 
 } // namespace homebutton
 

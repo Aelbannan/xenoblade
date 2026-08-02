@@ -493,10 +493,15 @@ void HBMMIXUpdateSettings(void) {
     }
 
     for (i = 0; i < HBMMIX_NUM_CHANNELS; i++) {
-        HBMMIXChannel* ch = &__HBMMIXChannel[i];
-        s32 veChanged = 0;
-        AXVPB* vpb = ch->vpb;
-        s32 mixChanged = 0;
+        s32 mixChanged;
+        s32 veChanged;
+        HBMMIXChannel* ch;
+        AXVPB* vpb;
+
+        ch = &__HBMMIXChannel[i];
+        veChanged = 0;
+        vpb = ch->vpb;
+        mixChanged = 0;
 
         if (vpb == NULL) {
             continue;
@@ -536,12 +541,17 @@ void HBMMIXUpdateSettings(void) {
 
         if (ch->flags & HBMMIX_FLAG_MIX) {
             switch (__HBMMIXSoundMode) {
+            // NB: sum operand order is deliberate - MWCC emits a top-level pure
+            // sum chain [s0,s1,s2] as loads [s2,s0,s1] and a 4-chain [s0,s1,s2,s3]
+            // as loads [s3,s2,s0,s1] (chains ending in `- const` stay in source
+            // order). Each expression below is written so the emitted load order
+            // matches retail exactly; the sums are algebraically identical.
             case HBMMIX_MODE_MONO:
                 ch->vLTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL);
                 ch->vRTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL);
                 ch->vSTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontR - 30);
-                ch->vAuxALTarget = __HBMMIXGetVolume(ch->auxA + ch->fader + ch->panFrontL);
-                ch->vAuxARTarget = __HBMMIXGetVolume(ch->auxA + ch->fader + ch->panFrontL);
+                ch->vAuxALTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontL);
+                ch->vAuxARTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontL);
                 ch->vAuxASTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontR - 30);
                 ch->vAuxBLTarget = 0;
                 ch->vAuxBRTarget = 0;
@@ -551,11 +561,11 @@ void HBMMIXUpdateSettings(void) {
                 ch->vAuxCSTarget = 0;
                 break;
             case HBMMIX_MODE_STEREO:
-                ch->vLTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL + ch->panL);
-                ch->vRTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL + ch->panR);
+                ch->vLTarget = __HBMMIXGetVolume(ch->fader + ch->panL + ch->panFrontL);
+                ch->vRTarget = __HBMMIXGetVolume(ch->fader + ch->panR + ch->panFrontL);
                 ch->vSTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontR - 30);
-                ch->vAuxALTarget = __HBMMIXGetVolume(ch->panFrontL + ch->panL + ch->fader + ch->auxA);
-                ch->vAuxARTarget = __HBMMIXGetVolume(ch->panFrontL + ch->panR + ch->fader + ch->auxA);
+                ch->vAuxALTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panL + ch->panFrontL);
+                ch->vAuxARTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panR + ch->panFrontL);
                 ch->vAuxASTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontR - 30);
                 ch->vAuxBLTarget = 0;
                 ch->vAuxBRTarget = 0;
@@ -565,14 +575,14 @@ void HBMMIXUpdateSettings(void) {
                 ch->vAuxCSTarget = 0;
                 break;
             case HBMMIX_MODE_DPL2:
-                ch->vLTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL + ch->panL);
-                ch->vRTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontL + ch->panR);
-                ch->vSTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontR + ch->panRearL);
-                ch->vAuxCLTarget = __HBMMIXGetVolume(ch->fader + ch->panFrontR + ch->panRearR);
-                ch->vAuxALTarget = __HBMMIXGetVolume(ch->panFrontL + ch->panL + ch->fader + ch->auxA);
-                ch->vAuxARTarget = __HBMMIXGetVolume(ch->panFrontL + ch->panR + ch->fader + ch->auxA);
-                ch->vAuxASTarget = __HBMMIXGetVolume(ch->panFrontR + ch->panRearL + ch->fader + ch->auxA);
-                ch->vAuxCRTarget = __HBMMIXGetVolume(ch->panFrontR + ch->panRearR + ch->fader + ch->auxA);
+                ch->vLTarget = __HBMMIXGetVolume(ch->fader + ch->panL + ch->panFrontL);
+                ch->vRTarget = __HBMMIXGetVolume(ch->fader + ch->panR + ch->panFrontL);
+                ch->vSTarget = __HBMMIXGetVolume(ch->fader + ch->panRearL + ch->panFrontR);
+                ch->vAuxCLTarget = __HBMMIXGetVolume(ch->fader + ch->panRearR + ch->panFrontR);
+                ch->vAuxALTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panL + ch->panFrontL);
+                ch->vAuxARTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panR + ch->panFrontL);
+                ch->vAuxASTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panRearL + ch->panFrontR);
+                ch->vAuxCRTarget = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panRearR + ch->panFrontR);
                 ctrl |= 0x80000000;
                 ch->vAuxBLTarget = 0;
                 ch->vAuxBRTarget = 0;

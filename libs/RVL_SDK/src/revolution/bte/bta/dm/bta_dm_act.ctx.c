@@ -2068,7 +2068,7 @@ void bta_dm_acl_change(struct bta_dm_msg *p_data) {
             }
         }
         if (i == bta_dm_cb.num_devices) {
-            bdcpy(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr);
+            bdcpy(bta_dm_cb.peer_dev[bta_dm_cb.num_devices].bd_addr, p_bd_addr);
             bta_dm_cb.num_devices++;
         }
         bta_dm_cb.peer_dev[i].in_use = 1;
@@ -2175,43 +2175,40 @@ unsigned char bta_dm_l2cap_server_compress_cback(
 void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
                            unsigned char client_id, bd_addr_t bd_addr) {
     unsigned char *p_cfg;
-    unsigned char num;
-    unsigned char i;
+    struct bta_dm_compress_srvc_t *p_srvc;
     unsigned char j;
     unsigned char k;
-    unsigned char num_conn;
     unsigned char found;
-    struct bta_dm_compress_srvc_t *p_srvc;
-    unsigned char *p_entry;
+    unsigned char i;
+    unsigned char num;
 
     if (action == 0) {
         p_cfg = p_bta_dm_compress_cfg;
         num = p_cfg[1];
         for (i = 1; i <= num; i++) {
-            p_entry = p_cfg + 3 * i;
-            if (p_entry[1] == client_id || p_entry[1] == 0xff) {
-                if (p_entry[0] == server_id && p_entry[2] == 1) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i] && p_cfg[3 * i + 2] == 1) {
                     /* if any state-2 server is already in the connected list, skip */
                     found = 0;
-                    num_conn = bta_dm_conn_srvcs[0];
                     for (j = 1; j <= p_cfg[1]; j++) {
                         if (p_cfg[3 * j + 2] == 2) {
-                            for (k = 0; k < num_conn; k++) {
+                            for (k = 0; k < bta_dm_conn_srvcs[0]; k++) {
                                 if (bta_dm_conn_srvcs[9 * k + 7] == p_cfg[3 * j])
                                     found = 1;
                             }
                         }
                     }
                     if (!found) {
-                        p_srvc = &bta_dm_compress_srvcs[i - 1];
-                        p_srvc->client_id = client_id;
-                        p_srvc->server_id = server_id;
-                        bdcpy(p_srvc->bd_addr, bd_addr);
-                        p_srvc->in_use = 1;
+                        bta_dm_compress_srvcs[i - 1].client_id = client_id;
+                        bta_dm_compress_srvcs[i - 1].server_id = server_id;
+                        bdcpy(bta_dm_compress_srvcs[i - 1].bd_addr, bd_addr);
+                        bta_dm_compress_srvcs[i - 1].in_use = 1;
                         if (appl_trace_level >= 4)
                             LogMsg_3(0x503,
                                      "bta_dm_compress_cback open app_id %d, BTA id %d, state %d",
-                                     p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
+                                     bta_dm_compress_srvcs[i - 1].client_id,
+                                     bta_dm_compress_srvcs[i - 1].server_id,
+                                     bta_dm_compress_srvcs[i - 1].in_use);
                     }
                     break;
                 }
@@ -2219,11 +2216,9 @@ void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
         }
     } else if (action == 1) {
         p_cfg = p_bta_dm_compress_cfg;
-        num = p_cfg[1];
-        for (i = 1; i <= num; i++) {
-            p_entry = p_cfg + 3 * i;
-            if (p_entry[1] == client_id || p_entry[1] == 0xff) {
-                if (p_entry[0] == server_id) {
+        for (i = 1; i <= p_cfg[1]; i++) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i]) {
                     p_srvc = &bta_dm_compress_srvcs[i - 1];
                     p_srvc->in_use = 0;
                     if (appl_trace_level >= 4)

@@ -103,7 +103,33 @@ void mwPlySetOutVol(void* self, s32 vol) {
     }
 }
 
-void mwPlyGetOutVol() {}
+extern s32 MWSFRNA_GetOutVol(void* rna);
+extern s32 MWSST_GetOutVol(void* sst);
+
+s32 mwPlyGetOutVol(void* self) {
+    s32 state = (self == NULL) ? 0 : *(s32*)self;
+    if (state != 1) {
+        MWSFSVM_Error(lbl_eu_8051B7B0 + 0x488);
+        return 0;
+    }
+    if (*(s32*)((u8*)self + 0x58) == 0) return 0;
+    {
+        s32 a = MWSFRNA_GetOutVol(self);
+        s32 b = MWSST_GetOutVol((u8*)self + 0x5D8);
+        s32 c = MWSST_GetOutVol((u8*)self + 0x600);
+        s32 ret;
+        if (a == b || a == c) {
+            ret = a;
+        } else if (a != 0) {
+            ret = a;
+        } else if (b != 0) {
+            ret = b;
+        } else {
+            ret = c;
+        }
+        return ret;
+    }
+}
 
 int criware_803A2258(void *h) {
     if ((s32)*(u32 *)((u8 *)h + 0x5D8) == 1 && MWSST_GetStat((u8 *)h + 0x5D8) == 4)

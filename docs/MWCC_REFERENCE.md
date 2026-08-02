@@ -798,6 +798,14 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 | `not_equivalent` on `__wpadConnectionCallback` (99.3%, 62 pure reg-swaps) | The retail callback dispatches through two real `mtctr`/`bctrl` indirect calls, so `_load_certified_callees` hard-fails with “registry has an unresolved indirect call” before any SMT runs; callee `us-8036e710`/`us-8036f9d0` also unaccepted | Not certifiable in the current framework (only FULL_MATCH 100% bypasses the probe — see `us-8036d8a0`). Keep CODE_MATCH; accept only after the indirect-call edge is modeled |
 | `__wpadInfoCallback` 99.0% (3 pure reg-swaps, base r4↔r5) stuck at CODE_MATCH — the renaming witness certified the gates but execution failed on the getInfoCB indirect bcctrl, and SMT fails closed on the registry `has_indirect_calls` flag | The decomp reused the dead `status` argument register (r4) for the `__rvl_p_wpadcb` base pointer because the old code called the callback with a single-arg cast `((void(*)(s32))p->getInfoCB)(chan)` and `#pragma unused(status)`; retail kept base in r5 | **Natural call form fixes it**: call `p->getInfoCB(chan, status)` through the `WPADCallback`-typed field (no cast, no `#pragma unused`) — passing `status` keeps r4 live as a call argument, so the allocator cannot reuse it for the base and places the base in r5 exactly like retail → **100.0% byte-identical, FULL_MATCH, semantic-certified on `cycle` with no `--smt`** (us-8036f270). Reusable pattern: dead-arg-register reuse is steered by whether the argument register is live at the indirect call; always call callback fields with their full natural signature |
 
+### RVL_SDK wpad/WPADHIDParser.c (US, mwcc_43_151 `-O4,p`)
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `WPADiHIDParser` (us-80374c00): decomp fused the three retail `__rvl_p_wpadcb[port]` loads into one (0x120 vs retail 0x128); after splitting them via inline global reads, only a 3-cycle register permutation remained (result/enable/cb0: r27/r28/r29 vs r29/r27/r28) | C locale declaration order drives MWCC's callee-saved allocation order: with locals declared `cb; status; result` (+`enable` in the if) the allocator gave cb0→r25 (lowest) and shifted everything; the retail wants status→r24, port→r25, p_rpt→r26, result→r27, enable→r28, cb0→r29 | Declare `WPADStatusEx* status; WPADCB* cb; BOOL enable; s32 result;` (status first, then cb, then enable, then result; assign `enable = OSDisableInterrupts();` inside the if) → **100.0% byte-identical, FULL_MATCH, semantic-certified on `cycle` with no `--smt`** despite the indirect dispatch array call. Also: keep the pre-if `cb` load for the post-call `handshakeFinished` read (separate local, do NOT reassign it), and read `status`/`rxBufIndex` toggle through inline `__rvl_p_wpadcb[port]` so MWCC emits the retail's three loads |
+| `__a1_33_data_type` (us-80376720): retail re-materializes the `__rvl_p_wpadcb` base+index (`lis/clrlslwi/addi r10/r11` + one `lwzx`) for the accel-calibration reads; decomp CSEs the base/index across the nearempty store and reuses the prologue registers → 3 instructions short (0x140 vs 0x14C) | MWCC keeps the array base/index values live from prologue to the reload (same class as the `__a1_20_status_report` init-block reload stall — CSE not controllable from C). 8 source variants tried (cb2 local, idx copy, `&arr[chan]`, element-pointer local, `__restrict`, inlined static helper, calib locals, decl order) all CSE | No C fix found. Semantically equivalent; record stall and accept via `--smt` out-of-band. Do NOT use inline global reads per-accel: the `sth status->accX/Y/Z` between them force 3 reloads (worse) |
+| `__a1_3d_data_type` (us-803772b0): retail keeps the `status` param in callee-saved r30 (`mr r30,r5`) in addition to the sp+8 slot for `&status`; decomp spills status to memory-only → 0x110 vs retail 0x114, plus reloads at the dev store and final check | When `&status` is passed to a helper, MWCC's cost model may decide the address-taken param's register copy is not worth keeping; sibling `__a1_34` (no `&status`) allocates correctly, while `__a1_3d/3e/3f` (with `&status`) all spill in decomp. Variants tried: status alias, nested-if final check, dev-store-first reorder (jumps to 52.2%/size-match but wrong store order), address local | No C fix found; record stall and accept via `--smt` out-of-band. Note: only 2 post-call status uses here vs ~10 in `__a1_34`, so the register copy is borderline for the spill-cost heuristic |
+
 ### RVL_SDK hbm/HBMController.cpp (US, Wii/1.1 `-O4,p`) — playSound float-cast reg-swap
 
 `Controller::playSound(int)` (us-80323a40): retail emits `lwz r6,0xc(r1); extsb r6,r6` for the `s8` volume arg, but a named local (`s8 vol = (int)(10.0f * getSpeakerVol()); … Play(chan, id, vol);`) makes MWCC emit `lwz r0,0xc(r1); extsb r6,r0` — an r0-temp move. The register-renaming witness rejects r6↔r0 (r0 is also used as r0 elsewhere, so rho is not injective) and the SMT ground on the `stfd`/`lwz` FP→GPR round-trip. | Named local keeps a dead 32-bit temp alive; the retail cast feeds the call directly | Inline the cast at the call site: `getRemoteSpk()->Play(getChan(), id, (s8)(10.0f * getSpeakerVol()));` → MWCC loads+sign-extends into r6 in place, byte-identical, 0 mismatches (FULL_MATCH). Only the `@N` vs `lbl_8051868C` pool-cookie name drift remains — canonicalized via the mined reloc map (`tools/coop/retail_reloc_map.json`), no `extern "C"` needed (the constant lives in anonymous rodata owned by WUDHidHost's split, so no linkable global exists).
@@ -4927,6 +4935,30 @@ with GC/3.0a5; this repo's Wii/1.1 (mwcc_43_151) needs the two adjustments above
 `GCA_PROG=26`, `EXTRA_*=28/29/30`, `HD720_PROG=34`) match TP exactly. Globals (`changed`, `regs`,
 `HorVer`, `timing`, `retraceCount`, …) are non-static in the retail `.o` (uppercase `B/D/T` in
 `nm`); only `IsInitialized` is local.
+
+**4. VIInit FULL_MATCH (us-80367a10, 0x548) — the retail source calls small helpers that MWCC inlines** (US, Wii/1.1).
+The 0x548 `VIInit` is 90%+ structural with the body hand-written; the last 10% (register
+allocation incl. `savegpr_24` vs `savegpr_28`) only lands when the source mirrors the retail
+helper-call structure so MWCC inlines them:
+- `HorVer.nonInter = VIGetScanMode();` — the inlined scan-mode compute keeps the `((DCR & 4) >> 2) != 0`
+  booleanize (`rlwinm …30,31,31; neg; or; srwi 31`). The `>> 2` intermediate blocks the fold; plain
+  `(x & 4) != 0` folds to a bare extract.
+- `switch (VIGetTvFormat()) { case VI_TVFORMAT_PAL: … default: … }` — inlined format switch
+  (jumptable 0→0, 1→1, 2→value, 3→0, 4→1, 5→value, 6/7/8→0) then `cmplwi` on the result.
+  The outer `switch` must be `(u32)`-cast for the unsigned compare.
+- `VIEnableDimming(TRUE); VIEnableDVDStopMotor(FALSE);` — the inlined bodies leave the "dead"
+  `lwz` of `__VIDimmingFlag_Enable` / `__VIDVDStopFlag_Enable` (a `BOOL old = flag;` read whose
+  return is discarded) plus the `li rX,1`-preload + single store. Without the helper calls these
+  loads never appear.
+- `AdjustPosition(tm->acv)` static helper with `CLAMP`/`MAX`/`MIN` macros: the macro-expanded
+  expressions make MWCC rematerialize `MIN(D,0)` 3× and `MAX(C,0)` 2× (matching retail's
+  `srawi;and` / `neg;andc;srawi;and` repeats) and `coeff = (FBMode == SF) ? 2 : 1` compiles to
+  `cntlzw; srwi 5; addi 1` (`divw` by register, not shift-divide).
+- Local decl order/types matter for the final regalloc: `u16 dspCfg; u32 value, tv, tvInBootrom;`
+  (u16 first, then the u32s) plus `CurrTiming->acv` reads (no `tm` local) landed `savegpr_24` and
+  100% — earlier variants with `u32 dspCfg`/a `tm` local stayed at ~90% with pure reg-swaps.
+- `(u16)(tm->acv << 1)` (u16 cast, no mask) emits `rlwinm rX,rX,1,16,28` (mask 0xFFF8) — the
+  retail's DispSizeY/FBSizeY/PanSizeY encoding; `& 0x7FFF` gives a different mask (17,30).
 
 ## RVL BTE btm_acl (GC/3.0a5.2, `-func_align 4`) — 8× FULL/EQUIVALENT match, loop-layout notes (US)
 

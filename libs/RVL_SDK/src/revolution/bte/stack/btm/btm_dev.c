@@ -282,14 +282,14 @@ BtmSecDevRec *btm_find_oldest_dev(void)
 {
     BtmSecDevRec *p_rec;
     BtmSecDevRec *p_oldest;
-    int i;
     u32 oldest_ts;
+    int i;
 
     p_rec    = btm_cb.sec_dev_rec;
     p_oldest = btm_cb.sec_dev_rec;
     oldest_ts = 0xFFFFFFFF;
 
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++, p_rec++)
     {
         if ((p_rec->sec_flags & BTM_SEC_IN_USE) &&
             !(p_rec->sec_flags & BTM_SEC_LINK_KEY_KNOWN) &&
@@ -298,7 +298,6 @@ BtmSecDevRec *btm_find_oldest_dev(void)
             p_oldest  = p_rec;
             oldest_ts = p_rec->timestamp;
         }
-        p_rec++;
     }
 
     if ((oldest_ts + 0x10000) != 0xFFFF)
@@ -306,7 +305,7 @@ BtmSecDevRec *btm_find_oldest_dev(void)
 
     /* Second pass: include keep-flagged devices */
     p_rec = btm_cb.sec_dev_rec;
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++, p_rec++)
     {
         if ((p_rec->sec_flags & BTM_SEC_IN_USE) &&
             p_rec->timestamp < oldest_ts)
@@ -314,7 +313,6 @@ BtmSecDevRec *btm_find_oldest_dev(void)
             p_oldest  = p_rec;
             oldest_ts = p_rec->timestamp;
         }
-        p_rec++;
     }
 
     return p_oldest;

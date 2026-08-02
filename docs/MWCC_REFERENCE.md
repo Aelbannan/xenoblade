@@ -833,6 +833,15 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 - `ArcResourceAccessor::~ArcResourceAccessor` (us-80325c80, emitted in HBMBase TU): a **virtual** dtor (vtable slot 8) with an **empty body** reproduces the whole retail sequence — `cmpwi this; beq` guard, `addic. r3,r3,0x24; beq` null-checked `LinkListImpl` member dtor call (`li r4,0`), base `ResourceAccessor` dtor call, then `cmpwi flag; ble; bl __dl__FPv`. Declare `virtual ~ArcResourceAccessor();` in lyt_arcResourceAccessor.h (key function stays GetResource in lyt_arcResourceAccessor.cpp; the vtable already points at this TU's dtor in retail).
 - `MIXSetPan` (us-8034e120): clamp `[0, 0x7F]` must write a **temp** (`s32 p` with `if/else-if/else`) not the param — assigning the param directly makes MWCC keep the value in r4 and emit branch-stores; the temp produces retail's single merged `stw r0, 0x18(r31)` (ch->panL).
 
+### RVL_SDK os/OSLaunch.c — `__OSRelaunchTitle` FULL_MATCH (us-80361eb0, Wii/1.1 `-O4,p`)
+
+Went 92% HIGH_MATCH (110 structural) → 100% byte-identical via four source-shape fixes:
+
+- **Stack-slot 0x20 alignment**: retail placed `ESTitleId titleId` at sp+0x40 and `OSStateFlags state` at sp+0x60 (frame 0xA0, stwux prologue). Declaring both locals `__attribute__((aligned(32)))` reproduces the exact slot layout + frame (same trick esp.c uses with `ALIGN(32)`). No flag/version (Wii/1.1 vs GC/3.0a3.4) reproduces it without the attribute.
+- **u64 struct member copy**: retail's `lwz r0,0x40(r1); lwz r3,0x44(r1); stw r3,0x1c(r30); stw r0,0x18(r30)` is an 8-byte member copy — use `NANDBootInfo.titleId` as `ESTitleId` and assign `bootInfo->titleId = titleId;` (NOT two separate hi/lo u32 assignments, which emit load-store-load-store).
+- **Pointer-NULL cast form**: `if (x == NULL)` emits `cmpwi rX, 0`; the retail `li r0,0; cmplw rX,r0` needs the explicit cast `if (x == (ESTicketView*)NULL)` / `(void*)NULL` (same shape as esp.c `ESP_GetTitleId`).
+- **Store vs call-arg scheduling**: `state.BYTE_0x5 = 3; __OSWriteStateFlags(&state);` hoists the `addi r3,sp,0x60` call-arg before the `stb`; the pointer-form lvalue `(&state)->BYTE_0x5 = 3;` (or `((u8*)&state)[5] = 3`) emits retail's `stb; addi; bl` order. `-ipa off`, `-O4,s`, `-func_align 4`, and GC/3.0a3.4 all leave the swap unchanged.
+
 ### RVL_SDK hbm/HBMBase.cpp — HomeButton retail layout vs ogws donor header (Wii/1.1 `-O4,p`)
 
 `getSelectBtnNum` (us-8032db80) and `setAdjustFlag` (us-8032dba0) were stuck at `CODE_MATCH` with 1–2 byte diffs that were pure **class-layout drift**, not codegen. The retail `homebutton::HomeButton` differs from the ogws donor header by three extra members + one removed pad:

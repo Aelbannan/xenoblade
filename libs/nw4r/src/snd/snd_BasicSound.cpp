@@ -529,6 +529,11 @@ void BasicSound::DetachSoundPlayer(SoundPlayer* pPlayer) {
     mSoundPlayer = NULL;
 }
 
+void BasicSound::DetachExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer) {
+    (void)pExtPlayer;
+    *(ExternalSoundPlayer**)((u8*)this + 0x18) = NULL;
+}
+
 bool BasicSound::IsAttachedGeneralHandle() {
     return mGeneralHandle != NULL;
 }

@@ -6174,3 +6174,35 @@ difference.
    `p = syn->midiWritePtr + 1; syn->midiWritePtr = p;` (a fresh load, then
    add/store) rather than `p++` — that is what produces the retail reload
    `lwz; addi; stw` shape.
+
+## RVL_SDK hbm/nw4hbm ut_TextWriterBase — Print/CalcLineWidth 3× FULL_MATCH: old-SDK PrintImpl is 2-arg (US, Wii/1.1 mwcc_43_151 `-O4,p`)
+
+`Print(const T*, int)` (us-8033dcb0 `<c>`, us-80340670 `<w>`) and
+`CalcLineWidth(const T*, int)` (us-8033e000 `<c>`) hit 100% static in
+`libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp`.
+
+1. **nw4hbm `PrintImpl` takes only `(const T*, int)` — no `bool bMutable`.**
+   The newer `nw4r` SDK header mangles `PrintImpl<...>FPCwib` and declares
+   `PrintMutable`; the older `nw4hbm` binary only contains
+   `PrintImpl__Q36nw4hbm2ut17TextWriterBase<c>FPCci` / `<w>FPCwi` (0x5AC/0x5D0)
+   and **no `PrintMutable` symbol at all**. Symptom: decomp emitted the 3-arg
+   symbol `...FPCcib`, so retail PrintImpl showed as "not written yet" and
+   `Print` was 2.3% with an extra `li r6, 0` in the prologue (the bool arg)
+   shifting every instruction by 4 bytes. Fix: remove `PrintMutable` from the
+   shared header, declare `f32 PrintImpl(const T* pStr, int len);`, drop the
+   `else if (bMutable)` tail branch (retail tail is just
+   `SetCursorY(orgCursorY)` vs `MoveCursorY(cursorYAdj)`). All three Print/VPrintf
+   family functions then went to 100%.
+
+2. **`Print` clone is a plain memberwise copy — no ctor call.** Retail
+   `Print` copies the full 0x60-byte object to a stack local with
+   `lwz/stw` pairs (fields interleaved as `lwz r6, 0x24; lwz r0, 0x28;
+   stw r0, 0x30; stw r6, 0x2c` — MWCC's own copy-codegen for the 13-word
+   block), calls `clone.PrintImpl(pStr, len)` (r4/r5 pass through untouched),
+   then `SetCursor(clone.GetCursorX(), clone.GetCursorY())` — retail evaluates
+   `GetCursorY` first (saved in f31), then `GetCursorX` into f1 — and destroys
+   the clone by calling `__dt__Q36nw4hbm2ut10CharWriterFv` directly (empty
+   inlined `~TextWriterBase`). Write exactly
+   `TextWriterBase<T> clone(*this); f32 w = clone.PrintImpl(pStr, len);
+   SetCursor(clone.GetCursorX(), clone.GetCursorY()); return w;` — the
+   clone-copy codegen and destructor selection match byte-for-byte.

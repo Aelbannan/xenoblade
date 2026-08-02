@@ -89,7 +89,6 @@ public:
     static int StrLen(const T* pStr);
     f32 VPrintf(const T* pStr, std::va_list args);
     f32 Print(const T* pStr, int len);
-    f32 PrintMutable(const T* pStr, int len);
 
     static T* GetBuffer();
     static T* SetBuffer(T* pBuffer, u32 size);
@@ -112,7 +111,7 @@ private:
     int CalcLineRectImpl(Rect* pRect, const T* pStr, int len);
     void CalcStringRectImpl(Rect* pRect, const T* pStr, int len);
 
-    f32 PrintImpl(const T* pStr, int len, bool bMutable);
+    f32 PrintImpl(const T* pStr, int len);
     f32 AdjustCursor(f32* pX, f32* pY, const T* pStr, int len);
 
 private:

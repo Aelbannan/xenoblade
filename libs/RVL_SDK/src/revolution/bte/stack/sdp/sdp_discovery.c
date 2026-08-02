@@ -20,6 +20,8 @@ extern UINT8 *sdpu_get_len_from_type(UINT8 *p, UINT8 type, UINT32 *p_len);
 extern BOOLEAN sdpu_is_base_uuid(UINT8 *p_uuid);
 extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
 extern void LogMsg_1(UINT32 trace_set_mask, const char *p_str, UINT32 p1);
+extern void LogMsg_2(UINT32 trace_set_mask, const char *p_str, UINT16 p1,
+                    UINT16 p2);
 
 /* Timer list entry (see gki.h); sizeof == 0x18. */
 typedef struct _tle {
@@ -34,6 +36,14 @@ typedef struct _tle {
 
 /* Service Search Request PDU id (BT core spec, SDP protocol). */
 #define SDP_SVC_SEARCH_REQ 2
+
+/* Response PDU ids dispatched by sdp_disc_server_rsp. */
+#define SDP_PDU_SERVICE_SEARCH_RSP      3
+#define SDP_PDU_SERVICE_ATTR_RSP        5
+#define SDP_PDU_SERVICE_SEARCH_ATTR_RSP 7
+
+/* Maximum continuation state length in a response PDU. */
+#define SDP_MAX_CONTINUATION_LEN    16
 
 /* sdp_disconnect() reason code used when no buffer can be allocated. */
 #define SDP_DISC_ERR_NO_RESOURCES 6
@@ -73,7 +83,7 @@ typedef struct
     UINT16          rem_mtu_size;                           // 0x020
     UINT16          connection_id;                          // 0x022
     UINT16          list_len;                               // 0x024
-    UINT8           _pad_rsp[0x3e8];                        // 0x026 scratchpad buffer
+    UINT8           rsp_list[0x3e8];                        // 0x026 scratchpad buffer
     UINT16          _pad_align;                             // 0x40e
     tSDP_DISCOVERY_DB *p_db;                                // 0x410
     tSDP_DISC_CMPL_CB *p_cb;                                // 0x414
@@ -99,7 +109,9 @@ typedef struct
     UINT32          mem_size;                               // 0x00
     UINT32          mem_free;                               // 0x04
     tSDP_DISC_REC   *p_first_rec;                           // 0x08
-    UINT8           _pad[0x5c];                             // 0x0c (uuid_filters + num_attr_filters + attr_filters)
+    UINT8           _pad[0x40];                             // 0x0c (num_uuid_filters + uuid_filters)
+    UINT16          num_attr_filters;                       // 0x4c
+    UINT16          attr_filters[13];                       // 0x4e (retail SDP_MAX_ATTR_FILTERS = 13)
     UINT8           *p_free_mem;                            // 0x68 in the retail build
 } tSDP_DISC_DB;
 
@@ -108,10 +120,15 @@ typedef struct
 /* ------------------------------------------------------------------------- */
 
 void sdp_snd_service_search_req(tCONN_CB *p_ccb, UINT8 cont_len, UINT8 *p_cont);
+void process_service_search_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len);
+void process_service_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len);
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len);
+UINT8 *sdpu_build_attrib_seq(UINT8 *p_out, UINT16 *p_attr, UINT16 num_attrs);
+UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end);
 
 /* Externals from sdp_main.c / GKI / L2CAP. */
 extern void sdp_disconnect(tCONN_CB *p_ccb, UINT16 reason);
+extern void btu_stop_timer(void *p_tle);
 extern void *GKI_getpoolbuf(UINT8 pool_id);
 extern BOOLEAN L2CA_DataWrite(UINT16 cid, BT_HDR *p_data);
 extern void btu_start_timer(TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout);
@@ -277,11 +294,204 @@ void sdp_snd_service_search_req(tCONN_CB *p_ccb, UINT8 cont_len, UINT8 *p_cont)
     btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_SDP_M2, SDP_M2_TIMEOUT);
 }
 
-void sdp_disc_server_rsp(tCONN_CB *p_ccb, BT_HDR *p_msg) {}
+/* Called by the SDP main state machine when a response PDU arrives on the
+   discovery channel. Stops the SDP M2 timer, then dispatches on the PDU id
+   to the handler matching the current discovery state. Any other PDU (or a
+   handler/state mismatch) tears the connection down. */
+void sdp_disc_server_rsp(tCONN_CB *p_ccb, BT_HDR *p_msg)
+{
+    UINT32 len;
+    UINT8 pdu_id;
+    UINT8 err = TRUE;
+    UINT8 *p;
 
-void process_service_search_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len) {}
+    /* Stop the M2 timer */
+    btu_stop_timer(&p_ccb->timer_entry);
 
-void process_service_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len) {}
+    p = (UINT8 *)p_msg + p_msg->offset;
+    pdu_id = p[8];
+
+    len = p_msg->len - 1;
+    p_msg->len = len;
+
+    switch (pdu_id) {
+    case SDP_PDU_SERVICE_SEARCH_RSP:
+        if (p_ccb->disc_state == SDP_DISC_WAIT_HANDLES) {
+            process_service_search_rsp(p_ccb, p + 9, len);
+            err = FALSE;
+        }
+        break;
+
+    case SDP_PDU_SERVICE_ATTR_RSP:
+        if (p_ccb->disc_state == SDP_DISC_WAIT_ATTR) {
+            process_service_attr_rsp(p_ccb, p + 9, len);
+            err = FALSE;
+        }
+        break;
+
+    case SDP_PDU_SERVICE_SEARCH_ATTR_RSP:
+        if (p_ccb->disc_state == SDP_DISC_WAIT_SEARCH_ATTR) {
+            process_service_search_attr_rsp(p_ccb, p + 9, len);
+            err = FALSE;
+        }
+        break;
+    }
+
+    if (err) {
+        if (sdp_cb[0x4630] >= 2) {
+            LogMsg_2(0xA0001, "SDP - Unexp. PDU: %d in state: %d", pdu_id,
+                     p_ccb->disc_state);
+        }
+        sdp_disconnect(p_ccb, SDP_GENERIC_ERROR);
+    }
+}
+
+/* Parses a Service Search Response PDU body. The current record count is
+   added to the handles already gathered; the handle list is copied into the
+   connection block (capped at max_recs_per_search). A non-empty continuation
+   state re-issues the search request, otherwise the discovery moves on to the
+   attribute phase. */
+void process_service_search_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
+{
+    UINT16 num_handles;
+    UINT16 xx;
+    UINT8 *p = p_reply + 8;
+
+    /* Number of records in this response */
+    num_handles = (UINT16)((p_reply[6] << 8) + p_reply[7]);
+    xx = p_ccb->num_handles;
+    num_handles = (UINT16)(xx + num_handles);
+    p_ccb->num_handles = num_handles;
+
+    if (num_handles == 0) {
+        if (sdp_cb[0x4630] >= 2) {
+            LogMsg_0(0xA0001, "SDP - Rcvd ServiceSearchRsp, no matches");
+        }
+        sdp_disconnect(p_ccb, SDP_NO_RECS_MATCH);
+        return;
+    }
+
+    if (num_handles > SDP_CB_MAX_RECS_PER_SEARCH) {
+        p_ccb->num_handles = SDP_CB_MAX_RECS_PER_SEARCH;
+    }
+
+    /* Copy the new handles into the connection block */
+    for (; xx < p_ccb->num_handles; xx++) {
+        BE_STREAM_TO_UINT32(p_ccb->handles[xx], p);
+    }
+
+    if (*p) {
+        if (*p > SDP_MAX_CONTINUATION_LEN) {
+            sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
+            return;
+        }
+        sdp_snd_service_search_req(p_ccb, *p, p + 1);
+    } else {
+        p_ccb->disc_state = SDP_DISC_WAIT_ATTR;
+        process_service_attr_rsp(p_ccb, NULL, 0);
+    }
+}
+
+/* sdp_cb.max_attr_list_size: 16-bit field at sdp_cb+0x462C (big-endian). */
+#define SDP_CB_MAX_ATTR_LIST_SIZE (*(UINT16 *)(sdp_cb + 0x462C))
+
+/* Retail build constants (differ from the public bt_target.h/sdp_api.h, so
+ * these are redefined after #undef'ing the header values). */
+#undef SDP_MAX_LIST_BYTE_COUNT
+#undef SDP_POOL_ID
+#define SDP_MAX_LIST_BYTE_COUNT     1000
+#define SDP_MAX_CONTINUATION_LEN    16
+#define SDP_POOL_ID                 2
+#define SDP_PDU_SERVICE_ATTR_REQ    4
+#define SDP_INACT_TIMEOUT           30
+#define SDP_L2CAP_MIN_OFFSET        9  /* L2CAP_OFFSET_WO_L2HDR (retail) */
+#define BTU_TTYPE_SDP               5
+
+void process_service_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
+{
+    UINT8 *p_start;
+    UINT8 *p_param_len;
+    UINT16 param_len;
+    UINT16 list_byte_count;
+    BOOLEAN cont_request_needed = FALSE;
+
+    if (p_reply) {
+        p_reply += 4;
+
+        BE_STREAM_TO_UINT16(list_byte_count, p_reply);
+
+        if (p_ccb->list_len + list_byte_count > SDP_MAX_LIST_BYTE_COUNT) {
+            sdp_disconnect(p_ccb, SDP_INVALID_PDU_SIZE);
+            return;
+        }
+
+        memcpy(&p_ccb->rsp_list[p_ccb->list_len], p_reply, list_byte_count);
+        p_ccb->list_len += list_byte_count;
+        p_reply += list_byte_count;
+
+        if (*p_reply) {
+            if (*p_reply > SDP_MAX_CONTINUATION_LEN) {
+                sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
+                return;
+            }
+            cont_request_needed = TRUE;
+        } else {
+            if (!save_attr_seq(p_ccb, p_ccb->rsp_list, p_ccb->rsp_list + p_ccb->list_len)) {
+                sdp_disconnect(p_ccb, SDP_DB_FULL);
+                return;
+            }
+            p_ccb->list_len = 0;
+            p_ccb->cur_handle++;
+        }
+    }
+
+    if (p_ccb->cur_handle < p_ccb->num_handles) {
+        BT_HDR *p_msg = (BT_HDR *)GKI_getpoolbuf(SDP_POOL_ID);
+        UINT8 *p;
+
+        if (!p_msg) {
+            sdp_disconnect(p_ccb, SDP_NO_RESOURCES);
+            return;
+        }
+
+        p_msg->offset = SDP_L2CAP_MIN_OFFSET;
+        p = p_start = (UINT8 *)(p_msg + 1) + SDP_L2CAP_MIN_OFFSET;
+
+        UINT8_TO_BE_STREAM(p, SDP_PDU_SERVICE_ATTR_REQ);
+        UINT16_TO_BE_STREAM(p, p_ccb->transaction_id);
+        p_ccb->transaction_id++;
+
+        p_param_len = p;
+        p += 2;
+
+        UINT32_TO_BE_STREAM(p, p_ccb->handles[p_ccb->cur_handle]);
+        UINT16_TO_BE_STREAM(p, SDP_CB_MAX_ATTR_LIST_SIZE);
+
+        if (p_ccb->p_db->num_attr_filters)
+            p = sdpu_build_attrib_seq(p, p_ccb->p_db->attr_filters,
+                                      p_ccb->p_db->num_attr_filters);
+        else
+            p = sdpu_build_attrib_seq(p, NULL, 0);
+
+        if (cont_request_needed) {
+            memcpy(p, p_reply, *p_reply + 1);
+            p += *p_reply + 1;
+        } else {
+            UINT8_TO_BE_STREAM(p, 0);
+        }
+
+        param_len = (UINT16)(p - p_param_len - 2);
+        UINT16_TO_BE_STREAM(p_param_len, param_len);
+
+        p_msg->len = (UINT16)(p - p_start);
+
+        L2CA_DataWrite(p_ccb->connection_id, p_msg);
+
+        btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_SDP, SDP_INACT_TIMEOUT);
+    } else {
+        sdp_disconnect(p_ccb, SDP_SUCCESS);
+    }
+}
 
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len) {}
 

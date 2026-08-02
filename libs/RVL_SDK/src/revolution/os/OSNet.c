@@ -23,12 +23,41 @@ static s32 NWC24iCloseResourceManager_(const char* funcName, s32 fd);
 static s32 NWC24iCloseResourceManagerAsync_(const char* funcName, s32 fd, void* callbackArg);
 static s32 CheckCallingStatus(const char* funcName);
 
+void __OSInitNet(void) {
+    s32 error;
+    OSIOSRev rev;
+
+    __OSGetIOSRev(&rev);
+
+    if (rev.idLo <= 4 || rev.idLo == 9) {
+        return;
+    }
+
+    error = NWC24iPrepareShutdown();
+    if (error != 0) {
+        if (error < 0) {
+            OSReport("Failed to register network shutdown function. %d\n", error);
+        }
+        error = NWC24SuspendScheduler();
+        if (error < 0) {
+            OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
+        }
+    }
+
+    if (!__OSInIPL) {
+        error = NWC24iSynchronizeRtcCounter(FALSE);
+        if (error != 0) {
+            OSReport("Failed to synchronize time with network resource managers. %d\n", error);
+        }
+    }
+}
+
 #pragma push
 #pragma auto_inline off
 
 NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     s32 result;
-    
+
     result = 0;
     ShutdownFuncInfo.func = NWC24Shutdown_;
     ShutdownFuncInfo.prio = 0x6e;
@@ -77,6 +106,7 @@ check_result:
 }
 
 s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
+    extern char lbl_8055EDF0[]; /* "/dev/net/kd/request" */
     s32 result;
     s32 fd;
     static s32 susResult[8] ALIGN(32);
@@ -86,7 +116,7 @@ s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
         return result;
     }
 
-    fd = IOS_Open("/dev/net/kd/request", IPC_OPEN_NONE);
+    fd = IOS_Open(lbl_8055EDF0, IPC_OPEN_NONE);
     if (fd < 0) {
         result = (fd == -6) ? -29 : -42;
     } else {
@@ -140,6 +170,7 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
 static BOOL NWC24iIsAsyncRequestPending_();
 
 static BOOL NWC24Shutdown_(BOOL final, u32 event){
+    extern char lbl_8055EE4C[]; /* "NWC24Shutdown_: Give up!\n" */
     static BOOL shuttingdown = FALSE;
     static NWC24Err result = NWC24_OK;
 
@@ -161,7 +192,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
             shuttingdown = FALSE;
             nwc24ShtRetryRest--;
         } else {
-            OSReport("NWC24Shutdown_: Give up!\n");
+            OSReport(lbl_8055EE4C);
             return TRUE;
         }
     } else {
@@ -176,6 +207,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
 
 //unused
 s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
+    extern char lbl_8055EE80[]; /* "/dev/net/kd/time" */
     s32 result;
     s32 fd;
 
@@ -184,7 +216,7 @@ s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
         return result;
     }
 
-    fd = IOS_Open("/dev/net/kd/time", IPC_OPEN_NONE);
+    fd = IOS_Open(lbl_8055EE80, IPC_OPEN_NONE);
     if (fd < 0) {
         result = (fd == -6) ? -29 : -42;
     } else {
@@ -284,32 +316,3 @@ static s32 CheckCallingStatus(const char* funcName){
 NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
 s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
 NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
-
-void __OSInitNet(void) {
-    s32 error;
-    OSIOSRev rev;
-
-    __OSGetIOSRev(&rev);
-
-    if (rev.idLo <= 4 || rev.idLo == 9) {
-        return;
-    }
-
-    error = NWC24iPrepareShutdown();
-    if (error != 0) {
-        if (error < 0) {
-            OSReport("Failed to register network shutdown function. %d\n", error);
-        }
-        error = NWC24SuspendScheduler();
-        if (error < 0) {
-            OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
-        }
-    }
-
-    if (!__OSInIPL) {
-        error = NWC24iSynchronizeRtcCounter(FALSE);
-        if (error != 0) {
-            OSReport("Failed to synchronize time with network resource managers. %d\n", error);
-        }
-    }
-}

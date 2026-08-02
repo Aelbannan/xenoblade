@@ -97,7 +97,21 @@ const char* AnmObjChrRes::GetTypeName() const {
 } // namespace g3d
 } // namespace nw4r
 
-void Release__Q34nw4r3g3d9AnmObjChrFv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjChr::Release() {
+    for (int i = 0; i < mNumBinding; i++) {
+        mpBinding[i] = BINDING_UNDEFINED;
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, false);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
 
@@ -110,9 +124,20 @@ float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
 
 void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
 
-void __dt__Q34nw4r3g3d9AnmObjChrFv(){}
 
-void __dt__Q34nw4r3g3d13AnmObjChrNodeFv(){}
+namespace nw4r {
+namespace g3d {
+
+AnmObjChrNode::~AnmObjChrNode() {
+    if (this != NULL) {
+        DetachAll();
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void Attach__Q34nw4r3g3d13AnmObjChrNodeFiPQ34nw4r3g3d12AnmObjChrRes(){}
 
@@ -193,7 +218,28 @@ void GetResult__Q34nw4r3g3d14AnmObjChrBlendFPQ34nw4r3g3d12ChrAnmResultUl(){}
 
 void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(){}
 
-void SetFrame__Q34nw4r3g3d12AnmObjChrResFf(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjChrRes::SetFrame(f32 frame) {
+    SetFrm(frame);
+
+    if (mpResultCache != NULL) {
+        f32 f = frame;
+        for (u32 i = 0; i < (u32)mNumBinding; i++) {
+            u16 binding = mpBinding[i];
+            if (!(binding & BINDING_UNDEFINED)) {
+                u32 id = binding & BINDING_ID_MASK;
+                mRes.GetAnmResult(&mpResultCache[id], id, f);
+            }
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf(){}
 

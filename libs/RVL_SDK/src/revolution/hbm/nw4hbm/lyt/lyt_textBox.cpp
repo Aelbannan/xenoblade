@@ -180,7 +180,13 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
     }
 }
 
-void TextBox::Init(u16 len) {
+// NOTE: Init/GetTextDrawRect/GetFont/SetFont/GetTextMagH/GetTextMagV/
+// MakeDrawFlag/GetStringBufferLength are NOT standalone retail symbols in the
+// nw4hbm (HBM) TextBox unit - the retail build only emits the 16 functions
+// listed in the split. They are kept here as inline definitions so MWCC folds
+// them into their single call sites (ctor, dtor, SetString, DrawSelf) and emits
+// no out-of-line copies, keeping the unit's .text within the retail budget.
+inline void TextBox::Init(u16 len) {
     mTextBuf = NULL;
     mTextBufBytes = 0;
     mTextLen = 0;
@@ -241,7 +247,7 @@ void TextBox::SetVtxColorElement(u32 idx, u8 value) {
         value;
 }
 
-ut::Rect TextBox::GetTextDrawRect(const DrawInfo& rInfo) const {
+inline ut::Rect TextBox::GetTextDrawRect(const DrawInfo& rInfo) const {
     ut::WideTextWriter writer;
     ut::Rect rect = GetTextDrawRect(&writer);
 
@@ -275,7 +281,7 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
                                           : ut::CharWriter::GRADMODE_NONE);
     writer.SetTextColor(top, bottom);
 
-    // Clamp TEV colors (GXColorS10 s16→u8) for color mapping
+    // Clamp TEV colors (GXColorS10 s16->u8) for color mapping
     GXColorS10 tev0 = mpMaterial->GetTevColor(TEVCOLOR_REG0);
     GXColorS10 tev1 = mpMaterial->GetTevColor(TEVCOLOR_REG1);
 
@@ -394,7 +400,7 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     }
 }
 
-u16 TextBox::GetStringBufferLength() const {
+inline u16 TextBox::GetStringBufferLength() const {
     if (mTextBufBytes == 0) {
         return 0;
     }
@@ -453,11 +459,11 @@ u16 TextBox::SetString(const wchar_t* pStr, u16 pos, u16 len) {
     return chars;
 }
 
-const ut::Font* TextBox::GetFont() const {
+inline const ut::Font* TextBox::GetFont() const {
     return mpFont;
 }
 
-void TextBox::SetFont(const ut::Font* pFont) {
+inline void TextBox::SetFont(const ut::Font* pFont) {
     if (mBits.bAllocFont) {
         mpFont->~Font();
         Layout::FreeMemory(const_cast<ut::Font*>(mpFont));
@@ -474,7 +480,7 @@ void TextBox::SetFont(const ut::Font* pFont) {
     }
 }
 
-ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
+inline ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
     ut::Rect rect;
 
     pWriter->SetCursor(0.0f, 0.0f);
@@ -500,7 +506,7 @@ ut::Rect TextBox::GetTextDrawRect(ut::WideTextWriter* pWriter) const {
     return rect;
 }
 
-f32 TextBox::GetTextMagH() const {
+inline f32 TextBox::GetTextMagH() const {
     f32 mag = 0.0f;
 
     switch (GetTextPositionH()) {
@@ -524,7 +530,7 @@ f32 TextBox::GetTextMagH() const {
     return mag;
 }
 
-f32 TextBox::GetTextMagV() const {
+inline f32 TextBox::GetTextMagV() const {
     f32 mag = 0.0f;
 
     switch (GetTextPositionV()) {
@@ -548,7 +554,7 @@ f32 TextBox::GetTextMagV() const {
     return mag;
 }
 
-u32 TextBox::MakeDrawFlag() const {
+inline u32 TextBox::MakeDrawFlag() const {
     u32 flag = 0;
 
     switch (GetTextPositionH()) {

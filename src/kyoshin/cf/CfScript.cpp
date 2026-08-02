@@ -42,6 +42,7 @@ namespace cf {
 
 // Forward declarations for functions in this TU
 void func_80068A30(char* dest, const char* src);
+void func_80068B58(CfScriptManager* mgr, const char* name);
 void func_80068ECC(CfScript* script, const char* name);
 void func_80068E7C(CfScriptManager* mgr, int index, int mask);
 

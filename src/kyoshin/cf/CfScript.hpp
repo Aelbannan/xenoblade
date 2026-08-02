@@ -12,6 +12,7 @@ class CfScript {
     friend class CfScriptManager;
 public:
     // 0x00: vtable pointer
+    CfScript();
     virtual ~CfScript();
 
     // 0x04: u8 name buffer (inline, up to 0x40 bytes)

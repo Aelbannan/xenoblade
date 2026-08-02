@@ -18,6 +18,6 @@ struct ResContainer {
     u8* findResEntry(u32 id, u32* outIndex, u32* outValue);
 };
 
-char* getEntryPtrGrid(char* self, int a, int b);
+extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 void clearWordFlag(u32* self, u32 mask);
 bool testResInfoFlag(u32 flags);

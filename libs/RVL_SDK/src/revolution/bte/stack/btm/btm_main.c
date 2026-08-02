@@ -3,10 +3,12 @@
 
 #include <string.h>
 
+/* btm_cb: retail .bss at 0x805BC2F8 (0x27C4 bytes) - owned by this TU's
+   .bss split; referenced as `extern BtmCb btm_cb` from the other btm TUs. */
+unsigned char btm_cb[0x27C4];
+
 void btm_init()
 {
-    extern unsigned char btm_cb[];
-    
     memset(btm_cb, 0, 0x27C4);
     btm_cb[0x27C0] = 0;
     btm_inq_db_init();

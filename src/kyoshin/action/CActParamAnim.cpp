@@ -671,7 +671,7 @@ void func_80052780(void* self, void* src){
 
 extern "C" void* func_800527B0(void* self, const void* a, const void* b) {
     extern void PSVECCrossProduct(const void*, const void*, void*);
-    PSVECCrossProduct(self, b, a);
+    PSVECCrossProduct(self, b, (void*)a);
     return (void*)a;
 }
 

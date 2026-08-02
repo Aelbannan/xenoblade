@@ -51,7 +51,10 @@ typedef struct {
     UINT8           trace_level;                     /* +0x141 */
 } tHIDD_CB;
 
-extern tHIDD_CB hd_cb;
+/* hd_cb - HID device control block; retail .bss at 0x805BEE70 (0x144
+   bytes). Defined here because this TU owns the .bss split; the other
+   hidd_* TUs reference it via their own `extern tHIDD_CB hd_cb`. */
+tHIDD_CB hd_cb;
 
 /* ------------------------------------------------------------------ */
 /*  Trace constants from bt_types.h.                                   */

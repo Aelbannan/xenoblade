@@ -84,7 +84,7 @@ extern MPFDrawMdlData* lbl_eu_80665860;          // last draw data handed to the
 // TEV / texture pipeline helpers implemented by mpfsys::UnkClass_80471EC8.
 // Retail mangles them as Fv members but they are invoked with the arguments
 // below (see the dispatch comment at the top of this file).
-void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(u16 texIdx, const MPFDrawMdlMat* mat, f32 lodBias);
+void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(u16 texIdx, const MPFDrawMdlMat* mat, f32 lodBias);
 void func_804743E0__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void func_804744EC__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void func_8047466C__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -164,7 +164,7 @@ extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
             } else {
                 func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
             GXCallDisplayList(lbl_eu_80665840 + poly->dlOff, poly->dlSize);
@@ -217,7 +217,7 @@ extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
             } else {
                 func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
             GXCallDisplayList(lbl_eu_80665840 + poly->dlOff, poly->dlSize);
@@ -273,7 +273,7 @@ extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
             } else {
                 func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_CLR0, lbl_eu_80665840 + poly->clrOff, 3);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);
@@ -327,7 +327,7 @@ extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
             } else {
                 func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
             }
-            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
+            func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(mats[poly->matIdx].texIdx, &mats[poly->matIdx], mats[poly->matIdx].lodBias);
             GXSetArray(GX_VA_POS, lbl_eu_80665840 + poly->posOff, 12);
             GXSetArray(GX_VA_CLR0, lbl_eu_80665840 + poly->clrOff, 3);
             GXSetArray(GX_VA_TEX0, lbl_eu_80665840 + poly->texOff, 8);

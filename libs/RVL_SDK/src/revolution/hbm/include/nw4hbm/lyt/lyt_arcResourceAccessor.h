@@ -56,7 +56,10 @@ public:
 public:
     ArcResourceAccessor();
 
-    virtual ~ArcResourceAccessor(); // at 0x8
+    // Inline: retail keeps the dtor out-of-line in HBMBase.o (strong), so the
+    // vt is emitted here via GetResource with a weak dtor copy that the linker
+    // overrides - matching retail's split (vt in this TU, dtor in HBMBase).
+    virtual ~ArcResourceAccessor() {}
 
     virtual void* GetResource(u32 type, const char* pName,
                               u32* pSize); // at 0xC

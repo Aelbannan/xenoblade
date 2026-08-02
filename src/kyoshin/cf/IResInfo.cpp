@@ -857,9 +857,9 @@ extern "C" void func_80068358(void* self) {
         CfRes_orBits_649B4(self, 1);
     }
     
-    if (testWordFlag(self, 1)) {
+    if (testWordFlag((const u32*)self, 1)) {
         func_800686E4(self, flag2);
-        clearWordFlag(self, 2);
+        clearWordFlag((u32*)self, 2);
     }
 }
 

@@ -6287,3 +6287,68 @@ difference.
    `OSRestoreInterrupts(OSDisableInterrupts())` nests both bl's back-to-back
    BEFORE the list stores, which does not match retail's disable-stores-restore
    order.
+
+## nw4r g3d RTTI (GetTypeObj/GetTypeName/IsDerivedFrom) — out-of-line members against retail lbl TYPE_NAME data (32 targets matched)
+
+The nw4r g3d RTTI macros (`g3d_rtti.h`) originally defined
+`GetTypeObj`/`GetTypeObjStatic`/`GetTypeName`/`IsDerivedFrom` **inline** in the
+class header, referencing a `static TYPE_NAME` member. Retail emits most of
+them **out-of-line** (vtable slots / standalone symbols), and every reference
+to the decomp's `TYPE_NAME__Q34nw4r3g3d6Xxx` static produced **reloc name
+drift** against the retail `lbl_eu_8051Dxxx` data symbol — blocking all RTTI
+functions even at hexdiff mm=0.
+
+### What does NOT work
+- **Static reference member bound to the lbl symbol**
+  (`static const ResNameDataT<N>& TYPE_NAME = lbl_eu_...;`) — MWCC 3.0a5.2
+  materialises static reference members as **stored pointers in .data**, so
+  `TypeObj(TYPE_NAME)` takes the address *of the pointer*, not the lbl.
+  Also `sizeof("X")` in MWCC is **strlen** (7 for "G3dObj"), not 8 — a
+  literal `ResNameDataT<8>` mismatches the class's `ResNameDataT<7>` decl.
+- **Inline recursion** (`return other == GetTypeObjStatic() ? true : BASE::IsDerivedFrom(other);`)
+  only unrolls the ancestor chain when every class's body is in the **same TU**
+  (`-ipa file` is intra-file); g3d classes span TUs, so it emits a call.
+
+### The fix (proven, 23 FULL_MATCH + 9 EQUIVALENT_MATCH)
+1. `g3d_rtti.h`: `GetTypeObj`/`GetTypeName`/`IsDerivedFrom` become
+   **declarations** (keep `GetTypeObjStatic` inline; nothing calls it, so it is
+   never emitted and its mangled `TYPE_NAME` reference never leaks).
+2. Per class TU, define the members out-of-line referencing the retail data
+   symbol directly:
+   ```cpp
+   extern "C" const G3dObj::ResNameDataT<sizeof("AnmObjMatClr")> lbl_eu_8051D530 =
+       {sizeof("AnmObjMatClr"), "AnmObjMatClr"};
+   bool AnmObjMatClr::IsDerivedFrom(G3dObj::TypeObj other) const {
+       return other == TypeObj(lbl_eu_8051D530) ? true
+            : other == TypeObj(lbl_eu_8051D650) ? true
+            : (other == TypeObj(lbl_eu_8051D640));
+   }
+   const G3dObj::TypeObj AnmObjMatClr::GetTypeObj() const { return TypeObj(lbl_eu_8051D530); }
+   const char* AnmObjMatClr::GetTypeName() const { return GetTypeObj().GetTypeName(); }
+   ```
+   - `sizeof("X")` in the template arg **must** match the class declaration
+     (use `sizeof(#T)`, i.e. strlen under MWCC — NOT `strlen+1`).
+   - The IsDerivedFrom chain is the **fully unrolled ancestor list**
+     (self, parent, grandparent, ..., G3dObj), extracted from the retail asm.
+     The `?:` chain form matches the branch shape (each link: `cmplw; bne;
+     li r3,1; blr`, tail uses the `subf/cntlzw/srwi` idiom).
+   - `IsDerivedFrom(G3dObj::TypeObj other)` — parameter types in out-of-class
+     member definitions must be **qualified** (`G3dObj::TypeObj`); bare
+     `TypeObj` fails on MWCC for inherited nested types.
+3. Remove the old raw `void IsDerivedFrom__...(){}` / `extern "C" void*
+   GetTypeObj__...` stubs in each TU (they double-mangle or shadow).
+
+### Residual notes
+- MWCC **CSEs** the `other.mName` reload (`lwz r0, 0(r4)`) across the chain;
+  retail reloads per link. The result is pure redundant-load CSE (4 bytes per
+  extra link) — **SMT-certifiable as EQUIVALENT_MATCH** (leaf, no indirect
+  calls; certified in seconds).
+- One exception: `AnmObjChrBlend::IsDerivedFrom` retail computes its own
+  TYPE_NAME as `lbl_eu_8051D5C0 + 0x24` (base-relative CSE), which the SMT
+  probe rejects (register-variant model) — parked.
+- Classes only forward-declared (`AnmScnRes`, `ScnMdlExpand`) need a minimal
+  class body (dtor + RTTI macro) before the out-of-line definitions compile.
+- Unit budget: the RTTI block is ~0x50-0xC0 per class. `g3d_scnobj`
+  (1464B pre-existing bloat: `ScnGroup_G3DPROC_*` helpers retail inlines) and
+  `g3d_scnproc` (56B: orphan `~ScnLeaf` weak copy from inline-dtor
+  materialisation) stay over budget — their RTTI targets are parked.

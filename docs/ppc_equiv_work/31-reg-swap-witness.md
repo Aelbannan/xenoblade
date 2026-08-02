@@ -153,3 +153,104 @@ initial state*, not operand rewriting.
 - Use `tools/coop/hexdiff.py` (or `run.py harness`) for verification; hexdiff
   holds the repo-wide build lock and is safe for concurrent agents. Do not run
   `ninja`/`configure.py` directly except when hexdiff cannot express the op.
+
+---
+
+## 5. Expansion B: region-sliced (position-dependent) rho — soundness theorem
+
+**Status: implemented** (witness_expansion_plan rev 5, 2026-08-03). The global
+single-bijection witness rejects pairs whose register correspondence is not one
+consistent bijection across the whole function — MWCC's *local*
+register-allocation differences (a temp lives in r5 in one region and r4 in
+another). Expansion B splits the stream into regions with a consistent bijection
+each, rebinds the shared symbolic variables at region boundaries, and compares
+each terminal under its exit region's rho.
+
+### Soundness formulation (mandatory)
+
+The invariant is **one shared symbolic variable per (value, live range)** —
+never "(register, range)". A live range of retail `r_i` is a maximal interval
+where its value flows without an intervening def; two ranges of the same
+register are value-disjoint (the first's value dies before the second begins).
+Rebinding at a region boundary from `rho_k` to `rho_{k+1}` is sound iff every
+changed binding is **dead on both sides at the boundary**:
+
+- **Retail direction:** for every retail `r` with `rho_k(r) ≠ rho_{k+1}(r)`,
+  the old decomp lane `rho_k(r)` must be dead.
+- **Decomp direction:** for every decomp `d` with
+  `rho_k^{-1}(d) ≠ rho_{k+1}^{-1}(d)`, the old retail lane `rho_k^{-1}(d)` must
+  be dead.
+
+The implementation uses the equivalent **four-lane rule** per changed lane (the
+two directions are exact duals): retail `r`, old decomp `rho_k(r)`, new decomp
+`rho_{k+1}(r)`, and the retail lane `rho_k^{-1}(rho_{k+1}(r))` whose value the
+new decomp lane previously carried — all dead. The round-2 stale-lane
+counterexample (`rho_k(i)=j`, `rho_{k+1}(i')=j` with `i≠i'`, stale decomp lane
+`m = rho_k(i')`) is exactly the fourth lane. Coverage proof: every changed
+binding is a mapping-change for some retail `r` iff it is a preimage-change for
+`d = rho(r)`; no binding change escapes both directions (round-4 review).
+
+Liveness is a **backwards dataflow fixpoint over the real CFG**
+(`_cfg_liveness`), not the straight-line approximation — the straight-line
+version ignores branches and would report loop-carried values dead, making the
+boundary deadness assertion unsound. Unknown opcodes over-approximate use+def
+of all GPR/FPR/PS1. PS1 lanes are defined by scalar-s FP arithmetic
+(`_FP_SINGLE_ARITH`, semantics.py:2116), single-precision FP loads
+(`lfs`/`lfsu`/`lfsx`/`lfsux`, semantics.py:3613), and `ps_*` ops.
+
+### Masking (terminal comparison)
+
+`_terminals_agree` compares all 32 GPR/FPR/PS1 lanes, memory, LR, CR/XER/FPSCR,
+and non-register state. Region-sliced execution rebinds changed lanes to fresh
+shared variables; a lane dead at the exit may hold a divergent fresh variable
+and is **masked only by the per-exit live-out set**. This is sound: a divergent
+value can escape into observable state only via memory (shared verbatim,
+compared unconditionally), LR/exit_target (never masked), CR/XER/FPSCR (never
+renamed), or a live lane (compared). A spill of a divergent lane exists on both
+sides (stores are position-aligned) and diverges in the shared memory array.
+Soundness rests on the fixpoint's live-out being correct (over-approximation is
+safe; under-approximation is the unsound direction, mitigated by the
+unknown-opcode over-approximation and the per-exit masking being the only
+weakening).
+
+### Fail-closed guards
+
+- **`pairs_checked == 0` guard:** if every terminal pair's combined path
+  condition is provably unsat (or exits are empty), the witness rejects — a
+  vacuous `True` would be a false certificate. `z3.simplify` is
+  equivalence-preserving in the `False` direction, so all-disjoint means genuine
+  divergence (round-4 review).
+- **First-cut loop policy:** any target whose full-function CFG contains a
+  backward branch or a non-return indirect branch (`bctr`/`bcctr`, or `bclr`
+  with link) falls through to SMT. Return-position `bclr` (`link=False`, incl.
+  predicated `beqlr`/`bnelr`) is a terminal, not rejected.
+- **Call model:** across-call rebinding only for precise (non-`*`) contracts
+  with the rebound lane not in `contract.reads`, and dead at the call site or in
+  `contract.writes`. Opaque `*` contracts read every register (call_token,
+  semantics.py:1539) — rebinding any observed lane is unsound and rejected.
+
+### Executor extension
+
+`execute_cfg` gains two strictly-additive kwargs (default `None`; all existing
+callers unchanged):
+- `stop_at_pcs`: pauses the frontier at pop-time BEFORE executing a boundary
+  instruction, collecting `(pc, state, condition, visit_counts, steps)` into
+  `paused_out`.
+- `initial_seed`: overrides the hardcoded `(start, state, ops.bool(True), {},
+  0)` seed so the region driver resumes at a boundary PC with a conjoined
+  condition, carried visit_counts, and carried steps.
+
+The pause is at pop-time, so resume re-executes the boundary instruction under
+the next region's binding (never `pc + 4`). `visit_counts` carryover preserves
+the `max_loop_iterations` bound; driver-side accounting sums `max_paths` across
+regions; budget exhaustion falls to SMT.
+
+### Scope limits
+
+- Only **register-resident** values are rebound; spill-offset differences are
+  Gate-3 rejects (non-register immediates) and same-offset spills already flow
+  through the shared memory array.
+- Loop-containing targets are first-cut SMT (fixpoint-enabled second cut is
+  future work).
+- Indirect `bctrl` targets are out of scope (parked plan
+  `indirect_call_certification_plan.md`).

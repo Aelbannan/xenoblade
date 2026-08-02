@@ -54,6 +54,7 @@ from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.model import MachineState, XerState
 from tools.ppc_equivalence.semantics import (
     DEFAULT_MAX_LOOP_ITERATIONS,
+    ExecutionInconclusive,
     SymbolicOps,
     execute_cfg,
 )
@@ -404,39 +405,239 @@ def _is_call(insn: Instruction) -> bool:
     )
 
 
+# Scalar single-precision FP arithmetic that defines ``ps1[fd]`` as a side
+# effect (semantics.py:4487-4488 ``if is_single: state.with_ps1(fd, d_bits)``
+# over ``_FP_SINGLE_ARITH``, semantics.py:2116-2118).  These are NOT on the
+# witness reject list, so the witness certifies functions that use them and
+# the liveness fixpoint must model the ps1 def (doc: witness_expansion_plan
+# §2.2, rev-5 correction).
+_PS1_DEF_ARITH = frozenset(
+    {
+        Opcode.FDIVS, Opcode.FSUBS, Opcode.FADDS, Opcode.FRES,
+        Opcode.FMULS, Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
+        Opcode.FNMADDS, Opcode.FRSP,
+    }
+)
+
+# Single-precision FP loads that define ``ps1[rt]`` (semantics.py:3613
+# ``if width == 4: state.with_ps1(rt, result)``; modeled by the engine's own
+# use-def table at semantics.py:5687).
+_PS1_DEF_LOADS = frozenset(
+    {Opcode.LFS, Opcode.LFSU, Opcode.LFSX, Opcode.LFSUX}
+)
+
+# PS1 lane numbering offset: GPR r -> r, FPR f -> 32 + f, PS1 f -> 64 + f.
+_PS1_OFFSET = 64
+
+
+def _numbered_lane(kind: str, value: int) -> int:
+    """Map a (kind, register) pair into the combined liveness numbering."""
+    if kind == GPR:
+        return value
+    if kind == FPR:
+        return 32 + value
+    return _PS1_OFFSET + value  # PS1
+
+
+def _use_def_numbered(
+    insn: Instruction,
+) -> tuple[frozenset[int], frozenset[int]]:
+    """Return ``(uses, defs)`` for one instruction in the combined numbering
+    space (GPR r -> r, FPR f -> 32 + f, PS1 f -> 64 + f).
+
+    PS1 defs: scalar-s FP arithmetic defines ``ps1[fd]`` (operand 0) and
+    single-precision FP loads define ``ps1[rt]`` (operand 0) — both per
+    witness_expansion_plan §2.2 (rev-5).  Unknown opcodes over-approximate
+    BOTH directions (use+def of every GPR/FPR/PS1 lane) so liveness can never
+    under-approximate a use when it is load-bearing (rev-4 finding 7: the
+    unknown-opcode default must include PS1).
+    """
+    uses_raw, defs_raw = _use_def(insn.opcode)
+    uses: set[int] = set()
+    defs: set[int] = set()
+    for pos, kind in uses_raw:
+        if pos < len(insn.operands):
+            uses.add(_numbered_lane(kind, insn.operands[pos]))
+    for pos, kind in defs_raw:
+        if pos < len(insn.operands):
+            defs.add(_numbered_lane(kind, insn.operands[pos]))
+    op = insn.opcode
+    if op in _PS1_DEF_ARITH or op in _PS1_DEF_LOADS:
+        # Destination is operand 0 (fd for arith, rt for loads); both write
+        # ps1 as a side effect.
+        if insn.operands:
+            defs.add(_PS1_OFFSET + insn.operands[0])
+    if op in _NO_REG_FIELDS or op in REJECT_OPCODES:
+        # Branch/CR/system ops that carry no GPR/FPR register fields and
+        # reject-listed ops: leave uses/defs as decoded (no ps1 side effect).
+        pass
+    elif not uses_raw and not defs_raw:
+        # Unknown opcode: over-approximate BOTH directions over all lanes.
+        uses = set(range(96))
+        defs = set(range(96))
+    return frozenset(uses), frozenset(defs)
+
+
+def _cfg_successors(
+    instructions: list[Instruction],
+    index: int,
+    by_index: dict[int, int],
+    end_pc: int,
+) -> tuple[int, ...]:
+    """Successor instruction indices for ``instructions[index]`` (positions).
+
+    Branches resolve through the static operand target; an out-of-function
+    target or an indirect exit has no in-function successor (the value is
+    live-out of the function — the fixpoint treats it as a terminal).  Calls
+    (link=True) fall through to pc+4: the callee clobbers per contract, and
+    gate-5's live-across-call set is computed separately (see
+    ``_live_across_calls``).  Return ``()`` for a terminal.
+    """
+    insn = instructions[index]
+    op = insn.opcode
+    if op == Opcode.B:
+        if insn.link:
+            return (index + 1,) if index + 1 < len(instructions) else ()
+        target = insn.operands[0]
+        ti = by_index.get(target)
+        return (ti,) if ti is not None else ()
+    if op == Opcode.BC:
+        if insn.link:
+            return (index + 1,) if index + 1 < len(instructions) else ()
+        succ: list[int] = []
+        if index + 1 < len(instructions):
+            succ.append(index + 1)
+        target = insn.operands[2]
+        ti = by_index.get(target)
+        if ti is not None:
+            succ.append(ti)
+        return tuple(succ)
+    if op in (Opcode.BCLR, Opcode.BCCTR):
+        # Non-link: return / indirect exit — terminal.  Link (blrl/blrl):
+        # call — falls through.
+        if insn.link:
+            return (index + 1,) if index + 1 < len(instructions) else ()
+        return ()
+    return (index + 1,) if index + 1 < len(instructions) else ()
+
+
+def _cfg_liveness(
+    instructions: list[Instruction],
+) -> tuple[list[frozenset[int]], frozenset[int], frozenset[int]]:
+    """Backwards dataflow fixpoint liveness over the real CFG.
+
+    Returns ``(per_slot_live_out, entry_live_in, live_across_calls)`` where
+    ``per_slot_live_out[i]`` is the live-out set of ``instructions[i]`` and
+    both are in the combined numbering space (GPR r -> r, FPR f -> 32 + f,
+    PS1 f -> 64 + f).  This is the load-bearing liveness for the region-
+    sliced witness: a lane dead at a region boundary may be rebound (§2.1),
+    a lane dead at an exit may be masked (§2.3) — both require fixpoint-
+    accurate liveness, NOT the straight-line approximation it replaces.
+
+    Branches are resolved through the CFG (backward edges included, so the
+    fixpoint converges for loops); unknown opcodes over-approximate both
+    directions (see ``_use_def_numbered``) so liveness can never
+    under-approximate a use.
+    """
+    n = len(instructions)
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
+    end_pc = instructions[-1].address + 4
+    succ: list[tuple[int, ...]] = []
+    gen: list[frozenset[int]] = []
+    kill: list[frozenset[int]] = []
+    for i, insn in enumerate(instructions):
+        succ.append(_cfg_successors(instructions, i, by_index, end_pc))
+        uses, defs = _use_def_numbered(insn)
+        gen.append(uses)
+        kill.append(defs)
+    # Standard backward dataflow fixpoint.
+    live_in: list[set[int]] = [set() for _ in range(n)]
+    live_out: list[set[int]] = [set() for _ in range(n)]
+    changed = True
+    while changed:
+        changed = False
+        for i in range(n - 1, -1, -1):
+            new_out: set[int] = set()
+            for s in succ[i]:
+                new_out |= live_in[s]
+            new_in = (new_out - kill[i]) | gen[i]
+            if new_in != live_in[i] or new_out != live_out[i]:
+                live_in[i] = new_in
+                live_out[i] = new_out
+                changed = True
+    # Live-across-call: registers live after a call (the call's live-out).
+    volatiles = set(_VOLATILE_GPRS) | {32 + r for r in _VOLATILE_FPRS}
+    live_across: set[int] = set()
+    for i, insn in enumerate(instructions):
+        if _is_call(insn):
+            live_across |= live_out[i] & volatiles
+    return [frozenset(s) for s in live_out], frozenset(live_in[0]), frozenset(live_across)
+
+
 def _liveness_sets(
     instructions: list[Instruction],
 ) -> tuple[frozenset[int], frozenset[int]]:
     """Return ``(live_in, live_across_calls)`` in one combined numbering
-    space (GPR r -> r, FPR f -> 32 + f).
+    space (GPR r -> r, FPR f -> 32 + f, PS1 f -> 64 + f).
 
-    Straight-line backward liveness over the position grid; branches are
-    ignored so both sets are safe over-approximations for the gate-5
-    defense-in-depth check.
+    Computed via the CFG fixpoint (``_cfg_liveness``); branches and backward
+    edges are modeled, so the entry live-in and live-across-call sets are
+    fixpoint-accurate — the straight-line approximation this replaces
+    silently missed loop-carried values, which would have made the region-
+    sliced witness's deadness assertions unsound (review F1/B1).
     """
-    # One numbering space: GPR r -> r, FPR f -> 32 + f.
-    live: set[int] = set()
-    live_across: set[int] = set()
-    for i in range(len(instructions) - 1, -1, -1):
-        insn = instructions[i]
-        uses, defs = _use_def(insn.opcode)
-        for pos, _kind in defs:
-            if pos < len(insn.operands):
-                live.discard(insn.operands[pos])
-        if _is_call(insn):
-            live_across |= live
-            # Registers read at the call (arguments) are also conservatively
-            # considered live across it.
-            for pos, kind in uses:
-                if pos < len(insn.operands):
-                    value = insn.operands[pos]
-                    live_across.add(value if kind == GPR else 32 + value)
-        for pos, kind in uses:
-            if pos < len(insn.operands):
-                value = insn.operands[pos]
-                live.add(value if kind == GPR else 32 + value)
-    volatiles = set(_VOLATILE_GPRS) | {32 + r for r in _VOLATILE_FPRS}
-    return frozenset(live), frozenset(live_across & volatiles)
+    _, entry_live_in, live_across = _cfg_liveness(instructions)
+    return entry_live_in, live_across
+
+
+def _has_loop_or_non_return_indirect(
+    instructions: list[Instruction],
+    *,
+    local_symbol: str | None = None,
+) -> bool:
+    """First-cut loop predicate (witness_expansion_plan §2.2): True when the
+    full-function CFG contains a backward direct branch, or a non-return
+    indirect branch (``bctr``/``bcctr``, or ``bclr`` with ``link=True``).
+
+    Return-position ``bclr`` (``link=False``, incl. predicated ``beqlr``/
+    ``bnelr``) is a terminal per the executor (semantics.py:5516-5518) and
+    is NOT a loop/indirect marker.  A relocated direct branch whose symbol is
+    the local function (direct recursion) is a real back-edge and is flagged;
+    other relocated branches (calls) are excluded from the static-target
+    test.  This predicate is pinned as committed code + test fixture (rev-4
+    finding 8): two reviewers disagreed 21-vs-19 on the same targets by
+    eyeball — the code must be the authority.
+    """
+    by_address = {insn.address: i for i, insn in enumerate(instructions)}
+    for i, insn in enumerate(instructions):
+        op = insn.opcode
+        if op == Opcode.BCCTR:
+            return True  # indirect branch / jump-table dispatch — first cut
+        if op == Opcode.BCLR:
+            if insn.link:
+                return True  # blrl — non-return indirect call
+            continue  # return terminal — not a loop marker
+        if op == Opcode.B:
+            target = insn.operands[0]
+            if insn.relocation is not None:
+                # Relocated branch: a call unless it is direct recursion.
+                if (
+                    insn.link
+                    and insn.relocation.canonical_symbol == local_symbol
+                ):
+                    return True  # direct self-recursion — real back-edge
+                continue
+            if target <= insn.address:
+                return True
+        elif op == Opcode.BC:
+            if insn.link:
+                continue  # conditional call
+            if insn.relocation is not None:
+                continue
+            target = insn.operands[2]
+            if target <= insn.address:
+                return True
+    return False
 
 
 # ── gates ──────────────────────────────────────────────────────────────────
@@ -638,9 +839,11 @@ def _check_abi_fixedness(
     for instructions in (original, candidate):
         live_in, live_across = _liveness_sets(instructions)
         fixed_gpr.update(live_in & _EABI_ARG_GPRS)
-        fixed_fpr.update({n - 32 for n in live_in if n >= 32} & _EABI_ARG_FPRS)
+        fixed_fpr.update(
+            {n - 32 for n in live_in if 32 <= n < _PS1_OFFSET} & _EABI_ARG_FPRS
+        )
         fixed_gpr.update(n for n in live_across if n < 32)
-        fixed_fpr.update(n - 32 for n in live_across if n >= 32)
+        fixed_fpr.update(n - 32 for n in live_across if 32 <= n < _PS1_OFFSET)
     for register in sorted(fixed_gpr):
         if rho.gpr.get(register, register) != register:
             return WitnessFailure(
@@ -973,6 +1176,18 @@ def run_structural_witness(
                     ),
                     terminal_pairs_checked=pairs_checked,
                 )
+    if pairs_checked == 0:
+        # All terminal pairs disjoint (or empty exits): the witness compared
+        # NOTHING — a vacuous True would be a false certificate.  Reject and
+        # let the caller fall through to SMT (witness_expansion_plan §2.3).
+        return WitnessOutcome(
+            False,
+            rho=rho,
+            failure=WitnessFailure(
+                "structural",
+                "all path conditions disjoint (no comparable terminal pairs)",
+            ),
+        )
     return WitnessOutcome(
         True,
         rho=rho,
@@ -991,10 +1206,31 @@ def certify_renaming_witness(
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, Any] | None = None,
     deadline_ms: int = 30_000,
+    local_symbol: str | None = None,
 ) -> WitnessOutcome:
-    """Full pipeline: gates 1-6, then the structural witness execution."""
+    """Full pipeline: gates 1-6, then the structural witness execution.
+
+    When the global bijection fails on the rho gate (a *local*
+    register-allocation difference — no single global bijection exists),
+    falls through to the region-sliced witness (expansion B) before giving
+    up.  Region slicing rebinds changed lanes at boundaries gated on
+    four-lane deadness; any deadness / executor / structural failure
+    degrades to SMT (``certified=False``), never a false certificate.
+    """
     outcome = check_gates(original, candidate)
     if not outcome.certified:
+        if getattr(outcome.failure, "gate", None) == "rho":
+            # Local rho conflict: try the region-sliced witness.
+            return run_region_sliced_witness(
+                original, candidate,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+                assumed_callees=assumed_callees,
+                callee_contracts=callee_contracts,
+                deadline=Deadline.after_ms(deadline_ms),
+                local_symbol=local_symbol,
+            )
         return outcome
     deadline = Deadline.after_ms(deadline_ms)
     return run_structural_witness(
@@ -1006,3 +1242,426 @@ def certify_renaming_witness(
         callee_contracts=callee_contracts,
         deadline=deadline,
     )
+
+
+# ── region-sliced witness (expansion B) ────────────────────────────────────
+#
+# The global-bijection witness (above) rejects any pair whose register
+# correspondence is not a single consistent bijection across the whole
+# function.  MWCC routinely produces *local* register-allocation differences
+# (a temp lives in r5 in one region and r4 in another); the pair is
+# equivalent but no single rho exists.  Expansion B splits the stream into
+# regions with a consistent bijection each, rebinds the shared symbolic
+# variables at region boundaries (sound iff every changed binding is dead at
+# the boundary on both sides — see witness_expansion_plan §2.1), and compares
+# each terminal under its exit region's rho (§3.1).
+#
+# Soundness backstop: the full-state structural terminal comparison remains
+# (all lanes + memory), the ``pairs_checked == 0`` guard rejects vacuous
+# certifications (§2.3), and liveness is a CFG fixpoint (§2.2) — never the
+# straight-line approximation, whose branch-ignoring would make the boundary
+# deadness assertion unsound on loop-carried values.
+
+
+def _rho_region_boundaries(
+    original: list[Instruction],
+    candidate: list[Instruction],
+) -> list[int]:
+    """Split-point instruction indices for the region-sliced witness.
+
+    A split occurs at (a) any slot where the accumulated bijection changes
+    (a Gate-4 conflict — the local temp re-allocation case) and (b) every
+    call site (link-set B/BC/BCLR/BCCTR — volatiles may rebind across calls
+    under precise contracts).  Splitting is conservative: extra boundaries
+    only add deadness requirements (fail-closed), never loosen anything.  A
+    boundary slot is the FIRST slot of the next region: its register fields
+    seed the new region's bijection.
+    """
+    boundaries: list[int] = []
+    rho_gpr: dict[int, int] = {}
+    rho_fpr: dict[int, int] = {}
+
+    def _conflicts(start: int, kind: str, rv: int, dv: int) -> bool:
+        table = rho_gpr if kind == GPR else rho_fpr
+        if rv in table:
+            return table[rv] != dv
+        return dv in table.values()
+
+    for index, (r_insn, d_insn) in enumerate(zip(original, candidate)):
+        if _is_call(r_insn) or _is_call(d_insn):
+            if index > 0 and index not in boundaries:
+                boundaries.append(index)
+            rho_gpr = {}
+            rho_fpr = {}
+        # Accumulate this slot's register fields into the current region's
+        # bijection; on conflict, start a new region at this slot.
+        split_here = False
+        for start_bit, kind in _register_fields(r_insn.opcode):
+            rv = (r_insn.raw >> start_bit) & 0x1F
+            dv = (d_insn.raw >> start_bit) & 0x1F
+            if _conflicts(index, kind, rv, dv):
+                split_here = True
+                break
+        if split_here:
+            if index > 0 and index not in boundaries:
+                boundaries.append(index)
+            rho_gpr = {}
+            rho_fpr = {}
+        # Seed the (possibly fresh) region with this slot's fields.
+        for start_bit, kind in _register_fields(r_insn.opcode):
+            rv = (r_insn.raw >> start_bit) & 0x1F
+            dv = (d_insn.raw >> start_bit) & 0x1F
+            table = rho_gpr if kind == GPR else rho_fpr
+            if rv not in table and dv not in table.values():
+                table[rv] = dv
+    return boundaries
+
+
+def _region_rho(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    start: int,
+    end: int,
+) -> Rho | None:
+    """Consistent bijection over [start, end); None when one does not exist
+    (a conflict inside a region — a bug in boundary computation)."""
+    rho_gpr: dict[int, int] = {}
+    rho_fpr: dict[int, int] = {}
+    for index in range(start, end):
+        r_insn, d_insn = original[index], candidate[index]
+        for start_bit, kind in _register_fields(r_insn.opcode):
+            rv = (r_insn.raw >> start_bit) & 0x1F
+            dv = (d_insn.raw >> start_bit) & 0x1F
+            table = rho_gpr if kind == GPR else rho_fpr
+            if rv in table:
+                if table[rv] != dv:
+                    return None
+            elif dv in table.values():
+                return None
+            else:
+                table[rv] = dv
+    return Rho(gpr=rho_gpr, fpr=rho_fpr)
+
+
+def _boundary_deadness_ok(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    boundary: int,
+    old_rho: Rho,
+    new_rho: Rho,
+) -> bool:
+    """Four-lane deadness at a region boundary (plan §2.1).
+
+    The effective correspondence is the FULL permutation (``Rho.gpr_perm()``,
+    which extends the partial bijection canonically): a lane whose partial
+    mapping is absent can still change across a boundary via the extension
+    (round-2 reviews' stale-lane ``m = rho_k(i')`` case).  For every retail
+    lane ``r`` whose mapping changes, the rebind replaces the value in retail
+    lane ``r`` and old decomp lane ``rho_k(r)``, and reuses new decomp lane
+    ``rho_{k+1}(r)`` (whose old value came from retail
+    ``rho_k^{-1}(rho_{k+1}(r))``).  Soundness requires ALL FOUR lanes dead at
+    the boundary:
+
+    - retail lane ``r`` dead on the retail side;
+    - old decomp lane ``rho_k(r)`` dead on the decomp side (retail direction);
+    - new decomp lane ``rho_{k+1}(r)`` dead on the decomp side (its old
+      value, retail ``rho_k^{-1}(rho_{k+1}(r))``, is discarded);
+    - the retail lane whose value the new decomp lane previously carried,
+      ``rho_k^{-1}(rho_{k+1}(r))``, dead on the retail side (decomp direction).
+
+    Liveness is the CFG fixpoint (``_cfg_liveness``); a lane is dead at the
+    boundary iff it is not live-in to the boundary slot (live-out of the
+    previous slot).
+    """
+    live_out_r, _, _ = _cfg_liveness(original)
+    live_out_c, _, _ = _cfg_liveness(candidate)
+    dead_r = live_out_r[boundary - 1] if boundary > 0 else frozenset()
+    dead_c = live_out_c[boundary - 1] if boundary > 0 else frozenset()
+
+    def _num(kind: str, lane: int) -> int:
+        if kind == GPR:
+            return lane
+        if kind == FPR:
+            return 32 + lane
+        return _PS1_OFFSET + lane
+
+    for kind, old_perm, new_perm in (
+        (GPR, old_rho.gpr_perm(), new_rho.gpr_perm()),
+        (FPR, old_rho.fpr_perm(), new_rho.fpr_perm()),
+    ):
+        old_preimage: dict[int, int] = {}
+        for r, d in enumerate(old_perm):
+            old_preimage[d] = r
+        for r in range(32):
+            old_d = old_perm[r]
+            new_d = new_perm[r]
+            if old_d == new_d:
+                continue  # mapping unchanged — no rebind needed
+            # Four-lane deadness (round-2 reviews).
+            if _num(kind, r) in dead_r:
+                return False  # retail lane r live at boundary
+            if _num(kind, old_d) in dead_c:
+                return False  # old decomp lane live at boundary
+            if _num(kind, new_d) in dead_c:
+                return False  # new decomp lane's old value live at boundary
+            old_retail_of_new = old_preimage[new_d]
+            if _num(kind, old_retail_of_new) in dead_r:
+                return False  # decomp direction: retail rho_k^{-1}(new_d) live
+    return True
+
+
+def run_region_sliced_witness(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    *,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    callee_contracts: dict[int | str, Any] | None = None,
+    deadline: Deadline | None = None,
+    local_symbol: str | None = None,
+) -> WitnessOutcome:
+    """Region-sliced structural witness (plan §3.1, §3.2).
+
+    Splits the stream at bijection conflicts / call sites, executes each
+    region through the executor with ``stop_at_pcs`` + ``initial_seed``,
+    rebinds changed lanes at boundaries (fresh shared variables, deadness-
+    asserted per §2.1), and compares each terminal pair under its exit
+    region's rho.  Falls back (``certified=False``) on any deadness failure,
+    executor inconclusiveness, or structural divergence — never a false
+    certificate; the caller degrades to the SMT probe.
+    """
+    from dataclasses import replace as _replace
+
+    ops = SymbolicOps()
+    z3 = ops.z3
+    boundaries = _rho_region_boundaries(original, candidate)
+    boundaries_set = frozenset(original[b].address for b in boundaries)
+    # Region rho per boundary interval: [0, b0), [b0, b1), ..., [bn, end).
+    region_starts = [0] + boundaries
+    regions: list[tuple[int, int, Rho]] = []
+    for i, start in enumerate(region_starts):
+        end = region_starts[i + 1] if i + 1 < len(region_starts) else len(original)
+        rho = _region_rho(original, candidate, start, end)
+        if rho is None:
+            return WitnessOutcome(False, failure=WitnessFailure(
+                "rho", f"no consistent bijection in region [{start}, {end})",
+            ))
+        regions.append((start, end, rho))
+    # First-cut loop policy: region slicing assumes a loop-free target (the
+    # fixpoint handles loops for liveness, but the rebinding driver is only
+    # sound for the loop-free first cut; loop targets fall to SMT).
+    if _has_loop_or_non_return_indirect(original, local_symbol=local_symbol) or \
+            _has_loop_or_non_return_indirect(candidate, local_symbol=local_symbol):
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "loop", "target contains a backward branch / non-return indirect; first cut",
+        ))
+
+    def _run_region(
+        start_state: MachineState,
+        start_pc: int,
+        condition: Any,
+        visits: dict[int, int],
+        steps: int,
+        stop: frozenset[int] | None,
+        side: list[Instruction],
+    ) -> tuple[list[Terminal], list[tuple[int, MachineState, Any, dict[int, int], int]]]:
+        paused: list[tuple[int, MachineState, Any, dict[int, int], int]] = []
+        if start_state is None:
+            raise AssertionError("region driver: start_state required")
+        try:
+            terms = execute_cfg(
+                start_state, side, ops,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+                assumed_callees=assumed_callees,
+                callee_contracts=callee_contracts or {},
+                deadline=deadline,
+                stop_at_pcs=stop,
+                initial_seed=(start_pc, start_state, condition, visits, steps),
+                paused_out=paused,
+            )
+        except (ProofDeadlineExceeded, Exception) as exc:
+            if isinstance(exc, ProofDeadlineExceeded):
+                raise
+            raise ExecutionInconclusive(f"region executor: {type(exc).__name__}: {exc}") from exc
+        return terms, paused
+
+    try:
+        # Region 0: initial shared-variable pair under region 0's rho.
+        rho0 = regions[0][2]
+        retail_initial, decomp_initial = _symbolic_initial_pair(
+            ops, rho0.gpr_perm(), rho0.fpr_perm(),
+        )
+        # Frontier entries per side: (pc, state, condition, visits, steps).
+        retail_frontier = [(original[0].address, retail_initial, ops.bool(True), {}, 0)]
+        decomp_frontier = [(candidate[0].address, decomp_initial, ops.bool(True), {}, 0)]
+        all_retail_terms: list[tuple[Terminal, int]] = []  # (terminal, region idx)
+        all_decomp_terms: list[tuple[Terminal, int]] = []
+        for region_idx, (start, end, rho) in enumerate(regions):
+            retail_stop = (
+                frozenset({original[regions[region_idx + 1][0]].address})
+                if region_idx + 1 < len(regions) else None
+            )
+            decomp_stop = (
+                frozenset({candidate[regions[region_idx + 1][0]].address})
+                if region_idx + 1 < len(regions) else None
+            )
+            new_retail_frontier: list[tuple[int, MachineState, Any, dict[int, int], int]] = []
+            new_decomp_frontier: list[tuple[int, MachineState, Any, dict[int, int], int]] = []
+            for entry in retail_frontier:
+                terms, paused = _run_region(
+                    entry[1], entry[0], entry[2], entry[3], entry[4],
+                    retail_stop, original,
+                )
+                for t in terms:
+                    all_retail_terms.append((t, region_idx))
+                new_retail_frontier.extend(paused)
+            for entry in decomp_frontier:
+                terms, paused = _run_region(
+                    entry[1], entry[0], entry[2], entry[3], entry[4],
+                    decomp_stop, candidate,
+                )
+                for t in terms:
+                    all_decomp_terms.append((t, region_idx))
+                new_decomp_frontier.extend(paused)
+            if region_idx + 1 < len(regions):
+                # Rebind at the boundary: changed lanes get fresh shared
+                # variables on both sides, gated on two-direction deadness.
+                old_rho, new_rho = rho, regions[region_idx + 1][2]
+                boundary = regions[region_idx + 1][0]
+                if not _boundary_deadness_ok(original, candidate, boundary, old_rho, new_rho):
+                    return WitnessOutcome(False, failure=WitnessFailure(
+                        "abi-boundary",
+                        f"region boundary {boundary}: a changed lane is live "
+                        "across the boundary (two-direction deadness)",
+                    ))
+                # Fresh shared variables for changed lanes, applied to every
+                # paused frontier entry on both sides (path conditions are
+                # carried per entry).  Retail lane r and decomp lane
+                # new_perm(r) receive the SAME fresh variable so both sides
+                # share it (old values dead — asserted above).
+                new_gpr_perm = new_rho.gpr_perm()
+                new_fpr_perm = new_rho.fpr_perm()
+                old_gpr_perm = rho.gpr_perm()
+                old_fpr_perm = rho.fpr_perm()
+                fresh_gpr = [z3.BitVec(f"witness.r{i}.r{region_idx + 1}", 32) for i in range(32)]
+                fresh_fpr = [z3.BitVec(f"witness.f{i}.r{region_idx + 1}", 64) for i in range(32)]
+                fresh_ps1 = [z3.BitVec(f"witness.f{i}.ps1.r{region_idx + 1}", 64) for i in range(32)]
+
+                def _changed(retail_lane: int, kind: str, new_perm: list[int], old_perm: list[int]) -> bool:
+                    return old_perm[retail_lane] != new_perm[retail_lane]
+
+                def _rebind_retail(state: MachineState) -> MachineState:
+                    gpr = list(state.gpr)
+                    fpr = list(state.fpr)
+                    ps1 = list(state.ps1)
+                    for r in range(32):
+                        if _changed(r, GPR, new_gpr_perm, old_gpr_perm):
+                            gpr[r] = fresh_gpr[r]
+                    for r in range(32):
+                        if _changed(r, FPR, new_fpr_perm, old_fpr_perm):
+                            fpr[r] = fresh_fpr[r]
+                            ps1[r] = fresh_ps1[r]
+                    return _replace(state, gpr=tuple(gpr), fpr=tuple(fpr), ps1=tuple(ps1))
+
+                def _rebind_decomp(state: MachineState) -> MachineState:
+                    # Decomp lane j plays retail lane new_perm^{-1}(j); give it
+                    # the fresh variable of its retail partner.
+                    gpr = list(state.gpr)
+                    fpr = list(state.fpr)
+                    ps1 = list(state.ps1)
+                    for r in range(32):
+                        if _changed(r, GPR, new_gpr_perm, old_gpr_perm):
+                            gpr[new_gpr_perm[r]] = fresh_gpr[r]
+                    for r in range(32):
+                        if _changed(r, FPR, new_fpr_perm, old_fpr_perm):
+                            fpr[new_fpr_perm[r]] = fresh_fpr[r]
+                            ps1[new_fpr_perm[r]] = fresh_ps1[r]
+                    return _replace(state, gpr=tuple(gpr), fpr=tuple(fpr), ps1=tuple(ps1))
+
+                boundary_pc_r = original[boundary].address
+                boundary_pc_c = candidate[boundary].address
+                retail_frontier = [
+                    (boundary_pc_r, _rebind_retail(e[1]), e[2], e[3], e[4])
+                    for e in new_retail_frontier
+                ]
+                decomp_frontier = [
+                    (boundary_pc_c, _rebind_decomp(e[1]), e[2], e[3], e[4])
+                    for e in new_decomp_frontier
+                ]
+            else:
+                retail_frontier = new_retail_frontier
+                decomp_frontier = new_decomp_frontier
+        if retail_frontier or decomp_frontier:
+            return WitnessOutcome(False, failure=WitnessFailure(
+                "execute", "frontier not exhausted after last region",
+            ))
+        # Terminal comparison under each exit region's rho.
+        pairs_checked = 0
+        left_base = original[0].address
+        right_base = candidate[0].address
+        for left, lregion in all_retail_terms:
+            for right, rregion in all_decomp_terms:
+                combined = z3.simplify(z3.And(left.condition, right.condition))
+                if z3.is_false(combined):
+                    continue
+                pairs_checked += 1
+                if lregion != rregion:
+                    # Exits in different regions: the two sides' exit PCs are
+                    # at different region-relative positions, which cannot be
+                    # equivalent under position-aligned streams — reject.
+                    return WitnessOutcome(
+                        False,
+                        failure=WitnessFailure(
+                            "structural",
+                            f"terminal pair regions differ ({lregion} vs {rregion})",
+                        ),
+                        terminal_pairs_checked=pairs_checked,
+                    )
+                lrho = regions[lregion][2]
+                gpr_perm = lrho.gpr_perm()
+                fpr_perm = lrho.fpr_perm()
+                if not _terminals_agree(
+                    left, right, gpr_perm, fpr_perm, z3,
+                    left_base=left_base, right_base=right_base,
+                ):
+                    return WitnessOutcome(
+                        False,
+                        failure=WitnessFailure(
+                            "structural",
+                            f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
+                            "diverges structurally under region rho",
+                        ),
+                        terminal_pairs_checked=pairs_checked,
+                    )
+        if pairs_checked == 0:
+            return WitnessOutcome(False, failure=WitnessFailure(
+                "structural",
+                "all path conditions disjoint (no comparable terminal pairs)",
+            ))
+        return WitnessOutcome(
+            True,
+            rho=regions[0][2],
+            structural_eq=True,
+            terminal_pairs_checked=pairs_checked,
+            details={
+                "rho_mode": "region-sliced",
+                "regions": [
+                    {"start": s, "end": e, "rho": r.to_dict()}
+                    for s, e, r in regions
+                ],
+            },
+        )
+    except ExecutionInconclusive as exc:
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "execute", f"ExecutionInconclusive: {exc}",
+        ))
+    except ProofDeadlineExceeded as exc:
+        return WitnessOutcome(False, failure=WitnessFailure("deadline", exc.phase))
+    except Exception as exc:  # pragma: no cover - defensive
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "execute", f"{type(exc).__name__}: {exc}",
+        ))

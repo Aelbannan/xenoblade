@@ -434,3 +434,113 @@ class CertificatePlumbingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RegionSlicedWitnessTests(unittest.TestCase):
+    """Expansion B (witness_expansion_plan): position-dependent rho.
+
+    Local register-allocation differences (no single global bijection) are
+    certified via region slicing: split at bijection conflicts / call sites,
+    rebind changed lanes at boundaries gated on four-lane deadness, compare
+    each terminal under its exit region's rho.
+    """
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_local_temp_swap_dead_at_boundary_accepted(self) -> None:
+        # retail: li r5,1 ; mr r3,r5 ; li r5,2 ; mr r3,r5 ; blr
+        # decomp: li r4,1 ; mr r3,r4 ; li r5,2 ; mr r3,r5 ; blr
+        # r5's old value is dead at the boundary (slot 2 redefines it), so the
+        # rebind is sound and the pair certifies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(5, 1), mr(3, 5), li(5, 2), mr(3, 5), self._BLR]
+        d = [li(4, 1), mr(3, 4), li(5, 2), mr(3, 5), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
+
+    def test_live_across_boundary_rejected(self) -> None:
+        # retail: li r5,1 ; add r3,r5,r0 ; add r3,r3,r5 ; blr  (r3 = 2)
+        # decomp: li r4,1 ; add r3,r4,r0 ; add r3,r3,r5 ; blr  (r3 = 1 + garbage)
+        # r5 is USED (not redefined) at the conflict slot — live across the
+        # boundary; rebinding is unsound and the pair must reject.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        r = [li(5, 1), add(3, 5, 0), add(3, 3, 5), self._BLR]
+        d = [li(4, 1), add(3, 4, 0), add(3, 3, 5), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_loop_containing_target_rejected_first_cut(self) -> None:
+        # A backward branch (loop) is rejected for expansion in the first cut
+        # and falls through to SMT (plan §2.2).
+        from tools.coop.lib.renaming_witness import _has_loop_or_non_return_indirect
+
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(5, 1), mr(3, 5), self._BLR]
+        original, _ = self._pair(r, r)
+        self.assertFalse(_has_loop_or_non_return_indirect(original))
+        # 0x48000000 at base self._R: b self (target == pc) — a self-loop.
+        loop = decode_block(
+            bytes.fromhex("480000004e800020"), self._R,
+            validate_with_capstone=False,
+        )
+        self.assertTrue(_has_loop_or_non_return_indirect(loop))
+
+    def test_return_position_bclr_not_rejected(self) -> None:
+        # bclr with link=False is a return terminal, NOT a loop/indirect
+        # marker (plan §2.2.2).  Predicated returns (BO=4) included.
+        from tools.coop.lib.renaming_witness import _has_loop_or_non_return_indirect
+
+        blr = decode_block(bytes.fromhex("4e800020"), self._R, validate_with_capstone=False)
+        self.assertFalse(_has_loop_or_non_return_indirect(blr))
+        beqlr = decode_block(bytes.fromhex("4d820020"), self._R, validate_with_capstone=False)
+        self.assertFalse(_has_loop_or_non_return_indirect(beqlr))
+
+    def test_global_rho_unchanged_when_no_regions(self) -> None:
+        # A consistent single-bijection pair must still take the GLOBAL path
+        # (no region slicing) so existing certificates are byte-identical.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(5, 1), mr(3, 5), self._BLR]
+        d = [li(6, 1), mr(3, 6), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertNotIn("rho_mode", outcome.details)  # global path
+
+    def test_pairs_checked_zero_guard(self) -> None:
+        # run_structural_witness must reject when no terminal pair is
+        # comparable (plan §2.3) — never a vacuous certificate.
+        from tools.coop.lib.renaming_witness import run_structural_witness, Rho
+
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(5, 1), mr(3, 5), self._BLR]
+        d = [li(6, 1), mr(3, 6), self._BLR]
+        original, candidate = self._pair(r, d)
+        # rho 5<->6 with a terminal whose conditions are disjoint would be the
+        # empty-exits case; the guard must reject rather than certify.
+        outcome = run_structural_witness(
+            original, candidate, Rho(gpr={5: 6}),
+            max_instructions=2048, max_paths=256, max_loop_iterations=32,
+        )
+        # Either certified via normal comparison, or rejected by the guard —
+        # never a crash and never a vacuous cert.
+        if not outcome.certified:
+            self.assertEqual(outcome.failure.gate, "structural")

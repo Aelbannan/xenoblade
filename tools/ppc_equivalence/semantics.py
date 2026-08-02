@@ -4847,6 +4847,18 @@ def execute_cfg(
     memory_plans_used: list[MemoryLoopPlan] | None = None,
     gx_fifo_loop_plans: dict[int, GxFifoLoopPlan] | None = None,
     gx_fifo_plans_used: list[GxFifoLoopPlan] | None = None,
+    # Region-sliced execution (witness_expansion_plan §3.2): when set, a
+    # frontier entry whose PC is in ``stop_at_pcs`` is paused at pop-time
+    # (BEFORE executing the boundary instruction): ``(pc, state, condition,
+    # visit_counts, steps)`` is appended to ``paused_out`` and the entry is
+    # not executed or enqueued.  ``initial_seed`` overrides the worklist seed
+    # ``(start, state, ops.bool(True), {}, 0)`` so the region driver can
+    # resume at a boundary PC with a conjoined path condition, carried
+    # visit_counts, and carried step count.  Both are strictly additive
+    # (default None ⇒ identical behaviour for all existing callers).
+    stop_at_pcs: frozenset[int] | None = None,
+    initial_seed: tuple[int, MachineState, Any, dict[int, int], int] | None = None,
+    paused_out: list[tuple[int, MachineState, Any, dict[int, int], int]] | None = None,
     # Deprecated aliases kept for transitional callers / tests.
     memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
     memory_summaries_used: list[MemoryLoopSummary] | None = None,
@@ -4949,6 +4961,9 @@ def execute_cfg(
             memory_plans_used=memory_plans_used,
             gx_fifo_loop_plans=gx_fifo_loop_plans,
             gx_fifo_plans_used=gx_fifo_plans_used,
+            stop_at_pcs=stop_at_pcs,
+            initial_seed=initial_seed,
+            paused_out=paused_out,
         )
     finally:
         if coverage_armed:
@@ -4979,6 +4994,9 @@ def _execute_cfg_body(
     memory_plans_used: list[MemoryLoopPlan] | None = None,
     gx_fifo_loop_plans: dict[int, GxFifoLoopPlan] | None = None,
     gx_fifo_plans_used: list[GxFifoLoopPlan] | None = None,
+    stop_at_pcs: frozenset[int] | None = None,
+    initial_seed: tuple[int, MachineState, Any, dict[int, int], int] | None = None,
+    paused_out: list[tuple[int, MachineState, Any, dict[int, int], int]] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -4998,9 +5016,12 @@ def _execute_cfg_body(
         gx_fifo_loop_plans = {}
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
-    work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
-        (start, state, ops.bool(True), {}, 0),
-    ]
+    if initial_seed is not None:
+        work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [initial_seed]
+    else:
+        work = [
+            (start, state, ops.bool(True), {}, 0),
+        ]
     terminals: list[Terminal] = []
 
     def enqueue(
@@ -5039,6 +5060,13 @@ def _execute_cfg_body(
         if deadline is not None and deadline.expired():
             raise ProofDeadlineExceeded("cfg-exploration")
         pc, current, condition, visit_counts, steps = work.pop()
+        if stop_at_pcs is not None and pc in stop_at_pcs:
+            # Region-sliced pause (witness_expansion_plan §3.2): pause BEFORE
+            # executing the boundary instruction; the region driver resumes
+            # from this PC after rebinding lanes (never ``pc + 4``).
+            if paused_out is not None:
+                paused_out.append((pc, current, condition, visit_counts, steps))
+            continue
         if steps >= max_instructions:
             raise ExecutionInconclusive(f"instruction limit exceeded ({max_instructions})")
         if pc == end:

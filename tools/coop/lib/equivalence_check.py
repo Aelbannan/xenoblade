@@ -1480,6 +1480,7 @@ def _try_renaming_witness(
             max_loop_iterations=max_loop_iterations,
             assumed_callees=call_targets,
             callee_contracts=contracts,
+            local_symbol=left.name,
         )
     except Exception:
         # Any tooling failure degrades to the SMT probe, never to a cert.
@@ -1496,12 +1497,20 @@ def _try_renaming_witness(
     )
     observables = _renaming_witness_observables()
     rho = outcome.rho.to_dict()
+    details = getattr(outcome, "details", {}) or {}
+    rho_mode = details.get("rho_mode", "global")
+    regions = details.get("regions")
     witness_payload = {
         "rho": rho,
         "structural_eq": outcome.structural_eq,
         "terminal_pairs_checked": outcome.terminal_pairs_checked,
         "location_independent_returns": True,
     }
+    if regions is not None:
+        # Region-sliced mode (witness_expansion_plan §3.1): the recorded rho
+        # is per-region; the assumptions text below is amended accordingly.
+        witness_payload["rho_mode"] = rho_mode
+        witness_payload["regions"] = regions
     source_hash = proof_request_hash(
         original_hex=left.code.hex(),
         candidate_hex=right.code.hex(),
@@ -1545,10 +1554,17 @@ def _try_renaming_witness(
             "non-register fields (opcode bits, immediates, CR bits/fields, "
             "SPR indices, FXM masks, branch displacements, Rc/OE/LK/AA) are "
             "bit-equal per slot",
-            "rho is a partial bijection consistent across all mnemonics and "
-            "positions, and fixes ABI-boundary registers (r0 zero-register "
-            "encoding, r1, r2, r13, returns, live-in EABI args, volatiles "
-            "live across calls)",
+            ("rho is a partial bijection consistent across all mnemonics and "
+             "positions, and fixes ABI-boundary registers (r0 zero-register "
+             "encoding, r1, r2, r13, returns, live-in EABI args, volatiles "
+             "live across calls)"
+             if rho_mode == "global"
+             else "rho is a partial bijection per region-slice (region-sliced "
+             "witness; witness_expansion_plan §3.1): within each region the "
+             "bijection is consistent across mnemonics/positions, ABI-boundary "
+             "registers are fixed in every region, and every changed binding at "
+             "a region boundary was dead on both sides (four-lane deadness, "
+             "§2.1) before rebinding to a fresh shared variable"),
             "matched callees are location-independent EABI functions: the "
             "absolute link-register return address is not a semantic input; "
             "constant return targets / LR values are compared relative to "

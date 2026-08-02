@@ -5,6 +5,10 @@
 #include <harness_catalog.h>
 #include <revolution/AX/AXVPB.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern unsigned long __cvt_fp2unsigned(double);
 
 /* ---- lookup tables (contiguous in .data) ---- */
@@ -27,7 +31,7 @@ struct HBMWaveInfo {
 
 typedef struct /* HBMSYNVOICE */ {
     u8                     _00[0x04];
-    struct AXVPB*          pb;              /* 0x04 */
+    AXVPB*                 pb;              /* 0x04 */
     void*                  sampleData;      /* 0x08 */
     u8                     _0C;             /* 0x0C */
     u8                     baseNote;        /* 0x0D */
@@ -85,45 +89,49 @@ f32 __HBMSYNGetRelativePitch(HBMSYNVOICE* voice)
 
 void __HBMSYNSetupPitch(HBMSYNVOICE* voice)
 {
-    f32 sampleRate = (f32)voice->waveInfo->sampleRate;
-    voice->pitch   = sampleRate / 32000.0f;
+    voice->pitch = (f32)voice->waveInfo->sampleRate / 32000.0f;
 
-    s32 pc  = (s32)(voice->baseNote - voice->preset->note) * 100;
-    s32 pf  = pc + voice->preset->fineTune;
-
-    voice->pitchFull = pf << 16;
+    voice->pitchFull = (voice->baseNote - voice->preset->note) * 100;
+    voice->pitchFull += voice->preset->fineTune;
+    voice->pitchFull <<= 16;
 }
 
 /* ================================================================== */
 
 void __HBMSYNSetupSrc(HBMSYNVOICE* voice)
 {
-    struct AXVPB* vp = voice->pb;
-    f32 mul          = voice->pitch * __HBMSYNGetRelativePitch(voice);
-    u32 sr           = __cvt_fp2unsigned(65536.0 * mul);
+    f32 mul = voice->pitch * __HBMSYNGetRelativePitch(voice);
+    u32 sr  = __cvt_fp2unsigned(65536.0f * mul);
 
-    vp->pb.srcSelect            = AX_SRC_TYPE_LINEAR;
-    vp->pb.src.ratioHi          = sr >> 16;
-    vp->pb.src.ratioLo          = sr & 0xFFFF;
-    vp->pb.src.currentAddressFrac = 0;
-    vp->pb.src.last_samples[0]  = 0;
-    vp->pb.src.last_samples[1]  = 0;
-    vp->pb.src.last_samples[2]  = 0;
-    vp->pb.src.last_samples[3]  = 0;
+    voice->pb->pb.srcSelect = AX_SRC_TYPE_LINEAR;
 
-    vp->sync &= ~AX_PBSYNC_SRC;
-    vp->sync |= AX_PBSYNC_SRC | AX_PBSYNC_SELECT;
+    {
+        AXVPB* pb = voice->pb;
+        pb->pb.src.ratioHi = sr >> 16;
+        pb->pb.src.ratioLo = sr;
+        pb->pb.src.currentAddressFrac = 0;
+        pb->pb.src.last_samples[0] = 0;
+        pb->pb.src.last_samples[1] = 0;
+        pb->pb.src.last_samples[2] = 0;
+        pb->pb.src.last_samples[3] = 0;
+    }
+
+    voice->pb->sync &= ~AX_PBSYNC_SRC_RATIO;
+    voice->pb->sync |= AX_PBSYNC_SRC | AX_PBSYNC_SELECT;
 }
 
 /* ================================================================== */
 
 void __HBMSYNUpdateSrc(HBMSYNVOICE* voice)
 {
-    struct AXVPB* vp = voice->pb;
-    f32 mul          = voice->pitch * __HBMSYNGetRelativePitch(voice);
-    u32 sr           = __cvt_fp2unsigned(65536.0 * mul);
+    f32 mul = voice->pitch * __HBMSYNGetRelativePitch(voice);
+    u32 sr  = __cvt_fp2unsigned(65536.0f * mul);
 
-    *((u32*)&vp->pb.src.ratioHi) = sr;
+    *((u32*)&voice->pb->pb.src.ratioHi) = sr;
 
-    vp->sync |= AX_PBSYNC_SRC_RATIO;
+    voice->pb->sync |= AX_PBSYNC_SRC_RATIO;
 }
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif

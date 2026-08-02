@@ -46,6 +46,14 @@ DECOMP_FORCEACTIVE(HBMBase_cpp, (GXColor){0, 0, 0, 255});
 extern void* HBMAllocMem(u32 size);
 extern void HBMFreeMem(void* pBlock);
 
+/* Retail keeps the WPADInfo array as a static (sWpadInfo) rather than a
+ * member; the exact linker name (mangled under cf::CfPadTask) is reproduced
+ * with an extern "C" definition so the reloc names match the retail object.
+ * The HomeButton layout member at 0x14C is retained solely to preserve the
+ * retail object layout. */
+extern "C" WPADInfo sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton
+    [WPAD_MAX_CONTROLLERS];
+
 static HBMAllocatorType getAllocatorType(const HBMDataInfo* pDataInfo) {
     if (pDataInfo->pAllocator != NULL) {
         return HBM_ALLOCATOR_APPLI;
@@ -1500,7 +1508,8 @@ void HomeButton::calc_letter() {
 
 void HomeButton::calc_battery(int chan) {
     for (int i = 0; i < res::eBatteryPane_Max; i++) {
-        if (i < mWpadInfo[chan].battery) {
+        if (i < sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[chan]
+                .battery) {
             mpLayout->GetRootPane()
                 ->FindPaneByName(scBatteryPaneName[chan][i], true)
                 ->SetVisible(true);
@@ -1511,7 +1520,8 @@ void HomeButton::calc_battery(int chan) {
         }
     }
 
-    if (mWpadInfo[chan].battery < 2) {
+    if (sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[chan].battery <
+        2) {
         int idx = findGroupAnimator(chan + res::eGrPane_plyr_00,
                                     res::eGrAnim_btry_red);
 

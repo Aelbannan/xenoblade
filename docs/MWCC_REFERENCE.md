@@ -69,7 +69,9 @@ register-operand `ASM()` blocks. Findings that transfer to any PS target:
 
 Model the current, portal, and candidate bounds as **six separately declared `CVec3` min/max objects**, in reverse stack order (`currentMax/currentMin`, `portalMax/portalMin`, `candidateMax/candidateMin`). A padded scalar rectangle has identical field offsets but MWCC assigns its stack slots by first use, leaving a 72-byte slot rotation; separate vectors reproduce every retail stack offset. Declaring `pass` before the queue pointers also makes queue-next/frontier-count use retail `r8/r9`.
 
-Preserve `graph.edges` in a local **mutable `u16*`**, matching the member's exact type, before deriving the count and neighbor pointers. Converting it immediately to `const u16*` introduces a separate MWCC virtual register, rotates the current-node GPR colors, and leaves 221 mismatches; the exact-type local plus a named candidate-node reference reaches 96.6% CODE_MATCH with 196 opcode-identical register-color mismatches. Aggregate arrays/workspaces lose retail's fourth saved FPR and regress by 8 bytes. Do not use register or stack steering to close the residual FPR/GPR Chaitin cycles.
+Preserve `graph.edges` in a local **mutable `u16*`**, matching the member's exact type, before deriving the count and neighbor pointers. Converting it immediately to `const u16*` introduces a separate MWCC virtual register and rotates the current-node GPR colors. Also declare `crossingX/Z`, `deltaX/Z`, `distance`, the two slopes, maxima, then minima at function scope; this natural old-style local order gives MWCC the retail virtual-ID order. Retail anchors line crossings at `goalCenter` (mathematically the same line as a position anchor), spells the final comparisons as `bestDistance < distance` and `goalNode == candidateIndex`, and swaps the two queues via `swap = next; next = frontier; frontier = swap`.
+
+Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structural differences, and 73 opcode-identical register-color mismatches. The residue is three independent Chaitin cycles: goal conversion `f3/f4`, traversal `f28/f30/f31`, and loop `r7/r10/r11/r12`. Aggregate arrays/workspaces lose retail's fourth saved FPR and regress by 8 bytes. Do not use register or stack steering to close the residual cycles.
 
 ## Isolated Gekko paired-single backends
 
@@ -5435,3 +5437,36 @@ Target `us-80341eb0` (594 insn, size 0x948). Structural wins that took it from
   (two-add tree) and `(ch->panFrontL + ch->panL) + (ch->fader + ch->auxA)`
   (four-load tree) to match retail's partial-sum ordering; flat left-chains
   re-associate differently.
+
+## RVL_HBM: static member with outer-class mangling prefix → `extern "C"` definition
+
+Target `us-803290a0` (`calc_battery`, 131 insn). Retail reads the WPADInfo
+array via a **static** whose mangled name carries an outer-class prefix that
+source-level C++ cannot reproduce: `sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton`
+(HomeButton is declared in `homebutton`, but the retail linker name is nested
+under `cf::CfPadTask`). The decomp TU had the array as an **instance member**
+(`lbz r0,0x160(r28)` vs retail `lbz r0,0x14(r28)` + a missing `lis/addi` pair).
+
+Fix: keep the member for layout, and add a file-scope definition with the exact
+retail linker name:
+
+```cpp
+extern "C" WPADInfo sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[WPAD_MAX_CONTROLLERS];
+```
+
+Then reference the full mangled identifier in code. Reloc names (R_PPC_ADDR16_HA/LO)
+become byte-identical to retail → 100% FULL_MATCH (131/131, size 0x20C → 0x20C),
+no SMT needed.
+
+## Constant-pool displacement mismatches are TU-layout-driven
+
+Target `us-80326dc0` (`init_volume`, 128 insn, 99.945%). 7 residual mismatches
+are `lfs/lfd/addi` displacements into the TU rodata pool (`0x304` vs `0x308`,
+`lbl_805186C8@l+104` vs `+112`): the **values are identical**, but the pool
+offsets differ because the decomp TU's rodata layout diverges from retail —
+driven by *other* functions in the same TU (extra `1.2f`/`30000.0f`, missing
+`1.5f`, `-1000f/1000f` pooled at the section head, double magics not fused
+into `176.0f/0.0f` float pairs). Per-function source edits cannot move pool
+entries; the whole TU must be matched for FULL_MATCH. These sites are
+equivalent loads (safe for EQUIVALENT_MATCH via SMT once the certified-callee
+tree is complete).

@@ -6,6 +6,8 @@ namespace detail {
 
 MmlSeqTrack::MmlSeqTrack() {}
 
+MmlSeqTrack::~MmlSeqTrack() {}
+
 ParseResult MmlSeqTrack::Parse(bool doNoteOn) {
     return mParser->Parse(this, doNoteOn);
 }

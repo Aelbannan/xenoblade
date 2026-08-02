@@ -22,6 +22,7 @@ public:
 
 public:
     MmlSeqTrack();
+    virtual ~MmlSeqTrack();
     virtual ParseResult Parse(bool doNoteOn); // at 0xC
 
     void SetMmlParser(const MmlParser* pParser) {

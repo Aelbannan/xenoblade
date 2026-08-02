@@ -83,9 +83,9 @@ s32 mwPlyGetRareStat(void* self) {
         return 0;
     }
     {
-        s32 r = criware_803A2258(*(void**)((u8*)self + 0x58));
+        s32 r = SFD_GetHnStat(*(void**)((u8*)self + 0x58));
         if (r < 0) return 4;
-        if (SFD_GetHnStat(self) != 0) return 4;
+        if (criware_803A2258(self) != 0) return 4;
         if (*(s32*)((u8*)self + 4) == 2) {
             if (r == 4 || r == 6) return 2;
             return 1;

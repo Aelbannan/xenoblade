@@ -93,7 +93,8 @@ extern "C" void HBMSEQSetVolume(HBMSEQSEQUENCE* seq, int volume);
 
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;
-    HBMSEQSEQUENCE* p = NULL;
+    HBMSEQSEQUENCE* p;
+    SeqPool* pool;
     int count;
     int i;
 
@@ -105,6 +106,7 @@ HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
         count = 4;
     }
 
+    p = NULL;
     for (i = 0; i < count; i++) {
         if (players[i].inUse == 0) {
             p = &players[i];
@@ -114,8 +116,6 @@ HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     }
 
     if (p == NULL) {
-        SeqPool* pool;
-
         if (soundId == 4 || soundId == 0x17 || soundId == 0x19) {
             pool = &sWork->pool[1];
         } else {

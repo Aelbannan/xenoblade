@@ -79,7 +79,7 @@ alloc_done:
         }
     }
     fx->delay.inPos = 0;
-    fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
+    fx->delay.outPos = (fx->delay.size - (u32)(float_8066BF00 * fx->delayTime)) << 16;
     fx->delay.lastPos = fx->delay.outPos;
     fx->delay.sizeFP = fx->delay.size << 16;
     ok = TRUE;
@@ -138,7 +138,7 @@ BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx) {
         walk++;
     }
     fx->delay.inPos = 0;
-    fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
+    fx->delay.outPos = (fx->delay.size - (u32)(float_8066BF00 * fx->delayTime)) << 16;
     fx->delay.lastPos = fx->delay.outPos;
     fx->delay.sizeFP = fx->delay.size << 16;
     ok = TRUE;

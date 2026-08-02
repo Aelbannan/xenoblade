@@ -216,20 +216,15 @@ const char* HomeButton::scBatteryPaneName //
 };
 #undef X
 
-/* Minimal classes with the vtable shapes the HomeButton destructor calls
- * through.  The objects are unknown SDK types whose deleting-destructor
- * virtuals sit at these offsets (verified against the retail dtor assembly). */
+/* Minimal class with the vtable shape the HomeButton destructor calls through
+ * for the lyt/GroupAnmController objects (deleting-destructor virtual at
+ * vtbl[2]).  Casting to this local type keeps the retail byte-identical
+ * virtual dispatch while avoiding standalone emission of the SDK classes'
+ * inline virtuals. */
 struct VtblObj {
     virtual ~VtblObj();
     virtual void v1();
     virtual void v2();
-};
-
-/* homebutton::RemoteSpk stores its vtable pointer at +0x1F0 (see the retail
- * RemoteSpk ctor), so the dtor call goes through that slot. */
-struct RemoteSpkDtor {
-    u8 pad[0x1F0];
-    void** vtbl;   // 0x1F0
 };
 
 HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
@@ -268,97 +263,64 @@ HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
 }
 
 HomeButton::~HomeButton() {
-    // Retail-layout view of the late HomeButton fields (the reconstructed
-    // header offsets are corrected via the mpText fix in HBMBase.h).
-    typedef struct DtorView {
-        u8 pad0[0x04];
-        const HBMDataInfo* mpHBInfo;   // 0x04
-        u8 pad1[0x08];
-        s32 mState;                    // 0x10
-        u8 pad2[0x80];
-        u8 flag94;                     // 0x94
-        u8 pad3[0x1B];
-        void* pB0;                     // 0xB0
-        void* pB4;                     // 0xB4
-        u8 pad4[0xF4];
-        WPADSyncDeviceCallback cb1AC;  // 0x1AC
-        u8 pad5[0x28];
-        nw4hbm::lyt::Layout* pLayout;  // 0x1D8
-        nw4hbm::lyt::Layout* pCursorLayout[4]; // 0x1DC
-        nw4hbm::lyt::ArcResourceAccessor* pResAccessor; // 0x1EC
-        gui::Manager* pGuiManager;     // 0x1F0
-        void* pRaw1F4;                 // 0x1F4
-        nw4hbm::lyt::DrawInfo drawInfo; // 0x1F8 (0x54 bytes -> 0x24C)
-        Controller* pController[WPAD_MAX_CONTROLLERS]; // 0x24C
-        RemoteSpkDtor* pRemoteSpk;     // 0x25C (vtable at +0x1F0)
-        VtblObj* pAnmObj[12];          // 0x260 (runtime count = mState, 0..3)
-        VtblObj* pGrpObj[0x4A];        // 0x290
-        VtblObj* pPairObj[0xF];        // 0x3B8
-        u8 pad7[0x14];
-        OSAlarm mAlarm[WPAD_MAX_CONTROLLERS];        // 0x408
-        OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];  // 0x4C8
-        OSAlarm mSimpleSyncAlarm;      // 0x588
-    } DtorView;
-
-    DtorView* v = (DtorView*)this;
     int i;
 
-    v->pResAccessor->~ArcResourceAccessor();
-    HBMFreeMem(v->pResAccessor);
+    ((VtblObj*)mpResAccessor)->~VtblObj();
+    HBMFreeMem(mpResAccessor);
 
-    v->pLayout->~Layout();
-    HBMFreeMem(v->pLayout);
+    ((VtblObj*)mpLayout)->~VtblObj();
+    HBMFreeMem(mpLayout);
 
-    if (v->mpHBInfo->cursor == 0) {
-        for (i = 0; i < 4; i++) {
-            v->pCursorLayout[i]->~Layout();
-            HBMFreeMem(v->pCursorLayout[i]);
+    if (mpHBInfo->cursor == 0) {
+        for (i = 0; i < res::eCursorLyt_Max; i++) {
+            ((VtblObj*)mpCursorLayout[i])->~VtblObj();
+            HBMFreeMem(mpCursorLayout[i]);
         }
     }
 
-    for (i = 0; i < v->mState; i++) {
-        v->pAnmObj[i]->~VtblObj();
-        HBMFreeMem(v->pAnmObj[i]);
+    for (i = 0; i < mAnmNum; i++) {
+        ((VtblObj*)mpAnmController[i])->~VtblObj();
+        HBMFreeMem(mpAnmController[i]);
     }
 
-    for (i = 0; i < 0xF; i++) {
-        v->pPairObj[i]->~VtblObj();
-        HBMFreeMem(v->pPairObj[i]);
+    for (i = 0; i < res::ePairAnm_Max; i++) {
+        ((VtblObj*)mpPairGroupAnmController[i])->~VtblObj();
+        HBMFreeMem(mpPairGroupAnmController[i]);
     }
 
-    for (i = 0; i < 0x4A; i++) {
-        v->pGrpObj[i]->~VtblObj();
-        HBMFreeMem(v->pGrpObj[i]);
+    for (i = 0; i < res::eGrAnimator_Max; i++) {
+        ((VtblObj*)mpGroupAnmController[i])->~VtblObj();
+        HBMFreeMem(mpGroupAnmController[i]);
     }
 
-    HBMFreeMem(v->pRaw1F4);
+    HBMFreeMem(mpHomeButtonEventHandler);
 
-    v->pGuiManager->~Manager();
-    HBMFreeMem(v->pGuiManager);
+    ((gui::Manager*)mpPaneManager)->~Manager();
+    HBMFreeMem(mpPaneManager);
 
     for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        if (v->flag94) {
-            v->pController[i]->clearCallback();
+        if (mInitFlag) {
+            mpController[i]->clearCallback();
         }
-        v->pController[i]->~Controller();
-        HBMFreeMem(v->pController[i]);
+        mpController[i]->~Controller();
+        HBMFreeMem(mpController[i]);
     }
 
-    ((void (*)(RemoteSpkDtor*, int))v->pRemoteSpk->vtbl[2])(v->pRemoteSpk, -1);
-    HBMFreeMem(v->pRemoteSpk);
-    v->pRemoteSpk = NULL;
+        mpRemoteSpk->~RemoteSpk();
+    HBMFreeMem(mpRemoteSpk);
+    mpRemoteSpk = NULL;
 
-    WPADSetSimpleSyncCallback(v->cb1AC);
+    WPADSetSimpleSyncCallback(mSimpleSyncCallback);
 
-    HBMFreeMem(v->pB0);
-    HBMFreeMem(v->pB4);
+    HBMFreeMem(mpLayoutName);
+    HBMFreeMem(mpAnmName);
 
     for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        OSCancelAlarm(&v->mAlarm[i]);
-        OSCancelAlarm(&v->mSpeakerAlarm[i]);
+        OSCancelAlarm(&mAlarm[i]);
+        OSCancelAlarm(&mSpeakerAlarm[i]);
     }
 
-    OSCancelAlarm(&v->mSimpleSyncAlarm);
+    OSCancelAlarm(&mSimpleSyncAlarm);
 }
 
 

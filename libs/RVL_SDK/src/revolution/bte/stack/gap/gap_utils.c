@@ -11,6 +11,7 @@
 /* GAP return codes (values recovered from the retail jump tables; these are
  * the BTE GAP_ERR_* statuses with GAP_ERR_GROUP = 0x100). */
 #define BT_PASS                 0x0000
+#define GAP_DEVICE_DISCOVERY     0x0111
 #define GAP_EOINQDB             0x0102
 #define GAP_ERR_BUSY            0x0103
 #define GAP_ERR_ILL_PARM        0x0109
@@ -76,6 +77,7 @@ typedef struct
 extern tGAP_CB gap_cb;
 
 void btm_cback(UINT16 index, void *p_msg);
+void gap_find_addr_name_cb(tBTM_REMOTE_DEV_NAME *p);
 
 UINT16 gap_convert_btm_status(tBTM_STATUS btm_status);
 
@@ -102,7 +104,109 @@ UINT16 gap_convert_btm_status(tBTM_STATUS btm_status)
     }
 }
 
-void gap_find_addr_inq_cb() {}
+void gap_find_addr_inq_cb(tBTM_INQUIRY_CMPL *p)
+{
+    tGAP_FINDADDR_CB *p_cb = &gap_cb.findaddr_cb;
+    tGAP_FINDADDR_RESULTS *p_result = &p_cb->results;
+    UINT16 code;
+
+    if (!p_cb->in_use)
+        return;
+
+    if (gap_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_GAP | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
+                 "   GAP: FindAddrByName Inq Cmpl Evt (Status 0x%04x, Result(s) %d)",
+                 (UINT32)p->status, (UINT32)p->num_resp);
+    }
+
+    if (p->status == BTM_SUCCESS)
+    {
+        p_result->status = GAP_DEVICE_DISCOVERY;
+        if ((p_cb->p_cur_inq = BTM_InqDbFirst()) != NULL)
+        {
+            if (BTM_ReadRemoteDeviceName(p_cb->p_cur_inq->results.remote_bd_addr,
+                                         (tBTM_CMPL_CB *)&gap_find_addr_name_cb) == BTM_CMD_STARTED)
+            {
+                return;
+            }
+
+            switch (p->status)
+            {
+            case BTM_SUCCESS:
+                code = BT_PASS;
+                break;
+            case BTM_CMD_STARTED:
+                code = GAP_CMD_INITIATED;
+                break;
+            case BTM_BUSY:
+                code = GAP_ERR_BUSY;
+                break;
+            case BTM_MODE_UNSUPPORTED:
+            case BTM_ILLEGAL_VALUE:
+                code = GAP_ERR_ILL_PARM;
+                break;
+            case BTM_WRONG_MODE:
+                code = GAP_DEVICE_NOT_UP;
+                break;
+            case BTM_UNKNOWN_ADDR:
+                code = GAP_BAD_BD_ADDR;
+                break;
+            case BTM_DEVICE_TIMEOUT:
+                code = GAP_ERR_TIMEOUT;
+                break;
+            default:
+                code = GAP_ERR_PROCESSING;
+                break;
+            }
+            p_result->status = code;
+        }
+        else
+        {
+            p_result->status = GAP_EOINQDB;
+        }
+    }
+    else
+    {
+        switch (p->status)
+        {
+        case BTM_SUCCESS:
+            code = BT_PASS;
+            break;
+        case BTM_CMD_STARTED:
+            code = GAP_CMD_INITIATED;
+            break;
+        case BTM_BUSY:
+            code = GAP_ERR_BUSY;
+            break;
+        case BTM_MODE_UNSUPPORTED:
+        case BTM_ILLEGAL_VALUE:
+            code = GAP_ERR_ILL_PARM;
+            break;
+        case BTM_WRONG_MODE:
+            code = GAP_DEVICE_NOT_UP;
+            break;
+        case BTM_UNKNOWN_ADDR:
+            code = GAP_BAD_BD_ADDR;
+            break;
+        case BTM_DEVICE_TIMEOUT:
+            code = GAP_ERR_TIMEOUT;
+            break;
+        default:
+            code = GAP_ERR_PROCESSING;
+            break;
+        }
+        p_result->status = code;
+    }
+
+    if (p_cb->p_cback)
+    {
+        (*p_cb->p_cback)(GAP_EVT_FIND_ADDR_COMPLETE, p_result);
+    }
+
+    p_cb->in_use = FALSE;
+    p_cb->p_cback = NULL;
+}
 
 void gap_find_addr_name_cb(tBTM_REMOTE_DEV_NAME *p)
 {

@@ -21,9 +21,9 @@ typedef struct {
     UINT16 product;                   /* 0x04 */
     UINT16 version;                   /* 0x06 */
     BOOLEAN primary_record;           /* 0x08 */
-    UINT8 client_executable_url[0x50]; /* 0x09 */
-    UINT8 service_description[0x50];   /* 0x59 */
-    UINT8 documentation_url[0x50];     /* 0xA9 */
+    char client_executable_url[0x50]; /* 0x09 */
+    char service_description[0x50];   /* 0x59 */
+    char documentation_url[0x50];     /* 0xA9 */
 } tSDP_DI_RECORD_LOCAL;                /* 0xFA */
 
 typedef struct {
@@ -262,7 +262,119 @@ tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid
     return NULL;
 }
 
-UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) { return 0; }
+UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) {
+    UINT16 result = SDP_SUCCESS;
+    UINT32 handle;
+    UINT16 spec_id = 0x1200;
+    UINT8 p_val[2];
+    tSDP_DI_RECORD_LOCAL *p_info = (tSDP_DI_RECORD_LOCAL *)device_info;
+
+    *p_handle = 0;
+
+    if (p_info == NULL) {
+        return SDP_ILLEGAL_PARAMETER;
+    }
+
+    if ((p_info->primary_record == TRUE) && (sdp_cb.di_primary_handle != 0)) {
+        handle = sdp_cb.di_primary_handle;
+    } else {
+        handle = SDP_CreateRecord();
+        if (handle == 0) {
+            return SDP_NO_RESOURCES;
+        }
+    }
+
+    *p_handle = handle;
+
+    if (!SDP_AddServiceClassIdList(handle, 1, &spec_id)) {
+        result = SDP_DI_REG_FAILED;
+    }
+
+    if (result == SDP_SUCCESS) {
+        p_val[0] = 0;
+        p_val[1] = 9;
+        if (SDP_AddAttribute(handle, ATTR_ID_SPECIFICATION_ID, UINT_DESC_TYPE, 2, &p_val[0]) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        if (p_info->client_executable_url[0] != '\0') {
+            if (((strlen((const char *)p_info->client_executable_url) + 1) > 0x50) || !SDP_AddAttribute(handle, ATTR_ID_CLIENT_EXE_URL, URL_DESC_TYPE,
+                                      (UINT32)(strlen((const char *)p_info->client_executable_url) + 1),
+                                      (UINT8 *)p_info->client_executable_url)) {
+                    result = SDP_DI_REG_FAILED;
+            }
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        if (p_info->service_description[0] != '\0') {
+            if (((strlen((const char *)p_info->service_description) + 1) > 0x50) || !SDP_AddAttribute(handle, ATTR_ID_SERVICE_DESCRIPTION, TEXT_STR_DESC_TYPE,
+                                      (UINT32)(strlen((const char *)p_info->service_description) + 1),
+                                      (UINT8 *)p_info->service_description)) {
+                    result = SDP_DI_REG_FAILED;
+            }
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        if (p_info->documentation_url[0] != '\0') {
+            if (((strlen((const char *)p_info->documentation_url) + 1) > 0x50) || !SDP_AddAttribute(handle, ATTR_ID_DOCUMENTATION_URL, URL_DESC_TYPE,
+                                      (UINT32)(strlen((const char *)p_info->documentation_url) + 1),
+                                      (UINT8 *)p_info->documentation_url)) {
+                    result = SDP_DI_REG_FAILED;
+            }
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        p_val[0] = (UINT8)(p_info->vendor >> 8);
+        p_val[1] = (UINT8)p_info->vendor;
+        if (SDP_AddAttribute(handle, ATTR_ID_VENDOR_ID, UINT_DESC_TYPE, 2, &p_val[0]) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        p_val[0] = (UINT8)(p_info->product >> 8);
+        p_val[1] = (UINT8)p_info->product;
+        if (SDP_AddAttribute(handle, ATTR_ID_PRODUCT_ID, UINT_DESC_TYPE, 2, &p_val[0]) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        p_val[0] = (UINT8)(p_info->version >> 8);
+        p_val[1] = (UINT8)p_info->version;
+        if (SDP_AddAttribute(handle, ATTR_ID_PRODUCT_VERSION, UINT_DESC_TYPE, 2, &p_val[0]) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        if (SDP_AddAttribute(handle, ATTR_ID_PRIMARY_RECORD, BOOLEAN_DESC_TYPE, 1,
+                              &p_info->primary_record) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result == SDP_SUCCESS) {
+        p_val[0] = (UINT8)(p_info->vendor_id_source >> 8);
+        p_val[1] = (UINT8)p_info->vendor_id_source;
+        if (SDP_AddAttribute(handle, ATTR_ID_VENDOR_ID_SOURCE, UINT_DESC_TYPE, 2, &p_val[0]) == FALSE) {
+            result = SDP_DI_REG_FAILED;
+        }
+    }
+
+    if (result != SDP_SUCCESS) {
+        SDP_DeleteRecord(handle);
+    } else if (p_info->primary_record == TRUE) {
+        sdp_cb.di_primary_handle = handle;
+    }
+
+    return result;
+}
 
 UINT16 SDP_GetLocalDiRecord(tSDP_DI_GET_RECORD *p_device_info, UINT32 *p_handle) {
     UINT16 result = SDP_NO_DI_RECORD_FOUND;

@@ -473,7 +473,109 @@ UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
 
     return p;
 }
-void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len) {}
+void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
+{
+    UINT8 *p_start;
+    UINT8 *p;
+    UINT8 *p_end;
+    UINT8 *p_param_len;
+    UINT16 param_len;
+    BOOLEAN cont_request_needed = FALSE;
+    UINT8 type_byte;
+    UINT32 attr_len;
+
+    if (p_reply) {
+        p_start = p_reply + 6;
+        param_len = (UINT16)((p_reply[4] << 8) + p_reply[5]);
+
+        if (p_ccb->list_len + param_len > SDP_MAX_LIST_BYTE_COUNT) {
+            sdp_disconnect(p_ccb, SDP_INVALID_PDU_SIZE);
+            return;
+        }
+
+        memcpy(&p_ccb->rsp_list[p_ccb->list_len], p_start, param_len);
+        p_ccb->list_len += param_len;
+        p_start += param_len;
+
+        if (*p_start) {
+            if (*p_start > SDP_MAX_CONTINUATION_LEN) {
+                sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
+                return;
+            }
+            cont_request_needed = TRUE;
+        }
+    }
+
+    if (cont_request_needed || !p_reply) {
+        BT_HDR *p_msg = (BT_HDR *)GKI_getpoolbuf(SDP_POOL_ID);
+        UINT8 *p_frame;
+
+        if (p_msg == NULL) {
+            sdp_disconnect(p_ccb, SDP_NO_RESOURCES);
+            return;
+        }
+
+        p_msg->offset = SDP_L2CAP_MIN_OFFSET;
+        p = p_frame = (UINT8 *)(p_msg + 1) + SDP_L2CAP_MIN_OFFSET;
+
+        UINT8_TO_BE_STREAM(p, 6); /* SDP_PDU_SERVICE_SEARCH_ATTR_REQ */
+        UINT16_TO_BE_STREAM(p, p_ccb->transaction_id);
+        p_ccb->transaction_id++;
+
+        p_param_len = p;
+        p += 2;
+
+        p = sdpu_build_uuid_seq(p, p_ccb->p_db->num_uuid_filters,
+                                p_ccb->p_db->uuid_filters);
+        UINT16_TO_BE_STREAM(p, SDP_CB_MAX_ATTR_LIST_SIZE);
+
+        if (p_ccb->p_db->num_attr_filters) {
+            p = sdpu_build_attrib_seq(p, p_ccb->p_db->attr_filters,
+                                      p_ccb->p_db->num_attr_filters);
+        } else {
+            p = sdpu_build_attrib_seq(p, NULL, 0);
+        }
+
+        if (p_start) {
+            memcpy(p, p_start, *p_start + 1);
+            p += *p_start + 1;
+        } else {
+            UINT8_TO_BE_STREAM(p, 0);
+        }
+
+        param_len = (UINT16)(p - p_param_len - 2);
+        UINT16_TO_BE_STREAM(p_param_len, param_len);
+
+        p_msg->len = (UINT16)(p - p_frame);
+
+        L2CA_DataWrite(p_ccb->connection_id, p_msg);
+
+        btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_SDP, SDP_INACT_TIMEOUT);
+    } else {
+        p = p_ccb->rsp_list;
+        type_byte = *p++;
+        if ((type_byte >> 3) != 6) {
+            if (sdp_cb[0x4630] >= 2) {
+                LogMsg_1(0xA0001, "SDP - Wrong type: 0x%02x in attr_rsp", type_byte);
+            }
+            return;
+        }
+        p = sdpu_get_len_from_type(p, type_byte, &attr_len);
+        p_end = p_ccb->rsp_list + p_ccb->list_len;
+        if (p + attr_len != p_end) {
+            sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
+            return;
+        }
+        while (p < p_end) {
+            p = save_attr_seq(p_ccb, p, p_ccb->rsp_list + p_ccb->list_len);
+            if (p == NULL) {
+                sdp_disconnect(p_ccb, SDP_DB_FULL);
+                return;
+            }
+        }
+        sdp_disconnect(p_ccb, SDP_SUCCESS);
+    }
+}
 void process_service_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
 {
     UINT8 *p_start;

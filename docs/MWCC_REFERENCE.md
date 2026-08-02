@@ -4143,24 +4143,43 @@ locals:
 - Removed `__copy_mem`/`__move_mem` stubs (retail has no such symbols; the `//unused`
   comment form still EMITS the empty functions — delete them outright) → unit .text
   exactly 0x2D0 = retail budget.
-- `__copy_longs_rev_unaligned` (0xac): **18 pure reg-swaps remain** (2026-08-22
-  improvement from 20): computing the shifts with the *shared CSE'd mask* FIRST —
+- `__copy_longs_rev_unaligned` (0xac): **15 pure reg-swaps remain** (2026-08-03
+  improvement from 18): computing the shifts with the *shared CSE'd mask* FIRST —
   `left_shift = ((unsigned int) cps & 3) << 3; src_offset = ((unsigned int) cps) & 3;
   right_shift = 32 - left_shift;` — makes the long-loop counter and v1/v2 land on
   the retail registers (r6/r7/r8); the so-first form (`src_offset` then
-  `left_shift = src_offset << 3`) puts the counter in r4 instead. The residual is
-  a single 4-cycle Chaitin rotation {cps: r4→r11, so: r9→r4, ls: r10→r9,
-  rs: r11→r10} — invariant across ~60 source variants (mask-between, separate
-  counters, locals/scoped-locals, tail via fresh local or in-place, u32/u64 types,
-  decl orders, `(x<<3)&0x18` ls form which BREAKS the CSE and regresses to 20
-  swaps, mask-expression, lang=c++), real `-O4`/`-O4,s` rebuilds, `-ipa off`,
-  `-opt nolifetimes/nopeephole`, `-schedule off`, GC 2.0–3.0a5.2 (GC 3.0a* gives
-  39.5% with 3 structural — Wii/1.1 is the only 0-structural compiler). MWCC never
-  coalesces the src-param reassignment in THIS function (the forward twin
-  coalesces `lpd` into r4; `rev_aligned`'s local `src` coalesces). Tail reset via
-  `cps = ((unsigned char*)src) + src_offset` (value-tracked to a fresh add, 18 vs
-  more for `+=`). Size correct; the other three functions stay 100%; 0x2D0 unit
-  budget exact.
+  `left_shift = src_offset << 3`) puts the counter in r4 instead. **Declaring the
+  shifts rs-first — `unsigned int right_shift, src_offset, left_shift;` — fixes
+  ls onto retail r10** (the 2026-08-22 "decl orders invariant" claim was wrong:
+  rs-first/any-rs-first permutation = 15 swaps, so-first/ls-first = 18;
+  `v2` before `v1` in the first decl line costs +2). Careful: the forward
+  `__copy_longs_unaligned` REGRESSES 100%→77% under rs-first — the rs-first decl
+  belongs ONLY to rev_unaligned. Residual: 3-cycle {cps: r4→r11, so: r9→r4,
+  rs: r11→r9} (ls now correct) — invariant across locals/scoped-locals (explicit
+  locals flip the pointers to r11/r12 AND change the tail shape), dst-first
+  statement order, tail via fresh local or in-place or `+=` (16), u32/u64 types,
+  ulong shift decls, separate decl lines, mask casts as ulong, `i` as uint,
+  copy-then-`+=` open, integer-arith open, `(x<<3)&0x18` ls form (BREAKS the CSE,
+  regresses), lang=c++. `cps = cps + 4 - src_offset` (vs `cps += 4 - src_offset`)
+  moves cps to r7 on Wii/1.1 but REWRITES the adjust block (addi+subf instead of
+  subfic+add, 5 structural) — net regression, do not keep. All real
+  `-O4`/`-O4,s`/`-O3`/`-O2` rebuilds, `-ipa off`, `-inline noauto`, `-common on`,
+  `-schedule off`, `#pragma defer_codegen on/off`, every Wii compiler
+  (1.0/1.0RC1/1.0a/1.1/1.3/1.5/1.6/1.7/0x4201_127) leave cps at r11.
+  **Isolated single-function ladder (wibo + mwcceppc + objdump of a standalone
+  TU copy — reusable technique):** without the adjust/word-loop, `cps = src + n`
+  DOES coalesce in-place (`add r4, r4, r5`); adding `cps += 4 - src_offset` alone
+  flips cpd into r4; each further block (word loop, n&4, tail) walks the pointer
+  pair up one register (r9/r10 → r10/r11 → r11/r12). GC/3.0a3–3.0a5.2 coalesce
+  cps into r4 but emit retail-incompatible schedule + instruction selection
+  (`srwi`/`subf`/`addi` instead of `rlwinm`/`subfic`/`add`) — retail combines
+  Wii/1.1 instruction selection with a GC-style coalesce that no available Wii
+  compiler reproduces for this body. MWCC never coalesces the src-param
+  reassignment in THIS function on Wii (the forward twin coalesces `lpd` into r4;
+  `rev_aligned`'s local `src` coalesces). Tail reset via
+  `cps = ((unsigned char*)src) + src_offset` (value-tracked to a fresh add,
+  better than `+=`). Size correct; the other three functions stay 100%; 0x2D0
+  unit budget exact.
   **Acceptance-blocker analysis (both bars):** (1) the register-renaming witness
   can never certify this pair — the rotation rho maps `r4→r11` (cps/counter swap)
   and gate 5 (ABI-boundary fixedness, `docs/ppc_equiv_work/31`) requires rho to
@@ -4172,8 +4191,9 @@ locals:
   `addi/subi` prelude + GPR-pure whitelisted body; `slw`/`srw`/memory ops excluded)
   applies, so it unrolls to 2048× and dies at the final byte loop (`0x2bc`).
   Raising limits just trips `max_paths`/`max_instructions`/deadline next — the
-  shape is unsummarizable by design. CODE_MATCH 96.05% (0 structural, size exact)
-  is the documented cap for both bars; do not burn probe time on it.
+  shape is unsummarizable by design. CODE_MATCH 97.91% objdiff / 65.1% hexdiff
+  (15 pure reg-swaps, 0 structural, size exact) is the documented cap for both
+  bars; do not burn probe time on it.
 
 ## CriWare Sofdec mpv_deli — CTR delimiter loops, decl-order wins + color ceiling (US)
 
@@ -6768,3 +6788,7 @@ in prologue/guard/parity). Leaf function — SMT probe is the acceptance path
    - `/1000` magic multiply: `-O4,s` always emits `divwu`; use the documented `__mulhwu` builtin — `(u32)(__mulhwu(0x10624DD3, OS_BUS_CLOCK_SPEED >> 2) >> 6) * 20` — magic as the FIRST arg (operand order matters; the reverse swaps rA/rB and breaks the renaming rho).
    - boolean normalize `x ? TRUE : FALSE` (retail `neg/or/rlwinm 1,31,31`): write `(u32)(-x | x) >> 31` (neg operand FIRST; `x | -x` order swaps the `or` operands; the `(u32)` cast selects logical `rlwinm` over `srawi`).
    - `libStatus = (u32)(s8)p->libStatus;` emits `lbz r0; extsb rD, r0` (two registers); plain `(u32)p->libStatus` (field already `s8`) emits retail's in-place `lbz rX; extsb rX, rX`.
+4. **HBMBase `~HomeButton` (us-803259d0, 100% FULL_MATCH) — member-object dtor devirtualization + inline-virtual emission control**:
+   - Calling a member object's virtual dtor EXPLICITLY (`mDrawInfo.~DrawInfo();`) makes MWCC emit the virtual (bcctrl) dispatch — the retail calls `__dt__DrawInfo` DIRECTLY. Removing the explicit call lets the compiler's **implicit member destruction** devirtualize it (the member's static type is known) → the exact retail `addi r3,this+0x1F8; li r4,-1; bl` sequence. If a member's dtor call must appear mid-body, structure it so the implicit destruction lands at the retail position (the retail call is the last statement before the delete-flag check).
+   - Calling virtual dtors through the SDK classes (`mpLayout->~Layout()`, `mpAnmController[i]->~GroupAnmController()`) forces MWCC to emit **standalone copies of every inline virtual** of those classes (Pane `GetRuntimeTypeInfo`, `ut::LinkList` dtor, gui `setManager`/`setDrawInfo`/`setTriggerTarget`/`getPane`/`onEvent`) — ~0x88+ bytes that can overflow the split budget. Casting the call target to a **local struct with the same vtable shape** (`struct VtblObj { virtual ~VtblObj(); virtual void v1(); virtual void v2(); };` then `((VtblObj*)mpLayout)->~VtblObj();`) keeps the byte-identical vtbl[2] dispatch but suppresses the SDK-class emissions (HBMBase unit: 0x8784 → 0x8634, back under the 0x86E0 budget).
+   - homebutton::RemoteSpk's vtable pointer sits at object+0x1F0 (non-standard layout the header can't express). A REAL virtual call `mpRemoteSpk->~RemoteSpk();` still compiles to the retail `lwz r12, 0x1F0(r3); lwz r12, 8(r12); mtspr ctr,r12; bcctrl` (MWCC knows the vptr offset) — use the real class, NOT a manual `vtbl[2]` function-pointer cast (which allocates the vptr load to r5 instead of r12).

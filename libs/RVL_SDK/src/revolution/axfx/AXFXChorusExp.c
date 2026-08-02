@@ -130,9 +130,8 @@ BOOL AXFXChorusExpSettingsUpdate(AXFX_CHORUS_EXP* fx) {
         }
         memset(*walk, 0, fx->delay.size * 4);
         walk++;
-    }
-    fx->delay.inPos = 0;
-    fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
+    }    fx->delay.inPos = 0;
+    fx->delay.outPos = (fx->delay.size - (u32)(float_8066BED0 * fx->delayTime)) << 16;
     fx->delay.lastPos = fx->delay.outPos;
     fx->delay.sizeFP = fx->delay.size << 16;
     ok = TRUE;

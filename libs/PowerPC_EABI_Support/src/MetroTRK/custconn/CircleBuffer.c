@@ -2,51 +2,58 @@
 #include "PowerPC_EABI_Support/MetroTRK/custconn/MWCriticalSection_gc.h"
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
-ui32 CBGetBytesAvailableForRead(CircleBuffer* cb){
+ui32 CBGetBytesAvailableForRead(const CircleBuffer* cb){
     return cb->mBytesToRead;
 }
 
-//unused
-//ui32 CBGetBytesAvailableForWrite(CircleBuffer* cb){
+// not present in the retail binary; kept commented out so the unit
+// stays within its split budget (the functions below would otherwise
+// emit 0x48 bytes of unreferenced .text)
+//ui32 CBGetBytesAvailableForWrite(const CircleBuffer* cb){
 //    return cb->mBytesToWrite;
 //}
 
 void CircleBufferInitialize(CircleBuffer* cb, ui8* buf, ui32 size){
-    cb->unk8 = buf;
-    cb->unkC = size;
-    cb->unk0 = buf;
-    cb->unk4 = buf;
+    cb->mBufStart = buf;
+    cb->mBufSize = size;
+    cb->mReadPtr = buf;
+    cb->mWritePtr = buf;
     cb->mBytesToRead = 0;
     cb->mBytesToWrite = size;
     MWInitializeCriticalSection(&(cb->mSection));
 }
 
-//unused
+// not present in the retail binary; kept commented out so the unit
+// stays within its split budget (the functions below would otherwise
+// emit 0x48 bytes of unreferenced .text)
 //void CircleBufferTerminate(CircleBuffer* cb){
 //    MWTerminateCriticalSection(&(cb->mSection));
 //    memset(cb,0,sizeof(CircleBuffer) - 4);
 //}
 
-int CircleBufferWriteBytes(CircleBuffer* cb, ui8* buf, ui32 size){
-    ui32 r29;
+int CircleBufferWriteBytes(CircleBuffer* cb, const ui8* buf, ui32 size){
+    ui32 spaceToEnd;
     
     if(size > cb->mBytesToWrite) return -1;
 
     MWEnterCriticalSection(&(cb->mSection));
 
-    r29 = cb->unkC - (cb->unk4 - cb->unk8);
+    // free space between the write pointer and the end of the buffer
+    spaceToEnd = cb->mBufSize - (cb->mWritePtr - cb->mBufStart);
 
-    if(r29 >= size){
-        memcpy(cb->unk4, buf, size);
-        cb->unk4 += size;
+    if(spaceToEnd >= size){
+        memcpy(cb->mWritePtr, buf, size);
+        cb->mWritePtr += size;
     }else{
-        memcpy(cb->unk4, buf, r29);
-        memcpy(cb->unk8, buf + r29, size - r29);
-        cb->unk4 = cb->unk8 + size - r29;
+        // the write wraps: fill to the end, then continue from the start
+        memcpy(cb->mWritePtr, buf, spaceToEnd);
+        memcpy(cb->mBufStart, buf + spaceToEnd, size - spaceToEnd);
+        cb->mWritePtr = cb->mBufStart + size - spaceToEnd;
     }
 
-    if(cb->unkC == cb->unk4 - cb->unk8){
-        cb->unk4 = cb->unk8;
+    // wrapped exactly to the end of the buffer: reset to the start
+    if(cb->mBufSize == cb->mWritePtr - cb->mBufStart){
+        cb->mWritePtr = cb->mBufStart;
     }
 
     cb->mBytesToWrite -= size;
@@ -58,25 +65,28 @@ int CircleBufferWriteBytes(CircleBuffer* cb, ui8* buf, ui32 size){
 }
 
 int CircleBufferReadBytes(CircleBuffer* cb, ui8* buf, ui32 size){
-    ui32 r29;
+    ui32 bytesToEnd;
 
     if(size > cb->mBytesToRead) return -1;
 
     MWEnterCriticalSection(&(cb->mSection));
 
-    r29 = cb->unkC - (cb->unk0 - cb->unk8);
+    // data between the read pointer and the end of the buffer
+    bytesToEnd = cb->mBufSize - (cb->mReadPtr - cb->mBufStart);
 
-    if(size < r29){
-        memcpy(buf, cb->unk0, size);
-        cb->unk0 += size;
+    if(size < bytesToEnd){
+        memcpy(buf, cb->mReadPtr, size);
+        cb->mReadPtr += size;
     }else{
-        memcpy(buf, cb->unk0, r29);
-        memcpy(buf + r29, cb->unk8, size - r29);
-        cb->unk0 = cb->unk8 + size - r29;
+        // the read wraps: drain to the end, then continue from the start
+        memcpy(buf, cb->mReadPtr, bytesToEnd);
+        memcpy(buf + bytesToEnd, cb->mBufStart, size - bytesToEnd);
+        cb->mReadPtr = cb->mBufStart + size - bytesToEnd;
     }
 
-    if(cb->unkC == cb->unk0 - cb->unk8){
-        cb->unk0 = cb->unk8;
+    // wrapped exactly to the end of the buffer: reset to the start
+    if(cb->mBufSize == cb->mReadPtr - cb->mBufStart){
+        cb->mReadPtr = cb->mBufStart;
     }
 
     cb->mBytesToWrite += size;

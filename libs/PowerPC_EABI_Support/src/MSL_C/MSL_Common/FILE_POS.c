@@ -50,8 +50,8 @@ int ftell(FILE* stream)
 }
 
 //unused
-void fgetpos(){
-}
+//void fgetpos(){
+//}
 
 int _fseek(FILE* file, u32 offset, int whence)
 {
@@ -111,17 +111,17 @@ int _fseek(FILE* file, u32 offset, int whence)
 }
 
 //unused
-int fseek(FILE* stream, u32 offset, int whence)
-{
-    int code;
-    code = _fseek(stream, offset, whence); // 0 if successful, -1 if error
-    return code;
-}
+//int fseek(FILE* stream, u32 offset, int whence)
+//{
+//    int code;
+//    code = _fseek(stream, offset, whence); // 0 if successful, -1 if error
+//    return code;
+//}
 
 //unused
-void fsetpos(){
-}
+//void fsetpos(){
+//}
 
 //unused
-void rewind(){
-}
+//void rewind(){
+//}

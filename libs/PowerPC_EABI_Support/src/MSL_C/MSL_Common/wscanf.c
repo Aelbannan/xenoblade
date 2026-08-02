@@ -10,8 +10,8 @@ static void __wsformatter(){
 }
 
 //unused
-void __wFileRead(){
-}
+//void __wFileRead(){
+//}
 
 wint_t __wStringRead(void* isc, wint_t ch, int Action){
     wchar_t ret;
@@ -42,49 +42,49 @@ wint_t __wStringRead(void* isc, wint_t ch, int Action){
 }
 
 //unused
-void fwscanf(){
-}
+//void fwscanf(){
+//}
 
 //unused
-void fwscanf_s(){
-}
+//void fwscanf_s(){
+//}
 
 //unused
-void wscanf(){
-}
+//void wscanf(){
+//}
 
 //unused
-void wscanf_s(){
-}
+//void wscanf_s(){
+//}
 
 //unused
-void vwscanf(){
-}
+//void vwscanf(){
+//}
 
 //unused
-void vwscanf_s(){
-}
+//void vwscanf_s(){
+//}
 
 //unused
-void vfwscanf(){
-}
+//void vfwscanf(){
+//}
 
 //unused
-void vfwscanf_s(){
-}
+//void vfwscanf_s(){
+//}
 
 //unused
-void vswscanf(){
-}
+//void vswscanf(){
+//}
 
 //unused
-void vswscanf_s(){
-}
+//void vswscanf_s(){
+//}
 
 //unused
-void swscanf(){
-}
+//void swscanf(){
+//}
 
 //unused
-void swscanf_s(){
-}
+//void swscanf_s(){
+//}

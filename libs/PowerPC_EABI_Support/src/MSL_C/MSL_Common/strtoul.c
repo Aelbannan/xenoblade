@@ -322,10 +322,10 @@ unsigned long strtoul(const char *str, char **end, int base) {
 }
 
 //unused
-void strtoull(){
-}
+//void strtoull(){
+//}
 
-long strtol(const char *str, char **end, int base) {
+static inline long strtol(const char *str, char **end, int base) {
     unsigned long uvalue;
     long svalue;
     int count, negative, overflow;
@@ -352,17 +352,17 @@ long strtol(const char *str, char **end, int base) {
 }
 
 //unused
-void strtoll(){
-}
+//void strtoll(){
+//}
 
 int atoi(const char *str) {
     return (strtol(str, 0, 10));
 }
 
 //unused
-void atol(){
-}
+//void atol(){
+//}
 
 //unused
-void atoll(){
-}
+//void atoll(){
+//}

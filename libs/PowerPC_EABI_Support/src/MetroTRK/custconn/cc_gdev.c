@@ -6,16 +6,14 @@ static ui8 gRecvBuf[0x500];
 static CircleBuffer gRecvCB;
 static bool gIsInitialized;
 
-DECOMP_FORCEACTIVE(CC_GDEV_c, gRecvBuf);
-
 //unused
-void OutputData(){
-}
-
+//void OutputData(){
+//}
+//
 //unused
-bool IsInitialized(){
-    return gIsInitialized;
-}
+//bool IsInitialized(){
+//    return gIsInitialized;
+//}
 
 int gdev_cc_initialize(void* flagOut, OSInterruptHandler handler){
     DBInitComm((ui8**)flagOut, handler);

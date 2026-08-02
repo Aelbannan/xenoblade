@@ -1,7 +1,7 @@
 #include <types.h>
 #include <revolution/OS.h>
 
-static void InitDefaultHeap(){
+static inline void InitDefaultHeap(){
     void* arenaLo;
     void* arenaHi;
 
@@ -22,8 +22,8 @@ static void InitDefaultHeap(){
 }
 
 //unused
-void __sys_alloc(){
-}
+//void __sys_alloc(){
+//}
 
 __declspec(weak) extern void __sys_free(void* ptr){
     if (__OSCurrHeap == -1) {

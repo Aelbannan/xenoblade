@@ -735,19 +735,19 @@ asm void __shl2i(void)
 }
 
 //unused
-asm void __shr2u(void)
-{
-    nofralloc
-    subfic r8,r5,32
-    subic r9,r5,32
-    srw r4,r4,r5
-    slw r10,r3,r8
-    or r4,r4,r10
-    srw r10,r3,r9
-    or r4,r4,r10
-    srw r3,r3,r5
-    blr
-}
+//asm void __shr2u(void)
+//{
+//    nofralloc
+//    subfic r8,r5,32
+//    subic r9,r5,32
+//    srw r4,r4,r5
+//    slw r10,r3,r8
+//    or r4,r4,r10
+//    srw r10,r3,r9
+//    or r4,r4,r10
+//    srw r3,r3,r5
+//    blr
+//}
 
 asm void __shr2i(void)
 {
@@ -766,105 +766,105 @@ L_802BA610:
 }
 
 //unused
-asm void __cvt_sll_dbl(void){
-    nofralloc
-    stwu r1,-16(r1)
-      rlwinm. r5,r3,0,0,0
-    beq positive
-    subfic r4,r4,0
-    subfze r3,r3
-positive:
-    or. r7,r3,r4
-    li r6,0
-    beq zero
-    cntlzw r7,r3
-    cntlzw r8,r4
-    rlwinm r9,r7,26,0,4
-    srawi r9,r9,31
-    and r9,r9,r8
-    add r7,r7,r9
-    subfic r8,r7,32
-    subic r9,r7,32
-    slw r3,r3,r7
-    srw r10,r4,r8
-    or r3,r3,r10
-    slw r10,r4,r9
-    or r3,r3,r10
-    slw r4,r4,r7
-    sub r6,r6,r7
-    rlwinm r7,r4,0,21,31
-    cmpi cr0,r7,0x400
-    addi r6,r6,1086
-    blt noround
-    bgt round
-    rlwinm. r7,r4,0,20,20
-    beq noround
-round:
-    addic r4,r4,0x0800
-    addze r3,r3
-    addze r6,r6
-noround:
-    rlwinm r4,r4,21,0,31
-    rlwimi r4,r3,21,0,10
-    rlwinm r3,r3,21,12,31
-    rlwinm r6,r6,20,0,11
-    or r3,r6,r3
-    or r3,r5,r3
-zero:
-    stw r3,8(r1)
-    stw r4,12(r1)
-    lfd f1,8(r1)
-    addi r1,r1,16
-    blr
-}
+//asm void __cvt_sll_dbl(void){
+//    nofralloc
+//    stwu r1,-16(r1)
+//      rlwinm. r5,r3,0,0,0
+//    beq positive
+//    subfic r4,r4,0
+//    subfze r3,r3
+//positive:
+//    or. r7,r3,r4
+//    li r6,0
+//    beq zero
+//    cntlzw r7,r3
+//    cntlzw r8,r4
+//    rlwinm r9,r7,26,0,4
+//    srawi r9,r9,31
+//    and r9,r9,r8
+//    add r7,r7,r9
+//    subfic r8,r7,32
+//    subic r9,r7,32
+//    slw r3,r3,r7
+//    srw r10,r4,r8
+//    or r3,r3,r10
+//    slw r10,r4,r9
+//    or r3,r3,r10
+//    slw r4,r4,r7
+//    sub r6,r6,r7
+//    rlwinm r7,r4,0,21,31
+//    cmpi cr0,r7,0x400
+//    addi r6,r6,1086
+//    blt noround
+//    bgt round
+//    rlwinm. r7,r4,0,20,20
+//    beq noround
+//round:
+//    addic r4,r4,0x0800
+//    addze r3,r3
+//    addze r6,r6
+//noround:
+//    rlwinm r4,r4,21,0,31
+//    rlwimi r4,r3,21,0,10
+//    rlwinm r3,r3,21,12,31
+//    rlwinm r6,r6,20,0,11
+//    or r3,r6,r3
+//    or r3,r5,r3
+//zero:
+//    stw r3,8(r1)
+//    stw r4,12(r1)
+//    lfd f1,8(r1)
+//    addi r1,r1,16
+//    blr
+//}
 
 //unused
-asm void __cvt_ull_dbl(void){
-    nofralloc
-    stwu r1,-0x10(r1)
-    or. r7,r3,r4
-    li r6,0x0
-    beq zero
-    cntlzw r7,r3
-    cntlzw r8,r4
-    rlwinm r9,r7,0x1a,0x0,0x4
-    srawi r9,r9,0x1f
-    and r9,r9,r8
-    add r7,r7,r9
-    subfic r8,r7,0x20
-    subic r9,r7,0x20
-    slw r3,r3,r7
-    srw r10,r4,r8
-    or r3,r3,r10
-    slw r10,r4,r9
-    or r3,r3,r10
-    slw r4,r4,r7
-    subf r6,r7,r6
-    rlwinm r7,r4,0x0,0x15,0x1f
-    cmpwi r7,0x400
-    addi r6,r6,0x43e
-    blt noround
-    bgt round
-    rlwinm. r7,r4,0x0,0x14,0x14
-    beq noround
-round:
-    addic r4,r4,0x800
-    addze r3,r3
-    addze r6,r6
-noround:
-    rlwinm r4,r4,0x15,0x0,0x1f
-    rlwimi r4,r3,0x15,0x0,0xa
-    rlwinm r3,r3,0x15,0xc,0x1f
-    rlwinm r6,r6,0x14,0x0,0xb
-    or r3,r6,r3
-zero:
-    stw r3,0x8(r1)
-    stw r4,0xc(r1)
-    lfd f1,0x8(r1)
-    addi r1,r1,0x10
-    blr
-
-}
+//asm void __cvt_ull_dbl(void){
+//    nofralloc
+//    stwu r1,-0x10(r1)
+//    or. r7,r3,r4
+//    li r6,0x0
+//    beq zero
+//    cntlzw r7,r3
+//    cntlzw r8,r4
+//    rlwinm r9,r7,0x1a,0x0,0x4
+//    srawi r9,r9,0x1f
+//    and r9,r9,r8
+//    add r7,r7,r9
+//    subfic r8,r7,0x20
+//    subic r9,r7,0x20
+//    slw r3,r3,r7
+//    srw r10,r4,r8
+//    or r3,r3,r10
+//    slw r10,r4,r9
+//    or r3,r3,r10
+//    slw r4,r4,r7
+//    subf r6,r7,r6
+//    rlwinm r7,r4,0x0,0x15,0x1f
+//    cmpwi r7,0x400
+//    addi r6,r6,0x43e
+//    blt noround
+//    bgt round
+//    rlwinm. r7,r4,0x0,0x14,0x14
+//    beq noround
+//round:
+//    addic r4,r4,0x800
+//    addze r3,r3
+//    addze r6,r6
+//noround:
+//    rlwinm r4,r4,0x15,0x0,0x1f
+//    rlwimi r4,r3,0x15,0x0,0xa
+//    rlwinm r3,r3,0x15,0xc,0x1f
+//    rlwinm r6,r6,0x14,0x0,0xb
+//    or r3,r6,r3
+//zero:
+//    stw r3,0x8(r1)
+//    stw r4,0xc(r1)
+//    lfd f1,0x8(r1)
+//    addi r1,r1,0x10
+//    blr
+//
+//}
 
 asm void __cvt_sll_flt(void)
 {
@@ -921,116 +921,116 @@ zero:
 }
 
 //unused
-asm void __cvt_ull_flt(void){
-    nofralloc
-    stwu r1,-0x10(r1)
-    or. r7,r3,r4
-    li r6,0x0
-    beq zero
-    cntlzw r7,r3
-    cntlzw r8,r4
-    rlwinm r9,r7,0x1a,0x0,0x4
-    srawi r9,r9,0x1f
-    and r9,r9,r8
-    add r7,r7,r9
-    subfic r8,r7,0x20
-    subic r9,r7,0x20
-    slw r3,r3,r7
-    srw r10,r4,r8
-    or r3,r3,r10
-    slw r10,r4,r9
-    or r3,r3,r10
-    slw r4,r4,r7
-    subf r6,r7,r6
-    rlwinm r7,r4,0x0,0x15,0x1f
-    cmpwi r7,0x400
-    addi r6,r6,0x43e
-    blt noround
-    bgt round
-    rlwinm. r7,r4,0x0,0x14,0x14
-    beq noround
-round:
-    addic r4,r4,0x800
-    addze r3,r3
-    addze r6,r6
-noround:
-    rlwinm r4,r4,0x15,0x0,0x1f
-    rlwimi r4,r3,0x15,0x0,0xa
-    rlwinm r3,r3,0x15,0xc,0x1f
-    rlwinm r6,r6,0x14,0x0,0xb
-    or r3,r6,r3
-zero:
-    stw r3,0x8(r1)
-    stw r4,0xc(r1)
-    lfd f1,0x8(r1)
-    frsp f1,f1
-    addi r1,r1,0x10
-    blr
-}
+//asm void __cvt_ull_flt(void){
+//    nofralloc
+//    stwu r1,-0x10(r1)
+//    or. r7,r3,r4
+//    li r6,0x0
+//    beq zero
+//    cntlzw r7,r3
+//    cntlzw r8,r4
+//    rlwinm r9,r7,0x1a,0x0,0x4
+//    srawi r9,r9,0x1f
+//    and r9,r9,r8
+//    add r7,r7,r9
+//    subfic r8,r7,0x20
+//    subic r9,r7,0x20
+//    slw r3,r3,r7
+//    srw r10,r4,r8
+//    or r3,r3,r10
+//    slw r10,r4,r9
+//    or r3,r3,r10
+//    slw r4,r4,r7
+//    subf r6,r7,r6
+//    rlwinm r7,r4,0x0,0x15,0x1f
+//    cmpwi r7,0x400
+//    addi r6,r6,0x43e
+//    blt noround
+//    bgt round
+//    rlwinm. r7,r4,0x0,0x14,0x14
+//    beq noround
+//round:
+//    addic r4,r4,0x800
+//    addze r3,r3
+//    addze r6,r6
+//noround:
+//    rlwinm r4,r4,0x15,0x0,0x1f
+//    rlwimi r4,r3,0x15,0x0,0xa
+//    rlwinm r3,r3,0x15,0xc,0x1f
+//    rlwinm r6,r6,0x14,0x0,0xb
+//    or r3,r6,r3
+//zero:
+//    stw r3,0x8(r1)
+//    stw r4,0xc(r1)
+//    lfd f1,0x8(r1)
+//    frsp f1,f1
+//    addi r1,r1,0x10
+//    blr
+//}
 
 //unused
-asm void __cvt_dbl_usll(void)
-{
-    nofralloc
-    stwu    r1,-16(r1)
-    stfd f1,8(r1)
-    lwz r3,8(r1)
-    lwz r4,12(r1)
-    rlwinm   r5,r3,12,21,31
-    cmpli cr0,0,r5,1023
-    bge cr0,not_fraction
-    li r3,0
-    li r4,0
-    b func_end
-not_fraction:
-    mr r6,r3
-    rlwinm r3,r3,0,12,31
-    oris r3,r3,0x0010
-    addi r5,r5,-1075
-    cmpwi cr0,r5,0
-    bge cr0,left
-    neg r5,r5
-    subfic r8,r5,32
-    subic r9,r5,32
-    srw r4,r4,r5
-    slw r10,r3,r8
-    or r4,r4,r10
-    srw r10,r3,r9
-    or r4,r4,r10
-    srw r3,r3,r5
-    b around
-left:
-    cmpwi cr0,r5,10
-    ble+ no_overflow
-    rlwinm. r6,r6,0,0,0
-    beq cr0,max_positive
-    lis r3,0x8000
-    li r4,0
-    b func_end
-max_positive:
-    lis r3,0x7FFF
-    ori r3,r3,0xFFFF
-    li r4,-1
-    b func_end
-no_overflow:
-    subfic r8,r5,32
-    subic r9,r5,32
-    slw r3,r3,r5
-    srw r10,r4,r8
-    or r3,r3,r10
-    slw r10,r4,r9
-    or r3,r3,r10
-    slw r4,r4,r5
-around:
-    rlwinm. r6,r6,0,0,0
-    beq cr0,positive
-    subfic r4,r4,0
-    subfze r3,r3
-positive:
-func_end:
-    addi r1,r1,16
-    blr
-}
+//asm void __cvt_dbl_usll(void)
+//{
+//    nofralloc
+//    stwu    r1,-16(r1)
+//    stfd f1,8(r1)
+//    lwz r3,8(r1)
+//    lwz r4,12(r1)
+//    rlwinm   r5,r3,12,21,31
+//    cmpli cr0,0,r5,1023
+//    bge cr0,not_fraction
+//    li r3,0
+//    li r4,0
+//    b func_end
+//not_fraction:
+//    mr r6,r3
+//    rlwinm r3,r3,0,12,31
+//    oris r3,r3,0x0010
+//    addi r5,r5,-1075
+//    cmpwi cr0,r5,0
+//    bge cr0,left
+//    neg r5,r5
+//    subfic r8,r5,32
+//    subic r9,r5,32
+//    srw r4,r4,r5
+//    slw r10,r3,r8
+//    or r4,r4,r10
+//    srw r10,r3,r9
+//    or r4,r4,r10
+//    srw r3,r3,r5
+//    b around
+//left:
+//    cmpwi cr0,r5,10
+//    ble+ no_overflow
+//    rlwinm. r6,r6,0,0,0
+//    beq cr0,max_positive
+//    lis r3,0x8000
+//    li r4,0
+//    b func_end
+//max_positive:
+//    lis r3,0x7FFF
+//    ori r3,r3,0xFFFF
+//    li r4,-1
+//    b func_end
+//no_overflow:
+//    subfic r8,r5,32
+//    subic r9,r5,32
+//    slw r3,r3,r5
+//    srw r10,r4,r8
+//    or r3,r3,r10
+//    slw r10,r4,r9
+//    or r3,r3,r10
+//    slw r4,r4,r5
+//around:
+//    rlwinm. r6,r6,0,0,0
+//    beq cr0,positive
+//    subfic r4,r4,0
+//    subfze r3,r3
+//positive:
+//func_end:
+//    addi r1,r1,16
+//    blr
+//}
 
 void __cvt_dbl_ull(void) {
     nofralloc

@@ -19,20 +19,20 @@ void DBClose(void);
 
 // EXI2 command words: bit 31 (0x80000000) marks the write direction; the
 // remaining bits select the debugger device register/address to touch.
-static BOOL __DBReadMailbox(u32* mailOut) {
+static inline BOOL __DBReadMailbox(u32* mailOut) {
     return __DBEXIReadReg(0x34000200, mailOut, sizeof(*mailOut));
 }
 
 // Translate the host offset into the EXI2 RAM command word (address field).
-static BOOL __DBRead(u32 ofs, void* dest, u32 size) {
+static inline BOOL __DBRead(u32 ofs, void* dest, u32 size) {
     return __DBEXIReadRam(((ofs + 0xD10000) * 0x40) & 0x3FFFFF00, dest, size);
 }
 
-static BOOL __DBWriteMailbox(u32 mail) {
+static inline BOOL __DBWriteMailbox(u32 mail) {
     return __DBEXIWriteReg(0xB4000100, &mail, sizeof(mail));
 }
 
-static BOOL __DBWrite(u32 ofs, const void* src, u32 size) {
+static inline BOOL __DBWrite(u32 ofs, const void* src, u32 size) {
     return __DBEXIWriteRam(
         (((ofs + 0xD10000) * 0x40) & 0x3FFFFF00) | 0x80000000, src, size);
 }

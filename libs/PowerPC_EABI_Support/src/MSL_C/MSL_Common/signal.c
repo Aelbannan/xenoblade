@@ -3,8 +3,8 @@
 sig_func signal_funcs[7];
 
 //unused
-void signal(){
-}
+//void signal(){
+//}
 
 int raise(int sig) {
     sig_func temp_r31;

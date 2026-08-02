@@ -19,15 +19,15 @@ bool GetTRKConnected(){
 }
 
 //unused
-void SetTRKConnected(bool value){
-    IsTRKConnected = value;
-}
+//void SetTRKConnected(bool value){
+//    IsTRKConnected = value;
+//}
 
-static DSError TRKSendACK(MessageBuffer* b){
+static inline DSError TRKSendACK(MessageBuffer* b){
     return TRK_MessageSend(b);
 }
 
-static DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandId, DSReplyError replyError){
+static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandId, DSReplyError replyError){
     msgbuf_t reply;
     ui32 nextSequence;
 
@@ -43,15 +43,15 @@ static DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandId, DSRe
 }
 
 //unused
-DSError TRKDoError(MessageBuffer* b){
-    return kNoError;
-}
+//DSError TRKDoError(MessageBuffer* b){
+//    return kNoError;
+//}
 
 //unused
-DSError TRKDoUnsupported(MessageBuffer* b){
-    TRKStandardACK(b,0x80,kDSReplyUnsupportedCommandError);
-    return kNoError;
-}
+//DSError TRKDoUnsupported(MessageBuffer* b){
+//    TRKStandardACK(b,0x80,kDSReplyUnsupportedCommandError);
+//    return kNoError;
+//}
 
 DSError TRK_DoConnect(MessageBuffer* b){
     IsTRKConnected = true;

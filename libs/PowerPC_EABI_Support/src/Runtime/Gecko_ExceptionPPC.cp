@@ -210,7 +210,7 @@ static void ExPPC_FindExceptionRecord(char* returnaddr, MWExceptionInfo* info){
     }
 }
 
-static long ExPPC_PopR31(char *SP,MWExceptionInfo *info){
+static inline long ExPPC_PopR31(char *SP,MWExceptionInfo *info){
     double* FPR_save_area;
     long* GPR_save_area;
     int saved_GPRs, saved_FPRs;
@@ -223,7 +223,7 @@ static long ExPPC_PopR31(char *SP,MWExceptionInfo *info){
     return GPR_save_area[-1];
 }
 
-static exaction_type ExPPC_CurrentAction(const ActionIterator* iter){
+static inline exaction_type ExPPC_CurrentAction(const ActionIterator* iter){
     if(iter->info.action_pointer == 0){
         return EXACTION_ENDOFLIST;
     }
@@ -357,11 +357,11 @@ static char* ExPPC_PopStackFrame(ThrowContext* context, MWExceptionInfo* info)
     return *(char**)(callers_SP + 4);
 }
 
-static void ExPPC_DestroyLocal(ThrowContext* context, const ex_destroylocal* ex){
+static inline void ExPPC_DestroyLocal(ThrowContext* context, const ex_destroylocal* ex){
     DTORCALL_COMPLETE(ex->dtor, context->FP + ex->local);
 }
 
-static void ExPPC_DestroyLocalCond(ThrowContext* context, const ex_destroylocalcond* ex){
+static inline void ExPPC_DestroyLocalCond(ThrowContext* context, const ex_destroylocalcond* ex){
     int cond = ex_destroylocalcond_GetRegCond(ex->dlc_field) ? (local_cond_type)context->GPR[ex->cond] : *(local_cond_type*)(context->FP + ex->cond);
 
     if(cond){
@@ -369,13 +369,13 @@ static void ExPPC_DestroyLocalCond(ThrowContext* context, const ex_destroylocalc
     }
 }
 
-static void ExPPC_DestroyLocalPointer(ThrowContext* context, const ex_destroylocalpointer* ex){
+static inline void ExPPC_DestroyLocalPointer(ThrowContext* context, const ex_destroylocalpointer* ex){
     void *pointer = ex_destroylocalpointer_GetRegPointer(ex->dlp_field) ? (void*)context->GPR[ex->pointer] : *(void**)(context->FP + ex->pointer);
 
     DTORCALL_COMPLETE(ex->dtor, pointer);
 }
 
-static void ExPPC_DestroyLocalArray(ThrowContext* context, const ex_destroylocalarray* ex){
+static inline void ExPPC_DestroyLocalArray(ThrowContext* context, const ex_destroylocalarray* ex){
     char* ptr = context->FP + ex->localarray;
     long n = ex->elements;
     long size = ex->element_size;
@@ -386,19 +386,19 @@ static void ExPPC_DestroyLocalArray(ThrowContext* context, const ex_destroylocal
     }
 }
 
-static void ExPPC_DestroyMember(ThrowContext* context, const ex_destroymember* ex){
+static inline void ExPPC_DestroyMember(ThrowContext* context, const ex_destroymember* ex){
     char *objectptr = ex_destroymember_GetRegPointer(ex->dm_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
 
     DTORCALL_COMPLETE(ex->dtor,objectptr + ex->offset);
 }
 
-static void ExPPC_DestroyBase(ThrowContext* context, const ex_destroymember* ex){
+static inline void ExPPC_DestroyBase(ThrowContext* context, const ex_destroymember* ex){
     char* objectptr = ex_destroymember_GetRegPointer(ex->dm_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
 
     DTORCALL_PARTIAL(ex->dtor,objectptr + ex->offset);
 }
 
-static void ExPPC_DestroyMemberCond(ThrowContext* context, const ex_destroymembercond* ex){
+static inline void ExPPC_DestroyMemberCond(ThrowContext* context, const ex_destroymembercond* ex){
     char* objectptr = ex_destroymembercond_GetRegPointer(ex->dmc_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
     int cond = ex_destroymembercond_GetRegCond(ex->dmc_field) ? (vbase_ctor_arg_type)context->GPR[ex->cond] : *(vbase_ctor_arg_type*)(context->FP + ex->cond);
 
@@ -407,7 +407,7 @@ static void ExPPC_DestroyMemberCond(ThrowContext* context, const ex_destroymembe
     }
 }
 
-static void ExPPC_DestroyMemberArray(ThrowContext* context, const ex_destroymemberarray* ex){
+static inline void ExPPC_DestroyMemberArray(ThrowContext* context, const ex_destroymemberarray* ex){
     char* ptr = ex_destroymemberarray_GetRegPointer(ex->dma_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
     long n = ex->elements;
     long size = ex->element_size;
@@ -420,13 +420,13 @@ static void ExPPC_DestroyMemberArray(ThrowContext* context, const ex_destroymemb
     }
 }
 
-static void ExPPC_DeletePointer(ThrowContext* context, const ex_deletepointer* ex){
+static inline void ExPPC_DeletePointer(ThrowContext* context, const ex_deletepointer* ex){
     char* objectptr = ex_deletepointer_GetRegPointer(ex->dp_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
 
     ((DeleteFunc)ex->deletefunc)(objectptr);
 }
 
-static void ExPPC_DeletePointerCond(ThrowContext* context, const ex_deletepointercond* ex){
+static inline void ExPPC_DeletePointerCond(ThrowContext* context, const ex_deletepointercond* ex){
     char* objectptr = ex_deletepointercond_GetRegPointer(ex->dpc_field) ? (char*)context->GPR[ex->objectptr] : *(char**)(context->FP + ex->objectptr);
     int cond = ex_deletepointercond_GetRegCond(ex->dpc_field) ? (local_cond_type)context->GPR[ex->cond] : *(local_cond_type*)(context->FP+ex->cond);
 
@@ -537,7 +537,7 @@ static void ExPPC_UnwindStack(ThrowContext* context, MWExceptionInfo* info, void
     }
 }
 
-static int ExPPC_IsInSpecification(char* extype, ex_specification* spec){
+static inline int ExPPC_IsInSpecification(char* extype, ex_specification* spec){
     int i, offset;
 
     for(i = 0; i < spec->specs; i++){
@@ -548,27 +548,27 @@ static int ExPPC_IsInSpecification(char* extype, ex_specification* spec){
 }
 
 //unused
-extern void __unexpected(CatchInfo* catchinfo){
-    ex_specification* unexp = (ex_specification*)catchinfo->stacktop;
-
-    #pragma exception_magic //allow access to __exception_magic in try/catch blocks
-
-    try {
-        unexpected();
-    }
-    catch(...){
-        if(ExPPC_IsInSpecification((char*)((CatchInfo*)&__exception_magic)->typeinfo, unexp)){
-            throw;
-        }
-        if(ExPPC_IsInSpecification("!bad_exception!!",unexp)){
-            throw bad_exception();
-        }
-        if(ExPPC_IsInSpecification("!std::bad_exception!!",unexp)){
-            throw bad_exception();
-        }
-    }
-    terminate();
-}
+//extern void __unexpected(CatchInfo* catchinfo){
+//    ex_specification* unexp = (ex_specification*)catchinfo->stacktop;
+//
+//    #pragma exception_magic //allow access to __exception_magic in try/catch blocks
+//
+//    try {
+//        unexpected();
+//    }
+//    catch(...){
+//        if(ExPPC_IsInSpecification((char*)((CatchInfo*)&__exception_magic)->typeinfo, unexp)){
+//            throw;
+//        }
+//        if(ExPPC_IsInSpecification("!bad_exception!!",unexp)){
+//            throw bad_exception();
+//        }
+//        if(ExPPC_IsInSpecification("!std::bad_exception!!",unexp)){
+//            throw bad_exception();
+//        }
+//    }
+//    terminate();
+//}
 
 static asm void ExPPC_LongJump(register ThrowContext* context, register void* newRTOC, register void* newPC){
     nofralloc
@@ -661,7 +661,7 @@ static asm void ExPPC_LongJump(register ThrowContext* context, register void* ne
     blr
 }
 
-static void ExPPC_HandleUnexpected(ThrowContext* context, MWExceptionInfo* info, ex_specification* unexp){
+static inline void ExPPC_HandleUnexpected(ThrowContext* context, MWExceptionInfo* info, ex_specification* unexp){
     CatchInfo* catchinfo;
 
     #pragma exception_terminate
@@ -919,8 +919,8 @@ asm void __throw(char* throwtype, void* location, void* dtor){
 }
 
 //unused
-void __end__catch(CatchInfo* catchinfo){
-    if (catchinfo->location && catchinfo->dtor){
-        DTORCALL_COMPLETE(catchinfo->dtor,catchinfo->location);
-    }
-}
+//void __end__catch(CatchInfo* catchinfo){
+//    if (catchinfo->location && catchinfo->dtor){
+//        DTORCALL_COMPLETE(catchinfo->dtor,catchinfo->location);
+//    }
+//}

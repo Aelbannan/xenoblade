@@ -155,16 +155,16 @@ unsigned long __wcstoul(int base, int max_width, wint_t (*wReadProc)(void*, wint
 }
 
 //unused
-void __wcstoull(){
-}
+//void __wcstoull(){
+//}
 
 //unused
-void wcstoul(){
-}
+//void wcstoul(){
+//}
 
 //unused
-void wcstoull(){
-}
+//void wcstoull(){
+//}
 
 long wcstol(const wchar_t* str, wchar_t** end, int base)
 {
@@ -191,13 +191,13 @@ long wcstol(const wchar_t* str, wchar_t** end, int base)
 }
 
 //unused
-void wcstoll(){
-}
+//void wcstoll(){
+//}
 
 //unused
-void watoi(){
-}
+//void watoi(){
+//}
 
 //unused
-void watol(){
-}
+//void watol(){
+//}

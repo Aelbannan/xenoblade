@@ -658,8 +658,8 @@ long double __strtold(int max_width, int (*ReadProc)(void *, int, int), void* Re
 }
 
 //unused
-void strtold(){
-}
+//void strtold(){
+//}
 
 double strtod(const char* str, char** end)
 {
@@ -678,9 +678,9 @@ double strtod(const char* str, char** end)
 }
 
 //unused
-float strtof(){
-}
+//float strtof(){
+//}
 
 //unused
-void atof(){
-}
+//void atof(){
+//}

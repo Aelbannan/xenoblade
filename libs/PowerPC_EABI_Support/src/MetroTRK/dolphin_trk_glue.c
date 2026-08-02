@@ -123,12 +123,12 @@ UARTError TRK_WriteUARTN(const void* bytes, ui32 length){
 }
 
 //unused
-void WriteUARTFlush(){
-}
+//void WriteUARTFlush(){
+//}
 
 //unused
-void WriteUART1(){
-}
+//void WriteUART1(){
+//}
 
 void ReserveEXI2Port() {
     gDBCommTable.post_stop_func();

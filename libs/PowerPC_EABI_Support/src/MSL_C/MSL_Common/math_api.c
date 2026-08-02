@@ -2,20 +2,20 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h"
 
 //unused
-void __msl_generic_count_bits32(){
-}
+//void __msl_generic_count_bits32(){
+//}
 
 //unused
-void __msl_generic_count_bits64(){
-}
+//void __msl_generic_count_bits64(){
+//}
 
 //unused
-void __msl_relation(){
-}
+//void __msl_relation(){
+//}
 
 //unused
-int __signbitf(float x){
-}
+//int __signbitf(float x){
+//}
 
 int __fpclassifyf(float x)
 {

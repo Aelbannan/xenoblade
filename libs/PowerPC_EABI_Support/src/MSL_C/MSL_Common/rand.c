@@ -10,7 +10,7 @@ int rand()
 }
 
 //unused
-void srand(u32 seed)
-{
-    random_next = seed;
-}
+//void srand(u32 seed)
+//{
+//    random_next = seed;
+//}

@@ -7,9 +7,9 @@ ui32 CBGetBytesAvailableForRead(CircleBuffer* cb){
 }
 
 //unused
-ui32 CBGetBytesAvailableForWrite(CircleBuffer* cb){
-    return cb->mBytesToWrite;
-}
+//ui32 CBGetBytesAvailableForWrite(CircleBuffer* cb){
+//    return cb->mBytesToWrite;
+//}
 
 void CircleBufferInitialize(CircleBuffer* cb, ui8* buf, ui32 size){
     cb->unk8 = buf;
@@ -22,10 +22,10 @@ void CircleBufferInitialize(CircleBuffer* cb, ui8* buf, ui32 size){
 }
 
 //unused
-void CircleBufferTerminate(CircleBuffer* cb){
-    MWTerminateCriticalSection(&(cb->mSection));
-    memset(cb,0,sizeof(CircleBuffer) - 4);
-}
+//void CircleBufferTerminate(CircleBuffer* cb){
+//    MWTerminateCriticalSection(&(cb->mSection));
+//    memset(cb,0,sizeof(CircleBuffer) - 4);
+//}
 
 int CircleBufferWriteBytes(CircleBuffer* cb, ui8* buf, ui32 size){
     ui32 r29;

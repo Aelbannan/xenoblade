@@ -14,7 +14,7 @@ void MWExitCriticalSection(unsigned int* section) {
 }
 
 //unused
-void MWTerminateCriticalSection(unsigned int* section){
-}
+//void MWTerminateCriticalSection(unsigned int* section){
+//}
 
 }

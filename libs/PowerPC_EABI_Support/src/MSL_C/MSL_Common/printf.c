@@ -1330,31 +1330,31 @@ static void* __StringWrite(void *pCtrl, const char *pBuffer, size_t char_num) {
 }
 
 //unused
-void printf(){
-}
+//void printf(){
+//}
 
 //unused
-void printf_s(){
-}
+//void printf_s(){
+//}
 
-int fprintf(FILE *file, const char *format, ...) {
-    int res;
-
-    if (fwide(file, -1) >= 0) {
-        return -1;
-    }
-
-    {
-        va_list args;
-        va_start(args, format);
-        res = __pformatter(&__FileWrite, (void*)file, format, args, FALSE);
-        return res;
-    }
-}
+//int fprintf(FILE *file, const char *format, ...) {
+//    int res;
+//
+//    if (fwide(file, -1) >= 0) {
+//        return -1;
+//    }
+//
+//    {
+//        va_list args;
+//        va_start(args, format);
+//        res = __pformatter(&__FileWrite, (void*)file, format, args, FALSE);
+//        return res;
+//    }
+//}
 
 //unused
-void fprintf_s(){
-}
+//void fprintf_s(){
+//}
 
 int vprintf(const char *pFormat, va_list arg) {
     int ret;
@@ -1368,16 +1368,16 @@ int vprintf(const char *pFormat, va_list arg) {
 }
 
 //unused
-void vprintf_s(){
-}
+//void vprintf_s(){
+//}
 
 //unused
-void vfprintf(){
-}
+//void vfprintf(){
+//}
 
 //unused
-void vfprintf_s(){
-}
+//void vfprintf_s(){
+//}
 
 int vsnprintf(char *s, size_t n, const char *format, va_list arg) {
     int end;
@@ -1403,16 +1403,16 @@ int vsnprintf(char *s, size_t n, const char *format, va_list arg) {
 }
 
 //unused
-void vsnprintf_s(){
-}
+//void vsnprintf_s(){
+//}
 
 int vsprintf(char *s, const char *format, va_list arg) {
     return vsnprintf(s, 0xFFFFFFFF, format, arg);
 }
 
 //unused
-void vsprintf_s(){
-}
+//void vsprintf_s(){
+//}
 
 int snprintf(char *s, size_t n, const char *format, ...) {
     va_list args;
@@ -1421,8 +1421,8 @@ int snprintf(char *s, size_t n, const char *format, ...) {
 }
 
 //unused
-void snprintf_s(){
-}
+//void snprintf_s(){
+//}
 
 int sprintf(char *s, const char *format, ...) {
     va_list args;
@@ -1431,5 +1431,5 @@ int sprintf(char *s, const char *format, ...) {
 }
 
 //unused
-void sprintf_s(){
-}
+//void sprintf_s(){
+//}

@@ -5,56 +5,56 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h"
 
 //unused
-void putwc(){
-}
+//void putwc(){
+//}
 
 //unused
-void putwchar(){
-}
+//void putwchar(){
+//}
 
 //unused
-void fputwc(){
-}
+//void fputwc(){
+//}
 
 //unused
-void getwc(){
-}
+//void getwc(){
+//}
 
 //unused
-void __getwc(){
-}
+//void __getwc(){
+//}
 
 //unused
-void __getwchar(){
-}
+//void __getwchar(){
+//}
 
 //unused
-void fgetwc(){
-}
+//void fgetwc(){
+//}
 
 //unused
-void __fgetwc(){
-}
+//void __fgetwc(){
+//}
 
 //unused
-void ungetwc(){
-}
+//void ungetwc(){
+//}
 
 //unused
-void __ungetwc(){
-}
+//void __ungetwc(){
+//}
 
 //unused
-void fputws(){
-}
+//void fputws(){
+//}
 
 //unused
-void fgetws(){
-}
+//void fgetws(){
+//}
 
 //unused
-void __fwide(){
-}
+//void __fwide(){
+//}
 
 int fwide(FILE* stream, int mode)
 {

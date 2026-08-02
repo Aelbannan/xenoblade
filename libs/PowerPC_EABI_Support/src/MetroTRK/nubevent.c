@@ -23,9 +23,9 @@ DSError TRKInitializeEventQueue() {
 }
 
 //unused
-void TRKCopyEvent(void)
-{
-}
+//void TRKCopyEvent(void)
+//{
+//}
 
 bool TRKGetNextEvent(NubEvent* ev)
 {

@@ -12,16 +12,16 @@
 
 
 //unused
-void fread(){
-}
+//void fread(){
+//}
 
 //unused
-void __fread(){
-}
+//void __fread(){
+//}
 
 //unused
-void fwrite(){
-}
+//void fwrite(){
+//}
 
 size_t __fwrite(const void* pPtr, size_t memb_size, size_t num_memb, FILE* file) {
     unsigned char* cur_ptr;

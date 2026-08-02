@@ -741,8 +741,8 @@ exit:
 }
 
 //unused
-void __FileRead(){
-}
+//void __FileRead(){
+//}
 
 
 int __StringRead(void *pPtr, int ch, int act) {
@@ -780,34 +780,34 @@ int __StringRead(void *pPtr, int ch, int act) {
 }
 
 //unsued
-void fscanf(){
-}
+//void fscanf(){
+//}
 
 //unused
-void fscanf_s(){
-}
+//void fscanf_s(){
+//}
 
 //unused
-void vscanf(){
-}
+//void vscanf(){
+//}
 
 //unused
-void scanf(){
-}
+//void scanf(){
+//}
 
 //unused
-void scanf_s(){
-}
+//void scanf_s(){
+//}
 
 //unused
-void vfscanf(){
-}
+//void vfscanf(){
+//}
 
 //unused
-void vfscanf_s(){
-}
+//void vfscanf_s(){
+//}
 
-int isspace_string(const char *s) {
+static inline int isspace_string(const char *s) {
     int i = 0;
 
     while(s[i] != '\0'){
@@ -817,7 +817,7 @@ int isspace_string(const char *s) {
     return 1;
 }
 
-int vsscanf(const char *s, const char *format, va_list arg) {
+static inline int vsscanf(const char *s, const char *format, va_list arg) {
     __InStrCtrl isc;
     isc.NextChar = (char*)s;
 
@@ -830,8 +830,8 @@ int vsscanf(const char *s, const char *format, va_list arg) {
 }
 
 //unused
-void vsscanf_s(){
-}
+//void vsscanf_s(){
+//}
 
 int sscanf(const char *s, const char *pFormat, ...) {
     int ret;
@@ -841,5 +841,5 @@ int sscanf(const char *s, const char *pFormat, ...) {
 }
 
 //unused
-void sscanf_s(){
-}
+//void sscanf_s(){
+//}

@@ -5,16 +5,16 @@
 #include "PowerPC_EABI_Support/MetroTRK/serpoll.h"
 
 //unused
-void TRK_HandleRequestEvent(void){
-}
+//void TRK_HandleRequestEvent(void){
+//}
 
 //unused
-void TRKHandleSupportEvent(void){
-}
+//void TRKHandleSupportEvent(void){
+//}
 
 //unused
-void TRK_Idle(void){
-}
+//void TRK_Idle(void){
+//}
 
 /*
  * Perhaps the switch case takes TRK CMD defines as inputs?

@@ -112,12 +112,12 @@ FILE __files[_STATIC_FILES] = {
 };
 
 //unused
-void __find_unopened_file(){
-}
+//void __find_unopened_file(){
+//}
 
 //unused
-void __init_file(){
-}
+//void __init_file(){
+//}
 
 void __close_all(){
     FILE* p = &__files[0];
@@ -141,8 +141,8 @@ void __close_all(){
 }
 
 //unused
-void __flush_line_buffered_output_files(){
-}
+//void __flush_line_buffered_output_files(){
+//}
 
 u32 __flush_all()
 {

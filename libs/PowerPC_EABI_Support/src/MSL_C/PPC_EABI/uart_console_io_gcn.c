@@ -37,13 +37,13 @@ int __close_console(__file_handle handle){
 }
 
 //unused
-void __delete_file(){
-}
+//void __delete_file(){
+//}
 
 //unused
-void __rename_file(){
-}
+//void __rename_file(){
+//}
 
 //unused
-void __temp_file_name(){
-}
+//void __temp_file_name(){
+//}

@@ -54,14 +54,14 @@ asm long __ptmf_cmpr(PTMF *ptmf1, PTMF *ptmf2)
 }
 
 //unused
-void __ptmf_call(void)
-{
-}
+//void __ptmf_call(void)
+//{
+//}
 
 //unused
-void __ptmf_call4(void)
-{
-}
+//void __ptmf_call4(void)
+//{
+//}
 
 asm void __ptmf_scall(...)
 {
@@ -80,11 +80,11 @@ loc_0x20:
 }
 
 //unused
-void __ptmf_scall4(void)
-{
-}
+//void __ptmf_scall4(void)
+//{
+//}
 
 //unused
-void __ptmf_cast(void)
-{
-}
+//void __ptmf_cast(void)
+//{
+//}

@@ -10,13 +10,13 @@ void abort(void) {
 }
 
 //unused
-void atexit(){
-}
+//void atexit(){
+//}
 
 //unused
-void __atexit(){
-}
+//void __atexit(){
+//}
 
 //unused
-void __exit(){
-}
+//void __exit(){
+//}

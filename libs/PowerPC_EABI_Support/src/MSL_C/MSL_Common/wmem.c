@@ -6,20 +6,20 @@ wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n) {
 }
 
 //unused
-void wmemcpy_s(){
-}
+//void wmemcpy_s(){
+//}
 
 //unused
-void wmemmove(){
-}
+//void wmemmove(){
+//}
 
 //unused
-void wmemmove_s(){
-}
+//void wmemmove_s(){
+//}
 
 //unused
-void wmemset(){
-}
+//void wmemset(){
+//}
 
 wchar_t* wmemchr(wchar_t* s, wchar_t c, int n) {
     while (n--) {
@@ -30,5 +30,5 @@ wchar_t* wmemchr(wchar_t* s, wchar_t c, int n) {
 }
 
 //unused
-void wmemcmp(){
-}
+//void wmemcmp(){
+//}

@@ -8,7 +8,7 @@ extern "C"{
 
 static int fragmentID = -2;
 
-static void __exception_info_constants(void** info, char** R2) {
+static inline void __exception_info_constants(void** info, char** R2) {
     register char* temp;
     asm { mr temp, r2; }
     *R2 = temp;
@@ -16,8 +16,8 @@ static void __exception_info_constants(void** info, char** R2) {
 }
 
 //unused
-extern void __find_exception_addresses(void* param1, char* param2, void** param3, void** param4){
-}
+//extern void __find_exception_addresses(void* param1, char* param2, void** param3, void** param4){
+//}
 
 extern void __init_cpp_exceptions(void) {
     char* R2;

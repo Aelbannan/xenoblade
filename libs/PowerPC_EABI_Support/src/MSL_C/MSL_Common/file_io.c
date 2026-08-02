@@ -4,28 +4,28 @@
 #include <stdio.h>
 
 //unused
-void remove(){
-}
+//void remove(){
+//}
 
 //unused
-void rename(){
-}
+//void rename(){
+//}
 
 //unused
-void tmpnam(){
-}
+//void tmpnam(){
+//}
 
 //unused
-void tmpnam_s(){
-}
+//void tmpnam_s(){
+//}
 
 //unused
-void tmpfile(){
-}
+//void tmpfile(){
+//}
 
 //unused
-void tmpfile_s(){
-}
+//void tmpfile_s(){
+//}
 
 int fclose(FILE* file)
 {
@@ -96,57 +96,57 @@ int fflush(FILE* file)
 }
 
 //unused
-void fopen(){
-}
+//void fopen(){
+//}
 
 //unused
-void fopen_s(){
-}
+//void fopen_s(){
+//}
 
 //unused
-void freopen(){
-}
+//void freopen(){
+//}
 
 //unused
-void freopen_s(){
-}
+//void freopen_s(){
+//}
 
 //unused
-void __reopen(){
-}
+//void __reopen(){
+//}
 
 //unused
-void __handle_open(){
-}
+//void __handle_open(){
+//}
 
 //unused
-void __handle_reopen(){
-}
+//void __handle_reopen(){
+//}
 
 //unused
-void __get_file_modes(){
-}
+//void __get_file_modes(){
+//}
 
 //unused
-void __set_ref_con(){
-}
+//void __set_ref_con(){
+//}
 
 //unused
-void __set_idle_proc(){
-}
+//void __set_idle_proc(){
+//}
 
 //unused
-void __msl_strnicmp(){
-}
+//void __msl_strnicmp(){
+//}
 
 //unused
-void __msl_strrev(){
-}
+//void __msl_strrev(){
+//}
 
 //unused
-void __msl_itoa(){
-}
+//void __msl_itoa(){
+//}
 
 //unused
-void __msl_strdup(){
-}
+//void __msl_strdup(){
+//}

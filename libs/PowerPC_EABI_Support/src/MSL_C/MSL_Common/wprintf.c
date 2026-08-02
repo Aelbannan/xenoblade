@@ -1322,8 +1322,8 @@ static int __wpformatter(void *(*WriteProc)(void *, const wchar_t *, size_t), vo
 }
 
 //unused
-void __wFileWrite(){
-}
+//void __wFileWrite(){
+//}
 
 void* __wStringWrite(void *wosc, const wchar_t * buffer, size_t numchars) {
     size_t tobewritten;
@@ -1336,51 +1336,51 @@ void* __wStringWrite(void *wosc, const wchar_t * buffer, size_t numchars) {
 }
 
 //unused
-void wprintf(){
-}
+//void wprintf(){
+//}
 
 //unused
-void wprintf_s(){
-}
+//void wprintf_s(){
+//}
 
 //unused
-void fwprintf(){
-}
+//void fwprintf(){
+//}
 
 //unused
-void fwprintf_s(){
-}
+//void fwprintf_s(){
+//}
 
 //unused
-void vwprintf(){
-}
+//void vwprintf(){
+//}
 
 //unused
-void vwprintf_s(){
-}
+//void vwprintf_s(){
+//}
 
 //unused
-void vfwprintf(){
-}
+//void vfwprintf(){
+//}
 
 //unused
-void vfwprintf_s(){
-}
+//void vfwprintf_s(){
+//}
 
 //unused
-int swprintf(wchar_t *s, size_t n, const wchar_t *format, ...) {
-    va_list args;
-    va_start(args, format);
-    return vswprintf(s, n, format, args);
-}
+//int swprintf(wchar_t *s, size_t n, const wchar_t *format, ...) {
+//    va_list args;
+//    va_start(args, format);
+//    return vswprintf(s, n, format, args);
+//}
 
 //unused
-void swprintf_s(){
-}
+//void swprintf_s(){
+//}
 
 //unused
-void snwprintf_s(){
-}
+//void snwprintf_s(){
+//}
 
 int vswprintf(wchar_t *s, size_t n, const wchar_t *format, va_list arg) {
     int count;
@@ -1405,9 +1405,9 @@ int vswprintf(wchar_t *s, size_t n, const wchar_t *format, va_list arg) {
 }
 
 //unused
-void vswprintf_s(){
-}
+//void vswprintf_s(){
+//}
 
 //unused
-void vsnwprintf_s(){
-}
+//void vsnwprintf_s(){
+//}

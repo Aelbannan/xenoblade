@@ -9,101 +9,101 @@ double scalbn(double x, int y) {
 }
 
 //unused
-void exp2(){
-}
+//void exp2(){
+//}
 
 //unused
-void llrint(){
-}
+//void llrint(){
+//}
 
 //unused
-void llround(){
-}
+//void llround(){
+//}
 
 //unused
-void llroundf(){
-}
+//void llroundf(){
+//}
 
 //unused
-void llroundl(){
-}
+//void llroundl(){
+//}
 
 //unused
-void lrint(){
-}
+//void lrint(){
+//}
 
 //unused
-void lrintf(){
-}
+//void lrintf(){
+//}
 
 //unused
-void lrintl(){
-}
+//void lrintl(){
+//}
 
 //unused
-void lround(){
-}
+//void lround(){
+//}
 
 //unused
-void lroundf(){
-}
+//void lroundf(){
+//}
 
 //unused
-void lroundl(){
-}
+//void lroundl(){
+//}
 
 //unused
-void nearbyint(){
-}
+//void nearbyint(){
+//}
 
 //unused
-void nearbyintf(){
-}
+//void nearbyintf(){
+//}
 
 //unused
-void nearbyintl(){
-}
+//void nearbyintl(){
+//}
 
 //unused
-void remquo(){
-}
+//void remquo(){
+//}
 
 //unused
-void remquof(){
-}
+//void remquof(){
+//}
 
 //unused
-void remquol(){
-}
+//void remquol(){
+//}
 
 //unused
-void round(){
-}
+//void round(){
+//}
 
 //unused
-void roundf(){
-}
+//void roundf(){
+//}
 
 //unused
-void roundl(){
-}
+//void roundl(){
+//}
 
 //unused
-void scalbnl(){
-}
+//void scalbnl(){
+//}
 
 //unused
-void tgamma(){
-}
+//void tgamma(){
+//}
 
 //unused
-void trunc(){
-}
+//void trunc(){
+//}
 
 //unused
-void truncf(){
-}
+//void truncf(){
+//}
 
 //unused
-void truncl(){
-}
+//void truncl(){
+//}

@@ -23,20 +23,20 @@ DSIOResult __write_file(__file_handle handle, ui8* buffer, size_t* count, __ref_
 }
 
 //unused
-DSIOResult __open_file(){
-}
+//DSIOResult __open_file(){
+//}
 
 //unused
-DSIOResult __close_file(){
-}
+//DSIOResult __close_file(){
+//}
 
 //unused
-int __position_file(){
-}
+//int __position_file(){
+//}
 
 //unused
-int convertFileMode(){
-}
+//int convertFileMode(){
+//}
 
 DSIOResult __access_file(__file_handle handle, ui8* buffer, size_t* count, __ref_con ref_con, MessageCommandID id){
     size_t countTemp;
@@ -59,5 +59,5 @@ DSIOResult __access_file(__file_handle handle, ui8* buffer, size_t* count, __ref
 }
 
 //unused
-int __open_temp_file(){
-}
+//int __open_temp_file(){
+//}

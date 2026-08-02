@@ -9,17 +9,17 @@ void __msl_runtime_constraint_violation_s(int param1, int param2, int param3) {
 }
 
 //unused
-void set_constraint_handler_s(){
-}
+//void set_constraint_handler_s(){
+//}
 
 //unused
-void abort_handler_s(){
-}
+//void abort_handler_s(){
+//}
 
 //unused
-void ignore_handler_s(){
-}
+//void ignore_handler_s(){
+//}
 
 //unused
-void strict_handler_s(){
-}
+//void strict_handler_s(){
+//}

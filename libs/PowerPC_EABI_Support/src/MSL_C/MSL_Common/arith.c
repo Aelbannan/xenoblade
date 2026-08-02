@@ -14,65 +14,65 @@ long labs(long x)
 }
 
 //unused
-s64 llabs(s64 __x){
-}
+//s64 llabs(s64 __x){
+//}
 
 //unused
-div_t div(s32 __numer, s32 __denom){
-}
+//div_t div(s32 __numer, s32 __denom){
+//}
 
 //unused
-void ldiv(){
-}
+//void ldiv(){
+//}
 
 //unused
-void lldiv(){
-}
+//void lldiv(){
+//}
 
 //unused
-void __msl_add(){
-}
+//void __msl_add(){
+//}
 
 //unused
-void __msl_ladd(){
-}
+//void __msl_ladd(){
+//}
 
 //unused
-void __lladd(){
-}
+//void __lladd(){
+//}
 
 //unused
-void __msl_mul(){
-}
+//void __msl_mul(){
+//}
 
 //unused
-void __msl_lmul(){
-}
+//void __msl_lmul(){
+//}
 
 //unused
-void __llmul(){
-}
+//void __llmul(){
+//}
 
 //unused
-void __msl_div(){
-}
+//void __msl_div(){
+//}
 
 //unused
-void __msl_ldiv(){
-}
+//void __msl_ldiv(){
+//}
 
 //unused
-void __lldiv(){
-}
+//void __lldiv(){
+//}
 
 //unused
-void __msl_mod(){
-}
+//void __msl_mod(){
+//}
 
 //unused
-void __msl_lmod(){
-}
+//void __msl_lmod(){
+//}
 
 //unused
-void __llmod(){
-}
+//void __llmod(){
+//}

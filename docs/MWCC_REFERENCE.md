@@ -4058,16 +4058,24 @@ locals:
 - Removed `__copy_mem`/`__move_mem` stubs (retail has no such symbols; the `//unused`
   comment form still EMITS the empty functions — delete them outright) → unit .text
   exactly 0x2D0 = retail budget.
-- `__copy_longs_rev_unaligned` (0xac): 20 PURE reg-swaps remain — retail coalesces
-  `cps = src + n` into r4 (`add r4,r4,r5`); every tested source form (macro, direct,
-  compound `+=`, char* params, cpd-first, mask-between-adds, separate byte/long
-  counters, flat/scoped locals, tail via fresh local `tc = cps + src_offset`,
-  unsigned int/long types, decl order, real `-O4`/`-O4,s` rebuilds, `-ipa off`,
-  GC/3.0a5.2) gives `add r11,r4,r5` — MWCC never coalesces the src-param
-  reassignment in THIS function (the forward twin coalesces `lpd` into r4). Best
-  variant: reset final loop via `cps = ((unsigned char*)src) + src_offset` (fixes
-  the final add's dest to r3, 20 vs 21 mismatches). Size correct; does not affect
-  the accepted aligned target or the 0x2D0 unit budget.
+- `__copy_longs_rev_unaligned` (0xac): **18 pure reg-swaps remain** (2026-08-22
+  improvement from 20): computing the shifts with the *shared CSE'd mask* FIRST —
+  `left_shift = ((unsigned int) cps & 3) << 3; src_offset = ((unsigned int) cps) & 3;
+  right_shift = 32 - left_shift;` — makes the long-loop counter and v1/v2 land on
+  the retail registers (r6/r7/r8); the so-first form (`src_offset` then
+  `left_shift = src_offset << 3`) puts the counter in r4 instead. The residual is
+  a single 4-cycle Chaitin rotation {cps: r4→r11, so: r9→r4, ls: r10→r9,
+  rs: r11→r10} — invariant across ~60 source variants (mask-between, separate
+  counters, locals/scoped-locals, tail via fresh local or in-place, u32/u64 types,
+  decl orders, `(x<<3)&0x18` ls form which BREAKS the CSE and regresses to 20
+  swaps, mask-expression, lang=c++), real `-O4`/`-O4,s` rebuilds, `-ipa off`,
+  `-opt nolifetimes/nopeephole`, `-schedule off`, GC 2.0–3.0a5.2 (GC 3.0a* gives
+  39.5% with 3 structural — Wii/1.1 is the only 0-structural compiler). MWCC never
+  coalesces the src-param reassignment in THIS function (the forward twin
+  coalesces `lpd` into r4; `rev_aligned`'s local `src` coalesces). Tail reset via
+  `cps = ((unsigned char*)src) + src_offset` (value-tracked to a fresh add, 18 vs
+  more for `+=`). Size correct; the other three functions stay 100%; 0x2D0 unit
+  budget exact.
   **Acceptance-blocker analysis (both bars):** (1) the register-renaming witness
   can never certify this pair — the rotation rho maps `r4→r11` (cps/counter swap)
   and gate 5 (ABI-boundary fixedness, `docs/ppc_equiv_work/31`) requires rho to
@@ -6451,3 +6459,19 @@ us-803443b0 went 4.4% → **81.6% (HIGH_MATCH, fuzzy 92%)**, size exact 0x110/0x
 3. **`if (cent != 0) { cent += 100; sem--; }` (not `cent < 0`) compiles to `subf.` + `beq`** matching retail — `cent < 0` emits plain `subf` + `bge`. Semantically identical in the `v<0` domain (cent ∈ [-99,0]); `!= 0` is the retail's exact compare.
 
 **Remaining 6 structural = 3 two-instruction scheduling-equivalent swaps, unreproducible:** (a) sem-section `srawi`(raw cent)/`rlwinm`(sem*4) order, (b) `mulli`(cent*100)/`fmuls`(oct*semUp) order, (c) negative-branch `rlwinm`(sem*4)/`neg`(-sem) order. Resists: statement/declaration orders, inline vs locals, single-expression returns, explicit index locals, `-ipa` on/off, `-O4,s`, `-opt nocse/noschedule/nopeephole`, compilers Wii/1.0/1.0a/1.1/1.3/GC-3.0a5.2, `-lang=c` (fixes (a)-adjacent ct-copy order but breaks table layout folding). Witness-blocked; SMT would certify (swaps are within-basic-block reorderings of independent ops). Candidate for `--smt` out-of-band acceptance.
+
+## nw4r lyt vtable-name reloc drift — hard cap on ctors/dtors
+
+lyt Pane/Picture/Window ctors and dtors are **byte-identical** (hexdiff mm=0)
+but reference the **vtable** via the auto-generated `__vt__Q34nw4r3lyt4Pane`
+symbol while retail references `lbl_eu_805698F0`. The vtable symbol name is
+compiler-generated and cannot be renamed from source (declaring the class
+normally always emits it mangled). objdiff under
+`functionRelocDiffs=data_value` still scores ~99.8% (data relocs are
+name-compared), and the SMT probe times out on the 0x12C ctor (memset +
+member-init chain). Same cap as `MTX34RotXYZFIdx` — park ctors/dtors whose
+only diff is the vtable reloc. The **SDA float constants** in the same
+functions ARE fixable: declare `extern "C" const float lbl_eu_80669D38/3C;`
+and reference them (note: 80669D38 = 0.0f, 80669D3C = 1.0f — verify values
+against the retail store pattern before swapping literals; getting them
+backwards silently swaps the initialized fields).

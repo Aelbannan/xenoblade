@@ -5,8 +5,12 @@
 #include <revolution/AX/AXVPB.h>
 #include <revolution/AX/AXAlloc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Forward declarations of external HBM functions
-void HBMMIXReleaseChannel(void* channel);
+void HBMMIXReleaseChannel(AXVPB* channel);
 s32 HBMGetIndex(s32 key);
 void HBMFreeIndex(s32 key);
 void HBMFreeIndexByKey(s32 key);
@@ -33,7 +37,7 @@ typedef struct HBMSYNVoice {
 // Voice pointer — points to the dynamically allocated voice state table
 extern HBMSYNVoice* __HBMSYNVoice;
 
-void __HBMSYNClearVoiceReferences(void* channel)
+void __HBMSYNClearVoiceReferences(AXVPB* vpb)
 {
     HBMSYNVoice* voice;
     s32 voiceIndex;
@@ -42,19 +46,15 @@ void __HBMSYNClearVoiceReferences(void* channel)
     u32 col;
     u32* gridCell;
 
-    synth = *(void**)((u8*)channel + 0x14);
-    voiceIndex = HBMGetIndex(*(s32*)((u8*)channel + 0x18));
+    synth = (void*)vpb->userContext;
+    voiceIndex = HBMGetIndex((s32)vpb->index);
     HBMFreeIndex(voiceIndex);
-
     voice = &__HBMSYNVoice[voiceIndex];
-    HBMMIXReleaseChannel(channel);
+    HBMMIXReleaseChannel(vpb);
 
     row = (u32)voice->voiceIndex;
     col = (u32)voice->voiceColumn;
-    {
-        u8* tmp = (u8*)synth + row * 512;
-        gridCell = (u32*)(tmp + col * 4 + 0x408);
-    }
+    gridCell = (u32*)((u8*)synth + (row << 9) + 0x408 + (col << 2));
     if (*gridCell == (u32)voice) {
         *gridCell = 0;
     }
@@ -80,8 +80,7 @@ void __HBMSYNServiceVoice(u32 voiceIndex)
     if (voice->flags == 0 && *(u16*)((u8*)voice->mixChannel + 0x38) == 0) {
         u32 index = voice->voiceIndex;
         u32 col = voice->voiceColumn;
-        u8* tmp = (u8*)synth + index * 512;
-        u32* gridCell = (u32*)(tmp + col * 4 + 0x408);
+        u32* gridCell = (u32*)((u8*)synth + (index << 9) + 0x408 + (col << 2));
         if (*gridCell == (u32)voice) {
             *gridCell = 0;
         }
@@ -94,7 +93,7 @@ void __HBMSYNServiceVoice(u32 voiceIndex)
         u32* vcPtr;
 
         voice->voiceDataBase = NULL;
-        HBMMIXReleaseChannel(voice->mixChannel);
+        HBMMIXReleaseChannel((AXVPB*)voice->mixChannel);
         HBMFreeIndexByKey(*(s32*)((u8*)voice->mixChannel + 0x18));
         AXFreeVoice((AXVPB*)voice->mixChannel);
         vcPtr = (u32*)((u8*)synth + 0x404);
@@ -104,3 +103,7 @@ void __HBMSYNServiceVoice(u32 voiceIndex)
         __HBMSYNUpdateSrc(voice);
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

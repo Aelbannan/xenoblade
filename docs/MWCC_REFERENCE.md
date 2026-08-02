@@ -1998,11 +1998,33 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   solving exceeds the 15 min/query budget; auto ppc-eabi+fpscr+msr/srr0/srr1).
   Untried: `SCALAR_FP_EXACT_V2` experimental exact-FP core (env-gated, not
   promotion-grade yet).
-- **`Callback` (~87%) / `__CalcLFO` (~64%)**: soft-cap. Callback history fill is
-  retail `mtctr`/`bdnz` (+ dead `subi`) vs MWCC `subic.`/`bne`; `__CalcLFO` retail
-  uses `mulhwu`+sign-fix and a `r31` stack frame for `(s64)a*b>>24`, while Wii/1.1
-  `-O4,p` prefers a shorter `mulhw` path (~0x20 smaller). Keep high-level
-  `((s64)…>>24)` / 96-sample LFO semantics.
+- **`Callback` (~87%) / `__CalcLFO` (97.92%, 0 structural)**: soft-cap. Callback history fill is
+  retail `mtctr`/`bdnz` (+ dead `subi`) vs MWCC `subic.`/`bne`. `__CalcLFO` was taken
+  62.9% -> 97.92% (52 structural -> 0, size exact 0x104) with three shapes that
+  reproduce the retail's exact instruction stream:
+  1. **Phase-variable reuse**: one `u32 phase` local, masked then `phase >>= 16`
+     in place. The dataflow destruction of the masked value forces MWCC to keep the
+     `srwi rX,rX,16` coalesced into the source register, which makes the table
+     index `slwi rX,rX,2` (the `(x>>16)<<2` fold to `rlwinm 18,14,29` is otherwise
+     unstoppable — ~80 shapes swept: decl orders x24, statement orders, separate
+     idx/currNum vars, pointer/volatile/compound-assign forms all fold).
+  2. **grad-first statement + `(s64)((u64)delta * (u64)gradFactor) >> 24`**: the
+     `(u64)` casts force the mulhwu + cross-term 64x64 multiply (mullw low,
+     mulhwu high, mullw corr1 = dhi*gf, mullw corr2 = delta*ghi, add add), and the
+     `(s64)` wrap on the product keeps the dead high-word `srawi` at the end.
+     `delta = (s64)(next - curr)` gives the 32-bit `subf` + `srawi` sign-ext.
+     grad-first (not value-first) is required for the retail's interleaved
+     schedule (V-low, dhi, ghi, G-low, V-rotl, V-high, G-rotl, G-high, V-done,
+     G-corr, G-done, G-stw, G-dead, V-dead).
+  3. **Soft-cap**: the residual 15 mismatches are pure reg-swaps, but the
+     register-renaming witness cannot certify: retail's callee-saved `r31` holds
+     the s64 delta high word (`dhi`), decomp's `r31` holds `curr`. Prologue/epilogue
+     `stw r31`/`lwz r31` force rho(31)=31 while the loop `srawi r31` (dhi) forces
+     rho(31)=r10 — no bijective rho exists (callee-saved dual-role, unlike the
+     sound r20<->r25 Chaitin class). Full `--smt` probe: `inconclusive_timeout`
+     (96-iter mtctr loop with in-loop branches + 64-bit rlwimi math; same as twin
+     us-802dc790). `~80` source shapes cannot move the r31 slot from curr to dhi.
+     Keep the high-level 96-sample LFO semantics.
 
 ## RVL BTE `btu_hcif` HCI event handlers (ogws donor, Wii/1.1 `-O4,p`)
 
@@ -2107,6 +2129,32 @@ The buffer-param builders hoist **all** `li`s before the first store.
   the multi-reg latency-fill pattern (~36%). Volatile/pointer/explicit
   sequencing does not force `filter[0]` before `fmuls`. Soft-cap until a
   non-patch approach appears; no `.text` `insn_patches`.
+  Re-verified 2026-08-02 (full compiler sweep, 29 versions): the retail
+  schedule is a **scheduler-timing fingerprint, not a source property** — the
+  register allocation already matches retail exactly (r4=Early base then f1,
+  r6=Filter base then ival then total, r5=f0, r7=e7, r3=f2, r0=f3); only the
+  instruction ORDER of the first 0x3C differs. Sweep results for the six-local
+  shape (`-O4,p`, per-version):
+  - GC/1.0..1.1p1, 1.2.5, 1.2.5n: stwu first, e7 before fmuls, no f0/f3 fill.
+  - GC/1.3, 1.3.2, 1.3.2r: stwu first, e7 before fmuls, f0 after, f3 before stfd.
+  - GC/2.0, 2.5, 2.6, 2.7, 3.0a3..a5.2: stwu first, fmuls, e7, f0, f3 before stfd
+    (f3 position matches retail; e7/f0 order does not).
+  - **GC/2.0p1 only**: stwu first, f0 BEFORE fmuls, e7 after, f3 between
+    fctiwz and stfd — the full retail window distribution (1 load in lfs→fmuls,
+    3 in fmuls→fctiwz, 1 in fctiwz→stfd). Remaining 4 mm are the lfs order
+    (GC/2.0p1 loads preDelay first, retail 32000.0 first) and the Filter base
+    register (GC/2.0p1: lis r3 + addi r6,r3; retail: lis r6 + addi r6,r6).
+  - Wii/0x4201_127, 1.0, 1.0RC1, 1.0a, 1.1, 1.3, 1.5, 1.6, 1.7: all identical
+    to Wii/1.1 (lfs/lis before stwu, e7 before f0, f3 after stfd).
+  Full-unit check disqualifies every non-Wii version: GC/3.0a5.2 gets
+  GetMemSize to 88.5% but regresses Init (99.5%), __InitParams (97.8%) and
+  Callback (94.7%); GC/2.0p1 gets 95.8% on GetMemSize but collapses the rest
+  (Init 76.8%, Callback 79.3%) — the unit is definitively Wii/1.1 (8/10 at
+  100%), so per-function compiler switching is not viable. `-schedule on|off`
+  (explicit flag) matches the default/`#pragma scheduling off` behaviors;
+  volatile loads (w1-w3) break CSE/regalloc and add stack traffic; operand
+  order of the multiply does not change the lfs order under any version.
+  Soft-cap confirmed after 3rd non-improving cycle; no `.text` `insn_patches`.
   Re-verified 2026-08-02 on the Dpl2 twin (`AXFXReverbStdExpGetMemSizeDpl2`,
   `us-802db010`, `* 16` → `slwi`): same 13/24 mm (45.7%) with the same
   six-local shape — add chain + `slwi` + epilogue byte-identical, 11

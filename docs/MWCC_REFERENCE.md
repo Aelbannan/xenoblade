@@ -2669,6 +2669,37 @@ now match on Wii/1.1 (`-O4,p -ipa file`, cflags_sdk). Reusable patterns:
   `fsub`+`frsp` instead of retail `fsubs`; MWCC also saves an extra GPR (`r28`).
   `^ 0x80000000` forces `xoris` but has not beaten the ~49% baseline yet. Park
   while chasing InitLOD / PreLoaded.
+- **`__SetSURegs` (FULL_MATCH)**: keep `suTs0`/`suTs1` in locals across both
+  rlwimi phases (retail never reloads between 0x30→0x6c) and **inline the
+  `tImage0[tmap]` access into `w`/`h` with no `image0` local** — the inline load
+  creates the load vreg before the address temp, so MWCC colors the load `r3`,
+  `tmap*4`→`r0`, `tcoord*4`→`r6` exactly like retail. A named `image0` local
+  flips the colors to `r0`/`r3` (4 pure reg-swaps, witness-inconsistent, and
+  SMT is blocked by the gx-fifo MMIO obligation — WGPIPE writers in this unit
+  are only certifiable statically).
+- **`GXLoadTlut` (FULL_MATCH)**: retail tail is
+  `lwz r0,0(r31); lwz r3,0(r30); rlwimi r3,r0,0,22,31` (insert **raw low 10
+  bits, no shift**) then a word-wise copy to `r->tlutObj` with the store-back
+  `t->tlut` LAST. The `SC_TX_SETTLUT_SET_TMEM_OFFSET` macro (shift 10) is
+  wrong here; use `__rlwimi(t->tlut, r->loadTlut1, 0, 22, 31)`. The struct
+  copy must be field-by-field with `((u32*)&r->tlutObj)[2] =
+  ((u32*)&t->tlut)[2]` for the padded `numEntries` word (u16 member emits
+  `lhz`/`sth`, retail uses `lwz`/`stw`) and `t->tlut = merged` as the last
+  statement — plain `(x & ~m) | (y & m)` does not fold into one rlwimi here.
+- **`__GetImageTileCount` (FULL_MATCH)**: retail dispatch is a **jump table**
+  (`cmplwi 0x3c` / `lis` / `lwzx` / `bctr`), not the `GXTexTileRowShift`
+  arrays — reconstruct a `switch (fmt)` with three case groups
+  `(3,3)/(3,2)/(2,2)` (table at `0x8054BF64` maps `{0,8,14,32,48}` → 3,3;
+  `{1,2,9,17,34,39-42,57,58}` → 3,2; `{3-6,10,19,22,35,43,44,60}` → 2,2).
+  Tile counts use **signed** `sraw` (no u32 cast); the `default` case assigns
+  `texColShift` before `texRowShift` (retail emits `li r12` before `li r11`);
+  `*cmpTiles` is the branchless boolean `(fmt==6||fmt==22) ? 2U : 1U`
+  (`neg`/`or`/`srwi` + `addi`).
+- **`GXInitTlutRegion` (FULL_MATCH)**: pass `tmem_addr - 0x80000` **unshifted**
+  to `__rlwimi(t->loadTlut1, tmem_addr, 23, 22, 31)` — the `>> 9` is baked
+  into SH=23 (mask 22-31 = 10 bits); `SC_TX_LOADTLUT1_SET_*` macros emit
+  `rlwinm`+`or` instead of the retail rlwimi chain. 4-byte smaller than the
+  macro form (recovered the unit's split budget).
 
 ## ocMsg ring push/pop (US)
 

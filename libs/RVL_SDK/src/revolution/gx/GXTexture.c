@@ -262,12 +262,50 @@ void __GetImageTileCount(GXTexFmt fmt, u16 wd, u16 ht, u32* rowTiles, u32* colTi
                          u32* cmpTiles) {
     u32 texRowShift, texColShift;
 
-    if ((u32)fmt <= 0x3C) {
-        texRowShift = GXTexTileRowShift[fmt];
-        texColShift = GXTexTileColShift[fmt];
-    } else {
-        texRowShift = 0;
+    switch (fmt) {
+    case GX_TF_I4:
+    case GX_TF_C4:
+    case GX_TF_CMPR:
+    case GX_CTF_R4:
+    case GX_CTF_Z4:
+        texRowShift = 3;
+        texColShift = 3;
+        break;
+
+    case GX_TF_I8:
+    case GX_TF_IA4:
+    case GX_TF_C8:
+    case GX_TF_Z8:
+    case GX_CTF_RA4:
+    case GX_CTF_A8:
+    case GX_CTF_R8:
+    case GX_CTF_G8:
+    case GX_CTF_B8:
+    case GX_CTF_Z8M:
+    case GX_CTF_Z8L:
+        texRowShift = 3;
+        texColShift = 2;
+        break;
+
+    case GX_TF_IA8:
+    case GX_TF_RGB565:
+    case GX_TF_RGB5A3:
+    case GX_TF_RGBA8:
+    case GX_TF_C14X2:
+    case GX_TF_Z16:
+    case GX_TF_Z24X8:
+    case GX_CTF_RA8:
+    case GX_CTF_RG8:
+    case GX_CTF_GB8:
+    case GX_CTF_Z16L:
+        texRowShift = 2;
+        texColShift = 2;
+        break;
+
+    default:
         texColShift = 0;
+        texRowShift = 0;
+        break;
     }
 
     if (wd == 0) {
@@ -676,7 +714,7 @@ void GXInitTlutObj(GXTlutObj* tlut_obj, void* lut, GXTlutFmt fmt, u16 n_entries)
 
 void GXLoadTlut(GXTlutObj* tlut_obj, u32 tlut_name) {
     GXTlutRegionImpl* r;
-    u32 tlut_offset;
+    u32 merged;
     GX_SETUP_TLUTOBJ(t, tlut_obj);
 
     r = (GXTlutRegionImpl*)(gxdt->tlutRegionCallback)(tlut_name);
@@ -688,9 +726,11 @@ void GXLoadTlut(GXTlutObj* tlut_obj, u32 tlut_name) {
 
     __GXFlushTextureState();
 
-    tlut_offset = TX_LOADTLUT1_GET_TMEM_OFFSET(r->loadTlut1);
-    SC_TX_SETTLUT_SET_TMEM_OFFSET(t->tlut, tlut_offset);
-    r->tlutObj = *t;
+    merged = __rlwimi(t->tlut, r->loadTlut1, 0, 22, 31);
+    r->tlutObj.tlut = merged;
+    r->tlutObj.loadTlut0 = t->loadTlut0;
+    ((u32*)&r->tlutObj)[2] = ((u32*)&t->tlut)[2];
+    t->tlut = merged;
 }
 
 void GXInitTexCacheRegion(GXTexRegion* region, GXBool is_32b_mipmap, u32 tmem_even,
@@ -749,9 +789,9 @@ void GXInitTlutRegion(GXTlutRegion* region, u32 tmem_addr, u32 tlut_size) {
 
     t->loadTlut1 = 0;
     tmem_addr -= 0x80000;
-    SC_TX_LOADTLUT1_SET_TMEM_OFFSET(t->loadTlut1, (tmem_addr >> 9));
-    SC_TX_LOADTLUT1_SET_COUNT(t->loadTlut1, tlut_size);
-    SC_TX_LOADTLUT1_SET_RID(t->loadTlut1, 0x65);
+    t->loadTlut1 = __rlwimi(t->loadTlut1, tmem_addr, 23, 22, 31);
+    t->loadTlut1 = __rlwimi(t->loadTlut1, tlut_size, 10, 11, 21);
+    t->loadTlut1 = __rlwimi(t->loadTlut1, 0x65, 24, 0, 7);
 }
 
 void GXInvalidateTexAll(void) {
@@ -791,8 +831,9 @@ void GXSetTexCoordScaleManually(GXTexCoordID coord, GXBool enable, u16 ss, u16 t
 
 #pragma dont_inline on
 void __SetSURegs(u32 tmap, u32 tcoord) {
-    u32 image0;
     u32 mode0;
+    u32 suTs0;
+    u32 suTs1;
     u32 w;
     u32 h;
     u32 wrapS;
@@ -800,13 +841,18 @@ void __SetSURegs(u32 tmap, u32 tcoord) {
     u32 sBias;
     u32 tBias;
 
-    image0 = gxdt->tImage0[tmap];
-    mode0 = gxdt->tMode0[tmap];
+    w = gxdt->tImage0[tmap] & 0x3FF;
+    h = (gxdt->tImage0[tmap] >> 10) & 0x3FF;
 
-    w = image0 & 0x3FF;
-    h = (image0 >> 10) & 0x3FF;
-    gxdt->suTs0[tcoord] = __rlwimi(gxdt->suTs0[tcoord], w, 0, 16, 31);
-    gxdt->suTs1[tcoord] = __rlwimi(gxdt->suTs1[tcoord], h, 0, 16, 31);
+    suTs0 = gxdt->suTs0[tcoord];
+    suTs0 = __rlwimi(suTs0, w, 0, 16, 31);
+    gxdt->suTs0[tcoord] = suTs0;
+
+    suTs1 = gxdt->suTs1[tcoord];
+    suTs1 = __rlwimi(suTs1, h, 0, 16, 31);
+    gxdt->suTs1[tcoord] = suTs1;
+
+    mode0 = gxdt->tMode0[tmap];
 
     wrapS = mode0 & 3;
     wrapT = (mode0 >> 2) & 3;
@@ -814,8 +860,12 @@ void __SetSURegs(u32 tmap, u32 tcoord) {
     wrapT = wrapT - 1;
     sBias = __cntlzw(wrapS);
     tBias = __cntlzw(wrapT);
-    gxdt->suTs0[tcoord] = __rlwimi(gxdt->suTs0[tcoord], sBias, 11, 15, 15);
-    gxdt->suTs1[tcoord] = __rlwimi(gxdt->suTs1[tcoord], tBias, 11, 15, 15);
+
+    suTs0 = __rlwimi(suTs0, sBias, 11, 15, 15);
+    gxdt->suTs0[tcoord] = suTs0;
+
+    suTs1 = __rlwimi(suTs1, tBias, 11, 15, 15);
+    gxdt->suTs1[tcoord] = suTs1;
 
     GX_BP_LOAD_REG(gxdt->suTs0[tcoord]);
     GX_BP_LOAD_REG(gxdt->suTs1[tcoord]);

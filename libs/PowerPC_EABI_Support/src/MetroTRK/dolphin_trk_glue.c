@@ -6,13 +6,14 @@
 
 extern void PPCHalt(void);
 
-static ui32 gReadCount; // not referenced by the game; retained for binary matching
-static ui32 gReadPos; // not referenced by the game; retained for binary matching
-static ui32 gWritePos; // not referenced by the game; retained for binary matching
+//not present in the retail binary (dead-stripped); kept commented out for reference
+//static ui32 gReadCount;
+//static ui32 gReadPos;
+//static ui32 gWritePos;
 static ui8 TRK_Use_BBA;
 static DBCommTable gDBCommTable;
-static ui8 gReadBuf[0x110a]; // not referenced by the game; retained for binary matching
-static ui8 gWriteBuf[0x110a]; // not referenced by the game; retained for binary matching
+//static ui8 gReadBuf[0x110a];
+//static ui8 gWriteBuf[0x110a];
 //_MetroTRK_Has_Framing
 
 

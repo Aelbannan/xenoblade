@@ -5,6 +5,12 @@
 // the older (pre-Bluedroid) MX_FRAME layout: the pn/msc/rpn/rls union
 // members carry a leading dlci byte, and the NSC response is emitted
 // inline at the end of rfc_process_mx_message.
+//
+// NOTE: this TU is compiled with `-ipa off`, which makes MWCC emit functions
+// in REVERSE source order (and pool the .data string literals in that same
+// reversed order).  The functions below are therefore written back-to-front
+// (rfc_process_mx_message first, rfc_send_sabme last) so the emitted .text
+// and string pool match the retail layout (same fix as l2c_csm.c).
 
 #include <harness_catalog.h>
 
@@ -157,6 +163,12 @@ extern void *GKI_getpoolbuf(u8 pool_id);
 extern void GKI_freebuf(void *p_buf);
 extern u16 L2CA_DataWrite(u16 cid, BT_HDR *p_buf);
 
+/* Short SDA trace strings: fixed-size externs keep MWCC on sda21 addressing
+** and give the retail reloc names (lbl_80665958/lbl_80665960), same fix as
+** btm_devctl.c's lbl_8066592C/34 (MWCC_REFERENCE §1a SDA globals). */
+extern const char lbl_80665958[7];   /* "Bad UA" */
+extern const char lbl_80665960[7];   /* "Bad DM" */
+
 extern void LogMsg_0(u32 level, const char *msg);
 extern void LogMsg_1(u32 level, const char *msg, u32 p1);
 extern void LogMsg_2(u32 level, const char *msg, u32 p1, u32 p2);
@@ -174,6 +186,10 @@ extern void rfc_process_nsc(tRFC_MCB *p_mcb, MX_FRAME *p_frame);
 extern void rfc_process_rpn(tRFC_MCB *p_mcb, u8 is_command, u8 is_request, MX_FRAME *p_frame);
 extern void rfc_process_rls(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame);
 
+/* Forward declarations (functions defined later in this back-to-front file). */
+void rfc_send_buf_uih(tRFC_MCB *p_mcb, u8 dlci, BT_HDR *p_buf);
+void rfc_send_test(tRFC_MCB *p_mcb, u8 is_command, BT_HDR *p_buf);
+
 #define RFCOMM_TRACE_ERROR0(m) \
     { if (rfc_cb.trace_level >= BT_TRACE_LEVEL_ERROR) LogMsg_0(TRACE_LAYER_RFCOMM, (m)); }
 #define RFCOMM_TRACE_ERROR1(m, p1) \
@@ -181,610 +197,6 @@ extern void rfc_process_rls(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame);
 #define RFCOMM_TRACE_ERROR2(m, p1, p2) \
     { if (rfc_cb.trace_level >= BT_TRACE_LEVEL_ERROR) LogMsg_2(TRACE_LAYER_RFCOMM, (m), (p1), (p2)); }
 
-/*******************************************************************************
-**
-** Function         rfc_send_sabme
-**
-** Description      This function sends SABME frame.
-**
-*******************************************************************************/
-void rfc_send_sabme(tRFC_MCB *p_mcb, u8 dlci)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET;
-    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
-
-    /* SABME frame, command, PF = 1, dlci */
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_SABME | RFCOMM_PF;
-    *p_data++ = RFCOMM_EA | 0;
-
-    *p_data = RFCOMM_SABME_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
-
-    p_buf->len = 4;
-
-    rfc_check_send_cmd(p_mcb, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_ua
-**
-** Description      This function sends UA frame.
-**
-*******************************************************************************/
-void rfc_send_ua(tRFC_MCB *p_mcb, u8 dlci)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, FALSE);
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET;
-    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
-
-    /* ua frame, response, PF = 1, dlci */
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_UA | RFCOMM_PF;
-    *p_data++ = RFCOMM_EA | 0;
-
-    *p_data = RFCOMM_UA_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
-
-    p_buf->len = 4;
-
-    rfc_check_send_cmd(p_mcb, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_dm
-**
-** Description      This function sends DM frame.
-**
-*******************************************************************************/
-void rfc_send_dm(tRFC_MCB *p_mcb, u8 dlci, u8 pf)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, FALSE);
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET;
-    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
-
-    /* DM frame, response, PF = 1, dlci */
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_DM | ((pf) ? RFCOMM_PF : 0);
-    *p_data++ = RFCOMM_EA | 0;
-
-    *p_data = RFCOMM_DM_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
-
-    p_buf->len = 4;
-
-    rfc_check_send_cmd(p_mcb, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_disc
-**
-** Description      This function sends DISC frame.
-**
-*******************************************************************************/
-void rfc_send_disc(tRFC_MCB *p_mcb, u8 dlci)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET;
-    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
-
-    /* DISC frame, command, PF = 1, dlci */
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_DISC | RFCOMM_PF;
-    *p_data++ = RFCOMM_EA | 0;
-
-    *p_data = RFCOMM_DISC_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
-
-    p_buf->len = 4;
-
-    rfc_check_send_cmd(p_mcb, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_buf_uih
-**
-** Description      This function sends UIH frame.
-**
-*******************************************************************************/
-void rfc_send_buf_uih(tRFC_MCB *p_mcb, u8 dlci, BT_HDR *p_buf)
-{
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
-    u8 credits;
-
-    p_buf->offset -= RFCOMM_CTRL_FRAME_LEN;
-    if (p_buf->len > 127)
-        p_buf->offset--;
-
-    if (dlci)
-        credits = (u8)p_buf->layer_specific;
-    else
-        credits = 0;
-
-    if (credits)
-        p_buf->offset--;
-
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    /* UIH frame, command, PF = 0, dlci */
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_UIH | ((credits) ? RFCOMM_PF : 0);
-    if (p_buf->len <= 127)
-    {
-        *p_data++ = RFCOMM_EA | (p_buf->len << 1);
-        p_buf->len += 3;
-    }
-    else
-    {
-        *p_data++ = (p_buf->len & 0x7F) << 1;
-        *p_data++ = p_buf->len >> RFCOMM_SHIFT_LENGTH2;
-        p_buf->len += 4;
-    }
-
-    if (credits)
-    {
-        *p_data++ = credits;
-        p_buf->len++;
-    }
-
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset + p_buf->len++;
-
-    *p_data = RFCOMM_UIH_FCS((u8 *)(p_buf + 1) + p_buf->offset, dlci);
-
-    if (dlci == RFCOMM_MX_DLCI)
-    {
-        rfc_check_send_cmd(p_mcb, p_buf);
-    }
-    else
-    {
-        L2CA_DataWrite(p_mcb->lcid, p_buf);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_pn
-**
-** Description      This function sends DLC Parameters Negotiation Frame.
-**
-*******************************************************************************/
-void rfc_send_pn(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, u16 mtu, u8 cl, u8 k)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_PN;
-    *p_data++ = RFCOMM_EA | (RFCOMM_MX_PN_LEN << 1);
-
-    *p_data++ = dlci;
-    *p_data++ = RFCOMM_PN_FRAM_TYPE_UIH | cl;
-
-    /* It appeared that we need to reply with the same priority bits as we
-    ** received.  We will use the fact that we reply in the same context so
-    ** rx_frame can still be used.
-    */
-    if (is_command)
-        *p_data++ = RFCOMM_PN_PRIORITY_0;
-    else
-        *p_data++ = rfc_cb.rx_frame.u.pn.priority;
-
-    *p_data++ = RFCOMM_T1_DSEC;
-    *p_data++ = mtu & 0xFF;
-    *p_data++ = mtu >> 8;
-    *p_data++ = RFCOMM_N2;
-    *p_data   = k;
-
-    /* Total length is size of PN data + mx header 2 */
-    p_buf->len = RFCOMM_MX_PN_LEN + 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_fcon
-**
-** Description      This function sends Flow Control On Command.
-**
-*******************************************************************************/
-void rfc_send_fcon(tRFC_MCB *p_mcb, u8 is_command)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_FCON;
-    *p_data++ = RFCOMM_EA | (RFCOMM_MX_FCON_LEN << 1);
-
-    /* Total length is size of FCON data + mx header 2 */
-    p_buf->len = RFCOMM_MX_FCON_LEN + 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_fcoff
-**
-** Description      This function sends Flow Control Off Command.
-**
-*******************************************************************************/
-void rfc_send_fcoff(tRFC_MCB *p_mcb, u8 is_command)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_FCOFF;
-    *p_data++ = RFCOMM_EA | (RFCOMM_MX_FCOFF_LEN << 1);
-
-    /* Total length is size of FCOFF data + mx header 2 */
-    p_buf->len = RFCOMM_MX_FCOFF_LEN + 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_msc
-**
-** Description      This function sends Modem Status Command Frame.
-**
-*******************************************************************************/
-void rfc_send_msc(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, tPORT_CTRL *p_pars)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 signals;
-    u8 break_duration;
-    u8 len;
-
-    signals        = p_pars->modem_signal;
-    break_duration = p_pars->break_signal;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    if (break_duration)
-        len = RFCOMM_MX_MSC_LEN_WITH_BREAK;
-    else
-        len = RFCOMM_MX_MSC_LEN_NO_BREAK;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_MSC;
-    *p_data++ = RFCOMM_EA | (len << 1);
-
-    *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_EA |
-                ((p_pars->fc)                    ? RFCOMM_MSC_FC  : 0) |
-                ((signals & MODEM_SIGNAL_DTRDSR) ? RFCOMM_MSC_RTC : 0) |
-                ((signals & MODEM_SIGNAL_RTSCTS) ? RFCOMM_MSC_RTR : 0) |
-                ((signals & MODEM_SIGNAL_RI)     ? RFCOMM_MSC_IC  : 0) |
-                ((signals & MODEM_SIGNAL_DCD)    ? RFCOMM_MSC_DV  : 0);
-
-    if (break_duration)
-    {
-        *p_data++ = RFCOMM_EA | RFCOMM_MSC_BREAK_PRESENT_MASK |
-                    (break_duration << RFCOMM_MSC_SHIFT_BREAK);
-    }
-
-    /* Total length is size of MSC data + mx header 2 */
-    p_buf->len = len + 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_rls
-**
-** Description      This function sends Remote Line Status Command Frame.
-**
-*******************************************************************************/
-void rfc_send_rls(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, u8 status)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_RLS;
-    *p_data++ = RFCOMM_EA | (RFCOMM_MX_RLS_LEN << 1);
-
-    *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_RLS_ERROR | status;
-
-    /* Total length is size of RLS data + mx header 2 */
-    p_buf->len = RFCOMM_MX_RLS_LEN + 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_rpn
-**
-** Description      This function sends Remote Port Negotiation Command
-**
-*******************************************************************************/
-void rfc_send_rpn(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, tPORT_STATE *p_pars, u16 mask)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_RPN;
-
-    if (!p_pars)
-    {
-        *p_data++ = RFCOMM_EA | (RFCOMM_MX_RPN_REQ_LEN << 1);
-
-        *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
-
-        p_buf->len = RFCOMM_MX_RPN_REQ_LEN + 2;
-    }
-    else
-    {
-        *p_data++ = RFCOMM_EA | (RFCOMM_MX_RPN_LEN << 1);
-
-        *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
-        *p_data++ = p_pars->baud_rate;
-        *p_data++ = (p_pars->byte_size << RFCOMM_RPN_BITS_SHIFT)
-                  | (p_pars->stop_bits << RFCOMM_RPN_STOP_BITS_SHIFT)
-                  | (p_pars->parity << RFCOMM_RPN_PARITY_SHIFT)
-                  | (p_pars->parity_type << RFCOMM_RPN_PARITY_TYPE_SHIFT);
-        *p_data++ = p_pars->fc_type;
-        *p_data++ = p_pars->xon_char;
-        *p_data++ = p_pars->xoff_char;
-        *p_data++ = (mask & 0xFF);
-        *p_data++ = (mask >> 8);
-
-        /* Total length is size of RPN data + mx header 2 */
-        p_buf->len = RFCOMM_MX_RPN_LEN + 2;
-    }
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_test
-**
-** Description      This function sends Test frame.
-**
-*******************************************************************************/
-void rfc_send_test(tRFC_MCB *p_mcb, u8 is_command, BT_HDR *p_buf)
-{
-    u8 *p_data;
-    u16 xx;
-    u8 *p_src, *p_dest;
-
-    /* Shift buffer to give space for header */
-    if (p_buf->offset < (L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2))
-    {
-        p_src  = (u8 *)(p_buf + 1) + p_buf->offset + p_buf->len - 1;
-        p_dest = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2 + p_buf->len - 1;
-
-        for (xx = 0; xx < p_buf->len; xx++)
-            *p_dest-- = *p_src--;
-
-        p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2;
-    }
-
-    /* Adjust offset by number of bytes we are going to fill */
-    p_buf->offset -= 2;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_TEST;
-    *p_data++ = RFCOMM_EA | (p_buf->len << 1);
-
-    p_buf->len += 2;
-
-    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_send_credit
-**
-** Description      This function sends a flow control credit in UIH frame.
-**
-*******************************************************************************/
-void rfc_send_credit(tRFC_MCB *p_mcb, u8 dlci, u8 credit)
-{
-    BT_HDR *p_buf;
-    u8 *p_data;
-    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
-
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
-        return;
-
-    p_buf->offset = L2CAP_MIN_OFFSET;
-    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-
-    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
-    *p_data++ = RFCOMM_UIH | RFCOMM_PF;
-    *p_data++ = RFCOMM_EA | 0;
-    *p_data++ = credit;
-    *p_data   = RFCOMM_UIH_FCS((u8 *)(p_buf + 1) + p_buf->offset, dlci);
-
-    p_buf->len = 5;
-
-    rfc_check_send_cmd(p_mcb, p_buf);
-}
-
-/*******************************************************************************
-**
-** Function         rfc_parse_data
-**
-** Description      This function processes data packet received from L2CAP
-**
-*******************************************************************************/
-u8 rfc_parse_data(tRFC_MCB *p_mcb, MX_FRAME *p_frame, BT_HDR *p_buf)
-{
-    u8 ead, eal, fcs;
-    u8 *p_data = (u8 *)(p_buf + 1) + p_buf->offset;
-    u8 *p_start = p_data;
-    u16 len;
-
-    if (p_buf->len < RFCOMM_CTRL_FRAME_LEN)
-    {
-        RFCOMM_TRACE_ERROR1("Bad Length1: %d", p_buf->len);
-        return (RFC_EVENT_BAD_FRAME);
-    }
-
-    RFCOMM_PARSE_CTRL_FIELD(ead, p_frame->cr, p_frame->dlci, p_data);
-    RFCOMM_PARSE_TYPE_FIELD(p_frame->type, p_frame->pf, p_data);
-    RFCOMM_PARSE_LEN_FIELD(eal, len, p_data);
-
-    p_buf->len    -= (3 + !ead + !eal + 1);  /* Additional 1 for FCS */
-    p_buf->offset += (3 + !ead + !eal);
-
-    /* handle credit if credit based flow control */
-    if ((p_mcb->flow == PORT_FC_CREDIT) && (p_frame->type == RFCOMM_UIH) &&
-        (p_frame->dlci != RFCOMM_MX_DLCI) && (p_frame->pf == 1))
-    {
-        p_frame->credit = *p_data++;
-        p_buf->len--;
-        p_buf->offset++;
-    }
-    else
-        p_frame->credit = 0;
-
-    if (p_buf->len != len)
-    {
-        RFCOMM_TRACE_ERROR2("Bad Length2 %d %d", p_buf->len, len);
-        return (RFC_EVENT_BAD_FRAME);
-    }
-
-    fcs = *(p_data + len);
-
-    /* All control frames that we are sending are sent with P=1, expect */
-    /* reply with F=1 */
-    /* According to TS 07.10 spec invalid frames are discarded without */
-    /* notification to the sender */
-    switch (p_frame->type)
-    {
-    case RFCOMM_SABME:
-        if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr)
-         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
-         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
-        {
-            RFCOMM_TRACE_ERROR0("Bad SABME");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else
-            return (RFC_EVENT_SABME);
-
-    case RFCOMM_UA:
-        if (RFCOMM_FRAME_IS_CMD(p_mcb->is_initiator, p_frame->cr)
-         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
-         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
-        {
-            RFCOMM_TRACE_ERROR0("Bad UA");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else
-            return (RFC_EVENT_UA);
-
-    case RFCOMM_DM:
-        if (RFCOMM_FRAME_IS_CMD(p_mcb->is_initiator, p_frame->cr)
-         || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
-         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
-        {
-            RFCOMM_TRACE_ERROR0("Bad DM");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else
-            return (RFC_EVENT_DM);
-
-    case RFCOMM_DISC:
-        if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr)
-         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
-         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
-        {
-            RFCOMM_TRACE_ERROR0("Bad DISC");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else
-            return (RFC_EVENT_DISC);
-
-    case RFCOMM_UIH:
-        if (!RFCOMM_VALID_DLCI(p_frame->dlci))
-        {
-            RFCOMM_TRACE_ERROR0("Bad UIH - invalid DLCI");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else if (!rfc_check_fcs(2, p_start, fcs))
-        {
-            RFCOMM_TRACE_ERROR0("Bad UIH - FCS");
-            return (RFC_EVENT_BAD_FRAME);
-        }
-        else if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr))
-        {
-            /* we assume that this is ok to allow bad implementations to work */
-            RFCOMM_TRACE_ERROR0("Bad UIH - response");
-            return (RFC_EVENT_UIH);
-        }
-        else
-            return (RFC_EVENT_UIH);
-    }
-
-    return (RFC_EVENT_BAD_FRAME);
-}
 
 /*******************************************************************************
 **
@@ -1002,25 +414,649 @@ void rfc_process_mx_message(tRFC_MCB *p_mcb, BT_HDR *p_buf)
     GKI_freebuf(p_buf);
 
     /* Unsupported command: reply with NSC carrying the offending control
-    ** field (rfc_send_nsc, inlined by the retail build). */
+    ** field (rfc_send_nsc semantics, hand-inlined: MWCC emits every static
+    ** function standalone, so the helper must not exist in source). */
     if (is_command)
     {
-        if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) != NULL)
+        BT_HDR *p_nsc;
+        u8 *p_nsc_data;
+
+        if ((p_nsc = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) != NULL)
         {
-            p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
-            p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+            p_nsc->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+            p_nsc_data = (u8 *)(p_nsc + 1) + p_nsc->offset;
 
-            *p_data++ = RFCOMM_EA | RFCOMM_I_CR(FALSE) | RFCOMM_MX_NSC;
-            *p_data++ = RFCOMM_EA | (RFCOMM_MX_NSC_LEN << 1);
+            *p_nsc_data++ = RFCOMM_EA | RFCOMM_I_CR(FALSE) | RFCOMM_MX_NSC;
+            *p_nsc_data++ = RFCOMM_EA | (RFCOMM_MX_NSC_LEN << 1);
 
-            *p_data++ = p_rx_frame->ea |
-                        (p_rx_frame->cr << RFCOMM_SHIFT_CR) |
-                        p_rx_frame->type;
+            *p_nsc_data = rfc_cb.rx_frame.ea |
+                          (rfc_cb.rx_frame.cr << RFCOMM_SHIFT_CR) |
+                          rfc_cb.rx_frame.type;
 
             /* Total length is size of NSC data + mx header 2 */
-            p_buf->len = RFCOMM_MX_NSC_LEN + 2;
+            p_nsc->len = RFCOMM_MX_NSC_LEN + 2;
 
-            rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+            rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_nsc);
         }
     }
 }
+
+
+/*******************************************************************************
+**
+** Function         rfc_parse_data
+**
+** Description      This function processes data packet received from L2CAP
+**
+*******************************************************************************/
+u8 rfc_parse_data(tRFC_MCB *p_mcb, MX_FRAME *p_frame, BT_HDR *p_buf)
+{
+    u8 ead, eal, fcs;
+    u8 *p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+    u8 *p_start = p_data;
+    u16 len;
+
+    if (p_buf->len < RFCOMM_CTRL_FRAME_LEN)
+    {
+        RFCOMM_TRACE_ERROR1("Bad Length1: %d", p_buf->len);
+        return (RFC_EVENT_BAD_FRAME);
+    }
+
+    RFCOMM_PARSE_CTRL_FIELD(ead, p_frame->cr, p_frame->dlci, p_data);
+    RFCOMM_PARSE_TYPE_FIELD(p_frame->type, p_frame->pf, p_data);
+    RFCOMM_PARSE_LEN_FIELD(eal, len, p_data);
+
+    p_buf->len    -= (3 + !ead + !eal + 1);  /* Additional 1 for FCS */
+    p_buf->offset += (3 + !ead + !eal);
+
+    /* handle credit if credit based flow control */
+    if ((p_mcb->flow == PORT_FC_CREDIT) && (p_frame->type == RFCOMM_UIH) &&
+        (p_frame->dlci != RFCOMM_MX_DLCI) && (p_frame->pf == 1))
+    {
+        p_frame->credit = *p_data++;
+        p_buf->len--;
+        p_buf->offset++;
+    }
+    else
+        p_frame->credit = 0;
+
+    if (p_buf->len != len)
+    {
+        RFCOMM_TRACE_ERROR2("Bad Length2 %d %d", p_buf->len, len);
+        return (RFC_EVENT_BAD_FRAME);
+    }
+
+    fcs = *(p_data + len);
+
+    /* All control frames that we are sending are sent with P=1, expect */
+    /* reply with F=1 */
+    /* According to TS 07.10 spec invalid frames are discarded without */
+    /* notification to the sender */
+    switch (p_frame->type)
+    {
+    case RFCOMM_SABME:
+        if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr)
+         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
+         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
+        {
+            RFCOMM_TRACE_ERROR0("Bad SABME");
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else
+            return (RFC_EVENT_SABME);
+
+    case RFCOMM_UA:
+        if (RFCOMM_FRAME_IS_CMD(p_mcb->is_initiator, p_frame->cr)
+         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
+         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
+        {
+            RFCOMM_TRACE_ERROR0(lbl_80665958);
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else
+            return (RFC_EVENT_UA);
+
+    case RFCOMM_DM:
+        if (RFCOMM_FRAME_IS_CMD(p_mcb->is_initiator, p_frame->cr)
+         || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
+         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
+        {
+            RFCOMM_TRACE_ERROR0(lbl_80665960);
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else
+            return (RFC_EVENT_DM);
+
+    case RFCOMM_DISC:
+        if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr)
+         || !p_frame->pf || len || !RFCOMM_VALID_DLCI(p_frame->dlci)
+         || !rfc_check_fcs(RFCOMM_CTRL_FRAME_LEN, p_start, fcs))
+        {
+            RFCOMM_TRACE_ERROR0("Bad DISC");
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else
+            return (RFC_EVENT_DISC);
+
+    case RFCOMM_UIH:
+        if (!RFCOMM_VALID_DLCI(p_frame->dlci))
+        {
+            RFCOMM_TRACE_ERROR0("Bad UIH - invalid DLCI");
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else if (!rfc_check_fcs(2, p_start, fcs))
+        {
+            RFCOMM_TRACE_ERROR0("Bad UIH - FCS");
+            return (RFC_EVENT_BAD_FRAME);
+        }
+        else if (RFCOMM_FRAME_IS_RSP(p_mcb->is_initiator, p_frame->cr))
+        {
+            /* we assume that this is ok to allow bad implementations to work */
+            RFCOMM_TRACE_ERROR0("Bad UIH - response");
+            return (RFC_EVENT_UIH);
+        }
+        else
+            return (RFC_EVENT_UIH);
+    }
+
+    return (RFC_EVENT_BAD_FRAME);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_credit
+**
+** Description      This function sends a flow control credit in UIH frame.
+**
+*******************************************************************************/
+void rfc_send_credit(tRFC_MCB *p_mcb, u8 dlci, u8 credit)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_UIH | RFCOMM_PF;
+    *p_data++ = RFCOMM_EA | 0;
+    *p_data++ = credit;
+    *p_data   = RFCOMM_UIH_FCS((u8 *)(p_buf + 1) + p_buf->offset, dlci);
+
+    p_buf->len = 5;
+
+    rfc_check_send_cmd(p_mcb, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_test
+**
+** Description      This function sends Test frame.
+**
+*******************************************************************************/
+void rfc_send_test(tRFC_MCB *p_mcb, u8 is_command, BT_HDR *p_buf)
+{
+    u8 *p_data;
+    u16 xx;
+    u8 *p_src, *p_dest;
+
+    /* Shift buffer to give space for header */
+    if (p_buf->offset < (L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2))
+    {
+        p_src  = (u8 *)(p_buf + 1) + p_buf->offset + p_buf->len - 1;
+        p_dest = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2 + p_buf->len - 1;
+
+        for (xx = 0; xx < p_buf->len; xx++)
+            *p_dest-- = *p_src--;
+
+        p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_MIN_OFFSET + 2;
+    }
+
+    /* Adjust offset by number of bytes we are going to fill */
+    p_buf->offset -= 2;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_TEST;
+    *p_data++ = RFCOMM_EA | (p_buf->len << 1);
+
+    p_buf->len += 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_rpn
+**
+** Description      This function sends Remote Port Negotiation Command
+**
+*******************************************************************************/
+void rfc_send_rpn(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, tPORT_STATE *p_pars, u16 mask)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_RPN;
+
+    if (!p_pars)
+    {
+        *p_data++ = RFCOMM_EA | (RFCOMM_MX_RPN_REQ_LEN << 1);
+
+        *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
+
+        p_buf->len = RFCOMM_MX_RPN_REQ_LEN + 2;
+    }
+    else
+    {
+        *p_data++ = RFCOMM_EA | (RFCOMM_MX_RPN_LEN << 1);
+
+        *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
+        *p_data++ = p_pars->baud_rate;
+        *p_data++ = (p_pars->byte_size << RFCOMM_RPN_BITS_SHIFT)
+                  | (p_pars->stop_bits << RFCOMM_RPN_STOP_BITS_SHIFT)
+                  | (p_pars->parity << RFCOMM_RPN_PARITY_SHIFT)
+                  | (p_pars->parity_type << RFCOMM_RPN_PARITY_TYPE_SHIFT);
+        *p_data++ = p_pars->fc_type;
+        *p_data++ = p_pars->xon_char;
+        *p_data++ = p_pars->xoff_char;
+        *p_data++ = (mask & 0xFF);
+        *p_data++ = (mask >> 8);
+
+        /* Total length is size of RPN data + mx header 2 */
+        p_buf->len = RFCOMM_MX_RPN_LEN + 2;
+    }
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_rls
+**
+** Description      This function sends Remote Line Status Command Frame.
+**
+*******************************************************************************/
+void rfc_send_rls(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, u8 status)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_RLS;
+    *p_data++ = RFCOMM_EA | (RFCOMM_MX_RLS_LEN << 1);
+
+    *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_RLS_ERROR | status;
+
+    /* Total length is size of RLS data + mx header 2 */
+    p_buf->len = RFCOMM_MX_RLS_LEN + 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_msc
+**
+** Description      This function sends Modem Status Command Frame.
+**
+*******************************************************************************/
+void rfc_send_msc(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, tPORT_CTRL *p_pars)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 signals;
+    u8 break_duration;
+    u8 len;
+
+    signals        = p_pars->modem_signal;
+    break_duration = p_pars->break_signal;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    if (break_duration)
+        len = RFCOMM_MX_MSC_LEN_WITH_BREAK;
+    else
+        len = RFCOMM_MX_MSC_LEN_NO_BREAK;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_MSC;
+    *p_data++ = RFCOMM_EA | (len << 1);
+
+    *p_data++ = RFCOMM_EA | RFCOMM_CR_MASK | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_EA |
+                ((p_pars->fc)                    ? RFCOMM_MSC_FC  : 0) |
+                ((signals & MODEM_SIGNAL_DTRDSR) ? RFCOMM_MSC_RTC : 0) |
+                ((signals & MODEM_SIGNAL_RTSCTS) ? RFCOMM_MSC_RTR : 0) |
+                ((signals & MODEM_SIGNAL_RI)     ? RFCOMM_MSC_IC  : 0) |
+                ((signals & MODEM_SIGNAL_DCD)    ? RFCOMM_MSC_DV  : 0);
+
+    if (break_duration)
+    {
+        *p_data++ = RFCOMM_EA | RFCOMM_MSC_BREAK_PRESENT_MASK |
+                    (break_duration << RFCOMM_MSC_SHIFT_BREAK);
+    }
+
+    /* Total length is size of MSC data + mx header 2 */
+    p_buf->len = len + 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_fcoff
+**
+** Description      This function sends Flow Control Off Command.
+**
+*******************************************************************************/
+void rfc_send_fcoff(tRFC_MCB *p_mcb, u8 is_command)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_FCOFF;
+    *p_data++ = RFCOMM_EA | (RFCOMM_MX_FCOFF_LEN << 1);
+
+    /* Total length is size of FCOFF data + mx header 2 */
+    p_buf->len = RFCOMM_MX_FCOFF_LEN + 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_fcon
+**
+** Description      This function sends Flow Control On Command.
+**
+*******************************************************************************/
+void rfc_send_fcon(tRFC_MCB *p_mcb, u8 is_command)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_FCON;
+    *p_data++ = RFCOMM_EA | (RFCOMM_MX_FCON_LEN << 1);
+
+    /* Total length is size of FCON data + mx header 2 */
+    p_buf->len = RFCOMM_MX_FCON_LEN + 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_pn
+**
+** Description      This function sends DLC Parameters Negotiation Frame.
+**
+*******************************************************************************/
+void rfc_send_pn(tRFC_MCB *p_mcb, u8 dlci, u8 is_command, u16 mtu, u8 cl, u8 k)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET + RFCOMM_CTRL_FRAME_LEN;
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    *p_data++ = RFCOMM_EA | RFCOMM_I_CR(is_command) | RFCOMM_MX_PN;
+    *p_data++ = RFCOMM_EA | (RFCOMM_MX_PN_LEN << 1);
+
+    *p_data++ = dlci;
+    *p_data++ = RFCOMM_PN_FRAM_TYPE_UIH | cl;
+
+    /* It appeared that we need to reply with the same priority bits as we
+    ** received.  We will use the fact that we reply in the same context so
+    ** rx_frame can still be used.
+    */
+    if (is_command)
+        *p_data++ = RFCOMM_PN_PRIORITY_0;
+    else
+        *p_data++ = rfc_cb.rx_frame.u.pn.priority;
+
+    *p_data++ = RFCOMM_T1_DSEC;
+    *p_data++ = mtu & 0xFF;
+    *p_data++ = mtu >> 8;
+    *p_data++ = RFCOMM_N2;
+    *p_data   = k;
+
+    /* Total length is size of PN data + mx header 2 */
+    p_buf->len = RFCOMM_MX_PN_LEN + 2;
+
+    rfc_send_buf_uih(p_mcb, RFCOMM_MX_DLCI, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_buf_uih
+**
+** Description      This function sends UIH frame.
+**
+*******************************************************************************/
+void rfc_send_buf_uih(tRFC_MCB *p_mcb, u8 dlci, BT_HDR *p_buf)
+{
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
+    u8 credits;
+
+    p_buf->offset -= RFCOMM_CTRL_FRAME_LEN;
+    if (p_buf->len > 127)
+        p_buf->offset--;
+
+    if (dlci)
+        credits = (u8)p_buf->layer_specific;
+    else
+        credits = 0;
+
+    if (credits)
+        p_buf->offset--;
+
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset;
+
+    /* UIH frame, command, PF = 0, dlci */
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_UIH | ((credits) ? RFCOMM_PF : 0);
+    if (p_buf->len <= 127)
+    {
+        *p_data++ = RFCOMM_EA | (p_buf->len << 1);
+        p_buf->len += 3;
+    }
+    else
+    {
+        *p_data++ = (p_buf->len & 0x7F) << 1;
+        *p_data++ = p_buf->len >> RFCOMM_SHIFT_LENGTH2;
+        p_buf->len += 4;
+    }
+
+    if (credits)
+    {
+        *p_data++ = credits;
+        p_buf->len++;
+    }
+
+    p_data = (u8 *)(p_buf + 1) + p_buf->offset + p_buf->len++;
+
+    *p_data = RFCOMM_UIH_FCS((u8 *)(p_buf + 1) + p_buf->offset, dlci);
+
+    if (dlci == RFCOMM_MX_DLCI)
+    {
+        rfc_check_send_cmd(p_mcb, p_buf);
+    }
+    else
+    {
+        L2CA_DataWrite(p_mcb->lcid, p_buf);
+    }
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_disc
+**
+** Description      This function sends DISC frame.
+**
+*******************************************************************************/
+void rfc_send_disc(tRFC_MCB *p_mcb, u8 dlci)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET;
+    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
+
+    /* DISC frame, command, PF = 1, dlci */
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_DISC | RFCOMM_PF;
+    *p_data++ = RFCOMM_EA | 0;
+
+    *p_data = RFCOMM_DISC_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
+
+    p_buf->len = 4;
+
+    rfc_check_send_cmd(p_mcb, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_dm
+**
+** Description      This function sends DM frame.
+**
+*******************************************************************************/
+void rfc_send_dm(tRFC_MCB *p_mcb, u8 dlci, u8 pf)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, FALSE);
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET;
+    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
+
+    /* DM frame, response, PF = 1, dlci */
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_DM | ((pf) ? RFCOMM_PF : 0);
+    *p_data++ = RFCOMM_EA | 0;
+
+    *p_data = RFCOMM_DM_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
+
+    p_buf->len = 4;
+
+    rfc_check_send_cmd(p_mcb, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_ua
+**
+** Description      This function sends UA frame.
+**
+*******************************************************************************/
+void rfc_send_ua(tRFC_MCB *p_mcb, u8 dlci)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, FALSE);
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET;
+    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
+
+    /* ua frame, response, PF = 1, dlci */
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_UA | RFCOMM_PF;
+    *p_data++ = RFCOMM_EA | 0;
+
+    *p_data = RFCOMM_UA_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
+
+    p_buf->len = 4;
+
+    rfc_check_send_cmd(p_mcb, p_buf);
+}
+
+
+/*******************************************************************************
+**
+** Function         rfc_send_sabme
+**
+** Description      This function sends SABME frame.
+**
+*******************************************************************************/
+void rfc_send_sabme(tRFC_MCB *p_mcb, u8 dlci)
+{
+    BT_HDR *p_buf;
+    u8 *p_data;
+    u8 cr = RFCOMM_CR(p_mcb->is_initiator, TRUE);
+
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf(RFCOMM_CMD_POOL_ID)) == NULL)
+        return;
+
+    p_buf->offset = L2CAP_MIN_OFFSET;
+    p_data = (u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET;
+
+    /* SABME frame, command, PF = 1, dlci */
+    *p_data++ = RFCOMM_EA | cr | (dlci << RFCOMM_SHIFT_DLCI);
+    *p_data++ = RFCOMM_SABME | RFCOMM_PF;
+    *p_data++ = RFCOMM_EA | 0;
+
+    *p_data = RFCOMM_SABME_FCS((u8 *)(p_buf + 1) + L2CAP_MIN_OFFSET, cr, dlci);
+
+    p_buf->len = 4;
+
+    rfc_check_send_cmd(p_mcb, p_buf);
+}
+

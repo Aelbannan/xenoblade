@@ -231,7 +231,10 @@ s32 SFMPV_Init(void) {
         return fn_803C34F8(0, ((u32)r + 0xfd0000 == 0xff05) ? 0xff000f13 : 0xff000f01);
     }
     SFMPVF_InitPool();
-    lbl_eu_80619B18 = 0;
+    {
+        u32* p = &lbl_eu_80619B18;
+        *p = 0;
+    }
     return 0;
 }
 

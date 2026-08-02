@@ -32,36 +32,33 @@ s32 SFTRN_Init(void* self, void* config) {
 void SFTRN_InitHn(void* self, void* dst, void* config) {
     s32 i;
     u32** fnTable = *(u32***)config;
-    u32* data = fnTable[0];
+    u32* data = (u32*)fnTable;
     u8* d = (u8*)dst;
     /* Initialize 3 handler entries, each 0xCC bytes */
     for (i = 0; i < 3; i++) {
-        u32 val0 = data[i * 3 + 0];
-        u32 val1 = data[i * 3 + 1];
-        u32 val2 = data[i * 3 + 2];
         u8* p = d + i * 0xCC;
-        *(u32*)(p + 0x00) = 0;
-        *(u32*)(p + 0x04) = 0;
         *(u32*)(p + 0x08) = 0;
-        *(u32*)(p + 0x0C) = val0;
+        *(u32*)(p + 0x04) = 0;
+        *(u32*)(p + 0x00) = 0;
+        *(u32*)(p + 0x0C) = data[i * 3 + 0];
         *(u32*)(p + 0x10) = 8;
         *(u32*)(p + 0x14) = 8;
         *(u32*)(p + 0x18) = 8;
         *(u32*)(p + 0x1C) = 8;
         *(s32*)(p + 0x20) = -1;
-        *(u32*)(p + 0x44) = 0;
-        *(u32*)(p + 0x48) = 0;
         *(u32*)(p + 0x4C) = 0;
-        *(u32*)(p + 0x50) = val1;
+        *(u32*)(p + 0x48) = 0;
+        *(u32*)(p + 0x44) = 0;
+        *(u32*)(p + 0x50) = data[i * 3 + 1];
         *(u32*)(p + 0x54) = 8;
         *(u32*)(p + 0x58) = 8;
         *(u32*)(p + 0x5C) = 8;
         *(u32*)(p + 0x60) = 8;
         *(s32*)(p + 0x64) = -1;
-        *(u32*)(p + 0x88) = 0;
-        *(u32*)(p + 0x8C) = 0;
         *(u32*)(p + 0x90) = 0;
-        *(u32*)(p + 0x94) = val2;
+        *(u32*)(p + 0x8C) = 0;
+        *(u32*)(p + 0x88) = 0;
+        *(u32*)(p + 0x94) = data[i * 3 + 2];
         *(u32*)(p + 0x98) = 8;
         *(u32*)(p + 0x9C) = 8;
         *(u32*)(p + 0xA0) = 8;

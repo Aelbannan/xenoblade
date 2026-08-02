@@ -19,18 +19,18 @@ int MPVLIB_CheckHn(void* handle);
 
 s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
     u32* dst;
-    if (self != 0) {
+    if (self == NULL) {
+        dst = lbl_eu_80602A78;
+    } else {
         if (MPVLIB_CheckHn(self) != 0) {
+            u32 code = 0xFF030203;
             u32 oldcb = lbl_eu_80602A78[0];
-            lbl_eu_80602A78[2] = 0xFF030203;
-            if (oldcb != 0) {
+            lbl_eu_80602A78[2] = code;
+            if (oldcb != 0)
                 ((void (*)(u32))oldcb)(lbl_eu_80602A78[1]);
-            }
-            return 0xFF030203;
+            return (s32)code;
         }
         dst = (u32*)((u8*)self + 0xbdc);
-    } else {
-        dst = lbl_eu_80602A78;
     }
     dst[0] = (u32)cb;
     dst[1] = (u32)arg;

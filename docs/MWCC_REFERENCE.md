@@ -694,6 +694,14 @@ Both 2-word TEV-color setters (us-8031fdc0, us-8031fe20) were stuck at CODE_MATC
 
 Do **not** use `|=`-expression packing (`(addr<<24) | (col<<8)` → `rlwinm`+`or`, +4 instructions, no rlwimi) and do not chase the `addr++` single-variable form (MWCC keeps `addr` live in a reg with `addi rX,rX,1` instead of folding `addi r0,r3,0xE1` — 9 structural). The `__rlwimi` builtin + compute-both-words-first shape is the whole fix.
 
+## RVL_SDK gx/GXTev — GXSetTevOp FULL_MATCH via same-TU global tables + SDK mask-expression form (US, mwcc_43_151 `-O4,p`)
+
+us-8031fbe0 (0x94) went from HIGH_MATCH 77.8% (30 structural) to **FULL_MATCH 100.0%** in one shot. Two independent MWCC keys:
+
+1. **Declare the TEV op tables as global (non-const) 5-u32 arrays in the owning TU, in retail `.data` order**: `TEVCOpTableST0` (0x00, stage0 color), `TEVCOpTableST1` (0x14), `TEVAOpTableST0` (0x28), `TEVAOpTableST1` (0x3C) — each indexed `Table + (u32)mode`. MWCC **folds the sibling arrays' addresses into constant offsets from the first symbol**, loading the base once (`lis/addi TEVCOpTableST0`) and emitting `addi r4,r5,0 / addi r0,r5,0x28 / add r8,r4,r6 / add r9,r0,r6` — the exact retail shape. Any byte-cast form (`(u32*)((u8*)base + K) + mode`) gets reassociated/CSE'd into `(base+idx)+K` (`add rX,r5,r0 / addi rY,rX,K`), which is 1 insn short per branch and structural. The `(base + 0) + mode` u32 form folds `+0` away; only the multi-symbol static/global-table route reproduces the `addi r4,r5,0` copy. (`(u32*)` cast on a `u32[]` table is a harmless no-op; keep the pointer local `ctmp/atmp` so the deref is a plain `lwz` — hoisting the add to the join fuses it into `lwzx`.)
+2. **Use the SDK's `(src & ~keep) | (reg & keep)` expression form** (as in zeldaret/tp's SDK sources) — it is the *only* shape that fuses to `clrrwi/rlwinm(reg) + rlwimi(reg, src)` with `reg` as destination, exactly retail's tevc/teva merge. Alternatives: `reg &= m; reg |= src;` → `rlwinm + or` (no fusion); `(reg & m) | (src & m2)` → fused but with **src** as rlwimi dest (dest register flips). The masked-left-operand form in the SDK source is what gives retail's register choice. Semantically `|` with an unmasked table load is wrong (high byte `0xC0/C1` leaks into the BP register) — the `~mask` keep is load-bearing.
+
+Reloc note: decomp anchors the folded group to the `.data` section symbol (`...data.0`) where retail names `TEVCOpTableST0` — pure name drift, byte-identical resolution (ST0 is at section offset 0), accepted at FULL_MATCH (function `match: 100.0%`, plus a semantic `equivalent` certificate, split size exact 0x94/0x94). The `static const` variant lands tables in `.rodata`; retail `.data` is writable, so non-const is required for unit data matching.
 
 ## kyoshin/main (US) — early init + contiguous .data base
 

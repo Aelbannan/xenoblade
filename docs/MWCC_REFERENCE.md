@@ -4476,6 +4476,14 @@ long` → mangling `Ul` (SetBuffer `FPcUl`, IsDrawFlagSet `CFUlUl`).
    prologue (r17=pStr, r31=this, `_savegpr_15`), and passing `StrLen(pStr)`
    inline as the call arg makes MWCC delay it past the clone copy
    (`_savegpr_18`, smaller frame).
+5. **Fork-only `Print(const T*)` single-arg overloads** (us-8033DE10 / us-803407D0,
+   called from lyt_textBox): absent from the ogws donor header — add the
+   declaration to `ut_TextWriterBase.h` and define `template <typename T> f32
+   TextWriterBase<T>::Print(const T* pStr) { return Print(pStr, StrLen(pStr)); }`
+   in the .cpp **immediately after the two-arg Print body**; `-inline auto` then
+   inlines the two-arg body (clone copy + `bl PrintImpl` + GetCursor/SetCursor +
+   dtor) with `strlen`/`wcslen` emitted right after the prologue (r30=pStr,
+   r31=this), giving byte-identical 0x170/0x170 (2× FULL_MATCH).
 
 ## CriWare ADX GCI — error-callback msg-local pattern + seek clamp + SetSctLen soft-cap (US)
 

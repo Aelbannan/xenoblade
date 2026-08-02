@@ -89,6 +89,7 @@ public:
     static int StrLen(const T* pStr);
     f32 VPrintf(const T* pStr, std::va_list args);
     f32 Print(const T* pStr, int len);
+    f32 Print(const T* pStr);
 
     static T* GetBuffer();
     static T* SetBuffer(T* pBuffer, u32 size);

@@ -95,6 +95,10 @@ template <typename T> f32 TextWriterBase<T>::Print(const T* pStr, int len) {
     return width;
 }
 
+template <typename T> f32 TextWriterBase<T>::Print(const T* pStr) {
+    return Print(pStr, StrLen(pStr));
+}
+
 template <typename T>
 f32 TextWriterBase<T>::CalcLineWidth(const T* pStr, int len) {
     Rect rect;

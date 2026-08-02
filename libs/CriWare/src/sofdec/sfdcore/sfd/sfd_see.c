@@ -53,19 +53,38 @@ void sfsee_ExecHeadAnaly(void* self) {
     void* avplay = *(void**)((u8*)self + 0x2670);
     s32 setup3_flag = 0;
     s32 setup2_flag = 0;
+    s32 ok1 = 0;
+    s32 ok2 = 0;
     s32 r3, r4;
 
     if (*(s32*)avplay != 0) return;
 
-    if (SFTRN_IsSetup(self, 3) && SFSET_GetCond(self, 6) == 1) {
-        setup3_flag = 1;
-        if (*(s32*)((u8*)avplay + 0xD0C) == 0) return;
+    if (SFTRN_IsSetup(self, 3) != 0) {
+        if ((s32)SFSET_GetCond(self, 6) == 1) {
+            setup3_flag = 1;
+            ok1 = (*(s32*)((u8*)avplay + 0xD0C) == 0);
+        } else {
+            setup3_flag = 0;
+            ok1 = 0;
+        }
+    } else {
+        setup3_flag = 0;
+        ok1 = 0;
     }
-
-    if (SFTRN_IsSetup(self, 2) && SFSET_GetCond(self, 5) == 1) {
-        setup2_flag = 1;
-        if (*(s32*)((u8*)avplay + 0xAD0) == 0) return;
-    }
+    if (ok1 == 0) {
+        if (SFTRN_IsSetup(self, 2) != 0) {
+            if ((s32)SFSET_GetCond(self, 5) == 1) {
+                setup2_flag = 1;
+                ok2 = (*(s32*)((u8*)avplay + 0xAD0) == 0);
+            } else {
+                setup2_flag = 0;
+                ok2 = 0;
+            }
+        } else {
+            setup2_flag = 0;
+            ok2 = 0;
+        }
+        if (ok2 == 0) {
 
     if (SFTRN_IsSetup(self, 1)) {
         *(s32*)((u8*)avplay + 0x8A0) = 1;
@@ -80,10 +99,7 @@ void sfsee_ExecHeadAnaly(void* self) {
         } else if (*(s32*)((u8*)avplay + 0x0C) != 0) {
             s32 muxVer = SFHDS_GetMuxVerNum(self);
             if (muxVer < 0x6C) {
-                s32 val = *(s32*)((u8*)avplay + 0x8A4);
-                val = (val << 11) * (s32)0x81E722C3;
-                val = (val + (val >> 31)) >> 10;
-                r3 = val;
+                r3 = (s32)(((s64)*(s32*)((u8*)avplay + 0x8A4) * 3087) / 1024);
             } else {
                 r3 = *(s32*)((u8*)avplay + 0x8A4);
             }
@@ -105,6 +121,8 @@ void sfsee_ExecHeadAnaly(void* self) {
     *(s32*)((u8*)avplay + 0x08) = r4;
     *(s32*)avplay = 1;
     sfsee_UpdateEByteRate(self);
+        }
+    }
 }
 
 s32 SFD_SetFileSize(void* self, s32 fileSize) {

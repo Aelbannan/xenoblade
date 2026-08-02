@@ -180,7 +180,33 @@ void adxm_mwidle_proc(void) {
 
 void ADXM_SetCbErr(void) { SVM_SetCbErr(); }
 
-void adxm_create_base_thread() {}
+extern OSThread* lbl_eu_805FBA78;
+extern u32 lbl_eu_805FBA7C;
+
+static void adxm_create_base_thread(void) {
+    u8* base = (u8*)&lbl_eu_805F3A50;
+    u32* p16 = (u32*)(base + 0x10);
+    OSCreateThread((OSThread*)(base + 0x78), (void*)adxm_safe_proc, NULL,
+                   base + 0x19F8, 4096, (s32)p16[1], 1);
+    OSCreateThread((OSThread*)(base + 0x19F8), (void*)adxm_vsync_proc, base + 0x1D10,
+                   base + 0x3D10, 8192, (s32)p16[3], 1);
+    OSCreateThread((OSThread*)(base + 0x3D10), (void*)adxm_fs_proc, base + 0x4028,
+                   base + 0x6028, 8192, (s32)p16[4], 1);
+    OSCreateThread((OSThread*)(base + 0x398), (void*)adxm_mwidle_proc, base + 0x6028,
+                   base + 0x8028, 8192, (s32)p16[6], 1);
+    lbl_eu_805FBA78 = OSGetCurrentThread();
+    if (*(s32*)(base + 0x24) != 16) {
+        s32 old = OSDisableInterrupts();
+        OSDisableScheduler();
+        *(s32*)(base + 0x70) = 1;
+        s32 prio = OSGetThreadPriority(lbl_eu_805FBA78);
+        OSSetThreadPriority(lbl_eu_805FBA78, prio);
+        lbl_eu_805FBA7C = (u32)prio;
+        *(s32*)(base + 0x70) = 0;
+        OSEnableScheduler();
+        OSRestoreInterrupts(old);
+    }
+}
 
 void ADXM_SetupThrd() {}
 

@@ -6635,3 +6635,41 @@ loop bottom); precomputing `s32 off = idx * 4;` once reproduces retail's
 `SFMPVF_InitPool` (`p + 0` and `&lbl[0]` both fold to `or`; retail keeps
 `addi r3, r31, 0`) is a documented single-instruction quirk — accepted
 EQUIVALENT_MATCH via SMT.
+
+## RVL_SDK mix — MIXInitChannel FULL_MATCH: u16-stream pb.mix walk + sum-rotation operand order + decl-order regalloc (US, Wii/1.1 `-O4,p` -inline auto)
+
+`MIXInitChannel` 98.9%→100.0% (0x16C4/0x16C4) in one session. Three levers,
+each verified by hexdiff (structural 106→0→0, reg-swaps 285→285 pure→0):
+
+1. **`pb.mix` store run: walk as a `u16*` stream, not field stores.** Retail
+   materialises `addi r3, r28, 62` (`&pb.mix.vDeltaL`) once and stores the
+   whole unrolled value/delta copy through base-relative offsets
+   (`sth r0, 0(r3)`, `2(r3)`, `4(r3)`…). Plain `vpb->pb.mix.vX = …` field
+   stores fold back to direct offsets (`sth r0, 148(r28)`…), producing 106
+   structural mismatches. `u16* q = &vpb->pb.mix.vL; *q++ = ch->volLCur;
+   if (vpb->pb.mix.vL != 0) ctrl |= AX_MIXER_CTRL_L; *q++ = 0; …` keeps `q`
+   in the base register for the whole copy (same trick as HBM
+   HBMMIXInitChannel, see above).
+
+2. **Inlined `MIXGetVolumeInline(sum)` operand order drives load order.**
+   Empirically (scratch compiles with mwcc_43_151): a 3-term sum
+   `s0+s1+s2` without a trailing constant loads `[s2, s0, s1]`
+   (`getv(c->f + c->a + c->s)` emits `lwz s, f, a`); with a trailing
+   `- 30` it loads in source order; a flat 4-term rotates (`[s3,s2,s0,s1]`)
+   while explicitly parenthesised `(a + b) + (c + d)` loads in written
+   order. Retail MIX source orderings (matches HBM's documented rule):
+   `fader + auxA + vSL` (not `auxA + fader + vSL`), `fader + vL + vSL`
+   (not `fader + vSL + vL`), and `(vSL + vL) + (fader + auxA)` for 4-term
+   else-branches. Fixing the operand order converted all 114 non-pure
+   reg-swaps (load-order rotations) into pure r30→r31 swaps.
+
+3. **Decl-order flips r30↔r31 Chaitin allocation.** `BOOL enabled;` declared
+   before `MIXChannel* ch` (HBM's order) makes MWCC put `ch` in r30 and
+   `enabled` in r31 exactly like retail; the reverse declaration order
+   swapped them, leaving 285 pure reg-swaps the renaming witness rejected
+   (epilogue restore slots pin the physical registers, so the swap is not a
+   consistent bijection). Result: byte-identical, `full-instruction-match`
+   certificate, no `--smt` needed.
+
+`MIXUpdateSettings` (same file) is a separate target sharing the sum-rotation
+patterns — operand order levers above should transfer.

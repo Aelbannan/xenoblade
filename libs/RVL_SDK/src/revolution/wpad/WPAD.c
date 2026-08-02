@@ -1407,10 +1407,8 @@ WPADSetExtensionCallback(s32 chan, WPADExtensionCallback pCallback) {
     BOOL enabled;
     WPADExtensionCallback pOldCallback;
 
-    DEBUGPrint("WPADSetExtensionCallback()\n");
-
-    enabled = OSDisableInterrupts();
     p = __rvl_p_wpadcb[chan];
+    enabled = OSDisableInterrupts();
 
     pOldCallback = p->extensionCB;
     p->extensionCB = pCallback;
@@ -1420,8 +1418,8 @@ WPADSetExtensionCallback(s32 chan, WPADExtensionCallback pCallback) {
 }
 
 u32 WPADGetDataFormat(s32 chan) {
-    BOOL enabled = OSDisableInterrupts();
     WPADCB* p = __rvl_p_wpadcb[chan];
+    BOOL enabled = OSDisableInterrupts();
 
     u32 format = p->dataFormat;
 
@@ -2118,7 +2116,11 @@ s32 WPADSendStreamData(s32 chan, void* pData, u16 len) {
 }
 
 u8 WPADGetDpdSensitivity(void) {
-    return _wpadDpdSense;
+    BOOL enabled = OSDisableInterrupts();
+    u8 sense = _wpadDpdSense;
+
+    OSRestoreInterrupts(enabled);
+    return sense;
 }
 
 

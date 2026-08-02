@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <string.h>
 
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
@@ -12,25 +13,25 @@ typedef unsigned char BOOLEAN;
 #define DATA_ELE_SEQ_DESC_TYPE 6
 
 #define SDP_MAX_RECORDS 0x14
-#define SDP_MAX_ATTR_PER_RECORD 0x25
+#define SDP_MAX_ATTR_PER_RECORD 0x19
 #define SDP_MAX_ATTR_LEN 0x50
 #define SIZE_TWO_BYTES 0x1
 
 typedef struct {
     UINT32 len;            /* 0x00 */
     UINT8 *value_ptr;      /* 0x04 */
-    UINT8 _pad[2];         /* 0x08 */
+    UINT16 attr_id;        /* 0x08 */
     UINT8 type;            /* 0x0A */
     UINT8 _pad2;           /* 0x0B */
 } tSDP_ATTRIBUTE;          /* 0x0C */
 
 typedef struct {
     UINT32 record_handle;              /* 0x00 */
-    UINT8 _pad1[4];                    /* 0x04 */
+    UINT32 attr_data_end;              /* 0x04 */
     UINT16 num_attributes;             /* 0x08 */
     UINT8 _pad2[2];                    /* 0x0A */
     tSDP_ATTRIBUTE attribute[SDP_MAX_ATTR_PER_RECORD]; /* 0x0C */
-    UINT8 _pad3[0x298 - 0x0C - SDP_MAX_ATTR_PER_RECORD * 0x0C]; /* .. 0x298 */
+    UINT8 attr_data[0x298 - 0x0C - SDP_MAX_ATTR_PER_RECORD * 0x0C]; /* 0x138 */
 } tSDP_RECORD;                          /* 0x298 */
 
 typedef struct {
@@ -60,7 +61,7 @@ extern tSDP_CB sdp_cb;
 extern UINT8 *sdpu_get_len_from_type(UINT8 *p, UINT8 type, UINT32 *p_len);
 extern BOOLEAN sdpu_compare_uuid_arrays(UINT8 *p_uuid1, UINT32 len1, UINT8 *p_uuid2, UINT32 len2);
 extern BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type, UINT32 attr_len, UINT8 *p_val);
-extern void LogMsg_2(UINT32 level, const char *fmt, UINT16 arg1, UINT16 arg2);
+extern void LogMsg_2(UINT32 level, const char *fmt, UINT32 arg1, UINT32 arg2);
 
 tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq);  // defined below
 
@@ -296,7 +297,74 @@ BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_
     return SDP_AddAttribute(handle, 1, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
 }
 
-void SDP_DeleteAttribute() {}
+BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
+{
+    UINT16 xx;
+    tSDP_RECORD *p_rec = &sdp_cb.server_db.record[0];
+
+    for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++)
+    {
+        if (p_rec->record_handle == handle)
+        {
+            tSDP_ATTRIBUTE *p_attr;
+
+            p_attr = &p_rec->attribute[0];
+
+            if (sdp_cb.trace_level >= 3)
+            {
+                LogMsg_2(0xA0002, "Deleting attr_id 0x%04x for handle 0x%x", attr_id, handle);
+            }
+
+            for (xx = 0; xx < p_rec->num_attributes; xx++, p_attr++)
+            {
+                if (p_attr->attr_id == attr_id)
+                {
+                    UINT32 len = p_attr->len;
+                    UINT8 *p_value = p_attr->value_ptr;
+
+                    if (len != 0)
+                    {
+                        UINT16 i;
+
+                        for (i = 0; i < p_rec->num_attributes; i++)
+                        {
+                            if (p_rec->attribute[i].value_ptr > p_value)
+                            {
+                                p_rec->attribute[i].value_ptr -= len;
+                            }
+                        }
+                    }
+
+                    p_rec->num_attributes--;
+
+                    for (; xx < p_rec->num_attributes; xx++, p_attr++)
+                    {
+                        *p_attr = *(p_attr + 1);
+                    }
+
+                    if (len != 0)
+                    {
+                        UINT16 cnt = (UINT16)(p_rec->attr_data_end -
+                                               (UINT32)((p_value + len) - p_rec->attr_data));
+                        UINT16 i;
+
+                        for (i = 0; i < cnt; i++)
+                        {
+                            *p_value = *(p_value + len);
+                            p_value++;
+                        }
+
+                        p_rec->attr_data_end -= len;
+                    }
+
+                    return TRUE;
+                }
+            }
+        }
+    }
+
+    return FALSE;
+}
 
 BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UINT16 *p_uuids) {
     UINT16 xx;

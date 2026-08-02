@@ -44,8 +44,11 @@ BOOL OSPlayTimeIsLimited(void) {
 
 void __OSPlayTimeFadeLastAIDCallback(void) {
     FadeAIData* fade;
+    u16* buf;
+    s16* dst;
+    u32 len;
+    s32 rem;
 
-    /* Access globals via volatile load to force reload after each call */
     fade = (FadeAIData*)__OSExpireAIFade;
     if (fade->callback != NULL) {
         fade->callback();
@@ -53,48 +56,57 @@ void __OSPlayTimeFadeLastAIDCallback(void) {
 
     fade = (FadeAIData*)__OSExpireAIFade;
     if (fade->state == 0) {
-        fade->ptr = AIGetDMAStartAddr() | 0x80000000;
+        ((FadeAIData*)__OSExpireAIFade)->ptr = AIGetDMAStartAddr() + 0x80000000;
     }
 
     fade = (FadeAIData*)__OSExpireAIFade;
     if (fade->state == 1) {
         DCInvalidateRange((void*)fade->ptr, 4);
+        fade = (FadeAIData*)__OSExpireAIFade;
         {
             s16* p = (s16*)fade->ptr;
             fade->fadeL = p[0];
             fade->ptr = (u32)(p + 1);
-            fade->fadeR = p[1];
         }
+        fade = (FadeAIData*)__OSExpireAIFade;
+        fade->fadeR = *(s16*)fade->ptr;
     }
 
     fade = (FadeAIData*)__OSExpireAIFade;
     if (fade->state >= 1) {
-        u16* buf;
-        u16* dst;
-        u32 len;
-        s32 rem;
-
         buf = (u16*)((u8*)fade + fade->bufIndex * 0x240);
-        dst = buf;
+        dst = (s16*)buf;
         len = AIGetDMALength();
         rem = (s32)len;
 
         while (rem != 0) {
-            dst[0] = (u16)fade->fadeL;
-            dst[1] = (u16)fade->fadeR;
-            dst += 2;
             rem -= 4;
-
-            fade->fadeL = (s16)((f32)fade->fadeL * 0.995f);
-            fade->fadeR = (s16)((f32)fade->fadeR * 0.995f);
+            fade = (FadeAIData*)__OSExpireAIFade;
+            dst[0] = fade->fadeL;
+            fade = (FadeAIData*)__OSExpireAIFade;
+            dst[1] = fade->fadeR;
+            dst += 2;
+            fade = (FadeAIData*)__OSExpireAIFade;
+            {
+                f32 mul = 0.995f;
+                f32 x = (f32)fade->fadeL;
+                fade->fadeL = (s16)(x * mul);
+            }
+            fade = (FadeAIData*)__OSExpireAIFade;
+            {
+                f32 mul = 0.995f;
+                f32 x = (f32)fade->fadeR;
+                fade->fadeR = (s16)(x * mul);
+            }
         }
 
         DCFlushRange(buf, len);
         AIInitDMA(buf, len);
-        fade->bufIndex = (fade->bufIndex + 1) & 1;
+        ((FadeAIData*)__OSExpireAIFade)->bufIndex += 1;
+        ((FadeAIData*)__OSExpireAIFade)->bufIndex &= 1;
     }
 
-    fade->state++;
+    ((FadeAIData*)__OSExpireAIFade)->state++;
 }
 
 s32 __OSWriteExpiredFlag(void) {
@@ -248,46 +260,47 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
     }
 
     // Search the 8-element limits array
-    {
-        for (i = 0; i < 8; i++) {
-            u32 code = view->limits[i].code;
-            if (code == 1) {
-                *outType = 1;
-                if (hasConsumed == 0) {
-                    *outRemaining = view->limits[i].limit;
+    for (i = 0; i < 8; i++) {
+        u32 code = view->limits[i].code;
+        if (code == 1) {
+            *outType = 1;
+            if (hasConsumed == 0) {
+                *outRemaining = view->limits[i].limit;
+            } else {
+                u32 consumed = entries[i].limit;
+                u32 limit = view->limits[i].limit;
+                if (consumed >= limit) {
+                    *outRemaining = 0;
                 } else {
-                    u32 consumed = entries[i].limit;
-                    u32 limit = view->limits[i].limit;
-                    if (consumed >= limit) {
-                        *outRemaining = 0;
-                    } else {
-                        *outRemaining = limit - consumed;
-                    }
+                    *outRemaining = limit - consumed;
                 }
-                return result;
             }
-            if (code != 0) {
-                lastUnknown = i + 1;
-            }
-        }
-
-        if (lastUnknown == 0) {
-            *outType = 0;
-            *outRemaining = (u32)-1;
             return result;
         }
-
-        // Fallback: use the last non-zero, non-one limit entry
-        i = lastUnknown - 1;
-        if (view->limits[i].code == 4) {
-            *outType = 4;
-            *outRemaining = view->limits[i].limit;
-            if (hasConsumed != 0) {
-                *outRemaining = view->limits[i].limit - entries[i].limit;
-            }
-        } else {
-            *outType = 9;
+        if (code != 0) {
+            lastUnknown = i + 1;
         }
+    }
+
+    if (lastUnknown == 0) {
+        *outType = 0;
+        *outRemaining = (u32)-1;
+        return result;
+    }
+
+    // Fallback: use the last non-zero, non-one limit entry
+    i = lastUnknown - 1;
+    if (view->limits[i].code == 4) {
+        *outType = 4;
+        {
+            u32 limit = view->limits[i].limit;
+            *outRemaining = limit;
+            if (hasConsumed != 0) {
+                *outRemaining = limit - entries[i].limit;
+            }
+        }
+    } else {
+        *outType = 9;
     }
 
     return result;

@@ -1607,7 +1607,7 @@ void func_80139198(void* arg) {
 
 
 extern u8 lbl_eu_80664077;
-u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
+extern "C" u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
 
 u8 func_801392C8(u8 idx) {
     extern u16 lbl_eu_80664078;
@@ -1615,7 +1615,7 @@ u8 func_801392C8(u8 idx) {
 }
 
 extern u8 lbl_eu_8066407E;
-u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
+extern "C" u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
 
 extern "C" u16 func_801392E4(const char* name) {
     if (lbl_eu_806640EC == 0) return 0;
@@ -2486,10 +2486,10 @@ extern "C" void func_8013B428__FUl(u32 value) {
 }
 
 extern u8 lbl_eu_8066407F;
-u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return val; }
+extern "C" u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return val; }
 
 extern u8 lbl_eu_8066407F;
-u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
+extern "C" u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
 
 extern "C" void func_8013B88C(u8 v) {
     if (v == 0) return;
@@ -2518,7 +2518,7 @@ extern "C" void func_8013B88C(u8 v) {
     }
 }
 
-unsigned char code80135FDC_postIncByte_64080() {
+extern "C" unsigned char code80135FDC_postIncByte_64080() {
     extern unsigned char lbl_eu_80664080;
     unsigned char v = lbl_eu_80664080;
     lbl_eu_80664080 = v + 1;
@@ -2534,7 +2534,7 @@ u8 func_8013B980() {
 }
 
 extern u8 lbl_eu_80664080;
-u8 code80135FDC_getByte_64080() { return lbl_eu_80664080; }
+extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080; }
 
 extern "C" int func_8013B9AC(void* self, void* arg) {
     CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
@@ -2625,10 +2625,10 @@ extern "C" void func_8013BD24(void* self, void* arg) {
 
 
 extern u8 lbl_eu_80664058;
-void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
+extern "C" void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
 
 extern u8 lbl_eu_80664058;
-u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
+extern "C" u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
 
 void func_8013BDBC() {
     extern void func_8013EC6C(u32, u32);
@@ -2637,41 +2637,41 @@ void func_8013BDBC() {
 }
 
 extern u8 lbl_eu_80664059;
-void code80135FDC_clearByte_64059() { lbl_eu_80664059 = 0; }
+extern "C" void code80135FDC_clearByte_64059() { lbl_eu_80664059 = 0; }
 
 extern u8 lbl_eu_80664059;
-u8 code80135FDC_getByte_64059() { return lbl_eu_80664059; }
+extern "C" u8 code80135FDC_getByte_64059() { return lbl_eu_80664059; }
 
 
 extern u8 lbl_eu_8066405B;
-void code80135FDC_setByte_6405B() { lbl_eu_8066405B = 1; }
+extern "C" void code80135FDC_setByte_6405B() { lbl_eu_8066405B = 1; }
 
 extern u8 lbl_eu_8066405A;
-u8 code80135FDC_getByte_6405A() { return lbl_eu_8066405A; }
+extern "C" u8 code80135FDC_getByte_6405A() { return lbl_eu_8066405A; }
 
 extern u8 lbl_eu_8066405B;
-u8 code80135FDC_getByte_6405B() { return lbl_eu_8066405B; }
+extern "C" u8 code80135FDC_getByte_6405B() { return lbl_eu_8066405B; }
 
-void code80135FDC_setPair_6405C_64060(u32 a, u32 b) {
+extern "C" void code80135FDC_setPair_6405C_64060(u32 a, u32 b) {
     extern u32 lbl_eu_8066405C;
     extern u32 lbl_eu_80664060;
     lbl_eu_8066405C = a;
     lbl_eu_80664060 = b;
 }
 
-u32 code80135FDC_getWord_6405C(void) {
+extern "C" u32 code80135FDC_getWord_6405C(void) {
     extern u32 lbl_eu_8066405C;
     return lbl_eu_8066405C;
 }
 
-u32 code80135FDC_getWord_64060(void) {
+extern "C" u32 code80135FDC_getWord_64060(void) {
     extern u32 lbl_eu_80664060;
     return lbl_eu_80664060;
 }
 
 
 extern u8 lbl_eu_806621F0;
-u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }
+extern "C" u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }
 
 extern "C" void* getInstance__14Class_80296898Fv();
 
@@ -2698,7 +2698,7 @@ int func_8013BEE8() {
 }
 
 extern u8 lbl_eu_80664064;
-void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
+extern "C" void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
 
 extern u8 lbl_eu_80664064;
 void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }

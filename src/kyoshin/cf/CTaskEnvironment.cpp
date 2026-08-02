@@ -27,11 +27,11 @@ CTaskEnvironment::~CTaskEnvironment() {}
 
 bool getGlobalSda() { return false; }
 
-u32 getSubField7C(void* self) { return *(u32*)((u8*)self + 0x7C); }
+extern "C" u32 getSubField7C(void* self) { return *(u32*)((u8*)self + 0x7C); }
 
 void func_800587F8(){}
 
-u32 getField5C(void* self) { return *(u32*)((u8*)self + 0x5C); }
+extern "C" u32 getField5C(void* self) { return *(u32*)((u8*)self + 0x5C); }
 
 void func_80058844(){}
 
@@ -48,13 +48,13 @@ void nopFunc() {}
 void func_80059610(){}
 
 extern float lbl_eu_8066A210;
-float scaleByGlobal(float val) { return val * lbl_eu_8066A210; }
+extern "C" float scaleByGlobal(float val) { return val * lbl_eu_8066A210; }
 
 void func_800596B8(){}
 
 void func_800598A8(){}
 
-u32 checkBitFlag(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
+extern "C" u32 checkBitFlag(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 
 // Converted to inline member function in header
 

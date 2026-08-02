@@ -13,18 +13,18 @@
 extern "C" BOOL AXIsInit(void);
 
 typedef struct HBMMIXChannel {
-    AXVPB* vpb;        // at 0x00 — attached AX voice (NULL = free slot)
-    u32 flags;         // at 0x04 — pending update flags
-    s32 input;         // at 0x08 — main input volume (dB x10)
-    s32 auxA;          // at 0x0C — AuxA send volume (dB x10)
-    s32 pan;           // at 0x10 — pan [0, 127]
-    s32 fader;         // at 0x14 — fader volume (dB x10)
-    s32 panL;          // at 0x18 — left pan attenuation (dB x10)
-    s32 panR;          // at 0x1C — right pan attenuation (dB x10)
-    s32 panFrontL;     // at 0x20 — front-left base attenuation
-    s32 panFrontR;     // at 0x24 — front-right base attenuation
-    s32 panRearL;      // at 0x28 — rear-left attenuation (DPL2)
-    s32 panRearR;      // at 0x2C — rear-right attenuation (DPL2)
+    AXVPB* vpb;        // at 0x00 -- attached AX voice (NULL = free slot)
+    u32 flags;         // at 0x04 -- pending update flags
+    s32 input;         // at 0x08 -- main input volume (dB x10)
+    s32 auxA;          // at 0x0C -- AuxA send volume (dB x10)
+    s32 pan;           // at 0x10 -- pan [0, 127]
+    s32 fader;         // at 0x14 -- fader volume (dB x10)
+    s32 panL;          // at 0x18 -- left pan attenuation (dB x10)
+    s32 panR;          // at 0x1C -- right pan attenuation (dB x10)
+    s32 panFrontL;     // at 0x20 -- front-left base attenuation
+    s32 panFrontR;     // at 0x24 -- front-right base attenuation
+    s32 panRearL;      // at 0x28 -- rear-left attenuation (DPL2)
+    s32 panRearR;      // at 0x2C -- rear-right attenuation (DPL2)
     u16 vMain;         // at 0x30
     u16 vMainTarget;   // at 0x32
     u16 vL;            // at 0x34
@@ -317,13 +317,16 @@ void HBMMIXInitChannel(AXVPB* vpb, s32 input, s32 auxA, s32 pan, s32 fader) {
     ch->vMain = __HBMMIXGetVolume(input);
 
     ctrl = 0;
+    // NB: sum operand order is deliberate - MWCC rotates a top-level sum chain
+    // [s0,s1,s2] into loads [s2,s0,s1], so `fader + X + panFrontL` emits the
+    // retail load order (panFrontL, fader, X). Plain source order regresses.
     switch (__HBMMIXSoundMode) {
     case HBMMIX_MODE_MONO:
         ch->vL = __HBMMIXGetVolume(ch->fader + ch->panFrontL);
         ch->vR = __HBMMIXGetVolume(ch->fader + ch->panFrontL);
         ch->vS = __HBMMIXGetVolume(ch->fader + ch->panFrontR - 30);
-        ch->vAuxAL = __HBMMIXGetVolume(ch->panFrontL + ch->fader + ch->auxA);
-        ch->vAuxAR = __HBMMIXGetVolume(ch->panFrontL + ch->fader + ch->auxA);
+        ch->vAuxAL = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontL);
+        ch->vAuxAR = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontL);
         ch->vAuxAS = __HBMMIXGetVolume(ch->fader + ch->auxA + ch->panFrontR - 30);
         ch->vAuxBL = 0;
         ch->vAuxBR = 0;
@@ -333,8 +336,8 @@ void HBMMIXInitChannel(AXVPB* vpb, s32 input, s32 auxA, s32 pan, s32 fader) {
         ch->vAuxCS = 0;
         break;
     case HBMMIX_MODE_STEREO:
-        ch->vL = __HBMMIXGetVolume(ch->panL + (ch->panFrontL + ch->fader));
-        ch->vR = __HBMMIXGetVolume(ch->panR + (ch->panFrontL + ch->fader));
+        ch->vL = __HBMMIXGetVolume(ch->fader + ch->panL + ch->panFrontL);
+        ch->vR = __HBMMIXGetVolume(ch->fader + ch->panR + ch->panFrontL);
         ch->vS = __HBMMIXGetVolume(ch->fader + ch->panFrontR - 30);
         ch->vAuxAL = __HBMMIXGetVolume((ch->panFrontL + ch->panL) + (ch->fader + ch->auxA));
         ch->vAuxAR = __HBMMIXGetVolume((ch->panFrontL + ch->panR) + (ch->fader + ch->auxA));
@@ -347,10 +350,10 @@ void HBMMIXInitChannel(AXVPB* vpb, s32 input, s32 auxA, s32 pan, s32 fader) {
         ch->vAuxCS = 0;
         break;
     case HBMMIX_MODE_DPL2:
-        ch->vL = __HBMMIXGetVolume(ch->panL + (ch->panFrontL + ch->fader));
-        ch->vR = __HBMMIXGetVolume(ch->panR + (ch->panFrontL + ch->fader));
-        ch->vS = __HBMMIXGetVolume(ch->panRearL + (ch->panFrontR + ch->fader));
-        ch->vAuxCL = __HBMMIXGetVolume(ch->panRearR + (ch->panFrontR + ch->fader));
+        ch->vL = __HBMMIXGetVolume(ch->fader + ch->panL + ch->panFrontL);
+        ch->vR = __HBMMIXGetVolume(ch->fader + ch->panR + ch->panFrontL);
+        ch->vS = __HBMMIXGetVolume(ch->fader + ch->panRearL + ch->panFrontR);
+        ch->vAuxCL = __HBMMIXGetVolume(ch->fader + ch->panRearR + ch->panFrontR);
         ch->vAuxAL = __HBMMIXGetVolume((ch->panFrontL + ch->panL) + (ch->fader + ch->auxA));
         ch->vAuxAR = __HBMMIXGetVolume((ch->panFrontL + ch->panR) + (ch->fader + ch->auxA));
         ch->vAuxAS = __HBMMIXGetVolume((ch->panFrontR + ch->panRearL) + (ch->fader + ch->auxA));
@@ -368,77 +371,71 @@ void HBMMIXInitChannel(AXVPB* vpb, s32 input, s32 auxA, s32 pan, s32 fader) {
     vpb->pb.ve.currentVolume = ch->vMain;
     vpb->pb.ve.currentDelta = 0;
 
-    vpb->pb.mix.vL = ch->vL;
+    // Walk pb.mix as a u16 stream: MWCC keeps `q` in a base register for the
+    // whole unrolled delta/value copy (retail materialises addi r3,r28,0x3e).
+    // Plain field stores fold back to direct offsets and break the match.
+    u16* q = &vpb->pb.mix.vL;
+    *q++ = ch->vL;
     if (vpb->pb.mix.vL != 0) {
         ctrl |= AX_MIXER_CTRL_L;
     }
-    vpb->pb.mix.vDeltaL = 0;
 
-    vpb->pb.mix.vR = ch->vR;
+    *q++ = 0;
+    *q++ = ch->vR;
     if (vpb->pb.mix.vR != 0) {
         ctrl |= AX_MIXER_CTRL_R;
     }
-    vpb->pb.mix.vDeltaR = 0;
-
-    vpb->pb.mix.vAuxAL = ch->vAuxAL;
+    *q++ = 0;
+    *q++ = ch->vAuxAL;
     if (vpb->pb.mix.vAuxAL != 0) {
         ctrl |= AX_MIXER_CTRL_AL;
     }
-    vpb->pb.mix.vDeltaAuxAL = 0;
-
-    vpb->pb.mix.vAuxAR = ch->vAuxAR;
+    *q++ = 0;
+    *q++ = ch->vAuxAR;
     if (vpb->pb.mix.vAuxAR != 0) {
         ctrl |= AX_MIXER_CTRL_AR;
     }
-    vpb->pb.mix.vDeltaAuxAR = 0;
-
-    vpb->pb.mix.vAuxBL = ch->vAuxBL;
+    *q++ = 0;
+    *q++ = ch->vAuxBL;
     if (vpb->pb.mix.vAuxBL != 0) {
         ctrl |= AX_MIXER_CTRL_BL;
     }
-    vpb->pb.mix.vDeltaAuxBL = 0;
-
-    vpb->pb.mix.vAuxBR = ch->vAuxBR;
+    *q++ = 0;
+    *q++ = ch->vAuxBR;
     if (vpb->pb.mix.vAuxBR != 0) {
         ctrl |= AX_MIXER_CTRL_BR;
     }
-    vpb->pb.mix.vDeltaAuxBR = 0;
-
-    vpb->pb.mix.vAuxCL = ch->vAuxCL;
+    *q++ = 0;
+    *q++ = ch->vAuxCL;
     if (vpb->pb.mix.vAuxCL != 0) {
         ctrl |= AX_MIXER_CTRL_CL;
     }
-    vpb->pb.mix.vDeltaAuxCL = 0;
-
-    vpb->pb.mix.vAuxCR = ch->vAuxCR;
+    *q++ = 0;
+    *q++ = ch->vAuxCR;
     if (vpb->pb.mix.vAuxCR != 0) {
         ctrl |= AX_MIXER_CTRL_CR;
     }
-    vpb->pb.mix.vDeltaAuxCR = 0;
-
-    vpb->pb.mix.vS = ch->vS;
+    *q++ = 0;
+    *q++ = ch->vS;
     if (vpb->pb.mix.vS != 0) {
         ctrl |= AX_MIXER_CTRL_S;
     }
-    vpb->pb.mix.vDeltaS = 0;
-
-    vpb->pb.mix.vAuxAS = ch->vAuxAS;
+    *q++ = 0;
+    *q++ = ch->vAuxAS;
     if (vpb->pb.mix.vAuxAS != 0) {
         ctrl |= AX_MIXER_CTRL_AS;
     }
-    vpb->pb.mix.vDeltaAuxAS = 0;
-
-    vpb->pb.mix.vAuxBS = ch->vAuxBS;
+    *q++ = 0;
+    *q++ = ch->vAuxBS;
     if (vpb->pb.mix.vAuxBS != 0) {
         ctrl |= AX_MIXER_CTRL_BS;
     }
-    vpb->pb.mix.vDeltaAuxBS = 0;
-
-    vpb->pb.mix.vAuxCS = ch->vAuxCS;
+    *q++ = 0;
+    *q++ = ch->vAuxCS;
     if (vpb->pb.mix.vAuxCS != 0) {
         ctrl |= AX_MIXER_CTRL_CS;
     }
-    vpb->pb.mix.vDeltaAuxCS = 0;
+    *q = 0;
 
     vpb->pb.mixerCtrl = ctrl;
     vpb->sync |= AX_PBSYNC_MIXER_CTRL | AX_PBSYNC_MIX | AX_PBSYNC_VE;

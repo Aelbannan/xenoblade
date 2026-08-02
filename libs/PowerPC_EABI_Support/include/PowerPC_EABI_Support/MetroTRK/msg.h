@@ -11,7 +11,7 @@ extern "C" {
 
 typedef struct TRKPacketSeq {
     ui16 sequence; //packet sequence counter
-    ui8 unk2[6];
+    ui8 pad[6];     //unused; retail .sbss slot is 8 bytes, only the sequence is accessed
 } TRKPacketSeq;
 
 DSError TRK_MessageSend(MessageBuffer*);

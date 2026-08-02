@@ -99,6 +99,12 @@ typedef struct Extended1_PPC_6xx_7xx {
 #define DS_EXTENDED1_MIN_REGISTER_6xx_7xx 0
 #define DS_EXTENDED1_MAX_REGISTER_6xx_7xx (sizeof(Extended1_PPC_6xx_7xx) / sizeof(Extended1Type) - 1)
 
+//register accessor indices (DS read/write-registers numbering)
+#define FP_FPSCR_ACCESS              32
+#define FP_FPECR_ACCESS              33
+#define ALTIVEC_VSCR_ACCESS          32
+#define ALTIVEC_VRSAVE_SPR_ACCESS    33
+
 typedef struct Extended2_PPC_6xx_7xx {
     ui32 PSR[32][2];
 } Extended2_PPC_6xx_7xx;

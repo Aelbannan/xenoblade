@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef short vbase_ctor_arg_type;
-typedef char local_cond_type;
+typedef char local_cond_type; //condition type for local-variable cleanup in exception tables (MW EABI)
 
 typedef struct CatchInfo {
     void* location;

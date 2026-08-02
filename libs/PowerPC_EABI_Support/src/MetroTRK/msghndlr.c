@@ -1,10 +1,12 @@
 #include "PowerPC_EABI_Support/MetroTRK/msghndlr.h"
+#include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Export/m7xx_m603e_reg.h"
 #include "PowerPC_EABI_Support/MetroTRK/msgxtrct.h"
 
 #define MSG_BUF_SIZE 0x820        //max read/write-memory request size
 #define REGISTER_REPLY_LENGTH 0x468 //register-dump reply size
-#define DEFAULT_REG_COUNT 36        //GPRs + PC/LR/CR/CTR
-#define FP_REG_COUNT 33             //FPRs + FPSCR
+#define EXTENDED1_READ_LAST_REG 0x60 //read-registers bound for Extended1; exceeds
+                                     //DS_EXTENDED1_MAX_REGISTER_6xx_7xx (0x51), so the
+                                     //request is rejected - matched retail quirk
 #include "PowerPC_EABI_Support/MetroTRK/mem_TRK.h"
 #include "PowerPC_EABI_Support/MetroTRK/dolphin_trk_glue.h"
 #include "PowerPC_EABI_Support/MetroTRK/nubevent.h"
@@ -272,13 +274,13 @@ DSError TRKDoReadRegisters(MessageBuffer* b) {
     TRKAppendBuffer_ui8(b, (ui8*)&reply, sizeof(msgbuf_t));
 
     //dump 32 GPRs + PC/LR/CR/CTR
-    error = TRKTargetAccessDefault(0, DEFAULT_REG_COUNT, b, &registersLength, true);
+    error = TRKTargetAccessDefault(0, TRK_DEFAULT_XER, b, &registersLength, true);
 
     if(error == kNoError) {
-        error = TRKTargetAccessFP(0, FP_REG_COUNT, b, &registersLength, true);
+        error = TRKTargetAccessFP(0, FP_FPECR_ACCESS, b, &registersLength, true);
     }
     if(error == kNoError) {
-        error = TRKTargetAccessExtended1(0, 0x60, b, &registersLength, true);
+        error = TRKTargetAccessExtended1(0, EXTENDED1_READ_LAST_REG, b, &registersLength, true);
     }
     if(error == kNoError) {
         error = TRKTargetAccessExtended2(0, 31, b, &registersLength, true);

@@ -1,4 +1,5 @@
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Generic/ppc_targimpl.h"
+#include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Export/m7xx_m603e_reg.h"
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Generic/flush_cache.h"
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Board/dolphin/memmap.h"
 #include "PowerPC_EABI_Support/MetroTRK/targimpl.h"
@@ -28,7 +29,7 @@ typedef struct TRKStepStatus {
     ui32 count; //0x8
     ui32 rangeStart; //0xC
     ui32 rangeEnd; //0x10
-    ui32 unk14;
+    ui32 padding; //unused tail field (no retail code accesses offset 0x14)
 } TRKStepStatus;
 
 ProcessorState_PPC gTRKCPUState;
@@ -323,8 +324,6 @@ DSError TRKTargetAccessExtended1(ui32 firstRegister,ui32 lastRegister,MessageBuf
 */
 #define ALTIVEC_VECTOR_REG_ACCESS_MIN    0
 #define ALTIVEC_VECTOR_REG_ACCESS_MAX    31
-#define ALTIVEC_VSCR_ACCESS              32
-#define ALTIVEC_VRSAVE_SPR_ACCESS        33
 
 DSError TRKTargetAccessExtended2(ui32 firstRegister, ui32 lastRegister, MessageBuffer *b, size_t *registersLengthPtr, bool read){
     DSError error;
@@ -1011,8 +1010,6 @@ DSError TRKPPCAccessPairedSingleRegister(void* srcDestPtr, ui32 psr, bool read){
     return TRKPPCAccessSpecialReg(srcDestPtr, instructionData, read);
 }
 
-#define FP_FPSCR_ACCESS     32
-#define FP_FPECR_ACCESS     33
 
 asm void ReadFPSCR() {
     nofralloc

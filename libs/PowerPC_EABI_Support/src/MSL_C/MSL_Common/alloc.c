@@ -80,7 +80,8 @@ typedef struct mem_pool_obj {
 
 } mem_pool_obj;
 
-mem_pool_obj __malloc_pool;
+//not present in the retail binary (dead-stripped); kept commented out for reference
+//mem_pool_obj __malloc_pool;
 static int initialized = 0;
 
 static SubBlock* SubBlock_merge_prev(SubBlock*, SubBlock**);

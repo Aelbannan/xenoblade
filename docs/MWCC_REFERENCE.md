@@ -3449,6 +3449,40 @@ policy-exception records in `attempts.jsonl` for opcode sets and guards.
   path. Their GX callee closure (GXBegin → __GXSetDirtyState →
   __GXSetSUTexRegs → __SetSURegs) is also uncertifiable for the same reason
   (needs FULL_MATCH of the SDK GX functions).
+- **GX FIFO wall lift for non-MMIO callers (GXFifo.c CPGPLinkCheck /
+  GXSetCPUFifo, 2026-08-02):** the wall also hit *RAM-only* functions whose
+  reloc names merely contain `fifo`/`gx` (the unit's `CPUFifo`/`GPFifo`
+  globals + `__GXData`): the engine's name-needle gate
+  (`instruction_may_form_mmio_address`) skipped the RAM-only bus projection,
+  and the opaque-EABI callee contract keyed the call token on the whole
+  register file, so pre-call register-colour swaps could never certify. Three
+  wrapper/certifier-boundary fixes unblocked `EQUIVALENT_MATCH`:
+  1. **Precise RAM-only gate** (`_reloc_symbols_may_form_mmio_address` in
+     `tools/coop/lib/equivalence_check.py`): resolves each reloc symbol to its
+     retail address (symbols.txt, then `lbl_*`-embedded) and checks the MMIO
+     ranges directly; unresolvable names (EABI `_savegpr_*`/`_restgpr_*`
+     helpers) fail closed unless they match the helper pattern.  Sound: it is
+     strictly more precise than the name-needle proxy.
+  2. **Narrow-EABI FULL_MATCH callee contract** (config
+     `full_match_callee_contract: "narrow-eabi"`): token reads r3–r5 + msr +
+     memory + definedness; writes volatiles + cr + xer + msr/srr0/srr1 +
+     memory (LR is model-owned = pc+4; r1 frame writes allowed in the
+     validation but preserved by the model).  The callee's retail body must
+     fit the EABI envelope via `register_effects`, else it falls back to
+     opaque.  This is what lets callers with reg-colour swaps at the call
+     site certify (swapped registers are dead scratch; the arg values are
+     value-identical).
+  3. **Retail-named string literals:** name the file-static format strings
+     `lbl_8054B8C0`/`lbl_8054B8D8` (matching the retail .rodata labels) so the
+     decomp relocs carry the retail names — one shared symbolic address for
+     the OSReport `r3` argument.
+  Also required: the `capability_assurance` cache-refresh bug
+  (`draft_integer_core_assurance` kept a cached integer-core attestation whose
+  aggregate `requirements_sha256` went stale when a sibling requirement — e.g.
+  provenance's certifier hash — changed) is fixed so strict re-attestation of
+  fresh certificates passes; engine hash re-blessed in `coop.json`.  Result:
+  `us-8031acc0`/`us-8031adc0` accepted EQUIVALENT_MATCH at 99.2%/95.6% with
+  the RAM-only projection recorded on the certificates.
 - **SMT probe budget:** a 247-instruction FP+loop function
   (`func_80479F54`) times out the probe (~40-50 min: two 900 s phases +
   linked fallback) under both `auto` and `memory` contracts; `--linked`

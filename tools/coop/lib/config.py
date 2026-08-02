@@ -73,6 +73,11 @@ class CoopConfig:
     # When neither original nor candidate can form MMIO addresses via
     # immediates/literals, strip MMIO regions/devices from the memory bus.
     ram_only_when_no_mmio: bool = False
+    # FULL_MATCH callee contract: "opaque-eabi" (default, conservative) or
+    # "narrow-eabi" (r3–r5/memory token — unblocks the GX FIFO SMT wall for
+    # callers with register-colour swaps at the call site; the callee's retail
+    # body must fit the EABI volatile envelope, else it falls back to opaque).
+    full_match_callee_contract: str = "opaque-eabi"
     # Opt-in AbiShape inference (narrow r4/f1 observation when evidence is
     # strong: simple vtable dispatch without r4/f1, or MWCC ``Fv`` symbol).
     # Default off — fail-closed to today's full ppc-eabi observation.
@@ -255,6 +260,7 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         ),
         object_base_mem1=bool(data.get("object_base_mem1", False)),
         ram_only_when_no_mmio=bool(data.get("ram_only_when_no_mmio", False)),
+        full_match_callee_contract=str(data.get("full_match_callee_contract", "opaque-eabi")),
         abi_shape_inference=bool(data.get("abi_shape_inference", False)),
         capability_manifest_path=capability_manifest_path,
         allowed_tier_a_capabilities=allowed_tier_a,

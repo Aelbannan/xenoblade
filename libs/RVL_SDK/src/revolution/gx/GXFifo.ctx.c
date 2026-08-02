@@ -174,19 +174,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -2409,6 +2401,10 @@ static inline void* OSCachedToPhysical(const void* ofs) {
     return (u8*)ofs - 0x80000000;
 }
 
+static inline void* OSUncachedToPhysical(const void* ofs) {
+    return (void*)((u32)ofs & 0x3FFFFFFF);
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -2439,6 +2435,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -4618,7 +4615,7 @@ void GXSetDispCopyGamma(u32);
 
 u32 GXGetNumXfbLines(u16 efbHeight, f32 scaleY);
 f32 GXGetYScaleFactor(u16 efbHeight, u16 xfbHeight);
-void GXSetDispCopyYScale(f32 scaleY);
+u32 GXSetDispCopyYScale(f32 scaleY);
 
 void GXSetCopyClear(GXColor color, u32 z);
 void GXSetCopyFilter(GXBool, const u8 sample_pattern[12][2], GXBool,
@@ -10333,8 +10330,8 @@ static volatile BOOL GXOverflowSuspendInProgress;
 static OSThread* __GXCurrentThread;
 static u8 CPGPLinked[8];
 
-static const char sCpuFifoReport[0x18] = "CPUFifo: %08X - %08X\n";
-static const char sGpFifoReport[0x18] = "GP Fifo: %08X - %08X\n";
+static const char lbl_8054B8C0[0x18] = "CPUFifo: %08X - %08X\n";
+static const char lbl_8054B8D8[0x18] = "GP Fifo: %08X - %08X\n";
 
 void GXCPInterruptHandler(s32 interrupt, OSContext* context) {
     gxdt->cpStatReg = GX_CP_REG_READ_U16(CP_STATUS);
@@ -10396,16 +10393,15 @@ void GXInitFifoBase(GXFifoObj* fifo, void* base, u32 size) {
 }
 
 GXBool CPGPLinkCheck(void) {
-    u32 check;
     s32 range1;
     s32 range2;
     u32 overlap;
+    u32 check = 0;
 
     if (!CPUFifoReady || !GPFifoReady[0]) {
         return GX_FALSE;
     }
 
-    check = 0;
     if (CPUFifo.base == GPFifo.base) {
         check = 1;
     }
@@ -10422,21 +10418,13 @@ GXBool CPGPLinkCheck(void) {
     range2 = (s32)((u8*)GPFifo.end - (u8*)CPUFifo.base);
 
     overlap = 0;
-    if (range1 > 0) {
-        if (range2 > 0) {
-            overlap = 1;
-        }
-    } else {
-        if (range1 < 0) {
-            if (range2 < 0) {
-                overlap = 1;
-            }
-        }
+    if ((range1 > 0 && range2 > 0) || (range1 < 0 && range2 < 0)) {
+        overlap = 1;
     }
 
     if (overlap) {
-        OSReport(sCpuFifoReport, (u32)CPUFifo.base, (u32)CPUFifo.end);
-        OSReport(sGpFifoReport, (u32)GPFifo.base, (u32)GPFifo.end);
+        OSReport(lbl_8054B8C0, (u32)CPUFifo.base, (u32)CPUFifo.end);
+        OSReport(lbl_8054B8D8, (u32)GPFifo.base, (u32)GPFifo.end);
     }
 
     return GX_FALSE;
@@ -10460,8 +10448,6 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
     }
 
     realFifo = (GXFifoObjImpl*)fifo;
-    /* Retail sets Ready before the struct copy; bind_cpu after (0x20 word copy). */
-    CPUFifoReady = 1;
     {
         GXFifoObjImpl* dst = &CPUFifo;
         void* base;
@@ -10473,6 +10459,8 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
         void* writePtr;
         u32 count;
 
+        /* Retail copies the 0x20 bind word first, then all 8 fields. */
+        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
         base = realFifo->base;
         end = realFifo->end;
         size = realFifo->size;
@@ -10482,7 +10470,7 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
         writePtr = realFifo->writePtr;
         count = realFifo->count;
 
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
+        dst->base = base;
         dst->end = end;
         dst->size = size;
         dst->hiWatermark = hiWatermark;
@@ -10490,8 +10478,8 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
         dst->readPtr = readPtr;
         dst->writePtr = writePtr;
         dst->count = count;
-        dst->base = base;
     }
+    CPUFifoReady = 1;
     CPUFifo.bind_cpu = GX_TRUE;
 
     if (CPGPLinkCheck()) {

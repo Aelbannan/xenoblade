@@ -92,7 +92,9 @@ from tools.ppc_equivalence.semantics import (
     DEFAULT_MAX_LOOP_ITERATIONS,
     automatic_live_out,
     execute_cfg,
+    register_effects,
 )
+from tools.ppc_equivalence.model import InvalidReason
 
 
 # Fuzzy match floor for EQUIVALENT_MATCH (strictly below FULL_MATCH).
@@ -122,6 +124,132 @@ def _current_engine_hash() -> str:
 
 def _current_certifier_hash() -> str:
     return hash_certifier_tree(_REPO_ROOT)
+
+
+# ── Narrow-EABI callee contracts for FULL_MATCH callees ──────────────────────
+# MWCC_REFERENCE §7m documents the "GX FIFO SMT wall": functions whose reloc
+# names contain ``fifo``/``gx`` (e.g. the GX FIFO unit's ``CPUFifo``/``GPFifo``
+# globals) are skipped by the RAM-only bus projection, and the conservative
+# ``opaque-eabi`` callee contract keys the call token on the *entire* register
+# file — so a caller with register-colour swaps live at the call site can never
+# be certified EQUIVALENT, even though the swapped registers are dead scratch.
+#
+# The narrow contract below keys the token on the EABI argument registers r3–r5
+# + memory + definedness only.  It is a sound summary for ordinary SDK callees:
+# - reads: r3–r5 (printf-style / 0–3 GPR args), memory, valid, invalid_reason
+# - writes: volatile GPRs r0/r3–r12, volatile CR fields, XER, memory,
+#   valid, invalid_reason.  LR is *not* written: the checker's call model sets
+#   LR = pc+4 architecturally, and a UF-keyed LR would split on any pre-call
+#   register difference (exit.target divergence).  Non-volatile GPRs/FPRs are
+#   preserved (PPC EABI), so they are neither read nor written by the model.
+#
+# This is an assumption-bearing refinement (callees with >3 GPR args must not
+# be certified through it), gated by coop.json ``full_match_callee_contract``
+# and validated below against the callee's retail body via ``register_effects``
+# (writes must fit the EABI envelope; FP/SPR writes fall back to opaque).
+_FM_CALLEE_READS = frozenset({"r3", "r4", "r5", "msr", "memory", "valid", "invalid_reason"})
+_FM_CALLEE_WRITES = frozenset(
+    {"r0", *(f"r{i}" for i in range(3, 13))}
+    | {"cr", "cr0", "cr1", "cr5", "cr6", "cr7"}
+    | {"xer.ca", "xer.ov", "xer.so"}
+    | {"msr", "srr0", "srr1"}
+    | {"memory", "valid", "invalid_reason"}
+)
+_FM_CALLEE_ENVELOPE_WRITES = _FM_CALLEE_WRITES | {"lr", "r1"}  # lr/r1: call-model/frame
+
+
+def _narrow_full_match_callee_contract() -> CalleeContract:
+    return CalleeContract(
+        _FM_CALLEE_READS,
+        _FM_CALLEE_WRITES,
+        "narrow-eabi-full-match",
+        invalid_reasons=frozenset({r.value for r in InvalidReason}),
+    )
+
+
+def _full_match_callee_body_fits_narrow(
+    project: Project, unit_hint: str, symbol: str,
+) -> bool:
+    """True when the callee's retail body effects fit the narrow-EABI envelope.
+
+    Uses the syntactic ``register_effects`` table (fast, conservative).  Writes
+    must be a subset of the envelope (LR is allowed — the call model owns the
+    post-call LR); any FP/SPR/GPR-nonvolatile write falls back to opaque.
+    """
+    try:
+        unit = project.resolve_unit(unit_hint)
+        if unit.target_path is None:
+            return False
+        fn = extract_function(unit.target_path, symbol)
+        insns = decode_block(
+            fn.code, base=fn.base, relocations=fn.relocations, local_symbol=fn.name,
+        )
+    except (ElfSymbolError, DecodeError, OSError, ValueError):
+        return False
+    for insn in insns:
+        _, writes = register_effects(insn)
+        if not writes <= _FM_CALLEE_ENVELOPE_WRITES:
+            return False
+    return True
+
+
+_MMIO_LABEL_RE = re.compile(r"^lbl(?:_eu)?_([0-9A-Fa-f]{8})$")
+# Metrowerks EABI save/restore helpers: fixed low-.text runtime routines, never
+# MMIO.  Their symbols are not in symbols.txt (like the ``_savegpr_27`` calls in
+# GXSetCPUFifo), so without this skip the precise gate would fail closed.
+_EABI_HELPER_RE = re.compile(r"^_(?:save|rest)(?:gpr|fpr)_\d+$")
+
+
+def _reloc_symbols_may_form_mmio_address(
+    project: Project | None,
+    original: list[Any],
+    candidate: list[Any],
+    memory_bus: Any | None,
+) -> bool:
+    """Precise RAM-only gate: True when a reloc symbol resolves into MMIO.
+
+    The engine's name-needle heuristic (``instruction_may_form_mmio_address``)
+    conservatively rejects any function whose reloc names contain ``fifo`` /
+    ``gx`` / ``mmio`` / ``wgpipe`` substrings — a false positive for RAM
+    globals such as ``CPUFifo``/``GPFifo`` in the GX FIFO unit (MWCC_REFERENCE
+    §7m), which blocks the RAM-only bus projection and then fails the SMT
+    probe on symbolic SDA21 addresses (``symbolic-mmio-mixed-address-space``).
+
+    This wrapper-side refinement resolves every reloc symbol to its retail
+    address (symbols.txt first, then the name-embedded ``lbl_*`` address) and
+    checks the MMIO ranges directly.  Unresolvable names fail closed (True).
+    """
+    if memory_bus is None:
+        return False
+    from tools.ppc_equivalence.object_base import mmio_ranges_from_bus_or_profile
+    mmio_ranges = mmio_ranges_from_bus_or_profile(memory_bus=memory_bus)
+    if not mmio_ranges:
+        return False
+    uses: set[tuple[str, int]] = set()
+    for insn in original + candidate:
+        reloc = insn.relocation
+        if reloc is not None:
+            uses.add((str(reloc.canonical_symbol), int(reloc.addend)))
+    for name, addend in sorted(uses, key=lambda item: str(item[0])):
+        if _EABI_HELPER_RE.match(name):
+            continue
+        address: int | None = None
+        if project is not None:
+            hit = project.symbol_address(name)
+            if hit is not None:
+                address = int(hit[0]) & 0xFFFFFFFF
+        if address is None:
+            match = _MMIO_LABEL_RE.match(name)
+            if match:
+                address = int(match.group(1), 16) & 0xFFFFFFFF
+        if address is None:
+            return True  # fail-closed: unresolvable reloc symbol
+        target = (address + addend) & 0xFFFFFFFF
+        for start, end in mmio_ranges:
+            if start <= target <= end:
+                return True
+    return False
+
 
 
 def _live_git_identity() -> tuple[str, bool]:
@@ -543,11 +671,22 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         if not isinstance(symbol, str) or not isinstance(unit_hint, str):
             errors.append(f"callee {callee_id!r} lacks a buildable symbol/unit")
             continue
-        # §2.7.5: FULL_MATCH callees use an opaque EABI contract (no
-        # certificate needed — they are byte-identical to retail).
+        # §2.7.5: FULL_MATCH callees are byte-identical to retail; no
+        # certificate is needed.  The default callee contract is opaque EABI
+        # (conservative).  When coop.json sets
+        # ``full_match_callee_contract: "narrow-eabi"``, use the narrow
+        # r3–r5/memory contract instead (MWCC_REFERENCE §7m GX FIFO wall) —
+        # validated below against the callee's retail body so FP/SPR/
+        # nonvolatile-clobbering callees fall back to opaque.
         is_full_match = callee.get("status") == "FULL_MATCH"
         if is_full_match:
             contract = CalleeContract.opaque_eabi()
+            if getattr(project.config, "full_match_callee_contract", "opaque-eabi") == "narrow-eabi":
+                unit_hint = callee.get("unit")
+                if isinstance(unit_hint, str) and isinstance(symbol, str) and (
+                    _full_match_callee_body_fits_narrow(project, unit_hint, symbol)
+                ):
+                    contract = _narrow_full_match_callee_contract()
             contracts[symbol] = contract
             address = callee.get("address")
             if isinstance(address, str):
@@ -2267,7 +2406,12 @@ def _prove_bytes(
                 should_use_ram_only_bus,
             )
 
-            if should_use_ram_only_bus(original, candidate, memory_bus_obj):
+            if (
+                should_use_ram_only_bus(original, candidate, memory_bus_obj)
+                or not _reloc_symbols_may_form_mmio_address(
+                    project, original, candidate, memory_bus_obj,
+                )
+            ):
                 memory_bus_obj = ram_only_memory_bus(memory_bus_obj)
                 ram_only_projection = True
         if memory_bus_obj is not None:

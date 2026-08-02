@@ -1512,10 +1512,25 @@ def draft_integer_core_assurance(
             and not _needs_ledger_refresh("fp-bitwise")
         )
     )
+    req_block = _normalize_requirements_block(
+        requirements
+        if requirements is not None
+        else getattr(result, "capability_requirements", None)
+    )
+    req_sha = (
+        str(getattr(req_block, "requirements_sha256", "") or "")
+        if req_block is not None
+        else None
+    )
     # A cached integer attestation is also refreshed when the requirements
     # binding changed, even if its ledger digest is still current.  This keeps
     # certificate capability evidence synchronized with the authoritative
-    # requirements block after a live proof-engine update.
+    # requirements block after a live proof-engine update.  The aggregate
+    # (``requirements_sha256``) is compared too: a sibling requirement (e.g.
+    # provenance's certifier/engine-hash identity) can change while the
+    # per-requirement digest of integer-core stays identical, and a kept
+    # attestation would then carry a stale aggregate binding that fails strict
+    # certificate re-attestation (targets.py aggregate binding check).
     def _needs_requirement_refresh(capability: str) -> bool:
         prior_item = prior_by_name.get(capability)
         if prior_item is None:
@@ -1529,7 +1544,10 @@ def draft_integer_core_assurance(
             capability,
         )
         expected = getattr(requirement, "requirement_sha256", None) if requirement is not None else None
-        return prior_item.evidence.get("requirement_sha256") != expected
+        return (
+            prior_item.evidence.get("requirement_sha256") != expected
+            or prior_item.evidence.get("requirements_sha256") != req_sha
+        )
 
     if integer_done and bitwise_done and not any(
         _needs_requirement_refresh(name)
@@ -1546,16 +1564,6 @@ def draft_integer_core_assurance(
     ):
         prior_names.discard("fp-bitwise")
 
-    req_block = _normalize_requirements_block(
-        requirements
-        if requirements is not None
-        else getattr(result, "capability_requirements", None)
-    )
-    req_sha = (
-        str(getattr(req_block, "requirements_sha256", "") or "")
-        if req_block is not None
-        else None
-    )
     integer_req = _requirement_lookup(req_block, "integer-core")
     fp_req = _requirement_lookup(req_block, "fp-bitwise")
 

@@ -356,20 +356,24 @@ void SeqTrack::ChannelCallbackFunc(Channel* pDropChannel,
     }
     }
 
-    if (p->mPlayer != NULL) {
-        p->mPlayer->ChannelCallback(pDropChannel);
+    SeqPlayer* player = *(SeqPlayer**)((u8*)p + 0xC0);
+    if (player != NULL) {
+        player->ChannelCallback(pDropChannel);
     }
 
-    if (p->mChannelList == pDropChannel) {
-        p->mChannelList = pDropChannel->GetNextTrackChannel();
+    Channel** channelList = (Channel**)((u8*)p + 0xC4);
+    if (*channelList == pDropChannel) {
+        *channelList = *(Channel**)((u8*)pDropChannel + 0xF4);
         return;
     }
 
-    for (Channel* pIt = p->mChannelList; pIt->GetNextTrackChannel() != NULL;
-         pIt = pIt->GetNextTrackChannel()) {
+    for (Channel* pIt = *channelList;
+         *(Channel**)((u8*)pIt + 0xF4) != NULL;
+         pIt = *(Channel**)((u8*)pIt + 0xF4)) {
 
-        if (pIt->GetNextTrackChannel() == pDropChannel) {
-            pIt->SetNextTrackChannel(pDropChannel->GetNextTrackChannel());
+        if (*(Channel**)((u8*)pIt + 0xF4) == pDropChannel) {
+            *(Channel**)((u8*)pIt + 0xF4) =
+                *(Channel**)((u8*)pDropChannel + 0xF4);
             return;
         }
     }

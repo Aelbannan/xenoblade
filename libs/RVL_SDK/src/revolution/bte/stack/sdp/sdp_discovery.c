@@ -21,6 +21,30 @@ extern BOOLEAN sdpu_is_base_uuid(UINT8 *p_uuid);
 extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
 extern void LogMsg_1(UINT32 trace_set_mask, const char *p_str, UINT32 p1);
 
+/* Timer list entry (see gki.h); sizeof == 0x18. */
+typedef struct _tle {
+    struct _tle *p_next;
+    struct _tle *p_prev;
+    void *p_cback;
+    int ticks;
+    void *param;
+    UINT16 event;
+    UINT8 in_use;
+} TIMER_LIST_ENT;
+
+/* Service Search Request PDU id (BT core spec, SDP protocol). */
+#define SDP_SVC_SEARCH_REQ 2
+
+/* sdp_disconnect() reason code used when no buffer can be allocated. */
+#define SDP_DISC_ERR_NO_RESOURCES 6
+
+/* SDP M2 timer: type + timeout passed to btu_start_timer(). */
+#define BTU_TTYPE_SDP_M2 5
+#define SDP_M2_TIMEOUT 30
+
+/* sdp_cb.max_recs_per_search: 16-bit field at sdp_cb+0x462E (big-endian). */
+#define SDP_CB_MAX_RECS_PER_SEARCH (*(UINT16 *)(sdp_cb + 0x462E))
+
 /* ------------------------------------------------------------------------- */
 /* Local types and constants (no shared sdpint.h header in the writable      */
 /* scope, so the minimum pieces needed by this TU are declared here).        */
@@ -45,7 +69,7 @@ typedef struct
     UINT8           con_state;                              // 0x000
     UINT8           con_flags;                              // 0x001
     BD_ADDR         device_address;                         // 0x002
-    UINT8           _pad_timer[0x18];                       // 0x008 TIMER_LIST_ENT slot
+    TIMER_LIST_ENT  timer_entry;                            // 0x008
     UINT16          rem_mtu_size;                           // 0x020
     UINT16          connection_id;                          // 0x022
     UINT16          list_len;                               // 0x024
@@ -85,6 +109,12 @@ typedef struct
 
 void sdp_snd_service_search_req(tCONN_CB *p_ccb, UINT8 cont_len, UINT8 *p_cont);
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len);
+
+/* Externals from sdp_main.c / GKI / L2CAP. */
+extern void sdp_disconnect(tCONN_CB *p_ccb, UINT16 reason);
+extern void *GKI_getpoolbuf(UINT8 pool_id);
+extern BOOLEAN L2CA_DataWrite(UINT16 cid, BT_HDR *p_data);
+extern void btu_start_timer(TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout);
 
 /* ------------------------------------------------------------------------- */
 /* Public SDP discovery entry points.                                        */
@@ -143,9 +173,109 @@ tSDP_DISC_REC *add_record(tSDP_DISC_DB *p_db, BD_ADDR p_bda)
 
 #pragma dont_inline on
 
-void sdpu_build_uuid_seq(UINT8 *p_out, UINT16 num_uuids, tSDP_UUID *p_uuid_list) {}
+/* Builds a data element sequence of UUIDs (the service search pattern) into
+   p_out. The sequence starts with a 0x35 header (sequence descriptor with
+   the length in the following byte); each entry is a UUID descriptor with a
+   fixed size. Returns a pointer to the first byte after the sequence. */
+UINT8 *sdpu_build_uuid_seq(UINT8 *p_out, UINT16 num_uuids, tSDP_UUID *p_uuid_list)
+{
+    UINT16 xx;
+    UINT8 *p_len;
 
-void sdp_snd_service_search_req(tCONN_CB *p_ccb, UINT8 cont_len, UINT8 *p_cont) {}
+    /* First thing is the data element header */
+    UINT8_TO_BE_STREAM(p_out, (DATA_ELE_SEQ_DESC_TYPE << 3) | SIZE_IN_NEXT_BYTE);
+
+    /* Remember where the length goes. Leave space for it. */
+    p_len = p_out;
+    p_out += 1;
+
+    /* Now, loop through and put in all the UUID(s) */
+    for (xx = 0; xx < num_uuids; xx++, p_uuid_list++) {
+        if (p_uuid_list->len == LEN_UUID_16) {
+            /* 16-bit UUID */
+            UINT8_TO_BE_STREAM(p_out, (UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
+            UINT16_TO_BE_STREAM(p_out, p_uuid_list->uu.uuid16);
+        } else if (p_uuid_list->len == LEN_UUID_32) {
+            /* 32-bit UUID */
+            UINT8_TO_BE_STREAM(p_out, (UUID_DESC_TYPE << 3) | SIZE_FOUR_BYTES);
+            UINT32_TO_BE_STREAM(p_out, p_uuid_list->uu.uuid32);
+        } else {
+            /* 128-bit UUID */
+            UINT8_TO_BE_STREAM(p_out, (UUID_DESC_TYPE << 3) | SIZE_SIXTEEN_BYTES);
+            ARRAY_TO_BE_STREAM(p_out, p_uuid_list->uu.uuid128, p_uuid_list->len);
+        }
+    }
+
+    /* Now, put in the length */
+    xx = (UINT16)(p_out - p_len - 1);
+    UINT8_TO_BE_STREAM(p_len, xx);
+
+    return p_out;
+}
+
+/* Sends a Service Search Request PDU to the peer device over the SDP
+   connection. The search pattern is taken from the discovery database UUID
+   filters; a continuation state may be appended when the previous response
+   was truncated. */
+void sdp_snd_service_search_req(tCONN_CB *p_ccb, UINT8 cont_len, UINT8 *p_cont)
+{
+    UINT8 *p;
+    UINT8 *p_start;
+    UINT8 *p_rsp_start;
+    BT_HDR *p_buf;
+
+    /* Service search PDU */
+    p_buf = (BT_HDR *)GKI_getpoolbuf(2);
+    if (p_buf == NULL) {
+        sdp_disconnect(p_ccb, SDP_DISC_ERR_NO_RESOURCES);
+        return;
+    }
+
+    p_buf->offset = 9;
+    p_rsp_start = (UINT8 *)(p_buf + 1) + p_buf->offset;
+    p = p_rsp_start;
+
+    /* First, build the header */
+    *p++ = SDP_SVC_SEARCH_REQ;
+    *p++ = (UINT8)(p_ccb->transaction_id >> 8);
+    *p++ = (UINT8)p_ccb->transaction_id;
+    p_ccb->transaction_id++;
+
+    /* Remember where the parameter length goes */
+    p_start = p;
+    p += 2;
+
+    /* Build the UUID sequence */
+    p = sdpu_build_uuid_seq(p, p_ccb->p_db->num_uuid_filters,
+                            p_ccb->p_db->uuid_filters);
+
+    /* Add max service record count */
+    *p++ = (UINT8)(SDP_CB_MAX_RECS_PER_SEARCH >> 8);
+    *p++ = (UINT8)SDP_CB_MAX_RECS_PER_SEARCH;
+
+    /* Add continuation state */
+    *p++ = cont_len;
+    if (cont_len && p_cont) {
+        memcpy(p, p_cont, cont_len);
+        p += cont_len;
+    }
+
+    /* Set the parameter length */
+    p_start[0] = (UINT8)(((UINT32)(p - p_start - 2)) >> 8);
+    p_start[1] = (UINT8)(p - p_start - 2);
+
+    /* Set the SDP state */
+    p_ccb->disc_state = SDP_DISC_WAIT_HANDLES;
+
+    /* Set the length of the SDP data */
+    p_buf->len = (UINT16)(p - p_rsp_start);
+
+    /* Send the buffer */
+    L2CA_DataWrite(p_ccb->connection_id, p_buf);
+
+    /* Start the M2 timeout */
+    btu_start_timer(&p_ccb->timer_entry, BTU_TTYPE_SDP_M2, SDP_M2_TIMEOUT);
+}
 
 void sdp_disc_server_rsp(tCONN_CB *p_ccb, BT_HDR *p_msg) {}
 

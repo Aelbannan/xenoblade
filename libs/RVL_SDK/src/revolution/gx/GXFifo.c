@@ -134,10 +134,8 @@ void GXCPInterruptHandler(s32 interrupt, OSContext* context) {
 
     if (CP_CTRL_GET_OVFLINT(gxdt->cpCtrlReg) && CP_STAT_GET_OVFL(gxdt->cpStatReg)) {
         __GXOverflowCount++;
-        gxdt->cpCtrlReg = (gxdt->cpCtrlReg & ~4) | 8;
-        GX_CP_REG_WRITE_U16(CP_ENABLE, (u16)gxdt->cpCtrlReg);
-        gxdt->cpClrReg = (gxdt->cpClrReg | 1) & ~2;
-        GX_CP_REG_WRITE_U16(CP_CLR, (u16)gxdt->cpClrReg);
+        __GXWriteFifoIntEnable(GX_FALSE, GX_TRUE);
+        __GXWriteFifoIntReset(GX_TRUE, GX_FALSE);
         GXOverflowSuspendInProgress = TRUE;
         OSSuspendThread(__GXCurrentThread);
     }
@@ -184,7 +182,7 @@ void GXInitFifoBase(GXFifoObj* fifo, void* base, u32 size) {
 }
 
 GXBool CPGPLinkCheck(void) {
-    u32 check = 0;
+    u32 check;
     s32 range1;
     s32 range2;
     u32 overlap;
@@ -193,6 +191,7 @@ GXBool CPGPLinkCheck(void) {
         return GX_FALSE;
     }
 
+    check = 0;
     if (CPUFifo.base == GPFifo.base) {
         check = 1;
     }
@@ -209,8 +208,16 @@ GXBool CPGPLinkCheck(void) {
     range2 = (s32)((u8*)GPFifo.end - (u8*)CPUFifo.base);
 
     overlap = 0;
-    if ((range1 > 0 && range2 > 0) || (range1 < 0 && range2 < 0)) {
-        overlap = 1;
+    if (range1 > 0) {
+        if (range2 > 0) {
+            overlap = 1;
+        }
+    } else {
+        if (range1 < 0) {
+            if (range2 < 0) {
+                overlap = 1;
+            }
+        }
     }
 
     if (overlap) {
@@ -340,9 +347,7 @@ void GXSetGPFifo(GXFifoObj* fifo) {
         void* writePtr;
         u32 count;
 
-        /* Retail copies the bind word first, loads base last (it is
-         * immediately used for the CP_FIFO_BASEL write below). */
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
+        base = realFifo->base;
         end = realFifo->end;
         size = realFifo->size;
         hiWatermark = realFifo->hiWatermark;
@@ -350,8 +355,8 @@ void GXSetGPFifo(GXFifoObj* fifo) {
         readPtr = realFifo->readPtr;
         writePtr = realFifo->writePtr;
         count = realFifo->count;
-        base = realFifo->base;
 
+        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
         dst->end = end;
         dst->size = size;
         dst->hiWatermark = hiWatermark;
@@ -361,7 +366,7 @@ void GXSetGPFifo(GXFifoObj* fifo) {
         dst->count = count;
         GPFifoReady[0] = 1;
         dst->bind_gp = GX_TRUE;
-        dst->base = base;
+        GPFifo.base = base;
     }
 
     {
@@ -412,6 +417,7 @@ void GXSetGPFifo(GXFifoObj* fifo) {
 
 void __GXSaveFifo(void) {
     u32 reg;
+    u32 temp;
     BOOL en = OSDisableInterrupts();
 
     if (CPUFifoReady) {
@@ -422,15 +428,13 @@ void __GXSaveFifo(void) {
     }
 
     if (GPFifoReady[0]) {
-        const volatile u16* cp = (const volatile u16*)__cpReg;
+        temp = (u32)GX_CP_REG_READ_U16(CP_FIFO_RPTRH) << 16;
+        temp |= (u32)GX_CP_REG_READ_U16(CP_FIFO_RPTRL);
+        GPFifo.readPtr = (void*)OSPhysicalToCached(temp);
 
-        reg = (u32)cp[CP_FIFO_RPTRH] << 16;
-        reg |= (u32)cp[CP_FIFO_RPTRL];
-        GPFifo.readPtr = (void*)OSPhysicalToCached(reg);
-
-        reg = (u32)cp[CP_FIFO_COUNTH] << 16;
-        reg |= (u32)cp[CP_FIFO_COUNTL];
-        GPFifo.count = reg;
+        temp = (u32)GX_CP_REG_READ_U16(CP_FIFO_COUNTH) << 16;
+        temp |= (u32)GX_CP_REG_READ_U16(CP_FIFO_COUNTL);
+        GPFifo.count = temp;
     }
 
     if (CPGPLinked[0]) {

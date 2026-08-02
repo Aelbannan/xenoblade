@@ -6,11 +6,13 @@ static ui8 gRecvBuf[0x500];
 static CircleBuffer gRecvCB;
 static bool gIsInitialized;
 
-//unused
+// not present in the retail binary; kept commented out so the unit
+// stays within its split budget
 //void OutputData(){
 //}
 //
-//unused
+// not present in the retail binary; kept commented out so the unit
+// stays within its split budget
 //bool IsInitialized(){
 //    return gIsInitialized;
 //}
@@ -40,29 +42,29 @@ int gdev_cc_read(ui8* dest, int size){
     int sizeTemp = size;
     ui8* destTemp = dest;
     ui8 buf[0x500];
-    int r30 = 0;
+    int readResult = 0;
 
     if(!gIsInitialized){
         return GDEV_RESULT_10001;
     }
 
     while(CBGetBytesAvailableForRead(&gRecvCB) < size){
-        int r29;
-        r30 = 0;
-        r29 = DBQueryData();
-        if(r29 != 0){
-            r30 = DBRead(buf, size);
-            if(r30 == 0){
-                CircleBufferWriteBytes(&gRecvCB, buf, r29);
+        int available;
+        readResult = 0;
+        available = DBQueryData();
+        if(available != 0){
+            readResult = DBRead(buf, size);
+            if(readResult == 0){
+                CircleBufferWriteBytes(&gRecvCB, buf, available);
             }
         }
     }
 
-    if(r30 == 0){
+    if(readResult == 0){
         CircleBufferReadBytes(&gRecvCB, dest, size);
     }
 
-    return r30;
+    return readResult;
 }
 
 int gdev_cc_write(const ui8* src, int size){
@@ -97,20 +99,20 @@ int gdev_cc_post_stop(){
 }
 
 int gdev_cc_peek(){
-    int r3 = DBQueryData();
+    int available = DBQueryData();
     ui8 buf[0x500];
 
-    if(r3 <= 0){
+    if(available <= 0){
         return 0;
     }
 
-    if(!DBRead(buf, r3)){
-        CircleBufferWriteBytes(&gRecvCB, buf, r3);
+    if(!DBRead(buf, available)){
+        CircleBufferWriteBytes(&gRecvCB, buf, available);
     }else{
         return GDEV_RESULT_10009;
     }
 
-    return r3;
+    return available;
 }
 
 int gdev_cc_initinterrupts(){

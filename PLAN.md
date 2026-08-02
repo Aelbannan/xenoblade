@@ -1485,6 +1485,17 @@ This is a narrow hardware-ABI exception, not a general assembly allowance:
 
 **Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, and decomp.me — not asm of any kind outside the isolated PS-backend exception.
 
+#### Original-SDK assembly retained as-is (`libs/PowerPC_EABI_Support`)
+
+The Metrowerks runtime and the MetroTRK debugger shipped as assembly in the original SDK, and retail contains that assembly verbatim. The `asm void` / `.s` content below is **original SDK source transcribed for matching — not decompiled output** — and is intentionally kept as-is (this is a documentation note, not a new exception; pre-existing content needs no `policy_exception` log, but do not re-transcribe or convert it):
+
+- `Runtime/runtime.c` — compiler runtime helpers (`__save_fpr`/`__restore_fpr`, `__save_gpr`/`__restore_gpr`, `__div2u`/`__div2i`/`__mod2u`/`__mod2i`/`__shl2i`/`__shr2u`/`__shr2i`, `__cvt_*` conversions)
+- `Runtime/ptmf.c`, `Runtime/__mem.c`, `Runtime/Gecko_ExceptionPPC.cp` — pointer-to-member thunks, memory kernels, exception-handling glue
+- `MetroTRK/flush_cache.c` (`TRK_flush_cache`), `MetroTRK/mpc_7xx_603e.c`, `MetroTRK/targimpl.c` (interrupt handler, MSR helpers), `MetroTRK/dolphin_trk.c` (boot vectors, see the Wii boot-entry exception above), `MetroTRK/dolphin_trk_glue.c` (context save/restore, `TRKLoadContext`)
+- `MetroTRK/__exception.s`, `MetroTRK/targsupp.s` — standalone SDK assembly units (interrupt vector table, target support)
+
+Rules: do not run clang-format on these files (it mangles MWCC `asm` text and changes generated code); keep the `asm void` bodies byte-stable; do not "fix" their style. Any **new** assembly added for matching remains subject to the exceptions table above.
+
 ### 17.3 Common mismatch categories
 
 - signed versus unsigned comparisons;

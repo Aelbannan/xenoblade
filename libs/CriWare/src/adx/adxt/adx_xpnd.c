@@ -9,9 +9,31 @@ void ADXPD_Init(void) {
     memset(lbl_eu_805E4F80, 0, 0x3c0);
 }
 
-void ADXPD_Create() {}
+void* ADXPD_Create(void) {
+    u32* p = (u32*)lbl_eu_805E4F80;
+    s32 count = 0;
+    s32 i;
 
-void ADX_GetCoefficient(void* a, void* b, void* c, void* d);
+    for (i = 0; i < 16; i++, p += 15) {
+        if (*p == 0)
+            break;
+        count++;
+    }
+    if (count == 16)
+        return NULL;
+    {
+        u8* slot = (u8*)lbl_eu_805E4F80 + count * 60;
+        memset(slot, 0, 60);
+        *(u32*)slot = 1;
+        *(u32*)(slot + 4) = (u32)count;
+        *(u32*)(slot + 8) = 0;
+        *(u32*)(slot + 12) = 0;
+        ADX_GetCoefficient((void*)500, (void*)44100, (void*)(slot + 48), (void*)(slot + 50));
+        memset(slot + 40, 0, 8);
+        return slot;
+    }
+}
+
 void ADXPD_SetCoef(void* self, void* tbl, void* idx) {
     ADX_GetCoefficient(idx, tbl, (u8*)self + 0x30, (u8*)self + 0x32);
 }

@@ -221,6 +221,22 @@ function was dead-stripped but the pooled literals survived) between the
 by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
+**btm_find_oldest_dev (us-802e90c8) — two-declaration-order keys to 100%:**
+stuck at 98.6% with 23 pure reg-swaps (0 structural) — `oldest_ts` in r7 vs
+retail's r6, dead loop counter `i` in r6 vs retail's r7, plus the two loop-tail
+increments emitted in swapped order. (1) Declare `u32 oldest_ts;` **before**
+`int i;` — MWCC assigns locals to registers in declaration order, moving
+`oldest_ts` into r6 and the dead `i` counter into r7 (19 of 23 mismatches
+cleared). (2) Write both increments in the for-header,
+`for (i = 0; i < 16; i++, p_rec++)`, instead of a body-trailing `p_rec++;` —
+the header form makes MWCC emit the dead-counter `addi r7,r7,3` **before** the
+pointer `addi r5,r5,0x88` at the unrolled-loop tail, matching retail (last 4
+mismatches cleared). Also: the retail btm_cb surrogate struct must place
+`sec_dev_rec[16]` at 0x1F30 (0x88 each) — matches btm_sec.s; the `+0x20`
+`btm_cb@l` addend drift seen in the old build disappears once the address is
+computed as a single `addi r5,r3,0x1F30`. Result: FULL_MATCH 100%, size 0x198
+exact (0 spare), semantic certificate issued.
+
 ## RVL_SDK bte/l2cap l2c_api.c — string-pool emission order and -ipa (US, mwcc_43_151 `-O4,p`)
 
 **l2c_utils.c l2cu_* helper fixes (this fork):**

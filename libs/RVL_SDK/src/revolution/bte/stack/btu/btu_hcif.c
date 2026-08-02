@@ -192,8 +192,284 @@ void l2c_link_role_change_failed(void);
 void bte_hcisu_send (BT_HDR *p_msg, UINT16 event);
 #define BT_EVT_TO_BTU_HCI_CMD  0x2000  /* HCI Command */
 
-/* Remaining catalog stubs (handlers not yet decompiled). */
-void btu_hcif_process_event() {}
+/* HCI event opcodes used by the process-event dispatcher (hcidefs.h). */
+#define HCI_INQUIRY_COMP_EVT            0x01
+#define HCI_INQUIRY_RESULT_EVT          0x02
+#define HCI_CONNECTION_COMP_EVT         0x03
+#define HCI_CONNECTION_REQUEST_EVT      0x04
+#define HCI_DISCONNECTION_COMP_EVT      0x05
+#define HCI_AUTHENTICATION_COMP_EVT     0x06
+#define HCI_RMT_NAME_REQUEST_COMP_EVT   0x07
+#define HCI_ENCRYPTION_CHANGE_EVT       0x08
+#define HCI_MASTER_LINK_KEY_COMP_EVT    0x0A
+#define HCI_READ_RMT_FEATURES_COMP_EVT  0x0B
+#define HCI_READ_RMT_VERSION_COMP_EVT   0x0C
+#define HCI_QOS_SETUP_COMP_EVT          0x0D
+#define HCI_COMMAND_COMPLETE_EVT        0x0E
+#define HCI_COMMAND_STATUS_EVT          0x0F
+#define HCI_HARDWARE_ERROR_EVT          0x10
+#define HCI_ROLE_CHANGE_EVT             0x12
+#define HCI_NUM_COMPL_DATA_PKTS_EVT     0x13
+#define HCI_MODE_CHANGE_EVT             0x14
+#define HCI_RETURN_LINK_KEYS_EVT        0x15
+#define HCI_PIN_CODE_REQUEST_EVT        0x16
+#define HCI_LINK_KEY_REQUEST_EVT        0x17
+#define HCI_LINK_KEY_NOTIFICATION_EVT   0x18
+#define HCI_READ_CLOCK_OFF_COMP_EVT     0x1C
+#define HCI_QOS_VIOLATION_EVT           0x1E
+#define HCI_INQUIRY_RSSI_RESULT_EVT     0x22
+#define HCI_ESCO_CONNECTION_COMP_EVT    0x2C
+#define HCI_ESCO_CONNECTION_CHANGED_EVT 0x2D
+#define HCI_VENDOR_SPECIFIC_EVT         0xFF
+
+/* Dispatcher callees in other BTE translation units. */
+extern void btm_process_inq_complete(UINT8 status);
+extern void btm_process_inq_results(UINT8 *p, BOOLEAN extended);
+extern BOOLEAN l2c_link_hci_disc_comp(UINT16 handle, UINT8 reason);
+extern void btm_sco_removed(UINT16 hci_handle, UINT8 reason);
+extern void btm_sec_disconnected(UINT16 handle, UINT8 reason);
+extern void btm_sec_auth_complete(UINT16 handle, UINT8 status);
+extern void btm_acl_encrypt_change(UINT16 handle, UINT8 status,
+                                   UINT8 encr_enable);
+extern void btm_sec_encrypt_change(UINT16 handle, UINT8 status,
+                                   UINT8 encr_enable);
+extern void btm_sec_mkey_comp_event(UINT16 handle, UINT8 status, UINT8 key_flg);
+extern void btm_read_remote_features_complete(UINT8 *p);
+extern void btm_read_remote_version_complete(UINT8 *p);
+extern void btm_sco_chk_pend_unpark(UINT8 hci_status, UINT16 hci_handle);
+extern void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle,
+                                     UINT8 mode, UINT16 interval);
+extern void hidd_pm_proc_mode_change(UINT8 hci_status, UINT8 mode,
+                                     UINT16 interval);
+extern void btm_return_link_keys_evt(UINT8 *p);
+extern void l2c_pin_code_request(BD_ADDR p_bda);
+extern void btm_sec_pin_code_request(BD_ADDR bd_addr);
+extern void btm_sec_link_key_request(BD_ADDR bd_addr);
+extern void btm_process_clk_off_comp_evt(UINT16 hci_handle,
+                                         UINT16 clock_offset);
+extern void btm_sec_update_clock_offset(UINT16 hci_handle, UINT16 clock_offset);
+extern void l2c_link_hci_qos_violation(UINT16 handle);
+extern void l2c_link_process_num_completed_pkts(UINT8 *p);
+extern void l2c_link_role_changed(UINT8 *p_bda, UINT8 new_role);
+extern void btm_vendor_specific_evt(UINT8 *p);
+extern BOOLEAN BTM_IsDeviceUp(void);
+extern void BTM_DeviceReset(void *p_cb);
+extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
+
+/* Handlers defined below in this TU (retail passes the event length byte
+   in the second argument). */
+extern void btu_hcif_connection_comp_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_connection_request_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_qos_setup_comp_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_link_key_notification_evt(UINT8 *p, UINT16 evt_len);
+extern void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len);
+
+void btu_hcif_process_event(BT_HDR *p_msg)
+{
+    UINT8 *p = (UINT8 *)(p_msg + 1) + p_msg->offset;
+    UINT8 event;
+    UINT8 evt_len;
+
+    event = *p;
+    evt_len = *(p + 1);
+
+    /* While the controller is still coming up only command
+       completion/status events are processed. */
+    if (!btm_cb.devcb_state && event != HCI_COMMAND_COMPLETE_EVT &&
+        event != HCI_COMMAND_STATUS_EVT)
+        return;
+
+    switch (event) {
+    case HCI_INQUIRY_COMP_EVT:
+        btm_process_inq_complete(*(p + 2));
+        break;
+
+    case HCI_INQUIRY_RESULT_EVT:
+        btm_process_inq_results(p + 2, FALSE);
+        break;
+
+    case HCI_INQUIRY_RSSI_RESULT_EVT:
+        btm_process_inq_results(p + 2, TRUE);
+        break;
+
+    case HCI_CONNECTION_COMP_EVT:
+        btu_hcif_connection_comp_evt(p + 2, evt_len);
+        break;
+
+    case HCI_CONNECTION_REQUEST_EVT:
+        btu_hcif_connection_request_evt(p + 2, evt_len);
+        break;
+
+    case HCI_DISCONNECTION_COMP_EVT: {
+        UINT16 handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
+        UINT8 reason = p[5];
+
+        if (!l2c_link_hci_disc_comp(handle, reason))
+            btm_sco_removed(handle, reason);
+        btm_sec_disconnected(handle, reason);
+        break;
+    }
+
+    case HCI_AUTHENTICATION_COMP_EVT:
+        btm_sec_auth_complete((UINT16)(p[3] + (p[4] << 8)), p[2]);
+        break;
+
+    case HCI_RMT_NAME_REQUEST_COMP_EVT: {
+        BD_ADDR bd_name;
+        UINT8 hci_status = p[2];
+        UINT8 *p_name = p + 9;
+        UINT8 *p_off = p + 3;
+
+        STREAM_TO_BDADDR(bd_name, p_off);
+        btm_process_remote_name(bd_name, p_name, (UINT16)(evt_len - 7),
+                                hci_status);
+        btm_sec_rmt_name_request_complete(bd_name, p_name, hci_status);
+        break;
+    }
+
+    case HCI_ENCRYPTION_CHANGE_EVT: {
+        UINT16 handle = (UINT16)(p[3] + (p[4] << 8));
+        UINT8 hci_status = p[2];
+        UINT8 encr_enable = p[5];
+
+        btm_acl_encrypt_change(handle, hci_status, encr_enable);
+        btm_sec_encrypt_change(handle, hci_status, encr_enable);
+        break;
+    }
+
+    case HCI_MASTER_LINK_KEY_COMP_EVT:
+        btm_sec_mkey_comp_event((UINT16)(p[3] + (p[4] << 8)), p[2], p[5]);
+        break;
+
+    case HCI_READ_RMT_FEATURES_COMP_EVT:
+        btm_read_remote_features_complete(p + 2);
+        break;
+
+    case HCI_READ_RMT_VERSION_COMP_EVT:
+        btm_read_remote_version_complete(p + 2);
+        break;
+
+    case HCI_QOS_SETUP_COMP_EVT:
+        btu_hcif_qos_setup_comp_evt(p + 2, evt_len);
+        break;
+
+    case HCI_COMMAND_COMPLETE_EVT:
+        btu_hcif_command_complete_evt(p + 2, evt_len);
+        break;
+
+    case HCI_COMMAND_STATUS_EVT:
+        btu_hcif_command_status_evt(p + 2, evt_len);
+        break;
+
+    case HCI_HARDWARE_ERROR_EVT:
+        LogMsg_0(0x70000, "Ctlr H/w error event");
+        if (BTM_IsDeviceUp())
+            BTM_DeviceReset(0);
+        break;
+
+    case HCI_ROLE_CHANGE_EVT: {
+        UINT8 hci_status = p[2];
+        BD_ADDR bd_addr;
+        UINT8 new_role;
+        UINT8 *p_off = p + 3;
+
+        STREAM_TO_BDADDR(bd_addr, p_off);
+        new_role = p[9];
+        if (hci_status == 0)
+            l2c_link_role_changed(bd_addr, new_role);
+        btm_acl_role_changed(hci_status, bd_addr, new_role);
+        break;
+    }
+
+    case HCI_NUM_COMPL_DATA_PKTS_EVT:
+        l2c_link_process_num_completed_pkts(p + 2);
+        break;
+
+    case HCI_MODE_CHANGE_EVT: {
+        UINT16 hci_handle = (UINT16)(p[3] + (p[4] << 8));
+        UINT8 mode = p[5];
+        UINT16 interval = (UINT16)(p[6] + (p[7] << 8));
+        UINT8 hci_status = p[2];
+
+        btm_sco_chk_pend_unpark(hci_status, hci_handle);
+        btm_pm_proc_mode_change(hci_status, hci_handle, mode, interval);
+        hidd_pm_proc_mode_change(hci_status, mode, interval);
+        break;
+    }
+
+    case HCI_RETURN_LINK_KEYS_EVT:
+        if (*(p + 2) != 0) {
+            *(p + 1) = 1;
+            btm_return_link_keys_evt(p + 1);
+        }
+        break;
+
+    case HCI_PIN_CODE_REQUEST_EVT: {
+        BD_ADDR bd_addr;
+
+        bd_addr[5] = p[2];
+        bd_addr[4] = p[3];
+        bd_addr[3] = p[4];
+        bd_addr[2] = p[5];
+        bd_addr[1] = p[6];
+        bd_addr[0] = p[7];
+        l2c_pin_code_request(bd_addr);
+        btm_sec_pin_code_request(bd_addr);
+        break;
+    }
+
+    case HCI_LINK_KEY_REQUEST_EVT: {
+        BD_ADDR bd_addr;
+
+        bd_addr[5] = p[2];
+        bd_addr[4] = p[3];
+        bd_addr[3] = p[4];
+        bd_addr[2] = p[5];
+        bd_addr[1] = p[6];
+        bd_addr[0] = p[7];
+        btm_sec_link_key_request(bd_addr);
+        break;
+    }
+
+    case HCI_LINK_KEY_NOTIFICATION_EVT:
+        btu_hcif_link_key_notification_evt(p + 2, evt_len);
+        break;
+
+    case HCI_READ_CLOCK_OFF_COMP_EVT:
+        if (*(p + 2) == 0) {
+            UINT16 hci_handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
+            UINT16 clock_offset = (UINT16)(p[5] + (p[6] << 8));
+
+            btm_process_clk_off_comp_evt(hci_handle, clock_offset);
+            btm_sec_update_clock_offset(hci_handle, clock_offset);
+        }
+        break;
+
+    case HCI_QOS_VIOLATION_EVT:
+        l2c_link_hci_qos_violation((UINT16)((p[2] + (p[3] << 8)) & 0x0FFF));
+        break;
+
+    case HCI_ESCO_CONNECTION_COMP_EVT:
+        btu_hcif_esco_connection_comp_evt(p + 2, evt_len);
+        break;
+
+    case HCI_ESCO_CONNECTION_CHANGED_EVT:
+        btm_esco_proc_conn_chg(p[2], (UINT16)(p[3] + (p[4] << 8)), p[5], p[6],
+                               (UINT16)(p[7] + (p[8] << 8)),
+                               (UINT16)(p[9] + (p[10] << 8)));
+        break;
+
+    case 0x21: /* HCI_FLOW_SPECIFICATION_COMP_EVT: no handler */
+        break;
+
+    case 0xEF:
+    case HCI_VENDOR_SPECIFIC_EVT:
+        btm_vendor_specific_evt(p + 2);
+        break;
+    }
+}
 
 /*******************************************************************************
 **

@@ -244,32 +244,36 @@ void AXFXChorusExpCallback(AXFX_BUFFERUPDATE* update, AXFX_CHORUS_EXP* fx) {
         histPos = fx->delay.lastPos >> 16;
         histIndex = fx->histIndex;
 
-        if (steps != 0) {
-            do {
-                fx->history[0][histIndex] = fx->delay.line[0][histPos];
-                fx->history[1][histIndex] = fx->delay.line[1][histPos];
-                fx->history[2][histIndex] = fx->delay.line[2][histPos];
-                histIndex = (histIndex + 1) & 3;
-                histPos++;
-                if (histPos >= fx->delay.size) {
-                    histPos = 0;
-                }
-            } while (--steps != 0);
+        while (steps != 0) {
+            fx->history[0][histIndex] = fx->delay.line[0][histPos];
+            fx->history[1][histIndex] = fx->delay.line[1][histPos];
+            fx->history[2][histIndex] = fx->delay.line[2][histPos];
+            histIndex++;
+            histIndex &= 3;
+            histPos++;
+            steps--;
+            if (histPos >= fx->delay.size) {
+                histPos = 0;
+            }
         }
 
         fx->delay.lastPos = (u32)pos & ~0xFFFFu;
         coef = __AXFXGetSrcCoef((frac >> 9) & 0x7F);
 
         for (ch = 0; ch < 3; ch++) {
-            out = 0.0f;
+            out = float_8066BED4;
             out += coef->unk0 * fx->history[ch][histIndex];
-            histIndex = (histIndex + 1) & 3;
+            histIndex++;
+            histIndex &= 3;
             out += coef->unk4 * fx->history[ch][histIndex];
-            histIndex = (histIndex + 1) & 3;
+            histIndex++;
+            histIndex &= 3;
             out += coef->unk8 * fx->history[ch][histIndex];
-            histIndex = (histIndex + 1) & 3;
+            histIndex++;
+            histIndex &= 3;
             out += coef->unkC * fx->history[ch][histIndex];
-            histIndex = (histIndex + 1) & 3;
+            histIndex++;
+            histIndex &= 3;
 
             if (fx->busIn != NULL) {
                 data = (f32)(*input[ch] + *inBus[ch]++);

@@ -73,7 +73,9 @@ public:
 
     f32 CalcLineWidth(const T* pStr, int len);
     f32 CalcStringWidth(const T* pStr, int len) const;
+    f32 CalcStringWidth(const T* pStr) const;
     void CalcStringRect(Rect* pRect, const T* pStr, int len) const;
+    void CalcStringRect(Rect* pRect, const T* pStr) const;
 
     f32 CalcStringHeight(const T* pStr, int len) const;
     f32 CalcStringHeight(const T* pStr) const;

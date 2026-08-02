@@ -416,8 +416,26 @@ f32 TextWriterBase<T>::CalcStringWidth(const T* pStr, int len) const {
 }
 
 template <typename T>
+f32 TextWriterBase<T>::CalcStringWidth(const T* pStr) const {
+    int len = StrLen(pStr);
+    Rect rect;
+    {
+        TextWriterBase<T> clone(*this);
+        clone.CalcStringRectImpl(&rect, pStr, len);
+    }
+    return rect.GetWidth();
+}
+
+template <typename T>
 void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
                                        int len) const {
+    TextWriterBase<T> clone(*this);
+    clone.CalcStringRectImpl(pRect, pStr, len);
+}
+
+template <typename T>
+void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr) const {
+    int len = StrLen(pStr);
     TextWriterBase<T> clone(*this);
     clone.CalcStringRectImpl(pRect, pStr, len);
 }

@@ -18,6 +18,7 @@
 namespace homebutton {
 void AxSoundMain(); // defined in HBMAxSound.cpp
 void SetSoundMode(u32 mode); // defined in HBMAxSound.cpp
+void PlaySeq(int seqId); // defined in HBMAxSound.cpp
 }
 
 /******************************************************************************
@@ -168,6 +169,53 @@ static const AnmControllerTable scAnmTable[] = {HBM_ANIM_TABLE};
 #define X(Y, Z) {res::eGrPane_##Y, res::eGrAnim_##Z},
 static const AnmControllerTable scGroupAnmTable[] = {HBM_GROUP_ANIM_TABLE};
 #undef X
+
+/* Retail keeps all of these helpers inlined (no out-of-line symbols exist in
+ * the retail HBMBase object); `inline` forces MWCC to inline them here and
+ * suppresses the standalone copies. */
+inline void HomeButton::play_sound(int id) {
+    int ret = 0;
+
+    if (mpHBInfo->sound_callback != NULL) {
+        ret = mpHBInfo->sound_callback(HBM_SOUND_PLAY, id);
+    }
+
+    if (ret == 0) {
+        PlaySeq(id);
+    }
+}
+
+inline int HomeButton::findAnimator(int pane, int anm) {
+    for (int i = 0; i < mAnmNum; i++) {
+        if (scAnmTable[i].pane == pane && scAnmTable[i].anm == anm) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+inline int HomeButton::findGroupAnimator(int grPane, int grAnm) {
+    for (int i = 0; i < res::eGrAnimator_Max; i++) {
+        if (scGroupAnmTable[i].pane == grPane &&
+            scGroupAnmTable[i].anm == grAnm) {
+
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+inline void HomeButton::BlackFader::init(int maxFrame) {
+    frame_ = 0;
+    maxFrame_ = maxFrame;
+    state_ = 0;
+}
+
+inline bool HomeButton::isActive() const {
+    return mState == 2;
+}
 
 HomeButton* HomeButton::spHomeButtonObj = NULL;
 OSMutex HomeButton::sMutex;
@@ -686,6 +734,9 @@ void HomeButton::init() {
     }
 
     mInitFlag = true;
+    mAppVolume[3] = 1; // "home button sound active" latch (retail 0x5CA)
+
+    WPADStopSimpleSync();
 
     mForceSttInitProcFlag = false;
     mForceSttFadeInProcFlag = false;
@@ -693,12 +744,18 @@ void HomeButton::init() {
     mForceStopSyncFlag = false;
     mSimpleSyncCallback = NULL;
 
-    iReConnectTime =
-        scReConnectTime / getInstance()->getHBMDataInfo()->frameDelta;
-    iReConnectTime2 =
-        scReConnectTime2 / getInstance()->getHBMDataInfo()->frameDelta;
+    iReConnectTime = static_cast<int>(
+        3600.0f / getInstance()->getHBMDataInfo()->frameDelta);
+    iReConnectTime2 = static_cast<int>(
+        3570.0f / getInstance()->getHBMDataInfo()->frameDelta);
 
-    if (mSelectBtnNum != HBM_SELECT_BTN3) {
+    if (mEndInitSoundFlag) {
+        AXFXReverbHiShutdown(&mAxFxReverb);
+        AXRegisterAuxACallback(mAuxCallback, mpAuxContext);
+        AXFXSetHooks(mAxFxAlloc, mAxFxFree);
+        AXSetAuxAReturnVolume(mAppVolume[0]);
+        AXSetAuxBReturnVolume(mAppVolume[1]);
+        AXSetAuxCReturnVolume(mAppVolume[2]);
         mEndInitSoundFlag = false;
     }
 
@@ -711,19 +768,34 @@ void HomeButton::init() {
     mReassignedFlag = false;
 
     mpPaneManager->init();
+    mpPaneManager->setAllComponentTriggerTarget(false);
+
+    for (i = 0; i < mButtonNum; i++) {
+        mpPaneManager->getPaneComponentByPane(
+            mpLayout->GetRootPane()->FindPaneByName(scBtnName[i], true))
+            ->setTriggerTarget(true);
+    }
+
     updateTrigPane();
 
     nw4hbm::ut::Rect layoutRect = mpLayout->GetLayoutRect();
     mDrawInfo.SetViewRect(layoutRect);
     mpLayout->CalculateMtx(mDrawInfo);
 
+    nw4hbm::math::VEC2 cursorPos(-1000.0f, -1000.0f);
+
     for (i = 0; i < res::eCursorLyt_Max; i++) {
         mpCursorLayout[i]->CalculateMtx(mDrawInfo);
+        mpCursorLayout[i]->GetRootPane()
+            ->FindPaneByName(scCursorPaneName, true)
+            ->SetTranslate(cursorPos);
     }
 
-    reset_guiManager(-1);
+    for (i = 0; i < 8; i++) {
+        mpPaneManager->update(i, -10000.0f, -10000.0f, 0, 0, 0, NULL);
+    }
 
-    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+    for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         mPadDrawTime[i] = 0;
 
         mpController[i]->setInValidPos();
@@ -740,6 +812,12 @@ void HomeButton::init() {
     mpLayout->GetRootPane()
         ->FindPaneByName(scFuncPaneName[res::eFuncPane_let_icn_00], true)
         ->SetVisible(false);
+    mpLayout->GetRootPane()->FindPaneByName("N_cntrl_01", true)
+        ->SetVisible(true);
+    mpLayout->GetRootPane()->FindPaneByName("bar_00", true)
+        ->SetVisible(true);
+    mpLayout->GetRootPane()->FindPaneByName("bar_10", true)
+        ->SetVisible(true);
 
     for (i = res::eFuncTouchPane_B_optnBtn_00;
          i < res::eFuncTouchPane_B_optnBtn_20 + 1; i++) {
@@ -757,19 +835,11 @@ void HomeButton::init() {
 
     mpRemoteSpk->Start();
 
-    /*
-    if (mpSoundArchivePlayer != NULL) {
-        nw4hbm::ut::detail::AutoLock<OSMutex> lock(sMutex);
-
-        for (i = 0; i < mpSoundArchivePlayer->GetSoundPlayerCount(); i++) {
-            mpSoundArchivePlayer->GetSoundPlayer(i).SetVolume(1.0f);
-        }
-    }
-    */
-
     calc(NULL);
 
-    mFader.init(30.0f / getInstance()->getHBMDataInfo()->frameDelta);
+    mFader.init(static_cast<int>(
+        30.0f / getInstance()->getHBMDataInfo()->frameDelta));
+    mFader.mBlackOutFlag = true;
 }
 
 void HomeButton::init_msg() {
@@ -1858,8 +1928,6 @@ void HomeButton::update(const HBMControllerData* pController) {
 }
 
 void HomeButton::update_controller(int id) {
-    int idx;
-
     if (isActive()) {
         HBController* pController = mpController[id]->getController();
 
@@ -1874,21 +1942,21 @@ void HomeButton::update_controller(int id) {
         mpPaneManager->update(id, x, -y, pController->trig, pController->hold,
                               pController->release, pController);
 
-        // Were they testing prototype controllers?
-        if (((pController->trig & (PAD_BUTTON_START << 16)) |
-             (pController->trig & WPAD_BUTTON_HOME)) &&
-            isActive()) {
-
+        if ((pController->trig & WPAD_BUTTON_HOME) && isActive()) {
             if (mSequence == eSeq_Control) {
+                mpLayout->GetRootPane()
+                    ->FindPaneByName("bar_00", true)
+                    ->SetVisible(true);
+
                 mpPaneManager->update(id, 0.0f, -180.0f, 0, 0, 0, NULL);
 
-                mpPairGroupAnmController[res::ePairAnm_hmMenu_bar_psh]->start();
+                mpPairGroupAnmController[res::ePairAnm_hmMenu_bar_psh]
+                    ->start();
 
                 mSelectAnmNum = res::ePairAnm_close_bar_psh;
                 mpPairGroupAnmController[mSelectAnmNum]->start();
 
-                int idx = res::ePairAnm_cntrl_dwn;
-                mpPairGroupAnmController[idx]->start();
+                mpPairGroupAnmController[res::ePairAnm_cntrl_dwn]->start();
 
                 mState = 10;
                 mSequence = eSeq_Normal;
@@ -1917,18 +1985,14 @@ void HomeButton::update_controller(int id) {
                 mState = 14;
                 play_sound(HBM_SE_RETURN_APP);
             }
-
         } else if (mSequence == eSeq_Control && isActive()) {
-
-            // Were they testing prototype controllers?
-            if ((pController->trig & WPAD_BUTTON_MINUS) ||
-                (pController->trig & (PAD_BUTTON_LEFT << 16))) {
-
+            if (pController->trig & WPAD_BUTTON_MINUS) {
                 if (mVolumeNum > 0) {
                     mVolumeNum--;
 
-                    idx = findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
-                                            res::eGrAnim_sound_ylw);
+                    int idx =
+                        findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
+                                          res::eGrAnim_sound_ylw);
                     mpGroupAnmController[idx]->stop();
 
                     idx = findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
@@ -1946,8 +2010,7 @@ void HomeButton::update_controller(int id) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     } else {
                         play_sound(HBM_SE_VOLUME_MINUS);
@@ -1956,21 +2019,17 @@ void HomeButton::update_controller(int id) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     }
-
                 } else {
                     play_sound(HBM_SE_NOTHING_DONE);
                 }
-
-            } else if ((pController->trig & WPAD_BUTTON_PLUS) ||
-                       (pController->trig & (PAD_BUTTON_RIGHT << 16))) {
-
+            } else if (pController->trig & WPAD_BUTTON_PLUS) {
                 if (mVolumeNum < HBM_MAX_VOLUME) {
-                    idx = findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
-                                            res::eGrAnim_sound_gry);
+                    int idx =
+                        findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
+                                          res::eGrAnim_sound_gry);
                     mpGroupAnmController[idx]->stop();
 
                     idx = findGroupAnimator(mVolumeNum + res::eGrPane_vol_00,
@@ -1990,8 +2049,7 @@ void HomeButton::update_controller(int id) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     } else {
                         play_sound(HBM_SE_VOLUME_PLUS);
@@ -2000,17 +2058,14 @@ void HomeButton::update_controller(int id) {
                             getController(i)->setSpeakerVol(
                                 mVolumeNum / static_cast<f32>(HBM_MAX_VOLUME));
 
-                            //getController(i)->playSound(mpSoundArchivePlayer,
-                            //                            HBM_SPK_SE_CONNECT1);
+                            getController(i)->playSound(HBM_SPK_SE_CONNECT1);
                         }
                     }
-
                 } else {
                     play_sound(HBM_SE_NOTHING_DONE);
                 }
             }
         }
-
     } else if (mSequence == eSeq_Control && mState == 5 &&
                !mpPairGroupAnmController[mSelectAnmNum]->isPlaying()) {
 
@@ -2876,10 +2931,6 @@ void HomeButton::reset_guiManager(int num) {
     }
 }
 
-bool HomeButton::isActive() const {
-    return mState == 2;
-}
-
 bool HomeButton::isUpBarActive() const {
     bool flag = true;
 
@@ -2935,28 +2986,6 @@ int HomeButton::getPaneNo(const nw4hbm::lyt::Pane* pPane) {
     }
 
     return ret;
-}
-
-int HomeButton::findAnimator(int pane, int anm) {
-    for (int i = 0; i < mAnmNum; i++) {
-        if (scAnmTable[i].pane == pane && scAnmTable[i].anm == anm) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-int HomeButton::findGroupAnimator(int grPane, int grAnm) {
-    for (int i = 0; i < res::eGrAnimator_Max; i++) {
-        if (scGroupAnmTable[i].pane == grPane &&
-            scGroupAnmTable[i].anm == grAnm) {
-
-            return i;
-        }
-    }
-
-    return -1;
 }
 
 HBMSelectBtnNum HomeButton::getSelectBtnNum() {
@@ -3128,12 +3157,6 @@ void HomeButton::startBlackOut() {
     }
 }
 
-void HomeButton::BlackFader::init(int maxFrame) {
-    frame_ = 0;
-    maxFrame_ = maxFrame;
-    state_ = 0;
-}
-
 void HomeButton::BlackFader::calc() {
     if (state_ == 1)
         frame_++;
@@ -3241,24 +3264,6 @@ void HomeButton::update_sound() {
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++)
         mpController[i]->updateSound();
-}
-
-void HomeButton::play_sound(int id) {
-    int ret = 0;
-
-    if (mpHBInfo->sound_callback != NULL) {
-        ret = mpHBInfo->sound_callback(HBM_SOUND_PLAY, id);
-    }
-
-    /*
-    if (ret != 0 || mpSoundArchivePlayer == NULL || mpSoundHandle == NULL) {
-        return;
-    }
-
-    nw4hbm::ut::detail::AutoLock<OSMutex> lock(sMutex);
-    mpSoundHandle->DetachSound();
-    mpSoundArchivePlayer->StartSound(mpSoundHandle, id);
-    */
 }
 
 void HomeButton::fadeout_sound(f32 gain) {

@@ -95,7 +95,11 @@ private:
         int frame_;         // at 0x0
         int maxFrame_;      // at 0x4
         int state_;         // at 0x8
+
+    public:
         bool mBlackOutFlag; // at 0xC (1 = draw fader color, 0 = force black)
+
+    private:
         u8 red_;            // at 0xD
         u8 green_;          // at 0xE
         u8 blue_;           // at 0xF
@@ -283,9 +287,9 @@ private:
     OSAlarm mAlarm[WPAD_MAX_CONTROLLERS];                  // at 0x408
     OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];           // at 0x4C8
     OSAlarm mSimpleSyncAlarm;                              // at 0x588
-    int iReConnectTime;                                    // at 0x5B8
-    int iReConnectTime2;                                   // at 0x5BC
-    int mSoundRetryCount;                                  // at 0x5C0 (retail; sound-retry limit, init()/calc())
+    int unk5B8;                                              // at 0x5B8 (retail; ctor/calc blackout-related counter)
+    int iReConnectTime;                                    // at 0x5BC
+    int iReConnectTime2;                                   // at 0x5C0
     u16 mAppVolume[4];                                     // at 0x5C4 (retail; AUX return volumes + 4th latch)
     AXFXAllocHook mAxFxAlloc;                              // at 0x5CC
     AXFXFreeHook mAxFxFree;                                // at 0x5D0

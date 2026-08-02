@@ -6133,6 +6133,29 @@ difference.
 `HBMSYNInit` (us-803435e0), `HBMSYNQuitSynth` (us-803438e0), `HBMSYNMidiInput`
 (us-80343990) reached 100% static (FULL_MATCH) in `libs/RVL_SDK/src/revolution/hbm/syn.c`.
 
+0. **`HBMSYNInitSynth` (us-80343750) FULL_MATCH — voice-table clear loop shape (this session).**
+   Retail zeroes the 2048-entry voice table (16 ch × 0x200 B at `syn+0x408`) as an outer
+   `for (i < 16)` loop whose body is MWCC's inline 32×-unrolled `mtctr 4`/`bdnz` zero run
+   (32 `stw` per 128 B, pointer +0x128 per count). Three things make it byte-identical:
+   - **Type the region as a real field** — `u32 voiceTable[0x800]` at 0x408 (not `u8
+     voiceData[0x2000]` + casts): the 0x408 offset then folds into the store displacements
+     (`stw r30, 1032..1156(r4)`) instead of being materialized as `addi`.
+   - **Per-iteration channel pointer derived from the counter** — `HBMSYNSYNTH* ch =
+     (HBMSYNSYNTH*)((u8*)syn + i * 0x200);` inside the outer loop with `ch->voiceTable[j] = 0`
+     inside the inner one. This lands retail's exact coloring (outer IV `r3 = syn + i*0x200`,
+     inner copy `or r4, r3, r3`, counter `r5` + `cmpli r5, 16`). Failed variants: hoisting the
+     pointer out and striding `ch = ch + 0x200` gives the same structure but a 3-register
+     Chaitin rotation (39 pure reg-swaps); `u32* p = (u32*)syn->voiceData + i*128` hoists the
+     field-base `addi` into the outer IV (stores at `0(r4)`, 1 structural); flat
+     `syn->voiceTable[i*128+j]` switches to an offset IV (`add r4, r31, r3`, 1 structural);
+     `u8*` striding + `((u32*)(ch+0x408))[j]` adds a per-iteration `addi` (1 structural).
+   - **Unsigned loop counter** (`u32 i`) so the guard is `cmpli` (signed `s32` → `cmpi`, 1
+     structural).
+   The tail list-insert under `OSDisableInterrupts`/`OSRestoreInterrupts` and the `v =
+   param3 + 0x80000000` / `v>>1` / `v<<1` field triplet fell out of the natural high-level C.
+   Accepted FULL_MATCH (semantic-certified; callee `__HBMSYNResetAllControllers` is still
+   STRUCTURAL in synctrl.c, which would block SMT, so 100% static was the right target).
+
 1. **TU-owned BSS globals → base-relative addressing.** Retail `syn.s` defines
    `__HBMSYNSynthList`(+0), `__HBMSYNVoice`(+4), `__s_HBMSYNVoice`(+8, 0x4C0),
    `__init`(+0x4C8, local) in one `.bss` block and most functions address them as

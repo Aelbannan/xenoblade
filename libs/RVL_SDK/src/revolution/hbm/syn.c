@@ -33,7 +33,7 @@ typedef struct HBMSYNSYNTH {
     u8*  midiWritePtr;          // 0x3FC - current write pos in midiBuffer
     u32  midiCount;             // 0x400 - number of MIDI bytes received
     u32  activeVoiceFlag;       // 0x404 - non-zero when voices are active
-    u8   voiceData[0x2000];    // 0x408-0x2407 - per-voice state blocks
+    u32  voiceTable[0x800];     // 0x408-0x2407 - 2048 per-voice entries (16 ch x 128)
 } HBMSYNSYNTH;
 
 // ---- BSS globals (single contiguous .bss block) ----
@@ -129,6 +129,7 @@ void HBMSYNRunAudioFrame(void)
 void HBMSYNInitSynth(HBMSYNSYNTH* syn, u32* config, u32 param3)
 {
     u32 v = param3 + 0x80000000;
+    u32 i, j;
 
     syn->dataSections[0] = (u8*)config + config[0];
     syn->dataSections[1] = (u8*)config + config[1];
@@ -149,12 +150,11 @@ void HBMSYNInitSynth(HBMSYNSYNTH* syn, u32* config, u32 param3)
     syn->midiCount = 0;
     syn->activeVoiceFlag = 0;
 
-    // Clear voice data region: 16 groups x 0x200 bytes, zeroed 4 words at a time
-    {
-        u32* p = (u32*)syn->voiceData;
-        u32* end = (u32*)(syn->voiceData + sizeof(syn->voiceData));
-        while (p < end) {
-            *p++ = 0;
+    // Clear the voice table: 16 channels x 128 entries (0x200 bytes each)
+    for (i = 0; i < 16; i++) {
+        HBMSYNSYNTH* ch = (HBMSYNSYNTH*)((u8*)syn + i * 0x200);
+        for (j = 0; j < 128; j++) {
+            ch->voiceTable[j] = 0;
         }
     }
 

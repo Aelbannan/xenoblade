@@ -577,6 +577,11 @@ void __OSLaunchNextFirmware(void) {
 void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
                        s32 param5, u32 argc, void* argv);
 
+/* .sdata:0x80663248 "%d" — retail sprintf format string, referenced via
+ * sda21 from __OSBootDol (MWCC_REFERENCE §1h: fixed-size extern keeps the
+ * retail pool label instead of a TU-local @N pool symbol). */
+extern const char lbl_80665B78[8];
+
 void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
     char doloffInString[20];
     s32 argvlen;
@@ -586,7 +591,7 @@ void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
     void* saveEnd;
 
     OSGetSaveRegion(&saveStart, &saveEnd);
-    sprintf(doloffInString, "%d", doloffset);
+    sprintf(doloffInString, lbl_80665B78, doloffset);
 
     argvlen = 0;
     if (argv) {

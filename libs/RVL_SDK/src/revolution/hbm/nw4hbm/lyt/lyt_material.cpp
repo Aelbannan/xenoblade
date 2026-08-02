@@ -526,7 +526,7 @@ void Material::SetTextureNum(u8 num) {
         TexMap* const pTexMap = GetTexMapAry();
 
         for (u32 i = mGXMemNum.texMap; i < num; i++) {
-            new (&pTexMap[i]) TexMap();
+            memset(&pTexMap[i], 0, sizeof(TexMap));
         }
 
         mGXMemNum.texMap = num;

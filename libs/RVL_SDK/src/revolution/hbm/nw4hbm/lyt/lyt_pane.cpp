@@ -37,9 +37,9 @@ namespace detail {
  * PaneBase
  *
  ******************************************************************************/
-PaneBase::PaneBase() {}
-
-PaneBase::~PaneBase() {}
+// PaneBase ctor/dtor are inline in lyt_pane.h (retail emits no standalone
+// bodies: the base ctor/dtor are inlined into Pane's ctor/dtor, and the
+// PaneBase vtable is never materialized in this TU).
 
 } // namespace detail
 

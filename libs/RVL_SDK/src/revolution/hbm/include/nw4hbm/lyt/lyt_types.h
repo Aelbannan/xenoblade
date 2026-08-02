@@ -84,7 +84,8 @@ public:
     }
 
     void Reset() {
-        Set(NULL, 0, false);
+        mAnimTrans = NULL;
+        mIdx = 0;
     }
 
     AnimTransform* GetAnimTransform() const {

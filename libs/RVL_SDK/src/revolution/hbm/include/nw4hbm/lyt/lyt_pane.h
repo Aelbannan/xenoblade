@@ -36,8 +36,8 @@ namespace detail {
  ******************************************************************************/
 class PaneBase {
 public:
-    PaneBase();
-    virtual ~PaneBase(); // at 0x8
+    PaneBase() {}
+    virtual ~PaneBase() {} // at 0x8
 
 public:
     NW4R_UT_LINKLIST_NODE_DECL(); // at 0x4

@@ -635,6 +635,31 @@ UNIT_RULES: dict[str, UnitRules] = {
         # lyt_group).
         repack_after_drop=16,
     ),
+    "lyt_pane.o": UnitRules(
+        # MWCC emits unreferenced weak orphans the retail linker GC'd: the
+        # PaneBase deleting-dtor wrapper (0x40; the base ctor/dtor are inline
+        # in lyt_pane.h so ~Pane elides the base call), the implicit
+        # LinkList<Pane,4>/LinkList<AnimationLink,0> template-dtor wrappers
+        # (0x58 each, same pattern as lyt_group/lyt_layout — ~Pane inlines
+        # them down to direct ~LinkListImpl calls), and the inline RTTI
+        # accessor GetRuntimeTypeInfo__PaneCFv (0xc, NW4R_UT_RTTI_DECL; only
+        # referenced via the vtable slot 0xC, and HBMGUIManager.o supplies the
+        # weak definition the DOL link resolves). The only .data reference to
+        # the dropped dtor sits in the equally-orphaned weak __vt__PaneBase
+        # (linker-GC'd), so the full main.elf link is clean. Dropping restores
+        # the retail split layout (decomp .text 0x1280 -> 0x1150) and fits the
+        # 0x1150 budget.
+        drop_text_symbols=(
+            "__dt__Q46nw4hbm3lyt6detail8PaneBaseFv",
+            "__dt__Q36nw4hbm2ut30LinkList<Q36nw4hbm3lyt4Pane,4>Fv",
+            "__dt__Q36nw4hbm2ut40LinkList<Q36nw4hbm3lyt13AnimationLink,0>Fv",
+            "GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv",
+        ),
+        # The dropped weaks occupied mid-section 16-aligned slots; without
+        # repacking, MWCC's pre-drop padding residue leaves later survivors off
+        # the retail offsets (same fix as lyt_group/lyt_layout).
+        repack_after_drop=16,
+    ),
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
         pool_patterns=(

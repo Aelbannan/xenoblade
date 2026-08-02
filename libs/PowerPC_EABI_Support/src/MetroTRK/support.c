@@ -3,7 +3,12 @@
 #include <revolution/OS.h>
 
 
-// Custom structure used as temporary buffer for message data transmission
+// Message buffer used for Dolphin file-I/O requests.
+// Header layout (TRK_MSG_HEADER_LENGTH = 0x40 bytes): command[0] is the
+// request opcode, handle carries the DS file handle, length[0] the payload
+// size; replies put the file handle at fData+0x8, the I/O result at
+// fData+0x10, the payload length at fData+0x14 and the file position at
+// fData+0x18.
 typedef struct
 {
     u32 msg_length;
@@ -12,9 +17,8 @@ typedef struct
     u16 length[2];
     u8 data[4];
 
-    // most likely used for padding to 64 bytes
-    // (as this is the length of the whole message)
-    u8 unknown[0x2C];
+    // padding so the message is exactly 64 bytes
+    u8 pad[0x2C];
 } msgbuf_t;
 
 DSError TRK_SuppAccessFile(ui32 file_handle, ui8* data, size_t* count, DSIOResult* io_result,
@@ -148,7 +152,7 @@ DSError TRK_RequestSend(MessageBuffer* msgBuf, int* bufferId){
     return error;
 }
 
-DSError HandleOpenFileSupportRequest(const char* path, ui8 replyError, ui32* param_3, DSIOResult* ioResult){
+DSError HandleOpenFileSupportRequest(const char* path, ui8 replyError, ui32* fileId, DSIOResult* ioResult){
     DSError error;
     int bufferId2;
     int bufferId1;
@@ -157,7 +161,7 @@ DSError HandleOpenFileSupportRequest(const char* path, ui8 replyError, ui32* par
     msgbuf_t reply;
     
     TRK_memset(&reply,0,sizeof(msgbuf_t));
-    *param_3 = 0;
+    *fileId = 0;
     reply.command[0] = kDSOpenFile;
     reply.msg_length = TRK_strlen(path) + TRK_MSG_REPLY_HEADER_LENGTH;
     reply.handle[0] = replyError;
@@ -178,7 +182,7 @@ DSError HandleOpenFileSupportRequest(const char* path, ui8 replyError, ui32* par
         }
         
         *ioResult = *(ui32*)(tempBuffer->fData + 0x10);
-        *param_3 = *(ui32*)(tempBuffer->fData + 0x8);
+        *fileId = *(ui32*)(tempBuffer->fData + 0x8);
         TRK_ReleaseBuffer(bufferId2);
     }
     TRK_ReleaseBuffer(bufferId1);
@@ -225,7 +229,7 @@ DSError HandleCloseFileSupportRequest(int replyError, DSIOResult* ioResult){
 }
 
 
-DSError HandlePositionFileSupportRequest(ui32 param_1, ui32* param_2, ui8 param_3, DSIOResult* ioResult){
+DSError HandlePositionFileSupportRequest(ui32 fileHandle, ui32* position, ui8 seekMode, DSIOResult* ioResult){
     DSError error;
     int bufferId2;
     int bufferId1;
@@ -236,9 +240,9 @@ DSError HandlePositionFileSupportRequest(ui32 param_1, ui32* param_2, ui8 param_
     TRK_memset(&reply, 0, TRK_MSG_HEADER_LENGTH);
     reply.command[0] = kDSPositionFile;
     reply.msg_length = TRK_MSG_HEADER_LENGTH;
-    *(DSFileHandle *)reply.handle = param_1;
-    *(int*)reply.length = *param_2;
-    reply.data[0] = param_3;
+    *(DSFileHandle *)reply.handle = fileHandle;
+    *(int*)reply.length = *position;
+    reply.data[0] = seekMode;
     error = TRK_GetFreeBuffer(&bufferId1,&buffer1);
     
     if (error == kNoError) {
@@ -247,7 +251,7 @@ DSError HandlePositionFileSupportRequest(ui32 param_1, ui32* param_2, ui8 param_
     
     if (error == kNoError) {
         *ioResult = kDSIONoError;
-        *param_2 = -1;
+        *position = -1;
         error = TRK_RequestSend(buffer1,&bufferId2);
 
         if(error == kNoError){
@@ -255,7 +259,7 @@ DSError HandlePositionFileSupportRequest(ui32 param_1, ui32* param_2, ui8 param_
         
             if (buffer2 != NULL) {
                 *ioResult = *(ui32*)(buffer2->fData + 0x10);
-                *param_2 = *(ui32*)(buffer2->fData + 0x18);
+                *position = *(ui32*)(buffer2->fData + 0x18);
             }
         }
         

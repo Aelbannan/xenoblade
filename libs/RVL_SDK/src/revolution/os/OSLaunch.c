@@ -24,21 +24,20 @@ typedef struct NANDBootInfo {
     u8 field_0xB;        // 0x0B
     u32 launchFlags;     // 0x0C
     u8 UNK_0x10[8];      // 0x10
-    u32 titleId_hi;      // 0x18
-    u32 titleId_lo;      // 0x1C
+    ESTitleId titleId;          // 0x18
     u8 reserved[0x1000]; // 0x20
 } NANDBootInfo; // total 0x1020
 
 void __OSRelaunchTitle(u32 flags) {
     ESTicketView* ticketView;
     NANDBootInfo* bootInfo;
-    ESTitleId titleId;
+    ESTitleId titleId __attribute__((aligned(32)));
     void* buffer;
     s32 result;
     u32 count = 1;
     u32 playTimeUsed;
     s32 playTimeRemaining;
-    OSStateFlags state;
+    OSStateFlags state __attribute__((aligned(32)));
     OSSetArenaLo((void*)0x81280000);
     OSSetArenaHi((void*)0x812F0000);
 
@@ -49,7 +48,7 @@ void __OSRelaunchTitle(u32 flags) {
         __OSReturnToMenuForError();
 
     ticketView = (ESTicketView*)OSAllocFromMEM1ArenaLo(0xE0, 0x20);
-    if (ticketView == NULL)
+    if (ticketView == (ESTicketView*)NULL)
         __OSReturnToMenuForError();
 
     memset(ticketView, 0, 0xE0);
@@ -61,7 +60,7 @@ void __OSRelaunchTitle(u32 flags) {
             __OSReturnToMenuForError();
 
         buffer = OSAllocFromMEM1ArenaLo((count * 0xD8 + 0x1F) & ~0x1F, 0x20);
-        if (buffer == NULL)
+        if (buffer == (void*)NULL)
             __OSReturnToMenuForError();
 
         if (ESP_GetTicketViews(titleId, (ESTicketView*)buffer, &count) != 0)
@@ -90,8 +89,7 @@ void __OSRelaunchTitle(u32 flags) {
 
     memset(buffer, 0, 0x2000);
 
-    bootInfo->titleId_hi = ((u32*)&titleId)[0];
-    bootInfo->titleId_lo = ((u32*)&titleId)[1];
+    bootInfo->titleId = titleId;
     bootInfo->appType = OSGetAppType();
     bootInfo->field_0xB = 1;
     bootInfo->launchFlags = flags | 0x80000000;
@@ -100,7 +98,7 @@ void __OSRelaunchTitle(u32 flags) {
     __OSWriteNandbootInfo((s32*)bootInfo);
 
     __OSReadStateFlags(&state);
-    state.BYTE_0x5 = 3;
+    (&state)->BYTE_0x5 = 3;
     __OSWriteStateFlags(&state);
 
     if (ESP_LaunchTitle(titleId, ticketView) != 0)

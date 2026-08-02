@@ -890,6 +890,18 @@ answer is an inline-empty `~Color` visible at compile time in the SDK header
 rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
 0x5ac/0x5d0) — must be matched before the 0x5470 split can fit.
 
+## RVL_SDK hbm/nw4hbm ut_TextWriterBase — PrintImpl FULL_MATCH via decl-hoist + baseF local (Wii/1.1 `-O4,p`)
+
+`PrintImpl<c>` (us-8033e670) + `PrintImpl<w>` (us-80341050) went 77.2%→97.0%→**100.0% FULL_MATCH** (0 structural, 0 reg-swap, exact size 0x5ac/0x5d0, semantic certificates). Three reusable levers:
+
+1. **The retail hbm PrintImpl has NO post-loop `width = GetCursorX()-context.x; textWidth = Max(...)` block** (the nw4r twin `libs/nw4r/src/ut/ut_TextWriterBase.cpp` DOES have it — do not port it). The extra block was 9 instructions AND shifted the FPR coloring so the inlined `TextWriterBase clone(*this)` blits emitted the paired-lwz schedule instead of retail's alternating `lwz r0/stw r0` ×9 (8 structural at each clone site). Removing it restored the retail blit schedule with no other change.
+2. **Declaration-hoisting `f32 textWidth;` above the `orgCursorX/orgCursorY` locals fixes the f28↔f29 value exchange** (retail orgCursorY→f28, textWidth→f29; MWCC assigned them reversed → 10 pure reg-swaps that the renaming witness can never certify because the byte-identical prologue `stfd f28/psq_st` pins rho(28)=28). Same assignment order, only the declaration position moves. Also remove the dead `useLimit = FLT_MAX < FLT_MAX` / `pPrevStream` machinery (compiled out anyway; the nw4r lineage confirms the original had it — hbm has no `mWidthLimit` so it folds to false).
+3. **`f32 baseF = (f32)(-pFont->GetBaselinePos()); MoveCursorY(baseF * scaleV);` pins the fmuls operand order** — retail `fmuls f1,f0,f26` vs MWCC's `fmuls f1,f26,f0` from every inline form (`(f32)(-x) * s`, `s * (f32)(-x)`, `-x * s`, `adj` local — cf. the UnkVirtualFunc6 soft-cap entry above). Materialising the conversion result into a named local (like `scaleV`) makes the multiply symmetric and MWCC emits frA=baseF. The f28/f29 exchange + this fmuls both create rho conflicts (matched `fsubs f0,f0,f27` pins rho(f0)=f0), so neither is witness-certifiable — only FULL_MATCH or SMT.
+
+**Status of the "GXColor regresses ut_TextWriterBase" correction above:** resolved by the explicit user-defined copy ctors/assignments now in `ut_CharWriter.h` (GXColor members + `ColorMapping(const ColorMapping&) : min(...), max(...) {}` etc.). With those, MWCC's struct-copy schedule matches retail again — PrintImpl<c>/<w> are 100% and the unit is 81/83 (only CalcLineRectImpl<c>/<w> remain at 96.4%/0 structural/9 reg-swaps, pre-existing Chaitin zero-merge split).
+
+Files: `libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp`, `ut_CharWriter.h`.
+
 **DrawSelf (us-80335c50, 0x714) reconstructed 0.9% → 51.9% hexdiff / 97.0%
 objdiff fuzzy, 0x708 body, split PASS** — six reusable levers for the
 by-value-Color + writer-copy class of lyt functions:

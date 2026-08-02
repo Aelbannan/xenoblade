@@ -26,7 +26,7 @@ typedef struct CXUncompContextLH {
 
 
 void CXInitUncompContextLH(CXUncompContextLH* context, void* dest);
-void CXReadUncompLH(CXUncompContextLH* context, const void* data, u32 len);
+s32 CXReadUncompLH(CXUncompContextLH* context, const void* data, u32 len);
 
 
 #ifdef __cplusplus

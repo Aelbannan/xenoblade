@@ -7,6 +7,41 @@ namespace {
 NW4R_G3D_RESFILE_NAME_DEF(LightSet, "LightSet(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(AmbLights, "AmbLights(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(Lights, "Lights(NW4R)");
+NW4R_G3D_RESFILE_NAME_DEF(Fog, "Fog(NW4R)");
+NW4R_G3D_RESFILE_NAME_DEF(Camera, "Camera(NW4R)");
+
+ResLightSet GetResLightSetImpl(const ResAnmScn& scn, int idx) {
+    void* pDicData = ResDic(scn.ofs_to_obj<ResDic>(
+        scn.ref().toScnTopLevelDic))[ResName(&ResNameData_LightSet)];
+
+    if (pDicData != NULL) {
+        return ResLightSet(ResDic(pDicData)[idx]);
+    }
+
+    return ResLightSet(NULL);
+}
+
+ResAnmAmbLight GetResAnmAmbLightImpl(const ResAnmScn& scn, int idx) {
+    void* pDicData = ResDic(scn.ofs_to_obj<ResDic>(
+        scn.ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)];
+
+    if (pDicData != NULL) {
+        return ResAnmAmbLight(ResDic(pDicData)[idx]);
+    }
+
+    return ResAnmAmbLight(NULL);
+}
+
+ResAnmLight GetResAnmLightImpl(const ResAnmScn& scn, int idx) {
+    void* pDicData = ResDic(scn.ofs_to_obj<ResDic>(
+        scn.ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)];
+
+    if (pDicData != NULL) {
+        return ResAnmLight(ResDic(pDicData)[idx]);
+    }
+
+    return ResAnmLight(NULL);
+}
 
 } // namespace
 
@@ -19,21 +54,6 @@ bool ResAnmScn::HasResAnmAmbLight() const {
 bool ResAnmScn::HasResAnmLight() const {
     return ResDic(ofs_to_obj<ResDic>(
                ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)] != NULL;
-}
-
-ResLightSet ResAnmScn::GetResLightSet(int idx) const {
-    void* pResLightSetDicData = ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_LightSet)];
-
-    if (pResLightSetDicData != NULL) {
-        return ResLightSet(ResDic(pResLightSetDicData)[idx]);
-    }
-
-    return ResLightSet(NULL);
-}
-
-ResLightSet ResAnmScn::GetResLightSet(u32 idx) const {
-    return GetResLightSet(static_cast<int>(idx));
 }
 
 u32 ResAnmScn::GetResLightSetNumEntries() const {
@@ -58,19 +78,8 @@ ResAnmAmbLight ResAnmScn::GetResAnmAmbLight(const ResName name) const {
     return ResAnmAmbLight(NULL);
 }
 
-ResAnmAmbLight ResAnmScn::GetResAnmAmbLight(int idx) const {
-    void* pResAnmAmbLightDicData = ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)];
-
-    if (pResAnmAmbLightDicData != NULL) {
-        return ResAnmAmbLight(ResDic(pResAnmAmbLightDicData)[idx]);
-    }
-
-    return ResAnmAmbLight(NULL);
-}
-
 ResAnmAmbLight ResAnmScn::GetResAnmAmbLight(u32 idx) const {
-    return GetResAnmAmbLight(static_cast<int>(idx));
+    return GetResAnmAmbLightImpl(*this, static_cast<int>(idx));
 }
 
 ResAnmLight ResAnmScn::GetResAnmLight(const ResName name) const {
@@ -84,19 +93,8 @@ ResAnmLight ResAnmScn::GetResAnmLight(const ResName name) const {
     return ResAnmLight(NULL);
 }
 
-ResAnmLight ResAnmScn::GetResAnmLight(int idx) const {
-    void* pResAnmLightDicData = ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)];
-
-    if (pResAnmLightDicData != NULL) {
-        return ResAnmLight(ResDic(pResAnmLightDicData)[idx]);
-    }
-
-    return ResAnmLight(NULL);
-}
-
 ResAnmLight ResAnmScn::GetResAnmLight(u32 idx) const {
-    return GetResAnmLight(static_cast<int>(idx));
+    return GetResAnmLightImpl(*this, static_cast<int>(idx));
 }
 
 ResLightSet ResAnmScn::GetResLightSetByRefNumber(u32 refNumber) const {
@@ -185,7 +183,7 @@ bool ResAnmScn::Bind(const ResAnmScn scene) {
     bool success = true;
 
     for (u32 i = 0; i < lightSetNum; i++) {
-        ResLightSet set = GetResLightSet(i);
+        ResLightSet set = GetResLightSetImpl(*this, static_cast<int>(i));
         success = set.Bind(scene) && success;
     }
 
@@ -195,9 +193,74 @@ bool ResAnmScn::Bind(const ResAnmScn scene) {
 } // namespace g3d
 } // namespace nw4r
 
-void GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
-void GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
-void GetResAnmFog__Q34nw4r3g3d9ResAnmScnCFUl(){}
-void GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
-void GetResAnmCamera__Q34nw4r3g3d9ResAnmScnCFUl(){}
-void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
+namespace nw4r {
+namespace g3d {
+
+u32 ResAnmScn::GetResAnmAmbLightNumEntries() const {
+    void* pDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_AmbLights)];
+
+    if (pDicData != NULL) {
+        return ResDic(pDicData).GetNumData();
+    }
+
+    return 0;
+}
+
+u32 ResAnmScn::GetResAnmLightNumEntries() const {
+    void* pDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_Lights)];
+
+    if (pDicData != NULL) {
+        return ResDic(pDicData).GetNumData();
+    }
+
+    return 0;
+}
+
+ResAnmFog ResAnmScn::GetResAnmFog(u32 idx) const {
+    void* pResAnmFogDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)];
+
+    if (pResAnmFogDicData != NULL) {
+        return ResAnmFog(ResDic(pResAnmFogDicData)[idx]);
+    }
+
+    return ResAnmFog(NULL);
+}
+
+u32 ResAnmScn::GetResAnmFogNumEntries() const {
+    void* pDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)];
+
+    if (pDicData != NULL) {
+        return ResDic(pDicData).GetNumData();
+    }
+
+    return 0;
+}
+
+ResAnmCamera ResAnmScn::GetResAnmCamera(u32 idx) const {
+    void* pResAnmCameraDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_Camera)];
+
+    if (pResAnmCameraDicData != NULL) {
+        return ResAnmCamera(ResDic(pResAnmCameraDicData)[idx]);
+    }
+
+    return ResAnmCamera(NULL);
+}
+
+u32 ResAnmScn::GetResAnmCameraNumEntries() const {
+    void* pDicData = ResDic(ofs_to_obj<ResDic>(
+        ref().toScnTopLevelDic))[ResName(&ResNameData_Camera)];
+
+    if (pDicData != NULL) {
+        return ResDic(pDicData).GetNumData();
+    }
+
+    return 0;
+}
+
+} // namespace g3d
+} // namespace nw4r

@@ -204,17 +204,13 @@ void ResVtxFurPos::SetArray(unsigned short idx) {
 
     ResVtxFurPosData& r = ref();
 
-    // Two-step validation pattern matches retail codegen
-    int index = idx;
-    int nLayer = r.numLayer;
-
     int valid = 0;
     int hasArray = 0;
-    if (r.toFurPosArray != 0 && index < nLayer) {
+    if (r.toFurPosArray != 0 && (s32)idx < (s32)r.numLayer) {
         hasArray = 1;
     }
     if (hasArray != 0) {
-        if (index >= 0) {
+        if ((s32)idx >= 0) {
             valid = 1;
         }
     }

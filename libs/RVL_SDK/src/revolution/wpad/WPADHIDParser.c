@@ -991,6 +991,7 @@ void __wpadAbortInitExtension(s32 chan, s32 result) {
             devType = 0xFD;
         } else if (cb->wpInfo.attach) {
             if (_wpadExtInitRetryCnt[chan]++ < 0x20) {
+                cb = __rvl_p_wpadcb[chan];
                 WPADiClearQueue(&cb->extCmdQueue);
                 WPADiSendSetReportType(&cb->extCmdQueue, cb->dataFormat, cb->UNK_0x98E,
                                        __wpadAbortInitExtension);
@@ -1005,9 +1006,9 @@ void __wpadAbortInitExtension(s32 chan, s32 result) {
             }
             devType = 0xFC;
         } else {
-            DEBUGPrint(WPAD_DBG_MSG(0x80));
+            DEBUGPrint(__wpadDebugStrings);
             WPADiSendSetReportType(&cb->extCmdQueue, cb->dataFormat, cb->UNK_0x98E, NULL);
-            devType = (u8)cb->dataFormat;
+            return;
         }
 
         cb->devType = devType;
@@ -1752,6 +1753,7 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
 void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADStatusEx* st = status;
     BOOL enable;
 
     if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
@@ -1771,13 +1773,15 @@ void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                          (s16)((s16)((u16)(data[1] >> 6)) & (s16)0x0002))) -
-                   (s16)cb->devConfig.accX0g;
-    status->accZ = (s16)((s16)status->accZ |
-                   (s16)((s16)((s16)((s16)((s16)data[2]) << 3) & (s16)0xFF00) |
-                         (s16)((s16)((u16)(data[1] << 1)) & (s16)0x00C0)));
+                   (s16)(*(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2)))->devConfig.accX0g;
+    {
+        s16 accz = status->accZ;
+        status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[2]) << 3) & (s16)0xFF00) |
+                            (s16)((s16)((u16)(data[1] << 1)) & (s16)0x00C0)) | accz);
+    }
 
-    __parse_dpdex_data(chan, &status, 0, data + 4, 0);
-    __parse_dpdex_data(chan, &status, 1, data + 13, 0);
+    __parse_dpdex_data(chan, &st, 0, data + 4, 0);
+    __parse_dpdex_data(chan, &st, 1, data + 13, 0);
 
     enable = OSDisableInterrupts();
     _recv_3e[chan] = 1;
@@ -1794,6 +1798,7 @@ void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
 void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADStatusEx* st = status;
     BOOL enable;
 
     if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
@@ -1813,13 +1818,13 @@ void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                          (s16)((s16)((u16)(data[1] >> 6)) & (s16)0x0002))) -
-                   (s16)cb->devConfig.accY0g;
+                   (s16)(*(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2)))->devConfig.accY0g;
     status->accZ = (s16)((s16)status->accZ |
                    (s16)((s16)((u16)(((u16)(data[1] >> 5) & 0x3) << 2)) |
                          (s16)((u16)(((u16)(data[2] >> 5) & 0x3) << 4))));
 
-    __parse_dpdex_data(chan, &status, 2, data + 4, 0);
-    __parse_dpdex_data(chan, &status, 3, data + 13, 0);
+    __parse_dpdex_data(chan, &st, 2, data + 4, 0);
+    __parse_dpdex_data(chan, &st, 3, data + 13, 0);
 
     enable = OSDisableInterrupts();
     _recv_3f[chan] = 1;

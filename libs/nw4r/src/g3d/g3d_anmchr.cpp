@@ -118,9 +118,6 @@ void Attach__Q34nw4r3g3d13AnmObjChrNodeFiPQ34nw4r3g3d12AnmObjChrRes(){}
 
 void Detach__Q34nw4r3g3d13AnmObjChrNodeFi(){}
 
-void DetachAll__Q34nw4r3g3d13AnmObjChrNodeFv(){}
-
-void UpdateFrame__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
 namespace nw4r {
 namespace g3d {
@@ -161,6 +158,20 @@ f32 AnmObjChrNode::GetUpdateRate() const {
         }
     }
     return lbl_eu_80669B8C;
+}
+
+void AnmObjChrNode::DetachAll() {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        Detach(i);
+    }
+}
+
+void AnmObjChrNode::UpdateFrame() {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            mpChildrenArray[i]->UpdateFrame();
+        }
+    }
 }
 
 } // namespace g3d

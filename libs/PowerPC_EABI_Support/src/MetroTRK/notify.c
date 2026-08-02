@@ -4,12 +4,12 @@
 #include "PowerPC_EABI_Support/MetroTRK/support.h"
 
 DSError TRKDoNotifyStopped(MessageCommandID cmdId) {
-    int sp8;
-    int spC;
+    int replyBufferId;
+    int bufferId;
     MessageBuffer* buffer;
     DSError result;
 
-    result = TRK_GetFreeBuffer(&spC, &buffer);
+    result = TRK_GetFreeBuffer(&bufferId, &buffer);
 
     if(result == kNoError) {
         if(cmdId == kDSNotifyStopped) {
@@ -18,13 +18,13 @@ DSError TRKDoNotifyStopped(MessageCommandID cmdId) {
             TRKTargetAddExceptionInfo(buffer);
         }
 
-        result = TRK_RequestSend(buffer, &sp8);
+        result = TRK_RequestSend(buffer, &replyBufferId);
 
         if(result == kNoError) {
-            TRK_ReleaseBuffer(sp8);
+            TRK_ReleaseBuffer(replyBufferId);
         }
 
-        TRK_ReleaseBuffer(spC);
+        TRK_ReleaseBuffer(bufferId);
     }
 
     return result;

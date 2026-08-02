@@ -8,9 +8,9 @@ static inline ui8 ppc_readbyte1(const ui8* ptr) {
 static inline void ppc_writebyte1(ui8* ptr, ui8 val) {
     ui32* alignedPtr = (ui32*)((ui32)ptr & ~3);
     ui32 v = *alignedPtr;
-    ui32 uVar3 = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
-    ui32 iVar1 = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
-    *alignedPtr = (v & ~uVar3) | (uVar3 & (val << iVar1));
+    ui32 byteMask = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
+    ui32 shift = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
+    *alignedPtr = (v & ~byteMask) | (byteMask & (val << shift));
 }
 
 void* TRK_memcpy(void* dst, const void* src, int size) {

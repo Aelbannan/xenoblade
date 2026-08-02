@@ -133,9 +133,9 @@ static inline ui8 ppc_readbyte1(const ui8* ptr){
 static inline void ppc_writebyte1(ui8* ptr, ui8 val){
     ui32* alignedPtr = (ui32 *)((ui32)ptr & ~3);
     ui32 v = *alignedPtr;
-    ui32 uVar3 = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
-    ui32 iVar1 = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
-    *alignedPtr = (v & ~uVar3) | (uVar3 & (val << iVar1));
+    ui32 byteMask = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
+    ui32 shift = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
+    *alignedPtr = (v & ~byteMask) | (byteMask & (val << shift));
 }
 
 static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR) {
@@ -166,9 +166,9 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
 
 DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAccessOptions accessOptions,bool read){
     DSError error;
-    ui32 uVar5;
-    void *addr;
-    ui32 param4;
+    ui32 msr;
+    void* addr;
+    ui32 targetMSR;
     ExceptionStatus tempExceptionStatus;
 
     tempExceptionStatus = gTRKExceptionStatus;
@@ -180,13 +180,13 @@ DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAcc
     if (error != kNoError) {
          *length = 0;
     }else{
-        uVar5 = __TRK_get_MSR();
-        param4 = uVar5 | (gTRKCPUState.Extended1.MSR & MSR_DR);
+        msr = __TRK_get_MSR();
+        targetMSR = msr | (gTRKCPUState.Extended1.MSR & MSR_DR);
         
         if (read) {
-            TRK_ppc_memcpy(data, addr, *length, uVar5, param4);
+            TRK_ppc_memcpy(data, addr, *length, msr, targetMSR);
         }else{
-            TRK_ppc_memcpy(addr, data, *length, param4, uVar5);
+            TRK_ppc_memcpy(addr, data, *length, targetMSR, msr);
             TRK_flush_cache((ui32)addr, *length);
             if ((void*)start != addr) {
                 TRK_flush_cache((ui32)start, *length);

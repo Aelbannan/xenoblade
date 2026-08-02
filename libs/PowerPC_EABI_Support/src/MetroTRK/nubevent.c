@@ -12,13 +12,13 @@ typedef struct EventQueue {
 
 EventQueue gTRKEventQueue;
 
-static inline DSError TRKReleaseMutex(void* p1) {
+static inline DSError TRKReleaseMutex(void* mutex) {
     return kNoError;
 }
-static inline DSError TRKAcquireMutex(void* p1) {
+static inline DSError TRKAcquireMutex(void* mutex) {
     return kNoError;
 }
-static inline DSError TRKInitializeMutex(void* p1) {
+static inline DSError TRKInitializeMutex(void* mutex) {
     return kNoError;
 }
 

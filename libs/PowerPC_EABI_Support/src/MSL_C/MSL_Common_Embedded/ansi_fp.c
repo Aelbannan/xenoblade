@@ -68,10 +68,10 @@ static void __dorounddecup(decimal* d, int digits) {
 
 static void __rounddec(decimal* d, int digits) {
     if(digits > 0 && digits < d->sig.length) {
-        int unkBool = __must_round(d, digits);
+        int roundResult = __must_round(d, digits);
         d->sig.length = digits;
 
-        if(unkBool >= 0) {
+        if(roundResult >= 0) {
             __dorounddecup(d, digits);
         }
     }

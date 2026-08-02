@@ -1,11 +1,11 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
 double scalbn(double x, int y) {
-    int sp8;
+    int exp;
 
-    double temp_f1 = frexp(x, &sp8);
-    sp8 += y;
-    return ldexp(temp_f1, sp8);
+    double frac = frexp(x, &exp);
+    exp += y;
+    return ldexp(frac, exp);
 }
 
 //not present in the retail binary; kept commented out for reference

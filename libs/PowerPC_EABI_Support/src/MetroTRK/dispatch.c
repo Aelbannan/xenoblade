@@ -2,49 +2,49 @@
 
 DSError TRK_DispatchMessage(MessageBuffer* buffer) {
     DSError result = kDispatchError;
-    MessageBuffer* temp = buffer;
+    MessageBuffer* msg = buffer;
     ui8 command;
 
     TRK_SetBufferPosition(buffer, 0);
 
-    command = temp->fData[4];
+    command = msg->fData[4];
 
     switch(command) {
         case kDSConnect:
-            result = TRK_DoConnect(temp);
+            result = TRK_DoConnect(msg);
             break;
         case kDSDisconnect:
-            result = TRKDoDisconnect(temp);
+            result = TRKDoDisconnect(msg);
             break;
         case kDSReset:
-            result = TRKDoReset(temp);
+            result = TRKDoReset(msg);
             break;
         case kDSOverride:
-            result = TRKDoOverride(temp);
+            result = TRKDoOverride(msg);
             break;
         case kDSReadMemory:
-            result = TRKDoReadMemory(temp);
+            result = TRKDoReadMemory(msg);
             break;
         case kDSWriteMemory:
-            result = TRKDoWriteMemory(temp);
+            result = TRKDoWriteMemory(msg);
             break;
         case kDSReadRegisters:
-            result = TRKDoReadRegisters(temp);
+            result = TRKDoReadRegisters(msg);
             break;
         case kDSWriteRegisters:
-            result = TRKDoWriteRegisters(temp);
+            result = TRKDoWriteRegisters(msg);
             break;
         case kDSContinue:
-            result = TRKDoContinue(temp);
+            result = TRKDoContinue(msg);
             break;
         case kDSStep:
-            result = TRKDoStep(temp);
+            result = TRKDoStep(msg);
             break;
         case kDSStop:
-            result = TRKDoStop(temp);
+            result = TRKDoStop(msg);
             break;
         case kDSSetOption:
-            result = TRKDoSetOption(temp);
+            result = TRKDoSetOption(msg);
             break;
     }
     return result;

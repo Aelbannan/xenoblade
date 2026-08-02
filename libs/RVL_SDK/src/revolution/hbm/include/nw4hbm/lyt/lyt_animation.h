@@ -124,14 +124,16 @@ class AnimTransform {
 public:
     AnimTransform() : mpRes(NULL), mFrame(0.0f) {}
 
-    void SetResource(const res::AnimationBlock* pBlock,
-                    ResourceAccessor* pAccessor); // at 0xC
+    virtual ~AnimTransform() {}
 
-    void Bind(Pane* pPane, bool recursive); // at 0x10
-    void Bind(Material* pMaterial);         // at 0x14
+    virtual void SetResource(const res::AnimationBlock* pBlock,
+                             ResourceAccessor* pAccessor) = 0; // at 0xC
 
-    void Animate(u32 idx, Pane* pPane);         // at 0x18
-    void Animate(u32 idx, Material* pMaterial); // at 0x1C
+    virtual void Bind(Pane* pPane, bool recursive) = 0; // at 0x10
+    virtual void Bind(Material* pMaterial) = 0;         // at 0x14
+
+    virtual void Animate(u32 idx, Pane* pPane) = 0;         // at 0x18
+    virtual void Animate(u32 idx, Material* pMaterial) = 0; // at 0x1C
 
     u16 GetFrameSize() const;
 

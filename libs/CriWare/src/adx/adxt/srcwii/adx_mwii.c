@@ -10,6 +10,8 @@ extern void ADXM_ShutdownThrd(void);
 extern void ADXMNG_SetFramework(u32 val);
 extern void ADXMNG_CallMainServerFunctions(void);
 extern void SVM_ExecSvrFs(void);
+extern void SVM_CallErr1(const char* msg);
+extern char lbl_eu_805196D4[];
 
 // Base struct for the ADXM framework state at lbl_eu_805F3A50.
 // Accessed by adxm_safe_proc, adxm_fs_proc, and adxm_unlock.
@@ -75,7 +77,26 @@ void adxm_unlock(void) {
     }
 }
 
-void adxm_goto_mwidle_border() {}
+void adxm_goto_mwidle_border(void) {
+    u8* base = (u8*)&lbl_eu_805F3A50;
+    u32 prio;
+    s32 spin = 0;
+
+    if (*(s32*)(base + 0x390) != 1)
+        return;
+    prio = *(u32*)(base + 0x28);
+    *(u32*)(base + 0x44) = 1;
+    OSSetThreadPriority((OSThread*)(base + 0x398), *(s32*)(base + 0x10));
+    do {
+        OSResumeThread((OSThread*)(base + 0x398));
+        if (*(u32*)(base + 0x44) == 0)
+            break;
+        spin++;
+    } while (spin < 0xBEBC200);
+    if ((u32)(spin + 0xF4150000) <= 0xC200)
+        SVM_CallErr1((const char*)lbl_eu_805196D4);
+    OSSetThreadPriority((OSThread*)(base + 0x398), (s32)prio);
+}
 
 void adxm_safe_proc(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;

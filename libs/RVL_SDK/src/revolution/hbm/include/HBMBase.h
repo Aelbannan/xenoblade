@@ -92,12 +92,13 @@ private:
         }
 
     private:
-        int frame_;    // at 0x0
-        int maxFrame_; // at 0x4
-        int state_;    // at 0x8
-        u8 red_;       // at 0xD
-        u8 green_;     // at 0xE
-        u8 blue_;      // at 0xF
+        int frame_;         // at 0x0
+        int maxFrame_;      // at 0x4
+        int state_;         // at 0x8
+        bool mBlackOutFlag; // at 0xC (1 = draw fader color, 0 = force black)
+        u8 red_;            // at 0xD
+        u8 green_;          // at 0xE
+        u8 blue_;           // at 0xF
     };
 
 public:

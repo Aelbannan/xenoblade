@@ -46,13 +46,17 @@ DECOMP_FORCEACTIVE(HBMBase_cpp, (GXColor){0, 0, 0, 255});
 extern void* HBMAllocMem(u32 size);
 extern void HBMFreeMem(void* pBlock);
 
-/* Retail keeps the WPADInfo array as a static (sWpadInfo) rather than a
- * member; the exact linker name (mangled under cf::CfPadTask) is reproduced
- * with an extern "C" definition so the reloc names match the retail object.
- * The HomeButton layout member at 0x14C is retained solely to preserve the
- * retail object layout. */
-extern "C" WPADInfo sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton
-    [WPAD_MAX_CONTROLLERS];
+/* Retail keeps the Wiimote battery-info array as a static bss object
+ * (sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton, 0x60 bytes) rather
+ * than an instance member; calc_battery/update/init_battery all reference this
+ * static. The two-Q mangled name cannot be produced by a normal C++ member
+ * declaration (cf::CfPadTask is not nested in HomeButton), so the exact retail
+ * linker name is pinned via an extern "C" definition. The HomeButton layout
+ * member at 0x14C is retained solely to preserve the retail object layout. */
+extern "C" WPADInfo
+    sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[WPAD_MAX_CONTROLLERS] =
+        {};
+
 
 static HBMAllocatorType getAllocatorType(const HBMDataInfo* pDataInfo) {
     if (pDataInfo->pAllocator != NULL) {
@@ -141,6 +145,9 @@ namespace homebutton {
 
 // Prototypes
 void SimpleSyncCallback(s32 result, s32 num);
+static void initgx();
+static void drawBlackPlate(f32 left, f32 top, f32 right, f32 bottom,
+                           GXColor clr);
 
 struct AnmControllerTable {
     int pane; // at 0x0
@@ -879,7 +886,8 @@ void HomeButton::init_battery(const HBMControllerData* pController) {
             mpGroupAnmController[idx]->start();
 
             mControllerFlag[i] = true;
-            getController(i)->getInfoAsync(&mWpadInfo[i]);
+            getController(i)->getInfoAsync(
+                &sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[i]);
         } else {
             if (!mpHBInfo->cursor) {
                 mpCursorLayout[i]
@@ -1541,6 +1549,31 @@ void HomeButton::calc_battery(int chan) {
 }
 
 void HomeButton::draw() {
+    GXSetFog(GX_FOG_NONE, (GXColor){0, 0, 0, 255}, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    GXSetTexCoordScaleManually(GX_TEXCOORD0, GX_FALSE, 0, 0);
+    GXSetTexCoordCylWrap(GX_TEXCOORD0, GX_FALSE, GX_FALSE);
+    GXSetTexCoordScaleManually(GX_TEXCOORD1, GX_FALSE, 0, 0);
+    GXSetTexCoordCylWrap(GX_TEXCOORD1, GX_FALSE, GX_FALSE);
+
+    initgx();
+
+    GXSetTevColor(GX_TEVREG0, (GXColor){0, 0, 0, 255});
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition2f32(-500.0f, 228.0f);
+    GXPosition2f32(-500.0f, 500.0f);
+    GXPosition2f32(500.0f, 500.0f);
+    GXPosition2f32(500.0f, 228.0f);
+
+    GXSetTevColor(GX_TEVREG0, (GXColor){0, 0, 0, 255});
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition2f32(-500.0f, -500.0f);
+    GXPosition2f32(-500.0f, -228.0f);
+    GXPosition2f32(500.0f, -228.0f);
+    GXPosition2f32(500.0f, -500.0f);
+
+    initgx();
+
     mpLayout->Draw(mDrawInfo);
 
     if (!mpHBInfo->cursor) {
@@ -3117,6 +3150,8 @@ bool HomeButton::BlackFader::isDone() {
 static void initgx() {
     Mtx view_mtx;
 
+    GXSetCullMode(GX_CULL_NONE);
+
     PSMTXIdentity(view_mtx);
     GXLoadPosMtxImm(view_mtx, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
@@ -3153,8 +3188,6 @@ static void initgx() {
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
                           GX_CH_ALPHA);
     GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
-
-    GXSetCullMode(GX_CULL_NONE);
 }
 
 static void drawBlackPlate(f32 left, f32 top, f32 right, f32 bottom,
@@ -3171,13 +3204,19 @@ static void drawBlackPlate(f32 left, f32 top, f32 right, f32 bottom,
     GXEnd();
 }
 
-void HomeButton::BlackFader::draw() {
+#pragma push
+#pragma inline_max_size(10000)
+#pragma inline_max_total_size(10000)
+__inline void HomeButton::BlackFader::draw() {
     u8 alpha = frame_ * 255 / maxFrame_;
 
     initgx();
-    GXColor clr = {red_, green_, blue_, alpha};
-    drawBlackPlate(-1000.0f, -1000.0f, 1000.0f, 1000.0f, clr);
+    drawBlackPlate(-1000.0f, -1000.0f, 1000.0f, 1000.0f,
+                   mBlackOutFlag
+                       ? (GXColor){red_, green_, blue_, alpha}
+                       : (GXColor){0, 0, 0, alpha});
 }
+#pragma pop
 
 const int HomeButton::scSoundHeapSize_but2 = 0x60000;
 const int HomeButton::scSoundHeapSize_but3 = 0x6f800;

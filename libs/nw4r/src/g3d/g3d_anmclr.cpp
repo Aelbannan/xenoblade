@@ -67,7 +67,21 @@ Color Color::operator|(u32 color) const {
 } // namespace ut
 } // namespace nw4r
 
-void Release__Q34nw4r3g3d12AnmObjMatClrFv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjMatClr::Release() {
+    for (int i = 0; i < mNumBinding; i++) {
+        mpBinding[i] = BINDING_UNDEFINED;
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, false);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 int Attach__Q34nw4r3g3d12AnmObjMatClrFiPQ34nw4r3g3d15AnmObjMatClrRes(void) { return 0x0; }
 
@@ -75,11 +89,66 @@ int Detach__Q34nw4r3g3d12AnmObjMatClrFi(void) { return 0x0; }
 
 void DetachAll__Q34nw4r3g3d12AnmObjMatClrFv(void) {}
 
-void __dt__Q34nw4r3g3d12AnmObjMatClrFv(){}
+
 
 void Construct__Q34nw4r3g3d15AnmObjMatClrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmClrQ34nw4r3g3d6ResMdlb(){}
 
-void SetFrame__Q34nw4r3g3d15AnmObjMatClrResFf(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjMatClrRes::SetFrame(f32 frame) {
+    SetFrm(frame);
+
+    if (mpResultCache != NULL) {
+        f32 f = GetFrm();
+        for (u32 i = 0; i < mNumBinding; i++) {
+            u16 binding = mpBinding[i];
+            if (!(binding & BINDING_UNDEFINED)) {
+                u32 id = binding & BINDING_ID_MASK;
+                mRes.GetAnmResult(&mpResultCache[id], id, f);
+            }
+        }
+    }
+}
+
+void AnmObjMatClrRes::SetUpdateRate(f32 rate) {
+    SetRate(rate);
+
+    if (rate == 1.0f) {
+        if (mpResultCache != NULL) {
+            f32 f = GetFrm();
+            for (u32 i = 0; i < mNumBinding; i++) {
+                u16 binding = mpBinding[i];
+                if (!(binding & BINDING_UNDEFINED)) {
+                    u32 id = binding & BINDING_ID_MASK;
+                    mRes.GetAnmResult(&mpResultCache[id], id, f);
+                }
+            }
+        }
+    }
+}
+
+void AnmObjMatClrRes::UpdateFrame() {
+    if (GetRate() != 1.0f) {
+        UpdateFrm();
+
+        if (mpResultCache != NULL) {
+            f32 f = GetFrm();
+            for (u32 i = 0; i < mNumBinding; i++) {
+                u16 binding = mpBinding[i];
+                if (!(binding & BINDING_UNDEFINED)) {
+                    u32 id = binding & BINDING_ID_MASK;
+                    mRes.GetAnmResult(&mpResultCache[id], id, f);
+                }
+            }
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void SetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResFf(){}
 

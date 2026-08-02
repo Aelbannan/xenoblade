@@ -126,35 +126,33 @@ void port_select_mtu(RfcPort* port)
     u16 max_packet;
     u16 mtu_val;
 
-    if (port->mtu != 0) {
+    if (port->mtu == 0) {
+        max_packet = btm_get_max_packet_size(port->bd_addr);
+
+        if (max_packet == 0) {
+            if (rfc_cb.trace_level >= 2) {
+                LogMsg_0(0x90001, "port_select_mtu bad packet size");
+            }
+            port->mtu = 0x7F;
+            goto done;
+        }
+
+        if (max_packet <= 0x69F) {
+            port->mtu = (u16)((0x69F / max_packet) * max_packet - 0xA);
+            if (rfc_cb.trace_level >= 5) {
+                LogMsg_1(0x90004, "port_select_mtu selected %d based on connection speed", port->mtu);
+            }
+            goto done;
+        }
+
+        port->mtu = 0x695;
+        if (rfc_cb.trace_level >= 5) {
+            LogMsg_1(0x90004, "port_select_mtu selected %d based on l2cap PDU size", 0x695);
+        }
+    } else {
         if (rfc_cb.trace_level >= 5) {
             LogMsg_1(0x90004, "port_select_mtu application selected %d", port->mtu);
         }
-        goto done;
-    }
-
-    max_packet = btm_get_max_packet_size(port->bd_addr);
-    max_packet = max_packet & 0xFFFF;
-
-    if (max_packet == 0) {
-        if (rfc_cb.trace_level >= 2) {
-            LogMsg_0(0x90001, "port_select_mtu bad packet size");
-        }
-        port->mtu = 0x7F;
-        goto done;
-    }
-
-    if (max_packet <= 0x69F) {
-        port->mtu = (u16)((0x69F / max_packet) * max_packet - 0xA);
-        if (rfc_cb.trace_level >= 5) {
-            LogMsg_1(0x90004, "port_select_mtu selected %d based on connection speed", port->mtu);
-        }
-        goto done;
-    }
-
-    port->mtu = 0x695;
-    if (rfc_cb.trace_level >= 5) {
-        LogMsg_1(0x90004, "port_select_mtu selected %d based on l2cap PDU size", 0x695);
     }
 
 done:

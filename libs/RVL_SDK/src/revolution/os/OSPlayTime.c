@@ -224,9 +224,8 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
     u32 hasConsumed = 0;
     ESLpEntry entries[8];
     s32 result;
+    u32 lastUnknown = 0;
     u32 i;
-
-    // Use aligned copy if input is not 32-byte aligned
     if (((u32)ticket & 31) != 0) {
         memcpy(&aligned, ticket, sizeof(ESTicketView));
         view = &aligned;
@@ -236,8 +235,12 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
 
     // Probe for consumption data (NULL entries = probe only)
     result = ESP_GetConsumption(view->ticketID, NULL, &hasConsumed);
-    if (result == 0 && hasConsumed != 0) {
-        result = ESP_GetConsumption(view->ticketID, entries, &hasConsumed);
+    if (result > 0) {
+        /* nothing */
+    } else if (result == 0) {
+        if (hasConsumed != 0) {
+            result = ESP_GetConsumption(view->ticketID, entries, &hasConsumed);
+        }
     }
 
     if (result != 0) {
@@ -246,7 +249,6 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
 
     // Search the 8-element limits array
     {
-        u32 lastUnknown = 0;
         for (i = 0; i < 8; i++) {
             u32 code = view->limits[i].code;
             if (code == 1) {
@@ -292,9 +294,9 @@ s32 __OSGetPlayTime(ESTicketView* ticket, u32* outType, u32* outRemaining) {
 }
 
 void __OSInitPlayTime(void) {
-    ESTicketView ticketView;
-    u32 resultType;
+    ESTicketView ticketView __attribute__((aligned(32)));
     u32 remaining;
+    u32 resultType;
     s32 result;
 
     __OSExpireTime = 0;
@@ -302,15 +304,19 @@ void __OSInitPlayTime(void) {
     __OSExpireSetExpiredFlag = TRUE;
 
     result = ESP_InitLib();
-    if (result != 0) {
+    if (result == 0) {
+        result = ESP_DiGetTicketView(NULL, &ticketView);
+    } else {
         goto close_lib;
     }
 
-    result = ESP_DiGetTicketView(NULL, &ticketView);
-    if (result == 0) {
-        __OSGetPlayTime(&ticketView, &resultType, &remaining);
+    if (result == -0x3F9 || result != 0) {
+        goto check_result;
     }
-    if (result != 0 && result != -0x3F9) {
+    result = __OSGetPlayTime(&ticketView, &resultType, &remaining);
+
+check_result:
+    if (result == -0x3F9 || result != 0) {
         goto close_lib;
     }
 
@@ -325,15 +331,13 @@ void __OSInitPlayTime(void) {
     // Set up an alarm that fires when the play time expires
     {
         OSAlarm* alarm = &__OSExpireAlarm;
+        u32 busClock;
         s64 tick;
 
         OSCreateAlarm(alarm);
 
-        {
-            u32 tbFreq = *(u32*)0x800000F8 >> 2;
-            u32 secs = remaining + 20;
-            tick = (s64)secs * tbFreq;
-        }
+        busClock = *(u32*)0x800000F8;
+        tick = (s64)(remaining + 20) * (s64)(busClock >> 2);
 
         OSSetAlarm(alarm, tick, __OSPlayTimeAlarmExpired);
 

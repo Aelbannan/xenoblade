@@ -311,7 +311,107 @@ void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len)
 
     btm_sco_connected (status, bda, handle, &esco_data);
 }
-void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __attribute__((noinline)) {}void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
+/* Command-completion handlers in BTM (btm_acl / btm_inq / btm_devctl / btm_dev). */
+extern void btm_reset_complete(void);
+extern void btm_process_inq_complete(UINT8 status, UINT8* p);
+extern void btm_event_filter_complete(UINT8* p);
+extern void btm_read_stored_link_key_complete(UINT8* p);
+extern void btm_write_stored_link_key_complete(UINT8* p);
+extern void btm_delete_stored_link_key_complete(UINT8* p);
+extern void btm_read_link_policy_complete(UINT8* p);
+extern void btm_read_hci_buf_size_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_version_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_features_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_name_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_local_addr_complete(UINT8* p, UINT16 evt_len);
+extern void btm_read_link_quality_complete(UINT8* p);
+extern void btm_read_rssi_complete(UINT8* p);
+extern void btm_vsc_complete(UINT8* p, UINT16 opcode);
+
+/* HCI command opcodes with completion handlers in this dispatch (hcidefs.h). */
+#define HCI_INQUIRY_CANCEL          0x0402
+#define HCI_READ_LINK_POLICY        0x080C
+#define HCI_SET_EVENT_FILTER        0x0C05
+#define HCI_READ_STORED_LINK_KEY    0x0C0D
+#define HCI_WRITE_STORED_LINK_KEY   0x0C11
+#define HCI_DELETE_STORED_LINK_KEY  0x0C12
+#define HCI_READ_LOCAL_NAME         0x0C14
+#define HCI_READ_LOCAL_VERSION      0x1001
+#define HCI_READ_LOCAL_FEATURES     0x1003
+#define HCI_READ_BUFFER_SIZE        0x1005
+#define HCI_READ_BD_ADDR            0x1009
+#define HCI_READ_LINK_QUALITY       0x1403
+#define HCI_READ_RSSI               0x1405
+#define HCI_GRP_VENDOR_SPECIFIC     0xFC00
+
+void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len)
+{
+    switch (opcode)
+    {
+    case HCI_RESET:
+        btm_reset_complete();
+        break;
+
+    case HCI_INQUIRY_CANCEL:
+        btm_process_inq_complete(0, p);
+        break;
+
+    case HCI_SET_EVENT_FILTER:
+        btm_event_filter_complete(p);
+        break;
+
+    case HCI_READ_STORED_LINK_KEY:
+        btm_read_stored_link_key_complete(p);
+        break;
+
+    case HCI_WRITE_STORED_LINK_KEY:
+        btm_write_stored_link_key_complete(p);
+        break;
+
+    case HCI_DELETE_STORED_LINK_KEY:
+        btm_delete_stored_link_key_complete(p);
+        break;
+
+    case HCI_READ_LOCAL_VERSION:
+        btm_read_local_version_complete(p, evt_len);
+        break;
+
+    case HCI_READ_LINK_POLICY:
+        btm_read_link_policy_complete(p);
+        break;
+
+    case HCI_READ_BUFFER_SIZE:
+        btm_read_hci_buf_size_complete(p, evt_len);
+        break;
+
+    case HCI_READ_LOCAL_FEATURES:
+        btm_read_local_features_complete(p, evt_len);
+        break;
+
+    case HCI_READ_LOCAL_NAME:
+        btm_read_local_name_complete(p, evt_len);
+        break;
+
+    case HCI_READ_BD_ADDR:
+        btm_read_local_addr_complete(p, evt_len);
+        break;
+
+    case HCI_READ_LINK_QUALITY:
+        btm_read_link_quality_complete(p);
+        break;
+
+    case HCI_READ_RSSI:
+        btm_read_rssi_complete(p);
+        break;
+
+    default:
+        if ((opcode & HCI_GRP_VENDOR_SPECIFIC) == HCI_GRP_VENDOR_SPECIFIC)
+            btm_vsc_complete(p, opcode);
+        break;
+    }
+}
+
+void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT16  cc_opcode;
     BT_HDR *p_cmd;
@@ -417,7 +517,60 @@ void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
 
     btu_hcif_send_cmd (0);
 }
-void btu_hcif_cmd_timeout() {}
+extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
+extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
+extern void btm_report_device_status(UINT8 status);
+
+void btu_hcif_cmd_timeout(void)
+{
+    BT_HDR  *p_cmd;
+    UINT8   *p;
+    UINT16   opcode;
+
+    btu_cb.controller_cmd_window = 1;
+
+    p_cmd = (BT_HDR *)GKI_dequeue(&btu_cb.cmd_cmpl_q);
+    if (p_cmd == NULL)
+    {
+        LogMsg_0(0x70001, "Cmd timeout; no cmd in queue");
+        return;
+    }
+
+    if (!GKI_queue_is_empty(&btu_cb.cmd_cmpl_q))
+        btu_start_timer(&btu_cb.cmd_cmpl_timer, BTU_TTYPE_BTU_CMD_CMPL, 8);
+
+    p = (UINT8 *)(p_cmd + 1) + p_cmd->offset;
+
+    opcode = (UINT16)(p[0] + (p[1] << 8));
+    LogMsg_1(0x70001, "BTU HCI command timeout - cmd opcode = 0x%02x", opcode);
+
+    switch (opcode)
+    {
+    case 0x000D:
+    case 0x0401:
+    case 0x0405:
+    case 0x0419:
+    case 0x0801:
+    case 0x0803:
+    case 0x0804:
+    case 0x0805:
+    case 0x0806:
+        btu_hcif_hdl_command_status(opcode, 0x1F, p + 2);
+        break;
+
+    default:
+        {
+            UINT8 status = 0x1F;
+            btu_hcif_hdl_command_complete(opcode, &status, 1);
+        }
+        break;
+    }
+
+    GKI_freebuf(p_cmd);
+    btm_report_device_status(2);
+    btu_hcif_send_cmd(0);
+}
+
 /*******************************************************************************
 **
 ** Function         btu_hcif_link_key_notification_evt

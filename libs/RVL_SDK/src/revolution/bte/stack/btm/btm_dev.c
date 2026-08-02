@@ -61,6 +61,7 @@ extern BtmCb btm_cb;
 
 /* ------------------------------------------------------------------ */
 /*  Forward declarations for internal linkage */
+static __inline BtmSecDevRec *btm_sec_find_dev_bda(BD_ADDR bd_addr);
 BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr);
 BtmSecDevRec *btm_find_oldest_dev(void);
 
@@ -73,19 +74,11 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
                          UINT8 key_type, tBTM_IO_CAP io_cap)
 {
     BtmSecDevRec *p_rec;
-    int i;
 
     /* Search for an existing record with this BD address */
-    for (i = 0; i < 16; i++)
-    {
-        if ((btm_cb.sec_dev_rec[i].sec_flags & BTM_SEC_IN_USE) &&
-            memcmp(btm_cb.sec_dev_rec[i].bd_addr, bd_addr, 6) == 0)
-        {
-            break;
-        }
-    }
+    p_rec = btm_sec_find_dev_bda(bd_addr);
 
-    if (i >= 16)
+    if (p_rec == NULL)
     {
         /* Not found — allocate a new device record */
         p_rec = (BtmSecDevRec *)btm_sec_alloc_dev(bd_addr);
@@ -94,12 +87,8 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
     }
     else
     {
-        u32 cnt;
-        p_rec = &btm_cb.sec_dev_rec[i];
         /* Found existing — assign a fresh timestamp */
-        cnt = btm_cb.dev_rec_count;
-        p_rec->timestamp = cnt;
-        btm_cb.dev_rec_count = cnt + 1;
+        p_rec->timestamp = btm_cb.dev_rec_count++;
     }
 
     /* Copy device class if provided */

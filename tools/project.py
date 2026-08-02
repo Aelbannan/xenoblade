@@ -469,7 +469,27 @@ def generate_build_ninja(
     n.comment("The arguments passed to configure.py, for rerunning it.")
     # Only flags (starting with -) go into configure_args; the positional
     # mode argument ("configure"/"progress") is handled by the rule command.
-    n.variable("configure_args", [arg for arg in sys.argv[1:] if arg.startswith('-')])
+    # Flags that take a value keep their value token, otherwise ninja's regen
+    # rule re-runs configure.py with a dangling flag (e.g. "--version") that
+    # argparse misparses ("configure_args = --version --map" broke the build).
+    _VALUE_FLAGS = {
+        "-v", "--version", "--build-dir", "--binutils", "--compilers",
+        "--dtk", "--objdiff", "--sjiswrap", "--ninja", "--wrapper",
+    }
+    _raw_args = sys.argv[1:]
+    _args = []
+    _i = 0
+    while _i < len(_raw_args):
+        _tok = _raw_args[_i]
+        if not _tok.startswith("-"):
+            _i += 1
+            continue
+        _args.append(_tok)
+        if _tok in _VALUE_FLAGS and _i + 1 < len(_raw_args) and not _raw_args[_i + 1].startswith("-"):
+            _args.append(_raw_args[_i + 1])
+            _i += 1
+        _i += 1
+    n.variable("configure_args", _args)
     n.variable("python", f'"{sys.executable}"')
     n.newline()
 

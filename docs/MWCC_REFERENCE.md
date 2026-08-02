@@ -5234,6 +5234,31 @@ to the merge test — is what makes `BTM_SecDeleteDevice` byte-identical
   `period / 10` then emits the signed 0x66666667 div magic (UINT32 gives the
   unsigned 0xCCCCCCCD sequence, 2 instructions shorter → 8-byte size miss).
 
+**AnimTransform base vptr (lyt_animation, US, FULL_MATCH us-8032e3d0):** when a
+*derived* class adds virtuals to a *non-virtual* base, MWCC places the vptr at
+**offset = sizeof(base)** (end of the base subobject), not at 0x0 — the whole
+class layout shifts by 4 (mpRes at 0x8 instead of retail's 0xC, vtable written
+at 0x10, 2-5 structural mismatches per member-accessing function). To match
+retail where the vptr is at 0x0, the **base** class must itself be polymorphic:
+declare the shared methods as pure virtuals in the base (pure-only classes emit
+no vtable symbol, matching retail). Evidence the base is polymorphic in retail:
+`Pane::BindAnimation` dispatches `pAnimTrans->Bind(this, recursive)` via
+vtable slot 0x10, and `Layout::~Layout` dispatches `it->~AnimTransform()` via
+slot 0x8 (LinkListNode at +0x4 after the vptr). The base dtor is **virtual and
+inline-empty** — the dol has no `__dt__Q36nw4hbm3lyt13AnimTransformFv` and
+`AnimTransformBasic::~AnimTransformBasic` emits no base-dtor call; a pure
+`= 0` dtor without definition is wrong (derived dtor then emits an undefined
+`bl`), a pure dtor with inline definition still emits the 0x40 weak deleting
+dtor. Accept the 0x40 weak `__dt__` + weak `__vt__` (.data) as inherent MWCC
+cost (see weak-GC note above); a previous "header restructure" that dropped the
+base virtuals caused this 4-byte regression across the whole class and stale
+FULL_MATCH records.
+
+**Related:** `AnimateTexturePattern` — retail calls
+`Material::SetTextureNoWrap(u8, TPLPalette*)` directly from the inline body;
+constructing a `TexMap` temp first adds `TexMap::Set` + `TexMap::SetNoWrap`
+calls (+44 bytes in `Animate(u32, Material*)`).
+
 ## RVL_SDK exi/EXIBios — retail compiled with `-schedule off` (US, 3× FULL_MATCH)
 
 `EXIDetach` (us-80317090), `EXIIntrruptHandler` (us-80317380),
@@ -5377,3 +5402,36 @@ Targets `us-80325cf0` createInstance, `us-80325d40` deleteInstance,
 - **Explicit dtor + free + NULL store**: `spHomeButtonObj->~HomeButton();
   HBMFreeMem(spHomeButtonObj); spHomeButtonObj = NULL;` is the exact retail
   deleteInstance shape (`li r4,-1` dtor flag, store NULL) — no contortions.
+
+## RVL_SDK hbm/mix — HBMMIXInitChannel EQUIVALENT_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p`)
+
+Target `us-80341eb0` (594 insn, size 0x948). Structural wins that took it from
+574 → 112 mismatches:
+
+- **Register-pressure control via memory-form operands.** The switch cases must
+  read `ch->fader` / `ch->auxA` (memory), NOT the `fader`/`auxA` parameters
+  (registers). Keeping the params live through the switch forces 7 callee-saved
+  regs (`_savegpr_25`, frame 0x30); memory-form reads let them die after the
+  initial stores and retail's exact 4-saved-reg frame 0x20 falls out. `input`
+  stays a register because `ch->vMain = __HBMMIXGetVolume(input)` uses it right
+  after `__HBMMIXSetPan(ch)`.
+- **`ctrl` init placement.** `u32 ctrl;` uninitialised + `ctrl = 0;` written
+  right before the switch (after `input`'s last use) lets MWCC coalesce ctrl
+  into the dead `input` register (retail `li r29,0` reuse). Declaring
+  `u32 ctrl = 0;` at the top hoists a dedicated zero/ctrl callee-saved reg.
+- **Compare the stored field, not the source field.** Tail pattern must be
+  `vpb->pb.mix.vL = ch->vL; if (vpb->pb.mix.vL != 0) …` — comparing
+  `ch->vL` forces MWCC to RELOAD ch->vL after the store (aliasing conservatism),
+  adding an `lhz` per channel. Comparing the just-stored field CSEs to the
+  register (11 fewer instructions).
+- **`s32 idx = db + 904; return table[idx];` flips `lhzx` vs displacement
+  fold.** `return table[db + 904]` strength-reduces to
+  `slwi db,1; add base,base,db; lhz 1808(base)`. Materialising the index in a
+  local first emits retail's `addi rX,db,904; slwi; lhzx` — byte-identical in
+  the non-loop context. Same TU's UpdateSettings (loop, hoisted base) folds in
+  retail too, so this pattern is context-dependent: folded when the table base
+  is a stable register, unfolded otherwise.
+- **Expression tree shape**: write `ch->panL + (ch->panFrontL + ch->fader)`
+  (two-add tree) and `(ch->panFrontL + ch->panL) + (ch->fader + ch->auxA)`
+  (four-load tree) to match retail's partial-sum ordering; flat left-chains
+  re-associate differently.

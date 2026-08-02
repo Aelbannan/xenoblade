@@ -8,13 +8,17 @@
 #include <revolution/HBM/HBMTypes.h>
 #include <revolution/version.h>
 
+#include <nw4hbm/lyt/lyt_layout.h>
+
 RVL_LIB_VERSION(HBM, "Feb 24 2010", "16:19:07", "0x4302_145");
 
 namespace homebutton {
 class HomeButton {
 public:
+    static void createInstance(const HBMDataInfo* pDataInfo);
     static HomeButton* getInstance();
     static void deleteInstance();
+    void create();
     void init();
     void draw();
     void update_sound();
@@ -46,7 +50,50 @@ void HBMFreeMem(void* pBlock) {
 
 extern "C" {
 
-void HBMCreate(){}
+void HBMCreate(const HBMDataInfo* pDataInfo) {
+    s32 allocType;
+
+    if (pDataInfo->pAllocator != NULL) {
+        allocType = 0;
+    } else {
+        allocType = 2;
+        if (pDataInfo->mem != NULL) {
+            allocType = 1;
+        }
+    }
+
+    if (allocType == 1) {
+        MEMInitAllocatorForExpHeap(
+            &sAllocator, MEMCreateExpHeapEx(pDataInfo->mem, pDataInfo->memSize, 0),
+            0x20);
+        spAllocator = &sAllocator;
+    }
+
+    if (pDataInfo->pAllocator != NULL) {
+        allocType = 0;
+    } else {
+        allocType = 2;
+        if (pDataInfo->mem != NULL) {
+            allocType = 1;
+        }
+    }
+
+    switch (allocType) {
+    case 0:
+        nw4hbm::lyt::Layout::SetAllocator(pDataInfo->pAllocator);
+        spAllocator = pDataInfo->pAllocator;
+        break;
+    case 1:
+        nw4hbm::lyt::Layout::SetAllocator(spAllocator);
+        break;
+    case 2:
+        spAllocator = nw4hbm::lyt::Layout::GetAllocator();
+        break;
+    }
+
+    homebutton::HomeButton::createInstance(pDataInfo);
+    homebutton::HomeButton::getInstance()->create();
+}
 
 void HBMDelete() {
     homebutton::HomeButton* pBtn = homebutton::HomeButton::getInstance();

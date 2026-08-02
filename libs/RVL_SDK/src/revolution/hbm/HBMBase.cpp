@@ -46,6 +46,13 @@ DECOMP_FORCEACTIVE(HBMBase_cpp, (GXColor){0, 0, 0, 255});
 extern void* HBMAllocMem(u32 size);
 extern void HBMFreeMem(void* pBlock);
 
+/* Layout view for free-function private-member access (retail offsets:
+   mSpeakerAlarm at 0x4C8). */
+struct HBMBaseAlarmView {
+    u8 _pad0[0x4C8];
+    OSAlarm mSpeakerAlarm[WPAD_MAX_CONTROLLERS];
+};
+
 /* Retail keeps the Wiimote battery-info array as a static bss object
  * (sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton, 0x60 bytes) rather
  * than an instance member; calc_battery/update/init_battery all reference this
@@ -1587,7 +1594,7 @@ void HomeButton::draw() {
 
 static void SpeakerCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
     u32 data = reinterpret_cast<u32>(OSGetAlarmUserData(pAlarm));
-    int chan = (data >> 16) & 0xFFFF;
+    int chan = data >> 16;
     int id = data & 0xFFFF;
 
     HomeButton* pHBObj = HomeButton::getInstance();
@@ -1595,10 +1602,16 @@ static void SpeakerCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
     if (!WPADIsSpeakerEnabled(chan) ||
         !pHBObj->getController(chan)->isPlayReady()) {
 
-        pHBObj->setSpeakerAlarm(chan, 50);
+        OSSetAlarmUserData(
+            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan],
+            reinterpret_cast<void*>((chan << 16) | (chan + 2)));
+        OSCancelAlarm(
+            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan]);
+        OSSetAlarm(
+            &reinterpret_cast<HBMBaseAlarmView*>(pHBObj)->mSpeakerAlarm[chan],
+            OS_MSEC_TO_TICKS(50), &SpeakerCallback);
     } else {
-        //pHBObj->getController(chan)->playSound(pHBObj->getSoundArchivePlayer(),
-        //                                       id);
+        pHBObj->getController(chan)->playSound(id);
     }
 }
 
@@ -3274,15 +3287,14 @@ void HomeButton::fadeout_sound(f32 gain) {
  *
  * nw4hbm::lyt::ArcResourceAccessor
  *
- * Retail places the ArcResourceAccessor destructor in this TU; the vtable
- * (lyt_arcResourceAccessor.cpp) references it as the virtual dtor at slot 8.
+ * The destructor is inline in lyt_arcResourceAccessor.h (retail keeps a
+ * strong out-of-line copy in this TU, which the linker prefers over the
+ * weak copy emitted with the vtable in lyt_arcResourceAccessor.o).
  *
  ******************************************************************************/
 
 namespace nw4hbm {
 namespace lyt {
-
-ArcResourceAccessor::~ArcResourceAccessor() {}
 
 } // namespace lyt
 } // namespace nw4hbm

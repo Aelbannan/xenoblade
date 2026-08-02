@@ -49,41 +49,191 @@ extern void bta_hh_api_disable(void);
 extern void bta_hh_disc_cmpl(void);
 extern void bta_hh_get_acl_q_info(void);
 extern UINT8 bta_hh_find_cb(UINT8 *bda);
+extern const char *bta_hh_evt_code(UINT16 event);
 
 /* State name strings used in trace */
 static const char *bta_hh_state_name(UINT8 state)
 {
-    if (state == 2)
-        return "BTA_HH_W4_CONN_ST";
-    if (state > 2) {
-        if (state >= 4)
-            return "unknown HID Host state";
-        return "BTA_HH_CONN_ST";
-    }
-    if (state == 0)
+    switch (state) {
+    case 0:
         return "BTA_HH_NULL_ST";
-    return "BTA_HH_IDLE_ST";
+    case 1:
+        return "BTA_HH_IDLE_ST";
+    case 2:
+        return "BTA_HH_W4_CONN_ST";
+    case 3:
+        return "BTA_HH_CONN_ST";
+    default:
+        return "unknown HID Host state";
+    }
 }
 
+/* ---- bta_hh_sm_execute ------------------------------------------------ */
+void bta_hh_sm_execute(void *p_cb, UINT16 event, void *p_data)
+{
+    const UINT8 (*state_table)[2];
+    UINT8 action;
+    UINT8 cback_data[0x20];
+    UINT16 cback_event;
+    UINT8 old_state;
+    UINT8 new_state;
+    const char *evt_str;
+    const char *state_str;
+    const char *new_state_str;
+
+    cback_event = 0;
+    memset(cback_data, 0, sizeof(cback_data));
+
+    if (p_cb == NULL) {
+        if (bta_hh_cb.cback) {
+            switch (event) {
+            case 0x1700:
+                cback_event = 2;
+                bdcpy((UINT8 *)cback_data, (UINT8 *)p_data + 8);
+                cback_data[0x06] = 0x09;
+                cback_data[0x07] = 0xFF;
+                break;
+            case 0x170A: {
+                UINT16 sub_type;
+
+                sub_type = *(UINT16 *)((UINT8 *)p_data + 0x10);
+                cback_event = sub_type;
+                if (sub_type == 0x0B) {
+                    bdcpy((UINT8 *)cback_data, (UINT8 *)p_data + 8);
+                    cback_data[0x06] = 0x09;
+                    cback_data[0x07] = 0xFF;
+                } else {
+                    cback_data[0x06] = 0x0D;
+                    cback_data[0x07] = *(UINT16 *)((UINT8 *)p_data + 6);
+                }
+                break;
+            }
+            case 0x1708: {
+                UINT8 sub_type;
+
+                sub_type = *(UINT8 *)((UINT8 *)p_data + 8);
+                cback_event = sub_type;
+                if (sub_type == 0x07 || sub_type == 0x05 || sub_type == 0x09) {
+                    cback_data[0x00] = 0x0D;
+                    cback_data[0x01] = *(UINT16 *)((UINT8 *)p_data + 6);
+                } else if (sub_type != 0x0A && sub_type != 0x01) {
+                    cback_data[0x01] = *(UINT16 *)((UINT8 *)p_data + 6);
+                    cback_data[0x00] = 0x0D;
+                }
+                break;
+            }
+            case 0x1701:
+                cback_data[0x00] = 0x0D;
+                cback_event = 3;
+                cback_data[0x01] = *(UINT16 *)((UINT8 *)p_data + 6);
+                break;
+            default:
+                if (appl_trace_level >= 1) {
+                    LogMsg_1(0x500, "wrong device handle: [%d]",
+                             (UINT32)*(UINT16 *)((UINT8 *)p_data + 6));
+                }
+                break;
+            }
+            if (cback_event) {
+                bta_hh_cb.cback(cback_event, cback_data);
+            }
+        }
+        return;
+    }
+
+    old_state = *(UINT8 *)((UINT8 *)p_cb + 0x1c);
+
+    if (appl_trace_level >= 4) {
+        state_str = bta_hh_state_name(old_state);
+        evt_str = bta_hh_evt_code(event);
+        LogMsg_3(0x503, "bta_hh_sm_execute: State 0x%02x [%s], Event [%s]",
+                 (UINT32)old_state, (UINT32)state_str, (UINT32)evt_str);
+    }
+
+    event &= 0xFF;
+    state_table = (const UINT8 (*)[2])bta_hh_st_tbl[*(UINT8 *)((UINT8 *)p_cb + 0x1c) - 1];
+    new_state = state_table[event][1];
+    *(UINT8 *)((UINT8 *)p_cb + 0x1c) = new_state;
+
+    if ((action = state_table[event][0]) != 0x0C) {
+        bta_hh_action[action](p_cb, p_data);
+    }
+
+    if (old_state != *(UINT8 *)((UINT8 *)p_cb + 0x1c)) {
+        if (appl_trace_level >= 5) {
+            state_str = bta_hh_state_name(old_state);
+            new_state_str = bta_hh_state_name(*(UINT8 *)((UINT8 *)p_cb + 0x1c));
+            evt_str = bta_hh_evt_code(event);
+            LogMsg_3(0x504, "HH State Change: [%s] -> [%s] after Event [%s]",
+                     (UINT32)state_str, (UINT32)new_state_str, (UINT32)evt_str);
+        }
+    }
+}
+
+/* ---- bta_hh_hdl_event ------------------------------------------------- */
+unsigned char bta_hh_hdl_event(BT_HDR *p_msg)
+{
+    void *p_cb;
+    UINT8 dev_cb_idx;
+
+    p_cb = NULL;
+    dev_cb_idx = 0x10;
+
+    switch (p_msg->event) {
+    case 0x170C:
+        bta_hh_api_enable();
+        break;
+    case 0x170D:
+        bta_hh_api_disable();
+        break;
+    case 0x170F:
+        bta_hh_disc_cmpl();
+        break;
+    case 0x170E:
+        bta_hh_get_acl_q_info();
+        break;
+    default:
+        if (p_msg->event == 0x1700) {
+            dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
+        } else if (p_msg->event == 0x170A) {
+            UINT16 sub_type;
+
+            sub_type = *(UINT16 *)((UINT8 *)p_msg + 0x10);
+            if (sub_type == 0x0B) {
+                dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
+            } else {
+                UINT16 handle;
+
+                handle = *(UINT16 *)((UINT8 *)p_msg + 6);
+                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+            }
+        } else {
+            UINT16 handle;
+
+            handle = *(UINT16 *)((UINT8 *)p_msg + 6);
+            if (handle < 0x10) {
+                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+            }
+        }
+
+        if (dev_cb_idx != 0x10) {
+            p_cb = &bta_hh_cb.dev_cb[dev_cb_idx];
+        }
+
+        if (appl_trace_level >= 5) {
+            LogMsg_2(0x504, "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
+                     (UINT32)*(UINT16 *)((UINT8 *)p_msg + 6), (UINT32)dev_cb_idx);
+        }
+
+        bta_hh_sm_execute(p_cb, p_msg->event, p_msg);
+        break;
+    }
+
+    return 1;
+}
 /* ---- bta_hh_evt_code -------------------------------------------------- */
 const char *bta_hh_evt_code(UINT16 event)
 {
-    /* Pool-order seeds: retail .data pools these sibling strings first
-     * (sm_execute / state_name / hdl_event traces); referenced here so the
-     * evt strings land at the retail offsets. Dead after pooling. */
-    static const char *const s_pool[] = {
-        "wrong device handle: [%d]",
-        "BTA_HH_NULL_ST",
-        "BTA_HH_IDLE_ST",
-        "BTA_HH_W4_CONN_ST",
-        "BTA_HH_CONN_ST",
-        "unknown HID Host state",
-        "bta_hh_sm_execute: State 0x%02x [%s], Event [%s]",
-        "HH State Change: [%s] -> [%s] after Event [%s]",
-        "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
-    };
-    (void)s_pool;
-
     switch (event) {
     case 0x170D: return "BTA_HH_API_DISABLE_EVT";
     case 0x170C: return "BTA_HH_API_ENABLE_EVT";
@@ -105,172 +255,3 @@ const char *bta_hh_evt_code(UINT16 event)
     }
 }
 
-/* ---- bta_hh_sm_execute ------------------------------------------------ */
-void bta_hh_sm_execute(void *p_cb, UINT16 event, void *p_data)
-{
-    UINT8 local[0x20];
-    UINT16 action;
-    UINT8 old_state;
-    UINT8 evt;
-    UINT8 *st_base;
-    UINT8 new_state;
-    const char *evt_str;
-    const char *state_str;
-
-    action = 0;
-    memset(local, 0, sizeof(local));
-
-    if (p_cb == NULL) {
-        if (bta_hh_cb.cback) {
-            if (event == 0x1708) {
-                UINT8 sub_type;
-
-                sub_type = *(UINT8 *)((UINT8 *)p_data + 8);
-                action = sub_type;
-                if (sub_type == 0x07 || sub_type == 0x05 || sub_type == 0x09) {
-                    local[0x08] = 0x0D;
-                    local[0x09] = *(UINT8 *)((UINT8 *)p_data + 6);
-                } else {
-                    if (sub_type != 0x0A && sub_type != 0x01) {
-                        local[0x08] = 0x0D;
-                        local[0x09] = *(UINT8 *)((UINT8 *)p_data + 6);
-                    }
-                }
-            } else if (event > 0x1708) {
-                if (event == 0x170A) {
-                    UINT16 sub_type;
-
-                    sub_type = *(UINT16 *)((UINT8 *)p_data + 0x10);
-                    action = sub_type;
-                    if (sub_type == 0x0B) {
-                        bdcpy((UINT8 *)local, (UINT8 *)p_data + 8);
-                        local[0x0E] = 0x09;
-                        local[0x0F] = 0xFF;
-                    } else {
-                        local[0x0E] = 0x0D;
-                        local[0x0F] = *(UINT8 *)((UINT8 *)p_data + 6);
-                    }
-                } else {
-                    action = 0;
-                    if (appl_trace_level >= 1) {
-                        LogMsg_1(0x500, "wrong device handle: [%d]",
-                                 (UINT32)*(UINT16 *)((UINT8 *)p_data + 6));
-                    }
-                }
-            } else if (event == 0x1701) {
-                local[0x08] = 0x0D;
-                local[0x09] = *(UINT8 *)((UINT8 *)p_data + 6);
-                action = 3;
-            } else if (event >= 0x1700) {
-                bdcpy((UINT8 *)local, (UINT8 *)p_data + 8);
-                local[0x0E] = 0x09;
-                local[0x0F] = 0xFF;
-                action = 2;
-            } else {
-                action = 0;
-                if (appl_trace_level >= 1) {
-                    LogMsg_1(0x500, "wrong device handle: [%d]",
-                             (UINT32)*(UINT16 *)((UINT8 *)p_data + 6));
-                }
-            }
-
-            if ((UINT16)action != 0) {
-                bta_hh_cb.cback(action, local);
-            }
-        }
-        return;
-    }
-
-    old_state = *(UINT8 *)((UINT8 *)p_cb + 0x1c);
-
-    if (appl_trace_level >= 4) {
-        evt_str = bta_hh_evt_code(event);
-        state_str = bta_hh_state_name(old_state);
-        LogMsg_3(0x503, "bta_hh_sm_execute: State 0x%02x [%s], Event [%s]",
-                 (UINT32)old_state, (UINT32)state_str, (UINT32)evt_str);
-    }
-
-    evt = (UINT8)event;
-    st_base = (UINT8 *)bta_hh_st_tbl[old_state - 1];
-    action = st_base[evt * 2];
-    new_state = st_base[evt * 2 + 1];
-    *(UINT8 *)((UINT8 *)p_cb + 0x1c) = new_state;
-
-    if (action != 0x0C) {
-        bta_hh_action[action](p_cb, p_data);
-    }
-
-    if (old_state != new_state) {
-        if (appl_trace_level >= 5) {
-            evt_str = bta_hh_evt_code(evt);
-            LogMsg_3(0x504, "HH State Change: [%s] -> [%s] after Event [%s]",
-                     (UINT32)bta_hh_state_name(old_state),
-                     (UINT32)bta_hh_state_name(new_state),
-                     (UINT32)evt_str);
-        }
-    }
-}
-
-/* ---- bta_hh_hdl_event ------------------------------------------------- */
-unsigned char bta_hh_hdl_event(BT_HDR *p_msg)
-{
-    void *p_cb;
-    UINT8 dev_cb_idx;
-    UINT16 event;
-
-    p_cb = NULL;
-    dev_cb_idx = 0x10;
-    event = p_msg->event;
-
-    switch (event) {
-    case 0x170E:
-        bta_hh_get_acl_q_info();
-        break;
-    case 0x170C:
-        bta_hh_api_enable();
-        break;
-    case 0x170D:
-        bta_hh_api_disable();
-        break;
-    case 0x170F:
-        bta_hh_disc_cmpl();
-        break;
-    default:
-        if (event == 0x1700) {
-            dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
-        } else if (event == 0x170A) {
-            UINT16 sub_type;
-
-            sub_type = *(UINT16 *)((UINT8 *)p_msg + 0x10);
-            if (sub_type == 0x0B) {
-                dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
-            } else {
-                UINT16 handle;
-
-                handle = *(UINT16 *)((UINT8 *)p_msg + 6);
-                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
-            }
-        } else {
-            UINT16 handle;
-
-            handle = *(UINT16 *)((UINT8 *)p_msg + 6);
-            if (handle < 0x10) {
-                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
-            }
-        }
-
-        if (dev_cb_idx < 0x10) {
-            p_cb = &bta_hh_cb.dev_cb[dev_cb_idx];
-        }
-
-        if (appl_trace_level >= 5) {
-            LogMsg_2(0x504, "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
-                     (UINT32)*(UINT16 *)((UINT8 *)p_msg + 6), (UINT32)dev_cb_idx);
-        }
-
-        bta_hh_sm_execute(p_cb, event, p_msg);
-        break;
-    }
-
-    return 1;
-}

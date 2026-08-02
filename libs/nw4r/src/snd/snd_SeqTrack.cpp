@@ -326,13 +326,14 @@ void SeqTrack::UpdateChannelParam() {
 void SeqTrack::FreeAllChannel() {
     SoundThread::AutoLock lock;
 
-    for (Channel* pIt = mChannelList; pIt != NULL;
-         pIt = pIt->GetNextTrackChannel()) {
+    Channel** channelList = (Channel**)((u8*)this + 0xC4);
+    for (Channel* pIt = *channelList; pIt != NULL;
+         pIt = *(Channel**)((u8*)pIt + 0xF4)) {
 
         Channel::FreeChannel(pIt);
     }
 
-    mChannelList = NULL;
+    *channelList = NULL;
 }
 
 void SeqTrack::ChannelCallbackFunc(Channel* pDropChannel,

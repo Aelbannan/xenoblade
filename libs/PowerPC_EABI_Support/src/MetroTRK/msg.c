@@ -2,8 +2,7 @@
 
 TRKPacketSeq gPacketSeq;
 
-DSError TRK_MessageSend(MessageBuffer* msg)
-{
+DSError TRK_MessageSend(MessageBuffer* msg) {
     ui32 write_val;
     ui16 val = gPacketSeq.unk0;
     if(val == 0) val = 1;

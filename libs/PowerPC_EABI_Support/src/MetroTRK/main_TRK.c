@@ -3,10 +3,10 @@
 
 static int TRK_mainError;
 
-int TRK_main(void){
+int TRK_main(void) {
     TRK_mainError = TRK_InitializeNub();
 
-    if (!TRK_mainError) {
+    if(!TRK_mainError) {
         TRK_NubWelcome();
         TRK_NubMainLoop();
     }

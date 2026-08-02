@@ -5,7 +5,7 @@ wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n) {
     return (wchar_t*)memcpy(dest, src, n * sizeof(wchar_t));
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void wmemcpy_s(){
 //}
 
@@ -19,13 +19,13 @@ wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n) {
 //}
 
 wchar_t* wmemchr(wchar_t* s, wchar_t c, int n) {
-    while (n--) {
-        if (*s == c) return s;
+    while(n--) {
+        if(*s == c) return s;
         s++;
     }
     return NULL;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void wmemcmp(){
 //}

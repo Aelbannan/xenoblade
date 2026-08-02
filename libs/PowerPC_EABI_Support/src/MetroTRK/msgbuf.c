@@ -2,38 +2,36 @@
 #include "PowerPC_EABI_Support/MetroTRK/mem_TRK.h"
 #include "PowerPC_EABI_Support/MetroTRK/nubinit.h"
 
-typedef struct TRKMsgBufs{
+typedef struct TRKMsgBufs {
     MessageBuffer buffers[NUM_BUFFERS];
     ui32 pad;
 } TRKMsgBufs;
 
 TRKMsgBufs gTRKMsgBufs;
 
-
-static void TRK_SetBufferUsed(MessageBuffer* b, bool state){
+static void TRK_SetBufferUsed(MessageBuffer* b, bool state) {
     b->fInUse = state;
 }
 
-DSError TRK_InitializeMessageBuffers()
-{
+DSError TRK_InitializeMessageBuffers() {
     int i;
 
-    for (i = 0; i < NUM_BUFFERS; i++) {
+    for(i = 0; i < NUM_BUFFERS; i++) {
         TRK_SetBufferUsed(&gTRKMsgBufs.buffers[i], false);
     }
 
     return kNoError;
 }
 
-DSError TRK_GetFreeBuffer(int* bufferIndexPtr, MessageBuffer** destBufPtr){
+DSError TRK_GetFreeBuffer(int* bufferIndexPtr, MessageBuffer** destBufPtr) {
     DSError error = kNoMessageBufferAvailable;
     int i;
     *destBufPtr = NULL;
 
-    for(i = 0; i < NUM_BUFFERS; i++){
+    for(i = 0; i < NUM_BUFFERS; i++) {
         MessageBuffer* buf = TRKGetBuffer(i);
 
-        if(!buf->fInUse){
+        if(!buf->fInUse) {
             TRKResetBuffer(buf, 1);
             TRK_SetBufferUsed(buf, true);
             error = kNoError;
@@ -43,46 +41,46 @@ DSError TRK_GetFreeBuffer(int* bufferIndexPtr, MessageBuffer** destBufPtr){
         }
     }
 
-    if(error == kNoMessageBufferAvailable){
+    if(error == kNoMessageBufferAvailable) {
         OSReport("MetroTRK - ERROR : No buffer available\n");
     }
 
     return error;
 }
 
-MessageBuffer* TRKGetBuffer(int index){
+MessageBuffer* TRKGetBuffer(int index) {
     MessageBuffer* buf = NULL;
 
-    if(index >= 0 && index < NUM_BUFFERS){
+    if(index >= 0 && index < NUM_BUFFERS) {
         buf = &gTRKMsgBufs.buffers[index];
     }
 
     return buf;
 }
 
-void TRK_ReleaseBuffer(int index){
-    if(index != -1 && index >= 0 && index < NUM_BUFFERS){
-        TRK_SetBufferUsed(&gTRKMsgBufs.buffers[index],false);
+void TRK_ReleaseBuffer(int index) {
+    if(index != -1 && index >= 0 && index < NUM_BUFFERS) {
+        TRK_SetBufferUsed(&gTRKMsgBufs.buffers[index], false);
     }
 }
 
-void TRKResetBuffer(MessageBuffer* buf, bool keepData){
+void TRKResetBuffer(MessageBuffer* buf, bool keepData) {
     buf->fLength = 0;
     buf->fPosition = 0;
 
-    if(!keepData){
+    if(!keepData) {
         TRK_memset(buf->fData, 0, kMessageBufferSize);
     }
 }
 
-DSError TRK_SetBufferPosition(MessageBuffer* buf, ui32 pos){
+DSError TRK_SetBufferPosition(MessageBuffer* buf, ui32 pos) {
     DSError error = kNoError;
 
-    if(pos > kMessageBufferSize){
+    if(pos > kMessageBufferSize) {
         error = kMessageBufferOverflow;
-    }else{
+    } else {
         buf->fPosition = pos;
-        if(pos > buf->fLength){
+        if(pos > buf->fLength) {
             buf->fLength = pos;
         }
     }
@@ -90,12 +88,12 @@ DSError TRK_SetBufferPosition(MessageBuffer* buf, ui32 pos){
     return error;
 }
 
-DSError TRK_AppendBuffer(MessageBuffer* buf, const void* data, size_t length){
+DSError TRK_AppendBuffer(MessageBuffer* buf, const void* data, size_t length) {
     DSError error = kNoError; //r31
     ui32 bytesLeft;
 
     //Return if no bytes to append
-    if(length == 0){
+    if(length == 0) {
         return kNoError;
     }
 
@@ -103,17 +101,17 @@ DSError TRK_AppendBuffer(MessageBuffer* buf, const void* data, size_t length){
 
     //If there isn't enough space left in the buffer, change the number
     //of bytes to append to the remaning number of bytes
-    if(bytesLeft < length){
+    if(bytesLeft < length) {
         error = kMessageBufferOverflow;
         length = bytesLeft;
     }
 
-    if(length == 1){
+    if(length == 1) {
         //If the length of bytes to append is 1, just copy the byte over
         buf->fData[buf->fPosition] = *((ui8*)(data));
-    }else{
+    } else {
         //Otherwise, use memcpy
-        TRK_memcpy(buf->fData + buf->fPosition,data,length);
+        TRK_memcpy(buf->fData + buf->fPosition, data, length);
     }
 
     //Update the position and length
@@ -123,12 +121,12 @@ DSError TRK_AppendBuffer(MessageBuffer* buf, const void* data, size_t length){
     return error;
 }
 
-DSError TRK_ReadBuffer(MessageBuffer* buf, void* data, size_t length){
+DSError TRK_ReadBuffer(MessageBuffer* buf, void* data, size_t length) {
     DSError error = kNoError;
     ui32 bytesLeft;
 
     //Return if no bytes to read
-    if(length == 0){
+    if(length == 0) {
         return kNoError;
     }
 
@@ -136,7 +134,7 @@ DSError TRK_ReadBuffer(MessageBuffer* buf, void* data, size_t length){
 
     //If the number of bytes to read exceeds the buffer length, change
     //the length to the remaining number of bytes
-    if(length > bytesLeft){
+    if(length > bytesLeft) {
         error = kMessageBufferReadError;
         length = bytesLeft;
     }
@@ -146,19 +144,17 @@ DSError TRK_ReadBuffer(MessageBuffer* buf, void* data, size_t length){
     return error;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKAppendBuffer1_ui16(MessageBuffer* buffer, const ui16 data){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKAppendBuffer1_ui16(MessageBuffer* buffer, const ui16 data) {}
 
-DSError TRKAppendBuffer1_ui32(MessageBuffer *buffer, const ui32 data) {
+DSError TRKAppendBuffer1_ui32(MessageBuffer* buffer, const ui32 data) {
     ui8* bigEndianData;
     ui8* byteData;
     ui8 swapBuffer[sizeof(data)];
 
-    if (gTRKBigEndian) {
+    if(gTRKBigEndian) {
         bigEndianData = (ui8*)&data;
-    }
-    else {
+    } else {
         byteData = (ui8*)&data;
         bigEndianData = swapBuffer;
 
@@ -171,16 +167,14 @@ DSError TRKAppendBuffer1_ui32(MessageBuffer *buffer, const ui32 data) {
     return TRK_AppendBuffer(buffer, (const void*)bigEndianData, sizeof(data));
 }
 
-
 DSError TRKAppendBuffer1_ui64(MessageBuffer* buffer, const ui64 data) {
     ui8* bigEndianData;
     ui8* byteData;
     ui8 swapBuffer[sizeof(data)];
 
-    if (gTRKBigEndian) {
+    if(gTRKBigEndian) {
         bigEndianData = (ui8*)&data;
-    }
-    else {
+    } else {
         byteData = (ui8*)&data;
         bigEndianData = swapBuffer;
 
@@ -197,69 +191,63 @@ DSError TRKAppendBuffer1_ui64(MessageBuffer* buffer, const ui64 data) {
     return TRK_AppendBuffer(buffer, (const void*)bigEndianData, sizeof(data));
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKAppendBuffer1_ui128(MessageBuffer* buffer, const ui128 data){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKAppendBuffer1_ui128(MessageBuffer* buffer, const ui128 data) {}
 
-DSError TRKAppendBuffer_ui8(MessageBuffer *buffer, const ui8* data, int count) {
+DSError TRKAppendBuffer_ui8(MessageBuffer* buffer, const ui8* data, int count) {
     DSError err;
     int i;
 
-    for (i = 0, err = kNoError; err == kNoError && i < count; i++) {
+    for(i = 0, err = kNoError; err == kNoError && i < count; i++) {
         err = TRKAppendBuffer1_ui8(buffer, data[i]);
     }
 
     return err;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKAppendBuffer_ui16(MessageBuffer* buffer, const ui16* data, int count){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKAppendBuffer_ui16(MessageBuffer* buffer, const ui16* data, int count) {}
 
-DSError TRKAppendBuffer_ui32(MessageBuffer *buffer, const ui32* data, int count) {
+DSError TRKAppendBuffer_ui32(MessageBuffer* buffer, const ui32* data, int count) {
     DSError err;
     int i;
 
-    for (i = 0, err = kNoError; err == kNoError && i < count; i++) {
+    for(i = 0, err = kNoError; err == kNoError && i < count; i++) {
         err = TRKAppendBuffer1_ui32(buffer, data[i]);
     }
 
     return err;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKAppendBuffer_ui64(MessageBuffer* buffer, const ui64* data, int count) {
-}
+//not referenced by the game; retained for binary matching
+DSError TRKAppendBuffer_ui64(MessageBuffer* buffer, const ui64* data, int count) {}
 
-// not referenced by the game; retained for binary matching
-DSError TRKAppendBuffer_ui128(MessageBuffer* buffer, const ui128* data, int count){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKAppendBuffer_ui128(MessageBuffer* buffer, const ui128* data, int count) {}
 
-DSError TRKReadBuffer1_ui8(MessageBuffer *buffer, ui8 *data) {
+DSError TRKReadBuffer1_ui8(MessageBuffer* buffer, ui8* data) {
     return TRK_ReadBuffer(buffer, (void*)data, 1);
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKReadBuffer1_ui16(MessageBuffer* buffer, ui16* data){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKReadBuffer1_ui16(MessageBuffer* buffer, ui16* data) {}
 
-DSError TRKReadBuffer1_ui32(MessageBuffer* buffer, ui32 *data) {
+DSError TRKReadBuffer1_ui32(MessageBuffer* buffer, ui32* data) {
     DSError err;
 
     ui8* bigEndianData;
     ui8* byteData;
     ui8 swapBuffer[sizeof(data)];
 
-    if (gTRKBigEndian) {
+    if(gTRKBigEndian) {
         bigEndianData = (ui8*)data;
-    }
-    else {
+    } else {
         bigEndianData = swapBuffer;
     }
 
     err = TRK_ReadBuffer(buffer, (void*)bigEndianData, sizeof(*data));
 
-    if (!gTRKBigEndian && err == kNoError) {
+    if(!gTRKBigEndian && err == kNoError) {
         byteData = (ui8*)data;
 
         byteData[0] = bigEndianData[3];
@@ -271,23 +259,22 @@ DSError TRKReadBuffer1_ui32(MessageBuffer* buffer, ui32 *data) {
     return err;
 }
 
-DSError TRKReadBuffer1_ui64(MessageBuffer *buffer, ui64* data) {
+DSError TRKReadBuffer1_ui64(MessageBuffer* buffer, ui64* data) {
     DSError err;
 
     ui8* bigEndianData;
     ui8* byteData;
     ui8 swapBuffer[sizeof(data)];
 
-    if (gTRKBigEndian) {
+    if(gTRKBigEndian) {
         bigEndianData = (ui8*)data;
-    }
-    else {
+    } else {
         bigEndianData = swapBuffer;
     }
 
     err = TRK_ReadBuffer(buffer, (void*)bigEndianData, sizeof(*data));
 
-    if (!gTRKBigEndian && err == 0) {
+    if(!gTRKBigEndian && err == 0) {
         byteData = (ui8*)data;
 
         byteData[0] = bigEndianData[7];
@@ -303,40 +290,36 @@ DSError TRKReadBuffer1_ui64(MessageBuffer *buffer, ui64* data) {
     return err;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKReadBuffer1_ui128(MessageBuffer* buffer, ui128 data){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKReadBuffer1_ui128(MessageBuffer* buffer, ui128 data) {}
 
-DSError TRKReadBuffer_ui8(MessageBuffer *buffer, ui8* data, int count) {
+DSError TRKReadBuffer_ui8(MessageBuffer* buffer, ui8* data, int count) {
     DSError err;
     int i;
 
-    for (i = 0, err = kNoError; err == kNoError && i < count; i++) {
+    for(i = 0, err = kNoError; err == kNoError && i < count; i++) {
         err = TRKReadBuffer1_ui8(buffer, &(data[i]));
     }
 
     return err;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKReadBuffer_ui16(MessageBuffer* buffer, ui16* data, int count){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKReadBuffer_ui16(MessageBuffer* buffer, ui16* data, int count) {}
 
-DSError TRKReadBuffer_ui32(MessageBuffer *buffer, ui32* data, int count) {
+DSError TRKReadBuffer_ui32(MessageBuffer* buffer, ui32* data, int count) {
     DSError err;
     int i;
 
-    for (i = 0, err = kNoError; err == kNoError && i < count; i++) {
+    for(i = 0, err = kNoError; err == kNoError && i < count; i++) {
         err = TRKReadBuffer1_ui32(buffer, &(data[i]));
     }
 
     return err;
 }
 
-// not referenced by the game; retained for binary matching
-DSError TRKReadBuffer_ui64(MessageBuffer* buffer, ui64* data, int count){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKReadBuffer_ui64(MessageBuffer* buffer, ui64* data, int count) {}
 
-// not referenced by the game; retained for binary matching
-DSError TRKReadBuffer_ui128(MessageBuffer* buffer, ui128* data, int count){
-}
+//not referenced by the game; retained for binary matching
+DSError TRKReadBuffer_ui128(MessageBuffer* buffer, ui128* data, int count) {}

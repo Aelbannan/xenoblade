@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-
 double atan(double x);
 double ceil(double x);
 double copysign(double x, double y);

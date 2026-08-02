@@ -4,7 +4,7 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h"
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void putwc(){
 //}
 
@@ -44,32 +44,28 @@
 //void __fwide(){
 //}
 
-int fwide(FILE* stream, int mode)
-{
+int fwide(FILE* stream, int mode) {
     int orientation;
     int result;
 
-    if (stream == nullptr || stream->mode.file_kind == __closed_file)
-        return 0;
+    if(stream == nullptr || stream->mode.file_kind == __closed_file) return 0;
 
     orientation = stream->mode.file_orientation;
-    switch (orientation) {
-    case __unoriented:
-        if (mode > 0)
-            stream->mode.file_orientation = __wide_oriented;
-        else if (mode < 0)
-            stream->mode.file_orientation = __char_oriented;
+    switch(orientation) {
+        case __unoriented:
+            if(mode > 0) stream->mode.file_orientation = __wide_oriented;
+            else if(mode < 0) stream->mode.file_orientation = __char_oriented;
 
-        result = mode;
-        break;
+            result = mode;
+            break;
 
-    case __wide_oriented:
-        result = 1;
-        break;
+        case __wide_oriented:
+            result = 1;
+            break;
 
-    case __char_oriented:
-        result = -1;
-        break;
+        case __char_oriented:
+            result = -1;
+            break;
     }
 
     return result;

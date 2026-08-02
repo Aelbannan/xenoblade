@@ -4,7 +4,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 int TRK_strlen(const char*);

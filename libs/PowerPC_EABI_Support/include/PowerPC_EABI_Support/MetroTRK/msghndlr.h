@@ -6,17 +6,17 @@
 #include "PowerPC_EABI_Support/MetroTRK/msgbuf.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 typedef struct msgbuf_t {
     ui32 msgLength;
     //TODO: fix enum size shenanigans
-    union{
+    union {
         ui8 commandId;
         MessageCommandID commandIdInt;
     };
-    union{
+    union {
         ui8 replyError;
         DSReplyError replyErrorInt;
     };
@@ -39,7 +39,6 @@ DSError TRKDoContinue(MessageBuffer*);
 DSError TRKDoStep(MessageBuffer*);
 DSError TRKDoStop(MessageBuffer*);
 DSError TRKDoSetOption(MessageBuffer*);
-
 
 #ifdef __cplusplus
 }

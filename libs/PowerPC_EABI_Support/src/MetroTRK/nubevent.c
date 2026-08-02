@@ -10,10 +10,15 @@ typedef struct EventQueue {
 
 EventQueue gTRKEventQueue;
 
-
-static inline DSError TRKReleaseMutex(void* p1) { return kNoError; }
-static inline DSError TRKAcquireMutex(void* p1) { return kNoError; }
-static inline DSError TRKInitializeMutex(void* p1) { return kNoError; }
+static inline DSError TRKReleaseMutex(void* p1) {
+    return kNoError;
+}
+static inline DSError TRKAcquireMutex(void* p1) {
+    return kNoError;
+}
+static inline DSError TRKInitializeMutex(void* p1) {
+    return kNoError;
+}
 
 DSError TRKInitializeEventQueue() {
     gTRKEventQueue.fCount = 0;
@@ -22,22 +27,21 @@ DSError TRKInitializeEventQueue() {
     return kNoError;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void TRKCopyEvent(void)
 //{
 //}
 
-bool TRKGetNextEvent(NubEvent* ev)
-{
+bool TRKGetNextEvent(NubEvent* ev) {
     bool ret = false;
 
     TRKAcquireMutex(&gTRKEventQueue);
 
-    if (gTRKEventQueue.fCount > 0) {
+    if(gTRKEventQueue.fCount > 0) {
         TRK_memcpy(ev, &gTRKEventQueue.fEventList[gTRKEventQueue.fFirst], sizeof(NubEvent));
         gTRKEventQueue.fCount--;
 
-        if (++gTRKEventQueue.fFirst == 2) {
+        if(++gTRKEventQueue.fFirst == 2) {
             gTRKEventQueue.fFirst = 0;
         }
 
@@ -48,14 +52,13 @@ bool TRKGetNextEvent(NubEvent* ev)
     return ret;
 }
 
-DSError TRKPostEvent(NubEvent* ev)
-{
+DSError TRKPostEvent(NubEvent* ev) {
     DSError ret = kNoError;
     int evID;
 
     TRKAcquireMutex(&gTRKEventQueue);
 
-    if (gTRKEventQueue.fCount == 2) {
+    if(gTRKEventQueue.fCount == 2) {
         ret = kEventQueueFull;
         OSReport("MetroTRK - Event Queue full\n");
     } else {
@@ -63,7 +66,7 @@ DSError TRKPostEvent(NubEvent* ev)
         TRK_memcpy(&gTRKEventQueue.fEventList[evID], ev, sizeof(NubEvent));
         gTRKEventQueue.fEventList[evID].fID = gTRKEventQueue.fEventID;
 
-        if (++gTRKEventQueue.fEventID < 256) {
+        if(++gTRKEventQueue.fEventID < 256) {
             gTRKEventQueue.fEventID = 256;
         }
 
@@ -74,13 +77,11 @@ DSError TRKPostEvent(NubEvent* ev)
     return ret;
 }
 
-void TRKConstructEvent(NubEvent* event, int eventType)
-{
+void TRKConstructEvent(NubEvent* event, int eventType) {
     event->fType = eventType;
     event->fID = 0;
     event->fMessageBufferID = -1;
 }
-
 
 void TRKDestructEvent(NubEvent* event) {
     TRK_ReleaseBuffer(event->fMessageBufferID);

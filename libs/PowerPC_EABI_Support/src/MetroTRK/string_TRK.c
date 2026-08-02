@@ -7,6 +7,6 @@ int TRK_strlen(const char* s) {
     do {
         c = *++p;
         len++;
-    } while (c != 0);
+    } while(c != 0);
     return len;
 }

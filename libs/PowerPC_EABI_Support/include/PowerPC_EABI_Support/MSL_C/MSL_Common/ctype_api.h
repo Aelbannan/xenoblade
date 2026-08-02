@@ -3,10 +3,9 @@
 
 #include <types.h>
 
-
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #define ctype_alpha 0x0001
 #define ctype_blank 0x0002
@@ -28,6 +27,6 @@ extern const unsigned char __upper_mapC[256];
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

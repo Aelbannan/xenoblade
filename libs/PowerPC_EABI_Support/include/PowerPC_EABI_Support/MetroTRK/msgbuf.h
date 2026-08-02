@@ -5,11 +5,9 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 #include <stddef.h>
 
-
 typedef int MessageBufferID;
 
-enum
-{
+enum {
     kInvalidMessageBufferId = -1
 };
 
@@ -17,9 +15,9 @@ enum
 #define NUM_BUFFERS 3
 
 typedef struct MessageBuffer {
-    bool fInUse; //0x0
-    ui32 fLength; //0x4
-    ui32 fPosition; //0x8
+    bool fInUse;                   //0x0
+    ui32 fLength;                  //0x4
+    ui32 fPosition;                //0x8
     ui8 fData[kMessageBufferSize]; //0xC
 } MessageBuffer;
 
@@ -28,23 +26,22 @@ Message body overlay for command-specific fields within MessageBuffer::fData.
 Offsets are relative to fData[0] (i.e. absolute offset 0xC within MessageBuffer).
 */
 typedef struct TRKMsgBody {
-    ui8 pad_00[4];   // 0x00-0x03
-    ui8 command;      // 0x04
-    ui8 pad_05[3];   // 0x05-0x07
-    ui8 options;      // 0x08
-    ui8 pad_09[3];   // 0x09-0x0B
+    ui8 pad_00[4]; //0x00-0x03
+    ui8 command;   //0x04
+    ui8 pad_05[3]; //0x05-0x07
+    ui8 options;   //0x08
+    ui8 pad_09[3]; //0x09-0x0B
     union {
-        ui16 param1;        // 0x0C-0x0D (length, firstRegister, stepCount)
-        ui8 count;           // 0x0C (step count, single byte)
+        ui16 param1; //0x0C-0x0D (length, firstRegister, stepCount)
+        ui8 count;   //0x0C (step count, single byte)
     };
-    ui8 pad_0E[2];   // 0x0E-0x0F
+    ui8 pad_0E[2]; //0x0E-0x0F
     union {
-        ui32 param2;            // 0x10-0x13 (start, rangeStart)
-        ui16 lastRegister;      // 0x10-0x11
+        ui32 param2;       //0x10-0x13 (start, rangeStart)
+        ui16 lastRegister; //0x10-0x11
     };
-    ui32 param3;       // 0x14-0x17 (rangeEnd; register data follows)
+    ui32 param3; //0x14-0x17 (rangeEnd; register data follows)
 } TRKMsgBody;
-
 
 DSError TRK_InitializeMessageBuffers();
 DSError TRK_GetFreeBuffer(int*, MessageBuffer**);
@@ -56,7 +53,7 @@ DSError TRK_AppendBuffer(MessageBuffer*, const void*, size_t);
 DSError TRK_ReadBuffer(MessageBuffer*, void*, size_t);
 
 inline DSError TRKAppendBuffer1_ui8(MessageBuffer* buffer, const ui8 data) {
-    if (buffer->fPosition >= kMessageBufferSize) {
+    if(buffer->fPosition >= kMessageBufferSize) {
         return kMessageBufferOverflow;
     }
 
@@ -87,6 +84,5 @@ DSError TRKReadBuffer_ui16(MessageBuffer* buffer, ui16* data, int count);
 DSError TRKReadBuffer_ui32(MessageBuffer* buffer, ui32* data, int count);
 DSError TRKReadBuffer_ui64(MessageBuffer* buffer, ui64* data, int count);
 DSError TRKReadBuffer_ui128(MessageBuffer* buffer, ui128* data, int count);
-
 
 #endif

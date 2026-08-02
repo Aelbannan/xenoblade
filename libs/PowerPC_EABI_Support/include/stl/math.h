@@ -5,7 +5,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h"
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h"
@@ -14,9 +14,9 @@ extern int __float_nan[];
 extern int __float_huge[];
 extern int __double_huge[];
 
-#define INFINITY (*(float*) __float_huge)
-#define NAN (*(float*) __float_nan)
-#define HUGE_VAL (*(double*) __double_huge)
+#define INFINITY (*(float*)__float_huge)
+#define NAN (*(float*)__float_nan)
+#define HUGE_VAL (*(double*)__double_huge)
 
 #define FP_NAN 1
 #define FP_INFINITE 2
@@ -24,7 +24,7 @@ extern int __double_huge[];
 #define FP_NORMAL 4
 #define FP_SUBNORMAL
 
-#define M_PI    3.1415927f
+#define M_PI 3.1415927f
 #define M_SQRT3 1.73205f
 
 int __signbitf(float);
@@ -59,12 +59,12 @@ double __kernel_sin(double, double, int);
 double __kernel_cos(double, double);
 double __kernel_tan(double, double, int);
 
-int __ieee754_rem_pio2(double, double *);
+int __ieee754_rem_pio2(double, double*);
 
 double nan(const char* arg);
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

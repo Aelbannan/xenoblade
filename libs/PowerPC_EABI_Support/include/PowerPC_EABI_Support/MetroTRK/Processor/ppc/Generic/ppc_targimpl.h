@@ -6,19 +6,19 @@
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Board/dolphin/target.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 typedef struct TRKState_PPC {
-    DefaultType GPR[32]; //0x0
-    DefaultType LR; //0x80
-    DefaultType CTR; //0x84
-    DefaultType XER; //0x88
-    Extended1Type MSR; //0x8c
-    Extended1Type DAR; //0x90
-    Extended1Type DSISR; //0x94
-    bool stopped; //0x98
-    bool inputActivated; //0x9c
+    DefaultType GPR[32];  //0x0
+    DefaultType LR;       //0x80
+    DefaultType CTR;      //0x84
+    DefaultType XER;      //0x88
+    Extended1Type MSR;    //0x8c
+    Extended1Type DAR;    //0x90
+    Extended1Type DSISR;  //0x94
+    bool stopped;         //0x98
+    bool inputActivated;  //0x9c
     ui8* inputPendingPtr; //0xA0
 } TRKState_PPC;
 

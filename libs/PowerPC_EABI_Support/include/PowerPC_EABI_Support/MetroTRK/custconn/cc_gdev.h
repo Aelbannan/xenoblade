@@ -4,12 +4,12 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 #include "NdevExi2A/DebuggerDriver.h"
 
-// GDEV error codes (negative values; exact meanings from NdevExi2A)
-typedef enum{
+//GDEV error codes (negative values; exact meanings from NdevExi2A)
+typedef enum {
     GDEV_RESULT_10009 = -10009,
     GDEV_RESULT_10005 = -10005,
     GDEV_RESULT_10001 = -10001
-}GdevResult;
+} GdevResult;
 
 void OutputData();
 bool IsInitialized();

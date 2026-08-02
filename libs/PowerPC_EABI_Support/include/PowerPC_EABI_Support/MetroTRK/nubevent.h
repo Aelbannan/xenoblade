@@ -6,7 +6,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/msgbuf.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 typedef unsigned long NubEventID;

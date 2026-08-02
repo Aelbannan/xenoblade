@@ -5,7 +5,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/trk.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 DSError TRKTargetContinue(void);

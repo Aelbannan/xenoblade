@@ -51,7 +51,7 @@
 //
 //===========================================================================
 
-// Derived from code with the following copyright
+//Derived from code with the following copyright
 
 /* @(#)k_tan.c 1.3 95/01/18 */
 /*
@@ -102,9 +102,9 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
 static const double one = 1.00000000000000000000e+00, /* 0x3FF00000, 0x00000000 */
-    pio4                = 7.85398163397448278999e-01, /* 0x3FE921FB, 0x54442D18 */
-    pio4lo              = 3.06161699786838301793e-17, /* 0x3C81A626, 0x33145C07 */
-    T[]                 = {
+    pio4 = 7.85398163397448278999e-01,                /* 0x3FE921FB, 0x54442D18 */
+    pio4lo = 3.06161699786838301793e-17,              /* 0x3C81A626, 0x33145C07 */
+    T[] = {
         3.33333333333334091986e-01,  /* 0x3FD55555, 0x55555563 */
         1.33333333333201242699e-01,  /* 0x3FC11111, 0x1110FE7A */
         5.39682539762260521377e-02,  /* 0x3FABA1BA, 0x1BB341FE */
@@ -118,23 +118,21 @@ static const double one = 1.00000000000000000000e+00, /* 0x3FF00000, 0x00000000 
         7.14072491382608190305e-05,  /* 0x3F12B80F, 0x32F0A7E9 */
         -1.85586374855275456654e-05, /* 0xBEF375CB, 0xDB605373 */
         2.59073051863633712884e-05,  /* 0x3EFB2A70, 0x74BF7AD4 */
-    };
+};
 
 double __kernel_tan(double x, double y, int iy) {
     double z, r, v, w, s;
     int ix, hx;
     hx = __HI(x);
     ix = hx & 0x7fffffff;
-    if (ix < 0x3e300000) {
-        if ((int)x == 0) {
-            if (((ix | __LO(x)) | (iy + 1)) == 0)
-                return one / __fabs(x);
-            else
-                return (iy == 1) ? x : -one / x;
+    if(ix < 0x3e300000) {
+        if((int)x == 0) {
+            if(((ix | __LO(x)) | (iy + 1)) == 0) return one / __fabs(x);
+            else return (iy == 1) ? x : -one / x;
         }
     }
-    if (ix >= 0x3FE59428) {
-        if (hx < 0) {
+    if(ix >= 0x3FE59428) {
+        if(hx < 0) {
             x = -x;
             y = -y;
         }
@@ -151,12 +149,11 @@ double __kernel_tan(double x, double y, int iy) {
     r = y + z * (s * (r + v) + y);
     r += T[0] * s;
     w = x + r;
-    if (ix >= 0x3FE59428) {
+    if(ix >= 0x3FE59428) {
         v = (double)iy;
         return (double)(1 - ((hx >> 30) & 2)) * (v - 2.0 * (x - (w * w / (w + v) - r)));
     }
-    if (iy == 1)
-        return w;
+    if(iy == 1) return w;
     else {
         double a, t;
         z = w;
@@ -169,4 +166,4 @@ double __kernel_tan(double x, double y, int iy) {
     }
 }
 
-// EOF k_tan.c
+//EOF k_tan.c

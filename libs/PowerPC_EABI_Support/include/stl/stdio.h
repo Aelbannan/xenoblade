@@ -4,7 +4,7 @@
 #include <types.h>
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h"
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h"
@@ -14,6 +14,6 @@ extern "C" {
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

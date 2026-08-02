@@ -3,7 +3,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 typedef enum {
     kNoError = 0,
@@ -26,6 +26,6 @@ typedef enum {
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

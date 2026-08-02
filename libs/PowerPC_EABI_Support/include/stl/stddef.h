@@ -6,13 +6,13 @@ extern "C" {
 
 #ifndef NULL
 #define NULL 0
-#endif // NULL
+#endif //NULL
 
 #ifndef nullptr
 #define nullptr 0
-#endif // nullptr
+#endif //nullptr
 
-#define offsetof(ST, M) ((size_t) & (((ST*)0)->M))
+#define offsetof(ST, M) ((size_t)&(((ST*)0)->M))
 
 typedef signed long ptrdiff_t;
 typedef unsigned long size_t;

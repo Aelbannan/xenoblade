@@ -13,21 +13,20 @@ static BOOL initialized;
 
 int __TRK_write_console(__file_handle, u8*, size_t*, __ref_con);
 
-BOOL __write_console(__file_handle handle, u8* buffer, size_t* count, __ref_con ref_con)
-{
+BOOL __write_console(__file_handle handle, u8* buffer, size_t* count, __ref_con ref_con) {
 
-    if ((OSGetConsoleType() & 0x20000000) == 0) {
+    if((OSGetConsoleType() & 0x20000000) == 0) {
         int initResult = 0;
-        if (initialized == FALSE) {
+        if(initialized == FALSE) {
             initResult = InitializeUART(0xE100);
-            if (initResult == 0) {
+            if(initResult == 0) {
                 initialized = TRUE;
             }
         }
-        if (initResult != 0) {
+        if(initResult != 0) {
             return TRUE;
         }
-        if (WriteUARTN(buffer, *count) != 0) {
+        if(WriteUARTN(buffer, *count) != 0) {
             *count = 0;
             return TRUE;
         }
@@ -36,21 +35,21 @@ BOOL __write_console(__file_handle handle, u8* buffer, size_t* count, __ref_con 
     return FALSE;
 }
 
-int __close_console(__file_handle handle){
+int __close_console(__file_handle handle) {
     return 0;
 }
 
-// not present in the retail binary; kept commented out so the unit
-// stays within its split budget
+//not present in the retail binary; kept commented out so the unit
+//stays within its split budget
 //void __delete_file(){
 //}
 
-// not present in the retail binary; kept commented out so the unit
-// stays within its split budget
+//not present in the retail binary; kept commented out so the unit
+//stays within its split budget
 //void __rename_file(){
 //}
 
-// not present in the retail binary; kept commented out so the unit
-// stays within its split budget
+//not present in the retail binary; kept commented out so the unit
+//stays within its split budget
 //void __temp_file_name(){
 //}

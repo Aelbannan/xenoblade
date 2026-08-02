@@ -3,14 +3,13 @@
 static u32 random_next = 1;
 
 //LCG (linear congruential generator) RNG algorithm
-int rand()
-{
+int rand() {
     random_next = random_next * 1103515245 + 12345;
     return ((random_next >> 16) & 0x7fff);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void srand(u32 seed)
 //{
-//    random_next = seed;
+//   random_next = seed;
 //}

@@ -19,8 +19,7 @@ typedef struct decimal {
     } sig;
 } decimal;
 
-typedef struct decform
-{
+typedef struct decform {
     char style;
     char unk1;
     short digits;

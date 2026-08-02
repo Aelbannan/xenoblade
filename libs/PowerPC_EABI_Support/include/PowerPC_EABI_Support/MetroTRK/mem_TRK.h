@@ -4,12 +4,11 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 void* TRK_memcpy(void* dst, const void* src, int size);
 void* TRK_memset(void* dst, int val, int size);
-
 
 #ifdef __cplusplus
 }

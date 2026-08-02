@@ -61,8 +61,7 @@ struct _loc_mon_cmpt {
     char int_n_sign_posn;
 };
 
-
-struct _loc_num_cmpt{
+struct _loc_num_cmpt {
     char CmptName[8];
     char* decimal_point;
     char* thousands_sep;
@@ -90,7 +89,7 @@ struct _loc_coll_cmpt {
     unsigned short* wchar_coll_seq_ptr;
 };
 
-struct _loc_ctype_cmpt{
+struct _loc_ctype_cmpt {
     char CmptName[8];
     const unsigned short* ctype_map_ptr;
     const unsigned char* upper_map_ptr;

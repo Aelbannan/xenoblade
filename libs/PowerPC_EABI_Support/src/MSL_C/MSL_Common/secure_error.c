@@ -3,12 +3,12 @@
 msl_constraint_handler __msl_constraint_handler;
 
 void __msl_runtime_constraint_violation_s(int param1, int param2, int param3) {
-    if (__msl_constraint_handler) {
+    if(__msl_constraint_handler) {
         __msl_constraint_handler(param1, param2, param3);
     }
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void set_constraint_handler_s(){
 //}
 

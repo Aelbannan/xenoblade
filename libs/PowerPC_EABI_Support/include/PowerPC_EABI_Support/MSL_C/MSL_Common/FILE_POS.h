@@ -6,7 +6,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 int fseek(FILE* stream, u32 offset, int whence);
 int _fseek(FILE* stream, u32 offset, int whence);
@@ -15,6 +15,6 @@ int _ftell(FILE* stream);
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

@@ -5,7 +5,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 #include "PowerPC_EABI_Support/MetroTRK/UART.h"
 
-typedef enum{
+typedef enum {
     HARDWARE_GDEV = 0,
     HARDWARE_NDEV = 1,
     HARDWARE_BBA = 2
@@ -18,7 +18,7 @@ typedef int (*DBCommInitFunc)(void*, OSInterruptHandler);
 typedef int (*DBCommReadFunc)(ui8*, int);
 typedef int (*DBCommWriteFunc)(const ui8*, int);
 
-typedef struct DBCommTable{
+typedef struct DBCommTable {
     DBCommInitFunc initialize_func;
     DBCommFunc initinterrupts_func;
     DBCommFunc shutdown_func;

@@ -9,7 +9,7 @@ void abort(void) {
     exit(1);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void atexit(){
 //}
 

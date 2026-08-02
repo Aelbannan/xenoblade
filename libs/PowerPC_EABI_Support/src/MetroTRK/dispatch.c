@@ -4,12 +4,12 @@ DSError TRK_DispatchMessage(MessageBuffer* buffer) {
     DSError result = kDispatchError;
     MessageBuffer* temp = buffer;
     ui8 command;
-    
+
     TRK_SetBufferPosition(buffer, 0);
-    
+
     command = temp->fData[4];
-    
-    switch(command){
+
+    switch(command) {
         case kDSConnect:
             result = TRK_DoConnect(temp);
             break;

@@ -2,7 +2,7 @@
 #include <locale.h>
 #include <string.h>
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void mblen(){
 //}
 
@@ -12,39 +12,39 @@
 //void __utf8_to_unicode(){
 //}
 
-int mbtowc(wchar_t *dest, const char *s, size_t num) {
+int mbtowc(wchar_t* dest, const char* s, size_t num) {
     return _current_locale.ctype_cmpt_ptr->decode_mb(dest, s, num);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void __unicode_to_UTF8(){
 //}
 
 //void __unicode_to_UTF8_s(){
 //}
 
-int __mbtowc_noconv(wchar_t *dest, const char *src, size_t n) {
-    if (src == 0) {
+int __mbtowc_noconv(wchar_t* dest, const char* src, size_t n) {
+    if(src == 0) {
         return 0;
     }
 
-    if (n == 0) {
+    if(n == 0) {
         return -1;
     }
 
-    if (dest) {
+    if(dest) {
         *dest = (unsigned char)*src;
     }
 
-    if (!*src) {
+    if(!*src) {
         return 0;
     }
 
     return 1;
 }
 
-int __wctomb_noconv(char *src, wchar_t cr) {
-    if (src == 0) {
+int __wctomb_noconv(char* src, wchar_t cr) {
+    if(src == 0) {
         return 0;
     }
 
@@ -52,15 +52,15 @@ int __wctomb_noconv(char *src, wchar_t cr) {
     return 1;
 }
 
-static inline int wctomb(char *src, wchar_t wchar) {
+static inline int wctomb(char* src, wchar_t wchar) {
     return _current_locale.ctype_cmpt_ptr->encode_wc(src, wchar);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void wctomb_s(){
 //}
 
-size_t mbstowcs(wchar_t *dest, const char *src, size_t num) {
+size_t mbstowcs(wchar_t* dest, const char* src, size_t num) {
     int res;
     char* src_temp;
     int count;
@@ -68,63 +68,58 @@ size_t mbstowcs(wchar_t *dest, const char *src, size_t num) {
 
     src_len = strlen(src);
 
-    if (dest != 0) {
+    if(dest != 0) {
         src_temp = (char*)src;
 
-        for (count = 0; count < num; count++) {
-            if (*src_temp) {
+        for(count = 0; count < num; count++) {
+            if(*src_temp) {
                 res = mbtowc(dest++, src_temp, src_len);
 
-                if (res > 0) {
+                if(res > 0) {
                     src_temp += res;
                     src_len -= res;
-                }
-                else {
+                } else {
                     return -1;
                 }
-            }
-            else {
+            } else {
                 *dest = 0;
                 break;
             }
         }
-    }
-    else {
+    } else {
         count = 0;
     }
 
     return count;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void mbstowcs_s(){
 //}
 
-size_t wcstombs(char *src, const wchar_t *pwcs, size_t n) {
+size_t wcstombs(char* src, const wchar_t* pwcs, size_t n) {
     int chars_written = 0;
     int result;
     char temp[3];
     wchar_t* source;
 
-    if (!src || !pwcs) {
+    if(!src || !pwcs) {
         return 0;
     }
 
     source = (wchar_t*)pwcs;
 
-    while (chars_written <= n) {
-        if (!*source) {
+    while(chars_written <= n) {
+        if(!*source) {
             *(src + chars_written) = '\0';
             break;
-        }
-        else {
+        } else {
             result = wctomb(temp, *source++);
 
-            if ((chars_written + result) <= n) {
+            if((chars_written + result) <= n) {
                 strncpy(src + chars_written, temp, result);
                 chars_written += result;
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -133,7 +128,7 @@ size_t wcstombs(char *src, const wchar_t *pwcs, size_t n) {
     return chars_written;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void wcstombs_s(){
 //}
 

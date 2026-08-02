@@ -3,8 +3,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
-
+#endif //ifdef __cplusplus
 
 //#ifdef __STDC__
 #include <math.h>
@@ -36,6 +35,6 @@ double sqrt(double x);
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

@@ -1,34 +1,31 @@
 #include <stdio.h>
 
+static void parse_format() {}
 
-static void parse_format(){
-}
+static void __wsformatter() {}
 
-static void __wsformatter(){
-}
-
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void __wFileRead(){
 //}
 
-wint_t __wStringRead(void* isc, wint_t ch, int Action){
+wint_t __wStringRead(void* isc, wint_t ch, int Action) {
     wchar_t ret;
     __wInStrCtrl* Iscp = (__wInStrCtrl*)isc;
 
-    switch(Action){
+    switch(Action) {
         case __GetAwChar:
             ret = *(Iscp->wNextChar);
-            if(ret == 0){
+            if(ret == 0) {
                 Iscp->wNullCharDetected = 1;
                 return 0xFFFF;
-            }else{
+            } else {
                 Iscp->wNextChar++;
                 return ret;
             }
         case __UngetAwChar:
-            if(!Iscp->wNullCharDetected){
+            if(!Iscp->wNullCharDetected) {
                 Iscp->wNextChar--;
-            }else{
+            } else {
                 Iscp->wNullCharDetected = FALSE;
             }
             return ch;
@@ -39,7 +36,7 @@ wint_t __wStringRead(void* isc, wint_t ch, int Action){
     return 0;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void fwscanf(){
 //}
 

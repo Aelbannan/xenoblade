@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-
 //printf
 //printf_s
 int fprintf(FILE*, const char* format, ...);

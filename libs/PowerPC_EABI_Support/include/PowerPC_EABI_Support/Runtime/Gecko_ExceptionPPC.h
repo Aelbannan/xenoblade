@@ -1,12 +1,10 @@
 #ifndef _RUNTIME_GECKO_EXCEPTIONPPC_H
 #define _RUNTIME_GECKO_EXCEPTIONPPC_H
 
-
 typedef unsigned char exaction_type;
 
 #define EXACTION_ENDBIT 0x80
 #define EXACTION_MASK 0x7F
-
 
 //EXAction structs
 
@@ -78,7 +76,6 @@ typedef struct ex_destroymember {
 #define ex_destroymember_MakeField(regpointer) (((regpointer) << 7))
 #define ex_destroymember_GetRegPointer(field) ((field) >> 7)
 
-
 #define EXACTION_DESTROYMEMBERCOND 8
 
 typedef struct ex_destroymembercond {
@@ -90,8 +87,7 @@ typedef struct ex_destroymembercond {
     void* dtor;
 } ex_destroymembercond;
 
-#define ex_destroymembercond_MakeField(regcond,regpointer) \
-            (((regcond) << 7) | (((regpointer) & 0x1) << 6))
+#define ex_destroymembercond_MakeField(regcond, regpointer) (((regcond) << 7) | (((regpointer) & 0x1) << 6))
 #define ex_destroymembercond_GetRegCond(field) ((field) >> 7)
 #define ex_destroymembercond_GetRegPointer(field) (((field) >> 6) & 0x1)
 
@@ -132,10 +128,9 @@ typedef struct ex_deletepointercond {
     void* deletefunc;
 } ex_deletepointercond;
 
-#define ex_deletepointercond_MakeField(regcond,regpointer) \
-            (((regcond) << 7)|(((regpointer) & 0x1)<<6))
+#define ex_deletepointercond_MakeField(regcond, regpointer) (((regcond) << 7) | (((regpointer) & 0x1) << 6))
 #define ex_deletepointercond_GetRegCond(field) ((field) >> 7)
-#define ex_deletepointercond_GetRegPointer(field) (((field)>>6) & 0x1)
+#define ex_deletepointercond_GetRegPointer(field) (((field) >> 6) & 0x1)
 
 #define EXACTION_CATCHBLOCK 12
 
@@ -183,7 +178,6 @@ typedef struct ex_catchblock_32 {
     long cinfo_ref;
 } ex_catchblock_32;
 
-
 //Other structs
 
 typedef struct ExceptionRangeSmall {
@@ -198,7 +192,7 @@ typedef struct ExceptionTableSmall {
 } ExceptionTableSmall;
 
 typedef struct ExceptionRangeLarge {
-    unsigned long  start;
+    unsigned long start;
     unsigned short size;
     unsigned short action;
 } ExceptionRangeLarge;
@@ -209,16 +203,16 @@ typedef struct ExceptionTableLarge {
     ExceptionRangeLarge ranges[];
 } ExceptionTableLarge;
 
-#define ET_MakeField(savedGPRs,savedFPRs, savedCR, hasframeptr, isLarge) \
-            (((savedGPRs) << 11) | ((savedFPRs & 0x1f) << 6) | ((savedCR & 0x1) << 5) | ((hasframeptr & 0x1) << 4) | ((isLarge & 1) << 3))
+#define ET_MakeField(savedGPRs, savedFPRs, savedCR, hasframeptr, isLarge)                                                                  \
+    (((savedGPRs) << 11) | ((savedFPRs & 0x1f) << 6) | ((savedCR & 0x1) << 5) | ((hasframeptr & 0x1) << 4) | ((isLarge & 1) << 3))
 
-#define ET_GetSavedGPRs(field)   ((field) >> 11)
-#define ET_GetSavedFPRs(field)   (((field) >> 6) & 0x1f)
-#define ET_GetSavedCR(field)     (((field) >> 5) & 0x1)
+#define ET_GetSavedGPRs(field) ((field) >> 11)
+#define ET_GetSavedFPRs(field) (((field) >> 6) & 0x1f)
+#define ET_GetSavedCR(field) (((field) >> 5) & 0x1)
 #define ET_GetHasFramePtr(field) (((field) >> 4) & 0x1)
-#define ET_IsLargeTable(field)   (((field) >> 3) & 0x1)
-#define ET_ClearLargeBit(field)  ((field) & ~(1 << 3))
-#define ET_SetLargeBit(field)    ((field) | (1 << 3))
+#define ET_IsLargeTable(field) (((field) >> 3) & 0x1)
+#define ET_ClearLargeBit(field) ((field) & ~(1 << 3))
+#define ET_SetLargeBit(field) ((field) | (1 << 3))
 
 #define ET_HasElfVector(field) (((field) >> 1) & 0x1)
 
@@ -228,9 +222,8 @@ typedef struct ExceptionTableIndex {
     unsigned long exceptionoffset;
 } ExceptionTableIndex;
 
-#define ETI_MakeField(direct,fsize) ((((long)(direct)) << 31) | ((fsize) & 0x7fffffff))
+#define ETI_MakeField(direct, fsize) ((((long)(direct)) << 31) | ((fsize) & 0x7fffffff))
 #define ETI_GetDirectStore(field) ((field) >> 31)
 #define ETI_GetFunctionSize(field) ((field) & 0x7fffffff)
-
 
 #endif

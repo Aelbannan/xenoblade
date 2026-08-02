@@ -9,7 +9,6 @@
 extern "C" {
 #endif
 
-
 static inline int iswalnum(wint_t c) {
     return (c < 0 || c >= 256) ? 0 : (int)(_current_locale.ctype_cmpt_ptr->wctype_map_ptr[c] & wctype_alnum);
 }

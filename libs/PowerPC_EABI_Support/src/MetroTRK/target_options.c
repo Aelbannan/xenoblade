@@ -2,8 +2,7 @@
 
 static ui8 bUseSerialIO;
 
-
-void SetUseSerialIO(ui8 sio){
+void SetUseSerialIO(ui8 sio) {
     bUseSerialIO = sio;
     return;
 }

@@ -68,38 +68,37 @@ typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con 
 typedef int (*__close_proc)(__file_handle file);
 
 struct _FILE {
-    __file_handle handle;                           // _00
-    __file_modes mode;                              // _04
-    __file_state state;                              // _08
-    u8 is_dynamically_allowed;                      // _0C
-    u8 char_buffer;                                 // _0D
-    u8 char_buffer_overflow;                        // _0E
-    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
-    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
-    u32 position;                                   // _18
-    u8* buffer;                                   // _1C
-    u32 buffer_size;                                // _20
-    u8* buffer_ptr;                               // _24
-    u32 buffer_len;                                 // _28
-    u32 buffer_alignment;                           // _2C
-    u32 saved_buffer_len;                           // _30
-    u32 buffer_pos;                                 // _34
-    __pos_proc position_proc;                       // _38
-    __io_proc read_proc;                            // _3C
-    __io_proc write_proc;                           // _40
-    __close_proc close_proc;                        // _44
-    __ref_con ref_con;                              // _48
-    _FILE* next_file_struct;                        // _4C
+    __file_handle handle;                         //_00
+    __file_modes mode;                            //_04
+    __file_state state;                           //_08
+    u8 is_dynamically_allowed;                    //_0C
+    u8 char_buffer;                               //_0D
+    u8 char_buffer_overflow;                      //_0E
+    u8 ungetc_buffer[__ungetc_buffer_size];       //_0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size]; //_12
+    u32 position;                                 //_18
+    u8* buffer;                                   //_1C
+    u32 buffer_size;                              //_20
+    u8* buffer_ptr;                               //_24
+    u32 buffer_len;                               //_28
+    u32 buffer_alignment;                         //_2C
+    u32 saved_buffer_len;                         //_30
+    u32 buffer_pos;                               //_34
+    __pos_proc position_proc;                     //_38
+    __io_proc read_proc;                          //_3C
+    __io_proc write_proc;                         //_40
+    __close_proc close_proc;                      //_44
+    __ref_con ref_con;                            //_48
+    _FILE* next_file_struct;                      //_4C
 };
 
 typedef struct _FILE FILE;
-
 
 #define _IONBF 0
 #define _IOLBF 1
 #define _IOFBF 2
 
-// define standard C file pointer location names
+//define standard C file pointer location names
 #define SEEK_SET (0)
 #define SEEK_CUR (1)
 #define SEEK_END (2)

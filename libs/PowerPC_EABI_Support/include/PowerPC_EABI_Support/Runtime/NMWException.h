@@ -21,9 +21,9 @@ typedef struct CatchInfo {
 } CatchInfo;
 
 typedef struct DestructorChain {
-  struct DestructorChain* next;
-  void* destructor;
-  void* object;
+    struct DestructorChain* next;
+    void* destructor;
+    void* object;
 } DestructorChain;
 
 extern void* __register_global_object(void* object, void* destructor, void* registration);
@@ -39,8 +39,8 @@ extern int __register_fragment(struct __eti_init_info* info, char* TOC);
 }
 #endif
 
-// Defined in Gecko_ExceptionPPC.cp with C++ linkage; callers and the
-// definition must agree on the mangled name.
+//Defined in Gecko_ExceptionPPC.cp with C++ linkage; callers and the
+//definition must agree on the mangled name.
 void __unregister_fragment(unsigned int fragmentID);
 
-#endif // _NMWEXCEPTION
+#endif //_NMWEXCEPTION

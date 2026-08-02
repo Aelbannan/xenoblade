@@ -3,10 +3,9 @@
 
 #include <types.h>
 
-
 #ifdef __cplusplus
 extern "C" {
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #define wctype_alpha 0x0001
 #define wctype_blank 0x0002
@@ -28,6 +27,6 @@ extern const wchar_t __wupper_mapC[256];
 
 #ifdef __cplusplus
 };
-#endif // ifdef __cplusplus
+#endif //ifdef __cplusplus
 
 #endif

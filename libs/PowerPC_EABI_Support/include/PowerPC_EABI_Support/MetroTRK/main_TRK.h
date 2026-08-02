@@ -4,11 +4,10 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 int TRK_main();
-
 
 #ifdef __cplusplus
 }

@@ -8,7 +8,7 @@ double scalbn(double x, int y) {
     return ldexp(temp_f1, sp8);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void exp2(){
 //}
 

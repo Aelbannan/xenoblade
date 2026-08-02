@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 DSIOResult __read_console(__file_handle, ui8*, size_t*, __ref_con);

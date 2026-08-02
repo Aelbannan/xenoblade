@@ -50,11 +50,11 @@ typedef struct DSCPUType {
 void TRKTargetSetStopped(bool);
 void TRKTargetSetInputPendingPtr(void*);
 
-DSError TRKTargetAccessMemory(void*,void*,size_t*,MemoryAccessOptions,bool);
-DSError TRKTargetAccessDefault(ui32,ui32,MessageBuffer*,size_t*,bool);
-DSError TRKTargetAccessFP(ui32,ui32,MessageBuffer*,size_t*,bool);
-DSError TRKTargetAccessExtended1(ui32,ui32,MessageBuffer*,size_t*,bool);
-DSError TRKTargetAccessExtended2(ui32,ui32,MessageBuffer*,size_t*,bool);
+DSError TRKTargetAccessMemory(void*, void*, size_t*, MemoryAccessOptions, bool);
+DSError TRKTargetAccessDefault(ui32, ui32, MessageBuffer*, size_t*, bool);
+DSError TRKTargetAccessFP(ui32, ui32, MessageBuffer*, size_t*, bool);
+DSError TRKTargetAccessExtended1(ui32, ui32, MessageBuffer*, size_t*, bool);
+DSError TRKTargetAccessExtended2(ui32, ui32, MessageBuffer*, size_t*, bool);
 
 DSError TRKTargetVersions(DSVersions*);
 DSError TRKTargetSupportMask(DSSupportMask*);
@@ -70,26 +70,25 @@ DSError TRKTargetInterrupt(NubEvent*);
 DSError TRKTargetAddStopInfo(MessageBuffer*);
 void TRKTargetAddExceptionInfo(MessageBuffer*);
 
-DSError TRKTargetSingleStep(ui8,bool);
-DSError TRKTargetStepOutOfRange(ui32,ui32,bool);
+DSError TRKTargetSingleStep(ui8, bool);
+DSError TRKTargetStepOutOfRange(ui32, ui32, bool);
 
 ui32 TRKTargetGetPC();
 
 DSError TRKTargetSupportRequest();
-DSError TRKTargetFlushCache(ui8,void*,void*);
+DSError TRKTargetFlushCache(ui8, void*, void*);
 
 bool TRKTargetStopped();
 void TRKTargetSetStopped(bool);
 DSError TRKTargetStop();
 
-void *TRKTargetTranslate(ui32*);
+void* TRKTargetTranslate(ui32*);
 
 void TRK_InterruptHandler(ui16);
 
 #if TRK_TRANSPORT_INT_DRIVEN
 void TRKTargetSetInputPendingPtr(void*);
 #endif
-
 
 /*
 ** Define aliases for the functions which have both OS and non-OS
@@ -98,35 +97,35 @@ void TRKTargetSetInputPendingPtr(void*);
 */
 #if DS_PROTOCOL < DS_PROTOCOL_RTOS
 
-    #define XTargetAccessMemory       TRKTargetAccessMemory
-    #define XTargetAccessDefault      TRKTargetAccessDefault
-    #define XTargetAccessFP           TRKTargetAccessFP
-    #define XTargetAccessExtended1    TRKTargetAccessExtended1
-    #define XTargetAccessExtended2    TRKTargetAccessExtended2
-    #define XTargetContinue           TRKTargetContinue
-    #define XTargetSingleStep         TRKTargetSingleStep
-    #define XTargetStepOutOfRange     TRKTargetStepOutOfRange
-    #define XTargetGetPC              TRKTargetGetPC
-    #define XTargetStopped            TRKTargetStopped
-    #define XTargetStop               TRKTargetStop
-    #define XTargetAddStopInfo        TRKTargetAddStopInfo
-    #define XTargetAddExceptionInfo   TRKTargetAddExceptionInfo
+#define XTargetAccessMemory TRKTargetAccessMemory
+#define XTargetAccessDefault TRKTargetAccessDefault
+#define XTargetAccessFP TRKTargetAccessFP
+#define XTargetAccessExtended1 TRKTargetAccessExtended1
+#define XTargetAccessExtended2 TRKTargetAccessExtended2
+#define XTargetContinue TRKTargetContinue
+#define XTargetSingleStep TRKTargetSingleStep
+#define XTargetStepOutOfRange TRKTargetStepOutOfRange
+#define XTargetGetPC TRKTargetGetPC
+#define XTargetStopped TRKTargetStopped
+#define XTargetStop TRKTargetStop
+#define XTargetAddStopInfo TRKTargetAddStopInfo
+#define XTargetAddExceptionInfo TRKTargetAddExceptionInfo
 
 #else /* #if DS_PROTOCOL < DS_PROTOCOL_RTOS */
 
-    #define XTargetAccessMemory       OsTargetAccessMemory
-    #define XTargetAccessDefault      OsTargetAccessDefault
-    #define XTargetAccessFP           OsTargetAccessFP
-    #define XTargetAccessExtended1    OsTargetAccessExtended1
-    #define XTargetAccessExtended2    OsTargetAccessExtended2
-    #define XTargetContinue           OsTargetContinue
-    #define XTargetSingleStep         OsTargetSingleStep
-    #define XTargetStepOutOfRange     OsTargetStepOutOfRange
-    #define XTargetGetPC              OsTargetGetPC
-    #define XTargetStopped            OsTargetStopped
-    #define XTargetStop               OsTargetStop
-    #define XTargetAddStopInfo        OsTargetAddStopInfo
-    #define XTargetAddExceptionInfo   OsTargetAddExceptionInfo
+#define XTargetAccessMemory OsTargetAccessMemory
+#define XTargetAccessDefault OsTargetAccessDefault
+#define XTargetAccessFP OsTargetAccessFP
+#define XTargetAccessExtended1 OsTargetAccessExtended1
+#define XTargetAccessExtended2 OsTargetAccessExtended2
+#define XTargetContinue OsTargetContinue
+#define XTargetSingleStep OsTargetSingleStep
+#define XTargetStepOutOfRange OsTargetStepOutOfRange
+#define XTargetGetPC OsTargetGetPC
+#define XTargetStopped OsTargetStopped
+#define XTargetStop OsTargetStop
+#define XTargetAddStopInfo OsTargetAddStopInfo
+#define XTargetAddExceptionInfo OsTargetAddExceptionInfo
 
 #endif /* #if DS_PROTOCOL < DS_PROTOCOL_RTOS */
 

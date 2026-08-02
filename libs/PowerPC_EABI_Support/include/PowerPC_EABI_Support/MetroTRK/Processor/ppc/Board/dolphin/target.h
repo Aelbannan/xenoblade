@@ -5,13 +5,12 @@
 #include "PowerPC_EABI_Support/MetroTRK/UART.h"
 #include "PowerPC_EABI_Support/MetroTRK/msgcmd.h"
 
-
 #define DS_TARGET_NAME "Revolution"
 
 #define TRK_BAUD_RATE kBaud38400
 
 #ifndef DS_PROTOCOL
-    #define DS_PROTOCOL DS_PROTOCOL_BOARD
+#define DS_PROTOCOL DS_PROTOCOL_BOARD
 #endif
 
 #define BOARD_WELCOME_STRING "MetroTRK for Revolution v0.4"

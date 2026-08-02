@@ -2,7 +2,7 @@
 
 sig_func signal_funcs[7];
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void signal(){
 //}
 
@@ -11,17 +11,17 @@ int raise(int sig) {
     u32 temp_r0;
 
     temp_r0 = sig - 1;
-    if (temp_r0 > 6) {
+    if(temp_r0 > 6) {
         return -1;
     }
     temp_r31 = signal_funcs[temp_r0];
-    if ((u32)temp_r31 != 1) {
+    if((u32)temp_r31 != 1) {
         signal_funcs[temp_r0] = 0;
     }
-    if ((u32)temp_r31 == 1 || ((int) temp_r31 == 0 && sig == 1)) {
+    if((u32)temp_r31 == 1 || ((int)temp_r31 == 0 && sig == 1)) {
         return 0;
     }
-    if ((u32) temp_r31 == 0) {
+    if((u32)temp_r31 == 0) {
         exit(0);
     }
     temp_r31(sig);

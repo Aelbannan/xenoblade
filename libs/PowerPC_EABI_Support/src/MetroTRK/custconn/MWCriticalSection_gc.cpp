@@ -2,10 +2,9 @@
 
 extern "C" {
 
-void MWInitializeCriticalSection(unsigned int* section){
-}
+void MWInitializeCriticalSection(unsigned int* section) {}
 
-void MWEnterCriticalSection(unsigned int* section){
+void MWEnterCriticalSection(unsigned int* section) {
     *section = OSDisableInterrupts();
 }
 
@@ -13,8 +12,7 @@ void MWExitCriticalSection(unsigned int* section) {
     OSRestoreInterrupts(*section);
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void MWTerminateCriticalSection(unsigned int* section){
 //}
-
 }

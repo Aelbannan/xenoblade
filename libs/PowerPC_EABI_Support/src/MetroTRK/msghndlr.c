@@ -14,20 +14,20 @@ extern void __TRKreset();
 static bool IsTRKConnected;
 static ui32 g_CurrentSequence;
 
-bool GetTRKConnected(){
+bool GetTRKConnected() {
     return IsTRKConnected;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //void SetTRKConnected(bool value){
-//    IsTRKConnected = value;
+//   IsTRKConnected = value;
 //}
 
-static inline DSError TRKSendACK(MessageBuffer* b){
+static inline DSError TRKSendACK(MessageBuffer* b) {
     return TRK_MessageSend(b);
 }
 
-static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandId, DSReplyError replyError){
+static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandId, DSReplyError replyError) {
     msgbuf_t reply;
     ui32 nextSequence;
 
@@ -42,9 +42,9 @@ static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandI
     return kNoError;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //DSError TRKDoError(MessageBuffer* b){
-//    return kNoError;
+//   return kNoError;
 //}
 
 //DSError TRKDoUnsupported(MessageBuffer* b){
@@ -52,33 +52,32 @@ static inline DSError TRKStandardACK(MessageBuffer* b, MessageCommandID commandI
 //    return kNoError;
 //}
 
-DSError TRK_DoConnect(MessageBuffer* b){
+DSError TRK_DoConnect(MessageBuffer* b) {
     IsTRKConnected = true;
-    return TRKStandardACK(b,0x80,kDSReplyNoError);
+    return TRKStandardACK(b, 0x80, kDSReplyNoError);
 }
 
-DSError TRKDoDisconnect(MessageBuffer* b){
+DSError TRKDoDisconnect(MessageBuffer* b) {
     NubEvent event;
 
     IsTRKConnected = false;
-    TRKStandardACK(b,0x80,kDSReplyNoError);
+    TRKStandardACK(b, 0x80, kDSReplyNoError);
     TRKConstructEvent(&event, 1);
     TRKPostEvent(&event);
     return kNoError;
 }
 
-DSError TRKDoReset(MessageBuffer* b){
-    TRKStandardACK(b,0x80,kDSReplyNoError);
+DSError TRKDoReset(MessageBuffer* b) {
+    TRKStandardACK(b, 0x80, kDSReplyNoError);
     __TRKreset();
     return kNoError;
 }
 
-DSError TRKDoOverride(MessageBuffer* b){
-    TRKStandardACK(b,0x80,kDSReplyNoError);
+DSError TRKDoOverride(MessageBuffer* b) {
+    TRKStandardACK(b, 0x80, kDSReplyNoError);
     __TRK_copy_vectors();
     return kNoError;
 }
-
 
 /*
 Message parameters:
@@ -88,7 +87,7 @@ Message parameters:
 0x10: start (ui16)
 0x14: register data (void*)
 */
-DSError TRKDoReadMemory(MessageBuffer* b){
+DSError TRKDoReadMemory(MessageBuffer* b) {
     DSError result = kNoError;
     DSReplyError replyError;
     ui8 options;
@@ -101,61 +100,61 @@ DSError TRKDoReadMemory(MessageBuffer* b){
     options = msg->options;
     start = msg->param2;
     length = msg->param1;
-    
-    if(options & DS_MSG_MEMORY_EXTENDED){
+
+    if(options & DS_MSG_MEMORY_EXTENDED) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyUnsupportedOptionError);
     }
 
-    if (result == 0) {
+    if(result == 0) {
         ui8 buf[0x820] ALIGN(32);
-        
+
         size_t tempLength = length;
 
         result = TRKTargetAccessMemory(buf, start, &tempLength, options & DS_MSG_MEMORY_USERVIEW ? 0 : 1, true);
         TRKResetBuffer(b, 0);
 
-        if(result == kNoError){
-            TRK_memset(&reply3,0,sizeof(msgbuf_t));
+        if(result == kNoError) {
+            TRK_memset(&reply3, 0, sizeof(msgbuf_t));
             reply3.replyError = result;
             reply3.msgLength = tempLength + sizeof(msgbuf_t);
             reply3.commandId = kDSReplyACK;
             reply3.unkC = g_CurrentSequence;
             g_CurrentSequence++;
-            TRK_AppendBuffer(b,(ui8*)&reply3,sizeof(msgbuf_t));
+            TRK_AppendBuffer(b, (ui8*)&reply3, sizeof(msgbuf_t));
 
-            if (options & DS_MSG_MEMORY_SPACE_DATA) {
+            if(options & DS_MSG_MEMORY_SPACE_DATA) {
                 result = TRK_AppendBuffer(b, buf + (start & 0x1F), tempLength);
-            }else {
+            } else {
                 result = TRK_AppendBuffer(b, buf, tempLength);
             }
         }
     }
 
-    if(result != kNoError){
+    if(result != kNoError) {
         switch(result) {
             case kCWDSException:
-            replyError = kDSReplyCWDSException;
-            break;
-              case kInvalidMemory:
-            replyError = kDSReplyInvalidMemoryRange;
-            break;
+                replyError = kDSReplyCWDSException;
+                break;
+            case kInvalidMemory:
+                replyError = kDSReplyInvalidMemoryRange;
+                break;
             case kInvalidProcessId:
-            replyError = kDSReplyInvalidProcessId;
-            break;
+                replyError = kDSReplyInvalidProcessId;
+                break;
             case kInvalidThreadId:
-            replyError = kDSReplyInvalidThreadId;
-            break;
+                replyError = kDSReplyInvalidThreadId;
+                break;
             case kOsError:
-            replyError = kDSReplyOsError;
-            break;
+                replyError = kDSReplyOsError;
+                break;
             default:
-            replyError = kDSReplyCWDSError;
-            break;
+                replyError = kDSReplyCWDSError;
+                break;
         }
 
         return TRKStandardACK(b, kDSReplyACK, replyError);
     }
-    
+
     return TRKSendACK(b);
 }
 
@@ -167,7 +166,7 @@ Message parameters:
 0x10: last register (ui16)
 0x14: register data (void*)
 */
-DSError TRKDoWriteMemory(MessageBuffer* b){
+DSError TRKDoWriteMemory(MessageBuffer* b) {
     DSError result = kNoError;
     DSReplyError replyError;
     ui8 options;
@@ -179,57 +178,57 @@ DSError TRKDoWriteMemory(MessageBuffer* b){
     options = msg->options;
     start = msg->param2;
     length = msg->param1;
-    
-    if(options & DS_MSG_MEMORY_EXTENDED){
+
+    if(options & DS_MSG_MEMORY_EXTENDED) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyUnsupportedOptionError);
     }
 
-    if (result == kNoError) {
+    if(result == kNoError) {
         ui8 buf[0x820] ALIGN(32);
 
         size_t tempLength = length;
 
-        TRK_SetBufferPosition(b,0x40);
-        result = TRK_ReadBuffer(b,buf,tempLength);
+        TRK_SetBufferPosition(b, 0x40);
+        result = TRK_ReadBuffer(b, buf, tempLength);
         result = TRKTargetAccessMemory(buf, start, &tempLength, options & DS_MSG_MEMORY_USERVIEW ? 0 : 1, false);
         TRKResetBuffer(b, 0);
-    
-        if(result == kNoError){
-            TRK_memset(&reply3,0,sizeof(msgbuf_t));
+
+        if(result == kNoError) {
+            TRK_memset(&reply3, 0, sizeof(msgbuf_t));
             reply3.msgLength = sizeof(msgbuf_t);
             reply3.commandId = kDSReplyACK;
             reply3.replyError = result;
             reply3.unkC = g_CurrentSequence;
             g_CurrentSequence++;
-            result = TRK_AppendBuffer(b,(ui8*)&reply3,sizeof(msgbuf_t));
+            result = TRK_AppendBuffer(b, (ui8*)&reply3, sizeof(msgbuf_t));
         }
     }
 
-    if(result != kNoError){
+    if(result != kNoError) {
         switch(result) {
             case kCWDSException:
-            replyError = kDSReplyCWDSException;
-            break;
-              case kInvalidMemory:
-            replyError = kDSReplyInvalidMemoryRange;
-            break;
+                replyError = kDSReplyCWDSException;
+                break;
+            case kInvalidMemory:
+                replyError = kDSReplyInvalidMemoryRange;
+                break;
             case kInvalidProcessId:
-            replyError = kDSReplyInvalidProcessId;
-            break;
+                replyError = kDSReplyInvalidProcessId;
+                break;
             case kInvalidThreadId:
-            replyError = kDSReplyInvalidThreadId;
-            break;
+                replyError = kDSReplyInvalidThreadId;
+                break;
             case kOsError:
-            replyError = kDSReplyOsError;
-            break;
+                replyError = kDSReplyOsError;
+                break;
             default:
-            replyError = kDSReplyCWDSError;
-            break;
+                replyError = kDSReplyCWDSError;
+                break;
         }
 
         return TRKStandardACK(b, kDSReplyACK, replyError);
     }
-    
+
     return TRKSendACK(b);
 }
 
@@ -241,7 +240,7 @@ Message parameters:
 0x10: last register (ui16)
 0x14: register data (ui32[])
 */
-DSError TRKDoReadRegisters(MessageBuffer* b){
+DSError TRKDoReadRegisters(MessageBuffer* b) {
     DSError error;
     DSReplyError replyError;
     ui8 options;
@@ -250,12 +249,12 @@ DSError TRKDoReadRegisters(MessageBuffer* b){
     size_t registersLength;
     msgbuf_t local_50;
     TRKMsgBody* msg = (TRKMsgBody*)b->fData;
-    
+
     options = msg->options;
     firstRegister = msg->param1;
     lastRegister = msg->lastRegister;
 
-    if(firstRegister > lastRegister){
+    if(firstRegister > lastRegister) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyInvalidRegisterRange);
     }
 
@@ -264,49 +263,49 @@ DSError TRKDoReadRegisters(MessageBuffer* b){
     local_50.unkC = g_CurrentSequence;
     g_CurrentSequence++;
 
-    TRKResetBuffer(b,0);
-    TRKAppendBuffer_ui8(b,(ui8*)&local_50,sizeof(msgbuf_t));
+    TRKResetBuffer(b, 0);
+    TRKAppendBuffer_ui8(b, (ui8*)&local_50, sizeof(msgbuf_t));
 
     //???
     error = TRKTargetAccessDefault(0, 36, b, &registersLength, true);
 
-    if(error == kNoError){
+    if(error == kNoError) {
         error = TRKTargetAccessFP(0, 33, b, &registersLength, true);
     }
-    if(error == kNoError){
+    if(error == kNoError) {
         error = TRKTargetAccessExtended1(0, 0x60, b, &registersLength, true);
     }
-    if(error == kNoError){
+    if(error == kNoError) {
         error = TRKTargetAccessExtended2(0, 31, b, &registersLength, true);
     }
 
     //Check if there was an error, and respond accordingly
-    if(error != kNoError){
-        switch(error){
+    if(error != kNoError) {
+        switch(error) {
             case kUnsupportedError:
-            replyError = kDSReplyUnsupportedOptionError;
-            break;
+                replyError = kDSReplyUnsupportedOptionError;
+                break;
             case kInvalidRegister:
-            replyError = kDSReplyInvalidRegisterRange;
-            break;
+                replyError = kDSReplyInvalidRegisterRange;
+                break;
             case kCWDSException:
-            replyError = kDSReplyCWDSException;
-            break;
+                replyError = kDSReplyCWDSException;
+                break;
             case kInvalidProcessId:
-            replyError = kDSReplyInvalidProcessId;
-            break;
+                replyError = kDSReplyInvalidProcessId;
+                break;
             case kInvalidThreadId:
-            replyError = kDSReplyInvalidThreadId;
-            break;
+                replyError = kDSReplyInvalidThreadId;
+                break;
             case kOsError:
-            replyError = kDSReplyOsError;
-            break;
+                replyError = kDSReplyOsError;
+                break;
             default:
-            replyError = kDSReplyCWDSError;
+                replyError = kDSReplyCWDSError;
         }
 
         return TRKStandardACK(b, kDSReplyACK, replyError);
-    }else{
+    } else {
         //No error, send ack
         return TRKSendACK(b);
     }
@@ -320,7 +319,7 @@ Message parameters:
 0x10: last register (ui16)
 0x14: register data (ui32[])
 */
-DSError TRKDoWriteRegisters(MessageBuffer* b){
+DSError TRKDoWriteRegisters(MessageBuffer* b) {
     DSError error;
     DSReplyError replyError;
     ui8 options;
@@ -329,41 +328,41 @@ DSError TRKDoWriteRegisters(MessageBuffer* b){
     size_t registersLength;
     msgbuf_t local_50;
     TRKMsgBody* msg = (TRKMsgBody*)b->fData;
-    
+
     options = msg->options;
     firstRegister = msg->param1;
     lastRegister = msg->lastRegister;
 
-    TRK_SetBufferPosition(b,0);
+    TRK_SetBufferPosition(b, 0);
 
-    if(firstRegister > lastRegister){
+    if(firstRegister > lastRegister) {
         return TRKStandardACK(b, kDSReplyACK, kDSReplyInvalidRegisterRange);
     }
 
-    TRK_SetBufferPosition(b,0x40);
+    TRK_SetBufferPosition(b, 0x40);
 
-    switch(options){
+    switch(options) {
         case kDSRegistersDefault:
-        error = TRKTargetAccessDefault(firstRegister, lastRegister, b, &registersLength, false);
-        break;
+            error = TRKTargetAccessDefault(firstRegister, lastRegister, b, &registersLength, false);
+            break;
         case kDSRegistersFP:
-        error = TRKTargetAccessFP(firstRegister, lastRegister, b, &registersLength, false);
-        break;
+            error = TRKTargetAccessFP(firstRegister, lastRegister, b, &registersLength, false);
+            break;
         case kDSRegistersExtended1:
-        error = TRKTargetAccessExtended1(firstRegister, lastRegister, b, &registersLength, false);
-        break;
+            error = TRKTargetAccessExtended1(firstRegister, lastRegister, b, &registersLength, false);
+            break;
         case kDSRegistersExtended2:
-        error = TRKTargetAccessExtended2(firstRegister, lastRegister, b, &registersLength, false);
-        break;
+            error = TRKTargetAccessExtended2(firstRegister, lastRegister, b, &registersLength, false);
+            break;
         default:
-        //invalid option
-        error = kUnsupportedError;
-        break;
+            //invalid option
+            error = kUnsupportedError;
+            break;
     }
 
-    TRKResetBuffer(b,0);
+    TRKResetBuffer(b, 0);
 
-    if (error == kDSReplyNoError) {
+    if(error == kDSReplyNoError) {
         TRK_memset(&local_50, 0, sizeof(msgbuf_t));
         local_50.msgLength = sizeof(msgbuf_t);
         local_50.commandId = kDSReplyACK;
@@ -374,46 +373,46 @@ DSError TRKDoWriteRegisters(MessageBuffer* b){
     }
 
     //Check if there was an error, and respond accordingly
-    if(error != kNoError){
-        switch(error){
+    if(error != kNoError) {
+        switch(error) {
             case kUnsupportedError:
-            replyError = kDSReplyUnsupportedOptionError;
-            break;
+                replyError = kDSReplyUnsupportedOptionError;
+                break;
             case kInvalidRegister:
-            replyError = kDSReplyInvalidRegisterRange;
-            break;
+                replyError = kDSReplyInvalidRegisterRange;
+                break;
             case kMessageBufferReadError:
-            replyError = kDSReplyPacketSizeError;
-            break;
+                replyError = kDSReplyPacketSizeError;
+                break;
             case kCWDSException:
-            replyError = kDSReplyCWDSException;
-            break;
+                replyError = kDSReplyCWDSException;
+                break;
             case kInvalidProcessId:
-            replyError = kDSReplyInvalidProcessId;
-            break;
+                replyError = kDSReplyInvalidProcessId;
+                break;
             case kInvalidThreadId:
-            replyError = kDSReplyInvalidThreadId;
-            break;
+                replyError = kDSReplyInvalidThreadId;
+                break;
             case kOsError:
-            replyError = kDSReplyOsError;
-            break;
+                replyError = kDSReplyOsError;
+                break;
             default:
-            replyError = kDSReplyCWDSError;
+                replyError = kDSReplyCWDSError;
         }
 
         return TRKStandardACK(b, kDSReplyACK, replyError);
-    }else{
+    } else {
         //No error, send ack
         return TRKSendACK(b);
     }
 }
 
-DSError TRKDoContinue(MessageBuffer* b){
+DSError TRKDoContinue(MessageBuffer* b) {
     DSError result;
-    
-    if(!TRKTargetStopped()){
+
+    if(!TRKTargetStopped()) {
         result = TRKStandardACK(b, kDSReplyACK, kDSReplyNotStopped);
-    }else{
+    } else {
         TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
         result = TRKTargetContinue();
     }
@@ -431,7 +430,7 @@ If kDSStepIntoRange/kDSStepOverRange:
 0x10: range start (ui32)
 0x14: range end (ui32)
 */
-DSError TRKDoStep(MessageBuffer *b){
+DSError TRKDoStep(MessageBuffer* b) {
     DSError result;
     ui8 options;
     ui8 count;
@@ -446,75 +445,75 @@ DSError TRKDoStep(MessageBuffer *b){
     rangeStart = msg->param2;
     rangeEnd = msg->param3;
 
-    switch(options){
-    //Count step
-    case kDSStepIntoCount:
-    case kDSStepOverCount:
-        //Continue if the step count is at least 1
-        count = b->fData[12];
-        if(count >= 1){
-            break;
-        }
-        return TRKStandardACK(b,kDSReplyACK,kDSReplyParameterError);
-    //Range step
-    case kDSStepIntoRange:
-    case kDSStepOverRange:
-        pc = TRKTargetGetPC();
-        //Continue if the current pc is within the step range
-        if(pc >= rangeStart && pc <= rangeEnd){
-            break;
-        }
-        return TRKStandardACK(b,kDSReplyACK,kDSReplyParameterError);
-    default:
-        //Invalid option value
-        return TRKStandardACK(b,kDSReplyACK,kDSReplyUnsupportedOptionError);
-    }
-
-    if(!TRKTargetStopped()){
-        return TRKStandardACK(b,kDSReplyACK,kDSReplyNotStopped);
-    }else{
-        result = TRKStandardACK(b,kDSReplyACK,kDSReplyNoError);
-
-        switch(options){
+    switch(options) {
         //Count step
         case kDSStepIntoCount:
         case kDSStepOverCount:
-            result = TRKTargetSingleStep(count, options == kDSStepOverCount);
-            break;
+            //Continue if the step count is at least 1
+            count = b->fData[12];
+            if(count >= 1) {
+                break;
+            }
+            return TRKStandardACK(b, kDSReplyACK, kDSReplyParameterError);
         //Range step
         case kDSStepIntoRange:
         case kDSStepOverRange:
-            result = TRKTargetStepOutOfRange(rangeStart, rangeEnd, options == kDSStepOverRange);
-            break;
+            pc = TRKTargetGetPC();
+            //Continue if the current pc is within the step range
+            if(pc >= rangeStart && pc <= rangeEnd) {
+                break;
+            }
+            return TRKStandardACK(b, kDSReplyACK, kDSReplyParameterError);
+        default:
+            //Invalid option value
+            return TRKStandardACK(b, kDSReplyACK, kDSReplyUnsupportedOptionError);
+    }
+
+    if(!TRKTargetStopped()) {
+        return TRKStandardACK(b, kDSReplyACK, kDSReplyNotStopped);
+    } else {
+        result = TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
+
+        switch(options) {
+            //Count step
+            case kDSStepIntoCount:
+            case kDSStepOverCount:
+                result = TRKTargetSingleStep(count, options == kDSStepOverCount);
+                break;
+            //Range step
+            case kDSStepIntoRange:
+            case kDSStepOverRange:
+                result = TRKTargetStepOutOfRange(rangeStart, rangeEnd, options == kDSStepOverRange);
+                break;
         }
     }
 
     return result;
 }
 
-DSError TRKDoStop(MessageBuffer* b){
+DSError TRKDoStop(MessageBuffer* b) {
     msgbuf_t reply;
     ui8 replyError;
 
-    switch(TRKTargetStop()){
+    switch(TRKTargetStop()) {
         case kNoError:
-        replyError = 0;
-        break;
+            replyError = 0;
+            break;
         case kInvalidProcessId:
-        replyError = kDSReplyInvalidProcessId;
-        break;
+            replyError = kDSReplyInvalidProcessId;
+            break;
         case kInvalidThreadId:
-        replyError = kDSReplyInvalidThreadId;
-        break;
+            replyError = kDSReplyInvalidThreadId;
+            break;
         case kOsError:
-        replyError = kDSReplyOsError;
-        break;
+            replyError = kDSReplyOsError;
+            break;
         default:
-        replyError = kDSReplyError;
-        break;
+            replyError = kDSReplyError;
+            break;
     }
 
-    return TRKStandardACK(b,kDSReplyACK,replyError);
+    return TRKStandardACK(b, kDSReplyACK, replyError);
 }
 
 /*
@@ -524,20 +523,20 @@ Message parameters:
 0x8:
 0xC: options? (ui8?)
 */
-DSError TRKDoSetOption(MessageBuffer *b){
+DSError TRKDoSetOption(MessageBuffer* b) {
     ui8 options = b->fData[12];
 
     if(b->fData[8] == 1) {
         OSReport("\nMetroTRK Option : SerialIO - ");
 
-        if(options != 0){
+        if(options != 0) {
             OSReport("Enable\n");
-        }else{
+        } else {
             OSReport("Disable\n");
         }
 
         SetUseSerialIO(options);
     }
 
-    return TRKStandardACK(b,kDSReplyACK,kDSReplyNoError);
+    return TRKStandardACK(b, kDSReplyACK, kDSReplyNoError);
 }

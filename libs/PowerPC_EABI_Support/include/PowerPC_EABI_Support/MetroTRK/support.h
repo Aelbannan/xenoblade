@@ -6,7 +6,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/msgbuf.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 DSError TRK_SuppAccessFile(ui32, ui8*, size_t*, DSIOResult*, bool, bool);

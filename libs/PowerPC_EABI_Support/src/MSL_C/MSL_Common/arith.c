@@ -1,19 +1,16 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/arith.h"
 
-
-int abs(int x)
-{
+int abs(int x) {
     int mask = x >> 31;
     return (mask ^ x) - mask;
 }
 
 //might be llabs
-long labs(long x)
-{
+long labs(long x) {
     return x > 0 ? x : -x;
 }
 
-// not present in the retail binary; kept commented out for reference
+//not present in the retail binary; kept commented out for reference
 //s64 llabs(s64 __x){
 //}
 

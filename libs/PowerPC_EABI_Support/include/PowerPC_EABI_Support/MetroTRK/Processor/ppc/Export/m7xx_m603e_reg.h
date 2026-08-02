@@ -4,7 +4,7 @@
 #include "PowerPC_EABI_Support/MetroTRK/dstypes.h"
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Export/ppc_reg.h"
 
-typedef struct Extended1_PPC_6xx_7xx{
+typedef struct Extended1_PPC_6xx_7xx {
     Extended1Type SR[16];
     Extended1Type TBL;
     Extended1Type TBU;
@@ -77,7 +77,7 @@ typedef struct Extended1_PPC_6xx_7xx{
     Extended1Type DBAT6L;
     Extended1Type DBAT7U;
     Extended1Type DBAT7L;
-    
+
     Extended1Type exceptionID;
     Extended1Type GQR;
 
@@ -96,14 +96,14 @@ typedef struct Extended1_PPC_6xx_7xx{
     ui8 pad[4];
 } Extended1_PPC_6xx_7xx;
 
-#define DS_EXTENDED1_MIN_REGISTER_6xx_7xx    0
-#define DS_EXTENDED1_MAX_REGISTER_6xx_7xx    (sizeof(Extended1_PPC_6xx_7xx) / sizeof(Extended1Type) - 1)
+#define DS_EXTENDED1_MIN_REGISTER_6xx_7xx 0
+#define DS_EXTENDED1_MAX_REGISTER_6xx_7xx (sizeof(Extended1_PPC_6xx_7xx) / sizeof(Extended1Type) - 1)
 
-typedef struct Extended2_PPC_6xx_7xx{
+typedef struct Extended2_PPC_6xx_7xx {
     ui32 PSR[32][2];
 } Extended2_PPC_6xx_7xx;
 
-typedef struct ProcessorState_PPC_6xx_7xx{
+typedef struct ProcessorState_PPC_6xx_7xx {
     Default_PPC Default;
     Float_PPC Float;
     Extended1_PPC_6xx_7xx Extended1;
@@ -112,7 +112,6 @@ typedef struct ProcessorState_PPC_6xx_7xx{
     DefaultType transport_handler_saved_ra;
 #endif
 } ProcessorState_PPC_6xx_7xx;
-
 
 typedef ProcessorState_PPC_6xx_7xx ProcessorState_PPC;
 

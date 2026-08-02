@@ -135,66 +135,65 @@ void __MIXRmtUpdateSettings(s32 idx, void* out)
     // Phase 3: output interpolation data for DSP
     {
         u16 bm;
-        u16 cur0, cur1, cur2, cur3, cur4, cur5, cur6, cur7;
+        u16 cur;
         s32 step;
-        u16* op;
+        u16* q = (u16*)((u8*)out + 0x102);
 
-        op = (u16*)((u8*)out + 0x104);
-        cur0 = ch->cur0;
-        ((u16*)out)[0x81] = cur0;
+        cur = ch->cur0;
+        *q++ = cur;
         bm = 0;
-        if (cur0 != 0) bm |= 1;
+        if (cur != 0) bm |= 1;
         step = (ch->dst0 - ch->cur0) / 18;
-        op[0] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 2;
 
-        cur1 = ch->cur1;
-        op[1] = cur1;
-        if (cur1 != 0) bm |= 4;
+        cur = ch->cur1;
+        *q++ = cur;
+        if (cur != 0) bm |= 4;
         step = (ch->dst1 - ch->cur1) / 18;
-        op[2] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 8;
 
-        cur2 = ch->cur2;
-        op[3] = cur2;
-        if (cur2 != 0) bm |= 0x10;
+        cur = ch->cur2;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x10;
         step = (ch->dst2 - ch->cur2) / 18;
-        op[4] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x20;
 
-        cur3 = ch->cur3;
-        op[5] = cur3;
-        if (cur3 != 0) bm |= 0x40;
+        cur = ch->cur3;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x40;
         step = (ch->dst3 - ch->cur3) / 18;
-        op[6] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x80;
 
-        cur4 = ch->cur4;
-        op[7] = cur4;
-        if (cur4 != 0) bm |= 0x100;
+        cur = ch->cur4;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x100;
         step = (ch->dst4 - ch->cur4) / 18;
-        op[8] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x200;
 
-        cur5 = ch->cur5;
-        op[9] = cur5;
-        if (cur5 != 0) bm |= 0x400;
+        cur = ch->cur5;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x400;
         step = (ch->dst5 - ch->cur5) / 18;
-        op[10] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x800;
 
-        cur6 = ch->cur6;
-        op[11] = cur6;
-        if (cur6 != 0) bm |= 0x1000;
+        cur = ch->cur6;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x1000;
         step = (ch->dst6 - ch->cur6) / 18;
-        op[12] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x2000;
 
-        cur7 = ch->cur7;
-        op[13] = cur7;
-        if (cur7 != 0) bm |= 0x4000;
+        cur = ch->cur7;
+        *q++ = cur;
+        if (cur != 0) bm |= 0x4000;
         step = (ch->dst7 - ch->cur7) / 18;
-        op[14] = (u16)step;
+        *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x8000;
 
         ((u16*)out)[0x80] = bm;

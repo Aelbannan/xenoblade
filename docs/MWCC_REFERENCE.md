@@ -130,7 +130,7 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 | Wrong float constant pool | `lfs` from wrong `.sdata2` slot | `extern "C" const float lbl_eu_*` |
 | Ternary vs `if/else` codegen | Extra `b` or `sel` | Toggle form |
 | Ghidra `r13` SDA | Misleading decompilation | Set SDA bases in Ghidra |
-| Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594) |
+| Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594; **__MIXRmtUpdateSettings phase-3**: walk `u16* q = (u16*)((u8*)out + 0x102)` so the folded cur0 store lands at `258(r30)` and the run materialises `addi r3,r30,260` with `sth 0..28(r3)` — 167 structural → 0, FULL_MATCH us-8034f910) |
 | 3-op load-order reg-swaps in a top-level sum (`lwz` order differs, adds identical) | MWCC rotates a top-level sum chain `[s0,s1,s2]` into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`) | Write the source in rotated order: retail loads `[panFrontL, fader, X]` require `fader + X + panFrontL`; sums nested in a larger tree (`(a+b+c)-30`) are NOT rotated (HBMMIXInitChannel) |
 
 ## RVL_SDK bte/sdp sdp_db.c — SDP_AddServiceClassIdList FULL_MATCH: "8-per-group" is MWCC ×8 unroll, not source structure (GC/3.0a3.4 `-func_align 4` `-ipa off`)
@@ -6526,3 +6526,46 @@ functions ARE fixable: declare `extern "C" const float lbl_eu_80669D38/3C;`
 and reference them (note: 80669D38 = 0.0f, 80669D3C = 1.0f — verify values
 against the retail store pattern before swapping literals; getting them
 backwards silently swaps the initialized fields).
+
+## RVL_SDK hbm/nw4hbm lyt_window — 20/20 FULL_MATCH: POD color locals, no GetTextureNum guards, y-down frame points (Wii/1.1 `-O4,p`)
+
+`lyt_window.cpp` (nw4hbm, us-80336bb0..us-803391c0) reached 20/20 FULL_MATCH in
+one session. The unit had been size-blocked for weeks (decomp .text 0x2700 vs
+0x2630 budget; every matched function cycled to BACKLOG via the split gate).
+Root causes and fixes:
+
+1. **Local `ut::Color` arrays force out-of-line ctor/dtor calls.** Retail
+   `ut_Color.h` declares `Color()`/`~Color()` out-of-line (strong defs emitted
+   only in lyt_material.o / lyt_bounding.o — verified bind=1 in the retail
+   objects). Any `ut::Color vtxColors[4]` local therefore lowers to 4×
+   `bl __ct__Color` + 4× `bl __dt__Color` (~0x50/fn of pure bloat; DrawFrame4
+   grew 0x728→0x798). The retail DrawFrame/4/8 locals are POD: `u32
+   vtxColors[4]` with per-element `= 0xFFFFFFFF` assignments (NOT an aggregate
+   initializer — `u32 x[4] = {0xFFFFFFFF,...}` and `GXColor x[4] =
+   {{255,...}}` both get const-pooled as `lwzu/lwz` instead of `li r0,-1;
+   stw`), passed to `DrawQuad` via
+   `reinterpret_cast<const ut::Color*>(vtxColors)`. The `= {ut::Color::WHITE,
+   ...}` form also works for the init (inline `Color(u32)` ctor → stores) but
+   leaves the 4 dtor calls.
+2. **nw4hbm DrawFrame/4/8 have NO `GetTextureNum()` guards** (retail calls
+   `SetupGX` unconditionally per frame; the `bc 12,2` sites are only the
+   DrawQuad color ternaries). The nw4r retails DO guard — do not port the
+   nw4r source blindly between SDK variants.
+3. **nw4hbm lyt uses y-DOWN frame coordinates** (nw4r is y-up): `WindowFrameSize`
+   layout is `{l, r, t, b}` and `GetLBFrameSize` point.y = `rBase.y +
+   rFrameSize.t`, `GetRBFrameSize` point.y = `rBase.y + mSize.height -
+   rFrameSize.b`, DrawContent point.y = `rBase.y + rFrameSize.t -
+   mContentInflation.t`. The nw4r forms (`- t`, `- h + b`) are retail-different
+   here (manifest as fadds↔fsubs operand swaps).
+4. **DrawFrame8 uses the same Get*TexCoord helper-call structure as
+   DrawFrame4** (per-frame `Get##TEXCOORD##TexCoord(texCoords[0], size,
+   GetTextureSize(...), flipType)`), NOT hand-inlined flip math. A previous
+   rewrite that inlined the flip-math macros kept the unit at 1–16% for those
+   functions; restoring the helper calls (plus y-down points, no guard, POD
+   colors) took DrawFrame 1.7%→100%, DrawFrame4 1.2%→100%, DrawFrame8
+   15.7%→100%.
+5. `FindMaterialByName` recursive call passes the constant `true` (retail
+   `li r5,1`), not the runtime `recursive` parameter.
+
+Files: `libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp` (+ the
+retail-proven helper/header facts above; no header changes needed).

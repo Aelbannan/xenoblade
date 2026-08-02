@@ -44,6 +44,10 @@ const char* AnmObjTexSrtRes::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
 
+const char* AnmObjTexSrtOverride::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 } // namespace nw4r
@@ -88,8 +92,6 @@ extern const char lbl_eu_8051D5A8[];
 void* GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv(void) { return (void*)lbl_eu_8051D5A8; }
 
 void __dt__Q34nw4r3g3d15AnmObjTexSrtResFv(){}
-
-void GetTypeName__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv(){}
 
 extern "C" const char lbl_eu_8051D590[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv(void) { return (void*)lbl_eu_8051D590; }

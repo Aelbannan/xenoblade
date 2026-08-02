@@ -2,8 +2,12 @@
 // High-level C reconstruction matching retail Wii GX TEV API.
 #include <revolution/GX.h>
 
-extern u32 TEVCOpTableST0[];
-extern u32 TEVCOpTableST1[];
+// TEV op tables indexed by GXTevMode (5 simple modes: ADD..BLEND).
+// Layout (retail .data order): ST0 color, ST1 color, ST0 alpha, ST1 alpha.
+u32 TEVCOpTableST0[5] = {0xC008F8AF, 0xC008A89F, 0xC008AC8F, 0xC008FFF8, 0xC008FFFA};
+u32 TEVCOpTableST1[5] = {0xC008F80F, 0xC008089F, 0xC0080C8F, 0xC008FFF8, 0xC008FFF0};
+u32 TEVAOpTableST0[5] = {0xC108F2F0, 0xC108FFD0, 0xC108F2F0, 0xC108FFC0, 0xC108FFD0};
+u32 TEVAOpTableST1[5] = {0xC108FF80, 0xC108FF80, 0xC108F070, 0xC108FFC0, 0xC108FF80};
 
 void GXSetNumTevStages(u8 nStages)
 {
@@ -369,40 +373,29 @@ void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map,
 
 void GXSetTevOp(GXTevStageID stage, GXTevMode mode)
 {
-    u32 *base = TEVCOpTableST0;
-    u32 *colorPtr, *alphaPtr;
+    u32 *ctmp, *atmp;
+    u32 idx = (u32)stage;
+    u32 tevc, teva;
 
-    if (stage != 0) {
-        colorPtr = (u32 *)((u8 *)base + 0x14) + (u32)mode;
-        alphaPtr = (u32 *)((u8 *)base + 0x3C) + (u32)mode;
+    if (stage == 0) {
+        ctmp = TEVCOpTableST0 + (u32)mode;
+        atmp = TEVAOpTableST0 + (u32)mode;
     } else {
-        colorPtr = base + (u32)mode;
-        alphaPtr = (u32 *)((u8 *)base + 0x28) + (u32)mode;
+        ctmp = TEVCOpTableST1 + (u32)mode;
+        atmp = TEVAOpTableST1 + (u32)mode;
     }
 
-    {
-        u32 idx = (u32)stage;
-        u32 cv = *colorPtr;
-        u32 tevc, teva;
+    tevc = __GXData->tevc[idx];
+    tevc = (*ctmp & ~0xFF000000) | (tevc & 0xFF000000);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = tevc;
+    __GXData->tevc[idx] = tevc;
 
-        tevc = __GXData->tevc[idx];
-        tevc &= 0xFF000000;
-        tevc |= (cv & 0x00FFFFFF);
+    teva = __GXData->teva[idx];
+    teva = (*atmp & ~0xFF00000F) | (teva & 0xFF00000F);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+    WGPIPE.i = teva;
+    __GXData->teva[idx] = teva;
 
-        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-        WGPIPE.i = tevc;
-        __GXData->tevc[idx] = tevc;
-
-        teva = __GXData->teva[idx];
-        {
-            u32 av = *alphaPtr;
-            teva = (teva & 0xFF00000F) | (av & 0x00FFFFF0);
-        }
-
-        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
-        WGPIPE.i = teva;
-        __GXData->teva[idx] = teva;
-
-        __GXData->lastWriteWasXF = 0;
-    }
+    __GXData->lastWriteWasXF = 0;
 }

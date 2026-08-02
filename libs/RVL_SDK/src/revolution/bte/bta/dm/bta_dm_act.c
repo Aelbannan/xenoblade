@@ -1530,7 +1530,6 @@ void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
    the role-management config table. */
 void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
                      bd_addr_t peer_addr) {
-    unsigned char num;
     unsigned char *p_cfg;
     unsigned char i;
     unsigned char j;
@@ -1539,11 +1538,10 @@ void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
             if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, peer_addr) == 0) {
                 bta_dm_cb.peer_dev[i].in_use = 1;
                 p_cfg = p_bta_dm_rm_cfg;
-                num = p_cfg[1];
-                for (j = 1; j <= num; j++) {
+                for (j = 1; j <= p_cfg[1]; j++) {
                     if (p_cfg[3 * j + 1] == app_id || p_cfg[3 * j + 1] == 0xff) {
                         if (p_cfg[3 * j] == id) {
-                            unsigned char cfg_val = p_cfg[3 * j + 2];
+                            unsigned char cfg_val = *(p_cfg + 3 * j + 2);
                             if (cfg_val > bta_dm_cb.peer_dev[i].policy) {
                                 bta_dm_cb.peer_dev[i].policy = cfg_val;
                             }

@@ -19,7 +19,23 @@ void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enabl
     return *reinterpret_cast<void**>(object + 0x10);
 }
 
-void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(){}
+namespace nw4r {
+namespace g3d {
+
+ResMatChan ScnMdl::CopiedMatAccess::GetResMatChan(bool markDirty) {
+    if (mpScnMdl != NULL && mChan.IsValid()) {
+        if (markDirty) {
+            u32* dirtyFlags =
+                *reinterpret_cast<u32**>(reinterpret_cast<u8*>(mpScnMdl) + 0x140);
+            dirtyFlags[mMatID] |= 0x8;
+        }
+        return mChan;
+    }
+    return ResMatChan(NULL);
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
     struct Model {

@@ -2,6 +2,7 @@
 
 #include <harness_catalog.h>
 
+#include <revolution/AI.h>
 #include <revolution/AX.h>
 #include <revolution/OS.h>
 #include <revolution/arc/arc.h>
@@ -53,18 +54,21 @@ struct HBMWork {
     ARCHandle archive;             // 0x1434C (0x1C bytes)
     OSThread thread;               // 0x14368 (0x318 bytes)
     OSMessageQueue msgQueue;       // 0x14680 (0x20 bytes)
-    u8 pad_146A0[0x14];            // .. 0x146B4
+    OSMessage msgBuffer[4];        // 0x146A0 (0x10 bytes)
+    void* workEnd;                 // 0x146B0
     void* seqWork1;                // 0x146B4
     void* seqWork2;                // 0x146B8
 };
 
 HBMWork* sWork;
 
-
 // Retail rodata: 28 filenames indexed by seq id (SOUND_FILENAME).
 extern "C" const char* SOUND_FILENAME[];
 
+// Sound data filenames inside the sound archive.
+
 // seq.c exports (unmangled in retail).
+extern "C" void HBMSEQInit(void);
 extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE* seq, const u8* data,
                                   void* synth, void* p1, u32 p2);
 extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE* seq);
@@ -72,8 +76,10 @@ extern "C" void HBMSEQSetState(HBMSEQSEQUENCE* seq, u32 state);
 extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE* seq);
 extern "C" void HBMSEQRunAudioFrame(void);
 extern "C" void HBMSEQQuit(void);
+extern "C" void HBMSYNInit(void);
 extern "C" void HBMSYNRunAudioFrame(void);
 extern "C" void HBMSYNQuit(void);
+extern "C" void HBMMIXInit(void);
 extern "C" void HBMMIXUpdateSettings(void);
 extern "C" void HBMMIXQuit(void);
 extern "C" void HBMMIXSetSoundMode(u32 mode);
@@ -276,8 +282,65 @@ void PlaySeq(int seqId) {
     }
 }
 
-void InitAxSound(const void* /* pWork */, void* /* pWorkEnd */,
-                 u32 /* workSize */) {}
+void InitAxSound(const void* pWork, void* pWorkEnd, u32 workSize) {
+    HBMWork* work;
+    ARCFileInfo fileInfo;
+    ARCFileInfo fileInfo2;
+    u32 intr;
+    int i;
+
+    if (workSize < 0x18700) {
+        return;
+    }
+
+    if (AICheckInit() == 0) {
+        AIInit(NULL);
+        AXInit();
+    }
+
+    HBMMIXInit();
+    HBMSYNInit();
+    HBMSEQInit();
+
+    work = static_cast<HBMWork*>(pWorkEnd);
+
+    for (i = 0; i < 7; i++) {
+        work->players[i].inUse = 0;
+        work->players[i].next = NULL;
+        work->players[i].prev = NULL;
+    }
+
+    work->seqWork1 = NULL;
+    work->seqWork2 = NULL;
+    work->workEnd = reinterpret_cast<u8*>(pWorkEnd) + 0x14700;
+    work->pool[0].first = NULL;
+    work->pool[0].last = NULL;
+    work->pool[1].first = NULL;
+    work->pool[1].last = NULL;
+    work->prevFrameCb = NULL;
+
+    if (ARCInitHandle(const_cast<void*>(pWork), &work->archive) != 0) {
+        if (ARCOpen(&work->archive, "wt\\HomeButtonSe.wt", &fileInfo) != 0) {
+            work->seqWork1 = ARCGetStartAddrInMem(&fileInfo);
+            if (ARCOpen(&work->archive, "wt\\HomeButtonSe.pcm", &fileInfo2) != 0) {
+                work->seqWork2 = ARCGetStartAddrInMem(&fileInfo2);
+                OSInitMessageQueue(&work->msgQueue, work->msgBuffer, 4);
+                if (OSCreateThread(
+                        &work->thread, AudioSoundThreadProc, NULL,
+                        reinterpret_cast<u8*>(work->workEnd) + workSize -
+                            0x14700,
+                        workSize - 0x14700, 4, 0) != 0) {
+                    sWork = work;
+                    OSResumeThread(&work->thread);
+                    intr = OSDisableInterrupts();
+                    work->prevFrameCb =
+                        AXRegisterCallback(AudioFrameCallback);
+                    OSRestoreInterrupts(intr);
+                }
+            }
+        }
+    }
+}
 
 void ShutdownAxSound() {
     if (sWork != NULL) {
@@ -296,7 +359,75 @@ void ShutdownAxSound() {
 void AxSoundMain() {}
 
 #pragma dont_inline on
-void StopAllSeq() {}
+void StopAllSeq() {
+    HBMSEQSEQUENCE* p;
+    int i;
+    SeqPool* pool;
+
+    if (sWork == NULL) {
+        return;
+    }
+
+    for (i = 0; i < 4; i++) {
+        p = &sWork->players[i];
+        if (p->inUse != 0) {
+            if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
+                pool = &sWork->pool[1];
+            } else {
+                pool = &sWork->pool[0];
+            }
+
+            HBMSEQSetState(p, 0);
+            HBMSEQRemoveSequence(p);
+            p->inUse = 0;
+
+            if (p->prev == NULL) {
+                pool->first = p->next;
+            } else {
+                p->prev->next = p->next;
+            }
+
+            if (p->next == NULL) {
+                pool->last = p->prev;
+            } else {
+                p->next->prev = p->prev;
+            }
+
+            p->next = NULL;
+            p->prev = NULL;
+        }
+    }
+
+    for (i = 0; i < 3; i++) {
+        p = &sWork->players[4] + i;
+        if (p->inUse != 0) {
+            if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
+                pool = &sWork->pool[1];
+            } else {
+                pool = &sWork->pool[0];
+            }
+
+            HBMSEQSetState(p, 0);
+            HBMSEQRemoveSequence(p);
+            p->inUse = 0;
+
+            if (p->prev == NULL) {
+                pool->first = p->next;
+            } else {
+                p->prev->next = p->next;
+            }
+
+            if (p->next == NULL) {
+                pool->last = p->prev;
+            } else {
+                p->next->prev = p->prev;
+            }
+
+            p->next = NULL;
+            p->prev = NULL;
+        }
+    }
+}
 #pragma dont_inline reset
 
 void SetVolumeAllSeq(float /* volume */) {}

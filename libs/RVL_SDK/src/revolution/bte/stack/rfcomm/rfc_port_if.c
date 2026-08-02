@@ -208,14 +208,16 @@ void RFCOMM_ControlReq(RfcMuxChannel* mcb, u8 dlci, void* p_port_ctrl) {
 }
 
 void RFCOMM_FlowReq(RfcMuxChannel* mcb, u8 dlci, u8 enable) {
+    tPORT_CTRL* p_ctrl;
     RfcPort* port = port_find_mcb_dlci_port(mcb, dlci);
 
     if (port->state != PORT_STATE_OPENED || port->rfc_state != RFC_STATE_OPENED)
         return;
 
-    port->port_ctrl.fc = (enable == 0);
+    p_ctrl = &port->port_ctrl;
+    p_ctrl->fc = (enable == 0);
     port->rfc_flags |= RFC_FLAG_EXPECT_MSC;
-    rfc_send_msc(mcb, dlci, 1, &port->port_ctrl);
+    rfc_send_msc(mcb, dlci, 1, p_ctrl);
     rfc_port_timer_start(port, RFC_PORT_T1_TIMEOUT);
 }
 

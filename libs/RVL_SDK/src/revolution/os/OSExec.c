@@ -215,6 +215,167 @@ static s32 _ES_LaunchTitle(s32* fd, u64 tid, void* pViews) {
     return IOS_IoctlvReboot(*fd, ES_IOCTLV_LAUNCH_TITLE, 2, 0, pVectors);
 }
 
+
+/**
+ * Packs argc/argv into the 0x2000-byte boot-args area at dst:
+ * strings are copied back-to-front from the top of the area, and the
+ * argv pointer table is written just below them.  *(dst+8) receives
+ * the offset of the pointer-table count word.
+ */
+int PackArgs(char* dst, int argc, char** argv) {
+    char* p;
+    char** a;
+    int i;
+
+    memset(dst, 0, 0x2000);
+
+    if (argc == 0) {
+        *(int*)(dst + 8) = 0;
+        return 1;
+    }
+
+    p = dst + 0x2000;
+    a = argv + argc;
+    i = argc;
+
+    while (--i >= 0) {
+        char* s;
+        int len;
+
+        a--;
+
+        s = *a;
+        len = (int)strlen(s);
+        p -= len + 1;
+        strcpy(p, s);
+        *(int*)a = (int)(p - dst);
+    }
+
+    {
+        unsigned int n = (unsigned int)argc + 1;
+        int used = (int)(p - dst) & ~3;
+        char* table = dst + used - (int)n * 4;
+
+        if (n != 0) {
+            unsigned int* src = (unsigned int*)argv;
+            unsigned int* dstw = (unsigned int*)table;
+            unsigned int j;
+
+            for (j = 0; j < n; j++) {
+                *dstw++ = *src++;
+            }
+        }
+
+        *(int*)(table - 4) = argc;
+        *(int*)(dst + 8) = (int)((table - 4) - dst);
+    }
+
+    return 1;
+}
+
+/**
+ * PackInstallerArgs: like PackArgs, but the odd/even index selects
+ * UTF-16 (wcslen + Utf16ToArg) vs UTF-8 (strlen + strcpy) packing.
+ */
+int PackInstallerArgs(char* dst, int argc, char** argv) {
+    char* p;
+    char** a;
+    int i;
+
+    memset(dst, 0, 0x2000);
+
+    if (argc != 0) {
+        p = dst + 0x2000;
+        i = argc;
+        a = argv + argc;
+        while (--i >= 0) {
+            if (i >= 2 && i % 2 == 0) {
+                wchar_t* s;
+                int len;
+
+                s = (wchar_t*)*a;
+                len = (int)wcslen(s);
+                p -= len * 4 + 1;
+                Utf16ToArg(p, s);
+                *(int*)a = (int)(p - dst);
+            } else {
+                char* s;
+                int len;
+
+                s = *a;
+                len = (int)strlen(s);
+                p -= len + 1;
+                strcpy(p, s);
+                *(int*)a = (int)(p - dst);
+            }
+            a--;
+        }
+
+        {
+            unsigned int n = (unsigned int)argc + 1;
+            int used = (int)(p - dst) & ~3;
+            char* table = dst + used - (int)n * 4;
+
+            if (n != 0) {
+                unsigned int* src = (unsigned int*)argv;
+                unsigned int* dstw = (unsigned int*)table;
+                unsigned int j;
+
+                for (j = 0; j < n; j++) {
+                    *dstw++ = *src++;
+                }
+            }
+
+            *(int*)(table - 4) = argc;
+            *(int*)(dst + 8) = (int)((table - 4) - dst);
+        }
+    } else {
+        *(int*)(dst + 8) = 0;
+    }
+
+    return 1;
+}
+
+void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
+                       s32 param5, u32 argc, void* argv);
+
+void __OSBootDol(u32 titleId, u32 param2, u32* argv) {
+    char name[0x20];
+    u32 saveStart;
+    u32 saveEnd;
+    void* newArgv;
+    int count = 0;
+    u32 n;
+    u32* p;
+    int j;
+
+    OSGetSaveRegion(&saveStart, &saveEnd);
+
+    sprintf(name, "%d", titleId);
+
+    if (argv != NULL) {
+        p = argv;
+        while (*p != 0) {
+            count++;
+            p++;
+        }
+    }
+
+    newArgv = OSAllocFromMEM1ArenaLo((count + 2) * 4, 1);
+    *(u32*)newArgv = (u32)name;
+    n = count + 1;
+
+    if (n > 1) {
+        int j;
+
+        for (j = 1; j <= count; j++) {
+            ((u32*)newArgv)[j] = ((u32*)argv)[j - 1];
+        }
+    }
+
+    __OSBootDolSimple(-1, param2, saveStart, saveEnd, 0, n, newArgv);
+}
+
 extern int Prepared;
 void Callback() {
     Prepared = 1;

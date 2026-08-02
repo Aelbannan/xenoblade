@@ -235,72 +235,74 @@ NW4R_UT_RTTI_DEF_DERIVED(Window, Pane);
 Window::Window(const res::Window* pRes, const ResBlockSet& rBlockSet)
     : Pane(pRes) {
 
-    const res::WindowContent* pResContent =
-        detail::ConvertOffsToPtr<res::WindowContent>(pRes, pRes->contentOffset);
-    
-    u8 num = ut::Min<u8>(pResContent->texCoordNum, GX_MAX_TEXCOORD);
-    InitContent(num);
     mContentInflation = pRes->inflation;
 
     const u32* const pMatOffsetTbl = detail::ConvertOffsToPtr<u32>(
-    rBlockSet.pMaterialList, sizeof(res::MaterialList));
+        rBlockSet.pMaterialList, sizeof(res::MaterialList));
+
+    const res::WindowContent* pResContent =
+        detail::ConvertOffsToPtr<res::WindowContent>(pRes, pRes->contentOffset);
 
     for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
         mContent.vtxColors[i] = pResContent->vtxCols[i];
     }
 
-    if (num > 0 && !mContent.texCoordAry.IsEmpty()) {
-        mContent.texCoordAry.Copy(reinterpret_cast<const u8*>(pResContent) +
-                                  sizeof(res::WindowContent),
-                                  num);
+    if (pResContent->texCoordNum > 0) {
+        u8 num = ut::Min<u8>(pResContent->texCoordNum, GX_MAX_TEXCOORD);
+        mContent.texCoordAry.Reserve(num);
+
+        if (!mContent.texCoordAry.IsEmpty()) {
+            mContent.texCoordAry.Copy(reinterpret_cast<const u8*>(pResContent) +
+                                      sizeof(res::WindowContent),
+                                      num);
+        }
     }
 
+    void* pMaterialBuf = Layout::AllocMemory(sizeof(Material));
 
-    const res::Material* const pResMaterial =
-        detail::ConvertOffsToPtr<res::Material>(
-            rBlockSet.pMaterialList,
-            pMatOffsetTbl[pResContent->materialIdx]);
+    if (pMaterialBuf != NULL) {
+        const res::Material* const pResMaterial =
+            detail::ConvertOffsToPtr<res::Material>(
+                rBlockSet.pMaterialList,
+                pMatOffsetTbl[pResContent->materialIdx]);
 
-    mpMaterial = Layout::NewObj<Material>(pResMaterial, rBlockSet);
+        mpMaterial = new (pMaterialBuf) Material(pResMaterial, rBlockSet);
+    }
 
     mFrameNum = 0;
     mFrames = NULL;
 
     if (pRes->frameNum > 0) {
-        InitFrame(pRes->frameNum);
+        mFrames =
+            static_cast<Frame*>(Layout::AllocMemory(pRes->frameNum * sizeof(Frame)));
 
-        const u32* const pFrmOffsetTbl = detail::ConvertOffsToPtr<u32>(
-            pRes, pRes->frameOffsetTableOffset);
+        if (mFrames != NULL) {
+            mFrameNum = pRes->frameNum;
 
-        for (int i = 0; i < mFrameNum; i++) {
-            const res::WindowFrame* const pResFrame =
-                detail::ConvertOffsToPtr<res::WindowFrame>(
-                    pRes, pFrmOffsetTbl[i]);
+            const u32* const pFrmOffsetTbl = detail::ConvertOffsToPtr<u32>(
+                pRes, pRes->frameOffsetTableOffset);
 
-            mFrames[i].textureFlip = pResFrame->textureFlip;
+            for (int i = 0; i < mFrameNum; i++) {
+                const res::WindowFrame* const pResFrame =
+                    detail::ConvertOffsToPtr<res::WindowFrame>(
+                        pRes, pFrmOffsetTbl[i]);
 
-            const res::Material* const pResMaterial =
-                detail::ConvertOffsToPtr<res::Material>(
-                    rBlockSet.pMaterialList,
-                    pMatOffsetTbl[pResFrame->materialIdx]);
+                mFrames[i].textureFlip = pResFrame->textureFlip;
+                mFrames[i].pMaterial = NULL;
 
-            mFrames[i].pMaterial = Layout::NewObj<Material>(pResMaterial, rBlockSet);
+                void* pFrameMatBuf = Layout::AllocMemory(sizeof(Material));
+
+                if (pFrameMatBuf != NULL) {
+                    const res::Material* const pResMaterial =
+                        detail::ConvertOffsToPtr<res::Material>(
+                            rBlockSet.pMaterialList,
+                            pMatOffsetTbl[pResFrame->materialIdx]);
+
+                    mFrames[i].pMaterial =
+                        new (pFrameMatBuf) Material(pResMaterial, rBlockSet);
+                }
+            }
         }
-    }
-}
-
-void Window::InitContent(u8 texNum) {
-    if (texNum > 0) {
-        ReserveTexCoord(texNum);
-    }
-}
-
-void Window::InitFrame(u8 frameNum) {
-    mFrameNum = 0;
-    mFrames = Layout::NewArray<Frame>(frameNum);
-    
-    if (mFrames != NULL) {
-        mFrameNum = frameNum;
     }
 }
 

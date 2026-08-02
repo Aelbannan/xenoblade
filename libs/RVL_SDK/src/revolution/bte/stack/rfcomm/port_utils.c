@@ -351,25 +351,24 @@ void port_flow_control_peer(RfcPort* port, u8 enable, u16 credits)
         } else {
             if (port->field_0x94 != 0) {
                 port->local_fc = 1;
-            } else if (port->tx_queue.count >= port->credit_rx_max) {
+            } else if (port->rx_queue.count >= port->credit_rx_max) {
                 port->local_fc = 1;
             }
         }
     } else {
         if (enable) {
-            if (port->local_fc != 0
-                && port->field_0x40 < 0x1388
-                && port->tx_queue.count < 8
-                && port->field_0x3D == 0)
-            {
+            if (port->local_fc != 0 && port->field_0x40 < 0x1388 &&
+                port->rx_queue.count < 8) {
                 port->local_fc = 0;
-                RFCOMM_FlowReq(port->mcb, port->dlci2, 1);
+                if (port->field_0x3D == 0) {
+                    RFCOMM_FlowReq(port->mcb, port->dlci2, 1);
+                }
             }
         } else {
             if (port->field_0x94 != 0) {
                 port->local_fc = 1;
                 RFCOMM_FlowReq(port->mcb, port->dlci2, 0);
-            } else if (port->field_0x40 > 0x1F40 || port->tx_queue.count > 0x10) {
+            } else if (port->field_0x40 > 0x1F40 || port->rx_queue.count > 0x10) {
                 if (port->local_fc == 0) {
                     if (rfc_cb.trace_level >= 4) {
                         LogMsg_0(0x90003,

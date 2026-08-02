@@ -12,6 +12,8 @@ typedef int            INT32;
 
 #define BD_ADDR_LEN   6
 typedef UINT8 BD_ADDR[BD_ADDR_LEN];     /* Device address */
+#define BD_NAME_LEN 248
+typedef UINT8 BD_NAME[BD_NAME_LEN];       /* Device name */
 
 #define LINK_KEY_LEN  16
 typedef UINT8 LINK_KEY[LINK_KEY_LEN];   /* Link key */
@@ -176,6 +178,15 @@ void btm_sec_connected(BD_ADDR bda, UINT16 handle, UINT8 status, UINT8 enc_mode)
 void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle, tBTM_ESCO_DATA *p_esco_data);
 void btm_sec_link_key_notification(BD_ADDR bda, LINK_KEY key, UINT8 key_type);
 void l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR bda);
+void btm_pm_proc_cmd_status(UINT8 status);
+void btm_process_remote_name(BD_ADDR bda, BD_NAME name, UINT16 evt_len, UINT8 hci_status);
+void btm_sec_rmt_name_request_complete(UINT8* bd_addr, UINT8* bd_name, UINT8 status);
+void btm_acl_role_changed(UINT8 hci_status, BD_ADDR bd_addr, UINT8 new_role);
+BOOLEAN btm_is_sco_active(UINT16 handle);
+void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
+                            UINT8 retrans_window, UINT16 rx_pkt_len,
+                            UINT16 tx_pkt_len);
+void l2c_link_role_change_failed(void);
 
 /* HCI command sent to the lower layer (bte_hcisu.c). */
 void bte_hcisu_send (BT_HDR *p_msg, UINT16 event);
@@ -313,7 +324,7 @@ void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len)
 }
 /* Command-completion handlers in BTM (btm_acl / btm_inq / btm_devctl / btm_dev). */
 extern void btm_reset_complete(void);
-extern void btm_process_inq_complete(UINT8 status, UINT8* p);
+extern void btm_process_inq_complete(UINT8 status);
 extern void btm_event_filter_complete(UINT8* p);
 extern void btm_read_stored_link_key_complete(UINT8* p);
 extern void btm_write_stored_link_key_complete(UINT8* p);
@@ -326,7 +337,7 @@ extern void btm_read_local_name_complete(UINT8* p, UINT16 evt_len);
 extern void btm_read_local_addr_complete(UINT8* p, UINT16 evt_len);
 extern void btm_read_link_quality_complete(UINT8* p);
 extern void btm_read_rssi_complete(UINT8* p);
-extern void btm_vsc_complete(UINT8* p, UINT16 opcode);
+extern void btm_vsc_complete(UINT8* p, UINT16 cc_opcode, UINT16 evt_len);
 
 /* HCI command opcodes with completion handlers in this dispatch (hcidefs.h). */
 #define HCI_INQUIRY_CANCEL          0x0402
@@ -353,7 +364,7 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len)
         break;
 
     case HCI_INQUIRY_CANCEL:
-        btm_process_inq_complete(0, p);
+        btm_process_inq_complete(0);
         break;
 
     case HCI_SET_EVENT_FILTER:
@@ -406,7 +417,7 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len)
 
     default:
         if ((opcode & HCI_GRP_VENDOR_SPECIFIC) == HCI_GRP_VENDOR_SPECIFIC)
-            btm_vsc_complete(p, opcode);
+            btm_vsc_complete(p, opcode, evt_len);
         break;
     }
 }
@@ -460,7 +471,82 @@ void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
 }
 extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);
 
-void btu_hcif_hdl_command_status(UINT16 opcode, UINT8 num_hci_cmds, UINT8 *p_data) __attribute__((noinline)) {}
+void btu_hcif_hdl_command_status(UINT16 opcode, UINT8 num_hci_cmds, UINT8 *p_data)
+{
+    switch (opcode)
+    {
+    case 0x0801:   /* HCI_READ_LOCAL_VERSION_INFORMATION */
+    case 0x0803:   /* HCI_READ_LOCAL_SUPPORTED_FEATURES */
+    case 0x0804:   /* HCI_READ_LOCAL_EXTENDED_FEATURES */
+    case 0x0805:   /* HCI_READ_BUFFER_SIZE */
+    case 0x0806:   /* HCI_READ_BD_ADDR */
+        btm_pm_proc_cmd_status(num_hci_cmds);
+        return;
+    default:
+        break;
+    }
+
+    if (num_hci_cmds == 0)
+        return;
+
+    switch (opcode)
+    {
+    case 0x0401:   /* HCI_INQUIRY */
+        btm_process_inq_complete(num_hci_cmds);
+        break;
+
+    case 0x0419:   /* HCI_REMOTE_NAME_REQUEST */
+        btm_process_remote_name(0, 0, 0, num_hci_cmds);
+        btm_sec_rmt_name_request_complete(0, 0, num_hci_cmds);
+        break;
+
+    case 0x000D:   /* HCI_QOS_SETUP */
+        btm_qos_setup_complete(num_hci_cmds, 0, 0);
+        break;
+
+    case 0x080B:   /* HCI_READ_LINK_POLICY_SETTINGS */
+        btm_acl_role_changed(num_hci_cmds, 0, 0xFF);
+        l2c_link_role_change_failed();
+        break;
+
+    case 0x0405:   /* HCI_CREATE_CONNECTION */
+        if (p_data != NULL)
+        {
+            BD_ADDR bd_addr;
+
+            bd_addr[5] = p_data[1];
+            bd_addr[4] = p_data[2];
+            bd_addr[3] = p_data[3];
+            bd_addr[2] = p_data[4];
+            bd_addr[1] = p_data[5];
+            bd_addr[0] = p_data[6];
+
+            btm_sec_connected(bd_addr, 0xFFFF, num_hci_cmds, 0);
+            l2c_link_hci_conn_comp(num_hci_cmds, 0xFFFF, bd_addr);
+        }
+        break;
+
+    case 0x0428:   /* HCI_ADD_SCO_CONNECTION */
+        if (p_data != NULL)
+        {
+            UINT16 handle = (UINT16)(p_data[1] + (p_data[2] << 8));
+
+            if (btm_is_sco_active(handle))
+                btm_esco_proc_conn_chg(num_hci_cmds, handle, 0, 0, 0, 0);
+            else
+            {
+                tBTM_ESCO_DATA esco_data;
+                btm_sco_connected(num_hci_cmds, 0, handle, &esco_data);
+            }
+        }
+        break;
+
+    default:
+        if ((opcode & 0xFC00) == 0xFC00)
+            btm_vsc_complete(p_data, opcode, 1);
+        break;
+    }
+}
 void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT8   num_hci_cmds;

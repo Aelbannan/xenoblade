@@ -153,7 +153,7 @@ public:
     void setVolume(int vol);
 
     bool getVibFlag();
-    int getPaneNo(const char* pName);
+    int getPaneNo(const nw4hbm::lyt::Pane* pPane);
 
     void setVibFlag(bool flag);
 
@@ -164,9 +164,9 @@ public:
     void update(const HBMControllerData* pController);
     void updateTrigPane();
 
-    void startPointEvent(const char* pName, void* pData);
-    void startLeftEvent(const char* pName);
-    void startTrigEvent(const char* pName);
+    void startPointEvent(const nw4hbm::lyt::Pane* pPane, void* pData);
+    void startLeftEvent(const nw4hbm::lyt::Pane* pPane);
+    void startTrigEvent(const nw4hbm::lyt::Pane* pPane);
 
     int findAnimator(int pane, int anm);
     int findGroupAnimator(int grPane, int grAnm);

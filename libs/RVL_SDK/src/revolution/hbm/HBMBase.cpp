@@ -17,6 +17,7 @@
 
 namespace homebutton {
 void AxSoundMain(); // defined in HBMAxSound.cpp
+void SetSoundMode(u32 mode); // defined in HBMAxSound.cpp
 }
 
 /******************************************************************************
@@ -819,15 +820,14 @@ void HomeButton::init_vib() {
     }
 }
 
-/*
 void HomeButton::init_sound() {
     if (mpHBInfo->sound_callback != NULL) {
         mpHBInfo->sound_callback(HBM_SOUND_INIT, 0);
     }
 
-    mAppVolume[nw4hbm::snd::AUX_A] = AXGetAuxAReturnVolume();
-    mAppVolume[nw4hbm::snd::AUX_B] = AXGetAuxBReturnVolume();
-    mAppVolume[nw4hbm::snd::AUX_C] = AXGetAuxCReturnVolume();
+    mAppVolume[0] = AXGetAuxAReturnVolume(); // AUX_A
+    mAppVolume[1] = AXGetAuxBReturnVolume(); // AUX_B
+    mAppVolume[2] = AXGetAuxCReturnVolume(); // AUX_C
 
     AXFXGetHooks(&mAxFxAlloc, &mAxFxFree);
     AXGetAuxACallback(&mAuxCallback, &mpAuxContext);
@@ -851,10 +851,9 @@ void HomeButton::init_sound() {
         mpHBInfo->sound_callback(HBM_SOUND_POST_INIT, 0);
     }
 
+    SetSoundMode(SCGetSoundMode());
     mEndInitSoundFlag = true;
 }
-*/
-
 void HomeButton::init_battery(const HBMControllerData* pController) {
     int idx;
 
@@ -2065,9 +2064,9 @@ void HomeButton::updateTrigPane() {
     }
 }
 
-void HomeButton::startPointEvent(const char* pName, void* pData) {
+void HomeButton::startPointEvent(const nw4hbm::lyt::Pane* pPane, void* pData) {
     int idx;
-    int btnNo = getPaneNo(pName);
+    int btnNo = getPaneNo(pPane);
     HBController* pController = static_cast<HBController*>(pData);
     bool onFlag = false;
 
@@ -2251,9 +2250,9 @@ void HomeButton::startPointEvent(const char* pName, void* pData) {
     }
 }
 
-void HomeButton::startLeftEvent(const char* pName) {
+void HomeButton::startLeftEvent(const nw4hbm::lyt::Pane* pPane) {
     int idx;
-    int btnNo = getPaneNo(pName);
+    int btnNo = getPaneNo(pPane);
 
     if (0 < mPaneCounter[btnNo]) {
         if (btnNo == mButtonNum + res::eFuncTouchPane_B_bar_10 ||
@@ -2390,11 +2389,11 @@ void HomeButton::startLeftEvent(const char* pName) {
     }
 }
 
-void HomeButton::startTrigEvent(const char* pName) {
+void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
     int idx;
     int btnNo;
 
-    btnNo = getPaneNo(pName);
+    btnNo = getPaneNo(pPane);
 
     if (isActive() && btnNo != -1) {
         if (mSequence == eSeq_Normal && btnNo < mButtonNum) {
@@ -2861,8 +2860,9 @@ bool HomeButton::isDownBarActive() {
     return flag;
 }
 
-int HomeButton::getPaneNo(const char* pName) {
+int HomeButton::getPaneNo(const nw4hbm::lyt::Pane* pPane) {
     int ret = -1;
+    const char* pName = pPane->GetName();
 
     for (int i = 0; i < mButtonNum; i++) {
         if (std::strcmp(pName, getPaneName(i)) == 0) {
@@ -2974,26 +2974,23 @@ void HomeButtonEventHandler::onEvent(u32 id, u32 event, void* pData) {
         static_cast<gui::PaneComponent*>(mpManager->getComponent(id));
 
     const nw4hbm::lyt::Pane* pPane = pComponent->getPane();
-    const char* pPaneName = pPane->GetName();
-
     HomeButton* pHBObj = getHomeButton();
     HBController* pController = static_cast<HBController*>(pData);
 
     switch (event) {
     case gui::HBM_EVENT_ON_POINT: {
-        pHBObj->startPointEvent(pPaneName, pData);
+        pHBObj->startPointEvent(pPane, pData);
         break;
     }
 
     case gui::HBM_EVENT_OFF_POINT: {
-        pHBObj->startLeftEvent(pPaneName);
+        pHBObj->startLeftEvent(pPane);
         break;
     }
 
     case gui::HBM_EVENT_TRIG: {
-        if ((pController->trig & WPAD_BUTTON_A) ||
-            (pController->trig & (PAD_BUTTON_A << 16))) {
-            pHBObj->startTrigEvent(pPaneName);
+        if (pController->trig & WPAD_BUTTON_A) {
+            pHBObj->startTrigEvent(pPane);
         }
 
         break;

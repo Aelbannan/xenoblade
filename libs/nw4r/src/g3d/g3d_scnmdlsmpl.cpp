@@ -28,30 +28,67 @@ void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObj(){}
 
 void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
+namespace nw4r {
+namespace g3d {
 
-void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
+AnmObj* ScnMdlSimple::GetAnmObj(AnmObjType type) {
+    switch (type) {
+    case ANMOBJTYPE_CHR: return mpAnmObjChr;
+    case ANMOBJTYPE_VIS: return mpAnmObjVis;
+    case ANMOBJTYPE_MATCLR: return mpAnmObjMatClr;
+    case ANMOBJTYPE_TEXPAT: return mpAnmObjTexPat;
+    case ANMOBJTYPE_TEXSRT: return mpAnmObjTexSrt;
+    case ANMOBJTYPE_SHP:
+    case ANMOBJTYPE_NOT_SPECIFIED: return mpAnmObjShp;
+    default: return NULL;
+    }
+}
+
+const AnmObj* ScnMdlSimple::GetAnmObj(AnmObjType type) const {
+    switch (type) {
+    case ANMOBJTYPE_CHR: return mpAnmObjChr;
+    case ANMOBJTYPE_VIS: return mpAnmObjVis;
+    case ANMOBJTYPE_MATCLR: return mpAnmObjMatClr;
+    case ANMOBJTYPE_TEXPAT: return mpAnmObjTexPat;
+    case ANMOBJTYPE_TEXSRT: return mpAnmObjTexSrt;
+    case ANMOBJTYPE_SHP:
+    case ANMOBJTYPE_NOT_SPECIFIED: return mpAnmObjShp;
+    default: return NULL;
+    }
+}
+
+math::MTX34* ScnMdlSimple::GetViewPosMtxArray() {
+    u32 aligned = (mNumViewMtx * 0x30 + 0x1f) & ~0x1f;
+    return reinterpret_cast<math::MTX34*>(reinterpret_cast<u8*>(mpViewPosMtxArray) +
+                                          mCurView * aligned);
+}
+
+math::MTX34* ScnMdlSimple::GetViewTexMtxArray() {
+    if (mpViewTexMtxArray != NULL) {
+        u32 aligned = (mNumViewMtx * 0x30 + 0x1f) & ~0x1f;
+        return reinterpret_cast<math::MTX34*>(
+            reinterpret_cast<u8*>(mpViewTexMtxArray) + mCurView * aligned);
+    }
+    return NULL;
+}
+
+math::MTX33* ScnMdlSimple::GetViewNrmMtxArray() {
+    if (mpViewNrmMtxArray != NULL) {
+        u32 aligned = (mNumViewMtx * 0x24 + 0x1f) & ~0x1f;
+        return reinterpret_cast<math::MTX33*>(
+            reinterpret_cast<u8*>(mpViewNrmMtxArray) + mCurView * aligned);
+    }
+    return NULL;
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void UpdateFrame__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
 void EnableScnMdlCallbackTiming__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d6ScnObj6Timing(){}
 
-void GetViewPosMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
-    void* r5 = *(void**)((char*)r3 + 0xf8);
-    if (r5 == nullptr) {
-        return nullptr;
-    }
-    unsigned short r0 = *(unsigned short*)((char*)r3 + 0x102);
-    unsigned char r4 = *(unsigned char*)((char*)r3 + 0x101);
-    unsigned int r3_val = r0 * 0x24;
-    unsigned int aligned = (r3_val + 0x1f) & ~0x1f;
-    unsigned int offset = r4 * aligned;
-    return (void*)((char*)r5 + offset);
-}
-
-void GetViewTexMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
 void __ct__Q34nw4r3g3d12ScnMdlSimpleFP12MEMAllocatorQ34nw4r3g3d6ResMdlPQ34nw4r4math5MTX34PUlPQ34nw4r4math5MTX34PQ34nw4r4math5MTX33PQ34nw4r4math5MTX34ii(){}
 

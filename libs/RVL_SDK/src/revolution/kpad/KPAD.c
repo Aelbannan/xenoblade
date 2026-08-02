@@ -23,11 +23,9 @@ typedef struct KPADInternal {
     /* 0xC8 */ f32 acc_play_radius;
     /* 0xCC */ f32 acc_sensitivity;
     /* 0xD0 */ f32 dist_init;
-    /* 0xD4 */ f32 unk_d4;
-    /* 0xD8 */ f32 unk_d8;
+    /* 0xD4 */ Vec2 unk_d4;
     /* 0xDC */ Vec2 sec_nrm_hori;
-    /* 0xE4 */ f32 unk_e4;
-    /* 0xE8 */ f32 unk_e8;
+    /* 0xE4 */ Vec2 unk_e4;
     /* 0xEC */ f32 unk_ec;
     /* 0xF0 */ KPADObject kobj_sample[4];
     /* 0x120 */ KPADObject kobj_regular[2];
@@ -336,7 +334,7 @@ void calc_acc(KPADInternal* kp, f32* acc, f32 acc2) {
     }
 }
 
-s32 select_1obj_first(KPADInternal* kp) {
+s8 select_1obj_first(KPADInternal* kp) {
     KPADObject* op1;
     f32 vx, vy;
     Vec2 p1, p2;
@@ -382,7 +380,7 @@ s32 select_1obj_first(KPADInternal* kp) {
     return 0;
 }
 
-s32 select_1obj_continue(KPADInternal* kp) {
+s8 select_1obj_continue(KPADInternal* kp) {
     KPADObject* op1;
     KPADObject* op2;
     KPADObject* rp1;
@@ -563,8 +561,8 @@ void calc_acc_horizon(KPADInternal* kp) {
     }
     f1 *= f1 * kp_acc_horizon_pw;
 
-    vx = kp->unk_d4 * ax + kp->unk_d8 * ay;
-    vy = kp->unk_d8 * ax - kp->unk_d4 * ay;
+    vx = kp->unk_d4.x * ax + kp->unk_d4.y * ay;
+    vy = kp->unk_d4.y * ax - kp->unk_d4.x * ay;
     ax = (vx - kp->acc_horizon.x) * f1 + kp->acc_horizon.x;
     ay = (vy - kp->acc_horizon.y) * f1 + kp->acc_horizon.y;
 
@@ -632,8 +630,8 @@ static f32 clamp_acc(f32 acc, f32 clamp) {
 
 void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
     KPADStatus* sp = &kp->status;
-    Vec vec;
     Vec t;
+    Vec vec;
 
     switch (uwp->fmt) {
     case 1:
@@ -663,7 +661,7 @@ void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
 
         if (uwp->u.core.err == 0 && uwp->u.core.dev == 1) {
             if (uwp->fmt != WPAD_FMT_FS_BTN_ACC && uwp->fmt != WPAD_FMT_FS_BTN_ACC_DPD) {
-                goto skip_fs;
+                break;
             }
             t.x = clamp_acc((f32)(s32)(-uwp->u.fs.fsAccX) * kp->fs_acc_scale_x, kp_fs_acc_max);
             t.y = clamp_acc((f32)(s32)(-uwp->u.fs.fsAccZ) * kp->fs_acc_scale_z, kp_fs_acc_max);
@@ -688,13 +686,12 @@ void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
             sp->ex_status.fs.acc_speed =
                 (f32)sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
         }
-    skip_fs:
         break;
     }
     }
 }
 
-s32 select_2obj_first(KPADInternal* kp) {
+s8 select_2obj_first(KPADInternal* kp) {
     KPADObject* op1;
     KPADObject* op2;
     KPADObject* best1;
@@ -703,9 +700,9 @@ s32 select_2obj_first(KPADInternal* kp) {
     f32 d;
     f32 dist;
     f32 inv;
-    f32 nx, ny;
+    f32 ny, nx;
     f32 s;
-    f32 rx, ry;
+    Vec2 n;
 
     op1 = kp->kobj_sample;
     do {
@@ -726,13 +723,13 @@ s32 select_2obj_first(KPADInternal* kp) {
             nx *= inv;
             ny *= inv;
             s = kp->unk_544 * inv;
+            n.x = kp->sec_nrm_hori.x * nx + kp->sec_nrm_hori.y * ny;
+            n.y = kp->sec_nrm_hori.y * nx - kp->sec_nrm_hori.x * ny;
             if (s <= kp->unk_548 || s >= kp_err_dist_max) {
                 continue;
             }
 
-            rx = kp->sec_nrm_hori.x * nx + kp->sec_nrm_hori.y * ny;
-            ry = kp->sec_nrm_hori.y * nx - kp->sec_nrm_hori.x * ny;
-            d = kp->acc_horizon.x * rx + kp->acc_horizon.y * ry;
+            d = kp->acc_horizon.x * n.x + kp->acc_horizon.y * n.y;
             if (d < 0.0f) {
                 d = -d;
                 if (d > best) {
@@ -759,17 +756,17 @@ s32 select_2obj_first(KPADInternal* kp) {
     return 2;
 }
 
-s32 select_2obj_continue(KPADInternal* kp) {
+s8 select_2obj_continue(KPADInternal* kp) {
     KPADObject* op1;
     KPADObject* op2;
     KPADObject* best1;
     KPADObject* best2;
-    f32 best = 2.0f;
+    f32 best = float_8066C0C8;
     f32 d;
     f32 dist;
     f32 inv;
-    f32 nx, ny;
-    f32 s;
+    f32 vx, vy;
+    Vec2 nrm;
     s32 neg;
 
     op1 = kp->kobj_sample;
@@ -784,28 +781,28 @@ s32 select_2obj_continue(KPADInternal* kp) {
                 continue;
             }
 
-            nx = op2->center.x - op1->center.x;
-            ny = op2->center.y - op1->center.y;
-            dist = (f32)sqrt(nx * nx + ny * ny);
+            vx = op2->center.x - op1->center.x;
+            vy = op2->center.y - op1->center.y;
+            dist = (f32)sqrt(vx * vx + vy * vy);
             inv = 1.0f / dist;
-            nx *= inv;
-            ny *= inv;
-            s = kp->unk_544 * inv;
-            if (s <= kp->unk_548 || s >= kp_err_dist_max) {
+            nrm.x = vx * inv;
+            nrm.y = vy * inv;
+            inv *= kp->unk_544;
+            if (inv <= kp->unk_548 || inv >= kp_err_dist_max) {
                 continue;
             }
 
-            s -= kp->sec_dist;
-            if (s < 0.0f) {
-                s *= kp->dist_speedM_1;
+            inv -= kp->sec_dist;
+            if (inv < 0.0f) {
+                inv *= kp->dist_speedM_1;
             } else {
-                s *= kp->dist_speed_1;
+                inv *= kp->dist_speed_1;
             }
-            if (s >= 1.0f) {
+            if (inv >= 1.0f) {
                 continue;
             }
 
-            d = kp->sec_nrm.x * nx + kp->sec_nrm.y * ny;
+            d = kp->sec_nrm.x * nrm.x + kp->sec_nrm.y * nrm.y;
             if (d < 0.0f) {
                 d = -d;
                 neg = 1;
@@ -816,9 +813,9 @@ s32 select_2obj_continue(KPADInternal* kp) {
                 continue;
             }
 
-            s += (1.0f - d) / (1.0f - kp_err_next_inpr);
-            if (s < best) {
-                best = s;
+            inv += (1.0f - d) / (1.0f - kp_err_next_inpr);
+            if (inv < best) {
+                best = inv;
                 if (neg != 0) {
                     best1 = op2;
                     best2 = op1;
@@ -830,7 +827,7 @@ s32 select_2obj_continue(KPADInternal* kp) {
         } while (++op2 <= &kp->kobj_sample[3]);
     } while (++op1 < &kp->kobj_sample[3]);
 
-    if (best == 2.0f) {
+    if (best == float_8066C0C8) {
         return 0;
     }
 
@@ -855,7 +852,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
     if (sp->dpd_valid_fg == 0) {
         sp->horizon = pos;
         sp->vec = Vec2_0;
-        sp->speed = 0.0f;
+        sp->speed = float_8066C0B0;
     } else {
         vec.x = pos.x - sp->horizon.x;
         vec.y = pos.y - sp->horizon.y;
@@ -863,7 +860,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
         if (kp->hor_mode == 0) {
             if (f1 >= kp->hor_play_radius) {
-                f1 = 1.0f;
+                f1 = float_8066C0BC;
             } else {
                 f1 /= kp->hor_play_radius;
                 f1 *= f1;
@@ -897,7 +894,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
                 sp->horizon = vec;
             } else {
                 sp->vec = Vec2_0;
-                sp->speed = 0.0f;
+                sp->speed = float_8066C0B0;
             }
         }
     }
@@ -906,11 +903,11 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
     if (sp->dpd_valid_fg == 0) {
         sp->dist = dist;
-        sp->dist_vec = 0.0f;
-        sp->dist_speed = 0.0f;
+        sp->dist_vec = float_8066C0B0;
+        sp->dist_speed = float_8066C0B0;
     } else {
         f2 = dist - sp->dist;
-        if (f2 < 0.0f) {
+        if (f2 < float_8066C0B0) {
             f1 = -f2;
         } else {
             f1 = f2;
@@ -918,7 +915,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
         if (kp->dist_mode == 0) {
             if (f1 >= kp->dist_play_radius) {
-                f1 = 1.0f;
+                f1 = float_8066C0BC;
             } else {
                 f1 /= kp->dist_play_radius;
                 f1 *= f1;
@@ -927,7 +924,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
             f1 *= kp->dist_sensitivity;
 
             sp->dist_vec = f1 * f2;
-            if (sp->dist_vec < 0.0f) {
+            if (sp->dist_vec < float_8066C0B0) {
                 sp->dist_speed = -sp->dist_vec;
             } else {
                 sp->dist_speed = sp->dist_vec;
@@ -938,7 +935,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
             if (f1 > kp->dist_play_radius) {
                 f1 = (f1 - kp->dist_play_radius) / f1 * kp->dist_sensitivity;
                 sp->dist_vec = f1 * f2;
-                if (sp->dist_vec < 0.0f) {
+                if (sp->dist_vec < float_8066C0B0) {
                     sp->dist_speed = -sp->dist_vec;
                 } else {
                     sp->dist_speed = sp->dist_vec;
@@ -946,29 +943,29 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
                 sp->dist += sp->dist_vec;
             } else {
-                sp->dist_vec = 0.0f;
-                sp->dist_speed = 0.0f;
+                sp->dist_vec = float_8066C0B0;
+                sp->dist_speed = float_8066C0B0;
             }
         }
     }
 
-    pos.x = (kp->kobj_regular[0].center.x + kp->kobj_regular[1].center.x) * 0.5f;
-    pos.y = (kp->kobj_regular[0].center.y + kp->kobj_regular[1].center.y) * 0.5f;
+    pos.x = (kp->kobj_regular[0].center.x + kp->kobj_regular[1].center.x) * float_8066C0B4;
+    pos.y = (kp->kobj_regular[0].center.y + kp->kobj_regular[1].center.y) * float_8066C0B4;
 
     f1 = kp->sec_nrm.x * kp->sec_nrm_hori.x + kp->sec_nrm.y * kp->sec_nrm_hori.y;
     f2 = -kp->sec_nrm.y * kp->sec_nrm_hori.x + kp->sec_nrm.x * kp->sec_nrm_hori.y;
     vec.x = f1 * pos.x - f2 * pos.y;
     vec.y = f2 * pos.x + f1 * pos.y;
 
-    vec.x = (kp->unk_e4 - vec.y) * kp->unk_ec;
-    vec.y = (kp->unk_e8 - vec.x) * kp->unk_ec;
+    vec.x = (kp->unk_e4.x - vec.y) * kp->unk_ec;
+    vec.y = (kp->unk_e4.y - vec.x) * kp->unk_ec;
 
-    pos.x = -kp->unk_d8 * vec.x + kp->unk_d4 * vec.y;
-    pos.y = -kp->unk_d4 * vec.x - kp->unk_d8 * vec.y;
+    pos.x = -kp->unk_d4.y * vec.x + kp->unk_d4.x * vec.y;
+    pos.y = -kp->unk_d4.x * vec.x - kp->unk_d4.y * vec.y;
     if (sp->dpd_valid_fg == 0) {
         sp->pos = pos;
         sp->vec = Vec2_0;
-        sp->speed = 0.0f;
+        sp->speed = float_8066C0B0;
     } else {
         vec.x = pos.x - sp->pos.x;
         vec.y = pos.y - sp->pos.y;
@@ -976,7 +973,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
         if (kp->pos_mode == 0) {
             if (f1 >= kp->pos_play_radius) {
-                f1 = 1.0f;
+                f1 = float_8066C0BC;
             } else {
                 f1 /= kp->pos_play_radius;
                 f1 *= f1;
@@ -1001,7 +998,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
                 sp->pos.y += sp->vec.y;
             } else {
                 sp->vec = Vec2_0;
-                sp->speed = 0.0f;
+                sp->speed = float_8066C0B0;
             }
         }
     }
@@ -1013,6 +1010,7 @@ void read_kpad_dpd(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
     s8 valid_fg;
     KPADObject* op;
     KPADObject* op2;
+    KPADObject* end;
     f32 f1, f2, f3;
     u8 fmt;
 
@@ -1045,7 +1043,8 @@ void read_kpad_dpd(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
         } while (--op >= kp->kobj_sample);
     }
 
-    op = &kp->kobj_sample[3];
+    end = &kp->kobj_sample[3];
+    op = end;
     do {
         if (op->error_fg >= 0) {
             if (op->center.x <= kp->kobj_frame_min_x || op->center.x >= kp->kobj_frame_max_x ||
@@ -1064,9 +1063,9 @@ void read_kpad_dpd(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
                     op->center.y == op2->center.y) {
                     op2->error_fg |= 2;
                 }
-            } while (++op2 <= &kp->kobj_sample[3]);
+            } while (++op2 <= end);
         }
-    } while (++op < &kp->kobj_sample[3]);
+    } while (++op < end);
 
     kp->valid_objs = 0;
     op = &kp->kobj_sample[3];
@@ -1080,40 +1079,34 @@ void read_kpad_dpd(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
         s8 d = kp->status.dpd_valid_fg;
         if (d == 2 || d == -2) {
             if (kp->valid_objs >= 2) {
-                valid_fg = select_2obj_continue(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_2obj_continue(kp)) != 0) {
                     goto select_ok;
                 }
             }
             if (kp->valid_objs >= 1) {
-                valid_fg = select_1obj_continue(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_1obj_continue(kp)) != 0) {
                     goto select_ok;
                 }
             }
         } else if (d == 1 || d == -1) {
             if (kp->valid_objs >= 2) {
-                valid_fg = select_2obj_first(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_2obj_first(kp)) != 0) {
                     goto select_ok;
                 }
             }
             if (kp->valid_objs >= 1) {
-                valid_fg = select_1obj_continue(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_1obj_continue(kp)) != 0) {
                     goto select_ok;
                 }
             }
         } else {
             if (kp->valid_objs >= 2) {
-                valid_fg = select_2obj_first(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_2obj_first(kp)) != 0) {
                     goto select_ok;
                 }
             }
             if (kp->valid_objs == 1) {
-                valid_fg = select_1obj_first(kp);
-                if (valid_fg != 0) {
+                if ((valid_fg = select_1obj_first(kp)) != 0) {
                     goto select_ok;
                 }
             }
@@ -1135,16 +1128,16 @@ select_ok:
 
         kp->sec_length = f3;
         kp->sec_nrm.x = dx;
-        kp->sec_nrm.y = dy;
         kp->sec_dist = f1;
+        kp->sec_nrm.y = dy;
         kp->obj_horizon.x = kp->sec_nrm_hori.x * dx + kp->sec_nrm_hori.y * dy;
         kp->obj_horizon.y = kp->sec_nrm_hori.y * dx - kp->sec_nrm_hori.x * dy;
 
         if (kp->ah_circle_ct_pad == 0) {
             f1 = kp->obj_horizon.x * kp->acc_horizon.x + kp->obj_horizon.y * kp->acc_horizon.y;
             if (f1 <= kp_err_acc_inpr) {
-                kp->kobj_regular[0].error_fg = 1;
                 kp->kobj_regular[1].error_fg = 1;
+                kp->kobj_regular[0].error_fg = 1;
                 valid_fg = 0;
             }
         }
@@ -1781,24 +1774,22 @@ void KPADInitEx(KPADUnifiedWpadStatus* uwStatus, u32 length) {
         kp->status.dev_type = 0xFD;
         kp->status.data_format = 0;
         kp->dist_init = idist_org;
-        kp->unk_d4 = iaccXY_nrm_hori.x;
-        kp->unk_d8 = iaccXY_nrm_hori.y;
+        kp->unk_d4 = iaccXY_nrm_hori;
         kp->sec_nrm_hori = isec_nrm_hori;
-        kp->unk_e4 = icenter_org.x;
-        kp->unk_e8 = icenter_org.y;
+        kp->unk_e4 = icenter_org;
 
         f27 = 1.0f;
         f28 = 0.75f;
         f1 = (f32)sqrt(f27 * f27 + f28 * f28);
-        if (icenter_org.x < 0.0f) {
-            f27 += icenter_org.x;
+        if (kp->unk_e4.x < 0.0f) {
+            f27 += kp->unk_e4.x;
         } else {
-            f27 -= icenter_org.x;
+            f27 -= kp->unk_e4.x;
         }
-        if (icenter_org.y < 0.0f) {
-            f28 += icenter_org.y;
+        if (kp->unk_e4.y < 0.0f) {
+            f28 += kp->unk_e4.y;
         } else {
-            f28 -= icenter_org.y;
+            f28 -= kp->unk_e4.y;
         }
         if (f28 < f27) {
             f27 = f28;
@@ -1813,10 +1804,10 @@ void KPADInitEx(KPADUnifiedWpadStatus* uwStatus, u32 length) {
         kp->dist_sensitivity = 1.0f;
         kp->hor_sensitivity = 1.0f;
         kp->pos_sensitivity = 1.0f;
-        kp->pos_mode = 0;
-        kp->hor_mode = 0;
-        kp->dist_mode = 0;
         kp->acc_mode = 0;
+        kp->dist_mode = 0;
+        kp->hor_mode = 0;
+        kp->pos_mode = 0;
         kp->btn_repeat_delay = 40000;
         kp->btn_repeat_pulse = 0;
         kp->btn_repeat_time = 0;
@@ -1992,20 +1983,20 @@ void KPADiSamplingCallback(s32 chan) {
         } else {
             center = 0.0f;
         }
-        kp->unk_e4 = 0.0f;
-        kp->unk_e8 = -center;
+        kp->unk_e4.x = 0.0f;
+        kp->unk_e4.y = -center;
         f30 = 1.0f;
         f31 = 0.75f;
         f3 = (f32)sqrt(f30 * f30 + f31 * f31);
-        if (kp->unk_e4 < 0.0f) {
-            f30 += kp->unk_e4;
+        if (kp->unk_e4.x < 0.0f) {
+            f30 += kp->unk_e4.x;
         } else {
-            f30 -= kp->unk_e4;
+            f30 -= kp->unk_e4.x;
         }
-        if (kp->unk_e8 < 0.0f) {
-            f31 += kp->unk_e8;
+        if (kp->unk_e4.y < 0.0f) {
+            f31 += kp->unk_e4.y;
         } else {
-            f31 -= kp->unk_e8;
+            f31 -= kp->unk_e4.y;
         }
         if (f30 < f31) {
             f30 = f30;

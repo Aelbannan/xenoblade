@@ -1,132 +1,179 @@
-// Decompiled RVL_SDK/src/revolution/hbm/synenv
-// High-level C reconstruction — no inline asm, no register tricks
-
+// Decompiled RVL_SDK/src/revolution/hbm/synenv — volume envelope setup/run
 #include <harness_catalog.h>
 #include <math.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern const f32 __HBMSYNn128[];
 extern const s32 __HBMSYNAttackAttnTable[];
 
+typedef struct HBMSYNVoice {
+    u8  _pad0[0x08];
+    void* base;        // 0x08 - synth base pointer
+    u8  ch;            // 0x0C - column index
+    u8  note;          // 0x0D - note index
+    u8  idx;           // 0x0E
+    u8  _pad0F;
+    u8  _pad10[0x04];  // 0x10-0x13
+    void* params;      // 0x14 - volume envelope params
+    u8  _pad18[0x18];  // 0x18-0x2F
+    s32 volPhase;      // 0x30 - 0=attack, 1=decay, 2=sustain, 3=release
+    s32 vol;           // 0x34
+    s32 attackTicks;   // 0x38
+    s32 attackRate;    // 0x3C
+    s32 decayRate;     // 0x40
+    s32 sustain;       // 0x44
+    s32 release;       // 0x48
+} HBMSYNVoice;
+
+typedef struct HBMSYNVolParams {
+    u8  _pad0[0x18];
+    s32 attack;        // 0x18
+    s32 decay;         // 0x1C
+    s32 sustain;       // 0x20
+    s32 release;       // 0x24
+    s32 attackExtra;   // 0x28
+    s32 decayExtra;    // 0x2C
+} HBMSYNVolParams;
+
 void __HBMSYNSetupVolumeEnvelope(void* voice)
 {
-    void* params = *(void**)((u8*)voice + 0x14);
-    s32 attack = *(s32*)((u8*)params + 0x18);
-    s32 decay = *(s32*)((u8*)params + 0x1C);
+    HBMSYNVoice* v = (HBMSYNVoice*)voice;
+    HBMSYNVolParams* params = (HBMSYNVolParams*)v->params;
+    s32 attack = params->attack;
 
-    if (attack != (s32)0x80000000) {
-        s32 extra, ticks, div3;
-        f32 arg;
-
-        extra = *(s32*)((u8*)params + 0x28);
-        if (extra == (s32)0x80000000) {
-            arg = (f32)(s32)attack / 78643200.0f;
-        } else {
-            arg = ((f32)(s32)extra * __HBMSYNn128[*(u8*)((u8*)voice + 0x0E)] + (f32)(s32)attack) / 78642000.0f;
-        }
-
-        ticks = (s32)(1000.0f * (f32)pow(2.0, (f64)arg));
-        div3 = ticks / 3;
-        if (div3 != 0) {
-            *(s32*)((u8*)voice + 0x38) = 0;
-            *(s32*)((u8*)voice + 0x34) = (s32)0xFC400000;
-            *(s32*)((u8*)voice + 0x30) = 0;
-            *(s32*)((u8*)voice + 0x3C) = 0x640000 / div3;
-        } else {
-            *(s32*)((u8*)voice + 0x38) = 0;
-            *(s32*)((u8*)voice + 0x34) = (s32)0xFC400000;
-            *(s32*)((u8*)voice + 0x30) = 0;
-            *(s32*)((u8*)voice + 0x3C) = 0x640000;
+    if (attack == 0x80000000) {
+        v->volPhase = 1;
+        v->vol = 0;
+        s32 decay = params->decay;
+        if (decay == 0x80000000) {
+            v->volPhase = 2;
+            v->vol = params->sustain;
         }
     } else {
-        *(s32*)((u8*)voice + 0x30) = 1;
-        *(s32*)((u8*)voice + 0x34) = 0;
-        if (decay == (s32)0x80000000) {
-            *(s32*)((u8*)voice + 0x30) = 2;
-            *(s32*)((u8*)voice + 0x34) = *(s32*)((u8*)params + 0x20);
+        u8 ch = v->idx;
+        s32 extra = params->attackExtra;
+        s32 ticks;
+
+        if (attack == 0x80000000) {
+            ticks = 0;
+        } else {
+            if (extra == 0x80000000) {
+                f32 f = (f32)pow(2.0, (f64)((f32)attack / 78643200.0f));
+                ticks = (s32)(f * 1000.0f);
+            } else {
+                f32 f = (f32)pow(2.0, (f64)(((f32)extra * __HBMSYNn128[ch] + (f32)attack) / 78642000.0f));
+                ticks = (s32)(f * 1000.0f);
+            }
+        }
+
+        {
+            s32 div3 = ticks / 3;
+            if (div3 != 0) {
+                v->attackTicks = 0;
+                v->attackRate = 0x640000 / div3;
+                v->vol = 0xFC400000;
+                v->volPhase = 0;
+            } else {
+                v->attackTicks = 0;
+                v->attackRate = 0x640000;
+                v->vol = (s32)0xFC400000;
+                v->volPhase = 0;
+            }
         }
     }
 
-    if (*(u32*)((u8*)voice + 0x30) < 2) {
-        params = *(void**)((u8*)voice + 0x14);
-        s32 decay2 = *(s32*)((u8*)params + 0x1C);
-        s32 extra2 = *(s32*)((u8*)params + 0x2C);
-        s32 ticks, div3;
-        f32 arg;
+    if ((u32)v->volPhase < 2) {
+        params = (HBMSYNVolParams*)v->params;
+        u8 ch = v->note;
+        s32 decay = params->decay;
+        s32 extra2 = params->decayExtra;
+        s32 ticks;
 
-        if (extra2 == (s32)0x80000000) {
-            arg = (f32)(s32)decay2 / 78643200.0f;
+        if (decay == 0x80000000) {
+            ticks = 0;
         } else {
-            arg = ((f32)(s32)extra2 * __HBMSYNn128[*(u8*)((u8*)voice + 0x0D)] + (f32)(s32)decay2) / 78642000.0f;
+            if (extra2 == 0x80000000) {
+                f32 f = (f32)pow(2.0, (f64)((f32)decay / 78643200.0f));
+                ticks = (s32)(f * 1000.0f);
+            } else {
+                f32 f = (f32)pow(2.0, (f64)(((f32)extra2 * __HBMSYNn128[ch] + (f32)decay) / 78642000.0f));
+                ticks = (s32)(f * 1000.0f);
+            }
         }
 
-        ticks = (s32)(1000.0f * (f32)pow(2.0, (f64)arg));
-        div3 = ticks / 3;
-
-        if (div3 != 0) {
-            *(s32*)((u8*)voice + 0x40) = (s32)0xFC400000 / div3;
-        } else {
-            *(s32*)((u8*)voice + 0x40) = (s32)0xFC400000;
+        {
+            s32 div3 = ticks / 3;
+            if (div3 != 0) {
+                v->decayRate = (s32)0xFC400000 / div3;
+            } else {
+                v->decayRate = (s32)0xFC400000;
+            }
         }
     }
 
-    params = *(void**)((u8*)voice + 0x14);
-    *(s32*)((u8*)voice + 0x44) = *(s32*)((u8*)params + 0x20);
-    *(s32*)((u8*)voice + 0x48) = *(s32*)((u8*)params + 0x24);
+    params = (HBMSYNVolParams*)v->params;
+    v->sustain = params->sustain;
+    v->release = params->release;
 }
 
 void __HBMSYNRunVolumeEnvelope(void* voice)
 {
-    u8* v = (u8*)voice;
-    u32 phase = *(u32*)(v + 0x30);
+    HBMSYNVoice* v = (HBMSYNVoice*)voice;
+    u32 phase = (u32)v->volPhase;
 
     switch (phase) {
     case 0:
     {
-        s32 cnt = *(s32*)(v + 0x38) + *(s32*)(v + 0x3C);
-        *(s32*)(v + 0x38) = cnt;
+        s32 cnt = v->attackTicks + v->attackRate;
+        v->attackTicks = cnt;
         if (cnt >= 0x630000) {
-            *(s32*)(v + 0x34) = 0;
+            v->vol = 0;
         } else {
-            *(s32*)(v + 0x34) = __HBMSYNAttackAttnTable[cnt >> 16];
+            v->vol = __HBMSYNAttackAttnTable[cnt >> 16];
         }
-        if (*(s32*)(v + 0x34) == 0) {
-            *(s32*)(v + 0x30) = 1;
+        if (v->vol == 0) {
+            v->volPhase = 1;
         }
         break;
     }
     case 1:
     {
-        s32 vol = *(s32*)(v + 0x34);
-        s32 drate = *(s32*)(v + 0x40);
-        s32 sust = *(s32*)(v + 0x44);
-        vol += drate;
-        *(s32*)(v + 0x34) = vol;
-        if (vol > sust) {
-            *(s32*)(v + 0x30) = 2;
-            *(s32*)(v + 0x34) = sust;
+        s32 vol = v->vol;
+        s32 drate = v->decayRate;
+        s32 sust = v->sustain;
+        s32 nvol = vol + drate;
+        v->vol = nvol;
+        if (nvol <= sust) {
+            v->vol = sust;
+            v->volPhase = 2;
         }
-        if (*(s32*)(v + 0x34) > (s32)0xFD300000) {
+        if (v->vol > (s32)0xFD300000) {
             break;
         }
         {
-            u8 ch = *(u8*)(v + 0x0C);
-            u8 note = *(u8*)(v + 0x0D);
-            void* base = *(void**)(v + 0x08);
+            v->volPhase = 4;
+            u8 ch = v->ch;
+            u8 note = v->note;
+            void* base = v->base;
             void* addr = (u8*)base + ((s32)ch << 9) + ((s32)note << 2);
-            *(s32*)(v + 0x30) = 4;
             *(s32*)((u8*)addr + 0x408) = 0;
         }
         break;
     }
     case 3:
     {
-        s32 vol = *(s32*)(v + 0x34);
-        if (vol > (s32)0xFD300000) {
-            *(s32*)(v + 0x34) = vol + *(s32*)(v + 0x48);
+        s32 vol = v->vol;
+        if (vol <= (s32)0xFD300000) {
+            v->volPhase = 4;
             break;
         }
-        *(s32*)(v + 0x30) = 4;
+        v->vol = vol + v->release;
         break;
     }
     }
 }
+#ifdef __cplusplus
+}
+#endif

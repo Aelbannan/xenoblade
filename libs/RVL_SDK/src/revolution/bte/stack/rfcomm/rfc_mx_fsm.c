@@ -122,7 +122,7 @@ void rfc_mx_sm_state_idle(RfcMuxChannel* channel, u16 event, u8* data) {
     case 11:
     case 12:
         if (rfc_cb.trace_level >= 1) {
-            LogMsg_2(0x90003, "Mx error state %d event %d", channel->state,
+            LogMsg_2(0x90000, "Mx error state %d event %d", channel->state,
                      event);
         }
         break;
@@ -143,23 +143,23 @@ void rfc_mx_sm_state_idle(RfcMuxChannel* channel, u16 event, u8* data) {
                 memset(&config, 0, sizeof(config));
                 config.field_0x02 = 1;
                 config.field_0x04 = 0x69b;
-                config.field_0x06 = 0;
                 config.field_0x20 = 0;
+                config.field_0x06 = 0;
                 L2CA_ConfigReq(channel->field_0x68, &config);
             }
             channel->state = 2;
         }
         break;
-    case 0:
     case 1:
     case 2:
-        break;
+        return;
     case 3:
         rfc_send_dm(channel, 0, 1);
         break;
     case 4:
         rfc_send_dm(channel, 0, 0);
         break;
+    case 0:
     default:
         if (rfc_cb.trace_level >= 4) {
             LogMsg_2(0x90003, "RFCOMM MX ignored - evt:%d in state:%d", event,
@@ -176,7 +176,7 @@ void rfc_mx_sm_state_wait_conn_cnf(RfcMuxChannel* channel, u16 event, u8* data) 
     switch (event) {
     case 6:
         if (rfc_cb.trace_level >= 1) {
-            LogMsg_2(0x90003, "Mx error state %d event %d", channel->state, event);
+            LogMsg_2(0x90000, "Mx error state %d event %d", channel->state, event);
         }
         break;
     case 9:
@@ -185,11 +185,16 @@ void rfc_mx_sm_state_wait_conn_cnf(RfcMuxChannel* channel, u16 event, u8* data) 
             PORT_StartCnf(channel, *(u16*)data);
         } else {
             channel->state = 2;
+            if (rfc_cb.trace_level >= 4) {
+                LogMsg_0(0x90003, "rfc_mx_send_config_req");
+            }
             {
                 RfcConfig config;
                 memset(&config, 0, sizeof(config));
                 config.field_0x02 = 1;
                 config.field_0x04 = 0x69b;
+                config.field_0x20 = 0;
+                config.field_0x06 = 0;
                 L2CA_ConfigReq(channel->field_0x68, &config);
             }
         }
@@ -199,12 +204,10 @@ void rfc_mx_sm_state_wait_conn_cnf(RfcMuxChannel* channel, u16 event, u8* data) 
         PORT_CloseInd(channel);
         break;
     case 5:
-    case 7:
-    case 8:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
+        channel->state = 0;
+        L2CA_DisconnectReq(channel->field_0x68);
+        PORT_CloseInd(channel);
+        break;
     default:
         if (rfc_cb.trace_level >= 4) {
             LogMsg_2(0x90003, "RFCOMM MX ignored - evt:%d in state:%d", event, channel->state);

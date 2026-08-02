@@ -379,15 +379,16 @@ rfc_port_fsm / rfc_utils needed GC/3.0a5.2. Three reusable findings:
 | Credit-check ternary `(mcb->field_72 == 0 ? 2 : mcb->field_72) == 2` emits `cmpi r0,2`; retail has `rlwinm r0,r0,0,24,31; cmpli r0,2` | The inline ternary result is `int` so no truncation is needed; retail's `clrlwi` comes from assigning the ternary to a `u8` local first | `u8 flow = (mcb->field_72 == 0) ? 2 : mcb->field_72; if (flow == 2) { ... }` — the `u8` assignment emits the retail `clrlwi` + `cmplwi` (RFCOMM_ParNegReq, us-803035bc) |
 | Decomp `.text` 0x3C over split budget with every function byte-identical | `cflags_sdk` defaults to `-func_align 16`; retail rfc_port_if.s functions are packed on 4-byte boundaries (0x803034B8+0x2C=0x803034E4, no padding), so MWCC inserts 60 bytes of inter-function padding | `Object(NonMatching, "...rfc_port_if.c", extra_cflags=["-func_align 4"])` — `.text` drops from 0x568 to exactly 0x52C (same as the other packed bte TUs btm_sec/btm_inq/rfc_utils) |
 
-**Remaining soft-cap:** `RFCOMM_FlowReq` (us-80303844) at 95.1% static — the last two
-instructions are an independent scheduling swap (`addi r6,r31,0x5a` / `stb r0,0x5e(r3)`
+**RFCOMM_FlowReq (us-80303844) — CLOSED 12/12 FULL_MATCH:** the last two
+instructions were an independent scheduling swap (`addi r6,r31,0x5a` / `stb r0,0x5e(r3)`
 order), reproducible under **no** source shape (plain, block-scope `tPORT_CTRL*` local,
 `u8*` fc pointer, fc-value local, flags-first statement order, `!enable` vs
-`(enable == 0)`, `-O4,s`) or compiler (Wii/1.1, GC/3.0a5.2). SMT acceptance is
-additionally blocked by the unvalidated callee `rfc_send_msc` (us-80304040,
-rfc_ts_frames.c) — `equivalence_check.py` fails closed on non-accepted callees with
-no opaque override. Accept at EQUIVALENT_MATCH once that callee lands (or a source
-shape reproduces the swap).
+`(enable == 0)` vs `enable ? 0 : 1`, `-O4,s`) or compiler (Wii/1.1, GC/3.0a5.2).
+Same call-arg-schedule float class as rfc_ts_frames.c — `mw_version="GC/3.0a3.4"`
+schedules the `cntlzw/mr r4/rlwinm/addi r6/stb` block byte-for-byte like retail
+with **zero regressions on the other 11 unit functions** and split still exactly
+0x52C/0x52C. Accepted FULL_MATCH (semantic-certified, no SMT needed). Keep the unit
+on `mw_version="GC/3.0a3.4"` + `extra_cflags=["-func_align 4", "-ipa off"]`.
 
 ### rfc_ts_frames.c — 4/4 FULL_MATCH on **GC/3.0a3.4** (rfc_send_fcon us-80303f38, rfc_send_fcoff us-80303fbc, rfc_send_test us-8030432c, rfc_send_buf_uih us-80303cb8)
 
@@ -401,17 +402,28 @@ shape reproduces the swap).
 
 Sibling soft-cap from the rfc_port_if section (`RFCOMM_FlowReq`, us-80303844) is blocked by `rfc_send_msc` (us-80304040) in this same TU — with this unit now accepted, that path can close once rfc_send_msc is certified.
 
-### rfc_mx_fsm.c — 3/3 FULL_MATCH on GC/3.0a5.2 (rfc_mx_conf_ind, rfc_mx_conf_cnf, rfc_mx_sm_state_connected)
+### rfc_mx_fsm.c — 10/10 FULL_MATCH on GC/3.0a5.2 (all state machines + conf handlers)
 
-`libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c` matches with the existing unit flags
-`mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4", "-ipa off"]`. Two reusable findings:
+`rfc_mx_sm_state_idle` (us-80301718) and `rfc_mx_sm_state_disc_wait_ua` (us-80301fbc) reached
+byte-identical 100% (0 structural / 0 reg-swap, split PASS) with the unit flags
+`mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4", "-ipa off"]`. New reusable findings:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `state_idle` case 7/9/11/12 "Mx error state" LogMsg_2: decomp `lis r3,9; addi r3,r3,3; bl` vs retail `lis r3,9; bl` — one extra 4-byte addi, all later branches shift by 4 | The retail trace level for this message is **0x90000**, not 0x90003 — a `lis`-only constant materializes as `lis r3,9` + direct `bl` (no `addi`), while `0x90003` needs the addi. Sibling states (wait_conn_cnf/configure/sabme_wait_ua) already used 0x90000; only state_idle had 0x90003 | Write `LogMsg_2(0x90000, "Mx error state %d event %d", …)` — the lis-only level saves the addi and restores retail arg scheduling (lis after the string addr) |
+| `state_idle` config-block stores: retail `stb r0,40(sp)` (field_0x20) before `stb r0,14(sp)` (field_0x06); decomp reversed, plus `addi r4,sp,8` position differed | RfcConfig assignment order — wait_conn_cnf's 100% sibling writes `field_0x20 = 0` **before** `field_0x06 = 0` after `field_0x04 = 0x69b` | Mirror wait_conn_cnf's order: `config.field_0x02 = 1; config.field_0x04 = 0x69b; config.field_0x20 = 0; config.field_0x06 = 0;` — MWCC then schedules `addi r4,sp,8` between `stb r4,10(sp)` and `sth r3,12(sp)` exactly like retail |
+| Dense jump-table switch over events 0..12: retail jump table points **event 0 → the default block** (shared body) and **events 1/2 → a standalone `b end` placeholder**; decomp pointed 0/1/2 straight at the epilogue and was 4 bytes short (0x210 vs 0x214) | (a) `case 0:` must be a real label sharing the default body (`case 0: default: …`) so its table entry targets the default block; (b) empty cases written `break;` get table entries pointing directly at the epilogue, but `return;` in a void function emits a physical `b end` slot at the empty cases' layout position (same as `disc_wait_ua`'s `case 8: case 13: return;` placeholder) | List `case 0:` together with `default:` (block last, after `case 4:`); write the empty cases as `case 1: case 2: return;` (not `break;`) positioned before `case 3:` — produces the retail placeholder at exactly the right layout offset |
+
+`state_idle` jump table (retail .data +0x98): 0→default(0x20c), 1/2→0x1e0 placeholder, 3→0x1e4, 4→0x1f8,
+5/8→default, 6→0xbc, 7/9/11/12→0x100, 10→0x12c — block layout = source case order (6, 7/9/11/12, 10,
+1/2, 3, 4, 0/default).
+
+Retail layout facts: `tRFC_MCB.state` 0x6C, `is_initiator` 0x6D, `cfg_bt_ch` 0x6E, `cfg_received` 0x6F, `restart_required` 0x70, `peer_ready` 0x71; connected state event map per the jump table: 3=send UA path, 5/8=disconnect path, 14=close. Confirmed against rfc_port_if.c notes above.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `rfc_mx_sm_state_connected` (us-80301ea4) switched on events 3/4/7 but retail dispatches a 12-slot jump table over events 3..14 with actions on **3** (send UA / optional L2CA disconnect / PORT_CloseInd), **5/8** (timer_start(3); state=6; send DISC), **14** (state=0; PORT_CloseInd) and 4/6/7/9-13 falling to the default trace | MWCC builds the dense jump table only when the case set covers the whole range; holes folded into `default` don't count, and the default string is `"RFCOMM MX ignored - evt:%d in state:%d"` with args `(event, state)` — not "Mx error state" | List **all** 12 case values explicitly (`case 5: case 8: …; case 14: …; case 3: …; default: case 4: case 6: case 7: case 9: case 10: case 11: case 12: case 13: …`), case bodies in the retail code order (timer_start, close, send_ua, default) — same recipe as bta_hh_act.c |
 | `rfc_mx_conf_cnf` (us-80302134) stuck at 99.8% with 2 pure reg-swaps (`lhz r4`/`cmpi r4` vs decomp `r0`) on the `config->result` load — 0 structural, SMT blocked by unaccepted callees | Retail `PORT_StartCnf` takes **2 args** `(p_mcb, result)` (AOSP Broadcom source: `PORT_StartCnf (p_mcb, p_cfg->result);`) — the condition load keeps `config->result` live in **r4** across the `is_initiator` check for the call, so the allocator colors it r4. The 1-arg declaration let MWCC color it r0. The call-site shows only `mr r3,r30; bl PORT_StartCnf` because r4 is already live — the hidden arg is visible in the register state, not a `li r4` | Declare `extern void PORT_StartCnf(RfcMuxChannel*, u16 result);` and call `PORT_StartCnf(channel, config->result);` — 100% byte-identical. Verify sibling call sites in the retail before changing shared signatures: state_idle/wait_conn_cnf/sabme_wait_ua/disc_wait_ua pass `1` / `*(u16*)data` / `0` / `1` as the second arg |
-
-Retail layout facts: `tRFC_MCB.state` 0x6C, `is_initiator` 0x6D, `cfg_bt_ch` 0x6E, `cfg_received` 0x6F, `restart_required` 0x70, `peer_ready` 0x71; connected state event map per the jump table: 3=send UA path, 5/8=disconnect path, 14=close. Confirmed against rfc_port_if.c notes above.
 
 Retail type/layout facts verified against rfc_port_if.s: `tRFC_MCB.state` 0x6C
 (RFC_MX_STATE_CONNECTED=5), `field_72` 0x72 (credit-based flow flag, 2=credit);

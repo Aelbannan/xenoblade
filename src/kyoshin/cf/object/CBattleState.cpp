@@ -9,6 +9,7 @@ extern const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
 extern const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
 extern const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
 extern const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
+extern u8 lbl_eu_80662248[8];      // .sdata object; CBattleState_UnkVirtualFunc3 returns its address
 
 void func_80109784(void* ptr, u32 id, int arg);
 void func_8013DB6C(int a, u32 id, int b, int c);
@@ -1943,7 +1944,7 @@ void func_801491F4(){}
 void func_80149330(){}
 void cf::CBattleState::CBattleState_UnkVirtualFunc30() {}
 void cf::CBattleState::CBattleState_UnkVirtualFunc32() {}
-int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return 0; }
+int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return (int)&lbl_eu_80662248; }
 extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0; }
 
 void func_80145BC4(){}

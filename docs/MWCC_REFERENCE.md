@@ -6750,3 +6750,14 @@ parity-guard overflow check (`cmpi r8,-1` vs `lis/addi/cmp` 0x7FFFFFFF), and
 register colors/role swaps in the parity block. 3.4%→6.3% (44 structural, all
 in prologue/guard/parity). Leaf function — SMT probe is the acceptance path
 (callee-free, so it unblocks the whole VER1/VER2 Anly family that calls it).
+
+## RVL_SDK wud/WUD — .bss layout is FIRST-REFERENCE order; -O4,p source keys under a -O4,s unit (US, Wii/1.1)
+
+`libs/RVL_SDK/src/revolution/wud/WUD.c` (unit flag `-O4,s -inline on`, retail mixes `-O4,p`/`-O4,s` per function — see the earlier WUD entry). Three targets moved from CODE_MATCH to FULL_MATCH / 0-structural:
+
+1. **MWCC emits .bss symbols in first-REFERENCE (textual) order, not declaration order.** Verified in scratch: reordering the first use of a global in a function reorders the .o's .bss layout. This fixes the WUD layout mismatch the earlier KB entry left "as-is": move `WUDShutdown` (first `_scArray` user) after `__wudSyncTryConnect`, and `_WUDGetDevAddr`/`_WUDGetQueuedSize`/`_WUDGetNotAckedSize` (first `_dev_handle_to_bda`/`_dev_handle_queue_size`/`_dev_handle_notack_num` users) after `__wudDeleteHandler0` → `_wudDiscResp@+0x750`, `_wudDiscWork@+0x858`, `_scArray@+0x8B8` land on retail offsets; every `base+offset` immediate matches. Declarations/externs do NOT count as references.
+2. **`__wudSyncStoredDevInfoToNand` (us-803790e0)**: `SCCheckStatus() == SC_STATUS_BUSY` compiles to `cmpli` unless the result is first stored in a **BOOL temp** (`BOOL busy = (SCCheckStatus() == SC_STATUS_BUSY); if (busy) …`) — that forces the retail `subi; cntlzw; srwi.; beq` ==1 idiom. `WUDCB* p` must be **assigned at first use** (`p = &_wcb;` after the branch, before `p->devNums`) or MWCC hoists an extra `addi` copy into the prologue. The tail `return 0x64/25` needs a `u8 result;` assigned right before the `_linkedWBC` check. Result: 83.1% static, 0 structural, 13 pure reg-swaps (witness rho non-bijective due to num/count/offset register-reuse pairing — out-of-band SMT candidate).
+3. **`__wudStartSyncDevice` (us-8037c0f0) — -O4,p signatures reproducible under the -O4,s unit** (100% static FULL_MATCH):
+   - `/1000` magic multiply: `-O4,s` always emits `divwu`; use the documented `__mulhwu` builtin — `(u32)(__mulhwu(0x10624DD3, OS_BUS_CLOCK_SPEED >> 2) >> 6) * 20` — magic as the FIRST arg (operand order matters; the reverse swaps rA/rB and breaks the renaming rho).
+   - boolean normalize `x ? TRUE : FALSE` (retail `neg/or/rlwinm 1,31,31`): write `(u32)(-x | x) >> 31` (neg operand FIRST; `x | -x` order swaps the `or` operands; the `(u32)` cast selects logical `rlwinm` over `srawi`).
+   - `libStatus = (u32)(s8)p->libStatus;` emits `lbz r0; extsb rD, r0` (two registers); plain `(u32)p->libStatus` (field already `s8`) emits retail's in-place `lbz rX; extsb rX, rX`.

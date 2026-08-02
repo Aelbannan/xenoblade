@@ -6595,3 +6595,43 @@ register/order). The SMT probe rejects the register-differing versions
 need the exact MWCC scheduling form — the per-exporter variants differ
 (3dsmax T is `-= Tu`, maya T is the `x += (y - x)` shape), so the formula must
 be reconstructed per exporter before the schedule can be chased.
+
+## CriWare sfd_set / sfd_aoap — control-shape patterns that unlock FULL_MATCH (US, GC/3.0a5.2 -O4,p)
+
+`libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c` + `sfd_aoap.c`. Four reusable
+MWCC control-shape rules (all verified byte-identical FULL_MATCH):
+
+1. **Signed decls fix `cmpli` → `cmpi`:** `u32 SFTRN_GetPrepFlg(void*, u32);`
+   makes `ret != 1` compile to `cmpli` (unsigned); retail uses `cmpi`
+   (signed). Declare the callee as `s32` at the call site (ABI-identical,
+   cross-TU type mismatch is fine) → `SFAOAP_ExecServer` FULL_MATCH.
+
+2. **Single `return 0` after if/else merges the epilogue `li r3, 0`:**
+   `if (self == NULL) { …table… } else { … } return 0;` — one return, the
+   retail if-branch as the fall-through path, the error path a direct
+   `return SetErr(…)`. Multiple `return 0;` statements make MWCC emit a
+   second `li r3, 0` (+4 bytes, shared-merge lost) — `SFD_GetCond` FULL_MATCH.
+
+3. **ok-guard: assign at the merge, never `s32 ok = 1;`:** the initializer is
+   hoisted into the prologue (`li rX, 1`) and forces a callee-saved reg (frame
+   grows: `stmw r24` vs retail `stmw r26`). Write
+   `s32 ok; if (A && f()==0) ok = 0; else if (B && g()==0) ok = 0; else ok = 1;`
+   — MWCC emits `li r0, 0/1` at the merge exactly like retail —
+   `SFSET_SetCond` FULL_MATCH.
+
+4. **Branch-return via named local, not ternary:** `s32 result = f(); s32 ret = 0;
+   if (result != 0) ret = result; return ret;` reproduces retail
+   `cmpi; li r0,0; beq; or r0,r3,r3; or r3,r0,r0`. The ternary
+   `return result ? result : 0;` and `if (result == 0) return 0; else return
+   result;` both compile to a branchless `neg/or/srawi/and` mask —
+   `SFAOAP_Start/Stop/Pause` FULL_MATCH.
+
+Also: `u32* p = tbl + 0x7F; … (void*)*p++ …` keeps the pointer induction in
+one register (retail `addi r29, r3, 508` + `lwz`/`addi r29, r29, 4` at the
+loop bottom); precomputing `s32 off = idx * 4;` once reproduces retail's
+`rlwinm r28, r4, 2` reuse of the dead `self` register in the NULL path
+(SFD_SetCond, 68.5% — residual store-order + color diffs, SMT-certifiable).
+
+`SFMPVF_InitPool` (`p + 0` and `&lbl[0]` both fold to `or`; retail keeps
+`addi r3, r31, 0`) is a documented single-instruction quirk — accepted
+EQUIVALENT_MATCH via SMT.

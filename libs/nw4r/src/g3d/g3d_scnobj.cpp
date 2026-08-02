@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cstddef>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -695,6 +697,39 @@ ScnGroup::ScnGroup(MEMAllocator* pAllocator, ScnObj** ppObj, u32 capacity)
 ScnGroup::~ScnGroup() {
     Clear();
 }
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768 = {sizeof("ScnObj"), "ScnObj"};
+
+bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D768) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj ScnObj::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D768);
+}
+
+const char* ScnObj::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788 = {sizeof("ScnGroup"), "ScnGroup"};
+
+bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D788) ? true
+         : other == TypeObj(lbl_eu_8051D768) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj ScnGroup::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D788);
+}
+
+const char* ScnGroup::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 } // namespace nw4r

@@ -1,5 +1,9 @@
 #include <nw4r/g3d.h>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnLeaf")> lbl_eu_8051D778;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -68,9 +72,27 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
     }
 }
 
+ScnProc::~ScnProc() {}
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnProc")> lbl_eu_8051D7E8 = {sizeof("ScnProc"), "ScnProc"};
+
+bool ScnProc::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D7E8) ? true
+         : other == TypeObj(lbl_eu_8051D778) ? true
+         : other == TypeObj(lbl_eu_8051D768) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj ScnProc::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D7E8);
+}
+
+const char* ScnProc::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
 } // namespace g3d
 } // namespace nw4r
 
-void IsDerivedFrom__Q34nw4r3g3d7ScnProcCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void GetTypeName__Q34nw4r3g3d7ScnProcCFv(){}
 // Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros

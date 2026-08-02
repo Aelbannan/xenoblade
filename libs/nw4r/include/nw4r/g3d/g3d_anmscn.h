@@ -72,6 +72,13 @@ private:
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScn, G3dObj);
 };
 
+class AnmScnRes : public AnmScn {
+public:
+    virtual ~AnmScnRes() {} // at 0x10
+
+    NW4R_G3D_RTTI_DECL_DERIVED(AnmScnRes, AnmScn);
+};
+
 } // namespace g3d
 } // namespace nw4r
 

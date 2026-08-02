@@ -332,7 +332,6 @@ public:
         : ScnObj(pAllocator), mScale(1.0f, 1.0f, 1.0f) {}
 
     virtual void G3dProc(u32 task, u32 param, void* pInfo) = 0; // at 0xC
-    virtual ~ScnLeaf() {}                                       // at 0x10
 
     virtual ForEachResult ForEach(ForEachFunc pFunc, void* pInfo,
                                   bool postOrder); // at 0x1C

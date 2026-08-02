@@ -163,6 +163,13 @@ private:
     NW4R_G3D_RTTI_DECL_DERIVED(ScnMdl, ScnMdlSimple);
 };
 
+class ScnMdlExpand : public ScnGroup {
+public:
+    virtual ~ScnMdlExpand() {} // at 0x10
+
+    NW4R_G3D_RTTI_DECL_DERIVED(ScnMdlExpand, ScnGroup);
+};
+
 } // namespace g3d
 } // namespace nw4r
 

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <nw4r/g3d.h>
 
 void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
 {
@@ -83,3 +84,34 @@ void GetTypeName__Q34nw4r3g3d6ScnMdlCFv(){}
 
 extern "C" const char lbl_eu_8051D7C0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return (void*)lbl_eu_8051D7C0; }
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdlSimple")> lbl_eu_8051D7A8;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnLeaf")> lbl_eu_8051D778;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
+namespace nw4r {
+namespace g3d {
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnMdl")> lbl_eu_8051D7C0 = {sizeof("ScnMdl"), "ScnMdl"};
+
+bool ScnMdl::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D7C0) ? true
+         : other == TypeObj(lbl_eu_8051D7A8) ? true
+         : other == TypeObj(lbl_eu_8051D778) ? true
+         : other == TypeObj(lbl_eu_8051D768) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj ScnMdl::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D7C0);
+}
+
+const char* ScnMdl::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+} // namespace g3d
+} // namespace nw4r

@@ -4,6 +4,9 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -14,6 +17,41 @@ bool AnmObjMatClr::TestExistence(u32 idx) const {
 f32 AnmObjMatClrRes::GetFrame() const {
     return GetFrm();
 }
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjMatClr")> lbl_eu_8051D530 = {sizeof("AnmObjMatClr"), "AnmObjMatClr"};
+
+bool AnmObjMatClr::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D530) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjMatClr::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D530);
+}
+
+const char* AnmObjMatClr::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjMatClrRes")> lbl_eu_8051D548 = {sizeof("AnmObjMatClrRes"), "AnmObjMatClrRes"};
+
+bool AnmObjMatClrRes::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D548) ? true
+         : other == TypeObj(lbl_eu_8051D530) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjMatClrRes::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D548);
+}
+
+const char* AnmObjMatClrRes::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 namespace ut {

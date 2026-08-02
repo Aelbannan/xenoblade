@@ -4,6 +4,9 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -14,6 +17,41 @@ bool AnmObjTexPat::TestExistence(u32 idx) const {
 f32 AnmObjTexPatRes::GetFrame() const {
     return GetFrm();
 }
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexPat")> lbl_eu_8051D560 = {sizeof("AnmObjTexPat"), "AnmObjTexPat"};
+
+bool AnmObjTexPat::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D560) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjTexPat::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D560);
+}
+
+const char* AnmObjTexPat::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjTexPatRes")> lbl_eu_8051D578 = {sizeof("AnmObjTexPatRes"), "AnmObjTexPatRes"};
+
+bool AnmObjTexPatRes::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D578) ? true
+         : other == TypeObj(lbl_eu_8051D560) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjTexPatRes::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D578);
+}
+
+const char* AnmObjTexPatRes::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 } // namespace nw4r

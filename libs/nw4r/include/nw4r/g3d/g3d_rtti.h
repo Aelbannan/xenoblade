@@ -12,17 +12,13 @@
  */
 #define __NW4R_G3D_RTTI_DECL(T)                                                \
 public:                                                                        \
-    virtual const TypeObj GetTypeObj() const {                                 \
-        return nw4r::g3d::G3dObj::TypeObj(TYPE_NAME);                          \
-    } /* at 0x14 */                                                            \
+    virtual const TypeObj GetTypeObj() const; /* at 0x14 */                    \
                                                                                \
     static const G3dObj::TypeObj GetTypeObjStatic() {                          \
         return nw4r::g3d::G3dObj::TypeObj(TYPE_NAME);                          \
     }                                                                          \
                                                                                \
-    virtual const char* GetTypeName() const {                                  \
-        return GetTypeObj().GetTypeName();                                     \
-    } /* at 0x18 */                                                            \
+    virtual const char* GetTypeName() const; /* at 0x18 */                     \
                                                                                \
 private:                                                                       \
     __NW4R_G3D_TYPEOBJ_DECL(T);
@@ -41,9 +37,8 @@ private:                                                                       \
     __NW4R_G3D_RTTI_DECL(T);                                                   \
                                                                                \
 public:                                                                        \
-    virtual bool IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj other) const {       \
-        return other == GetTypeObjStatic();                                    \
-    } /* at 0x8 */
+    virtual bool IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj other) const;        \
+        /* at 0x8 */
 
 /**
  * Define type RTTI (derived type).
@@ -52,9 +47,7 @@ public:                                                                        \
     __NW4R_G3D_RTTI_DECL(T);                                                   \
                                                                                \
 public:                                                                        \
-    virtual bool IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj other) const {       \
-        return other == GetTypeObjStatic() ? true                              \
-                                           : BASE::IsDerivedFrom(other);       \
-    } /* at 0x8 */
+    virtual bool IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj other) const;        \
+        /* at 0x8 */
 
 #endif

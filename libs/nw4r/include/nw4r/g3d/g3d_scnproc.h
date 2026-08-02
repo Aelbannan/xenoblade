@@ -33,7 +33,7 @@ public:
     }
 
     virtual void G3dProc(u32 task, u32 param, void* pInfo); // at 0xC
-    virtual ~ScnProc() {}                                   // at 0x10
+    virtual ~ScnProc();                                      // at 0x10
 
     void SetDrawProc(DrawProc pProc, bool opa, bool xlu) {
         mpDrawProc = pProc;

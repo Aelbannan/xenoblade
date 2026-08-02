@@ -3,7 +3,22 @@
 namespace nw4r {
 namespace g3d {
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640 = {
+    sizeof("G3dObj"), "G3dObj"};
+
 NW4R_G3D_RTTI_DEF(G3dObj);
+
+bool G3dObj::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D640);
+}
+
+const G3dObj::TypeObj G3dObj::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D640);
+}
+
+const char* G3dObj::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
 
 G3dObj::~G3dObj() {
     Dealloc(mpHeap, this);
@@ -19,12 +34,7 @@ void G3dObj::Destroy() {
     delete this;
 }
 
-DECOMP_FORCEACTIVE(g3d_obj_cpp,
-                   G3dObj::IsDerivedFrom);
-
 } // namespace g3d
 } // namespace nw4r
 
-void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void GetTypeName__Q34nw4r3g3d6G3dObjCFv(){}
 // Defined inline via NW4R_G3D_RTTI_DECL_BASE(G3dObj) in g3d_obj.h

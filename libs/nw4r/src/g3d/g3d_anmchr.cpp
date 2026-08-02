@@ -4,6 +4,9 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -18,6 +21,78 @@ void AnmObjChrBlend::SetWeight(int idx, f32 weight) {
 f32 AnmObjChrBlend::GetWeight(int idx) const {
     return mpWeightArray[idx];
 }
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChr")> lbl_eu_8051D5C0 = {sizeof("AnmObjChr"), "AnmObjChr"};
+
+bool AnmObjChr::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D5C0) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjChr::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D5C0);
+}
+
+const char* AnmObjChr::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrNode")> lbl_eu_8051D5D0 = {sizeof("AnmObjChrNode"), "AnmObjChrNode"};
+
+bool AnmObjChrNode::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D5D0) ? true
+         : other == TypeObj(lbl_eu_8051D5C0) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjChrNode::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D5D0);
+}
+
+const char* AnmObjChrNode::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrBlend")> lbl_eu_8051D5E4 = {sizeof("AnmObjChrBlend"), "AnmObjChrBlend"};
+
+bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D5E4) ? true
+         : other == TypeObj(lbl_eu_8051D5D0) ? true
+         : other == TypeObj(lbl_eu_8051D5C0) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjChrBlend::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D5E4);
+}
+
+const char* AnmObjChrBlend::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrRes")> lbl_eu_8051D5F8 = {sizeof("AnmObjChrRes"), "AnmObjChrRes"};
+
+bool AnmObjChrRes::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D5F8) ? true
+         : other == TypeObj(lbl_eu_8051D5C0) ? true
+         : other == TypeObj(lbl_eu_8051D650) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmObjChrRes::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D5F8);
+}
+
+const char* AnmObjChrRes::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 } // namespace nw4r

@@ -87,22 +87,14 @@ public:
     };
 
 public:
-    virtual bool IsDerivedFrom(TypeObj other) const {
-        return other == GetTypeObjStatic();
-    } // at 0x8
+    virtual bool IsDerivedFrom(TypeObj other) const; // at 0x8
 
     virtual void G3dProc(u32 task, u32 param, void* pInfo) = 0; // at 0xC
     virtual ~G3dObj();                                          // at 0x10
 
-    virtual const TypeObj GetTypeObj() const {
-        return TypeObj(TYPE_NAME);
-    } // at 0x14
-    static const G3dObj::TypeObj GetTypeObjStatic() {
-        return TypeObj(TYPE_NAME);
-    }
-    virtual const char* GetTypeName() const {
-        return GetTypeObj().GetTypeName();
-    } // at 0x18
+    virtual const TypeObj GetTypeObj() const; // at 0x14
+
+    virtual const char* GetTypeName() const; // at 0x18
 
     G3dObj(MEMAllocator* pAllocator, G3dObj* pParent)
         : mpHeap(pAllocator), mpParent(pParent) {}

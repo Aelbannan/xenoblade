@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 
@@ -64,6 +66,39 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
         }
     }
 }
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScn")> lbl_eu_8051D620 = {sizeof("AnmScn"), "AnmScn"};
+
+bool AnmScn::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D620) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmScn::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D620);
+}
+
+const char* AnmScn::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
+
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmScnRes")> lbl_eu_8051D630 = {sizeof("AnmScnRes"), "AnmScnRes"};
+
+bool AnmScnRes::IsDerivedFrom(G3dObj::TypeObj other) const {
+    return other == TypeObj(lbl_eu_8051D630) ? true
+         : other == TypeObj(lbl_eu_8051D620) ? true
+         : (other == TypeObj(lbl_eu_8051D640));
+}
+
+const G3dObj::TypeObj AnmScnRes::GetTypeObj() const {
+    return TypeObj(lbl_eu_8051D630);
+}
+
+const char* AnmScnRes::GetTypeName() const {
+    return GetTypeObj().GetTypeName();
+}
+
 
 } // namespace g3d
 } // namespace nw4r

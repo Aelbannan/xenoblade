@@ -162,21 +162,50 @@ public:
 
 private:
     struct ColorMapping {
-        Color min; // at 0x0
-        Color max; // at 0x4
+        GXColor min; // at 0x0
+        GXColor max; // at 0x4
+
+        ColorMapping() {}
+        ColorMapping(const ColorMapping& rOther) : min(rOther.min), max(rOther.max) {}
+        ColorMapping& operator=(const ColorMapping& rOther) {
+            min = rOther.min;
+            max = rOther.max;
+            return *this;
+        }
     };
 
     struct VertexColor {
-        Color lu; // at 0x0
-        Color ru; // at 0x4
-        Color ld; // at 0x8
-        Color rd; // at 0xC
+        GXColor lu; // at 0x0
+        GXColor ru; // at 0x4
+        GXColor ld; // at 0x8
+        GXColor rd; // at 0xC
+
+        VertexColor() {}
+        VertexColor(const VertexColor& rOther)
+            : lu(rOther.lu), ru(rOther.ru), ld(rOther.ld), rd(rOther.rd) {}
+        VertexColor& operator=(const VertexColor& rOther) {
+            lu = rOther.lu;
+            ru = rOther.ru;
+            ld = rOther.ld;
+            rd = rOther.rd;
+            return *this;
+        }
     };
 
     struct TextColor {
-        Color start;               // at 0x0
-        Color end;                 // at 0x4
+        GXColor start;               // at 0x0
+        GXColor end;                 // at 0x4
         GradationMode gradationMode; // at 0x8
+
+        TextColor() {}
+        TextColor(const TextColor& rOther)
+            : start(rOther.start), end(rOther.end), gradationMode(rOther.gradationMode) {}
+        TextColor& operator=(const TextColor& rOther) {
+            start = rOther.start;
+            end = rOther.end;
+            gradationMode = rOther.gradationMode;
+            return *this;
+        }
     };
 
     struct TextureFilter {

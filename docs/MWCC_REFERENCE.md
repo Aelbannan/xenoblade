@@ -890,6 +890,29 @@ answer is an inline-empty `~Color` visible at compile time in the SDK header
 rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
 0x5ac/0x5d0) — must be matched before the 0x5470 split can fit.
 
+**SOLVED (2026-08-03, ut_TextWriterBase batch — Printf<w> us-80340270 +
+AdjustCursor<c/w> us-8033ec20/us-80341620 FULL_MATCH accepted):** the dtor
+bloat is killed with GXColor members *plus user-declared copy ctors* on the
+three CharWriter nested structs (`ColorMapping`/`VertexColor`/`TextColor`).
+Plain GXColor members remove the emissions (trivial implicit dtors) but
+change MWCC's struct-copy schedule at the `clone(*this)` sites (pipelined
+blit, 8–24 structural mismatches in Print/Printf/VPrintf/CalcLineWidth/
+AdjustCursor). Adding user copy ctors (`ColorMapping(const ColorMapping&) :
+min(rOther.min), max(rOther.max) {}`) + default ctors + `operator=` restores
+the non-trivially-copyable per-word serial `lwz r0/stw r0` ×9 copy — all 79
+previously-matched functions stay byte-identical, and the three
+`__dt__ColorMapping/VertexColor/TextColor` globals vanish (retail linker
+GC'd them; DOL-extracted retail .o lacks them). Zero-reference implicit
+dtors of nested structs are emitted whenever the containing class's implicit
+copy ctor is generated in the TU, regardless of dtor explicitness or member
+non-triviality — only *trivial* members stop the emission, and only a
+user-declared copy ctor restores retail's serial copy shape. Side effects:
+ut_CharWriter.o −0x240 (0x26B4→0x2474 over its 0x1A00 budget, 22→23/26
+matched, ~CharWriter dtor now matches); all other nw4hbm units byte-identical.
+Then per-unit `-func_align 4` (approved split-fit tool, cf. lyt_picture /
+lyt_textBox) packs the unit 0x54A4→0x52DC ≤ 0x5470 — even with PrintImpl
+still +0x30 over retail.
+
 ## RVL_SDK hbm/mix.c — HBMMIXUpdateSettings FULL_MATCH via loop-local declaration order (Wii/1.1 `-O4,p`)
 
 `HBMMIXUpdateSettings` (us-80342970, 0xAF8, 16-channel mixer loop w/ flag switch + AX delta writes) went from HIGH_MATCH 94.2% (479 pure reg-swaps, 0 structural — witness and SMT both blocked) to **100% byte-identical** with one declaration-order change, closing the unit 15/15:

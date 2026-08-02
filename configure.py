@@ -1174,7 +1174,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp"),
+            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align + 2 unmatched PrintImpl bodies overruns 0x5470 (retail packed align 4; cf. lyt_picture/lyt_textBox)
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/mix.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/syn.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synctrl.c"),

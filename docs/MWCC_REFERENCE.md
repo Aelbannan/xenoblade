@@ -5138,8 +5138,22 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   `Object(NonMatching, "RVL_SDK/src/revolution/exi/EXIBios.c")` — no source
   change needed. Result: **17 of 18 functions byte-identical** (all previously
   registered FULL_MATCH, incl. EXIAttach/EXISelect/EXIInit/EXIGetID/EXIImmEx,
-  now verifiably 0 mismatches; EXIImm (us-803166b0) remains STRUCTURAL — 67
-  mismatches — and is the only blocker to promoting the unit).
+  now verifiably 0 mismatches; EXIImm (us-803166b0) was STRUCTURAL — 67
+  mismatches — and the only blocker to promoting the unit).
+- **EXIImm byte loop (the last blocker, now FULL_MATCH):** retail's
+  `type != EXI_READ` packing loop is versioned ×8 by MWCC and uses a hoisted
+  base pointer (`mr r3,r27` sunk into the unrolled branch only) with
+  displacement loads `lbz r6,j(r3)` + `addi r3,r3,8`, while the remainder loop
+  re-derives `buf+i` (`add r6,r27,r4`). A named pointer local (`u8* bytes =
+  (u8*)buf; *bytes++`) keeps the pointer live across both loops and
+  materializes the copy at loop init (56 structural mismatches); indexing the
+  local (`bytes[i]`) emits per-iteration `add r3,r27,r4` + `lbzx` (49
+  structural). **The matching form is direct indexing of the cast with no
+  pointer local: `word |= ((u8*)buf)[i] << (3 - i) * 8;`** — MWCC then
+  strength-reduces `buf+i` into the retail's hoisted pointer for the unrolled
+  loop only and re-derives it for the remainder loop: 0 mismatches, byte-
+  identical (159/159). The `(3 - i) * 8` shift relies on `slw`'s mod-32
+  masking for i > 3 (retail does the same: `subfic r5,r4,3; slwi; slw`).
 - Acceptance: `cycle` per target → FULL_MATCH + semantic certificate
   (full-instruction-match, no SMT needed), split size PASS (0x18F8 ≤ 0x1900).
 - Reuse: when a retail unit's prologue/body are in strict source order and the

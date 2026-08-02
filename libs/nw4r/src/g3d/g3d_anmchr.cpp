@@ -225,7 +225,7 @@ void AnmObjChrRes::SetFrame(f32 frame) {
     SetFrm(frame);
 
     if (mpResultCache != NULL) {
-        f32 f = frame;
+        f32 f = GetFrm();
         for (u32 i = 0; i < (u32)mNumBinding; i++) {
             u16 binding = mpBinding[i];
             if (!(binding & BINDING_UNDEFINED)) {

@@ -901,6 +901,22 @@ rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
 
 Earlier in this session's history (attempts #1-4): `HBMMIX_DELTA_UNIT` must be `96` (retail `mulhw 0x2AAAAAAB + srawi 4` = /96), `vpb->pb.mix.vX != 0` / `vDeltaX != 0` checks must read the register value (single load feeds store+compare), and `u32 ctrl = 0;` must be declared after the `vpb == NULL` check (retail inits r12 there) — each cut structural diffs to 0. The 2-entry prologue reloc-name drift (bss anchor `...bss.0` vs retail `sIndex2IdTable`, identical bytes/addends) is tolerated drift (values equal).
 
+## RVL_SDK hbm/seq.c — HBMSEQRunAudioFrame 99.5% (0 structural): const-pool placement, switch dispatch, two-statement increments (Wii/1.1 `-O4,p`)
+
+`HBMSEQRunAudioFrame` (us-80344e60, 0x490) went from 10.3% STRUCTURAL to **99.5% / 0 structural / 16 pure reg-swaps / exact size** (candidate for out-of-band SMT acceptance — the register-renaming witness did not apply to the tempo-path pointer-chain swaps). Reusable levers, in order of impact:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Every f-load displacement wrong (f31@+0x08 vs +0x00 …); pool at `.rodata+0x84` vs retail named pool at `+0x00` | `const u8 __HBMSEQMidiEventLength[128]` put the 0x80-byte array in `.rodata` **before** the unit's constant pool; retail has the array in `.data` (non-const) and the pool alone in `.rodata` | Drop `const` so the array lands in `.data` and the pool starts at `.rodata+0x00` — sections then match retail exactly (`.rodata` 0x28, `.data` 0x80) |
+| Pool entry order `[16000, 96, 65536, …]` vs retail `[65536, 96, 16000, …]` (shared TU pool — one wrong function shifts every other function's f-load offsets) | MWCC orders the shared constant pool by AST/source order: three separate statements `f = 16000/x; f = 96/f; x = (u32)(65536*f)` insert 16000 first; retail is one nested expression `(u32)(65536.0f * (96.0f / (16000.0f / (f32)(s16)…)))` which traverses outermost-first | Write the whole float formula as one nested expression (also matches the retail `fdivs/fmuls` op order exactly) |
+| Dispatch compares `cmpli` + bne-skip vs retail `cmpi` + beq-direct | MWCC `switch` on a `u8` emits signed `cmpi` per case with direct-to-handler branches; `if (x==A \|\| x==B) else if` chains emit unsigned `cmpli` + skip-forward branches | Use `switch (x) { case …: }` for byte-dispatch chains (running_status 0xF0/0xF7/0xFF, meta type 0x2F/0x51, event length 1/2) |
+| `cur = cur + 1 + v` emits `(cur+v)+1` (`add` then `addi`) vs retail `(cur+1)+v` | MWCC reassociates `+= 1 + v`; two statements keep left-to-right | Write `track->cur++; track->cur += v;` — MWCC merges to one store with `addi (cur+1); add (+v)` |
+| `data[1] = *track->cur++;` interleaves differently than retail | Retail's load-before-store / reload pattern came out of separate statements | Write `data[1] = *track->cur; track->cur++;` (and meta type as `b = *track->cur; track->cur++; switch (b)`) |
+| `track->delay = ReadVarInt(&cur) << 16; cur++;` stores delay before cur | Retail loads cur first | `v = ReadVarInt(&cur); cur++; track->delay = v << 16;` |
+| `track->seq` reload in the `== 0` check | Reloaded `track->seq` for the second use | Cache in a local (`seqp = track->seq; …; if (seqp->field_0x0C == 0)`); the local also places the `lwz` earlier in the tempo path to match retail scheduling |
+
+Remaining drift: 16 pure reg-swaps (tempo path pointer chain `r5/r4/r3` vs `r3/r0/r5`) and reloc-name-only drift on the constant pool (`lbl_80518B90` vs `.rodata.0`, identical addends — pool can't be named from C). Side effect: fixing the pool order dropped `__HBMSEQInitTracks` (us-80344c60) from 14 structural to 0 structural (12 reg-swaps) without touching its control flow, and corrected the `__HBMSEQMidiEventLength` table data to the retail bytes (0x02×64, 0x01×32, 0x02×16, 00 00 02 01 …).
+
 ## RVL_SDK vi/vi3in1 (US, mwcc_43_151 `-O4,p`) — DAC/AVE I2C setters, 10/10 FULL_MATCH
 
 All ten `vi3in1.c` setters (`__VISetYUVSEL`, `__VISetCGMS`, `__VISetWSS`, `__VISetClosedCaption`, `__VISetTrapFilter`, `VISetTrapFilter`, `__VISetRGBOverDrive`, `__VISetRGBModeImm`, `VISetRGBModeImm`, `VISetGamma`) matched byte-identical with `(u8)`-casted buffer bytes + sda21 globals defined in-TU.

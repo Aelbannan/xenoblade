@@ -57,7 +57,7 @@ u32 MWSFD_IsEnableHndl(void* self) {
     return *(u32*)self;
 }
 
-void mwPlyGetRareStat();
+s32 mwPlyGetRareStat(void* self);
 int mwPlyGetStat(void *h) {
     int stat = ((int (*)(void *))mwPlyGetRareStat)(h);
     if ((s32)*(u32 *)((u8 *)h + 0x63C) == 1 &&
@@ -69,7 +69,30 @@ int mwPlyGetStat(void *h) {
     return stat;
 }
 
-void mwPlyGetRareStat() {}
+extern int criware_803A2258(void* sst);
+extern s32 SFD_GetHnStat(void* self);
+extern void MWSFLIB_SetErrCode(s32 code);
+extern char lbl_eu_8051B7B0[];
+extern void MWSFSVM_Error(const char* fmt, ...);
+
+s32 mwPlyGetRareStat(void* self) {
+    s32 state = (self == NULL) ? 0 : *(s32*)self;
+    if (state != 1) {
+        MWSFLIB_SetErrCode(-12);
+        MWSFSVM_Error(lbl_eu_8051B7B0 + 0x2B8);
+        return 0;
+    }
+    {
+        s32 r = criware_803A2258(*(void**)((u8*)self + 0x58));
+        if (r < 0) return 4;
+        if (SFD_GetHnStat(self) != 0) return 4;
+        if (*(s32*)((u8*)self + 4) == 2) {
+            if (r == 4 || r == 6) return 2;
+            return 1;
+        }
+        return *(s32*)((u8*)self + 4);
+    }
+}
 
 void MWSFSET_ExecSetCyclicFrameOutput(void *h) {
     void *sfd = *(void **)((u8 *)h + 0x58);

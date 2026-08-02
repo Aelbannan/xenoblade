@@ -2492,7 +2492,7 @@ BOOL WPADiSendWriteDataCmd(WPADCommandQueue* pQueue, u8 cmd, u32 addr,
     return WPADiSendWriteData(pQueue, &cmd, sizeof(u8), addr, pCallback);
 }
 
-BOOL WPADiSendWriteData(WPADCommandQueue* pQueue, const void* pSrc, u16 len,
+BOOL WPADiSendWriteData(WPADCommandQueue* pQueue, const void* pSrc, u32 len,
                         u32 addr, WPADCallback pCallback) {
     BOOL success;
     WPADCommand command;
@@ -2887,12 +2887,10 @@ void WPADSetAutoSleepTime(int min) {
 }
 
 void __wpadInfoCallback(s32 chan, s32 status) {
-#pragma unused(status)
-
     WPADCB* p = __rvl_p_wpadcb[chan];
 
     if (p->getInfoCB != NULL) {
-        ((void (*)(s32))p->getInfoCB)(chan);
+        p->getInfoCB(chan, status);
     }
 
     p->getInfoCB = NULL;

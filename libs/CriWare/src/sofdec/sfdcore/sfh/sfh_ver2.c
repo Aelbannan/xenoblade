@@ -247,8 +247,7 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             p++;
         }
         p++;
-        t2 = 0;
-        for (;;) {
+        for (t2 = 0; ; ) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
                 break;

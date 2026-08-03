@@ -286,19 +286,17 @@ u32 SVM_ExecSvrUsrVsync(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 6;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[1] = 1;
+            ctrl->exec_flags[1] = 1;
             result |= fn(obj);
-            flag[1] = 0;
+            ctrl->exec_flags[1] = 0;
         }
     }
-    cnt[1] += 1;
+    ctrl->exec_counts[1] += 1;
     return result;
 }
 
@@ -306,16 +304,16 @@ u32 SVM_ExecSvrVsync(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 12;
+    SvmSvrEntry* base = ctrl->svr_tbl[0];
+    SvmSvrEntry* p = base + 12;
+    u32* cnt = ctrl->exec_counts;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[2] = 1;
+            ctrl->exec_flags[2] = 1;
             result |= fn(obj);
-            flag[2] = 0;
+            ctrl->exec_flags[2] = 0;
         }
     }
     cnt[2] += 1;
@@ -326,19 +324,17 @@ u32 SVM_ExecSvrUhigh(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 18;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[3] = 1;
+            ctrl->exec_flags[3] = 1;
             result |= fn(obj);
-            flag[3] = 0;
+            ctrl->exec_flags[3] = 0;
         }
     }
-    cnt[3] += 1;
+    ctrl->exec_counts[3] += 1;
     return result;
 }
 
@@ -346,19 +342,17 @@ u32 SVM_ExecSvrFs(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 24;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[4] = 1;
+            ctrl->exec_flags[4] = 1;
             result |= fn(obj);
-            flag[4] = 0;
+            ctrl->exec_flags[4] = 0;
         }
     }
-    cnt[4] += 1;
+    ctrl->exec_counts[4] += 1;
     return result;
 }
 
@@ -366,19 +360,17 @@ u32 SVM_ExecSvrMain(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 30;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[5] = 1;
+            ctrl->exec_flags[5] = 1;
             result |= fn(obj);
-            flag[5] = 0;
+            ctrl->exec_flags[5] = 0;
         }
     }
-    cnt[5] += 1;
+    ctrl->exec_counts[5] += 1;
     return result;
 }
 
@@ -386,19 +378,17 @@ u32 SVM_ExecSvrMwIdle(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 36;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[6] = 1;
+            ctrl->exec_flags[6] = 1;
             result |= fn(obj);
-            flag[6] = 0;
+            ctrl->exec_flags[6] = 0;
         }
     }
-    cnt[6] += 1;
+    ctrl->exec_counts[6] += 1;
     return result;
 }
 
@@ -406,19 +396,17 @@ u32 SVM_ExecSvrUsrIdle(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
     s32 i;
-    u32* flag = &ctrl->exec_flags[0];
-    u32* cnt = &ctrl->exec_counts[0];
     SvmSvrEntry* p = ctrl->svr_tbl[0] + 42;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            flag[7] = 1;
+            ctrl->exec_flags[7] = 1;
             result |= fn(obj);
-            flag[7] = 0;
+            ctrl->exec_flags[7] = 0;
         }
     }
-    cnt[7] += 1;
+    ctrl->exec_counts[7] += 1;
     return result;
 }
 
@@ -454,15 +442,12 @@ void SVM_Finish(void) {
     memset(&ctrl->unlock_cb, 0, 8);
     memset(&ctrl->field_0x3E8, 0, 8);
     memset(&ctrl->field_0x3F0, 0, 8);
-    {
-        u32* cnt = ctrl->exec_counts;
-        cnt[0] = 0;
-        cnt[1] = 0;
-        cnt[2] = 0;
-        cnt[3] = 0;
-        cnt[4] = 0;
-        cnt[5] = 0;
-    }
+    ctrl->exec_counts[0] = 0;
+    ctrl->exec_counts[1] = 0;
+    ctrl->exec_counts[2] = 0;
+    ctrl->exec_counts[3] = 0;
+    ctrl->exec_counts[4] = 0;
+    ctrl->exec_counts[5] = 0;
     ctrl->testandset_fn = NULL;
     memset(&ctrl->err_cb, 0, 8);
 }

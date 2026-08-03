@@ -19,15 +19,19 @@ void DCT_AcInit(void) {
     /* Store version string */
     lbl_eu_806046B8[0] = (u32)DCT_GetVerStr();
 
+    const double *c = (const double *)lbl_eu_8051C388;
+    double pi8 = c[2];  /* pi/8 */
+    double half = c[1]; /* 0.5 */
+
     for (i = 0; i < 8; i++) {
-        double scale = (i == 0) ? lbl_eu_8051C388[0] : lbl_eu_8051C388[1];
+        double scale = (i != 0) ? c[1] : c[0];
         double *row = tbl_base + i * 8;
         double *col = tbl_trans + i;
 
         for (j = 0; j < 8; j++) {
-            double arg = lbl_eu_8051C388[4] * (double)i;    /* pi/8 * i */
-            double offset = lbl_eu_8051C388[2] + (double)j; /* 0.5 + j */
-            double val = cos(arg * offset);                  /* cos(pi/8 * i * (j+0.5)) */
+            double arg = pi8 * (double)i;      /* pi/8 * i */
+            double offset = half + (double)j;  /* 0.5 + j */
+            double val = cos(arg * offset);    /* cos(pi/8 * i * (j+0.5)) */
             val *= scale;
 
             row[j] = val;

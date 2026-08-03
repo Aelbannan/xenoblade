@@ -15,19 +15,15 @@ SFXAlphaState* SFXA_Create(void) {
     s32 i;
 
     state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
-    i = count;
-    if (i > 0) {
-        do {
-            if (state->_00 == 0)
-                goto found;
-            state++;
-        } while (--i > 0);
+    for (i = 0; i < count; i++) {
+        if (state->_00 == 0)
+            goto found;
+        state++;
     }
     state = NULL;
 found:
-    if (state == NULL) {
-        return NULL;
-    }
+    if (state == NULL)
+        return state;
     state->arg0 = 0;
     state->arg1 = 0x1f;
     state->arg2 = 0x64;

@@ -59,13 +59,11 @@ void ahxsbf_init_filter(void) {
         ((float*)w->dstW)[i] *= 2147483648.0f;
     }
 
-    {
-        u8* s2 = (u8*)w->ftbl;
-        u8* d2 = (u8*)(((u32)s2 + 0x1F) & ~0x1F);
-        w->dstF = d2;
-        for (i = 0x2000; i >= 0; i--) {
-            d2[i] = s2[i];
-        }
+    src = (u8*)w->ftbl;
+    dst = (u8*)(((u32)src + 0x1F) & ~0x1F);
+    w->dstF = dst;
+    for (i = 0x2000; i >= 0; i--) {
+        dst[i] = src[i];
     }
 
     w->flag = 1;

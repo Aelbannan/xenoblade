@@ -49,11 +49,14 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     
     {
         u32 bitrate = *(u32 *)((u8 *)handle + 0xC48);
-        if ((bitrate & 0xFFFFFC00) == 0x300) {
+        if ((u32)(bitrate - 0x30000) <= 0xFFFF) {
             *out_max = (u32)-1;
         } else {
             u32 vbv = *(u32 *)((u8 *)handle + 0xC5C);
-            *out_max = (u32)((s32)((s64)vbv * (s64)bitrate * (s64)0x91A3B3C5 >> 42));
+            u32 m = vbv * bitrate;
+            u32 hi = (u32)(((u64)0x91A3B3C5 * m) >> 32);
+            u32 x = (hi + m) >> 10;
+            *out_max = x + ((x << 1) & 0x80000000);
         }
     }
     return 0;

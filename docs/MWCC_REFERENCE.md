@@ -7663,3 +7663,11 @@ sp+8) — decomp spills them (stmw r23, -112 frame, buf at sp+24). Removing the
 local initializers helped marginally (4.9→5.6%). The digit-parsing loops,
 GetSizeofMember/GetNbyteB pairs, and the (major<<8)|minor field packing are
 all semantically correct.
+
+### CriWare mpv_get MPV_GetVbvBufSiz — 32.1% (mulhi wall, improved)
+The condition is `(u32)(bitrate - 0x30000) <= 0xFFFF` (addis -3 + cmpli
+0xFFFF — the range test). The math `((u64)K * (vbv*bitrate)) >> 42` with the
+rounding `x + ((x<<1) & 0x80000000)` matches structurally; residual: MWCC
+emits the full 64-bit product ([li r3,0; mullw r3,r3,r4] dead pair) where the
+retail uses the bare `mulhw` — the __mulhw intrinsic is stubbed to 0 in the
+harness, so the mulhw-only codegen is unreproducible. 26→15 structural.

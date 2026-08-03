@@ -376,11 +376,15 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
 }
 
 void AXRNA_SetPlaySw(void* self, s32 sw) {
-    s32 cur;
     s32 i;
+    s32 cur;
     if (self == NULL)
         return;
-    cur = (self == NULL) ? -1 : (s32)((*(u8*)((u8*)self + 1) >> 1) & 1);
+    if (self == NULL) {
+        cur = -1;
+    } else {
+        cur = (s32)((*(u8*)((u8*)self + 1) >> 1) & 1);
+    }
     if (sw == cur)
         return;
     GCRNA_LockCs();

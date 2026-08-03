@@ -3,12 +3,57 @@
 
 #include <harness_catalog.h>
 
-void ADXT_AttachAhx() {}
+extern char lbl_eu_805174A0[];
+extern u32 lbl_eu_805E5354;
+extern u32 lbl_eu_805E5350;
+extern u32 lbl_eu_805E534C;
+extern u32 lbl_eu_805E5348;
+extern u32 lbl_eu_805E535C;
+extern void (*lbl_eu_805E4F20)(void*);
+extern void ADXERR_CallErrFunc1_(const char* msg);
+extern void ADXM_Lock(void);
+extern void ADXM_Unlock(void);
+extern void* AHXSJD_Create(void);
+extern void* AHXSJD_Init(void* a, s32 b, void* c, void* d, s32 e);
+extern s32 AHXSJD_EntryFltFunc(void* sj, void* a, void* b);
 
-extern void (*lbl_eu_805E4F20)(void);
+void ADXT_AttachAhx(void* a, void* b, s32 c) {
+    void* sj;
+    void* w;
+    if (a == NULL || b == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805174A0);
+        return;
+    }
+    if (c < 8192) {
+        ADXERR_CallErrFunc1_(lbl_eu_805174A0 + 0x26);
+        return;
+    }
+    ADXM_Lock();
+    if (lbl_eu_805E4F20 != NULL) {
+        lbl_eu_805E4F20(a);
+    }
+    w = *(void**)((u8*)a + 4);
+    sj = AHXSJD_Init(*(void**)((u8*)a + 0x10), 1, (u8*)a + 0x18, b, c);
+    if (sj == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805174A0 + 0x51);
+        return;
+    }
+    {
+        void* r = (void*)AHXSJD_EntryFltFunc(sj, *(void**)((u8*)w + 0x58), *(void**)((u8*)w + 0x5C));
+        *(void**)((u8*)b + 0xB8) = r;
+    }
+    lbl_eu_805E5354 = 0;
+    lbl_eu_805E5350 = 0;
+    lbl_eu_805E534C = 0;
+    lbl_eu_805E5348 = 0;
+    lbl_eu_805E535C = 0;
+    ADXM_Unlock();
+}
+
+extern void (*lbl_eu_805E4F20)(void*);
 void ADXT_DetachAhx(void) {
     if (lbl_eu_805E4F20 != NULL)
-        (*lbl_eu_805E4F20)();
+        lbl_eu_805E4F20(NULL);
 }
 
 extern char lbl_eu_805174A0[];

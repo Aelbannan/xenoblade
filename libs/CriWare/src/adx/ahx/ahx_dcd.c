@@ -73,7 +73,63 @@ void AHXDCD_SetBsr(void* self, void* bsr) {
 
 extern s32 AHXBSR_GetBitStm(void* bs, s32 nbits);
 extern s32 ADX_DecodeHeader(void* tbl, s32 size, void* out, void* out2);
-extern void SKG_GenerateKey(void* key, void* a, void* b, void* c, s32 n, void* d);
+extern s16 lbl_eu_80516B30[];
+
+s32 SKG_GenerateKey(u8* key, s32 count, s16* out1, s16* out2, s16* out3) {
+    s16 x1, x2, x3;
+    s32 i;
+
+    if (lbl_eu_805E64D0 == 0) {
+        lbl_eu_805E64D0 = lbl_eu_805E64D0 + 1;
+    }
+
+    *out1 = 0;
+    *out2 = 0;
+    *out3 = 0;
+
+    if (key == NULL && count <= 0) {
+        return 0;
+    }
+
+    x1 = lbl_eu_80516B30[0x100];
+    for (i = 0; i < count; i++) {
+        u32 m = (u32)((s32)x1 * (s32)lbl_eu_80516B30[0x80 + (s8)key[i]]);
+        u32 b = m << 22;
+        u32 s = m >> 31;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x1 = lbl_eu_80516B30[t];
+    }
+
+    x2 = lbl_eu_80516B30[0x200];
+    for (i = 0; i < count; i++) {
+        u32 m = (u32)((s32)x2 * (s32)lbl_eu_80516B30[0x80 + (s8)key[i]]);
+        u32 b = m << 22;
+        u32 s = m >> 31;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x2 = lbl_eu_80516B30[t];
+    }
+
+    x3 = lbl_eu_80516B30[0x300];
+    for (i = 0; i < count; i++) {
+        u32 m = (u32)((s32)x3 * (s32)lbl_eu_80516B30[0x80 + (s8)key[i]]);
+        u32 b = m << 22;
+        u32 s = m >> 31;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x3 = lbl_eu_80516B30[t];
+    }
+
+    *out1 = x1;
+    *out2 = x2;
+    *out3 = x3;
+
+    return 0;
+}
 
 s32 AHXDCD_DecodeHeader(void* self) {
     s32 ret;
@@ -110,10 +166,10 @@ s32 AHXDCD_DecodeHeader(void* self) {
     v = (s8)*(u8*)((u8*)buf + 0x4d);
     if (v > 0x10) {
         *(u16*)((u8*)self + 0x3bc) = 0;
-        if (*(u32*)&lbl_eu_805E64D0 == 0) {
-            *(u32*)&lbl_eu_805E64D0 = 1;
-            SKG_GenerateKey(lbl_eu_80517638, (u8*)self + 0x3be, (u8*)self + 0x3c0,
-                            (u8*)self + 0x3c2, 6, NULL);
+        if (lbl_eu_805E64D0 == 0) {
+            lbl_eu_805E64D0 = 1;
+            SKG_GenerateKey((u8*)lbl_eu_80517638, 6, (s16*)((u8*)self + 0x3be),
+                            (s16*)((u8*)self + 0x3c0), (s16*)((u8*)self + 0x3c2));
         }
     }
     if (v > 8) {

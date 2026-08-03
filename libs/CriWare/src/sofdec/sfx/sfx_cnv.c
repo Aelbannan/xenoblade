@@ -42,27 +42,29 @@ BOOL SFX_IsMergeField(SFXConvertState* self, SFXStmInf* stmInf) {
 
     splitField = SFX_GetSplitField(self);
 
-    if (splitField == -1) {
-        u32 v0 = stmInf->_88;
-        mergeField = FALSE;
-        if (v0 == 0) {
-            return mergeField;
-        }
-        if (SUD_AnalyTypeDivField(v0, stmInf->_8C) != 1) {
-            return mergeField;
-        }
-        if (SFX_GetProgOut(self) != 0) {
-            return mergeField;
-        }
-        mergeField = TRUE;
-    } else if (splitField == 0) {
-        mergeField = FALSE;
-    } else if (splitField == 1) {
-        mergeField = TRUE;
-    } else {
-        mergeField = FALSE;
-    }
+    if (splitField == -1) goto caseNeg1;
+    if (splitField == 0) goto case0;
+    if (splitField != 1) goto caseDefault;
+    goto case1;
 
+caseNeg1: {
+    u32 v0 = stmInf->_88;
+    mergeField = FALSE;
+    if (v0 == 0) goto done;
+    if (SUD_AnalyTypeDivField(v0, stmInf->_8C) != 1) goto done;
+    if (SFX_GetProgOut(self) != 0) goto done;
+    mergeField = TRUE;
+    goto done;
+}
+case0:
+    mergeField = FALSE;
+    goto done;
+case1:
+    mergeField = TRUE;
+    goto done;
+caseDefault:
+    mergeField = FALSE;
+done:
     return mergeField;
 }
 
@@ -226,41 +228,45 @@ void sfxcnv_MakeCftSrcBuf(SFXConvertState* self, SFXStmInf* stmInf,
                           SFXCnvSrcBuf* srcBuf) {
     memset(srcBuf, 0, sizeof(SFXCnvSrcBuf));
 
-    switch (stmInf->srcType) {
-    case 1:
+    {
+        s32 type = stmInf->srcType;
+        if (type == 1) goto case1;
+        if (type == 2) goto case2;
+        if (type != 3) goto caseDefault;
+        goto case3;
+case1:
         srcBuf->type = 1;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
         srcBuf->_0C = stmInf->_0C;
         srcBuf->_10 = stmInf->_08;
-        break;
-    case 2:
+        goto done;
+case2:
         srcBuf->type = 1;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
         srcBuf->_0C = stmInf->_0C;
         srcBuf->_10 = stmInf->_08;
-        break;
-    case 3: {
-        s32 halfW = (s32)stmInf->width / 2;
+        goto done;
+case3:
         srcBuf->type = 3;
         srcBuf->_04 = stmInf->_04;
         srcBuf->_08 = stmInf->width;
         srcBuf->_0C = stmInf->_0C;
         srcBuf->_10 = stmInf->_08;
         srcBuf->_14 = stmInf->_14;
-        srcBuf->_18 = (u32)halfW;
+        srcBuf->_18 = (u32)((s32)stmInf->width / 2);
         srcBuf->_1C = stmInf->_1C;
         srcBuf->_20 = stmInf->_18;
         srcBuf->_24 = stmInf->_24;
-        srcBuf->_28 = (u32)halfW;
+        srcBuf->_28 = (u32)((s32)stmInf->width / 2);
         srcBuf->_2C = stmInf->_2C;
         srcBuf->_30 = stmInf->_28;
-        break;
-    }
-    default:
+        goto done;
+caseDefault:
         SFXLIB_Error(self, stmInf, "sfxcnv_MakeCftSrcBuf: unknown source type");
-        break;
+done:
+        ;
     }
 }
 
@@ -319,7 +325,7 @@ void SFX_SetBytePerPixelOutBuf(void* self, u32 val) {
 
 void sfxcnv_MakeDstBufInf(SFXConvertState* self, SFXStmInf* stmInf,
                           void* bufPtr, SFXDstBufInf* dstArray, u32 idx) {
-    SFXDstBufInf* entry = &dstArray[idx];
+    SFXDstBufInf* entry = (SFXDstBufInf*)((u8*)dstArray + idx * 16);
     int bpp;
 
     entry->_04 = (u32)(uintptr_t)bufPtr;
@@ -348,19 +354,19 @@ void sfxcnv_MakeDstBufInf(SFXConvertState* self, SFXStmInf* stmInf,
     }
 
     if (bpp == 1) {
-        entry->_0C = (u32)((s32)stmInf->bytesPerLine / 2);
+        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_0C = (u32)((s32)stmInf->bytesPerLine / 2);
     } else {
-        entry->_0C = stmInf->bytesPerLine;
+        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_0C = stmInf->bytesPerLine;
     }
 
     if (self->_08 == 0) {
         u32 height = stmInf->width;
         SFXLIB_Error(self, stmInf, "sfxcnv_MakeDstBufInf: no buffer");
-        entry->_10 = height;
+        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = height;
     } else if (self->_10 == 0 && self->bytesPerPixelOut != 0) {
-        entry->_10 = self->_08 / self->bytesPerPixelOut;
+        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = (u32)((s32)self->_08 / (s32)self->bytesPerPixelOut);
     } else {
-        entry->_10 = self->_08;
+        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = self->_08;
     }
 }
 

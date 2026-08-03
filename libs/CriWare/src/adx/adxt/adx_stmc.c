@@ -10,7 +10,7 @@ extern volatile s32 lbl_eu_805E4EE8;
 
 typedef struct {
     /* 0x00 */ u8 active;
-    /* 0x01 */ u8 stat;
+    /* 0x01 */ s8 stat;
     /* 0x02 */ u8 subState;
     /* 0x03 */ u8 slotType;        // 1 = default pool, 0 = extended pool
     /* 0x04 */ void* sj;
@@ -81,15 +81,16 @@ void ADXSTMF_SetupHandleMember(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
 
     ADXCRS_Lock();
 
-    sectors = ceil_div2048(startOffsetLo);
+    sectors = (u32)((s32)((s32)startOffsetLo / 2048) +
+                      (s32)((-(u32)((s32)startOffsetLo % 2048) & ~(u32)((s32)startOffsetLo % 2048)) >> 31));
 
     h->stat = 1;
     h->subState = 0;
     h->sj = sj;
     h->fileHandle = fileName;
     h->startOffset = fileSizeParam;
-    h->fileSizeHi = (s32)startOffsetLo >> 31;
     h->fileSizeLo = startOffsetLo;
+    h->fileSizeHi = (s32)startOffsetLo >> 31;
     h->fileSectors = sectors;
     h->reqRdSize = 0x200;
     h->seekPos = 0;
@@ -97,15 +98,13 @@ void ADXSTMF_SetupHandleMember(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
     h->eosPos = sectors;
 
     if (sj != NULL) {
-        void* vtbl = *(void**)sj;
         typedef u32 (*GetLenFn)(void*, u32);
-        GetLenFn getLen = (GetLenFn)*((u32*)vtbl + 9);
-        u32 len1 = getLen(sj, 1);
-        u32 len0 = getLen(sj, 0);
-        bufSize = len1 + len0;
+        u32 len1 = ((GetLenFn)*((u32*)*(void**)sj + 9))(sj, 1);
+        u32 len0 = ((GetLenFn)*((u32*)*(void**)sj + 9))(sj, 0);
+        bufSize = len0 + len1;
         h->sjBufSize = bufSize;
         h->bufFill = bufSize;
-        h->bufStartOff = bufSize;
+        h->bufSize = bufSize;
     }
 
     h->pause = 0;
@@ -160,14 +159,11 @@ void* ADXSTM_Create(void* fileName, int type) {
 }
 
 void ADXSTM_Destroy(ADXSTMHndl* h) {
-    if (h == NULL) {
-        ADXCRS_Leave();
-        return;
-    }
-
-    /* Phase 1: stop file transfer */
     ADXCRS_Enter();
-    if (h->fileHandle && !(s8)h->closing) {
+    if (h == NULL) goto done;
+
+    ADXCRS_Enter();
+    if (h->fileHandle && (s8)h->closing == 0) {
         cvFsStopTr(h->fileHandle);
     }
     ADXCRS_Lock();
@@ -188,15 +184,15 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    /* Wait for FS server to process */
-    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
+    for (;;) {
+        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
         ADXT_ExecFsSvr();
     }
 
-    /* Phase 2: stop again */
     ADXCRS_Leave();
     ADXCRS_Enter();
-    if (h->fileHandle && !(s8)h->closing) {
+    ADXCRS_Enter();
+    if (h->fileHandle && (s8)h->closing == 0) {
         cvFsStopTr(h->fileHandle);
     }
     ADXCRS_Lock();
@@ -217,13 +213,13 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    /* Wait again */
-    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
+    for (;;) {
+        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
         ADXT_ExecFsSvr();
     }
 
-    /* Phase 3: stop file transfer once more */
     ADXCRS_Leave();
+    ADXCRS_Enter();
     ADXCRS_Enter();
     ADXCRS_Lock();
     if ((s32)h->stat == 2 && (s32)h->subState == 1) {
@@ -236,8 +232,6 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     }
     ADXCRS_Unlock();
     ADXCRS_Leave();
-
-    /* Mark close and wait for close complete */
     ADXCRS_Lock();
     if ((s32)h->opened == 1) {
         h->closing = 1;
@@ -246,26 +240,30 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (h->opened || h->closing) {
+    for (;;) {
+        if ((s8)h->opened == 0 && (s8)h->closing == 0) break;
         ADXT_ExecFsSvr();
     }
 
-    /* Zero the handle */
+    ADXCRS_Leave();
     h->active = 0;
-    memset(h, 0, 0x68);
+    memset((void*)h, 0, sizeof(ADXSTMHndl));
+done:
     ADXCRS_Leave();
 }
 
 void ADXSTM_BindFileNw(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
-                        u32 startOffsetLo, u32 startOffsetHi, u32 sizeLo, u32 sizeHi) {
+                        u32 startOffset, u32 sizeHi, u32 sizeLo) {
     u32 sectors;
+    s64 len;
 
     ADXCRS_Enter();
     ADXCRS_Lock();
 
-    sectors = (u32)((((u64)(u32)sizeHi << 32) + (u64)(u32)sizeLo + 2047) >> 11);
+    len = ((s64)(u32)sizeHi << 32) | (u64)(u32)sizeLo;
+    sectors = (u32)((s32)(((s64)len + 0x7FF) / 2048));
 
-    h->startOffset = startOffsetLo;
+    h->startOffset = startOffset;
     h->fileSizeLo = sizeLo;
     h->fileSizeHi = sizeHi;
     h->fileSectors = sectors;
@@ -308,11 +306,10 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Enter();
     ADXCRS_Enter();
 
-    if (h->fileHandle && !(s8)h->closing) {
+    if (h->fileHandle && (s8)h->closing == 0) {
         cvFsStopTr(h->fileHandle);
     }
 
-    /* Phase 1: stop */
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
@@ -331,21 +328,13 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
+    for (;;) {
+        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
         ADXT_ExecFsSvr();
     }
 
-    /* Phase 2: stop again */
     ADXCRS_Leave();
     ADXCRS_Enter();
-    if (h->fileHandle && !(s8)h->closing) {
-        cvFsStopTr(h->fileHandle);
-    }
-    ADXCRS_Lock();
-    h->stat = 1;
-    h->subState = 0;
-    *(u32*)((u8*)h + 0x28) = 0;
-    ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
     if ((s32)h->stat == 2 && (s32)h->subState == 1) {
@@ -357,13 +346,6 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
         h->stat = 1;
     }
     ADXCRS_Unlock();
-    ADXCRS_Leave();
-
-    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
-        ADXT_ExecFsSvr();
-    }
-
-    /* Phase 3: mark release */
     ADXCRS_Leave();
     ADXCRS_Lock();
     if ((s32)h->opened == 1) {
@@ -373,7 +355,8 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (h->opened || h->closing) {
+    for (;;) {
+        if ((s8)h->opened == 0 && (s8)h->closing == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -480,7 +463,7 @@ void ADXSTM_StopNw(ADXSTMHndl* h) {
 void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Enter();
 
-    if (h->fileHandle && !(s8)h->closing) {
+    if (h->fileHandle && (s8)h->closing == 0) {
         cvFsStopTr(h->fileHandle);
     }
 
@@ -503,7 +486,8 @@ void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
+    for (;;) {
+        if (h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0) break;
         ADXT_ExecFsSvr();
     }
 
@@ -918,18 +902,16 @@ void ADXSTM_SetSj(ADXSTMHndl* h, void* sj) {
     h->sj = sj;
     ADXCRS_Lock();
 
-    void* vtbl = *(void**)sj;
     typedef u32 (*GetLenFn)(void*, u32);
-    GetLenFn getLen = (GetLenFn)*((u32*)vtbl + 9);
-    u32 len1 = getLen(sj, 1);
-    u32 len0 = getLen(sj, 0);
-    bufSize = len1 + len0;
+    u32 len1 = ((GetLenFn)*((u32*)*(void**)sj + 9))(sj, 1);
+    u32 len0 = ((GetLenFn)*((u32*)*(void**)sj + 9))(sj, 0);
+    bufSize = len0 + len1;
     h->sjBufSize = bufSize;
 
     ADXCRS_Unlock();
 
     h->bufFill = h->sjBufSize;
-    h->bufStartOff = h->sjBufSize;
+    h->bufSize = h->sjBufSize;
 
     ADXCRS_Leave();
 }

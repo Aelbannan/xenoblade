@@ -7564,3 +7564,10 @@ MPS_Init(8, lbl_eu_80607160) + SetErr(0, 0xff000d01) + [lbl_eu_80607AF0 = 0;
 return 0]. Retail [lis r3; li r0,0; stw; li r3,0] vs decomp [li r0,0; lis r3;
 stw; li r3,0] — the store-value li scheduled before the base lis; same
 scheduler family as the store-before-return-li wall.
+
+### CriWare mpv_deli MPV_SearchDelim — 77.3% (state/byte color rotation)
+The MPEG start-code scan: `state = 0xFFFFFF00; for (i=0;i<count;i++) { q =
+start+i; byte=*q; if (state==0x100) { if (flags & tbl[byte]) return q-3; }
+state = (byte|state) << 8; }`. Size-exact, 0 structural; the 5 reg_swaps are
+state→r9/byte→r8 (retail) vs state→r8/byte→r9 (decomp) — a pure caller-saved
+color rotation, insensitive to declaration order/byte type.

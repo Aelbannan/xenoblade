@@ -452560,8 +452560,8 @@
       "size": "0x1C",
       "unit": "monolib/src/math/CRect16",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CRect16.cpp",
       "called_functions": [],
@@ -452569,7 +452569,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CRect16.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:40.358195+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/math/CRect16.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804386c0",
@@ -452608,8 +452618,8 @@
       "size": "0x64",
       "unit": "monolib/src/math/CVec3",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CVec3.cpp",
       "called_functions": [],
@@ -452617,7 +452627,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CVec3.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:42.428387+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/math/CVec3.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80438790",
@@ -452982,8 +453002,8 @@
       "size": "0x7C",
       "unit": "monolib/src/math/CMat34",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "BACKLOG",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CMat34.cpp",
       "called_functions": [],
@@ -452991,7 +453011,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CMat34.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:44.400627+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/math/CMat34.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 98.71,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043981c",
@@ -453162,8 +453192,8 @@
       "size": "0x3C",
       "unit": "monolib/src/math/CQuat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/math/CQuat.cpp",
       "called_functions": [],
@@ -453171,7 +453201,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CQuat.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:46.406806+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/math/CQuat.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 97.333,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80439d24",
@@ -453470,8 +453510,8 @@
       "size": "0x48",
       "unit": "monolib/src/work/CWorkThread",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkThread.cpp",
       "called_functions": [],
@@ -453480,7 +453520,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkThread.s",
       "abi_helper_calls": [],
-      "notes": "non-placeholder body present; marked via mark_implemented_bodies.py"
+      "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:33.988257+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkThread.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043a888",
@@ -454039,8 +454089,8 @@
       "size": "0x2C",
       "unit": "monolib/src/core/CProc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CProc.cpp",
       "called_functions": [],
@@ -454048,7 +454098,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/CProc.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:48.436634+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/CProc.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043bb40",
@@ -458616,7 +458676,7 @@
       "size": "0x3C",
       "unit": "monolib/src/work/CWorkRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "BACKLOG",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkRoot.cpp",
@@ -459818,8 +459878,8 @@
       "size": "0x2C",
       "unit": "monolib/src/work/CProcess",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "BACKLOG",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CProcess.cpp",
       "called_functions": [],
@@ -459827,7 +459887,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/work/CProcess.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:50.465005+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CProcess.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044760c",
@@ -524570,8 +524640,8 @@
       "size": "0x68",
       "unit": "monolib/src/effect/CERand",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/effect/CERand.cpp",
       "called_functions": [],
@@ -524579,7 +524649,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/effect/CERand.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:36.048818+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/effect/CERand.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804df88c",
@@ -524806,8 +524886,8 @@
       "size": "0x38",
       "unit": "monolib/src/effect/CERand",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/effect/CERand.cpp",
       "called_functions": [],
@@ -524815,7 +524895,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/effect/CERand.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:38.218404+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/effect/CERand.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 96.786,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804dfc50",
@@ -525992,8 +526082,8 @@
       "size": "0x48",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "BACKLOG",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
       "called_functions": [],
@@ -526001,7 +526091,17 @@
       "abi_helper_calls": [],
       "has_indirect_calls": false,
       "callgraph_status": "complete",
-      "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s"
+      "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T20:34:52.486006+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/CPackItem.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804e2e2c",

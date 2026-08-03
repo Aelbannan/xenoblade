@@ -23,6 +23,8 @@ u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to func_804E9FC8 above)
 
+extern "C" void func_804EA0D4(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
+
 u32 func_804EA0E0(void* self) { return *(u32*)((u8*)self + 0x4); }
 
 // (mapped to func_804E9FC8 above)
@@ -55,11 +57,11 @@ void func_804EB3E8(){}
 
 void func_804EB4C0(){}
 
-void func_804EB524(){}
+extern "C" void func_804EB524(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
 void func_804EB530(){}
 
-void func_804EB558(){}
+extern "C" void func_804EB558(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
 void func_804EB564(){}
 
@@ -75,7 +77,7 @@ void func_804EB720(){}
 
 void func_804EB740(){}
 
-void func_804EB758(){}
+extern "C" void func_804EB758(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
 void func_804EB764(void *r3, void *r4) {
     int *p = (int *)r3;
@@ -104,17 +106,17 @@ u32 func_804EBBC4(void* self) { return *(u32*)((u8*)self + 0x7e8); }
 
 void func_804EBBCC(){}
 
-u32 func_804EC32C(u32 val){ return (val >> 16) & 0xFF; }
+extern "C" u32 func_804EC32C(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3) & 1; }
 
-u32 func_804EC338(u32 val){ return (val >> 16) & 0xFF; }
+extern "C" u32 func_804EC338(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
 
 void func_804EC344(){}
 
-u32 func_804EC3AC(u32 val){ return (val >> 16) & 0xFF; }
+extern "C" u32 func_804EC3AC(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
 
-u32 func_804EC3B8(u32 val){ return (val >> 16) & 0xFF; }
+extern "C" u32 func_804EC3B8(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 7) & 1; }
 
-u32 func_804EC3C4(u32 val){ return (val >> 16) & 0xFF; }
+extern "C" u32 func_804EC3C4(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
 void func_804EC3D0(){}
 

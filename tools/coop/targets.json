@@ -530134,8 +530134,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -530143,7 +530143,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:41.660593+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804ee59c",
@@ -530586,8 +530596,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -530595,7 +530605,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:43.497034+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804ef9ec",
@@ -530630,8 +530650,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -530639,7 +530659,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:45.316615+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804efa20",
@@ -530809,8 +530839,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -530818,7 +530848,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:47.149699+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804efc20",
@@ -531060,8 +531100,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531070,9 +531110,16 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
-      "claim": null,
-      "instruction_match": 61.667,
-      "equivalence_status": "not_equivalent"
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:54.485177+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f07f4",
@@ -531085,8 +531132,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531095,9 +531142,16 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
-      "claim": null,
-      "instruction_match": 61.667,
-      "equivalence_status": "not_equivalent"
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:56.305683+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f0800",
@@ -531134,8 +531188,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531143,7 +531197,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:48.992037+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f0874",
@@ -531156,8 +531220,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531165,7 +531229,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:50.850896+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f0880",
@@ -531178,8 +531252,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531187,7 +531261,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T23:41:52.677742+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f088c",

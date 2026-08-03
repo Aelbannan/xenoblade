@@ -31,6 +31,7 @@ import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -311,6 +312,59 @@ def save_map(data: dict, path: Path | str = DEFAULT_MAP) -> None:
     tmp.replace(path)
 
 
+def ensure_fresh(
+    project: Project,
+    *,
+    force: bool = False,
+    out: Path | str = DEFAULT_MAP,
+) -> bool:
+    """Re-mine the reloc map iff it is stale; return True when re-mined.
+
+    Staleness (doc 33 §0.5): the map is fresh iff it exists, carries a
+    ``generated`` timestamp, and NO objdiff retail/decomp ``.o`` pair has an
+    mtime newer than ``generated``.  A stale map silently breaks witness gate 2
+    (TU-local ``@N`` labels shift on every rebuild) and — worse — can alias a
+    rebuilt ``@N`` to the wrong retail name (a false-certificate input, F1).
+    Re-mining is cheap (~2 s wall, no build lock).
+
+    Concurrency: ``mine()`` writes atomically (tmp + replace) and takes no
+    build lock, so concurrent agents re-mining cannot corrupt each other or
+    deadlock with hexdiff builds.  A rebuild that lands inside the mine window
+    is caught by the witness retry belt (prove_unit_symbol), not here.
+    """
+    out = Path(out)
+    map_data = load_map(out)
+    generated = map_data.get("generated")
+    if force or not generated:
+        data = mine(project, include_kinds={"data"})
+        save_map(data, out)
+        return True
+    try:
+        gen_dt = datetime.fromisoformat(generated)
+    except ValueError:
+        data = mine(project, include_kinds={"data"})
+        save_map(data, out)
+        return True
+    stale = False
+    for unit in project.load_objdiff_units():
+        for p in (unit.target_path, unit.base_path):
+            if p is None or not p.is_file():
+                continue
+            try:
+                if datetime.fromtimestamp(p.stat().st_mtime) > gen_dt:
+                    stale = True
+                    break
+            except OSError:
+                continue
+        if stale:
+            break
+    if not stale:
+        return False
+    data = mine(project, include_kinds={"data"})
+    save_map(data, out)
+    return True
+
+
 def _is_section_symbol(symbol: str) -> bool:
     """MWCC emits relocs against section symbols (``...bss.0``, ``...data.0``)
     when the source references data without a named variable. Unit-local."""
@@ -361,6 +415,11 @@ def mine(project: Project, *, include_kinds: set[str], limit: int | None = None)
     total_units = 0
     scanned = 0
     pair_count = 0
+    # Stamp ``generated`` at START (not at write time): the timestamp is the
+    # freshness watermark compared against .o mtimes (``ensure_fresh``); a
+    # stamp written at the end would miss rebuilds that happened during the
+    # mine window (doc 33 §0.5 rev-5 finding).
+    generated = time.strftime("%Y-%m-%dT%H:%M:%S")
     for unit in units:
         if unit.target_path is None or unit.base_path is None:
             continue
@@ -435,7 +494,7 @@ def mine(project: Project, *, include_kinds: set[str], limit: int | None = None)
     return {
         "version": MAP_VERSION,
         "region": project.config.region,
-        "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "generated": generated,
         "units_scanned": scanned,
         "function_pairs": pair_count,
         "count": sum(len(v) for v in entries.values()),
@@ -654,6 +713,15 @@ def cmd_mine(args) -> int:
     return 0
 
 
+def cmd_ensure_fresh(args) -> int:
+    config = load_config(Path("coop.json"), _REPO)
+    project = Project(config)
+    out = Path(args.out) if args.out else DEFAULT_MAP
+    re_mined = ensure_fresh(project, force=args.force, out=out)
+    print("re-mined" if re_mined else "fresh")
+    return 0
+
+
 def cmd_show(args) -> int:
     reloc_map = load_map(args.map or DEFAULT_MAP)
     entries = reloc_map.get("entries", {})
@@ -708,6 +776,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p_mine.add_argument("--dry-run", action="store_true", help="analyze and print stats without writing")
     p_mine.add_argument("--json", action="store_true")
     p_mine.set_defaults(func=cmd_mine)
+
+    p_fresh = sub.add_parser("ensure-fresh", help="re-mine the reloc map iff stale (doc 33 Item 0.5)")
+    p_fresh.add_argument("--out", default=None, help="map path (default: tools/coop/retail_reloc_map.json)")
+    p_fresh.add_argument("--force", action="store_true", help="re-mine unconditionally")
+    p_fresh.set_defaults(func=cmd_ensure_fresh)
 
     p_show = sub.add_parser("show", help="pretty-print the mined reloc map")
     p_show.add_argument("--map", default=None, help="map path (default: tools/coop/retail_reloc_map.json)")

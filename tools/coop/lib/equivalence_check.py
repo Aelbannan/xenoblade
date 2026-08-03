@@ -7,6 +7,7 @@ import json
 import re
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -35,14 +36,93 @@ from tools.ppc_equivalence.decoder import decode_block
 # hook so both sides share one canonical symbol (no object patching).
 _RELOC_MAP_PATH = Path(__file__).resolve().parent.parent / "retail_reloc_map.json"
 
+# Per-process memo of units whose freshness was already verified this process
+# (doc 33 Item 0.5).  Cleared on any re-mine so all units re-check.
+_reloc_map_fresh_units: set[str] = set()
+_reloc_map_loaded: tuple[dict, str] | None = None  # (data, sha256) cache
+
+
+def _load_reloc_map() -> tuple[dict, str]:
+    """Load the mined map + its sha256, cached per process.
+
+    The sha256 is the proof-input fingerprint recorded in witness certs
+    (``reloc_map_sha256``): a stale/regenerated map changes the fingerprint,
+    so a certificate is auditable against the map version its canonical
+    symbols were drawn from (doc 33 §0.5, F1 mitigation).
+    """
+    global _reloc_map_loaded
+    if _reloc_map_loaded is not None:
+        return _reloc_map_loaded
+    try:
+        data_bytes = _RELOC_MAP_PATH.read_bytes()
+        data = json.loads(data_bytes)
+    except (OSError, ValueError):
+        data = {}
+        data_bytes = b""
+    sha = hashlib.sha256(data_bytes).hexdigest()
+    _reloc_map_loaded = (data, sha)
+    return _reloc_map_loaded
+
+
+def _invalidate_reloc_map_cache() -> None:
+    """Drop the loaded-map cache + freshness memo after a re-mine."""
+    global _reloc_map_loaded, _reloc_map_fresh_units
+    _reloc_map_loaded = None
+    _reloc_map_fresh_units.clear()
+
+
+def _ensure_reloc_map_fresh(project: Project | None, unit: ObjdiffUnit) -> None:
+    """Re-mine the reloc map iff THIS unit's objects are newer than it.
+
+    Per-unit trigger (doc 33 §0.5): TU-local ``@N`` labels shift whenever a
+    unit's decomp object is rebuilt, and the canonical-symbols hook silently
+    fails gate 2 (or worse, aliases the rebuilt ``@N`` to a stale retail name)
+    when the map is out of date.  Runs lazily at the canonical-symbols
+    computation site (post-build) with a per-process memo; a stale unit
+    triggers a repo-wide re-mine (~2 s, no build lock).
+    """
+    global _reloc_map_fresh_units
+    unit_name = getattr(unit, "name", None)
+    if unit_name is None or project is None:
+        return
+    if unit_name in _reloc_map_fresh_units:
+        return
+    try:
+        from tools.coop.reloc_map import ensure_fresh
+
+        data, _sha = _load_reloc_map()
+        generated = data.get("generated")
+        if generated:
+            try:
+                gen_dt = datetime.fromisoformat(str(generated))
+            except ValueError:
+                gen_dt = None
+            if gen_dt is not None:
+                stale = False
+                for p in (unit.target_path, unit.base_path):
+                    if p is not None and p.is_file():
+                        try:
+                            if datetime.fromtimestamp(p.stat().st_mtime) > gen_dt:
+                                stale = True
+                                break
+                        except OSError:
+                            continue
+                if not stale:
+                    _reloc_map_fresh_units.add(unit_name)
+                    return
+        if ensure_fresh(project):
+            _invalidate_reloc_map_cache()
+            # Re-mark this unit fresh under the regenerated map.
+        _reloc_map_fresh_units.add(unit_name)
+    except Exception:
+        # Any freshness-tooling failure degrades to the cached map; the
+        # witness belt (retry-once on gate-2 reloc) is the backstop.
+        _reloc_map_fresh_units.add(unit_name)
+
 
 def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
     """Return {decomp_symbol: retail_symbol} for TU-local labels of ``unit_name``."""
-    try:
-        with open(_RELOC_MAP_PATH, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
-        return {}
+    data, _sha = _load_reloc_map()
     prefix = f"{unit_name}@"
     out: dict[str, str] = {}
     for key, by_type in (data.get("entries") or {}).items():
@@ -1431,6 +1511,7 @@ def _try_renaming_witness(
     max_paths: int = _DEFAULT_MAX_PATHS,
     max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
     canonical_symbols: dict[str, str] | None = None,
+    diag: dict[str, Any] | None = None,
 ) -> EquivalenceProbe | None:
     """Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).
 
@@ -1441,6 +1522,11 @@ def _try_renaming_witness(
     ``z3.eq``.  Returns ``None`` (fall through to the normal SMT probe) on any
     gate rejection, structural divergence, execution inconclusiveness, or
     missing callee certificates — never a false certificate.
+
+    ``diag`` (optional out-param): on witness failure, records
+    ``diag["witness_gate"]`` / ``diag["witness_reason"]`` so the caller can
+    distinguish a gate-2 reloc name drift (retryable via map re-mine) from
+    other failures (doc 33 Item 0.5 belt).
     """
     from tools.coop.lib.renaming_witness import certify_renaming_witness
 
@@ -1504,6 +1590,9 @@ def _try_renaming_witness(
         # Any tooling failure degrades to the SMT probe, never to a cert.
         return None
     if not outcome.certified:
+        if diag is not None:
+            diag["witness_gate"] = getattr(outcome.failure, "gate", None)
+            diag["witness_reason"] = str(getattr(outcome.failure, "reason", ""))
         return None
 
     opcodes_used = sorted(
@@ -1523,6 +1612,11 @@ def _try_renaming_witness(
         "structural_eq": outcome.structural_eq,
         "terminal_pairs_checked": outcome.terminal_pairs_checked,
         "location_independent_returns": True,
+        # Proof-input fingerprint (doc 33 Item 0.5, F1): the sha256 of the
+        # reloc map the canonical symbols were drawn from.  A regenerated or
+        # stale map changes the fingerprint, making the certificate
+        # auditable against its canonicalization input.
+        "reloc_map_sha256": _load_reloc_map()[1],
         # Full extended permutations (impl-review r2 NIT-1): gate 5 validates
         # gpr_perm()/fpr_perm(), not the partial rho; recording the full
         # arrays makes the certificate self-contained without depending on
@@ -2839,6 +2933,11 @@ def prove_unit_symbol(
         left, right = extract_function_pair(retail, decomp, symbol)
         certified_context = _load_certified_callees(project, target_id) if target_id else None
         unit_name = getattr(unit, "name", None)
+        # doc 33 Item 0.5: verify the reloc map is fresh for THIS unit before
+        # drawing canonical symbols from it (per-unit mtime check, lazy,
+        # post-build).  A stale map fails witness gate 2 or aliases a rebuilt
+        # ``@N`` to the wrong retail name (F1).
+        _ensure_reloc_map_fresh(project, unit)
         canonical_symbols = _canonical_symbols_for_unit(unit_name) if unit_name else {}
 
         # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31): certify
@@ -2847,13 +2946,39 @@ def prove_unit_symbol(
         # witness failure the normal SMT probe below still runs (unless
         # ``smt=False``, in which case the probe is skipped entirely).
         if target_id is not None:
+            witness_diag: dict[str, Any] = {}
             witness_probe = _try_renaming_witness(
                 project, symbol, left, right, target_id, certified_context,
                 max_instructions=max_instructions,
                 max_paths=max_paths,
                 max_loop_iterations=max_loop_iterations,
                 canonical_symbols=canonical_symbols,
+                diag=witness_diag,
             )
+            if (
+                witness_probe is None
+                and witness_diag.get("witness_gate") == "reloc"
+                # Reason-gate the belt: a reloc-presence difference (e.g. the
+                # i2f magic pools) cannot be fixed by re-mining — only a name
+                # drift on a TU-local label can.  Without the gate, the i2f
+                # functions would pay a ~2 s re-mine per process forever.
+                and "presence" not in str(witness_diag.get("witness_reason", ""))
+            ):
+                # Belt: the map may have gone stale mid-sweep (concurrent
+                # agents rebuild constantly).  Re-mine + re-decode + retry the
+                # witness once; the refreshed canonical_symbols also feed the
+                # SMT fallback below.
+                _ensure_reloc_map_fresh(project, unit)
+                canonical_symbols = (
+                    _canonical_symbols_for_unit(unit_name) if unit_name else {}
+                )
+                witness_probe = _try_renaming_witness(
+                    project, symbol, left, right, target_id, certified_context,
+                    max_instructions=max_instructions,
+                    max_paths=max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    canonical_symbols=canonical_symbols,
+                )
             if witness_probe is not None:
                 return witness_probe
 

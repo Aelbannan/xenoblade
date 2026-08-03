@@ -229,5 +229,85 @@ class MineAggregationTests(unittest.TestCase):
         self.assertEqual(data["count"], 0)
 
 
+class EnsureFreshTests(unittest.TestCase):
+    """doc 33 Item 0.5: reloc-map freshness precondition."""
+
+    def _make_unit(self, name, target_mtime, base_mtime):
+        import tempfile
+
+        d = tempfile.mkdtemp()
+        t = Path(d) / "target.o"
+        b = Path(d) / "base.o"
+        t.write_bytes(b"")
+        b.write_bytes(b"")
+        ts = 1_000_000_000.0
+        import os
+
+        os.utime(t, (ts, target_mtime))
+        os.utime(b, (ts, base_mtime))
+        return type("U", (), {"name": name, "target_path": t, "base_path": b})(), d
+
+    def test_fresh_map_is_noop(self) -> None:
+        from datetime import datetime, timezone
+
+        from tools.coop.reloc_map import ensure_fresh, save_map
+
+        unit, d = self._make_unit("main/u", 1_000_000_000.0, 1_000_000_000.0)
+        proj = type("P", (), {
+            "config": type("C", (), {"region": "us"})(),
+            "load_objdiff_units": lambda self: [unit],
+        })()
+        out = Path(d) / "map.json"
+        future = datetime(2030, 1, 1, tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        save_map({"version": 1, "generated": future, "entries": {}}, out)
+        self.assertFalse(ensure_fresh(proj, out=out))  # fresh → no re-mine
+
+    def test_stale_unit_remines(self) -> None:
+        from datetime import datetime, timezone
+
+        from tools.coop.reloc_map import ensure_fresh, save_map
+
+        unit, d = self._make_unit("main/u", 2_000_000_000.0, 2_000_000_000.0)
+        proj = type("P", (), {
+            "config": type("C", (), {"region": "us"})(),
+            "load_objdiff_units": lambda self: [unit],
+        })()
+        out = Path(d) / "map.json"
+        past = datetime(2020, 1, 1, tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        save_map({"version": 1, "generated": past, "entries": {}}, out)
+        self.assertTrue(ensure_fresh(proj, out=out))  # .o newer → re-mine
+        refreshed = load_map(out)
+        self.assertNotEqual(refreshed.get("generated"), past)
+
+    def test_missing_map_remines(self) -> None:
+        import tempfile
+
+        from tools.coop.reloc_map import ensure_fresh
+
+        unit, d = self._make_unit("main/u", 1_000_000_000.0, 1_000_000_000.0)
+        proj = type("P", (), {
+            "config": type("C", (), {"region": "us"})(),
+            "load_objdiff_units": lambda self: [unit],
+        })()
+        out = Path(d) / "map.json"
+        self.assertTrue(ensure_fresh(proj, out=out))
+        self.assertTrue(out.is_file())
+
+    def test_force_remines(self) -> None:
+        from datetime import datetime, timezone
+
+        from tools.coop.reloc_map import ensure_fresh, save_map
+
+        unit, d = self._make_unit("main/u", 1_000_000_000.0, 1_000_000_000.0)
+        proj = type("P", (), {
+            "config": type("C", (), {"region": "us"})(),
+            "load_objdiff_units": lambda self: [unit],
+        })()
+        out = Path(d) / "map.json"
+        future = datetime(2030, 1, 1, tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        save_map({"version": 1, "generated": future, "entries": {}}, out)
+        self.assertTrue(ensure_fresh(proj, force=True, out=out))
+
+
 if __name__ == "__main__":
     unittest.main()

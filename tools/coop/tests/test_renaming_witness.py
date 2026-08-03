@@ -517,6 +517,79 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         )
         self.assertTrue(_has_loop_or_non_return_indirect(loop))
 
+    def test_loop_region_path_accepts_no_boundary_in_span(self) -> None:
+        # doc 33 Item 2 (loop second-cut): a DIRECT backward-branch loop now
+        # executes through the bounded-iteration executor in the region path.
+        # The pair forces region slicing (a global rho conflict at slots 0-1
+        # over a lane dead at the boundary) with the loop fully contained in
+        # region 1 — no boundary inside the loop span, so the guard passes and
+        # the pair certifies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        addi = lambda rt, ra, v: _enc_primary(14, rt, ra, v)
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        # bne (bo=4, bi=2) backward 8 bytes (2 instructions): loop latch.
+        bne = lambda bd: (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
+        # retail: r5 defined slot0; slot1 redefines r5 (dead at boundary).
+        # decomp: r20 slot0; slot1 uses r30 — rho(5) maps 20 then 30 ⇒ global
+        # conflict ⇒ boundary after slot 0; the loop lives in region 1.
+        r = [li(5, 1), li(5, 2), li(7, 0), addi(7, 7, 1), cmpwi(7, 3),
+             bne(-8), mr(3, 5), self._BLR]
+        d = [li(20, 1), li(30, 2), li(7, 0), addi(7, 7, 1), cmpwi(7, 3),
+             bne(-8), mr(3, 30), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
+
+    def test_loop_region_path_rejects_boundary_in_span(self) -> None:
+        # doc 33 Item 2 guard: a region boundary INSIDE a backward-branch span
+        # (a rho conflict in the loop body) must reject — rebinding lanes
+        # mid-iteration is unsound.  Falls to SMT, never certifies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        addi = lambda rt, ra, v: _enc_primary(14, rt, ra, v)
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        bne = lambda bd: (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
+        # A REAL rho conflict inside the loop body: retail writes r5 twice
+        # (slots 2-3) while decomp uses r20 then r30 ⇒ rho(5) maps to both ⇒
+        # boundary lands at slot 4, inside span [slot1, slot5] ⇒ reject.
+        r = [li(7, 0), addi(7, 7, 1), li(5, 1), li(5, 2), cmpwi(7, 3),
+             bne(-16), mr(3, 5), self._BLR]
+        d = [li(7, 0), addi(7, 7, 1), li(20, 1), li(30, 2), cmpwi(7, 3),
+             bne(-16), mr(3, 30), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "loop")
+
+    def test_loop_predicates_split(self) -> None:
+        # doc 33 Item 2: the first-cut predicate splits into indirect dispatch
+        # (bcctr/blrl — still rejected) vs direct backward branch (now
+        # executable).  Verify each leg on the raw streams.
+        from tools.coop.lib.renaming_witness import (
+            _has_direct_backward_branch,
+            _has_indirect_dispatch,
+            _loop_spans,
+        )
+
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        addi = lambda rt, ra, v: _enc_primary(14, rt, ra, v)
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        bne = lambda bd: (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
+        loop_words = [li(7, 0), addi(7, 7, 1), cmpwi(7, 3), bne(-8), self._BLR]
+        original, _ = self._pair(loop_words, loop_words)
+        self.assertTrue(_has_direct_backward_branch(original))
+        self.assertFalse(_has_indirect_dispatch(original))
+        spans = _loop_spans(original)
+        self.assertEqual(len(spans), 1)
+        tgt, br = spans[0]
+        # bne targets the addi (slot 1); the branch itself is slot 3.
+        self.assertEqual(tgt, original[1].address)
+        self.assertEqual(br, original[3].address)
+        # bcctr (jump-table dispatch) is indirect only.
+        bcctr = decode_block(bytes.fromhex("4e800420"), self._R, validate_with_capstone=False)
+        self.assertTrue(_has_indirect_dispatch(bcctr))
+        self.assertFalse(_has_direct_backward_branch(bcctr))
+
     def test_return_position_bclr_not_rejected(self) -> None:
         # bclr with link=False is a return terminal, NOT a loop/indirect
         # marker (plan §2.2.2).  Predicated returns (BO=4) included.

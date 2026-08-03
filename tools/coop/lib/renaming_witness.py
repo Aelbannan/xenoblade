@@ -778,6 +778,94 @@ def _liveness_sets(
     return entry_live_in, live_across
 
 
+def _has_indirect_dispatch(instructions: list[Instruction]) -> bool:
+    """True when the stream contains an indirect dispatch (``bcctr``) or a
+    non-return indirect call (``bclr`` with ``link=True``).  Jump-table
+    switches compile to ``bcctr``; these stay rejected by the region-sliced
+    witness (scope choice — dispatch modeling is doc-28/30 work), and the
+    executor records an ``indirect-branch`` terminal with a symbolic CTR that
+    would self-agree under the shared-state binding, so the reject is
+    conservative rather than fail-closed (doc 33 Item 2).
+    """
+    for insn in instructions:
+        op = insn.opcode
+        if op == Opcode.BCCTR:
+            return True  # indirect branch / jump-table dispatch
+        if op == Opcode.BCLR and insn.link:
+            return True  # blrl — non-return indirect call
+    return False
+
+
+def _has_direct_backward_branch(
+    instructions: list[Instruction],
+    *,
+    local_symbol: str | None = None,
+) -> bool:
+    """True when the stream contains a direct backward branch (loop) or
+    direct self-recursion (tail call to the local function).  Return-position
+    ``bclr`` (link=False) is a terminal, not a loop marker.  A relocated
+    branch is a call unless its symbol is the local function (then it is a
+    real back-edge).
+    """
+    by_address = {insn.address: i for i, insn in enumerate(instructions)}
+    for i, insn in enumerate(instructions):
+        op = insn.opcode
+        if op == Opcode.B:
+            target = insn.operands[0]
+            if insn.relocation is not None:
+                # Relocated branch: a call unless it is direct recursion.
+                # Non-link relocated self-branch (tail recursion) is ALSO a
+                # real back-edge (impl-review MINOR 5).
+                if insn.relocation.canonical_symbol == local_symbol:
+                    return True
+                continue
+            if target <= insn.address and target in by_address:
+                return True
+        elif op == Opcode.BC:
+            if insn.link:
+                continue  # conditional call
+            if insn.relocation is not None:
+                continue
+            target = insn.operands[2]
+            if target <= insn.address and target in by_address:
+                return True
+    return False
+
+
+def _loop_spans(
+    instructions: list[Instruction],
+    *,
+    local_symbol: str | None = None,
+) -> list[tuple[int, int]]:
+    """Return ``(target_addr, branch_addr)`` spans of backward direct
+    branches / direct self-recursion (doc 33 Item 2 loop-boundary guard).
+
+    Only **in-function** targets count — a backward ``b`` to an out-of-function
+    address is a terminal (``_cfg_successors`` returns ``()``), not a loop.
+    A direct self-recursion (relocated non-link branch to the local symbol)
+    spans the whole function ``[start, insn]``: a boundary anywhere inside it
+    would resume the recursion under a different region rho.
+    """
+    by_address = {insn.address: i for i, insn in enumerate(instructions)}
+    func_start = instructions[0].address if instructions else 0
+    spans: list[tuple[int, int]] = []
+    for insn in instructions:
+        op = insn.opcode
+        if op == Opcode.B:
+            if insn.relocation is not None:
+                if insn.relocation.canonical_symbol == local_symbol:
+                    spans.append((func_start, insn.address))
+                continue
+            target = insn.operands[0]
+            if target <= insn.address and target in by_address:
+                spans.append((target, insn.address))
+        elif op == Opcode.BC and not insn.link and insn.relocation is None:
+            target = insn.operands[2]
+            if target <= insn.address and target in by_address:
+                spans.append((target, insn.address))
+    return spans
+
+
 def _has_loop_or_non_return_indirect(
     instructions: list[Instruction],
     *,
@@ -795,37 +883,14 @@ def _has_loop_or_non_return_indirect(
     test.  This predicate is pinned as committed code + test fixture (rev-4
     finding 8): two reviewers disagreed 21-vs-19 on the same targets by
     eyeball — the code must be the authority.
+
+    Doc 33 Item 2 splits this into ``_has_indirect_dispatch`` +
+    ``_has_direct_backward_branch``; this combined predicate is kept for the
+    pinned first-cut tests and callers that want the union.
     """
-    by_address = {insn.address: i for i, insn in enumerate(instructions)}
-    for i, insn in enumerate(instructions):
-        op = insn.opcode
-        if op == Opcode.BCCTR:
-            return True  # indirect branch / jump-table dispatch — first cut
-        if op == Opcode.BCLR:
-            if insn.link:
-                return True  # blrl — non-return indirect call
-            continue  # return terminal — not a loop marker
-        if op == Opcode.B:
-            target = insn.operands[0]
-            if insn.relocation is not None:
-                # Relocated branch: a call unless it is direct recursion.
-                # Non-link relocated self-branch (tail recursion) is ALSO a
-                # real back-edge and must be flagged (impl-review MINOR 5:
-                # the `insn.link` guard skipped tail-recursive self-calls).
-                if insn.relocation.canonical_symbol == local_symbol:
-                    return True  # direct self-recursion — real back-edge
-                continue
-            if target <= insn.address:
-                return True
-        elif op == Opcode.BC:
-            if insn.link:
-                continue  # conditional call
-            if insn.relocation is not None:
-                continue
-            target = insn.operands[2]
-            if target <= insn.address:
-                return True
-    return False
+    return _has_indirect_dispatch(instructions) or _has_direct_backward_branch(
+        instructions, local_symbol=local_symbol,
+    )
 
 
 # ── gates ──────────────────────────────────────────────────────────────────
@@ -1923,16 +1988,36 @@ def run_region_sliced_witness(
         if psq_failure is not None:
             return WitnessOutcome(False, rho=rho, failure=psq_failure)
         regions.append((start, end, rho))
-    # First-cut loop policy: region slicing assumes a loop-free target (the
-    # fixpoint handles loops for liveness, but the rebinding driver is only
-    # sound for the loop-free first cut; loop targets fall to SMT).
-    if _has_loop_or_non_return_indirect(original, local_symbol=local_symbol) or \
-            _has_loop_or_non_return_indirect(
-                candidate, local_symbol=candidate_local_symbol or local_symbol,
-            ):
+    # Loop policy (doc 33 Item 2, loop second-cut): region slicing now
+    # executes DIRECT backward-branch loops through the bounded-iteration
+    # executor (``max_loop_iterations``; overflow raises ExecutionInconclusive
+    # before any terminal is recorded => degrade to SMT, never a partial-
+    # unroll certificate).  Two guards remain:
+    #  (a) indirect dispatch (bcctr/blrl) stays rejected — scope choice,
+    #      jump-table dispatch modeling is doc-28/30 work; and
+    #  (b) a region boundary may not fall INSIDE a loop span: the rebinding
+    #      driver is only sound for loop-free spans (four-lane deadness
+    #      covers loop-carried lanes at the loop's edges, not mid-body
+    #      rebinds that would re-execute a body under a different rho).
+    if _has_indirect_dispatch(original) or _has_indirect_dispatch(candidate):
         return WitnessOutcome(False, failure=WitnessFailure(
-            "loop", "target contains a backward branch / non-return indirect; first cut",
+            "loop",
+            "target contains an indirect branch (bcctr/blrl); "
+            "dispatch modeling deferred",
         ))
+    spans = _loop_spans(original, local_symbol=local_symbol) + _loop_spans(
+        candidate, local_symbol=candidate_local_symbol or local_symbol,
+    )
+    if spans:
+        boundary_addrs = [original[b].address for b in boundaries]
+        for tgt, br in spans:
+            for addr in boundary_addrs:
+                if tgt < addr < br:
+                    return WitnessOutcome(False, failure=WitnessFailure(
+                        "loop",
+                        f"region boundary {addr:#x} falls inside loop span "
+                        f"[{tgt:#x}, {br:#x}]; rebinding mid-iteration is unsound",
+                    ))
 
     def _run_region(
         start_state: MachineState,

@@ -5,7 +5,35 @@
 
 void MPV_Init() {}
 
-void mpvlib_ChkFatal() {}
+extern s32 MPVVLC_IsVlcSizErr(void);
+extern s32 criware_803A59B0(void);
+extern u32 lbl_eu_8051C29C[];
+
+extern s32 MPVERR_SetCode(s32 val, u32 err_code);
+extern s32 MPVDEC_CheckVersion(void* a, s32 b, s32 c);
+
+void mpvlib_ChkFatal(void) {
+    if (MPVVLC_IsVlcSizErr()) {
+        MPVERR_SetCode(0, 0xFF04FF03);
+        return;
+    }
+    if (MPVDEC_CheckVersion(lbl_eu_8051C29C, 0xdac, 0x80) == 0) {
+        MPVERR_SetCode(0, 0xFF04FF07);
+        return;
+    }
+    if (criware_803A59B0() == 0) {
+        MPVERR_SetCode(0, 0xFF04FF09);
+        return;
+    }
+    {
+        u32 x = 0x01020304;
+        for (;;) {
+            if ((u8)x == 1)
+                break;
+            ((void (*)(void))-1)();
+        }
+    }
+}
 
 extern u8 lbl_eu_80602BE8[];
 extern u32 lbl_eu_80602FE8;

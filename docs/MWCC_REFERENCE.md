@@ -1922,7 +1922,7 @@ python3 tools/coop/reloc_map.py show --symbol spInstance
 ```
 
 - Detection aligns relocs **per function pair** (matched by name, equal `.text` size) and classifies each diff: `name` (bytes identical — pure rename), `addend` (only the addend field differs — rename + offset), `layout` (same symbol, offset drift — string pools, report-only), `structural` (not reloc-fixable). Section-level alignment is **not** used: misaligned objects produce false positives (e.g. `WaitingForCoverOpen` → `WaitingForCoverClose` — same `lwz r0, X@sda21(r0)` word in shifted streams).
-- The mined map keys named symbols globally (`spInstance__9CDeviceGX` → `lbl_eu_806656A0`, 29×) and TU-local labels (`@N` pools, `...bss.0` section relocs) per-unit (`unit@symbol`). Large addend deltas (> `MAX_MAP_ADDEND_DELTA`) are dropped as misalignment noise. Auto-mined entries reproduce the *legacy* hand-written `exact_renames` rules (e.g. `s_nandUserAreaCallbackFmt` → `lbl_80551294`, `s_nanderrPath` → `lbl_805512B8`), confirming the map is correct — but **do not add new postprocess rules**: FORK.md §6 deprecates object/reloc postprocessing, so the tool only points at the approved source-level `extern "C"` fix (PLAN.md §17.6).
+- The mined map keys named symbols globally (`spInstance__9CDeviceGX` → `lbl_eu_806656A0`, 29×) and TU-local labels (`@N` pools, `...bss.0` section relocs) per-unit (`unit@symbol`). Large addend deltas (> `MAX_MAP_ADDEND_DELTA`) are dropped as misalignment noise. Auto-mined entries reproduce the *legacy* hand-written `exact_renames` rules (e.g. `s_nandUserAreaCallbackFmt` → `lbl_80551294`, `s_nanderrPath` → `lbl_805512B8`), confirming the map is correct — but **do not add new postprocess rules**: object/reloc postprocessing is deprecated (PLAN.md §17.6), so the tool only points at the approved source-level `extern "C"` fix.
 - `hexdiff` embeds the same analysis: the terminal output ends with a **Reloc name drift** section listing each drift with the source `extern "C"` declaration (and an EQUIVALENT_MATCH fallback note when the symbol is an implicit pool that can't be named in source); `--json` adds `reloc_drift` + `reloc_suggestions` keys.
 
 ### 2. `extern "C"` on `bl` targets with retail mangling
@@ -7684,3 +7684,12 @@ MWSFSVM_Error(lbl+0x362); criware_803A09B4(self); return 0. Retail's
 [bne → the bl] branches INTO the middle of the error-call arg setup (stale
 args); decomp emits the clean [beq skip; bl] — the retail codegen quirk, 1
 reg_swap, size-exact.
+
+### CriWare mwsfdsfx MWSFTAG_UpdateTagInf — 93.5% (declaration-order + dead-arg fixes)
+The SJ_SearchTag in/out buffers: the [&a]'s pair (a + self+0x4e0) must be a
+**2-word buffer** `u32 buf[2]` (a bare &a CSEs away the second word), the
+`u32 out[2]` declared FIRST (frame slot order: out@sp+8, buf@sp+0x10 → after
+swap out@sp+0x10... wait — retail buf@sp+8 requires out declared first), and
+`buf[1] = *(self+0x4e0)` written inline (an intermediate b local hoists the
+load before the buf[0] store). Residual 2 structural: the buf[1] store
+schedules after the SJ arg-setup addi's (retail: between them).

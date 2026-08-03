@@ -167,17 +167,19 @@ void MWSFTAG_UpdateTagInf(void* self) {
     mwsftag_GetAinfFromSj(self);
     {
         void* tag = *(void**)((u8*)self + 0xc8);
-        u32 a = *(u32*)((u8*)self + 0x4dc);
-        u32 b = *(u32*)((u8*)self + 0x4e0);
         u32 out[2];
+        u32 buf[2];
+        u32 a = *(u32*)((u8*)self + 0x4dc);
         if (a == 0) {
             SFX_SetTagInf(tag, 0, 0);
             return;
         }
-        if (SJ_SearchTag(&a, lbl_eu_80519EC8 + 0x38d, lbl_eu_80519EC8 + 0x395, out) != 0) {
-            SFX_SetTagInf(tag, out[0], out[1]);
-        } else {
+        buf[0] = a;
+        buf[1] = *(u32*)((u8*)self + 0x4e0);
+        if (SJ_SearchTag(buf, lbl_eu_80519EC8 + 0x38d, lbl_eu_80519EC8 + 0x395, out) == 0) {
             SFX_SetTagInf(tag, 0, 0);
+        } else {
+            SFX_SetTagInf(tag, out[0], out[1]);
         }
     }
 }

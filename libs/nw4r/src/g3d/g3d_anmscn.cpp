@@ -299,8 +299,36 @@ CameraAnmResult* AnmScnRes::GetCameraResult(CameraAnmResult* pResult,
 } // namespace nw4r
 
 
-void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl(){}
-void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl(){}
+namespace nw4r {
+namespace g3d {
+
+u32 AnmScnRes::GetSpecularLightID(u32 idx) const {
+    ResAnmLight light = mRes.GetResAnmLightByRefNumber(idx);
+
+    if (light.IsValid()) {
+        return light.ref().specLightObjIdx;
+    }
+
+    return -1;
+}
+
+bool AnmScnRes::HasSpecularLight(u32 idx) const {
+    ResAnmLight light = mRes.GetResAnmLightByRefNumber(idx);
+    bool result = false;
+
+    if (light.IsValid() &&
+        (light.ref().flags & ResAnmLightData::FLAG_SPECULAR_ENABLE)) {
+        result = true;
+    }
+
+    return result;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
+
 namespace nw4r {
 namespace g3d {
 

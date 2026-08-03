@@ -92,6 +92,9 @@ public:
     virtual CameraAnmResult* GetCameraResult(CameraAnmResult* pResult,
                                              u32 idx); // at 0x64
 
+    virtual u32 GetSpecularLightID(u32 refNumber) const; // at 0x78
+    virtual bool HasSpecularLight(u32 refNumber) const;   // at 0x7C
+
     void UpdateCache();
 
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScnRes, AnmScn);

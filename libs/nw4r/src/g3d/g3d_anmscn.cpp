@@ -474,7 +474,134 @@ ut::Color AnmScnRes::GetAmbLightColor(u32 refNumber) {
 } // namespace nw4r
 
 
-void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl(){}
+namespace nw4r {
+namespace g3d {
+namespace {
+
+void MakeDiffuseLightObj(LightObj* pLightObj, const LightAnmResult* pResult) {
+    u32 lightType = pResult->flags & LightAnmResult::FLAG_LIGHT_TYPE_MASK;
+
+    pLightObj->Clear();
+
+    switch (lightType) {
+    case 0: {
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pResult->pos.x,
+                               pResult->pos.y, pResult->pos.z);
+        pLightObj->InitLightSpot(0.0f, GX_SP_OFF);
+        pLightObj->InitLightDistAttn(pResult->refDistance,
+                                     pResult->refBrightness,
+                                     pResult->distFunc);
+        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
+        break;
+    }
+    case 1: {
+        math::VEC3 dir = pResult->aim - pResult->pos;
+        math::VEC3 pos = dir * -10000000000.0f;
+
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pos.x, pos.y, pos.z);
+        pLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
+        pLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);
+        pLightObj->InitLightDir(0.0f, 0.0f, 0.0f);
+        break;
+    }
+    case 2: {
+        math::VEC3 dir = pResult->aim - pResult->pos;
+
+        PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
+                      reinterpret_cast<Vec*>(&dir));
+
+        pLightObj->InitLightColor(pResult->color);
+        pLightObj->InitLightPos(pResult->pos.x,
+                               pResult->pos.y, pResult->pos.z);
+        pLightObj->InitLightSpot(pResult->cutoff, pResult->spotFunc);
+        pLightObj->InitLightDistAttn(pResult->refDistance,
+                                     pResult->refBrightness,
+                                     pResult->distFunc);
+        pLightObj->InitLightDir(dir.x, dir.y, dir.z);
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
+        pLightObj->DisableColor();
+    }
+
+    if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
+        pLightObj->DisableAlpha();
+    }
+
+    pLightObj->Enable();
+}
+
+} // namespace
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::GetLight(LightObj* pDiff, LightObj* pSpec, u32 refNumber) {
+    LightAnmResult result;
+
+    result.color = -1;
+    result.specColor = -1;
+
+    LightAnmResult* pResult = GetLightResult(&result, refNumber);
+
+    if (!(pResult->flags & LightAnmResult::FLAG_LIGHT_ENABLE)) {
+        if (pDiff != NULL) {
+            pDiff->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
+                              LightObj::FLAG_SPECULAR_DIR);
+        }
+
+        if (pSpec != NULL) {
+            pSpec->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
+                              LightObj::FLAG_SPECULAR_DIR);
+        }
+
+        return;
+    }
+
+    if (pDiff != NULL) {
+        MakeDiffuseLightObj(pDiff, pResult);
+    }
+
+    if (pSpec != NULL) {
+        if (pResult->flags & LightAnmResult::FLAG_SPECULAR_ENABLE) {
+            math::VEC3 dir = pResult->aim - pResult->pos;
+
+            PSVECNormalize(reinterpret_cast<const Vec*>(&dir),
+                      reinterpret_cast<Vec*>(&dir));
+
+            pSpec->Clear();
+            pSpec->InitLightColor(static_cast<GXColor>(pResult->specColor));
+            pSpec->InitSpecularDir(dir.x, dir.y, dir.z);
+            pSpec->InitLightShininess(pResult->shininess);
+
+            if (!(pResult->flags & LightAnmResult::FLAG_COLOR_ENABLE)) {
+                pSpec->DisableColor();
+            }
+
+            if (!(pResult->flags & LightAnmResult::FLAG_ALPHA_ENABLE)) {
+                pSpec->DisableAlpha();
+            }
+
+            pSpec->Enable();
+        } else {
+            pSpec->mFlag &= ~(LightObj::FLAG_SPECULAR | LightObj::FLAG_ENABLE_LIGHT |
+                              LightObj::FLAG_SPECULAR_DIR);
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 namespace nw4r {
 namespace g3d {
 

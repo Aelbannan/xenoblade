@@ -44,6 +44,8 @@ public:
     void InitSpecularDir(f32 nx, f32 ny, f32 nz);
     void InitLightShininess(f32 shininess);
 
+    friend class AnmScnRes;
+
     void GetLightPos(math::VEC3* pPos) const;
     void GetLightDir(math::VEC3* pDir) const;
 

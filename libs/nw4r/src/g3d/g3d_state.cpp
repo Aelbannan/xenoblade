@@ -58,6 +58,10 @@ const math::MTX33* G3DState::GetViewNrmMtxPtr(u32 idx) {
     return reinterpret_cast<const math::MTX33*>(lbl_eu_8061FAB8);
 }
 
+void G3DState::SetRenderModeObj(const GXRenderModeObj& rObj) {
+    lbl_eu_8061F9D4 = rObj;
+}
+
 void G3DState::SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
                                      const math::MTX33* pViewNrmMtxArray,
                                      const math::MTX34* pViewEnvTexMtxArray) {

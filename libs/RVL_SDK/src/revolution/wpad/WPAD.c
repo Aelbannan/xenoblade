@@ -1312,25 +1312,25 @@ void WPADDisconnect(s32 chan) {
 
     if (status != WPAD_ERR_NO_CONTROLLER) {
         WUDSetDeviceHistory(chan, NULL);
-    }
 
-    p = __rvl_p_wpadcb[chan];
-    enabled = OSDisableInterrupts();
-    status = p->status;
-    OSRestoreInterrupts(enabled);
-
-    if (status != WPAD_ERR_NO_CONTROLLER) {
+        p = __rvl_p_wpadcb[chan];
         enabled = OSDisableInterrupts();
-
-        if (p->sleeping) {
-            OSRestoreInterrupts(enabled);
-            return;
-        }
-
-        p->sleeping = TRUE;
-
+        status = p->status;
         OSRestoreInterrupts(enabled);
-        WPADControlLed(chan, 0, __wpadDisconnectCallback);
+
+        if (status != WPAD_ERR_NO_CONTROLLER) {
+            enabled = OSDisableInterrupts();
+
+            if (p->sleeping) {
+                OSRestoreInterrupts(enabled);
+                return;
+            }
+
+            p->sleeping = TRUE;
+
+            OSRestoreInterrupts(enabled);
+            WPADControlLed(chan, 0, __wpadDisconnectCallback);
+        }
     }
 }
 

@@ -7558,3 +7558,9 @@ SFHLOCAL_GetSizeofMember/GetNbyteB pattern; each ends with the retail
 return-li is scheduled before the out-store. This store/li order wall recurs
 (SFVOM_GetRead, mpv_get) — the li r3,<const> return setup is hoisted by the
 scheduler regardless of source order.
+
+### CriWare sfd_mps SFMPS_Init — 90.9% (lis/li order wall)
+MPS_Init(8, lbl_eu_80607160) + SetErr(0, 0xff000d01) + [lbl_eu_80607AF0 = 0;
+return 0]. Retail [lis r3; li r0,0; stw; li r3,0] vs decomp [li r0,0; lis r3;
+stw; li r3,0] — the store-value li scheduled before the base lis; same
+scheduler family as the store-before-return-li wall.

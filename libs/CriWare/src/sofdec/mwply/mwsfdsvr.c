@@ -45,7 +45,33 @@ void mwsfsvr_SyncStartSst(void* self) {
     }
 }
 
-void mwsfsvr_StartStream() {}
+extern char lbl_eu_8051BE68[];
+extern s32 MWSTM_GetStat(void* stm);
+extern s32 MWSTM_ReqStart(void* stm);
+extern void MWSFCRE_SetSupplySj(void* self);
+extern void MWSFSVM_Error(const char* fmt, ...);
+extern void MWSFLIB_SetErrCode(s32 code);
+
+s32 mwsfsvr_StartStream(void* self) {
+    if (MWSTM_GetStat(*(void**)((u8*)self + 0x5C)) == 2) return -1;
+    if (*(s32*)((u8*)self + 0x678) == 1) return 1;
+    if (*(void**)((u8*)self + 0x500) != NULL) {
+        void* obj = *(void**)((u8*)self + 0x500);
+        ((void (*)(void*))*(void**)((char*)*(void**)obj + 0x14))(obj);
+    }
+    MWSTM_SetFileRange(*(void**)((u8*)self + 0x5C), *(s32*)((u8*)self + 0x4E8),
+                       *(s32*)((u8*)self + 0x4F4), *(s32*)((u8*)self + 0x4F8),
+                       *(s32*)((u8*)self + 0x4FC));
+    if (MWSTM_ReqStart(*(void**)((u8*)self + 0x5C)) == -1) {
+        *(s32*)((u8*)self + 4) = 4;
+        MWSFLIB_SetErrCode(-102);
+        MWSFSVM_Error(lbl_eu_8051BE68, *(s32*)((u8*)self + 0x4E8));
+        *(s32*)((u8*)self + 0x4F0) = 0;
+        return -1;
+    }
+    MWSFCRE_SetSupplySj(self);
+    return 1;
+}
 
 void mwlSfdExecDecSvrPlaying() {}
 

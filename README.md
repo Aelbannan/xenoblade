@@ -1,16 +1,26 @@
-# Xenoblade Chronicles Wii — split-screen co-op fork
+# Xenoblade Chronicles (Wii) — Decompilation
 
-Private/downstream fork of [xbret/xenoblade](https://github.com/xbret/xenoblade): byte-matching decompilation plus tooling toward **single-instance local split-screen co-op**.
+Byte-matching decompilation of *Xenoblade Chronicles* for the Nintendo Wii
+(`main.dol` + RELs). The goal is to reconstruct the game as **high-level C/C++**
+that compiles with the original MWCC toolchain into object files matching the
+retail binary — instruction for instruction where possible, and with proven
+semantic equivalence when 100% static match is unreachable.
+
+The workflow is registry-driven: every function in the binary is a tracked
+target with an owner, a match state, and an acceptance bar, and a single runner
+CLI drives configure/build/diff/acceptance/size/symbol-recovery.
+
+This is a **fork** of [xbret/xenoblade](https://github.com/xbret/xenoblade).
 
 | | |
 |---|---|
-| **Upstream** | [xbret/xenoblade](https://github.com/xbret/xenoblade) — do **not** upstream LLM-assisted matching or this fork’s co-op tools |
-| **Agents** | Start at [`AGENTS.md`](AGENTS.md) → [`.cursor/skills/xenoblade-decomp/SKILL.md`](.cursor/skills/xenoblade-decomp/SKILL.md) |
+| **Upstream** | [xbret/xenoblade](https://github.com/xbret/xenoblade) |
+| **Agent workflow** | [`AGENTS.md`](AGENTS.md) → [`xenoblade-decomp` skill](.agents/skills/xenoblade-decomp/SKILL.md) |
 | **Architecture** | [`PLAN.md`](PLAN.md) |
-| **Targets** | [`DECOMP_MAP.md`](DECOMP_MAP.md) · checklist [`TASKS.md`](TASKS.md) |
-| **Tool inventory** | [`FORK.md`](FORK.md) |
+| **Implementation map** | [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) |
 
-This repo does **not** ship game assets or retail assembly. You need a legally obtained copy of the game.
+This repo does **not** ship game assets or retail assembly. You need a legally
+obtained copy of the game to extract them yourself.
 
 ### Region hashes (`main.dol`)
 
@@ -20,7 +30,273 @@ This repo does **not** ship game assets or retail assembly. You need a legally o
 | EU | `10d34dbf901e5d6547718176303a6073ee80dda2` |
 | US | `214b15173fa3bad23a067476d58d3933ad7037b7` |
 
-The coop runner defaults to **US**. Use another region via `coop.json` or `configure.py --version`.
+The runner defaults to **US**. Use another region via `coop.json` or
+`configure.py --version`.
+
+---
+
+## Project status
+
+Generated from the target registry (`tools/coop/targets.json`) — do not edit by
+hand. Regenerate with:
+
+```sh
+.venv/bin/python3 tools/coop/readme_status.py --write   # update this section
+.venv/bin/python3 tools/coop/readme_status.py --check   # CI: fail if stale
+```
+
+<!-- BEGIN GENERATED COOP STATUS -->
+
+Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equivalent`)
+
+| Metric | Count |
+|---|---|
+| Targets (registry) | 19673 |
+| Buildable | 19673 |
+| Accepted | 8812 (`FULL_MATCH` 8577 · `EQUIVALENT_MATCH` 235) |
+| Active (in progress) | 1533 |
+| Accepted / total by tier | P0 13/17 · P1 35/52 · P2 3/7 |
+
+<!-- END GENERATED COOP STATUS -->
+
+---
+
+## Matching policy
+
+- **Acceptance bar** — every tracked target must reach **`EQUIVALENT_MATCH`**
+  (static fuzzy ≥ 50% **and** a semantic-equivalence proof under the default
+  effect-aware contract, **and** split-size fit) or **`FULL_MATCH`** (100%
+  static + relocs, **and** split-size fit). Both are equal-tier acceptance
+  outcomes; prefer `FULL_MATCH` when reachable — it is cheaper to certify and
+  is stronger evidence.
+- **Source language** — reconstruction is **high-level C/C++ only** in `src/**`
+  and `libs/**`: fields, locals, control flow, and normal function calls. No
+  asm / register / stack micro-matching (narrow documented exceptions only,
+  see `PLAN.md` §17.6).
+- **Size** — a decompiled translation unit's `.text` must fit its retail slice
+  in `config/<region>/splits.txt`, or the object cannot link at the retail
+  address. Size overflow blocks acceptance.
+- **Assets** — never commit `orig/`, `main.dol`, RELs, or disc assets.
+
+---
+
+## Quick start
+
+All commands use the project venv (`.venv/bin/python3`), never the system
+`python3` — the tools require a modern Python.
+
+### 1. Dependencies
+
+**macOS**
+
+```sh
+brew install ninja
+brew install --cask --no-quarantine gcenx/wine/wine-crossover
+# After OS upgrades, if Wine is quarantined:
+# sudo xattr -rd com.apple.quarantine '/Applications/Wine Crossover.app'
+```
+
+**Linux** — install ninja. On x86(_64), [wibo](https://github.com/decompals/wibo)
+is fetched automatically; other arches need wine.
+
+**Windows** — Python and [ninja](https://github.com/ninja-build/ninja/releases)
+on `%PATH%`. Prefer native tooling (WSL breaks objdiff file watching).
+
+Also useful: [objdiff](https://github.com/encounter/objdiff) for visual diffing,
+[Dolphin](https://dolphin-emu.org/) for PPC behaviour tests and gameplay.
+
+### 2. Extract the game
+
+With Dolphin, extract to `orig/<region>` (e.g. `orig/us`). Only these are
+required:
+
+- `sys/main.dol`
+- `files/rels/*.rel`
+
+![](assets/dolphin-extract.png)
+
+### 3. Configure the runner
+
+```sh
+cp tools/coop/coop.example.json coop.json
+# Optional: set "dolphin" to your Dolphin binary for PPC tests
+.venv/bin/python3 tools/coop/run.py status
+.venv/bin/python3 tools/coop/run.py baseline   # sha1 + configure + ninja
+```
+
+Equivalent without the runner:
+
+```sh
+.venv/bin/python3 configure.py --version us --map
+ninja
+```
+
+---
+
+## Everyday workflow
+
+### Pick and claim a target
+
+```sh
+.venv/bin/python3 tools/coop/run.py targets list
+.venv/bin/python3 tools/coop/run.py targets show <target-id>    # identity + state
+.venv/bin/python3 tools/coop/run.py targets claim <target-id> --owner <agent>
+.venv/bin/python3 tools/coop/run.py targets claim-smallest --owner <agent>
+.venv/bin/python3 tools/coop/run.py targets release <target-id> --owner <agent>
+```
+
+`targets.json` is the sole source of truth for function identity, owners, and
+match state — do not hand-maintain checklists.
+
+### Iterate with `hexdiff` (the fast feedback loop)
+
+`hexdiff` builds the object and diffs it against retail in ~1s, with a
+one-line verdict (`84.7% | 0 structural | 20 reg_swap | PASS`), reg-swap vs
+structural breakdown, a register-mapping table, compiler-config line, and
+knowledge-base hints. Use it during iteration; run `cycle` only for final
+acceptance.
+
+```sh
+.venv/bin/python3 tools/coop/hexdiff.py <unit> --all                       # unit triage
+.venv/bin/python3 tools/coop/hexdiff.py <unit> --symbol <mangled>          # one function
+.venv/bin/python3 tools/coop/hexdiff.py <unit> --symbol <mangled> --brief  # verdict + mismatches
+.venv/bin/python3 tools/coop/hexdiff.py <unit> --list [substr]             # find symbols
+.venv/bin/python3 tools/coop/hexdiff.py <unit> --symbol <mangled> --asm    # clean disasm
+```
+
+`<unit>` accepts an objdiff unit hint (`kyoshin/COccCulling`) or a source path.
+Before editing, search the MWCC knowledge base for the function and its
+mismatch patterns:
+
+```sh
+.venv/bin/python3 tools/mwcc_kb.py search "<function or symbol>" --json
+.venv/bin/python3 tools/mwcc_kb.py search "<mismatch terms>" --kind reference --json
+```
+
+### Accept a target
+
+```sh
+.venv/bin/python3 tools/coop/run.py cycle <target-id> \
+  --hypothesis "..." --next-change "..." --runtime-test ""
+
+# If fuzzy is in [50, 100) and the cheap witness did not certify, run the
+# full SMT probe once at acceptance time:
+.venv/bin/python3 tools/coop/run.py cycle <target-id> --smt
+```
+
+`cycle` runs the cheap register-renaming witness by default; the Z3 probe
+(`--smt`) costs 15–30 min of machine time, so run it **once, at acceptance**,
+not during iteration. If the function is stuck around 90%+, use
+`run.py diff <unit> --symbol <sym>` (full probe) as the divergence oracle
+before rewriting. `FULL_MATCH` targets are certified automatically without
+`--smt`.
+
+Mass-accept a whole unit or milestone:
+
+```sh
+.venv/bin/python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+  --default-hypothesis "high-level C reconstruction complete" \
+  --default-next-change "verify static match and equivalence" --summary sum.json
+```
+
+### Size budget (required before acceptance)
+
+```sh
+.venv/bin/python3 tools/coop/run.py size <unit>     # .text vs split budget
+.venv/bin/python3 tools/coop/run.py size --all
+```
+
+`diff`, `cycle`, and `behaviour compare` print a `size:` line and exit
+non-zero when the decomp `.text` exceeds the retail split.
+
+### Symbol recovery
+
+After acceptance (or when investigating `UnkClass_*` / `func_*` placeholders):
+
+```sh
+.venv/bin/python3 tools/coop/run.py symbols list --kind UnkClass
+.venv/bin/python3 tools/coop/run.py symbols show 8043C59C
+.venv/bin/python3 tools/coop/run.py symbols xref 8043C59C
+.venv/bin/python3 tools/coop/run.py symbols rename-plan UnkClass_8043C59C CViewRectData --verbose
+.venv/bin/python3 tools/coop/run.py symbols rename-all UnkClass_8043C59C CViewRectData --dry-run
+```
+
+`rename-all` updates symbol maps, source, `configure.py`, `splits.txt`, and
+renames `UnkClass_*.cpp/.hpp` files on disk. Prefer same-length renames to
+avoid re-mangling every symbol.
+
+### Behaviour and PPC evidence (optional)
+
+```sh
+.venv/bin/python3 tools/coop/run.py behaviour audit      # size budget for registered tests
+.venv/bin/python3 tools/coop/run.py behaviour compare <test-id>
+.venv/bin/python3 tools/coop/run.py behaviour ppc <test-id>    # headless Dolphin
+.venv/bin/python3 tools/coop/run.py equivalence check-unit <unit> --symbol <token>
+```
+
+Equivalence applies only to its printed observables; unsupported instructions,
+timeouts, and solver `unknown` are inconclusive. This evidence feeds
+`EQUIVALENT_MATCH` — it does not replace split-size checks.
+
+### Reloc name-drift (#1 cause of 99%+ near-misses)
+
+Bytes identical but relocation **names** differ. `reloc_map.py` detects the
+drift per function and suggests the approved source fix (an
+`extern "C" lbl_eu_*` declaration):
+
+```sh
+.venv/bin/python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> --no-build
+.venv/bin/python3 tools/coop/reloc_map.py mine        # rebuild the repo-wide map
+```
+
+| Subsystem | Entry |
+|-----------|--------|
+| Runner CLI | `.venv/bin/python3 tools/coop/run.py --help` |
+| Full workflow + acceptance protocol | [`.agents/skills/xenoblade-decomp/SKILL.md`](.agents/skills/xenoblade-decomp/SKILL.md) |
+| Behaviour + PPC | [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md) |
+| PPC equivalence | [`tools/ppc_equivalence/README.md`](tools/ppc_equivalence/README.md) |
+| MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) |
+| Attempt log | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) |
+
+---
+
+## Diffing (objdiff)
+
+After a successful build, root `objdiff.json` is ready. Open the project in
+[objdiff](https://github.com/encounter/objdiff), set **Project directory**, and
+select an object. Rebuilds track source, headers, `configure.py`, `splits.txt`,
+and `symbols.txt`.
+
+![](assets/objdiff.png)
+
+This project's runner config passes `functionRelocDiffs=data_value` (see
+`coop.json`). Manual diffs:
+
+```sh
+.venv/bin/python3 tools/coop/run.py diff <unit> --symbol <mangled>
+```
+
+---
+
+## Editor / agent setup
+
+- **VS Code / Cursor:** ready-made settings live in `.vscode`.
+- **Agents:** follow [`AGENTS.md`](AGENTS.md). The `xenoblade-decomp` skill and
+  `.cursor/rules/xenoblade-decomp.mdc` apply automatically in this repo.
+
+---
+
+## Documentation map
+
+| Document | Contents |
+|----------|----------|
+| [`AGENTS.md`](AGENTS.md) | Entry point: reading order, quick commands, do-not list |
+| [`PLAN.md`](PLAN.md) | Architecture invariants, matching policy, decomp loop (§17) |
+| [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) | Capability graph and handoffs |
+| [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Compiler behaviour, proven patterns, pitfalls — append breakthroughs here |
+| [`docs/MWCC_KNOWLEDGE_BASE.md`](docs/MWCC_KNOWLEDGE_BASE.md) | Search protocol for `mwcc_kb.py` |
+| [`docs/coding_style_guidelines.md`](docs/coding_style_guidelines.md) | Style for shared decomp code |
+| [`tools/coop/targets.json`](tools/coop/targets.json) | Canonical function registry and current state |
 
 ---
 
@@ -49,114 +325,3 @@ The coop runner defaults to **US**. Use another region via `coop.json` or `confi
 | `INTERNAL_ERROR` | `internal_error` |
 
 <!-- END GENERATED PROOF_STATUS_TABLE -->
-## Policy (this fork)
-
-- Match bar: **`FULL_MATCH`** (100% instruction + reloc when a symbol is set).
-- Source: **high-level C/C++ only** in `src/**` and `libs/**` — no asm / register micro-matching (narrow exceptions in `PLAN.md` §17.6).
-- Below 100%: keep matching (or §17.6); optional PPC harness / equivalence — no host dual-oracle tests.
-- Split object `.text` must fit the retail slice in `config/<region>/splits.txt`.
-- Never commit `orig/`, `main.dol`, RELs, or disc assets.
-
----
-
-## Quick start
-
-### 1. Dependencies
-
-**macOS**
-
-```sh
-brew install ninja
-brew install --cask --no-quarantine gcenx/wine/wine-crossover
-# After OS upgrades, if Wine is quarantined:
-# sudo xattr -rd com.apple.quarantine '/Applications/Wine Crossover.app'
-```
-
-**Linux** — install ninja. On x86(_64), [wibo](https://github.com/decompals/wibo) is fetched automatically; other arches need wine.
-
-**Windows** — Python and [ninja](https://github.com/ninja-build/ninja/releases) on `%PATH%`. Prefer native tooling (WSL breaks objdiff file watching).
-
-Also useful: [objdiff](https://github.com/encounter/objdiff), [Dolphin](https://dolphin-emu.org/) (for PPC behaviour tests and gameplay).
-
-### 2. Extract the game
-
-With Dolphin, extract to `orig/<region>` (e.g. `orig/us`). Only these are required:
-
-- `sys/main.dol`
-- `files/rels/*.rel`
-
-![](assets/dolphin-extract.png)
-
-### 3. Configure the coop runner
-
-```sh
-cp tools/coop/coop.example.json coop.json
-# Optional: set "dolphin" to your Dolphin binary for PPC tests
-python3 tools/coop/run.py status
-python3 tools/coop/run.py baseline   # sha1 + configure + ninja
-```
-
-Equivalent without the runner:
-
-```sh
-python3 configure.py --version us --map
-ninja
-```
-
----
-
-## Everyday workflow
-
-```sh
-python3 tools/coop/run.py targets list
-python3 tools/coop/run.py cycle <target-id> \
-  --hypothesis "..." --next-change "..."
-
-# Optional PPC evidence (when ppc_source is registered):
-python3 tools/coop/run.py behaviour ppc <test-id>
-python3 tools/coop/run.py behaviour audit      # size budget for registered tests
-
-python3 tools/coop/run.py size <unit>          # .text vs split budget
-python3 tools/coop/run.py symbols list         # UnkClass_* placeholders
-```
-
-| Subsystem | Entry |
-|-----------|--------|
-| Coop CLI | `python3 tools/coop/run.py --help` |
-| Behaviour + PPC | [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md) |
-| PPC equivalence | [`tools/ppc_equivalence/README.md`](tools/ppc_equivalence/README.md) · `python3 tools/coop/run.py equivalence --help` |
-| Symbol recovery | `python3 tools/symrecover.py --help` · [`FORK.md`](FORK.md) §4 |
-| MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) |
-| Attempt log | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) |
-| Ownership | [`docs/ownership.csv`](docs/ownership.csv) |
-
-Claim a symbol in `docs/ownership.csv` before editing. Check off [`TASKS.md`](TASKS.md) only at `FULL_MATCH`.
-
----
-
-## Diffing (objdiff)
-
-After a successful build, root `objdiff.json` is ready. Open the project in [objdiff](https://github.com/encounter/objdiff), set **Project directory**, and select an object. Rebuilds track source, headers, `configure.py`, `splits.txt`, and `symbols.txt`.
-
-![](assets/objdiff.png)
-
-This fork’s runner passes `functionRelocDiffs=data_value` (see `coop.json`). Manual diffs:
-
-```sh
-python3 tools/coop/run.py diff <unit> --symbol <mangled>
-```
-
----
-
-## Editor / agent setup
-
-- **VS Code / Cursor:** rename `.vscode.example` → `.vscode` for recommended settings.
-- **Agents:** follow [`AGENTS.md`](AGENTS.md). The Xenoblade decomp skill and `.cursor/rules/xenoblade-decomp.mdc` apply automatically in this repo.
-
----
-
-## Contributions & upstream
-
-This is a **downstream** co-op fork. Keep all LLM-assisted reconstruction here.
-
-Upstream [xbret/xenoblade](https://github.com/xbret/xenoblade) does **not** accept LLM-assisted contributions. Follow their [coding style](docs/coding_style_guidelines.md) when touching shared decomp code, and see [`FORK.md`](FORK.md) for what this tree adds beyond upstream.

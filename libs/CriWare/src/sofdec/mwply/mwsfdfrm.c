@@ -7,7 +7,29 @@ void mwPlyGetCurFrm() {}
 
 void mwl_convFrmInfFromSFD() {}
 
-void mwsffrm_SetPicUsrInf() {}
+extern s32 MWSFD_GetUsePicUsr(void* a);
+
+void mwsffrm_SetPicUsrInf(void* a, void* b, void* out) {
+    void* inf = *(void**)((u8*)b + 0x38);
+    s32 v = *(s32*)((u8*)inf + 0);
+    s32 w = *(s32*)((u8*)inf + 4);
+    if (MWSFD_GetUsePicUsr(a) != 1) {
+        *(s32*)((u8*)out + 0x4c) = 0;
+        *(s32*)((u8*)out + 0x50) = 0;
+        return;
+    }
+    if (*(s32*)((u8*)a + 0x4bc) == 0) {
+        *(s32*)((u8*)out + 0x4c) = 0;
+        *(s32*)((u8*)out + 0x50) = 0;
+        return;
+    }
+    if (v != 0 && w > 4) {
+        v += 4;
+        w -= 4;
+    }
+    *(s32*)((u8*)out + 0x4c) = v;
+    *(s32*)((u8*)out + 0x50) = w;
+}
 
 void mwsffrm_SetSudDatInf() {}
 

@@ -220,7 +220,58 @@ void AnmScnRes::UpdateFrame() {
 
 
 void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv(){}
-void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl(){}
+namespace nw4r {
+namespace g3d {
+
+bool AnmScnRes::GetLightSet(LightSet set, u32 refNumber) {
+    ResLightSet lightSet = mRes.GetResLightSetByRefNumber(refNumber);
+
+    if (!lightSet.IsValid()) {
+        return false;
+    }
+
+    u32 numLight = lightSet.ref().numLight;
+    u32 numSpecular = 7;
+    u32 i = 0;
+
+    if (numLight != 0) {
+        for (; i < numLight; i++) {
+            u16 lightIdx = lightSet.ref().lightId[i];
+
+            if (lightIdx != ResLightSetData::INVALID_ID) {
+                ResAnmLight light = mRes.GetResAnmLight(lightIdx);
+
+                set.SelectLightObj(i, light.ref().refNumber);
+
+                if (light.ref().flags &
+                    ResAnmLightData::FLAG_SPECULAR_ENABLE) {
+                    set.SelectLightObj(numSpecular--, light.ref().specLightObjIdx);
+                }
+            } else {
+                set.SelectLightObj(i, -1);
+            }
+        }
+    }
+
+    for (u32 i = numLight; i <= numSpecular; i++) {
+        set.SelectLightObj(i, -1);
+    }
+
+    if (lightSet.ref().ambLightName != 0) {
+        ResAnmAmbLight amb =
+            mRes.GetResAnmAmbLight(lightSet.ref().ambLightId);
+        set.SelectAmbLightObj(amb.GetRefNumber());
+    } else {
+        set.SelectAmbLightObj(-1);
+    }
+
+    return true;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl(){}
 void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl(){}
 void GetFog__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d3FogUl(){}

@@ -92,6 +92,13 @@ public:
     virtual CameraAnmResult* GetCameraResult(CameraAnmResult* pResult,
                                              u32 idx); // at 0x64
 
+    virtual bool GetLightSet(LightSet set, u32 refNumber); // at 0x64
+    virtual ut::Color GetAmbLightColor(u32 refNumber);     // at 0x68
+    virtual void GetLight(LightObj* pDiff, LightObj* pSpec,
+                          u32 refNumber);                  // at 0x6C
+    virtual void GetFog(Fog fog, u32 refNumber);           // at 0x70
+    virtual bool GetCamera(Camera camera, u32 refNumber);  // at 0x74
+
     virtual u32 GetSpecularLightID(u32 refNumber) const; // at 0x78
     virtual bool HasSpecularLight(u32 refNumber) const;   // at 0x7C
 

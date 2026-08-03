@@ -26,6 +26,39 @@ Tests: `test_renaming_witness.py` 54 (exploit shapes + regressions), full engine
 suite 1972 green, fixture blob green, `tools/coop/tests` unchanged (5
 pre-existing failures). Committed as the follow-up to 78dbecaa3.
 
+## R5. Impl-review round 2 (2026-08-04) — SOUND, rollout-ready
+
+Both reviewers verified the IR1-IR7 fixes against the running code. **No
+BLOCKER/MAJOR findings.** GLM-5.2: "the implementation is SOUND to certify
+with" — IR1 PS1 deadness non-vacuous and rebind-exact, IR2 bcctr/absolute/None
+covered on both sides and both paths, IR3 perm-based gate 5 matches the
+execution permutation with no extension escape, IR6 role-table fix sound, all
+five tests pin their fixes. Kimi K3: "integrates cleanly and is rollout-ready
+for the A3 metadata path" — cert plumbing exercised end-to-end (mocks
+intercept; §2.5.4 match/mismatch mutation-sensitive; hash binding confirmed),
+partial-rho-cert vs extended-perm-gate not an honesty gap (canonical
+deterministic extension), CI verified, commit exactly scoped.
+
+Post-review polish (committed with this section):
+- **r2-MINOR:** `_tail_call_reads_lane` no longer treats in-function `b`
+  jumps (gotos) as tail calls — gated on `by_index` (was over-fixing r4/f1 on
+  goto-bearing functions; sound but incomplete).
+- **r2-MAJOR (pre-existing, theoretical):** the A2 cmpwi/xform-arith accept
+  tests read r0 live-in, which is a true input a caller leaves independent —
+  tightened to write r0 before reading (mirroring
+  `test_r0_value_2cycle_accepted`). Real MWCC output never reads
+  uninitialized non-EABI scratch, so no production exposure.
+- **r2-NIT-1:** witness cert payload now records the full `gpr_perm`/`fpr_perm`
+  arrays (defense-in-depth; gate 5 validates the extension, so the cert is
+  self-contained).
+- **Rollout note (r2-MINOR-1, forward-looking):** the `full-instruction-match`
+  (byte-identical) path does not embed `abi_shape`; if such a cert lands on an
+  EQUIVALENT_MATCH row with a registry `declared_return`, §2.5.4 fails closed
+  (stale). Normal byte-identical pairs land at FULL_MATCH (validator bypassed)
+  so this is friction, not soundness — document before mass-recertification.
+  Also: 763 `targets.json` rows already carry non-null `declared_return` with
+  zero certificates, so §2.5.4 cannot false-reject anything today.
+
 
 
 All of I5 (provenance), A2, A1, A3-plumbing, and the A3 structural check are

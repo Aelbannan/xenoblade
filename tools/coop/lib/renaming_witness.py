@@ -1041,6 +1041,7 @@ def _tail_call_reads_lane(
     so this contract check is the only protection for tail-call exits; the
     default-FIXED rule covers them when the metadata is absent (F2/F7).
     """
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
     for insn in instructions:
         if insn.opcode == Opcode.BCCTR and not insn.link:
             # Indirect tail call / computed jump (impl-review BLOCKER 2): the
@@ -1050,8 +1051,11 @@ def _tail_call_reads_lane(
         if insn.opcode == Opcode.B and not insn.link:
             if insn.relocation is not None:
                 target: int | str = insn.relocation.canonical_symbol
-            elif insn.operands:
-                target = insn.operands[0]  # absolute tail call (Kimi F2)
+            elif insn.operands and insn.operands[0] not in by_index:
+                # Out-of-function absolute tail call (Kimi F2).  In-function
+                # `b` jumps (gotos) are control flow, NOT tail calls — the
+                # callee never sees the lane (impl-review r2 MINOR).
+                target = insn.operands[0]
             else:
                 continue
             contract = (callee_contracts or {}).get(target)

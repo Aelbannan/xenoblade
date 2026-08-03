@@ -790,23 +790,25 @@ class A2PositionAwareR0Tests(unittest.TestCase):
         self.assertEqual(outcome.rho.gpr, {0: 6, 3: 3, 4: 4})
 
     def test_cmpwi_r0_rename_accepted(self) -> None:
-        # cmpwi RA reads gpr[ra] (semantics.py:3455) — r0 is a real register;
-        # rho(0)=20 is sound: r20 is outside the EABI arg range (3-10), so
-        # even read-before-write (live-in) it is not gate-5-fixed.  The
-        # identity-first extension closes {0<->20}.
+        # cmpwi RA reads gpr[ra] (semantics.py:3455) — r0 is a real register.
+        # r0 is WRITTEN before being read (li r0,0 first), so it is not a
+        # live-in input: rho(0)=20 is sound (impl-review r2: a live-in r0
+        # would be a true input the caller leaves independent).
         cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
-        r = [cmpwi(0, 5), mr(3, 0), self._BLR]
-        d = [cmpwi(20, 5), mr(3, 20), self._BLR]
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [li(0, 0), cmpwi(0, 5), mr(3, 0), self._BLR]
+        d = [li(20, 0), cmpwi(20, 5), mr(3, 20), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 
     def test_xform_arith_r0_rename_accepted(self) -> None:
         # X-form arithmetic RA reads gpr[ra] with no r0 guard — renameable.
-        # rho(0)=20 (r20 outside EABI args).
+        # r0 written (li) before the read, so rho(0)=20 is sound.
         add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
-        r = [add(3, 0, 5), self._BLR]
-        d = [add(3, 20, 5), self._BLR]
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [li(0, 0), add(3, 0, 5), self._BLR]
+        d = [li(20, 0), add(3, 20, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 

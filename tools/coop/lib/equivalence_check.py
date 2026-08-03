@@ -1523,6 +1523,12 @@ def _try_renaming_witness(
         "structural_eq": outcome.structural_eq,
         "terminal_pairs_checked": outcome.terminal_pairs_checked,
         "location_independent_returns": True,
+        # Full extended permutations (impl-review r2 NIT-1): gate 5 validates
+        # gpr_perm()/fpr_perm(), not the partial rho; recording the full
+        # arrays makes the certificate self-contained without depending on
+        # the canonical extension algorithm.
+        "gpr_perm": outcome.rho.gpr_perm(),
+        "fpr_perm": outcome.rho.fpr_perm(),
     }
     if regions is not None:
         # Region-sliced mode (witness_expansion_plan §3.1): the recorded rho

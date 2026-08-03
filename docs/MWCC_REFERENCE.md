@@ -7649,3 +7649,10 @@ SFTMR_GetTmr 96.3% — all size-exact with 2 structural: a store is scheduled
 AFTER an independent following op (cmpi/lis/lwz/srawi) in decomp vs BEFORE in
 retail. Same family as the store-vs-return-li wall; source reordering and
 volatile don't change it.
+
+### CriWare mpv_cdec MPVCDEC_Init — 83.3% (0 structural, size exact)
+lbl_80602A68[0]=self; fn_803BDF3C((void*)fn_803A7770, 0); DCT_IsrInit();
+DCT_IsrInitScaleTbl(self+0x1160); lbl_80602A6C[2]=(u32)&lbl_8051C080 — the
+scalar extern + & (not the array-decay!) avoids the element-load [lwz]. Residual
+4 reg_swap: the final lis/addi pair colors+order (80602A6C→r3 first vs
+8051C080→r4 first) — insensitive to extern order.

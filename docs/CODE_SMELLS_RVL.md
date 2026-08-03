@@ -16,15 +16,15 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 | extern "C" (total lines) | 412 |
 | extern "C" declarations (non-lbl_*) | 90 |
 | extern "C" definitions (forced names) | 22 |
-| `self`/register-style params | 14 |
-| `void*` (params + locals) | 844 |
-| `(void*)` casts | 143 |
-| raw pointer offset arithmetic | 133 |
+| `self`/register-style params | 13 |
+| `void*` (params + locals) | 833 |
+| `(void*)` casts | 141 |
+| raw pointer offset arithmetic | 132 |
 | deref-through-cast arithmetic | 24 |
 | inline asm / `register` (incl. asm kernels) | 211 |
 | rN-named params | 13 |
 | goto | 224 |
-| #pragma | 203 |
+| #pragma | 202 |
 
 ## void* context
 
@@ -32,16 +32,16 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 
 | module | TUs | void* lines | api | cb | self-offset (actionable) | other |
 |---|---|---|---|---|---|---|
-| bte | 68 | 412 | 122 | 0 | 1 | 289 |
-| hbm | 41 | 123 | 29 | 0 | 0 | 94 |
+| bte | 68 | 409 | 122 | 1 | 0 | 286 |
 | os | 34 | 118 | 4 | 0 | 0 | 114 |
+| hbm | 41 | 117 | 29 | 0 | 0 | 88 |
 | gx | 15 | 46 | 3 | 0 | 0 | 43 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
 | ipc | 4 | 35 | 1 | 0 | 0 | 34 |
 | ax | 10 | 34 | 0 | 0 | 0 | 34 |
 | usb | 1 | 29 | 0 | 0 | 0 | 29 |
-| dvd | 8 | 25 | 0 | 0 | 0 | 25 |
 | nand | 5 | 24 | 0 | 0 | 0 | 24 |
+| dvd | 8 | 22 | 0 | 0 | 0 | 22 |
 | fs | 1 | 22 | 0 | 0 | 0 | 22 |
 | wpad | 5 | 15 | 1 | 0 | 0 | 14 |
 | sc | 3 | 13 | 0 | 0 | 0 | 13 |
@@ -66,15 +66,13 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 | tpl | 1 | 0 | 0 | 0 | 0 | 0 |
 | wenc | 1 | 0 | 0 | 0 | 0 | 0 |
 
-Files with the actionable `void* self` offset-deref pattern:
-
-- `libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c` (1)
+No files carry the `void* self` offset-deref pattern.
 
 ## Top offenders (by cleanable severity, asm kernels excluded)
 
 | TU | severity |
 |---|---|
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 82 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 77 |
 | libs/RVL_SDK/src/revolution/os/OSExec.c | 43 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 42 |
 | libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c | 41 |
@@ -100,8 +98,8 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/axfx/AXFXHooks.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/axfx/AXFXReverbHi.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/base/PPCArch.c | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 1 | 58 | 3 | 0 | 1 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c | 0 | 0 | 0 | 9 | 0 | 0 | 1 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 0 | 56 | 2 | 0 | 1 | 0 | 1 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c | 0 | 0 | 0 | 7 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c | 0 | 0 | 0 | 6 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c | 0 | 0 | 0 | 4 | 5 | 0 | 1 | 0 | 0 |
@@ -154,7 +152,7 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/db/db.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/dvd/dvd.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/dvd/dvdDeviceError.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 |
-| libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/dvd/dvdfs.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 3 |
 | libs/RVL_SDK/src/revolution/esp/esp.c | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 13 |
 | libs/RVL_SDK/src/revolution/exi/EXIBios.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -186,9 +184,9 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp | 0 | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/seq.c | 10 | 2 | 0 | 3 | 5 | 0 | 0 | 0 | 1 |
 | libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 5 | 3 | 0 | 0 | 0 |
@@ -299,13 +297,12 @@ Files with the actionable `void* self` offset-deref pattern:
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c": {
   "asm_code": 1,
   "goto_count": 1,
-  "ptr_arith": 3,
-  "self_params": 1,
-  "void_ptr": 58
+  "ptr_arith": 2,
+  "void_ptr": 56
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c": {
   "asm_code": 1,
-  "void_ptr": 9
+  "void_ptr": 7
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c": {
   "void_ptr": 2
@@ -494,7 +491,7 @@ Files with the actionable `void* self` offset-deref pattern:
   "goto_count": 10
  },
  "libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c": {
-  "void_ptr": 6
+  "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/dvd/dvdfs.c": {
   "goto_count": 3,
@@ -607,14 +604,14 @@ Files with the actionable `void* self` offset-deref pattern:
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp": {
-  "void_ptr": 3
+  "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp": {
   "deref_arith": 1,
   "ptr_arith": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp": {
-  "void_ptr": 10
+  "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/hbm/seq.c": {
   "extern_c_nonlbl_decl": 10,

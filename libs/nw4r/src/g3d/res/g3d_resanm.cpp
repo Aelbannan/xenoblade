@@ -91,8 +91,8 @@ f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame) {
 u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     const u32* pColorArray = pData->frameColors;
 
-    f32 intPart;
-    f32 fracPart = math::FModf(frame, &intPart);
+    f64 intPart;
+    f64 fracPart = modf(frame, &intPart);
     int intFrame = static_cast<int>(intPart);
 
     if (fracPart == 0.0f) {
@@ -102,7 +102,7 @@ u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     ut::Color left(pColorArray[intFrame]);
     ut::Color right(pColorArray[intFrame + 1]);
 
-    f32 biasedRatio = 32768 * fracPart;
+    f32 biasedRatio = 32768 * static_cast<f32>(fracPart);
     s16 fpRatio = math::F32ToS16(biasedRatio);
 
     return ut::Color(LinearInterpColorElem(left.r, right.r, fpRatio),

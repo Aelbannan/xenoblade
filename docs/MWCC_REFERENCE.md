@@ -7544,3 +7544,9 @@ SFBUF_VfrmGetRead(self, *(self+0x2180), out, arg3). The || type test folds to a
 range check [subi 3; cmpli 1] (retail keeps two cmpi's — acceptable). Residual 2
 structural: retail [li r0,0; stw *out; li r3,0] (store between the li's) vs
 decomp [li r0,0; li r3,0; stw] — a scheduler merge.
+
+### CriWare sfd_lib criware_803C0D94 — CR0-stale dispatch wall (3.6%)
+Retail reuses the handle's CR0 for a second `bne` (stale branch, dead [li r0,-1]
+block) and keeps handle/errFn/errArg in the caller-saved r3/r4/r5 across the
+SFLIB_SetErr call (the tail stores write to the clobbered base = retail codegen
+quirk). Natural C spills to callee-saved regs and re-compares — unreproducible.

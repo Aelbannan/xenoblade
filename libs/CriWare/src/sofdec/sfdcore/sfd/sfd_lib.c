@@ -192,7 +192,6 @@ s32 criware_803C0D94(void* handle, void (*errFn)(u32, u32), u32 errArg) {
     return SFLIB_SetErr(0, 0xFF000101);
 }
 
-extern void* lbl_eu_8060715C;
 s32 SFLIB_CheckHn(void* h) {
     typedef struct SfdHandleHeader {
         u8 _00[0x54];

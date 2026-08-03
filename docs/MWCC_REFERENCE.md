@@ -7340,6 +7340,54 @@ From matching `WPADRead` (FULL_MATCH), `WPADiCopyOut` (FULL_MATCH), `WPADiExclud
    Disconnect). Accept via `--smt` out-of-band; do not chase the allocation
    from C (5+ variants all reproduce the same colors).
 
+### RVL_SDK wpad/WPAD.c — `WPADSetAutoSamplingBuf` + `__wpadRetrieveChannel` FULL_MATCH keys (US, Wii/1.1 `-O4,p`)
+
+From matching `WPADSetAutoSamplingBuf` (us-8036f9d0, 0x1AC, was 28% / 46 structural)
+and `__wpadRetrieveChannel` (us-8036e710, 0x120, was 79.2% / 2 structural).
+
+1. **Signedness of the multiply operand decides MWCC's loop strength
+   reduction.** `s32 fmtSize` (with a runtime-computed value, e.g. from a
+   switch/if-chain) strength-reduces `pBuffer + fmtSize * i` to an add-chain
+   induction var (`add r3,rBuf,rIV; add rIV,rIV,rSize` per unrolled copy — 46
+   structural vs retail). Declaring `u32 fmtSize` keeps retail's per-iteration
+   `mullw r0,i,fmtSize` form — 0 structural. Reproducible in isolation: the
+   same loop with `fmtSize` as a plain param already emits `mullw`; ANY
+   computed value (switch, if-chain, helper, even a `s32 fs = fmtSize;` copy)
+   flips it to strength-reduction under `-O4,p`. `-O4,s` never strength-
+   reduces but also never 8x-unrolls, so neither -O4,p nor -O4,s alone
+   reproduces retail (retail = unroll + mullw).
+
+2. **Loop shape for the retained-mullw form: `i = 0; while (i < len) { ...;
+   ++i; }`** with the multiply written `i * fmtSize` (index first). The `for
+   (i = 0; i < len; i++)` form and `i++` post-increment are also safe in
+   isolation but the `while` + `++i` + index-first combination is what snaps
+   the final 9 commutative `mullw` operand-order swaps (0x1AC exact).
+
+3. **Jumptable case-body order = case-group source order, and duplicate-value
+   groups only merge when adjacent in source.** Retail bodies are
+   [0x32, 0x36, 0x2E, 0x34, 0x4A, 0x5A] → write groups in that order
+   (FS, CLASSIC(+11,15), TR_BTN_ACC, WBC_BTN_ACC, 13/14, TR_BTN). If 11/15
+   are their own group at the end, MWCC emits a 7th body instead of sharing
+   the 0x36 body (decomp +8 bytes, branch offsets shift). Same rule as the
+   `WPADRead` note above but verified against the full jumptable reloc list.
+
+4. **Declaration order snaps callee-saved colors** (consistent with the
+   reverse-declaration rule): `(defaultErr, fmtSize, p, enabled)` puts
+   enabled=r27, p=r28, fmtSize=r29 (retail); the original `(p, enabled,
+   defaultErr, fmtSize)` gave a 3-cycle rotation r27↔r28↔r29 (25 reg-swaps).
+   Similarly `__wpadRetrieveChannel`: `(pAddr, i, result)` → result=r28,
+   pInfo/i=r29 exactly like retail (was 2 structural + 13 reg-swaps).
+
+5. **`__wpadIsControllerDataChanged` (us-8036c0c0) stall reconfirmed:** the
+   TR-case `IsAnalogChanged(…, 1)` compiles to the exact retail
+   `xori rX,diff,1; srawi; and; subf` + sign-bit pattern (verified in
+   isolation: `diff > threshold ? TRUE : FALSE` → `xori r0,r5,T; srawi;
+   and; subf; srwi r3,r0,31`), so the 4 structural are purely the mascon-lbz
+   scheduling interleave (decomp hoists `lbz 45(r5)` before `xori`; retail
+   emits `xori` first). Driven by the `changed` accumulator register split
+   (retail r10 vs decomp r0); s32/declaration-order experiments: no effect.
+   Leaf function, size exact — accept via `--smt` out-of-band.
+
 ### CriWare ahx_dcd AHXDCD_DecodeFrmHdr — cross-call address CSE wall (3.1%, +16B)
 `AHXDCD_DecodeFrmHdr`: the decode dispatch (SearchSync/IsDataAvailable/BhdrToDinf/
 Bitalloc2/Scale2 chain). The `(u8*)self + 904` / `+ 964` / `+ 856` addresses are

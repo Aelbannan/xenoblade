@@ -3,20 +3,24 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_805F2AF8;
-extern u32 lbl_eu_805F2AFC;
+typedef struct {
+    u32 errfunc;
+    u32 errarg;
+    u8 buf[255];
+} RNAERR_Globals;
+extern RNAERR_Globals lbl_eu_805F2AF8;
 void RNAERR_EntryErrFunc(void* a, void* b) {
-    lbl_eu_805F2AF8 = (u32)a;
-    lbl_eu_805F2AFC = (u32)b;
+    lbl_eu_805F2AF8.errfunc = (u32)a;
+    lbl_eu_805F2AF8.errarg = (u32)b;
 }
 
 char* strncpy(char* dst, const char* src, size_t n);
-extern u32 lbl_eu_805F2AF8;
-extern u32 lbl_eu_805F2AFC;
 void RNAERR_CallErrFunc(const char* msg) {
-    void (*cb)(u32, char*) = (void (*)(u32, char*))lbl_eu_805F2AF8;
-    char* buf = (char*)&lbl_eu_805F2AFC + 4;
-    strncpy(buf, msg, 0xFF);
-    if (cb)
-        cb(lbl_eu_805F2AFC, buf);
+    register u32* g = (u32*)&lbl_eu_805F2AF8;
+    void (*cb)(u32, char*);
+    strncpy((char*)&lbl_eu_805F2AF8 + 8, msg, 0xFF);
+    cb = (void (*)(u32, char*))g[0];
+    if (cb) {
+        cb(g[1], (char*)(g + 2));
+    }
 }

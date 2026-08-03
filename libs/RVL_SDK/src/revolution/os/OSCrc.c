@@ -17,6 +17,4 @@ u16 OSCalcCRC16(const u8* array, s32 length) {
     return crc;
 }
 
-//unused
-u32 OSCalcCRC32(){
-}
+//unused in Xenoblade retail: OSCalcCRC32

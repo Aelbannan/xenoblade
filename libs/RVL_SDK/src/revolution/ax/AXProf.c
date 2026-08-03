@@ -15,10 +15,4 @@ AXPROFILE* __AXGetCurrentProfile(void) {
     return NULL;
 }
 
-//unused
-void AXInitProfile(){
-}
-
-//unused
-void AXGetProfile(){
-}
+//unused in Xenoblade retail: AXInitProfile, AXGetProfile

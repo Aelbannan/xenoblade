@@ -105,19 +105,55 @@ protected:
     }
 
     void SetResourceBuffer(void* pBuffer, FontInformation* pInfo);
-    void* RemoveResourceBuffer();
 
 private:
-    u16 GetGlyphIndex(u16 ch) const;
+    // These helpers are NOT standalone functions in Xenoblade retail (the
+    // retail linker GC'd the weak orphans); keep them inline so callers
+    // compile to the retail bytes without emitting extra symbols.
+    void* RemoveResourceBuffer() {
+        void* pUserData = mResource;
+        mResource = nullptr;
+        mFontInfo = nullptr;
+        return pUserData;
+    }
 
-    u16 FindGlyphIndex(u16 ch) const;
-    u16 FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const;
+    u16 GetGlyphIndex(u16 ch) const {
+        u16 index = FindGlyphIndex(ch);
+        return index != GLYPH_INDEX_NOT_FOUND ? index : mFontInfo->alterCharIndex;
+    }
 
-    const CharWidths& GetCharWidthsFromIndex(u16 index) const;
+    u16 FindGlyphIndex(u16 ch) const {
+        for (const FontCodeMap* pIt = mFontInfo->pMap; pIt != NULL;
+             pIt = pIt->pNext) {
+
+            if (pIt->ccodeBegin <= ch && ch <= pIt->ccodeEnd) {
+                return FindGlyphIndex(pIt, ch);
+            }
+        }
+
+        return GLYPH_INDEX_NOT_FOUND;
+    }
+
+    const CharWidths& GetCharWidthsFromIndex(u16 index) const {
+        for (const FontWidth* pIt = mFontInfo->pWidth; pIt != NULL;
+             pIt = pIt->pNext) {
+
+            if (pIt->indexBegin <= index && index <= pIt->indexEnd) {
+                return GetCharWidthsFromIndex(pIt, index);
+            }
+        }
+
+        return mFontInfo->defaultWidth;
+    }
+
     const CharWidths& GetCharWidthsFromIndex(const FontWidth* pWidth,
-                                             u16 index) const;
+                                             u16 index) const {
+        return pWidth->widthTable[index - pWidth->indexBegin];
+    }
 
     void GetGlyphFromIndex(Glyph* pGlyph, u16 index) const;
+
+    u16 FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const;
 
 private:
     void* mResource;            // at 0x10

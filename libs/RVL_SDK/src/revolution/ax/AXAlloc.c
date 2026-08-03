@@ -7,6 +7,14 @@ static AXVPB* __AXStackHead[STACK_MAX];
 static AXVPB* __AXStackTail[STACK_MAX];
 static AXVPB* __AXCallbackStack = NULL;
 
+// Retail .sbss slice is 8 bytes: __AXCallbackStack then 4 zero pad bytes
+// (aligning the next unit's .sbss); non-static so MWCC emits it.
+u32 __AXAllocSbssPad;
+// Retail .bss slice is 0x118: __AXStackHead/__AXStackTail then 0x18 zero pad
+// bytes (aligning the next unit's 32-byte-aligned .bss); non-static so MWCC
+// emits it.
+u32 __AXAllocBssPad[6];
+
 AXVPB* __AXGetStackHead(u32 prio) {
     return __AXStackHead[prio];
 }
@@ -28,7 +36,7 @@ void __AXServiceCallbackStack(void) {
     }
 }
 
-void __AXInitVoiceStacks(void) {
+static inline void __AXInitVoiceStacks(void) {
     u32 prio;
 
     __AXCallbackStack = NULL;
@@ -57,7 +65,12 @@ void __AXPushFreeStack(AXVPB* vpb) {
     vpb->priority = AX_PRIORITY_FREE;
 }
 
-AXVPB* __AXPopFreeStack(void) {
+// unused in Xenoblade retail as standalone symbols: __AXPopFreeStack,
+// __AXPopCallbackStack, __AXPushStackHead, __AXPopStackFromBottom,
+// __AXInitVoiceStacks (retail inlines them; keep static inline so callers
+// compile to the retail bytes without emitting orphans).
+
+static inline AXVPB* __AXPopFreeStack(void) {
     AXVPB* head = __AXStackHead[AX_PRIORITY_FREE];
 
     if (head != NULL) {
@@ -72,7 +85,7 @@ void __AXPushCallbackStack(AXVPB* vpb) {
     __AXCallbackStack = vpb;
 }
 
-AXVPB* __AXPopCallbackStack(void) {
+static inline AXVPB* __AXPopCallbackStack(void) {
     AXVPB* head = __AXCallbackStack;
 
     if (head != NULL) {
@@ -104,7 +117,7 @@ void __AXRemoveFromStack(AXVPB* vpb) {
     }
 }
 
-void __AXPushStackHead(AXVPB* vpb, u32 prio) {
+static inline void __AXPushStackHead(AXVPB* vpb, u32 prio) {
     vpb->next = __AXStackHead[prio];
     vpb->prev = NULL;
 
@@ -119,7 +132,7 @@ void __AXPushStackHead(AXVPB* vpb, u32 prio) {
     vpb->priority = prio;
 }
 
-AXVPB* __AXPopStackFromBottom(u32 prio) {
+static inline AXVPB* __AXPopStackFromBottom(u32 prio) {
     AXVPB* vpb = NULL;
 
     if (__AXStackHead[prio] != NULL) {

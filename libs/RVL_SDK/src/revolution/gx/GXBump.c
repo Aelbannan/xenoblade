@@ -192,3 +192,7 @@ void __GXFlushTextureState(void) {
     GX_BP_LOAD_REG(gxdt->ind_imask);
     gxdt->lastWriteWasXF = FALSE;
 }
+
+// Retail DOL pads this unit's .sdata2 contribution to 8 bytes (the 4 bytes
+// after the 1024.0f literal are zero padding).
+const u32 GXBumpPad = 0;

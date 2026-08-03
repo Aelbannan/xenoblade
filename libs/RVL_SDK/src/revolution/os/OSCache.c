@@ -2,9 +2,10 @@
 #include <revolution/DB.h>
 #include <revolution/OS.h>
 
-//unused
-asm void DCFlashInvalidate(){
-}
+// String pools are emitted in source order, so this array forces the L2
+// invalidate message to the first .data slot (matches retail object order).
+static char s_L2InvalidateMsg[0x30] =
+    ">>> L2 INVALIDATE : SHOULD NEVER HAPPEN\n";
 
 asm void DCEnable(void) {
     // clang-format off
@@ -17,38 +18,6 @@ asm void DCEnable(void) {
 
     blr
     // clang-format on
-}
-
-//unused
-asm void DCDisable(){
-}
-
-//unused
-asm void DCFreeze(){
-}
-
-//unused
-asm void DCUnfreeze(){
-}
-
-//unused
-asm void DCTouchLoad(){
-}
-
-//unused
-asm void DCBlockZero(){
-}
-
-//unused
-asm void DCBlockStore(){
-}
-
-//unused
-asm void DCBlockFlush(){
-}
-
-//unused
-asm void DCBlockInvalidate(){
 }
 
 asm void DCInvalidateRange(register const void* buf, register u32 len) {
@@ -185,10 +154,6 @@ do_zero:
     // clang-format on
 }
 
-//unused
-asm void DCTouchRange(){
-}
-
 asm void ICInvalidateRange(register const void* buf, register u32 len) {
     // clang-format off
     nofralloc
@@ -237,26 +202,6 @@ asm void ICEnable(void) {
 
     blr
     // clang-format on
-}
-
-//unused
-asm void ICDisable(){
-}
-
-//unused
-asm void ICFreeze(){
-}
-
-//unused
-asm void ICUnfreeze(){
-}
-
-//unused
-asm void ICBlockInvalidate(){
-}
-
-//unused
-asm void ICSync(){
 }
 
 static asm void __LCEnable(void) {
@@ -352,18 +297,6 @@ do_invalidate:
     // clang-format on
 }
 
-//unused
-asm void LCIsEnable(){
-}
-
-//unused
-asm void LCAllocOneTag(){
-}
-
-//unused
-asm void LCAllocTags(){
-}
-
 asm void LCLoadBlocks(register void* dst, register const void* src,
                       register u32 blocks) {
     // clang-format off
@@ -400,17 +333,7 @@ asm void LCStoreBlocks(register void* dst, register const void* src,
     // clang-format on
 }
 
-//unused
-asm void LCAlloc(){
-}
-
-//unused
-asm void LCAllocNoInvalidate(){
-}
-
-//unused
-asm void LCLoadData(){
-}
+// unused in Xenoblade retail: LCAlloc, LCAllocNoInvalidate, LCLoadData
 
 u32 LCStoreData(void* dst, const void* src, u32 len) {
     u32 blocks = (len + 31) / 32;
@@ -456,9 +379,7 @@ asm void LCQueueWait(register u32 n) {
     // clang-format on
 }
 
-//unused
-asm void LCFlushQueue(){
-}
+// unused in Xenoblade retail: LCFlushQueue
 
 static void L2Init(void) {
     u32 msr;
@@ -473,12 +394,12 @@ static void L2Init(void) {
     PPCMtmsr(msr);
 }
 
-void L2Enable(void) {
+static void L2Enable(void) {
     u32 l2cr = PPCMfl2cr();
     PPCMtl2cr((l2cr | L2CR_L2E) & ~L2CR_L2I);
 }
 
-void L2Disable(void) {
+static void L2Disable(void) {
     u32 l2cr;
 
     __sync();
@@ -487,7 +408,7 @@ void L2Disable(void) {
     __sync();
 }
 
-void L2GlobalInvalidate(void) {
+static void L2GlobalInvalidate(void) {
     u32 l2cr;
 
     L2Disable();
@@ -502,16 +423,8 @@ void L2GlobalInvalidate(void) {
     PPCMtl2cr(l2cr & ~L2CR_L2I);
 
     while (PPCMfl2cr() & L2CR_L2IP) {
-        DBPrintf(">>> L2 INVALIDATE : SHOULD NEVER HAPPEN\n");
+        DBPrintf(s_L2InvalidateMsg);
     }
-}
-
-//unused
-asm void L2SetDataOnly(){
-}
-
-//unused
-asm void L2SetWriteThrough(){
 }
 
 void DMAErrorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar, ...) {
@@ -547,6 +460,11 @@ void DMAErrorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar, ...) {
     PPCMthid2(hid2);
 }
 
+// Defined after __OSCacheInit so it is emitted as the last .data object,
+// reproducing the retail tail: "Locked cache" string (0x2e) + 2 pad bytes +
+// 4-byte linker gap (gap_07_8054E38C_data) = 0x34.
+extern char s_LockedCacheMsg[0x34];
+
 void __OSCacheInit(void) {
     if (!(PPCMfhid0() & HID0_ICE)) {
         ICEnable();
@@ -565,5 +483,8 @@ void __OSCacheInit(void) {
     }
 
     OSSetErrorHandler(OS_ERR_MACHINE_CHECK, DMAErrorHandler);
-    DBPrintf("Locked cache machine check handler installed\n");
+    // Trailing NULs reproduce the retail .data tail: the string (0x2e) plus 2
+    // pad bytes and the 4-byte linker gap (gap_07_8054E38C_data) = 0x34.
+    DBPrintf("Locked cache machine check handler installed\n\0\0\0\0\0\0");
 }
+

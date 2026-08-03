@@ -12,10 +12,7 @@ void DBInit(void) {
     DBVerbose = TRUE;
 }
 
-//unused
-void DBIsDebuggerPresent(){
-}
-
+//unused in Xenoblade retail: DBIsDebuggerPresent
 void __DBExceptionDestinationAux(void) {
     const void* physCtx = (void*)OS_PHYS_CURRENT_CONTEXT_PHYS;
     OSContext* ctx = (OSContext*)OSPhysicalToCached(*(u32*)physCtx);
@@ -37,14 +34,7 @@ BOOL __DBIsExceptionMarked(u8 exc) {
     return __DBInterface->exceptionMask & (1 << exc);
 }
 
-//unused
-void __DBMarkException(){
-}
-
-//unused
-void __DBSetPresent(){
-}
-
+//unused in Xenoblade retail: __DBMarkException, __DBSetPresent
 void DBPrintf(const char* fmt, ...) {
     (void)fmt;
 }

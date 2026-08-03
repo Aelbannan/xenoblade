@@ -29,34 +29,6 @@ s32 ESP_CloseLib(void) {
     return ret;
 }
 
-//unused
-void ESP_ImportTicket(){
-}
-
-//unused
-void ESP_ImportTitleInit(){
-}
-
-//unused
-void ESP_ImportContentBegin(){
-}
-
-//unused
-void ESP_ImportContentData(){
-}
-
-//unused
-void ESP_ImportContentEnd(){
-}
-
-//unused
-void ESP_ImportTitleDone(){
-}
-
-//unused
-void ESP_ImportTitleCancel(){
-}
-
 s32 ESP_LaunchTitle(u64 titleID, ESTicketView *pTicketView) {
     s32 ret = 0;
     // buffer being aligned is required for codegen
@@ -83,42 +55,6 @@ s32 ESP_LaunchTitle(u64 titleID, ESTicketView *pTicketView) {
     ret = IOS_IoctlvReboot(__esFd, 8, 2, 0, vec);
     __esFd = -1;
     return ret;
-}
-
-//unused
-void ESP_OpenContentFile(){
-}
-
-//unused
-void ESP_OpenTitleContentFile(){
-}
-
-//unused
-void ESP_ReadContentFile(){
-}
-
-//unused
-void ESP_SeekContentFile(){
-}
-
-//unused
-void ESP_CloseContentFile(){
-}
-
-//unused
-void ESP_ListOwnedTitles(){
-}
-
-//unused
-void ESP_ListTitlesOnCard(){
-}
-
-//unused
-void ESP_ListTitleContentsOnCard(){
-}
-
-//unused
-void ESP_ListTmdContentsOnCard(){
 }
 
 s32 ESP_GetTicketViews(ESTitleId titleId, ESTicketView* ticketViewList, u32* ticketViewCnt) {
@@ -242,18 +178,6 @@ out:
     return rv;
 }
 
-//unused
-void ESP_GetTmd(){
-}
-
-//unused
-void ESP_GetTmdSize(){
-}
-
-//unused
-s32 ESP_GetTmdView(ESTitleId titleId, ESTmdView* tmdView, u32* size) {
-}
-
 s32 ESP_GetDataDir(ESTitleId titleId, char* dataDir) {
     s32 rv = 0;
     u8 __esBuf[256] ALIGN(32);
@@ -304,10 +228,6 @@ out:
     return rv;
 }
 
-//unused
-void ESP_GetDeviceId(){
-}
-
 s32 ESP_GetConsumption(ESTicketId ticketId, ESLpEntry* entries, u32* nEntries) {
     s32 rv = 0;
     u8 __esBuf[256] ALIGN(32);
@@ -346,54 +266,3 @@ out:
     return rv;
 }
 
-//unused
-void ESP_GetDeviceCert(){
-}
-
-//unused
-void ESP_Encrypt(){
-}
-
-//unused
-void ESP_Decrypt(){
-}
-
-//unused
-void ESP_Sign(){
-}
-
-//unused
-void ESP_VerifySign(){
-}
-
-//unused
-void ESP_DeleteTitleContent(){
-}
-
-//unused
-void ESP_DeleteContent(){
-}
-
-//unused
-void ESP_ExportTitleInit(){
-}
-
-//unused
-void ESP_ExportContentBegin(){
-}
-
-//unused
-void ESP_ExportContentData(){
-}
-
-//unused
-void ESP_ExportContentEnd(){
-}
-
-//unused
-void ESP_ExportTitleDone(){
-}
-
-//unused
-void ESP_GetTicket(){
-}

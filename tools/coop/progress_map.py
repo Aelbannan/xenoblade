@@ -1,182 +1,250 @@
 #!/usr/bin/env python3
-"""Render an SVG progress map of the main.dol code section.
+"""Regenerate ``assets/progress-map.svg`` from the target registry.
 
-Each pixel column of the strip is one slice of the retail address space;
-functions from the target registry (tools/coop/targets.json) are plotted at
-their retail address and colored by match state. Regenerate after matching
-work and commit the result.
+Each column of the map is one slice of the retail ``main.dol`` code section
+(addresses ``0x80004000``-``0x804F9FA4``, 2400 slices total), colored by the
+*best* match state among the functions whose address falls in that slice:
 
-Usage:
-    python3 tools/coop/progress_map.py                  # write assets/progress-map.svg
-    python3 tools/coop/progress_map.py -o /tmp/map.svg  # custom output path
+* green  ``#1f883d``  ``FULL_MATCH``
+* blue   ``#0969da``  ``EQUIVALENT_MATCH``
+* amber  ``#d4a72c``  in progress (any status other than the above or
+                      ``NOT_STARTED``)
+* gray   ``#6e7681``  not started (``NOT_STARTED``)
+
+Slices that contain no function start are left blank (white). The header and
+legend counts are derived from the same per-status tallies.
+
+Usage::
+
+    .venv/bin/python3 tools/coop/progress_map.py            # rewrite the SVG
+    .venv/bin/python3 tools/coop/progress_map.py --check    # exit 1 if stale
+
+The image is intentionally rendered at 2x logical scale (2px per slice, larger
+type) so it reads well both standalone and when scaled down to README width;
+tweak ``SCALE`` below to change it globally.
 """
 
-from __future__ import annotations
-
 import argparse
+import json
+import os
 import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+TARGETS_PATH = os.path.join(ROOT, "tools", "coop", "targets.json")
+DEFAULT_OUT = os.path.join(ROOT, "assets", "progress-map.svg")
 
-from tools.coop.lib.config import load_config  # noqa: E402
-from tools.coop.lib.targets import ACCEPTED_MATCH_STATUSES, load_targets  # noqa: E402
+# Code-section address range covered by the map (US main.dol).
+CODE_BASE = 0x80004000
+CODE_END = 0x804F9FA4
+COLUMNS = 2400
 
-DEFAULT_OUTPUT = ROOT / "assets" / "progress-map.svg"
+# Global size multiplier. 1.0 reproduces the original (tiny) proportions;
+# the committed default of 2.0 doubles every dimension.
+SCALE = 2.0
 
-# Strip geometry.
-WIDTH = 2400
-STRIP_TOP = 40
-STRIP_HEIGHT = 64
-AXIS_TOP = STRIP_TOP + STRIP_HEIGHT + 6
-TEXT_TOP = AXIS_TOP + 18
-HEIGHT = 160
+# Match-state colors (best state wins when several functions share a slice).
+COLOR_FULL = "#1f883d"
+COLOR_EQUIV = "#0969da"
+COLOR_IN_PROGRESS = "#d4a72c"
+COLOR_NOT_STARTED = "#6e7681"
+COLOR_TEXT = "#24292f"
+COLOR_MUTED = "#57606a"
+COLOR_WHITE = "#ffffff"
 
-# Column colour priority (highest wins when several functions share a column).
-PRIORITY = {
-    "FULL_MATCH": 4,
-    "EQUIVALENT_MATCH": 3,
-    "in-progress": 2,
-    "NOT_STARTED": 1,
-}
-FILL = {
-    "FULL_MATCH": "#1f883d",
-    "EQUIVALENT_MATCH": "#0969da",
-    "in-progress": "#d4a72c",
-    "NOT_STARTED": "#6e7681",
-}
-INK = "#24292f"
-MUTED = "#57606a"
+FULL = "FULL_MATCH"
+EQUIV = "EQUIVALENT_MATCH"
+NOT_STARTED = "NOT_STARTED"
 
-IN_PROGRESS = {
-    "ACTIVE", "ACCEPTED", "BLOCKED", "CODE_MATCH", "COMPILES", "HIGH_MATCH",
-    "STALLED", "STALL", "STALLED_BLOCKED_EXTERNAL", "STRUCTURAL",
-}
+TITLE = "Xenoblade Chronicles (Wii) — code section progress"
 
 
-def classify(status: str) -> str:
-    if status == "FULL_MATCH":
-        return "FULL_MATCH"
-    if status == "EQUIVALENT_MATCH":
-        return "EQUIVALENT_MATCH"
-    if status in IN_PROGRESS:
-        return "in-progress"
-    return "NOT_STARTED"
+def tally(targets):
+    """Return (full, equiv, in_progress, not_started, accepted, total)."""
+    full = equiv = prog = ns = 0
+    for t in targets:
+        s = t.get("status")
+        if s == FULL:
+            full += 1
+        elif s == EQUIV:
+            equiv += 1
+        elif s == NOT_STARTED:
+            ns += 1
+        else:
+            prog += 1
+    return full, equiv, prog, ns, full + equiv, len(targets)
 
 
-def render(targets: list) -> str:
-    rows = [
-        t for t in targets
-        if t.kind == "function" and t.address is not None
+def slice_colors(targets, n=COLUMNS, base=CODE_BASE, end=CODE_END):
+    """Map each address-bearing target to a slice; pick best color per slice.
+
+    Returns {slice_index: color} for slices that contain at least one target.
+    """
+    step = (end - base) / n
+    best = {}
+    for t in targets:
+        a = t.get("address")
+        if a is None:
+            continue
+        try:
+            addr = int(a, 16) if isinstance(a, str) else int(a)
+        except ValueError:
+            continue
+        if not (base <= addr <= end):
+            continue
+        idx = int((addr - base) / step)
+        if idx >= n:
+            idx = n - 1
+        s = t.get("status")
+        color = (
+            COLOR_FULL
+            if s == FULL
+            else COLOR_EQUIV
+            if s == EQUIV
+            else COLOR_NOT_STARTED
+            if s == NOT_STARTED
+            else COLOR_IN_PROGRESS
+        )
+        prev = best.get(idx)
+        if prev is None or color != prev:
+            # priority: full > equiv > in-progress > not-started
+            if prev is None:
+                best[idx] = color
+            elif prev == COLOR_NOT_STARTED:
+                best[idx] = color
+            elif color == COLOR_FULL:
+                best[idx] = color
+            elif color == COLOR_EQUIV and prev in (COLOR_IN_PROGRESS, COLOR_NOT_STARTED):
+                best[idx] = color
+            elif color == COLOR_IN_PROGRESS and prev == COLOR_NOT_STARTED:
+                best[idx] = color
+    return best
+
+
+def axis_x(addr, base=CODE_BASE, end=CODE_END, n=COLUMNS):
+    """Column x position (in unscaled px) for an absolute address."""
+    return round((addr - base) / (end - base) * n, 1)
+
+
+def render(counts, slices):
+    """Assemble the SVG document at SCALE resolution.
+
+    Layout constants below are given in 1x design units (2400px wide) and
+    scaled by SCALE. The 1x proportions: 470px tall (bar 280px, legend ~30px)
+    so the image renders as a readable banner at README width.
+    """
+    full, equiv, prog, ns, accepted, total = counts
+    s = SCALE
+    w = int(COLUMNS * s)
+    h = int(470 * s)
+    col_w = s
+
+    title_font = round(36 * s)
+    title_y = round(58 * s)
+    count_font = round(28 * s)
+    count_y = title_y
+    axis_font = round(20 * s)
+    legend_font = round(27 * s)
+    bar_top = round(90 * s)
+    bar_h = round(280 * s)
+    axis_y = round(398 * s)
+    legend_swatch = round(30 * s)
+    legend_y = round(412 * s)
+    legend_text_y = legend_y + round(21 * s)
+
+    pad = round(24 * s)
+    stroke = max(1, round(2 * s))
+
+    out = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" '
+        f'viewBox="0 0 {w} {h}" font-family="ui-sans-serif, system-ui, sans-serif">',
+        # opaque card so the text stays readable on light and dark themes
+        f'<rect x="0" y="0" width="{w}" height="{h}" fill="{COLOR_WHITE}"/>',
+        f'<text x="{pad}" y="{title_y}" font-size="{title_font}" font-weight="700" '
+        f'fill="{COLOR_TEXT}">{TITLE}</text>',
+        f'<text x="{w - pad}" y="{count_y}" font-size="{count_font}" '
+        f'fill="{COLOR_MUTED}" text-anchor="end">{accepted}/{total} accepted '
+        f"({accepted / total * 100:.1f}%)</text>",
+        f'<rect x="0" y="{bar_top}" width="{w}" height="{bar_h}" fill="{COLOR_WHITE}" '
+        f'stroke="{COLOR_MUTED}" stroke-width="{stroke}"/>',
     ]
-    if not rows:
-        raise SystemExit("ERROR: no function targets with addresses in the registry")
-    rows.sort(key=lambda t: int(t.address, 16))
-
-    lo = int(rows[0].address, 16)
-    hi = int(rows[-1].address, 16)
-    span = max(hi - lo, 1)
-
-    def x_of(addr: int) -> int:
-        return round((addr - lo) / span * (WIDTH - 1))
-
-    # Per-column best status (highest priority present).
-    column: dict[int, str] = {}
-    for t in rows:
-        cls = classify(t.status)
-        col = x_of(int(t.address, 16))
-        if cls not in column or PRIORITY[cls] > PRIORITY[column[col]]:
-            column[col] = cls
-
-    counts = {k: 0 for k in FILL}
-    for t in rows:
-        counts[classify(t.status)] += 1
-    total = len(rows)
-    accepted = sum(counts[k] for k in ("FULL_MATCH", "EQUIVALENT_MATCH"))
-
-    parts: list[str] = []
-    parts.append(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
-        f'viewBox="0 0 {WIDTH} {HEIGHT}" font-family="ui-sans-serif, system-ui, sans-serif">'
-    )
-    parts.append(
-        f'<text x="0" y="20" font-size="17" font-weight="600" fill="{INK}">'
-        f"Xenoblade Chronicles (Wii) — code section progress</text>"
-    )
-    parts.append(
-        f'<text x="{WIDTH}" y="20" font-size="14" fill="{MUTED}" text-anchor="end">'
-        f"{accepted}/{total} accepted ({100.0 * accepted / total:.1f}%)</text>"
-    )
-    parts.append(
-        f'<rect x="0" y="{STRIP_TOP}" width="{WIDTH}" height="{STRIP_HEIGHT}" '
-        f'fill="#ffffff" stroke="{MUTED}" stroke-width="1"/>'
-    )
-    # One rect per occupied column (≤ WIDTH elements regardless of target count).
-    for col, cls in sorted(column.items()):
-        parts.append(
-            f'<rect x="{col}" y="{STRIP_TOP}" width="1" height="{STRIP_HEIGHT}" fill="{FILL[cls]}"/>'
+    for idx in sorted(slices):
+        x = round(idx * s, 1)
+        out.append(
+            f'<rect x="{x}" y="{bar_top}" width="{col_w}" height="{bar_h}" '
+            f'fill="{slices[idx]}"/>'
+        )
+    # address axis labels: section start, each 0x00100000 boundary, section end
+    axis_labels = [(CODE_BASE, pad, "start"), (0x80100000, axis_x(0x80100000) * s, "middle"),
+                   (0x80200000, axis_x(0x80200000) * s, "middle"),
+                   (0x80300000, axis_x(0x80300000) * s, "middle"),
+                   (0x80400000, axis_x(0x80400000) * s, "middle"),
+                   (CODE_END, w - pad, "end")]
+    for addr, x, anchor in axis_labels:
+        out.append(
+            f'<text x="{x}" y="{axis_y}" font-size="{axis_font}" fill="{COLOR_MUTED}" '
+            f'text-anchor="{anchor}">0x{addr:08X}</text>'
         )
 
-    # Axis: ticks every 1 MiB of address space.
-    tick = ((lo + 0xFFFFF) // 0x100000) * 0x100000
-    while tick <= hi:
-        x = x_of(tick)
-        parts.append(
-            f'<line x1="{x}" y1="{STRIP_TOP + STRIP_HEIGHT}" x2="{x}" '
-            f'y2="{AXIS_TOP}" stroke="{MUTED}" stroke-width="1"/>'
-        )
-        parts.append(
-            f'<text x="{x}" y="{TEXT_TOP}" font-size="11" fill="{MUTED}" '
-            f'text-anchor="middle">0x{tick:08X}</text>'
-        )
-        tick += 0x100000
-
-    parts.append(
-        f'<text x="0" y="{TEXT_TOP}" font-size="11" fill="{MUTED}" ' 
-        f'text-anchor="start">0x{lo:08X}</text>'
-    )
-    parts.append(
-        f'<text x="{WIDTH}" y="{TEXT_TOP}" font-size="11" fill="{MUTED}" ' 
-        f'text-anchor="end">0x{hi:08X}</text>'
-    )
-
-    # Legend with counts.
-    legend = [
-        ("FULL_MATCH", "FULL_MATCH", counts["FULL_MATCH"]),
-        ("EQUIVALENT_MATCH", "EQUIVALENT_MATCH", counts["EQUIVALENT_MATCH"]),
-        ("in progress", "in-progress", counts["in-progress"]),
-        ("not started", "NOT_STARTED", counts["NOT_STARTED"]),
+    # legend
+    items = [
+        (COLOR_FULL, f"FULL_MATCH · {full}"),
+        (COLOR_EQUIV, f"EQUIVALENT_MATCH · {equiv}"),
+        (COLOR_IN_PROGRESS, f"in progress · {prog}"),
+        (COLOR_NOT_STARTED, f"not started · {ns}"),
     ]
-    lx = 0
-    for label, key, count in legend:
-        parts.append(
-            f'<rect x="{lx}" y="{HEIGHT - 24}" width="12" height="12" rx="2" fill="{FILL[key]}"/>'
+    # rough glyph advance for layout only (ui-sans-serif, ~0.58em average)
+    x = pad
+    gap = round(44 * s)
+    for color, label in items:
+        out.append(
+            f'<rect x="{x}" y="{legend_y}" width="{legend_swatch}" height="{legend_swatch}" '
+            f'rx="{round(6 * s)}" fill="{color}"/>'
         )
-        parts.append(
-            f'<text x="{lx + 18}" y="{HEIGHT - 13}" font-size="12" fill="{INK}">'
-            f"{label} · {count}</text>"
+        out.append(
+            f'<text x="{x + legend_swatch + round(12 * s)}" y="{legend_text_y}" '
+            f'font-size="{legend_font}" fill="{COLOR_TEXT}">{label}</text>'
         )
-        lx += 18 + len(label) * 7.2 + len(str(count)) * 7.2 + 28
-    parts.append("</svg>")
-    return "\n".join(parts)
+        x += legend_swatch + round(12 * s) + round(len(label) * 0.58 * legend_font) + gap
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT,
-                        help=f"output path (default: {DEFAULT_OUTPUT.relative_to(ROOT)})")
-    args = parser.parse_args()
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--check", action="store_true",
+                    help="exit 1 if the SVG is stale instead of rewriting it")
+    ap.add_argument("--out", default=DEFAULT_OUT, help="output path (default: %(default)s)")
+    args = ap.parse_args(argv)
 
-    config = load_config(None, ROOT)
-    targets = load_targets(config)
-    svg = render(targets)
+    with open(TARGETS_PATH, encoding="utf-8") as fh:
+        targets = json.load(fh)["targets"]
 
-    output = args.output if args.output.is_absolute() else ROOT / args.output
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(svg + "\n", encoding="utf-8")
-    print(output)
+    counts = tally(targets)
+    full, equiv, prog, ns, accepted, total = counts
+    print(f"accepted {accepted}/{total} ({accepted / total * 100:.1f}%) — "
+          f"FULL_MATCH {full} · EQUIVALENT_MATCH {equiv} · in progress {prog} · "
+          f"not started {ns}")
+
+    svg = render(counts, slice_colors(targets))
+
+    if args.check:
+        try:
+            with open(args.out, encoding="utf-8") as fh:
+                current = fh.read()
+        except OSError:
+            print(f"{args.out}: missing", file=sys.stderr)
+            return 1
+        if current == svg:
+            return 0
+        print(f"{args.out} is stale — regenerate with {os.path.basename(__file__)}",
+              file=sys.stderr)
+        return 1
+
+    os.makedirs(os.path.dirname(args.out), exist_ok=True)
+    with open(args.out, "w", encoding="utf-8") as fh:
+        fh.write(svg)
+    print(f"wrote {args.out}")
     return 0
 
 

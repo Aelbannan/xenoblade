@@ -3,10 +3,11 @@
 
 #include <harness_catalog.h>
 
+#include <revolution/bte/bta/dm/bta_dm_int.h>
+
 /* --- Type definitions and extern declarations --- */
 
-/* Forward declarations for struct types used to avoid void* */
-struct bta_dm_msg;
+/* Forward declaration for the timer list entry type (defined below) */
 struct bta_dm_timer_t;
 
 /* Timer callback type: takes a timer list entry pointer */
@@ -54,29 +55,8 @@ struct bta_dm_search_cb_t {
     unsigned char _pad7a[2];                /* offset 0x7a-0x7b */
 };
 
-/* tBTA_DM_API_SEARCH message: BT_HDR(8) + inq_params(10) + services + p_cback.
-   Built by BTA_DmSearch() in bta_dm_api.c (msg size 0x1c). */
-struct bta_dm_search_msg_t {
-    unsigned char hdr[8];               /* offset 0x00 (BT_HDR) */
-    unsigned char inq_params[0xA];      /* offset 0x08 (tBTA_DM_INQ, partial) */
-    unsigned char _pad12[2];            /* offset 0x12-0x13 */
-    unsigned int services;              /* offset 0x14 */
-    void *p_cback;                      /* offset 0x18 */
-};
-
-/* Inquiry complete message (BTA_DM_INQUIRY_CMPL_EVT = 0x203) */
-struct bta_dm_inq_cmpl_msg_t {
-    unsigned short event;               /* offset 0x00 */
-    unsigned char _hdr[6];              /* offset 0x02-0x07 */
-    unsigned char num;                  /* offset 0x08 */
-};
-
-/* SDP result message (BTA_DM_SDP_RESULT_EVT = 0x206) */
-struct bta_dm_sdp_result_msg_t {
-    unsigned short event;               /* offset 0x00 */
-    unsigned char _hdr[6];              /* offset 0x02-0x07 */
-    unsigned short sdp_status;          /* offset 0x08 */
-};
+/* tBTA_DM_API_SEARCH / INQUIRY_CMPL / SDP_RESULT / DISC_RESULT message types
+   are provided by <revolution/bte/bta/dm/bta_dm_int.h>. */
 
 /* BTM inquiry complete structure as passed to tBTM_CMPL_CB (retail layout:
    status byte at +0, num_resp byte at +1). */
@@ -167,15 +147,6 @@ struct bta_dm_discover_msg_t {
     void *p_cback;                  /* offset 0x14 */
 };
 
-/* Discovery result message: bd_addr + name + services/result tail (tBTA_DM_DISC_RES) */
-struct bta_dm_disc_msg_t {
-    unsigned char hdr[8];           /* offset 0x00 (BT_HDR) */
-    bd_addr_t bd_addr;              /* offset 0x08 */
-    unsigned char bd_name[0xfa];    /* offset 0x0e-0x107 */
-    unsigned int services;          /* offset 0x108 */
-    unsigned char result;           /* offset 0x10c */
-};
-
 /* Stack DISC_RES-style buffer used by the inquiry-complete / remote-name
    handlers: bd_addr + result byte + services mask (0x104; the 0x110 frame
    allocation is completed by the inq_cmpl buffer in bta_dm_inq_cmpl). */
@@ -257,16 +228,6 @@ struct bta_dm_cb_t {
 };
 
 extern struct bta_dm_cb_t bta_dm_cb;
-
-/* Signal strength data struct layout (tBTA_API_DM_SIG_STRENGTH) */
-struct bta_dm_sig_strength_data_t {
-    unsigned char _hdr[8];  /* BT_HDR */
-    unsigned char mask;     /* offset 0x08 */
-    unsigned char _pad9;    /* offset 0x09 */
-    unsigned short period;  /* offset 0x0a */
-    unsigned char start;    /* offset 0x0c */
-    unsigned char _padd;    /* offset 0x0d */
-};
 
 extern void bta_sys_stop_timer(struct bta_dm_timer_t *p_tle);
 extern void bta_sys_start_timer(struct bta_dm_timer_t *p_tle, unsigned short type, int timeout);
@@ -446,13 +407,12 @@ extern const struct bta_security_t bta_security;
 
 void bta_dm_enable(struct bta_dm_msg *p_data) {
     unsigned char dev_class[3];
-    unsigned char *msg = (unsigned char *)p_data;
 
     memset(&bta_dm_search_cb, 0, 0x7c);
     memset(bta_dm_conn_srvcs, 0, 0x2e);
     memcpy(dev_class, bta_dm_cfg.dev_class, 3);
     BTM_SetDeviceClass(dev_class);
-    bta_dm_cb.cback = *(bta_dm_cback_t *)(msg + 8);
+    bta_dm_cb.cback = p_data->enable.p_sec_cback;
     BTM_SecRegister((void *)&bta_security);
     BTM_SetDefaultLinkSuperTout(bta_dm_cfg.link_timeout);
     BTM_WritePageTimeout(bta_dm_cfg.page_timeout);
@@ -502,72 +462,74 @@ void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
 }
 
 extern void BTM_SetLocalDeviceName(void*);
-void bta_dm_set_dev_name(void* self) { ((void(*)(void*))BTM_SetLocalDeviceName)((char*)self + 0x8); }
+void bta_dm_set_dev_name(struct bta_dm_msg *p_data) { ((void(*)(void*))BTM_SetLocalDeviceName)(p_data->set_name.name); }
 
 /* Set discoverability and connectability from the incoming message */
 void bta_dm_set_visibility(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
-    BTM_SetDiscoverability(msg[0x8], 0, 0);
-    BTM_SetConnectability(msg[0x9], 0, 0);
+    BTM_SetDiscoverability(p_data->set_visibility.disc_mode, 0, 0);
+    BTM_SetConnectability(p_data->set_visibility.conn_mode, 0, 0);
 }
 
 void bta_dm_bond(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
     unsigned char trusted_mask[8];
     unsigned int *p_mask;
 
-    p_mask = btm_read_trusted_mask(msg + 8);
+    p_mask = btm_read_trusted_mask(p_data->bond.bd_addr);
     if (p_mask != NULL) {
         memcpy(trusted_mask, p_mask, 8);
     } else {
         memset(trusted_mask, 0, 8);
     }
-    BTM_SecBond(msg + 8, msg[0xe], msg + 0xf, (unsigned int *)trusted_mask);
+    BTM_SecBond(p_data->bond.bd_addr, p_data->bond.pin_len, p_data->bond.p_pin,
+                (unsigned int *)trusted_mask);
 }
 
 /* Bond/pin reply with a remote device: read the trusted mask for the
    address, then pass it down to the security manager. */
 void bta_dm_pin_reply(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
     unsigned char trusted_mask[8];
     unsigned int *p_mask;
 
-    p_mask = btm_read_trusted_mask(msg + 8);
+    p_mask = btm_read_trusted_mask(p_data->pin_reply.bd_addr);
     if (p_mask != NULL) {
         memcpy(trusted_mask, p_mask, 8);
     } else {
         memset(trusted_mask, 0, 8);
     }
-    if (msg[0xe] != 0) {
-        BTM_PINCodeReply(msg + 8, 0, msg[0xf], msg + 0x10, trusted_mask);
+    if (p_data->pin_reply.accept != 0) {
+        BTM_PINCodeReply(p_data->pin_reply.bd_addr, 0,
+                         p_data->pin_reply.pin_len, p_data->pin_reply.p_pin,
+                         trusted_mask);
     } else {
-        BTM_PINCodeReply(msg + 8, 0xb, 0, NULL, trusted_mask);
+        BTM_PINCodeReply(p_data->pin_reply.bd_addr, 0xb, 0, NULL, trusted_mask);
     }
 }
 
 /* Authorization reply: set the trusted mask bit for the requested service
    (if any) and pass the result down to the security manager. */
 void bta_dm_auth_reply(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
     unsigned char trusted_mask[8];
     unsigned int *p_mask;
 
-    p_mask = btm_read_trusted_mask(msg + 8);
+    p_mask = btm_read_trusted_mask(p_data->auth_reply.bd_addr);
     if (p_mask != NULL) {
         memcpy(trusted_mask, p_mask, 8);
     } else {
         memset(trusted_mask, 0, 8);
     }
 
-    if (msg[0xf] != 2) {
-        if (msg[0xf] == 0 && msg[0xe] <= 0x17) {
-            unsigned int srv_id = bta_service_id_to_btm_srv_id_lkup_tbl[msg[0xe]];
+    if (p_data->auth_reply.accept != 2) {
+        if (p_data->auth_reply.accept == 0 && p_data->auth_reply.srv_id <= 0x17) {
+            unsigned int srv_id =
+                bta_service_id_to_btm_srv_id_lkup_tbl[p_data->auth_reply.srv_id];
             ((unsigned int *)trusted_mask)[(srv_id >> 5) & 0xff] |=
                 1u << (srv_id - (srv_id & 0x1fe0));
         }
-        BTM_DeviceAuthorized(msg + 8, 0, (unsigned int *)trusted_mask);
+        BTM_DeviceAuthorized(p_data->auth_reply.bd_addr, 0,
+                             (unsigned int *)trusted_mask);
     } else {
-        BTM_DeviceAuthorized(msg + 8, 0xb, (unsigned int *)trusted_mask);
+        BTM_DeviceAuthorized(p_data->auth_reply.bd_addr, 0xb,
+                             (unsigned int *)trusted_mask);
     }
 }
 
@@ -582,7 +544,7 @@ void bta_dm_search_start(struct bta_dm_msg *p_data) {
     BTM_ClearInqDb(NULL);
     bta_dm_search_cb.p_search_cback = (bta_dm_search_cback_t)p_search->p_cback;
     bta_dm_search_cb.services = p_search->services;
-    BTM_StartInquiry(p_search->inq_params, p_results_cb, p_cmpl_cb);
+    BTM_StartInquiry(&p_search->inq_params, p_results_cb, p_cmpl_cb);
 }
 
 void bta_dm_search_cancel(struct bta_dm_msg *p_data) {
@@ -644,7 +606,7 @@ void bta_dm_discover(struct bta_dm_msg *p_data) {
    device whose name is already known; for the first unknown name, start a
    remote-name request and let the result message continue the search. If no
    name request was started, finalize the search with a DISC_RESULT message. */
-void bta_dm_inq_cmpl(struct bta_dm_inq_cmpl_msg_t *p_data) {
+void bta_dm_inq_cmpl(struct bta_dm_msg *p_data) {
     unsigned char found = 1;
     unsigned char inq_cmpl[0x108];
     struct bta_dm_disc_res_local_t disc_res;
@@ -710,7 +672,7 @@ void bta_dm_inq_cmpl(struct bta_dm_inq_cmpl_msg_t *p_data) {
             bta_sys_sendmsg(p_buf);
         }
     }
-    inq_cmpl[0] = ((unsigned char *)p_data)[8];
+    inq_cmpl[0] = p_data->inq_cmpl.num;
     bta_dm_search_cb.p_search_cback(BTA_DM_INQ_CMPL_EVT, inq_cmpl);
 }
 
@@ -758,14 +720,12 @@ void bta_dm_rmt_name(struct bta_dm_msg *p_data) {
             bta_sys_sendmsg(p_buf);
         }
     }
-    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, (unsigned char *)p_data + 8);
+    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, p_data->disc.bd_addr);
 }
 
 /* Discovery remote-name transaction complete: report a discovery result
    with no services to the app and send the search machine a DISC_RESULT. */
 void bta_dm_disc_rmt_name(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
-    struct bta_dm_disc_msg_t *p_disc = (struct bta_dm_disc_msg_t *)p_data;
     struct bta_dm_buf_t *p_buf;
 
     p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
@@ -773,8 +733,8 @@ void bta_dm_disc_rmt_name(struct bta_dm_msg *p_data) {
         p_buf->event = BTA_DM_SEARCH_DISC_RES_EVT;
         bta_sys_sendmsg(p_buf);
     }
-    p_disc->services = 0;
-    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, p_disc->bd_addr);
+    p_data->disc.services = 0;
+    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, p_data->disc.bd_addr);
 }
 
 /* SDP discovery result: on success, check whether the searched service was
@@ -782,7 +742,7 @@ void bta_dm_disc_rmt_name(struct bta_dm_msg *p_data) {
    the services_found bit; then free the SDP DB and continue with the next
    service or report a discovery-complete message. On failure, stop the
    discovery and report the result to the search state machine. */
-void bta_dm_sdp_result(struct bta_dm_sdp_result_msg_t *p_data) {
+void bta_dm_sdp_result(struct bta_dm_msg *p_data) {
     unsigned char found;
     struct bta_dm_disc_msg_t *p_msg;
     unsigned char *p_name;
@@ -791,7 +751,7 @@ void bta_dm_sdp_result(struct bta_dm_sdp_result_msg_t *p_data) {
     unsigned short status;
 
     found = 0;
-    status = p_data->sdp_status;
+    status = p_data->sdp_result.sdp_status;
     p_rec = NULL;
 
     if (status == 0 || status == 0xfff0 || status == 0xfff4) {
@@ -879,7 +839,7 @@ void bta_dm_search_cmpl(struct bta_dm_msg *p_data) {
 void bta_dm_disc_result(struct bta_dm_msg *p_data) {
     struct bta_dm_buf_t *p_buf;
 
-    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, (void *)((unsigned char *)p_data + 0x8));
+    bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, (void *)p_data->disc.bd_addr);
     p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
     if (p_buf != NULL) {
         p_buf->event = BTA_DM_SEARCH_DISC_RES_EVT;
@@ -888,10 +848,9 @@ void bta_dm_disc_result(struct bta_dm_msg *p_data) {
 }
 
 void bta_dm_search_result(struct bta_dm_msg *p_data) {
-    struct bta_dm_disc_msg_t *p_disc = (struct bta_dm_disc_msg_t *)p_data;
-
-    if (p_disc->services != 0) {
-        bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT, p_disc->bd_addr);
+    if (p_data->disc.services != 0) {
+        bta_dm_search_cb.p_search_cback(BTA_DM_DISC_RES_EVT,
+                                        p_data->disc.bd_addr);
     }
     if (bta_dm_search_cb.search_disc_active == 0) {
         bta_dm_search_cb.search_disc_active = 0;
@@ -1073,7 +1032,7 @@ void bta_dm_sdp_callback(unsigned short status) {
 
     p_msg = (struct bta_dm_sdp_result_msg_t *)GKI_getbuf(0xA);
     if (p_msg != NULL) {
-        p_msg->event = BTA_DM_SEARCH_SDP_RES_EVT;
+        p_msg->hdr.event = BTA_DM_SEARCH_SDP_RES_EVT;
         p_msg->sdp_status = status;
         bta_sys_sendmsg(p_msg);
     }
@@ -1103,12 +1062,12 @@ void bta_dm_inq_results_cb(void *p_inq_results, void *p_eir) {
 /* Inquiry complete callback: forwards the number of responses to the search
    state machine as a INQUIRY_CMPL message (0x203). */
 void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results) {
-    struct bta_dm_inq_cmpl_msg_t *p_msg;
+    struct bta_dm_msg *p_msg;
 
-    p_msg = (struct bta_dm_inq_cmpl_msg_t *)GKI_getbuf(0x110);
+    p_msg = (struct bta_dm_msg *)GKI_getbuf(0x110);
     if (p_msg != NULL) {
-        p_msg->event = BTA_DM_SEARCH_INQ_CMPL_EVT;
-        p_msg->num = p_results->num_resp;
+        p_msg->inq_cmpl.hdr.event = BTA_DM_SEARCH_INQ_CMPL_EVT;
+        p_msg->inq_cmpl.num = p_results->num_resp;
         bta_sys_sendmsg(p_msg);
     }
 }
@@ -1297,10 +1256,9 @@ void bta_dm_local_addr_cback(void *addr) {
    When start=1, stores the mask/period and tail-calls the timer callback
    to trigger the first reading. When start=0, stops the ongoing timer. */
 void bta_dm_signal_strength(struct bta_dm_msg *p_data) {
-    struct bta_dm_sig_strength_data_t *d = (struct bta_dm_sig_strength_data_t *)p_data;
-    if (d->start) {
-        bta_dm_cb.signal_strength_mask = d->mask;
-        bta_dm_cb.signal_strength_period = d->period;
+    if (p_data->sig_strength.start) {
+        bta_dm_cb.signal_strength_mask = p_data->sig_strength.mask;
+        bta_dm_cb.signal_strength_period = p_data->sig_strength.period;
         bta_dm_signal_strength_timer_cback(NULL);
     } else {
         bta_sys_stop_timer(&bta_dm_cb.signal_strength_timer);
@@ -1350,10 +1308,10 @@ void bta_dm_acl_change_cback(bd_addr_t bd_addr, unsigned char *p_dc, unsigned ch
    disable is pending, complete the disable. */
 void bta_dm_acl_change(struct bta_dm_msg *p_data) {
     union bta_dm_sec_t sec_event;
-    unsigned char *p_bd_addr = (unsigned char *)p_data + 0xb;
+    unsigned char *p_bd_addr = p_data->acl_change.bd_addr;
     unsigned char i;
 
-    if (((unsigned char *)p_data)[0xa] != 0) {
+    if (p_data->acl_change.is_new != 0) {
         /* device connected */
         for (i = 0; i < bta_dm_cb.num_devices; i++) {
             if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr) == 0) {
@@ -1557,10 +1515,9 @@ void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
 
 /* Keep the L2CAP idle timeout disabled while a connection is open. */
 void bta_dm_keep_acl(struct bta_dm_msg *p_data) {
-    unsigned char *msg = (unsigned char *)p_data;
     unsigned short keep;
 
-    keep = *(unsigned short *)(msg + 6);
+    keep = p_data->hdr.layer_specific;
     bta_dm_cb.keep_acl = (unsigned char)keep;
     if ((unsigned char)keep != 0) {
         L2CA_SetIdleTimeoutByBdAddr(BT_BD_ANY, 0xffff);

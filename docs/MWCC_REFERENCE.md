@@ -1089,6 +1089,19 @@ Remaining: 28 pure reg-swaps (register allocation — retail chains rotate r8/r9
 | Every call reloc and every function symbol in the unit is C++-mangled (`__HBMSYNRunVolumeEnvelope__FPv`, `HBMMIXReleaseChannel__FP6_AXVPB`, `__HBMSYNClearVoiceReferences__FP6_AXVPB`) | hbm cflags use `-lang=c++` even for `.c` files; the retail hbm lib exports plain C names | Wrap the extern declarations **and** the function definitions in `#ifdef __cplusplus extern "C" { #endif … }` (same as syn.c/synenv.c/synmix.c) — clears all 5 call reloc drifts in ServiceVoice and unmangles the emitted symbols (body bytes unchanged) |
 | `__HBMSYNClearVoiceReferences` residual: decomp colors param vpb=r29 / idx=r31 / voice=r31 (merged with idx); retail vpb=r31 / idx=r29 / voice=r31 (merged with vpb). Prologue `stw r31; mr r31,r3; stw r30; stw r29` vs decomp `stw r31; stw r30; stw r29; mr r29,r3` — the mr position follows its target register's save slot | Regalloc soft-cap: invariant across 9 source shapes (6 declaration orders, s32/u32 idx, statement orders incl. voice-before-free and index-load-first, `__HBMSYNVoice + idx` pointer arith, `u32 key` local, AXVPB*-typed call decl, byte-pointer load form). Only the param vpb↔idx swap differs; instruction set/order otherwise identical | Accept as regalloc soft-cap — record `accept via --smt out-of-band` (callees HBMGetIndex/HBMFreeIndex/HBMMIXReleaseChannel all FULL_MATCH so the SMT gate is open); do NOT chase with asm or register tricks |
 
+## RVL_SDK hbm/synenv.c — __HBMSYNRunVolumeEnvelope FULL_MATCH via named-pointer + array-index store (Wii/1.1 `-O4,p`)
+
+`__HBMSYNRunVolumeEnvelope` (us-80344160, 0x10c) was stuck at 0 structural / 2 reg-swaps (97.0% hexdiff): the tail addr computation `(u8*)base + ((s32)ch << 9) + ((s32)note << 2)` built a **right-leaning** sum tree `(note<<2) + (base + (ch<<9))` (note<<2 colored r3, base+ch<<9 colored r0) while retail is **left-leaning** `((base + (ch<<9)) + (note<<2))` (base+ch<<9 in r3).
+
+**Fix (FULL_MATCH 100%):** make the `base + (ch<<9)` partial a **named pointer local** and fold the remaining offset into an **array-index store**:
+
+```c
+s32* p = (s32*)((u8*)base + ((s32)ch << 9));
+p[(s32)note + 0x102] = 0;
+```
+
+vs the failing shapes: single-expression sum (2 swaps), explicit parens `((A+B)+C)` (normalized away, 2 swaps), two-statement accumulation (9 swaps), named shift locals (2 swaps). The named-pointer form makes MWCC accumulate the first partial into r3 (the destination) and the second partial into scratch r0 — retail's allocation. Declaration-order experiments (best/zero/one permutations) were no-ops.
+
 ## RVL_SDK hbm/synctrl.c — NoteOn/MidiIn FULL_MATCH: 2D member array + triple-access idiom, byte-address CSE break, decl-order color (Wii/1.1 `-O4,p`, C++)
 
 `__HBMSYNNoteOn` (us-80343ad0, 0x22C) and `__HBMSYNMidiIn` (us-80343d00, 0x11C) both FULL_MATCH 100% (0 structural / 0 reg-swaps). Voice table = `HBMSYNVOICE* voiceTable[16][128]` (inline at synth+0x408, row stride 0x200). Three reusable levers:

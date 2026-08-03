@@ -13,7 +13,7 @@ LinkListImpl::Iterator LinkListImpl::Erase(LinkListImpl::Iterator it) {
     return Erase(it, ++clone);
 }
 
-void LinkListImpl::Clear() {
+inline void LinkListImpl::Clear() {
     Erase(GetBeginIter(), GetEndIter());
 }
 
@@ -34,7 +34,7 @@ LinkListImpl::Iterator LinkListImpl::Insert(Iterator it, LinkListNode* pNode) {
     return Iterator(pNode);
 }
 
-LinkListImpl::Iterator LinkListImpl::Erase(LinkListNode* pNode) {
+inline LinkListImpl::Iterator LinkListImpl::Erase(LinkListNode* pNode) {
     LinkListNode* pNext = pNode->mNext;
     LinkListNode* pPrev = pNode->mPrev;
 
@@ -51,7 +51,7 @@ LinkListImpl::Iterator LinkListImpl::Erase(LinkListNode* pNode) {
     return Iterator(pNext);
 }
 
-LinkListImpl::Iterator LinkListImpl::Erase(Iterator begin, Iterator end) {
+inline LinkListImpl::Iterator LinkListImpl::Erase(Iterator begin, Iterator end) {
     LinkListNode* pIt = begin.mNode;
     LinkListNode* pEnd = end.mNode;
 

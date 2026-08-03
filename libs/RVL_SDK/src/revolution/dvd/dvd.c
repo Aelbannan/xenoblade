@@ -294,10 +294,7 @@ static void defaultOptionalCommandChecker(DVDCommandBlock* block,
 #pragma unused(callback)
 }
 
-//unused
-void __DVDSetOptionalCommandChecker(){
-}
-
+// unused in Xenoblade retail: __DVDSetOptionalCommandChecker
 void DVDInit(void) {
     DVDDiskID* diskID;
     s32 rv;
@@ -998,11 +995,7 @@ static void cbForStateCheckID3(u32 intType) {
     }
 }
 
-//unused
-//static
-void AlarmHandler(){
-}
-
+// unused in Xenoblade retail: AlarmHandler
 static void stateCoverClosed(void) {
     DVDCommandBlock* block;
 
@@ -1480,14 +1473,7 @@ static void stateBusy(DVDCommandBlock* block) {
 
 static u32 ImmCommand[] = {-1, -1, -1};
 
-//unused
-void __DVDSetImmCommand(){
-}
-
-//unused
-void __DVDSetDmaCommand(){
-}
-
+// unused in Xenoblade retail: __DVDSetImmCommand, __DVDSetDmaCommand
 static BOOL IsImmCommandWithResult(u32 command) {
     u32 i;
 
@@ -1786,10 +1772,7 @@ static void cbForStateBusy(u32 intType) {
     stateGettingError();
 }
 
-//unused
-void __DVDGetIssueCommandAddr(){
-}
-
+// unused in Xenoblade retail: __DVDGetIssueCommandAddr
 static BOOL issueCommand(s32 prio, DVDCommandBlock* block) {
     BOOL enabled;
     BOOL success;
@@ -1828,51 +1811,9 @@ BOOL DVDReadAbsAsyncPrio(DVDCommandBlock* block, void* dst, u32 size,
 }
 
 //unused
-void DVDSeekAbsAsyncPrio(){
-}
-
-//unused
-void DVDReadAbsAsyncForBS(){
-}
-
-//unused
-void DVDReadDiskID(){
-}
-
-//unused
-void __DVDAudioBufferConfig(){
-}
-
-//unused
-void DVDChangeDiskAsyncForBS(){
-}
-
-//unused
-void DVDChangeDiskAsync(){
-}
-
-//unused
-void DVDChangeDisk(){
-}
-
-//unused
-//static
-void cbForChangeDiskSync(){
-}
-
-//unused
-void DVDStopMotorAsync(){
-}
-
-//unused
-void DVDStopMotor(){
-}
-
-//unused
-//static
-void cbForStopMotorSync(){
-}
-
+// unused in Xenoblade retail: DVDSeekAbsAsyncPrio, DVDReadAbsAsyncForBS, DVDReadDiskID, __DVDAudioBufferConfig,
+// DVDChangeDiskAsyncForBS, DVDChangeDiskAsync, DVDChangeDisk, cbForChangeDiskSync,
+// DVDStopMotorAsync, DVDStopMotor, cbForStopMotorSync
 BOOL DVDInquiryAsync(DVDCommandBlock* block, DVDDriveInfo* info,
                      DVDCommandCallback callback) {
     block->command = COMMAND_INQUIRY;
@@ -1884,32 +1825,7 @@ BOOL DVDInquiryAsync(DVDCommandBlock* block, DVDDriveInfo* info,
     return issueCommand(DVD_PRIO_MEDIUM, block);
 }
 
-//unused
-void DVDInquiry(){
-}
-
-//unused
-//static
-void cbForInquirySync(){
-}
-
-//unused
-void DVDResetAsync(){
-}
-
-//unused
-void DVDReset(){
-}
-
-//unused
-//static
-void cbForResetSync(){
-}
-
-//unused
-void DVDResetRequired(){
-}
-
+// unused in Xenoblade retail: DVDInquiry, cbForInquirySync, DVDResetAsync, DVDReset, cbForResetSync, DVDResetRequired
 
 s32 DVDGetCommandBlockStatus(const DVDCommandBlock* block) {
     s32 state;
@@ -1964,22 +1880,20 @@ s32 DVDGetDriveStatus(void) {
     return state;
 }
 
-//unused
-void __DVDGetDriveStatus(){
-}
-
 BOOL DVDSetAutoInvalidation(BOOL autoInval) {
     BOOL prev = autoInvalidation;
     autoInvalidation = autoInval;
     return prev;
 }
 
-BOOL __DVDLowBreak(void) {
+// unused in Xenoblade retail: __DVDGetDriveStatus
+
+static __inline BOOL __DVDLowBreak(void) {
     Breaking = TRUE;
     return TRUE;
 }
 
-void DVDPause(void) {
+static __inline void DVDPause(void) {
     BOOL enabled = OSDisableInterrupts();
 
     PauseFlag = TRUE;
@@ -2201,7 +2115,7 @@ static void cbForCancelSync(s32 result, DVDCommandBlock* block) {
     OSWakeupThread(&__DVDThreadQueue);
 }
 
-BOOL DVDCancelAllAsync(DVDCommandCallback callback) {
+static __inline BOOL DVDCancelAllAsync(DVDCommandCallback callback) {
     BOOL success;
     DVDCommandBlock* block;
     BOOL enabled = OSDisableInterrupts();
@@ -2225,23 +2139,7 @@ BOOL DVDCancelAllAsync(DVDCommandCallback callback) {
     return success;
 }
 
-//unused
-void DVDCancelAll(){
-}
-
-//unused
-//static
-void cbForCancelAllSync(){
-}
-
-
-const DVDDiskID* DVDGetCurrentDiskID(void) {
-    return &((OSBootInfo*)OSPhysicalToCached(OS_PHYS_BOOT_INFO))->diskID;
-}
-
-//unused
-void __DVDGetCoverStatusAsync(){
-}
+// unused in Xenoblade retail: DVDCancelAll, cbForCancelAllSync, DVDGetCurrentDiskID, __DVDGetCoverStatusAsync
 
 static void __BS2DVDLowCallback(u32 intType) {
     __BS2DVDLowIntType = intType;
@@ -2274,24 +2172,9 @@ u32 __DVDGetCoverStatus(void) {
     return DVD_COVER_CLOSED;
 }
 
-void __DVDResetWithNoSpinup(void) {
-    __BS2DVDLowIntType = 0;
-    DVDLowSetSpinupFlag(FALSE);
-    DVDLowReset(__BS2DVDLowCallback);
+// unused in Xenoblade retail: __DVDResetWithNoSpinup
 
-    while (!__BS2DVDLowIntType) {
-        ;
-    }
-}
-
-//unused
-BOOL DVDCheckDiskAsync(DVDCommandBlock* block, DVDCommandCallback callback) {
-}
-
-//unused
-void DVDIsDiskIdentified(){
-}
-
+// unused in Xenoblade retail: DVDCheckDiskAsync, DVDIsDiskIdentified
 void __DVDPrepareResetAsync(DVDCommandCallback callback) {
     BOOL enabled = OSDisableInterrupts();
 
@@ -2335,17 +2218,7 @@ BOOL __DVDTestAlarm(const OSAlarm* alarm) {
     return __DVDLowTestAlarm(alarm);
 }
 
-//unused
-void DVDOpenPartitionAsync(){
-}
-
-//unused
-void DVDClosePartitionAsync(){
-}
-
-//unused
-void DVDUnencryptedReadAbsAsyncForBS(){
-}
+// unused in Xenoblade retail: DVDOpenPartitionAsync, DVDClosePartitionAsync, DVDUnencryptedReadAbsAsyncForBS
 
 BOOL __DVDStopMotorAsync(DVDCommandBlock* block, DVDCommandCallback callback) {
 #pragma unused(block)
@@ -2356,18 +2229,4 @@ BOOL __DVDStopMotorAsync(DVDCommandBlock* block, DVDCommandCallback callback) {
 void __DVDRestartMotor(void) {
 }
 
-//unused
-void DVDDownRotationAsync(){
-}
-
-//unused
-void DVDPrepareDiskAsync(){
-}
-
-//unused
-void DVDGetPartitionParamsAsync(){
-}
-
-//unused
-void DVDOpenPartitionWithParamsAsync(){
-}
+// unused in Xenoblade retail: DVDDownRotationAsync, DVDPrepareDiskAsync, DVDGetPartitionParamsAsync, DVDOpenPartitionWithParamsAsync

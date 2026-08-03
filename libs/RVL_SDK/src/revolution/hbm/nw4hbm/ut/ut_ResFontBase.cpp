@@ -13,13 +13,6 @@ void ResFontBase::SetResourceBuffer(void* pBuffer, FontInformation* pInfo) {
     mFontInfo = pInfo;
 }
 
-void* ResFontBase::RemoveResourceBuffer() {
-    void* pUserData = mResource;
-    mResource = nullptr;
-    mFontInfo = nullptr;
-    return pUserData;
-}
-
 int ResFontBase::GetWidth() const {
     return mFontInfo->width;
 }
@@ -107,23 +100,6 @@ FontEncoding ResFontBase::GetEncoding() const {
     return static_cast<FontEncoding>(mFontInfo->encoding);
 }
 
-u16 ResFontBase::GetGlyphIndex(u16 ch) const {
-    u16 index = FindGlyphIndex(ch);
-    return index != GLYPH_INDEX_NOT_FOUND ? index : mFontInfo->alterCharIndex;
-}
-
-u16 ResFontBase::FindGlyphIndex(u16 ch) const {
-    for (const FontCodeMap* pIt = mFontInfo->pMap; pIt != NULL;
-         pIt = pIt->pNext) {
-        
-        if (pIt->ccodeBegin <= ch && ch <= pIt->ccodeEnd) {
-            return FindGlyphIndex(pIt, ch);
-        }
-    }
-
-    return GLYPH_INDEX_NOT_FOUND;
-}
-
 u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
     u16 index = GLYPH_INDEX_NOT_FOUND;
 
@@ -174,23 +150,6 @@ u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
 }
 
 
-
-const CharWidths& ResFontBase::GetCharWidthsFromIndex(u16 index) const {
-    for (const FontWidth* pIt = mFontInfo->pWidth; pIt != NULL;
-         pIt = pIt->pNext) {
-
-        if (pIt->indexBegin <= index && index <= pIt->indexEnd) {
-            return GetCharWidthsFromIndex(pIt, index);
-        }
-    }
-
-    return mFontInfo->defaultWidth;
-}
-
-const CharWidths& ResFontBase::GetCharWidthsFromIndex(const FontWidth* pWidth,
-                                                      u16 index) const {
-    return pWidth->widthTable[index - pWidth->indexBegin];
-}
 
 void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
     const FontTextureGlyph* pTexGlyph = mFontInfo->pGlyph;

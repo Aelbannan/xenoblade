@@ -3,17 +3,9 @@
 
 const u32 __EXIFreq = EXI_FREQ_16MHZ;
 
-//unused
-void EXIGetConsoleType(){
-}
-
-//unused
-void EXIWait(){
-}
-
-//unused
-void EXIReadReg(){
-}
+// Retail DOL pads this unit's .sdata2 contribution to 8 bytes (the 4 bytes
+// after __EXIFreq in the retail .sdata2 are zero padding).
+const u32 __EXIFreqPad = 0;
 
 BOOL EXIWriteReg(EXIChannel chan, u32 dev, u32 cmd, const void* buf, s32 len) {
     BOOL error = FALSE;
@@ -50,20 +42,4 @@ BOOL EXIWriteReg(EXIChannel chan, u32 dev, u32 cmd, const void* buf, s32 len) {
     error |= !EXIUnlock(chan);
 
     return error == FALSE;
-}
-
-//unused
-void EXIReadRam(){
-}
-
-//unused
-void EXIWriteRam(){
-}
-
-//unused
-void EXIReadRamImm(){
-}
-
-//unused
-void EXIWriteRamImm(){
 }

@@ -35,13 +35,6 @@ def generate_block(config: CoopConfig) -> str:
     full = sum(1 for t in accepted if t.status == "FULL_MATCH")
     equivalent = sum(1 for t in accepted if t.status == "EQUIVALENT_MATCH")
     active = sum(1 for t in targets if t.workflow_status == "ACTIVE")
-    tiers: list[str] = []
-    for tier in ("P0", "P1", "P2"):
-        in_tier = [t for t in targets if t.tier == tier]
-        if not in_tier:
-            continue
-        acc = sum(1 for t in in_tier if t.status in ACCEPTED_MATCH_STATUSES)
-        tiers.append(f"{tier} {acc}/{len(in_tier)}")
 
     lines = [
         BEGIN,
@@ -55,7 +48,6 @@ def generate_block(config: CoopConfig) -> str:
         f"| Buildable | {buildable} |",
         f"| Accepted | {len(accepted)} (`FULL_MATCH` {full} · `EQUIVALENT_MATCH` {equivalent}) |",
         f"| Active (in progress) | {active} |",
-        f"| Accepted / total by tier | {' · '.join(tiers)} |",
         "",
         END,
     ]

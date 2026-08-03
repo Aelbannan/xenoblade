@@ -698,6 +698,7 @@ s8 select_2obj_first(KPADInternal* kp) {
     KPADObject* best2;
     f32 one = 1.0f;
     f32 best = kp_err_first_inpr;
+    f32 zero = 0.0f;
     f32 d;
     f32 dist;
     f32 inv;
@@ -731,7 +732,7 @@ s8 select_2obj_first(KPADInternal* kp) {
             }
 
             d = kp->acc_horizon.x * n.x + kp->acc_horizon.y * n.y;
-            if (d < 0.0f) {
+            if (d < zero) {
                 d = -d;
                 if (d > best) {
                     best = d;
@@ -1950,19 +1951,19 @@ void KPADiSamplingCallback(s32 chan) {
     if (kp->unk_574 != 0) {
         WPADGetAccGravityUnit(chan, WPAD_DEV_CORE, &unit);
         if (unit.x * unit.y * unit.z != 0) {
-            kp->acc_scale_x = 1.0f / (f32)unit.x;
-            kp->acc_scale_y = 1.0f / (f32)unit.y;
-            kp->acc_scale_z = 1.0f / (f32)unit.z;
+            kp->acc_scale_x = float_8066C0BC / (f32)unit.x;
+            kp->acc_scale_y = float_8066C0BC / (f32)unit.y;
+            kp->acc_scale_z = float_8066C0BC / (f32)unit.z;
         } else {
-            kp->acc_scale_z = kp->acc_scale_y = kp->acc_scale_x = 0.01f;
+            kp->acc_scale_z = kp->acc_scale_y = kp->acc_scale_x = float_8066C110;
         }
         WPADGetAccGravityUnit(chan, WPAD_DEV_FREESTYLE, &unit);
         if (unit.x * unit.y * unit.z != 0) {
-            kp->fs_acc_scale_x = 1.0f / (f32)unit.x;
-            kp->fs_acc_scale_y = 1.0f / (f32)unit.y;
-            kp->fs_acc_scale_z = 1.0f / (f32)unit.z;
+            kp->fs_acc_scale_x = float_8066C0BC / (f32)unit.x;
+            kp->fs_acc_scale_y = float_8066C0BC / (f32)unit.y;
+            kp->fs_acc_scale_z = float_8066C0BC / (f32)unit.z;
         } else {
-            kp->fs_acc_scale_z = kp->fs_acc_scale_y = kp->fs_acc_scale_x = 0.005f;
+            kp->fs_acc_scale_z = kp->fs_acc_scale_y = kp->fs_acc_scale_x = float_8066C114;
         }
         kp->unk_574 = 0;
     }
@@ -1975,17 +1976,17 @@ void KPADiSamplingCallback(s32 chan) {
 
         if (kp->aiming_y != 0) {
             if (WPADGetSensorBarPosition() == WPAD_SENSOR_BAR_TOP) {
-                center = 0.2f;
+                center = float_8066C118;
             } else {
-                center = -0.2f;
+                center = float_8066C11C;
             }
         } else {
-            center = 0.0f;
+            center = float_8066C0B0;
         }
-        kp->unk_e4.x = 0.0f;
+        kp->unk_e4.x = float_8066C0B0;
         kp->unk_e4.y = -center;
-        f31 = 1.0f;
-        f30 = 0.75f;
+        f31 = float_8066C0BC;
+        f30 = float_8066C0C4;
         f3 = (f32)sqrt(f31 * f31 + f30 * f30);
         if (kp->unk_e4.x < 0.0f) {
             f31 += kp->unk_e4.x;

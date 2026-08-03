@@ -45,14 +45,6 @@ asm u32 OSGetTick(void){
     // clang-format on
 }
 
-//unused
-void __SetTime(){
-}
-
-//unused
-void __OSSetTime(){
-}
-
 s64 __OSGetSystemTime(void) {
     BOOL enabled = OSDisableInterrupts();
     s64 time = OSGetTime() + OS_SYSTEM_TIME;
@@ -65,10 +57,6 @@ s64 __OSTimeToSystemTime(s64 time) {
     s64 sysTime = OS_SYSTEM_TIME + time;
     OSRestoreInterrupts(enabled);
     return sysTime;
-}
-
-//unused
-void __OSSetTick(){
 }
 
 static BOOL IsLeapYear(s32 year) {
@@ -137,32 +125,4 @@ void OSTicksToCalendarTime(s64 ticks, OSCalendarTime* cal) {
     cal->sec = secs % 60;
 }
 
-//unused
-s64 OSCalendarTimeToTicks(const OSCalendarTime* cal) {
-    s64 seconds;
-    s32 month;
-    s32 ovMon;
-    s32 year;
-
-    ovMon = cal->month / MONTH_MAX;
-    month = cal->month - (ovMon * MONTH_MAX);
-
-    if (month < 0) {
-        month += MONTH_MAX;
-        ovMon--;
-    }
-
-    year = cal->year + ovMon;
-
-    // clang-format off
-    seconds = (s64)SECS_IN_YEAR * year +
-              (s64)SECS_IN_DAY * (cal->mday + GetLeapDays(year) + GetYearDays(year, month) - 1) +
-              (s64)SECS_IN_HOUR * cal->hour +
-              (s64)SECS_IN_MIN * cal->min +
-              cal->sec -
-              (s64)0xEB1E1BF80ULL;
-    // clang-format on
-
-    return OS_SEC_TO_TICKS(seconds) + OS_MSEC_TO_TICKS((s64)cal->msec) +
-           OS_USEC_TO_TICKS((s64)cal->usec);
-}
+// unused in Xenoblade retail: OSCalendarTimeToTicks

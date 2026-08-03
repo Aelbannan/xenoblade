@@ -52,8 +52,12 @@ u8 __HBMSEQMidiEventLength[128] = {
     0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-extern u32 __init;
-extern HBMSEQSEQUENCE *__HBMSEQSequenceList;
+/* .bss state owned by this unit in the retail DOL (retail .bss is 0x20
+   bytes: sequence list head + init flag + 0x18 gap padding). */
+static u32 __init;
+HBMSEQSEQUENCE *__HBMSEQSequenceList;
+/* Unreferenced .bss pad matching the 0x18-byte tail of the retail .bss. */
+u8 HBMSEQPad[0x18];
 
 extern "C" void HBMSYNMidiInput(void *syn, const u8 *data);
 extern "C" void HBMSYNInitSynth(void *syn, u32 config, u32 p3, u32 p4);

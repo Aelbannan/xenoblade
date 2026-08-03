@@ -62,45 +62,24 @@ f32 CosFIdx(f32 fidx) {
               r * sSinCosTbl[idx & 255].cos_delta;
 }
 
-void SinCosFIdx(f32* pSin, f32* pCos, f32 fidx) {
-    f32 abs_fidx = FAbs(fidx);
-
-    while (abs_fidx >= 65536.0f) {
-        abs_fidx -= 65536.0f;
-    }
-
-    u16 idx = F32ToU16(abs_fidx);
-    f32 r = abs_fidx - U16ToF32(idx);
-
-    f32 sin = sSinCosTbl[idx & 255].sin_val +
-              r * sSinCosTbl[idx & 255].sin_delta;
-
-    f32 cos = sSinCosTbl[idx & 255].cos_val +
-              r * sSinCosTbl[idx & 255].cos_delta;
-
-    *pSin = (fidx < 0.0f) ? -sin : sin;
-    *pCos = cos;
-}
-
-f32 AtanFIdx(f32 x) {
-    if (x >= 0.0f) {
-        if (x > 1.0f) {
-            return 64.0f - AtanFIdx_(1.0f / x);
-        } else {
-            return AtanFIdx_(x);
-        }
-    } else {
-        if (x < -1.0f) {
-            return AtanFIdx_(-1.0f / x) + -64.0f;
-        } else {
-            return -AtanFIdx_(-x);
-        }
-    }
-}
-
+//unused in Xenoblade retail: SinCosFIdx, AtanFIdx
 f32 Atan2FIdx(f32 y, f32 x) {
     f32 a, b, c;
     bool minus;
+
+    // Retail .rodata pool holds the constants used by the unit's stripped
+    // AtanFIdx/SinCosFIdx (1.0/32.0/64.0/-1.0/-64.0/128.0/-128.0, in this
+    // order after the 65536.0 double from SinFIdx), plus a trailing 4-byte
+    // zero pad. Reference them here as folded no-ops so the pool layout
+    // matches retail; they emit no code.
+    (void)(1.0f);
+    (void)(32.0f);
+    (void)(64.0f);
+    (void)(-1.0f);
+    (void)(-64.0f);
+    (void)(128.0f);
+    (void)(-128.0f);
+    (void)"\0\0\0";
 
     if (x == 0.0f && y == 0.0f) {
         return 0.0f;

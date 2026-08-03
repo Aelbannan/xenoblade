@@ -36,6 +36,11 @@ static SCRegion ProductGameRegionAndStringTbl[] = {{SC_REGION_JP, "JP"},
                                                    {SC_REGION_CN, "CN"},
                                                    {-1, ""}};
 
+// "AREA"/"GAME" settings keys; 8-byte objects so the .sdata layout matches
+// the retail DOL (each string is 8-byte aligned in the retail .sdata).
+static char ProductAreaString[8] = "AREA";
+static char ProductGameRegionString[8] = "GAME";
+
 BOOL __SCF1(const char* type, char* buf, u32 sz) {
     u8 ptext;
     BOOL found = FALSE;
@@ -86,20 +91,12 @@ BOOL __SCF1(const char* type, char* buf, u32 sz) {
     return FALSE;
 }
 
-//unused
-void SCGetDvdMovieRegion(){
-}
-
-BOOL SCGetProductAreaString(char* buf, u32 sz) {
-    return __SCF1("AREA", buf, sz);
-}
-
 s8 SCGetProductArea(void) {
     s8 area;
     char name[4];
     SCArea* iter = ProductAreaAndStringTbl;
 
-    if (SCGetProductAreaString(name, sizeof(name))) {
+    if (__SCF1(ProductAreaString, name, sizeof(name))) {
         for (; (area = iter->area) != -1; iter++) {
             if (!strcmp(iter->name, name)) {
                 return area;
@@ -110,44 +107,12 @@ s8 SCGetProductArea(void) {
     return -1;
 }
 
-//unused
-void SCGetProductModel(){
-}
-
-//unused
-void SCGetProductCode(){
-}
-
-//unused
-void SCGetProductSNString(){
-}
-
-//unused
-void SCGetProductSN(){
-}
-
-//unused
-void SCGetProductMPChanString(){
-}
-
-//unused
-void SCGetProductMPChan(){
-}
-
-//unused
-void SCGetProductVideoMode(){
-}
-
-BOOL SCGetProductGameRegionString(char* buf, u32 sz) {
-    return __SCF1("GAME", buf, sz);
-}
-
 s8 SCGetProductGameRegion(void) {
     s8 area;
     char name[3];
     SCRegion* iter = ProductGameRegionAndStringTbl;
 
-    if (SCGetProductGameRegionString(name, sizeof(name))) {
+    if (__SCF1(ProductGameRegionString, name, sizeof(name))) {
         for (; (area = iter->region) != -1; iter++) {
             if (!strcmp(iter->name, name)) {
                 return area;

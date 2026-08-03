@@ -9,7 +9,7 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 ## Summary
 
 - Files scanned: 248
-- Inline-asm kernels: 138 functions / 2698 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
+- Inline-asm kernels: 101 functions / 2661 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
 
 | metric | count |
 |---|---|
@@ -21,9 +21,9 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 | `(void*)` casts | 143 |
 | raw pointer offset arithmetic | 133 |
 | deref-through-cast arithmetic | 24 |
-| inline asm / `register` (incl. asm kernels) | 248 |
+| inline asm / `register` (incl. asm kernels) | 211 |
 | rN-named params | 13 |
-| goto | 226 |
+| goto | 224 |
 | #pragma | 203 |
 
 ## void* context
@@ -160,7 +160,7 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/exi/EXIBios.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/exi/EXICommon.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/exi/EXIUart.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
-| libs/RVL_SDK/src/revolution/fs/fs.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 19 |
+| libs/RVL_SDK/src/revolution/fs/fs.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 17 |
 | libs/RVL_SDK/src/revolution/gx/GXAttr.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXDisplayList.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/gx/GXFifo.c | 0 | 0 | 0 | 17 | 2 | 2 | 0 | 0 | 0 |
@@ -209,7 +209,6 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/mix/mix.c | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mix/remote.c | 0 | 0 | 0 | 3 | 4 | 3 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/mtx.c | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/mtx44.c | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/mtxvec.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/quat.c | 0 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/vec.c | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 0 |
@@ -222,8 +221,8 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/os/OSAlarm.c | 0 | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSAlloc.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSArena.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 40 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSContext.c | 0 | 0 | 0 | 0 | 0 | 0 | 13 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 16 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSContext.c | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSExec.c | 0 | 0 | 0 | 9 | 14 | 7 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSFatal.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 2 |
 | libs/RVL_SDK/src/revolution/os/OSFont.c | 0 | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 |
@@ -516,7 +515,7 @@ Files with the actionable `void* self` offset-deref pattern:
   "goto_count": 2
  },
  "libs/RVL_SDK/src/revolution/fs/fs.c": {
-  "goto_count": 19,
+  "goto_count": 17,
   "void_ptr": 22
  },
  "libs/RVL_SDK/src/revolution/gx/GXAttr.c": {
@@ -711,9 +710,6 @@ Files with the actionable `void* self` offset-deref pattern:
  "libs/RVL_SDK/src/revolution/mtx/mtx.c": {
   "asm_code": 39
  },
- "libs/RVL_SDK/src/revolution/mtx/mtx44.c": {
-  "asm_code": 11
- },
  "libs/RVL_SDK/src/revolution/mtx/mtxvec.c": {
   "asm_code": 1
  },
@@ -753,12 +749,12 @@ Files with the actionable `void* self` offset-deref pattern:
   "void_ptr": 17
  },
  "libs/RVL_SDK/src/revolution/os/OSCache.c": {
-  "asm_code": 40,
+  "asm_code": 16,
   "ptr_arith": 2,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/os/OSContext.c": {
-  "asm_code": 13
+  "asm_code": 11
  },
  "libs/RVL_SDK/src/revolution/os/OSExec.c": {
   "deref_arith": 7,

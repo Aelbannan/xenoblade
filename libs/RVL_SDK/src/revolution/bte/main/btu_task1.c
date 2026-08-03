@@ -10,11 +10,15 @@
 #include "revolution/os/OSTime.h"
 #include "revolution/bte/bta/sys/bta_sys.h"
 
-// Globals (in .sdata/.sbss)
-extern UINT8 btu_count;
-extern INT32 execute_btu;
-extern UINT32 _btu_g_count;
-extern UINT32 _btu_last_timer_tick;
+// Globals (in .sdata/.sbss) — defined here per retail btu_task1.o
+UINT8 btu_count = 1;
+INT32 execute_btu = 1;
+UINT32 _btu_g_count;
+UINT32 _btu_last_timer_tick;
+tBTU_CB btu_cb;
+// Retail .bss slice is 0x88: btu_cb then 4 zero pad bytes (aligning the next
+// unit's .bss); non-static so MWCC emits it.
+u32 __btuTask1BssPad;
 
 // Forward declarations for functions in other TUs
 void btu_init_core(void);

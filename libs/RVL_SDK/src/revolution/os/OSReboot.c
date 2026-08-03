@@ -15,15 +15,7 @@ void __OSReboot(u32 r3, u32 r4){
     __OSBootDol(r4, r3 | 0x80000000, r1_8);
 }
 
-//unused
-void OSSetSaveRegion(){
-}
-
 void OSGetSaveRegion(u32* saveStartPtr, u32* saveEndPtr){
     *saveStartPtr = SaveStart;
     *saveEndPtr = SaveEnd;
-}
-
-//unused
-void OSGetSavedRegion(){
 }

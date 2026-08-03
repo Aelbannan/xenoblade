@@ -8,6 +8,8 @@
 #include <harness_catalog.h>
 #include <string.h>
 
+#include <revolution/bte/bta/dm/bta_dm_int.h>
+
 /* --- Basic types --- */
 
 typedef unsigned char BOOLEAN;
@@ -18,15 +20,6 @@ typedef unsigned char tBTA_STATUS;
 
 /* DM security callback (tBTA_DM_SEC_CBACK) */
 typedef void (*tBTA_DM_SEC_CBACK)(unsigned char event, void *p_data);
-
-/* --- BT_HDR (bt_types.h) --- */
-
-struct bta_dm_hdr_t {
-    unsigned short event;           /* 0x00 */
-    unsigned short len;             /* 0x02 */
-    unsigned short offset;          /* 0x04 */
-    unsigned short layer_specific;  /* 0x06 */
-};
 
 /* --- Registration descriptor (tBTA_SYS_REG) --- */
 
@@ -77,58 +70,9 @@ struct bta_dm_cb_t {
 
 extern struct bta_dm_cb_t bta_dm_cb;
 
-/* --- API message structures --- */
-
-/* tBTA_DM_API_ENABLE: BT_HDR + p_sec_cback (0xc bytes) */
-struct bta_dm_enable_msg_t {
-    struct bta_dm_hdr_t hdr;        /* 0x00 */
-    void *p_sec_cback;              /* 0x08 */
-};
-
-/* tBTA_DM_API_SET_NAME: BT_HDR + 32-byte name (0x28 bytes) */
-struct bta_dm_set_name_msg_t {
-    struct bta_dm_hdr_t hdr;        /* 0x00 */
-    char name[32];                  /* 0x08 */
-};
-
-/* tBTA_DM_API_SET_VISIBILITY: BT_HDR + disc_mode + conn_mode, padded to the
-   0x110-byte tBTA_DM_MSG allocation used for all DM API messages. */
-struct bta_dm_set_visibility_msg_t {
-    struct bta_dm_hdr_t hdr;        /* 0x00 */
-    unsigned char disc_mode;        /* 0x08 */
-    unsigned char conn_mode;        /* 0x09 */
-    unsigned char _pad[0x106];      /* 0x0a-0x10f */
-};
-
-/* Retail tBTA_DM_INQ: mode, duration, max_resps, report_dup, filter_cond.
-   The filter type byte lives at the head of the condition union, so the
-   inquiry parameters are 0xa bytes in this build. */
-struct bta_dm_inq_t {
-    unsigned char mode;             /* 0x00 */
-    unsigned char duration;         /* 0x01 */
-    unsigned char max_resps;        /* 0x02 */
-    unsigned char report_dup;       /* 0x03 */
-    unsigned char filter_cond[6];   /* 0x04-0x09 */
-};
-
-/* tBTA_DM_API_SEARCH: BT_HDR + inq params + services + p_cback (0x1c bytes) */
-struct bta_dm_search_msg_t {
-    struct bta_dm_hdr_t hdr;        /* 0x00 */
-    struct bta_dm_inq_t inq_params; /* 0x08-0x11 */
-    unsigned char _pad[2];          /* 0x12-0x13 */
-    unsigned int services;          /* 0x14 */
-    void *p_cback;                  /* 0x18 */
-};
-
-/* tBTA_DM_API_PIN_REPLY: BT_HDR + bd_addr + accept + pin_len + p_pin
-   (0x20 bytes) */
-struct bta_dm_pin_reply_msg_t {
-    struct bta_dm_hdr_t hdr;        /* 0x00 */
-    unsigned char bd_addr[6];       /* 0x08-0x0d */
-    unsigned char accept;           /* 0x0e */
-    unsigned char pin_len;          /* 0x0f */
-    unsigned char p_pin[16];        /* 0x10-0x1f */
-};
+/* --- API message structures ---
+   All DM/Search API payload structs (tBTA_DM_API_* msg types, tBTA_DM_INQ,
+   the tBTA_DM_MSG union) are provided by <revolution/bte/bta/dm/bta_dm_int.h>. */
 
 /* --- DM/Search API event codes ---
    DM events start at BTA_SYS_EVT_START(BTA_ID_DM) = 0x100 plus the enum

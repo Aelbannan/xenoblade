@@ -9,7 +9,9 @@
 #define SC_CONF_MAX_SIZE 0x4000
 
 #define SC_CONF_BEGIN_MAGIC "SCv0"
-#define SC_CONF_END_MAGIC "SCed"
+// Trailing NULs reproduce the retail .sdata padding after this literal
+// (retail .sdata ends at 0x110, "SCed\0" occupies 0x108..0x10D).
+#define SC_CONF_END_MAGIC "SCed\0\0\0"
 
 #define SC_SMALLARRAY_MAX 0xFF
 #define SC_BIGARRAY_MAX 0xFFFF
@@ -105,8 +107,10 @@ static u8 ConfBufForFlush[SC_CONF_MAX_SIZE] ALIGN(32);
 
 static const char ConfDirName[] = "/shared2/sys";
 static const char ConfFileName[] = "/shared2/sys/SYSCONF";
+// Trailing NULs reproduce the retail .rodata padding after this string
+// (retail .rodata ends at 0x58, this string occupies 0x28..0x52).
 static const char ProductInfoFileName[] =
-    "/title/00000001/00000002/data/setting.txt";
+    "/title/00000001/00000002/data/setting.txt\0\0\0\0\0\0";
 
 static u8 BgJobStatus = SC_STATUS_OK;
 
@@ -118,6 +122,9 @@ static u32 ItemIDOffsetTblOffset = 0;
 static u8 IsDevKit = FALSE;
 static u8 DirtyFlag = FALSE;
 static u8 Initialized = FALSE;
+// unused in Xenoblade retail; global (not static) so -ipa file keeps it:
+// retail .sbss is 0x18 bytes and this fills the last byte (0x17)
+u8 SbssPad = 0;
 
 static SCNameAndID NameAndIDTbl[SC_ITEM_MAX] = {
     {"IPL.CB", SC_ITEM_IPL_CB},     {"IPL.AR", SC_ITEM_IPL_AR},
@@ -156,11 +163,11 @@ static void MyNandCallback(s32 result, NANDCommandBlock* block);
 static void FinishFromFlush(void);
 static void ErrorFromFlush(void);
 
-BOOL __SCIsDirty(void);
-void __SCSetDirtyFlag(void);
-void __SCClearDirtyFlag(void);
-u8* __SCGetConfBuf(void);
-u32 __SCGetConfBufSize(void);
+static inline BOOL __SCIsDirty(void);
+static inline void __SCSetDirtyFlag(void);
+static inline void __SCClearDirtyFlag(void);
+static inline u8* __SCGetConfBuf(void);
+static inline u32 __SCGetConfBufSize(void);
 
 void SCInit(void) {
     BOOL enabled = OSDisableInterrupts();
@@ -980,87 +987,20 @@ BOOL SCFindS8Item(s8* dst, SCItemID id) {
     return SCFindIntegerItem(dst, id, SC_ITEM_BYTE);
 }
 
-//unused
-BOOL SCFindU16Item(u16* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_SHORT);
-}
-
-//unused
-BOOL SCFindS16Item(s16* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_SHORT);
-}
-
 BOOL SCFindU32Item(u32* dst, SCItemID id) {
     return SCFindIntegerItem(dst, id, SC_ITEM_LONG);
 }
 
-//unused
-BOOL SCFindS32Item(s32* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_LONG);
-}
-
-//unused
-BOOL SCFindU64Item(u64* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_LONGLONG);
-}
-
-//unused
-BOOL SCFindS64Item(s64* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_LONGLONG);
-}
-
-//unused
-BOOL SCFindBoolItem(BOOL* dst, SCItemID id) {
-    return SCFindIntegerItem(dst, id, SC_ITEM_BOOL);
-}
+// unused in Xenoblade retail: SCFindU16Item, SCFindS16Item, SCFindS32Item,
+// SCFindU64Item, SCFindS64Item, SCFindBoolItem
 
 BOOL SCReplaceU8Item(u8 data, SCItemID id) {
     return SCReplaceIntegerItem(&data, id, SC_ITEM_BYTE);
 }
 
-//unused
-BOOL SCReplaceS8Item(s8 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_BYTE);
-}
-
-//unused
-BOOL SCReplaceU16Item(u16 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_SHORT);
-}
-
-//unused
-BOOL SCReplaceS16Item(s16 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_SHORT);
-}
-
-//unused
-BOOL SCReplaceU32Item(u32 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_LONG);
-}
-
-//unused
-BOOL SCReplaceS32Item(s32 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_LONG);
-}
-
-//unused
-BOOL SCReplaceU64Item(u64 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_LONGLONG);
-}
-
-//unused
-BOOL SCReplaceS64Item(s64 data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_LONGLONG);
-}
-
-//unused
-BOOL SCReplaceBoolItem(BOOL data, SCItemID id) {
-    return SCReplaceIntegerItem(&data, id, SC_ITEM_BOOL);
-}
-
-//unused
-void __SCDumpConfBuf(void) {
-}
+// unused in Xenoblade retail: SCReplaceS8Item, SCReplaceU16Item,
+// SCReplaceS16Item, SCReplaceU32Item, SCReplaceS32Item, SCReplaceU64Item,
+// SCReplaceS64Item, SCReplaceBoolItem, __SCDumpConfBuf
 
 static void __SCFlushSyncCallback(SCStatus status) {
 #pragma unused(status)
@@ -1068,13 +1008,7 @@ static void __SCFlushSyncCallback(SCStatus status) {
     OSWakeupThread(&Control.threadQueue);
 }
 
-//unused
-static void __SCFlushSync(void) {
-}
-
-//unused
-void SCFlush(void) {
-}
+// unused in Xenoblade retail: __SCFlushSync, SCFlush
 
 void SCFlushAsync(SCFlushCallback callback) {
     SCControl* ctrl;
@@ -1287,31 +1221,24 @@ static void ErrorFromFlush(void) {
     FinishFromFlush();
 }
 
-BOOL __SCIsDirty(void) {
+static inline BOOL __SCIsDirty(void) {
     return DirtyFlag ? TRUE : FALSE;
 }
 
-void __SCSetDirtyFlag(void) {
+static inline void __SCSetDirtyFlag(void) {
     DirtyFlag = TRUE;
 }
 
-void __SCClearDirtyFlag(void) {
+static inline void __SCClearDirtyFlag(void) {
     DirtyFlag = FALSE;
 }
 
-u8* __SCGetConfBuf(void) {
+static inline u8* __SCGetConfBuf(void) {
     return ConfBuf;
 }
 
-u32 __SCGetConfBufSize(void) {
+static inline u32 __SCGetConfBufSize(void) {
     return SC_CONF_MAX_SIZE;
 }
 
-//unused
-BOOL __SCIsDevKit(void) {
-    return IsDevKit ? TRUE : FALSE;
-}
-
-//unused
-void __SCClearConfBuf(void) {
-}
+// unused in Xenoblade retail: __SCIsDevKit, __SCClearConfBuf

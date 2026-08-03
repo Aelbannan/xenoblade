@@ -1,51 +1,55 @@
 #include <revolution/AX.h>
 #include <revolution/OS.h>
 
-const char* __AXVersion =
+// Retail .data is 0x48 bytes: the version string (0x45 incl. NUL) followed by 3
+// zero pad bytes so the next unit's .data starts 8-aligned.
+static char s_AXVersionStr[0x48] =
     "<< RVL_SDK - AX \trelease build: Feb 27 2009 10:01:36 (0x4302_145) >>";
+
+// Retail .sdata slice is 8 bytes: the version string pointer (reloc) followed by
+// 4 zero pad bytes (gap_09_80662F8C_sdata) aligning the next unit's .sdata.
+struct AXVersionDesc {
+    const char* str; // +0x0: pointer to version string
+    u32 pad;         // +0x4: zero pad
+} __AXVersion = { s_AXVersionStr, 0 };
 
 static BOOL __init = FALSE;
 
-void AXInit(void) {
-    AXInitEx(0);
-}
+// Retail .sbss slice is 8 bytes: __init then 4 zero pad bytes
+// (gap_10_80664D2C_sbss) aligning the next unit's .sbss.
+// (non-static so MWCC emits it)
+u32 __AXSbssPad;
 
-void AXInitEx(u32 mode) {
+void AXInit(void) {
     if (!__init) {
-        OSRegisterVersion(__AXVersion);
+        OSRegisterVersion(__AXVersion.str);
 
         __AXAllocInit();
         __AXVPBInit();
         __AXSPBInit();
         __AXAuxInit();
         __AXClInit();
-        __AXOutInit(mode);
+        __AXOutInit(0);
 
         __init = TRUE;
     }
 }
 
-//unused
-void AXInitSpecifyMem(){
-}
+//unused in Xenoblade retail: AXInitEx, AXInitSpecifyMem, AXInitExSpecifyMem
 
-//unused
-void AXInitExSpecifyMem(){
-}
-
-void AXQuit(){
-    if(__init){
+void AXQuit(void) {
+    if (__init) {
         __AXOutQuit();
         __AXAllocQuit();
         __AXVPBQuit();
         __AXSPBQuit();
         __AXAuxQuit();
         __AXClQuit();
-        
+
         __init = FALSE;
     }
 }
 
-BOOL AXIsInit() {
+BOOL AXIsInit(void) {
     return __init;
 }

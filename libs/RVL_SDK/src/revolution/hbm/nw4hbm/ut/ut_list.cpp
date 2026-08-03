@@ -38,50 +38,7 @@ void List_Append(List* pList, void* pObject) {
     pList->numObjects++;
 }
 
-void List_Prepend(List* pList, void* pObject) {
-    if (pList->headObject == NULL) {
-        SetFirstObject(pList, pObject);
-        return;
-    }
-
-    // New head -> Old head relationship
-    Link* pLink = NW4R_UT_LIST_GET_LINK(*pList, pObject);
-    pLink->prevObject = NULL;
-    pLink->nextObject = pList->headObject;
-
-    // New head <- Old head relationship
-    NW4R_UT_LIST_GET_LINK(*pList, pList->headObject)->prevObject = pObject;
-    pList->headObject = pObject;
-
-    pList->numObjects++;
-}
-
-void List_Insert(List* pList, void* pTarget, void* pObject) {
-    if (pTarget == NULL) {
-        List_Append(pList, pObject);
-        return;
-    }
-
-    if (pTarget == pList->headObject) {
-        List_Prepend(pList, pObject);
-        return;
-    }
-
-    Link* pLink = NW4R_UT_LIST_GET_LINK(*pList, pObject);
-    void* pPrev = NW4R_UT_LIST_GET_LINK(*pList, pTarget)->prevObject;
-    Link* pPrevLink = NW4R_UT_LIST_GET_LINK(*pList, pPrev);
-
-    // pPrev <- pObject
-    pLink->prevObject = pPrev;
-    // pPrev <- pObject -> pTarget
-    pLink->nextObject = pTarget;
-    // pPrev <-> pObject -> pTarget
-    pPrevLink->nextObject = pObject;
-    // pPrev <-> pObject <-> pTarget
-    NW4R_UT_LIST_GET_LINK(*pList, pTarget)->prevObject = pObject;
-
-    pList->numObjects++;
-}
+// unused in Xenoblade retail: List_Prepend, List_Insert, List_GetPrev
 
 void List_Remove(List* pList, void* pObject) {
     Link* pLink = NW4R_UT_LIST_GET_LINK(*pList, pObject);
@@ -108,19 +65,11 @@ void List_Remove(List* pList, void* pObject) {
     pList->numObjects--;
 }
 
-void* nw4hbm::ut::List_GetNext(const List* pList, const void* pObject) {
+void* List_GetNext(const List* pList, const void* pObject) {
     if (pObject == NULL) {
         return pList->headObject;
     }
     return NW4R_UT_LIST_GET_LINK(*pList, pObject)->nextObject;
-}
-
-void* List_GetPrev(const List* pList, const void* pObject) {
-    if (pObject == NULL) {
-        return pList->tailObject;
-    }
-
-    return NW4R_UT_LIST_GET_LINK(*pList, pObject)->prevObject;
 }
 
 void* List_GetNth(const List* pList, u16 n) {

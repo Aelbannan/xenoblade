@@ -16,6 +16,7 @@ typedef struct OSScb {
     BOOL locked;  // at 0x48
     BOOL sync;    // at 0x4C
     UNKWORD WORD_0x50;
+    UNKWORD WORD_0x54;
 } OSScb;
 
 static OSScb Scb ALIGN(32);
@@ -105,7 +106,7 @@ static void* LockSram(u32 pos) {
     return Scb.block + pos;
 }
 
-OSSramEx* __OSLockSramEx(void) {
+static OSSramEx* __OSLockSramEx(void) {
     return (OSSramEx*)LockSram(sizeof(OSSram));
 }
 
@@ -154,7 +155,7 @@ static BOOL UnlockSram(BOOL save, u32 pos) {
     return Scb.sync;
 }
 
-BOOL __OSUnlockSramEx(BOOL save) {
+static BOOL __OSUnlockSramEx(BOOL save) {
     return UnlockSram(save, sizeof(OSSram));
 }
 
@@ -211,7 +212,7 @@ void OSSetWirelessID(s32 pad, u16 id) {
     }
 }
 
-u16 OSGetGbsMode(void) {
+static u16 OSGetGbsMode(void) {
     OSSramEx* sram;
     u16 gbs;
 
@@ -222,7 +223,7 @@ u16 OSGetGbsMode(void) {
     return gbs;
 }
 
-void OSSetGbsMode(u16 gbs) {
+static void OSSetGbsMode(u16 gbs) {
     OSSramEx* sram;
 
     if (((u32)gbs & 0x7C00) == 0x5000 || ((u32)gbs & 0xC0) == 0xC0) {

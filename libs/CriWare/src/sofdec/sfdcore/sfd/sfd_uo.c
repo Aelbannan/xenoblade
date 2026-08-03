@@ -32,7 +32,24 @@ int SFUO_Init(void) { return 0x0; }
 
 int SFUO_Finish(void) { return 0x0; }
 
-void SFUO_ExecServer() {}
+extern s32 SFTRN_GetTermFlg(void* self, s32 a);
+extern s32 SFBUF_GetTermFlg(void* self, void* a);
+extern void SFTRN_SetTermFlg(void* self, s32 a, s32 b);
+extern s32 SFTRN_GetPrepFlg(void* self, s32 a);
+extern s32 SFBUF_GetPrepFlg(void* self, void* a);
+extern void SFTRN_SetPrepFlg(void* self, s32 a, s32 b);
+
+s32 SFUO_ExecServer(void* self) {
+    if (SFTRN_GetTermFlg(self, 8) != 1 &&
+        SFBUF_GetTermFlg(self, *(void**)((u8*)self + 0x2208)) == 1) {
+        SFTRN_SetTermFlg(self, 8, 1);
+    }
+    if (SFTRN_GetPrepFlg(self, 8) != 1 &&
+        SFBUF_GetPrepFlg(self, *(void**)((u8*)self + 0x2208)) == 1) {
+        SFTRN_SetPrepFlg(self, 8, 1);
+    }
+    return 0;
+}
 
 
 s32 SFUO_Create(void* self) {

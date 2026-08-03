@@ -2137,15 +2137,42 @@ through a cast so the TU compiles today and keeps matching after the stub
 lands: `int stat = ((int (*)(void *))mwPlyGetRareStat)(h);` — emits a plain
 `bl mwPlyGetRareStat` with the correct argument registers.
 
-#### 7i. MWCC int→double magic pool (`0x43300000`) reloc drift — unfixable in high-level C
+#### 7i. MWCC int→double magic pool (`0x43300000`) reloc drift — fixable by manual bit construction
 
-`(double)(s32)x` requires the `0x4330000000000000` magic; MWCC pools it as a
-TU-local `@N` label while retail references the shared data blob
-(`lbl_eu_8051B198`). The `lis`/`lfd` pair then differ only by reloc symbol
-name (~98.7% fuzzy; pure reg-swap on the base register). No high-level source
-fix exists (manual bit construction needs its own constants); acceptance
-requires the EQUIVALENT_MATCH path (SMT + certified callee chain) or objdiff
-`functionRelocDiffs=data_value`. See `MWSFPLY_SetFlowLimit` (us-803a523c).
+`(double)(s32)x` requires the `0x4330000080000000` magic (signed-conversion
+trick). The shared retail blob `lbl_eu_8051B198` (0x8051B198) holds
+4503601774854144 = `0x4330000080000000` — **not** `0x4330000000000000`;
+that value is only the `lis` immediate high word, and the `x ^ 0x80000000`
+low word is why retail emits `xoris`. MWCC pools the builtin conversion's
+magic as a TU-local `@N` label while retail references the shared blob, so
+the `lis`/`lfd` pair differs only by reloc symbol name (~98.7% fuzzy; pure
+reg-swap on the base register). A **high-level fix exists** — build the bit
+pattern manually and subtract the retail blob as an extern double
+(statement order matters: the `x ^ 0x80000000` word first, then
+`0x43300000`, otherwise MWCC hoists `lis 0x4330` above the extern `lis`s):
+
+```c
+extern double lbl_eu_8051B198;
+double conv(s32 x) {
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)x ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return u.d - lbl_eu_8051B198;
+}
+```
+
+Verified with the project's pinned toolchain: under `Wii/1.1 -ipa file`
+this reproduces retail's exact instruction schedule with the correct
+`lbl_eu_8051B198` / `lbl_eu_8051B190` relocs (pure reg-swap). Caveat: under
+the CriWare units' pinned compiler (`GC/3.0a5.2 -lang=c99 -sdata 0 -sdata2
+0 -use_lmw_stmw on`, no `-ipa`), the manual pattern schedules the magic
+`lfd` three slots later than the builtin conversion — static 69.6% vs the
+builtin's 98.696% on `MWSFPLY_SetFlowLimit` (us-803a523c, applied in
+`libs/CriWare/src/sofdec/mwply/mwsfdply.c`). Prefer the builtin
+`(double)(s32)x` when the unit compiles with GC/3.0a5.2 and accept the
+reloc-name-only drift via the EQUIVALENT_MATCH path (SMT + certified callee
+chain) or objdiff `functionRelocDiffs=data_value`; use the manual pattern
+when the toolchain reproduces retail's early-magic schedule.
 
 ### 7j. CSchedule runtime TU — PS vector subtraction and same-TU inlining
 
@@ -7615,7 +7642,8 @@ color rotation, insensitive to declaration order/byte type.
 `MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_8051B190 * (double)(s32)*(s32*)(h+0x50C)))`
 — the (s32)→double conversion uses the 0x4330+xoris trick. Retail's 2^31-base
 in r7 + xoris into a fresh r6; decomp r6 + in-place xoris r5. Size-exact, 0
-structural, 4 reg_swap — pure colors.
+structural, 4 reg_swap — pure colors. **Superseded by §7i** (reloc-name
+solution + current state: `lbl_eu_8051B190`/`lbl_eu_8051B198`).
 
 ### CriWare sfd_mpv SFMPV_Destroy — 93.9% (store/li order wall, recurring)
 The recurring [li r0,0; stw *out; li r3,0] vs [li r0,0; li r3,0; stw] — the
@@ -7815,3 +7843,10 @@ keeps the loops (the for-loops unroll); residual: the addic.+bne vs the
 mtctr+bdnz + the fused lwzu/stwu — the MPS_GetPicAtr wall family. The state==2
 short-circuit (MPVM2V_DecodeFrm) and the init-call sequence
 (InitOutRfb/InitMcOiRt/SetCcnt/StartFrame x2/DecPicture/EndOfFrame) match.
+
+### CriWare sfd_uo SFUO_ExecServer — FULL_MATCH (return-0 + flag-sync)
+The double flag-sync ([TRN_GetTermFlg != 1 && BUF_GetTermFlg == 1] →
+SetTermFlg; same for PrepFlg) + the [return 0] (the void version lost the
+final [li r3,0]). Also SFD_SetUsrSj 53.1% (the [e = base + a*16] must be
+computed AFTER the ==8 error check — the retail keeps the [2208/2200] loads
+before the branch and the rlwinm/add in the main path).

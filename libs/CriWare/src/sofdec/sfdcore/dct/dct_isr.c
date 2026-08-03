@@ -42,7 +42,6 @@ void DCT_IsrInit(void) {
     initSparseTbl();
 }
 
-extern char lbl_eu_80604CC8[];
 void* memcpy(void* dst, const void* src, size_t n);
 void DCT_IsrInitScaleTbl(void* dst) {
     memcpy(dst, lbl_eu_80604CC8, 0x80);

@@ -51,7 +51,33 @@ void AHXDCD_SetBsr(void* self, void* bsr) {
 
 void AHXDCD_DecodeHeader() {}
 
-void AHXDCD_DecodeFrmHdr() {}
+extern s32 AHXBSR_SearchSync(s32 a);
+extern s32 AHXBSR_IsDataAvailable(s32 a, s32 b);
+extern s32 AHXDCD_DecodeBhdr(s32 a, void* b);
+extern void AHXDCD_BhdrToDinf(void* self, s32* out);
+extern s32 AHXDCD_DecodeBitalloc2(s32 a, void* b, void* c);
+extern s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e);
+
+s32 AHXDCD_DecodeFrmHdr(void* self) {
+    s32 r;
+    if (*(s32*)((u8*)self + 848) == 0)
+        return -1;
+    r = AHXBSR_SearchSync(*(s32*)((u8*)self + 848));
+    if (r == -1)
+        return -1;
+    if (r != 1)
+        return 1;
+    if (AHXBSR_IsDataAvailable(*(s32*)((u8*)self + 848), 20) == 0)
+        return -1;
+    if (AHXDCD_DecodeBhdr(*(s32*)((u8*)self + 848), (u8*)self + 856) <= 0)
+        return -1;
+    AHXDCD_BhdrToDinf((s32*)((u8*)self + 856), (s32*)((u8*)self + 904));
+    AHXDCD_DecodeBitalloc2(*(s32*)((u8*)self + 848), (u8*)self + 904, (u8*)self + 964);
+    AHXDCD_DecodeScale2(*(s32*)((u8*)self + 848), (u8*)self + 904, (u8*)self + 964, (u8*)self + 1220, (u8*)self + 1476);
+    *(u8*)((u8*)self + 841) = 1;
+    *(s32*)((u8*)self + 844) = 0;
+    return 1;
+}
 
 typedef struct AHXDCDState {
     u8 _00[0x349];
@@ -104,7 +130,6 @@ void AHXDCD_SetExtPrm(void* self, void* prm) {
     memcpy((u8*)self + 0xbc4, prm, 8);
 }
 
-void AHXDCD_DecodeBhdr() {}
 
 extern u32 AHXCMN_SetAlcInfTbl(s32 a, void* b);
 extern u8 lbl_eu_80565AD8[];
@@ -133,7 +158,5 @@ void AHXDCD_BhdrToDinf(void* self, s32* out) {
     }
 }
 
-void AHXDCD_DecodeBitalloc2() {}
 
-void AHXDCD_DecodeScale2() {}
 

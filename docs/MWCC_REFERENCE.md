@@ -7279,3 +7279,15 @@ From matching `WPADRead` (FULL_MATCH), `WPADiCopyOut` (FULL_MATCH), `WPADiExclud
    structural for ExcludeButton; 2 prologue spill-order artifacts for
    Disconnect). Accept via `--smt` out-of-band; do not chase the allocation
    from C (5+ variants all reproduce the same colors).
+
+### CriWare ahx_dcd AHXDCD_DecodeFrmHdr — cross-call address CSE wall (3.1%, +16B)
+`AHXDCD_DecodeFrmHdr`: the decode dispatch (SearchSync/IsDataAvailable/BhdrToDinf/
+Bitalloc2/Scale2 chain). The `(u8*)self + 904` / `+ 964` / `+ 856` addresses are
+each used in 2-3 consecutive calls; MWCC CSEs them into callee-saved r30/r31
+(surviving the calls → 3 saved regs, 32-byte frame) while retail recomputes the
+`addi rX, r31, off` per call (1 saved reg, 16-byte frame). Syntax splits that
+break CSE elsewhere (`&((s32*)self)[226]`, `(u8*)((u32)self + 904)`,
+offset-first/paren assoc, `&((u8*)self)[904]`) each break ONE occurrence; the
+remaining uses still unify (MWCC's value numbering folds all address forms).
+Same family as the gcci gcCiOpen loop-base CSE. Semantic form kept; size 0x100
+vs 0xE4.

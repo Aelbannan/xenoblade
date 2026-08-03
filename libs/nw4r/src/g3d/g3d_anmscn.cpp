@@ -171,12 +171,18 @@ namespace nw4r {
 namespace g3d {
 
 void AnmScnRes::G3dProc(u32 task, u32 arg, void* pArg) {
-    if (task == G3DPROC_ATTACH_PARENT) {
-        SetParent(static_cast<G3dObj*>(pArg));
-    } else if (task == G3DPROC_UPDATEFRAME) {
+    switch (task) {
+    case G3DPROC_UPDATEFRAME:
         UpdateFrame();
-    } else if (task == G3DPROC_DETACH_PARENT) {
+        break;
+    case G3DPROC_DETACH_PARENT:
         SetParent(NULL);
+        break;
+    case G3DPROC_ATTACH_PARENT:
+        SetParent(static_cast<G3dObj*>(pArg));
+        break;
+    default:
+        break;
     }
 }
 

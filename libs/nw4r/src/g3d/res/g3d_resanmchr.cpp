@@ -912,6 +912,68 @@ void* ResAnmChr::GetResUserData() {
 } // namespace g3d
 } // namespace nw4r
 
-void GetMtx__Q34nw4r3g3d12ChrAnmResultCFPQ34nw4r4math5MTX34(){}
-void SetRotateDeg__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}
-void SetTranslate__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}
+namespace nw4r {
+namespace g3d {
+
+void ChrAnmResult::GetMtx(math::MTX34* pMtx) const {
+    GetRotTrans(pMtx);
+
+    if (!(flags & FLAG_SCALE_ONE)) {
+        math::MTX34Scale(pMtx, pMtx, &s);
+    }
+}
+
+void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
+    if (pRotate->x == 0.0f && pRotate->y == 0.0f && pRotate->z == 0.0f) {
+        u32 flag = FLAG_TRANS_ZERO;
+
+        if (flags & FLAG_ROT_ZERO) {
+            flag |= FLAG_ROT_TRANS_ZERO;
+
+            if (flags & FLAG_SCALE_ONE) {
+                flag |= FLAG_MTX_IDENT;
+            }
+        }
+
+        flags |= flag;
+
+        math::MTX34Identity(&rt);
+    } else {
+        math::VEC3 rot = *pRotate * 0.017453292f; // DEG_TO_RAD
+
+        math::MTX34RotXYZFIdx(&rt, rot.x, rot.y, rot.z);
+
+        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_TRANS_ZERO);
+
+        rawR = *pRotate;
+    }
+
+    flags |= FLAG_ROT_RAW_FMT;
+}
+
+void ChrAnmResult::SetTranslate(const math::VEC3* pTrans) {
+    if (pTrans->x == 0.0f && pTrans->y == 0.0f && pTrans->z == 0.0f) {
+        u32 flag = FLAG_TRANS_ZERO;
+
+        if (flags & FLAG_ROT_ZERO) {
+            flag |= FLAG_ROT_TRANS_ZERO;
+
+            if (flags & FLAG_SCALE_ONE) {
+                flag |= FLAG_MTX_IDENT;
+            }
+        }
+
+        flags |= flag;
+    } else {
+        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_TRANS_ZERO);
+    }
+
+    rt._03 = pTrans->x;
+    rt._13 = pTrans->y;
+    rt._23 = pTrans->z;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+

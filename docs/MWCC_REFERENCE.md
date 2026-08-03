@@ -7584,3 +7584,10 @@ return-0's li is hoisted before the final store. Volatile pointer and z-local
 variants do NOT reorder it (unlike adxm_unlock's subi/reload case). This wall
 appears in ~8 functions now: SFVOM_GetRead, mpv_get, VER2_Anly*, SFMPS_Init,
 SFMPV_Destroy.
+
+### CriWare sfd_adxt SFADXT_Start — FULL_MATCH (declaration-order color fix)
+Declaring the second-derived pointer FIRST (`void *adxt;` then `void *w =
+*(handle+0x20ac); adxt = *(void**)w;`) swapped the r4/r5 colors to match the
+retail ([lwz r5, 8364; lwz r4, 0(r5)]). Reusable: when a load-chain's register
+colors rotate, reorder the DECLARATIONS (not the statements) — the MWCC
+allocates the caller-saved colors by declaration order.

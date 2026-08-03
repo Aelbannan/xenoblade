@@ -385,9 +385,11 @@ extern void ADXT_Pause(void *, int);
 extern void SFTST_Pause(void *, u32);
 
 s32 SFADXT_Start(void *handle) {
+    void *adxt;
     void *w = *(void **)((u8 *)handle + 0x20ac);
-    void *adxt = *(void **)((u8 *)w);
     void *tim = (u8 *)handle + 0x1098;
+
+    adxt = *(void **)((u8 *)w);
 
     *(s32 *)((u8 *)w + 0x2c) = 0;
     if (*(s32 *)((u8 *)handle + 0x5c) != 1) {

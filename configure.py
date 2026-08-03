@@ -953,24 +953,24 @@ config.libs = [
     DolphinLib(
         "bte",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c", extra_cflags=["-func_align 16"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c", extra_cflags=["-func_align 16"]),
             # Default -func_align 16: inter-fn pad + first-loop nop in GKI_update_timer_list (8/8 FULL).
             Object(MatchingFor("us"), "RVL_SDK/src/revolution/bte/gki/gki_time.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_ppc.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/gki/gki_ppc.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/hci/hcisu_h2.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/hci/uusb_ppc.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_cfg.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_cfg.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_cfg.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/main/bte_hcisu.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_hcisu.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_init.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/main/bte_logmsg.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/main/bte_main.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/main/btu_task1.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_logmsg.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_main.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/main/btu_task1.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bd.c", extra_cflags=["-func_align 16"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
@@ -983,7 +983,7 @@ config.libs = [
             # bta_dm_api.c: retail bte compiled with GC/3.0a5.2 (see bta_dm_act /
             # btm_devctl notes); Wii/1.1 schedules mr-before-sth after the event
             # store and keeps the AddDevice loop counter in a volatile reg.
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
@@ -991,58 +991,58 @@ config.libs = [
             # chains instead of jump tables and schedules li/stb differently.
             # -func_align 4 matches the bte family layout (retail packed, not
             # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             # btm_acl.c: retail bte built with GC/3.0a5.2 (see btm_devctl / bta_dm_act
             # notes); -func_align 4 matches the bte btm family (btm_sec/discovery)
             # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # GC/3.0a3.4 reproduces the BTM_StartInquiry retail constant-hoist (li r4,1 into the inqparms copy) byte-for-byte; a5.2 allocates r4 as the copy-pair reg and cannot hoist (MWCC_REFERENCE constant-hoist note). -func_align 4 / -ipa off avoid the scheduling NOPs before mtctr-counted loops.
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte family is packed (no 16-byte fn padding); -func_align 4 packs .text into the split budget (MWCC_REFERENCE btm_devctl/btm_inq notes)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte family is packed (no 16-byte fn padding); -func_align 4 packs .text into the split budget (MWCC_REFERENCE btm_devctl/btm_inq notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 removes the spurious ori nop before mtctr-counted loops and matches the bte btm family layout (MWCC_REFERENCE btm_sco notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently; -ipa file (default) keeps forward TU function/pool emission vs retail (dropping -ipa off; see l2c_api.c/hidh_api.c MWCC_REFERENCE)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
-                                                                                                                                                                                                            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC/3.0a5.2 (bte family, see bta_dm_act/btm_devctl notes); volatile handle keeps the failure-path handle=0 store so the 0 lives in r31 across calls — FULL_MATCH
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
+                                                                                                                                                                                                            Object(Matching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC/3.0a5.2 (bte family, see bta_dm_act/btm_devctl notes); volatile handle keeps the failure-path handle=0 store so the 0 lives in r31 across calls — FULL_MATCH
             # gap_api.c: retail bte compiled with GC/3.0a5.2 (bte family, see
             # bta_dm_act/btm_devctl notes); Wii/1.1 floats li-before-addi on the
             # callback/trace stores in GAP_Init (KB ref:51910fc0cc).
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c", mw_version="GC/3.0a5.2"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_dm_act/btm_devctl notes)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c", mw_version="GC/3.0a5.2"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_dm_act/btm_devctl notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c", mw_version="GC/3.0a5.2", extra_cflags=["-O4", "-func_align 4"]),  # retail prologue scheme: individual stw for <=4 saved regs, _savegpr for >=5 (see MWCC_REFERENCE); -O4,s would emit _savegpr for 3-4 regs, breaking inquiry/hold_mode/park_mode/set_host_buf_size. Tradeoff: copy-loop funcs (write_cur_iac_lap) unroll under -O4.
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_hh_act/btm_devctl notes); Wii/1.1 lowers the {0,2,3} set_now dispatch to a linear cmpwi chain instead of the retail cmpwi/bge tree; -func_align 4 packs the unit .text into the retail split (retail packed, not 16-aligned)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see hidh_conn.c note); -func_align 4 removes the scheduling ori r0,r0,0 nop before mtctr-counted loops; -ipa off reverses the TU function/pool emission order vs retail (pooled-string immediates in HID_HostWriteDev / HID_HostSetSecurityLevel shift), so the unit needs -ipa file (forward pool) — same fix as l2c_api.c
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 lowers the snd_data switch with a subi/cmpli range test instead of the retail cmpwi/bge chain; -func_align 4 removes the scheduling nop before mtctr-counted loops (see MWCC_REFERENCE btm_inq/btm_sec notes)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_csm); -ipa off reverses the TU string-pool emission order vs retail (pooled-string immediates in DataWrite/Register/ConnectReq/ConnectRsp shift), so the unit needs -ipa file (forward pool) — verified 0 regressions on all 12 matched functions; Wii/1.1 schedules mr-before-stb floats on the ConfigReq fcr_present store (MWCC_REFERENCE 7c2/gap_conn)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_hh_act/btm_devctl notes); Wii/1.1 lowers the {0,2,3} set_now dispatch to a linear cmpwi chain instead of the retail cmpwi/bge tree; -func_align 4 packs the unit .text into the retail split (retail packed, not 16-aligned)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see hidh_conn.c note); -func_align 4 removes the scheduling ori r0,r0,0 nop before mtctr-counted loops; -ipa off reverses the TU function/pool emission order vs retail (pooled-string immediates in HID_HostWriteDev / HID_HostSetSecurityLevel shift), so the unit needs -ipa file (forward pool) — same fix as l2c_api.c
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # FLAG TEST a3.4 (see btm_devctl/btm_inq); Wii/1.1 lowers the snd_data switch with a subi/cmpli range test instead of the retail cmpwi/bge chain; -func_align 4 removes the scheduling nop before mtctr-counted loops (see MWCC_REFERENCE btm_inq/btm_sec notes)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_csm); -ipa off reverses the TU string-pool emission order vs retail (pooled-string immediates in DataWrite/Register/ConnectReq/ConnectRsp shift), so the unit needs -ipa file (forward pool) — verified 0 regressions on all 12 matched functions; Wii/1.1 schedules mr-before-stb floats on the ConfigReq fcr_present store (MWCC_REFERENCE 7c2/gap_conn)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_link); Wii/1.1 lowers dense event switches to signed cmpwi equality chains instead of the retail subi/cmplwi jump table and selects SDA21 addressing for l2cb (see MWCC_REFERENCE bta_hh/bte units)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family, packed (no 16-byte fn padding); default -func_align 16 blows the split; -ipa off reversed TU function/pool emission vs retail (pooled-string immediates in check_send_pkts/timeout shifted), so the unit needs default -ipa file (forward pool) — same fix as l2c_api.c/hidh_api.c (see MWCC_REFERENCE §8 hidh_api)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_csm/l2c_utils); Wii/1.1 lowers the sparse event switch to a linear cmpwi chain (retail: cmpwi/bge tree) and schedules the held-packets decrement store-before-test; -func_align 4 packs the unit (no 16-byte fn padding). Unit .text is 8 bytes over the split until process_l2cap_cmd is matched (currently +8 under this compiler)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq); retail l2c_utils is 4-aligned (zero fn padding) — -func_align 16 inserts alignment ori nops (l2cu_allocate_lcb/l2cu_lcb_disconnecting) and 160B of padding, blowing the split once echo loops are inlined; Wii/1.1 merges the indexed pool load into lbzu (l2cu_find_ccb_by_cid) and inserts an mtctr-loop nop (l2cu_lcb_disconnecting)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq); retail l2c_utils is 4-aligned (zero fn padding) — -func_align 16 inserts alignment ori nops (l2cu_allocate_lcb/l2cu_lcb_disconnecting) and 160B of padding, blowing the split once echo loops are inlined; Wii/1.1 merges the indexed pool load into lbzu (l2cu_find_ccb_by_cid) and inserts an mtctr-loop nop (l2cu_lcb_disconnecting)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail rfcomm built packed with GC 3.0a-family (see port_utils.c / rfc_utils.c); -ipa off reversed the TU function/pool emission order vs retail (pooled-string immediates in PORT_PortNegCnf / PORT_FlowInd shift by 0x40), so the unit needs -ipa file (forward pool) — same fix as hidh_api.c §8 / l2c_api.c; Wii/1.1 floats stb/rlwinm order in PORT_ControlCnf/PORT_LineStatusInd (retail test-before-store)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built packed with GC 3.0a-family (see bta_hh_api/btm_inq); Wii/1.1 schedules the port_find_dlci_port return mr after the stb (retail mr-before-stb) and inflates select_mtu/flow_control_peer; -ipa off reversed the TU string pool (MWCC_REFERENCE l2c_api / hidh_api)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail rfcomm built with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 schedules the rfcomm_l2cap_if_init callback-struct stores with base-lis-first and an early stwu (retail hoists all lis, then stwu merges base+0x14)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail pool forward-ordered: -ipa off reverses the -str reuse string pool (MWCC_REFERENCE l2c_api / hidh_api)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl); -func_align 4 removes inter-fn padding that blows the split (rfc_port_if pattern)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split; GC/3.0a3.4 reproduces the RFCOMM_FlowReq call-arg schedule (12/12 FULL_MATCH, split 0x52C exact)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 + -func_align 16 insert ori r0,r0,0 before the rfc_send_test shift loop and float mr/li arg setup in rfc_send_fcon/fcoff
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built packed with GC 3.0a-family (see bta_hh_api/btm_inq); Wii/1.1 schedules the port_find_dlci_port return mr after the stb (retail mr-before-stb) and inflates select_mtu/flow_control_peer; -ipa off reversed the TU string pool (MWCC_REFERENCE l2c_api / hidh_api)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail rfcomm built with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 schedules the rfcomm_l2cap_if_init callback-struct stores with base-lis-first and an early stwu (retail hoists all lis, then stwu merges base+0x14)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail pool forward-ordered: -ipa off reverses the -str reuse string pool (MWCC_REFERENCE l2c_api / hidh_api)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl); -func_align 4 removes inter-fn padding that blows the split (rfc_port_if pattern)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split; GC/3.0a3.4 reproduces the RFCOMM_FlowReq call-arg schedule (12/12 FULL_MATCH, split 0x52C exact)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 + -func_align 16 insert ori r0,r0,0 before the rfc_send_test shift loop and float mr/li arg setup in rfc_send_fcon/fcoff
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # FLAG TEST a3.4 -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 -func_align 16 inserts an alignment ori r0,r0,0 before the SDP_FindServiceInDb sub-attr loop
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 -func_align 16 + IPA inserts an alignment ori r0,r0,0 before the ARRAY_TO_STREAM loop in sdpu_build_uuid_seq
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 floats mr-before-stb call-arg scheduling on sdp_connect_ind cback-dispatch stores (KB ref:51910fc0cc)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 lowers the 3-case PDU dispatch switch to an equality chain instead of retail's compare tree
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA (see MWCC_REFERENCE btm_inq / l2c_utils)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA (see MWCC_REFERENCE btm_inq / l2c_utils)
         ],
     ),
     DolphinLib(
@@ -1103,7 +1103,7 @@ config.libs = [
     DolphinLib(
         "exi",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/exi/EXIBios.c", extra_cflags=["-schedule off"]),  # retail EXIBios emits strict source-order code (see MWCC_REFERENCE exi/EXIBios note); -schedule off makes all 17 matched fns byte-identical
+            Object(Matching, "RVL_SDK/src/revolution/exi/EXIBios.c", extra_cflags=["-schedule off"]),  # retail EXIBios emits strict source-order code (see MWCC_REFERENCE exi/EXIBios note); -schedule off makes all 17 matched fns byte-identical
             Object(Matching, "RVL_SDK/src/revolution/exi/EXIUart.c"),
             Object(Matching, "RVL_SDK/src/revolution/exi/EXICommon.c"),
         ],
@@ -1117,7 +1117,7 @@ config.libs = [
     DolphinLib(
         "gx",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/gx/GXInit.c"),
+            Object(Matching, "RVL_SDK/src/revolution/gx/GXInit.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/gx/GXFifo.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXAttr.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXMisc.c"),
@@ -1142,28 +1142,28 @@ config.libs = [
         "objects": [
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMFrameController.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMAnmController.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMController.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMController.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMAxSound.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMCommon.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMCommon.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMBase.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation.cpp"),
             Object(
                 Matching,
                 "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
                 mw_version = "Wii/1.0a" if sdk_hbm_version > 20090303 else sdk_hbm_compiler), # Only matches on 1.0a in EU/US
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp", extra_cflags=["-func_align 4"]),  # retail lyt_picture packed at 4-byte fn alignment (Append at 0x250 after 0x24C); 16-align + 2 WIP bodies blows the split
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp", extra_cflags=["-func_align 4"]),  # retail lyt_picture packed at 4-byte fn alignment (Append at 0x250 after 0x24C); 16-align + 2 WIP bodies blows the split
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align + WIP DrawSelf dtor-call bloat overruns 0x1450
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharStrmReader.cpp"),
@@ -1175,8 +1175,8 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align + 2 unmatched PrintImpl bodies overruns 0x5470 (retail packed align 4; cf. lyt_picture/lyt_textBox)
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/mix.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/syn.c"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/mix.c"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/syn.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synctrl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synenv.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synmix.c"),
@@ -1215,7 +1215,7 @@ config.libs = [
         "mix",
         [
             Object(NonMatching, "RVL_SDK/src/revolution/mix/mix.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/mix/remote.c"),
+            Object(Matching, "RVL_SDK/src/revolution/mix/remote.c"),
         ],
     ),
     DolphinLib(
@@ -1232,7 +1232,7 @@ config.libs = [
         "nand",
         [
             Object(Matching, "RVL_SDK/src/revolution/nand/nand.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDOpenClose.c"),
+            Object(Matching, "RVL_SDK/src/revolution/nand/NANDOpenClose.c"),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCore.c"),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCheck.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDLogging.c"),
@@ -1269,11 +1269,11 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/os/__start.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSPlayRecord.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSStateFlags.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/OSNet.c"),
+            Object(Matching, "RVL_SDK/src/revolution/os/OSNet.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSNandbootInfo.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/os/OSPlayTime.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSCrc.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/OSLaunch.c"),
+            Object(Matching, "RVL_SDK/src/revolution/os/OSLaunch.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/__ppc_eabi_init.c"),
         ],
     ),
@@ -1331,7 +1331,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPAD.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPADHIDParser.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPADEncrypt.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/wpad/WPADMem.c"),
+            Object(Matching, "RVL_SDK/src/revolution/wpad/WPADMem.c"),
             Object(Matching, "RVL_SDK/src/revolution/wpad/debug_msg.c"),
         ],
     ),

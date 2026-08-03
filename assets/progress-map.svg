@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2400" height="160" viewBox="0 0 2400 160" font-family="ui-sans-serif, system-ui, sans-serif">
 <text x="0" y="20" font-size="17" font-weight="600" fill="#24292f">Xenoblade Chronicles (Wii) — code section progress</text>
-<text x="2400" y="20" font-size="14" fill="#57606a" text-anchor="end">8824/19672 accepted (44.9%)</text>
+<text x="2400" y="20" font-size="14" fill="#57606a" text-anchor="end">8828/19672 accepted (44.9%)</text>
 <rect x="0" y="40" width="2400" height="64" fill="#ffffff" stroke="#57606a" stroke-width="1"/>
 <rect x="0" y="40" width="1" height="64" fill="#1f883d"/>
 <rect x="4" y="40" width="1" height="64" fill="#1f883d"/>
@@ -1598,7 +1598,7 @@
 <rect x="1864" y="40" width="1" height="64" fill="#1f883d"/>
 <rect x="1865" y="40" width="1" height="64" fill="#1f883d"/>
 <rect x="1866" y="40" width="1" height="64" fill="#1f883d"/>
-<rect x="1867" y="40" width="1" height="64" fill="#6e7681"/>
+<rect x="1867" y="40" width="1" height="64" fill="#1f883d"/>
 <rect x="1868" y="40" width="1" height="64" fill="#6e7681"/>
 <rect x="1870" y="40" width="1" height="64" fill="#1f883d"/>
 <rect x="1871" y="40" width="1" height="64" fill="#1f883d"/>
@@ -2123,11 +2123,11 @@
 <text x="0" y="128" font-size="11" fill="#57606a" text-anchor="start">0x80004000</text>
 <text x="2400" y="128" font-size="11" fill="#57606a" text-anchor="end">0x804F9FA4</text>
 <rect x="0" y="136" width="12" height="12" rx="2" fill="#1f883d"/>
-<text x="18" y="147" font-size="12" fill="#24292f">FULL_MATCH · 8589</text>
+<text x="18" y="147" font-size="12" fill="#24292f">FULL_MATCH · 8593</text>
 <rect x="146.8" y="136" width="12" height="12" rx="2" fill="#0969da"/>
 <text x="164.8" y="147" font-size="12" fill="#24292f">EQUIVALENT_MATCH · 235</text>
 <rect x="329.6" y="136" width="12" height="12" rx="2" fill="#d4a72c"/>
 <text x="347.6" y="147" font-size="12" fill="#24292f">in progress · 1965</text>
 <rect x="483.6" y="136" width="12" height="12" rx="2" fill="#6e7681"/>
-<text x="501.6" y="147" font-size="12" fill="#24292f">not started · 8883</text>
+<text x="501.6" y="147" font-size="12" fill="#24292f">not started · 8879</text>
 </svg>

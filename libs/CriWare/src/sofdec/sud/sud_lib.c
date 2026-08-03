@@ -29,4 +29,21 @@ s32 SUD_AnalyTypeCcs(const char* buf, s32 len) {
     return strncmp(buf + 0x13, lbl_eu_8051D47C + 0x17, 1) == 0 ? 1 : 0;
 }
 
-void SUD_SearchSudDat() {}
+s32 SUD_SearchSudDat(void* data, void* id, s32* out1, s32* out2) {
+    const u8* p = (const u8*)lbl_eu_8051D47C;
+    s32 i;
+    *out1 = 0;
+    *out2 = 0;
+    if (data == NULL)
+        return 0;
+    if ((s32)id > 0)
+        return 0;
+    for (i = 0; i < (s32)data; i++) {
+        if (memcmp(p, p + 0x1f, 1) == 0 && memcmp(p, id, 8) == 0) {
+            *out1 = i;
+            *out2 = (s32)(i + 1) & 1;
+        }
+        p++;
+    }
+    return 0;
+}

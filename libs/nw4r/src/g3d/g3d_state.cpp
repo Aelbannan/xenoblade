@@ -58,6 +58,32 @@ const math::MTX33* G3DState::GetViewNrmMtxPtr(u32 idx) {
     return reinterpret_cast<const math::MTX33*>(lbl_eu_8061FAB8);
 }
 
+void G3DState::SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
+                                     const math::MTX33* pViewNrmMtxArray,
+                                     const math::MTX34* pViewEnvTexMtxArray) {
+    *reinterpret_cast<const math::MTX34**>(lbl_eu_8061A750) = pViewPosMtxArray;
+    *reinterpret_cast<const math::MTX33**>(lbl_eu_8061A750 + 4) = pViewNrmMtxArray;
+    *reinterpret_cast<const math::MTX34**>(lbl_eu_8061A750 + 8) = pViewEnvTexMtxArray;
+
+    if (pViewPosMtxArray != NULL) {
+        GXSetArray(GX_POS_MTX_ARRAY, pViewPosMtxArray, 0x30);
+    }
+
+    math::MTX33* pNrm =
+        *reinterpret_cast<math::MTX33**>(lbl_eu_8061A750 + 4);
+
+    if (pNrm != NULL) {
+        GXSetArray(GX_NRM_MTX_ARRAY, pNrm, 0x24);
+    }
+
+    math::MTX34* pEnv =
+        *reinterpret_cast<math::MTX34**>(lbl_eu_8061A750 + 8);
+
+    if (pEnv != NULL) {
+        GXSetArray(GX_TEX_MTX_ARRAY, pEnv, 0x30);
+    }
+}
+
 void G3DState::SetFog(Fog fog, int id) {
     FogData* pData = fog.ptr();
 

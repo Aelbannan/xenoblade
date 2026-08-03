@@ -938,10 +938,6 @@ DECOMP_INLINE void __WPADShutdown(void) {
 }
 
 
-BOOL WPADStartSimpleSync(void) {
-    return WUDStartSyncSimple();
-}
-
 BOOL WPADStartFastSimpleSync(void) {
     return WUDStartFastSyncSimple();
 }
@@ -950,26 +946,13 @@ BOOL WPADStopSimpleSync(void) {
     return WUDStopSyncSimple();
 }
 
-BOOL WPADStartClearDevice(void) {
-    return WUDStartClearDevice();
-}
-
 WPADSyncDeviceCallback
 WPADSetSimpleSyncCallback(WPADSyncDeviceCallback pCallback) {
     return WUDSetSyncSimpleCallback(pCallback);
 }
 
-WPADClearDeviceCallback
-WPADSetClearDeviceCallback(WPADClearDeviceCallback pCallback) {
-    return WUDSetClearDeviceCallback(pCallback);
-}
-
 void WPADRegisterAllocator(WPADAllocFunc pAllocFunc, WPADFreeFunc pFreeFunc) {
     WUDRegisterAllocator(pAllocFunc, pFreeFunc);
-}
-
-u32 WPADGetWorkMemorySize(void) {
-    return WUDGetAllocatedMemSize();
 }
 
 WPADLibStatus WPADGetStatus(void) {
@@ -2260,6 +2243,7 @@ s32 WPADControlDpd(s32 chan, u32 command, WPADCallback pCallback) {
 
         if (__CanPushCmdQueue(&p->stdCmdQueue, 8)) {
             p->pendingDpdCommand = command;
+            p->dpdBusy = 1;
 
             WPADiSendEnableDPD(&p->stdCmdQueue, TRUE, NULL);
             WPADiSendDPDCSB(&p->stdCmdQueue, TRUE, NULL);

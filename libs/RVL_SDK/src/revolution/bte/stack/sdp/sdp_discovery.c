@@ -176,7 +176,6 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
     UINT8 flag;
     UINT32 size;
     UINT32 value;
-    INT32 i;
 
     type_byte = *p;
     flag = nest_level & 0x80;
@@ -193,7 +192,7 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
 
     p_attr = (tSDP_DISC_ATTR *)p_db->p_free_mem;
     p_attr->attr_id = attr_id;
-    p_attr->attr_len_type = (UINT16)((type << 12) | (UINT16)len);
+    p_attr->attr_len_type = (UINT16)((UINT16)len | (type << 12));
     p_attr->p_next_attr = NULL;
 
     switch (type) {
@@ -234,13 +233,14 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
         case 4:
             p_attr->attr_value.v.u32 =
                 (UINT32)(((UINT32)p_val[0] << 24) + ((UINT32)p_val[1] << 16)) +
-                ((UINT32)((UINT32)p_val[2] << 8) + p_val[3]);
+                (p_val[3] + (UINT32)((UINT32)p_val[2] << 8));
             p_val += 4;
             break;
         default:
             {
                 UINT8 *p_dst = p_attr->attr_value.v.array;
-                for (i = 0; i < (INT32)len; i++) {
+                INT32 j;
+                for (j = 0; j < (INT32)len; j++) {
                     *p_dst++ = *p_val++;
                 }
             }
@@ -287,7 +287,8 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
                 }
             } else {
                 UINT8 *p_dst = p_attr->attr_value.v.array;
-                for (i = 0; i < (INT32)len; i++) {
+                INT32 j;
+                for (j = 0; j < (INT32)len; j++) {
                     *p_dst++ = *p_val++;
                 }
             }
@@ -330,7 +331,8 @@ UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
     case 8:
         {
             UINT8 *p_dst = p_attr->attr_value.v.array;
-            for (i = 0; i < (INT32)len; i++) {
+            INT32 j;
+            for (j = 0; j < (INT32)len; j++) {
                 *p_dst++ = *p_val++;
             }
         }
@@ -475,30 +477,29 @@ UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end)
 }
 void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len)
 {
-    UINT8 *p_start;
+    UINT8 *p_param_len;
     UINT8 *p;
     UINT8 *p_end;
-    UINT8 *p_param_len;
     UINT16 param_len;
     BOOLEAN cont_request_needed = FALSE;
     UINT8 type_byte;
     UINT32 attr_len;
 
     if (p_reply) {
-        p_start = p_reply + 6;
         param_len = (UINT16)((p_reply[4] << 8) + p_reply[5]);
+        p_reply += 6;
 
         if (p_ccb->list_len + param_len > SDP_MAX_LIST_BYTE_COUNT) {
             sdp_disconnect(p_ccb, SDP_INVALID_PDU_SIZE);
             return;
         }
 
-        memcpy(&p_ccb->rsp_list[p_ccb->list_len], p_start, param_len);
+        memcpy(&p_ccb->rsp_list[p_ccb->list_len], p_reply, param_len);
         p_ccb->list_len += param_len;
-        p_start += param_len;
+        p_reply += param_len;
 
-        if (*p_start) {
-            if (*p_start > SDP_MAX_CONTINUATION_LEN) {
+        if (*p_reply) {
+            if (*p_reply > SDP_MAX_CONTINUATION_LEN) {
                 sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
                 return;
             }
@@ -536,9 +537,9 @@ void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len
             p = sdpu_build_attrib_seq(p, NULL, 0);
         }
 
-        if (p_start) {
-            memcpy(p, p_start, *p_start + 1);
-            p += *p_start + 1;
+        if (p_reply) {
+            memcpy(p, p_reply, *p_reply + 1);
+            p += *p_reply + 1;
         } else {
             UINT8_TO_BE_STREAM(p, 0);
         }

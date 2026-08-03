@@ -695,12 +695,12 @@ void GetAnmResult_R(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
 
-    pResult->s.x = 1.0f;
-    pResult->s.y = 1.0f;
-    pResult->s.z = 1.0f;
+    pResult->s.x = 0.0f;
+    pResult->s.y = 0.0f;
+    pResult->s.z = 0.0f;
 
-    GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData, pNodeData, pAnmData,
-                   frame);
+    pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
+                              pNodeData, pAnmData, frame);
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 
@@ -747,8 +747,8 @@ void GetAnmResult_SR(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
     pAnmData = GetAnmScale(&pResult->s, pNodeData, pAnmData, frame);
 
-    GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData, pNodeData, pAnmData,
-                   frame);
+    pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
+                              pNodeData, pAnmData, frame);
 
     pResult->flags |= ChrAnmResult::FLAG_ROT_RAW_FMT;
 

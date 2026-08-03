@@ -21,23 +21,23 @@ typedef struct {
     /* 0x18 */ u32 fileSectors;
     /* 0x1C */ u32 bufFill;
     /* 0x20 */ u32 bufSize;
-    /* 0x24 */ u32 reqId;
-    /* 0x28 */ u32 rdAddr;
-    /* 0x2C */ u32 rdSize;
+    /* 0x24 */ u32 unk24;
+    /* 0x28 */ u32 reqId;
+    /* 0x2C */ u32 rdAddr;
     /* 0x30 */ u32 reqRdSize;
     /* 0x34 */ u32 eosPos;
     /* 0x38 */ u32 written;
-    /* 0x3C */ void* eosFunc;
-    /* 0x40 */ void* eosCtx;
-    /* 0x44 */ u32 sjBufSize;
-    /* 0x48 */ u8 pause;
-    /* 0x49 */ u8 openReq;
-    /* 0x4A */ u8 closing;
-    /* 0x4B */ u8 startPending;
-    /* 0x4C */ u8 stopReq;
-    /* 0x4D */ u8 opened;
-    /* 0x4E */ u8 pad[2];
-    /* 0x50 */ u32 retryCount;
+    /* 0x40 */ void* eosFunc;
+    /* 0x44 */ void* eosCtx;
+    /* 0x48 */ u32 sjBufSize;
+    /* 0x4C */ u8 pause;
+    /* 0x4D */ u8 openReq;
+    /* 0x4E */ u8 closing;
+    /* 0x4F */ u8 startPending;
+    /* 0x50 */ u8 stopReq;
+    /* 0x51 */ u8 opened;
+    /* 0x52 */ u8 pad[2];
+    /* 0x54 */ u32 retryCount;
     /* 0x54 */ void* fileName;
     /* 0x58 */ u32 fileSizeParam;
     /* 0x5C */ u32 seekPos;
@@ -676,7 +676,7 @@ epilogue:
     h->reqId = cvFsReqRd(h->fileHandle, sectorsAvail, tmp[0]);
     h->reqId = (h->reqId > 0) ? h->reqId : 0;
     h->rdAddr = tmp[0];
-    h->rdSize = tmp[1];
+    *(u32*)((u8*)h + 0x2C) = tmp[1];
 
     if (h->reqId <= 0) {
         /* Request failed — notify SJ */

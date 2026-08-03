@@ -7758,3 +7758,9 @@ the retail writes/reads [stw/lwz 40(r29)]). Residual 9 structural: the
 while-loop's extsb (retail sign-extends the stat byte even for ==1) and the
 loop's branch layout [lbz; extsb; cmpi; bne; lwz; cmpi; beq; b loop] vs decomp
 [lbz; cmpi; bne; lwz; cmpi; bne; bl].
+
+### CriWare adx_stmc struct — reqId@+0x28 (not +0x24)
+The handle layout has an unknown field at +0x24; reqId is at **+0x28**, rdAddr
+at +0x2C, reqRdSize at +0x30 (retail: [stw 40/44/48(rX)]). The original struct
+comments were 4 bytes off — fixing the struct made ADXSTM_Start AND Start2
+FULL_MATCH (the [h->reqId = 0; h->rdAddr = 0] stores now hit +0x28/+0x2C).

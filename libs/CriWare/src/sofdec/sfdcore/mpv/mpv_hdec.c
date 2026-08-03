@@ -71,7 +71,50 @@ void mpvhdec_AnalyUd() {}
 
 void mpvhdec_DecSeqUdsc() {}
 
-void MPV_GoNextDelimSj() {}
+typedef struct MpvSjChunk {
+    const u8* p;
+    s32 size;
+} MpvSjChunk;
+
+extern void SJ_SplitChunk(const void* src, int size, void* dst1, void* dst2);
+
+s32 MPV_GoNextDelimSj(void* self) {
+    MpvSjChunk st;
+    MpvSjChunk rest;
+    s32 ret;
+    for (;;) {
+        ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x18))(
+            self, 1, 0x7FFFFFFF, &st);
+        if (st.size < 4) {
+            ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
+                self, 1, &st);
+            ret = 0;
+            break;
+        }
+        {
+            s32 found = MPV_SearchDelim((const u8*)st.p, st.size, -1);
+            if (found == 0) {
+                SJ_SplitChunk(&st, st.size - 3, &st, &rest);
+                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x20))(
+                    self, 0, &st);
+                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
+                    self, 1, &rest);
+                continue;
+            }
+            {
+                s32 r = MPV_CheckDelim((const u8*)found);
+                SJ_SplitChunk(&st, found - (s32)(intptr_t)st.p, &st, &rest);
+                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x20))(
+                    self, 0, &st);
+                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)self + 0x1C))(
+                    self, 1, &rest);
+                ret = r;
+                break;
+            }
+        }
+    }
+    return ret;
+}
 
 void MPVHDEC_RecoverSj() {}
 

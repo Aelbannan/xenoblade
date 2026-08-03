@@ -1,9 +1,15 @@
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/res/g3d_resnode.h>
 #include <nw4r/g3d/g3d_calcview.h>
+#include <nw4r/g3d/g3d_workmem.h>
 
 namespace nw4r {
 namespace g3d {
+namespace detail {
+
+#include <nw4r/g3d/detail/g3d_transform_ps.inl>
+
+} // namespace detail
 
 // Maximum number of view matrices
 static const u32 G3D_CALCVIEW_MAX_MTX = 32;
@@ -629,19 +635,123 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
  * to compute view-space position, normal, and texture matrices.
  *
  ******************************************************************************/
+namespace {
+
+typedef void (*CalcBillboardFunc)(math::MTX34*, const math::MTX34*, bool,
+                                  const math::MTX34*, ResMdl, u32);
+
+const CalcBillboardFunc gCalcBillboardFuncTable[] = {
+    NULL,
+    Calc_BILLBOARD_STD,
+    Calc_BILLBOARD_PERSP_STD,
+    Calc_BILLBOARD_ROT,
+    Calc_BILLBOARD_PERSP_ROT,
+    Calc_BILLBOARD_Y,
+    Calc_BILLBOARD_PERSP_Y,
+    NULL,
+};
+
+} // namespace
+
 void CalcView(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
               const math::MTX34* pModelMtxArray,
               const u32* pModelMtxAttribArray, u32 numMtx,
               const math::MTX34* pViewMtx, const ResMdl mdl,
               math::MTX34* pViewTexMtxArray) {
-    // Reference anonymous namespace functions to force emission
-    if (pViewPosArray == pModelMtxArray) {
-        Calc_BILLBOARD_ROT(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
-        Calc_BILLBOARD_PERSP_ROT(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
-        Calc_BILLBOARD_Y(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
-        Calc_BILLBOARD_PERSP_Y(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
-        Calc_BILLBOARD_STD(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
-        Calc_BILLBOARD_PERSP_STD(pViewPosArray, pModelMtxArray, true, pViewMtx, mdl, 0);
+    if (numMtx == 0) {
+        return;
+    }
+
+    if (numMtx > 1) {
+        math::MTX34MultArray(pViewPosArray, pViewMtx, pModelMtxArray,
+                             numMtx);
+    } else {
+        math::MTX34Mult(&pViewPosArray[0], pViewMtx,
+                        &pModelMtxArray[0]);
+    }
+
+    math::MTX34* pWorkMtx = nw4r::g3d::detail::workmem::GetBillboardMtxTemporary();
+
+    u32 i = 0;
+    const u32* pAttrib = pModelMtxAttribArray;
+    math::MTX34* pViewPos = pViewPosArray;
+    math::MTX34* pViewTex = pViewTexMtxArray;
+
+    while (i < numMtx) {
+        u32 attrib = *pAttrib++;
+        u32 billboardIdx = attrib & 0xFF;
+
+        if (billboardIdx != 0) {
+            gCalcBillboardFuncTable[billboardIdx](pViewPos, pModelMtxArray,
+                                                  (attrib >> 2) & 1, pViewMtx,
+                                                  mdl, i);
+
+            s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(i);
+            ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
+            void* pData = NULL;
+
+            if (node.IsValid()) {
+                s32 toData = node.ref().toResUserData;
+                pData = (toData != 0)
+                            ? reinterpret_cast<u8*>(&node.ref()) + toData
+                            : NULL;
+            }
+
+            if (pData != NULL) {
+                math::MTX34 inv;
+
+                if (detail::CalcInvWorldMtx(&inv, pViewPos) == 1) {
+                    math::MTX34Mult(pViewTex, &inv, pViewTex);
+                } else {
+                    math::MTX34Identity(pViewTex);
+                    pViewTex->_02 = pViewMtx->_02;
+                    pViewTex->_12 = pViewMtx->_12;
+                    pViewTex->_22 = pViewMtx->_22;
+                }
+            }
+        } else {
+            s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(i);
+
+            if (nodeId >= 0) {
+                ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
+
+                if (node.IsValid()) {
+                    if (node.ref().flags & 0x400) {
+                        s32 parentId = node.ref().bbref_nodeid;
+                        ResNode parent =
+                            mdl.GetResNode(static_cast<int>(parentId));
+                        u32 parentMtxId =
+                            parent.IsValid() ? parent.ref().mtxID : 0;
+
+                        math::MTX34Mult(&pWorkMtx[parentMtxId], pViewPos,
+                                        &pModelMtxArray[i]);
+                    }
+                }
+            }
+        }
+
+        pViewPos++;
+        pViewTex++;
+        i++;
+    }
+
+    u32 j = 0;
+    math::MTX33* pViewNrm = pViewNrmArray;
+    math::MTX34* pViewPos2 = pViewPosArray;
+    math::MTX34* pViewTex2 = pViewTexMtxArray;
+
+    while (j < numMtx) {
+        if (pViewTexMtxArray != NULL) {
+            detail::CalcViewTexMtx(pViewTex2, pViewPos2);
+            math::MTX34ToMTX33(pViewNrm, pViewPos2);
+        } else {
+            detail::CalcViewNrmMtx(pViewNrm, pViewPos2);
+        }
+
+        pViewNrm++;
+        pViewPos2++;
+        pViewTex2++;
+        j++;
     }
 }
 

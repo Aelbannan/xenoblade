@@ -2161,9 +2161,9 @@ void __wudDeleteFlushCallback(SCStatus status) {
 }
 
 u8 __wudDeleteDisconnectAll(void) {
-    WUDCB* p = &_wcb;
-    WUDDevInfo* pDev;
     int i;
+    WUDDevInfo* pDev;
+    WUDCB* p = &_wcb;
 
     for (i = 0, pDev = p->stdDevs; i < WUD_MAX_DEV_ENTRY_FOR_STD;
          i++, pDev++) {

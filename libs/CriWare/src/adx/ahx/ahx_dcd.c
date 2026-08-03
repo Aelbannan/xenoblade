@@ -5,10 +5,11 @@
 
 extern s32 AHXBSR_GetBitStm(void* self, s32 bits);
 
-void SKG_GenerateKey() {}
 
 void AHXSJD_SetupAtbl(u32 val) { AHXDCD_SetupAtbl(val); }
 
+extern u32 lbl_eu_805E64D0;
+extern char lbl_eu_80517638[];
 extern u32 lbl_eu_805E64D4;
 void AHXSJD_SetupMtbl(u32 val) { lbl_eu_805E64D4 = val; }
 
@@ -70,7 +71,58 @@ void AHXDCD_SetBsr(void* self, void* bsr) {
     *(void**)((u8*)self + 0x350) = bsr;
 }
 
-void AHXDCD_DecodeHeader() {}
+extern s32 AHXBSR_GetBitStm(void* bs, s32 nbits);
+extern s32 ADX_DecodeHeader(void* tbl, s32 size, void* out, void* out2);
+extern void SKG_GenerateKey(void* key, void* a, void* b, void* c, s32 n, void* d);
+
+s32 AHXDCD_DecodeHeader(void* self) {
+    s32 ret;
+    s32 n = 0;
+    s32 m = 0;
+    u8 tbl[8];
+    u8 buf[0x40];
+    s8 v;
+    s32 i;
+    if (*(void**)((u8*)self + 0x350) == NULL)
+        return 0;
+    memset(buf, 0, 0x40);
+    for (i = 0; i < 4; i++) {
+        tbl[i] = (u8)AHXBSR_GetBitStm(*(void**)((u8*)self + 0x350), 8);
+    }
+    ADX_DecodeHeader(tbl, 4, &n, NULL);
+    m += n;
+    for (i = 0; i < 8; i++) {
+        tbl[i] = (u8)AHXBSR_GetBitStm(*(void**)((u8*)self + 0x350), 8);
+    }
+    ret = ADX_DecodeHeader(tbl, 0x200, &n, buf);
+    if (ret <= 0)
+        return 0;
+    *(s32*)((u8*)self + 0x38c) = (s8)*(u8*)((u8*)buf + 0x13);
+    *(s32*)((u8*)self + 0x390) = *(s32*)((u8*)buf + 0x14);
+    *(s32*)((u8*)self + 0x394) = *(s32*)((u8*)buf + 0x18);
+    *(s32*)((u8*)self + 0x3a8) = *(s32*)((u8*)buf + 0x38);
+    *(s32*)((u8*)self + 0x3a4) = *(s32*)((u8*)buf + 0x34);
+    *(s32*)((u8*)self + 0x3ac) = *(s32*)((u8*)buf + 0x3c);
+    *(s32*)((u8*)self + 0x3b4) = *(s32*)((u8*)buf + 0x44);
+    *(s32*)((u8*)self + 0x3b0) = *(s32*)((u8*)buf + 0x40);
+    *(s32*)((u8*)self + 0x3b8) = *(s32*)((u8*)buf + 0x48);
+    *(s32*)((u8*)self + 0x388) = n;
+    v = (s8)*(u8*)((u8*)buf + 0x4d);
+    if (v > 0x10) {
+        *(u16*)((u8*)self + 0x3bc) = 0;
+        if (*(u32*)&lbl_eu_805E64D0 == 0) {
+            *(u32*)&lbl_eu_805E64D0 = 1;
+            SKG_GenerateKey(lbl_eu_80517638, (u8*)self + 0x3be, (u8*)self + 0x3c0,
+                            (u8*)self + 0x3c2, 6, NULL);
+        }
+    }
+    if (v > 8) {
+        memcpy((u8*)self + 0x3bc, (u8*)self + 0xbc4, 8);
+    } else {
+        memset((u8*)self + 0x3bc, 0, 8);
+    }
+    return 0;
+}
 
 extern s32 AHXBSR_SearchSync(s32 a);
 extern s32 AHXBSR_IsDataAvailable(s32 a, s32 b);
@@ -124,7 +176,6 @@ u32 AHXDCD_GetTotalNumSmpl(void* self) {
     return state->totalNumSmpl;
 }
 
-void* memcpy(void* dest, const void* src, size_t n);
 void AHXDCD_SetExtPrm(void* self, void* prm) {
     memcpy((u8*)self + 0xbc4, prm, 8);
 }

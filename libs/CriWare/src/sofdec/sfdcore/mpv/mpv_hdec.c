@@ -157,7 +157,36 @@ s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) {
     return found;
 }
 
-s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size) { return 0; }
+extern char lbl_eu_8051C1F0[];
+extern int strncmp(const char* a, const char* b, unsigned long n);
+extern int atoi(const char* s);
+
+s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size) {
+    s32 i = 0;
+    s32 ret = 0;
+    s32 limit = size - 4;
+    while (i < limit) {
+        const u8* q = p + i + 4;
+        if (strncmp((const char*)q, lbl_eu_8051C1F0, 7) == 0) {
+            if (atoi((const char*)q + 16) == 0)
+                *(s32*)((u8*)self + 0xD38) = 0;
+            else
+                *(s32*)((u8*)self + 0xD38) = 3;
+        }
+        if (strncmp((const char*)q, lbl_eu_8051C1F0 + 8, 7) == 0) {
+            *(s32*)((u8*)self + 0xD00) = atoi((const char*)q + 16);
+            *(s32*)((u8*)self + 0xD04) = atoi((const char*)q + 24);
+            *(s32*)((u8*)self + 0xD08) = atoi((const char*)q + 32);
+        }
+        if (MPV_CheckDelim(q) == 0)
+            i++;
+        else
+            break;
+    }
+    if (*(s32*)((u8*)self + 0xD00) == 8 || *(s32*)((u8*)self + 0xD00) == 9)
+        ret = -1;
+    return ret;
+}
 
 s32 MPV_GoNextDelimSj(void* self) {
     MpvSjChunk st;

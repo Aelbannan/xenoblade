@@ -69,11 +69,11 @@ extern void (*lbl_eu_805E5360)(void*, s16, void*, void*);
 int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3);
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding);
 
-static s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
+static s16 SKG_GenerateKey(u8* data, s16 len, s16* key1, s16* key2, s16* key3) {
     s16 x1;
     s16 x2;
     s16 x3;
-    s16 i;
+    int i;
 
     if (lbl_eu_805E5358 == 0) {
         lbl_eu_805E5358 = lbl_eu_805E5358 + 1;
@@ -95,7 +95,7 @@ static s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x1 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x1 = lbl_eu_80516B30[t];
     }
 
     x2 = 0x53FF;
@@ -106,7 +106,7 @@ static s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x2 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x2 = lbl_eu_80516B30[t];
     }
 
     x3 = 0x5DC1;
@@ -117,7 +117,7 @@ static s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x3 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x3 = lbl_eu_80516B30[t];
     }
 
     *key1 = x1;
@@ -524,14 +524,17 @@ u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
 void ADXB_EntryData(void* self, void* data, int size) {
     if (*(s16*)((u8*)self + 0x98) == 0) {
         *(void**)((u8*)self + 0x48) = data;
-        int ch = (s8)*(u8*)((u8*)self + 0x0F);
-        *(u32*)((u8*)self + 0x74) = 0;
-        *(u32*)((u8*)self + 0x4C) = size / ch;
+        {
+            int ch = (s8)*(u8*)((u8*)self + 0x0F);
+            *(u32*)((u8*)self + 0x74) = 0;
+            *(u32*)((u8*)self + 0x4C) = size / ch;
+        }
     } else {
+        int t = (s8)*(u8*)((u8*)self + 0x0D);
+        int ch = (s8)*(u8*)((u8*)self + 0x0E);
         *(void**)((u8*)self + 0x48) = data;
-        int t = (s8)*(u8*)((u8*)self + 0x0D) / 8;
         *(u32*)((u8*)self + 0x74) = 0;
-        *(u32*)((u8*)self + 0x4C) = size / (t * (s8)*(u8*)((u8*)self + 0x0E));
+        *(u32*)((u8*)self + 0x4C) = size / ((t / 8) * ch);
     }
     *(u32*)((u8*)self + 0x90) = 0;
     *(u32*)((u8*)self + 0x94) = 0;
@@ -662,7 +665,7 @@ void ADXB_EndDecode(void* adxb) {
         {
             s16* d = (s16*)pcmBase;
             const s16* s = (const s16*)(pcmBase + (pcmBufSize << 1));
-            s32 n = samplesLeft;
+            s16 n = samplesLeft;
             while (n > 0) {
                 *d++ = *s++;
                 n--;
@@ -671,19 +674,17 @@ void ADXB_EndDecode(void* adxb) {
         {
             s16* d = (s16*)(pcmBase + (workBufSize << 1));
             const s16* s = (const s16*)(pcmBase + ((workBufSize + pcmBufSize) << 1));
-            s32 n = samplesLeft;
-            while (n > 0) {
+            while (samplesLeft > 0) {
                 *d++ = *s++;
-                n--;
+                samplesLeft--;
             }
         }
     } else {
         s16* d = (s16*)pcmBase;
         const s16* s = (const s16*)(pcmBase + (pcmBufSize << 1));
-        s32 n = samplesLeft;
-        while (n > 0) {
+        while (samplesLeft > 0) {
             *d++ = *s++;
-            n--;
+            samplesLeft--;
         }
     }
 }

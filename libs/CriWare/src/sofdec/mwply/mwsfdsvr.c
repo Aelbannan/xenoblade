@@ -155,7 +155,7 @@ static s32 criware_803A2908(void* self) {
         if (*(s32*)((u8*)lw + 0x10) != 1) {
             if (lbl_eu_805FF3A0 != NULL) {
                 ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                    lbl_eu_805FF3A0, lbl_eu_80566E18 + 4);
+                    lbl_eu_805FF3A0, lbl_eu_80566EEC + 4);
             }
             {
                 s32 r = mwsfsvr_DecodeServer(self);
@@ -168,9 +168,9 @@ static s32 criware_803A2908(void* self) {
             }
         }
         if (lbl_eu_805FF3A0 != NULL) {
-            *(void**)(lbl_eu_80566EEC + 0x74) = &local;
+            *(void**)(lbl_eu_80566E18 + 0x74) = &local;
             ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
-                lbl_eu_805FF3A0, lbl_eu_80566EEC + 0x6C);
+                lbl_eu_805FF3A0, lbl_eu_80566E18 + 0x6C);
         }
     }
     return local;

@@ -7591,3 +7591,10 @@ Declaring the second-derived pointer FIRST (`void *adxt;` then `void *w =
 retail ([lwz r5, 8364; lwz r4, 0(r5)]). Reusable: when a load-chain's register
 colors rotate, reorder the DECLARATIONS (not the statements) — the MWCC
 allocates the caller-saved colors by declaration order.
+
+### CriWare mps_get MPS_Get* family — u64-pairing color wall (4 fns)
+GetPackHd 73.3% (8 reg_swap), GetSysHd 62.8% (16), GetLastSysHd 57.9% (16),
+GetPketHd 52.4% (20) — all size-exact, 0 structural. The 64-bit copies
+[*(u64*)out = *(u64*)handle+off] pair low-word→r4/high→r0 (retail) vs
+low→r0/high→r4 (decomp). The explicit two-u32 form degrades to structural.
+Pure color wall.

@@ -29,16 +29,12 @@ int MPV_GetPicAtr(void *handle, u32 *out) {
 
 /* Get bitrate from handle */
 int MPV_GetBitRate(void *handle, u32 *out) {
-    register void* h = handle;
-    register u32* o = out;
+    u32* o = out;
+    void* h = handle;
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020D);
     }
-
-    {
-        u32 v = *(u32 *)((u8 *)h + 0xC48);
-        *o = v;
-    }
+    *o = *(u32 *)((u8 *)h + 0xC48);
     return 0;
 }
 

@@ -370,21 +370,24 @@ void __parse_dpdex_data(s32 chan, WPADStatusEx** status, s32 index, u8* data, s3
 void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32 size) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
 
-    if (devMode == 2) {
+    switch (devMode) {
+    case 2:
         // Reduced mode: 10-bit sticks + 12 buttons
         ((WPADCLStatus*)(*status))->clLStickX =
             (s16)((s16)((s16)((s16)data[0] << 2) & (s16)0xFFFC) | (s16)((u16)data[4] & 0x3));
         ((WPADCLStatus*)(*status))->clRStickX =
-            (s16)((s16)((s16)((s16)data[1] << 2) & (s16)0xFFFC) | (s16)(((u16)data[4] >> 2) & 0x3));
+            (s16)((s16)((s16)((s16)data[1] << 2) & (s16)0xFFFC) | ((data[4] & 0xC) >> 2));
         ((WPADCLStatus*)(*status))->clLStickY =
-            (s16)((s16)((s16)((s16)data[2] << 2) & (s16)0xFFFC) | (s16)(((u16)data[4] >> 4) & 0x3));
+            (s16)((s16)((s16)((s16)data[2] << 2) & (s16)0xFFFC) | ((data[4] & 0x30) >> 4));
         ((WPADCLStatus*)(*status))->clRStickY =
-            (s16)((s16)((s16)((s16)data[3] << 2) & (s16)0xFFFC) | (s16)(((u16)data[4] >> 6) & 0x3));
+            (s16)((s16)((s16)((s16)data[3] << 2) & (s16)0xFFFC) | (s16)((s16)data[4] >> 6));
         ((WPADCLStatus*)(*status))->clTriggerL = data[5];
-        ((WPADCLStatus*)(*status))->clTriggerR = (size >= 9) ? data[6] : 0;
+        ((WPADCLStatus*)(*status))->clTriggerR = ((u32)size < 9) ? 0 : data[6];
         ((WPADCLStatus*)(*status))->clButton =
-            (size >= 9) ? (u16)~(u16)((data[7] << 8) | data[8]) : 0;
-    } else if (devMode == 3) {
+            ((u32)size < 9) ? 0 : (u16)((u16)((data[7] << 8) | data[8]) ^ 0xFFFF);
+        break;
+
+    case 3:
         // Extended mode: 8-bit sticks + 12 buttons
         ((WPADCLStatus*)(*status))->clLStickX = (s16)((s16)data[0] << 2);
         ((WPADCLStatus*)(*status))->clRStickX = (s16)((s16)data[1] << 2);
@@ -393,8 +396,10 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
         ((WPADCLStatus*)(*status))->clTriggerL = data[4];
         ((WPADCLStatus*)(*status))->clTriggerR = data[5];
         ((WPADCLStatus*)(*status))->clButton =
-            (size >= 8) ? (u16)~(u16)((data[6] << 8) | data[7]) : 0;
-    } else {
+            ((u32)size < 8) ? 0 : (u16)((u16)((data[6] << 8) | data[7]) ^ 0xFFFF);
+        break;
+
+    default:
         // Standard mode: 6-bit sticks, reconstructed to 10-bit + extras
         ((WPADCLStatus*)(*status))->clLStickX = (s16)((u16)(data[0] & 0x3F) << 4);
         ((WPADCLStatus*)(*status))->clLStickY = (s16)((u16)(data[1] & 0x3F) << 4);
@@ -405,6 +410,7 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
         ((WPADCLStatus*)(*status))->clTriggerL = (u8)((s8)((data[2] >> 2) & 0x7) << 5 | ((s8)data[3] >> 5) & 0x7);
         ((WPADCLStatus*)(*status))->clTriggerR = (u8)(data[3] & 0x1F) << 3;
         ((WPADCLStatus*)(*status))->clButton = (u16)~(u16)((data[4] << 8) | data[5]);
+        break;
     }
 
     if (cb->devType == WPAD_DEV_CLASSIC) {
@@ -476,7 +482,7 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
         }
         ((WPADCLStatus*)(*status))->clRStickY = v;
 
-        v = (s16)(s8)(((WPADCLStatus*)(*status))->clTriggerL - cb->extConfig.u.cl.triggerLZero);
+        v = (s16)(((WPADCLStatus*)(*status))->clTriggerL - cb->extConfig.u.cl.triggerLZero);
         if (v < 0) {
             v = 0;
         }
@@ -485,7 +491,7 @@ void __parse_cl_data(s32 chan, WPADStatusEx** status, s32 devMode, u8* data, s32
         }
         ((WPADCLStatus*)(*status))->clTriggerL = (u8)v;
 
-        v = (s16)(s8)(((WPADCLStatus*)(*status))->clTriggerR - cb->extConfig.u.cl.triggerRZero);
+        v = (s16)(((WPADCLStatus*)(*status))->clTriggerR - cb->extConfig.u.cl.triggerRZero);
         if (v < 0) {
             v = 0;
         }
@@ -574,12 +580,10 @@ void __a1_30_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_31_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    u16 rptBtn;
-    WPADCB* cb;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADCB* pCB;
 
-    rptBtn = (u16)((data[2] << 8) | data[1]);
-    cb = __rvl_p_wpadcb[chan];
-    status->button = (u16)(rptBtn & HID_WPAD_BUTTON_MASK);
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
     status->dev = cb->devType;
 
     if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC) {
@@ -590,15 +594,16 @@ void __a1_31_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
+    pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
     status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accX0g;
+                   (s16)pCB->devConfig.accX0g;
     status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accY0g;
+                   (s16)pCB->devConfig.accY0g;
     status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
-                   (s16)__rvl_p_wpadcb[chan]->devConfig.accZ0g;
+                   (s16)pCB->devConfig.accZ0g;
 }
 
 //

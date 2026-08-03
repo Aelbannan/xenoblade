@@ -1329,9 +1329,9 @@ void btm_process_inq_complete (UINT8 status)
     p_inq->inq_counter++;
 
     /* status is BTM_SUCCESS if HCI_STATUS is zero */
-    btm_status = BTM_SUCCESS;
-    if (status != HCI_SUCCESS)
-        btm_status = BTM_ERR_PROCESSING;
+    btm_status = BTM_ERR_PROCESSING;
+    if (status == HCI_SUCCESS)
+        btm_status = BTM_SUCCESS;
 
     p_inq->inq_cmpl_info.status = btm_status;
 

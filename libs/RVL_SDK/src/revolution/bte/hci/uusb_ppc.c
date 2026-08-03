@@ -96,28 +96,27 @@ void uusb_ReadIntrDataCB(IPCResult result, void* arg) {
         return;
     }
 
-    if (arg == NULL) {
-        /* no payload to handle */
-    } else if (result <= 0) {
+    if (arg == NULL) goto rearm;
+    if (result <= 0) {
+        GKI_freebuf(arg);
+        goto rearm;
+    }
+    buf = (BT_HDR*)GKI_getpoolbuf(2);
+    if (buf == NULL) {
         GKI_freebuf(arg);
     } else {
-        buf = (BT_HDR*)GKI_getpoolbuf(2);
-        if (buf == NULL) {
-            GKI_freebuf(arg);
-        } else {
-            ((BT_HDR*)arg)->event = 0x1000;
-            ((BT_HDR*)arg)->len = (u16)result;
-            memcpy(buf, arg,
-                   (((u32)(((BT_HDR*)arg)->len + ((BT_HDR*)arg)->offset +
-                           BT_HDR_SIZE)) &
-                    ~3u) +
-                       4);
-            OSSwitchFiberEx((u32)buf, 0, 0, 0, bta_ci_hci_msg_handler,
-                            __uusb_ppc_stack1 + 0x1000);
-            GKI_freebuf(arg);
-        }
+        ((BT_HDR*)arg)->event = 0x1000;
+        ((BT_HDR*)arg)->len = (u16)result;
+        memcpy(buf, arg,
+               (((u32)(((BT_HDR*)arg)->len + ((BT_HDR*)arg)->offset +
+                       BT_HDR_SIZE)) &
+                ~3u) +
+                   4);
+        OSSwitchFiberEx((u32)buf, 0, 0, 0, bta_ci_hci_msg_handler,
+                        __uusb_ppc_stack1 + 0x1000);
+        GKI_freebuf(arg);
     }
-
+rearm:
     /* Re-arm the interrupt-in read on a fresh pool buffer. */
     do {
         buf = (BT_HDR*)GKI_getpoolbuf(usb.pool_id_intr);
@@ -141,9 +140,9 @@ void uusb_ReadIntrDataCB(IPCResult result, void* arg) {
  * when the packet is complete, handed to the BTE HCI message handler on a
  * fiber stack. A new bulk-in read is then always re-armed. */
 void uusb_ReadBulkDataCB(IPCResult result, void* arg) {
+    u8* data;
     BT_HDR* buf;
     BT_HDR* pkt;
-    u8* data;
 
     if (usb.state != UUSB_STATE_OPEN) {
         GKI_freebuf(arg);

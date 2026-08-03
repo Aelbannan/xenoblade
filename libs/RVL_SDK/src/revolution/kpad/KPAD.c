@@ -1985,25 +1985,25 @@ void KPADiSamplingCallback(s32 chan) {
         }
         kp->unk_e4.x = 0.0f;
         kp->unk_e4.y = -center;
-        f30 = 1.0f;
-        f31 = 0.75f;
-        f3 = (f32)sqrt(f30 * f30 + f31 * f31);
+        f31 = 1.0f;
+        f30 = 0.75f;
+        f3 = (f32)sqrt(f31 * f31 + f30 * f30);
         if (kp->unk_e4.x < 0.0f) {
-            f30 += kp->unk_e4.x;
+            f31 += kp->unk_e4.x;
         } else {
-            f30 -= kp->unk_e4.x;
+            f31 -= kp->unk_e4.x;
         }
         if (kp->unk_e4.y < 0.0f) {
-            f31 += kp->unk_e4.y;
+            f30 += kp->unk_e4.y;
         } else {
-            f31 -= kp->unk_e4.y;
+            f30 -= kp->unk_e4.y;
         }
-        if (f30 < f31) {
-            f30 = f30;
+        if (f31 < f30) {
+            f31 = f31;
         } else {
-            f30 = f31;
+            f31 = f30;
         }
-        kp->unk_ec = f3 / f30;
+        kp->unk_ec = f3 / f31;
         kp->aiming_x = 0;
     }
 

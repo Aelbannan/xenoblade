@@ -160,6 +160,14 @@ Key lessons:
 - Register rotation (num=p=scratch 3-cycle) broke by declaring `UINT16 num = 0;` before `UINT8 *p = buff;` — declaration order, per §4.
 - Do not add an `if (num_services != 0)` wrapper: the for-loop entry test (`cmpi r4,0; beq` → call) already covers it; the wrapper emits a duplicate `beq`.
 
+## RVL_SDK bte/sdp sdp_api.c — SDP_SetLocalDiRecord: irreducible 2-instruction arg-setup float (GC/3.0a3.4 `-func_align 4` `-ipa off`)
+
+`SDP_SetLocalDiRecord` (us-80305e40, 0x360) sits at 95.4% (10 structural / 0 reg-swap, split 0xE68 exact) with 5 identical scheduling swaps: at each `SDP_AddAttribute(handle, attr, UINT_DESC_TYPE, 2, &p_val[0])` call whose 2-byte value is stored to a local `p_val[2]` in the same block, retail emits arg5 `addi r7,sp,8` BEFORE arg1 `mr r3,r30`; MWCC emits arg1 first. Same mr-before-stb float family as bta_dm_act / sdp_connect_ind (KB 51910fc0cc) but NOT compiler-fixable here:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| arg5 (addi r7,sp,8) scheduled before arg1 (mr r3,r30) at 5 p_val-based SDP_AddAttribute sites; string-pointer sites (addi r7,r29,X) and the &spec_id site schedule arg1 first in the SAME function | MWCC 3.0a3.4 hoists the stack-address computation for an arg whose referent was just stored in the block; no source shape reproduces it | Confirmed unreproducible: p_val direct, &p_val[0], comma-operator stores, single-use pointer local (CSE-folded), UINT16+byte-cast, two separate UINT8 locals (breaks layout); GC/3.0a3.4 vs GC/3.0a5.2 identical output; -O4,s destroys the unit (5/9). Accept via out-of-band `--smt` (all callees accepted: strlen, SDP_CreateRecord, SDP_DeleteRecord, SDP_AddAttribute, SDP_AddServiceClassIdList — gate open) |
+
 ---
 
 ---

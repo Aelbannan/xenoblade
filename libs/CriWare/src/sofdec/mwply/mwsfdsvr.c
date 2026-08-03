@@ -73,7 +73,26 @@ s32 mwsfsvr_StartStream(void* self) {
     return 1;
 }
 
-void mwlSfdExecDecSvrPlaying() {}
+extern void* mwPlyGetSstCoreHnByIdx(void* self, s32 idx);
+extern s32 MWSST_GetStat(void* sst);
+
+void mwlSfdExecDecSvrPlaying(void* self) {
+    void* sst = *(void**)((u8*)self + 0x58);
+    if (*(s32*)((u8*)self + 0x678) == 0) {
+        s32 s = SFD_GetHnStat(sst);
+        s32 a = 4;
+        s32 b = 4;
+        if (mwPlyGetSstCoreHnByIdx(self, 0) != 0) {
+            a = MWSST_GetStat((u8*)self + 0x5D8);
+        }
+        if (mwPlyGetSstCoreHnByIdx(self, 1) != 0) {
+            b = MWSST_GetStat((u8*)self + 0x600);
+        }
+        if (s == 6 && a != 2 && b != 2) {
+            *(s32*)((u8*)self + 4) = 3;
+        }
+    }
+}
 
 extern void* lbl_eu_805FF3A0;
 extern u8 lbl_eu_80566C70[];

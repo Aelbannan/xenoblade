@@ -7407,3 +7407,13 @@ dst[k] = src[i+k]; }` (the `while (j < 297)` bottom-test form is +4B; the
 structural = a 4-cycle register rotation in the unrolled copy loop (retail
 src=r7/dst=r6/cnt=r9/char=r8; decomp src=r6/dst=r4/cnt=r8/char=r7) — pure
 colors, no source form moves them.
+
+### CriWare return-li vs final-store scheduling wall (SFAOAP_Create / ADX_ScanInfoCode / SFPL2_Standby)
+A recurring 2-structural near-miss: the final `return 0`/`return -1` (or any
+`li r3, K` for the return value) is scheduled BEFORE the function's last
+store in decomp, AFTER it in retail. Retail: `li r0, K; stw r0, off(rX);
+li r3, ret;` — decomp: `li r0, K; li r3, ret; stw r0, off(rX);`. Reproduced
+across `SFAOAP_Create` (89.5%), `ADX_ScanInfoCode` (93.3%), `SFPL2_Standby`
+(85.7%), `SFD_Standby` (91.3%), `sfmps_pesfn` (90.5%) — all 2 structural with
+0 reg_swap. No source form moves it (named ret local, pointer local,
+store via cast/array, return-first). A general MWCC scheduler tie-break.

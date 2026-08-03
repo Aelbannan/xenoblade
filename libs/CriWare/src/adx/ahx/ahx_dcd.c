@@ -106,7 +106,32 @@ void AHXDCD_SetExtPrm(void* self, void* prm) {
 
 void AHXDCD_DecodeBhdr() {}
 
-void AHXDCD_BhdrToDinf() {}
+extern u32 AHXCMN_SetAlcInfTbl(s32 a, void* b);
+extern u8 lbl_eu_80565AD8[];
+extern u8 lbl_eu_80565AB8[];
+
+void AHXDCD_BhdrToDinf(void* self, s32* out) {
+    if (out[0] == 0) {
+        if (*(s32*)((u8*)self + 28) == 3) {
+            out[1] = 1;
+        } else {
+            out[1] = 2;
+        }
+    }
+    if (*(s32*)((u8*)self + 4) == 2) {
+        out[4] = AHXCMN_SetAlcInfTbl(0, (u8*)out + 24);
+    } else {
+        out[4] = 32;
+    }
+    if (*(s32*)((u8*)self + 28) == 1) {
+        out[5] = *(u32*)(lbl_eu_80565AD8 + (*(s32*)((u8*)self + 4) << 4) + (*(s32*)((u8*)self + 32) << 2));
+    } else {
+        out[5] = out[4];
+    }
+    if (out[0] == 0) {
+        out[2] = *(u32*)(lbl_eu_80565AB8 + (*(s32*)((u8*)self + 0) << 4) + (*(s32*)((u8*)self + 16) << 2));
+    }
+}
 
 void AHXDCD_DecodeBitalloc2() {}
 

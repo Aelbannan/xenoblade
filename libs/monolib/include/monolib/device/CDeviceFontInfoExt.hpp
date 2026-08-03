@@ -22,6 +22,7 @@ public:
     u32 field_58;
     u16 field_5C;
     u16 _5E;
+    u32 field_60;
 
     void func_80453624();
     void func_8045362C();

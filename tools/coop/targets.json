@@ -318897,7 +318897,7 @@
       "size": "0x598",
       "unit": "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -318917,7 +318917,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c",
       "instruction_match": 98.422,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:23:12.817850+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803085b8",
@@ -366500,8 +366508,8 @@
       "size": "0x204",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -366516,8 +366524,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/wud/WUD.s",
       "abi_helper_calls": [],
-      "instruction_match": 69.434,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "pi-rvl-rvl_hard_97",
         "claimed_at": "2026-08-03T11:12:45.887213+00:00",
@@ -371527,8 +371535,8 @@
       "size": "0xA4",
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038c680",
@@ -371542,7 +371550,9 @@
       "callgraph_source": "build/us/asm/CriWare/src/adx/adxt/adx_stmc.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/adxt/adx_stmc.c",
-      "declared_return": "i32"
+      "declared_return": "i32",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80384324",
@@ -371587,8 +371597,8 @@
       "size": "0x40",
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -371598,8 +371608,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/adxt/adx_stmc.c",
       "claim": null,
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 85.938,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803844e8",
@@ -371641,8 +371651,8 @@
       "size": "0x3C",
       "unit": "CriWare/src/adx/adxt/adx_stmc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038c688",
@@ -371655,8 +371665,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/adxt/adx_stmc.c",
       "declared_return": "i32",
-      "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "instruction_match": 99.333,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8038454c",
@@ -417476,8 +417486,8 @@
       "size": "0x100",
       "unit": "nw4r/src/g3d/res/g3d_resanm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "BACKLOG",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanm.cpp",
       "called_functions": [
@@ -417487,7 +417497,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanm.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e0038",
@@ -417594,7 +417606,7 @@
       "size": "0x170",
       "unit": "nw4r/src/g3d/res/g3d_resanmtexpat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmtexpat.cpp",
@@ -417609,7 +417621,15 @@
       "abi_helper_calls": [
         "_restgpr_22",
         "_savegpr_22"
-      ]
+      ],
+      "claim": {
+        "owner": "pi-nw4r-leaf",
+        "claimed_at": "2026-08-03T12:23:49.167666+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/g3d/res/g3d_resanmtexpat.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803e0540",
@@ -417678,8 +417698,8 @@
       "size": "0x2B8",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417691,7 +417711,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e0c2c",
@@ -417705,8 +417727,8 @@
       "size": "0x12C",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [],
@@ -417722,7 +417744,9 @@
           "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp"
         ],
         "note": "PS-instruction leaf batch; high-level C++ FVS96 interpolation"
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e0d58",
@@ -417736,8 +417760,8 @@
       "size": "0x170",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [],
@@ -417753,7 +417777,9 @@
           "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp"
         ],
         "note": "PS-instruction leaf batch; high-level C++ FVS48 interpolation"
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e0ec8",
@@ -417767,8 +417793,8 @@
       "size": "0x1C0",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [],
@@ -417784,7 +417810,9 @@
           "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp"
         ],
         "note": "PS-instruction leaf batch; high-level C++ FVS32 interpolation"
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1088",
@@ -417798,8 +417826,8 @@
       "size": "0xA5C",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417815,7 +417843,9 @@
       "abi_helper_calls": [
         "_restgpr_27",
         "_savegpr_27"
-      ]
+      ],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1ae4",
@@ -417829,8 +417859,8 @@
       "size": "0x270",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417842,7 +417872,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1d54",
@@ -417883,8 +417915,8 @@
       "size": "0x8C",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417895,7 +417927,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1df8",
@@ -417909,8 +417943,8 @@
       "size": "0x6C",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417920,7 +417954,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1e64",
@@ -417934,8 +417970,8 @@
       "size": "0x40",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417946,7 +417982,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1ea4",
@@ -417960,8 +417998,8 @@
       "size": "0xA8",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417972,7 +418010,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1f4c",
@@ -417986,8 +418026,8 @@
       "size": "0x9C",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -417998,7 +418038,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e1fe8",
@@ -418012,8 +418054,8 @@
       "size": "0x98",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -418025,7 +418067,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e2080",
@@ -418039,8 +418083,8 @@
       "size": "0xB8",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -418052,7 +418096,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e2138",
@@ -418197,8 +418243,8 @@
       "size": "0x54",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -418209,7 +418255,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e24bc",
@@ -418223,8 +418271,8 @@
       "size": "0x140",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [
@@ -418234,7 +418282,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e25fc",
@@ -418248,8 +418298,8 @@
       "size": "0x84",
       "unit": "nw4r/src/g3d/res/g3d_resanmchr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resanmchr.cpp",
       "called_functions": [],
@@ -418257,7 +418307,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resanmchr.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803e2680",

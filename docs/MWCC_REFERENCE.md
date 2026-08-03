@@ -7029,6 +7029,18 @@ Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exac
    logical); `cb->extensionCB == NULL || cb->extensionCB != cb->cmdBlkCB` keeps
    retail's redundant two-test gate.
 
+## RVL WPADHIDParser — __parse_cl_data mode dispatch / classic-stick decodes (US, mwcc_43_151 `-O4,p`)
+
+Bounded pass on `__parse_cl_data` (us-80375c00): 265 → 203 structural, 0x4b8 vs retail 0x4cc (mode-3 extsh fold + dead-srawi unreachable). Reusable findings:
+
+1. **if/else-if chain → `switch(devMode)` reproduces retail's compare-dispatch exactly.** Retail `cmpi 2; beq A; cmpi 3; beq B; b C` (blocks A/B/C in source order, default `b`-jumped) only comes from a switch; if/else-if compiles to `bne; fallthrough` interleaves (2 instructions shorter, whole function misaligns).
+2. **Ternary polarity: `((u32)size < 9) ? 0 : X` gives retail's `bge→value` + fallthrough-`li 0` shape; `(size >= 9) ? X : 0` gives the inverted `blt→0` layout.** Also `(u32)` on the size comparison is required: retail `cmpli` (unsigned) vs `cmpi` from a plain `s32 size < 9`.
+3. **16-bit complement via `^ 0xFFFF` instead of `~`:** `(u16)((u16)((data[7] << 8) | data[8]) ^ 0xFFFF)` emits retail's `rlwimi r0,r5,8,16,23; xori r0,r0,0xFFFF` (2 insns). `~(u16)x`, `(u16)~(u16)x`, and `~x` all emit `nor` (+ `rlwinm` 16,31 when cast) — 2-3 insns, never `xori`.
+4. **Classic-stick LSB terms: `(s16)((s16)data[4] >> 6)` (cast-then-plain-shift, NO mask) reproduces retail's `srawi; extsh` for the 2-bit term; `(s16)(((u16)data[4] >> 6) & 0x3)` emits `rlwinm`+extsh instead.** The `(s16)`-cast mask terms for `>> 2`/`>> 4` give `rlwinm(mask)+extsh`; mask-then-shift `(data[4] & 0xC) >> 2` gives `rlwinm(mask)+live-srawi`; retail's folded `rlwinm 30,30,31` + DEAD `srawi` (shift-then-mask with fold disabled) is not reachable from any tested shape (8 scratch variants) — same class as KB ref:a61612e194 finding 10.
+5. **Mode-3 8-bit sticks `(s16)((s16)data[n] << 2)` fold the (always-redundant) extsh away** — retail keeps `extsh; rlwinm 2,0,29`. 14 variants tested (incl. `(s8)` cast → semantically WRONG extsb for ≥0x80, `s8*` param, temps, double casts) all fold or mis-select. Semantically redundant — SMT-territory, not byte-identical.
+6. **Default-mode `clRStickX` retail is a buggy wrap-mask merge:** `rlwinm r0,r7,27,29,30; rlwimi r0,r9,29,27,24; or r0,r10,r0; extsh; rlwinm 5,0,26` — the rlwimi wrap mask (MB=27 > ME=24 → bits 27-31 ∪ 0-24) WIPES the (d1>>2&3) field and the sign term; sim-verified result = `(d0 & 0xF8) << 2` (d1/d2 contributions dead). Derived 3-expression shapes all generate 16-insn EXTSB chains instead of retail's 9-insn SRAWI/RLWINM/RLWIMI/EXTSH/OR dance — unreachable.
+7. **btm_process_inq_complete status default: write 10-then-0, not 0-then-10.** `btm_status = BTM_ERR_PROCESSING; if (status == HCI_SUCCESS) btm_status = BTM_SUCCESS;` reproduces retail's `li r3,10; bne skip; li r3,0` (the if-then-0 branch-target shape); the natural 0-default + `if (!=) x = 10` compiles to `li 0; beq skip; li 10` — li-value swap + branch polarity (2 mismatches).
+
 ## RVL WUD — device-list targets: CNT-01 length, base+12i IV, desc temp-copy cap (US, 1× FULL_MATCH + 2× HIGH_MATCH stalls)
 
 `libs/RVL_SDK/src/revolution/wud/WUD.c` — `WUDiRemoveDevice` **FULL_MATCH**, `WUDiRegisterDevice` + `WUDiMoveTopOfDisconnectedSmpDevice` HIGH_MATCH (90-92% fuzzy, SMT-candidates).

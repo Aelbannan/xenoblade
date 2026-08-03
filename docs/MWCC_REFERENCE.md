@@ -7677,3 +7677,10 @@ The dispatch is INVERTED: f==2/6/8/0xa → ok=1 → return 0; the other states r
 SFD_SetUsrSj(self+0x58, 2, self+0x4c0, 0). The final `return (-r | r) >> 31`
 needs the neg-OPERAND FIRST (the [neg r0; or r0, r0, r3] — the [or]'s operand
 order follows the source expression order, not the commutative canonical form).
+
+### CriWare mwsfdsfx MWSFTAG_CreateAinfSj — 97.2% (branch-into-call quirk)
+f==0/0x101 → SJRBF_Create(self+0x4c4, self+0x4c8, 0); if (ret!=0)
+MWSFSVM_Error(lbl+0x362); criware_803A09B4(self); return 0. Retail's
+[bne → the bl] branches INTO the middle of the error-call arg setup (stale
+args); decomp emits the clean [beq skip; bl] — the retail codegen quirk, 1
+reg_swap, size-exact.

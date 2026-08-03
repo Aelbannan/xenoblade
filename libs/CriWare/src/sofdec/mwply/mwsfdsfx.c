@@ -91,7 +91,28 @@ int MWSFTAG_IsUseAinfSj(void* self) {
     return 0;
 }
 
-void MWSFTAG_CreateAinfSj() {}
+extern void* SJRBF_Create(void* a, void* b, s32 c);
+extern void criware_803A09B4(void* self);
+extern char lbl_eu_80519EC8[];
+
+s32 MWSFTAG_CreateAinfSj(void* self) {
+    s32 ok;
+    s32 f = *(s32*)((u8*)self + 0x28);
+    if (f == 0 || f == 0x101) {
+        ok = 1;
+    } else {
+        ok = 0;
+    }
+    if (ok != 1)
+        return 0;
+    {
+        s32 r = (s32)SJRBF_Create(*(void**)((u8*)self + 0x4c4), *(void**)((u8*)self + 0x4c8), 0);
+        if (r != 0)
+            MWSFSVM_Error(lbl_eu_80519EC8 + 0x362);
+        criware_803A09B4(self);
+    }
+    return 0;
+}
 
 void MWSFTAG_DestroyAinfSj(void* self) {
     void* p = *(void**)((u8*)self + 0x4c0);

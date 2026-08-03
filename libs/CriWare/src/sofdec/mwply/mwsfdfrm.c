@@ -31,7 +31,24 @@ void mwsffrm_SetPicUsrInf(void* a, void* b, void* out) {
     *(s32*)((u8*)out + 0x50) = w;
 }
 
-void mwsffrm_SetSudDatInf() {}
+extern void* SUD_SearchSudDat(void* a, void* b, void* c, void* d);
+
+void mwsffrm_SetSudDatInf(void* a, void* b, void* out) {
+    void* sud = *(void**)((u8*)b + 0x38);
+    void* p = *(void**)((u8*)sud + 0);
+    void* q = *(void**)((u8*)sud + 4);
+    void* r1;
+    void* r2;
+    *(s32*)((u8*)out + 0xa0) = (s32)p;
+    *(s32*)((u8*)out + 0xa4) = (s32)q;
+    if (p != NULL && (s32)(u32)q >= 4) {
+        SUD_SearchSudDat((u8*)p + 4, (u8*)q - 4, &r1, &r2);
+        if (r1 != NULL && (s32)(u32)r2 >= 0) {
+            *(s32*)((u8*)out + 0xa0) = (s32)r1;
+            *(s32*)((u8*)out + 0xa4) = (s32)r2;
+        }
+    }
+}
 
 typedef struct {
     u32 a, b, c;

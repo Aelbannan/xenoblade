@@ -494,8 +494,60 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
                        bool useParent, const math::MTX34* pViewMtx,
                        ResMdl mdl, unsigned long mtxId) {
-    // TODO: Full implementation
-    math::MTX34Zero(pOut);
+    math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
+    math::VEC3 dir(up.y, -up.x, 1.0f);
+
+    if (fabsf(up.x) >= 1.0e-18f && fabsf(up.z) >= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&up, &up);
+
+    if (fabsf(dir.x) >= 1.0e-18f && fabsf(dir.y) >= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&dir, &dir);
+
+    math::VEC3 right;
+    math::VEC3Cross(&right, &dir, &up);
+
+    u32 offset = mtxId * sizeof(math::MTX34);
+    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
+        reinterpret_cast<const u8*>(pMtxArray) + offset);
+
+    f32 len1 = math::FrSqrt(pNodeMtx->_00 * pNodeMtx->_00 +
+                            pNodeMtx->_10 * pNodeMtx->_10 +
+                            pNodeMtx->_20 * pNodeMtx->_20);
+    f32 len1f = len1 * (pNodeMtx->_00 * pNodeMtx->_00 +
+                        pNodeMtx->_10 * pNodeMtx->_10 +
+                        pNodeMtx->_20 * pNodeMtx->_20);
+
+    f32 len2 = math::FrSqrt(pNodeMtx->_01 * pNodeMtx->_01 +
+                            pNodeMtx->_11 * pNodeMtx->_11 +
+                            pNodeMtx->_21 * pNodeMtx->_21);
+    f32 len2f = len2 * (pNodeMtx->_01 * pNodeMtx->_01 +
+                        pNodeMtx->_11 * pNodeMtx->_11 +
+                        pNodeMtx->_21 * pNodeMtx->_21);
+
+    f32 len3 = math::FrSqrt(pNodeMtx->_02 * pNodeMtx->_02 +
+                            pNodeMtx->_12 * pNodeMtx->_12 +
+                            pNodeMtx->_22 * pNodeMtx->_22);
+    f32 len3f = len3 * (pNodeMtx->_02 * pNodeMtx->_02 +
+                        pNodeMtx->_12 * pNodeMtx->_12 +
+                        pNodeMtx->_22 * pNodeMtx->_22);
+
+    pOut->_00 = dir.x * len2f;
+    pOut->_01 = up.x * len1f;
+    pOut->_02 = right.x * len3f;
+    pOut->_10 = dir.y * len2f;
+    pOut->_11 = up.y * len1f;
+    pOut->_12 = right.y * len3f;
+    pOut->_20 = dir.z * len2f;
+    pOut->_21 = up.z * len1f;
+    pOut->_22 = right.z * len3f;
 }
 
 /******************************************************************************
@@ -508,8 +560,60 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
                              bool useParent, const math::MTX34* pViewMtx,
                              ResMdl mdl, unsigned long mtxId) {
-    // TODO: Full implementation
-    math::MTX34Zero(pOut);
+    math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
+    math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
+
+    if (fabsf(up.x) >= 1.0e-18f && fabsf(up.z) >= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&up, &up);
+
+    if (fabsf(dir.x) >= 1.0e-18f && fabsf(dir.y) >= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&dir, &dir);
+
+    math::VEC3 right;
+    math::VEC3Cross(&right, &dir, &up);
+
+    u32 offset = mtxId * sizeof(math::MTX34);
+    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
+        reinterpret_cast<const u8*>(pMtxArray) + offset);
+
+    f32 len1 = math::FrSqrt(pNodeMtx->_00 * pNodeMtx->_00 +
+                            pNodeMtx->_10 * pNodeMtx->_10 +
+                            pNodeMtx->_20 * pNodeMtx->_20);
+    f32 len1f = len1 * (pNodeMtx->_00 * pNodeMtx->_00 +
+                        pNodeMtx->_10 * pNodeMtx->_10 +
+                        pNodeMtx->_20 * pNodeMtx->_20);
+
+    f32 len2 = math::FrSqrt(pNodeMtx->_01 * pNodeMtx->_01 +
+                            pNodeMtx->_11 * pNodeMtx->_11 +
+                            pNodeMtx->_21 * pNodeMtx->_21);
+    f32 len2f = len2 * (pNodeMtx->_01 * pNodeMtx->_01 +
+                        pNodeMtx->_11 * pNodeMtx->_11 +
+                        pNodeMtx->_21 * pNodeMtx->_21);
+
+    f32 len3 = math::FrSqrt(pNodeMtx->_02 * pNodeMtx->_02 +
+                            pNodeMtx->_12 * pNodeMtx->_12 +
+                            pNodeMtx->_22 * pNodeMtx->_22);
+    f32 len3f = len3 * (pNodeMtx->_02 * pNodeMtx->_02 +
+                        pNodeMtx->_12 * pNodeMtx->_12 +
+                        pNodeMtx->_22 * pNodeMtx->_22);
+
+    pOut->_00 = dir.x * len2f;
+    pOut->_01 = up.x * len1f;
+    pOut->_02 = right.x * len3f;
+    pOut->_10 = dir.y * len2f;
+    pOut->_11 = up.y * len1f;
+    pOut->_12 = right.y * len3f;
+    pOut->_20 = dir.z * len2f;
+    pOut->_21 = up.z * len1f;
+    pOut->_22 = right.z * len3f;
 }
 
 #pragma dont_inline off

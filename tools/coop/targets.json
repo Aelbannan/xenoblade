@@ -387131,7 +387131,7 @@
       "size": "0x7C",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -387144,8 +387144,8 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/sfd/sfd_con.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_con.c",
-      "instruction_match": 92.581,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 93.548,
+      "equivalence_status": "inconclusive_smt_disabled",
       "declared_return": "i32",
       "claim": {
         "owner": "cri-b16",
@@ -387167,8 +387167,8 @@
       "size": "0xB0",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c36e0",
@@ -387180,8 +387180,8 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/sfd/sfd_con.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_con.c",
-      "instruction_match": 66.318,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 95.182,
+      "equivalence_status": "inconclusive_smt_disabled",
       "declared_return": "i32",
       "claim": {
         "owner": "cri-b16",
@@ -387203,8 +387203,8 @@
       "size": "0xBC",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c36e0",
@@ -387216,8 +387216,8 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/sfd/sfd_con.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_con.c",
-      "instruction_match": 51.234,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 95.745,
+      "equivalence_status": "inconclusive_smt_disabled",
       "declared_return": "i32",
       "claim": {
         "owner": "cri-b16",
@@ -394740,7 +394740,7 @@
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc",
@@ -394761,8 +394761,8 @@
         ],
         "note": ""
       },
-      "instruction_match": 88.803,
-      "equivalence_status": "inconclusive_timeout"
+      "instruction_match": 99.262,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803d0f88",
@@ -395024,8 +395024,8 @@
       "size": "0xC0",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c1d50",
@@ -395046,7 +395046,9 @@
           "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803d14c0",
@@ -395141,8 +395143,8 @@
       "size": "0x80",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c1d50"
@@ -395154,7 +395156,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "declared_return": "i32",
-      "instruction_match": 61.188,
+      "instruction_match": 97.188,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "cri-b16",
@@ -419266,8 +419268,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_scnmdlsmpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -419276,8 +419278,8 @@
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_scnmdlsmpl.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp",
-      "instruction_match": 92.308,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "pi-nw4r-leaves",
         "claimed_at": "2026-08-03T17:33:30.338854+00:00",
@@ -419298,8 +419300,8 @@
       "size": "0x68",
       "unit": "nw4r/src/g3d/g3d_scnmdlsmpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -419308,8 +419310,8 @@
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_scnmdlsmpl.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp",
-      "instruction_match": 92.308,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "pi-nw4r-leaves",
         "claimed_at": "2026-08-03T17:33:32.566921+00:00",

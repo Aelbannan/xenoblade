@@ -39,7 +39,7 @@ AnmObj* ScnMdlSimple::GetAnmObj(AnmObjType type) {
     case ANMOBJTYPE_TEXPAT: return mpAnmObjTexPat;
     case ANMOBJTYPE_TEXSRT: return mpAnmObjTexSrt;
     case ANMOBJTYPE_SHP:
-    case ANMOBJTYPE_NOT_SPECIFIED: return mpAnmObjShp;
+    case ANMOBJTYPE_NOT_SPECIFIED:
     default: return NULL;
     }
 }
@@ -52,7 +52,7 @@ const AnmObj* ScnMdlSimple::GetAnmObj(AnmObjType type) const {
     case ANMOBJTYPE_TEXPAT: return mpAnmObjTexPat;
     case ANMOBJTYPE_TEXSRT: return mpAnmObjTexSrt;
     case ANMOBJTYPE_SHP:
-    case ANMOBJTYPE_NOT_SPECIFIED: return mpAnmObjShp;
+    case ANMOBJTYPE_NOT_SPECIFIED:
     default: return NULL;
     }
 }

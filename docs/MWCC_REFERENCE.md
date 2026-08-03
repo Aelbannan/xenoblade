@@ -7496,3 +7496,10 @@ Retail hoists a **dead load** `lwz r3, 0(r4)` (r4=8051914C) before the init-flag
 branch — the ++ operand's load scheduled early against the wrong base register.
 MWCC DCEs a dead read from the equivalent C; unreproducible intentionally.
 Size 0x50 vs 0x58 (2 missing instructions).
+
+### CriWare adx_mwii ADXM_ShutdownFramework — block-order wall (40%, goto form)
+Retail dispatch [cmpi 0; beq fn; cmpi 2; beq fn; cmpi 1; beq join; b ret0] lays
+the call block BETWEEN the dispatch and the ret0 ([fn: bl; b join; ret0: li 0]).
+The `goto call` form is closest (40%); MWCC flattens the ||+else-if variants and
+places the ret0 inline before the call block (source order), never reproducing
+the retail's fn-before-ret0 layout. 10 structural = the block order + 5 reg_swap.

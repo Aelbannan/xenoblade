@@ -7751,3 +7751,10 @@ The fileSectors = the 64-bit ceil-div [((u64)sizeHi<<32) + sizeLo + 2047 >> 11]
 emits [addic; addze; addc; adde] (the +2047 as a separate u64 add) vs the
 retail's single [li 2047; addc; adde] (register addc). The immediate-vs-register
 addc form is a MWCC codegen choice — semantic impl retained.
+
+### CriWare adx_stmc ADXSTM_Stop — 83.9% (reqId@+0x28 + loop layout)
+The handle's reqId field is at **+0x28** (not +0x24 as the struct comment says —
+the retail writes/reads [stw/lwz 40(r29)]). Residual 9 structural: the
+while-loop's extsb (retail sign-extends the stat byte even for ==1) and the
+loop's branch layout [lbz; extsb; cmpi; bne; lwz; cmpi; beq; b loop] vs decomp
+[lbz; cmpi; bne; lwz; cmpi; bne; bl].

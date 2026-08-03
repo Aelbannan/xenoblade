@@ -167,13 +167,13 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
 
     /* Phase 1: stop file transfer */
     ADXCRS_Enter();
-    if (h->fileHandle && !h->closing) {
+    if (h->fileHandle && !(s8)h->closing) {
         cvFsStopTr(h->fileHandle);
     }
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    h->reqId = 0;
+    *(u32*)((u8*)h + 0x28) = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -189,20 +189,20 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     /* Wait for FS server to process */
-    while (!(h->stat == 1 && h->reqId == 0)) {
+    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
         ADXT_ExecFsSvr();
     }
 
     /* Phase 2: stop again */
     ADXCRS_Leave();
     ADXCRS_Enter();
-    if (h->fileHandle && !h->closing) {
+    if (h->fileHandle && !(s8)h->closing) {
         cvFsStopTr(h->fileHandle);
     }
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    h->reqId = 0;
+    *(u32*)((u8*)h + 0x28) = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -218,7 +218,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Leave();
 
     /* Wait again */
-    while (!(h->stat == 1 && h->reqId == 0)) {
+    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
         ADXT_ExecFsSvr();
     }
 
@@ -239,7 +239,7 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
 
     /* Mark close and wait for close complete */
     ADXCRS_Lock();
-    if (h->opened == 1) {
+    if ((s32)h->opened == 1) {
         h->closing = 1;
     }
     h->openReq = 0;
@@ -295,7 +295,7 @@ void ADXSTM_ReleaseFileNw(ADXSTMHndl* h) {
     ADXCRS_Leave();
     ADXCRS_Lock();
 
-    if (h->opened == 1) {
+    if ((s32)h->opened == 1) {
         h->closing = 1;
     }
     h->openReq = 0;
@@ -308,7 +308,7 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Enter();
     ADXCRS_Enter();
 
-    if (h->fileHandle && !h->closing) {
+    if (h->fileHandle && !(s8)h->closing) {
         cvFsStopTr(h->fileHandle);
     }
 
@@ -316,7 +316,7 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    h->reqId = 0;
+    *(u32*)((u8*)h + 0x28) = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -331,20 +331,20 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (!(h->stat == 1 && h->reqId == 0)) {
+    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
         ADXT_ExecFsSvr();
     }
 
     /* Phase 2: stop again */
     ADXCRS_Leave();
     ADXCRS_Enter();
-    if (h->fileHandle && !h->closing) {
+    if (h->fileHandle && !(s8)h->closing) {
         cvFsStopTr(h->fileHandle);
     }
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    h->reqId = 0;
+    *(u32*)((u8*)h + 0x28) = 0;
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
@@ -359,14 +359,14 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (!(h->stat == 1 && h->reqId == 0)) {
+    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
         ADXT_ExecFsSvr();
     }
 
     /* Phase 3: mark release */
     ADXCRS_Leave();
     ADXCRS_Lock();
-    if (h->opened == 1) {
+    if ((s32)h->opened == 1) {
         h->closing = 1;
     }
     h->openReq = 0;
@@ -480,14 +480,14 @@ void ADXSTM_StopNw(ADXSTMHndl* h) {
 void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Enter();
 
-    if (h->fileHandle && !h->closing) {
+    if (h->fileHandle && !(s8)h->closing) {
         cvFsStopTr(h->fileHandle);
     }
 
     ADXCRS_Lock();
     h->stat = 1;
     h->subState = 0;
-    h->reqId = 0;
+    *(u32*)((u8*)h + 0x28) = 0;
     ADXCRS_Unlock();
 
     ADXCRS_Enter();
@@ -503,7 +503,7 @@ void ADXSTM_Stop(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Leave();
 
-    while (!(h->stat == 1 && h->reqId == 0)) {
+    while (!((s8)h->stat == 1 && *(u32*)((u8*)h + 0x28) == 0)) {
         ADXT_ExecFsSvr();
     }
 

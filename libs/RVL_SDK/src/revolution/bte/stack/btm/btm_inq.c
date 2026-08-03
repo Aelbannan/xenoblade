@@ -501,9 +501,9 @@ tBTM_STATUS BTM_SetInquiryMode (UINT8 mode)
 /* ------------------------------------------------------------------ */
 tBTM_STATUS BTM_SetConnectability (UINT16 page_mode, UINT16 window, UINT16 interval)
 {
+    tBTM_INQ_CB *p_inq = &btm_cb;
     UINT8        scan_mode = 0;
     void        *p_buf;
-    tBTM_INQ_CB *p_inq = &btm_cb;
 
     /* Check mode parameter */
     if ((page_mode != BTM_NON_CONNECTABLE) && (page_mode != BTM_CONNECTABLE))
@@ -850,15 +850,17 @@ tBTM_STATUS BTM_ClearInqDb(BD_ADDR p_bda)
 /* ------------------------------------------------------------------ */
 void btm_inq_db_reset (void)
 {
+    tBTM_INQ_CB        *p_inq = &btm_cb;
+    tBTM_INQ_CB        *p_bd;
+    UINT16              xx;
+    tINQ_DB_ENT        *p_ent;
     tBTM_REMOTE_DEV_NAME rem_name;
     UINT8               num_responses;
     UINT8               temp_state;
     tBTM_STATUS         status;
-    tBTM_INQ_CB        *p_inq = &btm_cb;
-    tINQ_DB_ENT        *p_ent;
-    UINT16              xx;
 
     /* If an inquiry is active, cancel it */
+    p_bd = &btm_cb;
     btu_stop_timer (p_inq->inq_timer_ent);
 
     /* If an inquiry or periodic inquiry is active, reset the mode to inactive */
@@ -924,13 +926,14 @@ void btm_inq_db_reset (void)
     }
 
     /* Clear the BD-addr results filter */
-    if (btm_cb.p_bd_db)
+    p_bd = &btm_cb;
+    if (p_bd->p_bd_db)
     {
-        GKI_freebuf (btm_cb.p_bd_db);
-        btm_cb.p_bd_db = NULL;
+        GKI_freebuf (p_bd->p_bd_db);
+        p_bd->p_bd_db = NULL;
     }
-    p_inq->num_bd_entries = 0;
-    p_inq->max_bd_entries = 0;
+    p_bd->num_bd_entries = 0;
+    p_bd->max_bd_entries = 0;
     p_inq->discoverable_mode = BTM_NON_DISCOVERABLE;
     p_inq->connectable_mode = BTM_NON_CONNECTABLE;
     p_inq->page_scan_type = BTM_SCAN_TYPE_STANDARD;

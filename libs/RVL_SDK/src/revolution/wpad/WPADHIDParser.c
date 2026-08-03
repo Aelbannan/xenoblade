@@ -287,9 +287,9 @@ void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 siz
         }
     } else if (fmt == WPAD_DPD_BASIC) {
         for (i = 0; i < WPAD_MAX_DPD_OBJECTS; ++i) {
-            x = *(data + i * 2);
-            y = *(data + i * 2 + 1);
-            xy = *(data + i * 3 + 2);
+            x = *(data + i * 3 - (i >> 1));
+            y = *(data + i * 3 - (i >> 1) + 1);
+            xy = *(data + i * 2 + (i >> 1) + 2);
 
             if ((i % 2) == 0) {
                 (*status)->obj[i].x =
@@ -940,6 +940,7 @@ void __wpadGetGameInfo(s32 chan, s32 err, u8 index) {
 //
 
 void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
+    const char* msg = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
     u8 type;
@@ -948,9 +949,9 @@ void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
 
     enable = OSDisableInterrupts();
 
-    DEBUGPrint(WPAD_DBG_MSG(0x520));
+    DEBUGPrint(msg + 0x520);
 
-    memcpy(status, cb->rxBufs[!cb->rxBufIndex], RX_BUFFER_SIZE);
+    memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex], RX_BUFFER_SIZE);
 
     status->button =
         (u16)(((u16)((data[2] << 8) & 0xFF00) | (u16)(data[1] & 0xFF)) & HID_WPAD_BUTTON_MASK) |
@@ -963,9 +964,9 @@ void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
 
     type = data[3];
     err = data[4];
-    ackStatus = (err == 0) ? WPAD_ERR_OK : WPAD_ERR_TRANSFER;
+    ackStatus = (err == 0) ? 0 : -3;
 
-    DEBUGPrint(WPAD_DBG_MSG(0x530), type, err);
+    DEBUGPrint(msg + 0x530, type, err);
 
     if (cb->lastReportID == type) {
         if (cb->cmdBlkCB != NULL) {
@@ -974,7 +975,7 @@ void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
         }
         cb->status = WPAD_ERR_OK;
     } else {
-        DEBUGPrint(WPAD_DBG_MSG(0x55C));
+        DEBUGPrint(msg + 0x55C);
     }
 
     OSRestoreInterrupts(enable);

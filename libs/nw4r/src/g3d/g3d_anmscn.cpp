@@ -261,28 +261,36 @@ AnmScnRes* AnmScnRes::Construct(MEMAllocator* pAllocator, u32* pSize,
         return NULL;
     }
 
-    u32 ambNum = 0;
+    u32 ambNum;
 
     if (pUserData != NULL) {
         ambNum = res.GetResAnmAmbLightNumEntries();
+    } else {
+        ambNum = 0;
     }
 
-    u32 lightNum = 0;
+    u32 lightNum;
 
     if (pUserData != NULL) {
         lightNum = res.GetResAnmLightNumEntries();
+    } else {
+        lightNum = 0;
     }
 
-    u32 fogNum = 0;
+    u32 fogNum;
 
     if (pUserData != NULL) {
         fogNum = res.GetResAnmFogNumEntries();
+    } else {
+        fogNum = 0;
     }
 
-    u32 camNum = 0;
+    u32 camNum;
 
     if (pUserData != NULL) {
         camNum = res.GetResAnmCameraNumEntries();
+    } else {
+        camNum = 0;
     }
 
     u32 ambCacheSize =

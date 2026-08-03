@@ -2507,6 +2507,10 @@ void HomeButton::startTrigEvent(const nw4hbm::lyt::Pane* pPane) {
             case res::eFuncTouchPane_B_bar_10:
             case res::eFuncTouchPane_cntrl_00: {
                 if (mSequence == eSeq_Control) {
+                    mpLayout->GetRootPane()
+                        ->FindPaneByName("bar_00", true)
+                        ->SetVisible(true);
+
                     mpPairGroupAnmController[res::ePairAnm_hmMenu_bar_psh]
                         ->start();
 

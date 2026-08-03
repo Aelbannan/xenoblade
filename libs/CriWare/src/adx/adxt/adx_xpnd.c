@@ -12,11 +12,11 @@ void ADXPD_Init(void) {
 void* ADXPD_Create(void) {
     u32* p = (u32*)lbl_eu_805E4F80;
     s32 count = 0;
-    s32 i;
 
-    for (i = 0; i < 16; i++, p += 15) {
+    while (count < 16) {
         if (*p == 0)
             break;
+        p += 15;
         count++;
     }
     if (count == 16)
@@ -122,4 +122,43 @@ void ADXPD_Reset(void* self) {
 
 u32 ADXPD_GetNumBlk(void* self) { return *(u32*)((u8*)self + 0x10); }
 
-void ADXPD_ExecHndl() {}
+extern u32 lbl_eu_805E5340;
+extern int ADX_DecodeMono4(const u8* in, int nblocks, s16* out, s16* prev,
+                           s16 c1, s16 c2, s16* hist, s16 scale, s16 pitch);
+extern int ADX_DecodeSte4(const u8* in, int nblocks, s16* out1, s16* prev1,
+                          s16* out2, s16* prev2, s16 c1, s16 c2,
+                          s16* hist, s16 v1, s16 v2);
+
+void ADXPD_ExecHndl(void* self) {
+    if (*(s32*)((u8*)self + 12) == 1) {
+        *(s32*)((u8*)self + 12) = 2;
+    }
+    if (*(s32*)((u8*)self + 12) == 2) {
+        s32 r;
+        s32 t;
+        s32 sign;
+        if (*(s32*)((u8*)self + 20) == 1) {
+            s16 pitch = *(s16*)((u8*)self + 56);
+            r = ADX_DecodeMono4(*(u8**)((u8*)self + 24), *(s32*)((u8*)self + 28),
+                                *(s16**)((u8*)self + 32), (s16*)((u8*)self + 40),
+                                *(s16*)((u8*)self + 48), *(s16*)((u8*)self + 50),
+                                (s16*)((u8*)self + 52), *(s16*)((u8*)self + 54),
+                                pitch);
+            *(s32*)((u8*)self + 16) = r;
+        } else {
+            r = ADX_DecodeSte4(*(u8**)((u8*)self + 24), *(s32*)((u8*)self + 28),
+                               *(s16**)((u8*)self + 32), (s16*)((u8*)self + 40),
+                               *(s16**)((u8*)self + 36), (s16*)((u8*)self + 44),
+                               *(s16*)((u8*)self + 48), *(s16*)((u8*)self + 50),
+                               (s16*)((u8*)self + 52), *(s16*)((u8*)self + 54),
+                               *(s16*)((u8*)self + 56));
+            sign = (r >> 31) & 1;
+            t = (r & 1) ^ sign;
+            *(s32*)((u8*)self + 16) = r;
+            if (t - sign == 1) {
+                lbl_eu_805E5340 = 1;
+            }
+        }
+        *(s32*)((u8*)self + 12) = 3;
+    }
+}

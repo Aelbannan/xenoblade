@@ -1652,10 +1652,6 @@ inline void HomeButton::setSimpleSyncAlarm(int type) {
 }
 
 void HomeButton::update(const HBMControllerData* pController) {
-#define IsValidDevType_(x)                                                     \
-    ((x)->use_devtype == WPAD_DEV_CLASSIC ||                                   \
-     (x)->kpad->dev_type == WPAD_DEV_CLASSIC)
-
     int i, idx;
 
     mFader.calc();
@@ -1672,21 +1668,29 @@ void HomeButton::update(const HBMControllerData* pController) {
                         / getInstance()->getHBMDataInfo()->frameDelta + 0.5f)) {
                     // clang-format on
 
-                    if (pController->wiiCon[i].kpad->wpad_err == WPAD_ERR_OK) {
+                    if (pController->wiiCon[i].kpad->wpad_err == WPAD_ERR_OK ||
+                        pController->wiiCon[i].kpad->wpad_err ==
+                            WPAD_ERR_CORRUPTED) {
                         bool pointerEnableFlag;
 
-                        if (pController->wiiCon[i].use_devtype !=
-                                WPAD_DEV_CLASSIC &&
-                            pController->wiiCon[i].kpad->dev_type !=
-                                WPAD_DEV_CLASSIC) {
+                        if ((pController->wiiCon[i].use_devtype !=
+                                 WPAD_DEV_CLASSIC ||
+                             pController->wiiCon[i].kpad->dev_type !=
+                                 WPAD_DEV_CLASSIC) &&
+                            (pController->wiiCon[i].use_devtype !=
+                                 WPAD_DEV_NUNCHUK ||
+                             pController->wiiCon[i].kpad->dev_type !=
+                                 WPAD_DEV_NUNCHUK)) {
 
-                            if (pController->wiiCon[i].kpad->dpd_valid_fg > 0) {
+                            if (pController->wiiCon[i].kpad->dpd_valid_fg >
+                                0) {
                                 pointerEnableFlag = true;
                             } else {
                                 pointerEnableFlag = false;
                             }
-                        } else
+                        } else {
                             pointerEnableFlag = true;
+                        }
 
                         mpController[i]->setKpad(&pController->wiiCon[i],
                                                  pointerEnableFlag);
@@ -1702,8 +1706,14 @@ void HomeButton::update(const HBMControllerData* pController) {
                     mPadDrawTime[i]++;
                 }
 
-                if (pController->wiiCon[i].use_devtype != WPAD_DEV_CLASSIC &&
-                    pController->wiiCon[i].kpad->dev_type != WPAD_DEV_CLASSIC) {
+                if (!((pController->wiiCon[i].use_devtype ==
+                           WPAD_DEV_CLASSIC &&
+                       pController->wiiCon[i].kpad->dev_type ==
+                           WPAD_DEV_CLASSIC) ||
+                      (pController->wiiCon[i].use_devtype ==
+                           WPAD_DEV_NUNCHUK &&
+                       pController->wiiCon[i].kpad->dev_type ==
+                           WPAD_DEV_NUNCHUK))) {
 
                     if (pController->wiiCon[i].kpad->dpd_valid_fg <= 0) {
                         s32 result;
@@ -1730,9 +1740,11 @@ void HomeButton::update(const HBMControllerData* pController) {
             }
 
             if (!mControllerFlag[i]) {
+                unk88 = i;
                 mControllerFlag[i] = true;
 
-                getController(i)->getInfoAsync(&mWpadInfo[i]);
+                getController(i)->getInfoAsync(
+                    &sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[i]);
 
                 idx = findGroupAnimator(i + res::eGrPane_plyr_00,
                                         res::eGrAnim_btry_wht);
@@ -1759,11 +1771,18 @@ void HomeButton::update(const HBMControllerData* pController) {
                 setSpeakerAlarm(i, 400);
             }
 
-            if (pController->wiiCon[i].kpad->wpad_err == WPAD_ERR_OK) {
+            if (pController->wiiCon[i].kpad->wpad_err == WPAD_ERR_OK ||
+                pController->wiiCon[i].kpad->wpad_err == WPAD_ERR_CORRUPTED) {
                 nw4hbm::math::VEC3 vec;
 
-                if (pController->wiiCon[i].use_devtype == WPAD_DEV_CLASSIC &&
-                    pController->wiiCon[i].kpad->dev_type == WPAD_DEV_CLASSIC) {
+                if ((pController->wiiCon[i].use_devtype ==
+                         WPAD_DEV_CLASSIC &&
+                     pController->wiiCon[i].kpad->dev_type ==
+                         WPAD_DEV_CLASSIC) ||
+                    (pController->wiiCon[i].use_devtype ==
+                         WPAD_DEV_NUNCHUK &&
+                     pController->wiiCon[i].kpad->dev_type ==
+                         WPAD_DEV_NUNCHUK)) {
                     vec = nw4hbm::math::VEC3(0.0f, 0.0f, 15.0f);
                 } else {
                     Vec2 v = pController->wiiCon[i].kpad->horizon;
@@ -1785,7 +1804,8 @@ void HomeButton::update(const HBMControllerData* pController) {
                 }
 
                 if (mGetPadInfoTime > scGetPadInfoTime) {
-                    getController(i)->getInfoAsync(&mWpadInfo[i]);
+                    getController(i)->getInfoAsync(
+                        &sWpadInfo__Q22cf9CfPadTask__Q210homebutton10HomeButton[i]);
                 }
 
                 update_controller(i);

@@ -17,8 +17,8 @@ extern s32 lbl_eu_805F2AF0;
 int ADX_DecodeMono4(const u8 *in, int nblocks, s16 *out, s16 *prev,
                     s16 c1, s16 c2, s16 *hist, s16 scale, s16 pitch)
 {
-    int block, i;
     s32 prev_lo, prev_hi;
+    int block, i;
     s32 hist_val;
     s16 scale_val;
     s32 nib_hi;

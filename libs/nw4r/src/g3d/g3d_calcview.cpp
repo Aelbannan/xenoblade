@@ -238,8 +238,84 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                                bool useParent, const math::MTX34* pViewMtx,
                                ResMdl mdl, unsigned long mtxId) {
-    // TODO: Full implementation
-    math::MTX34Zero(pOut);
+    math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
+    math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
+
+    if (fabsf(dir.x) <= 1.0e-18f && fabsf(dir.y) <= 1.0e-18f &&
+        fabsf(dir.z) <= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&dir, &dir);
+
+    math::VEC3 right;
+    math::VEC3Cross(&right, &up, &dir);
+
+    if (fabsf(right.x) <= 1.0e-18f && fabsf(right.y) <= 1.0e-18f &&
+        fabsf(right.z) <= 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&right, &right);
+    math::VEC3Cross(&up, &dir, &right);
+
+    u32 offset = mtxId * sizeof(math::MTX34);
+    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
+        reinterpret_cast<const u8*>(pMtxArray) + offset);
+
+    if (useParent) {
+        f32 len1sq = pNodeMtx->_00 * pNodeMtx->_00 +
+                     pNodeMtx->_10 * pNodeMtx->_10 +
+                     pNodeMtx->_20 * pNodeMtx->_20;
+        f32 len1 = math::FrSqrt(len1sq) * len1sq;
+
+        f32 len2sq = pNodeMtx->_01 * pNodeMtx->_01 +
+                     pNodeMtx->_11 * pNodeMtx->_11 +
+                     pNodeMtx->_21 * pNodeMtx->_21;
+        f32 len2 = math::FrSqrt(len2sq) * len2sq;
+
+        f32 len3sq = pNodeMtx->_02 * pNodeMtx->_02 +
+                     pNodeMtx->_12 * pNodeMtx->_12 +
+                     pNodeMtx->_22 * pNodeMtx->_22;
+        f32 len3 = math::FrSqrt(len3sq) * len3sq;
+
+        pOut->_00 = right.x * len1;
+        pOut->_01 = right.y * len1;
+        pOut->_02 = right.z * len1;
+        pOut->_10 = up.x * len2;
+        pOut->_11 = up.y * len2;
+        pOut->_12 = up.z * len2;
+        pOut->_20 = dir.x * len3;
+        pOut->_21 = dir.y * len3;
+        pOut->_22 = dir.z * len3;
+    } else {
+        f32 len1sq = pNodeMtx->_00 * pNodeMtx->_00 +
+                     pNodeMtx->_10 * pNodeMtx->_10 +
+                     pNodeMtx->_20 * pNodeMtx->_20;
+        f32 len1 = math::FrSqrt(len1sq) * len1sq;
+
+        f32 len2sq = pNodeMtx->_01 * pNodeMtx->_01 +
+                     pNodeMtx->_11 * pNodeMtx->_11 +
+                     pNodeMtx->_21 * pNodeMtx->_21;
+        f32 len2 = math::FrSqrt(len2sq) * len2sq;
+
+        f32 len3sq = pNodeMtx->_02 * pNodeMtx->_02 +
+                     pNodeMtx->_12 * pNodeMtx->_12 +
+                     pNodeMtx->_22 * pNodeMtx->_22;
+        f32 len3 = math::FrSqrt(len3sq) * len3sq;
+
+        pOut->_00 = right.x * len1;
+        pOut->_01 = right.y * len1;
+        pOut->_02 = right.z * len1;
+        pOut->_10 = up.x * len2;
+        pOut->_11 = up.y * len2;
+        pOut->_12 = up.z * len2;
+        pOut->_20 = dir.x * len3;
+        pOut->_21 = dir.y * len3;
+        pOut->_22 = dir.z * len3;
+    }
 }
 
 /******************************************************************************

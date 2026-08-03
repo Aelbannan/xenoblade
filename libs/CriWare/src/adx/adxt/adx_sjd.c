@@ -90,28 +90,29 @@ void* ADXSJD_Create(void* stream, s32 numChan, void* sjArray) {
     void* sjd = NULL;
     u8* base = lbl_eu_805E3358;
     int i;
+    void* sj0;
+    s32 halfBuf, halfXtr;
     void* bufPtr;
-    u32 bufSize, xtrSize, halfBuf, halfXtr;
+    s32 bufSize, xtrSize;
     void* adxb;
     u32* src;
     u32* dst;
 
     /* Find free slot (unrolled 8-at-a-time scan) */
     for (i = 0; i < 16; i++) {
-        if (base[i * 0xB4] == 0) {
-            sjd = &base[i * 0xB4];
-            break;
-        }
+        if (*(s8*)(base + i * 0xB4) == 0) break;
     }
-    if (sjd == NULL) return NULL;
+    if (i == 16) return NULL;
+    sjd = &lbl_eu_805E3358[i * 0xB4];
 
-    bufPtr = SJRBF_GetBufPtr(stream);
-    bufSize = SJRBF_GetBufSize(stream);
+    sj0 = *(void**)sjArray;
+    bufPtr = SJRBF_GetBufPtr(sj0);
+    bufSize = SJRBF_GetBufSize(sj0);
     halfBuf = bufSize / 2;
-    xtrSize = SJRBF_GetXtrSize(stream);
+    xtrSize = SJRBF_GetXtrSize(sj0);
     halfXtr = xtrSize / 2;
 
-    adxb = ADXB_Create((u8*)sjd + 0x0C, bufPtr, halfBuf, halfBuf + halfXtr);
+    adxb = ADXB_Create((void*)numChan, bufPtr, halfBuf, halfBuf + halfXtr);
     if (adxb == NULL) return NULL;
 
     *(void**)((u8*)sjd + 0x04) = adxb;

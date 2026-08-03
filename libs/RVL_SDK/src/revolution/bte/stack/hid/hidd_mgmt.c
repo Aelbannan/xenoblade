@@ -55,8 +55,6 @@ typedef struct {
    bytes). Defined here because this TU owns the .bss split; the other
    hidd_* TUs reference it via their own `extern tHIDD_CB hd_cb`. */
 tHIDD_CB hd_cb;
-// .bss pad (retail .bss section is 0x148, hd_cb is 0x144)
-u32 HiddBssPad;
 
 /* ------------------------------------------------------------------ */
 /*  Trace constants from bt_types.h.                                   */

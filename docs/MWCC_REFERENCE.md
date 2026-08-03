@@ -56,6 +56,15 @@ pattern cannot link.
    depends on it (e.g. dvdDeviceError `fgColor[2]` forces the `.sdata2` slot load;
    a plain const folds to an immediate). Keep it and document why.
 
+**objdiff data% quirk:** when the base data section is *smaller* than the target
+slice (pad removed), objdiff's top-level `matched_data` can collapse to ~0 even
+though per-section fuzzy stays high — the target's synthesized `gap_*` symbols
+and the section-size delta confuse its scoring. This is cosmetic (acceptance is
+function/code-based); if you want the data% line honest again, trim the slice end
+to the last content symbol in `config/<region>/splits.txt` (and fix any symbol
+whose ppcdis size absorbed the pad, e.g. `__i2c_ident_flag` size 8 → 4) then
+regenerate the split. Do **not** re-add a pad to the source to satisfy it.
+
 **Do not**: pad the decompiled object, add fake sections/symbols, or chase
 per-unit data% by growing sections. `EQUIVALENT_MATCH`/`FULL_MATCH` acceptance is
 function-level and does not depend on the pad bytes.
@@ -8100,3 +8109,34 @@ using them only at the end reproduces this; loading them inline at the end
 The copy loops still resist: retail `lwz/lwzu/stw/stwu + bdnz` (CTR) vs decomp
 `lwz/addic./stw/lwzu/stwu + bne` — no C form probed (u64*, u8*+offsets,
 do-while(--n), while(n--), for-loop) triggers the CTR conversion.
+
+## CriWare batch cri-17 — MWCC rlwinm shift mapping; declaration-order Chaitin fix (US)
+
+- **`(x >> k) & 1` → `rlwinm rd, rs, 32-k, 31, 31`** (MWCC GC/3.0a5.2). Empirically verified:
+  `>> 3` → SH=29, `>> 4` → SH=28, `>> 5` → SH=27 (SUD_SearchSudDat's `(cntlzw(p) >> 5) & 1`
+  zero-test idiom and ADXERR_ItoA both hit SH=27 exactly). The 31-k convention is WRONG for MWCC.
+  SUD_SearchSudDat's retail `rlwinm r0,r0,27,31,31` = `(x >> 5) & 1`, not `>> 4`.
+- **Declaration order drives Chaitin rotation in loop-heavy functions (SFD_SetCond 97.6%→100%):**
+  the NULL-path handle loop's 4-variable rotation (off/p/i/h) fixed by declaring
+  `void* h; s32 i; u32* p; s32 off; s32 ok;` in that exact order (h first); 6 permutations of the
+  outer 3 gave 6–12 reg-swaps, h-i-p-off-ok gave 1, and grouping the store offset
+  `*(u32*)((u8*)h + (off + 0xA1C))` (parenthesizing off+0xA1C) fixed the last add operand order →
+  **100% FULL_MATCH**. Also: `p++` must go in the for-increment clause (body-end `p++` schedules
+  before the call).
+- **SFH_IsSfdHeader structure keys:** the VER1 module-ver failure falls back
+  (`moduleMajor=0; moduleMinor=0`) but the VER2 module-ver failure RETURNS 0; the check-result
+  block needs `if (ctx->active == 2) goto success;` (error falls through, success is the branch
+  target); `ctx->active` must be `s32` for the signed `cmpi` (u32 emits `cmpli`); `isValid` is NOT
+  zero-initialized (retail leaves sp+8 untouched). SFH_AnlyHdrToolVer tail-call dispatcher needs a
+  1-arg cast `((u32 (*)(void*))VER1_AnlyHdrToolVer)(buf)` to avoid the `li r4,0; li r5,0` arg setup.
+- **ADXERR_ItoA structure:** bounded `for (i = 0; i < 32; i++)` digit loop (×4 unroll with
+  `mtctr 8`), RAW digit bytes (no '0' add), inline terminator `buf[i] = '\0'` at each break
+  (overwriting the last digit — the retail's quirk), signed `s32 value % 10` (mulhw 0x66666667),
+  strlen of the GLOBAL scratch lbl_eu_805E6488 + min(buf_size-1), ×8-unrolled reversal copy
+  `buf[j] = lbl_eu_805E6488[n-1-j]`.
+- **LSC_Init dead rodata load:** retail hoists a DEAD `lwz r0, lbl_eu_80518418@l` (an 8-byte
+  rodata {ptr,0} object) before the LSC_LockCrs call; no source shape reproduces it (count-local,
+  volatile, struct-copy, goto variants all fail) — 8 bytes short of retail.
+- **UTY_InitTmr p2 base:** retail materializes `addi r3,r31,8` for the `p2[1]` store in both
+  branches; decomp folds to `12(r31)` — the base materialization resisted volatile/non-volatile/
+  mixed p2/tmr variants (8 bytes short).

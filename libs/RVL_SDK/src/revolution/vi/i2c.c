@@ -2,7 +2,6 @@
 
 static volatile u32 __i2c_ident_flag = 1;
 static volatile u32 __i2c_ident_first = 0;
-u8 vi_i2c_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 
 #define busRd32(addr) (*(volatile u32*)(addr))
 #define busWrt32(addr, val) (*(volatile u32*)(addr)) = (val)

@@ -24,7 +24,6 @@ static s64 buffer;
 
 static BOOL __AID_Active;
 static BOOL __AI_init_flag;
-static u32 AiSbssPad;
 
 
 static void __AICallbackStackSwitch(AIDMACallback callback);

@@ -6,9 +6,6 @@ const char* __DSPVersion =
 
 static BOOL __DSP_init_flag = FALSE;
 
-// .sbss pad (retail gap_10_80664EAC_sbss at 0x4..0x8)
-u32 DspSbssPad;
-
 BOOL DSPCheckMailToDSP(void) {
     return (DSP_HW_REGS[DSP_DSPMBOX_H] & DSP_DSPMBOX_H_STATUS) != 0;
 }

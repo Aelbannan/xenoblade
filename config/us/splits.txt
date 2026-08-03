@@ -19,11 +19,11 @@ kyoshin/CGame.cpp:
 	.text       start:0x800395A0 end:0x8003A2A8
 	.ctors      start:0x804F9FC4 end:0x804F9FC8
 	.rodata     start:0x804FA1E0 end:0x804FA258
-	.data       start:0x805248E0 end:0x80524A80
-	.bss        start:0x80570480 end:0x805704C8
+	.data	start:0x805248e0 end:0x80524a7c
+	.bss	start:0x80570480 end:0x805704c4
 	.sdata      start:0x80661880 end:0x806618B0
 	.sbss       start:0x80663D00 end:0x80663D10
-	.sdata2     start:0x80665AA0 end:0x80665AB8
+	.sdata2	start:0x80665aa0 end:0x80665ab6
 
 kyoshin/main.cpp:
 	extab       start:0x800067C4 end:0x800067D4
@@ -42,7 +42,7 @@ split1.s:
 	.sdata2     start:0x80665B80 end:0x80669020
 
 PowerPC_EABI_Support/src/Runtime/New.cp:
-	.rodata     start:0x805139D8 end:0x805139E8
+	.rodata	start:0x805139d8 end:0x805139e7
 	.sdata      start:0x80662F30 end:0x80662F38
 
 kyoshin/plugin/pluginDeb.cpp:
@@ -1711,24 +1711,24 @@ PowerPC_EABI_Support/src/Runtime/__va_arg.c:
 
 PowerPC_EABI_Support/src/Runtime/global_destructor_chain.c:
 	.text       start:0x802BC10C end:0x802BC16C
-	.sbss       start:0x80664C40 end:0x80664C48
+	.sbss	start:0x80664c40 end:0x80664c44
 
 PowerPC_EABI_Support/src/Runtime/NMWException.cp:
 	extab       start:0x8001BF94 end:0x8001BFDC
 	extabindex  start:0x80033D3C end:0x80033D78
 	.text       start:0x802BC16C end:0x802BC760
-	.sdata      start:0x80662F38 end:0x80662F40
+	.sdata	start:0x80662f38 end:0x80662f3c
 
 PowerPC_EABI_Support/src/Runtime/ptmf.c:
 	.text       start:0x802BC760 end:0x802BC7F4
-	.rodata     start:0x805139E8 end:0x805139F8
+	.rodata	start:0x805139e8 end:0x805139f4
 
 PowerPC_EABI_Support/src/Runtime/MWRTTI.cp:
 	extab       start:0x8001BFDC end:0x8001BFEC
 	extabindex  start:0x80033D78 end:0x80033D90
 	.text       start:0x802BC7F4 end:0x802BCA9C
 	.rodata     start:0x805139F8 end:0x80513A50
-	.data       start:0x8053B928 end:0x8053B950
+	.data	start:0x8053b928 end:0x8053b94d
 	.sdata      start:0x80662F40 end:0x80662F48
 
 PowerPC_EABI_Support/src/Runtime/runtime.c:
@@ -1740,7 +1740,7 @@ PowerPC_EABI_Support/src/Runtime/__init_cpp_exceptions.cpp:
 	.ctors      start:0x804F9FC0 end:0x804F9FC4 rename:.ctors$10
 	.dtors      start:0x804FA1C0 end:0x804FA1C4 rename:.dtors$10
 	.dtors      start:0x804FA1C4 end:0x804FA1C8 rename:.dtors$15
-	.sdata      start:0x80662F48 end:0x80662F50
+	.sdata	start:0x80662f48 end:0x80662f4c
 
 PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp:
 	extab       start:0x8001BFEC end:0x8001C02C
@@ -1751,16 +1751,16 @@ PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp:
 
 PowerPC_EABI_Support/src/Runtime/GCN_mem_alloc.c:
 	.text       start:0x802BE770 end:0x802BE828
-	.rodata     start:0x80513A68 end:0x80513AD8
+	.rodata	start:0x80513a68 end:0x80513ad7
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/alloc.c:
 	.text       start:0x802BE828 end:0x802BED3C
 	.rodata     start:0x80513AD8 end:0x80513AF0
 	.bss        start:0x80577910 end:0x80577948
-	.sbss       start:0x80664C48 end:0x80664C50
+	.sbss	start:0x80664c48 end:0x80664c49
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/errno.c:
-	.sbss       start:0x80664C50 end:0x80664C58
+	.sbss	start:0x80664c50 end:0x80664c54
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/ansi_files.c:
 	.text       start:0x802BED3C end:0x802BEE4C
@@ -1769,7 +1769,7 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/ansi_files.c:
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp.c:
 	.text       start:0x802BEE4C end:0x802C06CC
-	.rodata     start:0x80513AF0 end:0x80513BD0
+	.rodata	start:0x80513af0 end:0x80513bcd
 	.data       start:0x8053BB18 end:0x8053BC80
 	.sdata2     start:0x80669020 end:0x80669058
 
@@ -1777,9 +1777,9 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/ctype.c:
 	.rodata     start:0x80513BD0 end:0x80513FD0
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/locale.c:
-	.rodata     start:0x80513FD0 end:0x805140D8
+	.rodata	start:0x80513fd0 end:0x805140d6
 	.data       start:0x8053BC80 end:0x8053BE78
-	.sdata2     start:0x80669058 end:0x80669070
+	.sdata2	start:0x80669058 end:0x8066906b
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith.c:
 	.text       start:0x802C06CC end:0x802C06EC
@@ -1813,14 +1813,14 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/misc_io.c:
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/printf.c:
 	.text       start:0x802C1670 end:0x802C3A68
-	.rodata     start:0x805140D8 end:0x80514100
+	.rodata	start:0x805140d8 end:0x805140fd
 	.data       start:0x8053BE78 end:0x8053C0A8
-	.sdata      start:0x80662F50 end:0x80662F58
+	.sdata	start:0x80662f50 end:0x80662f52
 	.sdata2     start:0x80669070 end:0x80669078
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/rand.c:
 	.text       start:0x802C3A68 end:0x802C3A88
-	.sdata      start:0x80662F58 end:0x80662F60
+	.sdata	start:0x80662f58 end:0x80662f5c
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/float.c:
 	.sdata      start:0x80662F60 end:0x80662F70
@@ -1839,7 +1839,7 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/string.c:
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/strtold.c:
 	.text       start:0x802C5388 end:0x802C6708
-	.rodata     start:0x80514128 end:0x80514138
+	.rodata	start:0x80514128 end:0x80514131
 	.sdata2     start:0x80669078 end:0x80669098
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/wctype.c:
@@ -1856,8 +1856,8 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/wmem.c:
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/wprintf.c:
 	.text       start:0x802C7668 end:0x802C9888
-	.rodata     start:0x80514738 end:0x80514740
-	.data       start:0x8053C318 end:0x8053C5B8
+	.rodata	start:0x80514738 end:0x80514739
+	.data	start:0x8053c318 end:0x8053c5b6
 	.sdata2     start:0x80669098 end:0x806690A0
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/wscanf.c:
@@ -1871,7 +1871,7 @@ PowerPC_EABI_Support/src/MSL_C/MSL_Common/wchar_io.c:
 
 PowerPC_EABI_Support/src/MSL_C/PPC_EABI/uart_console_io_gcn.c:
 	.text       start:0x802C9A6C end:0x802C9B44
-	.sbss       start:0x80664C58 end:0x80664C60
+	.sbss	start:0x80664c58 end:0x80664c5c
 
 PowerPC_EABI_Support/src/MSL_C/PPC_EABI/abort_exit_ppc_eabi.c:
 	.text       start:0x802C9B44 end:0x802C9B78
@@ -1879,7 +1879,7 @@ PowerPC_EABI_Support/src/MSL_C/PPC_EABI/abort_exit_ppc_eabi.c:
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/secure_error.c:
 	.text       start:0x802C9B78 end:0x802C9B90
-	.sbss       start:0x80664C68 end:0x80664C70
+	.sbss	start:0x80664c68 end:0x80664c6c
 
 PowerPC_EABI_Support/src/MSL_C/MSL_Common/math_double.c:
 	.text       start:0x802C9B90 end:0x802C9BB4
@@ -2020,7 +2020,7 @@ PowerPC_EABI_Support/src/MetroTRK/targsupp.s:
 PowerPC_EABI_Support/src/MetroTRK/custconn/cc_gdev.c:
 	.text       start:0x802CDE88 end:0x802CE100
 	.bss        start:0x80577C68 end:0x80578188
-	.sbss       start:0x80664C80 end:0x80664C88
+	.sbss	start:0x80664c80 end:0x80664c84
 
 PowerPC_EABI_Support/src/MetroTRK/custconn/MWCriticalSection_gc.cpp:
 	.text       start:0x802CE100 end:0x802CE13C
@@ -2033,7 +2033,7 @@ PowerPC_EABI_Support/src/MetroTRK/flush_cache.c:
 
 PowerPC_EABI_Support/src/MetroTRK/main_TRK.c:
 	.text       start:0x802CE3B0 end:0x802CE3EC
-	.sbss       start:0x80664C88 end:0x80664C90
+	.sbss	start:0x80664c88 end:0x80664c8c
 
 PowerPC_EABI_Support/src/MetroTRK/mainloop.c:
 	.text       start:0x802CE3EC end:0x802CE4D8
@@ -2043,43 +2043,43 @@ PowerPC_EABI_Support/src/MetroTRK/mem_TRK.c:
 
 PowerPC_EABI_Support/src/MetroTRK/dispatch.c:
 	.text       start:0x802CE73C end:0x802CE85C
-	.data       start:0x8053C5B8 end:0x8053C628
+	.data	start:0x8053c5b8 end:0x8053c624
 
 PowerPC_EABI_Support/src/MetroTRK/dolphin_trk.c:
 	.text       start:0x802CE85C end:0x802CEB80
-	.data       start:0x8053C628 end:0x8053C668
-	.sbss       start:0x80664C90 end:0x80664C98
+	.data	start:0x8053c628 end:0x8053c664
+	.sbss	start:0x80664c90 end:0x80664c94
 
 PowerPC_EABI_Support/src/MetroTRK/dolphin_trk_glue.c:
 	.text       start:0x802CEB80 end:0x802CEF1C
-	.data       start:0x8053C668 end:0x8053C750
+	.data	start:0x8053c668 end:0x8053c749
 	.bss        start:0x80578188 end:0x805781B0
-	.sbss       start:0x80664C98 end:0x80664CA0
-	.sdata2     start:0x806695B0 end:0x806695B8
+	.sbss	start:0x80664c98 end:0x80664c99
+	.sdata2	start:0x806695b0 end:0x806695b4
 
 PowerPC_EABI_Support/src/MetroTRK/notify.c:
 	.text       start:0x802CEF1C end:0x802CEFAC
 
 PowerPC_EABI_Support/src/MetroTRK/nubevent.c:
 	.text       start:0x802CEFAC end:0x802CF148
-	.data       start:0x8053C750 end:0x8053C770
-	.bss        start:0x805781B0 end:0x805781D8
+	.data	start:0x8053c750 end:0x8053c76d
+	.bss	start:0x805781b0 end:0x805781d4
 
 PowerPC_EABI_Support/src/MetroTRK/nubinit.c:
 	.text       start:0x802CF148 end:0x802CF298
-	.data       start:0x8053C770 end:0x8053C790
-	.sbss       start:0x80664CA0 end:0x80664CA8
+	.data	start:0x8053c770 end:0x8053c78d
+	.sbss	start:0x80664ca0 end:0x80664ca4
 
 PowerPC_EABI_Support/src/MetroTRK/serpoll.c:
 	.text       start:0x802CF298 end:0x802CF3E0
-	.sbss       start:0x80664CA8 end:0x80664CB0
+	.sbss	start:0x80664ca8 end:0x80664cac
 
 PowerPC_EABI_Support/src/MetroTRK/string_TRK.c:
 	.text       start:0x802CF3E0 end:0x802CF3FC
 
 PowerPC_EABI_Support/src/MetroTRK/support.c:
 	.text       start:0x802CF3FC end:0x802CFA20
-	.data       start:0x8053C790 end:0x8053C7D8
+	.data	start:0x8053c790 end:0x8053c7d1
 
 PowerPC_EABI_Support/src/MetroTRK/targcont.c:
 	.text       start:0x802CFA20 end:0x802CFA54
@@ -2110,67 +2110,67 @@ PowerPC_EABI_Support/src/MetroTRK/targimpl.c:
 	.rodata     start:0x80514A58 end:0x80514AE0
 	.data       start:0x8053C890 end:0x8053C8A0
 	.bss        start:0x80579B80 end:0x8057A128
-	.sbss       start:0x80664CC0 end:0x80664CC8
+	.sbss	start:0x80664cc0 end:0x80664cc2
 
 PowerPC_EABI_Support/src/MetroTRK/target_options.c:
 	.text       start:0x802D2F20 end:0x802D2F30
-	.sbss       start:0x80664CC8 end:0x80664CD0
+	.sbss	start:0x80664cc8 end:0x80664cc9
 
 NdevExi2A/src/DebuggerDriver.c:
 	.text       start:0x802D2F30 end:0x802D3264
-	.sdata      start:0x80662F70 end:0x80662F78
-	.sbss       start:0x80664CD0 end:0x80664CE8
+	.sdata	start:0x80662f70 end:0x80662f71
+	.sbss	start:0x80664cd0 end:0x80664ce4
 
 NdevExi2A/src/exi2.c:
 	.text       start:0x802D3264 end:0x802D39F0
 
 RVL_SDK/src/revolution/ai/ai.c:
 	.text       start:0x802D39F0 end:0x802D3FC0 align:16
-	.data       start:0x8053C8A0 end:0x8053C8E8
-	.sdata      start:0x80662F78 end:0x80662F80
-	.sbss       start:0x80664CE8 end:0x80664D28
+	.data	start:0x8053c8a0 end:0x8053c8e5
+	.sdata	start:0x80662f78 end:0x80662f7c
+	.sbss	start:0x80664ce8 end:0x80664d24
 
 RVL_SDK/src/revolution/arc/arc.c:
 	.text       start:0x802D3FC0 end:0x802D49A0 align:16
-	.data       start:0x8053C8E8 end:0x8053C958
-	.sdata      start:0x80662F80 end:0x80662F88
+	.data	start:0x8053c8e8 end:0x8053c952
+	.sdata	start:0x80662f80 end:0x80662f86
 
 RVL_SDK/src/revolution/ax/AX.c:
 	.text       start:0x802D49A0 end:0x802D4A60 align:16
-	.data       start:0x8053C958 end:0x8053C9A0
-	.sdata      start:0x80662F88 end:0x80662F90
-	.sbss       start:0x80664D28 end:0x80664D30
+	.data	start:0x8053c958 end:0x8053c99d
+	.sdata	start:0x80662f88 end:0x80662f8c
+	.sbss	start:0x80664d28 end:0x80664d2c
 
 RVL_SDK/src/revolution/ax/AXAlloc.c:
 	.text       start:0x802D4A60 end:0x802D5000 align:16
-	.bss        start:0x8057A128 end:0x8057A240
-	.sbss       start:0x80664D30 end:0x80664D38
+	.bss	start:0x8057a128 end:0x8057a228
+	.sbss	start:0x80664d30 end:0x80664d34
 
 RVL_SDK/src/revolution/ax/AXAux.c:
 	.text       start:0x802D5000 end:0x802D58C0 align:16
 	.bss        start:0x8057A240 end:0x8057D3C0
-	.sbss       start:0x80664D38 end:0x80664D80
+	.sbss	start:0x80664d38 end:0x80664d7f
 
 RVL_SDK/src/revolution/ax/AXCL.c:
 	.text       start:0x802D58C0 end:0x802D63C0 align:16
 	.bss        start:0x8057D3C0 end:0x8057D4C0
-	.sbss       start:0x80664D80 end:0x80664DA8
+	.sbss	start:0x80664d80 end:0x80664da4
 
 RVL_SDK/src/revolution/ax/AXOut.c:
 	.text       start:0x802D63C0 end:0x802D6C70 align:16
 	.bss        start:0x8057D4C0 end:0x8057E2C0
-	.sbss       start:0x80664DA8 end:0x80664DE8
+	.sbss	start:0x80664da8 end:0x80664de4
 
 RVL_SDK/src/revolution/ax/AXSPB.c:
 	.text       start:0x802D6C70 end:0x802D70B0 align:16
-	.bss        start:0x8057E2C0 end:0x8057E340
+	.bss	start:0x8057e2c0 end:0x8057e338
 	.sbss       start:0x80664DE8 end:0x80664E38
 
 RVL_SDK/src/revolution/ax/AXVPB.c:
 	.text       start:0x802D70B0 end:0x802D8020 align:16
-	.data       start:0x8053C9A0 end:0x8053CA40
+	.data	start:0x8053c9a0 end:0x8053ca30
 	.bss        start:0x8057E340 end:0x8058FA40
-	.sbss       start:0x80664E38 end:0x80664E58
+	.sbss	start:0x80664e38 end:0x80664e54
 	.sdata2     start:0x806695B8 end:0x806695D8
 
 RVL_SDK/src/revolution/ax/AXComp.c:
@@ -2178,7 +2178,7 @@ RVL_SDK/src/revolution/ax/AXComp.c:
 
 RVL_SDK/src/revolution/ax/DSPCode.c:
 	.data       start:0x8053DA00 end:0x8053FA00
-	.sdata      start:0x80662F90 end:0x80662F98
+	.sdata	start:0x80662f90 end:0x80662f96
 
 RVL_SDK/src/revolution/ax/AXProf.c:
 	.text       start:0x802D8020 end:0x802D8060 align:16
@@ -2233,11 +2233,11 @@ RVL_SDK/src/revolution/axfx/AXFXHooks.c:
 
 RVL_SDK/src/revolution/base/PPCArch.c:
 	.text       start:0x802DD4A0 end:0x802DD6B0 align:16
-	.data       start:0x805406C0 end:0x805406F8
+	.data	start:0x805406c0 end:0x805406f7
 
 RVL_SDK/src/revolution/bte/gki/gki_buffer.c:
 	.text       start:0x802DD6B0 end:0x802DEB50 align:16
-	.data       start:0x805406F8 end:0x80540840
+	.data	start:0x805406f8 end:0x8054083a
 
 RVL_SDK/src/revolution/bte/gki/gki_time.c:
 	.text       start:0x802DEB50 end:0x802DF0E0 align:16
@@ -2249,7 +2249,7 @@ RVL_SDK/src/revolution/bte/gki/gki_ppc.c:
 RVL_SDK/src/revolution/bte/hci/hcisu_h2.c:
 	.text       start:0x802DF3F0 end:0x802DFAB0 align:16
 	.rodata     start:0x80514AE0 end:0x80514AF8
-	.data       start:0x80540840 end:0x805408B0
+	.data	start:0x80540840 end:0x805408ab
 	.bss        start:0x805B8520 end:0x805B8560
 	.sdata2     start:0x80669730 end:0x80669740
 
@@ -2261,7 +2261,7 @@ RVL_SDK/src/revolution/bte/hci/uusb_ppc.c:
 
 RVL_SDK/src/revolution/bte/bta/dm/bta_dm_cfg.c:
 	.rodata     start:0x80514AF8 end:0x80514B88
-	.sdata      start:0x80662FB0 end:0x80662FC8
+	.sdata	start:0x80662fb0 end:0x80662fc4
 	.sbss2      start:0x8066B540 end:0x8066B548
 
 RVL_SDK/src/revolution/bte/bta/hh/bta_hh_cfg.c:
@@ -2281,8 +2281,8 @@ RVL_SDK/src/revolution/bte/main/bte_init.c:
 
 RVL_SDK/src/revolution/bte/main/bte_logmsg.c:
 	.text       start:0x802E0830 end:0x802E09D0 align:16
-	.bss        start:0x805BA5C0 end:0x805BADA0
-	.sdata      start:0x80662FE0 end:0x80662FE8
+	.bss	start:0x805ba5c0 end:0x805bad90
+	.sdata	start:0x80662fe0 end:0x80662fe4
 
 RVL_SDK/src/revolution/bte/main/bte_main.c:
 	.text       start:0x802E09D0 end:0x802E0B40 align:16
@@ -2292,7 +2292,7 @@ RVL_SDK/src/revolution/bte/main/bte_main.c:
 
 RVL_SDK/src/revolution/bte/main/btu_task1.c:
 	.text       start:0x802E0B40 end:0x802E0F84 align:16
-	.bss        start:0x805BBDD0 end:0x805BBE58
+	.bss	start:0x805bbdd0 end:0x805bbe54
 	.sdata      start:0x80662FF0 end:0x80662FF8
 	.sbss       start:0x80664E90 end:0x80664E98
 
@@ -2305,9 +2305,9 @@ RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c:
 
 RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c:
 	.text       start:0x802E12AC end:0x802E14F0
-	.data       start:0x805408B0 end:0x805408E8
-	.bss        start:0x805BBE58 end:0x805BBEE8
-	.sbss       start:0x80664E98 end:0x80664EA0
+	.data	start:0x805408b0 end:0x805408e5
+	.bss	start:0x805bbe58 end:0x805bbee4
+	.sbss	start:0x80664e98 end:0x80664e99
 
 RVL_SDK/src/revolution/bte/bta/sys/ptim.c:
 	.text       start:0x802E14F0 end:0x802E16D0
@@ -2318,9 +2318,9 @@ RVL_SDK/src/revolution/bte/bta/sys/utl.c:
 RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c:
 	.text       start:0x802E1714 end:0x802E3A50
 	.rodata     start:0x80514B98 end:0x80514C40
-	.data       start:0x805408E8 end:0x80540A28
-	.bss        start:0x805BBEE8 end:0x805BBF18
-	.sdata2     start:0x80669748 end:0x80669750
+	.data	start:0x805408e8 end:0x80540a23
+	.bss	start:0x805bbee8 end:0x805bbf15
+	.sdata2	start:0x80669748 end:0x8066974c
 
 RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c:
 	.text       start:0x802E3A50 end:0x802E3EBC
@@ -2333,8 +2333,8 @@ RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c:
 
 RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c:
 	.text       start:0x802E401C end:0x802E4A38
-	.data       start:0x80540A28 end:0x80540A78
-	.bss        start:0x805BC098 end:0x805BC0C8
+	.data	start:0x80540a28 end:0x80540a71
+	.bss	start:0x805bc098 end:0x805bc0c6
 
 RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c:
 	.text       start:0x802E4A38 end:0x802E6180
@@ -2343,7 +2343,7 @@ RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c:
 
 RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c:
 	.text       start:0x802E6180 end:0x802E6550
-	.data       start:0x80540F70 end:0x80540FA0
+	.data	start:0x80540f70 end:0x80540f9e
 	.sdata2     start:0x80669760 end:0x80669768
 
 RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c:
@@ -2354,42 +2354,42 @@ RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c:
 
 RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c:
 	.text       start:0x802E6AA4 end:0x802E6E50
-	.data       start:0x80541280 end:0x80541540
+	.data	start:0x80541280 end:0x8054153a
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c:
 	.text       start:0x802E6E50 end:0x802E8B94
-	.data       start:0x80541540 end:0x80541960
+	.data	start:0x80541540 end:0x8054195d
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c:
 	.text       start:0x802E8B94 end:0x802E9260
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c:
 	.text       start:0x802E9260 end:0x802EABE8
-	.data       start:0x80541960 end:0x80541BC0
-	.sdata      start:0x80663000 end:0x80663018
+	.data	start:0x80541960 end:0x80541bba
+	.sdata	start:0x80663000 end:0x80663012
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c:
 	.text       start:0x802EABE8 end:0x802EAD1C
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c:
 	.text       start:0x802EAD1C end:0x802EC7B4
-	.data       start:0x80541BC0 end:0x80541DD0
+	.data	start:0x80541bc0 end:0x80541dca
 	.sdata2     start:0x80669768 end:0x80669770
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_main.c:
 	.text       start:0x802EC7B4 end:0x802EC810
-	.bss        start:0x805BC2F8 end:0x805BEAC0
+	.bss	start:0x805bc2f8 end:0x805beabc
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c:
 	.text       start:0x802EC810 end:0x802ED4A4
 	.rodata     start:0x80514DF0 end:0x80514E00
-	.data       start:0x80541DD0 end:0x80541E10
+	.data	start:0x80541dd0 end:0x80541e0d
 	.sdata2     start:0x80669770 end:0x80669778
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c:
 	.text       start:0x802ED4A4 end:0x802EE2DC
 	.rodata     start:0x80514E00 end:0x80514E10
-	.data       start:0x80541E10 end:0x80542110
+	.data	start:0x80541e10 end:0x8054210b
 
 RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c:
 	.text       start:0x802EE2DC end:0x802F12A0
@@ -2398,7 +2398,7 @@ RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c:
 
 RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c:
 	.text       start:0x802F12A0 end:0x802F24FC
-	.data       start:0x80542B20 end:0x80542BB0
+	.data	start:0x80542b20 end:0x80542bae
 
 RVL_SDK/src/revolution/bte/stack/btu/btu_init.c:
 	.text       start:0x802F24FC end:0x802F2574
@@ -2412,13 +2412,13 @@ RVL_SDK/src/revolution/bte/stack/gap/gap_api.c:
 
 RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c:
 	.text       start:0x802F26B4 end:0x802F31F0
-	.data       start:0x80542BB0 end:0x80542C80
+	.data	start:0x80542bb0 end:0x80542c7b
 	.sdata      start:0x80663018 end:0x80663020
 
 RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c:
 	.text       start:0x802F31F0 end:0x802F380C
 	.data       start:0x80542C80 end:0x80542F70
-	.bss        start:0x805BEAC0 end:0x805BEE70
+	.bss	start:0x805beac0 end:0x805bee6c
 
 RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c:
 	.text       start:0x802F380C end:0x802F5F28
@@ -2429,70 +2429,70 @@ RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c:
 
 RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c:
 	.text       start:0x802F5F90 end:0x802F6050
-	.data       start:0x80542F70 end:0x80542FA0
+	.data	start:0x80542f70 end:0x80542f9f
 
 RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c:
 	.text       start:0x802F6050 end:0x802F6118
-	.data       start:0x80542FA0 end:0x80542FC0
-	.bss        start:0x805BEE70 end:0x805BEFB8
+	.data	start:0x80542fa0 end:0x80542fb9
+	.bss	start:0x805bee70 end:0x805befb4
 
 RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c:
 	.text       start:0x802F6118 end:0x802F6494
 
 RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c:
 	.text       start:0x802F6494 end:0x802F7214
-	.data       start:0x80542FC0 end:0x805430D8
-	.bss        start:0x805BEFB8 end:0x805BF3C0
+	.data	start:0x80542fc0 end:0x805430d3
+	.bss	start:0x805befb8 end:0x805bf3bc
 
 RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c:
 	.text       start:0x802F7214 end:0x802F9254
 	.rodata     start:0x80514E20 end:0x80514E48
-	.data       start:0x805430D8 end:0x805434C0
+	.data	start:0x805430d8 end:0x805434b9
 
 RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c:
 	.text       start:0x802F9254 end:0x802F9E20
-	.data       start:0x805434C0 end:0x80543C50
+	.data	start:0x805434c0 end:0x80543c4b
 
 RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c:
 	.text       start:0x802F9E20 end:0x802FB2FC
-	.data       start:0x80543C50 end:0x80544488
+	.data	start:0x80543c50 end:0x80544487
 
 RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c:
 	.text       start:0x802FB2FC end:0x802FC488
-	.data       start:0x80544488 end:0x805446F8
+	.data	start:0x80544488 end:0x805446f2
 
 RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c:
 	.text       start:0x802FC488 end:0x802FD4B8
-	.data       start:0x805446F8 end:0x805449F8
+	.data	start:0x805446f8 end:0x805449f3
 	.bss        start:0x805BF3C0 end:0x805BFBA8
 
 RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c:
 	.text       start:0x802FD4B8 end:0x802FF37C
-	.data       start:0x805449F8 end:0x80544AE0
-	.sdata      start:0x80663020 end:0x80663030
+	.data	start:0x805449f8 end:0x80544adf
+	.sdata	start:0x80663020 end:0x8066302e
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c:
 	.text       start:0x802FF37C end:0x802FF3CC
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c:
 	.text       start:0x802FF3CC end:0x803007C8
-	.data       start:0x80544AE0 end:0x80544E10
+	.data	start:0x80544ae0 end:0x80544e0b
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c:
 	.text       start:0x803007C8 end:0x80300DA0
-	.data       start:0x80544E10 end:0x80544F58
+	.data	start:0x80544e10 end:0x80544f56
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c:
 	.text       start:0x80300DA0 end:0x803016D4
-	.data       start:0x80544F58 end:0x80545098
+	.data	start:0x80544f58 end:0x80545091
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c:
 	.text       start:0x803016D4 end:0x80302318
-	.data       start:0x80545098 end:0x80545350
+	.data	start:0x80545098 end:0x8054534e
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c:
 	.text       start:0x80302318 end:0x803034B8
-	.data       start:0x80545350 end:0x80545678
+	.data	start:0x80545350 end:0x80545676
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c:
 	.text       start:0x803034B8 end:0x803039E4
@@ -2500,17 +2500,17 @@ RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c:
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c:
 	.text       start:0x803039E4 end:0x8030502C
-	.data       start:0x80545678 end:0x80545750
-	.sdata      start:0x80663030 end:0x80663040
+	.data	start:0x80545678 end:0x8054574e
+	.sdata	start:0x80663030 end:0x8066303f
 
 RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c:
 	.text       start:0x8030502C end:0x8030580C
 	.rodata     start:0x80514E48 end:0x80514F48
-	.data       start:0x80545750 end:0x805457E0
+	.data	start:0x80545750 end:0x805457da
 
 RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c:
 	.text       start:0x8030580C end:0x80306674
-	.data       start:0x805457E0 end:0x80545830
+	.data	start:0x805457e0 end:0x8054582f
 
 RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c:
 	.text       start:0x80306674 end:0x80307340
@@ -2518,12 +2518,12 @@ RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c:
 
 RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c:
 	.text       start:0x80307340 end:0x803085B8
-	.data       start:0x805458C8 end:0x80545A28
+	.data	start:0x805458c8 end:0x80545a24
 
 RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c:
 	.text       start:0x803085B8 end:0x80309124
-	.data       start:0x80545A28 end:0x80545D88
-	.bss        start:0x805BFFC0 end:0x805C4600
+	.data	start:0x80545a28 end:0x80545d82
+	.bss	start:0x805bffc0 end:0x805c45f4
 
 RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c:
 	.text       start:0x80309124 end:0x80309E34
@@ -2550,40 +2550,40 @@ RVL_SDK/src/revolution/db/db.c:
 
 RVL_SDK/src/revolution/dsp/dsp.c:
 	.text       start:0x8030BB60 end:0x8030BE00 align:16
-	.data       start:0x80545ED8 end:0x80545F58
-	.sdata      start:0x80663040 end:0x80663048
-	.sbss       start:0x80664EA8 end:0x80664EB0
+	.data	start:0x80545ed8 end:0x80545f55
+	.sdata	start:0x80663040 end:0x80663044
+	.sbss	start:0x80664ea8 end:0x80664eac
 
 RVL_SDK/src/revolution/dsp/dsp_debug.c:
 	.text       start:0x8030BE00 end:0x8030BE50 align:16
 
 RVL_SDK/src/revolution/dsp/dsp_task.c:
 	.text       start:0x8030BE50 end:0x8030C6F0 align:16
-	.data       start:0x80545F58 end:0x80546098
+	.data	start:0x80545f58 end:0x80546093
 	.sbss       start:0x80664EB0 end:0x80664EC8
 
 RVL_SDK/src/revolution/dvd/dvdfs.c:
 	.text       start:0x8030C6F0 end:0x8030D1F0 align:16
-	.data       start:0x80546098 end:0x80546200
+	.data	start:0x80546098 end:0x805461fb
 	.sdata      start:0x80663048 end:0x80663058
-	.sbss       start:0x80664EC8 end:0x80664F00
+	.sbss	start:0x80664ec8 end:0x80664ee8
 
 RVL_SDK/src/revolution/dvd/dvd.c:
 	.text       start:0x8030D1F0 end:0x80311DC0 align:16
-	.data       start:0x80546200 end:0x80546610
+	.data	start:0x80546200 end:0x8054660c
 	.bss        start:0x805C4600 end:0x805C92B0
 	.sdata      start:0x80663058 end:0x80663070
 	.sbss       start:0x80664F00 end:0x80664F98
 
 RVL_SDK/src/revolution/dvd/dvdqueue.c:
 	.text       start:0x80311DC0 end:0x80312040 align:16
-	.bss        start:0x805C92B0 end:0x805C92E0
+	.bss	start:0x805c92b0 end:0x805c92d0
 
 RVL_SDK/src/revolution/dvd/dvderror.c:
 	.text       start:0x80312040 end:0x80312A60 align:16
-	.data       start:0x80546610 end:0x80546640
+	.data	start:0x80546610 end:0x8054663b
 	.bss        start:0x805C92E0 end:0x805C9540
-	.sbss       start:0x80664F98 end:0x80664FA8
+	.sbss	start:0x80664f98 end:0x80664fa4
 
 RVL_SDK/src/revolution/dvd/dvdidutils.c:
 	.text       start:0x80312A60 end:0x80312B50 align:16
@@ -2591,32 +2591,32 @@ RVL_SDK/src/revolution/dvd/dvdidutils.c:
 RVL_SDK/src/revolution/dvd/dvdFatal.c:
 	.text       start:0x80312B50 end:0x80312CC0 align:16
 	.rodata     start:0x80514F58 end:0x80514F90
-	.data       start:0x80546640 end:0x80546E08
+	.data	start:0x80546640 end:0x80546e07
 	.sdata      start:0x80663070 end:0x80663078
-	.sbss       start:0x80664FA8 end:0x80664FB0
-	.sdata2     start:0x80669788 end:0x80669790
+	.sbss	start:0x80664fa8 end:0x80664fac
+	.sdata2	start:0x80669788 end:0x8066978c
 
 RVL_SDK/src/revolution/dvd/dvdDeviceError.c:
 	.text       start:0x80312CC0 end:0x80312F50 align:16
-	.rodata     start:0x80514F90 end:0x80514FB0
-	.data       start:0x80546E08 end:0x80546FA0
+	.rodata	start:0x80514f90 end:0x80514fac
+	.data	start:0x80546e08 end:0x80546f9f
 	.bss        start:0x805C9540 end:0x805C9560
-	.sdata      start:0x80663078 end:0x80663080
-	.sbss       start:0x80664FB0 end:0x80664FB8
-	.sdata2     start:0x80669790 end:0x80669798
+	.sdata	start:0x80663078 end:0x8066307c
+	.sbss	start:0x80664fb0 end:0x80664fb4
+	.sdata2	start:0x80669790 end:0x80669794
 
 RVL_SDK/src/revolution/dvd/dvd_broadway.c:
 	.text       start:0x80312F50 end:0x80315600 align:16
-	.data       start:0x80546FA0 end:0x80547EA8
+	.data	start:0x80546fa0 end:0x80547ea6
 	.bss        start:0x805C9560 end:0x805C9720
 	.sdata      start:0x80663080 end:0x80663090
-	.sbss       start:0x80664FB8 end:0x80664FE0
+	.sbss	start:0x80664fb8 end:0x80664fd9
 
 RVL_SDK/src/revolution/enc/encutility.c:
 	.text       start:0x80315600 end:0x80315840 align:16
-	.data       start:0x80547EA8 end:0x80547EF0
-	.sdata      start:0x80663090 end:0x80663098
-	.sbss       start:0x80664FE0 end:0x80664FE8
+	.data	start:0x80547ea8 end:0x80547eee
+	.sdata	start:0x80663090 end:0x80663094
+	.sbss	start:0x80664fe0 end:0x80664fe4
 
 RVL_SDK/src/revolution/enc/encunicode.c:
 	.text       start:0x80315840 end:0x80315C20 align:16
@@ -2631,10 +2631,10 @@ RVL_SDK/src/revolution/euart/euart.c:
 
 RVL_SDK/src/revolution/exi/EXIBios.c:
 	.text       start:0x803165C0 end:0x80317EC0 align:16
-	.data       start:0x80547EF0 end:0x80547F38
+	.data	start:0x80547ef0 end:0x80547f36
 	.bss        start:0x805C9720 end:0x805C97E0
-	.sdata      start:0x806630A8 end:0x806630B0
-	.sbss       start:0x80664FF8 end:0x80665000
+	.sdata	start:0x806630a8 end:0x806630ac
+	.sbss	start:0x80664ff8 end:0x80664ffc
 
 RVL_SDK/src/revolution/exi/EXIUart.c:
 	.text       start:0x80317EC0 end:0x80318200 align:16
@@ -2642,11 +2642,11 @@ RVL_SDK/src/revolution/exi/EXIUart.c:
 
 RVL_SDK/src/revolution/exi/EXICommon.c:
 	.text       start:0x80318200 end:0x80318390 align:16
-	.sdata2     start:0x80669798 end:0x806697A0
+	.sdata2	start:0x80669798 end:0x8066979c
 
 RVL_SDK/src/revolution/fs/fs.c:
 	.text       start:0x80318390 end:0x80319940 align:16
-	.data       start:0x80547F38 end:0x80547F60
+	.data	start:0x80547f38 end:0x80547f59
 	.sdata      start:0x806630B0 end:0x806630C0
 	.sbss       start:0x80665010 end:0x80665028
 
@@ -2654,20 +2654,20 @@ RVL_SDK/src/revolution/gx/GXInit.c:
 	.text       start:0x80319940 end:0x8031AAD0 align:16
 	.data       start:0x80547F60 end:0x805481A0
 	.bss        start:0x805C97E0 end:0x805C9E60
-	.sdata      start:0x806630C0 end:0x806630C8
+	.sdata	start:0x806630c0 end:0x806630c4
 	.sbss       start:0x80665028 end:0x80665050
 	.sdata2     start:0x806697A0 end:0x806697C8
 
 RVL_SDK/src/revolution/gx/GXFifo.c:
 	.text       start:0x8031AAD0 end:0x8031B700 align:16
-	.data       start:0x805481A0 end:0x805481D0
+	.data	start:0x805481a0 end:0x805481ce
 	.bss        start:0x805C9E60 end:0x805C9EA8
 	.sbss       start:0x80665050 end:0x80665070
 
 RVL_SDK/src/revolution/gx/GXAttr.c:
 	.text       start:0x8031B700 end:0x8031C250 align:16
-	.data       start:0x805481D0 end:0x80548318
-	.sdata      start:0x806630C8 end:0x806630D8
+	.data	start:0x805481d0 end:0x80548314
+	.sdata	start:0x806630c8 end:0x806630d4
 
 RVL_SDK/src/revolution/gx/GXMisc.c:
 	.text       start:0x8031C250 end:0x8031CC30 align:16
@@ -2683,17 +2683,17 @@ RVL_SDK/src/revolution/gx/GXFrameBuf.c:
 
 RVL_SDK/src/revolution/gx/GXLight.c:
 	.text       start:0x8031DE20 end:0x8031E590 align:16
-	.sdata2     start:0x806697D8 end:0x80669810
+	.sdata2	start:0x806697d8 end:0x8066980c
 
 RVL_SDK/src/revolution/gx/GXTexture.c:
 	.text       start:0x8031E590 end:0x8031F720 align:16
-	.data       start:0x80548750 end:0x80548978
+	.data	start:0x80548750 end:0x80548974
 	.sdata      start:0x806630D8 end:0x80663120
 	.sdata2     start:0x80669810 end:0x80669848
 
 RVL_SDK/src/revolution/gx/GXBump.c:
 	.text       start:0x8031F720 end:0x8031FBE0 align:16
-	.sdata2     start:0x80669848 end:0x80669850
+	.sdata2	start:0x80669848 end:0x8066984c
 
 RVL_SDK/src/revolution/gx/GXTev.c:
 	.text       start:0x8031FBE0 end:0x803202B0 align:16
@@ -2709,11 +2709,11 @@ RVL_SDK/src/revolution/gx/GXDisplayList.c:
 
 RVL_SDK/src/revolution/gx/GXTransform.c:
 	.text       start:0x80320AB0 end:0x80321030 align:16
-	.sdata2     start:0x806698A0 end:0x806698B0
+	.sdata2	start:0x806698a0 end:0x806698ac
 
 RVL_SDK/src/revolution/gx/GXPerf.c:
 	.text       start:0x80321030 end:0x80321860 align:16
-	.data       start:0x80548A10 end:0x80548AF8
+	.data	start:0x80548a10 end:0x80548af4
 
 RVL_SDK/src/revolution/hbm/HBMFrameController.cpp:
 	.text       start:0x80321860 end:0x80321A10 align:16
@@ -2728,23 +2728,23 @@ RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp:
 	.text       start:0x80321B20 end:0x80323340 align:16
 	.rodata     start:0x80514FB8 end:0x80514FC8
 	.data       start:0x80548B68 end:0x80548DD8
-	.bss        start:0x805C9EA8 end:0x805C9EB0
+	.bss	start:0x805c9ea8 end:0x805c9eac
 
 RVL_SDK/src/revolution/hbm/HBMController.cpp:
 	.text       start:0x80323340 end:0x80323F80 align:16
 	.rodata     start:0x80514FC8 end:0x80514FD8
-	.bss        start:0x805C9EB0 end:0x805CA050
+	.bss	start:0x805c9eb0 end:0x805ca04c
 
 RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp:
 	.text       start:0x80323F80 end:0x803248A0 align:16
 	.data       start:0x80548DD8 end:0x80548E08
-	.bss        start:0x805CA050 end:0x805CA058
+	.bss	start:0x805ca050 end:0x805ca054
 
 RVL_SDK/src/revolution/hbm/HBMAxSound.cpp:
 	.text       start:0x803248A0 end:0x803253D0 align:16
 	.rodata     start:0x80514FD8 end:0x80515010
 	.data       start:0x80548E08 end:0x80549158
-	.bss        start:0x805CA058 end:0x805CA060
+	.bss	start:0x805ca058 end:0x805ca05c
 
 RVL_SDK/src/revolution/hbm/HBMCommon.cpp:
 	.text       start:0x803253D0 end:0x80325700 align:16
@@ -2753,7 +2753,7 @@ RVL_SDK/src/revolution/hbm/HBMCommon.cpp:
 
 RVL_SDK/src/revolution/hbm/HBMBase.cpp:
 	.text       start:0x80325700 end:0x8032DDE0 align:16
-	.rodata     start:0x80515010 end:0x80515390
+	.rodata	start:0x80515010 end:0x8051538c
 	.data       start:0x805491A8 end:0x80549EC0
 	.bss        start:0x805CA070 end:0x805CA0F0
 
@@ -2770,7 +2770,7 @@ RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp:
 	.text       start:0x8032ED30 end:0x8032EEB0 align:16
 	.ctors      start:0x804FA0A8 end:0x804FA0AC
 	.data       start:0x80549FC0 end:0x8054A0A8
-	.bss        start:0x805CA0F0 end:0x805CA0F8
+	.bss	start:0x805ca0f0 end:0x805ca0f4
 
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp:
 	.text       start:0x8032EEB0 end:0x8032FD30 align:16
@@ -2790,7 +2790,7 @@ RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp:
 	.text       start:0x80330140 end:0x80330DE0 align:16
 	.rodata     start:0x805153C8 end:0x805153D0
 	.data       start:0x8054A100 end:0x8054A150
-	.bss        start:0x805CA120 end:0x805CA128
+	.bss	start:0x805ca120 end:0x805ca124
 
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp:
 	.text       start:0x80330DE0 end:0x80334050 align:16
@@ -2802,14 +2802,14 @@ RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp:
 	.ctors      start:0x804FA0AC end:0x804FA0B0
 	.rodata     start:0x80515400 end:0x80515420
 	.data       start:0x8054A1D8 end:0x8054A240
-	.bss        start:0x805CA128 end:0x805CA130
+	.bss	start:0x805ca128 end:0x805ca12c
 
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp:
 	.text       start:0x803351A0 end:0x80335700 align:16
 	.ctors      start:0x804FA0B0 end:0x804FA0B4
 	.rodata     start:0x80515420 end:0x80515428
 	.data       start:0x8054A240 end:0x8054A2E0
-	.bss        start:0x805CA130 end:0x805CA138
+	.bss	start:0x805ca130 end:0x805ca134
 
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp:
 	.text       start:0x80335700 end:0x80335760 align:16
@@ -2820,18 +2820,18 @@ RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp:
 	.ctors      start:0x804FA0B4 end:0x804FA0B8
 	.rodata     start:0x80515428 end:0x80515440
 	.data       start:0x8054A2F8 end:0x8054A3A8
-	.bss        start:0x805CA138 end:0x805CA140
+	.bss	start:0x805ca138 end:0x805ca13c
 
 RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp:
 	.text       start:0x80336BB0 end:0x803391E0 align:16
 	.ctors      start:0x804FA0B8 end:0x804FA0BC
 	.rodata     start:0x80515440 end:0x80515458
 	.data       start:0x8054A3A8 end:0x8054A490
-	.bss        start:0x805CA140 end:0x805CA148
+	.bss	start:0x805ca140 end:0x805ca144
 
 RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular.cpp:
 	.text       start:0x803391E0 end:0x80339490 align:16
-	.rodata     start:0x80515458 end:0x80515480
+	.rodata	start:0x80515458 end:0x8051547c
 	.data       start:0x8054A490 end:0x8054B5A8
 
 RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat.cpp:
@@ -2873,16 +2873,16 @@ RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp:
 	.ctors      start:0x804FA0BC end:0x804FA0C0
 	.rodata     start:0x805154A8 end:0x805154C0
 	.data       start:0x8054B800 end:0x8054B808
-	.bss        start:0x805CA160 end:0x805CA190
+	.bss	start:0x805ca160 end:0x805ca18a
 
 RVL_SDK/src/revolution/hbm/mix.c:
 	.text       start:0x80341BE0 end:0x80343550 align:16
 	.data       start:0x8054B808 end:0x8054C398
-	.bss        start:0x805CA190 end:0x805CA850
+	.bss	start:0x805ca190 end:0x805ca84c
 
 RVL_SDK/src/revolution/hbm/syn.c:
 	.text       start:0x80343550 end:0x803439F0 align:16
-	.bss        start:0x805CA850 end:0x805CAD20
+	.bss	start:0x805ca850 end:0x805cad1c
 
 RVL_SDK/src/revolution/hbm/synctrl.c:
 	.text       start:0x803439F0 end:0x80343E90 align:16
@@ -2915,7 +2915,7 @@ RVL_SDK/src/revolution/hbm/seq.c:
 
 RVL_SDK/src/revolution/ipc/ipcMain.c:
 	.text       start:0x80345590 end:0x80345680 align:16
-	.sbss       start:0x80665088 end:0x806650A0
+	.sbss	start:0x80665088 end:0x8066509c
 
 RVL_SDK/src/revolution/ipc/ipcclt.c:
 	.text       start:0x80345680 end:0x80346F80 align:16
@@ -2943,7 +2943,7 @@ RVL_SDK/src/revolution/kpad/KPAD.c:
 RVL_SDK/src/revolution/mem/mem_heapCommon.c:
 	.text       start:0x8034B720 end:0x8034BB90 align:16
 	.bss        start:0x805CC5D0 end:0x805CC5F8
-	.sbss       start:0x806650F0 end:0x806650F8
+	.sbss	start:0x806650f0 end:0x806650f4
 
 RVL_SDK/src/revolution/mem/mem_expHeap.c:
 	.text       start:0x8034BB90 end:0x8034C340 align:16
@@ -2972,7 +2972,7 @@ RVL_SDK/src/revolution/mix/remote.c:
 RVL_SDK/src/revolution/mtx/mtx.c:
 	.text       start:0x8034FDB0 end:0x803509C0 align:16
 	.sdata      start:0x806631A8 end:0x806631B0
-	.sdata2     start:0x80669928 end:0x80669948
+	.sdata2	start:0x80669928 end:0x80669944
 
 RVL_SDK/src/revolution/mtx/mtxvec.c:
 	.text       start:0x803509C0 end:0x80350A20 align:16
@@ -2983,11 +2983,11 @@ RVL_SDK/src/revolution/mtx/mtx44.c:
 
 RVL_SDK/src/revolution/mtx/vec.c:
 	.text       start:0x80350C50 end:0x80350E60 align:16
-	.sdata2     start:0x80669960 end:0x80669970
+	.sdata2	start:0x80669960 end:0x8066996c
 
 RVL_SDK/src/revolution/mtx/quat.c:
 	.text       start:0x80350E60 end:0x80351300 align:16
-	.rodata     start:0x80515520 end:0x80515530
+	.rodata	start:0x80515520 end:0x8051552c
 	.sdata2     start:0x80669970 end:0x80669988
 
 RVL_SDK/src/revolution/nand/nand.c:
@@ -3003,25 +3003,25 @@ RVL_SDK/src/revolution/nand/NANDCore.c:
 	.data       start:0x8054D9A0 end:0x8054DAF0
 	.bss        start:0x805D0980 end:0x805D09C0
 	.sdata      start:0x806631B8 end:0x806631E0
-	.sbss       start:0x80665110 end:0x80665118
+	.sbss	start:0x80665110 end:0x80665114
 
 RVL_SDK/src/revolution/nand/NANDCheck.c:
 	.text       start:0x80353C10 end:0x80353F00 align:16
-	.data       start:0x8054DAF0 end:0x8054DBD8
+	.data	start:0x8054daf0 end:0x8054dbd7
 	.sdata      start:0x806631E0 end:0x806631F0
 
 RVL_SDK/src/revolution/nand/NANDLogging.c:
 	.text       start:0x80353F00 end:0x803544F0 align:16
-	.data       start:0x8054DBD8 end:0x8054DC20
+	.data	start:0x8054dbd8 end:0x8054dc1b
 	.bss        start:0x805D09C0 end:0x805D0CC0
 	.sdata      start:0x806631F0 end:0x806631F8
 	.sbss       start:0x80665118 end:0x80665120
 
 RVL_SDK/src/revolution/os/OS.c:
 	.text       start:0x803544F0 end:0x80355A30 align:16
-	.data       start:0x8054DC20 end:0x8054E0C8
+	.data	start:0x8054dc20 end:0x8054e0c3
 	.bss        start:0x805D0CC0 end:0x805D0D30
-	.sdata      start:0x806631F8 end:0x80663228
+	.sdata	start:0x806631f8 end:0x80663224
 	.sbss       start:0x80665120 end:0x80665168
 	.sdata2     start:0x80669988 end:0x80669990
 
@@ -3032,7 +3032,7 @@ RVL_SDK/src/revolution/os/OSAlarm.c:
 
 RVL_SDK/src/revolution/os/OSAlloc.c:
 	.text       start:0x803562F0 end:0x80356610 align:16
-	.sdata      start:0x80663228 end:0x80663230
+	.sdata	start:0x80663228 end:0x8066322c
 	.sbss       start:0x80665170 end:0x80665180
 
 RVL_SDK/src/revolution/os/OSArena.c:
@@ -3046,42 +3046,42 @@ RVL_SDK/src/revolution/os/OSAudioSystem.c:
 
 RVL_SDK/src/revolution/os/OSCache.c:
 	.text       start:0x80356BD0 end:0x80357280 align:16
-	.data       start:0x8054E158 end:0x8054E390
+	.data	start:0x8054e158 end:0x8054e38a
 
 RVL_SDK/src/revolution/os/OSContext.c:
 	.text       start:0x80357280 end:0x80357B60 align:16
-	.data       start:0x8054E390 end:0x8054E570
+	.data	start:0x8054e390 end:0x8054e56b
 
 RVL_SDK/src/revolution/os/OSError.c:
 	.text       start:0x80357B60 end:0x80358180 align:16
-	.data       start:0x8054E570 end:0x8054E850
-	.bss        start:0x805D0D30 end:0x805D0D80
-	.sdata      start:0x80663238 end:0x80663240
+	.data	start:0x8054e570 end:0x8054e849
+	.bss	start:0x805d0d30 end:0x805d0d74
+	.sdata	start:0x80663238 end:0x8066323e
 
 RVL_SDK/src/revolution/os/OSExec.c:
 	.text       start:0x80358180 end:0x80359760 align:16
-	.data       start:0x8054E850 end:0x8054E8C0
+	.data	start:0x8054e850 end:0x8054e8bb
 	.bss        start:0x805D0D80 end:0x805D0DA0
-	.sdata      start:0x80663240 end:0x80663250
+	.sdata	start:0x80663240 end:0x8066324b
 	.sbss       start:0x80665188 end:0x806651A0
 
 RVL_SDK/src/revolution/os/OSFatal.c:
 	.text       start:0x80359760 end:0x8035A390 align:16
-	.bss        start:0x805D0DA0 end:0x805D1080
-	.sdata      start:0x80663250 end:0x80663258
+	.bss	start:0x805d0da0 end:0x805d1074
+	.sdata	start:0x80663250 end:0x80663254
 	.sdata2     start:0x80669990 end:0x806699D0
 
 RVL_SDK/src/revolution/os/OSFont.c:
 	.text       start:0x8035A390 end:0x8035B720 align:16
-	.data       start:0x8054E8C0 end:0x8054F3D0
-	.sdata      start:0x80663258 end:0x80663260
+	.data	start:0x8054e8c0 end:0x8054f3ca
+	.sdata	start:0x80663258 end:0x8066325a
 	.sbss       start:0x806651A0 end:0x806651B0
 	.sdata2     start:0x806699D0 end:0x806699D8
 
 RVL_SDK/src/revolution/os/OSInterrupt.c:
 	.text       start:0x8035B720 end:0x8035BEF0 align:16
 	.data       start:0x8054F3D0 end:0x8054F400
-	.sbss       start:0x806651B0 end:0x806651C8
+	.sbss	start:0x806651b0 end:0x806651c4
 
 RVL_SDK/src/revolution/os/OSLink.c:
 	.text       start:0x8035BEF0 end:0x8035BF10 align:16
@@ -3092,7 +3092,7 @@ RVL_SDK/src/revolution/os/OSMessage.c:
 RVL_SDK/src/revolution/os/OSMemory.c:
 	.text       start:0x8035C1F0 end:0x8035C990 align:16
 	.data       start:0x8054F400 end:0x8054F410
-	.sbss       start:0x806651C8 end:0x806651D0
+	.sbss	start:0x806651c8 end:0x806651cc
 
 RVL_SDK/src/revolution/os/OSMutex.c:
 	.text       start:0x8035C990 end:0x8035CBF0 align:16
@@ -3108,16 +3108,16 @@ RVL_SDK/src/revolution/os/OSReset.c:
 
 RVL_SDK/src/revolution/os/OSRtc.c:
 	.text       start:0x8035D570 end:0x8035E020 align:16
-	.bss        start:0x805D1080 end:0x805D10D8
+	.bss	start:0x805d1080 end:0x805d10d4
 
 RVL_SDK/src/revolution/os/OSSync.c:
 	.text       start:0x8035E020 end:0x8035E0A0 align:16
 
 RVL_SDK/src/revolution/os/OSThread.c:
 	.text       start:0x8035E0A0 end:0x8035F6D0 align:16
-	.bss        start:0x805D10D8 end:0x805D1AE0
-	.sdata      start:0x80663260 end:0x80663268
-	.sbss       start:0x806651E8 end:0x806651F8
+	.bss	start:0x805d10d8 end:0x805d1ad0
+	.sdata	start:0x80663260 end:0x80663264
+	.sbss	start:0x806651e8 end:0x806651f4
 
 RVL_SDK/src/revolution/os/OSTime.c:
 	.text       start:0x8035F6D0 end:0x8035FB00 align:16
@@ -3129,12 +3129,12 @@ RVL_SDK/src/revolution/os/OSUtf.c:
 
 RVL_SDK/src/revolution/os/OSIpc.c:
 	.text       start:0x8035FD50 end:0x8035FD90 align:16
-	.sdata      start:0x80663268 end:0x80663270
-	.sbss       start:0x806651F8 end:0x80665200
+	.sdata	start:0x80663268 end:0x8066326c
+	.sbss	start:0x806651f8 end:0x806651fc
 
 RVL_SDK/src/revolution/os/OSStateTM.c:
 	.text       start:0x8035FD90 end:0x803604A0 align:16
-	.data       start:0x8055B518 end:0x8055B5E0
+	.data	start:0x8055b518 end:0x8055b5de
 	.bss        start:0x805D1AE0 end:0x805D1BA0
 	.sbss       start:0x80665200 end:0x80665220
 
@@ -3143,13 +3143,13 @@ PowerPC_EABI_Support/src/MetroTRK/__exception.s:
 
 RVL_SDK/src/revolution/os/__start.c:
 	.init       start:0x800062C0 end:0x800065C0
-	.sbss       start:0x80665220 end:0x80665228
+	.sbss	start:0x80665220 end:0x80665221
 
 RVL_SDK/src/revolution/os/OSPlayRecord.c:
 	.text       start:0x803604A0 end:0x80360BC0 align:16
 	.data       start:0x8055B5E0 end:0x8055B628
-	.bss        start:0x805D1BA0 end:0x805D1DA0
-	.sdata      start:0x80663270 end:0x80663278
+	.bss	start:0x805d1ba0 end:0x805d1d98
+	.sdata	start:0x80663270 end:0x80663274
 	.sbss       start:0x80665228 end:0x80665248
 
 RVL_SDK/src/revolution/os/OSStateFlags.c:
@@ -3159,18 +3159,18 @@ RVL_SDK/src/revolution/os/OSStateFlags.c:
 
 RVL_SDK/src/revolution/os/OSNet.c:
 	.text       start:0x80360DE0 end:0x80361380 align:16
-	.data       start:0x8055B650 end:0x8055B7B8
+	.data	start:0x8055b650 end:0x8055b7b1
 	.bss        start:0x805D1DC0 end:0x805D1E80
-	.sdata      start:0x80663278 end:0x80663280
+	.sdata	start:0x80663278 end:0x8066327c
 	.sbss       start:0x80665248 end:0x80665258
 
 RVL_SDK/src/revolution/os/OSNandbootInfo.c:
 	.text       start:0x80361380 end:0x80361590 align:16
-	.data       start:0x8055B7B8 end:0x8055B7D8
+	.data	start:0x8055b7b8 end:0x8055b7d2
 
 RVL_SDK/src/revolution/os/OSPlayTime.c:
 	.text       start:0x80361590 end:0x80361D70 align:16
-	.data       start:0x8055B7D8 end:0x8055B818
+	.data	start:0x8055b7d8 end:0x8055b817
 	.bss        start:0x805D1E80 end:0x805D1EC0
 	.sdata      start:0x80663280 end:0x80663288
 	.sbss       start:0x80665258 end:0x80665270
@@ -3194,11 +3194,11 @@ RVL_SDK/src/revolution/pad/Pad.c:
 
 RVL_SDK/src/revolution/sc/scsystem.c:
 	.text       start:0x803622A0 end:0x80363C30 align:16
-	.rodata     start:0x80515698 end:0x805156F0
+	.rodata	start:0x80515698 end:0x805156ea
 	.data       start:0x8055B818 end:0x8055B9F8
 	.bss        start:0x805D1EC0 end:0x805DA060
-	.sdata      start:0x80663290 end:0x806633A0
-	.sbss       start:0x80665278 end:0x80665290
+	.sdata	start:0x80663290 end:0x8066339d
+	.sbss	start:0x80665278 end:0x8066528f
 
 RVL_SDK/src/revolution/sc/scapi.c:
 	.text       start:0x80363C30 end:0x80364140 align:16
@@ -3206,43 +3206,43 @@ RVL_SDK/src/revolution/sc/scapi.c:
 RVL_SDK/src/revolution/sc/scapi_prdinfo.c:
 	.text       start:0x80364140 end:0x803643D0 align:16
 	.data       start:0x8055B9F8 end:0x8055BA58
-	.sdata      start:0x806633A0 end:0x806633B0
+	.sdata	start:0x806633a0 end:0x806633ad
 
 RVL_SDK/src/revolution/si/SIBios.c:
 	.text       start:0x803643D0 end:0x80365440 align:16
 	.data       start:0x8055BA58 end:0x8055BAC8
 	.bss        start:0x805DA060 end:0x805DA280
-	.sdata      start:0x806633B0 end:0x806633B8
+	.sdata	start:0x806633b0 end:0x806633b4
 	.sbss       start:0x80665290 end:0x806652A0
 
 RVL_SDK/src/revolution/si/SISamplingRate.c:
 	.text       start:0x80365440 end:0x80365530 align:16
-	.data       start:0x8055BAC8 end:0x8055BB60
-	.sbss       start:0x806652A0 end:0x806652A8
+	.data	start:0x8055bac8 end:0x8055bb5b
+	.sbss	start:0x806652a0 end:0x806652a4
 
 RVL_SDK/src/revolution/tpl/TPL.c:
 	.text       start:0x80365530 end:0x80365750 align:16
-	.data       start:0x8055BB60 end:0x8055BB90
-	.sdata      start:0x806633B8 end:0x806633C0
+	.data	start:0x8055bb60 end:0x8055bb8b
+	.sdata	start:0x806633b8 end:0x806633be
 	.sdata2     start:0x806699E8 end:0x806699F0
 
 RVL_SDK/src/revolution/usb/usb.c:
 	.text       start:0x80365750 end:0x80366CA0 align:16
-	.data       start:0x8055BB90 end:0x8055C3C0
-	.sdata      start:0x806633C0 end:0x806633D0
-	.sbss       start:0x806652A8 end:0x806652B8
+	.data	start:0x8055bb90 end:0x8055c3bf
+	.sdata	start:0x806633c0 end:0x806633ce
+	.sbss	start:0x806652a8 end:0x806652b1
 
 RVL_SDK/src/revolution/vi/vi.c:
 	.text       start:0x80366CA0 end:0x80369770 align:16
 	.data       start:0x8055C3C0 end:0x8055C918
 	.bss        start:0x805DA280 end:0x805DA3F0
-	.sdata      start:0x806633D0 end:0x806633F0
+	.sdata	start:0x806633d0 end:0x806633ed
 	.sbss       start:0x806652B8 end:0x80665368
 
 RVL_SDK/src/revolution/vi/i2c.c:
 	.text       start:0x80369770 end:0x8036A090 align:16
-	.sdata      start:0x806633F0 end:0x806633F8
-	.sbss       start:0x80665368 end:0x80665370
+	.sdata      start:0x806633F0 end:0x806633F4
+	.sbss       start:0x80665368 end:0x8066536C
 
 RVL_SDK/src/revolution/vi/vi3in1.c:
 	.text       start:0x8036A090 end:0x8036B7FC align:16
@@ -3258,11 +3258,11 @@ RVL_SDK/src/revolution/wenc/wenc.c:
 
 RVL_SDK/src/revolution/wpad/WPAD.c:
 	.text       start:0x8036BAE0 end:0x80373480 align:16
-	.rodata     start:0x80515730 end:0x80515770
-	.data       start:0x8055CF28 end:0x8055D350
+	.rodata	start:0x80515730 end:0x8051576a
+	.data	start:0x8055cf28 end:0x8055d34c
 	.bss        start:0x805DA420 end:0x805DDB80
-	.sdata      start:0x80663408 end:0x80663450
-	.sbss       start:0x80665388 end:0x806653E0
+	.sdata	start:0x80663408 end:0x8066344e
+	.sbss	start:0x80665388 end:0x806653dd
 	.sdata2     start:0x806699F8 end:0x80669A00
 
 RVL_SDK/src/revolution/wpad/WPADHIDParser.c:
@@ -3276,7 +3276,7 @@ RVL_SDK/src/revolution/wpad/WPADHIDParser.c:
 RVL_SDK/src/revolution/wpad/WPADEncrypt.c:
 	.text       start:0x80377750 end:0x80378810 align:16
 	.data       start:0x8055D8C0 end:0x8055EBE8
-	.sbss       start:0x806653F8 end:0x80665400
+	.sbss	start:0x806653f8 end:0x806653fc
 
 RVL_SDK/src/revolution/wpad/WPADMem.c:
 	.text       start:0x80378810 end:0x80378910 align:16
@@ -3293,28 +3293,28 @@ RVL_SDK/src/revolution/wud/WUD.c:
 
 RVL_SDK/src/revolution/wud/WUDHidHost.c:
 	.text       start:0x8037ED60 end:0x8037F350 align:16
-	.data       start:0x8055FD90 end:0x80560028
+	.data	start:0x8055fd90 end:0x80560027
 
 criware_data.s:
 	.rodata     start:0x80515788 end:0x8051D4A0
-	.data       start:0x80560028 end:0x80568F38
+	.data	start:0x80560028 end:0x80568f34
 	.bss        start:0x805DFDA8 end:0x8061A4D8
 
 nw4r_data.s:
 	.rodata     start:0x8051D4A0 end:0x80522410
 	.data       start:0x80568F38 end:0x8056B0E0
 	.bss        start:0x8061A4D8 end:0x80653EE0
-	.sdata      start:0x80663450 end:0x80663500
+	.sdata	start:0x80663450 end:0x806634fa
 	.sbss       start:0x80665438 end:0x80665548
 	.sdata2     start:0x80669A68 end:0x8066A178
 	.sbss2      start:0x8066B550 end:0x8066B558
 
 monolibdata1.s:
-	.rodata     start:0x80522410 end:0x80522990
+	.rodata	start:0x80522410 end:0x8052298a
 	.data       start:0x8056B0E0 end:0x8056B538
 	.bss        start:0x80653EE0 end:0x80656BB0
 	.sdata      start:0x80663500 end:0x80663600
-	.sbss       start:0x80665550 end:0x80665580
+	.sbss	start:0x80665550 end:0x8066557d
 	.sdata2     start:0x8066A178 end:0x8066A360
 	.sbss2      start:0x8066B558 end:0x8066B55C
 
@@ -4207,7 +4207,7 @@ nw4r/src/ut/ut_IOStream.cpp:
 nw4r/src/ut/ut_FileStream.cpp:
 	.text       start:0x8042E160 end:0x8042E178
 	.ctors      start:0x804FA0F4 end:0x804FA0F8
-	.sbss       start:0x80665548 end:0x80665550
+	.sbss	start:0x80665548 end:0x8066554c
 
 nw4r/src/ut/ut_DvdFileStream.cpp:
 	.text       start:0x8042E178 end:0x8042E184
@@ -4497,20 +4497,20 @@ monolib/src/device/CDeviceVI.cpp:
 	extabindex  start:0x8003496C end:0x80034A2C
 	.text       start:0x8044A7B8 end:0x8044B9B0
 	.ctors      start:0x804FA130 end:0x804FA134
-	.rodata     start:0x80522990 end:0x80522A50
+	.rodata	start:0x80522990 end:0x80522a49
 	.data       start:0x8056BDF8 end:0x8056BF68
 	.bss        start:0x806574B8 end:0x806574F8
 	.sdata      start:0x80663600 end:0x80663618
-	.sbss       start:0x80665648 end:0x80665650
+	.sbss	start:0x80665648 end:0x8066564d
 	.sdata2     start:0x8066A360 end:0x8066A378
 
 monolibdata2.s:
-	.rodata     start:0x80522A50 end:0x805248D4
+	.rodata	start:0x80522a50 end:0x805248d3
 	.data       start:0x8056BF68 end:0x8057042C
 	.bss        start:0x806574F8 end:0x80661874
 	.sdata      start:0x80663618 end:0x80663CF0
 	.sbss       start:0x80665650 end:0x80665A9C
-	.sdata2     start:0x8066A378 end:0x8066B530
+	.sdata2	start:0x8066a378 end:0x8066b52e
 
 monolib/src/device/CDeviceVICb.cpp:
 	extab       start:0x8001CC1C end:0x8001CC2C

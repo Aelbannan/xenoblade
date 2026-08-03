@@ -272,9 +272,60 @@ bool AnmScnRes::GetLightSet(LightSet set, u32 refNumber) {
 } // namespace nw4r
 
 
-void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl(){}
+namespace nw4r {
+namespace g3d {
+
+ut::Color AnmScnRes::GetAmbLightColor(u32 refNumber) {
+    AmbLightAnmResult result;
+
+    AmbLightAnmResult* pResult = GetAmbLightResult(&result, refNumber);
+
+    u32 color = pResult->color;
+
+    if (!(pResult->flags & AmbLightAnmResult::FLAG_COLOR_ENABLE)) {
+        color |= 0xFFFFFF00;
+    }
+
+    if (!(pResult->flags & AmbLightAnmResult::FLAG_ALPHA_ENABLE)) {
+        color |= 0xFF;
+    }
+
+    return ut::Color(color);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl(){}
-void GetFog__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d3FogUl(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::GetFog(Fog fog, u32 refNumber) {
+    FogAnmResult result;
+
+    result.color = -1;
+
+    FogAnmResult* pResult = GetFogResult(&result, refNumber);
+
+    if (fog.ptr() != NULL) {
+        fog.ptr()->type = pResult->type;
+    }
+
+    if (fog.ptr() != NULL) {
+        fog.ptr()->startz = pResult->startz;
+        fog.ptr()->endz = pResult->endz;
+    }
+
+    if (fog.ptr() != NULL) {
+        fog.ptr()->color = pResult->color;
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void GetCamera__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d6CameraUl(){}
 namespace nw4r {
 namespace g3d {

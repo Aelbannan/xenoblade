@@ -8144,3 +8144,37 @@ do-while(--n), while(n--), for-loop) triggers the CTR conversion.
 - **UTY_InitTmr p2 base:** retail materializes `addi r3,r31,8` for the `p2[1]` store in both
   branches; decomp folds to `12(r31)` — the base materialization resisted volatile/non-volatile/
   mixed p2/tmr variants (8 bytes short).
+
+## criware-01 session notes (sfd_tim / sfx_zmv)
+
+### SFD/SFTIM pattern: shared divw via num/den split (Wii/1.1)
+`SFTIM_IsStagnant` (us-803cf764): retail hoists `divw` after the if/else merge
+(one divw, `b` from then-branch); writing the division inline per-branch emits
+2 divws (+4B). Split `num`/`den` into each branch and divide once after the
+merge: `if (cond) { num = A - B; den = C; } else { num = D - B; den = E; }
+elapsed = num / den;` reproduces the shared divw exactly (99.789%, 0
+structural, 2 reg_swap). Residual wall: else-branch load order (retail
+minuend-first, MWCC always emits subtrahend-first) — 12+ formulations tried.
+
+### MWCC 4.2 store→load forwarding: volatile pair needed (GC/3.0a5.2)
+`sfxzmv_MakeZ32TblFromOrgZ32` (us-803d9444): retail keeps `lwz` reload after
+`*p = 1; value = *p;` but MWCC folds it to `li value,1`. A volatile LOAD alone
+does not prevent the fold; make BOTH the store and the load volatile
+(`*(volatile u32*)p = 1; value = *(volatile u32*)p;`) — then the reload is
+emitted (same as SFTIM_InitHn's `u32 tmp = *(volatile u32*)p` pattern).
+
+### Union int→double magic: word order + tbl constants
+The union form `cv.u[0] = 0x43300000; cv.u[1] = value; cv.d - two52` emits
+stw/lfd/fsub correctly (double path) but the STORE ORDER must be
+`cv.u[1] = value; cv.u[0] = 0x43300000;` (value word first) to match retail's
+`stw value, 12(sp); stw 0x4330, 8(sp)`. When retail reads the 2^52/2^31-1/
+16777215/1.0 constants from an extern data blob (e.g. lbl_eu_8051D218+16..48),
+reference the table explicitly (`*(f64*)((u8*)&lbl + 16)` etc.) instead of
+literals to match the relocs.
+
+### SFXZ_Create slot allocator: check direction
+Retail: `bne → continue` + `b → shared-return-check`; the *p==0 (FREE) slot is
+returned. The C must be `if (*p == 0) goto found;` — the prior reconstruction
+had `!= 0` (busy→found), semantically inverted. MWCC then canonicalizes to
+`beq → check` (1 instr shorter, 0x78 vs retail 0x7C) — branch-layout wall
+(bne+fall-through+b unreachable via C on GC/3.0a5.2).

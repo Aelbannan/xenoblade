@@ -70,7 +70,7 @@ void AXRNA_Destroy(void* self);
 void AXRNA_SetTransSw(void* self, s32 sw);
 void AXRNA_SetPlaySw(void* self, s32 sw);
 void AXRNA_SetSfreq(void* self, s32 sfreq);
-void AXRNA_SetMain(void* self, s32 index, s32 val);
+void AXRNA_SetMain(void* self, u32 index, s32 val);
 void criware_8039A8E0(void* self, u32 flags);
 void axrna_update_play(void* self);
 void axrna_start_trans(void* self);
@@ -275,7 +275,7 @@ void AXRNA_Destroy(void* self) {
             void* v = *(void**)((u8*)self + i * 4 + 8);
             if (v != NULL) {
                 MIXReleaseChannel(v);
-                AXFreeVoice(v);
+                AXFreeVoice(*(void**)((u8*)self + i * 4 + 8));
             }
         }
         GCRNA_UnlockCs();
@@ -381,7 +381,7 @@ void AXRNA_SetPlaySw(void* self, s32 sw) {
                 addr.currentAddressHi = (u16)((base + sw) >> 17);
                 addr.currentAddressLo = (u16)(((base + sw) >> 15) & 0xffff);
                 AXSetVoiceAddr(v, &addr);
-                AXSetVoiceState(v, 1);
+                AXSetVoiceState(*(void**)((u8*)self + i * 4 + 8), 1);
             }
         }
         *(u8*)((u8*)self + 1) |= 2;
@@ -414,46 +414,44 @@ typedef struct AXRNA { char pad0[3]; signed char type; char pad4[0x2c]; void *ob
 
 #pragma auto_inline off
 void axrna_update_play(void* self) {
-    s32 nch;
     s32 i;
     s32 cur;
     s32 a4;
     s32 r28;
     void* voice;
 
-    nch = (s8)((u8*)self)[3];
     cur = *(s32*)((u8*)self + 4);
-    voice = *(void**)((u8*)self + (nch - 1) * 4 + 8);
+    voice = *(void**)((u8*)self + ((s8)((u8*)self)[3] - 1) * 4 + 8);
     if (voice == NULL)
         return;
-    a4 = (s32)(*(u32*)((u8*)voice + 0xa2) - ((*(u32*)((u8*)self + (nch - 1) * 4 + 0x10) + 0x80000000u) >> 1));
+    a4 = (s32)(*(u32*)((u8*)voice + 0xa2) - ((*(u32*)((u8*)self + ((s8)((u8*)self)[3] - 1) * 4 + 0x10) + 0x80000000u) >> 1));
     *(s32*)((u8*)self + 0xa4) = a4;
     if (a4 < 0 || a4 > *(s32*)((u8*)self + 0x18)) {
         for (;;) {
         }
     }
     if (cur == -1) {
-        if (a4 != 0) {
-            *(s32*)((u8*)self + 4) = 0;
-            cur = 0;
-        } else {
+        if (a4 == 0) {
             r28 = 0;
+        } else {
+            cur = 0;
+            *(s32*)((u8*)self + 4) = 0;
         }
     }
     if (cur != -1) {
-        if (a4 <= cur) {
-            r28 = 0x1000 - cur + a4;
-        } else {
+        r28 = 0x1000 - cur + a4;
+        if (a4 > cur) {
             r28 = a4 - cur;
         }
     }
     r28 = (r28 / 0x800) * 0x800;
     if (r28 > 0) {
         SJ_CHUNK out;
-        for (i = 0; i < nch; i++) {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, s32, void*))(*(void***)sj)[6])(sj, 1, r28 * 2, &out);
-            ((void(*)(void*, s32, void*))(*(void***)sj)[8])(sj, 0, &out);
+        for (i = 0; i < (s8)((u8*)self)[3]; i++) {
+            ((void(*)(void*, s32, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[6]))(
+                *(void**)((u8*)self + i * 4 + 0x30), 1, r28 * 2, &out);
+            ((void(*)(void*, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[8]))(
+                *(void**)((u8*)self + i * 4 + 0x30), 0, &out);
         }
         {
             s32 v = *(s32*)((u8*)self + 4) + r28;
@@ -472,54 +470,62 @@ void axrna_start_trans(void* self) {
     SJ_CHUNK chunkC;
     SJ_CHUNK chunkD;
     s32 size;
-    s32 nch = (s8)((u8*)self)[3];
+    u8* ch = (u8*)self + 0x38;
+    u8* cs = (u8*)self + 0x48;
+    u8* p38 = (u8*)self;
+    u8* p48 = (u8*)self;
 
-    for (i = 0; i < nch; i++) {
-        if (*(u32*)((u8*)self + i * 4 + 8) == 0)
-            continue;
-        if (*(u32*)((u8*)self + i * 4 + 0x58) != 0)
-            continue;
+    for (i = 0; i < (s8)((u8*)self)[3]; i++) {
+        if (*(u32*)(ch + 8) == 0)
+            goto next;
+        if (*(u32*)(ch + 0x58) != 0)
+            goto next;
         {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
+            void* sj = *(void**)(ch + 0x30);
             ((void(*)(void*, s32, s32, void*))(*(void***)sj)[6])(sj, 0, 0x2000, &chunkA);
         }
         {
-            void* obj = *(void**)((u8*)self + i * 4 + 0x28);
+            void* obj = *(void**)(ch + 0x28);
             ((void(*)(void*, s32, s32, void*))(*(void***)obj)[6])(obj, 1, chunkA.size, &chunkB);
         }
         size = (chunkA.size < chunkB.size) ? chunkA.size : chunkB.size;
         size = (size / 0x20) * 0x20;
         SJ_SplitChunk(&chunkA, size, &chunkA, &chunkC);
         {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
+            void* sj = *(void**)(ch + 0x30);
             ((void(*)(void*, s32, void*))(*(void***)sj)[7])(sj, 0, &chunkC);
         }
         SJ_SplitChunk(&chunkB, size, &chunkB, &chunkD);
         {
-            void* obj = *(void**)((u8*)self + i * 4 + 0x28);
+            void* obj = *(void**)(ch + 0x28);
             ((void(*)(void*, s32, void*))(*(void***)obj)[7])(obj, 1, &chunkD);
         }
         if (size == 0)
             return;
-        *(s32*)((u8*)self + i * 8 + 0x38) = (u32)chunkB.ptr;
-        *(s32*)((u8*)self + i * 8 + 0x3c) = chunkB.size;
-        *(s32*)((u8*)self + i * 8 + 0x48) = (u32)chunkA.ptr;
-        *(s32*)((u8*)self + i * 8 + 0x4c) = chunkA.size;
+        *(s32*)(cs + 0x38) = (u32)chunkB.ptr;
+        *(s32*)(cs + 0x3c) = chunkB.size;
+        *(s32*)(cs + 0x48) = (u32)chunkA.ptr;
+        *(s32*)(cs + 0x4c) = chunkA.size;
         *(s32*)((u8*)self + 0x60) = size >> 1;
-        DCFlushRange(*(void**)((u8*)self + i * 8 + 0x38), *(u32*)((u8*)self + i * 8 + 0x3c));
-        *(s32*)((u8*)self + i * 4 + 0x58) = 1;
+        DCFlushRange(*(void**)(cs + 0x38), *(u32*)(cs + 0x3c));
+        *(s32*)(ch + 0x58) = 1;
         memcpy(chunkA.ptr, chunkB.ptr, size);
         DCFlushRange(chunkA.ptr, size);
-        if (*(s32*)((u8*)self + i * 4 + 0x58) == 1) {
-            void* obj = *(void**)((u8*)self + i * 4 + 0x28);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 0, (void*)((u8*)self + i * 8 + 0x38));
-            obj = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, (void*)((u8*)self + i * 8 + 0x48));
-            *(s32*)((u8*)self + i * 4 + 0x58) = 0;
+        if (*(s32*)(ch + 0x58) == 1) {
+            void* obj = *(void**)(ch + 0x28);
+            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 0, p38);
+            obj = *(void**)(ch + 0x30);
+            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, p48);
+            *(s32*)(ch + 0x58) = 0;
             if (i == (s8)((u8*)self)[3] - 1) {
                 *(s32*)((u8*)self + 0x64) += *(s32*)((u8*)self + 0x60);
             }
         }
+    next:
+        ch += 4;
+        cs += 8;
+        p38 += 8;
+        p48 += 8;
     }
 }
 
@@ -537,7 +543,7 @@ void criware_80399F4C(void* self) {
     SJ_CHUNK out3;
 
     src_len = *(s32*)((u8*)self + 0xbc);
-    dst_len = (s32)((s64)(src_len * *(s32*)((u8*)self + 0xc0)) * 0x51EC851FLL >> 37);
+    dst_len = (src_len * *(s32*)((u8*)self + 0xc0)) / 100;
     dst_len &= ~3;
     nch = (s8)((u8*)self)[3];
     if (nch > 1) {
@@ -670,7 +676,7 @@ void axrna_start_flash(void* self) {
 #pragma auto_inline on
 
 void AXRNA_ExecServer(void) {
-    s32 i;
+    u32 i;
     u8* rna;
     s32 st;
 
@@ -681,18 +687,30 @@ void AXRNA_ExecServer(void) {
             continue;
         if (rna == NULL)
             continue;
-        st = (rna != NULL) ? ((rna[1] >> 1) & 1) : -1;
+        if (rna == NULL) {
+            st = -1;
+        } else {
+            st = ((rna[1] >> 1) & 1);
+        }
         if (st == 1)
             axrna_update_play(rna);
-        st = (rna != NULL) ? (s32)(rna[1] & 1) : -1;
+        if (rna == NULL) {
+            st = -1;
+        } else {
+            st = (rna[1] & 1);
+        }
         if (st == 1) {
-            if (*(u32*)(rna + 0xB4) == 1)
+            if (*(s32*)(rna + 0xB4) == 1)
                 criware_80399F4C(rna);
             else
                 axrna_start_trans(rna);
         } else {
-            st = (rna != NULL) ? (s32)((rna[1] >> 1) & 1) : -1;
-            if (st == 1 && *(u32*)(rna + 0x74) < *(u32*)(rna + 0x18))
+            if (rna == NULL) {
+                st = -1;
+            } else {
+                st = ((rna[1] >> 1) & 1);
+            }
+            if (st == 1 && *(s32*)(rna + 0x74) < *(s32*)(rna + 0x18))
                 axrna_start_flash(rna);
         }
     }
@@ -707,6 +725,8 @@ void AXRNA_SetNumChan(void* self, u8 numChan) {
 
 void AXRNA_SetSfreq(void* self, s32 sfreq) {
     s32 i;
+    s32 hi;
+    s32 lo;
     AXPBSRC src;
     if (self == NULL)
         return;
@@ -714,22 +734,20 @@ void AXRNA_SetSfreq(void* self, s32 sfreq) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x4b5));
     }
     *(s32*)((u8*)self + 0x1c) = sfreq;
-    {
-        s32 hi = (s32)((s64)sfreq * 0x10624DD3LL >> 43);
-        s32 lo = (s32)((s64)(sfreq << 8) * 0x10624DD3LL >> 35);
-        src.ratioHi = (u16)hi;
-        src.ratioLo = (u16)lo;
-        src.currentAddressFrac = 0;
-        src.last_samples[0] = 0;
-        src.last_samples[1] = 0;
-        src.last_samples[2] = 0;
-        src.last_samples[3] = 0;
-    }
+    hi = sfreq / 32000;
+    lo = (sfreq << 8) / 125;
     for (i = 0; i < (s8)((u8*)self)[2]; i++) {
         GCRNA_LockCs();
         {
             void* e = *(void**)((u8*)self + 4 * i + 8);
             if (e != NULL) {
+                src.ratioHi = (u16)hi;
+                src.ratioLo = (u16)lo;
+                src.currentAddressFrac = 0;
+                src.last_samples[0] = 0;
+                src.last_samples[1] = 0;
+                src.last_samples[2] = 0;
+                src.last_samples[3] = 0;
                 AXSetVoiceSrcType(e, *(s32*)((u8*)self + 0xa0));
                 AXSetVoiceSrc(e, &src);
             }
@@ -794,7 +812,7 @@ int AXRNA_SetStmHdInfo(void) { return 0x0; }
 
 int AXRNA_DiscardData(void) { return 0x0; }
 
-void AXRNA_SetMain(void* self, s32 index, s32 val) {
+void AXRNA_SetMain(void* self, u32 index, s32 val) {
     s32 t;
     s32 v;
     s32 i;
@@ -826,24 +844,24 @@ void AXRNA_SetMain(void* self, s32 index, s32 val) {
 
 void criware_8039A8E0(void* self, u32 flags) {
     s32 i;
-    u32 b0, b1, b2, b3, b4, b5;
+    u32 b4, b0, b1, b2, b3, b5;
     s32 fader0;
     s32 fader1;
     s32 fader2;
     s32 fader3;
-    if (self == NULL)
-        return;
-    ((u8*)self)[0xe0] = (u8)(flags & 0x1f);
-    b0 = flags & 1;
-    b1 = flags & 2;
-    b2 = flags & 4;
-    b3 = flags & 8;
-    b4 = flags & 0x10;
-    b5 = flags & 0xf;
     fader0 = -0x3c0;
     fader1 = -0x3c0;
     fader2 = -0x3c0;
     fader3 = -0x3c0;
+    if (self == NULL)
+        return;
+    ((u8*)self)[0xe0] = (u8)(flags & 0x1f);
+    b4 = flags & 0x10;
+    b0 = flags & 1;
+    b1 = flags & 2;
+    b2 = flags & 4;
+    b3 = flags & 8;
+    b5 = flags & 0xf;
     for (i = 0; i < (s8)((u8*)self)[2]; i++) {
         GCRNA_LockCs();
         {

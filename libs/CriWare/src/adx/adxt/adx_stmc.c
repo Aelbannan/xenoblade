@@ -129,7 +129,7 @@ void* ADXSTM_Create(void* fileName, int type) {
         h = NULL;
         for (i = 0; i < count; i++) {
             h = (ADXSTMHndl*)(lbl_eu_805E3EA8 + start);
-            if (h->active == 0) break;
+            if ((s8)h->active == 0) break;
             start += 0x68;
         }
         if (i == count) {
@@ -144,7 +144,7 @@ void* ADXSTM_Create(void* fileName, int type) {
         h = NULL;
         for (i = 0; i < count; i++) {
             h = (ADXSTMHndl*)(lbl_eu_805E3EA8 + start);
-            if (h->active == 0) break;
+            if ((s8)h->active == 0) break;
             start += 0x68;
         }
         if (i == count) {

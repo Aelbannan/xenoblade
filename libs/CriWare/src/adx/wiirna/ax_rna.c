@@ -789,16 +789,16 @@ void AXRNA_SetSfreq(void* self, s32 sfreq) {
 }
 
 void AXRNA_SetOutVol(void* self, s32 vol) {
-    s32 i;
     s32 t;
     s32 v;
+    s32 i;
     if (self == NULL)
         return;
     t = vol & (vol >> 31);
     v = -960;
     if (t > -960)
         v = t;
-    if (*(s32*)((u8*)self + 0x7c) == v)
+    if (v == *(s32*)((u8*)self + 0x7c))
         return;
     *(s32*)((u8*)self + 0x7c) = v;
     for (i = 0; i < (s8)((u8*)self)[2]; i++) {
@@ -845,10 +845,10 @@ int AXRNA_SetStmHdInfo(void) { return 0x0; }
 int AXRNA_DiscardData(void) { return 0x0; }
 
 void AXRNA_SetMain(void* self, u32 index, s32 val) {
+    s32* p;
     s32 t;
     s32 v;
     s32 i;
-    s32* p;
     if (self == NULL)
         return;
     if (index > 3) {
@@ -860,17 +860,21 @@ void AXRNA_SetMain(void* self, u32 index, s32 val) {
     if (t > -960)
         v = t;
     p = (s32*)((u8*)self + index * 4);
-    if (p[0xd0 / 4] == v)
+    if (v == p[0xd0 / 4])
         return;
     p[0xd0 / 4] = v;
-    for (i = 0; i < (s8)((u8*)self)[2]; i++) {
-        GCRNA_LockCs();
-        {
-            void* e = *(void**)((u8*)self + 4 * i + 8);
-            if (e != NULL)
-                MIXRmtSetFader(e, index, p[0xd0 / 4]);
+    {
+        u8* q = (u8*)self;
+        for (i = 0; i < (s8)((u8*)self)[2]; i++) {
+            GCRNA_LockCs();
+            {
+                void* e = *(void**)(q + 8);
+                if (e != NULL)
+                    MIXRmtSetFader(e, index, p[0xd0 / 4]);
+            }
+            GCRNA_UnlockCs();
+            q += 4;
         }
-        GCRNA_UnlockCs();
     }
 }
 

@@ -7621,3 +7621,10 @@ r0; decomp swaps to r0/r3 — pure color rotation (4 reg_swap).
 — the (s32) cast forces the signed cmpi; the `return 1` reuses the stw'd li r3,1
 (the retail's bne → epilogue with r3=1), and the v==2 path returns the
 MPVM2V_RequestStop result through (no extra li).
+
+### CriWare mpv_dec MPVDEC_CheckVersion — 53.3% (second-fail branch inversion)
+strcmp(lbl_8051C088, ver)!=0 → -1; size!=0xDAC → -1; return ((v-128)|(128-v))
+>>31 (the subi/subfic/or/srawi sign trick). Retail: [cmpli; beq tail; li -1;
+b epi; tail: subi...] — the second fail is a separate inline block. Decomp
+fuses to [cmpli; li -1; bne epi; subi...] — the li scheduled before the
+inverted branch, 1 instruction short (0x74 vs 0x78). Goto forms degrade.

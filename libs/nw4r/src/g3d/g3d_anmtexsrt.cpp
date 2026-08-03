@@ -88,7 +88,30 @@ void UpdateFrame__Q34nw4r3g3d15AnmObjTexSrtResFv(){}
 
 void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdl(){}
 
-void GetResult__Q34nw4r3g3d15AnmObjTexSrtResFPQ34nw4r3g3d15TexSrtAnmResultUl(){}
+namespace nw4r {
+namespace g3d {
+
+const TexSrtAnmResult* AnmObjTexSrtRes::GetResult(TexSrtAnmResult* pResult,
+                                                  u32 idx) {
+    u16 binding = mpBinding[idx];
+
+    if (binding & (BINDING_UNDEFINED | BINDING_INVALID)) {
+        pResult->flags = 0;
+        return pResult;
+    }
+
+    if (mpResultCache != NULL) {
+        return &mpResultCache[binding];
+    }
+
+    mRes.GetAnmResult(pResult, binding, GetFrm());
+    return pResult;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void G3dProc__Q34nw4r3g3d15AnmObjTexSrtResFUlUlPv(){}
 

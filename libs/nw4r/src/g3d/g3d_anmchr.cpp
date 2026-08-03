@@ -399,7 +399,30 @@ void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjCh
 
 void Release__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 
-void GetResult__Q34nw4r3g3d12AnmObjChrResFPQ34nw4r3g3d12ChrAnmResultUl(){}
+namespace nw4r {
+namespace g3d {
+
+const ChrAnmResult* AnmObjChrRes::GetResult(ChrAnmResult* pResult,
+                                            u32 idx) {
+    u16 binding = mpBinding[idx];
+
+    if (binding & (BINDING_UNDEFINED | BINDING_INVALID)) {
+        pResult->flags = 0;
+        return pResult;
+    }
+
+    if (mpResultCache != NULL) {
+        return &mpResultCache[binding];
+    }
+
+    mRes.GetAnmResult(pResult, binding, GetFrm());
+    return pResult;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void G3dProc__Q34nw4r3g3d12AnmObjChrResFUlUlPv(){}
 

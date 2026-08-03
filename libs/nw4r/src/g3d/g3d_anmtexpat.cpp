@@ -92,7 +92,31 @@ void UpdateFrame__Q34nw4r3g3d15AnmObjTexPatResFv(){}
 
 void Bind__Q34nw4r3g3d15AnmObjTexPatResFQ34nw4r3g3d6ResMdl(){}
 
-void GetResult__Q34nw4r3g3d15AnmObjTexPatResFPQ34nw4r3g3d15TexPatAnmResultUl(){}
+namespace nw4r {
+namespace g3d {
+
+const TexPatAnmResult* AnmObjTexPatRes::GetResult(TexPatAnmResult* pResult,
+                                                  u32 idx) {
+    u16 binding = mpBinding[idx];
+
+    if (binding & (BINDING_UNDEFINED | BINDING_INVALID)) {
+        pResult->bTexExist = 0;
+        pResult->bPlttExist = 0;
+        return pResult;
+    }
+
+    if (mpResultCache != NULL) {
+        return &mpResultCache[binding];
+    }
+
+    mRes.GetAnmResult(pResult, binding, GetFrm());
+    return pResult;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void G3dProc__Q34nw4r3g3d15AnmObjTexPatResFUlUlPv(){}
 

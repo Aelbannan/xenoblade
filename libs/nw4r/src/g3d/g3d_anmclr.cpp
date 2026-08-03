@@ -158,7 +158,30 @@ void UpdateFrame__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 
 void Bind__Q34nw4r3g3d15AnmObjMatClrResFQ34nw4r3g3d6ResMdl(){}
 
-void GetResult__Q34nw4r3g3d15AnmObjMatClrResFPQ34nw4r3g3d12ClrAnmResultUl(){}
+namespace nw4r {
+namespace g3d {
+
+const ClrAnmResult* AnmObjMatClrRes::GetResult(ClrAnmResult* pResult,
+                                               u32 idx) {
+    u16 binding = mpBinding[idx];
+
+    if (binding & (BINDING_UNDEFINED | BINDING_INVALID)) {
+        pResult->bRgbaExist = 0;
+        return pResult;
+    }
+
+    if (mpResultCache != NULL) {
+        return &mpResultCache[binding];
+    }
+
+    mRes.GetAnmResult(pResult, binding, GetFrm());
+    return pResult;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void G3dProc__Q34nw4r3g3d15AnmObjMatClrResFUlUlPv(){}
 

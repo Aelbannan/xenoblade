@@ -21,6 +21,13 @@
  * reloc. */
 extern "C" const u32 lbl_805186C8[2] = {0x000000FF, 0x00000000};
 
+/* Retail names the pooled "bar_00" pane string lbl_eu_80549D1C (symbols.txt
+ * .data:0x80549D1C); update_controller's FindPaneByName("bar_00") emits a
+ * reloc against it. Pin the name via an undefined extern declaration (resolved
+ * at link time from symbols.txt) so the reloc matches without adding a .data
+ * object that would shift the TU string pool. */
+extern "C" char lbl_eu_80549D1C[16];
+
 namespace homebutton {
 void AxSoundMain(); // defined in HBMAxSound.cpp
 void SetSoundMode(u32 mode); // defined in HBMAxSound.cpp
@@ -1852,7 +1859,7 @@ void HomeButton::update_controller(int id) {
         if ((pController->trig & WPAD_BUTTON_HOME) && isActive()) {
             if (mSequence == eSeq_Control) {
                 mpLayout->GetRootPane()
-                    ->FindPaneByName("bar_00", true)
+                    ->FindPaneByName(lbl_eu_80549D1C, true)
                     ->SetVisible(true);
 
                 mpPaneManager->update(id, 0.0f, -180.0f, 0, 0, 0, NULL);

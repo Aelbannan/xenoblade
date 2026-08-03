@@ -78,13 +78,60 @@ void DetachAll__Q34nw4r3g3d12AnmObjTexSrtFv(void) {}
 
 void Construct__Q34nw4r3g3d15AnmObjTexSrtResFP12MEMAllocatorPUlQ34nw4r3g3d12ResAnmTexSrtQ34nw4r3g3d6ResMdlb(){}
 
-void SetFrame__Q34nw4r3g3d15AnmObjTexSrtResFf(){}
+namespace nw4r {
+namespace g3d {
 
-void SetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResFf(){}
+void AnmObjTexSrtRes::SetFrame(f32 frame) {
+    SetFrm(frame);
 
-float GetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self) { return *(float *)((char *)self + 28); }
+    if (mpResultCache != NULL) {
+        f32 f = GetFrm();
+        for (u32 i = 0; i < (u32)mNumBinding; i++) {
+            u16 binding = mpBinding[i];
+            if (!(binding & BINDING_UNDEFINED)) {
+                u32 id = binding & BINDING_ID_MASK;
+                mRes.GetAnmResult(&mpResultCache[id], id, f);
+            }
+        }
+    }
+}
 
-void UpdateFrame__Q34nw4r3g3d15AnmObjTexSrtResFv(){}
+void AnmObjTexSrtRes::SetUpdateRate(f32 rate) {
+    SetRate(rate);
+
+    if (rate == 1.0f) {
+        if (mpResultCache != NULL) {
+            f32 f = GetFrm();
+            for (u32 i = 0; i < (u32)mNumBinding; i++) {
+                u16 binding = mpBinding[i];
+                if (!(binding & BINDING_UNDEFINED)) {
+                    u32 id = binding & BINDING_ID_MASK;
+                    mRes.GetAnmResult(&mpResultCache[id], id, f);
+                }
+            }
+        }
+    }
+}
+
+void AnmObjTexSrtRes::UpdateFrame() {
+    if (GetRate() != 1.0f) {
+        UpdateFrm();
+
+        if (mpResultCache != NULL) {
+            f32 f = GetFrm();
+            for (u32 i = 0; i < (u32)mNumBinding; i++) {
+                u16 binding = mpBinding[i];
+                if (!(binding & BINDING_UNDEFINED)) {
+                    u32 id = binding & BINDING_ID_MASK;
+                    mRes.GetAnmResult(&mpResultCache[id], id, f);
+                }
+            }
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdl(){}
 

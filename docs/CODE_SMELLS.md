@@ -10,16 +10,16 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5803 |
-| extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1635 |
-| `self`/register-style params | 3068 |
-| `void*` (params + locals) | 4586 |
-| raw pointer offset arithmetic | 2529 |
-| deref-through-cast arithmetic | 1120 |
+| extern "C" (total lines) | 5696 |
+| extern "C" declarations (non-lbl_*, imports) | 2162 |
+| extern "C" definitions (forced names) | 1633 |
+| `self`/register-style params | 3063 |
+| `void*` (params + locals) | 4584 |
+| raw pointer offset arithmetic | 2525 |
+| deref-through-cast arithmetic | 1117 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
-| goto | 1048 |
+| goto | 1042 |
 | #pragma | 245 |
 
 ## Top offenders (by cleanable severity)
@@ -42,7 +42,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto |
 |---|---|---|---|---|---|---|---|---|---|
 | libs/monolib/src/coli/CColiProc.cpp | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 2 | 0 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 0 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B59C8.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804BAE10.cpp | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
@@ -101,7 +101,6 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/lod/code_80468434.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lod/code_8046A530.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp | 14 | 10 | 4 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp | 20 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp | 17 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp | 1 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047BB54.cpp | 4 | 5 | 9 | 10 | 5 | 1 | 0 | 0 | 0 |
@@ -148,7 +147,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 2 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/UnkClass_8047E110.cpp | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 4 |
+| libs/monolib/src/scn/UnkClass_8047E110.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BC9EC.cpp | 2 | 0 | 1 | 6 | 8 | 0 | 0 | 0 | 2 |
@@ -165,8 +164,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/g3d/g3d_anmchr.cpp | 0 | 0 | 1 | 5 | 1 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmclr.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmscn.cpp | 0 | 0 | 8 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_anmtexpat.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_anmtexsrt.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_anmtexpat.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_anmtexsrt.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmvis.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcview.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcvtx.cpp | 0 | 0 | 0 | 15 | 0 | 0 | 21 | 0 | 2 |
@@ -226,7 +225,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_NandSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_PlayerHeap.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 3 | 4 | 3 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 2 | 4 | 11 | 3 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqTrack.cpp | 1 | 1 | 1 | 2 | 21 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DActor.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -434,7 +433,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/code_800A3B24.cpp | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 0 | 1 | 11 | 2 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| src/kyoshin/code_800B06A4.cpp | 27 | 12 | 61 | 83 | 63 | 35 | 0 | 0 | 2 |
+| src/kyoshin/code_800B06A4.cpp | 24 | 11 | 60 | 83 | 62 | 34 | 0 | 0 | 2 |
 | src/kyoshin/code_80135FDC.cpp | 56 | 70 | 12 | 164 | 83 | 14 | 0 | 0 | 12 |
 | src/kyoshin/code_801862C0.cpp | 1 | 1 | 6 | 14 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 0 | 0 | 3 | 3 | 1 | 0 | 0 | 1 | 0 |
@@ -556,7 +555,6 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "self_params": 5
  },
  "libs/monolib/src/coli/code_804A6C60.cpp": {
-  "extern_c_nonlbl_decl": 1,
   "ptr_arith": 1,
   "self_params": 1,
   "void_ptr": 1
@@ -876,12 +874,6 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "self_params": 4,
   "void_ptr": 3
  },
- "libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp": {
-  "extern_c_nonlbl_decl": 20,
-  "extern_c_nonlbl_def": 1,
-  "goto_count": 2,
-  "self_params": 1
- },
  "libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp": {
   "extern_c_nonlbl_decl": 17,
   "extern_c_nonlbl_def": 4,
@@ -1154,10 +1146,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "self_params": 1
  },
  "libs/monolib/src/scn/UnkClass_8047E110.cpp": {
-  "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 1,
-  "goto_count": 4,
-  "self_params": 1
+  "extern_c_nonlbl_def": 1
  },
  "libs/monolib/src/scn/code_8047D2AC.cpp": {
   "deref_arith": 3,
@@ -1238,16 +1227,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 17
  },
  "libs/nw4r/src/g3d/g3d_anmtexpat.cpp": {
-  "deref_arith": 1,
-  "ptr_arith": 1,
-  "self_params": 1,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/g3d/g3d_anmtexsrt.cpp": {
-  "deref_arith": 1,
-  "ptr_arith": 1,
-  "self_params": 1,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/g3d/g3d_anmvis.cpp": {
   "void_ptr": 2
@@ -1458,7 +1441,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/nw4r/src/snd/snd_SeqPlayer.cpp": {
   "deref_arith": 3,
   "extern_c_nonlbl_def": 1,
-  "ptr_arith": 4,
+  "ptr_arith": 3,
   "void_ptr": 3
  },
  "libs/nw4r/src/snd/snd_SeqSound.cpp": {
@@ -2584,12 +2567,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "goto_count": 1
  },
  "src/kyoshin/code_800B06A4.cpp": {
-  "deref_arith": 35,
-  "extern_c_nonlbl_decl": 27,
-  "extern_c_nonlbl_def": 12,
+  "deref_arith": 34,
+  "extern_c_nonlbl_decl": 24,
+  "extern_c_nonlbl_def": 11,
   "goto_count": 2,
-  "ptr_arith": 63,
-  "self_params": 61,
+  "ptr_arith": 62,
+  "self_params": 60,
   "void_ptr": 83
  },
  "src/kyoshin/code_80135FDC.cpp": {

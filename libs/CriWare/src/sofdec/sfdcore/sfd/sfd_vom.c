@@ -7,7 +7,38 @@ int SFVOM_Init(void) { return 0x0; }
 
 int SFVOM_Finish(void) { return 0x0; }
 
-void SFVOM_ExecServer() {}
+extern s32 SFSET_GetCond(void* self, s32 a);
+extern s32 SFTRN_GetTermFlg(void* self, s32 a);
+extern s32 SFBUF_GetTermFlg(void* self, void* a);
+extern void SFTRN_SetTermFlg(void* self, s32 a, s32 b);
+extern s32 SFTIM_IsVideoTerm(void* self);
+extern s32 SFTRN_GetPrepFlg(void* self, s32 a);
+extern s32 SFBUF_GetPrepFlg(void* self, void* a);
+extern void SFTRN_SetPrepFlg(void* self, s32 a, s32 b);
+
+s32 SFVOM_ExecServer(void* self) {
+    s32 r;
+    if (SFSET_GetCond(self, 5) != 0)
+        return 0;
+    if (SFSET_GetCond(self, 6) != 1) {
+        if (SFBUF_GetTermFlg(self, *(void**)((u8*)self + 0x2180)) == 1) {
+            if (SFSET_GetCond(self, 0xf) == 0) {
+                r = 1;
+            } else {
+                r = SFTIM_IsVideoTerm(self);
+            }
+            if (((r | -r) << 1) & 0x80000000) {
+                SFTRN_SetTermFlg(self, 6, 1);
+            }
+        }
+    }
+    if (SFTRN_GetPrepFlg(self, 6) != 1) {
+        if (SFBUF_GetPrepFlg(self, *(void**)((u8*)self + 0x2180)) == 1) {
+            SFTRN_SetPrepFlg(self, 6, 1);
+        }
+    }
+    return 0;
+}
 
 int SFVOM_Create(void) { return 0x0; }
 

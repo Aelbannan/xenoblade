@@ -6,6 +6,7 @@ void AXRNA_EntryErrFunc(void* fn) { RNAERR_EntryErrFunc(fn); }
 
 
 extern u32 lbl_eu_805F2C00;
+extern u32 lbl_eu_8051914C;
 extern u8 lbl_eu_805F2C08[];
 
 void AXRNA_Init(void) {

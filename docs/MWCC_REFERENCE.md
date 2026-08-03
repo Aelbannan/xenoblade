@@ -7480,3 +7480,19 @@ beats the inline `(s16)off` — 3 vs 4 reg_swap). Residual 4 structural: the
 retail `subf r0; sth; extsh r0,r0; bc` (store-then-extsh, stale-CR0 branch) vs
 decomp `subf; extsh; sth` (extsh-before-store) — the `(s16)off <= 0` test's
 extsh placement is a fixed scheduler choice; plus out-param register colors.
+
+### CriWare rna_err RNAERR_CallErrFunc — FULL_MATCH (single-base CSE via mixed references)
+The base (`lbl_eu_805F2AF8`) must be referenced as the **direct symbol** for the
+strncpy dst (`(char*)&lbl_eu_805F2AF8 + 8`) AND as a `register u32* g = (u32*)&lbl`
+for the callback (g[0]/g[1]/g+2). Mixing the two reference forms made MWCC fold
+the lis+addi into ONE register (r31) with correct lwz offsets; the pure-g form
+split the base [lis r31; addi r30, r31] (r31=lis-only → wrong-address lwz 0(r31)),
+the pure-direct form materialized the base repeatedly (OVER). The indirect
+callback call has **2 args** — r5=255 is the strncpy leftover, not an explicit
+third argument.
+
+### CriWare ax_rna AXRNA_Init — dead-load wall (13.6%, semantically correct)
+Retail hoists a **dead load** `lwz r3, 0(r4)` (r4=8051914C) before the init-flag
+branch — the ++ operand's load scheduled early against the wrong base register.
+MWCC DCEs a dead read from the equivalent C; unreproducible intentionally.
+Size 0x50 vs 0x58 (2 missing instructions).

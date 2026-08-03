@@ -65,7 +65,27 @@ void ADXM_Lock(void) { SVM_Lock(); }
 
 void ADXM_Unlock(void) { SVM_Unlock(); }
 
-void adxm_lock() {}
+
+void adxm_lock(void) {
+    u8* g = (u8*)&lbl_eu_805F3A50;
+    if (*(u32*)((u8*)g + 0x40) == 0) {
+        u32 irq;
+        OSThread* t;
+        s32 p;
+        irq = OSDisableInterrupts();
+        OSDisableScheduler();
+        *(u32*)((u8*)g + 0x70) = 1;
+        t = OSGetCurrentThread();
+        p = OSGetThreadPriority(t);
+        OSSetThreadPriority(t, *(s32*)((u8*)g + 0x10));
+        *(s32*)((u8*)g + 0x74) = p;
+        *(u32*)((u8*)g + 0x70) = 0;
+        OSEnableScheduler();
+        OSRestoreInterrupts(irq);
+        OSResumeThread((OSThread*)((u8*)g + 0x78));
+    }
+    *(u32*)((u8*)g + 0x40) += 1;
+}
 
 void adxm_unlock(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;

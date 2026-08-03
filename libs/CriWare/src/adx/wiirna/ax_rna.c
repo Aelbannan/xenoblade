@@ -169,6 +169,29 @@ int AXRNA_SetStmHdInfo(void) { return 0x0; }
 
 int AXRNA_DiscardData(void) { return 0x0; }
 
-void AXRNA_SetMain() {}
+extern void MIXRmtSetFader(void* a, s32 b);
+extern u32 lbl_eu_80519150[];
+
+void AXRNA_SetMain(void* self, s32 index, s32 val) {
+    s32 v;
+    s32 i;
+    if (self == NULL)
+        return;
+    if (index > 3) {
+        RNAERR_CallErrFunc(lbl_eu_80519150 + 0x4e4);
+        return;
+    }
+    v = -960;
+    if (*(s32*)((u8*)self + index * 4 + 0xd0) == v)
+        return;
+    *(s32*)((u8*)self + index * 4 + 0xd0) = v;
+    for (i = 0; i < (s8)*(u8*)((u8*)self + 2); i++) {
+        void* e = *(void**)((u8*)self + 4 * i + 8);
+        GCRNA_LockCs();
+        if (e != NULL)
+            MIXRmtSetFader(e, v);
+        GCRNA_UnlockCs();
+    }
+}
 
 void criware_8039A8E0() {}

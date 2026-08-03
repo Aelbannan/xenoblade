@@ -385276,8 +385276,8 @@
       "size": "0xE8",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80385a7c",
@@ -385298,7 +385298,9 @@
           "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 68.448,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803c0e00",
@@ -385396,8 +385398,8 @@
       "size": "0x128",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386180",
@@ -385422,7 +385424,9 @@
           "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 62.865,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803c0fbc",

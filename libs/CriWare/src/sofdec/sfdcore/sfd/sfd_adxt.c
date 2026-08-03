@@ -362,10 +362,10 @@ int SFADXT_Destroy(void *handle) {
     lbl_eu_80606DE8[5] = *(u32 *)((u8 *)w + 0x1c);
     lbl_eu_80606DE8[6] = *(u32 *)((u8 *)w + 0x20);
     if (SFPLY_GetResetFlg() == 1) {
-        ADXT_Stop(*(void **)((u8 *)w));
+        ADXT_Stop(adxt);
         lbl_eu_80606E38[0x1f4 / 4] = (u32)adxt;
     } else {
-        ADXT_Destroy(adxt);
+        ADXT_Destroy(*(void **)(*(void **)((u8 *)handle + 0x20ac)));
     }
     {
         void **vt = *(void ***)chunk;

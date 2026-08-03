@@ -106,9 +106,58 @@ s32 mpvhdec_DecUdscSj(void* self, void* sj) {
     return r;
 }
 
-s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) { return 0; }
+extern s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size);
 
-void mpvhdec_DecSeqUdsc() {}
+s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) {
+    s32 i;
+    s32 found = 0;
+    s32 ret = 0;
+    s32 codec = *(s32*)((u8*)self + 0xD58);
+    for (i = 4; i < size - 3; i++) {
+        if (MPV_CheckDelim(p + i) != 0) break;
+    }
+    if (i == size - 3) found = -1;
+    if (codec == 1) {
+        ret = mpvhdec_DecSeqUdsc(self, p, i);
+    }
+    {
+        void* fn = *(void**)((u8*)self + codec * 12 + 0xD5C);
+        if (fn != NULL) {
+            MpvSjChunk st;
+            MpvSjChunk rest;
+            ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
+                fn, 0, i, &st);
+            memcpy((void*)st.p, p, st.size);
+            ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
+                fn, 1, &st);
+            if (st.size < i) {
+                ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x18))(
+                    fn, 0, i - st.size, &rest);
+                memcpy((void*)rest.p, p + st.size, rest.size);
+                ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)fn + 0x20))(
+                    fn, 1, &rest);
+            }
+        }
+    }
+    {
+        void* fn2 = *(void**)((u8*)self + codec * 12 + 0xD60);
+        if (fn2 != NULL) {
+            ((void (*)(void*, s32))fn2)(*(void**)((u8*)self + codec * 12 + 0xD64), codec);
+        }
+    }
+    if (codec == 3) {
+        if (*(void**)((u8*)self + 0xD8C) != NULL) {
+            s32 n = *(s32*)((u8*)self + 0xD90);
+            if (i < n) n = i;
+            *(s32*)((u8*)self + 0xD94) = n;
+            memcpy(*(void**)((u8*)self + 0xD8C), p, n);
+        }
+    }
+    if (ret != 0) found = ret;
+    return found;
+}
+
+s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size) { return 0; }
 
 s32 MPV_GoNextDelimSj(void* self) {
     MpvSjChunk st;

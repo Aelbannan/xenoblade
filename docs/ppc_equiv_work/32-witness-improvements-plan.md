@@ -59,6 +59,33 @@ Post-review polish (committed with this section):
   Also: 763 `targets.json` rows already carry non-null `declared_return` with
   zero certificates, so §2.5.4 cannot false-reject anything today.
 
+## R6. Value-dependent RA rule (2026-08-04) — rollout finding + refinement
+
+Rollout measurement exposed an A2 completeness gap: A2 treated the whole RA
+field of RA-literal opcodes as non-register, so a *nonzero* RA rename
+(e.g. `lwz r3,0(r20)` vs `lwz r3,0(r21)`) was rejected at gate 3 even though
+a nonzero RA is a real register read. 41 of 43 `fields`-gate failures in the
+94-set were exactly this shape. Fix (committed as 055ba1d65):
+
+- **Value-dependent RA:** the RA field of an RA-literal opcode is the literal
+  zero only when its value is 0.  A both-nonzero RA pair is a real register
+  rename: gate 3 excludes its bits from the bit-equality and gate 4 (plus the
+  region-path rho builders) accumulates `rho[retail_ra] = decomp_ra`.  A
+  zero-vs-nonzero pair is a literal-vs-register mismatch and rejects at
+  `fields` (CX-2 unchanged).
+- Soundness: both-nonzero -> shared-state addresses agree under rho
+  (`decomp.gpr[rB] = X_A`); zero-vs-nonzero -> the literal side reads nothing
+  and the register side reads an independent variable -> bit-equality rejects.
+- Re-measured on the 94-set: `fields` 43 -> 3; the recovered pairs surface
+  the next gate (reloc/rho/loop — source-level or out-of-scope classes);
+  `__HBMSYNResetAllControllers` certifies again (1 certified, witness-only).
+- Tests: `ValueDependentRATests` (nonzero-RA rename accepted, zero-vs-nonzero
+  rejected, identity entry in rho); 57 witness tests, engine suite 1972,
+  fixture blob all green.
+- **Pending review:** this refines the round-2-reviewed "whole-RA
+  non-register" design — the value-dependent rule is strictly more complete
+  and equally sound, but is sent to the reviewers before rollout continues.
+
 
 
 All of I5 (provenance), A2, A1, A3-plumbing, and the A3 structural check are

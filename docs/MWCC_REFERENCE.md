@@ -2212,6 +2212,21 @@ reloc-name-only drift via the EQUIVALENT_MATCH path (SMT + certified callee
 chain) or objdiff `functionRelocDiffs=data_value`; use the manual pattern
 when the toolchain reproduces retail's early-magic schedule.
 
+### 7k. Variadic va_start register fusion — struct-pointer local vs char-pointer offsets
+
+For a variadic function that keeps a blob base register across the call
+(retail: `lis r30,@ha; addi r30,r30,@l` fused, ap in r31, exactly 2
+callee-saved), writing the accesses as `char *base = (char *)&blob;` and
+`base + 4` / `base + 8` makes MWCC (Wii/1.1) split the base into a 3rd
+callee-saved reg (`lis r30,@ha` scratch + `addi r29,r30,@l`) → frame +0x10,
+function +8 bytes — which can blow a zero-slack split budget. Declaring a
+struct pointer local and using **field accesses** (`e->cb` / `e->param` /
+`e->buf` with offsets 0/4/8) makes MWCC materialize the base ONCE into r30
+(fused lis/addi) with ap in r31 — byte-identical to retail. Verified on
+`LSC_CallErrFunc_` (us-803949ec, lsc_err.c, Wii/1.1): char-pointer forms
+0xCC/3-saved across 15 compilers × -O4,s/-ipa, struct-pointer form 0xC4 /
+2-saved / 100% FULL_MATCH. `va_end` does not affect the allocation.
+
 ### 7j. CSchedule runtime TU — PS vector subtraction and same-TU inlining
 
 For `monolib/src/core/code_804E36DC.cpp`, `ml::CVec3` subtraction through its high-level `operator-`/`CVec3::sub` path reproduces retail's paired-single `psq_l`/`ps_sub` sequence and the temporary-to-result copy before `PSVECMag`. Scalar component arithmetic does not. The retail `func_804E3B6C` distance helper also uses a same-TU `func_804E424C` call; marking that helper `DECOMP_DONT_INLINE` keeps the TU within its exact `0xC58` split budget. The residual distance-function mismatch is external virtual/callee register scheduling, not a semantic difference.

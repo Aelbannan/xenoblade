@@ -10,7 +10,13 @@ static u32 nwc24TimeCommonResult[8] ALIGN(32);
 static u32 nwc24TimeCommonBuffer[8] ALIGN(32);
 
 static s32 nwc24ShtRetryRest;
-static s32 nwc24ShtFd = -1;
+// .sdata is 8 bytes in retail: nwc24ShtFd then 4 zero pad bytes
+// (gap_09_8066307C_sdata-analog) aligning the next unit's .sdata.
+struct Nwc24ShtFd {
+    s32 fd;
+    u32 pad;
+};
+static struct Nwc24ShtFd nwc24ShtFd = { -1, 0 };
 static BOOL NWC24iIsRequestPending;
 
 static BOOL NWC24Shutdown_(BOOL final, u32 event);
@@ -66,8 +72,8 @@ NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     ShutdownFuncInfo.prio = 0x6e;
     OSRegisterShutdownFunction(&ShutdownFuncInfo);
 
-    if (nwc24ShtFd < 0) {
-        result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd,1);
+    if (nwc24ShtFd.fd < 0) {
+        result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd.fd,1);
     }
     nwc24ShtRetryRest = 5;
 
@@ -167,7 +173,7 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
 
     shtBuffer[0] = param_1;
     
-    if (IOS_IoctlAsync(nwc24ShtFd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
+    if (IOS_IoctlAsync(nwc24ShtFd.fd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
         return -42;
     }
     
@@ -326,6 +332,3 @@ static s32 CheckCallingStatus(const char* funcName){
 NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
 s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
 NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
-
-// .sdata is 8 bytes in retail: nwc24ShtFd then 4 zero pad bytes.
-const u32 s_sdataPad = 0;

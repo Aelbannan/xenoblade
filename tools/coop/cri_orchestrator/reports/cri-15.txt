@@ -1,0 +1,241 @@
+-80384510 CODE_MATCH, etc.)
+- us-803888bc ADXPD_Create (us-8038cd48 HIGH_MATCH)
+- us-803a7c60 mpvcdec_NintraBlocksInt1 (indirect)
+- us-803bf4e0 MPS_Init (indirect)
+- us-803993a8 sjuni_UngetChunk (indirect)
+- us-80398fcc sjuni_GetChunk (indirect)
+- us-803991b8 sjuni_PutChunk (indirect)
+- us-80394bc4 lsc_StatWait (us-803841ec NOT_STARTED)
+- us-803d1a94 SFTST_Create — hmm wait — SFTST_Create is NOT_STARTED and its callees are accepted (us-80004350, us-802bc028, us-802c5014)... it's NOT blocked! But I claimed it and never worked on it (I went to sfhds_AnlyVideo instead). Hmm — let me re-check: SFTST_Create was at 5.1% when I looked. It's NOT blocked — I just deprioritized it. Hmm — it's still actionable! Let me reconsider... it's 0x1D8 with the memcpy-inline issue. Actually — the memcpy inline issue: under Wii/1.1 (which the unit now uses), the memcpy might inline! Let me quickly check SFTST_Create under the current Wii/1.1 setup... I checked earlier: SFTST_Create was 5.1% under Wii/1.1 (the --all output). Hmm — wait, that was BEFORE I added the explicit memcpy/memset externs? Let me re-check now. Actually the --all after Wii/1.1 showed SFTST_Create at 5.1% — same as a5.2. So the memcpy inline doesn't happen under either.
+
+Hmm — but wait — actually, let me reconsider SFTST_Create once more. The retail INLINED both memset(0x2C) and memcpy(274). Let me try the `__builtin_memcpy`... no. Or maybe the size needs to be `sizeof(local)`... same value.
+
+Actually — hold on. Let me reconsider: maybe the retail's inline came from the `-ipa file` or... Let me look at whether the SFTST_Create memcpy can be made to inline with a specific form. MWCC's memcpy inlining: `-inline auto` should inline `memcpy(dst, src, CONST)` when the size is ≤ some threshold. 274 > threshold? The retail DID inline 274. Hmm.
+
+Actually — let me try one thing quickly: the sfd_tst unit is now Wii/1.1. Let me check if SFTST_Create inlines under Wii/1.1 with my explicit extern declarations... I checked — 5.1%. Hmm.
+
+OK — SFTST_Create: it's NOT blocked, but it needs the memcpy-inline puzzle solved (~17 instructions) + the copy loop. Given I've spent a lot of time, let me make a final attempt on it — try the `__builtin_memcpy` form or check what makes MWCC inline.
+
+Actually — wait. Let me reconsider the retail's memcpy inline ONE more time. The loop: `mtspr 19, r0; lwz r3, 4(r4); lwzu r0, 8(r4); stw r3, 4(r5); stwu r0, 8(r5); bdnz; lhz; sth`. Hmm — the `li r0, 34` (ctr) is materialized EARLY (0x70) — BEFORE the constant stores. And the loop is at the END (0x158). So MWCC computed the ctr value early but emitted the loop late. This is consistent with MWCC's memcpy inline expansion.
+
+For the decomp to inline, MWCC needs to recognize the memcpy as a builtin. The KEY: the DECLARATION. My explicit `extern void *memcpy(void *, const void *, unsigned long);` — hmm, did that change anything? I added it BEFORE the Wii/1.1 switch... then checked (5.1%) — wait, I added the externs and checked — still 5.1%. Hmm — but that check was with a5.2. Under Wii/1.1, with the externs — let me check now.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/sfd/sfd_tst --symbol SFTST_Create --asm 2>&1 | sed -n '/decomp/,$p' | grep -E "bl 0x|mt...
+[Thought] Still calls (no inline). The 4 bl calls at 0x24 (memset 0x1D0), 0x54 (memset 0xF0), 0x118 (memset 0x2C), 0x12C (memcpy 274), 0x14C/0x158/0x164 (strcpy/strlen calls). The retail inlined the memset(0x2C) and memcpy(274). 
+
+Let me try the `-ipa file`... no. Actually — let me look at the KB note again: "l2cu_send_peer_echo_req FULL_MATCH: ARRAY_TO_STREAM(p, p_data, data_len) — -O4,p loop-to-memcpy recognition reproduces the retail 8-byte-unrolled inline copy". The "-O4,p loop-to-memcpy recognition" — MWCC RECOGNIZES LOOPS as memcpy and inlines them. So the RETAIL source has a LOOP that MWCC converted to the inline memcpy. My loop attempts didn't produce it because... the loop shape matters. The ARRAY_TO_STREAM macro: `{register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}`.
+
+The `register int` — hmm. The rules forbid register locals. But maybe the loop shape `for (i = 0; i < len; i++) *p++ = src[i]` — I tried `*dst8++ = *src8++` (pointer-pointer) but NOT `*p++ = src[i]` (pointer-dest, indexed-source)! The ARRAY_TO_STREAM uses `*(p)++ = a[ijk]` — POINTER dest with INDEXED source. Let me try exactly that:
+
+```c
+u8 *p = (u8*)local;
+for (i = 0; i < 274; i++)
+    *p++ = lbl_eu_8051CD18[i];
+```
+
+I tried this earlier — gave 4.3% / 0x234. Hmm — that WAS the indexed form. And it didn't inline.
+
+OK — what about `register`? The rules say no register locals outside the PS backend. But the ARRAY_TO_STREAM macro uses it... The rules are explicit. Hmm.
+
+Actually — hold on. Let me reconsider whether the retail's copy is from the SOURCE at all. What if the retail's memcpy was inlined because the SOURCE is compiled with a DIFFERENT flag (like -O4,s or -ipa)? The unit is Wii/1.1 now. Let me check what flags produce the inline... The KB's l2cu note says "-O4,p loop-to-memcpy recognition" — so -O4,p DOES the recognition. Hmm.
+
+Let me look at the l2cu source to see the EXACT loop shape that worked.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && sed -n '730,745p' libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -rn "define ARRAY_TO_STREAM" libs/RVL_SDK/src/revolution/bte/ | grep -v ctx | head -2
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -rn "ARRAY_TO_STREAM" libs/RVL_SDK/include/ 2>/dev/null | head -3; grep -rln "ARRAY_TO_STREAM" libs/RVL_SDK/src/revolution/bte/ | grep -v ctx | head -3
+SFTST_Create's inline-copy puzzle remains (the `register`-loop recognition is out of bounds per rules). Recording its stall and finalizing:
+[Thought] The ARRAY_TO_STREAM macro uses `register int ijk`. The rules forbid `register` locals outside the PS backend — BUT the l2cu unit uses this macro and it's a FULL_MATCH (accepted). The macro is SDK code. Hmm — the rule: "do not use `register` locals outside the isolated PS backend". The macro is pre-existing SDK infrastructure... but SFTST_Create is my code. I should avoid `register`.
+
+Actually — let me test whether the loop-to-memcpy recognition works WITHOUT register. I tried `for (i = 0; i < 274; i++) *p++ = lbl_eu_8051CD18[i];` — 4.3%. Hmm — the `i` was a plain int local. Maybe the register keyword is what triggers the recognition in MWCC's -O4,p.
+
+Alternatively — the size: 274 isn't a nice round number. The l2cu's data_len was RUNTIME. Hmm.
+
+OK — you know what, I've spent enough on SFTST_Create. It's 5.1% and needs the inline-copy puzzle. Let me record it as ACTIVE with a stall note and finalize. Actually — wait, it's not blocked and I have time. Let me try the `register`-style loop ONCE — the rules forbid it, so NO. Let me instead try: `-ipa file` vs the default... hmm, the unit's flags: Wii/1.1, -O4,p, -inline auto (from the build line). The `-inline auto` should auto-inline memcpy... 
+
+Hmm — actually — WAIT. Let me look at the retail ONE more time. The copy loop uses `lwz r3, 4(r4); lwzu r0, 8(r4)` — copying 8 bytes/iter. What if the source's copy is NOT memcpy but the loop-to-memcpy of a U32-based loop with the tail? Let me try:
+
+```c
+u32 *dst = (u32*)local;
+u32 *src = (u32*)lbl_eu_8051CD18;
+for (i = 0; i < 34; i++) {
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst += 2;
+    src += 2;
+}
+```
+Tried the unrolled u32 loop — 3.2% (0x2f4 — MWCC unrolled it fully). 
+
+Hmm what about:
+```c
+for (i = 0; i < 274; i += 8) { *(u64*)((u8*)local + i) = *(u64*)((u8*)lbl_eu_8051CD18 + i); }
+... 2-byte tail
+```
+That would be a u64 loop — MWCC might recognize... probably not.
+
+OK — decision: SFTST_Create stays at 5.1% with a stall note. Let me also double-check its CURRENT source state is the best (the memcpy/memset call form). And record the stall.
+
+Then finalize the report.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 .scratch/append_attempt.py '{"target_id":"us-803d1a94","function":"SFTST_Create","region":"us","unit":"CriWare/src/sofdec/sfdcore/sfd/sf...
+Let me record the remaining blocker notes for callee-blocked targets:
+[Thought] Now let me do a final check on the whole batch and produce the final report. Let me verify the attempts.jsonl and targets.json are committed (or commit them one more time), and then produce the report.
+
+Actually — I should also double check: are there any targets I claimed but never recorded a blocker/stall for? Let me go through the 31:
+1. us-80388b64 ADXPD_Stop — stall ✓
+2. us-803cb87c SFPL2_Standby — stall ✓
+3. us-803bf880 MPS_Create — stall ✓
+4. us-803cb820 SFD_Standby — stall ✓
+5. us-803d81b0 SFX_Destroy — stall ✓
+6. us-803a7710 MPVCDEC_Init — BLOCKED (callee us-803bd574 NOT_STARTED) — hmm, did I record this? Let me check... I didn't explicitly record MPVCDEC_Init's blocker! Let me record it.
+7. us-803d1d24 SFTST_GoNextFrame — stall ✓
+8. us-803d7e6c SFX_Init — stall ✓
+9. us-803d8108 sfx_InitHn — stall ✓
+10. us-803bf650 MPS_Finish — BLOCKED (indirect) — did I record? No!
+11. us-80394d70 lsc_StatEnd — BLOCKED (us-80395984) — no record.
+12. us-803d1db0 SFTST_Calc — blocker ✓
+13. us-803c2b60 SFHDS_ReprocessHdr — BLOCKED (us-803c2c4c) — no record.
+14. us-80388b9c ADXPD_ExecHndl — BLOCKED (us-8038c690) — no record.
+15. us-80394e3c lsc_ExecHndl — BLOCKED — no record.
+16. us-803888bc ADXPD_Create — BLOCKED (us-8038cd48) — no record.
+17. us-803a7c60 mpvcdec_NintraBlocksInt1 — BLOCKED (indirect) — no record.
+18. us-803bf4e0 MPS_Init — BLOCKED (indirect) — no record.
+19. us-803993a8 sjuni_UngetChunk — BLOCKED (indirect) — no record.
+20. us-803cb690 SFPL2_Pause — stall ✓
+21. us-80398fcc sjuni_GetChunk — BLOCKED (indirect) — no record.
+22. us-803991b8 sjuni_PutChunk — BLOCKED (indirect) — no record.
+23. us-80394bc4 lsc_StatWait — BLOCKED (us-803841ec) — no record.
+24. us-803d1a94 SFTST_Create — stall ✓ (just now)
+25. us-803cb49c SFD_Pause — stall ✓
+26. us-803d7f0c SFX_Create — blocker ✓
+27. us-803c2930 SFHDS_SetHdr — BLOCKED (us-803c2c4c, us-803d2ef4, indirect) — no record.
+28. us-803c3070 sfhds_AnlyVideo — ACCEPTED ✓
+29. us-803c2c4c sfhds_DoProcessHdr — BLOCKED (us-803c3070 was accepted! but us-803d2ef4 CODE_MATCH remains) — no record.
+30. us-803a77b8 mpvcdec_IntraBlocksInt1 — BLOCKED (indirect) — no record.
+31. us-803d1e90 sftst_CalcSub — stall ✓
+
+So I need to record blockers for: MPVCDEC_Init, MPS_Finish, lsc_StatEnd, SFHDS_ReprocessHdr, ADXPD_ExecHndl, lsc_ExecHndl, ADXPD_Create, mpvcdec_NintraBlocksInt1, MPS_Init, sjuni_UngetChunk, sjuni_GetChunk, sjuni_PutChunk, lsc_StatWait, SFHDS_SetHdr, sfhds_DoProcessHdr, mpvcdec_IntraBlocksInt1. Let me batch-record them all.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json, subprocess, datetime recs = [ ("us-803a7710","MPVCDEC_Init","callee us-803bd574 NOT_STARTED (not in batch)"), ("u...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json 2>/dev/null; git commit -m "cri: batch cri-15 - record callee/indirect blockers for re...
+[Thought] Committed. Now let me do a final verification and produce the final report. Let me check the git state once more and confirm nothing of mine is uncommitted.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "^\?\?" | grep -E "sfd_|sfx_|attempts|targets" | head; echo "--- my files clean check done"; git log --oneline -1
+All work is committed. Final report:
+
+---
+
+## FINAL REPORT — batch cri-15
+
+### Per-target status
+
+| id | function | final status | blocker |
+|---|---|---|---|
+| us-803c3070 | sfhds_AnlyVideo | **FULL_MATCH 100%** | — |
+| us-803d1d24 | SFTST_GoNextFrame | ACTIVE CODE_MATCH 99.1% | witness-blocked (6 pure reg-swaps, 2-cycle) → SMT |
+| us-803d8108 | sfx_InitHn | ACTIVE CODE_MATCH 97.5% | witness-blocked (0 structural, 19 reg-swap 4-cycle + epilogue order) → SMT |
+| us-803cb690 | SFPL2_Pause | ACTIVE HIGH_MATCH 89.8% | witness-blocked (dispatch polarity, reg colors) → SMT |
+| us-803cb49c | SFD_Pause | ACTIVE HIGH_MATCH 86.0% | witness-blocked (reg colors) → SMT |
+| us-803cb87c | SFPL2_Standby | ACTIVE HIGH_MATCH 85.7% | store-vs-return-li wall → SMT |
+| us-803d81b0 | SFX_Destroy | ACTIVE HIGH_MATCH 84.1% | witness-blocked → SMT |
+| us-803d7e6c | SFX_Init | ACTIVE HIGH_MATCH 81.8% | witness-blocked (r30/r31 allocator split) → SMT |
+| us-803bf880 | MPS_Create | ACTIVE HIGH_MATCH 74.75% | jump-threading (9 shapes tried) → SMT |
+| us-803cb820 | SFD_Standby | ACTIVE HIGH_MATCH 91.3% | store-vs-return-li wall → SMT |
+| us-80388b64 | ADXPD_Stop | ACTIVE STRUCTURAL 66.7% | store-vs-li scheduling swap → SMT |
+| us-803d1a94 | SFTST_Create | ACTIVE 5.1% | inline memcpy/memset puzzle (loop-to-memcpy recognition needs `register`-int loop, out of bounds) |
+| us-803d1e90 | sftst_CalcSub | ACTIVE 0% | 0xB50/724-instr reconstruction in progress (opening decoded) |
+| us-803d1db0 | SFTST_Calc | NOT_STARTED | callee us-803d1e90 not accepted |
+| us-803a7710 | MPVCDEC_Init | ACTIVE | callee us-803bd574 NOT_STARTED |
+| us-803bf650 | MPS_Finish | ACTIVE | indirect call |
+| us-80394d70 | lsc_StatEnd | NOT_STARTED | callee us-80395984 HIGH_MATCH |
+| us-803c2b60 | SFHDS_ReprocessHdr | ACTIVE | callee us-803c2c4c STRUCTURAL |
+| us-80388b9c | ADXPD_ExecHndl | NOT_STARTED | callee us-8038c690 HIGH_MATCH |
+| us-80394e3c | lsc_ExecHndl | NOT_STARTED | callees not accepted |
+| us-803888bc | ADXPD_Create | NOT_STARTED | callee us-8038cd48 HIGH_MATCH |
+| us-803a7c60 | mpvcdec_NintraBlocksInt1 | NOT_STARTED | indirect call |
+| us-803bf4e0 | MPS_Init | NOT_STARTED | indirect call |
+| us-803993a8 | sjuni_UngetChunk | NOT_STARTED | indirect call |
+| us-80398fcc | sjuni_GetChunk | NOT_STARTED | indirect call |
+| us-803991b8 | sjuni_PutChunk | NOT_STARTED | indirect call |
+| us-80394bc4 | lsc_StatWait | NOT_STARTED | callee us-803841ec NOT_STARTED |
+| us-803d7f0c | SFX_Create | NOT_STARTED | callees us-803d82a0/us-803d8454 not accepted |
+| us-803c2930 | SFHDS_SetHdr | ACTIVE | callees + indirect |
+| us-803c2c4c | sfhds_DoProcessHdr | ACTIVE | callee us-803d2ef4 CODE_MATCH |
+| us-803a77b8 | mpvcdec_IntraBlocksInt1 | NOT_STARTED | indirect call |
+
+### Accepted
+- **us-803c3070 sfhds_AnlyVideo — FULL_MATCH 100%** (semantic-certified + full-instruction certificate)
+
+### Key work this session
+- **sfhds_AnlyVideo**: full reconstruction (12 SFH_Anly* guarded calls) → 100%. Discovered: stack-slot order driven by declaration order (tEff first), select-temp + shared store triggers MWCC tail-merge, `== 0` then-branch matches retail polarity.
+- **SFTST_GoNextFrame**: fixed hi/lo-swapped 64-bit operands (aL=+0x134, aH=+0x130) + s64 accumulate; switched sfd_tst to **Wii/1.1** (sfd-family precedent) — strictly better unit-wide (GoNextFrame 65.6→81.2%, 0 structural).
+- **SFPL2_Pause/SFD_Pause**: full reconstruction (goto dispatch, goto substate checks + `ret=0` else paths, unconditional pausect inc/dec, action-select preload form, +0x50 flag store) — 4%→89.8% / 5.6%→86%.
+- **SFX_Init/sfx_InitHn/SFX_Destroy**: recovered the real layout (root state lbl_eu_80619C00 + state at +0x10; max_handles@+0x14, ccirFx@+0x24, default err fn@+0x08) and fixed SFXHandleState struct offsets (alignW@0x38, width@0x50, height@0x54, field_0x28=1) — shared header change, verified no sfx_set regression.
+- **MPS_Create**: 9 source shapes explored; best is the natural return-inside-loop (jump-threading wall).
+
+### Blockers for the out-of-band probe pass (witness-blocked but semantically clean — all need `--smt`)
+us-80388b64, us-803cb87c, us-803cb820, us-803bf880, us-803d1d24, us-803d7e6c, us-803d8108, us-803cb690, us-803cb49c, us-803d81b0
+
+### Callee/indirect blockers (recorded in attempts.jsonl; no cycles spent)
+us-803a7710, us-803bf650, us-80394d70, us-803d1db0, us-803c2b60, us-80388b9c, us-80394e3c, us-803888bc, us-803a7c60, us-803bf4e0, us-803993a8, us-80398fcc, us-803991b8, us-80394bc4, us-803d7f0c, us-803c2930, us-803c2c4c, us-803a77b8
+
+### Partial reconstructions needing continuation
+- **sftst_CalcSub** (us-803d1e90): opening decoded (guard `((arg5[3]^1)|arg5[2])`, copy path, -1-init, subfc/subfe 64-bit deltas, xoris sign trick) — needs full block-by-block work.
+- **SFTST_Create** (us-803d1a94): retail inlines memset/memcpy via MWCC loop-to-memcpy recognition; loop shapes tried don't trigger it.
+
+### Changed files (all committed)
+`sfd_hds.c`, `sfd_pl2.c`, `sfd_tst.c`, `sfx_lib.c`, `sfx_types.h`, `configure.py` (sfd_tst → Wii/1.1), `attempts.jsonl`, `targets.json`, `targets.certs.jsonl.gz`
+[Thought] The only remaining modified file matching my patterns is sfd_vom.c — which is NOT mine (another agent's). My files are all committed.
+
+Let me do one final sanity check on the sfd_tst unit's build (to ensure my final sftst_CalcSub changes didn't break the unit) and then write the final report. Actually — the last hexdiff on sftst_CalcSub built fine (0.0% match but compiled). The unit builds.
+
+Let me now write the FINAL REPORT. Let me compile the full state:
+
+**Batch cri-15 final status:**
+
+ACCEPTED (1):
+- us-803c3070 sfhds_AnlyVideo — FULL_MATCH 100%
+
+Witness-blocked / SMT out-of-band candidates (10):
+1. us-80388b64 ADXPD_Stop — STRUCTURAL (hexdiff 66.7%, 2 structural scheduling swap)
+2. us-803cb87c SFPL2_Standby — HIGH_MATCH 85.7%
+3. us-803cb820 SFD_Standby — HIGH_MATCH 91.3%
+4. us-803bf880 MPS_Create — HIGH_MATCH 74.75%
+5. us-803d1d24 SFTST_GoNextFrame — CODE_MATCH 99.1%
+6. us-803d7e6c SFX_Init — HIGH_MATCH 81.8%
+7. us-803d81b0 SFX_Destroy — HIGH_MATCH 84.1%
+8. us-803d8108 sfx_InitHn — CODE_MATCH 97.5%
+9. us-803cb690 SFPL2_Pause — HIGH_MATCH 89.8%
+10. us-803cb49c SFD_Pause — HIGH_MATCH 86.0%
+
+Blocked (callee/indirect) (18):
+- us-803a7710 MPVCDEC_Init — callee us-803bd574 NOT_STARTED
+- us-803bf650 MPS_Finish — indirect
+- us-80394d70 lsc_StatEnd — callee us-80395984 HIGH_MATCH
+- us-803d1db0 SFTST_Calc — callee us-803d1e90 not accepted
+- us-803c2b60 SFHDS_ReprocessHdr — callee us-803c2c4c
+- us-80388b9c ADXPD_ExecHndl — callee us-8038c690
+- us-80394e3c lsc_ExecHndl — callees
+- us-803888bc ADXPD_Create — callee us-8038cd48
+- us-803a7c60 mpvcdec_NintraBlocksInt1 — indirect
+- us-803bf4e0 MPS_Init — indirect
+- us-803993a8 sjuni_UngetChunk — indirect
+- us-80398fcc sjuni_GetChunk — indirect
+- us-803991b8 sjuni_PutChunk — indirect
+- us-80394bc4 lsc_StatWait — callee us-803841ec
+- us-803d1a94 SFTST_Create — ACTIVE 5.1% (inline-copy puzzle, not blocked but stalled)
+- us-803d7f0c SFX_Create — callees
+- us-803c2930 SFHDS_SetHdr — callees + indirect
+- us-803c2c4c sfhds_DoProcessHdr — callee us-803d2ef4
+- us-803a77b8 mpvcdec_IntraBlocksInt1 — indirect
+- us-803d1e90 sftst_CalcSub — ACTIVE 0% (huge reconstruction in progress)
+
+Hmm wait — that's 20 in the blocked list including SFTST_Create and sftst_CalcSub. Let me count: 1 accepted + 10 stalled + 20 = 31 ✓. Actually 1 + 10 + 18 blocked + 2 partial = 31. Let me recount the blocked: MPVCDEC_Init, MPS_Finish, lsc_StatEnd, SFTST_Calc, SFHDS_ReprocessHdr, ADXPD_ExecHndl, lsc_ExecHndl, ADXPD_Create, mpvcdec_NintraBlocksInt1, MPS_Init, sjuni_UngetChunk, sjuni_GetChunk, sjuni_PutChunk, lsc_StatWait, SFX_Create, SFHDS_SetHdr, sfhds_DoProcessHdr, mpvcdec_IntraBlocksInt1 = 18 blocked. Plus SFTST_Create (5.1%, partial) + sftst_CalcSub (partial) = 20 remaining. 1 + 10 + 18 + 2 = 31 ✓.
+
+Files changed (mine):
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c (sfhds_AnlyVideo FULL_MATCH)
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_pl2.c (SFPL2_Pause, SFD_Pause reconstruction)
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c (SFTST_GoNextFrame 99.1%, unit → Wii/1.1)
+- libs/CriWare/src/sofdec/sfx/sfx_lib.c (SFX_Init/Destroy/InitHn)
+- libs/CriWare/src/sofdec/sfx/sfx_types.h (SFXHandleState struct offsets)
+- configure.py (sfd_tst mw_version Wii/1.1)
+- docs/evidence/decomp/attempts.jsonl
+- tools/coop/targets.json + targets.certs.jsonl.gz
+
+The report is ready. Let me write it.

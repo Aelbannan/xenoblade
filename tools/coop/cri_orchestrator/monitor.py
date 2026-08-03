@@ -76,7 +76,7 @@ def paseo_inspect(agent_id):
 
 
 def paseo_archive(agent_id):
-    r = sh(["archive", agent_id])
+    r = sh(["archive", agent_id, "--force"])
     return r.returncode == 0
 
 
@@ -165,11 +165,16 @@ FINAL REPORT (end of your session, plain text):
 
 
 def agent_finished_status(inspect):
-    """Return 'done', 'error', or None (still running)."""
+    """Classify a paseo inspect payload by status string.
+
+    paseo's status flaps (error->running) on transient provider flakes; the
+    authoritative liveness signal is UpdatedAt advancing across sweeps, which
+    callers gate on. This only classifies the status string.
+    """
     if inspect is None:
         return "error"
     st = (inspect.get("Status") or "").lower()
-    if st == "running":
+    if st in ("running", "pending"):
         return None
     if st in ("idle", "completed", "finished"):
         return "done"
@@ -184,6 +189,19 @@ def main():
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--once", action="store_true")
     args = ap.parse_args()
+
+    if not args.report:
+        # single-instance guard: refuse to run if another monitor is alive
+        pidfile = os.path.join(HERE, "monitor.pid")
+        if os.path.exists(pidfile):
+            try:
+                old = int(open(pidfile).read().strip())
+                os.kill(old, 0)
+                print(f"another monitor is running (pid {old}); exiting")
+                return
+            except (ProcessLookupError, ValueError):
+                pass
+        open(pidfile, "w").write(str(os.getpid()))
 
     os.makedirs(REPORTS, exist_ok=True)
     plan = json.load(open(PLAN))
@@ -207,64 +225,101 @@ def main():
 
         # sweep tracked agents
         for bid, rec in list(st["batches"].items()):
-            if rec["status"] in ("done", "error", "relaunch") and not rec.get("agent_id"):
+            if rec.get("status") in ("done", "error", "relaunch") and not rec.get("agent_id"):
                 continue
             aid = rec.get("agent_id")
             if not aid:
                 continue
             info = by_aid.get(aid)
-            finished = None
             insp = paseo_inspect(aid) if info is not None else None
             if info is None:
-                # disappeared: archived (we archived it?) or crashed
-                finished = "done" if rec.get("status") == "archived-ours" else "error"
-            else:
-                finished = agent_finished_status(insp)
-                if finished is None:
-                    # hang detection: no agent activity within max-idle
-                    upd = None
-                    if insp:
-                        upd = insp.get("UpdatedAt") or insp.get("LastActivityAt")
-                    ts = None
-                    try:
-                        if upd:
-                            ts = datetime.fromisoformat(str(upd).replace("Z", "+00:00"))
-                    except Exception:
-                        ts = None
-                    if ts:
-                        age_min = (datetime.now(timezone.utc) - ts).total_seconds() / 60
-                        if age_min > args.max_idle_min:
-                            log(f"HANG: {bid} agent {aid} no activity {age_min:.0f}m — archiving and relaunching")
-                            paseo_archive(aid)
-                            rec["status"] = "relaunch"
-                            rec["agent_id"] = None
-                            save_state(st)
-            if finished:
-                log(f"FINISHED: {bid} agent {aid} -> {finished}")
-                rec["status"] = "done" if finished == "done" else "error"
+                # disappeared from ls: we archived it (status relaunch/done) or it crashed
+                if rec.get("status") != "relaunch":
+                    log(f"CRASHED: {bid} agent {aid} no longer listed — relaunching")
+                    rec["status"] = "relaunch"
+                    rec["agent_id"] = None
+                    save_state(st)
+                continue
+
+            # activity age since last agent activity (authoritative liveness)
+            upd = None
+            if insp:
+                upd = insp.get("UpdatedAt") or insp.get("LastActivityAt")
+            ts = None
+            try:
+                if upd:
+                    ts = datetime.fromisoformat(str(upd).replace("Z", "+00:00"))
+            except Exception:
+                ts = None
+            age_min = (datetime.now(timezone.utc) - ts).total_seconds() / 60 if ts else None
+
+            if age_min is None:
+                continue  # can't tell; leave alone
+
+            if age_min < 5:
+                # fresh activity: alive, whatever the status string says (provider flake recovery)
+                rec["status"] = "running"
+                rec["error_since"] = None
+                continue
+
+            # stale activity (>= 5 min): status now matters
+            finished = agent_finished_status(insp)
+            if finished is None:
+                # status running/pending but stale -> hang
+                if age_min > args.max_idle_min:
+                    log(f"HANG: {bid} agent {aid} no activity {age_min:.0f}m — archiving and relaunching")
+                    paseo_archive(aid)
+                    rec["status"] = "relaunch"
+                    rec["agent_id"] = None
+                    save_state(st)
+                continue
+            if finished == "done":
+                log(f"FINISHED: {bid} agent {aid} -> done")
+                rec["status"] = "done"
                 rec["finished_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
                 # save log tail as report
                 r = sh(["logs", aid])
                 with open(os.path.join(REPORTS, f"{bid}.txt"), "w") as f:
                     f.write(r.stdout[-20000:] if r.stdout else "(no log)")
-                if finished == "error":
-                    # count relaunches
-                    rec["launches"] = rec.get("launches", 1)
-                    if rec["launches"] < MAX_RELAUNCH:
-                        rec["status"] = "relaunch"
-                        rec["agent_id"] = None
-                    else:
-                        st["done"].append(bid)
-                        log(f"{bid}: exceeded relaunch budget, marking done")
-                else:
+                if bid not in st["done"]:
                     st["done"].append(bid)
+                save_state(st)
+            else:
+                # error status + stale activity: grace period for provider flake recovery
+                first = rec.get("error_since")
+                if not first:
+                    rec["error_since"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                    save_state(st)
+                    continue
+                grace_min = (datetime.now(timezone.utc) - datetime.fromisoformat(first)).total_seconds() / 60
+                if grace_min < 12:
+                    continue  # still in grace, it may recover
+                log(f"DEAD: {bid} agent {aid} error for {grace_min:.0f}m — archiving and relaunching")
+                paseo_archive(aid)
+                rec["launches"] = rec.get("launches", 1)
+                if rec["launches"] < MAX_RELAUNCH:
+                    rec["status"] = "relaunch"
+                    rec["agent_id"] = None
+                else:
+                    log(f"{bid}: exceeded relaunch budget ({MAX_RELAUNCH}), marking done")
+                    if bid not in st["done"]:
+                        st["done"].append(bid)
+                    rec["status"] = "done"
+                rec["error_since"] = None
                 save_state(st)
 
         # relaunch slots marked relaunch
         for bid, rec in st["batches"].items():
-            if rec["status"] == "relaunch" and not rec.get("agent_id"):
+            if rec.get("status") == "relaunch" and not rec.get("agent_id"):
                 b = by_id[bid]
                 rec["launches"] = rec.get("launches", 1) + 1
+                if rec["launches"] > MAX_RELAUNCH:
+                    log(f"{bid}: launch budget exceeded ({MAX_RELAUNCH}), marking done")
+                    if bid not in st["done"]:
+                        st["done"].append(bid)
+                    rec["status"] = "done"
+                    save_state(st)
+                    continue
                 aid = launch_batch(b, f"CRI-MATCH-{bid}")
                 if aid:
                     rec["agent_id"] = aid

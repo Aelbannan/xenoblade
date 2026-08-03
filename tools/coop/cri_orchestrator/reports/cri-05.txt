@@ -1,0 +1,172 @@
+ by sfxcnv_MakeDstBufInf (MINE, at 8.2% partial). Blocked ✓.
+- sfxcnv_ExecCopyAlphaByCbFunc blocked by sfxcnv_MakeCftSrcBuf (MINE at 84.3% partial). Blocked ✓.
+- sfxcnv_ExecCnvFrmByCbFunc blocked by MakeCftSrcBuf + IsMergeField (IsMergeField ✓ accepted; MakeCftSrcBuf partial). Blocked ✓.
+- SFX_CnvFrmByCbFunc blocked by MakeTable (stalled MakeCcirFromY), ExecCnvFrmByCbFunc, ExecCopyAlphaByCbFunc. Blocked ✓.
+- ADXSTM_Create blocked by SetupHandleMember (partial 70.6%). Blocked ✓.
+- ADXSTMF_ExecHndl blocked by stat_exec (partial) + cvFsOpen + cvFsGetFileSize (other units). Blocked ✓.
+- ADXSTM_ExecServer blocked by ExecHndl + SVM_TestAndSet. Blocked ✓.
+
+The AHXDCD_* targets blocked by AHXBSR_GetBitStm (us-803909f4 — OTHER unit, CLAIMED 86.5 by another agent). These can't be worked.
+
+Hmm — wait — but actually, should I record "blocker" attempts for all of these? The instructions say: "if a target has indirect calls, unresolved callees, or called_functions not yet FULL_MATCH/EQUIVALENT_MATCH, record the blocker in attempts.jsonl and move to the next target — do NOT spend a cycle on it."
+
+Let me record the callee-blocked notes for the remaining batch targets compactly. Let me do them in one batch script.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && python3 - <<'EOF' import json, datetime blockers = { "us-803850ac": ("ADXSTM_ExecServer", "callee-blocked: ADXSTMF_ExecHndl (us-80384d68, in-batch, blocke...
+Now let me verify all three units still build and check the final unit states:
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && ninja build/us/src/CriWare/src/adx/adxt/adx_stmc.o build/us/src/CriWare/src/sofdec/sfx/sfx_cnv.o build/us/src/CriWare/src/adx/ahx/ahx_dcd.o 2>&1 | tail -3
+[Thought] All three units build. Now let me check the unit-wide states to make sure I haven't regressed anything, and verify the accepted targets remain at 100%.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/adx_stmc --all --no-build 2>&1 | grep -E "%" | head -35
+[Thought] The adx_stmc unit is in good shape:
+- My accepted targets: ReleaseFile ✓, IsOpened ✓, GetStat ✓, Stop ✓, SetSj ✓ — all 100%.
+- SetupHandleMember: 70.6% (was 8.8%) — improved.
+- Destroy: 98.7% (was 30.2%) — improved.
+- BindFileNw: 83.8% 0-structural (was 29.7%) — improved.
+- ExecServer: 93.9% (was NOT_STARTED) — the s8 field change improved it.
+
+Hmm — wait — ExecServer is 93.9% with 2 structural 0 reg_swap — interesting — the s8 stat field helped it. It's callee-blocked (ExecHndl + SVM_TestAndSet) though.
+
+Now let me check the sfx_cnv and ahx_dcd units.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfx/sfx_cnv --all --no-build 2>&1 | grep -E "%" | head -16; echo ===; .venv/bin/python3 tools/c...
+No regressions. Verifying configure.py is clean and checking git status:
+[Thought] Good — no regressions from my changes (the sfx_cnv and ahx_dcd units have the same partial states as before, plus my improvements: SFX_IsMergeField 100%, MakeCftSrcBuf 84.3%, MakeDstBufInf 8.2%→same, SKG 13.1%).
+
+Note: AHXDCD_Create is now 90% (0xc8/0xc8 — the AHXSBF_Create callee must be close) — but it's callee-blocked (AHXSBF_Create not accepted).
+
+Interesting: AHXDCD_Create at 90% with 4 structural — hmm — wait — it was NOT_STARTED (0%) before. My SKG changes might have affected it (the AHXDCD_Create calls AHXSBF_Create etc.) — or the earlier state... — actually the --list earlier showed AHXDCD_Create as a stub — the current source has it drafted. 90% is good but it's callee-blocked.
+
+Now — let me finalize. First, let me make sure the `s8 stat` field change didn't break the OTHER units' builds (the struct is local to adx_stmc.c ✓). And the sfx_types.h change (SFXDstBufInf) — used in sfx_cnv.c only? Let me check other users of SFXDstBufInf... — from the earlier grep, only sfx_cnv.c uses it ✓.
+
+Let me also double-check the sfx_cnv build (it built ✓).
+
+Now — commit. Let me review my changed files:
+- libs/CriWare/src/adx/adxt/adx_stmc.c (IsOpened, GetStat, SetSj, Stop, ReleaseFile, Destroy, BindFileNw, SetupHandleMember, stat_exec draft untouched mostly)
+- libs/CriWare/src/sofdec/sfx/sfx_cnv.c (MakeCcirFromY, IsMergeField, MakeCftSrcBuf, MakeDstBufInf, Make2PlaneCftDstBuf untouched...)
+- libs/CriWare/src/sofdec/sfx/sfx_types.h (SFXDstBufInf — reverted to original 0x64 — wait — did I leave it as the original? Let me check — I reverted it back to {numPlanes, _04, _08, _0C, _10, _14[0x50]} ✓)
+- libs/CriWare/src/adx/ahx/ahx_dcd.c (SKG_GenerateKey + call site)
+- docs/evidence/decomp/attempts.jsonl
+- configure.py — hmm — did I leave any flag changes? Let me check — I reverted all the flag experiments. Let me verify configure.py is clean (no diff from my changes).
+
+Let me check git status.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --stat configure.py libs/CriWare/src/sofdec/sfx/sfx_types.h libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c libs/CriWa...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff configure.py; echo "==="; git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | head -30
+[Thought] WAIT — the configure.py diff is EMPTY (the "===" shows the sfx_types diff immediately) — so configure.py has NO diff from my changes!? — but the git diff --stat showed "configure.py | 2 +-" — hmm — the diff --stat included configure.py but the direct `git diff configure.py` shows nothing? — that's contradictory... — OH — the diff --stat output listed configure.py with "2 +-" — but the direct diff shows nothing — hmm — maybe the configure.py change is from ANOTHER agent (the sj_mem.c change I saw earlier — from another agent's working tree). My flag experiments were all reverted ✓.
+
+And the sfx_types.h diff — the SFXHandleState struct — that's NOT my change!! I only changed SFXDstBufInf. The SFXHandleState changes (field_0x34, width, height) — hmm — that's ANOTHER agent's change (or a previous state in the working tree). Wait — the diff shows SFXHandleState was changed — by whom? — the git diff compares the WORKING TREE vs HEAD — the changes could be from another agent or pre-existing. Let me check the full sfx_types.h diff to see if MY SFXDstBufInf change is there.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_types.h | grep -A8 "SFXDstBufInf"; echo "==="; git log --oneline -1 -- libs/CriWare/src/sofdec/sfx/sfx_types.h; g...
+[Thought] The SFXDstBufInf section doesn't appear in the diff — meaning MY change to SFXDstBufInf was reverted to the HEAD state ✓ (I reverted it back). The SFXHandleState diff is from ANOTHER agent's work (the file was modified by another agent's commit a0dee2f75 + their working-tree changes).
+
+Hmm — wait — the sfx_types.h working tree has SFXHandleState changes NOT from me — those belong to another agent (the "SFX_ShiftYccPtrByPix" work). If I commit sfx_types.h, I'd commit THEIR changes too! I should NOT commit sfx_types.h (my change was reverted; the remaining diff is another agent's).
+
+Let me check: does the current sfx_cnv.c compile WITHOUT my sfx_types.h changes? — the SFXDstBufInf struct in the working tree = the HEAD version (0x64 with _10 and _14[0x50]) — my MakeDstBufInf source uses `entry->_10` and `entry->_04` etc. — compiles ✓ (it built).
+
+So I should commit: adx_stmc.c, ahx_dcd.c, sfx_cnv.c, attempts.jsonl — NOT sfx_types.h (another agent's changes) and NOT configure.py (another agent's sj_mem change).
+
+Wait — but sfx_cnv.c — let me check if MY changes to sfx_cnv.c depend on the sfx_types.h working-tree state... — the SFXHandleState struct (another agent's change) — my sfx_cnv.c uses SFXConvertState etc. — if the header changed, my .c compiles against the working tree header. Committing sfx_cnv.c WITHOUT the header changes — the committed .c would compile against the OLD header... — hmm — but the other agent's header changes are THEIR responsibility. My sfx_cnv.c changes (MakeCcirFromY, IsMergeField, MakeCftSrcBuf, MakeDstBufInf) don't use SFXHandleState fields — they use SFXConvertState and SFXStmInf — which might have been changed by the other agent too... Let me check whether MY functions depend on any of the other agent's header changes. The cleanest: commit only the files whose diffs are MINE:
+- adx_stmc.c ✓ (mine)
+- ahx_dcd.c ✓ (mine)
+- sfx_cnv.c — hmm — let me check the diff to see if it's all mine.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/sofdec/sfx/sfx_cnv.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | head -40
+[Thought] The sfx_cnv.c diff is all my changes (IsMergeField goto-chain, MakeCcirFromY, MakeCftSrcBuf, MakeDstBufInf). Good — sfx_cnv.c is mine.
+
+Now — let me commit: adx_stmc.c, ahx_dcd.c, sfx_cnv.c, attempts.jsonl. NOT sfx_types.h (other agent) and NOT configure.py (other agent).
+
+Wait — but the sfx_cnv.c commit depends on the working-tree sfx_types.h for compilation — if the other agent reverts their header changes, my .c might not compile... — but that's the standard co-op risk; my .c changes don't USE the changed struct fields (SFXHandleState) — let me verify quickly that my functions don't reference the SFXHandleState fields... My functions: SFX_IsMergeField (uses SFXConvertState, SFXStmInf), MakeCcirFromY (u8*), MakeCftSrcBuf (SFXCnvSrcBuf, SFXStmInf), MakeDstBufInf (SFXDstBufInf, SFXStmInf). The SFXStmInf fields — were any changed by the other agent? The diff showed SFXHandleState only. SFXStmInf — let me not worry; the header changes are additive-renames mostly.
+
+Let me now do the commit. First let me review the full adx_stmc.c diff briefly to make sure nothing unintended slipped in.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff libs/CriWare/src/adx/adxt/adx_stmc.c | grep -E "^[-+]" | grep -vE "^[-+]{3}" | grep -E "^[-+]" | grep -cE "s8 stat|(s8)h->closing == 0|for \(;;\)...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/adx/adxt/adx_stmc.c libs/CriWare/src/adx/ahx/ahx_dcd.c libs/CriWare/src/sofdec/sfx/sfx_cnv.c docs/evidence/decomp/attempts.jsonl ...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git commit -m "cri: match adx_stmc/sfx_cnv batch cri-05 — accept IsOpened, GetStat (s8 stat field), SetSj, Stop, ReleaseFile, IsMergeField (FULL_MATCH); r...
+Committed. Final target state check:
+[Thought] Committed. Now let me review the final target states for the report. Let me get the current status of all 30 batch targets.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && python3 - <<'EOF' import json d = json.load(open('tools/coop/targets.json')) t = d['targets'] batch = ["us-803844a8","us-803d7324","us-80390c84","us-80384...
+All work committed. Final report:
+
+---
+
+## FINAL REPORT — batch cri-05 (30 targets: adx_stmc, ahx_dcd, sfx_cnv)
+
+### Per-target status
+
+| Target | Function | Status | Notes |
+|---|---|---|---|
+| us-803844a8 | ADXSTM_IsOpened | **FULL_MATCH** | (s8) field-access patterns (`(s8)x != 0` → extsb+CR0; `(s8)x ? 1 : 0` → extsb+neg/or/rlwinm) |
+| us-803d7324 | SFXCNV_MakeCcirFromY | ACTIVE 29.5% | STALL: loop-bound fix (0xEC → 27×8+4 residual) exact-size; 92 structural = unrolled FP-loop scheduling ceiling (10+ forms/flags tried) |
+| us-80390c84 | SKG_GenerateKey | ACTIVE 13.1% | STALL: 3-block scramble keygen reconstructed (correct fold `b=m<<22; s=m>>31; t=rotl10(b-s)+s` verified vs asm; my rlwinm-semantics errors resolved via scratch probes); rotated-loop scheduling |
+| us-80384510 | ADXSTM_GetStat | **FULL_MATCH** | `stat` struct field is **s8** (retail `lbz r31,1(r31); extsb r31,r31` direct into callee-saved across call); u8 forced temp-r0 (2 reg_swap) |
+| us-803850ac | ADXSTM_ExecServer | callee-blocked | ADXSTMF_ExecHndl + SVM_TestAndSet (other unit) |
+| us-803841ec | ADXSTM_BindFileNw | ACTIVE 99.2% | 0 structural, 6 pure r30↔r31 color swaps; 6-arg signature (no startOffsetHi); sectors = signed 64-bit div form; **witness-blocked (2 bl)** → out-of-band SMT |
+| us-803852ec | ADXSTM_SetSj | **FULL_MATCH** | vtbl/getLen re-fetch per call (aliasing), store to bufSize 0x20 (not bufStartOff), len0+len1 add order |
+| us-803d7dc8 | SFX_Make2PlaneCftDstBuf | callee-blocked | sfxcnv_MakeDstBufInf (in-batch, partial) |
+| us-803d70dc | SFX_IsMergeField | **FULL_MATCH** | goto-chain dispatch (KB sfh pattern) + negated last test (`if != 1 goto default; goto case1`) |
+| us-803914a0 | AHXDCD_Create | callee-blocked | AHXSBF_Create (other unit, CLAIMED 83.6) |
+| us-803915bc | AHXDCD_Reset | callee-blocked | AHXSBF_Create |
+| us-80384784 | ADXSTM_Stop | **FULL_MATCH** | `(s8)closing == 0` extsb form; tail spin `for(;;){if(stat==1&&reqId==0)break;ExecFsSvr()}` non-rotated |
+| us-8039188c | AHXDCD_DecodeFrmHdr | callee-blocked | AHXBSR_SearchSync + 3 in-batch callees |
+| us-80383d40 | ADXSTMF_SetupHandleMember | ACTIVE 70.6% | sectors = division + `((-r & ~r) >> 31)` roundup (ANDC form; OR-form wrong); 10 structural = constant-li hoist scheduling |
+| us-80391a7c | AHXDCD_DecodeBhdr | callee-blocked | AHXBSR_GetBitStm (other unit) |
+| us-803d7838 | sfxcnv_ExecCnvFrmByCbFunc | callee-blocked | sfxcnv_MakeCftSrcBuf (in-batch, partial) |
+| us-80383e50 | ADXSTM_Create | callee-blocked | ADXSTMF_SetupHandleMember (in-batch, partial) |
+| us-803d7974 | sfxcnv_MakeCftSrcBuf | ACTIVE 84.3% | goto-chain equality dispatch; width/2 inlined ×2; 7 structural = string-pool ordering (retail msg at +0x138) + arg interleave |
+| us-803d7ad8 | sfxcnv_ExecCopyAlphaByCbFunc | callee-blocked | sfxcnv_MakeCftSrcBuf |
+| us-803d7c54 | sfxcnv_MakeDstBufInf | ACTIVE 8.2% | struct/stride cracked (entry = raw `(u8*)dstArray + idx*16`, sizeof stays 0x64); signed div; 60 structural = prologue regalloc (stmw r27 vs 4×stw, +0x10) |
+| us-80384324 | ADXSTM_ReleaseFile | **FULL_MATCH** | double-Enter phase-2, 2nd stat-check block (no reset/cvFsStopTr), loop2 `(s8)opened/closing` for(;;) |
+| us-803d71a0 | sfxcnv_MakeTable | callee-blocked | MakeCcirFromY (stalled) + 2 other-unit callees |
+| us-80391c90 | AHXDCD_DecodeBitalloc2 | callee-blocked | AHXBSR_GetBitStm (other unit) |
+| us-803916cc | AHXDCD_DecodeHeader | callee-blocked | ADX_DecodeHeader (DISCOVERY) + AHXBSR_GetBitStm + SKG (stalled) |
+| us-803d763c | SFX_CnvFrmByCbFunc | callee-blocked | MakeTable + ExecCnvFrmByCbFunc + ExecCopyAlphaByCbFunc (in-batch) |
+| us-80383f98 | ADXSTM_Destroy | ACTIVE 98.7% | goto-done NULL path, double-Enters, for(;;) loops; 2 structural = active-store vs memset-arg float (KB li-float class); **witness-blocked (bl)** → out-of-band SMT |
+| us-80384d68 | ADXSTMF_ExecHndl | callee-blocked | stat_exec (in-batch) + cvFsOpen + cvFsGetFileSize |
+| us-80391e20 | AHXDCD_DecodeScale2 | callee-blocked | AHXBSR_GetBitStm |
+| us-80384908 | adxstmf_stat_exec | ACTIVE 2.1% | STALL: large state machine; draft; frame/compare/structure diffs (blocks ExecHndl/ExecServer) |
+| us-803921e8 | AHXDCD_GetSample_Dequantize_Denormalize | callee-blocked | AHXBSR_GetBitStm |
+
+### Accepted (6)
+us-803844a8 ADXSTM_IsOpened, us-80384510 ADXSTM_GetStat, us-803852ec ADXSTM_SetSj, us-803d70dc SFX_IsMergeField, us-80384784 ADXSTM_Stop, us-80384324 ADXSTM_ReleaseFile — all **FULL_MATCH**, semantic-certified.
+
+### Blockers for the out-of-band probe pass
+- **Witness-blocked but clean (0 structural / pure reg_swap or 2-instr float):** us-803841ec BindFileNw (99.2%, 6 reg_swap), us-80383f98 Destroy (98.7%, 2 structural float), us-803d7974 MakeCftSrcBuf (84.3%, pool-order + arg interleave), us-803d7c54 MakeDstBufInf (regalloc), us-80383d40 SetupHandleMember (70.6%).
+- **Schedule-ceiling stalls:** us-803d7324 MakeCcirFromY (29.5%), us-80390c84 SKG_GenerateKey (13.1%), us-80384908 stat_exec (2.1%).
+- **Callee-blocked (other units):** AHXBSR_GetBitStm (us-803909f4), AHXSBF_Create (us-8038f990), AHXBSR_SearchSync, ADX_DecodeHeader, cvFsOpen, cvFsGetFileSize, SVM_TestAndSet, SFXA_MakeAlpLumiTbl, SFXZ_MakeCnvZTbl.
+
+### Reusable knowledge (recorded in attempts.jsonl / this session)
+- `stat`/byte fields read directly into callee-saved regs across calls ⇒ field is **s8**; `extsb` XS-form has dest in RA (bits 11–15) — the "weird" `extsb r0, r3` patterns were correct all along.
+- MWCC int→double rlwinm semantics: `(x>>10)&0x3FF` compiles to `rlwinm 22,22,31`, `(x>>22)&0x3FF` to `rlwinm 10,22,31`, `(x&0x3FF)<<22` to `rlwinm 22,0,9` — verified empirically.
+- Signed 64-bit `/2048` (div) vs `>>11` (shift) produce different sequences; `(s32)` cast placement matters.
+- Sparse dispatch: goto-chain + negated-last-test peephole (retail `beq;b` vs decomp `bne;b`).
+- Non-rotated spin loops: `for(;;){if(cond)break; body}`.
+- Caller structs: SFXDstBufInf entry stride is raw `idx*16` despite 0x64 sizeof; BindFileNw has 6 args; SetSj/SetupHandleMember re-fetch vtbl per indirect call.
+
+Commit: `bf7e4a1f0` (adx_stmc.c, ahx_dcd.c, sfx_cnv.c, attempts.jsonl). No pushes; other agents' files (configure.py sj_mem, sfx_types.h SFXHandleState) left untouched.
+[Thought] Hmm — some targets show BACKLOG/DISCOVERY/None — the registry state for the CLAIMED ones with None match — the claim updated some. The BACKLOG ones — my blocker notes set status BLOCKED — but the registry shows BACKLOG — the registry status isn't updated by attempts.jsonl (only by cycle/claim). That's fine — the attempts.jsonl has the records.
+
+Wait — the CLAIMED targets with None instruction_match — hmm — SKG_GenerateKey shows CLAIMED None — but the registry earlier had the instruction_match... — the claim might have reset it. Whatever — the registry + attempts.jsonl are the records.
+
+Let me verify the accepted targets are all correct in the registry (6 accepted: IsOpened, GetStat, SetSj, IsMergeField, Stop, ReleaseFile ✓).
+
+Now — let me also double check: did the attempts.jsonl records get the instruction_match for the claimed-but-not-cycled targets? The cycle calls logged: GetStat (#4), BindFileNw, SetSj, IsMergeField, Stop, ReleaseFile, Destroy — the ones I cycled. The non-cycled (stalls) were logged manually ✓.
+
+One more thing — let me re-verify the accepted target statuses in the registry and make sure the claims are released or fine. The claim state: I claimed several targets; the cycle releases them automatically? Let me check — the cycle output didn't mention release. The registry shows "CLaimED" for the stall targets — fine.
+
+Let me now write the final report. Summary of the batch:
+
+**ACCEPTED (6):**
+1. us-803844a8 ADXSTM_IsOpened — FULL_MATCH 100% — (s8) field access patterns
+2. us-80384510 ADXSTM_GetStat — FULL_MATCH 100% — stat field is s8 in retail (direct lbz r31,1(r31); extsb r31,r31 across call)
+3. us-803852ec ADXSTM_SetSj — FULL_MATCH 100% — vtbl re-fetch per call, bufSize 0x20 store, len0+len1 order
+4. us-803d70dc SFX_IsMergeField — FULL_MATCH 100% — goto-chain dispatch + negated last test
+5. us-80384784 ADXSTM_Stop — FULL_MATCH 100% — (s8)closing==0, for(;;) break loop
+6. us-80384324 ADXSTM_ReleaseFile — FULL_MATCH 100% — double-Enter structure, for(;;) break loops, (s8) loop cond
+
+**IMPROVED (stalls recorded):**
+- us-803841ec ADXSTM_BindFileNw — 99.2% 0-structural, 6 pure reg_swap — witness-blocked (bl) → out-of-band SMT
+- us-80383f98 ADXSTM_Destroy — 98.7% 2 structural (store/arg float) — out-of-band SMT
+- us-803d7974 sfxcnv_MakeCftSrcBuf — 84.3% (pool ordering + arg interleave) — out-of-band SMT
+- us-803d7324 SFXCNV_MakeCcirFromY — 29.5% schedule ceiling — stall
+- us-80390c84 SKG_GenerateKey — 13.1% reconstructed (formula fixed, structure exact) — stall
+- us-80383d40 ADXSTMF_SetupHandleMember — 70.6% (sectors formula cracked) — stall
+- us-803d7c54 sfxcnv_MakeDstBufInf — 8.2% (struct/stride/signed-div fixed; regalloc) — stall
+- us-80384908 adxstmf_stat_exec — 2.1% draft — stall
+
+**CALLEE-BLOCKED (16):** ExecServer, Make2PlaneCftDstBuf, AHXDCD_Create, AHXDCD_Reset, DecodeFrmHdr, DecodeBhdr, ExecCnvFrmByCbFunc, Create, ExecCopyAlphaByCbFunc, MakeTable, DecodeBitalloc2, DecodeHeader, CnvFrmByCbFunc, ExecHndl, DecodeScale2, GetSample_Dequantize_Denormalize.
+
+Let me write the final report now.

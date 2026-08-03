@@ -1,0 +1,186 @@
+THING of mine to commit for sfd_tim.c — the IsStagnant fix is ALREADY committed (by ca16562e8 at 00:26 — which must have been the "second wave checkpoint" commit that included a previous agent's version — and MY edit re-applied the same change, landing on identical text).
+
+Wait — that means a PREVIOUS agent already did the num/den fix and it got committed at 00:26 during my session (before my edit). My edit then re-did it (no-op). And the cycle improvement I saw (25 structural → 0)... the cycle was on the ALREADY-FIXED file. Hmm — but the hexdiff at the start showed SFTIM_IsStagnant at 32.8% (25 structural) — and after my edit 96.5% (0 structural). If the file already had the fix at session start... the hexdiff would have shown 0 structural initially.
+
+I'm going around in circles. Let me check the ACTUAL timeline: the hexdiff of sfd_tim at session start (my --all --no-build) showed SFTIM_IsStagnant 32.8% | 25 structural. Then I edited (num/den) → 96.5% | 0 structural. If HEAD has the num/den form and the working tree == HEAD now... then the hexdiff NOW would show 0 structural ✓ (it does — the recent cycle showed 96.5%). And git diff = 0 because... 
+
+OH!!! I finally get it. The HEAD commit ca16562e8 (00:26) — was committed DURING my session (00:26) — it's a checkpoint commit made by the orchestrator/user that INCLUDED the working tree state — but the stat shows... let me check ca16562e8's stat!
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat ca16562e8 | head -25
+The orchestrator swept my early work at 00:26. My remaining uncommitted work is the sfx_zmv/mpv_umc reconstruction. Committing:
+[Thought] ca16562e8 (00:26) DID include sfd_tim.c (17 lines changed) — it was a sweep commit by the orchestrator/user that included other agents' (and possibly my early) work. The 17-line change to sfd_tim.c = the num/den fix... which means the num/den fix was made by ME at ~00:20 (my edit) and SWEPT UP at 00:26?! But my edit was at... let me look at the timeline again — my session started, I read files, claimed 37 targets (that took a while), then the first sfd_tim hexdiff, then the IsStagnant analysis and edit. The cycle attempt #4 for IsStagnant happened around... the timestamp on my early cycle (us-803d0b9c attempt #3) — the attempts.jsonl shows "2026-08-03T16:16:54" (UTC) = 00:16 +08:00! So my CalcCycleFromFps cycle was at 00:16 local. And ca16562e8 at 00:26 — AFTER my CalcCycleFromFps cycle and my IsStagnant edit!
+
+So the timeline: the orchestrator made a sweep commit at 00:26 that INCLUDED my IsStagnant fix (17 lines in sfd_tim.c) and the targets.json/attempts.jsonl changes from my early cycles! That's why the working tree now shows no diff — my changes were already committed by the sweep!
+
+Interesting — so the orchestrator is auto-committing my work periodically. That means: my CURRENT uncommitted changes are ONLY what I did after 00:26: the sfx_zmv reconstruction, mpv_umc reconstruction, and the later attempts.jsonl entries. And the configure.py sj_mem.c change — hmm — wait, ca16562e8 ALSO changed sj_mem.c (257 lines!) — so the configure.py sj_mem.c Wii/1.1 change... let me check: is configure.py's sj_mem.c change part of the pre-00:26 state? My /tmp/configure.py.bak2 (00:44) had it, and git HEAD's configure.py — let me check if HEAD has the sj_mem.c Wii/1.1.
+
+Actually — this explains everything. The sweep commit at 00:26 grabbed the working tree. So the CURRENT uncommitted changes are mine (post-00:26) + other agents' (post-00:26). Let me just commit MY files now.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add libs/CriWare/src/sofdec/sfx/sfx_zmv.c libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c docs/evidence/decomp/attempts.jsonl tools/coop/targets.json &&...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --cached --stat && git commit -m "cri: match CriWare batch cri-02 (sfx_zmv Make*/SetTag/Create, mpv_umc fn_*/OneReadMb/OneMakeMb/PpicSkipped reco...
+[Thought] Committed (attempts.jsonl only had 1 line staged — the batch-cycle logs were already swept or the stall notes... wait — I appended 24 stall notes. Let me check they're in the commit — the stat shows only 1 line for attempts.jsonl. Hmm — the 24 stall notes I appended — where are they? Let me check the file. Maybe the sweep commit at 01:11 (e74263879) already grabbed them (it was at 01:11, my stall notes were appended ~01:05). Let me verify.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -c "batch cri-02" docs/evidence/decomp/attempts.jsonl; git log --oneline -2; grep -c "stall_note" docs/evidence/decomp/attempts.jsonl
+[Thought] The 24 "batch cri-02" stall notes are in the working tree but NOT in my commit (the staged attempts.jsonl had only 1 line — the batch-cycle logs were in the pre-staged state). Wait — the commit says 1 line for attempts.jsonl but the file has 24 "batch cri-02" entries... Let me check: the commit stat showed "attempts.jsonl | 1 +" — only 1 line added. But I appended 24 stall notes AND the batch-cycle runs appended ~10 more. Let me check if those are committed or still working-tree.
+
+Hmm — actually, the batch-cycle runs (InitCbpSub1 etc.) logged attempts BEFORE the 00:26 sweep? No — those were at ~00:50+. Let me just check the current git state and commit the remaining attempts.jsonl entries.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && git add docs/evidence/decomp/attempts.jsonl tools/coop/targets.json && g...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short docs/evidence/decomp/attempts.jsonl && tail -1 docs/evidence/decomp/attempts.jsonl | head -c 200; echo; grep -c '"stall_note": true' do...
+[Thought] The attempts.jsonl is being concurrently appended by OTHER agents (the last line is sfmpv_SearchDelim — not mine). My 24 stall notes — let me verify they're in the committed version and check where the concurrent writes left things. The file is shared append-only; other agents keep appending. My stall notes ARE in the file (grep found "batch cri-02" = 24). The uncommitted diff is other agents' new entries — I should NOT commit those (they'll commit their own). Let me verify my stall notes are in the committed history.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show HEAD:docs/evidence/decomp/attempts.jsonl | grep -c "batch cri-02"; git log --oneline -1 -- docs/evidence/decomp/attempts.jsonl
+All committed. Let me gather the final status of all 37 batch targets:
+[Thought] My 24 stall notes are committed. The current working-tree diff on attempts.jsonl is other agents' concurrent entries (not mine — leave them).
+
+Now let me verify the final states of my batch targets for the report. Let me get the current status of all 37 targets.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) by_id = {t['id']: t for t in data['targets']} batch...
+[Thought] Final state gathered. Note: mpvumc_PpicSkipMb shows NOT_STARTED (my stub definition was committed? — hmm, the stub `void mpvumc_PpicSkipMb(s32* sizes, u8* sub1, u8* sub2);` is a FORWARD DECLARATION without a definition — the target still shows NOT_STARTED which is accurate).
+
+Wait — I need to double-check one thing: the committed mpv_umc.c has `mpvumc_PpicSkipMb` as a forward declaration only — so the .o doesn't emit it — consistent with NOT_STARTED. And MPVUMC_BpicSkipped/BiMakeMb still stubs. MPVUMC_PpicSkipped — wait, it shows NOT_STARTED?? I wrote a full body for it! Let me check — the status shows NOT_STARTED with no match. Hmm — did my body get committed? Let me check the file.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -n "void MPVUMC_PpicSkipped" libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/sfdcore/mpv/...
+[Thought] MPVUMC_PpicSkipped HAS a body (33.3%) — the targets.json "NOT_STARTED" is stale because my last cycle for it was before... wait, I never cycled us-803b0b10. The status in targets.json reflects the last cycle — which for us-803b0b10 was... it shows NOT_STARTED. The hexdiff shows the body compiles. The targets.json status updates only happen on cycle. Let me run cycle on us-803b0b10 to log it properly. Actually — the cycle would show the current state. Let me do that quickly, plus check that the earlier commits are complete.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-803b0b10 --hypothesis "skip-MB advance + PpicSkipMb loop (callee-blocked on PpicSkipMb stub)" --next-change "...
+[Thought] MPVUMC_PpicSkipped: 81.4% fuzzy, HIGH_MATCH — the objdiff fuzzy is much higher than the hexdiff % (33.3% hexdiff vs 81.4% objdiff). So its semantics are close.
+
+Now let me finalize. The batch is complete in terms of my work. Summary of what happened:
+
+**Accepted (FULL_MATCH/cycle-passing):** NONE — no target reached 100% static or witness certification in-session. All 37 remain non-accepted for the out-of-band SMT pass.
+
+Wait — that's the reality: with the witness never applying and no SMT in-session, no target could be cycled to acceptance. The out-of-band probe pass will handle them.
+
+Hmm — let me reconsider whether I missed any FULL_MATCH opportunity... The sfd_tim unit had SFTIM_Init etc. at FULL_MATCH already (not my targets). My batch targets: none hit 100%.
+
+Let me commit the last cycle's targets.json change and write the final report.
+
+Actually — one more check: the batch rules say "Cycle and commit targets once accepted" — since none were accepted, I have no acceptance commits. My commits are the reconstruction + stall notes. Let me commit the final targets.json update (the PpicSkipped cycle).
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add tools/coop/targets.json && git commit -m "cri: record MPVUMC_PpicSkipped cycle state (81.4%, callee-blocked)" 2>&1 | tail -1 && git log --oneline -4
+[Thought] All committed. Let me do a final verification that my units still build cleanly, and verify the final git state is clean of my pending changes.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "sfx_zmv|mpv_umc|sfd_tim|attempts" ; ninja -f build.ninja build/us/src/CriWare/src/sofdec/sfx/sfx_zmv.o build/us/src/CriWare/...
+All units build clean; my work is committed. Here's the final report.
+
+---
+
+## FINAL REPORT — batch cri-02 (37 targets, 21 leaf)
+
+**Session outcome:** No target could be cycle-accepted in-session (the register-renaming witness never certified — verified on `SFD_CalcCycleFromFps` at 99.5% with 0 structural, and `SFTIM_IsStagnant` at 99.8% with 0 structural). Per batch rules, all non-100% targets are recorded with stall notes (`next_change: "accept via --smt out-of-band"`) for the orchestrator's out-of-band probe pass. 3 units' sources were reconstructed/improved and committed.
+
+### Per target: id | function | final status | notes
+
+| id | function | status (objdiff fuzzy) | blocker |
+|---|---|---|---|
+| us-803d0b9c | SFD_CalcCycleFromFps | CODE_MATCH 99.5% | 0 structural; documented rodata-reloc tooling stall |
+| us-803cf764 | SFTIM_IsStagnant | CODE_MATCH 99.8% | 0 structural, 2 reg-swaps (**fixed 25→0 structural** via num/den div merge) |
+| us-803cfc80 | sftim_GetTimeExtClock | CODE_MATCH 97.5% | 2 structural (li-hoist) |
+| us-803cf524 | SFTIM_VbIn | CODE_MATCH 97.6% | 43 structural (call setup/loop scheduling) |
+| us-803cf094 | SFTIM_InitHn | CODE_MATCH 95.8% | 9 structural (straight-line store scheduling) |
+| us-803d84f4 | SFXZ_SetTagInf | CODE_MATCH 97.6% | 0 structural; callee-blocked (SetTagGrp→SJ_SearchTag) |
+| us-803d9178 | SFXZ_MakeCnvZTbl | CODE_MATCH 99.1% | 0 structural; callee-blocked (GetZfrmRange + Make* chain) |
+| us-803d8454 | SFXZ_Create | HIGH_MATCH 90.2% | 17 structural (li/scheduling) |
+| us-803afa18 | mpvvlc_SetDflPtr | HIGH_MATCH 89.2% | 7 structural, 45 reg-swap |
+| us-803d8508 | sfxzmv_SetTagGrp | HIGH_MATCH 88.0% | **callee-blocked: SJ_SearchTag (us-8039982c) NOT_STARTED, external** |
+| us-803d85d8 | SFXZ_GetZfrmRange | HIGH_MATCH 87.7% | **callee-blocked: SJ_SearchTag (us-8039982c) NOT_STARTED, external** |
+| us-803d9264 | sfxzmv_MakeZ16TblFromOrgZ32 | HIGH_MATCH 84.5% | reconstructed (union u32→double trick, B=65535) |
+| us-803d9444 | sfxzmv_MakeZ32TblFromOrgZ32 | HIGH_MATCH 82.5% | reconstructed (union trick + `__cvt_fp2unsigned`) |
+| us-803b0b10 | MPVUMC_PpicSkipped | HIGH_MATCH 81.4% | reconstructed; callee-blocked (PpicSkipMb stub) |
+| us-803ae364 | mpvvlc_InitCbpSub2 | HIGH_MATCH 90.7% | 47 structural (li-hoist) |
+| us-803ad498 | mpvvlc_InitMbaiPpic | HIGH_MATCH 76.4% | 79 structural |
+| us-803ae1bc | mpvvlc_InitCbpSub1 | HIGH_MATCH 76.0% | 22 structural |
+| us-803ad834 | mpvvlc_InitMbaiBpic | STRUCTURAL 69.2% | 81 structural |
+| us-803d0040 | sftim_Tc2TimeN | STRUCTURAL 64.8% | scheduling wall (17 structural) |
+| us-803afaec | mpvvlc_SetVlcRunLevel | STRUCTURAL 60.5% | **callee-blocked: UTY_MemcpyDword (us-803d6ad4) not accepted** |
+| us-803b01bc | fn_803B01BC | STRUCTURAL 60.4% | reconstructed; needs OneReadMb/OneMakeMb |
+| us-803d8728 | sfxzmv_MakeOrgZ32TblByDirect | STRUCTURAL 59.4% | reconstructed (unsigned /207 magic step) |
+| us-803d024c/0300/03b4 | Tc2Time23D/29D/59D | STRUCTURAL 54.2/54.0/54.2% | scheduling wall (19 structural) |
+| us-803addcc | mpvvlc_InitMotion | STRUCTURAL 53.0% | 149 structural |
+| us-803affb4 | fn_803AFFB4 | STRUCTURAL 50.2% | reconstructed (above SMT gate) |
+| us-803b00b8 | fn_803B00B8 | STRUCTURAL 50.2% | reconstructed (above SMT gate) |
+| us-803d8a58 | sfxzmv_MakeOrgZ32TblByCCIR | STRUCTURAL 48.6% | reconstructed; **just under 50% gate** |
+| us-803acf84 | mpvvlc_InitMbaiIpic | STRUCTURAL 45.0% | **below 50% gate** |
+| us-803afdb0 | fn_803AFDB0 | STRUCTURAL 32.1% | reconstructed incl. `__dcbz` zero-fill path; **below 50%** |
+| us-803b02d8 | mpvumc_OneReadMb | STRUCTURAL 28.6% | reconstructed (MC table dispatch); **below 50%** |
+| us-803b043c | mpvumc_OneMakeMb | STRUCTURAL 19.6% | reconstructed (2 copy paths); **below 50%** |
+| us-803ace80 | MPVVLC_Init | STRUCTURAL 1.5% | **callee-blocked** (16 callees; UTY_MemcpyDword + 8 not accepted) |
+| us-803b05fc | mpvumc_BiMakeMb | NOT_STARTED | 0x514 not reconstructed (session budget) |
+| us-803b0c20 | mpvumc_PpicSkipMb | NOT_STARTED | 0x8A4 dcbz-heavy not reconstructed |
+| us-803b14c4 | MPVUMC_BpicSkipped | NOT_STARTED | 0xEC not reconstructed |
+
+### Targets accepted
+**None** — witness certification never applied in-session; all 37 are queued for the out-of-band SMT pass via stall notes (24 appended, committed).
+
+### Blockers for the out-of-band probe pass
+1. **Callee-blocked — external (NOT in batch):** `SJ_SearchTag` (us-8039982c, NOT_STARTED) blocks sfxzmv_SetTagGrp, SFXZ_GetZfrmRange, SFXZ_SetTagInf, SFXZ_MakeCnvZTbl. `UTY_MemcpyDword` (us-803d6ad4, HIGH_MATCH 89.3%, inconclusive_timeout) blocks mpvvlc_SetVlcRunLevel + MPVVLC_Init.
+2. **Callee-blocked — in-batch chain:** MPVVLC_Init, SFXZ_MakeCnvZTbl, fn_803AFFB4/B00B8/B01BC (need OneReadMb/OneMakeMb), MPVUMC_PpicSkipped (needs PpicSkipMb).
+3. **Below 50% fuzzy gate (need static bump or gate review):** sfxzmv_MakeOrgZ32TblByCCIR 48.6%, mpvvlc_InitMbaiIpic 45.0%, fn_803AFDB0 32.1%, mpvumc_OneReadMb 28.6%, mpvumc_OneMakeMb 19.6%, MPVVLC_Init 1.5%.
+4. **NOT_STARTED (no candidate for SMT):** mpvumc_BiMakeMb, mpvumc_PpicSkipMb, MPVUMC_BpicSkipped.
+
+### Key work delivered
+- **SFTIM_IsStagnant:** 25 structural → 0 (num/den restructure merges the shared `divw`; 99.8% fuzzy, 0xE4 exact).
+- **sfx_zmv:** all 4 `Make*` table functions reconstructed with verified exact float semantics (pool constants read from main.dol: 1.0/2^52/2^31−1/2^24−1; CCIR 1.164f BT.601 scale; s32→float folded 2^52+2^31 trick; big-endian union word order `u[0]`=high; `(src<<1)&0xFFFFFF00` and `(src>>15)&0xFFFF` masks; unsigned /207 interpolation; `__cvt_fp2unsigned`).
+- **mpv_umc:** 6 of 10 reconstructed (fn_803AFDB0 + 3 wrappers + OneReadMb + OneMakeMb + PpicSkipped), incl. `__dcbz` intrinsic for the cache-zero path, MC table bit-select dispatch (t08/t16 at c*16 + mv-bit selects).
+- **Compiler-version probes:** confirmed sfd_tim = Wii/1.1 (GC/3.0a5.2 regresses), sfx_zmv/mpv_vlc = GC/3.0a5.2 (Wii/1.1 and GC/3.0a3.4 no help) — all reverted, configure.py left untouched.
+- **Commits:** `0a4d8e9c5` (reconstructions), `66851f51b` (stall notes/logs), `d8fc39fe1` (PpicSkipped state).
+[Thought] All three units build cleanly. The remaining attempts.jsonl diff is other agents' concurrent entries (not mine — leave uncommitted for them).
+
+Now the final report. Let me compile it from the data I have.
+
+Final statuses (from the last targets.json query + cycles):
+
+**Targets with good fuzzy (SMT-ready, ≥50% objdiff):**
+- us-803d0b9c SFD_CalcCycleFromFps: CODE_MATCH 99.5% — 0 structural, tooling stall
+- us-803cf764 SFTIM_IsStagnant: CODE_MATCH 99.8% — 0 structural (FIXED from 25 structural)
+- us-803d84f4 SFXZ_SetTagInf: CODE_MATCH 97.6% — 0 structural
+- us-803d9178 SFXZ_MakeCnvZTbl: CODE_MATCH 99.1% — 0 structural
+- us-803cfc80 sftim_GetTimeExtClock: CODE_MATCH 97.5%
+- us-803cf524 SFTIM_VbIn: CODE_MATCH 97.6%
+- us-803cf094 SFTIM_InitHn: CODE_MATCH 95.8%
+- us-803d8454 SFXZ_Create: HIGH_MATCH 90.2%
+- us-803afa18 mpvvlc_SetDflPtr: HIGH_MATCH 89.2%
+- us-803d8508 sfxzmv_SetTagGrp: HIGH_MATCH 88.0% (callee-blocked SJ_SearchTag)
+- us-803d85d8 SFXZ_GetZfrmRange: HIGH_MATCH 87.7% (callee-blocked SJ_SearchTag)
+- us-803d9264 sfxzmv_MakeZ16TblFromOrgZ32: HIGH_MATCH 84.5% (written)
+- us-803d9444 sfxzmv_MakeZ32TblFromOrgZ32: HIGH_MATCH 82.5% (written)
+- us-803b0b10 MPVUMC_PpicSkipped: HIGH_MATCH 81.4% (written, callee-blocked PpicSkipMb)
+- us-803ae1bc mpvvlc_InitCbpSub1: HIGH_MATCH 76.0%
+- us-803ad498 mpvvlc_InitMbaiPpic: HIGH_MATCH 76.4%
+- us-803ae364 mpvvlc_InitCbpSub2: HIGH_MATCH 90.7%
+- us-803ad834 mpvvlc_InitMbaiBpic: STRUCTURAL 69.2%
+- us-803d0040 sftim_Tc2TimeN: STRUCTURAL 64.8%
+- us-803d024c/0300/03b4 Tc2Time23D/29D/59D: STRUCTURAL 54.2%/54.0%/54.2%
+- us-803afaec mpvvlc_SetVlcRunLevel: STRUCTURAL 60.5% (callee-blocked UTY_MemcpyDword)
+- us-803d8728 sfxzmv_MakeOrgZ32TblByDirect: STRUCTURAL 59.4% (written)
+- us-803addcc mpvvlc_InitMotion: STRUCTURAL 53.0%
+- us-803affb4 fn_803AFFB4: STRUCTURAL 50.2% (written)
+- us-803b00b8 fn_803B00B8: STRUCTURAL 50.2% (written)
+- us-803b01bc fn_803B01BC: STRUCTURAL 60.4% (written)
+
+**Below 50% (need more work before SMT):**
+- us-803d8a58 sfxzmv_MakeOrgZ32TblByCCIR: STRUCTURAL 48.6% (written, just under gate)
+- us-803acf84 mpvvlc_InitMbaiIpic: STRUCTURAL 45.0%
+- us-803afdb0 fn_803AFDB0: STRUCTURAL 32.1% (written)
+- us-803b02d8 mpvumc_OneReadMb: STRUCTURAL 28.6% (written)
+- us-803b043c mpvumc_OneMakeMb: STRUCTURAL 19.6% (written)
+- us-803ace80 MPVVLC_Init: STRUCTURAL 1.5% (callee-blocked)
+
+**NOT_STARTED (no body written):**
+- us-803b05fc mpvumc_BiMakeMb
+- us-803b0c20 mpvumc_PpicSkipMb
+- us-803b14c4 MPVUMC_BpicSkipped
+
+That's 37 total ✓.
+
+Blockers for the out-of-band probe pass:
+1. **Callee-blocked (external, not in batch):**
+   - SJ_SearchTag (us-8039982c) NOT_STARTED — blocks sfxzmv_SetTagGrp, SFXZ_GetZfrmRange, SFXZ_SetTagInf, SFXZ_MakeCnvZTbl
+   - UTY_MemcpyDword (us-803d6ad4) HIGH_MATCH/inconclusive — blocks mpvvlc_SetVlcRunLevel, MPVVLC_Init
+2. **Callee-blocked (in-batch, needs my reconstructions accepted first):**
+   - MPVVLC_Init — needs the whole VLC init chain + UTY_MemcpyDword
+   - SFXZ_MakeCnvZTbl — needs GetZfrmRange + 4 Make* accepted
+   - fn_803AFFB4/B00B8/B01BC — need OneReadMb + OneMakeMb
+   - MPVUMC_PpicSkipped — needs PpicSkipMb
+3. **Below the 50% fuzzy gate (need static improvement or gate review):**
+   - sfxzmv_MakeOrgZ32TblByCCIR 48.6%
+   - mpvvlc_InitMbaiIpic 45.0%
+   - fn_803AFDB0 32.1%
+   - mpvumc_OneReadMb 28.6%
+   - mpvumc_OneMakeMb 19.6%
+   - MPVVLC_Init 1.5%
+4. **Not reconstructed (NOT_STARTED):**
+   - mpvumc_BiMakeMb, mpvumc_PpicSkipMb, MPVUMC_BpicSkipped
+
+The report is ready. Let me write it.

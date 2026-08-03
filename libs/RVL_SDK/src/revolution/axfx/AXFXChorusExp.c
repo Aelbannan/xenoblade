@@ -3,17 +3,20 @@
 
 #include <string.h>
 
-// Float/double constants in .sdata2 (loaded via extern to match retail relocs)
-extern const f32 float_8066BED0; // 32.0f
-extern const f32 float_8066BED4; // 0.0f
-extern const f32 float_8066BEE0; // 0.1f
-extern const f32 float_8066BEE4; // 50.0f
-extern const f32 float_8066BEE8; // 1.0f
-extern const f32 float_8066BEEC; // 2.0f
-extern const f32 float_8066BEF0; // 65536.0f
-extern const f32 float_8066BEF4; // 256.0f
-extern const f32 float_8066BEF8; // 32000.0f
-extern const f32 float_8066BEFC; // 0.00390625f
+// Float constants in .sdata2 (retail pool at 0x806696D0, first-use order):
+// 32, 0, 176, -0, 0.1, 50, 1, 2, 65536, 256, 32000, 0.00390625.
+const f32 float_8066BED0 = 32.0f;
+const f32 float_8066BED4 = 0.0f;
+const f32 float_8066BED8 = 176.0f;
+const f32 float_8066BEDC = -0.0f;
+const f32 float_8066BEE0 = 0.1f;
+const f32 float_8066BEE4 = 50.0f;
+const f32 float_8066BEE8 = 1.0f;
+const f32 float_8066BEEC = 2.0f;
+const f32 float_8066BEF0 = 65536.0f;
+const f32 float_8066BEF4 = 256.0f;
+const f32 float_8066BEF8 = 32000.0f;
+const f32 float_8066BEFC = 0.00390625f;
 
 static BOOL __InitParams(AXFX_CHORUS_EXP* fx);
 static void __CalcLFO(s32* dst, AXFX_CHORUS_EXP_LFO* lfo);

@@ -2,63 +2,124 @@
  "batches": {
   "cri-01": {
    "agent_id": "662db273-79e1-4f52-a64f-d1301eba5ca7",
-   "launched_at": "2026-08-03T16:07:06+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:23+00:00"
   },
   "cri-02": {
    "agent_id": "0bceaead-c342-43f2-9b47-5ea9e8006e08",
-   "launched_at": "2026-08-03T16:07:10+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:25+00:00"
   },
   "cri-03": {
    "agent_id": "afc313e0-2076-46a8-a533-a751a259f6a8",
-   "launched_at": "2026-08-03T16:07:13+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:26+00:00"
   },
   "cri-04": {
    "agent_id": "9b8de6c6-0abe-4536-b112-b36077352d96",
-   "launched_at": "2026-08-03T16:07:43+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:28+00:00"
   },
   "cri-05": {
    "agent_id": "681eb203-f66c-4b6d-a0a0-8a8afa353209",
-   "launched_at": "2026-08-03T16:07:46+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:30+00:00"
   },
   "cri-06": {
    "agent_id": "928b8519-f085-4844-a505-84272feb4364",
-   "launched_at": "2026-08-03T16:07:50+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:32+00:00"
   },
   "cri-07": {
-   "agent_id": "9ee6eece-0bc1-459e-ba88-0a2fff52560f",
-   "launched_at": "2026-08-03T16:07:53+00:00",
-   "status": "running",
-   "launches": 1
+   "agent_id": "cbdebaf5-8266-4d81-8cee-a17a3721377e",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:34+00:00"
   },
   "cri-08": {
    "agent_id": "76286490-1500-49e9-b041-e83a30bc98b8",
-   "launched_at": "2026-08-03T16:07:57+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:36+00:00"
   },
   "cri-09": {
-   "agent_id": "fdd24562-b7a1-49f4-a021-99e228a10b93",
-   "launched_at": "2026-08-03T16:08:01+00:00",
-   "status": "running",
-   "launches": 1
+   "agent_id": "0c175e94-8775-452a-947b-fbd7af8bdf71",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:38+00:00"
   },
   "cri-10": {
    "agent_id": "15326cb9-8ee9-43a4-9c19-674c57fd9778",
-   "launched_at": "2026-08-03T16:08:05+00:00",
-   "status": "running",
-   "launches": 1
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:40+00:00"
+  },
+  "cri-11": {
+   "agent_id": "76e79b1e-c30e-4a17-ad12-33df655b8749",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:41+00:00"
+  },
+  "cri-12": {
+   "agent_id": "fdfd18e6-2b74-4f96-8491-9a664235c409",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:43+00:00"
+  },
+  "cri-13": {
+   "agent_id": "f785425b-6386-4f32-bc71-1f7ecb068668",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:45+00:00"
+  },
+  "cri-14": {
+   "agent_id": "17ce510d-ddb5-489a-a195-4e7fbc59d229",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:47+00:00"
+  },
+  "cri-15": {
+   "agent_id": "ea2d926f-a65b-44d1-a14e-8695d4cecb13",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:49+00:00"
+  },
+  "cri-16": {
+   "agent_id": "3fae4b0c-47b0-485f-8548-04a31f99a0e5",
+   "launched_at": "2026-08-03T17:31:57+00:00",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:51+00:00"
+  },
+  "cri-17": {
+   "agent_id": "6e548950-a425-42ab-b185-63a866014184",
+   "launched_at": "2026-08-03T17:45:31+00:00",
+   "status": "done",
+   "launches": 1,
+   "error_since": null,
+   "finished_at": "2026-08-03T19:27:53+00:00"
   }
  },
  "launch_order": [
@@ -71,7 +132,32 @@
   "cri-07",
   "cri-08",
   "cri-09",
-  "cri-10"
+  "cri-10",
+  "cri-11",
+  "cri-12",
+  "cri-13",
+  "cri-14",
+  "cri-15",
+  "cri-16",
+  "cri-17"
  ],
- "done": []
+ "done": [
+  "cri-01",
+  "cri-02",
+  "cri-04",
+  "cri-05",
+  "cri-06",
+  "cri-08",
+  "cri-10",
+  "cri-13",
+  "cri-14",
+  "cri-03",
+  "cri-12",
+  "cri-07",
+  "cri-11",
+  "cri-15",
+  "cri-09",
+  "cri-16",
+  "cri-17"
+ ]
 }

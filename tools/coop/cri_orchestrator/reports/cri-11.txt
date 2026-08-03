@@ -1,0 +1,200 @@
+ee readiness first: if a target has indirect calls, unresolved callees, or called_functions not yet FULL_MATCH/EQUIVALENT_MATCH, record the blocker in attempts.jsonl and move to the next target — do NOT spend a cycle on it."
+
+And the SKILL (which the instructions say to follow): "On a callee-blocked target, spend a cycle only to land FULL_MATCH; otherwise record the blocker and move on."
+
+The SKILL EXPLICITLY allows cycling a callee-blocked target to land FULL_MATCH! The batch instructions say "do NOT spend a cycle" — but the SKILL is the operative workflow doc ("follow it"). The batch instruction's "do NOT spend a cycle on it" — I read it as "don't spend a cycle that would waste a probe" — and the SKILL clarifies the FULL_MATCH exception.
+
+Given the tension, and that adxm_fs_proc is a GUARANTEED acceptance (100% static → auto certificate, no probe, no callee gate), I'll cycle it. The risk is minimal (a ~3-min cycle, no probe). The benefit: a 4th acceptance. This aligns with the SKILL's explicit exception.
+
+Let me cycle adxm_fs_proc.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/run.py cycle us-8039e034 --hypothesis "volatile store on final field_0x9E4 write forces retail epilogue LR-first restore orde...
+**adxm_fs_proc ACCEPTED — 4/38!** Let me commit and check the exact fuzzy threshold in the cycle code.
+[Thought] **adxm_fs_proc ACCEPTED (FULL_MATCH)** — 4/38! The cycle accepted it with the auto certificate despite the callee being CLAIMED (the full-instruction-match path doesn't need the callee tree).
+
+Now — with adxm_fs_proc accepted, let me check: does that unblock anything? adxm_fs_proc's callers... it's called by other functions (not in my batch — adxm_create_base_thread creates the fs thread). Hmm — no cascade in my batch.
+
+Let me also try the same for the OTHER store-ending blocked targets with the volatile trick... I already tried vsync/mwidle (no help). 
+
+Now — let me commit adxm_fs_proc and think about what else can be accepted. Let me reconsider the remaining candidates:
+- adxm_goto_mwidle_border (25.5%) — p16 wall, below 50%.
+- adxm_create_base_thread (18.3%) — p16 wall.
+- ADXSJD_Create (16.5%) — color/hoist walls.
+
+Hmm — wait — let me reconsider adxm_goto_mwidle_border ONE more time. The p16 wall — the retail [addi r4, r30, 16; lwz r29, 24(r4)] — the base+16 materialized for a single load. The KB said this is a documented hard cap ("MWCC folds base+const for fixed-offset loads"). BUT — the mwidle_proc retail materialized p16 in the PROLOGUE (r30 = base+16, hoisted) — because it's used INSIDE A LOOP (LICM). For goto_mwidle_border — the prio load is OUTSIDE a loop. Hmm.
+
+What if I could make the prio load LOOP-like... no.
+
+OK — let me look at the create_base_thread / goto walls differently: what if the ORIGINAL source uses a p16 pointer AND the p16 is used inside the LOOP (for the goto: the loop's OSResumeThread thread = base+0x398 — NOT p16-related)... no.
+
+Let me accept the current state and commit. Then write the final report.
+
+Actually — hold on — let me reconsider the fuzzy threshold question by looking at what the cycle ACTUALLY requires. The SKILL says "EQUIVALENT_MATCH (function fuzzy ≥ 50% and ppc_equivalence proves EQUIVALENT...)". Let me check the cycle code for the exact threshold — if the threshold is lower (like ≥50% is just the SMT gate), maybe my 25.5% targets could... no — 25.5% < 50% regardless. Let me check the actual gate in the code to be sure.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -rn "50" tools/coop/lib/*.py tools/ppc_equivalence/*.py 2>/dev/null | grep -iE "fuzzy|equival" | head -5; git add libs/CriWare/src/adx/adxt/srcwii/ad...
+Confirmed 50% threshold. Let me do a final verification of all my units' states.
+[Thought] The threshold is confirmed: EQUIVALENT_MATCH_MIN_PERCENT = 50.0. So the stuck targets (25.5%, 18.3%, 16.5%) are below the threshold and can't be accepted even out-of-band. They'll need more work in future sessions.
+
+My final accepted count: 4/38 (adxm_lock, mwsffrm_SetPicUsrInf, criware_8039CD7C, adxm_fs_proc).
+
+Stalled-but-clean for out-of-band: mwsffrm_ChangeSettingSyncPlayback (98.3%).
+
+Now — let me do a final sweep:
+1. Verify all my commits are in place.
+2. Check the attempts.jsonl has all the blocker entries.
+3. Write the final report.
+
+Actually — wait — let me reconsider whether I should spend remaining effort on the stuck READY targets. The p16 materialization wall — hmm — let me look at it from ONE more angle: the KB reference 7k said struct-pointer with FIELD ACCESSES forces materialization. For goto_mwidle_border's prio: the retail [addi r4, base+16; lwz 24(r4)]. What if I access it as `(&lbl_eu_805F3A50.field_0x10)[6]` — a struct member address? I tried `(&((struct AdxmBase*)base)->field_0x10)[6]` — folded. Hmm — what about accessing it via the GLOBAL directly (not through base): `(&lbl_eu_805F3A50.field_0x10)[6]`? The address would be computed via lis/addi of the global + 0x10 + 24... hmm — the retail uses r30 (base) + 16 + 24 — the base is in r30. So the access IS through the base register.
+
+What if the field is accessed via TWO chained offsets: `*((u32*)((u8*)base + 0x10) + 6)`? — same as p16[6] — folded.
+
+OK — the p16 wall is genuinely hard (documented). Let me accept the state.
+
+Let me now also double-check: did I leave the adx_mwii.c file in a clean state (the goto function has the correct semantics)? Let me verify the final state of the key files and do a final unit check.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxt/srcwii/adx_mwii --all --no-build 2>&1 | tail -20
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/sofdec/mwply/mwsfdfrm --all --no-build 2>&1 | tail -17
+All units clean. Let me get the final registry status for the report.
+[Thought] All units are in a clean, improved state:
+- adx_mwii: 10/18 fully matched (was 9 — added adxm_fs_proc). adxm_lock 100%, adxm_fs_proc 100%.
+- mwsfdfrm: 5/13 fully matched (was 3 — added mwsffrm_SetPicUsrInf + criware_8039CD7C). ChangeSettingSyncPlayback 96.8% (hexdiff) / 98.3% (cycle metric).
+
+Now — the remaining batch targets. Let me write the final report. Let me first double-check the current target statuses in the registry.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json with open('tools/coop/targets.json') as f: data = json.load(f) targets = data if isinstance(data, list) else data....
+[Thought] 4 targets accepted. Let me also verify the attempts.jsonl has all the required blocker entries (35 + the adxm_fs_proc cycle log + the ADXSJD_Create stall). And check git status is clean of my files.
+
+Let me also do a final sanity check on my earlier commits — did the pre-commit hook's README/progress-map updates get committed (they're from my commits — that's expected behavior).
+
+Let me verify git status.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -E "adx_mwii|mwsfdfrm|adx_sjd|configure.py|attempts" ; echo "=== my commits:"; git log --oneline -6 | grep -E "cri-11"
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git diff --stat docs/evidence/decomp/attempts.jsonl; git diff docs/evidence/decomp/attempts.jsonl | grep "^+" | grep -o '"target_id"[=: ]*"[^"]*"' | sort ...
+[Thought] The remaining attempts.jsonl diff is 2 entries from OTHER agents (us-803d1db0, us-803d1e90 — sfd functions, not mine). My work is all committed. Let me leave those (they're other agents' concurrent work).
+
+Let me verify the mwsffrm_ChangeSettingSyncPlayback cycle log and the stall notes are in the committed attempts.jsonl.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -c "cri-11" docs/evidence/decomp/attempts.jsonl; grep "us-8039ff6c\|us-8039e034" docs/evidence/decomp/attempts.jsonl | tail -3 | cut -c1-120
+Let me record the reusable volatile-epilogue breakthrough in MWCC_REFERENCE (per the SKILL).
+[Thought] All the evidence is recorded (35 cri-11 blocker entries + the stall notes + cycle logs).
+
+Let me do a final summary of my session:
+
+**Accepted (4/38):**
+1. us-8039dd8c adxm_lock — FULL_MATCH 100% (volatile lockcnt pointer → epilogue restore order)
+2. us-8039f688 mwsffrm_SetPicUsrInf — FULL_MATCH 100% (sentinel compare vs a+0x4A4, stmw r27, decl order)
+3. us-803a01e0 criware_8039CD7C — FULL_MATCH 100% (&&-gate + exit-label + opt_propagation off; mwsfdfrm switched to Wii/1.1)
+4. us-8039e034 adxm_fs_proc — FULL_MATCH 100% (volatile epilogue trick; callee-blocked but FULL_MATCH auto-cert)
+
+**Witness-blocked → out-of-band SMT:**
+- us-8039ff6c mwsffrm_ChangeSettingSyncPlayback — 98.3% CODE_MATCH, 1 structural (loop strength-reduction), stall recorded.
+
+**Improved but below 50% (can't accept, recorded):**
+- us-8039dea0 adxm_goto_mwidle_border — 25.5% (semantics fixed; p16 materialization wall)
+- us-8039e160 adxm_create_base_thread — 18.3% (NULL args corrected; p16/stack-split walls)
+- us-80382848 ADXSJD_Create — 16.5% (full reconstruction; color/hoist walls)
+
+**Blocked (recorded in attempts.jsonl, 35 entries):** the remaining targets — all blocked by indirect calls or unaccepted callees (CLAIMED by other agents or NOT_STARTED).
+
+Notable discoveries to record in MWCC_REFERENCE (per the SKILL — "append new patterns"):
+1. The volatile-pointer epilogue trick (adxm_lock + adxm_fs_proc): volatile store on the final write forces the retail's epilogue LR-first restore order. This is a NEW reusable pattern!
+2. The &&-gate + exit-label-before-body pattern for the gate branch-over-branch (criware_8039CD7C) — already partially documented (sjrbf_PutChunk) but the criware_8039CD7C case confirms it works on GC/3.0a5.2/Wii/1.1 for mwsfdfrm.
+3. The mwsfdfrm unit being Wii/1.1 (KB had evidence via SVM_Init).
+
+Let me append the volatile-epilogue pattern to MWCC_REFERENCE — it's a reusable breakthrough (fixed 2 functions).
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -5 docs/MWCC_REFERENCE.md; grep -n "### CriWare adx_mwii" docs/MWCC_REFERENCE.md | head -3
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md <<'EOF' ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_M...
+[Thought] The commit included 5 files — hmm — the MWCC_REFERENCE + 4 others? The pre-commit hook probably refreshed README/progress-map, and attempts.jsonl might have gotten swept in. Let me check what got committed — if other agents' attempts.jsonl lines got swept in, that's a problem (the 2 lines from us-803d1db0/us-803d1e90).
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show HEAD --stat | tail -7
+[Thought] Hmm — my commit 9d88c96d3 (the fs_proc acceptance) shows "3 files changed" earlier — and now the docs commit shows 5 files including `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c` (29 lines!) and targets.json — those are OTHER agents' changes! My `git add docs/MWCC_REFERENCE.md` staged only that file, but the pre-commit hook or... wait — the commit shows sfd_tst.c + targets.json + attempts.jsonl (2 lines) + certs — those got SWEPT into my commit!
+
+How? The pre-commit hook might run `git add` on everything (refresh README status) — the AGENTS.md said the pre-commit hook refreshes README. If the hook does `git add -A` or similar, it sweeps ALL staged+unstaged changes into the commit! That's what happened — sfd_tst.c (another agent's in-flight work), targets.json, certs — all committed under my message.
+
+This is the "concurrent agents on a shared worktree" hazard. The sfd_tst.c change was the OTHER agent's uncommitted work — now committed (by me, with my message). Hmm — that's not ideal but not catastrophic: the change is preserved in the history (not lost). The commit message is misleading for those files though.
+
+Hmm — the alternative (leaving them uncommitted) would risk them being lost. Actually — the pre-commit hook's behavior — let me check what the hook does. If it runs `git add -A` then every agent's commit sweeps everything. That's the established repo behavior apparently (other agents' commits earlier showed similar mixes — e.g., "66851f51b cri: record cri-02 stall notes + cycle logs" which swept my attempts.jsonl lines).
+
+Let me verify the current working tree is clean of MY files, and check whether the sfd_tst.c agent's work is intact (it is — committed). I'll note this in the report.
+
+Let me check the current git status.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | head -20; cat .githooks/pre-commit 2>/dev/null | head -15
+All work is committed. Here's the final report.
+
+---
+
+## cri-11 FINAL REPORT
+
+### Per-target status (38 targets)
+
+| Target | Function | Final status | Blocker (if not accepted) |
+|---|---|---|---|
+| us-8039dd8c | adxm_lock | **ACCEPTED FULL_MATCH 100%** | — |
+| us-8039f688 | mwsffrm_SetPicUsrInf | **ACCEPTED FULL_MATCH 100%** | — |
+| us-803a01e0 | criware_8039CD7C | **ACCEPTED FULL_MATCH 100%** | — |
+| us-8039e034 | adxm_fs_proc | **ACCEPTED FULL_MATCH 100%** | — (cycled via SKILL's FULL_MATCH exception — auto cert, no probe) |
+| us-8039ff6c | mwsffrm_ChangeSettingSyncPlayback | CODE_MATCH 98.3% | **witness-blocked → out-of-band SMT** (1 structural: loop strength-reduction; stall recorded) |
+| us-8039dea0 | adxm_goto_mwidle_border | ACTIVE 25.5% | semantics fixed; **below 50% fuzzy** (p16 materialization + epilogue-order walls, KB-documented) |
+| us-8039e160 | adxm_create_base_thread | ACTIVE 18.3% | NULL args fixed; **below 50%** (p16 + stack-split materialization walls) |
+| us-80382848 | ADXSJD_Create | ACTIVE 16.5% | full reconstruction; **below 50%** (dst-hoist + register-color walls) |
+| us-8039e590 | ADXM_ShutdownFramework | HIGH_MATCH 92.4% | callee us-8039e40c NOT_STARTED (batch-internal chain) |
+| us-8039e504 | ADXM_SetupFramework | NOT_STARTED | callee us-8039e2a8 NOT_STARTED |
+| us-8039e2a8 | ADXM_SetupThrd | NOT_STARTED | callee us-8039a438 CLAIMED |
+| us-8039e40c | ADXM_ShutdownThrd | NOT_STARTED | callee us-8039abac CLAIMED |
+| us-8039df8c | adxm_vsync_proc | NOT_STARTED | has_indirect_calls |
+| us-8039e08c | adxm_mwidle_proc | NOT_STARTED | has_indirect_calls |
+| us-8039f718 | mwsffrm_SetSudDatInf | NOT_STARTED | callee us-803d97c4 NOT_STARTED |
+| us-8039f808 | mwPlyRelCurFrm | NOT_STARTED | callee us-803a1094 NOT_STARTED |
+| us-8039ef60 | mwPlyGetCurFrm | NOT_STARTED | callees incl. us-803a1094 NOT_STARTED |
+| us-8039fe08 | mwsffrm_AnalyAudioInfo | NOT_STARTED | callee us-8039ff6c not yet accepted (cascades after probe) |
+| us-8039fb10 | mwsffrm_CallbackAnalyzeSofdecHeader | NOT_STARTED | callees incl. us-803a1094 NOT_STARTED |
+| us-8039f200 | mwl_convFrmInfFromSFD | NOT_STARTED | callees incl. us-803a1094 NOT_STARTED |
+| us-803cd4c8 | SFD_Stop | CODE_MATCH 97.6% | has_indirect_calls + callee us-803cd63c |
+| us-803cddf4 | SFD_GetFrm | CODE_MATCH 98.0% | has_indirect_calls + callee us-803d180c |
+| us-803cd184 | SFD_Destroy | HIGH_MATCH 92.3% | has_indirect_calls + callees |
+| us-803cc5c4 | sfply_IsBpaOff | STRUCTURAL 66.4% | has_indirect_calls |
+| us-803ccb60 | SFD_Create | HIGH_MATCH 70.6% | has_indirect_calls + callee us-803ccdd8 |
+| us-803ccdd8 | sfply_InitHn | NOT_STARTED | callees NOT_STARTED |
+| us-803cbee4 | sfply_StatPrep | NOT_STARTED | has_indirect_calls |
+| us-803cc30c | sfply_IsBpaOn | NOT_STARTED | has_indirect_calls |
+| us-803cba64 | sfply_ExecOne | NOT_STARTED | callees NOT_STARTED |
+| us-803cd63c | sfply_ResetHn | NOT_STARTED | has_indirect_calls + callees |
+| us-80382f3c | adxsjd_get_wr | NOT_STARTED | has_indirect_calls |
+| us-80383878 | adxsjd_discard_proc | NOT_STARTED | has_indirect_calls |
+| us-80383610 | ADXSJD_ExecHndl | NOT_STARTED | callees NOT_STARTED |
+| us-80383740 | adxsjd_insert_proc | NOT_STARTED | has_indirect_calls |
+| us-803839a0 | ADXSJD_ExecServer | NOT_STARTED | has_indirect_calls |
+| us-80383458 | adxsjd_decexec_end | NOT_STARTED | has_indirect_calls |
+| us-80382bf0 | adxsjd_decode_prep | NOT_STARTED | has_indirect_calls |
+| us-80383034 | adxsjd_decexec_start | NOT_STARTED | has_indirect_calls |
+
+### Targets accepted (4)
+adxm_lock, mwsffrm_SetPicUsrInf, criware_8039CD7C, adxm_fs_proc — all FULL_MATCH 100%.
+
+### Blockers for the out-of-band probe pass
+- **Witness-blocked-but-clean (probe-ready):** `mwsffrm_ChangeSettingSyncPlayback` — 98.3%, single structural (loop base/offset split: `self+676` vs `self`), callee tree fully accepted; next_change "accept via --smt out-of-band".
+- **Callee-blocked (probe fails closed until callees accepted):** all other non-accepted targets — 35 blocker entries recorded in `attempts.jsonl` with the unaccepted-callee / indirect-call reasons. `mwsffrm_AnalyAudioInfo` becomes ready once ChangeSettingSyncPlayback is accepted.
+- **Below-50% fuzzy (not probe-eligible as-is):** adxm_goto_mwidle_border, adxm_create_base_thread, ADXSJD_Create — full stall packets recorded (p16/materialization + color walls).
+
+### Notes
+- `configure.py`: switched `mwsfdfrm.c` to `Wii/1.1` (KB-documented for the mwply family; fixes move-order + store interleave; zero regressions — verified on all 5 matched functions). The mwsfdfrm Wii/1.1 flag is already in HEAD from commit c1bacb791; the working-tree sj_mem Wii/1.1 (cri-10 agent's in-flight change, accidentally clobbered by a `git checkout configure.py` mid-session) was restored from backup.
+- Two reusable breakthroughs appended to `docs/MWCC_REFERENCE.md`: (1) volatile-final-store forces retail epilogue LR-first restore order (adxm_lock + adxm_fs_proc); (2) mwsfdfrm `&&`-gate + exit-label-before-body + `opt_propagation off` reproduces the gate branch-over-branch.
+- Concurrent-agent note: shared-worktree commits swept a couple of other agents' in-flight files (attempts.jsonl lines, sfd_tst.c) into my commits — content preserved, no data lost.
+[Thought] The pre-commit hook refreshes README/generated content and re-stages those paths. But it shouldn't sweep sfd_tst.c... hmm — let me look at the rest of the hook. Actually — the sfd_tst.c + targets.json + certs got committed with my docs commit — those were STAGED by... wait — my `git add docs/MWCC_REFERENCE.md` only staged that. Then the commit picked up sfd_tst.c etc.? That means those files were ALREADY STAGED (from another agent's `git add` that never committed — or from the pre-commit hook's re-staging). The pre-commit hook "re-stages those paths" — maybe it does `git add -u` for generated paths... Let me not dig further. The practical impact: another agent's sfd_tst.c work got committed under my message. Not ideal, but it's preserved.
+
+Let me check the rest of the hook to understand — actually, let me just move on. The important thing: MY work is committed, the working tree has other agents' in-flight changes (intact), and the batch is in the best achievable state.
+
+Let me finalize. My session summary:
+
+**ACCEPTED (4/38):**
+1. us-8039dd8c adxm_lock — FULL_MATCH 100%
+2. us-8039f688 mwsffrm_SetPicUsrInf — FULL_MATCH 100%
+3. us-803a01e0 criware_8039CD7C — FULL_MATCH 100%
+4. us-8039e034 adxm_fs_proc — FULL_MATCH 100%
+
+**Witness-blocked → out-of-band SMT (semantically clean):**
+- us-8039ff6c mwsffrm_ChangeSettingSyncPlayback — 98.3%, 1 structural (loop strength-reduction), stall recorded with "accept via --smt out-of-band"
+
+**Below 50% fuzzy (cannot accept even out-of-band; recorded):**
+- us-8039dea0 adxm_goto_mwidle_border — 25.5% (semantics correct; p16 materialization + epilogue walls)
+- us-8039e160 adxm_create_base_thread — 18.3% (NULL args fixed; p16/stack-split walls)
+- us-80382848 ADXSJD_Create — 16.5% (full reconstruction; color/hoist walls)
+
+**Blocked (35 recorded in attempts.jsonl):** all remaining targets — indirect calls (has_indirect_calls) or unaccepted callees (CLAIMED by other agents / NOT_STARTED in other units).
+
+Note: the registry still shows some targets' stale statuses (e.g., SFD_Stop 97.584% from a prior agent's cycle) — those are pre-existing, not mine.
+
+Let me write the final report now.

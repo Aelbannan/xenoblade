@@ -35,6 +35,12 @@ namespace {
 
 CDevice* CDevice::spInstance;
 CDeviceException* CDeviceException::spInstance;
+
+// Retail sbss labels for the two TU singletons (MWCC_REFERENCE §1a).
+extern "C" {
+extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
+extern CDeviceException* lbl_eu_80665654;    // CDeviceException::spInstance
+}
 const char* CDevice::devSys1String = "DeviceSystem1";
 const char* CDevice::devSys2String = "DeviceSystem2";
 //Unused strings for region names?
@@ -153,7 +159,8 @@ void CDevice::initDevices(){
 
 #pragma dont_inline on
 CDeviceException* CDeviceException::getInstance(){
-    return spInstance;
+    // Retail SDA reloc is lbl_eu_80665654@sda21.
+    return lbl_eu_80665654;
 }
 #pragma dont_inline off
 

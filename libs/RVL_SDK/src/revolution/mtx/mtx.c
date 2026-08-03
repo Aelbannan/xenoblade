@@ -9,25 +9,33 @@
 
 #define MTXDegToRad(a) ((a)*0.01745329252f)
 
-static f32 Unit01[] = { 0.0f, 1.0f };
+static f32 Unit01[2];
 
 void PSMTXIdentity(register Mtx m) {
-    register f32 c_zero = 0.0f;
-    register f32 c_one = 1.0f;
+    register f32 c_zero;
+    register f32 c_one;
     register f32 c_01;
     register f32 c_10;
 
+    c_one = 1.0f;
+    c_zero = 0.0f;
+
+
     ASM (
         psq_st     c_zero, 8(m),  0, 0   // m[0][2] = 0, m[0][3] = 0;
+        ps_merge10 c_10, c_one,   c_zero // c_10 = (0,0)
         ps_merge01 c_01, c_zero,  c_one  // c_01 = (0,0)
         psq_st     c_zero, 24(m), 0, 0   // m[]
-        ps_merge10 c_10, c_one,   c_zero // c_10 = (0,0)
         psq_st     c_zero, 32(m), 0, 0
         psq_st     c_01, 16(m),   0, 0
         psq_st     c_10, 0(m),    0, 0
         psq_st     c_10, 40(m),   0, 0
     )
 }
+
+// Defined here so its initializer literals do not take the first .sdata2 pool
+// slots (retail pool order is 1.0 before 0.0).
+static f32 Unit01[] = { 0.0f, 1.0f };
 
 asm void PSMTXConcat(const register Mtx mA, const register Mtx mB,
                      register Mtx mAB) {
@@ -543,4 +551,5 @@ void C_MTXLightOrtho(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 scaleS,
     m[2][1] = 0.0f;
     m[2][2] = 0.0f;
     m[2][3] = 1.0f;
+    (void)0.0f; // retail .sdata2 ends with 0x1c-0x20 zero pad (gap_11_80669944_sdata2)
 }

@@ -251,7 +251,7 @@ void GKI_freebuf(void* p_buf) {
 
     if (bad) {
     free_corrupted:
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, msg + 0x30);
+        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Free - Buf Corrupted");
         return;
     }
 #else
@@ -259,12 +259,12 @@ void GKI_freebuf(void* p_buf) {
 #endif
 
     if (p_hdr->status != BUF_STATUS_UNLINKED) {
-        GKI_exception(GKI_ERROR_FREEBUF_BUF_LINKED, msg + 0x48);
+        GKI_exception(GKI_ERROR_FREEBUF_BUF_LINKED, "Freeing Linked Buf");
         return;
     }
 
     if (p_hdr->q_id >= GKI_NUM_TOTAL_BUF_POOLS) {
-        GKI_exception(GKI_ERROR_FREEBUF_BAD_QID, msg + 0x5c);
+        GKI_exception(GKI_ERROR_FREEBUF_BAD_QID, "Bad Buf QId");
         return;
     }
 
@@ -315,7 +315,7 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
 
     if ((task_id >= GKI_MAX_TASKS) || (mbox >= NUM_TASK_MBOX) ||
         (p_cb->OSRdyTbl[task_id] == TASK_DEAD)) {
-        GKI_exception(GKI_ERROR_SEND_MSG_BAD_DEST, str + 0x68);
+        GKI_exception(GKI_ERROR_SEND_MSG_BAD_DEST, "Sending to unknown dest");
         GKI_freebuf(msg);
         return;
     }
@@ -343,7 +343,7 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
     }
 
     if (bad) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, str + 0x80);
+        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Send - Buffer corrupted");
         return;
     }
 #else
@@ -351,7 +351,7 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
 #endif
 
     if (p_hdr->status != BUF_STATUS_UNLINKED) {
-        GKI_exception(GKI_ERROR_SEND_MSG_BUF_LINKED, str + 0x98);
+        GKI_exception(GKI_ERROR_SEND_MSG_BUF_LINKED, "Send - buffer linked");
         return;
     }
 
@@ -512,8 +512,15 @@ void GKI_enqueue_head(BUFFER_Q* p_q, void* p_buf) {
     return;
 }
 
+#pragma force_active on
+static char s_deadMsg[32] = "GKI_get_buf_start:: bad addr";
+// 24 bytes: "Deleting bad pool" (18 incl. NUL) + 6 zero pad bytes
+// (retail .data ends at 0x148).
+static char s_poolDelete[24] = "Deleting bad pool";
+#pragma force_active off
 void* GKI_dequeue(BUFFER_Q* p_q) {
     BUFFER_HDR_T* p_hdr;
+
 
     GKI_disable();
 
@@ -722,7 +729,7 @@ void GKI_delete_pool(UINT8 pool_id) {
         gki_remove_from_pool_list(pool_id);
         p_cb->curr_total_no_of_pools--;
     } else {
-        GKI_exception(GKI_ERROR_DELETE_POOL_BAD_QID, "Deleting bad pool");
+        GKI_exception(GKI_ERROR_DELETE_POOL_BAD_QID, s_poolDelete);
     }
 
     GKI_enable();

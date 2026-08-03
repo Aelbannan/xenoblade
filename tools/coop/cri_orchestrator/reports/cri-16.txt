@@ -1,0 +1,224 @@
+; if (MPVLIB_CheckHn(h) != 0) r...
+Let me check if ADXF_CloseAll (callee of my blocked ADXF_Finish, same unit) is close to acceptance:
+[Thought] Now let me also record the MPV_DecodeFrmSj progress (it's blocked on MPVSL_DecPicture — recorded as a blocker already, but let me update the record with the v1/v2 progress).
+
+Actually — let me check the remaining cycleable targets. All the cycleable ones have been processed:
+- us-803d178c SFVOM_GetRead — wall, recorded
+- us-803c363c criware_803C0D94 — wall, recorded
+- us-803c2714 SFCON_UpdateConcatTime — wall, recorded
+- us-803d1568 SFUO_Create — wall, recorded
+- us-803c2790 SFCON_WriteTotSmplQue — wall, recorded
+- us-803c2840 SFCON_ReadTotSmplQue — wall, recorded
+- us-803d0e94 SFTRN_InitHn — ACCEPTED (FULL_MATCH)
+- us-803cea68 sfsee_ExecFinAnaly — wall, recorded
+- us-803ce68c sfsee_ExecHeadAnaly — wall, recorded
+- us-803d1400 SFD_SetUsrSj — ACCEPTED (FULL_MATCH)
+- us-803d1658 SFVOM_ExecServer — ACCEPTED (FULL_MATCH)
+- us-803a71c4 criware_803A3A48 — wall, recorded
+- us-803a7260 criware_803A3AE4 — ACCEPTED (FULL_MATCH, despite callee blocker)
+- us-803a9b64 MPV_SkipFrmSj — wall, recorded
+
+Blocked targets (recorded): us-803d12d8, us-8037f454, us-803a576c, us-803a58c8, us-803d180c, us-803c3400, us-803c3320, us-803d18e4, us-803d0d9c, us-80382590, us-8038db28, us-80382460, us-803a9a34, us-803bce74, us-8038d918, us-803bcfd4.
+
+Wait — what about us-80382590 ADXT_Finish and us-80382460 ADXT_Init (adx_inis)? They're blocked on callees (ADXF_Finish HIGH_MATCH, SVM_* HIGH_MATCH, LSC_Init STRUCTURAL). And us-8037f454 ADXF_Finish (adx_fini) — blocked on ADXF_CloseAll CODE_MATCH.
+
+Hmm — but wait — a few of these blocked callees are at HIGH_MATCH/STRUCTURAL — NOT accepted. So those remain blocked. BUT — could I match some of the callees to unblock them? The callees like ADXF_CloseAll (CODE_MATCH, 0x80380F34), SVM_DelCbSvr, SVM_Finish, AHXSJD_Start, LSC_Init, SVM_SetCbSvrWithString... those are in OTHER units (not my batch) — I shouldn't work on them (they're other agents' territory, and the rules say only modify MY unit's source files). Also they're not in my batch list.
+
+Hmm — wait — actually, let me reconsider. My batch is the 30 targets listed. The instructions say "Match and ACCEPT every target in batch cri-16". The blocked ones are recorded. The rules explicitly say: "if a target has indirect calls, unresolved callees, or called_functions not yet FULL_MATCH/EQUIVALENT_MATCH, record the blocker in attempts.jsonl and move to the next target — do NOT spend a cycle on it." So the blocked targets stay blocked.
+
+BUT — for ADXF_Finish (us-8037f454): its callee ADXF_CloseAll is at CODE_MATCH (95%+) — very close to acceptance. If I could finish ADXF_CloseAll... it's in adx_fini.c — MY unit (adx_fini)! Let me check if ADXF_CloseAll is in my batch... it's NOT in the batch list (us-80380f34). But it's in MY unit's source file (adx_fini.c). The rules: "Only modify YOUR unit's source files". adx_fini.c is my unit. Matching ADXF_CloseAll would unblock ADXF_Finish (my target). Hmm — but the batch says "0 leaf" and lists specific targets. The instruction says work leaf first, record blockers for callee-blocked ones. It doesn't forbid improving callees in my own units to unblock my targets.
+
+Let me check ADXF_CloseAll's state — it's at CODE_MATCH. If it's close, finishing it unblocks ADXF_Finish. Let me look.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 tools/coop/hexdiff.py CriWare/src/adx/adxf/adx_fini --all --no-build 2>&1 | head -12
+[Thought] Hmm — the unit has ADXF_Init (0x8037F3A0? — not in my batch) and ADXF_Finish (my target). ADXF_CloseAll (us-80380f34) isn't in this unit — let me find it.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json reg = json.load(open('tools/coop/targets.json')) targets = {t['id']: t for t in reg['targets']} t = targets['us-80...
+All targets processed. Let me verify all my modified units build cleanly:
+[Thought] ADXF_CloseAll is in adx_fs.c — NOT my unit (my unit is adx_fini). The rules say don't edit other units' files. So ADXF_Finish stays blocked.
+
+Let me now do a comprehensive review. Let me re-verify all the remaining targets' states and check if there's anything else cycleable. The remaining NOT-STARTED/ACTIVE targets:
+
+1. us-803d12d8 SFTRN_CallTrSetup — BLOCKED (indirect) ✓ recorded
+2. us-8037f454 ADXF_Finish — BLOCKED (callee us-80380f34 CODE_MATCH) ✓ recorded
+3. us-803a576c mwPlyGetTime — BLOCKED (callee us-803a1094 NOT_STARTED) ✓ recorded
+4. us-803a58c8 mwPlyGetOutVol — BLOCKED (same) ✓ recorded
+5. us-803d180c SFTMR_GetTmr — BLOCKED (indirect) ✓ recorded — wait, SFTMR_GetTmr is CODE_MATCH 96.3% — hmm, it has an indirect call per the target record. But wait — let me double check: the earlier target show said "indirect call present" for SFTMR_GetTmr. Its callees us-803d6ea4/6ee8/6f18 are all accepted (UTY_GetTmr etc.). But indirect → blocked. Hmm — wait, let me re-verify: "us-803d180c SFTMR_GetTmr CODE_MATCH calls=3 ... indirect call present". Yes blocked.
+
+Hmm — actually, wait. Let me reconsider SFTMR_GetTmr: it's at CODE_MATCH 96.296%. The indirect call — maybe it's a switch/function-pointer dispatch. If the indirect call is actually a resolved pattern (like a table of function pointers)... the targets show marks has_indirect_calls=true. The rules say indirect → record blocker, don't cycle. OK.
+
+6. us-803c3400 fn_803C3400 — BLOCKED (callee us-803d0d9c SFTRN_Init NOT_STARTED) ✓
+7. us-803c3320 fn_803C3320 — BLOCKED (indirect + callees) ✓
+8. us-803d18e4 SFTMR_GetTmrUnit — BLOCKED (indirect) ✓
+9. us-803d0d9c SFTRN_Init — BLOCKED (indirect) ✓
+10. us-80382590 ADXT_Finish — BLOCKED (callees) ✓
+11. us-8038db28 AHXLINK_ExecOneAhx — BLOCKED (callee us-8038fd80 HIGH_MATCH) ✓
+12. us-80382460 ADXT_Init — BLOCKED (callees) ✓
+13. us-803a9a34 MPV_DecodeFrmSj — BLOCKED (callee us-803bce74) — recorded; also improved (27.6%, size fixed)
+14. us-803bce74 MPVSL_DecPicture — BLOCKED (indirect + callees) ✓
+15. us-8038d918 ADXT_AttachAhx — BLOCKED (indirect + callees) ✓
+16. us-803bcfd4 MPVSL_DecSliceOne — BLOCKED (indirect) ✓
+
+And the ACCEPTED: us-803d1658 (SFVOM_ExecServer), us-803d1400 (SFD_SetUsrSj), us-803d0e94 (SFTRN_InitHn), us-803a7260 (criware_803A3AE4).
+
+Walls recorded (out-of-band SMT candidates): us-803d178c, us-803c363c, us-803c2714, us-803d1568, us-803c2790, us-803c2840, us-803cea68, us-803ce68c, us-803a71c4, us-803a9b64.
+
+Wait — I should double-check the two blocked ones that got unblocked by my work:
+- us-803a7260 criware_803A3AE4: was blocked on callee MWSFSVM_Error — but ACCEPTED as FULL_MATCH anyway (full-instruction-match cert doesn't need callees).
+- us-803a9a34 MPV_DecodeFrmSj: still blocked (callee MPVSL_DecPicture) — recorded.
+
+Also — the mwply/mwsfdset targets (mwPlyGetTime, mwPlyGetOutVol) are blocked on MWSFSVM_Error (NOT_STARTED). Hmm — MWSFSVM_Error is in mwsfdsvm (not my unit). Blocked.
+
+Now — I should also check: did my edits break any OTHER units? The rules: "Fix or revert if another unit's build breaks" for shared headers. I edited:
+- sfd_vom.c (my unit)
+- sfd_con.c (my unit)
+- sfd_uo.c (my unit)
+- sfd_trn.c (my unit)
+- sfd_see.c (my unit)
+- sfd_lib.c (my unit — plus the extern fix)
+- code_803A3AE4.c (my unit)
+- mpv_frm.c (my unit)
+
+Let me verify all these units still build (hexdiff each unit --all). Also check that the sfd_lib.c build works for the whole unit (the earlier extern fix). Let me run a quick build check on all my units.
+
+Also — I should double check the ADXT units (adx_inis, ahx_link) and others — no edits there, fine.
+
+Let me run hexdiff --all on each modified unit to confirm everything builds and check the overall state.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for u in CriWare/src/sofdec/sfdcore/sfd/sfd_vom CriWare/src/sofdec/sfdcore/sfd/sfd_con CriWare/src/sofdec/sfdcore/sfd/sfd_uo CriWare/src/sofdec/sfdcore/sf...
+All units build. Let me record the MPV_DecodeFrmSj progress and add the new __mulhw pattern to the KB:
+[Thought] All units build and pass split budgets. Now let me record the MPV_DecodeFrmSj progress in attempts.jsonl (it was blocked but improved), then do a final review of the batch and commit.
+
+Let me also add the KB entries for the new patterns I discovered:
+1. The __mulhw magic-division pattern (ExecHeadAnaly) — this is a NEW reusable pattern worth adding to MWCC_REFERENCE.
+2. The declaration-order color fix for criware_803A3A48.
+3. The SFVOM_ExecServer's r = void-call-result trick for the BDC dispatch (criware_803A3AE4).
+
+Per the SKILL: "after a breakthrough: if you discover a reusable fix, append it to docs/MWCC_REFERENCE.md in the same session". Let me add a concise entry for the __mulhw pattern (that's genuinely reusable for CriWare code).
+
+Let me first record the MPV_DecodeFrmSj progress, then update MWCC_REFERENCE, then commit.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && .venv/bin/python3 - <<'EOF' import json, datetime now = datetime.datetime.now(datetime.timezone.utc).isoformat() rec = { "target_id": "us-803a9a34", "func...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -n "^## " docs/MWCC_REFERENCE.md | head -20; tail -20 docs/MWCC_REFERENCE.md | head -10
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md <<'EOF' ### CriWare __mulhw magic-multiply pattern (sfd_see sfsee_ExecHeadAnaly, sfd codegen) CriWare fixed-point `x * 3087 ...
+Now let me do a final review and commit:
+[Thought] Now let me do the final review: check git status, review the diff of my files, and commit. Also — I should double-check that I haven't left any broken state. Let me also verify the accepted targets are properly recorded in targets.json and the claims. Let me check the git status and commit.
+
+Also — I want to double-check the SFVOM_GetRead source state (I left it with the negative-condition version which had the store/li wall — the best state). And the sfd_con.c UpdateConcatTime (new_time local version). Let me do a final sanity check on the diff of my files.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -v "^ M tools/coop/cri_orchestrator\|^ M tools/coop/retail_reloc_map.json\|^ M tools/coop/targets" | head -25; echo ===; git dif...
+[Thought] My files: the 8 CriWare files + MWCC_REFERENCE + attempts.jsonl. The other modified files (cfg_lib.c, sj_utl.c, sud_lib.c, RVL_SDK...) are OTHER agents' work — I must NOT commit those. Let me stage ONLY my files:
+- docs/MWCC_REFERENCE.md
+- docs/evidence/decomp/attempts.jsonl (my additions — but wait, other agents also append to attempts.jsonl! The file has concurrent writes. Committing it includes their entries... the instructions say "Commit only your own work (git add your files...)" and attempts.jsonl is explicitly listed as committable: "Only modify YOUR unit's source files, shared headers, configure.py Object(...) for YOUR units, and docs/evidence/decomp/attempts.jsonl. Commit only your own work (git add your files, git commit)". attempts.jsonl is in the allowed list — it's append-only, so committing it is expected (the file is shared but the commits include everyone's entries).
+- libs/CriWare/src/sofdec/mwply/code_803A3AE4.c
+- libs/CriWare/src/sofdec/sfdcore/mpv/mpv_frm.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_con.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_see.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_trn.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c
+- libs/CriWare/src/sofdec/sfdcore/sfd/sfd_vom.c
+
+Also targets.json and targets.certs.jsonl.gz are modified by the cycle runs — those are tooling state files (shared). The instructions say commit "your unit files, docs/evidence/decomp/attempts.jsonl" — targets.json is the shared registry; the cycle command updates it. Previous commits in the repo include targets.json? Let me check the git log to see what previous agent commits included.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git log --oneline -8 | head -8; echo ===; git show --stat HEAD~1 2>/dev/null | grep -E "targets|certs|attempts" | head -5
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat HEAD 2>/dev/null | grep -E "targets.json|certs" | head -3; git show --stat d0e911b22 2>/dev/null | grep -E "targets.json|certs|attempts" |...
+[Thought] Previous commits include tools/coop/targets.json, targets.certs.jsonl.gz, and attempts.jsonl. So the accepted-target state IS committed in the shared registry. I'll follow the same pattern: commit my source files + attempts.jsonl + targets.json + targets.certs.jsonl.gz + MWCC_REFERENCE.md. The targets.json changes from my cycles are my accepted targets (us-803d1658, us-803d1400, us-803d0e94, us-803a7260) — those are mine.
+
+Let me stage my files and commit.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git add docs/MWCC_REFERENCE.md docs/evidence/decomp/attempts.jsonl tools/coop/targets.json tools/coop/targets.certs.jsonl.gz libs/CriWare/src/sofdec/mwply...
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git commit -m "cri: match sfd/sfvom/sfuo/sftrn/mpv/svm codegen batch cri-16 — accept SFVOM_ExecServer, SFD_SetUsrSj, SFTRN_InitHn, criware_803A3AE4 FULL_M...
+Committed. Final verification of all 30 targets:
+[Thought] Committed. Now let me do a final verification of the batch state and check for anything I may have missed. Let me re-verify the target statuses:
+
+1. Check the 30 targets' current states.
+2. Confirm the claims are still held (I should release them? The SKILL says "release the claim" after acceptance — but the batch instructions don't mention releasing. The targets show workflow status — accepted ones are ACCEPTED. Let me check if there's a release step needed... the cycle command probably handles it. Let me check the target states.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for id in us-803d178c us-803c363c us-803c2714 us-803d1568 us-803d12d8 us-803a71c4 us-8037f454 us-803a9b64 us-803c2790 us-803a7260 us-803c2840 us-803d1400 ...
+All 30 targets processed. Final state verified — batch complete.
+
+---
+
+## FINAL REPORT — batch cri-16 (30 targets)
+
+### Accepted (4)
+
+| id | function | status |
+|---|---|---|
+| us-803d1658 | SFVOM_ExecServer | **FULL_MATCH** (100%) |
+| us-803d1400 | SFD_SetUsrSj | **FULL_MATCH** (100%) |
+| us-803d0e94 | SFTRN_InitHn | **FULL_MATCH** (100%) |
+| us-803a7260 | criware_803A3AE4 | **FULL_MATCH** (100%, full-instruction-match cert despite callee-blocked MWSFSVM_Error) |
+
+### Blockers for the out-of-band probe pass (witness-blocked-but-clean; fuzzy ≥ 50%, semantics correct, 0 or few structural)
+
+| id | function | hexdiff/fuzzy | residual |
+|---|---|---|---|
+| us-803d178c | SFVOM_GetRead | 92.0% / 92.0% | documented store/li order wall |
+| us-803c2714 | SFCON_UpdateConcatTime | 87.1% / 93.5% | store/chain interleave wall |
+| us-803c2790 | SFCON_WriteTotSmplQue | 90.9% / 95.2% | 2 scheduler order swaps + r0/r3 swap |
+| us-803c2840 | SFCON_ReadTotSmplQue | 95.7% / 95.7% | store/li wall in failure path |
+| us-803d1568 | SFUO_Create | 97.2% / 97.2% | 0 structural, 15 pure reg_swaps |
+| us-803cea68 | sfsee_ExecFinAnaly | 90.7% / 90.7% | allocator frame/color diffs (reconstructed from inverted source) |
+| us-803ce68c | sfsee_ExecHeadAnaly | 95.1% / 95.1% | color rotation + 1-instr tail-merge diff (reconstructed: ok1/ok2 returns, __mulhw magic) |
+| us-803a71c4 | criware_803A3A48 | 99.7% / 99.7% | 0 structural, 0 reg_swap; 2 bl reloc placeholders |
+| us-803a9b64 | MPV_SkipFrmSj | 94.0% / 94.0% | 3-way callee-saved color rotation |
+| us-803c363c | criware_803C0D94 | 3.6% / low | documented CR0-stale dispatch wall (MWCC_REFERENCE) — semantics complete |
+
+### Callee/indirect blockers (recorded in attempts.jsonl; not cycleable)
+
+us-803d12d8 (indirect), us-8037f454 (ADXF_CloseAll CODE_MATCH), us-803a576c / us-803a58c8 (MWSFSVM_Error NOT_STARTED), us-803d180c / us-803d18e4 / us-803d0d9c / us-803bcfd4 (indirect), us-803c3400 (SFTRN_Init NOT_STARTED), us-803c3320 (indirect + callees), us-80382590 / us-80382460 (SVM/LSC callees not accepted), us-8038db28 (AHXSJD_Start HIGH_MATCH), us-803a9a34 (MPVSL_DecPicture NOT_STARTED — size fixed to fit unit), us-803bce74 (indirect + callees), us-8038d918 (indirect + callees).
+
+### Other work
+- Fixed missing `extern void* lbl_eu_8060715C` in sfd_lib.c (unblocked build; another agent's in-progress edit).
+- Fixed mpv_frm unit 16-byte split overflow via MPV_DecodeFrmSj v1/v2 pre-load restructure (0x140 → 0x124) and code_803A3AE4 unit overflow via criware_803A3AE4 100% match (0x180 → 0x16C).
+- Added MWCC_REFERENCE entries: `__mulhw` magic-multiply pattern, void-call-result alias, declaration-order color fix, mpv_frm size key.
+- Committed `cce1a30ea` (14 files: 8 CriWare sources + attempts.jsonl + targets registry + certs + MWCC_REFERENCE).
+[Thought] The state looks right:
+- 4 ACCEPTED (FULL_MATCH): us-803a7260, us-803d1400, us-803d1658, us-803d0e94
+- The rest are CLAIMED (my claims) or ACTIVE (my improved states)
+- Blocked ones are CLAIMED (recorded as blockers)
+
+The cycle updates the target records. The batch is done:
+- 4 targets accepted (FULL_MATCH)
+- 16 targets recorded as blockers (callee/indirect)
+- 10 targets recorded as witness-blocked stalls for out-of-band SMT
+
+Wait — let me count the blockers: 17 blocker records written initially + 2 more (criware_803C0D94 documented wall, MPV_DecodeFrmSj updated). Let me recount the final categorization:
+
+ACCEPTED (4):
+- us-803d1658 SFVOM_ExecServer FULL_MATCH
+- us-803d1400 SFD_SetUsrSj FULL_MATCH
+- us-803d0e94 SFTRN_InitHn FULL_MATCH
+- us-803a7260 criware_803A3AE4 FULL_MATCH (was callee-blocked; landed 100% static → accepted via full-instruction-match certificate)
+
+WITNESS-BLOCKED → OUT-OF-BAND SMT candidates (10, fuzzy ≥ 50%):
+- us-803d178c SFVOM_GetRead (92.0% / documented store/li wall)
+- us-803c2714 SFCON_UpdateConcatTime (93.5%)
+- us-803c2790 SFCON_WriteTotSmplQue (95.2%)
+- us-803c2840 SFCON_ReadTotSmplQue (95.7%)
+- us-803d1568 SFUO_Create (97.2%, 0 structural)
+- us-803cea68 sfsee_ExecFinAnaly (90.7%)
+- us-803ce68c sfsee_ExecHeadAnaly (95.1%)
+- us-803a71c4 criware_803A3A48 (99.7%, 0 structural)
+- us-803a9b64 MPV_SkipFrmSj (94.0%)
+- us-803c363c criware_803C0D94 (3.6% — documented CR0-stale wall, semantically complete but low static; SMT may not reach 50% fuzzy... noted as documented-wall)
+
+CALLEE/INDIRECT BLOCKED (16):
+- us-803d12d8 SFTRN_CallTrSetup (indirect)
+- us-8037f454 ADXF_Finish (callee ADXF_CloseAll CODE_MATCH)
+- us-803a576c mwPlyGetTime (callee MWSFSVM_Error NOT_STARTED)
+- us-803a58c8 mwPlyGetOutVol (callee MWSFSVM_Error NOT_STARTED)
+- us-803d180c SFTMR_GetTmr (indirect)
+- us-803c3400 fn_803C3400 (callee SFTRN_Init NOT_STARTED)
+- us-803c3320 fn_803C3320 (indirect + callees)
+- us-803d18e4 SFTMR_GetTmrUnit (indirect)
+- us-803d0d9c SFTRN_Init (indirect)
+- us-80382590 ADXT_Finish (callees not accepted)
+- us-8038db28 AHXLINK_ExecOneAhx (callee AHXSJD_Start HIGH_MATCH)
+- us-80382460 ADXT_Init (callees LSC_Init STRUCTURAL etc.)
+- us-803a9a34 MPV_DecodeFrmSj (callee MPVSL_DecPicture NOT_STARTED; size fixed)
+- us-803bce74 MPVSL_DecPicture (indirect + callees)
+- us-8038d918 ADXT_AttachAhx (indirect + callees)
+- us-803bcfd4 MPVSL_DecSliceOne (indirect)
+
+That's 4 + 10 + 16 = 30 ✓.
+
+One more check — the claims: should I release them? The SKILL says "release the claim" after acceptance, but the cycle command apparently handles the transition to ACCEPTED (the workflow shows ACCEPTED without me releasing). The blocked ones stay CLAIMED (by me, owner cri-b16) — that's fine for the batch (they're recorded as blockers and the owner info documents who recorded them).
+
+Let me write the final report. Also double-check that the sfd_lib.c fix (extern lbl_eu_8060715C) was included in my commit — yes, sfd_lib.c is in the commit.
+
+The batch is complete: everything either accepted, wall-recorded, or blocker-recorded. Every remaining target is either blocked (callee/indirect) or at its best documented state. The work is committed.

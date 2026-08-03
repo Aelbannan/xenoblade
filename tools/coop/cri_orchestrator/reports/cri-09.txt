@@ -1,0 +1,351 @@
+ more FULL_MATCH. The sfadxt_ExcludeHdr is at ~49% hexdiff with the block-layout diff. The sfadxt_SetAdxtHd is at 98.2% (1 add swap). 
+
+Hmm — actually — let me try ONE more thing on sfadxt_SetAdxtHd's add swap. The retail `add r3, r3, r4` — hmm — what if the expression is written so the FIRST term is `(x * 8)` computed via a SEPARATE statement AND the source's sum is `x8 + x` where x8 is declared AFTER x... I tried `s32 y = x * 8; (y + x)/16` — got x-first. 
+
+What if the SECOND term x comes from a MEMORY LOAD in the expression — `(x * 8 + conv->f10 * conv->fc) / 16` — where the second term re-loads?? — that would emit the loads... the retail's r4 = x (the mullw result — CSE'd). Hmm.
+
+OK — final answer on that: out-of-band. Let me finalize. Let me make sure my work is committed and write the final report.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "^( M|M )" | head -5; git status --short | grep -E "mpv_hdec|sfd_adxt|adx_fs|attempts" ; git log --oneline -4
+Let me append the key MWCC breakthroughs to the reference doc:
+[Thought] Interesting — the git log shows OTHER agents' commits (cri-15, cri-11, MWCC_REFERENCE) — other agents are working concurrently. My commits (f648cfefc, ebcb92468) are in the log. Good — my work is committed.
+
+The current uncommitted: only other agents' files (monitor.pid, reports) — not mine.
+
+Let me do a final check — the `tools/coop/cri_orchestrator/` files are other agents' — I should NOT touch them.
+
+Let me now also update MWCC_REFERENCE with the key breakthroughs I found (per the skill: "After a breakthrough: append to docs/MWCC_REFERENCE.md"). Key findings:
+1. `(b == 0) ? 1 : 0` ternary vs `b == 0` — the ternary hoists the cntlzw to the top (MPV_MoveChunk).
+2. The `x > 1` (unsigned) boolean-VALUE idiom (u32 local) for the xori+cntlzw+slw pattern (sfadxt_SetAdxtHd).
+3. `ret = -3; if (v == 0) ret = -2;` (default+override) vs ternary for the plain-cmpi codegen (MPVHDEC_RecoverSj).
+4. The struct-member access `&self->chunk` keeps self in a register and recomputes the member address (vs CSE'ing a pointer local) — DecEscSj.
+5. The `(p & ~3) + ((((p - a) * 8) + 7) >> 3) + 4 - p` size formula with `a = p & ~3` — the subf-based CSE.
+
+Let me append these to MWCC_REFERENCE.md. Then write the final report.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -30 docs/MWCC_REFERENCE.md
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md <<'EOF' ### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p) Batch cri...
+I have limited context remaining. Let me gather the final per-target state for the report:
+[Thought] Committed. Now let me use my remaining context for one more valuable attempt. Let me reconsider what could reach FULL_MATCH with limited effort:
+
+1. **sfadxt_ExcludeHdr** (48.9% hexdiff / maybe higher fuzzy): the block-layout diff. Its callees: AdjustSync (mine, HIGH_MATCH not accepted) — but FULL_MATCH certifies independently. Hmm — but the layout diff...
+
+2. **mpvhdec_DecGscSj** — the bit-reader stub. All callees OK. If FULL_MATCH → ACCEPT. This is the highest-value remaining target. The bit reader... let me look at the retail once more and try to reconstruct it.
+
+Actually — let me think about what DecGscSj does: reads a GOP header from the SJ chunk. The bit-unpacking: the retail reads 32-bit words from the chunk at a byte offset and extracts fields. Let me look at the retail structure once more:
+
+```
+0xB04: r0 = chunk.p
+0xB08: r3 = r0 & ~7
+0xB0C: r0 = r0 - r3   (offset in the 8-byte window)
+0xB10: r4 = *(u32*)(r3 + 4)   (word 1)
+0xB14: r7 = (r0 << 3) & ~7    (bit offset = r0*8)
+0xB18: beq skip (if r0 == 0)
+0xB1C: r4 <<= r7              (align word 1)
+0xB20: cmpi r7, 7
+0xB24: r6 = *(u32*)(r3 + 8)   (word 2)
+0xB28: r9 = r3 + 12
+0xB2C: ble 0xB64
+  ... (the r7 > 7 case: combine r4 and r6)
+0xB64: (r7 <= 7 case): r10 = r4 >> 7... etc.
+```
+
+This reads a 32-bit value at the byte offset with the bit-shift — the "read 25 bits from the stream" pattern. The fields: self+0xB88/0xB84/0xB80/0xB7C/0xB78 (the 6/6/6/5-bit + the top) and self+0xC54/0xC58 (from the loop).
+
+Hmm — this looks like the MPEG GOP header:
+- sequence_header_code: 32 bits
+- horizontal_size: 12 bits
+- vertical_size: 12 bits
+- aspect_ratio: 4 bits
+- frame_rate: 4 bits
+- bit_rate: 18 bits
+...
+
+The fields extracted: r10 (32 bits from the stream), then:
+- self+0xB88 = r10 & 0x3F (6 bits)
+- self+0xB84 = (r10 >> 6) & 0x3F
+- self+0xB80 = (r10 >> 12) & 0x3F
+- self+0xB7C = (r10 >> 18) & 0x1F (5 bits)
+- self+0xB78 = (r10 >> 5) & 0x7FFFFFF?? — hmm — wait — that's the top 27 bits...
+
+Hmm — actually — this is the MPEG-1 "video sequence header" fields — but with the Sofdec custom layout. The 6+6+6+5 = 23 bits + the loop's 31 bits...
+
+Honestly — reconstructing this bit-reader EXACTLY requires writing the C that produces the specific rlwinm chain. The bit reader is likely:
+
+```c
+// read n bits from the buffer at byte offset
+```
+
+with MWCC generating the exact shift/rotate sequence. This is a multi-hour task. Given my remaining context (~15-20%?), let me make the final call: write the report.
+
+Actually — hold on. Let me reconsider the situation. I've accepted 3 targets + the pre-accepted one = 4 accepted from my batch of 38. The instructions say "keep working until the whole batch is done or every remaining target is blocked." Most remaining targets ARE blocked (callee-blocked or witness-blocked). The unblocked stubs (DecGscSj, DecPscSj) need extensive reconstruction.
+
+Let me try DecGscSj with a focused effort — it's the smallest unblocked stub (0x1C8 = 114 instructions). Let me map the bit-reader semantics precisely and write the C.
+
+Looking at the retail flow once more:
+
+```
+prologue: stwu -32; mflr; li r6, 2; stw r0; li r0, 0; stw r31; or r31, r4 (sj); lis r4, -32768; stw r30; or r30, r3 (self)
+0xAC8: lwz r5, 2956(r3)      ← self+0xB8C (gop counter)
+0xACC: stw r6, 3416(r3)      ← self+0xD58 = 2 (codec?)
+0xAD0: addi r6, r30, 3372    ← &self+0xD2C (chunk)
+0xAD4: addi r5, r5, 1
+0xAD8: stw r5, 2956(r3)      ← self+0xB8C++
+0xADC: subi r5, r4, 1        ← 0x7FFFFFFF
+0xAE0: li r4, 1
+0xAE4: stw r0, 3484(r3)      ← self+0xD9C = 0
+0xAE8: stw r0, 3488(r3)      ← self+0xDA0 = 0
+0xAEC: stw r0, 3012(r3)      ← self+0xBC4 = 0
+0xAF0: or r3, r31 (sj)
+0xAF4: lwz r7, 0(r31)        ← vt
+0xAF8: lwz r12, 24(r7)       ← vt[6]
+0xB00: bcctrl                ← vt6(sj, 1, 0x7FFFFFFF, &self->chunk)
+0xB04: lwz r0, 3372(r30)     ← chunk.p
+0xB08: rlwinm r3, r0, 0, 0, 29  ← p & ~7  — hmm — wait — earlier I decoded rlwinm 0,0,29 as & ~3?? — let me recheck: rlwinm(v,0,0,29) = v & ~3 (mask [0:29] clears bits 30,31 = & ~3). Hmm — from my Python test: rlwinm(v,0,0,29) = 0xdeadbeec = v & ~3. And rlwinm(v,0,0,28) = v & ~7.
+0xB0C: subf r0, r3, r0       ← p - (p&~3) = p & 3
+0xB10: lwz r4, 4(r3)         ← *(u32*)((p&~3)+4)
+0xB14: rlwinm r7, r0, 3, 0, 28  ← (p&3) * 8
+0xB18: beq 0xB20             ← if (p&3 == 0) skip the shift
+0xB1C: slw r4, r4, r7        ← r4 <<= (p&3)*8
+0xB20: cmpi r7, 7
+0xB24: lwz r6, 8(r3)         ← *(u32*)((p&~3)+8)
+0xB28: addi r9, r3, 12       ← &((u32*)(p&~3))[3]
+0xB2C: ble 0xB64             ← if ((p&3)*8 <= 7) → the simple case
+  (the r7 > 7 case:)
+0xB30: addic. r7, r7, -7     ← r7 -= 7
+0xB34: beq 0xB50             ← if (r7 == 0)...
+0xB38: subfic r0, r7, 25     ← r0 = 25 - r7
+0xB3C: srw r0, r6, r0        ← r0 = r6 >> (25 - r7)
+0xB40: or r8, r4, r0         ← r8 = r4 | r0
+0xB44: rlwinm r10, r8, 25, 7, 31  ← ...
+0xB48: slw r8, r6, r7        ← r8 = r6 << r7
+0xB4C: b 0xB58
+0xB50: rlwinm r10, r4, 25, 7, 31
+0xB54: or r8, r6, r6         ← r8 = r6
+0xB58: lwz r6, 0(r9)         ← next word
+0xB5C: addi r9, r9, 4
+0xB60: b 0xB70
+0xB64: rlwinm r10, r4, 25, 7, 31
+0xB68: rlwinm r8, r4, 25, 0, 6
+0xB6C: addi r7, r7, 25       ← r7 += 25
+0xB70: rlwinm r4, r10, 0, 26, 31  ← r4 = r10 & 0x3F (6 bits)
+0xB74: rlwinm r10, r10, 26, 6, 31  ← r10 = (r10 >> 6) & 0x3FFFFFF
+0xB78: rlwinm r3, r10, 0, 26, 31   ← r3 = r10 & 0x3F
+0xB7C: rlwinm r0, r8, 1, 31, 31    ← r0 = r8 >> 31 (bit 31)
+0xB80: rlwinm r10, r10, 25, 7, 31  ← r10 = (r10 >> 7) & 0x1FFFFFF
+0xB84: cmpi r7, 31
+0xB88: rlwinm r5, r10, 0, 26, 31   ← r5 = r10 & 0x3F
+0xB8C: stw r4, 2952(r30)     ← self+0xB88 = 6 bits
+0xB90: rlwinm r10, r10, 26, 6, 31  ← r10 >>= 6
+0xB94: rlwinm r4, r10, 0, 27, 31   ← r4 = r10 & 0x1F (5 bits)
+0xB98: stw r3, 2948(r30)     ← self+0xB84
+0xB9C: rlwinm r3, r10, 27, 5, 31   ← r3 = r10 >> 5 (27 bits)
+0xBA0: stw r5, 2944(r30)     ← self+0xB80
+0xBA4: stw r4, 2940(r30)     ← self+0xB7C
+0xBA8: stw r3, 2936(r30)     ← self+0xB78
+0xBAC: stw r0, 3156(r30)     ← self+0xC54 = bit 31 of r8
+0xBB0: bne 0xBC4             ← if (r7 != 31)...
+0xBB4: or r8, r6, r6         ← r8 = r6 (next word)
+0xBB8: li r7, 0
+0xBBC: addi r9, r9, 4
+0xBC0: b 0xBCC
+0xBC4: rlwinm r8, r8, 1, 0, 30  ← r8 <<= 1
+0xBC8: addi r7, r7, 1
+0xBCC: cmpi r7, 31
+0xBD0: rlwinm r0, r8, 1, 31, 31  ← r0 = r8 >> 31
+0xBD4: stw r0, 3160(r30)     ← self+0xC58 = bit 31
+0xBD8: bne 0xBE8             ← if (r7 != 31) loop
+0xBDC: li r7, 0
+0xBE0: addi r9, r9, 4
+0xBE4: b 0xBEC
+0xBE8: addi r7, r7, 1
+0xBEC: addi r0, r7, 7
+0xBF0: addi r3, r30, 3372    ← &self->chunk
+0xBF4: srawi r0, r0, 3       ← (r7+7)>>3
+0xBF8: lwz r7, 3372(r30)     ← chunk.p
+0xBFC: add r4, r9, r0        ← r9 + (r7+7)/8
+0xC00: or r5, r3, r3
+0xC04: subi r0, r4, 8
+0xC08: addi r6, sp, 8
+0xC0C: subf r4, r7, r0       ← size = (r9 + (r7+7)/8 - 8) - chunk.p
+0xC10: bl SJ_SplitChunk
+0xC14: vt8(sj, 0, &self->chunk)
+0xC30: vt7(sj, 1, &sp8)
+0xC4C: return 0
+```
+
+The core: reads a 25-bit value from the bitstream at chunk.p (byte-aligned window), extracts:
+- self+0xB88 = bits [0:6] (6 bits)
+- self+0xB84 = bits [6:12] (6 bits)
+- self+0xB80 = bits [12:18] (6 bits)
+- self+0xB7C = bits [18:23] (5 bits)
+- self+0xB78 = bits [5:32] (27 bits — the WHOLE value shifted 5?)
+- self+0xC54 = bit 31 of r8
+- self+0xC58 = bit 31 of the loop value
+
+Then a loop reads 31 more bits (self+0xC58 = the last bit), and the split size = (r9 + (bitcount+7)/8 - 8) - chunk.p.
+
+Hmm — wait — the "25-bit read": r10 = the value; fields: 6+6+6+5 = 23 bits; self+0xB78 = r10 >> 5 (27 bits — overlapping!). And self+0xC54 = bit31 of r8 (from the word assembly). 
+
+Actually — hmm — this looks like the MPEG-1 GOP header:
+- gop_start_code: 32 bits
+- time_code: 25 bits (drop_frame 1, time_code_hours 5, minutes 6, marker 1, seconds 6, pictures 6) — the 5+6+1+6+6 = 24 bits!
+- closed_gop: 1 bit
+- broken_link: 1 bit
+
+The fields 6,6,6,5 = 23 bits + the loop's 31... Hmm.
+
+Actually — the Sofdec GOP header: the fields stored:
+- self+0xB88 (6 bits) — pictures?
+- self+0xB84 (6 bits) — seconds
+- self+0xB80 (6 bits) — minutes
+- self+0xB7C (5 bits) — hours
+- self+0xB78 (27 bits) — the full time_code?
+- self+0xC54 (1 bit) — closed_gop
+- self+0xC58 (1 bit) — broken_link
+
+And the loop reads 31 bits (the "bit reader" walking words) to get the broken_link bit at position 31.
+
+Reconstructing this EXACTLY from the rlwinm patterns... The 25-bit read at a byte offset with the word assembly — this is MWCC's codegen for reading a bit field from a byte buffer. The source probably used a helper like:
+
+```c
+// read 25 bits at bit position 0
+u32 v = (buf[0] << 24) | (buf[1] << 16) | ... 
+```
+NO — the retail reads WORDS (lwz). The chunk.p might be UNALIGNED — the code aligns to 8 bytes and shifts. So the source reads the value as WORDS and handles the offset.
+
+The exact C that MWCC compiles to this... Given the complexity (the r7 > 7 word-boundary handling, the 31-bit loop), this is a hard reconstruction. Let me try to write it:
+
+```c
+s32 mpvhdec_DecGscSj(void* self, void* sj) {
+    s32 r7;   // bit position
+    ...
+    self->d58 = 2;
+    self->b8c++;
+    self->d9c = 0;
+    self->da0 = 0;
+    self->bc4 = 0;
+    vt6(sj, 1, 0x7FFFFFFF, &self->chunk);
+    {
+        u8* p = self->chunk.p;   // the byte offset
+        u32* q = (u32*)((u32)p & ~3);   // hmm — the retail aligns to ~3 (rlwinm 0,0,29 = & ~3!)
+        s32 off = p - q;   // hmm — wait — r0 = p - (p & ~3) = p & 3
+        ...
+    }
+}
+```
+
+Hmm — the retail aligns to & ~3 (4-byte) and reads words. The bit offset = (p & 3) * 8. So:
+```c
+u32* q = (u32*)((s32)p & ~3);
+u32 v = q[1];           // r4 = *(q+1)
+s32 bit = (p & 3) * 8;  // r7
+if (bit != 0) v <<= bit;  // slw
+...
+```
+
+This is the "read a 32-bit word at an arbitrary byte offset" pattern. Then the fields... This will take MANY iterations to get right.
+
+Given my context, I'll make the final decision: I cannot realistically complete the bit-reader stubs in the remaining context. Let me finalize the batch report now.
+
+Actually — hold on, let me reconsider the acceptance accounting once more. Let me re-verify which targets I actually ACCEPTED (the registry shows ACCEPTED):
+- us-803ab620 MPV_MoveChunk — FULL_MATCH ACCEPTED ✓
+- us-803aaf50 mpvhdec_DecEscSj — FULL_MATCH ACCEPTED ✓
+- us-803ab51c MPVHDEC_RecoverSj — FULL_MATCH ACCEPTED ✓
+- us-803c03fc sfadxt_SearchAlign — pre-accepted ✓
+
+So 3 new acceptances this session. 
+
+Let me write the final report now. Let me gather the final state for the report — per-target status with the current hexdiff percentages.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && for u in CriWare/src/sofdec/sfdcore/mpv/mpv_hdec CriWare/src/sofdec/sfdcore/sfd/sfd_adxt CriWare/src/adx/adxf/adx_fs; do .venv/bin/python3 tools/coop/hexd...
+I've reached the practical limit of this session. Here's my final report:
+
+---
+
+## FINAL REPORT — batch cri-09 (38 targets, units adx_fs / mpv_hdec / sfd_adxt)
+
+### Accepted (3 new this session + 1 pre-accepted)
+
+| id | function | status |
+|---|---|---|
+| us-803ab620 | MPV_MoveChunk | **FULL_MATCH** |
+| us-803aaf50 | mpvhdec_DecEscSj | **FULL_MATCH** |
+| us-803ab51c | MPVHDEC_RecoverSj | **FULL_MATCH** |
+| us-803c03fc | sfadxt_SearchAlign | FULL_MATCH (pre-accepted) |
+
+### Witness-blocked-but-clean → out-of-band SMT probe candidates (semantically clean; register-cycle / scheduling diffs)
+
+| id | function | state | blocker detail |
+|---|---|---|---|
+| us-803aa1e0 | MPV_DecodePicAtr | 91.1% | prologue load hoist (1 sched diff); callee DecodePicAtrSj mine |
+| us-803a9fdc | MPV_DecodePicAtrSj | 79.1% | 4-cycle register permutation; callee-blocked by Dec* stubs |
+| us-803ab020 | mpvhdec_DecUdscSj | 91.8% | register cycle + prologue hoist; callee AnalyUd mine |
+| us-803ab2c8 | mpvhdec_DecSeqUdsc | 92.7% | 10-vs-9 callee-saved register permutation |
+| us-803ab118 | mpvhdec_AnalyUd | 97.4% | 2 sched diffs; callee DecSeqUdsc mine |
+| us-803a9e88 | MPVHDEC_Init | 71.9% | 5-base tail materialization (MWCC folds my shapes to 1 base) |
+| us-803c0760 | sfadxt_SetAdxtHd | 98.2% | 1 commutative add operand swap |
+| us-803c0fec | SFADXT_Seek | 94.2% | 1 lis scheduling hoist |
+| us-803c0d18 | SFADXT_Destroy | ~68% | 3-cycle register permutation |
+| us-80381cf8 | ADXF_GetFsizeSct | 96.1% | 64-bit add register chain |
+| us-80380aa8 | adxf_CreateAdxFs | 93.2% | 4 sched diffs; callee ADXSTM_Create NOT_STARTED |
+| us-803c00c0 | sfadxt_AdjustSync | 72.6% | reconstructed (0x280); 11-callee-saved allocation |
+
+### Callee-blocked / stubs (recorded in attempts.jsonl)
+
+- **adx_fs near-misses** (ADXF_LoadPartitionNw 76.2%, ADXF_Close 86.7%, ADXF_CloseAll 52.4%, adxf_Stop 89.4%, adxf_read_sj32 76.9%): blocked by other units' NOT_STARTED callees (ADXSTM_Stop/Destroy/ReleaseFile/GetStat/SetSj, ADXSTM_Create) + my own stubs.
+- **Stubs needing full reconstruction**: mpvhdec_DecShcSj (0x5D4, callee UTY_MemcpyDword CODE_MATCH), mpvhdec_DecGscSj (0x1C8), mpvhdec_DecPscSj (0x460) — complex MWCC bit-reader (word-aligned lwz + rlwinm chain) not completed; adxf_LoadPtBothNw (0x68C), adxf_GetPtStat (0xE3C), adxf_ReadNw32, adxf_ExecOne, adxf_Seek, adxf_GetFnameRangeEx (0x264 — analysed, unrolled-loop reconstruction incomplete); SFADXT_Create/ExecServer/InitInf/SetSpeed; sfadxt_ExcludeSilence/ChkTermFlg (22.2%, 7-register + block-layout diffs); sfadxt_ExcludeHdr (48.9%, branch-layout); SFADXT_Pause (62.9%, callee HIGH_MATCH).
+
+### Key MWCC breakthroughs (appended to docs/MWCC_REFERENCE.md)
+- `(x == 0) ? 1 : 0` ternary hoists cntlzw to prologue vs `x == 0` (MPV_MoveChunk 100%)
+- `u32 ok = x > 1; if (ok)` → xori/cntlzw/slw/rlwinm idiom (SetAdxtHd 98%)
+- `ret = -3; if (v==0) ret = -2;` default+override keeps plain cmpi (RecoverSj 100%)
+- Struct-member `&self->chunk` keeps base register live vs CSE'd pointer local (DecEscSj 100%)
+- Branch polarity driven by if-condition shape (`!= 0 → break` first) (RecoverSj loop 100%)
+
+### Commits
+`f648cfefc`, `ebcb92468`, `d0e911b22` (mpv_hdec, sfd_adxt, adx_fs + attempts.jsonl), plus the MWCC_REFERENCE doc commit. All work committed; no pushes, no other agents' files touched.
+
+**Remaining risk**: the register-permutation near-misses (79–98%) need the out-of-band Z3 probes to certify; the large stubs (0xE3C GetPtStat, 0x68C LoadPtBothNw, 0x5D4 DecShcSj) need multi-session reconstruction.
+[Thought] Good — I have the state. Let me finalize. The SFADXT_Seek improved to 92.7% (4 structural) after the last build. sfadxt_SetAdxtHd at 98.2% (0 structural, 1 reg_swap).
+
+Let me write the final report now. Let me summarize per-target:
+
+**ACCEPTED (3 new this session + 1 pre-accepted):**
+1. us-803ab620 MPV_MoveChunk — FULL_MATCH ✓
+2. us-803aaf50 mpvhdec_DecEscSj — FULL_MATCH ✓
+3. us-803ab51c MPVHDEC_RecoverSj — FULL_MATCH ✓
+4. us-803c03fc sfadxt_SearchAlign — FULL_MATCH (pre-accepted)
+
+**Witness-blocked-but-clean (for out-of-band SMT probe):**
+- us-803aa1e0 MPV_DecodePicAtr — 91.1% — prologue load hoist (1 scheduling diff), callee MPV_DecodePicAtrSj mine (blocked)
+- us-803a9fdc MPV_DecodePicAtrSj — 79.1% — 4-cycle register permutation; also callee-blocked by Dec* stubs
+- us-803ab020 mpvhdec_DecUdscSj — 91.8% — register cycle + prologue hoist; callee AnalyUd blocked
+- us-803ab2c8 mpvhdec_DecSeqUdsc — 92.7% — register permutation (10 vs 9 callee-saved)
+- us-803ab118 mpvhdec_AnalyUd — 97.4% — 2 structural (scheduling); callee DecSeqUdsc blocked
+- us-803a9e88 MPVHDEC_Init — 71.9% — 5-base tail materialization pattern unreproduced
+- us-803c0760 sfadxt_SetAdxtHd — 98.2% — 1 commutative add operand swap
+- us-803c0fec SFADXT_Seek — 94.2% — 1 lis scheduling hoist
+- us-803c0d18 SFADXT_Destroy — ~68% — 3-cycle register permutation
+- us-80381cf8 ADXF_GetFsizeSct — 96.1% — 64-bit add register cycle
+- us-80380aa8 adxf_CreateAdxFs — 93.2% — 4 scheduling diffs; callee-blocked (ADXSTM_Create NOT_STARTED)
+
+**Callee-blocked (other units' NOT_STARTED callees):**
+- us-8037f4f8 ADXF_LoadPartitionNw — 76.2% — callee adxf_LoadPtBothNw (mine, stub)
+- us-80380d90 ADXF_Close — 86.7% — ADXSTM_Destroy/ReleaseFile NOT_STARTED
+- us-80380f34 ADXF_CloseAll — 52.4% — same
+- us-80381568 adxf_Stop — 89.4% — ADXSTM_Stop NOT_STARTED
+- us-803810d8 adxf_read_sj32 — 76.9% — ADXSTM_GetStat CODE_MATCH/Stop/SetSj NOT_STARTED
+- us-803c0e94 SFADXT_Pause — 62.9% — ADXT_DiscardSmpl/SFTST_GoNextFrame HIGH_MATCH
+- us-803c04f0 sfadxt_ExcludeSilence — 20% — sfadxt_ExcludeHdr (mine)
+- us-803c061c sfadxt_ChkTermFlg — 22% — callees OK but 7-register allocation + block layout
+- us-803c0340 sfadxt_ExcludeHdr — 48.9% — sfadxt_AdjustSync (mine, HIGH_MATCH not accepted)
+- us-803c00c0 sfadxt_AdjustSync — 72.6% — complex register allocation (11 callee-saved)
+- us-803aa354 mpvhdec_DecShcSj — stub — UTY_MemcpyDword CODE_MATCH (other unit)
+- us-803bfd2c SFADXT_ExecServer — stub — SFBUF_GetFlowCnt HIGH_MATCH
+- us-803c083c SFADXT_Create — stub — ADXT_StartSj CODE_MATCH, sfadxt_InitInf (mine)
+- us-803c0a0c sfadxt_InitInf — stub — us-803d1a94/803d6dc0 NOT_STARTED
+- us-803bfae0 SFADXT_SetSpeed — stub
+- us-8037f5a0 adxf_LoadPtBothNw — stub — multiple NOT_STARTED callees
+- us-8037fc6c adxf_GetPtStat — stub — 0xE3C huge
+- us-803811dc adxf_ReadNw32, us-80381754 adxf_ExecOne, us-80381a6c adxf_Seek, us-8038203c adxf_GetFnameRangeEx — stubs
+- us-803aa928 mpvhdec_DecGscSj, us-803aaaf0 mpvhdec_DecPscSj — stubs (callees OK — reconstructable but complex bit-readers)
+
+Let me write the final report now. I'm at the end of my useful context.

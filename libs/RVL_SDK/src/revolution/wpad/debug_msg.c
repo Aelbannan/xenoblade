@@ -6,10 +6,4 @@ void DEBUGPrint(const char* pFmt, ...) {
     // Stubbed for release
 }
 
-//unused
-void _WPADEnableDebugMsgs(){
-}
-
-//unused
-void _WPADDisableDebugMsgs(){
-}
+// unused in Xenoblade retail: _WPADEnableDebugMsgs, _WPADDisableDebugMsgs

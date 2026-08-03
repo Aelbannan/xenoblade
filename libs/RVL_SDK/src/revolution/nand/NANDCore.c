@@ -28,8 +28,7 @@ s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
 char __NANDVersion[0x60] =
     "<< RVL_SDK - NAND \trelease build: Feb 27 2009 10:05:16 (0x4302_145) >>";
 
-static NANDLibState s_libState = NAND_LIB_UNINITIALIZED;
-static char s_currentDir[64] ALIGN(32) = "/";
+static NANDLibState s_libState = NAND_LIB_UNINITIALIZED;static char s_currentDir[64] ALIGN(32) = "/";
 /* Must remain a real .data object at +0xA0 (NANDInit may address via strBase). */
 #pragma force_active on
 static OSShutdownFunctionInfo s_shutdownFuncInfo = {nandOnShutdown, 255};

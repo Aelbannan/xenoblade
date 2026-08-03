@@ -331,5 +331,5 @@ void __DSP_remove_task(DSPTask* task) {
 // although the function was GC'd; keep it via an .init-section function so no
 // .text is added.
 __declspec(section ".init") void FORCEACTIVEdsp_task_sdata(void) {
-    fake_function("__DSP_add_task() : Added task    : 0x%08X\n\0\0\0\0\0\0\0");
+    fake_function("__DSP_add_task() : Added task    : 0x%08X\n\0\0\0\0\0");
 }

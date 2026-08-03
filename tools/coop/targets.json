@@ -464427,7 +464427,7 @@
       "size": "0x8",
       "unit": "monolib/src/device/CDevice",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDevice.cpp",
@@ -464439,7 +464439,15 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 97.5,
-      "equivalence_status": "not_equivalent"
+      "equivalence_status": "not_equivalent",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T19:39:21.064428+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDevice.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80450290",
@@ -487710,7 +487718,7 @@
       "size": "0x650",
       "unit": "monolib/src/scn/UnkClass_8047E110",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -487724,7 +487732,15 @@
       ],
       "source": "libs/monolib/src/scn/UnkClass_8047E110.cpp",
       "instruction_match": 98.824,
-      "equivalence_status": "inconclusive_timeout"
+      "equivalence_status": "inconclusive_timeout",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-03T19:38:35.897742+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/UnkClass_8047E110.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80484ec0",

@@ -256,7 +256,7 @@ u32 OSGetConsoleType(void) {
 }
 
 static void MemClear(void* mem, u32 size) {
-    void* flush = (0x40000 < size) ? (u8*)mem + (size - 0x40000) : mem;
+    void* flush = (0x40000 < size) ? (u8*)mem + size - 0x40000 : mem;
     DCZeroRange(mem, size);
     DCFlushRange(flush, 0x40000);
 }

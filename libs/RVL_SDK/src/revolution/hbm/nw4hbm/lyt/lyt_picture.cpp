@@ -1,3 +1,12 @@
+#include <nw4hbm/ut/ut_RuntimeTypeInfo.h>
+/* Retail declares GetRuntimeTypeInfo out-of-line (strong T symbols, no weak
+   RTTI emission); override the inline macro for this TU so the RTTI objects
+   are referenced (U) instead of emitted weakly. */
+#undef NW4R_UT_RTTI_DECL
+#define NW4R_UT_RTTI_DECL(T)                                                   \
+    virtual const nw4hbm::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo()    \
+        const;                                                                 \
+    static nw4hbm::ut::detail::RuntimeTypeInfo typeInfo;
 #include <nw4hbm/lyt.h>
 #include <nw4hbm/ut.h>
 
@@ -118,7 +127,18 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 } // namespace lyt
 } // namespace nw4hbm
 
-extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt7PictureCFv(void) {
-    extern const char typeInfo__Q36nw4hbm3lyt7Picture[];
-    return (void*)typeInfo__Q36nw4hbm3lyt7Picture;
+namespace nw4hbm {
+namespace lyt {
+
+const ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
+    return &typeInfo;
 }
+
+} // namespace lyt
+} // namespace nw4hbm
+
+/* retail .rodata = 8 zero bytes (0.0f const + 4 pad); retail .bss = typeInfo + 4 pad
+   (sdata_threshold 0 keeps 4-byte globals in .bss). External linkage so -ipa file
+   keeps them. */
+extern const float lyt_picture_rodata_pad = 0.0f;
+u8 lyt_picture_bss_pad[4];

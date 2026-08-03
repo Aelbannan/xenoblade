@@ -5,6 +5,4 @@ void __DSP_debug_printf(const char* fmt, ...) {
 #pragma unused(fmt)
 }
 
-//unused
-void __DSPGetCurrentTask(){
-}
+// unused in Xenoblade retail: __DSPGetCurrentTask

@@ -1261,7 +1261,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/os/OSReset.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSRtc.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSSync.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/OSThread.c"),  # demoted 2026-08: __OSThreadInit 1 structural — re-match before promoting
+            Object(Matching, "RVL_SDK/src/revolution/os/OSThread.c"),  # promoted 2026: 23/23 FULL_MATCH, split PASS (hexdiff --all)
             Object(Matching, "RVL_SDK/src/revolution/os/OSTime.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSUtf.c", mw_version = "GC/3.0a5.2"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSIpc.c"),

@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for RVL_SDK/src/revolution/bte/stack/hid/hidh_api
-
 // Replace stubs with high-level C/C++ during decomp.
 
 /* bt_target.h defaults to 7; retail binary uses 16 */
@@ -10,9 +9,6 @@
 #define BTM_SEC_PROTO_HID   6
 
 #include <harness_catalog.h>
-
-// Last trace string; definition at file end keeps it last in .data.
-static char hidh_sec6_failed_str[0x24];
 #include <revolution/bte/gki/common/gki.h>
 #include <revolution/bte/stack/include/btu.h>
 #include <revolution/bte/stack/include/sdp_api.h>
@@ -108,13 +104,15 @@ typedef struct {
     u8 pad_402[2];          /* offset 0x402 */
 } tHID_HOST_CTB;
 
-tHID_HOST_CTB hh_cb;
-
-// Retail .bss is 0x408: 4 pad bytes after hh_cb (sdata_threshold 0 forces
-// the pad into .bss instead of .sbss).
+// Retail .bss is 0x408: 4 pad bytes after hh_cb. Declared before hh_cb so
+// the reverse-order .bss emission places them after it.
 #pragma sdata_threshold 0
-u8 hidh_bss_pad[4];
+unsigned char hidh_bss_pad4;
+unsigned char hidh_bss_pad3;
+unsigned char hidh_bss_pad2;
+unsigned char hidh_bss_pad1;
 #pragma sdata_threshold 8
+tHID_HOST_CTB hh_cb;
 
 void hidh_search_callback(u16 result, void *p_data);
 
@@ -525,12 +523,9 @@ tHID_STATUS HID_HostSetSecurityLevel (char *p_name, UINT8 sec_lvl)
 
     if (!BTM_SetSecurityLevel(FALSE, p_name, HID_SERVICE_ID + 2, 0,
                               HID_PSM_INTERRUPT, BTM_SEC_PROTO_HID, 0)) {
-        HIDH_TRACE_ERROR0(hidh_sec6_failed_str);
+        HIDH_TRACE_ERROR0("Security Registration 6 failed\x00\x00\x00\x00\x00");
         return (HID_ERR_NO_RESOURCES);
     }
 
     return (HID_SUCCESS);
 }
-
-// Retail .data ends at 0x118: this trace string padded to 0x24 bytes.
-static char hidh_sec6_failed_str[0x24] = "Security Registration 6 failed";

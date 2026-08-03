@@ -252,138 +252,54 @@ UINT8 *sdpu_build_attrib_seq (UINT8 *p_out, UINT16 *p_attr, UINT16 num_attrs)
 
 /*******************************************************************************
 **
-** Function         sdpu_build_attrib_entry
+** Function         sdpu_get_len_from_type
 **
-** Description      Build one attribute entry (attribute id + value).
+** Description      Compute the byte length of a data element from its
+**                  descriptor type byte.
 **
-** Returns          Pointer to the next free byte in the output buffer.
-**
-*******************************************************************************/
-UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
-{
-    INT32    xx;
-    UINT8   *p_data;
-
-    /* First thing is the attribute ID (unsigned 16-bit integer). */
-    *p_out++ = (UINT_DESC_TYPE << 3) | SIZE_TWO_BYTES;
-    *p_out++ = (UINT8)(p_attr->attr_id >> 8);
-    *p_out++ = (UINT8)p_attr->attr_id;
-
-    switch (p_attr->attr_type)
-    {
-    case TEXT_STR_DESC_TYPE:        /* These types carry an explicit length */
-    case DATA_ELE_SEQ_DESC_TYPE:
-    case DATA_ELE_ALT_DESC_TYPE:
-    case URL_DESC_TYPE:
-        *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
-        *p_out++ = (UINT8)p_attr->attr_len;
-        p_data = p_out;
-
-        for (xx = 0; xx < p_attr->attr_len; xx++)
-        {
-            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
-            *p_data++ = p_value[xx];
-        }
-        return (p_data);
-
-    default:
-        switch (p_attr->attr_len)
-        {
-        case 1:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_ONE_BYTE);
-            break;
-        case 2:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_TWO_BYTES);
-            break;
-        case 4:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_FOUR_BYTES);
-            break;
-        case 8:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_EIGHT_BYTES);
-            break;
-        case 16:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_SIXTEEN_BYTES);
-            break;
-        default:
-            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
-            *p_out++ = (UINT8)p_attr->attr_len;
-            break;
-        }
-        p_data = p_out;
-
-        for (xx = 0; xx < p_attr->attr_len; xx++)
-        {
-            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
-            *p_data++ = p_value[xx];
-        }
-        return (p_data);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         sdpu_build_n_send_error
-**
-** Description      Build an SDP error response PDU and send it over L2CAP.
-**
-** Returns          void
+** Returns          Pointer to the first byte of the element data.
 **
 *******************************************************************************/
-void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_code,
-                              char *p_error_text)
+UINT8 *sdpu_get_len_from_type (UINT8 *p, UINT8 type, UINT32 *p_len)
 {
-    UINT8   *p;
-    UINT8   *p_start;
-    UINT8   *p_len;
-    BT_HDR  *p_buf;
-
-    if (sdp_cb.trace_level >= SDPU_TRACE_LEVEL_ERROR)
-        LogMsg_2 (TRACE_CTRL_GENERAL | TRACE_LAYER_SDP | TRACE_ORG_STACK | SDPU_TRACE_TYPE_ERROR,
-                  "SDP - sdpu_build_n_send_error  code: 0x%x  CID: 0x%x",
-                  (UINT32)error_code, (UINT32)p_ccb->connection_id);
-
-    /* Get a buffer to hold the response. */
-    if ((p_buf = (BT_HDR *)GKI_getpoolbuf (L2CAP_CMD_POOL_ID)) == NULL)
+    switch (type & 7)
     {
-        if (sdp_cb.trace_level >= SDPU_TRACE_LEVEL_WARNING)
-            LogMsg_0 (TRACE_CTRL_GENERAL | TRACE_LAYER_SDP | TRACE_ORG_STACK | SDPU_TRACE_TYPE_WARNING,
-                      "SDP - no buf for err msg");
-        return;
+    case SIZE_ONE_BYTE:
+        *p_len = 1;
+        break;
+    case SIZE_TWO_BYTES:
+        *p_len = 2;
+        break;
+    case SIZE_FOUR_BYTES:
+        *p_len = 4;
+        break;
+    case SIZE_EIGHT_BYTES:
+        *p_len = 8;
+        break;
+    case SIZE_SIXTEEN_BYTES:
+        *p_len = 16;
+        break;
+    case SIZE_IN_NEXT_BYTE:
+        *p_len = *p++;
+        break;
+    case SIZE_IN_NEXT_WORD:
+        *p_len = (UINT16)((*p << 8) + *(p + 1));
+        p += 2;
+        break;
+    case SIZE_IN_NEXT_LONG:
+        *p_len = (UINT16)(((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) +
+                            ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)));
+        p += 4;
+        break;
     }
 
-    p_buf->offset = 9;                      /* retail L2CAP_MIN_OFFSET */
-    p       = p_start = (UINT8 *)(p_buf + 1) + p_buf->offset;
-
-    *p++ = SDP_PDU_ERROR_RESPONSE;
-    *p++ = (UINT8)(trans_num >> 8);
-    *p++ = (UINT8)trans_num;
-
-    p_len   = p;                            /* error parameter length field */
-    p   += 2;                               /* skip the parameter length */
-
-    *p++ = (UINT8)(error_code >> 8);
-    *p++ = (UINT8)error_code;
-
-    /* Append the optional error text. */
-    if (p_error_text != NULL)
-    {
-        int xx;
-
-        for (xx = 0; xx < (int)strlen (p_error_text); xx++)
-            *p++ = p_error_text[xx];
-    }
-
-    /* Fill in the lengths and send. */
-    p_len[0]   = (UINT8)(((UINT32)(p - p_len - 2)) >> 8);
-    p_len[1]   = (UINT8)(p - p_len - 2);
-    p_buf->len = (UINT16)(p - p_start);
-
-    L2CA_DataWrite (p_ccb->connection_id, p_buf);
+    return (p);
 }
 
 /* ------------------------------------------------------------------------- */
-/* Sequence parsers                                                          */
+/* UUID helpers                                                              */
 /* ------------------------------------------------------------------------- */
+
 
 /*******************************************************************************
 **
@@ -500,6 +416,144 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
     return (p);
 }
 
+
+/*******************************************************************************
+**
+** Function         sdpu_build_n_send_error
+**
+** Description      Build an SDP error response PDU and send it over L2CAP.
+**
+** Returns          void
+**
+*******************************************************************************/
+void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_code,
+                              char *p_error_text)
+{
+    UINT8   *p;
+    UINT8   *p_start;
+    UINT8   *p_len;
+    BT_HDR  *p_buf;
+
+    if (sdp_cb.trace_level >= SDPU_TRACE_LEVEL_ERROR)
+        LogMsg_2 (TRACE_CTRL_GENERAL | TRACE_LAYER_SDP | TRACE_ORG_STACK | SDPU_TRACE_TYPE_ERROR,
+                  "SDP - sdpu_build_n_send_error  code: 0x%x  CID: 0x%x",
+                  (UINT32)error_code, (UINT32)p_ccb->connection_id);
+
+    /* Get a buffer to hold the response. */
+    if ((p_buf = (BT_HDR *)GKI_getpoolbuf (L2CAP_CMD_POOL_ID)) == NULL)
+    {
+        if (sdp_cb.trace_level >= SDPU_TRACE_LEVEL_WARNING)
+            LogMsg_0 (TRACE_CTRL_GENERAL | TRACE_LAYER_SDP | TRACE_ORG_STACK | SDPU_TRACE_TYPE_WARNING,
+                      "SDP - no buf for err msg");
+        return;
+    }
+
+    p_buf->offset = 9;                      /* retail L2CAP_MIN_OFFSET */
+    p       = p_start = (UINT8 *)(p_buf + 1) + p_buf->offset;
+
+    *p++ = SDP_PDU_ERROR_RESPONSE;
+    *p++ = (UINT8)(trans_num >> 8);
+    *p++ = (UINT8)trans_num;
+
+    p_len   = p;                            /* error parameter length field */
+    p   += 2;                               /* skip the parameter length */
+
+    *p++ = (UINT8)(error_code >> 8);
+    *p++ = (UINT8)error_code;
+
+    /* Append the optional error text. */
+    if (p_error_text != NULL)
+    {
+        int xx;
+
+        for (xx = 0; xx < (int)strlen (p_error_text); xx++)
+            *p++ = p_error_text[xx];
+    }
+
+    /* Fill in the lengths and send. */
+    p_len[0]   = (UINT8)(((UINT32)(p - p_len - 2)) >> 8);
+    p_len[1]   = (UINT8)(p - p_len - 2);
+    p_buf->len = (UINT16)(p - p_start);
+
+    L2CA_DataWrite (p_ccb->connection_id, p_buf);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Sequence parsers                                                          */
+/* ------------------------------------------------------------------------- */
+
+
+/*******************************************************************************
+**
+** Function         sdpu_build_attrib_entry
+**
+** Description      Build one attribute entry (attribute id + value).
+**
+** Returns          Pointer to the next free byte in the output buffer.
+**
+*******************************************************************************/
+UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
+{
+    INT32    xx;
+    UINT8   *p_data;
+
+    /* First thing is the attribute ID (unsigned 16-bit integer). */
+    *p_out++ = (UINT_DESC_TYPE << 3) | SIZE_TWO_BYTES;
+    *p_out++ = (UINT8)(p_attr->attr_id >> 8);
+    *p_out++ = (UINT8)p_attr->attr_id;
+
+    switch (p_attr->attr_type)
+    {
+    case TEXT_STR_DESC_TYPE:        /* These types carry an explicit length */
+    case DATA_ELE_SEQ_DESC_TYPE:
+    case DATA_ELE_ALT_DESC_TYPE:
+    case URL_DESC_TYPE:
+        *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
+        *p_out++ = (UINT8)p_attr->attr_len;
+        p_data = p_out;
+
+        for (xx = 0; xx < p_attr->attr_len; xx++)
+        {
+            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
+            *p_data++ = p_value[xx];
+        }
+        return (p_data);
+
+    default:
+        switch (p_attr->attr_len)
+        {
+        case 1:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_ONE_BYTE);
+            break;
+        case 2:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_TWO_BYTES);
+            break;
+        case 4:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_FOUR_BYTES);
+            break;
+        case 8:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_EIGHT_BYTES);
+            break;
+        case 16:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_SIXTEEN_BYTES);
+            break;
+        default:
+            *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
+            *p_out++ = (UINT8)p_attr->attr_len;
+            break;
+        }
+        p_data = p_out;
+
+        for (xx = 0; xx < p_attr->attr_len; xx++)
+        {
+            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
+            *p_data++ = p_value[xx];
+        }
+        return (p_data);
+    }
+}
+
+
 /*******************************************************************************
 **
 ** Function         sdpu_extract_attr_seq
@@ -602,56 +656,6 @@ UINT8 *sdpu_extract_attr_seq (UINT8 *p, UINT16 param_len, tSDP_ATTR_SEQ *p_seq)
 
     return (p);
 }
-
-/*******************************************************************************
-**
-** Function         sdpu_get_len_from_type
-**
-** Description      Compute the byte length of a data element from its
-**                  descriptor type byte.
-**
-** Returns          Pointer to the first byte of the element data.
-**
-*******************************************************************************/
-UINT8 *sdpu_get_len_from_type (UINT8 *p, UINT8 type, UINT32 *p_len)
-{
-    switch (type & 7)
-    {
-    case SIZE_ONE_BYTE:
-        *p_len = 1;
-        break;
-    case SIZE_TWO_BYTES:
-        *p_len = 2;
-        break;
-    case SIZE_FOUR_BYTES:
-        *p_len = 4;
-        break;
-    case SIZE_EIGHT_BYTES:
-        *p_len = 8;
-        break;
-    case SIZE_SIXTEEN_BYTES:
-        *p_len = 16;
-        break;
-    case SIZE_IN_NEXT_BYTE:
-        *p_len = *p++;
-        break;
-    case SIZE_IN_NEXT_WORD:
-        *p_len = (UINT16)((*p << 8) + *(p + 1));
-        p += 2;
-        break;
-    case SIZE_IN_NEXT_LONG:
-        *p_len = (UINT16)(((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) +
-                            ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)));
-        p += 4;
-        break;
-    }
-
-    return (p);
-}
-
-/* ------------------------------------------------------------------------- */
-/* UUID helpers                                                              */
-/* ------------------------------------------------------------------------- */
 
 /*******************************************************************************
 **

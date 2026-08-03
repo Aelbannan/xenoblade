@@ -167,7 +167,178 @@ u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* 
         reinterpret_cast<const u8*>(
             *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(pThis) + 0x20)) + 0x44);
 }
-void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::G3dProc(u32 task, u32 arg, void* pArg) {
+    if (task == G3DPROC_ATTACH_PARENT) {
+        SetParent(static_cast<G3dObj*>(pArg));
+    } else if (task == G3DPROC_UPDATEFRAME) {
+        UpdateFrame();
+    } else if (task == G3DPROC_DETACH_PARENT) {
+        SetParent(NULL);
+    }
+}
+
+AnmScnRes::AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
+                     AmbLightAnmResult* pAmbCache,
+                     LightAnmResult* pLightCache, FogAnmResult* pFogCache,
+                     CameraAnmResult* pCameraCache)
+    : AnmScn(pAllocator),
+      FrameCtrl(0.0f, static_cast<f32>(res.ref().info.numFrame),
+                GetAnmPlayPolicy(res.ref().info.policy)) {
+    mRes = res;
+    mRes = res;
+    mUpdateCacheFlag = 0;
+    mpAmbLightCache = pAmbCache;
+    mpLightCache = pLightCache;
+    mpFogCache = pFogCache;
+    mpCameraCache = pCameraCache;
+
+    if (pAmbCache != NULL || pLightCache != NULL || pFogCache != NULL ||
+        pCameraCache != NULL) {
+        mUpdateCacheFlag |= 1;
+    }
+
+    if (mUpdateCacheFlag & 1) {
+        UpdateCache();
+    }
+}
+
+u32 AnmScnRes::GetNumLightSet() const {
+    return mRes.GetResLightSetNumEntries();
+}
+
+u32 AnmScnRes::GetNumAmbLight() const {
+    return mRes.GetResAnmAmbLightNumEntries();
+}
+
+u32 AnmScnRes::GetNumDiffuseLight() const {
+    return mRes.GetResAnmLightNumEntries();
+}
+
+u32 AnmScnRes::GetNumSpecularLight() const {
+    return mRes.ref().info.numSpecularLight;
+}
+
+u32 AnmScnRes::GetNumFog() const {
+    return mRes.GetResAnmFogNumEntries();
+}
+
+u32 AnmScnRes::GetNumCamera() const {
+    return mRes.GetResAnmCameraNumEntries();
+}
+
+u32 AnmScnRes::GetLightSetMaxRefNumber() const {
+    return mRes.ref().info.numResLightSetData;
+}
+
+u32 AnmScnRes::GetAmbLightMaxRefNumber() const {
+    return mRes.ref().info.numResAnmAmbLightData;
+}
+
+u32 AnmScnRes::GetDiffuseLightMaxRefNumber() const {
+    return mRes.ref().info.numResAnmLightData;
+}
+
+u32 AnmScnRes::GetFogMaxRefNumber() const {
+    return mRes.ref().info.numResAnmFogData;
+}
+
+u32 AnmScnRes::GetCameraMaxRefNumber() const {
+    return mRes.ref().info.numResAnmCameraData;
+}
+
+AnmScnRes* AnmScnRes::Construct(MEMAllocator* pAllocator, u32* pSize,
+                                ResAnmScn res, void* pUserData) {
+    if (!res.IsValid()) {
+        return NULL;
+    }
+
+    u32 ambNum = 0;
+
+    if (pUserData != NULL) {
+        ambNum = res.GetResAnmAmbLightNumEntries();
+    }
+
+    u32 lightNum = 0;
+
+    if (pUserData != NULL) {
+        lightNum = res.GetResAnmLightNumEntries();
+    }
+
+    u32 fogNum = 0;
+
+    if (pUserData != NULL) {
+        fogNum = res.GetResAnmFogNumEntries();
+    }
+
+    u32 camNum = 0;
+
+    if (pUserData != NULL) {
+        camNum = res.GetResAnmCameraNumEntries();
+    }
+
+    u32 ambCacheSize =
+        ut::RoundUp<u32>(sizeof(AnmScnRes) +
+                             ambNum * sizeof(AmbLightAnmResult), 4);
+    u32 lightCacheSize =
+        ut::RoundUp<u32>(ambCacheSize + lightNum * sizeof(LightAnmResult), 4);
+    u32 fogCacheSize =
+        ut::RoundUp<u32>(lightCacheSize + fogNum * sizeof(FogAnmResult), 4);
+    u32 totalSize =
+        ut::RoundUp<u32>(fogCacheSize + camNum * sizeof(CameraAnmResult), 4);
+
+    if (pSize != NULL) {
+        *pSize = totalSize;
+    }
+
+    if (pAllocator == NULL) {
+        return NULL;
+    }
+
+    void* pMem = MEMAllocFromAllocator(pAllocator, totalSize);
+
+    if (pMem == NULL) {
+        return NULL;
+    }
+
+    AmbLightAnmResult* pAmbCache = NULL;
+
+    if (ambNum != 0) {
+        pAmbCache = reinterpret_cast<AmbLightAnmResult*>(
+            static_cast<char*>(pMem) + 0x38);
+    }
+
+    LightAnmResult* pLightCache = NULL;
+
+    if (lightNum != 0) {
+        pLightCache = reinterpret_cast<LightAnmResult*>(
+            static_cast<char*>(pMem) + ambCacheSize);
+    }
+
+    FogAnmResult* pFogCache = NULL;
+
+    if (fogNum != 0) {
+        pFogCache = reinterpret_cast<FogAnmResult*>(
+            static_cast<char*>(pMem) + lightCacheSize);
+    }
+
+    CameraAnmResult* pCameraCache = NULL;
+
+    if (camNum != 0) {
+        pCameraCache = reinterpret_cast<CameraAnmResult*>(
+            static_cast<char*>(pMem) + fogCacheSize);
+    }
+
+    return new (pMem) AnmScnRes(pAllocator, res, pAmbCache, pLightCache,
+                                pFogCache, pCameraCache);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 namespace nw4r {
 namespace g3d {
 

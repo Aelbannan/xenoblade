@@ -22,7 +22,7 @@ class LightSetting;
 
 class AnmScn : public G3dObj {
 public:
-    explicit AnmScn(MEMAllocator* pAllocator);
+    explicit AnmScn(MEMAllocator* pAllocator) : G3dObj(pAllocator, NULL) {}
     virtual ~AnmScn(); // at 0x10
 
     virtual void SetFrame(f32 frame) = 0; // at 0x1C
@@ -75,6 +75,9 @@ private:
 
 class AnmScnRes : public AnmScn, protected FrameCtrl {
 public:
+    AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
+              AmbLightAnmResult* pAmbCache, LightAnmResult* pLightCache,
+              FogAnmResult* pFogCache, CameraAnmResult* pCameraCache);
     virtual ~AnmScnRes() {} // at 0x10
 
     virtual void SetFrame(f32 frame);   // at 0x1C
@@ -92,6 +95,19 @@ public:
     virtual CameraAnmResult* GetCameraResult(CameraAnmResult* pResult,
                                              u32 idx); // at 0x64
 
+    virtual u32 GetNumLightSet() const;      // at 0x38
+    virtual u32 GetNumAmbLight() const;      // at 0x3C
+    virtual u32 GetNumDiffuseLight() const;  // at 0x40
+    virtual u32 GetNumSpecularLight() const; // at 0x44
+    virtual u32 GetNumFog() const;           // at 0x48
+    virtual u32 GetNumCamera() const;        // at 0x4C
+
+    virtual u32 GetLightSetMaxRefNumber() const;     // at 0x50
+    virtual u32 GetAmbLightMaxRefNumber() const;     // at 0x54
+    virtual u32 GetDiffuseLightMaxRefNumber() const; // at 0x58
+    virtual u32 GetFogMaxRefNumber() const;          // at 0x5C
+    virtual u32 GetCameraMaxRefNumber() const;       // at 0x60
+
     virtual bool GetLightSet(LightSet set, u32 refNumber); // at 0x64
     virtual ut::Color GetAmbLightColor(u32 refNumber);     // at 0x68
     virtual void GetLight(LightObj* pDiff, LightObj* pSpec,
@@ -103,6 +119,11 @@ public:
     virtual bool HasSpecularLight(u32 refNumber) const;   // at 0x7C
 
     void UpdateCache();
+
+    virtual void G3dProc(u32 task, u32 arg, void* pArg); // at 0x18
+
+    static AnmScnRes* Construct(MEMAllocator* pAllocator, u32* pSize,
+                                ResAnmScn res, void* pUserData);
 
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScnRes, AnmScn);
 

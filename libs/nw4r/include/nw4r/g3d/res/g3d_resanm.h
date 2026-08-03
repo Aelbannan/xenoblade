@@ -34,7 +34,13 @@ f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame);
  * ResAnm
  *
  ******************************************************************************/
-enum AnmPolicy { ANM_POLICY_ONETIME, ANM_POLICY_LOOP, ANM_POLICY_MAX };
+enum AnmPolicy {
+    ANM_POLICY_ONETIME,
+    ANM_POLICY_LOOP,
+    ANM_POLICY_CONSTANT_1, // 1.0f constant policy
+    ANM_POLICY_CONSTANT_0, // 0.0f constant policy
+    ANM_POLICY_MAX
+};
 
 union ResAnmData {
     f32 constValue;           // at 0x0

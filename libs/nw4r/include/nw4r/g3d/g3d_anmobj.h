@@ -67,8 +67,12 @@ f32 PlayPolicy_Loop(f32 start, f32 end, f32 frame);
 typedef f32 (*PlayPolicyFunc)(f32 start, f32 end, f32 frame);
 
 inline PlayPolicyFunc GetAnmPlayPolicy(AnmPolicy policy) {
-    static PlayPolicyFunc policyTable[ANM_POLICY_MAX] = {PlayPolicy_Onetime,
-                                                         PlayPolicy_Loop};
+    static PlayPolicyFunc policyTable[ANM_POLICY_MAX] = {
+        PlayPolicy_Onetime,
+        PlayPolicy_Loop,
+        reinterpret_cast<PlayPolicyFunc>(0x3F800000),
+        reinterpret_cast<PlayPolicyFunc>(0x00000000),
+    };
     return policyTable[policy];
 }
 

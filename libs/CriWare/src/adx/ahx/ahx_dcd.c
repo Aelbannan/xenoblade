@@ -66,7 +66,26 @@ u32 AHXDCD_IsEof(void* self) {
     return (((AHXDCDState*)self)->eofState == 0xc) ? 1 : 0;
 }
 
-void AHXDCD_DecodeData() {}
+extern void AHXDCD_GetSample_Dequantize_Denormalize(s32 a, s32* b, s32* c, s32* d, u32 e, s32 f, s32 g);
+extern void AHXSBF_Synthesize(s32* base, s32 pcm, s32 idx, s32* out);
+
+s32 AHXDCD_DecodeData(void* self, u8* out) {
+    s32 i;
+    if (*(s32*)((u8*)self + 844) == 12)
+        return 0;
+    {
+        s32 nblk = *(s32*)((u8*)self + 844) >> 2;
+        AHXDCD_GetSample_Dequantize_Denormalize(
+            *(s32*)((u8*)self + 848), (s32*)((u8*)self + 904), (s32*)((u8*)self + 964),
+            (s32*)((u8*)self + 1476), nblk,
+            *(s32*)((u8*)self + 0), *(s32*)((u8*)self + 836));
+    }
+    for (i = 0; i < 3; i++) {
+        AHXSBF_Synthesize(*(s32**)((u8*)self + 852), *(s32*)((u8*)self + 0) + i * 128, 0, (s32*)(out + i * 64));
+    }
+    *(s32*)((u8*)self + 844) += 1;
+    return 96;
+}
 
 s16 AHXDCD_GetOutBps(void* self) {
     return ((AHXDCDState*)self)->outputReady;
@@ -93,4 +112,3 @@ void AHXDCD_DecodeBitalloc2() {}
 
 void AHXDCD_DecodeScale2() {}
 
-void AHXDCD_GetSample_Dequantize_Denormalize() {}

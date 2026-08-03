@@ -280,9 +280,9 @@ int sfmps_DecodeSomeUnit(void* self) {
 }
 
 int criware_803C1490(void* self, s32* out_a, s32* out_b, s32 unused, s32* out_c) {
-    s32 tmp[10];
     s32 ret;
     s32 idx;
+    s32 tmp[10];
 
     idx = *(s32*)((u8*)self + 0x202c);
     *out_a = 0;

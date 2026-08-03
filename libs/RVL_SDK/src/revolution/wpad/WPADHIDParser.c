@@ -1699,7 +1699,7 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
-    pCB = __rvl_p_wpadcb[chan];
+    pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
     st->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
                    (s16)pCB->devConfig.accX0g;
@@ -1717,7 +1717,7 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     if (cb->wpInfo.attach != 0) {
         if (cb->devType == WPAD_DEV_FREESTYLE) {
-            pCB = __rvl_p_wpadcb[chan];
+            pCB = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
             ((WPADFSStatus*)status)->fsStickX = data[0x10];
             ((WPADFSStatus*)status)->fsStickY = data[0x11];
 

@@ -20,4 +20,24 @@ void ADXB_ExecOneWav(void* self) {
         ADXB_ExecOneWav16(self);
 }
 
-void ADX_ScanInfoCodeWav() {}
+extern char lbl_eu_80517418[];
+extern int memcmp(const void* a, const void* b, unsigned long n);
+
+s32 ADX_ScanInfoCodeWav(const u8* codes, s32 size, u16* out) {
+    s32 i;
+    s32 found = 0x7FFFFFFF;
+    for (i = 0; i < size - 3; i++) {
+        if (memcmp(codes + i, lbl_eu_80517418, 4) == 0) {
+            found = 0x7FFFFFFF;
+            if (i < found)
+                found = i;
+            break;
+        }
+    }
+    if (found != 0x7FFFFFFF) {
+        *out = (u16)found;
+        return 0;
+    }
+    *out = 0;
+    return -1;
+}

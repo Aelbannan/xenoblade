@@ -94,7 +94,44 @@ s32 ADX_DecodeInfoAiff(u8* src, s32 size, s16* outA, s8* outB, s8* outE, u8* out
     return 0;
 }
 
-void ADXB_DecodeHeaderAiff() {}
+s32 ADXB_DecodeHeaderAiff(void* self, u8* src, u32 size) {
+    s16 outA;
+    s32 outH, outC;
+    s32 ret;
+    s32 nch;
+    s32 sps;
+    *(s16*)((u8*)self + 2) = 1;
+    ret = ADX_DecodeInfoAiff(src, size, &outA, (s8*)((u8*)self + 12), (s8*)((u8*)self + 13),
+                             (u8*)((u8*)self + 15), (s8*)((u8*)self + 14),
+                             (s32*)((u8*)self + 20), &outH, &outC);
+    if (ret <= 0)
+        return 0;
+    nch = (s8)*(u8*)((u8*)self + 13);
+    sps = (s8)*(u8*)((u8*)self + 14);
+    *(s32*)((u8*)self + 28) = 0;
+    *(s32*)((u8*)self + 38) = 0;
+    *(s32*)((u8*)self + 36) = 0;
+    *(s32*)((u8*)self + 52) = 0;
+    *(s32*)((u8*)self + 48) = 0;
+    *(s32*)((u8*)self + 44) = 0;
+    *(s32*)((u8*)self + 40) = 0;
+    *(s32*)((u8*)self + 32) = 0;
+    *(s32*)((u8*)self + 80) = (s32)(s8)*(u8*)((u8*)self + 15);
+    *(s32*)((u8*)self + 84) = sps;
+    *(s32*)((u8*)self + 88) = *(u32*)((u8*)self + 16);
+    *(s32*)((u8*)self + 92) = *(u32*)((u8*)self + 60);
+    *(s32*)((u8*)self + 96) = *(u32*)((u8*)self + 64);
+    *(s32*)((u8*)self + 100) = *(u32*)((u8*)self + 68);
+    *(s32*)((u8*)self + 140) = 0;
+    *(s32*)((u8*)self + 136) = 0;
+    *(s16*)((u8*)self + 152) = 3;
+    if (nch > 8) {
+        *(s16*)((u8*)self + 156) = 1;
+    } else {
+        *(s16*)((u8*)self + 156) = 0;
+    }
+    return outA;
+}
 
 void ADXB_ExecOneAiff16() {}
 

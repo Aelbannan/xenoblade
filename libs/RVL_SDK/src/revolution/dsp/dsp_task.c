@@ -303,10 +303,6 @@ void __DSP_insert_task(DSPTask* task) {
     }
 }
 
-//unused
-void __DSP_add_task(DSPTask* task){
-}
-
 void __DSP_remove_task(DSPTask* task) {
     task->flags = 0;
     task->state = DSP_TASK_STATE_3;
@@ -331,5 +327,9 @@ void __DSP_remove_task(DSPTask* task) {
     }
 }
 
-DECOMP_FORCEACTIVE(dsp_task_c,
-                   "__DSP_add_task() : Added task    : 0x%08X\n");
+// The retail .data keeps the "__DSP_add_task()" string (0x110..0x140 incl pad)
+// although the function was GC'd; keep it via an .init-section function so no
+// .text is added.
+__declspec(section ".init") void FORCEACTIVEdsp_task_sdata(void) {
+    fake_function("__DSP_add_task() : Added task    : 0x%08X\n\0\0\0\0\0\0\0");
+}

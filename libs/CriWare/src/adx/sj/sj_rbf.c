@@ -48,9 +48,9 @@ typedef struct {
 /* --- Internal forward declarations --- */
 void *sjrbf_Create(void *pool_mem, u32 buf_size, u32 xtr_size);
 void  sjrbf_Reset(SJRBF *self);
-int   sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out);
+void  sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out);
 void  sjrbf_PutChunk(SJRBF *self, int mode, SJ_CHUNK *chunk);
-int   sjrbf_UngetChunk(SJRBF *self, int mode, SJ_CHUNK *chunk);
+void  sjrbf_UngetChunk(SJRBF *self, int mode, SJ_CHUNK *chunk);
 int   sjrbf_IsGetChunk(SJRBF *self, int mode, int size, int *out);
 
 /* --- SJRBF_Error --- */
@@ -275,24 +275,29 @@ int SJRBF_GetChunk(void *self, int mode, int size, SJ_CHUNK *out) {
 }
 
 /* --- sjrbf_GetChunk (internal) --- */
-int sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out) {
+#pragma push
+#pragma opt_propagation off
+void sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out) {
     if (self == NULL) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x11B);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x127);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->buf_size == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x133;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x14B);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x133);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (mode == 0) {
-        int avail = self->xtr_size + self->buf_size - self->get_pos;
+        int avail = self->xtr_size + (self->buf_size - self->get_pos);
         if ((int)self->get_avail < avail) avail = self->get_avail;
         out->size = avail;
         if (avail < size) size = avail;
@@ -300,12 +305,12 @@ int sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = self->pool_mem + self->get_pos;
         {
             int new_pos = self->get_pos + size;
-            self->get_pos = new_pos % self->buf_size;
+            self->get_pos = new_pos % (int)self->buf_size;
         }
         self->get_avail -= out->size;
         self->flow_cnt[0] += out->size;
     } else if (mode == 1) {
-        int avail = self->xtr_size + self->buf_size - self->put_pos;
+        int avail = self->xtr_size + (self->buf_size - self->put_pos);
         if ((int)self->put_avail < avail) avail = self->put_avail;
         out->size = avail;
         if (avail < size) size = avail;
@@ -313,7 +318,7 @@ int sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = self->pool_mem + self->put_pos;
         {
             int new_pos = self->put_pos + size;
-            self->put_pos = new_pos % self->buf_size;
+            self->put_pos = new_pos % (int)self->buf_size;
         }
         self->put_avail -= out->size;
         self->flow_cnt[2] += out->size;
@@ -322,8 +327,8 @@ int sjrbf_GetChunk(SJRBF *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = NULL;
         if (self->err_func) self->err_func(self->err_arg, -3);
     }
-    return 0;
 }
+#pragma pop
 
 /* --- SJRBF_PutChunk --- */
 int SJRBF_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
@@ -401,51 +406,69 @@ int SJRBF_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
 }
 
 /* --- sjrbf_UngetChunk (internal) --- */
-int sjrbf_UngetChunk(SJRBF *self, int mode, SJ_CHUNK *chunk) {
+#pragma push
+#pragma opt_propagation off
+void sjrbf_UngetChunk(SJRBF *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x16F);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (self->valid == 0) {
+        goto end;
+    }
+    if (self->valid == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x17B);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (self->buf_size == 0) {
+        goto end;
+    }
+    if (self->buf_size == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x133;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0x187);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x133);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (chunk->size > 0 && chunk->ptr != NULL) {
-        if (mode == 0) {
-            int new_pos = (self->get_pos + self->buf_size - chunk->size) % self->buf_size;
-            int expected = ((int)(self->pool_mem - chunk->ptr)) % self->buf_size;
-            if (new_pos == expected) {
-                self->get_pos = new_pos;
-                self->get_avail += chunk->size;
-            } else {
-                if (self->err_func) self->err_func(self->err_arg, -3);
-            }
-            self->flow_cnt[0] -= chunk->size;
-        } else if (mode == 1) {
-            int new_pos = (self->put_pos + self->buf_size - chunk->size) % self->buf_size;
-            int expected = ((int)(self->pool_mem - chunk->ptr)) % self->buf_size;
-            if (new_pos == expected) {
-                self->put_pos = new_pos;
-                self->put_avail += chunk->size;
-            } else {
-                if (self->err_func) self->err_func(self->err_arg, -3);
-            }
-            self->flow_cnt[2] -= chunk->size;
+        goto end;
+    }
+    if (chunk->size > 0 && chunk->ptr != NULL) goto body;
+    goto exit;
+exit:
+    return;
+body:
+    if (mode == 0) {
+        int new_pos = (int)(self->get_pos + self->buf_size - chunk->size) % (int)self->buf_size;
+        int expected = (int)(chunk->ptr - self->pool_mem) % (int)self->buf_size;
+        if (new_pos == expected) {
+            self->get_pos = new_pos;
+            self->get_avail += chunk->size;
         } else {
-            chunk->size = 0;
-            chunk->ptr = NULL;
             if (self->err_func) self->err_func(self->err_arg, -3);
         }
+        self->flow_cnt[0] -= chunk->size;
+        return;
     }
-    return 0;
+    if (mode == 1) {
+        int new_pos = (int)(self->put_pos + self->buf_size - chunk->size) % (int)self->buf_size;
+        int expected = (int)(chunk->ptr - self->pool_mem) % (int)self->buf_size;
+        if (new_pos == expected) {
+            self->put_pos = new_pos;
+            self->put_avail += chunk->size;
+        } else {
+            if (self->err_func) self->err_func(self->err_arg, -3);
+        }
+        self->flow_cnt[2] -= chunk->size;
+        return;
+    }
+    chunk->size = 0;
+    chunk->ptr = NULL;
+    if (self->err_func) self->err_func(self->err_arg, -3);
+end:
+    return;
 }
+#pragma pop
 
 /* --- SJRBF_IsGetChunk --- */
 int SJRBF_IsGetChunk(void *self, int mode, int size, int *out) {
@@ -605,8 +628,8 @@ int SJRBF_GetFlowCnt(void *self_ptr, int a, int b) {
         SJERR_CallErr(buf2);
         r = 0;
     } else {
-        int off = a * 8 + b * 4;
-        r = *(int *)((char *)self->flow_cnt + off);
+        int row = a * 8;
+        r = *(int *)((char *)self->flow_cnt + row + b * 4);
     }
     SJCRS_Unlock();
     return r;

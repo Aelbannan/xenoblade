@@ -341,6 +341,7 @@ static BOOL __InitParams(AXFX_DELAY_EXP* fx) {
     if (iir > 0.95f) {
         iir = 0.95f;
     }
+    (void)0.0f; // retail .sdata2 pairs 0.95 with a trailing 0.0
 
     fx->iirGain = (s32)(128.0f * iir);
     fx->last[0] = 0;

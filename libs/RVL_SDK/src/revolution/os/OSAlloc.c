@@ -19,6 +19,12 @@ volatile s32 __OSCurrHeap = -1;
 
 static void* ArenaEnd = NULL;
 static void* ArenaStart = NULL;
+// .sdata pad (retail gap_09_8066322C_sdata): keeps "\0\0\0" in .sdata via an
+// .init-section function so no .text is added.
+__declspec(section ".init") void FORCEACTIVEOSAlloc_sdata(void) {
+    fake_function("\0\0\0");
+}
+
 static s32 NumHeaps = 0;
 static OSHeapDescriptor* HeapArray = NULL;
 
@@ -134,10 +140,6 @@ void* OSAllocFromHeap(s32 handle, s32 size) {
     return (u8*)cell + sizeof(OSHeapCell);
 }
 
-//unused
-void OSAllocFixed(){
-}
-
 void OSFreeToHeap(s32 handle, void* p) {
     OSHeapDescriptor* hd = &HeapArray[handle];
     OSHeapCell* cell = (OSHeapCell*)((u8*)p - sizeof(OSHeapCell));
@@ -196,28 +198,4 @@ s32 OSCreateHeap(void* start, void* end) {
     }
 
     return -1;
-}
-
-//unused
-void OSDestroyHeap(){
-}
-
-//unused
-void OSAddToHeap(){
-}
-
-//unused
-void OSCheckHeap(){
-}
-
-//unused
-void OSReferentSize(){
-}
-
-//unused
-void OSDumpHeap(){
-}
-
-//unused
-void OSVisitAllocated(){
 }

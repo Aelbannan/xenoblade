@@ -49,22 +49,28 @@ typedef struct SfdMpvPara {
 } SfdMpvPara;
 
 s32 sfmpvf_CheckMpvPara(void* self) {
-    SfdMpvPara* g = (SfdMpvPara*)lbl_eu_80619B20;
-    s32 width = g->words[7];
-    s32 i;
+    u32* g = lbl_eu_80619B20;
+    SfdMpvPara* s = (SfdMpvPara*)g;
+    s32 width = s->words[7];
     if ((u32)(width - 1) > 0xF) {
         return -1;
     }
-    if (g->words[4] == 0 || g->words[8] == 0) {
-        if (g->words[10] == 0) {
+    if (s->words[4] == 0 || s->words[8] == 0) {
+        u32* p = g + 10;
+        if (*p == 0) {
             return -1;
         }
-        if (g->words[11] == 0) {
+        if (p[1] == 0) {
             return -1;
         }
-        for (i = 0; i < width; i++) {
-            if (g->words[12 + i] == 0) {
-                return -1;
+        {
+            u32* q = g + 12;
+            s32 i;
+            for (i = 0; i < width; i++) {
+                if (*q == 0) {
+                    return -1;
+                }
+                q++;
             }
         }
     }

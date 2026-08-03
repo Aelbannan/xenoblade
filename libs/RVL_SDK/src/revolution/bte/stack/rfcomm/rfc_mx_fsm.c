@@ -441,7 +441,7 @@ void rfc_mx_conf_cnf(RfcMuxChannel* channel, RfcConfig* config) {
 }
 void rfc_mx_conf_ind(RfcMuxChannel* channel, RfcConfig* config) {
     if (rfc_cb.trace_level >= 4) {
-        LogMsg_1(0x90003, "rfc_mx_conf_ind p_cfg:%0x", (u32)config);
+        LogMsg_1(0x90003, "rfc_mx_conf_ind p_cfg:%0x\0\0", (u32)config);
     }
 
     if (config->field_0x02 != 0) {

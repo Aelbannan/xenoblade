@@ -489,13 +489,19 @@ s32 SFTIM_IsStagnant(void* self) {
         if (cond33 == 0) {
             result = 0;
         } else {
-            s32 elapsed;
+            s32 num;
+            s32 den;
             if (SFSET_GetCond(self, 0x47) == 1) {
-                elapsed = (*(s32*)(p + 0x1044) - *(s32*)(p + 0x1070)) / *(s32*)(lbl_eu_80606E38 + 0x1A8);
+                num = *(s32*)(p + 0x1044) - *(s32*)(p + 0x1070);
+                den = *(s32*)(lbl_eu_80606E38 + 0x1A8);
             } else {
-                elapsed = (*(s32*)(p + 0x1084) - *(s32*)(p + 0x1070)) / *(s32*)(p + 0x1088);
+                num = *(s32*)(p + 0x1084) - *(s32*)(p + 0x1070);
+                den = *(s32*)(p + 0x1088);
             }
-            result = (elapsed > cond33);
+            {
+                s32 elapsed = num / den;
+                result = (elapsed > cond33);
+            }
         }
     }
 
@@ -886,7 +892,8 @@ void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 
 void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
+    s32 unit = 1000;
+    unit /= rate;
     s32 k = unit / 2;
     s32 min = *(s32*)(td + 0xC);
     s32 frame = *(s32*)(td + 0x14);

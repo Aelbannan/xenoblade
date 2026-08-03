@@ -243,10 +243,11 @@ class GateAcceptanceTests(unittest.TestCase):
         self.assertTrue(outcome.certified, outcome.failure)
 
     def test_reject_list_opcodes_fall_back_to_smt(self) -> None:
-        # psq_l / mffs / mtfsb0 / mcrfs / dcbz must never be certified via
-        # renaming — the witness fails and the SMT probe runs instead.
+        # mffs / mtfsb0 / mcrfs / dcbz must never be certified via renaming —
+        # the witness fails and the SMT probe runs instead.  (psq_l moved to
+        # A1PsqExemptionTests: under doc 32 A1 the byte-identical PSQ D-forms
+        # are exempted, so a bare psq_l + blr pair now certifies.)
         for name, word in (
-            ("psq_l", 0xE0000000),
             ("mffs", 0xFC00048E),
             ("mtfsb0", 0xFC00008C),
             ("mcrfs", 0xFC000080),
@@ -259,6 +260,15 @@ class GateAcceptanceTests(unittest.TestCase):
                 outcome = certify_renaming_witness(original, candidate)
                 self.assertFalse(outcome.certified)
                 self.assertEqual(outcome.failure.gate, "reject-list")
+
+    def test_psq_xform_still_rejected(self) -> None:
+        # PSQ X-forms stay on the reject list (doc 32 A1 rev 3, R2-5): even a
+        # byte-identical psq_lx pair must fall through to SMT.
+        psq_lx = 0x1000000C  # psq_lx f0, 0(r0), 0, 0 (decoder primary 4, XO5=6)
+        original, candidate = _decode_pair([psq_lx, _LR], [psq_lx, _LR])
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "reject-list")
 
 
 class AcrossCallTests(unittest.TestCase):
@@ -859,3 +869,190 @@ class DriftDetectorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class A1PsqExemptionTests(unittest.TestCase):
+    """doc 32 A1 rev 3: byte-identical PSQ D-form slots (FP prologue saves /
+    epilogue restores) are exempted from the reject list; the rest of the
+    function may differ only in rho-safe GPR colors."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    # psq_st f31, 120(r1), 1, qr3
+    PSQ_ST = 0xF3E10078
+    # psq_l f31, 120(r1), 1, qr3
+    PSQ_L = 0xE3E10078
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_byte_identical_psq_st_with_gpr_swap_accepted(self) -> None:
+        # The observed shape: GPR 2-cycle (r5<->r6) + byte-identical psq_st
+        # prologue save.  The psq slot is byte-identical with identity-rho
+        # operands (f31, r1 both fixed), so the exemption applies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [self.PSQ_ST, li(5, 1), mr(3, 5), self._BLR]
+        d = [self.PSQ_ST, li(6, 1), mr(3, 6), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_combined_psq_st_prologue_and_psq_l_epilogue_accepted(self) -> None:
+        # R2-5: functions carry BOTH a byte-identical psq_st prologue AND a
+        # byte-identical psq_l epilogue — both must be exempted.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [self.PSQ_ST, li(5, 1), mr(3, 5), self.PSQ_L, self._BLR]
+        d = [self.PSQ_ST, li(6, 1), mr(3, 6), self.PSQ_L, self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_non_byte_identical_psq_rejected(self) -> None:
+        # psq_st f31 vs psq_st f30: raw words differ -> reject-list
+        # (gate 6 exemption requires byte-identity).
+        psq_st_f30 = 0xF3C10078  # psq_st f30, 120(r1), 1, qr3
+        original, candidate = self._pair(
+            [self.PSQ_ST, self._BLR], [psq_st_f30, self._BLR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "reject-list")
+
+    def test_psq_operand_renamed_elsewhere_rejected(self) -> None:
+        # Byte-identical psq_st f31 with rho renaming f31 in ANOTHER slot
+        # (fadd f31, f0, f0 -> fadd f30, f0, f0): the post-rho check
+        # (belt-and-suspenders) rejects — the psq would store different
+        # shared variables on the two sides.
+        fadd = lambda fd, fa, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+            | ((fb & 31) << 11) | (21 << 1)
+        )
+        r = [self.PSQ_ST, fadd(31, 0, 0), self._BLR]
+        d = [self.PSQ_ST, fadd(30, 0, 0), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+
+    def test_psq_st_reads_ps1_lane_at_region_boundary(self) -> None:
+        # F1 regression: psq_st reads ps1[fS]; a region boundary rebind that
+        # would mask the ps1 read must be rejected by the ps1 use in
+        # _use_def_numbered.  Construct: region 0 writes f5 via fadd (defs
+        # f5+ps1[5]); psq_st f5 closes region 0; region 1 renames f5.  The
+        # psq_st's ps1[f5] read keeps the lane live at the boundary -> rebind
+        # rejected (fail-closed; no false certificate).
+        fadd = lambda fd, fa, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+            | ((fb & 31) << 11) | (21 << 1)
+        )
+        psq_st_f5 = 0xF4A10078  # psq_st f5, 120(r1), 1, qr3
+        r = [fadd(5, 0, 0), psq_st_f5, self._BLR]
+        d = [fadd(6, 0, 0), psq_st_f5, self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+
+class A3ReturnRegisterFixednessTests(unittest.TestCase):
+    """doc 32 A3 rev 3: r4/f1 default FIXED; unfixed only on trusted metadata
+    (non-64-bit declared_return) AND no write on a forward path to a return
+    AND no tail-call exits.  G7 closure + F2/F3/F7 regressions."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_g7_longlong_return_renamed_rejected(self) -> None:
+        # G7 false-certificate regression: retail returns long long in
+        # r3:r4 (r4 written before blr); decomp renames r4->r5; registry
+        # declared_return is STALE "i32".  The structural write-before-return
+        # check must fix r4 regardless of the metadata.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [li(3, 0), li(4, 1), self._BLR]
+        d = [li(3, 0), li(5, 1), self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d), deadline_ms=20000,
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_scratch_r4_unfixed_with_metadata_accepted(self) -> None:
+        # F3 synthetic accept: r4 written and consumed between calls, NEVER
+        # written on a path to the return; trusted metadata i32 unfixes it.
+        # rho {4:5} certifies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        # r4 used as dead scratch before the return; return value in r3 only.
+        r = [li(4, 7), mr(3, 4), li(3, 1), self._BLR]
+        d = [li(5, 7), mr(3, 5), li(3, 1), self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d), deadline_ms=20000,
+            declared_return="i32",
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertIn(4, outcome.rho.gpr)
+
+    def test_scratch_r4_fixed_without_metadata_rejected(self) -> None:
+        # Same synthetic body with NO registry metadata: default FIXED, so a
+        # rho renaming r4 must reject at gate 5.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(4, 7), mr(3, 4), li(3, 1), self._BLR]
+        d = [li(5, 7), mr(3, 5), li(3, 1), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_tail_call_exit_keeps_r4_fixed(self) -> None:
+        # F7 regression: function ends in a `b` tail-call (non-link, relocated
+        # out-of-function); r4 is set up as a tail-call argument.  Even with
+        # trusted i32 metadata, the tail-call exit keeps r4 FIXED.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        bl = lambda off: _enc_primary(18, 0, 0, 0) | (off & 0x3FFFFFC)
+        # relocate the tail-call so it decodes as an out-of-function branch
+        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(4, 1), 0x48000001]
+        d_words = [li(5, 1), 0x48000001]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000,
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_r4_live_in_renamed_rejected(self) -> None:
+        # r4 read before written (EABI argument): live-in -> fixed.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [mr(3, 4), self._BLR]
+        d = [mr(3, 5), self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d), deadline_ms=20000,
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")

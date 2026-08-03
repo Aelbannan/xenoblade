@@ -69,9 +69,11 @@ extern void (*lbl_eu_805E5360)(void*, s16, void*, void*);
 int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3);
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding);
 
-s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
+static s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
+    s16 x1;
+    s16 x2;
+    s16 x3;
     s16 i;
-    s16 x;
 
     if (lbl_eu_805E5358 == 0) {
         lbl_eu_805E5358 = lbl_eu_805E5358 + 1;
@@ -85,41 +87,42 @@ s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
         return 0;
     }
 
-    x = 0x4A1D;
+    x1 = 0x4A1D;
     for (i = 0; i < len; i++) {
-        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 m = (u32)((s32)x1 * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
         u32 b = m << 22;
-        u32 s = (m >> 31) & 1;
+        u32 s = m >> 31;
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x1 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
-    *key1 = x;
 
-    x = 0x53FF;
+    x2 = 0x53FF;
     for (i = 0; i < len; i++) {
-        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 m = (u32)((s32)x2 * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
         u32 b = m << 22;
-        u32 s = (m >> 31) & 1;
+        u32 s = m >> 31;
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x2 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
-    *key2 = x;
 
-    x = 0x5DC1;
+    x3 = 0x5DC1;
     for (i = 0; i < len; i++) {
-        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 m = (u32)((s32)x3 * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
         u32 b = m << 22;
-        u32 s = (m >> 31) & 1;
+        u32 s = m >> 31;
         u32 t = (b - s);
         t = (t << 10) | (t >> 22);
         t = t + s;
-        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
+        x3 = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
-    *key3 = x;
+
+    *key1 = x1;
+    *key2 = x2;
+    *key3 = x3;
 
     return 0;
 }

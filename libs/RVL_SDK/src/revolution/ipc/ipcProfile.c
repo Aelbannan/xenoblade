@@ -11,19 +11,8 @@ static s32 IpcFdArray[IPC_REQUEST_MAX];
 static void AddReqInfo(IPCRequestEx* req, s32 fd);
 static void DelReqInfo(IPCRequestEx* req, s32 fd);
 
-DECOMP_FORCEACTIVE(ipcProfile_c, IpcFdArray);
 
-//unused
-void IPCGetNumPendingReqs(){
-}
 
-//unused
-void IPCGetNumUnIssuedReqs(){
-}
-
-//unused
-void IPCGetQueueStatus(){
-}
 
 void IPCiProfInit(void) {
     int i;

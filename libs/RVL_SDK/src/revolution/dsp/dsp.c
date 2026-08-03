@@ -1,10 +1,19 @@
 #include <revolution/DSP.h>
 #include <revolution/OS.h>
 
+// .sdata pad (retail gap_09_80662F78_sdata): keeps "\0\0\0" in .sdata via an
+// .init-section function so no .text is added.
+__declspec(section ".init") void FORCEACTIVEdsp_sdata(void) {
+    fake_function("\0\0\0");
+}
+
 const char* __DSPVersion =
     "<< RVL_SDK - DSP \trelease build: Feb 27 2009 10:01:57 (0x4302_145) >>";
 
 static BOOL __DSP_init_flag = FALSE;
+
+// .sbss pad (retail gap_10_80664EAC_sbss at 0x4..0x8)
+u32 DspSbssPad;
 
 BOOL DSPCheckMailToDSP(void) {
     return (DSP_HW_REGS[DSP_DSPMBOX_H] & DSP_DSPMBOX_H_STATUS) != 0;
@@ -14,9 +23,6 @@ BOOL DSPCheckMailFromDSP(void) {
     return (DSP_HW_REGS[DSP_CPUMBOX_H] & DSP_CPUMBOX_H_STATUS) != 0;
 }
 
-//unused
-void DSPReadCPUToDSPMbox(){
-}
 
 DSPMail DSPReadMailFromDSP(void) {
     return (DSPMail)(DSP_HW_REGS[DSP_CPUMBOX_H] << 16 |
@@ -28,7 +34,7 @@ void DSPSendMailToDSP(DSPMail mail) {
     DSP_HW_REGS[DSP_DSPMBOX_L] = ((uintptr_t)mail) & 0xFFFF;
 }
 
-void DSPAssertInt(void) {
+static inline void DSPAssertInt(void) {
     BOOL enabled;
 
     enabled = OSDisableInterrupts();
@@ -45,7 +51,7 @@ void DSPInit(void) {
     BOOL enabled;
 
     __DSP_debug_printf("DSPInit(): Build Date: %s %s\n", "Feb 27 2009",
-                       "10:01:57");
+                       "10:01:57\0\0\0");
 
     if (__DSP_init_flag == TRUE) {
         return;
@@ -80,21 +86,9 @@ BOOL DSPCheckInit(void) {
     return __DSP_init_flag;
 }
 
-//unused
-void DSPReset(){
-}
 
-//unused
-void DSPHalt(){
-}
 
-//unused
-void DSPUnhalt(){
-}
 
-//unused
-void DSPGetDMAStatus(){
-}
 
 DSPTask* DSPAddTask(DSPTask* task) {
     BOOL enabled;

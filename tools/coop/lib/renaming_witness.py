@@ -137,6 +137,10 @@ _RA_LITERAL_OPCODES = frozenset(
         Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
         Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX,
         Opcode.STFIWX,
+        # PSQ D-forms (semantics.py:3874: ``ra == 0`` literal in the address
+        # computation).  Their fS/fD and rA are non-register fields; the
+        # rA entry here only drives the liveness RA-use guard.
+        Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
     }
 )
 
@@ -311,8 +315,11 @@ REJECT_OPCODES = frozenset(
         Opcode.PS_MULS1, Opcode.PS_NABS, Opcode.PS_NEG, Opcode.PS_NMADD,
         Opcode.PS_NMSUB, Opcode.PS_RES, Opcode.PS_RSQRTE, Opcode.PS_SEL,
         Opcode.PS_SUB, Opcode.PS_SUM0, Opcode.PS_SUM1,
-        Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LUX, Opcode.PSQ_LX,
-        Opcode.PSQ_ST, Opcode.PSQ_STU, Opcode.PSQ_STUX, Opcode.PSQ_STX,
+        # PSQ X-forms stay rejected (doc 32 A1 rev 3, R2-5); the four D-forms
+        # below leave REJECT_OPCODES and are handled by the byte-identical
+        # exemption in _stream_validation_failure.
+        Opcode.PSQ_LUX, Opcode.PSQ_LX,
+        Opcode.PSQ_STUX, Opcode.PSQ_STX,
         # FPSCR transfer / control (sticky bits).
         Opcode.MTFSF, Opcode.MFFS, Opcode.MCRFS,
         Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MTFSFI,
@@ -323,6 +330,13 @@ REJECT_OPCODES = frozenset(
         Opcode.SC, Opcode.RFI,
     }
 )
+
+# PSQ D-forms exempted from the reject list by the byte-identical rule
+# (doc 32 A1 rev 3).  X-forms stay rejected.
+_PSQ_D_FORMS = frozenset(
+    {Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU}
+)
+
 
 # SPR indices the witness may certify across: XER, LR, CTR.  Any other SPR
 # (GQRs 912-919, aux SPRs, TB, SRR0/SRR1, ...) fails closed to SMT.
@@ -338,11 +352,23 @@ _WITNESS_ALLOWED_SPRS = frozenset({1, 8, 9})
 # call (liveness gate).
 # r0 dropped from the unconditional fixed set (doc 32 A2): r0 is now only
 # special in the D/DS/X-indexed load-store and ADDI/ADDIS RA position, which is
-# a bit-equal non-register field (gate 3), so rho may rename r0 elsewhere.  r4
-# stays fixed pending the A3 conditional logic (doc 32 A3, payoff deferred).
-_UNCONDITIONALLY_FIXED_GPRS = frozenset({1, 2, 3, 4, 13})
-# f1 is the FP return register (and first FP argument).
-_UNCONDITIONALLY_FIXED_FPRS = frozenset({1})
+# a bit-equal non-register field (gate 3), so rho may rename r0 elsewhere.
+# r4/f1 are CONDITIONAL (doc 32 A3 rev 3): default FIXED; unfixed only when
+# trusted registry metadata says the caller cannot observe them AND the body
+# never writes them on a path to a return and there are no tail-call exits.
+_UNCONDITIONALLY_FIXED_GPRS = frozenset({1, 2, 3, 13})
+# f1 is the FP return register (and first FP argument) — conditional like r4.
+_UNCONDITIONALLY_FIXED_FPRS = frozenset()
+
+# r4 (integer return pair / 64-bit high word) and f1 (FP return) — the A3
+# conditional set.  Metadata values that prove the caller does NOT observe the
+# register (non-64-bit / non-aggregate returns; doc 32 A3 rev 3, I13 — the raw
+# string, never the narrowed AbiShape).
+_CONDITIONALLY_FIXED_GPRS = frozenset({4})
+_CONDITIONALLY_FIXED_FPRS = frozenset({1})
+_TRUSTED_NON_64BIT_RETURNS = frozenset(
+    {"void", "i32", "u32", "f32", "f64", "bool", "ptr"}
+)
 # EABI outgoing-argument ranges: registers that may carry live-in inputs.
 _EABI_ARG_GPRS = frozenset(range(3, 11))
 _EABI_ARG_FPRS = frozenset(range(1, 9))
@@ -446,6 +472,18 @@ def _use_def(opcode: Opcode) -> tuple[tuple[tuple[int, str], ...], tuple[tuple[i
     if opcode in (Opcode.CMPW, Opcode.CMPLW, Opcode.FCMPU, Opcode.FCMPO):
         kind = FPR if opcode in (Opcode.FCMPU, Opcode.FCMPO) else g
         return ((1, kind), (2, kind)), ()
+    if opcode in (
+        Opcode.PSQ_ST, Opcode.PSQ_STU, Opcode.PSQ_L, Opcode.PSQ_LU,
+    ):
+        # PSQ D-form operands are (fr, ra, disp, w, i) — semantics.py:3874.
+        # Store reads fS (pos 0) + rA (pos 1); load defs fD (pos 0) + reads
+        # rA (pos 1); update forms also def rA.  The ps1 lane side effects
+        # (psq_st reads ps1[fS], psq_l defs ps1[fD]) are added in
+        # _use_def_numbered (doc 32 A1 rev 3, F1/R2-6).
+        defs = ((1, g),) if opcode in (Opcode.PSQ_STU, Opcode.PSQ_LU) else ()
+        if opcode in (Opcode.PSQ_L, Opcode.PSQ_LU):
+            return ((1, g),), ((0, FPR),) + defs
+        return ((0, FPR), (1, g)), defs
     if opcode == Opcode.RLWNM:
         return ((1, g), (2, g)), ((0, g),)
     if opcode in (
@@ -564,6 +602,17 @@ def _use_def_numbered(
     if op in _PS1_DEF_ARITH or op in _PS1_DEF_LOADS:
         # Destination is operand 0 (fd for arith, rt for loads); both write
         # ps1 as a side effect.
+        if insn.operands:
+            defs.add(_PS1_OFFSET + insn.operands[0])
+    if op in (Opcode.PSQ_ST, Opcode.PSQ_STU):
+        # psq_st reads ps1[fS] in addition to fpr[fS] (semantics.py:3884-3888
+        # ``source1 = ops.fp_bits_to_double(state.ps1[rs])``).  Missing this
+        # use lets region-boundary liveness see ps1[fS] dead and rebind it to
+        # a fresh shared variable — the F1 false-certificate hole.
+        if insn.operands:
+            uses.add(_PS1_OFFSET + insn.operands[0])
+    elif op in (Opcode.PSQ_L, Opcode.PSQ_LU):
+        # psq_l writes ps1[fD] alongside fpr[fD] (semantics.py:3889).
         if insn.operands:
             defs.add(_PS1_OFFSET + insn.operands[0])
     if op in _NO_REG_FIELDS or op in REJECT_OPCODES:
@@ -852,6 +901,19 @@ def _stream_validation_failure(
         if r_insn.opcode in REJECT_OPCODES or d_insn.opcode in REJECT_OPCODES:
             op = r_insn.opcode if r_insn.opcode in REJECT_OPCODES else d_insn.opcode
             return WitnessFailure("reject-list", f"slot {index}: {op.value}")
+        # PSQ D-form exemption (doc 32 A1 rev 3): the four D-forms are allowed
+        # iff the slot is byte-identical (their fS/fD/rA fields are
+        # non-register — gate 3 enforces bit-equality anyway).  A
+        # non-byte-identical PSQ pair falls back to SMT via reject-list.
+        psq_r = r_insn.opcode in _PSQ_D_FORMS
+        psq_d = d_insn.opcode in _PSQ_D_FORMS
+        if psq_r or psq_d:
+            if r_insn.opcode != d_insn.opcode or r_insn.raw != d_insn.raw:
+                return WitnessFailure(
+                    "reject-list",
+                    f"slot {index}: non-byte-identical PSQ "
+                    f"({r_insn.opcode.value} vs {d_insn.opcode.value})",
+                )
         if r_insn.opcode != d_insn.opcode:
             return WitnessFailure(
                 "mnemonic", f"slot {index}: {r_insn.opcode.value} vs {d_insn.opcode.value}",
@@ -902,6 +964,7 @@ def _stream_validation_failure(
 def check_gates(
     original: list[Instruction],
     candidate: list[Instruction],
+    declared_return: str | None = None,
 ) -> WitnessOutcome:
     """Run gates 1-6; return the rho on success."""
     stream_failure = _stream_validation_failure(original, candidate)
@@ -941,22 +1004,102 @@ def check_gates(
     rho = Rho(gpr=rho_gpr, fpr=rho_fpr)
 
     # Gate 5: ABI-boundary fixedness.
-    failure = _check_abi_fixedness(original, candidate, rho)
+    failure = _check_abi_fixedness(original, candidate, rho, declared_return)
+    if failure is not None:
+        return WitnessOutcome(False, rho=rho, failure=failure)
+    # A1 post-rho belt-and-suspenders (global path).
+    failure = _psq_operands_rho_fixed(original, rho)
     if failure is not None:
         return WitnessOutcome(False, rho=rho, failure=failure)
 
     return WitnessOutcome(True, rho=rho)
 
 
+def _tail_call_exists(instructions: list[Instruction]) -> bool:
+    """True when the function has a non-link ``b`` (tail-call) exit.
+
+    A tail call passes EABI arguments (r3-r10) to an out-of-function callee
+    the proof cannot see; a renamed r4 there is observable (F7).  The
+    ``_cfg_liveness`` fixpoint models no exit live-out, so the default-FIXED
+    rule is the only protection — the A3 unfix condition requires NO tail
+    calls (doc 32 A3 rev 3, F7).
+    """
+    for insn in instructions:
+        if insn.opcode == Opcode.B and not insn.link:
+            if insn.relocation is not None or insn.operands:
+                return True
+    return False
+
+
+def _written_before_return(
+    instructions: list[Instruction],
+    lane: int,
+) -> bool:
+    """True when ``lane`` is written on any forward path reaching a
+    non-link ``bclr``/``bcctr`` return (doc 32 A3 rev 3, R2-4).
+
+    Forward DFS/BFS over the existing ``_cfg_successors`` from each write
+    site; a visited node that is itself a non-link BCLR/BCCTR is a potential
+    return terminal (predicated forms included — the taken edge returns).
+    Per-function, NOT per-region: a write in region 0 reaching a return in
+    region 2 still fixes the register.  Coarse over-approximation is sound
+    (only over-fixes, never unfixes).
+    """
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
+    end_pc = instructions[-1].address + 4
+    write_sites = [
+        i for i, insn in enumerate(instructions)
+        if lane in _use_def_numbered(insn)[1]
+    ]
+    if not write_sites:
+        return False
+    returns = {
+        i for i, insn in enumerate(instructions)
+        if insn.opcode in (Opcode.BCLR, Opcode.BCCTR) and not insn.link
+    }
+    if not returns:
+        return False
+    for start in write_sites:
+        seen: set[int] = set()
+        frontier = [start]
+        while frontier:
+            node = frontier.pop()
+            if node in seen:
+                continue
+            seen.add(node)
+            if node in returns:
+                return True
+            frontier.extend(_cfg_successors(instructions, node, by_index, end_pc))
+    return False
+
+
 def _check_abi_fixedness(
     original: list[Instruction],
     candidate: list[Instruction],
     rho: Rho,
+    declared_return: str | None = None,
 ) -> WitnessFailure | None:
     # LR/CTR are inherently fixed (SPR indices are non-register bit-equal
     # fields); only GPR/FPR entries are checked here.
     fixed_gpr = set(_UNCONDITIONALLY_FIXED_GPRS)
     fixed_fpr = set(_UNCONDITIONALLY_FIXED_FPRS)
+    # A3 conditional r4/f1 (doc 32 A3 rev 3): default FIXED.  Unfixed ONLY
+    # when trusted metadata proves a non-64-bit/non-aggregate return AND the
+    # body never writes the register on a forward path to a return AND there
+    # are no tail-call exits (F7).  The structural check can only ever fix,
+    # never unfix (F2/F3).
+    for register, fixed_set, kind in (
+        (4, fixed_gpr, GPR), (1, fixed_fpr, FPR),
+    ):
+        if declared_return not in _TRUSTED_NON_64BIT_RETURNS:
+            fixed_set.add(register)
+        elif _tail_call_exists(original) or _tail_call_exists(candidate):
+            fixed_set.add(register)
+        elif (
+            _written_before_return(original, _numbered_lane(kind, register))
+            or _written_before_return(candidate, _numbered_lane(kind, register))
+        ):
+            fixed_set.add(register)
     # Registers read before being written (live-in at entry) in the EABI
     # argument ranges are the function's input signature and must be fixed.
     # The two sides are position-aligned with identical control flow, so a
@@ -983,6 +1126,45 @@ def _check_abi_fixedness(
                 f"rho maps fpr f{register} -> f{rho.fpr.get(register)}; "
                 f"ABI registers must be fixed",
             )
+    return None
+
+
+def _psq_operands_rho_fixed(
+    instructions: list[Instruction],
+    rho: Rho,
+    start: int = 0,
+    end: int | None = None,
+) -> WitnessFailure | None:
+    """Belt-and-suspenders PSQ check (doc 32 A1 rev 3, G2/F6): a
+    byte-identical PSQ D-form slot's operand registers (fS/fD at pos 0, rA at
+    pos 1) must be rho-fixed, or the slot would store/load different shared
+    variables on the two sides (retail X_reg vs decomp X_{rho^{-1}(reg)}).
+    The structural terminal comparison catches this anyway; this check is
+    fail-closed diagnostics and is NOT load-bearing (the byte-identity gate
+    and the ps1-liveness fix are).  rA=0 is the literal-zero position and
+    reads nothing (semantics.py:3874), so it is skipped.
+    """
+    end = len(instructions) if end is None else end
+    for index in range(start, end):
+        insn = instructions[index]
+        if insn.opcode not in _PSQ_D_FORMS:
+            continue
+        if len(insn.operands) >= 1:
+            fd = insn.operands[0]
+            if rho.fpr.get(fd, fd) != fd:
+                return WitnessFailure(
+                    "reject-list",
+                    f"slot {index}: PSQ f{fd} renamed by rho "
+                    f"(f{fd} -> f{rho.fpr.get(fd)})",
+                )
+        if len(insn.operands) >= 2 and insn.operands[1] != 0:
+            ra = insn.operands[1]
+            if rho.gpr.get(ra, ra) != ra:
+                return WitnessFailure(
+                    "reject-list",
+                    f"slot {index}: PSQ r{ra} renamed by rho "
+                    f"(r{ra} -> r{rho.gpr.get(ra)})",
+                )
     return None
 
 
@@ -1333,6 +1515,7 @@ def certify_renaming_witness(
     deadline_ms: int = 30_000,
     local_symbol: str | None = None,
     candidate_local_symbol: str | None = None,
+    declared_return: str | None = None,
 ) -> WitnessOutcome:
     """Full pipeline: gates 1-6, then the structural witness execution.
 
@@ -1343,7 +1526,7 @@ def certify_renaming_witness(
     four-lane deadness; any deadness / executor / structural failure
     degrades to SMT (``certified=False``), never a false certificate.
     """
-    outcome = check_gates(original, candidate)
+    outcome = check_gates(original, candidate, declared_return)
     if not outcome.certified:
         if getattr(outcome.failure, "gate", None) == "rho":
             # Local rho conflict: try the region-sliced witness.
@@ -1357,6 +1540,7 @@ def certify_renaming_witness(
                 deadline=Deadline.after_ms(deadline_ms),
                 local_symbol=local_symbol,
                 candidate_local_symbol=candidate_local_symbol,
+                declared_return=declared_return,
             )
         return outcome
     deadline = Deadline.after_ms(deadline_ms)
@@ -1553,6 +1737,7 @@ def run_region_sliced_witness(
     deadline: Deadline | None = None,
     local_symbol: str | None = None,
     candidate_local_symbol: str | None = None,
+    declared_return: str | None = None,
 ) -> WitnessOutcome:
     """Region-sliced structural witness (plan §3.1, §3.2).
 
@@ -1593,9 +1778,13 @@ def run_region_sliced_witness(
         # volatiles) in EVERY region's rho — otherwise a non-identity mapping
         # on a fixed register (e.g. the return register r3) self-consistently
         # passes the structural comparison under the region perm.
-        abi_failure = _check_abi_fixedness(original, candidate, rho)
+        abi_failure = _check_abi_fixedness(original, candidate, rho, declared_return)
         if abi_failure is not None:
             return WitnessOutcome(False, rho=rho, failure=abi_failure)
+        # A1 post-rho belt-and-suspenders (per region, doc 32 A1 rev 3, I12).
+        psq_failure = _psq_operands_rho_fixed(original, rho, start, end)
+        if psq_failure is not None:
+            return WitnessOutcome(False, rho=rho, failure=psq_failure)
         regions.append((start, end, rho))
     # First-cut loop policy: region slicing assumes a loop-free target (the
     # fixpoint handles loops for liveness, but the rebinding driver is only

@@ -383987,8 +383987,8 @@
       "size": "0xF4",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803876b0",
@@ -384007,7 +384007,9 @@
           "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803c04f0",
@@ -391358,8 +391360,8 @@
       "size": "0xA8",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pts",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -391375,7 +391377,9 @@
           "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_pts.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 97.262,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803ce568",
@@ -392106,8 +392110,8 @@
       "size": "0xE4",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc",
@@ -392120,8 +392124,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c",
       "declared_return": "i32",
-      "instruction_match": 92.596,
-      "equivalence_status": "inconclusive_abstraction",
+      "instruction_match": 99.789,
+      "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "cri-b02",
         "claimed_at": "2026-08-03T16:12:53.111269+00:00",
@@ -398103,8 +398107,8 @@
       "size": "0xC4",
       "unit": "CriWare/src/sofdec/sfdcore/uty/memcpyd",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -398114,8 +398118,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/uty/memcpyd.c",
       "declared_return": "void",
-      "instruction_match": 89.286,
-      "equivalence_status": "inconclusive_timeout",
+      "instruction_match": 98.878,
+      "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "cri-b07",
         "claimed_at": "2026-08-03T16:08:55.867130+00:00",

@@ -13,6 +13,9 @@ namespace gui {
 
 u32 PaneManager::suIDCounter = 0;
 
+// Retail .bss ends with 4 zero pad bytes after suIDCounter.
+u32 sHBMGUIManagerBssPad;
+
 void drawLine_(f32 x0, f32 y0, f32 x1, f32 y1, f32 z, u8 width,
                GXColor& rColor) {
     GXClearVtxDesc();

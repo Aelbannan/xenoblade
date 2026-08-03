@@ -216,7 +216,7 @@ void forward_peer_data(tL2C_CCB *p_ccb, BT_HDR *p_buf)
 
         if (event < L2CAP_PKT_TYPE_CONNECT_REQ)
         {
-            L2CAP_TRACE_ERROR1("L2CAP - cannot send buffer, offset: %d", event);
+            L2CAP_TRACE_ERROR1("L2CAP - cannot send buffer, offset: %d\0", event);
             GKI_freebuf(p_buf);
             p_buf = (BT_HDR *)GKI_dequeue(&p_ccb->xmit_hold_q);
         }

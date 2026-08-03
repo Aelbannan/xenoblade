@@ -11,11 +11,21 @@ extern "C" u8 WPADGetRadioSensitivity(s32 chan);
 
 namespace homebutton {
 
+// Retail .rodata floats (lbl_80518680/684/688/68C), defined in this unit.
+const f32 lbl_80518680 = 1.0f;
+const f32 lbl_80518684 = -10000.0f;
+const f32 lbl_80518688 = -15000.0f;
+const f32 lbl_8051868C = 10.0f;
+
 bool Controller::sBatteryFlag[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarm[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
 Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
 bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
+
+// Retail .bss ends with 4 zero pad bytes after sSetInfoAsync
+// (gap_08_805CA04C_bss); the extra global reproduces the slice.
+u32 sHBMBssPad;
 
 void Controller::wpadConnectCallback(s32 chan, s32 result) {
     if (sThis[chan] == NULL) {
@@ -90,7 +100,7 @@ void Controller::soundOnCallback(OSAlarm* pAlarm, OSContext* /* pContext */) {
 Controller::Controller(int chan, RemoteSpk* pSpk) {
     mHBController.chan = chan;
     mHBController.rumble = false;
-    mHBController.spVol = 1.0f;
+    mHBController.spVol = lbl_80518680;
 
     remotespk = pSpk;
     mOldConnectCallback = NULL;

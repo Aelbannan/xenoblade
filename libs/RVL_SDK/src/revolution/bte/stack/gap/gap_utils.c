@@ -72,9 +72,10 @@ typedef struct
     UINT8       reserved2[3];              /* 0x29 */
     tGAP_FINDADDR_CB findaddr_cb;          /* 0x2C */
     tBTM_INQ_INFO *cur_inqptr;             /* 0x80 */
-} tGAP_CB;                                 /* 0x3AC total */
+    u8 tail[0x3B0 - 0x84];                 /* 0x84..0x3B0 (retail tail + 4 align pad, unused here) */
+} tGAP_CB;                                 /* 0x3B0 total = retail .bss 0x3AC + 4 pad */
 
-extern tGAP_CB gap_cb;
+tGAP_CB gap_cb; /* retail .bss 0x3AC + 4 pad; defined here (extern in other units) */
 
 void btm_cback(UINT16 index, void *p_msg);
 void gap_find_addr_name_cb(tBTM_REMOTE_DEV_NAME *p);
@@ -278,6 +279,7 @@ void gap_btm_cback1(void *p_msg)
 
 void gap_btm_cback0(void *p_msg)
 {
+
     btm_cback(0, p_msg);
 }
 
@@ -285,6 +287,15 @@ void gap_btm_cback0(void *p_msg)
  * p_msg is the BTM event message. gap_btm_cback0/1 tail-call into it. */
 #pragma push
 #pragma auto_inline off
+/* Retail keeps 2 dead strings (bdaddr/COD logging from the original inq results
+   callback) at .data 0xF0/0x134; referenced from .init so they land right after
+   btm_cback's data (first in -ipa off reverse order) without extra .text. */
+void fake_function(...);
+__declspec(section ".init") void FORCEACTIVEgap_utils_keep(void) {
+    fake_function("GAP Inquiry Results Callback (bdaddr [%02x%02x%02x%02x%02x%02x])",
+                  "                             (COD [%02x%02x%02x], clkoff 0x%04x)");
+}
+
 void btm_cback(UINT16 index, void *p_msg)
 {
     tGAP_CCB *p_ccb;

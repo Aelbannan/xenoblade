@@ -220,17 +220,17 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
             off += 4;
             if (*(s16*)(p + 2) != 0)
                 off += 0x14;
-            const u8* p2 = info + off;
             {
-                u32 tag = (info[off] << 24) | (p2[1] << 16) | (p2[2] << 8) | p2[3];
+                const u8* p2 = info + off;
+                u32 tag = ((u32)p2[0] << 24) | ((u32)p2[1] << 16) | ((u32)p2[2] << 8) | p2[3];
                 if (tag != 0x41494E46)
                     return -2;
+                *outA = *(u32*)(p2 + 4);
+                memcpy(outB, p2 + 8, 0x10);
+                *outC = *(s16*)(info + off + 0x18);
+                *outD = *(s16*)(info + off + 0x1C);
+                *(outD + 1) = *(s16*)(info + off + 0x1E);
             }
-            *outA = *(u32*)(p2 + 4);
-            memcpy(outB, p2 + 8, 0x10);
-            *outC = *(s16*)(info + off + 0x18);
-            *outD = *(s16*)(info + off + 0x1C);
-            *(outD + 1) = *(s16*)(info + off + 0x1E);
         }
     }
     return 0;

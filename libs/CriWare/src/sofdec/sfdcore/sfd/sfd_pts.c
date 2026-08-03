@@ -137,13 +137,13 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
 }
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
+    s32 count = (s32)q->count;
     u32 win_end = win_start + win_len;
     s32 maxIdx = (s32)q->maxIdx;
-    s32 count = (s32)q->count;
+    s32 i = 0;
     s32 start = (s32)q->start;
-    s32 i;
 
-    for (i = 0; i < count; i++) {
+    for (; i < count; i++) {
         SfdPtsEntry* e = &q->entries[start];
         u32 entry_end = e->pos + e->size;
 

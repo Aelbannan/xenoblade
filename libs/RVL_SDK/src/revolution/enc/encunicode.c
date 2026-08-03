@@ -9,94 +9,9 @@ ENCResult ENCiConvertStringUtf8ToUtf16(u16* dest, u32* destLengthPtr, const u8* 
 static u32 ENCiConvertUtf8To32(const u8* src, s32 size);
 static void ENCiConvertUtf32To16(u16* dest, s32 size, u32 val);
 
-//unused
-void ENCConvertStringUnicodeToAscii(){
-}
-
-//unused
-void ENCConvertStringAsciiToUnicode(){
-}
-
-//unused
-void ENCConvertStringUtf32ToUtf16(){
-}
-
-//unused
-void ENCConvertStringUtf16ToUtf32(){
-}
-
-//unused
-void ENCConvertStringUtf32ToUtf8(){
-}
-
-//unused
-void ENCConvertStringUtf8ToUtf32(){
-}
-
-//unused
-void ENCConvertStringUtf16ToUtf8(){
-}
-
 ENCResult ENCConvertStringUtf8ToUtf16(u16* dest, u32* destLength, const u8* src, u32* srcLength){
     return ENCiConvertStringUtf8ToUtf16(dest, destLength, src, srcLength, ENC_BR_KEEP);
 }
-
-//unused
-void ENCConvertStringUtf16ToUtf16(){
-}
-
-//unused
-void ENCConvertStringUtf16LEToUtf16BE(){
-}
-
-//unused
-void ENCConvertStringUtf7ToUtf16(){
-}
-
-//unused
-void ENCSetUnicodeBOM(){
-}
-
-//unused
-void ENCSetUnicodeBOM32(){
-}
-
-//unused
-void ENCSetUnicodeBOM16(){
-}
-
-//unused
-void ENCSetUnicodeBOM8(){
-}
-
-//unused
-void ENCiConvertStringUnicodeToAscii(){
-}
-
-//unused
-void ENCiConvertStringAsciiToUnicode(){
-}
-
-//unused
-void ENCiConvertStringUtf32ToUtf16(){
-}
-
-//unused
-void ENCiConvertStringUtf16ToUtf32(){
-}
-
-//unused
-void ENCiConvertStringUtf32ToUtf8(){
-}
-
-//unused
-void ENCiConvertStringUtf8ToUtf32(){
-}
-
-//unused
-void ENCiConvertStringUtf16ToUtf8(){
-}
-
 
 ENCResult ENCiConvertStringUtf8ToUtf16(u16* dest, u32* destLengthPtr, const u8* src, u32* srcLengthPtr, ENCBreakType brType){
     s32 srcOffset = 0;
@@ -239,14 +154,6 @@ ENCResult ENCiConvertStringUtf8ToUtf16(u16* dest, u32* destLengthPtr, const u8* 
     }
     
     return result;
-}
-
-//unused
-void ENCiConvertStringUtf7ToUtf16(){
-}
-
-//unused
-void ENCiConvertStringUtf16ToUtf16(){
 }
 
 //Converts a set of UTF-8 character bytes to the equivalent UTF-32 value. Returns

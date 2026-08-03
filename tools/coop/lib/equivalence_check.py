@@ -1471,6 +1471,22 @@ def _try_renaming_witness(
     contracts = {
         item: certified_context.contracts[item] for item in call_targets
     }
+    # doc 32 A3 rev 3 (R2-1): resolve the registry declared_return (raw
+    # string, NOT gated on abi_shape_inference_enabled — mirroring the SMT
+    # path at :2224).  The witness uses it only to UNFIX r4/f1 when trusted;
+    # the default remains FIXED (G7).
+    declared_return_value: str | None = None
+    try:
+        from tools.coop.lib.targets import get_target, load_targets
+
+        registry_target = get_target(
+            load_targets(project.config), target_id,
+        )
+        registry_declared = registry_target.extra.get("declared_return")
+        if registry_declared is not None:
+            declared_return_value = str(registry_declared)
+    except Exception:
+        declared_return_value = None
     try:
         outcome = certify_renaming_witness(
             original,
@@ -1482,6 +1498,7 @@ def _try_renaming_witness(
             callee_contracts=contracts,
             local_symbol=left.name,
             candidate_local_symbol=right.name,
+            declared_return=declared_return_value,
         )
     except Exception:
         # Any tooling failure degrades to the SMT probe, never to a cert.
@@ -1512,6 +1529,10 @@ def _try_renaming_witness(
         # is per-region; the assumptions text below is amended accordingly.
         witness_payload["rho_mode"] = rho_mode
         witness_payload["regions"] = regions
+    abi_shape_payload = (
+        {"declared_return": declared_return_value}
+        if declared_return_value is not None else None
+    )
     source_hash = proof_request_hash(
         original_hex=left.code.hex(),
         candidate_hex=right.code.hex(),
@@ -1521,6 +1542,7 @@ def _try_renaming_witness(
         max_paths=max_paths,
         max_loop_iterations=max_loop_iterations,
         observe=observables,
+        abi_shape=abi_shape_payload,
         assumed_callees=[str(item) for item in call_targets],
         callee_contract_sources={
             str(name): contract.source for name, contract in contracts.items()
@@ -1621,6 +1643,11 @@ def _try_renaming_witness(
         # CFG re-validation is skipped (see the parameter's justification).
         validation_bypass="register-renaming-witness",
         renaming_witness=witness_payload,
+        # doc 32 A3 rev 3 (R2-1): explicit kwarg — the witness ProofResult
+        # carries no contract_resolution, so the §2.5.1 embedder is dead for
+        # this path; emit abi_shape directly so the §2.5.4 staleness
+        # validator can match a registry declared_return.
+        abi_shape=abi_shape_payload,
     )
     if cert_detail:
         detail = f"{detail}; {cert_detail}" if detail else cert_detail

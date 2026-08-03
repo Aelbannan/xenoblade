@@ -24,6 +24,7 @@ static s32 NWC24iCloseResourceManagerAsync_(const char* funcName, s32 fd, void* 
 static s32 CheckCallingStatus(const char* funcName);
 
 void __OSInitNet(void) {
+
     s32 error;
     OSIOSRev rev;
 
@@ -49,7 +50,9 @@ void __OSInitNet(void) {
         if (error != 0) {
             OSReport("Failed to synchronize time with network resource managers. %d\n", error);
         }
+
     }
+
 }
 
 #pragma push
@@ -62,9 +65,6 @@ NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     ShutdownFuncInfo.func = NWC24Shutdown_;
     ShutdownFuncInfo.prio = 0x6e;
     OSRegisterShutdownFunction(&ShutdownFuncInfo);
-
-    // Retail .data pools the __FUNCTION__ name before the path string.
-    (void)"NWC24iPrepareShutdown";
 
     if (nwc24ShtFd < 0) {
         result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd,1);
@@ -82,6 +82,7 @@ s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE;
 NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE {
     s32 result;
     s32 rtc;
+
     
     while (TRUE) {
         u32 status = SCCheckStatus();
@@ -112,11 +113,6 @@ s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
     s32 result;
     s32 fd;
     static s32 susResult[8] ALIGN(32);
-
-    // Retail .data pools the __FUNCTION__ names (incl. the stripped
-    // NWC24ResumeScheduler) here.
-    (void)"NWC24SuspendScheduler";
-    (void)"NWC24ResumeScheduler";
 
     result = CheckCallingStatus(__FUNCTION__);
     if (result < 0) {
@@ -163,7 +159,10 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
     static s32 shtBuffer[8] ALIGN(32);
     static s32 shtResult[8] ALIGN(32);
 
-    // Retail .data pools the __FUNCTION__ name here.
+    // Retail .data pools the __FUNCTION__ names (incl. the stripped
+    // NWC24ResumeScheduler) here.
+    (void)"NWC24SuspendScheduler";
+    (void)"NWC24ResumeScheduler";
     (void)"NWC24iRequestShutdown";
 
     shtBuffer[0] = param_1;
@@ -327,3 +326,6 @@ static s32 CheckCallingStatus(const char* funcName){
 NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
 s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
 NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
+
+// .sdata is 8 bytes in retail: nwc24ShtFd then 4 zero pad bytes.
+const u32 s_sdataPad = 0;

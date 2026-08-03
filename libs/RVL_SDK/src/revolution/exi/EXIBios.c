@@ -5,10 +5,20 @@
 #include <string.h>
 
 const char* __EXIVersion =
-    "<< RVL_SDK - EXI \trelease build: Feb 27 2009 10:02:03 (0x4302_145) >>";
+    "<< RVL_SDK - EXI \trelease build: Feb 27 2009 10:02:03 (0x4302_145) >>\0\0";
+
+// Retail .sdata is 8 bytes: the __EXIVersion pointer (4) plus 4 zero pad
+// bytes; the .init-section function keeps the zero string in .sdata without
+// adding .text (i2c.c pattern).
+__declspec(section ".init") void FORCEACTIVEEXIBios_sdata(void) {
+    fake_function("\0\0\0");
+}
 
 static EXIData Ecb[EXI_MAX_CHAN];
 static u32 IDSerialPort1;
+
+// Retail .sbss is 8 bytes: IDSerialPort1 (4) plus 4 zero pad bytes.
+u32 __EXIBiosSbssPad;
 
 static BOOL __EXIProbe(EXIChannel chan);
 

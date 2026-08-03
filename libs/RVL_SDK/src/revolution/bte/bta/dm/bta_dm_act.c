@@ -366,6 +366,13 @@ struct bta_dm_compress_srvc_t {
     unsigned char in_use;   /* offset 0x08 */
 };
 
+// .bss pad: 3 zero bytes after bta_dm_compress_srvcs. Declared before it (and
+// as scalars) so the reverse-order .bss emission packs them at 0x2D..0x30.
+#pragma sdata_threshold 0
+unsigned char bta_dm_act_bss_pad3;
+unsigned char bta_dm_act_bss_pad2;
+unsigned char bta_dm_act_bss_pad1;
+#pragma sdata_threshold 8
 struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
 
 /* Connected services table: byte 0 = count, 9-byte entries, service id at +7
@@ -404,6 +411,10 @@ struct bta_security_t {
 extern const struct bta_security_t bta_security;
 
 /* --- Function implementations --- */
+
+// Retail .data/.bss/.sdata2 have trailing pad bytes; declared first so the
+// reverse-order emitter places them last in their sections.
+
 
 void bta_dm_enable(struct bta_dm_msg *p_data) {
     unsigned char dev_class[3];
@@ -1154,53 +1165,88 @@ union bta_dm_sec_t {
     struct bta_dm_acl_change_t acl_change;
 };
 
-void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
+void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
+                           unsigned char client_id, bd_addr_t bd_addr) {
+    unsigned char *p_cfg;
+    struct bta_dm_compress_srvc_t *p_srvc;
+    unsigned char j;
+    unsigned char k;
+    unsigned char found;
     unsigned char i;
+    unsigned char num;
 
-    if (appl_trace_level >= 4)
-        LogMsg_0(0x503, " bta_dm_disable_timer_cback  ");
-    if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
-        for (i = 0; i < bta_dm_cb.num_devices; i++) {
-            btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
+    if (action == 0) {
+        p_cfg = p_bta_dm_compress_cfg;
+        num = p_cfg[1];
+        for (i = 1; i <= num; i++) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i] && p_cfg[3 * i + 2] == 1) {
+                    /* if any state-2 server is already in the connected list, skip */
+                    found = 0;
+                    for (j = 1; j <= p_cfg[1]; j++) {
+                        if (p_cfg[3 * j + 2] == 2) {
+                            for (k = 0; k < bta_dm_conn_srvcs[0]; k++) {
+                                if (bta_dm_conn_srvcs[9 * k + 7] == p_cfg[3 * j])
+                                    found = 1;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        bta_dm_compress_srvcs[i - 1].client_id = client_id;
+                        bta_dm_compress_srvcs[i - 1].server_id = server_id;
+                        bdcpy(bta_dm_compress_srvcs[i - 1].bd_addr, bd_addr);
+                        bta_dm_compress_srvcs[i - 1].in_use = 1;
+                        if (appl_trace_level >= 4)
+                            LogMsg_3(0x503,
+                                     "bta_dm_compress_cback open app_id %d, BTA id %d, state %d",
+                                     bta_dm_compress_srvcs[i - 1].client_id,
+                                     bta_dm_compress_srvcs[i - 1].server_id,
+                                     bta_dm_compress_srvcs[i - 1].in_use);
+                    }
+                    break;
+                }
+            }
         }
-    } else {
-        bta_dm_cb.disable_timer_active = 0;
-        bta_dm_cb.cback(1, NULL);
+    } else if (action == 1) {
+        p_cfg = p_bta_dm_compress_cfg;
+        for (i = 1; i <= p_cfg[1]; i++) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i]) {
+                    p_srvc = &bta_dm_compress_srvcs[i - 1];
+                    p_srvc->in_use = 0;
+                    if (appl_trace_level >= 4)
+                        LogMsg_3(0x503,
+                                 "bta_dm_compress_cback close app_id %d, BTA id %d, state %d\x00\x00\x00\x00\x00",
+                                 p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
+                    break;
+                }
+            }
+        }
     }
 }
-void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
-    if (appl_trace_level >= 4)
-        LogMsg_0(0x503, " bta_dm_search_timer_cback  ");
-    bta_dm_search_cb.search_disc_active = 0;
-    bta_dm_discover_next_device();
-}
-unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
-                               unsigned char *bd_name) {
-    union bta_dm_sec_t sec_event;
 
-    if (bta_dm_cb.cback == NULL) {
-        return 0xb;
-    }
-    if (bd_name[0] == 0) {
-        bdcpy(bta_dm_cb.pin_bd_addr, bd_addr);
-        bta_dm_cb.pin_dev_class[0] = dev_class[0];
-        bta_dm_cb.pin_dev_class[1] = dev_class[1];
-        bta_dm_cb.pin_dev_class[2] = dev_class[2];
-        if (BTM_ReadRemoteDeviceName(bd_addr, (void *)bta_dm_pinname_cback) == 1) {
-            return 1;
+unsigned char bta_dm_l2cap_server_compress_cback(
+        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
+        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
+        unsigned int data_len2, unsigned char **pp_memory,
+        unsigned int *p_memory_size) {
+    unsigned char result = 0;
+    int i;
+
+    for (i = 0; i < 5; i++) {
+        if (bta_dm_compress_srvcs[i].in_use == 1 &&
+            bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
+            if (appl_trace_level >= 4)
+                LogMsg_1(0x503, "bta_dm_l2cap_server_compress_cback, BTA ID %d",
+                         bta_dm_compress_srvcs[i].server_id);
+            result = bta_dm_co_get_compress_memory(
+                bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
+            break;
         }
-        if (appl_trace_level >= 2)
-            LogMsg_0(0x501, " bta_dm_pin_cback() -> Failed to start Remote Name Request  ");
     }
-    bdcpy(sec_event.pin_req.bd_addr, bd_addr);
-    sec_event.pin_req.dev_class[0] = dev_class[0];
-    sec_event.pin_req.dev_class[1] = dev_class[1];
-    sec_event.pin_req.dev_class[2] = dev_class[2];
-    strncpy((char *)sec_event.pin_req.bd_name, (const char *)bd_name, 0x20);
-    sec_event.pin_req.bd_name[0x20] = 0;
-    bta_dm_cb.cback(2, &sec_event);
-    return 1;
+    return result;
 }
+
 void bta_dm_acl_change(struct bta_dm_msg *p_data) {
     union bta_dm_sec_t sec_event;
     unsigned char *p_bd_addr = p_data->acl_change.bd_addr;
@@ -1257,86 +1303,57 @@ void bta_dm_acl_change(struct bta_dm_msg *p_data) {
         bta_dm_cb.cback(BTA_DM_ACL_DOWN_EVT, &sec_event);
     }
 }
-unsigned char bta_dm_l2cap_server_compress_cback(
-        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
-        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
-        unsigned int data_len2, unsigned char **pp_memory,
-        unsigned int *p_memory_size) {
-    unsigned char result = 0;
-    int i;
 
-    for (i = 0; i < 5; i++) {
-        if (bta_dm_compress_srvcs[i].in_use == 1 &&
-            bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
-            if (appl_trace_level >= 4)
-                LogMsg_1(0x503, "bta_dm_l2cap_server_compress_cback, BTA ID %d",
-                         bta_dm_compress_srvcs[i].server_id);
-            result = bta_dm_co_get_compress_memory(
-                bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
-            break;
-        }
+unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
+                               unsigned char *bd_name) {
+    union bta_dm_sec_t sec_event;
+
+    if (bta_dm_cb.cback == NULL) {
+        return 0xb;
     }
-    return result;
+    if (bd_name[0] == 0) {
+        bdcpy(bta_dm_cb.pin_bd_addr, bd_addr);
+        bta_dm_cb.pin_dev_class[0] = dev_class[0];
+        bta_dm_cb.pin_dev_class[1] = dev_class[1];
+        bta_dm_cb.pin_dev_class[2] = dev_class[2];
+        if (BTM_ReadRemoteDeviceName(bd_addr, (void *)bta_dm_pinname_cback) == 1) {
+            return 1;
+        }
+        if (appl_trace_level >= 2)
+            LogMsg_0(0x501, " bta_dm_pin_cback() -> Failed to start Remote Name Request  ");
+    }
+    bdcpy(sec_event.pin_req.bd_addr, bd_addr);
+    sec_event.pin_req.dev_class[0] = dev_class[0];
+    sec_event.pin_req.dev_class[1] = dev_class[1];
+    sec_event.pin_req.dev_class[2] = dev_class[2];
+    strncpy((char *)sec_event.pin_req.bd_name, (const char *)bd_name, 0x20);
+    sec_event.pin_req.bd_name[0x20] = 0;
+    bta_dm_cb.cback(2, &sec_event);
+    return 1;
 }
-void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
-                           unsigned char client_id, bd_addr_t bd_addr) {
-    unsigned char *p_cfg;
-    struct bta_dm_compress_srvc_t *p_srvc;
-    unsigned char j;
-    unsigned char k;
-    unsigned char found;
+
+void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_search_timer_cback  ");
+    bta_dm_search_cb.search_disc_active = 0;
+    bta_dm_discover_next_device();
+}
+
+void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
     unsigned char i;
-    unsigned char num;
 
-    if (action == 0) {
-        p_cfg = p_bta_dm_compress_cfg;
-        num = p_cfg[1];
-        for (i = 1; i <= num; i++) {
-            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
-                if (server_id == p_cfg[3 * i] && p_cfg[3 * i + 2] == 1) {
-                    /* if any state-2 server is already in the connected list, skip */
-                    found = 0;
-                    for (j = 1; j <= p_cfg[1]; j++) {
-                        if (p_cfg[3 * j + 2] == 2) {
-                            for (k = 0; k < bta_dm_conn_srvcs[0]; k++) {
-                                if (bta_dm_conn_srvcs[9 * k + 7] == p_cfg[3 * j])
-                                    found = 1;
-                            }
-                        }
-                    }
-                    if (!found) {
-                        bta_dm_compress_srvcs[i - 1].client_id = client_id;
-                        bta_dm_compress_srvcs[i - 1].server_id = server_id;
-                        bdcpy(bta_dm_compress_srvcs[i - 1].bd_addr, bd_addr);
-                        bta_dm_compress_srvcs[i - 1].in_use = 1;
-                        if (appl_trace_level >= 4)
-                            LogMsg_3(0x503,
-                                     "bta_dm_compress_cback open app_id %d, BTA id %d, state %d",
-                                     bta_dm_compress_srvcs[i - 1].client_id,
-                                     bta_dm_compress_srvcs[i - 1].server_id,
-                                     bta_dm_compress_srvcs[i - 1].in_use);
-                    }
-                    break;
-                }
-            }
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_disable_timer_cback  ");
+    if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
         }
-    } else if (action == 1) {
-        p_cfg = p_bta_dm_compress_cfg;
-        for (i = 1; i <= p_cfg[1]; i++) {
-            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
-                if (server_id == p_cfg[3 * i]) {
-                    p_srvc = &bta_dm_compress_srvcs[i - 1];
-                    p_srvc->in_use = 0;
-                    if (appl_trace_level >= 4)
-                        LogMsg_3(0x503,
-                                 "bta_dm_compress_cback close app_id %d, BTA id %d, state %d",
-                                 p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
-                    break;
-                }
-            }
-        }
+    } else {
+        bta_dm_cb.disable_timer_active = 0;
+        bta_dm_cb.cback(1, NULL);
     }
 }
+
 
 
 /* PIN request callback: if the remote name is not yet known, kick off a
@@ -1559,19 +1576,3 @@ const struct bta_security_t bta_security = {
     (void *)bta_dm_authentication_complete_cback,
     NULL,
 };
-
-// Retail .data is 0x140 bytes: the trace strings plus 4 zero pad bytes after
-// the last one. sdata_threshold 0 keeps the 4-byte pad in .data; the
-// relocation emits as zero bytes in the object.
-#pragma sdata_threshold 0
-void *bta_dm_act_data_pad = (void *)&bta_dm_enable;
-#pragma sdata_threshold 8
-
-// Retail .bss is 0x30: 3 pad bytes after bta_dm_compress_srvcs
-// (sdata_threshold 0 forces the pad into .bss instead of .sbss).
-#pragma sdata_threshold 0
-unsigned char bta_dm_act_bss_pad[3];
-#pragma sdata_threshold 8
-
-// Retail .sdata2 is 8 bytes: the 0x00018001 literal plus 4 pad bytes.
-const unsigned int bta_dm_act_sdata2_pad = 0;

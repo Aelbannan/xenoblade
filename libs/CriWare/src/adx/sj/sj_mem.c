@@ -40,9 +40,9 @@ typedef struct {
 
 /* --- Internal functions (forward declarations) --- */
 void *sjmem_Create(void *pool_mem, u32 flags);
-int   sjmem_GetChunk(SJMEM *self, int mode, int size, SJ_CHUNK *out);
-int   sjmem_PutChunk(SJMEM *self, int mode, SJ_CHUNK *chunk);
-int   sjmem_UngetChunk(SJMEM *self, int mode, SJ_CHUNK *chunk);
+void  sjmem_GetChunk(SJMEM *self, int mode, int size, SJ_CHUNK *out);
+void  sjmem_PutChunk(SJMEM *self, int mode, SJ_CHUNK *chunk);
+void  sjmem_UngetChunk(SJMEM *self, int mode, SJ_CHUNK *chunk);
 int   sjmem_IsGetChunk(SJMEM *self, int mode, int size, int *out);
 
 /* --- SJMEM_Error --- */
@@ -81,16 +81,19 @@ void *SJMEM_Create(void *pool_mem, u32 flags) {
 }
 
 /* --- sjmem_Create (internal, 0x1B4) --- */
+#pragma push
+#pragma opt_propagation off
 void *sjmem_Create(void *pool_mem, u32 flags) {
-    SJMEM *instances = (SJMEM *)lbl_eu_805ECE50;
+    char buf2[64];
+    char buf1[64];
     int i;
 
     for (i = 0; i < 0x20; i++) {
-        if (instances[i].valid == 0) break;
+        if (((SJMEM *)lbl_eu_805ECE50)[i].valid == 0) break;
     }
     if (i == 0x20) return NULL;
 
-    SJMEM *self = &instances[i];
+    SJMEM *self = &((SJMEM *)lbl_eu_805ECE50)[i];
     self->valid = 1;
     self->vtable = lbl_eu_80565C00;
     self->pool_mem = (u8 *)pool_mem;
@@ -100,43 +103,40 @@ void *sjmem_Create(void *pool_mem, u32 flags) {
     self->err_arg = self;
 
     if (pool_mem == NULL) {
-        char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x27);
-        SJERR_CallErr(buf);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
+        CRICRW_Strcat(buf1, 0x40, suffix);
+        SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x53);
-        SJERR_CallErr(buf);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x53);
+        CRICRW_Strcat(buf2, 0x40, suffix);
+        SJERR_CallErr(buf2);
     } else {
         self->avail = self->buf_size;
         self->offset = 0;
     }
     return self;
 }
+#pragma pop
 
 /* --- SJMEM_Destroy --- */
+#pragma push
+#pragma opt_propagation off
 void SJMEM_Destroy(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
-    const char* msg1 = lbl_eu_80518A68 + 0x5F;
-    const char* msg2 = lbl_eu_80518A68 + 0x0C;
-    const char* msg3 = lbl_eu_80518A68 + 0x6B;
-    const char* msg4 = lbl_eu_80518A68 + 0x33;
-    const char* msg_0x5F = lbl_eu_80518A68 + 0x5F;
-    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
-    const char* msg_0x6B = lbl_eu_80518A68 + 0x6B;
-    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, msg1);
-        CRICRW_Strcat(buf1, 0x40, msg2);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x5F);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, msg3);
-        CRICRW_Strcat(buf2, 0x40, msg4);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x6B);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
         memset(self, 0, 0x24);
@@ -144,26 +144,27 @@ void SJMEM_Destroy(void *self_ptr) {
     }
     SJCRS_Unlock();
 }
+#pragma pop
 
 /* --- SJMEM_GetUuid --- */
+#pragma push
+#pragma opt_propagation off
 void *SJMEM_GetUuid(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     void *r;
-    const char* msg_0x77 = lbl_eu_80518A68 + 0x77;
-    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
-    const char* msg_0x83 = lbl_eu_80518A68 + 0x83;
-    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, msg_0x77);
-        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x77);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, msg_0x83);
-        CRICRW_Strcat(buf2, 0x40, msg_0x33);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x83);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -172,20 +173,25 @@ void *SJMEM_GetUuid(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJMEM_EntryErrFunc --- */
+#pragma push
+#pragma opt_propagation off
 void SJMEM_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x8F);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518A68 + 0x33;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x9B);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
         self->err_func = (void (*)(void *, int))cbfunc;
@@ -193,24 +199,25 @@ void SJMEM_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     }
     SJCRS_Unlock();
 }
+#pragma pop
 
 /* --- SJMEM_Reset --- */
+#pragma push
+#pragma opt_propagation off
 void SJMEM_Reset(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
-    const char* msg_0x27 = lbl_eu_80518A68 + 0x27;
-    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
-    const char* msg_0x53 = lbl_eu_80518A68 + 0x53;
-    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, msg_0x27);
-        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, msg_0x53);
-        CRICRW_Strcat(buf2, 0x40, msg_0x33);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x53);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
         self->avail = self->buf_size;
@@ -218,8 +225,11 @@ void SJMEM_Reset(void *self_ptr) {
     }
     SJCRS_Unlock();
 }
+#pragma pop
 
 /* --- SJMEM_GetNumData --- */
+#pragma push
+#pragma opt_propagation off
 int SJMEM_GetNumData(void *self_ptr, int mode) {
     char buf2[64];
     char buf1[64];
@@ -227,13 +237,15 @@ int SJMEM_GetNumData(void *self_ptr, int mode) {
     int r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0xA7);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518A68 + 0x33;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0xB3);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
     } else if (mode == 1) {
@@ -247,6 +259,7 @@ int SJMEM_GetNumData(void *self_ptr, int mode) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJMEM_GetChunk --- */
 int SJMEM_GetChunk(void *self, int mode, int size, SJ_CHUNK *out) {
@@ -256,16 +269,20 @@ int SJMEM_GetChunk(void *self, int mode, int size, SJ_CHUNK *out) {
 }
 
 /* --- sjmem_GetChunk (internal, 0x134) --- */
-int sjmem_GetChunk(SJMEM *self, int mode, int size, SJ_CHUNK *out) {
+#pragma push
+#pragma opt_propagation off
+void sjmem_GetChunk(SJMEM *self, int mode, int size, SJ_CHUNK *out) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xBF);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xBF);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xCB);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xCB);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (mode == 0) {
         out->size = 0;
@@ -281,8 +298,8 @@ int sjmem_GetChunk(SJMEM *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = NULL;
         if (self->err_func) self->err_func(self->err_arg, -3);
     }
-    return 0;
 }
+#pragma pop
 
 /* --- SJMEM_PutChunk --- */
 int SJMEM_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
@@ -292,30 +309,45 @@ int SJMEM_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
 }
 
 /* --- sjmem_PutChunk (internal, 0xFC) --- */
-int sjmem_PutChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
+#pragma push
+#pragma opt_propagation off
+void sjmem_PutChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xD7);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (self->valid == 0) {
-        char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xE3);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        SJERR_CallErr(buf);
-    } else if (chunk->size > 0 && chunk->ptr != NULL) {
-        if (mode == 0) {
-            /* no-op */
-        } else if (mode == 1) {
-            /* no-op */
-        } else {
-            chunk->size = 0;
-            chunk->ptr = NULL;
-            if (self->err_func) self->err_func(self->err_arg, -3);
-        }
+        goto end;
     }
-    return 0;
+    if (self->valid == 0) {
+        char buf[64];
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xE3);
+        CRICRW_Strcat(buf, 0x40, suffix);
+        SJERR_CallErr(buf);
+        goto end;
+    }
+    if (chunk->size > 0 && chunk->ptr != NULL) goto body;
+    goto exit;
+exit:
+    return;
+body:
+    if (mode == 0) {
+        /* no-op */
+        return;
+    }
+    if (mode == 1) {
+        /* no-op */
+        return;
+    }
+    chunk->size = 0;
+    chunk->ptr = NULL;
+    if (self->err_func) self->err_func(self->err_arg, -3);
+end:
+    return;
 }
+#pragma pop
 
 /* --- SJMEM_UngetChunk --- */
 int SJMEM_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
@@ -325,40 +357,55 @@ int SJMEM_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
 }
 
 /* --- sjmem_UngetChunk (internal, 0x18C) --- */
-int sjmem_UngetChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
+#pragma push
+#pragma opt_propagation off
+void sjmem_UngetChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xEF);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xEF);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (self->valid == 0) {
+        goto end;
+    }
+    if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xFB);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xFB);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (chunk->size > 0 && chunk->ptr != NULL) {
-        if (mode == 0) {
-            if (self->err_func) self->err_func(self->err_arg, -3);
-        } else if (mode == 1) {
-            int new_offset = self->offset - chunk->size;
-            if (new_offset < 0) new_offset = 0;
-            self->offset = new_offset;
-            {
-                int new_avail = self->avail + chunk->size;
-                if (new_avail > (int)self->buf_size) new_avail = self->buf_size;
-                self->avail = new_avail;
-            }
-            if (new_offset != (int)(chunk->ptr - self->pool_mem)) {
-                if (self->err_func) self->err_func(self->err_arg, -3);
-            }
-        } else {
-            chunk->size = 0;
-            chunk->ptr = NULL;
+        goto end;
+    }
+    if (chunk->size > 0 && chunk->ptr != NULL) goto body;
+    goto exit;
+exit:
+    return;
+body:
+    if (mode == 0) {
+        if (self->err_func) self->err_func(self->err_arg, -3);
+        return;
+    }
+    if (mode == 1) {
+        int new_offset = self->offset - chunk->size;
+        if (new_offset < 0) new_offset = 0;
+        self->offset = new_offset;
+        {
+            int new_avail = self->avail + chunk->size;
+            if (new_avail > (int)self->buf_size) new_avail = self->buf_size;
+            self->avail = new_avail;
+        }
+        if (new_offset != (int)(chunk->ptr - self->pool_mem)) {
             if (self->err_func) self->err_func(self->err_arg, -3);
         }
+        return;
     }
-    return 0;
+    chunk->size = 0;
+    chunk->ptr = NULL;
+    if (self->err_func) self->err_func(self->err_arg, -3);
+end:
+    return;
 }
+#pragma pop
 
 /* --- SJMEM_IsGetChunk --- */
 int SJMEM_IsGetChunk(void *self, int mode, int size, int *out) {
@@ -370,19 +417,23 @@ int SJMEM_IsGetChunk(void *self, int mode, int size, int *out) {
 }
 
 /* --- sjmem_IsGetChunk (internal, 0x128) --- */
+#pragma push
+#pragma opt_propagation off
 int sjmem_IsGetChunk(SJMEM *self, int mode, int size, int *out) {
     int result;
     if (self == NULL) {
         char buf[64];
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x107);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x0C);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
     }
     if (self->valid == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518A68 + 0x33;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x113);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x33);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
         return 0;
     }
@@ -398,26 +449,27 @@ int sjmem_IsGetChunk(SJMEM *self, int mode, int size, int *out) {
     *out = result;
     return (result == size) ? 1 : 0;
 }
+#pragma pop
 
 /* --- SJMEM_GetBufSize --- */
+#pragma push
+#pragma opt_propagation off
 int SJMEM_GetBufSize(void *self_ptr) {
     char buf2[64];
     char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     int r;
-    const char* msg_0x137 = lbl_eu_80518A68 + 0x137;
-    const char* msg_0x0C = lbl_eu_80518A68 + 0x0C;
-    const char* msg_0x143 = lbl_eu_80518A68 + 0x143;
-    const char* msg_0x33 = lbl_eu_80518A68 + 0x33;
     SJCRS_Lock();
     if (self == NULL) {
-        CRICRW_Strcpy(buf1, 0x40, msg_0x137);
-        CRICRW_Strcat(buf1, 0x40, msg_0x0C);
+        const char *suffix = lbl_eu_80518A68 + 0x0C;
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x137);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        CRICRW_Strcpy(buf2, 0x40, msg_0x143);
-        CRICRW_Strcat(buf2, 0x40, msg_0x33);
+        const char *suffix = lbl_eu_80518A68 + 0x33;
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x143);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
     } else {
@@ -426,3 +478,4 @@ int SJMEM_GetBufSize(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop

@@ -113,11 +113,11 @@ extern int SFHDS_GetMuxVerNum(void *handle);
 extern void *sfadxt_SearchAlign(void *handle, void *buf, int size);
 
 void sfadxt_ExcludeHdr(void *handle, void *buf, int size, int *out_size) {
+    void *w = *(void **)((u8 *)handle + 0x20ac);
     int exclude = 0;
 
     *out_size = 0;
     {
-        void *w = *(void **)((u8 *)handle + 0x20ac);
         if (size >= 288) {
             int hdr;
             if (ADXT_IsHeader(buf, size, &hdr)) {
@@ -139,36 +139,36 @@ extern s32 SFLIB_SetErr(void *h, u32 err_code);
 
 #pragma optimize_for_size on
 void *sfadxt_SearchAlign(void *handle, void *buf, int size) {
-    u8 *end = (u8 *)buf + size;
-    u8 *p = (u8 *)buf;
-    u8 *found = NULL;
-    u8 *start = NULL;
-    u8 *scan_end = (u8 *)buf + 0x24;
-    s32 unit = 0x12;
-    s32 flag = 0;
+    u8 *scan_end;
+    u8 *p;
     u8 *q;
-    s32 cnt;
+    u8 *end;
+    u8 *start;
+    u8 *found;
+    s32 flag;
+
+    end = (u8 *)buf + size;
+    p = (u8 *)buf;
+    scan_end = (u8 *)buf + 0x24;
+    flag = 0;
+    found = NULL;
+    start = NULL;
 
     while (p < scan_end) {
-        cnt = (s32)((u32)(end + 0x11 - p) / (u32)unit);
-        q = p;
         flag = 0;
-        if (p < end) {
-            do {
-                int ec;
-                if ((s8)q[0] >= 0) {
-                    q += 0x12;
-                    continue;
+        for (q = p; q < end; q += 0x12) {
+            int ec;
+            if ((s8)q[0] >= 0) {
+                continue;
+            }
+            flag = 1;
+            if (ADXT_IsEndcode(q, 0x12, &ec)) {
+                if (found < q) {
+                    found = q;
+                    start = p;
                 }
-                flag = 1;
-                if (ADXT_IsEndcode(q, 0x12, &ec)) {
-                    if (found < q) {
-                        found = q;
-                        start = p;
-                    }
-                }
-                break;
-            } while (--cnt);
+            }
+            break;
         }
         if (!flag) {
             break;

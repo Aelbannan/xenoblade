@@ -113,6 +113,14 @@ extern void PORT_DlcEstablishCnf(RfcMuxChannel* mcb, u8 dlci, u16 mtu, u16 resul
 extern void PORT_DlcReleaseInd(RfcMuxChannel* mcb, u8 dlci);
 extern void PORT_PortNegCnf(RfcMuxChannel* mcb, u8 dlci, u16 mtu, u16 result);
 
+/* rfc_cb: top-level RFCOMM control block (retail .bss 0x418, defined here;
+   extern in the other rfcomm units). */
+typedef struct RfcControlBlock RfcControlBlock;
+struct RfcControlBlock {
+    u8 data[0x418];
+};
+RfcControlBlock rfc_cb;
+
 void RFCOMM_StartRsp(unsigned short param1, unsigned short param2) {
     unsigned short local = param2;
     rfc_mx_sm_execute(param1, 7, &local);

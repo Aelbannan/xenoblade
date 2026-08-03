@@ -6,12 +6,28 @@
 //#define BUILD_DATE "Feb 27 2009"
 //#define BUILD_TIME "10:01:30"
 
-const char* __AIVersion = "<< RVL_SDK - AI \trelease build: Feb 27 2009 10:01:30 (0x4302_145) >>";
+// trailing NULs reproduce the retail .data padding (0x45..0x48)
+// .sdata pad: keeps "\0\0\0" (4 zero bytes) in .sdata via an .init-section
+// function, so no .text is added (retail gap_09_80662F7C_sdata).
+__declspec(section ".init") void FORCEACTIVEai_sdata(void) {
+    fake_function("\0\0\0");
+}
 
-static AIDMACallback __AID_Callback;
+const char* __AIVersion = "<< RVL_SDK - AI \trelease build: Feb 27 2009 10:01:30 (0x4302_145) >>\0\0\0";
+
+static u32 AiSbssPad;
+// 8-byte slot (retail __AID_Callback @ 0x38 + gap_10_80664D24_sbss @ 0x3C);
+// the macro keeps the code using the callback member directly.
+typedef struct {
+    AIDMACallback cb;
+    u32 pad;
+} AIDCallbackSlot;
+static AIDCallbackSlot __AID_Callback_slot;
+#define __AID_Callback (__AID_Callback_slot.cb)
 
 static void* __CallbackStack;
 static void* __OldStack;
+static u32 AiSbssPad;
 
 static s64 bound_32KHz;
 static s64 bound_48KHz;
@@ -22,6 +38,8 @@ static s64 buffer;
 
 static BOOL __AID_Active;
 static BOOL __AI_init_flag;
+static u32 AiSbssPad;
+
 
 static void __AICallbackStackSwitch(AIDMACallback callback);
 static void __AI_SRC_INIT(void);
@@ -58,9 +76,6 @@ void AIInitDMA(void* buffer, u32 length) {
     OSRestoreInterrupts(enabled);
 }
 
-//unused
-void AIGetDMAEnableFlag(){
-}
 
 void AIStartDMA(void) {
     *(volatile unsigned short*)0xCC005036 |= 0x8000;
@@ -89,7 +104,7 @@ BOOL AICheckInit(void) {
 }
 
 
-void AISetDSPSampleRate(u32 rate) {
+static inline void AISetDSPSampleRate(u32 rate) {
     BOOL enabled;
 
     if (rate != AIGetDSPSampleRate()) {
@@ -106,7 +121,7 @@ void AISetDSPSampleRate(u32 rate) {
     }
 }
 
-u32 AIGetDSPSampleRate(void) {
+static inline u32 AIGetDSPSampleRate(void) {
     return ((AI_HW_REGS[AI_AICR] & AI_AICR_SAMPLERATE) >> 6) ^ 1;
 }
 
@@ -141,9 +156,6 @@ void AIInit(void* stack) {
     }
 }
 
-//unused
-void AIReset(){
-}
 
 void __AIDHandler(s32 intr, OSContext* ctx) {
 #pragma unused(intr)
@@ -260,6 +272,3 @@ static void __AI_SRC_INIT(void) {
     }
 }
 
-//unused
-void __ai_src_get_time(){
-}

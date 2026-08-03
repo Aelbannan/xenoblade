@@ -34,4 +34,12 @@ const tBTA_HH_CFG_RETAIL bta_hh_cfg =
     0
 };
 
-tBTA_HH_CFG *p_bta_hh_cfg = (tBTA_HH_CFG *)&bta_hh_cfg;
+/* Retail .sdata slice is 0x10: p_devt_list then an 8-byte p_bta_hh_cfg
+   { &bta_hh_cfg, 0 }. Other TUs see `extern tBTA_HH_CFG *p_bta_hh_cfg` and
+   load the pointer from offset 0, so the trailing pad word is unused. */
+typedef struct {
+    tBTA_HH_CFG *p_cfg; /* 0x00 */
+    u32          _pad;  /* 0x04 */
+} tBTA_HH_CFG_PTR_RETAIL;
+
+tBTA_HH_CFG_PTR_RETAIL p_bta_hh_cfg = {(tBTA_HH_CFG *)&bta_hh_cfg, 0};

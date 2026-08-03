@@ -12,6 +12,13 @@ typedef const u8* (*ParseStringFunc)(u16 encode, const u8* str,
 
 static u16 FontEncode = 0xFFFF;
 
+// Retail .sdata is 8 bytes: FontEncode (2) + 2 pad + 4 zero pad bytes
+// (gap_09_8066325C_sdata); the .init-section function keeps the zero string in
+// .sdata without adding .text.
+__declspec(section ".init") void FORCEACTIVEOSFont_sdata(void) {
+    fake_function("\0\0\0");
+}
+
 static OSFontHeader* FontDataAnsi;
 static OSFontHeader* FontDataSjis;
 static BOOL FixedPitch;
@@ -191,7 +198,7 @@ static u16 Zenkaku2Code[] = {
     0x0000, 0x0000, 0x02FE, 0x02FF, 0x0300, 0x0301, 0x0302, 0x0303, 0x0304,
     0x0305, 0x0306, 0x0307, 0x0308, 0x0309, 0x030A, 0x030B, 0x030C, 0x030D,
     0x030E, 0x030F, 0x0310, 0x0311, 0x0312, 0x0313, 0x0314, 0x0315, 0x0316,
-    0x0317, 0x0318, 0x0319, 0x031A, 0x031B, 0x0000};
+    0x0317, 0x0318, 0x0319, 0x031A, 0x031B, 0x0000, 0x0000, 0x0000, 0x0000};
 
 static u32 GetFontCode(u16 encode, u16 code) {
     u32 tmp;
@@ -765,5 +772,4 @@ const char* OSGetFontWidth(const char* str, u32* widthOut) {
 }
 
 //unused
-void OSSetFontWidth(){
-}
+// unused in Xenoblade retail: OSSetFontWidth

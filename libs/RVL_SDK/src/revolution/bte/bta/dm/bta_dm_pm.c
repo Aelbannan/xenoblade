@@ -65,6 +65,15 @@ typedef struct
     tBTA_DM_SRVCS conn_srvc[5]; /* 0x01, stride 0x09 */
 } tBTA_DM_CONNECTED_SRVCS;    /* 0x2E */
 
+/* Retail .bss slice is 0x30: bta_dm_conn_srvcs then 2 zero pad bytes
+   (aligning the next unit's .bss). Declared BEFORE bta_dm_conn_srvcs because
+   -ipa off reverses the data emission order. sdata_threshold 0 keeps this
+   2-byte global in .bss. Non-static so MWCC emits it. */
+#pragma push
+#pragma sdata_threshold 0
+u16 __BtaDmPmBssPad;
+#pragma pop
+
 tBTA_DM_CONNECTED_SRVCS bta_dm_conn_srvcs;
 
 /* PM config / spec retail views (bta_dm_cfg.c). */
@@ -159,120 +168,99 @@ void bta_dm_pm_cback(tBTA_SYS_CONN_STATUS status, UINT8 id, UINT8 app_id,
 void bta_dm_pm_btm_cback(BD_ADDR bd_addr, tBTM_PM_STATUS status,
                          UINT16 value, UINT8 mode);
 
-void bta_dm_init_pm(void) {
-    memset(&bta_dm_conn_srvcs, 0, sizeof(bta_dm_conn_srvcs));
-
-    /* register PM callbacks when PM entries are configured */
-    if (p_bta_dm_pm_cfg->app_id) {
-        bta_sys_pm_register(bta_dm_pm_cback);
-        BTM_PmRegister(BTM_PM_REG_SET | BTM_PM_REG_NOTIF, &bta_dm_cb.pm_id,
-                       bta_dm_pm_btm_cback);
-    }
+void bta_dm_pm_timer(struct bta_dm_msg *p_data) {
+    bta_dm_pm_set_mode(p_data->pm.bd_addr, 1);
 }
 
-void bta_dm_disable_pm() {
-    BTM_PmRegister(BTM_PM_DEREG, &bta_dm_cb.pm_id, NULL);
-}
-
-void bta_dm_pm_cback(tBTA_SYS_CONN_STATUS status, UINT8 id, UINT8 app_id,
-                     BD_ADDR bd_addr) {
-    tBTM_VERSION_INFO version;
-    UINT8 j;
+void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
+{
+    tBTA_DM_PEER_DEVICE *p_dev;
     UINT8 i;
-    UINT8 k;
 
-    /* Broadcom (0x000F) controller with HCI version < 3.0: clear the SCO
-       link policy on SCO open/close. */
-    if ((UINT8)BTM_ReadLocalVersion(&version) == BTM_SUCCESS &&
-        version.manufacturer == 0x000F && version.hci_version < 0x03) {
-        UINT16 link_policy;
-        if (status == BTA_SYS_SCO_OPEN) {
-            link_policy = bta_dm_cfg.link_policy & 0x000B;
-            BTM_SetLinkPolicy(bd_addr, &link_policy);
-        } else if (status == BTA_SYS_SCO_CLOSE) {
-            link_policy = bta_dm_cfg.link_policy;
-            BTM_SetLinkPolicy(bd_addr, &link_policy);
-        }
-    }
-
-    /* find the PM config entry matching this service */
-    i = 1;
-    while (i <= p_bta_dm_pm_cfg->app_id) {
-        if (p_bta_dm_pm_cfg[i].id == id &&
-            (p_bta_dm_pm_cfg[i].app_id == BTA_ALL_APP_ID ||
-             p_bta_dm_pm_cfg[i].app_id == app_id))
-            break;
-        i++;
-    }
-    if (i > p_bta_dm_pm_cfg->app_id)
-        return;
-
-    /* stop the PM timer for this device */
-    for (j = 0; j < BTA_DM_NUM_PM_TIMER; j++) {
-        if (bta_dm_cb.pm_timer[j].in_use != 0 &&
-            !bdcmp(bta_dm_cb.pm_timer[j].bd_addr, bd_addr)) {
-            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[j].timer);
-            bta_dm_cb.pm_timer[j].in_use = 0;
+    /* stop the PM timer for this device if one is running */
+    for (i = 0; i < BTA_DM_NUM_PM_TIMER; i++) {
+        if (bta_dm_cb.pm_timer[i].in_use &&
+            !bdcmp(bta_dm_cb.pm_timer[i].bd_addr, p_data->pm_btm_status.bd_addr)) {
+            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[i].timer);
+            bta_dm_cb.pm_timer[i].in_use = FALSE;
             break;
         }
     }
 
-    if (p_bta_dm_pm_spec[p_bta_dm_pm_cfg[i].spec_idx]
-            .actn_tbl[status][0].power_mode == BTA_DM_PM_NO_ACTION)
-        return;
-
-    /* find the service in the connected-services list */
-    j = 0;
-    while (j < bta_dm_conn_srvcs.count) {
-        if (bta_dm_conn_srvcs.conn_srvc[j].id == id &&
-            bta_dm_conn_srvcs.conn_srvc[j].app_id == app_id &&
-            !bdcmp(bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr, bd_addr))
-            break;
-        j++;
-    }
-
-    if (p_bta_dm_pm_spec[p_bta_dm_pm_cfg[i].spec_idx]
-            .actn_tbl[status][0].power_mode == BTA_DM_PM_ACT_PARK) {
-        /* park action: drop the service from the list */
-        if (j != bta_dm_conn_srvcs.count) {
-            for (; j < bta_dm_conn_srvcs.count; j++) {
-                memcpy(&bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr,
-                       &bta_dm_conn_srvcs.conn_srvc[j + 1].peer_bdaddr,
-                       sizeof(tBTA_DM_SRVCS));
-            }
-            bta_dm_conn_srvcs.count--;
-        }
-    } else {
-        /* other actions: add the service if it is not yet listed */
-        if (j == bta_dm_conn_srvcs.count) {
-            if (bta_dm_conn_srvcs.count == BTA_DM_NUM_CONN_SRVCS) {
-                if (appl_trace_level >= 2) {
-                    LogMsg_0(0x501,
-                             "bta_dm_act no more connected service cbs");
+    switch (p_data->pm_btm_status.status) {
+    case BTM_PM_STS_ACTIVE:
+        if (p_data->pm_btm_status.mode != 0) {
+            for (i = 0; i < bta_dm_cb.device_list_count; i++) {
+                if (!bdcmp(bta_dm_cb.device_list[i].peer_bdaddr,
+                           p_data->pm_btm_status.bd_addr)) {
+                    p_dev = &bta_dm_cb.device_list[i];
+                    if (p_dev->pm_mode_attempted &
+                        (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF)) {
+                        p_dev->pm_mode_failed |=
+                            (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF) &
+                            p_dev->pm_mode_attempted;
+                        bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
+                    }
+                    break;
                 }
-                return;
             }
-            bta_dm_conn_srvcs.conn_srvc[j].id = id;
-            bta_dm_conn_srvcs.conn_srvc[j].app_id = app_id;
-            bdcpy(bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr, bd_addr);
-            bta_dm_conn_srvcs.count++;
+        } else {
+            bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
         }
+        break;
+    default:
+        break;
     }
-
-    /* clear the failed/attempted power-mode flags for this device */
-    for (k = 0; k < bta_dm_cb.device_list_count; k++) {
-        if (!bdcmp(bta_dm_cb.device_list[k].peer_bdaddr, bd_addr)) {
-            bta_dm_cb.device_list[k].pm_mode_attempted = 0;
-            bta_dm_cb.device_list[k].pm_mode_failed = 0;
-            break;
-        }
-    }
-
-    bta_dm_conn_srvcs.conn_srvc[j].state = status;
-    bta_dm_pm_set_mode(bd_addr, FALSE);
 }
 
-/* ---- bta_dm_pm_set_mode ------------------------------------------------ */
+void bta_dm_pm_timer_cback(void *p_tle) {
+    struct bta_dm_pm_msg *p_msg;
+    unsigned char timer_id = BTA_DM_PM_MODE_TIMER_ID_0;
+    struct bta_dm_cb_pm_t *p_cb = &bta_dm_cb;
+
+    if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0].in_use &&
+        (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0] == p_tle) {
+        p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0].in_use = FALSE;
+    } else {
+        timer_id = BTA_DM_PM_MODE_TIMER_ID_1;
+        if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1].in_use &&
+            (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1] == p_tle) {
+            p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1].in_use = FALSE;
+        } else {
+            timer_id = BTA_DM_PM_MODE_TIMER_ID_2;
+            if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2].in_use &&
+                (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2] == p_tle) {
+                p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2].in_use = FALSE;
+            } else {
+                timer_id = BTA_DM_PM_MODE_TIMER_ID_MAX;
+            }
+        }
+    }
+
+    if (timer_id != BTA_DM_PM_MODE_TIMER_ID_MAX) {
+        if ((p_msg = (struct bta_dm_pm_msg *)GKI_getbuf(sizeof(struct bta_dm_pm_msg))) != NULL) {
+            p_msg->hdr.event = BTA_DM_PM_TIMER_EVT;
+            bdcpy(p_msg->bd_addr, bta_dm_cb.pm_timer[timer_id].bd_addr);
+            bta_sys_sendmsg(p_msg);
+        }
+    }
+}
+
+void bta_dm_pm_btm_cback(BD_ADDR bd_addr, tBTM_PM_STATUS status,
+                         UINT16 value, UINT8 mode) {
+    struct bta_dm_pm_btm_status *p_buf;
+
+    if ((p_buf = (struct bta_dm_pm_btm_status *)GKI_getbuf(
+             sizeof(struct bta_dm_pm_btm_status))) != NULL) {
+        p_buf->hdr.event = BTA_DM_PM_BTM_STATUS_EVT;
+        p_buf->status = status;
+        p_buf->value = value;
+        p_buf->mode = mode;
+        bdcpy(p_buf->bd_addr, bd_addr);
+        bta_sys_sendmsg(p_buf);
+    }
+}
+
 void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
 {
     UINT8 pm_action = BTA_DM_PM_NO_ACTION;
@@ -391,7 +379,7 @@ void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
 
         if (i == BTA_DM_NUM_PM_TIMER) {
             if (appl_trace_level >= 2) {
-                LogMsg_0(0x501, "bta_dm_act dm_pm_timer no more");
+                LogMsg_0(0x501, "bta_dm_act no more pm timers\0\0\0\0\0\0\0");
             }
             return;
         }
@@ -424,95 +412,116 @@ void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
     }
 }
 
-void bta_dm_pm_btm_cback(BD_ADDR bd_addr, tBTM_PM_STATUS status,
-                         UINT16 value, UINT8 mode) {
-    struct bta_dm_pm_btm_status *p_buf;
-
-    if ((p_buf = (struct bta_dm_pm_btm_status *)GKI_getbuf(
-             sizeof(struct bta_dm_pm_btm_status))) != NULL) {
-        p_buf->hdr.event = BTA_DM_PM_BTM_STATUS_EVT;
-        p_buf->status = status;
-        p_buf->value = value;
-        p_buf->mode = mode;
-        bdcpy(p_buf->bd_addr, bd_addr);
-        bta_sys_sendmsg(p_buf);
-    }
-}
-
-void bta_dm_pm_timer_cback(void *p_tle) {
-    struct bta_dm_pm_msg *p_msg;
-    unsigned char timer_id = BTA_DM_PM_MODE_TIMER_ID_0;
-    struct bta_dm_cb_pm_t *p_cb = &bta_dm_cb;
-
-    if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0].in_use &&
-        (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0] == p_tle) {
-        p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_0].in_use = FALSE;
-    } else {
-        timer_id = BTA_DM_PM_MODE_TIMER_ID_1;
-        if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1].in_use &&
-            (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1] == p_tle) {
-            p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_1].in_use = FALSE;
-        } else {
-            timer_id = BTA_DM_PM_MODE_TIMER_ID_2;
-            if (p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2].in_use &&
-                (void *)&p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2] == p_tle) {
-                p_cb->pm_timer[BTA_DM_PM_MODE_TIMER_ID_2].in_use = FALSE;
-            } else {
-                timer_id = BTA_DM_PM_MODE_TIMER_ID_MAX;
-            }
-        }
-    }
-
-    if (timer_id != BTA_DM_PM_MODE_TIMER_ID_MAX) {
-        if ((p_msg = (struct bta_dm_pm_msg *)GKI_getbuf(sizeof(struct bta_dm_pm_msg))) != NULL) {
-            p_msg->hdr.event = BTA_DM_PM_TIMER_EVT;
-            bdcpy(p_msg->bd_addr, bta_dm_cb.pm_timer[timer_id].bd_addr);
-            bta_sys_sendmsg(p_msg);
-        }
-    }
-}
-
-void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
-{
-    tBTA_DM_PEER_DEVICE *p_dev;
+void bta_dm_pm_cback(tBTA_SYS_CONN_STATUS status, UINT8 id, UINT8 app_id,
+                     BD_ADDR bd_addr) {
+    tBTM_VERSION_INFO version;
+    UINT8 j;
     UINT8 i;
+    UINT8 k;
 
-    /* stop the PM timer for this device if one is running */
-    for (i = 0; i < BTA_DM_NUM_PM_TIMER; i++) {
-        if (bta_dm_cb.pm_timer[i].in_use &&
-            !bdcmp(bta_dm_cb.pm_timer[i].bd_addr, p_data->pm_btm_status.bd_addr)) {
-            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[i].timer);
-            bta_dm_cb.pm_timer[i].in_use = FALSE;
+    /* Broadcom (0x000F) controller with HCI version < 3.0: clear the SCO
+       link policy on SCO open/close. */
+    if ((UINT8)BTM_ReadLocalVersion(&version) == BTM_SUCCESS &&
+        version.manufacturer == 0x000F && version.hci_version < 0x03) {
+        UINT16 link_policy;
+        if (status == BTA_SYS_SCO_OPEN) {
+            link_policy = bta_dm_cfg.link_policy & 0x000B;
+            BTM_SetLinkPolicy(bd_addr, &link_policy);
+        } else if (status == BTA_SYS_SCO_CLOSE) {
+            link_policy = bta_dm_cfg.link_policy;
+            BTM_SetLinkPolicy(bd_addr, &link_policy);
+        }
+    }
+
+    /* find the PM config entry matching this service */
+    i = 1;
+    while (i <= p_bta_dm_pm_cfg->app_id) {
+        if (p_bta_dm_pm_cfg[i].id == id &&
+            (p_bta_dm_pm_cfg[i].app_id == BTA_ALL_APP_ID ||
+             p_bta_dm_pm_cfg[i].app_id == app_id))
+            break;
+        i++;
+    }
+    if (i > p_bta_dm_pm_cfg->app_id)
+        return;
+
+    /* stop the PM timer for this device */
+    for (j = 0; j < BTA_DM_NUM_PM_TIMER; j++) {
+        if (bta_dm_cb.pm_timer[j].in_use != 0 &&
+            !bdcmp(bta_dm_cb.pm_timer[j].bd_addr, bd_addr)) {
+            bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[j].timer);
+            bta_dm_cb.pm_timer[j].in_use = 0;
             break;
         }
     }
 
-    switch (p_data->pm_btm_status.status) {
-    case BTM_PM_STS_ACTIVE:
-        if (p_data->pm_btm_status.mode != 0) {
-            for (i = 0; i < bta_dm_cb.device_list_count; i++) {
-                if (!bdcmp(bta_dm_cb.device_list[i].peer_bdaddr,
-                           p_data->pm_btm_status.bd_addr)) {
-                    p_dev = &bta_dm_cb.device_list[i];
-                    if (p_dev->pm_mode_attempted &
-                        (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF)) {
-                        p_dev->pm_mode_failed |=
-                            (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF) &
-                            p_dev->pm_mode_attempted;
-                        bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
-                    }
-                    break;
-                }
-            }
-        } else {
-            bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
-        }
-        break;
-    default:
-        break;
+    if (p_bta_dm_pm_spec[p_bta_dm_pm_cfg[i].spec_idx]
+            .actn_tbl[status][0].power_mode == BTA_DM_PM_NO_ACTION)
+        return;
+
+    /* find the service in the connected-services list */
+    j = 0;
+    while (j < bta_dm_conn_srvcs.count) {
+        if (bta_dm_conn_srvcs.conn_srvc[j].id == id &&
+            bta_dm_conn_srvcs.conn_srvc[j].app_id == app_id &&
+            !bdcmp(bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr, bd_addr))
+            break;
+        j++;
     }
+
+    if (p_bta_dm_pm_spec[p_bta_dm_pm_cfg[i].spec_idx]
+            .actn_tbl[status][0].power_mode == BTA_DM_PM_ACT_PARK) {
+        /* park action: drop the service from the list */
+        if (j != bta_dm_conn_srvcs.count) {
+            for (; j < bta_dm_conn_srvcs.count; j++) {
+                memcpy(&bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr,
+                       &bta_dm_conn_srvcs.conn_srvc[j + 1].peer_bdaddr,
+                       sizeof(tBTA_DM_SRVCS));
+            }
+            bta_dm_conn_srvcs.count--;
+        }
+    } else {
+        /* other actions: add the service if it is not yet listed */
+        if (j == bta_dm_conn_srvcs.count) {
+            if (bta_dm_conn_srvcs.count == BTA_DM_NUM_CONN_SRVCS) {
+                if (appl_trace_level >= 2) {
+                    LogMsg_0(0x501,
+                             "bta_dm_act no more connected service cbs");
+                }
+                return;
+            }
+            bta_dm_conn_srvcs.conn_srvc[j].id = id;
+            bta_dm_conn_srvcs.conn_srvc[j].app_id = app_id;
+            bdcpy(bta_dm_conn_srvcs.conn_srvc[j].peer_bdaddr, bd_addr);
+            bta_dm_conn_srvcs.count++;
+        }
+    }
+
+    /* clear the failed/attempted power-mode flags for this device */
+    for (k = 0; k < bta_dm_cb.device_list_count; k++) {
+        if (!bdcmp(bta_dm_cb.device_list[k].peer_bdaddr, bd_addr)) {
+            bta_dm_cb.device_list[k].pm_mode_attempted = 0;
+            bta_dm_cb.device_list[k].pm_mode_failed = 0;
+            break;
+        }
+    }
+
+    bta_dm_conn_srvcs.conn_srvc[j].state = status;
+    bta_dm_pm_set_mode(bd_addr, FALSE);
 }
 
-void bta_dm_pm_timer(struct bta_dm_msg *p_data) {
-    bta_dm_pm_set_mode(p_data->pm.bd_addr, 1);
+/* ---- bta_dm_pm_set_mode ------------------------------------------------ */
+void bta_dm_disable_pm() {
+    BTM_PmRegister(BTM_PM_DEREG, &bta_dm_cb.pm_id, NULL);
+}
+
+void bta_dm_init_pm(void) {
+    memset(&bta_dm_conn_srvcs, 0, sizeof(bta_dm_conn_srvcs));
+
+    /* register PM callbacks when PM entries are configured */
+    if (p_bta_dm_pm_cfg->app_id) {
+        bta_sys_pm_register(bta_dm_pm_cback);
+        BTM_PmRegister(BTM_PM_REG_SET | BTM_PM_REG_NOTIF, &bta_dm_cb.pm_id,
+                       bta_dm_pm_btm_cback);
+    }
 }

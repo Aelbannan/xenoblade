@@ -2485,6 +2485,18 @@ The buffer-param builders hoist **all** `li`s before the first store.
   byte-identical; a pointer-base form (`const u32* early/filter`) and a
   loads-first statement order are also byte-identical to the six-local output;
   `-O3`/`-O2` regress to 21 mm (~36%).
+  **2026-08-03 (Dpl2 twin, same as sibling above):** `#pragma peephole off`
+  …`on` around the function (six-local shape, `e7` first) raises it to the
+  same documented window as the sibling: 62.5% raw hexdiff / **69.04% objdiff**
+  (above the 50% probe gate), `stwu` 1st, `lfs f1` at 0x0C, from 0x34
+  (`lwz r0` filter3, `stfd`, ival load, 5-add chain, `slwi`, epilogue)
+  byte-identical; residual 9/24 mm = 6 structural order swaps + 3 reg-swap
+  artifacts identical to the sibling list ((a) mem `lfs f0` hoists to 0x04,
+  (b) Filter base `lis r3; addi r6,r3` vs retail `lis r6; addi r6,r6`,
+  (c) load windows 0/3/2 vs retail 1/3/1, e7 before filter0). `-O4,s` under
+  peephole off: same 62.5% on this function but split OVER by 24 — keep
+  `-O4,p`. cycle #6: STRUCTURAL, witness `inconclusive_smt_disabled`;
+  acceptance = `cycle --smt` out-of-band (leaf, 0 calls, no callee gate).
 - **`Callback` (~98.9%)**: declare long-lived coef locals **before** loop temps
   in order `lpfCoef2, earlyCoef, combCoef0/1, allpassCoef, lpfCoef1,
   earlyGain, fusedGain` so MWCC homes them to **f0..f7** and emits retail's

@@ -157,8 +157,30 @@ void MWSFTAG_ResetAinfSj(void* self) {
     ((void (*)(void*))vtable[5])(p);
 }
 
-void MWSFTAG_UpdateTagInf() {}
+extern void mwsftag_GetAinfFromSj(void* self);
+extern void SFX_SetTagInf(void* tag, u32 a, u32 b);
+extern s32 SJ_SearchTag(u32* a, char* b, char* c, u32* out);
 
-void mwsftag_GetAinfFromSj() {}
+void MWSFTAG_UpdateTagInf(void* self) {
+    if (*(u32*)((u8*)self + 0x4c0) == 0)
+        return;
+    mwsftag_GetAinfFromSj(self);
+    {
+        void* tag = *(void**)((u8*)self + 0xc8);
+        u32 a = *(u32*)((u8*)self + 0x4dc);
+        u32 b = *(u32*)((u8*)self + 0x4e0);
+        u32 out[2];
+        if (a == 0) {
+            SFX_SetTagInf(tag, 0, 0);
+            return;
+        }
+        if (SJ_SearchTag(&a, lbl_eu_80519EC8 + 0x38d, lbl_eu_80519EC8 + 0x395, out) != 0) {
+            SFX_SetTagInf(tag, out[0], out[1]);
+        } else {
+            SFX_SetTagInf(tag, 0, 0);
+        }
+    }
+}
+
 
 void MWSFD_GetZfrmRange() {}

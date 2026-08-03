@@ -220,6 +220,7 @@ void InitTexSRT(TexSRT* pTexSrt, u32 num) {
  * GX memory offsets (inline in lyt_material.h like retail nw4hbm)
  ******************************************************************************/
 
+
 } // namespace
 
 namespace nw4hbm {
@@ -236,16 +237,44 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
     mTevCols[TEVCOLOR_REG1] = DefaultWhiteColor;
     mTevCols[TEVCOLOR_REG2] = DefaultWhiteColor;
 
-    mGXMemCap = detail::BitGXNums();
-    mGXMemNum = detail::BitGXNums();
+    mGXMemCap.texMap = 0;
+    mGXMemCap.texSRT = 0;
+    mGXMemCap.texCoordGen = 0;
+    mGXMemCap.indSRT = 0;
+    mGXMemCap.indStage = 0;
+    mGXMemCap.tevSwap = 0;
+    mGXMemCap.tevStage = 0;
+    mGXMemCap.chanCtrl = 0;
+    mGXMemCap.matCol = 0;
+    mGXMemCap.alpComp = 0;
+    mGXMemCap.blendMode = 0;
+
+    mGXMemNum.texMap = 0;
+    mGXMemNum.texSRT = 0;
+    mGXMemNum.texCoordGen = 0;
+    mGXMemNum.indSRT = 0;
+    mGXMemNum.indStage = 0;
+    mGXMemNum.tevSwap = 0;
+    mGXMemNum.tevStage = 0;
+    mGXMemNum.chanCtrl = 0;
+    mGXMemNum.matCol = 0;
+    mGXMemNum.alpComp = 0;
+    mGXMemNum.blendMode = 0;
 
     mbUserAllocated = false;
     mpGXMem = NULL;
 
     SetName(pRes->name);
 
+    u8 texMapNum      = ut::Min<u8>(pRes->resNum.GetTexMapNum(), GX_MAX_TEXMAP);
+    u8 texSrtNum      = ut::Min<u8>(pRes->resNum.GetTexSRTNum(), MAX_TEX_SRT);
+    u8 texCoordGenNum = ut::Min<u8>(pRes->resNum.GetTexCoordGenNum(), GX_MAX_TEXCOORD);
+
     for (int i = 0; i < TEVCOLOR_MAX; i++) {
-        mTevCols[i] = pRes->tevCols[i];
+        mTevCols[i].r = pRes->tevCols[i].r;
+        mTevCols[i].g = pRes->tevCols[i].g;
+        mTevCols[i].b = pRes->tevCols[i].b;
+        mTevCols[i].a = pRes->tevCols[i].a;
     }
 
     for (int i = 0; i < GX_MAX_KCOLOR; i++) {
@@ -255,18 +284,18 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
     u32 offset = sizeof(res::Material);
 
     // clang-format off
-    const res::TexMap* const pResTexMap = detail::ConvertOffsToPtr<res::TexMap>(pRes, offset);
+    const res::TexMap* const pResTexMap =
+        reinterpret_cast<const res::TexMap*>(reinterpret_cast<const u8*>(pRes) + offset);
     offset += pRes->resNum.GetTexMapNum() * sizeof(res::TexMap);
 
-    const TexSRT* const pResTexSrt = detail::ConvertOffsToPtr<TexSRT>(pRes, offset);
+    const TexSRT* const pResTexSrt =
+        reinterpret_cast<const TexSRT*>(reinterpret_cast<const u8*>(pRes) + offset);
     offset += pRes->resNum.GetTexSRTNum() * sizeof(TexSRT);
 
-    const TexCoordGen* const pResTexCoordGen = detail::ConvertOffsToPtr<TexCoordGen>(pRes, offset);
+    const TexCoordGen* const pResTexCoordGen =
+        reinterpret_cast<const TexCoordGen*>(reinterpret_cast<const u8*>(pRes) + offset);
     offset += pRes->resNum.GetTexCoordGenNum() * sizeof(TexCoordGen);
-
-    u8 texMapNum      = ut::Min<u8>(pRes->resNum.GetTexMapNum(), GX_MAX_TEXMAP);
-    u8 texSrtNum      = ut::Min<u8>(pRes->resNum.GetTexSRTNum(), MAX_TEX_SRT);
-    u8 texCoordGenNum = ut::Min<u8>(pRes->resNum.GetTexCoordGenNum(), GX_MAX_TEXCOORD);
+    // clang-format on
 
     bool allocChanCtrl  = pRes->resNum.GetChanCtrlNum() != 0;
     bool allocMatCol    = pRes->resNum.GetMatColNum() != 0;
@@ -277,7 +306,6 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
     u8 indTexSrtNum = ut::Min<u8>(pRes->resNum.GetIndTexSRTNum(), MAX_IND_SRT);
     u8 indStageNum  = ut::Min<u8>(pRes->resNum.GetIndTexStageNum(), GX_MAX_INDTEXSTAGE);
     u8 tevStageNum  = ut::Min<u8>(pRes->resNum.GetTevStageNum(), GX_MAX_TEVSTAGE);
-    // clang-format on
 
     ReserveGXMem(texMapNum, texSrtNum, texCoordGenNum, tevStageNum,
                  allocTevSwap, indStageNum, indTexSrtNum, allocChanCtrl,
@@ -288,23 +316,27 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
 
         if (texMapNum > 0) {
             const res::Texture* const pTexture =
-                detail::ConvertOffsToPtr<res::Texture>(
-                    rBlockSet.pTextureList, sizeof(res::TextureList));
+                reinterpret_cast<const res::Texture*>(
+                    reinterpret_cast<const u8*>(rBlockSet.pTextureList) +
+                    sizeof(res::TextureList));
 
-            TexMap* const pTexMap = GetTexMapAry();
-
-            u8 num = 0;
-            for (u8 i = 0; i < mGXMemNum.texMap; num++, i++) {
-                const char* const pName = detail::ConvertOffsToPtr<char>(
-                    pTexture, pTexture[pResTexMap[i].texIdx].nameStrOffset);
+            for (u8 i = 0; i < mGXMemNum.texMap; i++) {
+                const char* const pName =
+                    reinterpret_cast<const char*>(
+                        reinterpret_cast<const u8*>(pTexture) +
+                        pTexture[pResTexMap[i].texIdx].nameStrOffset);
 
                 void* const pTexPalette = rBlockSet.pResAccessor->GetResource(
                     ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
 
-                TexMap texMap(static_cast<TPLPalette*>(pTexPalette), 0);
-                SetTextureNoWrap(num, texMap);
+                GXTexObj* const pTexObj =
+                    reinterpret_cast<GXTexObj*>(GetTexMapAry()) + i;
 
-                pTexMap[num].SetWrapMode(
+                detail::InitGXTexObjFromTPL(
+                    pTexObj, static_cast<TPLPalette*>(pTexPalette), 0);
+
+                GXInitTexObjWrapMode(
+                    pTexObj,
                     static_cast<GXTexWrapMode>(pResTexMap[i].wrapS),
                     static_cast<GXTexWrapMode>(pResTexMap[i].wrapT));
             }
@@ -343,12 +375,8 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
             const TevSwapMode* const pResTevSwap =
                 detail::ConvertOffsToPtr<TevSwapMode>(pRes, offset);
 
-            TevSwapMode* const pTevSwap = GetTevSwapAry();
-            for (int i = 0; i < GX_MAX_TEVSWAP; i++) {
-                pTevSwap[i] = pResTevSwap[i];
-            }
-
-            offset += GX_MAX_TEVSWAP * sizeof(TevSwapMode);
+            *GetTevSwapAry() = *pResTevSwap;
+            offset += sizeof(TevSwapMode);
         }
 
         if (indTexSrtNum != 0) {
@@ -364,8 +392,17 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
         offset += pRes->resNum.GetIndTexSRTNum() * sizeof(TexSRT);
 
         if (indStageNum != 0) {
-            SetIndStageNum(indStageNum);
             IndirectStage* const pIndStage = GetIndirectStageAry();
+
+            for (u32 i = mGXMemNum.indStage; i < indStageNum; i++) {
+                IndirectStage& rStage = pIndStage[i];
+
+                rStage.texCoordGen = GX_TEXCOORD0;
+                rStage.texMap = GX_TEXMAP0;
+                rStage.scaleS = GX_ITS_1;
+                rStage.scaleT = GX_ITS_1;
+            }
+            mGXMemNum.indStage = indStageNum;
 
             const IndirectStage* const pResIndStage =
                 detail::ConvertOffsToPtr<IndirectStage>(pRes, offset);
@@ -377,14 +414,41 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
         offset += pRes->resNum.GetIndTexStageNum() * sizeof(IndirectStage);
 
         if (tevStageNum != 0) {
-            SetTevStageNum(tevStageNum);
             TevStage* const pTevStage = GetTevStageAry();
+
+            for (u32 i = mGXMemNum.tevStage; i < tevStageNum; i++) {
+                TevStage& rStage = pTevStage[i];
+
+                rStage.texCoordGen = GX_TEXCOORD_NULL;
+                rStage.colChan = GX_COLOR0A0;
+                rStage.texMap = GX_TEXMAP_NULL;
+                rStage.swapSel = GX_TEV_SWAP0;
+
+                rStage.colIn.ab = GX_CC_ZERO | GX_CC_ZERO << 4;
+                rStage.colIn.cd = GX_CC_ZERO | GX_CC_RASC << 4;
+                rStage.colIn.op = GX_TEV_ADD;
+                rStage.colIn.cl = true | GX_TEVPREV << 1 |
+                                  GX_TEV_KCSEL_K0 << 3;
+
+                rStage.alpIn.ab = GX_CA_ZERO | GX_CA_ZERO << 4;
+                rStage.alpIn.cd = GX_CA_ZERO | GX_CA_RASA << 4;
+                rStage.alpIn.op = GX_TEV_ADD;
+                rStage.alpIn.cl = true | GX_TEVPREV << 1 |
+                                  GX_TEV_KASEL_K0_R << 3;
+
+                rStage.indStage = GX_INDTEXSTAGE0;
+                rStage.indBiMt = 0;
+                rStage.indWrap = GX_ITW_OFF;
+                rStage.indFoAdUtAl = 0;
+            }
+            mGXMemNum.tevStage = tevStageNum;
 
             const TevStage* const pResTevStage =
                 detail::ConvertOffsToPtr<TevStage>(pRes, offset);
 
+            TevStage* const pTevStageDst = GetTevStageAry();
             for (int i = 0; i < tevStageNum; i++) {
-                pTevStage[i] = pResTevStage[i];
+                pTevStageDst[i] = pResTevStage[i];
             }
         }
         offset += pRes->resNum.GetTevStageNum() * sizeof(TevStage);

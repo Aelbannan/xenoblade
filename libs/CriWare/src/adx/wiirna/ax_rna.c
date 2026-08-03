@@ -134,7 +134,30 @@ void AXRNA_SetOutVol(void* self, s32 vol) {
     }
 }
 
-void AXRNA_SetOutPan() {}
+extern void MIXSetPan(void* a, s32 b);
+extern u32 lbl_eu_80566054[];
+
+void AXRNA_SetOutPan(void* self, s32 index, s32 pan) {
+    s32 v;
+    if (index >= (s8)*(u8*)((u8*)self + 2))
+        return;
+    if (pan > 0xf)
+        pan = 0xf;
+    if (pan < -0xf)
+        pan = -0xf;
+    if (*(s32*)((u8*)self + 0x80) == pan)
+        return;
+    *(s32*)((u8*)self + 0x80) = pan;
+    GCRNA_LockCs();
+    {
+        void* e = *(void**)((u8*)self + index * 4 + 8);
+        if (e != NULL) {
+            v = (s32)lbl_eu_80566054[pan + 0xf];
+            MIXSetPan(e, v);
+        }
+    }
+    GCRNA_UnlockCs();
+}
 
 void AXRNA_SetBitPerSmpl(void* self, u32 val) {
     if (self != NULL) {

@@ -75,7 +75,7 @@ void ADXSTM_Finish(void) {
 }
 
 void ADXSTMF_SetupHandleMember(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
-                                u32 startOffsetHi, u32 startOffsetLo, void* sj) {
+                                u32 startOffsetLo, void* sj) {
     u32 sectors;
     u32 bufSize;
 
@@ -83,18 +83,18 @@ void ADXSTMF_SetupHandleMember(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
 
     sectors = ceil_div2048(startOffsetLo);
 
-    h->active = 1;
+    h->stat = 1;
     h->subState = 0;
-    h->fileHandle = sj;
-    h->fileName = fileName;
-    h->fileSizeParam = fileSizeParam;
+    h->sj = sj;
+    h->fileHandle = fileName;
+    h->startOffset = fileSizeParam;
+    h->fileSizeHi = (s32)startOffsetLo >> 31;
     h->fileSizeLo = startOffsetLo;
-    h->fileSizeHi = startOffsetHi;
     h->fileSectors = sectors;
     h->reqRdSize = 0x200;
-    h->written = 0;
+    h->seekPos = 0;
     h->maxSectors = 0x100000 - 1;
-    h->bufSize = sectors;
+    h->eosPos = sectors;
 
     if (sj != NULL) {
         void* vtbl = *(void**)sj;
@@ -135,7 +135,7 @@ void* ADXSTM_Create(void* fileName, int type) {
         if (i == count) {
             h = NULL;
         } else {
-            ADXSTMF_SetupHandleMember(h, NULL, 0, 0, 0, fileName);
+            ADXSTMF_SetupHandleMember(h, NULL, 0, 0, fileName);
             h->slotType = 1;
         }
     } else {
@@ -150,7 +150,7 @@ void* ADXSTM_Create(void* fileName, int type) {
         if (i == count) {
             h = NULL;
         } else {
-            ADXSTMF_SetupHandleMember(h, NULL, 0, 0, 0, fileName);
+            ADXSTMF_SetupHandleMember(h, NULL, 0, 0, fileName);
             h->slotType = 0;
         }
     }

@@ -1,7 +1,7 @@
 #include <harness_catalog.h>
 
 extern int MPVLIB_CheckHn(void *);
-extern void MPVERR_SetCode(void *, int);
+extern int MPVERR_SetCode(void *, int);
 
 /* Copy picture attributes from handle to output buffer */
 int MPV_GetPicAtr(void *handle, u32 *out) {
@@ -10,40 +10,42 @@ int MPV_GetPicAtr(void *handle, u32 *out) {
     int i;
 
     if (MPVLIB_CheckHn(handle)) {
-        MPVERR_SetCode(NULL, 0xFF03020C);
-        return 0;
+        return MPVERR_SetCode(NULL, 0xFF03020C);
     }
 
     src = (u32 *)((u8 *)handle + 0xB58);
-    dst = out + 4;
-    for (i = 0; i < 16; i++) {
-        u32 v0, v1;
-        v0 = src[1];
-        v1 = *src;
-        dst[1] = v0;
-        *dst = v1;
+    dst = out;
+    do {
+        u32 v0 = src[1];
+        u32 v1 = *src;
         src += 2;
+        *dst = v0;
+        dst[1] = v1;
         dst += 2;
-    }
+        i--;
+    } while (i != 0);
     return 0;
 }
 
 /* Get bitrate from handle */
 int MPV_GetBitRate(void *handle, u32 *out) {
-    if (MPVLIB_CheckHn(handle)) {
-        MPVERR_SetCode(NULL, 0xFF03020D);
-        return 0;
+    register void* h = handle;
+    register u32* o = out;
+    if (MPVLIB_CheckHn(h)) {
+        return MPVERR_SetCode(NULL, 0xFF03020D);
     }
 
-    *out = *(u32 *)((u8 *)handle + 0xC48);
+    {
+        u32 v = *(u32 *)((u8 *)h + 0xC48);
+        *o = v;
+    }
     return 0;
 }
 
 /* Get VBV buffer size */
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     if (MPVLIB_CheckHn(handle)) {
-        MPVERR_SetCode(NULL, 0xFF03020F);
-        return 0;
+        return MPVERR_SetCode(NULL, 0xFF03020F);
     }
 
     *out_size = *(u32 *)((u8 *)handle + 0xC4C) << 11;
@@ -64,8 +66,7 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
 /* Get link flags */
 int MPV_GetLinkFlg(void *handle, u32 *out_prev, u32 *out_next) {
     if (MPVLIB_CheckHn(handle)) {
-        MPVERR_SetCode(NULL, 0xFF03020E);
-        return 0;
+        return MPVERR_SetCode(NULL, 0xFF03020E);
     }
 
     *out_prev = *(u32 *)((u8 *)handle + 0xC54);

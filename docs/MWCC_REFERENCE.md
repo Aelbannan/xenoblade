@@ -7524,3 +7524,15 @@ addi r4,32; bdnz]. MWCC 3.0a5.2 has NO inline __dcbi intrinsic — it compiles
 `__dcbi(p)` to an external call (reloc → __dcbi symbol), so the inline dcbi
 instruction cannot be reproduced in high-level C. (__dcbz/__dcbt exist as real
 intrinsics — signature-checked; __dcbi is not.)
+
+### CriWare mpv_get — MPV_GetBitRate/GetPicAtr (83.3%/64.5%, color walls)
+- GetBitRate: `return MPVERR_SetCode(...)` (not the discard+return-0!) — the
+  SetCode's return passes through (the bl + b epilogue). Handle/out callee-saved
+  colors rotate (handle→r31 retail vs out→r31 decomp) — pure allocator choice,
+  resistant to copy-locals/register keywords.
+- GetPicAtr: the loop must be a **do-while with `i--; while (i != 0)`** — the
+  `for (i=0;i<16;i++)` and `for(i=16;i!=0;i--)` both UNROLL (0x158); the
+  post-decrement do-while keeps the loop (0x7c, size-exact). Residual: retail
+  [lwz 4; lwzu 8; stw 4; stwu 8; mtctr/bdnz] vs decomp [lwz 0; addic; lwz 4;
+  addi 8; ...; addic./bne] — load order + lwzu/stwu fusion + CTR-vs-addic are
+  scheduler choices.

@@ -11,6 +11,7 @@ typedef struct MpvSjChunk {
 } MpvSjChunk;
 
 s32 MPV_GoNextDelimSj(void* self);
+extern s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size);
 
 void MPVHDEC_Init() {}
 
@@ -87,9 +88,28 @@ s32 mpvhdec_DecEscSj(void* self, void* sj) {
     return 0;
 }
 
-void mpvhdec_DecUdscSj() {}
+s32 mpvhdec_DecUdscSj(void* self, void* sj) {
+    MpvSjChunk rest;
+    s32 r;
+    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
+        sj, 1, 0x7FFFFFFF, (MpvSjChunk*)((u8*)self + 0xD2C));
+    {
+        s32 p = (s32)(intptr_t)*(void**)((u8*)self + 0xD2C);
+        s32 base = p & ~3;
+        r = mpvhdec_AnalyUd(self, (const u8*)p, *(s32*)((u8*)self + 0xD30));
+        SJ_SplitChunk((void*)((u8*)self + 0xD2C),
+                      base + (((r - base) * 8 + 7) / 8) + 4 - p,
+                      (void*)((u8*)self + 0xD2C), &rest);
+    }
+    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(
+        sj, 0, (MpvSjChunk*)((u8*)self + 0xD2C));
+    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+        sj, 1, &rest);
+    MPV_GoNextDelimSj(sj);
+    return r;
+}
 
-void mpvhdec_AnalyUd() {}
+s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size) { return 0; }
 
 void mpvhdec_DecSeqUdsc() {}
 

@@ -7744,3 +7744,10 @@ comparisons emit cmpli).
 (h→r30, i→r31); (s32) casts on the u8 active field force the signed cmpi.
 Residual 2 structural: the final [lis r3; li r0,0] vs [li r0,0; lis r3] (the
 store-value-li before the base-lis — the SFMPS_Init wall family).
+
+### CriWare adx_stmc ADXSTM_BindFileNw — 29.7% (64-bit ceil-div codegen)
+The fileSectors = the 64-bit ceil-div [((u64)sizeHi<<32) + sizeLo + 2047 >> 11]
+(adc/adde carry chain + rlwinm/rlwimi/srawi merge + addze rounding). Decomp
+emits [addic; addze; addc; adde] (the +2047 as a separate u64 add) vs the
+retail's single [li 2047; addc; adde] (register addc). The immediate-vs-register
+addc form is a MWCC codegen choice — semantic impl retained.

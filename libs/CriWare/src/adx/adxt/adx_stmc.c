@@ -263,7 +263,7 @@ void ADXSTM_BindFileNw(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
     ADXCRS_Enter();
     ADXCRS_Lock();
 
-    sectors = ceil_div2048(sizeLo);
+    sectors = (u32)((((u64)(u32)sizeHi << 32) + (u64)(u32)sizeLo + 2047) >> 11);
 
     h->startOffset = startOffsetLo;
     h->fileSizeLo = sizeLo;

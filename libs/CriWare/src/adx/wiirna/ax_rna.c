@@ -30,7 +30,20 @@ void AXRNA_Finish(void) {
     }
 }
 
-void axrna_voice_drop() {}
+extern void MIXReleaseChannel(s32 ch);
+
+void axrna_voice_drop(void* voice) {
+    s32 i, j;
+    for (i = 0; i < 0x10; i++) {
+        for (j = 0; j < 2; j++) {
+            if (voice == *(void**)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8)) {
+                MIXReleaseChannel(*(s32*)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8));
+                *(u32*)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8) = 0;
+                return;
+            }
+        }
+    }
+}
 
 void AXRNA_Create() {}
 

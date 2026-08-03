@@ -15,4 +15,16 @@ void LSC_EntryErrFunc(void *param1, void *param2) {
     }
 }
 
-void LSC_CallErrFunc_() {}
+extern void CRICRW_Vsprintf(char* dst, s32 size, const char* fmt, va_list ap);
+extern void* lbl_eu_805E7C30;
+
+void LSC_CallErrFunc_(const char* fmt, ...) {
+    va_list ap;
+    char* buf = (char*)&lbl_eu_805E7C30 + 8;
+    va_start(ap, fmt);
+    CRICRW_Vsprintf(buf, 256, fmt, ap);
+    va_end(ap);
+    if (*(void**)&lbl_eu_805E7C30 != NULL) {
+        ((void (*)(void*, char*))*(void**)&lbl_eu_805E7C30)(*(void**)((char*)&lbl_eu_805E7C30 + 4), buf);
+    }
+}

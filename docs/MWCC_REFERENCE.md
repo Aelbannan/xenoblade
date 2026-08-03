@@ -7291,3 +7291,11 @@ offset-first/paren assoc, `&((u8*)self)[904]`) each break ONE occurrence; the
 remaining uses still unify (MWCC's value numbering folds all address forms).
 Same family as the gcci gcCiOpen loop-base CSE. Semantic form kept; size 0x100
 vs 0xE4.
+
+### CriWare ahx_bsr AHXBSR_GetBitStm — signed bitBuf shift (66.7%, color rotation)
+`result = ((s32)bsr->bitBuf >> shift) & mask;` — the retail `sraw` (arithmetic)
+requires the **s32 cast** on the u32 bitBuf (plain `>>` on u32 emits `srw`).
+Residual: a 4-cycle register rotation in the read path (retail base=r3/idx=r4/
+shift=r5/bitBuf=r6; decomp base=r5/idx=r6/shift=r7/bitBuf=r3) plus the subf
+(shift) placement vs the base addi — pure allocator colors, no source form
+moves them.

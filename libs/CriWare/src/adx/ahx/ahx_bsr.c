@@ -173,9 +173,9 @@ u32 AHXBSR_GetBitStm(AHXBSR* bsr, s32 bits) {
         return 0;
     }
 
-    mask = lbl_eu_805175A0[bits];
     shift = bsr->bitCnt - bits;
-    result = (bsr->bitBuf >> shift) & mask;
+    mask = lbl_eu_805175A0[bits];
+    result = ((s32)bsr->bitBuf >> shift) & mask;
 
     bsr->bitCnt -= bits;
     bsr->position += bits;

@@ -7,7 +7,28 @@ void MPVFRM_Init(void) {}
 
 void MPV_DecodeFrmSj() {}
 
-void MPV_SkipFrmSj() {}
+extern s32 MPV_GoNextDelimSj(void* a);
+extern s32 MPV_MoveChunk(void* a, s32 b, s32 c);
+
+s32 MPV_SkipFrmSj(void* h, void* arg2) {
+    s32 flag;
+    if (MPVLIB_CheckHn(h))
+        return MPVERR_SetCode(NULL, 0xFF03020A);
+    for (;;) {
+        s32 r;
+        flag = 0xFF030305;
+        r = MPV_GoNextDelimSj(arg2);
+        if (r == 0)
+            break;
+        if ((r & 0xcc) != 0) {
+            flag = 0;
+            break;
+        }
+        if (MPV_MoveChunk(arg2, 1, 4) != 4)
+            break;
+    }
+    return MPVERR_SetCode(h, flag);
+}
 
 extern int MPVLIB_CheckHn(void*);
 extern int MPVERR_SetCode(void*, int);

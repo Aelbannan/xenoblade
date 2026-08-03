@@ -106,11 +106,11 @@ int VER2_IsSfdHeader(void *work, int *out) {
     char *p;
     u32 major;
     u32 minor;
-    u32 t1 = 0;
-    u32 t2 = 0;
-    u32 v1 = 0;
-    u32 v2 = 0;
-    u32 ok = 0;
+    u32 t1;
+    u32 t2;
+    u32 v1;
+    u32 v2;
+    u32 ok;
     char c;
 
     *out = 0;

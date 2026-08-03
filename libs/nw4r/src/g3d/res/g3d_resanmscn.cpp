@@ -219,8 +219,8 @@ u32 ResAnmScn::GetResAnmLightNumEntries() const {
 }
 
 ResAnmFog ResAnmScn::GetResAnmFog(u32 idx) const {
-    void* pResAnmFogDicData = ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)];
+    ResDic dic = ResDic(ofs_to_obj<ResDic>(ref().toScnTopLevelDic));
+    void* pResAnmFogDicData = dic[ResName(&ResNameData_Fog)];
 
     if (pResAnmFogDicData != NULL) {
         return ResAnmFog(ResDic(pResAnmFogDicData)[idx]);

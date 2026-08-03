@@ -72,7 +72,7 @@ void AHXDCD_DecodeHeader() {}
 
 extern s32 AHXBSR_SearchSync(s32 a);
 extern s32 AHXBSR_IsDataAvailable(s32 a, s32 b);
-extern s32 AHXDCD_DecodeBhdr(s32 a, void* b);
+extern s32 AHXDCD_DecodeBhdr(void* self, s32* out);
 extern void AHXDCD_BhdrToDinf(void* self, s32* out);
 extern s32 AHXDCD_DecodeBitalloc2(s32 a, void* b, void* c);
 extern s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e);
@@ -88,7 +88,7 @@ s32 AHXDCD_DecodeFrmHdr(void* self) {
         return 1;
     if (AHXBSR_IsDataAvailable(*(s32*)((u8*)self + 848), 20) == 0)
         return -1;
-    if (AHXDCD_DecodeBhdr(*(s32*)((u8*)self + 848), (u8*)self + 856) <= 0)
+    if (AHXDCD_DecodeBhdr((void*)*(s32*)((u8*)self + 848), (s32*)((u8*)self + 856)) <= 0)
         return -1;
     AHXDCD_BhdrToDinf((s32*)((u8*)self + 856), (s32*)((u8*)self + 904));
     AHXDCD_DecodeBitalloc2(*(s32*)((u8*)self + 848), (u8*)self + 904, (u8*)self + 964);
@@ -179,3 +179,26 @@ void AHXDCD_BhdrToDinf(void* self, s32* out) {
 
 
 
+
+extern s32 AHXBSR_GetBitStm(void* self, s32 bits);
+
+s32 AHXDCD_DecodeBhdr(void* self, s32* out) {
+    out[0] = AHXBSR_GetBitStm(self, 1);
+    out[1] = 4 - AHXBSR_GetBitStm(self, 2);
+    AHXBSR_GetBitStm(self, 1);
+    out[2] = (u32)out[1] >> 5;
+    out[3] = AHXBSR_GetBitStm(self, 4);
+    out[4] = AHXBSR_GetBitStm(self, 2);
+    out[5] = AHXBSR_GetBitStm(self, 1);
+    out[6] = AHXBSR_GetBitStm(self, 1);
+    out[7] = AHXBSR_GetBitStm(self, 2);
+    out[8] = AHXBSR_GetBitStm(self, 2);
+    out[9] = AHXBSR_GetBitStm(self, 1);
+    out[10] = AHXBSR_GetBitStm(self, 1);
+    out[11] = AHXBSR_GetBitStm(self, 2);
+    if (out[7] == 3 && out[8] == 0)
+        return 0;
+    return -1;
+}
+s32 AHXDCD_DecodeBitalloc2(s32 a, void* b, void* c) { return 0; }
+s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e) { return 0; }

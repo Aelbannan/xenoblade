@@ -7311,3 +7311,15 @@ land in r3 (reusing the lis base); a local mtbl at the top blows the frame to
 0xD0. Residual 4 structural: the `*(buf)=aligned` store vs the memset `li r4,0`
 order (retail store-first), and the return-value `or r3,r29` placement vs the
 836-store (retail store-first) — scheduler tie-breaks.
+
+### CriWare ahx_dcd AHXDCD_DecodeBhdr — dead GetBitStm + clobbered-r0 quirk (86.1%, 6 structural)
+Header bit-field reader: `out[1] = 4 - GetBitStm(self, 2); AHXBSR_GetBitStm(self, 1);
+out[2] = (u32)out[1] >> 5;` — the **dead 1-bit call must come BEFORE** the out[2]
+assignment (retail schedules the call at the field boundary; putting it after
+moves the call below the store). The retail then reads the out[1] value from the
+**call-clobbered r0** (a retail scheduling bug — the value does NOT survive
+GetBitStm) with a dead `cntlzw r3, r0` before the `rlwinm r0, r0, 27, 5, 31`
+(== `(u32)out[1] >> 5`); the natural C reloads via `lwz r0, 4(r31)` (+1
+structural) and cannot produce the dead cntlzw (every __cntlzw form bloats to
+0x128). Residual 6 structural: that lwz-vs-cntlzw, the out[1] store vs the next
+call's `or r3` order, and 4 bl-position artifacts.

@@ -453012,14 +453012,6 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CMat34.s",
       "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-monolib-leaf",
-        "claimed_at": "2026-08-03T20:34:44.400627+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/math/CMat34.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 98.71,
       "equivalence_status": "equivalent"
     },
@@ -453202,14 +453194,6 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/math/CQuat.s",
       "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-monolib-leaf",
-        "claimed_at": "2026-08-03T20:34:46.406806+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/math/CQuat.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 97.333,
       "equivalence_status": "equivalent"
     },
@@ -524896,14 +524880,6 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/effect/CERand.s",
       "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-monolib-leaf",
-        "claimed_at": "2026-08-03T20:34:38.218404+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/effect/CERand.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 96.786,
       "equivalence_status": "inconclusive_smt_disabled"
     },
@@ -526092,14 +526068,6 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s",
-      "claim": {
-        "owner": "pi-monolib-leaf",
-        "claimed_at": "2026-08-03T20:34:52.486006+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/core/CPackItem.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },

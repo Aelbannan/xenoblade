@@ -444062,8 +444062,8 @@
       "size": "0x14",
       "unit": "nw4r/src/snd/snd_TaskThread",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_TaskThread.cpp",
       "called_functions": [],
@@ -444071,7 +444071,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_TaskThread.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-03T22:54:18.112483+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_TaskThread.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804282a8",

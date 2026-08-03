@@ -50,18 +50,6 @@ void* TaskThread::ThreadFunc(void* pArg) {
     return NULL;
 }
 
-void TaskThread::ThreadProc() {
-    while (!mFinishFlag) {
-        TaskManager::GetInstance().WaitTask();
-
-        if (mFinishFlag) {
-            break;
-        }
-
-        TaskManager::GetInstance().ExecuteTask();
-    }
-}
-
 } // namespace detail
 } // namespace snd
 } // namespace nw4r

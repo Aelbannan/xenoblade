@@ -2,6 +2,8 @@
 #define NW4R_SND_TASK_THREAD_H
 #include <nw4r/types_nw4r.h>
 
+#include <nw4r/snd/snd_TaskManager.h>
+
 #include <revolution/OS.h>
 
 namespace nw4r {
@@ -18,7 +20,17 @@ public:
 
 private:
     static void* ThreadFunc(void* pArg);
-    void ThreadProc();
+    void ThreadProc() {
+        while (!mFinishFlag) {
+            TaskManager::GetInstance().WaitTask();
+
+            if (mFinishFlag) {
+                break;
+            }
+
+            TaskManager::GetInstance().ExecuteTask();
+        }
+    }
 
 private:
     OSThread mThread; // at 0x0

@@ -1334,10 +1334,10 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
                 (cb->wmReadAddress == 0x176C && cb->configIndex == 1)) {
                 __wpadGetDevConfig(chan, err);
             }
-            if ((u32)(cb->wmReadAddress - 0x04A40000) < 0x20) {
+            if (cb->wmReadAddress == WM_REG_EXTENSION_CONFIG) {
                 __wpadGetExtConfig(chan, err);
             }
-            if ((u32)(cb->wmReadAddress - 0x04A40000) < 0xFA) {
+            if (cb->wmReadAddress == WM_REG_EXTENSION_FA) {
                 __wpadGetExtType(chan, err);
             }
             if (cb->wmReadAddress == WM_ADDR_MEM_GAME_INFO_0) {
@@ -1589,6 +1589,7 @@ void __a1_34_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
     WPADCB* pCB;
+    WPADStatusEx* st = status;
 
     status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
 
@@ -1604,16 +1605,15 @@ void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
-    pCB = __rvl_p_wpadcb[chan];
     status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
-                   (s16)pCB->devConfig.accX0g;
+                   (s16)__rvl_p_wpadcb[chan]->devConfig.accX0g;
     status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
-                   (s16)pCB->devConfig.accY0g;
+                   (s16)__rvl_p_wpadcb[chan]->devConfig.accY0g;
     status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
-                   (s16)pCB->devConfig.accZ0g;
+                   (s16)__rvl_p_wpadcb[chan]->devConfig.accZ0g;
 
     memcpy(_wpadExtRawData, data + 6, 0x10);
     WPADiDecode(chan, data + 6, 0x10, 0);
@@ -1677,8 +1677,8 @@ void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             __parse_vs_data(chan, &status, (u8)cb->dataFormat, data + 6, 0x10);
         }
 
-        if (memcmp(_wpadExtRawData, _cExtInvalidData, 0x10) == 0 && status->err == 0) {
-            status->err = WPAD_ERR_CORRUPTED;
+        if (memcmp(_wpadExtRawData, _cExtInvalidData, 0x10) == 0 && st->err == 0) {
+            st->err = WPAD_ERR_CORRUPTED;
         }
     }
 }

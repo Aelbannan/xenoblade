@@ -19,12 +19,12 @@ extern void CRICRW_Vsprintf(char* dst, s32 size, const char* fmt, va_list ap);
 extern void* lbl_eu_805E7C30;
 
 void LSC_CallErrFunc_(const char* fmt, ...) {
+    char *base = (char *)&lbl_eu_805E7C30;
     va_list ap;
-    char* buf = (char*)&lbl_eu_805E7C30 + 8;
     va_start(ap, fmt);
-    CRICRW_Vsprintf(buf, 256, fmt, ap);
+    CRICRW_Vsprintf(base + 8, 256, fmt, ap);
     va_end(ap);
-    if (*(void**)&lbl_eu_805E7C30 != NULL) {
-        ((void (*)(void*, char*))*(void**)&lbl_eu_805E7C30)(*(void**)((char*)&lbl_eu_805E7C30 + 4), buf);
+    if (lbl_eu_805E7C30 != NULL) {
+        ((void (*)(void *, char *))lbl_eu_805E7C30)(*(void **)(base + 4), base + 8);
     }
 }

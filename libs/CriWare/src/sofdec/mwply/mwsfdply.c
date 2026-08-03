@@ -18,6 +18,7 @@ extern int MWSFSVR_IsSvrBdrHndl(void *);
 
 extern char lbl_eu_8051B1A0[];
 extern double lbl_eu_8051B190;
+extern double lbl_eu_8051B198; /* int->double conversion magic 0x4330000080000000 */
 
 /* Get SFD handle from player handle (+0x58) */
 static void *sfd(void *h) { return *(void **)((u8 *)h + 0x58); }
@@ -61,8 +62,17 @@ int mwPlyPause(void *h, int pause) {
 }
 
 int MWSFPLY_SetFlowLimit(void *h) {
-    MWSFD_SetFlowLimit(h,
-        (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
+    double m = lbl_eu_8051B198;
+    s32 x = *(s32 *)((u8 *)h + 0x50C);
+    /* Manual s32->double conversion referencing the retail magic blob
+       (MWCC_REFERENCE 7i): compiler-pooled magic would drift to a TU-local
+       label; building the bit pattern and subtracting lbl_eu_8051B198
+       reproduces retail's lis/lfd relocs. */
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)x ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    double dx = u.d - m;
+    MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_eu_8051B190 * dx));
 }
 
 int mwPlyChkSupply(void *h) {

@@ -1387,7 +1387,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/cvfs/cri_cvfs.c"),
             Object(NonMatching, "CriWare/src/adx/gcci/gcci.c"),
             Object(NonMatching, "CriWare/src/adx/gcci/gcci_sub.c"),
-            Object(NonMatching, "CriWare/src/adx/lsc/lsc_err.c"),
+            Object(NonMatching, "CriWare/src/adx/lsc/lsc_err.c", mw_version = "Wii/1.1"),  # retail lsc_err is Wii/1.1-built (LSC_EntryErrFunc byte-identical; SVM/sj ADX units same family)
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_ini.c"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_svr.c"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc.c"),

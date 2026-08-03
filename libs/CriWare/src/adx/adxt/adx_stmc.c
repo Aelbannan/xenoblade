@@ -843,9 +843,10 @@ unlock_and_return:
 void ADXSTM_ExecServer(void) {
     ADXCRS_Enter();
     if (SVM_TestAndSet(&lbl_eu_805E3EA0)) {
+        s32 i;
         ADXSTMHndl* h = (ADXSTMHndl*)lbl_eu_805E3EA8;
-        for (s32 i = 0; i < 40; i++) {
-            if (h->active == 1) {
+        for (i = 0; i < 40; i++) {
+            if ((s32)h->active == 1) {
                 ADXSTMF_ExecHndl(h);
             }
             h++;

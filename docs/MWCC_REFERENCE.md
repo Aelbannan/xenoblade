@@ -7738,3 +7738,9 @@ cvFsGetFileSize externs (implicit int → void* errors). Added them (void*
 handles) and the unit builds. ADXSTM_StopNw: (s32) casts on the u8/u32
 stat/subState/startPending fields force the retail's signed cmpi (plain
 comparisons emit cmpli).
+
+### CriWare adx_stmc ADXSTM_ExecServer — 93.9% (declaration-order + cmpi)
+`s32 i;` declared BEFORE the `ADXSTMHndl* h` local fixes the r30/r31 colors
+(h→r30, i→r31); (s32) casts on the u8 active field force the signed cmpi.
+Residual 2 structural: the final [lis r3; li r0,0] vs [li r0,0; lis r3] (the
+store-value-li before the base-lis — the SFMPS_Init wall family).

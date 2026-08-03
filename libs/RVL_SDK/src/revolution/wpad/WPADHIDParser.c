@@ -1394,6 +1394,7 @@ void __a1_36_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
 void __a1_3d_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADStatusEx* st = status;
 
     if (cb->dataFormat == 0xE) {
         status->err = WPAD_ERR_OK;
@@ -1407,7 +1408,7 @@ void __a1_3d_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
     if (cb->wpInfo.attach) {
         if (cb->devType == 0x4) {
-            __parse_vs_data(chan, &status, (u8)cb->dataFormat, data + 1, 21);
+            __parse_vs_data(chan, &st, (u8)cb->dataFormat, data + 1, 21);
         }
 
         if (memcmp(_wpadExtRawData, _cExtInvalidData, 21) == 0 && status->err == 0) {

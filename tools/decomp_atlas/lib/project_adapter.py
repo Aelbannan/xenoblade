@@ -165,7 +165,6 @@ class AtlasProjectAdapter:
                     "unit": target.unit,
                     "target_object": _rel(self.root, unit.target_path) if unit else None,
                     "base_object": _rel(self.root, unit.base_path) if unit else None,
-                    "tier": target.tier,
                     "milestone": target.milestone,
                     "capabilities": capabilities,
                     "required_level": target.required_level,

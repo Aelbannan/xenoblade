@@ -372,7 +372,6 @@ class TargetRegistryTests(unittest.TestCase):
         def target(target_id: str, status: str, **extra) -> Target:
             return Target(
                 id=target_id,
-                tier="P9",
                 milestone="unassigned",
                 function=target_id,
                 symbol=target_id,
@@ -575,7 +574,6 @@ class TargetRegistryTests(unittest.TestCase):
         ) -> Target:
             return Target(
                 id=target_id,
-                tier="P9",
                 milestone="unassigned",
                 function=target_id,
                 symbol=target_id,

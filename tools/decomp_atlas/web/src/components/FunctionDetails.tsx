@@ -286,9 +286,9 @@ export function FunctionDetails({
               <span className="value">{fn.readiness}</span>
             </div>
             <div className="kv">
-              <span className="label">Tier / milestone</span>
+              <span className="label">Milestone</span>
               <span className="value">
-                {fn.tier ?? "—"} / {fn.milestone ?? "—"}
+                {fn.milestone ?? "—"}
               </span>
             </div>
             <div className="kv">

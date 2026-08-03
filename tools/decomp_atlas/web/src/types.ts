@@ -25,7 +25,6 @@ export type DetailTab =
 
 export type CloudColorMode =
   | "status"
-  | "tier"
   | "readiness"
   | "milestone"
   | "buildable"
@@ -43,7 +42,6 @@ export interface FunctionSummary {
   size: number | null;
   source: string | null;
   unit: string | null;
-  tier: string | null;
   milestone: string | null;
   status: string;
   workflow_status: string;
@@ -82,7 +80,6 @@ export interface FunctionFilters {
   status?: string;
   workflow?: string;
   milestone?: string;
-  tier?: string;
   capability?: string;
   unit?: string;
   source?: string;
@@ -132,7 +129,6 @@ export interface ProjectionPoint {
   x: number;
   y: number;
   status?: string;
-  tier?: string;
   readiness?: string;
   milestone?: string;
   buildable?: boolean;

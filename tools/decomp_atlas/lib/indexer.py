@@ -86,7 +86,6 @@ def _function_insert_tuple(record: Dict[str, Any]) -> tuple:
         record.get("unit"),
         record.get("target_object"),
         record.get("base_object"),
-        record.get("tier"),
         record.get("milestone"),
         record.get("capabilities"),
         record.get("required_level"),
@@ -116,7 +115,7 @@ def _function_insert_tuple(record: Dict[str, Any]) -> tuple:
 FUNCTION_INSERT_SQL = """
 INSERT INTO functions(
     target_id, region, kind, display_name, symbol, address, size, source, unit,
-    target_object, base_object, tier, milestone, capabilities, required_level,
+    target_object, base_object, milestone, capabilities, required_level,
     workflow_status, status, instruction_percent, buildable, owner, claimed_at,
     origin, notes, direct_call_count, unresolved_call_count, has_indirect_calls,
     instruction_count, branch_count, relocation_count, stack_frame, readiness,

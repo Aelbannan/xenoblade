@@ -65,7 +65,6 @@ export function FunctionTable({
                   <th>Symbol</th>
                   <th>Unit</th>
                   <th>Readiness</th>
-                  <th>Tier</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,7 +88,6 @@ export function FunctionTable({
                     <td>
                       <span className="badge badge-neutral">{fn.readiness}</span>
                     </td>
-                    <td>{fn.tier ?? "—"}</td>
                   </tr>
                 ))}
                 {items.length === 0 && !loading ? (

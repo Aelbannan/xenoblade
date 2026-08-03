@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 
 FUNCTION_SUMMARY_COLS = (
     "target_id", "region", "kind", "display_name", "symbol", "address", "size",
-    "source", "unit", "tier", "milestone", "status", "workflow_status",
+    "source", "unit", "milestone", "status", "workflow_status",
     "instruction_percent", "readiness", "difficulty", "buildable", "owner",
     "required_level", "origin", "direct_call_count", "unresolved_call_count",
     "has_indirect_calls", "callgraph_status",
@@ -179,7 +179,6 @@ class AtlasAPI:
             ("workflow", "workflow_status"),
             ("workflow_status", "workflow_status"),
             ("milestone", "milestone"),
-            ("tier", "tier"),
             ("owner", "owner"),
             ("readiness", "readiness"),
         ):
@@ -232,7 +231,7 @@ class AtlasAPI:
             total = conn.execute(f"SELECT COUNT(*) AS n FROM functions{where}", args).fetchone()["n"]
             rows = conn.execute(
                 f"SELECT {cols} FROM functions{where} "
-                f"ORDER BY tier ASC, display_name ASC LIMIT ? OFFSET ?",
+                f"ORDER BY display_name ASC LIMIT ? OFFSET ?",
                 [*args, page_size, (page - 1) * page_size],
             ).fetchall()
         items = rows_to_dicts(rows)
@@ -441,7 +440,7 @@ class AtlasAPI:
     def get_projection(self) -> Dict[str, Any]:
         with self.db() as conn:
             rows = conn.execute(
-                "SELECT p.target_id, p.x, p.y, p.version, f.status, f.tier, f.readiness, "
+                "SELECT p.target_id, p.x, p.y, p.version, f.status, f.readiness, "
                 "f.milestone, f.buildable, f.owner, f.unit, f.display_name, f.workflow_status "
                 "FROM projection p LEFT JOIN functions f ON f.target_id = p.target_id"
             ).fetchall()

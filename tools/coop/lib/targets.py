@@ -292,7 +292,6 @@ def equivalence_certificate_error(
 @dataclass
 class Target:
     id: str
-    tier: str
     milestone: str
     function: str
     symbol: Optional[str]
@@ -678,7 +677,6 @@ def load_targets(config: CoopConfig) -> List[Target]:
         targets.append(
             Target(
                 id=item["id"],
-                tier=item.get("tier", item.get("priority", "P9")),
                 milestone=item.get("milestone", "unassigned"),
                 function=item.get("function", item.get("symbol", item["id"])),
                 symbol=item.get("symbol"),
@@ -707,7 +705,7 @@ def get_target(targets: List[Target], target_id: str) -> Target:
     raise KeyError(f"Unknown target id: {target_id}")
 
 
-def pending_targets(targets: List[Target], tier: Optional[str] = None) -> List[Target]:
+def pending_targets(targets: List[Target]) -> List[Target]:
     done = {"FULL_MATCH", "EQUIVALENT_MATCH"}
     closed = {"ACCEPTED", "NOT_REQUIRED"}
     result = [
@@ -717,10 +715,7 @@ def pending_targets(targets: List[Target], tier: Optional[str] = None) -> List[T
         and target.status not in done
         and target.workflow_status not in closed
     ]
-    if tier:
-        result = [target for target in result if target.tier == tier]
-    tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
-    result.sort(key=lambda target: (tier_order.get(target.tier, 99), target.id))
+    result.sort(key=lambda target: target.id)
     return result
 
 
@@ -891,7 +886,6 @@ def harness_targets(
     targets: List[Target],
     *,
     selection: str,
-    tier: Optional[str] = None,
     include_catalog: bool = False,
 ) -> List[Target]:
     """Select a safe bottom-up call-graph frontier for the cycle harness."""
@@ -905,9 +899,6 @@ def harness_targets(
         and target.workflow_status not in {"ACCEPTED", "NOT_REQUIRED", "BLOCKED"}
         and (include_catalog or target.extra.get("origin") != "symbols.txt")
     ]
-    if tier:
-        candidates = [target for target in candidates if target.tier == tier]
-
     def is_leaf(target: Target) -> bool:
         return (
             target.extra.get("callgraph_status") == "complete"
@@ -937,8 +928,7 @@ def harness_targets(
     elif selection != "pending":
         raise ValueError(f"Unknown harness selection: {selection}")
 
-    tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
-    candidates.sort(key=lambda target: (tier_order.get(target.tier, 99), target.id))
+    candidates.sort(key=lambda target: target.id)
     return candidates
 
 
@@ -1406,7 +1396,6 @@ def import_symbols(
             "id": target_id,
             "region": config.region,
             "kind": symbol_kind,
-            "tier": "P9",
             "milestone": "unassigned",
             "function": _display_name(entry.name),
             "symbol": entry.name,

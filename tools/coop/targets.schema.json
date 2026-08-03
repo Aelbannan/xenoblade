@@ -35,7 +35,6 @@
         "kind": {
           "enum": ["function", "object", "label", "unknown"]
         },
-        "tier": { "type": "string" },
         "milestone": { "type": "string" },
         "function": { "type": "string" },
         "symbol": { "type": ["string", "null"] },

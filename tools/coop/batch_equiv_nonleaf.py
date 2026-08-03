@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run equivalence checks on non-leaf named P0/P1 targets."""
+"""Run equivalence checks on non-leaf named targets."""
 import json, subprocess, os, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -11,27 +11,27 @@ def run(cmd, timeout=300):
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, timeout=timeout)
     return r.returncode, r.stdout, r.stderr, time.time() - start
 
-# Named P0/P1/P2 non-ACCEPTED targets that are NOT leaf
+# Named non-ACCEPTED targets that are NOT leaf
 named_nonleaf = [
-    # (target_id, tier)
-    ("occ-cull-helper", "P1"),
-    ("menu-bps-move", "P1"),
-    ("uicf-func-80133324", "P2"),
-    ("menu-enemy-cbrender", "P1"),
-    ("battlestate-vfunc10", "P1"),
-    ("battlestate-vfunc8", "P1"),
-    ("cview-render-view", "P0"),
-    ("menu-arts-cbrender", "P1"),
-    ("battle-mgr-move", "P1"),
-    ("uicf-init", "P2"),
-    ("uicf-move", "P2"),
-    ("menu-enemy-move", "P1"),
-    ("occ-set-frustum", "P1"),
-    ("menu-bps-ctor", "P1"),
-    ("menu-arts-move", "P1"),
-    ("battlestate-vfunc26", "P1"),
-    ("battlestate-vfunc11", "P1"),
-    ("view-update-msg", "P0"),
+    # (target_id)
+    "occ-cull-helper",
+    "menu-bps-move",
+    "uicf-func-80133324",
+    "menu-enemy-cbrender",
+    "battlestate-vfunc10",
+    "battlestate-vfunc8",
+    "cview-render-view",
+    "menu-arts-cbrender",
+    "battle-mgr-move",
+    "uicf-init",
+    "uicf-move",
+    "menu-enemy-move",
+    "occ-set-frustum",
+    "menu-bps-ctor",
+    "menu-arts-move",
+    "battlestate-vfunc26",
+    "battlestate-vfunc11",
+    "view-update-msg",
 ]
 
 with open(TARGETS_JSON) as f:
@@ -42,7 +42,7 @@ target_map = {t['id']: t for t in data['targets']}
 results = []
 built_units = set()
 
-for tid, tier in named_nonleaf:
+for tid in named_nonleaf:
     t = target_map.get(tid)
     if not t:
         print(f"SKIP {tid}: not found in targets.json")

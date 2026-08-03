@@ -26,7 +26,6 @@
     "unit": { "type": ["string", "null"], "description": "Objdiff / split unit name." },
     "target_object": { "type": ["string", "null"], "description": "Repo-relative retail object path." },
     "base_object": { "type": ["string", "null"], "description": "Repo-relative decomp object path." },
-    "tier": { "type": ["string", "null"], "description": "Priority tier P0–P9." },
     "milestone": { "type": ["string", "null"] },
     "capabilities": { "type": ["string", "null"], "description": "Optional JSON/text capability tags." },
     "required_level": { "type": ["string", "null"] },

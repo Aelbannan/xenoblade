@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS functions (
     unit TEXT,
     target_object TEXT,
     base_object TEXT,
-    tier TEXT,
     milestone TEXT,
     capabilities TEXT,
     required_level TEXT,
@@ -57,7 +56,6 @@ CREATE TABLE IF NOT EXISTS functions (
 
 CREATE INDEX IF NOT EXISTS idx_functions_status ON functions(status);
 CREATE INDEX IF NOT EXISTS idx_functions_workflow ON functions(workflow_status);
-CREATE INDEX IF NOT EXISTS idx_functions_tier ON functions(tier);
 CREATE INDEX IF NOT EXISTS idx_functions_milestone ON functions(milestone);
 CREATE INDEX IF NOT EXISTS idx_functions_unit ON functions(unit);
 CREATE INDEX IF NOT EXISTS idx_functions_source ON functions(source);

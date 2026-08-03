@@ -13,7 +13,7 @@ Usage (from repository root):
   python3 tools/coop/run.py size monolib/src/core/CViewRectDataCore
   python3 tools/coop/run.py size --all
   python3 tools/coop/run.py cycle pad-copy-input-flag
-  python3 tools/coop/run.py queue --tier P1
+  python3 tools/coop/run.py queue
   python3 tools/coop/run.py targets list
   python3 tools/coop/run.py targets recertify --bottom-up --dry-run
   python3 tools/coop/run.py log --tail 20
@@ -560,7 +560,6 @@ def cmd_cycle(
 def cmd_queue(
     project: Project,
     config: CoopConfig,
-    tier: Optional[str],
     *,
     dry_run: bool,
     selection: str = "pending",
@@ -569,12 +568,11 @@ def cmd_queue(
 ) -> int:
     all_targets = load_targets(config)
     if selection == "pending" and not include_catalog:
-        targets = pending_targets(all_targets, tier)
+        targets = pending_targets(all_targets)
     else:
         targets = harness_targets(
             all_targets,
             selection=selection,
-            tier=tier,
             include_catalog=include_catalog,
         )
     if limit is not None:
@@ -585,7 +583,7 @@ def cmd_queue(
     print(f"queue: {len(targets)} target(s)")
     failures = 0
     for target in targets:
-        print(f"\n==> {target.id} ({target.tier})")
+        print(f"\n==> {target.id}")
         if dry_run:
             continue
         rc = cmd_cycle(
@@ -603,7 +601,6 @@ def cmd_queue(
 
 def cmd_targets_list(
     config: CoopConfig,
-    tier: Optional[str],
     milestone: Optional[str],
     workflow_status: Optional[str],
     match_status: Optional[str],
@@ -613,8 +610,6 @@ def cmd_targets_list(
     targets = load_targets(config)
     if not include_catalog:
         targets = [target for target in targets if target.extra.get("origin") != "symbols.txt"]
-    if tier:
-        targets = [t for t in targets if t.tier == tier]
     if milestone:
         targets = [t for t in targets if t.milestone == milestone]
     if workflow_status:
@@ -626,7 +621,7 @@ def cmd_targets_list(
     for target in targets:
         buildable = "yes" if target.buildable else "no"
         print(
-            f"{target.id:28} {target.tier:3} {target.milestone:16} "
+            f"{target.id:28} {target.milestone:16} "
             f"flow={target.workflow_status:12} match={target.status:16} "
             f"buildable={buildable:3} {target.function}"
         )
@@ -636,7 +631,6 @@ def cmd_targets_list(
 def cmd_targets_show(config: CoopConfig, target_id: str) -> int:
     target = get_target(load_targets(config), target_id)
     print(f"id:       {target.id}")
-    print(f"tier:     {target.tier}")
     print(f"milestone:{target.milestone}")
     print(f"function: {target.function}")
     print(f"symbol:   {target.symbol}")
@@ -686,7 +680,6 @@ def _resolved_target_rows(config: CoopConfig) -> list[dict]:
                 "id": target.id,
                 "function": target.function,
                 "kind": target.kind,
-                "tier": target.tier,
                 "milestone": target.milestone,
                 "workflow_status": workflow,
                 "match_status": match_status,
@@ -707,15 +700,12 @@ def _resolved_target_rows(config: CoopConfig) -> list[dict]:
 def _filter_target_rows(
     rows: list[dict],
     *,
-    tier: Optional[str],
     milestone: Optional[str],
     kind: Optional[str],
     include_catalog: bool,
 ) -> list[dict]:
     if not include_catalog:
         rows = [row for row in rows if not row["catalog"]]
-    if tier:
-        rows = [row for row in rows if row["tier"] == tier]
     if milestone:
         rows = [row for row in rows if row["milestone"] == milestone]
     if kind:
@@ -750,16 +740,16 @@ def _render_target_status_markdown(rows: list[dict], region: str) -> str:
                 "",
                 f"## {milestone}",
                 "",
-                "| Target | Function | Tier | Workflow | Match | Percent | Owner | Buildable |",
-                "|---|---|---|---|---|---:|---|---|",
+                "| Target | Function | Workflow | Match | Percent | Owner | Buildable |",
+                "|---|---|---|---|---|---:|---|",
             ]
         )
-        for row in sorted(by_milestone[milestone], key=lambda item: (item["tier"], item["id"])):
+        for row in sorted(by_milestone[milestone], key=lambda item: item["id"]):
             percent = row["instruction_match"]
             percent_text = f"{percent:.1f}%" if isinstance(percent, (int, float)) else "—"
             function = str(row["function"]).replace("|", "\\|")
             lines.append(
-                f"| `{row['id']}` | {function} | {row['tier']} | "
+                f"| `{row['id']}` | {function} | "
                 f"{row['workflow_status']} | {row['match_status']} | {percent_text} | "
                 f"{row['owner'] or '—'} | "
                 f"{'yes' if row['buildable'] else 'no'} |"
@@ -770,7 +760,6 @@ def _render_target_status_markdown(rows: list[dict], region: str) -> str:
 def cmd_targets_status(
     config: CoopConfig,
     *,
-    tier: Optional[str],
     milestone: Optional[str],
     kind: Optional[str],
     output: Optional[Path],
@@ -779,7 +768,6 @@ def cmd_targets_status(
 ) -> int:
     rows = _filter_target_rows(
         _resolved_target_rows(config),
-        tier=tier,
         milestone=milestone,
         kind=kind,
         include_catalog=include_catalog,
@@ -984,7 +972,7 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
         f"- Address: `{target.address}`",
         f"- Unit: `{target.unit}`",
         f"- Source: `{source}`",
-        f"- Priority/milestone: `{target.tier}` / `{target.milestone}`",
+        f"- Milestone: `{target.milestone}`",
         f"- Current workflow/match: `{target.workflow_status}` / `{target.status}`",
         f"- Owner: `{claim.get('owner', 'unclaimed')}`",
     ]
@@ -1825,7 +1813,6 @@ def main() -> int:
     )
 
     def add_harness_args(command_parser: argparse.ArgumentParser) -> None:
-        command_parser.add_argument("--tier")
         command_parser.add_argument(
             "--selection",
             choices=["pending", "leaf", "callees-accepted", "ready"],
@@ -1839,7 +1826,7 @@ def main() -> int:
         command_parser.add_argument(
             "--include-catalog",
             action="store_true",
-            help="Include buildable P9 functions imported from symbols.txt",
+            help="Include catalog functions imported from symbols.txt",
         )
         command_parser.add_argument("--limit", type=int)
         command_parser.add_argument("--dry-run", action="store_true")
@@ -1854,7 +1841,6 @@ def main() -> int:
     p_targets = sub.add_parser("targets", help="Inspect and maintain the canonical target registry")
     p_targets_sub = p_targets.add_subparsers(dest="targets_cmd", required=True)
     p_targets_list = p_targets_sub.add_parser("list")
-    p_targets_list.add_argument("--tier")
     p_targets_list.add_argument("--milestone")
     p_targets_list.add_argument("--workflow-status")
     p_targets_list.add_argument("--match-status")
@@ -1862,14 +1848,13 @@ def main() -> int:
     p_targets_list.add_argument(
         "--include-catalog",
         action="store_true",
-        help="Include P9 records imported directly from symbols.txt",
+        help="Include catalog records imported directly from symbols.txt",
     )
     p_targets_show = p_targets_sub.add_parser("show")
     p_targets_show.add_argument("target_id")
     p_targets_status = p_targets_sub.add_parser(
         "status", help="Render a generated human-readable or JSON status view"
     )
-    p_targets_status.add_argument("--tier")
     p_targets_status.add_argument("--milestone")
     p_targets_status.add_argument("--kind", default="function")
     p_targets_status.add_argument("--format", choices=["markdown", "json"], default="markdown")
@@ -1959,7 +1944,7 @@ def main() -> int:
     p_targets_recertify.add_argument(
         "--include-catalog",
         action="store_true",
-        help="Include buildable P9 functions imported from symbols.txt",
+        help="Include catalog functions imported from symbols.txt",
     )
     p_targets_recertify.add_argument(
         "--linked",
@@ -2127,7 +2112,6 @@ def main() -> int:
         return cmd_queue(
             project,
             config,
-            args.tier,
             dry_run=args.dry_run,
             selection=args.selection,
             include_catalog=args.include_catalog,
@@ -2137,7 +2121,6 @@ def main() -> int:
         return cmd_queue(
             project,
             config,
-            args.tier,
             dry_run=args.dry_run,
             selection=args.selection,
             include_catalog=args.include_catalog,
@@ -2146,7 +2129,6 @@ def main() -> int:
     if args.command == "targets" and args.targets_cmd == "list":
         return cmd_targets_list(
             config,
-            args.tier,
             args.milestone,
             args.workflow_status,
             args.match_status,
@@ -2158,7 +2140,6 @@ def main() -> int:
     if args.command == "targets" and args.targets_cmd == "status":
         return cmd_targets_status(
             config,
-            tier=args.tier,
             milestone=args.milestone,
             kind=args.kind,
             output=args.output,

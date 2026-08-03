@@ -91,7 +91,7 @@ python3 tools/coop/run.py targets show <target-id>
 python3 tools/coop/run.py targets sync-calls
 ```
 
-Prefer `P0` / `P1` tiers unless the user names a specific function. Skip targets with `buildable=no` until source exists — recover via Ghidra first, add `.cpp` to `configure.py`, reconfigure.
+Prefer buildable targets inside the user's named feature slice, or let the harness pick the `ready` frontier when the user has not named a function. Skip targets with `buildable=no` until source exists — recover via Ghidra first, add `.cpp` to `configure.py`, reconfigure.
 
 For bottom-up matching across the complete symbol catalog, use the retail call
 graph. `leaf` requires no direct, unresolved, or indirect calls;

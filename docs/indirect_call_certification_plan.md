@@ -74,7 +74,7 @@ different register *names* holding equal *values*, so any name-keyed UF token br
 ### §0.3 Effort re-estimate (reviewers)
 
 WS0 ½ day (done). WS1 ≈ 1 day (still worth doing: better diagnostics, declared-callee plumbing —
-it also unblocks the ~6 P0/P1 vtable-dispatch targets at zero engine cost, though those are out of
+it also unblocks the ~6 vtable-dispatch targets at zero engine cost, though those are out of
 scope for this plan). WS2 ≈ 2–3 weeks including a new executor resume path in `semantics.py`
 (the repo's most soundness-sensitive file) and soundness review rounds. WS3 ≈ 3–5 days, dominated
 by the recertify wave (~576 indirect-flagged accepted targets; ~8315 total if hash inputs rotate).
@@ -84,11 +84,10 @@ Total ≈ 3–4 weeks for one engine owner. The original "1–1.5 weeks" was not
 
 This plan is **parked**, not rejected. Implement WS2 only when **any** of these holds:
 
-- A writable-global-callback target the fork actually prioritises reaches P0–P2 / ACTIVE
-  (closest candidates today: CriWare sfd/adx near-match targets, WPAD — ~15 near-match targets,
-  all currently P9); or
+- A writable-global-callback target the fork actually prioritises reaches ACTIVE
+  (closest candidates today: CriWare sfd/adx near-match targets, WPAD — ~15 near-match targets); or
 - Upstream `xbret/xenoblade` needs the opaque-call capability (the BTE callback targets this plan
-  names are P9/BACKLOG/unassigned and are not it); or
+  names are BACKLOG/unassigned and are not it); or
 - A project decision to build the capability as infrastructure (2–3 week budget approved).
 
 On resurrection: re-run WS0 (30 min) on the specific target(s) to confirm the executor resume gap

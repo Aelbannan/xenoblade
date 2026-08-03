@@ -10,7 +10,6 @@ interface FunctionCloudProps {
 
 const COLOR_MODES: { id: CloudColorMode; label: string }[] = [
   { id: "status", label: "Status" },
-  { id: "tier", label: "Tier" },
   { id: "readiness", label: "Readiness" },
   { id: "milestone", label: "Milestone" },
   { id: "buildable", label: "Buildable" },
@@ -33,9 +32,6 @@ function colorFor(point: ProjectionPoint, mode: CloudColorMode, keyIndex: Map<st
   switch (mode) {
     case "status":
       key = (point.status ?? "unknown").toLowerCase();
-      break;
-    case "tier":
-      key = (point.tier ?? "none").toLowerCase();
       break;
     case "readiness":
       key = (point.readiness ?? "unknown").toLowerCase();

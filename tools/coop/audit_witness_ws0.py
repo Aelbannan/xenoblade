@@ -60,7 +60,6 @@ def audit(config_path: str | None, project_root: Path) -> dict:
                 "id": t.id, "status": t.status,
                 "match": t.extra.get("instruction_match"),
                 "eq": t.extra.get("equivalence_status"),
-                "tier": t.tier,
                 "gate": None, "loop": None, "callee_clean": None,
                 "callee_errors": [],
             }
@@ -131,7 +130,7 @@ def audit(config_path: str | None, project_root: Path) -> dict:
         "per_target": {
             i["id"]: {
                 "status": i["status"], "match": i["match"], "eq": i["eq"],
-                "tier": i["tier"], "gate": i["gate"], "loop": i["loop"],
+                "gate": i["gate"], "loop": i["loop"],
                 "callee_clean": i["callee_clean"],
             }
             for i in near

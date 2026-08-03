@@ -81,7 +81,6 @@ export function listFunctions(
       status: filters.status,
       workflow: filters.workflow,
       milestone: filters.milestone,
-      tier: filters.tier,
       capability: filters.capability,
       unit: filters.unit,
       source: filters.source,

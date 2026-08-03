@@ -4,7 +4,7 @@ This document maps co-op capabilities to decompilation work. It explains
 **why** connected groups of functions matter; it is not a function database or
 progress checklist.
 
-The sole source of truth for function identity, address, size, priority,
+The sole source of truth for function identity, address, size,
 dependencies, workflow state, and match state is
 [`tools/coop/targets.json`](tools/coop/targets.json). Generate a current view:
 
@@ -139,7 +139,6 @@ Each enriched function target should connect binary identity to feature intent:
   "size": "0xCB4",
   "unit": "monolib/src/core/CView",
   "source": "libs/monolib/src/core/CView.cpp",
-  "tier": "P0",
   "milestone": "render",
   "capabilities": ["dual_view_render", "render_boundary"],
   "depends_on": ["view-set-current", "scn-draw"],
@@ -150,7 +149,7 @@ Each enriched function target should connect binary identity to feature intent:
 }
 ```
 
-Imported catalog records begin at `P9`, `unassigned`, and `DISCOVERY`. Promote
+Imported catalog records begin at `unassigned`/`DISCOVERY`. Promote
 and enrich only the symbols that enter a feature slice. Do not hand-copy target
 state into this document.
 

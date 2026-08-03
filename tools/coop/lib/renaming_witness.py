@@ -1010,9 +1010,9 @@ def _stream_validation_failure(
         # Value-dependent RA (doc 32 A2 rev 5): a both-nonzero RA pair on an
         # RA-literal opcode is a real register rename — exclude its bits from
         # the non-register bit-equality; gate 4 accumulates it into rho.
-        ra_rename_mask = 0x1F << 16 if (
-            r_reloc is None and _ra_field_is_register(r_insn, d_insn)
-        ) else 0
+        ra_rename_mask = (
+            0x1F << 16 if _ra_field_is_register(r_insn, d_insn) else 0
+        )
         if r_reloc is None:
             non_register_diff = (
                 (r_insn.raw ^ d_insn.raw) & ~(register_mask | ra_rename_mask)
@@ -1046,13 +1046,11 @@ def check_gates(
         for start, kind in _register_fields(r_insn.opcode):
             rv = (r_insn.raw >> start) & 0x1F
             dv = (d_insn.raw >> start) & 0x1F
-            if _fail_rho(rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind):
-                return WitnessOutcome(
-                    False,
-                    failure=_fail_rho(
-                        rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind,
-                    ),
-                )
+            failure = _fail_rho(
+                rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind,
+            )
+            if failure is not None:
+                return WitnessOutcome(False, failure=failure)
         # Value-dependent RA (doc 32 A2 rev 5): both-nonzero RA pair on an
         # RA-literal opcode is a real register rename.
         if _ra_field_is_register(r_insn, d_insn):

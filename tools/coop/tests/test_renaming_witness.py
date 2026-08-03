@@ -1316,7 +1316,11 @@ class ValueDependentRATests(unittest.TestCase):
 
     def test_zero_vs_nonzero_ra_rejected(self) -> None:
         # addi r3,0,5 vs addi r3,r12,5 (CX-2): RA 0 (literal) vs 12 (register)
-        # -> gate 3 fields.
+        # -> gate 3 fields.  NOTE (review F9): this is a regression guard for
+        # the UNCHANGED CX-2 case, not a pin for the value-dependent rule —
+        # it rejects at fields both before and after the rule.
+        # The rule's pins are test_nonzero_ra_rename_accepted and
+        # test_nonzero_ra_identity_entry_in_rho.
         original, candidate = self._pair(
             [_enc_primary(14, 3, 0, 5), self._BLR],
             [_enc_primary(14, 3, 12, 5), self._BLR],

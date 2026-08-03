@@ -36,12 +36,12 @@ void mwsfsvr_SyncStartSst(void* self) {
     }
 
     mwPlySfdStart(self);
-    if ((s8)*(u8*)((u8*)self + 0x92) != 0) {
+    if ((s8)*(u8*)((u8*)self + 0x92) == 0) {
         mwPlyPause(self, 0);
-        if ((s8)*(u8*)((u8*)self + 0x92) != 0) {
-            MWSST_GetTime((u8*)self + 0x5D8, 0);
-            MWSST_GetTime((u8*)self + 0x600, 0);
-        }
+    }
+    if ((s8)*(u8*)((u8*)self + 0x92) == 0) {
+        MWSST_GetTime((u8*)self + 0x5D8, 0);
+        MWSST_GetTime((u8*)self + 0x600, 0);
     }
 }
 

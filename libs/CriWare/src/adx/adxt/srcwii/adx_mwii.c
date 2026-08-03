@@ -209,7 +209,6 @@ static void adxm_create_base_thread(void) {
     }
 }
 
-void ADXM_SetupThrd() {}
 
 extern u32 lbl_eu_805F3A54;
 u32 ADXM_IsSetupThrd(void) {
@@ -232,4 +231,17 @@ done:
     return result;
 }
 
-void ADXM_SetupFramework() {}
+s32 ADXM_SetupFramework(s32 arg1, void* arg2) {
+    s32 mode = 2;
+    s32 ret = 1;
+    if (arg1 == 1)
+        mode = 1;
+    ADXMNG_SetFramework(mode);
+    lbl_eu_805FDD9C = (u32)arg1;
+    if (arg1 == 0 || arg1 == 2) {
+        ADXM_SetupThrd(arg2);
+    } else {
+        ret = 0;
+    }
+    return ret;
+}

@@ -387,4 +387,26 @@ void MPVMC16_OneRefH2_TuneC(MPC16Params *prm) {
     }
 }
 
-void MPVMC16_OneRef4p_TuneC() {}
+void MPVMC16_OneRef4p_TuneC(void* self) {
+    u8* src1 = *(u8**)((u8*)self + 0x24);
+    u8* src2 = *(u8**)((u8*)self + 0x28);
+    u8* dst = *(u8**)((u8*)self + 0x18);
+    s32 i;
+    for (i = 0; i < 0x10; i++) {
+        u32 p0 = (src1[0] + src2[0] + 1) >> 1;
+        u32 p1 = (src1[1] + src2[1] + 1) >> 1;
+        u32 p2 = (src1[2] + src2[2] + 1) >> 1;
+        u32 p3 = (src1[3] + src2[3] + 1) >> 1;
+        u32 p4 = (src1[4] + src2[4] + 1) >> 1;
+        u32 p5 = (src1[5] + src2[5] + 1) >> 1;
+        u32 p6 = (src1[6] + src2[6] + 1) >> 1;
+        u32 p7 = (src1[7] + src2[7] + 1) >> 1;
+        *(u16*)(dst + 0) = (u16)(p0 | (p1 << 8));
+        *(u16*)(dst + 2) = (u16)(p2 | (p3 << 8));
+        *(u16*)(dst + 4) = (u16)(p4 | (p5 << 8));
+        *(u16*)(dst + 6) = (u16)(p6 | (p7 << 8));
+        src1 += 2;
+        src2 += 2;
+        dst += 8;
+    }
+}

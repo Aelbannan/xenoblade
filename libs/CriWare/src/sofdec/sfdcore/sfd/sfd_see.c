@@ -62,7 +62,7 @@ void sfsee_ExecHeadAnaly(void* self) {
     if (SFTRN_IsSetup(self, 3) != 0) {
         if ((s32)SFSET_GetCond(self, 6) == 1) {
             setup3_flag = 1;
-            ok1 = (*(s32*)((u8*)avplay + 0xD0C) == 0);
+            ok1 = (*(s32*)((u8*)avplay + 0xD0C) == 0) ? 1 : 0;
         } else {
             setup3_flag = 0;
             ok1 = 0;
@@ -75,7 +75,7 @@ void sfsee_ExecHeadAnaly(void* self) {
         if (SFTRN_IsSetup(self, 2) != 0) {
             if ((s32)SFSET_GetCond(self, 5) == 1) {
                 setup2_flag = 1;
-                ok2 = (*(s32*)((u8*)avplay + 0xAD0) == 0);
+                ok2 = (*(s32*)((u8*)avplay + 0xAD0) == 0) ? 1 : 0;
             } else {
                 setup2_flag = 0;
                 ok2 = 0;

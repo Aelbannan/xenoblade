@@ -11,6 +11,12 @@ extern void MPVMC16_OneRef1p_TuneC(void);
 extern void MPVMC16_OneRefV2_TuneC(void);
 extern void MPVMC16_OneRefH2_TuneC(void);
 extern void MPVMC16_OneRef4p_TuneC(void);
+extern void MPVMC08_OneRefH2_TuneC(void);
+extern void MPVMC08_OneRef4p_TuneC(void);
+extern void MPVMC16_OneRef1p_TuneC(void);
+extern void MPVMC16_OneRefV2_TuneC(void);
+extern void MPVMC16_OneRefH2_TuneC(void);
+extern void MPVMC16_OneRef4p_TuneC(void);
 
 extern u32 lbl_eu_80604668[];
 extern u32 lbl_eu_80604688[];

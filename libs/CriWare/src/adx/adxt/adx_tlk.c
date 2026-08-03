@@ -12,7 +12,6 @@ extern void ADXCRS_Lock(void);
 extern void ADXCRS_Unlock(void);
 extern void ADXERR_CallErrFunc1_(const char*);
 extern char lbl_eu_805162F8[];
-extern float lbl_eu_805162F0;
 extern u8 lbl_eu_805E26E8[];
 
 extern void ADXSTM_ReleaseFileNw(void*);
@@ -374,7 +373,9 @@ s32 ADXT_GetTimeReal(void* self) {
     s32 ret;
     ADXCRS_Enter();
     adxt_GetTime(self, &t1, &t2);
-    ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162F0);
+extern float lbl_eu_805162DA;
+
+    ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162DA);
     ADXCRS_Leave();
     return ret;
 }

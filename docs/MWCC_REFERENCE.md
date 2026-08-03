@@ -7156,3 +7156,16 @@ the `cmpli` pre-test. Residual (2 structural + 6 reg_swap): the search loop's
 base/index register colors (retail base→r4/index→r3, decomp base→r3/index→r4)
 and the found-path address association (retail `(g+0x18) + i*100`, decomp
 `(g + i*100) + 0x18`) — all expression/decl permutations keep the decomp form.
+
+### CriWare adx_tlk ADXT_GetTimeReal — s32→float conversion pool wall (71.8%, 1 reloc drift)
+`ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162DA);` — the multiplier
+float's retail address is `lbl_eu_805162D8 + 2` (NOT 805162F0 — the pool label
+805162D8 holds the 2^31 double used by the xoris conversion; the float at +2 is
+the multiplier). Declare `extern float lbl_eu_805162DA;` (addend 0 at the real
+address) — the lfs reloc then matches. The residual drift is the **conversion's
+own 2^31 double**: retail `lfd f3, 0(lbl_eu_805162D8)`; decomp loads from the
+MWCC's own pool `@344 + 2` — the `(float)(s32)x` built-in materializes its
+constant in the compiler pool and ignores the file's `extern double
+lbl_eu_805162D8;`. Manual conversion forms (`(double)(u32)(t1 ^ 0x80000000) -
+lbl_eu_805162D8`) flip the path to the 0x4330 double-trick (+0x4330 lis, 48-byte
+frame). 9 structural are the xoris/lfd/fsubs interleave + lis color (r5 vs r6).

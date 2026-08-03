@@ -406,8 +406,82 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                                bool useParent, const math::MTX34* pViewMtx,
                                ResMdl mdl, unsigned long mtxId) {
-    // TODO: Full implementation
-    math::MTX34Zero(pOut);
+    math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
+
+    ResMdlInfo info = mdl.GetResMdlInfo();
+    s32 nodeId = info.GetNodeIDFromMtxID(mtxId);
+
+    math::VEC3 localY;
+    localY.x = 0.0f;
+    localY.y = 0.0f;
+    localY.z = 0.0f;
+    const math::MTX34* pNodeMtx = NULL;
+    const math::MTX34* pParentMtx = NULL;
+
+    if (nodeId >= 0) {
+        ResNode node = mdl.GetResNode(static_cast<u32>(nodeId));
+        ResNode parentNode = node.GetParentNode();
+        u32 parentMtxId = mtxId;
+
+        if (parentNode.IsValid()) {
+            parentMtxId = parentNode.GetMtxID();
+        }
+
+        const u8* base = reinterpret_cast<const u8*>(pMtxArray);
+
+        pNodeMtx = reinterpret_cast<const math::MTX34*>(
+            base + mtxId * sizeof(math::MTX34));
+        pParentMtx = reinterpret_cast<const math::MTX34*>(
+            base + parentMtxId * sizeof(math::MTX34));
+
+        GetModelLocalAxisY3(&localY, pNodeMtx, pParentMtx);
+    } else {
+        const u8* base = reinterpret_cast<const u8*>(pMtxArray);
+
+        pNodeMtx = reinterpret_cast<const math::MTX34*>(
+            base + mtxId * sizeof(math::MTX34));
+
+        localY.x = pNodeMtx->_01;
+        localY.y = pNodeMtx->_11;
+        localY.z = pNodeMtx->_21;
+    }
+
+    if (fabsf(dir.x) < 1.0e-18f && fabsf(dir.y) < 1.0e-18f &&
+        fabsf(dir.z) < 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&dir, &dir);
+
+    math::VEC3 right;
+    math::VEC3Cross(&right, &localY, &dir);
+
+    if (fabsf(right.x) < 1.0e-18f && fabsf(right.y) < 1.0e-18f &&
+        fabsf(right.z) < 1.0e-18f) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&right, &right);
+    math::VEC3Cross(&localY, &dir, &right);
+
+    f32 len = math::FrSqrt(pNodeMtx->_00 * pNodeMtx->_00 +
+                           pNodeMtx->_10 * pNodeMtx->_10 +
+                           pNodeMtx->_20 * pNodeMtx->_20);
+    f32 len1 = len * (pNodeMtx->_00 * pNodeMtx->_00 +
+                      pNodeMtx->_10 * pNodeMtx->_10 +
+                      pNodeMtx->_20 * pNodeMtx->_20);
+
+    pOut->_00 = right.x * len1;
+    pOut->_01 = localY.x * len1;
+    pOut->_02 = dir.x * len1;
+    pOut->_10 = right.y * len1;
+    pOut->_11 = localY.y * len1;
+    pOut->_12 = dir.y * len1;
+    pOut->_20 = right.z * len1;
+    pOut->_21 = localY.z * len1;
+    pOut->_22 = dir.z * len1;
 }
 
 /******************************************************************************

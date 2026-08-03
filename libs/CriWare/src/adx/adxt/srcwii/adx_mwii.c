@@ -69,8 +69,9 @@ void adxm_lock() {}
 
 void adxm_unlock(void) {
     struct AdxmBase* base = &lbl_eu_805F3A50;
-    base->field_0x40 -= 1;
-    if (base->field_0x40 == 0) {
+    volatile s32* p = &base->field_0x40;
+    *p -= 1;
+    if (*p == 0) {
         OSThread* currThread = OSGetCurrentThread();
         OSSuspendThread(&base->field_0x78);
         OSSetThreadPriority(currThread, base->field_0x74);

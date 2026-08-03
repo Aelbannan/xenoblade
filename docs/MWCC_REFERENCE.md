@@ -7503,3 +7503,9 @@ the call block BETWEEN the dispatch and the ret0 ([fn: bl; b join; ret0: li 0]).
 The `goto call` form is closest (40%); MWCC flattens the ||+else-if variants and
 places the ret0 inline before the call block (source order), never reproducing
 the retail's fn-before-ret0 layout. 10 structural = the block order + 5 reg_swap.
+
+### CriWare adx_mwii adxm_unlock — FULL_MATCH (volatile forces the reload)
+`volatile s32* p = &base->field_0x40; *p -= 1; if (*p == 0)` — the volatile
+pointer forces MWCC to emit the retail's [lwz; subi; stw; lwz(reload); cmpi]
+instead of fusing the decrement+test into `addic.` (the non-volatile forms all
+fused). Reusable pattern for "decrement-and-reload" globals.

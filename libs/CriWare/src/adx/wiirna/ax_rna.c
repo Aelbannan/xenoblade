@@ -112,7 +112,27 @@ void AXRNA_SetNumChan(void* self, u8 numChan) {
 
 void AXRNA_SetSfreq() {}
 
-void AXRNA_SetOutVol() {}
+extern void GCRNA_LockCs(void);
+extern void GCRNA_UnlockCs(void);
+extern void MIXSetInput(void* a, s32 b);
+
+void AXRNA_SetOutVol(void* self, s32 vol) {
+    s32 i;
+    s32 v;
+    if (self == NULL)
+        return;
+    v = -960;
+    if (*(s32*)((u8*)self + 0x7c) == v)
+        return;
+    *(s32*)((u8*)self + 0x7c) = v;
+    for (i = 0; i < (s8)*(u8*)((u8*)self + 2); i++) {
+        void* e = *(void**)((u8*)self + 4 * i + 0);
+        GCRNA_LockCs();
+        if (e != NULL)
+            MIXSetInput(e, v);
+        GCRNA_UnlockCs();
+    }
+}
 
 void AXRNA_SetOutPan() {}
 

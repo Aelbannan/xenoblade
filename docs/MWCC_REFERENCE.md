@@ -7903,3 +7903,12 @@ SetTermFlg; same for PrepFlg) + the [return 0] (the void version lost the
 final [li r3,0]). Also SFD_SetUsrSj 53.1% (the [e = base + a*16] must be
 computed AFTER the ==8 error check — the retail keeps the [2208/2200] loads
 before the branch and the rlwinm/add in the main path).
+
+### CriWare ax_rna — volatile read reproduces retail "dead" version-string load (AXRNA_Init FULL_MATCH)
+Retail `AXRNA_Init` hoists a **dead load** `lwz r3, lbl_eu_8051914C` (a rodata pointer to the version string) before the init-count branch; MWCC DCEs the plain read. Fix: declare `extern volatile u32 lbl_eu_8051914C;` and put `(void)lbl_eu_8051914C;` as the FIRST statement — the volatile read survives at the entry and the function goes 13.6% → 100%. This is the same "volatile forces the reload" lever as `adxm_unlock`, applied to a completely-dead value.
+
+### CriWare ax_rna — MWCC busy-wait loops: volatile prevents invariant-load hoisting in ×10 unroll (AXRNA_SetTransSw)
+Retail busy-wait `for (j=0;j<0x14;j++) for (k=0;k<0xa;k++) { if (flag==0) goto done; cnt++; }` compiles to mtctr-20 × **10 unrolled blocks, each re-loading the flag** (`lwz r6, 0x58(r31)`). Plain C lets MWCC hoist the loop-invariant load (1 load + 10 branch checks, decomp 0x278 vs retail 0x300). Fix: read the flag as `*(volatile s32*)((u8*)self + i*4 + 0x58)` — volatile blocks the hoist, the ×10 unroll with per-block loads reproduces retail exactly (0 structural, 0x300 exact). The flag is cross-context (audio callback) so volatile is semantically defensible. Verified in scratch: volatile → 10 lwz, non-volatile → 1 lwz.
+
+### CriWare ax_rna — declaration order + `==` operand order flip allocator colors (AXRNA_SetOutVol 100%)
+SetOutVol's 8 reg-swaps (v r30↔r29, counter r29↔r30) collapsed to 0 with: (1) declare `s32 t; s32 v; s32 i;` — the loop value BEFORE the counter; (2) write the guard as `if (v == *(s32*)((u8*)self + 0x7c))` — the NEW value as the FIRST operand of `==` (retail `cmpw r30, r0` = v vs cur). `s32* p` as the FIRST declaration in SetMain reduced 11→6 swaps. These two levers are worth trying before declaring a regalloc fixed point.

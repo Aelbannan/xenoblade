@@ -1150,10 +1150,10 @@ void* SFMPS_Create(void* self) {
 void sfmps_InitInf(void* inf) {
     s32* p = (s32*)inf;
     s32* q;
-    s32 max = 0x7fffffff;
     s32 cnt = 2;
     s32 neg = -1;
     s32 zero = 0;
+    s32 max = 0x7fffffff;
     int i, j;
 
     p[0] = zero;

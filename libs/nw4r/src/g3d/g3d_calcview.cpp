@@ -908,7 +908,142 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
                               const u32* pModelMtxAttribArray, u32 numMtx,
                               const math::MTX34* pViewMtx, const ResMdl mdl,
                               math::MTX34* pViewTexMtxArray) {
-    // TODO: Full implementation
+    if (numMtx == 0) {
+        return;
+    }
+
+    // Locked-cache regions used for the model matrix DMA load/store.
+    const u32 lcRegions[6] = {0xE0000800, 0xE0001000, 0xE0001800,
+                              0xE0002800, 0xE0003000, 0xE0003800};
+
+    u32 posSize = (numMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
+    u32 nrmSize = (numMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
+
+    DCInvalidateRange(pViewNrmArray, nrmSize);
+    DCInvalidateRange(pViewTexMtxArray, posSize);
+    DCInvalidateRange(pViewPosArray, posSize);
+
+    math::MTX34* pWorkMtx = nw4r::g3d::detail::workmem::GetBillboardMtxTemporary();
+
+    u32 processed = 0;
+
+    while (processed < numMtx) {
+        u32 chunk = numMtx - processed;
+
+        if (chunk > 0x28) {
+            chunk = 0x28;
+        }
+
+        // DMA-load the model matrices from the locked cache.
+        nw4r::ut::LC::LoadBlocks(
+            const_cast<math::MTX34*>(&pModelMtxArray[processed]),
+            reinterpret_cast<void*>(lcRegions[1]), posSize / 32);
+
+        if (numMtx > 0x14) {
+            while (LCQueueLength() != 0) {
+                OSYieldThread();
+            }
+        } else {
+            LCQueueWait(0);
+        }
+
+        if (chunk > 1) {
+            math::MTX34MultArray(&pViewPosArray[processed], pViewMtx,
+                                 &pModelMtxArray[processed], chunk);
+        } else {
+            math::MTX34Mult(&pViewPosArray[processed], pViewMtx,
+                            &pModelMtxArray[processed]);
+        }
+
+        for (u32 i = 0; i < chunk; i++) {
+            u32 idx = processed + i;
+            u32 attrib = pModelMtxAttribArray[idx];
+            u32 billboardIdx = attrib & 0xFF;
+
+            if (billboardIdx != 0) {
+                gCalcBillboardFuncTable[billboardIdx](
+                    &pViewPosArray[idx], pModelMtxArray, (attrib >> 2) & 1,
+                    pViewMtx, mdl, idx);
+
+                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
+                ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
+                void* pData = NULL;
+
+                if (node.IsValid()) {
+                    s32 toData = node.ref().toResUserData;
+                    pData = (toData != 0)
+                                ? reinterpret_cast<u8*>(&node.ref()) + toData
+                                : NULL;
+                }
+
+                if (pData != NULL) {
+                    math::MTX34 inv;
+
+                    if (detail::CalcInvWorldMtx(&inv, &pViewPosArray[idx]) ==
+                        1) {
+                        math::MTX34Mult(&pViewTexMtxArray[idx], &inv,
+                                        &pViewTexMtxArray[idx]);
+                    } else {
+                        math::MTX34Identity(&pViewTexMtxArray[idx]);
+                        pViewTexMtxArray[idx]._02 = pViewMtx->_02;
+                        pViewTexMtxArray[idx]._12 = pViewMtx->_12;
+                        pViewTexMtxArray[idx]._22 = pViewMtx->_22;
+                    }
+                }
+            } else {
+                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
+
+                if (nodeId >= 0) {
+                    ResNode node =
+                        mdl.GetResNode(static_cast<int>(nodeId));
+
+                    if (node.IsValid()) {
+                        if (node.ref().flags & 0x400) {
+                            s32 parentId = node.ref().bbref_nodeid;
+                            ResNode parent =
+                                mdl.GetResNode(static_cast<int>(parentId));
+                            u32 parentMtxId =
+                                parent.IsValid() ? parent.ref().mtxID : 0;
+
+                            math::MTX34Mult(&pWorkMtx[parentMtxId],
+                                            &pViewPosArray[idx],
+                                            &pModelMtxArray[idx]);
+                        }
+                    }
+                }
+            }
+        }
+
+        processed += chunk;
+    }
+
+    nw4r::ut::LC::StoreBlocks(pViewPosArray,
+                              reinterpret_cast<void*>(lcRegions[1]),
+                              posSize / 32);
+
+    if (pViewNrmArray != NULL) {
+        for (u32 i = 0; i < numMtx; i++) {
+            u32 attrib = pModelMtxAttribArray[i];
+
+            if (attrib & 1) {
+                if (pViewTexMtxArray != NULL) {
+                    math::MTX34Copy(&pViewTexMtxArray[i], &pViewPosArray[i]);
+                    pViewTexMtxArray[i]._03 = 0.0f;
+                    pViewTexMtxArray[i]._13 = 0.0f;
+                    pViewTexMtxArray[i]._23 = 0.0f;
+                }
+
+                math::MTX34ToMTX33(&pViewNrmArray[i], &pViewPosArray[i]);
+            } else {
+                if (pViewTexMtxArray != NULL) {
+                    detail::CalcViewTexMtx(&pViewTexMtxArray[i],
+                                           &pViewPosArray[i]);
+                }
+
+                detail::CalcViewNrmMtx(&pViewNrmArray[i], &pViewPosArray[i]);
+            }
+        }
+    }
 }
 
 } // namespace g3d

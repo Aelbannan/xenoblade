@@ -138,13 +138,13 @@ bool ResTexObj::IsValidTexObj(GXTexMapID id) const {
     return false;
 }
 
-void ResTexObj::Validate(GXTexMapID id) {
+inline void ResTexObj::Validate(GXTexMapID id) {
     if (IsValid() && id >= GX_TEXMAP0 && id <= GX_TEXMAP7) {
         ptr()->flagUsedTexMapID |= (1 << id);
     }
 }
 
-void ResTexObj::Invalidate(GXTexMapID id) {
+inline void ResTexObj::Invalidate(GXTexMapID id) {
     if (IsValid() && id >= GX_TEXMAP0 && id <= GX_TEXMAP7) {
         ptr()->flagUsedTexMapID &= ~(1 << id);
     }
@@ -200,13 +200,13 @@ bool ResTlutObj::IsValidTlut(GXTlut tlut) const {
     return false;
 }
 
-void ResTlutObj::Validate(GXTlut tlut) {
+inline void ResTlutObj::Validate(GXTlut tlut) {
     if (IsValid() && tlut >= GX_TLUT0 && tlut <= GX_TLUT7) {
         ptr()->flagUsedTlutID |= (1 << tlut);
     }
 }
 
-void ResTlutObj::Invalidate(GXTlut tlut) {
+inline void ResTlutObj::Invalidate(GXTlut tlut) {
     if (IsValid() && tlut >= GX_TLUT0 && tlut <= GX_TLUT7) {
         ptr()->flagUsedTlutID &= ~(1 << tlut);
     }
@@ -305,7 +305,7 @@ bool ResTexSrt::SetEffectMtx(u32 id, const math::MTX34* pMtx) {
     return false;
 }
 
-bool ResTexSrt::GetEffectMtx(u32 id, math::MTX34* pMtx) const {
+inline bool ResTexSrt::GetEffectMtx(u32 id, math::MTX34* pMtx) const {
     if (pMtx != NULL && id < ResTexSrtData::NUM_OF_TEXTURE) {
         const TexMtxEffect& rEffect = ref().effect[id];
 
@@ -318,7 +318,7 @@ bool ResTexSrt::GetEffectMtx(u32 id, math::MTX34* pMtx) const {
     return false;
 }
 
-bool ResTexSrt::SetMapMode(u32 id, u32 mode, int camRef, int lightRef) {
+inline bool ResTexSrt::SetMapMode(u32 id, u32 mode, int camRef, int lightRef) {
     if (id < ResTexSrtData::NUM_OF_TEXTURE &&
         mode < G3DState::NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE) {
 
@@ -341,7 +341,7 @@ bool ResTexSrt::SetMapMode(u32 id, u32 mode, int camRef, int lightRef) {
     return false;
 }
 
-bool ResTexSrt::GetMapMode(u32 id, u32* pMode, int* pCamRef,
+inline bool ResTexSrt::GetMapMode(u32 id, u32* pMode, int* pCamRef,
                            int* pLightRef) const {
     if (id < ResTexSrtData::NUM_OF_TEXTURE) {
         const ResTexSrtData& r = ref();
@@ -370,13 +370,13 @@ bool ResTexSrt::GetMapMode(u32 id, u32* pMode, int* pCamRef,
  * ResGenMode
  *
  ******************************************************************************/
-void ResGenMode::GXSetNumTexGens(u8 num) {
+inline void ResGenMode::GXSetNumTexGens(u8 num) {
     if (IsValid()) {
         ref().nTexGens = num;
     }
 }
 
-void ResGenMode::GXSetNumChans(u8 num) {
+inline void ResGenMode::GXSetNumChans(u8 num) {
     if (IsValid()) {
         ref().nChans = num;
     }
@@ -388,7 +388,7 @@ void ResGenMode::GXSetNumTevStages(u8 num) {
     }
 }
 
-void ResGenMode::GXSetNumIndStages(u8 num) {
+inline void ResGenMode::GXSetNumIndStages(u8 num) {
     if (IsValid()) {
         ref().nInds = num;
     }
@@ -521,7 +521,7 @@ void ResMatPix::GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
     detail::ResWriteBPCmd(pCmd, reg);
 }
 
-bool ResMatPix::GXGetZMode(GXBool* pTest, GXCompare* pCompare,
+inline bool ResMatPix::GXGetZMode(GXBool* pTest, GXCompare* pCompare,
                            GXBool* pUpdate) const {
     const u8* pCmd = ref().dl.zMode;
     if (pCmd[0] == 0) {
@@ -549,7 +549,7 @@ bool ResMatPix::GXGetZMode(GXBool* pTest, GXCompare* pCompare,
     return true;
 }
 
-void ResMatPix::GXSetZMode(GXBool test, GXCompare compare, GXBool update) {
+inline void ResMatPix::GXSetZMode(GXBool test, GXCompare compare, GXBool update) {
     u8* pCmd = ref().dl.zMode;
 
     u32 reg = test << GX_BP_ZMODE_TEST_ENABLE_SHIFT |
@@ -632,7 +632,7 @@ void ResMatPix::GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 1], reg);
 }
 
-bool ResMatPix::GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const {
+inline bool ResMatPix::GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const {
     const u8* pCmd = ref().dl.setDstAlpha;
     if (pCmd[0] == 0) {
         return false;
@@ -657,7 +657,7 @@ bool ResMatPix::GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const {
     return true;
 }
 
-void ResMatPix::GXSetDstAlpha(GXBool enable, u8 alpha) {
+inline void ResMatPix::GXSetDstAlpha(GXBool enable, u8 alpha) {
     u8* pCmd = ref().dl.setDstAlpha;
 
     u32 reg = alpha << GX_BP_DSTALPHA_ALPHA_SHIFT |
@@ -712,7 +712,7 @@ void ResMatTevColor::GXSetTevColor(GXTevRegID id, GXColor color) {
     detail::ResWriteBPCmd(&pCmd[GX_BP_CMD_SZ * 3], regBG);
 }
 
-bool ResMatTevColor::GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const {
+inline bool ResMatTevColor::GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const {
     const u8* pCmd = ref().dl.tevColor[id - 1];
     if (pCmd[0] == 0) {
         return false;
@@ -740,7 +740,7 @@ bool ResMatTevColor::GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const {
     return true;
 }
 
-void ResMatTevColor::GXSetTevColorS10(GXTevRegID id, GXColorS10 color) {
+inline void ResMatTevColor::GXSetTevColorS10(GXTevRegID id, GXColorS10 color) {
     u8* pCmd = ref().dl.tevColor[id - 1];
 
     u32 mask = GX_BP_TEVREGLO_RED_LMASK;
@@ -964,7 +964,7 @@ void ResMatIndMtxAndScale::GXSetIndTexMtx(GXIndTexMtxID id,
  * ResMatChan
  *
  ******************************************************************************/
-void ResMatChan::GXSetChanMatColor(GXChannelID id, GXColor color) {
+inline void ResMatChan::GXSetChanMatColor(GXChannelID id, GXColor color) {
     GXColor& rMatColor = ref().chan[id & 1].matColor;
 
     if ((id & 2) == 0) {
@@ -996,7 +996,7 @@ void ResMatChan::GXSetChanAmbColor(GXChannelID id, GXColor color) {
     }
 }
 
-void ResMatChan::GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
+inline void ResMatChan::GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
                                GXColorSrc matSrc, GXLightID lightMask,
                                GXDiffuseFn diffuseFn, GXAttnFn attnFn) {
     Chan& rChan = ref().chan[id & 1];
@@ -1154,7 +1154,7 @@ void ResMatTexCoordGen::CallDisplayList(u8 numGens, bool sync) const {
     }
 }
 
-bool ResMatTexCoordGen::GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
+inline bool ResMatTexCoordGen::GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
                                           GXTexGenSrc* pParam,
                                           GXBool* pNormalize,
                                           u32* pPostMtx) const {
@@ -1274,7 +1274,7 @@ bool ResMatTexCoordGen::GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
     return false;
 }
 
-void ResMatTexCoordGen::GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType func,
+inline void ResMatTexCoordGen::GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType func,
                                           GXTexGenSrc param, GXBool normalize,
                                           u32 postMtx) {
     u8* pCmd = ref().dl.texCoordGen[id];
@@ -1492,7 +1492,7 @@ ResTev ResMat::GetResTev() {
     return ofs_to_obj<ResTev>(ref().toResTevData);
 }
 
-ResTev ResMat::GetResTev() const {
+inline ResTev ResMat::GetResTev() const {
     return ofs_to_obj<ResTev>(ref().toResTevData);
 }
 
@@ -1501,7 +1501,7 @@ ResTev ResMat::GetResTev() const {
  * ResTexPlttInfo
  *
  ******************************************************************************/
-void ResTexPlttInfo::BindTex_(const ResTex tex, ResTexObj texObj) {
+inline void ResTexPlttInfo::BindTex_(const ResTex tex, ResTexObj texObj) {
     ResTexPlttInfoData& r = ref();
     r.pTexData = const_cast<ResTexData*>(&tex.ref());
 
@@ -1535,7 +1535,7 @@ void ResTexPlttInfo::BindTex_(const ResTex tex, ResTexObj texObj) {
     texObj.Validate(r.mapID);
 }
 
-void ResTexPlttInfo::BindPltt_(const ResPltt pltt, ResTlutObj tlutObj) {
+inline void ResTexPlttInfo::BindPltt_(const ResPltt pltt, ResTlutObj tlutObj) {
     ResTexPlttInfoData& r = ref();
     r.pPlttData = const_cast<ResPlttData*>(&pltt.ref());
 
@@ -1581,7 +1581,7 @@ bool ResTexPlttInfo::Bind(const ResFile file, ResTexObj texObj,
     return success;
 }
 
-void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
+inline void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
     ResTexPlttInfoData& r = ref();
 
     r.pTexData = NULL;
@@ -1618,55 +1618,17 @@ f32 ResMatFur::GetLyrRate(u32 layer) const {
 } // namespace g3d
 } // namespace nw4r
 
+namespace nw4r {
+namespace g3d {
 
-bool GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_GXBlendFactorP10_GXLogicOp(const void* self, unsigned int* blendMode, unsigned int* srcFactor, unsigned int* dstFactor, unsigned int* logicOp) {
-    const unsigned char* data = *reinterpret_cast<const unsigned char* const*>(self);
-    if (data[0xA] == 0) {
-        return false;
-    }
-    const unsigned int value = (static_cast<unsigned int>(data[0x10]) << 24) |
-                               (static_cast<unsigned int>(data[0x11]) << 16) |
-                               (static_cast<unsigned int>(data[0x12]) << 8) |
-                               static_cast<unsigned int>(data[0x13]);
-    unsigned int mode;
-    if ((value & 2) != 0) {
-        mode = 2;
-    } else if ((value & 0x800) != 0) {
-        mode = 3;
-    } else {
-        mode = value & 1;
-    }
-    if (blendMode != 0) {
-        *blendMode = mode;
-    }
-    if (srcFactor != 0) {
-        *srcFactor = (value >> 8) & 7;
-    }
-    if (dstFactor != 0) {
-        *dstFactor = (value >> 5) & 7;
-    }
-    if (logicOp != 0) {
-        *logicOp = (value >> 12) & 0xFFF;
-    }
-    return true;
+ResMatFur ResMat::GetResMatFur() {
+    return ResMatFur(ofs_to_ptr<ResMatFurData>(ref().toResMatFurData));
 }
-bool GXGetChanCtrl__Q34nw4r3g3d10ResMatChanCF12_GXChannelIDPUcP11_GXColorSrcP11_GXColorSrcP10_GXLightIDP12_GXDiffuseFnP9_GXAttnFn(const void* self, _GXChannelID channel, unsigned char* enable, _GXColorSrc* ambSrc, _GXColorSrc* matSrc, _GXLightID* lightMask, _GXDiffuseFn* diffFn, _GXAttnFn* attnFn) { const unsigned char* chan = reinterpret_cast<const unsigned char*>(*reinterpret_cast<const void* const*>(self)) + (static_cast<unsigned int>(channel) & 1u) * 0x14u; unsigned int ctrl = *reinterpret_cast<const unsigned int*>(chan + ((static_cast<unsigned int>(channel) & 0x40000000u) ? 0x10u : 0x0cu)); if (enable) *enable = static_cast<unsigned char>((ctrl >> 1) & 1u); if (ambSrc) *ambSrc = static_cast<_GXColorSrc>((ctrl >> 6) & 1u); if (matSrc) *matSrc = static_cast<_GXColorSrc>(ctrl & 1u); if (lightMask) *lightMask = static_cast<_GXLightID>(((ctrl >> 2) & 0xfu) | (((ctrl >> 11) & 0xfu) << 4)); unsigned int attn = 0; if (ctrl & (1u << 10)) attn = (ctrl & (1u << 9)) ? 1u : 2u; if (diffFn) *diffFn = static_cast<_GXDiffuseFn>((ctrl >> 7) & 3u); if (attnFn) *attnFn = static_cast<_GXAttnFn>(attn); return true; }
-void* GetResMatFur__Q34nw4r3g3d6ResMatFv(void* self) {
-    const unsigned char* ref = *(const unsigned char* const*)self;
-    const s32 ofs = *(const s32*)(ref + 0x34);
-    if (ofs != 0) {
-        return (void*)(ref + ofs);
-    }
-    return 0;
+
+void* ResMat::GetResUserData() {
+    return ofs_to_ptr<void>(ref().toResUserData);
 }
-void* GetResUserData__Q34nw4r3g3d6ResMatFv(void* self) {
-    const unsigned char* ref = *(const unsigned char* const*)self;
-    const s32 ofs = *(const s32*)(ref + 0x38);
-    if (ofs != 0) {
-        return (void*)(ref + ofs);
-    }
-    return 0;
-}
-const void* GetResTex__Q34nw4r3g3d14ResTexPlttInfoCFv(const void* p) {
-    return *(const void**)((const char*)*(const void**)p + 8);
-}
+
+} // namespace g3d
+} // namespace nw4r
+

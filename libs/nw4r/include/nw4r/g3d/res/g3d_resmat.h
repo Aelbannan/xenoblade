@@ -487,6 +487,10 @@ public:
         return ResName(NULL);
     }
 
+    ResTex GetResTex() const {
+        return ResTex(ptr()->pTexData);
+    }
+
     ResName GetPlttResName() const {
         const ResTexPlttInfoData& r = ref();
 
@@ -538,7 +542,18 @@ struct ResMatData {
     ResChanData chan;           // at 0x3F0
 };
 
-class ResMatFur;
+struct ResMatFurData {
+    u32 size;   // at 0x0
+    u32 value;  // at 0x4
+    s32 type;   // at 0x8
+};
+
+class ResMatFur : public ResCommon<ResMatFurData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatFur);
+
+    f32 GetLyrRate(u32 layer) const;
+};
 
 class ResMat : public ResCommon<ResMatData> {
 public:
@@ -614,23 +629,7 @@ public:
     }
 
     ResMatFur GetResMatFur();
-
-    void* GetResUserData() {
-        return ofs_to_ptr<void>(ref().toResUserData);
-    }
-};
-
-struct ResMatFurData {
-    u32 size;   // at 0x0
-    u32 value;  // at 0x4
-    s32 type;   // at 0x8
-};
-
-class ResMatFur : public ResCommon<ResMatFurData> {
-public:
-    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatFur);
-
-    f32 GetLyrRate(u32 layer) const;
+    void* GetResUserData();
 };
 
 } // namespace g3d

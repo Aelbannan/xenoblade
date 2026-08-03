@@ -369,17 +369,17 @@ s32 SFMPV_ExecServer(void* self) {
 // ---------------------------------------------------------------------------
 void sfmpv_ProcessAuxShc(void* self) {
     void* e = *(void**)((u8*)self + 0x2068);
-    u32 a = *(u32*)((u8*)self + 0xd90);
-    u32 b = *(u32*)((u8*)self + 0xd94);
-    void* p = *(void**)((u8*)e + 0);
+    s32 buf[2];
+    void* p;
     s32 c;
-    if (a == 0)
+    buf[0] = *(s32*)((u8*)self + 0xd90);
+    p = *(void**)((u8*)e + 0);
+    buf[1] = *(s32*)((u8*)self + 0xd94);
+    if (buf[0] == 0 || buf[1] == 0)
         return;
-    if (b == 0)
+    if ((s32)*(u32*)((u8*)e + 8) != 0xc0)
         return;
-    if (*(u32*)((u8*)e + 8) != 0xc0)
-        return;
-    if (MPV_DecodePicAtr(p, &a, &c) == 0) {
+    if (MPV_DecodePicAtr(p, buf, &c) == 0) {
         *(u32*)((u8*)e + 4) = 2;
         *(u32*)((u8*)e + 8) = 0xc8;
     }

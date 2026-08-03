@@ -7700,3 +7700,11 @@ calls + SFD_SetUsrSj). Retail frame -48: [t@sp+8; out@sp+0x10; buf@sp+0x18]
 with buf[1] = the first call's ret (the r3 reuse). Decomp frame -32: MWCC
 merges the 3rd/4th-call temp into the out slot — the [&t] and [&out[0]] get
 the same sp+8 home. Semantically correct; the frame shape is the wall.
+
+### CriWare sfd_mpv sfmpv_ProcessAuxShc — 75.8% (load-order scheduling)
+The a/b pair must be `s32 buf[2]` (adjacent frame slots — a bare a/b loses the
+b store), the p load must sit BETWEEN the buf[0] and buf[1] assignments, and
+the e+8 compare needs the (s32) cast (signed cmpi). Residual 5 structural: the
+entry load [lwz r31,0x2068] schedules AFTER the buf[0] load (retail: first),
+the p load position, and the final store/li interleave (retail [li r0,2; stw;
+li r0,0xc8; stw] vs decomp [li r3,2; li r0,0xc8; stw; stw]).

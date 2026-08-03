@@ -7138,3 +7138,21 @@ r6/r5/r3). No consistent register bijection exists → register-renaming witness
 cannot certify; both targets need the out-of-band `--smt` probe (VIConfigure
 also blocked until OSPanic us-804f2934 is accepted; __VIRetraceHandler blocked
 by indirect PreCB/PostCB/PositionCallback calls).
+
+### CriWare gcci gcCiOpen — struct-derived handle base + inverted a3 guard (94.1%, 2 structural)
+`gcCiOpen(path, mode, a3)`: (1) the **a3 guard is inverted** vs the naive reading —
+retail `cmpi r5,0; beq main` means `a3 != 0 → err(+166)` (the arg is an
+"already-open/device" flag, not a must-be-nonzero handle). (2) The handle-array
+loop must derive the array base **through the hoisted globals struct**
+(`(GciHndl*)&g->status[0xC]` = g+0x18 = 0x805E6B88) — a direct
+`lbl_eu_805E6B88[i]` reference makes MWCC materialize a fresh lis/addi instead
+of retail's `addi rX, r30, 24` (the GciGlobals base is hoisted into r30 by the
+`GciGlobals* g = &lbl_eu_805E6B70;` local + errfunc/errarg struct references).
+Declaring a `base` local (top-level or scoped) blows the frame up to 0x31C —
+keep the inline `&g->status[0xC]` expression. (3) The fileSize clamp needs a
+local: `s32 sz = h->fi.size; if (sz & 0x80000000) sz = 0x7FFFFFFF; h->fileSize = sz;`
+(the store lands once at the join); the strlen loop count must be `u32 n` for
+the `cmpli` pre-test. Residual (2 structural + 6 reg_swap): the search loop's
+base/index register colors (retail base→r4/index→r3, decomp base→r3/index→r4)
+and the found-path address association (retail `(g+0x18) + i*100`, decomp
+`(g + i*100) + 0x18`) — all expression/decl permutations keep the decomp form.

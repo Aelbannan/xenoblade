@@ -75,6 +75,7 @@ s32 gcCiGetFileSize(const char* path) {
     return size;
 }
 
+
 // GCI transfer handle (0x64 bytes), 40 entries at 0x805E6B88.
 typedef struct {
     s8 use;                            // +0x00
@@ -94,6 +95,69 @@ typedef struct {
 } GciHndl;
 
 extern GciHndl lbl_eu_805E6B88[];
+
+void* gcCiOpen(const char* path, s32 mode, s32 a3) {
+    GciGlobals* g = &lbl_eu_805E6B70;
+    char buf[0x100];
+    s32 i;
+    GciHndl* h;
+    if (path == NULL) {
+        const char* msg = &lbl_eu_805181F0[132];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, 0);
+        return NULL;
+    }
+    if (a3 != 0) {
+        const char* msg = &lbl_eu_805181F0[166];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, 0);
+        return NULL;
+    }
+    h = NULL;
+    for (i = 0; i < 40; i++) {
+        if (((GciHndl*)&g->status[0xC])[i].use == 0) {
+            h = (GciHndl*)((u8*)g + 0x18 + i * 100);
+            break;
+        }
+    }
+    if (h == NULL) {
+        const char* msg = &lbl_eu_805181F0[200];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, 0);
+        return NULL;
+    }
+    strcpy(buf, (const char*)lbl_eu_805E7B30);
+    strcat(buf, path);
+    {
+        u32 n = strlen(buf);
+        s32 j;
+        for (j = 0; j < n; j++) {
+            if (buf[j] == '\\') buf[j] = '/';
+        }
+    }
+    if (!DVDOpen(buf, &h->fi)) {
+        const char* msg = &lbl_eu_805181F0[247];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, 0);
+        memset(h, 0, 100);
+        return NULL;
+    }
+    h->sctLen = 2048;
+    {
+        s32 sz = h->fi.size;
+        if (sz & 0x80000000) sz = 0x7FFFFFFF;
+        h->fileSize = sz;
+    }
+    h->numSct = (h->sctLen + h->fileSize - 1) / h->sctLen;
+    h->pos = 0;
+    h->buf = NULL;
+    h->length = 0;
+    h->transferred = 0;
+    h->state = 0;
+    h->use = 1;
+    return h;
+}
+
 
 s32 DVDGetTransferredSize(DVDFileInfo *info);
 void gcCiStopTr(GciHndl *h);
@@ -172,7 +236,6 @@ void gcCiEntryErrFunc(u32 a, u32 b) {
 }
 
 
-void gcCiOpen() {}
 
 void gcCiClose(GciHndl *h) {
     if (h == NULL)

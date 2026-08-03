@@ -53,7 +53,49 @@ void mpvlib_InitClip0255(void) {
     lbl_eu_80602FE8 = (u32)(lbl_eu_80602BE8 + 0x180);
 }
 
-void mpvlib_InitPicAtr() {}
+void mpvlib_InitPicAtr(void* self) {
+    memset(self, 0, 4);
+    *(u32*)((u8*)self + 0x00) = 0;
+    *(u32*)((u8*)self + 0x04) = 0;
+    *(u32*)((u8*)self + 0x08) = 0;
+    *(u32*)((u8*)self + 0x0c) = 0;
+    *(u32*)((u8*)self + 0x10) = 0;
+    *(u32*)((u8*)self + 0x14) = 0;
+    *(u32*)((u8*)self + 0x18) = 0;
+    *(u32*)((u8*)self + 0x1c) = 0;
+    *(u32*)((u8*)self + 0x20) = 0;
+    *(u32*)((u8*)self + 0x24) = 0;
+    *(u32*)((u8*)self + 0x28) = 0;
+    *(u32*)((u8*)self + 0x2c) = 0;
+    *(u32*)((u8*)self + 0x30) = 0;
+    *(u32*)((u8*)self + 0x34) = 0;
+    *(u32*)((u8*)self + 0x38) = 3;
+    *(u32*)((u8*)self + 0x3c) = 1;
+    *(u32*)((u8*)self + 0x40) = 1;
+    *(u32*)((u8*)self + 0x44) = 1;
+    *(u32*)((u8*)self + 0x48) = 0;
+    *(u32*)((u8*)self + 0x4c) = 0;
+    *(s16*)((u8*)self + 0x50) = -1;
+    *(s16*)((u8*)self + 0x52) = -1;
+    *(u8*)((u8*)self + 0x54) = 0;
+    *(s8*)((u8*)self + 0x55) = -1;
+    *(s8*)((u8*)self + 0x56) = -1;
+    *(s8*)((u8*)self + 0x57) = -1;
+    *(u8*)((u8*)self + 0x58) = 0;
+    *(u8*)((u8*)self + 0x59) = 1;
+    *(u8*)((u8*)self + 0x5a) = 0;
+    *(u8*)((u8*)self + 0x5b) = 0;
+    *(u8*)((u8*)self + 0x5c) = 0;
+    *(u8*)((u8*)self + 0x5d) = 0xFF;
+    *(s8*)((u8*)self + 0x5e) = -1;
+    *(s8*)((u8*)self + 0x5f) = -1;
+    *(s8*)((u8*)self + 0x60) = -1;
+    *(u8*)((u8*)self + 0x61) = 0;
+    *(u8*)((u8*)self + 0x62) = 0xFF;
+    *(u8*)((u8*)self + 0x63) = 0xFF;
+    *(u8*)((u8*)self + 0x64) = 0xFF;
+    *(u32*)((u8*)self + 0x68) = 0;
+}
 
 void MPVUMC_Finish(void);
 void MPVSL_Finish(void);
@@ -66,17 +108,85 @@ void MPV_Finish(void) {
     MPVSL_Finish();
     MPVM2V_Finish();
     if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
-        u32 base = lbl_eu_80602B88[0x50/4];
-        u32 i;
-        for (i = 0; i < 0xDF; i++) {
-            __dcbi((void*)(base + i * 0x20));
+        u8* base = (u8*)lbl_eu_80602B88[0x50/4];
+        u32 off;
+        for (off = 0; off < 0x1BE0; off += 0x20) {
+            __dcbi(base + off);
         }
     }
 }
 
 void MPV_Create() {}
 
-void mpvlib_InitHn() {}
+extern u32 lbl_eu_8060464C;
+extern u32 lbl_eu_80604650;
+extern u32 lbl_eu_80604654;
+extern u32 lbl_eu_80604658;
+extern u32 lbl_eu_8060465C;
+extern u32 lbl_eu_80604660;
+extern u32 lbl_eu_80604664;
+
+void MEM_Copy(void* d, const void* s, u32 n);
+void MPVERR_InitErrInf(void* self);
+void MPVCMC_InitObj(void* self);
+void MPVSL_Create(void* self);
+int MPVM2V_Create(void* self);
+void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c);
+void MPV_SetPicUsrBuf(void* self, void* a, void* b);
+
+void mpvlib_InitHn(void* self) {
+    u8* b = (u8*)self;
+    u32 base = lbl_eu_80602B88[0x50 / 4];
+    s32 i;
+
+    *(u32*)(b + 0x990) = lbl_eu_80604664;
+    *(u32*)(b + 0x994) = lbl_eu_80604660 - 16;
+    *(u32*)(b + 0x998) = lbl_eu_8060465C - 32;
+    *(u32*)(b + 0x99C) = lbl_eu_80604658 - 32;
+    *(u32*)(b + 0x9A0) = lbl_eu_80604654;
+    *(u32*)(b + 0x9A4) = lbl_eu_80604650;
+    *(u32*)(b + 0x9A8) = lbl_eu_8060464C;
+    *(u32*)(b + 0x9B8) = base + 0x11E0;
+    *(u32*)(b + 0x9BC) = base + 0x1200;
+    *(u32*)(b + 0x9B0) = base + 0x1100;
+    {
+        u32 clip = lbl_eu_80602FE8;
+        *(u32*)(b + 0x9C0) = clip;
+        *(u32*)(b + 0xA90) = clip;
+    }
+    *(u32*)(b + 0xA94) = (u32)self;
+    *(u32*)(b + 0xA98) = (u32)self + 0x380;
+    *(u32*)(b + 0xA9C) = (u32)self + 0x500;
+    *(u32*)(b + 0xD0C) = (u32)self + 0x100;
+    *(u32*)(b + 0xD10) = (u32)self + 0x180;
+    *(u32*)(b + 0xD14) = (u32)self + 0x200;
+    *(u32*)(b + 0xD18) = (u32)self + 0x280;
+    *(u32*)(b + 0xD1C) = (u32)self;
+    *(u32*)(b + 0xD20) = (u32)self + 0x80;
+    *(u32*)(b + 0xB0C) = 0;
+    MEM_Copy(b + 0xB10, (u8*)lbl_eu_80602B88, 64);
+    *(u32*)(b + 0xB54) = 0;
+    *(u32*)(b + 0xB58) = 0;
+    *(u32*)(b + 0xB50) = 0x7FFFFFFF;
+    MPVERR_InitErrInf(b + 0xBDC);
+    MPVCMC_InitObj(self);
+    mpvlib_InitPicAtr(b + 0xB5C);
+    *(u32*)(b + 0xD24) = 0;
+    *(u32*)(b + 0xD28) = 0;
+    *(u32*)(b + 0xCFC) = 0;
+    *(u32*)(b + 0xD00) = 0;
+    *(u32*)(b + 0xD04) = 0;
+    *(u32*)(b + 0xD08) = 0;
+    *(u32*)(b + 0xD38) = 0;
+    for (i = 0; i < 4; i++) {
+        MPV_SetUsrSj(self, (u32)i, 0, 0, 0);
+    }
+    MPV_SetPicUsrBuf(self, 0, 0);
+    *(u32*)(b + 0xDA8) = 0;
+    MPVSL_Create(self);
+    *(u32*)(b + 0xD54) = (u32)MPVM2V_Create(self);
+    *(u32*)(b + 0xB08) = 2;
+}
 
 void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
     *out1 = *(u32*)((u8*)self + 0xa10);

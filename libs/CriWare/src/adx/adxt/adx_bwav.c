@@ -3,57 +3,71 @@
 
 #include <harness_catalog.h>
 
-extern char lbl_eu_80560050[];
-extern char lbl_eu_80560054[];
+extern u32 lbl_eu_80560050;
+extern u32 lbl_eu_80560054;
 
 s32 ADX_DecodeInfoWav(u8* src, s32 size, s16* out1, s8* out2, s8* out3, s8* out4,
                       s8* out5, s32* out6, s32* out7, s32* out8, s16* out9) {
     s32 i;
     u8 buf[0x14];
+    u32 dataSize;
+    const void* tag1 = (const void*)lbl_eu_80560050;
+    const void* tag2;
     s32 r;
     for (i = 0; i < size; i++) {
-        if (memcmp(src + i, lbl_eu_80560050, 4) == 0)
+        if (memcmp(src + i, tag1, 4) == 0)
             break;
     }
-    if (i >= size)
+    if (i == size)
         return -1;
-    memcpy(buf, src + i + 8, 0x14);
-    if ((s16)((*(u16*)buf >> 8) | (*(u16*)buf << 8)) <= 1)
+    {
+        u8* p = src + i + 8;
+        memcpy(buf, p, 0x14);
+    }
+    if ((s16)(((*(u16*)buf & 0xFF00) >> 8) | ((*(u16*)buf & 0xFF) << 8)) > 1)
         return -1;
+    tag2 = (const void*)lbl_eu_80560054;
     for (i = 0; i < size; i++) {
-        if (memcmp(src + i, lbl_eu_80560054, 4) == 0)
+        if (memcmp(src + i, tag2, 4) == 0)
             break;
     }
-    if (i >= size)
+    if (i == size)
         return -1;
+    dataSize = (u32)src[i + 4] | ((u32)src[i + 5] << 8) | ((u32)src[i + 6] << 16) |
+               ((u32)src[i + 7] << 24);
     *out1 = (s16)(i + 8);
     *out2 = -1;
-    *out6 = (s32)((*(u32*)((u8*)buf + 4) >> 24) | ((*(u32*)((u8*)buf + 4) >> 8) & 0xFF00) |
-                  ((*(u32*)((u8*)buf + 4) << 8) & 0xFF0000) | (*(u32*)((u8*)buf + 4) << 24));
-    *out5 = (s8)((*(u16*)((u8*)buf + 2) >> 8) | (*(u16*)((u8*)buf + 2) << 8));
-    *out3 = (s8)((*(u16*)((u8*)buf + 0x14) >> 8) | (*(u16*)((u8*)buf + 0x14) << 8));
-    *out4 = (s8)((*(u16*)((u8*)buf + 0x12) >> 8) | (*(u16*)((u8*)buf + 0x12) << 8));
-    *out7 = (s32)*(u8*)((u8*)src + i + 4) / (s8)(*(u16*)((u8*)buf + 0x12) & 0xFF);
+    *out6 = (s32)(((*(u32*)((u8*)buf + 4) & 0xFF000000u) >> 24) |
+                  ((*(u32*)((u8*)buf + 4) & 0xFF0000u) >> 8) |
+                  ((*(u32*)((u8*)buf + 4) & 0xFF00u) << 8) |
+                  ((*(u32*)((u8*)buf + 4) & 0xFFu) << 24));
+    *out5 = (s8)(((*(u16*)((u8*)buf + 2) & 0xFF00) >> 8) | ((*(u16*)((u8*)buf + 2) & 0xFF) << 8));
+    *out3 = (s8)(((*(u16*)((u8*)buf + 14) & 0xFF00) >> 8) | ((*(u16*)((u8*)buf + 14) & 0xFF) << 8));
+    {
+        u16 blkAlign = (u16)(((*(u16*)((u8*)buf + 12) & 0xFF00) >> 8) | ((*(u16*)((u8*)buf + 12) & 0xFF) << 8));
+        *out4 = (s8)(blkAlign & 0xFF);
+        *out7 = (s32)dataSize / (s8)(blkAlign & 0xFF);
+    }
     *out8 = 1;
-    if (*out3 == 16) {
+    if ((s8)*out3 == 16) {
         *out9 = 0;
-    } else if (*out3 == 8) {
+    } else if ((s8)*out3 == 8) {
         *out9 = 1;
-    } else if (*out3 == 4) {
-        *out4 = 0x10;
-        *out8 = 2;
-        *out7 = (s32)(s8)*out5 / (s32)(s8)*out5;
+    } else if ((s8)*out3 == 4) {
+        *out4 = (s8)((s8)*out5 * 2);
+        *out8 = 4;
+        *out7 = ((s32)(dataSize + (dataSize >> 31)) >> 1) / (s8)*out5;
         *out3 = (s8)0x10;
         *out9 = 2;
     }
-    if (*out3 == 0)
+    if ((s8)*out3 == 0)
         return -1;
-    if (*out4 == 0)
+    if ((s8)*out4 == 0)
         return -1;
-    if ((u32)((s8)*out5 - 1) > 1)
+    if ((u32)((u8)((s8)*out5 - 1)) > 1)
         return -1;
     r = *out6;
-    return (r | -r) >> 31;
+    return (r == 0) ? -1 : 0;
 }
 void ADXB_DecodeHeaderWav();
 void ADXB_ExecOneWav16(void* self);

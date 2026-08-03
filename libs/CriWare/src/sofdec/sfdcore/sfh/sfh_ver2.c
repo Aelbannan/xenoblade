@@ -110,8 +110,8 @@ int VER2_IsSfdHeader(void *work, int *out) {
     u32 t2;
     u32 v1;
     u32 v2;
-    u32 ok;
-    char c;
+    s32 ok;
+    int c;
 
     *out = 0;
     if (memcmp(((u8 **)work)[1] + 0x20, lbl_eu_8051CF00, 0x18) != 0) {
@@ -123,9 +123,14 @@ int VER2_IsSfdHeader(void *work, int *out) {
     *(u32 *)((u8 *)work + 0x10) = (major << 8) | minor;
     memset(buf, 0, 0x40);
     memcpy(buf, ((u8 **)work)[1] + 0x40, 0x40);
+    t1 = 0;
+    t2 = 0;
     p = strstr(buf, lbl_eu_8051CF00 + 0x19);
-    if (p != NULL) {
+    if (p == NULL) {
+        ok = 0;
+    } else {
         p += 4;
+        t1 = 0;
         for (;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
@@ -142,6 +147,7 @@ int VER2_IsSfdHeader(void *work, int *out) {
             p++;
         }
         p++;
+        t2 = 0;
         for (;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
@@ -162,9 +168,6 @@ int VER2_IsSfdHeader(void *work, int *out) {
     if (ok != 0) {
         v1 = t1;
         v2 = t2;
-    }
-    ok = (ok != 0);
-    if (ok != 0) {
         *(u32 *)((u8 *)work + 0xC) = (v1 << 8) | v2;
     }
     major = SFHLOCAL_GetNbyteB(((u8 **)work)[1] + 0x3A, SFHLOCAL_GetSizeofMember(0x3A, 0x3B));

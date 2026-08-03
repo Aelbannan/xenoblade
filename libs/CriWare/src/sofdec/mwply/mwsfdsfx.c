@@ -53,27 +53,33 @@ int MWSFD_GetFxType(void* self, int idx) {
 
 extern void mwPlyCalcYccPlane(s32 a, s32 b, s32 c, s32* out);
 
-void mwsfsfx_SetYcc420plnInfToSfx(void* self, void* src, void* out) {
-    s32 h = *(s32*)((u8*)src + 0xc);
-    s32 v = *(s32*)((u8*)src + 0x10);
-    *(u32*)((u8*)out + 0x44) = h;
-    *(u32*)((u8*)out + 0x48) = v;
-    if (*(s32*)((u8*)src + 8) == 3) {
-        s32 sp[4];
-        mwPlyCalcYccPlane(*(s32*)((u8*)src + 0), 0, v, sp);
-        *(s32*)((u8*)self + 4) = sp[0];
-        *(s32*)((u8*)self + 8) = sp[1];
-        *(s32*)((u8*)self + 0xc) = v;
-        *(s32*)((u8*)self + 0x14) = sp[1];
-        *(s32*)((u8*)self + 0x18) = sp[2];
-        *(s32*)((u8*)self + 0x1c) = sp[0] >> 31;
-        *(s32*)((u8*)self + 0x24) = sp[1];
-        *(s32*)((u8*)self + 0x28) = sp[2];
-        *(s32*)((u8*)self + 0x2c) = sp[0] >> 31;
+void mwsfsfx_SetYcc420plnInfToSfx(void* a, void* src, void* sfx) {
+    u32 h = *(u32*)((u8*)src + 0xc);
+    u32 v = *(u32*)((u8*)src + 0x10);
+    *(u32*)((u8*)sfx + 0x48) = v;
+    *(u32*)((u8*)sfx + 0x44) = h;
+    if (*(s32*)((u8*)src + 8) != 3) {
+        *(u32*)((u8*)sfx + 4) = *(u32*)((u8*)src + 0);
+        *(u32*)((u8*)sfx + 8) = h;
+        *(u32*)((u8*)sfx + 0xc) = v;
     } else {
-        *(s32*)((u8*)self + 4) = *(s32*)((u8*)src + 0);
-        *(s32*)((u8*)self + 8) = h;
-        *(s32*)((u8*)self + 0xc) = v;
+        s32 plane[6];
+        s32 w0;
+        s32 w3;
+        s32 r;
+        mwPlyCalcYccPlane(*(s32*)((u8*)src + 0), h, v, plane);
+        w0 = plane[0];
+        w3 = plane[3];
+        r = (s32)(v + (v >> 31)) >> 1;
+        *(s32*)((u8*)sfx + 4) = w0;
+        *(s32*)((u8*)sfx + 8) = w3;
+        *(s32*)((u8*)sfx + 0xc) = v;
+        *(s32*)((u8*)sfx + 0x18) = plane[4];
+        *(s32*)((u8*)sfx + 0x14) = plane[1];
+        *(s32*)((u8*)sfx + 0x1c) = r;
+        *(s32*)((u8*)sfx + 0x24) = plane[2];
+        *(s32*)((u8*)sfx + 0x28) = plane[5];
+        *(s32*)((u8*)sfx + 0x2c) = r;
     }
 }
 

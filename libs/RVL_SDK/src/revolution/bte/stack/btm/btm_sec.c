@@ -325,13 +325,13 @@ static __inline BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
     {
         if ((p_srec->security_flags & BTM_SEC_IN_USE) && (p_srec->psm == p_cur->psm))
         {
-            if (p_cur == p_srec)
+            if (!found)
             {
-                found = TRUE;
+                if (p_cur == p_srec)
+                    found = TRUE;
                 continue;
             }
-            if (found)
-                return (p_srec);
+            return (p_srec);
         }
     }
     return (NULL);
@@ -878,7 +878,7 @@ UINT8 btm_sec_l2cap_access_req(BD_ADDR bd_addr, UINT16 psm, UINT16 handle,
 
     /* If not originator of the connection, or the device's service record
        is not set, set it */
-    if (!is_originator || !p_dev_rec->p_cur_service)
+    if (is_originator == FALSE || is_originator == FALSE || p_dev_rec->p_cur_service == NULL)
         p_dev_rec->p_cur_service = p_srec;
 
     security_required = p_srec->security_flags;
@@ -908,7 +908,7 @@ UINT8 btm_sec_l2cap_access_req(BD_ADDR bd_addr, UINT16 psm, UINT16 handle,
 
     if (!is_originator && (security_required & BTM_SEC_AUTHORIZED))
     {
-        p_dev_rec->sec_flags &= ~(BTM_SEC_AUTHORIZED | BTM_SEC_AUTHENTICATED | BTM_SEC_ENCRYPTED);
+        p_dev_rec->sec_flags &= ~BTM_SEC_AUTHORIZED;
 
         BTM_TRACE_EVENT3("Security Manager: trusted:0x%04x%04x Flags:0x%x",
                          p_dev_rec->trusted_mask[1], p_dev_rec->trusted_mask[0], p_dev_rec->sec_flags);

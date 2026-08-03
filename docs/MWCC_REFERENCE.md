@@ -7577,3 +7577,10 @@ color rotation, insensitive to declaration order/byte type.
 — the (s32)→double conversion uses the 0x4330+xoris trick. Retail's 2^31-base
 in r7 + xoris into a fresh r6; decomp r6 + in-place xoris r5. Size-exact, 0
 structural, 4 reg_swap — pure colors.
+
+### CriWare sfd_mpv SFMPV_Destroy — 93.9% (store/li order wall, recurring)
+The recurring [li r0,0; stw *out; li r3,0] vs [li r0,0; li r3,0; stw] — the
+return-0's li is hoisted before the final store. Volatile pointer and z-local
+variants do NOT reorder it (unlike adxm_unlock's subi/reload case). This wall
+appears in ~8 functions now: SFVOM_GetRead, mpv_get, VER2_Anly*, SFMPS_Init,
+SFMPV_Destroy.

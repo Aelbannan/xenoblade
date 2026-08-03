@@ -445891,8 +445891,8 @@
       "size": "0x84",
       "unit": "nw4r/src/snd/snd_Util",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_Util.cpp",
       "called_functions": [],
@@ -445901,7 +445901,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_Util.s",
       "abi_helper_calls": [],
-      "notes": "non-placeholder body present; marked via mark_implemented_bodies.py"
+      "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042bb14",

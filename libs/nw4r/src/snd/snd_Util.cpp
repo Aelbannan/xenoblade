@@ -4,6 +4,16 @@
 
 #include <cmath>
 
+// Retail .sdata2/.rodata pool constants referenced by name so SDA21/data
+// relocations match the stripped retail object (PLAN.md §17.6 approved
+// extern "C" lbl_eu_* pattern, docs/MWCC_REFERENCE.md §1b float pools).
+extern "C" const f32 lbl_eu_8066A0D0; // 1.0f
+extern "C" const f32 lbl_eu_8066A0F0; // 0.0f
+extern "C" const f32 lbl_eu_8066A0F4; // LPF scale lower bound
+extern "C" const f32 lbl_eu_8066A0F8; // LPF scale upper bound
+extern "C" const f32 lbl_eu_8066A0FC; // LPF scale step
+extern "C" const u16 lbl_eu_805223E0[]; // LPF freq table 80..16000 (24 entries)
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -74,8 +84,18 @@ f32 Util::CalcSurroundPanRatio(f32 pan, const PanInfo& rInfo) {
 }
 
 int Util::CalcLpfFreq(f32 scale) {
-    scale = ut::Clamp(scale, 0.0f, 1.0f);
-    return static_cast<int>(32000 * std::pow(2.0, 10.0 * (scale - 1.0)));
+    scale = ut::Clamp(scale, lbl_eu_8066A0F0, lbl_eu_8066A0D0);
+
+    if (scale < lbl_eu_8066A0F4) {
+        return 80;
+    }
+
+    if (scale >= lbl_eu_8066A0F8) {
+        return 16000;
+    }
+
+    return lbl_eu_805223E0[static_cast<int>((scale - lbl_eu_8066A0F4) /
+                                            lbl_eu_8066A0FC)];
 }
 
 void Util::GetRemoteFilterCoefs(int filter, u16* pB0, u16* pB1, u16* pB2,

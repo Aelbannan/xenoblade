@@ -35,7 +35,8 @@ int mfci_str_to_uint_ptr(const char* str, char** endptr, int base) {
         } else {
             break;
         }
-        value = value * base + d;
+        value = value * base;
+        value = value + d;
         str++;
     }
     *endptr = (char*)str;

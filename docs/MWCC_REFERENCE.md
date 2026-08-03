@@ -7045,6 +7045,45 @@ BTA_DmSetVisibility, BTM_SetPowerMode, BTM_DeleteStoredLinkKey, WUDiGetDevInfo,
 memset/memcpy/memcmp, SCCheckStatus, SCSetBtDeviceInfoArray,
 SCGetProductGameRegion, WUD_DEBUGPrint).
 
+## RVL_SDK wud/WUD — `__wudDeleteCleanupDatabase` FULL_MATCH: dead `b; bl` pairs from folded NULL-guards, walking CRC loop, declaration-order colours (US, Wii/1.1)
+
+`__wudDeleteCleanupDatabase` (us-8037a190) went 23.3% → **100% FULL_MATCH** (size
+exact 0x204) with three source keys:
+
+1. **Retail's dead `b .L; bl memcpy` pairs are folded-false if-bodies, reproduced
+   by NULL-guarded memcpy calls.** The retail zero-fills a stack buf (4 `stw`), then
+   emits `b .L1; bl memcpy; .L1: <setup>; bl memcpy; b .L2; bl memcpy; .L2: …` —
+   two DEAD `bl memcpy` (jumped over). This is the GXAbortFrame mechanism
+   (MWCC_REFERENCE line ~513): an `if` whose condition folds to false still emits
+   the dead then-body with a branch over it. It folds ONLY for value-tracked
+   conditions (store→load forward on a global, or a constant-NULL local pointer),
+   not `if (0)` (removed early) and not `buf == 0` on a stack array (kept as
+   `addic.`). The source shape that reproduces both dead pairs byte-for-byte:
+   `u8 buf[0x10] = {0}; u8* pWork = NULL; if (pWork != NULL) { memcpy(&_wudNandWbcInfo[6], buf, 16); } memcpy(&_wudNandWbcInfo[6], buf, 16); { u8* p2 = NULL; if (p2 != NULL) { memcpy(…); } }` — each guard must be a SEPARATE NULL local; reusing the same local for the second check makes the second a runtime `cmpwi` (the value gets materialized in a callee-saved reg).
+2. **The CRC loop cadence needs a walking-pointer loop, not the hand-unrolled-8
+   body.** Retail CRC: `lhz r3,0(r4); nor; add sum; lhz r3,2(r4); add inv; clrlwi` —
+   load→use interleaved, register r3 reused. The hand-unrolled `sum += pData[0];
+   invSum = (u16)(invSum + ~pData[0]); … pData += 8` under -O4,p pairs the loads
+   (`lhz r9; lhz r6`) into extra registers. Writing **`for (j = 0; j < 64; j++) {
+   sum += *pData; invSum = (u16)(invSum + ~*pData); pData++; }`** (single statement,
+   walking pointer) makes MWCC unroll ×8 itself with the retail cadence and
+   registers (base walked `addi r4,r4,0x10`, loads 0..14(r4)).
+3. **Declaration order drives the callee-saved colours AND the spill order.**
+   `u8 linkedNum; int i; WUDCB* p = &_wcb;` (linkedNum FIRST, then i, then p)
+   allocates base=r29, linkedNum=r31, counter=r30, IV=r31 — the retail layout, and
+   forces the retail spill order `[stw r31][stw r30][stw r29][lis r29][addi r29]`
+   (the base must be spilled before overwrite). With `int i` first but linkedNum
+   later, the base lands r30 and the `lis/addi` floats between the spills (3
+   structural). Note this seems to CONTRADICT the earlier "callee-saved allocate
+   from r31 down in declaration order" key (line ~6980) — the order here is
+   linkedNum(r31), counter(r30), base(r29): the highest-use-first value took r31.
+
+Also: `-O4,s` pragma on this function is wrong (prologue → `_savegpr`, CRC cadence
+breaks); `#pragma scheduling off` is wrong (breaks the load hoisting that the
+retail relies on). The `memset(buf,0,16)` is NOT inlined by Wii/1.1 — the 4 `stw`
+zero-fill comes from the `{0}` initializer (block-scoped so it lands inside the
+region check).
+
 ## RVL_SDK wpad/WPADHIDParser — report parsers: range-check codegen, addr-derived local hoisting, AND-mask fold (US, mwcc_43_151)
 
 Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exact

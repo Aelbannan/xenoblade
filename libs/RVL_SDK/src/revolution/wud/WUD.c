@@ -2158,12 +2158,11 @@ u8 __wudDeleteDisconnectAll(void) {
 #pragma pop
 
 u8 __wudDeleteCleanupDatabase(void) {
+    u8 linkedNum;
+    int i;
     WUDCB* p = &_wcb;
     BOOL enabled;
-    u8 linkedNum;
-    u8 buf[0x10];
     u32 crc;
-    int i;
 
     enabled = OSDisableInterrupts();
     linkedNum = p->linkedNum;
@@ -2187,8 +2186,20 @@ u8 __wudDeleteCleanupDatabase(void) {
 
     if (_linkedWBC != 0) {
         if (SCGetProductGameRegion() == 0) {
-            memset(buf, 0, sizeof(buf));
+            u8 buf[0x10] = {0};
+            u8* pWork = NULL;
+
+            if (pWork != NULL) {
+                memcpy(&_wudNandWbcInfo[6], buf, sizeof(buf));
+            }
             memcpy(&_wudNandWbcInfo[6], buf, sizeof(buf));
+
+            {
+                u8* pData2 = NULL;
+                if (pData2 != NULL) {
+                    memcpy(&_wudNandWbcInfo[6], buf, sizeof(buf));
+                }
+            }
 
             {
                 const u16* pData = (const u16*)&_wudNandWbcInfo[0];
@@ -2196,24 +2207,10 @@ u8 __wudDeleteCleanupDatabase(void) {
                 u16 invSum = _wudNandWbcCrc & 0xFFFF;
                 int j;
 
-                for (j = 0; j < 8; j++) {
-                    sum += pData[0];
-                    invSum = (u16)(invSum + ~pData[0]);
-                    sum += pData[1];
-                    invSum = (u16)(invSum + ~pData[1]);
-                    sum += pData[2];
-                    invSum = (u16)(invSum + ~pData[2]);
-                    sum += pData[3];
-                    invSum = (u16)(invSum + ~pData[3]);
-                    sum += pData[4];
-                    invSum = (u16)(invSum + ~pData[4]);
-                    sum += pData[5];
-                    invSum = (u16)(invSum + ~pData[5]);
-                    sum += pData[6];
-                    invSum = (u16)(invSum + ~pData[6]);
-                    sum += pData[7];
-                    invSum = (u16)(invSum + ~pData[7]);
-                    pData += 8;
+                for (j = 0; j < 64; j++) {
+                    sum += *pData;
+                    invSum = (u16)(invSum + ~*pData);
+                    pData++;
                 }
 
                 crc = (sum << 16) | invSum;
@@ -3409,24 +3406,26 @@ void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
 }
 
 void __wudRemovePatchCallback(tBTM_VSC_CMPL* p1) {
-    u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
-    u32 address;
-    u8 length;
     int i;
+    u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
+    u8 length;
+    u32 address;
 
     DEBUGPrint(_wudWiiRemoteDescriptor + 0x8F8);
 
     if (p1 != NULL) {
+        u8* pPatch = (u8*)_wudWiiRemoteDescriptor + 0xE8;
+
         length = MIN(_wudPatchSize, WUD_PATCH_BUFFER_SIZE - sizeof(u32));
         address = _wudPatchAddress;
 
         buf[0] = (u8)address;
-        buf[1] = (u8)(address >> 16);
-        buf[2] = (u8)(address >> 8);
+        buf[1] = (u8)(address >> 8);
+        buf[2] = (u8)(address >> 16);
         buf[3] = (u8)(address >> 24);
 
         for (i = 0; i < (s32)length; i++) {
-            buf[4 + i] = _wudWiiRemoteDescriptor[0xE8 + 8 + i];
+            buf[i + 4] = pPatch[i + 8];
         }
 
         _wudPatchOffset = length;
@@ -3440,6 +3439,7 @@ void __wudRemovePatchCallback(tBTM_VSC_CMPL* p1) {
         BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
     }
 }
+
 void __wudSuperPeekPokeCallback(void) {
     extern char lbl_80562BD8[];
     extern char lbl_80562BF0[];
@@ -3454,6 +3454,7 @@ void __wudSuperPeekPokeCallback(void) {
 
 void __wudAppendRuntimePatch(void) {
     u8* pPatch = (u8*)_wudWiiRemoteDescriptor + 0xE8;
+    u32 isInIPL = __OSInIPL;
 
     DEBUGPrint(_wudWiiRemoteDescriptor + 0x938);
 
@@ -3466,7 +3467,7 @@ void __wudAppendRuntimePatch(void) {
     _wudPatchSize = (_wudPatchSize << 8) + pPatch[5];
     _wudPatchSize = (_wudPatchSize << 8) + pPatch[4];
 
-    if (__OSInIPL != 0) {
+    if (isInIPL != 0) {
         DEBUGPrint(_wudWiiRemoteDescriptor + 0x954);
 
         BTM_VendorSpecificCommand(0xFC0A, 9,

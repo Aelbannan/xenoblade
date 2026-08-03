@@ -29,7 +29,26 @@ void AHXDCD_Finish(void) {
     AHXSBF_Finish();
 }
 
-void AHXDCD_Create() {}
+extern void* AHXSBF_Create(void* self, u32 size);
+
+void* AHXDCD_Create(u8* buf, u32 size) {
+    u8* base = (u8*)(((u32)buf + 7) & ~7);
+    u8* sbf;
+    memset(base, 0, 3020);
+    sbf = (u8*)(((u32)base + 3027) & ~7);
+    if ((u32)(sbf + 4124) < size)
+        return 0;
+    sbf = (u8*)AHXSBF_Create((void*)sbf, 4124);
+    *(s32*)((u8*)buf + 852) = (s32)sbf;
+    if (sbf == 0)
+        return 0;
+    *(u32*)buf = (u32)(((u32)buf + 35) & ~31);
+    memset((u8*)buf + 904, 0, 8);
+    *(s32*)((u8*)buf + 836) = lbl_eu_805E64D4;
+    *(u8*)((u8*)buf + 843) = 16;
+    *(u8*)((u8*)buf + 840) = 1;
+    return buf;
+}
 
 void AHXDCD_Destroy(void* p)
 {

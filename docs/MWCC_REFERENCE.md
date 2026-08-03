@@ -7299,3 +7299,15 @@ Residual: a 4-cycle register rotation in the read path (retail base=r3/idx=r4/
 shift=r5/bitBuf=r6; decomp base=r5/idx=r6/shift=r7/bitBuf=r3) plus the subf
 (shift) placement vs the base addi — pure allocator colors, no source form
 moves them.
+
+### CriWare ahx_dcd AHXDCD_Create — workspace allocator (90.0%, 4 sched/color)
+`AHXDCD_Create(buf, size)`: state fields live at the **original buf** (r29),
+the aligned base `(buf+7)&~7` (r31) is only the memset(3020) dest; the sbf
+workspace = `((base+3027)&~7)` and MUST flow through the AHXSBF_Create return
+(`sbf = (u8*)AHXSBF_Create((void*)sbf, 4124); *(buf+852) = sbf; if (sbf==0)
+return 0;` — the value reuses r3 across the call; the `== 0` inline-check form
+forces an extra callee-saved r31 web). `*(buf+836) = lbl_eu_805E64D4` load must
+land in r3 (reusing the lis base); a local mtbl at the top blows the frame to
+0xD0. Residual 4 structural: the `*(buf)=aligned` store vs the memset `li r4,0`
+order (retail store-first), and the return-value `or r3,r29` placement vs the
+836-store (retail store-first) — scheduler tie-breaks.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fcntl
+import gzip
 import hashlib
 import json
 import os
@@ -22,6 +23,13 @@ from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 # Sidecar flock for targets.json read-modify-write. Released on process exit.
 TARGETS_LOCK_TIMEOUT_S = 120.0
+
+# Equivalence certificates (the signed verification ledger) live in a gzip
+# JSONL sidecar next to the registry, so the committed registry stays small and
+# its diffs stay meaningful. Each line is the certificate's canonical
+# serialization (the same form ``equivalence_certificate_hash`` hashes), so a
+# load/save round-trip reproduces every certificate byte-exactly.
+CERTS_SIDECAR_SUFFIX = ".certs.jsonl.gz"
 
 
 MATCH_STATUSES = {
@@ -336,6 +344,67 @@ def _atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
+def _atomic_write_gz(path: Path, data: bytes) -> None:
+    """Atomically write ``data`` gzip-compressed to ``path``.
+
+    Uses a fixed gzip mtime so identical payloads produce identical bytes
+    (deterministic git blobs).
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=str(path.parent),
+    )
+    try:
+        with os.fdopen(fd, "wb") as tmp:
+            tmp.write(gzip.compress(data, compresslevel=9, mtime=0))
+            tmp.flush()
+            os.fsync(tmp.fileno())
+        os.replace(tmp_name, path)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
+def certs_sidecar_path(path: Path) -> Path:
+    """Path of the equivalence-certificate ledger sidecar for ``path``."""
+    return path.with_name(path.stem + CERTS_SIDECAR_SUFFIX)
+
+
+def _load_certs_sidecar(path: Path) -> Dict[str, Dict[str, Any]]:
+    """Load certificates from the gzip JSONL sidecar, keyed by target id.
+
+    Each line is ``[target_id, certificate]``; the certificate object is stored
+    verbatim (its canonical serialization), so certificate hashes round-trip
+    unchanged even for old certificates whose own ``target_id`` field is null.
+    """
+    sidecar = certs_sidecar_path(path)
+    certs: Dict[str, Dict[str, Any]] = {}
+    if not sidecar.is_file():
+        return certs
+    with gzip.open(sidecar, "rt", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                pair = json.loads(line)
+            except ValueError:
+                continue
+            if (
+                isinstance(pair, list)
+                and len(pair) == 2
+                and isinstance(pair[0], str)
+                and isinstance(pair[1], dict)
+            ):
+                certs[pair[0]] = pair[1]
+    return certs
+
+
 @contextmanager
 def exclusive_targets_lock(
     config: CoopConfig,
@@ -374,15 +443,45 @@ def load_targets_document(config: CoopConfig) -> Dict[str, Any]:
     if path.suffix in {".yaml", ".yml"}:
         return _load_yaml(path)
     with path.open(encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    # Merge the certificate ledger sidecar (if any). Certificates already
+    # embedded in the registry (hand-edited files, fixtures) take precedence.
+    sidecar_certs = _load_certs_sidecar(path)
+    if sidecar_certs:
+        for row in data.get("targets", []):
+            row_id = row.get("id")
+            if row_id in sidecar_certs and "equivalence_certificate" not in row:
+                row["equivalence_certificate"] = sidecar_certs[row_id]
+    return data
 
 
 def _write_targets_document_unlocked(config: CoopConfig, data: Dict[str, Any]) -> Path:
     path = targets_path(config)
     if path.suffix in {".yaml", ".yml"}:
         raise ValueError("Symbol import currently writes JSON target registries only")
-    text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+    # Split equivalence certificates into the gzip JSONL ledger sidecar so the
+    # committed registry stays small. ``data`` itself is never mutated. Each
+    # sidecar line is ``[target_id, certificate]``; the certificate is stored
+    # verbatim so its ``certificate_sha256`` keeps validating on reload.
+    cert_lines: List[str] = []
+    stripped_rows: List[Dict[str, Any]] = []
+    for row in data.get("targets") or []:
+        cert = row.get("equivalence_certificate")
+        if isinstance(cert, dict):
+            pair = [row.get("id"), cert]
+            cert_lines.append(
+                json.dumps(pair, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+            )
+            if "equivalence_certificate" in row:
+                row = dict(row)
+                row.pop("equivalence_certificate")
+        stripped_rows.append(row)
+    out = dict(data)
+    out["targets"] = stripped_rows
+    text = json.dumps(out, indent=2, ensure_ascii=False) + "\n"
     _atomic_write_text(path, text)
+    payload = ("\n".join(cert_lines) + "\n") if cert_lines else ""
+    _atomic_write_gz(certs_sidecar_path(path), payload.encode("utf-8"))
     return path
 
 

@@ -415,9 +415,7 @@ def cmd_cycle(
     # certificate (manual review), so cycle re-proofs replay it.
     _declared_return = None
     try:
-        import json as _json
-
-        _raw = _json.loads(targets_path(config).read_text(encoding="utf-8"))
+        _raw = load_targets_document(config)
         for _row in _raw.get("targets", []):
             if _row.get("id") == target_id:
                 _abi = (_row.get("equivalence_certificate") or {}).get("abi_shape")

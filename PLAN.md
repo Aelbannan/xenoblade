@@ -8,7 +8,7 @@
 
 **Companion documents:**
 
-- `tools/coop/targets.json` — canonical function registry and current target state
+- `tools/coop/targets.json` — canonical function registry and current target state (equivalence certificates live in the gzip JSONL sidecar `tools/coop/targets.certs.jsonl.gz`; the runner merges it transparently on load)
 - `COOP_IMPLEMENTATION_MAP.md` — capability graph and critical feature handoffs
 - `FORK.md` — fork-only tooling inventory (coop runner, symbol recovery, host/PPC behaviour tests, postprocess)
 - `AGENTS.md` / `.cursor/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop

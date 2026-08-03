@@ -409,7 +409,7 @@ extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE *seq)
     HBMSYNQuitSynth(&seq->midi_input);
 }
 
-extern "C" u32 HBMSEQGetState(void* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE *seq) { return seq->state; }
 
 extern "C" void HBMSYNSetMasterVolume(void*);
-extern "C" void HBMSEQSetVolume(void* self) { HBMSYNSetMasterVolume((char*)self + 0x14); }
+extern "C" void HBMSEQSetVolume(HBMSEQSEQUENCE *seq) { HBMSYNSetMasterVolume(seq->midi_input); }

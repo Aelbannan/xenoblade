@@ -235,20 +235,27 @@ class Monitor:
         orig = ROOT / "orig"
         wt_orig = wt / "orig"
         if orig.is_dir():
-            if wt_orig.exists() and not wt_orig.is_symlink():
-                # the worktree checked out the tracked orig/ skeleton (.gitkeep
-                # dirs only); replace it with a symlink to the real retail files.
-                # Safe: git tracks only .gitkeep under orig/, and orig/ is in the
-                # worktree's info/exclude so git never notices.
-                os.system(f"rm -rf {shlex.quote(str(wt_orig))}")
-                self._log(f"prepare: replaced tracked orig/ skeleton with symlink target")
+            if wt_orig.is_symlink():
+                # legacy prep replaced the tracked skeleton with a whole-dir
+                # symlink (pollutes git); restore the skeleton from HEAD/main
+                os.system(f"rm -f {shlex.quote(str(wt_orig))}")
+                sh(["git", "-C", str(wt), "checkout", "HEAD", "--", "orig/"], timeout=120)
+                self._log("prepare: restored tracked orig/ skeleton")
+            # keep the tracked .gitkeep skeleton intact and symlink only the
+            # retail subdirs, so git never sees orig/ change
+            for rel in ("us/sys", "us/files", "eu/sys", "eu/files", "jp/sys", "jp/files"):
+                src = orig / rel
+                dst = wt_orig / rel
+                if src.is_dir() and not dst.exists():
+                    try:
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        os.symlink(src, dst)
+                    except Exception as e:
+                        self._log(f"prepare: orig/{rel} symlink failed: {e}")
+                        return False
             if not wt_orig.exists():
-                try:
-                    os.symlink(orig, wt_orig, target_is_directory=True)
-                    self._log(f"prepare: symlinked {orig} -> {wt_orig}")
-                except Exception as e:
-                    self._log(f"prepare: orig symlink failed: {e}")
-                    return False
+                self._log("prepare: worktree orig/ missing after prep")
+                return False
         # the venv is gitignored, so worktrees need it symlinked in for
         # .venv/bin/python3 (the agents' first command) to resolve
         wt_venv = wt / ".venv"

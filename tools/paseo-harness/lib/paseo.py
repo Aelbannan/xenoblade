@@ -87,6 +87,13 @@ def archive_workspace(workspace_id):
     return r.returncode == 0
 
 
+def _resolve_ref(ref, cwd=None):
+    """Resolve a ref to a full SHA — paseo's --base can otherwise resolve to a
+    stale cached commit, silently branching 6+ hours behind main."""
+    r = sh(["git", "-C", str(cwd) if cwd else ".", "rev-parse", "--verify", ref])
+    return r.stdout.strip() if r.returncode == 0 else ref
+
+
 def create_worktree_workspace(branch, *, base="main", slug=None, title=None, path=None):
     """Create a paseo-managed worktree workspace on the given branch.
 
@@ -98,7 +105,8 @@ def create_worktree_workspace(branch, *, base="main", slug=None, title=None, pat
     if branch and _branch_exists_git(branch):
         cmd += ["--mode", "checkout-branch", "--branch", branch]
     else:
-        cmd += ["--mode", "branch-off", "--new-branch", branch, "--base", base]
+        cmd += ["--mode", "branch-off", "--new-branch", branch,
+                "--base", _resolve_ref(base, cwd=path)]
     if slug:
         cmd += ["--worktree-slug", slug]
     if title:

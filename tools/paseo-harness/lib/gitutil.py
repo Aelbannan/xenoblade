@@ -122,15 +122,39 @@ def ensure_merge_drivers():
 
 # --- merge-back ------------------------------------------------------------
 
+# Shared registries written by every agent in the main tree (and by other
+# sections' agents running there). Before a merge, checkpoint-commit them so
+# git doesn't refuse the merge over other agents' dirty registry writes.
+REGISTRY_FILES = [
+    "tools/coop/targets.json",
+    "tools/coop/targets.certs.jsonl.gz",
+    "docs/evidence/decomp/attempts.jsonl",
+    "config/us/symbols.txt",
+    "README.md",
+    "assets/progress-map.svg",
+]
+
+
+def checkpoint_registry():
+    """Commit dirty shared-registry files in the main checkout (if any)."""
+    r = _git(["status", "--porcelain", "--", *REGISTRY_FILES])
+    if r.returncode != 0 or not r.stdout.strip():
+        return False
+    _git(["add", "--", *REGISTRY_FILES])
+    r = _git(["commit", "-m", "paseo-harness: checkpoint shared registry before merge"])
+    return r.returncode == 0
+
+
 def merge_batch(branch, message, base="main"):
     """Merge a batch branch into the current checkout (main).
 
     Returns (status, detail):
       ("merged",  "")            merged cleanly; branch deleted
       ("conflict", stderr)       merge conflicts; aborted, branch kept
-      ("deferred", stderr)       merge refused (dirty tree etc.); branch kept
+      ("deferred", stderr)       merge refused (dirty sources etc.); branch kept
     """
     ensure_merge_drivers()
+    checkpoint_registry()
     r = _git(["merge", "--no-ff", "-m", message, branch])
     if r.returncode == 0:
         delete_branch(branch)
@@ -140,5 +164,5 @@ def merge_batch(branch, message, base="main"):
     mh = _git(["rev-parse", "-q", "--verify", "MERGE_HEAD"])
     if mh.returncode == 0:
         _git(["merge", "--abort"])
-        return ("conflict", r.stderr[-2000:])
-    return ("deferred", r.stderr[-2000:])
+        return ("conflict", (r.stderr or r.stdout)[-2000:])
+    return ("deferred", (r.stderr or r.stdout)[-2000:])

@@ -107,7 +107,7 @@ RULES (non-negotiable):
 - Search budget: max 3 grep/find per function; read hexdiff --json directly.
 - Do NOT use the pi harness (tools/pi_harness). Do NOT use subagents. Do NOT ask questions — keep working until the batch is done or every remaining target is blocked.
 - Minimal git: status/diff once at start and once before commit; commit per unit or several targets at once with batch-cycle.py — do not commit every keystroke.
-- Do NOT git reset, do NOT revert other worktrees' files, do NOT push.
+- Do NOT git reset, do NOT revert other worktrees' files, do NOT push. NEVER commit orig/ (retail files) or build/ artifacts.
 - Per-unit compiler flags are a legitimate tool: if MWCC_REFERENCE attributes a diff to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...), hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no failed experiments left in place.
 
 WORKFLOW per target:

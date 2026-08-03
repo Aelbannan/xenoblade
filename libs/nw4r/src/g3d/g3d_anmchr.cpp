@@ -139,9 +139,76 @@ AnmObjChrNode::~AnmObjChrNode() {
 
 
 
-void Attach__Q34nw4r3g3d13AnmObjChrNodeFiPQ34nw4r3g3d12AnmObjChrRes(){}
+namespace nw4r {
+namespace g3d {
 
-void Detach__Q34nw4r3g3d13AnmObjChrNodeFi(){}
+AnmObjChrRes* AnmObjChrNode::Attach(int idx, AnmObjChrRes* pRes) {
+    AnmObjChrRes* pOld = Detach(idx);
+
+    bool found = false;
+
+    for (int i = 0; i < mNumBinding; i++) {
+        if (pRes->TestDefined(i)) {
+            found = true;
+            mpBinding[i] = 0;
+        }
+    }
+
+    if (found) {
+        SetAnmFlag(FLAG_ANM_BOUND, true);
+    }
+
+    mpChildrenArray[idx] = pRes;
+    pRes->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
+
+    return pOld;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
+
+namespace nw4r {
+namespace g3d {
+
+AnmObjChrRes* AnmObjChrNode::Detach(int idx) {
+    AnmObjChrRes* pChild = mpChildrenArray[idx];
+
+    if (pChild != NULL) {
+        pChild->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpChildrenArray[idx] = NULL;
+
+        bool found = false;
+
+        for (int j = 0; j < mNumBinding; j++) {
+            u16 binding = BINDING_UNDEFINED;
+
+            for (int i = 0; i < mChildrenArraySize; i++) {
+                AnmObjChrRes* p = mpChildrenArray[i];
+
+                if (p != NULL && p->TestDefined(j)) {
+                    found = true;
+                    binding = 0;
+                    break;
+                }
+            }
+
+            mpBinding[j] = binding;
+        }
+
+        if (!found) {
+            SetAnmFlag(FLAG_ANM_BOUND, false);
+        }
+    }
+
+    return pChild;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 
 namespace nw4r {
@@ -295,7 +362,38 @@ void AnmObjChrRes::UpdateFrame() {
 
 
 
-void Bind__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdl(){}
+namespace nw4r {
+namespace g3d {
+
+bool AnmObjChrRes::Bind(ResMdl mdl) {
+    u16 numNode = mRes.ref().info.numNode;
+    bool bound = false;
+
+    for (u16 i = 0; i < numNode; i++) {
+        ResDic dic = ResDic(mRes.ofs_to_ptr<ResDicData>(mRes.ref().toChrDataDic));
+        const ResAnmChrNodeData* pData =
+            reinterpret_cast<const ResAnmChrNodeData*>(dic[i]);
+        const char* pName =
+            reinterpret_cast<const char*>(pData) + pData->name;
+
+        ResNode node = mdl.GetResNode(ResName(
+            reinterpret_cast<const ResNameData*>(
+                reinterpret_cast<const char*>(pName) - 4)));
+
+        if (node.IsValid()) {
+            mpBinding[node.ref().id] = i;
+            bound = true;
+        }
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, true);
+    return bound;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 

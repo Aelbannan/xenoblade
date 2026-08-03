@@ -50,8 +50,12 @@ public:
     virtual void Release(const ResMdl mdl, u32 target,
                          BindOption option) = 0; // at 0x54
 
-    bool TestExistence(u32 idx) const;
-    bool TestDefined(u32 idx) const;
+    bool TestExistence(u32 idx) const {
+        return !(mpBinding[idx] & (BINDING_UNDEFINED | BINDING_INVALID));
+    }
+    bool TestDefined(u32 idx) const {
+        return !(mpBinding[idx] & BINDING_UNDEFINED);
+    }
 
     void UseQuaternionBlend(bool enable) {
         SetAnmFlag(FLAG_USE_QUATERNION_ROTATION_BLEND, enable);

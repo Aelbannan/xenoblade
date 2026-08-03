@@ -4,6 +4,7 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 #include <nw4r/math.h>
+#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
 namespace nw4r {
 namespace g3d {
@@ -282,6 +283,11 @@ namespace nw4r {
             namespace {
                 class LightState {
                     public:
+                    nw4r::g3d::LightSetting mSetting;      // at 0x0
+                    nw4r::g3d::LightObj mLightObj[0x80];   // at 0x2C
+                    nw4r::g3d::AmbLightObj mAmbLightObj[0x80]; // at 0x222C
+                    nw4r::g3d::LightSetData mLightSetData[0x80]; // at 0x242C
+
                     void SetLightSetting(const nw4r::g3d::LightSetting&);
                     void SetLightObj(const nw4r::g3d::LightObj&, int);
                     void LoadLightSet(int, unsigned long*, unsigned long*, unsigned long*, unsigned long*, nw4r::g3d::AmbLightObj*);
@@ -290,7 +296,16 @@ namespace nw4r {
                 void LightState::SetLightSetting(const nw4r::g3d::LightSetting&) {}
                 void LightState::SetLightObj(const nw4r::g3d::LightObj&, int) {}
                 void LightState::LoadLightSet(int, unsigned long*, unsigned long*, unsigned long*, unsigned long*, nw4r::g3d::AmbLightObj*) {}
-                LightState::~LightState() {}
+                LightState::~LightState() {
+                    extern void __dt__Q34nw4r3g3d8LightObjFv(void*, int);
+
+                    __destroy_arr(mLightObj,
+                                  reinterpret_cast<ConstructorDestructor*>(
+                                      const_cast<void*>(reinterpret_cast<
+                                          const void*>(
+                                          &__dt__Q34nw4r3g3d8LightObjFv))),
+                                  sizeof(nw4r::g3d::LightObj), 0x80);
+                }
             }
 
         }

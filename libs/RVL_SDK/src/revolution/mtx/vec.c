@@ -193,3 +193,6 @@ void C_VECHalfAngle(register const Vec* a, register const Vec* b,
         *half = ns;
     }
 }
+
+// .sdata2 is 0x10 in retail: [0.5f, 3.0f, 0.0f] then 4 zero pad bytes.
+const f32 s_sdata2Pad = 0.0f;

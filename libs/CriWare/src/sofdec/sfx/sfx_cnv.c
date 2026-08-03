@@ -19,7 +19,7 @@ void SFXCNV_MakeCcirFromY(u8* table) {
     for (i = 0; i < 16; i++) {
         table[i] = 0;
     }
-    for (i = 16; i < 0x100; i++) {
+    for (i = 16; i < 0xEC; i++) {
         table[i] = (u8)(s32)(1.164f * (i - 16) + 0.5f);
     }
     for (i = 0xEC; i < 0x100; i++) {

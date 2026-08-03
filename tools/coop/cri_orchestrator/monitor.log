@@ -10,3 +10,6 @@
 [2026-08-03T16:08:01+00:00] launched cri-09 as agent fdd24562-b7a1-49f4-a021-99e228a10b93 (CRI-MATCH-cri-09: mixed (38 fns))
 [2026-08-03T16:08:05+00:00] launched cri-10 as agent 15326cb9-8ee9-43a4-9c19-674c57fd9778 (CRI-MATCH-cri-10: mixed (32 fns))
 [2026-08-03T16:08:05+00:00] running=10 done=0/17 pending=7 remaining=17 — next sweep in 180s
+[2026-08-03T16:11:13+00:00] running=10 done=0/17 pending=7 remaining=17 — next sweep in 180s
+[2026-08-03T16:14:23+00:00] running=10 done=0/17 pending=7 remaining=17 — next sweep in 180s
+[2026-08-03T16:17:31+00:00] running=10 done=0/17 pending=7 remaining=17 — next sweep in 180s

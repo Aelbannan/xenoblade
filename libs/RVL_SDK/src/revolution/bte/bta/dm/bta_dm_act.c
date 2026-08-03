@@ -318,19 +318,6 @@ extern void btsnd_hcic_write_scan_enable(void *p_buf, unsigned char scan_enable)
 extern int BTM_SecDeleteRmtNameNotifyCallback(bta_dm_rmt_name_cback_t p_callback);
 extern void LogMsg_0(unsigned int trace_set_mask, const char *p_str);
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle);
-// Retail .data is 0x140 bytes: the trace strings below, each padded to its
-// retail slot extent (4-byte alignment in the retail DOL).
-static char str_disable_timer_cback[0x20] = " bta_dm_disable_timer_cback  ";
-static char str_search_timer_cback[0x20] = " bta_dm_search_timer_cback  ";
-static char str_pin_cback_failed[0x40] = " bta_dm_pin_cback() -> Failed to start Remote Name Request  ";
-static char str_timer_stopped[0x14] = " timer stopped  ";
-static char str_l2cap_server_compress[0x30] = "bta_dm_l2cap_server_compress_cback, BTA ID %d";
-static char str_compress_open[0x3C] = "bta_dm_compress_cback open app_id %d, BTA id %d, state %d";
-static char str_compress_close[0x40] = "bta_dm_compress_cback close app_id %d, BTA id %d, state %d";
-
-// Retail .sdata2 is 8 bytes: the 0x00018001 literal plus 4 pad bytes.
-const u32 bta_dm_act_sdata2_pad = 0;
-
 void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle);
 void bta_dm_discover_next_device(void);
 void bta_dm_inq_results_cb();
@@ -380,9 +367,6 @@ struct bta_dm_compress_srvc_t {
 };
 
 struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
-
-// Retail .bss is 0x30: 3 pad bytes after bta_dm_compress_srvcs.
-u8 bta_dm_act_bss_pad[3];
 
 /* Connected services table: byte 0 = count, 9-byte entries, service id at +7
    (defined in bta_dm_pm.c, retail bss owner) */
@@ -462,20 +446,6 @@ void bta_dm_disable(struct bta_dm_msg *p_data) {
 
 /* Disable timeout expired: if ACL links are still up (and we are not
    keeping them), drop every peer device, otherwise report the disable. */
-void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
-    unsigned char i;
-
-    if (appl_trace_level >= 4)
-        LogMsg_0(0x503, str_disable_timer_cback);
-    if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
-        for (i = 0; i < bta_dm_cb.num_devices; i++) {
-            btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
-        }
-    } else {
-        bta_dm_cb.disable_timer_active = 0;
-        bta_dm_cb.cback(1, NULL);
-    }
-}
 
 extern void BTM_SetLocalDeviceName(void*);
 void bta_dm_set_dev_name(struct bta_dm_msg *p_data) { ((void(*)(void*))BTM_SetLocalDeviceName)(p_data->set_name.name); }
@@ -880,12 +850,6 @@ void bta_dm_search_result(struct bta_dm_msg *p_data) {
 
 /* Search discovery timer expired: trace, clear the discovery-active flag
    and continue with the next device in the discovery queue. */
-void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
-    if (appl_trace_level >= 4)
-        LogMsg_0(0x503, str_search_timer_cback);
-    bta_dm_search_cb.search_disc_active = 0;
-    bta_dm_discover_next_device();
-}
 
 /* Free the SDP database buffer if it exists */
 void bta_dm_free_sdp_db() {
@@ -1190,9 +1154,26 @@ union bta_dm_sec_t {
     struct bta_dm_acl_change_t acl_change;
 };
 
-/* PIN request callback: if the remote name is not yet known, kick off a
-   remote name request and report the PIN request once the name arrives;
-   otherwise report it immediately. */
+void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
+    unsigned char i;
+
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_disable_timer_cback  ");
+    if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
+        }
+    } else {
+        bta_dm_cb.disable_timer_active = 0;
+        bta_dm_cb.cback(1, NULL);
+    }
+}
+void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_search_timer_cback  ");
+    bta_dm_search_cb.search_disc_active = 0;
+    bta_dm_discover_next_device();
+}
 unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
                                unsigned char *bd_name) {
     union bta_dm_sec_t sec_event;
@@ -1209,7 +1190,7 @@ unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
             return 1;
         }
         if (appl_trace_level >= 2)
-            LogMsg_0(0x501, str_pin_cback_failed);
+            LogMsg_0(0x501, " bta_dm_pin_cback() -> Failed to start Remote Name Request  ");
     }
     bdcpy(sec_event.pin_req.bd_addr, bd_addr);
     sec_event.pin_req.dev_class[0] = dev_class[0];
@@ -1220,6 +1201,147 @@ unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
     bta_dm_cb.cback(2, &sec_event);
     return 1;
 }
+void bta_dm_acl_change(struct bta_dm_msg *p_data) {
+    union bta_dm_sec_t sec_event;
+    unsigned char *p_bd_addr = p_data->acl_change.bd_addr;
+    unsigned char i;
+
+    if (p_data->acl_change.is_new != 0) {
+        /* device connected */
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr) == 0) {
+                break;
+            }
+        }
+        if (i == bta_dm_cb.num_devices) {
+            bdcpy(bta_dm_cb.peer_dev[bta_dm_cb.num_devices].bd_addr, p_bd_addr);
+            bta_dm_cb.num_devices++;
+        }
+        bta_dm_cb.peer_dev[i].in_use = 1;
+        bta_dm_cb.peer_dev[i].policy = 0;
+        bdcpy(sec_event.acl_change.bd_addr, p_bd_addr);
+        bta_dm_cb.cback(BTA_DM_ACL_CHANGED_EVT, &sec_event);
+    } else {
+        /* device disconnected */
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr) == 0) {
+                while (i < bta_dm_cb.num_devices) {
+                    memcpy(&bta_dm_cb.peer_dev[i], &bta_dm_cb.peer_dev[i + 1],
+                           sizeof(struct bta_dm_peer_dev_t));
+                    i++;
+                }
+                break;
+            }
+        }
+        bta_dm_cb.num_devices--;
+        if (bta_dm_search_cb.search_disc_active != 0 &&
+            bdcmp(bta_dm_search_cb.disc_bd_addr, p_bd_addr) == 0) {
+            bta_dm_search_cb.search_disc_active = 0;
+            if (bta_dm_search_cb.search_timer_active != 0) {
+                if (appl_trace_level >= 4)
+                    LogMsg_0(0x503, " timer stopped  ");
+                bta_sys_stop_timer(&bta_dm_search_cb.search_timer);
+                bta_dm_discover_next_device();
+            }
+        }
+        if (bta_dm_cb.disable_timer_active != 0) {
+            if (BTM_GetNumAclLinks() == 0) {
+                bta_dm_cb.disable_timer_active = 0;
+                bta_sys_stop_timer(&bta_dm_cb.disable_timer);
+                bta_dm_cb.disable_timer.p_cback = bta_dm_disable_conn_down_timer_cback;
+                bta_sys_start_timer(&bta_dm_cb.disable_timer, 0, 1000);
+            }
+        }
+        bdcpy(sec_event.acl_change.bd_addr, p_bd_addr);
+        sec_event.acl_change.reason = (unsigned char)btm_get_acl_disc_reason_code();
+        bta_dm_cb.cback(BTA_DM_ACL_DOWN_EVT, &sec_event);
+    }
+}
+unsigned char bta_dm_l2cap_server_compress_cback(
+        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
+        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
+        unsigned int data_len2, unsigned char **pp_memory,
+        unsigned int *p_memory_size) {
+    unsigned char result = 0;
+    int i;
+
+    for (i = 0; i < 5; i++) {
+        if (bta_dm_compress_srvcs[i].in_use == 1 &&
+            bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
+            if (appl_trace_level >= 4)
+                LogMsg_1(0x503, "bta_dm_l2cap_server_compress_cback, BTA ID %d",
+                         bta_dm_compress_srvcs[i].server_id);
+            result = bta_dm_co_get_compress_memory(
+                bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
+            break;
+        }
+    }
+    return result;
+}
+void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
+                           unsigned char client_id, bd_addr_t bd_addr) {
+    unsigned char *p_cfg;
+    struct bta_dm_compress_srvc_t *p_srvc;
+    unsigned char j;
+    unsigned char k;
+    unsigned char found;
+    unsigned char i;
+    unsigned char num;
+
+    if (action == 0) {
+        p_cfg = p_bta_dm_compress_cfg;
+        num = p_cfg[1];
+        for (i = 1; i <= num; i++) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i] && p_cfg[3 * i + 2] == 1) {
+                    /* if any state-2 server is already in the connected list, skip */
+                    found = 0;
+                    for (j = 1; j <= p_cfg[1]; j++) {
+                        if (p_cfg[3 * j + 2] == 2) {
+                            for (k = 0; k < bta_dm_conn_srvcs[0]; k++) {
+                                if (bta_dm_conn_srvcs[9 * k + 7] == p_cfg[3 * j])
+                                    found = 1;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        bta_dm_compress_srvcs[i - 1].client_id = client_id;
+                        bta_dm_compress_srvcs[i - 1].server_id = server_id;
+                        bdcpy(bta_dm_compress_srvcs[i - 1].bd_addr, bd_addr);
+                        bta_dm_compress_srvcs[i - 1].in_use = 1;
+                        if (appl_trace_level >= 4)
+                            LogMsg_3(0x503,
+                                     "bta_dm_compress_cback open app_id %d, BTA id %d, state %d",
+                                     bta_dm_compress_srvcs[i - 1].client_id,
+                                     bta_dm_compress_srvcs[i - 1].server_id,
+                                     bta_dm_compress_srvcs[i - 1].in_use);
+                    }
+                    break;
+                }
+            }
+        }
+    } else if (action == 1) {
+        p_cfg = p_bta_dm_compress_cfg;
+        for (i = 1; i <= p_cfg[1]; i++) {
+            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
+                if (server_id == p_cfg[3 * i]) {
+                    p_srvc = &bta_dm_compress_srvcs[i - 1];
+                    p_srvc->in_use = 0;
+                    if (appl_trace_level >= 4)
+                        LogMsg_3(0x503,
+                                 "bta_dm_compress_cback close app_id %d, BTA id %d, state %d",
+                                 p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+/* PIN request callback: if the remote name is not yet known, kick off a
+   remote name request and report the PIN request once the name arrives;
+   otherwise report it immediately. */
 
 int bta_dm_link_key_request_cback(void) { return 0xb; }
 
@@ -1322,62 +1444,6 @@ void bta_dm_acl_change_cback(bd_addr_t bd_addr, unsigned char *p_dc, unsigned ch
    devices are removed (shifting the list down). While a discovery is active
    for the dropped device, restart it; when the last ACL link drops while a
    disable is pending, complete the disable. */
-void bta_dm_acl_change(struct bta_dm_msg *p_data) {
-    union bta_dm_sec_t sec_event;
-    unsigned char *p_bd_addr = p_data->acl_change.bd_addr;
-    unsigned char i;
-
-    if (p_data->acl_change.is_new != 0) {
-        /* device connected */
-        for (i = 0; i < bta_dm_cb.num_devices; i++) {
-            if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr) == 0) {
-                break;
-            }
-        }
-        if (i == bta_dm_cb.num_devices) {
-            bdcpy(bta_dm_cb.peer_dev[bta_dm_cb.num_devices].bd_addr, p_bd_addr);
-            bta_dm_cb.num_devices++;
-        }
-        bta_dm_cb.peer_dev[i].in_use = 1;
-        bta_dm_cb.peer_dev[i].policy = 0;
-        bdcpy(sec_event.acl_change.bd_addr, p_bd_addr);
-        bta_dm_cb.cback(BTA_DM_ACL_CHANGED_EVT, &sec_event);
-    } else {
-        /* device disconnected */
-        for (i = 0; i < bta_dm_cb.num_devices; i++) {
-            if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, p_bd_addr) == 0) {
-                while (i < bta_dm_cb.num_devices) {
-                    memcpy(&bta_dm_cb.peer_dev[i], &bta_dm_cb.peer_dev[i + 1],
-                           sizeof(struct bta_dm_peer_dev_t));
-                    i++;
-                }
-                break;
-            }
-        }
-        bta_dm_cb.num_devices--;
-        if (bta_dm_search_cb.search_disc_active != 0 &&
-            bdcmp(bta_dm_search_cb.disc_bd_addr, p_bd_addr) == 0) {
-            bta_dm_search_cb.search_disc_active = 0;
-            if (bta_dm_search_cb.search_timer_active != 0) {
-                if (appl_trace_level >= 4)
-                    LogMsg_0(0x503, str_timer_stopped);
-                bta_sys_stop_timer(&bta_dm_search_cb.search_timer);
-                bta_dm_discover_next_device();
-            }
-        }
-        if (bta_dm_cb.disable_timer_active != 0) {
-            if (BTM_GetNumAclLinks() == 0) {
-                bta_dm_cb.disable_timer_active = 0;
-                bta_sys_stop_timer(&bta_dm_cb.disable_timer);
-                bta_dm_cb.disable_timer.p_cback = bta_dm_disable_conn_down_timer_cback;
-                bta_sys_start_timer(&bta_dm_cb.disable_timer, 0, 1000);
-            }
-        }
-        bdcpy(sec_event.acl_change.bd_addr, p_bd_addr);
-        sec_event.acl_change.reason = (unsigned char)btm_get_acl_disc_reason_code();
-        bta_dm_cb.cback(BTA_DM_ACL_DOWN_EVT, &sec_event);
-    }
-}
 
 void bta_dm_disable_conn_down_timer_cback() {
     bta_dm_cb.cback(1, 0);
@@ -1415,89 +1481,9 @@ void bta_dm_link_quality_cback(void *p_result) {
    The connection engine invokes this with (bd_addr, ids, buffers,
    pp_memory, p_memory_size); only the address and the two memory output
    pointers are used here. */
-unsigned char bta_dm_l2cap_server_compress_cback(
-        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
-        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
-        unsigned int data_len2, unsigned char **pp_memory,
-        unsigned int *p_memory_size) {
-    unsigned char result = 0;
-    int i;
-
-    for (i = 0; i < 5; i++) {
-        if (bta_dm_compress_srvcs[i].in_use == 1 &&
-            bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
-            if (appl_trace_level >= 4)
-                LogMsg_1(0x503, str_l2cap_server_compress,
-                         bta_dm_compress_srvcs[i].server_id);
-            result = bta_dm_co_get_compress_memory(
-                bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
-            break;
-        }
-    }
-    return result;
-}
 
 /* Target: us-802e361c (0x238): compress server/client registration callback.
    action 0 = open (add pair to bta_dm_compress_srvcs), 1 = close (remove). */
-void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
-                           unsigned char client_id, bd_addr_t bd_addr) {
-    unsigned char *p_cfg;
-    struct bta_dm_compress_srvc_t *p_srvc;
-    unsigned char j;
-    unsigned char k;
-    unsigned char found;
-    unsigned char i;
-    unsigned char num;
-
-    if (action == 0) {
-        p_cfg = p_bta_dm_compress_cfg;
-        num = p_cfg[1];
-        for (i = 1; i <= num; i++) {
-            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
-                if (server_id == p_cfg[3 * i] && p_cfg[3 * i + 2] == 1) {
-                    /* if any state-2 server is already in the connected list, skip */
-                    found = 0;
-                    for (j = 1; j <= p_cfg[1]; j++) {
-                        if (p_cfg[3 * j + 2] == 2) {
-                            for (k = 0; k < bta_dm_conn_srvcs[0]; k++) {
-                                if (bta_dm_conn_srvcs[9 * k + 7] == p_cfg[3 * j])
-                                    found = 1;
-                            }
-                        }
-                    }
-                    if (!found) {
-                        bta_dm_compress_srvcs[i - 1].client_id = client_id;
-                        bta_dm_compress_srvcs[i - 1].server_id = server_id;
-                        bdcpy(bta_dm_compress_srvcs[i - 1].bd_addr, bd_addr);
-                        bta_dm_compress_srvcs[i - 1].in_use = 1;
-                        if (appl_trace_level >= 4)
-                            LogMsg_3(0x503,
-                                     str_compress_open,
-                                     bta_dm_compress_srvcs[i - 1].client_id,
-                                     bta_dm_compress_srvcs[i - 1].server_id,
-                                     bta_dm_compress_srvcs[i - 1].in_use);
-                    }
-                    break;
-                }
-            }
-        }
-    } else if (action == 1) {
-        p_cfg = p_bta_dm_compress_cfg;
-        for (i = 1; i <= p_cfg[1]; i++) {
-            if (client_id == p_cfg[3 * i + 1] || p_cfg[3 * i + 1] == 0xff) {
-                if (server_id == p_cfg[3 * i]) {
-                    p_srvc = &bta_dm_compress_srvcs[i - 1];
-                    p_srvc->in_use = 0;
-                    if (appl_trace_level >= 4)
-                        LogMsg_3(0x503,
-                                 str_compress_close,
-                                 p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
-                    break;
-                }
-            }
-        }
-    }
-}
 
 /* Role-management connection callback (BTA_SYS_CONN_OPEN): mark the peer
    device in use and raise its power policy to the best matching entry in
@@ -1573,3 +1559,19 @@ const struct bta_security_t bta_security = {
     (void *)bta_dm_authentication_complete_cback,
     NULL,
 };
+
+// Retail .data is 0x140 bytes: the trace strings plus 4 zero pad bytes after
+// the last one. sdata_threshold 0 keeps the 4-byte pad in .data; the
+// relocation emits as zero bytes in the object.
+#pragma sdata_threshold 0
+void *bta_dm_act_data_pad = (void *)&bta_dm_enable;
+#pragma sdata_threshold 8
+
+// Retail .bss is 0x30: 3 pad bytes after bta_dm_compress_srvcs
+// (sdata_threshold 0 forces the pad into .bss instead of .sbss).
+#pragma sdata_threshold 0
+unsigned char bta_dm_act_bss_pad[3];
+#pragma sdata_threshold 8
+
+// Retail .sdata2 is 8 bytes: the 0x00018001 literal plus 4 pad bytes.
+const unsigned int bta_dm_act_sdata2_pad = 0;

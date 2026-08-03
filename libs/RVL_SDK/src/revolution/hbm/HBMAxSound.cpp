@@ -68,7 +68,36 @@ struct HBMWork {
 HBMWork* sWork;
 
 // Retail rodata: 28 filenames indexed by seq id (SOUND_FILENAME).
-extern "C" const char* SOUND_FILENAME[];
+extern "C" const char* SOUND_FILENAME[] = {
+    "midi\\00_home_button.mid",
+    "midi\\01_return_app.mid",
+    "midi\\02_goto_menu.mid",
+    "midi\\03_reset_app.mid",
+    "midi\\04_focus.mid",
+    "midi\\05_select.mid",
+    "midi\\06_cancel.mid",
+    "midi\\07_open_controller.mid",
+    "midi\\08_close_controller.mid",
+    "midi\\09_volume_plus.mid",
+    "midi\\10_volume_minus.mid",
+    "midi\\11_volume_plus_limit.mid",
+    "midi\\12_volume_minus_limit.mid",
+    "midi\\13_nothing_done.mid",
+    "midi\\14_vibe_on.mid",
+    "midi\\15_vibe_off.mid",
+    "midi\\16_start_connect_window.mid",
+    "midi\\17_connected1.mid",
+    "midi\\18_connected2.mid",
+    "midi\\19_connected3.mid",
+    "midi\\20_connected4.mid",
+    "midi\\21_end_connect_window.mid",
+    "midi\\22_manual_open.mid",
+    "midi\\23_manual_focus.mid",
+    "midi\\24_manual_select.mid",
+    "midi\\25_manual_scroll.mid",
+    "midi\\26_manual_cancel.mid",
+    "midi\\27_manual_return_app.mid",
+};
 
 // Sound data filenames inside the sound archive.
 
@@ -250,7 +279,13 @@ void* AudioSoundThreadProc(void* /* arg */) {
 static const char WT_FILENAME[0x14] = "wt\\HomeButtonSe.wt";
 static const char PCM_FILENAME[0x14] = "wt\\HomeButtonSe.pcm";
 
+
 } // namespace
+
+// retail .rodata has a 4th float (0.0f) after the 10.0f/20.0f/0.0f pool.
+// External linkage (not anonymous-namespace) so -ipa file keeps them.
+extern const float s_volumeZeroPad = 0.0f;
+u8 hbmAxSound_bss_pad[4]; /* retail .bss 0x4 -> 0x8 (align tail) */
 
 namespace homebutton {
 

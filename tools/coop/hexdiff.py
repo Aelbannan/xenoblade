@@ -37,6 +37,7 @@ from tools.coop.lib.config import CoopConfig, load_config
 from tools.coop.lib.object_size import check_object_size, format_size_check
 from tools.coop.lib.project import Project
 from tools.ppc_equivalence.elf_symbols import list_text_functions, FunctionBytes
+from tools.ppc_equivalence.ir import Opcode
 
 # ── mini PowerPC disassembler ──────────────────────────────────────────────
 
@@ -106,6 +107,123 @@ def _crb(insn: int) -> int:
     return (insn >> 21) & 0x1F  # crbA for branches
 
 
+_CLASSIFIER_NO_REG_FIELDS = frozenset(
+    {
+        Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR,
+        Opcode.CRAND, Opcode.CRANDC, Opcode.CREQV, Opcode.CRNAND,
+        Opcode.CRNOR, Opcode.CROR, Opcode.CRORC, Opcode.CRXOR,
+        Opcode.SYNC, Opcode.ISYNC, Opcode.SC, Opcode.RFI,
+    }
+)
+
+
+
+def _classifier_register_fields(opcode: Opcode) -> tuple[tuple[int, str], ...]:
+    """FROZEN pre-A2 role table for hexdiff's classifier (doc 32 A2 rev 3, R2-2).
+    Do NOT re-sync with renaming_witness._register_fields — the divergence is
+    intentional and pinned by the drift-detector test.
+    """
+    if opcode in _CLASSIFIER_NO_REG_FIELDS:
+        return ()
+    if opcode in (
+        Opcode.TWI, Opcode.MULLI, Opcode.SUBFIC, Opcode.ADDIC,
+        Opcode.ADDIC_DOT, Opcode.ADDI, Opcode.ADDIS,
+        Opcode.ORI, Opcode.ORIS, Opcode.XORI, Opcode.XORIS,
+        Opcode.ANDI_DOT, Opcode.ANDIS_DOT,
+        Opcode.RLWIMI, Opcode.RLWINM,
+        Opcode.LWZ, Opcode.LWZU, Opcode.LBZ, Opcode.LBZU,
+        Opcode.STW, Opcode.STWU, Opcode.STB, Opcode.STBU,
+        Opcode.LHZ, Opcode.LHZU, Opcode.LHA, Opcode.LHAU,
+        Opcode.STH, Opcode.STHU, Opcode.LMW, Opcode.STMW,
+        Opcode.MFCR,
+        Opcode.CNTLZW, Opcode.EXTSH, Opcode.EXTSB,
+        Opcode.SRAWI,
+        Opcode.NEG, Opcode.ADDME, Opcode.ADDZE, Opcode.SUBFME,
+        Opcode.SUBFZE,
+    ):
+        # TWI decodes (to, ra, simm): operand 0 is the 5-bit trap-condition
+        # immediate, NOT a renameable register — only RA (operand 1) enters
+        # rho (impl-review Finding 4).  RLWIMI's operand 0 (rA) is a genuine
+        # "gpr" (read-modify-write) and stays in the (RD, RA) group.
+        if opcode == Opcode.TWI:
+            return ((16, "gpr"),)
+        return ((21, "gpr"), (16, "gpr"))
+    if opcode in (
+        Opcode.MFSPR, Opcode.MTSPR, Opcode.MTCRF,
+        Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR,
+        Opcode.MFTB,
+    ):
+        # Only the destination/source "gpr" (bits 21-25) is a register field;
+        # bits 11-20 carry the SPR index / SR index / TBR / FXM / reserved
+        # fields, all non-register and required to be bit-equal.
+        return ((21, "gpr"),)
+    if opcode in (Opcode.CMPWI, Opcode.CMPLWI):
+        # BF (23-25) is a CR field immediate; only RA (16-20) is a register.
+        return ((16, "gpr"),)
+    if opcode == Opcode.RLWNM:
+        return ((21, "gpr"), (16, "gpr"), (11, "gpr"))
+    if opcode in (
+        Opcode.CMPW, Opcode.CMPLW, Opcode.DCBF, Opcode.DCBI,
+        Opcode.DCBST, Opcode.DCBT, Opcode.DCBZ, Opcode.DCBZ_L,
+        Opcode.ICBI,
+    ):
+        # RA (16-20) and RB (11-15); BF (23-25) is a CR field immediate.
+        return ((16, "gpr"), (11, "gpr"))
+    if opcode in (
+        Opcode.AND, Opcode.ANDC, Opcode.EQV, Opcode.NAND, Opcode.NOR,
+        Opcode.OR, Opcode.ORC, Opcode.XOR, Opcode.SLW, Opcode.SRW,
+        Opcode.SRAW, Opcode.SUBFC, Opcode.ADDC, Opcode.MULHWU,
+        Opcode.SUBF, Opcode.MULHW, Opcode.SUBFE, Opcode.ADDE,
+        Opcode.MULLW, Opcode.ADD, Opcode.DIVWU, Opcode.DIVW,
+        Opcode.LWZX, Opcode.LWZUX, Opcode.LBZX, Opcode.LBZUX,
+        Opcode.STWX, Opcode.STWUX, Opcode.STBX, Opcode.STBUX,
+        Opcode.LHZX, Opcode.LHZUX, Opcode.LHAX, Opcode.LHAUX,
+        Opcode.STHX, Opcode.STHUX, Opcode.LWBRX, Opcode.STWBRX,
+        Opcode.LHBRX, Opcode.STHBRX,
+    ):
+        return ((21, "gpr"), (16, "gpr"), (11, "gpr"))
+    if opcode in (
+        Opcode.LFS, Opcode.LFSU, Opcode.LFD, Opcode.LFDU,
+        Opcode.STFS, Opcode.STFSU, Opcode.STFD, Opcode.STFDU,
+    ):
+        return ((21, "fpr"), (16, "gpr"))
+    if opcode in (
+        Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
+        Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX,
+        Opcode.STFIWX,
+    ):
+        return ((21, "fpr"), (16, "gpr"), (11, "gpr"))
+    if opcode in (
+        Opcode.FDIVS, Opcode.FSUBS, Opcode.FADDS, Opcode.FRES,
+        Opcode.FMULS, Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
+        Opcode.FNMADDS, Opcode.FDIV, Opcode.FSUB, Opcode.FADD,
+        Opcode.FSEL, Opcode.FMUL, Opcode.FRSQRTE, Opcode.FMSUB,
+        Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD, Opcode.FRSP,
+        Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FNEG, Opcode.FMR,
+        Opcode.FNABS, Opcode.FABS,
+    ):
+        return ((21, "fpr"), (16, "fpr"), (11, "fpr"), (6, "fpr"))
+    if opcode in (Opcode.FCMPU, Opcode.FCMPO):
+        return ((16, "fpr"), (11, "fpr"))
+    return ()
+
+
+def _classifier_gpr_fpr_masks(opcode) -> tuple[int, int]:
+    """FROZEN pre-A2 mask builder (doc 32 A2 rev 3, R2-2): wraps the frozen
+    pre-A2 role table above.  See its docstring — do NOT re-sync with the
+    witness role table; the drift-detector test pins the divergence.
+    """
+    gpr_mask = 0
+    fpr_mask = 0
+    for start, kind in _classifier_register_fields(opcode):
+        mask = 0x1F << start
+        if kind == "gpr":
+            gpr_mask |= mask
+        else:
+            fpr_mask |= mask
+    return gpr_mask, fpr_mask
+
+
 def _pure_reg_swap(r_word: int, d_word: int, r_mnem: str, d_mnem: str) -> bool:
     """Role-table refinement of the reg-swap classifier (doc 31, additive).
 
@@ -123,13 +241,12 @@ def _pure_reg_swap(r_word: int, d_word: int, r_mnem: str, d_mnem: str) -> bool:
     if not r_mnem or r_mnem != d_mnem:
         return False
     try:
-        from tools.coop.lib.renaming_witness import _gpr_fpr_masks
         from tools.ppc_equivalence.decoder import _decode_word
 
         opcode = _decode_word(r_word, 0, allow_broadway_lmw_overlap=True).opcode
     except Exception:
         return True
-    gpr_mask, fpr_mask = _gpr_fpr_masks(opcode)
+    gpr_mask, fpr_mask = _classifier_gpr_fpr_masks(opcode)
     non_register = (r_word ^ d_word) & ~(gpr_mask | fpr_mask)
     return non_register == 0
 

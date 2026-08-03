@@ -381,9 +381,9 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
 }
 
 int ADXSTM_IsOpened(const ADXSTMHndl* h) {
-    if (h->closing) return 1;
-    if (h->openReq) return 0;
-    return h->opened ? 1 : 0;
+    if ((s8)h->closing != 0) return 1;
+    if ((s8)h->openReq != 0) return 0;
+    return (s8)h->opened ? 1 : 0;
 }
 
 s32 ADXSTM_IsOpenReq(ADXSTMHndl* h) {

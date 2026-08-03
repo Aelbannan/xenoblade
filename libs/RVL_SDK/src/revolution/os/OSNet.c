@@ -63,6 +63,9 @@ NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     ShutdownFuncInfo.prio = 0x6e;
     OSRegisterShutdownFunction(&ShutdownFuncInfo);
 
+    // Retail .data pools the __FUNCTION__ name before the path string.
+    (void)"NWC24iPrepareShutdown";
+
     if (nwc24ShtFd < 0) {
         result = NWC24iOpenResourceManager_(__FUNCTION__,"/dev/net/kd/request",&nwc24ShtFd,1);
     }
@@ -106,17 +109,21 @@ check_result:
 }
 
 s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
-    extern char lbl_8055EDF0[]; /* "/dev/net/kd/request" */
     s32 result;
     s32 fd;
     static s32 susResult[8] ALIGN(32);
+
+    // Retail .data pools the __FUNCTION__ names (incl. the stripped
+    // NWC24ResumeScheduler) here.
+    (void)"NWC24SuspendScheduler";
+    (void)"NWC24ResumeScheduler";
 
     result = CheckCallingStatus(__FUNCTION__);
     if (result < 0) {
         return result;
     }
 
-    fd = IOS_Open(lbl_8055EDF0, IPC_OPEN_NONE);
+    fd = IOS_Open("/dev/net/kd/request", IPC_OPEN_NONE);
     if (fd < 0) {
         result = (fd == -6) ? -29 : -42;
     } else {
@@ -155,7 +162,10 @@ s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
 NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
     static s32 shtBuffer[8] ALIGN(32);
     static s32 shtResult[8] ALIGN(32);
-    
+
+    // Retail .data pools the __FUNCTION__ name here.
+    (void)"NWC24iRequestShutdown";
+
     shtBuffer[0] = param_1;
     
     if (IOS_IoctlAsync(nwc24ShtFd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
@@ -170,7 +180,6 @@ NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
 static BOOL NWC24iIsAsyncRequestPending_();
 
 static BOOL NWC24Shutdown_(BOOL final, u32 event){
-    extern char lbl_8055EE4C[]; /* "NWC24Shutdown_: Give up!\n" */
     static BOOL shuttingdown = FALSE;
     static NWC24Err result = NWC24_OK;
 
@@ -192,7 +201,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
             shuttingdown = FALSE;
             nwc24ShtRetryRest--;
         } else {
-            OSReport(lbl_8055EE4C);
+            OSReport("NWC24Shutdown_: Give up!\n");
             return TRUE;
         }
     } else {
@@ -207,16 +216,18 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
 
 //unused
 s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
-    extern char lbl_8055EE80[]; /* "/dev/net/kd/time" */
     s32 result;
     s32 fd;
+
+    // Retail .data pools the __FUNCTION__ name before the path string.
+    (void)"NWC24iSetRtcCounter_";
 
     result = CheckCallingStatus(__FUNCTION__);
     if (result < 0) {
         return result;
     }
 
-    fd = IOS_Open(lbl_8055EE80, IPC_OPEN_NONE);
+    fd = IOS_Open("/dev/net/kd/time", IPC_OPEN_NONE);
     if (fd < 0) {
         result = (fd == -6) ? -29 : -42;
     } else {

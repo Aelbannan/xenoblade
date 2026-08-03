@@ -6,12 +6,22 @@ extern u16 OSSetFontEncode(u16);
 extern void __DVDShowFatalMessage(void);
 static u8 CheckBuffer[32] ALIGN(32);
 
-static volatile BOOL lowDone = TRUE;
+// .sdata is 8 bytes in retail: lowDone then 4 zero pad bytes
+// (gap_09_8066307C_sdata) aligning the next unit's .sdata.
+struct LowDone {
+    volatile BOOL done;
+    u32 pad;
+};
+static struct LowDone lowDone = { TRUE, 0 };
 static volatile u32 lowIntType = 0;
+
+// .sbss is 8 bytes in retail: lowIntType then 4 zero pad bytes
+// (gap_10_80664FB4_sbss) aligning the next unit's .sbss.
+u32 __dvdDeviceErrorSbssPad;
 
 static void lowCallback(u32 intType) {
     lowIntType = intType;
-    lowDone = TRUE;
+    lowDone.done = TRUE;
 }
 
 void __DVDShowDeviceErrorMessage(void);
@@ -21,10 +31,6 @@ BOOL __DVDCheckDevice(void) {
     u32 outOfRangeError = 0xFFFFFFFF;
     u32 reportKeyError = 0xFFFFFFFF;
     OSIOSRev iosRev;
-
-    // 1-byte pad: retail .data ends at 0x198 (string pool 4-align). Folded
-    // no-op pools the string after the message strings; emits no code.
-    (void)"\0";
 
     if (OSGetPhysicalMem2Size() == 0x08000000) {
         return TRUE;
@@ -40,10 +46,10 @@ BOOL __DVDCheckDevice(void) {
         checkCode = 0x7ED40000;
     }
 
-    lowDone = FALSE;
+    lowDone.done = FALSE;
     DVDLowUnencryptedRead((void*)CheckBuffer, 32, checkCode, lowCallback);\
 
-    while (!lowDone) {
+    while (!lowDone.done) {
 
     }
 
@@ -58,10 +64,10 @@ BOOL __DVDCheckDevice(void) {
             break;
     }
 
-    lowDone = FALSE;
+    lowDone.done = FALSE;
     DVDLowRequestError(lowCallback);
 
-    while (!lowDone) {
+    while (!lowDone.done) {
 
     }
 
@@ -91,10 +97,10 @@ BOOL __DVDCheckDevice(void) {
             break;
     }
 
-    lowDone = FALSE;
+    lowDone.done = FALSE;
     DVDLowReportKey((struct DVDVideoReportKey*)CheckBuffer, 0x40000, 0, lowCallback);
 
-    while (!lowDone) {
+    while (!lowDone.done) {
 
     }
 
@@ -109,10 +115,10 @@ BOOL __DVDCheckDevice(void) {
             break;
     }
 
-    lowDone = FALSE;
+    lowDone.done = FALSE;
     DVDLowRequestError(lowCallback);
 
-    while (!lowDone) {
+    while (!lowDone.done) {
 
     }
 
@@ -155,6 +161,8 @@ fatal:
     return FALSE;
 }
 
+static char lbl_80546840[48];
+
 const char* const __DVDDeviceErrorMessage[] = {
     "\n\n\nエラーコード００１。\n"
     "不明なデバイスが見つかりました。",
@@ -178,10 +186,13 @@ const char* const __DVDDeviceErrorMessage[] = {
     "\n\n\nErrore #001:\n"
     "rilevato un dispositivo non autorizzato.",
 
-    "\n\n\nFout #001:\n"
-    "ongeoorloofd onderdeel gevonden.",
+    lbl_80546840,
     NULL
 };
+
+// 1-byte pad: retail .data ends at 0x198 (string pool 4-align); the Dutch
+// message is 47 bytes, so a 48-byte array supplies the final pad byte.
+static char lbl_80546840[48] = "\n\n\nFout #001:\nongeoorloofd onderdeel gevonden.";
 
 
 
@@ -189,7 +200,11 @@ static void __DVDShowDeviceErrorMessage(void) {
     const char* message;
     const char* const* messageList;
     GXColor bg = { 0, 0, 0, 0 };
-    GXColor fg = { 255, 255, 255, 0 };
+    GXColor fg;
+    // .sdata2 is 8 bytes in retail: the fg color word then 4 zero pad bytes
+    // (gap_11_80669794_sdata2) aligning the next unit's .sdata2.
+    static const u32 fgColor[2] = { 0xFFFFFF00, 0 };
+    *(u32*)&fg = fgColor[0];
 
     if (SCGetLanguage() == 0) {
         OSSetFontEncode(1);

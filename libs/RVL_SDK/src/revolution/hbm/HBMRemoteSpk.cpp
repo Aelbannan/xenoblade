@@ -11,6 +11,9 @@ namespace homebutton {
 
 RemoteSpk* RemoteSpk::spInstance = NULL;
 
+// .bss is 8 bytes in retail: spInstance then 4 zero pad bytes.
+u32 __hbmRemoteSpkPad;
+
 void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) {
     s16 pcmBuffer[40];
     u8 adpcmBuffer[20];

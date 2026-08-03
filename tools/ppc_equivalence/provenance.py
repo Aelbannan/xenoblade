@@ -20,6 +20,7 @@ ENGINE_SOURCE_PATTERNS = [
 CERTIFIER_SOURCE_PATHS = [
     "tools/coop/lib/equivalence_check.py",
     "tools/coop/lib/equivalence_policy.py",
+    "tools/coop/lib/renaming_witness.py",
     "tools/coop/lib/targets.py",
 ]
 

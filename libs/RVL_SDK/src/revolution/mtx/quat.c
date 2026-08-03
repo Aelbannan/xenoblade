@@ -11,10 +11,6 @@ static inline void quat_force_literals(void) {
     (MY_EPSILON, 1.0f, 0.0f);
 }
 
-// Retail .rodata is 0x10: the C_QUATMtx next[] table {1,2,0} plus 4 zero pad
-// bytes (gap_06_8051552C_rodata); the 4-word table reproduces the exact slice.
-const u32 quatNext[4] = {1, 2, 0, 0};
-
 //TODO: get it to match with a register var instead of f3
 void PSQUATAdd(const register Quaternion* quat1, const register Quaternion* quat2,
                register Quaternion* out) {
@@ -161,7 +157,7 @@ inline f32 mySqrtf(f32 x){
 void C_QUATMtx(Quaternion* quat, const Mtx mtx) {
     f32 root, trace;
     u32 dmax, dnext, dlast;
-    const u32* next = quatNext;
+    u32 next[3] = {1, 2, 0};
     f32 temp[3];
 
     trace = mtx[0][0] + mtx[1][1] + mtx[2][2];
@@ -205,6 +201,11 @@ void C_QUATMtx(Quaternion* quat, const Mtx mtx) {
         quat->z = temp[2];
     }
 }
+
+// Retail .rodata ends with the C_QUATMtx next[] table {1,2,0} (0xc) followed
+// by 4 zero pad bytes (gap_06_8051552C_rodata); this forced-section object
+// reproduces the exact .rodata slice (a plain zero const would go to .bss).
+const u32 quatRoDataPad[1] __attribute__((section(".rodata"))) = {0};
 
 void C_QUATSlerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
                  f32 t) {

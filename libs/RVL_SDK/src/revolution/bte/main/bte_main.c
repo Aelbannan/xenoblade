@@ -15,14 +15,22 @@ typedef void (*tBTE_APP_INFO_CB)(int);
 
 /* --- externs (defined in sibling bte units) --- */
 extern tHCI_IF hcisu_h2;
-extern tHCI_CFG bte_hcisu_h2_cfg;
 extern void bte_hcisu_task(int);
 extern void bte_hcisu_close(void);
 extern void btu_task_init(void);
 extern void btu_task_msg_handler(void);
-extern char __BTUInterruptHandlerStack[];
 
-extern tBTE_APP_INFO_CB _bte_app_info;
+// Defined here to reproduce the retail .bss/.sbss/.sdata allocations.
+// bte_target_mode is never referenced in this unit, so MWCC places it first
+// in the .sbss group (0x0..0x4), followed by _bte_app_info (0x4..0x8).
+volatile u32 bte_target_mode;
+tBTE_APP_INFO_CB _bte_app_info;
+char __BTUInterruptHandlerStack[0x1000];
+
+// retail .sdata symbol bte_hcisu_h2_cfg is 8 bytes; the header type tHCI_CFG
+// is only 4, so back the symbol with an 8-byte array and alias the 4-byte view.
+static u8 bte_hcisu_h2_cfg_data[8] = {0x0a, 0x5c, 0x21, 0x01, 0x00, 0x00, 0x00, 0x00};
+#define bte_hcisu_h2_cfg (*(tHCI_CFG*)bte_hcisu_h2_cfg_data)
 
 static OSAlarm _bte_alarm;
 

@@ -33,7 +33,8 @@ typedef struct {
 #define GKI_SUCCESS   0x00
 #define GKI_FAILURE   0x01
 
-extern tGKI_INT_MIRROR gki_cb;
+// Defined here (retail .bss symbol, 0x28AE0 bytes)
+tGKI_INT_MIRROR gki_cb;
 
 void GKI_disable(void);
 void GKI_enable(void);

@@ -304,3 +304,7 @@ static BOOL __InitParams(AXFX_DELAY_EXP_DPL2* fx) {
     fx->sendGainI = (s32)(128.0f * fx->sendGain);
     return TRUE;
 }
+
+// .sdata2 is 0x18 in retail: [32.0f, 0.0f, 1.0f, 2.0f, 0.9f] then 4 zero pad
+// bytes aligning the next unit's .sdata2.
+const f32 s_sdata2Pad = 0.0f;

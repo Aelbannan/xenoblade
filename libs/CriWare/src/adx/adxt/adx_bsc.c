@@ -70,7 +70,7 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding);
 
 s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
-    int i;
+    s16 i;
     s16 x;
 
     if (lbl_eu_805E5358 == 0) {

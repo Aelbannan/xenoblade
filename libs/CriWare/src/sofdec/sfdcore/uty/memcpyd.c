@@ -1,9 +1,9 @@
 #include <harness_catalog.h>
 
-void UTY_MemcpyDword(u32 *dst, const u32 *src, u32 n) {
-    u32 *d = dst;
-    const u32 *s = src;
-    u32 t0, t1, t2, t3;
+void UTY_MemcpyDword(volatile u32 *dst, const volatile u32 *src, u32 n) {
+    volatile u32 *d = dst;
+    const volatile u32 *s = src;
+    u32 t1, t2, t3, t0;
     u32 cnt;
 
     cnt = (n & 0xF) + 1;

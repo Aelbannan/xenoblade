@@ -13,7 +13,10 @@ extern u16 __MIXGetVolume(s32 value);
 
 // __MIXRmtChannel is a global pointer (sbss) to the remote channel array.
 // Initialized during MIXInit to point to __s_MIXRmtChannel in BSS.
-extern struct MIXRmtChannel* __MIXRmtChannel;
+// Defined here to reproduce the retail .bss (0x1988) / .sbss allocations.
+// retail .sbss symbol is 8 bytes; u64 keeps the size (and keeps the pointer at 0x0)
+u64 __MIXRmtChannel;
+u8 __s_MIXRmtChannel[0x1988];
 
 // ----- Remote channel structure -----
 

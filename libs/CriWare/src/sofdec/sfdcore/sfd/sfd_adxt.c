@@ -150,7 +150,7 @@ void *sfadxt_SearchAlign(void *handle, void *buf, int size) {
     s32 cnt;
 
     while (p < scan_end) {
-        cnt = (s32)((u32)(end - p + 0x11) / (u32)unit);
+        cnt = (s32)((u32)(end + 0x11 - p) / (u32)unit);
         q = p;
         flag = 0;
         if (p < end) {
@@ -170,20 +170,18 @@ void *sfadxt_SearchAlign(void *handle, void *buf, int size) {
                 break;
             } while (--cnt);
         }
-        if (flag) {
-            p += 2;
-        } else {
+        if (!flag) {
             break;
         }
+        p += 2;
     }
-    if (!flag) {
-        return p;
+    if (flag) {
+        if (start == NULL) {
+            SFLIB_SetErr(handle, 0xFF000C0A);
+            return (u8 *)buf;
+        }
+        p = start;
     }
-    if (start == NULL) {
-        SFLIB_SetErr(handle, 0xFF000C0A);
-        return (u8 *)buf;
-    }
-    p = start;
     return p;
 }
 #pragma optimize_for_size reset

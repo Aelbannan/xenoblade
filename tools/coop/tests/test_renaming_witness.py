@@ -110,7 +110,7 @@ class GateAcceptanceTests(unittest.TestCase):
         )
         outcome = certify_renaming_witness(original, candidate)
         self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {3: 3, 4: 4, 5: 6, 6: 5})
+        self.assertEqual(outcome.rho.gpr, {4: 4, 5: 6, 6: 5})
 
     def test_pure_nonvolatile_color_swap_accepted(self) -> None:
         # r20<->r25 2-cycle over loads/stores (the Chaitin-cycle target class).
@@ -122,7 +122,7 @@ class GateAcceptanceTests(unittest.TestCase):
         )
         outcome = certify_renaming_witness(original, candidate)
         self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25, 25: 20})
+        self.assertEqual(outcome.rho.gpr, {20: 25, 25: 20})
 
     def test_cx1_shift_count_swap_rejected(self) -> None:
         # CX-1: slw r3,r4,r5 vs slw r3,r5,r4 — the shift source/amount swap.
@@ -137,15 +137,18 @@ class GateAcceptanceTests(unittest.TestCase):
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_cx2_zero_register_encoding_rejected(self) -> None:
-        # CX-2: addi r3,0,5 (literal) vs addi r3,r12,5 — rho would map r0 to
-        # r12, but rho must fix r0 (zero-register encoding).
+        # CX-2 (doc 32 A2 rev 3, F4): addi r3,0,5 (literal) vs addi r3,r12,5.
+        # Under A2, ADDI's RA field is non-register (r0 = literal zero on
+        # ADDI/ADDIS, semantics.py:3296), so rho may rename r0 elsewhere but
+        # this pair fails gate 3 (`fields`) on the RA bits 0 vs 12 — the
+        # rejection is bit-equality, not the old "rho must fix r0" gate 5.
         original, candidate = _decode_pair(
             [_enc_primary(14, 3, 0, 5), _LR],
             [_enc_primary(14, 3, 12, 5), _LR],
         )
         outcome = certify_renaming_witness(original, candidate)
         self.assertFalse(outcome.certified)
-        self.assertEqual(outcome.failure.gate, "abi-boundary")
+        self.assertEqual(outcome.failure.gate, "fields")
 
     def test_cx3_gqr_spr_index_rejected(self) -> None:
         # CX-3: mfspr r3,GQR0 vs mfspr r3,GQR1 — GQRs are user-mode SPRs the
@@ -292,7 +295,7 @@ class AcrossCallTests(unittest.TestCase):
         )
         self.assertTrue(outcome.certified, outcome.failure)
         # retail uses only r20 (never r25), so the renaming is one-way.
-        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25})
+        self.assertEqual(outcome.rho.gpr, {20: 25})
 
     def test_opaque_eabi_callee_rejected(self) -> None:
         # Opaque EABI reads "*" — the call token covers every register, so a
@@ -386,7 +389,7 @@ class CertificatePlumbingTests(unittest.TestCase):
         self.assertEqual(certificate["evidence"], "register-renaming-witness")
         self.assertEqual(certificate["contract"], "register-renaming-witness")
         payload = certificate["register_renaming_witness"]
-        self.assertEqual(payload["rho"]["gpr"], {"3": 3, "20": 25, "25": 20})
+        self.assertEqual(payload["rho"]["gpr"], {"20": 25, "25": 20})
         self.assertTrue(payload["structural_eq"])
         self.assertGreaterEqual(payload["terminal_pairs_checked"], 1)
         self.assertEqual(
@@ -741,3 +744,118 @@ class ImplReview2RegressionTests(unittest.TestCase):
             self.assertIsInstance(out.certified, bool)
         except Exception as exc:  # pragma: no cover
             self.fail(f"region driver raised unexpectedly: {exc}")
+
+class A2PositionAwareR0Tests(unittest.TestCase):
+    """doc 32 A2: r0 is renameable in RD/RB/X-form-arith/cmp positions, and is
+    literal zero (bit-equal, non-register) only in D/DS/X-indexed load-store
+    and ADDI/ADDIS RA.  GXCopyDisp 2-cycle accept; X-form load/store RA reject;
+    cmpwi/X-form-arith RA accept."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_r0_value_2cycle_accepted(self) -> None:
+        # doc 32 A2 (G3 accept case): r0 used as a REAL value register (li +
+        # mr), renamed to r6; rho {0:6} extends to the natural 2-cycle {0<->6}
+        # via the identity-first extension.  The pair certifies.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [li(0, 97), mr(3, 0), li(0, 2), mr(4, 0), self._BLR]
+        d = [li(6, 97), mr(3, 6), li(6, 2), mr(4, 6), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.rho.gpr, {0: 6, 3: 3, 4: 4})
+
+    def test_cmpwi_r0_rename_accepted(self) -> None:
+        # cmpwi RA reads gpr[ra] (semantics.py:3455) — r0 is a real register;
+        # rho(0)=6 is sound.
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        r = [cmpwi(0, 5), mr(3, 0), self._BLR]
+        d = [cmpwi(6, 5), mr(3, 6), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_xform_arith_r0_rename_accepted(self) -> None:
+        # X-form arithmetic RA reads gpr[ra] with no r0 guard — renameable.
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        r = [add(3, 0, 5), self._BLR]
+        d = [add(3, 6, 5), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_dform_load_ra_literal_rejected(self) -> None:
+        # lwz r3,0(r0) vs lwz r3,0(r12): D-form RA is literal-zero; RA bits
+        # differ -> gate 3 fields.
+        lwz = lambda rt, ra, dsp: _enc_primary(32, rt, ra, dsp)
+        original, candidate = self._pair(
+            [lwz(3, 0, 0), self._BLR], [lwz(3, 12, 0), self._BLR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+    def test_xindex_load_ra_literal_rejected(self) -> None:
+        # lwzx r3,r0,r5 vs lwzx r3,r6,r5 (G3): X-form indexed load RA=0 is
+        # literal zero (semantics.py:3531) — RA is non-register, gate 3.
+        lwzx = lambda rt, ra, rb: _enc_x(31, 87, rt, ra, rb)
+        original, candidate = self._pair(
+            [lwzx(3, 0, 5), self._BLR], [lwzx(3, 6, 5), self._BLR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+
+class DriftDetectorTests(unittest.TestCase):
+    """doc 32 A2 rev 3, R2-2: hexdiff's frozen pre-A2 classifier must keep the
+    historical register-mask table (RA is a register field for load-store and
+    ADDI/ADDIS) while the witness role table drops it.  Pins the intentional
+    divergence so an accidental re-sync fails CI."""
+
+    def test_classifier_keeps_ra_witness_drops_it(self) -> None:
+        from tools.coop.hexdiff import _classifier_gpr_fpr_masks
+        from tools.coop.lib.renaming_witness import _gpr_fpr_masks
+        from tools.ppc_equivalence.ir import Opcode
+
+        ra_bit = 0x1F << 16
+        for op in (Opcode.LWZX, Opcode.ADDI, Opcode.LWZ, Opcode.STWX, Opcode.LFSX):
+            c_mask, _ = _classifier_gpr_fpr_masks(op)
+            w_mask, _ = _gpr_fpr_masks(op)
+            self.assertTrue(c_mask & ra_bit, f"{op}: classifier lost the RA bit")
+            self.assertFalse(w_mask & ra_bit, f"{op}: witness still has the RA bit")
+
+    def test_classifier_still_calls_xindex_ra_swap_pure(self) -> None:
+        # The pre-A2 classifier calls lwzx r3,r0,r5 vs lwzx r3,r6,r5 a pure
+        # reg-swap (RA in the register mask); the witness rejects it.  This is
+        # the intended classifier-vs-witness divergence (R2-2).
+        from tools.coop.hexdiff import _pure_reg_swap
+
+        r = 0x7C03286E  # lwzx r3,r0,r5
+        d = 0x7C03306E  # lwzx r3,r6,r5
+        self.assertTrue(_pure_reg_swap(r, d, "lwzx", "lwzx"))
+
+    def test_classifier_adjusts_for_literal_immediates(self) -> None:
+        # Same mnemonic, differing immediate: structural, not pure reg-swap
+        # (the classifier must keep rejecting these after the freeze).
+        from tools.coop.hexdiff import _pure_reg_swap
+
+        r = 0x38600005  # addi r3,0,5
+        d = 0x38600006  # addi r3,0,6
+        self.assertFalse(_pure_reg_swap(r, d, "addi", "addi"))
+
+
+if __name__ == "__main__":
+    unittest.main()

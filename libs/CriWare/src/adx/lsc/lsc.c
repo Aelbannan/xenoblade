@@ -325,7 +325,7 @@ extern u32 lbl_eu_805EC440[];
 
 void LSC_CallStatFunc(void) {
     u32 *p = (u32 *)lbl_eu_805EC440;
-    u32 fn = *p;
+    u32 fn = p[0];
     if (fn == 0)
         return;
     ((void (*)(u32, u32))fn)(p[1], p[2]);

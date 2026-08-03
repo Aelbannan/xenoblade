@@ -117,18 +117,22 @@ void *sjrbf_Create(void *pool_mem, u32 buf_size, u32 xtr_size) {
 }
 
 /* --- SJRBF_Destroy --- */
+#pragma push
+#pragma opt_propagation off
 void SJRBF_Destroy(void *self_ptr) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x6B);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x97);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
         memset(self, 0, 0x48);
@@ -136,8 +140,11 @@ void SJRBF_Destroy(void *self_ptr) {
     }
     SJCRS_Unlock();
 }
+#pragma pop
 
 /* --- SJRBF_GetUuid --- */
+#pragma push
+#pragma opt_propagation off
 void *SJRBF_GetUuid(void *self_ptr) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
@@ -145,13 +152,15 @@ void *SJRBF_GetUuid(void *self_ptr) {
     void *r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0xA3);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0xAF);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -160,20 +169,25 @@ void *SJRBF_GetUuid(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJRBF_EntryErrFunc --- */
+#pragma push
+#pragma opt_propagation off
 void SJRBF_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
     char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0xBB);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0xC7);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
     } else {
         self->err_func = (void (*)(void *, int))cbfunc;
@@ -181,6 +195,7 @@ void SJRBF_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     }
     SJCRS_Unlock();
 }
+#pragma pop
 
 /* --- SJRBF_Reset --- */
 void SJRBF_Reset(void *self) {
@@ -190,16 +205,20 @@ void SJRBF_Reset(void *self) {
 }
 
 /* --- sjrbf_Reset (internal) --- */
+#pragma push
+#pragma opt_propagation off
 void sjrbf_Reset(SJRBF *self) {
     if (self == NULL) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0xEB);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf, 0x40, lbl_eu_80518BC8 + 0xF7);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
     } else {
         self->put_avail = 0;
@@ -212,6 +231,7 @@ void sjrbf_Reset(SJRBF *self) {
         self->flow_cnt[3] = 0;
     }
 }
+#pragma pop
 
 /* --- fn_80397A74 --- */
 #pragma push
@@ -477,6 +497,8 @@ int sjrbf_IsGetChunk(SJRBF *self, int mode, int size, int *out) {
 #pragma pop
 
 /* --- SJRBF_GetBufPtr --- */
+#pragma push
+#pragma opt_propagation off
 void *SJRBF_GetBufPtr(void *self_ptr) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
@@ -484,13 +506,15 @@ void *SJRBF_GetBufPtr(void *self_ptr) {
     void *r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x1AB);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x1B7);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -499,8 +523,11 @@ void *SJRBF_GetBufPtr(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJRBF_GetBufSize --- */
+#pragma push
+#pragma opt_propagation off
 int SJRBF_GetBufSize(void *self_ptr) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
@@ -508,13 +535,15 @@ int SJRBF_GetBufSize(void *self_ptr) {
     int r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x1C3);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x1CF);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
     } else {
@@ -523,8 +552,11 @@ int SJRBF_GetBufSize(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJRBF_GetXtrSize --- */
+#pragma push
+#pragma opt_propagation off
 int SJRBF_GetXtrSize(void *self_ptr) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
@@ -532,13 +564,15 @@ int SJRBF_GetXtrSize(void *self_ptr) {
     int r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x1DB);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x1E7);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
     } else {
@@ -547,8 +581,11 @@ int SJRBF_GetXtrSize(void *self_ptr) {
     SJCRS_Unlock();
     return r;
 }
+#pragma pop
 
 /* --- SJRBF_GetFlowCnt --- */
+#pragma push
+#pragma opt_propagation off
 int SJRBF_GetFlowCnt(void *self_ptr, int a, int b) {
     SJRBF *self = (SJRBF *)self_ptr;
     char buf2[64];
@@ -556,18 +593,22 @@ int SJRBF_GetFlowCnt(void *self_ptr, int a, int b) {
     int r;
     SJCRS_Lock();
     if (self == NULL) {
+        const char *suffix = lbl_eu_80518BC8 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x20B);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
+        CRICRW_Strcat(buf1, 0x40, suffix);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
+        const char *suffix = lbl_eu_80518BC8 + 0x77;
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x217);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
+        CRICRW_Strcat(buf2, 0x40, suffix);
         SJERR_CallErr(buf2);
         r = 0;
     } else {
-        r = self->flow_cnt[a * 2 + b];
+        int off = a * 8 + b * 4;
+        r = *(int *)((char *)self->flow_cnt + off);
     }
     SJCRS_Unlock();
     return r;
 }
+#pragma pop

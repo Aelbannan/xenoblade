@@ -107,14 +107,58 @@ _NO_REG_FIELDS = frozenset(
     }
 )
 
+# Opcodes whose RA field (bits 16-20) is the literal-zero position: r0 in RA
+# encodes the constant zero and reads NO register (doc 32 A2, rev 3, per
+# G3/G4/F8 — verified against the engine's ``ra == 0`` guards:
+# ``_dform_address`` semantics.py:1854, LMW/STMW :4498, INDEXED_MEMORY
+# :3531/:3559, ADDI/ADDIS :3296; DCBZ :3261 is reject-listed; PSQ D-forms
+# :3874 are A1-scoped).  RA is a NON-register field for these: bit-equal,
+# excluded from rho.  Everywhere else (cmpwi, mulli/addic/subfic, X-form
+# arithmetic, M-form, RD/RB/RS, X-form load/store RB) r0 is an ordinary
+# register.
+_RA_LITERAL_OPCODES = frozenset(
+    {
+        Opcode.ADDI, Opcode.ADDIS,
+        # D-form integer load/store + update forms.
+        Opcode.LWZ, Opcode.LWZU, Opcode.LBZ, Opcode.LBZU,
+        Opcode.LHZ, Opcode.LHZU, Opcode.LHA, Opcode.LHAU,
+        Opcode.STW, Opcode.STWU, Opcode.STB, Opcode.STBU,
+        Opcode.STH, Opcode.STHU, Opcode.LMW, Opcode.STMW,
+        # D-form FP load/store + update forms.
+        Opcode.LFS, Opcode.LFSU, Opcode.LFD, Opcode.LFDU,
+        Opcode.STFS, Opcode.STFSU, Opcode.STFD, Opcode.STFDU,
+        # X-form indexed integer load/store (RA is the base; RB is real).
+        Opcode.LWZX, Opcode.LWZUX, Opcode.LBZX, Opcode.LBZUX,
+        Opcode.LHZX, Opcode.LHZUX, Opcode.LHAX, Opcode.LHAUX,
+        Opcode.STWX, Opcode.STWUX, Opcode.STBX, Opcode.STBUX,
+        Opcode.STHX, Opcode.STHUX, Opcode.LWBRX, Opcode.STWBRX,
+        Opcode.LHBRX, Opcode.STHBRX,
+        # X-form indexed FP load/store (RA is the base; RB is real).
+        Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
+        Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX,
+        Opcode.STFIWX,
+    }
+)
+
 
 def _register_fields(opcode: Opcode) -> tuple[tuple[int, str], ...]:
     """Return the ``(start_bit, kind)`` 5-bit register fields for ``opcode``.
 
-    Unknown opcodes return ``()`` — the caller then treats every bit as
-    non-register, which only makes the witness *stricter* (byte-equality of
-    all non-register bits plus a trivially-empty rho), never looser.
+    For ``_RA_LITERAL_OPCODES`` the RA field (bits 16-20) is dropped: r0 in
+    RA is the literal zero on those forms (doc 32 A2), so it is a non-register,
+    bit-equal field.  Unknown opcodes return ``()`` — the caller then treats
+    every bit as non-register, which only makes the witness *stricter*
+    (byte-equality of all non-register bits plus a trivially-empty rho), never
+    looser.
     """
+    fields = _register_fields_impl(opcode)
+    if opcode in _RA_LITERAL_OPCODES:
+        fields = tuple(f for f in fields if f[0] != 16)
+    return fields
+
+
+def _register_fields_impl(opcode: Opcode) -> tuple[tuple[int, str], ...]:
+    """Pre-A2 role table (frozen for hexdiff's classifier copy)."""
     if opcode in _NO_REG_FIELDS:
         return ()
     if opcode in (
@@ -292,13 +336,18 @@ _WITNESS_ALLOWED_SPRS = frozenset({1, 8, 9})
 # (r3..r10, f1..f8) are the function's input signature and are also fixed.
 # Volatile r11/r12 / f0/f9..f13 join the fixed set only when live across a
 # call (liveness gate).
-_UNCONDITIONALLY_FIXED_GPRS = frozenset({0, 1, 2, 3, 4, 13})
+# r0 dropped from the unconditional fixed set (doc 32 A2): r0 is now only
+# special in the D/DS/X-indexed load-store and ADDI/ADDIS RA position, which is
+# a bit-equal non-register field (gate 3), so rho may rename r0 elsewhere.  r4
+# stays fixed pending the A3 conditional logic (doc 32 A3, payoff deferred).
+_UNCONDITIONALLY_FIXED_GPRS = frozenset({1, 2, 3, 4, 13})
 # f1 is the FP return register (and first FP argument).
 _UNCONDITIONALLY_FIXED_FPRS = frozenset({1})
 # EABI outgoing-argument ranges: registers that may carry live-in inputs.
 _EABI_ARG_GPRS = frozenset(range(3, 11))
 _EABI_ARG_FPRS = frozenset(range(1, 9))
-_VOLATILE_GPRS = frozenset(range(3, 13))
+# EABI volatile GPRs (r0, r3-r12); r1/r2 are unconditionally fixed anyway.
+_VOLATILE_GPRS = frozenset(range(13)) - frozenset({1, 2})
 _VOLATILE_FPRS = frozenset(range(0, 14))
 
 # ── per-opcode use/def positions (decoded operand indices) for liveness ────
@@ -485,6 +534,17 @@ def _use_def_numbered(
     defs: set[int] = set()
     for pos, kind in uses_raw:
         if pos < len(insn.operands):
+            # RA-literal guard (doc 32 A2 rev 3, G6/F5): on load/store and
+            # ADDI/ADDIS forms the engine reads gpr[ra] only when ra != 0
+            # (semantics.py:3296/3531/3559); RA=0 is the literal zero and must
+            # not count as a use, or region-boundary liveness would spuriously
+            # keep r0 live and over-reject rebinds.
+            if (
+                pos == 1
+                and insn.opcode in _RA_LITERAL_OPCODES
+                and insn.operands[1] == 0
+            ):
+                continue
             uses.add(_numbered_lane(kind, insn.operands[pos]))
     for pos, kind in defs_raw:
         if pos < len(insn.operands):
@@ -724,15 +784,30 @@ class Rho:
 def _extend_permutation(partial: dict[int, int]) -> list[int]:
     """Extend a partial bijection to a full permutation of 0..31.
 
-    Unused domain/range registers are matched in ascending order, so the
-    extension is canonical and a pure identity for byte-identical pairs.
+    Identity is preferred for every unused register present on both sides
+    (free_domain AND free_range), then the remaining domains/ranges are
+    matched in ascending order.  Without the identity-first pass, dropping an
+    identity entry from rho (doc 32 A2: RA fields of load/store and
+    ADDI/ADDIS are now non-register, so a register used only as an address
+    base no longer contributes ``r -> r``) would let the ascending zip rotate
+    unrelated live registers — e.g. rho {0:6} extending to 1->0, 2->1, ...,
+    scrambling the r3 return lane and rejecting equivalent pairs.  The
+    identity-first pass yields the natural 2-cycle closure (rho {0:6} extends
+    to {0<->6}), which is canonical and a pure identity for byte-identical
+    pairs.
     """
     perm = {k: v for k, v in partial.items()}
     used_domain = set(perm)
     used_range = set(perm.values())
-    free_domain = sorted(set(range(32)) - used_domain)
-    free_range = sorted(set(range(32)) - used_range)
-    for key, value in zip(free_domain, free_range):
+    free_domain = set(range(32)) - used_domain
+    free_range = set(range(32)) - used_range
+    # Identity first: registers free on both sides map to themselves.
+    for r in sorted(free_domain & free_range):
+        perm[r] = r
+    # Then the remainder (genuinely re-colored lanes) ascending.
+    for key, value in zip(
+        sorted(free_domain - free_range), sorted(free_range - free_domain),
+    ):
         perm[key] = value
     assert sorted(perm.values()) == list(range(32)), "rho extension is not a permutation"
     return [perm[k] for k in range(32)]

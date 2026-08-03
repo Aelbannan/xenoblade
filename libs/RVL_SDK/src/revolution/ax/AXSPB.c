@@ -4,7 +4,15 @@
 #define DEPOP_MIN (-20)
 #define DEPOP_MAX 20
 
-static AXSTUDIO __AXStudio ALIGN(32);
+// .bss is 0x80 in retail: __AXStudio (0x78) + 8 zero pad bytes (32-align).
+static struct {
+    AXSTUDIO studio ALIGN(32);
+    u8 pad[8];
+} __AXStudioBlock;
+#define __AXStudio (__AXStudioBlock.studio)
+
+// .bss is 0x80 in retail: __AXStudio (0x78) + 8 zero pad bytes (32-align).
+
 
 static s32 __AXSpbAux3 = 0;
 static s32 __AXSpbAux2 = 0;

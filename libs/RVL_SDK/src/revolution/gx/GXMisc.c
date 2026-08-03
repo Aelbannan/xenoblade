@@ -30,9 +30,11 @@ extern GXBool __GXIsGPFifoReady(void);
 extern void __GXCleanGPFifo(void);
 extern void __GXInitRevisionBits(void);
 
-static GXDrawSyncCallback TokenCB;
+// Retail .sbss: TokenCB is 8 bytes (only word 0 is used) and DrawDone is
+// 4 bytes (only byte 0 is used, via lbz/stb).
+static GXDrawSyncCallback TokenCB[2];
 static GXDrawDoneCallback DrawDoneCB;
-static volatile GXBool DrawDone;
+static volatile u8 DrawDone[4];
 static OSThreadQueue FinishQueue;
 
 void GXSetMisc(UNKWORD token, UNKWORD val) {
@@ -166,14 +168,14 @@ void GXSetDrawDone(void) {
     GX_BP_LOAD_REG(reg);
 
     GXFlush();
-    DrawDone = FALSE;
+    DrawDone[0] = FALSE;
     OSRestoreInterrupts(en);
     gxdt->lastWriteWasXF = FALSE;
 }
 
 static inline void GXWaitDrawDone(void) {
     BOOL en = OSDisableInterrupts();
-    while (!DrawDone) {
+    while (!DrawDone[0]) {
         OSSleepThread(&FinishQueue);
     }
     OSRestoreInterrupts(en);
@@ -250,9 +252,9 @@ void GXPokeZMode(GXBool compare_en, GXCompare func, GXBool update_en) {
 }
 
 GXDrawSyncCallback GXSetDrawSyncCallback(GXDrawSyncCallback cb) {
-    GXDrawSyncCallback oldcb = TokenCB;
+    GXDrawSyncCallback oldcb = TokenCB[0];
     BOOL en = OSDisableInterrupts();
-    TokenCB = cb;
+    TokenCB[0] = cb;
     OSRestoreInterrupts(en);
     return oldcb;
 }
@@ -263,10 +265,10 @@ static void GXTokenInterruptHandler(s32 intr, OSContext* context) {
     u32 reg;
 
     token = GX_PE_REG_READ_U16(7);
-    if (TokenCB) {
+    if (TokenCB[0]) {
         OSClearContext(&exceptionContext);
         OSSetCurrentContext(&exceptionContext);
-        (*TokenCB)(token);
+        (*TokenCB[0])(token);
         OSClearContext(&exceptionContext);
         OSSetCurrentContext(context);
     }
@@ -292,7 +294,7 @@ static void GXFinishInterruptHandler(s32 intr, OSContext* context) {
     reg |= 1 << 3;
     GX_PE_REG_WRITE_U16(5, reg);
 
-    DrawDone = TRUE;
+    DrawDone[0] = TRUE;
 
     if (DrawDoneCB) {
         OSClearContext(&exceptionContext);

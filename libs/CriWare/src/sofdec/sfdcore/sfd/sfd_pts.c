@@ -153,16 +153,15 @@ s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
         } else {
             if (e->pos <= target && target < win_end)
                 goto found;
-            if (win_start <= target && target < entry_end - win_len)
-                goto found;
+            if (win_start <= target && target < entry_end - win_len) {
+            found:
+                return (s32)i;
+            }
         }
 
-        start = (start + 1 >= maxIdx) ? start + 1 - maxIdx : start + 1;
+        start = (start + 1 < maxIdx) ? start + 1 : start + 1 - maxIdx;
     }
     return -1;
-
-found:
-    return (s32)i;
 }
 
 int SFPTS_IsPtsQueFull(void* self, int idx) {

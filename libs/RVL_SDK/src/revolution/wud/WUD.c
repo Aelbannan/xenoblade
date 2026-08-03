@@ -59,6 +59,7 @@ extern int _wudAbortSync;
 extern unsigned char _wudPatchRemoveCmd;
 extern unsigned char _wudTarget;
 extern int _linkedWBC;
+extern void (*_initWBC)(void);
 
 extern char _wudWiiRemoteDescriptor[];
 extern unsigned char _wudInstallNum;
@@ -329,11 +330,16 @@ BOOL WUDInit(void) {
 
     SCInit();
 
+    if (_linkedWBC != 0 && _initWBC != 0) {
+        _initWBC();
+    }
+
     OSCreateAlarm(&p->alarm);
     OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(10),
                        __wudInitHandler0);
 
     _wudInitialized = TRUE;
+    _scFlush = 0;
     return TRUE;
 }
 
@@ -3045,8 +3051,8 @@ void __wudInitHandler(void) {
     case WUD_STATE_INIT_WAIT_FOR_INITIALIZATION:
         nextState = WUD_STATE_INIT_WAIT_FOR_INITIALIZATION;
 
-        if (OS_TICKS_TO_MSEC((u32)(__OSGetSystemTime() - __OSStartTime)) >
-            500) {
+        if ((s32)(500 - OS_TICKS_TO_MSEC((u32)__OSGetSystemTime() -
+                                         (u32)__OSStartTime)) < 0) {
             if (SCCheckStatus() != SC_STATUS_BUSY) {
                 __wudClearControlBlock();
                 nextState = WUD_STATE_INIT_DONE;

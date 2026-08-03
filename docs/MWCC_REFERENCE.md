@@ -7724,3 +7724,10 @@ Retail loads the magic WORD ([lis r11; lwz r20, 0(r11)] — the VALUE!) and pass
 it as the memcmp's second arg (a value-as-address quirk); decomp's natural
 [memcmp(src+i, lbl, 4)] emits an address arg — unreproducible. Semantic impl
 retained (0x234 vs 0x26c, 14 instructions short).
+
+### CriWare sfd_see sfsee_ExecFinAnaly — 17.7% (corrected semantics)
+The prior C had INVERTED guards ([<= 0] instead of [> 0]) — fixed to the retail
+flow: v>0 → v6 (0 if self+0x2678==-3 else stm+0xdd4) → v6>0 → the nested
+[self+0x1408+idx1*0x74]*0x44+0x1fd8+0x20 lookup → [r>=0 && r!=-1] → stm+0xdac
+= v6+r. Second guard: stm+0xdb0>0 && self+0xe50==0 → zero+copy. Residual:
+the [bgt]-vs-[ble] block layout inversion + the [add;li;stw] order.

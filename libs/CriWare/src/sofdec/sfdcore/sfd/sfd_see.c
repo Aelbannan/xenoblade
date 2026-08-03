@@ -184,45 +184,36 @@ s32 SFD_SetSeekPos(void* self, s32 seekPos) {
 
 void sfsee_ExecFinAnaly(void* self) {
     void* avplay = *(void**)((u8*)self + 0x2670);
-    s32* fieldPtr = (s32*)((u8*)self + 0x2674);
     s32 updated = 0;
-    
+    s32 finalPos;
+    s32 result;
+
     if (SFCON_IsEndcodeSkip(self)) return;
-    
-    if (*(s32*)((u8*)avplay + 0xDAC) <= 0) {
-        s32 seekPos = fieldPtr[1];
-        s32 finalPos;
-        
-        if (seekPos == -3) {
-            finalPos = 0;
-        } else {
+
+    if (*(s32*)((u8*)avplay + 0xDAC) > 0) {
+        if (*(s32*)((u8*)self + 0x2678) != -3) {
             finalPos = *(s32*)((u8*)avplay + 0xDD4);
+        } else {
+            finalPos = 0;
         }
-        
-        if (finalPos >= 0) {
-            s32 idx1 = *(s32*)((u8*)self + 0x1FEC);
-            s32 idx2;
-            s32 result;
-            
-            idx2 = *(s32*)((u8*)self + 0x1408 + idx1 * 0x74);
-            result = *(s32*)((u8*)self + 0x1FD8 + idx2 * 0x44 + 0x20);
-            
-            if (result >= 0) {
+        if (finalPos > 0) {
+            result = *(s32*)((u8*)self + 0x1FD8 +
+                        *(s32*)((u8*)self + 0x1408 + *(s32*)((u8*)self + 0x1FEC) * 0x74) * 0x44 + 0x20);
+            if (result >= 0 && result != -1) {
                 *(s32*)((u8*)avplay + 0xDAC) = finalPos + result;
                 updated = 1;
             }
         }
     }
-    
-    if (*(s32*)((u8*)avplay + 0xDB0) <= 0) {
-        s32 val = *(s32*)((u8*)self + 0xE50);
-        if (val > 0) {
-            *(s32*)((u8*)avplay + 0xDB0) = val;
+
+    if (*(s32*)((u8*)avplay + 0xDB0) > 0) {
+        if (*(s32*)((u8*)self + 0xE50) == 0) {
+            *(s32*)((u8*)avplay + 0xDB0) = 0;
             *(s32*)((u8*)avplay + 0xDB4) = *(s32*)((u8*)self + 0xE54);
             updated = 1;
         }
     }
-    
+
     if (updated) {
         sfsee_UpdateEByteRate(self);
     }

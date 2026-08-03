@@ -192,9 +192,8 @@ AnmScnRes::AnmScnRes(MEMAllocator* pAllocator, ResAnmScn res,
                      CameraAnmResult* pCameraCache)
     : AnmScn(pAllocator),
       FrameCtrl(0.0f, static_cast<f32>(res.ref().info.numFrame),
-                GetAnmPlayPolicy(res.ref().info.policy)) {
-    mRes = res;
-    mRes = res;
+                GetAnmPlayPolicy(res.ref().info.policy)),
+      mRes(res) {
     mUpdateCacheFlag = 0;
     mpAmbLightCache = pAmbCache;
     mpLightCache = pLightCache;

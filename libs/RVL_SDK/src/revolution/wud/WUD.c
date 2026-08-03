@@ -84,8 +84,8 @@ void SCGetBtCmpDevInfoArray(SCBtCmpDevInfoArray* info);
 BOOL SCSetBtCmpDevInfoArray(const SCBtCmpDevInfoArray* info);
 
 WUDCB __rvl_wudcb;
-WUDDevInfo _wudDiscWork;
 WUDDiscResp _wudDiscResp;
+WUDDevInfo _wudDiscWork;
 SCBtDeviceInfoArray _scArray;
 SCBtCmpDevInfoArray _spArray;
 u8 __WUDHandlerStack[0x1000] ALIGN(32);
@@ -865,23 +865,22 @@ void WUDiMoveBottomSmpDevInfoPtr(WUDDevInfo* pInfo) {
 }
 
 
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
     WUDCB* p = &_wcb;
     int i;
     BOOL enabled;
     WUDDevInfoList* pIt;
-
-#define WUD_SMP_DEV(p, i) (*(WUDDevInfo**)((u8*)(p) + (u32)(i) * 12 + 0x1C))
-#define WUD_SMP_PREV(p, i) (*(WUDDevInfoList**)((u8*)(p) + ((u32)(i) * 12 + 0x20)))
-#define WUD_SMP_NEXT(p, i) (*(WUDDevInfoList**)((u8*)(p) + ((u32)(i) * 12 + 0x24)))
-#define WUD_SMP_LIST(p, i) ((WUDDevInfoList*)((u8*)(p) + (u32)(i) * 12 + 0x1C))
+    WUDDevInfoList* pList;
 
     enabled = OSDisableInterrupts();
 
     for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
+        pList = &p->smpList[i];
 
-        if (WUD_BDCMP((*(WUDDevInfo**)((u8*)p + (u32)i * 12 + 0x1C))->devAddr,
-                      pInfo->devAddr) != 0) {
+        if (WUD_BDCMP(pList->devInfo->devAddr, pInfo->devAddr) != 0) {
             continue;
         }
 
@@ -895,45 +894,41 @@ void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
             }
 
             if (WUD_BDCMP(p->smpListHead->devInfo->devAddr,
-                          (*(WUDDevInfo**)((u8*)p + ((u32)i * 12 + 0x1C)))
+                          (*(WUDDevInfo**)((u8*)p + (u32)i * 12 + 0x1C))
                               ->devAddr) == 0) {
                 if (pIt == p->smpListHead->next) {
                     break;
                 }
 
-                p->smpListHead = WUD_SMP_NEXT(p, i);
+                p->smpListHead = p->smpList[i].next;
             } else {
-                WUD_SMP_PREV(p, i)->next = WUD_SMP_NEXT(p, i);
+                p->smpList[i].prev->next = p->smpList[i].next;
             }
 
-            WUD_SMP_NEXT(p, i)->prev = WUD_SMP_PREV(p, i);
+            p->smpList[i].next->prev = p->smpList[i].prev;
 
             if (pIt != p->smpListHead) {
-                WUD_SMP_PREV(p, i) = pIt->prev;
-                WUD_SMP_NEXT(p, i) = pIt;
+                p->smpList[i].prev = pIt->prev;
+                p->smpList[i].next = pIt;
 
-                pIt->prev->next = WUD_SMP_LIST(p, i);
-                pIt->prev = WUD_SMP_LIST(p, i);
+                pIt->prev->next = pList;
+                pIt->prev = pList;
             } else {
-                WUD_SMP_PREV(p, i) = pIt;
-                WUD_SMP_NEXT(p, i) = pIt->next;
+                p->smpList[i].prev = pIt;
+                p->smpList[i].next = pIt->next;
 
-                pIt->next->prev = WUD_SMP_LIST(p, i);
-                pIt->next = WUD_SMP_LIST(p, i);
+                pIt->next->prev = pList;
+                pIt->next = pList;
             }
 
             break;
         }
     }
 
-#undef WUD_SMP_DEV
-#undef WUD_SMP_PREV
-#undef WUD_SMP_NEXT
-#undef WUD_SMP_LIST
-
-
     OSRestoreInterrupts(enabled);
 }
+
+#pragma pop
 
 void WUDiMoveTopStdDevInfoPtr(WUDDevInfo* pInfo) {
     WUDCB* p = &_wcb;
@@ -1197,13 +1192,13 @@ u8 __wudSyncPrepareSearch(void) {
 #pragma pop
 
 u8 __wudSyncTryConnect(void) {
-    WUDCB* p = &_wcb;
+    char* pMsg = _wudWiiRemoteDescriptor;
     WUDDevInfoList* pIt;
     WUDDevInfo* pFound;
     BOOL enabled;
     u8 ret = WUD_STATE_SYNC_ERROR;
 
-    if (memcmp(_wudDiscResp.devName, _wudWiiRemoteDescriptor + 0x268,
+    if (memcmp(_wudDiscResp.devName, pMsg + 0x268,
                sizeof(LINK_KEY)) == 0) {
         WUDDevInfo* pWork = &_wudDiscWork;
 
@@ -1214,13 +1209,13 @@ u8 __wudSyncTryConnect(void) {
     }
 
     if (_linkedWBC != 0) {
-        if (memcmp(_wudDiscResp.devName, _wudWiiRemoteDescriptor + 0x27C,
+        if (memcmp(_wudDiscResp.devName, pMsg + 0x27C,
                    sizeof(LINK_KEY)) == 0) {
             pFound = NULL;
             enabled = OSDisableInterrupts();
 
-            for (pIt = p->stdListHead; pIt != NULL; pIt = pIt->next) {
-                if (memcmp(pIt->devInfo, _wudWiiRemoteDescriptor + 0x27C,
+            for (pIt = _wcb.stdListHead; pIt != NULL; pIt = pIt->next) {
+                if (memcmp(pIt->devInfo, pMsg + 0x27C,
                            sizeof(LINK_KEY)) == 0) {
                     pFound = pIt->devInfo;
                 }
@@ -1229,7 +1224,7 @@ u8 __wudSyncTryConnect(void) {
             OSRestoreInterrupts(enabled);
 
             if (pFound != NULL) {
-                DEBUGPrint(_wudWiiRemoteDescriptor + 0x290);
+                DEBUGPrint(pMsg + 0x290);
 
                 if (pFound->status > 1) {
                     return ret;
@@ -1237,7 +1232,7 @@ u8 __wudSyncTryConnect(void) {
 
                 if (memcmp(_wudDiscResp.devAddr, pFound->devAddr,
                            BD_ADDR_LEN) != 0) {
-                    DEBUGPrint(_wudWiiRemoteDescriptor + 0x2B8);
+                    DEBUGPrint(pMsg + 0x2B8);
                     WUDiMoveBottomStdDevInfoPtr(pFound);
                     WUDiRemoveDevice(pFound->devAddr);
                 }
@@ -1256,6 +1251,7 @@ u8 __wudSyncTryConnect(void) {
 
     return ret;
 }
+
 void WUDShutdown(BOOL onReconnect) {
     WUDCB* p = &_wcb;
     BOOL enabled;
@@ -1271,40 +1267,40 @@ void WUDShutdown(BOOL onReconnect) {
         OSCancelAlarm(&p->alarm);
     }
 
-    memset(p->scArray.devices, 0,
+    memset(_scArray.devices, 0,
            sizeof(SCBtDeviceInfo) * WUD_MAX_DEV_ENTRY_FOR_STD);
 
     for (i = 0, pIt = p->stdListHead; pIt != NULL; pIt = pIt->next, i++) {
-        WUD_BDCPY(p->scArray.devices[i].addr, pIt->devInfo->devAddr);
+        WUD_BDCPY(_scArray.devices[i].addr, pIt->devInfo->devAddr);
 
-        memcpy(&p->scArray.devices[i].info, pIt->devInfo->devAddr,
+        memcpy(&_scArray.devices[i].info, pIt->devInfo->devAddr,
                sizeof(SCDevInfo));
     }
 
     enabled = OSDisableInterrupts();
     num = p->devNums;
     OSRestoreInterrupts(enabled);
-    p->scArray.numRegist = num;
+    _scArray.numRegist = num;
 
-    memset(&p->spArray.regist, 0,
+    memset(&_spArray.regist, 0,
            sizeof(SCBtCmpDevInfo) * WUD_MAX_DEV_ENTRY_FOR_SMP);
 
     if (onReconnect) {
         for (i = 0, pIt = p->smpListHead; pIt != NULL; pIt = pIt->next, i++) {
-            WUD_BDCPY(p->spArray.regist[i].addr, pIt->devInfo->devAddr);
+            WUD_BDCPY(_spArray.regist[i].addr, pIt->devInfo->devAddr);
 
-            memcpy(&p->spArray.regist[i].info, pIt->devInfo->devAddr,
+            memcpy(&_spArray.regist[i].info, pIt->devInfo->devAddr,
                    sizeof(SCDevInfo));
-            memcpy(&p->spArray.regist[i].linkKey, pIt->devInfo->linkKey,
+            memcpy(&_spArray.regist[i].linkKey, pIt->devInfo->linkKey,
                    sizeof(LINK_KEY));
         }
 
         enabled = OSDisableInterrupts();
         num = p->devSmpNums;
         OSRestoreInterrupts(enabled);
-        p->spArray.numRegist = num;
+        _spArray.numRegist = num;
     } else {
-        p->spArray.numRegist = 0;
+        _spArray.numRegist = 0;
     }
 
     p->shutdownState = WUD_STATE_SHUTDOWN_STORE_SETTINGS;
@@ -1573,13 +1569,13 @@ u8 __wudSyncDone(void) {
     int i;
 
     if (p->syncSkipChecks != 0) {
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
             tBTM_PM_PWR_MD block;
 
             enabled = OSDisableInterrupts();
             pDev = ((u32)i <= 9)
-                       ? &_wcb.stdDevs[i]
-                       : &_wcb.smpDevs[i - WUD_MAX_DEV_ENTRY_FOR_STD];
+                       ? (WUDDevInfo*)((u8*)&_wcb + ((u32)i * 0x60) + 0xE4)
+                       : (WUDDevInfo*)((u8*)&_wcb + (((u32)i - WUD_MAX_DEV_ENTRY_FOR_STD) * 0x60) + 0x4A4);
             OSRestoreInterrupts(enabled);
 
             if (pDev->status == 8) {
@@ -3143,9 +3139,9 @@ void __wudClearControlBlock(void) {
     DEBUGPrint(lbl_80562A20);
 
     for (h = 0; h < WUD_MAX_DEV_ENTRY; h++) {
-        p->devHandleToBda[h] = NULL;
-        p->devHandleQueueSize[h] = 0;
-        p->devHandleNotAckNum[h] = 0;
+        _dev_handle_to_bda[h] = NULL;
+        _dev_handle_queue_size[h] = 0;
+        _dev_handle_notack_num[h] = 0;
     }
 
     p->smpListHead = &p->smpList[0];

@@ -5316,6 +5316,64 @@ Findings while matching the 10 WUD stack/sync/patch targets (`libs/RVL_SDK/src/r
    the header to a `u64 services` did not help `__wudSyncTryConnect` because the
    retail also materializes `wudcb+0x750/+0x858` bases (folded immediates) while
    the decomp folds full offsets — left as-is; the separate-global form is kept.
+
+   **UPDATE (2026-08): the real fix is the bss restructure.** The decomp's
+   giant WUDCB (members `discResp` at 0x750 … `devHandleNotAckNum` at 0x2188)
+   made MWCC fold `_wudDiscResp` as `base+0x21A8` instead of retail's
+   `base+0x750`. The retail `__rvl_wudcb` is the **real 0x750 struct**; the
+   blob objects (`_wudDiscResp` 0x750, `_wudDiscWork` 0x858, `_scArray` 0x8B8,
+   `_wudNandWbcInfo` 0xD20, `_dev_handle_to_bda` 0xDC0, `_wudNandFileInfo`
+   0xE00, `_wudNandBlock` 0xE8C, `_wudHandlerStack` 0xF60, `_spArray` 0x1F60,
+   `_dev_handle_queue_size` 0x2168, `_dev_handle_notack_num` 0x2188) are
+   **separate globals in the same TU in retail order**. MWCC folds same-TU
+   adjacent bss globals into the `__rvl_wudcb` base register + literal offset
+   when the base is live (exactly the retail's folded immediates, zero relocs),
+   while leaf functions without the base live emit `lis/addi` of the named
+   global (also matching retail). Shrinking the struct + ordering the globals
+   flipped `__wudSyncTryConnect`'s discResp/discWork offsets from 0x21A8/0x22B0
+   to 0x750/0x858 and unlocked 0-structural. Consumers of the removed members
+   (`WUDShutdown` p->scArray/p->spArray, `__wudClearControlBlock`
+   p->devHandleToBda) switch to the globals.
+
+7. **IV-first operand order defeats -O4,p base hoisting in scan loops**
+   (`__wudSyncDone` 14.4%→91.1%, 0 structural, size-exact 0x168). The retail
+   scan loop keeps `base+IV` (`li rIV,0; … add rX,rBase,rIV; addi rY,rX,0xE4;
+   addi rIV,rIV,0x60`), but -O4,p hoists `&stdDevs[0]` into a walking pointer
+   (`addi rPtr,rBase,0xE4; or rY,rPtr,rPtr`) making the body 4 bytes short and
+   the whole tail misaligned. Writing the ternary branches as
+   `(WUDDevInfo*)((u8*)&_wcb + ((u32)i * 0x60) + 0xE4)` (IV term FIRST) and
+   `… + (((u32)i - 10) * 0x60) + 0x4A4` makes MWCC keep the IV form with the
+   struct base — byte-matching retail (pure r30↔r31 IV/pDev color swaps
+   remain). Offset-first `0xE4 + i*0x60` hoists both array bases into two extra
+   callee-saved regs (5-reg function → `_savegpr` prologue mismatch, 0x158
+   size). The plain `&_wcb.stdDevs[i]` ternary walks under -O4,p; the -O4,s
+   pragma gives the right loop but `_savegpr_28` prologue (retail 4-reg
+   functions use individual stw — a true -O4,p/-O4,s mix not reachable in one
+   mode).
+
+8. **Kept `pList` + raw-arithmetic second access breaks the devAddr CSE**
+   (`WUDiMoveTopOfDisconnectedSmpDevice` 33.7%→56.7%, 0 structural, size-exact
+   0x168, fuzzy 97.3%, under the per-function `#pragma optimize_for_size on` /
+   `#pragma dont_inline on`). The retail materializes `&smpList[i]` once (via
+   `lwzu`) and keeps it across the inner loop, but RECOMPUTES the devAddr for
+   the head-compare memcmp. A pure `WUDDevInfoList* pList = &p->smpList[i];`
+   local makes MWCC keep devAddr in a callee-saved reg across both memcmps
+   (85 vs 90 instr — too small); the pure macro form recomputes base+IV per
+   use (92 instr — 2 too many). The winning mix: first compare + node-store
+   rewiring via `pList`, the head-compare's second operand via the raw
+   cast-arithmetic `(*(WUDDevInfo**)((u8*)p + (u32)i * 12 + 0x1C))->devAddr`
+   (breaks the CSE, forces the retail recompute) — 90/90 instructions,
+   39/39 pure reg-swaps, zero structural. This function's retail prologue IS
+   `_savegpr_23` (9 regs), so the -O4,s pragma is safe here.
+
+9. **The WUD unit needs `-func_align 4`** (packed retail). With the default
+   `-func_align 16` from `cflags_sdk`, the -O4,p unit overflowed its 0x6400
+   split by 0x104 (inter-function padding); retail WUD functions are packed
+   (e.g. `__wudSyncTryConnect` 0x170 ends exactly at the next function's
+   address). Adding `-func_align 4` to the unit's `extra_cflags` packs it to
+   0x62D0 with zero instruction-level regressions (58/86 functions stay
+   100%). Same fix as the bte/hidh units.
+
 7. **Equivalence acceptance blocker confirmed for this unit**: every target's
    SMT proof is `inconclusive_unvalidated_callee` via transitive bte internals
    (`BTM_VendorSpecificCommand → … → LogMsg` etc., NOT_STARTED). With the

@@ -30,7 +30,7 @@ typedef struct {
 extern u32 lbl_eu_805F2C00;
 extern volatile u32 lbl_eu_8051914C;
 extern u8 lbl_eu_805F2C08[];
-extern u16 lbl_eu_805F2C04;
+extern u32 lbl_eu_805F2C04;
 extern u32 lbl_eu_80566050;
 extern u32 lbl_eu_80566054[];
 extern u32 lbl_eu_805F3A48;
@@ -139,17 +139,21 @@ void* AXRNA_Create(void* obj_arr, u32 maxnch, u8* buf) {
     }
 
     idx = 0;
-    for (n = 0; n < 2; n++) {
-        for (j = 0; j < 8; j++) {
-            if ((s8)lbl_eu_805F2C08[n * 8 * 0xE4 + j * 0xE4] != 0) {
-                idx++;
-            } else {
-                goto found_slot;
+    {
+        u8* p = lbl_eu_805F2C08;
+        for (n = 0; n < 2; n++) {
+            for (j = 0; j < 8; j++) {
+                if ((s8)p[0] != 0) {
+                    idx++;
+                } else {
+                    goto found_slot;
+                }
+                p += 0xE4;
             }
         }
     }
 found_slot:
-    if (idx >= 0x10) {
+    if (idx == 0x10) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x76));
         return NULL;
     }
@@ -160,7 +164,7 @@ found_slot:
 
     dst = (u32*)((u8*)slot + 0x28);
     src = (u32*)obj_arr;
-    for (i = 0; i < maxnch; i++) {
+    for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
         *dst++ = *src++;
     }
 
@@ -171,35 +175,44 @@ found_slot:
     *(s32*)((u8*)slot + 0x94) = -0x3c0;
     *(s32*)((u8*)slot + 0x98) = 0;
 
-    for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
-        *(u32*)((u8*)slot + i * 4 + 0x10) = (u32)(buf + i * 0x2000);
-        *(u32*)((u8*)slot + 0x18) = 0x1000;
-        sj = SJRBF_Create(buf + i * 0x2000, 0x2000, 0);
-        *(u32*)((u8*)slot + i * 4 + 0x30) = (u32)sj;
-        if (sj == NULL) {
-            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x97));
-            AXRNA_Destroy(slot);
-            return NULL;
+    {
+        u8* ch = (u8*)slot;
+        u8* bufp = buf;
+        for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
+            *(u32*)(ch + 0x10) = (u32)bufp;
+            *(u32*)((u8*)slot + 0x18) = 0x1000;
+            sj = SJRBF_Create(bufp, 0x2000, 0);
+            *(u32*)(ch + 0x30) = (u32)sj;
+            if (sj == NULL) {
+                RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x97));
+                AXRNA_Destroy(slot);
+                return NULL;
+            }
+            vpb = AXAcquireVoice(0x1f, (void*)axrna_voice_drop, 0);
+            *(u32*)(ch + 8) = (u32)vpb;
+            if (vpb == NULL) {
+                RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0xb2));
+                AXRNA_Destroy(slot);
+                return NULL;
+            }
+            GCRNA_LockCs();
+            {
+                void* v = *(void**)(ch + 8);
+                if (v != 0) {
+                    MIXInitChannel(v, 3,
+                                   *(s32*)((u8*)slot + 0x7c), *(s32*)((u8*)slot + 0x8c),
+                                   *(s32*)((u8*)slot + 0x90), *(s32*)((u8*)slot + 0x94),
+                                   0x40, *(s32*)((u8*)slot + 0x88), *(s32*)((u8*)slot + 0x98));
+                }
+            }
+            GCRNA_UnlockCs();
+            bufp += 0x2000;
+            ch += 4;
         }
-        vpb = AXAcquireVoice(0x1f, (void*)axrna_voice_drop, 0);
-        *(u32*)((u8*)slot + i * 4 + 8) = (u32)vpb;
-        if (vpb == NULL) {
-            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0xb2));
-            AXRNA_Destroy(slot);
-            return NULL;
-        }
-        GCRNA_LockCs();
-        if (*(u32*)((u8*)slot + i * 4 + 8) != 0) {
-            MIXInitChannel(*(void**)((u8*)slot + i * 4 + 8), 3,
-                           *(s32*)((u8*)slot + 0x7c), *(s32*)((u8*)slot + 0x8c),
-                           *(s32*)((u8*)slot + 0x90), *(s32*)((u8*)slot + 0x94),
-                           0x40, *(s32*)((u8*)slot + 0x88), *(s32*)((u8*)slot + 0x98));
-        }
-        GCRNA_UnlockCs();
     }
 
     if (slot != NULL) {
-        *(u16*)((u8*)slot + 0x9c) = lbl_eu_805F2C04;
+        *(u16*)((u8*)slot + 0x9c) = (u16)lbl_eu_805F2C04;
     }
     if (slot != NULL) {
         *(u32*)((u8*)slot + 0xa0) = lbl_eu_80566050;

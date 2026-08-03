@@ -7070,3 +7070,55 @@ decomp `[li r6,64][lis r5][stw 8][lis r4][li r0,1][or r3][stw 4]` — the 64-con
 lands in r6 (retail reuses r0 for 64 and 1, forcing stw-4 before li-1); local-c,
 chained-assignment, and statement-order variants all keep r6. Pure
 allocator/scheduler wall; size exact 0x64.
+
+### RVL_SDK vi/vi.c — VIConfigure + __VIRetraceHandler (US, mwcc_43_151, cflags_sdk, `-func_align 16`)
+Both targets stalled at scheduling/regalloc softcaps (HIGH_MATCH), but several
+reusable source-shape keys were recovered this session (structural: VIConfigure
+282→239, __VIRetraceHandler 421→382):
+
+1. **regs[]-shadow registers need u32 locals loaded once, not in-place
+   load-modify-store.** `regs[VI_DCR] = (u16)((regs[VI_DCR] & ~0x4) | 0x4);`
+   emits lhz+sth per mutation (~14 extra instructions). Retail loads
+   `u32 dcr = regs[VI_DCR]; u32 viclk = regs[VI_VICLK];` ONCE, mutates 32-bit
+   (masks `rlwinm 30,28` / `0,0,30` — 32-bit, not 16-bit), and stores once at
+   the end via `regs[VI_DCR] = (u16)dcr`. VIConfigure 0x70C→0x6D8.
+
+2. **Hardware do-while double-read needs a `prev` copy** — MWCC emits a `mr`
+   only for
+   `do { vcount = VI_HW_REGS[VI_DPH] & 0x7FF; prev = hcount; hcount = VI_HW_REGS[VI_DPV] & 0x7FF; } while (prev != hcount);`
+   (the 100%-matched `GetCurrentDisplayPosition` uses exactly this). A direct
+   `} while (hcount2 != hcount);` compare omits the `mr` and the retail's loop
+   shape.
+
+3. **u16-typed load-result locals fix prologue/DI-block register colours.**
+   `u16 reg;` for the `VI_HW_REGS[VI_DIx_H]` reads (vs `u32 reg`) made the
+   prologue + DI0-DI3 blocks and intrMask check byte-exact (0x100/0x200
+   regions 100%), moving ~20 instructions from reg_swap to exact. Declaring
+   `reg` before `intrMask` matters too (`u32 reg; u32 intrMask = 0;` → intrMask
+   lands in r6 like retail).
+
+4. **u16-field `>> 1` needs an explicit `(u32)` cast** (srawi vs rlwinm): u16
+   promotes to int (signed) → arithmetic shift. `(u32)CurrTiming->nhlines >> 1`
+   emits `rlwinm rX,rX,31,1,31` matching retail (same as the matched `__VIInit`
+   `di0h = (u16)(((u32)tm->nhlines >> 1) + 1)`).
+
+5. **Enum-typed `>> 2` needs `(u32)` cast** (`VITVMode` is an enum = signed
+   int): `newTvMode = (u32)rmo->viTVmode >> 2;` for `srwi` vs `srawi`.
+
+6. **Branch polarity of a goto-guard is compiler-fixed**: `if (field == 0) {
+   flushNow = FALSE; goto flushCheck; }` with the flush body as fall-through
+   cannot reproduce retail's `beq`-to-false-assign-after-body layout (decomp
+   emits `bne`-to-body with the false-assign inline); inverted `if (field != 0)
+   {} else {...}` normalizes identically. A single natural goto for shared
+   flush paths is fine; duplicated loop bodies are NOT merged by this build
+   (retail's MWCC merged them) — keep one shared copy + goto.
+
+Residual (both targets): pure scheduler/regalloc — retail hoists `tm->acv`
+right after getTiming, stores `HorVer.timing` before the clamp `subfic`,
+interleaves `changed` u64 read-modify-writes differently, and (retrace) uses a
+dead volatile `VI_DI3_H` re-load in the intrMask branch shadow (2 instrs) plus
+regionally shifted colours in the vsync/flush-field section (r7/r6/r5 vs
+r6/r5/r3). No consistent register bijection exists → register-renaming witness
+cannot certify; both targets need the out-of-band `--smt` probe (VIConfigure
+also blocked until OSPanic us-804f2934 is accepted; __VIRetraceHandler blocked
+by indirect PreCB/PostCB/PositionCallback calls).

@@ -253,14 +253,14 @@ void __VIDisplayPositionToXY(u32 hct, u32 vct, s16* x, s16* y);
 
 void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
     OSContext exceptionContext;
+    u16 reg;
     u32 intrMask = 0;
-    u32 reg;
     BOOL flushNow;
     BOOL enabled;
     u32 field;
     u32 hcount;
     u32 vcount;
-    u32 hcount2;
+    u32 prev;
     u32 halfLine;
     u32 nh;
     u32 dtvStatus;
@@ -308,9 +308,10 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
             hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
             do {
                 vcount = VI_HW_REGS[VI_DPH] & 0x7FF;
-                hcount2 = VI_HW_REGS[VI_DPV] & 0x7FF;
-            } while (hcount2 != hcount);
-            __VIDisplayPositionToXY(hcount2, vcount, &x, &y);
+                prev = hcount;
+                hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+            } while (prev != hcount);
+            __VIDisplayPositionToXY(vcount, hcount, &x, &y);
             PositionCallback(x, y);
         }
 
@@ -332,10 +333,11 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
         hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
         do {
             vcount = VI_HW_REGS[VI_DPH] & 0x7FF;
-            hcount2 = VI_HW_REGS[VI_DPV] & 0x7FF;
-        } while (hcount2 != hcount);
+            prev = hcount;
+            hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+        } while (prev != hcount);
 
-        if (hcount2 != 1 && hcount2 != (CurrTiming->nhlines >> 1) + 1) {
+        if (hcount != 1 && hcount != ((u32)CurrTiming->nhlines >> 1) + 1) {
             vsync_timing_err_cnt++;
         }
     }
@@ -345,28 +347,33 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
             hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
             do {
                 vcount = VI_HW_REGS[VI_DPH] & 0x7FF;
-                hcount2 = VI_HW_REGS[VI_DPV] & 0x7FF;
-            } while (hcount2 != hcount);
+                prev = hcount;
+                hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+            } while (prev != hcount);
 
-            halfLine = ((hcount2 - 1) << 1) + (vcount - 1) / CurrTiming->hlw;
+            halfLine = ((hcount - 1) << 1) + (vcount - 1) / CurrTiming->hlw;
             nh = CurrTiming->nhlines;
             field = ((nh << __cntlzw(nh ^ halfLine)) >> 31);
-            flushNow = (field != 0);
-        } else {
-            flushNow = TRUE;
+            if (field == 0) {
+                flushNow = FALSE;
+                goto flushCheck;
+            }
         }
 
-        if (flushNow) {
-            while (shdwChanged != 0) {
-                regIndex = cntlzd(shdwChanged);
-                VI_HW_REGS[regIndex] = shdwRegs[regIndex];
-                shdwChanged &= ~((u64)1 << (63 - regIndex));
-            }
+        while (shdwChanged != 0) {
+            regIndex = cntlzd(shdwChanged);
+            VI_HW_REGS[regIndex] = shdwRegs[regIndex];
+            shdwChanged &= ~((u64)1 << (63 - regIndex));
+        }
 
-            shdwChangeMode = 0;
-            CurrTiming = HorVer.timing;
-            CurrTvMode = HorVer.tv;
-            CurrBufAddr = NextBufAddr;
+        shdwChangeMode = 0;
+        CurrTiming = HorVer.timing;
+        CurrTvMode = HorVer.tv;
+        CurrBufAddr = NextBufAddr;
+        flushNow = TRUE;
+
+    flushCheck:
+        if (flushNow) {
             flushFlag = 0;
             SIRefreshSamplingRate();
         }
@@ -404,7 +411,11 @@ void __VIRetraceHandler(s16 intrType, OSContext* ctx) {
     if (tvtype != old_tvtype) {
         old_tvtype = tvtype;
 
-        __VISetFilter4EURGB60((tvtype == 5) ? 1 : 0);
+        if (tvtype == 5) {
+            __VISetFilter4EURGB60(1);
+        } else {
+            __VISetFilter4EURGB60(0);
+        }
 
         if (tvtype == 1) {
             switch (g_current_time_to_dim) {
@@ -1059,15 +1070,15 @@ void VIConfigure(const GXRenderModeObj* rmo) {
         HorVer.nonInter = newNonInter;
     }
 
-    newTvMode = rmo->viTVmode >> 2;
+    newTvMode = (u32)rmo->viTVmode >> 2;
     currTvMode = *(u32*)OSPhysicalToCached(0xCC);
 
     if (newTvMode == 4) {
         PrintDebugPalCaution();
     }
 
-    if (((currTvMode == 1 || currTvMode == 5) && (newTvMode != 1 && newTvMode != 5)) ||
-        ((newTvMode == 1 || newTvMode == 5) && (currTvMode != 1 && currTvMode != 5))) {
+    if (((currTvMode != 1 && currTvMode != 5) && (newTvMode == 1 || newTvMode == 5)) ||
+        ((currTvMode == 1 || currTvMode == 5) && (newTvMode != 1 && newTvMode != 5))) {
         OSPanic("vi.c", 0xA5B,
                 "VIConfigure(): Tried to change mode from (%d) to (%d), which is forbidden\n",
                 currTvMode, newTvMode);
@@ -1110,9 +1121,9 @@ void VIConfigure(const GXRenderModeObj* rmo) {
     HorVer.AdjustedDispPosY = (u16)MAX((s16)HorVer.DispPosY + displayOffsetV, frac);
 
     {
+        s32 t0 = (s16)tm->acv * 2 - frac;
+        s32 adjB = (s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV - t0;
         s32 adjA = (s16)HorVer.DispPosY + displayOffsetV - frac;
-        s32 adjB = (s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV -
-                   ((s16)tm->acv * 2 - frac);
 
         HorVer.AdjustedDispSizeY = (u16)(HorVer.DispSizeY + MIN(adjA, 0) - MAX(adjB, 0));
         HorVer.AdjustedPanPosY = (u16)(HorVer.PanPosY - MIN(adjA, 0) / coeff);
@@ -1120,7 +1131,10 @@ void VIConfigure(const GXRenderModeObj* rmo) {
             (u16)(HorVer.PanSizeY + MIN(adjA, 0) / coeff - MAX(adjB, 0) / coeff);
     }
 
-    hct = (tm->nhlines % 2) ? tm->hlw : 0;
+    {
+        u16 odd = (u16)(tm->nhlines % 2);
+        hct = odd ? tm->hlw : 0;
+    }
     vct = (u16)(tm->nhlines / 2 + 1) | 0x1000;
 
     regs[VI_DI0_L] = (u16)(hct + 1);
@@ -1128,28 +1142,35 @@ void VIConfigure(const GXRenderModeObj* rmo) {
     regs[VI_DI0_H] = vct;
     MARK_CHANGED(VI_DI0_H);
 
-    if (HorVer.nonInter == 2 || HorVer.nonInter == 3) {
-        regs[VI_DCR] = (u16)((regs[VI_DCR] & ~0x4) | 0x4);
-        if (HorVer.tv == 8) {
-            regs[VI_VICLK] = (u16)(regs[VI_VICLK] & ~0x1);
+    {
+        u32 dcr = regs[VI_DCR];
+        u32 viclk = regs[VI_VICLK];
+
+        if (HorVer.nonInter == 2 || HorVer.nonInter == 3) {
+            dcr = (dcr & ~0x4) | 0x4;
+            if (HorVer.tv == 8) {
+                viclk = viclk & ~0x1;
+            } else {
+                viclk = (viclk & ~0x1) | 0x1;
+            }
         } else {
-            regs[VI_VICLK] = (u16)((regs[VI_VICLK] & ~0x1) | 0x1);
+            dcr = (dcr & ~0x4) | ((HorVer.nonInter & 1) << 2);
+            viclk = viclk & ~0x1;
         }
-    } else {
-        regs[VI_DCR] = (u16)((regs[VI_DCR] & ~0x4) | ((HorVer.nonInter & 1) << 2));
-        regs[VI_VICLK] = (u16)(regs[VI_VICLK] & ~0x1);
+
+        dcr = (dcr & ~0x8) | (HorVer.threeD << 3);
+
+        if (HorVer.tv == 1 || HorVer.tv == 2 || HorVer.tv == 3) {
+            dcr = (dcr & ~0x300) | (HorVer.tv << 8);
+        } else {
+            dcr = dcr & ~0x300;
+        }
+
+        regs[VI_DCR] = (u16)dcr;
+        MARK_CHANGED(VI_DCR);
+        regs[VI_VICLK] = (u16)viclk;
+        MARK_CHANGED(VI_VICLK);
     }
-
-    regs[VI_DCR] = (u16)((regs[VI_DCR] & ~0x8) | (HorVer.threeD << 3));
-
-    if (HorVer.tv == 1 || HorVer.tv == 2 || HorVer.tv == 3) {
-        regs[VI_DCR] = (u16)((regs[VI_DCR] & ~0x300) | (HorVer.tv << 8));
-    } else {
-        regs[VI_DCR] = (u16)(regs[VI_DCR] & ~0x300);
-    }
-
-    MARK_CHANGED(VI_DCR);
-    MARK_CHANGED(VI_VICLK);
 
     {
         u16 panSizeX = HorVer.PanSizeX;

@@ -3,12 +3,28 @@
 
 #include <harness_catalog.h>
 
-void criware_803A3A48() {}
 
 extern char lbl_eu_8051BF28[];
 extern void MWSFSVM_Error(const char* fmt, ...);
 extern u32 criware_803A0BA8(void* self, u32 x);
 extern void criware_803A0BDC(void* self);
+
+void criware_803A3A48(void* self) {
+    s32 i;
+    for (i = 0; i < 32; i++) {
+        s32* entry = (s32*)((u8*)self + (31 - i) * 4 + 0x558);
+        if (*entry != 0) {
+            if (*(s32*)((u8*)self + 0x540) != 0)
+                criware_803A0BA8(self, (u32)*entry);
+            else
+                criware_803A0BDC((void*)*entry);
+            (*(s32*)((u8*)self + 0x554))--;
+            *entry = 0;
+        }
+    }
+}
+
+void criware_803A3A48(void* self);
 
 s32 criware_803A3AE4(void* self, s32 x) {
     if (x <= 0) return 0;

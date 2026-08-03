@@ -79,7 +79,37 @@ void cvFsSetDefDev(const char* name) {
 
 void cvFsOpen() {}
 
-void getDevName() {}
+void getDevName(char* dst, char* dev, const char* src) {
+    s32 i, j, k;
+    if (src == NULL) return;
+    for (i = 0; i < 297; i++) {
+        if (src[i] == ':' || src[i] == 0) break;
+        dst[i] = src[i];
+    }
+    if (src[i] != 0) {
+        dst[i] = 0;
+        memcpy(dev, dst, strlen(dst) + 1);
+        dst[0] = 0;
+        return;
+    }
+    dst[i] = 0;
+    i++;
+    if (i == 2) {
+        i = 0;
+        dst[0] = 0;
+    }
+    for (k = 0; k < 297 - i; k++) {
+        if (src[i + k] == 0) break;
+        dst[k] = src[i + k];
+    }
+    dst[k] = 0;
+    {
+        s32 n = strlen(dst);
+        for (k = 0; k <= n; k++) {
+            if ((u8)(dst[k] - 'a') <= 25) dst[k] -= 32;
+        }
+    }
+}
 
 void cvFsClose(void *hndl) {
     CvFsHandle *h = (CvFsHandle *)hndl;

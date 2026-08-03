@@ -7337,3 +7337,15 @@ param regresses the whole function (0x134); (2) the loop count comes from the
 FIRST strlen's len+1 (retail calls strlen a second time — the `strlen` in the
 loop condition regresses to 0x14C); (3) a 5-cycle register rotation (retail
 base=r31/name=r27/len=r28/dev=r29/i=r30; decomp base=r29/name=r26/...).
+
+### CriWare cvfs getDevName — device-name parser (56.9%, loop color rotation)
+`getDevName(dst, dev, src)`: `if (src == NULL) return;` FIRST (the arg3-null
+check is the retail's first instruction). The 297-char copy loop checks BOTH
+`:` and 0; the second (post-`i==2` reset) loop checks ONLY 0 and must be the
+CTR-counted form `for (k = 0; k < 297 - i; k++) { if (src[i+k] == 0) break;
+dst[k] = src[i+k]; }` (the `while (j < 297)` bottom-test form is +4B; the
+`dst[j-i]` derived-index form shrinks to 0x190). The `:`-found path:
+`dst[i]=0; memcpy(dev, dst, strlen(dst)+1); dst[0]=0; return;`. Residual 12
+structural = a 4-cycle register rotation in the unrolled copy loop (retail
+src=r7/dst=r6/cnt=r9/char=r8; decomp src=r6/dst=r4/cnt=r8/char=r7) — pure
+colors, no source form moves them.

@@ -1113,6 +1113,9 @@ void __wudSyncFlushCallback(SCStatus status) {
     }
 }
 
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 u8 __wudSyncPrepareSearch(void) {
     WUDCB* p = &_wcb;
     WUDDevInfo* pDev;
@@ -1175,6 +1178,7 @@ u8 __wudSyncPrepareSearch(void) {
     p->UNK_0x748 = 0x32;
     return WUD_STATE_SYNC_WAIT_FOR_START_SEARCH;
 }
+#pragma pop
 
 u8 __wudSyncTryConnect(void) {
     WUDCB* p = &_wcb;
@@ -1408,6 +1412,9 @@ u8 __wudSyncVirginStandard(void) {
     _dev_handle_to_bda[pWork->devHandle] = pWork->devAddr;
     return WUD_STATE_SYNC_STORED_LINK_KEY_TO_EEPROM;
 }
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 u8 __wudSyncStoredDevInfoToNand(void) {
     extern char lbl_805625AC[];
     extern char lbl_80562544[];
@@ -1456,6 +1463,7 @@ u8 __wudSyncStoredDevInfoToNand(void) {
 
     return result;
 }
+#pragma pop
 void __wudOpenWiiFitCallback(s32 result) {
     extern char lbl_805625D0[];
 
@@ -2404,6 +2412,9 @@ u16 _WUDGetNotAckedSize(s8 handle) {
     return notAckedSize;
 }
 
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 u8 __wudStackCheckDeviceInfo(void) {
     WUDCB* p = &_wcb;
     WUDDevInfo* pDev;
@@ -2448,6 +2459,7 @@ u8 __wudStackCheckDeviceInfo(void) {
 
     return WUD_STATE_STACK_CHECK_DEVICE_INFO;
 }
+#pragma pop
 
 void __wudStackHandler(void) {
     char* pMsg = _wudWiiRemoteDescriptor;

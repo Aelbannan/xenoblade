@@ -5,7 +5,13 @@
 
 void AIFF_GetInfo() {}
 
-void ADXB_CheckAiff() {}
+extern char lbl_eu_80516B20[];
+
+int ADXB_CheckAiff(void* self) {
+    if (memcmp(self, lbl_eu_80516B20, 4) == 0 && memcmp((u8*)self + 8, lbl_eu_80516B20 + 5, 4) == 0)
+        return 1;
+    return 0;
+}
 
 void ADX_DecodeInfoAiff() {}
 

@@ -21,7 +21,7 @@ const char* G3dObj::GetTypeName() const {
 }
 
 G3dObj::~G3dObj() {
-    Dealloc(mpHeap, this);
+    MEMFreeToAllocator(mpHeap, this);
 }
 
 void G3dObj::Destroy() {

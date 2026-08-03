@@ -879,6 +879,22 @@ Went 92% HIGH_MATCH (110 structural) → 100% byte-identical via four source-sha
 
 Ground truth came from the retail ctor (member stores at 0x8/0x14/0xB8/0x8F/0x90/0x97…), `set_text` (mpText base 0xBC, row stride 0x18), `calc` (mControllerFlag 0x80, mVibFlag 0x8C, mSimpleSyncFlag 0x91, mEndSimpleSyncFlag 0x92, mInitFlag 0x94…, mOnPaneVibFrame 0x1B0), `update` (mGetPadInfoTime 0x7C, unk88 write), `setAdjustFlag` (mAdjustFlag 0x8F), `startPointEvent` (mButtonNum 0xC, mAnmNum 0x10 as the inlined findAnimator bound, mForcusSEWaitTime 0x68). Result: both targets byte-identical → `FULL_MATCH` (100%), split-size PASS. Note the donor's `at 0x…` comments are unreliable (mpLayout is 0x1D8, mDrawInfo 0x1F8, not 0x1E8/0x208); retail also keeps `WPADInfo` as a **static** `sWpadInfo` (not a member) and `mpText` is written up to `[9][5]` (60 pointers).
 
+`update` (us-80329780, 0x994) FULL_MATCH: the pointer-enable flag must be written as a **De Morgan `&&`-of-`||`s condition**, not the natural `(2,2)||(7,7)` form:
+
+```cpp
+bool pointerEnableFlag;
+if ((use != WPAD_DEV_CLASSIC || dev != WPAD_DEV_CLASSIC) &&
+    (use != WPAD_DEV_NUNCHUK || dev != WPAD_DEV_NUNCHUK)) {
+    if (kpad->dpd_valid_fg > 0) { pointerEnableFlag = true; }
+    else { pointerEnableFlag = false; }
+} else {
+    pointerEnableFlag = true;
+}
+```
+
+- The natural `if ((use==2&&dev==2)||(use==7&&dev==7)) f=1; else f = dpd>0;` forms make MWCC fold `bool = (s8>0)` into the `neg/andc/rlwinm` sign idiom (unmatchable — retail HBM never uses it). The `&&`-of-`||`s form puts the `>0` comparison inside the THEN of a complex condition, forcing the retail's **branchy bool diamond** (`extsb.; ble→F; T:li1;b; F:li0;b; T_AB:li1`) with the flag=1 else-block placed last (fall-through into the call). The `||` inside each clause keeps the `dev_type` load un-CSE'd (two `lbz 0x5c(r6)` like retail); a flat `&&` chain CSEs it (1 insn short).
+- Other keys: `getInfoAsync` uses the **static `sWpadInfo`** (extern "C" pinned), not the 0x14C member placeholder; `unk88 = i` before `mControllerFlag[i] = true`; the vec gates need `WPAD_ERR_CORRUPTED (-7)` alongside `WPAD_ERR_OK`, and the nunchuk (7) pair checks in the setKpad flag, probe-skip and vec-build; the cursor `VEC3` is **one variable** assigned `VEC3(0,0,15/rad)` (the retail's second stack copy is the RHS-constructor temp, kept as a dead store — two named VEC3s spill 4 copies). `WPAD_DEV_NUNCHUK = 7` was added to `revolution/wpad/WPAD.h` (additive; official SDK value).
+
 ### RVL_SDK hbm/HBMRemoteSpk.cpp — RemoteSpk::UpdateSpeaker FULL_MATCH: mixed-sign loop guard, lazy s8 extsb, declaration-order regalloc (Wii/1.1 `-O4,p`)
 
 `RemoteSpk::UpdateSpeaker` (us-80323f80) matched byte-identical (0/155 hexdiff mismatches, `cycle` issued a `full-instruction-match` certificate). Three reusable keys:

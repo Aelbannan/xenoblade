@@ -1061,6 +1061,18 @@ Remaining: 28 pure reg-swaps (register allocation — retail chains rotate r8/r9
 | Every call reloc and every function symbol in the unit is C++-mangled (`__HBMSYNRunVolumeEnvelope__FPv`, `HBMMIXReleaseChannel__FP6_AXVPB`, `__HBMSYNClearVoiceReferences__FP6_AXVPB`) | hbm cflags use `-lang=c++` even for `.c` files; the retail hbm lib exports plain C names | Wrap the extern declarations **and** the function definitions in `#ifdef __cplusplus extern "C" { #endif … }` (same as syn.c/synenv.c/synmix.c) — clears all 5 call reloc drifts in ServiceVoice and unmangles the emitted symbols (body bytes unchanged) |
 | `__HBMSYNClearVoiceReferences` residual: decomp colors param vpb=r29 / idx=r31 / voice=r31 (merged with idx); retail vpb=r31 / idx=r29 / voice=r31 (merged with vpb). Prologue `stw r31; mr r31,r3; stw r30; stw r29` vs decomp `stw r31; stw r30; stw r29; mr r29,r3` — the mr position follows its target register's save slot | Regalloc soft-cap: invariant across 9 source shapes (6 declaration orders, s32/u32 idx, statement orders incl. voice-before-free and index-load-first, `__HBMSYNVoice + idx` pointer arith, `u32 key` local, AXVPB*-typed call decl, byte-pointer load form). Only the param vpb↔idx swap differs; instruction set/order otherwise identical | Accept as regalloc soft-cap — record `accept via --smt out-of-band` (callees HBMGetIndex/HBMFreeIndex/HBMMIXReleaseChannel all FULL_MATCH so the SMT gate is open); do NOT chase with asm or register tricks |
 
+## RVL_SDK hbm/synctrl.c — NoteOn/MidiIn FULL_MATCH: 2D member array + triple-access idiom, byte-address CSE break, decl-order color (Wii/1.1 `-O4,p`, C++)
+
+`__HBMSYNNoteOn` (us-80343ad0, 0x22C) and `__HBMSYNMidiIn` (us-80343d00, 0x11C) both FULL_MATCH 100% (0 structural / 0 reg-swaps). Voice table = `HBMSYNVOICE* voiceTable[16][128]` (inline at synth+0x408, row stride 0x200). Three reusable levers:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| NoteOn note-on slot access (`synth + ch*512 + key*4 + 0x408`, load + NULL-store spanning a call) folds into `add r31,r3,r0` + `lwz/stw rD,0x408(r31)` (1 callee-saved reg); retail splits base+index `addi r30,r3,0x408` + `lwzx/stwx rD,r30,r31` (2 regs). 4 structural + the freed r30 hoists `ch*4` across the setup calls → 1 instr short → ±4 cascade through the whole tail | MWCC folds a 2-access address across a call regardless of source form (10+ variants: single expr, slot/row locals, `&voiceTable[ch][0]`, 1D flat index, cell pointer, volatile, `-ipa off`, Wii/1.0a/GC/3.0a5.2 all fold). A **third source-level access** to the same cell (check + call-arg + store) flips the cost model: with 3 references the allocator keeps base+index live in r30/r31 and emits exactly the retail `lwzx`/`stwx` pair | Write the guard as `if (synth->voiceTable[channel][key] != NULL) { __HBMSYNSetVoiceToRelease(synth->voiceTable[channel][key]); synth->voiceTable[channel][key] = NULL; }` — the two loads CSE into one `lwzx`, but liveness still sees 3 cell references → split. (The same 2D form in MidiIn case-8 with 2 accesses reproduces retail's folded `add r31` + `lwz 0x408(r31)` allocation `ch<<9→r4, key<<2→r0`; 1D `voiceTable[(ch<<7)+key]` regresses to a 3-instr index `rlwinm 7/add/rlwinm 2`) |
+| `synth->instrPtr[channel]` and `synth->pan[channel]` share the `synth + ch*4` subexpression → MWCC CSEs it into callee-saved r30 across the 4 setup calls and reuses it at the `HBMMIXInitChannel` arg site (missing the retail `clrlslwi ch,2` re-materialization → 1 instr short, cascading ±4) | Cross-call CSE of a struct-member scaled index | Express the pan/ctrl reads as byte-address forms: `*(s32*)((u8*)synth + 0xAC + ((u32)channel << 2)) >> 16` and `*(u8*)((u8*)synth + 0xEC + channel)` — the CSE no longer unifies them with `instrPtr[channel]`, retail's recompute appears, sizes align to 0x22C/0x22C |
+| Final 7 diffs: `ok` (volatile, live li→cmpi across the ie-block) and `ie` colored r4/r5 swapped vs retail (ok=r5, ie=r4) | Chaitin color of two block-adjacent volatile locals | Hoist `u8* ie;` to function scope and declare it **before** `u32 ok;` — the first-declared volatile gets r4, flipping both into retail's colors (declaration order lever, cf. l2c_link.c / bte btm notes) |
+
+Anti-pattern to avoid: a `u32 rowIdx = channel << 7;` intermediate for `voiceTable[rowIdx][key]` is **semantically wrong** — rowIdx is a row *index*, so `voiceTable[rowIdx][key]` addresses `synth + 0x408 + (channel<<7)*128*4` = `ch<<16` bytes, not `ch<<9`. Do not use it even though hexdiff may superficially classify the resulting `rlwinm` as a reg-swap.
+
 ## RVL_SDK vi/vi3in1 (US, mwcc_43_151 `-O4,p`) — DAC/AVE I2C setters, 10/10 FULL_MATCH
 
 All ten `vi3in1.c` setters (`__VISetYUVSEL`, `__VISetCGMS`, `__VISetWSS`, `__VISetClosedCaption`, `__VISetTrapFilter`, `VISetTrapFilter`, `__VISetRGBOverDrive`, `__VISetRGBModeImm`, `VISetRGBModeImm`, `VISetGamma`) matched byte-identical with `(u8)`-casted buffer bytes + sda21 globals defined in-TU.
@@ -6095,6 +6107,27 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   shape emits it (tested -O4,p/-O4,s, C/C++, do/while/for, return forms); SMT
   blocked by the unknown indirect callee. Keep the C candidate with
   `__sync(); __isync();` (56% static / 91.9% fuzzy).
+
+### `__HBMSYNGetRelativePitch` — div/table schedule: retail prioritises the integer div chain, decomp the float/load chain (synpitch.c, us-803443b0)
+- Retail positive branch interleaves the two `/100` chains (`rem/100` = `mulhw`
+  on rem at 0x60, `v/100` = `mulhw` on v at 0x68 — both present, so the source
+  must be `sem = rem / 100` + `cent = v % 100` with a **separate** division on
+  `v`, NOT `rem % 100` even though `oct*1200 % 100 == 0` makes them equal). The
+  three scheduling-permutation pairs (6 structural, everything else
+  byte-identical modulo reg-swaps):
+  1. `srawi t2,5` vs `rlwinm sem,2` order (ready-list tie-break after `add sem`);
+  2. `mulli v100,100` vs `fmuls f1,f1,f0` order — retail issues the integer
+     chain (cent) before the float join, decomp hoists the fmuls;
+  3. negative branch `rlwinm sem,2`+`neg` (= `-(sem<<2)`) vs `neg`+`rlwinm`
+     (= `(-sem)<<2`) — instruction-selection/order, both equal.
+- Tried and failed to flip (Wii/1.1 retail-confirmed): single-expression
+  returns, statement reorders (cent-before-sem, named `v100` intermediate),
+  `0 - sem`, `-schedule off` (destroys all 4 fns), `-ipa off` (no change),
+  `-O4,s` (0%), `GC/3.0a5.2` (regresses SetupPitch 100%→76.9%). ~45 prior
+  variants in attempts history. Siblings `__HBMSYNSetupPitch/SetupSrc/UpdateSrc`
+  stay 100%. 92.0% objdiff fuzzy, split PASS. Same class as
+  `__wpadIsControllerDataChanged` (MWCC_REFERENCE §__wpad): record stall,
+  accept via `--smt` out-of-band.
 
 ### RVL_SDK gx/GXInit.c — `__GXInitRevisionBits` + `GXInit` FULL_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p`)
 

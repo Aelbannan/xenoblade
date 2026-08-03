@@ -57,7 +57,7 @@ typedef struct HBMSYNSYNTH {
     u32 inBufBase;
     u32 inBufCount;
     u32 activeVoiceCount;
-    HBMSYNVOICE* voiceTable[2048];
+    HBMSYNVOICE* voiceTable[16][128];
 } HBMSYNSYNTH;
 
 extern "C" {
@@ -90,19 +90,16 @@ void __HBMSYNResetAllControllers(HBMSYNSYNTH* synth)
 void __HBMSYNNoteOn(HBMSYNSYNTH* synth, u8 channel, u8 key, u8 velocity)
 {
     if (velocity != 0) {
-        HBMSYNVOICE* existing;
         AXVPB* axVoice;
         s32 vIdx;
         HBMSYNVOICE* sv;
-        u32 iid;
+        u16 iid;
+        u8* ie;
         u32 ok;
 
-        existing =
-            *(HBMSYNVOICE**)((u8*)synth + (channel << 9) + 0x408 + (key << 2));
-        if (existing != NULL) {
-            __HBMSYNSetVoiceToRelease(existing);
-            *(HBMSYNVOICE**)((u8*)synth + (channel << 9) + 0x408 + (key << 2)) =
-                NULL;
+        if (synth->voiceTable[channel][key] != NULL) {
+            __HBMSYNSetVoiceToRelease(synth->voiceTable[channel][key]);
+            synth->voiceTable[channel][key] = NULL;
         }
 
         axVoice = AXAcquireVoice(31, (AXVoiceCallback)__HBMSYNClearVoiceReferences,
@@ -114,64 +111,63 @@ void __HBMSYNNoteOn(HBMSYNSYNTH* synth, u8 channel, u8 key, u8 velocity)
         vIdx = HBMAllocIndex(axVoice->index);
         if (vIdx >= 0) {
             sv = &__HBMSYNVoice[vIdx];
-        sv->axvpb = axVoice;
-        sv->synth = synth;
-        sv->channel = channel;
-        sv->key = key;
-        sv->velocity = velocity;
+            sv->axvpb = axVoice;
+            sv->synth = synth;
+            sv->channel = channel;
+            sv->key = key;
+            sv->velocity = velocity;
 
-        iid = ((u16*)((u8*)synth->instrPtr[channel]))[key];
+            iid = ((u16*)synth->instrPtr[channel])[key];
+            if (iid == 0xFFFF) {
+                ok = 0;
+            } else {
+                u32 kgi;
+                u32 kgdi;
+                u16 si;
 
-        if (iid == 0xFFFF) {
-            ok = 0;
-        } else {
-            u8* ie;
-            u32 kgi;
-            u32 kgdi;
-            u16 si;
+                ok = 1;
+                ie = (u8*)synth->instruments + iid * 0x18;
+                sv->instrumentEntry = (void*)ie;
 
-            ok = 1;
-            ie = (u8*)synth->instruments + iid * 0x18;
-            sv->instrumentEntry = (void*)ie;
+                kgi = *(u32*)(ie + 0x10);
+                sv->region = (void*)((u8*)synth->regions + kgi * 0x50);
 
-            kgi = *(u32*)(ie + 0x10);
-            sv->region = (void*)((u8*)synth->regions + kgi * 0x50);
+                kgdi = *(u32*)(ie + 0x14);
+                sv->keygroup = (void*)((u8*)synth->keygroups + (kgdi << 4));
 
-            kgdi = *(u32*)(ie + 0x14);
-            sv->keygroup = (void*)((u8*)synth->keygroups + (kgdi << 4));
-
-            si = *(u16*)((u8*)sv->keygroup + 0x0C);
-            sv->sample = (void*)((u8*)synth->samples + si * 0x2E);
-        }
-
-        if (ok) {
-            *(HBMSYNVOICE**)((u8*)synth + (channel << 9) + 0x408 + (key << 2)) =
-                sv;
-            synth->activeVoiceCount = synth->activeVoiceCount + 1;
-
-            __HBMSYNSetupPitch(sv);
-            __HBMSYNSetupVolume(sv);
-            __HBMSYNSetupPan(sv);
-            __HBMSYNSetupVolumeEnvelope(sv);
-
-            {
-                s32 fader = __HBMSYNGetVoiceFader(sv);
-                u32 vi = __HBMSYNGetVoiceInput(sv);
-                HBMMIXInitChannel(axVoice, vi, synth->pan[channel] >> 16,
-                                  synth->ctrl[channel], fader);
+                si = *(u16*)((u8*)sv->keygroup + 0x0C);
+                sv->sample = (void*)((u8*)synth->samples + si * 0x2E);
             }
 
-            __HBMSYNSetupSample(sv);
-            __HBMSYNSetupSrc(sv);
+            if (ok) {
+                synth->voiceTable[channel][key] = sv;
+                synth->activeVoiceCount = synth->activeVoiceCount + 1;
 
-            axVoice->pb.state = 1;
-            axVoice->sync |= 4;
-        } else {
-            sv->synth = NULL;
-            HBMMIXReleaseChannel(axVoice);
-            HBMFreeIndex(vIdx);
-            AXFreeVoice(axVoice);
-        }
+                __HBMSYNSetupPitch(sv);
+                __HBMSYNSetupVolume(sv);
+                __HBMSYNSetupPan(sv);
+                __HBMSYNSetupVolumeEnvelope(sv);
+
+                {
+                    s32 fader = __HBMSYNGetVoiceFader(sv);
+                    u32 vi = __HBMSYNGetVoiceInput(sv);
+                    HBMMIXInitChannel(
+                        axVoice, vi,
+                        *(s32*)((u8*)synth + 0xAC + ((u32)channel << 2)) >> 16,
+                        *(u8*)((u8*)synth + 0xEC + channel), fader);
+                }
+
+                __HBMSYNSetupSample(sv);
+                __HBMSYNSetupSrc(sv);
+
+                axVoice->pb.state = 1;
+                axVoice->sync |= 4;
+            } else {
+                sv->synth = NULL;
+                HBMMIXReleaseChannel(axVoice);
+                HBMFreeIndex(vIdx);
+                AXFreeVoice(axVoice);
+            }
         } else {
             AXFreeVoice(axVoice);
             return;
@@ -180,10 +176,10 @@ void __HBMSYNNoteOn(HBMSYNSYNTH* synth, u8 channel, u8 key, u8 velocity)
         // Note-off: release the voice bound to this channel/key slot.
         HBMSYNVOICE* voice;
 
-        voice = *(HBMSYNVOICE**)((u8*)synth + (channel << 9) + (key << 2) + 0x408);
+        voice = synth->voiceTable[channel][key];
         if (voice != NULL) {
             __HBMSYNSetVoiceToRelease(voice);
-            *(HBMSYNVOICE**)((u8*)synth + (channel << 9) + (key << 2) + 0x408) = NULL;
+            synth->voiceTable[channel][key] = NULL;
         }
     }
 }
@@ -205,11 +201,10 @@ void __HBMSYNMidiIn(HBMSYNSYNTH* synth, u8* msg)
     case 8: {
         HBMSYNVOICE* voice;
 
-        voice =
-            *(HBMSYNVOICE**)((u8*)synth + (chan << 9) + (d1 << 2) + 0x408);
+        voice = synth->voiceTable[chan][d1];
         if (voice != NULL) {
             __HBMSYNSetVoiceToRelease(voice);
-            *(HBMSYNVOICE**)((u8*)synth + (chan << 9) + (d1 << 2) + 0x408) = NULL;
+            synth->voiceTable[chan][d1] = NULL;
         }
         break;
     }

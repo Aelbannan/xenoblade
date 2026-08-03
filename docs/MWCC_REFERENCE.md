@@ -7990,3 +7990,27 @@ Retail `MPS_GetPackHd/GetLastSysHd/GetPketHd/GetSysHd` copy u64 fields as `lwz h
 
 ### CriWare mpv_get — retail forward param→callee-saved order is a fixed MWCC soft-cap (do not burn time)
 `MPV_GetBitRate/GetLinkFlg/GetVbvBufSiz` retail assigns callee-saved regs in FORWARD param order (r3→r31, r4→r30, r5→r29) while GC/3.0a5.2, Wii/1.1, GC/3.0a3.4, -O4, -ipa file, and every source shape (local orders, temps, typed structs) emit REVERSE (param2→r31). Contrast: mps_get retail is reverse (matches MWCC). 0 structural / pure reg-swaps on all three — witness-ineligible (bl-containing) → stall with `accept via --smt out-of-band`. GetPicAtr's `li 16; mtctr; lwzu/stwu; bdnz` copy loop is the same mtctr soft-cap as CBattleState vfunc26 (every constant-trip form unrolls ×8/16 under -O4,p); best shape is `u32 *s = h+0xB58; u32 *d = out-1; do { v0 = *(s+1); v1 = *(s+=2); *(d+1)=v0; *(d+=2)=v1; } while (--n != 0);` (0x7C exact, 4 structural = the mtctr family).
+
+### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_MATCH)
+
+When the retail epilogue restores LR FIRST (`lwz r0, X(sp)` before the callee-saved
+`lwz r31...`) but MWCC emits the LR load LAST (right before `mtlr`), and the
+function's last statement is a store, declare a **volatile pointer for the final
+store** — e.g. `*(volatile u32*)(base + 0x9E4) = 1;` or `volatile s32* p = &b->f; *p -= 1;` —
+and MWCC's scheduler emits the retail restore order (100% byte-identical).
+Verified on `adxm_lock` (us-8039dd8c, last store `field_0x40 += 1`) and
+`adxm_fs_proc` (us-8039e034, last store `field_0x9E4 = 1`), both FULL_MATCH.
+The trick does NOT apply when the function ends with a CALL (e.g.
+`adxm_goto_mwidle_border` ends with OSSetThreadPriority — epilogue wall persists).
+Same lever family as the adxm_unlock volatile-reload and ax_rna dead-load notes.
+
+### CriWare mwsfdfrm — &&-gate + exit-label reproduces the retail gate branch-over-branch on Wii/1.1 (criware_8039CD7C FULL_MATCH)
+
+The `[cmp; bc-true -> body; b -> epi; body]` gate (second condition of an `if (A && B) goto body;`)
+requires the **&& chain**: `if (SFH_IsExistStmId(...) == 1 && stm == 1) goto body; goto exit; exit: return; body:`
+with `#pragma opt_propagation off`. The first &&-condition folds to a direct
+branch to the epilogue; the second becomes the gate (bc to body + fall-through b).
+Single-condition gates (`if (stm == 1) goto body; goto exit;`) and if/else shapes
+all fold on both GC/3.0a5.2 and Wii/1.1. Also confirms the mwply-family retail is
+**Wii/1.1**: the unit's param-move order (r4 before r3) and store/arg-setup
+interleave match only under Wii/1.1 (cf. SVM_Init/SVM_Finish notes).

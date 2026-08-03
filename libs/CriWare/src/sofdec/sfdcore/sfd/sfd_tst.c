@@ -130,7 +130,7 @@ void SFTST_SetSpeed(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0x19c) = b;
 }
 
-static void sftst_CalcSub(void* self, s32* param, void* arg5, s32* out);
+static void sftst_CalcSub(void* self, s32* param, s32* arg5, s32* out);
 
 void SFTST_Calc(void* self, s32* param, void* arg5, s32* out) {
     s32 speed_a = *(s32*)((u8*)self + 0x198);
@@ -161,4 +161,29 @@ void SFTST_Calc(void* self, s32* param, void* arg5, s32* out) {
     }
 }
 
-void sftst_CalcSub(void* self, s32* param, void* arg5, s32* out) {}
+static void sftst_CalcSub(void* self, s32* param, s32* arg5, s32* out) {
+    if (((arg5[3] ^ 1) | arg5[2]) != 0 && *(s32*)self != 0) {
+        s64 d1;
+        s64 p01;
+
+        if (*(s64*)((u8*)self + 0x178) == -1)
+            *(s64*)((u8*)self + 0x178) = *(s64*)arg5;
+
+        d1 = (s64)(((s64)arg5[1] << 32) | (u32)arg5[0]) -
+             (s64)(((s64)*(s32*)((u8*)self + 0x17C) << 32) |
+                   (u32)*(s32*)((u8*)self + 0x178));
+        p01 = (s64)(((s64)param[1] << 32) | (u32)param[0]) -
+              (s64)(((s64)*(s32*)((u8*)self + 0x194) << 32) |
+                    (u32)*(s32*)((u8*)self + 0x190));
+
+        if (p01 >= 0) {
+            param[0] = *(s32*)((u8*)self + 0x190);
+            param[1] = *(s32*)((u8*)self + 0x194);
+        }
+        (void)d1;
+    }
+    out[0] = param[0];
+    out[1] = param[1];
+    out[2] = param[2];
+    out[3] = param[3];
+}

@@ -45,9 +45,6 @@ int mwPlyStartFname(void *h, const char *fname) {
     return mw_sfd_start_ex(h, (void *)fname, NULL);
 }
 
-int mwPlyStartSj(void *h, int sj) {
-    return mw_sfd_start_ex(h, NULL, (void *)(u32)sj);
-}
 
 int mwSfdStopDec(void *h) {
     SFD_Stop(sfd(h));
@@ -88,6 +85,23 @@ extern void* lbl_eu_805FF3A0;
 extern s32 MWSFD_IsEnableHndl(void* self);
 extern void SFD_RequestStop(void* sst);
 extern void MWSFD_RequestStopRead(void* self);
+extern void MWSFD_SetProhibitServer(int on);
+
+void mwPlyStartSj(void *h, int sj) {
+    if (MWSFD_IsEnableHndl(h) != 1) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x336);
+        return;
+    }
+    MWSFD_SetProhibitServer(1);
+    mwSfdStopDec(h);
+    *(s32*)((u8*)h + 0x500) = sj;
+    *(s32*)((u8*)h + 0x514) = 2;
+    *(s32*)((u8*)h + 0x518) = 0;
+    *(s32*)((u8*)h + 0x51c) = 0;
+    *(s32*)((u8*)h + 0x520) = 0;
+    mw_sfd_start_ex(h, (void*)2, NULL);
+    MWSFD_SetProhibitServer(0);
+}
 
 void fn_803A537C(void* self) {
     if (lbl_eu_805FF3A0 != NULL) {

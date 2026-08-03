@@ -369,11 +369,10 @@ s32 SFMPV_ExecServer(void* self) {
 // ---------------------------------------------------------------------------
 void sfmpv_ProcessAuxShc(void* self) {
     void* e = *(void**)((u8*)self + 0x2068);
+    void* p = *(void**)((u8*)e + 0);
     s32 buf[2];
-    void* p;
     s32 c;
     buf[0] = *(s32*)((u8*)self + 0xd90);
-    p = *(void**)((u8*)e + 0);
     buf[1] = *(s32*)((u8*)self + 0xd94);
     if (buf[0] == 0 || buf[1] == 0)
         return;

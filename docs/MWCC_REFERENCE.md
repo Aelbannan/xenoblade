@@ -7708,3 +7708,10 @@ the e+8 compare needs the (s32) cast (signed cmpi). Residual 5 structural: the
 entry load [lwz r31,0x2068] schedules AFTER the buf[0] load (retail: first),
 the p load position, and the final store/li interleave (retail [li r0,2; stw;
 li r0,0xc8; stw] vs decomp [li r3,2; li r0,0xc8; stw; stw]).
+
+### CriWare sfd_mpv sfmpv_ProcessAuxShc — 90.9% (final)
+`void* p = *(void**)((u8*)e + 0);` must be declared IMMEDIATELY after the e
+load (the [lwz r31,0x2068; lwz r4,0(r31)] pairing — any intervening statement
+lets the buf[0] load jump ahead). Residual 2 structural: the final
+[li r3,2; li r0,0xc8; stw; stw] vs retail [li r0,2; stw; li r0,0xc8; stw] —
+the store/li interleave wall.

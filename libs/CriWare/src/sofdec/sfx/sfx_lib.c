@@ -3,6 +3,12 @@
 
 #include <harness_catalog.h>
 #include <string.h>
+#include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
+
+extern void* SFXZ_Create(void);
+extern void* SFXA_Create(void);
+extern void* SFXSUD_Create(void);
+void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height);
 
 /* ---- SFX library global state ----
  * lbl_eu_80619C10 is a0x528-byte structure:
@@ -47,7 +53,7 @@ void SFX_SetErrFn(void (*fn)(u32, const char*), u32 arg) {
     lbl_eu_80619C10.error_arg = arg;
 }
 
-SFXHandle SFX_Create(u32 width, u32 height) {
+SFXHandleState* SFX_Create(u32 width, u32 height) {
     SFXHandleState* hn;
     void* zmv;
     void* alp;

@@ -273,7 +273,48 @@ int MWSFSVR_IsSvrBdrHndl(void *h) {
     return *(u32 *)((u8 *)h + 0x7C) != 1;
 }
 
-void mwlSfdSleepDecSvr() {}
+extern void* MWSFLIB_GetLibWorkPtr(void);
+extern void ADXM_WaitVsync(void);
+extern void MWSFSVM_GotoIdleBorder(void);
+extern void mwPlySaveRsc(void);
+extern void mwPlyRestoreRsc(void);
+
+void mwlSfdSleepDecSvr(void* self) {
+    void* w;
+    int i;
+
+    mwPlySaveRsc();
+    w = MWSFLIB_GetLibWorkPtr();
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x78) = 1;
+    }
+    *(u32*)((u8*)w + 0x24) = 1;
+    MWSFSVM_GotoIdleBorder();
+    w = MWSFLIB_GetLibWorkPtr();
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x78) = 0;
+    }
+    *(u32*)((u8*)w + 0x24) = 0;
+    mwPlyRestoreRsc();
+    if ((s32)*(u32*)((u8*)self + 0x7C) == 1) {
+        for (i = 0; i < 10; i++) {
+            w = MWSFLIB_GetLibWorkPtr();
+            if (self != NULL) {
+                *(u32*)((u8*)self + 0x78) = 1;
+            }
+            *(u32*)((u8*)w + 0x24) = 1;
+            ADXM_WaitVsync();
+            w = MWSFLIB_GetLibWorkPtr();
+            if (self != NULL) {
+                *(u32*)((u8*)self + 0x78) = 0;
+            }
+            *(u32*)((u8*)w + 0x24) = 0;
+            if ((s32)*(u32*)((u8*)self + 0x7C) != 1) {
+                break;
+            }
+        }
+    }
+}
 
 void MWSFLSC_Pause(void* self, int flag);
 void* MWSFD_GetStmHn(void* self);

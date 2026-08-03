@@ -22,7 +22,7 @@ extern void *lbl_eu_80606E10; /* ring buffer object */
 extern void *lbl_eu_80606E14; /* memory buffer object */
 
 /* Forward declarations for internal functions */
-static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
+static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
                               int idx, u32 extraSize);
 void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
                         u32 *sizes, int idx);
@@ -85,66 +85,77 @@ void SFBUF_Init(void) {
  * Sets up the ring buffer at the given index with the specified
  * buffer size, extra size, and PTS queue initialization.
  */
-static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
+static int sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
                               int idx, u32 extraSize) {
     u8 *p = sfbuf_base(self, idx);
-    u32 bufSize = cumulative[idx];
-    u32 allocSize;
+    u32 bufSize = sizes[idx];
+    struct RingHead {
+        u32 f10, f14, f18, f1c, f20, f24;
+    } head;
+    u32 actualSize;
+    u32 memObj;
     void *ringObj;
+    u32 err;
     int active;
     int state;
+    u32 cs;
 
     if (bufSize == 0) {
         /* Buffer not allocated - mark inactive */
         active = 0;
         state = 4; /* not active */
+        goto store;
+    }
+
+    actualSize = bufSize - extraSize;
+    memObj = cumulative[idx]; /* buffer memory pointer */
+    err = 0;
+
+    head.f10 = 0;
+    active = 1;
+    state = 5; /* active */
+    head.f18 = memObj;
+    head.f1c = actualSize;
+
+    /* Allocate ring buffer */
+    if ((s32)actualSize <= 0) {
+        err = SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0C);
     } else {
-        u32 actualSize = bufSize - extraSize;
-        void *memObj = (void *)cumulative[idx]; /* buffer memory pointer */
-
-        active = 1;
-        state = 5; /* active */
-
-        /* Allocate ring buffer */
-        if (actualSize <= 0) {
-            SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0C);
-            allocSize = 0;
-        } else {
-            ringObj = SJRBF_Create(memObj, actualSize, extraSize);
-            if (ringObj == NULL) {
-                SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0A);
-                allocSize = 0;
-            } else {
-                allocSize = (u32)ringObj;
-            }
-        }
-
-        if (allocSize != 0) {
-            /* Lock and initialize buffer fields */
-            u32 cs;
-            SFLIB_LockCs(&cs);
-
-            *(u32 *)(p + OFF_BUFOBJ) = allocSize;
-            *(u32 *)(p + OFF_BUFSIZ) = actualSize;
-            *(u32 *)(p + OFF_WTOT) = 0;
-            *(u32 *)(p + OFF_RTOT) = 0;
-            *(u32 *)(p + OFF_DLM_PTR) = 0;
-            *(u32 *)(p + OFF_DLM_SIZE) = 0;
-
-            SFLIB_UnlockCs(&cs);
-
-            /* Initialize PTS queue */
-            SFPTS_InitPtsQue(p + 0x38);
+        head.f20 = extraSize;
+        head.f24 = 0;
+        ringObj = SJRBF_Create((void *)memObj, actualSize, extraSize);
+        head.f14 = (u32)ringObj;
+        if (ringObj == NULL) {
+            err = SFLIB_SetErr(NULL, SFBUF_ERR_BASE + 0x0A);
         }
     }
 
+    if (err == 0) {
+        /* Lock and initialize buffer fields */
+        SFLIB_LockCs(&cs);
+        *(u32 *)(p + 0x04) = 1;
+        *(struct RingHead *)(p + 0x10) = head;
+        *(u32 *)(p + 0x28) = 0;
+        *(u32 *)(p + 0x2C) = 0;
+        *(u32 *)(p + 0x30) = 0;
+        *(u32 *)(p + 0x34) = 0;
+        SFLIB_UnlockCs(&cs);
+
+        /* Initialize PTS queue */
+        SFPTS_InitPtsQue(p + 0x38);
+    } else {
+        return err;
+    }
+
+store:
     /* Set buffer metadata */
-    *(u32 *)(p + OFF_STATE) = state;
-    *(u32 *)(p + OFF_ACTIVE) = active;
+    *(u32 *)(p + 0x00) = state;
+    *(u32 *)(p + 0x04) = active;
     *(u32 *)(p + 0x08) = 0;
     *(u32 *)(p + 0x0C) = 0;
     *(u32 *)(p + 0x4C) = 9;
     *(u32 *)(p + 0x50) = 9;
+    return 0;
 }
 
 /*
@@ -158,65 +169,68 @@ static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
  * @param idx    Buffer group index
  * @param config Configuration array with sizes and metadata
  */
-void SFBUF_InitHn(void *self, int idx, u32 *config) {
+int SFBUF_InitHn(void *hn, void *area, u32 *cfg) {
     u32 cumulative[8];
-    u32 bufSize = config[0];
-    u32 divisor = config[11]; /* config[0x2C/4] */
-    u32 extraSize;
+    u32 *sizes = cfg + 8;
+    s32 extraSize;
+    s32 c1;
+    s32 r;
     int i;
 
-    /* Build cumulative offset array from config sizes */
-    cumulative[0] = bufSize;
-    for (i = 1; i < 7; i++) {
-        cumulative[i] = cumulative[i - 1] + config[i];
+    /* Build cumulative offset array from config sizes (starting at cfg[1]) */
+    c1 = (s32)cfg[1];
+    cumulative[0] = c1;
+    for (i = 1; i < 8; i++) {
+        cumulative[i] = cumulative[i - 1] + (s32)sizes[i - 1];
     }
 
-    /* Compute extra size as remainder of bufSize / divisor */
-    extraSize = bufSize - (bufSize / divisor) * divisor;
+    /* Compute extra size as remainder of cfg[2] / cfg[11] */
+    extraSize = (s32)cfg[2] - ((s32)cfg[2] / (s32)cfg[11]) * (s32)cfg[11];
 
     /* Initialize ring buffer (index 0) */
-    sfbuf_InitRingSj(self, cumulative, config, 0, extraSize);
-    if (*(u32 *)sfbuf_base(self, 0) != 0) return;
+    r = sfbuf_InitRingSj(area, cumulative, sizes, 0, extraSize);
+    if (r != 0) return r;
 
-    /* Initialize video frame buffer 0 (index 1) */
-    sfbuf_InitRingSj(self, cumulative, config, 1, 0x800);
-    if (*(u32 *)sfbuf_base(self, 1) != 0) return;
+    /* Initialize ring buffer 1 (0x800 extra) */
+    r = sfbuf_InitRingSj(area, cumulative, sizes, 1, 0x800);
+    if (r != 0) return r;
 
-    /* Initialize audio ring buffer 0 (index 2) */
-    sfbuf_InitRingSj(self, cumulative, config, 2, 0);
-    if (*(u32 *)sfbuf_base(self, 2) != 0) return;
+    /* Initialize ring buffer 2 */
+    r = sfbuf_InitRingSj(area, cumulative, sizes, 2, 0);
+    if (r != 0) return r;
 
-    /* Initialize video frame buffer 1 (index 3) */
-    sfbuf_InitVfrmBuf(self, self, cumulative, config, 3);
+    /* Initialize video frame buffer 0 (index 3) */
+    sfbuf_InitVfrmBuf(hn, area, cumulative, sizes, 3);
 
-    /* Initialize audio ring buffer 1 (index 4) */
-    sfbuf_InitAringBuf(self, cumulative, config, 4);
+    /* Initialize audio ring buffer 0 (index 4) */
+    sfbuf_InitAringBuf(area, cumulative, sizes, 4);
 
-    /* Initialize video frame buffer 2 (index 5) */
-    sfbuf_InitVfrmBuf(self, self, cumulative, config, 5);
+    /* Initialize video frame buffer 1 (index 5) */
+    sfbuf_InitVfrmBuf(hn, area, cumulative, sizes, 5);
 
-    /* Initialize audio ring buffer 2 (index 6) */
-    sfbuf_InitAringBuf(self, cumulative, config, 6);
+    /* Initialize audio ring buffer 1 (index 6) */
+    sfbuf_InitAringBuf(area, cumulative, sizes, 6);
 
     /* Set initial handle state */
-    *(u32 *)((u8 *)self + 0x32C) = 3;
-    *(u32 *)((u8 *)self + 0x330) = 1;
-    *(u32 *)((u8 *)self + 0x334) = 0;
-    *(u32 *)((u8 *)self + 0x338) = 0;
-    *(u32 *)((u8 *)self + 0x378) = 9;
-    *(u32 *)((u8 *)self + 0x37C) = 9;
-    *(u32 *)((u8 *)self + 0x33C) = 0;
-    *(u32 *)((u8 *)self + 0x340) = 0;
-    *(u32 *)((u8 *)self + 0x344) = 0;
-    *(u32 *)((u8 *)self + 0x348) = 0;
-    *(u32 *)((u8 *)self + 0x34C) = 0;
-    *(u32 *)((u8 *)self + 0x350) = 0;
-    *(u32 *)((u8 *)self + 0x354) = 0;
-    *(u32 *)((u8 *)self + 0x358) = 0;
-    *(u32 *)((u8 *)self + 0x35C) = 0;
-    *(u32 *)((u8 *)self + 0x360) = 0;
-    *(u32 *)((u8 *)self + 0x364) = 0;
-    *(u32 *)((u8 *)self + 0x368) = 0;
+    *(u32 *)((u8 *)area + 0x32C) = 3;
+    *(u32 *)((u8 *)area + 0x330) = 1;
+    *(u32 *)((u8 *)area + 0x334) = 0;
+    *(u32 *)((u8 *)area + 0x338) = 0;
+    *(u32 *)((u8 *)area + 0x378) = 9;
+    *(u32 *)((u8 *)area + 0x37C) = 9;
+    *(u32 *)((u8 *)area + 0x33C) = 0;
+    *(u32 *)((u8 *)area + 0x340) = 0;
+    *(u32 *)((u8 *)area + 0x344) = 0;
+    *(u32 *)((u8 *)area + 0x348) = 0;
+    *(u32 *)((u8 *)area + 0x34C) = 0;
+    *(u32 *)((u8 *)area + 0x350) = 0;
+    *(u32 *)((u8 *)area + 0x354) = 0;
+    *(u32 *)((u8 *)area + 0x358) = 0;
+    *(u32 *)((u8 *)area + 0x35C) = 0;
+    *(u32 *)((u8 *)area + 0x360) = 0;
+    *(u32 *)((u8 *)area + 0x364) = 0;
+    *(u32 *)((u8 *)area + 0x368) = 0;
+    return 0;
 }
 
 /*
@@ -344,22 +358,19 @@ s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
     u32 bufBase;
     int bufIdx;
     u32 cs;
+    s32 result = 0;
 
     /* Validate supply configuration */
     if (supply[1] == 0) {
-        return -1;
+        result = -1;
+    } else if (supply[0] != 0) {
+        if (supply[2] == 0 || (s32)supply[3] <= 0 || (s32)supply[5] > 0) {
+            result = -1;
+        }
     }
-    if (supply[0] != 0) {
-        /* Check additional fields */
-        if (supply[2] == 0) {
-            return -1;
-        }
-        if ((s32)supply[3] <= 0) {
-            return -1;
-        }
-        if ((s32)supply[5] > 0) {
-            return -1;
-        }
+
+    if (result != 0) {
+        return SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x08);
     }
 
     /* Determine buffer index from transport type */
@@ -376,9 +387,8 @@ s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
     bufBase = bufIdx * SFBUF_BUF_STRIDE;
 
     /* Check that buffer is in ready state */
-    if (*(u32 *)((u8 *)self + bufBase + 0x13B8) != SFBUF_STATE_READY) {
-        SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x09);
-        return -1;
+    if ((s32)*(u32 *)((u8 *)self + bufBase + 0x13B8) != SFBUF_STATE_READY) {
+        return SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x09);
     }
 
     /* Compute non-zero flag for supply pointer */
@@ -429,7 +439,6 @@ int fn_803C1CAC(void *self) {
     int bufIdx;
     u32 *fields;
 
-    /* Determine buffer index from transport type */
     if (SFTRN_IsSetup(self, 1)) {
         bufIdx = 0;
     } else if (SFTRN_IsSetup(self, 2)) {
@@ -440,10 +449,9 @@ int fn_803C1CAC(void *self) {
         bufIdx = 0;
     }
 
-    /* Check if buffer has supply configured */
     fields = (u32 *)((u8 *)self + bufIdx * 0x74 + 0x13B8);
 
-    if (fields[1] == 0 || fields[5] == 0) { /* active flag or ring obj */
+    if (fields[1] == 0 || fields[5] == 0) {
         return 0;
     }
     return 1;
@@ -856,13 +864,10 @@ int SFBUF_VfrmGetRead(void *self, int idx, int *out, int size) {
  * @param size  Data size to add
  * @param flags Additional flags
  */
-void SFBUF_VfrmAddRead(void *self, int idx, u32 size, u32 flags) {
+int SFBUF_VfrmAddRead(void *self, int idx, u32 size, u32 flags) {
     u8 *p = (u8 *)self + idx * 0x74;
-    s32 result;
-    u32 savedFlags;
-
-    result = 0;
-    savedFlags = flags;
+    u32 savedFlags = flags;
+    s32 result = 0;
 
     if (*(u32 *)(p + 0x13BC) == 0) {
         result = SFTRN_CallTrtTrif(self, *(int *)(p + 0x1404), 0x0C,
@@ -870,6 +875,7 @@ void SFBUF_VfrmAddRead(void *self, int idx, u32 size, u32 flags) {
     }
 
     *(u32 *)((u8 *)self + 0x50) = 1;
+    return result;
 }
 
 /*

@@ -33,7 +33,7 @@ typedef struct ADXT_ChannelObj ADXT_ChannelObj;
 // ADXT_Tsvr struct definition based on ASM analysis
 typedef struct ADXT_Tsvr {
     u8  field_0x00;         // field_0x00: unknown
-    u8  state;              // field_0x01: state (1=?, 3=playing, 4=done?)
+    s8  state;              // field_0x01: state (1=?, 3=playing, 4=done?)
     u8  format;             // field_0x02: format type
     u8  field_0x03;         // field_0x03: padding or unknown
     ADXSJD_State* sjd;      // field_0x04: sound job descriptor
@@ -115,8 +115,9 @@ void adxt_trap_entry_lps(void* self) {
     s32 end = ADXSJD_GetLpEndPos(sj);
     ADXSJD_TakeSnapshot(sj);
     ADXSJD_SetTrapCnt(sj, 0);
-    *(u32*)((u8*)self + 0x90) = end - start;
-    ADXSJD_SetTrapNumSmpl(sj, 0);
+    s32 d = end - start;
+    *(u32*)((u8*)self + 0x90) = d;
+    ADXSJD_SetTrapNumSmpl(sj, d);
     ADXSJD_SetTrapDtLen(sj, ofst);
     ADXSJD_SetDecPos(sj, start);
     ADXSJD_EntryTrapFunc(sj, (void*)adxt_trap_entry, self);
@@ -126,7 +127,7 @@ void adxt_trap_entry() {}
 
 extern s32 ADXSJD_GetLpStartOfst(void* sj);
 extern void ADXSTM_Seek(void* stm, s32 pos);
-extern void ADXSTM_SetEos(void* stm, s32 a);
+extern void ADXSTM_SetEos(void* stm, s16 a);
 
 void adxt_eos_entry(void* self) {
     void* stm = *(void**)((u8*)self + 8);
@@ -134,18 +135,18 @@ void adxt_eos_entry(void* self) {
     s32 dt;
     if (stm == NULL || adxt == NULL) return;
     dt = (s32)ADXSJD_GetDecDtLen(adxt);
-    if (*(u8*)((u8*)self + 2) == 4) {
-        ADXSTM_Seek(stm, 0x7FFFFFFF);
+    if ((s8)*(u8*)((u8*)self + 2) == 4) {
+        ADXSTM_Seek(*(void**)((u8*)self + 8), 0x7FFFFFFF);
         return;
     }
     if (*(s8*)((u8*)self + 0x6C) == 0) {
-        if (ADXSJD_GetLpStartOfst(adxt) < *(s32*)((u8*)self + 0xC0)) {
-            ADXSJD_SetTrapNumSmpl(adxt, -1);
+        if (ADXSJD_GetLpStartOfst(*(void**)((u8*)self + 4)) >= *(s32*)((u8*)self + 0xC0)) {
+            ADXSJD_SetTrapNumSmpl(*(void**)((u8*)self + 4), -1);
         }
-        ADXSTM_Seek(stm, 0x7FFFFFFF);
+        ADXSTM_Seek(*(void**)((u8*)self + 8), 0x7FFFFFFF);
         return;
     }
-    ADXSTM_SetEos(stm, dt >> 11);
+    ADXSTM_SetEos(stm, (s16)(dt >> 11));
 }
 
 void adxt_nlp_trap_entry() {}
@@ -172,19 +173,18 @@ extern u32 lbl_eu_805E4F78;
  * @param self Pointer to the ADXT server struct
  */
 void criware_80385320(ADXT_Tsvr* self) {
+    // Load fields early to match register allocation pattern
+    ADXRNA_State* rna = self->rna;
+    ADXSJD_State* sjd = self->sjd;
+    ADXSTM_State* stream = self->stream;
+
     // Check state first - early return if not playing (state != 3)
     if (self->state != 3) {
         return;
     }
     
-    // Load fields early to match register allocation pattern
-    ADXRNA_State* rna = self->rna;
-    ADXSJD_State* sjd = self->sjd;
-    ADXSTM_State* stream = self->stream;
-    
     if (self->flag_0x73 == 0) {
         // Path 1: Not yet playing - check if we should start
-        // Condition: numSctIbuf <= 1 and numSmplObuf < 0x10
         if (ADXT_GetNumSctIbuf(self) > 1) {
             return;
         }
@@ -203,7 +203,7 @@ void criware_80385320(ADXT_Tsvr* self) {
         
         // Clamp remaining to loop end position (field_0x3E)
         s16 loopEnd = self->field_0x3E;
-        if (remaining > loopEnd) {
+        if (loopEnd < remaining) {
             remaining = loopEnd;
         }
         
@@ -222,15 +222,10 @@ void criware_80385320(ADXT_Tsvr* self) {
         u32 numRoom = ADXRNA_GetNumRoom(rna);
         
         // Apply limit cap (max 0x2000)
-        u32 limit = self->field_0x48;
-        if (limit >= 0x2000) {
-            limit = 0x2000;
-        }
+        s32 lim = (s32)self->field_0x48 < 0x2000 ? (s32)self->field_0x48 : 0x2000;
         
-        // Check if we should stop based on data/room and block size
-        u32 blkSmpl = ADXSJD_GetBlkSmpl(sjd);
-        if (numData >= limit || numRoom <= blkSmpl) {
-            // Additional check: only stop if SJD status is 3 (ready/playing)
+        // Only stop if there is buffer headroom and SJD status is 3
+        if ((s32)numData < lim && (s32)numRoom > (s32)ADXSJD_GetBlkSmpl(sjd)) {
             if (ADXSJD_GetStat(sjd) != 3) {
                 return;
             }

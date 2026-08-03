@@ -7715,3 +7715,12 @@ load (the [lwz r31,0x2068; lwz r4,0(r31)] pairing — any intervening statement
 lets the buf[0] load jump ahead). Residual 2 structural: the final
 [li r3,2; li r0,0xc8; stw; stw] vs retail [li r0,2; stw; li r0,0xc8; stw] —
 the store/li interleave wall.
+
+### CriWare adx_bwav ADX_DecodeInfoWav — 2.6% (magic-word lwz quirk, semantic)
+The 11-arg WAV header decoder: dual magic scans (80560050/80560054), the 20-byte
+memcpy into the buf, the bswap16/32 field stores, the [*out7 = byte /
+(s8)bswap16(&0xFF)] divw, the out9 dispatch (16/8/4), and the final validation.
+Retail loads the magic WORD ([lis r11; lwz r20, 0(r11)] — the VALUE!) and passes
+it as the memcmp's second arg (a value-as-address quirk); decomp's natural
+[memcmp(src+i, lbl, 4)] emits an address arg — unreproducible. Semantic impl
+retained (0x234 vs 0x26c, 14 instructions short).

@@ -368,25 +368,20 @@ s32 SFMPV_ExecServer(void* self) {
 // sfmpv_ProcessAuxShc
 // ---------------------------------------------------------------------------
 void sfmpv_ProcessAuxShc(void* self) {
-    typedef struct SfdAtr {
-        u32 w;
-        u32 h;
-    } SfdAtr;
-    SfdAtr atr;
-    u32 out;
-    void* shc = *(void**)((u8*)self + 0x2068);
-    void* mpv = *(void**)shc;
-    atr.w = *(u32*)((u8*)self + 0xd90);
-    atr.h = *(u32*)((u8*)self + 0xd94);
-    if (atr.w != 0) {
-        if (atr.h != 0) {
-            if (*(s32*)((u8*)shc + 8) == 0xc0) {
-                if (MPV_DecodePicAtr(mpv, &atr, &out) == 0) {
-                    *(u32*)((u8*)shc + 4) = 2;
-                    *(u32*)((u8*)shc + 8) = 0xc8;
-                }
-            }
-        }
+    void* e = *(void**)((u8*)self + 0x2068);
+    u32 a = *(u32*)((u8*)self + 0xd90);
+    u32 b = *(u32*)((u8*)self + 0xd94);
+    void* p = *(void**)((u8*)e + 0);
+    s32 c;
+    if (a == 0)
+        return;
+    if (b == 0)
+        return;
+    if (*(u32*)((u8*)e + 8) != 0xc0)
+        return;
+    if (MPV_DecodePicAtr(p, &a, &c) == 0) {
+        *(u32*)((u8*)e + 4) = 2;
+        *(u32*)((u8*)e + 8) = 0xc8;
     }
 }
 

@@ -215,9 +215,101 @@ void AnmObjTexSrtRes::G3dProc(u32 task, u32 arg, void* pArg) {
 
 
 
-void ApplyTexSrtAnmResult__Q24nw4r3g3dFQ34nw4r3g3d9ResTexSrtPCQ34nw4r3g3d15TexSrtAnmResult(){}
+namespace nw4r {
+namespace g3d {
 
-void ApplyTexSrtAnmResult__Q24nw4r3g3dFQ34nw4r3g3d9ResTexSrtQ34nw4r3g3d20ResMatIndMtxAndScalePCQ34nw4r3g3d15TexSrtAnmResult(){}
+void ApplyTexSrtAnmResult(ResTexSrt texSrt, const TexSrtAnmResult* pResult) {
+    u32 texSrtFlags = texSrt.ref().flag;
+    u32 resultFlags = pResult->flags;
+    u32 mask = 0xF;
+    TexSrt* pDst = texSrt.ref().texSrt;
+    const TexSrt* pSrc = pResult->srt;
+
+    while (texSrtFlags != 0 && resultFlags != 0) {
+        if ((texSrtFlags & 1) != 0 && (resultFlags & 1) != 0) {
+            texSrt.ref().texMtxMode = pResult->texMtxMode;
+
+            *pDst = *pSrc;
+
+            texSrt.ref().flag =
+                (texSrt.ref().flag & ~mask) | (resultFlags & mask);
+        }
+
+        texSrtFlags >>= 4;
+        resultFlags >>= 4;
+        mask <<= 4;
+        pDst++;
+        pSrc++;
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
+
+namespace nw4r {
+namespace g3d {
+
+void ApplyTexSrtAnmResult(ResTexSrt texSrt, ResMatIndMtxAndScale indMtxAndScale,
+                          const TexSrtAnmResult* pResult) {
+    ApplyTexSrtAnmResult(texSrt, pResult);
+
+    u32 flags = *reinterpret_cast<u32*>(
+        reinterpret_cast<u8*>(indMtxAndScale.ptr()) + 4);
+    const TexSrt* pSrt = texSrt.ref().texSrt;
+    u32 i = 8;
+
+    while (flags != 0) {
+        if (flags & 1) {
+            math::MTX34 mtx;
+
+            CalcTexMtx(&mtx, true, *pSrt,
+                       static_cast<TexSrt::Flag>(flags & 0xF));
+
+            f32 scale = 1.0f;
+            f32 v = fabsf(mtx._00);
+            if (v < scale) scale = v;
+            v = fabsf(mtx._01);
+            if (v < scale) scale = v;
+            v = fabsf(mtx._10);
+            if (v < scale) scale = v;
+            v = fabsf(mtx._11);
+            if (v < scale) scale = v;
+            v = fabsf(mtx._20);
+            if (v < scale) scale = v;
+            v = fabsf(mtx._22);
+            if (v < scale) scale = v;
+
+            s8 scaleExp = static_cast<s8>(
+                ((reinterpret_cast<u32&>(scale) >> 23) & 0xFF) - 0x7E);
+
+            f32 factor = static_cast<f32>(ldexp(1.0f, -scaleExp));
+
+            mtx._00 *= factor;
+            mtx._01 *= factor;
+            mtx._02 *= factor;
+            mtx._10 *= factor;
+            mtx._11 *= factor;
+            mtx._12 *= factor;
+            mtx._20 *= factor;
+            mtx._21 *= factor;
+            mtx._22 *= factor;
+
+            indMtxAndScale.GXSetIndTexMtx(
+                static_cast<GXIndTexMtxID>(i - 7), mtx, scaleExp);
+        }
+
+        flags >>= 4;
+        pSrt++;
+        i++;
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void IsDerivedFrom__Q34nw4r3g3d15AnmObjTexSrtResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 

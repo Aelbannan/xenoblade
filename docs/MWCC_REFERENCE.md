@@ -397,7 +397,7 @@ reveals every structural idiom:
 | CONN_RSP reads/computes in a different order than retail | Retail field order is rcid, src_cid, result, status (public BTE STREAM order remote_cid, lcid, result, status) | Assign `conn_info.rcid`, then `src_cid`, then `conn_info.result`, then `conn_info.status`; trace arg `conn_info.rcid` (reloads the stack slot like retail `lhz 0x16(sp)`) |
 | ConfigReq/CfgRsp tails, DISC_REQ/RSP put the `== NULL` branch block first | Retail keeps the found-path inline and the not-found block last | Write `if ((p_ccb = l2cu_find_ccb_by_cid(...)) != NULL) { ... } else { ... }` (condition with the fall-through path first) |
 
-Remaining wall: `process_l2cap_cmd` contains a real indirect call (`bctrl` through
+Remaining gap: `process_l2cap_cmd` contains a real indirect call (`bctrl` through
 `p_lcb->p_echo_cb` in ECHO_RSP), so `EQUIVALENT_MATCH` is gated by the
 certified-callee check (`registry has an unresolved indirect call` — no
 certificate-bearing EQUIVALENT_MATCH target in the registry has indirect calls),
@@ -940,6 +940,11 @@ OS.c went 18/20 → 20/20 byte-identical. The two residuals (ClearArena/ClearMEM
 ### RVL_SDK os/__ppc_eabi_init.c — `__init_user` tail-call stall: per-function optimization-level conflict (Wii/1.1)
 
 `__init_user` (0x20 retail) is a full-frame `bl __init_cpp` trampoline; under `-O4,p` MWCC tail-call-folds it to a bare `b` (0x4). Verified by scratch probe: global `-O1`/`-O0`/`-Os`/`-O1,p` all reproduce the 0x20 frame, while `-O2` and above tail-call. BUT `__init_cpp` (0x48) and `exit` (0x4c) only match at `-O4,p` — at `-O1` their loop scheduling/register-coloring diverge (retail `__init_cpp` == `-O4,p` bytes exactly). So the unit needs MIXED per-function optimization: `__init_user` at `-O1`-ish, siblings at `-O4,p`. Ruled out for bridging this: `#pragma optimization_level 0/1/2/3/4` (with and without `push`/`pop`), `global_optimizer off`, `peephole off`, `scheduling off`, `schedule off`, `opt_propagation off`, `optimize_for_size on`, and `dont_inline` combos — none suppress the tail-call at `-O4,p`, and `-O1` base + `#pragma optimization_level 4` on the siblings reproduces `__init_user` but regresses `__init_cpp`/`exit` (lis r3/addi r31 vs retail lis r31; epilogue lwz order). Root cause: the tail-call fold is keyed to the global `-opt level` (>=2), and the per-function pragma does not re-enable the `,p` scheduling/peephole bundle that `-O4` implies. This is a genuine per-function-optimization-level conflict with no high-level C or pragma bridge found; needs a tooling approach (per-object split or a compiler wrapper) to resolve.
+
+### RVL_SDK os/OSReset.c — `strBase` base-copy idiom soft-cap: retail `addi rD,base,0` vs MWCC `mr`/`or` (Wii/1.1 `-O4,p`)
+
+`__OSReturnToMenuForError` (0xa4, only 2 structural) and `__OSReturnToMenu` (0x288) both stall on the same codegen idiom. Retail keeps the pooled-string base (&OSReset_file, retail `lbl_80552AF0`) in a callee-saved register and materializes EVERY string use as `addi rX,base,off` — including the offset-0 file argument (`addi r3,r31,0`). MWCC instead copies the offset-0 case with `mr r3,r31` (=`or r3,r31,r31`). Exhaustively ruled out (scratch probes, all emit `mr`): passing the arg as `strBase`, `&strBase[0]`, `strBase+0`, `strBase+0x0`, a `char (*)[12]` cast, a const-cast, and struct-member access (`p->file` at offset 0); also every available compiler version (Wii/1.0/1.0a/1.1/1.3, GC/3.0a3/3.0a3.4/3.0a5.2). When the base is freshly materialized into the arg register (no callee-saved reuse) MWCC DOES emit `addi r3,r3,0` — so the idiom only appears when the base must be preserved across calls. `OSRestart` sidesteps it by passing two DISTINCT objects (`OSPanic(OSReset_file, N, OSReset_hotResetPool)` = two lis pairs, no base+offset), which matches retail for that function; the two failing functions genuinely use the single-base+offset scheme. `__OSReturnToMenu` additionally has a r30/r31 register-color swap (strBase vs disc/ticket webs) that decl-order/union/CSE-hoist experiments did not flip (see in-file comment). Treat both as soft-caps unless a tooling-level copy-idiom control appears.
+
 
 ### RVL_SDK hbm/HBMBase.cpp — HomeButton retail layout vs ogws donor header (Wii/1.1 `-O4,p`)
 
@@ -4060,7 +4065,7 @@ policy-exception records in `attempts.jsonl` for opcode sets and guards.
   `#pragma dont_inline` or MWCC inlines it away (removing the tail call).
   `func_804734F4` (getter, uses `this`), `func_804742BC` (GX state setup),
   `func_804737CC` are all 100% byte-exact with this pattern.
-- **GX FIFO SMT wall:** functions writing the GX FIFO (`stb/sth/stfs
+- **GX FIFO SMT constraint:** functions writing the GX FIFO (`stb/sth/stfs
   -0x8000(rX)` with `lis rX, 0xcc01`) cannot pass the SMT equivalence probe —
   the memory bus fails closed on symbolic MMIO/RAM mixed-space
   (`symbolic-mmio-mixed-address-space`), so `EQUIVALENT_MATCH` is unreachable
@@ -4068,8 +4073,8 @@ policy-exception records in `attempts.jsonl` for opcode sets and guards.
   path. Their GX callee closure (GXBegin → __GXSetDirtyState →
   __GXSetSUTexRegs → __SetSURegs) is also uncertifiable for the same reason
   (needs FULL_MATCH of the SDK GX functions).
-- **GX FIFO wall lift for non-MMIO callers (GXFifo.c CPGPLinkCheck /
-  GXSetCPUFifo, 2026-08-02):** the wall also hit *RAM-only* functions whose
+- **GX FIFO constraint relaxation for non-MMIO callers (GXFifo.c CPGPLinkCheck /
+  GXSetCPUFifo, 2026-08-02):** the constraint also hit *RAM-only* functions whose
   reloc names merely contain `fifo`/`gx` (the unit's `CPUFifo`/`GPFifo`
   globals + `__GXData`): the engine's name-needle gate
   (`instruction_may_form_mmio_address`) skipped the RAM-only bus projection,
@@ -5575,7 +5580,7 @@ Findings from matching `__VISetGammaImm` (FULL_MATCH), `__VISetGamma1_0`/`__VISe
 3. **u16 constant-mask normalisation:** `v & 0x300` on a u16 compiles to `rlwinm rX,rX,0,22,23` (MWCC divides the mask by 4), `v & 0xFF00` → `rlwinm 0,16,23` (÷256). The retail's `rlwinm rX,rX,0,24,25` for the "yout & 3" byte comes from writing **`v & 0xC0`** (normalises to mask 24-25 in place; the truncating `stb` shifts). Similarly `buf[i] = (v >> 8) & 0xFF` → `extrwi rX,rX,8,16` (single rotate+mask), while `(u8)(v >> 8)` or a bare `v >> 8` emit `srawi` (2-instr/opcode diff).
 4. **Large inlined copies: pointer-increment loop + `#pragma inline_max_size(10000)` + `#pragma inline_max_total_size(10000)` + `static __inline`.** A 26-byte copy as a `for (i=0;i<0x1A;i++) *d++ = *pt++;` in a static helper is auto-inlined and fully unrolled; the pointer-increment form reproduces the retail's 8-deep `lbz/stb` interleave and register rotation. Plain `static` (even with `__inline`) leaves a 0x10C standalone stub; explicit 26 statements inline but schedule sequentially or out-of-order.
 5. **The retail keeps `buf[0] = 0x40` store LATE in the copy** (after ~24 loads) and loads the constant early; MWCC places an equivalent early source store early. Not steered from C (scheduling).
-6. **Macrovision materialisation wall:** retail materialises the table pointer per case (`addi r30,r3,0x420; lbz rX,0..25(r30)`); MWCC folds `base + const` into every load displacement (`lbz rX,0x420+N(rBase)`) for all tested source forms (direct expr, locals, `&arr[i]`, `(u32)`/`void*` casts, volatile, loop forms, memcpy/struct-copy, `__inline`/IPA variants). Only `while (pt < e)` materialises (`addi r4,r3,0x420`) but then only partial-unrolls (3×8+2). Treat as hard cap; EQUIVALENT_MATCH via SMT is the only acceptance path at ~50%+ fuzzy.
+6. **Macrovision materialisation limit:** retail materialises the table pointer per case (`addi r30,r3,0x420; lbz rX,0..25(r30)`); MWCC folds `base + const` into every load displacement (`lbz rX,0x420+N(rBase)`) for all tested source forms (direct expr, locals, `&arr[i]`, `(u32)`/`void*` casts, volatile, loop forms, memcpy/struct-copy, `__inline`/IPA variants). Only `while (pt < e)` materialises (`addi r4,r3,0x420`) but then only partial-unrolls (3×8+2). Treat as a fixed codegen limit; EQUIVALENT_MATCH via SMT is the only acceptance path at ~50%+ fuzzy.
 7. **`__VISetRevolutionModeSimple` regalloc cascade:** the `region` local allocates r29 (retail r28), shifting the callee-saved save-set (r29-r31 vs r28-r31), epilogue length (1 insn short), the copy's 0x40 constant (r0 vs r28) and the copy interleave by 1 position (14 structural + 37 reg-swaps at 96.9% objdiff fuzzy). Declaration order, initializer vs assignment, `u32`/`u8` typing and statement reordering all fail to move it — the retail's 4th callee-saved slot for `region` requires 4 callee-saved values in the function, and MWCC's allocation for the reconstructed source only needs 3.
 
 ## RVL_SDK BTE HID host (hidh_conn.c) — GC/3.0a5.2 + `-func_align 4`, upstream-broadcom shapes
@@ -6352,12 +6357,12 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   4→0 structural. Always try source-statement permutations when stores execute
   in a different order than written.
 
-### Reg-swap acceptance wall (confirmed 3rd occurrence)
+### Reg-swap acceptance gap (confirmed 3rd occurrence)
 - These loops end with 0 structural + pure reg-swaps where the retail reuses a
   register across roles (mixChanged=r8 & delta-target=r8; delayed/mixed
   accumulators) and the decomp allocator merges them into one register. The
   renaming witness requires a **global injective** permutation — register
-  merging makes no bijection exist, so EQUIVALENT_MATCH is unreachable for
+  merging makes no bijection exist, so EQUIVALENT_MATCH cannot certify
   these loop-heavy functions; SMT fails on loop unroll (96-iter) / path
   explosion (16-iter with per-channel flag branches). Recorded as stalls
   (us-802d9590, us-802da6b0, us-80342970).
@@ -6970,7 +6975,7 @@ Root causes and fixes:
 Files: `libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp` (+ the
 retail-proven helper/header facts above; no header changes needed).
 
-## nw4r g3d DCC TexSrt helpers — register-scheduling wall (parked)
+## nw4r g3d DCC TexSrt helpers — register-scheduling gap (parked)
 
 The maya `ProductTexSrtMtx_T` etc. helpers are semantically correct but the
 retail's register allocation + schedule differ from every tested source form:
@@ -7076,13 +7081,13 @@ registers (`cmpwi` on cur, `clrlwi.` on delta) and keeps the `addi r3,r4,0x3e`
 base. Also: unsigned loop compare `i < (u32)__MIXMaxVoices` (u32 index) for the
 retail `cmplw` loop bound.
 
-Remaining wall (pre-existing, survived 9 source orderings + `-schedule off`
+Remaining gap (pre-existing, survived 9 source orderings + `-schedule off`
 (105 structural — retail mix is NOT -schedule-off like EXIBios) + `-ipa off`
 (no change) + `-O4,s` (destroys the unit)): loop entry `add r5,r4,r27; lwzx
 r4,r4,r27` (retail) vs `lwzx r4,r27,r0; add r3,r0,r27` (decomp) — MWCC hoists
 the indexed vpb load above the address add; retail reuses r4 for base→vpb so
 no global injective reg bijection exists (same family as the KB reg-swap
-acceptance wall for loop-heavy mixers). Recorded for out-of-band SMT
+acceptance gap for loop-heavy mixers). Recorded for out-of-band SMT
 (scheduling category); prior probe with 162 structural hit the 4096 path limit.
 
 ## CriWare sfh_local SFHLOCAL_GetNbyteL — rlwimi loop form found (US, GC/3.0a5.2 -O4,p)
@@ -7334,7 +7339,7 @@ retail reloc dumps with `elf_symbols.list_section_relocations` on
    branch calls become `or r4, rX` moves. Statement order that matches retail:
    `dst = buf + 0x400;` (computes the addi before memset), then the two copies,
    then memset. Result: 0 structural, 9 pure reg-swaps (2-cycle dst↔o1 color
-   wall: retail allocates dst→r29 before o1→r31; every decl/statement
+   difference: retail allocates dst→r29 before o1→r31; every decl/statement
    permutation keeps o1→r29/dst→r31 — SMT candidate, no SMT probes per session
    policy).
 
@@ -7369,7 +7374,7 @@ rotation — retail `[li r0,64][stw 8][lis r5][lis r4][stw 4][li r0,1][or r3]`,
 decomp `[li r6,64][lis r5][stw 8][lis r4][li r0,1][or r3][stw 4]` — the 64-const
 lands in r6 (retail reuses r0 for 64 and 1, forcing stw-4 before li-1); local-c,
 chained-assignment, and statement-order variants all keep r6. Pure
-allocator/scheduler wall; size exact 0x64.
+allocator/scheduler difference; size exact 0x64.
 
 ### RVL_SDK vi/vi.c — VIConfigure + __VIRetraceHandler (US, mwcc_43_151, cflags_sdk, `-func_align 16`)
 Both targets stalled at scheduling/regalloc softcaps (HIGH_MATCH), but several
@@ -7441,7 +7446,7 @@ base/index register colors (retail base→r4/index→r3, decomp base→r3/index�
 and the found-path address association (retail `(g+0x18) + i*100`, decomp
 `(g + i*100) + 0x18`) — all expression/decl permutations keep the decomp form.
 
-### CriWare adx_tlk ADXT_GetTimeReal — s32→float conversion pool wall (71.8%, 1 reloc drift)
+### CriWare adx_tlk ADXT_GetTimeReal — s32→float conversion pool gap (71.8%, 1 reloc drift)
 `ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162DA);` — the multiplier
 float's retail address is `lbl_eu_805162D8 + 2` (NOT 805162F0 — the pool label
 805162D8 holds the 2^31 double used by the xoris conversion; the float at +2 is
@@ -7579,7 +7584,7 @@ and `__wpadRetrieveChannel` (us-8036e710, 0x120, was 79.2% / 2 structural).
    (retail r10 vs decomp r0); s32/declaration-order experiments: no effect.
    Leaf function, size exact — accept via `--smt` out-of-band.
 
-### CriWare ahx_dcd AHXDCD_DecodeFrmHdr — cross-call address CSE wall (3.1%, +16B)
+### CriWare ahx_dcd AHXDCD_DecodeFrmHdr — cross-call address CSE gap (3.1%, +16B)
 `AHXDCD_DecodeFrmHdr`: the decode dispatch (SearchSync/IsDataAvailable/BhdrToDinf/
 Bitalloc2/Scale2 chain). The `(u8*)self + 904` / `+ 964` / `+ 856` addresses are
 each used in 2-3 consecutive calls; MWCC CSEs them into callee-saved r30/r31
@@ -7623,7 +7628,7 @@ structural) and cannot produce the dead cntlzw (every __cntlzw form bloats to
 0x128). Residual 6 structural: that lwz-vs-cntlzw, the out[1] store vs the next
 call's `or r3` order, and 4 bl-position artifacts.
 
-### CriWare cvfs cvFsSetDefDev — device-name setup (30.0%, color/schedule wall)
+### CriWare cvfs cvFsSetDefDev — device-name setup (30.0%, color/schedule gap)
 `cvFsSetDefDev(name)`: err-callback + strlen check + uppercase loop + 32-entry
 device strncmp search + memcpy/err. A `u8* g = (u8*)&lbl_eu_805E66E8;` base
 local is REQUIRED (hoists the globals base into a callee-saved reg — separate
@@ -7647,7 +7652,7 @@ structural = a 4-cycle register rotation in the unrolled copy loop (retail
 src=r7/dst=r6/cnt=r9/char=r8; decomp src=r6/dst=r4/cnt=r8/char=r7) — pure
 colors, no source form moves them.
 
-### CriWare return-li vs final-store scheduling wall (SFAOAP_Create / ADX_ScanInfoCode / SFPL2_Standby)
+### CriWare return-li vs final-store scheduling gap (SFAOAP_Create / ADX_ScanInfoCode / SFPL2_Standby)
 A recurring 2-structural near-miss: the final `return 0`/`return -1` (or any
 `li r3, K` for the return value) is scheduled BEFORE the function's last
 store in decomp, AFTER it in retail. Retail: `li r0, K; stw r0, off(rX);
@@ -7682,13 +7687,13 @@ the pure-direct form materialized the base repeatedly (OVER). The indirect
 callback call has **2 args** — r5=255 is the strncpy leftover, not an explicit
 third argument.
 
-### CriWare ax_rna AXRNA_Init — dead-load wall (13.6%, semantically correct)
+### CriWare ax_rna AXRNA_Init — dead-load gap (13.6%, semantically correct)
 Retail hoists a **dead load** `lwz r3, 0(r4)` (r4=8051914C) before the init-flag
 branch — the ++ operand's load scheduled early against the wrong base register.
 MWCC DCEs a dead read from the equivalent C; unreproducible intentionally.
 Size 0x50 vs 0x58 (2 missing instructions).
 
-### CriWare adx_mwii ADXM_ShutdownFramework — block-order wall (40%, goto form)
+### CriWare adx_mwii ADXM_ShutdownFramework — block-order gap (40%, goto form)
 Retail dispatch [cmpi 0; beq fn; cmpi 2; beq fn; cmpi 1; beq join; b ret0] lays
 the call block BETWEEN the dispatch and the ret0 ([fn: bl; b join; ret0: li 0]).
 The `goto call` form is closest (40%); MWCC flattens the ||+else-if variants and
@@ -7708,7 +7713,7 @@ return 0]. The natural `return 1`/`return 0` forms put the success inline (beq�
 bne inversion, cntlzw boolean). Note the .au check is INVERTED vs WAV (first
 magic match → success).
 
-### CriWare mpv_lib MPV_Finish — dcbi intrinsic wall (14.8%, semantic)
+### CriWare mpv_lib MPV_Finish — dcbi intrinsic gap (14.8%, semantic)
 Retail: 3 calls (MPVUMC/SL/M2V_Finish) + a flag check (bit 0x10000000 of
 lbl+0x48) + a **DCBI cache-flush loop** [mtctr 223; li r4,0; dcbi r3,r4;
 addi r4,32; bdnz]. MWCC 3.0a5.2 has NO inline __dcbi intrinsic — it compiles
@@ -7716,7 +7721,7 @@ addi r4,32; bdnz]. MWCC 3.0a5.2 has NO inline __dcbi intrinsic — it compiles
 instruction cannot be reproduced in high-level C. (__dcbz/__dcbt exist as real
 intrinsics — signature-checked; __dcbi is not.)
 
-### CriWare mpv_get — MPV_GetBitRate/GetPicAtr (83.3%/64.5%, color walls)
+### CriWare mpv_get — MPV_GetBitRate/GetPicAtr (83.3%/64.5%, color differences)
 - GetBitRate: `return MPVERR_SetCode(...)` (not the discard+return-0!) — the
   SetCode's return passes through (the bl + b epilogue). Handle/out callee-saved
   colors rotate (handle→r31 retail vs out→r31 decomp) — pure allocator choice,
@@ -7728,7 +7733,7 @@ intrinsics — signature-checked; __dcbi is not.)
   addi 8; ...; addic./bne] — load order + lwzu/stwu fusion + CTR-vs-addic are
   scheduler choices.
 
-### CriWare sfd_vom SFVOM_GetRead — 92% (goto-call layout; store/li order wall)
+### CriWare sfd_vom SFVOM_GetRead — 92% (goto-call layout; store/li order gap)
 The call block must be pushed to the bottom via `goto call` (the natural
 if/else puts the zero-path at the bottom). The call is **4-arg**:
 SFBUF_VfrmGetRead(self, *(self+0x2180), out, arg3). The || type test folds to a
@@ -7736,25 +7741,25 @@ range check [subi 3; cmpli 1] (retail keeps two cmpi's — acceptable). Residual
 structural: retail [li r0,0; stw *out; li r3,0] (store between the li's) vs
 decomp [li r0,0; li r3,0; stw] — a scheduler merge.
 
-### CriWare sfd_lib criware_803C0D94 — CR0-stale dispatch wall (3.6%)
+### CriWare sfd_lib criware_803C0D94 — CR0-stale dispatch gap (3.6%)
 Retail reuses the handle's CR0 for a second `bne` (stale branch, dead [li r0,-1]
 block) and keeps handle/errFn/errArg in the caller-saved r3/r4/r5 across the
 SFLIB_SetErr call (the tail stores write to the clobbered base = retail codegen
 quirk). Natural C spills to callee-saved regs and re-compares — unreproducible.
 
-### CriWare sfh_ver2 VER2_Anly* family — 93.1% each (store-before-return-li wall)
+### CriWare sfh_ver2 VER2_Anly* family — 93.1% each (store-before-return-li gap)
 All four (ElemChNum/SmpHz/FtrFixFlg/FtrShcFixFlg) match the searchStmId +
 SFHLOCAL_GetSizeofMember/GetNbyteB pattern; each ends with the retail
 [rlwinm; stw *out; li r3,1] vs decomp [rlwinm; li r3,1; stw] — the constant
-return-li is scheduled before the out-store. This store/li order wall recurs
+return-li is scheduled before the out-store. This store/li order difference recurs
 (SFVOM_GetRead, mpv_get) — the li r3,<const> return setup is hoisted by the
 scheduler regardless of source order.
 
-### CriWare sfd_mps SFMPS_Init — 90.9% (lis/li order wall)
+### CriWare sfd_mps SFMPS_Init — 90.9% (lis/li order gap)
 MPS_Init(8, lbl_eu_80607160) + SetErr(0, 0xff000d01) + [lbl_eu_80607AF0 = 0;
 return 0]. Retail [lis r3; li r0,0; stw; li r3,0] vs decomp [li r0,0; lis r3;
 stw; li r3,0] — the store-value li scheduled before the base lis; same
-scheduler family as the store-before-return-li wall.
+scheduler family as the store-before-return-li gap.
 
 ### CriWare mpv_deli MPV_SearchDelim — 77.3% (state/byte color rotation)
 The MPEG start-code scan: `state = 0xFFFFFF00; for (i=0;i<count;i++) { q =
@@ -7763,17 +7768,17 @@ state = (byte|state) << 8; }`. Size-exact, 0 structural; the 5 reg_swaps are
 state→r9/byte→r8 (retail) vs state→r8/byte→r9 (decomp) — a pure caller-saved
 color rotation, insensitive to declaration order/byte type.
 
-### CriWare mwsfdply MWSFPLY_SetFlowLimit — 82.6% (base-reg/xoris color wall)
+### CriWare mwsfdply MWSFPLY_SetFlowLimit — 82.6% (base-reg/xoris color gap)
 `MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_8051B190 * (double)(s32)*(s32*)(h+0x50C)))`
 — the (s32)→double conversion uses the 0x4330+xoris trick. Retail's 2^31-base
 in r7 + xoris into a fresh r6; decomp r6 + in-place xoris r5. Size-exact, 0
 structural, 4 reg_swap — pure colors. **Superseded by §7i** (reloc-name
 solution + current state: `lbl_eu_8051B190`/`lbl_eu_8051B198`).
 
-### CriWare sfd_mpv SFMPV_Destroy — 93.9% (store/li order wall, recurring)
+### CriWare sfd_mpv SFMPV_Destroy — 93.9% (store/li order gap, recurring)
 The recurring [li r0,0; stw *out; li r3,0] vs [li r0,0; li r3,0; stw] — the
 return-0's li is hoisted before the final store. Volatile pointer and z-local
-variants do NOT reorder it (unlike adxm_unlock's subi/reload case). This wall
+variants do NOT reorder it (unlike adxm_unlock's subi/reload case). This difference
 appears in ~8 functions now: SFVOM_GetRead, mpv_get, VER2_Anly*, SFMPS_Init,
 SFMPV_Destroy.
 
@@ -7784,18 +7789,18 @@ retail ([lwz r5, 8364; lwz r4, 0(r5)]). Reusable: when a load-chain's register
 colors rotate, reorder the DECLARATIONS (not the statements) — the MWCC
 allocates the caller-saved colors by declaration order.
 
-### CriWare mps_get MPS_Get* family — u64-pairing color wall (4 fns)
+### CriWare mps_get MPS_Get* family — u64-pairing color gap (4 fns)
 GetPackHd 73.3% (8 reg_swap), GetSysHd 62.8% (16), GetLastSysHd 57.9% (16),
 GetPketHd 52.4% (20) — all size-exact, 0 structural. The 64-bit copies
 [*(u64*)out = *(u64*)handle+off] pair low-word→r4/high→r0 (retail) vs
 low→r0/high→r4 (decomp). The explicit two-u32 form degrades to structural.
-Pure color wall.
+Pure color difference.
 
 ### CriWare lsc/adx_tlk — store-vs-call-arg-setup swap (96.8%/96.9%)
 LSC_Destroy and ADXT_StartSj both end a path with the retail [stb r0, 0/2(r30);
 or r3, r30, r30] (the store THEN the next call's arg move) vs decomp [or r3;
 stb] — the call-arg setup hoisted before the store. Same family as the
-store-vs-return-li wall; resistant to source reordering.
+store-vs-return-li gap; resistant to source reordering.
 
 ### CriWare ax_rna AXRNA_Finish — FULL_MATCH (signed cmpi on u8 compare)
 `if ((s32)lbl[i*0xE4] == 1)` — the (s32) cast on the u8 array element forces
@@ -7828,18 +7833,18 @@ call = fn(self, arg1, arg2, c)), and the `or r3,r3,r3` is the MWCC's arg-setup
 NOP (the self already in r3). Decomp keeps the loads inside the if and omits
 the no-op — 4 bytes short, unreproducible.
 
-### CriWare sfd_tst SFTST_GoNextFrame — 53.1% (fixed-point load-order wall)
+### CriWare sfd_tst SFTST_GoNextFrame — 53.1% (fixed-point load-order gap)
 The s64 fixed-point `(val_a * val_b) / val_d` with the accumulation
 (self+0x12c/0x128 +=c/adde). Retail loads [0x134 a_hi; param[1] b_hi; 0x130
 a_lo; param[0] b_lo] with the op31_11 (mulhw) interleaving; decomp reverses
 the load order and colors (r9/r8) — 3 structural + 12 reg_swap, size exact.
 Semantically correct s64 form retained.
 
-### CriWare store-scheduling wall — 4 more instances (96-98%)
+### CriWare store-scheduling gap — 4 more instances (96-98%)
 MWSST_Destroy 98.1%, mwPlyStartSeamless 97.2%, sftim_GetTimeExtClock 96.5%,
 SFTMR_GetTmr 96.3% — all size-exact with 2 structural: a store is scheduled
 AFTER an independent following op (cmpi/lis/lwz/srawi) in decomp vs BEFORE in
-retail. Same family as the store-vs-return-li wall; source reordering and
+retail. Same family as the store-vs-return-li gap; source reordering and
 volatile don't change it.
 
 ### CriWare mpv_cdec MPVCDEC_Init — 83.3% (0 structural, size exact)
@@ -7849,14 +7854,14 @@ scalar extern + & (not the array-decay!) avoids the element-load [lwz]. Residual
 4 reg_swap: the final lis/addi pair colors+order (80602A6C→r3 first vs
 8051C080→r4 first) — insensitive to extern order.
 
-### CriWare sfh_ver2 VER2_IsSfdHeader — 5.6% (frame-alloc wall)
+### CriWare sfh_ver2 VER2_IsSfdHeader — 5.6% (frame-alloc gap)
 Retail keeps t1/t2/v1/v2/ok in callee-saved regs (stmw r27, -96 frame, buf at
 sp+8) — decomp spills them (stmw r23, -112 frame, buf at sp+24). Removing the
 local initializers helped marginally (4.9→5.6%). The digit-parsing loops,
 GetSizeofMember/GetNbyteB pairs, and the (major<<8)|minor field packing are
 all semantically correct.
 
-### CriWare mpv_get MPV_GetVbvBufSiz — 32.1% (mulhi wall, improved)
+### CriWare mpv_get MPV_GetVbvBufSiz — 32.1% (mulhi gap, improved)
 The condition is `(u32)(bitrate - 0x30000) <= 0xFFFF` (addis -3 + cmpli
 0xFFFF — the range test). The math `((u64)K * (vbv*bitrate)) >> 42` with the
 rounding `x + ((x<<1) & 0x80000000)` matches structurally; residual: MWCC
@@ -7886,12 +7891,12 @@ swap out@sp+0x10... wait — retail buf@sp+8 requires out declared first), and
 load before the buf[0] store). Residual 2 structural: the buf[1] store
 schedules after the SJ arg-setup addi's (retail: between them).
 
-### CriWare mwsfdsfx mwsftag_GetAinfFromSj — frame-alloc wall (2.8%, semantic)
+### CriWare mwsfdsfx mwsftag_GetAinfFromSj — frame-alloc gap (2.8%, semantic)
 The 0x1ac dispatcher (3 zero-out branches + SJ_SearchTag + memcpy + 3 indirect
 calls + SFD_SetUsrSj). Retail frame -48: [t@sp+8; out@sp+0x10; buf@sp+0x18]
 with buf[1] = the first call's ret (the r3 reuse). Decomp frame -32: MWCC
 merges the 3rd/4th-call temp into the out slot — the [&t] and [&out[0]] get
-the same sp+8 home. Semantically correct; the frame shape is the wall.
+the same sp+8 home. Semantically correct; the frame shape is the remaining difference.
 
 ### CriWare sfd_mpv sfmpv_ProcessAuxShc — 75.8% (load-order scheduling)
 The a/b pair must be `s32 buf[2]` (adjacent frame slots — a bare a/b loses the
@@ -7906,7 +7911,7 @@ li r0,0xc8; stw] vs decomp [li r3,2; li r0,0xc8; stw; stw]).
 load (the [lwz r31,0x2068; lwz r4,0(r31)] pairing — any intervening statement
 lets the buf[0] load jump ahead). Residual 2 structural: the final
 [li r3,2; li r0,0xc8; stw; stw] vs retail [li r0,2; stw; li r0,0xc8; stw] —
-the store/li interleave wall.
+the store/li interleave gap.
 
 ### CriWare adx_bwav ADX_DecodeInfoWav — 2.6% (magic-word lwz quirk, semantic)
 The 11-arg WAV header decoder: dual magic scans (80560050/80560054), the 20-byte
@@ -7935,7 +7940,7 @@ comparisons emit cmpli).
 `s32 i;` declared BEFORE the `ADXSTMHndl* h` local fixes the r30/r31 colors
 (h→r30, i→r31); (s32) casts on the u8 active field force the signed cmpi.
 Residual 2 structural: the final [lis r3; li r0,0] vs [li r0,0; lis r3] (the
-store-value-li before the base-lis — the SFMPS_Init wall family).
+store-value-li before the base-lis — the SFMPS_Init gap family).
 
 ### CriWare adx_stmc ADXSTM_BindFileNw — 29.7% (64-bit ceil-div codegen)
 The fileSectors = the 64-bit ceil-div [((u64)sizeHi<<32) + sizeLo + 2047 >> 11]
@@ -7965,7 +7970,7 @@ lbl_eu_80619C10 — the arg-3 pool variant unreproduced. Semantic impl retained.
 ### CriWare mpv_frm MPV_DecodeFrmSj — 10.0% (CTR-vs-addic copy loops)
 The 8-pair + 16-pair copy loops (mtctr + lwzu/stwu fused) — count-down do-while
 keeps the loops (the for-loops unroll); residual: the addic.+bne vs the
-mtctr+bdnz + the fused lwzu/stwu — the MPS_GetPicAtr wall family. The state==2
+mtctr+bdnz + the fused lwzu/stwu — the MPS_GetPicAtr gap family. The state==2
 short-circuit (MPVM2V_DecodeFrm) and the init-call sequence
 (InitOutRfb/InitMcOiRt/SetCcnt/StartFrame x2/DecPicture/EndOfFrame) match.
 
@@ -8019,7 +8024,7 @@ and MWCC's scheduler emits the retail restore order (100% byte-identical).
 Verified on `adxm_lock` (us-8039dd8c, last store `field_0x40 += 1`) and
 `adxm_fs_proc` (us-8039e034, last store `field_0x9E4 = 1`), both FULL_MATCH.
 The trick does NOT apply when the function ends with a CALL (e.g.
-`adxm_goto_mwidle_border` ends with OSSetThreadPriority — epilogue wall persists).
+`adxm_goto_mwidle_border` ends with OSSetThreadPriority — epilogue gap persists).
 Same lever family as the adxm_unlock volatile-reload and ax_rna dead-load notes.
 
 ### CriWare mwsfdfrm — &&-gate + exit-label reproduces the retail gate branch-over-branch on Wii/1.1 (criware_8039CD7C FULL_MATCH)
@@ -8157,7 +8162,7 @@ do-while(--n), while(n--), for-loop) triggers the CTR conversion.
 2 divws (+4B). Split `num`/`den` into each branch and divide once after the
 merge: `if (cond) { num = A - B; den = C; } else { num = D - B; den = E; }
 elapsed = num / den;` reproduces the shared divw exactly (99.789%, 0
-structural, 2 reg_swap). Residual wall: else-branch load order (retail
+structural, 2 reg_swap). Residual gap: else-branch load order (retail
 minuend-first, MWCC always emits subtrahend-first) — 12+ formulations tried.
 
 ### MWCC 4.2 store→load forwarding: volatile pair needed (GC/3.0a5.2)
@@ -8180,5 +8185,59 @@ literals to match the relocs.
 Retail: `bne → continue` + `b → shared-return-check`; the *p==0 (FREE) slot is
 returned. The C must be `if (*p == 0) goto found;` — the prior reconstruction
 had `!= 0` (busy→found), semantically inverted. MWCC then canonicalizes to
-`beq → check` (1 instr shorter, 0x78 vs retail 0x7C) — branch-layout wall
+`beq → check` (1 instr shorter, 0x78 vs retail 0x7C) — branch-layout gap
 (bne+fall-through+b unreachable via C on GC/3.0a5.2).
+
+## Link-only symbol renames (mwldeppc symbol-hash collision)
+
+**Symptom:** with the US full link at ~33,200 global symbols, mwldeppc reports
+`undefined: 'HBMSEQInit'` (and the other HBMSEQ*/HBMMIX*/HBMSYN* entry points)
+even though the definitions exist in linked `seq.o`/`mix.o`/`syn.o` and the
+symbol names are byte-identical on both sides (verified via `.strtab` dumps).
+The same objects resolve fine in isolation (2-object link). The linker's
+`-listclosure` map shows `seq.o`/`synctrl.o`/`synsample.o` with **zero** closure
+entries while their undefined refs (e.g. `_savegpr_*`, `HBMSYNMidiInput`) still
+resolve — i.e. the definitions vanish from the internal symbol table, not the
+objects.
+
+**Root cause:** mwldeppc's internal symbol table is a hash structure with a
+collision bug that triggers at the current link scale. The trigger is the
+**presence of the `HBMSEQ*` names themselves**: renaming any single
+`HBMSEQ*` symbol (definition in `seq.o` + reference in `HBMAxSound.o`, both
+sides via `objcopy --redefine-sym`) makes the entire link succeed (all 15
+HBM* errors disappear at once). Renaming only one side does not help; the
+reference's `UNDEF` entry also corrupts the bucket. `FORCEACTIVE` in the lcf
+does not help. The DOL output is byte-identical under the rename (reloc
+*values* are unchanged; names never reach the DOL).
+
+**Fix (approved infrastructure):** a link-only object transform — `Object(
+..., link_transform={"renames": [(old, new), ...]})` in `configure.py`.
+`tools/project.py` emits a `link_symbol_rename` ninja rule producing a
+`<unit>.link.o` copy (`powerpc-eabi-objcopy --redefine-sym=…`) that the
+main.dol link consumes instead of the compiled object. The compiled object
+stays pristine, so objdiff/split-size/`hexdiff`/`cycle` continue to see the
+retail names and matching is unaffected. Currently applied to
+`RVL_SDK/src/revolution/hbm/seq.c` + `HBMAxSound.cpp` (HBMSEQ* → `hbmseq_fix_*`).
+
+**Rules when extending:**
+- Rename **both** the defining object and every referencing object.
+- Keep the renamed names out of `src/**` — the transform is link-only.
+- If a future symbol-count increase re-triggers the bug for other families,
+  add their renames to the same `link_transform` dicts (or new ones).
+- Do not try to "fix" this by localizing unused globals: localizing enough
+  symbols to clear the closure also crashes mwldeppc at `ELF_linker.c:5774`
+  (observed with `.bss`+`.rodata` pad symbols, `__OS*` debug-vector symbols,
+  and extabindex-referenced functions) — the rename is the safe workaround.
+
+**Also fixed in the same batch (genuine source issues, not linker bugs):**
+- `rfc_crctable` was declared `extern` in `rfc_utils.c` but defined nowhere;
+  define the 256-byte Bluetooth CRC table (retail bytes at `.rodata:0x80514E48`)
+  as `const u8 rfc_crctable[256] = {…}` in the same TU.
+- `homebutton::RemoteSpk::Connect(long)` did not exist in retail — the retail
+  `Controller::connect()` tail-calls `RemoteSpk::Disconnect(chan)`; the stale
+  `Connect` declaration was dropped from `HBMRemoteSpk.h`.
+- `symbols.txt` renamed the gui vtables to unmangled `__vt__homebutton_gui_*`
+  labels while the decompiled `HBMGUIManager.o` emits the real MWCC mangling
+  `__vt__Q310homebutton3gui*`; retail `HBMBase.o` references the renamed name,
+  so the link failed. Changed the two `symbols.txt` entries to the true mangled
+  names — both retail refs and decompiled defs now agree (56/56 still matched).

@@ -52,7 +52,31 @@ void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 16) = b;
     sfxzmv_SetTagGrp();
 }
-void sfxzmv_SetTagGrp() {}
+extern char lbl_eu_80518C38[];
+extern void SJ_SearchTag(void* v, const char* a, const char* b, s32* out);
+
+void sfxzmv_SetTagGrp(void* self) {
+    struct { u32 a; u32 b; } v;
+    s32 out[2];
+    if (*(s32*)((u8*)self + 0xC) == 0) {
+        *(s32*)((u8*)self + 0x18) = 1;
+        *(s32*)((u8*)self + 0x1C) = 0;
+        *(s32*)((u8*)self + 0x20) = 0;
+        *(s32*)((u8*)self + 0x28) = 1;
+        *(s32*)((u8*)self + 0x2C) = 0;
+        *(s32*)((u8*)self + 0x30) = 0;
+        return;
+    }
+    v.a = *(u32*)((u8*)self + 0xC);
+    v.b = *(u32*)((u8*)self + 0x10);
+    SJ_SearchTag(&v, lbl_eu_80518C38, lbl_eu_80518C38 + 6, &out[0]);
+    *(s32*)((u8*)self + 0x18) = 1;
+    *(s32*)((u8*)self + 0x1C) = out[0];
+    SJ_SearchTag(&v, lbl_eu_80518C38 + 14, lbl_eu_80518C38, &out[0]);
+    *(s32*)((u8*)self + 0x28) = 1;
+    *(s32*)((u8*)self + 0x2C) = out[0];
+    *(s32*)((u8*)self + 0x30) = out[1];
+}
 void SFXZ_GetZfrmRange() {}
 void sfxzmv_MakeOrgZ32TblByDirect() {}
 void sfxzmv_MakeOrgZ32TblByCCIR() {}

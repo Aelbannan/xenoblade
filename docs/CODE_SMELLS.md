@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 2187 |
 | extern "C" definitions (forced names) | 1635 |
 | `self`/register-style params | 3068 |
-| `void*` (params + locals) | 4584 |
+| `void*` (params + locals) | 4585 |
 | raw pointer offset arithmetic | 2529 |
 | deref-through-cast arithmetic | 1120 |
 | inline asm / `register` | 88 |
@@ -168,7 +168,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/g3d/g3d_anmtexpat.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmtexsrt.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmvis.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_calcview.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_calcview.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcvtx.cpp | 0 | 0 | 0 | 15 | 0 | 0 | 21 | 0 | 2 |
 | libs/nw4r/src/g3d/g3d_calcworld.cpp | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_fog.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 |
@@ -1253,7 +1253,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "libs/nw4r/src/g3d/g3d_calcview.cpp": {
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "libs/nw4r/src/g3d/g3d_calcvtx.cpp": {
   "asm_code": 21,

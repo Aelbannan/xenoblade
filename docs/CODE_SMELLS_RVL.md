@@ -17,7 +17,7 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 | extern "C" declarations (non-lbl_*) | 90 |
 | extern "C" definitions (forced names) | 22 |
 | `self`/register-style params | 14 |
-| `void*` (params + locals) | 847 |
+| `void*` (params + locals) | 845 |
 | `(void*)` casts | 143 |
 | raw pointer offset arithmetic | 134 |
 | deref-through-cast arithmetic | 25 |
@@ -33,7 +33,7 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 | module | TUs | void* lines | api | cb | self-offset (actionable) | other |
 |---|---|---|---|---|---|---|
 | bte | 68 | 412 | 122 | 0 | 1 | 289 |
-| hbm | 41 | 126 | 29 | 0 | 0 | 97 |
+| hbm | 41 | 124 | 29 | 0 | 0 | 95 |
 | os | 34 | 118 | 4 | 0 | 0 | 114 |
 | gx | 15 | 46 | 3 | 0 | 0 | 43 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
@@ -178,7 +178,7 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/mix.c | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -581,7 +581,7 @@ Files with the actionable `void* self` offset-deref pattern:
   "extern_c_nonlbl_def": 3
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp": {
-  "void_ptr": 6
+  "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp": {
   "void_ptr": 1

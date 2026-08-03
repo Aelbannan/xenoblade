@@ -141,20 +141,21 @@ s32 MPVHDEC_RecoverSj(void* self, s32 mask, void* sj) {
             return -2;
         *(s32*)((u8*)self + 0xbec) += 1;
     }
-    ret = (v == 0) ? -2 : -3;
+    ret = -3;
+    if (v == 0)
+        ret = -2;
     for (;;) {
         s32 t = MPV_GoNextDelimSj(sj);
         if (t == 0)
             break;
-        if ((t & mask) == 0) {
-            ((void (*)(void*, s32, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, 4, sp);
-            ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, sp);
-            if (sp[1] != 4)
-                break;
-        } else {
+        if ((t & mask) != 0) {
             ret = 0;
             break;
         }
+        ((void (*)(void*, s32, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, 4, sp);
+        ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, sp);
+        if (sp[1] != 4)
+            break;
     }
     return ret;
 }
@@ -180,8 +181,8 @@ s32 MPV_DecodePicAtr(void* self, const MpvSjChunk* chunk, s32* out) {
 s32 MPV_DecodePicAtrSj(void* self, void* sj) {
     MpvSjChunk st;
     MpvSjChunk gc;
-    s32 ret;
     s32 codec;
+    s32 ret;
     if (MPVLIB_CheckHn(self))
         return MPVERR_SetCode(0, 0xFF03020C);
     *(s32*)((u8*)self + 0xD94) = 0;
@@ -355,9 +356,9 @@ extern int strncmp(const char* a, const char* b, unsigned long n);
 extern int atoi(const char* s);
 
 s32 mpvhdec_DecSeqUdsc(void* self, const u8* p, s32 size) {
+    s32 limit = size - 4;
     s32 i = 0;
     s32 ret = 0;
-    s32 limit = size - 4;
     while (i < limit) {
         const u8* q = p + i + 4;
         if (strncmp((const char*)q, lbl_eu_8051C1F0, 7) == 0) {

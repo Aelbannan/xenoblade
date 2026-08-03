@@ -76,6 +76,44 @@ extern s32 mpvhdec_DecGscSj(void* self, s32 a, void* sj);
 extern s32 mpvhdec_DecPscSj(void* self, void* sj);
 extern s32 mpvhdec_DecEscSj(void* self, void* sj, s32 codec);
 extern s32 mpvhdec_DecUdscSj(void* self, void* sj, s32 codec);
+extern s32 MPV_GoNextDelimSj(void* a);
+
+s32 MPVHDEC_RecoverSj(void* self, void* a2) {
+    s32 r = *(s32*)((u8*)self + 0xd24);
+    s32 v = *(s32*)((u8*)self + 0xb14);
+    s32 ret = -1;
+    s32 t;
+    s32 sp[2];
+    if (r != 0) {
+        s32 x = *(s32*)((u8*)self + 0xd28);
+        s32 y = *(s32*)((u8*)self + 0xbe8);
+        *(s32*)((u8*)self + 0xd24) = 0;
+        *(s32*)((u8*)self + 0xd28) = x + 1;
+        *(s32*)((u8*)self + 0xbe8) = y + 1;
+        if (v == 0)
+            return -2;
+        *(s32*)((u8*)self + 0xbec) += 1;
+        if (v == 0)
+            ret = -3;
+        else
+            ret = -2;
+        for (;;) {
+            t = MPV_GoNextDelimSj(a2);
+            if (t == 0)
+                break;
+            if ((t & 0x1c0) == 0) {
+                ret = 0;
+                break;
+            }
+            ((void (*)(void*, s32, s32, s32*))*(void**)((u8*)*(void**)((u8*)a2) + 0x18))(a2, 1, 4, sp);
+            ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)a2) + 0x20))(a2, 0, sp);
+            if (sp[1] != 4)
+                break;
+        }
+    }
+    return ret;
+}
+
 extern s32 MPVHDEC_RecoverSj(void* self, void* sj);
 
 s32 MPV_DecodePicAtrSj(void* self, void* sj) {
@@ -332,6 +370,5 @@ s32 MPV_GoNextDelimSj(void* self) {
     return ret;
 }
 
-s32 MPVHDEC_RecoverSj(void* self, void* sj) { return 0; }
 
 void MPV_MoveChunk() {}

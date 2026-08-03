@@ -234,9 +234,3 @@ s32 __VISendI2CData(u8 slaveAddr, u8* pData, s32 nBytes) {
     OSRestoreInterrupts(enabled);
     return 1;
 }
-
-/* retail .sdata = __i2c_ident_flag(4) + 4 zero pad bytes; keep via .init + zero string. */
-void fake_function(...);
-__declspec(section ".init") void FORCEACTIVEvi_i2c_sdata(void) {
-    fake_function("\0\0\0");
-}

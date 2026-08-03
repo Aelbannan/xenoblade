@@ -171,7 +171,7 @@ void PPCMthid4(register u32 val) {
             mtspr 0x3F3, val //HID4
         )
     } else {
-        OSReport("H4A should not be cleared because of Broadway errata.\n\0"); /* 0x38 .data slot = retail 0x37 + 1 pad byte */
+        OSReport("H4A should not be cleared because of Broadway errata.\n");
         val |= HID4_H4A;
 
         ASM (

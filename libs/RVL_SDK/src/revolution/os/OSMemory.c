@@ -3,10 +3,6 @@
 static BOOL OnShutdown(BOOL final, u32 event);
 static OSShutdownFunctionInfo ShutdownFunctionInfo = {OnShutdown, 127};
 
-/* Retail .sbss slice is 8 bytes: the __OSInitMemoryProtection flag then 4
-   zero pad bytes; a plain 4-byte zero-init global lands in .sbss. */
-u32 __OSMemorySbssPad;
-
 // unused in Xenoblade retail: OSGetPhysicalMem1Size
 
 u32 OSGetPhysicalMem2Size(void) {

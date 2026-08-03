@@ -363,12 +363,12 @@ s32 DVDReadPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset, s32 prio) {
 
     // clang-format off
 #line 893
-    OS_ASSERT(offset >= 0 && offset <= info->size, "DVDRead(): specified area is out of the file  \0\0\0\0\0"); /* 52-byte .data slot = retail 0x2f + 5 pad bytes */
+    OS_ASSERT(offset >= 0 && offset <= info->size, "DVDRead(): specified area is out of the file  ");
     // clang-format on
 
     // clang-format off
 #line 899
-    OS_ASSERT(offset + size >= 0 && offset + size < info->size + 32, "DVDRead(): specified area is out of the file  \0\0\0\0\0"); /* 52-byte .data slot = retail 0x2f + 5 pad bytes */
+    OS_ASSERT(offset + size >= 0 && offset + size < info->size + 32, "DVDRead(): specified area is out of the file  ");
     // clang-format on
 
     block = &info->block;

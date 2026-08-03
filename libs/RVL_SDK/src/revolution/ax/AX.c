@@ -15,11 +15,6 @@ struct AXVersionDesc {
 
 static BOOL __init = FALSE;
 
-// Retail .sbss slice is 8 bytes: __init then 4 zero pad bytes
-// (gap_10_80664D2C_sbss) aligning the next unit's .sbss.
-// (non-static so MWCC emits it)
-u32 __AXSbssPad;
-
 void AXInit(void) {
     if (!__init) {
         OSRegisterVersion(__AXVersion.str);

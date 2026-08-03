@@ -326,8 +326,3 @@ void __OSStopPlayRecord(void) {
 }
 
 // unused in Xenoblade retail: __OSGetPlayRecordState
-
-/* retail .sdata = PlayRecordState(4) + 4 zero pad bytes; keep via .init + zero string. */
-__declspec(section ".init") void FORCEACTIVEOSPlayRecord_sdata(void) {
-    fake_function("\0\0\0");
-}

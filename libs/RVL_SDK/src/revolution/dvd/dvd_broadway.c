@@ -125,12 +125,6 @@ typedef struct DVDVideoReportKey {
 
 static s32 DiFD = -1;
 
-// unused in Xenoblade retail; global (not static) so -ipa file keeps it.
-// Uninitialized so MWCC places it in the uninit .sbss group (reversed decl
-// order -> lands 4-aligned at 0x24..0x28; the 3 preceding pad bytes
-// match the retail gap, giving retail .sbss size 0x28).
-u8 SbssPad[4];
-
 static volatile bool requestInProgress = FALSE;
 static bool breakRequested;
 static bool callbackInProgress = FALSE;

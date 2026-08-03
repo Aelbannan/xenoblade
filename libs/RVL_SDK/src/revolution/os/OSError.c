@@ -156,7 +156,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
         OSReport("Unhandled Exception %d", error);
     }
 
-    OSReport("\n\0\0"); /* 4-byte .sdata slot = retail \"\\n\" + 2 pad bytes */
+    OSReport("\n"); /* retail pools \"\\n\" as a 4-byte .sdata slot (2 pad) */
     OSDumpContext(ctx);
     OSReport("\nDSISR = 0x%08x                   DAR  = 0x%08x\n", dsisr, dar);
     OSReport("TB = 0x%016llx\n", tb);
@@ -182,7 +182,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
                  ctx->srr0, dar);
         break;
     case OS_ERR_PROTECTION:
-        OSReport("\n\0\0"); /* 4-byte .sdata slot = retail \"\\n\" + 2 pad bytes */
+        OSReport("\n"); /* retail pools \"\\n\" as a 4-byte .sdata slot (2 pad) */
         OSReport("AI DMA Address =   0x%04x%04x\n",
                  DSP_HW_REGS[DSP_AI_DMA_START_H],
                  DSP_HW_REGS[DSP_AI_DMA_START_L]);

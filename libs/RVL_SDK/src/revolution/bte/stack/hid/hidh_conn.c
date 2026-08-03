@@ -495,7 +495,7 @@ void hidh_l2cif_data_ind(UINT16 l2cap_cid, BT_HDR *p_buf)
         if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
         {
             LogMsg_1(0x001e0001,
-                     "HID - Rcvd L2CAP data, unknown CID: 0x%x\0\0\0\0\0\0\0",
+                     "HID - Rcvd L2CAP data, unknown CID: 0x%x",
                      l2cap_cid);
         }
         GKI_freebuf(p_buf);

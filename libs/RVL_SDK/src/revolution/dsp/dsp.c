@@ -1,12 +1,6 @@
 #include <revolution/DSP.h>
 #include <revolution/OS.h>
 
-// .sdata pad (retail gap_09_80662F78_sdata): keeps "\0\0\0" in .sdata via an
-// .init-section function so no .text is added.
-__declspec(section ".init") void FORCEACTIVEdsp_sdata(void) {
-    fake_function("\0\0\0");
-}
-
 const char* __DSPVersion =
     "<< RVL_SDK - DSP \trelease build: Feb 27 2009 10:01:57 (0x4302_145) >>";
 

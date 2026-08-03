@@ -21,9 +21,9 @@ NANDLoggingCallback s_callback;
 int s_stage;
 
 /* Retail .data @0x0 / @0x1C; postprocess renames to lbl_805512*. */
-static char s_nanderrPath[] = "/shared2/test2/nanderr.log\0";
+static char s_nanderrPath[] = "/shared2/test2/nanderr.log";
 static char s_lineFmt[] =
-    "%d %04d/%02d/%02d %02d:%02d:%02d %s %s\0\0\0\0\0\0\0\0\0\0";
+    "%d %04d/%02d/%02d %02d:%02d:%02d %s %s";
 
 void asyncRoutine(s32 result, void* ctxt);
 

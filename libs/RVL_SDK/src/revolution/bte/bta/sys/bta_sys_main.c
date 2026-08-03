@@ -38,9 +38,6 @@ typedef struct {
 tBTA_SYS_CB bta_sys_cb;
 
 UINT8 appl_trace_level;
-/* Retail .sbss slice is 8 bytes: appl_trace_level then 7 zero pad bytes.
-   Non-static so MWCC emits it. */
-char __BtaSysMainSbssPad[7];
 
 extern tBTA_SYS_CFG *p_bta_sys_cfg;
 extern void ptim_init(void *p_cb, UINT16 period, UINT8 timer_id);
@@ -118,12 +115,3 @@ void bta_sys_disable(tBTA_SYS_HW_MODULE module) {
 }
 
 void bta_sys_set_trace_level(u8 val) { appl_trace_level = val; }
-
-/* Retail .bss slice is 0x90: bta_sys_cb then 4 zero pad bytes (aligning the
-   next unit's .bss); sdata_threshold 0 keeps this 4-byte global in .bss.
-   Declared last so the pragma does not affect string placement above.
-   Non-static so MWCC emits it. */
-#pragma push
-#pragma sdata_threshold 0
-u32 __BtaSysMainBssPad;
-#pragma pop

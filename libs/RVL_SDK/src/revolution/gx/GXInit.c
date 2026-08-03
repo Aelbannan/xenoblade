@@ -140,13 +140,6 @@ static char s_GXVersionStr[0x48] =
     "<< RVL_SDK - GX \trelease build: Feb 27 2009 10:04:13 (0x4302_145) >>";
 const char* __GXVersion = s_GXVersionStr;
 
-// Retail .sdata is 8 bytes: the __GXVersion pointer (4) plus 4 zero pad bytes;
-// the .init-section function keeps the zero string in .sdata without adding
-// .text (i2c.c pattern).
-__declspec(section ".init") void FORCEACTIVEGXInit_sdata(void) {
-    fake_function("\0\0\0");
-}
-
 static BOOL __GXShutdown(BOOL, u32);
 
 static u16 DefaultTexData[] __attribute__((aligned(32))) = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF,

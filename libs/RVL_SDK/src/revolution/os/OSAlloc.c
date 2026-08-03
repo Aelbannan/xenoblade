@@ -19,11 +19,6 @@ volatile s32 __OSCurrHeap = -1;
 
 static void* ArenaEnd = NULL;
 static void* ArenaStart = NULL;
-// .sdata pad (retail gap_09_8066322C_sdata): keeps "\0\0\0" in .sdata via an
-// .init-section function so no .text is added.
-__declspec(section ".init") void FORCEACTIVEOSAlloc_sdata(void) {
-    fake_function("\0\0\0");
-}
 
 static s32 NumHeaps = 0;
 static OSHeapDescriptor* HeapArray = NULL;

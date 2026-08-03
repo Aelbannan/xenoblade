@@ -65,16 +65,8 @@ typedef struct
     tBTA_DM_SRVCS conn_srvc[5]; /* 0x01, stride 0x09 */
 } tBTA_DM_CONNECTED_SRVCS;    /* 0x2E */
 
-/* Retail .bss slice is 0x30: bta_dm_conn_srvcs then 2 zero pad bytes
-   (aligning the next unit's .bss). Declared BEFORE bta_dm_conn_srvcs because
-   -ipa off reverses the data emission order. sdata_threshold 0 keeps this
-   2-byte global in .bss. Non-static so MWCC emits it. */
-#pragma push
-#pragma sdata_threshold 0
-u16 __BtaDmPmBssPad;
-#pragma pop
-
 tBTA_DM_CONNECTED_SRVCS bta_dm_conn_srvcs;
+
 
 /* PM config / spec retail views (bta_dm_cfg.c). */
 typedef struct
@@ -379,7 +371,7 @@ void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out)
 
         if (i == BTA_DM_NUM_PM_TIMER) {
             if (appl_trace_level >= 2) {
-                LogMsg_0(0x501, "bta_dm_act no more pm timers\0\0\0\0\0\0\0");
+                LogMsg_0(0x501, "bta_dm_act no more pm timers");
             }
             return;
         }

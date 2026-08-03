@@ -11,10 +11,6 @@ typedef struct SIPollSetting {
 
 static u32 SamplingRate = 0;
 
-// Retail .sbss is 8 bytes: SamplingRate (4) plus 4 zero pad bytes
-// (gap_10_806652A4_sbss).
-u32 __SISamplingRateSbssPad;
-
 static SIPollSetting XYNTSC = {
     // clang-format off
     246,  2, // 0 msec
@@ -72,7 +68,7 @@ void SISetSamplingRate(u32 msec) {
         xy = &XYPAL;
         break;
     default:
-        OSReport("SISetSamplingRate: unknown TV format. Use default.\0\0\0\0\0");
+        OSReport("SISetSamplingRate: unknown TV format. Use default.");
         msec = 0;
         xy = &XYNTSC;
         break;

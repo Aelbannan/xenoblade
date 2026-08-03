@@ -113,8 +113,8 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("s_lineFmt", "lbl_805512D4"),
         ),
         symbol_sizes=(
-            ("lbl_805512B8", 0x1C),
-            ("lbl_805512D4", 0x2C),
+            ("lbl_805512B8", 0x1B),
+            ("lbl_805512D4", 0x27),
             ("s_fd", 0x8),
         ),
         # Retail .text ends with 0xC alignment padding after asyncRoutine.

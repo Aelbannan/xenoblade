@@ -6,8 +6,7 @@
 
 int main(int argc, char** argv);
 
-// .sbss is 8 bytes in retail: Debug_BBA (byte 0) + pad (gap_10_80665224_sbss).
-static u8 Debug_BBA[8];
+static u8 Debug_BBA;
 
 DECL_SECTION(".init") static void __init_registers(void);
 DECL_SECTION(".init") static void __init_data(void);
@@ -19,11 +18,11 @@ DECL_SECTION(".init") static void __check_pad3(void) {
 }
 
 DECL_SECTION(".init") static void __set_debug_bba(void) {
-    Debug_BBA[0] = TRUE;
+    Debug_BBA = TRUE;
 }
 
 DECL_SECTION(".init") static BOOL __get_debug_bba(void) {
-    return Debug_BBA[0];
+    return Debug_BBA;
 }
 
 DECL_SECTION(".init") DECL_WEAK asm void __start(void) {

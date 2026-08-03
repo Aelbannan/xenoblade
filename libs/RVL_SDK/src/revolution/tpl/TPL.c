@@ -7,11 +7,9 @@ void TPLBind(TPLPalette* pal) {
     u16 i;
 
     // clang-format off
-    // OS_ASSERT equivalent with the retail-padded pool strings (the retail
-    // .data/.sdata slices carry 5/2 trailing zero pad bytes).
     if (pal->versionNumber != TPL_VERSION)
-        OSPanic("TPL.c\0\0", 25,
-                "invalid version number for texture palette\0\0\0\0\0");
+        OSPanic("TPL.c", 25,
+                "invalid version number for texture palette");
     // clang-format on
 
     pal->descriptorArray =

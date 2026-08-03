@@ -53,9 +53,7 @@ typedef struct ARCHeader {
 static u32 entryToPath(ARCHandle* handle, u32 entrynum, char* string,
                        u32 maxlen);
 
-// Retail .sdata is 8 bytes: the assert's "arc.c" file string (6) plus 2 zero
-// pad bytes; the padded array reproduces the exact .sdata slice.
-static char s_arcFileName[8] = "arc.c";
+static char s_arcFileName[] = "arc.c";
 
 static BOOL isSame(const char* lhs, const char* rhs) {
     while (rhs[0] != '\0') {
@@ -142,7 +140,7 @@ BOOL ARCOpen(ARCHandle* handle, const char* path, ARCFileInfo* info) {
         ARCGetCurrentDir(handle, dir, sizeof(dir));
 
         OSReport("Warning: ARCOpen(): file '%s' was not found under %s in the "
-                 "archive.\n\0\0\0\0\0\0",
+                 "archive.\n",
                  path, dir);
 
         return FALSE;

@@ -25,6 +25,10 @@ static OSFatalParam FatalParam;
 
 static void Halt(void);
 
+// Retail .sdata: the "%s\n" format string then 4 zero pad bytes
+// (gap_09_80663254_sdata) to the next unit's 8-aligned .sdata.
+static char s_haltFmt[] = "%s\n";
+
 static void ScreenClear(u8* fb, u16 width, u16 height, GXColor yuv) {
     int x, y;
 
@@ -297,6 +301,6 @@ static void Halt(void) {
     }
 
     OSDisableInterrupts();
-    OSReport("%s\n", params->msg);
+    OSReport(s_haltFmt, params->msg);
     PPCHalt();
 }

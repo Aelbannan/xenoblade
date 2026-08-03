@@ -23,10 +23,6 @@ OSAlarm Controller::sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
 Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
 bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 
-// Retail .bss ends with 4 zero pad bytes after sSetInfoAsync
-// (gap_08_805CA04C_bss); the extra global reproduces the slice.
-u32 sHBMBssPad;
-
 void Controller::wpadConnectCallback(s32 chan, s32 result) {
     if (sThis[chan] == NULL) {
         return;

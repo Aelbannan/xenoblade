@@ -368,7 +368,7 @@ void RFCOMM_CongestionStatusInd(u16 lcid, u8 congested) {
     } else {
         if (rfc_cb.trace_level >= 4) {
             LogMsg_1(0x90003,
-                     "RFCOMM_CongestionStatusInd LCID:0x%x\0\0\0\0\0\0\0", lcid);
+                     "RFCOMM_CongestionStatusInd LCID:0x%x", lcid);
         }
         rfc_process_l2cap_congestion(channel, congested);
     }

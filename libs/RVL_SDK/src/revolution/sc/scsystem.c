@@ -122,9 +122,6 @@ static u32 ItemIDOffsetTblOffset = 0;
 static u8 IsDevKit = FALSE;
 static u8 DirtyFlag = FALSE;
 static u8 Initialized = FALSE;
-// unused in Xenoblade retail; global (not static) so -ipa file keeps it:
-// retail .sbss is 0x18 bytes and this fills the last byte (0x17)
-u8 SbssPad = 0;
 
 static SCNameAndID NameAndIDTbl[SC_ITEM_MAX] = {
     {"IPL.CB", SC_ITEM_IPL_CB},     {"IPL.AR", SC_ITEM_IPL_AR},

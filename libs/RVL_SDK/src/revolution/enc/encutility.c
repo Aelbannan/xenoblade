@@ -3,7 +3,7 @@
 #include <string.h>
 
 const char* __ENCVersion =
-    "<< RVL_SDK - ENC \trelease build: Feb 27 2009 10:05:42 (0x4302_145) >>\0\0"; /* 0x48 .data slot = retail 0x46 + 2 pad bytes */
+    "<< RVL_SDK - ENC \trelease build: Feb 27 2009 10:05:42 (0x4302_145) >>";
 static BOOL encRegistered = FALSE;
 u8 encutility_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 
@@ -105,10 +105,4 @@ u32 ENCiWriteBreakType(u8* dest, u32 size, ENCBreakType breakType, BOOL write){
     }
 
     return 0;
-}
-
-/* retail .sdata = __ENCVersion ptr(4) + 4 zero pad bytes; keep via .init + zero string. */
-void fake_function(...);
-__declspec(section ".init") void FORCEACTIVEencutility_sdata(void) {
-    fake_function("\0\0\0");
 }

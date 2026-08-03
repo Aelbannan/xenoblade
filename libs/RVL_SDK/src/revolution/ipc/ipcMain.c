@@ -3,11 +3,7 @@
 
 static u8 Initialized = FALSE;
 static void* IPCCurrentBufferLo = NULL;
-static void* IPCCurrentBufferHi = NULL;
-/* Retail .sbss slice is 0x18: the buffers then 4 zero pad bytes; a plain
-   4-byte zero-init global lands in .sbss. */
-u32 __IpcMainSbssPad;
-static void* IPCBufferLo = NULL;
+static void* IPCCurrentBufferHi = NULL;static void* IPCBufferLo = NULL;
 static void* IPCBufferHi = NULL;
 
 void IPCInit(void) {

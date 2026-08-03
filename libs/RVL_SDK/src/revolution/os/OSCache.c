@@ -485,6 +485,6 @@ void __OSCacheInit(void) {
     OSSetErrorHandler(OS_ERR_MACHINE_CHECK, DMAErrorHandler);
     // Trailing NULs reproduce the retail .data tail: the string (0x2e) plus 2
     // pad bytes and the 4-byte linker gap (gap_07_8054E38C_data) = 0x34.
-    DBPrintf("Locked cache machine check handler installed\n\0\0\0\0\0\0");
+    DBPrintf("Locked cache machine check handler installed\n");
 }
 

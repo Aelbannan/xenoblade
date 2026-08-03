@@ -6,18 +6,13 @@ extern u16 OSSetFontEncode(u16);
 extern void __DVDShowFatalMessage(void);
 static u8 CheckBuffer[32] ALIGN(32);
 
-// .sdata is 8 bytes in retail: lowDone then 4 zero pad bytes
-// (gap_09_8066307C_sdata) aligning the next unit's .sdata.
+// Retail .sdata: lowDone (4) then 4 zero pad bytes to the next unit's
+// 8-aligned .sdata (gap_09_8066307C_sdata).
 struct LowDone {
     volatile BOOL done;
-    u32 pad;
 };
-static struct LowDone lowDone = { TRUE, 0 };
+static struct LowDone lowDone = { TRUE };
 static volatile u32 lowIntType = 0;
-
-// .sbss is 8 bytes in retail: lowIntType then 4 zero pad bytes
-// (gap_10_80664FB4_sbss) aligning the next unit's .sbss.
-u32 __dvdDeviceErrorSbssPad;
 
 static void lowCallback(u32 intType) {
     lowIntType = intType;
@@ -202,7 +197,9 @@ static void __DVDShowDeviceErrorMessage(void) {
     GXColor bg = { 0, 0, 0, 0 };
     GXColor fg;
     // .sdata2 is 8 bytes in retail: the fg color word then 4 zero pad bytes
-    // (gap_11_80669794_sdata2) aligning the next unit's .sdata2.
+    // (gap_11_80669794_sdata2) aligning the next unit's .sdata2. The [2]
+    // array is load-bearing: a plain const scalar folds to an immediate and
+    // the retail .sdata2 slot disappears (codegen differs).
     static const u32 fgColor[2] = { 0xFFFFFF00, 0 };
     *(u32*)&fg = fgColor[0];
 

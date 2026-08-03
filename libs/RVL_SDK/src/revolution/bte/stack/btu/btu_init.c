@@ -9,12 +9,6 @@
 
 /* Retail .sdata2 slice is 8 bytes: BT_BD_ANY (all-FF BD_ADDR) + 2 pad. */
 const BD_ADDR BT_BD_ANY = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-/* Retail .sdata2 slice is 8 bytes: BT_BD_ANY then 2 zero pad bytes;
-   sdata_threshold 0 keeps a zero const scalar in .sdata2 (not .sbss2). */
-#pragma push
-#pragma sdata_threshold 0
-const UINT16 __BtuInitSdata2Pad = 0;
-#pragma pop
 
 void btu_init_core() {
     btm_init();

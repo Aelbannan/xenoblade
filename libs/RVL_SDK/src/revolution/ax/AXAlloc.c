@@ -7,14 +7,6 @@ static AXVPB* __AXStackHead[STACK_MAX];
 static AXVPB* __AXStackTail[STACK_MAX];
 static AXVPB* __AXCallbackStack = NULL;
 
-// Retail .sbss slice is 8 bytes: __AXCallbackStack then 4 zero pad bytes
-// (aligning the next unit's .sbss); non-static so MWCC emits it.
-u32 __AXAllocSbssPad;
-// Retail .bss slice is 0x118: __AXStackHead/__AXStackTail then 0x18 zero pad
-// bytes (aligning the next unit's 32-byte-aligned .bss); non-static so MWCC
-// emits it.
-u32 __AXAllocBssPad[6];
-
 AXVPB* __AXGetStackHead(u32 prio) {
     return __AXStackHead[prio];
 }

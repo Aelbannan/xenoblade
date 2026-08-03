@@ -211,8 +211,6 @@ u32 __HBMMIXSoundMode;
 HBMMIXChannel* __HBMMIXChannel;
 HBMMIXChannel __s_HBMMIXChannel[HBMMIX_NUM_CHANNELS];
 static u32 __init;
-/* Retail .bss is 0x6C0: 4 pad bytes after __init. */
-u8 HBMIXPad[4];
 
 static u16 __HBMMIXGetVolume(s32 db) {
     if (db <= HBMMIX_DB_MIN) {

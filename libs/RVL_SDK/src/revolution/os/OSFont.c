@@ -12,13 +12,6 @@ typedef const u8* (*ParseStringFunc)(u16 encode, const u8* str,
 
 static u16 FontEncode = 0xFFFF;
 
-// Retail .sdata is 8 bytes: FontEncode (2) + 2 pad + 4 zero pad bytes
-// (gap_09_8066325C_sdata); the .init-section function keeps the zero string in
-// .sdata without adding .text.
-__declspec(section ".init") void FORCEACTIVEOSFont_sdata(void) {
-    fake_function("\0\0\0");
-}
-
 static OSFontHeader* FontDataAnsi;
 static OSFontHeader* FontDataSjis;
 static BOOL FixedPitch;

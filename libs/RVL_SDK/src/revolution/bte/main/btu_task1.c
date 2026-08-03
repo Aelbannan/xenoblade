@@ -16,12 +16,6 @@ INT32 execute_btu = 1;
 UINT32 _btu_g_count;
 UINT32 _btu_last_timer_tick;
 tBTU_CB btu_cb;
-// Retail .bss slice is 0x88: btu_cb then 4 zero pad bytes (aligning the next
-// unit's .bss); non-static so MWCC emits it. sdata_threshold 0 forces the
-// 4-byte pad into .bss instead of .sbss.
-#pragma sdata_threshold 0
-u32 __btuTask1BssPad;
-#pragma sdata_threshold 8
 
 // Forward declarations for functions in other TUs
 void btu_init_core(void);

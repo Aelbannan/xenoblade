@@ -27,5 +27,5 @@ const tBTA_SYS_CFG_RETAIL bta_sys_cfg =
     0                       /* reserved    */
 };
 
-// Retail .sdata is 8 bytes: the pointer plus 4 zero pad bytes.
+// Retail .sdata is 8 bytes: { &bta_sys_cfg, NULL }.
 tBTA_SYS_CFG *p_bta_sys_cfg[2] = { (tBTA_SYS_CFG *)&bta_sys_cfg, NULL };

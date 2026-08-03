@@ -42,10 +42,6 @@ typedef enum {
 
 static u32 __AXCommandListPosition;
 
-// Retail .sbss ends with 4 zero pad bytes after __AXCommandListPosition
-// (aligning the next unit's .sbss); the extra global reproduces the slice.
-u32 __AXSbssPad;
-
 static u16* __AXClWrite;
 u32 __AXClMode;
 

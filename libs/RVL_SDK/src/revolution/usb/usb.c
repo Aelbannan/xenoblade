@@ -58,7 +58,7 @@ static void USB_LOG(const char* fmt, ...) {
     va_list list;
 
     if (s_usb_log) {
-        OSReport("USB: \0\0"); /* 8-byte .sdata slot = retail "USB: " + 2 pad bytes */
+        OSReport("USB: ");
         va_start(list, fmt);
         vprintf(fmt, list);
         va_end(list);

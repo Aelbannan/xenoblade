@@ -462,7 +462,7 @@ void btm_process_inq_complete (UINT8 status)
 
     if (btm_cb.trace_level >= BT_TRACE_LEVEL_DEBUG)
         LogMsg_2 (TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_DEBUG,
-                  "BTM Inq Compl Callback: status 0x%02x, num results %d\0\0\0\0\0\0",
+                  "BTM Inq Compl Callback: status 0x%02x, num results %d",
                   p_inq->inq_cmpl_info.status, p_inq->inq_cmpl_info.num_resp);
 
     /* If we have a callback registered for inquiry complete, call it */

@@ -503,7 +503,70 @@ void AnmScnRes::GetFog(Fog fog, u32 refNumber) {
 } // namespace nw4r
 
 
-void GetCamera__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d6CameraUl(){}
+namespace nw4r {
+namespace g3d {
+
+bool AnmScnRes::GetCamera(Camera camera, u32 refNumber) {
+    CameraAnmResult result;
+
+    CameraAnmResult* pResult = GetCameraResult(&result, refNumber);
+
+    if (!(pResult->flags & CameraAnmResult::FLAG_ANM_EXISTS)) {
+        return false;
+    }
+
+    switch (pResult->projType) {
+    case GX_PERSPECTIVE: {
+        camera.SetPerspective(pResult->perspFovy, pResult->aspect,
+                              pResult->near, pResult->far);
+        break;
+    }
+    case GX_ORTHOGRAPHIC: {
+        f32 height = pResult->orthoHeight * 2.0f;
+        f32 width = height * pResult->aspect;
+
+        camera.SetOrtho(height, -height, -width, width, pResult->near,
+                        pResult->far);
+        break;
+    }
+    default:
+        break;
+    }
+
+    Camera::PostureInfo posture;
+
+    switch (pResult->flags & CameraAnmResult::FLAG_CAMERA_TYPE_MASK) {
+    case 0: {
+        posture.tp = Camera::POSTURE_ROTATE;
+
+        math::VEC3 rotate = pResult->rotate.rot;
+
+        posture.cameraRotate = rotate;
+        break;
+    }
+    case 1: {
+        posture.tp = Camera::POSTURE_AIM;
+
+        math::VEC3 aim = pResult->aim.aim;
+
+        posture.cameraTarget = aim;
+        posture.cameraTwist = pResult->aim.twist;
+        break;
+    }
+    default:
+        break;
+    }
+
+    camera.SetPosition(pResult->pos);
+    camera.SetPosture(posture);
+
+    return true;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 namespace nw4r {
 namespace g3d {
 

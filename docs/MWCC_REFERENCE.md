@@ -7731,3 +7731,10 @@ flow: v>0 → v6 (0 if self+0x2678==-3 else stm+0xdd4) → v6>0 → the nested
 [self+0x1408+idx1*0x74]*0x44+0x1fd8+0x20 lookup → [r>=0 && r!=-1] → stm+0xdac
 = v6+r. Second guard: stm+0xdb0>0 && self+0xe50==0 → zero+copy. Residual:
 the [bgt]-vs-[ble] block layout inversion + the [add;li;stw] order.
+
+### CriWare adx_stmc ADXSTM_StopNw — FULL_MATCH + unit unblocked
+The adx_stmc unit was "broken" only due to the missing cvFsOpen/cvFsClose/
+cvFsGetFileSize externs (implicit int → void* errors). Added them (void*
+handles) and the unit builds. ADXSTM_StopNw: (s32) casts on the u8/u32
+stat/subState/startPending fields force the retail's signed cmpi (plain
+comparisons emit cmpli).

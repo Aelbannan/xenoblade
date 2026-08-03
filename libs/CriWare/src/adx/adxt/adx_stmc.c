@@ -177,9 +177,9 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -206,9 +206,9 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -226,9 +226,9 @@ void ADXSTM_Destroy(ADXSTMHndl* h) {
     ADXCRS_Leave();
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -282,9 +282,9 @@ void ADXSTM_ReleaseFileNw(ADXSTMHndl* h) {
     ADXCRS_Enter();
     ADXCRS_Lock();
 
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -320,9 +320,9 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -348,9 +348,9 @@ void ADXSTM_ReleaseFile(ADXSTMHndl* h) {
     ADXCRS_Unlock();
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -465,9 +465,9 @@ s32 ADXSTM_Start2(ADXSTMHndl* h, u32 maxSectors) {
 void ADXSTM_StopNw(ADXSTMHndl* h) {
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {
@@ -492,9 +492,9 @@ void ADXSTM_Stop(ADXSTMHndl* h) {
 
     ADXCRS_Enter();
     ADXCRS_Lock();
-    if (h->stat == 2 && h->subState == 1) {
+    if ((s32)h->stat == 2 && (s32)h->subState == 1) {
         h->stopReq = 1;
-        if (h->startPending == 1) {
+        if ((s32)h->startPending == 1) {
             h->startPending = 0;
         }
     } else {

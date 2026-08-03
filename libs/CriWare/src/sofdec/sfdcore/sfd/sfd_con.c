@@ -76,38 +76,46 @@ void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
     u32 cs;
-    SFLIB_LockCs(&cs);
     SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
-    s32 wr = ctx->wr;
-    s32 rd = ctx->rd;
+    s32 rd;
+    s32 wr;
+    s32 r;
+    SFLIB_LockCs(&cs);
+    rd = ctx->rd;
+    wr = ctx->wr;
     if (wr - rd >= 32) {
-        SFLIB_UnlockCs(&cs);
-        return 0;
+        r = 0;
+    } else {
+        ctx->value = value;
+        ctx->smplQueue[wr % 32] = lastSmpl;
+        ctx->wr += 1;
+        ctx->totalSmpl += lastSmpl;
+        r = 1;
     }
-    ctx->value = value;
-    ctx->smplQueue[wr % 32] = lastSmpl;
-    ctx->wr = wr + 1;
-    ctx->totalSmpl += lastSmpl;
     SFLIB_UnlockCs(&cs);
-    return 1;
+    return r;
 }
 
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 s32 SFCON_ReadTotSmplQue(void* h, s32* lastSmpl, s32* value) {
     u32 cs;
-    SFLIB_LockCs(&cs);
     SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
-    s32 rd = ctx->rd;
-    s32 wr = ctx->wr;
+    s32 rd;
+    s32 wr;
+    s32 r;
+    SFLIB_LockCs(&cs);
+    rd = ctx->rd;
+    wr = ctx->wr;
     if (wr - rd <= 0) {
         *lastSmpl = -1;
-        SFLIB_UnlockCs(&cs);
-        return 0;
+        r = 0;
+    } else {
+        *value = ctx->value;
+        *lastSmpl = ctx->smplQueue[ctx->rd % 32];
+        ctx->rd += 1;
+        r = 1;
     }
-    *value = ctx->value;
-    *lastSmpl = ctx->smplQueue[rd % 32];
-    ctx->rd = rd + 1;
     SFLIB_UnlockCs(&cs);
-    return 1;
+    return r;
 }

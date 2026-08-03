@@ -22,7 +22,7 @@ s32 SFD_SetUsrSj(void* self, u32 a, u32 b, u32 c) {
             *(u32*)((u8*)e + 8) = c;
             *(u32*)((u8*)e + 12) = 0;
             *(u32*)((u8*)e + 16) = 0;
-            SFBUF_SetUoch(self, *(void**)((u8*)self + 0x2208), (void*)a, (u8*)e + 4);
+            SFBUF_SetUoch(self, (void*)v, (void*)a, (u8*)e + 4);
         }
     }
     return 0;
@@ -55,18 +55,19 @@ s32 SFUO_ExecServer(void* self) {
 s32 SFUO_Create(void* self) {
     u8* end = (u8*)self + 0x2638;
     u8* e = end + 4;
-    u32 i = 0;
+    s32 i = 0;
     void* x = *(void**)((u8*)self + 0x2208);
     *(void**)((u8*)self + 0x2200) = end;
     *(u32*)((u8*)self + 0x2638) = 0;
     do {
-        *(u32*)((u8*)e + 0) = 0;
-        *(u32*)((u8*)e + 4) = 0;
-        *(u32*)((u8*)e + 8) = 0;
-        *(u32*)((u8*)e + 12) = 0;
+        *(u32*)((u8*)end + 4) = 0;
+        *(u32*)((u8*)end + 8) = 0;
+        *(u32*)((u8*)end + 12) = 0;
+        *(u32*)((u8*)end + 16) = 0;
         SFBUF_SetUoch(self, x, (void*)i, e);
         i++;
         e += 16;
+        end += 16;
     } while (i < 3);
     return 0;
 }

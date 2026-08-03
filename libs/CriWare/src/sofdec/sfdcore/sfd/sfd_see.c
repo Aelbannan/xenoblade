@@ -56,37 +56,36 @@ void sfsee_ExecHeadAnaly(void* self) {
     s32 ok1 = 0;
     s32 ok2 = 0;
     s32 r3, r4;
+    s32 st;
 
     if (*(s32*)avplay != 0) return;
 
-    if (SFTRN_IsSetup(self, 3) != 0) {
-        if ((s32)SFSET_GetCond(self, 6) == 1) {
-            setup3_flag = 1;
-            ok1 = (*(s32*)((u8*)avplay + 0xD0C) == 0) ? 1 : 0;
-        } else {
-            setup3_flag = 0;
+    if (SFTRN_IsSetup(self, 3) != 0 && (s32)SFSET_GetCond(self, 6) == 1) {
+        setup3_flag = 1;
+        if (*(s32*)((u8*)avplay + 0xD0C) == 0)
+            ok1 = 1;
+        else
             ok1 = 0;
-        }
     } else {
         setup3_flag = 0;
         ok1 = 0;
     }
-    if (ok1 == 0) {
-        if (SFTRN_IsSetup(self, 2) != 0) {
-            if ((s32)SFSET_GetCond(self, 5) == 1) {
-                setup2_flag = 1;
-                ok2 = (*(s32*)((u8*)avplay + 0xAD0) == 0) ? 1 : 0;
-            } else {
-                setup2_flag = 0;
-                ok2 = 0;
-            }
-        } else {
-            setup2_flag = 0;
-            ok2 = 0;
-        }
-        if (ok2 == 0) {
+    if (ok1 != 0) return;
 
-    if (SFTRN_IsSetup(self, 1)) {
+    if (SFTRN_IsSetup(self, 2) != 0 && (s32)SFSET_GetCond(self, 5) == 1) {
+        setup2_flag = 1;
+        if (*(s32*)((u8*)avplay + 0xAD0) == 0)
+            ok2 = 1;
+        else
+            ok2 = 0;
+    } else {
+        setup2_flag = 0;
+        ok2 = 0;
+    }
+    if (ok2 != 0) return;
+
+    st = SFTRN_IsSetup(self, 1);
+    if ((u32)(-st | st) >> 31) {
         *(s32*)((u8*)avplay + 0x8A0) = 1;
         if (*(s32*)((u8*)avplay + 0x0C) != 0 && *(s32*)((u8*)avplay + 0x18) > 0) {
             s32 fileSize = *(s32*)((u8*)avplay + 0xDC4);
@@ -99,7 +98,11 @@ void sfsee_ExecHeadAnaly(void* self) {
         } else if (*(s32*)((u8*)avplay + 0x0C) != 0) {
             s32 muxVer = SFHDS_GetMuxVerNum(self);
             if (muxVer < 0x6C) {
-                r3 = (s32)(((s64)*(s32*)((u8*)avplay + 0x8A4) * 3087) / 1024);
+                s32 v = *(s32*)((u8*)avplay + 0x8A4);
+                u32 m = (u32)v << 11;
+                s32 hi = __mulhw((s32)0x81E722C3, (s32)m);
+                s32 x = ((s32)hi + (s32)m) >> 10;
+                r3 = (s32)x + ((u32)x >> 31);
             } else {
                 r3 = *(s32*)((u8*)avplay + 0x8A4);
             }
@@ -121,8 +124,6 @@ void sfsee_ExecHeadAnaly(void* self) {
     *(s32*)((u8*)avplay + 0x08) = r4;
     *(s32*)avplay = 1;
     sfsee_UpdateEByteRate(self);
-        }
-    }
 }
 
 s32 SFD_SetFileSize(void* self, s32 fileSize) {
@@ -183,40 +184,39 @@ s32 SFD_SetSeekPos(void* self, s32 seekPos) {
 }
 
 void sfsee_ExecFinAnaly(void* self) {
-    void* avplay = *(void**)((u8*)self + 0x2670);
-    s32 updated = 0;
-    s32 finalPos;
-    s32 result;
-
-    if (SFCON_IsEndcodeSkip(self)) return;
-
-    if (*(s32*)((u8*)avplay + 0xDAC) > 0) {
-        if (*(s32*)((u8*)self + 0x2678) != -3) {
-            finalPos = *(s32*)((u8*)avplay + 0xDD4);
-        } else {
-            finalPos = 0;
-        }
-        if (finalPos > 0) {
-            result = *(s32*)((u8*)self + 0x1FD8 +
-                        *(s32*)((u8*)self + 0x1408 + *(s32*)((u8*)self + 0x1FEC) * 0x74) * 0x44 + 0x20);
-            if (result >= 0 && result != -1) {
-                *(s32*)((u8*)avplay + 0xDAC) = finalPos + result;
-                updated = 1;
+    u8* ptr = (u8*)self + 0x2674;
+    u32* p = *(u32**)((u8*)self + 0x2670);
+    s32 flag = 0;
+    if (SFCON_IsEndcodeSkip(self) != 0)
+        return;
+    if ((s32)*(s32*)((u8*)p + 0xDAC) <= 0) {
+        s32 r6;
+        if (*(s32*)(ptr + 4) == -3)
+            r6 = 0;
+        else
+            r6 = *(s32*)((u8*)p + 0xDD4);
+        if (r6 >= 0) {
+            s32 r0 = -1;
+            s32 idx2 = *(s32*)((u8*)self + 0x1408 + *(s32*)((u8*)self + 0x1FEC) * 0x74);
+            u8* q = (u8*)self + 0x1FD8 + idx2 * 0x44;
+            s32 result = *(s32*)(q + 0x20);
+            if (result >= 0)
+                r0 = result;
+            if (r0 != -1) {
+                *(s32*)((u8*)p + 0xDAC) = r6 + r0;
+                flag = 1;
             }
         }
     }
-
-    if (*(s32*)((u8*)avplay + 0xDB0) > 0) {
-        if (*(s32*)((u8*)self + 0xE50) == 0) {
-            *(s32*)((u8*)avplay + 0xDB0) = 0;
-            *(s32*)((u8*)avplay + 0xDB4) = *(s32*)((u8*)self + 0xE54);
-            updated = 1;
+    if ((s32)*(s32*)((u8*)p + 0xDB0) <= 0) {
+        if (*(s32*)((u8*)self + 0xE50) > 0) {
+            *(s32*)((u8*)p + 0xDB0) = *(s32*)((u8*)self + 0xE50);
+            flag = 1;
+            *(s32*)((u8*)p + 0xDB4) = *(s32*)((u8*)self + 0xE54);
         }
     }
-
-    if (updated) {
+    if (flag)
         sfsee_UpdateEByteRate(self);
-    }
 }
 
 void sfsee_UpdateEByteRate(void* self) {

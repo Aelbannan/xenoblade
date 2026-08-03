@@ -19,6 +19,7 @@ extern u32 lbl_eu_8051CA10[];
 extern u32 lbl_eu_80567ED8[];
 extern u32 lbl_eu_80606E20[];
 extern u32 lbl_eu_80606E38[];
+extern void* lbl_eu_8060715C;
 
 s32 SFLIB_SetErr(s32 val, u32 err_code);
 s32 SFLIB_CheckHn(void* h);
@@ -179,17 +180,23 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
 }
 
 s32 criware_803C0D94(void* handle, void (*errFn)(u32, u32), u32 errArg) {
+    s32 r;
     if (handle == NULL) {
         lbl_eu_80606E20[0] = (u32)errFn;
         lbl_eu_80606E20[1] = errArg;
         return 0;
     }
-    if (*(s32*)((u8*)handle + 0x54) != 0) {
-        *(void (**)(u32, u32))((u8*)handle + 0xA08) = errFn;
-        *(u32*)((u8*)handle + 0xA0C) = errArg;
-        return 0;
+    if (handle == NULL || *(s32*)((u8*)handle + 0x54) == 0)
+        r = -1;
+    else {
+        lbl_eu_8060715C = handle;
+        r = 0;
     }
-    return SFLIB_SetErr(0, 0xFF000101);
+    if (r != 0)
+        return SFLIB_SetErr(0, 0xFF000101);
+    *(void (**)(u32, u32))((u8*)handle + 0xA08) = errFn;
+    *(u32*)((u8*)handle + 0xA0C) = errArg;
+    return 0;
 }
 
 s32 SFLIB_CheckHn(void* h) {

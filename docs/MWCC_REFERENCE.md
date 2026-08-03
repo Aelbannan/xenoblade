@@ -5547,6 +5547,7 @@ Matched `__a1_20_status_report` (88.6%), `__a1_35_data_type` (85.9%), `__a1_37_d
 5. **Sparse `switch` cases reproduce retail compare chains; `slot = slot * 2` after a switch folds into the case `li` values only in specific shapes** — the retail KPADiSamplingCallback DPD table folds `slot*2` into the `li` (one `rlwinm` at the table access); source `slot *= 2` as a separate statement emits an extra early `slwi` (2-instruction schedule diff, no semantic change).
 6. **Framework acceptance notes:** indirect-call targets (function-pointer callbacks) can only reach EQUIVALENT_MATCH as FULL_MATCH (100%) — the certified-callee context fails closed on `has_indirect_calls`. SMT equivalence for 295-instruction FP-heavy functions (sqrt calls, f64 math) exceeds the 900s solver cap under concurrent-agent load; `--contract memory` does not reduce the formula-construction cost. The renaming witness is rejected by `psq_st` prologues (reject-list) and mnemonic diffs.
 7. **Symmetric FP accumulator init order flips which callee-saved FPR each gets.** `KPADiSamplingCallback`'s aiming block had 11 pure f30↔f31 reg-swaps: the 1.0f accumulator lived in f31 instead of retail's f30. Writing `f31 = 1.0f; f30 = 0.75f;` (0.75f accumulator initialized *first*) flips the allocation to match retail byte-for-byte — MWCC colors the first-initialized FP live range into f31 in this unit. The swap is a free lever when two symmetric FP accumulators differ only in register color; try it before declaring a regalloc stall.
+8. **`static const` function-local tables land in `.rodata`; the retail puts them in `.data` — this is a `reloc_eq` failure under `functionRelocDiffs=data_value` (99.9789% = 2 reg-diff penalties), not a pool-layout issue.** `KPADiSamplingCallback` (us-8034afb0) had a `static const u8 table[12][2]` DPD dispatch table. objdiff's `reloc_eq` for the table's `R_PPC_ADDR16_HA/LO` relocs requires `section_name_eq` between the retail (.data) and decomp (.rodata) symbols; the section mismatch fails the gate, each of the 2 table-address instructions gets `PENALTY_REG_DIFF` (5), and the score sits at 99.978905 forever while pool-layout investigations go nowhere. Fix: **drop `const`** so MWCC emits the table into `.data` (`static u8 table[12][2]`). One-line change → 100.0% static, FULL_MATCH. Diagnostic that isolates section-mismatch failures from pool/data-layout stalls: changing a suspect symbol's VALUE (e.g. `static const f64 double_8066C0E8 = 0.0` → `= 12345.678`) does NOT move the score when the symbol is dead/implicit (MWCC regenerates its own conversion constants), but the table's section is directly observable via the object symbol table (shndx 2 = `.data` vs `.rodata`).
 
 ## RVL_SDK vi/vi3in1 gamma + macrovision internals (US, mwcc_43_151 `-O4,p`) — table addressing, u16 masks, inline-copy patterns
 
@@ -8056,3 +8057,46 @@ Batch cri-09 matches in `mpv_hdec.c` / `sfd_adxt.c` (all FULL_MATCH or 90%+):
    — the retail keeps `handle` (r31) alive by RELOADING `*(void**)((u8*)handle + 0x20ac)`
    at the ADXT_Destroy site while using the cached `adxt` for ADXT_Stop; the source
    must mirror which sites reload vs cache or the callee-saved count shifts by one.
+
+### CriWare __mulhw magic-multiply pattern (sfd_see sfsee_ExecHeadAnaly, sfd codegen)
+CriWare fixed-point `x * 3087 / 1024`-style conversions compile to a
+magic-constant `mulhw` sequence, NOT the natural `mulli`/`mulhw` 64-bit form.
+Retail: `lis magic_hi; addi magic_lo; slwi m,x,11; mulhw hi,magic,m; add
+hi,m; srawi x,hi,10; rlwinm sb,x,1,31,31; add r,x,sb`. Reproduce with the
+SDK `__mulhw` intrinsic and explicit magic:
+```c
+u32 m = (u32)v << 11;
+s32 hi = __mulhw((s32)0x81E722C3, (s32)m);
+s32 x = ((s32)hi + (s32)m) >> 10;
+r = x + ((x & 0x80000000) >> 31);   /* retail uses rlwinm 1,31,31 (0/1) vs srwi — same op, encoding differs */
+```
+`__mulhw` is declared in include/compat.h for non-MWCC (macro → 0) and is a
+MWCC builtin. Get the magic constant from the retail `lis`/`addi` pair
+(0x81E722C3 for 3087/1024; mpv_get uses 0x91A3B3C5). `(x & 0x80000000) >> 31`
+emits `srwi` where retail emits the fused `rlwinm 1,31,31` — semantically
+identical single instruction, certifiable via SMT.
+
+### CriWare void-call-result alias (code_803A3AE4 criware_803A3AE4, 100%)
+Retail keeps the else-dispatch value in r3 across a void helper call:
+`bl helper(x)` then uses r3 as the result. Reproduce by declaring the helper
+`s32` and writing `r = (s32)helper((void*)x);` — MWCC emits `or r3,rX,rX; bl;
+r = r3` with no callee-saved spill of x (a plain `r = x` after the call forces
+a callee-saved save/reload and bloats the frame). Also: the second
+MWSFSVM_Error call used the SAME `lbl_eu_8051BF28` (not +0x28), and the x<=0
+gate was `x < 0` (retail `bge` — x==0 proceeds), not `x <= 0`.
+
+### Declaration-order color fix (code_803A3AE4 criware_803A3A48, 100%)
+Loop-local pointer declared at function scope BEFORE the counter swaps the
+callee-saved colors to match retail: `s32* entry; s32 i;` → i=r29/entry=r30
+(retail) vs `s32 i;` with in-loop `s32* entry` → i=r30/entry=r29. Same family
+as the SFADXT_Start declaration-order note.
+
+### mpv_frm MPV_DecodeFrmSj — unit-size key (blocked, size fixed)
+Retail keeps `h[0xBE8]`/`h[0xBEC]` pre-loaded in callee-saved r30/r29 across
+the whole function (used by the trailing `a3[0x38] = a2 - h[0xBE8]` subfs) →
+5 callee-saved regs → `stmw`/`lmw` prologue. Declaring the loads at the top and
+using them only at the end reproduces this; loading them inline at the end
+(volatile regs) shrinks the frame, loses `stmw`, and overflows the split by 16B.
+The copy loops still resist: retail `lwz/lwzu/stw/stwu + bdnz` (CTR) vs decomp
+`lwz/addic./stw/lwzu/stwu + bne` — no C form probed (u64*, u8*+offsets,
+do-while(--n), while(n--), for-loop) triggers the CTR conversion.

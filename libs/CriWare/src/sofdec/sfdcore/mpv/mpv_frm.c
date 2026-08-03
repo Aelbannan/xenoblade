@@ -15,6 +15,8 @@ extern s32 MPVSL_DecPicture(void* h, void* a);
 extern void MPVUMC_EndOfFrame(void* h);
 
 s32 MPV_DecodeFrmSj(void* h, void* a2, void* a3) {
+    u32 v1;
+    u32 v2;
     if (MPVLIB_CheckHn(h))
         return MPVERR_SetCode(NULL, 0xFF030209);
     if (*(s32*)((u8*)h + 0xcfc) == 2)
@@ -22,13 +24,15 @@ s32 MPV_DecodeFrmSj(void* h, void* a2, void* a3) {
     {
         u8* src = (u8*)h + 0xbe8;
         u8* dst = (u8*)a3 - 4;
-        u32 n = 8;
+        s32 n = 8;
+        v1 = *(u32*)((u8*)h + 0xbe8);
+        v2 = *(u32*)((u8*)h + 0xbec);
         do {
             *(u32*)(dst + 4) = *(u32*)(src + 4);
             *(u32*)(dst + 8) = *(u32*)(src + 8);
             src += 8;
             dst += 8;
-        } while (--n);
+        } while (--n != 0);
         *(u32*)(dst + 4) = *(u32*)(src + 4);
     }
     MPVUMC_InitOutRfb(h);
@@ -41,16 +45,16 @@ s32 MPV_DecodeFrmSj(void* h, void* a2, void* a3) {
     {
         u8* src = (u8*)h + 0xb58;
         u8* dst = (u8*)*(u32*)((u8*)a3 + 0x34) - 4;
-        u32 n = 16;
+        s32 n = 16;
         do {
             *(u32*)(dst + 4) = *(u32*)(src + 4);
             *(u32*)(dst + 8) = *(u32*)(src + 8);
             src += 8;
             dst += 8;
-        } while (--n);
+        } while (--n != 0);
     }
-    *(u32*)((u8*)a3 + 0x38) = (u32)a2 - *(u32*)((u8*)h + 0xbe8);
-    *(u32*)((u8*)a3 + 0x3c) = (u32)a2 - *(u32*)((u8*)h + 0xbec);
+    *(u32*)((u8*)a3 + 0x38) = (u32)a2 - v1;
+    *(u32*)((u8*)a3 + 0x3c) = (u32)a2 - v2;
     *(u16*)((u8*)a3 + 0x40) = *(s16*)((u8*)h + 0xc30);
     return 0;
 }
@@ -60,7 +64,7 @@ extern s32 MPV_MoveChunk(void* a, s32 b, s32 c);
 
 s32 MPV_SkipFrmSj(void* h, void* arg2) {
     s32 flag;
-    if (MPVLIB_CheckHn(h))
+    if (MPVLIB_CheckHn(h) != 0)
         return MPVERR_SetCode(NULL, 0xFF03020A);
     for (;;) {
         s32 r;
@@ -72,7 +76,7 @@ s32 MPV_SkipFrmSj(void* h, void* arg2) {
             flag = 0;
             break;
         }
-        if (MPV_MoveChunk(arg2, 1, 4) != 4)
+        if (MPV_MoveChunk(arg2, 1, 4) == 4)
             break;
     }
     return MPVERR_SetCode(h, flag);

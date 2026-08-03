@@ -1,5 +1,6 @@
 #include <revolution/OS.h>
 #include <revolution/SI.h>
+#include <revolution/VI.h>
 
 typedef enum {
     SI_ERROR_NOREP = (1 << 3),
@@ -8,12 +9,15 @@ typedef enum {
     SI_WIRELESS_CONT = (1 << 19),
 } SIStatus;
 
+typedef void (*SICallbackCtx)(s32 chan, u32 status, OSContext* ctx);
+
 typedef struct SIMain {
-    s32 chan;            // at 0x0
-    u32 poll;            // at 0x4
-    u32 inSize;          // at 0x8
-    void* inAddr;        // at 0xC
-    SICallback callback; // at 0x10
+    s32 chan;               // at 0x0
+    u32 poll;               // at 0x4
+    u32 inSize;             // at 0x8
+    void* inAddr;           // at 0xC
+    SICallbackCtx callback; // at 0x10
+    s32 pad;                // at 0x14
 } SIMain;
 
 typedef struct SIPacket {
@@ -27,23 +31,22 @@ typedef struct SIPacket {
 } SIPacket;
 
 const char* __SIVersion =
-    "<< RVL_SDK - SI \trelease build: Nov 30 2006 03:31:44 (0x4199_60831) >>";
+    "<< RVL_SDK - SI \trelease build: Feb 27 2009 10:04:44 (0x4302_145) >>";
 
-static SIMain Si = {SI_CHAN_NONE};
-static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
-                                SI_ERROR_NOREP};
+SIMain Si = {SI_CHAN_NONE};
+u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
+                         SI_ERROR_NOREP};
 
-static SIPacket Packet[SI_MAX_CHAN];
-static s64 XferTime[SI_MAX_CHAN];
-static s64 TypeTime[SI_MAX_CHAN];
-static BOOL InputBufferValid[SI_MAX_CHAN];
-static u32 InputBuffer[SI_MAX_CHAN][2];
-static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
-static u32 InputBufferVcount[SI_MAX_CHAN];
-static OSAlarm Alarm[SI_MAX_CHAN];
-static u32 cmdFixDevice[SI_MAX_CHAN];
-static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
-static u32 __PADFixBits;
+SIPacket Packet[SI_MAX_CHAN];
+s64 XferTime[SI_MAX_CHAN];
+s64 TypeTime[SI_MAX_CHAN];
+BOOL InputBufferValid[SI_MAX_CHAN];
+u32 InputBuffer[SI_MAX_CHAN][2];
+OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
+u32 InputBufferVcount[SI_MAX_CHAN];
+OSAlarm Alarm[SI_MAX_CHAN];
+SICallback TypeCallback[SI_MAX_CHAN][SI_MAX_TYPE];
+u32 __PADFixBits;
 
 static void SIClearTCInterrupt(void) {
     u32 csr = SI_HW_REGS[SI_SICOMSCR];
@@ -106,9 +109,122 @@ u32 CompleteTransfer(void) {
     return sr;
 }
 
-// TODO
-static void SIInterruptHandler(s32 intr, OSContext* ctx) {
-    ;
+static void GetTypeCallback(s32 chan, u32 status, OSContext* ctx);
+
+static void SIInterruptHandler(s16 intr, OSContext* ctx) {
+    u32 comsr;
+    u32 csr;
+    s32 chan;
+    u32 sr;
+    SICallbackCtx callback;
+    s32 i;
+    s32 chan2;
+    SIPacket* p;
+    s64 now;
+    s64 wait;
+    u32 line;
+    u32 poll;
+    u32 v;
+    u32 hi;
+    BOOL enabled;
+    static u32 cmdTypeAndStatus;
+
+    comsr = SI_HW_REGS[SI_SICOMSCR];
+
+    if ((comsr & 0xC0000000) == 0xC0000000) {
+        chan = Si.chan;
+        sr = CompleteTransfer();
+        callback = Si.callback;
+        Si.callback = NULL;
+
+        chan2 = chan;
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            chan2 = (chan2 + 1) % SI_MAX_CHAN;
+            p = &Packet[chan2];
+            if (p->chan == SI_CHAN_NONE) {
+                continue;
+            }
+            now = __OSGetSystemTime();
+            if (now < p->fire) {
+                continue;
+            }
+            if (__SITransfer(p->chan, p->outAddr, p->outSize, p->inAddr,
+                             p->inSize, p->callback)) {
+                OSCancelAlarm(&Alarm[chan2]);
+                p->chan = SI_CHAN_NONE;
+            }
+            break;
+        }
+
+        if (callback != NULL) {
+            callback(chan, sr, ctx);
+        }
+
+        csr = SI_HW_REGS[SI_SISR];
+        csr &= 0x0F000000 >> (chan * 8);
+        SI_HW_REGS[SI_SISR] = csr;
+
+        if (Type[chan] == SI_ERROR_BUSY) {
+            BOOL pending = Packet[chan].chan != SI_CHAN_NONE || Si.chan == chan;
+            if (!pending) {
+                v = *(volatile u32*)0x800000F8;
+                hi = __mulhwu(0x431BDE83, v >> 2);
+                wait = ((hi >> 15) + (((hi << 23) | (hi >> 9)) & 0x7FFFC0)) >> 3;
+                SITransfer(chan, &cmdTypeAndStatus, 1, &Type[chan], 3,
+                           (SICallback)GetTypeCallback, wait);
+            }
+        }
+    }
+
+    if ((comsr & 0x18000000) == 0x18000000) {
+        line = VIGetCurrentLine() + 1;
+        poll = (Si.poll >> 6) & 0x3FF;
+
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            u32 sr2;
+            BOOL rdst;
+
+            enabled = OSDisableInterrupts();
+            sr2 = SI_HW_REGS[SI_SISR] >> ((SI_MAX_CHAN - 1) - i) * 8;
+            if ((sr2 & SI_ERROR_NOREP) && !(Type[i] & SI_ERROR_BUSY)) {
+                Type[i] = SI_ERROR_NOREP;
+            }
+            OSRestoreInterrupts(enabled);
+            if (sr2 & SI_ERROR_RDST) {
+                rdst = TRUE;
+                InputBuffer[i][0] = SI_HW_REGS[3 * i + 1];
+                InputBuffer[i][1] = SI_HW_REGS[3 * i + 2];
+                InputBufferValid[i] = TRUE;
+            } else {
+                rdst = FALSE;
+            }
+            if (rdst) {
+                InputBufferVcount[i] = line;
+            }
+        }
+
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            if (Si.poll & (0x80000000 >> (24 + i))) {
+                if (InputBufferVcount[i] != 0) {
+                    if ((InputBufferVcount[i] + (poll >> 1)) >= line) {
+                        continue;
+                    }
+                    return;
+                }
+                return;
+            }
+        }
+
+        InputBufferVcount[0] = 0;
+        InputBufferVcount[1] = 0;
+        InputBufferVcount[2] = 0;
+        InputBufferVcount[3] = 0;
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            if (RDSTHandler[i] != NULL) {
+                RDSTHandler[i](intr, ctx);
+            }
+        }
+    }
 }
 
 void SIInit(void) {
@@ -132,7 +248,7 @@ void SIInit(void) {
 
     SI_HW_REGS[SI_SICOMSCR] = SI_SICOMCSR_TCINT;
 
-    __OSSetInterruptHandler(OS_INTR_PI_SI, SIInterruptHandler);
+    __OSSetInterruptHandler(OS_INTR_PI_SI, (OSInterruptHandler)SIInterruptHandler);
     __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_SI));
 
     SIGetType(SI_CHAN_0);
@@ -182,7 +298,7 @@ static BOOL __SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr,
     SI_HW_REGS[SI_SISR] = sr;
 
     Si.chan = chan;
-    Si.callback = callback;
+    Si.callback = (SICallbackCtx)callback;
     Si.inSize = inSize;
     Si.inAddr = inAddr;
 
@@ -281,13 +397,14 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     return TRUE;
 }
 
-static void GetTypeCallback(s32 chan, u32 status) {
+static void GetTypeCallback(s32 chan, u32 status, OSContext* ctx) {
     u32 type;
     u32 chanBit;
     u32 fix;
+    s32 i;
     u32 id;
     u32 cmd;
-    s32 i;
+    static u32 cmdFixDevice[SI_MAX_CHAN];
 
     Type[chan] &= ~SI_ERROR_BUSY;
     Type[chan] |= status;
@@ -302,9 +419,9 @@ static void GetTypeCallback(s32 chan, u32 status) {
         OSSetWirelessID(chan, 0);
         type = Type[chan];
         for (i = 0; i < SI_MAX_TYPE; i++) {
-            SICallback cb = TypeCallback[i][chan];
+            SICallback cb = TypeCallback[chan][i];
             if (cb != NULL) {
-                TypeCallback[i][chan] = NULL;
+                TypeCallback[chan][i] = NULL;
                 cb(chan, type);
             }
         }
@@ -314,11 +431,12 @@ static void GetTypeCallback(s32 chan, u32 status) {
     id = OSGetWirelessID(chan) << 8;
 
     if (fix && (id & 0x00100000)) {
+        u32* fixDev = &cmdFixDevice[chan];
         cmd = (id & 0xCFFF00) | 0x4E100000;
+        *fixDev = cmd;
         Type[chan] = SI_ERROR_BUSY;
-        SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
-                   GetTypeCallback, 0);
-        cmdFixDevice[chan] = cmd;
+        SITransfer(chan, fixDev, 3, &Type[chan], 3, (SICallback)GetTypeCallback,
+                   0);
         return;
     }
 
@@ -329,20 +447,20 @@ static void GetTypeCallback(s32 chan, u32 status) {
                 OSSetWirelessID(chan, (u16)(id >> 8));
             }
             cmd = 0x4E000000 | id;
+            cmdFixDevice[chan] = cmd;
             Type[chan] = SI_ERROR_BUSY;
             SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
-                       GetTypeCallback, 0);
-            cmdFixDevice[chan] = cmd;
+                       (SICallback)GetTypeCallback, 0);
             return;
         }
     } else if (type & 0x40000000) {
         id = (type & 0xCFFF00) | 0x00100000;
         OSSetWirelessID(chan, (u16)(id >> 8));
         cmd = 0x4E000000 | id;
+        cmdFixDevice[chan] = cmd;
         Type[chan] = SI_ERROR_BUSY;
         SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
-                   GetTypeCallback, 0);
-        cmdFixDevice[chan] = cmd;
+                   (SICallback)GetTypeCallback, 0);
         return;
     } else {
         OSSetWirelessID(chan, 0);
@@ -350,9 +468,9 @@ static void GetTypeCallback(s32 chan, u32 status) {
 
     type = Type[chan];
     for (i = 0; i < SI_MAX_TYPE; i++) {
-        SICallback cb = TypeCallback[i][chan];
+        SICallback cb = TypeCallback[chan][i];
         if (cb != NULL) {
-            TypeCallback[i][chan] = NULL;
+            TypeCallback[chan][i] = NULL;
             cb(chan, type);
         }
     }
@@ -386,8 +504,8 @@ u32 SIGetType(s32 chan) {
     }
 
     TypeTime[chan] = __OSGetSystemTime();
-    SITransfer(chan, &cmdTypeAndStatus, 1, &Type[chan], 3, GetTypeCallback,
-               OS_USEC_TO_TICKS(65));
+    SITransfer(chan, &cmdTypeAndStatus, 1, &Type[chan], 3,
+               (SICallback)GetTypeCallback, OS_USEC_TO_TICKS(65));
     OSRestoreInterrupts(enabled);
     return type;
 }

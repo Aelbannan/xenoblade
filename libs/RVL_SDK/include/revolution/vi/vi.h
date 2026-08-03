@@ -26,6 +26,7 @@ void* VIGetCurrentFrameBuffer(void);
 
 void VISetBlack(BOOL black);
 s32 VIGetRetraceCount(void);
+u32 VIGetCurrentLine(void);
 
 VITVFormat VIGetTvFormat(void);
 VIScanMode VIGetScanMode(void);

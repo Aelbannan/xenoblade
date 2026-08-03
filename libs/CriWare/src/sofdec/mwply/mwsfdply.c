@@ -83,9 +83,31 @@ int MWSFPLY_RecordFname(void *h, const char *fname) {
     }
 }
 
-int fn_803A537C(void *a, void *b) {
-    /* Unknown sub-function */
-    return 0;
+extern u8 lbl_eu_805669F4[];
+extern void* lbl_eu_805FF3A0;
+extern s32 MWSFD_IsEnableHndl(void* self);
+extern void SFD_RequestStop(void* sst);
+extern void MWSFD_RequestStopRead(void* self);
+
+void fn_803A537C(void* self) {
+    if (lbl_eu_805FF3A0 != NULL) {
+        *(void**)(lbl_eu_805669F4 + 0xC) = self;
+        ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
+            lbl_eu_805FF3A0, lbl_eu_805669F4 + 4);
+    }
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
+        return;
+    }
+    if (*(s32*)((u8*)self + 4) != 0 && *(s32*)((u8*)self + 0x678) != 1) {
+        *(s32*)((u8*)self + 0x678) = 1;
+        SFD_RequestStop(*(void**)((u8*)self + 0x58));
+        MWSFD_RequestStopRead(self);
+    }
+    if (lbl_eu_805FF3A0 != NULL) {
+        ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
+            lbl_eu_805FF3A0, lbl_eu_805669F4 + 0x6C);
+    }
 }
 
 int MWSFD_IsEndPrepareStop(void *h) {

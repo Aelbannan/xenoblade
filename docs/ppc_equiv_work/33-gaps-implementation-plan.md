@@ -1,265 +1,257 @@
-# 33 — Implementation plan: certifying the doc-32 "not fixed" RVL gaps
+# 33 — Implementation plan: certifying the doc-32 "not fixed" RVL gaps (rev 2)
 
-Status: **draft for adversarial review** (Kimi K3 integration / GLM-5.2 soundness).
-Companion to `31-reg-swap-witness.md`, `32-witness-improvements-plan.md`
-(draft), `30-loop-support-implementation-plan.md`, `28-loop-jt-corpus-hits.md`,
-and `docs/witness_expansion_plan.md` (region-sliced rho, four-lane deadness).
+Status: **draft, rev 2 — post round-1 adversarial review** (Kimi K3 integration /
+GLM-5.2 soundness; findings verified against live runs by the plan owner
+2026-08-03). Companion to `31-reg-swap-witness.md`, `32-witness-improvements-plan.md`,
+`30-loop-support-implementation-plan.md`, `28-loop-jt-corpus-hits.md`,
+`docs/witness_expansion_plan.md`.
 
-Source of the gap list: the reloc-drift sweep (2026-08-03) of the 28 RVL
-functions whose gate-2 (reloc) failures were fixed by the mined-map
-canonicalization / the `__wudLinkKeyEventStackCallback` declaration swap. After
-gate 2 passes, the witness fails at later gates; doc-32 fixes A1–A5 cover
-~10–12 of them. This plan covers the remainder, grouped into four work items.
+Rev 2 incorporates round-1 findings where they **reproduce**; where a reviewer
+claim was contradicted by a direct `certify_renaming_witness` run or objdump,
+the plan records the correction (marked **[verified]** / **[refuted]**).
 
 ---
 
 ## 0. Problem statement
 
-After doc-32 (A1–A5), these classes still fail the witness (counts are from
-the 28-function sweep; sibling classes exist in the 94):
+After doc-32 (A1–A5), these classes still fail the witness (28-function sweep,
+2026-08-03; re-verified for this rev):
 
 | Class | Functions (28-set) | Root cause |
 |---|---|---|
-| r3/r4 abi-boundary (global) | `__OSPlayTimeFadeLastAIDCallback` (r3→r5, void), `__HBMSYNSetupVolumeEnvelope` (r3→r4, void) | r3 in `_UNCONDITIONALLY_FIXED_GPRS` even when dead-scratch (doc-32 A3 keeps r3 unconditionally fixed) |
-| r3 abi-boundary (return-register, region-local) | `btm_sec_mx_access_request` (r3→r4), `l2c_csm_config` (r5→r3) — both return `UINT8` via r3 | gate-5 failure never reaches the region path (only gate-4 `rho` triggers `run_region_sliced_witness`); per-region gate 5 + deadness rebinding could accept a region-local scratch rename even when r3 is a return register, **if** the rename region provably never writes the return |
-| loop first-cut | `btm_acl_role_changed`, `bta_dm_pm_cback`, `process_service_search_attr_rsp`, `SDP_DeleteAttribute`, `btm_event_filter_complete`, `btm_process_inq_complete`, `__wudDeleteHandler` | `run_region_sliced_witness` rejects any backward branch / `bcctr` / `blrl` before executing (line ~1527) |
-| fields (source/TU-layout, not witness) | `SITransfer` (baked `.bss` offset 0x40), `SIInterruptHandler`, `GetTypeCallback` (section-anchor) | decomp SIBios `.bss` emission order puts `Packet` at 0x40, retail at 0x0; `.text` function order differs |
-| boundary-deadness | `BTM_CancelInquiry` | region boundary 56: a changed lane is live across the boundary; two-direction deadness fails |
-| hard fields | `hcisu_h2_receive_msg` (rlwinm mask), `SetVolumeAllSeq` (float-pool order), `btm_sec_l2cap_access_req` (bc displacement) | scheduler/TU-pool driven; **out of scope here** (source forensics, doc-32's "3 fields" + my 4th) |
+| r3 abi-boundary (void, global) | `__OSPlayTimeFadeLastAIDCallback` (r3→r5), `__HBMSYNSetupVolumeEnvelope` (r3→r4) | r3 in `_UNCONDITIONALLY_FIXED_GPRS` even when dead-scratch **[verified: both fail `gate='abi-boundary'` on a consistent global rho]** |
+| r3 abi-boundary (UINT8 return, global) | `btm_sec_mx_access_request` (r3→r4), `l2c_csm_config` (r5→r3) | same; both also `loop=True` **[verified: `gate='abi-boundary'` global, `_has_loop_or_non_return_indirect=True`]** |
+| loop first-cut | `btm_acl_role_changed`, `bta_dm_pm_cback`, `process_service_search_attr_rsp`, `SDP_DeleteAttribute`, `btm_event_filter_complete`, `btm_process_inq_complete`, `__wudDeleteHandler` | `run_region_sliced_witness` rejects any backward branch / `bcctr` / `blrl` **[verified: ALL 7 have backward branches and ZERO `bcctr`/`bclr` — the region-path reject is the only blocker]** |
+| fields (source/TU-layout) | `SITransfer` (baked `.bss` offset 0x40), `SIInterruptHandler`, `GetTypeCallback` (section-anchor) | decomp SIBios `.bss` emission puts `Packet` at 0x40, retail at 0x0; mechanism under investigation (see §3) |
+| boundary-deadness | `BTM_CancelInquiry` | region boundary 56 changed-lane live-across **[verified: reproduces with certified-callee contracts]** |
+| hard fields | `hcisu_h2_receive_msg` (rlwinm mask), `SetVolumeAllSeq` (float-pool order), `btm_sec_l2cap_access_req` (bc displacement) | scheduler/TU-pool driven; **out of scope** |
 
 ---
 
 ## 1. Conditional r3/r4 fixedness — extends doc-32 A3
 
-### 1a. Global path: make r3 conditional like A3's r4
+### 1a. Global path: r3 conditional on `declared_return=="void"` only
 
-`tools/coop/lib/renaming_witness.py:295`:
-`_UNCONDITIONALLY_FIXED_GPRS = frozenset({0, 1, 2, 3, 4, 13})` →
-after A2 (r0 removed) and A3 (r4 conditional), split into:
+`renaming_witness.py:295` `_UNCONDITIONALLY_FIXED_GPRS = {0, 1, 2, 3, 4, 13}`.
 
-- `_UNCONDITIONALLY_FIXED_GPRS = frozenset({1, 2, 13})` (r0 handled by A2's
-  D-form-RA position rule; r3/r4 conditional)
-- r3 conditional rule (mirrors A3's r4 rule, with one addition):
-  fixed iff
-  (a) live-in at entry in the EABI arg range (`live_in & _EABI_ARG_GPRS`,
-  already computed), or
-  (b) live-across-call (already computed), or
-  (c) `declared_return` is **not** `"void"` (r3 carries a scalar return
-  value; 64-bit/aggregate also fixes r4), or
-  (d) `declared_return` is unknown (`None`) — **conservative: fixed**
-  (current behaviour).
+**[Refuted]** the rev-1 reviewer claim that `__OSPlayTimeFadeLastAIDCallback`
+is a gate-2 i2f target — it fails `gate='abi-boundary'` on a consistent global
+rho (verified). Both 1a targets are valid.
 
-Threading: `certify_renaming_witness(..., declared_return: str | None = None)`
-→ `check_gates(..., declared_return)` → `_check_abi_fixedness(..., declared_return)`.
-`_try_renaming_witness` (equivalence_check.py:1422) gains `declared_return` and
-passes it; both call sites resolve it the same way the SMT path already does —
-`prove_unit_symbol` has it as a kwarg; `certify_unit_symbol` (line ~2942) and
-the registry fallback (equivalence_check.py:2228–2236:
-`targets.json` → `extra.declared_return`) must be wired so the witness sees the
-same value the SMT probe would. Default `None` ⇒ r3/r4 fixed ⇒ zero behaviour
-change when a caller does not thread it.
+**[Adopted from GLM-5.2]** the r3-unfix is NOT sound on `None` (unknown)
+`declared_return`: the CFG fixpoint models no exit live-out, and nothing
+verifies an annotation against callers. **r3 becomes conditional ONLY when
+`declared_return == "void"` is resolved from the registry (`targets.json` →
+`extra.declared_return`, same source the SMT path uses at
+equivalence_check.py:2228–2236).** On `None` or any non-void value, r3 stays
+fixed (current behaviour). The "wrong annotation" integrity risk is shared
+with the SMT path and is out of the witness's scope.
 
-Certificate honesty: the witness certificate (`witness_payload`) must record
-the `declared_return` used, and the strict validator
-(`equivalence_certificate_error`) must accept a rho containing r3/r4 only when
-the certificate's declared_return justifies it. Verify the
-`proof_request_hash` provenance includes the declared_return so the audit
-trail stays honest.
+Design:
+- `_UNCONDITIONALLY_FIXED_GPRS = {0, 1, 2, 13}` + a per-call conditional set:
+  r3 fixed iff `declared_return != "void"` OR live-in (EABI arg range) OR
+  live-across-call. (r0 remains fixed until doc-32 A2 lands; r4 remains fixed
+  until A3 lands — §1a must not silently assume A2/A3 are committed
+  **[verified: `_UNCONDITIONALLY_FIXED_GPRS` still contains 3 and 4]**).
+- Thread `declared_return` through `certify_renaming_witness` →
+  `check_gates` → `_check_abi_fixedness`, and into BOTH region-path call
+  sites (renaming_witness.py ~:1510) and `run_region_sliced_witness`.
+- **Certificate honesty (BLOCKER from Kimi K3, adopted):** the witness
+  `ProofResult` (equivalence_check.py ~:1599) must embed
+  `contract_resolution.abi_shape.declared_return` so the strict validator
+  (targets.py `equivalence_certificate_error`, staleness check) does not
+  reject the cert as stale when the registry declares `void`. Add a test:
+  witness cert for a `declared_return="void"` target passes the validator.
+- **Validator rho rule (MAJOR from Kimi K3, adopted):** either (a) drop the
+  plan's claim that the validator enforces rho/declared_return consistency,
+  or (b) add a validator rule: `evidence=="register-renaming-witness"` with a
+  rho mapping r3 ⇒ `abi_shape.declared_return` must be `"void"`. Choose (b)
+  with a test.
 
-**Expected fixes (global, void):** `__OSPlayTimeFadeLastAIDCallback`,
-`__HBMSYNSetupVolumeEnvelope`.
+### 1b. Region path: trigger on gate-5 + per-region return-write analysis (gated)
 
-### 1b. Region path: trigger region slicing on gate-5 failures
+**[Refuted]** Kimi K3's claim that `btm_sec_mx_access_request` /
+`l2c_csm_config` "already reach the region path via `gate=='rho'`" — both fail
+the GLOBAL gate 5 on a consistent rho and never reach the region path
+(verified). The 2-line trigger (region slice when
+`outcome.failure.gate == "abi-boundary"`) is therefore **not a no-op** for
+these targets; it changes global-reject → region-reject.
 
-`certify_renaming_witness` currently falls to the region-sliced witness only
-when `outcome.failure.gate == "rho"`. A global gate-5 (`abi-boundary`) failure
-with a *region-local* rename never gets the region path's per-region gate 5 +
-boundary-deadness rebinding — even though `run_region_sliced_witness`
-already runs `_check_abi_fixedness` per region (line ~1510) and would reject a
-function-wide rename correctly (no boundaries ⇒ one region ⇒ global rho ⇒
-gate 5 rejects).
+**[Adopted from GLM-5.2]** the payoff for the UINT8-return targets is NOT
+delivered by the trigger alone: per-region gate 5 uses function-level fixed
+sets, so with `declared_return="UINT8"` every region's r3 rename is rejected.
+Certifying them needs a **per-region return-write analysis**: a region's rho
+may rename r3 only if the region provably never writes r3 observably (the
+return value is written in a region where rho(3)=3). That analysis is real
+design work — produce a soundness argument + accept/reject tests and gate it
+on a second adversarial round. Default without it: 1b is sound but fixes
+nothing (keep the trigger only if a global-abi-boundary target appears; none
+is known in the 28-set).
 
-Change: also attempt `run_region_sliced_witness` when
-`outcome.failure.gate == "abi-boundary"`. Soundness rests on the existing
-per-region gate 5 (function-level live-in/live-across/declared_return fixed
-sets) + the four-lane deadness rebinding — no new soundness machinery, only a
-trigger extension. Confirm the region path's `live_in`/`live_across`
-computation still uses the FULL function's sets (it does: `_liveness_sets`
-runs over all instructions in `_check_abi_fixedness`), so a region cannot
-hide an entry-live or call-live rename.
-
-**Expected fixes (region-local, return-register):** `btm_sec_mx_access_request`,
-`l2c_csm_config` — **only if** the r3 rotation is contained in a region that
-never writes the return path; the reviewers must construct the counterexample
-if this is unsound (e.g. a region whose rho renames r3 while a later region
-writes r3 with rho(3)=3 — the return write is fixed, the scratch region's
-write is dead ⇒ likely sound, but prove it).
+Note both targets are `loop=True`: item 2 must land before either can certify.
 
 ---
 
 ## 2. Loop second-cut — bounded-iteration loops in the region path
 
 `run_region_sliced_witness` (renaming_witness.py:1527–1533) rejects any
-backward branch / `bcctr` / `blrl` before executing. The executor
-(`execute_cfg` via `_run_region`) already takes `max_loop_iterations`
-(default 2048 from equivalence_check) and the engine has loop support
-(doc-28/30: CTR-affine, compare-affine, memory-loop recognizers + bounded
-unrolling fallback). The global path (`run_structural_witness`) already
-executes loops bounded; only the region path has the first-cut reject.
+backward branch / `bcctr` / `blrl` before executing. **[Verified]** all 7
+loop-group functions have backward direct branches and **no** `bcctr`/`bclr`,
+so all 7 qualify for item 2 (rev-1's "only 3 of 7" is refuted — the reviewer
+miscounted the switch functions, which compile to direct branch trees here).
 
 Change:
 - Split `_has_loop_or_non_return_indirect` into
-  `_has_direct_backward_branch` (loop) vs `_has_indirect_dispatch`
-  (`bcctr`/`blrl` — jump tables / vtable / non-return indirect).
-- Region path: drop the reject for **direct backward branches**; let the
-  bounded executor run (loop iterations capped at `max_loop_iterations`;
-  exceeding ⇒ `ExecutionInconclusive` ⇒ degrade to SMT, never certify).
-- Keep the reject for `bcctr`/`blrl` (jump-table dispatch needs the
-  `jump_table` finder integration — doc-28/30 scope, **deferred**; the
-  executor marks indirect branches inconclusive anyway, so this is
-  conservative, not a lost opportunity).
-
-Soundness/design constraints for review:
-1. **Region boundaries must not fall inside a loop body.** `_rho_region_boundaries`
-   splits at bijection conflicts and call sites; a boundary inside a loop body
-   would rebind lanes mid-iteration, breaking the loop's register invariants.
-   Specify: when a boundary's address lies inside a backward-branch span, move
-   it to the loop header (or reject → SMT). Reviewers: verify the rebinding
-   driver + executor's loop-unrolling interact correctly with `paused_out`
-   resumption across the boundary.
-2. The four-lane deadness assertion at boundaries is computed with the loop
-   fixpoint liveness (already `_liveness_sets` handles loops) — confirm it
-   stays sound when the executor unrolls a loop that spans a region.
-
-**Expected fixes:** `btm_acl_role_changed` (counted loop), and the
-`bta_dm_pm_cback` / `btm_*` group **if** their switches compile to direct
-branch trees rather than `bcctr`; `__wudDeleteHandler` (big switch) likely
-stays on the deferred `bcctr` path. The plan must verify per function which
-it is (hexdiff `--asm`, look for `bcctr`).
+  `_has_direct_backward_branch` + `_has_indirect_dispatch` (`bcctr`/`blrl`).
+- Region path: drop the reject for **direct backward branches**; run the
+  bounded executor (`max_loop_iterations`, default 2048). Loop overflow ⇒
+  `ExecutionInconclusive` (semantics.py ~:5347 — no terminal recorded for an
+  overflowing path) ⇒ degrade to SMT. **[verified: overflow raises before any
+  terminal is recorded — no partial-unroll certificate possible]**
+- Keep the reject for `bcctr`/`blrl`. **[corrected rationale]** the executor
+  does NOT fail-closed on `bcctr` — it records an `"indirect-branch"` terminal
+  with a symbolic CTR target (semantics.py ~:5640). The comparison of that
+  terminal is sound (both sides share CTR under the shared-state binding), so
+  the reject is a **scope/completeness choice, not a soundness requirement**;
+  do not present it as fail-closed. `__wudDeleteHandler` (big switch) is a
+  deferred `bcctr`-dispatch case only if its switch lowers to `bctr` —
+  **[verified: it does not; it is a direct-branch tree, so it qualifies too]**
+  — re-check per function with `hexdiff --asm` after the split.
+- **Loop-boundary guard (placement, from Kimi K3):** after
+  `boundaries = _rho_region_boundaries(...)` in `run_region_sliced_witness`,
+  compute the address set inside every backward-branch span
+  `[target, branch]`; if any boundary address falls inside a span, return
+  `WitnessFailure(gate="loop", ...)` → SMT. Do **not** attempt "move to
+  header" this iteration (soundness risk; the global path already executes
+  the no-rebind loop case bounded). The four-lane deadness check
+  (`_boundary_deadness_ok`) is the backstop for loop-carried lanes at
+  non-loop boundaries.
+- **Tests:** rewrite `test_loop_containing_target_rejected_first_cut`
+  (test_renaming_witness.py:489) for the split predicates; add (a) region
+  path accepts a direct-backward-loop target with no boundary in a loop span,
+  (b) rejects when a boundary falls in a loop span, (c) overflow path → SMT
+  not cert.
 
 ---
 
-## 3. SIBios TU-order reorder (source experiment — not a witness change)
+## 3. SIBios `.bss` layout — mechanism investigation before any reorder
 
-### Hypothesis
+**[Corrected from rev-1]** the cited `.text` orders were wrong (drawn from
+symbol-table order, not `.text` offset). Objdump-verified orders:
 
-`.bss` emission order follows first-reference order across the TU's `.text`
-function order (evidence: SIBios declares `Packet` before `XferTime` yet the
-object emits `XferTime` first; `Alarm` is declared last but sits 4th; the
-decomp `.text` order differs from retail). Reordering the 11 function
-definitions in `libs/RVL_SDK/src/revolution/si/SIBios.c` to the retail `.text`
-order should flip `.bss` emission to `Packet` at 0x0, fixing:
+- Retail: `CompleteTransfer(0)`, `SIInterruptHandler(0x300)`, `SIInit(0x6f0)`,
+  `__SITransfer(0x7b0)`, `SISetCommand(0x960)`, `SITransferCommands(0x980)`,
+  `SISetXY(0x990)`, `AlarmHandler(0x9f0)`, `SITransfer(0xa80)`,
+  `GetTypeCallback(0xbf0)`, `SIGetType(0xeb0)`.
+- Decomp: same prefix through `__SITransfer`, then `SISetXY(0x960)`,
+  `AlarmHandler(0x9c0)`, `SITransfer(0xa50)`, `GetTypeCallback(0xbc0)`,
+  `SIGetType(0xe80)`, `SISetCommand(0x1040)`, `SITransferCommands(0x1060)`.
 
-- `SITransfer` (us-80364e50): `&Packet[chan]` stops baking +0x40
-  (`addi r0, r31, 64` → `0`), witness gate-3 `fields` clears;
-- `SIInterruptHandler` (us-803646d0), `GetTypeCallback` (us-80364fc0):
-  section-anchor `...bss.0` becomes `Packet`-anchored (or a map-covered
-  offset-0 anchor — either way the baked offsets clear).
+Real delta: **2 functions** (`SISetCommand`, `SITransferCommands`) at
+retail positions 5–6 vs decomp positions 10–11.
 
-Retail `.text` order (from the retail object): `AlarmHandler`,
-`CompleteTransfer`, `SIInterruptHandler`, `SIInit`, `__SITransfer`,
-`SISetCommand`, `SITransferCommands`, `SISetXY`, `SITransfer`,
-`GetTypeCallback`, `SIGetType`. Current decomp order:
-`SIInterruptHandler`, `__SITransfer`, `GetTypeCallback`, `AlarmHandler`,
-`CompleteTransfer`, `SITransfer`, `SIInit`, `SIGetType`, `SISetXY`,
-`SISetCommand`, `SITransferCommands`.
+**[Open question — mechanism unknown]** the `.bss` mismatch is real (retail
+`Packet`@0x0 vs decomp `Packet`@0x40) and NOT explained by:
+- declaration order (decomp source declares `Packet` before `XferTime`, yet
+  the rebuilt object emits `XferTime` first — verified by rebuild), nor
+- `.text` first-reference order (retail's first function `CompleteTransfer`
+  references `TypeTime`/`XferTime`, yet retail `.bss` starts with `Packet`).
 
-### Procedure
+The rev-1 reorder hypothesis ("moving 2 functions flips `.bss`") is therefore
+**unlikely to work** — the two moved functions do not reference `Packet` or
+`XferTime`. Re-scope item 3 as an **investigation**:
+1. Experiment matrix on the real mechanism (declaration order variants,
+   alignment/attribute effects, `-ipa` on/off, `-O4,p` vs `-O4,s`) — each
+   tested via `hexdiff.py RVL_SDK/src/revolution/si/SIBios --all` with the 8
+   FULL_MATCH siblings as the regression gate.
+2. Only if a mechanism is found: apply it, claim
+   `us-80364e50`/`us-803646d0`/`us-80364fc0`, verify the 3 targets clear
+   their `fields` gates and the 8 siblings stay 100% (their relocs are
+   named-symbol; verify by hexdiff, not assumption — Kimi K3's caution
+   adopted).
+3. If no mechanism is found within the experiment budget: record
+   `SITransfer`/`SIInterruptHandler`/`GetTypeCallback` as SMT candidates
+   (named-reloc siblings certify fine; the baked offset is a
+   layout-level block).
 
-1. Claim `us-80364e50`, `us-803646d0`, `us-80364fc0` (owner `paseo-reloc-fix`
-   or the impl agent).
-2. Reorder function definitions (mechanical move of whole function blocks;
-   keep forward declarations).
-3. `hexdiff.py RVL_SDK/src/revolution/si/SIBios --all` — verify the 8
-   FULL_MATCH functions stay 100% (their relocs are named-symbol →
-   order-independent) and the 3 targets improve. Revert on any regression.
-4. If the anchor becomes `...bss.0` at offset 0 (the WUD quirk), the static
-   match still clears the baked offsets; re-mine the map and re-run the
-   witness.
-
-Risk note: `.text` order is not compared by objdiff (per-function matching),
-and the TU split budget is unchanged (total `.text` size invariant under
-reorder). `-ipa` behaviour with reordered functions is the main unknown.
+Note: `list_text_functions` exists (`tools/ppc_equivalence/elf_symbols.py`);
+rev-1's "does not exist" is refuted. Prefer `objdump -t | sort` for `.text`
+ordering (symbol-table order ≠ `.text` offset order — the rev-1 error).
 
 ---
 
 ## 4. `BTM_CancelInquiry` boundary-deadness (us-802eb330)
 
-Failure: `region boundary 56: a changed lane is live across the boundary
-(two-direction deadness)`. This is the region path's `_boundary_deadness_ok`
-assertion failing for one lane at one boundary — the one "real"
-boundary-deadness failure in doc-32's abi-boundary count.
+**[Verified]** with certified-callee contracts the failure is
+`abi-boundary: region boundary 56: a changed lane is live across the boundary`
+— the plan's original premise **reproduces**. (Rev-1's executor-lemma failure
+(`BTM_IsDeviceUp` no matched-callee lemma) occurs only with opaque/empty
+contracts; Phase A must use `_load_certified_callees(proj, tid)`, not the
+sweep's opaque-EABI path.) `loop=False`, `bcctr=0` — clean.
 
-### Phase A — reproduce and characterise (cheap)
+### Phase A — characterise (cheap)
+Print the failing boundary/lane from the region driver (scratch script, not
+committed code): which lane, which side live, whether the liveness is genuine
+(used after the boundary) or a call-clobber artifact.
 
-Re-run the region-sliced witness on `BTM_CancelInquiry` with
-`certify_renaming_witness` and print the failing boundary/lane (extend the
-failure detail temporarily in a scratch script, not in committed code).
-Determine: which lane, which register, which side is live, and whether the
-liveness is genuine (a value used after the boundary) or an artifact of the
-fixpoint (e.g. a call-clobbered volatile counted as live-across).
+### Phase B — bounded source fix (3 attempts)
+Reshape so the lane dies before boundary 56 (reorder a use, scope a local).
+Callees are certified ⇒ a clean witness pass = EQUIVALENT_MATCH.
 
-### Phase B — source-level deadness fix (bounded, 3 attempts)
-
-If the lane's liveness is genuine but the source can be reshaped so the value
-dies before the boundary (reorder a use, scope a local), do it — bounded to 3
-hexdiff iterations. `BTM_CancelInquiry`'s callees are certified
-(`BTM_IsDeviceUp` etc.), so a clean witness pass = EQUIVALENT_MATCH.
-
-### Phase C — value-splitting design (only if A/B fail)
-
-This is doc-32's explicitly deferred "value-splitting region boundaries".
-Design: at a boundary where a changed lane is live-across on one side, split
-the lane's value into pre/post boundary symbolic variables with an equality
-constraint at the boundary (phi-like), so the region rho rebinding does not
-lose the carried value. Soundness: the equality constraint must be structural
-(`z3.eq`) and participate in the terminal comparison; a divergence rejects.
-This is **real design work** — produce a soundness argument + accept/reject
-tests and gate it on a second adversarial round before implementation.
-Default: leave the function as an SMT candidate (callees certified; SMT would
-certify).
+### Phase C — value-splitting design (gated)
+**[Adopted from GLM-5.2]** the rev-1 sketch (z3.eq equality assertion at the
+boundary) **cannot accept anything**: `_terminals_agree` has no constraint
+parameter and compares AST identity — an asserted-but-not-compared equality
+over-rejects, it does not false-certify. Phase C needs substitutive rebinding
+or a solver-based comparison; produce a real design + tests and gate it on a
+second adversarial round. Default: leave the function an SMT candidate.
 
 ---
 
-## Sequencing, scope, and acceptance
+## 5. Sequencing, scope, acceptance
 
-1. **Item 1a** (conditional r3, global) — smallest, self-contained; threads
-   `declared_return`; tests + re-sweep `__OSPlayTimeFadeLastAIDCallback`,
+1. **Item 1a** (foundation): conditional r3 on `declared_return=="void"`
+   (registry-resolved), `abi_shape` embedding in the witness cert, validator
+   rule (b), region-path threading. Re-sweep `__OSPlayTimeFadeLastAIDCallback`,
    `__HBMSYNSetupVolumeEnvelope`.
-2. **Item 1b** (gate-5 region trigger) — 2-line trigger + region-path tests;
-   re-sweep `btm_sec_mx_access_request`, `l2c_csm_config`.
-3. **Item 2** (loop second-cut) — split predicate + drop direct-backward
-   reject; loop-boundary constraint; re-sweep the 7 loop functions.
-4. **Item 3** (SIBios reorder) — source experiment, independent of 1–2; can
-   run in parallel (claims + hexdiff only, no witness code).
-5. **Item 4** — A (characterise) → B (bounded source) → C (design doc, gated).
+2. **Item 2** (loop second-cut): split predicate, drop direct-backward reject,
+   loop-boundary guard, test rewrite. Re-sweep the 7 loop functions (all
+   qualify; re-check `bcctr` per function after the split).
+3. **Item 1b**: trigger extension + per-region return-write analysis design
+   (gated on a second review); the trigger alone lands only if a
+   global-abi-boundary target is found.
+4. **Item 3**: `.bss` mechanism investigation (experiment matrix) → apply if
+   found; else record SMT candidates.
+5. **Item 4**: A → B → C (C gated).
 
-In scope: `tools/coop/lib/renaming_witness.py`,
-`tools/coop/lib/equivalence_check.py` (declared_return threading),
+Dependencies: 1b's targets need item 2 (both `loop=True`); 1a's cert work must
+land before any 1a acceptance (validator rejects stale certs); item 2's tests
+must be rewritten before the predicate split.
+
+CI (full AGENTS.md gate, not the witness subset — Kimi K3's NIT adopted):
+`gen_fixture_blob.py --check`, `tools/ppc_equivalence/tests`,
+`tools.ppc_equivalence differential`, `docs_sync --check`,
+`smell_report --check`, `tools/coop/tests`.
+
+In scope: `renaming_witness.py`, `equivalence_check.py`,
 `tools/coop/tests/test_renaming_witness.py`, `SOUNDNESS.md` via `docs_sync`,
-`libs/RVL_SDK/src/revolution/si/SIBios.c`, this doc.
-
-**Out of scope:** jump-table `bcctr` dispatch modeling (doc-28/30 scope);
-the 3 hard fields cases (`hcisu_h2` rlwinm mask, `SetVolumeAllSeq` float-pool
-order, `btm_sec_l2cap_access_req` bc displacement — scheduler/TU-pool
-forensics); i2f magic-double pools (doc-32 A5 territory, value-equal gate 2);
-anything touching the reloc-fix pipeline's files.
-
-CI: `python tools/ppc_equivalence/gen_fixture_blob.py --check`,
-`python -m unittest discover -s tools/ppc_equivalence/tests -p "test_*.py"`,
-`python -m tools.ppc_equivalence.docs_sync --check`, plus the
-`tools/coop/tests` witness suite. Shared-branch rules apply: no git
-destructive ops; `hexdiff.py` for builds; claim targets before editing;
-no `--smt` unless explicitly authorised.
+`SIBios.c`, this doc. **Out of scope:** `bcctr`-dispatch modeling (deferred;
+no known 28-set target uses it), the 3 hard-fields cases, i2f magic-double
+pools (doc-32 A5), reloc-pipeline files. Shared-branch rules: no git
+destructive ops; `hexdiff.py` for builds; claims before edits; no `--smt`
+unless authorised.
 
 ## Files to read
 
-- `tools/coop/lib/renaming_witness.py` — gates 1–6, `_check_abi_fixedness`
-  (876), `_has_loop_or_non_return_indirect` (645), region path (1469–1670).
-- `tools/coop/lib/equivalence_check.py` — `_try_renaming_witness` (1422),
-  `prove_unit_symbol` (2759), `certify_unit_symbol` (~2942), declared_return
-  registry resolution (2228–2236).
-- `tools/ppc_equivalence/abi_infer.py` — `declared_return` / `returns_i64`.
+- `renaming_witness.py` — gates 1–6, `_check_abi_fixedness` (:876, region
+  call ~:1510), `_has_loop_or_non_return_indirect` (:645), region path
+  (:1469–1670), `_rho_region_boundaries` (:1290–1350).
+- `equivalence_check.py` — `_try_renaming_witness` (:1422), witness
+  `ProofResult` (~:1599), `prove_unit_symbol` (:2759), `certify_unit_symbol`
+  (~:2942), declared_return resolution (:2228–2236).
+- `tools/coop/lib/targets.py` — `equivalence_certificate_error` (:72–260).
+- `tools/ppc_equivalence/semantics.py` — loop overflow (:5347), bcctr
+  terminal (:5640), `_terminals_agree`/`_execute_cfg_body`.
+- `tools/ppc_equivalence/abi_infer.py` — declared_return/returns_i64.
 - `docs/ppc_equiv_work/30-loop-support-implementation-plan.md`,
-  `28-loop-jt-corpus-hits.md` — engine loop/jump-table machinery.
-- `docs/witness_expansion_plan.md` — region rebinding, four-lane deadness.
+  `28-loop-jt-corpus-hits.md`, `docs/witness_expansion_plan.md`.

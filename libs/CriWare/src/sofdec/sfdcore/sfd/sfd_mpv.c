@@ -231,10 +231,7 @@ s32 SFMPV_Init(void) {
         return fn_803C34F8(0, ((u32)r + 0xfd0000 == 0xff05) ? 0xff000f13 : 0xff000f01);
     }
     SFMPVF_InitPool();
-    {
-        u32* p = &lbl_eu_80619B18;
-        *p = 0;
-    }
+    lbl_eu_80619B18 = 0;
     return 0;
 }
 
@@ -520,20 +517,10 @@ s32 sfmpv_NeedSafeDlmRefresh(void* buf, u32 dlm, u32 dlm_new) {
     if (dlm_new == *(u32*)buf) {
         return 1;
     }
-    if (dlm_new > *(u32*)buf && dlm_new - *(u32*)buf <= 3) {
+    if (dlm_new > *(u32*)buf && (s32)(dlm_new - *(u32*)buf) <= 3) {
         return 1;
     }
-    if (dlm_new < *(u32*)buf || dlm_new >= *(u32*)buf + *(u32*)((u8*)buf + 4)) {
-        /* second half */
-        if (dlm_new < *(u32*)((u8*)buf + 8) || dlm_new >= *(u32*)((u8*)buf + 8) + *(u32*)((u8*)buf + 0xc)) {
-            return 1;
-        }
-        n = dlm_new + 4 - (*(u32*)((u8*)buf + 8) + *(u32*)((u8*)buf + 0xc));
-        if (n > 0) {
-            return 1;
-        }
-        memcpy(tmp, (void*)dlm_new, 4);
-    } else {
+    if (dlm_new >= *(u32*)buf && dlm_new < *(u32*)buf + *(u32*)((u8*)buf + 4)) {
         /* first half */
         n = dlm_new + 4 - (*(u32*)buf + *(u32*)((u8*)buf + 4));
         if (n > 0) {
@@ -545,22 +532,32 @@ s32 sfmpv_NeedSafeDlmRefresh(void* buf, u32 dlm, u32 dlm_new) {
         } else {
             memcpy(tmp, (void*)dlm_new, 4);
         }
+    } else {
+        /* second half */
+        if (dlm_new < *(u32*)((u8*)buf + 8) || dlm_new >= *(u32*)((u8*)buf + 8) + *(u32*)((u8*)buf + 0xc)) {
+            return 1;
+        }
+        n = dlm_new + 4 - (*(u32*)((u8*)buf + 8) + *(u32*)((u8*)buf + 0xc));
+        if (n > 0) {
+            return 1;
+        }
+        memcpy(tmp, (void*)dlm_new, 4);
     }
     {
-        u32 v = MPV_CheckDelim(tmp);
+        s32 v = MPV_CheckDelim(tmp);
         if (v == 0x40 || v == 0x80) {
             return 0;
         }
         if (v == 8) {
             if ((dlm & 0x40) != 0) {
-                u32 r = sfmpv_SearchDelim(buf, 8, &dlm);
+                s32 r = sfmpv_SearchDelim(buf, 8, &dlm);
                 if (r == 0 || r == dlm_new) {
                     return 1;
                 }
             }
         } else if (v == 4) {
             if ((dlm & 0x48) != 0) {
-                u32 r = sfmpv_SearchDelim(buf, 4, &dlm);
+                s32 r = sfmpv_SearchDelim(buf, 4, &dlm);
                 if (r == 0 || r == dlm_new) {
                     return 1;
                 }
@@ -579,7 +576,7 @@ u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out) {
     u32 r;
     s32 n1;
     s32 n2;
-    u32 i;
+    s32 i;
     u8 tmp[8];
     *out = 0;
     r = MPV_SearchDelim(*(void**)buf, *(u32*)((u8*)buf + 4), mask);
@@ -591,22 +588,18 @@ u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out) {
         return 0;
     }
     n1 = *(s32*)((u8*)buf + 4);
-    if (n1 > 3) {
-        n1 = 3;
-    }
+    n1 = (n1 < 3) ? n1 : 3;
     n2 = *(s32*)((u8*)buf + 0xc);
-    if (n2 > 3) {
-        n2 = 3;
-    }
-    memcpy(tmp, *(u8**)buf + *(u32*)((u8*)buf + 4) - n1, n1);
+    n2 = (n2 < 3) ? n2 : 3;
+    memcpy(tmp, *(u8**)buf + *(s32*)((u8*)buf + 4) - n1, n1);
     memcpy(tmp + n1, *(void**)((u8*)buf + 8), n2);
     {
         u8* p = tmp;
-        for (i = 0; i < (u32)(n1 + n2 - 3); i++) {
+        for (i = 0; i < (n1 + n2 - 3); i++) {
             u32 v = MPV_CheckDelim(p);
             if ((v & mask) != 0) {
                 *out = v;
-                return *(u32*)((u8*)buf) + *(u32*)((u8*)buf + 4) - n1 + i;
+                return *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1 + i;
             }
             p++;
         }
@@ -626,7 +619,7 @@ u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
     u32 r;
     s32 n1;
     s32 n2;
-    u32 i;
+    s32 i;
     u8 tmp[8];
     *out = 0;
     if (*(s32*)((u8*)buf + 0xc) != 0) {
@@ -635,26 +628,22 @@ u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
             *out = MPV_CheckDelim((u8*)r);
             return r;
         }
-    }
-    n1 = *(s32*)((u8*)buf + 4);
-    if (n1 > 3) {
-        n1 = 3;
-    }
-    n2 = *(s32*)((u8*)buf + 0xc);
-    if (n2 > 3) {
-        n2 = 3;
-    }
-    memcpy(tmp, *(u8**)buf + *(u32*)((u8*)buf + 4) - n1, n1);
-    memcpy(tmp + n1, *(void**)((u8*)buf + 8), n2);
-    {
-        u8* p = tmp;
-        for (i = 0; i < (u32)(n1 + n2 - 3); i++) {
-            u32 v = MPV_CheckDelim(p);
-            if ((v & mask) != 0) {
-                *out = v;
-                return *(u32*)((u8*)buf) + *(u32*)((u8*)buf + 4) - n1 + i;
+        n1 = *(s32*)((u8*)buf + 4);
+        n1 = (n1 < 3) ? n1 : 3;
+        n2 = *(s32*)((u8*)buf + 0xc);
+        n2 = (n2 < 3) ? n2 : 3;
+        memcpy(tmp, *(u8**)buf + *(s32*)((u8*)buf + 4) - n1, n1);
+        memcpy(tmp + n1, *(void**)((u8*)buf + 8), n2);
+        {
+            u8* p = tmp;
+            for (i = 0; i < (n1 + n2 - 3); i++) {
+                u32 v = MPV_CheckDelim(p);
+                if ((v & mask) != 0) {
+                    *out = v;
+                    return *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1 + i;
+                }
+                p++;
             }
-            p++;
         }
     }
     r = MPV_BsearchDelim((u8*)*(void**)((u8*)buf) + *(u32*)((u8*)buf + 4), *(u32*)((u8*)buf + 4), mask);
@@ -1379,32 +1368,30 @@ void sfmpv_Pts2Tc(s32 a, s32 b, s32 v, s32 t, s32 u, u32* out) {
 // sfmpv_NextTc
 // ---------------------------------------------------------------------------
 void sfmpv_NextTc(void* in, void* out) {
-    s32 t0 = *(s32*)((u8*)in + 0);
-    s32 t1 = *(s32*)((u8*)in + 4);
-    s32 t2 = *(s32*)((u8*)in + 8);
-    s32 t3 = *(s32*)((u8*)in + 0xc);
-    s32 t4 = *(s32*)((u8*)in + 0x10);
-    s32 t5 = *(s32*)((u8*)in + 0x14);
-    s32 t6 = *(s32*)((u8*)in + 0x18);
     s32 t8 = (s32)*(s16*)((u8*)in + 0x1e);
     s32 t7 = (s32)*(s16*)((u8*)in + 0x1c);
-    s32 sum = t7 + t8;
+    s32 t0 = *(s32*)((u8*)in + 0x00);
+    s32 sum = t8 + t7;
+    s32 t5 = *(s32*)((u8*)in + 0x14);
+    s32 t6 = *(s32*)((u8*)in + 0x18);
     s32 rate = lbl_eu_8051C97C[t0];
     s32 s = sum % 2;
     s32 a = t5 + t6 + 1 + sum / 2;
+    s32 t1 = *(s32*)((u8*)in + 0x04);
     s32 d = a / rate;
-    s32 e = t4 + d;
+    s32 e = *(s32*)((u8*)in + 0x10) + d;
     s32 q1 = e / 60;
-    s32 f = t3 + q1;
+    s32 f = *(s32*)((u8*)in + 0x0c) + q1;
     s32 q2 = f / 60;
+    s32 t2 = *(s32*)((u8*)in + 0x08);
     s32 t3rem = a - d * rate;
-    s32 erem = e - q1 * 60;
-    s32 frem = f - q2 * 60;
+    s32 frem = f % 60;
+    s32 erem = e % 60;
     if (t1 == 0 && erem == 0 && frem % 10 == 0 && (u32)t3rem <= 1) {
         t3rem = 2;
     }
     *(s32*)((u8*)out + 0x00) = t0;
-    *(s32*)((u8*)out + 0x04) = t1;
+    *(s32*)((u8*)out + 0x04) = *(s32*)((u8*)in + 0x04);
     *(s32*)((u8*)out + 0x08) = t2 + q2;
     *(s32*)((u8*)out + 0x0c) = frem;
     *(s32*)((u8*)out + 0x10) = erem;
@@ -2274,6 +2261,7 @@ s32 sfmpv_InitInf(void* self, void* shc) {
 // sfmpv_InitFrmObj
 // ---------------------------------------------------------------------------
 void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count) {
+    const u32* q = src;
     s32 i;
     for (i = 0; i < count; i++) {
         *(u32*)((u8*)frm + 0x00) = 0;
@@ -2284,7 +2272,7 @@ void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count) {
         *(u16*)((u8*)frm + 0x12) = 0;
         *(u32*)((u8*)frm + 0x14) = 5;
         SFTIM_InitTtu((u8*)frm + 0x18, 0);
-        *(u32*)((u8*)frm + 0x08) = src[0];
+        *(u32*)((u8*)frm + 0x08) = *q;
         *(u32*)((u8*)frm + 0x44) = 0;
         *(u32*)((u8*)frm + 0x48) = 1;
         *(u32*)((u8*)frm + 0x4c) = 0;
@@ -2302,7 +2290,7 @@ void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count) {
         *(u32*)((u8*)frm + 0xfc) = 0;
         *(u16*)((u8*)frm + 0x100) = 0;
         frm = (u8*)frm + 0x110;
-        src += 1;
+        q += 1;
     }
 }
 

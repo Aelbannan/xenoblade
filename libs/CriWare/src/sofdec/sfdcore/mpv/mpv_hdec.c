@@ -31,7 +31,31 @@ void MPV_DecodePicAtrSj() {}
 
 void MPV_DecodePicAtr() {}
 
-void mpvhdec_GetCodec() {}
+extern s32 MPV_SearchDelim(const u8* data, s32 size, s32 limit);
+extern s32 MPV_CheckDelim(const u8* p);
+
+s32 mpvhdec_GetCodec(void* self, s32* param) {
+    s32 p;
+    if (*(s32*)((u8*)self + 0xCFC) != 0)
+        return *(s32*)((u8*)self + 0xCFC);
+    p = MPV_SearchDelim(*(const u8**)param, *(s32*)((u8*)param + 4), 64);
+    if (p == 0)
+        return *(s32*)((u8*)self + 0xCFC);
+    p = MPV_SearchDelim((const u8*)p + 4,
+                        *(s32*)((u8*)param + 4) - ((const u8*)p + 4 - *(const u8**)param),
+                        -1);
+    if (p == 0)
+        return *(s32*)((u8*)self + 0xCFC);
+    {
+        s32 v = MPV_CheckDelim((const u8*)p);
+        if (v & 0x10) {
+            *(s32*)((u8*)self + 0xCFC) = 2;
+        } else if (v != 0) {
+            *(s32*)((u8*)self + 0xCFC) = 1;
+        }
+    }
+    return *(s32*)((u8*)self + 0xCFC);
+}
 
 void mpvhdec_DecShcSj() {}
 

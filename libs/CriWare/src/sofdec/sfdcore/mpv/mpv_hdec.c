@@ -37,7 +37,84 @@ void MPV_GetPicUsr(void* self, u32* out_top, u32* out_bot) {
     }
 }
 
-void MPV_DecodePicAtrSj() {}
+extern s32 MPVLIB_CheckHn(void* h);
+extern s32 MPVERR_SetCode(void* h, u32 code);
+extern s32 MPVM2V_DecodePicAtr(void* self, s32 ret);
+extern s32 MPV_CheckDelim(const u8* p);
+extern s32 mpvhdec_GetCodec(void* self, s32* param);
+extern s32 mpvhdec_DecShcSj(void* self, void* sj);
+extern s32 mpvhdec_DecGscSj(void* self, s32 a, void* sj);
+extern s32 mpvhdec_DecPscSj(void* self, void* sj);
+extern s32 mpvhdec_DecEscSj(void* self, void* sj, s32 codec);
+extern s32 mpvhdec_DecUdscSj(void* self, void* sj, s32 codec);
+extern s32 MPVHDEC_RecoverSj(void* self, void* sj);
+
+s32 MPV_DecodePicAtrSj(void* self, void* sj) {
+    MpvSjChunk st;
+    s32 ret = 0;
+    s32 codec;
+    if (MPVLIB_CheckHn(self)) {
+        MPVERR_SetCode(0, 0xFF03020C);
+        return ret;
+    }
+    *(s32*)((u8*)self + 0xD94) = 0;
+    for (;;) {
+        ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
+            sj, 1, 0x7FFFFFFF, &st);
+        ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+            sj, 1, &st);
+        if (mpvhdec_GetCodec(self, (s32*)&st) != 2) {
+            MPVHDEC_RecoverSj(self, sj);
+            return ret;
+        }
+        codec = 0;
+        ret = mpvhdec_DecGscSj(self, -1, sj);
+        if (ret != 0) {
+            MPVM2V_DecodePicAtr(self, ret);
+            return ret;
+        }
+        ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
+            sj, 1, 0x7FFFFFFF, &st);
+        ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(
+            sj, 1, &st);
+        {
+            s32 v = (st.size < 4) ? 0 : MPV_CheckDelim(st.p);
+            if (v != 0) {
+                if ((v & 3) != 0) break;
+                if (v & 0x80) {
+                    ret = -2;
+                    break;
+                }
+                if (v == 64) {
+                    codec = 64;
+                    mpvhdec_DecShcSj(self, sj);
+                    continue;
+                }
+                if (v == 8) {
+                    codec = 8;
+                    mpvhdec_DecGscSj(self, (s32)sj, 0);
+                    continue;
+                }
+                if (v == 4) {
+                    codec = 4;
+                    mpvhdec_DecPscSj(self, sj);
+                    continue;
+                }
+                if (v == 16) {
+                    codec = 16;
+                    mpvhdec_DecEscSj(self, sj, codec);
+                    continue;
+                }
+                if (v == 32) {
+                    codec = 32;
+                    mpvhdec_DecUdscSj(self, sj, codec);
+                    continue;
+                }
+            }
+        }
+    }
+    return ret;
+}
 
 void MPV_DecodePicAtr() {}
 
@@ -67,13 +144,13 @@ s32 mpvhdec_GetCodec(void* self, s32* param) {
     return *(s32*)((u8*)self + 0xCFC);
 }
 
-void mpvhdec_DecShcSj() {}
+s32 mpvhdec_DecShcSj(void* self, void* sj) { return 0; }
 
-void mpvhdec_DecGscSj() {}
+s32 mpvhdec_DecGscSj(void* self, s32 a, void* sj) { return 0; }
 
-void mpvhdec_DecPscSj() {}
+s32 mpvhdec_DecPscSj(void* self, void* sj) { return 0; }
 
-s32 mpvhdec_DecEscSj(void* self, void* sj) {
+s32 mpvhdec_DecEscSj(void* self, void* sj, s32 codec) {
     MpvSjChunk* chunk = (MpvSjChunk*)((u8*)self + 0xD2C);
     MpvSjChunk rest;
     ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
@@ -88,7 +165,7 @@ s32 mpvhdec_DecEscSj(void* self, void* sj) {
     return 0;
 }
 
-s32 mpvhdec_DecUdscSj(void* self, void* sj) {
+s32 mpvhdec_DecUdscSj(void* self, void* sj, s32 codec) {
     MpvSjChunk* chunk = (MpvSjChunk*)((u8*)self + 0xD2C);
     MpvSjChunk rest;
     s32 r;
@@ -226,6 +303,6 @@ s32 MPV_GoNextDelimSj(void* self) {
     return ret;
 }
 
-void MPVHDEC_RecoverSj() {}
+s32 MPVHDEC_RecoverSj(void* self, void* sj) { return 0; }
 
 void MPV_MoveChunk() {}

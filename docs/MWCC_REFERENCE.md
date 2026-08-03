@@ -8014,3 +8014,45 @@ Single-condition gates (`if (stm == 1) goto body; goto exit;`) and if/else shape
 all fold on both GC/3.0a5.2 and Wii/1.1. Also confirms the mwply-family retail is
 **Wii/1.1**: the unit's param-move order (r4 before r3) and store/arg-setup
 interleave match only under Wii/1.1 (cf. SVM_Init/SVM_Finish notes).
+
+### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p)
+
+Batch cri-09 matches in `mpv_hdec.c` / `sfd_adxt.c` (all FULL_MATCH or 90%+):
+
+1. **`(x == 0) ? 1 : 0` ternary hoists the cntlzw to the prologue; plain `x == 0` sinks it**
+   (MPV_MoveChunk, 100%). Retail `cntlzw r0, r4; srwi r31, r0, 5` (the
+   `clz(x)>>5 == (x==0)` rewrite) is only reproduced by the ternary written to a
+   local `s32 n = (b == 0) ? 1 : 0;` before the call — `b == 0` alone schedules
+   the cntlzw after the call. This also fixed the 3-arg signature (self, b, c) —
+   the caller `MPV_SkipFrmSj` passes (sj, 1, 4).
+
+2. **Unsigned `> 1` in a boolean local → `xori; cntlzw; slw; rlwinm 1,31,31`**
+   (sfadxt_SetAdxtHd, 98.2%): `u32 ok = (u32)ADXT_GetStat(adxt) > 1; if (ok) {…}`
+   reproduces the retail idiom; the inline `if ((u32)x > 1)` emits `cmpli; ble`.
+   The last diff is a single commutative `add r3,r3,r4` vs `add r3,r4,r3` operand
+   swap (x*8+x) that every source order leaves swapped — stall for --smt.
+
+3. **`ret = -3; if (v == 0) ret = -2;` (default + override) reproduces `cmpi; li -3; bne; li -2`**
+   (MPVHDEC_RecoverSj, 100%). The ternary `(v == 0) ? -2 : -3` or if/else both
+   fold to the cntlzw select (`cntlzw; rlwinm; subi`) — only the
+   default-then-override shape keeps the plain compare.
+
+4. **Struct-member access keeps the base register live and recomputes the member address;**
+   a pointer local CSEs it into one base (mpvhdec_DecEscSj, 100%): `&self->chunk`
+   (struct with `MpvSjChunk chunk;` at 0xD2C) emits `addi r6, r30, 0xD2C` at each
+   call site (retail), while `MpvSjChunk* chunk = (MpvSjChunk*)((u8*)self + 0xD2C);`
+   folds to one callee-saved pointer. Also: `(p & ~3) + ((((p - a) * 8) + 7) >> 3) + 4 - p`
+   with `s32 a = p & ~3;` reproduces the retail `rlwinm; subf; rlwinm; addi; srawi; add; addi; subf`
+   chain (the `p - a` form makes MWCC emit `subf` instead of re-deriving `p & 3`;
+   `>> 3` not `/ 8` — division adds the signed `addze` fixup the retail lacks).
+
+5. **Branch polarity / block placement is driven by the if-condition shape**
+   (MPVHDEC_RecoverSj loop, 100%): retail `and r0,t,mask; beq vt-calls; li ret,0; b ret`
+   (vt-calls block placed AFTER the ret=0 fall-through) is reproduced only by
+   `if ((t & mask) != 0) { ret = 0; break; } <vt-calls>; if (sp[1] != 4) break;`
+   — the `== 0 → calls` + else form puts the calls inline and flips the branch.
+
+6. **`sfadxt_AdjustSync` / `SFADXT_Destroy` pattern: cached value vs reload-from-handle**
+   — the retail keeps `handle` (r31) alive by RELOADING `*(void**)((u8*)handle + 0x20ac)`
+   at the ADXT_Destroy site while using the cached `adxt` for ADXT_Stop; the source
+   must mirror which sites reload vs cache or the callee-saved count shifts by one.

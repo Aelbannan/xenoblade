@@ -7,6 +7,7 @@
 #include <nw4r/g3d/g3d_fog.h>
 #include <nw4r/g3d/g3d_light.h>
 #include <nw4r/g3d/g3d_obj.h>
+#include <nw4r/g3d/res/g3d_resanmscn.h>
 
 namespace nw4r {
 namespace g3d {
@@ -72,11 +73,36 @@ private:
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScn, G3dObj);
 };
 
-class AnmScnRes : public AnmScn {
+class AnmScnRes : public AnmScn, protected FrameCtrl {
 public:
     virtual ~AnmScnRes() {} // at 0x10
 
+    virtual void SetFrame(f32 frame);   // at 0x1C
+    virtual f32 GetFrame() const;       // at 0x20
+    virtual void SetUpdateRate(f32 rate); // at 0x24
+    virtual f32 GetUpdateRate() const;    // at 0x28
+    virtual void UpdateFrame();           // at 0x2C
+
+    virtual AmbLightAnmResult* GetAmbLightResult(
+        AmbLightAnmResult* pResult, u32 idx);    // at 0x58
+    virtual LightAnmResult* GetLightResult(LightAnmResult* pResult,
+                                           u32 idx); // at 0x5C
+    virtual FogAnmResult* GetFogResult(FogAnmResult* pResult,
+                                       u32 idx); // at 0x60
+    virtual CameraAnmResult* GetCameraResult(CameraAnmResult* pResult,
+                                             u32 idx); // at 0x64
+
+    void UpdateCache();
+
     NW4R_G3D_RTTI_DECL_DERIVED(AnmScnRes, AnmScn);
+
+protected:
+    ResAnmScn mRes;                        // at 0x20
+    u32 mUpdateCacheFlag;                  // at 0x24
+    AmbLightAnmResult* mpAmbLightCache;    // at 0x28
+    LightAnmResult* mpLightCache;          // at 0x2C
+    FogAnmResult* mpFogCache;              // at 0x30
+    CameraAnmResult* mpCameraCache;        // at 0x34
 };
 
 } // namespace g3d

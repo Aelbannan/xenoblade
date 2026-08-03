@@ -168,26 +168,170 @@ u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* 
             *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(pThis) + 0x20)) + 0x44);
 }
 void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb(){}
-void SetFrame__Q34nw4r3g3d9AnmScnResFf(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::SetFrame(f32 frame) {
+    SetFrm(frame);
+
+    if (mUpdateCacheFlag & 1) {
+        UpdateCache();
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
     return *(const float*)((const unsigned char*)this_ptr + 0xC);
 }
-void SetUpdateRate__Q34nw4r3g3d9AnmScnResFf(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::SetUpdateRate(f32 rate) {
+    SetRate(rate);
+
+    if (rate == 1.0f && (mUpdateCacheFlag & 1)) {
+        UpdateCache();
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
-void UpdateFrame__Q34nw4r3g3d9AnmScnResFv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::UpdateFrame() {
+    if (GetRate() != 1.0f) {
+        UpdateFrm();
+
+        if (mUpdateCacheFlag & 1) {
+            UpdateCache();
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv(){}
 void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl(){}
 void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl(){}
 void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl(){}
 void GetFog__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d3FogUl(){}
 void GetCamera__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d6CameraUl(){}
-void GetAmbLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d17AmbLightAnmResultUl(){}
-void GetLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d14LightAnmResultUl(){}
-void GetFogResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d12FogAnmResultUl(){}
-void GetCameraResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d15CameraAnmResultUl(){}
+namespace nw4r {
+namespace g3d {
+
+AmbLightAnmResult* AnmScnRes::GetAmbLightResult(AmbLightAnmResult* pResult,
+                                                u32 idx) {
+    ResAnmAmbLight amb = mRes.GetResAnmAmbLightByRefNumber(idx);
+
+    if (!amb.IsValid()) {
+        pResult->flags = 0;
+        pResult->color = -1;
+        return pResult;
+    }
+
+    if (mpAmbLightCache != NULL) {
+        return &mpAmbLightCache[amb.GetID()];
+    }
+
+    amb.GetAnmResult(pResult, GetFrm());
+    return pResult;
+}
+
+LightAnmResult* AnmScnRes::GetLightResult(LightAnmResult* pResult, u32 idx) {
+    ResAnmLight light = mRes.GetResAnmLightByRefNumber(idx);
+
+    if (!light.IsValid()) {
+        pResult->flags = 0;
+        return pResult;
+    }
+
+    if (mpLightCache != NULL) {
+        return &mpLightCache[light.GetID()];
+    }
+
+    light.GetAnmResult(pResult, GetFrm());
+    return pResult;
+}
+
+FogAnmResult* AnmScnRes::GetFogResult(FogAnmResult* pResult, u32 idx) {
+    ResAnmFog fog = mRes.GetResAnmFogByRefNumber(idx);
+
+    if (!fog.IsValid()) {
+        pResult->type = GX_FOG_NONE;
+        return pResult;
+    }
+
+    if (mpFogCache != NULL) {
+        return &mpFogCache[fog.GetID()];
+    }
+
+    fog.GetAnmResult(pResult, GetFrm());
+    return pResult;
+}
+
+CameraAnmResult* AnmScnRes::GetCameraResult(CameraAnmResult* pResult,
+                                            u32 idx) {
+    ResAnmCamera camera = mRes.GetResAnmCameraByRefNumber(idx);
+
+    if (!camera.IsValid()) {
+        pResult->flags = 0;
+        return pResult;
+    }
+
+    if (mpCameraCache != NULL) {
+        return &mpCameraCache[camera.GetID()];
+    }
+
+    camera.GetAnmResult(pResult, GetFrm());
+    return pResult;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl(){}
 void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl(){}
-void UpdateCache__Q34nw4r3g3d9AnmScnResFv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmScnRes::UpdateCache() {
+    u32 numAmb = mRes.GetResAnmAmbLightNumEntries();
+    u32 numLight = mRes.GetResAnmLightNumEntries();
+    u32 numFog = mRes.GetResAnmFogNumEntries();
+    u32 numCamera = mRes.GetResAnmCameraNumEntries();
+    f32 frame = GetFrm();
+
+    for (u32 i = 0; i < numAmb; i++) {
+        mRes.GetResAnmAmbLight(i).GetAnmResult(&mpAmbLightCache[i], frame);
+    }
+
+    for (u32 i = 0; i < numLight; i++) {
+        mRes.GetResAnmLight(i).GetAnmResult(&mpLightCache[i], frame);
+    }
+
+    for (u32 i = 0; i < numFog; i++) {
+        mRes.GetResAnmFog(i).GetAnmResult(&mpFogCache[i], frame);
+    }
+
+    for (u32 i = 0; i < numCamera; i++) {
+        mRes.GetResAnmCamera(i).GetAnmResult(&mpCameraCache[i], frame);
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void GetTypeName__Q34nw4r3g3d9AnmScnResCFv(){}

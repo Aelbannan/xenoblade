@@ -5,10 +5,6 @@ extern int MPVERR_SetCode(void *, int);
 
 /* Copy picture attributes from handle to output buffer */
 int MPV_GetPicAtr(void *handle, u32 *out) {
-    u32 *src;
-    u32 *dst;
-    int i;
-
     if (MPVLIB_CheckHn(handle)) {
         return MPVERR_SetCode(NULL, 0xFF03020C);
     }

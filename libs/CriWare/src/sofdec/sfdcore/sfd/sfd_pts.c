@@ -18,10 +18,10 @@ typedef struct SfdPtsEntry {
 // PTS queue descriptor located at offset 0x13F0 of the stream handle.
 typedef struct SfdPtsQue {
     SfdPtsEntry* entries; // 0x00
-    u32 maxIdx;           // 0x04 ring capacity (entries)
-    u32 count;            // 0x08 number of valid entries
-    u32 unk0C;            // 0x0C
-    u32 start;            // 0x10 read position
+    s32 maxIdx;           // 0x04 ring capacity (entries)
+    s32 count;            // 0x08 number of valid entries
+    s32 unk0C;            // 0x0C
+    s32 start;            // 0x10 read position
 } SfdPtsQue;
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len);
@@ -41,15 +41,13 @@ void SFPTS_ResetPtsQue(void* self) {
 }
 
 s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
-    u8* aligned;
-    s32 n;
     if (pts == 0 || size <= 0)
         return 0;
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(0, 0xFF000165);
     }
-    aligned = (u8*)(((u32)pts + 7) & ~7);
-    n = size - (s32)(aligned - (u8*)pts);
+    u8* aligned = (u8*)(((u32)pts + 7) & ~7);
+    s32 n = size - (s32)(aligned - (u8*)pts);
     memset(aligned, 0, n);
     *(u32*)((u8*)self + 0x1464) = (u32)aligned;
     *(s32*)((u8*)self + 0x1468) = n / 16;
@@ -61,14 +59,11 @@ s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
 
 s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
     u32* d = (u32*)data;
-    u32 lo = d[0];
-    u32 hi = d[1];
     u32* o = (u32*)out;
     SfdPtsQue* q;
-    u32 next;
-    s32 r = 0;
+    s32 r;
     o[0] = 0;
-    if ((s64)((u64)hi << 32 | (u64)lo) <= 0)
+    if ((s64)(((u64)d[0] << 32) | (u64)d[1]) <= 0)
         return 0;
     q = (SfdPtsQue*)((u8*)self + idx * 0x74 + 0x13f0);
     if (q->entries == 0)
@@ -77,15 +72,22 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
         o[0] = 1;
         r = -1;
     } else {
-        SfdPtsEntry* e = &q->entries[q->unk0C];
-        e->lo = lo;
-        e->hi = hi;
+        s32 uc = q->unk0C;
+        s32 next = uc + 1;
+        SfdPtsEntry* e = q->entries + uc;
+        e->lo = d[0];
+        e->hi = d[1];
         e->pos = d[2];
         e->size = d[3];
-        next = q->unk0C + 1;
-        q->unk0C = (next >= q->maxIdx) ? next - q->maxIdx : next;
-        q->count = q->count + 1;
-        o[0] = (q->count >= q->maxIdx);
+        s32 nn = (next < q->maxIdx) ? next : next - q->maxIdx;
+        s32 c2 = q->count + 1;
+        q->count = c2;
+        q->unk0C = nn;
+        if (c2 >= q->maxIdx)
+            o[0] = 1;
+        else
+            o[0] = 0;
+        r = 0;
     }
     if (r == -1)
         return SFLIB_SetErr(self, 0xFF000421);

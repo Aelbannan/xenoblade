@@ -11,13 +11,7 @@ int ADX_DecodeInfoSpsd(const u8 *data, int size, u16 *outBps, s8 *outCodec,
     *outX = (data[9] & 3) + 1;
     *outNum = *(u16 *)&data[0x2A];
 
-    if ((u32)(data[8] - 2) <= 1) {
-        *outVer = 4;
-        *outCh = *outX;
-        *outBlk = 2;
-        *outSmp = *(s32 *)&data[0x0C] * 2;
-        *outX2 = 2;
-    } else if (data[8] == 0) {
+    if (data[8] == 0) {
         *outVer = 0x10;
         *outCh = *outX << 1;
         *outBlk = 1;
@@ -29,13 +23,19 @@ int ADX_DecodeInfoSpsd(const u8 *data, int size, u16 *outBps, s8 *outCodec,
         *outBlk = 1;
         *outSmp = *(s32 *)&data[0x0C];
         *outX2 = 1;
-    } else {
-        *outCh = 2;
-        *outBlk = 1;
-        *outSmp = *(s32 *)&data[0x0C] / 2;
-        *outVer = 0x10;
-        *outCodec = -1;
+    } else if ((u32)(data[8] - 2) <= 1) {
+        *outVer = 4;
+        *outCh = *outX;
+        *outBlk = 2;
+        *outSmp = *(s32 *)&data[0x0C] * 2;
+        *outX2 = 2;
     }
+
+    *outCh = 2;
+    *outBlk = 1;
+    *outSmp = *(s32 *)&data[0x0C] / 2;
+    *outVer = 0x10;
+    *outCodec = -1;
     return 0;
 }
 

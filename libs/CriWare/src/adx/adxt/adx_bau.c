@@ -18,7 +18,7 @@ static u16 read_be16(const u8* p) {
 }
 
 u8* AU_GetInfo(u8* data, s32 maxBytes, s32* outSampleRate, s32* outTotalSamples,
-               s32* outBlockSize, s32* outChannelCount, u32* outFormat) {
+               s32* outBlockSize, s32* outChannelCount, s32* outFormat) {
     u32 sig, hdrSize, version, samples, sampleRate, totalSamples;
 
     sig = (u32)data[0] | ((u32)data[1] << 8) | ((u32)data[2] << 16) | ((u32)data[3] << 24);
@@ -37,20 +37,15 @@ u8* AU_GetInfo(u8* data, s32 maxBytes, s32* outSampleRate, s32* outTotalSamples,
     if (version == 1) {
         *outFormat = 2;
         *outBlockSize = 8;
-        goto found;
-    }
-    if (version == 2) {
+    } else if (version == 2) {
         *outFormat = 1;
         *outBlockSize = 8;
-        goto found;
-    }
-    if (version == 3) {
+    } else if (version == 3) {
         *outFormat = 0;
         *outBlockSize = 0x10;
-        goto found;
+    } else {
+        return NULL;
     }
-    return NULL;
-found:
 
     sampleRate = read_be32(data + 0x10);
     totalSamples = read_be32(data + 0x14);
@@ -61,8 +56,10 @@ found:
         *outChannelCount = (s32)samples / (s32)totalSamples;
     } else if (*outFormat == 1) {
         *outChannelCount = (s32)samples / (s32)totalSamples;
-    } else {
+    } else if (*outFormat == 0) {
         *outChannelCount = ((s32)samples / 2) / (s32)totalSamples;
+    } else {
+        *outChannelCount = 0x7FFF;
     }
 
     return data + hdrSize;
@@ -79,9 +76,9 @@ fail:
     return 0;
 }
 
-s32 ADX_DecodeInfoAu(u8* data, s32 maxBytes, s16* outHeaderSize, u8* outChannelCount, u8* outBlockSize, u8* outEncoding, s32* outSampleRate, s32* outTotalSamples, u32* outFormat) {
+s32 ADX_DecodeInfoAu(u8* data, s32 maxBytes, s16* outHeaderSize, u8* outChannelCount, u8* outBlockSize, u8* outEncoding, s32* outSampleRate, s32* outTotalSamples, s32* outFormat) {
     s32 channelCount, sampleRate, totalSamples, blockSize;
-    u32 format;
+    s32 format;
     u8 encoding;
 
     if (maxBytes < 8) {
@@ -132,7 +129,7 @@ s32 ADXB_DecodeHeaderAu(void* self, u8* data, s32 maxBytes) {
         (u8*)((u8*)sjd + 0x0F),
         (s32*)((u8*)sjd + 0x10),
         (s32*)((u8*)sjd + 0x14),
-        (u32*)((u8*)sjd + 0x18));
+        (s32*)((u8*)sjd + 0x18));
 
     if (result < 0) {
         return 0;

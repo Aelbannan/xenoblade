@@ -6,12 +6,15 @@
 extern char lbl_eu_8051C088[];
 extern int strcmp(const char* a, const char* b);
 
-s32 MPVDEC_CheckVersion(const char* version, u32 size, s32 v) {
+s32 MPVDEC_CheckVersion(const char* version, unsigned int size, s32 v) {
     if (strcmp(lbl_eu_8051C088, version) != 0)
         return -1;
-    if (size == 0xDAC)
+    switch (size) {
+    default:
+        return -1;
+    case 0xDAC:
         return ((v - 128) | (128 - v)) >> 31;
-    return -1;
+    }
 }
 
 void MPVDEC_DecIpicMb() {}

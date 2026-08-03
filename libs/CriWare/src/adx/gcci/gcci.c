@@ -297,7 +297,9 @@ void gcCiStopTr(GciHndl *h) {
     DVDGetCommandBlockStatus(&h->fi.block);
     DVDGetDriveStatus();
     *(u32 *)&g->status[8] = 1;
-    if (DVDCancel(&h->fi.block) < 0) {
+    s32 rc = DVDCancel(&h->fi.block);
+    *(u32 *)&g->status[8] = 0;
+    if (rc < 0) {
         const char *msg = &lbl_eu_805181F0[0x16F];
         if (g->errfunc != NULL)
             g->errfunc(g->errarg, msg, (s32)(u32)h);
@@ -308,10 +310,10 @@ void gcCiStopTr(GciHndl *h) {
         h->dvdStatus = DVDGetCommandBlockStatus(&h->fi.block);
         *(u32 *)&g->status = h->dvdStatus;
         u32 now = GCI_TICKS_TO_MS(OSGetTick());
-        u32 elapsed = now - start - 1;
+        s32 elapsed = (s32)(now - start) - 1;
         if (now >= start)
-            elapsed = now - start;
-        if (elapsed > 2000) {
+            elapsed = (s32)(now - start);
+        if ((u32)elapsed > 2000) {
             const char *msg = &lbl_eu_805181F0[0x18A];
             if (g->errfunc != NULL)
                 g->errfunc(g->errarg, msg, (s32)(u32)h);

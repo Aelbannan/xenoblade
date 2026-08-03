@@ -13,7 +13,36 @@ typedef struct MpvSjChunk {
 s32 MPV_GoNextDelimSj(void* self);
 extern s32 mpvhdec_AnalyUd(void* self, const u8* p, s32 size);
 
-void MPVHDEC_Init() {}
+extern void MPVUMC_PpicSkipped(void);
+extern void MPVUMC_BpicSkipped(void);
+extern void fn_803AFDB0(void);
+extern void fn_803AFFB4(void);
+extern void fn_803B00B8(void);
+extern void fn_803B01BC(void);
+extern u32 lbl_eu_80602A90[];
+
+void MPVHDEC_Init(void) {
+    memset(lbl_eu_80602A90, 0, 0x28);
+    memset((u8*)lbl_eu_80602A90 + 0x28, 0, 0x50);
+    memset((u8*)lbl_eu_80602A90 + 0x78, 0, 0x28);
+    memset((u8*)lbl_eu_80602A90 + 0xa0, 0, 0x28);
+    memset((u8*)lbl_eu_80602A90 + 0xc8, 0, 0x28);
+    lbl_eu_80602A90[1] = (u32)MPVUMC_PpicSkipped;
+    lbl_eu_80602A90[2] = (u32)MPVUMC_PpicSkipped;
+    lbl_eu_80602A90[3] = (u32)MPVUMC_BpicSkipped;
+    lbl_eu_80602A90[0xb] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0xc] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0xd] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0xe] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0x15] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0x16] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0x17] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0x18] = (u32)fn_803AFDB0;
+    lbl_eu_80602A90[0x20] = (u32)fn_803AFFB4;
+    lbl_eu_80602A90[0x21] = (u32)fn_803AFFB4;
+    lbl_eu_80602A90[0x2b] = (u32)fn_803B00B8;
+    lbl_eu_80602A90[0x35] = (u32)fn_803B01BC;
+}
 
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c) {
     void* base = (u8*)self + idx * 0xc;

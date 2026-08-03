@@ -84,12 +84,14 @@ void *SJMEM_Create(void *pool_mem, u32 flags) {
 #pragma push
 #pragma opt_propagation off
 void *sjmem_Create(void *pool_mem, u32 flags) {
+    SJMEM *p = (SJMEM *)lbl_eu_805ECE50;
     char buf2[64];
     char buf1[64];
     int i;
 
     for (i = 0; i < 0x20; i++) {
-        if (((SJMEM *)lbl_eu_805ECE50)[i].valid == 0) break;
+        if (p->valid == 0) break;
+        p++;
     }
     if (i == 0x20) return NULL;
 
@@ -102,7 +104,7 @@ void *sjmem_Create(void *pool_mem, u32 flags) {
     self->err_func = (void (*)(void *, int))SJMEM_Error;
     self->err_arg = self;
 
-    if (pool_mem == NULL) {
+    if (i == 0x20) {
         const char *suffix = lbl_eu_80518A68 + 0x0C;
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
         CRICRW_Strcat(buf1, 0x40, suffix);
@@ -386,9 +388,8 @@ body:
         return;
     }
     if (mode == 1) {
-        int new_offset = self->offset - chunk->size;
-        if (new_offset < 0) new_offset = 0;
-        self->offset = new_offset;
+        int new_offset = (int)self->offset - chunk->size;
+        self->offset = (new_offset > 0) ? new_offset : 0;
         {
             int new_avail = self->avail + chunk->size;
             if (new_avail > (int)self->buf_size) new_avail = self->buf_size;

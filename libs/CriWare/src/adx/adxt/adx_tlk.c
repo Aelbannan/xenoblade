@@ -302,15 +302,16 @@ void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq) {
 void adxt_GetTime(void* self, u32* time, u32* sfreq) {
     u32 localTime, localSfreq;
     u8 stat;
+    u32 *svr = (u32 *)&lbl_eu_805E4EF0;
     if (self == NULL || time == NULL || sfreq == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x14B);
         return;
     }
-    if (*(u32*)(lbl_eu_805E4EF0 + 0x20) == 0) {
+    if (svr[8] == 0) {
         adxt_GetTimeSfreq2(self, time, sfreq);
         return;
     }
-    *(float*)(lbl_eu_805E4EF0 + 0x40) = lbl_eu_805162D0;
+    *(float *)(svr + 0x10) = 0.0f;
     stat = ((u8*)self)[1];
     if ((u8)(stat - 3) <= 1) {
         if ((s8)((u8*)self)[0x72] == 0) {
@@ -323,27 +324,27 @@ void adxt_GetTime(void* self, u32* time, u32* sfreq) {
         {
             float fTime = (float)(s32)localTime;
             float fSfreq = (float)(s32)localSfreq;
-            float fSvrFreq = (float)(s32)*(u32*)(lbl_eu_805E4EF0 + 0x38);
             float fTime2 = (float)(s32)*time;
-            float spd = *(float*)(lbl_eu_805E4EF0 + 0x40);
+            float fSvrFreq = (float)(s32)svr[14];
             float ratio1 = fTime / fSfreq;
             float ratio2 = fTime2 / fSvrFreq;
-            *(float*)(lbl_eu_805E4EF0 + 0x40) = spd * (ratio1 - ratio2);
+            *(float *)(svr + 0x10) = 1000.0f * (ratio1 - ratio2);
         }
         {
-            float spd = *(float*)(lbl_eu_805E4EF0 + 0x40);
-            if (spd > lbl_eu_805162D0 + 0x14 || spd < lbl_eu_805162D0 + 0x1C) {
+            float spd = *(float *)(svr + 0x10);
+            if (spd > 60.0f || spd < -60.0f) {
                 if (lbl_eu_80560044 == 1) {
-                    u32 savedSvrFreq = *(u32*)(lbl_eu_805E4EF0 + 0x20);
-                    *(u32*)(lbl_eu_805E4EF0 + 0x20) = 0;
-                    adxt_GetTime(self, time, sfreq);
-                    *(u32*)(lbl_eu_805E4EF0 + 0x20) = savedSvrFreq;
-                    *(u32*)(lbl_eu_805E4EF0 + 0x3C) = *(u32*)(lbl_eu_805E4EF0 + 0x3C) + 1;
+                    u32 savedSvrFreq = svr[8];
+                    svr[8] = 0;
+                    adxt_GetTime(self, &localTime, &localSfreq);
+                    svr[15] = svr[15] + 1;
+                    svr[8] = savedSvrFreq;
                 }
                 {
                     float fTime = (float)(s32)localTime;
                     float fSfreq = (float)(s32)localSfreq;
-                    *(u32*)((u8*)self + 0x9C) = (u32)__cvt_fp2unsigned(fTime / fSfreq * (float)(s32)*time);
+                    float fSvrFreq = (float)(s32)svr[14];
+                    *(u32*)((u8*)self + 0x9C) = (u32)__cvt_fp2unsigned(fSvrFreq * (fTime / fSfreq));
                     *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
                 }
             }
@@ -352,14 +353,14 @@ void adxt_GetTime(void* self, u32* time, u32* sfreq) {
         u32 totalSmpl = ADXSJD_GetTotalNumSmpl(*(void**)((u8*)self + 4));
         u32 sf = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
         u32 bps = ADXSJD_GetOutBps(*(void**)((u8*)self + 4));
-        u32 adjusted = totalSmpl * (16 / bps);
-        *time = (u32)((float)(s32)adjusted / (float)(s32)sf * (float)(s32)*(u32*)(lbl_eu_805E4EF0 + 0x38));
+        u32 adjusted = totalSmpl * (16 / (s32)bps);
+        *time = (u32)((float)(s32)svr[14] * ((float)(s32)adjusted / (float)(s32)sf));
         *time = *time + 1 + *(u32*)((u8*)self + 0x9C);
     } else {
         *time = 0;
     }
     *time += *(u32*)((u8*)self + 0x88);
-    *sfreq = *(u32*)(lbl_eu_805E4EF0 + 0x38);
+    *sfreq = svr[14];
 }
 
 void ADXT_GetTime(void* a, void* b, void* c) {

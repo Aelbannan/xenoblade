@@ -1393,7 +1393,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/lsc/lsc.c"),
             Object(NonMatching, "CriWare/src/adx/lsc/lsc_crs.c"),
             Object(NonMatching, "CriWare/src/adx/mfci/mfci.c"),
-            Object(NonMatching, "CriWare/src/adx/sj/sj_mem.c"),
+            Object(NonMatching, "CriWare/src/adx/sj/sj_mem.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_rbf.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_uni.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c"),

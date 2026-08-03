@@ -19,9 +19,9 @@ Usage::
     .venv/bin/python3 tools/coop/progress_map.py            # rewrite the SVG
     .venv/bin/python3 tools/coop/progress_map.py --check    # exit 1 if stale
 
-The image is intentionally rendered at 2x logical scale (2px per slice, larger
-type) so it reads well both standalone and when scaled down to README width;
-tweak ``SCALE`` below to change it globally.
+The image is intentionally rendered at 3x logical scale (3px per slice, larger
+type) with a taller banner layout so it reads well both standalone and at
+README width; tweak ``SCALE`` below to change it globally.
 """
 
 import argparse
@@ -39,8 +39,8 @@ CODE_END = 0x804F9FA4
 COLUMNS = 2400
 
 # Global size multiplier. 1.0 reproduces the original (tiny) proportions;
-# the committed default of 2.0 doubles every dimension.
-SCALE = 2.0
+# the committed default of 3.0 triples every dimension.
+SCALE = 3.0
 
 # Match-state colors (best state wins when several functions share a slice).
 COLOR_FULL = "#1f883d"
@@ -129,29 +129,29 @@ def render(counts, slices):
     """Assemble the SVG document at SCALE resolution.
 
     Layout constants below are given in 1x design units (2400px wide) and
-    scaled by SCALE. The 1x proportions: 470px tall (bar 280px, legend ~30px)
-    so the image renders as a readable banner at README width.
+    scaled by SCALE. The 1x proportions: 740px tall (bar 420px, legend ~80px)
+    so the image renders as a larger, readable banner at README width.
     """
     full, equiv, prog, ns, accepted, total = counts
     s = SCALE
     w = int(COLUMNS * s)
-    h = int(470 * s)
+    h = int(740 * s)
     col_w = s
 
-    title_font = round(36 * s)
-    title_y = round(58 * s)
-    count_font = round(28 * s)
+    title_font = round(48 * s)
+    title_y = round(84 * s)
+    count_font = round(38 * s)
     count_y = title_y
-    axis_font = round(20 * s)
-    legend_font = round(27 * s)
-    bar_top = round(90 * s)
-    bar_h = round(280 * s)
-    axis_y = round(398 * s)
-    legend_swatch = round(30 * s)
-    legend_y = round(412 * s)
-    legend_text_y = legend_y + round(21 * s)
+    axis_font = round(26 * s)
+    legend_font = round(36 * s)
+    bar_top = round(150 * s)
+    bar_h = round(420 * s)
+    axis_y = round(620 * s)
+    legend_swatch = round(40 * s)
+    legend_y = round(660 * s)
+    legend_text_y = legend_y + round(27 * s)
 
-    pad = round(24 * s)
+    pad = round(32 * s)
     stroke = max(1, round(2 * s))
 
     out = [
@@ -194,7 +194,7 @@ def render(counts, slices):
     ]
     # rough glyph advance for layout only (ui-sans-serif, ~0.58em average)
     x = pad
-    gap = round(44 * s)
+    gap = round(60 * s)
     for color, label in items:
         out.append(
             f'<rect x="{x}" y="{legend_y}" width="{legend_swatch}" height="{legend_swatch}" '

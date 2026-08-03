@@ -382712,8 +382712,8 @@
       "size": "0x110",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803b0c20"
@@ -382731,7 +382731,9 @@
           "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_umc.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 81.368,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803b0c20",
@@ -389426,7 +389428,7 @@
       "size": "0x1DC",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -389439,7 +389441,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.s",
       "abi_helper_calls": [],
-      "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c"
+      "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c",
+      "claim": {
+        "owner": "cri-b01",
+        "claimed_at": "2026-08-03T17:15:23.920330+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803c6454",

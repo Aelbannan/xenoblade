@@ -10,7 +10,9 @@ typedef struct SFHContext {
     u32 active;       /* 0x00: set to 1 when created */
     u32 field_0x04;   /* 0x04: arg0 from SFH_Create */
     u32 field_0x08;   /* 0x08: arg1 from SFH_Create */
-    u8  field_0x0C[0x0C]; /* 0x0C-0x17: remainder */
+    u32 field_0x0C;   /* 0x0C */
+    u32 field_0x10;   /* 0x10 */
+    u32 field_0x14;   /* 0x14 */
 } SFHContext;
 
 void SFH_Init(void) {
@@ -122,12 +124,10 @@ u32 SFH_IsEffFtrInf(void* buf) {
     return 0;
 }
 
-u32 VER1_AnlyHdrToolVer(void* buf);
-u32 VER2_AnlyHdrToolVer(void* buf);
 u32 SFH_AnlyHdrToolVer(void* buf) {
     s32 ver = *(s32*)((u8*)buf + 0x10);
-    if (ver < 0xC8) return VER1_AnlyHdrToolVer(buf);
-    if (ver < 0x12C) return VER2_AnlyHdrToolVer(buf);
+    if (ver < 0xC8) return VER1_AnlyHdrToolVer(buf, NULL, NULL);
+    if (ver < 0x12C) return VER2_AnlyHdrToolVer(buf, NULL, NULL);
     return 0;
 }
 

@@ -38,6 +38,43 @@ extern u8 lbl_eu_805E7B30[];           // sector buffer (0x100)
 extern char lbl_eu_80565B30[];         // GCI interface table
 extern char lbl_eu_805181F0[];         // error message strings
 
+s32 gcCiGetFileSize(const char* path) {
+    char buf[0x100];
+    DVDFileInfo fi;
+    u32 n;
+    s32 size;
+    if (path == NULL) {
+        const char* msg = &lbl_eu_805181F0[0];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    strcpy(buf, (const char*)lbl_eu_805E7B30);
+    strcat(buf, path);
+    n = strlen(buf);
+    {
+        u32 i;
+        for (i = 0; i < n; i++) {
+            if (buf[i] == '\\') buf[i] = '/';
+        }
+    }
+    if (!DVDOpen(buf, &fi)) {
+        const char* msg = &lbl_eu_805181F0[41];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    size = fi.size;
+    if (size & 0x80000000) size = 0x7FFFFFFF;
+    if (!DVDClose(&fi)) {
+        const char* msg = &lbl_eu_805181F0[86];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    return size;
+}
+
 // GCI transfer handle (0x64 bytes), 40 entries at 0x805E6B88.
 typedef struct {
     s8 use;                            // +0x00
@@ -134,7 +171,6 @@ void gcCiEntryErrFunc(u32 a, u32 b) {
     lbl_eu_805E6B78 = b;
 }
 
-void gcCiGetFileSize() {}
 
 void gcCiOpen() {}
 

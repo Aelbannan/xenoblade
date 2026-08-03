@@ -6,7 +6,27 @@ GLM-5.2/max). Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 /
 R2-1-R2-10 are recorded below with resolutions. Companion to
 `31-reg-swap-witness.md` and `docs/witness_expansion_plan.md`.
 
-## R3. Implementation status (2026-08-03)
+## R4. Implementation-review findings and fixes (2026-08-04)
+
+The committed implementation (78dbecaa3) was adversarially reviewed by
+GLM-5.2 (soundness) and Kimi K3 (integration) against the running code. Both
+found false certificates; all are fixed and regression-tested:
+
+| # | Sev | Area | Finding | Fix |
+|---|---|---|---|---|
+| IR1 | BLOCKER | A1 | **`_boundary_deadness_ok` ignores the PS1 sub-lane** — an FPR rebind replaces both `fpr[r]` and `ps1[r]`, but the four-lane check only consults `32+r`. A byte-identical `psq_st` + a double-precision kill of `fpr[fS]` left `ps1[fS]` live; the rebind stored a fresh variable on both sides and the memory comparison self-agreed — false certificate (exploitable today). | Four-lane check now also tests PS1 sub-lanes `64+{r, old_d, new_d, old_retail_of_new}` for FPR rebinds. |
+| IR2 | BLOCKER | A3 | **Non-link `bcctr` indirect exits uncovered** — `_tail_call_reads_lane` iterated only `Opcode.B`; a trusted-metadata-unfixed return lane could be live-out to an unknown indirect callee (latent until the deferred `declared_return` entries land). | Non-link `BCCTR` now conservatively returns True (fix the lane); plus relocation-less absolute `b` tail calls covered (Kimi F2) and `callee_contracts=None` guarded (Kimi F3). |
+| IR3 | BLOCKER | gate 5 | **Gate 5 validated the partial rho, execution used the extended permutation** (pre-existing, Kimi F1): partial `{5:3}` forced the extension to map r3 elsewhere; `li r5,1; blr` vs `li r3,1; blr` certified a non-equivalent pair. | `_check_abi_fixedness` now validates `gpr_perm()`/`fpr_perm()` (the actual execution permutation), not the partial dict. |
+| IR4 | MAJOR | tests | **F1/default-FIXED tests passed for the wrong reasons** (GLM MAJOR 1/2, Kimi F5): the psq test rejected at gate-5 live-in (f5 EABI arg), not the ps1 use; the default-FIXED test actually exercised (c). | Both replaced with the exploit shapes: non-EABI f20/f21 psq rebind (rejects via PS1 deadness), `b`-tail-call body with no metadata (rejects via default-FIXED). |
+| IR5 | MAJOR | tests | **No `bcctr`, absolute-tail-call, perm-gate, or abi_shape-cert tests** (GLM MAJOR 3, Kimi F4). | Added `ImplReviewRegressionTests`: bcctr exit keeps f1 fixed; absolute `b` keeps r4 fixed; perm-based gate 5 rejects the `{5:3}` repro; witness cert carries `abi_shape` and the §2.5.4 validator matches/mismatches. |
+| IR6 | MINOR | A2 | **2-operand FP ops role table over-classified bits 6-10 as fC** (pre-existing, GLM MINOR 1) — spurious rho conflicts (e.g. fmr f1 vs f2 collided on fC). | `FRSP/FCTIW/FCTIWZ/FNEG/FMR/FNABS/FABS` now return `(_FD, _FB)` matching `_use_def`. |
+| IR7 | NIT | certs | Stale assumptions text claimed "rho fixes r0" (pre-A2). | Updated to the A2/A3 policy. |
+
+Tests: `test_renaming_witness.py` 54 (exploit shapes + regressions), full engine
+suite 1972 green, fixture blob green, `tools/coop/tests` unchanged (5
+pre-existing failures). Committed as the follow-up to 78dbecaa3.
+
+
 
 All of I5 (provenance), A2, A1, A3-plumbing, and the A3 structural check are
 implemented and tested:

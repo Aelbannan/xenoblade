@@ -477,11 +477,12 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         # retail: li r5,1 ; mr r3,r5 ; li r5,2 ; mr r3,r5 ; blr
         # decomp: li r4,1 ; mr r3,r4 ; li r5,2 ; mr r3,r5 ; blr
         # r5's old value is dead at the boundary (slot 2 redefines it), so the
-        # rebind is sound and the pair certifies.
+        # rebind is sound and the pair certifies.  r20 (not r4: r4 is
+        # default-FIXED under doc 32 A3) is the rename partner.
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         r = [li(5, 1), mr(3, 5), li(5, 2), mr(3, 5), self._BLR]
-        d = [li(4, 1), mr(3, 4), li(5, 2), mr(3, 5), self._BLR]
+        d = [li(20, 1), mr(3, 20), li(5, 2), mr(3, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
@@ -790,19 +791,22 @@ class A2PositionAwareR0Tests(unittest.TestCase):
 
     def test_cmpwi_r0_rename_accepted(self) -> None:
         # cmpwi RA reads gpr[ra] (semantics.py:3455) — r0 is a real register;
-        # rho(0)=6 is sound.
+        # rho(0)=20 is sound: r20 is outside the EABI arg range (3-10), so
+        # even read-before-write (live-in) it is not gate-5-fixed.  The
+        # identity-first extension closes {0<->20}.
         cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         r = [cmpwi(0, 5), mr(3, 0), self._BLR]
-        d = [cmpwi(6, 5), mr(3, 6), self._BLR]
+        d = [cmpwi(20, 5), mr(3, 20), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 
     def test_xform_arith_r0_rename_accepted(self) -> None:
         # X-form arithmetic RA reads gpr[ra] with no r0 guard — renameable.
+        # rho(0)=20 (r20 outside EABI args).
         add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
         r = [add(3, 0, 5), self._BLR]
-        d = [add(3, 6, 5), self._BLR]
+        d = [add(3, 20, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 
@@ -941,20 +945,21 @@ class A1PsqExemptionTests(unittest.TestCase):
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertFalse(outcome.certified)
 
-    def test_psq_st_reads_ps1_lane_at_region_boundary(self) -> None:
-        # F1 regression: psq_st reads ps1[fS]; a region boundary rebind that
-        # would mask the ps1 read must be rejected by the ps1 use in
-        # _use_def_numbered.  Construct: region 0 writes f5 via fadd (defs
-        # f5+ps1[5]); psq_st f5 closes region 0; region 1 renames f5.  The
-        # psq_st's ps1[f5] read keeps the lane live at the boundary -> rebind
-        # rejected (fail-closed; no false certificate).
-        fadd = lambda fd, fa, fb: (
-            (63 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
-            | ((fb & 31) << 11) | (21 << 1)
+    def test_psq_st_ps1_sublane_deadness_rejected(self) -> None:
+        # GLM impl-review BLOCKER 1 exploit shape: region 0 renames f20->f21;
+        # a double-precision fmr kills fpr[20] (not ps1[20]); the byte-identical
+        # psq_st f20 (region 1) reads ps1[20] which is still LIVE.  The
+        # four-lane deadness must check the PS1 sub-lanes and reject the rebind
+        # (before the fix this certified a non-equivalent pair).
+        lfs = lambda ft, ra, dsp: _enc_primary(48, ft, ra, dsp)
+        fmr = lambda fd, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fb & 31) << 11) | (72 << 1)
         )
-        psq_st_f5 = 0xF4A10078  # psq_st f5, 120(r1), 1, qr3
-        r = [fadd(5, 0, 0), psq_st_f5, self._BLR]
-        d = [fadd(6, 0, 0), psq_st_f5, self._BLR]
+        psq_st_f20 = 0xF4A10078 & ~(31 << 21) | (20 << 21)  # psq_st f20,120(r1),1,qr3
+        # retail: lfs f20,0(r2) ; fmr f20,f0 ; psq_st f20 ; blr
+        # decomp: lfs f21,0(r2) ; fmr f20,f0 ; psq_st f20 ; blr
+        r = [lfs(20, 2, 0), fmr(20, 0), psq_st_f20, self._BLR]
+        d = [lfs(21, 2, 0), fmr(20, 0), psq_st_f20, self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertFalse(outcome.certified)
 
@@ -1026,14 +1031,34 @@ class A3ReturnRegisterFixednessTests(unittest.TestCase):
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertIn(4, outcome.rho.gpr)
 
-    def test_scratch_r4_fixed_without_metadata_rejected(self) -> None:
-        # Same synthetic body with NO registry metadata: default FIXED, so a
-        # rho renaming r4 must reject at gate 5.
+    def test_default_fixed_without_metadata_rejected(self) -> None:
+        # GLM impl-review MAJOR 2: the load-bearing default-FIXED shape is a
+        # write on a path ending in a `b` tail-call (no bclr reached, so (c)
+        # does NOT fire) with NO registry metadata -> default-FIXED must still
+        # fix r4 and reject a rho that renames it.
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
-        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
-        r = [li(4, 7), mr(3, 4), li(3, 1), self._BLR]
-        d = [li(5, 7), mr(3, 5), li(3, 1), self._BLR]
-        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(4, 7), 0x48000000]
+        d_words = [li(5, 7), 0x48000000]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        precise = {
+            "callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
+        # No declared_return: default FIXED regardless of the callee contract.
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=precise,
+        )
         self.assertFalse(outcome.certified)
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
@@ -1102,3 +1127,156 @@ class A3ReturnRegisterFixednessTests(unittest.TestCase):
         )
         self.assertFalse(outcome.certified)
         self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+class ImplReviewRegressionTests(unittest.TestCase):
+    """Regressions for the implementation-review findings (2026-08-04):
+    PS1 sub-lane deadness (GLM BLOCKER 1), bcctr indirect tail calls
+    (GLM BLOCKER 2), gate-5-vs-extension (Kimi F1), absolute tail calls
+    (Kimi F2), abi_shape certificate plumbing (Kimi F4)."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_bcctr_indirect_exit_keeps_return_lane_fixed(self) -> None:
+        # GLM BLOCKER 2: f1 written only on a `b` tail-call path; the beq-taken
+        # path exits via bcctr with f1 untouched.  Trusted "f32" metadata would
+        # unfix f1 unless the non-link bcctr is treated as an unknown-contract
+        # indirect exit (conservative).  Must reject.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        beq = 0x4182000C
+        bcctr = 0x4E800420  # bcctr (BO=20, non-link)
+        fmr = lambda fd, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fb & 31) << 11) | (72 << 1)
+        )
+        reloc = (RelocationRef(12, R_PPC_REL24, "callee", "callee", 0),)
+        # retail: cmpwi r3,0 ; beq +0xC ; fmr f1,f0 ; b callee ; bcctr ; blr
+        r_words = [cmpwi(3, 0), beq, fmr(1, 0), 0x48000000, bcctr, self._BLR]
+        d_words = [cmpwi(3, 0), beq, fmr(3, 0), 0x48000000, bcctr, self._BLR]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        precise = {
+            "callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=precise,
+            declared_return="f32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_gate5_checks_extended_permutation(self) -> None:
+        # Kimi F1 repro: partial rho {5:3} forces the extension to map r3
+        # elsewhere; r3 is a fixed return register.  The perm-based gate 5
+        # must reject (the partial-dict check certified this non-equivalent
+        # pair: retail returns its r3 input, decomp returns 1).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [li(5, 1), self._BLR]
+        d = [li(3, 1), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_absolute_tail_call_keeps_lane_fixed(self) -> None:
+        # Kimi F2: relocation-less absolute `b` tail call (DOL-sourced target
+        # as an int operand) with trusted metadata — the lane check must not
+        # skip it (conservative: no contract for an int target).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        b_abs = 0x48000000 | ((0x80001000 & 0x3FFFFFC))  # b 0x80001000
+        r_words = [li(4, 1), b_abs]
+        d_words = [li(5, 1), b_abs]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000,
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_witness_cert_carries_abi_shape(self) -> None:
+        # Kimi F4: the witness certificate must embed abi_shape so the §2.5.4
+        # staleness validator can match a registry declared_return.  Build a
+        # probe through _try_renaming_witness with a mocked registry entry.
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+        from tools.coop.lib.equivalence_check import (
+            _try_renaming_witness, CertifiedCalleeContext,
+        )
+        from tools.coop.lib.targets import equivalence_certificate_error
+
+        r_words = [_enc_primary(32, 20, 3, 0), _enc_primary(32, 25, 3, 4),
+                   _enc_primary(36, 20, 3, 8), _enc_primary(36, 25, 3, 12), _LR]
+        d_words = [_enc_primary(32, 25, 3, 0), _enc_primary(32, 20, 3, 4),
+                   _enc_primary(36, 25, 3, 8), _enc_primary(36, 20, 3, 12), _LR]
+        left = _function_bytes("f", r_words, self._R)
+        right = _function_bytes("f", d_words, self._D)
+        context = CertifiedCalleeContext({}, (), ())
+
+        class _FakeRegistryTarget:
+            symbol = "f"
+            extra = {"declared_return": "i32"}
+
+        class _FakeRegistry:
+            def extra(self, *a, **k):
+                return {}
+
+        class _StubProject:
+            config = None  # load_targets is mocked; config value unused
+
+        with mock.patch(
+            "tools.coop.lib.targets.get_target",
+            return_value=_FakeRegistryTarget(),
+        ), mock.patch(
+            "tools.coop.lib.targets.load_targets",
+            return_value=_FakeRegistry(),
+        ):
+            probe = _try_renaming_witness(
+                _StubProject(), "f", left, right, "us-abi-shape-test", context,
+            )
+        self.assertIsNotNone(probe)
+        certificate = probe.certificate
+        self.assertEqual(
+            certificate.get("abi_shape", {}).get("declared_return"), "i32",
+        )
+        row = {
+            "id": "us-abi-shape-test",
+            "status": "EQUIVALENT_MATCH",
+            "equivalence_certificate": certificate,
+            "declared_return": "i32",
+        }
+        self.assertIsNone(equivalence_certificate_error(row, {row["id"]: row}))
+        # Drift must be caught: registry says i64, cert says i32.
+        row64 = dict(row, declared_return="i64")
+        self.assertIsNotNone(
+            equivalence_certificate_error(row64, {row64["id"]: row64}),
+        )

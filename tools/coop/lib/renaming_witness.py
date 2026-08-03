@@ -238,11 +238,20 @@ def _register_fields_impl(opcode: Opcode) -> tuple[tuple[int, str], ...]:
         Opcode.FMULS, Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
         Opcode.FNMADDS, Opcode.FDIV, Opcode.FSUB, Opcode.FADD,
         Opcode.FSEL, Opcode.FMUL, Opcode.FRSQRTE, Opcode.FMSUB,
-        Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD, Opcode.FRSP,
-        Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FNEG, Opcode.FMR,
-        Opcode.FNABS, Opcode.FABS,
+        Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD,
     ):
         return (_FD, _FA, _FB, _FC)
+    if opcode in (
+        Opcode.FRSP, Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FNEG,
+        Opcode.FMR, Opcode.FNABS, Opcode.FABS,
+    ):
+        # 2-operand FP ops (impl-review MINOR): the decoder emits
+        # (fd, fa=0, fb, fc=0); bits 6-10 are XO, not a renameable fC.
+        # Modelling them with (_FD, _FA, _FB, _FC) made the XO bits look
+        # like a register field and produced spurious rho conflicts
+        # (e.g. fmr f1,f0 vs fmr f2,f0 collided on fC=2).  Real source is
+        # FB (pos 2), matching _use_def.
+        return (_FD, _FB)
     if opcode in (Opcode.FCMPU, Opcode.FCMPO):
         return (_FA, _FB)
     return ()
@@ -1033,10 +1042,19 @@ def _tail_call_reads_lane(
     default-FIXED rule covers them when the metadata is absent (F2/F7).
     """
     for insn in instructions:
+        if insn.opcode == Opcode.BCCTR and not insn.link:
+            # Indirect tail call / computed jump (impl-review BLOCKER 2): the
+            # target is unknown, so any callee may read the lane.  Conservative
+            # (fix the lane); the G7 closure is incomplete without this.
+            return True
         if insn.opcode == Opcode.B and not insn.link:
-            if insn.relocation is None:
+            if insn.relocation is not None:
+                target: int | str = insn.relocation.canonical_symbol
+            elif insn.operands:
+                target = insn.operands[0]  # absolute tail call (Kimi F2)
+            else:
                 continue
-            contract = callee_contracts.get(insn.relocation.canonical_symbol)
+            contract = (callee_contracts or {}).get(target)
             if contract is None:
                 return True  # unknown callee: conservative (fix the lane)
             reads = getattr(contract, "reads", None)
@@ -1130,18 +1148,27 @@ def _check_abi_fixedness(
         )
         fixed_gpr.update(n for n in live_across if n < 32)
         fixed_fpr.update(n - 32 for n in live_across if 32 <= n < _PS1_OFFSET)
+    # Validate the FULL permutation, not the partial rho (impl-review BLOCKER):
+    # execution and the terminal comparison use ``gpr_perm()``/``fpr_perm()``,
+    # whose canonical extension can map a fixed register non-identically when
+    # another mapping steals its image (e.g. partial {5:3} forces the extension
+    # to send r3 elsewhere).  Checking only the partial dict let ``li r5,1; blr``
+    # vs ``li r3,1; blr`` certify with perm[3] = 5 while retail returns its r3
+    # input and decomp returns 1 — a false certificate.
+    gpr_perm = rho.gpr_perm()
+    fpr_perm = rho.fpr_perm()
     for register in sorted(fixed_gpr):
-        if rho.gpr.get(register, register) != register:
+        if gpr_perm[register] != register:
             return WitnessFailure(
                 "abi-boundary",
-                f"rho maps gpr r{register} -> r{rho.gpr.get(register)}; "
+                f"rho perm maps gpr r{register} -> r{gpr_perm[register]}; "
                 f"ABI registers must be fixed",
             )
     for register in sorted(fixed_fpr):
-        if rho.fpr.get(register, register) != register:
+        if fpr_perm[register] != register:
             return WitnessFailure(
                 "abi-boundary",
-                f"rho maps fpr f{register} -> f{rho.fpr.get(register)}; "
+                f"rho perm maps fpr f{register} -> f{fpr_perm[register]}; "
                 f"ABI registers must be fixed",
             )
     return None
@@ -1740,6 +1767,20 @@ def _boundary_deadness_ok(
             old_retail_of_new = old_preimage[new_d]
             if _num(kind, old_retail_of_new) in live_r:
                 return False  # decomp direction: retail rho_k^{-1}(new_d) live
+            if kind == FPR:
+                # PS1 sub-lane deadness (doc 32 A1 rev 3, impl-review BLOCKER 1):
+                # an FPR rebind replaces BOTH fpr[r] and ps1[r] with fresh
+                # variables, so the four-lane deadness must hold for the PS1
+                # sub-lanes too.  A byte-identical psq_st reads ps1[fS]; if a
+                # double-precision op killed only fpr[fS], the FPR lane looks
+                # dead while ps1[fS] stays live — rebinding then stores a fresh
+                # variable on both sides and the memory comparison self-agrees,
+                # a false certificate (the F1 ps1 use is necessary but not
+                # sufficient; the CHECK must consult the sub-lane).
+                for ps1_lane in (r, old_d, new_d, old_retail_of_new):
+                    n = _PS1_OFFSET + ps1_lane
+                    if n in live_r or n in live_c:
+                        return False
     return True
 
 

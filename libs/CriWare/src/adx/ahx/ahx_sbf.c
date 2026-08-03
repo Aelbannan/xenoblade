@@ -73,6 +73,17 @@ void AHXSBF_Finish(void) {
     lbl_eu_805E64B0--;
 }
 
-void AHXSBF_Create() {}
+extern u32 lbl_eu_805E64AC;
+
+AhxSbfWork* AHXSBF_Create(AhxSbfWork* self, u32 size) {
+    u32 c = 64;
+    memset(self, 0, size);
+    self->unk08 = c;
+    self->dstW = (void*)c;
+    self->ftbl = (void*)lbl_eu_805E64AC;
+    self->flag = *(u32*)&lbl_eu_805E64A8;
+    *(u8*)self = 1;
+    return self;
+}
 
 void AHXSBF_Destroy(void* self) { memset(self, 0, 0x1014); }

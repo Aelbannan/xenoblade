@@ -6906,6 +6906,48 @@ Source keys that landed the last structural diffs:
    `extern char lbl_80562AE0[];` + `DEBUGPrint(lbl_80562AE0, …)` — reloc drift clears,
    byte-identical. 99.8%→100% on cycle.
 
+## RVL_SDK wud/WUD — per-function `-O4,s` codegen under a `-O4,p` unit: `#pragma optimize_for_size on` + `#pragma dont_inline on` (US, Wii/1.1)
+
+`libs/RVL_SDK/src/revolution/wud/WUD.c` (unit stays `-O4,p -inline on`; retail mixes
+`-O4,p`/`-O4,s` per function). The device-scan loops
+(`__wudSyncPrepareSearch` us-80378a90, `__wudStackCheckDeviceInfo` us-8037a710) need
+the `-O4,s` **base+IV** strength-reduction form (`add rX,rBase,rIV; addi rY,rX,0xE4`,
+IV `+= 0x60`); under the `-O4,p` unit they fell to 29%/13% (walking-pointer `mr` IV).
+Flipping the whole unit to `-O4,s` regresses the 9 small control functions
+(WUDStopSyncSimple etc.) from 100% to ~10% (prologue `_savegpr_N` vs individual
+`stw`). **Per-function fix:** wrap each loop function in
+`#pragma push / #pragma optimize_for_size on / #pragma dont_inline on … #pragma pop`
+— under the `-O4,p` unit this reproduces the `-O4,s` codegen exactly
+(`_savegpr_27` prologue, base+IV loop, size 0x158/0x10C identical to the `-O4,s`
+flag build) while every other function keeps its accepted `-O4,p` bytes
+(56/86 fully matched, unit split 0x63F4 vs budget 0x6400 PASS). Two gotchas:
+
+1. **The `on` keyword is mandatory** — `#pragma optimize_for_size` (no `on`) is a
+   silent no-op (probe size 164 vs 152).
+2. **`optimize_for_size on` alone makes MWCC auto-inline the wrapped function into
+   later call sites in the same TU** (function size drops under the inline
+   threshold) — `__wudStackCheckDeviceInfo` got inlined into `__wudStackHandler`
+   (100%→11.3%, size 0x144→0x214) and `__wudSyncPrepareSearch` into
+   `__wudSyncHandler`. `#pragma dont_inline on` at the definition suppresses it;
+   `#pragma auto_inline off` does NOT.
+
+Results (0 structural, pure reg-swaps, sizes exact): `__wudStackCheckDeviceInfo`
+73.1% static / 18 pure reg-swaps (4-cycle Chaitin rotation p↔r28/r29, IV↔r29/r31,
+pDev↔r31/r30, pInfo↔r30/r28 — declaration-order permutations regress),
+`__wudSyncPrepareSearch` 84.9% / 2 structural (loop-setup `addi base@l` vs `li IV`
+order swap at 0x94/0x98; identical under the full `-O4,s` flag build — hard
+scheduler fixed point, resistant to ternary/if-else, while-loop, and
+`&_wcb.` vs `&p->` forms) / 11 reg-swaps, `__wudSyncStoredDevInfoToNand`
+(us-803790e0) 83.1% / 0 structural / 13 reg-swaps + one reloc NAME drift
+(`...bss.0` section-relative vs `__rvl_wudcb`, addend-identical — MWCC emits a
+section-relative `lis/addi` when `__rvl_wudcb` sits at .bss offset 0; cannot be
+re-named without breaking the first-reference .bss layout). Witness cannot certify
+(non-applicable rho), so all three are **out-of-band `--smt` candidates** (all
+callees FULL_MATCH: OSDisableInterrupts, OSRestoreInterrupts,
+BTA_DmSetVisibility, BTM_SetPowerMode, BTM_DeleteStoredLinkKey, WUDiGetDevInfo,
+memset/memcpy/memcmp, SCCheckStatus, SCSetBtDeviceInfoArray,
+SCGetProductGameRegion, WUD_DEBUGPrint).
+
 ## RVL_SDK wpad/WPADHIDParser — report parsers: range-check codegen, addr-derived local hoisting, AND-mask fold (US, mwcc_43_151)
 
 Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exact
@@ -7012,3 +7054,18 @@ copy-at-join). `sfxzmv_SetTagGrp` 80.8% / 7 structural — all single-position
 scheduler swaps in the second block (retail interleaves the self+0x1C/0x20
 stores between call-arg computations; decomp bunches the args first) — no
 source shape moves them.
+
+### CriWare ahx_sbf AHXSBF_Create — two-base loads + return-self (76.0%, 5 structural)
+`AHXSBF_Create(self, size)`: memset(self,0,size); `self->unk08 = 64; self->dstW = 64;`
+`self->ftbl = *(u32*)lbl_eu_805E64AC; self->flag = *(u32*)&lbl_eu_805E64A8; *(u8*)self = 1;
+return self;` — the ftbl/flag loads MUST use two SEPARATE extern symbols
+(`lbl_eu_805E64AC` and the struct `lbl_eu_805E64A8` cast to u32*); a single
+struct base (`lbl_eu_805E64A8.dstW/.dstF`) makes MWCC CSE the base into
+lis+addi and emits `lwz rX, 4(rX)` instead of retail's two `lis` + `lwz rX,0(rX)`
+(0x2EE/0x302/0x30A relocs: ADDR16_HI/LO on 805E64AC and 805E64A8, addend 0).
+Return value is `self` (`or r3, r31, r31`). Residual (5 structural): a 4-instr
+rotation — retail `[li r0,64][stw 8][lis r5][lis r4][stw 4][li r0,1][or r3]`,
+decomp `[li r6,64][lis r5][stw 8][lis r4][li r0,1][or r3][stw 4]` — the 64-const
+lands in r6 (retail reuses r0 for 64 and 1, forcing stw-4 before li-1); local-c,
+chained-assignment, and statement-order variants all keep r6. Pure
+allocator/scheduler wall; size exact 0x64.

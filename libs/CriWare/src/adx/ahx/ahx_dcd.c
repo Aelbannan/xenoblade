@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern s32 AHXBSR_GetBitStm(void* self, s32 bits);
+
 void SKG_GenerateKey() {}
 
 void AHXSJD_SetupAtbl(u32 val) { AHXDCD_SetupAtbl(val); }
@@ -74,29 +76,7 @@ extern s32 AHXBSR_SearchSync(s32 a);
 extern s32 AHXBSR_IsDataAvailable(s32 a, s32 b);
 extern s32 AHXDCD_DecodeBhdr(void* self, s32* out);
 extern void AHXDCD_BhdrToDinf(void* self, s32* out);
-extern s32 AHXDCD_DecodeBitalloc2(s32 a, void* b, void* c);
-extern s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e);
-
-s32 AHXDCD_DecodeFrmHdr(void* self) {
-    s32 r;
-    if (*(s32*)((u8*)self + 848) == 0)
-        return -1;
-    r = AHXBSR_SearchSync(*(s32*)((u8*)self + 848));
-    if (r == -1)
-        return -1;
-    if (r != 1)
-        return 1;
-    if (AHXBSR_IsDataAvailable(*(s32*)((u8*)self + 848), 20) == 0)
-        return -1;
-    if (AHXDCD_DecodeBhdr((void*)*(s32*)((u8*)self + 848), (s32*)((u8*)self + 856)) <= 0)
-        return -1;
-    AHXDCD_BhdrToDinf((s32*)((u8*)self + 856), (s32*)((u8*)self + 904));
-    AHXDCD_DecodeBitalloc2(*(s32*)((u8*)self + 848), (u8*)self + 904, (u8*)self + 964);
-    AHXDCD_DecodeScale2(*(s32*)((u8*)self + 848), (u8*)self + 904, (u8*)self + 964, (u8*)self + 1220, (u8*)self + 1476);
-    *(u8*)((u8*)self + 841) = 1;
-    *(s32*)((u8*)self + 844) = 0;
-    return 1;
-}
+extern s32 AHXDCD_DecodeBitalloc2(void* self, void* inf, s32* out);
 
 typedef struct AHXDCDState {
     u8 _00[0x349];
@@ -180,7 +160,6 @@ void AHXDCD_BhdrToDinf(void* self, s32* out) {
 
 
 
-extern s32 AHXBSR_GetBitStm(void* self, s32 bits);
 
 s32 AHXDCD_DecodeBhdr(void* self, s32* out) {
     out[0] = AHXBSR_GetBitStm(self, 1);
@@ -200,5 +179,56 @@ s32 AHXDCD_DecodeBhdr(void* self, s32* out) {
         return 0;
     return -1;
 }
-s32 AHXDCD_DecodeBitalloc2(s32 a, void* b, void* c) { return 0; }
+s32 AHXDCD_DecodeBitalloc2(void* self, void* inf, s32* out) {
+    s32 nch = *(s32*)((u8*)inf + 4);
+    s32 c = *(s32*)((u8*)inf + 0x10);
+    s32 s = *(s32*)((u8*)inf + 0x14);
+    s32 i, j, k;
+    s32 v;
+    for (i = 0; i < s; i++) {
+        s32* p = out + i;
+        for (j = 0; j < nch; j++) {
+            *p = AHXBSR_GetBitStm(self, *(s32*)((u8*)inf + 0x1C + i * 384));
+            p += 128;
+        }
+    }
+    k = s;
+    {
+        s32* p = out + s;
+        s32* q = (s32*)((u8*)inf + 0x18 + s * 384);
+        for (; k < c; k++) {
+            v = AHXBSR_GetBitStm(self, *(q + 1));
+            p[32] = v;
+            q += 96;
+            p[0] = v;
+            p++;
+        }
+    }
+    for (k = 0; k < 32; k++) {
+        if (nch > 0) {
+            i = 0;
+            if (nch >= 8) {
+                j = (nch - 8 + 7) >> 3;
+                while (j > 0) {
+                    s32* p = out + k * 4 + i;
+                    p[0] = v;
+                    p[32] = v;
+                    p[64] = v;
+                    p[96] = v;
+                    p[128] = v;
+                    p[160] = v;
+                    p[192] = v;
+                    p[224] = v;
+                    i += 8;
+                    j--;
+                }
+            }
+            while (i < nch) {
+                out[k * 4 + i] = v;
+                i++;
+            }
+        }
+    }
+    return 0;
+}
 s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e) { return 0; }

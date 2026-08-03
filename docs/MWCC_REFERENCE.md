@@ -7417,3 +7417,18 @@ across `SFAOAP_Create` (89.5%), `ADX_ScanInfoCode` (93.3%), `SFPL2_Standby`
 (85.7%), `SFD_Standby` (91.3%), `sfmps_pesfn` (90.5%) — all 2 structural with
 0 reg_swap. No source form moves it (named ret local, pointer local,
 store via cast/array, return-first). A general MWCC scheduler tie-break.
+
+### CriWare adx_baif ADX_DecodeInfoAiff — 10-arg AIFF info wrapper (89.1%, 4 structural)
+`ADX_DecodeInfoAiff(src, size, outA, outB, outE, outD, outF, outG, outH, outC)`
+— the out-param ORDER differs from the naive reading: outC (the final `= 1`)
+is the **10th arg** (u32 store), outB=-1 (s8) is the 4th, outE/outD/outF are the
+5th/6th/7th (s8), outG/outH (u32) the 8th/9th. The v1..v4 AIFF out-locals MUST
+be **zero-initialized** (`s32 v1 = 0, ...`) — the retail prologue stw's the four
+stack slots to 0 (without the initializers the function is 16 bytes short).
+The outD computation reads the **stored** outF/outE bytes
+(`(s8)*outF * (s8)*outE / 8` — mullw+srawi+addze). The offset
+`*outA = s16 off` with `s16 s = (s16)off; *outA = s; if (s <= 0)` (an s16 local
+beats the inline `(s16)off` — 3 vs 4 reg_swap). Residual 4 structural: the
+retail `subf r0; sth; extsh r0,r0; bc` (store-then-extsh, stale-CR0 branch) vs
+decomp `subf; extsh; sth` (extsh-before-store) — the `(s16)off <= 0` test's
+extsh placement is a fixed scheduler choice; plus out-param register colors.

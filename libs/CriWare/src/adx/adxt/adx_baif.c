@@ -65,7 +65,34 @@ int ADXB_CheckAiff(void* self) {
     return 0;
 }
 
-void ADX_DecodeInfoAiff() {}
+extern int AIFF_GetInfo(u8* self, u32* out1, u32* out2, u32* out3, u32* out4);
+
+s32 ADX_DecodeInfoAiff(u8* src, s32 size, s16* outA, s8* outB, s8* outE, u8* outD, s8* outF, s32* outG, s32* outH, s32* outC) {
+    s32 v1 = 0, v2 = 0, v3 = 0, v4 = 0;
+    s32 r;
+    if (size < 4096) {
+        *outA = 0;
+        return -1;
+    }
+    r = AIFF_GetInfo(src, (u32*)&v1, (u32*)&v2, (u32*)&v3, (u32*)&v4);
+    if (r == 0)
+        return -1;
+    {
+        s32 off = r - (s32)src;
+        s16 s = (s16)off;
+        *outA = s;
+        if (s <= 0)
+            return -1;
+    }
+    *outH = v1;
+    *outF = (u8)v2;
+    *outE = (u8)v3;
+    *outG = v4;
+    *outB = -1;
+    *outD = (s8)((s8)*outF * (s8)*outE / 8);
+    *outC = 1;
+    return 0;
+}
 
 void ADXB_DecodeHeaderAiff() {}
 

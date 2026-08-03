@@ -17,7 +17,7 @@ extern "C" {
 
 // clang-format off
 #define WUD_DEV_NAME_IS(NAME, VALUE)                                           \
-    (memcmp(NAME, VALUE, sizeof(VALUE) - 1) == 0)
+    (memcmp(NAME, VALUE, sizeof("Nintendo RVL-CNT") - 1) == 0)
 
 #define WUD_DEV_NAME_IS_CNT(NAME)                                              \
     WUD_DEV_NAME_IS(NAME, "Nintendo RVL-CNT")

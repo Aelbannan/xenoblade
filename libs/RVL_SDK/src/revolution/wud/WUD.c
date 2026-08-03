@@ -649,27 +649,29 @@ DECOMP_FORCEACTIVE(WUD_c_1,
 
 
 void WUDiRegisterDevice(BD_ADDR addr) {
+    char* pMsg = _wudWiiRemoteDescriptor;
     WUDCB* p = &_wcb;
     WUDDevInfo* pInfo;
     tBTA_STATUS status;
     BOOL enabled;
 
+    enabled = OSDisableInterrupts();
     pInfo = WUDiGetDevInfo(addr);
 
     status = BTA_DmAddDevice(pInfo->devAddr, pInfo->linkKey, 0, FALSE);
-    DEBUGPrint("BTA_DmAddDevice(): %d\n", status);
+    DEBUGPrint(pMsg + 0x97C, status);
 
-    if (WUD_DEV_NAME_IS_CNT(pInfo->conf.devName)) {
+    if (memcmp(pInfo->conf.devName, pMsg + 0x268, sizeof(LINK_KEY)) == 0 ||
+        (memcmp(pInfo->conf.devName, pMsg + 0x27C, sizeof(LINK_KEY)) == 0 &&
+         _linkedWBC)) {
         tBTA_HH_DEV_DESCR desc;
+        desc.dsc_list = (u8*)pMsg;
         desc.dl_len = sizeof(descriptor);
-        desc.dsc_list = descriptor;
 
-        DEBUGPrint("BTA_HhAddDev()\n");
+        DEBUGPrint(pMsg + 0x998);
         BTA_HhAddDev(pInfo->devAddr, pInfo->hhAttrMask, pInfo->subclass,
                      pInfo->appID, desc);
     }
-
-    enabled = OSDisableInterrupts();
 
     if (pInfo->UNK_0x5B == 0 || pInfo->UNK_0x5B == 4 || pInfo->UNK_0x5B == 2 ||
         pInfo->UNK_0x5B == 5) {
@@ -683,33 +685,37 @@ void WUDiRegisterDevice(BD_ADDR addr) {
 }
 
 void WUDiRemoveDevice(BD_ADDR addr) {
+    char* pMsg = _wudWiiRemoteDescriptor;
     WUDCB* p = &_wcb;
     WUDDevInfo* pInfo;
     tBTM_STATUS status;
     BOOL enabled = OSDisableInterrupts();
 
-    DEBUGPrint("WUDiRemoveDevice : \n");
+    DEBUGPrint(pMsg + 0x9A8);
 
     pInfo = WUDiGetDevInfo(addr);
 
     if (pInfo != NULL) {
-        DEBUGPrint(" handle : %d,  addr : %02x:%02x:%02x:%02x:%02x:%02x\n",
+        DEBUGPrint(pMsg + 0x9C0,
                    pInfo->devHandle, pInfo->devAddr[0], pInfo->devAddr[1],
                    pInfo->devAddr[2], pInfo->devAddr[3], pInfo->devAddr[4],
                    pInfo->devAddr[5]);
 
-        DEBUGPrint("remove device info from database.\n");
+        DEBUGPrint(pMsg + 0x9F8);
 
-        if (WUD_DEV_NAME_IS_CNT(pInfo->conf.devName)) {
-            DEBUGPrint("BTA_HhRemoveDev()\n");
-            DEBUGPrint(" handle : %d\n", pInfo->devHandle);
+        if (memcmp(pInfo->conf.devName, pMsg + 0x268, sizeof(LINK_KEY)) == 0 ||
+            (memcmp(pInfo->conf.devName, pMsg + 0x27C, sizeof(LINK_KEY)) == 0 &&
+             _linkedWBC)) {
+            DEBUGPrint(pMsg + 0xA1C);
+            DEBUGPrint(pMsg + 0xA30, pInfo->devHandle);
             BTA_HhRemoveDev(pInfo->devHandle);
         }
 
         status = BTA_DmRemoveDevice(pInfo->devAddr);
-        DEBUGPrint("BTA_DmRemoveDevice(): %d\n", status);
+        DEBUGPrint(pMsg + 0xA40, status);
 
-        if (pInfo->UNK_0x5B == 0) {
+        if (pInfo->UNK_0x5B == 0 || pInfo->UNK_0x5B == 2 ||
+            pInfo->UNK_0x5B == 4 || pInfo->UNK_0x5B == 5) {
             p->devNums--;
         } else {
             p->devSmpNums--;
@@ -859,10 +865,17 @@ void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
     BOOL enabled;
     WUDDevInfoList* pIt;
 
+#define WUD_SMP_DEV(p, i) (*(WUDDevInfo**)((u8*)(p) + (u32)(i) * 12 + 0x1C))
+#define WUD_SMP_PREV(p, i) (*(WUDDevInfoList**)((u8*)(p) + ((u32)(i) * 12 + 0x20)))
+#define WUD_SMP_NEXT(p, i) (*(WUDDevInfoList**)((u8*)(p) + ((u32)(i) * 12 + 0x24)))
+#define WUD_SMP_LIST(p, i) ((WUDDevInfoList*)((u8*)(p) + (u32)(i) * 12 + 0x1C))
+
     enabled = OSDisableInterrupts();
 
     for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
-        if (WUD_BDCMP(p->smpList[i].devInfo->devAddr, pInfo->devAddr) != 0) {
+
+        if (WUD_BDCMP((*(WUDDevInfo**)((u8*)p + (u32)i * 12 + 0x1C))->devAddr,
+                      pInfo->devAddr) != 0) {
             continue;
         }
 
@@ -876,35 +889,42 @@ void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
             }
 
             if (WUD_BDCMP(p->smpListHead->devInfo->devAddr,
-                          p->smpList[i].devInfo->devAddr) == 0) {
+                          (*(WUDDevInfo**)((u8*)p + ((u32)i * 12 + 0x1C)))
+                              ->devAddr) == 0) {
                 if (pIt == p->smpListHead->next) {
                     break;
                 }
 
-                p->smpListHead = p->smpList[i].next;
+                p->smpListHead = WUD_SMP_NEXT(p, i);
             } else {
-                p->smpList[i].prev->next = p->smpList[i].next;
+                WUD_SMP_PREV(p, i)->next = WUD_SMP_NEXT(p, i);
             }
 
-            p->smpList[i].next->prev = p->smpList[i].prev;
+            WUD_SMP_NEXT(p, i)->prev = WUD_SMP_PREV(p, i);
 
             if (pIt != p->smpListHead) {
-                p->smpList[i].prev = pIt->prev;
-                p->smpList[i].next = pIt;
+                WUD_SMP_PREV(p, i) = pIt->prev;
+                WUD_SMP_NEXT(p, i) = pIt;
 
-                pIt->prev->next = &p->smpList[i];
-                pIt->prev = &p->smpList[i];
+                pIt->prev->next = WUD_SMP_LIST(p, i);
+                pIt->prev = WUD_SMP_LIST(p, i);
             } else {
-                p->smpList[i].prev = pIt;
-                p->smpList[i].next = pIt->next;
+                WUD_SMP_PREV(p, i) = pIt;
+                WUD_SMP_NEXT(p, i) = pIt->next;
 
-                pIt->next->prev = &p->smpList[i];
-                pIt->next = &p->smpList[i];
+                pIt->next->prev = WUD_SMP_LIST(p, i);
+                pIt->next = WUD_SMP_LIST(p, i);
             }
 
             break;
         }
     }
+
+#undef WUD_SMP_DEV
+#undef WUD_SMP_PREV
+#undef WUD_SMP_NEXT
+#undef WUD_SMP_LIST
+
 
     OSRestoreInterrupts(enabled);
 }

@@ -58,13 +58,8 @@ extern volatile void* __cpReg;
 #define CP_PTR_HI(ptr) ((u16)(((u32)(ptr) >> 16) & 0x3FFF))
 
 static void __GXWriteFifoIntEnable(BOOL hi, BOOL lo) {
-    u32 reg = gxdt->cpCtrlReg;
+    u32 reg = hi ? (gxdt->cpCtrlReg | 4) : (gxdt->cpCtrlReg & ~4);
 
-    if (hi) {
-        reg |= 4;
-    } else {
-        reg &= ~4;
-    }
     if (lo) {
         reg |= 8;
     } else {
@@ -75,15 +70,20 @@ static void __GXWriteFifoIntEnable(BOOL hi, BOOL lo) {
 }
 
 static void __GXWriteFifoIntReset(BOOL hi, BOOL lo) {
-    u32 reg = gxdt->cpClrReg;
+    u32 reg;
 
     if (hi) {
-        reg |= 1;
-    }
-    if (lo) {
-        reg |= 2;
-    } else if (hi) {
-        reg &= ~2;
+        if (lo) {
+            reg = gxdt->cpClrReg | 3;
+        } else {
+            reg = (gxdt->cpClrReg | 1) & ~2;
+        }
+    } else {
+        if (lo) {
+            reg = gxdt->cpClrReg | 2;
+        } else {
+            reg = gxdt->cpClrReg;
+        }
     }
     gxdt->cpClrReg = reg;
     GX_CP_REG_WRITE_U16(CP_CLR, (u16)reg);
@@ -329,7 +329,6 @@ void GXSetGPFifo(GXFifoObj* fifo) {
     realFifo = (GXFifoObjImpl*)fifo;
     {
         GXFifoObjImpl* dst = &GPFifo;
-        void* base;
         void* end;
         u32 size;
         void* hiWatermark;
@@ -337,8 +336,11 @@ void GXSetGPFifo(GXFifoObj* fifo) {
         void* readPtr;
         void* writePtr;
         u32 count;
+        void* base;
 
-        base = realFifo->base;
+        /* Retail copies the 0x20 bind word first, then loads fields
+           end..count, and finally base (stored back last). */
+        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
         end = realFifo->end;
         size = realFifo->size;
         hiWatermark = realFifo->hiWatermark;
@@ -346,8 +348,8 @@ void GXSetGPFifo(GXFifoObj* fifo) {
         readPtr = realFifo->readPtr;
         writePtr = realFifo->writePtr;
         count = realFifo->count;
+        base = realFifo->base;
 
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
         dst->end = end;
         dst->size = size;
         dst->hiWatermark = hiWatermark;

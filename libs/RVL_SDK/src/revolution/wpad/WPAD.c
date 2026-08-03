@@ -24,6 +24,7 @@ void* __wpadNoAlloc(u32 size);
 BOOL __wpadNoFree(void* pBlock);
 
 extern const char lbl_80560608[];
+extern const char lbl_80560690[];
 extern const char lbl_80560878[];
 extern const char lbl_805608AC[];
 extern const char lbl_80560900[];
@@ -74,7 +75,7 @@ static BOOL _wpadStartup;
 
 void* _wpadUsedCallback;
 
-s32 _wpadOnReconnect;
+s32 _wpadOnReconnect = -1;
 s32 _wpadReconnectWait;
 
 void (*_wpadVSMInit)(void);
@@ -98,52 +99,80 @@ static u8 __ClampSpeakerVolume(u8 volume);
 static u8 __GetSpeakerVolume(void);
 
 static BOOL OnShutdown(BOOL final, u32 event) {
-    BOOL result = FALSE;
     WUDLibStatus status = WUDGetStatus();
+    int i;
 
-    if (!final) {
-        if (status == WUD_LIB_STATUS_3) {
-            switch (event) {
-            case OS_SD_EVENT_FATAL: {
-                DEBUGPrint("Deregister allocators because of fatal error.\n");
-                WUDRegisterAllocator(&__wpadNoAlloc, &__wpadNoFree);
-
-                // FALLTHROUGH
-            }
-
-            case OS_SD_EVENT_SHUTDOWN:
-            case OS_SD_EVENT_3: {
-                __WPADShutdown();
-                result = FALSE;
-                break;
-            }
-
-            case OS_SD_EVENT_1:
-            case OS_SD_EVENT_RESTART:
-            case OS_SD_EVENT_RETURN_TO_MENU:
-            case OS_SD_EVENT_LAUNCH_APP: {
-                result = FALSE;
-                break;
-            }
-            }
-
-        } else if (status == WUD_LIB_STATUS_5) {
-            WPADStopSimpleSync();
-            result = FALSE;
-
-        } else if (status == WUD_LIB_STATUS_4 || status == WUD_LIB_STATUS_1 ||
-                   status == WUD_LIB_STATUS_2) {
-            result = FALSE;
-
-        } else if (status == WUD_LIB_STATUS_0) {
-            result = TRUE;
-        }
-    } else {
-        result = TRUE;
+    if (final || status == WUD_LIB_STATUS_0) {
+        return TRUE;
     }
 
-_end:
-    return result;
+    if (status == WUD_LIB_STATUS_4 || status == WUD_LIB_STATUS_1 ||
+        status == WUD_LIB_STATUS_2) {
+        return FALSE;
+    }
+
+    if (WUDIsBusy()) {
+        WUDCancelSyncDevice();
+        return FALSE;
+    }
+
+    {
+        BOOL doShutdown;
+
+        switch (event) {
+        case OS_SD_EVENT_FATAL:
+            WUDRegisterAllocator(&__wpadNoAlloc, &__wpadNoFree);
+
+            // FALLTHROUGH
+        case OS_SD_EVENT_SHUTDOWN:
+        case OS_SD_EVENT_3:
+            doShutdown = TRUE;
+            break;
+
+        case OS_SD_EVENT_1:
+        case OS_SD_EVENT_RESTART:
+        case OS_SD_EVENT_LAUNCH_APP:
+            doShutdown = FALSE;
+            break;
+
+        case OS_SD_EVENT_RETURN_TO_MENU:
+            doShutdown = (__OSIsReturnToIdle != FALSE);
+            break;
+        }
+
+        if (doShutdown) {
+            u32 enabled = OSDisableInterrupts();
+            if (_wpadShutdownFlag) {
+                OSRestoreInterrupts(enabled);
+            } else {
+                _wpadShutdownFlag = TRUE;
+                WUDSetVisibility(FALSE, FALSE);
+
+                for (i = 0; i < 4; i++) {
+                    WUDSetDeviceHistory(i, NULL);
+                }
+
+                OSCancelAlarm(&_wpadManageAlarm);
+                WUDSetHidRecvCallback(NULL);
+                WUDShutdown(FALSE);
+                OSRestoreInterrupts(enabled);
+            }
+        } else {
+            u32 enabled = OSDisableInterrupts();
+            if (!_wpadStartup) {
+                OSRestoreInterrupts(enabled);
+            } else if (_wpadShutdownFlag) {
+                OSRestoreInterrupts(enabled);
+            } else {
+                _wpadShutdownFlag = TRUE;
+                _wpadOnReconnect = 1;
+                DEBUGPrint(lbl_80560690, _wpadReconnectWait);
+                OSRestoreInterrupts(enabled);
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 static OSShutdownFunctionInfo ShutdownFunctionInfo = {OnShutdown, 127};

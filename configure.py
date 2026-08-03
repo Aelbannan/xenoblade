@@ -1743,7 +1743,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-func_align 16"]),
             Object(MatchingFor("jp"), "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-func_align 16"]),
             Object(MatchingFor("jp", "us"), "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-func_align 16"]),
-            Object(MatchingFor("us"), "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 16"]),
+            Object(MatchingFor("us"), "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"]),
             Object(MatchingFor("jp"), "monolib/src/util/CDoubleListNode.cpp"),
             Object(MatchingFor("jp"), "monolib/src/util/CChildListNode.cpp"),
             Object(MatchingFor("jp"), "monolib/src/core/CPadManager.cpp"),

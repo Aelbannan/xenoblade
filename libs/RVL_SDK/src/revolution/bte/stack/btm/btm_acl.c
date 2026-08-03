@@ -306,12 +306,15 @@ void btm_acl_created(BD_ADDR bda, UINT8 *p_dc, UINT8 *p_bdn,
                 if (p_dev_rec->features[xx] != 0) {
                     memcpy(p_acl->features, p_dev_rec->features, 8);
 
-                    base = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
-                    if (btm_cb.local_version[0] >= 3) {
-                        pkt_types = (UINT16)(base |
-                                             (btm_cb.btm_acl_pkt_types_supported & 0x3306));
-                    } else {
-                        pkt_types = (UINT16)(base & 0xFFFFCCF9);
+                    /* Select the packet types based on the local features/version. */
+                    {
+                        UINT16 supported = btm_cb.btm_acl_pkt_types_supported;
+                        base = (UINT16)(supported & 0xCC18);
+                        if (btm_cb.local_version[0] >= 3) {
+                            pkt_types = (UINT16)(base | (supported & 0x3306));
+                        } else {
+                            pkt_types = (UINT16)(base & 0xFFFFCCF9);
+                        }
                     }
 
                     if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {

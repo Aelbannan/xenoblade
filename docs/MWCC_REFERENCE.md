@@ -8,6 +8,60 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 ---
 
+## Section padding is a linker artifact — never fabricate it in source
+
+Retail data slices (`splits.txt`) end at the next unit's **alignment boundary**, so
+most per-unit `.sdata`/`.sbss`/`.bss`/`.data`/`.rodata` slices carry trailing zero
+pad bytes (4 for 8-aligned slices, up to 31 for 32-aligned `.bss`). Those bytes
+are **linker-inserted inter-unit alignment**, not content, and they reproduce
+automatically when the neighbouring unit's section is aligned at link time. The
+original source never contained them.
+
+**Antipatterns — do not add these to `libs/**` or `src/**`:**
+
+- fake `.init`-section functions (`__declspec(section ".init") void
+  FORCEACTIVE*_sdata(void) { fake_function("\0\0\0"); }`) to keep a zero string
+  in `.sdata`;
+- file-scope pad globals (`u32 __FooSbssPad;`, `char x[7]`, `s_sdata2Pad = 0.0f`,
+  `GXAttrDataPad = (u32)&fn`, `#pragma sdata_threshold 0` + pad global);
+- trailing `\0` padding inside string literals (`"USB: \0\0"`, `"...\n\0\0\0\0"`)
+  to inflate a pooled string to its retail slot; padded `[8]`/`[2]` arrays whose
+  extra element is a pad word; `u8 pad[4]` struct fields that only exist to grow a
+  `.bss`/`.sbss` object;
+- bare `(void)"string";` statements used only to force pool order.
+
+They are fabrication (the source never looked like that), they **inflate the
+linked DOL** (the old `.sdata` was 0x60 bytes over retail from these), they add
+`.init`/`.text` code that does not exist in retail, and the `fake_function`
+pattern cannot link.
+
+**Correct handling:**
+
+1. Declare the object at its true size/type (`u32 x;`, `static char s[] = "str";`).
+   The linker re-inserts the pad from the next unit's section alignment; the DOL
+   bytes are identical with or without the fake (verified: GXInit/i2c .sdata).
+2. objdiff only counts **named symbols**; unattributed pad is not scored. If the
+   retail symbol *absorbed* the pad (ppcdis sized it to the next symbol — e.g.
+   `__i2c_ident_flag` size 8, string pools like `lbl_8054B610` size 0x48), fix the
+   **accounting, not the source**: correct the size in `config/<region>/symbols.txt`
+   (true size = first NUL + 1 for strings; 4/2/1 for typed scalars) and regenerate
+   the retail split objects (`dtk dol split --no-update` — note it skips existing
+   objects, delete `build/<region>/obj` first). Then fix stale
+   `symbol_sizes=(...)` overrides in `tools/postprocess_reloc_names.py` that baked
+   in the absorbed size (e.g. NANDLogging `lbl_805512D4` 0x2C → 0x27).
+3. Real dead-code string pools (a GC'd function whose format strings remain in
+   retail `.data`) are **real content** — keep them via the documented
+   `DECOMP_FORCEACTIVE` mechanism, not by padding literals.
+4. Exception: a `[2]`/`[N]` array or padded literal is load-bearing when codegen
+   depends on it (e.g. dvdDeviceError `fgColor[2]` forces the `.sdata2` slot load;
+   a plain const folds to an immediate). Keep it and document why.
+
+**Do not**: pad the decompiled object, add fake sections/symbols, or chase
+per-unit data% by growing sections. `EQUIVALENT_MATCH`/`FULL_MATCH` acceptance is
+function-level and does not depend on the pad bytes.
+
+---
+
 ## Isolated Gekko paired-single backends — worked results (nw4r g3d + math)
 
 Four nw4r PS kernels reached byte-exact match by shipping the **retail SDK's own
@@ -7912,3 +7966,12 @@ Retail busy-wait `for (j=0;j<0x14;j++) for (k=0;k<0xa;k++) { if (flag==0) goto d
 
 ### CriWare ax_rna — declaration order + `==` operand order flip allocator colors (AXRNA_SetOutVol 100%)
 SetOutVol's 8 reg-swaps (v r30↔r29, counter r29↔r30) collapsed to 0 with: (1) declare `s32 t; s32 v; s32 i;` — the loop value BEFORE the counter; (2) write the guard as `if (v == *(s32*)((u8*)self + 0x7c))` — the NEW value as the FIRST operand of `==` (retail `cmpw r30, r0` = v vs cur). `s32* p` as the FIRST declaration in SetMain reduced 11→6 swaps. These two levers are worth trying before declaring a regalloc fixed point.
+
+### CriWare sfd_mpv — `% N` remainder form unlocks MWCC's double-srawi rematerialized-quotient division (sfmpv_NextTc)
+Retail `e/60` and `f/60` emit the *expanded* magic division: `mulhw; add; srawi; rlwinm bit30; srawi (2nd copy); add q; [rlwinm bit30(raw); add q again]` — the quotient is recomputed from the raw value when it is used again after the next division (rematerialization under pressure). Writing the remainder as `erem = e % 60` / `frem = f % 60` (NOT `e - (e/60)*60` or a named `q1 = e/60` local) makes MWCC emit this exact double-srawi + recompute pattern (44-48/84 shape vs 19/79 for the other forms). The `/2`-`%2` pair on the same variable is required for the front: `a = ... + sum/2; s = sum % 2` — MWCC's signed `/2` is `rlwinm bit30; add; srawi` (truncation) and `%2` shares the bit30 rlwinm via CSE (`rlwinm bit30; rlwinm sum&1; xor; subf`).
+
+### CriWare sfd_mpv — min-form clamp `n = (n < 3) ? n : 3` emits retail `li 3; cmpi; bge; or` (SearchDelim/BsearchDelim)
+The retail clamps `n1 = min(buf[4],3)` as `li r30,3; cmpi r4,3; bge skip; or r30,r4` (default-first + conditional or). The branchy `if (n1 > 3) n1 = 3` emits `cmpi; ble skip; li` instead. The ternary `(n1 < 3) ? n1 : 3` reproduces the retail shape exactly. Also: re-reading the same memory with the **same s32 type** (`*(s32*)(buf+4)`) in a later arg makes MWCC CSE the load into a volatile register (avoids the extra `lwz`); a `u32` re-read of an `s32` load breaks the CSE. Signed loop counters give `cmp` (not `cmpl`) — match the retail's compare signedness.
+
+### CriWare sfd_mpv — declaration-order color fix for callee-saved (sfmpv_InitFrmObj)
+`void f(frm, src, count)` with `s32 i` gave decomp colors {frm=r24, src=r25, count=r26, i=r27}; retail is {frm=r24, count=r25, i=r26, src=r27} (live-range-length order). Declaring `const u32* q = src;` as the FIRST local (before `s32 i`) rotated the colors to exactly the retail set (94.4%, 2 structural = stw-vs-li scheduling tie at the memset args). Same lever as the SFADXT_Start caller-saved note but for callee-saved colors.

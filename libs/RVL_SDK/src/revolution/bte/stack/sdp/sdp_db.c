@@ -247,9 +247,9 @@ BOOLEAN SDP_DeleteRecord(UINT32 handle) {
 
 BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
                          UINT32 attr_len, UINT8 *p_val) {
+    UINT16 xx, yy, zz;
     tSDP_RECORD *p_rec;
     tSDP_ATTRIBUTE *p_attr;
-    UINT16 xx, yy, zz;
 
     p_rec = &sdp_cb.server_db.record[0];
     for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
@@ -267,7 +267,7 @@ BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
                 }
             }
 
-            if (p_rec->num_attributes >= SDP_MAX_ATTR_PER_RECORD) {
+            if (p_rec->num_attributes == SDP_MAX_ATTR_PER_RECORD) {
                 return FALSE;
             }
 
@@ -286,7 +286,7 @@ BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
             p_attr->len = attr_len;
             p_attr->type = attr_type;
 
-            if (p_rec->attr_data_end + attr_len > SDP_MAX_PAD_LEN) {
+            if (p_rec->attr_data_end + attr_len >= SDP_MAX_PAD_LEN) {
                 if (sdp_cb.trace_level >= 2) {
                     LogMsg_2(0xA0001,
                              "SDP_AddAttribute: attr_len:%d too long. truncate to (%d)",

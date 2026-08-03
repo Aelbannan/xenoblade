@@ -83,7 +83,28 @@ void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
     *out2 = *(u32*)((u8*)self + 0xa14);
 }
 
-void MPV_Destroy() {}
+extern void MPVM2V_Destroy(void* self);
+extern void MPVSL_Destroy(void* self);
+extern u32 lbl_eu_80602FEC;
+extern u32 lbl_eu_80602B88[];
+
+s32 MPV_Destroy(void* self) {
+    if (self == NULL)
+        return -1;
+    if (*(s32*)((u8*)self + 0xb08) == 2)
+        return -1;
+    lbl_eu_80602FEC = 0;
+    MPVM2V_Destroy(self);
+    MPVSL_Destroy(self);
+    if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
+        s32 i;
+        for (i = 0; i < 0x6e; i++) {
+            __dcbi((void*)((u8*)self + i * 0x20));
+        }
+    }
+    *(s32*)((u8*)self + 0xb08) = 1;
+    return 0;
+}
 
 extern u32 lbl_eu_80602FEC;
 void MPVM2V_SetCond(void* mpv);

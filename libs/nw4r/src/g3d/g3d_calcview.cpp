@@ -260,6 +260,8 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
     localY.x = 0.0f;
     localY.y = 0.0f;
     localY.z = 0.0f;
+    const math::MTX34* pNodeMtx = NULL;
+    const math::MTX34* pParentMtx = NULL;
 
     if (nodeId >= 0) {
         ResNode node = mdl.GetResNode(static_cast<u32>(nodeId));
@@ -270,9 +272,9 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
         }
 
         const u8* base = reinterpret_cast<const u8*>(pMtxArray);
-        const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
+        pNodeMtx = reinterpret_cast<const math::MTX34*>(
             base + mtxId * sizeof(math::MTX34));
-        const math::MTX34* pParentMtx = reinterpret_cast<const math::MTX34*>(
+        pParentMtx = reinterpret_cast<const math::MTX34*>(
             base + parentMtxId * sizeof(math::MTX34));
 
         GetModelLocalAxisY2(&localY, pNodeMtx, pParentMtx);
@@ -286,8 +288,33 @@ void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
 
     if (ax <= 1.0e-18f && ay <= 1.0e-18f) {
         math::VEC3Normalize(&localY, &localY);
-        // TODO: Build billboard matrix from the normalized Y axis
-        math::MTX34Zero(pOut);
+
+        const math::MTX34* pScaleMtx = useParent ? pParentMtx : pNodeMtx;
+
+        f32 len1sq = pScaleMtx->_00 * pScaleMtx->_00 +
+                     pScaleMtx->_10 * pScaleMtx->_10 +
+                     pScaleMtx->_20 * pScaleMtx->_20;
+        f32 len1 = math::FrSqrt(len1sq) * len1sq;
+
+        f32 len2sq = pScaleMtx->_01 * pScaleMtx->_01 +
+                     pScaleMtx->_11 * pScaleMtx->_11 +
+                     pScaleMtx->_21 * pScaleMtx->_21;
+        f32 len2 = math::FrSqrt(len2sq) * len2sq;
+
+        f32 len3sq = pScaleMtx->_02 * pScaleMtx->_02 +
+                     pScaleMtx->_12 * pScaleMtx->_12 +
+                     pScaleMtx->_22 * pScaleMtx->_22;
+        f32 len3 = math::FrSqrt(len3sq) * len3sq;
+
+        pOut->_00 = localY.y * len1;
+        pOut->_01 = localY.x * len2;
+        pOut->_02 = 1.0f;
+        pOut->_10 = -localY.x * len1;
+        pOut->_11 = localY.y * len2;
+        pOut->_12 = 1.0f;
+        pOut->_20 = 1.0f;
+        pOut->_21 = 1.0f;
+        pOut->_22 = len3;
     } else {
         math::MTX34Zero(pOut);
     }

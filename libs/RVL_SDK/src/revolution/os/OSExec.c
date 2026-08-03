@@ -232,7 +232,7 @@ extern BOOL DVDLowOpenPartitionWithTmdAndTicketView(const u32 offset,
 extern BOOL DVDLowOpenPartition(const u32 offset, const ESTicket *ticket,
                                 const u32 certsSize, const u8 *certs,
                                 ESTitleMeta *tmd, DVDLowCallback callback);
-extern u32 DVDLowIntType;
+extern volatile u32 DVDLowIntType;
 extern void callback(u32 type);
 extern DVDDiskID id;
 
@@ -252,26 +252,22 @@ static const char sNoGameStr[] =
     "\nOSExec(): The specified game doesn't exist in the disc\n";
 
 void __OSLaunchNextFirmware(void) {
-    u8 *bootInfo;
-    u8 *gameTmd;
-    ESTitleMeta *discTmd;
-    u8 *ticketView;
-    s32 err;
-    u32 count;
-    u32 tmdSize;
-    u32 limit;
-    u32 used;
-    u32 *p;
-    u8 *p2;
-    u32 i;
-    u64 titleId;
+    s32 err = -1;
+    u8 i;
+    u32 count = 1;
     ESTicketView *views;
+    ESTicketView *ticketView;
+    u64 titleId;
     u32 codeStart;
     u32 codeSize;
-
-    count = 1;
-    tmdSize = 0;
-    err = -1;
+    u8 *bootInfo;
+    u8 *gameTmd;
+    u32 *p;
+    ESTitleMeta *discTmd;
+    u32 tmdSize = 0;
+    u8 *p2;
+    u32 limit;
+    u32 used;
 
     bootInfo = OSAllocFromMEM1ArenaLo(0x20, 0x20);
     gameTmd = OSAllocFromMEM1ArenaLo(0x800, 0x20);
@@ -282,7 +278,7 @@ void __OSLaunchNextFirmware(void) {
         *(u32 *)0x80003198 != 0) {
         err = ESP_InitLib();
         if (err == 0) {
-            err = ESP_DiGetTicketView(NULL, (ESTicketView *)ticketView);
+            err = ESP_DiGetTicketView(NULL, ticketView);
         }
         if (err == 0) {
             err = ESP_DiGetTmd(NULL, &tmdSize);
@@ -295,7 +291,7 @@ void __OSLaunchNextFirmware(void) {
         if (OSPlayTimeIsLimited()) {
             limit = 0;
             used = (u32)-1;
-            __OSGetPlayTime((ESTicketView *)ticketView, &limit, &used);
+            __OSGetPlayTime(ticketView, &limit, &used);
             if (used == 0) {
                 __OSWriteExpiredFlag();
                 __OSReturnToMenuForError();
@@ -341,16 +337,16 @@ void __OSLaunchNextFirmware(void) {
 
         p = NULL;
         p2 = gameTmd;
-        for (i = 0; i < *(u32 *)bootInfo; i++, p2 += 8) {
-            if (*(u32 *)(p2 + 4) == (u32)__OSNextPartitionType) {
+        for (i = 0; i < *(volatile u32 *)bootInfo; i++, p2 += 8) {
+            if (*(u32 *)(p2 + 4) == (u32)*(volatile void **)&__OSNextPartitionType) {
                 p = (u32 *)p2;
             }
         }
 
         if (p == NULL) {
             p2 = gameTmd + 0x20;
-            for (i = 0; i < *(u32 *)(bootInfo + 8); i++, p2 += 8) {
-                if (*(u32 *)(p2 + 4) == (u32)__OSNextPartitionType) {
+            for (i = 0; i < *(volatile u32 *)(bootInfo + 8); i++, p2 += 8) {
+                if (*(u32 *)(p2 + 4) == (u32)*(volatile void **)&__OSNextPartitionType) {
                     p = (u32 *)p2;
                 }
             }
@@ -367,8 +363,8 @@ void __OSLaunchNextFirmware(void) {
         DVDLowIntType = 0;
         if (*(u8 *)0x80003187 == 0x80) {
             DVDLowOpenPartitionWithTmdAndTicketView(
-                *(u32 *)((u8 *)p + 0), (ESTicketView *)ticketView, tmdSize,
-                discTmd, 0, NULL, callback);
+                *(u32 *)((u8 *)p + 0), ticketView, tmdSize, discTmd, 0,
+                NULL, callback);
         } else {
             DVDLowOpenPartition(*(u32 *)((u8 *)p + 0), NULL, 0, NULL,
                                 discTmd, callback);
@@ -429,10 +425,10 @@ void __OSLaunchNextFirmware(void) {
     DCInvalidateRange((void *)0x80003100, 0x100);
 
     if (codeStart < *(u32 *)0x8000311C) {
-        *(u32 *)0x80003120 = *(u32 *)0x80003120 - (*(u32 *)0x8000311C - codeStart);
-        *(u32 *)0x80003128 = *(u32 *)0x80003128 - (*(u32 *)0x8000311C - codeStart);
-        *(u32 *)0x80003130 = *(u32 *)0x80003130 - (*(u32 *)0x8000311C - codeStart);
-        *(u32 *)0x80003134 = *(u32 *)0x80003134 - (*(u32 *)0x8000311C - codeStart);
+        *(u32 *)0x80003120 = codeStart - (*(u32 *)0x8000311C - *(u32 *)0x80003120);
+        *(u32 *)0x80003128 = codeStart - (*(u32 *)0x8000311C - *(u32 *)0x80003128);
+        *(u32 *)0x80003130 = codeStart - (*(u32 *)0x8000311C - *(u32 *)0x80003130);
+        *(u32 *)0x80003134 = codeStart - (*(u32 *)0x8000311C - *(u32 *)0x80003134);
         *(u32 *)0x8000311C = codeStart;
     }
 
@@ -458,8 +454,8 @@ void __OSLaunchNextFirmware(void) {
     DVDLowIntType = 0;
     if (*(u8 *)0x80003187 == 0x80) {
         DVDLowOpenPartitionWithTmdAndTicketView(
-            *(u32 *)((u8 *)p + 0), (ESTicketView *)ticketView, tmdSize,
-            discTmd, 0, NULL, callback);
+            *(u32 *)((u8 *)p + 0), ticketView, tmdSize, discTmd, 0, NULL,
+            callback);
     } else {
         DVDLowOpenPartition(*(u32 *)((u8 *)p + 0), NULL, 0, NULL, discTmd,
                             callback);
@@ -720,7 +716,7 @@ extern volatile int Prepared;
 void Callback() {
     Prepared = 1;
 }
-extern unsigned long DVDLowIntType;
+extern volatile unsigned long DVDLowIntType;
 void callback(unsigned long type) {
     DVDLowIntType = type;
 }

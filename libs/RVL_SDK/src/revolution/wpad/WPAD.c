@@ -87,8 +87,6 @@ static u16 _wpad_hyst_count_threshold[2] = {30, 30};  // acc, dpd
 
 void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open);
 
-static DECOMP_INLINE void WPADiDisconnect(s32 chan, BOOL sleep);
-
 static BOOL __CanPushCmdQueue(const WPADCommandQueue* pQueue, s8 num);
 static s8 __GetCmdNumber(const WPADCommandQueue* pQueue);
 
@@ -1248,16 +1246,6 @@ void __wpadReceiveCallback(UINT8 devHandle, UINT8* pReport, UINT16 len) {
     }
 }
 
-static s32 WPADiGetStatus(s32 chan) {
-    WPADCB* p = __rvl_p_wpadcb[chan];
-    BOOL enabled = OSDisableInterrupts();
-
-    s32 status = p->status;
-
-    OSRestoreInterrupts(enabled);
-    return status;
-}
-
 void WPADGetAccGravityUnit(s32 chan, u32 type, WPADAccGravityUnit* pAcc) {
     WPADCB* p = __rvl_p_wpadcb[chan];
     BOOL enabled = OSDisableInterrupts();
@@ -1291,17 +1279,26 @@ void __wpadDisconnectCallback(s32 chan, s32 status) {
     }
 }
 
-static void WPADiDisconnect(s32 chan, BOOL sleep) {
-    WPADCB* p = __rvl_p_wpadcb[chan];
-    s32 status;
+void WPADDisconnect(s32 chan) {
+    WPADCB* p;
     BOOL enabled;
+    s32 status;
 
-    status = WPADiGetStatus(chan);
-    if (status == WPAD_ERR_NO_CONTROLLER) {
-        return;
+    p = __rvl_p_wpadcb[chan];
+    enabled = OSDisableInterrupts();
+    status = p->status;
+    OSRestoreInterrupts(enabled);
+
+    if (status != WPAD_ERR_NO_CONTROLLER) {
+        WUDSetDeviceHistory(chan, NULL);
     }
 
-    if (sleep) {
+    p = __rvl_p_wpadcb[chan];
+    enabled = OSDisableInterrupts();
+    status = p->status;
+    OSRestoreInterrupts(enabled);
+
+    if (status != WPAD_ERR_NO_CONTROLLER) {
         enabled = OSDisableInterrupts();
 
         if (p->sleeping) {
@@ -1313,36 +1310,7 @@ static void WPADiDisconnect(s32 chan, BOOL sleep) {
 
         OSRestoreInterrupts(enabled);
         WPADControlLed(chan, 0, __wpadDisconnectCallback);
-    } else {
-        BD_ADDR addr;
-        BD_ADDR_PTR pDevAddr;
-        WPADCB* p2 = __rvl_p_wpadcb[chan];
-        BOOL enabled = OSDisableInterrupts();
-        s8 devHandle = p2->devHandle;
-
-        OSRestoreInterrupts(enabled);
-
-        pDevAddr = _WUDGetDevAddr(devHandle);
-
-        if (pDevAddr != NULL) {
-            WUD_BDCPY(addr, pDevAddr);
-        } else {
-            memset(addr, 0, BD_ADDR_LEN);
-        }
-
-        btm_remove_acl(addr);
     }
-}
-
-void WPADDisconnect(s32 chan) {
-    s32 status;
-
-    memset(&_scArray.devices[WUD_MAX_DEV_ENTRY_FOR_STD + chan], 0,
-           sizeof(SCBtDeviceInfo));
-
-    _scFlush = TRUE;
-
-    WPADiDisconnect(chan, TRUE);
 }
 
 s32 WPADProbe(s32 chan, s32* pDevType) {
@@ -1648,28 +1616,28 @@ void WPADRead(s32 chan, WPADStatus* pStatus) {
         break;
 
     case WPAD_FMT_CLASSIC_BTN:
-        size = 0x5A;
-        break;
-
     case WPAD_FMT_CLASSIC_BTN_ACC:
-        size = 0x2E;
-        break;
-
     case WPAD_FMT_CLASSIC_BTN_ACC_DPD:
+    case WPAD_FMT_BTN_ACC_DPD_EXTENDED:
+    case 15:
         size = 0x36;
-        break;
-
-    case WPAD_FMT_TR_BTN:
-        size = 0x34;
         break;
 
     case WPAD_FMT_TR_BTN_ACC:
-    case WPAD_FMT_BTN_ACC_DPD_EXTENDED:
-        size = 0x4A;
+        size = 0x2E;
         break;
 
     case WPAD_FMT_WBC_BTN_ACC:
-        size = 0x36;
+        size = 0x34;
+        break;
+
+    case 13:
+    case 14:
+        size = 0x4A;
+        break;
+
+    case WPAD_FMT_TR_BTN:
+        size = 0x5A;
         break;
 
     default:
@@ -1767,31 +1735,50 @@ void WPADiExcludeButton(s32 chan) {
     if ((pStatus->button & (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)) ==
         (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)) {
 
-        pStatus->button &= ~WPAD_BUTTON_RIGHT;
+        pStatus->button = pStatus->button & ~WPAD_BUTTON_RIGHT;
     }
 
     if ((pStatus->button & (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN)) ==
         (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN)) {
 
-        pStatus->button &= ~WPAD_BUTTON_DOWN;
+        pStatus->button = pStatus->button & ~WPAD_BUTTON_DOWN;
     }
 
     if (p->dataFormat == WPAD_FMT_CLASSIC_BTN ||
         p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC ||
-        p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC_DPD) {
+        p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC_DPD ||
+        p->dataFormat == WPAD_FMT_BTN_ACC_DPD_EXTENDED ||
+        p->dataFormat == 15) {
         pStatusCL = (WPADCLStatus*)pRxBuffer;
 
         if ((pStatusCL->clButton &
              (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) ==
             (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) {
 
-            pStatusCL->clButton &= ~WPAD_BUTTON_CL_RIGHT;
+            pStatusCL->clButton = pStatusCL->clButton & ~WPAD_BUTTON_CL_RIGHT;
         }
 
         if ((pStatusCL->clButton & (WPAD_BUTTON_CL_UP | WPAD_BUTTON_CL_DOWN)) ==
             (WPAD_BUTTON_CL_UP | WPAD_BUTTON_CL_DOWN)) {
 
-            pStatusCL->clButton &= ~WPAD_BUTTON_CL_DOWN;
+            pStatusCL->clButton = pStatusCL->clButton & ~WPAD_BUTTON_CL_DOWN;
+        }
+    }
+
+    if (p->dataFormat == WPAD_FMT_TR_BTN_ACC) {
+        pStatusCL = (WPADCLStatus*)pRxBuffer;
+
+        if ((pStatusCL->clButton &
+             (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) ==
+            (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) {
+
+            pStatusCL->clButton = pStatusCL->clButton & ~WPAD_BUTTON_CL_RIGHT;
+        }
+
+        if ((pStatusCL->clButton & (WPAD_BUTTON_CL_UP | WPAD_BUTTON_CL_DOWN)) ==
+            (WPAD_BUTTON_CL_UP | WPAD_BUTTON_CL_DOWN)) {
+
+            pStatusCL->clButton = pStatusCL->clButton & ~WPAD_BUTTON_CL_DOWN;
         }
     }
 
@@ -1804,36 +1791,58 @@ void WPADiCopyOut(s32 chan) {
 
     u8 rxBufIndex = p->rxBufIndex != 0 ? 0 : 1;
     WPADStatus* pStatus = (WPADStatus*)p->rxBufs[rxBufIndex];
+    u32 size;
+
+    switch (p->dataFormat) {
+    case WPAD_FMT_FS_BTN:
+    case WPAD_FMT_FS_BTN_ACC:
+    case WPAD_FMT_FS_BTN_ACC_DPD:
+        size = 0x32;
+        break;
+
+    case WPAD_FMT_CLASSIC_BTN:
+    case WPAD_FMT_CLASSIC_BTN_ACC:
+    case WPAD_FMT_CLASSIC_BTN_ACC_DPD:
+    case WPAD_FMT_BTN_ACC_DPD_EXTENDED:
+    case 15:
+        size = 0x36;
+        break;
+
+    case WPAD_FMT_TR_BTN_ACC:
+        size = 0x2E;
+        break;
+
+    case WPAD_FMT_WBC_BTN_ACC:
+        size = 0x34;
+        break;
+
+    case 13:
+    case 14:
+        size = 0x4A;
+        break;
+
+    case WPAD_FMT_TR_BTN:
+        size = 0x5A;
+        break;
+
+    default:
+        size = 0x2A;
+        break;
+    }
 
     if (p->samplingBuf != NULL) {
         if (++p->samplingBufIndex >= p->samplingBufSize) {
             p->samplingBufIndex = 0;
         }
 
-        if (p->dataFormat == WPAD_FMT_CORE_BTN ||
-            p->dataFormat == WPAD_FMT_CORE_BTN_ACC ||
-            p->dataFormat == WPAD_FMT_CORE_BTN_ACC_DPD) {
+        {
+            u8* pDst = (u8*)p->samplingBuf + p->samplingBufIndex * size;
 
-            memcpy(&p->samplingBuf[p->samplingBufIndex], pStatus,
-                   sizeof(WPADStatus));
+            if (pStatus->err != 0) {
+                size = 0x2A;
+            }
 
-        } else if (p->dataFormat == WPAD_FMT_FS_BTN ||
-                   p->dataFormat == WPAD_FMT_FS_BTN_ACC ||
-                   p->dataFormat == WPAD_FMT_FS_BTN_ACC_DPD) {
-
-            memcpy(&p->samplingBufFS[p->samplingBufIndex], pStatus,
-                   !pStatus->err ? sizeof(WPADFSStatus) : sizeof(WPADStatus));
-
-        } else if (p->dataFormat == WPAD_FMT_CLASSIC_BTN ||
-                   p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC ||
-                   p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC_DPD) {
-
-            memcpy(&p->samplingBufCL[p->samplingBufIndex], pStatus,
-                   !pStatus->err ? sizeof(WPADCLStatus) : sizeof(WPADStatus));
-
-        } else {
-            memcpy(&p->samplingBufEx[p->samplingBufIndex], pStatus,
-                   !pStatus->err ? sizeof(WPADStatusEx) : sizeof(WPADStatus));
+            memcpy(pDst, pStatus, size);
         }
     }
 
@@ -1842,6 +1851,7 @@ void WPADiCopyOut(s32 chan) {
     }
 
     p->copyOutCount++;
+
     OSRestoreInterrupts(enabled);
 }
 

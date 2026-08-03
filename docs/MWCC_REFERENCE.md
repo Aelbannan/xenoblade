@@ -7202,3 +7202,47 @@ reaches `_scArray`/`_spArray`/`_dev_handle_to_bda`/`_dev_handle_queue_size`/
 FULL_MATCH) use the separate bss symbols via lis/addi — both access styles
 coexist in retail; keep the separate globals AND add struct fields at the same
 offsets (additive WUDCB extension) so each function compiles to its retail form.
+
+## RVL_SDK wpad/WPAD.c — format-size switch + button-exclude patterns (US, Wii/1.1 `-O4,p`)
+
+From matching `WPADRead` (FULL_MATCH), `WPADiCopyOut` (FULL_MATCH), `WPADiExcludeButton`
+(98.6%, pure r5<->r6 swap) and `WPADDisconnect` (94.2%, r29<->r30 swap).
+
+1. **The `dataFormat` size switch (`WPADRead`/`WPADiCopyOut`) is a 13-entry
+   jumptable over `fmt - 3` with a specific case→size map**, identical in all
+   three functions: fmt 3,4,5→0x32; 6,7,8,11,15→0x36; 9→0x5A; 10→0x2E;
+   12→0x34; 13,14→0x4A; default→0x2A. The enum only names 3..12
+   (`WPAD_FMT_BTN_ACC_DPD_EXTENDED`=11, `WPAD_FMT_WBC_BTN_ACC`=12); 13,14,15
+   must be written as raw case labels. **Case ORDER in source determines the
+   emitted block layout**: retail layout is 0x32, 0x36, 0x2E, 0x34, 0x4A, 0x5A
+   → write the switch in that order (FS group, classic+ext+15 group,
+   TR_BTN_ACC, WBC_BTN_ACC, 13/14, TR_BTN, default). Any other case order
+   shifts the `li r5,X` blocks (4 mismatched `li`s).
+
+2. **`u16 x = x & ~C` (plain assignment) emits the retail `rlwinm` wrap mask;
+   `u16 x &= ~C` (compound) emits `andi.` instead.** For `~0x2`/`~0x4`/`~0x4000`
+   the compound form produces `andi. rD,rS,0xFFFD/0xFFFB/0xBFFF` while retail
+   has `rlwinm rD,rS,0,31,29 / 0,30,28 / 0,18,16` — the prior KB fix
+   (attempt:us-802e9be0:14492) used the `DECOMP_PPC_RLWINM` policy exception;
+   the plain-assignment form avoids it entirely with no exception. The
+   `~0x8000` clear emits `clrlwi rD,rS,17` in both forms.
+
+3. **Runtime-size byte-offset memcpy: `memcpy((u8*)buf + index * size, src, size)`
+   emits `mullw index,index,size`; typed `&buf[index]` emits `mulli index,index,sizeof(T)`**
+   (here sizeof(WPADStatus)=0x2A) and never matches. Also: when the copy length
+   is overridden by a later condition, **compute the destination into a named
+   local BEFORE the `if`** — a ternary-in-argument form emits an unconditional
+   `li` + select (extra instruction, size over), while
+   `u8* pDst = ...; if (err) size = 0x2A; memcpy(pDst, src, size);` reproduces
+   retail's schedule (dst computed before the branch).
+
+4. **Register-renaming witness limitation (recorded, not fixable in C):** when
+   a function's only diffs are a consistent register swap (r5<->r6 base vs
+   clButton in `WPADiExcludeButton`; r29<->r30 index vs p in `WPADDisconnect`),
+   the witness still fails: call summaries hash the swapped input lanes, so the
+   terminal lanes written by `OSDisableInterrupts`/`OSRestoreInterrupts`
+   (`r0,r3..r7`) get side-specific fresh symbols and the structural terminal
+   comparison diverges. Both are byte-identical under the swap otherwise (0
+   structural for ExcludeButton; 2 prologue spill-order artifacts for
+   Disconnect). Accept via `--smt` out-of-band; do not chase the allocation
+   from C (5+ variants all reproduce the same colors).

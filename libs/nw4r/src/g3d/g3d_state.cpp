@@ -58,6 +58,15 @@ const math::MTX33* G3DState::GetViewNrmMtxPtr(u32 idx) {
     return reinterpret_cast<const math::MTX33*>(lbl_eu_8061FAB8);
 }
 
+void G3DState::IndMtxOpStd::Reset() {
+    PSMTXIdentity(mIndMtx[0]);
+    PSMTXIdentity(mIndMtx[1]);
+    PSMTXIdentity(mIndMtx[2]);
+    mIsValidMtx[2] = false;
+    mIsValidMtx[1] = false;
+    mIsValidMtx[0] = false;
+}
+
 void G3DState::SetRenderModeObj(const GXRenderModeObj& rObj) {
     lbl_eu_8061F9D4 = rObj;
 }
@@ -240,11 +249,30 @@ namespace nw4r {
     namespace g3d {
         namespace G3DState {
             namespace {
-                class CameraMtxState {
-                    public:
+                struct CameraMtxState {
+                    u16 mFlag;                 // at 0x0
+                    u16 mCurCameraID;          // at 0x2
+                    math::MTX34 mViewMtx;      // at 0x4
+                    math::MTX34 mViewMtxArray[0x20];  // at 0x34
+                    math::MTX44 mProjMtxArray[0x20];  // at 0x634
+                    math::MTX34 mNrmMtxArray[0x20];   // at 0xE34
+                    math::MTX34 mEnvMtxArray[0x20];   // at 0x1434
+
                     CameraMtxState();
                 };
-                CameraMtxState::CameraMtxState() {}
+
+                CameraMtxState::CameraMtxState() {
+                    mFlag = 0;
+                    mCurCameraID = 0;
+                    PSMTXIdentity(mViewMtx);
+
+                    for (u32 i = 0; i < 0x20; i++) {
+                        PSMTXIdentity(mViewMtxArray[i]);
+                        MTX44Identity(&mProjMtxArray[i]);
+                        PSMTXIdentity(mNrmMtxArray[i]);
+                        PSMTXIdentity(mEnvMtxArray[i]);
+                    }
+                }
             }
         }
     }

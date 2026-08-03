@@ -236,7 +236,8 @@ extern void btm_sec_encrypt_change(UINT16 handle, UINT8 status,
 extern void btm_sec_mkey_comp_event(UINT16 handle, UINT8 status, UINT8 key_flg);
 extern void btm_read_remote_features_complete(UINT8 *p);
 extern void btm_read_remote_version_complete(UINT8 *p);
-extern void btm_sco_chk_pend_unpark(UINT8 hci_status, UINT16 hci_handle);
+extern void btm_sco_chk_pend_unpark(UINT8 hci_status, UINT16 hci_handle,
+                                    UINT8 mode);
 extern void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle,
                                      UINT8 mode, UINT16 interval);
 extern void hidd_pm_proc_mode_change(UINT8 hci_status, UINT8 mode,
@@ -272,9 +273,9 @@ void btu_hcif_process_event(BT_HDR *p_msg)
     UINT8 event;
     UINT8 evt_len;
     UINT16 hci_handle;
+    UINT8 mode;
     UINT16 interval;
     UINT8 hci_status;
-    UINT8 mode;
 
     event = *p;
     evt_len = *(p + 1);
@@ -322,8 +323,8 @@ void btu_hcif_process_event(BT_HDR *p_msg)
 
     case HCI_RMT_NAME_REQUEST_COMP_EVT: {
         BD_ADDR bd_name;
-        UINT8 hci_status = p[2];
         UINT8 *p_name = p + 9;
+        UINT8 hci_status = p[2];
         UINT8 *p_off = p + 3;
 
         STREAM_TO_BDADDR(bd_name, p_off);
@@ -393,11 +394,11 @@ void btu_hcif_process_event(BT_HDR *p_msg)
 
     case HCI_MODE_CHANGE_EVT:
         hci_handle = (UINT16)(p[3] + (p[4] << 8));
-        interval = (UINT16)(p[6] + (p[7] << 8));
         mode = p[5];
+        interval = (UINT16)(p[6] + (p[7] << 8));
         hci_status = p[2];
 
-        btm_sco_chk_pend_unpark(hci_status, hci_handle);
+        btm_sco_chk_pend_unpark(hci_status, hci_handle, mode);
         btm_pm_proc_mode_change(hci_status, hci_handle, mode, interval);
         hidd_pm_proc_mode_change(hci_status, mode, interval);
         break;
@@ -442,8 +443,11 @@ void btu_hcif_process_event(BT_HDR *p_msg)
 
     case HCI_READ_CLOCK_OFF_COMP_EVT:
         if (*(p + 2) == 0) {
-            UINT16 hci_handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
-            UINT16 clock_offset = (UINT16)(p[5] + (p[6] << 8));
+            UINT16 clock_offset;
+            UINT16 hci_handle;
+
+            hci_handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
+            clock_offset = (UINT16)(p[5] + (p[6] << 8));
 
             btm_process_clk_off_comp_evt(hci_handle, clock_offset);
             btm_sec_update_clock_offset(hci_handle, clock_offset);

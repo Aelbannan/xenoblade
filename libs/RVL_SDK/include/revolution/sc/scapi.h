@@ -66,8 +66,15 @@ typedef struct SCBtDeviceInfoArray {
     };
 } SCBtDeviceInfoArray;
 
+typedef struct SCBtCmpDevInfo {
+    BD_ADDR addr;    // at 0x0
+    SCDevInfo info;  // at 0x6
+    LINK_KEY linkKey; // at 0x46
+} SCBtCmpDevInfo;
+
 typedef struct SCBtCmpDevInfoArray {
-    u8 unk0[0x205];
+    u8 numRegist; // at 0x0
+    SCBtCmpDevInfo regist[SC_MAX_DEV_ENTRY_FOR_SMP]; // at 0x1
 } SCBtCmpDevInfoArray;
 
 u8 SCGetAspectRatio(void);

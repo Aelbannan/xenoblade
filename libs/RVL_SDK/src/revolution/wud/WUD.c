@@ -2512,17 +2512,18 @@ void __wudInitFlushCallback(s32 result) {
     _wcb.initState = 5;
 }
 
-void __wudInitDevInfo(void) {
+int __wudInitDevInfo(void) {
     extern char _wudWiiRemoteDescriptor[];
-    WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
     BD_ADDR zeroAddr;
     WUDDevInfo* pDev;
     BOOL enabled;
-    u8 numStd;
+    BOOL found = FALSE;
+    int numStd;
+    int cmpNum;
     int i;
     int j;
-    int count = 0;
+    u8 count;
 
     memset(&_scArray, 0, sizeof(_scArray));
     memset(&_spArray, 0, sizeof(_spArray));
@@ -2531,11 +2532,11 @@ void __wudInitDevInfo(void) {
     SCGetBtDeviceInfoArray(&_scArray);
     SCGetBtCmpDevInfoArray(&_spArray);
 
-    p->syncType = WUD_SYNC_TYPE_STANDARD;
+    _wcb.syncType = WUD_SYNC_TYPE_STANDARD;
 
     numStd = _scArray.numRegist;
 
-    for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_STD; i++) {
+    for (i = 0, count = 0; i < WUD_MAX_DEV_ENTRY_FOR_STD; i++) {
         if (numStd == 0) {
             break;
         }
@@ -2569,17 +2570,17 @@ void __wudInitDevInfo(void) {
     process:
         enabled = OSDisableInterrupts();
 
-        if (p->syncType == WUD_SYNC_TYPE_STANDARD) {
+        if (_wcb.syncType == WUD_SYNC_TYPE_STANDARD) {
             pDev = NULL;
             for (j = 0; j < WUD_MAX_DEV_ENTRY_FOR_STD; j++) {
-                if (p->stdDevs[j].status == 0) {
+                if (_wcb.stdDevs[j].status == 0) {
                     DEBUGPrint(pMsg + 0x2CC, j);
-                    pDev = &p->stdDevs[j];
+                    pDev = &_wcb.stdDevs[j];
                     break;
                 }
             }
         } else {
-            pDev = p->smpListTail->devInfo;
+            pDev = _wcb.smpListTail->devInfo;
         }
 
         OSRestoreInterrupts(enabled);
@@ -2608,25 +2609,30 @@ void __wudInitDevInfo(void) {
     if (_linkedWBC != 0) {
         if (memcmp(&_scArray.active[4].info, pMsg + 0x27C,
                    sizeof(LINK_KEY)) == 0) {
-            enabled = OSDisableInterrupts();
+            WUDCB* pWbc;
 
-            if (p->syncType == WUD_SYNC_TYPE_STANDARD) {
+            enabled = OSDisableInterrupts();
+            pWbc = &_wcb;
+
+            if (pWbc->syncType == WUD_SYNC_TYPE_STANDARD) {
                 pDev = NULL;
                 for (j = 0; j < WUD_MAX_DEV_ENTRY_FOR_STD; j++) {
-                    if (p->stdDevs[j].status == 0) {
+                    if (pWbc->stdDevs[j].status == 0) {
                         DEBUGPrint(pMsg + 0x2CC, j);
-                        pDev = &p->stdDevs[j];
+                        pDev = &pWbc->stdDevs[j];
                         break;
                     }
                 }
             } else {
-                pDev = p->smpListTail->devInfo;
+                pDev = pWbc->smpListTail->devInfo;
             }
 
             OSRestoreInterrupts(enabled);
 
             if (pDev == NULL) {
-                pDev = &p->stdDevs[WUD_MAX_DEV_ENTRY_FOR_STD - 1];
+                enabled = OSDisableInterrupts();
+                OSRestoreInterrupts(enabled);
+                pDev = &_wcb.stdDevs[WUD_MAX_DEV_ENTRY_FOR_STD - 1];
                 count--;
             }
 
@@ -2659,14 +2665,94 @@ void __wudInitDevInfo(void) {
     }
 
     _scArray.numRegist = count;
-    p->syncType = WUD_SYNC_TYPE_SIMPLE;
-    p->initState = WUD_STATE_INIT_INITIALIZED;
+
+    {
+        WUDCB* pSmp = &_wcb;
+
+        pSmp->syncType = WUD_SYNC_TYPE_SIMPLE;
+
+        cmpNum = _spArray.numRegist;
+
+        for (i = WUD_MAX_DEV_ENTRY_FOR_SMP - 1; i >= 0; i--) {
+            if (cmpNum == 0) {
+                break;
+            }
+
+            if (memcmp(_spArray.regist[i].addr, zeroAddr, sizeof(BD_ADDR)) ==
+                0) {
+                continue;
+            }
+
+            for (j = 0; j < _scArray.numRegist; j++) {
+                if (memcmp(_scArray.regist[j].addr, _spArray.regist[i].addr,
+                           sizeof(BD_ADDR)) == 0) {
+                    found = TRUE;
+                    goto dup_checked;
+                }
+            }
+
+            found = FALSE;
+
+        dup_checked:
+            if (found) {
+                continue;
+            }
+
+            enabled = OSDisableInterrupts();
+
+            if (pSmp->syncType == WUD_SYNC_TYPE_STANDARD) {
+                pDev = NULL;
+
+                for (j = 0; j < WUD_MAX_DEV_ENTRY_FOR_STD; j++) {
+                    if (pSmp->stdDevs[j].status == 0) {
+                        DEBUGPrint(pMsg + 0x2CC, j);
+                        pDev = &pSmp->stdDevs[j];
+                        break;
+                    }
+                }
+            } else {
+                pDev = pSmp->smpListTail->devInfo;
+            }
+
+        OSRestoreInterrupts(enabled);
+
+        if (pDev != NULL) {
+            memcpy(pDev->devAddr, _spArray.regist[i].addr, sizeof(BD_ADDR));
+            memcpy(pDev, &_spArray.regist[i].info, sizeof(SCDevInfo));
+            memcpy(pDev->linkKey, _spArray.regist[i].linkKey,
+                   sizeof(LINK_KEY));
+
+            pDev->status = 1;
+            pDev->UNK_0x5B = 1;
+            pDev->UNK_0x5C = 3;
+
+            if (memcmp(pDev, pMsg + 0x5FC, 0x13) == 0) {
+                pDev->subclass = 2;
+                pDev->hhAttrMask = 0x8074;
+                pDev->appID = 3;
+            }
+
+            DEBUGPrint(pMsg + 0x378, pDev->devAddr[0], pDev->devAddr[1],
+                       pDev->devAddr[2], pDev->devAddr[3], pDev->devAddr[4],
+                       pDev->devAddr[5]);
+            DEBUGPrint(pMsg + 0x5F0, pDev);
+
+            WUDiMoveTopSmpDevInfoPtr(pDev);
+
+            cmpNum--;
+            }
+        }
+    }
+
+    _wcb.syncType = WUD_SYNC_TYPE_STANDARD;
+    _wcb.initState = WUD_STATE_INIT_INITIALIZED;
 
     memset(&_spArray, 0, sizeof(_spArray));
 
     SCSetBtDeviceInfoArray(&_scArray);
     SCSetBtCmpDevInfoArray(&_spArray);
     SCFlushAsync((SCFlushCallback)__wudInitFlushCallback);
+    return 5;
 }
 
 void __wudNandResultCallback(s32 result) {

@@ -611,9 +611,11 @@ void __a1_31_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 //
 
 void __wpadGetDevConfig(s32 chan, s32 err) {
+    const char* dbg = (const char*)__a1_input_reports_array;
+    f32 (*cal)[WPAD_MAX_CONTROLLERS] = _wpadCalibrationX;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     u8* buf = cb->wmReadDataPtr;
-    s32 i;
+    u8 i;
     s32 j;
     s32 sum;
     s32 index;
@@ -660,7 +662,7 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
             }
 
             if ((u8)(sum + 0x55) == buf[index + 10]) {
-                DEBUGPrint(WPAD_DBG_MSG(0xAC));
+                DEBUGPrint(dbg + 0xAC);
 
                 // Decode the four sensor-bar objects (basic format)
                 obj[0].x = (s16)((s16)((u16)buf[index] & 0xFF) |
@@ -694,22 +696,37 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
                 // Distribute the objects into the quadrant slots
                 for (j = 0; j < WPAD_MAX_DPD_OBJECTS; j++) {
                     if (obj[j].x < 0x200 && obj[j].y < 0x180) {
-                        cb->devConfig.dpd[0] = obj[j];
-                    } else if (obj[j].x > 0x200 && obj[j].y < 0x180) {
-                        cb->devConfig.dpd[1] = obj[j];
-                    } else if (obj[j].x > 0x200 && obj[j].y > 0x180) {
-                        cb->devConfig.dpd[2] = obj[j];
-                    } else if (obj[j].x < 0x200 && obj[j].y > 0x180) {
-                        cb->devConfig.dpd[3] = obj[j];
+                        cb->devConfig.dpd[0].x = obj[j].x;
+                        cb->devConfig.dpd[0].y = obj[j].y;
+                        cb->devConfig.dpd[0].size = obj[j].size;
+                        cb->devConfig.dpd[0].traceId = obj[j].traceId;
+                    }
+                    if (obj[j].x > 0x200 && obj[j].y < 0x180) {
+                        cb->devConfig.dpd[1].x = obj[j].x;
+                        cb->devConfig.dpd[1].y = obj[j].y;
+                        cb->devConfig.dpd[1].size = obj[j].size;
+                        cb->devConfig.dpd[1].traceId = obj[j].traceId;
+                    }
+                    if (obj[j].x > 0x200 && obj[j].y > 0x180) {
+                        cb->devConfig.dpd[2].x = obj[j].x;
+                        cb->devConfig.dpd[2].y = obj[j].y;
+                        cb->devConfig.dpd[2].size = obj[j].size;
+                        cb->devConfig.dpd[2].traceId = obj[j].traceId;
+                    }
+                    if (obj[j].x < 0x200 && obj[j].y > 0x180) {
+                        cb->devConfig.dpd[3].x = obj[j].x;
+                        cb->devConfig.dpd[3].y = obj[j].y;
+                        cb->devConfig.dpd[3].size = obj[j].size;
+                        cb->devConfig.dpd[3].traceId = obj[j].traceId;
                     }
                 }
                 break;
             } else {
-                DEBUGPrint(WPAD_DBG_MSG(0xC0));
+                DEBUGPrint(dbg + 0xC0);
             }
         }
     } else {
-        DEBUGPrint(WPAD_DBG_MSG(0xD8));
+        DEBUGPrint(dbg + 0xD8);
     }
 
     // Sensor bar position / angle calibration
@@ -721,7 +738,7 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
         centY[i] = (f32)cb->devConfig.dpd[i].y;
         difaveX += (f32)(cb->devConfig.dpd[i].x - dummyObjX[i]);
         difaveY += (f32)(cb->devConfig.dpd[i].y - dummyObjY[i]);
-        DEBUGPrint(WPAD_DBG_MSG(0x11C), centX[i], centY[i]);
+        DEBUGPrint(dbg + 0x11C, centX[i], centY[i]);
     }
     difaveX *= 0.25f;
     difaveY *= 0.25f;
@@ -729,35 +746,35 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
     deltaX = (f32)atan((126.5f + difaveX) / 1332.5f) - (f32)atan(126.5f / 1332.5f);
     deltaY = (f32)atan((93.0f + difaveY) / 1337.4f) - (f32)atan(93.0f / 1337.4f);
 
-    _wpadCalibrationX[0][chan] = -1.0f * (f32)tan(deltaX) * 1332.5f;
-    _wpadCalibrationX[1][chan] = -1.0f * (f32)tan(deltaY) * 1337.4f;
+    cal[0][chan] = -1.0f * (f32)tan(deltaX) * 1332.5f;
+    cal[1][chan] = -1.0f * (f32)tan(deltaY) * 1337.4f;
 
-    DEBUGPrint(WPAD_DBG_MSG(0x130), difaveX, difaveY);
-    DEBUGPrint(WPAD_DBG_MSG(0x150), deltaX, deltaY);
-    DEBUGPrint(WPAD_DBG_MSG(0x170), _wpadCalibrationX[0][chan], _wpadCalibrationX[1][chan]);
+    DEBUGPrint(dbg + 0x130, difaveX, difaveY);
+    DEBUGPrint(dbg + 0x150, deltaX, deltaY);
+    DEBUGPrint(dbg + 0x170, cal[0][chan], cal[1][chan]);
 
-    _wpadCalibrationX[2][chan] = 0.0f;
-    _wpadCalibrationX[3][chan] = 0.0f;
+    cal[2][chan] = 0.0f;
+    cal[3][chan] = 0.0f;
     for (i = 0; i < WPAD_MAX_DPD_OBJECTS; i++) {
-        centX[i] += _wpadCalibrationX[0][chan];
-        centY[i] += _wpadCalibrationX[1][chan];
-        _wpadCalibrationX[2][chan] += centX[i];
-        _wpadCalibrationX[3][chan] += centY[i];
+        centX[i] += cal[0][chan];
+        centY[i] += cal[1][chan];
+        cal[2][chan] += centX[i];
+        cal[3][chan] += centY[i];
     }
-    _wpadCalibrationX[2][chan] *= 0.25f;
-    _wpadCalibrationX[3][chan] *= 0.25f;
-    DEBUGPrint(WPAD_DBG_MSG(0x1A4), _wpadCalibrationX[2][chan], _wpadCalibrationX[3][chan]);
+    cal[2][chan] *= 0.25f;
+    cal[3][chan] *= 0.25f;
+    DEBUGPrint(dbg + 0x1A4, cal[2][chan], cal[3][chan]);
 
     // Sensor bar rotation angle ("rolag")
-    _wpadCalibrationX[4][chan] = 0.0f;
+    cal[4][chan] = 0.0f;
     for (i = 0; i < WPAD_MAX_DPD_OBJECTS; i++) {
-        angle[i] = (f32)atan((centY[i] - _wpadCalibrationX[2][chan]) /
-                             (centX[i] - _wpadCalibrationX[3][chan]));
+        angle[i] = (f32)atan((centY[i] - cal[2][chan]) /
+                             (centX[i] - cal[3][chan]));
         b[i] = (f32)atan(((f32)dummyObjY[i] - 383.5f) / ((f32)dummyObjX[i] - 511.5f));
-        _wpadCalibrationX[4][chan] += angle[i] - b[i];
+        cal[4][chan] += angle[i] - b[i];
     }
-    _wpadCalibrationX[4][chan] *= 0.25f;
-    DEBUGPrint(WPAD_DBG_MSG(0x1C0), _wpadCalibrationX[4][chan]);
+    cal[4][chan] *= 0.25f;
+    DEBUGPrint(dbg + 0x1C0, cal[4][chan]);
 
     // Accelerometer calibration block
     for (i = 0; i < 2; i++) {
@@ -772,33 +789,34 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
         }
 
         if ((u8)(sum + 0x55) == buf[index + 9]) {
-            DEBUGPrint(WPAD_DBG_MSG(0x1D4));
+            DEBUGPrint(dbg + 0x1D4);
             cb->devConfig.accX0g = (s16)((u16)(((u16)buf[index + 0]) << 2 & 0xFFFC) |
-                                         (u16)(((u16)buf[index + 3]) >> 2 & 3));
-            cb->devConfig.accY0g = (s16)((u16)(((u16)buf[index + 1]) << 2 & 0xFFFC) |
                                          (u16)(((u16)buf[index + 3]) >> 4 & 3));
+            cb->devConfig.accY0g = (s16)((u16)(((u16)buf[index + 1]) << 2 & 0xFFFC) |
+                                         (u16)(((u16)buf[index + 3]) >> 2 & 3));
             cb->devConfig.accZ0g = (s16)((u16)(((u16)buf[index + 2]) << 2 & 0xFFFC) |
                                          (u16)(((u16)buf[index + 3]) & 3));
             cb->devConfig.accX1g = (s16)((u16)(((u16)buf[index + 4]) << 2 & 0xFFFC) |
-                                         (u16)(((u16)buf[index + 7]) >> 2 & 3));
-            cb->devConfig.accY1g = (s16)((u16)(((u16)buf[index + 5]) << 2 & 0xFFFC) |
                                          (u16)(((u16)buf[index + 7]) >> 4 & 3));
+            cb->devConfig.accY1g = (s16)((u16)(((u16)buf[index + 5]) << 2 & 0xFFFC) |
+                                         (u16)(((u16)buf[index + 7]) >> 2 & 3));
             cb->devConfig.accZ1g = (s16)((u16)(((u16)buf[index + 6]) << 2 & 0xFFFC) |
                                          (u16)(((u16)buf[index + 7]) & 3));
             cb->devConfig.volume = (u8)(buf[index + 8] & 0x7F);
             cb->devConfig.motor = (u8)(buf[index + 8] & 0x80);
             break;
         } else {
-            DEBUGPrint(WPAD_DBG_MSG(0x1E0));
+            DEBUGPrint(dbg + 0x1E0);
         }
     }
-    DEBUGPrint(WPAD_DBG_MSG(0x1F0), cb->devConfig.accX0g, cb->devConfig.accY0g, cb->devConfig.accZ0g);
-    DEBUGPrint(WPAD_DBG_MSG(0x218), cb->devConfig.accX1g, cb->devConfig.accY1g, cb->devConfig.accZ1g);
-    DEBUGPrint(WPAD_DBG_MSG(0x240), cb->devConfig.volume, cb->devConfig.motor);
+    DEBUGPrint(dbg + 0x1F0, cb->devConfig.accX0g, cb->devConfig.accY0g, cb->devConfig.accZ0g);
+    DEBUGPrint(dbg + 0x218, cb->devConfig.accX1g, cb->devConfig.accY1g, cb->devConfig.accZ1g);
+    DEBUGPrint(dbg + 0x240, cb->devConfig.volume, cb->devConfig.motor);
 }
 
 void __wpadGetExtConfig(s32 chan, s32 err) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    const char* dbg = (const char*)__a1_input_reports_array;
     u8* buf = cb->wmReadDataPtr;
     s32 i;
     s32 j;
@@ -806,16 +824,20 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
     s32 index = -1;
     s32 k;
 
-    if (err == -1) {
+    switch (err) {
+    case -1:
         cb->devType = 0xFD;
         cb->UNK_0x990 = 0xFD;
         cb->UNK_0x991 = 0;
-    } else if (err == 0) {
+        break;
+    case 0:
         cb->devType = _wpadDevType[chan];
-    } else {
+        break;
+    default:
         cb->devType = WPAD_DEV_NOT_SUPPORTED;
         cb->UNK_0x990 = WPAD_DEV_NOT_SUPPORTED;
         cb->UNK_0x991 = 0;
+        break;
     }
     cb->devMode = _wpadDevMode[chan];
 
@@ -835,7 +857,7 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
         switch (cb->devType) {
         case WPAD_DEV_FREESTYLE:
             if (index < 0) {
-                DEBUGPrint(WPAD_DBG_MSG(0x25C));
+                DEBUGPrint(dbg + 0x25C);
                 cb->extConfig.u.fs.accX0g = 512;
                 cb->extConfig.u.fs.accY0g = 512;
                 cb->extConfig.u.fs.accZ0g = 512;
@@ -844,15 +866,15 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
                 cb->extConfig.u.fs.accZ1g = 716;
             } else {
                 cb->extConfig.u.fs.accX0g = (s16)((u16)(((u16)buf[index + 0]) << 2 & 0xFFFC) |
-                                                (u16)(((u16)buf[index + 3]) >> 2 & 3));
-                cb->extConfig.u.fs.accY0g = (s16)((u16)(((u16)buf[index + 1]) << 2 & 0xFFFC) |
                                                 (u16)(((u16)buf[index + 3]) >> 4 & 3));
+                cb->extConfig.u.fs.accY0g = (s16)((u16)(((u16)buf[index + 1]) << 2 & 0xFFFC) |
+                                                (u16)(((u16)buf[index + 3]) >> 2 & 3));
                 cb->extConfig.u.fs.accZ0g = (s16)((u16)(((u16)buf[index + 2]) << 2 & 0xFFFC) |
                                                 (u16)(((u16)buf[index + 3]) & 3));
                 cb->extConfig.u.fs.accX1g = (s16)((u16)(((u16)buf[index + 4]) << 2 & 0xFFFC) |
-                                                (u16)(((u16)buf[index + 7]) >> 2 & 3));
-                cb->extConfig.u.fs.accY1g = (s16)((u16)(((u16)buf[index + 5]) << 2 & 0xFFFC) |
                                                 (u16)(((u16)buf[index + 7]) >> 4 & 3));
+                cb->extConfig.u.fs.accY1g = (s16)((u16)(((u16)buf[index + 5]) << 2 & 0xFFFC) |
+                                                (u16)(((u16)buf[index + 7]) >> 2 & 3));
                 cb->extConfig.u.fs.accZ1g = (s16)((u16)(((u16)buf[index + 6]) << 2 & 0xFFFC) |
                                                 (u16)(((u16)buf[index + 7]) & 3));
                 cb->extConfig.u.fs.at_0x04 = (s8)buf[index + 8];
@@ -864,13 +886,13 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
                     cb->extConfig.u.fs.stickYCenter = (s8)buf[index + 13];
                 }
 
-                DEBUGPrint(WPAD_DBG_MSG(0x270), cb->extConfig.u.fs.accX0g, cb->extConfig.u.fs.accY0g,
+                DEBUGPrint(dbg + 0x270, cb->extConfig.u.fs.accX0g, cb->extConfig.u.fs.accY0g,
                            cb->extConfig.u.fs.accZ0g);
-                DEBUGPrint(WPAD_DBG_MSG(0x2A0), cb->extConfig.u.fs.accX1g, cb->extConfig.u.fs.accY1g,
+                DEBUGPrint(dbg + 0x2A0, cb->extConfig.u.fs.accX1g, cb->extConfig.u.fs.accY1g,
                            cb->extConfig.u.fs.accZ1g);
-                DEBUGPrint(WPAD_DBG_MSG(0x2D0), cb->extConfig.u.fs.stickXCenter, cb->extConfig.u.fs.at_0x04,
+                DEBUGPrint(dbg + 0x2D0, cb->extConfig.u.fs.stickXCenter, cb->extConfig.u.fs.at_0x04,
                            cb->extConfig.u.fs.at_0x02);
-                DEBUGPrint(WPAD_DBG_MSG(0x2F8), cb->extConfig.u.fs.stickYCenter, cb->extConfig.u.fs.at_0x0a,
+                DEBUGPrint(dbg + 0x2F8, cb->extConfig.u.fs.stickYCenter, cb->extConfig.u.fs.at_0x0a,
                            cb->extConfig.u.fs.at_0x08);
             }
             break;
@@ -893,20 +915,20 @@ void __wpadGetExtConfig(s32 chan, s32 err) {
                 cb->extConfig.u.cl.triggerRZero = buf[index + 13];
             }
 
-            DEBUGPrint(WPAD_DBG_MSG(0x320), cb->extConfig.u.cl.lStickXCenter, cb->extConfig.u.cl.at_0x04,
+            DEBUGPrint(dbg + 0x320, cb->extConfig.u.cl.lStickXCenter, cb->extConfig.u.cl.at_0x04,
                        cb->extConfig.u.cl.at_0x02);
-            DEBUGPrint(WPAD_DBG_MSG(0x348), cb->extConfig.u.cl.lStickYCenter, cb->extConfig.u.cl.at_0x0a,
+            DEBUGPrint(dbg + 0x348, cb->extConfig.u.cl.lStickYCenter, cb->extConfig.u.cl.at_0x0a,
                        cb->extConfig.u.cl.at_0x08);
-            DEBUGPrint(WPAD_DBG_MSG(0x370), cb->extConfig.u.cl.rStickXCenter, cb->extConfig.u.cl.at_0x10,
+            DEBUGPrint(dbg + 0x370, cb->extConfig.u.cl.rStickXCenter, cb->extConfig.u.cl.at_0x10,
                        cb->extConfig.u.cl.at_0x0e);
-            DEBUGPrint(WPAD_DBG_MSG(0x398), cb->extConfig.u.cl.rStickYCenter, cb->extConfig.u.cl.at_0x16,
+            DEBUGPrint(dbg + 0x398, cb->extConfig.u.cl.rStickYCenter, cb->extConfig.u.cl.at_0x16,
                        cb->extConfig.u.cl.at_0x14);
-            DEBUGPrint(WPAD_DBG_MSG(0x3C0), cb->extConfig.u.cl.triggerLZero, cb->extConfig.u.cl.triggerRZero);
+            DEBUGPrint(dbg + 0x3C0, cb->extConfig.u.cl.triggerLZero, cb->extConfig.u.cl.triggerRZero);
             break;
         }
     }
 
-    if (!(cb->devType == WPAD_DEV_CLASSIC && cb->wmReadLength == 1) && cb->cmdBlkCB != NULL &&
+    if (!(cb->devType == 3 && cb->wmReadLength == 1) && cb->cmdBlkCB != NULL &&
         cb->cmdBlkCB == cb->extensionCB) {
         cb->cmdBlkCB(chan, cb->devType);
         cb->cmdBlkCB = NULL;

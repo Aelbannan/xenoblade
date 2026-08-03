@@ -81,12 +81,22 @@ math::MTX33* ScnMdlSimple::GetViewNrmMtxArray() {
     return NULL;
 }
 
+void ScnMdlSimple::EnableScnMdlCallbackTiming(Timing timing) {
+    if (timing & ScnObj::CALLBACK_TIMING_A) {
+        mCwcbTiming |= CALLBACK_TIMING_A;
+    }
+    if (timing & ScnObj::CALLBACK_TIMING_B) {
+        mCwcbTiming |= CALLBACK_TIMING_B;
+    }
+    if (timing & ScnObj::CALLBACK_TIMING_C) {
+        mCwcbTiming |= CALLBACK_TIMING_C;
+    }
+}
+
 } // namespace g3d
 } // namespace nw4r
 
 void UpdateFrame__Q34nw4r3g3d12ScnMdlSimpleFv(){}
-
-void EnableScnMdlCallbackTiming__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d6ScnObj6Timing(){}
 
 
 

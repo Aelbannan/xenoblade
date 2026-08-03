@@ -354114,8 +354114,8 @@
       "size": "0x11C",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -354135,8 +354135,8 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/wud/WUD.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 99.859,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "paseo-rvl-g3",
         "claimed_at": "2026-08-03T12:48:57.552211+00:00",
@@ -393227,8 +393227,8 @@
       "size": "0x1F0",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_set",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c34fc",
@@ -393242,8 +393242,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c",
       "declared_return": "i32",
-      "instruction_match": 97.976,
-      "equivalence_status": "inconclusive_unsupported",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "cri-b17",
         "claimed_at": "2026-08-03T17:48:49.200587+00:00",
@@ -400086,8 +400086,8 @@
       "size": "0x90",
       "unit": "CriWare/src/sofdec/sfx/sfx_set",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8039982c",
@@ -400100,8 +400100,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfx/sfx_set.c",
       "declared_return": "void",
-      "instruction_match": 99.5,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 87.028,
+      "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "cri-b17",
         "claimed_at": "2026-08-03T17:48:13.531524+00:00",
@@ -419352,8 +419352,8 @@
       "size": "0x40",
       "unit": "nw4r/src/g3d/g3d_scnmdlsmpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -419361,7 +419361,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_scnmdlsmpl.s",
       "abi_helper_calls": [],
-      "source": "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp"
+      "source": "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp",
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-03T19:04:55.421667+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803fb3c0",

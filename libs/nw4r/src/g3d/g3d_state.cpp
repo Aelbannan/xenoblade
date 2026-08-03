@@ -235,11 +235,10 @@ void Invalidate__Q34nw4r3g3d8G3DStateFUl(){}
 
 void SetNrmMapMtx__Q44nw4r3g3d8G3DState11IndMtxOpStdF14_GXIndTexMtxIDPCQ34nw4r4math4VEC3PCQ34nw4r4math5MTX34Q44nw4r3g3d14ResMatMiscData14IndirectMethod(){}
 
-void Reset__Q44nw4r3g3d8G3DState11IndMtxOpStdFv(){}
 
 void __cl__Q44nw4r3g3d8G3DState11IndMtxOpStdFPQ44nw4r3g3d8G3DState13IndTexMtxInfo(){}
 
-void __dt__Q44nw4r3g3d8G3DState11IndMtxOpStdFv(){}
+
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace nw4r { namespace g3d { class LightSetting; }}

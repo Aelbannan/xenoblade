@@ -7656,3 +7656,10 @@ DCT_IsrInitScaleTbl(self+0x1160); lbl_80602A6C[2]=(u32)&lbl_8051C080 — the
 scalar extern + & (not the array-decay!) avoids the element-load [lwz]. Residual
 4 reg_swap: the final lis/addi pair colors+order (80602A6C→r3 first vs
 8051C080→r4 first) — insensitive to extern order.
+
+### CriWare sfh_ver2 VER2_IsSfdHeader — 5.6% (frame-alloc wall)
+Retail keeps t1/t2/v1/v2/ok in callee-saved regs (stmw r27, -96 frame, buf at
+sp+8) — decomp spills them (stmw r23, -112 frame, buf at sp+24). Removing the
+local initializers helped marginally (4.9→5.6%). The digit-parsing loops,
+GetSizeofMember/GetNbyteB pairs, and the (major<<8)|minor field packing are
+all semantically correct.

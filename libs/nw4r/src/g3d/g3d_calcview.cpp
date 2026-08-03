@@ -248,8 +248,8 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (fabsf(dir.x) <= 1.0e-18f && fabsf(dir.y) <= 1.0e-18f &&
-        fabsf(dir.z) <= 1.0e-18f) {
+    if (math::FAbs(dir.x) <= 1.0e-18f && math::FAbs(dir.y) <= 1.0e-18f &&
+        math::FAbs(dir.z) <= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -259,8 +259,8 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 right;
     math::VEC3Cross(&right, &up, &dir);
 
-    if (fabsf(right.x) <= 1.0e-18f && fabsf(right.y) <= 1.0e-18f &&
-        fabsf(right.z) <= 1.0e-18f) {
+    if (math::FAbs(right.x) <= 1.0e-18f && math::FAbs(right.y) <= 1.0e-18f &&
+        math::FAbs(right.z) <= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -453,8 +453,8 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
         localY.z = pNodeMtx->_21;
     }
 
-    if (fabsf(dir.x) < 1.0e-18f && fabsf(dir.y) < 1.0e-18f &&
-        fabsf(dir.z) < 1.0e-18f) {
+    if (math::FAbs(dir.x) < 1.0e-18f && math::FAbs(dir.y) < 1.0e-18f &&
+        math::FAbs(dir.z) < 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -464,8 +464,8 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 right;
     math::VEC3Cross(&right, &localY, &dir);
 
-    if (fabsf(right.x) < 1.0e-18f && fabsf(right.y) < 1.0e-18f &&
-        fabsf(right.z) < 1.0e-18f) {
+    if (math::FAbs(right.x) < 1.0e-18f && math::FAbs(right.y) < 1.0e-18f &&
+        math::FAbs(right.z) < 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -504,14 +504,14 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(up.y, -up.x, 1.0f);
 
-    if (fabsf(up.x) >= 1.0e-18f && fabsf(up.z) >= 1.0e-18f) {
+    if (math::FAbs(up.x) >= 1.0e-18f && math::FAbs(up.z) >= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
 
     math::VEC3Normalize(&up, &up);
 
-    if (fabsf(dir.x) >= 1.0e-18f && fabsf(dir.y) >= 1.0e-18f) {
+    if (math::FAbs(dir.x) >= 1.0e-18f && math::FAbs(dir.y) >= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -570,14 +570,14 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (fabsf(up.x) >= 1.0e-18f && fabsf(up.z) >= 1.0e-18f) {
+    if (math::FAbs(up.x) >= 1.0e-18f && math::FAbs(up.z) >= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }
 
     math::VEC3Normalize(&up, &up);
 
-    if (fabsf(dir.x) >= 1.0e-18f && fabsf(dir.y) >= 1.0e-18f) {
+    if (math::FAbs(dir.x) >= 1.0e-18f && math::FAbs(dir.y) >= 1.0e-18f) {
         math::MTX34Zero(pOut);
         return;
     }

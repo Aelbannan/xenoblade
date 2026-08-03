@@ -268,17 +268,17 @@ void ApplyTexSrtAnmResult(ResTexSrt texSrt, ResMatIndMtxAndScale indMtxAndScale,
                        static_cast<TexSrt::Flag>(flags & 0xF));
 
             f32 scale = 1.0f;
-            f32 v = fabsf(mtx._00);
+            f32 v = math::FAbs(mtx._00);
             if (v < scale) scale = v;
-            v = fabsf(mtx._01);
+            v = math::FAbs(mtx._01);
             if (v < scale) scale = v;
-            v = fabsf(mtx._10);
+            v = math::FAbs(mtx._10);
             if (v < scale) scale = v;
-            v = fabsf(mtx._11);
+            v = math::FAbs(mtx._11);
             if (v < scale) scale = v;
-            v = fabsf(mtx._20);
+            v = math::FAbs(mtx._20);
             if (v < scale) scale = v;
-            v = fabsf(mtx._22);
+            v = math::FAbs(mtx._22);
             if (v < scale) scale = v;
 
             s8 scaleExp = static_cast<s8>(

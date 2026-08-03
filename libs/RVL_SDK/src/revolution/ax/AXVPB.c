@@ -50,12 +50,16 @@ static s32 __AXNumVoices = 0;
 static u32 __AXRecDspCycles = 0;
 static u32 __AXMaxDspCycles = 0;
 
+// Retail .sbss is 0x20: 4 pad bytes after __AXMaxDspCycles.
+u32 __AXVPBPad = 0;
+
 static u32 __AXMixCycles[] = {2,   408,  408,  810,  1404, 1404, 1404, 1404,
                               408, 816,  816,  1218, 1812, 1812, 1812, 1812,
                               707, 1115, 1115, 1517, 2111, 2111, 2111, 2111,
                               707, 1115, 1115, 1517, 2111, 2111, 2111, 2111};
 
-static u32 __AXRmtMixCycles[] = {4, 86, 151, 151};
+// Retail .data is 0xA0: this table plus 4 zero pad words.
+static u32 __AXRmtMixCycles[8] = {4, 86, 151, 151};
 
 static void __AXVPBInitCommon(void);
 static u32 __AXGetSrcCycles(u16 select, const AXPBSRC* src);
@@ -576,8 +580,13 @@ void AXSetVoiceSrc(AXVPB* p, AXPBSRC* src_)
 }
 
 void AXGetLpfCoefs(u16 freq, u16* a, u16* b) {
-    f32 rf31 = 2.0f - cosf(2 * M_PI * freq / AX_SAMPLE_RATE);
-    f32 rf30 = (float)sqrt(rf31 * rf31 - 1.0f) - rf31;
+    // Split so the retail .sdata2 pool order (2.0f before 2*M_PI/32000.0f)
+    // is reproduced: the 2.0f literal must be created before the folded
+    // 2*M_PI constant.
+    f32 rf31 = 2.0f;
+    f32 rf30;
+    rf31 -= cosf(2 * M_PI * freq / AX_SAMPLE_RATE);
+    rf30 = (float)sqrt(rf31 * rf31 - 1.0f) - rf31;
 
     *b = 32768 * -rf30;
     *a = 32767 - *b;

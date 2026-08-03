@@ -1241,7 +1241,7 @@ config.libs = [
     DolphinLib(
         "os",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/os/OS.c"),  # demoted 2026-08: OSInit 4 structural — re-match before promoting
+            Object(Matching, "RVL_SDK/src/revolution/os/OS.c"),  # promoted 2026: 20/20 FULL_MATCH — MemClear flush needs left-assoc `(u8*)mem + size - 0x40000` (r30 coalesce; parens give r0 scratch)
             Object(Matching, "RVL_SDK/src/revolution/os/OSAlarm.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSAlloc.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSArena.c"),

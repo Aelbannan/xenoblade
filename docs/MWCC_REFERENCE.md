@@ -7516,3 +7516,11 @@ The retail's first check branches to a **bottom success block** (`goto ok` layou
 return 0]. The natural `return 1`/`return 0` forms put the success inline (beq→
 bne inversion, cntlzw boolean). Note the .au check is INVERTED vs WAV (first
 magic match → success).
+
+### CriWare mpv_lib MPV_Finish — dcbi intrinsic wall (14.8%, semantic)
+Retail: 3 calls (MPVUMC/SL/M2V_Finish) + a flag check (bit 0x10000000 of
+lbl+0x48) + a **DCBI cache-flush loop** [mtctr 223; li r4,0; dcbi r3,r4;
+addi r4,32; bdnz]. MWCC 3.0a5.2 has NO inline __dcbi intrinsic — it compiles
+`__dcbi(p)` to an external call (reloc → __dcbi symbol), so the inline dcbi
+instruction cannot be reproduced in high-level C. (__dcbz/__dcbt exist as real
+intrinsics — signature-checked; __dcbi is not.)

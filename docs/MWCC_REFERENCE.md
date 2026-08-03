@@ -7598,3 +7598,9 @@ GetPketHd 52.4% (20) — all size-exact, 0 structural. The 64-bit copies
 [*(u64*)out = *(u64*)handle+off] pair low-word→r4/high→r0 (retail) vs
 low→r0/high→r4 (decomp). The explicit two-u32 form degrades to structural.
 Pure color wall.
+
+### CriWare lsc/adx_tlk — store-vs-call-arg-setup swap (96.8%/96.9%)
+LSC_Destroy and ADXT_StartSj both end a path with the retail [stb r0, 0/2(r30);
+or r3, r30, r30] (the store THEN the next call's arg move) vs decomp [or r3;
+stb] — the call-arg setup hoisted before the store. Same family as the
+store-vs-return-li wall; resistant to source reordering.

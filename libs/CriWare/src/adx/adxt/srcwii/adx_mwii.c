@@ -68,7 +68,8 @@ void ADXM_Unlock(void) { SVM_Unlock(); }
 
 void adxm_lock(void) {
     u8* g = (u8*)&lbl_eu_805F3A50;
-    if (*(u32*)((u8*)g + 0x40) == 0) {
+    volatile u32* lockcnt = (volatile u32*)((u8*)g + 0x40);
+    if (*lockcnt == 0) {
         u32 irq;
         OSThread* t;
         s32 p;
@@ -84,7 +85,7 @@ void adxm_lock(void) {
         OSRestoreInterrupts(irq);
         OSResumeThread((OSThread*)((u8*)g + 0x78));
     }
-    *(u32*)((u8*)g + 0x40) += 1;
+    *lockcnt += 1;
 }
 
 void adxm_unlock(void) {

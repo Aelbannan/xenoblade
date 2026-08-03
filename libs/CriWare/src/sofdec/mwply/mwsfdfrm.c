@@ -13,12 +13,14 @@ void mwsffrm_SetPicUsrInf(void* a, void* b, void* out) {
     void* inf = *(void**)((u8*)b + 0x38);
     s32 v = *(s32*)((u8*)inf + 0);
     s32 w = *(s32*)((u8*)inf + 4);
+    u32 picadr = (u32)((u8*)a + 0x4A4);
+    u32 pic = *(u32*)((u8*)a + 0x4bc);
     if (MWSFD_GetUsePicUsr(a) != 1) {
         *(s32*)((u8*)out + 0x4c) = 0;
         *(s32*)((u8*)out + 0x50) = 0;
         return;
     }
-    if (*(s32*)((u8*)a + 0x4bc) == 0) {
+    if (pic == picadr) {
         *(s32*)((u8*)out + 0x4c) = 0;
         *(s32*)((u8*)out + 0x50) = 0;
         return;
@@ -96,6 +98,9 @@ extern s32 SFH_AnlyElemCodecAud(const void* sfd, s32 idx, s32* out);
 extern s32 SFH_AnlyElemChNum(const void* sfd, s32 idx, s32* out);
 extern s32 SFH_AnlyElemSmpHz(const void* sfd, s32 idx, s32* out);
 extern s32 SFH_IsExistStmId(const void* sfd, s32 idx, s32* out);
+extern s32 SFH_AnlyElemPicSz(const void* sfd, s32 idx, s32* sz, s32* rate);
+extern s32 SFH_AnlyFtrNetWidth(const void* sfd, s32 idx, s32* out);
+extern s32 SFH_AnlyFtrNetHeight(const void* sfd, s32 idx, s32* out);
 
 void mwsffrm_AnalyAudioInfo(void* self, void* sj) {
     s32 i;
@@ -138,4 +143,31 @@ void mwsffrm_AnalyAudioInfo(void* self, void* sj) {
 
 void mwsffrm_ChangeSettingSyncPlayback() {}
 
-void criware_8039CD7C() {}
+#pragma push
+#pragma opt_propagation off
+void criware_8039CD7C(void* a, s32* out1, s32* out2, s32* out3, s32* out4) {
+    s32 stm;
+    s32 sz;
+    s32 rate;
+    *out1 = 0;
+    *out2 = 0;
+    *out3 = 0;
+    *out4 = 0;
+    if (SFH_IsExistStmId(a, 0xE0, &stm) == 1 && stm == 1) goto body;
+    goto exit;
+exit:
+    return;
+body:
+    if (SFH_AnlyElemPicSz(a, 0xE0, &sz, &rate) != 1) goto end;
+    *out1 = sz;
+    *out2 = rate;
+    if (SFH_AnlyFtrNetWidth(a, 0xE0, &sz) != 0) {
+        *out3 = sz;
+    }
+    if (SFH_AnlyFtrNetHeight(a, 0xE0, &rate) != 0) {
+        *out4 = rate;
+    }
+end:
+    return;
+}
+#pragma pop

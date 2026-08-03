@@ -388709,8 +388709,8 @@
       "size": "0x8C",
       "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803d1400"
@@ -388721,7 +388721,9 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/mwply/mwsfdsfx.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/mwply/mwsfdsfx.c",
-      "declared_return": "i32"
+      "declared_return": "i32",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803a1ac4",
@@ -423177,8 +423179,8 @@
       "size": "0xB0",
       "unit": "nw4r/src/g3d/g3d_anmscn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_anmscn.cpp",
       "called_functions": [],
@@ -423187,14 +423189,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_anmscn.s",
       "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-nw4r-leaf",
-        "claimed_at": "2026-08-03T08:02:02.128998+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/g3d/g3d_anmscn.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 63.932,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803e8f70",
@@ -423225,7 +423221,7 @@
       "abi_helper_calls": [],
       "claim": {
         "owner": "pi-nw4r-leaf",
-        "claimed_at": "2026-08-03T08:02:04.011205+00:00",
+        "claimed_at": "2026-08-03T11:26:42.534851+00:00",
         "allowed_paths": [
           "libs/nw4r/src/g3d/g3d_anmscn.cpp"
         ],

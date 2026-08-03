@@ -100,7 +100,27 @@ void MWSFTAG_DestroyAinfSj(void* self) {
     ((void (*)(void*))vtable[3])(p);
 }
 
-void MWSFTAG_SetAinfSj() {}
+extern s32 SFD_SetUsrSj(void* sst, s32 a, s32 b, s32 c);
+
+s32 MWSFTAG_SetAinfSj(void* self) {
+    s32 ok;
+    if (*(s32*)((u8*)self + 8) == 2 ||
+        *(s32*)((u8*)self + 8) == 6 ||
+        *(s32*)((u8*)self + 8) == 8 ||
+        *(s32*)((u8*)self + 8) == 0xa) {
+        ok = 1;
+    } else {
+        ok = 0;
+    }
+    if (ok == 1)
+        return 0;
+    if (*(s32*)((u8*)self + 0x4c0) == 0)
+        return 0;
+    {
+        s32 r = SFD_SetUsrSj(*(void**)((u8*)self + 0x58), 2, *(s32*)((u8*)self + 0x4c0), 0);
+        return (-r | r) >> 31;
+    }
+}
 
 void MWSFTAG_InitTagInf(void* self) {
     *(u32*)((u8*)self + 0x4d8) = 0;

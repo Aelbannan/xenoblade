@@ -7671,3 +7671,9 @@ rounding `x + ((x<<1) & 0x80000000)` matches structurally; residual: MWCC
 emits the full 64-bit product ([li r3,0; mullw r3,r3,r4] dead pair) where the
 retail uses the bare `mulhw` — the __mulhw intrinsic is stubbed to 0 in the
 harness, so the mulhw-only codegen is unreproducible. 26→15 structural.
+
+### CriWare mwsfdsfx MWSFTAG_SetAinfSj — FULL_MATCH (operand-order + inverted dispatch)
+The dispatch is INVERTED: f==2/6/8/0xa → ok=1 → return 0; the other states run
+SFD_SetUsrSj(self+0x58, 2, self+0x4c0, 0). The final `return (-r | r) >> 31`
+needs the neg-OPERAND FIRST (the [neg r0; or r0, r0, r3] — the [or]'s operand
+order follows the source expression order, not the commutative canonical form).

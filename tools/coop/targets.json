@@ -303164,7 +303164,7 @@
       "size": "0x380",
       "unit": "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -303187,7 +303187,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c",
       "instruction_match": 99.8,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:54.392593+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802e441c",
@@ -306651,7 +306659,7 @@
       "size": "0x108",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -306667,7 +306675,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 99.848,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:03.367292+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802eb438",
@@ -307028,7 +307044,7 @@
       "size": "0x220",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -307048,7 +307064,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 99.926,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:05.178948+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ec150",
@@ -307096,7 +307120,7 @@
       "size": "0x104",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -307110,7 +307134,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 99.846,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:07.030961+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ec4cc",
@@ -308225,7 +308257,7 @@
       "size": "0x464",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_sec",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STALLED_BLOCKED_EXTERNAL",
       "origin": "symbols.txt",
       "called_functions": [
@@ -308246,7 +308278,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c",
       "instruction_match": 99.982,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:11.264788+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ef1a0",
@@ -313145,7 +313185,7 @@
       "size": "0x3C8",
       "unit": "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -313175,7 +313215,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c",
       "instruction_match": 99.876,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:59.769699+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802fabbc",
@@ -317786,7 +317834,15 @@
       "instruction_match": 99.884,
       "equivalence_status": "equivalent",
       "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_policy": "auto-promotion-v2",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:09.404562+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80305208",
@@ -318644,7 +318700,7 @@
       "size": "0x23C",
       "unit": "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -318660,7 +318716,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c",
       "instruction_match": 99.755,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:57.963894+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80307340",
@@ -318860,7 +318924,7 @@
       "size": "0x2D4",
       "unit": "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -318885,7 +318949,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c",
       "instruction_match": 99.724,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:56.150760+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80307d94",
@@ -327294,7 +327366,7 @@
       "size": "0x5C",
       "unit": "RVL_SDK/src/revolution/gx/GXMisc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -327305,7 +327377,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/gx/GXMisc.c",
       "instruction_match": 71.0,
-      "equivalence_status": "internal_error"
+      "equivalence_status": "internal_error",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:00.688237+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/gx/GXMisc.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8031c990",
@@ -329047,7 +329127,7 @@
       "size": "0x164",
       "unit": "RVL_SDK/src/revolution/gx/GXTexture",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -329058,7 +329138,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/gx/GXTexture.c",
       "instruction_match": 37.1,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:02.477387+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/gx/GXTexture.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8031ee50",
@@ -338977,7 +339065,7 @@
       "size": "0x190",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp",
@@ -338993,7 +339081,15 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.s",
       "abi_helper_calls": [],
       "instruction_match": 99.99,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:13.833970+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80335bb0",
@@ -345398,7 +345494,7 @@
       "size": "0x2CC",
       "unit": "RVL_SDK/src/revolution/hbm/synenv",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -345411,7 +345507,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/hbm/synenv.c",
       "instruction_match": 99.525,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:46.952770+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/synenv.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80344160",
@@ -360729,7 +360833,7 @@
       "size": "0x16C",
       "unit": "RVL_SDK/src/revolution/si/SIBios",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/si/SIBios.c",
@@ -360750,7 +360854,15 @@
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 99.319,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:48.827636+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/si/SIBios.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80364fc0",
@@ -362481,7 +362593,7 @@
       "size": "0xD78",
       "unit": "RVL_SDK/src/revolution/vi/vi3in1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -362494,7 +362606,15 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/vi/vi3in1.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/vi/vi3in1.c",
-      "instruction_match": 2.8
+      "instruction_match": 2.8,
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:35:53.053095+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/vi/vi3in1.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8036b030",
@@ -362749,7 +362869,7 @@
       "size": "0x4AC",
       "unit": "RVL_SDK/src/revolution/vi/vi3in1",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -362765,7 +362885,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/vi/vi3in1.c",
       "instruction_match": 82.9,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:35:55.085909+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/vi/vi3in1.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8036b7fc",
@@ -363119,7 +363247,7 @@
       "size": "0x1C8",
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACCEPTED",
       "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
@@ -364977,7 +365105,7 @@
       "size": "0x1B8",
       "unit": "RVL_SDK/src/revolution/wpad/WPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACCEPTED",
       "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
@@ -365153,7 +365281,7 @@
       "size": "0xAE8",
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -365171,7 +365299,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 0.693,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:35:57.006508+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803740d0",
@@ -365480,7 +365616,7 @@
       "size": "0x4CC",
       "unit": "RVL_SDK/src/revolution/wpad/WPADHIDParser",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -365491,7 +365627,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c",
       "instruction_match": 0.822,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:35:58.853758+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803760d0",
@@ -366206,7 +366350,7 @@
       "size": "0x170",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
@@ -366228,7 +366372,15 @@
         "_savegpr_25"
       ],
       "instruction_match": 99.293,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:52.543393+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wud/WUD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80378d60",
@@ -366282,7 +366434,7 @@
       "size": "0x134",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
@@ -366306,7 +366458,15 @@
         "_savegpr_27"
       ],
       "instruction_match": 99.091,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:32:50.682705+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wud/WUD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80379220",
@@ -366635,7 +366795,7 @@
       "size": "0x350",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
@@ -366663,7 +366823,15 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/wud/WUD.s",
       "abi_helper_calls": [],
       "instruction_match": 99.929,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "paseo-reloc-fix",
+        "claimed_at": "2026-08-03T12:33:01.603015+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wud/WUD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8037a6f0",
@@ -366961,7 +367129,7 @@
       "size": "0x114",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACCEPTED",
       "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
@@ -425724,7 +425892,7 @@
       "unit": "nw4r/src/g3d/g3d_calcview",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "NOT_STARTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350c80",
@@ -425739,15 +425907,7 @@
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/g3d/g3d_calcview.cpp",
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
-      "claim": {
-        "owner": "pi-nw4r-leaf",
-        "claimed_at": "2026-08-03T12:26:13.103521+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/g3d/g3d_calcview.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803eee88",

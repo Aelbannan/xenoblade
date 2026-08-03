@@ -59,11 +59,13 @@ extern u8 lbl_eu_80566AC8[];
 
 extern void SVM_CallErr1(const char* msg);
 
+extern char lbl_eu_805FF1E0[];
+
 void MWSFSVM_Error(const char* fmt, ...) {
     va_list ap;
-    char msg[256];
+    char* msg = lbl_eu_805FF1E0;
 
-    memset(msg, 0, sizeof(msg));
+    memset(msg, 0, 256);
     va_start(ap, fmt);
     vsprintf(msg, fmt, ap);
     va_end(ap);

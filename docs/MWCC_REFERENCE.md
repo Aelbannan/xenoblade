@@ -7628,3 +7628,10 @@ strcmp(lbl_8051C088, ver)!=0 → -1; size!=0xDAC → -1; return ((v-128)|(128-v)
 b epi; tail: subi...] — the second fail is a separate inline block. Decomp
 fuses to [cmpli; li -1; bne epi; subi...] — the li scheduled before the
 inverted branch, 1 instruction short (0x74 vs 0x78). Goto forms degrade.
+
+### CriWare sfx_alp SFXA_MakeAlpLumiTbl — dead-arg0 call quirk (9.1%)
+Retail hoists [lwz r12,24; lwz r0,8; cmpi; lwz r4,12; lwz r5,16; beq; or r3,r3,r3
+(no-op); bcctrl] — the arg0 (self+8) loads into r0 and is DROPPED (the actual
+call = fn(self, arg1, arg2, c)), and the `or r3,r3,r3` is the MWCC's arg-setup
+NOP (the self already in r3). Decomp keeps the loads inside the if and omits
+the no-op — 4 bytes short, unreproducible.

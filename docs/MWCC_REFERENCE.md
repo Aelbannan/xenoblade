@@ -7509,3 +7509,10 @@ the retail's fn-before-ret0 layout. 10 structural = the block order + 5 reg_swap
 pointer forces MWCC to emit the retail's [lwz; subi; stw; lwz(reload); cmpi]
 instead of fusing the decrement+test into `addic.` (the non-volatile forms all
 fused). Reusable pattern for "decrement-and-reload" globals.
+
+### CriWare adx_bau ADXB_CheckAu — FULL_MATCH (goto moves success block to bottom)
+The retail's first check branches to a **bottom success block** (`goto ok` layout):
+[if (memcmp(a)==0) goto ok; if (memcmp(b)!=0) goto fail; ok: return 1; fail:
+return 0]. The natural `return 1`/`return 0` forms put the success inline (beq→
+bne inversion, cntlzw boolean). Note the .au check is INVERTED vs WAV (first
+magic match → success).

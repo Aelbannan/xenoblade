@@ -69,12 +69,13 @@ found:
 }
 
 s32 ADXB_CheckAu(void* data) {
-    if (memcmp(data, lbl_eu_80519110, 4) == 0) {
-        return 1;
-    }
-    if (memcmp(data, lbl_eu_80519110 + 5, 4) == 0) {
-        return 1;
-    }
+    if (memcmp(data, lbl_eu_80519110, 4) == 0)
+        goto ok;
+    if (memcmp(data, lbl_eu_80519110 + 5, 4) != 0)
+        goto fail;
+ok:
+    return 1;
+fail:
     return 0;
 }
 

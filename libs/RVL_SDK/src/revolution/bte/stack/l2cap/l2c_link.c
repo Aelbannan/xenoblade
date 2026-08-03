@@ -330,7 +330,7 @@ BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
 
 void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
 {
-    INT32 event_base;
+    UINT16 event;
     tL2C_CONN_INFO ci;
     tL2C_LCB *p_lcb;
     tL2C_CCB *p_ccb;
@@ -347,14 +347,15 @@ void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
         return;
     }
 
-    event_base = -(status == 0);
+    if (status == 0)
+        event = L2CEVT_SEC_COMP;
+    else
+        event = L2CEVT_SEC_COMP_NEG;
 
     for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL; p_ccb = p_next_ccb)
     {
         p_next_ccb = p_ccb->p_next_ccb;
-        l2c_csm_execute(p_ccb,
-                        (UINT8)(event_base + L2CEVT_SEC_COMP_NEG),
-                        &ci);
+        l2c_csm_execute(p_ccb, (UINT8)event, &ci);
     }
 }
 

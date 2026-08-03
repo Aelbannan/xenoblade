@@ -211,6 +211,13 @@ extern u32 __MIXSoundMode;          // current output mode
 extern s32 __MIXMaxVoices;          // number of mixer channels (from AXGetMaxVoices)
 extern s32 __init;                  // mixer initialized flag
 
+// Backing BSS arrays (named per retail symbols.txt)
+extern MIXChannel __s_MIXChannel[];
+extern u8 __s_MIXRmtChannel[0x1988];
+
+// AX header misses these
+extern BOOL AXIsInit(void);
+
 void __MIXRmtResetChannel(s32 idx);
 void __MIXRmtUpdateSettings(s32 idx, void* out);
 
@@ -274,7 +281,46 @@ void __MIXSetPan(MIXChannel* ch) {
     }
 }
 
-void MIXInit() {}
+void MIXInit(void) {
+    u32 i;
+    MIXChannel* ch;
+
+    if (!AXIsInit()) {
+        return;
+    }
+    if (__init) {
+        return;
+    }
+
+    __MIXMaxVoices = AXGetMaxVoices();
+    __MIXChannel = __s_MIXChannel;
+    __MIXRmtChannel = (MIXChannel*)__s_MIXRmtChannel;
+
+    for (i = 0; i < (u32)__MIXMaxVoices; i++) {
+        __MIXChannel[i].vpb = NULL;
+        ch = &__MIXChannel[i];
+        ch->flags = 0x50000000;
+        ch->input = 0;
+        ch->auxA = -0x3C0;
+        ch->auxB = -0x3C0;
+        ch->pan = -0x3C0;
+        ch->fader = 0;
+        ch->panL = 0x40;
+        ch->panR = 0x7F;
+        {
+            u16* v = (u16*)((u8*)ch + 0x6C);
+            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
+            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
+            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
+            *v = 0;
+        }
+        __MIXSetPan(ch);
+        __MIXRmtResetChannel(i);
+    }
+
+    __MIXSoundMode = MIX_MODE_STEREO;
+    __init = 1;
+}
 
 void MIXQuit(void) {
     __MIXChannel = NULL;

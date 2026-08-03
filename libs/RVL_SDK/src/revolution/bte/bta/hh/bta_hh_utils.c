@@ -198,6 +198,24 @@ BOOLEAN bta_hh_tod_spt(tBTA_HH_DEV_CB *p_cb, UINT8 sub_class)
 }
 
 /* ------------------------------------------------------------------ */
+/*  Retail .data string pool orphans: the keybd/mice report functions  */
+/*  live in a sibling split, but the retail bta_hh_utils .data pool   */
+/*  contains their strings (in retail pool order) between the         */
+/*  add_device_to_list "subclass" string and the trace strings.       */
+/*  Reference them here so the .data layout matches (trace at +0x1e4).*/
+/* ------------------------------------------------------------------ */
+char *const bta_hh_pool_orphan_strings[] = {
+    "bta_hh_parse_keybd_rpt:  (report=%p, report_len=%d) called",
+    "Alt key pressed",
+    "Alt key not pressed",
+    "this_char = %02x",
+    "BTA_HhParseKeybdRpt:  Cannot interpret scan code                 0x%02x",
+    "bta_hh_parse_mice_rpt:  bta_keybd_rpt_rcvd(report=%p,                 report_len=%d) called",
+    "mice button: 0x%2x",
+    "mice move: x = %d y = %d",
+};
+
+/* ------------------------------------------------------------------ */
 /*  bta_hh_trace_dev_db - dump the entire device DB to trace log      */
 /* ------------------------------------------------------------------ */
 void bta_hh_trace_dev_db(void)

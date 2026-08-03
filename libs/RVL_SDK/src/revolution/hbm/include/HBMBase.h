@@ -66,6 +66,7 @@ private:
         BlackFader(int maxFrame) {
             init(maxFrame);
             setColor(0, 0, 0);
+            mBlackOutFlag = true;
         }
 
         int getFrame() const {

@@ -228,8 +228,10 @@ struct VtblObj {
 };
 
 HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
-    : mpHBInfo(pDataInfo), mpLayout(NULL), mpPaneManager(NULL), mFader(30) {
+    : mpHBInfo(pDataInfo), unk08(NULL), mpLayout(NULL), mpPaneManager(NULL),
+      mFader(30) {
 
+    unk5B8 = 1;
     mState = 2;
     mSelectBtnNum = HBM_SELECT_NULL;
     mSelectAnmNum = -1;
@@ -243,6 +245,7 @@ HomeButton::HomeButton(const HBMDataInfo* pDataInfo)
     mBar1AnmRevHold = 0;
     mAdjustFlag = false;
     mReassignedFlag = false;
+    mEndInitSoundFlag = false;
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         OSCreateAlarm(&mAlarm[i]);

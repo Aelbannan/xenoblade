@@ -23,6 +23,12 @@ extern void (*__OSExpireCallback)(void);
 extern u64 __OSExpireTime;
 extern OSAlarm __OSExpireAlarm;
 
+// Retail .data string pool (named per config/us/symbols.txt so the string
+// relocs carry the retail labels; local scope matches retail)
+static char lbl_8055EEB8[0x14] = "/shared2/expired";
+static char lbl_8055EECC[0x10] = "OSPlayTime.c";
+static char lbl_8055EEDC[0x1C] = "PlayTime: %d seconds left\n";
+
 // Float/double constants in .sdata2 (loaded via extern to match retail relocs)
 extern const f32 float_8066C1D8;
 extern const f64 double_8066C1E0;
@@ -113,26 +119,28 @@ s32 __OSWriteExpiredFlag(void) {
     NANDFileInfo info;
     s32 result;
     BOOL opened = FALSE;
-    ESTitleId titleId;
-    s32 written;
+    u8 titleId[0x20] __attribute__((aligned(32)));
 
-    result = NANDPrivateCreate("/shared2/expired", 0x3F, 0);
+    result = NANDPrivateCreate(lbl_8055EEB8, 0x3F, 0);
     if (result == 0 || result == -6) {
-        result = NANDPrivateOpen("/shared2/expired", &info, NAND_ACCESS_WRITE);
+        result = NANDPrivateOpen(lbl_8055EEB8, &info, NAND_ACCESS_WRITE);
         if (result == 0) {
             opened = TRUE;
 
-            ESP_InitLib();
-            memset(&titleId, 0, sizeof(titleId));
-            ESP_GetTitleId(&titleId);
-
-            written = NANDWrite(&info, &titleId, sizeof(titleId));
-            if (written < 0) {
-                result = written;
-            } else if (written == (s32)sizeof(titleId)) {
-                result = 0;
-            } else {
-                result = -8;
+            result = ESP_InitLib();
+            if (result == 0) {
+                memset(&titleId, 0, sizeof(titleId));
+                result = ESP_GetTitleId((ESTitleId*)&titleId);
+                if (result == 0) {
+                    result = NANDWrite(&info, &titleId, sizeof(titleId));
+                    if (result < 0) {
+                        /* keep the negative write error */
+                    } else if (result != (s32)sizeof(titleId)) {
+                        result = -8;
+                    } else {
+                        result = 0;
+                    }
+                }
             }
         }
     }
@@ -364,7 +372,7 @@ type_checks:
     }
 
     if (remaining == 0) {
-        OSPanic("OSPlayTime.c", 0x2E1, "Expired");
+        OSPanic(lbl_8055EECC, 0x2E1, "Expired");
     }
 
     // Set up an alarm that fires when the play time expires
@@ -382,7 +390,7 @@ type_checks:
         // Store the alarm end time for OSPlayTimeIsLimited
         __OSExpireTime = __OSExpireAlarm.end;
 
-        OSReport("PlayTime: %d seconds left\n", remaining);
+        OSReport(lbl_8055EEDC, remaining);
     }
 
 close_lib:

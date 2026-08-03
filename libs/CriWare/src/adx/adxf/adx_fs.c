@@ -556,7 +556,8 @@ int ADXF_GetFsizeSct(void *adxf) {
                 ADXT_ExecFsSvr();
             }
             {
-                r = (int)(((s64)ADXSTM_GetFileLen64(work->fstm) + 0x7FF) / 2048);
+                s64 len = ADXSTM_GetFileLen64(work->fstm);
+                r = (int)((len + 0x7FF) / 2048);
                 work->field_0C = (u32)r;
             }
             if (r >= 0xFFFFF) {

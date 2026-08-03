@@ -106,31 +106,28 @@ void sfadxt_CopyData(void *handle, void *buf, int size, int *out_size) {
     *out_size = len;
 }
 
-int sfadxt_AdjustSync(void *handle);
+s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4);
 
 extern int ADXT_IsHeader(void *buf, int size, int *out);
 extern int SFHDS_GetMuxVerNum(void *handle);
 extern void *sfadxt_SearchAlign(void *handle, void *buf, int size);
 
 void sfadxt_ExcludeHdr(void *handle, void *buf, int size, int *out_size) {
-    void *w = *(void **)((u8 *)handle + 0x20ac);
+    void *w;
     int exclude = 0;
 
     *out_size = 0;
-    {
-        if (size >= 288) {
-            int hdr;
-            if (ADXT_IsHeader(buf, size, &hdr)) {
-                exclude = hdr;
-            } else {
-                if (SFHDS_GetMuxVerNum(handle) < 108) {
-                    exclude = (int)sfadxt_SearchAlign(handle, buf, size) - (int)buf;
-                }
-            }
-            *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_AdjustSync;
-            *out_size = exclude;
-            *(u64 *)((u8 *)handle + 0x9D8) += (u64)(s64)(s32)exclude;
+    w = *(void **)((u8 *)handle + 0x20ac);
+    if (size >= 288) {
+        int hdr;
+        if (ADXT_IsHeader(buf, size, &hdr)) {
+            exclude = hdr;
+        } else if (SFHDS_GetMuxVerNum(handle) < 108) {
+            exclude = (int)sfadxt_SearchAlign(handle, buf, size) - (int)buf;
         }
+        *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_AdjustSync;
+        *out_size = exclude;
+        *(u64 *)((u8 *)handle + 0x9D8) += (u64)(s64)(s32)exclude;
     }
 }
 
@@ -288,17 +285,18 @@ void sfadxt_SetAdxtHd(void *handle) {
     }
     {
         void *adxt = *(void **)((u8 *)w);
-        if ((u32)ADXT_GetStat(adxt) >= 2) {
+        u32 ok = (u32)ADXT_GetStat(adxt) > 1;
+        if (ok) {
+            s32 x;
             *(s32 *)((u8 *)conv + 0x10) = ADXT_GetSfreq(adxt);
             *(s32 *)((u8 *)conv + 0x14) = ADXT_GetNumSmpl(adxt);
             *(s32 *)((u8 *)conv + 0xc) = ADXT_GetNumChan(adxt);
-            *(s32 *)((u8 *)conv + 0x4) =
-                (*(s32 *)((u8 *)conv + 0x10) * *(s32 *)((u8 *)conv + 0xc) * 8 +
-                 *(s32 *)((u8 *)conv + 0x10) * *(s32 *)((u8 *)conv + 0xc)) /
-                16;
+            x = *(s32 *)((u8 *)conv + 0x10) * *(s32 *)((u8 *)conv + 0xc);
+            *(s32 *)((u8 *)conv + 0x4) = (x * 8 + x) / 16;
             *(s32 *)((u8 *)conv + 0x8) = 1;
             *(s32 *)((u8 *)conv) = 1;
         }
+        return;
     }
 }
 
@@ -468,28 +466,123 @@ extern void ADXT_SetTimeOfst(void *, u32);
 
 s32 SFADXT_Seek(void *handle) {
     void *w = *(void **)((u8 *)handle + 0x20ac);
-    void *adxt = *(void **)((u8 *)w);
-    void *conv = NULL;
+    void *conv;
+    void *p2670 = *(void **)((u8 *)handle + 0x2670);
     void (*seekfn)(void *, u32, u32, u32);
 
-    if (*(void **)((u8 *)handle + 0x2670) != NULL &&
-        *(s32 *)((u8 *)w + 0x40) <= 0) {
-        conv = (u8 *)*(void **)((u8 *)handle + 0x2670) + 0xd0c;
+    if (p2670 == NULL) {
+        conv = NULL;
+    } else if (*(s32 *)((u8 *)w + 0x40) > 0) {
+        conv = NULL;
+    } else {
+        conv = (u8 *)p2670 + 0xd0c;
     }
     if (conv == NULL) {
         return 0;
     }
-    if (*(s32 *)((u8 *)w + 0x34) != 0) {
+    {
+        s32 f34 = *(s32 *)((u8 *)w + 0x34);
+        void *adxt = *(void **)((u8 *)w);
+        if (f34 != 0) {
+            return 0;
+        }
+        if (*(s32 *)((u8 *)conv) == 0) {
+            return 0;
+        }
+        seekfn = (void (*)(void *, u32, u32, u32))lbl_eu_80606E0C;
+        seekfn(adxt, *(u32 *)((u8 *)conv + 0xc), *(u32 *)((u8 *)conv + 0x10),
+               *(u32 *)((u8 *)conv + 0x14));
+        ADXT_SetTimeOfst(adxt, 0);
+        *(s32 *)((u8 *)w + 0x34) = 1;
+        *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_ExcludeSilence;
+    }
+    return 0;
+}
+
+extern s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate);
+extern s32 SFTIM_GetVideoStartSample(void* self, s32 mul, s32* out2);
+extern void SFTIM_SetStartTime(void* self, u32 a, u32 b);
+extern int ADXT_IsEndcode(void* self, int idx, int* out);
+extern s32 ADXT_InsertSilence(void* adxt, s32 nchan, s32 nsmpl);
+
+/* sfadxt_AdjustSync - adjust sync timing (0x280 bytes in retail). */
+s32 sfadxt_AdjustSync(void* handle, void* a2, s32 a3, s32* a4) {
+    u8* tim = (u8*)handle + 0xD98;
+    void* w = *(void**)((u8*)handle + 0x20ac);
+    void* conv;
+    s32 sc;
+    s32 sa;
+    s32 r;
+    s32 sp12;
+    s32 sp16;
+    s32 total = 0;
+    *a4 = 0;
+
+    if (*(void**)((u8*)handle + 0x2670) == NULL) {
+        conv = NULL;
+    } else if (*(s32*)((u8*)w + 0x40) > 0) {
+        conv = NULL;
+    } else {
+        conv = (u8*)*(void**)((u8*)handle + 0x2670) + 0xd0c;
+    }
+    if (conv == NULL) {
+        *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
         return 0;
     }
-    if (*(s32 *)((u8 *)conv) == 0) {
+    sc = *(s32*)((u8*)conv + 0xc);
+    sa = *(s32*)((u8*)conv + 0x10);
+    r = SFTIM_GetAudioStartSample(tim, sa);
+    if (r == 0)
+        return 0;
+    if (SFSET_GetCond(handle, 5) != 0) {
+        SFTIM_SetStartTime(tim, r, sa);
+        *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
         return 0;
     }
-    seekfn = (void (*)(void *, u32, u32, u32))lbl_eu_80606E0C;
-    seekfn(adxt, *(u32 *)((u8 *)conv + 0xc), *(u32 *)((u8 *)conv + 0x10),
-           *(u32 *)((u8 *)conv + 0x14));
-    ADXT_SetTimeOfst(adxt, 0);
-    *(s32 *)((u8 *)w + 0x34) = 1;
-    *(void **)((u8 *)w + 0x3c) = (void *)sfadxt_ExcludeSilence;
+    {
+        s32 rv = SFTIM_GetVideoStartSample(tim, sa, (s32*)&sp12);
+        s32 diff;
+        if (rv == 0)
+            return 0;
+        SFTIM_SetStartTime(tim, rv, sa);
+        diff = rv - r - *(s32*)((u8*)w + 0x38);
+        if (diff >= 0) {
+            s32 mul = sc * 18;
+            s32 n = (diff / 32) * mul;
+            if (n > 0) {
+                s32 d = (a3 / mul) * mul;
+                if (d < n)
+                    n = d;
+                total = 0;
+                while (total < n) {
+                    if (ADXT_IsEndcode(a2, 18, (int*)&sp16) != 0)
+                        break;
+                    a2 = (u8*)a2 + 18;
+                    total += 18;
+                }
+                *(s32*)((u8*)w + 0x38) +=
+                    (total / mul) << 5;
+                if (n - total != 0 && sp12 != 0) {
+                    *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
+                    if (ADXT_IsEndcode(a2, a3, (int*)&sp16) != 0)
+                        SFSET_SetCond(handle, 6, 0);
+                }
+            }
+        } else {
+            if (sp12 != 0) {
+                s32 neg = ((-diff / 32)) << 5;
+                if (neg > 0) {
+                    void* adxt = *(void**)((u8*)w);
+                    s32 ins = ADXT_InsertSilence(adxt, sc, neg);
+                    *(s32*)((u8*)w + 0x38) -= ins;
+                    neg -= ins;
+                    if (neg < 0)
+                        *(void**)((u8*)w + 0x3c) = (void*)sfadxt_CopyData;
+                }
+            }
+        }
+    }
+    *a4 = total;
+    *(u64*)((u8*)handle + 0x9D8) += (u64)(s64)total;
     return 0;
 }

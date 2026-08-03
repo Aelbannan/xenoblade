@@ -29,7 +29,15 @@ void MWSTM_Destroy(void) {
     ADXSTM_Destroy();
 }
 
-void MWSTM_SetFileRange() {}
+extern void ADXSTM_SetEos(void* stm, s32 a);
+extern s32 ADXSTM_BindFileNw(void* stm, s32 a, s32 b, s32 c, s64 d);
+extern void ADXSTM_ReleaseFileNw(void*);
+
+void MWSTM_SetFileRange(void* a, s32 b, s32 c, s32 d, s32 e) {
+    ADXSTM_ReleaseFileNw(a);
+    ADXSTM_BindFileNw(a, b, c, d, ((s64)e) << 11);
+    ADXSTM_SetEos(a, e);
+}
 
 void MWSTM_ReqStart(void) {
     ADXSTM_Start();

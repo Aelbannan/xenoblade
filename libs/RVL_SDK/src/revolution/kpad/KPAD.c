@@ -696,6 +696,7 @@ s8 select_2obj_first(KPADInternal* kp) {
     KPADObject* op2;
     KPADObject* best1;
     KPADObject* best2;
+    f32 one = 1.0f;
     f32 best = kp_err_first_inpr;
     f32 d;
     f32 dist;
@@ -719,12 +720,12 @@ s8 select_2obj_first(KPADInternal* kp) {
             nx = op2->center.x - op1->center.x;
             ny = op2->center.y - op1->center.y;
             dist = (f32)sqrt(nx * nx + ny * ny);
-            inv = 1.0f / dist;
+            inv = one / dist;
             nx *= inv;
             ny *= inv;
-            s = kp->unk_544 * inv;
             n.x = kp->sec_nrm_hori.x * nx + kp->sec_nrm_hori.y * ny;
             n.y = kp->sec_nrm_hori.y * nx - kp->sec_nrm_hori.x * ny;
+            s = kp->unk_544 * inv;
             if (s <= kp->unk_548 || s >= kp_err_dist_max) {
                 continue;
             }
@@ -851,8 +852,8 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
     if (sp->dpd_valid_fg == 0) {
         sp->horizon = pos;
-        sp->vec = Vec2_0;
-        sp->speed = float_8066C0B0;
+        sp->hori_vec = Vec2_0;
+        sp->hori_speed = float_8066C0B0;
     } else {
         vec.x = pos.x - sp->horizon.x;
         vec.y = pos.y - sp->horizon.y;
@@ -873,9 +874,9 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
             vec.x /= f1;
             vec.y /= f1;
 
-            sp->vec.x = vec.x - sp->horizon.x;
-            sp->vec.y = vec.y - sp->horizon.y;
-            sp->speed = (f32)sqrt(sp->vec.x * sp->vec.x + sp->vec.y * sp->vec.y);
+            sp->hori_vec.x = vec.x - sp->horizon.x;
+            sp->hori_vec.y = vec.y - sp->horizon.y;
+            sp->hori_speed = (f32)sqrt(sp->hori_vec.x * sp->hori_vec.x + sp->hori_vec.y * sp->hori_vec.y);
 
             sp->horizon = vec;
         } else {
@@ -887,14 +888,14 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
                 vec.x /= f1;
                 vec.y /= f1;
 
-                sp->vec.x = vec.x - sp->horizon.x;
-                sp->vec.y = vec.y - sp->horizon.y;
-                sp->speed = (f32)sqrt(sp->vec.x * sp->vec.x + sp->vec.y * sp->vec.y);
+                sp->hori_vec.x = vec.x - sp->horizon.x;
+                sp->hori_vec.y = vec.y - sp->horizon.y;
+                sp->hori_speed = (f32)sqrt(sp->hori_vec.x * sp->hori_vec.x + sp->hori_vec.y * sp->hori_vec.y);
 
                 sp->horizon = vec;
             } else {
-                sp->vec = Vec2_0;
-                sp->speed = float_8066C0B0;
+                sp->hori_vec = Vec2_0;
+                sp->hori_speed = float_8066C0B0;
             }
         }
     }
@@ -949,17 +950,15 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
         }
     }
 
-    pos.x = (kp->kobj_regular[0].center.x + kp->kobj_regular[1].center.x) * float_8066C0B4;
-    pos.y = (kp->kobj_regular[0].center.y + kp->kobj_regular[1].center.y) * float_8066C0B4;
-
     f1 = kp->sec_nrm.x * kp->sec_nrm_hori.x + kp->sec_nrm.y * kp->sec_nrm_hori.y;
     f2 = -kp->sec_nrm.y * kp->sec_nrm_hori.x + kp->sec_nrm.x * kp->sec_nrm_hori.y;
-    vec.x = f1 * pos.x - f2 * pos.y;
+    pos.x = (kp->kobj_regular[0].center.x + kp->kobj_regular[1].center.x) * float_8066C0B4;
+    pos.y = (kp->kobj_regular[0].center.y + kp->kobj_regular[1].center.y) * float_8066C0B4;
     vec.y = f2 * pos.x + f1 * pos.y;
+    vec.x = f1 * pos.x - f2 * pos.y;
 
-    vec.x = (kp->unk_e4.x - vec.y) * kp->unk_ec;
-    vec.y = (kp->unk_e4.y - vec.x) * kp->unk_ec;
-
+    vec.y = (kp->unk_e4.y - vec.y) * kp->unk_ec;
+    vec.x = (kp->unk_e4.x - vec.x) * kp->unk_ec;
     pos.x = -kp->unk_d4.y * vec.x + kp->unk_d4.x * vec.y;
     pos.y = -kp->unk_d4.x * vec.x - kp->unk_d4.y * vec.y;
     if (sp->dpd_valid_fg == 0) {
@@ -983,7 +982,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
 
             sp->vec.x = f1 * vec.x;
             sp->vec.y = f1 * vec.y;
-            sp->speed = (f32)sqrt(sp->vec.x * sp->vec.x + sp->vec.y * sp->vec.y);
+            sp->speed = (f32)sqrt(sp->vec.y * sp->vec.y + sp->vec.x * sp->vec.x);
 
             sp->pos.x += sp->vec.x;
             sp->pos.y += sp->vec.y;
@@ -992,7 +991,7 @@ void calc_dpd_variable(KPADInternal* kp, s8 valid_fg) {
                 f1 = (f1 - kp->pos_play_radius) / f1 * kp->pos_sensitivity;
                 sp->vec.x = f1 * vec.x;
                 sp->vec.y = f1 * vec.y;
-                sp->speed = (f32)sqrt(sp->vec.x * sp->vec.x + sp->vec.y * sp->vec.y);
+                sp->speed = (f32)sqrt(sp->vec.y * sp->vec.y + sp->vec.x * sp->vec.x);
 
                 sp->pos.x += sp->vec.x;
                 sp->pos.y += sp->vec.y;
@@ -1791,7 +1790,7 @@ void KPADInitEx(KPADUnifiedWpadStatus* uwStatus, u32 length) {
         } else {
             f28 -= kp->unk_e4.y;
         }
-        if (f28 < f27) {
+        if (f27 < f28) {
             f27 = f28;
         }
         kp->unk_ec = f1 / f27;
@@ -1821,7 +1820,7 @@ void KPADInitEx(KPADUnifiedWpadStatus* uwStatus, u32 length) {
         kp->unk_55e = 0;
         if (length != 0 && uwStatus != NULL) {
             kp->kp_ex_count = length / 4;
-            kp->kp_ex_ptr = &uwStatus[i * (length / 4)];
+            kp->kp_ex_ptr = &uwStatus[(length / 4) * i];
         } else {
             kp->kp_ex_count = 0;
             kp->kp_ex_ptr = NULL;

@@ -5,7 +5,55 @@
 
 void MPVFRM_Init(void) {}
 
-void MPV_DecodeFrmSj() {}
+extern s32 MPVM2V_DecodeFrm(void* h, void* a, void* b);
+extern void MPVUMC_InitOutRfb(void* h);
+extern void MPVCMC_InitMcOiRt(void* h);
+extern void MPVCMC_SetCcnt(void* h);
+extern void MPVCDEC_StartFrame(void* h);
+extern void MPVBDEC_StartFrame(void* h);
+extern s32 MPVSL_DecPicture(void* h, void* a);
+extern void MPVUMC_EndOfFrame(void* h);
+
+s32 MPV_DecodeFrmSj(void* h, void* a2, void* a3) {
+    if (MPVLIB_CheckHn(h))
+        return MPVERR_SetCode(NULL, 0xFF030209);
+    if (*(s32*)((u8*)h + 0xcfc) == 2)
+        return MPVM2V_DecodeFrm(h, a2, a3);
+    {
+        u8* src = (u8*)h + 0xbe8;
+        u8* dst = (u8*)a3 - 4;
+        u32 n = 8;
+        do {
+            *(u32*)(dst + 4) = *(u32*)(src + 4);
+            *(u32*)(dst + 8) = *(u32*)(src + 8);
+            src += 8;
+            dst += 8;
+        } while (--n);
+        *(u32*)(dst + 4) = *(u32*)(src + 4);
+    }
+    MPVUMC_InitOutRfb(h);
+    MPVCMC_InitMcOiRt(h);
+    MPVCMC_SetCcnt(h);
+    MPVCDEC_StartFrame(h);
+    MPVBDEC_StartFrame(h);
+    MPVSL_DecPicture(h, a2);
+    MPVUMC_EndOfFrame(h);
+    {
+        u8* src = (u8*)h + 0xb58;
+        u8* dst = (u8*)*(u32*)((u8*)a3 + 0x34) - 4;
+        u32 n = 16;
+        do {
+            *(u32*)(dst + 4) = *(u32*)(src + 4);
+            *(u32*)(dst + 8) = *(u32*)(src + 8);
+            src += 8;
+            dst += 8;
+        } while (--n);
+    }
+    *(u32*)((u8*)a3 + 0x38) = (u32)a2 - *(u32*)((u8*)h + 0xbe8);
+    *(u32*)((u8*)a3 + 0x3c) = (u32)a2 - *(u32*)((u8*)h + 0xbec);
+    *(u16*)((u8*)a3 + 0x40) = *(s16*)((u8*)h + 0xc30);
+    return 0;
+}
 
 extern s32 MPV_GoNextDelimSj(void* a);
 extern s32 MPV_MoveChunk(void* a, s32 b, s32 c);

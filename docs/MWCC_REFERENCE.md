@@ -7808,3 +7808,10 @@ FULL_MATCH (the [h->reqId = 0; h->rdAddr = 0] stores now hit +0x28/+0x2C).
 Retail takes the pool base as the 3rd arg ([addi r31, r6, 24] — the handles at
 arg3+24, the count at arg3+4, the [mtctr] slot-scan). Decomp uses the global
 lbl_eu_80619C10 — the arg-3 pool variant unreproduced. Semantic impl retained.
+
+### CriWare mpv_frm MPV_DecodeFrmSj — 10.0% (CTR-vs-addic copy loops)
+The 8-pair + 16-pair copy loops (mtctr + lwzu/stwu fused) — count-down do-while
+keeps the loops (the for-loops unroll); residual: the addic.+bne vs the
+mtctr+bdnz + the fused lwzu/stwu — the MPS_GetPicAtr wall family. The state==2
+short-circuit (MPVM2V_DecodeFrm) and the init-call sequence
+(InitOutRfb/InitMcOiRt/SetCcnt/StartFrame x2/DecPicture/EndOfFrame) match.

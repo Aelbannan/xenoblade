@@ -178,9 +178,36 @@ static s32 criware_803A2908(void* self) {
 
 s32 mwsfsvr_DecodeServer(void* self) { return 0; }
 
-void mwply_ExecSvrHndl() {}
+extern u8 lbl_eu_80566FC0[];
+extern s32 mwsfd_ExecSvrHndl(void* self);
 
-void mwsfd_ExecSvrHndl() {}
+s32 mwply_ExecSvrHndl(void* self) {
+    if ((s32)lbl_eu_805FF39C != 1) return 0;
+    if (self == NULL) {
+        MWSFSVM_Error(lbl_eu_8051BE68 + 0x29);
+        return 0;
+    }
+    if (*(s32*)self != 1) return 0;
+    if (*(s32*)((u8*)self + 0x7C) == 1) return 0;
+    if (*(s32*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x24) == 1) return 0;
+    if (*(s32*)((u8*)self + 0x678) == 1) return 0;
+    if (lbl_eu_805FF3A0 != NULL) {
+        *(void**)(lbl_eu_80566FC0 + 0xC) = self;
+        ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
+            lbl_eu_805FF3A0, lbl_eu_80566FC0 + 4);
+    }
+    {
+        s32 local = mwsfd_ExecSvrHndl(self);
+        if (lbl_eu_805FF3A0 != NULL) {
+            *(void**)(lbl_eu_80566FC0 + 0x74) = &local;
+            ((void (*)(void*, void*))*(void**)((char*)*(void**)lbl_eu_805FF3A0 + 0x24))(
+                lbl_eu_805FF3A0, lbl_eu_80566FC0 + 0x6C);
+        }
+        return local;
+    }
+}
+
+s32 mwsfd_ExecSvrHndl(void* self) { return 0; }
 
 typedef struct MWSFDServerWork {
     u8 _00[0x58];

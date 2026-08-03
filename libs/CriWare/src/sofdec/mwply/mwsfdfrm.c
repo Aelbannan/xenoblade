@@ -53,7 +53,49 @@ void MWSFFRM_SetShfCbFn(void* self) {
 
 void mwsffrm_CallbackAnalyzeSofdecHeader() {}
 
-void mwsffrm_AnalyAudioInfo() {}
+extern s32 SFH_AnlyElemCodecAud(const void* sfd, s32 idx, s32* out);
+extern s32 SFH_AnlyElemChNum(const void* sfd, s32 idx, s32* out);
+extern s32 SFH_AnlyElemSmpHz(const void* sfd, s32 idx, s32* out);
+extern s32 SFH_IsExistStmId(const void* sfd, s32 idx, s32* out);
+
+void mwsffrm_AnalyAudioInfo(void* self, void* sj) {
+    s32 i;
+    s32 out;
+    if (*(s32*)((u8*)self + 0x2A0) != 1) return;
+    for (i = 0; i < 32; i++) {
+        s32* ent = (s32*)((u8*)self + i * 16 + 0x2A4);
+        s32 idx = (i + 0xC0) & 0xFF;
+        ent[0] = 0;
+        ent[1] = 0;
+        ent[2] = 0;
+        ent[3] = 0;
+        if (SFH_AnlyElemCodecAud(sj, idx, &out) == 1 && out == 1) {
+            ent[0] = 1;
+            if (SFH_AnlyElemChNum(sj, idx, &out) == 1) {
+                s32 ch = out;
+                if ((u32)(ch - 2) > 3) {
+                    ent[1] = 2;
+                } else if (ch == 1) {
+                    ent[1] = 1;
+                } else if (ch == 6) {
+                    ent[1] = 3;
+                } else if (ch == 7) {
+                    ent[1] = 4;
+                } else if (ch == 8) {
+                    ent[1] = 5;
+                } else {
+                    ent[1] = 0;
+                }
+            }
+            if (SFH_AnlyElemSmpHz(sj, idx, &out) == 1) {
+                ent[2] = out;
+            }
+            if (SFH_IsExistStmId(sj, idx, &out) == 1) {
+                ent[3] = out;
+            }
+        }
+    }
+}
 
 void mwsffrm_ChangeSettingSyncPlayback() {}
 

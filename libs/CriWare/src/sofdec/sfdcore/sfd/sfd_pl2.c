@@ -20,141 +20,176 @@ extern int fn_803CD484(void *);
  * Returns 0 on success, error code on failure */
 int SFD_Pause(void *handle, int pause_flag) {
     int ret = 0;
+    u32 current_pause;
+    s32 action;
 
     if (SFLIB_CheckHn(handle)) {
         return SFLIB_SetErr(NULL, 0xFF000142);
     }
 
-    {
-        u32 *h = (u32 *)handle;
-        u32 current_pause = h[P_PAUSE / 4];
-        u32 new_pause = pause_flag;
-        u32 action;
+    current_pause = *(u32 *)((u8 *)handle + P_PAUSE);
 
-        if (pause_flag == 0) {
-            action = (current_pause != 0) ? 1 : 0;
-        } else {
-            action = (current_pause == 0) ? 2 : 0;
-        }
-
-        h[P_PAUSE / 4] = new_pause;
-
-        switch (action) {
-        case 0: /* no state change needed */
-            break;
-
-        case 2: /* pause */
-            if (h[P_STATE / 4] == 4) {
-                if (h[P_SUBSTATE / 4] == 3 || h[P_SUBSTATE / 4] == 4) {
-                    SFTIM_Pause(handle, 2);
-                    {
-                        int data = 2;
-                        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-                        if (result) ret = result;
-                    }
-                }
-            }
-            break;
-
-        case 1: /* unpause */
-            if (h[P_STATE / 4] == 4) {
-                if (h[P_SUBSTATE / 4] == 3 || h[P_SUBSTATE / 4] == 4) {
-                    u32 ct = h[P_PAUSECT / 4];
-                    if (ct == 0) {
-                        SFTIM_Pause(handle, 1);
-                        {
-                            int data = 1;
-                            int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-                            if (result) ret = result;
-                        }
-                    }
-                }
-            }
-            break;
-        }
-
-        h[P_PAUSECT / 4] = 0;
-        if (action == 1) {
-            h[P_PAUSECT / 4] = 1;
-        }
+    if (pause_flag == 0) {
+        if (current_pause == 0)
+            return 0;
+        action = 0;
+    } else {
+        action = 2;
+        if (current_pause == 0)
+            action = 1;
     }
 
+    *(u32 *)((u8 *)handle + P_PAUSE) = pause_flag;
+
+    if (action == 2)
+        goto act2;
+    if (action == 1)
+        goto act1;
+    if (action == 0)
+        goto act0;
+    goto done;
+
+act2:
+    if (*(s32 *)((u8 *)handle + P_STATE) != 4)
+        goto done;
+    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+        goto body2;
+    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+        goto body2;
+    ret = 0;
+    goto done;
+body2:
+    SFTIM_Pause(handle, 2);
+    {
+        int data = 2;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
+    }
+    goto done;
+
+act1:
+    {
+        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
+        *(s32 *)((u8 *)handle + P_PAUSECT) = ct + 1;
+        if (ct != 0)
+            goto done;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+            goto body1;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+            goto body1;
+        ret = 0;
+        goto done;
+    }
+body1:
+    SFTIM_Pause(handle, 1);
+    {
+        int data = 1;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
+    }
+    goto done;
+
+act0:
+    {
+        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
+        *(s32 *)((u8 *)handle + P_PAUSECT) = ct - 1;
+        if (ct - 1 != 0)
+            goto done;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+            goto body0;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+            goto body0;
+        ret = 0;
+        goto done;
+    }
+body0:
+    SFTIM_Pause(handle, 0);
+    {
+        int data = 0;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
+    }
+
+done:
+    *(u32 *)((u8 *)handle + P_FLAG) = 1;
     return ret;
 }
 
-/* Player pause v2 - returns error code directly */
 int SFPL2_Pause(void *handle, int op) {
     int ret = 0;
 
-    if (op == 2) {
-        if (*(u32 *)((u8 *)handle + P_STATE) == 4) {
-            u32 substate = *(u32 *)((u8 *)handle + P_SUBSTATE);
-            if (substate == 3 || substate == 4) {
-                SFTIM_Pause(handle, 2);
-                {
-                    int data = 2;
-                    int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-                    if (result) ret = result;
-                    else ret = 0;
-                }
-            }
-        }
-    } else if (op == 1) {
-        u32 ct = *(u32 *)((u8 *)handle + P_PAUSECT);
-        if (ct == 0) {
-            *(u32 *)((u8 *)handle + P_PAUSECT) = ct + 1;
-            if (*(u32 *)((u8 *)handle + P_STATE) == 4) {
-                u32 substate = *(u32 *)((u8 *)handle + P_SUBSTATE);
-                if (substate == 3 || substate == 4) {
-                    SFTIM_Pause(handle, 1);
-                    {
-                        int data = 1;
-                        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-                        if (result) ret = result;
-                        else ret = 0;
-                    }
-                }
-            }
-        }
-    } else if (op == 0) {
-        u32 ct = *(u32 *)((u8 *)handle + P_PAUSECT);
-        if (ct != 0) {
-            *(u32 *)((u8 *)handle + P_PAUSECT) = ct - 1;
-            if (*(u32 *)((u8 *)handle + P_STATE) == 4) {
-                u32 substate = *(u32 *)((u8 *)handle + P_SUBSTATE);
-                if (substate == 3 || substate == 4) {
-                    SFTIM_Pause(handle, 0);
-                    {
-                        int data = 0;
-                        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-                        if (result) ret = result;
-                        else ret = 0;
-                    }
-                }
-            }
-        }
+    if (op == 2)
+        goto case2;
+    else if (op == 1)
+        goto case1;
+    else if (op == 0)
+        goto case0;
+    else
+        goto done;
+
+case2:
+    if (*(s32 *)((u8 *)handle + P_STATE) != 4)
+        goto done;
+    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+        goto body2;
+    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+        goto body2;
+    ret = 0;
+    goto done;
+body2:
+    SFTIM_Pause(handle, 2);
+    {
+        int data = 2;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
+    }
+    goto done;
+
+case1:
+    {
+        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
+        *(s32 *)((u8 *)handle + P_PAUSECT) = ct + 1;
+        if (ct != 0)
+            goto done;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+            goto body1;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+            goto body1;
+        ret = 0;
+        goto done;
+    }
+body1:
+    SFTIM_Pause(handle, 1);
+    {
+        int data = 1;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
+    }
+    goto done;
+
+case0:
+    {
+        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
+        *(s32 *)((u8 *)handle + P_PAUSECT) = ct - 1;
+        if (ct - 1 != 0)
+            goto done;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
+            goto body0;
+        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
+            goto body0;
+        ret = 0;
+        goto done;
+    }
+body0:
+    SFTIM_Pause(handle, 0);
+    {
+        int data = 0;
+        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
+        if (result) ret = result;
     }
 
+done:
     return ret;
-}
-
-/* Enter standby state */
-int SFD_Standby(void *handle) {
-    int ret = 0;
-
-    if (SFLIB_CheckHn(handle))
-        return SFLIB_SetErr(NULL, 0xFF000143);
-
-    fn_803CD484(handle);
-    ((u32 *)handle)[P_SUBSTATE / 4] = 3;
-    return ret;
-}
-
-/* Standby sub-operation */
-int SFPL2_Standby(void *handle) {
-    fn_803CD484(handle);
-    *(u32 *)((u8 *)handle + P_SUBSTATE) = 3;
-    return 0;
 }
 
 /* Set playback speed (rational numerator/denominator) */

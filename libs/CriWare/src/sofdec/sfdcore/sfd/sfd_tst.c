@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern void *memset(void *, int, unsigned long);
+extern void *memcpy(void *, const void *, unsigned long);
 extern u8 lbl_eu_80619BD0[];
 extern char* strcpy(char*, const char*);
 extern unsigned long strlen(const char*);
@@ -107,20 +109,19 @@ void SFTST_SetAdjFlg(void* self, u32 val) { *(u32*)((u8*)self + 0xc) = val; }
 
 void SFTST_GoNextFrame(void* self, s32* param) {
     if (*(u32*)((u8*)self + 0xc) == 0) {
-        s32 a_hi = *(s32*)((u8*)self + 0x134);
-        s32 a_lo = *(s32*)((u8*)self + 0x130);
-        s32 b_hi = param[1];
-        s32 b_lo = param[0];
-        s32 d_hi = param[3];
-        s32 d_lo = param[2];
+        s32 a_lo = *(s32*)((u8*)self + 0x134);
+        s32 a_hi = *(s32*)((u8*)self + 0x130);
+        s32 b_lo = param[1];
+        s32 b_hi = param[0];
+        s32 d_hi = param[2];
+        s32 d_lo = param[3];
 
         s64 val_a = ((s64)a_hi << 32) | (u32)a_lo;
         s64 val_b = ((s64)b_hi << 32) | (u32)b_lo;
         s64 val_d = ((s64)d_hi << 32) | (u32)d_lo;
         s64 result = (val_a * val_b) / val_d;
 
-        *(u32*)((u8*)self + 0x12c) += (s32)(u32)result;
-        *(u32*)((u8*)self + 0x128) += (s32)(u32)(result >> 32);
+        *(s64*)((u8*)self + 0x128) += result;
     }
 }
 

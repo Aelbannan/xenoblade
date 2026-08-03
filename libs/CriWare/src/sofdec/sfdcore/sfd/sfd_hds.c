@@ -71,7 +71,94 @@ s32 SFHDS_ReprocessHdr(void* self) {
 
 void sfhds_DoProcessHdr(void* a, void* b) {} // stub
 
-void sfhds_AnlyVideo() {}
+extern s32 SFH_AnlyElemCodecVid(void*, u8, s32*);
+extern s32 SFH_AnlyElemBitRate(void*, u8, s32*);
+extern s32 SFH_AnlyElemPicSz(void*, u8, s32*, s32*);
+extern s32 SFH_AnlyElemPicRate(void*, u8, s32*);
+extern s32 SFH_IsEffFtrInf(void*, u8, s32*);
+extern s32 SFH_AnlyFtrColType(void*, u8, s32*);
+extern s32 SFH_AnlyFtrPicType(void*, u8, s32*);
+extern s32 SFH_AnlyFtrFixFlg(void*, u8, s32*);
+extern s32 SFH_AnlyFtrShcFixFlg(void*, u8, s32*);
+extern s32 SFH_AnlyFtrExpand(void*, u8, s32*);
+extern s32 SFH_AnlyFtrGopN(void*, u8, s32*);
+extern s32 SFH_AnlyFtrGopM(void*, u8, s32*);
+
+void sfhds_AnlyVideo(void* self, u32 a, s32* out) {
+    s32 tEff, tCodec, tBitRate, tPicRate, tColType, tPicType, tFixFlg, tShcFixFlg, tExpand, tGopN, tGopM;
+    s32 v;
+
+    if (SFH_AnlyElemCodecVid(self, (u8)a, &tCodec) == 0)
+        v = -1;
+    else
+        v = tCodec;
+    out[0] = v;
+
+    if (SFH_AnlyElemBitRate(self, (u8)a, &tBitRate) == 0)
+        v = -1;
+    else
+        v = tBitRate;
+    out[1] = v;
+
+    if (SFH_AnlyElemPicSz(self, (u8)a, &out[2], &out[3]) == 0) {
+        out[2] = -1;
+        out[3] = -1;
+    }
+
+    if (SFH_AnlyElemPicRate(self, (u8)a, &tPicRate) == 0)
+        v = -1;
+    else
+        v = tPicRate;
+    out[4] = v;
+
+    if (SFH_IsEffFtrInf(self, (u8)a, &tEff) == 0)
+        tEff = 0;
+    out[5] = (tEff != 0);
+    if (tEff == 0)
+        return;
+
+    if (SFH_AnlyFtrColType(self, (u8)a, &tColType) == 0)
+        v = -1;
+    else
+        v = tColType;
+    out[6] = v;
+
+    if (SFH_AnlyFtrPicType(self, (u8)a, &tPicType) == 0)
+        v = -1;
+    else
+        v = tPicType;
+    out[7] = v;
+
+    if (SFH_AnlyFtrFixFlg(self, (u8)a, &tFixFlg) == 0)
+        v = -1;
+    else
+        v = tFixFlg;
+    out[8] = v;
+
+    if (SFH_AnlyFtrShcFixFlg(self, (u8)a, &tShcFixFlg) == 0)
+        v = -1;
+    else
+        v = tShcFixFlg;
+    out[9] = v;
+
+    if (SFH_AnlyFtrExpand(self, (u8)a, &tExpand) == 0)
+        v = -1;
+    else
+        v = tExpand;
+    out[10] = v;
+
+    if (SFH_AnlyFtrGopN(self, (u8)a, &tGopN) == 0)
+        v = -1;
+    else
+        v = tGopN;
+    out[11] = v;
+
+    if (SFH_AnlyFtrGopM(self, (u8)a, &tGopM) == 0)
+        v = -1;
+    else
+        v = tGopM;
+    out[12] = v;
+}
 
 typedef struct {
     unsigned char pad0[0x88];

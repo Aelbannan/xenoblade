@@ -107,6 +107,24 @@ _NO_REG_FIELDS = frozenset(
     }
 )
 
+def _ra_field_is_register(
+    r_insn: Instruction,
+    d_insn: Instruction,
+) -> bool:
+    """Value-dependent RA rule (doc 32 A2 rev 5): the RA field of an
+    RA-literal opcode is the literal zero ONLY when its value is 0.  A nonzero
+    RA is a real register read (semantics: ``ra == 0 if ... else
+    state.gpr[ra]``) and is a renameable register pair.  The field is a
+    literal (bit-equal, excluded from rho) iff EITHER side is 0 — a literal
+    can never rename with a register.
+    """
+    if r_insn.opcode not in _RA_LITERAL_OPCODES:
+        return False
+    r_ra = (r_insn.raw >> 16) & 0x1F
+    d_ra = (d_insn.raw >> 16) & 0x1F
+    return r_ra != 0 and d_ra != 0
+
+
 # Opcodes whose RA field (bits 16-20) is the literal-zero position: r0 in RA
 # encodes the constant zero and reads NO register (doc 32 A2, rev 3, per
 # G3/G4/F8 — verified against the engine's ``ra == 0`` guards:
@@ -889,6 +907,36 @@ class WitnessOutcome:
     details: dict[str, Any] = field(default_factory=dict)
 
 
+def _fail_rho(
+    table: dict[int, int],
+    rv: int,
+    dv: int,
+    index: int,
+    kind: str,
+) -> WitnessFailure | None:
+    """Accumulate one (retail rv -> decomp dv) mapping into a partial rho
+    table; return the failure when it breaks single-valuedness/injectivity.
+    Shared by gate 4 and the value-dependent RA rule (doc 32 A2 rev 5).
+    """
+    if rv in table:
+        if table[rv] != dv:
+            return WitnessFailure(
+                "rho",
+                f"slot {index}: {kind} r{rv} maps to both "
+                f"r{table[rv]} and r{dv}",
+            )
+        return None
+    if dv in table.values():
+        other = next(k for k, v in table.items() if v == dv)
+        return WitnessFailure(
+            "rho",
+            f"slot {index}: {kind} r{rv} and r{other} "
+            f"both map to r{dv}",
+        )
+    table[rv] = dv
+    return None
+
+
 def _stream_validation_failure(
     original: list[Instruction],
     candidate: list[Instruction],
@@ -959,8 +1007,16 @@ def _stream_validation_failure(
         # sides (gate 2 binds identity).
         gpr_mask, fpr_mask = _gpr_fpr_masks(r_insn.opcode)
         register_mask = gpr_mask | fpr_mask
+        # Value-dependent RA (doc 32 A2 rev 5): a both-nonzero RA pair on an
+        # RA-literal opcode is a real register rename — exclude its bits from
+        # the non-register bit-equality; gate 4 accumulates it into rho.
+        ra_rename_mask = 0x1F << 16 if (
+            r_reloc is None and _ra_field_is_register(r_insn, d_insn)
+        ) else 0
         if r_reloc is None:
-            non_register_diff = (r_insn.raw ^ d_insn.raw) & ~register_mask
+            non_register_diff = (
+                (r_insn.raw ^ d_insn.raw) & ~(register_mask | ra_rename_mask)
+            )
             if non_register_diff:
                 return WitnessFailure(
                     "fields",
@@ -990,26 +1046,21 @@ def check_gates(
         for start, kind in _register_fields(r_insn.opcode):
             rv = (r_insn.raw >> start) & 0x1F
             dv = (d_insn.raw >> start) & 0x1F
-            table = rho_gpr if kind == GPR else rho_fpr
-            if rv in table:
-                if table[rv] != dv:
-                    return WitnessOutcome(
-                        False, failure=WitnessFailure(
-                            "rho",
-                            f"slot {index}: {kind} r{rv} maps to both "
-                            f"r{table[rv]} and r{dv}",
-                        ),
-                    )
-            elif dv in table.values():
+            if _fail_rho(rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind):
                 return WitnessOutcome(
-                    False, failure=WitnessFailure(
-                        "rho",
-                        f"slot {index}: {kind} r{rv} and r{next(k for k, v in table.items() if v == dv)} "
-                        f"both map to r{dv}",
+                    False,
+                    failure=_fail_rho(
+                        rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind,
                     ),
                 )
-            else:
-                table[rv] = dv
+        # Value-dependent RA (doc 32 A2 rev 5): both-nonzero RA pair on an
+        # RA-literal opcode is a real register rename.
+        if _ra_field_is_register(r_insn, d_insn):
+            rv = (r_insn.raw >> 16) & 0x1F
+            dv = (d_insn.raw >> 16) & 0x1F
+            failure = _fail_rho(rho_gpr, rv, dv, index, GPR)
+            if failure is not None:
+                return WitnessOutcome(False, failure=failure)
 
     rho = Rho(gpr=rho_gpr, fpr=rho_fpr)
 
@@ -1662,6 +1713,13 @@ def _rho_region_boundaries(
             if _conflicts(index, kind, rv, dv):
                 split_here = True
                 break
+        # Value-dependent RA (doc 32 A2 rev 5): both-nonzero RA pair is a
+        # real register rename participating in the bijection.
+        if not split_here and _ra_field_is_register(r_insn, d_insn):
+            rv = (r_insn.raw >> 16) & 0x1F
+            dv = (d_insn.raw >> 16) & 0x1F
+            if _conflicts(index, GPR, rv, dv):
+                split_here = True
         if split_here:
             if index > 0 and index not in boundaries:
                 boundaries.append(index)
@@ -1672,6 +1730,12 @@ def _rho_region_boundaries(
             rv = (r_insn.raw >> start_bit) & 0x1F
             dv = (d_insn.raw >> start_bit) & 0x1F
             table = rho_gpr if kind == GPR else rho_fpr
+            if rv not in table and dv not in table.values():
+                table[rv] = dv
+        if _ra_field_is_register(r_insn, d_insn):
+            rv = (r_insn.raw >> 16) & 0x1F
+            dv = (d_insn.raw >> 16) & 0x1F
+            table = rho_gpr
             if rv not in table and dv not in table.values():
                 table[rv] = dv
     return boundaries
@@ -1700,6 +1764,17 @@ def _region_rho(
                 return None
             else:
                 table[rv] = dv
+        # Value-dependent RA (doc 32 A2 rev 5).
+        if _ra_field_is_register(r_insn, d_insn):
+            rv = (r_insn.raw >> 16) & 0x1F
+            dv = (d_insn.raw >> 16) & 0x1F
+            if rv in rho_gpr:
+                if rho_gpr[rv] != dv:
+                    return None
+            elif dv in rho_gpr.values():
+                return None
+            else:
+                rho_gpr[rv] = dv
     return Rho(gpr=rho_gpr, fpr=rho_fpr)
 
 

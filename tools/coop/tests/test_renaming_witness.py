@@ -110,7 +110,7 @@ class GateAcceptanceTests(unittest.TestCase):
         )
         outcome = certify_renaming_witness(original, candidate)
         self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {4: 4, 5: 6, 6: 5})
+        self.assertEqual(outcome.rho.gpr, {3: 3, 4: 4, 5: 6, 6: 5})
 
     def test_pure_nonvolatile_color_swap_accepted(self) -> None:
         # r20<->r25 2-cycle over loads/stores (the Chaitin-cycle target class).
@@ -122,7 +122,7 @@ class GateAcceptanceTests(unittest.TestCase):
         )
         outcome = certify_renaming_witness(original, candidate)
         self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {20: 25, 25: 20})
+        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25, 25: 20})
 
     def test_cx1_shift_count_swap_rejected(self) -> None:
         # CX-1: slw r3,r4,r5 vs slw r3,r5,r4 — the shift source/amount swap.
@@ -305,7 +305,7 @@ class AcrossCallTests(unittest.TestCase):
         )
         self.assertTrue(outcome.certified, outcome.failure)
         # retail uses only r20 (never r25), so the renaming is one-way.
-        self.assertEqual(outcome.rho.gpr, {20: 25})
+        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25})
 
     def test_opaque_eabi_callee_rejected(self) -> None:
         # Opaque EABI reads "*" — the call token covers every register, so a
@@ -399,7 +399,7 @@ class CertificatePlumbingTests(unittest.TestCase):
         self.assertEqual(certificate["evidence"], "register-renaming-witness")
         self.assertEqual(certificate["contract"], "register-renaming-witness")
         payload = certificate["register_renaming_witness"]
-        self.assertEqual(payload["rho"]["gpr"], {"20": 25, "25": 20})
+        self.assertEqual(payload["rho"]["gpr"], {"3": 3, "20": 25, "25": 20})
         self.assertTrue(payload["structural_eq"])
         self.assertGreaterEqual(payload["terminal_pairs_checked"], 1)
         self.assertEqual(
@@ -1282,3 +1282,56 @@ class ImplReviewRegressionTests(unittest.TestCase):
         self.assertIsNotNone(
             equivalence_certificate_error(row64, {row64["id"]: row64}),
         )
+
+class ValueDependentRATests(unittest.TestCase):
+    """doc 32 A2 rev 5: the RA field of an RA-literal opcode is the literal
+    zero only when its value is 0.  A both-nonzero RA pair is a real register
+    rename (enters rho); zero-vs-nonzero is a literal-vs-register mismatch
+    and must reject at fields."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_nonzero_ra_rename_accepted(self) -> None:
+        # lwz r3,0(r20) vs lwz r3,0(r21): both RA nonzero -> renameable
+        # (r20/r21 non-EABI, not fixed); the value-dependent rule certifies.
+        lwz = lambda rt, ra, dsp: _enc_primary(32, rt, ra, dsp)
+        r = [lwz(3, 20, 0), self._BLR]
+        d = [lwz(3, 21, 0), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 21})
+
+    def test_zero_vs_nonzero_ra_rejected(self) -> None:
+        # addi r3,0,5 vs addi r3,r12,5 (CX-2): RA 0 (literal) vs 12 (register)
+        # -> gate 3 fields.
+        original, candidate = self._pair(
+            [_enc_primary(14, 3, 0, 5), self._BLR],
+            [_enc_primary(14, 3, 12, 5), self._BLR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+    def test_nonzero_ra_identity_entry_in_rho(self) -> None:
+        # A load with a nonzero RA base records the base's identity in rho
+        # (it is a real register read under the value-dependent rule).
+        lwz = lambda rt, ra, dsp: _enc_primary(32, rt, ra, dsp)
+        original, candidate = self._pair(
+            [lwz(5, 3, 0), self._BLR], [lwz(5, 3, 0), self._BLR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertIn(3, outcome.rho.gpr)

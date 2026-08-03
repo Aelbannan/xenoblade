@@ -24,11 +24,11 @@ void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
     u32 output[2];
     s32 ret;
 
+    input[0] = val1;
+    input[1] = val2;
     zmv = self->zmv;
     self->tagVal1 = val1;
     self->tagVal2 = val2;
-    input[0] = val1;
-    input[1] = val2;
     ret = SJ_SearchTag(input, lbl_eu_8051CF28, lbl_eu_8051CF28 + 5, output);
     if (ret == 0) {
         SFXZ_SetTagInf(zmv, 0, 0);
@@ -36,9 +36,7 @@ void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
         SFXZ_SetTagInf(zmv, output[0], output[1]);
     }
     self->tagFlag = 1;
-}
-
-void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
+}void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
     if (self->tagFlag == 1) {
         *out1 = self->tagVal1;
         *out2 = self->tagVal2;

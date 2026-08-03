@@ -44,7 +44,7 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
     if (size < 4) return -1;
 
     /* check sync word 0x8000 */
-    if (((data[0] << 8) | data[1]) != 0x8000) return -4;
+    if ((u16)((data[0] << 8) | data[1]) != 0x8000) return -4;
 
     /* header size */
     ch_info_size = (data[2] << 8) | data[3];
@@ -79,15 +79,11 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
 
         for (i = 0; i < ch_count; i++) {
             u8 *ch_dst = out_hdr + 0x10 + i * 0x14;
-            ch_dst[0] = p[0]; ch_dst[1] = p[1];
-            *(s16 *)(ch_dst + 2) = (s16)((p[2] << 8) | p[3]);
-            /* u32 from p[4..7] */
+            *(u16 *)(ch_dst + 0) = (u16)((p[0] << 8) | p[1]);
+            *(u16 *)(ch_dst + 2) = (u16)((p[2] << 8) | p[3]);
             *(u32 *)(ch_dst + 4) = ((u32)p[4] << 24) | ((u32)p[5] << 16) | ((u32)p[6] << 8) | p[7];
-            /* u32 from p[8..11] */
             *(u32 *)(ch_dst + 8) = ((u32)p[8] << 24) | ((u32)p[9] << 16) | ((u32)p[10] << 8) | p[11];
-            /* u32 from p[12..15] */
             *(u32 *)(ch_dst + 12) = ((u32)p[12] << 24) | ((u32)p[13] << 16) | ((u32)p[14] << 8) | p[15];
-            /* u32 from p[16..19] */
             *(u32 *)(ch_dst + 16) = ((u32)p[16] << 24) | ((u32)p[17] << 16) | ((u32)p[18] << 8) | p[19];
             p += 0x14;
         }
@@ -103,3 +99,4 @@ int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
 
     return 0;
 }
+

@@ -6,6 +6,7 @@
 extern char lbl_eu_8051CF20[];
 extern s32 lbl_eu_80619BF0;
 extern s32 CRICFG_Read(const char* key, s32* out);
+extern u32 lbl_eu_80619BF8[2];
 
 void UTY_InitTmr(void* self) {
     s32 val;
@@ -25,11 +26,7 @@ void UTY_InitTmr(void* self) {
             p2[0] = 0;
         }
     }
-}
-
-extern s32 lbl_eu_80619BF0;
-
-void UTY_FinishTmr(void) {
+}void UTY_FinishTmr(void) {
     if (--lbl_eu_80619BF0 < 0) {
         lbl_eu_80619BF0 = 0;
     }

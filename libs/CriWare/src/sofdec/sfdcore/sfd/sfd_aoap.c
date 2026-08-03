@@ -76,10 +76,9 @@ int SFAOAP_Create(void* self) {
     if (SFSET_GetCond(self, 6) == 0) {
         return 0;
     }
-    *(void**)((u8*)self + 0x21BC) = (u8*)self + 0x261C;
+    *(void**)((u8*)self + 0x21BC) = (void*)((u8*)self + 0x261C);
     return 0;
 }
-
 int SFAOAP_Destroy(void) { return 0x0; }
 
 int SFAOAP_RequestStop(void* param_1) {

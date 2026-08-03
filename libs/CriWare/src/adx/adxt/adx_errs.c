@@ -75,39 +75,24 @@ void ADXERR_CallErrFunc2_(const char* a, const char* b) {
 }
 
 void ADXERR_ItoA(s32 value, char* buf, s32 buf_size) {
-    // Convert integer to ASCII digits (least-significant first) into a temp buffer
-    char tmp[32];
-    int i = 0;
-    int negative = 0;
-    u32 v;
-
-    if (value < 0) {
-        negative = 1;
-        v = (u32)(-value);
-    } else {
-        v = (u32)value;
-    }
-
-    if (v == 0) {
-        tmp[i++] = '0';
-    } else {
-        while (v > 0 && i < 31) {
-            tmp[i++] = (char)('0' + (v % 10));
-            v /= 10;
+    s32 i;
+    for (i = 0; i < 32; i++) {
+        buf[i] = (char)(value % 10);
+        value /= 10;
+        if (value == 0) {
+            buf[i] = '\0';
+            break;
         }
     }
 
-    if (negative && i < 31) {
-        tmp[i++] = '-';
-    }
-
-    // Copy digits into output buffer in reverse order (most-significant first)
-    s32 copy_len = i < buf_size - 1 ? i : buf_size - 1;
-    for (s32 j = 0; j < copy_len; j++) {
-        buf[j] = tmp[i - 1 - j];
-    }
-    if (copy_len >= 0) {
-        buf[copy_len] = '\0';
+    {
+        s32 len = (s32)strlen(lbl_eu_805E6488);
+        s32 n = len < buf_size - 1 ? len : buf_size - 1;
+        s32 j;
+        for (j = 0; j < n; j++) {
+            buf[j] = lbl_eu_805E6488[n - 1 - j];
+        }
+        buf[n] = '\0';
     }
 }
 

@@ -15,13 +15,13 @@ extern u32 lbl_eu_80606E38[]; /* SFD work area */
 
 s32 SFD_SetCond(void* self, s32 idx, s32 val) {
     if (self == NULL) {
-        s32 off = idx * 4;
-        u32* p = lbl_eu_80606E38 + 0x7F;
+        s32 ok;
+        void* h;
         s32 i;
-        for (i = 0; i < 8; i++) {
-            void* h = (void*)*p;
-            p++;
-            s32 ok;
+        u32* p = lbl_eu_80606E38 + 0x7F;
+        s32 off = idx * 4;
+        for (i = 0; i < 8; i++, p++) {
+            h = (void*)*p;
             if (SFLIB_CheckHn(h) != 0)
                 continue;
             if (idx == 6 && val == 1 && SFTRN_IsSetup(h, 3) == 0)
@@ -31,10 +31,10 @@ s32 SFD_SetCond(void* self, s32 idx, s32 val) {
             else
                 ok = 1;
             if (ok)
-                *(u32*)((u8*)h + off + 0xA1C) = val;
+                *(u32*)((u8*)h + (off + 0xA1C)) = val;
         }
         *(u32*)((u8*)lbl_eu_80606E38 + off) = val;
-    } else {
+        } else {
         if (SFLIB_CheckHn(self) != 0)
             return SFLIB_SetErr(0, 0xFF000112);
 

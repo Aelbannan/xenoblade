@@ -5,8 +5,8 @@ extern s32 lbl_eu_805E66E0;
 extern s32 lbl_eu_805E66E4;
 
 int CRICFG_Read(const char *key, int *value) {
-    char *p;
     int i, count;
+    char *p;
     
     p = (char *)lbl_eu_805E66E0;
     if (p == NULL)
@@ -16,15 +16,14 @@ int CRICFG_Read(const char *key, int *value) {
         p = NULL;
     } else {
         count = *(s32 *)&lbl_eu_805E66E4;
-        for (i = 0; i < count; i++) {
-            if (strncmp(p, key, 12) == 0)
-                break;
-            p += 16;
+        for (i = 0; i < count; i++, p += 16) {
+            if (strncmp(p, key, 12) != 0)
+                continue;
+            goto found;
         }
-        if (i >= count)
-            p = NULL;
+        p = NULL;
     }
-    
+found:
     if (p == NULL)
         return -3;
     

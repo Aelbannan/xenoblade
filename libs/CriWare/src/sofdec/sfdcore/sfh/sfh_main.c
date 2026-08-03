@@ -7,7 +7,7 @@ extern u32 lbl_eu_80619BE8;
 
 /* SFH runtime context — 0x18 bytes */
 typedef struct SFHContext {
-    u32 active;       /* 0x00: set to 1 when created */
+    s32 active;       /* 0x00: set to 1 when created */
     u32 field_0x04;   /* 0x04: arg0 from SFH_Create */
     u32 field_0x08;   /* 0x08: arg1 from SFH_Create */
     u32 field_0x0C;   /* 0x0C */
@@ -59,7 +59,7 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
     u32 toolMajor = 0, toolMinor = 0;
     u32 sfhMajor = 0, sfhMinor = 0;
     u32 moduleMajor = 0, moduleMinor = 0;
-    int isValid = 0;
+    int isValid;
 
     *outIsValid = 0;
 
@@ -80,6 +80,7 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
             moduleMinor = 0;
         }
         ctx->active = 2;
+        goto check_result;
     } else {
         if (!VER2_IsSfdHeader(ctx, &isValid)) {
             goto check_result;
@@ -88,21 +89,22 @@ int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
         if (!VER2_AnlyHdrSfhVer(ctx, &sfhMajor, &sfhMinor)) {
             return 0;
         }
-        VER2_AnlyHdrModuleVer(ctx, &moduleMajor, &moduleMinor);
+        if (!VER2_AnlyHdrModuleVer(ctx, &moduleMajor, &moduleMinor)) {
+            return 0;
+        }
         ctx->active = 2;
     }
 
 check_result:
-    if (ctx->active != 2) {
-        ctx->active = -1;
-        return 0;
-    }
-
+    if (ctx->active == 2)
+        goto success;
+    ctx->active = -1;
+    return 0;
+success:
     ctx->field_0x0C = toolMinor + toolMajor * 100;
     ctx->field_0x10 = sfhMinor + sfhMajor * 100;
     ctx->field_0x14 = moduleMinor + moduleMajor * 100;
     *outIsValid = 1;
-
     return 1;
 }
 
@@ -126,8 +128,8 @@ u32 SFH_IsEffFtrInf(void* buf) {
 
 u32 SFH_AnlyHdrToolVer(void* buf) {
     s32 ver = *(s32*)((u8*)buf + 0x10);
-    if (ver < 0xC8) return VER1_AnlyHdrToolVer(buf, NULL, NULL);
-    if (ver < 0x12C) return VER2_AnlyHdrToolVer(buf, NULL, NULL);
+    if (ver < 0xC8) return ((u32 (*)(void*))VER1_AnlyHdrToolVer)(buf);
+    if (ver < 0x12C) return ((u32 (*)(void*))VER2_AnlyHdrToolVer)(buf);
     return 0;
 }
 

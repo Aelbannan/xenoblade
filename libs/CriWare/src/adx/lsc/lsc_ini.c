@@ -38,9 +38,7 @@ void LSC_Init(void) {
     }
     lbl_eu_805E7D38++;
     LSC_UnlockCrs(&cs);
-}
-
-void LSC_Finish() {
+}void LSC_Finish() {
     struct LSC_CriticalSection cs;
     struct LSC_StmEntry* entry;
     s32 i;

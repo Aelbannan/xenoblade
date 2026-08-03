@@ -539,9 +539,11 @@ void __wpadManageHandler(void) {
                         s32 devHandle;
                         BOOL enabled;
 
+                        WPADCB* pCur = __rvl_p_wpadcb[chan];
+
                         enabled = OSDisableInterrupts();
 
-                        if (__rvl_p_wpadcb[chan]->statusReqBusy) {
+                        if (pCur->statusReqBusy) {
                             devHandle = -2;
                         } else {
                             WPADCB* p2 = __rvl_p_wpadcb[chan];
@@ -559,11 +561,11 @@ void __wpadManageHandler(void) {
 
                         if (devHandle == -2) {
                             if ((s32)OS_TICKS_TO_SEC(__OSGetSystemTime() -
-                                                     p->lastReportSendTime) >
+                                                     pCur->lastReportSendTime) >
                                     1 &&
                                 _wpadSleepTime != 0) {
 
-                                p->lastReportSendTime = __OSGetSystemTime();
+                                pCur->lastReportSendTime = __OSGetSystemTime();
 
                                 {
                                     s32 st;
@@ -611,21 +613,26 @@ void __wpadManageHandler(void) {
                                     ? _wpadExtCnt[chan]
                                     : _wpadExtCnt[chan] + 1;
 
-            if (!success) {
-                WPADCommand command;
+            {
+                BOOL got = FALSE;
+                WPADCB* pStd = __rvl_p_wpadcb[chan];
 
-                if (WPADiGetCommand(&p->stdCmdQueue, &command)) {
-                    if (command.reportID == RPTID_SET_DATA_REPORT_MODE ||
-                        p->wpInfo.attach) {
+                if (success) {
+                    got = TRUE;
+                } else {
+                    WPADCommand command;
 
+                    if (WPADiGetCommand(&pStd->stdCmdQueue, &command)) {
                         WPADCommand command2 = command;
 
                         s32 devHandle;
                         BOOL enabled;
 
+                        WPADCB* pCur = __rvl_p_wpadcb[chan];
+
                         enabled = OSDisableInterrupts();
 
-                        if (__rvl_p_wpadcb[chan]->statusReqBusy) {
+                        if (pCur->statusReqBusy) {
                             devHandle = -2;
                         } else {
                             WPADCB* p2 = __rvl_p_wpadcb[chan];
@@ -643,11 +650,11 @@ void __wpadManageHandler(void) {
 
                         if (devHandle == -2) {
                             if ((s32)OS_TICKS_TO_SEC(__OSGetSystemTime() -
-                                                     p->lastReportSendTime) >
+                                                     pCur->lastReportSendTime) >
                                     1 &&
                                 _wpadSleepTime != 0) {
 
-                                p->lastReportSendTime = __OSGetSystemTime();
+                                pCur->lastReportSendTime = __OSGetSystemTime();
 
                                 {
                                     s32 st;
@@ -683,26 +690,29 @@ void __wpadManageHandler(void) {
                         }
 
                         if (devHandle == 0) {
-                            WPADiPopCommand(&p->stdCmdQueue);
-                            success = TRUE;
+                            WPADiPopCommand(&pStd->stdCmdQueue);
+                            got = TRUE;
+                        } else {
+                            got = FALSE;
                         }
+                    } else {
+                        got = FALSE;
                     }
                 }
-            }
 
-            if (success) {
-                p->motorBusy = FALSE;
-            } else if (__GetCmdNumber(&p->stdCmdQueue) > 0) {
-                p->motorBusy = FALSE;
-            } else if (_wpadRumbleCnt[chan] == 5) {
-                WPADCommand command;
+                if (success || got ||
+                    __GetCmdNumber(&__rvl_p_wpadcb[chan]->stdCmdQueue) > 0) {
+                    __rvl_p_wpadcb[chan]->motorBusy = FALSE;
+                } else if (_wpadRumbleCnt[chan] == 5) {
+                    WPADCommand command;
 
-                p->motorBusy = FALSE;
-                command.reportID = RPTID_SET_RUMBLE;
-                command.dataLength = RPT10_SIZE;
-                command.dataBuf[RPT10_RUMBLE] = FALSE;
-                command.cmdCB = NULL;
-                __wpadSendDataSub(chan, command);
+                    __rvl_p_wpadcb[chan]->motorBusy = FALSE;
+                    command.reportID = RPTID_SET_RUMBLE;
+                    command.dataLength = RPT10_SIZE;
+                    command.dataBuf[RPT10_RUMBLE] = FALSE;
+                    command.cmdCB = NULL;
+                    __wpadSendDataSub(chan, command);
+                }
             }
 
             _wpadRumbleCnt[chan] =
@@ -825,8 +835,7 @@ void __wpadClearControlBlock(s32 chan) {
 }
 
 // TODO(kiwi) __rvl_wpadcb should be 32-byte aligned, but doing so breaks this function
-static u8 FAKE_ALIGNMENT[0x10];
-DECOMP_FORCEACTIVE(WPAD_c, _wpadHandle2PortTable, FAKE_ALIGNMENT);
+u8 FAKE_ALIGNMENT[0x10];
 
 void __wpadInitSub(void) {
     BOOL enabled;

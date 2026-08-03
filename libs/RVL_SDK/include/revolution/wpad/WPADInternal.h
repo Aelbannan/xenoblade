@@ -242,7 +242,7 @@ typedef struct WPADCB {
     u8 UNK_0x98F;           // at 0x98F
     u8 UNK_0x990;           // at 0x990
     u8 UNK_0x991;           // at 0x991
-    u16 UNK_0x992;          // at 0x992
+    s16 UNK_0x992;          // at 0x992
     u8 dpdBusy;             // at 0x994
     u8 UNK_0x995[0x998 - 0x995]; // at 0x995
     s32 memBlock_0x00;      // at 0x998

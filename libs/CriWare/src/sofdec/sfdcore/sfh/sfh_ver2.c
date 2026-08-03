@@ -470,17 +470,18 @@ store:
 }
 int VER2_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
     u8 *f;
-    u32 val;
+    u32 result;
 
     *out = 0;
     f = searchStmId(work, stm_id);
     if (f == NULL) {
         return 0;
     }
-    val = SFHLOCAL_GetNbyteB(f + 0x2, SFHLOCAL_GetSizeofMember(0x2, 0x3));
-    *out = (val >> 4) & 0xF;
+    result = (SFHLOCAL_GetNbyteB(f + 0x2, SFHLOCAL_GetSizeofMember(0x2, 0x3)) >> 4) & 0xF;
+    *out = result;
     return 1;
 }
+
 
 int VER2_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
     u8 *f;

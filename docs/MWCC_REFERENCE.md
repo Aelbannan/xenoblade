@@ -7550,3 +7550,11 @@ Retail reuses the handle's CR0 for a second `bne` (stale branch, dead [li r0,-1]
 block) and keeps handle/errFn/errArg in the caller-saved r3/r4/r5 across the
 SFLIB_SetErr call (the tail stores write to the clobbered base = retail codegen
 quirk). Natural C spills to callee-saved regs and re-compares — unreproducible.
+
+### CriWare sfh_ver2 VER2_Anly* family — 93.1% each (store-before-return-li wall)
+All four (ElemChNum/SmpHz/FtrFixFlg/FtrShcFixFlg) match the searchStmId +
+SFHLOCAL_GetSizeofMember/GetNbyteB pattern; each ends with the retail
+[rlwinm; stw *out; li r3,1] vs decomp [rlwinm; li r3,1; stw] — the constant
+return-li is scheduled before the out-store. This store/li order wall recurs
+(SFVOM_GetRead, mpv_get) — the li r3,<const> return setup is hoisted by the
+scheduler regardless of source order.

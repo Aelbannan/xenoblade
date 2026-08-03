@@ -3,6 +3,15 @@
 
 #include <harness_catalog.h>
 
+extern void SJ_SplitChunk(const void* src, int size, void* dst1, void* dst2);
+
+typedef struct MpvSjChunk {
+    const u8* p;
+    s32 size;
+} MpvSjChunk;
+
+s32 MPV_GoNextDelimSj(void* self);
+
 void MPVHDEC_Init() {}
 
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c) {
@@ -63,20 +72,26 @@ void mpvhdec_DecGscSj() {}
 
 void mpvhdec_DecPscSj() {}
 
-void mpvhdec_DecEscSj() {}
+s32 mpvhdec_DecEscSj(void* self, void* sj) {
+    MpvSjChunk* chunk = (MpvSjChunk*)((u8*)self + 0xD2C);
+    MpvSjChunk rest;
+    ((void (*)(void*, s32, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x18))(
+        sj, 1, 0x7FFFFFFF, chunk);
+    {
+        s32 p = (s32)(intptr_t)chunk->p;
+        SJ_SplitChunk(chunk, (p & ~3) + (((p & 3) * 8 + 7) / 8) + 4 - p, chunk, &rest);
+    }
+    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x20))(sj, 0, chunk);
+    ((void (*)(void*, s32, MpvSjChunk*))*(void**)((char*)*(void**)sj + 0x1C))(sj, 1, &rest);
+    MPV_GoNextDelimSj(sj);
+    return 0;
+}
 
 void mpvhdec_DecUdscSj() {}
 
 void mpvhdec_AnalyUd() {}
 
 void mpvhdec_DecSeqUdsc() {}
-
-typedef struct MpvSjChunk {
-    const u8* p;
-    s32 size;
-} MpvSjChunk;
-
-extern void SJ_SplitChunk(const void* src, int size, void* dst1, void* dst2);
 
 s32 MPV_GoNextDelimSj(void* self) {
     MpvSjChunk st;

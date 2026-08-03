@@ -6835,3 +6835,47 @@ Source keys that landed the last structural diffs:
    (data:string, addend-identical). Approved fix (PLAN §17.6): function-scope
    `extern char lbl_80562AE0[];` + `DEBUGPrint(lbl_80562AE0, …)` — reloc drift clears,
    byte-identical. 99.8%→100% on cycle.
+
+## RVL_SDK wpad/WPADHIDParser — report parsers: range-check codegen, addr-derived local hoisting, AND-mask fold (US, mwcc_43_151)
+
+Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exact
+0x328) and `__a1_34_data_type` (us-80376870, FULL_MATCH 100%).
+
+1. **Extension-register dispatch is a RANGE check, not equality.** Retail
+   `subis r0,r3,0x4a4; cmplwi r0,0x20` / `0xfa` for `__wpadGetExtConfig` /
+   `__wpadGetExtType` comes from **`(u32)(cb->wmReadAddress - 0x04A40000) < 0x20`**
+   (`< 0xFA`). The old `== WM_REG_EXTENSION_CONFIG` (0x40A40020) never matches.
+
+2. **Address-derived values must be hoisted into named locals to match retail
+   register allocation.** `__a1_21` retail keeps `addrHi = wmReadAddress >> 16`
+   in r31 and the string base (`__a1_input_reports_array`) in r29 for the whole
+   function. Without named locals for these, MWCC recomputes per use → 8 extra
+   registers-worth of pressure, wrong allocation, 13.7% static and size over.
+   Adding `u32 addrHi = cb->wmReadAddress >> 16;` + `const char* pDbg =
+   (const char*)__a1_input_reports_array;` (pDbg declared BEFORE the cb local)
+   gave 78.2%, exact size, 39 pure reg-swaps. Declaration order of the two
+   pointers (pDbg first) beat cb-first (66.3%).
+
+3. **`(u8)(x + 0xFE)` emits `addi rX, 0xFE`; `(u8)(x - 2)` emits `subi rX, 2`.**
+   Retail used `addi r0,r3,0xfe` before the `clrlwi` mask → write `+ 0xFE`.
+
+4. **`x & -3` ALWAYS folds to the wrap-mask `rlwinm rD,rS,0,31,29`**
+   (0xFFFFFFFD) at `-O4,p`; the retail's `li r0,-3; and` is not reproducible
+   from any source form tried (single expr, `-3 & x`, `& 0xFFFFFFFD`, `& ~2`,
+   two-statement `err = …; err &= -3;`, `(s32)`/`u32` casts, named locals).
+   Instruction-selection diff — EQUIVALENT_MATCH territory (semantically
+   identical), do not chase.
+
+5. **Block layout: MWCC sinks a small else-branch after a big if-branch.** To
+   get retail's layout (big body inline, `DEBUGPrint(0x500)` sunk to the end),
+   write the guard as **`if (!(dataAddr < addr || …)) { big body } else { small
+   print }`** — i.e. put the big path in the if-branch. Inverted form places the
+   print inline and adds a forward jump.
+
+6. **Read-report flow (`__a1_21`):** mixed compare signedness is deliberate —
+   `dataAddr < addr` is `cmplw` (u16 operands promote unsigned), the
+   `addr + wmReadLength` bound is `cmpw` (`(s32)dataAddr > (s32)(addr + len)`
+   with UNMASKED sums), and the final equality compares unmasked sums signed.
+   `length = (u8)((data[3] >> 4) + 1)` emits `srawi` (u8 arithmetic shift ≡
+   logical); `cb->extensionCB == NULL || cb->extensionCB != cb->cmdBlkCB` keeps
+   retail's redundant two-test gate.

@@ -1263,21 +1263,23 @@ void __a1_20_status_report(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
+    const char* pDbg = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
-    u16 addr;
+    u32 addrHi;
     u16 dataAddr;
+    u16 addr;
     u8 length;
     s16 offset;
 
     enable = OSDisableInterrupts();
 
     if ((data[3] & 0x0F) != 0) {
-        DEBUGPrint(WPAD_DBG_MSG(0x464));
+        DEBUGPrint(pDbg + 0x464);
         cb->wmReadHadError = -1;
 
         if (cb->cmdBlkCB != NULL) {
-            if (cb->extensionCB != cb->cmdBlkCB) {
+            if (cb->extensionCB == NULL || cb->extensionCB != cb->cmdBlkCB) {
                 cb->cmdBlkCB(chan, WPAD_ERR_TRANSFER);
             }
             cb->cmdBlkCB = NULL;
@@ -1287,28 +1289,29 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
 
     addr = (u16)cb->wmReadAddress;
     dataAddr = (u16)((data[4] << 8) | data[5]);
+    addrHi = cb->wmReadAddress >> 16;
     length = (u8)((data[3] >> 4) + 1);
     offset = (s16)(dataAddr - addr);
 
-    if (dataAddr < addr || dataAddr > (u16)(addr + cb->wmReadLength)) {
-        DEBUGPrint(WPAD_DBG_MSG(0x500));
-    } else {
+    if (dataAddr >= addr && (s32)dataAddr <= (s32)(addr + cb->wmReadLength)) {
         memcpy(cb->wmReadDataPtr + offset, data + 6, length);
 
-        if ((u16)(addr + cb->wmReadLength) == dataAddr + length) {
-            s32 err = (cb->wmReadHadError >> 31) & -3;
+        if ((s32)(addr + cb->wmReadLength) == (s32)(dataAddr + length)) {
+            s32 err;
 
-            DEBUGPrint(WPAD_DBG_MSG(0x47C), cb->wmReadAddress);
-            DEBUGPrint(WPAD_DBG_MSG(0x490), cb->wmReadLength);
-            DEBUGPrint(WPAD_DBG_MSG(0x4A0), cb->wmReadAddress >> 16, err);
-            DEBUGPrint(WPAD_DBG_MSG(0x4AC), cb->UNK_0x98D);
+            DEBUGPrint(pDbg + 0x47C, cb->wmReadAddress);
+            DEBUGPrint(pDbg + 0x490, cb->wmReadLength);
+            err = cb->wmReadHadError >> 31;
+            err &= -3;
+            DEBUGPrint(pDbg + 0x4A0, addrHi, err);
+            DEBUGPrint(pDbg + 0x4AC, cb->UNK_0x98D);
 
-            if ((cb->wmReadAddress >> 16) == 0x4A4) {
-                DEBUGPrint(WPAD_DBG_MSG(0x4B8));
+            if (addrHi == 0x4A4) {
+                DEBUGPrint(pDbg + 0x4B8);
 
-                if ((u8)(cb->UNK_0x98D - 2) <= 1) {
-                    DEBUGPrint(WPAD_DBG_MSG(0x4D8));
-                    DEBUGPrint(WPAD_DBG_MSG(0x4E4), length, addr);
+                if ((u8)(cb->UNK_0x98D + 0xFE) <= 1) {
+                    DEBUGPrint(pDbg + 0x4D8);
+                    DEBUGPrint(pDbg + 0x4E4, length, addr);
                     WPADiDecode(chan, cb->wmReadDataPtr, length, addr);
                 }
             }
@@ -1317,10 +1320,10 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
                 (cb->wmReadAddress == 0x176C && cb->configIndex == 1)) {
                 __wpadGetDevConfig(chan, err);
             }
-            if (cb->wmReadAddress == WM_REG_EXTENSION_CONFIG) {
+            if ((u32)(cb->wmReadAddress - 0x04A40000) < 0x20) {
                 __wpadGetExtConfig(chan, err);
             }
-            if (cb->wmReadAddress == WM_REG_EXTENSION_FA) {
+            if ((u32)(cb->wmReadAddress - 0x04A40000) < 0xFA) {
                 __wpadGetExtType(chan, err);
             }
             if (cb->wmReadAddress == WM_ADDR_MEM_GAME_INFO_0) {
@@ -1336,9 +1339,12 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
             }
             cb->status = 0;
         }
+    } else {
+        DEBUGPrint(pDbg + 0x500);
     }
 
-    memcpy(status, cb->rxBufs[!cb->rxBufIndex], RX_BUFFER_SIZE);
+    memcpy(status, __rvl_p_wpadcb[chan]->rxBufs[!__rvl_p_wpadcb[chan]->rxBufIndex],
+           RX_BUFFER_SIZE);
 
     status->button =
         (u16)(((u16)((data[2] << 8) & 0xFF00) | (u16)(data[1] & 0xFF)) & HID_WPAD_BUTTON_MASK) |
@@ -1409,8 +1415,8 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     }
     status->dev = cb->devType;
 
-    memcpy(_wpadExtRawData, data + 3, 8);
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+    memcpy(_wpadExtRawData, data + 3, 8);
     WPADiDecode(chan, data + 3, 8, 0);
 
     if (cb->wpInfo.attach) {
@@ -1420,15 +1426,15 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
             ((WPADFSStatus*)status)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[8] >> 2)) & (s16)0x0003))) -
+                         (s16)((s16)((s16)data[8] >> 2) & 3))) -
                 (s16)cb->extConfig.u.fs.accX0g;
             ((WPADFSStatus*)status)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[8] >> 4)) & (s16)0x0003))) -
+                         (s16)((s16)((s16)data[8] >> 4) & 3))) -
                 (s16)cb->extConfig.u.fs.accY0g;
             ((WPADFSStatus*)status)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((s8)data[8] >> 6) & (s16)0x0003))) -
+                         (s16)((s16)data[8] >> 6))) -
                 (s16)cb->extConfig.u.fs.accZ0g;
 
             ((WPADFSStatus*)status)->button =
@@ -1438,9 +1444,9 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             if (cb->calibrated == 0) {
                 cb->calibrated = 1;
                 cb->extConfig.u.fs.stickXCenter =
-                    (s8)((WPADFSStatus*)status)->fsStickX;
+                    ((WPADFSStatus*)status)->fsStickX;
                 cb->extConfig.u.fs.stickYCenter =
-                    (s8)((WPADFSStatus*)status)->fsStickY;
+                    ((WPADFSStatus*)status)->fsStickY;
             }
 
             {
@@ -1523,25 +1529,32 @@ void __a1_34_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     }
     status->dev = cb->devType;
 
-    memcpy(_wpadExtRawData, data + 3, 19);
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+    memcpy(_wpadExtRawData, data + 3, 19);
     WPADiDecode(chan, data + 3, 19, 0);
 
     if (cb->wpInfo.attach) {
         if (cb->devType == 0x3) {
+            s32 level;
+            u8 batt;
+
             ((WPADCLStatus*)status)->clButton = (u16)((data[3] << 8) | data[4]);
             ((WPADCLStatus*)status)->clLStickX = (s16)((data[5] << 8) | data[6]);
             ((WPADCLStatus*)status)->clLStickY = (s16)((data[7] << 8) | data[8]);
             ((WPADCLStatus*)status)->clRStickX = (s16)((data[9] << 8) | data[10]);
-            ((WPADCLStatus*)status)->clRStickY = (s16)((data[13] << 8) | data[11]);
+            ((u8*)&((WPADCLStatus*)status)->clRStickY)[0] = data[11];
 
-            if ((s32)(data[13] << 1) >= 0x104) {
+            batt = data[13];
+            ((u8*)&((WPADCLStatus*)status)->clRStickY)[1] = batt;
+
+            level = (s32)(batt << 1);
+            if (level >= 0x104) {
                 cb->UNK_0x98F = 4;
-            } else if ((s32)(data[13] << 1) >= 0xFA) {
+            } else if ((u32)(level - 0xFA) <= 9) {
                 cb->UNK_0x98F = 3;
-            } else if ((s32)(data[13] << 1) >= 0xF0) {
+            } else if ((u32)(level - 0xF0) <= 9) {
                 cb->UNK_0x98F = 2;
-            } else if ((s32)(data[13] << 1) >= 0xD4) {
+            } else if ((u32)(level - 0xD4) <= 0x1B) {
                 cb->UNK_0x98F = 1;
             } else {
                 cb->UNK_0x98F = 0;

@@ -147,10 +147,7 @@ void SFMPVF_ResetPicUsrBuf(void* self) {
 
 s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {
     u32* p = (u32*)((u8*)self + 0x38f8);
-    u32 n;
-    u32 lim;
-    u32 i;
-    u32 cur;
+    s32 i;
 
     if (w == 0 || h == 0 || stride == 0) {
         for (i = 0; i < 0x94 / 4; i++) {
@@ -166,13 +163,13 @@ s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {
     p[2] = stride;
     p[3] = w;
     p[4] = 0;
-    cur = w + stride;
-    n = h - 1;
-    lim = (n >= 16) ? 16 : n;
-    for (i = 0; i < lim; i++) {
-        p[5 + 2 * i] = cur;
-        p[6 + 2 * i] = 0;
-        cur += stride;
+    {
+        u32 cur = w + stride;
+        for (i = 0; i < (((s32)h - 1 >= 16) ? 16 : (s32)h - 1); i++) {
+            p[5 + 2 * i] = cur;
+            p[6 + 2 * i] = 0;
+            cur += stride;
+        }
     }
     return 0;
 }
@@ -251,7 +248,63 @@ s32 SFMPVF_GetRead(void* self, void** ppRead, u32* pFrmCnt, void (*callback)(voi
     return 0;
 }
 
-void SFMPVF_AddRead() {}
+s32 SFMPVF_AddRead(void* self, void* p2, u32* pFrmNo) {
+    void* cs;
+    void* frm;
+    void* req;
+    s32 err = 0;
+    s32 i;
+
+    SFLIB_LockCs(&cs);
+    if (*(s32*)((u8*)self + 0x68) == 2) {
+        u32 target = *pFrmNo;
+        for (i = 0; i < 16; i++) {
+            u8* e = (u8*)self + 0x27F8 + i * 0x110;
+            if (*(s32*)(e + 0x64) == (s32)target) {
+                frm = e;
+                break;
+            }
+            frm = NULL;
+        }
+        if (frm == NULL) {
+            err = SFLIB_SetErr(self, 0xff000f1f);
+        } else {
+            for (i = 0; i < *(s32*)((u8*)self + 0x27EC); i++) {
+                u8* e = (u8*)self + 0x27F8 + i * 0x110;
+                if (e == frm) {
+                    req = (u8*)self + 0x1758 + i * 0x88;
+                    break;
+                }
+            }
+        }
+    } else {
+        if (*(s32*)((u8*)p2 - 8) != 1) {
+            err = SFLIB_SetErr(self, 0xff000f0e);
+        } else {
+            req = (u8*)p2 - 8;
+            for (i = 0; i < 16; i++) {
+                u8* e = (u8*)self + 0x1758 + i * 0x88;
+                if (e + 8 == p2) {
+                    frm = (u8*)self + 0x27F8 + i * 0x110;
+                    break;
+                }
+                frm = NULL;
+            }
+            if (*(s32*)((u8*)self + 0x27F4) != (s32)frm) {
+                err = SFLIB_SetErr(self, 0xff000f0f);
+            }
+        }
+    }
+    if (err == 0) {
+        *(s32*)req = 0;
+        if (frm != NULL) {
+            *(s32*)frm = (*(s32*)frm == 4) ? 3 : 0;
+            *(s32*)((u8*)frm + 0x64) = -1;
+        }
+    }
+    SFLIB_UnlockCs(&cs);
+    return err;
+}
 
 void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 

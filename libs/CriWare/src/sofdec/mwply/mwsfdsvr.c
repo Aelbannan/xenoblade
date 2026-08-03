@@ -176,7 +176,46 @@ static s32 criware_803A2908(void* self) {
     return local;
 }
 
-s32 mwsfsvr_DecodeServer(void* self) { return 0; }
+extern s32 MWSFSVM_TestAndSet(void* flag);
+extern s32 mwply_ExecSvrHndl(void* self);
+
+s32 mwsfsvr_DecodeServer(void* self) {
+    u8* lw;
+    s32 found = 0;
+    if ((s32)lbl_eu_805FF39C != 1) return 0;
+    lw = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (MWSFSVM_TestAndSet(lw + 0x58) != 1) return 0;
+    lw = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (*(void**)(lw + 0x40) != NULL) {
+        ((void (*)(void*))*(void**)(lw + 0x40))(*(void**)(lw + 0x44));
+    }
+    lw = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (*(s32*)(lw + 0x34F0) != 1) {
+        s32 i;
+        for (i = 0; i < 8; i++) {
+            void* h = lw + 0x70 + i * 0x690;
+            if (h != NULL && mwply_ExecSvrHndl(h) == 1) {
+                found = 1;
+            }
+        }
+    }
+    lw = (u8*)MWSFLIB_GetLibWorkPtr();
+    *(s32*)(lw + 0x58) = 0;
+    lw = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (*(void**)(lw + 0x48) != NULL) {
+        ((void (*)(void*))*(void**)(lw + 0x48))(*(void**)(lw + 0x4C));
+    }
+    if (found != 1) {
+        lw = (u8*)MWSFLIB_GetLibWorkPtr();
+        if (*(s32*)(lw + 0x24) != 1) {
+            lw = (u8*)MWSFLIB_GetLibWorkPtr();
+            if (*(void**)(lw + 0x50) != NULL) {
+                ((void (*)(void*))*(void**)(lw + 0x50))(*(void**)(lw + 0x54));
+            }
+        }
+    }
+    return found;
+}
 
 extern u8 lbl_eu_80566FC0[];
 extern s32 mwsfd_ExecSvrHndl(void* self);

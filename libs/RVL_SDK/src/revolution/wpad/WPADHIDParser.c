@@ -1022,11 +1022,13 @@ void __wpadAbortInitExtension(s32 chan, s32 result) {
 }
 
 void __wpadGetExtType(s32 chan, s32 err) {
+    const char* dbgBase = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    WPADCommandQueue* extCmdQueue = &cb->extCmdQueue;
     u8* pExtId = cb->wmReadDataPtr;
 
     if (err == WPAD_ERR_OK) {
-        DEBUGPrint(WPAD_DBG_MSG(0x3D8), pExtId[5], pExtId[0]);
+        DEBUGPrint(dbgBase + 0x3D8, pExtId[5], pExtId[0]);
         _wpadCLCompt[chan] = 0;
         _wpadDevMode[chan] = pExtId[4];
 
@@ -1038,52 +1040,58 @@ void __wpadGetExtType(s32 chan, s32 err) {
             _wpadDevType[chan] = 2;
             break;
         case 2:
-            _wpadDevType[chan] = WUDIsLinkedWBC() ? 3 : WPAD_DEV_NOT_FOUND;
+            _wpadDevType[chan] = WUDIsLinkedWBC() ? 3 : WPAD_DEV_FUTURE;
             break;
         case 4:
-            _wpadDevType[chan] = WPADIsEnabledVSM() ? 4 : WPAD_DEV_NOT_FOUND;
+            _wpadDevType[chan] = WPADIsEnabledVSM() ? 4 : WPAD_DEV_FUTURE;
             break;
         case 0x10:
-            _wpadDevType[chan] = WPADIsEnabledTRN() ? 0x10 : WPAD_DEV_NOT_FOUND;
+            _wpadDevType[chan] = WPADIsEnabledTRN() ? 0x10 : WPAD_DEV_FUTURE;
             break;
         case 3:
             if (__OSInIPL != 0) {
                 _wpadDevMode[chan] = 1;
                 _wpadDevType[chan] = 2;
                 _wpadCLCompt[chan] = 1;
-            } else if (pExtId[0] == 0) {
-                _wpadDevType[chan] = WPADIsEnabledGTR() ? 0x11 : WPAD_DEV_NOT_FOUND;
-            } else if (pExtId[0] == 1) {
-                _wpadDevType[chan] = WPADIsEnabledDRM() ? 0x12 : WPAD_DEV_NOT_FOUND;
             } else {
-                _wpadDevType[chan] = WPAD_DEV_NOT_FOUND;
+                switch (pExtId[0]) {
+                case 0:
+                    _wpadDevType[chan] = WPADIsEnabledGTR() ? 0x11 : WPAD_DEV_FUTURE;
+                    break;
+                case 1:
+                    _wpadDevType[chan] = WPADIsEnabledDRM() ? 0x12 : WPAD_DEV_FUTURE;
+                    break;
+                default:
+                    _wpadDevType[chan] = WPAD_DEV_FUTURE;
+                    break;
+                }
             }
             break;
         default:
-            _wpadDevType[chan] = WPAD_DEV_NOT_FOUND;
+            _wpadDevType[chan] = WPAD_DEV_FUTURE;
             break;
         }
 
-        if (_wpadDevType[chan] == WPAD_DEV_CLASSIC && (u8)(_wpadDevMode[chan] - 1) > 2) {
+        if (_wpadDevType[chan] == WPAD_DEV_CLASSIC && (u8)(_wpadDevMode[chan] + 0xFF) > 2) {
             _wpadDevType[chan] = WPAD_DEV_NOT_SUPPORTED;
         }
 
-        DEBUGPrint(WPAD_DBG_MSG(0x3F0), _wpadDevType[chan]);
-        DEBUGPrint(WPAD_DBG_MSG(0x3FC), _wpadDevMode[chan]);
-        DEBUGPrint(WPAD_DBG_MSG(0x408), cb->UNK_0x990);
+        DEBUGPrint(dbgBase + 0x3F0, _wpadDevType[chan]);
+        DEBUGPrint(dbgBase + 0x3FC, _wpadDevMode[chan]);
+        DEBUGPrint(dbgBase + 0x408, cb->UNK_0x990);
 
         if (cb->UNK_0x991 != 0 && cb->UNK_0x990 == _wpadDevType[chan] && cb->calibrated != 0) {
-            DEBUGPrint(WPAD_DBG_MSG(0x414));
+            DEBUGPrint(dbgBase + 0x414);
             cb->calibrated = 1;
         } else {
-            DEBUGPrint(WPAD_DBG_MSG(0x428));
+            DEBUGPrint(dbgBase + 0x428);
             cb->calibrated = 0;
         }
 
         cb->UNK_0x990 = _wpadDevType[chan];
         cb->UNK_0x991 = 0;
 
-        if (_wpadDevType[chan] == WPAD_DEV_NOT_FOUND ||
+        if (_wpadDevType[chan] == WPAD_DEV_FUTURE ||
             _wpadDevType[chan] == WPAD_DEV_NOT_SUPPORTED) {
             cb->devType = _wpadDevType[chan];
             cb->devMode = _wpadDevMode[chan];
@@ -1091,8 +1099,14 @@ void __wpadGetExtType(s32 chan, s32 err) {
                 cb->extensionCB(chan, cb->devType);
             }
         } else {
-            if ((_wpadDevType[chan] >= 1 && _wpadDevType[chan] <= 4) ||
-                (_wpadDevType[chan] >= 0x11 && _wpadDevType[chan] <= 0x12)) {
+            u8 bKey;
+            if ((u8)(_wpadDevType[chan] + 0xFF) <= 3 ||
+                (u8)(_wpadDevType[chan] + 0xEF) <= 1) {
+                bKey = 1;
+            } else {
+                bKey = 0;
+            }
+            if (bKey) {
                 cb->UNK_0x98D = 2;
                 WPADiCreateKey(chan);
             } else {
@@ -1100,25 +1114,25 @@ void __wpadGetExtType(s32 chan, s32 err) {
                 WPADiCreateKeyFor3rd(chan);
             }
 
-            WPADiSendWriteDataCmd(&cb->extCmdQueue, 0xAA, WM_REG_EXTENSION_F0,
+            WPADiSendWriteDataCmd(extCmdQueue, 0xAA, WM_REG_EXTENSION_F0,
                                   __wpadAbortInitExtension);
-            WPADiSendWriteData(&cb->extCmdQueue, cb->encryptionKey, 6, WM_REG_EXTENSION_40,
+            WPADiSendWriteData(extCmdQueue, cb->encryptionKey, 6, WM_REG_EXTENSION_40,
                                __wpadAbortInitExtension);
-            WPADiSendWriteData(&cb->extCmdQueue, cb->encryptionKey + 6, 6,
+            WPADiSendWriteData(extCmdQueue, cb->encryptionKey + 6, 6,
                                WM_REG_EXTENSION_40 + 6, __wpadAbortInitExtension);
-            WPADiSendWriteData(&cb->extCmdQueue, cb->encryptionKey + 12, 4,
+            WPADiSendWriteData(extCmdQueue, cb->encryptionKey + 12, 4,
                                WM_REG_EXTENSION_40 + 0xC, __wpadAbortInitExtension);
 
             if (_wpadDevType[chan] == 3) {
-                WPADiSendWriteDataCmd(&cb->extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
+                WPADiSendWriteDataCmd(extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
                                       __wpadAbortInitExtension);
-                WPADiSendWriteDataCmd(&cb->extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
+                WPADiSendWriteDataCmd(extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
                                       __wpadAbortInitExtension);
-                WPADiSendWriteDataCmd(&cb->extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
+                WPADiSendWriteDataCmd(extCmdQueue, 0xAA, WM_REG_EXTENSION_CERT_CHALLENGE,
                                       __wpadAbortInitExtension);
             }
 
-            WPADiSendReadData(&cb->extCmdQueue, cb->wmReadDataBuf, 0x20,
+            WPADiSendReadData(extCmdQueue, cb->wmReadDataBuf, 0x20,
                               WM_REG_EXTENSION_CONFIG, cb->extensionCB);
         }
     } else {

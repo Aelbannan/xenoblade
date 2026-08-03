@@ -141,7 +141,90 @@ void mwsffrm_AnalyAudioInfo(void* self, void* sj) {
     }
 }
 
-void mwsffrm_ChangeSettingSyncPlayback() {}
+extern void* mwPlyGetSfdHn(void* self);
+extern void MWSFD_SetSstCh(void* self, s32 idx, s32 ch);
+extern void criware_803A326C(void* self, s32 idx);
+extern s32 SFD_GetCond(void* self, u32 idx, s32* out);
+extern void MWSFD_SetAudioSw(void* self, u32 sw);
+extern void MWSFD_SetCond(void* self, u32 sw, u32 unk);
+
+void mwsffrm_ChangeSettingSyncPlayback(void* self) {
+    void* hn;
+    s32 mode1;
+    s32 mode2;
+    s32 ch1;
+    s32 flag;
+    s32 ch2;
+    s32 found;
+    s32 i;
+    hn = mwPlyGetSfdHn(self);
+    mode1 = 0;
+    ch1 = -1;
+    if (*(s32*)((u8*)self + 0x5D8) == 1) {
+        if (*(s32*)((u8*)self + 0x5F0) == 1) {
+            ch1 = *(s32*)((u8*)self + 0x5F4);
+            if (*(s32*)((u8*)self + 0x2A4 + ch1 * 16) == 1) {
+                if (*(s32*)((u8*)self + 0x2A8 + ch1 * 16) == 5) {
+                    MWSFD_SetSstCh(self, 0, ch1);
+                    mode1 = 1;
+                }
+            }
+            if (mode1 != 1) {
+                ch1 = -1;
+                criware_803A326C(self, 0);
+            }
+        }
+    }
+    mode2 = 0;
+    ch2 = -1;
+    if (*(s32*)((u8*)self + 0x600) == 1) {
+        if (*(s32*)((u8*)self + 0x618) == 1) {
+            ch2 = *(s32*)((u8*)self + 0x61C);
+            if (*(s32*)((u8*)self + 0x2A4 + ch2 * 16) == 1) {
+                MWSFD_SetSstCh(self, 1, ch2);
+                mode2 = 1;
+            }
+            if (mode2 != 1) {
+                ch2 = -1;
+                criware_803A326C(self, 1);
+            }
+        }
+    }
+    flag = 0;
+    SFD_GetCond(hn, 30, &found);
+    if (found == -1) {
+        for (i = 0; i < 32; i++) {
+            if (*(s32*)((u8*)self + 0x2A4 + i * 16) == 1) {
+                if (i != ch1 && i != ch2) {
+                    found = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (found != -1 && found != ch1 && found != ch2) {
+        s32 st = *(s32*)((u8*)self + 0x2A8 + found * 16);
+        if (st == 1) {
+            flag = 1;
+        }
+        if (st == 2) {
+            if (*(s32*)((u8*)hn + 0x3990) == 1) {
+                flag = 1;
+            }
+        }
+        if (st == 0) {
+            if (*(s32*)((u8*)hn + 0x3994) == 1) {
+                flag = 1;
+            }
+        }
+    }
+    if (flag == 0) {
+        MWSFD_SetAudioSw(self, 0);
+    }
+    if (mode1 == 1 || mode2 == 1) {
+        MWSFD_SetCond(self, 67, 0);
+    }
+}
 
 #pragma push
 #pragma opt_propagation off

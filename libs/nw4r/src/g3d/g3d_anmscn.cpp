@@ -7,6 +7,8 @@ extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D6
 namespace nw4r {
 namespace g3d {
 
+AnmScn::~AnmScn() {}
+
 void AnmScn::GetLightSetting(LightSetting* pSetting) {
     const u32 numLightSet = GetLightSetMaxRefNumber();
     const u32 numAmbLight = GetAmbLightMaxRefNumber();

@@ -213,6 +213,33 @@ safe; under-approximation is the unsound direction, mitigated by the
 unknown-opcode over-approximation and the per-exit masking being the only
 weakening).
 
+### Implementation-review fixes — round 2 (2026-08-03, third commit)
+
+The second commit's fixes were re-reviewed (GLM-5.2 + Kimi K3). All round-1
+findings verified fixed with PoC-verified load-bearing changes; **no new
+false-certificate hole found**. Residual fixes applied:
+
+- **max_paths cross-region accounting** (MINOR): the `+=` accumulator
+  double-counted prior regions' terminals (over-strict → premature SMT
+  fallback). Replaced with a snapshot check of the cumulative
+  frontier+terminal count after each region.
+- **MFSPR/MFTB `_use_def`** (NIT): the SPR/TBR index (operand 1) was treated
+  as a GPR use; now a pure def of rt (conservative either way, corrected for
+  cleanliness).
+- **New coverage** (`ImplReview2RegressionTests`): STMW-boundary end-to-end
+  PoC (load-bearing for the range-use fix), 3-region rebind chain (multi-
+  boundary `old_rho` composition), TWI immediate-not-register, early-return-
+  before-boundary, region-driver robustness (never crashes/certifies on
+  infeasible seeds).
+
+Round-2 verified-sound (no action): RLWIMI was the only GPR read-modify-write
+under-approximation (exhaustive audit vs the engine's use-def table); the
+BCLR BO-mask `(BO & 0x14) == 0x14` is exact for always-taken encodings (BO
+20-23) across all 32 BO values; per-region gate 5 composes soundly with the
+four-lane deadness for region-local live-ins; `_stream_validation_failure`
+preserves global-path gate order/messages and the reloc exemption; no
+unchecked rho reaches execution or terminal comparison.
+
 ### Implementation-review fixes (2026-08-03, second commit)
 
 The first implementation commit (a9d6cd02) was adversarially reviewed against

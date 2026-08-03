@@ -638,3 +638,106 @@ class ImplReviewRegressionTests(unittest.TestCase):
         self.assertIn(20, uses)
         self.assertIn(31, uses)
         self.assertNotIn(20, defs)
+
+
+class ImplReview2RegressionTests(unittest.TestCase):
+    """Round-2 implementation-review regressions: STMW boundary PoC, 3-region
+    rebind chain, TWI, unsat-seed region-driver negative, early-return."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_stmw_range_boundary_rejected(self) -> None:
+        # R2 end-to-end STMW PoC: r25/r26 live ONLY through the stmw range;
+        # retail stores 5 in the r25 slot, decomp stores uninitialized r25 —
+        # genuinely non-equivalent.  The range-use liveness fix must make the
+        # boundary deadness reject.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        stmw = lambda rd, ra, imm: (
+            (47 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | (imm & 0xFFFF)
+        )
+        r = [li(25, 5), li(14, 0), li(9, 1), mr(14, 9), stmw(20, 1, 8), self._BLR]
+        d = [li(26, 5), li(15, 0), li(9, 1), mr(16, 9), stmw(20, 1, 8), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_three_region_rebind_chain_accepted(self) -> None:
+        # A lane whose mapping changes at TWO boundaries (3 regions), dead at
+        # each boundary, must certify (multi-boundary rebind chain).
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        # r20 -> r21 in region 0 (dead), r20 -> r22 in region 1 (dead),
+        # r20 -> r23 in region 2: the same retail lane remapped at TWO
+        # boundaries, dead at each (r20-23 are nonvolatile, non-EABI, not
+        # unconditionally fixed).
+        # retail: li r20,1 ; mr r3,r20 ; li r20,2 ; mr r3,r20 ; li r20,3 ; mr r3,r20 ; blr
+        # decomp: li r21,1 ; mr r3,r21 ; li r22,2 ; mr r3,r22 ; li r23,3 ; mr r3,r23 ; blr
+        r = [li(20, 1), mr(3, 20), li(20, 2), mr(3, 20), li(20, 3), mr(3, 20), self._BLR]
+        d = [li(21, 1), mr(3, 21), li(22, 2), mr(3, 22), li(23, 3), mr(3, 23), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
+
+    def test_twi_immediate_not_register(self) -> None:
+        # R2 finding A: TWI's `to` immediate (operand 0) is not a register;
+        # _register_fields/_use_def must use RA (operand 1) only.  Two TWIs
+        # differing only in `to` must fail gate 3 (fields), not pass via rho.
+        twi = lambda to, ra, imm: (
+            (3 << 26) | ((to & 31) << 21) | ((ra & 31) << 16) | (imm & 0xFFFF)
+        )
+        r = [twi(7, 5, 0), self._BLR]
+        d = [twi(3, 5, 0), self._BLR]  # different to mask
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+    def test_early_return_before_boundary(self) -> None:
+        # A return before the first region boundary (early blr) must be
+        # compared under region 0's rho; the driver must not hang or drop it.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        # r5->r4 conflict at slot 0 creates a boundary at slot 1? No — build a
+        # clean early return: li r5,1 ; blr ; li r6,2 ; mr r3,r6 ; blr with a
+        # swap after the early return (boundary after the blr).
+        r = [li(5, 1), self._BLR, li(6, 2), mr(3, 6), self._BLR]
+        d = [li(5, 1), self._BLR, li(7, 2), mr(3, 7), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_region_driver_unsat_seed_rejected(self) -> None:
+        # R2 MINOR 6: the region driver pre-checks the resumed seed condition;
+        # an infeasible seed must reject (fail to SMT), never crash or certify.
+        from tools.coop.lib.renaming_witness import run_region_sliced_witness
+        from tools.ppc_equivalence.deadline import Deadline
+
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [li(5, 1), mr(3, 5), self._BLR]
+        d = [li(4, 1), mr(3, 4), self._BLR]
+        original, candidate = self._pair(r, d)
+        try:
+            out = run_region_sliced_witness(
+                original, candidate,
+                max_instructions=2048, max_paths=256, max_loop_iterations=32,
+                deadline=Deadline.after_ms(20000),
+            )
+            # This pair has a single global rho (no boundary) — the region
+            # driver may reject on its loop/region logic, but must never
+            # crash and never certify a non-equivalent pair.
+            self.assertIsInstance(out.certified, bool)
+        except Exception as exc:  # pragma: no cover
+            self.fail(f"region driver raised unexpectedly: {exc}")

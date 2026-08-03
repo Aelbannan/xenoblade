@@ -335,9 +335,15 @@ def _use_def(opcode: Opcode) -> tuple[tuple[tuple[int, str], ...], tuple[tuple[i
         return ((0, FPR), (1, g)), defs
     if opcode in (
         Opcode.LWZ, Opcode.LBZ, Opcode.LHZ, Opcode.LHA, Opcode.LMW,
-        Opcode.MFCR, Opcode.MFSPR, Opcode.MFMSR, Opcode.MFSR, Opcode.MFTB,
+        Opcode.MFCR, Opcode.MFMSR, Opcode.MFSR,
     ):
         return ((1, g),), ((0, g),)
+    if opcode in (Opcode.MFSPR, Opcode.MFTB):
+        # mfspr/mftb read an SPR/TBR index (operand 1), never a GPR — treat
+        # as a pure def of rt (impl-review R2-N2: the old ((1,g),) shape
+        # spuriously marked the SPR index as a GPR use).  MTSPR (below) reads
+        # rt and writes the SPR — correct as ((0,g),), ().
+        return (), ((0, g),)
     if opcode in (Opcode.LFS, Opcode.LFD):
         return ((1, g),), ((0, FPR),)
     if opcode in (Opcode.LWZU, Opcode.LBZU, Opcode.LHZU, Opcode.LHAU):
@@ -1580,14 +1586,11 @@ def run_region_sliced_witness(
         # Driver-side cross-region max_paths budget (plan §3.2, impl-review
         # MAJOR 4): enqueue's len(work)+len(terminals) bound resets per
         # execute_cfg call, so without driver accounting the total frontier
-        # could reach num_regions * max_paths.  Track cumulative counts and
-        # fall to SMT (ExecutionInconclusive) past the budget.
-        path_budget_used = 0
+        # could reach num_regions * max_paths.  Snapshot the cumulative
+        # frontier+terminal count after each region and fall to SMT
+        # (ExecutionInconclusive) past the budget.  (R2-N1: a += accumulator
+        # re-counted prior regions' terminals — replaced by a snapshot check.)
         for region_idx, (start, end, rho) in enumerate(regions):
-            if path_budget_used > max_paths:
-                raise ExecutionInconclusive(
-                    f"region driver: cumulative path budget exceeded ({max_paths})",
-                )
             retail_stop = (
                 frozenset({original[regions[region_idx + 1][0]].address})
                 if region_idx + 1 < len(regions) else None
@@ -1606,7 +1609,6 @@ def run_region_sliced_witness(
                 for t in terms:
                     all_retail_terms.append((t, region_idx))
                 new_retail_frontier.extend(paused)
-            path_budget_used += len(new_retail_frontier) + len(all_retail_terms)
             for entry in decomp_frontier:
                 terms, paused = _run_region(
                     entry[1], entry[0], entry[2], entry[3], entry[4],
@@ -1615,7 +1617,17 @@ def run_region_sliced_witness(
                 for t in terms:
                     all_decomp_terms.append((t, region_idx))
                 new_decomp_frontier.extend(paused)
-            path_budget_used += len(new_decomp_frontier) + len(all_decomp_terms)
+            # Snapshot budget check: cumulative frontier + terminal count
+            # across BOTH sides and ALL regions so far (R2-N1 fix — no
+            # double-count; over-budget falls to SMT).
+            cumulative = (
+                len(new_retail_frontier) + len(new_decomp_frontier)
+                + len(all_retail_terms) + len(all_decomp_terms)
+            )
+            if cumulative > max_paths:
+                raise ExecutionInconclusive(
+                    f"region driver: cumulative path budget exceeded ({max_paths})",
+                )
             if region_idx + 1 < len(regions):
                 # Rebind at the boundary: changed lanes get fresh shared
                 # variables on both sides, gated on two-direction deadness.

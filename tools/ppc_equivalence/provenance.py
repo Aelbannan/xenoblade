@@ -258,6 +258,7 @@ def proof_request_identity(
     capability_assurance: dict | None = None,
     abi_shape: dict | None = None,
     initial_gpr_ranges: dict | None = None,
+    reloc_map_sha256: str | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
 
@@ -362,6 +363,8 @@ def proof_request_identity(
                 initial_gpr_ranges.items(), key=lambda item: int(item[0])
             )
         }
+    if reloc_map_sha256 is not None:
+        payload["reloc_map_sha256"] = reloc_map_sha256
     return payload
 
 

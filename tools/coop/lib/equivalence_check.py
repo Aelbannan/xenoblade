@@ -36,9 +36,11 @@ from tools.ppc_equivalence.decoder import decode_block
 # hook so both sides share one canonical symbol (no object patching).
 _RELOC_MAP_PATH = Path(__file__).resolve().parent.parent / "retail_reloc_map.json"
 
-# Per-process memo of units whose freshness was already verified this process
-# (doc 33 Item 0.5).  Cleared on any re-mine so all units re-check.
-_reloc_map_fresh_units: set[str] = set()
+# Loaded-map cache (data + sha256) — invalidated on any re-mine.  Freshness is
+# checked per invocation (no cross-prove memo): the per-unit mtime check is 2
+# stat calls, and a cross-prove memo would reopen the F1 window (a rebuild of
+# the unit mid-process would keep using stale canonical symbols — doc 33 rev-5
+# round-3 finding 2).
 _reloc_map_loaded: tuple[dict, str] | None = None  # (data, sha256) cache
 
 
@@ -65,40 +67,40 @@ def _load_reloc_map() -> tuple[dict, str]:
 
 
 def _invalidate_reloc_map_cache() -> None:
-    """Drop the loaded-map cache + freshness memo after a re-mine."""
-    global _reloc_map_loaded, _reloc_map_fresh_units
+    """Drop the loaded-map cache after a re-mine."""
+    global _reloc_map_loaded
     _reloc_map_loaded = None
-    _reloc_map_fresh_units.clear()
 
 
-def _ensure_reloc_map_fresh(project: Project | None, unit: ObjdiffUnit) -> None:
+def _ensure_reloc_map_fresh(
+    project: Project | None, unit: ObjdiffUnit, *, force: bool = False,
+) -> None:
     """Re-mine the reloc map iff THIS unit's objects are newer than it.
 
-    Per-unit trigger (doc 33 §0.5): TU-local ``@N`` labels shift whenever a
-    unit's decomp object is rebuilt, and the canonical-symbols hook silently
-    fails gate 2 (or worse, aliases the rebuilt ``@N`` to a stale retail name)
-    when the map is out of date.  Runs lazily at the canonical-symbols
-    computation site (post-build) with a per-process memo; a stale unit
-    triggers a repo-wide re-mine (~2 s, no build lock).
+    Per-unit, per-invocation (doc 33 §0.5 rev-5): TU-local ``@N`` labels shift
+    whenever a unit's decomp object is rebuilt, and the canonical-symbols hook
+    silently fails witness gate 2 (or worse, aliases the rebuilt ``@N`` to a
+    stale retail name — F1) when the map is out of date.  The check is 2 stat
+    calls; only a stale unit triggers a repo-wide re-mine (~2 s, no build
+    lock).  ``force=True`` re-mines unconditionally (the retry belt path).
+    Fail-open on tooling errors: the belt (retry-once on gate-2 reloc) is the
+    backstop, and staleness only ever over-rejects, never false-certifies.
     """
-    global _reloc_map_fresh_units
     unit_name = getattr(unit, "name", None)
     if unit_name is None or project is None:
         return
-    if unit_name in _reloc_map_fresh_units:
-        return
     try:
-        from tools.coop.reloc_map import ensure_fresh
+        from tools.coop.reloc_map import mine, save_map
 
         data, _sha = _load_reloc_map()
         generated = data.get("generated")
-        if generated:
+        stale = force
+        if not stale and generated:
             try:
                 gen_dt = datetime.fromisoformat(str(generated))
             except ValueError:
                 gen_dt = None
             if gen_dt is not None:
-                stale = False
                 for p in (unit.target_path, unit.base_path):
                     if p is not None and p.is_file():
                         try:
@@ -107,17 +109,26 @@ def _ensure_reloc_map_fresh(project: Project | None, unit: ObjdiffUnit) -> None:
                                 break
                         except OSError:
                             continue
-                if not stale:
-                    _reloc_map_fresh_units.add(unit_name)
+                else:
+                    # No object newer than the map: fresh.
                     return
-        if ensure_fresh(project):
-            _invalidate_reloc_map_cache()
-            # Re-mark this unit fresh under the regenerated map.
-        _reloc_map_fresh_units.add(unit_name)
+            else:
+                stale = True
+        else:
+            stale = True
+        if not stale:
+            return
+        # Known-stale / forced path: mine directly (the unit's mtime check
+        # already proved staleness — a full ``ensure_fresh`` repo scan would be
+        # redundant; doc 33 rev-5 round-3 finding 3).
+        from tools.coop.reloc_map import DEFAULT_MAP as _DEFAULT_MAP
+
+        fresh = mine(project, include_kinds={"data"})
+        save_map(fresh, _DEFAULT_MAP)
+        _invalidate_reloc_map_cache()
     except Exception:
-        # Any freshness-tooling failure degrades to the cached map; the
-        # witness belt (retry-once on gate-2 reloc) is the backstop.
-        _reloc_map_fresh_units.add(unit_name)
+        # Fail-open: cached map stays in use; the belt is the backstop.
+        pass
 
 
 def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
@@ -1613,17 +1624,18 @@ def _try_renaming_witness(
         "terminal_pairs_checked": outcome.terminal_pairs_checked,
         "location_independent_returns": True,
         # Proof-input fingerprint (doc 33 Item 0.5, F1): the sha256 of the
-        # reloc map the canonical symbols were drawn from.  A regenerated or
-        # stale map changes the fingerprint, making the certificate
-        # auditable against its canonicalization input.
-        "reloc_map_sha256": _load_reloc_map()[1],
-        # Full extended permutations (impl-review r2 NIT-1): gate 5 validates
-        # gpr_perm()/fpr_perm(), not the partial rho; recording the full
-        # arrays makes the certificate self-contained without depending on
-        # the canonical extension algorithm.
+        # reloc map the canonical symbols were drawn from — recorded ONLY when
+        # the map was actually an input (canonical_symbols is not None; the
+        # certify_unit_symbol path passes none, so recording it there would be
+        # misleading provenance — round-3 finding).  A regenerated or stale
+        # map changes the fingerprint, making the certificate auditable
+        # against its canonicalization input, and is bound into
+        # proof_request_hash below.
         "gpr_perm": outcome.rho.gpr_perm(),
         "fpr_perm": outcome.rho.fpr_perm(),
     }
+    if canonical_symbols is not None:
+        witness_payload["reloc_map_sha256"] = _load_reloc_map()[1]
     if regions is not None:
         # Region-sliced mode (witness_expansion_plan §3.1): the recorded rho
         # is per-region; the assumptions text below is amended accordingly.
@@ -1642,6 +1654,9 @@ def _try_renaming_witness(
         max_paths=max_paths,
         max_loop_iterations=max_loop_iterations,
         observe=observables,
+        reloc_map_sha256=(
+            _load_reloc_map()[1] if canonical_symbols is not None else None
+        ),
         abi_shape=abi_shape_payload,
         assumed_callees=[str(item) for item in call_targets],
         callee_contract_sources={
@@ -2965,10 +2980,11 @@ def prove_unit_symbol(
                 and "presence" not in str(witness_diag.get("witness_reason", ""))
             ):
                 # Belt: the map may have gone stale mid-sweep (concurrent
-                # agents rebuild constantly).  Re-mine + re-decode + retry the
-                # witness once; the refreshed canonical_symbols also feed the
-                # SMT fallback below.
-                _ensure_reloc_map_fresh(project, unit)
+                # agents rebuild constantly).  Force a re-mine (bypassing any
+                # freshness state — round-3 finding 1: the previous memo made
+                # this a no-op), re-decode + retry the witness once; the
+                # refreshed canonical_symbols also feed the SMT fallback below.
+                _ensure_reloc_map_fresh(project, unit, force=True)
                 canonical_symbols = (
                     _canonical_symbols_for_unit(unit_name) if unit_name else {}
                 )

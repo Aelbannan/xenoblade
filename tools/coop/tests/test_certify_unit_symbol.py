@@ -311,5 +311,89 @@ class FullMatchCertWithoutSmtTests(unittest.TestCase):
         self.assertEqual(refreshed["engine_hash"], hash_engine_tree(_REPO_ROOT))
         self.assertEqual(refreshed["certifier_hash"], hash_certifier_tree(_REPO_ROOT))
         self.assertNotEqual(refreshed["certificate_sha256"], stale["certificate_sha256"])
+
+
+class RelocBeltTests(CertifyUnitSymbolTests):
+    """doc 33 Item 0.5: the retry-once belt in prove_unit_symbol.
+
+    Round-3 finding 1: the belt was a no-op because the per-unit freshness
+    memo made the belt's re-check return immediately.  The memo is gone and
+    the belt calls ``_ensure_reloc_map_fresh(force=True)`` — this test pins
+    the control flow: on a witness gate-2 reloc (name-drift) failure the belt
+    force-re-mines and retries once, and the refreshed canonical symbols feed
+    the SMT fallback.
+    """
+
+    def test_belt_force_remines_and_retries_on_reloc_name_drift(self) -> None:
+        from tools.coop.lib import equivalence_check as eq
+        from tools.coop.lib.equivalence_check import _canonical_symbols_for_unit
+        from tools.coop.lib.equivalence_check import EquivalenceProbe
+        from tools.ppc_equivalence.result import ProofStatus
+
+        probe = EquivalenceProbe(ProofStatus.EQUIVALENT, "witness cert")
+        calls = {"n": 0}
+
+        def fake_witness(project, symbol, left, right, target_id, certified_context=None, **kw):
+            calls["n"] += 1
+            diag = kw.get("diag")
+            if diag is not None and calls["n"] == 1:
+                # First attempt fails at gate 2 with a name drift (NOT a
+                # reloc-presence difference — the belt must fire).
+                diag["witness_gate"] = "reloc"
+                diag["witness_reason"] = "slot 5: @1234@0 vs lbl_x@0"
+                return None
+            return probe
+
+        fresh_calls: list[bool] = []
+
+        def fake_fresh(project, unit, **kw):
+            fresh_calls.append(kw.get("force", False))
+
+        with mock.patch.object(eq, "_try_renaming_witness", side_effect=fake_witness), \
+                mock.patch.object(eq, "_ensure_reloc_map_fresh", side_effect=fake_fresh):
+            result = prove_unit_symbol(
+                self.project, self.unit, _SYMBOL, target_id=_TARGET_ID, smt=False,
+            )
+        self.assertIs(result, probe)
+        # Belt fired: first attempt (no diag) fails reloc, belt force-re-mines
+        # and retries; witness called twice, freshness forced on the 2nd call.
+        self.assertEqual(calls["n"], 2)
+        self.assertEqual(fresh_calls, [False, True])
+
+    def test_belt_skipped_on_reloc_presence_difference(self) -> None:
+        from tools.coop.lib import equivalence_check as eq
+        from tools.coop.lib.equivalence_check import EquivalenceProbe
+        from tools.ppc_equivalence.result import ProofStatus
+
+        probe = EquivalenceProbe(ProofStatus.EQUIVALENT, "witness cert")
+        calls = {"n": 0}
+
+        def fake_witness(project, symbol, left, right, target_id, certified_context=None, **kw):
+            calls["n"] += 1
+            diag = kw.get("diag")
+            if diag is not None and calls["n"] == 1:
+                diag["witness_gate"] = "reloc"
+                diag["witness_reason"] = "slot 5: reloc presence differs"
+                return None
+            return probe
+
+        fresh_calls: list[bool] = []
+
+        def fake_fresh(project, unit, **kw):
+            fresh_calls.append(kw.get("force", False))
+
+        with mock.patch.object(eq, "_try_renaming_witness", side_effect=fake_witness), \
+                mock.patch.object(eq, "_ensure_reloc_map_fresh", side_effect=fake_fresh):
+            result = prove_unit_symbol(
+                self.project, self.unit, _SYMBOL, target_id=_TARGET_ID, smt=False,
+            )
+        # The belt is reason-gated: "reloc presence differs" (i2f magic pools)
+        # cannot be fixed by re-mining — no force re-mine, no retry.
+        self.assertEqual(calls["n"], 1)
+        self.assertEqual(fresh_calls, [False])
+        self.assertIsNotNone(result)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_SMT_DISABLED)
+
+
 if __name__ == "__main__":
     unittest.main()

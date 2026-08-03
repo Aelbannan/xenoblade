@@ -1775,6 +1775,9 @@ def main() -> int:
     p_reloc_show.add_argument("--verbose", action="store_true")
     p_reloc_show.add_argument("--unit-scoped", action="store_true", default=None, help="only TU-local entries")
     p_reloc_show.add_argument("--global-only", dest="unit_scoped", action="store_false", help="only named (global) entries")
+    p_reloc_fresh = p_reloc_sub.add_parser("ensure-fresh", help="Re-mine the reloc map iff stale (doc 33 Item 0.5)")
+    p_reloc_fresh.add_argument("--out", default=None, help="map path (default: tools/coop/retail_reloc_map.json)")
+    p_reloc_fresh.add_argument("--force", action="store_true", help="re-mine unconditionally")
 
     p_cycle = sub.add_parser("cycle", help="ctx + build + diff + JSONL log for one target id")
     p_cycle.add_argument("target_id")
@@ -2094,6 +2097,11 @@ def main() -> int:
                 argv.append("--unit-scoped")
             if args.unit_scoped is False:
                 argv.append("--global-only")
+        elif args.reloc_cmd == "ensure-fresh":
+            if args.out:
+                argv += ["--out", args.out]
+            if args.force:
+                argv.append("--force")
         return reloc_map_main(argv)
     if args.command == "cycle":
         return cmd_cycle(

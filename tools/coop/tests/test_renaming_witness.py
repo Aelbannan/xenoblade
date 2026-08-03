@@ -500,9 +500,11 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         self.assertFalse(outcome.certified)
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
-    def test_loop_containing_target_rejected_first_cut(self) -> None:
-        # A backward branch (loop) is rejected for expansion in the first cut
-        # and falls through to SMT (plan §2.2).
+    def test_loop_union_predicate_pins_backward_and_self_loops(self) -> None:
+        # doc 33 Item 2: the first-cut predicate is now the union of indirect
+        # dispatch + direct backward branch; the region path executes direct
+        # loops bounded, but the union predicate (and this pin) remains for
+        # callers that want the coarse pre-Item-2 test.
         from tools.coop.lib.renaming_witness import _has_loop_or_non_return_indirect
 
         li = lambda rt, v: _enc_primary(14, rt, 0, v)

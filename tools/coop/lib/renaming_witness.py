@@ -781,11 +781,12 @@ def _liveness_sets(
 def _has_indirect_dispatch(instructions: list[Instruction]) -> bool:
     """True when the stream contains an indirect dispatch (``bcctr``) or a
     non-return indirect call (``bclr`` with ``link=True``).  Jump-table
-    switches compile to ``bcctr``; these stay rejected by the region-sliced
-    witness (scope choice — dispatch modeling is doc-28/30 work), and the
-    executor records an ``indirect-branch`` terminal with a symbolic CTR that
-    would self-agree under the shared-state binding, so the reject is
-    conservative rather than fail-closed (doc 33 Item 2).
+    switches compile to ``bcctr``.  The region-sliced witness rejects these
+    (doc 33 Item 2): the executor records an ``indirect-branch`` terminal with
+    a symbolic CTR that would self-agree under the shared-state binding, so
+    certifying through them would need jump-table target modeling — keeping
+    the reject is a soundness-preserving scope choice, not a fail-closed
+    fallback (dispatch modeling is doc-28/30 work).
     """
     for insn in instructions:
         op = insn.opcode
@@ -885,8 +886,12 @@ def _has_loop_or_non_return_indirect(
     eyeball — the code must be the authority.
 
     Doc 33 Item 2 splits this into ``_has_indirect_dispatch`` +
-    ``_has_direct_backward_branch``; this combined predicate is kept for the
-    pinned first-cut tests and callers that want the union.
+    ``_has_direct_backward_branch`` (the region path now executes direct
+    backward loops bounded and rejects only indirect dispatch + boundaries
+    inside loop spans).  This combined predicate is kept for the pinned
+    first-cut tests and callers that want the union.  Note: since Item 2,
+    an out-of-function backward ``b`` is NOT flagged (it is a terminal per
+    ``_cfg_successors``, not a loop — only in-function targets count).
     """
     return _has_indirect_dispatch(instructions) or _has_direct_backward_branch(
         instructions, local_symbol=local_symbol,
@@ -2005,19 +2010,24 @@ def run_region_sliced_witness(
             "target contains an indirect branch (bcctr/blrl); "
             "dispatch modeling deferred",
         ))
-    spans = _loop_spans(original, local_symbol=local_symbol) + _loop_spans(
-        candidate, local_symbol=candidate_local_symbol or local_symbol,
-    )
-    if spans:
-        boundary_addrs = [original[b].address for b in boundaries]
-        for tgt, br in spans:
-            for addr in boundary_addrs:
-                if tgt < addr < br:
-                    return WitnessOutcome(False, failure=WitnessFailure(
-                        "loop",
-                        f"region boundary {addr:#x} falls inside loop span "
-                        f"[{tgt:#x}, {br:#x}]; rebinding mid-iteration is unsound",
-                    ))
+    spans_r = _loop_spans(original, local_symbol=local_symbol)
+    spans_d = _loop_spans(candidate, local_symbol=candidate_local_symbol or local_symbol)
+    if spans_r or spans_d:
+        # Compare each side's spans against THAT side's boundary addresses
+        # (round-3 finding: candidate spans must not be checked against
+        # original-space boundary addresses — position-aligned gates mask the
+        # mismatch today, but the guard must be self-consistent).
+        boundary_addrs_r = [original[b].address for b in boundaries]
+        boundary_addrs_d = [candidate[b].address for b in boundaries]
+        for spans, addrs in ((spans_r, boundary_addrs_r), (spans_d, boundary_addrs_d)):
+            for tgt, br in spans:
+                for addr in addrs:
+                    if tgt < addr < br:
+                        return WitnessOutcome(False, failure=WitnessFailure(
+                            "loop",
+                            f"region boundary {addr:#x} falls inside loop span "
+                            f"[{tgt:#x}, {br:#x}]; rebinding mid-iteration is unsound",
+                        ))
 
     def _run_region(
         start_state: MachineState,

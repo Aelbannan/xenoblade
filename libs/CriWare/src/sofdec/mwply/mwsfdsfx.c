@@ -184,5 +184,47 @@ void MWSFTAG_UpdateTagInf(void* self) {
     }
 }
 
+void mwsftag_GetAinfFromSj(void* self) {
+    void* sj = *(void**)((u8*)self + 0x4c0);
+    u32 buf[2];
+    u32 out[2];
+    s32 ret;
+    buf[0] = *(u32*)((u8*)self + 0x4c4);
+    ret = ((s32 (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x24))(sj);
+    if (ret == 0) {
+        *(u32*)((u8*)self + 0x4dc) = 0;
+        *(u32*)((u8*)self + 0x4e0) = 0;
+        *(u32*)((u8*)self + 0x4d8) = 1;
+        return;
+    }
+    buf[1] = (u32)ret;
+    if (SJ_SearchTag(buf, lbl_eu_80519EC8 + 0x39d, lbl_eu_80519EC8 + 0x3a5, out) == 0) {
+        *(u32*)((u8*)self + 0x4dc) = 0;
+        *(u32*)((u8*)self + 0x4e0) = 0;
+        *(u32*)((u8*)self + 0x4d8) = 1;
+        return;
+    }
+    if (*(void**)((u8*)self + 0x4cc) != NULL) {
+        s32 t;
+        memcpy(*(void**)((u8*)self + 0x4cc), (void*)out[0], out[1]);
+        *(u32*)((u8*)self + 0x4dc) = *(u32*)((u8*)self + 0x4cc);
+        *(u32*)((u8*)self + 0x4e0) = 0x7fffffff;
+        *(u32*)((u8*)self + 0x4d8) = 1;
+        ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x18))(sj, 1, &t);
+        ((void (*)(void*, s32, s32*))*(void**)((u8*)*(void**)((u8*)sj) + 0x20))(sj, 0, &t);
+        ((void (*)(void*))*(void**)((u8*)*(void**)((u8*)sj) + 0x14))(sj);
+    } else {
+        *(u32*)((u8*)self + 0x4dc) = out[0];
+        *(u32*)((u8*)self + 0x4e0) = out[1];
+        *(u32*)((u8*)self + 0x4d8) = 1;
+        if (!(*(s32*)((u8*)self + 8) == 2 || *(s32*)((u8*)self + 8) == 6 ||
+              *(s32*)((u8*)self + 8) == 8 || *(s32*)((u8*)self + 8) == 0xa)) {
+            if (*(u32*)((u8*)self + 0x4c0) != 0) {
+                SFD_SetUsrSj(*(void**)((u8*)self + 0x58), 2, 0, 0);
+            }
+        }
+    }
+}
+
 
 void MWSFD_GetZfrmRange() {}

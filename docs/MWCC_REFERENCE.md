@@ -7693,3 +7693,10 @@ swap out@sp+0x10... wait — retail buf@sp+8 requires out declared first), and
 `buf[1] = *(self+0x4e0)` written inline (an intermediate b local hoists the
 load before the buf[0] store). Residual 2 structural: the buf[1] store
 schedules after the SJ arg-setup addi's (retail: between them).
+
+### CriWare mwsfdsfx mwsftag_GetAinfFromSj — frame-alloc wall (2.8%, semantic)
+The 0x1ac dispatcher (3 zero-out branches + SJ_SearchTag + memcpy + 3 indirect
+calls + SFD_SetUsrSj). Retail frame -48: [t@sp+8; out@sp+0x10; buf@sp+0x18]
+with buf[1] = the first call's ret (the r3 reuse). Decomp frame -32: MWCC
+merges the 3rd/4th-call temp into the out slot — the [&t] and [&out[0]] get
+the same sp+8 home. Semantically correct; the frame shape is the wall.

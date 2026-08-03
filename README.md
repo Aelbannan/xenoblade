@@ -37,12 +37,29 @@ The runner defaults to **US**. Use another region via `coop.json` or
 
 ## Project status
 
+<img src="assets/progress-map.svg" alt="main.dol code section progress map" width="100%">
+
+Each column of the map is one slice of the retail code section (addresses
+`0x80004000`–`0x804F9FA4`), colored by the best match state among the functions
+at that address: green `FULL_MATCH`, blue `EQUIVALENT_MATCH`, amber in
+progress, light gray not started.
+
 Generated from the target registry (`tools/coop/targets.json`) — do not edit by
 hand. Regenerate with:
 
 ```sh
-.venv/bin/python3 tools/coop/readme_status.py --write   # update this section
-.venv/bin/python3 tools/coop/readme_status.py --check   # CI: fail if stale
+.venv/bin/python3 tools/coop/progress_map.py                     # rewrite assets/progress-map.svg
+.venv/bin/python3 tools/coop/readme_status.py --write            # refresh the table below
+.venv/bin/python3 tools/coop/readme_status.py --check            # CI: fail if stale
+```
+
+A `pre-commit` hook can do this automatically on every commit — it regenerates
+the map, the status table, and the equivalence blocks, then stages them so the
+commit carries fresh numbers:
+
+```sh
+bash .githooks/install.sh    # one-time: symlink into .git/hooks/
+# skip a single refresh with: git commit --no-verify
 ```
 
 <!-- BEGIN GENERATED COOP STATUS -->
@@ -53,7 +70,7 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19673 |
 | Buildable | 19673 |
-| Accepted | 8812 (`FULL_MATCH` 8577 · `EQUIVALENT_MATCH` 235) |
+| Accepted | 8813 (`FULL_MATCH` 8578 · `EQUIVALENT_MATCH` 235) |
 | Active (in progress) | 1533 |
 | Accepted / total by tier | P0 13/17 · P1 35/52 · P2 3/7 |
 

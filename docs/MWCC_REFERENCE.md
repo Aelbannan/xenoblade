@@ -4954,6 +4954,26 @@ BTM_ChangeEScoLinkParms → 97.5%, US):**
   remaining 15 diffs are a pure lis/addi-vs-lwzu scheduling interleave + reg-swaps
   (function stays SMT-equivalent as before).
 
+## RVL WPAD — `_wpadOnReconnect = -1` lands `.sdata`, unblocks `functionRelocDiffs=data_value` (US)
+
+`libs/RVL_SDK/src/revolution/wpad/WPAD.c` — `OnShutdown` (us-8036bc00) plus
+`WPADInit`/`__wpadManageHandler` residuals. OnShutdown was byte-identical
+(hexdiff 0 structural / 0 reg-swap, size 0x1C8 exact) yet objdiff fuzzy capped
+at **99.9561%** (`functionRelocDiffs=data_value`), so `cycle` could not issue the
+`full-instruction-match` certificate. **Cause:** `s32 _wpadOnReconnect;` without
+an initializer lands in `.sbss` while retail carries it in `.sdata` at +4 with
+value `0xFFFFFFFF`; objdiff flags the relocation as a **symbol section kind
+mismatch** (`.sbss` vs `.sdata`), not a value drift — patching addends or symbol
+`st_value`s had zero effect, and the ~0.044% deficit is exactly 1/20 of one
+instruction (reloc-mismatch partial credit). **Fix:** declare
+`s32 _wpadOnReconnect = -1;` (initializer matches the retail `.sdata` word) →
+objdiff fuzzy 100.0, `FULL_MATCH` + semantic certificate on the next `cycle`.
+Also lifted `WPADInit` 99.82 → 100.0 and improved `__wpadManageHandler`.
+**Levers that did NOT matter:** declaration order of `i`/`enabled`, per-path
+scoping of the `OSDisableInterrupts` result, and the drifted `st_value`s of the
+`.sbss` statics (type-109 SDA21 relocs are not value-compared when the section
+kind matches; `__wpadInitSub` stays 100.0 with drifted offsets).
+
 ## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
 
 `libs/RVL_SDK/src/revolution/wud/WUD.c` — 10 targets

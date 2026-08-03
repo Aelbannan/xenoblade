@@ -7635,3 +7635,10 @@ Retail hoists [lwz r12,24; lwz r0,8; cmpi; lwz r4,12; lwz r5,16; beq; or r3,r3,r
 call = fn(self, arg1, arg2, c)), and the `or r3,r3,r3` is the MWCC's arg-setup
 NOP (the self already in r3). Decomp keeps the loads inside the if and omits
 the no-op — 4 bytes short, unreproducible.
+
+### CriWare sfd_tst SFTST_GoNextFrame — 53.1% (fixed-point load-order wall)
+The s64 fixed-point `(val_a * val_b) / val_d` with the accumulation
+(self+0x12c/0x128 +=c/adde). Retail loads [0x134 a_hi; param[1] b_hi; 0x130
+a_lo; param[0] b_lo] with the op31_11 (mulhw) interleaving; decomp reverses
+the load order and colors (r9/r8) — 3 structural + 12 reg_swap, size exact.
+Semantically correct s64 form retained.

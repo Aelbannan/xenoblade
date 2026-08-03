@@ -700,6 +700,10 @@ epilogue:
     }
 }
 
+extern void* cvFsOpen(const char* name, s32 size, s32 mode);
+extern void cvFsClose(void* fh);
+extern s32 cvFsGetFileSize(const char* name);
+
 void ADXSTMF_ExecHndl(ADXSTMHndl* h) {
     if (h->subState != 0) goto try_stat_exec;
 

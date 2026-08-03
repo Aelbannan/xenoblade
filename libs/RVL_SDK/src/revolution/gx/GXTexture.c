@@ -403,8 +403,6 @@ void GXInitTexObj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFm
         t->mode0 = mode0;
     }
 
-    fmt = format & 0xF;
-
     image0 = t->image0;
     image0 = __rlwimi(image0, width - 1, 0, 22, 31);
 
@@ -412,6 +410,7 @@ void GXInitTexObj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFm
     image0 = __rlwimi(image0, height - 1, 10, 12, 21);
     image3 = __rlwimi(image3, (GX_PHY_ADDR(image_ptr)) >> 5, 0, 8, 31);
 
+    fmt = format & 0xF;
     image0 = __rlwimi(image0, fmt, 20, 8, 11);
     t->fmt = format;
     t->image0 = image0;

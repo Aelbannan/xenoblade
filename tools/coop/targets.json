@@ -335793,7 +335793,7 @@
       "size": "0xDC",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
@@ -335809,7 +335809,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:08.100203+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8032ea70",
@@ -335823,7 +335831,7 @@
       "size": "0x148",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
@@ -335843,7 +335851,15 @@
       "abi_helper_calls": [
         "_restgpr_26",
         "_savegpr_26"
-      ]
+      ],
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:09.916227+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8032ebc0",
@@ -335857,7 +335873,7 @@
       "size": "0x54",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
@@ -335868,7 +335884,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:11.748152+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8032ec20",
@@ -347399,7 +347423,7 @@
       "size": "0xA0",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -347412,7 +347436,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
       "instruction_match": 98.125,
-      "equivalence_status": "inconclusive_abstraction"
+      "equivalence_status": "inconclusive_abstraction",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:04.312842+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/kpad/KPAD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80347ac0",
@@ -347854,7 +347886,7 @@
       "size": "0x444",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -347883,7 +347915,15 @@
         "_savegpr_14"
       ],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
-      "instruction_match": 9.2
+      "instruction_match": 9.2,
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:13.564638+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/kpad/KPAD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8034ac20",
@@ -351955,7 +351995,7 @@
       "size": "0x484",
       "unit": "RVL_SDK/src/revolution/nand/NANDLogging",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -351978,7 +352018,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/nand/NANDLogging.c",
       "instruction_match": 38.408,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "paseo-rvl-hw1",
+        "claimed_at": "2026-08-03T12:36:06.176262+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/nand/NANDLogging.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803544f0",
@@ -425830,8 +425878,8 @@
       "size": "0xD8",
       "unit": "nw4r/src/g3d/g3d_calcview",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -425848,7 +425896,8 @@
         ],
         "note": ""
       },
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803ee8e0",
@@ -425953,7 +426002,7 @@
       "unit": "nw4r/src/g3d/g3d_calcview",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "NOT_STARTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350c80",
@@ -425969,14 +426018,6 @@
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_calcview.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/g3d/g3d_calcview.cpp",
-      "claim": {
-        "owner": "pi-nw4r-leaf",
-        "claimed_at": "2026-08-03T12:26:25.625878+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/g3d/g3d_calcview.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },

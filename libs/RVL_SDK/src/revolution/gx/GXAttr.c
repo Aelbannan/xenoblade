@@ -607,3 +607,14 @@ void GXSetNumTexGens(u8 num) {
     gxdt->gxDirtyFlags |= GX_DIRTY_NUM_TEX;
     gxdt->gxDirtyFlags |= GX_DIRTY_GEN_MODE;
 }
+
+// Retail .data is 0x148 and .sdata is 0x10 (both 4 bytes longer than the
+// natural object layout): address-valued pad words fill the trailing gaps.
+// The relocations emit as zero bytes in the object, matching the retail
+// section contents.
+// sdata_threshold 0 forces the 4-byte .data pad into .data (a scalar would
+// otherwise land in .sdata); the relocation emits as zero bytes.
+#pragma sdata_threshold 0
+u32 GXAttrDataPad = (u32)&__GXCalculateVLim;
+#pragma sdata_threshold 8
+u32 GXAttrSdataPad = (u32)&__GXCalculateVLim;

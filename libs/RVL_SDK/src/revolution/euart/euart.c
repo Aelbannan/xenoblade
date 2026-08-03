@@ -45,22 +45,7 @@ BOOL EUARTInit(void) {
     return TRUE;
 }
 
-//unused
-void EUARTExit(){
-}
-
-//unused
-void EUARTPrintf(){
-}
-
-//unused
-void EUARTSetStatus(){
-}
-
-//unused
-EUARTError EUARTGetLastError(){
-}
-
+// unused in Xenoblade retail: EUARTExit, EUARTPrintf, EUARTSetStatus, EUARTGetLastError
 
 EUARTError InitializeUART(void) {
     if ((OSGetConsoleType() & OS_CONSOLE_MASK_EMU) == 0) {
@@ -72,9 +57,7 @@ EUARTError InitializeUART(void) {
     return EUART_ERROR_OK;
 }
 
-//unused
-EUARTError ReadUARTN(){
-}
+// unused in Xenoblade retail: ReadUARTN
 
 static s32 QueueLength(void) {
     u32 cmd;

@@ -9,6 +9,7 @@ extern volatile u8 bte_target_mode;
 
 /* Format string for adding newline to LogMsg output. Name matches retail. */
 static char lbl_80665908[8] = "%s\n";
+u8 bte_logmsg_bss_pad[16]; /* retail .bss 0x7D0 -> 0x7E0 (align tail); non-static so -ipa file keeps it */
 extern void OSReport(const char *msg, ...);
 
 void LogMsg(u32 trace_set_mask, const char *fmt_str, ...)

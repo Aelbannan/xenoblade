@@ -28,6 +28,4 @@ BOOL DVDCompareDiskID(const DVDDiskID* id1, const DVDDiskID* id2) {
     return TRUE;
 }
 
-//unused
-void DVDGenerateDiskID(){
-}
+// unused in Xenoblade retail: DVDGenerateDiskID

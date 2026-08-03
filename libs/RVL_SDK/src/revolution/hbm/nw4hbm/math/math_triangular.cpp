@@ -79,7 +79,6 @@ f32 Atan2FIdx(f32 y, f32 x) {
     (void)(-64.0f);
     (void)(128.0f);
     (void)(-128.0f);
-    (void)"\0\0\0";
 
     if (x == 0.0f && y == 0.0f) {
         return 0.0f;

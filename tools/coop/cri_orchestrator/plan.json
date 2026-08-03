@@ -1,0 +1,5782 @@
+{
+ "generated_at": null,
+ "batches": [
+  {
+   "batch_id": "cri-01",
+   "label": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+   "targets": [
+    "us-803c81bc",
+    "us-803c5d50",
+    "us-803ca070",
+    "us-803c58ec",
+    "us-803c9f64",
+    "us-803c7ec0",
+    "us-803c9cb0",
+    "us-803c830c",
+    "us-803ca370",
+    "us-803c843c",
+    "us-803c99c8",
+    "us-803c6454",
+    "us-803c659c",
+    "us-803c8e68",
+    "us-803c9ddc",
+    "us-803c9b04",
+    "us-803c6c54",
+    "us-803c8fbc",
+    "us-803c7fe4",
+    "us-803c6278",
+    "us-803c7590",
+    "us-803c899c",
+    "us-803c95f4",
+    "us-803c59ac",
+    "us-803c5ed4",
+    "us-803c8570",
+    "us-803c9188",
+    "us-803c66e4",
+    "us-803c7868",
+    "us-803c6e18"
+   ],
+   "target_details": [
+    {
+     "id": "us-803c81bc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_NextTc",
+     "status": "HIGH_MATCH",
+     "match_percent": null,
+     "size": "0x150",
+     "leaf": true
+    },
+    {
+     "id": "us-803c5d50",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_ProcessAuxShc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x84",
+     "leaf": false
+    },
+    {
+     "id": "us-803ca070",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "SFMPV_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x84",
+     "leaf": false
+    },
+    {
+     "id": "us-803c58ec",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "SFMPV_Init",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.872,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c9f64",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_InitFrmObj",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.852,
+     "size": "0xD8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c7ec0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_DoReformTc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x124",
+     "leaf": false
+    },
+    {
+     "id": "us-803c9cb0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "SFMPV_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x12C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c830c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_FirstPicAtr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-803ca370",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_ReprocessShc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-803c843c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_SetMpvHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x134",
+     "leaf": false
+    },
+    {
+     "id": "us-803c99c8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "fn_803C99C8",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x13C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c6454",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_SearchDelim",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-803c659c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_BsearchDelim",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-803c8e68",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_IsLate",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x154",
+     "leaf": false
+    },
+    {
+     "id": "us-803c9ddc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_InitInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x188",
+     "leaf": false
+    },
+    {
+     "id": "us-803c9b04",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_GoDdelim",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1AC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c6c54",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_ConcatSub",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1C4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c8fbc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_SkipFrm",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1CC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c7fe4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_Pts2Tc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1D8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c6278",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_NeedSafeDlmRefresh",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1DC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c7590",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_ComplementPts",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2D8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c899c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_IsSkip",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x340",
+     "leaf": false
+    },
+    {
+     "id": "us-803c95f4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_SetFrmPara",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x354",
+     "leaf": false
+    },
+    {
+     "id": "us-803c59ac",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "SFMPV_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3A4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c5ed4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_GetActiveSize",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3A4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c8570",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_ChkBufSiz",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x42C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c9188",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_DecodeFrm",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x46C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c66e4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_DecodeOneUnit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x570",
+     "leaf": false
+    },
+    {
+     "id": "us-803c7868",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_CalcRepeatField",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x658",
+     "leaf": false
+    },
+    {
+     "id": "us-803c6e18",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv",
+     "function": "sfmpv_DecodePicAtr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x778",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_mpv"
+   ],
+   "leaf_count": 1,
+   "total": 30
+  },
+  {
+   "batch_id": "cri-02",
+   "label": "mixed",
+   "targets": [
+    "us-803d0040",
+    "us-803d8454",
+    "us-803d024c",
+    "us-803d0300",
+    "us-803d03b4",
+    "us-803afa18",
+    "us-803d0b9c",
+    "us-803ae1bc",
+    "us-803b043c",
+    "us-803d9264",
+    "us-803afdb0",
+    "us-803d8728",
+    "us-803cf094",
+    "us-803ad498",
+    "us-803ad834",
+    "us-803addcc",
+    "us-803acf84",
+    "us-803b05fc",
+    "us-803d8a58",
+    "us-803ae364",
+    "us-803b0c20",
+    "us-803d84f4",
+    "us-803d8508",
+    "us-803afaec",
+    "us-803cf764",
+    "us-803b14c4",
+    "us-803d9178",
+    "us-803ace80",
+    "us-803affb4",
+    "us-803b00b8",
+    "us-803b0b10",
+    "us-803b01bc",
+    "us-803d85d8",
+    "us-803cfc80",
+    "us-803b02d8",
+    "us-803d9444",
+    "us-803cf524"
+   ],
+   "target_details": [
+    {
+     "id": "us-803d0040",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "sftim_Tc2TimeN",
+     "status": "STRUCTURAL",
+     "match_percent": 64.806,
+     "size": "0x7C",
+     "leaf": true
+    },
+    {
+     "id": "us-803d8454",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "SFXZ_Create",
+     "status": "STRUCTURAL",
+     "match_percent": 90.2,
+     "size": "0x7C",
+     "leaf": true
+    },
+    {
+     "id": "us-803d024c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "sftim_Tc2Time23D",
+     "status": "STRUCTURAL",
+     "match_percent": 54.244,
+     "size": "0xB4",
+     "leaf": true
+    },
+    {
+     "id": "us-803d0300",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "sftim_Tc2Time29D",
+     "status": "STRUCTURAL",
+     "match_percent": 54.022,
+     "size": "0xB4",
+     "leaf": true
+    },
+    {
+     "id": "us-803d03b4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "sftim_Tc2Time59D",
+     "status": "STRUCTURAL",
+     "match_percent": 54.244,
+     "size": "0xB4",
+     "leaf": true
+    },
+    {
+     "id": "us-803afa18",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_SetDflPtr",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.189,
+     "size": "0xD4",
+     "leaf": true
+    },
+    {
+     "id": "us-803d0b9c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "SFD_CalcCycleFromFps",
+     "status": "STRUCTURAL",
+     "match_percent": 99.5,
+     "size": "0x188",
+     "leaf": true
+    },
+    {
+     "id": "us-803ae1bc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitCbpSub1",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1A8",
+     "leaf": true
+    },
+    {
+     "id": "us-803b043c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "mpvumc_OneMakeMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1C0",
+     "leaf": true
+    },
+    {
+     "id": "us-803d9264",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "sfxzmv_MakeZ16TblFromOrgZ32",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1E0",
+     "leaf": true
+    },
+    {
+     "id": "us-803afdb0",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "fn_803AFDB0",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x204",
+     "leaf": true
+    },
+    {
+     "id": "us-803d8728",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "sfxzmv_MakeOrgZ32TblByDirect",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x330",
+     "leaf": true
+    },
+    {
+     "id": "us-803cf094",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "SFTIM_InitHn",
+     "status": "CODE_MATCH",
+     "match_percent": 95.844,
+     "size": "0x384",
+     "leaf": true
+    },
+    {
+     "id": "us-803ad498",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitMbaiPpic",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x39C",
+     "leaf": true
+    },
+    {
+     "id": "us-803ad834",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitMbaiBpic",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3AC",
+     "leaf": true
+    },
+    {
+     "id": "us-803addcc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitMotion",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3F0",
+     "leaf": true
+    },
+    {
+     "id": "us-803acf84",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitMbaiIpic",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x514",
+     "leaf": true
+    },
+    {
+     "id": "us-803b05fc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "mpvumc_BiMakeMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x514",
+     "leaf": true
+    },
+    {
+     "id": "us-803d8a58",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "sfxzmv_MakeOrgZ32TblByCCIR",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x720",
+     "leaf": true
+    },
+    {
+     "id": "us-803ae364",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_InitCbpSub2",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x724",
+     "leaf": true
+    },
+    {
+     "id": "us-803b0c20",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "mpvumc_PpicSkipMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x8A4",
+     "leaf": true
+    },
+    {
+     "id": "us-803d84f4",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "SFXZ_SetTagInf",
+     "status": "CODE_MATCH",
+     "match_percent": 97.6,
+     "size": "0x14",
+     "leaf": false
+    },
+    {
+     "id": "us-803d8508",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "sfxzmv_SetTagGrp",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-803afaec",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "mpvvlc_SetVlcRunLevel",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-803cf764",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "SFTIM_IsStagnant",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.596,
+     "size": "0xE4",
+     "leaf": false
+    },
+    {
+     "id": "us-803b14c4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "MPVUMC_BpicSkipped",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d9178",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "SFXZ_MakeCnvZTbl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803ace80",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+     "function": "MPVVLC_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803affb4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "fn_803AFFB4",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803b00b8",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "fn_803B00B8",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803b0b10",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "MPVUMC_PpicSkipped",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x110",
+     "leaf": false
+    },
+    {
+     "id": "us-803b01bc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "fn_803B01BC",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x11C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d85d8",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "SFXZ_GetZfrmRange",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x150",
+     "leaf": false
+    },
+    {
+     "id": "us-803cfc80",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "sftim_GetTimeExtClock",
+     "status": "HIGH_MATCH",
+     "match_percent": 97.5,
+     "size": "0x158",
+     "leaf": false
+    },
+    {
+     "id": "us-803b02d8",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+     "function": "mpvumc_OneReadMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803d9444",
+     "unit": "CriWare/src/sofdec/sfx/sfx_zmv",
+     "function": "sfxzmv_MakeZ32TblFromOrgZ32",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x208",
+     "leaf": false
+    },
+    {
+     "id": "us-803cf524",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+     "function": "SFTIM_VbIn",
+     "status": "CODE_MATCH",
+     "match_percent": 97.583,
+     "size": "0x240",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_umc",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_vlc",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_tim",
+    "CriWare/src/sofdec/sfx/sfx_zmv"
+   ],
+   "leaf_count": 21,
+   "total": 37
+  },
+  {
+   "batch_id": "cri-03",
+   "label": "mixed",
+   "targets": [
+    "us-8038ae8c",
+    "us-80395a30",
+    "us-8039634c",
+    "us-803acd5c",
+    "us-8038c690",
+    "us-803b253c",
+    "us-803acb1c",
+    "us-8038caa8",
+    "us-8038c7cc",
+    "us-803b20e4",
+    "us-803b1c2c",
+    "us-803ac1b0",
+    "us-803b15dc",
+    "us-80389b08",
+    "us-803b5dc4",
+    "us-803b2784",
+    "us-803b93e4",
+    "us-80395f1c",
+    "us-803962ec",
+    "us-803963c4",
+    "us-80396288",
+    "us-80396214",
+    "us-80395d90",
+    "us-80395abc",
+    "us-8038b564",
+    "us-80395e2c",
+    "us-8038b43c",
+    "us-8038afc4",
+    "us-80395b8c",
+    "us-8038ac3c",
+    "us-80396424",
+    "us-80395f7c",
+    "us-8038b14c",
+    "us-8038a544"
+   ],
+   "target_details": [
+    {
+     "id": "us-8038ae8c",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_EntryData",
+     "status": "HIGH_MATCH",
+     "match_percent": 55.2,
+     "size": "0x74",
+     "leaf": true
+    },
+    {
+     "id": "us-80395a30",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfci_str_to_uint_ptr",
+     "status": "NOT_STARTED",
+     "match_percent": 3.3,
+     "size": "0x74",
+     "leaf": true
+    },
+    {
+     "id": "us-8039634c",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiSetSctLen",
+     "status": "STRUCTURAL",
+     "match_percent": 56.7,
+     "size": "0x78",
+     "leaf": true
+    },
+    {
+     "id": "us-803acd5c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mc",
+     "function": "MPVMC08_OneRef4p_TuneC",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x11C",
+     "leaf": true
+    },
+    {
+     "id": "us-8038c690",
+     "unit": "CriWare/src/adx/adxt/adx_dcd5",
+     "function": "ADX_DecodeMono4",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.1,
+     "size": "0x13C",
+     "leaf": true
+    },
+    {
+     "id": "us-803b253c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy",
+     "function": "MPVMC16_OneRef4p_TuneC",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x200",
+     "leaf": true
+    },
+    {
+     "id": "us-803acb1c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mc",
+     "function": "MPVMC08_OneRefH2_TuneC",
+     "status": "STRUCTURAL",
+     "match_percent": 28.243,
+     "size": "0x240",
+     "leaf": true
+    },
+    {
+     "id": "us-8038caa8",
+     "unit": "CriWare/src/adx/adxt/adx_dcd5",
+     "function": "ADX_DecodeSte4AsSte",
+     "status": "COMPILES",
+     "match_percent": 30.0,
+     "size": "0x244",
+     "leaf": true
+    },
+    {
+     "id": "us-8038c7cc",
+     "unit": "CriWare/src/adx/adxt/adx_dcd5",
+     "function": "ADX_DecodeSte4AsMono",
+     "status": "COMPILES",
+     "match_percent": 30.0,
+     "size": "0x2DC",
+     "leaf": true
+    },
+    {
+     "id": "us-803b20e4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy",
+     "function": "MPVMC16_OneRefH2_TuneC",
+     "status": "STRUCTURAL",
+     "match_percent": 6.835,
+     "size": "0x458",
+     "leaf": true
+    },
+    {
+     "id": "us-803b1c2c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy",
+     "function": "MPVMC16_OneRefV2_TuneC",
+     "status": "STRUCTURAL",
+     "match_percent": 10.265,
+     "size": "0x4B8",
+     "leaf": true
+    },
+    {
+     "id": "us-803ac1b0",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mc",
+     "function": "MPVMC08_OneRef1p_TuneC",
+     "status": "HIGH_MATCH",
+     "match_percent": 80.609,
+     "size": "0x4E0",
+     "leaf": true
+    },
+    {
+     "id": "us-803b15dc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy",
+     "function": "MPVMC16_OneRef1p_TuneC",
+     "status": "STRUCTURAL",
+     "match_percent": 14.933,
+     "size": "0x650",
+     "leaf": true
+    },
+    {
+     "id": "us-80389b08",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "SKG_GenerateKey",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x790",
+     "leaf": true
+    },
+    {
+     "id": "us-803b5dc4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
+     "function": "mpvabdec_IntraBlockDc11_Isr",
+     "status": "STRUCTURAL",
+     "match_percent": 53.724,
+     "size": "0x3620",
+     "leaf": true
+    },
+    {
+     "id": "us-803b2784",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
+     "function": "mpvabdec_IntraBlock_Isr",
+     "status": "HIGH_MATCH",
+     "match_percent": 76.548,
+     "size": "0x3640",
+     "leaf": true
+    },
+    {
+     "id": "us-803b93e4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpvabdec",
+     "function": "mpvabdec_NintraBlock_Isr",
+     "status": "STRUCTURAL",
+     "match_percent": 19.872,
+     "size": "0x3A80",
+     "leaf": true
+    },
+    {
+     "id": "us-80395f1c",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiTell",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x60",
+     "leaf": false
+    },
+    {
+     "id": "us-803962ec",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiGetSctLen",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x60",
+     "leaf": false
+    },
+    {
+     "id": "us-803963c4",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiGetNumTr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x60",
+     "leaf": false
+    },
+    {
+     "id": "us-80396288",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiGetStat",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x64",
+     "leaf": false
+    },
+    {
+     "id": "us-80396214",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiStopTr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-80395d90",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiClose",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-80395abc",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiGetFileSize",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b564",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_ExecHndl",
+     "status": "CODE_MATCH",
+     "match_percent": 99.364,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-80395e2c",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiSeek",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF0",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b43c",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_ExecOneAdx",
+     "status": "CODE_MATCH",
+     "match_percent": 99.459,
+     "size": "0x128",
+     "leaf": false
+    },
+    {
+     "id": "us-8038afc4",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_EvokeDecode",
+     "status": "CODE_MATCH",
+     "match_percent": 97.041,
+     "size": "0x188",
+     "leaf": false
+    },
+    {
+     "id": "us-80395b8c",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiOpen",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x204",
+     "leaf": false
+    },
+    {
+     "id": "us-8038ac3c",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "adxb_get_key",
+     "status": "CODE_MATCH",
+     "match_percent": 95.543,
+     "size": "0x228",
+     "leaf": false
+    },
+    {
+     "id": "us-80396424",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiOptFn1",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x278",
+     "leaf": false
+    },
+    {
+     "id": "us-80395f7c",
+     "unit": "CriWare/src/adx/mfci/mfci",
+     "function": "mfCiReqRd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x298",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b14c",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_EndDecode",
+     "status": "STRUCTURAL",
+     "match_percent": 67.59,
+     "size": "0x2F0",
+     "leaf": false
+    },
+    {
+     "id": "us-8038a544",
+     "unit": "CriWare/src/adx/adxt/adx_bsc",
+     "function": "ADXB_DecodeHeaderAdx",
+     "status": "CODE_MATCH",
+     "match_percent": 95.376,
+     "size": "0x314",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_bsc",
+    "CriWare/src/adx/adxt/adx_dcd5",
+    "CriWare/src/adx/mfci/mfci",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_mc",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_mcy",
+    "CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
+   ],
+   "leaf_count": 17,
+   "total": 34
+  },
+  {
+   "batch_id": "cri-04",
+   "label": "mixed",
+   "targets": [
+    "us-8038ce6c",
+    "us-803ca648",
+    "us-8038d134",
+    "us-803ca4fc",
+    "us-8039eb5c",
+    "us-803a20c0",
+    "us-803bda7c",
+    "us-803be2c8",
+    "us-8039ecc4",
+    "us-803bdc20",
+    "us-803bea30",
+    "us-803a3114",
+    "us-803ca7ac",
+    "us-803ca6e4",
+    "us-803be1e8",
+    "us-803be0dc",
+    "us-803a3424",
+    "us-8038cd48",
+    "us-803ca980",
+    "us-803a272c",
+    "us-803a25d4",
+    "us-803a3fac",
+    "us-803a2474",
+    "us-803a2878",
+    "us-803bd574",
+    "us-803cab50",
+    "us-803a29e0",
+    "us-8038d250",
+    "us-803a31d0",
+    "us-803a2260",
+    "us-803cacc8",
+    "us-803bd704",
+    "us-803be53c",
+    "us-803a2b60",
+    "us-803a3540"
+   ],
+   "target_details": [
+    {
+     "id": "us-8038ce6c",
+     "unit": "CriWare/src/adx/adxt/adx_dcd",
+     "function": "ADX_ScanInfoCode",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.3,
+     "size": "0x78",
+     "leaf": true
+    },
+    {
+     "id": "us-803ca648",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "sfmpvf_CheckMpvPara",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.795,
+     "size": "0x9C",
+     "leaf": true
+    },
+    {
+     "id": "us-8038d134",
+     "unit": "CriWare/src/adx/adxt/adx_dcd",
+     "function": "ADX_DecodeInfoExLoop",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x11C",
+     "leaf": true
+    },
+    {
+     "id": "us-803ca4fc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "SFD_SetMpvParaTbl",
+     "status": "HIGH_MATCH",
+     "match_percent": 82.133,
+     "size": "0x14C",
+     "leaf": true
+    },
+    {
+     "id": "us-8039eb5c",
+     "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
+     "function": "CFT_Ycc420plnToArgb8888Init",
+     "status": "NOT_STARTED",
+     "match_percent": 1.1,
+     "size": "0x168",
+     "leaf": true
+    },
+    {
+     "id": "us-803a20c0",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_CalcWorkStmBuf",
+     "status": "NOT_STARTED",
+     "match_percent": 75.0,
+     "size": "0x1A0",
+     "leaf": true
+    },
+    {
+     "id": "us-803bda7c",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_isr",
+     "function": "MSID_JRevDctSparse",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1A4",
+     "leaf": true
+    },
+    {
+     "id": "us-803be2c8",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+     "function": "mpsdec_DecPackHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x274",
+     "leaf": true
+    },
+    {
+     "id": "us-8039ecc4",
+     "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
+     "function": "CFT_Ycc420plnToY84C44",
+     "status": "NOT_STARTED",
+     "match_percent": 0.0,
+     "size": "0x288",
+     "leaf": true
+    },
+    {
+     "id": "us-803bdc20",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_isr",
+     "function": "MSID_JRevDctDense",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x308",
+     "leaf": true
+    },
+    {
+     "id": "us-803bea30",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+     "function": "mpsdec_DecPketHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x7D0",
+     "leaf": true
+    },
+    {
+     "id": "us-803a3114",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_AttachPicUsrBuf",
+     "status": "CODE_MATCH",
+     "match_percent": 99.468,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-803ca7ac",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "SFMPVF_WriteGlobalMpvPara",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-803ca6e4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "SFMPVF_ReadGlobalMpvPara",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC8",
+     "leaf": false
+    },
+    {
+     "id": "us-803be1e8",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+     "function": "mpsdec_DecOneHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-803be0dc",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+     "function": "MPSDEC_DecHdMpeg1",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x10C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a3424",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "criware_8039FF34",
+     "status": "CODE_MATCH",
+     "match_percent": 97.183,
+     "size": "0x11C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038cd48",
+     "unit": "CriWare/src/adx/adxt/adx_dcd",
+     "function": "ADX_GetCoefficient",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x124",
+     "leaf": false
+    },
+    {
+     "id": "us-803ca980",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "sfmpvf_SetPicUsrBuf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x134",
+     "leaf": false
+    },
+    {
+     "id": "us-803a272c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_MallocRfb",
+     "status": "CODE_MATCH",
+     "match_percent": 96.253,
+     "size": "0x14C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a25d4",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "MWSFCRE_SetSupplySj",
+     "status": "CODE_MATCH",
+     "match_percent": 99.86,
+     "size": "0x158",
+     "leaf": false
+    },
+    {
+     "id": "us-803a3fac",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwply_Destroy",
+     "status": "CODE_MATCH",
+     "match_percent": 97.701,
+     "size": "0x15C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a2474",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_IsOuterFrmPoolUsed",
+     "status": "CODE_MATCH",
+     "match_percent": 97.443,
+     "size": "0x160",
+     "leaf": false
+    },
+    {
+     "id": "us-803a2878",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_MallocTab",
+     "status": "CODE_MATCH",
+     "match_percent": 96.833,
+     "size": "0x168",
+     "leaf": false
+    },
+    {
+     "id": "us-803bd574",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_isr",
+     "function": "DCT_IsrInit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x16C",
+     "leaf": false
+    },
+    {
+     "id": "us-803cab50",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "SFMPVF_GetRead",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x178",
+     "leaf": false
+    },
+    {
+     "id": "us-803a29e0",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "criware_eu_803A29E0",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x180",
+     "leaf": false
+    },
+    {
+     "id": "us-8038d250",
+     "unit": "CriWare/src/adx/adxt/adx_dcd",
+     "function": "ADX_DecodeInfoAinf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x184",
+     "leaf": false
+    },
+    {
+     "id": "us-803a31d0",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "MWSFCRE_SetCondSfd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x19C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a2260",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwPlyCalcWorkCprmSfd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x214",
+     "leaf": false
+    },
+    {
+     "id": "us-803cacc8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf",
+     "function": "SFMPVF_AddRead",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x24C",
+     "leaf": false
+    },
+    {
+     "id": "us-803bd704",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_isr",
+     "function": "initSparseTbl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x378",
+     "leaf": false
+    },
+    {
+     "id": "us-803be53c",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+     "function": "mpsdec_DecSysHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x4F4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a2b60",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwsfcre_CreateSfd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x5B4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a3540",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdcre",
+     "function": "mwPlyCreateSofdec",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x8D8",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_dcd",
+    "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
+    "CriWare/src/sofdec/mwply/mwsfdcre",
+    "CriWare/src/sofdec/sfdcore/dct/dct_isr",
+    "CriWare/src/sofdec/sfdcore/mps/mps_dec",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_mpvf"
+   ],
+   "leaf_count": 11,
+   "total": 35
+  },
+  {
+   "batch_id": "cri-05",
+   "label": "mixed",
+   "targets": [
+    "us-803844a8",
+    "us-803d7324",
+    "us-80390c84",
+    "us-80384510",
+    "us-803850ac",
+    "us-803841ec",
+    "us-803852ec",
+    "us-803d7dc8",
+    "us-803d70dc",
+    "us-803914a0",
+    "us-803915bc",
+    "us-80384784",
+    "us-8039188c",
+    "us-80383d40",
+    "us-80391a7c",
+    "us-803d7838",
+    "us-80383e50",
+    "us-803d7974",
+    "us-803d7ad8",
+    "us-803d7c54",
+    "us-80384324",
+    "us-803d71a0",
+    "us-80391c90",
+    "us-803916cc",
+    "us-803d763c",
+    "us-80383f98",
+    "us-80384d68",
+    "us-80391e20",
+    "us-80384908",
+    "us-803921e8"
+   ],
+   "target_details": [
+    {
+     "id": "us-803844a8",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_IsOpened",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.938,
+     "size": "0x40",
+     "leaf": true
+    },
+    {
+     "id": "us-803d7324",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "SFXCNV_MakeCcirFromY",
+     "status": "COMPILES",
+     "match_percent": 25.0,
+     "size": "0x2DC",
+     "leaf": true
+    },
+    {
+     "id": "us-80390c84",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "SKG_GenerateKey",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x7A8",
+     "leaf": true
+    },
+    {
+     "id": "us-80384510",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_GetStat",
+     "status": "CODE_MATCH",
+     "match_percent": 99.333,
+     "size": "0x3C",
+     "leaf": false
+    },
+    {
+     "id": "us-803850ac",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x84",
+     "leaf": false
+    },
+    {
+     "id": "us-803841ec",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_BindFileNw",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x94",
+     "leaf": false
+    },
+    {
+     "id": "us-803852ec",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_SetSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x98",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7dc8",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "SFX_Make2PlaneCftDstBuf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d70dc",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "SFX_IsMergeField",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803914a0",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC8",
+     "leaf": false
+    },
+    {
+     "id": "us-803915bc",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_Reset",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD4",
+     "leaf": false
+    },
+    {
+     "id": "us-80384784",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_Stop",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-8039188c",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_DecodeFrmHdr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE4",
+     "leaf": false
+    },
+    {
+     "id": "us-80383d40",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTMF_SetupHandleMember",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x110",
+     "leaf": false
+    },
+    {
+     "id": "us-80391a7c",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_DecodeBhdr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x120",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7838",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "sfxcnv_ExecCnvFrmByCbFunc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x13C",
+     "leaf": false
+    },
+    {
+     "id": "us-80383e50",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7974",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "sfxcnv_MakeCftSrcBuf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7ad8",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "sfxcnv_ExecCopyAlphaByCbFunc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x174",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7c54",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "sfxcnv_MakeDstBufInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x174",
+     "leaf": false
+    },
+    {
+     "id": "us-80384324",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_ReleaseFile",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x184",
+     "leaf": false
+    },
+    {
+     "id": "us-803d71a0",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "sfxcnv_MakeTable",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x184",
+     "leaf": false
+    },
+    {
+     "id": "us-80391c90",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_DecodeBitalloc2",
+     "status": "STRUCTURAL",
+     "match_percent": 1.0,
+     "size": "0x190",
+     "leaf": false
+    },
+    {
+     "id": "us-803916cc",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_DecodeHeader",
+     "status": "STRUCTURAL",
+     "match_percent": 65.08,
+     "size": "0x1C0",
+     "leaf": false
+    },
+    {
+     "id": "us-803d763c",
+     "unit": "CriWare/src/sofdec/sfx/sfx_cnv",
+     "function": "SFX_CnvFrmByCbFunc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1FC",
+     "leaf": false
+    },
+    {
+     "id": "us-80383f98",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTM_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x254",
+     "leaf": false
+    },
+    {
+     "id": "us-80384d68",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "ADXSTMF_ExecHndl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x344",
+     "leaf": false
+    },
+    {
+     "id": "us-80391e20",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_DecodeScale2",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3C8",
+     "leaf": false
+    },
+    {
+     "id": "us-80384908",
+     "unit": "CriWare/src/adx/adxt/adx_stmc",
+     "function": "adxstmf_stat_exec",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x460",
+     "leaf": false
+    },
+    {
+     "id": "us-803921e8",
+     "unit": "CriWare/src/adx/ahx/ahx_dcd",
+     "function": "AHXDCD_GetSample_Dequantize_Denormalize",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x560",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_stmc",
+    "CriWare/src/adx/ahx/ahx_dcd",
+    "CriWare/src/sofdec/sfx/sfx_cnv"
+   ],
+   "leaf_count": 3,
+   "total": 30
+  },
+  {
+   "batch_id": "cri-06",
+   "label": "mixed",
+   "targets": [
+    "us-80395984",
+    "us-803ce4c0",
+    "us-8039485c",
+    "us-8039ad88",
+    "us-803a88ec",
+    "us-8039b2e8",
+    "us-80388f78",
+    "us-80394140",
+    "us-803a7ea0",
+    "us-803ce19c",
+    "us-8039aea8",
+    "us-8039b678",
+    "us-8039512c",
+    "us-803ce260",
+    "us-8038924c",
+    "us-8038934c",
+    "us-8039b570",
+    "us-803ce35c",
+    "us-803945e8",
+    "us-80393f20",
+    "us-80395324",
+    "us-80389454",
+    "us-8039af94",
+    "us-803942b8",
+    "us-80389774",
+    "us-8039bb64",
+    "us-803a7f18",
+    "us-8039b76c",
+    "us-8039bee4",
+    "us-803a8300",
+    "us-803a8a78"
+   ],
+   "target_details": [
+    {
+     "id": "us-80395984",
+     "unit": "CriWare/src/adx/lsc/lsc",
+     "function": "LSC_CallStatFunc",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.0,
+     "size": "0x28",
+     "leaf": true
+    },
+    {
+     "id": "us-803ce4c0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pts",
+     "function": "sfpts_SearchPtsQue",
+     "status": "HIGH_MATCH",
+     "match_percent": null,
+     "size": "0xA8",
+     "leaf": true
+    },
+    {
+     "id": "us-8039485c",
+     "unit": "CriWare/src/adx/gcci/gcci",
+     "function": "gcCiSetSctLen",
+     "status": "HIGH_MATCH",
+     "match_percent": 75.5,
+     "size": "0xC4",
+     "leaf": true
+    },
+    {
+     "id": "us-8039ad88",
+     "unit": "CriWare/src/adx/adxt/adx_bsps",
+     "function": "ADX_DecodeInfoSpsd",
+     "status": "NOT_STARTED",
+     "match_percent": 4.1,
+     "size": "0x120",
+     "leaf": true
+    },
+    {
+     "id": "us-803a88ec",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+     "function": "mpvdec_MotionSub",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x18C",
+     "leaf": true
+    },
+    {
+     "id": "us-8039b2e8",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "AU_GetInfo",
+     "status": "COMPILES",
+     "match_percent": 53.0,
+     "size": "0x218",
+     "leaf": true
+    },
+    {
+     "id": "us-80388f78",
+     "unit": "CriWare/src/adx/adxt/adx_baif",
+     "function": "AIFF_GetInfo",
+     "status": "NOT_STARTED",
+     "match_percent": 0.0,
+     "size": "0x264",
+     "leaf": true
+    },
+    {
+     "id": "us-80394140",
+     "unit": "CriWare/src/adx/gcci/gcci",
+     "function": "gcCiClose",
+     "status": "HIGH_MATCH",
+     "match_percent": 90.476,
+     "size": "0x54",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7ea0",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+     "function": "MPVDEC_CheckVersion",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.667,
+     "size": "0x78",
+     "leaf": false
+    },
+    {
+     "id": "us-803ce19c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pts",
+     "function": "SFD_SetVideoPts",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-8039aea8",
+     "unit": "CriWare/src/adx/adxt/adx_bsps",
+     "function": "ADXB_DecodeHeaderSpsd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039b678",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "ADXB_DecodeHeaderAu",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF4",
+     "leaf": false
+    },
+    {
+     "id": "us-8039512c",
+     "unit": "CriWare/src/adx/lsc/lsc",
+     "function": "LSC_Destroy",
+     "status": "CODE_MATCH",
+     "match_percent": 96.8,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-803ce260",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pts",
+     "function": "SFPTS_WritePtsQue",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xFC",
+     "leaf": false
+    },
+    {
+     "id": "us-8038924c",
+     "unit": "CriWare/src/adx/adxt/adx_baif",
+     "function": "ADX_DecodeInfoAiff",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x100",
+     "leaf": false
+    },
+    {
+     "id": "us-8038934c",
+     "unit": "CriWare/src/adx/adxt/adx_baif",
+     "function": "ADXB_DecodeHeaderAiff",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x108",
+     "leaf": false
+    },
+    {
+     "id": "us-8039b570",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "ADX_DecodeInfoAu",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x108",
+     "leaf": false
+    },
+    {
+     "id": "us-803ce35c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pts",
+     "function": "SFPTS_ReadPtsQue",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803945e8",
+     "unit": "CriWare/src/adx/gcci/gcci",
+     "function": "gcCiStopTr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1B0",
+     "leaf": false
+    },
+    {
+     "id": "us-80393f20",
+     "unit": "CriWare/src/adx/gcci/gcci",
+     "function": "gcCiOpen",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x220",
+     "leaf": false
+    },
+    {
+     "id": "us-80395324",
+     "unit": "CriWare/src/adx/lsc/lsc",
+     "function": "lsc_EntryFileRange",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x224",
+     "leaf": false
+    },
+    {
+     "id": "us-80389454",
+     "unit": "CriWare/src/adx/adxt/adx_baif",
+     "function": "ADXB_ExecOneAiff16",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x320",
+     "leaf": false
+    },
+    {
+     "id": "us-8039af94",
+     "unit": "CriWare/src/adx/adxt/adx_bsps",
+     "function": "ADXB_ExecOneSpsd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x320",
+     "leaf": false
+    },
+    {
+     "id": "us-803942b8",
+     "unit": "CriWare/src/adx/gcci/gcci",
+     "function": "gcCiReqRd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x330",
+     "leaf": false
+    },
+    {
+     "id": "us-80389774",
+     "unit": "CriWare/src/adx/adxt/adx_baif",
+     "function": "ADXB_ExecOneAiff8",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x380",
+     "leaf": false
+    },
+    {
+     "id": "us-8039bb64",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "ADXB_ExecOneAu8",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x380",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7f18",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+     "function": "MPVDEC_DecIpicMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3E8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039b76c",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "ADXB_ExecOneAu16",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3F8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039bee4",
+     "unit": "CriWare/src/adx/adxt/adx_bau",
+     "function": "ADXB_ExecOneAuUlaw",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x40C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a8300",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+     "function": "MPVDEC_DecPpicMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x5C0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a8a78",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+     "function": "MPVDEC_DecBpicMb",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x62C",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_baif",
+    "CriWare/src/adx/adxt/adx_bau",
+    "CriWare/src/adx/adxt/adx_bsps",
+    "CriWare/src/adx/gcci/gcci",
+    "CriWare/src/adx/lsc/lsc",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_dec",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_pts"
+   ],
+   "leaf_count": 7,
+   "total": 31
+  },
+  {
+   "batch_id": "cri-07",
+   "label": "mixed",
+   "targets": [
+    "us-803a9230",
+    "us-803d82a0",
+    "us-803d6ad4",
+    "us-803d2af4",
+    "us-803bd348",
+    "us-8038f724",
+    "us-803a9288",
+    "us-8038dc50",
+    "us-803d8350",
+    "us-8038f990",
+    "us-80399b0c",
+    "us-80399b74",
+    "us-8039a704",
+    "us-8039a794",
+    "us-8039a824",
+    "us-8039a8b4",
+    "us-8039a944",
+    "us-8039a9d4",
+    "us-8039aa64",
+    "us-8039abac",
+    "us-8039a568",
+    "us-80399d64",
+    "us-8039a194",
+    "us-803bd250",
+    "us-8039a438",
+    "us-8039ac74",
+    "us-80399e5c",
+    "us-8039a28c",
+    "us-80399fb8",
+    "us-803a9564"
+   ],
+   "target_details": [
+    {
+     "id": "us-803a9230",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_deli",
+     "function": "MPV_SearchDelim",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.27,
+     "size": "0x58",
+     "leaf": true
+    },
+    {
+     "id": "us-803d82a0",
+     "unit": "CriWare/src/sofdec/sfx/sfx_alp",
+     "function": "SFXA_Create",
+     "status": "COMPILES",
+     "match_percent": 50.0,
+     "size": "0x8C",
+     "leaf": true
+    },
+    {
+     "id": "us-803d6ad4",
+     "unit": "CriWare/src/sofdec/sfdcore/uty/memcpyd",
+     "function": "UTY_MemcpyDword",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.286,
+     "size": "0xC4",
+     "leaf": true
+    },
+    {
+     "id": "us-803d2af4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_local",
+     "function": "SFHLOCAL_GetNbyteL",
+     "status": "STRUCTURAL",
+     "match_percent": 61.8,
+     "size": "0xEC",
+     "leaf": true
+    },
+    {
+     "id": "us-803bd348",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_ac",
+     "function": "DCT_AcIdctDouble",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.7,
+     "size": "0x22C",
+     "leaf": true
+    },
+    {
+     "id": "us-8038f724",
+     "unit": "CriWare/src/adx/ahx/ahx_sbf",
+     "function": "ahxsbf_init_filter",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.6,
+     "size": "0x258",
+     "leaf": true
+    },
+    {
+     "id": "us-803a9288",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_emp",
+     "function": "MPV_IsEmptyBpic",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2DC",
+     "leaf": true
+    },
+    {
+     "id": "us-8038dc50",
+     "unit": "CriWare/src/adx/ahx/ahx_mflt_c",
+     "function": "ahxsbf_mult_flt_ex",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x4F8",
+     "leaf": true
+    },
+    {
+     "id": "us-803d8350",
+     "unit": "CriWare/src/sofdec/sfx/sfx_alp",
+     "function": "SFXA_MakeAlpLumiTbl",
+     "status": "STRUCTURAL",
+     "match_percent": 69.727,
+     "size": "0x58",
+     "leaf": false
+    },
+    {
+     "id": "us-8038f990",
+     "unit": "CriWare/src/adx/ahx/ahx_sbf",
+     "function": "AHXSBF_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 83.6,
+     "size": "0x64",
+     "leaf": false
+    },
+    {
+     "id": "us-80399b0c",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_Lock",
+     "status": "CODE_MATCH",
+     "match_percent": 95.923,
+     "size": "0x68",
+     "leaf": false
+    },
+    {
+     "id": "us-80399b74",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_Unlock",
+     "status": "CODE_MATCH",
+     "match_percent": 97.056,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a704",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrUsrVsync",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a794",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrVsync",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a824",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrUhigh",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a8b4",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrFs",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a944",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrMain",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a9d4",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrMwIdle",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039aa64",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_ExecSvrUsrIdle",
+     "status": "HIGH_MATCH",
+     "match_percent": 77.889,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039abac",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_Finish",
+     "status": "HIGH_MATCH",
+     "match_percent": 82.2,
+     "size": "0xC8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a568",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_SetCbErr",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.083,
+     "size": "0xF0",
+     "leaf": false
+    },
+    {
+     "id": "us-80399d64",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_SetCbSvrWithString",
+     "status": "HIGH_MATCH",
+     "match_percent": 91.661,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a194",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_SetCbSvrIdWithString",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.355,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-803bd250",
+     "unit": "CriWare/src/sofdec/sfdcore/dct/dct_ac",
+     "function": "DCT_AcInit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a438",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_SetCbBdr",
+     "status": "HIGH_MATCH",
+     "match_percent": 83.8,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-8039ac74",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_TestAndSet",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.507,
+     "size": "0x114",
+     "leaf": false
+    },
+    {
+     "id": "us-80399e5c",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "svm_SetCbSvr",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.517,
+     "size": "0x15C",
+     "leaf": false
+    },
+    {
+     "id": "us-8039a28c",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "svm_SetCbSvrId",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.6,
+     "size": "0x1AC",
+     "leaf": false
+    },
+    {
+     "id": "us-80399fb8",
+     "unit": "CriWare/src/adx/svm/svm",
+     "function": "SVM_DelCbSvr",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.4,
+     "size": "0x1DC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9564",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_emp",
+     "function": "MPV_IsEmptyPpic",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x37C",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/ahx/ahx_mflt_c",
+    "CriWare/src/adx/ahx/ahx_sbf",
+    "CriWare/src/adx/svm/svm",
+    "CriWare/src/sofdec/sfdcore/dct/dct_ac",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_deli",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_emp",
+    "CriWare/src/sofdec/sfdcore/sfh/sfh_local",
+    "CriWare/src/sofdec/sfdcore/uty/memcpyd",
+    "CriWare/src/sofdec/sfx/sfx_alp"
+   ],
+   "leaf_count": 8,
+   "total": 30
+  },
+  {
+   "batch_id": "cri-08",
+   "label": "mixed",
+   "targets": [
+    "us-803c4158",
+    "us-8039c388",
+    "us-803c3820",
+    "us-8039ce90",
+    "us-8039c464",
+    "us-8039d9f8",
+    "us-8039daa8",
+    "us-8039c93c",
+    "us-8039db80",
+    "us-803c3d2c",
+    "us-8039d90c",
+    "us-8039d7f8",
+    "us-803c55d4",
+    "us-8039dc44",
+    "us-8039cf60",
+    "us-803c41ac",
+    "us-8039d698",
+    "us-803c3bc4",
+    "us-8039cd00",
+    "us-803c4620",
+    "us-803c4a60",
+    "us-803c4c24",
+    "us-8039d0b0",
+    "us-803c47b4",
+    "us-803c4df0",
+    "us-8039ca00",
+    "us-803c4308",
+    "us-803c389c",
+    "us-803c3e20",
+    "us-8039d2bc",
+    "us-8039c4f8"
+   ],
+   "target_details": [
+    {
+     "id": "us-803c4158",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_pesfn",
+     "status": "CODE_MATCH",
+     "match_percent": 99.4,
+     "size": "0x54",
+     "leaf": false
+    },
+    {
+     "id": "us-8039c388",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_Init",
+     "status": "HIGH_MATCH",
+     "match_percent": 90.227,
+     "size": "0x58",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3820",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "SFMPS_Init",
+     "status": "HIGH_MATCH",
+     "match_percent": 90.9,
+     "size": "0x58",
+     "leaf": false
+    },
+    {
+     "id": "us-8039ce90",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_GetNumData",
+     "status": "CODE_MATCH",
+     "match_percent": 98.966,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-8039c464",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "axrna_voice_drop",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x94",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d9f8",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetOutVol",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB0",
+     "leaf": false
+    },
+    {
+     "id": "us-8039daa8",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetOutPan",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039c93c",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-8039db80",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetMain",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3d2c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "criware_803C1490",
+     "status": "CODE_MATCH",
+     "match_percent": 99.8,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d90c",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetSfreq",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d7f8",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803c55d4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "SFMPS_Seek",
+     "status": "CODE_MATCH",
+     "match_percent": 99.467,
+     "size": "0x12C",
+     "leaf": false
+    },
+    {
+     "id": "us-8039dc44",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "criware_8039A8E0",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x138",
+     "leaf": false
+    },
+    {
+     "id": "us-8039cf60",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "axrna_update_play",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x150",
+     "leaf": false
+    },
+    {
+     "id": "us-803c41ac",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_SkipNext",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.368,
+     "size": "0x15C",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d698",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "axrna_start_flash",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x160",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3bc4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_DecodeSomeUnit",
+     "status": "HIGH_MATCH",
+     "match_percent": 91.378,
+     "size": "0x168",
+     "leaf": false
+    },
+    {
+     "id": "us-8039cd00",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetPlaySw",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x190",
+     "leaf": false
+    },
+    {
+     "id": "us-803c4620",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_CopyAudio",
+     "status": "HIGH_MATCH",
+     "match_percent": 87.475,
+     "size": "0x194",
+     "leaf": false
+    },
+    {
+     "id": "us-803c4a60",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_CopyUsrSj",
+     "status": "HIGH_MATCH",
+     "match_percent": 74.838,
+     "size": "0x1BC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c4c24",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_CopyDstBuft",
+     "status": "CODE_MATCH",
+     "match_percent": 95.496,
+     "size": "0x1CC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d0b0",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "axrna_start_trans",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x20C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c47b4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_CopyVideo",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x214",
+     "leaf": false
+    },
+    {
+     "id": "us-803c4df0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_ChkSupply",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x274",
+     "leaf": false
+    },
+    {
+     "id": "us-8039ca00",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_SetTransSw",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x300",
+     "leaf": false
+    },
+    {
+     "id": "us-803c4308",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_CopyPketData",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x318",
+     "leaf": false
+    },
+    {
+     "id": "us-803c389c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "SFMPS_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x328",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3e20",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_mps",
+     "function": "sfmps_DecodeOneUnit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x338",
+     "leaf": false
+    },
+    {
+     "id": "us-8039d2bc",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "criware_80399F4C",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3DC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039c4f8",
+     "unit": "CriWare/src/adx/wiirna/ax_rna",
+     "function": "AXRNA_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x444",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/wiirna/ax_rna",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_mps"
+   ],
+   "leaf_count": 0,
+   "total": 31
+  },
+  {
+   "batch_id": "cri-09",
+   "label": "mixed",
+   "targets": [
+    "us-803ab620",
+    "us-8037f4f8",
+    "us-803aa1e0",
+    "us-803c0340",
+    "us-803aaf50",
+    "us-803c0760",
+    "us-803c0fec",
+    "us-803c0d18",
+    "us-80380aa8",
+    "us-803c03fc",
+    "us-803ab020",
+    "us-80381cf8",
+    "us-803ab2c8",
+    "us-803810d8",
+    "us-803a9e88",
+    "us-803ab51c",
+    "us-803c0e94",
+    "us-803c04f0",
+    "us-803c061c",
+    "us-803bfae0",
+    "us-80380d90",
+    "us-80380f34",
+    "us-803ab118",
+    "us-803aa928",
+    "us-803c083c",
+    "us-80381568",
+    "us-803a9fdc",
+    "us-803c0a0c",
+    "us-80381754",
+    "us-8038203c",
+    "us-803c00c0",
+    "us-803bfd2c",
+    "us-80381a6c",
+    "us-803811dc",
+    "us-803aaaf0",
+    "us-803aa354",
+    "us-8037f5a0",
+    "us-8037fc6c"
+   ],
+   "target_details": [
+    {
+     "id": "us-803ab620",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "MPV_MoveChunk",
+     "status": "STRUCTURAL",
+     "match_percent": 3.704,
+     "size": "0x6C",
+     "leaf": false
+    },
+    {
+     "id": "us-8037f4f8",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "ADXF_LoadPartitionNw",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.595,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-803aa1e0",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "MPV_DecodePicAtr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0340",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_ExcludeHdr",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.277,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-803aaf50",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecEscSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0760",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_SetAdxtHd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0fec",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_Seek",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0d18",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE8",
+     "leaf": false
+    },
+    {
+     "id": "us-80380aa8",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_CreateAdxFs",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.085,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c03fc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_SearchAlign",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF4",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab020",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecUdscSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-80381cf8",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "ADXF_GetFsizeSct",
+     "status": "CODE_MATCH",
+     "match_percent": 96.111,
+     "size": "0xFC",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab2c8",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecSeqUdsc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x100",
+     "leaf": false
+    },
+    {
+     "id": "us-803810d8",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_read_sj32",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.738,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9e88",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "MPVHDEC_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab51c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "MPVHDEC_RecoverSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0e94",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_Pause",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x128",
+     "leaf": false
+    },
+    {
+     "id": "us-803c04f0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_ExcludeSilence",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x12C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c061c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_ChkTermFlg",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x144",
+     "leaf": false
+    },
+    {
+     "id": "us-803bfae0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_SetSpeed",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x188",
+     "leaf": false
+    },
+    {
+     "id": "us-80380d90",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "ADXF_Close",
+     "status": "CODE_MATCH",
+     "match_percent": 97.524,
+     "size": "0x1A4",
+     "leaf": false
+    },
+    {
+     "id": "us-80380f34",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "ADXF_CloseAll",
+     "status": "CODE_MATCH",
+     "match_percent": 95.381,
+     "size": "0x1A4",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab118",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_AnalyUd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1B0",
+     "leaf": false
+    },
+    {
+     "id": "us-803aa928",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecGscSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1C8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c083c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1D0",
+     "leaf": false
+    },
+    {
+     "id": "us-80381568",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_Stop",
+     "status": "CODE_MATCH",
+     "match_percent": 97.748,
+     "size": "0x1EC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9fdc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "MPV_DecodePicAtrSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x204",
+     "leaf": false
+    },
+    {
+     "id": "us-803c0a0c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_InitInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x214",
+     "leaf": false
+    },
+    {
+     "id": "us-80381754",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_ExecOne",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x24C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038203c",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_GetFnameRangeEx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x264",
+     "leaf": false
+    },
+    {
+     "id": "us-803c00c0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "sfadxt_AdjustSync",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x280",
+     "leaf": false
+    },
+    {
+     "id": "us-803bfd2c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt",
+     "function": "SFADXT_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x284",
+     "leaf": false
+    },
+    {
+     "id": "us-80381a6c",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_Seek",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x28C",
+     "leaf": false
+    },
+    {
+     "id": "us-803811dc",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_ReadNw32",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2CC",
+     "leaf": false
+    },
+    {
+     "id": "us-803aaaf0",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecPscSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x460",
+     "leaf": false
+    },
+    {
+     "id": "us-803aa354",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+     "function": "mpvhdec_DecShcSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x5D4",
+     "leaf": false
+    },
+    {
+     "id": "us-8037f5a0",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_LoadPtBothNw",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x68C",
+     "leaf": false
+    },
+    {
+     "id": "us-8037fc6c",
+     "unit": "CriWare/src/adx/adxf/adx_fs",
+     "function": "adxf_GetPtStat",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE3C",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxf/adx_fs",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_adxt"
+   ],
+   "leaf_count": 0,
+   "total": 38
+  },
+  {
+   "batch_id": "cri-10",
+   "label": "mixed",
+   "targets": [
+    "us-80386678",
+    "us-80396a24",
+    "us-80396bbc",
+    "us-803973f8",
+    "us-803977d4",
+    "us-803984d8",
+    "us-8039859c",
+    "us-80398660",
+    "us-80396958",
+    "us-80397708",
+    "us-803979a4",
+    "us-80396ae8",
+    "us-80397898",
+    "us-80398724",
+    "us-80396f80",
+    "us-80385f44",
+    "us-80385d78",
+    "us-80396c80",
+    "us-80386e20",
+    "us-80387418",
+    "us-803972d0",
+    "us-80396df4",
+    "us-803861dc",
+    "us-80387740",
+    "us-803970d4",
+    "us-803967a4",
+    "us-80397be8",
+    "us-803980a8",
+    "us-80385ab4",
+    "us-803870e4",
+    "us-80386398",
+    "us-80385600"
+   ],
+   "target_details": [
+    {
+     "id": "us-80386678",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "ADXT_GetTimeReal",
+     "status": "HIGH_MATCH",
+     "match_percent": 78.718,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-80396a24",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_GetUuid",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-80396bbc",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_Reset",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.0,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803973f8",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_GetBufSize",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803977d4",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_GetUuid",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803984d8",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_GetBufPtr",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-8039859c",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_GetBufSize",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-80398660",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_GetXtrSize",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.245,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-80396958",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_Destroy",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.863,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-80397708",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_Destroy",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.765,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-803979a4",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "sjrbf_Reset",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.154,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-80396ae8",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_EntryErrFunc",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.434,
+     "size": "0xD4",
+     "leaf": false
+    },
+    {
+     "id": "us-80397898",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_EntryErrFunc",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.434,
+     "size": "0xD4",
+     "leaf": false
+    },
+    {
+     "id": "us-80398724",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "SJRBF_GetFlowCnt",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.475,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-80396f80",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "sjmem_PutChunk",
+     "status": "HIGH_MATCH",
+     "match_percent": 82.937,
+     "size": "0xFC",
+     "leaf": false
+    },
+    {
+     "id": "us-80385f44",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "ADXT_StartSj",
+     "status": "CODE_MATCH",
+     "match_percent": 96.875,
+     "size": "0x100",
+     "leaf": false
+    },
+    {
+     "id": "us-80385d78",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_start_sj",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.121,
+     "size": "0x108",
+     "leaf": false
+    },
+    {
+     "id": "us-80396c80",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "SJMEM_GetNumData",
+     "status": "HIGH_MATCH",
+     "match_percent": 88.478,
+     "size": "0x10C",
+     "leaf": false
+    },
+    {
+     "id": "us-80386e20",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_ExecServer",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.118,
+     "size": "0x110",
+     "leaf": false
+    },
+    {
+     "id": "us-80387418",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "ADXT_DiscardSmpl",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.829,
+     "size": "0x118",
+     "leaf": false
+    },
+    {
+     "id": "us-803972d0",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "sjmem_IsGetChunk",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.568,
+     "size": "0x128",
+     "leaf": false
+    },
+    {
+     "id": "us-80396df4",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "sjmem_GetChunk",
+     "status": "HIGH_MATCH",
+     "match_percent": 88.545,
+     "size": "0x134",
+     "leaf": false
+    },
+    {
+     "id": "us-803861dc",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_GetTimeSfreq2",
+     "status": "CODE_MATCH",
+     "match_percent": 97.528,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-80387740",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_InsertSilence",
+     "status": "CODE_MATCH",
+     "match_percent": 99.263,
+     "size": "0x17C",
+     "leaf": false
+    },
+    {
+     "id": "us-803970d4",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "sjmem_UngetChunk",
+     "status": "HIGH_MATCH",
+     "match_percent": 82.192,
+     "size": "0x18C",
+     "leaf": false
+    },
+    {
+     "id": "us-803967a4",
+     "unit": "CriWare/src/adx/sj/sj_mem",
+     "function": "sjmem_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.495,
+     "size": "0x1B4",
+     "leaf": false
+    },
+    {
+     "id": "us-80397be8",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "sjrbf_GetChunk",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x22C",
+     "leaf": false
+    },
+    {
+     "id": "us-803980a8",
+     "unit": "CriWare/src/adx/sj/sj_rbf",
+     "function": "sjrbf_UngetChunk",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x248",
+     "leaf": false
+    },
+    {
+     "id": "us-80385ab4",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x260",
+     "leaf": false
+    },
+    {
+     "id": "us-803870e4",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_Pause",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2B4",
+     "leaf": false
+    },
+    {
+     "id": "us-80386398",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_GetTime",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2E0",
+     "leaf": false
+    },
+    {
+     "id": "us-80385600",
+     "unit": "CriWare/src/adx/adxt/adx_tlk",
+     "function": "adxt_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x47C",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_tlk",
+    "CriWare/src/adx/sj/sj_mem",
+    "CriWare/src/adx/sj/sj_rbf"
+   ],
+   "leaf_count": 0,
+   "total": 32
+  },
+  {
+   "batch_id": "cri-11",
+   "label": "mixed",
+   "targets": [
+    "us-8039e034",
+    "us-8039e590",
+    "us-8039e504",
+    "us-8039f688",
+    "us-8039f718",
+    "us-8039df8c",
+    "us-8039dd8c",
+    "us-8039dea0",
+    "us-8039f808",
+    "us-8039e08c",
+    "us-803a01e0",
+    "us-80382f3c",
+    "us-8039e40c",
+    "us-80383878",
+    "us-80383610",
+    "us-80383740",
+    "us-8039e160",
+    "us-8039e2a8",
+    "us-8039fe08",
+    "us-803cd4c8",
+    "us-803839a0",
+    "us-80383458",
+    "us-803cddf4",
+    "us-803cd184",
+    "us-803cc5c4",
+    "us-8039ff6c",
+    "us-803ccb60",
+    "us-803ccdd8",
+    "us-803cbee4",
+    "us-80382848",
+    "us-8039ef60",
+    "us-803cc30c",
+    "us-8039fb10",
+    "us-80382bf0",
+    "us-80383034",
+    "us-803cba64",
+    "us-8039f200",
+    "us-803cd63c"
+   ],
+   "target_details": [
+    {
+     "id": "us-8039e034",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_fs_proc",
+     "status": "CODE_MATCH",
+     "match_percent": 99.455,
+     "size": "0x58",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e590",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "ADXM_ShutdownFramework",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.4,
+     "size": "0x64",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e504",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "ADXM_SetupFramework",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x8C",
+     "leaf": false
+    },
+    {
+     "id": "us-8039f688",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwsffrm_SetPicUsrInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039f718",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwsffrm_SetSudDatInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-8039df8c",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_vsync_proc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039dd8c",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_lock",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xAC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039dea0",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_goto_mwidle_border",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039f808",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwPlyRelCurFrm",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e08c",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_mwidle_proc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a01e0",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "criware_8039CD7C",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-80382f3c",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_get_wr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e40c",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "ADXM_ShutdownThrd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-80383878",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_discard_proc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x128",
+     "leaf": false
+    },
+    {
+     "id": "us-80383610",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "ADXSJD_ExecHndl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-80383740",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_insert_proc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x138",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e160",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "adxm_create_base_thread",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e2a8",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_mwii",
+     "function": "ADXM_SetupThrd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x14C",
+     "leaf": false
+    },
+    {
+     "id": "us-8039fe08",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwsffrm_AnalyAudioInfo",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803cd4c8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "SFD_Stop",
+     "status": "CODE_MATCH",
+     "match_percent": 97.584,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803839a0",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "ADXSJD_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x180",
+     "leaf": false
+    },
+    {
+     "id": "us-80383458",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_decexec_end",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1B8",
+     "leaf": false
+    },
+    {
+     "id": "us-803cddf4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "SFD_GetFrm",
+     "status": "CODE_MATCH",
+     "match_percent": 97.975,
+     "size": "0x1E4",
+     "leaf": false
+    },
+    {
+     "id": "us-803cd184",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "SFD_Destroy",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.336,
+     "size": "0x218",
+     "leaf": false
+    },
+    {
+     "id": "us-803cc5c4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_IsBpaOff",
+     "status": "STRUCTURAL",
+     "match_percent": 66.431,
+     "size": "0x224",
+     "leaf": false
+    },
+    {
+     "id": "us-8039ff6c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwsffrm_ChangeSettingSyncPlayback",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x274",
+     "leaf": false
+    },
+    {
+     "id": "us-803ccb60",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "SFD_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 70.62,
+     "size": "0x278",
+     "leaf": false
+    },
+    {
+     "id": "us-803ccdd8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_InitHn",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x284",
+     "leaf": false
+    },
+    {
+     "id": "us-803cbee4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_StatPrep",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x28C",
+     "leaf": false
+    },
+    {
+     "id": "us-80382848",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "ADXSJD_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x298",
+     "leaf": false
+    },
+    {
+     "id": "us-8039ef60",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwPlyGetCurFrm",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2A0",
+     "leaf": false
+    },
+    {
+     "id": "us-803cc30c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_IsBpaOn",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2B8",
+     "leaf": false
+    },
+    {
+     "id": "us-8039fb10",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwsffrm_CallbackAnalyzeSofdecHeader",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2F8",
+     "leaf": false
+    },
+    {
+     "id": "us-80382bf0",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_decode_prep",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x34C",
+     "leaf": false
+    },
+    {
+     "id": "us-80383034",
+     "unit": "CriWare/src/adx/adxt/adx_sjd",
+     "function": "adxsjd_decexec_start",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x424",
+     "leaf": false
+    },
+    {
+     "id": "us-803cba64",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_ExecOne",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x480",
+     "leaf": false
+    },
+    {
+     "id": "us-8039f200",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdfrm",
+     "function": "mwl_convFrmInfFromSFD",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x488",
+     "leaf": false
+    },
+    {
+     "id": "us-803cd63c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_ply",
+     "function": "sfply_ResetHn",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x5C0",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_sjd",
+    "CriWare/src/adx/adxt/srcwii/adx_mwii",
+    "CriWare/src/sofdec/mwply/mwsfdfrm",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_ply"
+   ],
+   "leaf_count": 0,
+   "total": 38
+  },
+  {
+   "batch_id": "cri-12",
+   "label": "mixed",
+   "targets": [
+    "us-803a523c",
+    "us-803c2394",
+    "us-803a4dbc",
+    "us-80387904",
+    "us-803c1cac",
+    "us-80387b24",
+    "us-803a6878",
+    "us-803c18d0",
+    "us-803a5b1c",
+    "us-803a66fc",
+    "us-803a537c",
+    "us-803c249c",
+    "us-803a5a18",
+    "us-803a4e50",
+    "us-803a6168",
+    "us-803a5104",
+    "us-803884dc",
+    "us-803c1dc8",
+    "us-803a5cb4",
+    "us-80388744",
+    "us-803c176c",
+    "us-80388374",
+    "us-803879a4",
+    "us-803a4f7c",
+    "us-803a4c08",
+    "us-803c1af8",
+    "us-803c15a0",
+    "us-803a5e0c",
+    "us-803c1f20",
+    "us-803a63c4",
+    "us-803a4970",
+    "us-80387be4",
+    "us-80387f44"
+   ],
+   "target_details": [
+    {
+     "id": "us-803a523c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "MWSFPLY_SetFlowLimit",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.522,
+     "size": "0x5C",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2394",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "SFBUF_VfrmAddRead",
+     "status": "HIGH_MATCH",
+     "match_percent": 88.0,
+     "size": "0x64",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4dbc",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mwPlyStartSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x94",
+     "leaf": false
+    },
+    {
+     "id": "us-80387904",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_trap_entry_lps",
+     "status": "STRUCTURAL",
+     "match_percent": 2.5,
+     "size": "0xA0",
+     "leaf": false
+    },
+    {
+     "id": "us-803c1cac",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "fn_803C1CAC",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.146,
+     "size": "0xA4",
+     "leaf": false
+    },
+    {
+     "id": "us-80387b24",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_eos_entry",
+     "status": "STRUCTURAL",
+     "match_percent": 24.396,
+     "size": "0xC0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a6878",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwPlyExecRequestServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c18d0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "SFBUF_DestroySj",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.922,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a5b1c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwsfsvr_StartStream",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD8",
+     "leaf": false
+    },
+    {
+     "id": "us-803a66fc",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwlSfdSleepDecSvr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a537c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "fn_803A537C",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-803c249c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "SFBUF_GetFlowCnt",
+     "status": "HIGH_MATCH",
+     "match_percent": 80.312,
+     "size": "0x100",
+     "leaf": false
+    },
+    {
+     "id": "us-803a5a18",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwsfsvr_SyncStartSst",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4e50",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mwSfdStopDec",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x12C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a6168",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwsfsvr_DecodeServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-803a5104",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mwPlyPause",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x138",
+     "leaf": false
+    },
+    {
+     "id": "us-803884dc",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "criware_80385320",
+     "status": "HIGH_MATCH",
+     "match_percent": 79.481,
+     "size": "0x144",
+     "leaf": false
+    },
+    {
+     "id": "us-803c1dc8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "sfbuf_RingGetSub",
+     "status": "STRUCTURAL",
+     "match_percent": 62.707,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-803a5cb4",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "MWSFSVR_VsyncThrdProc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x158",
+     "leaf": false
+    },
+    {
+     "id": "us-80388744",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_ExecHndl",
+     "status": "STRUCTURAL",
+     "match_percent": 1.124,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803c176c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "sfbuf_InitRingSj",
+     "status": "STRUCTURAL",
+     "match_percent": 58.944,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-80388374",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_stat_prep",
+     "status": "STRUCTURAL",
+     "match_percent": 1.111,
+     "size": "0x168",
+     "leaf": false
+    },
+    {
+     "id": "us-803879a4",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_trap_entry",
+     "status": "STRUCTURAL",
+     "match_percent": 1.042,
+     "size": "0x180",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4f7c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mwPlyStop",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x188",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4c08",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mwPlyStartFname",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1B4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c1af8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "SFBUF_SetSupplySj",
+     "status": "HIGH_MATCH",
+     "match_percent": 73.037,
+     "size": "0x1B4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c15a0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "SFBUF_InitHn",
+     "status": "STRUCTURAL",
+     "match_percent": 60.043,
+     "size": "0x1CC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a5e0c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "MWSFSVR_MainThrdProc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x244",
+     "leaf": false
+    },
+    {
+     "id": "us-803c1f20",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+     "function": "sfbuf_RingAddSub",
+     "status": "STRUCTURAL",
+     "match_percent": 53.646,
+     "size": "0x278",
+     "leaf": false
+    },
+    {
+     "id": "us-803a63c4",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvr",
+     "function": "mwsfd_ExecSvrHndl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x294",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4970",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdply",
+     "function": "mw_sfd_start_ex",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x298",
+     "leaf": false
+    },
+    {
+     "id": "us-80387be4",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_nlp_trap_entry",
+     "status": "STRUCTURAL",
+     "match_percent": 0.463,
+     "size": "0x360",
+     "leaf": false
+    },
+    {
+     "id": "us-80387f44",
+     "unit": "CriWare/src/adx/adxt/adx_tsvr",
+     "function": "adxt_stat_decinfo",
+     "status": "STRUCTURAL",
+     "match_percent": 0.373,
+     "size": "0x430",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_tsvr",
+    "CriWare/src/sofdec/mwply/mwsfdply",
+    "CriWare/src/sofdec/mwply/mwsfdsvr",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_buf"
+   ],
+   "leaf_count": 0,
+   "total": 33
+  },
+  {
+   "batch_id": "cri-13",
+   "label": "mixed",
+   "targets": [
+    "us-803abca4",
+    "us-803d6280",
+    "us-803d62f4",
+    "us-803d66dc",
+    "us-803d6750",
+    "us-803abcfc",
+    "us-803a1988",
+    "us-803909f4",
+    "us-8038c584",
+    "us-803a1b00",
+    "us-803ab828",
+    "us-803a17c8",
+    "us-803abf48",
+    "us-80390690",
+    "us-803ac004",
+    "us-803905a0",
+    "us-803abbbc",
+    "us-8038b8ac",
+    "us-803d595c",
+    "us-803ab68c",
+    "us-803a1bb8",
+    "us-803abd7c",
+    "us-80390a98",
+    "us-803d5730",
+    "us-803d53cc",
+    "us-80390754",
+    "us-8038b640",
+    "us-803a137c",
+    "us-803a1d64",
+    "us-8038b998",
+    "us-8038bd04",
+    "us-8038c0f0"
+   ],
+   "target_details": [
+    {
+     "id": "us-803abca4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "MPV_Finish",
+     "status": "STRUCTURAL",
+     "match_percent": 46.091,
+     "size": "0x58",
+     "leaf": false
+    },
+    {
+     "id": "us-803d6280",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_AnlyElemChNum",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.1,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803d62f4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_AnlyElemSmpHz",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.1,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803d66dc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_AnlyFtrFixFlg",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.1,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803d6750",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_AnlyFtrShcFixFlg",
+     "status": "HIGH_MATCH",
+     "match_percent": 93.1,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803abcfc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "MPV_Create",
+     "status": "STRUCTURAL",
+     "match_percent": 3.125,
+     "size": "0x80",
+     "leaf": false
+    },
+    {
+     "id": "us-803a1988",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "MWSFTAG_CreateAinfSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-803909f4",
+     "unit": "CriWare/src/adx/ahx/ahx_bsr",
+     "function": "AHXBSR_GetBitStm",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.538,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038c584",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADX_ScanInfoCodeWav",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xA4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a1b00",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "MWSFTAG_UpdateTagInf",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB8",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab828",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "mpvlib_ChkFatal",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB8",
+     "leaf": false
+    },
+    {
+     "id": "us-803a17c8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "mwsfsfx_SetYcc420plnInfToSfx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-803abf48",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "MPV_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-80390690",
+     "unit": "CriWare/src/adx/ahx/ahx_bsr",
+     "function": "AHXBSR_Restruct",
+     "status": "HIGH_MATCH",
+     "match_percent": 94.898,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803ac004",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "MPV_SetCond",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-803905a0",
+     "unit": "CriWare/src/adx/ahx/ahx_bsr",
+     "function": "AHXBSR_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.389,
+     "size": "0xD8",
+     "leaf": false
+    },
+    {
+     "id": "us-803abbbc",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "mpvlib_InitPicAtr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE8",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b8ac",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADXB_DecodeHeaderWav",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d595c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_AnlyHdrToolVer",
+     "status": "ACTIVE",
+     "match_percent": 97.849,
+     "size": "0x174",
+     "leaf": false
+    },
+    {
+     "id": "us-803ab68c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "MPV_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x19C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a1bb8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "mwsftag_GetAinfFromSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1AC",
+     "leaf": false
+    },
+    {
+     "id": "us-803abd7c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+     "function": "mpvlib_InitHn",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1B8",
+     "leaf": false
+    },
+    {
+     "id": "us-80390a98",
+     "unit": "CriWare/src/adx/ahx/ahx_bsr",
+     "function": "AHXBSR_SearchSync",
+     "status": "HIGH_MATCH",
+     "match_percent": 90.078,
+     "size": "0x1CC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d5730",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "searchStmId",
+     "status": "CODE_MATCH",
+     "match_percent": 97.9,
+     "size": "0x22C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d53cc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2",
+     "function": "VER2_IsSfdHeader",
+     "status": "HIGH_MATCH",
+     "match_percent": 75.0,
+     "size": "0x240",
+     "leaf": false
+    },
+    {
+     "id": "us-80390754",
+     "unit": "CriWare/src/adx/ahx/ahx_bsr",
+     "function": "ahxbsr_get_data",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x244",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b640",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADX_DecodeInfoWav",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x26C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a137c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "MWSFD_CnvFrmInfToSfx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x358",
+     "leaf": false
+    },
+    {
+     "id": "us-803a1d64",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsfx",
+     "function": "MWSFD_GetZfrmRange",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x35C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038b998",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADXB_ExecOneWav16",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x36C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038bd04",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADXB_ExecOneWav8",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3EC",
+     "leaf": false
+    },
+    {
+     "id": "us-8038c0f0",
+     "unit": "CriWare/src/adx/adxt/adx_bwav",
+     "function": "ADXB_ExecOneWav4",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x3F8",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_bwav",
+    "CriWare/src/adx/ahx/ahx_bsr",
+    "CriWare/src/sofdec/mwply/mwsfdsfx",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
+    "CriWare/src/sofdec/sfdcore/sfh/sfh_ver2"
+   ],
+   "leaf_count": 0,
+   "total": 32
+  },
+  {
+   "batch_id": "cri-14",
+   "label": "mixed",
+   "targets": [
+    "us-803a9cec",
+    "us-803a9e14",
+    "us-803bf27c",
+    "us-803a9c70",
+    "us-8038fd80",
+    "us-803bf3a0",
+    "us-803bf438",
+    "us-8038fa00",
+    "us-803bf2f4",
+    "us-803a4440",
+    "us-803d35a8",
+    "us-803a4534",
+    "us-803a9d4c",
+    "us-803d4ad0",
+    "us-803d4bd8",
+    "us-803d46a8",
+    "us-803a03f8",
+    "us-803a02d4",
+    "us-80392a88",
+    "us-803930f8",
+    "us-803a07a0",
+    "us-803d3888",
+    "us-803a05d8",
+    "us-8038faec",
+    "us-80392820",
+    "us-803a41d8",
+    "us-8038fe3c",
+    "us-803a45f8",
+    "us-80393744",
+    "us-80392bc8",
+    "us-803a0a04"
+   ],
+   "target_details": [
+    {
+     "id": "us-803a9cec",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_get",
+     "function": "MPV_GetBitRate",
+     "status": "CODE_MATCH",
+     "match_percent": 99.167,
+     "size": "0x60",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9e14",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_get",
+     "function": "MPV_GetLinkFlg",
+     "status": "CODE_MATCH",
+     "match_percent": 98.793,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf27c",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_get",
+     "function": "MPS_GetPackHd",
+     "status": "CODE_MATCH",
+     "match_percent": 98.667,
+     "size": "0x78",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9c70",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_get",
+     "function": "MPV_GetPicAtr",
+     "status": "STRUCTURAL",
+     "match_percent": 64.452,
+     "size": "0x7C",
+     "leaf": false
+    },
+    {
+     "id": "us-8038fd80",
+     "unit": "CriWare/src/adx/ahx/ahx_sjd",
+     "function": "AHXSJD_Start",
+     "status": "HIGH_MATCH",
+     "match_percent": 87.394,
+     "size": "0x84",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf3a0",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_get",
+     "function": "MPS_GetLastSysHd",
+     "status": "CODE_MATCH",
+     "match_percent": 97.895,
+     "size": "0x98",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf438",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_get",
+     "function": "MPS_GetPketHd",
+     "status": "CODE_MATCH",
+     "match_percent": 97.619,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-8038fa00",
+     "unit": "CriWare/src/adx/ahx/ahx_sjd",
+     "function": "AHXSJD_Init",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.302,
+     "size": "0xAC",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf2f4",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_get",
+     "function": "MPS_GetSysHd",
+     "status": "CODE_MATCH",
+     "match_percent": 98.14,
+     "size": "0xAC",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4440",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdlib",
+     "function": "mwsflib_InitLibWork",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB4",
+     "leaf": false
+    },
+    {
+     "id": "us-803d35a8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+     "function": "VER1_IsSfdHeader",
+     "status": "HIGH_MATCH",
+     "match_percent": 86.2,
+     "size": "0xB4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a4534",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdlib",
+     "function": "mwPlySfdInit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9d4c",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_get",
+     "function": "MPV_GetVbvBufSiz",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d4ad0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+     "function": "VER1_AnlyFtrFixFlg",
+     "status": "CODE_MATCH",
+     "match_percent": 96.97,
+     "size": "0x108",
+     "leaf": false
+    },
+    {
+     "id": "us-803d4bd8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+     "function": "VER1_AnlyFtrShcFixFlg",
+     "status": "NOT_STARTED",
+     "match_percent": 97.0,
+     "size": "0x108",
+     "leaf": false
+    },
+    {
+     "id": "us-803d46a8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+     "function": "VER1_AnlyElemPicSz",
+     "status": "CODE_MATCH",
+     "match_percent": 97.0,
+     "size": "0x118",
+     "leaf": false
+    },
+    {
+     "id": "us-803a03f8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
+     "function": "mwPlyStartSeamless",
+     "status": "CODE_MATCH",
+     "match_percent": 97.222,
+     "size": "0x120",
+     "leaf": false
+    },
+    {
+     "id": "us-803a02d4",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
+     "function": "mwPlyEntryFname",
+     "status": "CODE_MATCH",
+     "match_percent": 95.069,
+     "size": "0x124",
+     "leaf": false
+    },
+    {
+     "id": "us-80392a88",
+     "unit": "CriWare/src/adx/cvfs/cri_cvfs",
+     "function": "cvFsSetDefDev",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x140",
+     "leaf": false
+    },
+    {
+     "id": "us-803930f8",
+     "unit": "CriWare/src/adx/cvfs/cri_cvfs",
+     "function": "getDevName",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x198",
+     "leaf": false
+    },
+    {
+     "id": "us-803a07a0",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
+     "function": "mwPlyStartFnameRangeLp",
+     "status": "CODE_MATCH",
+     "match_percent": 97.696,
+     "size": "0x198",
+     "leaf": false
+    },
+    {
+     "id": "us-803d3888",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+     "function": "VER1_AnlyHdrToolVer",
+     "status": "CODE_MATCH",
+     "match_percent": 98.125,
+     "size": "0x1C0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a05d8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
+     "function": "mwPlyStartFnameLp",
+     "status": "STRUCTURAL",
+     "match_percent": 0.877,
+     "size": "0x1C8",
+     "leaf": false
+    },
+    {
+     "id": "us-8038faec",
+     "unit": "CriWare/src/adx/ahx/ahx_sjd",
+     "function": "AHXSJD_Create",
+     "status": "COMPILES",
+     "match_percent": 0.0,
+     "size": "0x20C",
+     "leaf": false
+    },
+    {
+     "id": "us-80392820",
+     "unit": "CriWare/src/adx/cvfs/cri_cvfs",
+     "function": "cvFsAddDev",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x268",
+     "leaf": false
+    },
+    {
+     "id": "us-803a41d8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdlib",
+     "function": "mwPlyInitSfdFx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x268",
+     "leaf": false
+    },
+    {
+     "id": "us-8038fe3c",
+     "unit": "CriWare/src/adx/ahx/ahx_sjd",
+     "function": "criware_8038CB9C",
+     "status": "HIGH_MATCH",
+     "match_percent": 82.229,
+     "size": "0x2A8",
+     "leaf": false
+    },
+    {
+     "id": "us-803a45f8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdlib",
+     "function": "MWSFLIB_SfdErrFunc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x2E4",
+     "leaf": false
+    },
+    {
+     "id": "us-80393744",
+     "unit": "CriWare/src/adx/cvfs/cri_cvfs",
+     "function": "cvFsGetFileSize",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x388",
+     "leaf": false
+    },
+    {
+     "id": "us-80392bc8",
+     "unit": "CriWare/src/adx/cvfs/cri_cvfs",
+     "function": "cvFsOpen",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x530",
+     "leaf": false
+    },
+    {
+     "id": "us-803a0a04",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsl",
+     "function": "mwPlyExecInfiniteLoopHandle",
+     "status": "STRUCTURAL",
+     "match_percent": 0.286,
+     "size": "0x578",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/ahx/ahx_sjd",
+    "CriWare/src/adx/cvfs/cri_cvfs",
+    "CriWare/src/sofdec/mwply/mwsfdlib",
+    "CriWare/src/sofdec/mwply/mwsfdsl",
+    "CriWare/src/sofdec/sfdcore/mps/mps_get",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_get",
+    "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1"
+   ],
+   "leaf_count": 0,
+   "total": 31
+  },
+  {
+   "batch_id": "cri-15",
+   "label": "mixed",
+   "targets": [
+    "us-80388b64",
+    "us-803cb87c",
+    "us-803bf880",
+    "us-803cb820",
+    "us-803d81b0",
+    "us-803a7710",
+    "us-803d1d24",
+    "us-803d7e6c",
+    "us-803d8108",
+    "us-803bf650",
+    "us-80394d70",
+    "us-803d1db0",
+    "us-803c2b60",
+    "us-80388b9c",
+    "us-80394e3c",
+    "us-803888bc",
+    "us-803a7c60",
+    "us-803bf4e0",
+    "us-803993a8",
+    "us-803cb690",
+    "us-80398fcc",
+    "us-803991b8",
+    "us-80394bc4",
+    "us-803d1a94",
+    "us-803cb49c",
+    "us-803d7f0c",
+    "us-803c2930",
+    "us-803c3070",
+    "us-803c2c4c",
+    "us-803a77b8",
+    "us-803d1e90"
+   ],
+   "target_details": [
+    {
+     "id": "us-80388b64",
+     "unit": "CriWare/src/adx/adxt/adx_xpnd",
+     "function": "ADXPD_Stop",
+     "status": "STRUCTURAL",
+     "match_percent": 55.667,
+     "size": "0x18",
+     "leaf": false
+    },
+    {
+     "id": "us-803cb87c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pl2",
+     "function": "SFPL2_Standby",
+     "status": "HIGH_MATCH",
+     "match_percent": 85.714,
+     "size": "0x38",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf880",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_lib",
+     "function": "MPS_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 74.75,
+     "size": "0x50",
+     "leaf": false
+    },
+    {
+     "id": "us-803cb820",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pl2",
+     "function": "SFD_Standby",
+     "status": "HIGH_MATCH",
+     "match_percent": 91.304,
+     "size": "0x5C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d81b0",
+     "unit": "CriWare/src/sofdec/sfx/sfx_lib",
+     "function": "SFX_Destroy",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x5C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7710",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cdec",
+     "function": "MPVCDEC_Init",
+     "status": "CODE_MATCH",
+     "match_percent": 97.917,
+     "size": "0x60",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1d24",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+     "function": "SFTST_GoNextFrame",
+     "status": "HIGH_MATCH",
+     "match_percent": 90.281,
+     "size": "0x80",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7e6c",
+     "unit": "CriWare/src/sofdec/sfx/sfx_lib",
+     "function": "SFX_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x8C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d8108",
+     "unit": "CriWare/src/sofdec/sfx/sfx_lib",
+     "function": "sfx_InitHn",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf650",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_lib",
+     "function": "MPS_Finish",
+     "status": "CODE_MATCH",
+     "match_percent": 98.837,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-80394d70",
+     "unit": "CriWare/src/adx/lsc/lsc_svr",
+     "function": "lsc_StatEnd",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xCC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1db0",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+     "function": "SFTST_Calc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2b60",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
+     "function": "SFHDS_ReprocessHdr",
+     "status": "STRUCTURAL",
+     "match_percent": 1.695,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-80388b9c",
+     "unit": "CriWare/src/adx/adxt/adx_xpnd",
+     "function": "ADXPD_ExecHndl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF4",
+     "leaf": false
+    },
+    {
+     "id": "us-80394e3c",
+     "unit": "CriWare/src/adx/lsc/lsc_svr",
+     "function": "lsc_ExecHndl",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x11C",
+     "leaf": false
+    },
+    {
+     "id": "us-803888bc",
+     "unit": "CriWare/src/adx/adxt/adx_xpnd",
+     "function": "ADXPD_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x13C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7c60",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cdec",
+     "function": "mpvcdec_NintraBlocksInt1",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x148",
+     "leaf": false
+    },
+    {
+     "id": "us-803bf4e0",
+     "unit": "CriWare/src/sofdec/sfdcore/mps/mps_lib",
+     "function": "MPS_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x170",
+     "leaf": false
+    },
+    {
+     "id": "us-803993a8",
+     "unit": "CriWare/src/adx/sj/sj_uni",
+     "function": "sjuni_UngetChunk",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x18C",
+     "leaf": false
+    },
+    {
+     "id": "us-803cb690",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pl2",
+     "function": "SFPL2_Pause",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x190",
+     "leaf": false
+    },
+    {
+     "id": "us-80398fcc",
+     "unit": "CriWare/src/adx/sj/sj_uni",
+     "function": "sjuni_GetChunk",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x194",
+     "leaf": false
+    },
+    {
+     "id": "us-803991b8",
+     "unit": "CriWare/src/adx/sj/sj_uni",
+     "function": "sjuni_PutChunk",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x198",
+     "leaf": false
+    },
+    {
+     "id": "us-80394bc4",
+     "unit": "CriWare/src/adx/lsc/lsc_svr",
+     "function": "lsc_StatWait",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1AC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1a94",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+     "function": "SFTST_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1D8",
+     "leaf": false
+    },
+    {
+     "id": "us-803cb49c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_pl2",
+     "function": "SFD_Pause",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1F4",
+     "leaf": false
+    },
+    {
+     "id": "us-803d7f0c",
+     "unit": "CriWare/src/sofdec/sfx/sfx_lib",
+     "function": "SFX_Create",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1FC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2930",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
+     "function": "SFHDS_SetHdr",
+     "status": "STRUCTURAL",
+     "match_percent": 0.714,
+     "size": "0x230",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3070",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
+     "function": "sfhds_AnlyVideo",
+     "status": "STRUCTURAL",
+     "match_percent": 0.709,
+     "size": "0x234",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2c4c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
+     "function": "sfhds_DoProcessHdr",
+     "status": "STRUCTURAL",
+     "match_percent": 0.377,
+     "size": "0x424",
+     "leaf": false
+    },
+    {
+     "id": "us-803a77b8",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cdec",
+     "function": "mpvcdec_IntraBlocksInt1",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x4A8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1e90",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+     "function": "sftst_CalcSub",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB50",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_xpnd",
+    "CriWare/src/adx/lsc/lsc_svr",
+    "CriWare/src/adx/sj/sj_uni",
+    "CriWare/src/sofdec/sfdcore/mps/mps_lib",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_cdec",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_hds",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_pl2",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+    "CriWare/src/sofdec/sfx/sfx_lib"
+   ],
+   "leaf_count": 0,
+   "total": 31
+  },
+  {
+   "batch_id": "cri-16",
+   "label": "mixed",
+   "targets": [
+    "us-803d178c",
+    "us-803c363c",
+    "us-803c2714",
+    "us-803d1568",
+    "us-803d12d8",
+    "us-803a71c4",
+    "us-8037f454",
+    "us-803a9b64",
+    "us-803c2790",
+    "us-803a7260",
+    "us-803c2840",
+    "us-803d1400",
+    "us-803a576c",
+    "us-803a58c8",
+    "us-803d180c",
+    "us-803c3400",
+    "us-803c3320",
+    "us-803d1658",
+    "us-803d18e4",
+    "us-803d0e94",
+    "us-803cea68",
+    "us-803d0d9c",
+    "us-80382590",
+    "us-8038db28",
+    "us-80382460",
+    "us-803a9a34",
+    "us-803bce74",
+    "us-8038d918",
+    "us-803ce68c",
+    "us-803bcfd4"
+   ],
+   "target_details": [
+    {
+     "id": "us-803d178c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_vom",
+     "function": "SFVOM_GetRead",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.0,
+     "size": "0x64",
+     "leaf": false
+    },
+    {
+     "id": "us-803c363c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
+     "function": "criware_803C0D94",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x70",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2714",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
+     "function": "SFCON_UpdateConcatTime",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.581,
+     "size": "0x7C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1568",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
+     "function": "SFUO_Create",
+     "status": "STRUCTURAL",
+     "match_percent": 61.188,
+     "size": "0x80",
+     "leaf": false
+    },
+    {
+     "id": "us-803d12d8",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
+     "function": "SFTRN_CallTrSetup",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-803a71c4",
+     "unit": "CriWare/src/sofdec/mwply/code_803A3AE4",
+     "function": "criware_803A3A48",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-8037f454",
+     "unit": "CriWare/src/adx/adxf/adx_fini",
+     "function": "ADXF_Finish",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.463,
+     "size": "0xA4",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9b64",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_frm",
+     "function": "MPV_SkipFrmSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2790",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
+     "function": "SFCON_WriteTotSmplQue",
+     "status": "STRUCTURAL",
+     "match_percent": 66.318,
+     "size": "0xB0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7260",
+     "unit": "CriWare/src/sofdec/mwply/code_803A3AE4",
+     "function": "criware_803A3AE4",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB4",
+     "leaf": false
+    },
+    {
+     "id": "us-803c2840",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
+     "function": "SFCON_ReadTotSmplQue",
+     "status": "STRUCTURAL",
+     "match_percent": 51.234,
+     "size": "0xBC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1400",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
+     "function": "SFD_SetUsrSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a576c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdset",
+     "function": "mwPlyGetTime",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD0",
+     "leaf": false
+    },
+    {
+     "id": "us-803a58c8",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdset",
+     "function": "mwPlyGetOutVol",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xD8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d180c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tmr",
+     "function": "SFTMR_GetTmr",
+     "status": "CODE_MATCH",
+     "match_percent": 96.296,
+     "size": "0xD8",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3400",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
+     "function": "fn_803C3400",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xDC",
+     "leaf": false
+    },
+    {
+     "id": "us-803c3320",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
+     "function": "fn_803C3320",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xE0",
+     "leaf": false
+    },
+    {
+     "id": "us-803d1658",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_vom",
+     "function": "SFVOM_ExecServer",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d18e4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_tmr",
+     "function": "SFTMR_GetTmrUnit",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xEC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d0e94",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
+     "function": "SFTRN_InitHn",
+     "status": "HIGH_MATCH",
+     "match_percent": 88.803,
+     "size": "0xF4",
+     "leaf": false
+    },
+    {
+     "id": "us-803cea68",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_see",
+     "function": "sfsee_ExecFinAnaly",
+     "status": "HIGH_MATCH",
+     "match_percent": 80.516,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d0d9c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
+     "function": "SFTRN_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF8",
+     "leaf": false
+    },
+    {
+     "id": "us-80382590",
+     "unit": "CriWare/src/adx/adxt/adx_inis",
+     "function": "ADXT_Finish",
+     "status": "HIGH_MATCH",
+     "match_percent": 92.578,
+     "size": "0x100",
+     "leaf": false
+    },
+    {
+     "id": "us-8038db28",
+     "unit": "CriWare/src/adx/ahx/ahx_link",
+     "function": "AHXLINK_ExecOneAhx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x128",
+     "leaf": false
+    },
+    {
+     "id": "us-80382460",
+     "unit": "CriWare/src/adx/adxt/adx_inis",
+     "function": "ADXT_Init",
+     "status": "HIGH_MATCH",
+     "match_percent": 87.184,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9a34",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_frm",
+     "function": "MPV_DecodeFrmSj",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x130",
+     "leaf": false
+    },
+    {
+     "id": "us-803bce74",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_slice",
+     "function": "MPVSL_DecPicture",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x160",
+     "leaf": false
+    },
+    {
+     "id": "us-8038d918",
+     "unit": "CriWare/src/adx/ahx/ahx_link",
+     "function": "ADXT_AttachAhx",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x164",
+     "leaf": false
+    },
+    {
+     "id": "us-803ce68c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_see",
+     "function": "sfsee_ExecHeadAnaly",
+     "status": "HIGH_MATCH",
+     "match_percent": 84.872,
+     "size": "0x1F4",
+     "leaf": false
+    },
+    {
+     "id": "us-803bcfd4",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_slice",
+     "function": "MPVSL_DecSliceOne",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x27C",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxf/adx_fini",
+    "CriWare/src/adx/adxt/adx_inis",
+    "CriWare/src/adx/ahx/ahx_link",
+    "CriWare/src/sofdec/mwply/code_803A3AE4",
+    "CriWare/src/sofdec/mwply/mwsfdset",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_frm",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_slice",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_con",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_lib",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_see",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_tmr",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_trn",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_vom"
+   ],
+   "leaf_count": 0,
+   "total": 30
+  },
+  {
+   "batch_id": "cri-17",
+   "label": "mixed",
+   "targets": [
+    "us-803c12fc",
+    "us-80394ab0",
+    "us-803d6f48",
+    "us-803a7128",
+    "us-803a9900",
+    "us-80392748",
+    "us-803d6dc0",
+    "us-803d97c4",
+    "us-8038f608",
+    "us-8039e5fc",
+    "us-803d2a04",
+    "us-803853e8",
+    "us-803a1094",
+    "us-803d6c68",
+    "us-803a6f7c",
+    "us-80388cd8",
+    "us-803d2ef4",
+    "us-803cec5c",
+    "us-8039982c",
+    "us-80390308",
+    "us-8038d5cc",
+    "us-8039e844",
+    "us-803a7330"
+   ],
+   "target_details": [
+    {
+     "id": "us-803c12fc",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_aoap",
+     "function": "SFAOAP_Create",
+     "status": "HIGH_MATCH",
+     "match_percent": 89.474,
+     "size": "0x4C",
+     "leaf": false
+    },
+    {
+     "id": "us-80394ab0",
+     "unit": "CriWare/src/adx/lsc/lsc_ini",
+     "function": "LSC_Init",
+     "status": "STRUCTURAL",
+     "match_percent": 46.034,
+     "size": "0x74",
+     "leaf": false
+    },
+    {
+     "id": "us-803d6f48",
+     "unit": "CriWare/src/sofdec/sfx/sfx_set",
+     "function": "SFX_SetTagInf",
+     "status": "CODE_MATCH",
+     "match_percent": 99.5,
+     "size": "0x90",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7128",
+     "unit": "CriWare/src/sofdec/mwply/mwsfx_Y84C44",
+     "function": "mwPlyFxCnvFrmY84C44",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x9C",
+     "leaf": false
+    },
+    {
+     "id": "us-803a9900",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_err",
+     "function": "MPV_SetErrFunc",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xA8",
+     "leaf": false
+    },
+    {
+     "id": "us-80392748",
+     "unit": "CriWare/src/adx/cricfg/cfg_lib",
+     "function": "CRICFG_Read",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB4",
+     "leaf": false
+    },
+    {
+     "id": "us-803d6dc0",
+     "unit": "CriWare/src/sofdec/sfdcore/uty/uty_tmr",
+     "function": "UTY_InitTmr",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xB8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d97c4",
+     "unit": "CriWare/src/sofdec/sud/sud_lib",
+     "function": "SUD_SearchSudDat",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC0",
+     "leaf": false
+    },
+    {
+     "id": "us-8038f608",
+     "unit": "CriWare/src/adx/ahx/ahx_sbf2",
+     "function": "AHXSBF_Synthesize",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC4",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e5fc",
+     "unit": "CriWare/src/adx/adxt/srcwii/adx_suwii",
+     "function": "ADXWII_SetupDvdFs",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xC8",
+     "leaf": false
+    },
+    {
+     "id": "us-803d2a04",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_seeki",
+     "function": "SFSEEKI_IsSkip",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0xF0",
+     "leaf": false
+    },
+    {
+     "id": "us-803853e8",
+     "unit": "CriWare/src/adx/adxt/adx_tlk2",
+     "function": "adxt_StartAfs",
+     "status": "CODE_MATCH",
+     "match_percent": 96.846,
+     "size": "0x104",
+     "leaf": false
+    },
+    {
+     "id": "us-803a1094",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsvm",
+     "function": "MWSFSVM_Error",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x11C",
+     "leaf": false
+    },
+    {
+     "id": "us-803d6c68",
+     "unit": "CriWare/src/sofdec/sfdcore/uty/muldivr",
+     "function": "UTY_MulDivRound64",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x158",
+     "leaf": false
+    },
+    {
+     "id": "us-803a6f7c",
+     "unit": "CriWare/src/sofdec/mwply/mwsfdsst",
+     "function": "MWSST_Destroy",
+     "status": "CODE_MATCH",
+     "match_percent": 98.131,
+     "size": "0x1AC",
+     "leaf": false
+    },
+    {
+     "id": "us-80388cd8",
+     "unit": "CriWare/src/adx/adxt/adx_amp",
+     "function": "ADXAMP_Start",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x1BC",
+     "leaf": false
+    },
+    {
+     "id": "us-803d2ef4",
+     "unit": "CriWare/src/sofdec/sfdcore/sfh/sfh_main",
+     "function": "SFH_IsSfdHeader",
+     "status": "CODE_MATCH",
+     "match_percent": 98.23,
+     "size": "0x1C4",
+     "leaf": false
+    },
+    {
+     "id": "us-803cec5c",
+     "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_set",
+     "function": "SFD_SetCond",
+     "status": "CODE_MATCH",
+     "match_percent": 97.976,
+     "size": "0x1F0",
+     "leaf": false
+    },
+    {
+     "id": "us-8039982c",
+     "unit": "CriWare/src/adx/sj/sj_utl",
+     "function": "SJ_SearchTag",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x210",
+     "leaf": false
+    },
+    {
+     "id": "us-80390308",
+     "unit": "CriWare/src/adx/ahx/adx_hdr",
+     "function": "ADX_DecodeHeader",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x240",
+     "leaf": false
+    },
+    {
+     "id": "us-8038d5cc",
+     "unit": "CriWare/src/adx/adxt/adx_errs",
+     "function": "ADXERR_ItoA",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x284",
+     "leaf": false
+    },
+    {
+     "id": "us-8039e844",
+     "unit": "CriWare/src/adx/std/cri_crw_std",
+     "function": "criware_8039B4E0",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x318",
+     "leaf": false
+    },
+    {
+     "id": "us-803a7330",
+     "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_bdec",
+     "function": "MPVBDEC_Init",
+     "status": "NOT_STARTED",
+     "match_percent": null,
+     "size": "0x354",
+     "leaf": false
+    }
+   ],
+   "units": [
+    "CriWare/src/adx/adxt/adx_amp",
+    "CriWare/src/adx/adxt/adx_errs",
+    "CriWare/src/adx/adxt/adx_tlk2",
+    "CriWare/src/adx/adxt/srcwii/adx_suwii",
+    "CriWare/src/adx/ahx/adx_hdr",
+    "CriWare/src/adx/ahx/ahx_sbf2",
+    "CriWare/src/adx/cricfg/cfg_lib",
+    "CriWare/src/adx/lsc/lsc_ini",
+    "CriWare/src/adx/sj/sj_utl",
+    "CriWare/src/adx/std/cri_crw_std",
+    "CriWare/src/sofdec/mwply/mwsfdsst",
+    "CriWare/src/sofdec/mwply/mwsfdsvm",
+    "CriWare/src/sofdec/mwply/mwsfx_Y84C44",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_bdec",
+    "CriWare/src/sofdec/sfdcore/mpv/mpv_err",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_aoap",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_seeki",
+    "CriWare/src/sofdec/sfdcore/sfd/sfd_set",
+    "CriWare/src/sofdec/sfdcore/sfh/sfh_main",
+    "CriWare/src/sofdec/sfdcore/uty/muldivr",
+    "CriWare/src/sofdec/sfdcore/uty/uty_tmr",
+    "CriWare/src/sofdec/sfx/sfx_set",
+    "CriWare/src/sofdec/sud/sud_lib"
+   ],
+   "leaf_count": 0,
+   "total": 23
+  }
+ ],
+ "total_targets": 546,
+ "total_batches": 17,
+ "leaf_targets": 68
+}

@@ -1,5 +1,8 @@
 #include <harness_catalog.h>
 
+// Retail .data is 0x40 bytes: trace string padded to 0x40.
+static char btm_pm_unsniff_str[0x40] = "btm mode change AFTER unsniffing; hci hdl 0x%x, types 0x%02x";
+
 /******************************************************************************
  *
  *  Copyright (C) 2000-2012 Broadcom Corporation
@@ -497,7 +500,7 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
 
             if (btm_cb.trace_level >= BT_TRACE_LEVEL_DEBUG) {
                 LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_DEBUG,
-                         "btm mode change AFTER unsniffing; hci hdl 0x%x, types 0x%02x",
+                         btm_pm_unsniff_str,
                          hci_handle, p->pkt_types_mask);
             }
 

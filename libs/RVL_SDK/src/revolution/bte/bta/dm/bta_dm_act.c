@@ -318,6 +318,19 @@ extern void btsnd_hcic_write_scan_enable(void *p_buf, unsigned char scan_enable)
 extern int BTM_SecDeleteRmtNameNotifyCallback(bta_dm_rmt_name_cback_t p_callback);
 extern void LogMsg_0(unsigned int trace_set_mask, const char *p_str);
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle);
+// Retail .data is 0x140 bytes: the trace strings below, each padded to its
+// retail slot extent (4-byte alignment in the retail DOL).
+static char str_disable_timer_cback[0x20] = " bta_dm_disable_timer_cback  ";
+static char str_search_timer_cback[0x20] = " bta_dm_search_timer_cback  ";
+static char str_pin_cback_failed[0x40] = " bta_dm_pin_cback() -> Failed to start Remote Name Request  ";
+static char str_timer_stopped[0x14] = " timer stopped  ";
+static char str_l2cap_server_compress[0x30] = "bta_dm_l2cap_server_compress_cback, BTA ID %d";
+static char str_compress_open[0x3C] = "bta_dm_compress_cback open app_id %d, BTA id %d, state %d";
+static char str_compress_close[0x40] = "bta_dm_compress_cback close app_id %d, BTA id %d, state %d";
+
+// Retail .sdata2 is 8 bytes: the 0x00018001 literal plus 4 pad bytes.
+const u32 bta_dm_act_sdata2_pad = 0;
+
 void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle);
 void bta_dm_discover_next_device(void);
 void bta_dm_inq_results_cb();
@@ -367,6 +380,9 @@ struct bta_dm_compress_srvc_t {
 };
 
 struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
+
+// Retail .bss is 0x30: 3 pad bytes after bta_dm_compress_srvcs.
+u8 bta_dm_act_bss_pad[3];
 
 /* Connected services table: byte 0 = count, 9-byte entries, service id at +7
    (defined in bta_dm_pm.c, retail bss owner) */
@@ -450,7 +466,7 @@ void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
     unsigned char i;
 
     if (appl_trace_level >= 4)
-        LogMsg_0(0x503, " bta_dm_disable_timer_cback  ");
+        LogMsg_0(0x503, str_disable_timer_cback);
     if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
         for (i = 0; i < bta_dm_cb.num_devices; i++) {
             btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
@@ -866,7 +882,7 @@ void bta_dm_search_result(struct bta_dm_msg *p_data) {
    and continue with the next device in the discovery queue. */
 void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle) {
     if (appl_trace_level >= 4)
-        LogMsg_0(0x503, " bta_dm_search_timer_cback  ");
+        LogMsg_0(0x503, str_search_timer_cback);
     bta_dm_search_cb.search_disc_active = 0;
     bta_dm_discover_next_device();
 }
@@ -1193,7 +1209,7 @@ unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
             return 1;
         }
         if (appl_trace_level >= 2)
-            LogMsg_0(0x501, " bta_dm_pin_cback() -> Failed to start Remote Name Request  ");
+            LogMsg_0(0x501, str_pin_cback_failed);
     }
     bdcpy(sec_event.pin_req.bd_addr, bd_addr);
     sec_event.pin_req.dev_class[0] = dev_class[0];
@@ -1344,7 +1360,7 @@ void bta_dm_acl_change(struct bta_dm_msg *p_data) {
             bta_dm_search_cb.search_disc_active = 0;
             if (bta_dm_search_cb.search_timer_active != 0) {
                 if (appl_trace_level >= 4)
-                    LogMsg_0(0x503, " timer stopped  ");
+                    LogMsg_0(0x503, str_timer_stopped);
                 bta_sys_stop_timer(&bta_dm_search_cb.search_timer);
                 bta_dm_discover_next_device();
             }
@@ -1411,7 +1427,7 @@ unsigned char bta_dm_l2cap_server_compress_cback(
         if (bta_dm_compress_srvcs[i].in_use == 1 &&
             bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
             if (appl_trace_level >= 4)
-                LogMsg_1(0x503, "bta_dm_l2cap_server_compress_cback, BTA ID %d",
+                LogMsg_1(0x503, str_l2cap_server_compress,
                          bta_dm_compress_srvcs[i].server_id);
             result = bta_dm_co_get_compress_memory(
                 bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
@@ -1456,7 +1472,7 @@ void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
                         bta_dm_compress_srvcs[i - 1].in_use = 1;
                         if (appl_trace_level >= 4)
                             LogMsg_3(0x503,
-                                     "bta_dm_compress_cback open app_id %d, BTA id %d, state %d",
+                                     str_compress_open,
                                      bta_dm_compress_srvcs[i - 1].client_id,
                                      bta_dm_compress_srvcs[i - 1].server_id,
                                      bta_dm_compress_srvcs[i - 1].in_use);
@@ -1474,7 +1490,7 @@ void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
                     p_srvc->in_use = 0;
                     if (appl_trace_level >= 4)
                         LogMsg_3(0x503,
-                                 "bta_dm_compress_cback close app_id %d, BTA id %d, state %d",
+                                 str_compress_close,
                                  p_srvc->client_id, p_srvc->server_id, p_srvc->in_use);
                     break;
                 }

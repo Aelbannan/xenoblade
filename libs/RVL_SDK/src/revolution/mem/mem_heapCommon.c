@@ -2,6 +2,7 @@
 #include <revolution/OS.h>
 
 static BOOL sRootListInitialized;
+u8 mem_heapCommon_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 static MEMList sRootList;
 static OSMutex sRootMutex;
 

@@ -4,7 +4,16 @@
 
 #define MY_EPSILON 1e-5f
 
-DECOMP_FORCELITERAL(quat_c, MY_EPSILON, 1.0f, 0.0f);
+// Forces the .sdata2 float constants into the retail emission order
+// (1e-5, 1.0, 0.0 before 0.5/3.0). Inlined into PSQUATNormalize below with
+// no emitted code (discarded comma expression).
+static inline void quat_force_literals(void) {
+    (MY_EPSILON, 1.0f, 0.0f);
+}
+
+// Retail .rodata is 0x10: the C_QUATMtx next[] table {1,2,0} plus 4 zero pad
+// bytes (gap_06_8051552C_rodata); the 4-word table reproduces the exact slice.
+const u32 quatNext[4] = {1, 2, 0, 0};
 
 //TODO: get it to match with a register var instead of f3
 void PSQUATAdd(const register Quaternion* quat1, const register Quaternion* quat2,
@@ -102,6 +111,7 @@ void PSQUATNormalize(register const Quaternion* in, register Quaternion* out) {
     register f32 work0, work1, work2, work3;
     register f32 c_epsilon, c_half, c_three;
 
+    quat_force_literals();
     c_epsilon = MY_EPSILON;
     c_half = 0.5f;
     c_three = 3.0f;
@@ -142,39 +152,7 @@ void PSQUATNormalize(register const Quaternion* in, register Quaternion* out) {
     )
 }
 
-//unused
-void PSQUATInverse(const register Quaternion* src, register Quaternion* inv) {
-    register f32 vv1, vv2, vv3, vv4;
-    register f32 vv5, vv6, vv7, vv8, vv9, vvA, vvB;
-    register f32 vvC = 1.0F;
-    
-    ASM (
-        psq_l       vv1, 0(src), 0, 0;
-        ps_mul      vv5, vv1, vv1;
-        ps_sub      vvB, vvC, vvC;
-        psq_l       vv2, 8(src), 0, 0;
-        ps_madd     vv5, vv2, vv2, vv5;
-        ps_add      vvA, vvC, vvC;
-        ps_sum0     vv5, vv5, vv5, vv5;
-        fcmpu       cr0, vv5, vvB;
-        beq-        loc0;
-        fres        vv7, vv5;
-        ps_neg      vv6, vv5;
-        ps_nmsub    vv9, vv5, vv7, vvA;
-        ps_mul      vv7, vv7, vv9;
-        b           loc1;
-loc0:
-        fmr         vv7, vvC;
-loc1:
-        ps_neg      vv8, vv7;
-        ps_muls1    vv4, vv7, vv2;
-        ps_muls0    vv1, vv1, vv8;
-        psq_st      vv4, 12(inv), 1, 0;
-        ps_muls0    vv3, vv2, vv8;
-        psq_st      vv1, 0(inv), 0, 0;
-        psq_st      vv3, 8(inv), 1, 0;
-    )
-}
+// unused in Xenoblade retail: PSQUATInverse, C_QUATLerp
 
 inline f32 mySqrtf(f32 x){
     return sqrt(x);
@@ -183,7 +161,7 @@ inline f32 mySqrtf(f32 x){
 void C_QUATMtx(Quaternion* quat, const Mtx mtx) {
     f32 root, trace;
     u32 dmax, dnext, dlast;
-    u32 next[3] = {1, 2, 0};
+    const u32* next = quatNext;
     f32 temp[3];
 
     trace = mtx[0][0] + mtx[1][1] + mtx[2][2];
@@ -226,17 +204,6 @@ void C_QUATMtx(Quaternion* quat, const Mtx mtx) {
         quat->y = temp[1];
         quat->z = temp[2];
     }
-}
-
-//unused
-void C_QUATLerp(const Quaternion* quat1, const Quaternion* quat2,
-                Quaternion* out, f32 f) {
-    /*
-    out->x = f * (quat2->x - quat1->x) + quat1->x;
-    out->y = f * (quat2->y - quat1->y) + quat1->y;
-    out->z = f * (quat2->z - quat1->z) + quat1->z;
-    out->w = f * (quat2->w - quat1->w) + quat1->w;
-    */
 }
 
 void C_QUATSlerp(const Quaternion* a, const Quaternion* b, Quaternion* out,

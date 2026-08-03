@@ -22,6 +22,10 @@ BOOL __DVDCheckDevice(void) {
     u32 reportKeyError = 0xFFFFFFFF;
     OSIOSRev iosRev;
 
+    // 1-byte pad: retail .data ends at 0x198 (string pool 4-align). Folded
+    // no-op pools the string after the message strings; emits no code.
+    (void)"\0";
+
     if (OSGetPhysicalMem2Size() == 0x08000000) {
         return TRUE;
     }
@@ -175,11 +179,13 @@ const char* const __DVDDeviceErrorMessage[] = {
     "rilevato un dispositivo non autorizzato.",
 
     "\n\n\nFout #001:\n"
-    "ongeoorloofd onderdeel gevonden."
+    "ongeoorloofd onderdeel gevonden.",
+    NULL
 };
 
-//unused
-void __DVDShowDeviceErrorMessage(void) {
+
+
+static void __DVDShowDeviceErrorMessage(void) {
     const char* message;
     const char* const* messageList;
     GXColor bg = { 0, 0, 0, 0 };

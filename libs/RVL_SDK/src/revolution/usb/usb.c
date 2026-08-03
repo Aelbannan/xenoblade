@@ -49,6 +49,7 @@ static void* hi = NULL;
 
 static u8 s_usb_log = FALSE;
 static u8 s_usb_err = TRUE;
+u8 s_usb_sbss_pad[4]; /* retail .sbss 0x9 -> 0x10 (align tail); non-static so -ipa file keeps it */
 
 //unused
 // unused in Xenoblade retail: _usb_enable_log, _usb_disable_log
@@ -57,7 +58,7 @@ static void USB_LOG(const char* fmt, ...) {
     va_list list;
 
     if (s_usb_log) {
-        OSReport("USB: ");
+        OSReport("USB: \0\0"); /* 8-byte .sdata slot = retail "USB: " + 2 pad bytes */
         va_start(list, fmt);
         vprintf(fmt, list);
         va_end(list);
@@ -212,18 +213,20 @@ end:
 
 // unused in Xenoblade retail: IUSB_OpenDeviceIdsAsync, IUSB_CloseDevice
 
-/* Keep the retail .data strings below (unreferenced in Xenoblade retail). */
-static const char lbl_OpenDevice[] = "OpenDevice\n";
-static const char lbl_OpenDeviceIdsAsync[] = "OpenDeviceIdsAsync: Not enough memory\n";
-static const char lbl_CloseDevice[] = "CloseDevice\n";
-static const char lbl_CloseDeviceReturned[] = "CloseDevice returned: %d\n";
+/* Keep the retail .data strings below (referenced from .init instead of .text so
+   the retail .data string order is preserved without extra .text functions). */
+void fake_function(...);
+__declspec(section ".init") void FORCEACTIVEusb_c_keep(void) {
+    fake_function("OpenDevice\n", "OpenDeviceIdsAsync: Not enough memory\n",
+                  "CloseDevice\n", "CloseDevice returned: %d\n");
+}
 
 IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
                                 void* callbackArg) {
     IPCResult result;
     USBCommandBlock* block;
 
-    USB_LOG(lbl_CloseDevice);
+    USB_LOG("CloseDevice\n");
 
     block = IOSAlloc(sizeof(USBCommandBlock));
     if (block == NULL) {
@@ -237,7 +240,7 @@ IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
     block->nclean = USB_NCLEAN_CLOSEDEVICE;
 
     result = IOS_CloseAsync(fd, _intrBlkCtrlIsoCb, block);
-    USB_LOG(lbl_CloseDeviceReturned, result);
+    USB_LOG("CloseDevice returned: %d\n", result);
 
     if (result < 0) {
         IOSFree(block);
@@ -249,8 +252,10 @@ end:
 
 // unused in Xenoblade retail: __openDevice, IUSB_GetDeviceList
 
-static const char lbl_openDeviceMem[] = "openDevice: Not enough memory\n";
-static const char lbl_getDeviceListMem[] = "getDeviceList: Not enough memory\n";
+__declspec(section ".init") void FORCEACTIVEusb_c_2_keep(void) {
+    fake_function("openDevice: Not enough memory\n",
+                  "getDeviceList: Not enough memory\n");
+}
 
 static IPCResult __LongBlkMsgInt(s32 fd, u32 endpoint, u32 length, void* buffer,
                                  USBCallback callback, void* callbackArg,
@@ -431,8 +436,10 @@ end_async:
 
 // unused in Xenoblade retail: IUSB_ReadIntrMsg
 
-static const char lbl_shortBlk[] = "calling short blk transfer fn: buflen = %u limit = %u\n";
-static const char lbl_longBlk[] = "calling long blk transfer fn: buflen = %u limit = %u\n";
+__declspec(section ".init") void FORCEACTIVEusb_c_3_keep(void) {
+    fake_function("calling short blk transfer fn: buflen = %u limit = %u\n",
+                  "calling long blk transfer fn: buflen = %u limit = %u\n");
+}
 
 IPCResult IUSB_ReadIntrMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
                                 USBCallback callback, void* callbackArg) {
@@ -618,28 +625,27 @@ IPCResult IUSB_WriteCtrlMsgAsync(s32 fd, u8 requestType, u8 request, u16 value,
 // IUSB_DeviceInsertionNotifyAsyncWithTimeout, IUSB_DeviceClassInsertionNotifyAsync, IUSB_SetIsoAlt,
 // IUSB_RegisterInsertionNotifyWithIdAsync, IUSB_CancelInsertionNotify
 
-/* Keep the retail .data strings below (unreferenced in Xenoblade retail). */
-static const char lbl_GetStrCbRet[] = "GetStrCb returned: %d\n";
-static const char lbl_GetStrCbBuf[] = "GetStrCb: buf = 0x%x buflen = %u\n";
-static const char lbl_ConvertBuf[] = "Failed to convert buffer from unicode 2 ascii\n";
-static const char lbl_CallingCb[] = "calling cb 0x%x with arg 0x%x\n";
-static const char lbl_FailedCtrlMsg[] = "Failed __CtrlMsg: %d";
-static const char lbl_ConvertUnicode[] = "Failed to convert unicode 2 ascii\n";
-static const char lbl_GetStrCbStr[] = "GetStr - _GetStrCb\n";
-static const char lbl_GetAsciiStrAsyncMem[] = " GetAsciiStrAsync: Not enough memory\n";
-static const char lbl_CtrlMsgIntFailed[] = "__CtrlMsgInt failed %d\n";
-static const char lbl_GetDescrCbRet[] = "GetDescrCb returned: %d\n";
-static const char lbl_GetDevDescr[] = "GetDevDescr\n";
-static const char lbl_GetDevDescrMem[] = "GetDevDescr: Not enough memory\n";
-static const char lbl_GetDevDescrD[] = "GetDevDescr: %d\n";
-static const char lbl_GetDevDescrCb[] = "GetDevDescr - _GetDescrCb\n";
-static const char lbl_GetDevDescrAsyncMem[] = "GetDevDescrAsync: Not enough memory\n";
-static const char lbl_DeviceRemovalNotify[] = "DeviceRemovalNotifyAsync\n";
-static const char lbl_PacketTooBig[] = "packet %u too big: %u\n";
-static const char lbl_InvalidIso[] = "Invalid parameters for ISO transfer request\n";
-static const char lbl_IsoMsgAsyncMem[] = "IUSB_IsoMsgAsync: Not enough memory\n";
-static const char lbl_OpenFailed[] = "Open(%s) failed\n";
-static const char lbl_InvalidPath[] = "Invalid path or devClass in insertion notification call\n";
-static const char lbl_RegisterInsertion[] = "IUSB_RegisterInsertionNotifyWithIdAsync";
-static const char lbl_NotEnoughMem[] = "%s: Not enough memory\n";
-static const char lbl_FailedToOpen[0x18] = "Failed to open %s: %d\n"; /* 0x17 + 1 pad = retail .data 8-align tail */
+/* Keep the retail .data strings below (referenced from .init instead of .text so
+   the retail .data string order is preserved without extra .text functions). */
+__declspec(section ".init") void FORCEACTIVEusb_c_4_keep(void) {
+    fake_function("GetStrCb returned: %d\n",
+                  "GetStrCb: buf = 0x%x buflen = %u\n",
+                  "Failed to convert buffer from unicode 2 ascii\n",
+                  "calling cb 0x%x with arg 0x%x\n",
+                  "Failed __CtrlMsg: %d",
+                  "Failed to convert unicode 2 ascii\n",
+                  "GetStr - _GetStrCb\n",
+                  " GetAsciiStrAsync: Not enough memory\n",
+                  "__CtrlMsgInt failed %d\n", "GetDescrCb returned: %d\n",
+                  "GetDevDescr\n", "GetDevDescr: Not enough memory\n",
+                  "GetDevDescr: %d\n", "GetDevDescr - _GetDescrCb\n",
+                  "GetDevDescrAsync: Not enough memory\n",
+                  "DeviceRemovalNotifyAsync\n", "packet %u too big: %u\n",
+                  "Invalid parameters for ISO transfer request\n",
+                  "IUSB_IsoMsgAsync: Not enough memory\n", "Open(%s) failed\n",
+                  "Invalid path or devClass in insertion notification call\n",
+                  "IUSB_RegisterInsertionNotifyWithIdAsync",
+                  "%s: Not enough memory\n");
+}
+/* last .data slot is 0x17 + 1 pad byte = retail .data 8-align tail */
+char lbl_usb_last[0x18] = "Failed to open %s: %d\n";

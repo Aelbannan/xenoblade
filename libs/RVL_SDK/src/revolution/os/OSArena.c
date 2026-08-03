@@ -61,14 +61,5 @@ void* OSAllocFromMEM1ArenaLo(size_t size, u32 align) {
     return begin;
 }
 
-//unused
-void OSAllocFromMEM2ArenaLo(){
-}
-
-//unused
-void OSAllocFromMEM1ArenaHi(){
-}
-
-//unused
-void OSAllocFromMEM2ArenaHi(){
-}
+// unused in Xenoblade retail: OSAllocFromMEM2ArenaLo, OSAllocFromMEM1ArenaHi,
+// OSAllocFromMEM2ArenaHi

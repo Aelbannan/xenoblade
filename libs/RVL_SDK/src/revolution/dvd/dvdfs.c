@@ -42,6 +42,10 @@ BOOL __DVDLongFileNameFlag = TRUE;
 
 static u32 currentDirectory = 0;
 
+u8 dvdfs_sbss_pad[8];  /* retail .sbss 0x20 -> 0x38 (align tail); non-static so -ipa file keeps them */
+u8 dvdfs_sbss_pad2[8];
+u8 dvdfs_sbss_pad3[8];
+
 static void cbForReadAsync(s32 result, DVDCommandBlock* block);
 static void cbForReadSync(s32 result, DVDCommandBlock* block);
 
@@ -221,9 +225,7 @@ s32 DVDConvertPathToEntrynum(const char* path) {
     }
 }
 
-//unused
-BOOL DVDEntrynumIsDir(){
-}
+// unused in Xenoblade retail: DVDEntrynumIsDir
 
 BOOL DVDFastOpen(s32 entrynum, DVDFileInfo* info) {
     if (entrynum < 0 || entrynum >= MaxEntryNum ||
@@ -319,14 +321,12 @@ static BOOL DVDConvertEntrynumToPath(s32 entrynum, char* string, u32 maxlen) {
     return TRUE;
 }
 
-//unused
-BOOL DVDGetCurrentDir(char* buffer, u32 maxlen) {
+/* inlined into DVDOpen in retail (no standalone body) */
+static __inline BOOL DVDGetCurrentDir(char* buffer, u32 maxlen) {
     return DVDConvertEntrynumToPath(currentDirectory, buffer, maxlen);
 }
 
-//unused
-void DVDChangeDir(){
-}
+// unused in Xenoblade retail: DVDChangeDir
 
 BOOL DVDReadAsyncPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset,
                       DVDAsyncCallback callback, s32 prio) {
@@ -363,12 +363,12 @@ s32 DVDReadPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset, s32 prio) {
 
     // clang-format off
 #line 893
-    OS_ASSERT(offset >= 0 && offset <= info->size, "DVDRead(): specified area is out of the file  ");
+    OS_ASSERT(offset >= 0 && offset <= info->size, "DVDRead(): specified area is out of the file  \0\0\0\0\0"); /* 52-byte .data slot = retail 0x2f + 5 pad bytes */
     // clang-format on
 
     // clang-format off
 #line 899
-    OS_ASSERT(offset + size >= 0 && offset + size < info->size + 32, "DVDRead(): specified area is out of the file  ");
+    OS_ASSERT(offset + size >= 0 && offset + size < info->size + 32, "DVDRead(): specified area is out of the file  \0\0\0\0\0"); /* 52-byte .data slot = retail 0x2f + 5 pad bytes */
     // clang-format on
 
     block = &info->block;
@@ -404,49 +404,9 @@ static void cbForReadSync(s32 result, DVDCommandBlock* block) {
     OSWakeupThread(&__DVDThreadQueue);
 }
 
-//unused
-void DVDSeekAsyncPrio(){
-}
-
-//unused
-void cbForSeekAsync(){
-}
-
-//unused
-void DVDSeekPrio(){
-}
-
-//unused
-void cbForSeekSync(){
-}
-
-//unused
-void DVDGetFileInfoStatus(){
-}
-
-//unused
-void DVDFastOpenDir(){
-}
-
-//unused
-BOOL DVDOpenDir(const char* dirName, DVDDir* dir) {
-}
-
-//unused
-BOOL DVDReadDir(DVDDir* dir, DVDDirEntry* dirent) {
-}
-
-BOOL DVDCloseDir(DVDDir* dir) {
-    return TRUE;
-}
-
-//unused
-void DVDRewindDir(){
-}
-
-//unused
-void DVDGetFSTLocation(){
-}
+// unused in Xenoblade retail: DVDSeekAsyncPrio, cbForSeekAsync, DVDSeekPrio, cbForSeekSync,
+// DVDGetFileInfoStatus, DVDFastOpenDir, DVDOpenDir, DVDReadDir, DVDCloseDir, DVDRewindDir,
+// DVDGetFSTLocation
 
 u32 DVDGetTransferredSize(DVDCommandBlock* block){
     s32 size;

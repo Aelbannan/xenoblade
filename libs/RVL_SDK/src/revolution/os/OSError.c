@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 OSErrorHandler __OSErrorTable[OS_ERR_MAX];
+u8 oserror_bss_pad[12]; /* retail .bss 0x44 -> 0x50 (align tail); non-static so -ipa file keeps it */
 u32 __OSFpscrEnableBits = FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE;
 
 DECL_WEAK void OSReport(const char* msg, ...) {
@@ -18,25 +19,12 @@ DECL_WEAK void OSVReport(const char* msg, va_list arg){
     vprintf(msg,arg);
 }
 
-DECL_WEAK void OSPanic(const char* file, int line, const char* msg, ...) {
-    u32 depth;
-    u32* sp;
-    va_list list;
-
-    OSDisableInterrupts();
-
-    va_start(list, msg);
-    vprintf(msg, list);
-    va_end(list);
-    OSReport(" in \"%s\" on line %d.\n", file, line);
-
-    OSReport("\nAddress:      Back Chain    LR Save\n");
-    for (depth = 0, sp = (u32*)OSGetStackPointer();
-         sp != NULL && sp != (u32*)0xFFFFFFFF && depth++ < 16; sp = (u32*)*sp) {
-        OSReport("0x%08x:   0x%08x    0x%08x\n", sp, sp[0], sp[1]);
-    }
-
-    PPCHalt();
+// unused in Xenoblade retail: OSPanic (defined in monolib/src/util/CErrorWii.cpp instead).
+// Its 3 message strings are still present in retail .data at 0x0-0x5B; keep them via .init.
+void fake_function(...);
+__declspec(section ".init") void FORCEACTIVEOSError_keep(void) {
+    fake_function(" in \"%s\" on line %d.\n", "\nAddress:      Back Chain    LR Save\n",
+                  "0x%08x:   0x%08x    0x%08x\n");
 }
 
 OSErrorHandler OSSetErrorHandler(u16 error, OSErrorHandler handler) {
@@ -168,7 +156,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
         OSReport("Unhandled Exception %d", error);
     }
 
-    OSReport("\n");
+    OSReport("\n\0\0"); /* 4-byte .sdata slot = retail \"\\n\" + 2 pad bytes */
     OSDumpContext(ctx);
     OSReport("\nDSISR = 0x%08x                   DAR  = 0x%08x\n", dsisr, dar);
     OSReport("TB = 0x%016llx\n", tb);
@@ -194,7 +182,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
                  ctx->srr0, dar);
         break;
     case OS_ERR_PROTECTION:
-        OSReport("\n");
+        OSReport("\n\0\0"); /* 4-byte .sdata slot = retail \"\\n\" + 2 pad bytes */
         OSReport("AI DMA Address =   0x%04x%04x\n",
                  DSP_HW_REGS[DSP_AI_DMA_START_H],
                  DSP_HW_REGS[DSP_AI_DMA_START_L]);
@@ -205,7 +193,7 @@ void __OSUnhandledException(u8 error, OSContext* ctx, u32 dsisr, u32 dar) {
         break;
     }
 
-    OSReport("\nLast interrupt (%d): SRR0 = 0x%08x  TB = 0x%016llx\n",
+    OSReport("\nLast interrupt (%d): SRR0 = 0x%08x  TB = 0x%016llx\n\0\0\0\0\0\0\0",
              __OSLastInterrupt, __OSLastInterruptSrr0, __OSLastInterruptTime);
     PPCHalt();
 }

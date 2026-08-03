@@ -425,6 +425,16 @@ UINT8 L2CA_DataWrite (UINT16 cid, BT_HDR *p_data)
     return (L2CAP_DW_SUCCESS);
 }
 
+// L2CA_Ping is not present in Xenoblade retail .text; these named arrays
+// reproduce its trace strings in the retail .data (between L2CA_DataWrite and
+// L2CA_SetIdleTimeout).
+char s_l2ca_ping_bda[0x30] =
+    "L2CA_Ping()  BDA: %02x-%02x-%02x-%02x-%02x-%02x";
+char s_l2ca_ping_no_lcb[0x1d] = "L2CAP - no LCB for L2CA_ping";
+char s_l2ca_ping_reject2[0x22] = "L2CAP - rejected second L2CA_ping";
+char s_l2ca_ping_reject_link[0x30] =
+    "L2CAP - L2CA_ping rejected - link disconnecting";
+
 BOOLEAN L2CA_SetIdleTimeout (UINT16 cid, UINT16 timeout, BOOLEAN is_global)
 {
     tL2C_CCB *p_ccb;
@@ -506,3 +516,18 @@ UINT8 L2CA_SetTraceLevel (UINT8 trace_level)
 void L2CA_RegisterCompression (void)
 {
 }
+
+// L2CA_SetAclPriority/L2CA_SetCompression/L2CA_Flush/L2CA_GetNumQueuedBufs
+// are not present in Xenoblade retail .text; these named arrays reproduce
+// their trace strings in the retail .data tail.
+char s_l2ca_acl_prio[0x38] =
+    "L2CA_SetAclPriority()  bdaddr: %02x%02x%02x%02x%02x%02x";
+char s_l2ca_acl_prio_no_lcb[0x27] = "L2CAP - no LCB for L2CA_SetAclPriority";
+char s_l2ca_set_comp[0x60] =
+    "L2CA_SetCompression() local cid %d, direction %d, pe_type %d, mem_level %d, wbits %d, enable %d";
+char s_l2ca_flush_no_ccb[0x27] = "L2CAP - no CCB for L2CA_Flush, CID: %d";
+char s_l2ca_flush[0x2d] = "L2CA_Flush()  CID: 0x%04x flushed %d buffers";
+char s_l2ca_qbuf_abnormal[0x3d] =
+    "L2CA_GetNumQueuedBufs()  CID: 0x%04x  abmormally returning 0";
+char s_l2ca_qbuf[0x38] =
+    "L2CA_GetNumQueuedBufs()  CID: 0x%04x  returning %d";

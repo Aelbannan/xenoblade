@@ -53,6 +53,10 @@ typedef struct ARCHeader {
 static u32 entryToPath(ARCHandle* handle, u32 entrynum, char* string,
                        u32 maxlen);
 
+// Retail .sdata is 8 bytes: the assert's "arc.c" file string (6) plus 2 zero
+// pad bytes; the padded array reproduces the exact .sdata slice.
+static char s_arcFileName[8] = "arc.c";
+
 static BOOL isSame(const char* lhs, const char* rhs) {
     while (rhs[0] != '\0') {
         if (tolower(*lhs++) != tolower(*rhs++))
@@ -75,6 +79,7 @@ static u32 myStrncpy(char* dst, char* src, u32 maxlen) {
     return maxlen - i;
 }
 
+// Inlined into ARCOpen by MWCC (static, no standalone body in retail).
 static BOOL ARCConvertEntrynumToPath(ARCHandle* handle, s32 entrynum,
                                      char* string, u32 maxlen) {
     ARCNode* nodes = handle->FSTStart;
@@ -98,7 +103,8 @@ static BOOL ARCConvertEntrynumToPath(ARCHandle* handle, s32 entrynum,
     return TRUE;
 }
 
-BOOL ARCGetCurrentDir(ARCHandle* handle, char* string, u32 maxlen) {
+// Inlined into ARCOpen by MWCC (static, no standalone body in retail).
+static BOOL ARCGetCurrentDir(ARCHandle* handle, char* string, u32 maxlen) {
     return ARCConvertEntrynumToPath(handle, handle->currDir, string, maxlen);
 }
 
@@ -108,7 +114,7 @@ BOOL ARCInitHandle(void* bin, ARCHandle* handle) {
 
     // clang-format off
 #line 74
-    OS_ASSERT(header->magic == ARC_FILE_MAGIC, "ARCInitHandle: bad archive format");
+    if (header->magic != ARC_FILE_MAGIC) OSPanic(s_arcFileName, __LINE__, "ARCInitHandle: bad archive format");
     // clang-format on
 
     handle->archiveStartAddr = header;
@@ -136,7 +142,7 @@ BOOL ARCOpen(ARCHandle* handle, const char* path, ARCFileInfo* info) {
         ARCGetCurrentDir(handle, dir, sizeof(dir));
 
         OSReport("Warning: ARCOpen(): file '%s' was not found under %s in the "
-                 "archive.\n",
+                 "archive.\n\0\0\0\0\0\0",
                  path, dir);
 
         return FALSE;
@@ -258,9 +264,7 @@ descend:
     }
 }
 
-//unused
-void ARCEntrynumIsDir(){
-}
+// unused in Xenoblade retail: ARCEntrynumIsDir
 
 static u32 entryToPath(ARCHandle* handle, u32 entrynum, char* string,
                        u32 maxlen) {
@@ -288,9 +292,7 @@ void* ARCGetStartAddrInMem(ARCFileInfo* info) {
     return (u8*)info->handle->archiveStartAddr + info->startOffset;
 }
 
-u32 ARCGetStartOffset(ARCFileInfo* info) {
-    return info->startOffset;
-}
+// unused in Xenoblade retail: ARCGetStartOffset
 
 u32 ARCGetLength(ARCFileInfo* info) {
     return info->length;

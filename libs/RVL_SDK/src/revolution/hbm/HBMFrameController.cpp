@@ -30,6 +30,10 @@ void FrameController::calc() {
             stop();
         }
 
+        // Retail .rodata pool is 8 bytes: 1.0f (getLastFrame) then a dead
+        // 0.0f entry. Folded no-op keeps the pool layout; emits no code.
+        (void)(0.0f);
+
         break;
     }
 
@@ -69,3 +73,10 @@ void FrameController::calc() {
 }
 
 } // namespace homebutton
+
+// .data: the class RTTI name string followed by the __RTTI__ object. The
+// vtable itself was linker-stripped in retail (unreferenced weak symbol), so
+// the class is __declspec(novtable); the RTTI is reproduced manually below
+// with the retail linker name (referenced by GroupAnmController's vtable).
+char lbl_80518668[0x20] = "homebutton::FrameController";
+void* __RTTI__Q210homebutton15FrameController[2] = { lbl_80518668, NULL };

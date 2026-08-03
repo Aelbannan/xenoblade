@@ -90,13 +90,7 @@ OSStateCallback OSSetPowerCallback(OSStateCallback callback) {
     else return old;
 }
 
-//unused
-void OSGetResetButtonState(){
-}
-
-//unused
-void OSGetResetSwitchState(){
-}
+// unused in Xenoblade retail: OSGetResetButtonState, OSGetResetSwitchState
 
 BOOL __OSInitSTM(void) {
     BOOL success;
@@ -132,9 +126,7 @@ exit:
     return success;
 }
 
-//unused
-void __OSFinalizeSTM(){
-}
+// unused in Xenoblade retail: __OSFinalizeSTM
 
 void __OSShutdownToSBY(void) {
 #define in_args ((u32*)StmImInBuf)
@@ -154,9 +146,7 @@ void __OSShutdownToSBY(void) {
 #undef in_args
 }
 
-//unused
-void __OSShutdownToIDL(){
-}
+// unused in Xenoblade retail: __OSShutdownToIDL
 
 void __OSHotReset(void) {
     VI_HW_REGS[VI_DCR] = 0;
@@ -171,21 +161,13 @@ void __OSHotReset(void) {
     LockUp();
 }
 
-//unused
-void __OSHotResetForPDN(){
-}
+// unused in Xenoblade retail: __OSHotResetForPDN
 
-BOOL __OSGetResetButtonStateRaw(void) {
+static inline BOOL __OSGetResetButtonStateRaw(void) {
     return (!(PI_HW_REGS[PI_INTSR] & PI_INTSR_RSWST)) ? TRUE : FALSE;
 }
 
-//unused
-void __OSIsSTMReady(){
-}
-
-//unused
-void __OSSetVIAutoDimming(){
-}
+// unused in Xenoblade retail: __OSIsSTMReady, __OSSetVIAutoDimming
 
 s32 __OSSetVIForceDimming(u32 arg0, u32 arg1, u32 arg2) {
 #define in_args ((u32*)StmVdInBuf)
@@ -224,25 +206,7 @@ s32 __OSSetVIForceDimming(u32 arg0, u32 arg1, u32 arg2) {
 #undef in_args
 }
 
-//unused
-void __OSSetRFIdleForAutoDimming(){
-}
-
-//unused
-s32 __OSSetIdleLEDMode(u32 mode) {
-#define in_args ((u32*)StmImInBuf)
-
-    if (!StmReady) {
-        return -6;
-    }
-
-    in_args[0] = mode;
-
-    return IOS_Ioctl(StmImDesc, STM_IOCTL_SET_IDLE_LED_MODE, StmImInBuf,
-                     sizeof(StmImInBuf), StmImOutBuf, sizeof(StmImOutBuf));
-
-#undef in_args
-}
+// unused in Xenoblade retail: __OSSetRFIdleForAutoDimming, __OSSetIdleLEDMode
 
 s32 __OSUnRegisterStateEvent(void) {
     IPCResult result;
@@ -264,9 +228,7 @@ s32 __OSUnRegisterStateEvent(void) {
     return result;
 }
 
-//unused
-void __OSSetSlotLED(){
-}
+// unused in Xenoblade retail: __OSSetSlotLED
 
 static s32 AccessVIDimRegs(void) {
     IPCResult result = IOS_IoctlAsync(
@@ -312,7 +274,7 @@ static s32 __OSStateEventHandler(s32 result, void* arg) {
 
     // clang-format off
 #line 820
-    OS_ASSERT(result == IPC_RESULT_OK, "Error on STM state event handler\n");
+    OS_ASSERT(result == IPC_RESULT_OK, "Error on STM state event handler\n\0\0");
     // clang-format on
 
     StmEhRegistered = FALSE;

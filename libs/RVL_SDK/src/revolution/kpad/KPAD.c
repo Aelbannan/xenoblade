@@ -696,15 +696,19 @@ s8 select_2obj_first(KPADInternal* kp) {
     KPADObject* op2;
     KPADObject* best1;
     KPADObject* best2;
-    f32 one = 1.0f;
-    f32 best = kp_err_first_inpr;
-    f32 zero = 0.0f;
+    f32 one;
+    f32 best;
+    f32 zero;
     f32 d;
     f32 dist;
     f32 inv;
     f32 ny, nx;
     f32 s;
     Vec2 n;
+
+    one = 1.0f;
+    best = kp_err_first_inpr;
+    zero = 0.0f;
 
     op1 = kp->kobj_sample;
     do {

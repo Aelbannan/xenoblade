@@ -1,281 +1,381 @@
 # 32 — Witness improvements plan: certifying the remaining pure-reg-swap RVL pairs
 
-Status: **draft for adversarial review** (GLM-5.2 soundness, Kimi K3 integration).
-Companion to `31-reg-swap-witness.md` (the register-renaming witness) and
-`docs/witness_expansion_plan.md` (region-sliced rho).
+Status: **rev 3 — after round-2 adversarial review** (GLM-5.2 soundness, Kimi K3
+integration; both re-verified against code; second reviewer ran as GLM-5.2/max).
+Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 / R2-1-R2-10 are
+recorded below with resolutions. Companion to `31-reg-swap-witness.md` and
+`docs/witness_expansion_plan.md`.
 
 ---
 
 ## 0. Problem statement
 
 The RVL targets were swept through the current witness
-(`tools/coop/lib/renaming_witness.py`, `certify_renaming_witness`). Of 200
-non-FULL_MATCH RVL targets, 94 are **pure register-swap pairs** (hexdiff:
-0 structural, >0 reg-swap) — exactly the witness's target class. Only **1 of
-the 94 certifies today** (`__HBMSYNResetAllControllers`). The other 93 fail
-at these gates:
+(`tools/coop/lib/renaming_witness.py`, `certify_renaming_witness`). 195 RVL
+targets are non-FULL_MATCH (plan rev 1 said 200; 195 is the targets.json count).
+Of those, 94 are **pure register-swap pairs** by hexdiff's classifier (0
+structural, >0 reg-swap). Only **1 of the 94 certifies today**
+(`__HBMSYNResetAllControllers`). The integration reviewer reproduced the sweep
+independently (passes size+mnemonic) and confirmed the non-reloc gate counts
+(rho 22 vs 23, abi-boundary 15 vs 14, loop 12 vs 12, reject-list 12 vs 10,
+structural 2 vs 1, execute+deadline 2 vs 2; the reloc and fields counts are the
+moving set boundary plus the parallel reloc-fix pipeline).
 
-| Gate | Count | Root cause |
-|---|---|---|
-| reloc (gate 2) | 28 | reloc symbol names differ (mostly TU-local `@N` labels / `...data.0`; a separate fix pipeline — `reloc_map.py` + `extern "C" lbl_*` — is running in parallel; ~17 are "do-not-chase" name drift with equal values) |
-| rho (gate 4, incl. region path) | 23 | 7 are r0-involved (see A2); 16 are genuinely non-bijective local allocations |
-| abi-boundary (gate 5) | 14 | 6 `r0→rX`, 7 `r3/r4→rX` (see A2/A3), 1 real boundary-deadness failure |
-| loop (first-cut policy) | 12 | any backward branch → SMT |
-| reject-list (gate 6) | 10 | **all are byte-identical `psq_st`/`psq_l` FP prologue/epilogue saves** (same raw word both sides; see A1) |
-| fields (gate 3) | 3 | genuine non-register bit differences (source fixes, not witness) |
-| structural | 1 | `bta_dm_sdp_result` diverges under region rho |
-| execute / deadline | 2 | `WPADiExcludeButton` path-limit 256; `__wudStackCheckDeviceInfo` 20s deadline (see A4) |
-| total | 93 | |
-
-This plan proposes five witness-side changes. Sound improvements A1–A3 target
-~25–30 of the 93; A4 is resource plumbing; A5 (reloc value-equality) is gated
-on the parallel reloc-fix pipeline's report.
-
-All five changes must preserve the witness's two soundness invariants:
+Two soundness invariants must survive every change:
 1. **Shared-state symbolic execution** — retail `r_i` and decomp `r_rho(i)`
    share one variable; divergence always degrades to SMT, never certifies.
-2. **Full-state structural terminal comparison** — every architectural
-   component is compared; a divergence in any compared lane rejects.
+2. **Full-state structural terminal comparison** — `_terminals_agree`
+   compares every GPR/FPR/PS1 lane unconditionally (no dead-lane masking in the
+   global path), memory, LR, CR/XER/FPSCR, and all non-register state.
 
 ---
 
-## A1. Byte-identical reject-list slot exemption (10 targets)
+## R1. Round-1 review findings and resolutions
 
-### Motivation
+### GLM-5.2 (soundness)
 
-All 10 reject-list failures are the **same pattern**: retail and decomp both
-emit an identical `psq_st f31, 0xXX(r1), 1, qr3` (FP prologue save) / `psq_l`
-(epilogue restore) at the same slot — same raw word, e.g. `0xf3e10078` vs
-`0xf3e10078`. The rest of the function differs only in GPR colors. Gate 6
-currently rejects the pair the moment it sees `psq_*` anywhere, even when the
-slot cannot diverge.
+| # | Sev | Change | Finding | Resolution in rev 2 |
+|---|---|---|---|---|
+| G1 | MINOR | A1 | "psq/FPSCR semantics are capability-stubbed" is false — `_psq_store_pair`/`_psq_load_pair`, `MFFS`/`MTFSF`, `DCBZ` are fully modeled (semantics.py:2007/1967/4152/3247). Soundness rests on shared binding + structural comparison, not stubness. | A1 rationale corrected; no code impact. |
+| G2 | MINOR | A1 | Post-rho check is belt-and-suspenders (structural comparison is the backstop); region-path placement and psq field classification unspecified. | A1 rev: per-region post-rho (I12) + explicit psq operand classification. |
+| G3 | MAJOR | A2 | **X-form indexed load/store RA=0 IS literal zero** (semantics.py:3531/3559 `ops.const(0) if ra == 0`), not a real register. The rev-1 accept test `lwzx r3,r0,r5` vs `lwzx r3,r6,r5` **does not certify** — addresses diverge, structural comparison rejects. | A2 rev: X-form indexed load/store RA joins the non-register set; accept test removed; X-form RA renameable only for arithmetic (add/subf/…) and cmpw/cmpwi-family (which read `gpr[ra]`). |
+| G4 | MAJOR | A2 | `cmpwi`/`cmplwi`/`mulli`/`addic`/`addic.`/`subfic` are NOT r0-literal — they read `state.gpr[ra]` (semantics.py:3455; the literal-zero guard at 3296 is `ADDI, ADDIS` only). Rev-1 `_D_FORM_RA_OPCODES` enumeration over-broad. | A2 rev: rA=0-literal set = exactly `{ADDI, ADDIS}` ∪ D-form/DS-form integer load-store + update forms ∪ `{LMW, STMW}` ∪ FP D-form load-store + update ∪ PSQ D-forms. `cmpwi`/`mulli`/`addic`/`subfic` RA stays renameable. |
+| G5 | MINOR | A2 | r0 missing from `_VOLATILE_GPRS` (range(3,13)) — latent only; opaque-EABI clobbers r0. | Add r0 to `_VOLATILE_GPRS` for EABI consistency. |
+| G6 | MINOR | A2 | `_use_def` over-approximates X-form load/store RA as a use when RA=0; safe direction (over-live), only over-strict at region rebinds. | Mirror the engine's `if a[1]:` guard in `_use_def` for load/store RA. |
+| G7 | BLOCKER | A3 | **False certificate.** `_terminals_agree` is rho-aligned: with rho(4)=5, retail gpr[4]=X4 vs decomp gpr[5]=X4 self-agree. A `long long` return + stale `declared_return="i32"` + rho{4↔5} certifies while the caller reads decomp r4=garbage. `combine_abi_shapes` narrows `returns_i64` (abi_infer.py:330) so a wrong declared shape overrides the conservative inference. | A3 rev: condition (c) replaced by a **structural** check — r4 (and f1) fixed iff written on any path before a non-link `bclr` return (equivalent to conservative `inferred.returns_i64`). Never trust the narrowed/declared shape. |
+| G8 | MINOR | A3 | Exit live-out gap confirmed: terminals have `succ=()`, so the fixpoint cannot see return registers — corroborates G7. | Structural write-before-return check (G7) is computed from the instruction stream, not the fixpoint. |
+| G9 | NIT | A3 | The 64-bit split pair (r3/r4) is the load-bearing case; r3 stays fixed, r4 is the high word. | Covered by G7's structural check. |
+| G10 | NIT | A4 | Sound; investigate cross-region path accounting before raising caps. | See I8 — the WPADiExcludeButton diagnosis changed. |
+| G11 | NIT | A5 | Sketch sound-in-principle; out of scope. | See I10 — framing corrected. |
 
-### Design
+### Kimi K3 (integration; ran as GLM-5.2/max)
 
-- **Stream validation (gate 6):** a reject-list opcode slot is allowed iff
-  `r_insn.raw == d_insn.raw` (byte-identical) **and** every GPR/FPR field of
-  that slot is **rho-fixed** (identity-mapped). Otherwise the existing
-  reject-list rejection stands (fall through to SMT).
-- Because rho is built after stream validation, the check is split:
-  - stream validation rejects reject-list slots that are *not* byte-identical
-    (unchanged behaviour);
-  - a new post-rho check rejects the pair when a byte-identical reject-list
-    slot's register fields are renamed by rho.
-- Execution proceeds through the existing `SymbolicOps` path for the
-  exempted slot (the engine's psq/FPSCR semantics are used as-is — same as the
-  `full-instruction-match` path, which accepts byte-identical functions
-  containing these opcodes with **no** semantic proof at all).
+| # | Sev | Change | Finding | Resolution in rev 2 |
+|---|---|---|---|---|
+| I1 | BLOCKER | A1 | **A1 breaks `test_reject_list_opcodes_fall_back_to_smt`** (test_renaming_witness.py:242): its five cases (`psq_l`/`mffs`/`mtfsb0`/`mcrfs`/`dcbz` + blr) are byte-identical with empty rho ⇒ under A1 they certify; the plan's "must keep passing" regression claim is false. | A1 rev: the test is **rewritten** (reject case uses a non-byte-identical reject word or asserts the new exempted behaviour). A1 scoped to the confirmed motivating set (psq_st/psq_l) with a test per opcode family. |
+| I2 | BLOCKER | A3 | **Feasibility: all 7 claimed targets have `declared_return = None`** in targets.json (only 3 RVL targets carry one; none in the 93). `infer_abi_shape` sets `returns_i64=True` whenever either side writes r4 (abi_infer.py:60) — `__wudSyncDone` writes r4 as scratch, so inference keeps r4 fixed. As specified, A3 certifies ~0 targets. | A3 rev: the structural write-before-return check (G7) makes `__wudSyncDone`-style targets certifiable **without** any registry change (r4 written but never on a path to a return ⇒ unfixed); the payoff is re-measured. |
+| I3 | MAJOR | A1 | **Region-path use/def hole:** `_use_def_numbered` skips REJECT opcodes; an exempted `psq_st f31,0(r1)` at a region end reads f31, but the fixpoint models no use ⇒ f31 looks dead at the boundary ⇒ rebind unsound. | A1 rev: model psq uses/defs in `_use_def_numbered` (psq_st: use fS+rA; psq_l: def fD+ps1[D], use rA; update forms also def rA). |
+| I4 | MAJOR | A3 | **Certificate staleness:** the witness cert call passes no `abi_shape` (equivalence_check.py:1608); the §2.5.4 validator rejects certs when the registry has a `declared_return` and the cert has None. A3 makes this acute. | A3 rev: thread `declared_return` into `_build_equivalence_certificate` for the witness path and emit `abi_shape={"declared_return": …}` (raw string — I13), as the SMT path already does. |
+| I5 | MAJOR | all | **Provenance hole:** `renaming_witness.py` is in neither `CERTIFIER_SOURCE_PATHS` nor `engine_hash` (provenance.py:20); A1–A3 semantics changes would not invalidate old certificates (hash checks currently relaxed at targets.py:107–117). | **Implement first:** add `tools/coop/lib/renaming_witness.py` to `CERTIFIER_SOURCE_PATHS` before any semantic change. |
+| I6 | MAJOR | A2 | **hexdiff coupling:** hexdiff imports `_gpr_fpr_masks` (hexdiff.py:126) for `_pure_reg_swap`; A2 moving D-form RA out of the register mask changes hexdiff's classification repo-wide, mutating the plan's own 94-set instrument and other agents' diffs. | A2 rev: decouple — hexdiff keeps a frozen copy of the pre-A2 mask logic (explicitly documented as classifier-only), or A2 ships with a coordinated re-measurement of the target set. Choose decoupling (isolated blast radius on a shared branch). |
+| I7 | MAJOR | A2 | `cmpwi` wrongly listed in A2's D-form-RA set (semantics.py:3455 reads `gpr[ra]`); aligns with G4. | A2 rev: set per G4. |
+| I8 | MAJOR | A4 | **`WPADiExcludeButton` misdiagnosed:** at production `max_paths=4096, deadline=30s` it fails at `structural`, not path-limit-256 (the 256 was the sweep's witness-default budget). `__wudStackCheckDeviceInfo` does reproduce the 30s deadline. | A4 rev: re-measure at production budgets; investigate the structural divergence for WPADiExcludeButton; only the deadline case is a resource knob. |
+| I9 | MINOR | §0 | 200 → 195 targets; gate counts otherwise credible. | §0 corrected. |
+| I10 | MINOR | A5 | Gate 3 **skips** the raw-bit compare when a reloc is present (`if r_reloc is None:`); the displaced bits are not the enforcement mechanism. A5's authority must be the address-resolution check. | A5 note amended; still out of scope this round. |
+| I11 | MINOR | A1 | Reject-list failures are 12 (not 10), all `psq_st`; byte-identical claim fully confirmed; epilogue `psq_l` also byte-identical but never gates (reject fires at the first psq slot). | Count corrected; A1 must handle both prologue psq_st and epilogue psq_l. |
+| I12 | MINOR | A1 | Post-rho check must run **per-region** in the region path (slots are atomic, so a slot never straddles a boundary — but the check must consult the containing region's rho, in both `check_gates` and `run_region_sliced_witness`). | A1 rev: per-region placement specified. |
+| I13 | NIT | A3 | `abi_shape_from_declared_return("aggregate")` returns None; the witness must branch on the **raw** `declared_return` string, not the narrowed shape. | A3 rev: thread the raw string. |
 
+**Verdicts after round 1:** A1 rework (test rewrite + psq use/def + per-region check),
+A2 rework (correct r0-literal set + hexdiff decoupling), A3 rework (structural
+return check + cert abi_shape; feasibility restored without registry changes),
+A4 rework (re-measure), A5 out of scope.
+
+## R2. Round-2 review findings and resolutions
+
+### GLM-5.2 r2 (soundness)
+
+| # | Sev | Change | Finding | Resolution in rev 3 |
+|---|---|---|---|---|
+| F1 | BLOCKER | A1 | **psq_st use/def omits `ps1[fS]`** — `_psq_store_pair` reads BOTH `fpr[rs]` and `ps1[rs]` for W=0 stores (semantics.py:3911-3913/2016-2024). Without the ps1 use, region-boundary liveness sees `ps1[5]` dead → rebind to a fresh shared variable on both sides → the unconditional memory comparison self-agrees → **false certificate**. Exactly the I3 hole, on the ps1 lane. | A1 rev 3: `psq_st` uses = `{fS, ps1[fS], rA}` (rA guarded `ra!=0`); `psq_l` defs = `{fD, ps1[fD]}`, uses = `{rA}`. |
+| F2 | BLOCKER | A3 | **Internal contradiction:** A3 §3 says default r4 **FIXED** (only trusted metadata unfixes); the I2 resolution says `__wudSyncDone` certifiable **without registry change** (default unfixed). Mutually exclusive. If default-unfixed, G7 reopens via `b` tail-call exits (live-out invisible to the fixpoint). | A3 rev 3: **default FIXED is the only sound choice.** I2's "certifiable without registry change" claim is **retracted**. The `b`-tail-call gap is closed by default-FIXED, not by (c) (F7). |
+| F3 | BLOCKER | A3 | **Accept test impossible:** `__wudSyncDone` writes r4 before a return ⇒ (c) fires ⇒ r4 fixed **regardless of** `declared_return` ⇒ the "accept with declared_return=i32" test cannot certify. | A3 rev 3: accept test uses a **synthetic** shape where r4 is never written on any return path AND a non-i64 registry `declared_return` unfixes it. The `__wudSyncDone` label moves to the *reject* test. |
+| F4 | MAJOR | A2 | `test_cx2_zero_register_encoding_rejected` (test_renaming_witness.py:139) asserts gate `abi-boundary`; under A2 the pair fails at gate **`fields`** (ADDI RA becomes bit-equal). "Stays green" is false. | A2 rev 3: rewrite the test to assert gate `fields`; replace the CX-2 rationale (r0 no longer fixed; rejection is RA bit-equality). |
+| F5 | MAJOR | A2 | G6 liveness fix must also cover **ADDI/ADDIS** (engine literal-zero guard at semantics.py:3296), not only load/store forms. | A2 rev 3: mirror `ra != 0` for the ADDI/ADDIS group too (safe direction; completeness). |
+| F6 | MAJOR | A1 | Ambiguity: are psq fS/rA register or non-register fields? If register, byte-identical slots contribute identity rho and a renamed operand elsewhere fails gate 4 (`rho`) first — the post-rho test "passes for the wrong reason". | A1 rev 3: **fS/rA are non-register** (bit-equal via gate 3); the byte-identical raw-word check is the exemption gate; the post-rho check is retained as per-region belt-and-suspenders only (G2/F6). |
+| F7 | MAJOR | A3 | (c) does not cover **`b` tail-call exits** (no `bclr`/`bcctr`; live-out at terminals invisible). | A3 rev 3: default-FIXED covers these (F2); stated explicitly. |
+| F8 | MINOR | A2 | DCBZ/DCBZ_L also treat RA=0 as literal (semantics.py:3261) — omitted from the "exactly complete" claim; reject-listed so harmless. | A2 rev 3: note the reject-listed carve-out. |
+| F9 | MINOR | A1 | psq rA use should mirror the engine's `if a[1]:` guard (semantics.py:3874). | A1 rev 3: `ra != 0` guard on the psq rA use. |
+| F10 | NIT | A4 | Sound framing; witness-only `deadline_ms` correctly scoped. | — |
+| F11 | NIT | A5 | Framing correction (I10) accurate. | — |
+
+### Kimi K3 r2 (integration; ran as GLM-5.2/max)
+
+| # | Sev | Change | Finding | Resolution in rev 3 |
+|---|---|---|---|---|
+| R2-1 | BLOCKER | A3 | **`abi_shape` plumbing targets a dead path:** the witness `ProofResult` never sets `contract_resolution` (result.py:433 default None), so the §2.5.1 embedder at equivalence_check.py:1878-1885 never fires for the witness path; `proof_request_hash` (1513) also omits `abi_shape`. "As the SMT path already does" is not wired. | A3 rev 3: pass `abi_shape={"declared_return": raw}` as an **explicit kwarg** to `_build_equivalence_certificate` (already accepts it at :906, writes at :961-962); add a registry `declared_return` lookup to `_try_renaming_witness` (mirroring the SMT path's non-gated lookup at 2224-2236); bind `abi_shape` into `proof_request_hash` for source-hash consistency. |
+| R2-2 | MAJOR | A2 | hexdiff decoupling has no enforcement: hexdiff.py:126 imports `_gpr_fpr_masks` live; a frozen copy will silently drift. | A2 rev 3: duplicate `_register_fields`/`_gpr_fpr_masks` into hexdiff as `_classifier_*` with a pinned header comment, plus a **drift-detector test** (X-indexed RA-literal fixtures) in the test suite. No module-level flag (same module, one address). |
+| R2-3 | MAJOR | all | I5 provenance fix is audit-hygiene only until targets.py:107-117 (relaxed hash checks) is re-tightened; `test_provenance.py` covers the list change automatically. | Note in sequencing: re-tightening the hash check is a **separate, out-of-scope** policy step; the list append still lands first. |
+| R2-4 | MAJOR | A3 | The structural write-before-return check is a **forward** reachability — `_cfg_liveness` is backward and won't serve it; plan does not specify the pass. | A3 rev 3: small forward DFS/BFS over `_cfg_successors` from each write site, terminating at non-link `bclr`/`bcctr` returns; **per-function, not per-region** (a write in region 0 reaching a return in region 2 must still fix r4). |
+| R2-5 | MAJOR | A1 | Test rewrite must remove BOTH `PSQ_L*` and `PSQ_ST*` from `REJECT_OPCODES` (or branch on byte-identity before the reject check) — exempting only PSQ_ST leaves the epilogue `psq_l` rejecting; add a byte-identical `psq_st`+`psq_l` combined accept case (the observed shape). | A1 rev 3: scope = all four PSQ forms (`PSQ_L/PSQ_ST/PSQ_LU/PSQ_STU`); tests cover combined prologue+epilogue accept, byte-identical single-form accept, non-byte-identical reject. |
+| R2-6 | MAJOR | A1 | Without explicit `_use_def` psq entries, the `elif not uses_raw and not defs_raw:` fallback over-approximates **all 96 lanes** at every psq slot — safe but defeats the precise I3 liveness the design needs. | A1 rev 3: add explicit `_use_def` branches for PSQ forms (per F1/F9); the REJECT_OPCODES skip branch must not swallow them. |
+| R2-7 | MINOR | A2 | Corrected `_register_fields` flows into `_rho_region_boundaries`/`_region_rho` automatically (all share the same call site). No gap. | — |
+| R2-8 | MAJOR | A3 | Scope list omits `tools/coop/targets.json` — A3's payoff requires adding `declared_return` entries (source-data step). | A3 rev 3: A3's payoff is **deferred** to a follow-up while the G7 closure ships; targets.json edits are contentious on a shared branch. |
+| R2-9 | NIT | A4 | Reproduced: `WPADiExcludeButton` fails `structural` (1 terminal pair, global rho, 10.8s); `__wudStackCheckDeviceInfo` fails `deadline` (30s). | A4 rev 3: confirmed. |
+| R2-10 | MINOR | all | Provenance tests stay green after I5; the trust-boundary dirty flag will now fire on witness edits — intended. No test breakage. | — |
+
+**Verdicts after round 2:** A2 SOUND as revised (needs F4/F5/R2-2); A1 NOT sound as
+revised (F1 blocker + F6/F9/R2-5/R2-6); A3 NOT sound as revised (F2/F3 blockers +
+F7/R2-1/R2-4); A4 SOUND (reproduced); A5 out of scope.
+
+---
+
+## A1. Byte-identical reject-list slot exemption (PSQ forms; 10-12 targets)
+
+### Motivation (confirmed)
+
+All reject-list failures are **byte-identical `psq_st` FP prologue saves** (same
+raw word both sides, e.g. `0xf3e100d8`); most also carry byte-identical `psq_l`
+epilogue restores that never gate because the witness rejects at the first psq
+slot. The rest of each function differs only in GPR colors.
+
+### Design (rev 3, per F1/F6/F9/R2-5/R2-6)
+
+1. **Scope the exemption to the four PSQ memory forms** `PSQ_L`, `PSQ_ST`,
+   `PSQ_LU`, `PSQ_STU` (all four leave `REJECT_OPCODES` — exempting only the
+   store forms would leave epilogue `psq_l` rejecting, R2-5). All other reject
+   opcodes (`mffs`, `mtfsf`, `dcbz`, privileged, PSQ X-forms) stay
+   unconditionally rejected.
+2. **Stream validation:** a PSQ slot is allowed iff `r_insn.raw == d_insn.raw`
+   (byte-identical); otherwise the existing reject-list rejection stands.
+3. **Field classification (F6):** PSQ fS/fD and rA are **non-register**
+   (bit-equal, excluded from rho). Gate 3 enforces their bit-equality; the
+   explicit `raw == raw` check is the exemption gate.
+4. **Post-rho check (per region, belt-and-suspenders only):** retained per G2/F6
+   — in `check_gates` and per-region in `run_region_sliced_witness` — but not
+   load-bearing for soundness (the structural comparison and the liveness fix in
+   (5) are).
+5. **Liveness (I3/F1/R2-6):** add explicit `_use_def` branches for PSQ forms so
+   the REJECT skip branch does not swallow them and the unknown-opcode fallback
+   (all 96 lanes) does not fire:
+   - `psq_st`/`psq_stu`: uses `{fS, ps1[fS], rA}` (rA guarded `ra != 0`);
+     `psq_stu` also defs rA.
+   - `psq_l`/`psq_lu`: defs `{fD, ps1[fD]}`; uses `{rA}` (guarded);
+     `psq_lu` also defs rA.
+   Missing `ps1[fS]` in the store use is a false-certificate hole (F1).
+6. Execution proceeds through the existing `SymbolicOps` path; the structural
+   terminal comparison remains the soundness backstop (G2).
 ### Soundness argument
 
-The reject-list exists because *renaming through* these opcodes is unsound:
-psq/FPSCR semantics are capability-stubbed, and a renamed operand would let a
-stub mask a real divergence. The exemption closes that hole structurally:
+Byte-identical slot ⇒ identical opcode/operands/memory address on both sides;
+rho-fixed operands ⇒ both sides access the same shared variables, so outputs
+(memory, lanes, FPSCR) are identical ASTs. A renamed operand writes different
+shared variables; any escape (memory — compared unconditionally; a live lane —
+compared; FPSCR — compared) diverges and rejects; a dead lane is genuinely
+unobservable and masking it is correct. Consistency: `full-instruction-match`
+already accepts byte-identical functions containing psq with no solver.
 
-- **Byte-identical slot ⇒ identical opcode and identical operand register
-  numbers.** Both sides execute the same instruction on the same memory
-  address.
-- **rho-fixed operands ⇒ the slot reads/writes the same shared variables on
-  both sides.** Under the shared-state binding, decomp register `j` holds
-  retail's `rho^{-1}(j)` variable. A slot whose every GPR/FPR field `j` has
-  `rho(j)=j` accesses `X_j` on both sides, so its inputs are the same ASTs and
-  its outputs (registers, memory, FPSCR) are the same ASTs.
-- If rho renames any operand register, the slot writes different shared
-  variables; any *escape* (memory write, compared lane, FPSCR, LR) diverges and
-  the structural comparison rejects. The only masked component is a dead
-  register lane (region path); a dead lane cannot escape to memory because the
-  slot's memory writes are compared unconditionally and any divergence there
-  rejects. (Edge: an exempted slot that *writes only* a dead lane — e.g. a
-  dead `psq_l` — writes memory too when the operand is rho-fixed; when it is
-  not rho-fixed the exemption does not apply.)
-- **Consistency with existing acceptance:** `full-instruction-match` certifies
-  byte-identical functions containing `psq_*` with no solver. The exemption
-  certifies pairs whose non-psq slots differ only in rho-fixed-safe colors —
-  strictly more evidence than the byte-identical path requires, and the same
-  semantics the byte-identical path trusts.
+### Tests (rev 3)
 
-### Tests
-
-- Accept: 2-cycle GPR swap + byte-identical `psq_st`/`psq_l` prologue save
-  (the observed pattern).
-- Reject: same pair with a *renamed* psq operand (e.g. `psq_st f31` retail vs
-  `psq_st f30` decomp — bytes differ → reject-list; and `psq_st f31` both
-  sides with rho(31)=30 elsewhere → post-rho rejection).
-- Reject: `mffs`/`dcbz` pairs that are byte-identical but whose *operands*
-  (f0 / none) cannot be rho-fixed under a renaming rho — confirm fail-closed.
-- Regression: the existing `test_reject_list_opcodes_fall_back_to_smt` must
-  keep passing (non-identical reject-list slots still reject).
-
----
-
+- Rewrite `test_reject_list_opcodes_fall_back_to_smt`: `mffs`/`mtfsb0`/`mcrfs`/
+  `dcbz` keep asserting `reject-list`; the byte-identical `psq_l` case moves to
+  a new PSQ-exemption test group. Add non-byte-identical `psq_st` reject.
+- Accept: GPR 2-cycle + **combined byte-identical `psq_st` prologue AND `psq_l`
+  epilogue** (the observed shape, R2-5).
+- Accept: byte-identical single `psq_st` (or `psq_l`) with identity rho.
+- Reject: psq word differs (gate 6, unchanged).
+- Reject: `psq_st f31` byte-identical with `ps1[31]` renamed across a region
+  boundary whose deadness is masked by a missing ps1 use — the F1 regression
+  (must reject via the new ps1 use).
+- Reject: psq read at a region end with a cross-boundary rename (I3/F1
+  liveness).
+- Regression: region-sliced suite; `test_stmw_range_use_modeled` analog for psq.
 ## A2. Position-aware r0 (≈13 targets: 6 abi-boundary + 7 rho-region)
 
-### Motivation
+### The actual rule (rev 3, per G3/G4/I7/F8 — verified against the engine)
 
-Retail code routinely uses **r0 as a real value register**: `li r0,97;
-... stb r0,...` and 2-cycles like `{r0→r6, r6→r0}` (verified in
-`GXCopyDisp`, `__wpadGetExtConfig`). Gate 5's `_UNCONDITIONALLY_FIXED_GPRS`
-contains r0, so any rho touching r0 is rejected — and because the rho is
-built before gate 5, the *region path* reports these as rho conflicts
-("no consistent bijection in region [4,11)") even though the region rho
-`{r0↔r6}` is a perfectly consistent bijection.
+r0 is literal zero **only** where the engine guards `ra == 0`:
+- D-form/DS-form **memory** ops: `lwz`/`lwzu`/`lbz`/`lh`/`lha`/`st` family +
+  update forms, `lmw`/`stmw`, FP `lfs`/`lfd`/`stfs`/`stfd` + update forms,
+  PSQ D-forms.
+- X-form **indexed load/store** (integer and FP): `lwzx`/`stwx`/`lfsx`/… —
+  `ops.const(0) if ra == 0` (semantics.py:3531/3559). **Not** a real register.
+  (`dcbz`/`dcbzl` also guard RA=0 — semantics.py:3261 — but they are
+  reject-listed, so they never reach the role table; F8 carve-out.)
+- Arithmetic `addi`/`addis` (the `ra == 0 and op in (ADDI, ADDIS)` guard,
+  semantics.py:3296).
 
-### The actual rule
+r0 is a **real register** (reads `gpr[ra]`) everywhere else, including:
+- `cmpwi`/`cmplwi`/`cmpw`/`cmplw` (semantics.py:3455),
+- `mulli`/`addic`/`addic.`/`subfic` (no guard outside ADDI/ADDIS),
+- X-form arithmetic (`add`/`subf`/`and`/`or`/…), M-form (`rlwimi`/`rlwinm`),
+  RD/RB/RS positions, and X-form load/store **third** operand (RB).
 
-On PPC, r0 is only special in the **RA field of D-form (and DS-form)
-instructions** (`addi`, `lwz`, `stw`, `cmpwi`, `li`/`lis` encodings, …):
-there `RA=r0` means the literal zero and the instruction reads no register.
-In every other position — RD, RB, and **X-form RA** (`lwzx r3,r0,r5` reads
-r0) — r0 is an ordinary register.
+### Design (rev 3)
 
-### Design
-
-1. **Role table:** for D-form/DS-form opcodes, mark the RA field
-   `non-register` (bit-equal required, excluded from rho accumulation). Add a
-   `_D_FORM_RA_OPCODES` set; extend `_register_fields` so those opcodes return
-   RA as non-renameable (the `(start, kind)` tuple gains a `FIXED` marker, or
-   the rho builder consults the set directly).
-2. **Rho builder (gate 4):** r0 accumulates normally from RD/RB and X-form RA.
-3. **Gate 5:** remove r0 from `_UNCONDITIONALLY_FIXED_GPRS`. The D-form RA
-   bit-equality (gate 3) already guarantees no instruction can misread decomp's
-   r0 as a literal.
-4. **Region path:** no change needed beyond the above — the r0↔r6 2-cycle
-   regions then pass `_region_rho` + per-region gate 5.
-
-### Soundness argument
-
-The only semantic specialness of r0 is the D-form RA literal-zero encoding.
-Gate 3 requires every non-register bit to be equal, and under this change the
-D-form RA field *is* non-register: any pair where retail writes `RA=0` and
-decomp writes `RA=rX` fails gate 3 (fields), and vice versa. Therefore no
-instruction in a certified pair can differ in whether r0 is interpreted as
-zero. Everywhere else, r0 is a value register and is renamed exactly like any
-other GPR under the shared-state binding. X-form RA r0 reads are renamed
-consistently because both sides' X-form RA fields are renameable GPR fields
-participating in the same rho.
-
-### Tests
-
-- Accept: `li r0,97; lwz r6,552(r7); stb r0,..; ori r6,r6,0xF; stw r6,..;
-  lwz r6,544(r7); stb r0,..; rlwinm r0,r6,0,0,29` vs the r0/r6-swapped
-  version (the `GXCopyDisp` body) — global rho or region-sliced, whichever.
-- Accept: `lwzx r3, r0, r5` vs `lwzx r3, r6, r5` under rho(0)=6 (X-form RA).
-- Reject: `addi r3, 0, 5` vs `addi r3, r12, 5` (CX-2 must keep failing —
-  D-form RA bit differs → gate 3).
-- Reject: `lwz r3, 0(r0)` vs `lwz r3, 0(r12)` (D-form RA rename attempt).
-- Regression: `test_cx2_zero_register_encoding_rejected` stays green.
-
----
-
-## A3. Live-out/live-in-based r3/r4 fixedness (≈7 targets)
-
-### Motivation
-
-`_UNCONDITIONALLY_FIXED_GPRS = {0,1,2,3,4,13}` fixes r3/r4 even when the
-function never reads them before writing (not live-in) and never returns
-through them. Verified example: `__wudSyncDone` renames dead-scratch
-`r4→r30` (`add r4,r29,r30` / `add r30,r29,r31` — written and consumed between
-calls). r4 is a volatile scratch register there; the rename is sound.
-
-### Design
-
-- **r3 stays unconditionally fixed** (universal return register; only ~2 of
-  the 14 abi-boundary failures involve r3 — conservative and cheap).
-- **r4 (and f1) become conditionally fixed:** fixed iff
-  (a) live-in in the EABI arg range (already computed), or
-  (b) live-across-call (already computed), or
-  (c) the function returns 64-bit/aggregate — the pipeline's `declared_return`
-  already knows this (`abi_infer.py`); thread it into
-  `certify_renaming_witness` as an optional parameter (default: fixed, i.e.
-  current behaviour when unknown).
-- Note the current CFG fixpoint models **no exit live-out** (terminals have no
-  successors, so `live_out=∅` at exits); `declared_return` is the source of
-  truth for the return set rather than re-engineering exit liveness.
+1. **Role table:** the RA field is `non-register` (bit-equal, excluded from
+   rho) for exactly the memory-form set above (D/DS/X-indexed load-store).
+   `_register_fields` returns RA as non-renameable for those opcodes.
+2. **Rho builder (gate 4):** unchanged mechanics; r0 accumulates normally from
+   every other position.
+3. **Gate 5:** remove r0 from `_UNCONDITIONALLY_FIXED_GPRS`; add r0 to
+   `_VOLATILE_GPRS` (G5).
+4. **Liveness (G6/F5):** mirror the engine's `if a[1]:` RA-read guard in
+   `_use_def` for load/store forms **and** the ADDI/ADDIS group (the engine's
+   literal-zero guard covers both; semantics.py:3296). Safe direction, needed
+   for region-rebind completeness.
+5. **hexdiff decoupling (I6/R2-2):** duplicate `_register_fields` +
+   `_gpr_fpr_masks` into hexdiff as `_classifier_register_fields` /
+   `_classifier_gpr_fpr_masks` with a pinned header comment ("classifier-only
+   frozen copy of the pre-A2 witness role table; do NOT update when the witness
+   table changes — they intentionally diverge after A2, doc 32 §A2"), plus a
+   **drift-detector test** pinning the frozen table against the A2 reject
+   fixtures (X-indexed RA-literal pairs) so an accidental re-sync fails CI. No
+   module-level flag (both callers import the same module at one address).
+6. **Region path:** the corrected `_register_fields` applies automatically to
+   `_rho_region_boundaries`/`_region_rho`.
 
 ### Soundness argument
 
-An r4 rename is unsound only if the function's caller observes r4: i.e. r4 is
-live-in (argument), live-out (return), or preserved across a call boundary in
-a way the callee contract captures. Conditions (a)–(c) cover exactly those;
-otherwise r4 is dead at entry, dead at every exit, and its post-call value is
-a volatile clobber — renaming it changes nothing observable to any caller.
-The structural terminal comparison remains the backstop: any lane the
-comparison checks that diverges rejects.
+The only r0-literal interpretation in the ISA is guarded by `ra == 0` in the
+engine for exactly the memory + ADDI/ADDIS set. Gate 3 requires bit-equality of
+the now-non-register RA fields, so a certified pair can never differ in whether
+r0 is literal; everywhere else r0 is an ordinary register renamed under the
+shared-state binding. No false certificate path: any misclassification only
+shifts a divergence into a compared lane (reject), never past one (G3 showed
+the accept-test pair is rejected, not certified).
 
-### Tests
+### Tests (rev 3)
 
-- Accept: `__wudSyncDone`-shape pair (r4 scratch, dead at entry/exit/calls,
-  u32/void return) with `declared_return` set.
-- Reject: same shape with `declared_return` = 64-bit (r4 is a return register).
-- Reject: r4 live-in (read before write) renamed.
-- Reject: r4 live across a call renamed (existing test
-  `test_volatile_live_across_call_must_be_fixed` analog for r4).
-- Regression: `test_cx1_shift_count_swap_rejected` (r4/r5 ABI args) stays
-  green — r4 remains fixed when live-in.
+- Accept: `li r0,97; lwz r6,552(r7); stb r0,..; ori r6,r6,0xF; …` vs the
+  r0/r6-swapped version (GXCopyDisp body).
+- Accept: X-form arithmetic RA rename `add r3,r0,r5` vs `add r3,r6,r5` under
+  rho(0)=6. Accept: `cmpwi cr0,r0,5` vs `cmpwi cr0,r6,5` under rho(0)=6.
+- Reject: `addi r3,0,5` vs `addi r3,r12,5` — **gate `fields`** (F4: the
+  `test_cx2_zero_register_encoding_rejected` assertion is rewritten from
+  `abi-boundary` to `fields`; the CX-2 rationale becomes "D-form RA is
+  bit-equal", not "rho must fix r0").
+- Reject: `lwz r3,0(r0)` vs `lwz r3,0(r12)`; `lwzx r3,r0,r5` vs `lwzx r3,r6,r5`
+  (X-indexed RA literal — no longer an accept case, G3).
+- Regression: updated CX-2 test; the X-indexed-RA reject fixtures double as the
+  hexdiff drift-detector fixtures (R2-2).
+## A3. Structural return-register fixedness for r4/f1 (payoff deferred; G7 closure ships)
+
+### Design (rev 3, per F2/F3/F7/R2-1/R2-4/R2-8)
+
+1. **r3 stays unconditionally fixed.**
+2. **r4 and f1 default to FIXED.** They are unfixed ONLY when BOTH hold:
+   (a) no live-in in the EABI arg range and no live-across-call (existing
+   gate-5 computations), AND
+   (b) **trusted metadata:** a registry `declared_return` whose raw string is
+   provably not 64-bit/aggregate (∈ {void, i32, u32, f32, f64, bool, ptr} per
+   I13 — the narrowed `AbiShape` is NOT consulted; `aggregate`→None).
+   The structural check (c) below can only ever **fix** r4, never unfix it
+   (F2/F3):
+   (c) **structurally: r4/f1 is written on any forward-CFG path reaching a
+   non-link `bclr`/`bcctr` exit** — a new per-function forward DFS/BFS over the
+   existing `_cfg_successors` (R2-4; NOT per-region: a write in region 0
+   reaching a return in region 2 still fixes r4). `b` tail-call exits are
+   covered by the default-FIXED rule (F7), not by (c).
+3. **Payoff honesty (F2/F3/R2-8):** the I2 claim that `__wudSyncDone`-style
+   targets certify "without any registry change" is **retracted** — (c) fixes
+   r4 for them because r4 is written before a return. Certifying them requires
+   adding `declared_return` entries to `tools/coop/targets.json` (a source-data
+   step, deferred this round; see Scope). A3 rev 3 ships the **G7 closure**
+   (soundness hardening) now; the certification payoff is a follow-up.
+4. **Certificate plumbing (I4/R2-1):** add a registry `declared_return` lookup
+   to `_try_renaming_witness` (mirroring the SMT path's non-gated lookup at
+   equivalence_check.py:2224-2236), pass `abi_shape={"declared_return": raw}`
+   as an **explicit kwarg** to `_build_equivalence_certificate` (it already
+   accepts `abi_shape` at :906 and writes it at :961-962 — the §2.5.1
+   `contract_resolution` embedder is dead for the witness path), and bind
+   `abi_shape` into `proof_request_hash` at :1513. Absent a registry value,
+   `abi_shape` stays None (both sides absent ⇒ validator passes).
+5. **Provenance (I5/R2-3):** `renaming_witness.py` added to
+   `CERTIFIER_SOURCE_PATHS` before any semantic change; re-tightening the
+   targets.py:107-117 hash checks is a separate out-of-scope policy step.
+
+### Soundness argument
+
+A return-register rename is observable by the caller; gate 5 is the **only**
+protection because the terminal comparison is rho-aligned and self-agrees on a
+renamed return lane (G7). Default-FIXED pins r4/f1 unless trusted metadata says
+the caller cannot observe them (non-64-bit return) AND the body never writes
+them on a return path ((c), which only over-fixes). Every escape (live-in
+argument, live-across-call value, write-before-return, `b` tail-call argument)
+is covered by (a)/(b)/(c)/default-FIXED respectively. The structural comparison
+remains the backstop for every other lane.
+
+### Tests (rev 3)
+
+- Reject (G7 regression): `long long` return (r4 written before `blr`) with ANY
+  `declared_return` — default-FIXED + (c) fix r4 (F3: the `__wudSyncDone`
+  label belongs here, not in accept).
+- Accept (synthetic, F3): r4 never written on any return path (e.g. written
+  and consumed between calls, function ends via `b` tail-call of a callee that
+  does not observe r4 as an arg), registry `declared_return="i32"` → r4
+  unfixed, cert issues, `abi_shape` present, §2.5.4 validates.
+- Accept (default-FIXED + metadata absent): same synthetic body with NO
+  registry `declared_return` → r4 stays fixed → a rho that renames r4 rejects
+  at gate 5 (no cert, no false accept).
+- Reject: `b` tail-call with r4 live-out as a callee argument, registry i32
+  present — default-FIXED still fixes r4 (F7 regression).
+- Reject: r4 live-in renamed; r4 live-across-call renamed.
+- Regression: `test_cx1_shift_count_swap_rejected` (r4/r5 ABI args) stays green.
+
+## A4. Resource and diagnosis (re-measured, rev 3 per I8/R2-9)
+
+- `__wudStackCheckDeviceInfo` (us-8037a710): reproduces the ~30s
+  `cfg-exploration` deadline at production budgets (`max_paths=4096,
+  deadline_ms=30000`, 30.0s, `pairs=0`, `mode=None`) — a real resource case.
+  Give the witness a comparable `deadline_ms` (machine time, not soundness).
+- `WPADiExcludeButton` (us-8036fb80): **confirmed misdiagnosed in rev 1** — at
+  production budgets it fails `structural` ("terminal pair (return, return)
+  diverges structurally", `pairs=1`, `mode=None` (global rho), 10.8s). The
+  pair diverges under a single global rho with ONE terminal pair — a genuine
+  code difference or global-rho gap, not a resource case. Investigate before
+  touching any budget.
+- Do not raise `max_paths` for the SMT probe; witness-only budget changes.
+
+## A5. Gate-2 reloc value-equality (out of scope this round; framing corrected)
+
+Parallel reloc-fix pipeline result (2026-08-03): refreshing
+`retail_reloc_map.json` (1901 entries) made gate 2 pass for TU-local `@N`↔`@M`
+drift via the canonical-symbols hook — most rev-1 reloc-gate failures were a
+stale-map artifact. The remaining reloc-blocked cases are the §7i group
+(`double_8066BE60` vs `@1000`, i2f magic-double pool, reloc-presence differs).
+If revisited: the authority is an **address-resolution check** (both reloc
+slots resolve to the same target address, re-verifiable from the two objects'
+symbol tables at certification time), **not** bit-equality of displaced fields —
+gate 3 skips the raw-bit compare entirely when a reloc is present (I10).
 
 ---
 
-## A4. Resource knobs + `WPADiExcludeButton` path blow-up (2 targets)
+## Sequencing, scope, and acceptance (rev 3)
 
-- `__wudStackCheckDeviceInfo` (7 calls, 18 regsw): witness hit the 20s
-  `cfg-exploration` deadline in the sweep. The pipeline default
-  (`prove_unit_symbol`) should be confirmed; if it is the same 20s, raise the
-  witness budget to match the SMT probe budget — this is machine time, not
-  soundness.
-- `WPADiExcludeButton` (2 calls, 17 regsw): `ExecutionInconclusive: path limit
-  exceeded (256)`. 256 paths for a small function is suspicious — **investigate
-  the region driver's cross-region path accounting before raising the cap**
-  (doc-31 round-2 fixed a double-counting bug in the same area). If it is a
-  genuine accumulation bug, fix it; if it is a real blow-up, raise
-  `max_paths` for the witness only (never the SMT probe).
+1. **Provenance first (I5/R2-3/R2-10):** append `renaming_witness.py` to
+   `CERTIFIER_SOURCE_PATHS` (one line, zero risk, `test_provenance.py` covers
+   it). Note: audit-hygiene until the targets.py:107-117 hash checks are
+   re-tightened (separate out-of-scope policy step).
+2. **A2** (corrected r0 set per G3/G4/F4/F5/F8 + hexdiff decoupling per
+   I6/R2-2) → tests → re-sweep the 13 r0 targets on `cycle` (no `--smt`).
+3. **A1** (PSQ-only scope, non-register fS/rA, explicit `_use_def` psq entries
+   incl. `ps1[fS]`, test rewrite, per-region belt-and-suspenders post-rho) →
+   tests → re-sweep the ~12 psq targets.
+4. **A3 plumbing + structural check** (R2-1 explicit `abi_shape` kwarg +
+   registry lookup; R2-4 forward CFG pass, per-function) → tests → G7
+   regression green. Payoff (r4-scratch certification) is **deferred** — it
+   requires `tools/coop/targets.json` `declared_return` entries (R2-8).
+5. **A4 diagnosis** — `WPADiExcludeButton` structural divergence
+   (investigate, do not raise caps); `__wudStackCheckDeviceInfo` witness-only
+   `deadline_ms` bump. Measure per wave: how many of the 93 previously-failing
+   targets now certify (`cycle` verdict `EQUIVALENT_MATCH` without `--smt`,
+   split-size fit).
 
----
-
-## A5. Gate-2 reloc value-equality (up to ~17 targets, gated)
-
-Held: the parallel reloc-fix pipeline
-(`reloc_map.py` + `extern "C" lbl_*` declarations) is running on the 28 reloc
-failures. Once it reports, the "do-not-chase" remainder (TU-local `@N` vs
-`@M` labels whose *values* match) can only be certified if gate 2 accepts
-relocs proven to resolve to the same address.
-
-Design sketch (only if the report justifies it): gate 2 currently requires
-`canonical_symbol` equality. Extend it to accept a pair when the mined map
-(`tools/coop/retail_reloc_map.json`) or an address-resolution check proves
-`retail_symbol + retail_addend == decomp_symbol + decomp_addend` (same target
-address, different names). Soundness precondition: both reloc slots must have
-**identical instruction bytes** (the displaced bits match) — the only
-difference is the symbol name, which is not part of the executed semantics.
-The mined map is evidence, not the sole authority: a value-equality decision
-must be re-verifiable from the two objects' symbol tables at certification
-time, and `data_value`-accepted pairs elsewhere in the repo (MWCC_REFERENCE §1)
-are the precedent. This change is **out of scope for this review round**;
-revisit with the pipeline's final per-function report.
-
----
-
-## Sequencing, scope, and acceptance
-
-1. Implement A1 → tests → `python -m unittest discover -s tools/coop/tests`
-   → re-sweep the 10 reject-list targets on `cycle` (no `--smt`).
-2. Implement A2 → tests → re-sweep the 13 r0 targets.
-3. Implement A3 → tests → re-sweep the 7 r3/r4 targets.
-4. A4 as investigation permits.
-5. Measure per wave: how many of the 93 previously-failing targets now certify
-   (`cycle` verdict `EQUIVALENT_MATCH` without `--smt`, split-size fit).
-
-In scope: `tools/coop/lib/renaming_witness.py`,
-`tools/coop/lib/equivalence_check.py` (threading `declared_return`), the
-`test_renaming_witness.py` suite, `SOUNDNESS.md` via `docs_sync`, and this
-doc. **Out of scope:** loop second-cut (fixpoint-enabled loops), value-splitting
-region boundaries for the 16 non-r0 rho failures, source-level matching of the
-3 `fields` failures, and anything touching the reloc-fix pipeline's files.
+In scope: `tools/coop/lib/renaming_witness.py` (incl. explicit `_use_def` PSQ
+branches), `tools/coop/lib/equivalence_check.py` (abi_shape kwarg + registry
+lookup + proof_request_hash), `tools/ppc_equivalence/provenance.py`
+(CERTIFIER_SOURCE_PATHS), `tools/coop/tests/test_renaming_witness.py`
+(rewrites + new, incl. hexdiff drift-detector fixtures),
+`tools/coop/hexdiff.py` (frozen `_classifier_*` copy), `SOUNDNESS.md` via
+`docs_sync`, and this doc. **Explicitly deferred:** `tools/coop/targets.json`
+`declared_return` entries (A3 payoff, source-data step on a shared branch),
+re-tightening the provenance hash checks. **Out of scope:** loop second-cut,
+value-splitting for the 16 non-r0 rho failures, the 3 `fields` failures
+(source), and the reloc-fix pipeline's files (no file overlap: A2's hexdiff
+touch is `_pure_reg_swap`, the reloc agent's is the drift-suggestion block —
+disjoint).
 
 ## Files to read
 
 - `tools/coop/lib/renaming_witness.py` — gates 1–6, rho builder, region path.
-- `docs/ppc_equiv_work/31-reg-swap-witness.md` — original spec + two
-  adversarial review rounds (GLM-5.2/Kimi K3).
+- `docs/ppc_equiv_work/31-reg-swap-witness.md` — original spec + two prior
+  review rounds.
 - `docs/witness_expansion_plan.md` — region-sliced rho, four-lane deadness.
-- `tools/ppc_equivalence/abi_infer.py` — `declared_return` availability.
-- `tools/coop/tests/test_renaming_witness.py` — existing regression corpus.
+- `tools/ppc_equivalence/semantics.py` — rA=0 guards (3296/3455/3531/3559),
+  psq/mffs/dcbz semantics (2007/4152/3247), call_token (1549).
+- `tools/ppc_equivalence/abi_infer.py` — `returns_i64` inference and narrowing.
+- `tools/ppc_equivalence/provenance.py` — `CERTIFIER_SOURCE_PATHS`.
+- `tools/coop/tests/test_renaming_witness.py` — regression corpus (I1/F4 rewrites).
+- `tools/ppc_equivalence/semantics.py` — PSQ pair (1967/2007/3860-3915),
+  r0 guards (3296/3531/3559/3874/3877/4498).

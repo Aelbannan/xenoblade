@@ -8,6 +8,7 @@
 #include <string.h>
 
 static OSInterruptHandler* InterruptHandlerTable;
+u8 osinterrupt_sbss_pad[4]; /* retail .sbss 0x14 -> 0x18 (align tail); non-static so -ipa file keeps it */
 s64 __OSLastInterruptTime;
 s16 __OSLastInterrupt;
 u32 __OSLastInterruptSrr0;
@@ -327,13 +328,7 @@ static u32 SetInterruptMask(u32 type, u32 mask) {
     }
 }
 
-//unused
-void OSGetInterruptMask(){
-}
-
-//unused
-void OSSetInterruptMask(){
-}
+// unused in Xenoblade retail: OSGetInterruptMask, OSSetInterruptMask
 
 u32 __OSMaskInterrupts(u32 userMask) {
     BOOL enabled = OSDisableInterrupts();

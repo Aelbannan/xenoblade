@@ -22,7 +22,7 @@ typedef struct {
     UINT8 _pad2[3];
 } tBTA_HH_DEV_CB;
 
-/* Main control block at 0x805BC0C8, total 0x230 bytes */
+/* Main control block at 0x805BC0C8, total 0x230 bytes (.bss) */
 typedef struct {
     UINT8 _pad1[0x10];
     tBTA_HH_DEV_CB dev_cb[16];
@@ -32,16 +32,39 @@ typedef struct {
     UINT8 _pad3[8];
 } tBTA_HH_CB;
 
-extern tBTA_HH_CB bta_hh_cb;
+tBTA_HH_CB bta_hh_cb;
 
-/* rodata tables */
-extern const UINT32 bta_hh_st_idle[];
-extern const UINT32 bta_hh_st_w4_conn[];
-extern const UINT32 bta_hh_st_connected[];
-extern const UINT32 *bta_hh_st_tbl[];
+/* Action functions (defined in bta_hh_act.c) */
+extern void bta_hh_api_disc_act(void *, void *);
+extern void bta_hh_open_act(void *, void *);
+extern void bta_hh_close_act(void *, void *);
+extern void bta_hh_data_act(void *, void *);
+extern void bta_hh_ctrl_dat_act(void *, void *);
+extern void bta_hh_handsk_act(void *, void *);
+extern void bta_hh_start_sdp(void *, void *);
+extern void bta_hh_sdp_cmpl(void *, void *);
+extern void bta_hh_write_dev_act(void *, void *);
+extern void bta_hh_get_dscp_act(void *, void *);
+extern void bta_hh_maint_dev_act(void *, void *);
+extern void bta_hh_open_cmpl_act(void *, void *);
 
-/* Action function table */
-extern void (*bta_hh_action[])(void *, void *);
+/* Action function table (.rodata, emitted first) */
+void (*const bta_hh_action[12])(void *, void *) = {
+    bta_hh_api_disc_act, bta_hh_open_act,   bta_hh_close_act,
+    bta_hh_data_act,     bta_hh_ctrl_dat_act, bta_hh_handsk_act,
+    bta_hh_start_sdp,    bta_hh_sdp_cmpl,   bta_hh_write_dev_act,
+    bta_hh_get_dscp_act, bta_hh_maint_dev_act, bta_hh_open_cmpl_act,
+};
+
+/* rodata state tables */
+const UINT32 bta_hh_st_idle[] = {0x06020C01, 0x01020201, 0x0C010C01,
+                                 0x0C010C01, 0x0C010C01, 0x0A010C01};
+const UINT32 bta_hh_st_w4_conn[] = {0x0C020C01, 0x01020201, 0x0C020C02,
+                                    0x0C020702, 0x0C020C02, 0x0A010B03};
+const UINT32 bta_hh_st_connected[] = {0x0C030003, 0x01030201, 0x03030403,
+                                      0x05030C03, 0x08030903, 0x0A030C03};
+const UINT32 *const bta_hh_st_tbl[] = {bta_hh_st_idle, bta_hh_st_w4_conn,
+                                       bta_hh_st_connected, NULL};
 
 /* Forward declarations */
 extern void bta_hh_api_enable(void);

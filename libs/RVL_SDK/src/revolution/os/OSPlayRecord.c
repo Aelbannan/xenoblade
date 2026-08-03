@@ -39,7 +39,8 @@ static BOOL PlayRecordGet;
 
 static OSPlayRecord PlayRecord ALIGN(32);
 static NANDFileInfo FileInfo;
-static NANDCommandBlock Block;
+static u8 BlockRaw[0xbc + 8]; /* NANDCommandBlock + 8-byte .bss align tail (retail .bss 0x1F8->0x200); non-static so -ipa file keeps it */
+#define Block (*(NANDCommandBlock*)BlockRaw)
 static OSAlarm PlayRecordAlarm;
 
 static void PlayRecordCallback(s32 result, NANDCommandBlock* block);
@@ -56,14 +57,13 @@ static u32 RecordCheckSum(const OSPlayRecord* playRec) {
     return checksum;
 }
 
-//unused
-void __OSCreatePlayRecord(){
-}
+// unused in Xenoblade retail: __OSCreatePlayRecord, __OSReadPlayRecord, __OSGetPlayRecordState
 
-DECOMP_FORCEACTIVE(OSPlayRecord_c, PlayRecord);
-
-//unused
-void __OSReadPlayRecord(){
+/* Reference PlayRecord first (by value) so the .bss order matches retail
+   (PlayRecord at 0x0, ALIGN(32)); kept in .init so no extra .text is emitted. */
+void fake_function(...);
+__declspec(section ".init") void FORCEACTIVEOSPlayRecord_keep(void) {
+    fake_function(PlayRecord);
 }
 
 static void PlayRecordAlarmCallback(OSAlarm* alarm, OSContext* ctx) {
@@ -325,6 +325,9 @@ void __OSStopPlayRecord(void) {
     PlayRecordState = PLAY_RECORD_STATE_STOPPED;
 }
 
-//unused
-void __OSGetPlayRecordState(){
+// unused in Xenoblade retail: __OSGetPlayRecordState
+
+/* retail .sdata = PlayRecordState(4) + 4 zero pad bytes; keep via .init + zero string. */
+__declspec(section ".init") void FORCEACTIVEOSPlayRecord_sdata(void) {
+    fake_function("\0\0\0");
 }

@@ -249,7 +249,7 @@ static const tL2CAP_APPL_INFO hst_reg_info = {
 **                  found
 **
 *******************************************************************************/
-static UINT8 find_conn_by_cid(UINT16 cid)
+static inline UINT8 find_conn_by_cid(UINT16 cid)
 {
     UINT8 xx;
 
@@ -269,814 +269,59 @@ static UINT8 find_conn_by_cid(UINT16 cid)
 
 /*******************************************************************************
 **
-** Function         hidh_conn_reg
+** Function         hidh_conn_dereg
 **
-** Description      Registers HID Host with L2CAP
+** Description      This function deregisters HID Host with L2CAP
+**
+** Returns          void
+**
+*******************************************************************************/
+void hidh_conn_dereg(void)
+{
+    L2CA_Deregister(HID_PSM_CONTROL);
+    L2CA_Deregister(HID_PSM_INTERRUPT);
+}
+/*******************************************************************************
+**
+** Function         hidh_conn_initiate
+**
+** Description      This function is called to initiate a HID connection.
 **
 ** Returns          tHID_STATUS
 **
 *******************************************************************************/
-tHID_STATUS hidh_conn_reg(void)
+tHID_STATUS hidh_conn_initiate(UINT8 dhandle)
 {
-    int xx;
+    tHID_HOST_DEV_CTB *p_dev = &hh_cb.devices[dhandle];
 
-    hh_cb.l2cap_cfg.mtu_present = TRUE;
-    hh_cb.l2cap_cfg.mtu = HID_HOST_MTU;
-    hh_cb.l2cap_cfg.flush_to_present = TRUE;
-    hh_cb.l2cap_cfg.flush_to = HID_HOST_FLUSH_TO;
-
-    if (!L2CA_Register(HID_PSM_CONTROL, (void *)&hst_reg_info))
+    if (p_dev->conn.conn_state != HID_CONN_STATE_UNUSED)
     {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_ERROR)
-        {
-            LogMsg_0(0x001e0000, "HID Control Registration failed");
-        }
-        return (HID_ERR_L2CAP_FAILED);
+        return (HID_ERR_CONN_IN_PROCESS);
     }
 
-    if (!L2CA_Register(HID_PSM_INTERRUPT, (void *)&hst_reg_info))
-    {
-        L2CA_Deregister(HID_PSM_CONTROL);
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_ERROR)
-        {
-            LogMsg_0(0x001e0000, "HID Interrupt Registration failed");
-        }
-        return (HID_ERR_L2CAP_FAILED);
-    }
+    p_dev->conn.ctrl_cid = 0;
+    p_dev->conn.intr_cid = 0;
+    p_dev->conn.disc_reason = HID_L2CAP_CONN_FAIL;
+    p_dev->conn.conn_flags = 1;
+    p_dev->conn.ctrl_cid = L2CA_ConnectReq(HID_PSM_CONTROL, p_dev->addr);
 
-    for (xx = 0; xx < HID_HOST_MAX_DEVICES; xx++)
+    if (p_dev->conn.ctrl_cid == 0)
     {
-        hh_cb.devices[xx].in_use = FALSE;
-        hh_cb.devices[xx].conn.conn_state = HID_CONN_STATE_UNUSED;
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_0(0x001e0001, "HID - Originate failed");
+        }
+        hh_cb.dev_cback((UINT8)((p_dev - hh_cb.devices) /
+                                sizeof(tHID_HOST_DEV_CTB)),
+                        HID_HDEV_EVT_CLOSE, HID_ERR_L2CAP_FAILED, NULL);
+    }
+    else
+    {
+        p_dev->conn.conn_state = HID_CONN_STATE_CONNECTING;
     }
 
     return (HID_SUCCESS);
 }
-
-/*******************************************************************************
-**
-** Function         hidh_conn_disconnect
-**
-** Description      This function disconnects the device.
-**
-** Returns          tHID_STATUS
-**
-*******************************************************************************/
-tHID_STATUS hidh_conn_disconnect(UINT8 dhandle)
-{
-    tHID_CONN *p_hcon = &hh_cb.devices[dhandle].conn;
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_0(0x001e0003, "HID - disconnect");
-    }
-
-    if ((p_hcon->ctrl_cid != 0) || (p_hcon->intr_cid != 0))
-    {
-        p_hcon->conn_state = HID_CONN_STATE_DISCONNECTING;
-
-        if (p_hcon->intr_cid)
-        {
-            L2CA_DisconnectReq(p_hcon->intr_cid);
-        }
-
-        if (p_hcon->ctrl_cid)
-        {
-            L2CA_DisconnectReq(p_hcon->ctrl_cid);
-        }
-    }
-    else
-    {
-        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
-    }
-
-    return (HID_SUCCESS);
-}
-
-/*******************************************************************************
-**
-** Function         hidh_sec_check_complete_term
-**
-** Description      This function is called when security check for
-**                  termination is complete.
-**
-*******************************************************************************/
-void hidh_sec_check_complete_term(BD_ADDR addr, void *p_ref_data, UINT8 res)
-{
-    tHID_HOST_DEV_CTB *p_dev = (tHID_HOST_DEV_CTB *)p_ref_data;
-    tHID_HOST_DEV_CTB *p_dev2;
-    UINT8 i = (UINT8)(p_dev - hh_cb.devices);
-
-    if (res == BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
-    {
-        p_dev->conn.disc_reason = 0;
-        p_dev->conn.conn_state = HID_CONN_STATE_CONNECTED;
-        L2CA_ConnectRsp(p_dev->addr, p_dev->conn.ctrl_id, p_dev->conn.ctrl_cid,
-                        0, 0);
-        L2CA_ConfigReq(p_dev->conn.ctrl_cid, (void *)&hh_cb.l2cap_cfg);
-    }
-    else if (res != BTM_SUCCESS)
-    {
-        p_dev->conn.disc_reason = HID_ERR_AUTH_FAILED;
-        p_dev2 = &hh_cb.devices[i];
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-        {
-            LogMsg_0(0x001e0003, "HID - disconnect");
-        }
-        if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
-        {
-            p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
-            if (p_dev2->conn.intr_cid)
-            {
-                L2CA_DisconnectReq(p_dev2->conn.intr_cid);
-            }
-            if (p_dev2->conn.ctrl_cid)
-            {
-                L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
-            }
-        }
-        else
-        {
-            p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
-        }
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_connect_ind
-**
-** Description      This function handles an L2CAP connect indication event.
-**
-*******************************************************************************/
-void hidh_l2cif_connect_ind(BD_ADDR bd_addr, UINT16 l2cap_cid, UINT16 psm,
-                            UINT8 l2cap_id)
-{
-    tHID_CONN *p_hcon;
-    BOOLEAN bAccept = TRUE;
-    int i;
-    tHID_HOST_DEV_CTB *p_dev;
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_2(0x001e0003, "HID - Rcvd L2CAP conn ind, PSM: 0x%04x  CID 0x%x",
-                 psm, l2cap_cid);
-    }
-
-    for (i = 0; i < HID_HOST_MAX_DEVICES; i++)
-    {
-        if (hh_cb.devices[i].in_use &&
-            (!memcmp(bd_addr, hh_cb.devices[i].addr, sizeof(BD_ADDR))))
-        {
-            break;
-        }
-    }
-
-    if (i == HID_HOST_MAX_DEVICES)
-    {
-        L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid,
-                        L2CAP_CONN_NO_RESOURCES, 0);
-        return;
-    }
-
-    p_hcon = &hh_cb.devices[i].conn;
-    p_dev = &hh_cb.devices[i];
-
-    if (psm == HID_PSM_INTERRUPT)
-    {
-        if (p_hcon->ctrl_cid == 0)
-        {
-            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-            {
-                LogMsg_0(0x001e0001,
-                         "HID - Rcvd INTR L2CAP conn ind, but no CTL channel");
-            }
-            bAccept = FALSE;
-        }
-        if (p_hcon->conn_state != HID_CONN_STATE_CONNECTED)
-        {
-            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-            {
-                LogMsg_1(0x001e0001,
-                         "HID - Rcvd INTR L2CAP conn ind, wrong state: %d",
-                         p_hcon->conn_state);
-            }
-            bAccept = FALSE;
-        }
-    }
-    else
-    {
-        if (p_hcon->conn_state != HID_CONN_STATE_UNUSED)
-        {
-            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-            {
-                LogMsg_1(0x001e0001,
-                         "HID - Rcvd CTL L2CAP conn ind, wrong state: %d",
-                         p_hcon->conn_state);
-            }
-            bAccept = FALSE;
-        }
-    }
-
-    if (!bAccept)
-    {
-        L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid,
-                        L2CAP_CONN_NO_PSM_ALLOWED, 0);
-        return;
-    }
-
-    if (psm == HID_PSM_CONTROL)
-    {
-        UINT32 mx_chan_id;
-
-        p_hcon->conn_flags = 0;
-        p_hcon->ctrl_cid = l2cap_cid;
-        p_hcon->ctrl_id = l2cap_id;
-        p_hcon->disc_reason = HID_L2CAP_CONN_FAIL;
-        p_hcon->conn_state = HID_CONN_STATE_SECURITY;
-        mx_chan_id = -((p_dev->attr_mask & HID_SEC_REQUIRED) >> 15);
-        btm_sec_mx_access_request(p_dev->addr, HID_PSM_CONTROL, FALSE,
-                                  BTM_SEC_PROTO_HID, mx_chan_id + 2,
-                                  (void *)hidh_sec_check_complete_term, p_dev);
-        return;
-    }
-
-    p_hcon->conn_state = HID_CONN_STATE_CONFIG;
-    p_hcon->intr_cid = l2cap_cid;
-
-    L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid, 0, 0);
-
-    L2CA_ConfigReq(l2cap_cid, (void *)&hh_cb.l2cap_cfg);
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_2(0x001e0003,
-                 "HID - Rcvd L2CAP conn ind, sent config req, PSM: 0x%04x  CID 0x%x",
-                 psm, l2cap_cid);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_proc_repage_timeout
-**
-** Description      This function is called when the repage timer expires.
-**
-*******************************************************************************/
-void hidh_proc_repage_timeout(TIMER_LIST_ENT *p_tle)
-{
-    hidh_conn_initiate((UINT8)p_tle->param);
-    hh_cb.devices[p_tle->param].conn_tries++;
-    hh_cb.dev_cback((UINT8)p_tle->param, HID_HDEV_EVT_RETRYING,
-                    hh_cb.devices[p_tle->param].conn_tries, NULL);
-}
-
-/*******************************************************************************
-**
-** Function         hidh_sec_check_complete_orig
-**
-** Description      This function is called when security check for originator
-**                  is complete.
-**
-*******************************************************************************/
-void hidh_sec_check_complete_orig(BD_ADDR addr, void *p_ref_data, UINT8 result)
-{
-    tHID_HOST_DEV_CTB *p_dev = (tHID_HOST_DEV_CTB *)p_ref_data;
-    tHID_HOST_DEV_CTB *p_dev2;
-    UINT8 i = (UINT8)(p_dev - hh_cb.devices);
-
-    if (result == BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-        {
-            LogMsg_0(0x001e0003, "HID - Originator security pass.");
-        }
-        p_dev->conn.disc_reason = 0;
-        p_dev2 = &hh_cb.devices[i];
-        p_dev->conn.intr_cid = L2CA_ConnectReq(HID_PSM_INTERRUPT, p_dev2->addr);
-        if (p_dev->conn.intr_cid == 0)
-        {
-            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-            {
-                LogMsg_0(0x001e0001, "HID - INTR Originate failed");
-            }
-            if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-            {
-                LogMsg_0(0x001e0003, "HID - disconnect");
-            }
-            if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
-            {
-                p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
-                if (p_dev2->conn.intr_cid)
-                {
-                    L2CA_DisconnectReq(p_dev2->conn.intr_cid);
-                }
-                if (p_dev2->conn.ctrl_cid)
-                {
-                    L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
-                }
-            }
-            else
-            {
-                p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
-            }
-            hh_cb.dev_cback(i, HID_HDEV_EVT_CLOSE, HID_L2CAP_REQ_FAIL, NULL);
-            return;
-        }
-        else
-        {
-            p_dev->conn.conn_state = HID_CONN_STATE_CONNECTED;
-        }
-    }
-    if (result != BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
-    {
-        p_dev->conn.disc_reason = HID_ERR_AUTH_FAILED;
-        p_dev2 = &hh_cb.devices[i];
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-        {
-            LogMsg_0(0x001e0003, "HID - disconnect");
-        }
-        if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
-        {
-            p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
-            if (p_dev2->conn.intr_cid)
-            {
-                L2CA_DisconnectReq(p_dev2->conn.intr_cid);
-            }
-            if (p_dev2->conn.ctrl_cid)
-            {
-                L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
-            }
-        }
-        else
-        {
-            p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
-        }
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_connect_cfm
-**
-** Description      This function handles an L2CAP connect confirm event.
-**
-*******************************************************************************/
-void hidh_l2cif_connect_cfm(UINT16 l2cap_cid, UINT16 result)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-    tHID_HOST_DEV_CTB *p_dev = NULL;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_dev = &hh_cb.devices[dhandle];
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if ((p_hcon == NULL)
-        || (!(p_hcon->conn_flags & HID_CONN_FLAG_IS_ORIG))
-        || ((l2cap_cid == p_hcon->ctrl_cid) &&
-            (p_hcon->conn_state != HID_CONN_STATE_CONNECTING))
-        || ((l2cap_cid == p_hcon->intr_cid) &&
-            (p_hcon->conn_state != HID_CONN_STATE_CONNECTED)))
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001, "HID - Rcvd unexpected conn cnf, CID 0x%x ",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (result != 0)
-    {
-        if (l2cap_cid == p_hcon->ctrl_cid)
-        {
-            p_hcon->ctrl_cid = 0;
-        }
-        else
-        {
-            p_hcon->intr_cid = 0;
-        }
-
-        hidh_conn_disconnect(dhandle);
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE,
-                        HID_L2CAP_CONN_FAIL | result, NULL);
-        return;
-    }
-
-    if (l2cap_cid == p_hcon->ctrl_cid)
-    {
-        UINT32 mx_chan_id;
-
-        p_hcon->conn_state = HID_CONN_STATE_SECURITY;
-        p_hcon->disc_reason = HID_L2CAP_CONN_FAIL;
-        mx_chan_id = -((p_dev->attr_mask & HID_SEC_REQUIRED) >> 15);
-        btm_sec_mx_access_request(p_dev->addr, HID_PSM_CONTROL, TRUE,
-                                  BTM_SEC_PROTO_HID, mx_chan_id + 2,
-                                  (void *)hidh_sec_check_complete_orig, p_dev);
-    }
-    else
-    {
-        p_hcon->conn_state = HID_CONN_STATE_CONFIG;
-    }
-
-    L2CA_ConfigReq(l2cap_cid, (void *)&hh_cb.l2cap_cfg);
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_1(0x001e0003, "HID - got CTRL conn cnf, sent cfg req, CID: 0x%x",
-                 l2cap_cid);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_config_ind
-**
-** Description      This function handles an L2CAP config indication event.
-**
-*******************************************************************************/
-void hidh_l2cif_config_ind(UINT16 l2cap_cid, tL2CAP_CFG_INFO *p_cfg)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-    tHID_HOST_DEV_CTB *p_dev = NULL;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_dev = &hh_cb.devices[dhandle];
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP cfg ind, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_1(0x001e0003, "HID - Rcvd cfg ind, sent cfg cfm, CID: 0x%x",
-                 l2cap_cid);
-    }
-
-    if ((!p_cfg->mtu_present) || (p_cfg->mtu > HID_HOST_MTU))
-    {
-        p_hcon->rem_mtu_size = HID_HOST_MTU;
-    }
-    else
-    {
-        p_hcon->rem_mtu_size = p_cfg->mtu;
-    }
-
-    p_cfg->flush_to_present = FALSE;
-    p_cfg->mtu_present = FALSE;
-    p_cfg->result = 0;
-
-    L2CA_ConfigRsp(l2cap_cid, (void *)p_cfg);
-
-    if (l2cap_cid == p_hcon->ctrl_cid)
-    {
-        p_hcon->conn_flags |= HID_CONN_FLAG_CTL_CFG_IND;
-    }
-    else
-    {
-        p_hcon->conn_flags |= HID_CONN_FLAG_INTR_CFG_IND;
-    }
-
-    if (((p_hcon->conn_flags & HID_CONN_FLAG_ALL_CONFIG) ==
-         HID_CONN_FLAG_ALL_CONFIG) &&
-        (p_hcon->conn_state == HID_CONN_STATE_CONFIG))
-    {
-        p_hcon->conn_state = HID_CONN_STATE_OPENED;
-        hh_cb.devices[dhandle].state = HID_DEV_CONNECTED;
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_OPEN, 0, NULL);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_config_cfm
-**
-** Description      This function handles an L2CAP config confirm event.
-**
-*******************************************************************************/
-void hidh_l2cif_config_cfm(UINT16 l2cap_cid, tL2CAP_CFG_INFO *p_cfg)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_2(0x001e0003, "HID - Rcvd cfg cfm, CID: 0x%x  Result: %d",
-                 l2cap_cid, p_cfg->result);
-    }
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP cfg ind, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (p_cfg->result != 0)
-    {
-        hidh_conn_disconnect(dhandle);
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE,
-                        HID_L2CAP_CFG_FAIL | p_cfg->result, NULL);
-        return;
-    }
-
-    if (l2cap_cid == p_hcon->ctrl_cid)
-    {
-        p_hcon->conn_flags |= HID_CONN_FLAG_CTL_CFG_CFM;
-    }
-    else
-    {
-        p_hcon->conn_flags |= HID_CONN_FLAG_INTR_CFG_CFM;
-    }
-
-    if (((p_hcon->conn_flags & HID_CONN_FLAG_ALL_CONFIG) ==
-         HID_CONN_FLAG_ALL_CONFIG) &&
-        (p_hcon->conn_state == HID_CONN_STATE_CONFIG))
-    {
-        p_hcon->conn_state = HID_CONN_STATE_OPENED;
-        hh_cb.devices[dhandle].state = HID_DEV_CONNECTED;
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_OPEN, 0, NULL);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_disconnect_ind
-**
-** Description      This function handles an L2CAP disconnect indication event.
-**
-*******************************************************************************/
-void hidh_l2cif_disconnect_ind(UINT16 l2cap_cid, UINT8 ack_needed)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-    UINT16 disc_res = 0;
-    UINT16 hid_close_evt_reason;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP disc, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (ack_needed)
-    {
-        L2CA_DisconnectRsp(l2cap_cid);
-    }
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_1(0x001e0003, "HID - Rcvd L2CAP disc, CID: 0x%x", l2cap_cid);
-    }
-
-    p_hcon->conn_state = HID_CONN_STATE_DISCONNECTING;
-
-    if (l2cap_cid == p_hcon->ctrl_cid)
-    {
-        p_hcon->ctrl_cid = 0;
-    }
-    else
-    {
-        p_hcon->intr_cid = 0;
-    }
-
-    if ((p_hcon->ctrl_cid == 0) && (p_hcon->intr_cid == 0))
-    {
-        hh_cb.devices[dhandle].state = HID_DEV_NO_CONN;
-        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
-
-        if (!ack_needed)
-        {
-            disc_res = btm_get_acl_disc_reason_code();
-        }
-
-        hid_close_evt_reason = p_hcon->disc_reason;
-
-        if ((disc_res == HCI_ERR_AUTH_FAILURE) ||
-            (disc_res == HCI_ERR_KEY_MISSING) ||
-            (disc_res == HCI_ERR_HOST_REJECT_SECURITY) ||
-            (disc_res == HCI_ERR_PAIRING_NOT_ALLOWED) ||
-            (disc_res == HCI_ERR_UNIT_KEY_USED) ||
-            (disc_res == HCI_ERR_PAIRING_WITH_UNIT_KEY_NOT_SUPPORTED) ||
-            (disc_res == HCI_ERR_ENCRY_MODE_NOT_ACCEPTABLE) ||
-            (disc_res == HCI_ERR_REPEATED_ATTEMPTS))
-        {
-            hid_close_evt_reason = HID_ERR_AUTH_FAILED;
-        }
-
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE, hid_close_evt_reason,
-                        NULL);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_disconnect_cfm
-**
-** Description      This function handles an L2CAP disconnect confirm event.
-**
-*******************************************************************************/
-void hidh_l2cif_disconnect_cfm(UINT16 l2cap_cid, UINT16 result)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001,
-                     "HID - Rcvd L2CAP disc cfm, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_1(0x001e0003, "HID - Rcvd L2CAP disc cfm, CID: 0x%x",
-                 l2cap_cid);
-    }
-
-    if (l2cap_cid == p_hcon->ctrl_cid)
-    {
-        p_hcon->ctrl_cid = 0;
-    }
-    else
-    {
-        p_hcon->intr_cid = 0;
-    }
-
-    if ((p_hcon->ctrl_cid == 0) && (p_hcon->intr_cid == 0))
-    {
-        hh_cb.devices[dhandle].state = HID_DEV_NO_CONN;
-        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE, p_hcon->disc_reason,
-                        NULL);
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_cong_ind
-**
-** Description      This function handles an L2CAP congestion indication event.
-**
-*******************************************************************************/
-void hidh_l2cif_cong_ind(UINT16 l2cap_cid, UINT8 is_congested)
-{
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001,
-                     "HID - Rcvd L2CAP congestion status, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        return;
-    }
-
-    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
-    {
-        LogMsg_2(0x001e0003,
-                 "HID - Rcvd L2CAP congestion status, CID: 0x%x  Cong: %d",
-                 l2cap_cid, is_congested);
-    }
-
-    if (is_congested)
-    {
-        p_hcon->conn_flags |= HID_CONN_FLAG_CONGESTED;
-    }
-    else
-    {
-        p_hcon->conn_flags &= ~HID_CONN_FLAG_CONGESTED;
-    }
-}
-
-/*******************************************************************************
-**
-** Function         hidh_l2cif_data_ind
-**
-** Description      This function handles an L2CAP data indication event.
-**
-*******************************************************************************/
-void hidh_l2cif_data_ind(UINT16 l2cap_cid, BT_HDR *p_buf)
-{
-    UINT8 *p_data = (UINT8 *)(p_buf + 1) + p_buf->offset;
-    UINT8 ttype;
-    UINT8 param;
-    UINT8 rep_type;
-    UINT8 evt;
-    UINT8 dhandle;
-    tHID_CONN *p_hcon = NULL;
-
-    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
-    {
-        p_hcon = &hh_cb.devices[dhandle].conn;
-    }
-
-    if (p_hcon == NULL)
-    {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
-        {
-            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP data, unknown CID: 0x%x",
-                     l2cap_cid);
-        }
-        GKI_freebuf(p_buf);
-        return;
-    }
-
-    ttype = HID_GET_TRANS_FROM_HDR(*p_data);
-    param = HID_GET_PARAM_FROM_HDR(*p_data);
-    rep_type = param & HID_PAR_REP_TYPE_MASK;
-    p_data++;
-
-    p_buf->len--;
-    p_buf->offset++;
-
-    switch (ttype)
-    {
-    case HID_TRANS_HANDSHAKE:
-        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_HANDSHAKE, param, NULL);
-        GKI_freebuf(p_buf);
-        break;
-
-    case HID_TRANS_CONTROL:
-        switch (param)
-        {
-        case HID_PAR_CONTROL_VIRTUAL_CABLE_UNPLUG:
-            hidh_conn_disconnect(dhandle);
-            hh_cb.dev_cback(dhandle, HID_HDEV_EVT_VC_UNPLUG, 0, NULL);
-            break;
-
-        default:
-            break;
-        }
-        GKI_freebuf(p_buf);
-        break;
-
-    case HID_TRANS_DATA:
-        evt = (hh_cb.devices[dhandle].conn.intr_cid == l2cap_cid)
-                  ? HID_HDEV_EVT_INTR_DATA
-                  : HID_HDEV_EVT_CTRL_DATA;
-        hh_cb.dev_cback(dhandle, evt, rep_type, p_buf);
-        break;
-
-    case HID_TRANS_DATAC:
-        evt = (hh_cb.devices[dhandle].conn.intr_cid == l2cap_cid)
-                  ? HID_HDEV_EVT_INTR_DATC
-                  : HID_HDEV_EVT_CTRL_DATC;
-        hh_cb.dev_cback(dhandle, evt, rep_type, p_buf);
-        break;
-
-    default:
-        GKI_freebuf(p_buf);
-        break;
-    }
-}
-
 /*******************************************************************************
 **
 ** Function         hidh_conn_snd_data
@@ -1223,60 +468,801 @@ tHID_STATUS hidh_conn_snd_data(UINT8 dhandle, UINT8 trans_type, UINT8 param,
 
     return (HID_SUCCESS);
 }
-
 /*******************************************************************************
 **
-** Function         hidh_conn_initiate
+** Function         hidh_l2cif_data_ind
 **
-** Description      This function is called to initiate a HID connection.
+** Description      This function handles an L2CAP data indication event.
+**
+*******************************************************************************/
+void hidh_l2cif_data_ind(UINT16 l2cap_cid, BT_HDR *p_buf)
+{
+    UINT8 *p_data = (UINT8 *)(p_buf + 1) + p_buf->offset;
+    UINT8 ttype;
+    UINT8 param;
+    UINT8 rep_type;
+    UINT8 evt;
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001,
+                     "HID - Rcvd L2CAP data, unknown CID: 0x%x\0\0\0\0\0\0\0",
+                     l2cap_cid);
+        }
+        GKI_freebuf(p_buf);
+        return;
+    }
+
+    ttype = HID_GET_TRANS_FROM_HDR(*p_data);
+    param = HID_GET_PARAM_FROM_HDR(*p_data);
+    rep_type = param & HID_PAR_REP_TYPE_MASK;
+    p_data++;
+
+    p_buf->len--;
+    p_buf->offset++;
+
+    switch (ttype)
+    {
+    case HID_TRANS_HANDSHAKE:
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_HANDSHAKE, param, NULL);
+        GKI_freebuf(p_buf);
+        break;
+
+    case HID_TRANS_CONTROL:
+        switch (param)
+        {
+        case HID_PAR_CONTROL_VIRTUAL_CABLE_UNPLUG:
+            hidh_conn_disconnect(dhandle);
+            hh_cb.dev_cback(dhandle, HID_HDEV_EVT_VC_UNPLUG, 0, NULL);
+            break;
+
+        default:
+            break;
+        }
+        GKI_freebuf(p_buf);
+        break;
+
+    case HID_TRANS_DATA:
+        evt = (hh_cb.devices[dhandle].conn.intr_cid == l2cap_cid)
+                  ? HID_HDEV_EVT_INTR_DATA
+                  : HID_HDEV_EVT_CTRL_DATA;
+        hh_cb.dev_cback(dhandle, evt, rep_type, p_buf);
+        break;
+
+    case HID_TRANS_DATAC:
+        evt = (hh_cb.devices[dhandle].conn.intr_cid == l2cap_cid)
+                  ? HID_HDEV_EVT_INTR_DATC
+                  : HID_HDEV_EVT_CTRL_DATC;
+        hh_cb.dev_cback(dhandle, evt, rep_type, p_buf);
+        break;
+
+    default:
+        GKI_freebuf(p_buf);
+        break;
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_cong_ind
+**
+** Description      This function handles an L2CAP congestion indication event.
+**
+*******************************************************************************/
+void hidh_l2cif_cong_ind(UINT16 l2cap_cid, UINT8 is_congested)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001,
+                     "HID - Rcvd L2CAP congestion status, unknown CID: 0x%x",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_2(0x001e0003,
+                 "HID - Rcvd L2CAP congestion status, CID: 0x%x  Cong: %d",
+                 l2cap_cid, is_congested);
+    }
+
+    if (is_congested)
+    {
+        p_hcon->conn_flags |= HID_CONN_FLAG_CONGESTED;
+    }
+    else
+    {
+        p_hcon->conn_flags &= ~HID_CONN_FLAG_CONGESTED;
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_disconnect_cfm
+**
+** Description      This function handles an L2CAP disconnect confirm event.
+**
+*******************************************************************************/
+void hidh_l2cif_disconnect_cfm(UINT16 l2cap_cid, UINT16 result)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001,
+                     "HID - Rcvd L2CAP disc cfm, unknown CID: 0x%x",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_1(0x001e0003, "HID - Rcvd L2CAP disc cfm, CID: 0x%x",
+                 l2cap_cid);
+    }
+
+    if (l2cap_cid == p_hcon->ctrl_cid)
+    {
+        p_hcon->ctrl_cid = 0;
+    }
+    else
+    {
+        p_hcon->intr_cid = 0;
+    }
+
+    if ((p_hcon->ctrl_cid == 0) && (p_hcon->intr_cid == 0))
+    {
+        hh_cb.devices[dhandle].state = HID_DEV_NO_CONN;
+        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE, p_hcon->disc_reason,
+                        NULL);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_disconnect_ind
+**
+** Description      This function handles an L2CAP disconnect indication event.
+**
+*******************************************************************************/
+void hidh_l2cif_disconnect_ind(UINT16 l2cap_cid, UINT8 ack_needed)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+    UINT16 disc_res = 0;
+    UINT16 hid_close_evt_reason;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP disc, unknown CID: 0x%x",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (ack_needed)
+    {
+        L2CA_DisconnectRsp(l2cap_cid);
+    }
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_1(0x001e0003, "HID - Rcvd L2CAP disc, CID: 0x%x", l2cap_cid);
+    }
+
+    p_hcon->conn_state = HID_CONN_STATE_DISCONNECTING;
+
+    if (l2cap_cid == p_hcon->ctrl_cid)
+    {
+        p_hcon->ctrl_cid = 0;
+    }
+    else
+    {
+        p_hcon->intr_cid = 0;
+    }
+
+    if ((p_hcon->ctrl_cid == 0) && (p_hcon->intr_cid == 0))
+    {
+        hh_cb.devices[dhandle].state = HID_DEV_NO_CONN;
+        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
+
+        if (!ack_needed)
+        {
+            disc_res = btm_get_acl_disc_reason_code();
+        }
+
+        hid_close_evt_reason = p_hcon->disc_reason;
+
+        if ((disc_res == HCI_ERR_AUTH_FAILURE) ||
+            (disc_res == HCI_ERR_KEY_MISSING) ||
+            (disc_res == HCI_ERR_HOST_REJECT_SECURITY) ||
+            (disc_res == HCI_ERR_PAIRING_NOT_ALLOWED) ||
+            (disc_res == HCI_ERR_UNIT_KEY_USED) ||
+            (disc_res == HCI_ERR_PAIRING_WITH_UNIT_KEY_NOT_SUPPORTED) ||
+            (disc_res == HCI_ERR_ENCRY_MODE_NOT_ACCEPTABLE) ||
+            (disc_res == HCI_ERR_REPEATED_ATTEMPTS))
+        {
+            hid_close_evt_reason = HID_ERR_AUTH_FAILED;
+        }
+
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE, hid_close_evt_reason,
+                        NULL);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_config_cfm
+**
+** Description      This function handles an L2CAP config confirm event.
+**
+*******************************************************************************/
+void hidh_l2cif_config_cfm(UINT16 l2cap_cid, tL2CAP_CFG_INFO *p_cfg)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_2(0x001e0003, "HID - Rcvd cfg cfm, CID: 0x%x  Result: %d",
+                 l2cap_cid, p_cfg->result);
+    }
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP cfg ind, unknown CID: 0x%x",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (p_cfg->result != 0)
+    {
+        hidh_conn_disconnect(dhandle);
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE,
+                        HID_L2CAP_CFG_FAIL | p_cfg->result, NULL);
+        return;
+    }
+
+    if (l2cap_cid == p_hcon->ctrl_cid)
+    {
+        p_hcon->conn_flags |= HID_CONN_FLAG_CTL_CFG_CFM;
+    }
+    else
+    {
+        p_hcon->conn_flags |= HID_CONN_FLAG_INTR_CFG_CFM;
+    }
+
+    if (((p_hcon->conn_flags & HID_CONN_FLAG_ALL_CONFIG) ==
+         HID_CONN_FLAG_ALL_CONFIG) &&
+        (p_hcon->conn_state == HID_CONN_STATE_CONFIG))
+    {
+        p_hcon->conn_state = HID_CONN_STATE_OPENED;
+        hh_cb.devices[dhandle].state = HID_DEV_CONNECTED;
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_OPEN, 0, NULL);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_config_ind
+**
+** Description      This function handles an L2CAP config indication event.
+**
+*******************************************************************************/
+void hidh_l2cif_config_ind(UINT16 l2cap_cid, tL2CAP_CFG_INFO *p_cfg)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+    tHID_HOST_DEV_CTB *p_dev = NULL;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_dev = &hh_cb.devices[dhandle];
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if (p_hcon == NULL)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001, "HID - Rcvd L2CAP cfg ind, unknown CID: 0x%x",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_1(0x001e0003, "HID - Rcvd cfg ind, sent cfg cfm, CID: 0x%x",
+                 l2cap_cid);
+    }
+
+    if ((!p_cfg->mtu_present) || (p_cfg->mtu > HID_HOST_MTU))
+    {
+        p_hcon->rem_mtu_size = HID_HOST_MTU;
+    }
+    else
+    {
+        p_hcon->rem_mtu_size = p_cfg->mtu;
+    }
+
+    p_cfg->flush_to_present = FALSE;
+    p_cfg->mtu_present = FALSE;
+    p_cfg->result = 0;
+
+    L2CA_ConfigRsp(l2cap_cid, (void *)p_cfg);
+
+    if (l2cap_cid == p_hcon->ctrl_cid)
+    {
+        p_hcon->conn_flags |= HID_CONN_FLAG_CTL_CFG_IND;
+    }
+    else
+    {
+        p_hcon->conn_flags |= HID_CONN_FLAG_INTR_CFG_IND;
+    }
+
+    if (((p_hcon->conn_flags & HID_CONN_FLAG_ALL_CONFIG) ==
+         HID_CONN_FLAG_ALL_CONFIG) &&
+        (p_hcon->conn_state == HID_CONN_STATE_CONFIG))
+    {
+        p_hcon->conn_state = HID_CONN_STATE_OPENED;
+        hh_cb.devices[dhandle].state = HID_DEV_CONNECTED;
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_OPEN, 0, NULL);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_connect_cfm
+**
+** Description      This function handles an L2CAP connect confirm event.
+**
+*******************************************************************************/
+void hidh_l2cif_connect_cfm(UINT16 l2cap_cid, UINT16 result)
+{
+    UINT8 dhandle;
+    tHID_CONN *p_hcon = NULL;
+    tHID_HOST_DEV_CTB *p_dev = NULL;
+
+    if ((dhandle = find_conn_by_cid(l2cap_cid)) != HID_HOST_MAX_DEVICES)
+    {
+        p_dev = &hh_cb.devices[dhandle];
+        p_hcon = &hh_cb.devices[dhandle].conn;
+    }
+
+    if ((p_hcon == NULL)
+        || (!(p_hcon->conn_flags & HID_CONN_FLAG_IS_ORIG))
+        || ((l2cap_cid == p_hcon->ctrl_cid) &&
+            (p_hcon->conn_state != HID_CONN_STATE_CONNECTING))
+        || ((l2cap_cid == p_hcon->intr_cid) &&
+            (p_hcon->conn_state != HID_CONN_STATE_CONNECTED)))
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        {
+            LogMsg_1(0x001e0001, "HID - Rcvd unexpected conn cnf, CID 0x%x ",
+                     l2cap_cid);
+        }
+        return;
+    }
+
+    if (result != 0)
+    {
+        if (l2cap_cid == p_hcon->ctrl_cid)
+        {
+            p_hcon->ctrl_cid = 0;
+        }
+        else
+        {
+            p_hcon->intr_cid = 0;
+        }
+
+        hidh_conn_disconnect(dhandle);
+        hh_cb.dev_cback(dhandle, HID_HDEV_EVT_CLOSE,
+                        HID_L2CAP_CONN_FAIL | result, NULL);
+        return;
+    }
+
+    if (l2cap_cid == p_hcon->ctrl_cid)
+    {
+        UINT32 mx_chan_id;
+
+        p_hcon->conn_state = HID_CONN_STATE_SECURITY;
+        p_hcon->disc_reason = HID_L2CAP_CONN_FAIL;
+        mx_chan_id = -((p_dev->attr_mask & HID_SEC_REQUIRED) >> 15);
+        btm_sec_mx_access_request(p_dev->addr, HID_PSM_CONTROL, TRUE,
+                                  BTM_SEC_PROTO_HID, mx_chan_id + 2,
+                                  (void *)hidh_sec_check_complete_orig, p_dev);
+    }
+    else
+    {
+        p_hcon->conn_state = HID_CONN_STATE_CONFIG;
+    }
+
+    L2CA_ConfigReq(l2cap_cid, (void *)&hh_cb.l2cap_cfg);
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_1(0x001e0003, "HID - got CTRL conn cnf, sent cfg req, CID: 0x%x",
+                 l2cap_cid);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_sec_check_complete_orig
+**
+** Description      This function is called when security check for originator
+**                  is complete.
+**
+*******************************************************************************/
+void hidh_sec_check_complete_orig(BD_ADDR addr, void *p_ref_data, UINT8 result)
+{
+    tHID_HOST_DEV_CTB *p_dev = (tHID_HOST_DEV_CTB *)p_ref_data;
+    tHID_HOST_DEV_CTB *p_dev2;
+    UINT8 i = (UINT8)(p_dev - hh_cb.devices);
+
+    if (result == BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+        {
+            LogMsg_0(0x001e0003, "HID - Originator security pass.");
+        }
+        p_dev->conn.disc_reason = 0;
+        p_dev2 = &hh_cb.devices[i];
+        p_dev->conn.intr_cid = L2CA_ConnectReq(HID_PSM_INTERRUPT, p_dev2->addr);
+        if (p_dev->conn.intr_cid == 0)
+        {
+            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+            {
+                LogMsg_0(0x001e0001, "HID - INTR Originate failed");
+            }
+            if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+            {
+                LogMsg_0(0x001e0003, "HID - disconnect");
+            }
+            if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
+            {
+                p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
+                if (p_dev2->conn.intr_cid)
+                {
+                    L2CA_DisconnectReq(p_dev2->conn.intr_cid);
+                }
+                if (p_dev2->conn.ctrl_cid)
+                {
+                    L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
+                }
+            }
+            else
+            {
+                p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
+            }
+            hh_cb.dev_cback(i, HID_HDEV_EVT_CLOSE, HID_L2CAP_REQ_FAIL, NULL);
+            return;
+        }
+        else
+        {
+            p_dev->conn.conn_state = HID_CONN_STATE_CONNECTED;
+        }
+    }
+    if (result != BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
+    {
+        p_dev->conn.disc_reason = HID_ERR_AUTH_FAILED;
+        p_dev2 = &hh_cb.devices[i];
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+        {
+            LogMsg_0(0x001e0003, "HID - disconnect");
+        }
+        if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
+        {
+            p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
+            if (p_dev2->conn.intr_cid)
+            {
+                L2CA_DisconnectReq(p_dev2->conn.intr_cid);
+            }
+            if (p_dev2->conn.ctrl_cid)
+            {
+                L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
+            }
+        }
+        else
+        {
+            p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
+        }
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_proc_repage_timeout
+**
+** Description      This function is called when the repage timer expires.
+**
+*******************************************************************************/
+void hidh_proc_repage_timeout(TIMER_LIST_ENT *p_tle)
+{
+    hidh_conn_initiate((UINT8)p_tle->param);
+    hh_cb.devices[p_tle->param].conn_tries++;
+    hh_cb.dev_cback((UINT8)p_tle->param, HID_HDEV_EVT_RETRYING,
+                    hh_cb.devices[p_tle->param].conn_tries, NULL);
+}
+/*******************************************************************************
+**
+** Function         hidh_l2cif_connect_ind
+**
+** Description      This function handles an L2CAP connect indication event.
+**
+*******************************************************************************/
+void hidh_l2cif_connect_ind(BD_ADDR bd_addr, UINT16 l2cap_cid, UINT16 psm,
+                            UINT8 l2cap_id)
+{
+    tHID_CONN *p_hcon;
+    BOOLEAN bAccept = TRUE;
+    int i;
+    tHID_HOST_DEV_CTB *p_dev;
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_2(0x001e0003, "HID - Rcvd L2CAP conn ind, PSM: 0x%04x  CID 0x%x",
+                 psm, l2cap_cid);
+    }
+
+    for (i = 0; i < HID_HOST_MAX_DEVICES; i++)
+    {
+        if (hh_cb.devices[i].in_use &&
+            (!memcmp(bd_addr, hh_cb.devices[i].addr, sizeof(BD_ADDR))))
+        {
+            break;
+        }
+    }
+
+    if (i == HID_HOST_MAX_DEVICES)
+    {
+        L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid,
+                        L2CAP_CONN_NO_RESOURCES, 0);
+        return;
+    }
+
+    p_hcon = &hh_cb.devices[i].conn;
+    p_dev = &hh_cb.devices[i];
+
+    if (psm == HID_PSM_INTERRUPT)
+    {
+        if (p_hcon->ctrl_cid == 0)
+        {
+            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+            {
+                LogMsg_0(0x001e0001,
+                         "HID - Rcvd INTR L2CAP conn ind, but no CTL channel");
+            }
+            bAccept = FALSE;
+        }
+        if (p_hcon->conn_state != HID_CONN_STATE_CONNECTED)
+        {
+            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+            {
+                LogMsg_1(0x001e0001,
+                         "HID - Rcvd INTR L2CAP conn ind, wrong state: %d",
+                         p_hcon->conn_state);
+            }
+            bAccept = FALSE;
+        }
+    }
+    else
+    {
+        if (p_hcon->conn_state != HID_CONN_STATE_UNUSED)
+        {
+            if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+            {
+                LogMsg_1(0x001e0001,
+                         "HID - Rcvd CTL L2CAP conn ind, wrong state: %d",
+                         p_hcon->conn_state);
+            }
+            bAccept = FALSE;
+        }
+    }
+
+    if (!bAccept)
+    {
+        L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid,
+                        L2CAP_CONN_NO_PSM_ALLOWED, 0);
+        return;
+    }
+
+    if (psm == HID_PSM_CONTROL)
+    {
+        UINT32 mx_chan_id;
+
+        p_hcon->conn_flags = 0;
+        p_hcon->ctrl_cid = l2cap_cid;
+        p_hcon->ctrl_id = l2cap_id;
+        p_hcon->disc_reason = HID_L2CAP_CONN_FAIL;
+        p_hcon->conn_state = HID_CONN_STATE_SECURITY;
+        mx_chan_id = -((p_dev->attr_mask & HID_SEC_REQUIRED) >> 15);
+        btm_sec_mx_access_request(p_dev->addr, HID_PSM_CONTROL, FALSE,
+                                  BTM_SEC_PROTO_HID, mx_chan_id + 2,
+                                  (void *)hidh_sec_check_complete_term, p_dev);
+        return;
+    }
+
+    p_hcon->conn_state = HID_CONN_STATE_CONFIG;
+    p_hcon->intr_cid = l2cap_cid;
+
+    L2CA_ConnectRsp(bd_addr, l2cap_id, l2cap_cid, 0, 0);
+
+    L2CA_ConfigReq(l2cap_cid, (void *)&hh_cb.l2cap_cfg);
+
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+    {
+        LogMsg_2(0x001e0003,
+                 "HID - Rcvd L2CAP conn ind, sent config req, PSM: 0x%04x  CID 0x%x",
+                 psm, l2cap_cid);
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_sec_check_complete_term
+**
+** Description      This function is called when security check for
+**                  termination is complete.
+**
+*******************************************************************************/
+void hidh_sec_check_complete_term(BD_ADDR addr, void *p_ref_data, UINT8 res)
+{
+    tHID_HOST_DEV_CTB *p_dev = (tHID_HOST_DEV_CTB *)p_ref_data;
+    tHID_HOST_DEV_CTB *p_dev2;
+    UINT8 i = (UINT8)(p_dev - hh_cb.devices);
+
+    if (res == BTM_SUCCESS && p_dev->conn.conn_state == HID_CONN_STATE_SECURITY)
+    {
+        p_dev->conn.disc_reason = 0;
+        p_dev->conn.conn_state = HID_CONN_STATE_CONNECTED;
+        L2CA_ConnectRsp(p_dev->addr, p_dev->conn.ctrl_id, p_dev->conn.ctrl_cid,
+                        0, 0);
+        L2CA_ConfigReq(p_dev->conn.ctrl_cid, (void *)&hh_cb.l2cap_cfg);
+    }
+    else if (res != BTM_SUCCESS)
+    {
+        p_dev->conn.disc_reason = HID_ERR_AUTH_FAILED;
+        p_dev2 = &hh_cb.devices[i];
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
+        {
+            LogMsg_0(0x001e0003, "HID - disconnect");
+        }
+        if ((p_dev2->conn.ctrl_cid != 0) || (p_dev2->conn.intr_cid != 0))
+        {
+            p_dev2->conn.conn_state = HID_CONN_STATE_DISCONNECTING;
+            if (p_dev2->conn.intr_cid)
+            {
+                L2CA_DisconnectReq(p_dev2->conn.intr_cid);
+            }
+            if (p_dev2->conn.ctrl_cid)
+            {
+                L2CA_DisconnectReq(p_dev2->conn.ctrl_cid);
+            }
+        }
+        else
+        {
+            p_dev2->conn.conn_state = HID_CONN_STATE_UNUSED;
+        }
+    }
+}
+/*******************************************************************************
+**
+** Function         hidh_conn_disconnect
+**
+** Description      This function disconnects the device.
 **
 ** Returns          tHID_STATUS
 **
 *******************************************************************************/
-tHID_STATUS hidh_conn_initiate(UINT8 dhandle)
+tHID_STATUS hidh_conn_disconnect(UINT8 dhandle)
 {
-    tHID_HOST_DEV_CTB *p_dev = &hh_cb.devices[dhandle];
+    tHID_CONN *p_hcon = &hh_cb.devices[dhandle].conn;
 
-    if (p_dev->conn.conn_state != HID_CONN_STATE_UNUSED)
+    if (hh_cb.trace_level >= BT_TRACE_LEVEL_EVENT)
     {
-        return (HID_ERR_CONN_IN_PROCESS);
+        LogMsg_0(0x001e0003, "HID - disconnect");
     }
 
-    p_dev->conn.ctrl_cid = 0;
-    p_dev->conn.intr_cid = 0;
-    p_dev->conn.disc_reason = HID_L2CAP_CONN_FAIL;
-    p_dev->conn.conn_flags = 1;
-    p_dev->conn.ctrl_cid = L2CA_ConnectReq(HID_PSM_CONTROL, p_dev->addr);
-
-    if (p_dev->conn.ctrl_cid == 0)
+    if ((p_hcon->ctrl_cid != 0) || (p_hcon->intr_cid != 0))
     {
-        if (hh_cb.trace_level >= BT_TRACE_LEVEL_WARNING)
+        p_hcon->conn_state = HID_CONN_STATE_DISCONNECTING;
+
+        if (p_hcon->intr_cid)
         {
-            LogMsg_0(0x001e0001, "HID - Originate failed");
+            L2CA_DisconnectReq(p_hcon->intr_cid);
         }
-        hh_cb.dev_cback((UINT8)((p_dev - hh_cb.devices) /
-                                sizeof(tHID_HOST_DEV_CTB)),
-                        HID_HDEV_EVT_CLOSE, HID_ERR_L2CAP_FAILED, NULL);
+
+        if (p_hcon->ctrl_cid)
+        {
+            L2CA_DisconnectReq(p_hcon->ctrl_cid);
+        }
     }
     else
     {
-        p_dev->conn.conn_state = HID_CONN_STATE_CONNECTING;
+        p_hcon->conn_state = HID_CONN_STATE_UNUSED;
     }
 
     return (HID_SUCCESS);
 }
-
 /*******************************************************************************
 **
-** Function         hidh_conn_dereg
+** Function         hidh_conn_reg
 **
-** Description      This function deregisters HID Host with L2CAP
+** Description      Registers HID Host with L2CAP
 **
-** Returns          void
+** Returns          tHID_STATUS
 **
 *******************************************************************************/
-void hidh_conn_dereg(void)
+tHID_STATUS hidh_conn_reg(void)
 {
-    L2CA_Deregister(HID_PSM_CONTROL);
-    L2CA_Deregister(HID_PSM_INTERRUPT);
+    int xx;
+
+    hh_cb.l2cap_cfg.mtu_present = TRUE;
+    hh_cb.l2cap_cfg.mtu = HID_HOST_MTU;
+    hh_cb.l2cap_cfg.flush_to_present = TRUE;
+    hh_cb.l2cap_cfg.flush_to = HID_HOST_FLUSH_TO;
+
+    if (!L2CA_Register(HID_PSM_CONTROL, (void *)&hst_reg_info))
+    {
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_ERROR)
+        {
+            LogMsg_0(0x001e0000, "HID Control Registration failed");
+        }
+        return (HID_ERR_L2CAP_FAILED);
+    }
+
+    if (!L2CA_Register(HID_PSM_INTERRUPT, (void *)&hst_reg_info))
+    {
+        L2CA_Deregister(HID_PSM_CONTROL);
+        if (hh_cb.trace_level >= BT_TRACE_LEVEL_ERROR)
+        {
+            LogMsg_0(0x001e0000, "HID Interrupt Registration failed");
+        }
+        return (HID_ERR_L2CAP_FAILED);
+    }
+
+    for (xx = 0; xx < HID_HOST_MAX_DEVICES; xx++)
+    {
+        hh_cb.devices[xx].in_use = FALSE;
+        hh_cb.devices[xx].conn.conn_state = HID_CONN_STATE_UNUSED;
+    }
+
+    return (HID_SUCCESS);
 }

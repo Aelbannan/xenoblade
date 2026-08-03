@@ -45,10 +45,15 @@ typedef struct {
    SCO = 3. */
 const UINT8 hcisu_preamble_table[8] = {3, 4, 3, 2, 0, 0, 0, 0};
 
-/* HCI packet event codes indexed by (msgtype - 1) (bt_types.h). */
-const UINT16 hcisu_msg_evt_table[4] = {0x0013, 0x0011, 0x0012, 0x0010};
+/* HCI packet event codes indexed by (msgtype - 1) (bt_types.h). Retail bytes
+   are {0x13,0x00, 0x11,0x00, 0x12,0x00, 0x10,0x00}; the code reads them as
+   u16 at (msgtype-1)*2 (see the cast at the use site). */
+const UINT8 hcisu_msg_evt_table[8] = {0x13, 0x00, 0x11, 0x00, 0x12, 0x00,
+                                     0x10, 0x00};
 
-extern unsigned char hcisu_h2_cb[];
+UINT8 hcisu_h2_cb[0x24];
+/* Retail .bss slice is 0x40: hcisu_h2_cb then this 0x1C pad region. */
+UINT8 pad_805BBC44[0x1C];
 
 /* BTU control block (btu.h): hcit_acl_data_size at 0x7C, hcit_acl_pkt_size at 0x7E. */
 #include <revolution/bte/stack/include/btu.h>
@@ -123,7 +128,7 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
             if (cb->msg[hcisu_event] != NULL) {
                 cb->msg[hcisu_event]->len = 0;
                 cb->msg[hcisu_event]->event =
-                    hcisu_msg_evt_table[cb->msgtype[hcisu_event] - 1];
+                    ((const UINT16 *)hcisu_msg_evt_table)[cb->msgtype[hcisu_event] - 1];
                 cb->msg[hcisu_event]->offset = 0;
                 cb->state[hcisu_event] = HCISU_H2_STATE_HEADER;
             } else {
@@ -165,7 +170,8 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
                     cb->msg[hcisu_event] = NULL;
                     cb->state[hcisu_event] = HCISU_H2_STATE_BAD;
                     LogMsg_0(0x70000,
-                             "HCIS: Invalid length for incoming HCI message.");
+                             "HCIS: Invalid length for incoming HCI "
+                             "message.\0\0\0\0\0");
                     break;
                 }
                 if (payload_len != 0) {

@@ -7,8 +7,11 @@ void TPLBind(TPLPalette* pal) {
     u16 i;
 
     // clang-format off
-#line 25
-    OS_ASSERT(pal->versionNumber == TPL_VERSION, "invalid version number for texture palette");
+    // OS_ASSERT equivalent with the retail-padded pool strings (the retail
+    // .data/.sdata slices carry 5/2 trailing zero pad bytes).
+    if (pal->versionNumber != TPL_VERSION)
+        OSPanic("TPL.c\0\0", 25,
+                "invalid version number for texture palette\0\0\0\0\0");
     // clang-format on
 
     pal->descriptorArray =
@@ -64,6 +67,4 @@ void TPLGetGXTexObjFromPalette(TPLPalette* pal, GXTexObj* to, u32 id) {
                   desc->textureHeader->edgeLODEnable, 0);
 }
 
-//unused
-void TPLGetGXTexObjFromPaletteCI(){
-}
+// unused in Xenoblade retail: TPLGetGXTexObjFromPaletteCI

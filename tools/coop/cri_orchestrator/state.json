@@ -1,0 +1,77 @@
+{
+ "batches": {
+  "cri-01": {
+   "agent_id": "662db273-79e1-4f52-a64f-d1301eba5ca7",
+   "launched_at": "2026-08-03T16:07:06+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-02": {
+   "agent_id": "0bceaead-c342-43f2-9b47-5ea9e8006e08",
+   "launched_at": "2026-08-03T16:07:10+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-03": {
+   "agent_id": "afc313e0-2076-46a8-a533-a751a259f6a8",
+   "launched_at": "2026-08-03T16:07:13+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-04": {
+   "agent_id": "9b8de6c6-0abe-4536-b112-b36077352d96",
+   "launched_at": "2026-08-03T16:07:43+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-05": {
+   "agent_id": "681eb203-f66c-4b6d-a0a0-8a8afa353209",
+   "launched_at": "2026-08-03T16:07:46+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-06": {
+   "agent_id": "928b8519-f085-4844-a505-84272feb4364",
+   "launched_at": "2026-08-03T16:07:50+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-07": {
+   "agent_id": "9ee6eece-0bc1-459e-ba88-0a2fff52560f",
+   "launched_at": "2026-08-03T16:07:53+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-08": {
+   "agent_id": "76286490-1500-49e9-b041-e83a30bc98b8",
+   "launched_at": "2026-08-03T16:07:57+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-09": {
+   "agent_id": "fdd24562-b7a1-49f4-a021-99e228a10b93",
+   "launched_at": "2026-08-03T16:08:01+00:00",
+   "status": "running",
+   "launches": 1
+  },
+  "cri-10": {
+   "agent_id": "15326cb9-8ee9-43a4-9c19-674c57fd9778",
+   "launched_at": "2026-08-03T16:08:05+00:00",
+   "status": "running",
+   "launches": 1
+  }
+ },
+ "launch_order": [
+  "cri-01",
+  "cri-02",
+  "cri-03",
+  "cri-04",
+  "cri-05",
+  "cri-06",
+  "cri-07",
+  "cri-08",
+  "cri-09",
+  "cri-10"
+ ],
+ "done": []
+}

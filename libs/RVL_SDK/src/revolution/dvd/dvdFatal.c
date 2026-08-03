@@ -3,6 +3,7 @@
 #include <revolution/SC.h>
 
 static funcptr_t FatalFunc = NULL;
+u8 dvdFatal_sbss_pad[4]; /* retail .sbss 0x4 -> 0x8 (align tail); non-static so -ipa file keeps it */
 
 const char* const __DVDErrorMessageDefault[] = {
     // clang-format off
@@ -125,7 +126,7 @@ char* __DVDErrorMessageChinaKorea[] = {
     "Press the EJECT Button, remove the\n"
     "Game Disc, and turn the power off.\n"
     "Please read the Wii Operations Manual\n"
-    "for more information."
+    "for more information.\0" /* 0xA8 slot = retail 0xA7 + 1 pad byte */
     
     // clang-format on
 };
@@ -190,3 +191,6 @@ void __DVDPrintFatalMessage(void) {
         FatalFunc();
     }
 }
+
+/* retail .sdata2 = textColor const (0xFFFFFF00) + 4 zero pad bytes */
+const float dvdFatal_sdata2_pad = 0.0f;

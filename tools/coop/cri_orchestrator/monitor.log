@@ -1,0 +1,12 @@
+[2026-08-03T16:07:06+00:00] launched cri-01 as agent 662db273-79e1-4f52-a64f-d1301eba5ca7 (CRI-MATCH-cri-01: CriWare/src/sofdec/sfdcore/sfd/sfd_mpv (30 fns))
+[2026-08-03T16:07:10+00:00] launched cri-02 as agent 0bceaead-c342-43f2-9b47-5ea9e8006e08 (CRI-MATCH-cri-02: mixed (37 fns))
+[2026-08-03T16:07:13+00:00] launched cri-03 as agent afc313e0-2076-46a8-a533-a751a259f6a8 (CRI-MATCH-cri-03: mixed (34 fns))
+[2026-08-03T16:07:13+00:00] running=3 done=0/17 pending=14 remaining=17 — next sweep in 180s
+[2026-08-03T16:07:43+00:00] launched cri-04 as agent 9b8de6c6-0abe-4536-b112-b36077352d96 (CRI-MATCH-cri-04: mixed (35 fns))
+[2026-08-03T16:07:46+00:00] launched cri-05 as agent 681eb203-f66c-4b6d-a0a0-8a8afa353209 (CRI-MATCH-cri-05: mixed (30 fns))
+[2026-08-03T16:07:50+00:00] launched cri-06 as agent 928b8519-f085-4844-a505-84272feb4364 (CRI-MATCH-cri-06: mixed (31 fns))
+[2026-08-03T16:07:53+00:00] launched cri-07 as agent 9ee6eece-0bc1-459e-ba88-0a2fff52560f (CRI-MATCH-cri-07: mixed (30 fns))
+[2026-08-03T16:07:57+00:00] launched cri-08 as agent 76286490-1500-49e9-b041-e83a30bc98b8 (CRI-MATCH-cri-08: mixed (31 fns))
+[2026-08-03T16:08:01+00:00] launched cri-09 as agent fdd24562-b7a1-49f4-a021-99e228a10b93 (CRI-MATCH-cri-09: mixed (38 fns))
+[2026-08-03T16:08:05+00:00] launched cri-10 as agent 15326cb9-8ee9-43a4-9c19-674c57fd9778 (CRI-MATCH-cri-10: mixed (32 fns))
+[2026-08-03T16:08:05+00:00] running=10 done=0/17 pending=7 remaining=17 — next sweep in 180s

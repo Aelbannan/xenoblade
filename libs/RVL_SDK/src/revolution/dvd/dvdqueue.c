@@ -6,6 +6,8 @@ typedef struct DVDWaitingQueue {
 } DVDWaitingQueue;
 
 static DVDWaitingQueue WaitingQueue[DVD_PRIO_MAX];
+/* Retail .bss slice is 0x30: WaitingQueue then 0x10 zero pad bytes. */
+static u8 __DVDQueueBssPad[0x10];
 
 void __DVDClearWaitingQueue(void) {
     u32 i;
@@ -116,11 +118,4 @@ BOOL __DVDDequeueWaitingQueue(const DVDCommandBlock* block) {
     return TRUE;
 }
 
-//unused
-void __DVDIsBlockInWaitingQueue(){
-}
-
-//unused
-void DVDDumpWaitingQueue(){
-}
-
+// unused in Xenoblade retail: __DVDIsBlockInWaitingQueue, DVDDumpWaitingQueue

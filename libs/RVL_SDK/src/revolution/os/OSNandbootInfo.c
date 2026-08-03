@@ -1,4 +1,7 @@
 #include <revolution/OS.h>
+
+// Retail .data is 0x20 bytes: path string padded to 0x20.
+static char NandbootInfoPath[0x20] = "/shared2/sys/NANDBOOTINFO";
 #include <revolution/NAND.h>
 
 static s32 CheckSum(s32* array){
@@ -16,21 +19,21 @@ static s32 CheckSum(s32* array){
 
 BOOL __OSCreateNandbootInfo(void) {
     NANDStatus status;
-    NANDResult result = NANDPrivateGetStatus("/shared2/sys/NANDBOOTINFO", &status);
+    NANDResult result = NANDPrivateGetStatus(NandbootInfoPath, &status);
     
     if (result == NAND_RESULT_OK && status.perm == 0x3F) {
         return TRUE;
     }
     
     if(result == NAND_RESULT_OK && status.perm != 0x3F) {
-        if (NANDPrivateDelete("/shared2/sys/NANDBOOTINFO")) {
+        if (NANDPrivateDelete(NandbootInfoPath)) {
             return FALSE;
         }
     }else if (result != NAND_RESULT_NOEXISTS) {
         return FALSE;
     }
         
-    if (NANDPrivateCreate("/shared2/sys/NANDBOOTINFO", 0x3F, 0)) {
+    if (NANDPrivateCreate(NandbootInfoPath, 0x3F, 0)) {
         return FALSE;
     }
     
@@ -43,7 +46,7 @@ BOOL __OSWriteNandbootInfo(s32* arg0) {
     s32 checksum = CheckSum(arg0);
     *arg0 = checksum;
     
-    if (NANDPrivateOpen("/shared2/sys/NANDBOOTINFO", &fileInfo, 2U) == NAND_RESULT_OK) {
+    if (NANDPrivateOpen(NandbootInfoPath, &fileInfo, 2U) == NAND_RESULT_OK) {
         if (NANDWrite(&fileInfo, arg0, 0x1020U) != 0x1020U) {
             NANDClose(&fileInfo);
             return FALSE;

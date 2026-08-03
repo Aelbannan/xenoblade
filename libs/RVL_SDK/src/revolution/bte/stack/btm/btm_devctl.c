@@ -56,10 +56,18 @@ extern void btsnd_hcic_write_stored_key(void *p, UINT8 num_keys, UINT8 *bd_addr,
                                         UINT8 *link_key);
 extern UINT8 btsnd_hcic_delete_stored_key(UINT8 *bd_addr, UINT8 delete_all_flag);
 
-/* "TRUE"/"FALSE" strings -- fixed-size externs so MWCC treats them as
-   small-data (sda21-accessed), matching the retail lbl_8066592C/34 relocs. */
-extern const char lbl_8066592C[5];   /* "TRUE"  */
-extern const char lbl_80665934[6];   /* "FALSE" */
+/* "TRUE"/"FALSE" strings -- defined here (retail btm_devctl.o .sdata
+   slice 0x80663000..0x80663018: dev-class bytes, "TRUE", "FALSE").
+   Non-const so MWCC places them in .sdata (sda21-accessed), matching the
+   retail lbl_8066592C/34 relocs. */
+UINT8 lbl_80665928[DEV_CLASS_LEN] = {0x00, 0x1F, 0x00};
+char lbl_8066592C[5] = "TRUE";   /* "TRUE"  */
+/* Retail .sdata slice is 0x18 (0x80663000..0x80663018): the 3 objects with
+   "FALSE" occupying 0xC..0x18 (6-byte string + 6 pad zeros); raise the small-
+   data threshold so the 12-byte object stays in .sdata like retail. */
+#pragma sdata_threshold 12
+char lbl_80665934[12] = "FALSE";  /* "FALSE" */
+#pragma sdata_threshold 8
 
 /* BTU control block (Wii layout: hcit_acl_data_size at 0x7C) */
 typedef struct
@@ -76,9 +84,6 @@ typedef struct
     UINT8   _pad[0x10];
     UINT32  event;                /* 0x10 */
 } BtmTimerListEnt;
-
-/* Default device class literal (retail bss symbol, sda21-accessed) */
-extern UINT8 lbl_80665928[DEV_CLASS_LEN];
 
 /* Trace level thresholds (from bt_trace.h) */
 #define BT_TRACE_LEVEL_API    3

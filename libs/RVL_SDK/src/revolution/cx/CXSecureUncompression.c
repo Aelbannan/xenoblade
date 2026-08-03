@@ -1,33 +1,5 @@
 #include <revolution/cx/CXSecureUncompression.h>
 
-//unused
-void CXSecureUncompressAny(){
-}
-
-//unused
-void CXSecureUncompressRL(){
-}
-
-//unused
-void CXSecureUncompressLZ(){
-}
-
-//unused
-void CXiVerifyHuffmanTable_(){
-}
-
-//unused
-void CXSecureUncompressHuffman(){
-}
-
-//unused
-void CXiHuffImportTree(){
-}
-
-//unused
-void CXSecureUnfilterDiff(){
-}
-
 //Doesn't match on the 1.0 compiler
 BOOL CXiLHVerifyTable(u16* r3, u32 r4) {
     u16* r30 = r3;
@@ -81,18 +53,3 @@ BOOL CXiLHVerifyTable(u16* r3, u32 r4) {
     return TRUE;
 }
 
-//unused
-void CXSecureUncompressLH(){
-}
-
-//unused
-void RCAddCount_(){
-}
-
-//unused
-void RCSearch_(){
-}
-
-//unused
-void CXSecureUncompressLRC(){
-}

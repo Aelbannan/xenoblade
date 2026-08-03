@@ -1,9 +1,13 @@
+
 // High-level C reconstruction of RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm
 // RFCOMM port state machine (Broadcom BTE RFCOMM stack).
 // Field offsets recovered from retail assembly and cross-checked against the
 // already-decompiled sibling units port_rfc.c / port_utils.c / rfc_ts_frames.c.
 
 #include <harness_catalog.h>
+
+// Last trace string; definition at file end keeps it last in .data.
+extern char rfc_pn_disc_str[0x28];
 #include <string.h>
 
 /* ------------------------------------------------------------------ */
@@ -574,7 +578,7 @@ void rfc_process_pn(tRFC_MCB *p_mcb, u8 is_command, MX_FRAME *p_frame)
             /* We are disconnecting, send DM */
             rfc_send_dm(p_mcb, dlci, 0);
             if (rfc_cb.trace_level >= 2) {
-                LogMsg_0(0x90001, "***** MX PN while disconnecting *****");
+                LogMsg_0(0x90001, rfc_pn_disc_str);
             }
         }
     } else {
@@ -822,3 +826,6 @@ void rfc_set_port_state(u8 *p_port_state, MX_FRAME *p_frame)
         p_port_state[8] = p_frame->u.rpn.xoff_char;
     }
 }
+
+// Retail .data ends at 0x328: this trace string padded to 0x28 bytes.
+char rfc_pn_disc_str[0x28] = "***** MX PN while disconnecting *****";

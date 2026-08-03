@@ -1,4 +1,5 @@
 // L2CAP utility functions - RVL retail slice.
+
 // High-level C reconstruction of the Broadcom BTE l2c_utils module:
 // link/channel/registration control block management and the L2CAP
 // signalling packet builders.
@@ -6,6 +7,9 @@
 #define REVOLUTION 1
 
 #include <string.h>
+
+// Last trace string; definition at file end keeps it last in .data.
+extern char l2c_nobuf_create_conn_str[0x28];
 
 #include <revolution/BTE/include/bt_target.h>
 #include <revolution/BTE/stack/include/bt_types.h>
@@ -1195,7 +1199,7 @@ BOOLEAN l2cu_create_conn_after_switch (tL2C_LCB *p_lcb)
     if (!btsnd_hcic_create_conn (p_lcb->remote_bd_addr, 0x18, page_scan_rep_mode,
                                  page_scan_mode, clock_offset, allow_switch))
     {
-        L2CAP_TRACE_ERROR0 ("L2CAP - no buffer for l2cu_create_conn");
+        L2CAP_TRACE_ERROR0 (l2c_nobuf_create_conn_str);
         l2cu_release_lcb (p_lcb);
         return (FALSE);
     }
@@ -1253,3 +1257,6 @@ BOOLEAN l2cu_lcb_disconnecting (void)
 
     return (status);
 }
+
+// Retail .data ends at 0xE8: this trace string padded to 0x28 bytes.
+char l2c_nobuf_create_conn_str[0x28] = "L2CAP - no buffer for l2cu_create_conn";

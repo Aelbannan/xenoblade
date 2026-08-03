@@ -3,10 +3,11 @@
 static BOOL OnShutdown(BOOL final, u32 event);
 static OSShutdownFunctionInfo ShutdownFunctionInfo = {OnShutdown, 127};
 
-//unused
-u32 OSGetPhysicalMem1Size(void) {
-    return OS_PHYSICAL_MEM1_SIZE;
-}
+/* Retail .sbss slice is 8 bytes: the __OSInitMemoryProtection flag then 4
+   zero pad bytes; a plain 4-byte zero-init global lands in .sbss. */
+u32 __OSMemorySbssPad;
+
+// unused in Xenoblade retail: OSGetPhysicalMem1Size
 
 u32 OSGetPhysicalMem2Size(void) {
     return OS_PHYSICAL_MEM2_SIZE;
@@ -48,9 +49,7 @@ static void MEMIntrruptHandler(s32 intr, OSContext* ctx) {
     }
 }
 
-//unused
-void OSProtectRange(){
-}
+// unused in Xenoblade retail: OSProtectRange
 
 static asm void ConfigMEM1_24MB(void) {
     // clang-format off
@@ -369,21 +368,8 @@ static asm void ConfigMEM2_128MB(void) {
     // clang-format on
 }
 
-//unused
-void DisableInstsOnMEM1Hi8MB(){
-}
-
-//unused
-void DisableInstsOnMEM1Hi16MB(){
-}
-
-//unused
-void EnableInstsOnMEM2Lo8MB(){
-}
-
-//unused
-void EnableInstsOnMEM2Lo16MB(){
-}
+// unused in Xenoblade retail: DisableInstsOnMEM1Hi8MB, DisableInstsOnMEM1Hi16MB,
+// EnableInstsOnMEM2Lo8MB, EnableInstsOnMEM2Lo16MB
 
 static asm void RealMode(register void* config) {
     // clang-format off
@@ -411,7 +397,7 @@ static void BATConfig(u32 size) {
     void* mem2end;
 
     mem1sim = OSGetConsoleSimulatedMem1Size();
-    mem1phys = OSGetPhysicalMem1Size();
+    mem1phys = OS_PHYSICAL_MEM1_SIZE;
     if (OSGetConsoleSimulatedMem1Size() < mem1phys &&
         mem1sim == OS_MEM_MB_TO_B(24)) {
         DCInvalidateRange((void*)0x81800000, OS_MEM_MB_TO_B(24));
@@ -442,25 +428,14 @@ static void BATConfig(u32 size) {
     WeirdAssInline(size);
 }
 
-//unused
-void OSDisableCodeExecOnMEM1Hi8MB(){
-}
-
-//unused
-void OSDisableCodeExecOnMEM1Hi16MB(){
-}
+// unused in Xenoblade retail: DisableInstsOnMEM1Hi8MB, DisableInstsOnMEM1Hi16MB,
+// EnableInstsOnMEM2Lo8MB, EnableInstsOnMEM2Lo16MB,
+// OSDisableCodeExecOnMEM1Hi8MB, OSDisableCodeExecOnMEM1Hi16MB,
+// OSEnableCodeExecOnMEM2Lo16MB, OSEnableCodeExecOnMEM2Lo8MB
 
 void __OSRestoreCodeExecOnMEM1(u32 size){
     RealMode(ConfigMEM1_24MB);
     WeirdAssInline(size);
-}
-
-//unused
-void OSEnableCodeExecOnMEM2Lo16MB(){
-}
-
-//unused
-void OSEnableCodeExecOnMEM2Lo8MB(){
 }
 
 void __OSInitMemoryProtection(void) {

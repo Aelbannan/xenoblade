@@ -7,10 +7,4 @@ void WUD_DEBUGPrint(const char* pFmt, ...) {
 }
 
 
-//unused
-void _WUDEnableDebugMsgs(){
-}
-
-//unused
-void _WUDDisableDebugMsgs(){
-}
+// unused in Xenoblade retail: _WUDEnableDebugMsgs, _WUDDisableDebugMsgs

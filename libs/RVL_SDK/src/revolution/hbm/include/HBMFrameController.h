@@ -4,7 +4,7 @@
 
 namespace homebutton {
 
-class FrameController {
+class __declspec(novtable) FrameController {
 public:
     enum eState {
         eState_Stopped,

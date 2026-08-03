@@ -1101,8 +1101,8 @@ void __wpadInitConnectionCallback(s32 chan, s32 status) {
 
 s32 __wpadRetrieveChannel(WUDDevInfo* pInfo) {
     BD_ADDR_PTR pAddr;
-    s32 result = WPAD_CHAN_INVALID;
     s32 i;
+    s32 result = WPAD_CHAN_INVALID;
 
     pAddr = _WUDGetDevAddr(pInfo->devHandle);
 
@@ -1667,10 +1667,10 @@ void WPADRead(s32 chan, WPADStatus* pStatus) {
 }
 
 void WPADSetAutoSamplingBuf(s32 chan, void* pBuffer, u32 len) {
+    s8 defaultErr;
+    u32 fmtSize;
     WPADCB* p;
     BOOL enabled;
-    s8 defaultErr;
-    s32 fmtSize;
     int i;
 
     p = __rvl_p_wpadcb[chan];
@@ -1694,10 +1694,6 @@ void WPADSetAutoSamplingBuf(s32 chan, void* pBuffer, u32 len) {
         fmtSize = 0x36;
         break;
 
-    case WPAD_FMT_TR_BTN:
-        fmtSize = 0x5A;
-        break;
-
     case WPAD_FMT_TR_BTN_ACC:
         fmtSize = 0x2E;
         break;
@@ -1711,6 +1707,10 @@ void WPADSetAutoSamplingBuf(s32 chan, void* pBuffer, u32 len) {
         fmtSize = 0x4A;
         break;
 
+    case WPAD_FMT_TR_BTN:
+        fmtSize = 0x5A;
+        break;
+
     default:
         fmtSize = 0x2A;
         break;
@@ -1719,8 +1719,10 @@ void WPADSetAutoSamplingBuf(s32 chan, void* pBuffer, u32 len) {
     if (pBuffer != NULL) {
         memset(pBuffer, 0, fmtSize * len);
 
-        for (i = 0; i < len; i++) {
-            ((WPADStatus*)((u8*)pBuffer + fmtSize * i))->err = defaultErr;
+        i = 0;
+        while (i < len) {
+            ((WPADStatus*)((u8*)pBuffer + i * fmtSize))->err = defaultErr;
+            ++i;
         }
 
         p->samplingBufIndex = -1;

@@ -393243,15 +393243,7 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c",
       "declared_return": "i32",
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
-      "claim": {
-        "owner": "cri-b17",
-        "claimed_at": "2026-08-03T17:48:49.200587+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803cee4c",

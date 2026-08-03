@@ -371,4 +371,9 @@ s32 MPV_GoNextDelimSj(void* self) {
 }
 
 
-void MPV_MoveChunk() {}
+s32 MPV_MoveChunk(void* self, u32 x) {
+    s32 sp[2];
+    ((void (*)(void*, u32, u32, s32*))*(void**)((u8*)*(void**)((u8*)self) + 0x18))(self, x, x, sp);
+    ((void (*)(void*, u32, s32*))*(void**)((u8*)*(void**)((u8*)self) + 0x20))(self, x >> 5, sp);
+    return sp[1];
+}

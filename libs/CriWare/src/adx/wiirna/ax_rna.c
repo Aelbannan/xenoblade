@@ -288,21 +288,34 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
     s32 i, j, k;
     if (self == NULL)
         return;
-    cur = (self == NULL) ? -1 : (s32)(*(u8*)((u8*)self + 1) & 1);
+    if (self == NULL) {
+        cur = -1;
+    } else {
+        cur = (s32)(*(u8*)((u8*)self + 1) & 1);
+    }
     if (sw == cur)
         return;
     if (sw == 1) {
+        u8* p48;
+        u8* p38;
+        u8* ch;
         GCRNA_LockCs();
+        ch = (u8*)self;
+        p38 = (u8*)self + 0x38;
+        p48 = (u8*)self + 0x48;
         for (i = 0; i < (s8)((u8*)self)[3]; i++) {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
+            void* sj = *(void**)(ch + 0x30);
             ((void(*)(void*))(*(void***)sj)[5])(sj);
-            memset((u8*)self + i * 4 + 0x38, 0, 8);
-            memset((u8*)self + i * 4 + 0x48, 0, 8);
+            memset(p38, 0, 8);
+            memset(p48, 0, 8);
             if (*(s32*)((u8*)self + 0xb4) == 1) {
-                void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
+                void* sj2 = *(void**)(ch + 0xc8);
                 ((void(*)(void*))(*(void***)sj2)[5])(sj2);
             }
-            *(s32*)((u8*)self + i * 4 + 0x58) = 0;
+            *(s32*)(ch + 0x58) = 0;
+            ch += 4;
+            p38 += 8;
+            p48 += 8;
         }
         *(s32*)((u8*)self + 0x60) = 0;
         *(s32*)((u8*)self + 0x64) = 0;
@@ -319,7 +332,7 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
             s32 cnt = 0;
             for (j = 0; j < 0x14; j++) {
                 for (k = 0; k < 0xa; k++) {
-                    if (*(s32*)((u8*)self + i * 4 + 0x58) == 0)
+                    if (*(volatile s32*)((u8*)self + i * 4 + 0x58) == 0)
                         goto wait1;
                     cnt++;
                 }
@@ -332,7 +345,7 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
             cnt = 0;
             for (j = 0; j < 0x14; j++) {
                 for (k = 0; k < 0xa; k++) {
-                    if (*(s32*)((u8*)self + i * 4 + 0x68) == 0)
+                    if (*(volatile s32*)((u8*)self + i * 4 + 0x68) == 0)
                         goto wait2;
                     cnt++;
                 }
@@ -635,42 +648,48 @@ void criware_80399F4C(void* self) {
 
 void axrna_start_flash(void* self) {
     s32 i;
-    s32 nch = (s8)((u8*)self)[3];
     SJ_CHUNK out;
     SJ_CHUNK split;
+    u8* ch = (u8*)self;
+    u8* cs = (u8*)self;
+    u8* p48 = (u8*)self + 0x48;
 
-    for (i = 0; i < nch; i++) {
+    for (i = 0; i < (s8)((u8*)self)[3]; i++) {
         s32 size;
-        if (*(u32*)((u8*)self + i * 4 + 0x68) != 0)
-            continue;
+        if (*(u32*)(ch + 0x68) != 0)
+            goto next;
         {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
+            void* sj = *(void**)(ch + 0x30);
             ((void(*)(void*, s32, s32, void*))(*(void***)sj)[6])(sj, 0, 0x2000, &out);
         }
         size = out.size;
         size = (size / 0x20) * 0x20;
         SJ_SplitChunk(&out, size, &out, &split);
         {
-            void* sj = *(void**)((u8*)self + i * 4 + 0x30);
+            void* sj = *(void**)(ch + 0x30);
             ((void(*)(void*, s32, void*))(*(void***)sj)[7])(sj, 0, &split);
         }
         if (size == 0)
             return;
-        *(s32*)((u8*)self + i * 8 + 0x48) = (u32)out.ptr;
-        *(s32*)((u8*)self + i * 8 + 0x4c) = out.size;
+        *(s32*)(cs + 0x48) = (u32)out.ptr;
+        *(s32*)(cs + 0x4c) = out.size;
         *(s32*)((u8*)self + 0x70) = size >> 1;
-        *(s32*)((u8*)self + i * 4 + 0x68) = 1;
+        *(s32*)(ch + 0x68) = 1;
         memset(out.ptr, 0, size);
         DCFlushRange(out.ptr, size);
-        if (*(s32*)((u8*)self + i * 4 + 0x68) == 1) {
+        if (*(s32*)(ch + 0x68) == 1) {
             void* obj;
-            obj = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, (void*)((u8*)self + i * 8 + 0x48));
-            *(s32*)((u8*)self + i * 4 + 0x68) = 0;
+            obj = *(void**)(ch + 0x30);
+            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, p48);
+            *(s32*)(ch + 0x68) = 0;
             if (i == (s8)((u8*)self)[3] - 1) {
                 *(s32*)((u8*)self + 0x74) += *(s32*)((u8*)self + 0x70);
             }
         }
+    next:
+        ch += 4;
+        cs += 8;
+        p48 += 8;
     }
 }
 #pragma auto_inline on

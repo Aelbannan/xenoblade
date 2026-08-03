@@ -3,8 +3,30 @@
 
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
+#include <nw4r/math.h>
+
+namespace nw4r {
+namespace g3d {
+namespace detail {
+
+#include <nw4r/g3d/detail/g3d_transform_ps.inl>
+
+} // namespace detail
+} // namespace g3d
+} // namespace nw4r
 
 extern "C" GXRenderModeObj lbl_eu_8061F9D4;
+extern "C" char lbl_eu_8061A750[];
+extern "C" char lbl_eu_8061FAB8[];
+extern "C" char lbl_eu_80665458[1];
+
+struct FogState {
+    u32 flags;                  // at 0x0
+    s32 curFogID;               // at 0x4
+    nw4r::g3d::FogData fogArray[0x20]; // at 0x8
+};
+
+extern "C" FogState lbl_eu_8061AF60;
 
 namespace nw4r {
 namespace g3d {
@@ -13,6 +35,59 @@ LightObj::LightObj() : mFlag(0) {}
 
 const GXRenderModeObj* G3DState::GetRenderModeObj() {
     return &lbl_eu_8061F9D4;
+}
+
+const math::MTX33* G3DState::GetViewNrmMtxPtr(u32 idx) {
+    math::MTX33* pNrmMtx =
+        *reinterpret_cast<math::MTX33**>(lbl_eu_8061A750 + 4);
+
+    if (pNrmMtx != NULL) {
+        return &pNrmMtx[idx];
+    }
+
+    if (!lbl_eu_80665458[0]) {
+        lbl_eu_80665458[0] = 1;
+    }
+
+    math::MTX34* pViewMtx =
+        *reinterpret_cast<math::MTX34**>(lbl_eu_8061A750);
+
+    detail::CalcViewNrmMtx(reinterpret_cast<math::MTX33*>(lbl_eu_8061FAB8),
+                           pViewMtx != NULL ? &pViewMtx[idx] : NULL);
+
+    return reinterpret_cast<const math::MTX33*>(lbl_eu_8061FAB8);
+}
+
+void G3DState::SetFog(Fog fog, int id) {
+    FogData* pData = fog.ptr();
+
+    if (id < 0 || id >= 0x20 || pData == NULL) {
+        return;
+    }
+
+    if (lbl_eu_8061AF60.curFogID != id ||
+        memcmp(pData, &lbl_eu_8061AF60.fogArray[id], 0x30) != 0) {
+        lbl_eu_8061AF60.flags = 0;
+        fog.CopyTo(&lbl_eu_8061AF60.fogArray[id]);
+    }
+}
+
+void G3DState::LoadFog(int id) {
+    if ((lbl_eu_8061AF60.flags & 1) && (lbl_eu_8061AF60.flags & 2) &&
+        id == lbl_eu_8061AF60.curFogID) {
+        return;
+    }
+
+    if (id < 0 || id >= 0x20) {
+        GXColor color = {0, 0, 0, 0};
+        GXSetFog(GX_FOG_NONE, color, 0.0f, 0.0f, 0.0f, 0.0f);
+    } else {
+        Fog fog(&lbl_eu_8061AF60.fogArray[id]);
+        fog.SetGP();
+    }
+
+    lbl_eu_8061AF60.curFogID = id;
+    lbl_eu_8061AF60.flags |= 3;
 }
 
 } // namespace g3d

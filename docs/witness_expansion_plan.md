@@ -20,7 +20,15 @@ The counts in this header are **run-time snapshots** — the registry is live an
 subcommand re-computes them (drift observed between runs: 74↔75 rho-fail); never treat them as
 fixed.
 
-**Implementation status (2026-08-03):** WS1 (CFG-liveness fixpoint, PS1 defs,
+**Implementation status (2026-08-03, second commit after code review):** the
+first implementation commit was adversarially code-reviewed (GLM-5.2 + Kimi K3);
+three false-certificate holes were fixed: per-region gate 5 (was missing
+entirely), RLWIMI-accumulator / STMW-range / predicated-bclr-fallthrough
+liveness under-approximation, and full-stream gates 2/3/6 validation before
+region slicing (previously skipped after the first rho conflict). See
+`docs/ppc_equiv_work/31-reg-swap-witness.md` §"Implementation-review fixes".
+
+WS1 (CFG-liveness fixpoint, PS1 defs,
 first-cut loop predicate), WS2 (executor `stop_at_pcs` + `initial_seed` +
 `pairs_checked == 0` guard), WS3 (region-sliced witness B: region splitting,
 four-lane boundary deadness, per-exit region rho, cert payload

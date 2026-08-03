@@ -544,3 +544,97 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         # never a crash and never a vacuous cert.
         if not outcome.certified:
             self.assertEqual(outcome.failure.gate, "structural")
+
+
+class ImplReviewRegressionTests(unittest.TestCase):
+    """Regressions for the implementation-review findings (2026-08-03):
+    per-region gate 5, RLWIMI/STMW liveness, predicated-bclr fallthrough,
+    reject-list after a rho conflict.
+    """
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+        )
+        return original, candidate
+
+    def test_abi_arg_remap_in_region_rejected(self) -> None:
+        # Impl-review BLOCKER (GLM-2 / Kimi-1): gate 5 must run per region.
+        # retail takes its argument in r5, decomp in r8 — genuinely different
+        # ABI; the region path must reject at abi-boundary, not certify.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        r = [mr(3, 5), li(9, 1), mr(4, 9), li(9, 2), mr(6, 9), self._BLR]
+        d = [mr(3, 8), li(10, 1), mr(4, 10), li(9, 2), mr(6, 9), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_rlwimi_accumulator_read_rejected(self) -> None:
+        # Impl-review BLOCKER (GLM-1): rlwimi reads its accumulator (operand
+        # 0); under-approximating that use made the boundary deadness see the
+        # lane dead -> unsound rebind -> false certificate.  Must reject.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        rlwimi = lambda rs, ra, sh, mb, me: (
+            (20 << 26) | ((rs & 31) << 21) | ((ra & 31) << 16)
+            | ((sh & 31) << 11) | ((mb & 31) << 6) | ((me & 31) << 1)
+        )
+        r = [li(5, 1), mr(3, 6), rlwimi(5, 6, 0, 0, 30), mr(3, 5), self._BLR]
+        d = [li(7, 1), mr(3, 6), rlwimi(9, 6, 0, 0, 30), mr(3, 9), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+
+    def test_predicated_bclr_fallthrough_rejected(self) -> None:
+        # Impl-review BLOCKER (Kimi-2): a predicated bclr (beqlr) has a live
+        # fallthrough; dropping it made liveness see lanes dead -> unsound
+        # rebind.  Also the decomp reads an uninitialized r5 (EABI live-in),
+        # so gate 5 rejects the r5->r6 mapping.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        beqlr = 0x4D820020
+        r = [li(5, 1), cmpwi(3, 0), beqlr, mr(3, 5), self._BLR]
+        d = [li(6, 1), cmpwi(3, 0), beqlr, mr(3, 5), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+
+    def test_reject_list_after_rho_conflict_rejected(self) -> None:
+        # Impl-review MAJOR (Kimi-3): gates 2/3/6 must be validated over the
+        # FULL stream, including slots after a rho conflict.  An mffs after
+        # the conflict must be rejected at reject-list, not certified.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        mffs = 0xFC00048E
+        r = [mr(3, 5), mr(3, 4), mffs, self._BLR]
+        d = [mr(3, 8), mr(3, 4), mffs, self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "reject-list")
+
+    def test_stmw_range_use_modeled(self) -> None:
+        # Impl-review MAJOR (GLM-3): stmw reads rD..r31, not just (rD, rA).
+        # Verify _use_def_numbered marks the full range as uses so a lane in
+        # the range is not falsely dead at a boundary.
+        from tools.coop.lib.renaming_witness import _use_def_numbered
+
+        stmw = lambda rd, ra, imm: (
+            (47 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | (imm & 0xFFFF)
+        )
+        insn = decode_block(
+            bytes.fromhex(_words_hex([stmw(20, 1, 8), self._BLR])), self._R,
+            validate_with_capstone=False,
+        )[0]
+        uses, defs = _use_def_numbered(insn)
+        # r20..r31 all read.
+        self.assertIn(20, uses)
+        self.assertIn(31, uses)
+        self.assertNotIn(20, defs)

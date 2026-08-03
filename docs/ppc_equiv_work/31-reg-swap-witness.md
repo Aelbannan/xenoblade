@@ -213,6 +213,36 @@ safe; under-approximation is the unsound direction, mitigated by the
 unknown-opcode over-approximation and the per-exit masking being the only
 weakening).
 
+### Implementation-review fixes (2026-08-03, second commit)
+
+The first implementation commit (a9d6cd02) was adversarially reviewed against
+the code (GLM-5.2 + Kimi K3). Three false-certificate holes were found and
+fixed:
+
+1. **Per-region gate 5 (BLOCKER):** the region-sliced path never ran
+   `_check_abi_fixedness` — ABI-boundary registers (r0/r1/r2/r13/args/returns,
+   live-across-call volatiles) could be remapped in any region's rho and the
+   structural comparison self-agrees under the region perm. Fixed: every
+   region's rho is gate-5-checked before execution.
+2. **Liveness under-approximation (BLOCKERs):** `_use_def` missed RLWIMI's
+   accumulator read (operand 0 is read-modify-write) and STMW's full
+   rD..r31 read range, and `_cfg_successors` dropped the predicated-`bclr`
+   fallthrough edge the executor actually takes (only BO=20 `blr` is
+   constant-true). All three under-approximated a *use* — the unsound
+   direction — letting a live lane appear dead at a boundary and be rebound.
+   Fixed in `_use_def` / `_use_def_numbered` / `_cfg_successors`; TWI's `to`
+   immediate is no longer treated as a GPR.
+3. **Full-stream gates (MAJOR):** gates 2/3/6 were only checked up to the
+   first rho conflict (the global path returns early), so a reject-list /
+   reloc / field violation after a conflict could certify. Fixed: the region
+   path validates the FULL stream (`_stream_validation_failure`) before
+   slicing.
+
+Also fixed: `local_symbol` now threads per side (candidate self-recursion
+detection), the loop predicate flags non-link relocated self-calls (tail
+recursion), driver-side `max_paths` cross-region accounting, and seed-time
+feasibility pre-checks. Regression corpus: `ImplReviewRegressionTests`.
+
 ### Fail-closed guards
 
 - **`pairs_checked == 0` guard:** if every terminal pair's combined path

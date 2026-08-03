@@ -1481,6 +1481,7 @@ def _try_renaming_witness(
             assumed_callees=call_targets,
             callee_contracts=contracts,
             local_symbol=left.name,
+            candidate_local_symbol=right.name,
         )
     except Exception:
         # Any tooling failure degrades to the SMT probe, never to a cert.

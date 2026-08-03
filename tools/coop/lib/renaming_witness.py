@@ -56,6 +56,7 @@ from tools.ppc_equivalence.semantics import (
     DEFAULT_MAX_LOOP_ITERATIONS,
     ExecutionInconclusive,
     SymbolicOps,
+    _path_condition_feasible,
     execute_cfg,
 )
 from tools.ppc_equivalence.spr import AUX_SPR_OBSERVABLES
@@ -132,6 +133,12 @@ def _register_fields(opcode: Opcode) -> tuple[tuple[int, str], ...]:
         Opcode.NEG, Opcode.ADDME, Opcode.ADDZE, Opcode.SUBFME,
         Opcode.SUBFZE,
     ):
+        # TWI decodes (to, ra, simm): operand 0 is the 5-bit trap-condition
+        # immediate, NOT a renameable register — only RA (operand 1) enters
+        # rho (impl-review Finding 4).  RLWIMI's operand 0 (rA) is a genuine
+        # GPR (read-modify-write) and stays in the (RD, RA) group.
+        if opcode == Opcode.TWI:
+            return (_RA,)
         return (_RD, _RA)
     if opcode in (
         Opcode.MFSPR, Opcode.MTSPR, Opcode.MTCRF,
@@ -309,6 +316,13 @@ def _use_def(opcode: Opcode) -> tuple[tuple[tuple[int, str], ...], tuple[tuple[i
     if opcode in (
         Opcode.TWI, Opcode.MTCRF, Opcode.MTSPR, Opcode.MTMSR, Opcode.MTSR,
     ):
+        # TWI decodes (to, ra, simm): operand 0 is the 5-bit trap-condition
+        # immediate, NOT a register — the real use is ra at operand 1
+        # (engine register_effects: semantics.py:5698-5700).  Treating `to`
+        # as a GPR use under-approximated ra and polluted rho (impl-review
+        # Finding 4).
+        if opcode == Opcode.TWI:
+            return ((1, g),), ()
         return ((0, g),), ()
     if opcode in (
         Opcode.STW, Opcode.STWU, Opcode.STB, Opcode.STBU, Opcode.STH,
@@ -360,10 +374,18 @@ def _use_def(opcode: Opcode) -> tuple[tuple[tuple[int, str], ...], tuple[tuple[i
         return ((1, g),), ((0, g),)
     if opcode in (
         Opcode.ORI, Opcode.ORIS, Opcode.XORI, Opcode.XORIS,
-        Opcode.ANDI_DOT, Opcode.ANDIS_DOT, Opcode.RLWIMI, Opcode.RLWINM,
+        Opcode.ANDI_DOT, Opcode.ANDIS_DOT, Opcode.RLWINM,
         Opcode.SRAWI, Opcode.CNTLZW, Opcode.EXTSH, Opcode.EXTSB,
     ):
         return ((1, g),), ((0, g),)
+    if opcode == Opcode.RLWIMI:
+        # rlwimi rA, rS, sh, mb, me is a read-modify-write: operand 0 (rA)
+        # is BOTH read (accumulator) and written (engine semantics:
+        # semantics.py:3334 ``result = bor(result, band(gpr[ra], bnot(mask)))``)
+        # and operand 1 (rS) is read.  Missing the rA read under-
+        # approximated a use → liveness reported rA dead at the boundary →
+        # unsound rebind (impl-review BLOCKER 1).
+        return ((0, g), (1, g)), ((0, g),)
     if opcode in (Opcode.CMPWI, Opcode.CMPLWI):
         return ((1, g),), ()
     if opcode in (Opcode.CMPW, Opcode.CMPLW, Opcode.FCMPU, Opcode.FCMPO):
@@ -462,6 +484,17 @@ def _use_def_numbered(
         if pos < len(insn.operands):
             defs.add(_numbered_lane(kind, insn.operands[pos]))
     op = insn.opcode
+    # stmw/lmw operate over a register RANGE starting at operand 0 (rD),
+    # which position-based tables cannot express: stmw stores rD..r31 (all
+    # reads), lmw defines rD..r31 (engine table: semantics.py:5838).
+    # Under-approximating the stmw reads was the unsound direction for
+    # liveness (impl-review MAJOR 3).
+    if op == Opcode.STMW and insn.operands:
+        start = insn.operands[0]
+        uses.update(_numbered_lane(GPR, r) for r in range(start, 32))
+    elif op == Opcode.LMW and insn.operands:
+        start = insn.operands[0]
+        defs.update(_numbered_lane(GPR, r) for r in range(start, 32))
     if op in _PS1_DEF_ARITH or op in _PS1_DEF_LOADS:
         # Destination is operand 0 (fd for arith, rt for loads); both write
         # ps1 as a side effect.
@@ -513,11 +546,24 @@ def _cfg_successors(
             succ.append(ti)
         return tuple(succ)
     if op in (Opcode.BCLR, Opcode.BCCTR):
-        # Non-link: return / indirect exit — terminal.  Link (blrl/blrl):
-        # call — falls through.
+        # Link: call — falls through.  Non-link: the executor yields a
+        # *symbolic* taken predicate for BO=4/12/etc. (only BO=20 ``blr`` is
+        # constant-true) and keeps a live fallthrough edge to pc+4
+        # (semantics.py:5647) — verified: ``beqlr`` continues past the
+        # branch.  Liveness must model the fallthrough for non-link BCLR/
+        # BCCTR too (over-live is the safe direction; dropping it
+        # under-approximates live and made the region deadness assertion
+        # unsound — impl-review Finding 2).  An out-of-range fallthrough
+        # (``blr`` at function end) returns () as a terminal.
         if insn.link:
             return (index + 1,) if index + 1 < len(instructions) else ()
-        return ()
+        # Non-link BCLR/BCCTR: taken edge is a terminal (return / indirect
+        # exit); the fallthrough continues when the branch is not taken.
+        fall = (index + 1,) if index + 1 < len(instructions) else ()
+        if insn.opcode == Opcode.BCLR and (insn.operands[0] & 0x14) == 0x14:
+            # BO=20 (canonical ``blr``): always-taken return — no fallthrough.
+            return ()
+        return fall
     return (index + 1,) if index + 1 < len(instructions) else ()
 
 
@@ -621,10 +667,10 @@ def _has_loop_or_non_return_indirect(
             target = insn.operands[0]
             if insn.relocation is not None:
                 # Relocated branch: a call unless it is direct recursion.
-                if (
-                    insn.link
-                    and insn.relocation.canonical_symbol == local_symbol
-                ):
+                # Non-link relocated self-branch (tail recursion) is ALSO a
+                # real back-edge and must be flagged (impl-review MINOR 5:
+                # the `insn.link` guard skipped tail-recursive self-calls).
+                if insn.relocation.canonical_symbol == local_symbol:
                     return True  # direct self-recursion — real back-edge
                 continue
             if target <= insn.address:
@@ -704,55 +750,44 @@ class WitnessOutcome:
     details: dict[str, Any] = field(default_factory=dict)
 
 
-def check_gates(
+def _stream_validation_failure(
     original: list[Instruction],
     candidate: list[Instruction],
-) -> WitnessOutcome:
-    """Run gates 1-6; return the rho on success."""
-    # Gate 1: size equality.
+) -> WitnessFailure | None:
+    """Run the per-slot stream gates (reject-list, mnemonic, reloc, SPR
+    policy, non-register bits) over ALL slots, returning the first failure.
+
+    Extracted from ``check_gates`` so the region-sliced path can validate the
+    FULL stream even when a rho conflict occurs mid-function (impl-review
+    Finding 3: gates 2/3/6 after the first rho conflict were never checked,
+    letting e.g. a reject-list ``mffs`` after a conflict be certified).
+    """
     if len(original) != len(candidate):
-        return WitnessOutcome(
-            False, failure=WitnessFailure(
-                "size", f"{len(original)} vs {len(candidate)} instructions",
-            ),
+        return WitnessFailure(
+            "size", f"{len(original)} vs {len(candidate)} instructions",
         )
-
-    rho_gpr: dict[int, int] = {}
-    rho_fpr: dict[int, int] = {}
-
     for index, (r_insn, d_insn) in enumerate(zip(original, candidate)):
         # Gate 6 (reject-list) and SPR policy are checked per slot.
         if r_insn.opcode in REJECT_OPCODES or d_insn.opcode in REJECT_OPCODES:
             op = r_insn.opcode if r_insn.opcode in REJECT_OPCODES else d_insn.opcode
-            return WitnessOutcome(
-                False, failure=WitnessFailure(
-                    "reject-list", f"slot {index}: {op.value}",
-                ),
-            )
+            return WitnessFailure("reject-list", f"slot {index}: {op.value}")
         if r_insn.opcode != d_insn.opcode:
-            return WitnessOutcome(
-                False, failure=WitnessFailure(
-                    "mnemonic", f"slot {index}: {r_insn.opcode.value} vs {d_insn.opcode.value}",
-                ),
+            return WitnessFailure(
+                "mnemonic", f"slot {index}: {r_insn.opcode.value} vs {d_insn.opcode.value}",
             )
         if r_insn.opcode in (Opcode.MFSPR, Opcode.MTSPR):
             for insn in (r_insn, d_insn):
                 if insn.operands[1] not in _WITNESS_ALLOWED_SPRS:
-                    return WitnessOutcome(
-                        False, failure=WitnessFailure(
-                            "reject-list",
-                            f"slot {index}: {insn.opcode.value} to SPR {insn.operands[1]}",
-                        ),
+                    return WitnessFailure(
+                        "reject-list",
+                        f"slot {index}: {insn.opcode.value} to SPR {insn.operands[1]}",
                     )
-
         # Gate 2: per-slot relocation equality (offset/type/symbol/addend).
         r_reloc = r_insn.relocation
         d_reloc = d_insn.relocation
         if (r_reloc is None) != (d_reloc is None):
-            return WitnessOutcome(
-                False, failure=WitnessFailure(
-                    "reloc", f"slot {index}: reloc presence differs",
-                ),
+            return WitnessFailure(
+                "reloc", f"slot {index}: reloc presence differs",
             )
         if r_reloc is not None:
             if (
@@ -761,32 +796,41 @@ def check_gates(
                 or r_reloc.canonical_symbol != d_reloc.canonical_symbol
                 or r_reloc.addend != d_reloc.addend
             ):
-                return WitnessOutcome(
-                    False, failure=WitnessFailure(
-                        "reloc",
-                        f"slot {index}: {r_reloc.canonical_symbol}@{r_reloc.addend} "
-                        f"vs {d_reloc.canonical_symbol}@{d_reloc.addend}",
-                    ),
+                return WitnessFailure(
+                    "reloc",
+                    f"slot {index}: {r_reloc.canonical_symbol}@{r_reloc.addend} "
+                    f"vs {d_reloc.canonical_symbol}@{d_reloc.addend}",
                 )
-
         # Gate 3: non-register field equality (raw-bit comparison).  Slots
         # with a matched relocation are exempt: the relocated bits are
         # placeholders that resolve to the same canonical symbol on both
-        # sides (gate 2 binds identity), and execute_cfg substitutes the
-        # shared symbolic value.
+        # sides (gate 2 binds identity).
         gpr_mask, fpr_mask = _gpr_fpr_masks(r_insn.opcode)
         register_mask = gpr_mask | fpr_mask
         if r_reloc is None:
             non_register_diff = (r_insn.raw ^ d_insn.raw) & ~register_mask
             if non_register_diff:
-                return WitnessOutcome(
-                    False, failure=WitnessFailure(
-                        "fields",
-                        f"slot {index}: non-register bits differ "
-                        f"(0x{non_register_diff:08x})",
-                    ),
+                return WitnessFailure(
+                    "fields",
+                    f"slot {index}: non-register bits differ "
+                    f"(0x{non_register_diff:08x})",
                 )
+    return None
 
+
+def check_gates(
+    original: list[Instruction],
+    candidate: list[Instruction],
+) -> WitnessOutcome:
+    """Run gates 1-6; return the rho on success."""
+    stream_failure = _stream_validation_failure(original, candidate)
+    if stream_failure is not None:
+        return WitnessOutcome(False, failure=stream_failure)
+
+    rho_gpr: dict[int, int] = {}
+    rho_fpr: dict[int, int] = {}
+
+    for index, (r_insn, d_insn) in enumerate(zip(original, candidate)):
         # Gate 4: rho accumulation — single-valued and injective, consistent
         # across all mnemonics/positions.
         for start, kind in _register_fields(r_insn.opcode):
@@ -1207,6 +1251,7 @@ def certify_renaming_witness(
     callee_contracts: dict[int | str, Any] | None = None,
     deadline_ms: int = 30_000,
     local_symbol: str | None = None,
+    candidate_local_symbol: str | None = None,
 ) -> WitnessOutcome:
     """Full pipeline: gates 1-6, then the structural witness execution.
 
@@ -1230,6 +1275,7 @@ def certify_renaming_witness(
                 callee_contracts=callee_contracts,
                 deadline=Deadline.after_ms(deadline_ms),
                 local_symbol=local_symbol,
+                candidate_local_symbol=candidate_local_symbol,
             )
         return outcome
     deadline = Deadline.after_ms(deadline_ms)
@@ -1375,8 +1421,12 @@ def _boundary_deadness_ok(
     """
     live_out_r, _, _ = _cfg_liveness(original)
     live_out_c, _, _ = _cfg_liveness(candidate)
-    dead_r = live_out_r[boundary - 1] if boundary > 0 else frozenset()
-    dead_c = live_out_c[boundary - 1] if boundary > 0 else frozenset()
+    # live_r/live_c = lanes LIVE at the boundary (live-in to the boundary
+    # slot = live-out of the previous slot).  A changed lane must NOT be in
+    # these sets (deadness is required); naming them "dead_*" inverted the
+    # meaning and invited review errors (impl-review NIT 7).
+    live_r = live_out_r[boundary - 1] if boundary > 0 else frozenset()
+    live_c = live_out_c[boundary - 1] if boundary > 0 else frozenset()
 
     def _num(kind: str, lane: int) -> int:
         if kind == GPR:
@@ -1398,14 +1448,14 @@ def _boundary_deadness_ok(
             if old_d == new_d:
                 continue  # mapping unchanged — no rebind needed
             # Four-lane deadness (round-2 reviews).
-            if _num(kind, r) in dead_r:
+            if _num(kind, r) in live_r:
                 return False  # retail lane r live at boundary
-            if _num(kind, old_d) in dead_c:
+            if _num(kind, old_d) in live_c:
                 return False  # old decomp lane live at boundary
-            if _num(kind, new_d) in dead_c:
+            if _num(kind, new_d) in live_c:
                 return False  # new decomp lane's old value live at boundary
             old_retail_of_new = old_preimage[new_d]
-            if _num(kind, old_retail_of_new) in dead_r:
+            if _num(kind, old_retail_of_new) in live_r:
                 return False  # decomp direction: retail rho_k^{-1}(new_d) live
     return True
 
@@ -1421,6 +1471,7 @@ def run_region_sliced_witness(
     callee_contracts: dict[int | str, Any] | None = None,
     deadline: Deadline | None = None,
     local_symbol: str | None = None,
+    candidate_local_symbol: str | None = None,
 ) -> WitnessOutcome:
     """Region-sliced structural witness (plan §3.1, §3.2).
 
@@ -1436,6 +1487,13 @@ def run_region_sliced_witness(
 
     ops = SymbolicOps()
     z3 = ops.z3
+    # Full-stream validation (gates 1/2/3/6) BEFORE region slicing: the
+    # global path returns at the first rho conflict, so slots after it were
+    # never checked for reject-list / reloc / non-register-bit equality
+    # (impl-review Finding 3 — an ``mffs`` after a conflict certified).
+    stream_failure = _stream_validation_failure(original, candidate)
+    if stream_failure is not None:
+        return WitnessOutcome(False, failure=stream_failure)
     boundaries = _rho_region_boundaries(original, candidate)
     boundaries_set = frozenset(original[b].address for b in boundaries)
     # Region rho per boundary interval: [0, b0), [b0, b1), ..., [bn, end).
@@ -1448,12 +1506,23 @@ def run_region_sliced_witness(
             return WitnessOutcome(False, failure=WitnessFailure(
                 "rho", f"no consistent bijection in region [{start}, {end})",
             ))
+        # Gate 5 PER REGION (impl-review BLOCKER 1): the global path never
+        # runs gate 5 after a rho conflict, and the region path must enforce
+        # ABI-boundary fixedness (r0/r1/r2/r13/args/returns, live-across-call
+        # volatiles) in EVERY region's rho — otherwise a non-identity mapping
+        # on a fixed register (e.g. the return register r3) self-consistently
+        # passes the structural comparison under the region perm.
+        abi_failure = _check_abi_fixedness(original, candidate, rho)
+        if abi_failure is not None:
+            return WitnessOutcome(False, rho=rho, failure=abi_failure)
         regions.append((start, end, rho))
     # First-cut loop policy: region slicing assumes a loop-free target (the
     # fixpoint handles loops for liveness, but the rebinding driver is only
     # sound for the loop-free first cut; loop targets fall to SMT).
     if _has_loop_or_non_return_indirect(original, local_symbol=local_symbol) or \
-            _has_loop_or_non_return_indirect(candidate, local_symbol=local_symbol):
+            _has_loop_or_non_return_indirect(
+                candidate, local_symbol=candidate_local_symbol or local_symbol,
+            ):
         return WitnessOutcome(False, failure=WitnessFailure(
             "loop", "target contains a backward branch / non-return indirect; first cut",
         ))
@@ -1470,6 +1539,14 @@ def run_region_sliced_witness(
         paused: list[tuple[int, MachineState, Any, dict[int, int], int]] = []
         if start_state is None:
             raise AssertionError("region driver: start_state required")
+        # Seed-time feasibility pre-check (plan §3.2, impl-review Finding 7):
+        # the seed bypasses enqueue's _path_condition_feasible, so an
+        # infeasible resumed condition would otherwise execute until its
+        # first prune.  Reject the region run outright instead.
+        if not _path_condition_feasible(condition, ops):
+            raise ExecutionInconclusive(
+                "region driver: infeasible resumed path condition",
+            )
         try:
             terms = execute_cfg(
                 start_state, side, ops,
@@ -1500,7 +1577,17 @@ def run_region_sliced_witness(
         decomp_frontier = [(candidate[0].address, decomp_initial, ops.bool(True), {}, 0)]
         all_retail_terms: list[tuple[Terminal, int]] = []  # (terminal, region idx)
         all_decomp_terms: list[tuple[Terminal, int]] = []
+        # Driver-side cross-region max_paths budget (plan §3.2, impl-review
+        # MAJOR 4): enqueue's len(work)+len(terminals) bound resets per
+        # execute_cfg call, so without driver accounting the total frontier
+        # could reach num_regions * max_paths.  Track cumulative counts and
+        # fall to SMT (ExecutionInconclusive) past the budget.
+        path_budget_used = 0
         for region_idx, (start, end, rho) in enumerate(regions):
+            if path_budget_used > max_paths:
+                raise ExecutionInconclusive(
+                    f"region driver: cumulative path budget exceeded ({max_paths})",
+                )
             retail_stop = (
                 frozenset({original[regions[region_idx + 1][0]].address})
                 if region_idx + 1 < len(regions) else None
@@ -1519,6 +1606,7 @@ def run_region_sliced_witness(
                 for t in terms:
                     all_retail_terms.append((t, region_idx))
                 new_retail_frontier.extend(paused)
+            path_budget_used += len(new_retail_frontier) + len(all_retail_terms)
             for entry in decomp_frontier:
                 terms, paused = _run_region(
                     entry[1], entry[0], entry[2], entry[3], entry[4],
@@ -1527,6 +1615,7 @@ def run_region_sliced_witness(
                 for t in terms:
                     all_decomp_terms.append((t, region_idx))
                 new_decomp_frontier.extend(paused)
+            path_budget_used += len(new_decomp_frontier) + len(all_decomp_terms)
             if region_idx + 1 < len(regions):
                 # Rebind at the boundary: changed lanes get fresh shared
                 # variables on both sides, gated on two-direction deadness.

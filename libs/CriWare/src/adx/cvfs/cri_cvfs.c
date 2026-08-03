@@ -42,7 +42,40 @@ void cvFsCallUsrErrFn(void) {
 
 void cvFsAddDev() {}
 
-void cvFsSetDefDev() {}
+void cvFsSetDefDev(const char* name) {
+    u8* g = (u8*)&lbl_eu_805E66E8;
+    s32 len;
+    s32 i;
+    s32 found;
+    if (name == NULL) {
+        const char* msg = &lbl_eu_80517640[137];
+        if (*(CvFsErrFn*)g != NULL)
+            (*(CvFsErrFn*)g)(*(void**)(g + 4), msg, 0);
+        return;
+    }
+    len = strlen(name);
+    if (len == 0) {
+        *(u8*)(g + 848) = 0;
+        return;
+    }
+    for (i = 0; i <= len; i++) {
+        if ((u8)(name[i] - 'a') <= 25) ((char*)name)[i] -= 32;
+    }
+    found = 0;
+    for (i = 0; i < 32; i++) {
+        if (strncmp(name, (const char*)(g + 336 + i * 16 + 4), len) == 0) {
+            found = 1;
+            break;
+        }
+    }
+    if (found) {
+        memcpy(g + 848, name, len + 1);
+    } else {
+        const char* msg = &lbl_eu_80517640[174];
+        if (*(CvFsErrFn*)g != NULL)
+            (*(CvFsErrFn*)g)(*(void**)(g + 4), msg, 0);
+    }
+}
 
 void cvFsOpen() {}
 

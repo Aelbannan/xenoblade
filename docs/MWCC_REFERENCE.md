@@ -7323,3 +7323,15 @@ GetBitStm) with a dead `cntlzw r3, r0` before the `rlwinm r0, r0, 27, 5, 31`
 structural) and cannot produce the dead cntlzw (every __cntlzw form bloats to
 0x128). Residual 6 structural: that lwz-vs-cntlzw, the out[1] store vs the next
 call's `or r3` order, and 4 bl-position artifacts.
+
+### CriWare cvfs cvFsSetDefDev — device-name setup (30.0%, color/schedule wall)
+`cvFsSetDefDev(name)`: err-callback + strlen check + uppercase loop + 32-entry
+device strncmp search + memcpy/err. A `u8* g = (u8*)&lbl_eu_805E66E8;` base
+local is REQUIRED (hoists the globals base into a callee-saved reg — separate
+`lbl_eu_805E66E8`/`lbl_eu_805E66EC` extern references emit fresh lis pairs).
+Residual 39 structural: (1) the uppercase loop needs TWO pointers in decomp
+(`((char*)name)[i]` read-via-r3 + write-via-r5) vs retail's one — `char* name`
+param regresses the whole function (0x134); (2) the loop count comes from the
+FIRST strlen's len+1 (retail calls strlen a second time — the `strlen` in the
+loop condition regresses to 0x14C); (3) a 5-cycle register rotation (retail
+base=r31/name=r27/len=r28/dev=r29/i=r30; decomp base=r29/name=r26/...).

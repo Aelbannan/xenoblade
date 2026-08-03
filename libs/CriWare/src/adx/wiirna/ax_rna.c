@@ -16,13 +16,23 @@ void AXRNA_Init(void) {
     lbl_eu_805F2C00++;
 }
 
-void AXRNA_Finish() {}
+extern void AXRNA_Destroy(void* entry);
+
+void AXRNA_Finish(void) {
+    s32 i;
+    if (--lbl_eu_805F2C00 == 0) {
+        for (i = 0; i < 0x10; i++) {
+            if ((s32)lbl_eu_805F2C08[i * 0xE4] == 1) {
+                AXRNA_Destroy(&lbl_eu_805F2C08[i * 0xE4]);
+            }
+        }
+        memset(lbl_eu_805F2C08, 0, 0xE40);
+    }
+}
 
 void axrna_voice_drop() {}
 
 void AXRNA_Create() {}
-
-void AXRNA_Destroy() {}
 
 void AXRNA_SetTransSw() {}
 

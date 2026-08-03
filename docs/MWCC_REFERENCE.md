@@ -7604,3 +7604,8 @@ LSC_Destroy and ADXT_StartSj both end a path with the retail [stb r0, 0/2(r30);
 or r3, r30, r30] (the store THEN the next call's arg move) vs decomp [or r3;
 stb] — the call-arg setup hoisted before the store. Same family as the
 store-vs-return-li wall; resistant to source reordering.
+
+### CriWare ax_rna AXRNA_Finish — FULL_MATCH (signed cmpi on u8 compare)
+`if ((s32)lbl[i*0xE4] == 1)` — the (s32) cast on the u8 array element forces
+the retail's signed `cmpi` (the plain u8 compare emits `cmpli`). Also removed
+the conflicting `void AXRNA_Destroy(){}` stub in favor of the extern.

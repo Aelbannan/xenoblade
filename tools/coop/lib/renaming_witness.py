@@ -965,6 +965,7 @@ def check_gates(
     original: list[Instruction],
     candidate: list[Instruction],
     declared_return: str | None = None,
+    callee_contracts: dict[int | str, Any] | None = None,
 ) -> WitnessOutcome:
     """Run gates 1-6; return the rho on success."""
     stream_failure = _stream_validation_failure(original, candidate)
@@ -1004,7 +1005,8 @@ def check_gates(
     rho = Rho(gpr=rho_gpr, fpr=rho_fpr)
 
     # Gate 5: ABI-boundary fixedness.
-    failure = _check_abi_fixedness(original, candidate, rho, declared_return)
+    failure = _check_abi_fixedness(original, candidate, rho, declared_return,
+                              callee_contracts)
     if failure is not None:
         return WitnessOutcome(False, rho=rho, failure=failure)
     # A1 post-rho belt-and-suspenders (global path).
@@ -1015,18 +1017,30 @@ def check_gates(
     return WitnessOutcome(True, rho=rho)
 
 
-def _tail_call_exists(instructions: list[Instruction]) -> bool:
-    """True when the function has a non-link ``b`` (tail-call) exit.
+def _tail_call_reads_lane(
+    instructions: list[Instruction],
+    lane_name: str,
+    callee_contracts: dict[int | str, Any],
+) -> bool:
+    """True when any non-link ``b`` tail-call exits with a callee whose
+    contract reads ``lane_name`` (doc 32 A3 rev 3, F7).
 
-    A tail call passes EABI arguments (r3-r10) to an out-of-function callee
-    the proof cannot see; a renamed r4 there is observable (F7).  The
-    ``_cfg_liveness`` fixpoint models no exit live-out, so the default-FIXED
-    rule is the only protection — the A3 unfix condition requires NO tail
-    calls (doc 32 A3 rev 3, F7).
+    A tail call passes EABI arguments to an out-of-function callee the proof
+    cannot see; if the callee reads the lane, a rename there is observable.
+    Unknown callees (no contract) and opaque ``*`` contracts conservatively
+    read everything.  The ``_cfg_liveness`` fixpoint models no exit live-out,
+    so this contract check is the only protection for tail-call exits; the
+    default-FIXED rule covers them when the metadata is absent (F2/F7).
     """
     for insn in instructions:
         if insn.opcode == Opcode.B and not insn.link:
-            if insn.relocation is not None or insn.operands:
+            if insn.relocation is None:
+                continue
+            contract = callee_contracts.get(insn.relocation.canonical_symbol)
+            if contract is None:
+                return True  # unknown callee: conservative (fix the lane)
+            reads = getattr(contract, "reads", None)
+            if reads is None or "*" in reads or lane_name in reads:
                 return True
     return False
 
@@ -1078,6 +1092,7 @@ def _check_abi_fixedness(
     candidate: list[Instruction],
     rho: Rho,
     declared_return: str | None = None,
+    callee_contracts: dict[int | str, Any] | None = None,
 ) -> WitnessFailure | None:
     # LR/CTR are inherently fixed (SPR indices are non-register bit-equal
     # fields); only GPR/FPR entries are checked here.
@@ -1088,16 +1103,19 @@ def _check_abi_fixedness(
     # body never writes the register on a forward path to a return AND there
     # are no tail-call exits (F7).  The structural check can only ever fix,
     # never unfix (F2/F3).
-    for register, fixed_set, kind in (
-        (4, fixed_gpr, GPR), (1, fixed_fpr, FPR),
+    for register, fixed_set, kind, lane_name in (
+        (4, fixed_gpr, GPR, "r4"), (1, fixed_fpr, FPR, "f1"),
     ):
+        lane = _numbered_lane(kind, register)
         if declared_return not in _TRUSTED_NON_64BIT_RETURNS:
             fixed_set.add(register)
-        elif _tail_call_exists(original) or _tail_call_exists(candidate):
-            fixed_set.add(register)
         elif (
-            _written_before_return(original, _numbered_lane(kind, register))
-            or _written_before_return(candidate, _numbered_lane(kind, register))
+            _tail_call_reads_lane(original, lane_name, callee_contracts)
+            or _tail_call_reads_lane(candidate, lane_name, callee_contracts)
+        ):
+            fixed_set.add(register)
+        elif _written_before_return(original, lane) or _written_before_return(
+            candidate, lane,
         ):
             fixed_set.add(register)
     # Registers read before being written (live-in at entry) in the EABI
@@ -1526,7 +1544,7 @@ def certify_renaming_witness(
     four-lane deadness; any deadness / executor / structural failure
     degrades to SMT (``certified=False``), never a false certificate.
     """
-    outcome = check_gates(original, candidate, declared_return)
+    outcome = check_gates(original, candidate, declared_return, callee_contracts)
     if not outcome.certified:
         if getattr(outcome.failure, "gate", None) == "rho":
             # Local rho conflict: try the region-sliced witness.
@@ -1778,7 +1796,8 @@ def run_region_sliced_witness(
         # volatiles) in EVERY region's rho — otherwise a non-identity mapping
         # on a fixed register (e.g. the return register r3) self-consistently
         # passes the structural comparison under the region perm.
-        abi_failure = _check_abi_fixedness(original, candidate, rho, declared_return)
+        abi_failure = _check_abi_fixedness(original, candidate, rho, declared_return,
+                                  callee_contracts)
         if abi_failure is not None:
             return WitnessOutcome(False, rho=rho, failure=abi_failure)
         # A1 post-rho belt-and-suspenders (per region, doc 32 A1 rev 3, I12).

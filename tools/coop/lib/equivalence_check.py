@@ -1722,6 +1722,7 @@ def _build_equivalence_certificate(
     skip_semantic_validation: bool = False,
     validation_bypass: str | None = None,
     renaming_witness: dict | None = None,
+    abi_shape: dict[str, Any] | None = None,
 ) -> tuple[dict | None, str]:
     """Derive and validate a normal-return semantic effect summary.
 
@@ -1910,6 +1911,12 @@ def _build_equivalence_certificate(
             # Also embed when declared_return is explicitly None/absent so
             # the certificate carries an explicit record.
             certificate["abi_shape"] = dict(raw_abi_shape)
+    if abi_shape is not None:
+        # Witness path (doc 32 A3 rev 3, R2-1): the witness ProofResult never
+        # sets contract_resolution, so the block above never fires; the
+        # explicit kwarg is the only channel.  Same payload shape so the
+        # §2.5.4 staleness validator compares identically.
+        certificate["abi_shape"] = dict(abi_shape)
 
     # Bind live trust-boundary trees last so stale proof/cache provenance cannot win.
     certificate["engine_hash"] = _current_engine_hash()

@@ -1,10 +1,48 @@
 # 32 — Witness improvements plan: certifying the remaining pure-reg-swap RVL pairs
 
-Status: **rev 3 — after round-2 adversarial review** (GLM-5.2 soundness, Kimi K3
-integration; both re-verified against code; second reviewer ran as GLM-5.2/max).
-Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 / R2-1-R2-10 are
-recorded below with resolutions. Companion to `31-reg-swap-witness.md` and
-`docs/witness_expansion_plan.md`.
+Status: **rev 4 — implemented, pending implementation review** (GLM-5.2 soundness,
+Kimi K3 integration; both re-verified against code; second reviewer ran as
+GLM-5.2/max). Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 /
+R2-1-R2-10 are recorded below with resolutions. Companion to
+`31-reg-swap-witness.md` and `docs/witness_expansion_plan.md`.
+
+## R3. Implementation status (2026-08-03)
+
+All of I5 (provenance), A2, A1, A3-plumbing, and the A3 structural check are
+implemented and tested:
+
+- **I5:** `renaming_witness.py` added to `CERTIFIER_SOURCE_PATHS` (provenance.py).
+- **A2:** `_RA_LITERAL_OPCODES` (D/DS/X-indexed load-store + ADDI/ADDIS + PSQ
+  D-forms); r0 dropped from `_UNCONDITIONALLY_FIXED_GPRS`, added to
+  `_VOLATILE_GPRS`; `_use_def_numbered` RA-read guard; hexdiff frozen
+  `_classifier_*` copy + drift-detector tests; identity-first
+  `_extend_permutation` (the extension previously rotated unused registers
+  when A2 dropped identity RA entries from rho — a completeness bug found and
+  fixed during implementation).
+- **A1:** PSQ D-forms removed from `REJECT_OPCODES` (X-forms stay);
+  byte-identity exemption in `_stream_validation_failure`; non-register
+  fS/rA; explicit `_use_def` PSQ entries incl. `ps1[fS]` store use (F1);
+  per-region post-rho belt-and-suspenders `_psq_operands_rho_fixed`.
+- **A3:** r4/f1 conditional fixedness (default FIXED; unfixed only on trusted
+  non-64-bit `declared_return` + no write-before-return + no tail-call callee
+  reading the lane); forward `_written_before_return` (DFS over
+  `_cfg_successors`) + contract-aware `_tail_call_reads_lane` (F7); registry
+  `declared_return` lookup + explicit `abi_shape=` kwarg in
+  `_try_renaming_witness` / `_build_equivalence_certificate` (R2-1).
+
+Tests: `test_renaming_witness.py` 43 -> 55 (A2 + A1 + A3 groups), full
+`tools/ppc_equivalence/tests` suite (1972) green, `gen_fixture_blob.py --check`
+green, `tools/coop/tests` unchanged apart from 5 pre-existing failures (relaxed
+hash checks + byte-identical summary, reproduced on clean HEAD).
+
+Measured payoff on sampled targets: the psq reject-list targets now pass gate 6
+and fail at the NEXT gate (reloc-name drift needing source `extern` fixes —
+the parallel reloc-fix workflow's domain); `GXCopyTex`'s r0<->r6 region [4,11)
+now passes A2 and fails only at the documented out-of-scope value-splitting
+region [11,12) (read-write-overlap rho). Remaining blockers are reloc-name
+drift, other agents' in-flight source changes, and the out-of-scope
+value-splitting class.
+
 
 ---
 

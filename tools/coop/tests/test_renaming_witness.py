@@ -994,16 +994,33 @@ class A3ReturnRegisterFixednessTests(unittest.TestCase):
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_scratch_r4_unfixed_with_metadata_accepted(self) -> None:
-        # F3 synthetic accept: r4 written and consumed between calls, NEVER
-        # written on a path to the return; trusted metadata i32 unfixes it.
-        # rho {4:5} certifies.
+        # F3 synthetic accept: r4 written/consumed as dead scratch, function
+        # ends in a tail-call whose callee contract reads ONLY r3 (r4 not
+        # observed, F7 distinguishes this from the reject case).  Trusted
+        # metadata i32 + no write-before-bclr-return (no bclr at all) + no
+        # callee reading r4 -> r4 unfixed; rho {4:5} certifies.
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
-        # r4 used as dead scratch before the return; return value in r3 only.
-        r = [li(4, 7), mr(3, 4), li(3, 1), self._BLR]
-        d = [li(5, 7), mr(3, 5), li(3, 1), self._BLR]
+        reloc = (RelocationRef(12, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(4, 7), mr(3, 4), li(3, 1), 0x48000000]
+        d_words = [li(5, 7), mr(3, 5), li(3, 1), 0x48000000]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        precise = {
+            "callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
         outcome = certify_renaming_witness(
-            *self._pair(r, d), deadline_ms=20000,
+            original, candidate, deadline_ms=20000,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=precise,
             declared_return="i32",
         )
         self.assertTrue(outcome.certified, outcome.failure)
@@ -1020,16 +1037,14 @@ class A3ReturnRegisterFixednessTests(unittest.TestCase):
         self.assertFalse(outcome.certified)
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
-    def test_tail_call_exit_keeps_r4_fixed(self) -> None:
-        # F7 regression: function ends in a `b` tail-call (non-link, relocated
-        # out-of-function); r4 is set up as a tail-call argument.  Even with
-        # trusted i32 metadata, the tail-call exit keeps r4 FIXED.
+    def test_tail_call_reading_r4_keeps_it_fixed(self) -> None:
+        # F7 regression: function ends in a `b` tail-call whose callee
+        # contract READS r4 (r4 set up as a tail-call argument).  Even with
+        # trusted i32 metadata, the tail-call keeps r4 FIXED.
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
-        bl = lambda off: _enc_primary(18, 0, 0, 0) | (off & 0x3FFFFFC)
-        # relocate the tail-call so it decodes as an out-of-function branch
-        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
-        r_words = [li(4, 1), 0x48000001]
-        d_words = [li(5, 1), 0x48000001]
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(4, 1), 0x48000000]
+        d_words = [li(5, 1), 0x48000000]
         original = decode_block(
             bytes.fromhex(_words_hex(r_words)), self._R,
             validate_with_capstone=False, relocations=reloc,
@@ -1038,8 +1053,39 @@ class A3ReturnRegisterFixednessTests(unittest.TestCase):
             bytes.fromhex(_words_hex(d_words)), self._D,
             validate_with_capstone=False, relocations=reloc,
         )
+        reads_r4 = {
+            "callee": CalleeContract(
+                frozenset({"r3", "r4"}), frozenset({"r3", "r4"}), "inferred:test",
+            )
+        }
         outcome = certify_renaming_witness(
             original, candidate, deadline_ms=20000,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=reads_r4,
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_tail_call_opaque_contract_keeps_r4_fixed(self) -> None:
+        # Opaque EABI tail-call: reads "*" -> conservative, r4 stays fixed.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(4, 1), 0x48000000]
+        d_words = [li(5, 1), 0x48000000]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        opaque = {"callee": CalleeContract.opaque_eabi()}
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=opaque,
             declared_return="i32",
         )
         self.assertFalse(outcome.certified)

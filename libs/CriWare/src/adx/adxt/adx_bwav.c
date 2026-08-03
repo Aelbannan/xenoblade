@@ -8,7 +8,15 @@ void ADXB_DecodeHeaderWav();
 void ADXB_ExecOneWav16(void* self);
 void ADXB_ExecOneWav8(void* self);
 void ADXB_ExecOneWav4(void* self);
-void ADXB_CheckWav();
+extern char lbl_eu_80517418[];
+extern int memcmp(const void* a, const void* b, unsigned long n);
+
+s32 ADXB_CheckWav(const u8* self) {
+    if (memcmp(self, lbl_eu_80517418, 4) == 0 &&
+        memcmp(self + 8, lbl_eu_80517418 + 5, 4) == 0)
+        return 1;
+    return 0;
+}
 
 void ADXB_ExecOneWav(void* self) {
     s32 codec = *(s16*)((u8*)self + 0x9c);
@@ -19,9 +27,6 @@ void ADXB_ExecOneWav(void* self) {
     else if (codec == 0)
         ADXB_ExecOneWav16(self);
 }
-
-extern char lbl_eu_80517418[];
-extern int memcmp(const void* a, const void* b, unsigned long n);
 
 s32 ADX_ScanInfoCodeWav(const u8* codes, s32 size, u16* out) {
     s32 i;

@@ -28,29 +28,28 @@ s32 MPS_GetPackHd(void *handle, void *out) {
 }
 
 s32 MPS_GetSysHd(void *handle, void *out, u32 index) {
+    u32 hi0, lo0, hi1, lo1, hi2, lo2, hi3, lo3;
     u8 *entry;
     if (MPSLIB_CheckHn(handle)) {
         return MPSLIB_SetErr(NULL, 0xFF020202);
     }
     entry = (u8 *)handle + (index << 5);
-    {
-        u32 hi0 = *(u32 *)(entry + 0x48);
-        u32 lo0 = *(u32 *)(entry + 0x4C);
-        *(u32 *)((u8 *)out + 0x04) = lo0;
-        *(u32 *)((u8 *)out + 0x00) = hi0;
-        u32 hi1 = *(u32 *)(entry + 0x50);
-        u32 lo1 = *(u32 *)(entry + 0x54);
-        *(u32 *)((u8 *)out + 0x0C) = lo1;
-        *(u32 *)((u8 *)out + 0x08) = hi1;
-        u32 hi2 = *(u32 *)(entry + 0x58);
-        u32 lo2 = *(u32 *)(entry + 0x5C);
-        *(u32 *)((u8 *)out + 0x14) = lo2;
-        *(u32 *)((u8 *)out + 0x10) = hi2;
-        u32 hi3 = *(u32 *)(entry + 0x60);
-        u32 lo3 = *(u32 *)(entry + 0x64);
-        *(u32 *)((u8 *)out + 0x1C) = lo3;
-        *(u32 *)((u8 *)out + 0x18) = hi3;
-    }
+    hi0 = *(u32 *)(entry + 0x48);
+    lo0 = *(u32 *)(entry + 0x4C);
+    *(u32 *)((u8 *)out + 0x04) = lo0;
+    *(u32 *)((u8 *)out + 0x00) = hi0;
+    hi1 = *(u32 *)(entry + 0x50);
+    lo1 = *(u32 *)(entry + 0x54);
+    *(u32 *)((u8 *)out + 0x0C) = lo1;
+    *(u32 *)((u8 *)out + 0x08) = hi1;
+    hi2 = *(u32 *)(entry + 0x58);
+    lo2 = *(u32 *)(entry + 0x5C);
+    *(u32 *)((u8 *)out + 0x14) = lo2;
+    *(u32 *)((u8 *)out + 0x10) = hi2;
+    hi3 = *(u32 *)(entry + 0x60);
+    lo3 = *(u32 *)(entry + 0x64);
+    *(u32 *)((u8 *)out + 0x1C) = lo3;
+    *(u32 *)((u8 *)out + 0x18) = hi3;
     return 0;
 }
 

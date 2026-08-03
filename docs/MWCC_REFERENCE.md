@@ -7571,3 +7571,9 @@ start+i; byte=*q; if (state==0x100) { if (flags & tbl[byte]) return q-3; }
 state = (byte|state) << 8; }`. Size-exact, 0 structural; the 5 reg_swaps are
 state→r9/byte→r8 (retail) vs state→r8/byte→r9 (decomp) — a pure caller-saved
 color rotation, insensitive to declaration order/byte type.
+
+### CriWare mwsfdply MWSFPLY_SetFlowLimit — 82.6% (base-reg/xoris color wall)
+`MWSFD_SetFlowLimit(h, (u32)(s32)(lbl_8051B190 * (double)(s32)*(s32*)(h+0x50C)))`
+— the (s32)→double conversion uses the 0x4330+xoris trick. Retail's 2^31-base
+in r7 + xoris into a fresh r6; decomp r6 + in-place xoris r5. Size-exact, 0
+structural, 4 reg_swap — pure colors.

@@ -102,7 +102,29 @@ void adxt_trap_entry_lps() {}
 
 void adxt_trap_entry() {}
 
-void adxt_eos_entry() {}
+extern s32 ADXSJD_GetLpStartOfst(void* sj);
+extern void ADXSTM_Seek(void* stm, s32 pos);
+extern void ADXSTM_SetEos(void* stm, s32 a);
+
+void adxt_eos_entry(void* self) {
+    void* stm = *(void**)((u8*)self + 8);
+    void* adxt = *(void**)((u8*)self + 4);
+    s32 dt;
+    if (stm == NULL || adxt == NULL) return;
+    dt = (s32)ADXSJD_GetDecDtLen(adxt);
+    if (*(u8*)((u8*)self + 2) == 4) {
+        ADXSTM_Seek(stm, 0x7FFFFFFF);
+        return;
+    }
+    if (*(s8*)((u8*)self + 0x6C) == 0) {
+        if (ADXSJD_GetLpStartOfst(adxt) < *(s32*)((u8*)self + 0xC0)) {
+            ADXSJD_SetTrapNumSmpl(adxt, -1);
+        }
+        ADXSTM_Seek(stm, 0x7FFFFFFF);
+        return;
+    }
+    ADXSTM_SetEos(stm, dt >> 11);
+}
 
 void adxt_nlp_trap_entry() {}
 

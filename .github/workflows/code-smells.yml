@@ -1,0 +1,49 @@
+# Code smell report gate
+#
+# Enforces freshness of the committed code-smell report (docs/CODE_SMELLS.md)
+# and a hard no-regression rule: per-TU smell metrics must not increase
+# relative to the base branch's committed baseline. Runs without any build
+# artifacts — pure stdlib Python over the game-code C++ TUs.
+
+name: Code Smells
+
+on:
+  push:
+    paths:
+      - "src/kyoshin/**"
+      - "libs/monolib/**"
+      - "libs/nw4r/**"
+      - "tools/coop/smell_scan.py"
+      - "tools/coop/smell_report.py"
+      - "docs/CODE_SMELLS.md"
+      - ".github/workflows/code-smells.yml"
+  pull_request:
+    paths:
+      - "src/kyoshin/**"
+      - "libs/monolib/**"
+      - "libs/nw4r/**"
+      - "tools/coop/smell_scan.py"
+      - "tools/coop/smell_report.py"
+      - "docs/CODE_SMELLS.md"
+      - ".github/workflows/code-smells.yml"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth 0 so the regression gate can read the base branch's
+      # committed baseline (docs/CODE_SMELLS.md at origin/main).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify committed code-smell report is fresh and not regressing
+        run: python tools/coop/smell_report.py --check
+
+      - name: Show live TU status (informational)
+        run: python tools/coop/smell_report.py --completeness | head -60

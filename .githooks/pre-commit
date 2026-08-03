@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# pre-commit: refresh all generated README content before every commit.
+#
+# Regenerates:
+#   - assets/progress-map.svg                 (tools/coop/progress_map.py)
+#   - the GENERATED status table in README.md (tools/coop/readme_status.py --write)
+#   - the ppc_equivalence version/status blocks in README.md + package docs
+#     (tools.ppc_equivalence.docs_sync --write)
+#   - docs/CODE_SMELLS.md                     (tools/coop/smell_report.py --write)
+#
+# Then re-stages those paths so the commit carries fresh numbers. Best-effort:
+# regeneration failures warn on stderr but never block the commit (CI enforces
+# freshness via readme_status.py --check / docs_sync --check). Skip this hook
+# with: git commit --no-verify
+
+cd "$(git rev-parse --show-toplevel)" || exit 0
+
+PY=./.venv/bin/python3
+if [ ! -x "$PY" ]; then
+    echo "pre-commit: $PY not found; skipping README status refresh" >&2
+    exit 0
+fi
+
+fail=0
+"$PY" tools/coop/progress_map.py >/dev/null 2>&1 \
+    || { echo "pre-commit: progress_map.py failed" >&2; fail=1; }
+"$PY" tools/coop/readme_status.py --write >/dev/null 2>&1 \
+    || { echo "pre-commit: readme_status.py failed" >&2; fail=1; }
+"$PY" -m tools.ppc_equivalence.docs_sync --write >/dev/null 2>&1 \
+    || { echo "pre-commit: docs_sync failed" >&2; fail=1; }
+"$PY" tools/coop/smell_report.py --write >/dev/null 2>&1 \
+    || { echo "pre-commit: smell_report.py failed" >&2; fail=1; }
+
+git add README.md assets/progress-map.svg \
+    tools/ppc_equivalence/README.md tools/ppc_equivalence/SOUNDNESS.md \
+    docs/CODE_SMELLS.md 2>/dev/null
+
+if [ "$fail" -ne 0 ]; then
+    echo "pre-commit: README refresh incomplete (see warnings above)" >&2
+fi
+exit 0

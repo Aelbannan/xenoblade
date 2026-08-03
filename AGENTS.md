@@ -19,6 +19,7 @@ the system Python (3.9.6) will fail on modern syntax used in project tools.
 ```bash
 cp tools/coop/coop.example.json coop.json   # first time only
 .venv/bin/python3 tools/coop/run.py status
+bash .githooks/install.sh                     # pre-commit: refresh README status on commit
 .venv/bin/python3 tools/coop/run.py targets validate
 .venv/bin/python3 tools/coop/run.py targets status
 .venv/bin/python3 tools/coop/run.py targets show <target-id>
@@ -55,6 +56,13 @@ python -m tools.ppc_equivalence differential
 # Documentation sync
 python -m tools.ppc_equivalence.docs_sync --write
 python -m tools.ppc_equivalence.docs_sync --check
+```
+
+```bash
+# Code smell report (committed docs/CODE_SMELLS.md; CI gate: freshness + no per-TU regression vs base)
+python tools/coop/smell_report.py --write
+python tools/coop/smell_report.py --check
+python tools/coop/smell_report.py --completeness   # live TU status (replaces ALL_TUS.md)
 ```
 
 ## Do not

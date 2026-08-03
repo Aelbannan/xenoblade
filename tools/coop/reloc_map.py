@@ -472,7 +472,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"  fix (approved): give the referenced data a named variable in source so "
             f"MWCC emits the symbol instead of a section reloc (access via the retail "
             f"name), or accept at EQUIVALENT_MATCH — postprocess reloc patching is "
-            f"deprecated (FORK.md §6)",
+            f"deprecated (PLAN.md §17.6)",
         ]
 
     lines: list[str] = []
@@ -492,7 +492,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"  if the symbol is an implicit MWCC pool/magic constant that cannot be "
             f"named in source: accept at EQUIVALENT_MATCH — binary reloc patching "
             f"(postprocess_reloc_names.py rules / objcopy --redefine-sym) is deprecated "
-            f"(FORK.md §6)"
+            f"(PLAN.md §17.6)"
         )
     else:  # addend
         lines.append(
@@ -507,7 +507,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
         )
         lines.append(
             f"  same acceptance note as pure name drift: no postprocess reloc patching "
-            f"(FORK.md §6)"
+            f"(PLAN.md §17.6)"
         )
     return lines
 

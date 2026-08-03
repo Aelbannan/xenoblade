@@ -56,18 +56,19 @@ public:
 public:
     ArcResourceAccessor();
 
-    // Inline: retail keeps the dtor out-of-line in HBMBase.o (strong), so the
-    // vt is emitted here via GetResource with a weak dtor copy that the linker
-    // overrides - matching retail's split (vt in this TU, dtor in HBMBase).
-    virtual ~ArcResourceAccessor() {}
-
+    // Out-of-line: retail keeps the dtor in HBMBase.o (strong). Declared AFTER
+    // GetResource/GetFont so the vtable's key function stays GetResource and
+    // the vt is emitted in this TU without a weak inline-dtor copy (retail
+    // split: vt here, dtor in HBMBase). The vtable slot order is unaffected
+    // (MWCC places the dtor slot first regardless of declaration order).
     virtual void* GetResource(u32 type, const char* pName,
                               u32* pSize); // at 0xC
 
     virtual ut::Font* GetFont(const char* pName); // at 0x10
 
+    virtual ~ArcResourceAccessor(); // at 0x8
+
     bool Attach(void* pArchive, const char* pRootDir);
-    void* Detach();
 
     bool IsAttached() const {
         return mArcBuf != NULL;

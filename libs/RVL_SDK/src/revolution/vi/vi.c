@@ -1232,6 +1232,11 @@ void VIConfigurePan(u16 x, u16 y, u16 w, u16 h) {
     BOOL enabled;
     s32 coeff;
     s32 frac;
+    u16 acv;
+    u8 wordPerLine;
+    u8 std;
+    u8 xof;
+    u8 wpl;
     u32 v;
     u32 scale;
 
@@ -1248,6 +1253,7 @@ void VIConfigurePan(u16 x, u16 y, u16 w, u16 h) {
                                                            : h;
 
     tm = HorVer.timing;
+    acv = tm->acv;
 
     HorVer.AdjustedDispPosX =
         (u16)CLAMP_VI((s16)HorVer.DispPosX + displayOffsetH, 0, 0x2D0 - HorVer.DispSizeX);
@@ -1257,23 +1263,28 @@ void VIConfigurePan(u16 x, u16 y, u16 w, u16 h) {
 
     HorVer.AdjustedDispPosY = (u16)MAX((s16)HorVer.DispPosY + displayOffsetV, frac);
 
-    {
-        s32 adjA = (s16)tm->acv * 2 + displayOffsetV - frac;
-        s32 adjB = (s16)tm->acv * 2 +
-                   ((s16)tm->acv * 2 + displayOffsetV) - ((s16)tm->acv * 2 - frac);
-        s32 adjC = (s16)HorVer.DispPosY + displayOffsetV - frac;
-        s32 adjD = (s16)HorVer.DispSizeY +
-                   ((s16)tm->acv * 2 + displayOffsetV) - ((s16)tm->acv * 2 - frac);
+    HorVer.AdjustedDispSizeY =
+        (u16)(HorVer.DispSizeY + MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) -
+              MAX((s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV -
+                      ((s16)acv * 2 - frac),
+                  0));
 
-        HorVer.AdjustedDispSizeY = (u16)(HorVer.DispSizeY + MIN(adjA, 0) - MAX(adjB, 0));
-        HorVer.AdjustedPanPosY = (u16)(HorVer.PanPosY - MIN(adjC, 0) / coeff);
-        HorVer.AdjustedPanSizeY = (u16)(HorVer.PanSizeY + MIN(adjA, 0) / coeff -
-                                        MIN(adjD, 0) / coeff);
-    }
+    HorVer.AdjustedPanPosY =
+        (u16)(HorVer.PanPosY - MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) / coeff);
+
+    HorVer.AdjustedPanSizeY =
+        (u16)(HorVer.PanSizeY + MIN((s16)HorVer.DispPosY + displayOffsetV - frac, 0) / coeff -
+              MAX((s16)HorVer.DispPosY + (s16)HorVer.DispSizeY + displayOffsetV -
+                      ((s16)acv * 2 - frac),
+                  0) /
+                  coeff);
 
     {
         u16 panSizeX = HorVer.PanSizeX;
-        v = (u16)(HorVer.threeD ? panSizeX * 2 : panSizeX);
+        v = panSizeX;
+        if (HorVer.threeD) {
+            v = panSizeX * 2;
+        }
     }
 
     if (v < HorVer.DispSizeX) {
@@ -1287,16 +1298,21 @@ void VIConfigurePan(u16 x, u16 y, u16 w, u16 h) {
         MARK_CHANGED(VI_HSR);
     }
 
-    HorVer.wordPerLine = (u8)((HorVer.FBSizeX + 15) / 16);
-    if (HorVer.FBMode == VI_XFBMODE_SF) {
-        HorVer.std = HorVer.wordPerLine;
+    wordPerLine = (u8)((HorVer.FBSizeX + 15) / 16);
+    HorVer.wordPerLine = wordPerLine;
+    if (HorVer.FBMode != VI_XFBMODE_SF) {
+        std = (u8)(2 * wordPerLine);
     } else {
-        HorVer.std = (u8)(2 * HorVer.wordPerLine);
+        std = (u8)wordPerLine;
     }
-    HorVer.xof = (u8)(HorVer.PanPosX % 16);
-    HorVer.wpl = (u8)((HorVer.xof + HorVer.PanSizeX + 15) / 16);
+    xof = (u8)(HorVer.PanPosX % 16);
 
-    regs[VI_HSW] = (u16)(HorVer.std | (HorVer.wpl << 8));
+    wpl = (u8)((xof + HorVer.PanSizeX + 15) / 16);
+    HorVer.std = std;
+    HorVer.xof = xof;
+    HorVer.wpl = wpl;
+
+    regs[VI_HSW] = (u16)(std | (wpl << 8));
     MARK_CHANGED(VI_HSW);
 
     if (FBSet) {

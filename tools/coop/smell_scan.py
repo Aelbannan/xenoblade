@@ -37,6 +37,16 @@ RE_HEX_OFF = re.compile(r'[+]\s*0x[0-9A-Fa-f]+')
 RE_DEC_OFF = re.compile(r'[+]\s*[0-9]{1,3}\s*(?:\)|,|;|\])')
 RE_DEREF_ARITH = re.compile(r'\*\(\s*\w+\s*\*\)\s*\(\s*\(?\s*(?:char|u8|u16|u32|u64|int|s8|s16|s32|s64|float|double)\s*\*?\s*\)?[^)]*[+][^)]*\)')
 RE_ASM = re.compile(r'\basm\b|__asm|\bregister\b')
+# asm entries whose bodies must be skipped by scan_file(skip_asm_bodies=True):
+#   - asm function decls, incl. macro-prefixed forms
+#     (``DECL_SECTION(".init") DECL_WEAK asm void f(register ...) {``)
+#   - ``asm { ... }`` block statements
+#   - ``ASM_VOLATILE( ... )`` / ``ASM( ... )`` paired-single blocks (GX, mtx, OS)
+RE_ASM_ENTRY = re.compile(
+    r'^\s*(?!/?\*).*\basm\s+(?:void|const\s+void|[A-Za-z_]\w*(?:\s*\*)?)\s+'
+    r'[A-Za-z_]\w*\s*\(|^\s*asm\s*\{|\b(?:ASM_VOLATILE|ASM)\s*\(\s*$'
+)
+RE_ASM_PAREN = re.compile(r'\b(?:ASM_VOLATILE|ASM)\s*\(')
 RE_FAKE_STACK = re.compile(r'\bvolatile\b[^;]*\b(?:char|u8)\b[^;]*\[|\b(?:u8|char)\s+(?:sp|stack)\d*\s*\[')
 RE_RN_PARAM = re.compile(r'\b(?:r3|r4|r5|r6|r7|r8|r9|r10|r11|r12|r13|r14|r15|r16|r17|r18|r19|r20|r21|r22|r23|r24|r25|r26|r27|r28|r29|r30|r31)\s*[,)]')
 RE_GOTO = re.compile(r'\bgoto\b')
@@ -70,17 +80,48 @@ class Stats:
         self.includes = 0
 
 
-def scan_file(path: Path) -> Stats:
+def scan_file(path: Path, skip_asm_bodies: bool = False) -> Stats:
+    """Scan one TU for smell families.
+
+    With ``skip_asm_bodies=True`` (used by the RVL_SDK report), lines inside
+    ``asm`` function/block bodies are not counted against the C-level metrics
+    (rN/self/void*/arith). Their PPC mnemonic lines (``lis r3, ...``) would
+    otherwise pollute those counts; the body lines are folded into
+    ``asm_code`` only. The default ``False`` keeps the game-code scan
+    behaviour byte-identical.
+    """
     s = Stats()
     try:
         lines = path.read_text(errors="replace").splitlines()
     except OSError:
         return s
     in_extern_c = False
+    in_asm = False
+    amode = "brace"  # "brace" for asm fns/`asm {` bodies, "paren" for ASM_VOLATILE(
     depth = 0
     for raw in lines:
         line = raw.split("//", 1)[0]
         stripped = line.strip()
+        if skip_asm_bodies:
+            asm_entry = bool(RE_ASM_ENTRY.search(line))
+            if not in_asm and asm_entry:
+                in_asm = True
+                s.asm_code += 1
+                amode = "paren" if RE_ASM_PAREN.search(line) else "brace"
+                depth = (line.count("(") - line.count(")")) if amode == "paren" else (
+                    line.count("{") - line.count("}")
+                )
+                continue
+            if in_asm:
+                if amode == "brace":
+                    depth += line.count("{") - line.count("}")
+                    if stripped == "}" or depth < 0:
+                        in_asm = False
+                else:
+                    depth += line.count("(") - line.count(")")
+                    if depth <= 0:
+                        in_asm = False
+                continue
         if RE_EXTERN_C_BLOCK.search(line):
             in_extern_c = True
             depth = 0

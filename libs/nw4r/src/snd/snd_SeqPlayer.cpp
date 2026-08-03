@@ -228,7 +228,8 @@ SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
         return NULL;
     }
 
-    return mTracks[idx];
+    SeqTrack** tracks = (SeqTrack**)((u8*)this + 0x120);
+    return tracks[idx];
 }
 
 void SeqPlayer::CloseTrack(int idx) {

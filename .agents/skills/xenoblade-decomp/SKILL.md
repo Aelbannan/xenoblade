@@ -47,6 +47,42 @@ python3 tools/coop/run.py baseline   # sha1 + configure + ninja
 
 Region defaults to `us` in `coop.json`. Change with `--config` or edit `region`.
 
+## Scratch files and compiler experiments
+
+All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
+comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
+`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
+`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
+contents. Anything you wouldn't ship stays there.
+
+```bash
+mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
+```
+
+## Scratch files and compiler experiments
+
+All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
+comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
+`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
+`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
+contents. Anything you wouldn't ship stays there.
+
+```bash
+mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
+```
+
+## Scratch files and compiler experiments
+
+All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
+comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
+`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
+`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
+contents. Anything you wouldn't ship stays there.
+
+```bash
+mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
+```
+
 ## Pick a target
 
 ```bash
@@ -541,7 +577,6 @@ design: docs/llm_decomp_design.md.
 
 | Path | Role |
 |------|------|
-| `FORK.md` | Fork-only tooling inventory vs upstream `xbret/xenoblade` |
 | `PLAN.md` | Co-op architecture, agent rules, milestones |
 | `COOP_IMPLEMENTATION_MAP.md` | Capability graph and co-op implementation handoffs |
 | `tools/coop/run.py` | Runner CLI (`symbols`, `behaviour`, `size` subcommands) |

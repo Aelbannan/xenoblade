@@ -161,7 +161,7 @@ class SuggestionTests(unittest.TestCase):
         self.assertTrue(any("lbl_eu_806656A0" in line for line in lines))
         self.assertTrue(any("extern \"C\"" in line for line in lines))
         # Approved fix is source-level; postprocess patching is deprecated.
-        self.assertTrue(any("FORK.md §6" in line for line in lines))
+        self.assertTrue(any("PLAN.md §17.6" in line for line in lines))
         self.assertFalse(any("exact_renames" in line for line in lines))
 
     def test_section_symbol_suggestion(self):

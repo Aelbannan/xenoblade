@@ -2,8 +2,6 @@
 
 Compare **retail split objects** (`build/<region>/obj/...`) with **decompiled objects** (`build/<region>/src/...`).
 
-Fork-wide tooling context: [`FORK.md`](../../../FORK.md) §5.
-
 | Layer | What it checks | Dolphin? |
 |-------|----------------|----------|
 | **static** | objdiff instruction + relocation match | No |

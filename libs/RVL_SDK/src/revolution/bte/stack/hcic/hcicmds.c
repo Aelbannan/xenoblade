@@ -949,6 +949,7 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
 {
     unsigned short len = (num_laps << 2) - num_laps + 4;
     unsigned char *pp = p + 12;
+    int i, j;
 
     *(unsigned short *)(p + 2) = len;
     *(unsigned short *)(p + 4) = 0;
@@ -957,10 +958,9 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
     p[10] = (unsigned char)(len - 3);
     p[11] = num_laps;
 
-    while (num_laps--) {
-        pp[0] = lap_array[2];
-        pp[1] = lap_array[1];
-        pp[2] = lap_array[0];
+    for (i = 0; i < num_laps; i++) {
+        for (j = 0; j < 3; j++)
+            pp[j] = lap_array[2 - j];
         pp += 3;
         lap_array += 3;
     }

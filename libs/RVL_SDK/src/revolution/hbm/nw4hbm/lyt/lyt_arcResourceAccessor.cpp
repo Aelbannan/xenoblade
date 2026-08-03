@@ -93,25 +93,6 @@ namespace lyt {
 
 /******************************************************************************
  *
- * Implementation details
- *
- ******************************************************************************/
-namespace detail {
-
-ut::Font* FindFont(FontRefLinkList* pFontList, const char* pName) {
-    NW4R_UT_LINKLIST_FOREACH (it, *pFontList, {
-        if (std::strcmp(pName, it->GetFontName()) == 0) {
-            return it->GetFont();
-        }
-    })
-
-    return NULL;
-}
-
-} // namespace detail
-
-/******************************************************************************
- *
  * ArcResourceAccessor
  *
  ******************************************************************************/
@@ -131,13 +112,6 @@ bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     return true;
 }
 
-void* ArcResourceAccessor::Detach() {
-    void *old = mArcBuf;
-    mArcBuf = NULL;
-        
-    return old;
-}
-
 void* ArcResourceAccessor::GetResource(u32 type, const char* pName,
                                        u32* pSize) {
 
@@ -145,7 +119,13 @@ void* ArcResourceAccessor::GetResource(u32 type, const char* pName,
 }
 
 ut::Font* ArcResourceAccessor::GetFont(const char* pName) {
-    return detail::FindFont(&mFontList, pName);
+    NW4R_UT_LINKLIST_FOREACH (it, mFontList, {
+        if (std::strcmp(pName, it->GetFontName()) == 0) {
+            return it->GetFont();
+        }
+    })
+
+    return NULL;
 }
 
 } // namespace lyt

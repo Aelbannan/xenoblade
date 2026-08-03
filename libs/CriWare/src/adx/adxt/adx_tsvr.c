@@ -98,7 +98,29 @@ void criware_eu_803878BC(void* self, void* fmt) {
     ADXCRS_Leave();
 }
 
-void adxt_trap_entry_lps() {}
+extern s32 ADXSJD_GetLpStartPos(void* sj);
+extern s32 ADXSJD_GetLpStartOfst(void* sj);
+extern s32 ADXSJD_GetLpEndPos(void* sj);
+extern void ADXSJD_TakeSnapshot(void* sj);
+extern void ADXSJD_SetTrapCnt(void* sj, s32 a);
+extern void ADXSJD_SetTrapDtLen(void* sj, s32 a);
+extern void ADXSJD_SetDecPos(void* sj, s32 a);
+extern void ADXSJD_EntryTrapFunc(void* sj, void* fn, void* a);
+void adxt_trap_entry(void);
+
+void adxt_trap_entry_lps(void* self) {
+    void* sj = *(void**)((u8*)self + 4);
+    s32 start = ADXSJD_GetLpStartPos(sj);
+    s32 ofst = ADXSJD_GetLpStartOfst(sj);
+    s32 end = ADXSJD_GetLpEndPos(sj);
+    ADXSJD_TakeSnapshot(sj);
+    ADXSJD_SetTrapCnt(sj, 0);
+    *(u32*)((u8*)self + 0x90) = end - start;
+    ADXSJD_SetTrapNumSmpl(sj, 0);
+    ADXSJD_SetTrapDtLen(sj, ofst);
+    ADXSJD_SetDecPos(sj, start);
+    ADXSJD_EntryTrapFunc(sj, (void*)adxt_trap_entry, self);
+}
 
 void adxt_trap_entry() {}
 

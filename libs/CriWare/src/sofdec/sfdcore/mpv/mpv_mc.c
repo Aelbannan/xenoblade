@@ -82,7 +82,7 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
             u32 a0 = *(const u32 *)src;
             u32 a1 = *(const u32 *)(src + 4);
             u32 b8 = src[8];
-            __dcbt(src + stride, 0);
+            __dcbt(src, stride);
             u32 s0 = (a1 >> 24) | (a0 << 8);
             u32 s1 = (a1 << 8) | b8;
             *(u32 *)dst = MPVMC08_AVG(a0, s0);
@@ -97,7 +97,7 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
             u32 wp3 = *(const u32 *)(src + 3);
             u32 wm1 = *(const u32 *)(src - 1);
             u16 h78 = *(const u16 *)(src + 6);
-            __dcbt(src + stride, 0);
+            __dcbt(src, stride);
             u32 w0 = (wm1 << 8) | (wp3 >> 24);
             u32 s0 = (wm1 << 16) | (wp3 >> 16);
             u32 s1 = (wp3 << 16) | h78;
@@ -114,7 +114,7 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
             u32 wm2 = *(const u32 *)(src - 2);
             u32 wp2 = *(const u32 *)(src + 2);
             u32 wp6 = *(const u32 *)(src + 6);
-            __dcbt(src + stride, 0);
+            __dcbt(src, stride);
             u32 w0 = (wm2 << 16) | (wp2 >> 16);
             u32 s0 = (wm2 << 24) | ((wp2 >> 8) & 0x00FFFFFF);
             u32 w1 = (wp2 << 16) | (wp6 >> 16);
@@ -130,7 +130,7 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
         u32 wp1 = *(const u32 *)(src + 1);
         u32 wp5 = *(const u32 *)(src + 5);
         u32 b0 = __lwbrx(src - 3, 0);
-        __dcbt(src + stride, 0);
+        __dcbt(src, stride);
         u32 w0 = (b0 & 0xFF000000) | ((wp1 >> 8) & 0x00FFFFFF);
         u32 w1 = (wp1 << 24) | ((wp5 >> 8) & 0x00FFFFFF);
         *(u32 *)dst = MPVMC08_AVG(w0, wp1);
@@ -144,13 +144,23 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
 /* Half-pel vertical one-ref compensation: (src1[i] + src2[i] + 1) >> 1.
    Dispatches on the src1 alignment; two rows per loop iteration. */
 void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
+    u8 *dst = prm->dst;
     u8 *s1 = prm->src1;
     u8 *s2 = prm->src2;
-    u8 *dst = prm->dst;
     u32 stride = prm->stride;
     int i;
 
-    if (((u32)s1 & 3) == 0) {
+    if (((u32)s1 & 3) == 0)
+        goto mpvmc08_v2_case0;
+    if (((u32)s1 & 3) == 1)
+        goto mpvmc08_v2_case1;
+    if (((u32)s1 & 3) == 2)
+        goto mpvmc08_v2_case2;
+    if (((u32)s1 & 3) == 3)
+        goto mpvmc08_v2_case3;
+    return;
+
+mpvmc08_v2_case0:
         for (i = 0; i < 4; i++) {
             u32 a0 = *(const u32 *)s1;
             u32 b0 = *(const u32 *)s2;
@@ -183,9 +193,8 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 1) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case1:
         for (i = 0; i < 4; i++) {
             u32 wm1 = *(const u32 *)(s1 - 1);
             u32 xm1 = *(const u32 *)(s2 - 1);
@@ -230,9 +239,8 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 2) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case2:
         for (i = 0; i < 4; i++) {
             u32 h01 = *(const u16 *)(s1 + 0);
             u32 g01 = *(const u16 *)(s2 + 0);
@@ -277,10 +285,9 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 3) {
-    for (i = 0; i < 4; i++) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case3:
+        for (i = 0; i < 4; i++) {
             u32 wm3 = *(const u32 *)(s1 - 3);
             u32 xm3 = *(const u32 *)(s2 - 3);
             u32 wp1 = *(const u32 *)(s1 + 1);
@@ -324,8 +331,7 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
+mpvmc08_v2_done:
     return;
 }
 
@@ -334,31 +340,63 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
    word loads so each row needs only 8+overlap input bytes. */
 void MPVMC08_OneRef1p_TuneC(MPC08Params *prm) {
     u8 *src = prm->src1;
-    u8 *dst = prm->dst;
-    u32 stride = prm->stride;
     int i;
 
+    __dcbt(src, 0);
     switch ((u32)src & 7) {
     case 0: {
-        u64 v[8];
-        for (i = 0; i < 8; i++) {
-            v[i] = *(const u64 *)src;
-            src += stride;
-        }
-        for (i = 0; i < 8; i++)
-            ((u64 *)dst)[i] = v[i];
+        u8 *dst = prm->dst;
+        u8 *p = src;
+        u32 stride = prm->stride;
+        double v0 = *(const double *)p;
+        p += stride;
+        double v1 = *(const double *)p;
+        p += stride;
+        double v2 = *(const double *)p;
+        p += stride;
+        double v3 = *(const double *)p;
+        p += stride;
+        double v4 = *(const double *)p;
+        p += stride;
+        double v5 = *(const double *)p;
+        p += stride;
+        double v6 = *(const double *)p;
+        p += stride;
+        double v7 = *(const double *)p;
+        ((double *)dst)[0] = v0;
+        ((double *)dst)[1] = v1;
+        ((double *)dst)[2] = v2;
+        ((double *)dst)[3] = v3;
+        ((double *)dst)[4] = v4;
+        ((double *)dst)[5] = v5;
+        ((double *)dst)[6] = v6;
+        ((double *)dst)[7] = v7;
         break;
     }
-    case 4:
-        for (i = 0; i < 8; i++) {
-            *(u32 *)dst = *(const u32 *)src;
-            *(u32 *)(dst + 4) = *(const u32 *)(src + 4);
-            src += stride;
-            dst += 8;
+    case 4: {
+        u32 stride = prm->stride;
+        u8 *d = prm->dst;
+        u8 *p = src;
+        u32 cur0 = *(const u32 *)p;
+        u32 cur1 = *(const u32 *)(p + 4);
+        for (i = 1; i < 8; i++) {
+            p += stride;
+            u32 next0 = *(const u32 *)p;
+            u32 next1 = *(const u32 *)(p + 4);
+            *(u32 *)d = cur0;
+            *(u32 *)(d + 4) = cur1;
+            cur0 = next0;
+            cur1 = next1;
+            d += 8;
         }
+        *(u32 *)d = cur0;
+        *(u32 *)(d + 4) = cur1;
         break;
+    }
     case 2:
     case 6: {
+        u32 stride = prm->stride;
+        u8 *dst = prm->dst;
         u16 *p = (u16 *)src;
         for (i = 0; i < 8; i++) {
             u16 h0 = p[0];
@@ -372,19 +410,9 @@ void MPVMC08_OneRef1p_TuneC(MPC08Params *prm) {
         break;
     }
     case 1:
-    case 5:
-        for (i = 0; i < 8; i++) {
-            u32 wm3 = *(const u32 *)(src - 3);
-            u32 wp1 = *(const u32 *)(src + 1);
-            u32 wp5 = *(const u32 *)(src + 5);
-            *(u32 *)dst = (wm3 << 24) | ((wp1 >> 8) & 0x00FFFFFF);
-            *(u32 *)(dst + 4) = (wp1 << 24) | ((wp5 >> 8) & 0x00FFFFFF);
-            src += stride;
-            dst += 8;
-        }
-        break;
-    case 3:
-    case 7:
+    case 5: {
+        u32 stride = prm->stride;
+        u8 *dst = prm->dst;
         for (i = 0; i < 8; i++) {
             u32 wm1 = *(const u32 *)(src - 1);
             u32 wp3 = *(const u32 *)(src + 3);
@@ -395,5 +423,21 @@ void MPVMC08_OneRef1p_TuneC(MPC08Params *prm) {
             dst += 8;
         }
         break;
+    }
+    case 3:
+    case 7: {
+        u32 stride = prm->stride;
+        u8 *dst = prm->dst;
+        for (i = 0; i < 8; i++) {
+            u32 wm3 = *(const u32 *)(src - 3);
+            u32 wp1 = *(const u32 *)(src + 1);
+            u32 wp5 = *(const u32 *)(src + 5);
+            *(u32 *)dst = (wm3 << 24) | ((wp1 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 4) = (wp1 << 24) | ((wp5 >> 8) & 0x00FFFFFF);
+            src += stride;
+            dst += 8;
+        }
+        break;
+    }
     }
 }

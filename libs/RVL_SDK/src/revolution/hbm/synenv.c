@@ -157,8 +157,8 @@ void __HBMSYNRunVolumeEnvelope(void* voice)
             u8 ch = v->ch;
             u8 note = v->note;
             void* base = v->base;
-            void* addr = (u8*)base + ((s32)ch << 9) + ((s32)note << 2);
-            *(s32*)((u8*)addr + 0x408) = 0;
+            s32* p = (s32*)((u8*)base + ((s32)ch << 9));
+            p[(s32)note + 0x102] = 0;
         }
         break;
     }

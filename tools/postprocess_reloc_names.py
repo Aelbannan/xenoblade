@@ -621,6 +621,21 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         repack_after_drop=16,
     ),
+    "lyt_arcResourceAccessor.o": UnitRules(
+        # MWCC emits the unreferenced weak in-charge dtor of the implicit
+        # ut::LinkList<FontRefLink,0> template (mFontList). The Arc dtor is
+        # declared out-of-line (defined strong in HBMBase.o) so no call site
+        # exists in this TU: every destruction path inlines down to a direct
+        # ~LinkListImpl call, the vtable's dtor slot resolves to HBMBase's
+        # strong copy at link, and nothing in the DOL references the 0x58
+        # wrapper — the retail linker dead-stripped it (retail split holds
+        # only the 6 surviving symbols). Dropping restores the retail split
+        # layout (decomp .text 0x400 -> 0x3A0) and fits the 0x3A0 budget.
+        drop_text_symbols=(
+            "__dt__Q36nw4hbm2ut38LinkList<Q36nw4hbm3lyt11FontRefLink,0>Fv",
+        ),
+        repack_after_drop=16,
+    ),
     "lyt_window.o": UnitRules(
         # MWCC emits the unreferenced weak in-charge dtor of the nested
         # Window::Content (0x64: __destroy_arr of vtxColors[4] + delete-flag

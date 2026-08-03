@@ -445,7 +445,57 @@ void mwply_Destroy(MWSFDPLY* self) {
 
 /* ---- Non-target stubs preserved from the scaffold ---- */
 
-void mwsfcre_CalcWorkStmBuf() {}
+extern const f64 lbl_eu_8051A3C0;  /* 0x4330000080000000 (int->float conversion bias) */
+
+void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
+    u32* outD, u32* outE, u32* outF) {
+    u8* s = (u8*)stm;
+    s32 fmt = *(s32*)(s + 0x00);
+    s32 size = *(s32*)(s + 0x04);
+    s32 n = *(s32*)(s + 0x14);
+    s32 size2 = size;
+
+    if (n <= 0)
+        n = 1;
+
+    if (*(u32*)(s + 0x38) != 0) {
+        if (size != 0) {
+            s32 lim = (s32)(*(float*)(s + 0x3C) * (float)size);
+            size2 = 0x8000;
+            if (lim > 0x8000)
+                size2 = lim;
+        }
+        n = 1;
+    }
+
+    if (fmt == 2 || fmt == 6 || fmt == 8 || fmt == 0xA) {
+        s32 d = size2 / 8 / 2048;
+        *outA = (u32)(n * (d << 11));
+        *outB = 0;
+        *outC = 0;
+        *outD = 0;
+        *outE = 0;
+        *outF = 0;
+    } else if (fmt == 3 || fmt == 7) {
+        s32 d = size2 / 8 / 2048;
+        s32 base = d << 11;
+        *outA = (u32)(n * base);
+        *outB = 0;
+        *outC = (u32)(((base + ((base >> 31) & 1)) >> 1) + 0x800);
+        *outD = 0;
+        *outE = 0;
+        *outF = 0;
+    } else {
+        s32 d = size2 / 8 / 2048;
+        s32 base = d << 11;
+        *outA = (u32)(n * base);
+        *outB = 0;
+        *outC = (u32)(((base + ((base >> 31) & 1)) >> 1) + 0x800);
+        *outD = 0x5DCC;
+        *outE = 0x5F0C;
+        *outF = 0x10000 - 0x3E40;
+    }
+}
 
 void mwPlyCalcWorkCprmSfd() {}
 

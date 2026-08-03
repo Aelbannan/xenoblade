@@ -1242,116 +1242,123 @@ static void clamp_trigger(f32* trigger, s32 tr, s32 min, s32 max) {
 
 void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
     void (*clamp_stick)(Vec2*, s32, s32, s32, s32);
+    KPADEXStatus* ex;
     u8 fmt;
-    s32 i;
+
+    ex = &kp->status.ex_status;
 
     clamp_stick = clamp_stick_circle;
     if (kp_stick_clamp_cross != 0) {
         clamp_stick = clamp_stick_cross;
     }
 
-    fmt = uwp->fmt;
-
     if (uwp->u.core.dev == WPAD_DEV_FREESTYLE) {
-        if (fmt == WPAD_FMT_FS_BTN || fmt == WPAD_FMT_FS_BTN_ACC || fmt == WPAD_FMT_FS_BTN_ACC_DPD) {
+        fmt = uwp->fmt;
+        if (fmt >= WPAD_FMT_FS_BTN && fmt <= WPAD_FMT_FS_BTN_ACC_DPD) {
             if (kp->unk_555 != 0) {
                 kp->unk_555 = 0;
-                kp->status.ex_status.fs.stick = Vec2_0;
-                kp->status.ex_status.fs.acc.z = 0.0f;
-                kp->status.ex_status.fs.acc.x = 0.0f;
-                kp->status.ex_status.fs.acc.y = -1.0f;
-                kp->status.ex_status.fs.acc_value = 1.0f;
-                kp->status.ex_status.fs.acc_speed = 0.0f;
+                ex->fs.stick = Vec2_0;
+                ex->fs.acc.z = 0.0f;
+                ex->fs.acc.x = 0.0f;
+                ex->fs.acc.y = -1.0f;
+                ex->fs.acc_value = 1.0f;
+                ex->fs.acc_speed = 0.0f;
             }
-            clamp_stick(&kp->status.ex_status.fs.stick, uwp->u.fs.fsStickX, uwp->u.fs.fsStickY,
-                        kp_fs_fstick_min, kp_fs_fstick_max);
+            clamp_stick(&ex->fs.stick, uwp->u.fs.fsStickX, uwp->u.fs.fsStickY, kp_fs_fstick_min,
+                        kp_fs_fstick_max);
             return;
         }
     }
 
     if (uwp->u.core.dev == WPAD_DEV_CLASSIC) {
-        if (fmt == WPAD_FMT_CLASSIC_BTN || fmt == WPAD_FMT_CLASSIC_BTN_ACC ||
-            fmt == WPAD_FMT_CLASSIC_BTN_ACC_DPD) {
+        fmt = uwp->fmt;
+        if (fmt >= WPAD_FMT_CLASSIC_BTN && fmt <= WPAD_FMT_CLASSIC_BTN_ACC_DPD) {
             if (kp->unk_555 != 0) {
                 kp->unk_555 = 0;
-                kp->status.ex_status.cl.hold = 0;
-                kp->status.ex_status.cl.trig = 0;
-                kp->status.ex_status.cl.release = 0;
-                kp->status.ex_status.cl.lstick = Vec2_0;
-                kp->status.ex_status.cl.rstick = Vec2_0;
-                kp->status.ex_status.cl.ltrigger = 0.0f;
-                kp->status.ex_status.cl.rtrigger = 0.0f;
+                ex->cl.hold = 0;
+                ex->cl.trig = 0;
+                ex->cl.release = 0;
+                ex->cl.lstick = Vec2_0;
+                ex->cl.rstick = Vec2_0;
+                ex->cl.ltrigger = 0.0f;
+                ex->cl.rtrigger = 0.0f;
                 kp->btn_repeat_time = 0;
                 kp->btn_repeat_next = kp->btn_repeat_delay;
             }
-            clamp_stick(&kp->status.ex_status.cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY,
-                        kp_cl_stick_min, kp_cl_stick_max);
-            clamp_stick(&kp->status.ex_status.cl.rstick, uwp->u.cl.clRStickX, uwp->u.cl.clRStickY,
-                        kp_cl_stick_min, kp_cl_stick_max);
-            clamp_trigger(&kp->status.ex_status.cl.ltrigger, uwp->u.cl.clTriggerL, kp_cl_trigger_min,
+            clamp_stick(&ex->cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY, kp_cl_stick_min,
+                        kp_cl_stick_max);
+            clamp_stick(&ex->cl.rstick, uwp->u.cl.clRStickX, uwp->u.cl.clRStickY, kp_cl_stick_min,
+                        kp_cl_stick_max);
+            clamp_trigger(&ex->cl.ltrigger, uwp->u.cl.clTriggerL, kp_cl_trigger_min,
                           kp_cl_trigger_max);
-            clamp_trigger(&kp->status.ex_status.cl.rtrigger, uwp->u.cl.clTriggerR, kp_cl_trigger_min,
+            clamp_trigger(&ex->cl.rtrigger, uwp->u.cl.clTriggerR, kp_cl_trigger_min,
                           kp_cl_trigger_max);
             return;
         }
     }
 
     if (uwp->u.core.dev == 0x11) { /* TGC */
+        fmt = uwp->fmt;
         if (fmt == WPAD_FMT_BTN_ACC_DPD_EXTENDED) {
             if (kp->unk_555 != 0) {
                 kp->unk_555 = 0;
-                kp->status.ex_status.cl.hold = 0;
-                kp->status.ex_status.cl.trig = 0;
-                kp->status.ex_status.cl.release = 0;
-                kp->status.ex_status.cl.lstick = Vec2_0;
-                kp->status.ex_status.cl.rstick = Vec2_0;
-                kp->status.ex_status.cl.ltrigger = 0.0f;
-                kp->status.ex_status.cl.rtrigger = 0.0f;
+                ex->cl.hold = 0;
+                ex->cl.trig = 0;
+                ex->cl.release = 0;
+                ex->cl.lstick = Vec2_0;
+                ex->cl.rstick = Vec2_0;
+                ex->cl.ltrigger = 0.0f;
+                ex->cl.rtrigger = 0.0f;
                 kp->btn_repeat_time = 0;
                 kp->btn_repeat_next = kp->btn_repeat_delay;
             }
-            clamp_stick(&kp->status.ex_status.cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY,
-                        kp_cl_stick_min, kp_cl_stick_max);
-            clamp_trigger(&kp->status.ex_status.cl.rstick.x, uwp->u.cl.clRStickX, kp_ex_analog_min,
+            clamp_stick(&ex->cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY, kp_cl_stick_min,
+                        kp_cl_stick_max);
+            clamp_trigger(&ex->cl.rstick.x, uwp->u.cl.clRStickX, kp_ex_analog_min,
                           kp_ex_analog_max);
-            clamp_trigger(&kp->status.ex_status.cl.rstick.y, uwp->u.cl.clRStickY, kp_ex_analog_min,
+            clamp_trigger(&ex->cl.rstick.y, uwp->u.cl.clRStickY, kp_ex_analog_min,
                           kp_ex_analog_max);
-            clamp_trigger(&kp->status.ex_status.cl.ltrigger, uwp->u.cl.clTriggerL, kp_ex_trigger_min,
+            clamp_trigger(&ex->cl.ltrigger, uwp->u.cl.clTriggerL, kp_ex_trigger_min,
                           kp_ex_trigger_max);
-            clamp_trigger(&kp->status.ex_status.cl.rtrigger, uwp->u.cl.clTriggerR, kp_ex_trigger_min,
+            clamp_trigger(&ex->cl.rtrigger, uwp->u.cl.clTriggerR, kp_ex_trigger_min,
                           kp_ex_trigger_max);
             return;
         }
     }
 
     if (uwp->u.core.dev == 0x10) { /* TR */
+        fmt = uwp->fmt;
         if (fmt == 0x0A) {
             if (kp->unk_555 != 0) {
                 kp->unk_555 = 0;
-                kp->status.ex_status.cl.hold = 0;
-                kp->status.ex_status.cl.trig = 0;
-                kp->status.ex_status.cl.release = 0;
-                kp->status.ex_status.cl.lstick = Vec2_0;
-                kp->status.ex_status.cl.rstick = Vec2_0;
-                kp->status.ex_status.cl.ltrigger = 0.0f;
-                kp->status.ex_status.cl.rtrigger = 0.0f;
+                ex->cl.hold = 0;
+                ex->cl.trig = 0;
+                ex->cl.release = 0;
+                ex->cl.lstick = Vec2_0;
+                ex->cl.rstick = Vec2_0;
+                ex->cl.ltrigger = 0.0f;
+                ex->cl.rtrigger = 0.0f;
                 kp->btn_repeat_time = 0;
                 kp->btn_repeat_next = kp->btn_repeat_delay;
             }
-            kp->status.ex_status.cl.lstick = Vec2_0;
-            kp->status.ex_status.cl.rstick = Vec2_0;
-            clamp_trigger(&kp->status.ex_status.cl.ltrigger, uwp->u.tr.brake, kp_ex_trigger_min,
+            ex->cl.lstick.x = 0.0f;
+            ex->cl.lstick.y = 0.0f;
+            ex->cl.rstick.x = 0.0f;
+            ex->cl.rstick.y = 0.0f;
+            clamp_trigger(&ex->cl.ltrigger, uwp->u.tr.brake, kp_ex_trigger_min,
                           kp_ex_trigger_max);
-            clamp_trigger(&kp->status.ex_status.cl.rtrigger, uwp->u.tr.mascon, kp_ex_trigger_min,
+            clamp_trigger(&ex->cl.rtrigger, uwp->u.tr.mascon, kp_ex_trigger_min,
                           kp_ex_trigger_max);
             return;
         }
     }
 
     if (uwp->u.core.dev == 3) { /* WBC */
+        fmt = uwp->fmt;
         if (fmt == 0x0C) {
             s32 err;
             u16 count;
+            s32 i;
 
             if (kp->unk_555 != 0) {
                 kp->unk_555 = 0;
@@ -1370,82 +1377,71 @@ void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
 
             err = WBCGetBatteryLevel(uwp->u.bl.battery);
             if (err == 0) {
-                kp->status.ex_status.wbc.err = -1;
+                ex->wbc.err = -1;
                 return;
             }
             if (kp_wbc_zero_point_done < 3) {
-                kp->status.ex_status.wbc.err = -2;
+                ex->wbc.err = -2;
                 return;
             }
             if ((s8)uwp->u.bl.temp == 0x7F || (s8)uwp->u.bl.temp == -0x80) {
-                kp->status.ex_status.wbc.err = -3;
+                ex->wbc.err = -3;
                 return;
             }
 
-            err = WBCReadDummy(uwp, kp->status.ex_status.wbc.sample, 4);
-            kp->status.ex_status.wbc.err = err;
+            err = WBCReadDummy(uwp, ex->wbc.sample, 4);
+            ex->wbc.err = err;
             if (err >= 0) {
-                kp_wbc_weight_ave[0] = (kp_wbc_weight_ave[0] * kp_wbc_ave_count +
-                                        kp->status.ex_status.wbc.sample[0]) /
+                kp_wbc_weight_ave[0] = (kp_wbc_weight_ave[0] * kp_wbc_ave_count + ex->wbc.sample[0]) /
                                        (1.0f + kp_wbc_ave_count);
-                kp_wbc_weight_ave[1] = (kp_wbc_weight_ave[1] * kp_wbc_ave_count +
-                                        kp->status.ex_status.wbc.sample[1]) /
+                kp_wbc_weight_ave[1] = (kp_wbc_weight_ave[1] * kp_wbc_ave_count + ex->wbc.sample[1]) /
                                        (1.0f + kp_wbc_ave_count);
-                kp_wbc_weight_ave[2] = (kp_wbc_weight_ave[2] * kp_wbc_ave_count +
-                                        kp->status.ex_status.wbc.sample[2]) /
+                kp_wbc_weight_ave[2] = (kp_wbc_weight_ave[2] * kp_wbc_ave_count + ex->wbc.sample[2]) /
                                        (1.0f + kp_wbc_ave_count);
-                kp_wbc_weight_ave[3] = (kp_wbc_weight_ave[3] * kp_wbc_ave_count +
-                                        kp->status.ex_status.wbc.sample[3]) /
+                kp_wbc_weight_ave[3] = (kp_wbc_weight_ave[3] * kp_wbc_ave_count + ex->wbc.sample[3]) /
                                        (1.0f + kp_wbc_ave_count);
 
                 if (kp_wbc_tgc_weight_issued != 0) {
                     count = kp_wbc_ave_sample_count + 1;
                     kp_wbc_ave_sample_count = count;
-                    kp_wbc_ave_sample[0] = (kp_wbc_ave_sample[0] * (count - 1) +
-                                            kp->status.ex_status.wbc.sample[0]) /
-                                           count;
-                    kp_wbc_ave_sample[1] = (kp_wbc_ave_sample[1] * (count - 1) +
-                                            kp->status.ex_status.wbc.sample[1]) /
-                                           count;
-                    kp_wbc_ave_sample[2] = (kp_wbc_ave_sample[2] * (count - 1) +
-                                            kp->status.ex_status.wbc.sample[2]) /
-                                           count;
-                    kp_wbc_ave_sample[3] = (kp_wbc_ave_sample[3] * (count - 1) +
-                                            kp->status.ex_status.wbc.sample[3]) /
-                                           count;
+                    for (i = 0; i < 4; i++) {
+                        kp_wbc_ave_sample[i] = (kp_wbc_ave_sample[i] * (count - 1) + ex->wbc.sample[i]) /
+                                               count;
+                    }
                     if ((f32)kp_wbc_ave_sample_count == kp_wbc_ave_count) {
                         kp_wbc_tgc_weight_issued = 0;
                         err = WBCGetTGCWeightDummy(&kp_wbc_tgc_weight, uwp);
-                        kp->status.ex_status.wbc.err = err;
+                        ex->wbc.err = err;
                         if (kp_wbc_tgc_weight < -0.5) {
-                            kp->status.ex_status.wbc.err = -4;
+                            ex->wbc.err = -4;
                         }
                     }
                 }
             }
 
-            kp->status.ex_status.wbc.weight_ave[0] = kp_wbc_weight_ave[0];
-            kp->status.ex_status.wbc.weight_ave[1] = kp_wbc_weight_ave[1];
-            kp->status.ex_status.wbc.weight_ave[2] = kp_wbc_weight_ave[2];
-            kp->status.ex_status.wbc.weight_ave[3] = kp_wbc_weight_ave[3];
-            kp->status.ex_status.wbc.tgc_weight = kp_wbc_tgc_weight;
-            kp->status.ex_status.wbc.tgc_weight_issued = kp_wbc_tgc_weight_issued;
+            ex->wbc.weight_ave[0] = kp_wbc_weight_ave[0];
+            ex->wbc.weight_ave[1] = kp_wbc_weight_ave[1];
+            ex->wbc.weight_ave[2] = kp_wbc_weight_ave[2];
+            ex->wbc.weight_ave[3] = kp_wbc_weight_ave[3];
+            ex->wbc.tgc_weight = kp_wbc_tgc_weight;
+            ex->wbc.tgc_weight_issued = kp_wbc_tgc_weight_issued;
         }
     }
 }
+
 
 s32 KPADReadEx(s32 chan, KPADStatus* status, s32 count, KPADResult* result) {
     return KPADiRead(chan, status, count, (s32*)result, 1);
 }
 
 s32 KPADiRead(s32 chan, KPADStatus* sampling_bufs, s32 length, s32* result, s32 param5) {
+    s32 err = 0;
+    s32 num = 0;
     KPADInternal* kp = &inside_kpads[chan];
     KPADStatus* entry;
     KPADStatus saved;
     KPADUnifiedWpadStatus* raw;
     BOOL enabled;
-    s32 err = 0;
-    s32 num = 0;
     s32 idx;
     u32 count;
     s32 i;
@@ -1473,9 +1469,13 @@ s32 KPADiRead(s32 chan, KPADStatus* sampling_bufs, s32 length, s32* result, s32 
         if (kp->dpd_callback != NULL) {
             if (kp->unk_55a != 0) {
                 if (kp->dpd_cb_state == 0) {
-                    kp->dpd_cb_state = 1;
-                    kp->dpd_callback(chan, 1);
-                    kp->unk_55a = 0;
+                    if (kp->dpd_callback != NULL) {
+                        if (kp->dpd_cb_state == 0) {
+                            kp->dpd_cb_state = 1;
+                            kp->dpd_callback(chan, 1);
+                            kp->unk_55a = 0;
+                        }
+                    }
                 }
             }
         }

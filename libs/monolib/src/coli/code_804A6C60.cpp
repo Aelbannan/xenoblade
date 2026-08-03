@@ -4,8 +4,21 @@
 
 #include <harness_catalog.h>
 #include <monolib/coli/coli_types.hpp>
+#include <nw4r/math.h>
 
 using ml::coli::CColiObject;
+using nw4r::math::VEC3;
+
+// SDA2 float constants referenced by the retail code (@sda21 relocs).
+extern "C" const float lbl_eu_8066AE3C; // 1.0f
+extern "C" const float lbl_eu_8066AE44; // 0.0f
+extern "C" const float lbl_eu_8066AE50; // -1.0f
+
+static inline f32 clamp01(f32 value) {
+    if (value < lbl_eu_8066AE44) return lbl_eu_8066AE44;
+    if (value > lbl_eu_8066AE3C) return lbl_eu_8066AE3C;
+    return value;
+}
 
 void func_804A6C60(void){}
 
@@ -157,7 +170,81 @@ void func_804AF98C(){}
 
 void func_804AFA08(){}
 
-void func_804AFB28(){}
+// Clip the segment (pA, pB) against the frame spanned by (pC, pD): writes the
+// entry/exit points of the portion of the segment that lies within the strip
+// between the two parallel lines through pC and pD into pOutA/pOutB.
+extern "C" void func_804AFB28(VEC3* pOutA, VEC3* pOutB, const VEC3* pA,
+                              const VEC3* pB, const VEC3* pC, const VEC3* pD) {
+    VEC3 v3, v1, v4;
+    VEC3 scratch;
+    VEC3 v2;
+    VEC3Sub(&v1, pD, pC);
+    VEC3Scale(&v2, &v1, lbl_eu_8066AE50);
+    VEC3Sub(&v3, pB, pA);
+    VEC3Sub(&v4, pC, pA);
+
+    f32 a = VEC3Dot(&v1, &v1);
+    f32 b = VEC3Dot(&v3, &v3);
+    f32 c = VEC3Dot(&v3, &v2);
+    f32 d = VEC3Dot(&v3, &v4);
+    f32 e = VEC3Dot(&v2, &v4);
+
+    f32 t = (b * e - c * d) / (a * b - c * c);
+    f32 u = (d - c * t) / b;
+
+    if ((u < lbl_eu_8066AE44 || u > lbl_eu_8066AE3C) &&
+        (t < lbl_eu_8066AE44 || t > lbl_eu_8066AE3C)) {
+        // both out of range
+        f32 uc = clamp01(u);
+        VEC3Scale(&scratch, &v3, uc);
+        VEC3Add(pOutA, pA, &scratch);
+        VEC3Sub(&v4, pOutA, pC);
+        f32 s = VEC3Dot(&v1, &v4) / a;
+        if (s < lbl_eu_8066AE44 || s > lbl_eu_8066AE3C) {
+            f32 sc = clamp01(s);
+            VEC3Scale(&scratch, &v1, sc);
+            VEC3Add(pOutB, pC, &scratch);
+            VEC3Sub(&v4, pOutB, pA);
+            f32 s2 = VEC3Dot(&v3, &v4) / b;
+            f32 sc2 = clamp01(s2);
+            VEC3Scale(&scratch, &v3, sc2);
+            VEC3Add(pOutA, pA, &scratch);
+        } else {
+            VEC3Scale(&scratch, &v1, s);
+            VEC3Add(pOutB, pC, &scratch);
+        }
+    } else {
+        if (u < lbl_eu_8066AE44 || u > lbl_eu_8066AE3C) {
+            // u out, t in
+            f32 uc = clamp01(u);
+            VEC3Scale(&scratch, &v3, uc);
+            VEC3Add(pOutA, pA, &scratch);
+            VEC3Sub(&v4, pOutA, pC);
+            f32 s = VEC3Dot(&v1, &v4) / a;
+            f32 sc = clamp01(s);
+            VEC3Scale(&scratch, &v1, sc);
+            VEC3Add(pOutB, pC, &scratch);
+        } else {
+            if (t < lbl_eu_8066AE44 || t > lbl_eu_8066AE3C) {
+                // t out, u in
+                f32 tc = clamp01(t);
+                VEC3Scale(&scratch, &v1, tc);
+                VEC3Add(pOutB, pC, &scratch);
+                VEC3Sub(&v4, pOutB, pA);
+                f32 s2 = VEC3Dot(&v3, &v4) / b;
+                f32 sc2 = clamp01(s2);
+                VEC3Scale(&scratch, &v3, sc2);
+                VEC3Add(pOutA, pA, &scratch);
+            } else {
+                // both in range
+                VEC3Scale(&scratch, &v3, u);
+                VEC3Add(pOutA, pA, &scratch);
+                VEC3Scale(&scratch, &v1, t);
+                VEC3Add(pOutB, pC, &scratch);
+            }
+        }
+    }
+}
 
 void func_804B028C(){}
 

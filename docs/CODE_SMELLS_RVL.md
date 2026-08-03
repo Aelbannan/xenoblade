@@ -17,10 +17,10 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 | extern "C" declarations (non-lbl_*) | 90 |
 | extern "C" definitions (forced names) | 22 |
 | `self`/register-style params | 14 |
-| `void*` (params + locals) | 845 |
+| `void*` (params + locals) | 844 |
 | `(void*)` casts | 143 |
-| raw pointer offset arithmetic | 134 |
-| deref-through-cast arithmetic | 25 |
+| raw pointer offset arithmetic | 133 |
+| deref-through-cast arithmetic | 24 |
 | inline asm / `register` (incl. asm kernels) | 248 |
 | rN-named params | 13 |
 | goto | 226 |
@@ -33,7 +33,7 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 | module | TUs | void* lines | api | cb | self-offset (actionable) | other |
 |---|---|---|---|---|---|---|
 | bte | 68 | 412 | 122 | 0 | 1 | 289 |
-| hbm | 41 | 124 | 29 | 0 | 0 | 95 |
+| hbm | 41 | 123 | 29 | 0 | 0 | 94 |
 | os | 34 | 118 | 4 | 0 | 0 | 114 |
 | gx | 15 | 46 | 3 | 0 | 0 | 43 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
@@ -192,7 +192,7 @@ Files with the actionable `void* self` offset-deref pattern:
 | libs/RVL_SDK/src/revolution/hbm/seq.c | 10 | 2 | 0 | 3 | 5 | 0 | 0 | 0 | 1 |
 | libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 5 | 3 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synenv.c | 3 | 2 | 0 | 6 | 1 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synenv.c | 3 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synmix.c | 6 | 0 | 0 | 9 | 2 | 2 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synpitch.c | 3 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 |
@@ -637,11 +637,9 @@ Files with the actionable `void* self` offset-deref pattern:
   "void_ptr": 8
  },
  "libs/RVL_SDK/src/revolution/hbm/synenv.c": {
-  "deref_arith": 1,
   "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 2,
-  "ptr_arith": 1,
-  "void_ptr": 6
+  "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/hbm/synmix.c": {
   "deref_arith": 2,

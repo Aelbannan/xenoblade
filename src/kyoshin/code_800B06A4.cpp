@@ -261,7 +261,86 @@ int obj_testBit_64_v4(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 int obj_testBit_64_v5(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 int obj_testBit_64_v6(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
-void init_3210(){}
+// Sorted circular buffer insertion (by pointer address, field_74 fast path).
+extern "C" void func_800B3210(UnkClass_800B0AD8* self, UnkClass_805764CC** item_ptr) {
+    u32 count = self->unkB00;
+
+    if (count == 0) {
+        ((UnkClass_805764CC**)self->unkAF8)[self->unkAFC] = *item_ptr;
+        self->unkB00 = 1;
+        return;
+    }
+
+    // Fast path: append at end if item's sort key >= last element's sort key
+    {
+        u32 head = self->unkAFC;
+        u32 cap = self->unkB04;
+        UnkClass_805764CC** buf = (UnkClass_805764CC**)self->unkAF8;
+        u32 lastIdx = (head + count - 1) % cap;
+        if (*(u32*)((u8*)*item_ptr + 0x74) >= *(u32*)((u8*)buf[lastIdx] + 0x74)) {
+            buf[(head + count) % cap] = *item_ptr;
+            self->unkB00 = count + 1;
+            return;
+        }
+    }
+
+    // Binary search for insertion point (unsigned pointer comparison)
+    u32 insIdx;
+    {
+        u32 head = self->unkAFC;
+        u32 cap = self->unkB04;
+        UnkClass_805764CC** buf = (UnkClass_805764CC**)self->unkAF8;
+        u32 lo = 0;
+        u32 range = count;
+        while (range > 0) {
+            u32 mid = range / 2;
+            u32 probe = lo + mid;
+            u32 probeIdx = (head + probe) % cap;
+            if (buf[probeIdx] < *item_ptr) {
+                lo = probe + 1;
+                range -= mid + 1;
+            } else {
+                range = mid;
+            }
+        }
+        insIdx = lo;
+    }
+
+    // Shift elements to make room, choosing the shorter direction
+    if (insIdx < count / 2) {
+        // Shift elements [0, insIdx) toward head, then decrement head
+        u32 i = 0;
+        for (; i < insIdx; i++) {
+            u32 h = self->unkAFC;
+            u32 c = self->unkB04;
+            UnkClass_805764CC** b = (UnkClass_805764CC**)self->unkAF8;
+            u32 src = (h + i) % c;
+            u32 dst = (src - 1) % c;
+            b[dst] = b[src];
+        }
+        self->unkAFC = (self->unkAFC - 1) % self->unkB04;
+    } else {
+        // Shift elements [insIdx+1, count-1] toward tail
+        u32 i = count - 1;
+        for (; i > insIdx; i--) {
+            u32 h = self->unkAFC;
+            u32 c = self->unkB04;
+            UnkClass_805764CC** b = (UnkClass_805764CC**)self->unkAF8;
+            u32 src = (h + i) % c;
+            u32 dst = (src + 1) % c;
+            b[dst] = b[src];
+        }
+    }
+
+    // Insert item and increment count
+    {
+        u32 head = self->unkAFC;
+        u32 cap = self->unkB04;
+        UnkClass_805764CC** buf = (UnkClass_805764CC**)self->unkAF8;
+        buf[(head + insIdx) % cap] = *item_ptr;
+    }
+    self->unkB00 = self->unkB00 + 1;
+}
 u32 UnkClass_805764CC::get_u32_74(){return *(u32*)((u8*)this + 0x74);}
 void init_39C8(){}
 void copy_int_ptr_alt2(int* dst, int* src){*dst = *src;}
@@ -424,7 +503,7 @@ void* sub_getReslist_C08(){return &UnkClass_805764CC::func_800B07E8()->field_0xC
 void* sub_getReslist_C48(){return &UnkClass_805764CC::func_800B07E8()->field_0xC48;}
 extern "C" reslist<cf::CfObject>* func_800B6CC4() {
     UnkClass_805764CC* obj = func_800B07E8();
-    func_800B4400();
+    func_800B4400(obj);
     return &obj->field_0xC28;
 }
 void init_6CF8(){}
@@ -542,6 +621,14 @@ void func_800B88E0(u8* self, u32 targetId) {
         node = next;
     }
 }
+extern "C" {
+    extern s8 lbl_eu_80663EE8;
+    extern u8 lbl_eu_80572CD4[];
+    extern u8 lbl_eu_80572CC8[];
+    extern void __dt__17UnkClass_805764CCFv(void*, int);
+    extern void __ct__17UnkClass_805764CCFv(void*);
+    extern void __register_global_object(void*, void*, void*);
+}
 // Target 5: us-800b923c - func_800B8920
 // Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),
 // then looks up the singleton and calls func_800B6EC0(&singleton, *(this+0x74)).
@@ -559,7 +646,7 @@ extern "C" int func_800B8920(u32 addr) {
     }
 
     u32 val = *(u32*)(addr + 0x74);
-    int result = func_800B6EC0((UnkClass_805764CC*)lbl_eu_80572CD4, val);
+    int result = (int)func_800B6EC0((UnkClass_805764CC*)lbl_eu_80572CD4, val);
     return (result != 0) ? 1 : 0;
 }
 // Target 4: us-800b92e8 - func_800B89CC
@@ -629,7 +716,8 @@ extern "C" void* func_800B8AFC(void* self) {
 
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
-        result = func_80193CD0(ca0, self);
+        func_80193CD0(ca0, self);
+        result = ca0;
     }
 
     return result;

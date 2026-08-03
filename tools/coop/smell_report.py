@@ -5,6 +5,12 @@ Scans the game-code C++ TUs (src/kyoshin, libs/monolib/src, libs/nw4r/src)
 for the smell families tracked by the team and writes a deterministic report
 to docs/CODE_SMELLS.md.
 
+With ``--rvl`` the same detector is pointed at the RVL_SDK C TUs
+(libs/RVL_SDK/src) and writes docs/CODE_SMELLS_RVL.md. That report is
+informational (not CI-gated): asm-function bodies are stripped from the
+C-level metrics and void* usage is classified by context because much of it
+is API-mandated (allocators, OS/FS/IPC buffers, Bluetooth stack).
+
 Usage:
     python3 tools/coop/smell_report.py --write          # regenerate docs/CODE_SMELLS.md
     python3 tools/coop/smell_report.py --check          # CI gate: stale OR per-TU regression -> exit 1
@@ -30,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -38,14 +45,31 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.coop.smell_scan import Stats, scan_file  # noqa: E402
+from tools.coop.smell_scan import (  # noqa: E402
+    RE_ASM_ENTRY,
+    RE_ASM_PAREN,
+    RE_EXTERN_C,
+    RE_EXTERN_C_BLOCK,
+    RE_VOID_PTR,
+    RE_VOID_PTR_CAST,
+    Stats,
+    scan_file,
+)
 
 REPORT = ROOT / "docs" / "CODE_SMELLS.md"
+RVL_REPORT = ROOT / "docs" / "CODE_SMELLS_RVL.md"
 BEGIN_BASELINE = "<!-- BEGIN BASELINE -->"
 END_BASELINE = "<!-- END BASELINE -->"
 
 # Game-code C++ roots scanned for smells (SDK C code is out of scope).
 ROOTS = ("src/kyoshin", "libs/monolib/src", "libs/nw4r/src")
+RVL_ROOT = ROOT / "libs" / "RVL_SDK" / "src"
+
+# RVL_SDK-specific void* context classification.
+RVL_CB_CAST = re.compile(r"\(\s*void\s*\(\s*\*\s*\)\s*\([^()]*\)\s*\)")  # ((void(*)(...))...) interop casts
+RVL_SELF_OFFSET = re.compile(
+    r"\(\s*(?:char|u8|u16|u32|s8|s16|s32|s64|u64|int)\s*\*\s*\)\s*self\b"
+)  # (char*)self + N -> should be a typed struct/field access
 
 # metric key (Stats attr) -> display name
 METRICS = (
@@ -309,11 +333,296 @@ def cmd_completeness() -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# RVL_SDK informational report (--rvl)
+# ---------------------------------------------------------------------------
+
+
+def rvl_files() -> list[Path]:
+    files = sorted({*RVL_ROOT.rglob("*.c"), *RVL_ROOT.rglob("*.cpp")})
+    return [f for f in files if not f.name.endswith(".ctx.c")]
+
+
+def scan_all_rvl() -> dict[str, Stats]:
+    """Hand-written RVL_SDK TUs; asm bodies stripped from C-level metrics."""
+    rows: dict[str, Stats] = {}
+    for f in rvl_files():
+        rel = f.relative_to(ROOT)
+        rows[str(rel)] = scan_file(f, skip_asm_bodies=True)
+    return rows
+
+
+def scan_rvl_context(path: Path) -> dict[str, int]:
+    """Per-file void* context buckets + asm kernel stats.
+
+    Buckets (per void*-bearing line, first match wins):
+      self_arith  - ``void* self`` dereferenced via cast+offset: actionable
+                    (should be a typed struct pointer / field access).
+      api         - void* on an extern "C" / plain ``extern`` declaration line:
+                    the C-linkage import surface, API-mandated.
+      cb          - ``((void(*)(...))...)`` callback/function-pointer casts:
+                    interop (BT stack, OS callbacks) — mostly legit.
+      other       - void* params/locals in definitions: context-dependent
+                    (allocator buffers and OS/FS/IPC/DVD buffer APIs are
+                    legit; see Notes).
+    """
+    c = {"api": 0, "cb": 0, "self_arith": 0, "other": 0, "asm_fns": 0, "asm_lines": 0}
+    lines = path.read_text(errors="replace").splitlines()
+    in_extern_c = False
+    in_asm = False
+    amode = "brace"
+    depth = 0
+    adepth = 0
+    for raw in lines:
+        line = raw.split("//", 1)[0]
+        stripped = line.strip()
+        if not in_asm and RE_ASM_ENTRY.search(line):
+            in_asm = True
+            c["asm_fns"] += 1
+            amode = "paren" if RE_ASM_PAREN.search(line) else "brace"
+            adepth = (line.count("(") - line.count(")")) if amode == "paren" else (
+                line.count("{") - line.count("}")
+            )
+            continue
+        if in_asm:
+            if amode == "brace":
+                adepth += line.count("{") - line.count("}")
+                c["asm_lines"] += 1
+                if stripped == "}" or adepth < 0:
+                    in_asm = False
+            else:
+                adepth += line.count("(") - line.count(")")
+                c["asm_lines"] += 1
+                if adepth <= 0:
+                    in_asm = False
+            continue
+        if RE_EXTERN_C_BLOCK.search(line):
+            in_extern_c = True
+            depth = 0
+            continue
+        if in_extern_c:
+            depth += line.count("{") - line.count("}")
+            if stripped == "}" or depth < 0:
+                in_extern_c = False
+                continue
+        if not (RE_VOID_PTR.search(line) or RE_VOID_PTR_CAST.search(line)):
+            continue
+        if RVL_SELF_OFFSET.search(line):
+            c["self_arith"] += 1
+        elif in_extern_c or RE_EXTERN_C.search(line) or line.lstrip().startswith("extern"):
+            c["api"] += 1
+        elif RVL_CB_CAST.search(line):
+            c["cb"] += 1
+        else:
+            c["other"] += 1
+    return c
+
+
+def rvl_module(rel: Path) -> str:
+    parts = rel.parts
+    try:
+        i = parts.index("revolution")
+    except ValueError:
+        return "(root)"
+    return parts[i + 1] if i + 1 < len(parts) else "(root)"
+
+
+RVL_SEVERITY_WEIGHTS = {k: w for k, w in SEVERITY_WEIGHTS.items() if k != "asm_code"}
+
+
+def rvl_severity(s: Stats) -> int:
+    return sum(getattr(s, k) * w for k, w in RVL_SEVERITY_WEIGHTS.items())
+
+
+def render_report_rvl(rows: dict[str, Stats], ctx: dict[str, dict[str, int]]) -> str:
+    tot = totals(rows)
+    tot_asm_fns = sum(c["asm_fns"] for c in ctx.values())
+    tot_asm_lines = sum(c["asm_lines"] for c in ctx.values())
+    by_mod: dict[str, dict[str, int]] = {}
+    for rel, c in ctx.items():
+        mod = rvl_module(Path(rel))
+        m = by_mod.setdefault(mod, {"tus": 0, "void_lines": 0, "api": 0, "cb": 0, "self_arith": 0, "other": 0})
+        m["tus"] += 1
+        m["void_lines"] += c["api"] + c["cb"] + c["self_arith"] + c["other"]
+        for k in ("api", "cb", "self_arith", "other"):
+            m[k] += c[k]
+
+    lines: list[str] = []
+    lines.append("# RVL_SDK Code Smell Report")
+    lines.append("")
+    lines.append("<!-- GENERATED by tools/coop/smell_report.py --rvl --write. Do not edit by hand. -->")
+    lines.append("")
+    lines.append(
+        "Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-written "
+        "RVL_SDK C TUs in `libs/RVL_SDK/src` (revolution modules). It is **informational, not "
+        "CI-gated**: SDK code is retail/match-pinned, so most findings are context-dependent "
+        "rather than cleanable."
+    )
+    lines.append("")
+    lines.append(
+        f"**Scope:** {len(rows)} hand-written .c/.cpp TUs. Excluded: "
+        f"{sum(1 for _ in RVL_ROOT.rglob('*.ctx.c'))} preprocessed "
+        "`.ctx.c` context dumps (all headers inlined — not source) and the retail public headers "
+        "in `libs/RVL_SDK/include`. **Asm-function bodies are stripped** from the C-level metrics "
+        "(their `lis r3, …` mnemonic lines would otherwise flood rN/self counts); they are folded "
+        "into the `asm` metric and reported as kernels below."
+    )
+    lines.append("")
+    lines.append("## Summary")
+    lines.append("")
+    lines.append(f"- Files scanned: {len(rows)}")
+    lines.append(f"- Inline-asm kernels: {tot_asm_fns} functions / {tot_asm_lines} lines "
+                f"(PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)")
+    lines.append("")
+    lines.append("| metric | count |")
+    lines.append("|---|---|")
+    total_row = {
+        "extern_c_total": "extern \"C\" (total lines)",
+        "extern_c_nonlbl_decl": "extern \"C\" declarations (non-lbl_*)",
+        "extern_c_nonlbl_def": "extern \"C\" definitions (forced names)",
+        "self_params": "`self`/register-style params",
+        "void_ptr": "`void*` (params + locals)",
+        "void_ptr_cast": "`(void*)` casts",
+        "ptr_arith": "raw pointer offset arithmetic",
+        "deref_arith": "deref-through-cast arithmetic",
+        "asm_code": "inline asm / `register` (incl. asm kernels)",
+        "rn_params": "rN-named params",
+        "goto_count": "goto",
+        "pragma": "#pragma",
+    }
+    for k, label in total_row.items():
+        lines.append(f"| {label} | {getattr(tot, k)} |")
+    lines.append("")
+
+    lines.append("## void* context")
+    lines.append("")
+    lines.append(
+        "Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*` for "
+        "allocator buffers (mem, OSAlloc), OS/FS/DVD/IPC transfer buffers, hardware addresses, "
+        "and Bluetooth/OS callback contexts. The actionable subset is the `void* self` pattern "
+        "below. `api` = void* on extern/`extern \"C\"` declaration lines (import surface), `cb` = "
+        "`((void(*)(…))…)` function-pointer casts (interop), `other` = params/locals in "
+        "definitions (context-dependent)."
+    )
+    lines.append("")
+    lines.append("| module | TUs | void* lines | api | cb | self-offset (actionable) | other |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for mod in sorted(by_mod, key=lambda m: -by_mod[m]["void_lines"]):
+        m = by_mod[mod]
+        lines.append(
+            f"| {mod} | {m['tus']} | {m['void_lines']} | {m['api']} | {m['cb']} | "
+            f"{m['self_arith']} | {m['other']} |"
+        )
+    lines.append("")
+    actionable = sorted(
+        (rel for rel, c in ctx.items() if c["self_arith"] > 0),
+        key=lambda r: -ctx[r]["self_arith"],
+    )
+    if actionable:
+        lines.append("Files with the actionable `void* self` offset-deref pattern:")
+        lines.append("")
+        for rel in actionable:
+            lines.append(f"- `{rel}` ({ctx[rel]['self_arith']})")
+    else:
+        lines.append("No files carry the `void* self` offset-deref pattern.")
+    lines.append("")
+
+    top = sorted(rows.items(), key=lambda kv: -rvl_severity(kv[1]))[:10]
+    lines.append("## Top offenders (by cleanable severity, asm kernels excluded)")
+    lines.append("")
+    lines.append("| TU | severity |")
+    lines.append("|---|---|")
+    for path, s in top:
+        lines.append(f"| {path} | {rvl_severity(s)} |")
+    lines.append("")
+
+    lines.append("## Per-TU metrics")
+    lines.append("")
+    lines.append("| TU | " + " | ".join(disp for _, disp in METRICS) + " |")
+    lines.append("|" + "---|" * (len(METRICS) + 1))
+    for path in sorted(rows):
+        s = rows[path]
+        vals = [str(getattr(s, k)) for k, _ in METRICS]
+        if all(v == "0" for v in vals):
+            continue
+        lines.append(f"| {path} | " + " | ".join(vals) + " |")
+    lines.append("")
+    lines.append("## Notes")
+    lines.append("")
+    lines.append(
+        "- **Much of the `void*` is valid and must stay.** Allocator APIs (mem, OSAlloc), "
+        "OS/FS/DVD/IPC buffer transfers, hardware register/address params, and Bluetooth stack "
+        "callback contexts are `void*` in the retail API; typing them would break the "
+        "reloc/matching contract. The cleanable subset is `void* self` free functions that "
+        "walk an existing struct (see the actionable list above) — the same byte-identical "
+        "type-erasure cleanup as game code, verified with `hexdiff` per function."
+    )
+    lines.append(
+        "- **Asm kernels are sanctioned** (PLAN.md §17.6 — Gekko paired-single / hardware-"
+        "register code): OSMemory config, OSContext FPU/stack switching, OSCache, OSAlarm, "
+        "OSTime, OSInterrupt, OSSync, OS, mtx/vec paired-single, PPCArch, ai callback stack, "
+        "ipcclt `asm {}` opword blocks, db `__asm__` exception stub. Not fixable; `register` "
+        "params on asm decls are register bindings, not C smells."
+    )
+    lines.append(
+        "- **rN-named params** outside asm bodies are genuine register-named code: "
+        "`cx/CXSecureUncompression.c` (`CXiLHVerifyTable(u16* r3, u32 r4)`). Match-pinned "
+        "crypto; renaming requires the symbols ceremony."
+    )
+    lines.append(
+        "- **extern \"C\" forced names** are reloc/retail-mandated (the retail objects reference "
+        "the exact exported names) and would require the symbols rename ceremony to change."
+    )
+    lines.append(
+        "- Metrics count lines, not unique occurrences; `//` comments are stripped but "
+        "`/* */` comment bodies are not — a handful of counts may include retail-ASM notes."
+    )
+    lines.append("")
+    lines.append(BEGIN_BASELINE)
+    lines.append(baseline_json(rows))
+    lines.append(END_BASELINE)
+    lines.append("")
+    return "\n".join(lines)
+
+
+def cmd_write_rvl() -> int:
+    rows = scan_all_rvl()
+    ctx = {rel: scan_rvl_context(f) for rel, f in ((str(f.relative_to(ROOT)), f) for f in rvl_files())}
+    RVL_REPORT.write_text(render_report_rvl(rows, ctx))
+    print(f"wrote {RVL_REPORT.relative_to(ROOT)}")
+    return 0
+
+
+def cmd_check_rvl(args) -> int:
+    """Freshness-only gate (no regression enforcement) for the RVL report."""
+    rows = scan_all_rvl()
+    ctx = {rel: scan_rvl_context(f) for rel, f in ((str(f.relative_to(ROOT)), f) for f in rvl_files())}
+    current = render_report_rvl(rows, ctx)
+    if RVL_REPORT.exists():
+        if RVL_REPORT.read_text() != current:
+            print(
+                f"ERROR: {RVL_REPORT.relative_to(ROOT)} is stale — run "
+                f"`python3 tools/coop/smell_report.py --rvl --write` and commit the update",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        print(
+            f"ERROR: {RVL_REPORT.relative_to(ROOT)} is missing — run "
+            f"`python3 tools/coop/smell_report.py --rvl --write` and commit it",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"ok: {RVL_REPORT.relative_to(ROOT)} is fresh.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--write", action="store_true", help="regenerate docs/CODE_SMELLS.md")
     ap.add_argument("--check", action="store_true", help="CI gate (freshness + regression)")
     ap.add_argument("--no-strict", action="store_true", help="with --check: freshness only")
+    ap.add_argument("--rvl", action="store_true", help="scan libs/RVL_SDK instead (informational)")
     ap.add_argument("--base", default=None, help="base ref for the regression comparison")
     ap.add_argument("--completeness", action="store_true", help="print TU status table (stdout)")
     args = ap.parse_args()
@@ -322,6 +631,12 @@ def main() -> int:
         return cmd_completeness()
     if args.write and args.check:
         ap.error("--write and --check are mutually exclusive")
+    if args.rvl:
+        if args.write:
+            return cmd_write_rvl()
+        if args.check:
+            return cmd_check_rvl(args)
+        ap.error("--rvl needs one of --write, --check")
 
     rows = scan_all()
     if args.write:

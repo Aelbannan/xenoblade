@@ -343,7 +343,7 @@ AxVoice::Format Voice::GetFormat() const {
         return mAxVoice[0][0]->GetFormat();
     }
 
-    return AxVoice::FORMAT_PCM16;
+    return static_cast<AxVoice::Format>(1);
 }
 
 void Voice::SetVolume(f32 volume) {

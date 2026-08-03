@@ -1036,7 +1036,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl); -func_align 4 removes inter-fn padding that blows the split (rfc_port_if pattern)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split; GC/3.0a3.4 reproduces the RFCOMM_FlowReq call-arg schedule (12/12 FULL_MATCH, split 0x52C exact)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed with GC 3.0a-family (see rfc_utils.c / rfc_mx_fsm.c); Wii/1.1 + -func_align 16 insert ori r0,r0,0 before the rfc_send_test shift loop and float mr/li arg setup in rfc_send_fcon/fcoff
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # FLAG TEST a3.4 -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # FLAG TEST a3.4 -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 -func_align 16 inserts an alignment ori r0,r0,0 before the SDP_FindServiceInDb sub-attr loop
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 -func_align 16 + IPA inserts an alignment ori r0,r0,0 before the ARRAY_TO_STREAM loop in sdpu_build_uuid_seq
@@ -1126,7 +1126,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/gx/GXLight.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/gx/GXTexture.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXBump.c", mw_version = "Wii/1.0"),
-            Object(NonMatching, "RVL_SDK/src/revolution/gx/GXTev.c"),
+            Object(Matching, "RVL_SDK/src/revolution/gx/GXTev.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXPixel.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXDisplayList.c"),
             Object(Matching, "RVL_SDK/src/revolution/gx/GXTransform.c"),
@@ -1177,7 +1177,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp", extra_cflags=["-func_align 4"]),  # fit split: 16-align + 2 unmatched PrintImpl bodies overruns 0x5470 (retail packed align 4; cf. lyt_picture/lyt_textBox)
             Object(Matching, "RVL_SDK/src/revolution/hbm/mix.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/syn.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/synctrl.c"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/synctrl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synenv.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synmix.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synpitch.c"),

@@ -4032,8 +4032,8 @@ void __wudDeviceStatusEventStackCallback(tBTM_DEV_STATUS status) {
 }
 
 void __wudLinkKeyEventStackCallback(void* p1) {
-    WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
+    WUDCB* p = &_wcb;
     tBTM_BD_ADDR_LINK_KEY_PAIR* pPair;
     WUDDevInfo* pInfo;
     WUDDevInfo* pNewInfo;

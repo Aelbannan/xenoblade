@@ -75,7 +75,6 @@ int mfCiGetFileSize(const char* name) {
     MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
     int size = 0;
     const char* p;
-    int* sizePtr = &size;
     if (strlen(name) >= 0x12) {
         CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, name, 0x12);
         if (g->errfn != NULL)
@@ -84,7 +83,7 @@ int mfCiGetFileSize(const char* name) {
     p = name;
     mfci_str_to_uint_ptr(p, (char**)&p, 0x10);
     if (*p != 0) p++;
-    *sizePtr = (int)strtoul(p, (char**)&p, 0x10);
+    size = (int)strtoul(p, (char**)&p, 0x10);
     return size;
 }
 
@@ -155,7 +154,7 @@ void mfCiClose(MfCiFile* sct) {
     sct->status = 0;
     SVM_Unlock();
     if (sct->flag == 1) {
-        sct->flag = 0;
+        sct->flag = (s8)0;
         memset(sct, 0, 0x38);
     }
 }
@@ -201,23 +200,27 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     int n;
     int rdOff;
     int rdSize;
+    int n2;
+    int size2;
+    const char* p;
+    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
 
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xFE;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, 0);
+        if (g->errfn != NULL)
+            g->errfn(g->errarg, msg, 0);
         return 0;
     }
     if (size < 0) {
         const char* msg = lbl_eu_80518844 + 0x117;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, (u32)sct);
+        if (g->errfn != NULL)
+            g->errfn(g->errarg, msg, (u32)sct);
         return 0;
     }
     if (buf == NULL) {
         const char* msg = lbl_eu_80518844 + 0x136;
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, msg, (u32)sct);
+        if (g->errfn != NULL)
+            g->errfn(g->errarg, msg, (u32)sct);
         return 0;
     }
     if (size == 0) {
@@ -243,22 +246,20 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     sct->rdOff = rdOff;
     sct->rdSize = rdSize;
     if (strlen(sct->name) >= 0x12) {
-        CRICRW_Sprintf((char*)&lbl_eu_805EC450 + 8, 0x12C, lbl_eu_80518844, sct->name, 0x12);
-        if (lbl_eu_805EC450 != NULL)
-            lbl_eu_805EC450(lbl_eu_805EC454, (char*)&lbl_eu_805EC450 + 8, 0);
+        CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+        if (g->errfn != NULL)
+            g->errfn(g->errarg, g->errbuf, 0);
     }
-    {
-        char* p = sct->name;
-        parsed = mfci_str_to_uint_ptr(p, &p, 0x10);
-        if (*p != 0) p++;
-        (void)strtoul(p, &p, 0x10);
-    }
-    n = rdSize;
-    if (n > parsed + sct->rdOff) n = rdSize - sct->rdOff;
+    p = sct->name;
+    parsed = mfci_str_to_uint_ptr(p, (char**)&p, 0x10);
+    if (*p != 0) p++;
+    size2 = (int)strtoul(p, (char**)&p, 0x10);
+    n2 = rdSize;
+    if (n2 > size2 - sct->rdOff) n2 = size2 - sct->rdOff;
     SVM_Unlock();
-    memcpy(buf, (const char*)parsed + rdOff, n);
-    if (rdSize - n > 0) {
-        memset((u8*)buf + n, 0, rdSize - n);
+    memcpy(buf, (const char*)parsed + sct->rdOff, n2);
+    if (sct->rdSize - n2 > 0) {
+        memset((u8*)buf + n2, 0, sct->rdSize - n2);
     }
     SVM_Lock();
     sct->status = 1;
@@ -337,7 +338,8 @@ int mfCiGetNumTr(MfCiFile* sct) {
 }
 
 int mfCiOptFn1(MfCiFile* sct, int op) {
-    int parsed;
+    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    const char* p;
     int result;
 
     if (sct == NULL) {
@@ -348,7 +350,9 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
         return 0;
     case 0xC9:
         if (sct == NULL) {
-            mfci_err(0, lbl_eu_80518844 + 0xB4);
+            const char* msg = lbl_eu_80518844 + 0xB4;
+            if (g->errfn != NULL)
+                g->errfn(g->errarg, msg, 0);
             return 0;
         }
         return sct->numTr;
@@ -356,27 +360,27 @@ int mfCiOptFn1(MfCiFile* sct, int op) {
         return 0;
     case 0xCB:
         if (strlen(sct->name) >= 0x12) {
-            mfci_print_err(sct->name);
+            CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+            if (g->errfn != NULL)
+                g->errfn(g->errarg, g->errbuf, 0);
         }
-        {
-            char* p = sct->name;
-            parsed = mfci_str_to_uint_ptr(p, &p, 0x10);
-            if (*p != 0) p++;
-            result = (int)strtoul(p, &p, 0x10);
-        }
+        p = sct->name;
+        mfci_str_to_uint_ptr(p, (char**)&p, 0x10);
+        if (*p != 0) p++;
+        result = (int)strtoul(p, (char**)&p, 0x10);
         return result;
     case 0xCC:
         return 0;
     case 0xCD:
         if (strlen(sct->name) >= 0x12) {
-            mfci_print_err(sct->name);
+            CRICRW_Sprintf(g->errbuf, 0x12C, lbl_eu_80518844, sct->name, 0x12);
+            if (g->errfn != NULL)
+                g->errfn(g->errarg, g->errbuf, 0);
         }
-        {
-            char* p = sct->name;
-            parsed = mfci_str_to_uint_ptr(p, &p, 0x10);
-            if (*p != 0) p++;
-            result = (int)strtoul(p, &p, 0x10);
-        }
+        p = sct->name;
+        mfci_str_to_uint_ptr(p, (char**)&p, 0x10);
+        if (*p != 0) p++;
+        result = (int)strtoul(p, (char**)&p, 0x10);
         return result;
     case 0x12B:
         return 0;

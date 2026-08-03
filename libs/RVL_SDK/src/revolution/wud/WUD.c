@@ -78,7 +78,7 @@ extern NANDCommandBlock _wudNandBlock;
 
 extern char lbl_80665D68_80663438[];
 extern char lbl_80665D70_80663440[];
-extern char lbl_80665D78_80663448[];
+extern const char lbl_80665D78_80663448[8];
 
 void SCGetBtCmpDevInfoArray(SCBtCmpDevInfoArray* info);
 BOOL SCSetBtCmpDevInfoArray(const SCBtCmpDevInfoArray* info);
@@ -779,10 +779,8 @@ static u8 WUDiGetConnNumber(void) {
 }
 
 static u8 WUDiGetLinkNum(void) {
-    WUDCB* p = &_wcb;
     BOOL enabled = OSDisableInterrupts();
-
-    u8 num = p->linkedNum;
+    u8 num = _wcb.linkedNum;
 
     OSRestoreInterrupts(enabled);
     return num;
@@ -3436,9 +3434,9 @@ void __wudAppendRuntimePatch(void) {
 
 void __wudInitSub(void) {
     extern char lbl_80562C2C[];
-    extern u32 lbl_8066C260;
-    extern u16 lbl_8066C264;
-    extern u8 lbl_8066C266;
+    extern const u32 lbl_8066C260;
+    extern const u16 lbl_8066C264;
+    extern const u8 lbl_8066C266;
     WUDCB* p = &_wcb;
     char devName[4];
     DEV_CLASS devClass;
@@ -3755,7 +3753,6 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
 }
 void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
                                    tBTA_DM_SEARCH* pData) {
-    WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
     s32 timeout;
     BOOL enabled;
@@ -3775,8 +3772,8 @@ void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
 
         _wudDiscRssi = pResp->rssi;
 
-        if (p->syncSkipChecks == TRUE ||
-            (p->syncSkipChecks == FALSE &&
+        if (_wcb.syncSkipChecks == TRUE ||
+            (_wcb.syncSkipChecks == FALSE &&
              WUDiGetLinkNum() < WUD_MAX_CHANNELS - 1)) {
 
             timeout = 0x1900;
@@ -3815,7 +3812,7 @@ void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
     case BTA_DM_DISC_CMPL_EVT: {
         DEBUGPrint(pMsg + 0xD94);
 
-        p->syncState = WUD_STATE_SYNC_CHECK_SEARCH_RESULT;
+        _wcb.syncState = WUD_STATE_SYNC_CHECK_SEARCH_RESULT;
         break;
     }
 
@@ -3828,7 +3825,7 @@ void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
         _wudDiscNumResps = 0;
         memset(&_wudDiscResp, 0, sizeof(WUDDiscResp));
 
-        p->syncState = WUD_STATE_SYNC_CHECK_SEARCH_RESULT;
+        _wcb.syncState = WUD_STATE_SYNC_CHECK_SEARCH_RESULT;
         break;
     }
 
@@ -3838,9 +3835,51 @@ void __wudSearchEventStackCallback(tBTA_DM_SEARCH_EVT event,
     }
     }
 }
-void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
+
+static inline void WUDiDeleteAllKeysProc(char* pMsg) {
     WUDCB* p = &_wcb;
+    BOOL enabled;
+    u32 libStatus;
+    BOOL busy2;
+
+    DEBUGPrint(pMsg + 0x800);
+
+    enabled = OSDisableInterrupts();
+    libStatus = p->libStatus;
+    OSRestoreInterrupts(enabled);
+
+    if (libStatus == WUD_LIB_STATUS_3) {
+        enabled = OSDisableInterrupts();
+
+        if (p->syncState == WUD_STATE_SYNC_START &&
+            p->deleteState == WUD_STATE_DELETE_START &&
+            p->stackState == WUD_STATE_STACK_INITIALIZED &&
+            p->initState == 6) {
+
+            OSRestoreInterrupts(enabled);
+            busy2 = FALSE;
+        } else {
+            OSRestoreInterrupts(enabled);
+            busy2 = TRUE;
+        }
+
+        if (!busy2) {
+            enabled = OSDisableInterrupts();
+            p->deleteState = WUD_STATE_DELETE_DISALLOW_INCOMING;
+
+            OSCreateAlarm(&p->alarm);
+            OSSetPeriodicAlarm(&p->alarm, OSGetTime(),
+                               OS_MSEC_TO_TICKS(20), __wudDeleteHandler0);
+
+            OSRestoreInterrupts(enabled);
+        }
+    }
+}
+
+void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
     char* pMsg = _wudWiiRemoteDescriptor;
+    WUDClearDeviceCallback pClearCallback;
+    WUDCB* p = &_wcb;
     BOOL enabled;
     u8 event = pData[0];
 
@@ -3882,29 +3921,30 @@ void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
     }
 
     case WUD_VSE_DELETE_ALL_KEYS: {
-        WUDClearDeviceCallback pClearCallback;
-        s32 result;
-        s8 libStatus;
+        BOOL busyEnabled;
         BOOL busy;
+        u32 libStatus;
+        s32 result;
 
         DEBUGPrint(pMsg + 0xE00);
 
         enabled = OSDisableInterrupts();
         pClearCallback = p->clearDevCB;
+        busyEnabled = OSDisableInterrupts();
 
         if (p->syncState == WUD_STATE_SYNC_START &&
             p->deleteState == WUD_STATE_DELETE_START &&
             p->stackState == WUD_STATE_STACK_INITIALIZED &&
             p->initState == 6) {
 
-            OSRestoreInterrupts(enabled);
+            OSRestoreInterrupts(busyEnabled);
             busy = FALSE;
         } else {
-            OSRestoreInterrupts(enabled);
+            OSRestoreInterrupts(busyEnabled);
             busy = TRUE;
         }
 
-        result = busy ? WUD_RESULT_DELETE_BUSY : WUD_RESULT_DELETE_WAITING;
+        result = -(busy ? 1 : 0);
         OSRestoreInterrupts(enabled);
 
         if (pClearCallback != NULL) {
@@ -3912,45 +3952,12 @@ void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
             break;
         }
 
-        DEBUGPrint(pMsg + 0x800);
-
-        enabled = OSDisableInterrupts();
-        libStatus = p->libStatus;
-        OSRestoreInterrupts(enabled);
-
-        if (libStatus == WUD_LIB_STATUS_3) {
-            BOOL busy2;
-
-            enabled = OSDisableInterrupts();
-
-            if (p->syncState == WUD_STATE_SYNC_START &&
-                p->deleteState == WUD_STATE_DELETE_START &&
-                p->stackState == WUD_STATE_STACK_INITIALIZED &&
-                p->initState == 6) {
-
-                OSRestoreInterrupts(enabled);
-                busy2 = FALSE;
-            } else {
-                OSRestoreInterrupts(enabled);
-                busy2 = TRUE;
-            }
-
-            if (!busy2) {
-                enabled = OSDisableInterrupts();
-                p->deleteState = WUD_STATE_DELETE_DISALLOW_INCOMING;
-
-                OSCreateAlarm(&p->alarm);
-                OSSetPeriodicAlarm(&p->alarm, OSGetTime(),
-                                   OS_MSEC_TO_TICKS(20), __wudDeleteHandler0);
-
-                OSRestoreInterrupts(enabled);
-            }
-        }
+        WUDiDeleteAllKeysProc(pMsg);
         break;
     }
 
     case WUD_VSE_SI_PORT_STATUS: {
-        p->serialPortStatus = pData[1];
+        _wcb.serialPortStatus = pData[1];
         break;
     }
 

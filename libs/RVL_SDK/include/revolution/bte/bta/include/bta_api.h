@@ -629,16 +629,13 @@ typedef UINT8 tBTA_DM_SEARCH_EVT;
 #define BTA_DM_INQ_RES_IGNORE_RSSI      BTM_INQ_RES_IGNORE_RSSI /* 0x7f RSSI value not supplied (ignore it) */
 
 /* Structure associated with BTA_DM_INQ_RES_EVT */
+/* Retail layout (bta_dm_act.c): bd_addr@0x00, dev_class@0x06, rssi@0x09, device_type@0x0a */
 typedef struct
 {
     BD_ADDR         bd_addr;                /* BD address peer device. */
     DEV_CLASS       dev_class;              /* Device class of peer device. */
-    BOOLEAN         remt_name_not_required; /* Application sets this flag if it already knows the name of the device */
-                                            /* If the device name is known to application BTA skips the remote name request */
-    BOOLEAN         is_limited;             /* TRUE, if the limited inquiry bit is set in the CoD */
     INT8            rssi;                   /* The rssi value */
-    UINT8           *p_eir;                 /* received EIR */
-
+    UINT8           device_type;            /* Device type */
 } tBTA_DM_INQ_RES;
 
 /* Structure associated with BTA_DM_INQ_CMPL_EVT */

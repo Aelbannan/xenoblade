@@ -16,6 +16,7 @@ static void __FreeDelayLine(AXFX_REVERBSTD_EXP* reverb);
 static void __BzeroDelayLines(AXFX_REVERBSTD_EXP* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP* reverb);
 
+#pragma peephole off
 u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     u32 e7 = __EarlySizeTable[7];
     u32 f0 = __FilterSizeTable[6][0];
@@ -31,6 +32,7 @@ u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
     tot += f3;
     return tot * 12;
 }
+#pragma peephole on
 
 BOOL AXFXReverbStdExpInit(AXFX_REVERBSTD_EXP* reverb) {
     u32 i;

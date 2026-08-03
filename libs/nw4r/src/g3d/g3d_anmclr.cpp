@@ -156,7 +156,38 @@ float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(floa
 
 void UpdateFrame__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 
-void Bind__Q34nw4r3g3d15AnmObjMatClrResFQ34nw4r3g3d6ResMdl(){}
+namespace nw4r {
+namespace g3d {
+
+bool AnmObjMatClrRes::Bind(ResMdl mdl) {
+    u16 numMat = mRes.ref().info.numMaterial;
+    bool bound = false;
+
+    for (u16 i = 0; i < numMat; i++) {
+        ResDic dic = ResDic(mRes.ofs_to_ptr<ResDicData>(mRes.ref().toClrDataDic));
+        const ResAnmClrMatData* pData =
+            reinterpret_cast<const ResAnmClrMatData*>(dic[i]);
+        const char* pName =
+            reinterpret_cast<const char*>(pData) + pData->name;
+
+        ResMat mat = mdl.GetResMat(ResName(
+            reinterpret_cast<const ResNameData*>(
+                reinterpret_cast<const char*>(pName) - 4)));
+
+        if (mat.IsValid()) {
+            mpBinding[mat.ref().id] = i;
+            bound = true;
+        }
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, true);
+    return bound;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 namespace nw4r {
 namespace g3d {
@@ -183,7 +214,29 @@ const ClrAnmResult* AnmObjMatClrRes::GetResult(ClrAnmResult* pResult,
 
 
 
-void G3dProc__Q34nw4r3g3d15AnmObjMatClrResFUlUlPv(){}
+namespace nw4r {
+namespace g3d {
+
+void AnmObjMatClrRes::G3dProc(u32 task, u32 arg, void* pArg) {
+    switch (task) {
+    case G3DPROC_UPDATEFRAME:
+        UpdateFrame();
+        break;
+    case G3DPROC_DETACH_PARENT:
+        SetParent(NULL);
+        break;
+    case G3DPROC_ATTACH_PARENT:
+        SetParent(static_cast<G3dObj*>(pArg));
+        break;
+    default:
+        break;
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 void ApplyClrAnmResult__Q24nw4r3g3dFQ34nw4r3g3d10ResMatChanQ34nw4r3g3d14ResMatTevColorPCQ34nw4r3g3d12ClrAnmResult(){}
 

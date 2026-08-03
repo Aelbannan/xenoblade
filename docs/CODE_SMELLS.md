@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 2162 |
 | extern "C" definitions (forced names) | 1633 |
 | `self`/register-style params | 3063 |
-| `void*` (params + locals) | 4584 |
+| `void*` (params + locals) | 4587 |
 | raw pointer offset arithmetic | 2525 |
 | deref-through-cast arithmetic | 1117 |
 | inline asm / `register` | 88 |
@@ -162,10 +162,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/db/db_assert.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
 | libs/nw4r/src/db/db_console.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | libs/nw4r/src/g3d/g3d_anmchr.cpp | 0 | 0 | 1 | 5 | 1 | 1 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_anmclr.cpp | 0 | 0 | 1 | 3 | 1 | 1 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_anmclr.cpp | 0 | 0 | 1 | 4 | 1 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmscn.cpp | 0 | 0 | 8 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_anmtexpat.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_anmtexsrt.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_anmtexpat.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_anmtexsrt.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmvis.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcview.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcvtx.cpp | 0 | 0 | 0 | 15 | 0 | 0 | 21 | 0 | 2 |
@@ -1220,17 +1220,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "deref_arith": 1,
   "ptr_arith": 1,
   "self_params": 1,
-  "void_ptr": 3
+  "void_ptr": 4
  },
  "libs/nw4r/src/g3d/g3d_anmscn.cpp": {
   "self_params": 8,
   "void_ptr": 17
  },
  "libs/nw4r/src/g3d/g3d_anmtexpat.cpp": {
-  "void_ptr": 2
+  "void_ptr": 3
  },
  "libs/nw4r/src/g3d/g3d_anmtexsrt.cpp": {
-  "void_ptr": 2
+  "void_ptr": 3
  },
  "libs/nw4r/src/g3d/g3d_anmvis.cpp": {
   "void_ptr": 2

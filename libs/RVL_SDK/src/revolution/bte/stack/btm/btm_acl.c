@@ -656,14 +656,15 @@ void btm_read_remote_features_complete(UINT8 *p)
                 memcpy(p_dev_rec->features, p_acl->features, 8);
 
             /* Select the packet types based on the local features/version. */
-            base = (UINT16)(btm_cb.btm_acl_pkt_types_supported & 0xCC18);
-            if (btm_cb.local_version[0] >= 3) {
-                pkt_types = (UINT16)(base |
-                                     (btm_cb.btm_acl_pkt_types_supported & 0x3306));
-            } else {
-                pkt_types = (UINT16)(base & 0xFFFFCCF9);
+            {
+                UINT16 supported = btm_cb.btm_acl_pkt_types_supported;
+                base = (UINT16)(supported & 0xCC18);
+                if (btm_cb.local_version[0] >= 3) {
+                    pkt_types = (UINT16)(base | (supported & 0x3306));
+                } else {
+                    pkt_types = (UINT16)(base & 0xFFFFCCF9);
+                }
             }
-
             if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT) {
                 LogMsg_1(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_EVENT,
                          "SetPacketType Mask -> 0x%04x", (UINT32)pkt_types);
@@ -1218,12 +1219,11 @@ void btm_chg_all_acl_pkt_types(BOOLEAN is_sco_active)
             }
 
             {
-                UINT16 base = (UINT16)(btm_cb.btm_acl_pkt_types_supported &
-                                        p_acl->restore_pkt_types) & 0xCC18;
+                UINT16 restore_pkt_types = p_acl->restore_pkt_types;
+                UINT16 supported = btm_cb.btm_acl_pkt_types_supported;
+                UINT16 base = (UINT16)(restore_pkt_types & supported) & 0xCC18;
                 if (btm_cb.local_version[0] >= 3) {
-                    pkt_types = (UINT16)(base |
-                                         ((btm_cb.btm_acl_pkt_types_supported |
-                                           p_acl->restore_pkt_types) & 0x3306));
+                    pkt_types = (UINT16)(base | ((restore_pkt_types | supported) & 0x3306));
                 } else {
                     pkt_types = (UINT16)(base & 0xFFFFCCF9);
                 }

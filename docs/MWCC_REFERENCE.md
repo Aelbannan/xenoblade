@@ -933,6 +933,10 @@ Went 92% HIGH_MATCH (110 structural) → 100% byte-identical via four source-sha
 - **Pointer-NULL cast form**: `if (x == NULL)` emits `cmpwi rX, 0`; the retail `li r0,0; cmplw rX,r0` needs the explicit cast `if (x == (ESTicketView*)NULL)` / `(void*)NULL` (same shape as esp.c `ESP_GetTitleId`).
 - **Store vs call-arg scheduling**: `state.BYTE_0x5 = 3; __OSWriteStateFlags(&state);` hoists the `addi r3,sp,0x60` call-arg before the `stb`; the pointer-form lvalue `(&state)->BYTE_0x5 = 3;` (or `((u8*)&state)[5] = 3`) emits retail's `stb; addi; bl` order. `-ipa off`, `-O4,s`, `-func_align 4`, and GC/3.0a3.4 all leave the swap unchanged.
 
+### RVL_SDK os/OS.c — ClearArena/ClearMEM2Arena FULL_MATCH: MemClear flush left-assoc pointer arithmetic coalesces the addis temp (Wii/1.1 `-O4,p`)
+
+OS.c went 18/20 → 20/20 byte-identical. The two residuals (ClearArena/ClearMEM2Arena, both 0 structural, 10 reg-swap) were the inlined static MemClear flush-pointer computation: retail computes `size - 0x40000` with an `addis` whose destination is coalesced into the final flush register (`addis r30,r31,-4; add r30,r3,r30`), while the decomp spilled the intermediate through `r0` (`addis r0,r31,-4; add r30,r3,r0`) at all 5 inline sites. The parenthesized form `(u8*)mem + (size - 0x40000)` forces a separate subexpression web that MWCC colors to the `r0` scratch; the left-associative form `(u8*)mem + size - 0x40000` lets the allocator coalesce the running address into the destination register, reproducing retail byte-for-byte. Ternary guard kept as-is (`(0x40000 < size) ? ... : mem`). Split PASS 0x1540 exact (0 spare); the other 18 functions (incl. OSInit/OSExceptionInit) were already 100%, confirming the unit is Wii/1.1 — no compiler-version change needed.
+
 ### RVL_SDK hbm/HBMBase.cpp — HomeButton retail layout vs ogws donor header (Wii/1.1 `-O4,p`)
 
 `getSelectBtnNum` (us-8032db80) and `setAdjustFlag` (us-8032dba0) were stuck at `CODE_MATCH` with 1–2 byte diffs that were pure **class-layout drift**, not codegen. The retail `homebutton::HomeButton` differs from the ogws donor header by three extra members + one removed pad:

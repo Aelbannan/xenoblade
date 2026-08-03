@@ -38,7 +38,17 @@ void AXRNA_SetTransSw() {}
 
 void AXRNA_SetPlaySw() {}
 
-void AXRNA_GetNumData() {}
+s32 AXRNA_GetNumData(void* self) {
+    if (self == NULL)
+        return -1;
+    {
+        u8* e = (u8*)self + (((s32)((s8)*(u8*)((u8*)self + 3) - 1) << 2) & 0xFFFFFFFC);
+        void* p = *(void**)((u8*)e + 0x30);
+        void* q = *(void**)((u8*)p + 0);
+        u32 r = (u32)((s32 (*)(void*, s32, void*))*(void**)((u8*)q + 36))(p, 0, q);
+        return 0x1000 - (s32)(r >> 1) - *(s32*)((u8*)self + 0x74);
+    }
+}
 
 typedef struct AXRNA { char pad0[3]; signed char type; char pad4[0x2c]; void *objs[1]; } AXRNA; int AXRNA_GetNumRoom(AXRNA *rna) { if (rna == NULL) { return -1; } void *obj = rna->objs[rna->type - 1]; int (*func)(void *, int) = ((int (**)(void *, int))(*(void ***)obj))[9]; return (unsigned int)func(obj, 0) >> 1; }
 

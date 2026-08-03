@@ -7609,3 +7609,9 @@ store-vs-return-li wall; resistant to source reordering.
 `if ((s32)lbl[i*0xE4] == 1)` — the (s32) cast on the u8 array element forces
 the retail's signed `cmpi` (the plain u8 compare emits `cmpli`). Also removed
 the conflicting `void AXRNA_Destroy(){}` stub in favor of the extern.
+
+### CriWare ax_rna AXRNA_GetNumData — 86.2% (0 structural, size exact)
+Indirect-call counter: `0x1000 - ((u32)r>>1) - *(self+0x74)` with the entry
+index `((s32)((s8)self[3]-1) << 2) & 0xFFFFFFFC` (the rlwinm SH=2 mask 0-29).
+The retail does the (r>>1) IN-PLACE (rlwinm r3,r3) with the self+0x74 load in
+r0; decomp swaps to r0/r3 — pure color rotation (4 reg_swap).

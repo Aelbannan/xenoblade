@@ -7615,3 +7615,9 @@ Indirect-call counter: `0x1000 - ((u32)r>>1) - *(self+0x74)` with the entry
 index `((s32)((s8)self[3]-1) << 2) & 0xFFFFFFFC` (the rlwinm SH=2 mask 0-29).
 The retail does the (r>>1) IN-PLACE (rlwinm r3,r3) with the self+0x74 load in
 r0; decomp swaps to r0/r3 — pure color rotation (4 reg_swap).
+
+### CriWare mpv_frm MPV_RequestStop — FULL_MATCH (return-through + return-1 tail)
+`if ((s32)*(handle+0xCFC) == 2) return MPVM2V_RequestStop(handle); return 1;`
+— the (s32) cast forces the signed cmpi; the `return 1` reuses the stw'd li r3,1
+(the retail's bne → epilogue with r3=1), and the v==2 path returns the
+MPVM2V_RequestStop result through (no extra li).

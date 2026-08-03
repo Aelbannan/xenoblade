@@ -255,7 +255,7 @@ void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
 
     if (event == 0x2100) {
         if (p_buf->len > btu_cb.hcit_acl_pkt_size) {
-            h2type = (UINT16)(p_data[0] + ((UINT16)p_data[1] << 8));
+            h2type = (UINT16)(p_data[0] + ((p_data[1] << 8) & 0xff00));
             h2type = (UINT16)((h2type & 0xCFFF) | 0x1000);
             h2type_hi = (UINT8)(h2type >> 8);
             p_data += 2;
@@ -269,17 +269,17 @@ void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf)
 
                 p[0] = (UINT8)h2type;
                 p[1] = h2type_hi;
-                p += 2;
+                p_data = p + 2;
 
                 if (p_buf->len > btu_cb.hcit_acl_pkt_size) {
-                    p[0] = (UINT8)btu_cb.hcit_acl_data_size;
-                    p[1] = (UINT8)(btu_cb.hcit_acl_data_size >> 8);
+                    p_data[0] = (UINT8)btu_cb.hcit_acl_data_size;
+                    p_data[1] = (UINT8)(btu_cb.hcit_acl_data_size >> 8);
+                    p_data += 2;
                 } else {
-                    p[0] = (UINT8)(p_buf->len - 4);
-                    p[1] = (UINT8)((p_buf->len - 4) >> 8);
+                    p_data[0] = (UINT8)(p_buf->len - 4);
+                    p_data[1] = (UINT8)((p_buf->len - 4) >> 8);
+                    p_data += 2;
                 }
-                p += 2;
-                p_data = p;
 
                 if (p_buf->layer_specific != 0) {
                     p_buf->layer_specific--;

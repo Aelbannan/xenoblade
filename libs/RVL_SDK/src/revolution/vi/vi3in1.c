@@ -468,12 +468,12 @@ void __VISetRevolutionModeSimple(void) {
     region = 1;
 
     bufA[0] = 0x6A;
-    bufA[1] = 0x01;
+    bufA[1] = (u8)region;
     __VISendI2CData(0xE0, bufA, 2);
     WaitMicroTime(2);
 
     bufB[0] = 0x65;
-    bufB[1] = 0x01;
+    bufB[1] = (u8)region;
     __VISendI2CData(0xE0, bufB, 2);
     WaitMicroTime(2);
 

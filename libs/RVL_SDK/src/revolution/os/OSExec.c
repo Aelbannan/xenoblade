@@ -11,12 +11,14 @@
 
 BOOL __OSInReboot;
 
+#pragma dont_inline on
 void Run(void (*func)(void)) {
     ICFlashInvalidate();
     __sync();
     __isync();
     func();
 }
+#pragma dont_inline off
 
 void __OSGetExecParams(OSExecParams* out) {
     if ((void*)OS_DOL_EXEC_PARAMS >= (void*)0x80000000) {
@@ -471,8 +473,212 @@ void __OSLaunchNextFirmware(void) {
     }
 }
 
+/* .sdata:0x80663240 "%016llx" — retail snprintf format, referenced via
+ * sda21 from __OSBootDolSimple. */
+extern const char lbl_80665B70[8];
+
+/* .data:0x8054E8B0 "2004/02/01" — retail apploader date string. */
+extern const char lbl_80551F90[0x10];
+
+/* Missing from revolution/dvd.h. */
+extern void DVDSetAutoInvalidation(BOOL invalidate);
+
+/* Defined at the end of this TU (retail .fn Callback, local). */
+extern void Callback(void);
+extern volatile int Prepared;
+
+/*
+ * Reads the apploader/DOL start sector from the disc and caches it.
+ * 0x800030F4 holds the apploader start offset; the 0x40-byte header read
+ * carries the size at +0x38. The cached value is 0x910 when the disc has
+ * no apploader region. Inlined into __OSBootDolSimple (retail has no
+ * standalone symbol; the cache lives in .sbss as
+ * "@LOCAL@GetApploaderPosition__Fv@apploaderPosition").
+ */
+#pragma push
+#pragma inline_max_size(10000)
+#pragma inline_max_total_size(10000)
+static __inline s32 GetApploaderPosition(DVDCommandBlock *cb) {
+    static s32 apploaderPosition;
+
+    if (apploaderPosition != 0) {
+        return apploaderPosition;
+    }
+    if (*(s32 *)0x800030F4 != 0) {
+        u8 *buf;
+        u32 pos;
+
+        buf = (u8 *)OSAllocFromMEM1ArenaLo(0x40, 0x20);
+        pos = (u32)(*(s32 *)0x800030F4 >> 2);
+        DVDReadAbsAsyncPrio(cb, buf, 0x40, pos, 0, 0);
+        while (DVDGetCommandBlockStatus(cb) != 0) {
+            if (DVDGetCommandBlockStatus(cb) > 2 ||
+                DVDGetCommandBlockStatus(cb) < 0) {
+                __OSReturnToMenuForError();
+            }
+        }
+        apploaderPosition = (*(s32 *)0x800030F4 + *(s32 *)(buf + 0x38)) >> 2;
+    } else {
+        apploaderPosition = 0x910;
+    }
+    return apploaderPosition;
+}
+#pragma pop
+
+/*
+ * Boots the game DOL: prepares the boot-args block, resets the DVD layer,
+ * then either runs the disc apploader (which streams the DOL) or loads the
+ * DOL directly at 0x81330000. param1 == -1 selects the apploader path
+ * (normal disc boot); otherwise the DOL is read raw at
+ * apploaderPosition + ((cb[5] + 0x20) >> 2).
+ */
 void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
-                       s32 param5, u32 argc, void* argv);
+                       s32 param5, s32 argc, char *argv[]) {
+    u32 entry;
+    void *p2;
+    void *p3;
+    s32 *p;
+    s32 *cb;
+    s32 apploaderPosition;
+    void *args;
+    DVDCommandBlock cb8[8] ALIGN(32);
+    ESTitleId titleId ALIGN(32);
+    u32 c;
+    u32 b;
+    u32 a;
+    u32 v2;
+    u32 v1;
+    u32 v0;
+    s32 cmpRes;
+
+    OSDisableInterrupts();
+    if (__OSInReboot) {
+        __OSNextPartitionType = (void *)*(u32 *)0x80003194;
+    }
+    __OSRestoreCodeExecOnMEM1(0xBA2CF);
+
+    p = (s32 *)OSAllocFromMEM1ArenaLo(0x1C, 1);
+    p[0] = 1;
+    p[1] = (s32)param2;
+    p[3] = (s32)regionStart;
+    p[4] = (s32)regionEnd;
+    p[5] = param5;
+
+    if (param5 == 0) {
+        args = OSAllocFromMEM1ArenaLo(0x2000, 1);
+        p[6] = (s32)args;
+        if ((u32)__OSNextPartitionType == 2 && !__OSInReboot) {
+            PackInstallerArgs((void *)p[6], argc, argv);
+        } else {
+            PackArgs((void *)p[6], argc, argv);
+        }
+    }
+
+    DVDInit();
+    DVDSetAutoInvalidation(TRUE);
+    DVDResume();
+    Prepared = 0;
+    __DVDPrepareResetAsync((DVDCommandCallback)Callback);
+    __OSMaskInterrupts(-0x10);
+    __OSUnmaskInterrupts(0x10);
+    OSEnableInterrupts();
+    while (Prepared != 1) {
+        ;
+    }
+    __OSLaunchNextFirmware();
+
+    if (param2 == 0xA0000000 && !__OSInReboot) {
+        if (ESP_InitLib() == 0 && ESP_GetTitleId(&titleId) == 0 &&
+            ESP_CloseLib() == 0) {
+            snprintf((char *)p[6] + (u32)argv[1], 0x11, lbl_80665B70,
+                     titleId);
+        }
+    }
+
+    cb = (s32 *)OSAllocFromMEM1ArenaLo(0x20, 0x20);
+    apploaderPosition = GetApploaderPosition(&cb8[4]);
+    DVDReadAbsAsyncPrio(&cb8[5], cb, 0x20, (u32)apploaderPosition, 0, 0);
+    while (DVDGetCommandBlockStatus(&cb8[5]) != 0) {
+        if (DVDGetCommandBlockStatus(&cb8[5]) > 2 ||
+            DVDGetCommandBlockStatus(&cb8[5]) < 0) {
+            __OSReturnToMenuForError();
+        }
+    }
+
+    apploaderPosition = GetApploaderPosition(&cb8[6]);
+    DVDReadAbsAsyncPrio(&cb8[7], (void *)0x81200000,
+                        (cb[5] + 0x1F) & ~0x1F, (u32)apploaderPosition + 8,
+                        0, 0);
+    while (DVDGetCommandBlockStatus(&cb8[7]) != 0) {
+        if (DVDGetCommandBlockStatus(&cb8[7]) > 2 ||
+            DVDGetCommandBlockStatus(&cb8[7]) < 0) {
+            __OSReturnToMenuForError();
+        }
+    }
+    ICInvalidateRange((void *)0x81200000, (cb[5] + 0x1F) & ~0x1F);
+
+    if (strncmp((char *)cb, lbl_80551F90, 0xA) > 0) {
+        cmpRes = 1;
+    } else {
+        cmpRes = 0;
+    }
+    if (cmpRes) {
+        /* Disc apploader path: run the apploader, then stream the DOL
+         * through its callbacks. */
+        if ((u32)param1 == 0xFFFFFFFF) {
+            apploaderPosition = GetApploaderPosition(&cb8[3]);
+            param1 = apploaderPosition + ((u32)(cb[5] + 0x20) >> 2);
+        }
+        p[2] = param1;
+        ((void (*)(u32 *, u32 *, u32 *))cb[4])(&v0, &v1, &v2);
+
+        p2 = OSAllocFromMEM1ArenaLo(0x1C, 1);
+        memcpy(p2, p, 0x1C);
+        *(u32 *)0x800030F0 = (u32)p2;
+        ((void (*)(s32))v0)((s32)&OSReport);
+        OSSetArenaLo(p2);
+
+        while (((s32(*)(u32 *, u32 *, u32 *))v1)(&a, &b, &c) != 0) {
+            DVDReadAbsAsyncPrio(&cb8[2], (void *)a, b,
+                                c >> __DVDLayoutFormat, 0, 0);
+            while (DVDGetCommandBlockStatus(&cb8[2]) != 0) {
+                if (DVDGetCommandBlockStatus(&cb8[2]) > 2 ||
+                    DVDGetCommandBlockStatus(&cb8[2]) < 0) {
+                    __OSReturnToMenuForError();
+                }
+            }
+        }
+        entry = ((u32(*)())v2)();
+        *(u32 *)0x80003180 = *(u32 *)0x80000000;
+        *(u8 *)0x80003184 = 0x80;
+        p3 = OSAllocFromMEM1ArenaLo(0x1C, 1);
+        memcpy(p3, p, 0x1C);
+        *(u32 *)0x800030F0 = (u32)p3;
+        *(u32 *)0xCC003024 = 7;
+        OSDisableInterrupts();
+        Run((void (*)(void))entry);
+    } else {
+        /* Direct DOL boot at 0x81330000. */
+        *(u32 *)0x812FDFF0 = regionStart;
+        *(u32 *)0x812FDFEC = regionEnd;
+        *(u8 *)0x800030E2 = 1;
+        apploaderPosition = GetApploaderPosition(&cb8[1]);
+        DVDReadAbsAsyncPrio(&cb8[0], (void *)0x81330000,
+                            (cb[6] + 0x1F) & ~0x1F,
+                            (u32)apploaderPosition + ((u32)(cb[5] + 0x20) >> 2),
+                            0, 0);
+        while (DVDGetCommandBlockStatus(&cb8[0]) != 0) {
+            if (DVDGetCommandBlockStatus(&cb8[0]) > 2 ||
+                DVDGetCommandBlockStatus(&cb8[0]) < 0) {
+                __OSReturnToMenuForError();
+            }
+        }
+        ICInvalidateRange((void *)0x81330000, (cb[6] + 0x1F) & ~0x1F);
+        OSDisableInterrupts();
+        ICFlashInvalidate();
+        Run((void (*)(void))0x81330000);
+    }
+}
 
 /* .sdata:0x80663248 "%d" — retail sprintf format string, referenced via
  * sda21 from __OSBootDol (MWCC_REFERENCE §1h: fixed-size extern keeps the
@@ -510,7 +716,7 @@ void __OSBootDol(u32 doloffset, u32 restartCode, u32* argv) {
 }
 
 
-extern int Prepared;
+extern volatile int Prepared;
 void Callback() {
     Prepared = 1;
 }

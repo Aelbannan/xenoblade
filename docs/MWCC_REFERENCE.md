@@ -7642,3 +7642,10 @@ The s64 fixed-point `(val_a * val_b) / val_d` with the accumulation
 a_lo; param[0] b_lo] with the op31_11 (mulhw) interleaving; decomp reverses
 the load order and colors (r9/r8) — 3 structural + 12 reg_swap, size exact.
 Semantically correct s64 form retained.
+
+### CriWare store-scheduling wall — 4 more instances (96-98%)
+MWSST_Destroy 98.1%, mwPlyStartSeamless 97.2%, sftim_GetTimeExtClock 96.5%,
+SFTMR_GetTmr 96.3% — all size-exact with 2 structural: a store is scheduled
+AFTER an independent following op (cmpi/lis/lwz/srawi) in decomp vs BEFORE in
+retail. Same family as the store-vs-return-li wall; source reordering and
+volatile don't change it.

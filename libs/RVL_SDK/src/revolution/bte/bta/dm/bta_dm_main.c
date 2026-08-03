@@ -5,6 +5,7 @@
 #include <revolution/BTE/gki/platform/data_types.h>
 #include <revolution/BTE/stack/include/bt_types.h>
 #include <revolution/BTE/bta/sys/bta_sys.h>
+#include <revolution/bte/bta/dm/bta_dm_int.h>
 
 /* --- DM control block --- */
 
@@ -14,10 +15,6 @@
 struct bta_dm_cb_t {
     unsigned char data[0x72];
 } bta_dm_cb;
-
-/* --- Forward declarations --- */
-
-struct bta_dm_msg;
 
 /* --- DM state machine constants --- */
 

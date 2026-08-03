@@ -7,6 +7,7 @@
 #include <revolution/BTE/bta/include/bd.h>
 #include <revolution/BTE/bta/sys/bta_sys.h>
 #include <revolution/BTE/stack/include/btm_api.h>
+#include <revolution/bte/bta/dm/bta_dm_int.h>
 
 /* DM PM timer event id (BTA_SYS_EVT_START(BTA_ID_DM) + 10) */
 #define BTA_DM_PM_TIMER_EVT 0x10A
@@ -37,8 +38,6 @@
 #define BTA_DM_PM_ACT_PARK 0x10
 
 #define BTA_DM_NUM_CONN_SRVCS 5
-
-struct bta_dm_msg;
 
 /* Peer device entry: 0xB bytes, list at bta_dm_cb+0x0, count at +0x4D. */
 typedef struct
@@ -147,29 +146,11 @@ extern tBTM_PM_PWR_MD *p_bta_dm_pm_md;
 extern UINT8 appl_trace_level;
 extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
 extern void bta_dm_pm_set_mode(BD_ADDR bd_addr, BOOLEAN timed_out);
-struct bta_dm_pm_btm_status;
-extern void bta_dm_pm_btm_status(struct bta_dm_pm_btm_status *p_data);
+extern void bta_dm_pm_btm_status(struct bta_dm_msg *p_data);
 extern void bta_dm_pm_timer_cback(void *p_tle);
 
-/* PM BTM-status message: BT_HDR (8 bytes), peer BD address, then the
-   BTM power-manager callback payload. */
-struct bta_dm_pm_btm_status
-{
-    unsigned short event;      /* 0x00 */
-    unsigned char _pad[6];     /* 0x02-0x07 */
-    BD_ADDR bd_addr;           /* 0x08 */
-    unsigned char status;      /* 0x0E */
-    unsigned short value;      /* 0x10 */
-    unsigned char mode;        /* 0x12 */
-};                             /* 0x14 */
-
-/* PM timer message: BT_HDR (8 bytes) followed by the peer BD address. */
-struct bta_dm_pm_msg
-{
-    unsigned short event;      /* 0x00 */
-    unsigned char _pad[6];     /* 0x02-0x07 */
-    BD_ADDR bd_addr;           /* 0x08 */
-};
+/* PM message types (bta_dm_pm_msg, bta_dm_pm_btm_status) are provided by
+   <revolution/bte/bta/dm/bta_dm_int.h>. */
 
 extern void bta_sys_sendmsg(void *p_msg);
 
@@ -449,7 +430,7 @@ void bta_dm_pm_btm_cback(BD_ADDR bd_addr, tBTM_PM_STATUS status,
 
     if ((p_buf = (struct bta_dm_pm_btm_status *)GKI_getbuf(
              sizeof(struct bta_dm_pm_btm_status))) != NULL) {
-        p_buf->event = BTA_DM_PM_BTM_STATUS_EVT;
+        p_buf->hdr.event = BTA_DM_PM_BTM_STATUS_EVT;
         p_buf->status = status;
         p_buf->value = value;
         p_buf->mode = mode;
@@ -484,14 +465,14 @@ void bta_dm_pm_timer_cback(void *p_tle) {
 
     if (timer_id != BTA_DM_PM_MODE_TIMER_ID_MAX) {
         if ((p_msg = (struct bta_dm_pm_msg *)GKI_getbuf(sizeof(struct bta_dm_pm_msg))) != NULL) {
-            p_msg->event = BTA_DM_PM_TIMER_EVT;
+            p_msg->hdr.event = BTA_DM_PM_TIMER_EVT;
             bdcpy(p_msg->bd_addr, bta_dm_cb.pm_timer[timer_id].bd_addr);
             bta_sys_sendmsg(p_msg);
         }
     }
 }
 
-void bta_dm_pm_btm_status(struct bta_dm_pm_btm_status *p_status)
+void bta_dm_pm_btm_status(struct bta_dm_msg *p_data)
 {
     tBTA_DM_PEER_DEVICE *p_dev;
     UINT8 i;
@@ -499,32 +480,32 @@ void bta_dm_pm_btm_status(struct bta_dm_pm_btm_status *p_status)
     /* stop the PM timer for this device if one is running */
     for (i = 0; i < BTA_DM_NUM_PM_TIMER; i++) {
         if (bta_dm_cb.pm_timer[i].in_use &&
-            !bdcmp(bta_dm_cb.pm_timer[i].bd_addr, p_status->bd_addr)) {
+            !bdcmp(bta_dm_cb.pm_timer[i].bd_addr, p_data->pm_btm_status.bd_addr)) {
             bta_sys_stop_timer((TIMER_LIST_ENT *)&bta_dm_cb.pm_timer[i].timer);
             bta_dm_cb.pm_timer[i].in_use = FALSE;
             break;
         }
     }
 
-    switch (p_status->status) {
+    switch (p_data->pm_btm_status.status) {
     case BTM_PM_STS_ACTIVE:
-        if (p_status->mode != 0) {
+        if (p_data->pm_btm_status.mode != 0) {
             for (i = 0; i < bta_dm_cb.device_list_count; i++) {
                 if (!bdcmp(bta_dm_cb.device_list[i].peer_bdaddr,
-                           p_status->bd_addr)) {
+                           p_data->pm_btm_status.bd_addr)) {
                     p_dev = &bta_dm_cb.device_list[i];
                     if (p_dev->pm_mode_attempted &
                         (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF)) {
                         p_dev->pm_mode_failed |=
                             (BTA_DM_PM_PARK | BTA_DM_PM_SNIFF) &
                             p_dev->pm_mode_attempted;
-                        bta_dm_pm_set_mode(p_status->bd_addr, FALSE);
+                        bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
                     }
                     break;
                 }
             }
         } else {
-            bta_dm_pm_set_mode(p_status->bd_addr, FALSE);
+            bta_dm_pm_set_mode(p_data->pm_btm_status.bd_addr, FALSE);
         }
         break;
     default:
@@ -533,7 +514,5 @@ void bta_dm_pm_btm_status(struct bta_dm_pm_btm_status *p_status)
 }
 
 void bta_dm_pm_timer(struct bta_dm_msg *p_data) {
-    struct bta_dm_pm_msg *msg = (struct bta_dm_pm_msg *)p_data;
-
-    bta_dm_pm_set_mode(msg->bd_addr, 1);
+    bta_dm_pm_set_mode(p_data->pm.bd_addr, 1);
 }

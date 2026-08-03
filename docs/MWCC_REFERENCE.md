@@ -7536,3 +7536,11 @@ intrinsics — signature-checked; __dcbi is not.)
   [lwz 4; lwzu 8; stw 4; stwu 8; mtctr/bdnz] vs decomp [lwz 0; addic; lwz 4;
   addi 8; ...; addic./bne] — load order + lwzu/stwu fusion + CTR-vs-addic are
   scheduler choices.
+
+### CriWare sfd_vom SFVOM_GetRead — 92% (goto-call layout; store/li order wall)
+The call block must be pushed to the bottom via `goto call` (the natural
+if/else puts the zero-path at the bottom). The call is **4-arg**:
+SFBUF_VfrmGetRead(self, *(self+0x2180), out, arg3). The || type test folds to a
+range check [subi 3; cmpli 1] (retail keeps two cmpi's — acceptable). Residual 2
+structural: retail [li r0,0; stw *out; li r3,0] (store between the li's) vs
+decomp [li r0,0; li r3,0; stw] — a scheduler merge.

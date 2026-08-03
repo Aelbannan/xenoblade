@@ -7169,3 +7169,36 @@ constant in the compiler pool and ignores the file's `extern double
 lbl_eu_805162D8;`. Manual conversion forms (`(double)(u32)(t1 ^ 0x80000000) -
 lbl_eu_805162D8`) flip the path to the 0x4330 double-trick (+0x4330 lis, 48-byte
 frame). 9 structural are the xoris/lfd/fsubs interleave + lis color (r5 vs r6).
+
+## RVL_SDK revolution/wud WUD.c — constant-bound clear loops: MWCC unroll factor depends on body statement count (Wii/1.1 `-O4,p -inline on`)
+
+`__wudClearControlBlock` (us-8037b860) clears `_dev_handle_to_bda[16]`,
+`_dev_handle_queue_size[16]`, `_dev_handle_notack_num[16]` in one
+`for (h = 0; h < 16; h++)` loop. Retail keeps a count-2 countdown loop with
+byte-masked indexed stores (`li r0,2; mtctr; clrlslwi …; stwx/sthx`),
+**not** a fully unrolled 48-store straight-line block.
+
+Scratch-verified (all compilers Wii/1.0/1.0a/1.1/1.6/1.7 and GC/3.0a3..3.0a5.2,
+all `-O4,p`/`-O4,s`/`-O3` and `-ipa`/`-func_align`/`-inline` combos):
+- A 3-statement loop body (3 array stores) with a constant bound ALWAYS fully
+  unrolls (16×, 48 direct `stw/sth`).
+- A 4-statement body (4 effective stores) unrolls ×8 → the retail count-2
+  shape with `(h&0xFF)<<k` masked indices.
+- A 4th statement whose value folds into an existing store (e.g.
+  `qsz[h] = (u16)(h*0);` or `qsz[h] = (u16)(qsz[h]|0);`, i.e. the dedup happens
+  AFTER the unroll decision) still triggers ×8 while emitting only 3 stores.
+  Syntactic dups (`qsz[h]=0; qsz[h]=0;`) dedup early and stay fully unrolled.
+- The ×8 shape's addressing is then FOLDED (`add rX,base,idx; stw r0,0xDC0(rX)`)
+  rather than retail's INDEXED (`stwx` with pre-computed base registers), and
+  the two u16 stores can come out reversed (na before qsz) — so the shape alone
+  does not byte-match the retail loop; no source form found reproduces the
+  retail indexed addressing + ascending store order. Accept at EQUIVALENT_MATCH
+  via SMT (loop semantics are identical) rather than chasing byte identity.
+
+Also: WUDCB is only the 0x0..0x750 head of the unit's bss blob; retail code
+reaches `_scArray`/`_spArray`/`_dev_handle_to_bda`/`_dev_handle_queue_size`/
+`_dev_handle_notack_num` as STRUCT MEMBERS at wudcb+0x8B8/0x1F60/0xDC0/0x2168/
+0x2188 in WUDShutdown/__wudClearControlBlock while other functions (already
+FULL_MATCH) use the separate bss symbols via lis/addi — both access styles
+coexist in retail; keep the separate globals AND add struct fields at the same
+offsets (additive WUDCB extension) so each function compiles to its retail form.

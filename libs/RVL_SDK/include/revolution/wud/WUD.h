@@ -73,7 +73,7 @@ BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
 void WUDRegisterAllocator(WUDAllocFunc pAllocFunc, WUDFreeFunc pFreeFunc);
 u32 WUDGetAllocatedMemSize(void);
-void WUDShutdown(void);
+void WUDShutdown(BOOL onReconnect);
 
 WUDLibStatus WUDGetStatus(void);
 u8 WUDGetBufferStatus(void);

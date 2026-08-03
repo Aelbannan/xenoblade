@@ -1007,6 +1007,7 @@ void WUDiMoveBottomStdDevInfoPtr(WUDDevInfo* pInfo) {
 
 
 void WUDiMoveTopOfDisconnectedStdDevice(WUDDevInfo* pInfo) {
+    extern char lbl_80562530[];
     WUDCB* p = &_wcb;
     int i;
     BOOL enabled;
@@ -1024,8 +1025,17 @@ void WUDiMoveTopOfDisconnectedStdDevice(WUDDevInfo* pInfo) {
                 continue;
             }
 
+            // Standard devices (status <= 1) are always candidates; devices
+            // with status > 1 are candidates only when they are not the
+            // standard Wiimote descriptor and a WBC is linked.
             if (pIt->devInfo->status > 1) {
-                continue;
+                if (memcmp(pIt->devInfo, lbl_80562530,
+                           sizeof("Nintendo RVL-CNT")) != 0 &&
+                    _linkedWBC != 0) {
+                    /* candidate */
+                } else {
+                    continue;
+                }
             }
 
             if (WUD_BDCMP(p->stdListHead->devInfo->devAddr,
@@ -1240,15 +1250,14 @@ u8 __wudSyncTryConnect(void) {
 
     return ret;
 }
-void WUDShutdown(void) {
+void WUDShutdown(BOOL onReconnect) {
     WUDCB* p = &_wcb;
     BOOL enabled;
+    u8 num;
     int i;
     WUDDevInfoList* pIt;
 
     DEBUGPrint("WUDShutdown()\n");
-
-    WUDSetVisibility(FALSE, FALSE);
 
     enabled = OSDisableInterrupts();
 
@@ -1256,14 +1265,40 @@ void WUDShutdown(void) {
         OSCancelAlarm(&p->alarm);
     }
 
-    memset(_scArray.devices, 0,
+    memset(p->scArray.devices, 0,
            sizeof(SCBtDeviceInfo) * WUD_MAX_DEV_ENTRY_FOR_STD);
 
-    for (i = 0, pIt = _wcb.stdListHead; pIt != NULL; pIt = pIt->next, i++) {
-        WUD_BDCPY(_scArray.devices[i].addr, pIt->devInfo->devAddr);
+    for (i = 0, pIt = p->stdListHead; pIt != NULL; pIt = pIt->next, i++) {
+        WUD_BDCPY(p->scArray.devices[i].addr, pIt->devInfo->devAddr);
 
-        memcpy(&_scArray.devices[i].info, &pIt->devInfo->conf,
+        memcpy(&p->scArray.devices[i].info, pIt->devInfo->devAddr,
                sizeof(SCDevInfo));
+    }
+
+    enabled = OSDisableInterrupts();
+    num = p->devNums;
+    OSRestoreInterrupts(enabled);
+    p->scArray.numRegist = num;
+
+    memset(&p->spArray.regist, 0,
+           sizeof(SCBtCmpDevInfo) * WUD_MAX_DEV_ENTRY_FOR_SMP);
+
+    if (onReconnect) {
+        for (i = 0, pIt = p->smpListHead; pIt != NULL; pIt = pIt->next, i++) {
+            WUD_BDCPY(p->spArray.regist[i].addr, pIt->devInfo->devAddr);
+
+            memcpy(&p->spArray.regist[i].info, pIt->devInfo->devAddr,
+                   sizeof(SCDevInfo));
+            memcpy(&p->spArray.regist[i].linkKey, pIt->devInfo->linkKey,
+                   sizeof(LINK_KEY));
+        }
+
+        enabled = OSDisableInterrupts();
+        num = p->devSmpNums;
+        OSRestoreInterrupts(enabled);
+        p->spArray.numRegist = num;
+    } else {
+        p->spArray.numRegist = 0;
     }
 
     p->shutdownState = WUD_STATE_SHUTDOWN_STORE_SETTINGS;
@@ -3102,23 +3137,20 @@ void __wudClearControlBlock(void) {
     DEBUGPrint(lbl_80562A20);
 
     for (h = 0; h < WUD_MAX_DEV_ENTRY; h++) {
-        _dev_handle_to_bda[h] = NULL;
-        _dev_handle_queue_size[h] = 0;
-        _dev_handle_notack_num[h] = 0;
+        p->devHandleToBda[h] = NULL;
+        p->devHandleQueueSize[h] = 0;
+        p->devHandleNotAckNum[h] = 0;
     }
 
     p->smpListHead = &p->smpList[0];
     p->smpListTail = &p->smpList[WUD_MAX_DEV_ENTRY_FOR_SMP - 1];
 
-    for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP / 2; i++) {
-        p->smpList[2 * i].devInfo =
-            &p->smpDevs[WUD_MAX_DEV_ENTRY_FOR_SMP - 1 - i];
-        p->smpList[2 * i].prev = i == 0 ? NULL : &p->smpList[i - 1];
-        p->smpList[2 * i].next = i == WUD_MAX_DEV_ENTRY_FOR_SMP - 1
-                                     ? NULL
-                                     : &p->smpList[i + 1];
-        p->smpList[2 * i + 1].devInfo =
-            &p->smpDevs[WUD_MAX_DEV_ENTRY_FOR_SMP - 2 - i];
+    for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
+        p->smpList[i].devInfo = &p->smpDevs[WUD_MAX_DEV_ENTRY_FOR_SMP - 1 - i];
+        p->smpList[i].prev = i == 0 ? NULL : &p->smpList[i - 1];
+        p->smpList[i].next = i == WUD_MAX_DEV_ENTRY_FOR_SMP - 1
+                                 ? NULL
+                                 : &p->smpList[i + 1];
     }
 
     p->stdListHead = &p->stdList[0];

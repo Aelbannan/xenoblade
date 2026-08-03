@@ -198,6 +198,25 @@ typedef struct WUDCB {
 
     s16 UNK_0x748; // at 0x748
     s16 UNK_0x74A; // at 0x74A
+    u8 pad_0x74C[0x4]; // at 0x74C
+
+    // Retail bss blob continues past the WUDCB struct proper; the members
+    // below mirror the remaining globals in this TU's .bss region
+    // (0x750..0x21A8) and are accessed as struct members by some functions.
+    WUDDiscResp discResp;                            // at 0x750
+    WUDDevInfo discWork;                             // at 0x858
+    SCBtDeviceInfoArray scArray;                     // at 0x8B8
+    u8 pad_0xD19[0x7];                               // at 0xD19
+    u8 nandWbcInfo[0xA0];                            // at 0xD20
+    BD_ADDR_PTR devHandleToBda[WUD_MAX_DEV_ENTRY];   // at 0xDC0
+    u8 pad_0xE00[0x8C];                              // NANDFileInfo at 0xE00
+    u8 pad_0xE8C[0xBC];                              // NANDCommandBlock at 0xE8C
+    u8 pad_0xF48[0x18];                              // at 0xF48
+    u8 handlerStack[0x1000];                         // at 0xF60
+    SCBtCmpDevInfoArray spArray;                     // at 0x1F60
+    u8 pad_0x2165[0x3];                              // at 0x2165
+    u16 devHandleQueueSize[WUD_MAX_DEV_ENTRY];       // at 0x2168
+    u16 devHandleNotAckNum[WUD_MAX_DEV_ENTRY];       // at 0x2188
 } WUDCB;
 
 extern WUDCB __rvl_wudcb;

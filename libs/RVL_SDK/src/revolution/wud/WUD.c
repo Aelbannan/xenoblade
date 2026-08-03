@@ -1591,34 +1591,33 @@ void __wudSyncHandler(void) {
     case WUD_STATE_SYNC_WAIT_FOR_START_SEARCH: {
         u8 linkNum;
         u8 connNum;
+        u8 nextState;
 
         if (p->syncLoopNum == 0) {
-            p->syncState = WUD_STATE_SYNC_DONE;
-            break;
-        }
-
-        enabled = OSDisableInterrupts();
-        linkNum = p->linkedNum;
-        OSRestoreInterrupts(enabled);
-
-        if (linkNum == WUD_MAX_CHANNELS) {
+            nextState = WUD_STATE_SYNC_DONE;
+        } else {
             enabled = OSDisableInterrupts();
-            connNum = p->connectedNum;
+            linkNum = p->linkedNum;
             OSRestoreInterrupts(enabled);
 
-            if (connNum == WUD_MAX_CHANNELS) {
-                p->syncState = WUD_STATE_SYNC_DONE;
-                break;
+            if (linkNum == WUD_MAX_CHANNELS &&
+                (enabled = OSDisableInterrupts(),
+                 connNum = p->connectedNum, OSRestoreInterrupts(enabled),
+                 connNum) == WUD_MAX_CHANNELS) {
+                nextState = WUD_STATE_SYNC_DONE;
+            } else {
+                p->UNK_0x748--;
+
+                if (p->UNK_0x748 < 0) {
+                    nextState = WUD_STATE_SYNC_START_SEARCH;
+                } else {
+                    nextState =
+                        WUD_STATE_SYNC_WAIT_FOR_START_SEARCH;
+                }
             }
         }
 
-        p->UNK_0x748--;
-
-        if (p->UNK_0x748 < 0) {
-            p->syncState = WUD_STATE_SYNC_START_SEARCH;
-        } else {
-            p->syncState = WUD_STATE_SYNC_WAIT_FOR_START_SEARCH;
-        }
+        p->syncState = nextState;
         break;
     }
 
@@ -1654,31 +1653,6 @@ void __wudSyncHandler(void) {
         _wudDiscNumResps = 0;
         memset(&_wudDiscResp, 0, sizeof(WUDDiscResp));
         BTA_DmSearch(&dm_inq, 0, __wudSearchEventStackCallback);
-        p->syncState = WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT;
-        break;
-    }
-
-    case WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT: {
-        u8 linkNum;
-        u8 connNum;
-
-        enabled = OSDisableInterrupts();
-        linkNum = p->linkedNum;
-        OSRestoreInterrupts(enabled);
-
-        if (linkNum == WUD_MAX_CHANNELS) {
-            enabled = OSDisableInterrupts();
-            connNum = p->connectedNum;
-            OSRestoreInterrupts(enabled);
-
-            if (connNum == WUD_MAX_CHANNELS) {
-                DEBUGPrint(pMsg + 0x3F8);
-                BTA_DmSearchCancel();
-                p->syncState = WUD_STATE_SYNC_CANCEL_SEARCH;
-                break;
-            }
-        }
-
         p->syncState = WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT;
         break;
     }
@@ -1878,21 +1852,18 @@ void __wudSyncHandler(void) {
         OSRestoreInterrupts(enabled);
 
         if (pWork == NULL) {
-            p->syncState = WUD_STATE_SYNC_ERROR;
-            break;
+            nextState = WUD_STATE_SYNC_ERROR;
+        } else if (pWork->status != 0) {
+            nextState = WUD_STATE_SYNC_ERROR;
+        } else {
+            memcpy(pWork, &_wudDiscWork, sizeof(WUDDevInfo));
+            WUDiRegisterDevice(pWork->devAddr);
+            WUDiMoveTopSmpDevInfoPtr(pWork);
+            _dev_handle_to_bda[pWork->devHandle] = pWork->devAddr;
+            nextState = WUD_STATE_SYNC_COMPLETE;
         }
 
-        if (pWork->status != 0) {
-            p->syncState = WUD_STATE_SYNC_ERROR;
-            break;
-        }
-
-        memcpy(pWork, &_wudDiscWork, sizeof(WUDDevInfo));
-        WUDiRegisterDevice(pWork->devAddr);
-        WUDiMoveTopSmpDevInfoPtr(pWork);
-        _dev_handle_to_bda[pWork->devHandle] = pWork->devAddr;
-
-        p->syncState = WUD_STATE_SYNC_COMPLETE;
+        p->syncState = nextState;
         break;
     }
 
@@ -1911,51 +1882,58 @@ void __wudSyncHandler(void) {
     case WUD_STATE_SYNC_STORED_LINK_KEY_TO_EEPROM: {
         WUDDevInfo* pInfo;
         u8 linkKeyState;
+        u8 nextState;
 
         linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
 
         if (linkKeyState) {
-            p->syncState = WUD_STATE_SYNC_STORED_LINK_KEY_TO_EEPROM;
-            break;
+            nextState = WUD_STATE_SYNC_STORED_LINK_KEY_TO_EEPROM;
+        } else if (_linkedWBC != 0 &&
+                   memcmp(&_wudDiscWork, pMsg + 0x27C,
+                          sizeof(LINK_KEY)) == 0) {
+
+            nextState = WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
+        } else {
+            pInfo = WUDiGetDevInfo(_wudDiscWork.devAddr);
+
+            DEBUGPrint(pMsg + 0x360);
+            DEBUGPrint(pMsg + 0x378, pInfo->devAddr[0], pInfo->devAddr[1],
+                       pInfo->devAddr[2], pInfo->devAddr[3],
+                       pInfo->devAddr[4], pInfo->devAddr[5]);
+
+            // clang-format off
+            DEBUGPrint(pMsg + 0x3A0,
+                       pInfo->linkKey[0],  pInfo->linkKey[1],  pInfo->linkKey[2],  pInfo->linkKey[3],
+                       pInfo->linkKey[4],  pInfo->linkKey[5],  pInfo->linkKey[6],  pInfo->linkKey[7],
+                       pInfo->linkKey[8],  pInfo->linkKey[9],  pInfo->linkKey[10], pInfo->linkKey[11],
+                       pInfo->linkKey[12], pInfo->linkKey[13], pInfo->linkKey[14], pInfo->linkKey[15]);
+            // clang-format on
+
+            p->linkKeyState = WUD_STATE_LINK_KEY_WRITING;
+
+            BTM_WriteStoredLinkKey(1, &pInfo->devAddr, &pInfo->linkKey,
+                                   (tBTM_CMPL_CB*)__wudLinkKeyEventStackCallback);
+
+            nextState = WUD_STATE_SYNC_WAIT_FOR_STORING;
         }
 
-        if (_linkedWBC != 0 &&
-            memcmp(&_wudDiscWork, pMsg + 0x27C, sizeof(LINK_KEY)) == 0) {
-
-            p->syncState = WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
-            break;
-        }
-
-        pInfo = WUDiGetDevInfo(_wudDiscWork.devAddr);
-
-        DEBUGPrint(pMsg + 0x360);
-        DEBUGPrint(pMsg + 0x378, pInfo->devAddr[0], pInfo->devAddr[1],
-                   pInfo->devAddr[2], pInfo->devAddr[3], pInfo->devAddr[4],
-                   pInfo->devAddr[5]);
-
-        // clang-format off
-        DEBUGPrint(pMsg + 0x3A0,
-                   pInfo->linkKey[0],  pInfo->linkKey[1],  pInfo->linkKey[2],  pInfo->linkKey[3],
-                   pInfo->linkKey[4],  pInfo->linkKey[5],  pInfo->linkKey[6],  pInfo->linkKey[7],
-                   pInfo->linkKey[8],  pInfo->linkKey[9],  pInfo->linkKey[10], pInfo->linkKey[11],
-                   pInfo->linkKey[12], pInfo->linkKey[13], pInfo->linkKey[14], pInfo->linkKey[15]);
-        // clang-format on
-
-        p->linkKeyState = WUD_STATE_LINK_KEY_WRITING;
-
-        BTM_WriteStoredLinkKey(1, &pInfo->devAddr, &pInfo->linkKey,
-                               (tBTM_CMPL_CB*)__wudLinkKeyEventStackCallback);
-
-        p->syncState = WUD_STATE_SYNC_WAIT_FOR_STORING;
+        p->syncState = nextState;
         break;
     }
 
     case WUD_STATE_SYNC_WAIT_FOR_STORING: {
-        if (p->linkKeyState != WUD_STATE_LINK_KEY_START) {
-            p->syncState = WUD_STATE_SYNC_WAIT_FOR_STORING;
+        u8 nextState;
+        BOOL linkKeyState;
+
+        linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
+
+        if (linkKeyState) {
+            nextState = WUD_STATE_SYNC_WAIT_FOR_STORING;
         } else {
-            p->syncState = WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
+            nextState = WUD_STATE_SYNC_STORED_DEV_INFO_TO_NAND;
         }
+
+        p->syncState = nextState;
         break;
     }
 
@@ -1974,8 +1952,11 @@ void __wudSyncHandler(void) {
 
     case WUD_STATE_SYNC_WAIT_FOR_READING: {
         u8 nextState = WUD_STATE_SYNC_WAIT_FOR_READING;
+        BOOL linkKeyState;
 
-        if (p->linkKeyState == WUD_STATE_LINK_KEY_START) {
+        linkKeyState = p->linkKeyState != WUD_STATE_LINK_KEY_START;
+
+        if (!linkKeyState) {
             nextState = WUD_STATE_SYNC_VIRGIN_STANDARD;
             WUDiRemoveDevice(p->pairAddr);
         }
@@ -2006,6 +1987,30 @@ void __wudSyncHandler(void) {
         break;
     }
 
+    case WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT: {
+        u8 linkNum;
+        u8 connNum;
+        u8 nextState;
+
+        enabled = OSDisableInterrupts();
+        linkNum = p->linkedNum;
+        OSRestoreInterrupts(enabled);
+
+        if (linkNum == WUD_MAX_CHANNELS &&
+            (enabled = OSDisableInterrupts(),
+             connNum = p->connectedNum, OSRestoreInterrupts(enabled),
+             connNum) == WUD_MAX_CHANNELS) {
+            DEBUGPrint(pMsg + 0x3F8);
+            BTA_DmSearchCancel();
+            nextState = WUD_STATE_SYNC_CANCEL_SEARCH;
+        } else {
+            nextState = WUD_STATE_SYNC_WAIT_FOR_SEARCH_RESULT;
+        }
+
+        p->syncState = nextState;
+        break;
+    }
+
     case WUD_STATE_SYNC_WAIT_FOR_INCOMING: {
         u8 nextState = WUD_STATE_SYNC_WAIT_FOR_INCOMING;
         u8 linkNum;
@@ -2015,14 +2020,11 @@ void __wudSyncHandler(void) {
         linkNum = p->linkedNum;
         OSRestoreInterrupts(enabled);
 
-        if (linkNum == WUD_MAX_CHANNELS) {
-            enabled = OSDisableInterrupts();
-            connNum = p->connectedNum;
-            OSRestoreInterrupts(enabled);
-
-            if (connNum == WUD_MAX_CHANNELS) {
-                nextState = WUD_STATE_SYNC_DONE;
-            }
+        if (linkNum == WUD_MAX_CHANNELS &&
+            (enabled = OSDisableInterrupts(),
+             connNum = p->connectedNum, OSRestoreInterrupts(enabled),
+             connNum) == WUD_MAX_CHANNELS) {
+            nextState = WUD_STATE_SYNC_DONE;
         }
 
         p->UNK_0x74A--;
@@ -2036,14 +2038,16 @@ void __wudSyncHandler(void) {
     }
 
     case 0x64: {
+        char* pFile = pMsg + 0x428;
+
         if (_wudNandLocked != 0) {
             break;
         }
 
-        DEBUGPrint(pMsg + 0x454, pMsg + 0x428);
+        DEBUGPrint(pMsg + 0x454, pFile);
         _wudNandLocked = 1;
 
-        NANDOpenAsync(pMsg + 0x428, &_wudNandFileInfo, NAND_ACCESS_RW,
+        NANDOpenAsync(pFile, &_wudNandFileInfo, NAND_ACCESS_WRITE,
                       (NANDAsyncCallback)__wudOpenWiiFitCallback,
                       &_wudNandBlock);
         break;
@@ -2071,16 +2075,16 @@ void __wudSyncHandler(void) {
         DEBUGPrint(pMsg + 0x478, _wudNandWbcInfo[0], _wudNandWbcInfo[1],
                    _wudNandWbcInfo[2], _wudNandWbcInfo[3],
                    _wudNandWbcInfo[4], _wudNandWbcInfo[5]);
-        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0xD],
-                   _wudNandWbcInfo[6], _wudNandWbcInfo[7],
-                   _wudNandWbcInfo[8], _wudNandWbcInfo[9],
-                   _wudNandWbcInfo[0xA], _wudNandWbcInfo[0xB],
-                   _wudNandWbcInfo[0xC]);
-        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0x15],
-                   _wudNandWbcInfo[0xE], _wudNandWbcInfo[0xF],
-                   _wudNandWbcInfo[0x10], _wudNandWbcInfo[0x11],
-                   _wudNandWbcInfo[0x12], _wudNandWbcInfo[0x13],
-                   _wudNandWbcInfo[0x14]);
+        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[6],
+                   _wudNandWbcInfo[7], _wudNandWbcInfo[8],
+                   _wudNandWbcInfo[9], _wudNandWbcInfo[0xA],
+                   _wudNandWbcInfo[0xB], _wudNandWbcInfo[0xC],
+                   _wudNandWbcInfo[0xD]);
+        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0xE],
+                   _wudNandWbcInfo[0xF], _wudNandWbcInfo[0x10],
+                   _wudNandWbcInfo[0x11], _wudNandWbcInfo[0x12],
+                   _wudNandWbcInfo[0x13], _wudNandWbcInfo[0x14],
+                   _wudNandWbcInfo[0x15]);
         DEBUGPrint(lbl_80665D68_80663438, &_wudNandWbcInfo[0x16]);
         DEBUGPrint(pMsg + 0x4C4, _wudNandWbcInfo[0x80],
                    _wudNandWbcInfo[0x81], _wudNandWbcInfo[0x82],
@@ -2820,6 +2824,8 @@ void __wudNandFlushCallback(void) {
 u8 __wudGetDevInfoFromWiiFit(void) {
     WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
+    char* pFile = pMsg + 0x428;
+    const char* pAppName = lbl_80665D70_80663440;
     u8 nextState = WUD_STATE_INIT_GET_DEV_INFO;
     u8 zero[0x10] = {0};
     u32 crc;
@@ -2847,11 +2853,11 @@ u8 __wudGetDevInfoFromWiiFit(void) {
 
     case 1: {
         if (SCGetProductGameRegion() == 0) {
-            DEBUGPrint(pMsg + 0x454, pMsg + 0x428);
+            DEBUGPrint(pMsg + 0x454, pFile);
             _wudNandLocked = 1;
             _wudNandWbcCrc = 0;
 
-            NANDOpenAsync(pMsg + 0x428, &_wudNandFileInfo, NAND_ACCESS_READ,
+            NANDOpenAsync(pFile, &_wudNandFileInfo, NAND_ACCESS_READ,
                           (NANDAsyncCallback)__wudNandResultCallback,
                           &_wudNandBlock);
         } else {
@@ -2891,14 +2897,18 @@ u8 __wudGetDevInfoFromWiiFit(void) {
             int j;
 
             for (j = 0; j < 0x95E3; j++) {
-                sum += pData[0];
-                invSum = (u16)(invSum + ~pData[0]);
-                sum += pData[1];
-                invSum = (u16)(invSum + ~pData[1]);
-                sum += pData[2];
-                invSum = (u16)(invSum + ~pData[2]);
-                sum += pData[3];
-                invSum = (u16)(invSum + ~pData[3]);
+                u16 v = pData[0];
+                sum += v;
+                invSum = (u16)(invSum + ~v);
+                v = pData[1];
+                sum += v;
+                invSum = (u16)(invSum + ~v);
+                v = pData[2];
+                sum += v;
+                invSum = (u16)(invSum + ~v);
+                v = pData[3];
+                sum += v;
+                invSum = (u16)(invSum + ~v);
                 pData += 4;
             }
 
@@ -2907,28 +2917,36 @@ u8 __wudGetDevInfoFromWiiFit(void) {
         _wudNandWbcCrc = crc;
 
             {
-                const u16* pData = (const u16*)_wudNandBufPtr + 0x4AF18;
+                const u16* pData = (const u16*)(_wudNandBufPtr + 0x4AF18);
                 u32 sum = crc >> 16;
                 u16 invSum = crc & 0xFFFF;
                 int j;
 
                 for (j = 0; j < 8; j++) {
-                    sum += pData[0];
-                    invSum = (u16)(invSum + ~pData[0]);
-                    sum += pData[1];
-                    invSum = (u16)(invSum + ~pData[1]);
-                    sum += pData[2];
-                    invSum = (u16)(invSum + ~pData[2]);
-                    sum += pData[3];
-                    invSum = (u16)(invSum + ~pData[3]);
-                    sum += pData[4];
-                    invSum = (u16)(invSum + ~pData[4]);
-                    sum += pData[5];
-                    invSum = (u16)(invSum + ~pData[5]);
-                    sum += pData[6];
-                    invSum = (u16)(invSum + ~pData[6]);
-                    sum += pData[7];
-                    invSum = (u16)(invSum + ~pData[7]);
+                    u16 v = pData[0];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[1];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[2];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[3];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[4];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[5];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[6];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
+                    v = pData[7];
+                    sum += v;
+                    invSum = (u16)(invSum + ~v);
                     pData += 8;
                 }
 
@@ -2948,7 +2966,7 @@ u8 __wudGetDevInfoFromWiiFit(void) {
             break;
         }
 
-        if (memcmp(OSGetAppGamename(), lbl_80665D70_80663440, 4) != 0 &&
+        if (memcmp(OSGetAppGamename(), pAppName, 4) != 0 &&
             memcmp(&_wudNandWbcInfo[6], zero, sizeof(LINK_KEY)) == 0) {
 
             _wudNandPhase = 5;
@@ -2971,20 +2989,17 @@ u8 __wudGetDevInfoFromWiiFit(void) {
         DEBUGPrint(pMsg + 0x478, _wudNandWbcInfo[0], _wudNandWbcInfo[1],
                    _wudNandWbcInfo[2], _wudNandWbcInfo[3],
                    _wudNandWbcInfo[4], _wudNandWbcInfo[5]);
-        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0xD],
-                   _wudNandWbcInfo[6], _wudNandWbcInfo[7],
-                   _wudNandWbcInfo[8], _wudNandWbcInfo[9],
-                   _wudNandWbcInfo[0xA], _wudNandWbcInfo[0xB],
-                   _wudNandWbcInfo[0xC]);
-        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0x15],
-                   _wudNandWbcInfo[0xE], _wudNandWbcInfo[0xF],
-                   _wudNandWbcInfo[0x10], _wudNandWbcInfo[0x11],
-                   _wudNandWbcInfo[0x12], _wudNandWbcInfo[0x13],
-                   _wudNandWbcInfo[0x14]);
+        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[6],
+                   _wudNandWbcInfo[7], _wudNandWbcInfo[8],
+                   _wudNandWbcInfo[9], _wudNandWbcInfo[0xA],
+                   _wudNandWbcInfo[0xB], _wudNandWbcInfo[0xC],
+                   _wudNandWbcInfo[0xD]);
+        DEBUGPrint(pMsg + 0x498, _wudNandWbcInfo[0xE],
+                   _wudNandWbcInfo[0xF], _wudNandWbcInfo[0x10],
+                   _wudNandWbcInfo[0x11], _wudNandWbcInfo[0x12],
+                   _wudNandWbcInfo[0x13], _wudNandWbcInfo[0x14],
+                   _wudNandWbcInfo[0x15]);
         DEBUGPrint(lbl_80665D68_80663438, &_wudNandWbcInfo[0x16]);
-        DEBUGPrint(pMsg + 0x4C4, _wudNandWbcInfo[0x80],
-                   _wudNandWbcInfo[0x81], _wudNandWbcInfo[0x82],
-                   _wudNandWbcInfo[0x83]);
 
         SCSetBtDeviceInfoArray(&_scArray);
         _wudNandLocked = 1;
@@ -3710,18 +3725,19 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
             pInfo = &_wudDiscWork;
         }
 
-        enabled = OSDisableInterrupts();
-        linkedNum = p->linkedNum;
-        OSRestoreInterrupts(enabled);
+        if (pInfo == NULL ||
+            (enabled = OSDisableInterrupts(),
+             linkedNum = p->linkedNum, OSRestoreInterrupts(enabled),
+             linkedNum) == WUD_MAX_CHANNELS) {
+            char* pReason;
 
-        if (pInfo == NULL || linkedNum == WUD_MAX_CHANNELS) {
             btm_remove_acl(pLinkUp->bd_addr);
 
-            DEBUGPrint(pMsg + 0xBFC,
-                       pInfo == NULL ? pMsg + 0xC24 : pMsg + 0xC30,
-                       pLinkUp->bd_addr[0], pLinkUp->bd_addr[1],
-                       pLinkUp->bd_addr[2], pLinkUp->bd_addr[3],
-                       pLinkUp->bd_addr[4], pLinkUp->bd_addr[5]);
+            pReason = pInfo != NULL ? pMsg + 0xC30 : pMsg + 0xC24;
+            DEBUGPrint(pMsg + 0xBFC, pReason, pLinkUp->bd_addr[0],
+                       pLinkUp->bd_addr[1], pLinkUp->bd_addr[2],
+                       pLinkUp->bd_addr[3], pLinkUp->bd_addr[4],
+                       pLinkUp->bd_addr[5]);
             break;
         }
 
@@ -3750,11 +3766,13 @@ void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
             }
 
             if (pLinkDown->status == HCI_ERR_PEER_POWER_OFF) {
-                for (i = 0; i < WUD_MAX_DEV_ENTRY_FOR_SMP; i++) {
-                    if (WUD_BDCMP(_scArray.active[i].addr,
+                u8 i;
+
+                for (i = 0; i < 4; i++) {
+                    if (WUD_BDCMP(_scArray.devices[i + 10].addr,
                                   pLinkDown->bd_addr) == 0) {
 
-                        memset(&_scArray.active[i], 0,
+                        memset(&_scArray.devices[i + 10], 0,
                                sizeof(SCBtDeviceInfo));
                         _scFlush = TRUE;
                     }

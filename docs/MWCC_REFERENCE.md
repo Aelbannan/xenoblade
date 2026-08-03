@@ -7803,3 +7803,8 @@ The handle layout has an unknown field at +0x24; reqId is at **+0x28**, rdAddr
 at +0x2C, reqRdSize at +0x30 (retail: [stw 40/44/48(rX)]). The original struct
 comments were 4 bytes off — fixing the struct made ADXSTM_Start AND Start2
 FULL_MATCH (the [h->reqId = 0; h->rdAddr = 0] stores now hit +0x28/+0x2C).
+
+### CriWare sfx_lib SFX_Create — 20.5% (pool-arg signature)
+Retail takes the pool base as the 3rd arg ([addi r31, r6, 24] — the handles at
+arg3+24, the count at arg3+4, the [mtctr] slot-scan). Decomp uses the global
+lbl_eu_80619C10 — the arg-3 pool variant unreproduced. Semantic impl retained.

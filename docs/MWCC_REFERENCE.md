@@ -6958,3 +6958,57 @@ Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exac
 2. **Debug strings are inside the retail `_wudWiiRemoteDescriptor` blob** (`descriptor+0x97C` "BTA_DmAddDevice()", +0x998, +0x9A8, +0x9C0, +0x9F8, +0xA1C, +0xA30, +0xA40). Reference them via `char* pMsg = _wudWiiRemoteDescriptor;` **first local** (prologue lis/addi, MWCC_REFERENCE §RVL WUD point 4) + `pMsg + off`. String LITERALS resolve to different `.data` offsets → `functionRelocDiffs=data_value` → SMT cannot resolve the address (see the §4893 section). `_wudWiiRemoteDescriptor` starts with the 217-byte HID report descriptor; `desc.dsc_list` matches retail at `descriptor+0` only in the literal-static-array form.
 3. **`WUDiMoveTopOfDisconnectedSmpDevice` base+12i IV (retail) vs walking-pointer IV (-O4,p default):** the nested inner loop makes MWCC hoist the shared `&smpList[i].devInfo->devAddr` (check A ↔ D) into a callee-saved reg (r23), which cascades into walking-pointer IVs for all smpList[i] accesses. Writing check A and D in **different syntax families** breaks the CSE: A = `(*(WUDDevInfo**)((u8*)p + (u32)i*12 + 0x1C))->devAddr` (offset-last), D = same with **`((u32)i*12 + 0x1C)` parenthesized** (assoc-split, does not unify in value numbering). The surgery uses `#define`d pointer-arithmetic forms. Result: retail's `add rX, rBase, r12i` base+IV form, D-check byte-identical, 27 structural left (all MWCC `lwzu` fusion: `add+lwzu` vs `lwz+addi`; the `&smpList[i]` temp copy; back-edge extra `addi`). Tried: plain/explicit/mixed/assoc/-O4,s (regresses sibling -O4,p functions)/pNode local/cast variants — the lwzu post-value derivation is a hard allocator choice.
 4. **`WUDiRegisterDevice` desc temp-copy cap:** retail `addi r0,r31,0; li r3,217; sth; addi r3,...; stw r0,20(sp)` (dsc_list value formed in a volatile BEFORE dl_len, stored late, then `lwz`-reloaded for the by-value arg). With `desc.dsc_list = (u8*)pMsg` MWCC stores r31 directly and re-forms `or r0,r31,r31` after the call (keeps dsc_list live in callee-saved r31). Tried: dlLen local, struct initializer (C89 rejects non-constant init), `pMsg+0`, `(void*)` cast, `pDsc` copy, static-array decay with pMsg (gets its own lis/addi base) — all fold or split bases. Accept as EQUIVALENT_MATCH via SMT (diffs are pure regalloc/scheduling).
+
+## CriWare sfx_zmv — string-pool identity, const-local hoist, copy-local register forcing (US, GC/3.0a5.2)
+
+`libs/CriWare/src/sofdec/sfx/sfx_zmv.c`. Three reusable discoveries (verified via
+retail reloc dumps with `elf_symbols.list_section_relocations` on
+`build/us/obj/.../sfx_zmv.o`):
+
+1. **String-pool identity: dump the retail relocs instead of trusting nearby
+   symbols.** The sfx_zmv tag pool is `lbl_eu_8051D254` (+0/+6/+14/+21/+29/+33/+41),
+   NOT `lbl_eu_80518C38` (a different REL pool 0x41C away). All 10 relocs in
+   SetTagGrp/GetZfrmRange name 8051D254 with addend 0 (the +N offsets are
+   instruction addends). Wrong pool → `R_PPC_ADDR16_HA/LO` name drift, unfixable
+   otherwise. Always verify with a reloc dump before writing the extern.
+
+2. **Const-pointer locals at function top hoist the string base into the
+   prologue and the tag addends into the entry block** (retail `lis r7; addi r7`
+   before `stw r0` + `addi r5, r7, 6; addi r4, r7, 21` before the first guard
+   load). Const locals whose value is used ONLY inside one call region stay in
+   volatile registers (no `or` copies at the call); reusing the same local
+   across calls makes MWCC keep it callee-saved and emit `or` copies. Declare
+   per-region const locals in the DECL ORDER that matches the retail addi order
+   (retail emits `addi r5, base, 6` before `addi r4, base, 21` → declare the +6
+   local first).
+
+3. **Copy-locals force long-lived values into callee-saved registers.**
+   `SFXZ_MakeCnvZTbl` retail keeps the GetZfrmRange out-params in r30/r31 across
+   memset+SFX_SetCcirFx (frame = 5 saved regs, `_savegpr_27` prologue); the
+   plain form left them stack-resident (3 saved regs, 32-byte frame, +4 instrs).
+   `s32 f0 = o0; s32 f1 = o1;` (copies used in BOTH if/else branches) forces the
+   register homes; the loads then emit right after the out-param call and the
+   branch calls become `or r4, rX` moves. Statement order that matches retail:
+   `dst = buf + 0x400;` (computes the addi before memset), then the two copies,
+   then memset. Result: 0 structural, 9 pure reg-swaps (2-cycle dst↔o1 color
+   wall: retail allocates dst→r29 before o1→r31; every decl/statement
+   permutation keeps o1→r29/dst→r31 — SMT candidate, no SMT probes per session
+   policy).
+
+4. **SJ_SearchTag arg semantics for the SFX header tags:** the (a,b) pair is
+   (tagStart, tagEnd) of a pool slice; the second SFXZ tag search is
+   `(base+14, base+6)` — NOT `(base+14, base+0)` (the +0/+6 pair is only the
+   first search). A wrong second tag cost 51.9%→80.8% when fixed. The
+   GetZfrmRange out-param order is `(self, a, &o1, &o0)` with the caller reading
+   `lwz o0` BEFORE `lwz o1` (8(sp) first).
+
+Stall notes: `SFXZ_GetZfrmRange` (0x150) 21.8% / 56 structural — control flow,
+slots, and prologue all match after the const-local form; residual is the
+out1v/out2v spill (fail path `li r0; stw` + join reload vs retail `li r3,0` +
+reload in the ok path) and base2 in r29 vs r31 — MWCC keeps address-taken
+join-crossing values memory-resident under every shape tried (~12 variants:
+pointer/s32/u32 types, scoped consts, struct locals, default-first init,
+copy-at-join). `sfxzmv_SetTagGrp` 80.8% / 7 structural — all single-position
+scheduler swaps in the second block (retail interleaves the self+0x1C/0x20
+stores between call-arg computations; decomp bunches the args first) — no
+source shape moves them.

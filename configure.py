@@ -1426,7 +1426,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsee.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsfx.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdcre.c"),
-            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdlib.c"),
+            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdlib.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdply.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdset.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsvr.c"),

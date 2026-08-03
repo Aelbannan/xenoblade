@@ -13,28 +13,26 @@ int MPV_GetPicAtr(void *handle, u32 *out) {
         return MPVERR_SetCode(NULL, 0xFF03020C);
     }
 
-    src = (u32 *)((u8 *)handle + 0xB58);
-    dst = out;
-    do {
-        u32 v0 = src[1];
-        u32 v1 = *src;
-        src += 2;
-        *dst = v0;
-        dst[1] = v1;
-        dst += 2;
-        i--;
-    } while (i != 0);
+    {
+        u32 *s = (u32 *)((u8 *)handle + 0xB58);
+        u32 *d = out - 1;
+        int n = 16;
+        do {
+            u32 v0 = *(s + 1);
+            u32 v1 = *(s += 2);
+            *(d + 1) = v0;
+            *(d += 2) = v1;
+        } while (--n != 0);
+    }
     return 0;
 }
 
 /* Get bitrate from handle */
 int MPV_GetBitRate(void *handle, u32 *out) {
-    u32* o = out;
-    void* h = handle;
-    if (MPVLIB_CheckHn(h)) {
+    if (MPVLIB_CheckHn(handle)) {
         return MPVERR_SetCode(NULL, 0xFF03020D);
     }
-    *o = *(u32 *)((u8 *)h + 0xC48);
+    *out = *(u32 *)((u8 *)handle + 0xC48);
     return 0;
 }
 
@@ -46,17 +44,17 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
 
     *out_size = *(u32 *)((u8 *)handle + 0xC4C) << 11;
     *out_avg = *(u32 *)((u8 *)handle + 0xC5C);
-    
+
     {
         u32 bitrate = *(u32 *)((u8 *)handle + 0xC48);
-        if ((u32)(bitrate - 0x30000) <= 0xFFFF) {
+        if ((u32)(bitrate - 0x30000) == 0xFFFF) {
             *out_max = (u32)-1;
         } else {
             u32 vbv = *(u32 *)((u8 *)handle + 0xC5C);
             u32 m = vbv * bitrate;
-            u32 hi = (u32)(((u64)0x91A3B3C5 * m) >> 32);
-            u32 x = (hi + m) >> 10;
-            *out_max = x + ((x << 1) & 0x80000000);
+            s32 hi = __mulhw((s32)0x91A3B3C5, (s32)m);
+            s32 x = ((s32)hi + (s32)m) >> 10;
+            *out_max = (u32)x + ((x & 0x40000000) << 1);
         }
     }
     return 0;

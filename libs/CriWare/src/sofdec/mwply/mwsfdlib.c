@@ -3,7 +3,23 @@
 
 #include <harness_catalog.h>
 
-typedef struct MWSFDLibWork MWSFDLibWork;
+typedef struct MWSFDLibWork {
+    u8 _00[0x04];
+    float fps;       /* 0x04 */
+    u32 _08;         /* 0x08 */
+    u32 _0C;         /* 0x0C */
+    u32 _10;         /* 0x10 */
+    u8 _14[0x38 - 0x14];
+    u32 usePicUsr;   /* 0x38 */
+    u32 pauseBdr;    /* 0x3C */
+    u8 _40[0x5C - 0x40];
+    u32 _5C;         /* 0x5C */
+    u8 _60[0x68 - 0x60];
+    u32 errCode;     /* 0x68 */
+    u8 _6C[0x34F0 - 0x6C];
+    u32 _34F0;       /* 0x34F0 */
+} MWSFDLibWork;
+
 extern MWSFDLibWork lbl_eu_805FF3A8;
 
 void* MWSFLIB_GetLibWorkPtr(void) { return &lbl_eu_805FF3A8; }
@@ -13,17 +29,38 @@ void mwsflib_LscErrFunc(void* context, int code) { MWSFSVM_Error((const char*)co
 
 void mwPlyInitSfdFx() {}
 
-void mwsflib_InitLibWork() {}
+typedef struct {
+    float fps;
+    u32 a;
+    u32 b;
+    u32 c;
+} MWSFDINITPRM;
 
-typedef struct MWSFDLibWork {
-    u8 _00[0x38];
-    u32 usePicUsr;
-    u32 pauseBdr;
-    u8 _40[0x28];
-    u32 errCode;
-} MWSFDLibWork;
+extern void MWSFSVR_SetMwsfdSvrFlg(int);
+extern const float lbl_eu_8051ADCC;
 
-extern MWSFDLibWork lbl_eu_805FF3A8;
+void mwsflib_InitLibWork(MWSFDINITPRM *prm) {
+    MWSFDLibWork *w = &lbl_eu_805FF3A8;
+    memset(w, 0, 0x34F8);
+    MWSFSVR_SetMwsfdSvrFlg(0);
+    w->_5C = 0;
+    if (prm != NULL) {
+        w->fps = prm->fps;
+        w->_08 = prm->a;
+        w->_0C = prm->b;
+        w->_10 = prm->c;
+    } else {
+        float f = lbl_eu_8051ADCC;
+        w->fps = f;
+        w->_08 = 1;
+        w->_0C = 1;
+        w->_10 = 0;
+    }
+    w->usePicUsr = 1;
+    w->pauseBdr = 0;
+    w->_34F0 = 0;
+}
+
 u32 MWSFD_GetUsePicUsr(void) {
     return lbl_eu_805FF3A8.usePicUsr;
 }

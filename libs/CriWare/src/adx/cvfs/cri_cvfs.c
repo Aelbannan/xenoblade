@@ -82,11 +82,15 @@ void cvFsOpen() {}
 void getDevName(char* dst, char* dev, const char* src) {
     s32 i, j, k;
     if (src == NULL) return;
-    for (i = 0; i < 297; i++) {
-        if (src[i] == ':' || src[i] == 0) break;
-        dst[i] = src[i];
+    {
+        const char *s = src;
+        char *d = dst;
+        for (i = 0; i < 297; i++) {
+            if (*s == ':' || *s == 0) break;
+            *d++ = *s++;
+        }
     }
-    if (src[i] != 0) {
+    if (src[i] == 0) {
         dst[i] = 0;
         memcpy(dev, dst, strlen(dst) + 1);
         dst[0] = 0;
@@ -98,13 +102,13 @@ void getDevName(char* dst, char* dev, const char* src) {
         i = 0;
         dst[0] = 0;
     }
-    for (k = 0; k < 297 - i; k++) {
-        if (src[i + k] == 0) break;
-        dst[k] = src[i + k];
+    for (j = i; j < 297; j++) {
+        if (src[j] == 0) break;
+        dst[j - i] = src[j];
     }
-    dst[k] = 0;
+    dst[j - i] = 0;
     {
-        s32 n = strlen(dst);
+        u32 n = strlen(dst);
         for (k = 0; k <= n; k++) {
             if ((u8)(dst[k] - 'a') <= 25) dst[k] -= 32;
         }

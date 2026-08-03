@@ -26,6 +26,7 @@ typedef struct AHXSJD {
     /*0x58*/ void* fltCtx;
 } AHXSJD;
 
+extern volatile u32 lbl_eu_80517598;
 extern volatile s32 lbl_eu_805E64C0;
 
 extern void AHXTBL_GetAtblInfo(u32*, u32*);
@@ -56,17 +57,19 @@ extern void AHXDCD_SetExtPrm(void*);
 extern s32 AHXBSR_Tell(void*);
 
 void AHXSJD_Init(void) {
-    u32 info[2];
+    u32 i0, i1;
+    (void)lbl_eu_80517598;
+    (void)lbl_eu_80517598;
 
     if (lbl_eu_805E64C0 == 0) {
-        AHXTBL_GetAtblInfo(&info[0], &info[1]);
-        AHXSJD_SetupAtbl(info[0], info[1]);
-        AHXTBL_GetMtblInfo(&info[0], &info[1]);
-        AHXSJD_SetupMtbl(info[0], info[1]);
-        AHXTBL_GetFtblInfo(&info[0], &info[1]);
-        AHXSJD_SetupFtbl(info[0], info[1]);
-        AHXTBL_GetWtblInfo(&info[0], &info[1]);
-        AHXSJD_SetupWtbl(info[0], info[1]);
+        AHXTBL_GetAtblInfo(&i0, &i1);
+        AHXSJD_SetupAtbl(i0, i1);
+        AHXTBL_GetMtblInfo(&i0, &i1);
+        AHXSJD_SetupMtbl(i0, i1);
+        AHXTBL_GetFtblInfo(&i0, &i1);
+        AHXSJD_SetupFtbl(i0, i1);
+        AHXTBL_GetWtblInfo(&i0, &i1);
+        AHXSJD_SetupWtbl(i0, i1);
         AHXDCD_Init();
     }
     ++lbl_eu_805E64C0;

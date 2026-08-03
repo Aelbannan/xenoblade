@@ -240,13 +240,12 @@ void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {
 
 s32 __OSGetPlayTime(ESTicketView* ticket, s32* outType, u32* outRemaining) {
     ESTicketView aligned __attribute__((aligned(32)));
-    ESTicketView* view;
+    ESTicketView* view = ticket;
     u32 hasConsumed = 0;
     ESLpEntry entries[8] __attribute__((aligned(32)));
     s32 result;
     u32 lastUnknown = 0;
     u32 i;
-    view = ticket;
     if (((u32)ticket & 31) != 0) {
         memcpy(&aligned, ticket, sizeof(ESTicketView));
         view = &aligned;
@@ -260,15 +259,16 @@ s32 __OSGetPlayTime(ESTicketView* ticket, s32* outType, u32* outRemaining) {
     if (result == 0) {
         goto fetch_consumption;
     }
-    if (result != 0) {
-        goto search_limits;
-    }
+    goto search_limits;
 
 fetch_consumption:
     if (hasConsumed == 0) {
         goto search_limits;
     }
     result = ESP_GetConsumption(view->ticketID, entries, &hasConsumed);
+    if (result != 0) {
+        return result;
+    }
 
 search_limits:
     if (result == 0) {

@@ -275845,7 +275845,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.s",
       "abi_helper_calls": [],
-      "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source; 2026-08-03 decl-order improvement: 'unsigned int right_shift, src_offset, left_shift;' (rs-first, rev_unaligned ONLY - the forward __copy_longs_unaligned regresses under it) fixes ls onto retail r10: 18->15 pure reg-swaps, 0 structural, 97.91% objdiff (was 97.33), size exact 0xac, unit .text exactly 0x2D0 = budget, siblings stay 100%. Residual 3-cycle {cps r4->r11, so r9->r4, rs r11->r9}: isolated-MWCC-ladder-proven unreachable on every Wii/1.x compiler/flag/source form (cps=src+n never coalesces into r4 once adjust+word-loop exist; GC/3.0a* coalesces but breaks retail insn selection). Witness gate 5 forbids certifying arg-register rotations; acceptance requires the SMT probe (declined 2026-08-03; KB says it fail-closes anyway). STALL: documented cap, see MWCC_REFERENCE ref 0f209f4a48.",
+      "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source; 2026-08-03 decl-order improvement: 'unsigned int right_shift, src_offset, left_shift;' (rs-first, rev_unaligned ONLY - the forward __copy_longs_unaligned regresses under it) fixes ls onto retail r10: 18->15 pure reg-swaps, 0 structural, 97.91% objdiff (was 97.33), size exact 0xac, unit .text exactly 0x2D0 = budget, siblings stay 100%. Residual 3-cycle {cps r4->r11, so r9->r4, rs r11->r9}: confirmed 2026-08-04 by re-running the isolated-MWCC ladder: ALL 9 Wii compilers (0x4201_127, 1.0, 1.0RC1, 1.0a, 1.1, 1.3, 1.5, 1.6, 1.7) = exactly 15 reg-swaps; all 6 GC/3.0a* (a3..a5.2) = 28 (worse; different insn selection/scheduling); -proc broadway, -O4/-O4,s/-O3/-O2, ipa off/clone, inline modes, func_align 4/16, full-unit vs isolated TU all = 15. New source shapes tried 2026-08-04: adjust-on-word-pointer split (F, cps->r7 still 15), mask-local (20), named adj (15), i2-first (15), cpd-first (15), rs-before-so (15), tail-recompute-so (44 insns), all = 15 or worse. Witness gate 5 forbids certifying arg-register rotations. SMT probe RUN 2026-08-04 (--smt, declared_return=void, caller-corroborated by FULL_MATCH memmove us-802c112c): inconclusive_unsupported (loop iteration limit 2048 at 0x2bc) — the GPR-counter byte/word loops (subic./bne) are unsummarizable by the current memory-loop plan (needs mtctr/bdnz); NOT not_equivalent, so the function is semantically equivalent but the engine cannot certify it. STALL: documented cap, MWCC_REFERENCE 'MSL mem_funcs.c' section; next angle = engine loop-summary extension for GPR-counter shift/memory loops.",
       "instruction_match": 97.907,
       "equivalence_status": "inconclusive_unsupported",
       "claim": {
@@ -450284,8 +450284,8 @@
       "size": "0x64",
       "unit": "nw4r/src/ut/ut_ArchiveFontBase",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -450293,7 +450293,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/ut/ut_ArchiveFontBase.s",
       "abi_helper_calls": [],
-      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp",
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-04T05:08:14.933178+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042fde8",

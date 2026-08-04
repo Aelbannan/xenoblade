@@ -61,7 +61,34 @@ void ConstructOpAnalyzeFileHeader__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2u
 
 void ConstructOpAnalyzeFINF__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 
-void ConstructOpAnalyzeCMAP__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+extern "C" int
+ConstructOpAnalyzeCMAP__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(void* ctx,
+                                                                                                                                 void* reader) {
+    unsigned int* c = (unsigned int*)ctx;
+
+    unsigned int cur = c[0x13];      // 0x4c
+    unsigned int block = c[2];       // 0x8
+
+    if (block != 0) {
+        ((unsigned int*)block)[2] = cur; // block->0x8 = cur
+    } else {
+        ((unsigned int*)c[0])[4] = cur;  // base->0x10 = cur
+    }
+
+    c[2] = cur;                     // ctx->0x8 = cur
+
+    unsigned int limit = c[5];      // 0x14
+    unsigned int base = c[0x12];    // 0x48
+
+    if (base - c[0x13] < limit - 8) {
+        return 2;
+    }
+
+    c[0x15] = limit - 8;            // 0x54
+    c[3] = 9;                       // 0xc
+    c[0x14] = 0;                    // 0x50
+    return 3;
+}
 
 void ConstructOpAnalyzeCWDH__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 

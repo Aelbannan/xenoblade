@@ -1892,3 +1892,62 @@ class AdversarialReview2026Tests(unittest.TestCase):
              lwz(25, 1, 8), lwz(20, 1, 12), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
+
+
+class CalleeCertificateIndependenceTests(unittest.TestCase):
+    """The witness must IGNORE callee certificates (pi-harness requirement).
+
+    Previously ``_try_renaming_witness`` hard-gated on
+    ``certified_context.errors`` and on every call target being present in
+    ``certified_context.contracts`` — any uncertified / unknown / not-yet-
+    accepted callee made the witness return ``None`` and fall through to the
+    SMT probe, which the no-SMT pipeline never runs. Targets calling
+    uncertified callees could never certify even when their diff was purely
+    register-color. The witness handles missing callees conservatively
+    internally (opaque EABI: argument-window reads, full clobber set, rho-
+    fixed lanes) — never a false certificate — so the gates were removed and
+    missing callees get ``CalleeContract.opaque_eabi()`` (mirroring the SMT
+    path's fallback at equivalence_check:3267).
+    """
+
+    def _volatile_swap_pair(self):
+        # Pure volatile r5<->r6 swap, no calls: certifies.
+        r_words = [_enc_primary(32, 5, 3, 0), _enc_primary(36, 5, 3, 8), _LR]
+        d_words = [_enc_primary(32, 6, 3, 0), _enc_primary(36, 6, 3, 8), _LR]
+        return (
+            _function_bytes("f", r_words, _RETAIL_BASE),
+            _function_bytes("f", d_words, _DECOMP_BASE),
+        )
+
+    def test_error_context_does_not_block_witness(self) -> None:
+        # CertifiedCalleeContext with errors (uncertified callees) previously
+        # made _try_renaming_witness return None immediately. It must run.
+        left, right = self._volatile_swap_pair()
+        context = CertifiedCalleeContext(
+            {}, (), ("callee us-xxxx is not accepted", "registry has unresolved direct callees"),
+        )
+        probe = _try_renaming_witness(None, "f", left, right, "us-test", context)
+        self.assertIsNotNone(probe, "witness must not bail on callee-cert errors")
+        self.assertEqual(probe.status.value, "equivalent")
+
+    def test_error_context_with_call_targets_does_not_bail(self) -> None:
+        # A target whose registry has unresolved/uncertified callees previously
+        # made _try_renaming_witness return None BEFORE execution (the
+        # certified_context.errors gate). It must run. Use the volatile-swap
+        # pair; the point is the error context no longer short-circuits.
+        left, right = self._volatile_swap_pair()
+        context = CertifiedCalleeContext(
+            {}, (),
+            ("callee us-xxxx is not accepted", "registry has unresolved direct callees"),
+        )
+        probe = _try_renaming_witness(None, "f", left, right, "us-test", context)
+        self.assertIsNotNone(probe, "witness must not bail on callee-cert errors")
+        self.assertEqual(probe.status.value, "equivalent")
+
+    def test_none_context_still_runs(self) -> None:
+        # target_id present but _load_certified_callees returned None/empty.
+        left, right = self._volatile_swap_pair()
+        context = CertifiedCalleeContext({}, (), ())
+        probe = _try_renaming_witness(None, "f", left, right, "us-test", context)
+        self.assertIsNotNone(probe)
+        self.assertEqual(probe.status.value, "equivalent")

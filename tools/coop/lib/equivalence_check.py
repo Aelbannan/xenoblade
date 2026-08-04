@@ -1608,10 +1608,20 @@ def _try_renaming_witness(
     """
     from tools.coop.lib.renaming_witness import certify_renaming_witness
 
+    # Callee certificates are NOT required for the witness. The register-
+    # renaming witness handles unknown callees conservatively inside
+    # certify_renaming_witness (opaque EABI: argument-window reads r3-r10/
+    # f1-f8, full clobber set, rho-fixed lanes at call sites) — never a
+    # false certificate. Hard-gating on certified_context.errors (callees
+    # not yet accepted/certified) forced the witness to bail and fall
+    # through to SMT, which the no-SMT pipeline never runs, so targets
+    # calling uncertified callees could never certify even when their diff
+    # was purely register-color. Mirror the SMT path's opaque-EABI fallback
+    # (:3267) instead.
     if certified_context is None:
         certified_context = _load_certified_callees(project, target_id)
-    if certified_context.errors:
-        return None
+    # Errors (uncertified / unknown / unresolved callees) are NOT fatal for
+    # the witness — missing callees get opaque EABI contracts below.
     try:
         original = decode_block(
             left.code, left.base, validate_with_capstone=False,
@@ -1626,14 +1636,13 @@ def _try_renaming_witness(
     except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
         return None
     call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
-    missing = sorted(
-        (item for item in call_targets if item not in certified_context.contracts),
-        key=str,
-    )
-    if missing:
-        return None
+    # Every callee gets a contract; uncertified ones fall back to opaque
+    # EABI (conservative — the witness will fix any lane the callee may
+    # observe). This is what lets targets with uncertified callees certify
+    # on their own reg-swap diff.
     contracts = {
-        item: certified_context.contracts[item] for item in call_targets
+        item: certified_context.contracts.get(item) or CalleeContract.opaque_eabi()
+        for item in call_targets
     }
     # doc 32 A3 rev 3 (R2-1): resolve the registry declared_return (raw
     # string, NOT gated on abi_shape_inference_enabled — mirroring the SMT

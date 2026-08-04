@@ -63,7 +63,27 @@ void* __dt__CMsgParam_32(void* self, int shouldDelete) {
 
 // (mapped to __ct__80449548 above)
 
-void __ct__80449534(){}
+// CMsgParam<32>-ish ctor: vtable + ring-buffer init (retail data label).
+// char[] form prevents SDA21 (label is >8B data; retail uses lis/addi).
+extern "C" { extern char lbl_eu_8056BFE4[]; }
+extern "C" void __ct__CMsgParam_32(void* self, u32 param) {
+    u8* s = (u8*)self;
+    *(void**)s = lbl_eu_8056BFE4;
+    *(u32*)(s + 0x490) = 32;
+    *(u32*)(s + 0x484) = (u32)(s + 4);
+    *(u32*)(s + 0x48C) = 0;
+    *(u32*)(s + 0x488) = 0;
+    *(u32*)(s + 0x494) = 0;
+    *(u32*)(s + 0x498) = param;
+}
+
+extern "C" void __ct__80449534(void* self, u16 a, u16 b, u16 c, u16 d) {
+    u8* s = (u8*)self;
+    *(u16*)(s + 0) = a;
+    *(u16*)(s + 2) = b;
+    *(u16*)(s + 4) = c;
+    *(u16*)(s + 6) = d;
+}
 
 // (mapped to __ct__80449548 above)
 
@@ -71,7 +91,11 @@ void func_8044954C(void) {}
 
 // (mapped to __ct__80449548 above)
 
-void __ct__IStateCache(){}
+// IStateCache ctor: vtable store (retail data label). char[] avoids SDA21.
+extern "C" { extern char lbl_eu_8056BFF0[]; }
+extern "C" void __ct__IStateCache(void* self) {
+    *(void**)self = lbl_eu_8056BFF0;
+}
 
 CGXCache::~CGXCache() {}
 

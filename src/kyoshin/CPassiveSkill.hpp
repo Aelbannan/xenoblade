@@ -36,7 +36,6 @@ public:
     void thunk28_67C44();
     void thunk28_68518();
     void thunk28_68C38();
-    void setByte180(u8 val);
     void thunk1b8_CSysWin_getUnk34();
 
     // TODO: add fields

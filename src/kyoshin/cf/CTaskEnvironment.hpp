@@ -12,6 +12,5 @@ public:
 
     // TODO: add fields
     void Draw();
-    u32 getField68() const { return *(u32*)((u8*)this + 0x68); }
 };
 

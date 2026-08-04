@@ -5,15 +5,9 @@ namespace cf {
         
     }
 
-    int CChain::getZero_78E04() { return 0; }
-
     bool CChain::chkActorList() {
         extern bool func_8027B770(void*);
         return func_8027B770((char*)this + 0x18);
-    }
-
-    u16 CChain::getChainCount() {
-        return *(u16*)((char*)this + 0x3f28);
     }
 
     void CChain::setFieldAndClear(int val) {
@@ -21,15 +15,18 @@ namespace cf {
         *(unsigned short*)((char*)this + 0x6C) = 0;
     }
 
-    int CChain::getZero_A584() { return 0; }
-    int CChain::getZero_A9D0() { return 0; }
-    int CChain::getZero_A9D8() { return 0; }
-    int CChain::getZero_A9E0() { return 0; }
-    int CChain::getZero_A9EC() { return 0; }
-    int CChain::getZero_A9F4() { return 0; }
-    int CChain::getZero_A9FC() { return 0; }
-    int CChain::getZero_AA04() { return 0; }
 }
+
+extern "C" int CChain_getZero_78E04() { return 0; }
+extern "C" int CChain_getZero_A584() { return 0; }
+extern "C" int CChain_getZero_A9D0() { return 0; }
+extern "C" int CChain_getZero_A9D8() { return 0; }
+extern "C" int CChain_getZero_A9E0() { return 0; }
+extern "C" int CChain_getZero_A9EC() { return 0; }
+extern "C" int CChain_getZero_A9F4() { return 0; }
+extern "C" int CChain_getZero_A9FC() { return 0; }
+extern "C" int CChain_getZero_AA04() { return 0; }
+extern "C" u16 CChain_getChainCount(void* self) { return *(u16*)((u8*)*(void**)self + 0x3f28); }
 
 bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
     unsigned char v = a1[2];

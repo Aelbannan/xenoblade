@@ -29,6 +29,33 @@ CActParamData::CActParamData() {
 // ============================================================
 CActParamData::~CActParamData() {}
 
+// Cast-only SI ifaces for anonymous vtable tail-call thunks
+// (same RTTI-omit pattern as BattleStateV8If in MWCC_REFERENCE).
+struct If0x38 {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void vf38();
+};
+struct If0x3C {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038();
+    virtual void vf3C();
+};
+struct If0x40 {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C();
+    virtual void vf40();
+};
+
+extern "C" void func_80056128(void* self) { reinterpret_cast<If0x40*>(self)->vf40(); }
+extern "C" void func_80056138(void* self) { reinterpret_cast<If0x38*>(self)->vf38(); }
+extern "C" void func_80056148(void* self) { reinterpret_cast<If0x3C*>(self)->vf3C(); }
+
 void initParamDefaults(){}
 void setupParamData(){}
 void calcFloatField(){}

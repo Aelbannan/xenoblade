@@ -123,8 +123,12 @@ void resetCItemBox() {}
 
 // --- CItemBoxInfo methods ---
 
-u8 CItemBoxInfo::getItemBoxState() {
-    return state.current;
+u8 getItemBoxState(CItemBoxInfo* self) {
+    return self->state.current;
+}
+
+u8 getItemBox2State(CItemBoxInfo2* self) {
+    return self->state.current;
 }
 
 void CItemBoxInfo::advanceItemBoxState() {
@@ -1210,10 +1214,6 @@ void func_801E13F8(CItemBoxInfo2* info) {
     info->state.resource = 0;
     func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
     func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
-}
-
-u8 CItemBoxInfo2::getItemBox2State() {
-    return state.current;
 }
 
 void func_801E1498(CItemBoxInfo2* info) {

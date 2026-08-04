@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6014 |
-| extern "C" declarations (non-lbl_*, imports) | 2197 |
-| extern "C" definitions (forced names) | 1775 |
+| extern "C" (total lines) | 6072 |
+| extern "C" declarations (non-lbl_*, imports) | 2195 |
+| extern "C" definitions (forced names) | 1805 |
 | `self`/register-style params | 3173 |
 | `void*` (params + locals) | 4699 |
 | raw pointer offset arithmetic | 2702 |
-| deref-through-cast arithmetic | 1219 |
+| deref-through-cast arithmetic | 1218 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -64,7 +64,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/CViewRectDataCore.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CViewRoot.cpp | 13 | 0 | 1 | 9 | 0 | 0 | 0 | 0 | 20 |
 | libs/monolib/src/core/ScheduleList.cpp | 0 | 0 | 1 | 3 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/code_804DEDA8.cpp | 3 | 8 | 2 | 8 | 8 | 1 | 0 | 1 | 0 |
+| libs/monolib/src/core/code_804DEDA8.cpp | 1 | 38 | 2 | 8 | 8 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/code_804E36DC.cpp | 21 | 15 | 17 | 15 | 3 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 3 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
@@ -683,9 +683,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "libs/monolib/src/core/code_804DEDA8.cpp": {
-  "deref_arith": 1,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 8,
+  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_def": 38,
   "ptr_arith": 8,
   "rn_params": 1,
   "self_params": 2,

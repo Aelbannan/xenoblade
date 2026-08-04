@@ -25,7 +25,11 @@ bool func_80058724(){ return false; }
 
 CTaskEnvironment::~CTaskEnvironment() {}
 
-bool getGlobalSda() { return false; }
+extern void* lbl_eu_80663D58;
+
+extern "C" void* getGlobalSda() { return lbl_eu_80663D58; }
+
+extern "C" u32 getField68(void* self) { return *(u32*)((u8*)self + 0x68); }
 
 extern "C" u32 getSubField7C(void* self) { return *(u32*)((u8*)self + 0x7C); }
 

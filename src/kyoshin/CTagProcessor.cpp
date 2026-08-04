@@ -104,10 +104,12 @@ struct TagContext {
     u8 _pad08[0x0C - 0x08];
     float charSpace;
 
-    const wchar_t* getContextStr() const { return contextStr; }
-    const wchar_t** getContextStrPtr() { return &contextStr; }
     void addToCharSpace(float val) { charSpace = *(float*)((u8*)this + 4) + val; }
 };
+
+extern "C" const wchar_t* getContextStr(void* self) { return *(const wchar_t**)((u8*)self + 0x4); }
+
+extern "C" const wchar_t** getContextStrPtr(void* self) { return (const wchar_t**)((u8*)self + 0x4); };
 
 void func_80127670(){}
 

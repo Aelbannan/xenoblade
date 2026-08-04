@@ -39,15 +39,19 @@ struct CItemBoxInfo {
     void tryActivateItemBox();
 };
 
+// Recovered free functions (retail: getItemBoxState__FP12CItemBoxInfo)
+u8 getItemBoxState(CItemBoxInfo* self);
+
 struct CItemBoxInfo2 {
     CItemBoxInfoState state;
     ~CItemBoxInfo2();
     bool OnFileEvent(CEventFile*);
 
     void drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo);
-    u8 getItemBox2State();
     void advanceItemBox2State();
 };
+
+u8 getItemBox2State(CItemBoxInfo2* self);
 
 struct CItemBoxInfoEntry {
     u16 itemId;

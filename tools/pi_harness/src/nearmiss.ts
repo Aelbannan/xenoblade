@@ -132,8 +132,12 @@ export async function bankDraft(
     return undefined; // not better — keep the stored best
   }
 
-  // Copy the whole writable-scope files into a round-stamped dir.
-  const dir = join(bankDirFor(repoRoot, config, unit, tid), `r${round ?? 0}-${Date.now()}`);
+  // Copy the whole writable-scope files into a round-stamped dir. Use ONE
+  // timestamp so the dir name and candidate.roundDir always agree (a second
+  // Date.now() call could cross a millisecond boundary and orphan the row
+  // from its files, Kimi r8 M4 nit).
+  const stamp = `r${round ?? 0}-${Date.now()}`;
+  const dir = join(bankDirFor(repoRoot, config, unit, tid), stamp);
   await mkdir(dir, { recursive: true });
   const bankedFiles: string[] = [];
   for (const file of files) {
@@ -146,7 +150,7 @@ export async function bankDraft(
   }
   if (bankedFiles.length === 0) return undefined;
   candidate.files = bankedFiles;
-  candidate.roundDir = `r${round ?? 0}-${Date.now()}`;
+  candidate.roundDir = stamp;
 
   // Append to the index (append-only; last row for a tid is not authoritative,
   // readers reduce by betterThan — see bestBankedDraft). Appends are

@@ -646,6 +646,16 @@ export function tuFinalSpawnHook(python: string): BashSpawnHook {
         `BLOCKED: multi-line commands are not allowed in TU-final bash (prefix check is per-line). Got: ${cmd.slice(0, 120)}`,
       );
     }
+    // Output redirection truncates/creates files BEFORE the command runs —
+    // `ninja > tools/coop/targets.json` would wipe the registry even though
+    // ninja itself is allowlisted (Kimi r8 residual). Block `>`, `>>`, `2>`
+    // and heredocs; input redirection `<` is read-only but banned too for
+    // uniformity (a file's contents could steer the tool).
+    if (/[<>]/.test(cmd)) {
+      throw new Error(
+        `BLOCKED: shell redirection is not allowed in TU-final bash (files could be truncated or read). Got: ${cmd.slice(0, 120)}`,
+      );
+    }
     // Whitelist: everything else is blocked. Multi-command chains are
     // rejected unless EVERY segment starts with an allowed prefix.
     const segments = cmd.split(/[;&|]\s*/).map((s) => s.trim()).filter(Boolean);
@@ -657,14 +667,27 @@ export function tuFinalSpawnHook(python: string): BashSpawnHook {
         `BLOCKED: command not in the TU-final allowlist. Allowed: run.py diff/size/symbols, hexdiff, build_lock.py, configure.py, ninja. Got: ${cmd.slice(0, 120)}`,
       );
     }
-    // build_lock.py is a passthrough runner: whatever follows `--` is
-    // executed. An allowed prefix on the OUTER command must not smuggle an
-    // arbitrary inner command (adversarial review C2: `build_lock.py us --
-    // python3 -c '…'` or `build_lock.py us -- git status`). Validate the
-    // inner command against the same allowlist.
-    const blMatch = cmd.match(/build_lock\.py\s+(?:(?:--timeout|--stale-timeout)\s+\d+\s+)*(?:[^\s]+)\s+--\s+(.+)$/);
+    // build_lock.py is a passthrough runner: whatever follows the first
+    // standalone `--` is executed (build_lock.py itself splits on
+    // args.index("--")). An allowed prefix on the OUTER command must not
+    // smuggle an arbitrary inner command — validate the inner command
+    // against the same allowlist. Flags may appear in ANY position before
+    // the separator (--timeout/--stale-timeout), and the region is the first
+    // non-flag token; replicate build_lock.py's exact split so the hook and
+    // the runner agree (Kimi r8: flags AFTER the region bypassed the earlier
+    // regex, which only matched flags before it).
+    const blMatch = cmd.match(/build_lock\.py\s+(.+)$/);
     if (blMatch) {
-      const inner = blMatch[1].trim();
+      const after = blMatch[1];
+      // Find the first standalone `--` token, exactly as build_lock.py does
+      // (args.index("--")).
+      const parts = after.split(/\s+/).filter(Boolean);
+      const sepIdx = parts.indexOf("--");
+      if (sepIdx === -1) {
+        // No separator — build_lock.py would error out; nothing runs.
+        return ctx;
+      }
+      const inner = parts.slice(sepIdx + 1).join(" ");
       const innerSegments = inner.split(/[;&|]\s*/).map((s) => s.trim()).filter(Boolean);
       const innerAllowed = innerSegments.length > 0 && innerSegments.every((seg) =>
         allowPrefixes.some((p) => seg.startsWith(p) || seg.toLowerCase().startsWith(p.toLowerCase()))

@@ -131,6 +131,10 @@ describe("tuFinalSpawnHook", () => {
     `${PY} tools/pi_harness/build_lock.py us -- git status`, // git behind passthrough
     `${PY} tools/pi_harness/build_lock.py --stale-timeout 3600 us -- python3 -c "print(1)"`, // stale-timeout flag bypass
     `${PY} tools/pi_harness/build_lock.py --timeout 900 --stale-timeout 3600 us -- git status`, // both flags
+    `${PY} tools/pi_harness/build_lock.py us --stale-timeout 5 -- python3 -c "print(1)"`, // flags AFTER region
+    `ninja > tools/coop/targets.json`, // output redirection truncates files
+    `${PY} tools/coop/run.py size kyoshin/menu/CMenuMapSelect > /tmp/evil`, // redirect on allowed cmd
+    `ninja < /etc/passwd`, // input redirection
   ];
   for (const cmd of injectionBypasses) {
     test(`BLOCKED (C2): ${cmd.slice(0, 70)}`, () => {

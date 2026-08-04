@@ -39,6 +39,76 @@ from tools.coop.lib.project import Project
 from tools.ppc_equivalence.elf_symbols import list_text_functions, FunctionBytes
 from tools.ppc_equivalence.ir import Opcode
 
+
+def _recover_retail_names(
+    project: Project,
+    retail_fn: list[FunctionBytes],
+    decomp_fn: list[FunctionBytes] | None,
+    unit_name: str,
+) -> int:
+    """Rename retail functions whose symbols are NULL/stripped in the retail
+    object (DOL-split placeholder strings — e.g. CBattleManager's 78 functions
+    are all literal '(null)') by matching each function's .text OFFSET against
+    the target registry's address→symbol map.
+
+    text_base is derived from the DECOMP object: it has real mangled names, and
+    the registry maps name→absolute address, so
+        text_base = registry_addr(name) - decomp_offset(name)
+    for any named decomp function. Then retail_abs = text_base + retail_offset.
+
+    Returns the number of retail functions that were renamed.
+    """
+    if not retail_fn or not decomp_fn:
+        return 0
+    # Build name→absolute address from the registry (all units; cheap once).
+    reg = project.root / "tools" / "coop" / "targets.json"
+    if not reg.is_file():
+        return 0
+    try:
+        doc = json.loads(reg.read_text())
+        rows = doc.get("targets", []) if isinstance(doc, dict) else []
+    except (OSError, ValueError):
+        return 0
+    name_to_addr: dict[str, int] = {}
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        sym = r.get("symbol")
+        addr = r.get("address")
+        if isinstance(sym, str) and sym and isinstance(addr, str) and addr:
+            try:
+                name_to_addr[sym] = int(addr, 0)
+            except ValueError:
+                pass
+    if not name_to_addr:
+        return 0
+    # text_base from the FIRST decomp function that has a registry address.
+    text_base: int | None = None
+    for f in decomp_fn:
+        if f.name in name_to_addr:
+            text_base = (name_to_addr[f.name] - f.value) & 0xFFFFFFFF
+            break
+    if text_base is None:
+        return 0
+    # Rename retail functions by address match.
+    addr_to_name: dict[int, str] = {}
+    for sym, addr in name_to_addr.items():
+        addr_to_name[addr] = sym
+    renamed = 0
+    for i, f in enumerate(retail_fn):
+        if f.name and f.name != "(null)":
+            continue
+        abs_addr = (text_base + f.value) & 0xFFFFFFFF
+        sym = addr_to_name.get(abs_addr)
+        if sym:
+            retail_fn[i] = FunctionBytes(
+                name=sym, path=f.path, code=f.code, base=f.base, value=f.value,
+                size=f.size, section_index=f.section_index, section_name=f.section_name,
+                symbol_type=f.symbol_type, relocations=f.relocations,
+            )
+            renamed += 1
+    return renamed
+
 # ── mini PowerPC disassembler ──────────────────────────────────────────────
 
 # Opcode fields: primary opcode (bits 0-5), extended opcode varies.
@@ -785,7 +855,7 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     if args.list is not None:
-        return _cmd_list(args, retail_path)
+        return _cmd_list(args, retail_path, project, unit)
 
     if decomp_path is None:
         print(f"ERROR: no decomp (base) object for unit {unit.name}", file=sys.stderr)
@@ -829,6 +899,7 @@ def run(argv: list[str] | None = None) -> int:
     try:
         retail_fn = list_text_functions(retail_path)
         decomp_fn = list_text_functions(decomp_path)
+        _recover_retail_names(project, retail_fn, decomp_fn, unit.name)
     except Exception as exc:
         print(f"ERROR reading objects: {exc}", file=sys.stderr)
         return 3
@@ -1088,10 +1159,19 @@ def _kb_hints(unit_name: str, c: dict, retail: FunctionBytes, decomp: FunctionBy
     return hints
 
 
-def _cmd_list(args: argparse.Namespace, retail_path: Path) -> int:
+def _cmd_list(args: argparse.Namespace, retail_path: Path, project: Project | None = None, unit=None) -> int:
     """--list: print retail function symbols (address | size | name). No build."""
     try:
         retail_fn = list_text_functions(retail_path)
+        # Recover null retail names so --list shows real symbols for stripped
+        # units (CBattleManager etc.). Needs the decomp object for text_base.
+        if project is not None and unit is not None:
+            try:
+                decomp_path_l = unit.base_path if hasattr(unit, "base_path") else None
+                decomp_fn_l = list_text_functions(decomp_path_l) if decomp_path_l and decomp_path_l.is_file() else []
+                _recover_retail_names(project, retail_fn, decomp_fn_l, unit.name)
+            except Exception:
+                pass
     except Exception as exc:
         print(f"ERROR reading {retail_path}: {exc}", file=sys.stderr)
         return 3
@@ -1110,6 +1190,7 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
     try:
         retail_fn = list_text_functions(retail_path)
         decomp_fn = list_text_functions(decomp_path)
+        _recover_retail_names(project, retail_fn, decomp_fn, unit.name)
     except Exception as exc:
         print(f"ERROR reading objects: {exc}", file=sys.stderr)
         return 3

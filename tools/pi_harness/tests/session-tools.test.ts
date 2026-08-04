@@ -1,0 +1,285 @@
+/**
+ * Tests for the pi-harness session tools (tools/pi_harness/src/session-tools.ts).
+ *
+ * Two layers:
+ *   1. UNIT — pure logic (looksLikeJson, spawnHook allowlist/blocklist).
+ *   2. INTEGRATION — each tool's execute() against the REAL repo commands
+ *      (hexdiff.py / run.py / mwcc_kb.py). These require the repo to be
+ *      configured (build/us exists) and are marked integration.
+ *
+ * Run:
+ *   node --import tsx --test tests/session-tools.test.ts
+ *   (or: npm test after adding the script)
+ */
+import { test, describe, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import {
+  looksLikeJson,
+  run,
+  hexdiffTool,
+  symbolsTool,
+  targetsTool,
+  kbTool,
+  ctxTool,
+  tuFinalSpawnHook,
+  batchSessionTools,
+  tuFinalSessionTools,
+} from "../src/session-tools.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO = join(__dirname, "..", "..", "..");
+const PY = ".venv/bin/python3";
+
+// Known-good identities from the target registry (stable across runs).
+const KNOWN_UNIT = "kyoshin/menu/CMenuMapSelect";
+const KNOWN_SYMBOL = "func_80242368"; // exists in retail, diffable
+const FULL_MATCH_UNIT = "kyoshin/menu/CMenuPTState";
+const FULL_MATCH_SYMBOL = "__ct__80192C10"; // verified 0-mismatch earlier
+const KNOWN_TARGET_ID = "us-802443d4"; // CMenuMapSelect ctor target
+
+// ---------------------------------------------------------------------------
+// UNIT: looksLikeJson
+// ---------------------------------------------------------------------------
+describe("looksLikeJson", () => {
+  test("true for a JSON object document", () => {
+    assert.equal(looksLikeJson('{"a":1}'), true);
+    assert.equal(looksLikeJson('  \n\t{"a":1}\n'), true);
+  });
+  test("false for a JSON ARRAY (hexdiff never emits arrays)", () => {
+    assert.equal(looksLikeJson("[1,2]"), false);
+  });
+  test("false for build noise (.note.split line) that pollutes stdout", () => {
+    assert.equal(looksLikeJson("added .note.split to /path/obj.o"), false);
+  });
+  test("false for empty / whitespace", () => {
+    assert.equal(looksLikeJson(""), false);
+    assert.equal(looksLikeJson("   \n  "), false);
+  });
+  test("false for ninja progress lines ([1/1] MWCC ...)", () => {
+    assert.equal(looksLikeJson("[1/1] MWCC build/us/src/kyoshin/menu/CMenuMapSelect.o"), false);
+  });
+  test("false for JSON preceded by noise (the pollution case)", () => {
+    // The .note.split line is NOT trimmed away, so this stays false — the
+    // fix is at the subprocess level (capture_output), not in this guard.
+    assert.equal(looksLikeJson("added .note.split to /x\n{\"a\":1}"), false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UNIT: tuFinalSpawnHook allowlist/blocklist
+// ---------------------------------------------------------------------------
+describe("tuFinalSpawnHook", () => {
+  const hook = tuFinalSpawnHook(PY);
+  const ctx = { command: "" };
+
+  const allowed = [
+    `${PY} tools/coop/run.py diff kyoshin/menu/CMenuMapSelect --no-smt`,
+    `${PY} tools/coop/run.py size kyoshin/menu/CMenuMapSelect`,
+    `${PY} tools/coop/run.py symbols kyoshin/menu/CMenuMapSelect`,
+    `${PY} tools/coop/hexdiff.py kyoshin/menu/CMenuMapSelect --symbol func_80242368 --json`,
+    `${PY} tools/pi_harness/build_lock.py configure`,
+    `${PY} configure.py`,
+    "ninja build/us/src/kyoshin/menu/CMenuMapSelect.o",
+  ];
+  for (const cmd of allowed) {
+    test(`ALLOWED: ${cmd.slice(0, 70)}`, () => {
+      assert.doesNotThrow(() => hook({ ...ctx, command: cmd } as never));
+    });
+  }
+
+  const blocked = [
+    `${PY} tools/coop/run.py diff kyoshin/menu/CMenuMapSelect`, // no --no-smt
+    `${PY} tools/coop/run.py diff kyoshin/menu/CMenuMapSelect --smt`,
+    `${PY} tools/coop/run.py diff kyoshin/menu/CMenuMapSelect --linked`,
+    "git checkout src/kyoshin/menu/CMenuMapSelect.cpp",
+    "git reset --hard",
+    `${PY} tools/coop/run.py cycle us-802443d4`,
+    `${PY} tools/coop/run.py batch-cycle us-802443d4`,
+    `${PY} tools/coop/run.py targets claim us-802443d4`,
+    `${PY} tools/coop/run.py targets sync`,
+    "echo hello; git push origin main",
+    "cat /etc/passwd",
+    "ls -la",
+  ];
+  for (const cmd of blocked) {
+    test(`BLOCKED: ${cmd.slice(0, 70)}`, () => {
+      assert.throws(() => hook({ ...ctx, command: cmd } as never));
+    });
+  }
+
+  test("SMT anywhere is blocked even with --no-smt present elsewhere", () => {
+    assert.throws(() =>
+      hook({ ...ctx, command: `${PY} tools/coop/run.py diff x --no-smt && echo --smt` } as never),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// INTEGRATION: tool execute() against the real repo
+// ---------------------------------------------------------------------------
+describe("integration: hexdiffTool", () => {
+  const tool = hexdiffTool(REPO, PY);
+
+  test("returns structured diff for a known mismatched symbol", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: KNOWN_SYMBOL, brief: true });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /## hexdiff: func_80242368/);
+    assert.match(text, /mismatch: \d+/);
+    assert.match(text, /structural: \d+/);
+    assert.match(text, /retail \d+B vs decomp \d+B/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("full mode includes mismatched instructions", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: KNOWN_SYMBOL });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /retail:|decomp:/);
+  });
+
+  test("reports a clear error for a nonexistent symbol (not 'non-JSON output')", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: "__ct__NO_SUCH_SYMBOL_XYZ" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /symbol|not found|ERROR/i);
+    assert.doesNotMatch(text, /non-JSON output/);
+  });
+
+  test("returns 0-mismatch for a full-match symbol", async () => {
+    const r = await tool.execute("t", { unit: FULL_MATCH_UNIT, symbol: FULL_MATCH_SYMBOL, brief: true });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /mismatch: 0/);
+    assert.match(text, /structural: 0/);
+  });
+});
+
+describe("integration: symbolsTool", () => {
+  const tool = symbolsTool(REPO, PY);
+
+  test("lists symbols for a known unit", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT });
+    const text = r.content?.[0]?.text ?? "";
+    assert.ok(text.length > 0, "expected non-empty symbol table");
+    assert.doesNotMatch(text, /^ERROR/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("filters by substring", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, substr: "func_80242" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /func_80242/i);
+  });
+});
+
+describe("integration: targetsTool", () => {
+  const tool = targetsTool(REPO, PY);
+
+  test("shows a known target record", async () => {
+    const r = await tool.execute("t", { targetId: KNOWN_TARGET_ID });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, new RegExp(KNOWN_TARGET_ID));
+    assert.match(text, /CMenuMapSelect|802443d4/i);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("errors cleanly for a nonexistent target", async () => {
+    const r = await tool.execute("t", { targetId: "us-00000000" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /ERROR|not found/i);
+  });
+});
+
+describe("integration: ctxTool", () => {
+  const tool = ctxTool(REPO, PY);
+
+  test("generates context for a known source file", async () => {
+    const r = await tool.execute("t", { source: "src/kyoshin/menu/CMenuMapSelect.cpp" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.ok(text.length > 0, "expected context output");
+    assert.doesNotMatch(text, /^ERROR/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+});
+
+describe("integration: kbTool", () => {
+  const tool = kbTool(REPO, PY);
+
+  test("searches for a known symbol/term", async () => {
+    const r = await tool.execute("t", { query: "func_80242368" });
+    const text = r.content?.[0]?.text ?? "";
+    // KB may be empty on a fresh repo — accept either, but never ERROR.
+    assert.doesNotMatch(text, /^ERROR/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("kind filter: reference only", async () => {
+    const r = await tool.execute("t", { query: "mullw", kind: "reference" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.doesNotMatch(text, /Sibling attempts/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("status filter passes through", async () => {
+    const r = await tool.execute("t", { query: "func_80242368", status: "FULL_MATCH" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.doesNotMatch(text, /^ERROR/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("no-hit query returns the friendly empty message", async () => {
+    const r = await tool.execute("t", { query: "zzz_no_such_thing_42" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /no KB hits/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REGRESSION: run() must preserve stdout/stderr on non-zero exit
+// ---------------------------------------------------------------------------
+describe("run() stdout/stderr preservation (root-cause regression)", () => {
+  test("exit 0: resolves with stdout/stderr", async () => {
+    const r = await run(PY, ["-c", "print('hi')"], REPO);
+    assert.equal(r.stdout.trim(), "hi");
+  });
+
+  test("exit 5 (mismatch): rejection error carries stdout (the diff JSON)", async () => {
+    // This is the exact bug: node's execFile error object does NOT include
+    // stdout/stderr — they are separate callback args. If run() rejects
+    // without attaching them, the hexdiff tool loses the diff on every
+    // mismatch and reports 'build failed' instead.
+    const err = await run(PY, ["tools/coop/hexdiff.py", "kyoshin/menu/CMenuMapSelect", "--symbol", "func_80242368", "--json", "--no-build"], REPO)
+      .then(() => null, (e: Error & { stdout?: string; code?: number }) => e);
+    assert.ok(err, "expected rejection (exit 5)");
+    assert.equal(err.code, 5);
+    assert.ok(err.stdout && err.stdout.startsWith("{"), "rejection must carry the JSON stdout");
+  });
+
+  test("exit 2 (build error): rejection carries stderr (the compiler error)", async () => {
+    // python exits 2 on a syntax error; stderr must be preserved.
+    const err = await run(PY, ["-c", "raise SystemExit(2)"], REPO)
+      .then(() => null, (e: Error & { code?: number }) => e);
+    assert.ok(err);
+    assert.equal(err.code, 2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tool-set composition
+// ---------------------------------------------------------------------------
+describe("tool set composition", () => {
+  test("batchSessionTools contains exactly the 5 structured tools, no bash", () => {
+    const tools = batchSessionTools(REPO, PY);
+    const names = tools.map((t) => t.name).sort();
+    assert.deepEqual(names, ["ctx", "hexdiff", "kb", "symbols", "targets"]);
+  });
+
+  test("tuFinalSessionTools = batch tools + bash", () => {
+    const tools = tuFinalSessionTools(REPO, PY);
+    const names = tools.map((t) => t.name);
+    assert.ok(names.includes("bash"), "tu-final must include bash behind the allowlist");
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx"]) {
+      assert.ok(names.includes(n), `tu-final must include ${n}`);
+    }
+  });
+});

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "pi-harness": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "test:tools": "node --import tsx --test tests/session-tools.test.ts"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "file:/Users/ahmedelbannan/.local/lib/node_modules/@earendil-works/pi-coding-agent",

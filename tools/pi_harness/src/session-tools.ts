@@ -27,7 +27,7 @@ import {
  *  they are separate callback args. On non-zero exit we must attach them
  *  to the rejection, or every hexdiff mismatch (exit 5) would lose the
  *  diff JSON and the tool would fall into the "build failed" path. */
-function run(python: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
+export function run(python: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     execFile(python, args, { cwd, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) {
@@ -41,13 +41,12 @@ function run(python: string, args: string[], cwd: string): Promise<{ stdout: str
   });
 }
 
-/** True when a hexdiff stdout blob is a JSON document (starts with `{` after
- *  trimming, and the trailing newline-before-JSON noise is not JSON). Build
- *  failures print "added .note.split to ..." to stdout before failing —
- *  those must not be mistaken for a diff result. */
-function looksLikeJson(s: string): boolean {
-  const t = s.trim();
-  return t.startsWith("{") || t.startsWith("[");
+/** True when a hexdiff stdout blob is the JSON result. hexdiff always emits
+ *  an OBJECT ({...}) — never an array — so require a `{` prefix after trim.
+ *  This rejects ninja progress lines (`[1/1] MWCC ...`), the .note.split
+ *  postprocess line, and any other stdout noise. */
+export function looksLikeJson(s: string): boolean {
+  return s.trimStart().startsWith("{");
 }
 
 // ─────────────────────────────────────────────────────────────────────

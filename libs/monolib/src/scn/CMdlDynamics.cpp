@@ -33,7 +33,7 @@ void __dt__804EA1D0(){}
 
 u32 func_804EA268(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-void func_804EA270(){}
+extern "C" void* func_804EA270(void* self) { return (char*)*(void**)self + (*(u32*)((u8*)self + 4) << 2); }
 
 void func_804EA284(){}
 
@@ -43,13 +43,13 @@ void func_804EAA14(void) {}
 
 void func_804EAA18(){}
 
-void func_804EB1C4(){}
+extern "C" u32 func_804EB1C4(void* self) { return *(u32*)self != 0; }
 
 void func_804EB1D8(){}
 
 void func_804EB22C(){}
 
-void func_804EB2FC(){}
+extern "C" u32 func_804EB2FC(void* self) { return *(u32*)self != 0; }
 
 void func_804EB310(){}
 
@@ -154,7 +154,7 @@ void func_804EC8AC(){}
 
 u32 func_804EC9E4(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-void func_804EC9EC(){}
+extern "C" void* func_804EC9EC(void* self) { return (char*)*(void**)self + *(u32*)((u8*)self + 4) * 0x98; }
 
 void func_804ECA00(){}
 

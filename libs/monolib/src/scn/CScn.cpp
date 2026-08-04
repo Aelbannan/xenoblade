@@ -11,6 +11,7 @@ struct VTarget {
     virtual void v8() = 0;
     virtual void v9() = 0;
     virtual void v10() = 0;
+    virtual void v11() = 0;
     virtual ~VTarget() {}
 };
 
@@ -225,11 +226,19 @@ extern "C" int func_8049698C() {
 }
 void func_80496994__Fv(void){}
 void func_80496998__Fv(void){}
-void func_8049699C(){}
+// Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
+
+
+
 extern "C" void func_eu_8049AB50(void* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
 }
 void __dt__4CScnFv(void*, int);
 extern "C" void func_80496B04(void* pThis, int r4) {
     __dt__4CScnFv((char*)pThis - 0x54, r4);
+}
+
+extern "C" void func_8049699C(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 0x8C);
+    obj->v11();
 }

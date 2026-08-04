@@ -11,3 +11,5 @@ extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
 
 
+
+extern "C" u32 func_8049C794(void* self) { return (s32)(*(u32*)((u8*)self + 0x38)) <= 0; }

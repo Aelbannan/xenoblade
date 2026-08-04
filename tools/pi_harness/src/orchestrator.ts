@@ -38,7 +38,7 @@ import {
 } from "./nearmiss.js";
 import { buildBatchPrompt, buildTuFinalPrompt } from "./prompts.js";
 import {
-  scanUnitState, scoreState, buildUnitFeedback,
+  scanUnitState, scoreState, buildUnitFeedback, diffUnitScans,
   type UnitScan,
 } from "./tufinal-scan.js";
 import { runAgentSession, type SessionRunResult } from "./session.js";
@@ -781,6 +781,7 @@ function makeVerifyCallback(opts: {
     const matchedTargets: string[] = []; // mismatch:0 in the current state
     const unmatchedTargets: string[] = [];
     let hexdiffFailedCount = 0;
+    const hexdiffFailedIds: string[] = [];
     for (const tid of targetIds) {
       const sym = targetSymbols.get(tid);
       if (!sym) continue;
@@ -830,6 +831,7 @@ function makeVerifyCallback(opts: {
         }
       } else {
         hexdiffFailedCount++;
+        hexdiffFailedIds.push(tid);
         process.stderr.write(`[pi-harness] hexdiff failed for ${tid}: ${hd.output.slice(0, 200)}\n`);
       }
     }
@@ -843,9 +845,14 @@ function makeVerifyCallback(opts: {
     const feedbackParts: string[] = [];
     if (matchedTargets.length > 0) {
       feedbackParts.push(
-        `## Targets Already Matched\n\n` +
-        `These targets are at mismatch:0 (byte-identical) in the current worktree — ` +
-        `the harness has certified or is certifying them. **Do NOT edit them again**: ` +
+        `## Targets Are Byte-Identical (mismatch:0) but NOT Accepted
+
+` +
+        `These targets show mismatch:0 in hexdiff, but the acceptance cycle did ` +
+        `NOT certify them (this session is still in the re-prompt path = 0 ` +
+        `accepted). They are byte-identical but a witness/reloc/size gate ` +
+        `rejected them. **Do NOT edit the code bytes** — instead investigate ` +
+        `the gate with \`witness <unit> <symbol>\` and \`unit-status <unit>\`: ` +
         matchedTargets.map((id) => `\`${id}\``).join(", ") + `.\n`,
       );
     }
@@ -860,6 +867,15 @@ function makeVerifyCallback(opts: {
         `confirm any match. Use \`symbols <unit>\` and \`targets <id>\` to check ` +
         `what the registry/objects expose, and review the retail ASM manually. ` +
         `The acceptance cycle cannot certify targets it cannot resolve.`,
+      );
+    } else if (hexdiffFailedCount > 0) {
+      // M1: partial failures were silently dropped — the model must know
+      // which targets couldn't be verified (so it doesn't think they match).
+      feedbackParts.push(
+        `## ⚠️ Partial verification — ${hexdiffFailedCount} target(s) could not be diffed\n\n` +
+        `hexdiff failed for: ${hexdiffFailedIds.map((id) => `\`${id}\``).join(", ")}. ` +
+        `Their match status is UNKNOWN (null/stripped symbols or build issue). ` +
+        `The targets listed elsewhere are the ones verified.`,
       );
     } else if (unmatchedTargets.length === 0 && matchedTargets.length === 0) {
       feedbackParts.push(`## ⚠️ Verification incomplete — nothing could be confirmed as matched.`);
@@ -888,7 +904,7 @@ function makeVerifyCallback(opts: {
     } else {
       feedbackParts.push(
         `## ${matchedTargets.length > 0 ? "Remaining Targets" : "No Matches Found"}\n\n` +
-        `Your code compiled and passed lint, but ${unmatchedTargets.length} target(s) still do not match the retail binary.` +
+        `Your code compiled, but ${unmatchedTargets.length} target(s) still do not match the retail binary.` +
         (hexdiffOutputs.length > 0
           ? `\n\nHexdiff output for unmatched targets:\n\n${hexdiffOutputs.join("\n\n")}`
           : `\n\n(hexdiff unavailable — review the assembly patterns carefully)`) +
@@ -1643,7 +1659,7 @@ async function runSingleton(
         await releaseBatch(repoRoot, config, [targetId]);
         if (accepted) return true;
         // Compile + lint passed but batch-cycle rejected.
-        feedback = `Previous singleton session passed compile and lint but was not accepted by batch-cycle (status: ${results?.[0]?.status ?? "unknown"}).`;
+        feedback = `Previous singleton session compiled but was not accepted by batch-cycle (status: ${results?.[0]?.status ?? "unknown"}). Review the hexdiff/witness state and continue.`;
         continue;
       }
 
@@ -1750,7 +1766,11 @@ async function runTuFinal(
   // scoring snapshot is restored ONCE at the very end — never mid-session
   // (the model may be working toward something).
   const baselineScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
-  let bestScore: bigint | null = null;
+  // M2: seed bestScore with the BASELINE itself (zero regressions by
+  // definition) so a state worse than session start never wins the end-of-
+  // session restore. bestSnapshot stays null → the pristine snapshot is the
+  // fallback (it IS the baseline).
+  let bestScore: bigint = scoreState(baselineScan, baselineScan, Infinity);
   let bestScan: UnitScan | null = null;
   let bestSnapshot: Snapshot | null = null;
   let bestLintCount = Infinity;
@@ -1810,7 +1830,7 @@ async function runTuFinal(
     lintViolations = lintAfter.violations;
     const currentScore = scoreState(currentScan, baselineScan, lintAfter.violations.length);
     const unitFeedback = buildUnitFeedback(baselineScan, currentScan, lintAfter.violations.length);
-    if (bestScore === null || currentScore < bestScore) {
+    if (currentScore < bestScore) {
       bestScore = currentScore;
       bestScan = currentScan;
       bestSnapshot = await snapshotUnit(repoRoot, unit, writable);
@@ -1854,6 +1874,30 @@ async function runTuFinal(
     // Only a lint-clean attempt proceeds to the full-tree rebuild + size
     // gate. Lint violations re-prompt (the scan feedback shows what matters).
     if (lintViolations.length > 0) {
+      if (attempt < maxTuFinalAttempts) continue;
+      break;
+    }
+
+    // ── Regression gate (C2): lint-clean + compiles is NOT 'done' — a
+    //    matched function that the polish regressed must reject this attempt.
+    //    'A regression is never acceptable' (the TU-final contract). ──
+    const regressions = diffUnitScans(baselineScan, currentScan).filter((d) => d.regressed);
+    if (regressions.length > 0) {
+      lastReason = "regression";
+      feedback =
+        `## ⚠️ MATCH REGRESSION — ${regressions.length} function(s) regressed (not acceptable)\n\n` +
+        `The polish REGRESSED previously-matched functions. This attempt is ` +
+        `REJECTED even though it compiles and passes lint — a regression is ` +
+        `never acceptable. Fix these back to their baseline:\n\n` +
+        regressions.map((d) =>
+          `- \`${d.symbol}\`: structural ${d.before.structural}→${d.after.structural}, ` +
+          `mismatch ${d.before.mismatch}→${d.after.mismatch}` +
+          (d.witnessBefore === true && d.witnessAfter === false
+            ? ` — WITNESS NO LONGER CERTIFIES`
+            : ""),
+        ).join("\n") +
+        `\n\nRun \`unit-status <unit>\` for the full state, restore the regressed ` +
+        `functions to their prior implementations, and retry.`;
       if (attempt < maxTuFinalAttempts) continue;
       break;
     }

@@ -152,14 +152,23 @@ export function scoreState(
   const improvedCount = improved.length;
   const overBudget = scan.size_check && !scan.size_check.ok ? (scan.size_check.over_by ?? 0) : 0;
   const dataPct = scan.dataPercent ?? 0;
-  // Encode: regressedCount (0-99) | regressedSeverity | improvedCount |
-  //          overBudget (0-999999) | dataPct (0-100, lower worse) | lint (0-999)
-  let score = BigInt(regressedCount) * 100_000_000_000_000n;
-  score += BigInt(Math.max(0, Math.min(99999, regressedSeverity))) * 1_000_000_000n;
-  score += BigInt(Math.max(0, Math.min(99, improvedCount))) * 10_000_000n;
+  // Encode (LOWER is better), with NO field overlap:
+  //   [0-99]      regressedCount     × 100_000_000_000_000
+  //   [0-999999]  regressedSeverity  × 100_000_000
+  //   [0-999999]  overBudget         × 100
+  //   [0-100]     (100 - dataPct)    × 1
+  //   [0-999]     lintViolations     × 1/1000 (fractional, low priority)
+  //   improvements are a BONUS (subtracted) so they never outrank a
+  //   regression, and overBudget cannot overflow into another field.
+  let score = BigInt(Math.max(0, Math.min(99, regressedCount))) * 100_000_000_000_000n;
+  score += BigInt(Math.max(0, Math.min(999999, regressedSeverity))) * 100_000_000n;
   score += BigInt(Math.max(0, Math.min(999999, overBudget))) * 100n;
   score += BigInt(100 - Math.max(0, Math.min(100, Math.round(dataPct))));
   score += BigInt(Math.max(0, Math.min(999, lintViolations)));
+  // Improvements reduce the score within the same regression tier (best
+  // possible bonus ≈ 99*1_000_000 = 99,000,000 — under the 100M regressedSeverity
+  // digit, so an improvement can never hide a regression or overflow).
+  score -= BigInt(Math.max(0, Math.min(99, improvedCount))) * 1_000_000n;
   return score;
 }
 
@@ -250,7 +259,19 @@ export async function scanUnitState(
     size_check: null, dataPercent: null, sizeOutput: "", witnessCert: new Map(),
   };
   try {
-    const { stdout } = await run(python, ["tools/coop/hexdiff.py", unit, "--all", "--json"], repoRoot);
+    // hexdiff --all --json exits 5 when any function mismatches — run()
+    // REJECTS on non-zero exit, so we must read stdout from the rejection
+    // error (C1: swallowing the rejection returned an empty scan, making the
+    // whole regression detector a no-op for any non-byte-identical unit).
+    let stdout = "";
+    try {
+      const r = await run(python, ["tools/coop/hexdiff.py", unit, "--all", "--json"], repoRoot);
+      stdout = r.stdout;
+    } catch (err) {
+      const e = err as { stdout?: string };
+      if (e.stdout && e.stdout.trimStart().startsWith("{")) stdout = e.stdout;
+      else throw err; // genuinely broken (build failure) — empty scan is correct
+    }
     const parsed = JSON.parse(stdout) as {
       unit?: string; functions?: unknown[]; matched?: number; total?: number; size_check?: UnitScan["size_check"];
     };
@@ -280,20 +301,27 @@ export async function scanUnitState(
     // Cheap: only structural:0 & mismatch>0 functions get a witness probe.
     for (const f of scan.functions) {
       if (f.present && f.structural === 0 && f.mismatch > 0) {
+        let stdout = "";
         try {
-          const { stdout } = await run(
+          const r = await run(
             python, ["tools/coop/run.py", "diff", unit, "--symbol", f.symbol, "--no-smt"], repoRoot,
           );
-          const eq = stdout.match(/equivalence: (\S+)/)?.[1];
-          const status = stdout.match(/status: (\S+)/)?.[1];
-          scan.witnessCert.set(
-            f.symbol,
-            eq === "EQUIVALENT_MATCH" || eq === "FULL_MATCH" ||
-            status === "EQUIVALENT_MATCH" || status === "FULL_MATCH",
-          );
-        } catch {
-          scan.witnessCert.set(f.symbol, false); // witness unavailable → not certified
+          stdout = r.stdout;
+        } catch (err) {
+          // run.py diff prints the verdict to stdout then exits 1 on size
+          // over-budget — read the verdict from the rejection (H2: discarding
+          // it produced false 'WITNESS NO LONGER CERTIFIES' regressions).
+          const e = err as { stdout?: string };
+          if (e.stdout && /status: \S+/.test(e.stdout)) stdout = e.stdout;
+          else { scan.witnessCert.set(f.symbol, false); continue; }
         }
+        const eq = stdout.match(/equivalence: (\S+)/)?.[1];
+        const status = stdout.match(/status: (\S+)/)?.[1];
+        scan.witnessCert.set(
+          f.symbol,
+          eq === "EQUIVALENT_MATCH" || eq === "FULL_MATCH" ||
+          status === "EQUIVALENT_MATCH" || status === "FULL_MATCH",
+        );
       }
     }
   } catch {

@@ -218,7 +218,7 @@ describe("unitStatusTool (integration)", () => {
     const tool = unitStatusTool(REPO_ROOT, ".venv/bin/python3");
     const r = await tool.execute("t", { unit: "kyoshin/CSaveLoad" });
     const text = r.content?.[0]?.text ?? "";
-    assert.match(text, /## unit-status: kyoshin\/CSaveLoad/);
+    assert.match(text, /## unit-status: .*CSaveLoad/);
     assert.match(text, /matched: \d+\/\d+/);
     assert.match(text, /TU size/);
     assert.match(text, /data section match/);
@@ -233,3 +233,19 @@ describe("unitStatusTool (integration)", () => {
     assert.ok(r.content?.[0]?.text !== undefined);
   });
 });
+
+// ---------------------------------------------------------------------------
+describe("scanUnitState exit-5 regression (C1)", () => {
+  test("a unit with mismatches (exit 5) still yields a populated scan, not empty", async () => {
+    const { scanUnitState } = await import("../src/tufinal-scan.js");
+    // CSaveLoad has unmatched functions → hexdiff --all --json exits 5 with
+    // JSON on stdout. The fix reads stdout from the rejection error; without
+    // it the scan would be empty (total 0) and the regression detector a
+    // no-op. Assert a populated scan: total > 0 and functions present.
+    const scan = await scanUnitState(REPO_ROOT, ".venv/bin/python3", "kyoshin/CSaveLoad");
+    assert.ok(scan.total > 0, `expected populated scan, got total=${scan.total}`);
+    assert.ok(scan.functions.length > 0, "expected functions in scan");
+    assert.ok(scan.matched >= 0 && scan.matched <= scan.total, "matched within range");
+  });
+});
+

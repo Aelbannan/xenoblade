@@ -30,7 +30,7 @@ export function buildBatchPrompt(opts: {
     "- Do NOT search for the same symbol or pattern more than once.\n" +
     "- Do NOT use `nm`, `objdump`, or `readelf` — use the `symbols` tool and the brief's provided file/symbol info instead. (`find`/`ls` ARE available and cheap for locating files; cap them like grep.)\n" +
     "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
-    "\n## Anti-patterns (will cause lint rejection)\n\n" +
+    "\n## Anti-patterns (avoid these — they are flagged by the repo lint in TU-final)\n\n" +
     "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header. Only `lbl_*` reloc/data names may stay `extern \"C\"`.\n" +
     "- NEVER write constructors/destructors as C-style free functions taking `* self` (e.g. `extern \"C\" CFoo* __ct__4CFooFv(CFoo* self)`). The retail symbols are mangled members — write real member ctors/dtors: `CFoo::CFoo(...)` / `CFoo::~CFoo(...)`.\n" +
     "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +

@@ -20,8 +20,6 @@
   "maxBriefChars": 40000,
   "briefTargetChars": 12000,
   "maxBatchMinutes": 45,
-  "maxTimeoutRePrompts": 3,
-  "maxNoMatchRePrompts": 1,
   "region": "us",
   "sessionDir": "build/pi-harness/sessions",
   "ledgerPath": "build/pi-harness/ledger.jsonl",
@@ -36,5 +34,9 @@
   "maxAttemptsPerTarget": 4,
   "staleRoundThreshold": 2,
   "retryExhausted": false,
-  "bankOnlyOnBetter": true
+  "bankOnlyOnBetter": true,
+  "timeoutRetries": 3,
+  "rejectionRetries": 1,
+  "tuFinalAttempts": 2,
+  "tuFinalTimeoutMinutes": 0
 }

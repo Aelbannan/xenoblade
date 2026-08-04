@@ -1,6 +1,14 @@
 {
-  "matchModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "off" },
-  "cleanupModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "off" },
+  "matchModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  },
+  "cleanupModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  },
   "batchSize": 5,
   "maxParallelTUs": 2,
   "maxBatchRetries": 2,
@@ -11,9 +19,11 @@
   "singletonMinSize": 500,
   "maxBriefChars": 80000,
   "maxBatchMinutes": 45,
-  "maxTimeoutRePrompts": 3,
-  "maxNoMatchRePrompts": 1,
   "region": "us",
   "sessionDir": "build/pi-harness/sessions",
-  "ledgerPath": "build/pi-harness/ledger.jsonl"
+  "ledgerPath": "build/pi-harness/ledger.jsonl",
+  "timeoutRetries": 3,
+  "rejectionRetries": 1,
+  "tuFinalAttempts": 2,
+  "tuFinalTimeoutMinutes": 0
 }

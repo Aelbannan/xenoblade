@@ -54,12 +54,17 @@ export interface HarnessConfig {
   ledgerPath: string;
   /** Python interpreter for coop tooling; auto-detected from .venv. */
   pythonBin: string;
-  /** Total in-session re-prompts on compile/lint failure before falling
-   *  back to a fresh session. 0 = single-prompt, no continuation. */
-  maxTimeoutRePrompts: number;
-  /** In-session re-prompts when the model completed but code still
-   *  fails (not a timeout). Lower cap avoids entrenchment on dead ends. */
-  maxNoMatchRePrompts: number;
+  /** Total in-session re-prompts when the session hit the wall-clock
+   *  timeout (model was still working). 0 = single-prompt, no continuation. */
+  timeoutRetries: number;
+  /** In-session re-prompts when the model FINISHED but the harness rejected
+   *  the result (compile fail, lint fail, or no match). Lower cap avoids
+   *  entrenchment on dead ends. */
+  rejectionRetries: number;
+  /** TU-final phase levers (independent of batch/singleton knobs). */
+  tuFinalAttempts: number;
+  /** TU-final session timeout in minutes; 0 = derive (maxBatchMinutes * 2). */
+  tuFinalTimeoutMinutes: number;
   /** Unified per-target session budget across pass1 + singleton + rebatch. */
   maxAttemptsPerTarget: number;
   /** Consecutive verify rounds with no divergence improvement before early-stop. */

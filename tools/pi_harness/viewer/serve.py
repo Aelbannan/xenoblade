@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Read-only web viewer for the pi-harness.
+Web viewer for the pi-harness.
 
 Phase 3 viewer: a small, dependency-free HTTP server that exposes pi-harness
 state (ledger event stream, targets registry, near-miss draft bank, session
-transcripts) as JSON. Read-only — never writes to the ledger, targets.json,
-nearmiss/, or anything else.
+transcripts) as JSON. Read-only except for /api/config (the Settings tab),
+which validates and atomically saves <repoRoot>/pi-harness.json with a
+backup. Never touches the ledger, targets.json, nearmiss/, or anything else.
 
 Usage:
     .venv/bin/python3 tools/pi_harness/viewer/serve.py [--port 8766]
 
-    --port PORT       listen port (default 8766; atlas serve owns 8765)
+    --port PORT       listen port (default 8766)
     --repo-root DIR   repo root; auto-detected by walking up from CWD
                       (mirrors tools/pi_harness/src/index.ts findRepoRoot)
     --ledger PATH     ledger path, relative to repo root
@@ -22,7 +23,10 @@ Endpoints:
     GET /                        UI (static/index.html)
     GET /app.js                  UI script
     GET /api/overview            live TU progress + totals + $/match ticker
-    GET /api/tu/<unit>           per-target rows for a unit
+                                (includes per-TU totalBytes/acceptedBytes for
+                                atlas tile sizing, computed from targets.json)
+    GET /api/tu/<unit>           per-target rows for a unit (rows include the
+                                per-target attempt history from ledger results)
     GET /api/cost                cost report (cost_report.py --json, TTL-cached
                                 ~30s; falls back to a lightweight viewer
                                 aggregation if the report can't run)
@@ -30,6 +34,10 @@ Endpoints:
     GET /api/nearmiss/<targetId> banked near-miss draft info
     GET /api/transcripts?tu=     session transcript list for a TU
     GET /transcripts/<path...>   served transcript file (strict allowlist)
+    GET /api/config              raw pi-harness.json (path, parsed, raw text,
+                                parseError)
+    POST /api/config             validate + atomically save pi-harness.json
+                                (the one deliberate write; timestamped backup)
 
 Python 3 stdlib only. Read-only server.
 """
@@ -40,6 +48,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -57,6 +66,11 @@ TERMINAL_EVENTS = ("tu-incomplete", "tu-final-failed")
 
 COST_KEYS = ("inputPerM", "outputPerM", "cacheReadPerM", "cacheWritePerM")
 TOKEN_KEYS = ("input", "output", "cacheRead", "cacheWrite")
+
+# Config validation — mirrors tools/pi_harness/src/config.ts loadConfig.
+THINKING_LEVELS = ("off", "minimal", "low", "medium", "high", "xhigh")
+SELECTION_MODES = ("claim-order", "similarity", "random")
+TRIAGE_MODES = ("off", "route")
 
 SESSION_REL = "build/pi-harness/sessions"
 NEARMISS_REL = "build/pi-harness/nearmiss"
@@ -83,6 +97,101 @@ TRANSCRIPT_EXTENSIONS = (".transcript.md", ".md", ".jsonl")
 # ---------------------------------------------------------------------------
 # File state (cached reads)
 # ---------------------------------------------------------------------------
+
+
+def validate_config(data):
+    """Mirror the harness's loadConfig checks. Returns a list of
+    human-readable errors (empty = valid). Unknown keys are allowed — the
+    harness merges only keys it knows and ignores the rest."""
+    errors = []
+    if not isinstance(data, dict):
+        return ["config must be a JSON object"]
+
+    def check_int(key, minimum):
+        if key not in data or data[key] is None:
+            return
+        v = data[key]
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or v != int(v):
+            errors.append(f"config.{key} must be an integer")
+        elif v < minimum:
+            errors.append(f"config.{key} must be >= {minimum}")
+
+    def check_num(key, minimum, inclusive=True):
+        if key not in data or data[key] is None:
+            return
+        v = data[key]
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            errors.append(f"config.{key} must be a number")
+        elif v < minimum if inclusive else v <= minimum:
+            errors.append(f"config.{key} must be {'>=' if inclusive else '>'} {minimum}")
+
+    def check_str(key):
+        if key not in data or data[key] is None:
+            return
+        if not isinstance(data[key], str) or not data[key]:
+            errors.append(f"config.{key} must be a non-empty string")
+
+    def check_bool(key):
+        if key not in data or data[key] is None:
+            return
+        if not isinstance(data[key], bool):
+            errors.append(f"config.{key} must be a boolean")
+
+    def check_enum(key, allowed):
+        if key not in data or data[key] is None:
+            return
+        if data[key] not in allowed:
+            errors.append(f"config.{key} must be one of {', '.join(allowed)}")
+
+    def check_model(key):
+        v = data.get(key)
+        if v is None:
+            return
+        if not isinstance(v, dict):
+            errors.append(f"config.{key} must be an object")
+            return
+        for f in ("provider", "model"):
+            if not isinstance(v.get(f), str) or not v.get(f):
+                errors.append(f"config.{key}.{f} must be a non-empty string")
+        check_enum(key + ".thinkingLevel", THINKING_LEVELS)
+
+    check_model("matchModel")
+    check_model("cleanupModel")
+    check_int("batchSize", 1)
+    check_int("maxParallelTUs", 1)
+    check_int("maxBatchRetries", 1)
+    check_int("maxRebatchAttempts", 0)
+    check_int("maxTokens", 0)
+    check_int("singletonMinSize", 0)
+    check_int("timeoutRetries", 0)
+    check_int("rejectionRetries", 0)
+    check_int("maxAttemptsPerTarget", 1)
+    check_int("staleRoundThreshold", 1)
+    check_num("maxBriefChars", 1000)
+    check_int("briefTargetChars", 1)
+    check_num("maxBatchMinutes", 0, inclusive=False)
+    check_bool("singletonEnabled")
+    check_bool("rebatchEnabled")
+    check_bool("retryExhausted")
+    check_bool("bankOnlyOnBetter")
+    check_str("region")
+    check_str("sessionDir")
+    check_str("ledgerPath")
+    check_str("nearmissDir")
+    check_str("knownWallsPath")
+    check_str("pythonBin")
+    check_enum("selection", SELECTION_MODES)
+    check_enum("triage", TRIAGE_MODES)
+    cm = data.get("costModel")
+    if cm is not None:
+        if not isinstance(cm, dict):
+            errors.append("config.costModel must be an object")
+        else:
+            for f in COST_KEYS:
+                v = cm.get(f)
+                if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0):
+                    errors.append(f"config.costModel.{f} must be a number >= 0")
+    return errors
 
 
 def _mtime_size(path: str):
@@ -223,6 +332,63 @@ class ViewerState:
         with self._lock:
             self._config = (key, cfg)
         return cfg
+
+    def read_config_raw(self):
+        """(path, raw_text, parsed | None, parse_error | None) for the config
+        file, for the Settings editor. Missing file -> (path, None, {}, None)."""
+        path = os.path.join(self.repo_root, CONFIG_REL)
+        if not os.path.isfile(path):
+            return path, None, {}, None
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as fh:
+                raw = fh.read()
+        except OSError as exc:
+            return path, None, {}, "read failed: %s" % exc
+        try:
+            return path, raw, json.loads(raw), None
+        except ValueError as exc:
+            return path, raw, None, str(exc)
+
+    def api_config(self):
+        path, raw, parsed, parse_error = self.read_config_raw()
+        return {
+            "path": path,
+            "exists": os.path.isfile(path),
+            "parseError": parse_error,
+            "config": parsed,
+            "raw": raw,
+        }
+
+    def save_config(self, data):
+        """Validate + atomically write pi-harness.json (timestamped backup).
+        Returns {"ok": True, path, backup} or {"ok": False, errors}."""
+        errors = validate_config(data)
+        if errors:
+            return {"ok": False, "errors": errors}
+        path = os.path.join(self.repo_root, CONFIG_REL)
+        raw = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+        backup = None
+        if os.path.isfile(path):
+            backup = path + ".bak-" + time.strftime("%Y%m%d-%H%M%S")
+            try:
+                shutil.copy2(path, backup)
+            except OSError as exc:
+                return {"ok": False, "errors": ["backup failed: %s" % exc]}
+        tmp = path + ".tmp"
+        try:
+            with open(tmp, "w", encoding="utf-8") as fh:
+                fh.write(raw)
+            os.replace(tmp, path)
+        except OSError as exc:
+            try:
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+            except OSError:
+                pass
+            return {"ok": False, "errors": ["write failed: %s" % exc]}
+        with self._lock:
+            self._config = None  # invalidate merged-view cache (cost model)
+        return {"ok": True, "path": path, "backup": backup}
 
     # -- helpers ------------------------------------------------------------
 
@@ -436,6 +602,18 @@ class ViewerState:
         accepted_by_tu = self.accepted_by_tu(agg, targets)
         cost_model = self.cost_model()
         priced = any(v > 0 for v in cost_model.values())
+        # Per-TU byte totals from the registry (atlas tile sizing by code size).
+        bytes_by_tu = {}
+        if isinstance(targets, dict):
+            for t in targets.get("targets") or []:
+                unit = t.get("unit")
+                sz = parse_size(t.get("size"))
+                if not unit or sz is None:
+                    continue
+                b = bytes_by_tu.setdefault(unit, {"total": 0, "accepted": 0})
+                b["total"] += sz
+                if t.get("status") in ACCEPTED_STATUSES:
+                    b["accepted"] += sz
 
         def sort_key(tu):
             return agg["last"].get(tu, ("", ""))[0]
@@ -450,6 +628,7 @@ class ViewerState:
             skipped = len(agg["skipped"].get(tu, set()))
             exhausted = len(set(agg["exhausted"].get(tu, [])))
             last_ts, last_event = agg["last"].get(tu, (None, None))
+            byt = bytes_by_tu.get(tu, {})
             tus.append({
                 "tu": tu,
                 "total": total,
@@ -457,6 +636,8 @@ class ViewerState:
                 "skipped": skipped,
                 "exhausted": exhausted,
                 "remaining": max(0, (total or 0) - accepted),
+                "totalBytes": byt.get("total", 0),
+                "acceptedBytes": byt.get("accepted", 0),
                 "running": last_event not in TERMINAL_EVENTS,
                 "lastEvent": last_event,
                 "lastActivity": last_ts,
@@ -521,19 +702,32 @@ class ViewerState:
 
         ledger_status = {}
         attempts = {}
+        history = {}
         for tu, evs in agg["results"].items():
             if tu != unit:
                 continue
             for e in evs:
-                for r in (e.get("detail") or {}).get("results") or []:
+                d = e.get("detail") or {}
+                bi = d.get("batchIndex")
+                for r in d.get("results") or []:
                     tid = r.get("targetId")
                     if not tid:
                         continue
                     attempts[tid] = attempts.get(tid, 0) + 1
+                    history.setdefault(tid, []).append({
+                        "ts": e.get("ts"),
+                        "event": e.get("event"),
+                        "status": r.get("status"),
+                        "batchIndex": bi,
+                        "attempt": r.get("attempt"),
+                    })
                     if r.get("status"):
                         ledger_status[tid] = r["status"]
         for tid in agg["exhausted"].get(unit, []):
             attempts[tid] = attempts.get(tid, 0) + 1
+            history.setdefault(tid, []).append({"event": "exhausted"})
+        for tid, rows in history.items():
+            rows.sort(key=lambda r: (r.get("ts") or "", r.get("batchIndex") or -1))
         skipped_ids = agg["skipped"].get(unit, set())
 
         by_id = {}
@@ -581,6 +775,7 @@ class ViewerState:
                 "nearmissBanked": bool(near_rows),
                 "skipped": tid in skipped_ids,
                 "workflowStatus": t.get("workflow_status"),
+                "history": history.get(tid, []),
             })
 
         tr = self.transcript_map()
@@ -893,6 +1088,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(res, 400 if "error" in res else 200)
         if path == "/api/cost":
             return self.send_json(st.api_cost_payload())
+        if path == "/api/config":
+            return self.send_json(st.api_config())
         if path == "/api/ledger":
             return self.send_json(st.api_ledger(query))
         if path.startswith("/api/nearmiss/"):
@@ -904,6 +1101,39 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/transcripts/"):
             return st.serve_transcript(self, path[len("/transcripts/"):])
         return self.send_json({"error": "not found"}, 404)
+
+    # -- POST (only /api/config — the Settings tab) -----------------------
+
+    def do_POST(self):
+        try:
+            self._route_post()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception as exc:  # never crash a poll
+            try:
+                self.send_json({"error": "internal: %s" % exc}, 500)
+            except Exception:
+                pass
+
+    def _route_post(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != "/api/config":
+            return self.send_json({"error": "not found"}, 404)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except (TypeError, ValueError):
+            length = 0
+        if length <= 0 or length > 2_000_000:
+            return self.send_json({"error": "bad Content-Length"}, 400)
+        body = self.rfile.read(length).decode("utf-8", "replace")
+        try:
+            data = json.loads(body)
+        except ValueError as exc:
+            return self.send_json({"error": "invalid JSON: %s" % exc}, 400)
+        res = self.server.viewer.save_config(data)  # type: ignore[attr-defined]
+        if res.get("ok"):
+            return self.send_json(res)
+        return self.send_json(res, 400)
 
 
 # ---------------------------------------------------------------------------
@@ -930,7 +1160,7 @@ def main(argv=None):
         description="Read-only pi-harness web viewer (stdlib only)."
     )
     ap.add_argument("--port", type=int, default=8766,
-                    help="listen port (default 8766; atlas serve owns 8765)")
+                    help="listen port (default 8766)")
     ap.add_argument("--repo-root", default=None,
                     help="repo root (default: auto-detected from CWD)")
     ap.add_argument("--ledger", default="build/pi-harness/ledger.jsonl",

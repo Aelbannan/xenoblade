@@ -745,7 +745,7 @@ function makeVerifyCallback(opts: {
 
     // ── Cap check: build passed but no match yet. Only reject on
     //    re-prompt budget exhaustion. ──
-    const effectiveMax = timedOut ? config.maxTimeoutRePrompts : config.maxNoMatchRePrompts;
+    const effectiveMax = timedOut ? config.timeoutRetries : config.rejectionRetries;
     if (rePromptCount >= effectiveMax) {
       lastFeedback = `re-prompt cap hit (${effectiveMax})`;
       return { action: "fail", reason: lastFeedback };
@@ -978,10 +978,10 @@ async function runOneTu(
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
-          maxTimeoutRePrompts: config.maxTimeoutRePrompts,
-          maxNoMatchRePrompts: config.maxNoMatchRePrompts,
+          timeoutRetries: config.timeoutRetries,
+          rejectionRetries: config.rejectionRetries,
           onVerify: verify.onVerify,
-          totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxTimeoutRePrompts),
+          totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.timeoutRetries),
         },
       });
 
@@ -1297,10 +1297,10 @@ async function runRebatchPhase(
           timeoutMinutes: config.maxBatchMinutes,
           maxTokens: config.maxTokens,
           multiPrompt: {
-            maxTimeoutRePrompts: config.maxTimeoutRePrompts,
-            maxNoMatchRePrompts: config.maxNoMatchRePrompts,
+            timeoutRetries: config.timeoutRetries,
+            rejectionRetries: config.rejectionRetries,
             onVerify: verify.onVerify,
-            totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxTimeoutRePrompts),
+            totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.timeoutRetries),
           },
         });
 
@@ -1505,10 +1505,10 @@ async function runSingleton(
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
-          maxTimeoutRePrompts: config.maxTimeoutRePrompts,
-          maxNoMatchRePrompts: config.maxNoMatchRePrompts,
+          timeoutRetries: config.timeoutRetries,
+          rejectionRetries: config.rejectionRetries,
           onVerify: verify.onVerify,
-          totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxTimeoutRePrompts),
+          totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.timeoutRetries),
         },
       });
 
@@ -1627,13 +1627,16 @@ async function runTuFinal(
 
   // TU-final retry loop: lint or build rejection restores the snapshot and
   // re-runs the cleanup session with the violations/errors as feedback
-  // (bounded by maxNoMatchRePrompts + 1 attempts). Previously a single lint
+  // (bounded by tuFinalAttempts). Previously a single lint
   // violation permanently left the unit non-Matching despite all functions
   // matching.
   const basePrompt = buildTuFinalPrompt({
     unit, sourceFiles, pythonBin: config.pythonBin, region: config.region,
   });
-  const maxTuFinalAttempts = Math.max(1, config.maxNoMatchRePrompts + 1);
+  const maxTuFinalAttempts = Math.max(1, config.tuFinalAttempts);
+  const tuFinalTimeout = config.tuFinalTimeoutMinutes > 0
+    ? config.tuFinalTimeoutMinutes
+    : config.maxBatchMinutes * 2;
   let feedback = "";
   let sessionResult: SessionRunResult | null = null;
   let buildOk = false;
@@ -1664,7 +1667,7 @@ async function runTuFinal(
         label: attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`,
         kind: "tu-final",
         python: config.pythonBin,
-        timeoutMinutes: config.maxBatchMinutes * 2,
+        timeoutMinutes: tuFinalTimeout,
         maxTokens: config.maxTokens,
       });
       logUsage(repoRoot, config, unit, attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`, sessionResult.usage, sessionResult.timedOut);

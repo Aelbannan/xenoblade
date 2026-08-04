@@ -68,9 +68,23 @@ _RE_SECTION = re.compile(r"__declspec\s*\(\s*section|__attribute__\s*\(\s*\(\s*s
 _RE_ANGLE_INC = re.compile(r'^\s*#\s*include\s*<([^>]+)>')
 
 
+def is_cpp(path: str) -> bool:
+    """True for C++ source/header files."""
+    return path.endswith((".cpp", ".cc", ".cxx", ".hpp", ".hh"))
+
+
 def lint_delta(path: str, old_text: str | None,
                new_text: str) -> list[LintViolation]:
     violations: list[LintViolation] = []
+
+    # C vs C++: this decomp fork writes free functions with `X* self` first
+    # params in BOTH languages (retail `func_*` symbols are unmangled free
+    # functions, so `Class::method` is impossible for them) — self params are
+    # NOT a C++-vs-C discriminator here. The real differences:
+    #  - `extern "C"` is C++-only syntax; it is a compile error in .c files.
+    #  - Member-function style (`Class::method`) only applies to mangled
+    #    member symbols, which the codebase already handles.
+    is_c = path.endswith((".c", ".h")) and not is_cpp(path)
 
     def add(rule: str, line_no: int, line: str, why: str) -> None:
         violations.append(LintViolation(
@@ -79,6 +93,12 @@ def lint_delta(path: str, old_text: str | None,
 
     for line_no, raw in _added_lines(old_text, new_text):
         code = _strip_line_comment(raw)
+
+        # C-only: `extern "C"` is C++ syntax — illegal in C source.
+        if is_c and _RE_EXTERN_C.search(code):
+            add("extern_c_in_c", line_no, raw,
+                '`extern "C"` is C++-only syntax and does not compile in C '
+                "files — remove it")
 
         if _RE_PRAGMA.search(raw):
             add("no_pragmas", line_no, raw,

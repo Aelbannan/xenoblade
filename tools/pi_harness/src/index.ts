@@ -226,8 +226,8 @@ async function main(): Promise<void> {
   process.stderr.write(`  maxRebatchAttempts: ${effectiveConfig.maxRebatchAttempts === 0 ? `off` : effectiveConfig.maxRebatchAttempts}\n`);
   process.stderr.write(`  maxTokens:      ${effectiveConfig.maxTokens === 0 ? "unlimited (model default)" : effectiveConfig.maxTokens}\n`);
   process.stderr.write(`  singletonMinSize: ${effectiveConfig.singletonMinSize === 0 ? "off (all use singletons)" : effectiveConfig.singletonMinSize + " bytes"}\n`);
-  process.stderr.write(`  maxTimeoutRePrompts:   ${effectiveConfig.maxTimeoutRePrompts} (in-session continuation, 0=off)\n`);
-  process.stderr.write(`  maxNoMatchRePrompts: ${effectiveConfig.maxNoMatchRePrompts} (when model completed but code fails)\n`);
+  process.stderr.write(`  timeoutRetries:   ${effectiveConfig.timeoutRetries} (in-session continuation after wall-clock timeout, 0=off)\n`);
+  process.stderr.write(`  rejectionRetries: ${effectiveConfig.rejectionRetries} (re-prompts when the model finished but code failed)\n`);
   process.stderr.write(`  pythonBin:      ${effectiveConfig.pythonBin}\n`);
   process.stderr.write(`  dryRun:         ${args.dryRun}\n`);
 

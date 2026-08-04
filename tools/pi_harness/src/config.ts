@@ -41,8 +41,10 @@ function defaultConfig(): HarnessConfig {
     maxBriefChars: 80_000,
     briefTargetChars: 12_000,
     maxBatchMinutes: 60,
-    maxTimeoutRePrompts: 3,
-    maxNoMatchRePrompts: 1,
+    timeoutRetries: 3,
+    rejectionRetries: 1,
+    tuFinalAttempts: 2,
+    tuFinalTimeoutMinutes: 0, // 0 = derive (maxBatchMinutes * 2)
     maxAttemptsPerTarget: 4,
     staleRoundThreshold: 2,
     retryExhausted: false,
@@ -175,11 +177,17 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (!(config.maxBatchMinutes > 0)) {
     throw new Error("config.maxBatchMinutes must be > 0");
   }
-  if (typeof config.maxTimeoutRePrompts !== "number" || config.maxTimeoutRePrompts < 0 || !Number.isInteger(config.maxTimeoutRePrompts)) {
-    throw new Error("config.maxTimeoutRePrompts must be an integer >= 0");
+  if (typeof config.timeoutRetries !== "number" || config.timeoutRetries < 0 || !Number.isInteger(config.timeoutRetries)) {
+    throw new Error("config.timeoutRetries must be an integer >= 0");
   }
-  if (typeof config.maxNoMatchRePrompts !== "number" || config.maxNoMatchRePrompts < 0 || !Number.isInteger(config.maxNoMatchRePrompts)) {
-    throw new Error("config.maxNoMatchRePrompts must be an integer >= 0");
+  if (typeof config.rejectionRetries !== "number" || config.rejectionRetries < 0 || !Number.isInteger(config.rejectionRetries)) {
+    throw new Error("config.rejectionRetries must be an integer >= 0");
+  }
+  if (!Number.isInteger(config.tuFinalAttempts) || config.tuFinalAttempts < 1) {
+    throw new Error("config.tuFinalAttempts must be an integer >= 1");
+  }
+  if (!Number.isInteger(config.tuFinalTimeoutMinutes) || config.tuFinalTimeoutMinutes < 0) {
+    throw new Error("config.tuFinalTimeoutMinutes must be an integer >= 0");
   }
   if (!Number.isInteger(config.maxAttemptsPerTarget) || config.maxAttemptsPerTarget < 1) {
     throw new Error("config.maxAttemptsPerTarget must be an integer >= 1");

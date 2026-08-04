@@ -65,8 +65,10 @@ export interface SessionRunResult {
 }
 
 export interface MultiPromptOpts {
-  maxTimeoutRePrompts: number;
-  maxNoMatchRePrompts: number;
+  /** Re-prompts when the session hit the wall-clock timeout. */
+  timeoutRetries: number;
+  /** Re-prompts when the model finished but the harness rejected (compile/lint/no-match). */
+  rejectionRetries: number;
   /** Called after each prompt round. Receives the latest final text,
    *  whether it timed out, and the re-prompt count so far (0 after
    *  initial prompt). Returns the next action. */
@@ -75,7 +77,7 @@ export interface MultiPromptOpts {
     timedOut: boolean,
     rePromptCount: number,
   ) => Promise<VerifyResult>;
-  /** Overall session deadline in minutes (default: timeoutMinutes * (1 + maxTimeoutRePrompts)). */
+  /** Overall session deadline in minutes (default: timeoutMinutes * (1 + timeoutRetries)). */
   totalTimeoutMinutes?: number;
 }
 
@@ -282,8 +284,8 @@ export async function runAgentSession(opts: {
 
     // ── Multi-prompt path ──
     // Even when caps are 0, we enter this path so onVerify runs once.
-    process.stderr.write(`[session] ${label}: starting multi-prompt (timeout=${timeoutMinutes}min, maxTimeoutRePrompts=${multiPrompt.maxTimeoutRePrompts})\n`);
-    const { maxTimeoutRePrompts, maxNoMatchRePrompts, onVerify, totalTimeoutMinutes } = multiPrompt;
+    process.stderr.write(`[session] ${label}: starting multi-prompt (timeout=${timeoutMinutes}min, timeoutRetries=${multiPrompt.timeoutRetries})\n`);
+    const { timeoutRetries, rejectionRetries, onVerify, totalTimeoutMinutes } = multiPrompt;
     const overallDeadline =
       totalTimeoutMinutes && totalTimeoutMinutes > 0
         ? Date.now() + totalTimeoutMinutes * 60 * 1000
@@ -349,7 +351,7 @@ export async function runAgentSession(opts: {
       }
 
       // action === "re-prompt" — check budget and deadline
-      const effectiveMax = timedOut ? maxTimeoutRePrompts : maxNoMatchRePrompts;
+      const effectiveMax = timedOut ? timeoutRetries : rejectionRetries;
       if (rePromptsUsed >= effectiveMax) {
         lastRejection = verifyResult.feedback;
         await transcriptQueue;

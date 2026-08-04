@@ -18,7 +18,7 @@ void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 
 namespace cf {
 void CfObjectEff::func_800AC7CC() {}
-void CfObjectEff::func_800AC7FC() {}
+extern "C" u32 func_800AC7FC__Q22cf11CfObjectEffFv(void* self) { return *(u32*)((u8*)self + 0x94) != 0; }
 void CfObjectEff::func_800AC810() {}
 void CfObjectEff::func_800AC86C() {}
 } // namespace cf
@@ -43,10 +43,16 @@ void func_800ACC14(void* self, unsigned char val) {
 void func_800ACC28(){}
 
 namespace cf {
-void CfObjectEff::func_800ACC3C() {}
+extern "C" void func_800ACC3C__Q22cf11CfObjectEffFv(void* self, float v) {
+    void* o = *(void**)((u8*)self + 0x94);
+    if (o) *(float*)((u8*)o + 0x50) = v;
+}
 } // namespace cf
 
-void func_800ACC50(){}
+extern "C" void func_800ACC50(void* self, float v) {
+    void* o = *(void**)((u8*)self + 0x94);
+    if (o) *(float*)((u8*)o + 0x50) = v;
+}
 
 void func_800ACC64(void* obj, const void* src) {
     cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(obj);

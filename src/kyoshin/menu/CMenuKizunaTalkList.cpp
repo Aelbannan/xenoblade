@@ -40,3 +40,6 @@ void CMenuKizunaTalkList::func_802726E4() {
 void CMenuKizunaTalkList::func_802726EC() {
     this->~CMenuKizunaTalkList();
 }
+
+extern unsigned long lbl_eu_806648B0;
+extern "C" unsigned long func_80272488(void) { return lbl_eu_806648B0 != 0; }

@@ -7,10 +7,7 @@
 void __ct__CMenuItem(){}
 
 extern f32 lbl_eu_80664258;
-unsigned long func_80167A18(){
-    unsigned long v = *(unsigned long*)(&lbl_eu_80664258);
-    return !!v;
-}
+extern "C" unsigned long func_80167A18(void) { return *(unsigned long*)(&lbl_eu_80664258) != 0; }
 
 void func_80167A2C(){}
 

@@ -103,6 +103,59 @@ extern "C" void func_800567B0(void* self) { reinterpret_cast<ActParamThunkIf*>(s
 extern "C" void func_800567C0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vD4(); }
 extern "C" void func_800567D0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vD8(); }
 extern "C" void func_800567E0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vDC(); }
+// Param-arg thunks: set r5 (2nd arg) to a constant, tail-call a vtable slot.
+struct ActParamThunkIfP {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078();
+    virtual void vf7C(u32 a, u32 b);
+    virtual void _v080();
+    virtual void vf84(u32 a, u32 b);
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C();
+    virtual void vfA0(u32 a, u32 b);
+    virtual void _v0A4(); virtual void _v0A8();
+    virtual void vfAC(u32 a, u32 b);
+    virtual void vfB0(u32 a, u32 b);
+    virtual void vfB4(u32 a, u32 b);
+};
+
+extern "C" void func_80056104(void* self, u32 a, u32 b) { reinterpret_cast<ActParamThunkIfP*>(self)->vf84(a, (u16)b); }
+extern "C" void func_80056268(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 1); }
+extern "C" void func_8005627C(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 2); }
+extern "C" void func_800564D4(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x20); }
+extern "C" void func_800564E8(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x21); }
+extern "C" void func_800564FC(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x22); }
+extern "C" void func_80056510(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x23); }
+extern "C" void func_80056524(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x24); }
+extern "C" void func_80056538(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x25); }
+extern "C" void func_8005654C(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x26); }
+extern "C" void func_80056560(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x27); }
+extern "C" void func_80056574(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x28); }
+extern "C" void func_80056588(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x29); }
+extern "C" void func_8005659C(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2a); }
+extern "C" void func_800565B0(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2b); }
+extern "C" void func_800565C4(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2c); }
+extern "C" void func_800565D8(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2d); }
+extern "C" void func_800565EC(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2e); }
+extern "C" void func_80056600(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vf7C(a, 0x2f); }
+extern "C" void func_80056624(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfA0(a, 0); }
+extern "C" void func_80056638(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfA0(a, 1); }
+extern "C" void func_8005664C(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfA0(a, 2); }
+extern "C" void func_80056680(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB0(a, 0); }
+extern "C" void func_80056694(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB0(a, 1); }
+extern "C" void func_800566A8(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB0(a, 2); }
+extern "C" void func_800566BC(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB0(a, 3); }
+extern "C" void func_800566D0(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB4(a, 0); }
+extern "C" void func_800566E4(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfB4(a, 1); }
+extern "C" void func_80056708(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfAC(a, 0); }
+extern "C" void func_8005671C(void* self, u32 a) { reinterpret_cast<ActParamThunkIfP*>(self)->vfAC(a, 1); }
+
 
 void initParamDefaults(){}
 void setupParamData(){}

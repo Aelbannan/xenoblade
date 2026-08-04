@@ -39,7 +39,9 @@ void func_80076CE4(){}
 
 void func_80076D8C(){}
 
-cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_UnkVirtualFunc129() { return nullptr; }
+cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_UnkVirtualFunc129() {
+    return (cf::CActorParam_UnkStruct1*)((u8*)this + *(u8*)((u8*)this + 0x3354) * 0xbc + 0x2a84);
+}
 
 void func_80076F88(){}
 
@@ -69,7 +71,11 @@ void func_80079E04(){}
 
 void func_8007AA4C(){}
 
-void func_8007B030(){}
+extern "C" void func_8007B030(void* self) {
+    *(u8*)((u8*)self + 0x1de) = 0;
+    *(u8*)((u8*)self + 0x356) = 0;
+    *(u8*)((u8*)self + 0x4ce) = 0;
+}
 
 void func_8007B044(){}
 

@@ -18,7 +18,6 @@ void CMenuTutorialList::cbRenderBefore() {}
 
 void func_802AC494(){}
 
-void func_802AC510(){}
 
 void func_802AC520(){}
 
@@ -50,3 +49,6 @@ void CMenuTutorialList::func_802ACBCC() {
 void CMenuTutorialList::func_802ACBD4() {
     this->~CMenuTutorialList();
 }
+
+extern unsigned long lbl_eu_80664BE8;
+extern "C" unsigned long func_802AC510(void) { return lbl_eu_80664BE8 != 0; }

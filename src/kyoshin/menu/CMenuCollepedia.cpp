@@ -54,3 +54,6 @@ void CMenuCollepedia::func_80253188() {
 void CMenuCollepedia::func_80253190() {
     this->~CMenuCollepedia();
 }
+
+extern int lbl_eu_806647D0;
+extern "C" int func_80252CD4(void) { return lbl_eu_806647D0 != 0; }

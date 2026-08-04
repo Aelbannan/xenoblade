@@ -13,7 +13,33 @@ void cf::CfObjectColl::func_800AB3EC() {}
 
 cf::CfObjectColl::~CfObjectColl() {}
 
-void cf::CfObjectColl::func_800AB498() {}
+struct If158 {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
+    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
+    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
+    virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
+    virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
+    virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
+    virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
+    virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
+    virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
+    virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
+    virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
+    virtual void vf158(u32 a);
+};
+extern "C" void func_800AB498__Q22cf12CfObjectCollFv(void* self) {
+    reinterpret_cast<If158*>(self)->vf158(1);
+}
 
 void CfObjectColl_initCollImplInstances(){}
 

@@ -10,10 +10,7 @@ namespace cf {
         return func_8027B770((char*)this + 0x18);
     }
 
-    void CChain::setFieldAndClear(int val) {
-        *(int*)this = val;
-        *(unsigned short*)((char*)this + 0x6C) = 0;
-    }
+
 
 }
 
@@ -78,3 +75,8 @@ void func_8027A024(){}
 void func_8027A338(){}
 void func_8027A58C(){}
 void func_8027A8C8(){}
+
+extern "C" void CChain_setFieldAndClear(void* self, int val) {
+    *(int*)self = val;
+    *(u16*)((u8*)self + 0x6c) = 0;
+}

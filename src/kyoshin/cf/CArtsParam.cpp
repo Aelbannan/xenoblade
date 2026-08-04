@@ -37,7 +37,7 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 void func_8015403C(){}
 float func_80154058(void* this_) { unsigned short raw = *(const unsigned short*)((const unsigned char*)this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
 void func_8015408C(){}
-const float lbl_eu_805019C0[];
+extern const float lbl_eu_805019C0[];
 float func_80154134(const void* self) {
     int index = *reinterpret_cast<const unsigned short*>(reinterpret_cast<const unsigned char*>(self) + 0x5a);
     if (index < 0)
@@ -55,3 +55,8 @@ void func_801540C0(){}
 void func_801541B0(){}
 void func_80154280(){}
 void func_801554DC(){}
+
+void cf::CArtsParam::vtableFunc3(u8 val) {
+    void* o = *(void**)((u8*)this + 0x88);
+    if (o) *(u8*)((u8*)o + 0) = val;
+}

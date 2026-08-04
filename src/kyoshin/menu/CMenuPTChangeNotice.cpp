@@ -40,3 +40,6 @@ void func_80293D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)
 void func_80293D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 
 extern "C" void func_80293D88(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
+
+extern unsigned long lbl_eu_80664A00;
+extern "C" unsigned long func_80293C10(void) { return lbl_eu_80664A00 != 0; }

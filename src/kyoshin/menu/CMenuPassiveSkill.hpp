@@ -16,7 +16,7 @@ extern "C" void Term__17CMenuPassiveSkillFv();
 extern "C" void Move__17CMenuPassiveSkillFv();
 extern "C" void cbRenderBefore__17CMenuPassiveSkillFv(void* self);
 extern "C" void func_802638D0();
-extern "C" void func_80263944();
+extern "C" unsigned long func_80263944();
 extern "C" void func_80263954();
 extern "C" void func_802639E4();
 extern "C" void func_80263A34();

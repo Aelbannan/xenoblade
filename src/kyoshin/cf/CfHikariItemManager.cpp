@@ -46,7 +46,10 @@ void func_802B41E4(){}
 
 void func_802B4358(){}
 
-void func_802B4460(){}
+extern "C" void func_802B4460(void) {
+    extern unsigned long lbl_eu_80664C24;
+    ++lbl_eu_80664C24;
+}
 
 void func_802B4470(){}
 

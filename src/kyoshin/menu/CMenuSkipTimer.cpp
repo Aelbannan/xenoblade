@@ -20,7 +20,6 @@ __attribute__((never_inline)) void cbRenderBefore__14CMenuSkipTimerFv(void* self
 
 __attribute__((never_inline)) void func_8029EDE4(){}
 
-__attribute__((never_inline)) void func_8029EE58(){}
 
 __attribute__((never_inline)) void func_8029EE68(){}
 
@@ -49,3 +48,6 @@ void CMenuSkipTimer::func_8029F098() {
 void CMenuSkipTimer::func_8029F0A0() {
     this->~CMenuSkipTimer();
 }
+
+extern unsigned long lbl_eu_80664A48;
+extern "C" unsigned long func_8029EE58(void) { return lbl_eu_80664A48 != 0; }

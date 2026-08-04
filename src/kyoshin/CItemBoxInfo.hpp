@@ -59,8 +59,6 @@ struct CItemBoxInfoEntry {
     u32 value;
     u8 state;
 
-    void setItemBoxEntry(u16 r4, u32 r5, u8 r6);
-    void setItemBoxCopy(unsigned short a, unsigned int b, unsigned char c);
+
 };
 
-typedef CItemBoxInfoEntry ItemBoxInfoCopy;

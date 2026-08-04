@@ -820,10 +820,10 @@ void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
     dst->state = src->state;
 }
 
-void CItemBoxInfoEntry::setItemBoxEntry(u16 r4, u32 r5, u8 r6) {
-    itemId = r4;
-    value = r5;
-    state = r6;
+void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
+    *(u16*)self = a;
+    *(u32*)((u8*)self + 4) = b;
+    *(u8*)((u8*)self + 8) = c;
 }
 
 s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
@@ -1733,16 +1733,22 @@ void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     }
 }
 
+struct ItemBoxInfoCopy {
+    unsigned short itemId;
+    unsigned short _02;
+    unsigned int value;
+    unsigned char state;
+};
 void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
     dst->itemId = src->itemId;
     dst->value = src->value;
     dst->state = src->state;
 }
 
-void CItemBoxInfoEntry::setItemBoxCopy(unsigned short a, unsigned int b, unsigned char c) {
-    itemId = a;
-    value = b;
-    state = c;
+void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
+    *(unsigned short*)self = a;
+    *(unsigned int*)((u8*)self + 4) = b;
+    *(unsigned char*)((u8*)self + 8) = c;
 }
 
 s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {

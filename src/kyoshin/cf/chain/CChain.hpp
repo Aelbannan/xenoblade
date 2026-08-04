@@ -16,7 +16,6 @@ namespace cf {
         ~CChain(){}
         void func_8027728C();
         bool chkActorList();
-        void setFieldAndClear(int val);
 
         u8 unk0[0x18];
         CChainActorList mChainActorList; //0x18

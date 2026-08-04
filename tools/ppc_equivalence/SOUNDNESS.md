@@ -302,17 +302,47 @@ to SMT):
 4. `rho` bijection — single-valued in both directions, consistent across all
    mnemonics and positions (hexdiff's per-`(mnem,pos)` `reg_map` allows
    many-to-one and is never used as `rho`).
-5. ABI-boundary fixedness — `rho` fixes r0 (zero-register encoding), r1, r2,
-   r13, LR/CTR (inherently fixed: SPR indices are non-register fields),
-   return registers (r3/r4, f1), every register live-in at entry in the EABI
-   argument ranges (r3–r10, f1–f8), and every volatile register live across a
-   call.  Nonvolatile permutations across calls (e.g. r20↔r25, both
-   preserved by EABI) are SOUND and not pre-rejected — that is the
-   Chaitin-cycle class the feature exists for.
+5. ABI-boundary fixedness — `rho` fixes r1, r2, r13, LR/CTR (inherently
+   fixed: SPR indices are non-register fields), return registers (r3/r4, f1),
+   **every register live-in at entry** (not just the EABI argument ranges —
+   F1, adversarial review 2026-08: a live-in r11/r12/r14–r31/f0/f9–f31 or
+   r0-in-a-genuine-operand is an input the caller placed in a physical lane,
+   and permuting it assumes the caller renamed its registers), every volatile
+   register live across a call, and every lane whose live-in value is not
+   spill-only (consumed exclusively by a prologue `stw rN, c(r1)`/
+   `stfd fN, c(r1)` before its first def).  Nonvolatile permutations across
+   calls (e.g. r20↔r25, both preserved by EABI) are SOUND and not
+   pre-rejected — that is the Chaitin-cycle class the feature exists for —
+   but the pair must additionally pass the **per-terminal nonvolatile
+   preservation check** (F1): every PERMUTED nonvolatile lane must equal its
+   entry binding at every exit on EACH side (`z3.simplify` equality — a
+   simple save/restore reduces; an aliased restore falls to SMT).  A
+   clobber-without-restore pair (e.g. `li r20,7` vs `li r25,7`) is rejected;
+   identity-mapped lanes need no check (their terminal comparison is already
+   physical).  The region-sliced path rejects non-identity mappings on
+   nonvolatile lanes outright.
 6. Reject-list — `ps_*`, `psq_*`, `mtfsf`/`mffs`/`mcrfs`/`mtfsb*`/`mtfsfi`,
    `mtspr`/`mfspr` to GQRs (912–919) or any non-{LR,CTR,XER} SPR, `dcbz`/
-   `icbi`/`tlb*`, and privileged/system opcodes fall straight to SMT and are
-   never certified via renaming.
+   `icbi`/`tlb*`, privileged/system opcodes, and **indirect dispatch**
+   (`bcctr`/`blrl` — F2, adversarial review 2026-08: the global path now
+   rejects these exactly like the region path, because the executor records
+   an indirect-branch terminal whose shared CTR self-agrees without
+   jump-table target modeling) fall straight to SMT and are never certified
+   via renaming.
+
+Additional 2026-08 adversarial-review changes (all fail-closed):
+- **F3 — renaming-aware callee token.**  The callee transition token
+  (`SymbolicOps.call_token`) is canonicalized to retail lane order before the
+  summary (and the summarized writes un-canonicalized after), so opaque
+  contracts certify the across-call Chaitin class instead of diverging the
+  token on any non-identity rho.  Sound because a genuine EABI callee
+  observes only fixed/shared lanes; the SMT path passes no perm and is
+  unchanged.
+- **S1 — location-aware memory comparison.**  The terminal memory comparison
+  recombines the byte-level store chain into stored words and compares them
+  with the base-relative rule, so a post-call `mflr; stw` (which stores
+  `pc + 4`, an absolute constant differing by the function base) no longer
+  over-rejects.  Aliasing/reordering/uninterpreted terms still reject.
 
 The terminal comparison covers the complete machine state; GPR/FPR/PS1 lanes
 are indexed by `pi` (`retail.r_i` vs `decomp.r_pi(i)`), everything else

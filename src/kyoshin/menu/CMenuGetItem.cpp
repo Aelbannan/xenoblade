@@ -27,10 +27,7 @@ void func_8014A11C(){}
 void func_8014A1D4(){}
 
 extern unsigned long lbl_eu_806641A8;
-unsigned long func_8014A2A0(){
-    unsigned long v = lbl_eu_806641A8;
-    return !!v;
-}
+extern "C" unsigned long func_8014A2A0(void) { return lbl_eu_806641A8 != 0; }
 
 void func_8014A2B4(){}
 

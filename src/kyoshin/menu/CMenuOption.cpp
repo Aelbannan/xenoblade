@@ -18,7 +18,6 @@ void CMenuOption::cbRenderBefore() {}
 
 void func_8029BB24(){}
 
-void func_8029BBA0(){}
 
 void func_8029BBB0(){}
 
@@ -49,3 +48,6 @@ void CMenuOption::func_8029BECC() {
 void CMenuOption::func_8029BED4() {
     this->~CMenuOption();
 }
+
+extern unsigned long lbl_eu_80664A38;
+extern "C" unsigned long func_8029BBA0(void) { return lbl_eu_80664A38 != 0; }

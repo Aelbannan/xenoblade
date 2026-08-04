@@ -80,3 +80,9 @@ void cursorHide() {}
 void cursorAnimate() {}
 
 void cursorFinalize() {}
+
+extern CMenuBattleDamage* lbl_eu_80663F28;
+
+extern "C" void func_80109874(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x777) = val; }
+extern "C" void func_80109888(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x778) = val; }
+extern "C" void func_8010989C(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x779) = val; }

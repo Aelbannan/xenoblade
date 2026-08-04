@@ -13,7 +13,10 @@ void func_80069A78(){}
 
 void func_80069ACC(){}
 
-void func_80069C14(){}
+extern "C" u32 func_80069C14(void* self) {
+    u32 x = *(u32*)((u8*)self + 0x828);
+    return !(0 - x);
+}
 
 void func_80069C28(){}
 
@@ -53,7 +56,16 @@ void func_80069EE4(){}
 
 void func_80069F2C(){}
 
-void func_8006A028(){}
+extern "C" void func_8006A028(float v) {
+    extern float lbl_eu_80666238;
+    extern float lbl_eu_80663D94;
+    extern float lbl_eu_80663D98;
+    extern float lbl_eu_80663D9C;
+    float c = lbl_eu_80666238;
+    lbl_eu_80663D94 = v;
+    lbl_eu_80663D98 = v;
+    lbl_eu_80663D9C = c;
+}
 
 void func_8006A03C(){}
 

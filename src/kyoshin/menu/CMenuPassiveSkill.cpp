@@ -45,3 +45,6 @@ void CMenuPassiveSkill::func_80263EAC() {
 void CMenuPassiveSkill::func_80263EB4() {
     this->~CMenuPassiveSkill();
 }
+
+extern unsigned long lbl_eu_80664878;
+extern "C" unsigned long func_80263944(void) { return lbl_eu_80664878 != 0; }

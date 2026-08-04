@@ -118,3 +118,6 @@ void func_802717F8(){}
 void func_802719F8(){}
 
 void CPlayAwardList::OnFileEvent() {}
+
+extern unsigned long lbl_eu_806648A0;
+extern "C" unsigned long func_8027037C(void) { return lbl_eu_806648A0 != 0; }

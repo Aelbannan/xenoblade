@@ -55,3 +55,6 @@ void CMenuKizunagram::func_80257A7C() {
 void CMenuKizunagram::func_80257A84() {
     this->~CMenuKizunagram();
 }
+
+extern unsigned long lbl_eu_806647E0;
+extern "C" unsigned long func_80257308(void) { return lbl_eu_806647E0 != 0; }

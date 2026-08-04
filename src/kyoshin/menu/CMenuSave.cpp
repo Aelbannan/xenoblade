@@ -48,3 +48,6 @@ void CMenuSave::func_8028E7B8() {
 void CMenuSave::func_8028E7C0() {
     this->~CMenuSave();
 }
+
+extern unsigned long lbl_eu_806649E8;
+extern "C" unsigned long func_8028E440(void) { return lbl_eu_806649E8 != 0; }

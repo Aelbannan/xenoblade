@@ -82,11 +82,23 @@ void func_80092F94(void* a, void* b, void* c) {
     *(float*)c = lbl_eu_806665E4;
 }
 
-void func_80092FA8(){}
+extern "C" void func_80092FA8(void* u, u32* a, float* b) {
+    *a = 0x12C;
+    extern float lbl_eu_806665E4;
+    *b = lbl_eu_806665E4;
+}
 
-void func_80092FBC(){}
+extern "C" void func_80092FBC(void* u, u32* a, float* b) {
+    *a = 0x258;
+    extern float lbl_eu_806665E4;
+    *b = lbl_eu_806665E4;
+}
 
-void func_80092FD0(){}
+extern "C" void func_80092FD0(void* u, u32* a, float* b) {
+    *a = 0x384;
+    extern float lbl_eu_806665E4;
+    *b = lbl_eu_806665E4;
+}
 
 void func_80092FE4(){}
 

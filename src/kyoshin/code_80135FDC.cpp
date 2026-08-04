@@ -62,7 +62,7 @@ extern u32 lbl_eu_80664068;
 extern u32 lbl_eu_8066406C;
 extern u8 lbl_eu_80664070;
 extern u8 lbl_eu_80664077;
-extern u16 lbl_eu_80664078;
+extern u16 lbl_eu_80664078[3];
 extern u8  lbl_eu_8066407E;
 extern u8 lbl_eu_8066407F;
 extern u8 lbl_eu_80664080;
@@ -1609,9 +1609,9 @@ void func_80139198(void* arg) {
 extern u8 lbl_eu_80664077;
 extern "C" u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
 
-u8 func_801392C8(u8 idx) {
-    extern u16 lbl_eu_80664078;
-    return *((u8*)&lbl_eu_80664078 + idx * 2 + 1);
+extern "C" u8 func_801392C8(u32 idx) {
+    extern u16 lbl_eu_80664078[3];
+    return (u8)(((u16*)lbl_eu_80664078)[(u8)idx]);
 }
 
 extern u8 lbl_eu_8066407E;

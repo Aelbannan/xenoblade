@@ -51,7 +51,15 @@ extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
-void cf::CActorState::CActorState_UnkVirtualFunc1() {}
+struct If38 {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void vf38();
+};
+extern "C" void CActorState_UnkVirtualFunc1__Q22cf11CActorStateFv(void* self) {
+    reinterpret_cast<If38*>(*(void**)((u8*)self + 4))->vf38();
+}
 
 extern "C" void* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(void* self, unsigned long index) {
     return ((cf::CBattleState*)self)->unk152C + (index << 4);

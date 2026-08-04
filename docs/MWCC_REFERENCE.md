@@ -8,6 +8,28 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 ---
 
+## kyoshin leaf-function patterns (US, Wii/1.1)
+
+- **`x != 0` codegen depends on `-O4,p` vs `-O4,s`:** `-O4,p` emits
+  `lwz; neg r0,r3; or r0,r0,r3; srwi r3,r0,31` (5 instr); `-O4,s` emits
+  `lwz; subic r0,r3,1; subfe r3,r0,r3; blr` (4 instr). The 11 menu units
+  (CMenuCollepedia/Kizunagram/PassiveSkill/PlayAward/KizunaTalkList/Save/
+  PTChangeNotice/Tutorial/Option/SkipTimer/TutorialList) are retail `-O4,s`:
+  configure them `extra_cflags=["-O4,s"]` — `subic/subfe` is otherwise
+  unreachable from any `!= 0` source shape under `-O4,p` (probed ~20 shapes).
+  `func_80252CD4` etc. are 0x10 (4 instr) only under `-O4,s`.
+
+- **Double-hop thunks (vptr at obj+0x10, this=obj, r4 must pass through):**
+  retail `lwz r3,0xb0(r3); lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctr`.
+  The fn-pointer form `((VFn*)*(void**)(obj+0x10))[N](obj)` clobbers r4 (an
+  arg passthrough!) — SMT proves `not_equivalent` (r4 divergence). The
+  typed-struct form adds a redundant vptr deref (5 instr). Fix: cast-only
+  fake SI with a **non-polymorphic base** — `struct Shift { char pad[0x10]; };
+  struct ObjVtIf : Shift { virtual … };` puts the vptr at obj+0x10 and MWCC
+  emits the retail form byte-for-byte (vptr load into r12, this stays obj).
+  CfObjectMove CfObject_UnkVirtualFunc9/10/61/62, CfObjectModel_UnkVirtualFunc6,
+  func_800BEE1C/800BF29C/B0/CC/E0/F8/eu_800BFC7C — all FULL_MATCH.
+
 ## Section padding is a linker artifact — never fabricate it in source
 
 Retail data slices (`splits.txt`) end at the next unit's **alignment boundary**, so

@@ -3,7 +3,7 @@
 
 namespace cf {
     CActorParam::CActorParam(UNKTYPE* r4, UNKTYPE* r5) : CActorState(r4),
-    unk15DC(r4), unk15E0(r5), unk1648(0), unk164A(0), unk164C(0) {
+    unk15DC(r4), unk15E0(reinterpret_cast<cf::UnkClass_CActorParam15E0*>(r5)), unk1648(0), unk164A(0), unk164C(0) {
         *(u32*)((u32)unk3298.unk8 + 4) = 0;
         std::memset(unk335C, 0, sizeof(unk335C));
         *(u32*)((u32)unk3298.unk8 + 8) = 0;
@@ -70,8 +70,29 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc1() {
     ((void (*)(void*))(*(void***)this->unk15DC)[0x10])(this->unk15DC);
 }
 int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) { return 0x0; }
-void cf::CActorParam::CActorParam_UnkVirtualFunc35() {
-    this->CActorParam_UnkVirtualFunc34();
+struct If11C {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
+    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
+    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
+    virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
+    virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
+    virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
+    virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
+    virtual void _v118();
+    virtual void vf11C();
+};
+extern "C" void CActorParam_UnkVirtualFunc35__Q22cf11CActorParamFv(void* self) {
+    reinterpret_cast<If11C*>(self)->vf11C();
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc54() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc60() {}

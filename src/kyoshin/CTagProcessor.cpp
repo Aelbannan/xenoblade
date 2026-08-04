@@ -117,7 +117,11 @@ void func_80127670(){}
 
 void func_801276C8(){}
 
-void func_801276E0(){}
+extern "C" void* func_801276E0(void* self) {
+    void* p = *(void**)self;
+    *(u32*)self = *(u32*)p;
+    return p;
+}
 
 void func_801276F4(){}
 
@@ -220,7 +224,11 @@ void func_8012A460(){}
 
 void func_8012AAA4(){}
 
-void func_8012AD2C(){}
+extern "C" u32 func_8012AD2C(void* a, void* b, void* c, void* p) {
+    void* base = *(void**)((u8*)p + 4);
+    *(void**)((u8*)p + 4) = (u8*)base + 4;
+    return 0;
+}
 
 void func_8012AD40(){}
 

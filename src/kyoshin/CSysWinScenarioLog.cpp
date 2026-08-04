@@ -77,7 +77,7 @@ void func_80280E9C(){}
 
 void func_80280F44(){}
 
-void func_802811FC(void* self){
+extern "C" void func_802811FC(void* self){
     *(u32*)((u8*)self + 0x1D80) = 0;
     *(u32*)((u8*)self + 0x1D84) = 0;
 }

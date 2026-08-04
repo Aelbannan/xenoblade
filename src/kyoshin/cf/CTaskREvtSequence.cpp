@@ -34,7 +34,11 @@ unsigned long func_8016840C(){
 
 void func_8016841C(){}
 
-void func_8016846C(){}
+extern "C" u32 func_8016846C(void) {
+    extern unsigned long lbl_eu_80664268;
+    void* g = (void*)lbl_eu_80664268;
+    return (*(u32*)((u8*)g + 0x5c) >> 5) & 1;
+}
 
 bool func_8016847C() { return false; }
 

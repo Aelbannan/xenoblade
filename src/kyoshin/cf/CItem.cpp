@@ -445,7 +445,7 @@ extern "C" void func_8015B588(void* u, void* p, u32 val) { ((ItemHalf18*)((u8*)p
 
 u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
 
-void func_8015B5A4(){}
+extern "C" void func_8015B5A4(void* u, void* p, u32 val) { ((ItemByte7*)((u8*)p + 7))->b01 = (u8)val; }
 
 u32 CItemData_getByte7Bits01_dup(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
@@ -458,9 +458,9 @@ extern "C" u8* func_8015B5CC(u32 unused, u8* obj, u32 idx, u8 val) {
 
 extern "C" u8 func_8015B5D8(u32 unused, u8* obj, u32 idx) { return obj[idx + 0x12]; }
 
-void func_8015B5E4(){}
+extern "C" u32 func_8015B5E4(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 2 + 8) >> 1) & 7; }
 
-void func_8015B5F8(){}
+extern "C" u32 func_8015B5F8(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 2 + 8) >> 4) & 0xFFF; }
 
 void func_8015B60C(){}
 
@@ -476,7 +476,7 @@ void func_8015B75C(){}
 
 void func_8015B86C(){}
 
-void func_8015B88C(){}
+extern "C" u32 func_8015B88C(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 8 + 0xc) >> 4) & 0xFFF; }
 
 u32 CItemExt_setByte49(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 49) = val; return unused; }
 
@@ -486,7 +486,7 @@ u32 CItemExt_setByte48(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 
 
 u8 CItemExt_getByte48(u32, CItemExt* obj) { return *(u8*)((char*)obj + 48); }
 
-void func_8015B8C0(){}
+extern "C" void* func_8015B8C0(void* u, void* p, u32 idx) { return (u8*)p + idx * 8 + 8; }
 
 void func_8015B8D0(){}
 

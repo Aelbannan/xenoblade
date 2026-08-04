@@ -27,6 +27,7 @@ public:
     u8 _padA8[0xC0 - 0xA8];
 
     CfObjectEff();
+    void CfObject_UnkVirtualFunc29();
     void func_800AC7CC();
     void func_800AC7FC();
     void func_800AC810();

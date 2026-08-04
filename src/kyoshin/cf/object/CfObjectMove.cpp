@@ -4,6 +4,22 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
+typedef void (*VFn)(void*);
+// Cast-only SI iface for the +0xB0/+0x10 double-hop thunks.
+// Shift base puts the vptr at object+0x10 (retail lwz r12, 0x10(r3));
+// RTTI omit keeps slots at vtable+0x08, +0x04 each.
+struct Shift { char pad[0x10]; };
+struct ObjVtIf : Shift {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void vf14();
+    virtual void vf18(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void vf28(); virtual void vf2C(); virtual void vf30(); virtual void vf34();
+    virtual void _v038(); virtual void _v03C(); virtual void vf40(); virtual void _v044();
+    virtual void vf48(); virtual void _v04C(); virtual void _v050(); virtual void vf54();
+    virtual void vf58(); virtual void _v05C(); virtual void vf60(); virtual void _v064();
+    virtual void vf68();
+};
+
+
 namespace cf {
 
 CfObjectMove::CfObjectMove() {}
@@ -85,7 +101,7 @@ void func_804B0B54(void*, void*);
 
 void cf::CfObjectMove::updatePos() {
     if ((unk64 & 8) != 0) {
-        func_804B0B54(_60C_region, _pad3C);
+        func_804B0B54(_60C_region, (void*)((u8*)this + 0x3C));
     }
 }
 
@@ -130,7 +146,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc57() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc4() {}
 
-void cf::CfObjectMove::CObjectParam_UnkVirtualFunc2(void) {}
+void* cf::CfObjectMove::CObjectParam_UnkVirtualFunc2() { return 0; }
 
 void CfObjectMove_nullsub_15(){}
 
@@ -154,9 +170,15 @@ void CfObjectMove_nullsub_18(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {}
 
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc10() {}
+extern "C" void CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(void* self, float v) {
+    void* o = *(void**)((u8*)self + 0x6c0);
+    if (o) *(float*)((u8*)o + 0xd4) = v;
+}
 
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc11() {}
+extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(void* self, u16 v) {
+    void* o = *(void**)((u8*)self + 0x6c0);
+    if (o) *(u16*)((u8*)o + 0xde) = v;
+}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc12() {}
 
@@ -230,9 +252,13 @@ void cf::CfObjectMove::setSubFieldE(unsigned short val) {
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
 
-bool cf::CfObjectMove::CfObject_UnkVirtualFunc9() { return false; }
+extern "C" void CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf14();
+}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc10() {}
+extern "C" void CfObject_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf18();
+}
 
 void cf::CfObjectMove::virtCall10(){
     void** inner = (void**)mPtr10;
@@ -240,9 +266,13 @@ void cf::CfObjectMove::virtCall10(){
     func(this);
 }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc61() {}
+extern "C" void CfObject_UnkVirtualFunc61__Q22cf12CfObjectMoveFv(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf30();
+}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc62() {}
+extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf34();
+}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc12() {}
 
@@ -256,7 +286,9 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc66(int) {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc19() {}
 
-void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc6() {}
+extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf48();
+}
 
 int cf::CfObjectMove::nullsub_26() { return 0; }
 
@@ -308,7 +340,33 @@ void CfObjectMove_nullsub_42(){}
 
 void func_eu_800BFC78() {}
 
-void func_eu_800BFC7C(){}
+extern "C" void func_800BEE1C(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf40();
+}
+extern "C" void func_800BF29C(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf54();
+}
+extern "C" void func_800BF2B0(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf58();
+}
+extern "C" void func_800BF2CC(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf60();
+}
+extern "C" void func_800BF2E0(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf28();
+}
+extern "C" void func_800BF2F8(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf2C();
+}
+extern "C" void func_eu_800BFC7C(void* self) {
+    reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf68();
+}
+extern "C" void func_800BC4B8(void* self, float v) {
+    extern float lbl_eu_80666A90;
+    void* o = *(void**)((u8*)self + 0xb0);
+    *(float*)((u8*)o + 4) = lbl_eu_80666A90 * v;
+}
+
 
 int cf::CfObjectMove::isActive() { return 1; }
 

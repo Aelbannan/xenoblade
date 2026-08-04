@@ -124,6 +124,7 @@ namespace cf {
         virtual void CArtsParam_UnkVirtualFunc1();
         virtual u8 CArtsParam_UnkVirtualFunc2();
         virtual void CArtsParam_UnkVirtualFunc3(u8 r4);
+        void vtableFunc3(u8 val);
     };
 
     //size: 0x38

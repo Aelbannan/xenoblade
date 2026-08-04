@@ -1704,6 +1704,30 @@ async function runTuFinal(
       return;
     }
 
+    // ── Build gate (1/2): unit compile check — lint only judges code that
+    //    compiles (matches the batch loop's build → lint order). The full
+    //    tree rebuild (configure.py + ninja) runs later, after lint passes. ──
+    const unitBuild = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+    if (!unitBuild.ok) {
+      // A compile failure invalidates any prior lint-improved state — the
+      // worktree now holds broken code, so the next retry must restore.
+      bestLintSnapshot = null;
+      bestLintCount = Infinity;
+      lastReason = "build-failed";
+      feedback =
+        `The unit does not compile after the polish. Error tail:\n\`\`\`text\n` +
+        unitBuild.output.slice(-1500) +
+        `\n\`\`\`\n\nFix the compile error and retry.`;
+      if (attempt < maxTuFinalAttempts) continue;
+      await restoreSnapshot(repoRoot, snapshot);
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
+        detail: { reason: "build-failed", buildOutput: unitBuild.output.slice(-1500), attempts: maxTuFinalAttempts },
+      });
+      console.log(`[pi-harness] ${unit}: TU-final compile failed after ${maxTuFinalAttempts} attempt(s) (restored)`);
+      return;
+    }
+
     // ── Lint gate (delta vs the pre-session snapshot) ──
     const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
     if (!finalLint.ok) {
@@ -1752,7 +1776,8 @@ async function runTuFinal(
       return;
     }
 
-    // ── Build gate (configure.py + ninja under the build lock) ──
+    // ── Build gate (2/2): full-tree rebuild (configure.py + ninja) — runs
+    //    only after the unit compiles AND lint passes. ──
     buildOk = false;
     buildOutput = "";
     sizeOutput = "";

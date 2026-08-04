@@ -32,6 +32,15 @@ function run(python: string, args: string[], cwd: string): Promise<{ stdout: str
   });
 }
 
+/** True when a hexdiff stdout blob is a JSON document (starts with `{` after
+ *  trimming, and the trailing newline-before-JSON noise is not JSON). Build
+ *  failures print "added .note.split to ..." to stdout before failing —
+ *  those must not be mistaken for a diff result. */
+function looksLikeJson(s: string): boolean {
+  const t = s.trim();
+  return t.startsWith("{") || t.startsWith("[");
+}
+
 // ─────────────────────────────────────────────────────────────────────
 //  hexdiff — the iteration loop, with reloc surfacing
 // ─────────────────────────────────────────────────────────────────────
@@ -53,7 +62,11 @@ async function runHexdiffTool(
       return { stdout, stderr: "" };
     } catch (err) {
       const e = err as { stdout?: string; stderr?: string; message?: string };
-      if (e.stdout) return { stdout: e.stdout, stderr: e.stderr ?? "" }; // exit 5 (mismatches) carries JSON on stdout
+      // exit 5 (mismatches) carries JSON on stdout — but a failed build
+      // ALSO writes a non-JSON line ("added .note.split to ...") to stdout
+      // before failing. Only treat stdout as a result if it actually parses
+      // as JSON; otherwise surface stderr (the real compiler error).
+      if (e.stdout && looksLikeJson(e.stdout)) return { stdout: e.stdout, stderr: e.stderr ?? "" };
       return { stdout: null, stderr: e.stderr ?? e.message ?? String(err) };
     }
   };
@@ -63,7 +76,16 @@ async function runHexdiffTool(
   let result = await build(true);
   if (!result.stdout) result = await build(false);
   if (!result.stdout) {
-    const errTail = result.stderr.trim().split("\n").slice(-25).join("\n");
+    // Surface the ACTUAL compiler error, not the ninja command dump that
+    // precedes it (which is ~15 lines of flags). mwcceppc errors look like:
+    //   ### mwcceppc.exe Compiler:
+    //   #    File: src\foo.cpp
+    //   #     67:     THIS_SHOULD_NOT_COMPILE_XYZ;
+    //   #   Error:     ^^^^^^^^^^^^^^^^^^^
+    //   #   (10140) undefined identifier 'THIS_SHOULD_NOT_COMPILE_XYZ'
+    const errLines = result.stderr.trim().split("\n");
+    const ccIdx = errLines.findIndex((l) => l.includes("mwcceppc.exe Compiler") || l.includes("### "));
+    const errTail = (ccIdx >= 0 ? errLines.slice(ccIdx) : errLines.slice(-25)).join("\n");
     return (
       `ERROR: hexdiff build failed for ${unit} ${symbol}.\n` +
       `The object could not be built — the model must fix the compile error first.\n` +

@@ -940,6 +940,7 @@ def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
         subprocess.run(
             [sys.executable, str(notesplit_script), str(obj)],
             cwd=project.root, check=False,
+            capture_output=True,  # never pollute --json stdout
         )
 
 

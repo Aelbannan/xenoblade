@@ -1,6 +1,32 @@
 # 33 — Implementation plan: certifying the doc-32 "not fixed" RVL gaps (rev 5)
 
-Status: **draft, rev 6 — Item 0 landed by the parallel impl-review line**. Rev history: 1 = plan; 2 = round-1 review; 3 = re-baseline after doc-32 A1/A2/A3 landed (`78dbecaa3`); 4 = freshness precondition; 5 = round-2 synthesis; 6 = re-sweep against the impl-review commits (`2d8f23de2` IR1–IR7, `662448aae` r2 polish) which **implemented Item 0 as "doc 32 A2 rev 5"** (per-slot RA rule).
+Status: **draft, rev 7 — Items 0.5 and 2 IMPLEMENTED and reviewed (rounds 3–4)**.
+Rev history: 1 = plan; 2 = round-1 review; 3 = re-baseline after A1/A2/A3
+landed; 4 = freshness precondition; 5 = round-2 synthesis; 6 = Item 0
+landed by the impl-review line; 7 = Items 0.5+2 implemented
+(`93e0f4114`) and hardened across two more review rounds
+(`ee9d49ffd`, `4081ec61a`).
+
+## Items 0.5 + 2 — IMPLEMENTED (round-4 clean)
+
+Both reviewers (round 4) verified the fixes and found no BLOCKER/MAJOR:
+- **Item 0.5** is sound in normal operation: per-invocation freshness (2-stat
+  per-unit check, no cross-prove memo), belt force-re-mine, `reloc_map_sha256`
+  bound into `proof_request_hash` (witness + SMT paths), and — the round-4
+  fix — **fail-closed freshness**: when the map cannot be verified, no
+  canonical symbols are drawn (closes the residual F1 false-cert path where
+  a tooling failure left a stale map in use and the belt never fired).
+- **Item 2** is sound: per-side loop-boundary guard address spaces, bounded
+  direct-loop execution, indirect-dispatch reject, strict-inside range with
+  the deadness backstop at loop edges.
+
+Known residuals (accepted, audit-level): the sha fingerprint is auditable
+but no validator rule auto-rejects on map change; a same-`@N`-different-data
+rebuild + fresh-map pass would be caught only by the fail-closed freshness or
+manual audit. Test coverage: 98 witness/reloc/certify tests green; the 5
+`test_targets` failures are pre-existing (validator relaxation).
+
+## Items 0.5 + 2 — IMPLEMENTED (round-4 clean)
 
 ---
 

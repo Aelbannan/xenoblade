@@ -269,17 +269,88 @@ private:
     u32 ConvertLabelStringToId(const SoundArchiveFile::StringTree* pTree,
                                const char* pLabel) const;
 
-    const SoundArchiveFile::SoundCommonInfo* impl_GetSoundInfo(u32 id) const;
+    const SoundArchiveFile::SoundCommonInfo* impl_GetSoundInfo(u32 id) const {
+        const SoundArchiveFile::SoundCommonTable* pTable =
+            Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
+
+        if (pTable == NULL) {
+            return NULL;
+        }
+
+        if (id >= pTable->count) {
+            return NULL;
+        }
+
+        if (GetVersion() >= NW4R_VERSION(1, 1)) {
+            return Util::GetDataRefAddress0(pTable->items[id], mInfo);
+        } else {
+            return static_cast<const SoundArchiveFile::SoundCommonInfo*>(
+                ut::AddOffsetToPtr(mInfo, pTable->items[id].value));
+        }
+    }
+
     SoundArchiveFile::SoundInfoOffset impl_GetSoundInfoOffset(u32 id) const
         DECOMP_DONT_INLINE;
 
-    const SoundArchiveFile::SeqSoundInfo* impl_GetSeqSoundInfo(u32 id) const;
-    const SoundArchiveFile::StrmSoundInfo* impl_GetStrmSoundInfo(u32 id) const;
-    const SoundArchiveFile::WaveSoundInfo* impl_GetWaveSoundInfo(u32 id) const;
+    const SoundArchiveFile::SeqSoundInfo* impl_GetSeqSoundInfo(u32 id) const {
+        SoundArchiveFile::SoundInfoOffset offset = impl_GetSoundInfoOffset(id);
+        return Util::GetDataRefAddress1(offset, mInfo);
+    }
 
-    const SoundArchiveFile::BankInfo* impl_GetBankInfo(u32 id) const;
-    const SoundArchiveFile::PlayerInfo* impl_GetPlayerInfo(u32 id) const;
-    const SoundArchiveFile::GroupInfo* impl_GetGroupInfo(u32 id) const;
+    const SoundArchiveFile::StrmSoundInfo* impl_GetStrmSoundInfo(u32 id) const {
+        SoundArchiveFile::SoundInfoOffset offset = impl_GetSoundInfoOffset(id);
+        return Util::GetDataRefAddress2(offset, mInfo);
+    }
+
+    const SoundArchiveFile::WaveSoundInfo* impl_GetWaveSoundInfo(u32 id) const {
+        SoundArchiveFile::SoundInfoOffset offset = impl_GetSoundInfoOffset(id);
+        return Util::GetDataRefAddress3(offset, mInfo);
+    }
+
+    const SoundArchiveFile::BankInfo* impl_GetBankInfo(u32 id) const {
+        const SoundArchiveFile::BankTable* pTable =
+            Util::GetDataRefAddress0(mInfo->bankTableRef, mInfo);
+
+        if (pTable == NULL) {
+            return NULL;
+        }
+
+        if (id >= pTable->count) {
+            return NULL;
+        }
+
+        return Util::GetDataRefAddress0(pTable->items[id], mInfo);
+    }
+
+    const SoundArchiveFile::PlayerInfo* impl_GetPlayerInfo(u32 id) const {
+        const SoundArchiveFile::PlayerTable* pTable =
+            Util::GetDataRefAddress0(mInfo->playerTableRef, mInfo);
+
+        if (pTable == NULL) {
+            return NULL;
+        }
+
+        if (id >= pTable->count) {
+            return NULL;
+        }
+
+        return Util::GetDataRefAddress0(pTable->items[id], mInfo);
+    }
+
+    const SoundArchiveFile::GroupInfo* impl_GetGroupInfo(u32 id) const {
+        const SoundArchiveFile::GroupTable* pTable =
+            Util::GetDataRefAddress0(mInfo->groupTableRef, mInfo);
+
+        if (pTable == NULL) {
+            return NULL;
+        }
+
+        if (id >= pTable->count) {
+            return NULL;
+        }
+
+        return Util::GetDataRefAddress0(pTable->items[id], mInfo);
+    }
 
     const void* GetPtrConst(const void* pBase, u32 offset) const {
         if (offset == 0) {

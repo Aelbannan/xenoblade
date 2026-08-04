@@ -335053,8 +335053,8 @@
       "size": "0x1E8",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802cddc4"
@@ -335068,8 +335068,8 @@
         "_savegpr_25"
       ],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
-      "instruction_match": 99.754,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "claim": {
         "owner": "hexdiff-agent",
         "claimed_at": "2026-08-04T04:51:21.741488+00:00",
@@ -335167,7 +335167,7 @@
       "size": "0x5CC",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -335180,7 +335180,15 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
       "instruction_match": 96.44,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "hexdiff-agent",
+        "claimed_at": "2026-08-04T04:54:59.461735+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/kpad/KPAD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80348fe0",

@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5991 |
+| extern "C" (total lines) | 6026 |
 | extern "C" declarations (non-lbl_*, imports) | 2194 |
-| extern "C" definitions (forced names) | 1741 |
-| `self`/register-style params | 3114 |
-| `void*` (params + locals) | 4638 |
-| raw pointer offset arithmetic | 2615 |
-| deref-through-cast arithmetic | 1142 |
+| extern "C" definitions (forced names) | 1771 |
+| `self`/register-style params | 3142 |
+| `void*` (params + locals) | 4659 |
+| raw pointer offset arithmetic | 2656 |
+| deref-through-cast arithmetic | 1187 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -43,8 +43,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 |---|---|---|---|---|---|---|---|---|---|
 | libs/monolib/src/coli/CColiProc.cpp | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/coli/code_804A6C60.cpp | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804B59C8.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804BAE10.cpp | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804B59C8.cpp | 0 | 1 | 1 | 2 | 1 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804BAE10.cpp | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/CDrawGX.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 |
 | libs/monolib/src/core/CException.cpp | 46 | 10 | 15 | 22 | 13 | 6 | 0 | 0 | 0 |
@@ -57,7 +57,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/CRsrcData.cpp | 9 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 5 |
 | libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 17 | 9 | 14 | 39 | 25 | 15 | 0 | 0 | 0 |
-| libs/monolib/src/core/CSplitFrame.cpp | 1 | 4 | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CSplitFrame.cpp | 1 | 5 | 6 | 1 | 2 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/core/CToken.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/core/CView.cpp | 0 | 1 | 24 | 13 | 61 | 16 | 1 | 23 | 120 |
 | libs/monolib/src/core/CViewFrame.cpp | 9 | 1 | 4 | 2 | 1 | 1 | 0 | 0 | 2 |
@@ -67,7 +67,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/code_804DEDA8.cpp | 1 | 38 | 2 | 8 | 8 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/code_804E36DC.cpp | 21 | 15 | 17 | 15 | 3 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 3 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/core/code_804F0258.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 2 | 3 | 5 | 4 | 3 | 3 | 0 | 5 | 0 |
 | libs/monolib/src/device/CDeviceFile.cpp | 0 | 6 | 3 | 9 | 4 | 2 | 0 | 1 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 26 | 3 | 6 | 13 | 4 | 0 | 0 | 0 | 0 |
@@ -82,7 +82,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8718.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804CC2B8.cpp | 0 | 0 | 8 | 3 | 3 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/effect/code_804D854C.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/effect/code_804D854C.cpp | 0 | 1 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804D9274.cpp | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804DB938.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCri.cpp | 35 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 3 |
@@ -115,17 +115,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/nand/CNand.cpp | 10 | 14 | 27 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 0 | 10 | 6 | 6 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlDynamics.cpp | 0 | 12 | 19 | 21 | 14 | 16 | 0 | 1 | 0 |
+| libs/monolib/src/scn/CMdlDynamics.cpp | 0 | 20 | 27 | 29 | 31 | 33 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScn.cpp | 13 | 28 | 15 | 33 | 25 | 5 | 0 | 2 | 0 |
+| libs/monolib/src/scn/CScn.cpp | 13 | 29 | 16 | 27 | 19 | 5 | 0 | 2 | 0 |
 | libs/monolib/src/scn/CScnBlend.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnBloom.cpp | 2 | 10 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnCameraMan.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnEffectActNw4r.cpp | 0 | 2 | 9 | 9 | 2 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 0 | 2 | 10 | 32 | 37 | 24 | 0 | 3 | 0 |
-| libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnEffectActNw4r.cpp | 0 | 5 | 12 | 12 | 5 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 0 | 9 | 17 | 39 | 51 | 38 | 0 | 3 | 0 |
+| libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 2 | 2 | 2 | 2 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 1 | 2 | 5 | 4 | 3 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 18 | 13 | 10 | 7 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFogMan.cpp | 0 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -137,15 +137,15 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemLight.cpp | 0 | 1 | 3 | 2 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 0 | 7 | 11 | 11 | 5 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 4 | 25 | 26 | 14 | 4 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 5 | 26 | 27 | 16 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 0 | 6 | 6 | 7 | 7 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnLightMan.cpp | 0 | 1 | 1 | 3 | 3 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnLightMan.cpp | 0 | 1 | 1 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 0 | 4 | 0 | 1 | 2 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 2 | 2 | 12 | 12 | 1 | 1 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnRoot.cpp | 2 | 0 | 6 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnRootNw4r.cpp | 1 | 5 | 7 | 7 | 4 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnRootNw4r.cpp | 1 | 6 | 7 | 7 | 4 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnVirtualLight.cpp | 0 | 21 | 37 | 34 | 11 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScn_80496B0C.cpp | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScn_80496B0C.cpp | 0 | 2 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 2 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -153,7 +153,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BC9EC.cpp | 2 | 0 | 1 | 6 | 8 | 0 | 0 | 0 | 2 |
-| libs/monolib/src/scn/code_804BD8E8.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/code_804BD8E8.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BF59C.cpp | 0 | 4 | 8 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/util/MemManager.cpp | 0 | 0 | 0 | 21 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CEvent1.cpp | 1 | 1 | 2 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -563,12 +563,16 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "libs/monolib/src/coli/code_804B59C8.cpp": {
-  "void_ptr": 1
+  "deref_arith": 1,
+  "extern_c_nonlbl_def": 1,
+  "ptr_arith": 1,
+  "self_params": 1,
+  "void_ptr": 2
  },
  "libs/monolib/src/coli/code_804BAE10.cpp": {
-  "extern_c_nonlbl_def": 1,
-  "self_params": 1,
-  "void_ptr": 1
+  "extern_c_nonlbl_def": 2,
+  "self_params": 2,
+  "void_ptr": 2
  },
  "libs/monolib/src/core/CDesktop.cpp": {
   "rn_params": 1,
@@ -634,9 +638,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 39
  },
  "libs/monolib/src/core/CSplitFrame.cpp": {
+  "deref_arith": 2,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 4,
-  "self_params": 5
+  "extern_c_nonlbl_def": 5,
+  "ptr_arith": 2,
+  "self_params": 6,
+  "void_ptr": 1
  },
  "libs/monolib/src/core/CToken.cpp": {
   "goto_count": 3
@@ -698,8 +705,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 34
  },
  "libs/monolib/src/core/code_804F0258.cpp": {
-  "self_params": 2,
-  "void_ptr": 2
+  "deref_arith": 3,
+  "extern_c_nonlbl_def": 1,
+  "ptr_arith": 3,
+  "self_params": 3,
+  "void_ptr": 3
  },
  "libs/monolib/src/core/monolib_eu_804F9E98.cpp": {
   "deref_arith": 3,
@@ -782,8 +792,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "libs/monolib/src/effect/code_804D854C.cpp": {
-  "self_params": 2,
-  "void_ptr": 2
+  "deref_arith": 3,
+  "extern_c_nonlbl_def": 1,
+  "ptr_arith": 3,
+  "self_params": 3,
+  "void_ptr": 3
  },
  "libs/monolib/src/effect/code_804D9274.cpp": {
   "extern_c_nonlbl_decl": 1,
@@ -960,12 +973,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "libs/monolib/src/scn/CMdlDynamics.cpp": {
-  "deref_arith": 16,
-  "extern_c_nonlbl_def": 12,
-  "ptr_arith": 14,
+  "deref_arith": 33,
+  "extern_c_nonlbl_def": 20,
+  "ptr_arith": 31,
   "rn_params": 1,
-  "self_params": 19,
-  "void_ptr": 21
+  "self_params": 27,
+  "void_ptr": 29
  },
  "libs/monolib/src/scn/CMdlLook.cpp": {
   "self_params": 1,
@@ -982,11 +995,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/monolib/src/scn/CScn.cpp": {
   "deref_arith": 5,
   "extern_c_nonlbl_decl": 13,
-  "extern_c_nonlbl_def": 28,
-  "ptr_arith": 25,
+  "extern_c_nonlbl_def": 29,
+  "ptr_arith": 19,
   "rn_params": 2,
-  "self_params": 15,
-  "void_ptr": 33
+  "self_params": 16,
+  "void_ptr": 27
  },
  "libs/monolib/src/scn/CScnBlend.cpp": {
   "rn_params": 1,
@@ -1004,24 +1017,25 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/scn/CScnEffectActNw4r.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_def": 2,
-  "ptr_arith": 2,
-  "self_params": 9,
-  "void_ptr": 9
+  "extern_c_nonlbl_def": 5,
+  "ptr_arith": 5,
+  "self_params": 12,
+  "void_ptr": 12
  },
  "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp": {
-  "deref_arith": 24,
-  "extern_c_nonlbl_def": 2,
-  "ptr_arith": 37,
+  "deref_arith": 38,
+  "extern_c_nonlbl_def": 9,
+  "ptr_arith": 51,
   "rn_params": 3,
-  "self_params": 10,
-  "void_ptr": 32
+  "self_params": 17,
+  "void_ptr": 39
  },
  "libs/monolib/src/scn/CScnFadeMan.cpp": {
-  "extern_c_nonlbl_def": 1,
-  "ptr_arith": 1,
-  "self_params": 1,
-  "void_ptr": 1
+  "deref_arith": 1,
+  "extern_c_nonlbl_def": 2,
+  "ptr_arith": 2,
+  "self_params": 2,
+  "void_ptr": 2
  },
  "libs/monolib/src/scn/CScnFilter.cpp": {
   "deref_arith": 1,
@@ -1096,11 +1110,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 11
  },
  "libs/monolib/src/scn/CScnItemModelNw4r.cpp": {
-  "deref_arith": 4,
-  "extern_c_nonlbl_def": 4,
-  "ptr_arith": 14,
-  "self_params": 25,
-  "void_ptr": 26
+  "deref_arith": 6,
+  "extern_c_nonlbl_def": 5,
+  "ptr_arith": 16,
+  "self_params": 26,
+  "void_ptr": 27
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
   "extern_c_nonlbl_def": 6,
@@ -1110,9 +1124,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/scn/CScnLightMan.cpp": {
   "extern_c_nonlbl_def": 1,
-  "ptr_arith": 3,
+  "ptr_arith": 2,
   "self_params": 1,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp": {
   "deref_arith": 2,
@@ -1137,7 +1151,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/monolib/src/scn/CScnRootNw4r.cpp": {
   "deref_arith": 1,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_def": 6,
   "ptr_arith": 4,
   "self_params": 7,
   "void_ptr": 7
@@ -1150,10 +1164,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 34
  },
  "libs/monolib/src/scn/CScn_80496B0C.cpp": {
-  "deref_arith": 1,
-  "ptr_arith": 1,
-  "self_params": 1,
-  "void_ptr": 1
+  "deref_arith": 3,
+  "extern_c_nonlbl_def": 2,
+  "ptr_arith": 3,
+  "self_params": 3,
+  "void_ptr": 3
  },
  "libs/monolib/src/scn/CVirtualLightAmb.cpp": {
   "extern_c_nonlbl_decl": 2,
@@ -1197,7 +1212,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 6
  },
  "libs/monolib/src/scn/code_804BD8E8.cpp": {
-  "void_ptr": 3
+  "extern_c_nonlbl_def": 1,
+  "void_ptr": 4
  },
  "libs/monolib/src/scn/code_804BF59C.cpp": {
   "extern_c_nonlbl_def": 4,

@@ -491894,7 +491894,7 @@
       "size": "0x34",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -491903,7 +491903,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemModelNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:22:24.032237+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnItemModelNw4r.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8048c640",
@@ -491990,8 +491998,8 @@
       "size": "0x30",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -491999,7 +492007,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemModelNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:22:26.613627+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnItemModelNw4r.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 81.25,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8048c9c8",

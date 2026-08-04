@@ -795,6 +795,20 @@ function makeVerifyCallback(opts: {
         if (hd.structuralCount === 0 && hd.mismatchCount > 0) {
           regSwapOnlyTargets.push(tid);
         }
+        // FULL MATCH (mismatch: 0): certify THIS state NOW via the witness
+        // cycle — before any further model edits can regress it. The model
+        // often reaches a perfect match mid-session then keeps editing (the
+        // run-9 transcripts show 6/10 perfect matches lost to regression);
+        // runBatchCycle already ran at the round start, so certify the exact
+        // 0-mismatch state here under the build lock.
+        if (hd.mismatchCount === 0) {
+          process.stderr.write(`[orchestrator] ${unit}: ${tid} is at mismatch:0 — certifying now\n`);
+          const certified = await runWitnessCycle(repoRoot, unit, tid, config);
+          process.stderr.write(`[orchestrator] ${unit}: ${tid} 0-mismatch certify: ${certified ? "ACCEPTED" : "not certified (reloc/witness gate)"}\n`);
+          if (certified) {
+            return { action: "accept", reason: `${tid} certified at mismatch:0` };
+          }
+        }
         // Bank the compiling draft (status from batch-cycle results).
         const status = batchResults?.find((r) => r.targetId === tid)?.status;
         await bankTarget(tid, status, rePromptCount);

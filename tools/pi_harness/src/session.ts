@@ -230,10 +230,52 @@ export async function runAgentSession(opts: {
     }
     if (event.type === "tool_execution_start") {
       transcriptContent += `\n\n---\n**🛠 Tool: ${event.toolName}**\n\n`;
+      // Include the tool's input parameters (compact JSON) so transcripts
+      // are self-contained for debugging (which symbol/unit was passed).
+      const args = event.args as Record<string, unknown> | undefined;
+      if (args && Object.keys(args).length > 0) {
+        try {
+          const compact = JSON.stringify(args);
+          transcriptContent +=
+            compact.length > 800
+              ? `*Args: ${compact.slice(0, 800)}… (${compact.length} chars)*\n\n`
+              : `*Args: ${compact}*\n\n`;
+        } catch { /* args not JSON-serialisable — skip */ }
+      }
       queueTranscriptWrite();
     }
+    if (event.type === "tool_execution_update") {
+      // Streaming partial output — record only SMALL chunks (<2KB) so
+      // long streams (build output) don't bloat the transcript AND don't
+      // near-duplicate the final result recorded at tool_execution_end.
+      // The final result (possibly truncated) is the authoritative capture.
+      const pr = event.partialResult as { text?: string; content?: unknown } | undefined;
+      const text = typeof pr === "string" ? pr : pr && typeof pr.text === "string" ? pr.text : undefined;
+      if (text && text.length > 0 && text.length <= 2000) {
+        transcriptContent += `  …${text.slice(0, 2000)}\n`;
+        queueTranscriptWrite();
+      }
+    }
     if (event.type === "tool_execution_end") {
-      transcriptContent += `\n*Result: ${event.isError ? "❌ error" : "✅ success"}*\n\n---\n\n`;
+      const result = event.result as { content?: Array<{ type?: string; text?: string }> } | string | undefined;
+      let outText = "";
+      if (typeof result === "string") {
+        outText = result;
+      } else if (result && Array.isArray(result.content)) {
+        outText = result.content
+          .map((c) => (typeof c === "string" ? c : c?.text ?? ""))
+          .join("\n");
+      }
+      // Truncate long outputs (hexdiff JSON, build logs) to keep the
+      // transcript readable — full detail stays in the tool's own JSON.
+      const MAX_TOOL_OUT = 6000;
+      let shown =
+        outText.length > MAX_TOOL_OUT
+          ? outText.slice(0, MAX_TOOL_OUT) + `\n… (${outText.length - MAX_TOOL_OUT} more chars)`
+          : outText;
+      // Keep the markdown code block intact if the output contains ```.
+      shown = shown.replace(/```/g, "` ``");
+      transcriptContent += `*Result: ${event.isError ? "❌ error" : "✅ success"}*\n\n\`\`\`text\n${shown}\n\`\`\`\n\n---\n\n`;
       queueTranscriptWrite();
     }
   });

@@ -834,10 +834,12 @@ function makeVerifyCallback(opts: {
     if (regSwapOnlyTargets.length > 0) {
       lastFeedback += `\n\n### Reg-swap-only (structure correct)\n\n` +
         `These targets have structural=0 — the code shape is right and only ` +
-        `register allocation differs: ${regSwapOnlyTargets.join(", ")}. The ` +
-        `register-renaming witness may certify them without further edits. If ` +
-        `they were not accepted this round, try ONE small structural nudge ` +
-        `(declaration order / statement order) and stop — do not grind.`;
+        `register allocation differs: ${regSwapOnlyTargets.join(", ")}. ` +
+        `**CERTIFY THEM instead of editing**: call the \`witness\` tool (` +
+        `\`witness <unit> <symbol>\`) to confirm, then \`certify <target-id>\` and ` +
+        `include \`CERTIFY: <target-id>\` in your final response. The register-` +
+        `renaming witness (no SMT) certifies these — do NOT keep editing or you ` +
+        `will regress the match.`;
     }
     return { action: "re-prompt", feedback: lastFeedback };
   };

@@ -512,4 +512,24 @@ describe("scoped edit/write tools", () => {
       /outside the writable scope/,
     );
   });
+
+  test("write allows an in-scope file (parent dir mkdir is ancestor-allowed)", async () => {
+    // The SDK calls mkdir(dirname(file)) — a parent dir is not itself in the
+    // writable list but must be creatable (H4 regression check). Target an
+    // in-scope file so writeFile passes and only the mkdir-ancestor path is
+    // exercised; clean up afterwards.
+    const writable2 = ["src/kyoshin/zz-h4-test.tmp"];
+    const write2 = scopedWriteTool(REPO, writable2);
+    try {
+      const res = await write2.execute(
+        "id",
+        { path: "src/kyoshin/zz-h4-test.tmp", content: "x" } as never,
+        undefined as never, undefined as never, {} as never,
+      );
+      assert.ok(res, "in-scope write with ancestor mkdir must succeed");
+    } finally {
+      const { rm } = await import("node:fs/promises");
+      await rm(join(REPO, "src/kyoshin/zz-h4-test.tmp"), { force: true });
+    }
+  });
 });

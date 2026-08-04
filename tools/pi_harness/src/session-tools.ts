@@ -709,6 +709,23 @@ function assertWritablePath(repoRoot: string, writable: string[], absPath: strin
   }
 }
 
+/** True when a DIRECTORY is an ancestor of (or equal to) an allowed path —
+ *  the SDK write tool calls mkdir(dirname(file)), and a parent directory is
+ *  legitimately creatable even though it is not itself in the writable list. */
+function assertWritableDir(repoRoot: string, writable: string[], absDir: string): void {
+  const dir = resolve(absDir);
+  const rel = relative(repoRoot, dir);
+  if (rel.startsWith("build/pi-harness")) return;
+  const allowed = writable.map((w) => resolve(repoRoot, w));
+  const isAncestorOfAllowed = allowed.some((a) => a === dir || a.startsWith(dir + "/"));
+  if (!isAncestorOfAllowed) {
+    throw new Error(
+      `BLOCKED: ${absDir} is not an ancestor of any writable file for this session. ` +
+        `Allowed files: ${writable.length > 0 ? writable.join(", ") : "(none)"}`,
+    );
+  }
+}
+
 /** Edit tool restricted to the session's writable scope. Overrides the
  *  built-in `edit` (custom tools replace built-ins by name). */
 export function scopedEditTool(repoRoot: string, writable: string[]): ToolDefinition {
@@ -739,7 +756,9 @@ export function scopedWriteTool(repoRoot: string, writable: string[]): ToolDefin
     },
     mkdir: async (dir) => {
       const { mkdir } = await import("node:fs/promises");
-      assertWritablePath(repoRoot, writable, dir);
+      // The SDK passes dirname(file); allow it when it is an ancestor of an
+      // allowed file (it is NOT itself in the writable list).
+      assertWritableDir(repoRoot, writable, dir);
       await mkdir(dir, { recursive: true });
     },
   };

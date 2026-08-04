@@ -41,7 +41,13 @@ void func_804884F8(){}
 
 void func_8048856C(){}
 
-void func_804885C8(){}
+extern "C" u32 func_804885C8(void* self) {
+    u32 r = 0;
+    if (*(u32*)((u8*)self + 0x7C8) != 0 || *(u32*)((u8*)self + 0x854) != 0 || (*(u32*)((u8*)self + 0x7A8) & 0x800)) {
+        r = 1;
+    }
+    return r;
+}
 
 void func_804885FC(){}
 

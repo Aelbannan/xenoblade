@@ -433375,8 +433375,8 @@
       "size": "0x44",
       "unit": "nw4r/src/snd/snd_EnvGenerator",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_EnvGenerator.cpp",
       "called_functions": [],
@@ -433394,7 +433394,9 @@
         "note": ""
       },
       "instruction_match": 99.412,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-8041776c",
@@ -433407,8 +433409,8 @@
       "size": "0x40",
       "unit": "nw4r/src/snd/snd_EnvGenerator",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_EnvGenerator.cpp",
       "called_functions": [],
@@ -433427,7 +433429,9 @@
         "note": ""
       },
       "instruction_match": 99.375,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-804177ac",
@@ -490062,8 +490066,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnItemModel",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -490071,7 +490075,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemModel.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnItemModel.cpp"
+      "source": "libs/monolib/src/scn/CScnItemModel.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:32:42.932730+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnItemModel.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80489800",
@@ -490084,8 +490098,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnItemModel",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -490093,7 +490107,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemModel.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnItemModel.cpp"
+      "source": "libs/monolib/src/scn/CScnItemModel.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:32:45.559210+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnItemModel.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80489814",
@@ -527398,8 +527422,8 @@
       "size": "0x10",
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -527407,7 +527431,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/code_804DEDA8.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/core/code_804DEDA8.cpp"
+      "source": "libs/monolib/src/core/code_804DEDA8.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:32:34.878458+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/code_804DEDA8.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804e4338",
@@ -527420,8 +527454,8 @@
       "size": "0x10",
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -527429,7 +527463,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/code_804DEDA8.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/core/code_804DEDA8.cpp"
+      "source": "libs/monolib/src/core/code_804DEDA8.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:32:37.269989+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/code_804DEDA8.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804e4348",
@@ -527538,8 +527582,8 @@
       "size": "0x10",
       "unit": "monolib/src/core/code_804DEDA8",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -527547,7 +527591,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/code_804DEDA8.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/core/code_804DEDA8.cpp"
+      "source": "libs/monolib/src/core/code_804DEDA8.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:32:40.304309+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/code_804DEDA8.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804e45b0",

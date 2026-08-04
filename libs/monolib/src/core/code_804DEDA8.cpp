@@ -129,9 +129,10 @@ void func_804DFCC4(){}
 
 void func_804DFE20(){}
 
-void func_804DFE8C(){}
+extern "C" { extern char lbl_eu_80661728[]; }
+extern "C" u32 func_804DFE8C(void) { return *(u32*)(lbl_eu_80661728 + 8); }
 
-void func_804DFE9C(){}
+extern "C" u32 func_804DFE9C(void) { return *(u32*)(lbl_eu_80661728 + 4); }
 
 void func_804DFEAC(){}
 
@@ -141,7 +142,8 @@ void func_804DFFA8(){}
 
 void func_804E0098(){}
 
-void func_804E0104(){}
+extern "C" { extern char lbl_eu_80661738[]; }
+extern "C" u32 func_804E0104(void) { return *(u32*)(lbl_eu_80661738 + 4); }
 
 void func_804E0114(){}
 

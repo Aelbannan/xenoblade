@@ -83,9 +83,15 @@ void func_80485684(){}
 
 void func_80485774(){}
 
-void func_804857DC(){}
+extern "C" void func_804857DC(void* self, u32 param) {
+    *(u32*)((u8*)self + 0x7A4) |= 0x20;
+    *(u32*)((u8*)self + 0x7C8) = param;
+}
 
-void func_804857F0(){}
+extern "C" void func_804857F0(void* self, u32 param) {
+    *(u32*)((u8*)self + 0x7A4) |= 0x100;
+    *(u32*)((u8*)self + 0x7C8) = param;
+}
 
 void func_80485804(){}
 

@@ -50,10 +50,6 @@ public:
     virtual Operation Process(u16 ch, ContextType* pCtx); // at 0xC
     virtual Operation CalcRect(Rect* pRect, u16 ch,
                                ContextType* pCtx); // at 0x10
-
-private:
-    void ProcessTab(ContextType* pCtx);
-    void ProcessLinefeed(ContextType* pCtx);
 };
 
 } // namespace ut

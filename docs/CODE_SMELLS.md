@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5863 |
-| extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1676 |
-| `self`/register-style params | 3086 |
-| `void*` (params + locals) | 4601 |
-| raw pointer offset arithmetic | 2535 |
-| deref-through-cast arithmetic | 1121 |
+| extern "C" (total lines) | 5877 |
+| extern "C" declarations (non-lbl_*, imports) | 2194 |
+| extern "C" definitions (forced names) | 1679 |
+| `self`/register-style params | 3089 |
+| `void*` (params + locals) | 4602 |
+| raw pointer offset arithmetic | 2548 |
+| deref-through-cast arithmetic | 1123 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -69,7 +69,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 3 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 2 | 3 | 5 | 4 | 3 | 3 | 0 | 5 | 0 |
-| libs/monolib/src/device/CDeviceFile.cpp | 0 | 6 | 3 | 8 | 0 | 0 | 0 | 1 | 0 |
+| libs/monolib/src/device/CDeviceFile.cpp | 0 | 6 | 3 | 6 | 3 | 2 | 0 | 1 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 26 | 3 | 6 | 13 | 4 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileDvd.cpp | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileJob.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -77,7 +77,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 0 | 11 | 17 | 11 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 8 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/device/CDeviceGX.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CGXCache.cpp | 5 | 2 | 17 | 21 | 0 | 0 | 0 | 0 | 4 |
+| libs/monolib/src/device/CGXCache.cpp | 12 | 5 | 20 | 24 | 10 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/effect/CETrail.cpp | 23 | 12 | 5 | 26 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8718.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -711,10 +711,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 4
  },
  "libs/monolib/src/device/CDeviceFile.cpp": {
+  "deref_arith": 2,
   "extern_c_nonlbl_def": 6,
+  "ptr_arith": 3,
   "rn_params": 1,
   "self_params": 3,
-  "void_ptr": 8
+  "void_ptr": 6
  },
  "libs/monolib/src/device/CDeviceFileCri.cpp": {
   "extern_c_nonlbl_decl": 26,
@@ -751,11 +753,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 6
  },
  "libs/monolib/src/device/CGXCache.cpp": {
-  "extern_c_nonlbl_decl": 5,
-  "extern_c_nonlbl_def": 2,
+  "extern_c_nonlbl_decl": 12,
+  "extern_c_nonlbl_def": 5,
   "goto_count": 4,
-  "self_params": 17,
-  "void_ptr": 21
+  "ptr_arith": 10,
+  "self_params": 20,
+  "void_ptr": 24
  },
  "libs/monolib/src/effect/CETrail.cpp": {
   "extern_c_nonlbl_decl": 23,

@@ -16,7 +16,7 @@
   "functionRelocDiffs=data_value"
  ],
  "automatic_promotion": true,
- "allowed_engine_sha256": "8c74e3266823006d575e23bbc299b1f4d1bc78038e46f2fe765651966e9ac7e0",
+ "allowed_engine_sha256": "ccd63fbafb684447ef007e3c62bc9905f2f58b66f53a9515d1cfeb7bd2285f15",
  "allowed_confidence_tiers": [
   "A",
   "B",

@@ -23,9 +23,11 @@ description: >-
    `docs/MWCC_REFERENCE.md` and prior attempts (protocol below).
 4. Confirm this is a **private/downstream fork** — do not upstream LLM-assisted matching work to `xbret/xenoblade`.
 
-**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes, **but prefer `FULL_MATCH` when it is reachable**: a 100% static match is cheaper to certify (automatic `full-instruction-match` certificate, no `--smt` needed) and is stronger evidence than a semantic proof. Use `EQUIVALENT_MATCH` when 100% static is genuinely unreachable (register allocation, scheduling, immediate/instruction selection, FP codegen). Unit-level (no symbol) still requires 100% code + data.
+**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes, **but prefer `FULL_MATCH` when it is reachable**: a 100% static match is cheaper to certify (automatic `full-instruction-match` certificate, no `--smt` needed) and is stronger evidence than a semantic proof. Use `EQUIVALENT_MATCH` when 100% static has not yet been reached after the documented levers (register allocation, scheduling, immediate/instruction selection, FP codegen) — a semantic proof is a full-tier acceptance, and the byte-identity route stays open. Unit-level (no symbol) still requires 100% code + data.
 
-**SMT probe is opt-in (cost control):** `coop run cycle` runs only the cheap pre-SMT register-renaming witness by default; the full Z3 probe runs only with `--smt`. `coop run diff` keeps the full probe on by default (use `--no-smt` to skip while iterating). A skipped probe logs `inconclusive_smt_disabled` and can never reach `EQUIVALENT_MATCH` — to accept a function the witness cannot certify (scheduling/immediate/instruction-selection diffs), run `cycle <target-id> --smt` and confirm status is `EQUIVALENT_MATCH`. When a function is stuck above ~90% and looks semantically equivalent, run `diff <unit> --symbol <sym>` (full probe) for the divergence oracle before rewriting. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) even without `--smt` — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
+**Matching is always possible.** Every retail function is the output of MWCC compiling *some* C/C++ source, so a matching reconstruction exists in principle. A plateau below 100% means the current angle is exhausted — not that the target is unmatchable. Angles to try, roughly in order: another source shape / declaration order / expression order; another compiler version or per-unit flag (`mw_version`, `-func_align 4/16`, `-ipa off`, `-O4,s`); reloc naming via `extern "C" lbl_eu_*`; `EQUIVALENT_MATCH` via `--smt`; a tooling/engine improvement; or a documented `PLAN.md` §17.6 policy exception. `docs/MWCC_REFERENCE.md` is full of targets that once looked like hard caps and later reached FULL_MATCH/EQUIVALENT_MATCH through one of these levers. Never tell another agent (or record) that a target is impossible: record what was tried, the exact residual, and the next angle instead. A target is `BLOCKED` only for a concrete external/tooling limitation, never because it "doesn't match".
+
+**SMT probe is opt-in (cost control):** `coop run cycle` runs only the cheap pre-SMT register-renaming witness by default; the full Z3 probe runs only with `--smt`. `coop run diff` keeps the full probe on by default (use `--no-smt` to skip while iterating). A skipped probe logs `inconclusive_smt_disabled` and can never reach `EQUIVALENT_MATCH` — to accept a function the witness cannot certify (scheduling/immediate/instruction-selection diffs), run `cycle <target-id> --smt` and confirm status is `EQUIVALENT_MATCH`. When a function has plateaued above ~90% and looks semantically equivalent, run `diff <unit> --symbol <sym>` (full probe) for the divergence oracle before rewriting. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) even without `--smt` — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
 
 **Probe etiquette (each probe costs 15-30 min of machine time):** run the probe **once, at acceptance time** — not during iteration (hexdiff is the iteration tool). Before `cycle --smt`, confirm the callee tree is ready: indirect calls, unresolved callees, or `called_functions` not yet FULL_MATCH/EQUIVALENT_MATCH fail closed no matter what the probe does (`cycle` prints this as an early warning). On a callee-blocked target, spend a cycle only to land FULL_MATCH; otherwise record the blocker and move on. Never retry the same function with `--contract` variants (strict/live-out/memory/ppc-eabi) — accept the `auto` outcome. Concurrent probes starve hexdiff builds and have hung agents for hours; when other agents are active, prefer deferring the probe to a quiet moment.
 
@@ -198,8 +200,8 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
     python3 tools/coop/hexdiff.py <unit> --all          # unit triage: one build, table of all functions
     python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --brief
     → check the one-line verdict (mismatch/structural/reg_swap) went down; if it went up, revert the edit
-    → iterate until 0 structural / 0 mismatches or stalls for 3 attempts
-→ **Final acceptance** (only when hexdiff shows few misses or 3 attempts stalled):
+    → iterate until 0 structural / 0 mismatches, or after 3 non-improving attempts record an open-item packet and switch angle (see "Matching is always possible" above)
+→ **Final acceptance** (only when hexdiff shows few misses, or after 3 non-improving attempts have been recorded):
     python3 tools/coop/run.py cycle <target-id> \
         --hypothesis "..." --next-change "..." --runtime-test ""
     # If fuzzy is in [50, 100) and the register-renaming witness did not
@@ -258,11 +260,13 @@ Hypothesis map JSON format (`target_id` → per-target overrides):
 
 - State one mismatch hypothesis and make one bounded source change per cycle.
 - Preserve the best-known candidate; do not compound regressions with unrelated edits.
-- After three non-improving attempts, record a stall packet: best status/percent,
-  size result, mismatch categories, ruled-out hypotheses, exact blocker, and the
+- After three non-improving attempts, record an **open-item packet**: best status/percent,
+  size result, mismatch categories, ruled-out hypotheses, exact residual, and the
   next three bounded experiments.
-- A stall is not acceptance. Keep the target `ACTIVE` or set it `BLOCKED` only
-  for a concrete external/tooling limitation.
+- An open item is not acceptance — and it is not a dead end. Keep the target `ACTIVE`
+  or set it `BLOCKED` only for a concrete external/tooling limitation. Matching is
+  always possible: a plateau means the current angle is exhausted, so record the
+  next angle and switch.
 - Final handoff must report target status, static percent, equivalence result and
   contract when applicable, size result, changed files, reusable insight, claim
   release state, and remaining risk.
@@ -346,7 +350,7 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --asm
 - **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
 - **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
 - **Compiler config line** — the unit's configured `mw_version`/`extra_cflags` from configure.py is printed (e.g. `GC/3.0a5.2 -func_align 4`), so you know the exact compiler contract before touching flags.
-- **KB hints** — detects known MWCC_REFERENCE stall signatures (alignment nop `ori r0,r0,0` near `mtctr` on one side; bte-family unit without `-func_align 4`) and prints the documented flag fix.
+- **KB hints** — detects known MWCC_REFERENCE plateau signatures (alignment nop `ori r0,r0,0` near `mtctr` on one side; bte-family unit without `-func_align 4`) and prints the documented flag fix.
 - **Reloc name-drift section** — terminal ends with `Reloc name drift (N):` listing each byte-identical/reloc-name-different site with the approved source fix (`extern "C"` declaration) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
 - **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
 
@@ -423,7 +427,7 @@ move on.
 
 ### decomp.me (optional)
 
-For stubborn **small** functions: generate ctx → open unit in **objdiff** → Create scratch on decomp.me → paste matched code back → `cycle` again.
+For **small** functions that have plateaued: generate ctx → open unit in **objdiff** → Create scratch on decomp.me → paste matched code back → `cycle` again.
 
 ### Large functions
 
@@ -456,12 +460,12 @@ Decompose into leaf symbols/units first. Each leaf and the parent must still end
   top records—do not act from snippets alone. Name the relevant knowledge IDs
   in the cycle hypothesis and do not repeat a recorded failed experiment
   without a new reason. Full protocol: `docs/MWCC_KNOWLEDGE_BASE.md`.
-- **After a breakthrough:** if you discover a reusable fix (new pattern, pragma/flag combo, struct/layout insight, regalloc trick, reloc naming rule, or confirmed hard cap), **append it to `docs/MWCC_REFERENCE.md`** in the same session — do not leave it only in `attempts.jsonl` or chat.
+- **After a breakthrough:** if you discover a reusable fix (new pattern, pragma/flag combo, struct/layout insight, regalloc trick, reloc naming rule, or confirmed fixed codegen behavior), **append it to `docs/MWCC_REFERENCE.md`** in the same session — do not leave it only in `attempts.jsonl` or chat.
 - **Where to add:**
   - Proven high-level fix → **Patterns that work in this repo** (new numbered subsection) or extend an existing one.
   - Symptom → cause → fix → **Pitfalls and failure modes** tables.
   - Compiler/tooling note → **MWCC compiler behavior** or **decomp.me workflow**.
-  - Confirmed policy limit → **When FULL_MATCH or EQUIVALENT_MATCH may be unrealistic**.
+  - Confirmed fixed codegen behavior (with the acceptance route that remains) → **When FULL_MATCH or EQUIVALENT_MATCH is not yet reached**.
 - Keep entries concise: function/symbol, symptom, fix, match %, and file path. Link to retail symbol names where relevant.
 
 ## Marking configure.py matching
@@ -496,7 +500,7 @@ Prefer fixing semantics and types first; only then tune expression order with no
 
 ## Approved policy exceptions (`PLAN.md` §17.6)
 
-When C++ and decomp.me cannot close the last instruction(s), these are **allowed** if logged in `attempts.jsonl` with `"policy_exception": true`:
+When C++ and decomp.me have not closed the last instruction(s), these are **allowed** if logged in `attempts.jsonl` with `"policy_exception": true`:
 
 | Tool | Use |
 |------|-----|

@@ -115,8 +115,8 @@ register-operand `ASM()` blocks. Findings that transfer to any PS target:
   (non-asm-body) code, which for this kernel adds a frame-pointer save and
   reschedules the PS stream. `MTX34RotXYZFIdx` (retail `li r0,lbl_eu_80669E50@sda21`)
   therefore stays at hexdiff 100% / objdiff 99.943% (the `@l` fallback is
-  byte-identical; SMT prove times out on the PS kernel). Logged as a stall in
-  `attempts.jsonl` — revisit only via a newer MWCC with `@sda21` support or a
+  byte-identical; SMT prove times out on the PS kernel). Recorded for out-of-band acceptance in
+  `attempts.jsonl` — the revisit path is a newer MWCC with `@sda21` support or a
   linked-DOL prove with the `li` baked.
 - `g3d_transform_ps.inl` / `math_types_ps.inl` are guarded by
   `#if defined(__MWERKS__) && !defined(NONMATCHING)`; the scalar C++ fallbacks
@@ -169,7 +169,7 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 
 ---
 
-## Quick diagnostic: I'm stuck at 97–99.9% — what do I check?
+## Quick diagnostic: plateaued at 97–99.9% — what do I check?
 
 | Symptom | Most likely cause | Fix |
 |---------|-------------------|-----|
@@ -198,7 +198,7 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 | Ghidra `r13` SDA | Misleading decompilation | Set SDA bases in Ghidra |
 | Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594; **__MIXRmtUpdateSettings phase-3**: walk `u16* q = (u16*)((u8*)out + 0x102)` so the folded cur0 store lands at `258(r30)` and the run materialises `addi r3,r30,260` with `sth 0..28(r3)` — 167 structural → 0, FULL_MATCH us-8034f910) |
 | 3-op load-order reg-swaps in a top-level sum (`lwz` order differs, adds identical) | MWCC rotates a top-level sum chain `[s0,s1,s2]` into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`) | Write the source in rotated order: retail loads `[panFrontL, fader, X]` require `fader + X + panFrontL`; sums nested in a larger tree (`(a+b+c)-30`) are NOT rotated (HBMMIXInitChannel) |
-| 0 structural, pure reg-swaps, but `cycle` witness never certifies | **Gate 6 reject-list: any prologue that saves FPRs emits `stfd`+`psq_st` pairs (MWCC always does this for f14–f31 saves), and the register-renaming witness unconditionally rejects `psq_*`** — witness-ineligible no matter how clean the body diff. Also: commutative `add` operand-order swaps break rho (r6 maps to both r6 and r0) and the region-sliced fallback refuses. **Confirmed 2026-08-03: the witness also never applies to any function containing a `bl` call** — 0/11 witness-certified certs in the sidecar contain `bl`; opaque-EABI callee contracts make the terminal-state comparison diverge on callee effects. For ANY call-containing target, the only no-SMT acceptance is FULL_MATCH (byte-identical) | Record stall with `next_change: accept via --smt out-of-band` (SMT is out-of-band per orchestrator). Don't chase regalloc — no source lever flips MWCC's callee-save colors for FPR-saving functions (hbm/seq.c `__HBMSEQInitTracks` 12 swaps, `HBMSEQRunAudioFrame` 16 swaps; `__HBMSEQReadHeader` 1 swap via rho conflict); for bl-containing targets the reg-swap levers are equally pointless unless a FULL_MATCH shape is reachable (e.g. wpad `WPADiExcludeButton` r5↔r6 pointer color: 3 source variants no-op, 17 swaps, stall) |
+| 0 structural, pure reg-swaps, but `cycle` witness never certifies | **Gate 6 reject-list: any prologue that saves FPRs emits `stfd`+`psq_st` pairs (MWCC always does this for f14–f31 saves), and the register-renaming witness unconditionally rejects `psq_*`** — witness-ineligible no matter how clean the body diff. Also: commutative `add` operand-order swaps break rho (r6 maps to both r6 and r0) and the region-sliced fallback refuses. **Confirmed 2026-08-03: the witness also never applies to any function containing a `bl` call** — 0/11 witness-certified certs in the sidecar contain `bl`; opaque-EABI callee contracts make the terminal-state comparison diverge on callee effects. For ANY call-containing target, the only no-SMT acceptance is FULL_MATCH (byte-identical) | Record stall with `next_change: accept via --smt out-of-band` (SMT is out-of-band per orchestrator). Skip further regalloc attempts — no source lever flips MWCC's callee-save colors for FPR-saving functions (hbm/seq.c `__HBMSEQInitTracks` 12 swaps, `HBMSEQRunAudioFrame` 16 swaps; `__HBMSEQReadHeader` 1 swap via rho conflict); for bl-containing targets the reg-swap levers are equally unlikely to pay off unless a FULL_MATCH shape is reachable (e.g. wpad `WPADiExcludeButton` r5↔r6 pointer color: 3 source variants no-op, 17 swaps — recorded for SMT acceptance) |
 
 ## RVL_SDK bte/sdp sdp_db.c — SDP_AddServiceClassIdList FULL_MATCH: "8-per-group" is MWCC ×8 unroll, not source structure (GC/3.0a3.4 `-func_align 4` `-ipa off`)
 
@@ -233,7 +233,7 @@ Key lessons:
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| arg5 (addi r7,sp,8) scheduled before arg1 (mr r3,r30) at 5 p_val-based SDP_AddAttribute sites; string-pointer sites (addi r7,r29,X) and the &spec_id site schedule arg1 first in the SAME function | MWCC 3.0a3.4 hoists the stack-address computation for an arg whose referent was just stored in the block; no source shape reproduces it | Confirmed unreproducible: p_val direct, &p_val[0], comma-operator stores, single-use pointer local (CSE-folded), UINT16+byte-cast, two separate UINT8 locals (breaks layout); GC/3.0a3.4 vs GC/3.0a5.2 identical output; -O4,s destroys the unit (5/9). Accept via out-of-band `--smt` (all callees accepted: strlen, SDP_CreateRecord, SDP_DeleteRecord, SDP_AddAttribute, SDP_AddServiceClassIdList — gate open) |
+| arg5 (addi r7,sp,8) scheduled before arg1 (mr r3,r30) at 5 p_val-based SDP_AddAttribute sites; string-pointer sites (addi r7,r29,X) and the &spec_id site schedule arg1 first in the SAME function | MWCC 3.0a3.4 hoists the stack-address computation for an arg whose referent was just stored in the block; no source shape reproduces it | Confirmed not yet reproduced under the tested forms: p_val direct, &p_val[0], comma-operator stores, single-use pointer local (CSE-folded), UINT16+byte-cast, two separate UINT8 locals (breaks layout); GC/3.0a3.4 vs GC/3.0a5.2 identical output; -O4,s destroys the unit (5/9). Accept via out-of-band `--smt` (all callees accepted: strlen, SDP_CreateRecord, SDP_DeleteRecord, SDP_AddAttribute, SDP_AddServiceClassIdList — gate open) |
 
 ---
 
@@ -318,7 +318,7 @@ configure.py had `-ipa off` on btm_sec.c (inherited from the pre-GC bte family n
 
 **pin_code_request reconstruction keys (all needed together):** (1) `BtmCb *p_cb = &btm_cb;` local for MOST accesses (keeps btm_cb in callee-saved r29 across calls), but `&btm_cb.sec_dev_rec[0]` / `&btm_cb.sec_pin_code_req_bd_addr` and the `btm_cb.security_mode_changed` block use the GLOBAL directly so MWCC re-materializes (lis+addi) like retail instead of folding into the r29 base; (2) count loop written as index-into-array with the count check `if (dev_rec_count >= N)` OUTSIDE the `btm_find_dev == NULL` block (retail's `bne` routes through the count-check `blt` — a branch-hop join); (3) the BOND/reject flow as `if (bond) {...} else if (reject-condition) {...} else {...}` so the bonding exits route through the reject check; (4) `BOOLEAN reject` declared BEFORE `int dev_rec_count` (li r28 before li r30); (5) trace `Handle:%d` arg uses the `handle` param (not `p_dev_rec->hci_handle`).
 
-**btm_sec_l2cap_access_req (us-802eed3c) — 93.8% stall, 5 unreproducible dead-branch artifacts → 100% static under `-ipa file`:** structure fully recovered (prologue r24-r28, inlined find_first_serv byte-identical, p_cur-first find_next_serv with found=r6/count=r5, security_required hoisted before find_next_serv). Retail has (a) a dead `beq skip` after `beq store` in `if (!is_originator || !p_dev_rec->p_cur_service)` and (b) per-unrolled-record `li found,1; b CONT; b JOIN(dead)` in the inlined find_next_serv (4×). Decomp merges both into clean fall-throughs under every source form tried (condition forms, found-first vs p_cur-first, continue on/off, while, int/BOOLEAN found, modern no-flag `p_cur != p_srec` form, operand order). **Resolution (both artifacts ARE reproducible under `-ipa file`):** (b) the per-record dead `b NEXT; b RET` pair comes from the if/else-return shape `if (!found) { if (p_cur == p_srec) found = TRUE; continue; } return (p_srec);` (found-first; the `return` after the if-block emits the dead second branch — same as the btm_acl_encrypt_change 556 pattern); (a) the dead second beq in the p_cur_service block comes from duplicating the first operand: `if (is_originator == FALSE || is_originator == FALSE || p_dev_rec->p_cur_service == NULL)` — the duplicated `is_originator == FALSE` makes MWCC CSE the repeated null-test into one `cmpi` + two `beq`s (dead second branch, MWCC_REFERENCE 201). Also narrowed the `sec_flags` clear to `~BTM_SEC_AUTHORIZED` only (retail `rlwinm r0,r0,0,24,30` = clear 0x01; the full AUTHORIZED|AUTHENTICATED|ENCRYPTED clear emits 24,28). Result: 100.0% objdiff match / 99.98% hexdiff (1 dead-branch reg-swap: retail dead beq targets skip vs decomp store — semantically identical). EQUIVALENT_MATCH still gated by the registry indirect-call gate (bctrl through p_callback — all 145 bte indirect-call acceptances are FULL_MATCH) + callee us-802f0c90 (execute_procedure) not yet accepted; FULL_MATCH blocked by the one dead-branch target. Original Broadcom sources (bluedroid lineage) use the no-flag `if (p_cur != p_serv_rec) return(p_serv_rec);` form — semantically equivalent since p_cur is the first PSM match; the Wii retail's found-flag variant is not publicly available.
+**btm_sec_l2cap_access_req (us-802eed3c) — 93.8% → 100% static under `-ipa file` (5 dead-branch artifacts):** structure fully recovered (prologue r24-r28, inlined find_first_serv byte-identical, p_cur-first find_next_serv with found=r6/count=r5, security_required hoisted before find_next_serv). Retail has (a) a dead `beq skip` after `beq store` in `if (!is_originator || !p_dev_rec->p_cur_service)` and (b) per-unrolled-record `li found,1; b CONT; b JOIN(dead)` in the inlined find_next_serv (4×). Decomp merges both into clean fall-throughs under every source form tried (condition forms, found-first vs p_cur-first, continue on/off, while, int/BOOLEAN found, modern no-flag `p_cur != p_srec` form, operand order). **Resolution (both artifacts ARE reproducible under `-ipa file`):** (b) the per-record dead `b NEXT; b RET` pair comes from the if/else-return shape `if (!found) { if (p_cur == p_srec) found = TRUE; continue; } return (p_srec);` (found-first; the `return` after the if-block emits the dead second branch — same as the btm_acl_encrypt_change 556 pattern); (a) the dead second beq in the p_cur_service block comes from duplicating the first operand: `if (is_originator == FALSE || is_originator == FALSE || p_dev_rec->p_cur_service == NULL)` — the duplicated `is_originator == FALSE` makes MWCC CSE the repeated null-test into one `cmpi` + two `beq`s (dead second branch, MWCC_REFERENCE 201). Also narrowed the `sec_flags` clear to `~BTM_SEC_AUTHORIZED` only (retail `rlwinm r0,r0,0,24,30` = clear 0x01; the full AUTHORIZED|AUTHENTICATED|ENCRYPTED clear emits 24,28). Result: 100.0% objdiff match / 99.98% hexdiff (1 dead-branch reg-swap: retail dead beq targets skip vs decomp store — semantically identical). EQUIVALENT_MATCH still gated by the registry indirect-call gate (bctrl through p_callback — all 145 bte indirect-call acceptances are FULL_MATCH) + callee us-802f0c90 (execute_procedure) not yet accepted; FULL_MATCH blocked by the one dead-branch target. Original Broadcom sources (bluedroid lineage) use the no-flag `if (p_cur != p_serv_rec) return(p_serv_rec);` form — semantically equivalent since p_cur is the first PSM match; the Wii retail's found-flag variant is not publicly available.
 
 Retail `btm_cb` layout facts verified against btm_sec.s (do not trust `btm_int.h`'s
 `tBTM_CB`): `pin_type` 0x20, `cfg.pin_code_len` 0x21, `cfg.pin_code` 0x22 (16B),
@@ -335,7 +335,7 @@ by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
 **btm_find_oldest_dev (us-802e90c8) — two-declaration-order keys to 100%:**
-stuck at 98.6% with 23 pure reg-swaps (0 structural) — `oldest_ts` in r7 vs
+was at 98.6% with 23 pure reg-swaps (0 structural) — `oldest_ts` in r7 vs
 retail's r6, dead loop counter `i` in r6 vs retail's r7, plus the two loop-tail
 increments emitted in swapped order. (1) Declare `u32 oldest_ts;` **before**
 `int i;` — MWCC assigns locals to registers in declaration order, moving
@@ -718,13 +718,13 @@ signed `blt` default check, and the case-1/2 body zeroes p_inqparms->filter_cond
 
 **BTM_MAX_PM_RECORDS split-personality (this fork):** retail sizes `tBTM_PM_MCB` with `BTM_MAX_PM_RECORDS = 1` (`req_mode[RECORDS+1]` = 2 entries → 0x22 struct, mulli 0x22 stride, `pm_reg_db` at 0x554) but every loop/bound in the unit runs **2** iterations/entries — the loops and bounds use `BTM_MAX_PM_RECORDS + 1` (`BTM_SetPowerMode`/`BTM_PmRegister` `>=` checks emit `cmplwi 2`; `btm_pm_get_set_mode`/`BTM_PmRegister`/`btm_pm_proc_mode_change` loops emit `cmpwi 2` / `mtctr 2`). Setting the macro to 2 fixes the loops but breaks the struct (tBTM_PM_MCB → 0x2C, pm_reg_db → 0x57C — every `lbz 0x558` becomes `0x580`). Correct: `#define BTM_MAX_PM_RECORDS 1` + write all bounds as `BTM_MAX_PM_RECORDS + 1` + `pm_reg_db[BTM_MAX_PM_RECORDS + 1]` (extra slot is the SET_ONLY temp per Broadcom). `btm_pm_get_set_mode` / `BTM_SetPowerMode` / `BTM_PmRegister` / `btm_pm_snd_md_req` are byte-identical with this. Also needs `-func_align 4` (retail bte family is packed; default 16-align adds 0x2C padding and blows the 0xC94 split).
 
-`btm_pm_reset` was stuck at 6 pure reg-swaps (retail `li r0,0; li r4,4` vs decomp `li r4,0; li r0,4` — a constant-colour swap that the SMT probe cannot certify: gate 5 fixes r0/r3/r4, and the `bctr` tail-call exit fails the M1 indirect-exit gate, so EQUIVALENT_MATCH is unreachable and only FULL_MATCH can accept). Two compounding root causes, both fixed:
+`btm_pm_reset` was at 6 pure reg-swaps (retail `li r0,0; li r4,4` vs decomp `li r4,0; li r0,4` — a constant-colour swap that the SMT probe cannot certify: gate 5 fixes r0/r3/r4, and the `bctr` tail-call exit fails the M1 indirect-exit gate, so EQUIVALENT_MATCH is out of reach via the witness and only FULL_MATCH can accept). Two compounding root causes, both fixed:
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Constant colours swapped (`0→r4, 4→r0`) regardless of compiler/flag sweep | The constant **first referenced in source** gets the first fresh colour; retail's `btm_pm_reset` colours `4→r4` and `0→r0`, so its IR created the `4` vreg first | Write the `pm_pend_link = MAX_L2CAP_LINKS` (4) store **before** the two `mask = 0` stores — MWCC then emits the retail `li r0,0; li r4,4; stb 0x558; stb 0x564; stb 0x560` byte-for-byte (GC/3.0a5.2 re-schedules the stores; Wii/1.1 does not reorder and keeps the source order)
 | Cast-form `((tBTM_CB_COMPAT*)&btm_cb)->field` accesses never reorder stores and allocate the base differently | `&btm_cb` goes through the SDK extern (wrong layout) so MWCC treats the cast pointer as possibly-aliasing; a same-TU-defined `tBTM_CB_COMPAT btm_cb` reproducer reorders correctly | Declare the retail-layout extern **directly**: `#define btm_cb btm_cb_sdk` before `#include "revolution/BTE/stack/btm/btm_int.h"`, `#undef btm_cb` after, then `extern tBTM_CB_COMPAT btm_cb;` (per-TU overlay pattern already used by btm_main.c/btm_dev.c). Direct member access restores MWCC's independence analysis (same pattern as btm_devctl's sub-object-address fix)
-| Whole unit stuck on Wii/1.1 (default) while the retail bte family is GC/3.0a5.2 | btm_pm.c was the last btm file without `mw_version="GC/3.0a5.2"` (see §7c2 / btm_devctl / btm_inq notes) | `Object(NonMatching, "…btm/btm_pm.c", mw_version="GC/3.0a5.2")` — zero regressions: the two prior FULL_MATCH functions stay 100%, and `btm_pm_compare_modes` / `btm_pm_snd_md_req` / `btm_pm_proc_cmd_status` newly 100% (they were 121/71/2 structural under Wii/1.1)
+| Whole unit was on Wii/1.1 (default) while the retail bte family is GC/3.0a5.2 | btm_pm.c was the last btm file without `mw_version="GC/3.0a5.2"` (see §7c2 / btm_devctl / btm_inq notes) | `Object(NonMatching, "…btm/btm_pm.c", mw_version="GC/3.0a5.2")` — zero regressions: the two prior FULL_MATCH functions stay 100%, and `btm_pm_compare_modes` / `btm_pm_snd_md_req` / `btm_pm_proc_cmd_status` newly 100% (they were 121/71/2 structural under Wii/1.1)
 
 Retail `btm_cb` layout facts for btm_pm.s: `acl_db[4]` 0x34 (0x11C stride, remote_addr +0x08 — same tACL_CONN as btm_acl.c), `pm_mode_db[4]` 0x4CC (0x22 stride with BTM_SSR_INCLUDED off / BTM_MAX_PM_RECORDS 1), `pm_reg_db[2]` 0x554 (8-byte entries: cback, mask, pad×3), `pm_pend_link` 0x564, `pm_pend_id` 0x565, devcb `switch_role_ref_data` 0x624 (tBTM_ROLE_SWITCH_CMPL, 8 bytes), `p_switch_role_cb` 0x62C. `btm_pm_reset`'s callback read `acl_db[4].remote_addr` (index 4 = out of bounds) is a genuine retail quirk — reproduce it with a comment, do not "fix" it.
 
@@ -798,7 +798,7 @@ prologue scheme is **individual `stw` for ≤4 saved regs and `_savegpr_X` for �
 `create_conn` 6 regs use `_savegpr_27/_savegpr_26`; btm_devctl 5+ regs use
 `_savegpr_27`). MWCC `-O4`/`-O4,p` emits exactly this split; `-O4,s` (opt space)
 emits `_savegpr` already at 3 saved regs, which breaks the prologue of every 3–4
-param builder (`inquiry`/`hold_mode`/`park_mode`/`set_host_buf_size` were stuck at
+param builder (`inquiry`/`hold_mode`/`park_mode`/`set_host_buf_size` were at
 ~10% fuzzy under `-O4,s`; under `-O4` they are at the 82–89% scheduling ceiling
 with byte-matching prologues). Tradeoff: `-O4` unrolls the mtctr copy loops
 (`btsnd_hcic_write_cur_iac_lap` goes from HIGH_MATCH 15 mismatches to unrolled
@@ -820,7 +820,7 @@ Now HIGH_MATCH (73.7–90.5% static, sizes exact) with clean high-level C:
 `btsnd_hcic_switch_role`, `btsnd_hcic_delete_stored_key`, `btsnd_hcic_hold_mode`,
 `btsnd_hcic_park_mode`, `btsnd_hcic_set_host_buf_size`. Acceptance still blocked
 by the engine artifact below (cross-unit callee lemmas unavailable; same blocker
-stalled `disconnect`/`add_SCO_conn`/`write_policy_set`/`write_link_super_tout` and
+held up `disconnect`/`add_SCO_conn`/`write_policy_set`/`write_link_super_tout` and
 now fails re-verification of previously-accepted `read_rssi`/`write_pin_type`).
 
 `btsnd_hcic_write_pin_type`, `btsnd_hcic_write_auth_enable`, `btsnd_hcic_write_encr_mode`,
@@ -839,7 +839,7 @@ with the command at p+8: `[opcode-lo, opcode-hi(=OGF<<2), paramlen, params…]`
 |---------|-------|-----|
 | `li r0,0` (constant 0 for `p->offset`) allocated to r0 after the `sth len,2(r3)` store, reusing r0 — while retail hoists `li r6,0` **before** the first store (r0 still live with len). The pre-call opaque-EABI call token then diverges on r6 (retail 0 vs decomp opaque) → `inconclusive_abstraction` (`exit.target` mismatch = LR restored from a stack slot the opaque callee may write, differing per token) | MWCC schedules single-use constants as late as possible; the retail's scheduler hoisted the zero. A constant used **twice** is commoned and hoisted into a distinct register | Unclosable in source: 10+ forms tried (byte pair, stream/pp-chain, locals, masks, arg types). Keep the plain halfword form; the pass/fail split of the SMT probe is per-function allocator luck — 6 sibling builders pass (`change_conn_type`, `set_conn_encrypt`, `read_rmt_clk_offset`, `exit_sniff_mode`, `exit_park_mode`, `get_link_quality`) while `disconnect`/`add_SCO_conn`/`write_policy_set`/`write_link_super_tout` (+ these four) fail with the same `exit.target: 0x01010104 != 0x00000000` artifact. Engine-side fix needed (exclude provably-untouched callee inputs from the opaque token) |
 | SMT persists after registers match | A halfword store at p+2 stores BE bytes `00 04`; naive byte stores `p[2]=4; p[3]=0` reverse them (`04 00`) — the pre-call **memory** diverges, keeping the token unequal | Always store the len as the BE byte pair (high byte at p[2], low byte at p[3]); verify with `check-objects` after any byte-store change |
-| `btsnd_hcic_write_cur_iac_lap` (mtctr/cmpwi/ble/header/bdnz copy loop, param trip) stalls: `inconclusive_unsupported` (instruction limit 2048) | The CTR-affine summarizer needs an in-function dot-form trip def + padding-only mtctr→guard adjacency; a param trip has no def (`_find_trip_def_index` → None) and the signed `ble` guard fails the zero-trip discharge (r4≤0 skips but trip≠0); the 3× lbz/stb copy body also fails the word-copy memory-loop grammar; unrolling is unbounded (r4 unconstrained) | Requires engine-side loop-summary grammar extension (mtctr;cmpwi;ble;header;bdnz with param trip + `max(0,trip)` skip semantics) or a u8-range bound on entry r4; source is otherwise register-matched modulo reg-swaps (83.2% static) |
+| `btsnd_hcic_write_cur_iac_lap` (mtctr/cmpwi/ble/header/bdnz copy loop, param trip) open item: `inconclusive_unsupported` (instruction limit 2048) | The CTR-affine summarizer needs an in-function dot-form trip def + padding-only mtctr→guard adjacency; a param trip has no def (`_find_trip_def_index` → None) and the signed `ble` guard fails the zero-trip discharge (r4≤0 skips but trip≠0); the 3× lbz/stb copy body also fails the word-copy memory-loop grammar; unrolling is unbounded (r4 unconstrained) | Requires engine-side loop-summary grammar extension (mtctr;cmpwi;ble;header;bdnz with param trip + `max(0,trip)` skip semantics) or a u8-range bound on entry r4; source is otherwise register-matched modulo reg-swaps (83.2% static) |
 
 **Compiler-version correction (2026-09): the retail hcicmds unit is `GC/3.0a5.2`, not Wii/1.1.**
 Switching the Object to `mw_version="GC/3.0a5.2"` + `extra_cflags=["-O4", "-func_align 4"]`
@@ -853,7 +853,7 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `btsnd_hcic_write_cur_iac_lap` unrolls ×8 under `-O4` (392 B vs retail 112 B), blowing the unit split budget | `for (i = num_laps; i > 0; i--)` lets MWCC bound the trip count and unroll; `#pragma opt_unroll off` and `-ipa off` do **not** stop it | Write the loop as `while (num_laps--)` (post-decrement of the param, no separate counter) — GC emits the retail's plain mtctr loop (108–112 B). This is the missing source form the earlier note said didn't exist |
-| **Retraction (2026-08-02, verified on GC/3.0a5.2 `-O4` + `-func_align 4`):** the `while (num_laps--)` fix above does **not** reproduce — it emits `b; body; rlwinm.; subi; bne` (bottom-test, 23 mismatches / 12 structural, 112 B), not `mtctr`. `for (i = num_laps; i > 0; i--)` unrolls ×8 (392 B) and `for (i = num_laps; i != 0; i--)` ×4 + `andi.` remainder (240 B) under `-O4`. The retail plain `mtctr; cmpwi; ble; body; bdnz` requires `-O4,s` codegen, which cannot be applied per-function (unit flag is locked to `-O4` for the 3–4-reg individual-`stw` prologues; `btsnd_hcic_write_stored_key` gets the same mtctr shape only because its 22 B/iter body is too big to unroll). Static 83.2% (71.4% fuzzy) is the `-O4` ceiling; SMT stays `inconclusive_*` (engine `skip_guard.find_mtctr_with_guard` still rejects the `cmpwi` adjacency and param trips have no in-function def — unchanged since 2026-08-01). `btsnd_hcic_write_pin_type` / `write_auth_enable` are 100% static (`FULL_MATCH`, `semantic-certified`), their known SMT blocker is the opaque-callee volatile-register token, irrelevant at FULL_MATCH |
+| **Retraction (2026-08-02, verified on GC/3.0a5.2 `-O4` + `-func_align 4`):** the `while (num_laps--)` fix above does **not** reproduce — it emits `b; body; rlwinm.; subi; bne` (bottom-test, 23 mismatches / 12 structural, 112 B), not `mtctr`. `for (i = num_laps; i > 0; i--)` unrolls ×8 (392 B) and `for (i = num_laps; i != 0; i--)` ×4 + `andi.` remainder (240 B) under `-O4`. The retail plain `mtctr; cmpwi; ble; body; bdnz` requires `-O4,s` codegen, which cannot be applied per-function (unit flag is locked to `-O4` for the 3–4-reg individual-`stw` prologues; `btsnd_hcic_write_stored_key` gets the same mtctr shape only because its 22 B/iter body is too big to unroll). Static 83.2% (71.4% fuzzy) is the `-O4` limit; SMT stays `inconclusive_*` (engine `skip_guard.find_mtctr_with_guard` still rejects the `cmpwi` adjacency and param trips have no in-function def — unchanged since 2026-08-01). `btsnd_hcic_write_pin_type` / `write_auth_enable` are 100% static (`FULL_MATCH`, `semantic-certified`), their known SMT blocker is the opaque-callee volatile-register token, irrelevant at FULL_MATCH |
 | **Correction (2027-01): the `mtctr` loop IS reachable under `-O4` — write the copy as a counted `for` whose body contains an inner constant-trip loop** (the `btsnd_hcic_write_stored_key` pattern): `for (i = 0; i < num_laps; i++) { for (j = 0; j < 3; j++) pp[j] = lap_array[2 - j]; pp += 3; lap_array += 3; }`. The inner `for (j<3)` is unrolled to the 3× lbz/stb body, and the outer loop is then un-unrollable (contains a loop) so GC emits the retail's plain `mtspr r4; cmpi; beq; body; bdnz` — the loop is byte-identical (offsets 0x3C–0x68). The `while (num_laps--)` / explicit-body / do-while-guard forms still fail (bottom-test GPR; ×8 unroll 392 B; +4 B size over). Residual after the loop fix: **4 structural scheduling swaps in the header** (`li r7,12`↔`sth r8,4(r3)`, `sth r10,2(r3)`↔`li r6,12`, `addi r6,r3,12`↔`sth r9,2(r3)`, `sth r9,4(r3)`↔`addi r9,r3,12`): retail defers the p+4=0 store to +0x28 (after the pp addi) while decomp fires it at +0x14, and li12/pp shift. 12+ source forms tried (store reorder, pp positions, plen local, pp-stream, shared loop-counter zero, p+4-last). `p+4`-last-in-source gives 2 structural but places the store after p[11] (retail wants it before p[8]); every computed-value header store in this unit (cur_iac_lap, link_key_req_reply, rmt_name_req) hits this same hoist ceiling — the all-literal-header builders (inquiry, per_inq_mode, change_name, write_link_super_tout) are 0-structural. Static 85.8% (fuzzy 99.7%) at 0x70/0x70; SMT acceptance still gated by the param-trip mtctr loop summarizer |
 | `btsnd_hcic_set_event_filter` +4 B (u8 `count` re-masked with `rlwinm` at both the ×8 guard and the remainder loop; retail masks once at the `count = filt_cond - 6` assignment) | Indexed source read `*dst++ = src[i]` keeps the count register live across the loop, so the u8 truncation is re-applied per use; `int count` removes the assignment mask too (semantics differ for filt_cond<6) | Write the copy as `for (i = 0; i < count; i++) *dst++ = *src++;` with `unsigned char count` — pointer-walk form drops both re-masks, exact retail size (444 B) |
 | `btsnd_hcic_pin_code_req_reply` / `btsnd_hcic_set_afh_channels` reloc name drift (`@502` vs retail `lbl_8050E260`, same addend) for the `UINT8 channels[10] = {0xFF,…}` initializer blob | MWCC emits the anonymous initializer blob under a generated TU-local name; the retail symbol map named it `lbl_8050E260` by address | Accept at FULL_MATCH: the `functionRelocDiffs=data_value` config (coop.json) treats addend-equal relocs as matched; do **not** replace the initializer with a named-static loop copy (that form regresses to 27 mismatches) |
@@ -886,9 +886,9 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `WPADiHIDParser` (us-80374c00): decomp fused the three retail `__rvl_p_wpadcb[port]` loads into one (0x120 vs retail 0x128); after splitting them via inline global reads, only a 3-cycle register permutation remained (result/enable/cb0: r27/r28/r29 vs r29/r27/r28) | C locale declaration order drives MWCC's callee-saved allocation order: with locals declared `cb; status; result` (+`enable` in the if) the allocator gave cb0→r25 (lowest) and shifted everything; the retail wants status→r24, port→r25, p_rpt→r26, result→r27, enable→r28, cb0→r29 | Declare `WPADStatusEx* status; WPADCB* cb; BOOL enable; s32 result;` (status first, then cb, then enable, then result; assign `enable = OSDisableInterrupts();` inside the if) → **100.0% byte-identical, FULL_MATCH, semantic-certified on `cycle` with no `--smt`** despite the indirect dispatch array call. Also: keep the pre-if `cb` load for the post-call `handshakeFinished` read (separate local, do NOT reassign it), and read `status`/`rxBufIndex` toggle through inline `__rvl_p_wpadcb[port]` so MWCC emits the retail's three loads |
-| `__a1_33_data_type` (us-80376720): retail re-materializes the `__rvl_p_wpadcb` base+index (`lis/clrlslwi/addi r10/r11` + one `lwzx`) for the accel-calibration reads; decomp CSEs the base/index across the nearempty store and reuses the prologue registers → 3 instructions short (0x140 vs 0x14C) | MWCC keeps the array base/index values live from prologue to the reload (same class as the `__a1_20_status_report` init-block reload stall — CSE not controllable from C). 8 source variants tried (cb2 local, idx copy, `&arr[chan]`, element-pointer local, `__restrict`, inlined static helper, calib locals, decl order) all CSE | No C fix found. Semantically equivalent; record stall and accept via `--smt` out-of-band. Do NOT use inline global reads per-accel: the `sth status->accX/Y/Z` between them force 3 reloads (worse) |
+| `__a1_33_data_type` (us-80376720): retail re-materializes the `__rvl_p_wpadcb` base+index (`lis/clrlslwi/addi r10/r11` + one `lwzx`) for the accel-calibration reads; decomp CSEs the base/index across the nearempty store and reuses the prologue registers → 3 instructions short (0x140 vs 0x14C) | MWCC keeps the array base/index values live from prologue to the reload (same class as the `__a1_20_status_report` init-block reload stall — CSE not controllable from C). 8 source variants tried (cb2 local, idx copy, `&arr[chan]`, element-pointer local, `__restrict`, inlined static helper, calib locals, decl order) all CSE | No source fix found yet. Semantically equivalent; record for out-of-band SMT acceptance (`--smt`). Do NOT use inline global reads per-accel: the `sth status->accX/Y/Z` between them force 3 reloads (worse) |
 | `__a1_3d_data_type` (us-803772b0): retail keeps the `status` param in callee-saved r30 (`mr r30,r5`) in addition to the sp+8 slot for `&status`; decomp spills status to memory-only → 0x110 vs retail 0x114, plus reloads at the dev store and final check | When `&status` is passed to a helper, MWCC's cost model may decide the address-taken param's register copy is not worth keeping; sibling `__a1_34` (no `&status`) allocates correctly, while `__a1_3d/3e/3f` (with `&status`) all spill in decomp. Variants tried: status alias, nested-if final check, dev-store-first reorder (jumps to 52.2%/size-match but wrong store order), address local | **Fixed with a `st` alias local**: declare `WPADStatusEx* st = status;` and pass `&st` to `__parse_vs_data` (same pattern as siblings `__a1_3e/3f`). The alias gives MWCC a second live pointer that both keeps the value in callee-saved r30 AND homes it at sp+8 for `&st` → **100.0% byte-identical, 12/12 relocs matched, FULL_MATCH, semantic-certified on `cycle` with no `--smt`** (us-803772b0). The address-taken param itself still spills; the alias forces the register copy |
-| `__a1_3f_data_type` (us-80377590): 3 structural classes — (1) accZ merge: retail emits `rlwimi r0,r8,31,26,27` (data[2] part folded into the data[1]-derived r0), decomp emits `rlwinm+or+extsh` (+2 insns); (2) accZ old-value load (`lha r9,6(r29)`) hoisted into the accY block before the accY store, forcing accY0g from r9→r10; (3) cb/status callee-saved colors swapped (r28/r29). Decomp is 0x1BC vs retail 0x1B0 | The rlwimi direction is MWCC-internal: restructures that DO trigger rlwimi (`u16 accz` local with `|=`, 3e-style `s16 accz` local) flip the merge direction (`rlwimi r0,r9,2,28,29`, srawi-based) and cascade a regression into accY (`srawi r8,r8,6` dead re-computation, +1 insn) — net worse. Scheduling hoist not controllable from C | No C fix found; record stall and accept via `--smt` out-of-band (blocked until callee `__parse_dpdex_data` us-80375980 accepted). Do NOT repeat: `u16 accz`/`s16 accz` locals, reversed OR operand order, inline pointer form — all regress accY to srawi |
+| `__a1_3f_data_type` (us-80377590): 3 structural classes — (1) accZ merge: retail emits `rlwimi r0,r8,31,26,27` (data[2] part folded into the data[1]-derived r0), decomp emits `rlwinm+or+extsh` (+2 insns); (2) accZ old-value load (`lha r9,6(r29)`) hoisted into the accY block before the accY store, forcing accY0g from r9→r10; (3) cb/status callee-saved colors swapped (r28/r29). Decomp is 0x1BC vs retail 0x1B0 | The rlwimi direction is MWCC-internal: restructures that DO trigger rlwimi (`u16 accz` local with `|=`, 3e-style `s16 accz` local) flip the merge direction (`rlwimi r0,r9,2,28,29`, srawi-based) and cascade a regression into accY (`srawi r8,r8,6` dead re-computation, +1 insn) — net worse. Scheduling hoist not controllable from C | No source fix found yet; record for out-of-band SMT acceptance (`--smt`; pending callee `__parse_dpdex_data` us-80375980 acceptance). Do NOT repeat: `u16 accz`/`s16 accz` locals, reversed OR operand order, inline pointer form — all regress accY to srawi |
 | `__wpadGetExtType` (us-80374610): retail lowers `if ((v>=1&&v<=4) || (v>=0x11&&v<=0x12)) A else B` to a **materialized bool diamond** (`ble li1; bgt li0; li1; b; li0; cmpwi; beq`) with a SINGLE A body; plain `||` / if/else-if sources make MWCC emit direct branch chains (two duplicated A bodies when written as else-if, one body + direct jumps when `||`) | MWCC materializes the boolean VALUE only when both 0 and 1 must be produced at the test point. `x = (A||B)` reuses a provably-0 register already set earlier in the block (e.g. the `li r3,0` for an adjacent `=0` store) and emits only `li 1; cmpwi; beq` (2 insns short, wrong alloc); ternary chains produce branchless boolean-algebra garbage | Write the bool as an **explicit if/else assignment**: `u8 bKey; if (cond) { bKey = 1; } else { bKey = 0; } if (bKey) { A } else { B }` → MWCC emits retail's exact `li 1; b; li 0; cmpwi; beq` diamond with one shared A body (0 structural, exact size). Also reusable in this function: retail's "not found" sentinel for the FUTURE/NOT_SUPPORTED check is **0xFB (`WPAD_DEV_FUTURE`)**, not the header's `WPAD_DEV_NOT_FOUND` (0xFD) — the devType+5 fold only covers {0xFB,0xFC}; `(u8)(devMode+0xFF)>2` (addi 0xff) vs `(u8)(devMode-1)>2` (subi -1) — retail encodes the add-form; `dbgBase`/`extCmdQueue` pointer locals hoist the string base + queue addr into callee-saved regs; pExtId[0] if-chain compiles to retail's beq-dispatch only as a `switch` |
 
 ### RVL_SDK hbm/HBMController.cpp (US, Wii/1.1 `-O4,p`) — playSound float-cast reg-swap
@@ -940,13 +940,13 @@ Went 92% HIGH_MATCH (110 structural) → 100% byte-identical via four source-sha
 
 OS.c went 18/20 → 20/20 byte-identical. The two residuals (ClearArena/ClearMEM2Arena, both 0 structural, 10 reg-swap) were the inlined static MemClear flush-pointer computation: retail computes `size - 0x40000` with an `addis` whose destination is coalesced into the final flush register (`addis r30,r31,-4; add r30,r3,r30`), while the decomp spilled the intermediate through `r0` (`addis r0,r31,-4; add r30,r3,r0`) at all 5 inline sites. The parenthesized form `(u8*)mem + (size - 0x40000)` forces a separate subexpression web that MWCC colors to the `r0` scratch; the left-associative form `(u8*)mem + size - 0x40000` lets the allocator coalesce the running address into the destination register, reproducing retail byte-for-byte. Ternary guard kept as-is (`(0x40000 < size) ? ... : mem`). Split PASS 0x1540 exact (0 spare); the other 18 functions (incl. OSInit/OSExceptionInit) were already 100%, confirming the unit is Wii/1.1 — no compiler-version change needed.
 
-### RVL_SDK os/__ppc_eabi_init.c — `__init_user` tail-call stall: per-function optimization-level conflict (Wii/1.1)
+### RVL_SDK os/__ppc_eabi_init.c — `__init_user` tail-call open item: per-function optimization-level conflict (Wii/1.1)
 
-`__init_user` (0x20 retail) is a full-frame `bl __init_cpp` trampoline; under `-O4,p` MWCC tail-call-folds it to a bare `b` (0x4). Verified by scratch probe: global `-O1`/`-O0`/`-Os`/`-O1,p` all reproduce the 0x20 frame, while `-O2` and above tail-call. BUT `__init_cpp` (0x48) and `exit` (0x4c) only match at `-O4,p` — at `-O1` their loop scheduling/register-coloring diverge (retail `__init_cpp` == `-O4,p` bytes exactly). So the unit needs MIXED per-function optimization: `__init_user` at `-O1`-ish, siblings at `-O4,p`. Ruled out for bridging this: `#pragma optimization_level 0/1/2/3/4` (with and without `push`/`pop`), `global_optimizer off`, `peephole off`, `scheduling off`, `schedule off`, `opt_propagation off`, `optimize_for_size on`, and `dont_inline` combos — none suppress the tail-call at `-O4,p`, and `-O1` base + `#pragma optimization_level 4` on the siblings reproduces `__init_user` but regresses `__init_cpp`/`exit` (lis r3/addi r31 vs retail lis r31; epilogue lwz order). Root cause: the tail-call fold is keyed to the global `-opt level` (>=2), and the per-function pragma does not re-enable the `,p` scheduling/peephole bundle that `-O4` implies. This is a genuine per-function-optimization-level conflict with no high-level C or pragma bridge found; needs a tooling approach (per-object split or a compiler wrapper) to resolve.
+`__init_user` (0x20 retail) is a full-frame `bl __init_cpp` trampoline; under `-O4,p` MWCC tail-call-folds it to a bare `b` (0x4). Verified by scratch probe: global `-O1`/`-O0`/`-Os`/`-O1,p` all reproduce the 0x20 frame, while `-O2` and above tail-call. BUT `__init_cpp` (0x48) and `exit` (0x4c) only match at `-O4,p` — at `-O1` their loop scheduling/register-coloring diverge (retail `__init_cpp` == `-O4,p` bytes exactly). So the unit needs MIXED per-function optimization: `__init_user` at `-O1`-ish, siblings at `-O4,p`. Ruled out for bridging this: `#pragma optimization_level 0/1/2/3/4` (with and without `push`/`pop`), `global_optimizer off`, `peephole off`, `scheduling off`, `schedule off`, `opt_propagation off`, `optimize_for_size on`, and `dont_inline` combos — none suppress the tail-call at `-O4,p`, and `-O1` base + `#pragma optimization_level 4` on the siblings reproduces `__init_user` but regresses `__init_cpp`/`exit` (lis r3/addi r31 vs retail lis r31; epilogue lwz order). Root cause: the tail-call fold is keyed to the global `-opt level` (>=2), and the per-function pragma does not re-enable the `,p` scheduling/peephole bundle that `-O4` implies. This is a genuine per-function-optimization-level conflict with no high-level C or pragma bridge found yet; the remaining route is a tooling approach (per-object split or a compiler wrapper).
 
 ### RVL_SDK os/OSReset.c — `strBase` base-copy idiom soft-cap: retail `addi rD,base,0` vs MWCC `mr`/`or` (Wii/1.1 `-O4,p`)
 
-`__OSReturnToMenuForError` (0xa4, only 2 structural) and `__OSReturnToMenu` (0x288) both stall on the same codegen idiom. Retail keeps the pooled-string base (&OSReset_file, retail `lbl_80552AF0`) in a callee-saved register and materializes EVERY string use as `addi rX,base,off` — including the offset-0 file argument (`addi r3,r31,0`). MWCC instead copies the offset-0 case with `mr r3,r31` (=`or r3,r31,r31`). Exhaustively ruled out (scratch probes, all emit `mr`): passing the arg as `strBase`, `&strBase[0]`, `strBase+0`, `strBase+0x0`, a `char (*)[12]` cast, a const-cast, and struct-member access (`p->file` at offset 0); also every available compiler version (Wii/1.0/1.0a/1.1/1.3, GC/3.0a3/3.0a3.4/3.0a5.2). When the base is freshly materialized into the arg register (no callee-saved reuse) MWCC DOES emit `addi r3,r3,0` — so the idiom only appears when the base must be preserved across calls. `OSRestart` sidesteps it by passing two DISTINCT objects (`OSPanic(OSReset_file, N, OSReset_hotResetPool)` = two lis pairs, no base+offset), which matches retail for that function; the two failing functions genuinely use the single-base+offset scheme. `__OSReturnToMenu` additionally has a r30/r31 register-color swap (strBase vs disc/ticket webs) that decl-order/union/CSE-hoist experiments did not flip (see in-file comment). Treat both as soft-caps unless a tooling-level copy-idiom control appears.
+`__OSReturnToMenuForError` (0xa4, only 2 structural) and `__OSReturnToMenu` (0x288) both hit the same codegen idiom. Retail keeps the pooled-string base (&OSReset_file, retail `lbl_80552AF0`) in a callee-saved register and materializes EVERY string use as `addi rX,base,off` — including the offset-0 file argument (`addi r3,r31,0`). MWCC instead copies the offset-0 case with `mr r3,r31` (=`or r3,r31,r31`). Exhaustively ruled out (scratch probes, all emit `mr`): passing the arg as `strBase`, `&strBase[0]`, `strBase+0`, `strBase+0x0`, a `char (*)[12]` cast, a const-cast, and struct-member access (`p->file` at offset 0); also every available compiler version (Wii/1.0/1.0a/1.1/1.3, GC/3.0a3/3.0a3.4/3.0a5.2). When the base is freshly materialized into the arg register (no callee-saved reuse) MWCC DOES emit `addi r3,r3,0` — so the idiom only appears when the base must be preserved across calls. `OSRestart` sidesteps it by passing two DISTINCT objects (`OSPanic(OSReset_file, N, OSReset_hotResetPool)` = two lis pairs, no base+offset), which matches retail for that function; the two remaining functions genuinely use the single-base+offset scheme. `__OSReturnToMenu` additionally has a r30/r31 register-color swap (strBase vs disc/ticket webs) that decl-order/union/CSE-hoist experiments did not flip (see in-file comment). Treat both as fixed codegen behavior unless a tooling-level copy-idiom control appears.
 
 
 ### RVL_SDK hbm/HBMBase.cpp — HomeButton retail layout vs ogws donor header (Wii/1.1 `-O4,p`)
@@ -1426,7 +1426,7 @@ Retail `lwz r3, offset(r3)` then `cmpwi r3, 0`; decomp generates `lwz r0, offset
 
 MWCC prefers r0 for the loaded field value when r3 holds the `this`/first parameter, even when r3 is not used after the load. The function is a leaf (no further use of r3). Decl-order, `u32 self` cast, explicit `self = val` reassignment, `goto`, and `if`/`else` restructures all failed to flip the allocation. The reg-swap is purely Chaitin and does not affect EQUIVALENT_MATCH when no callee dependency exists. Documented at 98.3% CODE_MATCH (2 reg-swap mismatches out of 6 instructions). Accept as soft-cap; do not use `asm void` or `register` bindings.
 
-**Stall packet (cursor-gki-uicf, 2026-07-24):** peak **99.5625%** CODE_MATCH, size PASS `0x3C0`, equiv `inconclusive_unvalidated_callee` (9 callees). Residual still the 8-word Chaitin pair above. Fresh RA shapes ruled out: (1) `u16 codePersist` reused for `ret2` — flat 99.56%; (2) `u8 code` + `u32 diff` — **98.58%** (`li r25,0xc8` steals a1 home); (3) `codePersist=0xc8` then conditional overwrite — **98.58%** (`li r27` early). Prior ruled out: decl-order, goto beq-skip, inline helper, masked temp, `u32`+ret2. Next experiments: decomp.me scratch for li→r0 anti-coalesce; certify callees for EQUIVALENT route; avoid narrowing `code` onto NV early. Term measures ~99.8% on current toolchain (registry FULL_MATCH stale at HEAD too) — do not chase via this function's locals.
+**Open-item packet (cursor-gki-uicf, 2026-07-24):** peak **99.5625%** CODE_MATCH, size PASS `0x3C0`, equiv `inconclusive_unvalidated_callee` (9 callees). Residual still the 8-word Chaitin pair above. Fresh RA shapes ruled out: (1) `u16 codePersist` reused for `ret2` — flat 99.56%; (2) `u8 code` + `u32 diff` — **98.58%** (`li r25,0xc8` steals a1 home); (3) `codePersist=0xc8` then conditional overwrite — **98.58%** (`li r27` early). Prior ruled out: decl-order, goto beq-skip, inline helper, masked temp, `u32`+ret2. Next experiments: decomp.me scratch for li→r0 anti-coalesce; certify callees for EQUIVALENT route; avoid narrowing `code` onto NV early. Term measures ~99.8% on current toolchain (registry FULL_MATCH stale at HEAD too) — down-prioritise this function's locals in favour of the next experiments listed above.
 
 ## CUICfManager::Init — packed slot templates (US)
 
@@ -1746,13 +1746,13 @@ if (lbl_eu_806659D4 == -12) {
 
 Combined with (1) this took `func_804F4D90` (0x2F8 state machine with 12-case jump table) from 173 mismatches/744 bytes to **0 mismatches/760 bytes exact**.
 
-### 4. `b .+4` sinit ceiling (unreproducible)
+### 4. `b .+4` sinit ceiling (not yet reproduced)
 
 All five `sinit_804DB4xx/804DB2xx/804DB0xx/804F51xx` functions store one vtable pointer. Retail shape: `li r3, dest@sda21; b .+4; lis r4, src@ha; addi r4, r4, src@l; stw r4, 0(r3); blr` (24 bytes). The `b .+4` is a scheduler barrier and the store is deliberately unfolded through r3.
 
-MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no source form emits the branch. Ruled out: return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, `-O4,p`/`-O4,s`, and MWCC Wii versions 1.0/1.0a/1.1/1.3/1.5/1.6/1.7. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL).
+MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no tested source form emits the branch. Ruled out: return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, `-O4,p`/`-O4,s`, and MWCC Wii versions 1.0/1.0a/1.1/1.3/1.5/1.6/1.7. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL).
 
-These 5 sinits are parked at COMPILES; fuzzy 0/6 < 50% excludes EQUIVALENT_MATCH. The `.ctors`-registered vtable-pointer sinits likely came from a different codegen path (hand-written `.s` or toolchain emission). If a policy exception is ever granted, a single `asm { }` for the `b .+4` plus the unfolded-store source would close them.
+These 5 sinits are deferred at COMPILES; fuzzy 0/6 < 50% excludes EQUIVALENT_MATCH. The `.ctors`-registered vtable-pointer sinits likely came from a different codegen path (hand-written `.s` or toolchain emission). If a policy exception is ever granted, a single `asm { }` for the `b .+4` plus the unfolded-store source would close them.
 
 ### 5. MPF billboard list-loop shape (US)
 
@@ -2161,7 +2161,7 @@ memset(self, 0, 0x3c);
 
 `volatile`, expression nesting `((u32*)self)[0] = 0`, and data dependencies via `memset(self, *(u32*)self, …)` all fail to flip the schedule. Accept as a soft-cap; equivalence proves EQUIVALENT when no callee-register dependency exists.
 
-Confirmed on `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c` (`SFD_Start`, `SFD_TermSupply`): the same float appears for a **return-constant** `li r31,0` (result=0) vs a following `stw r0, 0x50(r30)` store. Tried 8+ shapes (statement order both ways, goto-out structure, declaration order, `-O3`/`-O4,s`/`-ipa file`, `#pragma scheduling off` — fixes the float but regresses prologue address-const hoisting, `#pragma optimization_level 3`, val locals, `result+1` dependency — all fail). Both functions stalled at 95–97% CODE_MATCH; EQUIVALENT_MATCH additionally blocked by the `has_indirect_calls` gate (vtable trace calls via `bctrl`), so only FULL_MATCH (100%) can accept — unreachable for this soft-cap. Do not spend further attempts here without a tooling change.
+Confirmed on `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c` (`SFD_Start`, `SFD_TermSupply`): the same float appears for a **return-constant** `li r31,0` (result=0) vs a following `stw r0, 0x50(r30)` store. Tried 8+ shapes (statement order both ways, goto-out structure, declaration order, `-O3`/`-O4,s`/`-ipa file`, `#pragma scheduling off` — fixes the float but regresses prologue address-const hoisting, `#pragma optimization_level 3`, val locals, `result+1` dependency — all fail). Both functions were at 95–97% CODE_MATCH; EQUIVALENT_MATCH additionally blocked by the `has_indirect_calls` gate (vtable trace calls via `bctrl`), so only FULL_MATCH (100%) can accept — out of reach via byte-identity for now (soft-cap). Source-level attempts here have plateaued; revisit after a tooling/engine change.
 
 **7c2. Unit compiler mismatch is the real fix for many 7c floats (RVL_SDK bte → GC/3.0a5.2):** before treating a `li`-vs-`lis` / `mr`-vs-`stb` schedule float as an irreducible soft-cap, sweep the **other MWCC family** for the whole unit. `libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c` was configured `Wii/1.1` (mwcc_43_151) but the retail bte was compiled with **GC/3.0a5.2 (mwcc_41_60831)**: every Wii/1.x and GC 1.x-2.x build hoists `lis r3, bta_dm_cb@ha` above the mask-store `li r0,1` (rssi/link_quality/new_link_key cback dispatch), while GC/3.0a3/3.0a5/3.0a5.2 emits the retail order `li r0,1; lis r3; stb` byte-for-byte. Per-object fix: `Object(NonMatching, "…bta_dm_act.c", mw_version="GC/3.0a5.2")`. Verified zero regressions: 29/56 functions at 100% under GC vs 24 under Wii/1.1 (all previously-accepted stay 100%; `bta_dm_search_start`/`bta_dm_send_hci_reset` newly 100%). Quick probe recipe: compile the minimal reproducer (`bdcpy` + byte-store + `lis`-based indirect call) with each `build/compilers/*/mwcceppc.exe` and diff the `bl`-follow sequence; also sweep `-O3/-O4,p/-O4,s` and `-ipa file` on/off. Residual soft-cap that no compiler version fixes: `bta_dm_compress_cback`'s hoisted `mr r7,r31` (p_srvc copy for trace-log p3 base, 17+ source shapes tried) — semantically trivial, provable by SMT once the LogMsg callee chain (us-802e0830) is accepted.
 
@@ -2772,7 +2772,7 @@ The buffer-param builders hoist **all** `li`s before the first store.
   `s_currentDir`, shutdown info, `s_shared2Prefix[12]`, `s_nandStringPool[0x94]`.
   Convert loads `char* strBase = __NANDVersion` first and formats with
   `strBase + 0xC8/0xDC/0x110` so relocs target `__NANDVersion` **size 96**.
-  Bare string literals leave a `...data.0` reloc with size 0 → stuck at
+  Bare string literals leave a `...data.0` reloc with size 0 → caps at
   ~99.97% despite identical opcodes. `/shared2` must be a 12-byte array
   (reloc size 12); `/shared2/` lives at the start of the 0x94 pool.
   `nandConvertPath`'s `"%s/%s"` must be an 8-byte `.sdata` object
@@ -2909,7 +2909,7 @@ The buffer-param builders hoist **all** `li`s before the first store.
 - **`wkRemoveChild` (FULL_MATCH 0x48):** Do **not** call `reslist::remove` (walks all matches).
   Retail unlinks the **first** match only. Emit retail loop with **`goto advance` /
   `check:`** (advance-at-top, head compare, then item compare) — a plain
-  `while (curr != head) { if (item==) break; curr=next; }` stalls ~98%.
+  `while (curr != head) { if (item==) break; curr=next; }` tops out at ~98%.
 - **`getWorkThread(const char*)`:** Null-check **`this`** (not `name`);
   `strcmp((const char*)&mName, name)` (FixStr `mString` is first); `#pragma dont_inline on`
   to stop recursive IPA unroll (otherwise ~0x16C vs retail 0x9C). Residual: `cmpwi` vs
@@ -2992,7 +2992,7 @@ The buffer-param builders hoist **all** `li`s before the first store.
 
 - **`AllocFromHead_` / `AllocFromTail_`:** MKW-style loop locals (`found`, `foundSize`, `foundMem`, `bAllocFirst`) with `if (!found) return NULL` beats ternary tail-call for MWCC (head/tail both reached **FULL_MATCH**).
 - **`AllocUsedBlockFromFreeBlock_`:** Petari `MemRegion` + `RemoveMBlock_` / `InitFreeMBlock_` / `InsertMBlock_`. Retail skips left/right free fragments when `(allocDir==0|1) && !useMarginOfAlign` in addition to the `sizeof(MEMiExpHeapMBlock)+4` threshold (`MEMiExpHeapHead.useMarginOfAlign` at `0x12`). Do **not** cast the threshold to `(s32)` — that forces `cmpwi`; bare `sizeof(...) + 4` (unsigned) yields retail `cmplwi` (last ~0.9%).
-- **`RecycleRegion_`:** Petari shape is required: `MemRegion freeRgn = *region` (stack copy), compare merges against the **original** `region` pointer, mutate `freeRgn`, return `BOOL`, then `InsertMBlock_(..., InitFreeMBlock_(&freeRgn), ...)`. Register-only extents (no stack copy) stall ~79% and shrink `.text` by `0x20`.
+- **`RecycleRegion_`:** Petari shape is required: `MemRegion freeRgn = *region` (stack copy), compare merges against the **original** `region` pointer, mutate `freeRgn`, return `BOOL`, then `InsertMBlock_(..., InitFreeMBlock_(&freeRgn), ...)`. Register-only extents (no stack copy) top out at ~79% and shrink `.text` by `0x20`.
 - **`MEMFreeToExpHeap`:** Petari order — `LockHeap` → `GetRegionOfMBlock_` → `RemoveMBlock_` (used list) → `RecycleRegion_` → `UnlockHeap`.
 - **Avoid:** `__cntlzw`/`nor` alignment-mask rewrite for head/tail search — large regression vs `ROUND_UP_PTR`/`ROUND_DOWN_PTR` loops.
 
@@ -3022,7 +3022,7 @@ The buffer-param builders hoist **all** `li`s before the first store.
 - **BP immediates:** `(GX_BP_REG_DRAWDONE << 24) | 2` and `token | (GX_BP_REG_PETOKENINT << 24)` yield retail `lis`/`addi`/`oris`. `GX_BP_SET_OPCODE` from 0 forces extra `li`/`rlwimi`. For the second draw-sync write, `GX_BITSET(reg, 16, 16, token)` then `GX_BP_SET_OPCODE(..., PETOKEN)`.
 - **`GXPokeAlphaRead`:** `GX_BITSET` for AFMT (bits 30–31) + ZFMT (bit 29) — bare `|= mode & 3` drops the leading `li r0,0` / `rlwimi` and shrinks by 4.
 - **`GXPokeBlendMode`:** still set opcode/`RID` `0x41` via `GX_BP_SET_OPCODE` before the PE halfword store (matches retail even though `sth` only writes low 16).
-- **IPA for AbortFrame / DrawDone:** write `GXAbortFrame` as `__GXAbort(); ...; GXFlush();` and `GXDrawDone` as `GXSetDrawDone();` + `static inline GXWaitDrawDone()`. Manual duplication of the callee body stalls at ~99.3–99.5% (wrong Chaitin colors); `-ipa file` inlines into the caller and matches retail RA. Do **not** emit a global `GXWaitDrawDone` symbol.
+- **IPA for AbortFrame / DrawDone:** write `GXAbortFrame` as `__GXAbort(); ...; GXFlush();` and `GXDrawDone` as `GXSetDrawDone();` + `static inline GXWaitDrawDone()`. Manual duplication of the callee body tops out at ~99.3–99.5% (wrong Chaitin colors); `-ipa file` inlines into the caller and matches retail RA. Do **not** emit a global `GXWaitDrawDone` symbol.
 
 ---
 
@@ -3275,7 +3275,7 @@ Additional near-miss patterns:
   ~99.7%); `u32 reg` on the BP path did not move InterruptHandler.
 
 - **`GXSetTexCoordCylWrap`**: retail `and.; beqlr` flushes BP when
-  `(tcsManEnab & (1<<coord)) != 0`. A negated test emits `bnelr` and stuck at
+  `(tcsManEnab & (1<<coord)) != 0`. A negated test emits `bnelr` and tops out at
   99.8% — invert to match ScaleManually-style “flush when enabled”.
 
 ## GXFrameBuf — copy/scale targets (US) — FULL_MATCH + EQUIVALENT_MATCH patterns
@@ -3506,7 +3506,7 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
      call — place `va_start(ap, fmt)` after the `memset` statement in source
      (semantically valid; matches the retail layout and frame size). Combined
      with Wii/1.1 this is byte-identical (`SVM_CallErr` FULL_MATCH).
-- **Known unreproducible (do not burn time):** the retail loads callback-pair
+- **Known unsolved under tested forms (down-prioritised; revisit after a tooling change):** the retail loads callback-pair
   objects via `addi r3, base, off; lwz r3, 4(r3)` and the ExecSvr functions
   materialize `&ctrl->exec_flags[0]` / `&exec_counts[0]` / `&svr_tbl[0]`
   pointers (two-add `p = base + 6`). MWCC 3.0a5.2 `-O4,p` folds all of these
@@ -3567,7 +3567,7 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   (3) the error callbacks are **2-arg** `cb(ctx, err)` — r4 (=err) is still
   live at both `bctrl`s, which is why MWCC pre-colors the per-branch `err`
   temp to r4 (argument register). With a 1-arg callback type the temp lands
-  in r3 and you stall at 96.2% with 3 pure reg-swaps.
+  in r3 and you sit at 96.2% with 3 pure reg-swaps.
 - **Engine limit:** any `bctrl`/`blrl` in retail sets `has_indirect_calls`
   (sync-calls), which fail-closes **certificate minting** for that function
   and therefore the certified-callee path for all of its callers
@@ -3588,7 +3588,7 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   }
   ```
 
-  A 1-arg call loads the constant into r3 and stalls at 95%. Use the `s32`
+  A 1-arg call loads the constant into r3 and sits at 95%. Use the `s32`
   `return`-tail-call form, not `void`: the tail `b` forwards SFLIB_SetErr's
   r3 (error code) to the wrapper's caller, so a `void` signature
   misrepresents the ABI (both are byte-identical; `s32` is the honest one). Error codes are
@@ -3845,7 +3845,7 @@ mangled names (`zero__Q22ml5CVec4`) that the retail object uses.
 - `__sinit_\CVec4_cpp`: EQUIVALENT_MATCH (99.7%, fuzzy)
 - `isErrFloat__Q22ml4mathFf`: FULL_MATCH (100.0%)
 
-### CCamUtil::getXYZ2ZXY — stall
+### CCamUtil::getXYZ2ZXY — open item
 - Target: `us-80435a18`, `ml::CCamUtil::getXYZ2ZXY(CVec3&, CVec3 const&)`
 - Best result: 99.09% (160 instructions, 11 pure reg-swaps)
 - Relocation naming fixed via post-process pool patterns
@@ -3949,7 +3949,7 @@ late-used `addi` that the compiler won't hoist).
 
 **Symptoms:** A clean `switch` (e.g. `criware_803D2C98`, pic-rate code → rate×1000
 jump table) compiles byte-identical (hexdiff 0 mismatches, fuzzy 99.7%) yet
-`cycle` stuck at `CODE_MATCH`: objdiff 99.7%, SMT `not_equivalent` with
+`cycle` remains at `CODE_MATCH`: objdiff 99.7%, SMT `not_equivalent` with
 `exit.target: 0x0000bc00 != 0x00000000`.
 
 **Root cause chain (three independent gaps):**
@@ -4071,7 +4071,7 @@ policy-exception records in `attempts.jsonl` for opcode sets and guards.
 - **GX FIFO SMT constraint:** functions writing the GX FIFO (`stb/sth/stfs
   -0x8000(rX)` with `lis rX, 0xcc01`) cannot pass the SMT equivalence probe —
   the memory bus fails closed on symbolic MMIO/RAM mixed-space
-  (`symbolic-mmio-mixed-address-space`), so `EQUIVALENT_MATCH` is unreachable
+  (`symbolic-mmio-mixed-address-space`), so `EQUIVALENT_MATCH` is out of reach
   for `func_8047A330/A570/B1E8/B528`; FULL_MATCH (byte identity) is the only
   path. Their GX callee closure (GXBegin → __GXSetDirtyState →
   __GXSetSUTexRegs → __SetSURegs) is also uncertifiable for the same reason
@@ -4204,7 +4204,7 @@ made the 0x2A8 split fit exactly:
 0x27) because our TU defines `__RTTI__exception` locally while retail
 references it externally; does not block the dtor target.
 
-### TRK_ppc_memcpy / __copy_longs_aligned — register/CE ceilings (stalled)
+### TRK_ppc_memcpy / __copy_longs_aligned — register/CE ceilings (open)
 
 - `TRK_ppc_memcpy`: 196 vs 204 bytes; MWCC level-4 CSE merges the two
   `(3 - offset) << 3` shifts in inlined `ppc_writebyte1`; retail computes both.
@@ -4324,7 +4324,7 @@ Match details (bytes):
   load/store (`lwz r0,@l(r3)`), materializing the pointer later
   (`addi r31,r3,@l`). ~25 source shapes (local pointer, direct globals, mixed,
   `volatile`, array-of-1, `s32*` member alias, block/early-return forms) all
-  reproduce the same 6-instruction prologue delta — treat as a hard cap; use
+  reproduce the same 6-instruction prologue delta — treat as fixed codegen behavior; use
   EQUIVALENT_MATCH with a matching reloc symbol instead of chasing bytes.
 
 ### TRK_ppc_memcpy — asm{sync} barrier defeats CSE of duplicated shifts (ACCEPTED FULL_MATCH)
@@ -4418,7 +4418,7 @@ locals:
   Raising limits just trips `max_paths`/`max_instructions`/deadline next — the
   shape is unsummarizable by design. CODE_MATCH 97.91% objdiff / 65.1% hexdiff
   (15 pure reg-swaps, 0 structural, size exact) is the documented cap for both
-  bars; do not burn probe time on it.
+  bars; recorded — revisit after an engine change.
 
 ## CriWare Sofdec mpv_deli — CTR delimiter loops, decl-order wins + color ceiling (US)
 
@@ -4491,7 +4491,7 @@ conversion call TWICE (call + the (u32) cast's float→u32 runtime helper).
 Declaring it u32-returning removes the double call (ADXT_DiscardSmpl 280→280
 size, -4 instructions).
 
-**Residual soft-caps (recorded, do not chase):** `adxt_InsertSilence` 12 mm =
+**Residual soft-caps (recorded; acceptance via `--smt` out-of-band):** `adxt_InsertSilence` 12 mm =
 pure chunkSize↔numBytes color swap (invariant across decl orders, numBytes3,
 got-inline, numBlocks, sj-last); `adxt_ExecServer` 4 mm = `stw srv[9]` sunk
 below the callback null-check `cmpi` (volatile store, statement reorder both
@@ -4567,7 +4567,7 @@ when the exit block is placed before the body label (wrong layout, two epilogues
 Also fixed here: retail never sets r3 at the PutChunk exit (function returns garbage)
 — do NOT `return 0` (extra `li r3,0`). `EQUIVALENT_MATCH` is additionally blocked by
 the `has_indirect_calls` gate (put_func/err_func `bctrl`), so FULL_MATCH (100%) is the
-only route — unreachable while the gate collapses. Same over-branch appears in
+only route while the gate stays collapsed. Same over-branch appears in
 `sjrbf_UngetChunk` / `sjmem_PutChunk` retail gates.
 
 **RESOLVED — PutChunk gate (this fork):** the branch-over-branch is reproduced by
@@ -4780,7 +4780,7 @@ unblocking.
 zeroes 16 `LSC_STM` handles (stw, after the calls). With raw byte-offset stores
 (`*(void **)(entry + 0x50 + i * 0x20) = NULL`) MWCC CSE-merges the two `0`
 constants into ONE value whose live range spans the calls → allocator keeps it
-in callee-saved r28/r29 → extra `stw r28` prologue, ~95% fuzzy, unreachable.
+in callee-saved r28/r29 → extra `stw r28` prologue, ~95% fuzzy, no byte-identity route yet.
 Ruled out: every zero spelling (`0`, `(s8)0`, `'\0'`, `0u`, `0L`, `NULL`,
 `(void *)0`), volatile store, `#pragma scheduling/peephole/opt_propagation/
 global_optimizer/optimization_level` toggles, `-O4,s`, mwcc GC/2.6–3.0a5.2 and
@@ -4955,7 +4955,7 @@ the ceiling; the `lwzu` is semantically trivial.
 **Soft-cap — `gcCiSetSctLen` (87.1% HIGH_MATCH):** (1) EQUIVALENT blocked: the two
 err paths **tail-call** the runtime errFunc (`beqlr`/`bctr`) — an indirect-branch exit
 requires indirect-target-closure obligations; the callback pointer is runtime bss data,
-so closure is impossible (`--assume-relocated-callees` → sampling `not_equivalent`).
+so closure is not currently possible (`--assume-relocated-callees` → sampling `not_equivalent`).
 (2) FULL_MATCH blocked: retail main path computes the numSct chain fully first with
 `oldSct` staying in `r6` and the `pos*oldSct` mullw emitted *in place* (not hoisted);
 every natural C order either hoists the mullw (numSct-first → `oldSct=r7`) or changes
@@ -5103,7 +5103,7 @@ BTM_ChangeEScoLinkParms → 97.5%, US):**
   `_savegpr_27`), and the function compiles byte-identical (0/106 mismatches,
   `full-instruction-match` cert). Same addends, same reloc symbols — only the
   TU-local string-pool label name drifts (`@1903` vs `@1242`), which is
-  EQUIVALENT_MATCH-tolerant. This was the missing shape in the STALLED matrix
+  EQUIVALENT_MATCH-tolerant. This was the missing shape in the previously-open matrix
   (inline checks / raw volatile reads / static helpers / declaration orders /
   `#pragma scheduling off` / `-ipa off` / GC/3.0a3.4 were all tried first).
 - **btm_sco_init `lwzu` shape (same TU):** the committed `unsigned long *src =
@@ -5314,7 +5314,7 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
    `inconclusive_unvalidated_callee` — they need FULL_MATCH or the callee accepted.
    The `--linked` DOL/ELF fallback only triggers on `NOT_EQUIVALENT`, not on
    `INCONCLUSIVE_ABSTRACTION` (call-continuation `exit.target` mismatch from a
-   same-TU callback argument), so function-pointer-arg functions can stall at 99%+
+   same-TU callback argument), so function-pointer-arg functions can sit at 99%+
    CODE_MATCH.
 
 ## RVL BTE btm_sec (GC/3.0a5.2, `-func_align 4`) — string-pool orphans, count-as-induction loops, inlined-search helpers (US, 6× FULL_MATCH)
@@ -5553,7 +5553,7 @@ Matched `__a1_20_status_report` (88.6%), `__a1_35_data_type` (85.9%), `__a1_37_d
 7. **Acceptance blockers (framework-level):** all four targets' SMT equivalence is `inconclusive_unvalidated_callee` — WPADHIDParser callees `__parse_cl_data`/`__parse_dpd_data` (HIGH_MATCH, eq unsupported/timeout), `WPADiDecode` (COMPILES), `WPADiSendWriteDataCmd`/`WPADiSendReadData` (COMPILES in WPAD.c) are not ACCEPTED; `__a1_20`/`__wpadGetExtType` additionally have unresolved indirect `extensionCB` calls. Only FULL_MATCH (100%) bypasses; the remaining ~10-18% per function is MWCC scheduler register allocation (reload CSE, base-register hoisting, status register vs slot) not reachable from high-level C.
 8. **Pointer-arithmetic form defeats the base/index CSE for the accel reload (works where a1_33's 8 variants failed).** Retail `__a1_3e/3f` re-materialize `__rvl_p_wpadcb` base+index for the `accX0g`/`accY0g` read (`lis@ha; rlwinm; addi@l; lwzx; lha`). Plain `__rvl_p_wpadcb[chan]->devConfig.accX0g` CSEs the base+index from the prologue load (a1_33 stall). Writing the access as `(*(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2)))->devConfig.accX0g` makes MWCC emit the full fresh lis/rlwinm/addi/lwzx re-materialization (byte-matching retail) and frees the 2 callee-saved regs it hoisted, dropping the prologue from `_savegpr_24` to `_savegpr_26`. `__a1_3e` went 25.2%→75.2% (size-exact 0x1b4) with this + the st-local fix. Source: `libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c`.
 9. **Status-param register copy: keep the address-of on a separate alias.** When a helper takes `&status` (e.g. `__parse_dpdex_data(chan, &st, …)`), MWCC demotes the address-taken param to its stack slot (lwz reload per field access). Declaring `WPADStatusEx* st = status;` and passing `&st` while doing all field accesses through the `status` param keeps the param in a callee-saved register (`mr r29,r5`-class) with the slot written once for `&st` — matching retail. (The a1_3d note's "status alias" variant used the alias for field access too, which still spills; the split matters.)
-10. **Remaining `__a1_3e`/`__a1_3f` gaps are pure MWCC scheduler placements (8 / 43 structural).** Confirmed uncontrollable from C: (a) the `status->accZ` read `lha` is hoisted into the previous accX/accY tail instead of the start of the accZ computation (tried OR-operand swap — canonicalized, temp local, volatile on both sides); (b) final-block `lbzx` (_recv_3f) hoisted above `stbx` (_recv_3e=1) in `__a1_3e` while retail stores first (volatile flips the order but costs a fresh base `li`); (c) `__a1_3f` accY `(data[3]<<2)&0xFFFC` folds to one rlwinm while retail keeps slwi+extsh+clrrwi+extsh (the documented fold-context of the later `>>5` in accZ does not trigger from shift-first/mask-first/(u16)-cast variants), and the accZ merge stays rlwinm+or instead of retail's rlwimi+extsh. Both targets also gated by callee `__parse_dpdex_data` (us-80375980) STALLED → SMT fails closed; only FULL_MATCH would bypass and these scheduling gaps block it.
+10. **Remaining `__a1_3e`/`__a1_3f` gaps are pure MWCC scheduler placements (8 / 43 structural).** Confirmed not steerable from C: (a) the `status->accZ` read `lha` is hoisted into the previous accX/accY tail instead of the start of the accZ computation (tried OR-operand swap — canonicalized, temp local, volatile on both sides); (b) final-block `lbzx` (_recv_3f) hoisted above `stbx` (_recv_3e=1) in `__a1_3e` while retail stores first (volatile flips the order but costs a fresh base `li`); (c) `__a1_3f` accY `(data[3]<<2)&0xFFFC` folds to one rlwinm while retail keeps slwi+extsh+clrrwi+extsh (the documented fold-context of the later `>>5` in accZ does not trigger from shift-first/mask-first/(u16)-cast variants), and the accZ merge stays rlwinm+or instead of retail's rlwimi+extsh. Both targets also gated by callee `__parse_dpdex_data` (us-80375980) still open → SMT fails closed; only FULL_MATCH would bypass and these scheduling gaps block it.
 
 ## RVL_SDK kpad/KPAD (US, mwcc_43_151 `-O4,p`) — clamp/inline/FPR insights
 
@@ -5571,7 +5571,7 @@ Matched `__a1_20_status_report` (88.6%), `__a1_35_data_type` (85.9%), `__a1_37_d
 4. **u16→f64 conversion tricks differ by operand provenance:** the retail's running average uses the s16 trick (xoris + `2^52+0x8000`) for the *multiplier* and the u16 trick (plain `stw`, `2^52`) for the *divisor*. Reproduce by writing `count = kp_wbc_ave_sample_count + 1; kp_wbc_ave_sample_count = count; … (ave * (count - 1) + sample) / count;` — the `subi`/`clrlwi` provenance drives MWCC's trick choice; the naive `count; count+1` form inverts the tricks (wrong constants in the diff).
 5. **Sparse `switch` cases reproduce retail compare chains; `slot = slot * 2` after a switch folds into the case `li` values only in specific shapes** — the retail KPADiSamplingCallback DPD table folds `slot*2` into the `li` (one `rlwinm` at the table access); source `slot *= 2` as a separate statement emits an extra early `slwi` (2-instruction schedule diff, no semantic change).
 6. **Framework acceptance notes:** indirect-call targets (function-pointer callbacks) can only reach EQUIVALENT_MATCH as FULL_MATCH (100%) — the certified-callee context fails closed on `has_indirect_calls`. SMT equivalence for 295-instruction FP-heavy functions (sqrt calls, f64 math) exceeds the 900s solver cap under concurrent-agent load; `--contract memory` does not reduce the formula-construction cost. The renaming witness is rejected by `psq_st` prologues (reject-list) and mnemonic diffs.
-7. **Symmetric FP accumulator init order flips which callee-saved FPR each gets.** `KPADiSamplingCallback`'s aiming block had 11 pure f30↔f31 reg-swaps: the 1.0f accumulator lived in f31 instead of retail's f30. Writing `f31 = 1.0f; f30 = 0.75f;` (0.75f accumulator initialized *first*) flips the allocation to match retail byte-for-byte — MWCC colors the first-initialized FP live range into f31 in this unit. The swap is a free lever when two symmetric FP accumulators differ only in register color; try it before declaring a regalloc stall.
+7. **Symmetric FP accumulator init order flips which callee-saved FPR each gets.** `KPADiSamplingCallback`'s aiming block had 11 pure f30↔f31 reg-swaps: the 1.0f accumulator lived in f31 instead of retail's f30. Writing `f31 = 1.0f; f30 = 0.75f;` (0.75f accumulator initialized *first*) flips the allocation to match retail byte-for-byte — MWCC colors the first-initialized FP live range into f31 in this unit. The swap is a free lever when two symmetric FP accumulators differ only in register color; try it before recording a regalloc open item.
 8. **`static const` function-local tables land in `.rodata`; the retail puts them in `.data` — this is a `reloc_eq` failure under `functionRelocDiffs=data_value` (99.9789% = 2 reg-diff penalties), not a pool-layout issue.** `KPADiSamplingCallback` (us-8034afb0) had a `static const u8 table[12][2]` DPD dispatch table. objdiff's `reloc_eq` for the table's `R_PPC_ADDR16_HA/LO` relocs requires `section_name_eq` between the retail (.data) and decomp (.rodata) symbols; the section mismatch fails the gate, each of the 2 table-address instructions gets `PENALTY_REG_DIFF` (5), and the score sits at 99.978905 forever while pool-layout investigations go nowhere. Fix: **drop `const`** so MWCC emits the table into `.data` (`static u8 table[12][2]`). One-line change → 100.0% static, FULL_MATCH. Diagnostic that isolates section-mismatch failures from pool/data-layout stalls: changing a suspect symbol's VALUE (e.g. `static const f64 double_8066C0E8 = 0.0` → `= 12345.678`) does NOT move the score when the symbol is dead/implicit (MWCC regenerates its own conversion constants), but the table's section is directly observable via the object symbol table (shndx 2 = `.data` vs `.rodata`).
 
 ## RVL_SDK vi/vi3in1 gamma + macrovision internals (US, mwcc_43_151 `-O4,p`) — table addressing, u16 masks, inline-copy patterns
@@ -5883,7 +5883,7 @@ sdp_utils.c):
    reversed emission is unit-wide for these flags.
 
 2. **String addends depend on the whole preceding pool.** `l2c_csm_orig_w4_sec_comp`
-   was stuck at 99.97% (3 `addi r4, r30, N` addend drifts) with the SMT probe
+   was at 99.97% (3 `addi r4, r30, N` addend drifts) with the SMT probe
    hard-failing `inconclusive_unvalidated_callee` (indirect `bctrl` API callback +
    unaccepted transitive callees — only FULL_MATCH 100% bypasses that gate, cf.
    `btm_pm_reset` / `__wpadConnectionCallback` notes). The addends only match after
@@ -6367,10 +6367,10 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   renaming witness requires a **global injective** permutation — register
   merging makes no bijection exist, so EQUIVALENT_MATCH cannot certify
   these loop-heavy functions; SMT fails on loop unroll (96-iter) / path
-  explosion (16-iter with per-channel flag branches). Recorded as stalls
+  explosion (16-iter with per-channel flag branches). Recorded for out-of-band SMT acceptance
   (us-802d9590, us-802da6b0, us-80342970).
 - `Run` (OSExec, us-80358630): retail is an asm-void-shaped tail call
-  (`mtctr r31; bctr` + dead epilogue as the func return path). No high-level C
+  (`mtctr r31; bctr` + dead epilogue as the func return path). No tested high-level C
   shape emits it (tested -O4,p/-O4,s, C/C++, do/while/for, return forms); SMT
   blocked by the unknown indirect callee. Keep the C candidate with
   `__sync(); __isync();` (56% static / 91.9% fuzzy).
@@ -6393,8 +6393,7 @@ retail `r0`, and reorders the epilogue `lwz r0` first.
   `-O4,s` (0%), `GC/3.0a5.2` (regresses SetupPitch 100%→76.9%). ~45 prior
   variants in attempts history. Siblings `__HBMSYNSetupPitch/SetupSrc/UpdateSrc`
   stay 100%. 92.0% objdiff fuzzy, split PASS. Same class as
-  `__wpadIsControllerDataChanged` (MWCC_REFERENCE §__wpad): record stall,
-  accept via `--smt` out-of-band.
+  `__wpadIsControllerDataChanged` (MWCC_REFERENCE §__wpad): record for `--smt` out-of-band acceptance.
 
 ### RVL_SDK gx/GXInit.c — `__GXInitRevisionBits` + `GXInit` FULL_MATCH (US, Wii/1.1 mwcc_43_151 `-O4,p`)
 
@@ -6589,7 +6588,7 @@ tree is complete).
 
 ## PowerPC_EABI_Support MWRTTI `__dynamic_cast` — cross-split string-pool layout (US, mwcc_43_151 `-O4,p`)
 
-**Symptom:** `__dynamic_cast` (`us-802bc7f4`, 0x25C) stuck at 99.3% with one
+**Symptom:** `__dynamic_cast` (`us-802bc7f4`, 0x25C) was at 99.3% with one
 diff: `addi r3, r3, 39` (retail) vs `addi r3, r3, 4` (decomp) in the
 `throw std::bad_cast()` tail — a plain immediate, not a relocation. Both sides
 point at the same string (`!std::exception!!std::bad_cast!!`); the immediate
@@ -6692,7 +6691,7 @@ certificate; do not retry `--contract` variants.
 **Result:** all 106 PowerPC_EABI units now `size: PASS` with 0 spare in most
 units; every in-range function byte-identical at the exact retail offset
 (verified by nm offset comparison against the `.s` files). Only pre-existing
-stalls remain: `__prep_buffer` (EQUIVALENT_MATCH, certified) and
+open items remain: `__prep_buffer` (EQUIVALENT_MATCH, certified) and
 `__copy_longs_rev_unaligned` (CODE_MATCH, solver-inconclusive).
 
 **Pitfall:** functions in the remove set are often *called* by kept functions
@@ -6901,13 +6900,13 @@ functions even at hexdiff mm=0.
   calls; certified in seconds).
 - One exception: `AnmObjChrBlend::IsDerivedFrom` retail computes its own
   TYPE_NAME as `lbl_eu_8051D5C0 + 0x24` (base-relative CSE), which the SMT
-  probe rejects (register-variant model) — parked.
+  probe rejects (register-variant model) — deferred.
 - Classes only forward-declared (`AnmScnRes`, `ScnMdlExpand`) need a minimal
   class body (dtor + RTTI macro) before the out-of-line definitions compile.
 - Unit budget: the RTTI block is ~0x50-0xC0 per class. `g3d_scnobj`
   (1464B pre-existing bloat: `ScnGroup_G3DPROC_*` helpers retail inlines) and
   `g3d_scnproc` (56B: orphan `~ScnLeaf` weak copy from inline-dtor
-  materialisation) stay over budget — their RTTI targets are parked.
+  materialisation) stay over budget — their RTTI targets are deferred.
 
 ## RVL_SDK hbm/synpitch — __HBMSYNGetRelativePitch HIGH_MATCH via in-TU sibling tables + `%` division duplication (US, Wii/1.1 `-O4,p`)
 
@@ -6917,9 +6916,9 @@ us-803443b0 went 4.4% → **81.6% (HIGH_MATCH, fuzzy 92%)**, size exact 0x110/0x
 2. **Define the lookup tables as separate global (non-const) arrays IN the owning TU, in retail `.data` order** — `__HBMSYNCentsTable[100]`, `__HBMSYNOctavesTableUp[12]`, `__HBMSYNSemitonesTableUp[12]`, `__HBMSYNSemitonesTableDown[128]` — and index the sibling symbols directly (`__HBMSYNOctavesTableUp[oct]`). MWCC folds sibling-symbol addresses into constant offsets from the first symbol (`addi r5,r7,0x190`) + `lfsx` indexed loads with separate index registers — the exact retail shape (retail .o relocs confirm only the first symbol is referenced; offsets baked). Pointer-arithmetic forms (`ct + 100`) fold into `lfs d(rB)` instead (structural). Relocs anchor to `...data.0` where retail names `__HBMSYNCentsTable` — pure name drift, byte-identical data (1008/1008 bytes verified).
 3. **`if (cent != 0) { cent += 100; sem--; }` (not `cent < 0`) compiles to `subf.` + `beq`** matching retail — `cent < 0` emits plain `subf` + `bge`. Semantically identical in the `v<0` domain (cent ∈ [-99,0]); `!= 0` is the retail's exact compare.
 
-**Remaining 6 structural = 3 two-instruction scheduling-equivalent swaps, unreproducible:** (a) sem-section `srawi`(raw cent)/`rlwinm`(sem*4) order, (b) `mulli`(cent*100)/`fmuls`(oct*semUp) order, (c) negative-branch `rlwinm`(sem*4)/`neg`(-sem) order. Resists: statement/declaration orders, inline vs locals, single-expression returns, explicit index locals, `-ipa` on/off, `-O4,s`, `-opt nocse/noschedule/nopeephole`, compilers Wii/1.0/1.0a/1.1/1.3/GC-3.0a5.2, `-lang=c` (fixes (a)-adjacent ct-copy order but breaks table layout folding). Witness-blocked; SMT would certify (swaps are within-basic-block reorderings of independent ops). Candidate for `--smt` out-of-band acceptance.
+**Remaining 6 structural = 3 two-instruction scheduling-equivalent swaps, not yet reproduced:** (a) sem-section `srawi`(raw cent)/`rlwinm`(sem*4) order, (b) `mulli`(cent*100)/`fmuls`(oct*semUp) order, (c) negative-branch `rlwinm`(sem*4)/`neg`(-sem) order. Not shifted by: statement/declaration orders, inline vs locals, single-expression returns, explicit index locals, `-ipa` on/off, `-O4,s`, `-opt nocse/noschedule/nopeephole`, compilers Wii/1.0/1.0a/1.1/1.3/GC-3.0a5.2, `-lang=c` (fixes (a)-adjacent ct-copy order but breaks table layout folding). Witness-blocked; SMT would certify (swaps are within-basic-block reorderings of independent ops). Candidate for `--smt` out-of-band acceptance.
 
-## nw4r lyt vtable-name reloc drift — hard cap on ctors/dtors
+## nw4r lyt vtable-name reloc drift — fixed reloc behavior on ctors/dtors
 
 lyt Pane/Picture/Window ctors and dtors are **byte-identical** (hexdiff mm=0)
 but reference the **vtable** via the auto-generated `__vt__Q34nw4r3lyt4Pane`
@@ -6928,7 +6927,7 @@ compiler-generated and cannot be renamed from source (declaring the class
 normally always emits it mangled). objdiff under
 `functionRelocDiffs=data_value` still scores ~99.8% (data relocs are
 name-compared), and the SMT probe times out on the 0x12C ctor (memset +
-member-init chain). Same cap as `MTX34RotXYZFIdx` — park ctors/dtors whose
+member-init chain). Same behavior as `MTX34RotXYZFIdx` — defer ctors/dtors whose
 only diff is the vtable reloc. The **SDA float constants** in the same
 functions ARE fixable: declare `extern "C" const float lbl_eu_80669D38/3C;`
 and reference them (note: 80669D38 = 0.0f, 80669D3C = 1.0f — verify values
@@ -6978,7 +6977,7 @@ Root causes and fixes:
 Files: `libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp` (+ the
 retail-proven helper/header facts above; no header changes needed).
 
-## nw4r g3d DCC TexSrt helpers — register-scheduling gap (parked)
+## nw4r g3d DCC TexSrt helpers — register-scheduling gap (deferred)
 
 The maya `ProductTexSrtMtx_T` etc. helpers are semantically correct but the
 retail's register allocation + schedule differ from every tested source form:
@@ -7272,7 +7271,7 @@ Patterns from matching `__a1_21_user_data` (us-80375070, 3.9%→78.2%, size-exac
    from any source form tried (single expr, `-3 & x`, `& 0xFFFFFFFD`, `& ~2`,
    two-statement `err = …; err &= -3;`, `(s32)`/`u32` casts, named locals).
    Instruction-selection diff — EQUIVALENT_MATCH territory (semantically
-   identical), do not chase.
+   identical); record for `--smt` acceptance.
 
 5. **Block layout: MWCC sinks a small else-branch after a big if-branch.** To
    get retail's layout (big body inline, `DEBUGPrint(0x500)` sunk to the end),
@@ -7297,10 +7296,10 @@ Bounded pass on `__parse_cl_data` (us-80375c00): 265 → 203 structural, 0x4b8 v
 3. **16-bit complement via `^ 0xFFFF` instead of `~`:** `(u16)((u16)((data[7] << 8) | data[8]) ^ 0xFFFF)` emits retail's `rlwimi r0,r5,8,16,23; xori r0,r0,0xFFFF` (2 insns). `~(u16)x`, `(u16)~(u16)x`, and `~x` all emit `nor` (+ `rlwinm` 16,31 when cast) — 2-3 insns, never `xori`.
 4. **Classic-stick LSB terms: `(s16)((s16)data[4] >> 6)` (cast-then-plain-shift, NO mask) reproduces retail's `srawi; extsh` for the 2-bit term; `(s16)(((u16)data[4] >> 6) & 0x3)` emits `rlwinm`+extsh instead.** The `(s16)`-cast mask terms for `>> 2`/`>> 4` give `rlwinm(mask)+extsh`; mask-then-shift `(data[4] & 0xC) >> 2` gives `rlwinm(mask)+live-srawi`; retail's folded `rlwinm 30,30,31` + DEAD `srawi` (shift-then-mask with fold disabled) is not reachable from any tested shape (8 scratch variants) — same class as KB ref:a61612e194 finding 10.
 5. **Mode-3 8-bit sticks `(s16)((s16)data[n] << 2)` fold the (always-redundant) extsh away** — retail keeps `extsh; rlwinm 2,0,29`. 14 variants tested (incl. `(s8)` cast → semantically WRONG extsb for ≥0x80, `s8*` param, temps, double casts) all fold or mis-select. Semantically redundant — SMT-territory, not byte-identical.
-6. **Default-mode `clRStickX` retail is a buggy wrap-mask merge:** `rlwinm r0,r7,27,29,30; rlwimi r0,r9,29,27,24; or r0,r10,r0; extsh; rlwinm 5,0,26` — the rlwimi wrap mask (MB=27 > ME=24 → bits 27-31 ∪ 0-24) WIPES the (d1>>2&3) field and the sign term; sim-verified result = `(d0 & 0xF8) << 2` (d1/d2 contributions dead). Derived 3-expression shapes all generate 16-insn EXTSB chains instead of retail's 9-insn SRAWI/RLWINM/RLWIMI/EXTSH/OR dance — unreachable.
+6. **Default-mode `clRStickX` retail is a buggy wrap-mask merge:** `rlwinm r0,r7,27,29,30; rlwimi r0,r9,29,27,24; or r0,r10,r0; extsh; rlwinm 5,0,26` — the rlwimi wrap mask (MB=27 > ME=24 → bits 27-31 ∪ 0-24) WIPES the (d1>>2&3) field and the sign term; sim-verified result = `(d0 & 0xF8) << 2` (d1/d2 contributions dead). Derived 3-expression shapes all generate 16-insn EXTSB chains instead of retail's 9-insn SRAWI/RLWINM/RLWIMI/EXTSH/OR dance — not reproduced yet.
 7. **btm_process_inq_complete status default: write 10-then-0, not 0-then-10.** `btm_status = BTM_ERR_PROCESSING; if (status == HCI_SUCCESS) btm_status = BTM_SUCCESS;` reproduces retail's `li r3,10; bne skip; li r3,0` (the if-then-0 branch-target shape); the natural 0-default + `if (!=) x = 10` compiles to `li 0; beq skip; li 10` — li-value swap + branch polarity (2 mismatches).
 
-## RVL WUD — device-list targets: CNT-01 length, base+12i IV, desc temp-copy cap (US, 1× FULL_MATCH + 2× HIGH_MATCH stalls)
+## RVL WUD — device-list targets: CNT-01 length, base+12i IV, desc temp-copy cap (US, 1× FULL_MATCH + 2× HIGH_MATCH open items)
 
 `libs/RVL_SDK/src/revolution/wud/WUD.c` — `WUDiRemoveDevice` **FULL_MATCH**, `WUDiRegisterDevice` + `WUDiMoveTopOfDisconnectedSmpDevice` HIGH_MATCH (90-92% fuzzy, SMT-candidates).
 
@@ -7353,7 +7352,7 @@ retail reloc dumps with `elf_symbols.list_section_relocations` on
    GetZfrmRange out-param order is `(self, a, &o1, &o0)` with the caller reading
    `lwz o0` BEFORE `lwz o1` (8(sp) first).
 
-Stall notes: `SFXZ_GetZfrmRange` (0x150) 21.8% / 56 structural — control flow,
+Open-item notes: `SFXZ_GetZfrmRange` (0x150) 21.8% / 56 structural — control flow,
 slots, and prologue all match after the const-local form; residual is the
 out1v/out2v spill (fail path `li r0; stw` + join reload vs retail `li r3,0` +
 reload in the ok path) and base2 in r29 vs r31 — MWCC keeps address-taken
@@ -7380,7 +7379,7 @@ chained-assignment, and statement-order variants all keep r6. Pure
 allocator/scheduler difference; size exact 0x64.
 
 ### RVL_SDK vi/vi.c — VIConfigure + __VIRetraceHandler (US, mwcc_43_151, cflags_sdk, `-func_align 16`)
-Both targets stalled at scheduling/regalloc softcaps (HIGH_MATCH), but several
+Both targets were at scheduling/regalloc softcaps (HIGH_MATCH), but several
 reusable source-shape keys were recovered this session (structural: VIConfigure
 282→239, __VIRetraceHandler 421→382):
 
@@ -7483,7 +7482,7 @@ all `-O4,p`/`-O4,s`/`-O3` and `-ipa`/`-func_align`/`-inline` combos):
 - The ×8 shape's addressing is then FOLDED (`add rX,base,idx; stw r0,0xDC0(rX)`)
   rather than retail's INDEXED (`stwx` with pre-computed base registers), and
   the two u16 stores can come out reversed (na before qsz) — so the shape alone
-  does not byte-match the retail loop; no source form found reproduces the
+  does not byte-match the retail loop; no tested source form found yet reproduces the
   retail indexed addressing + ascending store order. Accept at EQUIVALENT_MATCH
   via SMT (loop semantics are identical) rather than chasing byte identity.
 
@@ -7577,7 +7576,7 @@ and `__wpadRetrieveChannel` (us-8036e710, 0x120, was 79.2% / 2 structural).
    Similarly `__wpadRetrieveChannel`: `(pAddr, i, result)` → result=r28,
    pInfo/i=r29 exactly like retail (was 2 structural + 13 reg-swaps).
 
-5. **`__wpadIsControllerDataChanged` (us-8036c0c0) stall reconfirmed:** the
+5. **`__wpadIsControllerDataChanged` (us-8036c0c0) open item reconfirmed:** the
    TR-case `IsAnalogChanged(…, 1)` compiles to the exact retail
    `xori rX,diff,1; srawi; and; subf` + sign-bit pattern (verified in
    isolation: `diff > threshold ? TRUE : FALSE` → `xori r0,r5,T; srawi;
@@ -7604,8 +7603,8 @@ vs 0xE4.
 requires the **s32 cast** on the u32 bitBuf (plain `>>` on u32 emits `srw`).
 Residual: a 4-cycle register rotation in the read path (retail base=r3/idx=r4/
 shift=r5/bitBuf=r6; decomp base=r5/idx=r6/shift=r7/bitBuf=r3) plus the subf
-(shift) placement vs the base addi — pure allocator colors, no source form
-moves them.
+(shift) placement vs the base addi — pure allocator colors, no tested source form
+has moved them.
 
 ### CriWare ahx_dcd AHXDCD_Create — workspace allocator (90.0%, 4 sched/color)
 `AHXDCD_Create(buf, size)`: state fields live at the **original buf** (r29),
@@ -7653,7 +7652,7 @@ dst[k] = src[i+k]; }` (the `while (j < 297)` bottom-test form is +4B; the
 `dst[i]=0; memcpy(dev, dst, strlen(dst)+1); dst[0]=0; return;`. Residual 12
 structural = a 4-cycle register rotation in the unrolled copy loop (retail
 src=r7/dst=r6/cnt=r9/char=r8; decomp src=r6/dst=r4/cnt=r8/char=r7) — pure
-colors, no source form moves them.
+colors, no tested source form has moved them.
 
 ### CriWare return-li vs final-store scheduling gap (SFAOAP_Create / ADX_ScanInfoCode / SFPL2_Standby)
 A recurring 2-structural near-miss: the final `return 0`/`return -1` (or any
@@ -7662,7 +7661,7 @@ store in decomp, AFTER it in retail. Retail: `li r0, K; stw r0, off(rX);
 li r3, ret;` — decomp: `li r0, K; li r3, ret; stw r0, off(rX);`. Reproduced
 across `SFAOAP_Create` (89.5%), `ADX_ScanInfoCode` (93.3%), `SFPL2_Standby`
 (85.7%), `SFD_Standby` (91.3%), `sfmps_pesfn` (90.5%) — all 2 structural with
-0 reg_swap. No source form moves it (named ret local, pointer local,
+0 reg_swap. No tested source form has moved it (named ret local, pointer local,
 store via cast/array, return-first). A general MWCC scheduler tie-break.
 
 ### CriWare adx_baif ADX_DecodeInfoAiff — 10-arg AIFF info wrapper (89.1%, 4 structural)
@@ -7693,7 +7692,7 @@ third argument.
 ### CriWare ax_rna AXRNA_Init — dead-load gap (13.6%, semantically correct)
 Retail hoists a **dead load** `lwz r3, 0(r4)` (r4=8051914C) before the init-flag
 branch — the ++ operand's load scheduled early against the wrong base register.
-MWCC DCEs a dead read from the equivalent C; unreproducible intentionally.
+MWCC DCEs a dead read from the equivalent C; a `volatile` read forces it — see the ax_rna volatile-dead-load note later in this file (AXRNA_Init reached FULL_MATCH that way).
 Size 0x50 vs 0x58 (2 missing instructions).
 
 ### CriWare adx_mwii ADXM_ShutdownFramework — block-order gap (40%, goto form)
@@ -7748,7 +7747,7 @@ decomp [li r0,0; li r3,0; stw] — a scheduler merge.
 Retail reuses the handle's CR0 for a second `bne` (stale branch, dead [li r0,-1]
 block) and keeps handle/errFn/errArg in the caller-saved r3/r4/r5 across the
 SFLIB_SetErr call (the tail stores write to the clobbered base = retail codegen
-quirk). Natural C spills to callee-saved regs and re-compares — unreproducible.
+quirk). Natural C spills to callee-saved regs and re-compares — not yet reproduced.
 
 ### CriWare sfh_ver2 VER2_Anly* family — 93.1% each (store-before-return-li gap)
 All four (ElemChNum/SmpHz/FtrFixFlg/FtrShcFixFlg) match the searchStmId +
@@ -7834,7 +7833,7 @@ Retail hoists [lwz r12,24; lwz r0,8; cmpi; lwz r4,12; lwz r5,16; beq; or r3,r3,r
 (no-op); bcctrl] — the arg0 (self+8) loads into r0 and is DROPPED (the actual
 call = fn(self, arg1, arg2, c)), and the `or r3,r3,r3` is the MWCC's arg-setup
 NOP (the self already in r3). Decomp keeps the loads inside the if and omits
-the no-op — 4 bytes short, unreproducible.
+the no-op — 4 bytes short, not yet reproduced.
 
 ### CriWare sfd_tst SFTST_GoNextFrame — 53.1% (fixed-point load-order gap)
 The s64 fixed-point `(val_a * val_b) / val_d` with the accumulation
@@ -7870,7 +7869,7 @@ The condition is `(u32)(bitrate - 0x30000) <= 0xFFFF` (addis -3 + cmpli
 rounding `x + ((x<<1) & 0x80000000)` matches structurally; residual: MWCC
 emits the full 64-bit product ([li r3,0; mullw r3,r3,r4] dead pair) where the
 retail uses the bare `mulhw` — the __mulhw intrinsic is stubbed to 0 in the
-harness, so the mulhw-only codegen is unreproducible. 26→15 structural.
+harness, so the mulhw-only codegen is not reproducible until the harness stub is fixed. 26→15 structural.
 
 ### CriWare mwsfdsfx MWSFTAG_SetAinfSj — FULL_MATCH (operand-order + inverted dispatch)
 The dispatch is INVERTED: f==2/6/8/0xa → ok=1 → return 0; the other states run
@@ -7922,7 +7921,7 @@ memcpy into the buf, the bswap16/32 field stores, the [*out7 = byte /
 (s8)bswap16(&0xFF)] divw, the out9 dispatch (16/8/4), and the final validation.
 Retail loads the magic WORD ([lis r11; lwz r20, 0(r11)] — the VALUE!) and passes
 it as the memcmp's second arg (a value-as-address quirk); decomp's natural
-[memcmp(src+i, lbl, 4)] emits an address arg — unreproducible. Semantic impl
+[memcmp(src+i, lbl, 4)] emits an address arg — not yet reproduced. Semantic impl
 retained (0x234 vs 0x26c, 14 instructions short).
 
 ### CriWare sfd_see sfsee_ExecFinAnaly — 17.7% (corrected semantics)
@@ -7968,7 +7967,7 @@ FULL_MATCH (the [h->reqId = 0; h->rdAddr = 0] stores now hit +0x28/+0x2C).
 ### CriWare sfx_lib SFX_Create — 20.5% (pool-arg signature)
 Retail takes the pool base as the 3rd arg ([addi r31, r6, 24] — the handles at
 arg3+24, the count at arg3+4, the [mtctr] slot-scan). Decomp uses the global
-lbl_eu_80619C10 — the arg-3 pool variant unreproduced. Semantic impl retained.
+lbl_eu_80619C10 — the arg-3 pool variant not yet reproduced. Semantic impl retained.
 
 ### CriWare mpv_frm MPV_DecodeFrmSj — 10.0% (CTR-vs-addic copy loops)
 The 8-pair + 16-pair copy loops (mtctr + lwzu/stwu fused) — count-down do-while
@@ -8014,8 +8013,8 @@ Retail `MPS_GetPackHd/GetLastSysHd/GetPketHd/GetSysHd` copy u64 fields as `lwz h
 - Same "volatile forces the retail dead load" lever as ax_rna: retail hoists two dead `lwz r3/r0, lbl_eu_80517598` (rodata ptr to the "\nAHX/WII Ver.1.90" string) before the init-count branch. `extern volatile u32 lbl_eu_80517598; (void)lbl_eu_80517598; (void)lbl_eu_80517598;` reproduces them (2 structural remain: lis order + cmpi/lwz interleave — scheduling soft-cap).
 - The `u32 info[2]` array gets REVERSED stack slots (retail info[0]@sp+12, info[1]@sp+8); two separate locals `u32 i0, i1;` place them at the retail offsets (86.0%, was 23.3%).
 
-### CriWare mpv_get — retail forward param→callee-saved order is a fixed MWCC soft-cap (do not burn time)
-`MPV_GetBitRate/GetLinkFlg/GetVbvBufSiz` retail assigns callee-saved regs in FORWARD param order (r3→r31, r4→r30, r5→r29) while GC/3.0a5.2, Wii/1.1, GC/3.0a3.4, -O4, -ipa file, and every source shape (local orders, temps, typed structs) emit REVERSE (param2→r31). Contrast: mps_get retail is reverse (matches MWCC). 0 structural / pure reg-swaps on all three — witness-ineligible (bl-containing) → stall with `accept via --smt out-of-band`. GetPicAtr's `li 16; mtctr; lwzu/stwu; bdnz` copy loop is the same mtctr soft-cap as CBattleState vfunc26 (every constant-trip form unrolls ×8/16 under -O4,p); best shape is `u32 *s = h+0xB58; u32 *d = out-1; do { v0 = *(s+1); v1 = *(s+=2); *(d+1)=v0; *(d+=2)=v1; } while (--n != 0);` (0x7C exact, 4 structural = the mtctr family).
+### CriWare mpv_get — retail forward param→callee-saved order is a fixed MWCC soft-cap (record for `--smt` acceptance)
+`MPV_GetBitRate/GetLinkFlg/GetVbvBufSiz` retail assigns callee-saved regs in FORWARD param order (r3→r31, r4→r30, r5→r29) while GC/3.0a5.2, Wii/1.1, GC/3.0a3.4, -O4, -ipa file, and every source shape (local orders, temps, typed structs) emit REVERSE (param2→r31). Contrast: mps_get retail is reverse (matches MWCC). 0 structural / pure reg-swaps on all three — witness-ineligible (bl-containing) → record for `--smt` out-of-band acceptance. GetPicAtr's `li 16; mtctr; lwzu/stwu; bdnz` copy loop is the same mtctr soft-cap as CBattleState vfunc26 (every constant-trip form unrolls ×8/16 under -O4,p); best shape is `u32 *s = h+0xB58; u32 *d = out-1; do { v0 = *(s+1); v1 = *(s+=2); *(d+1)=v0; *(d+=2)=v1; } while (--n != 0);` (0x7C exact, 4 structural = the mtctr family).
 
 ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_MATCH)
 
@@ -8056,7 +8055,7 @@ Batch cri-09 matches in `mpv_hdec.c` / `sfd_adxt.c` (all FULL_MATCH or 90%+):
    (sfadxt_SetAdxtHd, 98.2%): `u32 ok = (u32)ADXT_GetStat(adxt) > 1; if (ok) {…}`
    reproduces the retail idiom; the inline `if ((u32)x > 1)` emits `cmpli; ble`.
    The last diff is a single commutative `add r3,r3,r4` vs `add r3,r4,r3` operand
-   swap (x*8+x) that every source order leaves swapped — stall for --smt.
+   swap (x*8+x) that every source order leaves swapped — record for `--smt` acceptance.
 
 3. **`ret = -3; if (v == 0) ret = -2;` (default + override) reproduces `cmpi; li -3; bne; li -2`**
    (MPVHDEC_RecoverSj, 100%). The ternary `(v == 0) ? -2 : -3` or if/else both

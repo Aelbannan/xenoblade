@@ -115,8 +115,6 @@ private:
     u16 FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const;
 
     const CharWidths& GetCharWidthsFromIndex(u16 index) const;
-    const CharWidths& GetCharWidthsFromIndex(const FontWidth* pWidth,
-                                             u16 index) const;
 
     void GetGlyphFromIndex(Glyph* pGlyph, u16 index) const;
 

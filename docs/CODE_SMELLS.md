@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 2194 |
 | extern "C" definitions (forced names) | 1679 |
 | `self`/register-style params | 3089 |
-| `void*` (params + locals) | 4602 |
+| `void*` (params + locals) | 4603 |
 | raw pointer offset arithmetic | 2548 |
 | deref-through-cast arithmetic | 1123 |
 | inline asm / `register` | 88 |
@@ -95,7 +95,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 6 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_80460308.cpp | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/lib/UnkClass_80460C34.cpp | 5 | 3 | 0 | 1 | 15 | 0 | 0 | 0 | 7 |
-| libs/monolib/src/lod/CLODCacheManagerS.cpp | 1 | 0 | 9 | 8 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lod/CLODCacheManagerS.cpp | 1 | 0 | 9 | 9 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lod/UnkClass_8046368C.cpp | 12 | 14 | 1 | 5 | 1 | 0 | 0 | 0 | 12 |
 | libs/monolib/src/lod/code_804645CC.cpp | 0 | 5 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lod/code_80468434.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -853,7 +853,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/monolib/src/lod/CLODCacheManagerS.cpp": {
   "extern_c_nonlbl_decl": 1,
   "self_params": 9,
-  "void_ptr": 8
+  "void_ptr": 9
  },
  "libs/monolib/src/lod/UnkClass_8046368C.cpp": {
   "extern_c_nonlbl_decl": 12,

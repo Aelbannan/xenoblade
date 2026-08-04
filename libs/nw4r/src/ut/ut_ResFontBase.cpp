@@ -4,6 +4,15 @@ namespace nw4r {
 namespace ut {
 namespace detail {
 
+namespace {
+
+const CharWidths& GetCharWidthsFromIndexImpl(const FontWidth* pWidth,
+                                              u16 index) {
+    return pWidth->widthTable[index - pWidth->indexBegin];
+}
+
+} // namespace
+
 ResFontBase::ResFontBase() : mResource(NULL), mFontInfo(NULL),
 mLastCharCode(0), mLastGlyphIndex(-1) {}
 
@@ -187,16 +196,11 @@ const CharWidths& ResFontBase::GetCharWidthsFromIndex(u16 index) const {
          pIt = pIt->pNext) {
 
         if (pIt->indexBegin <= index && index <= pIt->indexEnd) {
-            return GetCharWidthsFromIndex(pIt, index);
+            return GetCharWidthsFromIndexImpl(pIt, index);
         }
     }
 
     return mFontInfo->defaultWidth;
-}
-
-const CharWidths& ResFontBase::GetCharWidthsFromIndex(const FontWidth* pWidth,
-                                                      u16 index) const {
-    return pWidth->widthTable[index - pWidth->indexBegin];
 }
 
 void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {

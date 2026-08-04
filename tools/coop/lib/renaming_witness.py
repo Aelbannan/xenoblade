@@ -1520,7 +1520,8 @@ def _live_in_spill_only(
     kind: str,
 ) -> bool:
     """True when ``lane``'s live-in value is used ONLY by a prologue stack
-    save before its first def (F1 carve-out, adversarial review 2026-08).
+    save (F1 carve-out, adversarial review 2026-08; fixed for N1 in round 2
+    2026-08-05).
 
     ``stw rN, c(r1)`` / ``stfd fN, c(r1)`` with a constant offset and the
     frame pointer r1 is the EABI prologue-save pattern: the entry value flows
@@ -1528,39 +1529,63 @@ def _live_in_spill_only(
     shared slot holds the same shared variable), so permuting the lane is
     sound and the Chaitin prologue-save class survives.  ANY other use of the
     live-in value (data computation, call argument, non-r1 store) makes it a
-    real input dependency → not spill-only → the lane is fixed.  Stream-order
-    approximation (position-aligned pairs; conservative: a helper-call save
-    is invisible to ``_use_def_numbered``, so such a lane has no stream-visible
-    use and is NOT spill-only — it stays fixed, fail-closed).
+    real input dependency → not spill-only → the lane is fixed.
+
+    The entry value's reachability is computed over the REAL CFG (forward
+    dataflow: ``entry_reaches[i]`` = can the entry value reach instruction
+    ``i`` without an intervening def), NOT a stream-order first-def scan — a
+    live-in read reachable via a forward branch that skips a stream-order
+    earlier def is a genuine input dependency (N1, round-2 review: a
+    ``beq``-skipped ``li r20,7`` left the taken path reading the caller's
+    r20 as data while the carve-out called it spill-only).  A def that also
+    USES the lane (e.g. ``rlwimi``) observes the entry value at that slot and
+    is therefore an input dependency unless it is itself a spill store.
     """
-    first_def: int | None = None
-    for i, insn in enumerate(instructions):
-        if lane in _use_def_numbered(insn)[1]:
-            first_def = i
-            break
-    if first_def is None:
-        return False  # never def'd: live-in value flows to an exit — input.
-    for i, insn in enumerate(instructions[:first_def]):
-        if lane not in _use_def_numbered(insn)[0]:
-            continue
-        op = insn.opcode
-        if kind == GPR:
-            # stw/stwu rN, c(r1) — the prologue save.  RA must be r1 and the
-            # displacement a plain immediate (no relocation / symbolic base).
-            if op not in (Opcode.STW, Opcode.STWU):
-                return False
-            if len(insn.operands) < 2 or insn.operands[0] != lane:
-                return False
-            if insn.operands[1] != 1 or insn.relocation is not None:
-                return False
-        else:
-            # stfd/stfdu fN, c(r1).
-            if op not in (Opcode.STFD, Opcode.STFDU):
-                return False
-            if len(insn.operands) < 2 or insn.operands[0] != lane:
-                return False
-            if insn.operands[1] != 1 or insn.relocation is not None:
-                return False
+    n = len(instructions)
+    if n == 0:
+        return False
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
+    end_pc = instructions[-1].address + 4
+    # ``_use_def_numbered`` uses the COMBINED numbering (GPR r -> r, FPR f ->
+    # 32 + f, PS1 -> 64 + f); the caller passes the raw register number.
+    nlane = lane if kind == GPR else _PS1_OFFSET - 32 + lane
+    defs = [_use_def_numbered(insn)[1] for insn in instructions]
+    uses = [_use_def_numbered(insn)[0] for insn in instructions]
+    reaches = [False] * n
+    reaches[0] = True
+    changed = True
+    while changed:
+        changed = False
+        for i in range(n):
+            out = reaches[i] and nlane not in defs[i]
+            if not out:
+                continue
+            for s in _cfg_successors(instructions, i, by_index, end_pc):
+                if not reaches[s]:
+                    reaches[s] = True
+                    changed = True
+    for i in range(n):
+        if reaches[i] and nlane in uses[i]:
+            insn = instructions[i]
+            op = insn.opcode
+            if kind == GPR:
+                # stw/stwu rN, c(r1) — the prologue save.  RA must be r1 and
+                # the displacement a plain immediate (no relocation / symbolic
+                # base).
+                if op not in (Opcode.STW, Opcode.STWU):
+                    return False
+                if len(insn.operands) < 2 or insn.operands[0] != lane:
+                    return False
+                if insn.operands[1] != 1 or insn.relocation is not None:
+                    return False
+            else:
+                # stfd/stfdu fN, c(r1).
+                if op not in (Opcode.STFD, Opcode.STFDU):
+                    return False
+                if len(insn.operands) < 2 or insn.operands[0] != lane:
+                    return False
+                if insn.operands[1] != 1 or insn.relocation is not None:
+                    return False
     return True
 
 

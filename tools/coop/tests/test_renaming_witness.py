@@ -1640,3 +1640,41 @@ class AdversarialReview2026Tests(unittest.TestCase):
             deadline_ms=20000,
         )
         self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_n1_def_skipping_branch_carve_out_rejected(self) -> None:
+        # N1 (round-2 adversarial review, 2026-08-05, Kimi K3): the original
+        # `_live_in_spill_only` scanned the STREAM for the first def, but
+        # liveness is a CFG fixpoint.  A live-in read reachable via a forward
+        # branch that SKIPS the stream-order first def was misclassified as
+        # spill-only -> not fixed -> certified an inequivalent pair.  Here the
+        # beq-taken path reads the caller's r20 as data (no `li r20,7` on that
+        # path), so retail returns r3+caller-r20 while decomp returns
+        # r3+caller-r25.  The entry-value-reaches fixpoint now classifies r20
+        # as a genuine input and rejects.
+        cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        lwz = lambda rt, ra, d: _enc_primary(32, rt, ra, d)
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        beq = lambda disp: (16 << 26) | (12 << 21) | (2 << 16) | (disp & 0xFFFC)
+        r = [cmpwi(3, 0), beq(20), stw(20, 1, 0), li(20, 7), add(3, 3, 20),
+             lwz(20, 1, 0), add(4, 3, 20), mr(3, 4), self._BLR]
+        d = [cmpwi(3, 0), beq(20), stw(25, 1, 0), li(25, 7), add(3, 3, 25),
+             lwz(25, 1, 0), add(4, 3, 25), mr(3, 4), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_n1_control_stream_spill_only_still_accepted(self) -> None:
+        # N1 control: the legitimate prologue-save Chaitin shape (entry value
+        # consumed only by stw to r1 before its first def, restored before the
+        # exit) still passes the carve-out and certifies.
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        lwz = lambda rt, ra, d: _enc_primary(32, rt, ra, d)
+        r = [stw(20, 1, 8), stw(25, 1, 12), lwz(20, 3, 0), lwz(25, 3, 4),
+             lwz(20, 1, 8), lwz(25, 1, 12), self._BLR]
+        d = [stw(25, 1, 8), stw(20, 1, 12), lwz(25, 3, 0), lwz(20, 3, 4),
+             lwz(25, 1, 8), lwz(20, 1, 12), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)

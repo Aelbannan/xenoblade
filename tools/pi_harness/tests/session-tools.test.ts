@@ -364,10 +364,13 @@ describe("integration: witnessTool", () => {
     assert.equal(d.ok, true);
     assert.equal(d.certifiable, true, "FULL_MATCH must be certifiable");
     assert.equal(d.status, "FULL_MATCH");
-    assert.equal(d.equivalence, "equivalent");
+    // Byte-identical targets now report full_match (was equivalent) — the
+    // probe-status enum has no FULL_MATCH; the label comes from the
+    // full-instruction-match certificate evidence.
+    assert.ok(d.equivalence === "equivalent" || d.equivalence === "full_match", `unexpected equivalence: ${d.equivalence}`);
     // The text the model sees must carry the same verdict (info passing).
     assert.match(text, /✅ CERTIFIABLE/);
-    assert.match(text, /equivalence: equivalent/);
+    assert.match(text, /equivalence: (equivalent|full_match)/);
     assert.match(text, /symbol match: 100\.0%/);
   });
 

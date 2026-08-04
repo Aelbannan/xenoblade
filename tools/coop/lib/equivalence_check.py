@@ -174,6 +174,8 @@ from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
     extract_function,
     extract_function_pair,
+    list_text_functions,
+    _resolve_candidates,
 )
 from tools.ppc_equivalence.callee_inference import infer_matched_callee_contracts
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
@@ -255,10 +257,16 @@ def _current_certifier_hash() -> str:
 _FM_CALLEE_READS = frozenset({
     "r3", "r4", "r5", "f1",  # argument window
     "cr", "xer.ca", "xer.ov", "xer.so",  # genuinely-read volatile components
-    "msr", "lr", "time_base",  # caller-independent (lr=pc+4, clock global)
+    "msr", "lr", "time_base",  # caller-independent at a call (lr=pc+4, clock global)
     "r1", "r2", "r13",  # frame / SDA bases (caller-independent at a call)
     "memory", "valid", "invalid_reason",
 })
+# NOTE: ``lr`` stays in the read ENVELOPE (a callee may ``mflr`` — ``blr``
+# reads lr too), but ``call_token`` (semantics.py) excludes lr from the
+# precise-contract token: at a call site lr = pc+4 is location-dependent, so
+# keying the token on it would diverge the two sides across bases (round-3
+# review F2).  The read envelope and the token key are deliberately different
+# sets.
 _FM_CALLEE_WRITES = frozenset(
     {"r0", *(f"r{i}" for i in range(3, 13))}
     | {"cr", "cr0", "cr1", "cr5", "cr6", "cr7"}
@@ -289,16 +297,21 @@ def _full_match_callee_body_fits_narrow(
     with ``reads={r3,r4,r5}`` — the outgoing-argument false-certificate class
     re-routed through a dishonest contract (gate 5 trusts ``contract.reads``).
 
-    Reads: GPR/FPR/PS1 lanes via the witness role table (``_use_def_numbered``
-    — precise, no immediate/destination artifacts, audited for rlwimi/ps1/
-    stmw; unknown opcodes over-approximate all 96 lanes) plus non-GPR
-    components via ``register_effects`` (cr/xer/msr/…, cr-field granularity).
-    Any live-in read outside ``_FM_CALLEE_READS`` falls back to opaque.
-    Writes must fit ``_FM_CALLEE_ENVELOPE_WRITES`` (register_effects is
-    conservative for live-out, i.e. over-approximates writes).  A callee with
-    an internal call fails closed: ``bl`` reads nothing syntactically, but the
-    body may pass its entry arguments (r3–r10/f1–f8) down to nested callees,
-    so the narrow window cannot certify its entry reads.
+    Reads: GPR/FPR/PS1 lanes via the witness CFG liveness fixpoint
+    (``_cfg_liveness`` — precise over the real CFG, no immediate/destination
+    artifacts, audited for rlwimi/ps1/stmw; unknown opcodes over-approximate
+    all 96 lanes; round-3 review: the prior STREAM-ORDER scan skipped a
+    live-in read shadowed by a later-in-stream def on a branch-skip path, e.g.
+    ``bne .L1; li r6,0; .L1: mr r3,r6`` reads ENTRY r6 on the taken path but
+    was certified ``reads={r3,r4,r5}``) plus non-GPR components via
+    ``register_effects`` (cr/xer/msr/…, cr-field granularity).  Any live-in
+    read outside ``_FM_CALLEE_READS`` falls back to opaque.  Writes must fit
+    ``_FM_CALLEE_ENVELOPE_WRITES`` (register_effects is conservative for
+    live-out, i.e. over-approximates writes).  A callee with an internal call
+    OR a tail call fails closed (round-3 finding 2): ``bl`` reads nothing
+    syntactically and a non-link relocated ``b`` reads nothing at all, but
+    both pass the body's entry arguments (r3–r10/f1–f8) down to a nested
+    callee, so the narrow window cannot certify its entry reads.
     """
     try:
         unit = project.resolve_unit(unit_hint)
@@ -311,30 +324,27 @@ def _full_match_callee_body_fits_narrow(
     except (ElfSymbolError, DecodeError, OSError, ValueError):
         return False
     from tools.coop.lib.renaming_witness import (
-        _is_call, _use_def_numbered, _PS1_OFFSET,
+        _is_call, _is_tail_call, _cfg_liveness, _PS1_OFFSET,
     )
     allowed_gpr = frozenset({1, 2, 3, 4, 5, 13})
+    by_index = {insn.address: i for i, insn in enumerate(insns)}
+    end_pc = insns[-1].address + 4 if insns else 0
     for insn in insns:
         _, writes = register_effects(insn)
         if not writes <= _FM_CALLEE_ENVELOPE_WRITES:
             return False
-        if _is_call(insn):
-            return False  # internal call: entry reads not certifiable
-    written: set[int] = set()
-    for insn in insns:
-        uses, defs = _use_def_numbered(insn)
-        for lane in uses:
-            if lane in written:
-                continue
-            if lane < 32:
-                if lane not in allowed_gpr:
-                    return False
-            elif lane < _PS1_OFFSET:
-                if lane - 32 != 1:  # f1 only
-                    return False
-            else:
-                return False  # ps1 reads not in the narrow envelope
-        written |= defs
+        if _is_call(insn) or _is_tail_call(insn, by_index, end_pc):
+            return False  # internal call or tail call: entry reads not certifiable
+    _, entry_live_in, _ = _cfg_liveness(insns)
+    for lane in entry_live_in:
+        if lane < 32:
+            if lane not in allowed_gpr:
+                return False
+        elif lane < _PS1_OFFSET:
+            if lane - 32 != 1:  # f1 only
+                return False
+        else:
+            return False  # ps1 reads not in the narrow envelope
     other_written: set[str] = set()
     for insn in insns:
         reads, writes = register_effects(insn)
@@ -3203,7 +3213,58 @@ def certify_unit_symbol(
     if unit.target_path is None or unit.base_path is None:
         return EquivalenceProbe(ProofStatus.INVALID_INPUT, "unit lacks an object pair")
     try:
-        left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
+        try:
+            left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
+        except Exception:
+            # Retail object may have NULL/stripped symbols (DOL-split placeholder,
+            # e.g. CBattleManager) while the decomp side has real mangled names.
+            # hexdiff recovers these via the registry address; do the same here:
+            # resolve the decomp function by name, and the retail function by
+            # address (registry address - decomp text_base = retail .text offset).
+            from tools.coop.lib.targets import get_target, load_targets
+            try:
+                reg = get_target(load_targets(project.config), target_id)
+                addr = reg.address
+            except Exception:
+                addr = None
+            if not addr:
+                raise
+            # text_base: the unit's first retail function address. The registry
+            # min address for this unit == where retail .text starts. Deriving
+            # it from the DECOMP object is unreliable (decomp can have
+            # different function sizes/ordering than the DOL-split retail,
+            # e.g. CBattleManager: retail first fn 0x320B vs decomp 0x328B).
+            try:
+                min_addr = min(
+                    int(t.address, 0)
+                    for t in load_targets(project.config)
+                    if t.unit and (t.unit == unit.name or t.unit == unit.name.split("/", 1)[-1])
+                    and t.address
+                )
+            except Exception:
+                min_addr = None
+            if min_addr is not None and (int(str(addr), 0) - 0) >= min_addr:
+                text_base = min_addr
+            else:
+                decomp_fns = list_text_functions(unit.base_path)
+                decomp_fn = _resolve_candidates(decomp_fns, symbol)
+                if not decomp_fn:
+                    raise
+                decomp_fn = decomp_fn[0]
+                text_base = (int(str(addr), 0) - decomp_fn.value) & 0xFFFFFFFF
+            retail_fns = list_text_functions(unit.target_path)
+            retail_target = None
+            for rf in retail_fns:
+                if (text_base + rf.value) & 0xFFFFFFFF == int(str(addr), 0):
+                    retail_target = rf
+                    break
+            if retail_target is None:
+                raise
+            decomp_fns = list_text_functions(unit.base_path)
+            decomp_fn = _resolve_candidates(decomp_fns, symbol)
+            if not decomp_fn:
+                raise
+            left, right = retail_target, decomp_fn[0]
         # Byte-identical FULL_MATCH leaves (common for RVL paired-single MTX)
         # skip SMT prove: incomplete PS capability stubs / timeouts block certs
         # that parents need. Prefer prove only when bytes differ and a reviewed

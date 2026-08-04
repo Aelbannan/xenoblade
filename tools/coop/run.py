@@ -102,6 +102,25 @@ def _sha1(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _equivalence_label(evaluation) -> str:
+    """Format the equivalence value for display. Byte-identical targets
+    certify as full-instruction-match; the probe status enum has no
+    FULL_MATCH value, so surface 'full_match' from the certificate evidence
+    instead of the misleading 'equivalent' (the registry status is
+    FULL_MATCH via classify_status)."""
+    if evaluation.equivalence is None:
+        return ""
+    detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
+    ev = evaluation.equivalence.value
+    if (
+        ev == "equivalent"
+        and evaluation.equivalence_certificate
+        and evaluation.equivalence_certificate.get("evidence") == "full-instruction-match"
+    ):
+        ev = "full_match"
+    return f"{ev}{detail}"
+
+
 def cmd_status(project: Project, config: CoopConfig) -> int:
     print(f"project_root: {project.root}")
     print(f"region:       {config.region}")
@@ -285,8 +304,7 @@ def cmd_diff(
         print(f"WARNING: symbol not found in report: {symbol}", file=sys.stderr)
 
     if evaluation.equivalence is not None:
-        detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
-        print(f"equivalence: {evaluation.equivalence.value}{detail}")
+        print(f"equivalence: {_equivalence_label(evaluation)}")
 
     if write_function_diff and symbol and fn_match:
         out = config.resolve(Path("build/coop-function-diff.json"))
@@ -449,8 +467,7 @@ def cmd_cycle(
             f"size: 0x{fn_match.size:X}"
         )
     if evaluation.equivalence is not None:
-        detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
-        print(f"equivalence: {evaluation.equivalence.value}{detail}")
+        print(f"equivalence: {_equivalence_label(evaluation)}")
     if evaluation.equivalence_certificate:
         print(
             "certificate: semantic-certified "
@@ -1688,14 +1705,6 @@ def cmd_opcodes(opcodes_args: list[str], config: CoopConfig) -> int:
     return subprocess.run(cmd, cwd=ROOT, check=False).returncode
 
 
-def cmd_atlas(atlas_args: list[str]) -> int:
-    if atlas_args and atlas_args[0] == "--":
-        atlas_args = atlas_args[1:]
-    script = ROOT / "tools" / "decomp_atlas" / "run.py"
-    cmd = [sys.executable, str(script), *atlas_args]
-    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Xenoblade co-op decompilation runner")
     parser.add_argument(
@@ -2033,16 +2042,6 @@ def main() -> int:
         help="optional DOL path and flags (e.g. --sort count, --names-only, --json)",
     )
 
-    p_atlas = sub.add_parser(
-        "atlas",
-        help="Decomp Atlas index/serve (wraps tools/decomp_atlas/run.py)",
-    )
-    p_atlas.add_argument(
-        "atlas_args",
-        nargs=argparse.REMAINDER,
-        help="atlas subcommand (status, index [--full] [--vectors], serve [--enable-jobs])",
-    )
-
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -2215,8 +2214,6 @@ def main() -> int:
         return cmd_equivalence(project, config, args.equivalence_args)
     if args.command == "opcodes":
         return cmd_opcodes(args.opcodes_args, config)
-    if args.command == "atlas":
-        return cmd_atlas(args.atlas_args)
 
     parser.error(f"unknown command: {args.command}")
     return 2

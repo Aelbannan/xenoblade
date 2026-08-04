@@ -129,6 +129,16 @@ def classify_status(
     proof: Optional[ProofResult] = None,
 ) -> str:
     if symbol:
+        # A certificate means a sound equivalence proof ALREADY succeeded
+        # (register-renaming witness or full-instruction-match). That is the
+        # source of truth even when the objdiff match% is broken/None — some
+        # units' objdiff reports return 0%/None for byte-identical functions
+        # (null retail symbols, e.g. CBattleManager), which would otherwise
+        # classify as NOT_STARTED/COMPILES despite the witness certifying.
+        if certificate is not None and equivalence == ProofStatus.EQUIVALENT:
+            if certificate.get("evidence") == "full-instruction-match":
+                return "FULL_MATCH"
+            return "EQUIVALENT_MATCH"
         if function_match is None:
             return "NOT_STARTED"
         if function_match >= 100.0:
@@ -219,16 +229,21 @@ def evaluate_unit_match(
     pct = fn_match.match_percent if fn_match else None
     # Witness-only path (run_smt=False, the no-SMT pipeline): the objdiff
     # match% gate (should_probe_equivalence) is unreliable — some units' objdiff
-    # reports under-report (0.0% for byte-identical functions, e.g.
-    # CCollepedia's func_802542B8), which silently skipped certification and
-    # made certify requests fail. certify_unit_symbol reads the ELF bytes
-    # directly: byte-identical -> FULL_MATCH (full-instruction-match cert),
-    # reg-swap-only -> register-renaming witness internally. Route the
-    # witness-only path through it whenever a target_id is present (the
-    # harness's certify path). For run_smt=True keep the historical gate.
-    if (not run_smt) and target_id and symbol and fn_match and pct is not None and pct < 100.0:
+    # reports under-report or find NOTHING (0%/None for byte-identical
+    # functions: null retail symbols, e.g. CBattleManager), which silently
+    # skipped certification and made certify requests fail. certify_unit_symbol
+    # reads the ELF bytes directly: byte-identical -> FULL_MATCH
+    # (full-instruction-match cert), reg-swap-only -> register-renaming witness
+    # internally. Route the witness-only path through it whenever a target_id
+    # is present (the harness's certify path), even when objdiff found no
+    # fn_match (the registry symbol is the lookup key). For run_smt=True keep
+    # the historical gate.
+    if (not run_smt) and target_id and symbol and (
+        (fn_match is not None and (pct is None or pct < 100.0))
+        or (fn_match is None and symbol)
+    ):
         with timer("smt"):
-            probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
+            probe = certify_unit_symbol(project, unit, symbol, target_id)
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate

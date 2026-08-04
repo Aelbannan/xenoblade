@@ -217,6 +217,8 @@ async function main(): Promise<void> {
 
   process.stderr.write("[pi-harness] Effective config:\n");
   process.stderr.write(`  matchModel:     ${effectiveConfig.matchModel.provider}/${effectiveConfig.matchModel.model} (thinking: ${effectiveConfig.matchModel.thinkingLevel})\n`);
+  process.stderr.write(`  singletonModel: ${effectiveConfig.singletonModel.provider}/${effectiveConfig.singletonModel.model} (thinking: ${effectiveConfig.singletonModel.thinkingLevel})\n`);
+  process.stderr.write(`  rebatchModel:   ${effectiveConfig.rebatchModel.provider}/${effectiveConfig.rebatchModel.model} (thinking: ${effectiveConfig.rebatchModel.thinkingLevel})\n`);
   process.stderr.write(`  cleanupModel:   ${effectiveConfig.cleanupModel.provider}/${effectiveConfig.cleanupModel.model} (thinking: ${effectiveConfig.cleanupModel.thinkingLevel})\n`);
   process.stderr.write(`  batchSize:      ${effectiveConfig.batchSize}\n`);
   process.stderr.write(`  maxParallel:    ${effectiveConfig.maxParallelTUs}\n`);

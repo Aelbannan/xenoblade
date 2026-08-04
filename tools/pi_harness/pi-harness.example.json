@@ -41,5 +41,15 @@
   "bankOnlyOnBetter": true,
   "selection": "claim-order",
   "triage": "off",
-  "pythonBin": ".venv/bin/python"
+  "pythonBin": ".venv/bin/python",
+  "singletonModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  },
+  "rebatchModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  }
 }

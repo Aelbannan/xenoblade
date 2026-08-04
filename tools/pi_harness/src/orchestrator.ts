@@ -150,6 +150,8 @@ export async function runTus(
   // has ~113 batch-error events from exactly this: "Model X not found").
   for (const [label, spec] of [
     ["matchModel", config.matchModel],
+    ["singletonModel", config.singletonModel],
+    ["rebatchModel", config.rebatchModel],
     ["cleanupModel", config.cleanupModel],
   ] as const) {
     if (!modelRuntime.getModel(spec.provider, spec.model)) {
@@ -1290,7 +1292,7 @@ async function runRebatchPhase(
         });
 
         const sessionResult = await runAgentSession({
-          repoRoot, modelRuntime, spec: config.matchModel, prompt,
+          repoRoot, modelRuntime, spec: config.rebatchModel, prompt,
           sessionDir: join(config.sessionDir, sanitized, `rebatch-${rbIdx}`),
           label: `rebatch-${rbIdx}-session`,
           python: config.pythonBin,
@@ -1498,7 +1500,7 @@ async function runSingleton(
       });
 
       const sessionResult = await runAgentSession({
-        repoRoot, modelRuntime, spec: config.matchModel, prompt,
+        repoRoot, modelRuntime, spec: config.singletonModel, prompt,
         sessionDir: join(config.sessionDir, sanitized, `singleton-${targetId}`),
         label: `singleton-${targetId}-session-${sessionAttempt}`,
         python: config.pythonBin,

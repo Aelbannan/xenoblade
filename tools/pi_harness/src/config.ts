@@ -27,6 +27,8 @@ const DEFAULT_MODEL: ModelSpec = {
 function defaultConfig(): HarnessConfig {
   return {
     matchModel: { ...DEFAULT_MODEL },
+    singletonModel: { ...DEFAULT_MODEL },
+    rebatchModel: { ...DEFAULT_MODEL },
     cleanupModel: { ...DEFAULT_MODEL, thinkingLevel: "medium" },
     batchSize: 5,
     maxParallelTUs: 2,
@@ -103,13 +105,28 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
 
     for (const [key, value] of Object.entries(raw)) {
       if (value === undefined || value === null) continue;
-      if (key === "matchModel" || key === "cleanupModel") {
+      if (key === "matchModel" || key === "cleanupModel" || key === "singletonModel" || key === "rebatchModel") {
         if (typeof value !== "object" || value === null || Array.isArray(value)) {
           throw new Error(`config.${key} must be an object`);
         }
         Object.assign(config[key], value);
       } else if (key in config) {
         (config as unknown as Record<string, unknown>)[key] = value;
+      }
+    }
+
+    // Phase models inherit from matchModel when not explicitly set. Because
+    // partial specs merge over the DEFAULT_MODEL defaults, a phase spec that
+    // left `model`/`thinkingLevel` unset still carries DEFAULT_MODEL's values
+    // — those match the inherited default sentinel and get replaced.
+    for (const phase of ["singletonModel", "rebatchModel"] as const) {
+      const spec = config[phase];
+      if (spec.model === DEFAULT_MODEL.model && spec.provider === DEFAULT_MODEL.provider) {
+        spec.model = config.matchModel.model;
+        spec.provider = config.matchModel.provider;
+      }
+      if (spec.thinkingLevel === DEFAULT_MODEL.thinkingLevel) {
+        spec.thinkingLevel = config.matchModel.thinkingLevel;
       }
     }
   }
@@ -214,6 +231,8 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
     }
   }
   validateModel(config.matchModel, "matchModel");
+  validateModel(config.singletonModel, "singletonModel");
+  validateModel(config.rebatchModel, "rebatchModel");
   validateModel(config.cleanupModel, "cleanupModel");
 
   // Cross-field warnings (non-fatal).

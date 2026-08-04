@@ -25,6 +25,13 @@ export interface ModelSpec {
 
 export interface HarnessConfig {
   matchModel: ModelSpec;
+  /** Model for singleton retries (fallback after a batch target failed).
+   *  Defaults to matchModel. Often worth a cheaper/different model since
+   *  singletons retry already-failed targets. */
+  singletonModel: ModelSpec;
+  /** Model for the re-batch phase (small failed targets). Defaults to
+   *  matchModel. */
+  rebatchModel: ModelSpec;
   cleanupModel: ModelSpec;
   batchSize: number;
   maxParallelTUs: number;

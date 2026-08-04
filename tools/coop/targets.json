@@ -275690,7 +275690,7 @@
       "size": "0xAC",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.c",
@@ -275702,7 +275702,15 @@
       "abi_helper_calls": [],
       "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source; 2026-08-03 decl-order improvement: 'unsigned int right_shift, src_offset, left_shift;' (rs-first, rev_unaligned ONLY - the forward __copy_longs_unaligned regresses under it) fixes ls onto retail r10: 18->15 pure reg-swaps, 0 structural, 97.91% objdiff (was 97.33), size exact 0xac, unit .text exactly 0x2D0 = budget, siblings stay 100%. Residual 3-cycle {cps r4->r11, so r9->r4, rs r11->r9}: isolated-MWCC-ladder-proven unreachable on every Wii/1.x compiler/flag/source form (cps=src+n never coalesces into r4 once adjust+word-loop exist; GC/3.0a* coalesces but breaks retail insn selection). Witness gate 5 forbids certifying arg-register rotations; acceptance requires the SMT probe (declined 2026-08-03; KB says it fail-closes anyway). STALL: documented cap, see MWCC_REFERENCE ref 0f209f4a48.",
       "instruction_match": 97.907,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-eabi-match",
+        "claimed_at": "2026-08-04T04:41:37.162046+00:00",
+        "allowed_paths": [
+          "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802c156c",
@@ -354618,7 +354626,7 @@
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -354632,8 +354640,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/wud/WUD.s",
       "abi_helper_calls": [],
-      "instruction_match": 50.49,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "instruction_match": 91.302,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8037c910",
@@ -518983,8 +518991,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -518992,7 +519000,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:09.546471+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb6d4",
@@ -519005,8 +519023,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519014,7 +519032,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:12.005232+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb6e8",
@@ -519027,8 +519055,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519036,7 +519064,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:14.473192+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb6fc",
@@ -519049,8 +519087,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519058,7 +519096,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:16.878476+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb710",
@@ -519143,8 +519191,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519152,7 +519200,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:19.882920+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb73c",
@@ -519165,8 +519223,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519174,7 +519232,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:22.327849+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb750",
@@ -519187,8 +519255,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -519196,7 +519264,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+      "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:40:24.837592+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804cb764",

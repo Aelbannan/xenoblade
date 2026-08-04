@@ -227,13 +227,25 @@ void func_804C7190(){}
 
 void func_804C7530(){}
 
-void func_804C7564(){}
+extern "C" void func_804C7564(void* self, void* target, float v) {
+    *(float*)((u8*)target + 0x18) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x8;
+}
 
-void func_804C7578(){}
+extern "C" void func_804C7578(void* self, void* target, float v) {
+    *(float*)((u8*)target + 0x1C) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x8;
+}
 
-void func_804C758C(){}
+extern "C" void func_804C758C(void* self, void* target, float v) {
+    *(float*)((u8*)target + 0x20) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x8;
+}
 
-void func_804C75A0(){}
+extern "C" void func_804C75A0(void* self, void* target, float v) {
+    *(float*)((u8*)target + 0x24) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x8;
+}
 
 u32 func_804C75B4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 0) = val; return unused; }
 
@@ -241,11 +253,20 @@ u32 func_804C75BC(u32 unused, void* obj, float val) { *(float*)((char*)obj + 4) 
 
 u32 func_804C75C4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 8) = val; return unused; }
 
-void func_804C75CC(){}
+extern "C" void func_804C75CC(void* self, float v) {
+    *(float*)((u8*)self + 0x0C) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x1;
+}
 
-void func_804C75E0(){}
+extern "C" void func_804C75E0(void* self, float v) {
+    *(float*)((u8*)self + 0x10) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x2;
+}
 
-void func_804C75F4(){}
+extern "C" void func_804C75F4(void* self, float v) {
+    *(float*)((u8*)self + 0x14) = v;
+    *(u32*)((u8*)self + 0x20) |= 0x4;
+}
 
 u32 func_804C7608(u32 unused, void* obj, float val) { *(float*)((char*)obj + 40) = val; return unused; }
 

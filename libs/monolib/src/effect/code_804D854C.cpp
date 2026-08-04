@@ -13,7 +13,11 @@ void func_804D8B28(void* self){ func_80490314(); }
 extern void func_8049032C();
 void func_804D8B30(void* self){ func_8049032C(); }
 
-void func_804D8B38(){}
+extern "C" void func_804D8B38(void* self) {
+    *(u32*)((u8*)self + 0) = 0;
+    *(u32*)((u8*)self + 4) = 0;
+    *(u8*)((u8*)self + 8) = 0;
+}
 
 void func_804D8B4C(){}
 

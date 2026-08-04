@@ -41,7 +41,8 @@ void func_804BE4B4(){}
 
 void func_804BE4E0(){}
 
-void func_804BE50C(){}
+extern "C" { extern unsigned char lbl_eu_8065F428[]; }
+extern "C" void* func_804BE50C(u32 idx) { return (void*)((char*)lbl_eu_8065F428 + idx * 0x24); }
 
 void* func_804BE520(int index) {
     extern unsigned char lbl_eu_8065F428[];

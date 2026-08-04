@@ -35,7 +35,7 @@ void func_804BC164(){}
 
 void func_804BC494(){}
 
-void func_804BC9A0(){}
+extern "C" u32 func_804BC9A0(void* self) { return *(u32*)self != 0; }
 
 void func_804BC9B4(int *dest, int offset, int *src) {
     dest[0] = offset + src[1];

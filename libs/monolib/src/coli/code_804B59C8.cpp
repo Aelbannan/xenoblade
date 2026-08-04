@@ -132,7 +132,7 @@ void func_804BA7BC(){}
 
 void func_804BA8B4(){}
 
-void func_804BADA0(){}
+extern "C" u32 func_804BADA0(void* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BADB4(){}

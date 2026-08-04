@@ -62,6 +62,11 @@ _RE_VOLATILE_ARR = re.compile(
 _RE_CAST = re.compile(r"\(\s*\w+\s*\*\s*\)")
 _RE_HEX_OFF = re.compile(r"\+\s*0x[0-9A-Fa-f]+")
 _RE_CODEGEN = re.compile(r"DECOMP_PPC_|DECOMP_FORCELITERAL|DECOMP_FORCEACTIVE")
+# Binary-patching escapes (PLAN.md §17.6): forbidden in source. The narrow
+# linker-ADDR16 bake (bake_linker_addrs / force_symbol_relocs) is allowed.
+_RE_BINPATCH = re.compile(
+    r"insn_patches|insert_insns|reloc_offset_moves|postprocess_reloc_names"
+)
 _RE_PRAGMA = re.compile(r"^\s*#\s*pragma\b")
 _RE_IF0 = re.compile(r"^\s*#\s*if\s+0\b")
 _RE_SECTION = re.compile(r"__declspec\s*\(\s*section|__attribute__\s*\(\s*\(\s*section")
@@ -74,6 +79,21 @@ def is_cpp(path: str) -> bool:
 
 
 _RE_SELF_PARAM = re.compile(r"\*\s*self\s*(?:[,)]|$)")
+
+# SJIS-safe check: the build runs sjiswrap + mwcceppc which reject characters
+# with no Shift-JIS encoding (e.g. U+2014 em-dash, U+2018/2019 curly quotes).
+# Genuine Japanese (し, く, 。…) DOES have SJIS encodings and is fine. A UTF-8
+# char that cannot round-trip through shift_jis will fail the build.
+def _sjis_unsafe_chars(text: str) -> list[str]:
+    out: list[str] = []
+    for ch in text:
+        if ord(ch) > 0x7F:
+            try:
+                ch.encode("shift_jis")
+            except UnicodeEncodeError:
+                if ch not in out:
+                    out.append(ch)
+    return out
 
 
 def lint_delta(path: str, old_text: str | None,
@@ -97,6 +117,14 @@ def lint_delta(path: str, old_text: str | None,
     for line_no, raw in _added_lines(old_text, new_text):
         code = _strip_line_comment(raw)
 
+        # SJIS safety: characters with no Shift-JIS encoding break the build
+        # (sjiswrap rejects them). Check the raw line INCLUDING comments.
+        bad = _sjis_unsafe_chars(raw)
+        if bad:
+            add("non_sjis_char", line_no, raw,
+                f"character(s) with no Shift-JIS encoding (will fail the "
+                f"build): {''.join(bad)} — replace with ASCII or valid SJIS")
+
         # C-only: `extern "C"` is C++ syntax — illegal in C source.
         if is_c and _RE_EXTERN_C.search(code):
             add("extern_c_in_c", line_no, raw,
@@ -115,6 +143,11 @@ def lint_delta(path: str, old_text: str | None,
         if _RE_CODEGEN.search(raw):
             add("no_codegen_macros", line_no, raw,
                 "DECOMP_* codegen-steering macros are forbidden")
+        if _RE_BINPATCH.search(raw):
+            add("no_binary_patching", line_no, raw,
+                "binary-patching escapes (insn_patches / insert_insns / "
+                "reloc_offset_moves / postprocess_reloc_names) are forbidden — "
+                "chase EQUIVALENT_MATCH, not byte-identity patches")
         if _RE_EXTERN_C.search(raw) and "lbl_" not in raw:
             add("no_extern_c", line_no, raw,
                 'extern "C" is only allowed for lbl_* reloc names')

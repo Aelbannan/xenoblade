@@ -11,12 +11,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | metric | count |
 |---|---|
 | extern "C" (total lines) | 6349 |
-| extern "C" declarations (non-lbl_*, imports) | 2241 |
+| extern "C" declarations (non-lbl_*, imports) | 2243 |
 | extern "C" definitions (forced names) | 1998 |
-| `self`/register-style params | 3369 |
-| `void*` (params + locals) | 4895 |
-| raw pointer offset arithmetic | 2908 |
-| deref-through-cast arithmetic | 1293 |
+| `self`/register-style params | 3370 |
+| `void*` (params + locals) | 4922 |
+| raw pointer offset arithmetic | 2913 |
+| deref-through-cast arithmetic | 1298 |
 | inline asm / `register` | 88 |
 | rN-named params | 315 |
 | goto | 1048 |
@@ -498,12 +498,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuKizunaTalk.cpp | 0 | 1 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLandTelop.cpp | 0 | 0 | 3 | 4 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLvUp.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuMapSelect.cpp | 37 | 2 | 42 | 1 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuMapSelect.cpp | 39 | 2 | 42 | 28 | 5 | 5 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelectSC.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/menu/CMenuOption.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 0 | 1 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTGauge.cpp | 4 | 3 | 3 | 10 | 13 | 11 | 2 | 0 | 14 |
-| src/kyoshin/menu/CMenuPTState.cpp | 0 | 0 | 7 | 3 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuPTState.cpp | 0 | 0 | 8 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPause.cpp | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 0 | 1 | 6 | 7 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuQstCnt.cpp | 2 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -2990,10 +2990,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "src/kyoshin/menu/CMenuMapSelect.cpp": {
-  "extern_c_nonlbl_decl": 37,
+  "deref_arith": 5,
+  "extern_c_nonlbl_decl": 39,
   "extern_c_nonlbl_def": 2,
+  "ptr_arith": 5,
   "self_params": 42,
-  "void_ptr": 1
+  "void_ptr": 28
  },
  "src/kyoshin/menu/CMenuMapSelectSC.cpp": {
   "rn_params": 1,
@@ -3020,7 +3022,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 10
  },
  "src/kyoshin/menu/CMenuPTState.cpp": {
-  "self_params": 7,
+  "self_params": 8,
   "void_ptr": 3
  },
  "src/kyoshin/menu/CMenuPause.cpp": {

@@ -35,7 +35,9 @@ export function buildBatchPrompt(opts: {
     "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +
     "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
     "- NEVER write `*(u32*)(ptr + 0xNN)` or similar cast+offset arithmetic — define a struct with `field_0xNN` members instead.\n" +
-    "- NEVER add new `#pragma` directives (except `#pragma once` in headers) — the build system handles compiler options.\n"
+    "- NEVER add new `#pragma` directives (except `#pragma once` in headers) — the build system handles compiler options.\n" +
+    "- NEVER use binary-patching escapes (`insn_patches`, `insert_insns`, `reloc_offset_moves`, `postprocess_reloc_names.py`) — chase EQUIVALENT_MATCH, not byte-identity patches. (`bake_linker_addrs`/`force_symbol_relocs` for DOL-split absolutes are the only allowed exceptions.)\n" +
+    "- NEVER write characters with no Shift-JIS encoding (e.g. em-dash `—`, en-dash `–`) — the build rejects them. Use ASCII (`-`) or genuine Japanese that has an SJIS encoding.\n"
   );
 }
 

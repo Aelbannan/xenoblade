@@ -1,6 +1,10 @@
 #include <revolution/GX.h>
 
-// TODO(kiwi) Fake inline
+// Isolated Gekko paired-single kernel (PLAN.md §17.6): projection matrix
+// write through the GX FIFO port — the 3x `psq_st 0(dst)` at the same
+// address are correct (the port auto-advances per store). VERIFIED 100% vs
+// retail (16/16 TU). FRAGILE: register-pinned operands; do not extend the
+// asm, prefer __psq_st builtins for new code.
 inline void WriteProjPS(register volatile void* dst, register const f32* src) {
     register f32 ps_0, ps_1, ps_2;
 

@@ -62,6 +62,7 @@ class Object:
             "extra_cflags": [],
             "extra_clang_flags": [],
             "lib": None,
+            "link_transform": None,
             "mw_version": None,
             "progress_category": None,
             "scratch_preset_id": None,
@@ -809,6 +810,21 @@ def generate_build_ninja(
     )
     n.newline()
 
+    # Link-only symbol rename (objcopy --redefine-sym). Produces a *.link.o
+    # copy of a compiled object with selected symbols renamed, used ONLY for
+    # the main.dol link — the original object (objdiff base_path, split-size
+    # checks, reloc matching) stays untouched. This works around mwldeppc
+    # symbol-hash collisions that make some retail names (e.g. the HBMSEQ*
+    # family) unresolvable at the current link scale; see
+    # docs/MWCC_REFERENCE.md §Link-only symbol renames.
+    n.comment("Link symbol rename (link-only object transform)")
+    n.rule(
+        name="link_symbol_rename",
+        command=f"{binutils / f'powerpc-eabi-objcopy{EXE}'} $renames $in $out",
+        description="RENAMESYM $out",
+    )
+    n.newline()
+
     n.comment("Build precompiled header")
     n.rule(
         name="mwcc_pch",
@@ -1111,6 +1127,28 @@ def generate_build_ninja(
 
             if obj.options["add_to_all"]:
                 source_inputs.append(obj.src_obj_path)
+
+            # Link-only transform: emit a *.link.o copy with selected symbols
+            # renamed (objdiff/split checks keep the original object).
+            link_transform = obj.options.get("link_transform")
+            if link_transform:
+                link_obj = obj.src_obj_path.with_name(
+                    obj.src_obj_path.stem + ".link.o"
+                )
+                renames = " ".join(
+                    f"--redefine-sym={old}={new}"
+                    for old, new in link_transform["renames"]
+                )
+                n.comment(f"{obj.name}: link symbol rename (link-only)")
+                n.build(
+                    outputs=link_obj,
+                    rule="link_symbol_rename",
+                    inputs=obj.src_obj_path,
+                    variables={"renames": renames},
+                    implicit=[binutils_implicit or binutils],
+                )
+                n.newline()
+                return link_obj
 
             return obj.src_obj_path
 

@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5816 |
+| extern "C" (total lines) | 5825 |
 | extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1639 |
-| `self`/register-style params | 3076 |
-| `void*` (params + locals) | 4591 |
-| raw pointer offset arithmetic | 2527 |
-| deref-through-cast arithmetic | 1118 |
+| extern "C" definitions (forced names) | 1648 |
+| `self`/register-style params | 3085 |
+| `void*` (params + locals) | 4600 |
+| raw pointer offset arithmetic | 2532 |
+| deref-through-cast arithmetic | 1123 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -114,7 +114,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/nand/CNand.cpp | 10 | 14 | 27 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 0 | 10 | 6 | 6 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlDynamics.cpp | 0 | 0 | 7 | 7 | 6 | 6 | 0 | 1 | 0 |
+| libs/monolib/src/scn/CMdlDynamics.cpp | 0 | 9 | 16 | 16 | 11 | 11 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -950,11 +950,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "libs/monolib/src/scn/CMdlDynamics.cpp": {
-  "deref_arith": 6,
-  "ptr_arith": 6,
+  "deref_arith": 11,
+  "extern_c_nonlbl_def": 9,
+  "ptr_arith": 11,
   "rn_params": 1,
-  "self_params": 7,
-  "void_ptr": 7
+  "self_params": 16,
+  "void_ptr": 16
  },
  "libs/monolib/src/scn/CMdlLook.cpp": {
   "self_params": 1,

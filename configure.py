@@ -1145,7 +1145,22 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMController.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp"),
-            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMAxSound.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/HBMAxSound.cpp", link_transform={
+                # mwldeppc symbol-hash collision: the HBMSEQ* names are
+                # unresolvable in the full link at the current symbol scale.
+                # The link uses a renamed *.link.o copy; the compiled object
+                # (objdiff / split checks) keeps the retail names.
+                "renames": [
+                    ("HBMSEQInit", "hbmseq_fix_Init"),
+                    ("HBMSEQQuit", "hbmseq_fix_Quit"),
+                    ("HBMSEQSetState", "hbmseq_fix_SetState"),
+                    ("HBMSEQRunAudioFrame", "hbmseq_fix_RunAudioFrame"),
+                    ("HBMSEQAddSequence", "hbmseq_fix_AddSequence"),
+                    ("HBMSEQRemoveSequence", "hbmseq_fix_RemoveSequence"),
+                    ("HBMSEQGetState", "hbmseq_fix_GetState"),
+                    ("HBMSEQSetVolume", "hbmseq_fix_SetVolume"),
+                ],
+            }),
             Object(Matching, "RVL_SDK/src/revolution/hbm/HBMCommon.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/HBMBase.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation.cpp"),
@@ -1183,7 +1198,21 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synpitch.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synsample.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synvoice.c"),
-            Object(Matching, "RVL_SDK/src/revolution/hbm/seq.c"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/seq.c", link_transform={
+                # See HBMAxSound.cpp: link-only rename of the HBMSEQ* symbols
+                # (definitions here, references in HBMAxSound.o) to dodge the
+                # mwldeppc symbol-hash collision in the full link.
+                "renames": [
+                    ("HBMSEQInit", "hbmseq_fix_Init"),
+                    ("HBMSEQQuit", "hbmseq_fix_Quit"),
+                    ("HBMSEQSetState", "hbmseq_fix_SetState"),
+                    ("HBMSEQRunAudioFrame", "hbmseq_fix_RunAudioFrame"),
+                    ("HBMSEQAddSequence", "hbmseq_fix_AddSequence"),
+                    ("HBMSEQRemoveSequence", "hbmseq_fix_RemoveSequence"),
+                    ("HBMSEQGetState", "hbmseq_fix_GetState"),
+                    ("HBMSEQSetVolume", "hbmseq_fix_SetVolume"),
+                ],
+            }),
         ],
     },
     DolphinLib(

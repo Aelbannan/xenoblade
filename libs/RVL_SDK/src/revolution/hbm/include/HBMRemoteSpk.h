@@ -47,7 +47,6 @@ public:
     void ClearPcm();
     void Start();
     void Stop();
-    void Connect(s32 chan);
     void Play(s32 chan, int seID, s8 vol);
 
 private:

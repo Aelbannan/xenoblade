@@ -212,7 +212,9 @@ void Controller::setInValidPos() {
 }
 
 void Controller::connect() {
-    remotespk->Connect(mHBController.chan);
+    // Retail tail-calls RemoteSpk::Disconnect (there is no RemoteSpk::Connect
+    // in retail; the decompiled header previously declared a stale one).
+    remotespk->Disconnect(mHBController.chan);
 }
 
 void Controller::disconnect() {}

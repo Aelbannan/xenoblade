@@ -864,7 +864,27 @@ function makeVerifyCallback(opts: {
     } else if (unmatchedTargets.length === 0 && matchedTargets.length === 0) {
       feedbackParts.push(`## ⚠️ Verification incomplete — nothing could be confirmed as matched.`);
     } else if (unmatchedTargets.length === 0) {
-      feedbackParts.push(`## All Targets Matched\n\nYour code matches everything in this batch. If some were not accepted, the witness found a reloc/structural gate — the summaries above explain which.`);
+      // Every target shows mismatch:0 in hexdiff, but the acceptance cycle
+      // did NOT certify them (we are in the re-prompt path = 0 accepted).
+      // hexdiff byte-identity != acceptance: the witness can still reject on
+      // reloc drift / size / structural gates. NEVER tell the model its work
+      // is done here — it stops and the session dies (run 9b: CBattleManager
+      // model stopped after being told 'All Targets Matched' while 0 were
+      // accepted). Say what matched at byte level, then direct it to the
+      // witness to find the gate.
+      feedbackParts.push(
+        `## ⚠️ Targets are byte-identical but NOT accepted\n\n` +
+        `hexdiff shows mismatch:0 for all targets (${matchedTargets.length} byte-identical), ` +
+        `BUT the acceptance cycle did NOT certify them — otherwise this session ` +
+        `would have accepted. A witness/reloc/size gate rejected them. ` +
+        `Investigate with the \`witness\` tool (` +
+        `\`witness <unit> <symbol>\`) on each: it reports the exact equivalence ` +
+        `status. Likely causes:\n` +
+        `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
+        `- unit split-size over budget\n` +
+        `- the witness gate (nonvolatile preservation, ABI fixedness)\n\n` +
+        `Do NOT stop — find and fix the gate.`,
+      );
     } else {
       feedbackParts.push(
         `## ${matchedTargets.length > 0 ? "Remaining Targets" : "No Matches Found"}\n\n` +

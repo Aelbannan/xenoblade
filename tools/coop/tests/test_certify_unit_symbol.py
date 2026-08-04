@@ -337,6 +337,70 @@ class FullMatchCertWithoutSmtTests(unittest.TestCase):
             _byte_identical_with_relocs(left, right),
             "reloc sites differ — must not count as byte-identical",
         )
+
+    def test_pure_reg_swap_certifies_through_certify_unit_symbol(self) -> None:
+        """r6 F2: certify_unit_symbol END-TO-END certifies a pure
+        non-byte-identical register-renaming pair with
+        register-renaming-witness evidence.
+
+        Regression guard for the witness↔guard wiring in certify_unit_symbol:
+        a non-byte-identical body whose witness SUCCEEDS must return the
+        witness probe (EQUIVALENT + register-renaming-witness) BEFORE the
+        r5 guard can fire (the guard only rejects witness-FAILED bodies).
+        """
+        from tools.coop.lib import objdiff_report as _or
+        from tools.ppc_equivalence.tests.test_elf_symbols import build_reloc_elf
+
+        # Pure volatile r5<->r6 color swap: same shape, different registers.
+        # retail: mr r5,r3; addi r5,r5,8; blr  |  decomp: mr r6,r3; addi r6,r6,8; blr
+        retail_body = bytes.fromhex("7c631b78 38a30008 4e800020")
+        decomp_body = bytes.fromhex("7c631b78 38c30008 4e800020")
+        retail = self.root / "build/us/retail_regswap.o"
+        decomp = self.root / "build/us/decomp_regswap.o"
+        retail.write_bytes(build_reloc_elf({_SYMBOL: retail_body}))
+        decomp.write_bytes(build_reloc_elf({_SYMBOL: decomp_body}))
+        unit = ObjdiffUnit(
+            name=_UNIT_NAME,
+            target_path=retail,
+            base_path=decomp,
+            source_path=None,
+        )
+
+        fn_match = _or.FunctionMatch(
+            name=_SYMBOL, demangled_name=None, match_percent=0.0, size=8,
+        )
+        unit_report = _or.UnitReport(
+            unit_name=_UNIT_NAME,
+            code_match_percent=0.0,
+            data_match_percent=100.0,
+            fuzzy_match_percent=0.0,
+            total_functions=1,
+            matched_functions=0,
+            functions=[fn_match],
+        )
+        with mock.patch.object(_or, "report_unit", return_value=unit_report), mock.patch.object(
+            _or, "find_function_match", return_value=fn_match
+        ):
+            ev = _or.evaluate_unit_match(
+                self.project, unit, _SYMBOL, target_id=_TARGET_ID, run_smt=False,
+            )
+        # The witness certifies the reg-swap pair -> EQUIVALENT_MATCH with
+        # register-renaming-witness evidence (NOT full-instruction-match,
+        # and NOT blocked by the r5 guard).
+        self.assertEqual(ev.status, "EQUIVALENT_MATCH", ev.equivalence_detail)
+        self.assertIsNotNone(ev.equivalence_certificate)
+        self.assertEqual(
+            ev.equivalence_certificate.get("evidence"), "register-renaming-witness",
+        )
+        self.assertEqual(ev.equivalence, ProofStatus.EQUIVALENT)
+        # Direct call must agree (end-to-end witness↔guard wiring).
+        probe = certify_unit_symbol(self.project, unit, _SYMBOL, _TARGET_ID)
+        self.assertEqual(probe.status, ProofStatus.EQUIVALENT, probe.detail)
+        self.assertEqual(
+            probe.certificate.get("evidence"), "register-renaming-witness",
+        )
+
+    def test_certify_unit_symbol_issues_live_engine_hash_certificate(self) -> None:
         probe = certify_unit_symbol(
             self.project,
             self.unit,

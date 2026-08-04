@@ -45,4 +45,11 @@ extern "C" u32 func_80490098__Fv(void) {
     return lbl_eu_806639A8;
 }
 
-void func_804900A0__FUl(){}
+extern "C" void func_804900A0__FUl(u32 param) {
+    extern u32 lbl_eu_806658FC;
+    if (param) {
+        lbl_eu_806658FC += 1;
+    } else {
+        lbl_eu_806658FC -= 1;
+    }
+}

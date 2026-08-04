@@ -8,7 +8,10 @@ u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 
 u32 func_8048736C(void* self) { return *(u32*)((u8*)self + 0x14c0); }
 
-void func_804876C0(){}
+extern "C" void func_804876C0(void* self) {
+    *(u16*)((u8*)self + 0x17FA) |= 1;
+    *(u16*)((u8*)self + 0x181A) |= 1;
+}
 
 void func_804EB798(void* self);
 void func_804876DC(void* self) { ((void(*)(void*))func_804EB798)((char*)self + 0x17a0); }

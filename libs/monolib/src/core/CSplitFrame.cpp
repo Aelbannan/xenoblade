@@ -198,3 +198,8 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     out->mSize.x = (s16)(x1 - x0);
     out->mSize.y = (s16)(y1 - y0);
 }
+
+extern "C" s16 getSplitLine__11CSplitFrameFv(void* self) {
+    if (*(u8*)((u8*)self + 8) != 0) return *(s16*)((u8*)self + 0xC);
+    return *(s16*)((u8*)self + 0xA);
+}

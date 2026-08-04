@@ -17,7 +17,11 @@ void func_804F1F18(){}
 
 void func_804F213C(){}
 
-void func_804F2A8C(){}
+extern "C" void func_804F2A8C(void* self) {
+    *(u32*)((u8*)self + 8) = 0;
+    *(u32*)((u8*)self + 0) = 0;
+    *(u32*)((u8*)self + 4) = 0;
+}
 
 void func_804F2AA0(){}
 

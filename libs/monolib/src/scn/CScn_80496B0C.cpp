@@ -27,13 +27,13 @@ void func_804977F0(){}
 
 void func_8049782C(){}
 
-void func_804978B8(){}
+extern "C" u32 func_804978B8(void* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
 
 void func_804978D0(){}
 
 void func_80497914(){}
 
-void func_8049798C(){}
+extern "C" u32 func_8049798C(void* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
 
 void func_804979A4(){}
 

@@ -2,12 +2,12 @@
   "matchModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "off"
+    "thinkingLevel": "high"
   },
   "cleanupModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "off"
+    "thinkingLevel": "xhigh"
   },
   "batchSize": 5,
   "maxParallelTUs": 2,

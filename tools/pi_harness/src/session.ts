@@ -170,8 +170,8 @@ export async function runAgentSession(opts: {
     //  - tu-final: same + bash behind a spawnHook allowlist (diff/size/
     //    symbols/build_lock/configure/ninja only).
     tools: kind === "batch"
-      ? ["read", "edit", "write", "grep", "find", "ls"]
-      : ["read", "bash", "edit", "write", "grep", "find", "ls"],
+      ? ["read", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx"]
+      : ["read", "bash", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx"],
     customTools: kind === "batch"
       ? batchSessionTools(repoRoot, python)
       : tuFinalSessionTools(repoRoot, python),

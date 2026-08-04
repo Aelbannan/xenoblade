@@ -37,6 +37,10 @@ import {
   bankDraft, bestBankedDraft, draftNoteFor, restoreBankedDraft,
 } from "./nearmiss.js";
 import { buildBatchPrompt, buildTuFinalPrompt } from "./prompts.js";
+import {
+  scanUnitState, scoreState, buildUnitFeedback,
+  type UnitScan,
+} from "./tufinal-scan.js";
 import { runAgentSession, type SessionRunResult } from "./session.js";
 import {
   snapshotUnit,
@@ -1698,35 +1702,37 @@ async function runTuFinal(
   let buildOk = false;
   let buildOutput = "";
   let sizeOutput = "";
-  let finalLintOk = true;
   let lintViolations: LintOutcome["violations"] = [];
   let lastReason = "";
-  // Lint-improvement tracking: a retry that REDUCES violations keeps its
-  // improvements (no revert); only a regression restores. bestLintCount =
-  // Infinity means "no lint-accepted state yet".
+  // ── Regression-aware state tracking (tufinal-scan.ts) ──
+  // Baseline captured at session start; each attempt's state is scored
+  // lexicographically (match regressions > TU size/data > lint). The best-
+  // scoring snapshot is restored ONCE at the very end — never mid-session
+  // (the model may be working toward something).
+  const baselineScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
+  let bestScore: bigint | null = null;
+  let bestScan: UnitScan | null = null;
+  let bestSnapshot: Snapshot | null = null;
   let bestLintCount = Infinity;
-  let bestLintSnapshot: Snapshot | null = null;
 
   for (let attempt = 1; attempt <= maxTuFinalAttempts; attempt++) {
     const prompt = feedback
       ? basePrompt + `\n\n## TU-final rejection feedback (attempt ${attempt - 1})\n\n${feedback}\n\nThe previous attempt's changes were ${
-          lastReason.startsWith("lint") && bestLintSnapshot ? "KEPT (it reduced lint violations)" : "reverted"
+          lastReason.startsWith("kept") ? "KEPT (best-scoring state so far)" : "NOT reverted mid-session (the model may be building toward something; the best state restores at the end)"
         }. Apply the fixes and retry.\n`
       : basePrompt;
 
     if (attempt > 1) {
-      // Restore only on regression (or when nothing improved): if the last
-      // attempt reduced violations, its state is already the working tree.
-      if (bestLintSnapshot) {
-        // No restore — the improved state is in the worktree.
-        process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} keeps the improved worktree (${bestLintCount} lint violation(s) remaining)\n`);
-      } else {
-        await restoreSnapshot(repoRoot, snapshot);
-      }
-      process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} (retry after ${lastReason})\n`);
+      // NO mid-session restore: the model may be working toward something,
+      // and reverting between attempts discards that progress. The best-
+      // scoring state is snapshotted per-attempt and restored ONCE at the
+      // very end (after all attempts). If the worktree is left build-broken
+      // by a prior attempt, the next attempt sees the error in feedback and
+      // fixes forward.
+      process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} (retry after ${lastReason}) — no mid-session restore\n`);
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "tu-final-retry", tu: unit,
-        detail: { attempt, reason: lastReason, keptImprovement: !!bestLintSnapshot, feedback: feedback.slice(0, 500) },
+        detail: { attempt, reason: lastReason, feedback: feedback.slice(0, 500) },
       });
     }
 
@@ -1744,96 +1750,76 @@ async function runTuFinal(
     } catch (err) {
       const usage = usageFromError(err);
       if (usage) logUsage(repoRoot, config, unit, `tu-final-retry-${attempt}`, usage, false);
-      const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
-      if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
       lastReason = "session-error";
       feedback = `The TU-final session itself failed: ${err instanceof Error ? err.message : String(err)}`;
       if (attempt < maxTuFinalAttempts) continue;
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-        detail: {
-          reason: lastReason,
-          error: err instanceof Error ? err.message : String(err),
-          recoveryOutput: recovery.output,
-        },
+        detail: { reason: lastReason, error: err instanceof Error ? err.message : String(err) },
       });
       return;
     }
 
-    // ── Build gate (1/2): unit compile check — lint only judges code that
-    //    compiles (matches the batch loop's build → lint order). The full
-    //    tree rebuild (configure.py + ninja) runs later, after lint passes. ──
+    // ── Regression-aware state capture (AFTER each session, BEFORE gates) ──
+    // Scan the unit (hexdiff --all --json + size + data%), diff vs baseline,
+    // score, and snapshot the best-scoring state so far. A state that
+    // regressed a match is scored worst and NEVER kept — even if it reduced
+    // lint. Restore happens only at the very end, to the best snapshot.
+    const currentScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
+    const lintAfter = await runLint(repoRoot, config.pythonBin, snapshot);
+    lintViolations = lintAfter.violations;
+    const currentScore = scoreState(currentScan, baselineScan, lintAfter.violations.length);
+    const unitFeedback = buildUnitFeedback(baselineScan, currentScan, lintAfter.violations.length);
+    if (bestScore === null || currentScore < bestScore) {
+      bestScore = currentScore;
+      bestScan = currentScan;
+      bestSnapshot = await snapshotUnit(repoRoot, unit, writable);
+      bestLintCount = lintAfter.violations.length;
+      process.stderr.write(
+        `[pi-harness] ${unit}: attempt ${attempt} is the best state so far ` +
+        `(score ${currentScore}, lint ${lintAfter.violations.length}, matched ${currentScan.matched}/${currentScan.total}) — snapshotted\n`,
+      );
+    }
+
+    // ── Build gate: unit compile check. A broken build is scored worst
+    //    (scanUnitState returns empty on build failure) and the next attempt
+    //    fixes forward — no mid-session restore. ──
     const unitBuild = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
     if (!unitBuild.ok) {
-      // A compile failure invalidates any prior lint-improved state — the
-      // worktree now holds broken code, so the next retry must restore.
-      bestLintSnapshot = null;
-      bestLintCount = Infinity;
       lastReason = "build-failed";
       feedback =
         `The unit does not compile after the polish. Error tail:\n\`\`\`text\n` +
         unitBuild.output.slice(-1500) +
         `\n\`\`\`\n\nFix the compile error and retry.`;
       if (attempt < maxTuFinalAttempts) continue;
-      await restoreSnapshot(repoRoot, snapshot);
-      appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-        detail: { reason: "build-failed", buildOutput: unitBuild.output.slice(-1500), attempts: maxTuFinalAttempts },
-      });
-      console.log(`[pi-harness] ${unit}: TU-final compile failed after ${maxTuFinalAttempts} attempt(s) (restored)`);
-      return;
+      break;
     }
 
-    // ── Lint gate (delta vs the pre-session snapshot) ──
-    const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
-    if (!finalLint.ok) {
-      lastReason = "lint-rejected";
-      lintViolations = finalLint.violations;
-      finalLintOk = false;
-      const rules = [...new Set(lintViolations.map((v) => v.rule))].join(", ");
-      feedback =
-        `Lint rejected the polish (rules: ${rules}). Violations:\n` +
-        lintViolations.slice(0, 10).map(
-          (v) => `- ${v.path}:${v.line ?? "?"} [${v.rule}] ${v.detail}`,
-        ).join("\n") +
-        `\n\nFix ONLY these violations — do not redo the whole finalisation.`;
-      // Lint-improvement: if this attempt reduced violations vs the best
-      // prior state, snapshot the improved worktree and keep it (no revert).
-      const current = lintViolations.length;
-      if (current < bestLintCount) {
-        bestLintCount = current;
-        bestLintSnapshot = await snapshotUnit(repoRoot, unit, writable);
-        process.stderr.write(`[pi-harness] ${unit}: lint improved ${bestLintCount} violation(s) remaining — keeping worktree\n`);
-      } else {
-        bestLintSnapshot = null; // regression — next retry restores
-      }
+    // ── Feedback from the regression-aware scan (built in the capture
+    //    block above; includes unit size/data, loud regressions, and lint).
+    //    Lint no longer preempts: matches/regressions/size are shown first,
+    //    lint violations follow. If lint is clean AND the scan is best-so-far
+    //    with no regressions, this attempt succeeds. ──
+    lastReason = "regression-or-lint";
+    const rules = [...new Set(lintViolations.map((v) => v.rule))].join(", ");
+    feedback = unitFeedback +
+      (lintViolations.length > 0
+        ? `\n\n## Lint Violations (${lintViolations.length})\n\nRules: ${rules}\n` +
+          lintViolations.slice(0, 10).map(
+            (v) => `- ${v.path}:${v.line ?? "?"} [${v.rule}] ${v.detail}`,
+          ).join("\n") +
+          `\n\nFix ONLY these violations — do not redo the whole finalisation.`
+        : `\n\n## Lint clean ✅`);
+
+    // Only a lint-clean attempt proceeds to the full-tree rebuild + size
+    // gate. Lint violations re-prompt (the scan feedback shows what matters).
+    if (lintViolations.length > 0) {
       if (attempt < maxTuFinalAttempts) continue;
-    }
-
-    // Lint passed — we are out of lint-recovery mode. A later build failure
-    // must restore to the pristine snapshot, not the last lint-improved state.
-    bestLintSnapshot = null;
-    bestLintCount = Infinity;
-
-    if (!finalLintOk) {
-      // Lint still failing after all attempts — keep the best-improved state
-      // if any (it is strictly fewer violations than the original), else
-      // restore the pristine snapshot. The unit stays non-Matching either way.
-      if (!bestLintSnapshot) await restoreSnapshot(repoRoot, snapshot);
-      appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-        detail: {
-          reason: "lint-rejected", violations: lintViolations, attempts: maxTuFinalAttempts,
-          keptBest: !!bestLintSnapshot, bestLintCount: bestLintCount === Infinity ? undefined : bestLintCount,
-        },
-      });
-      console.log(`[pi-harness] ${unit}: TU-final lint failed after ${maxTuFinalAttempts} attempt(s)` +
-        (bestLintSnapshot ? ` (kept best-improved state with ${bestLintCount} violation(s))` : " (restored)"));
-      return;
+      break;
     }
 
     // ── Build gate (2/2): full-tree rebuild (configure.py + ninja) — runs
-    //    only after the unit compiles AND lint passes. ──
+    //    only after the unit compiles AND lint is clean. ──
     buildOk = false;
     buildOutput = "";
     sizeOutput = "";
@@ -1857,7 +1843,6 @@ async function runTuFinal(
         buildOutput.slice(-1500) +
         `\n\`\`\`\n\nFix the compile error and retry.`;
       if (attempt < maxTuFinalAttempts) continue;
-      await restoreSnapshot(repoRoot, snapshot);
       break;
     }
 
@@ -1875,6 +1860,17 @@ async function runTuFinal(
     break; // success
   }
 
+  // ── End-of-session restore: the ONLY restore point. If we did not finish
+  //    with a clean lint + build, restore the best-scoring state captured
+  //    across attempts (match-regression-aware) — never the pristine
+  //    snapshot blindly, and never mid-session.
+  if (!buildOk && bestSnapshot) {
+    await restoreSnapshot(repoRoot, bestSnapshot);
+    process.stderr.write(
+      `[pi-harness] ${unit}: TU-final restored best-scoring state (score ${bestScore}, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})\n`,
+    );
+  }
+
   appendLedger(repoRoot, config.ledgerPath, {
     ts: new Date().toISOString(),
     event: buildOk ? "tu-final-done" : "tu-final-failed",
@@ -1882,12 +1878,18 @@ async function runTuFinal(
     detail: {
       buildOk, buildOutput, sizeOutput, attempts: buildOk ? 1 : maxTuFinalAttempts,
       finalTextPreview: (sessionResult?.finalText ?? "").slice(0, 1000),
+      bestScore: bestScore === null ? undefined : bestScore.toString(),
+      bestLintCount: bestLintCount === Infinity ? undefined : bestLintCount,
+      bestMatched: bestScan?.matched,
+      bestTotal: bestScan?.total,
+      restoredBest: !buildOk && !!bestSnapshot,
     },
   });
   console.log(
     buildOk
       ? `[pi-harness] ${unit}: TU-final complete`
-      : `[pi-harness] ${unit}: TU-final build failed after ${maxTuFinalAttempts} attempt(s) (restored)`,
+      : `[pi-harness] ${unit}: TU-final did not finish clean after ${maxTuFinalAttempts} attempt(s) ` +
+        (bestSnapshot ? `(restored best-scoring state, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})` : ""),
   );
 }
 

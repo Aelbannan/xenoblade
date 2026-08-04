@@ -275691,7 +275691,7 @@
       "declared_return": "void",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.c",
@@ -275703,7 +275703,7 @@
       "abi_helper_calls": [],
       "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source; 2026-08-03 decl-order improvement: 'unsigned int right_shift, src_offset, left_shift;' (rs-first, rev_unaligned ONLY - the forward __copy_longs_unaligned regresses under it) fixes ls onto retail r10: 18->15 pure reg-swaps, 0 structural, 97.91% objdiff (was 97.33), size exact 0xac, unit .text exactly 0x2D0 = budget, siblings stay 100%. Residual 3-cycle {cps r4->r11, so r9->r4, rs r11->r9}: isolated-MWCC-ladder-proven unreachable on every Wii/1.x compiler/flag/source form (cps=src+n never coalesces into r4 once adjust+word-loop exist; GC/3.0a* coalesces but breaks retail insn selection). Witness gate 5 forbids certifying arg-register rotations; acceptance requires the SMT probe (declined 2026-08-03; KB says it fail-closes anyway). STALL: documented cap, see MWCC_REFERENCE ref 0f209f4a48.",
       "instruction_match": 97.907,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "equivalence_status": "inconclusive_unsupported",
       "claim": {
         "owner": "pi-eabi-match",
         "claimed_at": "2026-08-04T04:41:37.162046+00:00",
@@ -290746,7 +290746,7 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c",
       "instruction_match": 99.805,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-802e2414",
@@ -295649,8 +295649,8 @@
       "size": "0x108",
       "unit": "RVL_SDK/src/revolution/bte/stack/btm/btm_inq",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dde30",
@@ -295665,7 +295665,9 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c",
       "instruction_match": 99.848,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "equivalent",
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-802eb438",
@@ -335051,7 +335053,7 @@
       "size": "0x1E8",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -335067,7 +335069,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
       "instruction_match": 99.754,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "hexdiff-agent",
+        "claimed_at": "2026-08-04T04:51:21.741488+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/kpad/KPAD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803484a0",
@@ -355206,8 +355216,8 @@
       "size": "0x208",
       "unit": "RVL_SDK/src/revolution/wud/WUD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/wud/WUD.c",
       "called_functions": [
@@ -355225,7 +355235,9 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/wud/WUD.s",
       "abi_helper_calls": [],
       "instruction_match": 99.923,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "equivalent",
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-8037e2b0",
@@ -504616,8 +504628,8 @@
       "size": "0x1C",
       "unit": "monolib/src/scn/CScnFilterMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -504625,7 +504637,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFilterMan.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnFilterMan.cpp"
+      "source": "libs/monolib/src/scn/CScnFilterMan.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:49:54.459328+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnFilterMan.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 95.714,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804a16c0",
@@ -531572,8 +531594,8 @@
       "size": "0x18",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531581,7 +531603,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:51:20.223859+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804efbdc",
@@ -531616,8 +531648,8 @@
       "size": "0x18",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -531625,7 +531657,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:51:23.266034+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804efc14",
@@ -532083,8 +532125,8 @@
       "size": "0x1C",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -532092,7 +532134,19 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:51:56.953630+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 97.143,
+      "equivalence_status": "equivalent",
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-804f08a8",
@@ -532137,8 +532191,8 @@
       "size": "0x1C",
       "unit": "monolib/src/scn/CMdlDynamics",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -532146,7 +532200,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlDynamics.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlDynamics.cpp"
+      "source": "libs/monolib/src/scn/CMdlDynamics.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:51:26.036935+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlDynamics.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804f08d4",

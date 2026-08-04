@@ -79,11 +79,21 @@ extern "C" u32 func_804EB6F8(void* self, u32 idx) {
     return *(u32*)((char*)base + off);
 }
 
-void func_804EB708(){}
+extern "C" u32 func_804EB708(void* self, u32 a, u32 b) {
+    *(u32*)((u8*)self + 0) = a;
+    *(u32*)((u8*)self + 4) = 0;
+    *(u32*)((u8*)self + 8) = b;
+    return b << 2;
+}
 
 void func_804EB720(){}
 
-void func_804EB740(){}
+extern "C" u32 func_804EB740(void* self, u32 a, u32 b) {
+    *(u32*)((u8*)self + 0) = a;
+    *(u32*)((u8*)self + 4) = 0;
+    *(u32*)((u8*)self + 8) = b;
+    return b * 12;
+}
 
 extern "C" void func_804EB758(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
@@ -126,7 +136,14 @@ extern "C" u32 func_804EC3B8(void* self) { return (*(u32*)((u8*)self + 0x7A4) >>
 
 extern "C" u32 func_804EC3C4(void* self) { return (*(u32*)((u8*)self + 0x7A4) >> 17) & 1; }
 
-void func_804EC3D0(){}
+extern "C" void func_804EC3D0(void* self, void* out) {
+    const float c = *(float*)((u8*)self + 0x2C);
+    const float b = *(float*)((u8*)self + 0x1C);
+    const float a = *(float*)((u8*)self + 0x0C);
+    *(float*)((u8*)out + 0) = a;
+    *(float*)((u8*)out + 4) = b;
+    *(float*)((u8*)out + 8) = c;
+}
 
 extern "C" void func_804EC3EC(void* self, float a, float b, float c) {
     *(float*)((u8*)self + 0) = a;
@@ -134,7 +151,11 @@ extern "C" void func_804EC3EC(void* self, float a, float b, float c) {
     *(float*)((u8*)self + 8) = c;
 }
 
-void func_804EC3FC(){}
+extern "C" void func_804EC3FC(void* self, const void* src) {
+    *(float*)((u8*)self + 0) = *(float*)((u8*)src + 0);
+    *(float*)((u8*)self + 4) = *(float*)((u8*)src + 4);
+    *(float*)((u8*)self + 8) = *(float*)((u8*)src + 8);
+}
 
 void func_804EC418(){}
 

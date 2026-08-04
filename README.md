@@ -70,7 +70,7 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19673 |
 | Buildable | 19673 |
-| Accepted | 9094 (`FULL_MATCH` 8854 · `EQUIVALENT_MATCH` 240) |
+| Accepted | 9106 (`FULL_MATCH` 8866 · `EQUIVALENT_MATCH` 240) |
 | Active (in progress) | 1450 |
 
 <!-- END GENERATED COOP STATUS -->

@@ -173027,8 +173027,8 @@
       "size": "0x8",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "called_functions": [],
@@ -173044,7 +173044,9 @@
           "src/kyoshin/CItemBoxInfo.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801d5cf8",
@@ -174874,8 +174876,8 @@
       "size": "0x8",
       "unit": "kyoshin/CItemBoxInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CItemBoxInfo.cpp",
       "called_functions": [],
@@ -174891,7 +174893,9 @@
           "src/kyoshin/CItemBoxInfo.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801e3004",
@@ -233270,8 +233274,8 @@
       "size": "0x8",
       "unit": "kyoshin/CPassiveSkill",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CPassiveSkill.cpp",
       "called_functions": [],
@@ -233287,7 +233291,9 @@
           "src/kyoshin/CPassiveSkill.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027011c",
@@ -239346,8 +239352,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -239363,7 +239369,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027b290",
@@ -240196,8 +240204,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240213,7 +240221,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ca10",
@@ -240306,8 +240316,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240323,7 +240333,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce5c",
@@ -240361,8 +240373,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240378,7 +240390,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce64",
@@ -240416,8 +240430,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240433,7 +240447,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce6c",
@@ -240520,8 +240536,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240537,7 +240553,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce78",
@@ -240575,8 +240593,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240592,7 +240610,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce80",
@@ -240630,8 +240650,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240647,7 +240667,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce88",
@@ -240685,8 +240707,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChain.cpp",
       "called_functions": [],
@@ -240702,7 +240724,9 @@
           "src/kyoshin/cf/chain/CChain.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027ce90",
@@ -307370,7 +307394,7 @@
       "size": "0x23C",
       "unit": "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -307386,7 +307410,15 @@
       ],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c",
       "instruction_match": 99.755,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "hexdiff-agent",
+        "claimed_at": "2026-08-04T05:09:34.578207+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80307340",
@@ -450553,8 +450585,8 @@
       "size": "0xB0",
       "unit": "nw4r/src/ut/ut_ArchiveFontBase",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000"
@@ -450564,7 +450596,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/ut/ut_ArchiveFontBase.s",
       "abi_helper_calls": [],
-      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp",
+      "instruction_match": 98.977,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80430360",

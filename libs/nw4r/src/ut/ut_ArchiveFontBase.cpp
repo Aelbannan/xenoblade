@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern "C" void* memcpy(void* pDst, const void* pSrc, unsigned long size);
+
 void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(){}
 
 void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void* self, int deleting)
@@ -160,6 +162,24 @@ GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void*
            (*(const unsigned int*)((const char*)self + 0x14) - *(const unsigned int*)((const char*)self + 0x10));
 }
 
-void CopyTo__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPvUl(){}
+extern "C" void
+CopyTo__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPvUl(void* self,
+                                                                 void* pDst,
+                                                                 unsigned int size) {
+    unsigned int* p = (unsigned int*)self;
+
+    unsigned int avail = p[5] - p[4];  // mStreamEnd - mStart
+
+    if (avail >= size) {
+        memcpy(pDst, (void*)p[4], size);
+        p[4] = p[4] + size;
+    } else {
+        unsigned int remaining = size - avail;
+        memcpy(pDst, (void*)p[4], avail);
+        memcpy((void*)((unsigned int)pDst + avail), (void*)p[1], remaining);
+        p[4] = p[5];
+        p[1] = p[1] + remaining;
+    }
+}
 
 void RequestData__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextUl(){}

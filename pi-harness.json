@@ -38,5 +38,8 @@
   "timeoutRetries": 3,
   "rejectionRetries": 1,
   "tuFinalAttempts": 2,
-  "tuFinalTimeoutMinutes": 0
+  "tuFinalTimeoutMinutes": 0,
+  "selection": "claim-order",
+  "triage": "off",
+  "pythonBin": ".venv/bin/python"
 }

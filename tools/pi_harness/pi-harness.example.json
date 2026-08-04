@@ -25,5 +25,21 @@
   "timeoutRetries": 3,
   "rejectionRetries": 1,
   "tuFinalAttempts": 2,
-  "tuFinalTimeoutMinutes": 0
+  "tuFinalTimeoutMinutes": 0,
+  "briefTargetChars": 12000,
+  "costModel": {
+    "inputPerM": 0.14,
+    "outputPerM": 0.28,
+    "cacheReadPerM": 0.0028,
+    "cacheWritePerM": 0.0
+  },
+  "knownWallsPath": "docs/KNOWN_WALLS.md",
+  "nearmissDir": "build/pi-harness/nearmiss",
+  "maxAttemptsPerTarget": 4,
+  "staleRoundThreshold": 2,
+  "retryExhausted": false,
+  "bankOnlyOnBetter": true,
+  "selection": "claim-order",
+  "triage": "off",
+  "pythonBin": ".venv/bin/python"
 }

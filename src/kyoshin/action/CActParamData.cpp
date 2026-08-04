@@ -70,6 +70,10 @@ struct ActParamThunkIf {
     virtual void v88(); virtual void v8C(); virtual void v90(); virtual void v94();
     virtual void v98(); virtual void v9C(); virtual void vA0(); virtual void vA4();
     virtual void vA8();
+    virtual void vAC(); virtual void vB0(); virtual void vB4(); virtual void vB8();
+    virtual void vBC(); virtual void vC0(); virtual void vC4(); virtual void vC8();
+    virtual void vCC(); virtual void vD0(); virtual void vD4(); virtual void vD8();
+    virtual void vDC();
 };
 
 extern "C" void func_80056158(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v44(); }
@@ -92,6 +96,13 @@ extern "C" void func_80056258(void* self) { reinterpret_cast<ActParamThunkIf*>(s
 extern "C" void func_80056614(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v9C(); }
 extern "C" void func_80056660(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vA4(); }
 extern "C" void func_80056670(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vA8(); }
+extern "C" void func_800566F8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vB8(); }
+extern "C" void func_80056790(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vC8(); }
+extern "C" void func_800567A0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vCC(); }
+extern "C" void func_800567B0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vD0(); }
+extern "C" void func_800567C0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vD4(); }
+extern "C" void func_800567D0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vD8(); }
+extern "C" void func_800567E0(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vDC(); }
 
 void initParamDefaults(){}
 void setupParamData(){}

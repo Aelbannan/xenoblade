@@ -109,7 +109,9 @@ struct TagContext {
 
 extern "C" const wchar_t* getContextStr(void* self) { return *(const wchar_t**)((u8*)self + 0x4); }
 
-extern "C" const wchar_t** getContextStrPtr(void* self) { return (const wchar_t**)((u8*)self + 0x4); };
+extern "C" const wchar_t** getContextStrPtr(void* self) { return (const wchar_t**)((u8*)self + 0x4); }
+
+extern "C" void addToCharSpace(void* self, float val) { *(float*)((u8*)self + 0xC) = *(float*)((u8*)self + 0x4) + val; };
 
 void func_80127670(){}
 

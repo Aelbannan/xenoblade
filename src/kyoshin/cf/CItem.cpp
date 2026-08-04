@@ -61,7 +61,17 @@ char* func_80155D28() {
 
 extern char* lbl_eu_806641B8;
 
-void func_80155D38(){}
+extern char lbl_eu_80501C58[];
+
+// Recovered CItemData bitfield area (offsets 0x7/0x8/0x18)
+struct ItemByte7 { u8 pad0 : 6; u8 b01 : 2; };
+struct ItemWord8 { u32 pad0 : 11; u32 f11 : 11; u32 pad1 : 3; u32 f7 : 7; };
+struct ItemHalf18 { u16 bit15 : 1; u16 low15 : 15; };
+
+struct If20 { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void vf20(); };
+
+extern "C" const char* func_80155D38(void) { return (const char*)lbl_eu_80501C58 + 0x63; }
 
 void func_80155D48(){}
 
@@ -79,7 +89,7 @@ int CItemInfo_isEnabled0(CItemInfo*) { return 0; }
 
 int CItemInfo_getFlag0(CItemInfo*) { return 0; }
 
-void func_80156050(){}
+extern "C" void func_80156050(void* self) { reinterpret_cast<If20*>(self)->vf20(); }
 
 void func_80156060(){}
 
@@ -135,7 +145,7 @@ void func_80157184(){}
 
 void func_801571A8(){}
 
-void func_801571FC(){}
+extern "C" void* func_801571FC(void) { return *(void**)((u8*)lbl_eu_806641B8 + 0x10000 + 0x20e8); }
 
 void func_8015720C(){}
 
@@ -378,13 +388,16 @@ int CItemData_isFalse2(CItemData*) { return 0; }
 
 int CItemData_isFalse3(CItemData*) { return 0; }
 
-void func_8015B404(){}
+extern "C" void func_8015B404(void* u, void* p, u32 val) { ((ItemWord8*)((u8*)p + 8))->f7 = val; }
 
 void func_8015B414(){}
 
-void func_8015B420(){}
+extern "C" void func_8015B420(void* u, void* p, u32 val) { ((ItemWord8*)((u8*)p + 8))->f11 = val; }
 
-void func_8015B430(){}
+extern "C" s16 func_8015B430(void* u, void* p) {
+    u32 x = *(u32*)((u8*)p + 8);
+    return (s16)((x >> 10) & 0x7FF);
+}
 
 u32 CItemParam_getCategory(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 12) >> 1) & 7; }
 
@@ -400,7 +413,7 @@ int CItemData_getSize16(CItemData*) { return 16; }
 
 u32 CItemData_getBits7to9(u32, CItemData* obj) { return (*(u32*)((char*)obj + 8) >> 7) & 7; }
 
-void func_8015B4C8(){}
+extern "C" void func_8015B4C8(void* u, void* p, u32 val) { ((ItemByte7*)((u8*)p + 7))->b01 = (u8)val; }
 
 u32 CItemData_getByte7Bits01(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
@@ -424,11 +437,11 @@ u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { *(u16*)((char*
 
 u16 CItemParam_getField16(u32, CItemParam* obj) { return *(u16*)((char*)obj + 16); }
 
-void func_8015B56C(){}
+extern "C" void func_8015B56C(void* u, void* p, u32 val) { ((ItemHalf18*)((u8*)p + 0x18))->bit15 = (u16)val; }
 
 u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 24) >> 15) & 1; }
 
-void func_8015B588(){}
+extern "C" void func_8015B588(void* u, void* p, u32 val) { ((ItemHalf18*)((u8*)p + 0x18))->low15 = (u16)val; }
 
 u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
 

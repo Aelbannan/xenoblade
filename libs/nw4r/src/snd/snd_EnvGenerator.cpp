@@ -4,40 +4,53 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-const s16
-    EnvGenerator::DecibelSquareTable[EnvGenerator::DECIBEL_SQUARE_TABLE_SIZE] =
-        {-723, -722, -721, -651, -601, -562, -530, -503, -480, -460, -442, -425,
-         -410, -396, -383, -371, -360, -349, -339, -330, -321, -313, -305, -297,
-         -289, -282, -276, -269, -263, -257, -251, -245, -239, -234, -229, -224,
-         -219, -214, -210, -205, -201, -196, -192, -188, -184, -180, -176, -173,
-         -169, -165, -162, -158, -155, -152, -149, -145, -142, -139, -136, -133,
-         -130, -127, -125, -122, -119, -116, -114, -111, -109, -106, -103, -101,
-         -99,  -96,  -94,  -91,  -89,  -87,  -85,  -82,  -80,  -78,  -76,  -74,
-         -72,  -70,  -68,  -66,  -64,  -62,  -60,  -58,  -56,  -54,  -52,  -50,
-         -49,  -47,  -45,  -43,  -42,  -40,  -38,  -36,  -35,  -33,  -31,  -30,
-         -28,  -27,  -25,  -23,  -22,  -20,  -19,  -17,  -16,  -14,  -13,  -11,
-         -10,  -8,   -7,   -6,   -4,   -3,   -1,   0};
+// Retail .sdata2/.rodata pool constants and tables referenced by name so the
+// SDA21/data relocations match the stripped retail object (PLAN.md §17.6
+// approved extern "C" lbl_eu_* pattern, MWCC_REFERENCE §1b float pools).
+extern "C" const f32 lbl_eu_80669F30; // -90.4f (volume min dB)
+extern "C" const f32 lbl_eu_80669F34; // 65535.0f
+extern "C" const f32 lbl_eu_80669F38; // 10.0f
+extern "C" const f32 lbl_eu_80669F3C; // 0.0f
+extern "C" const f32 lbl_eu_80669F40; // -1/32
+extern "C" const f32 lbl_eu_80669F48; // 176.0f
 
+// Decibel square table (128 s16 entries).  Retail: lbl_eu_8051FC40.
+extern "C" const s16 lbl_eu_8051FC40[128] = {
+    -723, -722, -721, -651, -601, -562, -530, -503, -480, -460, -442, -425,
+    -410, -396, -383, -371, -360, -349, -339, -330, -321, -313, -305, -297,
+    -289, -282, -276, -269, -263, -257, -251, -245, -239, -234, -229, -224,
+    -219, -214, -210, -205, -201, -196, -192, -188, -184, -180, -176, -173,
+    -169, -165, -162, -158, -155, -152, -149, -145, -142, -139, -136, -133,
+    -130, -127, -125, -122, -119, -116, -114, -111, -109, -106, -103, -101,
+    -99,  -96,  -94,  -91,  -89,  -87,  -85,  -82,  -80,  -78,  -76,  -74,
+    -72,  -70,  -68,  -66,  -64,  -62,  -60,  -58,  -56,  -54,  -52,  -50,
+    -49,  -47,  -45,  -43,  -42,  -40,  -38,  -36,  -35,  -33,  -31,  -30,
+    -28,  -27,  -25,  -23,  -22,  -20,  -19,  -17,  -16,  -14,  -13,  -11,
+    -10,  -8,   -7,   -6,   -4,   -3,   -1,   0};
+
+// Attack table (128 f32 entries).  Retail: lbl_eu_8051FD40.
+extern "C" const f32 lbl_eu_8051FD40[128];
+
+// VOLUME_INIT stays defined (referenced by the header's default args); the
+// ctor passes lbl_eu_80669F30 explicitly to match retail relocs.
 const volatile f32 EnvGenerator::VOLUME_INIT = VOLUME_MIN_DB;
 
-extern const f32 attackTable[128];
-
 EnvGenerator::EnvGenerator() {
-    Init(VOLUME_INIT);
+    Init(lbl_eu_80669F30);
 }
 
 void EnvGenerator::Init(f32 db) {
     SetAttack(127);
     mHold = 0;
-    mDecay = 65535.0f;
+    mDecay = lbl_eu_80669F34;
     mSustain = 127;
-    mRelease = 65535.0f;
-    mValue = 10.0f * db;
+    mRelease = lbl_eu_80669F34;
+    mValue = lbl_eu_80669F38 * db;
     mStatus = STATUS_ATTACK;
 }
 
 void EnvGenerator::Reset(f32 db) {
-    mValue = db * 10.0f;
+    mValue = lbl_eu_80669F38 * db;
     mStatus = STATUS_ATTACK;
 }
 
@@ -56,8 +69,8 @@ void EnvGenerator::Update(int msec) {
 
         while (i-- > 0) {
             mValue = mValue * mAttack;
-            if (mValue > -(1.0f / 32.0f)) {
-                mValue = 0.0f;
+            if (mValue > lbl_eu_80669F40) {
+                mValue = lbl_eu_80669F3C;
                 mStatus = STATUS_HOLD;
                 mHoldCounter = mHold;
                 return;
@@ -82,7 +95,7 @@ void EnvGenerator::Update(int msec) {
     }
 
     case STATUS_DECAY: {
-        f32 target = (f32)DecibelSquareTable[mSustain];
+        f32 target = (f32)lbl_eu_8051FC40[mSustain];
         mValue -= mDecay * (f32)msec;
 
         if (mValue < target) {
@@ -103,7 +116,7 @@ void EnvGenerator::Update(int msec) {
     }
 }
 
-extern const f32 attackTable[128] = {
+extern "C" const f32 lbl_eu_8051FD40[128] = {
     0.9992175f, 0.9984326f, 0.9976452f, 0.9968553f, 0.9960629f, 0.9952679f,
     0.9944704f, 0.9936704f, 0.9928677f, 0.9920625f, 0.9912546f, 0.9904441f,
     0.9896309f, 0.9888151f, 0.9879965f, 0.9871752f, 0.9863512f, 0.9855244f,
@@ -128,7 +141,7 @@ extern const f32 attackTable[128] = {
     0.3298770f, 0.0000000f};
 
 void EnvGenerator::SetAttack(int attack) {
-    mAttack = attackTable[attack];
+    mAttack = lbl_eu_8051FD40[attack];
 }
 
 void EnvGenerator::SetDecay(int decay) {
@@ -141,26 +154,6 @@ void EnvGenerator::SetSustain(int sustain) {
 
 void EnvGenerator::SetRelease(int release) {
     mRelease = CalcRelease(release);
-}
-
-f32 EnvGenerator::CalcRelease(int release) {
-    if (release == 127) {
-        return 65535.0f;
-    }
-
-    if (release == 127 - 1) {
-        return 24.0f;
-    }
-
-    if (release < 50) {
-        return (release * 2 + 1) / 128.0f / 5.0f;
-    }
-
-    return 60.0f / (127 - 1 - release) / 5.0f;
-}
-
-int EnvGenerator::CalcDecibelSquare(int scale) {
-    return DecibelSquareTable[scale];
 }
 
 void EnvGenerator::SetHold(int hold) {

@@ -6,6 +6,10 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Retail .rodata table referenced by the inline CalcDecibelSquare below so
+// the data relocation matches the stripped retail object.
+extern "C" const s16 lbl_eu_8051FC40[128];
+
 class EnvGenerator {
 public:
     enum Status { STATUS_ATTACK, STATUS_HOLD, STATUS_DECAY, STATUS_SUSTAIN, STATUS_RELEASE };
@@ -41,8 +45,25 @@ private:
     static const int RELEASE_INIT = 127;
 
 private:
-    f32 CalcRelease(int release);
-    int CalcDecibelSquare(int scale);
+    f32 CalcRelease(int release) {
+        if (release == 127) {
+            return 65535.0f;
+        }
+
+        if (release == 127 - 1) {
+            return 24.0f;
+        }
+
+        if (release < 50) {
+            return (release * 2 + 1) / 128.0f / 5.0f;
+        }
+
+        return 60.0f / (127 - 1 - release) / 5.0f;
+    }
+
+    int CalcDecibelSquare(int scale) {
+        return lbl_eu_8051FC40[scale];
+    }
 
 private:
     Status mStatus; // at 0x0
@@ -53,8 +74,6 @@ private:
     u8 mSustain;       // at 0x14
     s16 mHold;         // at 0x16
     u16 mHoldCounter;  // at 0x18
-
-    static const s16 DecibelSquareTable[DECIBEL_SQUARE_TABLE_SIZE];
 };
 
 } // namespace detail

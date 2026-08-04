@@ -3364,10 +3364,10 @@ void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
 
     if (p1 != NULL) {
         if (_wudPatchSize == _wudPatchOffset) {
-            _wudInstallNum = 0;
             _wudPatchNum = _wudWiiRemoteDescriptor[0x1A4];
+            _wudInstallNum = 0;
 
-            length = MIN(_wudPatchNum, WUD_MAX_PATCHES);
+            length = MIN((s32)_wudPatchNum, WUD_MAX_PATCHES);
             buf2[0] = length;
             memcpy(&buf2[1], &_wudWiiRemoteDescriptor[0x1A5],
                    length * sizeof(WUDPatchCmd));

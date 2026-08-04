@@ -110,8 +110,10 @@ extern "C" void* cfCam_getUnk40Ptr(void* ptr) { return static_cast<cf::CfCamFoll
 extern "C" void* cfCam_getUnk1CPtr(void* self) { return static_cast<cf::CfCamFollow*>(self)->unk1C; }
 extern "C" bool cfCam_getTrue() { return true; }
 void func_8006BA80(){}
-float func_8006BAF0(void* self){
-    return __fabs(*(float*)self);
+extern "C" float func_8006BAF0(void* self) {
+    double x = *(float*)self;
+    x = __fabs(x);
+    return (float)x;
 }
 extern "C" float cfCam_vecMag(const float* v) {
     return PSVECMag(reinterpret_cast<const Vec*>(v));

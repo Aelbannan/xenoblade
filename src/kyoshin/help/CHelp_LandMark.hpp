@@ -18,7 +18,8 @@ public:
 
     // CHelp at +0x00..+0x0B (mOwner, mParam, mVtbl)
     // Second base-class subobject (invisible in single-inheritance C++)
-    char mSecondBase[4]; // +0x0C
+    // Stores a vtable pointer for the second base at +0x0C
+    void* mSecondBase; // +0x0C
     u32 field_10;         // +0x10
     s32 mTimer;           // +0x14
     u32 mSavedFlags;      // +0x18

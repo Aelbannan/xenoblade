@@ -1053,7 +1053,16 @@ void func_80135654(){}
 void func_80135694(){}
 void func_801356BC(){}
 void func_801356E0(){}
-void func_80135898(){}
+extern "C" int func_80135898() {
+    unsigned char* g = (unsigned char*)lbl_eu_80664054;
+    if (!g) return 0;
+    struct Entry { u8 flag; };
+    Entry* arr = (Entry*)(g + 0x14c);
+    for (int i = 0; i < 8; i++) {
+        if (arr[i].flag == 4) return 1;
+    }
+    return 0;
+}
 void CUICfManager_setFieldC8C(u8 value){
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     if (m == NULL)

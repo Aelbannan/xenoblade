@@ -1,5 +1,203 @@
 #include "kyoshin/cf/chain/CChain.hpp"
 
+struct ChIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void vf004C();
+    virtual void vf0050();
+};
+struct ChIf2 {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void _v0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void _v009C();
+    virtual void _v00A0();
+    virtual void _v00A4();
+    virtual void _v00A8();
+    virtual void _v00AC();
+    virtual void _v00B0();
+    virtual void _v00B4();
+    virtual void _v00B8();
+    virtual void _v00BC();
+    virtual void _v00C0();
+    virtual void _v00C4();
+    virtual void _v00C8();
+    virtual void _v00CC();
+    virtual void _v00D0();
+    virtual void _v00D4();
+    virtual void _v00D8();
+    virtual void _v00DC();
+    virtual void _v00E0();
+    virtual void _v00E4();
+    virtual void _v00E8();
+    virtual void _v00EC();
+    virtual void _v00F0();
+    virtual void _v00F4();
+    virtual void _v00F8();
+    virtual void _v00FC();
+    virtual void _v0100();
+    virtual void _v0104();
+    virtual void _v0108();
+    virtual void _v010C();
+    virtual void _v0110();
+    virtual void _v0114();
+    virtual void _v0118();
+    virtual void _v011C();
+    virtual void _v0120();
+    virtual void _v0124();
+    virtual void _v0128();
+    virtual void _v012C();
+    virtual void _v0130();
+    virtual void _v0134();
+    virtual void _v0138();
+    virtual void _v013C();
+    virtual void _v0140();
+    virtual void _v0144();
+    virtual void _v0148();
+    virtual void _v014C();
+    virtual void _v0150();
+    virtual void _v0154();
+    virtual void _v0158();
+    virtual void _v015C();
+    virtual void _v0160();
+    virtual void _v0164();
+    virtual void _v0168();
+    virtual void _v016C();
+    virtual void _v0170();
+    virtual void _v0174();
+    virtual void _v0178();
+    virtual void _v017C();
+    virtual void _v0180();
+    virtual void _v0184();
+    virtual void _v0188();
+    virtual void _v018C();
+    virtual void _v0190();
+    virtual void _v0194();
+    virtual void _v0198();
+    virtual void _v019C();
+    virtual void _v01A0();
+    virtual void _v01A4();
+    virtual void _v01A8();
+    virtual void _v01AC();
+    virtual void _v01B0();
+    virtual void _v01B4();
+    virtual void _v01B8();
+    virtual void _v01BC();
+    virtual void _v01C0();
+    virtual void _v01C4();
+    virtual void _v01C8();
+    virtual void _v01CC();
+    virtual void _v01D0();
+    virtual void _v01D4();
+    virtual void _v01D8();
+    virtual void _v01DC();
+    virtual void _v01E0();
+    virtual void _v01E4();
+    virtual void _v01E8();
+    virtual void _v01EC();
+    virtual void _v01F0();
+    virtual void _v01F4();
+    virtual void _v01F8();
+    virtual void _v01FC();
+    virtual void _v0200();
+    virtual void _v0204();
+    virtual void _v0208();
+    virtual void _v020C();
+    virtual void _v0210();
+    virtual void _v0214();
+    virtual void _v0218();
+    virtual void _v021C();
+    virtual void _v0220();
+    virtual void _v0224();
+    virtual void _v0228();
+    virtual void _v022C();
+    virtual void _v0230();
+    virtual void _v0234();
+    virtual void _v0238();
+    virtual void _v023C();
+    virtual void _v0240();
+    virtual void _v0244();
+    virtual void _v0248();
+    virtual void _v024C();
+    virtual void _v0250();
+    virtual void _v0254();
+    virtual void _v0258();
+    virtual void _v025C();
+    virtual void _v0260();
+    virtual void _v0264();
+    virtual void _v0268();
+    virtual void _v026C();
+    virtual void _v0270();
+    virtual void _v0274();
+    virtual void _v0278();
+    virtual void _v027C();
+    virtual void _v0280();
+    virtual void _v0284();
+    virtual void _v0288();
+    virtual void _v028C();
+    virtual void _v0290();
+    virtual void _v0294();
+    virtual void _v0298();
+    virtual void _v029C();
+    virtual void _v02A0();
+    virtual void _v02A4();
+    virtual void _v02A8();
+    virtual void _v02AC();
+    virtual void _v02B0();
+    virtual void _v02B4();
+    virtual void _v02B8();
+    virtual void vf02BC();
+};
+
 namespace cf {
     CChain::CChain(){
         
@@ -39,11 +237,11 @@ void func_80277154(){}
 void func_80277A7C(){}
 void func_80277B34(void){}
 extern "C" void CChain_noop_78E00() {}
-void func_80278F5C(){}
-void func_80278F70(){}
+extern "C" void func_80278F5C(void* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf0050(); }
+extern "C" void func_80278F70(void* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf004C(); }
 extern "C" void CChain_noop_795D0() {}
 extern "C" void CChain_noop_79768() {}
-void func_8027A324(){}
+extern "C" void func_8027A324(void* self) { reinterpret_cast<ChIf2*>(*(void**)self)->vf02BC(); }
 extern "C" void CChain_noop_A9E8() {}
 extern "C" void CChain_noop_AA0C() {}
 

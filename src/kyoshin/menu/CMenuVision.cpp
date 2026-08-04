@@ -19,16 +19,13 @@ extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 }
 
 extern u32 func_801355A0();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+
 extern void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
 extern f32 func_800F4424(void*);
 extern u32 lbl_eu_80664388;
 
-// Pad accessors for pane byte/float fields at known retail offsets
-struct PaneVisAccess {
-    u8 _pad[0xBB];
-    u8 visByte;
-};
-
+// Pad accessor for pane float fields at known retail offsets
 struct PaneTransAccess {
     u8 _pad[0x4C];
     f32 transX;
@@ -38,11 +35,11 @@ struct PaneTransAccess {
 // --- Stubs for non-target functions ---
 void __ct__CMenuVision(){}
 
-void CMenuVision::~CMenuVision() {}
+CMenuVision::~CMenuVision() {}
 
-unsigned long func_801AC088(){
-    unsigned long v = *(unsigned long*)(&lbl_eu_80664388);
-    return !!v;
+extern "C" unsigned long func_801AC088() {
+    extern unsigned long lbl_eu_80664388;
+    return lbl_eu_80664388 != 0;
 }
 
 void func_801AC09C(){}
@@ -64,6 +61,10 @@ void func_801AD504(){}
 void func_801AF934(){}
 
 void func_801AFAD0(CMenuVision*, CMenuVisionEntry*){}
+
+// Mangled linker names used by adjustor thunks below
+extern "C" void __dt__11CMenuVisionFv(void*);
+extern "C" void cbRenderBefore__11CMenuVisionFv(void*);
 
 void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 
@@ -89,7 +90,7 @@ void CMenuVision::Move() {
         return;
     }
 
-    // Check if any entry has non-zero state — if all are zero, skip update
+    // Check if any entry has non-zero state - if all are zero, skip update
     bool anyActive = false;
     for (int i = 0; i < 6; i++) {
         if (mEntries[i].mState != 0) {
@@ -195,17 +196,17 @@ void CMenuVision::Init() {
     for (int i = 0; i < 6; i++) {
         CMenuVisionEntry& e = mEntries[i];
 
-        func_80136E84(&e.mLayout, accessor, strBase + 0xb);
+        func_80136E84(&e.mLayout, accessor, (char*)strBase + 0xb);
         nw4r::lyt::Layout* layout = e.mLayout;
 
-        func_80136F08(layout, &e.mAnim1, accessor, strBase + 0x2b);
-        func_80136F08(layout, &e.mAnim2, accessor, strBase + 0x4e);
-        func_80136F08(layout, &e.mAnim3, accessor, strBase + 0x72);
-        func_80136F08(layout, &e.mAnim4, accessor, strBase + 0x9a);
-        func_80136F08(layout, &e.mAnim5, accessor, strBase + 0xc5);
-        func_80136F08(layout, &e.mAnim6, accessor, strBase + 0xef);
-        func_80136F08(layout, &e.mAnim7, accessor, strBase + 0x119);
-        func_80136F08(layout, &e.mAnim8, accessor, strBase + 0x13f);
+        func_80136F08(layout, &e.mAnim1, accessor, (char*)strBase + 0x2b);
+        func_80136F08(layout, &e.mAnim2, accessor, (char*)strBase + 0x4e);
+        func_80136F08(layout, &e.mAnim3, accessor, (char*)strBase + 0x72);
+        func_80136F08(layout, &e.mAnim4, accessor, (char*)strBase + 0x9a);
+        func_80136F08(layout, &e.mAnim5, accessor, (char*)strBase + 0xc5);
+        func_80136F08(layout, &e.mAnim6, accessor, (char*)strBase + 0xef);
+        func_80136F08(layout, &e.mAnim7, accessor, (char*)strBase + 0x119);
+        func_80136F08(layout, &e.mAnim8, accessor, (char*)strBase + 0x13f);
 
         // Disable anims 2-8, enable anim1, reset to frame 0
         layout->SetAnimationEnable(e.mAnim2, false);
@@ -247,18 +248,18 @@ void CMenuVision::Init() {
             typedef u32 (*FontVFn)(void*);
             u32 fontVal = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
 
-            func_801368C0(layout, strBase + 0x1ab, fontVal);
-            func_801368C0(layout, strBase + 0x1b8, fontVal);
-            func_801368C0(layout, strBase + 0x1c5, fontVal);
-            func_801368C0(layout, strBase + 0x1d2, fontVal);
-            func_801368C0(layout, strBase + 0x1df, fontVal);
-            func_801368C0(layout, strBase + 0x1ed, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1ab, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1b8, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1c5, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1d2, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1df, fontVal);
+            func_801368C0(layout, (char*)strBase + 0x1ed, fontVal);
         } else if (i == 3) {
             u32 val = func_801355A0();
-            func_801368C0(layout, strBase + 0x1fb, val);
+            func_801368C0(layout, (char*)strBase + 0x1fb, val);
         } else if (i == 5) {
             u32 val = func_801355A0();
-            func_801368C0(layout, strBase + 0x208, val);
+            func_801368C0(layout, (char*)strBase + 0x208, val);
         }
     }
 

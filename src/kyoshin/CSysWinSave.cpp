@@ -37,3 +37,8 @@ extern "C" void func_80294834__FPv(void* self) {
 }
 
 void func_80294844(){}
+
+extern "C" unsigned long func_80294624() {
+    extern unsigned long lbl_eu_80664A08;
+    return lbl_eu_80664A08 != 0;
+}

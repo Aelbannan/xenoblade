@@ -11,7 +11,7 @@
    accessed by FULL_MATCH functions are explicitly declared; intermediate
    regions use opaque byte arrays at the correct offsets (verified against
    retail objdiff at 100% match). */
-struct CTutorialList {
+struct CTutorialListLayout {
     void* mVtbl;            // 0x00
 
     // 0x04-0x83 -- UnkClass_8045F564 (0x10), 6 pointers, CCur (0x18), CScrollBar (0x40)

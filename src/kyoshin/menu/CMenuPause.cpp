@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuPause.hpp"
 
 // forward declarations for scaffold thunk references
-extern const char lbl_eu_806647C8[];
+extern unsigned long lbl_eu_806647C8;
 void __dt__10CMenuPauseFv(void*);
 void cbRenderBefore__10CMenuPauseFv(void*);
 
@@ -23,7 +23,7 @@ void CMenuPause::cbRenderBefore() {}
 void __ct__CMenuPause(){}
 
 unsigned long CMenuPause::isInitialized() {
-    unsigned long v = *(unsigned long*)(lbl_eu_806647C8);
+    unsigned long v = lbl_eu_806647C8;
     return !!v;
 }
 
@@ -36,3 +36,7 @@ void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)s
 void func_80252630(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
 
 void func_80252638(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }
+
+extern "C" unsigned long isInitialized__10CMenuPauseFv() {
+    return lbl_eu_806647C8 != 0;
+}

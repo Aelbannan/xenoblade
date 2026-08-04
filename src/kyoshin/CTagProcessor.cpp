@@ -4,6 +4,17 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTagProcessor.hpp"
 
+struct TagCopyBlock {
+    u32 w00, w04, w08, w0C, w10, w14, w18, w1C;
+    u32 w20, w24, w28, w2C, w30, w34, w38, w3C;
+    u16 h40;
+    u8 b42, b43;
+    f32 f44;
+    u32 w48;
+    f32 f4C, f50, f54;
+    u32 w58, w5C, w60;
+};
+
 void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
     if (self && deleting > 0) {
         ::operator delete(self);
@@ -127,7 +138,10 @@ void func_801276F4(){}
 
 void func_80127764(){}
 
-void func_80127BC4(){}
+extern "C" void func_80127BC4(void* dst, void* src) {
+    *(float*)dst = *(float*)src;
+    *(float*)((u8*)dst + 4) = *(float*)((u8*)src + 4);
+}
 
 extern "C" void copyVEC3(float* dst, const float* src) {
     dst[0] = src[0];
@@ -206,7 +220,9 @@ void func_80129AEC(){}
 
 void func_80129C04(){}
 
-void func_80129D1C(){}
+extern "C" void func_80129D1C(void* dst, const void* src) {
+    *(TagCopyBlock*)dst = *(const TagCopyBlock*)src;
+}
 
 void func_80129E20(){}
 

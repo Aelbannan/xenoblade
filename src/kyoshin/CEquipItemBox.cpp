@@ -186,7 +186,10 @@ extern "C" void func_802882A4(){}
 
 extern "C" void func_8028847C(){}
 
-extern "C" void func_80288530(){}
+extern "C" unsigned char func_80288530(void* self) {
+    s8 idx = *(s8*)((u8*)self + 0x373);
+    return *(unsigned char*)((u8*)self + 0x36c + idx);
+}
 
 extern "C" void func_80288544(){}
 

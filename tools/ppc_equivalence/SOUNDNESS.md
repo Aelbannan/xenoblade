@@ -4,7 +4,7 @@
 
 - Architecture model: `broadway-ppc32-be-v51`
 - Result format: `24`
-- Certificate format: `18`
+- Certificate format: `19`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -308,8 +308,13 @@ to SMT):
    F1, adversarial review 2026-08: a live-in r11/r12/r14–r31/f0/f9–f31 or
    r0-in-a-genuine-operand is an input the caller placed in a physical lane,
    and permuting it assumes the caller renamed its registers), every volatile
-   register live across a call, and every lane whose live-in value is not
-   spill-only (consumed exclusively by a prologue `stw rN, c(r1)`/
+   register live across a call, **every lane a callee READS at every
+   call/tail-call site** (round-3 review BLOCKER, 2026-08-05: precise
+   `contract.reads` when a contract exists, otherwise the EABI argument
+   window r3–r10 / f1–f8 (+ ps1 sub-lanes) — a callee observes its
+   arguments in physical lanes, and the renaming-aware callee token would
+   hide a rename of an observed lane), and every lane whose live-in value is
+   not spill-only (consumed exclusively by a prologue `stw rN, c(r1)`/
    `stfd fN, c(r1)` before its first def).  Nonvolatile permutations across
    calls (e.g. r20↔r25, both preserved by EABI) are SOUND and not
    pre-rejected — that is the Chaitin-cycle class the feature exists for —

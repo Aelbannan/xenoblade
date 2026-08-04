@@ -4,6 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
+struct OMIfShift { char pad[0x10]; };
+struct OMIf : OMIfShift {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void vf0014();
+};
+
 typedef void (*VFn)(void*);
 // Cast-only SI iface for the +0xB0/+0x10 double-hop thunks.
 // Shift base puts the vptr at object+0x10 (retail lwz r12, 0x10(r3));
@@ -385,3 +393,5 @@ cf::CfObjectMove* cf::CfObjectMove::testFlag8() {
 }
 
 } // namespace cf
+
+extern "C" void func_800BE9AC(void* self) { reinterpret_cast<OMIf*>(self)->vf0014(); }

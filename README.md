@@ -70,8 +70,8 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19673 |
 | Buildable | 19673 |
-| Accepted | 9274 (`FULL_MATCH` 9029 · `EQUIVALENT_MATCH` 245) |
-| Active (in progress) | 1451 |
+| Accepted | 9328 (`FULL_MATCH` 9083 · `EQUIVALENT_MATCH` 245) |
+| Active (in progress) | 1454 |
 
 <!-- END GENERATED COOP STATUS -->
 
@@ -320,7 +320,7 @@ This project's runner config passes `functionRelocDiffs=data_value` (see
 
 - Architecture model: `broadway-ppc32-be-v51`
 - Result format: `24`
-- Certificate format: `18`
+- Certificate format: `19`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->

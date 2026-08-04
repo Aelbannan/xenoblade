@@ -1,5 +1,41 @@
 #include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 #include "kyoshin/cf/object/CfObjectEne.hpp"
+
+
+// Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650
+struct ParamCopyBlock {
+    u32 f00;
+    f32 f04, f08, f0C, f10, f14, f18;
+    s16 f1C, f1E, f20;
+    f32 f24, f28;
+    s16 h2C, h2E, h30, h32, h34, h36, h38, h3A;
+    u8 f3C;
+    f32 f40, f44, f48, f4C, f50;
+    u8 f54, f55, f56, f57, f58;
+    f32 f5C;
+    u32 f60, f64, f68, f6C, f70, f74;
+};
+
+
+struct BSIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void vf0038();
+    virtual void vf003C();
+    virtual void vf0040();
+    virtual void vf0044();
+};
 
 void __ct__cf_CfObjectEne(){}
 
@@ -71,29 +107,9 @@ extern "C" void* CBattleState_UnkVirtualFunc25__Q22cf12CBattleStateFv(void* self
 
 void cf::CBattleState::CBattleState_UnkVirtualFunc24() {}
 
-void cf::CBattleState::CBattleState_UnkVirtualFunc23() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0x44 / 4];
-    func(this);
-}
 
-void cf::CBattleState::CBattleState_UnkVirtualFunc22() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0x40 / 4];
-    func(this);
-}
 
-void cf::CBattleState::CBattleState_UnkVirtualFunc21() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0x3c / 4];
-    func(this);
-}
 
-void cf::CBattleState::CBattleState_UnkVirtualFunc20() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0x38 / 4];
-    func(this);
-}
 
 extern "C" void CActorParam_UnkVirtualFunc181__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x2A80) = val; }
 
@@ -315,3 +331,19 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(void* self) { ((v
 
 extern "C" void __dt__Q22cf11CfObjectEneFv(void* self);
 extern "C" void func_800B069C__Q22cf11CfObjectEneFv(void* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
+
+extern "C" void CBattleState_UnkVirtualFunc23__Q22cf12CBattleStateFv(void* self) { reinterpret_cast<BSIf*>(self)->vf0044(); }
+
+extern "C" void CBattleState_UnkVirtualFunc22__Q22cf12CBattleStateFv(void* self) { reinterpret_cast<BSIf*>(self)->vf0040(); }
+
+extern "C" void CBattleState_UnkVirtualFunc21__Q22cf12CBattleStateFv(void* self) { reinterpret_cast<BSIf*>(self)->vf003C(); }
+
+extern "C" void CBattleState_UnkVirtualFunc20__Q22cf12CBattleStateFv(void* self) { reinterpret_cast<BSIf*>(self)->vf0038(); }
+
+extern "C" void CActorParam_UnkVirtualFunc98__Q22cf11CActorParamFv(void* self, const void* src) {
+    *(ParamCopyBlock*)((u8*)self + 0x17e4) = *(const ParamCopyBlock*)src;
+}
+
+extern "C" void CActorParam_UnkVirtualFunc92__Q22cf11CActorParamFv(void* self, const void* src) {
+    *(ParamCopyBlock*)((u8*)self + 0x1650) = *(const ParamCopyBlock*)src;
+}

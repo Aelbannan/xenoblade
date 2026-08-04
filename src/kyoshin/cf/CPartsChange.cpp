@@ -16,7 +16,34 @@ cf::CPartsChange::~CPartsChange() {}
 
 void func_80192E80(){}
 
-void func_80192F94(){}
+struct PartsChangeIf {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void vf30(u8 a, u32 b);
+    virtual void _v034(); virtual int vf34();
+};
+extern "C" void func_80192F94(void* self) {
+    if (!((u8*)self)[0x2c]) return;
+    if (!*(void**)((u8*)self + 8)) return;
+    if (((u8*)self)[4]) return;
+    int hit = 0;
+    for (int i = 0; i < 0x20; i++) {
+        u8 c = ((u8*)self)[0xc + i];
+        if (c == 0xff) continue;
+        if (hit) {
+            ((PartsChangeIf*)*(void**)((u8*)self + 8))->vf30(c, 0);
+        } else {
+            if (((PartsChangeIf*)*(void**)((u8*)self + 8))->vf34()) hit = 1;
+        }
+    }
+    if (hit) return;
+    for (int i = 0; i < 0x20; i++) {
+        if (((u8*)self)[0xc + i] != 0xff) {
+            ((PartsChangeIf*)*(void**)((u8*)self + 8))->vf30(((u8*)self)[0xc + i], 1);
+            return;
+        }
+    }
+}
 
 void func_801930A0(){}
 

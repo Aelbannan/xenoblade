@@ -16,11 +16,14 @@ void func_801F5BF8(void* self) {
     *(unsigned long*)((char*)self + 0x74) |= 0x10000;
 }
 
-void func_801F5C08(void* self){
-    *(unsigned long*)((char*)self + 0x74) &= ~0x10000;
+extern "C" void func_801F5C08(void* self) {
+    *(unsigned long*)((char*)self + 0x74) &= ~0x18000;
 }
 
-void func_801F5C18(){}
+extern "C" void func_801F5C18(void* self) {
+    *(unsigned short*)((char*)self + 0x188) = 6;
+    *(unsigned long*)((char*)self + 0x74) = 0;
+}
 
 void func_801F5C2C(){}
 

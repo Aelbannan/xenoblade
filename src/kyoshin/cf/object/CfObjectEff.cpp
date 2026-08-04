@@ -4,6 +4,60 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectEff.hpp"
 
+struct CfObjIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void _v0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void vf009C();
+    virtual void _v00A0();
+    virtual void _v00A4();
+    virtual void _v00A8();
+    virtual void _v00AC();
+    virtual void _v00B0();
+    virtual void vf00B4();
+    virtual void _v00B8();
+    virtual void _v00BC();
+    virtual void _v00C0();
+    virtual void vf00C4();
+    virtual void _v00C8();
+    virtual void _v00CC();
+    virtual void vf00D0();
+};
+
 namespace cf {
 CfObjectEff::CfObjectEff() {}
 } // namespace cf
@@ -20,7 +74,6 @@ namespace cf {
 void CfObjectEff::func_800AC7CC() {}
 extern "C" u32 func_800AC7FC__Q22cf11CfObjectEffFv(void* self) { return *(u32*)((u8*)self + 0x94) != 0; }
 void CfObjectEff::func_800AC810() {}
-void CfObjectEff::func_800AC86C() {}
 } // namespace cf
 
 void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
@@ -68,15 +121,9 @@ void func_800ACC64(void* obj, const void* src) {
 namespace cf {
 void CfObjectEff::func_800ACC94() {}
 
-void CfObjectEff::func_800ACCD4() {
-    this->CfObject_UnkVirtualFunc19();
-}
 
 void CfObjectEff::func_800ACCE4() {}
 
-void CfObjectEff::func_800ACD4C() {
-    this->CfObject_UnkVirtualFunc25();
-}
 
 void CfObjectEff::func_800ACD5C() {}
 void CfObjectEff::func_800ACDA0() {}
@@ -157,13 +204,7 @@ void CfObjectEff::func_800AD68C() {}
 CfObjectEff::~CfObjectEff() {}
 void CfObjectEff::func_800AD818() {}
 
-void CfObjectEff::func_800AD830() {
-    this->CfObject_UnkVirtualFunc32();
-}
 
-void CfObjectEff::func_800AD840() {
-    this->CfObject_UnkVirtualFunc29();
-}
 } // namespace cf
 
 // Forward declarations for symbols used by thunks
@@ -179,3 +220,11 @@ void func_800AD858__Q22cf11CfObjectEffFv(void* self) {
 }
 
 void func_800AD860__FPv(){}
+
+extern "C" void func_800ACCD4__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
+
+extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00B4(); }
+
+extern "C" void func_800AD830__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00D0(); }
+
+extern "C" void func_800AD840__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }

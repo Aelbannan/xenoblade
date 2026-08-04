@@ -41,7 +41,32 @@ bool func_8011C2E8() {
     return ((-v) | v) >> 31;
 }
 
-void func_8011C2FC(){}
+// Cast-only SI for the minimap sub-object virtual calls (slots 0x2C/0x38)
+struct MiniMapIf {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void vf2C(void* a, u32 b);
+    virtual void _v030(); virtual void _v034(); virtual void vf38(void* a);
+};
+extern "C" void func_8011C2FC(void) {
+    void* g = (void*)lbl_eu_80663FB0;
+    if (!g) return;
+    ((u8*)g)[0x8d4] = 3;
+    ((u8*)g)[0x7c] = 3;
+    ((u8*)g)[0x7d] = 0;
+    if (*(void**)((u8*)g + 0x70)) {
+        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf2C(*(void**)((u8*)g + 0x78), 0);
+        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf2C(*(void**)((u8*)g + 0x74), 1);
+        ((MiniMapIf*)*(void**)((u8*)g + 0x70))->vf38(0);
+    }
+    ((u8*)g)[0xa8] = 3;
+    ((u8*)g)[0xa9] = 0;
+    if (*(void**)((u8*)g + 0x9c)) {
+        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf2C(*(void**)((u8*)g + 0xa4), 0);
+        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf2C(*(void**)((u8*)g + 0xa0), 1);
+        ((MiniMapIf*)*(void**)((u8*)g + 0x9c))->vf38(0);
+    }
+}
 
 void func_8011C400()
 {

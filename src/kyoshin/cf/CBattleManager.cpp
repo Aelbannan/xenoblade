@@ -1,4 +1,10 @@
 #include "kyoshin/cf/CBattleManager.hpp"
+
+struct BMIf {
+    virtual void _v008(); virtual void _v00C(); virtual void vf0010();
+    virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020();
+    virtual void vf0024();
+};
 #include "kyoshin/UnkClass_805764CC.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "kyoshin/cf/object/CfObjectEne.hpp"
@@ -156,12 +162,7 @@ void cf::CBattleManager::func_800E2584(u32 mask) {
 }
 void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
 void func_800EA3AC(){}
-void func_800EA410(void* self){
-    self = (char*)self + 0x219c;
-    void** vtable = *(void***)self;
-    void (*func)(void*) = (void (*)(void*))vtable[0x10 / 4];
-    func(self);
-}
+extern "C" void func_800EA410(void* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0010(); }
 void func_800EA420(){}
 unsigned int lbl_eu_80663F00;
 void* func_801A8070(void*);
@@ -176,12 +177,7 @@ void cf::CBattleManager::func_800EA460(float a, float b, unsigned long c) {
     func_800EA484(this);
 }
 void func_800EA470(){}
-void func_800EA998(void* self){
-    self = (char*)self + 0x219c;
-    void** vtable = *(void***)self;
-    void (*func)(void*) = (void (*)(void*))vtable[0x24 / 4];
-    func(self);
-}
+extern "C" void func_800EA998(void* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
 void func_800EC8FC(){}
 void func_800F3958(){}
 unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }

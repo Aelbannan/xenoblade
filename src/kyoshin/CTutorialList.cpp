@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTutorialList.hpp"
 
-u8 CTutorialList::func_802AD300() { return mInitialized; }
+u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
 
 
 
@@ -37,7 +37,7 @@ void func_802AD854(void){}
 void func_802AD858(){}
 
 u8 func_801D3320(void* self);
-u8 CTutorialList::func_802AD984() { return func_801D3320(&mSortMenu); }
+u8 CTutorialList::func_802AD984() { return func_801D3320((u8*)this + 0x84); }
 
 void func_802AD98C(){}
 
@@ -70,3 +70,9 @@ void func_802AE004(){}
 void CTutorialList::OnFileEvent() {}
 
 void func_802AE38C(){}
+
+extern "C" void func_802ACBDC(void* self) {
+    *(unsigned short*)((u8*)self + 0x100) = 0;
+    *(unsigned short*)((u8*)self + 0x102) = 0;
+    *(unsigned short*)((u8*)self + 0x104) = 0;
+}

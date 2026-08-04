@@ -50,7 +50,10 @@ void __dt__80270714(){}
 
 void func_80270770(){}
 
-void func_80270AD8(){}
+extern "C" void func_80270AD8(void* dst, void* src) {
+    *(unsigned long*)dst = *(unsigned long*)src;
+    *(unsigned long*)((u8*)dst + 4) = *(unsigned long*)((u8*)src + 4);
+}
 
 void* func_80270AEC(void* self, int param) {
     if (param >= 256) return 0;

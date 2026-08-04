@@ -1,6 +1,93 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 #include "monolib/math.hpp"
 
+struct APIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void vf0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void _v0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void _v009C();
+    virtual void _v00A0();
+    virtual void _v00A4();
+    virtual void _v00A8();
+    virtual void _v00AC();
+    virtual void _v00B0();
+    virtual void _v00B4();
+    virtual void _v00B8();
+    virtual void _v00BC();
+    virtual void _v00C0();
+    virtual void _v00C4();
+    virtual void _v00C8();
+    virtual void _v00CC();
+    virtual void _v00D0();
+    virtual void _v00D4();
+    virtual void _v00D8();
+    virtual void _v00DC();
+    virtual void _v00E0();
+    virtual void _v00E4();
+    virtual void _v00E8();
+    virtual void _v00EC();
+    virtual void _v00F0();
+    virtual void _v00F4();
+    virtual void _v00F8();
+    virtual void _v00FC();
+    virtual void _v0100();
+    virtual void _v0104();
+    virtual void _v0108();
+    virtual void _v010C();
+    virtual void _v0110();
+    virtual void _v0114();
+    virtual void _v0118();
+    virtual void vf011C(float a);
+    virtual void _v0120();
+    virtual void _v0124();
+    virtual void _v0128();
+    virtual void _v012C();
+    virtual void _v0130();
+    virtual void _v0134();
+    virtual void _v0138();
+    virtual void vf013C(float a);
+    virtual void _v0140();
+    virtual void _v0144();
+    virtual void _v0148();
+    virtual void _v014C();
+    virtual void _v0150();
+    virtual void vf0154(float a);
+};
+
 namespace cf {
     CActorParam::CActorParam(UNKTYPE* r4, UNKTYPE* r5) : CActorState(r4),
     unk15DC(r4), unk15E0(reinterpret_cast<cf::UnkClass_CActorParam15E0*>(r5)), unk1648(0), unk164A(0), unk164C(0) {
@@ -96,19 +183,6 @@ extern "C" void CActorParam_UnkVirtualFunc35__Q22cf11CActorParamFv(void* self) {
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc54() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc60() {}
-void cf::CActorParam::CActorParam_UnkVirtualFunc40() {
-    // Virtual call: CActorParam_UnkVirtualFunc34(this, field_17F4)
-    typedef void (*VFunc34)(void*, float);
-    VFunc34 func = (VFunc34)(*(void***)this)[0x47];
-    func(this, *(float*)((u8*)this + 0x17F4));
-}
-void cf::CActorParam::CActorParam_UnkVirtualFunc46() {
-    // Virtual call: CActorParam_UnkVirtualFunc41(this, field_17F8)
-    typedef void (*VFunc41)(void*, float);
-    VFunc41 func = (VFunc41)(*(void***)this)[0x4F];
-    func(this, *(float*)((u8*)this + 0x17F8));
-}
-void cf::CActorParam::CActorParam_UnkVirtualFunc52() {}
 void CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv() {}
 void CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc141() {}
@@ -173,10 +247,7 @@ void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
 }
 
 // us-80180178
-void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv();
-extern "C" void CBattleState_UnkVirtualFunc3__Q22cf11CActorParamFv(void* self) {
-    ((CActorFn)CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv)((void*)((char*)self - 8));
-}
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(*(void**)((u8*)self + 0x15dc))->vf0040(); }
 
 // us-80180180
 int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self);
@@ -189,3 +260,9 @@ extern "C" void CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();
 extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv)((char*)self - 8);
 }
+
+extern "C" void CActorParam_UnkVirtualFunc40__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf011C(*(float*)((u8*)self + 0x17f4)); }
+
+extern "C" void CActorParam_UnkVirtualFunc46__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf013C(*(float*)((u8*)self + 0x17f8)); }
+
+extern "C" void CActorParam_UnkVirtualFunc52__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf0154(*(float*)((u8*)self + 0x17fc)); }

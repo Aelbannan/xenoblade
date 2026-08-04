@@ -42,7 +42,65 @@ void func_8016D688(){}
 
 void func_8016DAF8(){}
 
-void func_8016DCE4(){}
+// Cast-only SI for CfResReloadImpl sub-object virtual calls
+struct ResReloadIf {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void* vf3C(void* a);
+    virtual void _v040(); virtual int vf44();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v0A8(); virtual void _v0AC(); virtual void vfB0();
+    virtual void _v0B4(); virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0();
+    virtual void _v0C4(); virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0();
+    virtual void _v0D4(); virtual void _v0D8(); virtual void _v0DC(); virtual float vfE0();
+    virtual void _v0E4(); virtual void _v0E8(); virtual void _v0EC(); virtual float vfF0();
+    virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC(); virtual void _v100();
+    virtual void _v104(); virtual void _v108(); virtual void _v10C(); virtual void _v110();
+    virtual void _v114(); virtual void _v118(); virtual void _v11C(); virtual void _v120();
+    virtual void _v124(); virtual void _v128(); virtual void _v12C(); virtual void _v130();
+    virtual void _v134(); virtual void _v138(); virtual void _v13C(); virtual void _v140();
+    virtual void _v144(); virtual void _v148(); virtual void _v14C(); virtual void _v150();
+    virtual void _v154(); virtual void _v158(); virtual void _v15C(); virtual void _v160();
+    virtual void _v164(); virtual void _v168(); virtual void _v16C(); virtual void _v170();
+    virtual void _v174(); virtual void _v178(); virtual void _v17C(); virtual void* vf180();
+    virtual void _v184(); virtual void _v188(); virtual void _v18C(); virtual void _v190();
+    virtual void _v194(); virtual void _v198(); virtual void _v19C(); virtual void _v1A0();
+    virtual void _v1A4(); virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0();
+    virtual void _v1B4(); virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0();
+    virtual void _v1C4(); virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0();
+    virtual void _v1D4(); virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0();
+    virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0();
+    virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC(); virtual int vf200();
+};
+
+extern "C" void func_8016DCE4(void* self) {
+    if (!((ResReloadIf*)*(void**)self)->vf44()) {
+        void* r = ((ResReloadIf*)*(void**)self)->vf180();
+        ((ResReloadIf*)*(void**)self)->vf3C(r);
+    }
+    if (*(void**)((u8*)*(void**)self + 0x38))
+        ((ResReloadIf*)*(void**)((u8*)*(void**)self + 0x38))->vfB0();
+    if (*(void**)((u8*)*(void**)self + 0x98)) {
+        float v;
+        if (((ResReloadIf*)*(void**)self)->vf200()) {
+            void* b = *(void**)self;
+            if (b) b = (u8*)b - 0x3e9c;
+            v = ((ResReloadIf*)b)->vfF0();
+        } else {
+            v = ((ResReloadIf*)*(void**)self)->vfE0();
+        }
+        void* obj = *(void**)((u8*)*(void**)self + 0x98);
+        *(float*)((u8*)obj + 0x304) = v;
+        *(float*)((u8*)obj + 0x308) = v;
+        *(float*)((u8*)obj + 0x30c) = v;
+    }
+}
 
 void func_8016DDE8(){}
 

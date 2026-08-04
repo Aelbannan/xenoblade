@@ -147,7 +147,24 @@ void func_801571A8(){}
 
 extern "C" void* func_801571FC(void) { return *(void**)((u8*)lbl_eu_806641B8 + 0x10000 + 0x20e8); }
 
-void func_8015720C(){}
+extern "C" void func_8015720C(u32 v, u32 set) {
+    extern u16 lbl_eu_8052F6B8[];
+    if (v < 1) return;
+    if (v > 0xb) return;
+    u32 bit = 1u << v;
+    u32* flags = (u32*)((u8*)lbl_eu_806641B8 + 0x12108);
+    if (set) {
+        const u16* t = lbl_eu_8052F6B8;
+        if (v == *t++) *flags |= bit;
+        if (v == *t++) *flags |= bit;
+        if (v == *t++) *flags |= bit;
+        if (v == *t++) *flags |= bit;
+        if (v == *t++) *flags |= bit;
+        if (v == *t) *flags |= bit;
+    } else {
+        *flags &= ~bit;
+    }
+}
 
 void func_8015730C(){}
 
@@ -163,7 +180,20 @@ void func_80157824(int index, short value) {
     ((short*)((char*)lbl_eu_806641B8 + 0x120EC))[index] = value;
 }
 
-void func_8015783C(){}
+extern "C" void* func_8015783C(s32 kind, u32 idx, u32 sub) {
+    extern char* lbl_eu_806641B8;
+    if (idx - 1 > 0xa) return 0;
+    switch (kind) {
+    case 2: return (u8*)lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x5a74;
+    case 4: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34;
+    case 5: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x211c;
+    case 6: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x4238;
+    case 7: return (u8*)lbl_eu_806641B8 + (idx + 0x96) * 0x34 + 0x6354;
+    case 8: return (u8*)lbl_eu_806641B8 + 0x10000 + (idx + 0x96) * 0x34 - 0x7b90;
+    case 3: return (u8*)lbl_eu_806641B8 + 0x10000 + ((sub + (idx - 1) * 8) << 4) + 0x1ab8;
+    }
+    return 0;
+}
 
 void func_80157948(){}
 

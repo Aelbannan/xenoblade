@@ -2,10 +2,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTitle.hpp"
 
 void __ct__CTitleLogo(){}
 
-void CTitleLogo::~CTitleLogo() {}
+CTitleLogo::~CTitleLogo() {}
 
 void func_802B63A4(){}
 
@@ -37,7 +38,7 @@ void func_802B6854(){}
 
 void __ct__CTitleMenu(){}
 
-void CTitleMenu::~CTitleMenu() {}
+CTitleMenu::~CTitleMenu() {}
 
 void func_802B6970(){}
 
@@ -87,7 +88,7 @@ void func_802B725C(){}
 
 void __ct__CTitle(){}
 
-void CTitle::~CTitle() {}
+CTitle::~CTitle() {}
 
 void func_802B73D4(){}
 
@@ -135,7 +136,11 @@ void func_802B7920() {}
 
 void func_802B7924(){}
 
-void func_802B7948(){}
+extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v) {
+    extern void* lbl_eu_80664C38;
+    void* p = lbl_eu_80664C38;
+    if (p) *(unsigned char*)((u8*)p + 0x25) = v;
+}
 
 void CTitle::OnFileEvent() {}
 

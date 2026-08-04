@@ -11,10 +11,7 @@ void __dt__12CMenuPTStateFv(CMenuPTState* self);
 
 void __ct__CMenuPTState(){}
 
-unsigned long func_80192BD0(){
-    unsigned long v = lbl_eu_80664300;
-    return !!v;
-}
+extern "C" unsigned long func_80192BD0() { return lbl_eu_80664300 != 0; }
 
 // FULL_MATCH: vtable adjustor thunks (IScnRender secondary base at offset +0x58).
 void func_80192BE4(void* self) {

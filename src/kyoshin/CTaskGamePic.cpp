@@ -47,13 +47,6 @@ public:
 class CTaskGamePic;
 template<> void CTTask<CTaskGamePic>::Move() {}
 template<> void CTTask<CTaskGamePic>::Draw() {}
-s16 func_80295388(void* self){
-    struct UnkPart {
-        u8 _pad[2];
-        s16 field_2;
-        u16 _pad2;
-        s16 field_6;
-    };
-    const UnkPart* p = static_cast<const UnkPart*>(self);
-    return p->field_2 + p->field_6;
+extern "C" s16 func_80295388(void* self) {
+    return (s16)(*(s16*)((u8*)self + 2) + *(s16*)((u8*)self + 6));
 }

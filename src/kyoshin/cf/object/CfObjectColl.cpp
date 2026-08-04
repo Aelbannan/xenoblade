@@ -5,6 +5,47 @@
 
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 
+struct CfObjIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void vf0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void vf009C();
+};
+
 
 
 void func_800AB3D0(){}
@@ -49,11 +90,6 @@ void cf::CfObjectColl::func_800AB57C() {
 
 void func_800AB580(){}
 
-void cf::CfObjectColl::func_800AB798() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0x9c / 4];
-    func(this);
-}
 
 void cf::CfObjectColl::func_800AB7A8() {}
 
@@ -202,3 +238,7 @@ extern "C" void* func_800AC610(void* param_1) {
     }
     return NULL;
 }
+
+extern "C" void func_800AB798__Q22cf12CfObjectCollFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
+
+extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf0074(); }

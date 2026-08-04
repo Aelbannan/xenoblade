@@ -7,9 +7,9 @@
 #include <cstddef>
 void __ct__CMenuArtsSet(){}
 
-unsigned long func_8022F530(){
+extern "C" unsigned long func_8022F530() {
     extern unsigned long lbl_eu_80664740;
-    return !!lbl_eu_80664740;
+    return lbl_eu_80664740 != 0;
 }
 
 void func_8022F544(){}
@@ -102,9 +102,11 @@ void func_80231648(){}
 
 void func_802316F8(){}
 
-void CMenuArtsSet::func_80231848(void* src){
-    mField44 = *static_cast<float*>(src);
-    mField48 = *(float*)((char*)src + 4);
+extern "C" void func_80231848(void* self, void* src) {
+    float x = *(float*)src;
+    float y = *(float*)((u8*)src + 4);
+    *(float*)((u8*)self + 0x44) = x;
+    *(float*)((u8*)self + 0x48) = y;
 }
 
 void func_8023185C(){}

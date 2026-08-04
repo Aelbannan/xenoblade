@@ -16,7 +16,7 @@ extern "C" {
 void* func_801862C0(VMThread* pThread);
 void* func_801862E0(void* p);
 void* func_801863F4(void* p);
-void* func_80186460(void* p);
+void* func_80186460(void* dst, void* src);
 void* func_80186474(void* p);
 void* func_801864DC(void* pObj, int slot);
 void* func_80186664(void* p);

@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuGameClear.hpp"
 
 // forward declarations for scaffold thunk references
-extern const char lbl_eu_80664C08[];
+extern unsigned long lbl_eu_80664C08;
 void cbRenderBefore__14CMenuGameClearFv(void*);
 void __dt__14CMenuGameClearFv(void*);
 
@@ -22,9 +22,8 @@ void CMenuGameClear::cbRenderBefore() {}
 
 void __ct__CMenuGameClear(){}
 
-unsigned long func_802B22E0(){
-    unsigned long v = *(unsigned long*)(lbl_eu_80664C08);
-    return !!v;
+extern "C" unsigned long func_802B22E0() {
+    return lbl_eu_80664C08 != 0;
 }
 
 void func_802B22F4(){}

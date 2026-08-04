@@ -4,6 +4,60 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
 
+struct CMIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void _v0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void _v009C();
+    virtual void _v00A0();
+    virtual void _v00A4();
+    virtual void _v00A8();
+    virtual void _v00AC();
+    virtual void _v00B0();
+    virtual void _v00B4();
+    virtual void _v00B8();
+    virtual void _v00BC();
+    virtual void _v00C0();
+    virtual void vf00C4();
+    virtual void _v00C8();
+    virtual void _v00CC();
+    virtual void vf00D0();
+};
+
 void cf::CfObjectMap::func_800B9A70() {}
 
 void cf::CfObjectMap::func_800B9AB4() {}
@@ -54,18 +108,12 @@ extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(void* self)
 
 extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(void* self) { return 0; }
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc33(float amount) {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0xd0 / 4];
-    func(this);
-}
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc30() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0xc4 / 4];
-    func(this);
-}
 
 extern "C" void func_800BA764__Q22cf11CfObjectMapFv() {}
 
 cf::CfObjectMap::~CfObjectMap() {}
+
+extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(void* self) { reinterpret_cast<CMIf*>(self)->vf00D0(); }
+
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(void* self) { reinterpret_cast<CMIf*>(self)->vf00C4(); }

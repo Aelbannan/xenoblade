@@ -49,3 +49,8 @@ void CMenuGCItem::func_802B0F08() {
 void CMenuGCItem::func_802B0F10() {
     this->~CMenuGCItem();
 }
+
+extern "C" unsigned long func_802B0D10() {
+    extern unsigned long lbl_eu_80664C00;
+    return lbl_eu_80664C00 != 0;
+}

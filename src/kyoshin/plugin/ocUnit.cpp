@@ -3,6 +3,57 @@
 
 #include "kyoshin/plugin/ocUnit.hpp"
 
+struct CfObjIf {
+    virtual void _v0008();
+    virtual void _v000C();
+    virtual void _v0010();
+    virtual void _v0014();
+    virtual void _v0018();
+    virtual void _v001C();
+    virtual void _v0020();
+    virtual void _v0024();
+    virtual void _v0028();
+    virtual void _v002C();
+    virtual void _v0030();
+    virtual void _v0034();
+    virtual void _v0038();
+    virtual void _v003C();
+    virtual void _v0040();
+    virtual void _v0044();
+    virtual void _v0048();
+    virtual void _v004C();
+    virtual void _v0050();
+    virtual void _v0054();
+    virtual void _v0058();
+    virtual void _v005C();
+    virtual void _v0060();
+    virtual void _v0064();
+    virtual void _v0068();
+    virtual void _v006C();
+    virtual void _v0070();
+    virtual void _v0074();
+    virtual void _v0078();
+    virtual void _v007C();
+    virtual void _v0080();
+    virtual void _v0084();
+    virtual void _v0088();
+    virtual void _v008C();
+    virtual void _v0090();
+    virtual void _v0094();
+    virtual void _v0098();
+    virtual void _v009C();
+    virtual void _v00A0();
+    virtual void _v00A4();
+    virtual void _v00A8();
+    virtual void _v00AC();
+    virtual void _v00B0();
+    virtual void _v00B4();
+    virtual void _v00B8();
+    virtual void _v00BC();
+    virtual void _v00C0();
+    virtual void vf00C4();
+};
+
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
     extern u32 lbl_eu_80663E24;
@@ -1249,3 +1300,8 @@ void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
         *field &= ~0x01000000;
     }
 }
+
+extern float lbl_eu_8066A20C;
+extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x4c) * lbl_eu_8066A20C; }
+
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }

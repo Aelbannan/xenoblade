@@ -61,9 +61,9 @@ void func_80190568(){}
 
 void func_80190690(){}
 
-unsigned long func_801906FC(){
+extern "C" unsigned long func_801906FC() {
     extern unsigned long lbl_eu_80663E24;
-    lbl_eu_80663E24 &= ~0x40000;
+    lbl_eu_80663E24 &= ~0x80000;
     return 0;
 }
 

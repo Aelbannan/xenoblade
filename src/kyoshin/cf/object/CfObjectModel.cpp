@@ -85,7 +85,7 @@ extern "C" void CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv(void* self, fl
     ((void (*)(void*, float))((*(void***)self)[0xC4 / 4]))(self, f * lbl_eu_8066A210);
 }
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc34() {}
+float cf::CfObjectModel::CfObject_UnkVirtualFunc34() { return 0.0f; }
 
 void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv(void* self, float f) {
     void* p = *(void**)((u8*)self + 0x98);
@@ -111,7 +111,7 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc54() {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc55() {}
 
-void cf::CfObjectModel::CObjectParam_UnkVirtualFunc2() {}
+void* cf::CfObjectModel::CObjectParam_UnkVirtualFunc2() { return 0; }
 
 void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc3() {}
 
@@ -166,8 +166,6 @@ int CfObjectModel_UnkVirtualFunc6__Q22cf13CfObjectModelFv(void* self) { return 0
 // so we emit the exact mangled name via extern "C" to match the retail .o symbol table.
 extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(void* self, float a, float b) {
     extern float lbl_eu_80666A68;
-    // Load constant first, then store params around it to match retail scheduling:
-    // lfs f0, constant -> stfs f1, 0x3c -> stfs f0, 0x40 -> stfs f2, 0x44 -> blr
     float c = lbl_eu_80666A68;
     *(float*)((char*)self + 0x3c) = a;
     *(float*)((char*)self + 0x40) = c;

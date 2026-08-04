@@ -29,10 +29,7 @@ void func_801B46E4(){}
 void func_801B4790(){}
 
 extern unsigned long lbl_eu_80664414;
-unsigned long func_801B481C(){
-    unsigned long v = lbl_eu_80664414;
-    return !!v;
-}
+extern "C" unsigned long func_801B481C() { return lbl_eu_80664414 != 0; }
 
 void func_801B4830(){}
 

@@ -57,8 +57,8 @@ void __dt__80213E4C(){}
 void func_80213E8C(CMCCrystalBox* self) {
     u32 i;
     self->unk20 = 0;
-    self->unk29 = 0;
-    self->unk6A = 0;
+    ((u8*)self)[0x29] = 0;
+    ((u8*)self)[0x6A] = 0;
     for (i = 0; i < 8; i++) {
         self->subObjPtrs[i] = 0;
         ((u8*)self)[0x21 + i] = 0xFF;
@@ -125,7 +125,7 @@ int lookupIndexedValue_80215AE8(void* self) {
     CMCCrystalBox* obj = static_cast<CMCCrystalBox*>(self);
     if (obj->unk20 == 0) return 0;
     CMCCrystalBoxLookup* lookup = (CMCCrystalBoxLookup*)obj;
-    return lookup->values[lookup->valueIndex[obj->unk29]];
+    return lookup->values[lookup->valueIndex[((u8*)obj)[0x29]]];
 }
 
 void func_80215B18(){}
@@ -278,3 +278,8 @@ void copyShortPair_80219D10(void* dst, void* src){
 }
 
 void CMCCrystalBox::OnFileEvent() {}
+
+extern "C" void func_80219D10(void* dst, void* src) {
+    *(unsigned short*)dst = *(unsigned short*)src;
+    *(unsigned short*)((u8*)dst + 2) = *(unsigned short*)((u8*)src + 2);
+}

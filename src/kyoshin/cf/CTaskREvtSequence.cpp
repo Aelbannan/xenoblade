@@ -20,16 +20,16 @@ void __dt__801682AC(){}
 
 cf::CTaskREvtSequence::~CTaskREvtSequence() {}
 
-unsigned long func_801683FC(){
+extern "C" unsigned long func_801683FC() {
     extern unsigned long lbl_eu_80664268;
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
-    return (ptr[0x5c/4] >> 17) & 1;
+    return (ptr[0x5c/4] >> 14) & 1;
 }
 
-unsigned long func_8016840C(){
+extern "C" unsigned long func_8016840C() {
     extern unsigned long lbl_eu_80664268;
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
-    return (ptr[0x5c/4] >> 19) & 1;
+    return (ptr[0x5c/4] >> 12) & 1;
 }
 
 void func_8016841C(){}

@@ -304,7 +304,7 @@ void sinit_80189D68() {
     lbl_eu_806642E0 = 0;
 }
 
-void func_80188584(SoundSlot* slot) {
+extern "C" void func_80188584(SoundSlot* slot) {
     u8* start = (u8*)slot + 0xB8;
     u8* end = (u8*)slot + 0x398;
     for (u8* cur = start; cur < end; cur += 0xB8) {

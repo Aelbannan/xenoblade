@@ -30,13 +30,12 @@ void* func_801862E0(void* p){ return 0; }
 
 void* func_801863F4(void* p){ return 0; }
 
-void* func_80186460(void* dst, void* src){
-    // Copy src->unk74 to dst->unk1700 and src pointer to dst->unk1704
+extern "C" void* func_80186460(void* dst, void* src) {
     CArtsSelectContainer* container = static_cast<CArtsSelectContainer*>(dst);
     const u8* srcBytes = static_cast<const u8*>(src);
     u32 id = *reinterpret_cast<const u32*>(srcBytes + 0x74);
-    container->unk1700 = id;
-    container->unk1704 = reinterpret_cast<u32>(src);
+    *(u32*)((u8*)dst + 0x1700) = id;
+    *(u32*)((u8*)dst + 0x1704) = reinterpret_cast<u32>(src);
     return reinterpret_cast<void*>(id);
 }
 

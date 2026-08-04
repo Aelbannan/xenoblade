@@ -39,7 +39,7 @@ public:
 
     // 0x00: vtable + base classes (0x60 bytes; mirrors CMenuPTGauge layout)
     u8 unk00[0x60];
-    CScn* mScn;                                 // 0x60 — owning scene; addRenderCB target
-    UnkClass_8045F564 mLayoutMem;               // 0x64 — layout memory region (MEM2 alloc)
-    CMenuVisionEntry mEntries[6];               // 0x74 — 6 vision slots (stride 0x30)
+    CScn* mScn;                                 // 0x60 - owning scene; addRenderCB target
+    UnkClass_8045F564 mLayoutMem;               // 0x64 - layout memory region (MEM2 alloc)
+    CMenuVisionEntry mEntries[6];               // 0x74 - 6 vision slots (stride 0x30)
 };

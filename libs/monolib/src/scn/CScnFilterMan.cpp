@@ -34,7 +34,7 @@ void func_8049CD34(){}
 
 void func_8049CDAC(void) {}
 
-void func_8049CDB0(void* param_1){ *(u32*)param_1 = 0; }
+extern "C" void func_8049CDB0(void* unused, void* out) { *(u32*)out = 0; }
 
 void __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(){}
 
@@ -78,13 +78,15 @@ void func_8049D490(){}
 
 void func_8049D520(){}
 
-u32 func_8049D530(void* self){ return *(u32*)((u8*)self + 0); }
+extern "C" void* func_8049D530(void* self){ return (void*)((char*)*(void**)self + 8); }
 
 void func_8049D53C(void){}
 
 void func_8049D548(){}
 
-void func_8049D564(){}
+extern "C" void func_8049D564(int* dst, int* src){
+    *dst = *src;
+}
 
 void func_8049D570(){}
 
@@ -112,11 +114,13 @@ void func_8049D914(){}
 
 void func_8049D948(void){}
 
-u32 func_8049D954(void* self){ return *(u32*)((u8*)self + 0); }
+extern "C" void* func_8049D954(void* self){ return (void*)((char*)*(void**)self + 8); }
 
 void func_8049D960(){}
 
-void func_8049D994(){}
+extern "C" void func_8049D994(int* dst, int* src){
+    *dst = *src;
+}
 
 void func_8049D9A0(){}
 
@@ -139,10 +143,10 @@ void func_8049DAFC(){}
 
 void func_8049DB14(){}
 
-u32 func_8049DBF0(void){
-    extern u32 cacheInstance__9CDeviceGX;
-    return cacheInstance__9CDeviceGX;
-}
+// Retail refs the CDeviceGX static (extern; defined in retail data object)
+// by its mangled name cacheInstance__9CDeviceGX via SDA21.
+extern "C" { extern void* cacheInstance__9CDeviceGX; }
+extern "C" void* func_8049DBF0(void) { return cacheInstance__9CDeviceGX; }
 
 void func_8049DBF8(void){}
 

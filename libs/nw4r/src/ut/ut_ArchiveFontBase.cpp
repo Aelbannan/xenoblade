@@ -56,7 +56,8 @@ void Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(){}
 
 void Attach__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPCvUl(){}
 
-unsigned int GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void* self) {
+extern "C" unsigned int
+GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void* self) {
     return (*(const unsigned int*)((const char*)self + 8) - *(const unsigned int*)((const char*)self + 4)) +
            (*(const unsigned int*)((const char*)self + 0x14) - *(const unsigned int*)((const char*)self + 0x10));
 }

@@ -8,6 +8,33 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 ---
 
+## kyoshin leaf-codegen walls (MWCC 1.1, Wii/1.1, -O4,p) — unreachable shapes
+
+- **Default-return hoisting:** `int f(...) { if (c1) return 1; ... if (cN) return 1;
+  return 0; }` always puts `li r3, 0` in the final epilogue (81 instr). Retail
+  (func_8016FA68/801AA960) hoists it to the top and uses `bnelr`/`bgtlr` for the
+  last block (80 instr). Every source shape (if-chain, switch, goto, r-var)
+  gives the same 81. SMT can't certify (path limit 4096).
+- **Pair-copy register allocation:** retail `lfs f1,0(r4); lfs f0,4(r4); stfs
+  f1,0(r3); stfs f0,4(r3)` assigns the FIRST-loaded value to f1 and stores it
+  first. MWCC assigns f0 to the first decl and reorders stores (f0's store
+  first). The `return x` trick fixes regs but not store order; struct copies
+  interleave single-reg. The store-order difference is SMT-proved NOT
+  equivalent (observable under aliasing). func_80127BC4/80231848/80219D10/
+  80270AD8/800BC510 are open items.
+- **Range-test normalization:** `if (v < 1 || v > 0xb) return X;` normalizes to
+  `subi r0,v,1; cmplwi r0,0xa` (retail keeps two `cmplwi` + shared epilogue).
+  `if (v >= 1 && v <= 0xb) {...} return X;` also fuses. Unreachable.
+- **Loop strength reduction:** `self[0xc + i]` in a counted loop strength-
+  reduces to a pointer walk (addi per iter, extra saved reg). Retail recomputes
+  `add r3,self,i; lbz rX,0xc(r3)` per iteration. The reduction cannot be
+  disabled from source (func_80192F94/801930A0).
+- **Struct-copy middle loops:** a 0xF0-byte struct copy where retail emits a
+  field-by-field head + `lwz/lwzu/stw/stwu` 8-byte counted loop for the middle
+  region cannot be reproduced by struct assignment (MWCC copies the whole thing
+  field-by-field, 5x larger) or by an explicit u64 loop (different instruction
+  shape). func_80166E48.
+
 ## kyoshin leaf-function patterns (US, Wii/1.1)
 
 - **`x != 0` codegen depends on `-O4,p` vs `-O4,s`:** `-O4,p` emits

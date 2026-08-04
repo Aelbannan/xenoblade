@@ -49,6 +49,7 @@ import {
   releaseTargets,
   execFilePromise,
   type Snapshot,
+  type LintOutcome,
 } from "./acceptance.js";
 
 const OWNER = `pi-harness-${process.pid}`;
@@ -1622,80 +1623,137 @@ async function runTuFinal(
     return;
   }
 
-  const prompt = buildTuFinalPrompt({
+  const snapshot = await snapshotUnit(repoRoot, unit, writable);
+
+  // TU-final retry loop: lint or build rejection restores the snapshot and
+  // re-runs the cleanup session with the violations/errors as feedback
+  // (bounded by maxNoMatchRePrompts + 1 attempts). Previously a single lint
+  // violation permanently left the unit non-Matching despite all functions
+  // matching.
+  const basePrompt = buildTuFinalPrompt({
     unit, sourceFiles, pythonBin: config.pythonBin, region: config.region,
   });
-
-  const snapshot = await snapshotUnit(repoRoot, unit, writable);
-  let sessionResult: SessionRunResult;
-  try {
-    sessionResult = await runAgentSession({
-      repoRoot, modelRuntime, spec: config.cleanupModel, prompt,
-      sessionDir: join(config.sessionDir, sanitized, "tu-final"),
-      label: "tu-final",
-      kind: "tu-final",
-      python: config.pythonBin,
-      timeoutMinutes: config.maxBatchMinutes * 2,
-      maxTokens: config.maxTokens,
-    });
-    logUsage(repoRoot, config, unit, "tu-final", sessionResult.usage, sessionResult.timedOut);
-  } catch (err) {
-    const usage = usageFromError(err);
-    if (usage) logUsage(repoRoot, config, unit, "tu-final", usage, false);
-    const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
-    if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
-    appendLedger(repoRoot, config.ledgerPath, {
-      ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-      detail: {
-        reason: "session-error",
-        error: err instanceof Error ? err.message : String(err),
-        recoveryOutput: recovery.output,
-      },
-    });
-    return;
-  }
-
-  const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
-  if (!finalLint.ok) {
-    appendLedger(repoRoot, config.ledgerPath, {
-      ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-      detail: { reason: "lint-rejected", violations: finalLint.violations },
-    });
-    console.log(`[pi-harness] ${unit}: TU-final lint failed (restored)`);
-    return;
-  }
-
+  const maxTuFinalAttempts = Math.max(1, config.maxNoMatchRePrompts + 1);
+  let feedback = "";
+  let sessionResult: SessionRunResult | null = null;
   let buildOk = false;
   let buildOutput = "";
   let sizeOutput = "";
+  let finalLintOk = true;
+  let lintViolations: LintOutcome["violations"] = [];
+  let lastReason = "";
 
-  try {
-    const { stdout: cfgOut } = await execFilePromise(config.pythonBin, [
-      "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", config.pythonBin, "configure.py",
-    ], { cwd: repoRoot });
-    const { stdout: ninjaOut } = await execFilePromise(config.pythonBin, [
-      "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", "ninja",
-    ], { cwd: repoRoot });
-    buildOutput = (cfgOut + ninjaOut).slice(-2000);
-    buildOk = true;
-  } catch (err) {
-    buildOutput = (err instanceof Error ? err.message : String(err)).slice(-2000);
-  }
+  for (let attempt = 1; attempt <= maxTuFinalAttempts; attempt++) {
+    const prompt = feedback
+      ? basePrompt + `\n\n## TU-final rejection feedback (attempt ${attempt - 1})\n\n${feedback}\n\nThe previous attempt's changes were reverted. Apply the fixes and retry.\n`
+      : basePrompt;
 
-  if (buildOk) {
-    try {
-      const { stdout } = await execFilePromise(config.pythonBin, [
-        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
-        config.pythonBin, "tools/coop/run.py", "size", unit,
-      ], { cwd: repoRoot });
-      sizeOutput = stdout.slice(-1000);
-    } catch (err) {
-      sizeOutput = (err instanceof Error ? err.message : String(err)).slice(-1000);
+    if (attempt > 1) {
+      await restoreSnapshot(repoRoot, snapshot);
+      process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} (retry after ${lastReason})\n`);
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(), event: "tu-final-retry", tu: unit,
+        detail: { attempt, reason: lastReason, feedback: feedback.slice(0, 500) },
+      });
     }
-  }
 
-  if (!buildOk) {
-    await restoreSnapshot(repoRoot, snapshot);
+    try {
+      sessionResult = await runAgentSession({
+        repoRoot, modelRuntime, spec: config.cleanupModel, prompt,
+        sessionDir: join(config.sessionDir, sanitized, "tu-final"),
+        label: attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`,
+        kind: "tu-final",
+        python: config.pythonBin,
+        timeoutMinutes: config.maxBatchMinutes * 2,
+        maxTokens: config.maxTokens,
+      });
+      logUsage(repoRoot, config, unit, attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`, sessionResult.usage, sessionResult.timedOut);
+    } catch (err) {
+      const usage = usageFromError(err);
+      if (usage) logUsage(repoRoot, config, unit, `tu-final-retry-${attempt}`, usage, false);
+      const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+      if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
+      lastReason = "session-error";
+      feedback = `The TU-final session itself failed: ${err instanceof Error ? err.message : String(err)}`;
+      if (attempt < maxTuFinalAttempts) continue;
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
+        detail: {
+          reason: lastReason,
+          error: err instanceof Error ? err.message : String(err),
+          recoveryOutput: recovery.output,
+        },
+      });
+      return;
+    }
+
+    // ── Lint gate (delta vs the pre-session snapshot) ──
+    const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
+    if (!finalLint.ok) {
+      lastReason = "lint-rejected";
+      lintViolations = finalLint.violations;
+      finalLintOk = false;
+      const rules = [...new Set(lintViolations.map((v) => v.rule))].join(", ");
+      feedback =
+        `Lint rejected the polish (rules: ${rules}). Violations:\n` +
+        lintViolations.slice(0, 10).map(
+          (v) => `- ${v.path}:${v.line ?? "?"} [${v.rule}] ${v.detail}`,
+        ).join("\n") +
+        `\n\nFix ONLY these violations — do not redo the whole finalisation.`;
+      if (attempt < maxTuFinalAttempts) continue;
+    }
+
+    if (!finalLintOk) {
+      // Lint still failing after all attempts — leave the unit non-Matching.
+      await restoreSnapshot(repoRoot, snapshot);
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
+        detail: { reason: "lint-rejected", violations: lintViolations, attempts: maxTuFinalAttempts },
+      });
+      console.log(`[pi-harness] ${unit}: TU-final lint failed after ${maxTuFinalAttempts} attempt(s) (restored)`);
+      return;
+    }
+
+    // ── Build gate (configure.py + ninja under the build lock) ──
+    buildOk = false;
+    buildOutput = "";
+    sizeOutput = "";
+    try {
+      const { stdout: cfgOut } = await execFilePromise(config.pythonBin, [
+        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", config.pythonBin, "configure.py",
+      ], { cwd: repoRoot });
+      const { stdout: ninjaOut } = await execFilePromise(config.pythonBin, [
+        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", "ninja",
+      ], { cwd: repoRoot });
+      buildOutput = (cfgOut + ninjaOut).slice(-2000);
+      buildOk = true;
+    } catch (err) {
+      buildOutput = (err instanceof Error ? err.message : String(err)).slice(-2000);
+    }
+
+    if (!buildOk) {
+      lastReason = "build-failed";
+      feedback =
+        `The full-tree build failed after the polish. Error tail:\n\`\`\`text\n` +
+        buildOutput.slice(-1500) +
+        `\n\`\`\`\n\nFix the compile error and retry.`;
+      if (attempt < maxTuFinalAttempts) continue;
+      await restoreSnapshot(repoRoot, snapshot);
+      break;
+    }
+
+    if (buildOk) {
+      try {
+        const { stdout } = await execFilePromise(config.pythonBin, [
+          "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
+          config.pythonBin, "tools/coop/run.py", "size", unit,
+        ], { cwd: repoRoot });
+        sizeOutput = stdout.slice(-1000);
+      } catch (err) {
+        sizeOutput = (err instanceof Error ? err.message : String(err)).slice(-1000);
+      }
+    }
+    break; // success
   }
 
   appendLedger(repoRoot, config.ledgerPath, {
@@ -1703,14 +1761,14 @@ async function runTuFinal(
     event: buildOk ? "tu-final-done" : "tu-final-failed",
     tu: unit,
     detail: {
-      buildOk, buildOutput, sizeOutput,
-      finalTextPreview: sessionResult.finalText.slice(0, 1000),
+      buildOk, buildOutput, sizeOutput, attempts: buildOk ? 1 : maxTuFinalAttempts,
+      finalTextPreview: (sessionResult?.finalText ?? "").slice(0, 1000),
     },
   });
   console.log(
     buildOk
       ? `[pi-harness] ${unit}: TU-final complete`
-      : `[pi-harness] ${unit}: TU-final build failed (restored)`,
+      : `[pi-harness] ${unit}: TU-final build failed after ${maxTuFinalAttempts} attempt(s) (restored)`,
   );
 }
 

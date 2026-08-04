@@ -66,6 +66,10 @@ need to undo your own edits, use the editor to make forward fixes.
 blocked at the tool level. The \`hexdiff\`, \`kb\`, \`symbols\`, \`targets\`,
 and \`ctx\` tools are available as in batch sessions.)
 
+If the harness rejects this session's polish (lint violations or a build
+break), it reverts to the pre-session snapshot and re-runs with the specific
+violations fed back — fix ONLY those, do not redo unrelated work.
+
 ### 1. Verify the full TU matches — including data
 
 \`\`\`bash

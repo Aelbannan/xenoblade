@@ -29,15 +29,5 @@ bool IsValidBinaryFile(const BinaryFileHeader* pHeader, u32 signature,
     return true;
 }
 
-//unused
-bool IsReverseEndianBinaryFile(const BinaryFileHeader* pHeader) {
-    return false;
-}
-
-//unused
-BinaryBlockHeader* GetNextBinaryBlockHeader(BinaryFileHeader* pHeader, BinaryBlockHeader* pBlockHeader) {
-    return nullptr;
-}
-
 } // namespace ut
 } // namespace nw4r

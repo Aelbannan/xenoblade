@@ -447508,8 +447508,8 @@
       "size": "0x74",
       "unit": "nw4r/src/ut/ut_binaryFileFormat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/ut/ut_binaryFileFormat.cpp",
       "called_functions": [],
@@ -447517,7 +447517,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/ut/ut_binaryFileFormat.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-04T03:57:51.550812+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/ut/ut_binaryFileFormat.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042d954",
@@ -496484,7 +496494,7 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -496493,7 +496503,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:24.085783+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80496ae4",
@@ -496602,7 +496620,7 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -496611,7 +496629,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:26.691828+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80496b28",
@@ -496650,7 +496676,7 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -496659,7 +496685,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:29.283519+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80496bb4",
@@ -497035,7 +497069,7 @@
       "size": "0x8",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -497044,7 +497078,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:32.033710+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80497330",
@@ -497194,7 +497236,7 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -497203,7 +497245,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:34.673124+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804975fc",
@@ -497216,7 +497266,7 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScnVirtualLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -497225,7 +497275,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnVirtualLight.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp"
+      "source": "libs/monolib/src/scn/CScnVirtualLight.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T03:58:37.408935+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnVirtualLight.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80497608",

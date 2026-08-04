@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5825 |
+| extern "C" (total lines) | 5832 |
 | extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1648 |
+| extern "C" definitions (forced names) | 1655 |
 | `self`/register-style params | 3085 |
 | `void*` (params + locals) | 4600 |
-| raw pointer offset arithmetic | 2532 |
+| raw pointer offset arithmetic | 2534 |
 | deref-through-cast arithmetic | 1123 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
@@ -143,7 +143,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnMem.cpp | 2 | 2 | 12 | 12 | 1 | 1 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnRoot.cpp | 2 | 0 | 6 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRootNw4r.cpp | 1 | 5 | 7 | 7 | 4 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnVirtualLight.cpp | 0 | 7 | 30 | 29 | 4 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnVirtualLight.cpp | 0 | 14 | 30 | 29 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScn_80496B0C.cpp | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 2 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -1129,8 +1129,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 7
  },
  "libs/monolib/src/scn/CScnVirtualLight.cpp": {
-  "extern_c_nonlbl_def": 7,
-  "ptr_arith": 4,
+  "extern_c_nonlbl_def": 14,
+  "ptr_arith": 6,
   "self_params": 30,
   "void_ptr": 29
  },

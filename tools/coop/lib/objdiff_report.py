@@ -220,18 +220,20 @@ def evaluate_unit_match(
     # Witness-only path (run_smt=False, the no-SMT pipeline): the objdiff
     # match% gate (should_probe_equivalence) is unreliable — some units' objdiff
     # reports under-report (0.0% for byte-identical functions, e.g.
-    # CCollepedia's func_802542B8), which silently skipped the witness probe
-    # and made certify requests fail. The register-renaming witness reads the
-    # ELF bytes directly and is sound; run it whenever a target_id is present
-    # (the harness's certify path), regardless of the objdiff %. A 100% objdiff
-    # match still goes to certify_unit_symbol below (full-instruction-match,
-    # cheaper/more direct than the witness). For run_smt=True keep the
-    # historical gate.
-    should_probe = (
-        (not run_smt and target_id and symbol and fn_match and pct is not None and pct < 100.0)
-        or (run_equivalence and symbol and fn_match and should_probe_equivalence(pct))
-    )
-    if should_probe:
+    # CCollepedia's func_802542B8), which silently skipped certification and
+    # made certify requests fail. certify_unit_symbol reads the ELF bytes
+    # directly: byte-identical -> FULL_MATCH (full-instruction-match cert),
+    # reg-swap-only -> register-renaming witness internally. Route the
+    # witness-only path through it whenever a target_id is present (the
+    # harness's certify path). For run_smt=True keep the historical gate.
+    if (not run_smt) and target_id and symbol and fn_match and pct is not None and pct < 100.0:
+        with timer("smt"):
+            probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
+        equivalence = probe.status
+        detail = probe.detail
+        certificate = probe.certificate
+        proof = probe.proof
+    elif run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
         with timer("smt"):
             probe: EquivalenceProbe = prove_unit_symbol(
                 project, unit, fn_match.name, linked=linked, target_id=target_id,

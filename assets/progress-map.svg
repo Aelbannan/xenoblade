@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="7200" height="2220" viewBox="0 0 7200 2220" font-family="ui-sans-serif, system-ui, sans-serif">
 <rect x="0" y="0" width="7200" height="2220" fill="#ffffff"/>
 <text x="96" y="252" font-size="144" font-weight="700" fill="#24292f">Xenoblade Chronicles (Wii) — code section progress</text>
-<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">9355/19673 accepted (47.6%)</text>
+<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">9356/19673 accepted (47.6%)</text>
 <rect x="0" y="450" width="7200" height="1260" fill="#ffffff" stroke="#57606a" stroke-width="6"/>
 <rect x="0.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="12.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -2123,11 +2123,11 @@
 <text x="5782.799999999999" y="1860" font-size="78" fill="#57606a" text-anchor="middle">0x80400000</text>
 <text x="7104" y="1860" font-size="78" fill="#57606a" text-anchor="end">0x804F9FA4</text>
 <rect x="96" y="1980" width="120" height="120" rx="18" fill="#1f883d"/>
-<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 9107</text>
+<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 9108</text>
 <rect x="1497" y="1980" width="120" height="120" rx="18" fill="#0969da"/>
 <text x="1653" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 248</text>
 <rect x="3211" y="1980" width="120" height="120" rx="18" fill="#d4a72c"/>
-<text x="3367" y="2061" font-size="108" fill="#24292f">in progress · 2080</text>
+<text x="3367" y="2061" font-size="108" fill="#24292f">in progress · 2079</text>
 <rect x="4675" y="1980" width="120" height="120" rx="18" fill="#6e7681"/>
 <text x="4831" y="2061" font-size="108" fill="#24292f">not started · 8238</text>
 </svg>

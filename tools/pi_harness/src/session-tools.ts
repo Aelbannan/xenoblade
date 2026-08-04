@@ -55,20 +55,33 @@ async function runHexdiffTool(
   repoRoot: string, python: string, unit: string, symbol: string, brief: boolean,
 ): Promise<string> {
   const baseArgs = ["tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json"];
+  // Transient failures (ninja lock contention with a parallel run, mid-write
+  // objects, `premature end of file`) present as empty stdout + no real
+  // compiler error. Retry a few times with backoff before surfacing.
+  const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
   const build = async (noBuild: boolean): Promise<{ stdout: string | null; stderr: string }> => {
     const args = noBuild ? [...baseArgs, "--no-build"] : baseArgs;
-    try {
-      const { stdout } = await run(python, args, repoRoot);
-      return { stdout, stderr: "" };
-    } catch (err) {
-      const e = err as { stdout?: string; stderr?: string; message?: string };
-      // exit 5 (mismatches) carries JSON on stdout — but a failed build
-      // ALSO writes a non-JSON line ("added .note.split to ...") to stdout
-      // before failing. Only treat stdout as a result if it actually parses
-      // as JSON; otherwise surface stderr (the real compiler error).
-      if (e.stdout && looksLikeJson(e.stdout)) return { stdout: e.stdout, stderr: e.stderr ?? "" };
-      return { stdout: null, stderr: e.stderr ?? e.message ?? String(err) };
+    let lastStderr = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { stdout } = await run(python, args, repoRoot);
+        return { stdout, stderr: "" };
+      } catch (err) {
+        const e = err as { stdout?: string; stderr?: string; message?: string };
+        // exit 5 (mismatches) carries JSON on stdout — but a failed build
+        // ALSO writes a non-JSON line ("added .note.split to ...") to stdout
+        // before failing. Only treat stdout as a result if it actually parses
+        // as JSON; otherwise surface stderr (the real compiler error).
+        if (e.stdout && looksLikeJson(e.stdout)) return { stdout: e.stdout, stderr: e.stderr ?? "" };
+        lastStderr = e.stderr ?? e.message ?? String(err);
+        // Empty stderr + non-zero exit = transient (no compiler error was
+        // produced). Retry; a real compile error always has mwcceppc output.
+        const realError = /mwcceppc|Error|error:/i.test(lastStderr);
+        if (realError || attempt === 2) break;
+        await sleep(1500 * (attempt + 1));
+      }
     }
+    return { stdout: null, stderr: lastStderr };
   };
   // Fast path: --no-build read of the existing object. If it fails (missing
   // or mid-write object), rebuild — and on build failure surface the ACTUAL

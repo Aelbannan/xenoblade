@@ -154,7 +154,20 @@ describe("integration: hexdiffTool", () => {
     // The old --no-build fast path returned the PRE-EDIT object's mismatch
     // counts after a model edit (stale: 13 vs fresh 68 in the finding). The
     // tool must always build so the diff reflects the current source.
+    //
+    // HAZARD (Kimi finding 4): this edits a LIVE source file. Skip when the
+    // file is dirty (a harness run is mid-edit) — a concurrent write between
+    // our read and restore would be destroyed. The freshness guarantee is
+    // structurally enforced by always-build; this test just pins the
+    // regression when the worktree is quiet.
     const src = join(REPO, "src/kyoshin/menu/CMenuMapSelect.cpp");
+    try {
+      const git = await run(PY, ["-c", `import subprocess; print(subprocess.run(['git','diff','--quiet','--','src/kyoshin/menu/CMenuMapSelect.cpp'], cwd=r'${REPO}').returncode)`], REPO);
+      if (git.stdout.trim() !== "0") {
+        // Dirty (live run mid-edit) — skip to avoid destroying its work.
+        return;
+      }
+    } catch { return; }
     const orig = await readFile(src, "utf-8");
     try {
       // Remove the singleton guard — a codegen change that definitely alters

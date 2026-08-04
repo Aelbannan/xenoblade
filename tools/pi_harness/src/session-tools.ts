@@ -324,10 +324,24 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
           // dropped, repeating the run() bug class).
           if (e.stdout && /status: \S+/.test(e.stdout)) {
             const full = e.stdout.trim();
-            const sizeLine = full.split("\n").find((l) => /size:/.test(l)) ?? "";
+            const verdictLines = full.split("\n").filter((l) =>
+              /^(status|equivalence|certificate|code|symbol|size):/.test(l));
+            // Include the verdict so the model knows whether the CODE is
+            // done (size is a separate unit-level concern) — Kimi finding 5:
+            // dropping the verdict made the model keep 'fixing' finished code.
+            const eq = full.match(/equivalence: (\S+)/)?.[1];
+            const certifiable = eq === "FULL_MATCH" || eq === "EQUIVALENT_MATCH";
+            const lines = [
+              `## witness: ${params.symbol}`,
+              `- ❗ UNIT SIZE OVER BUDGET (the function's own verdict is below)`,
+              ...verdictLines.map((l) => `- ${l}`),
+              certifiable
+                ? "- ✅ CODE IS CERTIFIABLE — fix the unit split size, then re-run"
+                : "- ❌ NOT certifiable yet — keep iterating",
+            ];
             return {
-              content: [{ type: "text", text: `## witness: ${params.symbol}\n- (verdict delivered; unit size check failed: ${sizeLine || "over budget"})` }],
-              details: { ok: false, certifiable: false, status: "size-failed", equivalence: null },
+              content: [{ type: "text", text: lines.join("\n") }],
+              details: { ok: false, certifiable, status: "size-failed", equivalence: eq ?? null },
             };
           }
           const detail = e.stderr || e.message || String(err);

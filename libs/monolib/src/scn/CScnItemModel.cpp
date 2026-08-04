@@ -57,7 +57,19 @@ void func_80484E04(void* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val
 
 void func_80484E0C(void) {}
 
-void func_80484E10(){}
+extern "C" void func_80484E10(void* self, u32 a, u32 b) {
+    volatile u32* f = (volatile u32*)((u8*)self + 0x7A8);
+    if (a != 0) {
+        *f |= 0x1;
+    } else {
+        *f &= ~0x1;
+    }
+    if (b != 0) {
+        *f |= 0x2;
+    } else {
+        *f &= ~0x2;
+    }
+}
 
 void func_80484E5C(){}
 

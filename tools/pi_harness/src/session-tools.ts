@@ -247,6 +247,95 @@ export function symbolsTool(repoRoot: string, python: string): ToolDefinition {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+//  witness — read-only equivalence certification check (no SMT)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * witness custom tool: `run.py diff --no-smt` — READ-ONLY. Runs the cheap
+ * register-renaming witness (position-aligned same-mnemonic pairs whose
+ * diffs are register-only) and reports whether the CURRENT code would
+ * certify as EQUIVALENT_MATCH / FULL_MATCH. Does NOT touch the target
+ * registry (unlike `run.py cycle`, which is harness-owned and writes
+ * acceptance).
+ *
+ * The model should call this when hexdiff shows `structural: 0` (code
+ * structure is right, only registers differ) — if it says certifiable,
+ * report it so the harness can run the accepting cycle. Also useful to
+ * confirm FULL_MATCH on 0-mismatch states.
+ */
+export function witnessTool(repoRoot: string, python: string): ToolDefinition {
+  return defineTool({
+    name: "witness",
+    label: "witness",
+    description:
+      "READ-ONLY equivalence check: runs the register-renaming witness (no SMT) on the current code and reports whether it would certify as FULL_MATCH or EQUIVALENT_MATCH. Call when hexdiff shows structural: 0 (only registers differ) or mismatch: 0 — if certifiable, tell the harness to run the accepting cycle. Never modifies the target registry.",
+    promptSnippet: "witness <unit> <symbol> — check current code certifies (no SMT, read-only)",
+    parameters: Type.Object({
+      unit: Type.String({ description: "objdiff unit hint (e.g. kyoshin/menu/CMenuMapSelect)" }),
+      symbol: Type.String({ description: "function symbol (base name, e.g. func_80242368)" }),
+    }),
+    execute: async (_id, params) => {
+      const args = ["tools/coop/run.py", "diff", params.unit, "--symbol", params.symbol, "--no-smt"];
+      // Transient ninja lock contention (parallel runs sharing the build
+      // dir) surfaces as a non-zero exit with no verdict — retry a few
+      // times before surfacing.
+      const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { stdout, stderr } = await run(python, args, repoRoot);
+          const full = (stdout + stderr).trim();
+          // A verdict is present when we see status:/equivalence:/code:
+          if (/status: \S+/.test(full)) {
+            // Parse the verdict lines.
+            const status = full.match(/status: (\S+)/)?.[1] ?? "?";
+            const eq = full.match(/equivalence: (\S+)/)?.[1];
+            const codeMatch = full.match(/code: ([\d.]+)%/)?.[1] ?? "?";
+            const symMatch = full.match(/symbol: \S+  match: ([\d.]+)%/)?.[1] ?? "?";
+            const certifiable =
+              eq === "FULL_MATCH" || eq === "EQUIVALENT_MATCH" ||
+              /semantic-certified/.test(full) ||
+              status === "FULL_MATCH" || status === "EQUIVALENT_MATCH";
+
+            const lines: string[] = [];
+            lines.push(`## witness: ${params.symbol}`);
+            lines.push(`- status: ${status} | code: ${codeMatch}% | symbol match: ${symMatch}%`);
+            if (eq) lines.push(`- equivalence: ${eq}`);
+            lines.push(certifiable
+              ? "- ✅ CERTIFIABLE — this code would be accepted (the harness should run the accepting cycle)"
+              : "- ❌ NOT certifiable yet — keep iterating (structure and/or semantics still differ)");
+            const verdictLines = full.split("\n").filter((l) =>
+              /^(status|equivalence|certificate|code|symbol):/.test(l));
+            if (verdictLines.length > 0) lines.push("", "### raw verdict", ...verdictLines.map((l) => `- ${l}`));
+            const text = lines.join("\n");
+            return {
+              content: [{ type: "text", text }],
+              details: { ok: true, certifiable, status, equivalence: eq ?? null },
+            };
+          }
+          // No verdict yet — transient (lock contention). Retry.
+          if (attempt < 2) await sleep(2000 * (attempt + 1));
+        } catch (err) {
+          const e = err as { stdout?: string; stderr?: string; message?: string };
+          const detail = e.stderr || e.message || String(err);
+          if (/lock|premature|contention/i.test(detail) && attempt < 2) {
+            await sleep(2000 * (attempt + 1));
+            continue;
+          }
+          return {
+            content: [{ type: "text", text: `ERROR: ${detail}` }],
+            details: { ok: false, certifiable: false, status: "error", equivalence: null },
+          };
+        }
+      }
+      return {
+        content: [{ type: "text", text: "ERROR: witness tool could not get a verdict after 3 attempts (build lock contention?)" }],
+        details: { ok: false, certifiable: false, status: "error", equivalence: null },
+      };
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
 //  targets — read-only target identity
 // ─────────────────────────────────────────────────────────────────────
 
@@ -494,6 +583,7 @@ export function batchSessionTools(repoRoot: string, python: string): ToolDefinit
     hexdiffTool(repoRoot, python),
     symbolsTool(repoRoot, python),
     targetsTool(repoRoot, python),
+    witnessTool(repoRoot, python),
     kbTool(repoRoot, python),
     ctxTool(repoRoot, python),
   ];

@@ -24,6 +24,7 @@ import {
   targetsTool,
   kbTool,
   ctxTool,
+  witnessTool,
   tuFinalSpawnHook,
   batchSessionTools,
   tuFinalSessionTools,
@@ -277,21 +278,41 @@ describe("run() stdout/stderr preservation (root-cause regression)", () => {
   });
 });
 
+describe("integration: witnessTool", () => {
+  const tool = witnessTool(REPO, PY);
+
+  test("returns a verdict for a known symbol (not an error)", async () => {
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: KNOWN_SYMBOL });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /## witness: func_80242368/);
+    assert.match(text, /status: \S+/);
+    assert.match(text, /CERTIFIABLE|NOT certifiable/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("never modifies the registry (read-only)", async () => {
+    const before = await run(PY, ["tools/coop/run.py", "targets", "show", KNOWN_TARGET_ID], REPO);
+    await tool.execute("t", { unit: KNOWN_UNIT, symbol: KNOWN_SYMBOL });
+    const after = await run(PY, ["tools/coop/run.py", "targets", "show", KNOWN_TARGET_ID], REPO);
+    assert.equal(before.stdout, after.stdout, "witness must not touch the registry");
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Tool-set composition
 // ---------------------------------------------------------------------------
 describe("tool set composition", () => {
-  test("batchSessionTools contains exactly the 5 structured tools, no bash", () => {
+  test("batchSessionTools contains exactly the 6 structured tools, no bash", () => {
     const tools = batchSessionTools(REPO, PY);
     const names = tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ["ctx", "hexdiff", "kb", "symbols", "targets"]);
+    assert.deepEqual(names, ["ctx", "hexdiff", "kb", "symbols", "targets", "witness"]);
   });
 
   test("tuFinalSessionTools = batch tools + bash", () => {
     const tools = tuFinalSessionTools(REPO, PY);
     const names = tools.map((t) => t.name);
     assert.ok(names.includes("bash"), "tu-final must include bash behind the allowlist");
-    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx"]) {
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness"]) {
       assert.ok(names.includes(n), `tu-final must include ${n}`);
     }
   });

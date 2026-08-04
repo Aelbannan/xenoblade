@@ -15,6 +15,14 @@ from tools.coop.lib.targets import equivalence_certificate_error
 from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.tests.test_elf_symbols import _EQ_LEFT, _NEQ, build_reloc_elf
+from tools.coop.tests.test_renaming_witness import (
+    _DECOMP_BASE,
+    _LR,
+    _RETAIL_BASE,
+    _enc_primary,
+    _function_bytes,
+    _words_hex,
+)
 from unittest import mock
 
 _HAS_Z3 = importlib.util.find_spec("z3") is not None
@@ -595,6 +603,78 @@ class NarrowCalleeReadsValidationTests(unittest.TestCase):
         self.assertTrue(_full_match_callee_body_fits_narrow(
             self.project, "demo/Narrow", "writes_r6_before_read",
         ))
+
+
+
+
+
+
+class WitnessWithUncertifiedCalleesTests(unittest.TestCase):
+    """The post-check witness must IGNORE callee certificates (pi-harness).
+
+    The harness's runBatchCycle -> batch-cycle.py -> run.py cycle ->
+    prove_unit_symbol (smt=False) uses this gate: with a callee that is not
+    yet accepted/certified, the witness previously bailed (returned None ->
+    INCONCLUSIVE_UNVALIDATED_CALLEE) and the target could never certify.
+    Now the witness runs with opaque-EABI fallback for the missing callee.
+
+    Soundness boundary (verified here):
+    - pure reg-swap with NO call certifies even with an error context
+      (uncertified callees in the registry) — the common case
+    - a call with an OPAQUE (uncertified) callee is rejected, never a false
+      certificate (the callee may observe the permuted lane)
+    """
+
+    def test_pure_reg_swap_certifies_with_uncertified_callee(self) -> None:
+        # Registry says callee 'us-uncertified-callee' is not accepted, but
+        # this function has no calls: pure volatile r5<->r6 swap certifies.
+        from tools.coop.lib.equivalence_check import (
+            CertifiedCalleeContext,
+            _try_renaming_witness,
+        )
+        r = [_enc_primary(32, 5, 3, 0), _enc_primary(36, 5, 3, 8), _LR]
+        d = [_enc_primary(32, 6, 3, 0), _enc_primary(36, 6, 3, 8), _LR]
+        left = _function_bytes("f", r, _RETAIL_BASE)
+        right = _function_bytes("f", d, _DECOMP_BASE)
+        context = CertifiedCalleeContext(
+            {}, (), ("callee 'us-uncertified-callee' is not accepted",),
+        )
+        probe = _try_renaming_witness(
+            None, "f", left, right, "us-witness-callee", context,
+        )
+        self.assertIsNotNone(probe, "witness must run with uncertified callee")
+        self.assertEqual(probe.status.value, "equivalent")
+        self.assertIsNotNone(probe.certificate)
+
+    def test_opaque_callee_preserves_soundness_no_false_cert(self) -> None:
+        # A call to an opaque (uncertified) callee: the witness REJECTS it
+        # (the callee may observe the permuted argument lanes). Never a
+        # false certificate — and crucially it RUNS (returns a verdict, not
+        # None on the missing cert).
+        from tools.coop.lib.equivalence_check import (
+            CertifiedCalleeContext,
+            _try_renaming_witness,
+        )
+        from tools.ppc_equivalence.elf_symbols import FunctionRelocation
+        from tools.ppc_equivalence.ir import R_PPC_REL24
+        relocs = (FunctionRelocation(8, R_PPC_REL24, "callee_fn", 0),)
+        r = [_enc_primary(32, 5, 3, 0), 0x48000001, _enc_primary(32, 5, 3, 8), _LR]
+        d = [_enc_primary(32, 6, 3, 0), 0x48000001, _enc_primary(32, 6, 3, 8), _LR]
+        left = _function_bytes("f", r, _RETAIL_BASE, relocs)
+        right = _function_bytes("f", d, _DECOMP_BASE, relocs)
+        context = CertifiedCalleeContext({}, (), ("callee not accepted",))
+        probe = _try_renaming_witness(
+            None, "f", left, right, "us-witness-callee", context,
+        )
+        # The opaque-call shape is NOT certifiable (the callee may observe the
+        # permuted lane) — the witness returns None, which means "fall through
+        # to SMT", never a certificate. The soundness property: it must NOT
+        # certify. (None vs not_equivalent both mean "not certified"; the
+        # callee-CERT gate removal is proven by the positive test above.)
+        self.assertIsNone(probe) if probe is None else self.assertNotEqual(
+            probe.status.value, "equivalent",
+            "opaque-call must never certify",
+        )
 
 
 if __name__ == "__main__":

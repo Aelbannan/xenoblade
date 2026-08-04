@@ -262,11 +262,19 @@ describe("run() stdout/stderr preservation (root-cause regression)", () => {
     // stdout/stderr — they are separate callback args. If run() rejects
     // without attaching them, the hexdiff tool loses the diff on every
     // mismatch and reports 'build failed' instead.
-    const err = await run(PY, ["tools/coop/hexdiff.py", "kyoshin/menu/CMenuMapSelect", "--symbol", "func_80242368", "--json", "--no-build"], REPO)
-      .then(() => null, (e: Error & { stdout?: string; code?: number }) => e);
+    // Use a python one-liner that exits 5 with JSON on stdout — deterministic
+    // (independent of the live runs' build state, which can transiently make
+    // a real symbol a full-match or the object mid-write).
+    const err = await run(
+      PY,
+      ["-c", "import sys; print('{\"mismatch_count\":5}'); sys.exit(5)"],
+      REPO,
+    ).then(() => null, (e: Error & { stdout?: string; code?: number }) => e);
     assert.ok(err, "expected rejection (exit 5)");
     assert.equal(err.code, 5);
     assert.ok(err.stdout && err.stdout.startsWith("{"), "rejection must carry the JSON stdout");
+    const parsed = JSON.parse(err.stdout as string);
+    assert.equal(parsed.mismatch_count, 5);
   });
 
   test("exit 2 (build error): rejection carries stderr (the compiler error)", async () => {
@@ -288,6 +296,34 @@ describe("integration: witnessTool", () => {
     assert.match(text, /status: \S+/);
     assert.match(text, /CERTIFIABLE|NOT certifiable/);
     assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("FULL_MATCH target: verdict text + details agree (certifiable=true, equivalence=equivalent)", async () => {
+    // func_80242354 is a certified FULL_MATCH in CMenuMapSelect.
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: "func_80242354" });
+    const text = r.content?.[0]?.text ?? "";
+    const d = r.details as { ok: boolean; certifiable: boolean; status: string; equivalence: string | null };
+    assert.equal(d.ok, true);
+    assert.equal(d.certifiable, true, "FULL_MATCH must be certifiable");
+    assert.equal(d.status, "FULL_MATCH");
+    assert.equal(d.equivalence, "equivalent");
+    // The text the model sees must carry the same verdict (info passing).
+    assert.match(text, /✅ CERTIFIABLE/);
+    assert.match(text, /equivalence: equivalent/);
+    assert.match(text, /symbol match: 100\.0%/);
+  });
+
+  test("verdict text reflects details on the NOT-certifiable path too", async () => {
+    // func_80242368 is not certifiable in the current worktree — but this
+    // assertion is about CONSISTENCY: whatever details says, the text shows it.
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: KNOWN_SYMBOL });
+    const text = r.content?.[0]?.text ?? "";
+    const d = r.details as { certifiable: boolean };
+    if (d.certifiable) {
+      assert.match(text, /✅ CERTIFIABLE/);
+    } else {
+      assert.match(text, /❌ NOT certifiable/);
+    }
   });
 
   test("never modifies the registry (read-only)", async () => {

@@ -87,12 +87,15 @@ def _decode_pair(
     return original, candidate
 
 
-def _function_bytes(name: str, words: list[int], base: int) -> FunctionBytes:
+def _function_bytes(
+    name: str, words: list[int], base: int,
+    relocations: tuple = (),
+) -> FunctionBytes:
     code = bytes.fromhex(_words_hex(words))
     return FunctionBytes(
         name=name, path=Path(f"{name}.o"), code=code, base=base,
         value=0, size=len(code), section_index=0, section_name=".text",
-        symbol_type=2,
+        symbol_type=2, relocations=relocations,
     )
 
 

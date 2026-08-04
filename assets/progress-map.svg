@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="7200" height="2220" viewBox="0 0 7200 2220" font-family="ui-sans-serif, system-ui, sans-serif">
 <rect x="0" y="0" width="7200" height="2220" fill="#ffffff"/>
 <text x="96" y="252" font-size="144" font-weight="700" fill="#24292f">Xenoblade Chronicles (Wii) — code section progress</text>
-<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">9076/19673 accepted (46.1%)</text>
+<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">9084/19673 accepted (46.2%)</text>
 <rect x="0" y="450" width="7200" height="1260" fill="#ffffff" stroke="#57606a" stroke-width="6"/>
 <rect x="0.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="12.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -1926,7 +1926,7 @@
 <rect x="6600.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6603.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6606.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
-<rect x="6609.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="6609.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6612.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6615.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6618.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
@@ -2003,7 +2003,7 @@
 <rect x="6834.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6837.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6840.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
-<rect x="6843.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="6843.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6846.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6849.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
 <rect x="6852.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
@@ -2123,11 +2123,11 @@
 <text x="5782.799999999999" y="1860" font-size="78" fill="#57606a" text-anchor="middle">0x80400000</text>
 <text x="7104" y="1860" font-size="78" fill="#57606a" text-anchor="end">0x804F9FA4</text>
 <rect x="96" y="1980" width="120" height="120" rx="18" fill="#1f883d"/>
-<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 8836</text>
+<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 8844</text>
 <rect x="1497" y="1980" width="120" height="120" rx="18" fill="#0969da"/>
 <text x="1653" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 240</text>
 <rect x="3211" y="1980" width="120" height="120" rx="18" fill="#d4a72c"/>
 <text x="3367" y="2061" font-size="108" fill="#24292f">in progress · 2017</text>
 <rect x="4675" y="1980" width="120" height="120" rx="18" fill="#6e7681"/>
-<text x="4831" y="2061" font-size="108" fill="#24292f">not started · 8580</text>
+<text x="4831" y="2061" font-size="108" fill="#24292f">not started · 8572</text>
 </svg>

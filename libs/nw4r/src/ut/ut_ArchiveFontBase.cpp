@@ -71,7 +71,12 @@ void ConstructOpCopy__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15Arc
 
 void ConstructOpSkip__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 
-void ConstructOpFatalError__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+extern "C" int
+ConstructOpFatalError__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(void* ctx,
+                                                                                                                                 void* reader) {
+    ((unsigned int*)ctx)[3] = 12;
+    return 2;
+}
 
 extern "C" void
 Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(void* self) {

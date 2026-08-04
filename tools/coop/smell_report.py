@@ -143,7 +143,7 @@ def render_report(rows: dict[str, Stats]) -> str:
         "Tracks the legacy hand-written TU smell families (extern \"C\" outside `lbl_*`, "
         "`self` free-function params, `void*`, raw pointer arithmetic, register-named "
         "params, inline asm, goto chains). New harness-produced code is already gated by "
-        "`tools/llm_decomp/lint.py`; this report makes the legacy backlog visible and "
+        "`tools/pi_harness/lint.py`; this report makes the legacy backlog visible and "
         "prevents it from growing. **Goal: every number in this table trends to 0.**"
     )
     lines.append("")

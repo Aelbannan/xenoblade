@@ -30,7 +30,8 @@ export function buildBatchPrompt(opts: {
     "- Do NOT use `nm`, `objdump`, or `readelf` — use the `symbols` tool and the brief's provided file/symbol info instead. (`find`/`ls` ARE available and cheap for locating files; cap them like grep.)\n" +
     "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
     "\n## Anti-patterns (will cause lint rejection)\n\n" +
-    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. Existing `extern \"C\"` stubs with `lbl_*` names are fine.\n" +
+    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header. Only `lbl_*` reloc/data names may stay `extern \"C\"`.\n" +
+    "- NEVER write constructors/destructors as C-style free functions taking `* self` (e.g. `extern \"C\" CFoo* __ct__4CFooFv(CFoo* self)`). The retail symbols are mangled members — write real member ctors/dtors: `CFoo::CFoo(...)` / `CFoo::~CFoo(...)`.\n" +
     "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +
     "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
     "- NEVER write `*(u32*)(ptr + 0xNN)` or similar cast+offset arithmetic — define a struct with `field_0xNN` members instead.\n" +
@@ -92,6 +93,9 @@ field types and widths, not offset arithmetic. Keep compiled bytes identical.
 Naming, comments, structure. The compiled output must not change. Also:
 **\`extern "C"\` stubs are compile-only scaffolding — try your best to get
 rid of every \`extern "C"\`** by using proper C++ declarations from headers.
+Constructors/destructors must be real member functions (\`Class::Class\` /
+\`Class::~Class\`), never C-style free functions taking \`* self\` — the
+retail symbols are mangled members (\`__ct__\`/\`__dt__\`).
 
 ### 4. Rename to human-readable names — only when confident
 

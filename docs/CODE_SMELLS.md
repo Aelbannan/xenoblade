@@ -10,7 +10,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6345 |
+| extern "C" (total lines) | 6349 |
 | extern "C" declarations (non-lbl_*, imports) | 2241 |
 | extern "C" definitions (forced names) | 1998 |
 | `self`/register-style params | 3369 |

@@ -1645,18 +1645,32 @@ async function runTuFinal(
   let finalLintOk = true;
   let lintViolations: LintOutcome["violations"] = [];
   let lastReason = "";
+  // Lint-improvement tracking: a retry that REDUCES violations keeps its
+  // improvements (no revert); only a regression restores. bestLintCount =
+  // Infinity means "no lint-accepted state yet".
+  let bestLintCount = Infinity;
+  let bestLintSnapshot: Snapshot | null = null;
 
   for (let attempt = 1; attempt <= maxTuFinalAttempts; attempt++) {
     const prompt = feedback
-      ? basePrompt + `\n\n## TU-final rejection feedback (attempt ${attempt - 1})\n\n${feedback}\n\nThe previous attempt's changes were reverted. Apply the fixes and retry.\n`
+      ? basePrompt + `\n\n## TU-final rejection feedback (attempt ${attempt - 1})\n\n${feedback}\n\nThe previous attempt's changes were ${
+          lastReason.startsWith("lint") && bestLintSnapshot ? "KEPT (it reduced lint violations)" : "reverted"
+        }. Apply the fixes and retry.\n`
       : basePrompt;
 
     if (attempt > 1) {
-      await restoreSnapshot(repoRoot, snapshot);
+      // Restore only on regression (or when nothing improved): if the last
+      // attempt reduced violations, its state is already the working tree.
+      if (bestLintSnapshot) {
+        // No restore — the improved state is in the worktree.
+        process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} keeps the improved worktree (${bestLintCount} lint violation(s) remaining)\n`);
+      } else {
+        await restoreSnapshot(repoRoot, snapshot);
+      }
       process.stderr.write(`[pi-harness] ${unit}: TU-final attempt ${attempt}/${maxTuFinalAttempts} (retry after ${lastReason})\n`);
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "tu-final-retry", tu: unit,
-        detail: { attempt, reason: lastReason, feedback: feedback.slice(0, 500) },
+        detail: { attempt, reason: lastReason, keptImprovement: !!bestLintSnapshot, feedback: feedback.slice(0, 500) },
       });
     }
 
@@ -1703,17 +1717,38 @@ async function runTuFinal(
           (v) => `- ${v.path}:${v.line ?? "?"} [${v.rule}] ${v.detail}`,
         ).join("\n") +
         `\n\nFix ONLY these violations — do not redo the whole finalisation.`;
+      // Lint-improvement: if this attempt reduced violations vs the best
+      // prior state, snapshot the improved worktree and keep it (no revert).
+      const current = lintViolations.length;
+      if (current < bestLintCount) {
+        bestLintCount = current;
+        bestLintSnapshot = await snapshotUnit(repoRoot, unit, writable);
+        process.stderr.write(`[pi-harness] ${unit}: lint improved ${bestLintCount} violation(s) remaining — keeping worktree\n`);
+      } else {
+        bestLintSnapshot = null; // regression — next retry restores
+      }
       if (attempt < maxTuFinalAttempts) continue;
     }
 
+    // Lint passed — we are out of lint-recovery mode. A later build failure
+    // must restore to the pristine snapshot, not the last lint-improved state.
+    bestLintSnapshot = null;
+    bestLintCount = Infinity;
+
     if (!finalLintOk) {
-      // Lint still failing after all attempts — leave the unit non-Matching.
-      await restoreSnapshot(repoRoot, snapshot);
+      // Lint still failing after all attempts — keep the best-improved state
+      // if any (it is strictly fewer violations than the original), else
+      // restore the pristine snapshot. The unit stays non-Matching either way.
+      if (!bestLintSnapshot) await restoreSnapshot(repoRoot, snapshot);
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-        detail: { reason: "lint-rejected", violations: lintViolations, attempts: maxTuFinalAttempts },
+        detail: {
+          reason: "lint-rejected", violations: lintViolations, attempts: maxTuFinalAttempts,
+          keptBest: !!bestLintSnapshot, bestLintCount: bestLintCount === Infinity ? undefined : bestLintCount,
+        },
       });
-      console.log(`[pi-harness] ${unit}: TU-final lint failed after ${maxTuFinalAttempts} attempt(s) (restored)`);
+      console.log(`[pi-harness] ${unit}: TU-final lint failed after ${maxTuFinalAttempts} attempt(s)` +
+        (bestLintSnapshot ? ` (kept best-improved state with ${bestLintCount} violation(s))` : " (restored)"));
       return;
     }
 

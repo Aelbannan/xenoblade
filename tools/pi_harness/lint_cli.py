@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI shim so the TS harness can reuse tools/llm_decomp/lint.py.
+"""CLI shim so the TS harness can run the anti-cheat lint gate.
 
 Usage (from repo root):
     python3 tools/pi_harness/lint_cli.py --pair <old_snapshot_file> <new_abs_path> [--pair ...]
@@ -16,7 +16,7 @@ import sys
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, REPO_ROOT)
 
-from tools.llm_decomp.lint import lint_delta  # noqa: E402
+from tools.pi_harness.lint import lint_delta  # noqa: E402
 
 
 def read_text(path: str) -> str | None:

@@ -31,7 +31,7 @@ struct CDeviceFile {
 
 struct CEventFile {
     CEventFile();
-    void getFileDataPtr();
+    void* getFileDataPtr();
 };
 
 
@@ -119,7 +119,12 @@ extern "C" u8 func_eu_804521C4() {
 
 CEventFile::CEventFile() {}
 
-void CEventFile::getFileDataPtr() {}
+void* CEventFile::getFileDataPtr() {
+    u32* p = *(u32**)((char*)this + 4);
+    void* r = (void*)p[1];
+    p[1] = 0;
+    return r;
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_eu_80452248() {

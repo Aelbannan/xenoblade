@@ -22,6 +22,12 @@ import {
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 
+// Imported lazily to avoid a module cycle: tufinal-scan imports `run` from
+// this module, and this module exposes the unit-status tool defined there.
+// The cycle is benign (function declarations hoist), but the import sits at
+// the top level for clarity.
+import { unitStatusTool } from "./tufinal-scan.js";
+
 /** Promisified execFile with a generous buffer (hexdiff JSON can be big).
  *  IMPORTANT: node's execFile error object does NOT carry stdout/stderr —
  *  they are separate callback args. On non-zero exit we must attach them
@@ -653,6 +659,7 @@ export function batchSessionTools(repoRoot: string, python: string): ToolDefinit
     targetsTool(repoRoot, python),
     witnessTool(repoRoot, python),
     certifyTool(),
+    unitStatusTool(repoRoot, python),
     kbTool(repoRoot, python),
     ctxTool(repoRoot, python),
   ];

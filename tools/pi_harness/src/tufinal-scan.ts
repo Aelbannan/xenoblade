@@ -20,6 +20,8 @@
  */
 
 import { execFile } from "node:child_process";
+import { Type } from "typebox";
+import { defineTool, type ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { run } from "./session-tools.js";
 
 /** Per-function match counts (hexdiff --all --json shape). */
@@ -313,4 +315,68 @@ export async function scanUnitState(
   } catch { /* size unavailable */ }
 
   return scan;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  unit-status tool — one-call whole-unit match scan (hexdiff --all + size
+//  + data% + witness re-checks on reg-swap targets)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * unit-status custom tool: single call that scans the WHOLE unit — one
+ * `hexdiff --all --json` (per-function match counts), one `run.py size`
+ * (split budget), one `run.py diff --no-smt` (data-section %), and a
+ * witness re-check on every reg-swap-only target. Returns the same summary
+ * the TU-final regression sweep uses. Use in TU-final (or batch) to see the
+ * whole unit's state at once instead of per-symbol hexdiff calls.
+ */
+export function unitStatusTool(repoRoot: string, python: string): ToolDefinition {
+  return defineTool({
+    name: "unit-status",
+    label: "unit-status",
+    description:
+      "One-call whole-unit scan: hexdiff --all (per-function match counts), TU split size, data-section match %, and witness certification status for reg-swap-only targets. Use to see the entire unit's matching state at once — for TU-final verification or to check whether any function regressed.",
+    promptSnippet: "unit-status <unit> — whole-unit match/size/data/witness scan (one call)",
+    parameters: Type.Object({
+      unit: Type.String({ description: "objdiff unit hint (e.g. kyoshin/CSaveLoad)" }),
+    }),
+    execute: async (_id, params) => {
+      const scan = await scanUnitState(repoRoot, python, params.unit);
+      const parts: string[] = [];
+      parts.push(`## unit-status: ${scan.unit}`);
+      const sz = scan.size_check;
+      parts.push(
+        sz
+          ? `- TU size: ${sz.ok ? "PASS" : "OVER BUDGET"} decomp ${sz.decomp_text ?? "?"}B vs budget ${sz.budget ?? "?"}B` +
+            (sz.over_by ? ` (over by ${sz.over_by}B)` : "")
+          : "- TU size: unavailable (build broken?)",
+      );
+      parts.push(`- data section match: ${scan.dataPercent !== null ? `${scan.dataPercent.toFixed(1)}%` : "unavailable"}`);
+      parts.push(`- matched: ${scan.matched}/${scan.total}`);
+      const regSwap = scan.functions.filter((f) => f.present && f.structural === 0 && f.mismatch > 0);
+      if (regSwap.length > 0) {
+        parts.push(`\n### Reg-swap-only (${regSwap.length}) — witness status`);
+        for (const f of regSwap.slice(0, 25)) {
+          const cert = scan.witnessCert.get(f.symbol);
+          parts.push(`- ${cert === true ? "✅ certifies" : cert === false ? "❌ NOT certified by witness" : "❓ untested"} \`${f.symbol}\` (${f.mismatch} reg-swaps)`);
+        }
+        if (regSwap.length > 25) parts.push(`- … (${regSwap.length - 25} more)`);
+      }
+      const unmatched = scan.functions.filter((f) => f.present && !(f.structural === 0 && f.mismatch === 0) && !(f.structural === 0 && f.mismatch > 0));
+      if (unmatched.length > 0) {
+        parts.push(`\n### Not matched (${unmatched.length})`);
+        for (const f of unmatched.slice(0, 25)) {
+          parts.push(`- \`${f.symbol}\`: structural ${f.structural}, mismatch ${f.mismatch}`);
+        }
+        if (unmatched.length > 25) parts.push(`- … (${unmatched.length - 25} more)`);
+      }
+      if (scan.sizeOutput) {
+        parts.push(`\n### size output\n\`\`\`text\n${scan.sizeOutput.slice(-400)}\n\`\`\``);
+      }
+      return {
+        content: [{ type: "text", text: parts.join("\n") }],
+        details: { ok: true, matched: scan.matched, total: scan.total, sizeOk: sz?.ok ?? null, dataPercent: scan.dataPercent },
+      };
+    },
+  });
 }

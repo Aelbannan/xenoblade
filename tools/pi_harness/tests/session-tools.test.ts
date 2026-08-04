@@ -435,17 +435,17 @@ describe("unit: parseCertifyRequests", () => {
 // Tool-set composition
 // ---------------------------------------------------------------------------
 describe("tool set composition", () => {
-  test("batchSessionTools contains exactly the 7 structured tools, no bash", () => {
+  test("batchSessionTools contains exactly the 8 structured tools, no bash", () => {
     const tools = batchSessionTools(REPO, PY);
     const names = tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ["certify", "ctx", "hexdiff", "kb", "symbols", "targets", "witness"]);
+    assert.deepEqual(names, ["certify", "ctx", "hexdiff", "kb", "symbols", "targets", "unit-status", "witness"]);
   });
 
   test("tuFinalSessionTools = batch tools + bash", () => {
     const tools = tuFinalSessionTools(REPO, PY);
     const names = tools.map((t) => t.name);
     assert.ok(names.includes("bash"), "tu-final must include bash behind the allowlist");
-    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify"]) {
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"]) {
       assert.ok(names.includes(n), `tu-final must include ${n}`);
     }
   });

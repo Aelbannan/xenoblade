@@ -18,7 +18,7 @@ export function buildBatchPrompt(opts: {
     "- For diffs use the **`hexdiff` tool**: `hexdiff <unit> <symbol>` (counts + reloc drift + fix suggestions). For symbol lookup use **`symbols`**; for target records use **`targets`**.\n" +
     "- **Certification (IMPORTANT)**: when `hexdiff` shows `mismatch: 0` or `structural: 0` (only registers differ), call the **`witness` tool**: `witness <unit> <symbol>` — it runs the register-renaming witness (no SMT) and tells you if the code would be accepted. If it says CERTIFIABLE, call **`certify <target-id>`** and then include `CERTIFY: <target-id>` in your FINAL response so the harness accepts it. **Do NOT keep editing past a match** — you will regress it.\n" +
     "- **Before iterating on a target, search the MWCC knowledge base with `kb`**: `kb <symbol>` (sibling attempts + reference patterns with status/match%) and `kb <short mismatch terms> tag=<category>` for known codegen fixes. Use **`ctx <source>`** for struct layouts when the brief's headers aren't enough.\n" +
-    "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`, `witness`, `certify`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level; the register-renaming witness is the only equivalence path (the harness runs it in acceptance).\n" +
+    "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`, `witness`, `certify`, `unit-status`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level; the register-renaming witness is the only equivalence path (the harness runs it in acceptance).\n" +
     "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance (and you have no shell to run them with).\n" +
     "- NEVER revert using git — other agents share this branch (and you have no shell).\n" +
     "- Put new or updated struct/class/enum type definitions into the corresponding `.hpp` header file, not the `.cpp` source. If a type is only used by this TU, put it in the unit's own header; if it's shared, use the appropriate shared header.\n" +
@@ -68,7 +68,7 @@ need to undo your own edits, use the editor to make forward fixes.
 (This session's bash is constrained to the TU-final allowlist — git,
 \`cycle\`/\`batch-cycle\`, \`--smt\`/\`--linked\`, and plain \`run.py diff\` are
 blocked at the tool level. The \`hexdiff\`, \`kb\`, \`symbols\`, \`targets\`,
-and \`ctx\` tools are available as in batch sessions.)
+\`ctx\`, and \`unit-status\` tools are available as in batch sessions.)
 
 If the harness rejects this session's polish (lint violations or a build
 break), it reverts to the pre-session snapshot and re-runs with the specific

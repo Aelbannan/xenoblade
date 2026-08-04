@@ -1742,6 +1742,8 @@ async function runTuFinal(
   let sizeOutput = "";
   let lintViolations: LintOutcome["violations"] = [];
   let lastReason = "";
+  let recertOk = true;
+  let recertOutput = "";
   // ── Regression-aware state tracking (tufinal-scan.ts) ──
   // Baseline captured at session start; each attempt's state is scored
   // lexicographically (match regressions > TU size/data > lint). The best-
@@ -1895,6 +1897,54 @@ async function runTuFinal(
         sizeOutput = (err instanceof Error ? err.message : String(err)).slice(-1000);
       }
     }
+
+    // ── Mass re-certification gate: after the full rebuild, re-run the
+    //    acceptance cycle (batch-cycle → run.py cycle → register-renaming
+    //    witness, NO SMT) over every target in the unit. This re-certifies
+    //    each FULL_MATCH/EQUIVALENT_MATCH after the polish — catching any
+    //    target that silently stopped certifying (reloc drift, size, ABI
+    //    gate) that the regression sweep detected but didn't re-certify.
+    //    The unit is only 'done' if every target re-certifies. ──
+    let recertOkLocal = true;
+    let recertOutputLocal = "";
+    if (buildOk) {
+      const unitTargets = loadUnitTargets(repoRoot, config.region, unit)
+        .filter((t) => t.status === "FULL_MATCH" || t.status === "EQUIVALENT_MATCH" || t.status === "ACCEPTED");
+      if (unitTargets.length > 0) {
+        process.stderr.write(`[pi-harness] ${unit}: mass re-certification of ${unitTargets.length} target(s) after polish\n`);
+        try {
+          const { stdout } = await execFilePromise(config.pythonBin, [
+            "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
+            config.pythonBin, "tools/coop/batch-cycle.py",
+            "--default-hypothesis", "TU-final mass re-certification after polish",
+            "--default-next-change", "none (re-certify only)",
+            "--", ...unitTargets.map((t) => t.id),
+          ], { cwd: repoRoot });
+          recertOutputLocal = stdout.slice(-1200);
+        } catch (err) {
+          recertOutputLocal = (err instanceof Error ? err.message : String(err)).slice(-1200);
+        }
+        // batch-cycle exits non-zero when ANY target fails — re-check the
+        // registry for the actual accepted set.
+        const postStatus = new Map(loadUnitTargets(repoRoot, config.region, unit).map((t) => [t.id, t.status]));
+        const notAccepted = unitTargets.filter((t) =>
+          !(postStatus.get(t.id) === "FULL_MATCH" || postStatus.get(t.id) === "EQUIVALENT_MATCH" || postStatus.get(t.id) === "ACCEPTED"));
+        if (notAccepted.length > 0) {
+          recertOkLocal = false;
+          lastReason = "recert-failed";
+          feedback =
+            `## ⚠️ Mass re-certification failed — ${notAccepted.length} target(s) no longer certify\n\n` +
+            `After the full rebuild, these previously-accepted targets did NOT re-certify ` +
+            `(the polish changed their compiled output):\n\n` +
+            notAccepted.map((t) => `- \`${t.id}\` (\`${t.symbol}\`)`).join("\n") +
+            `\n\nRun \`unit-status <unit>\` to see the per-function state, fix the ` +
+            `regression, and retry.`;
+          if (attempt < maxTuFinalAttempts) continue;
+        }
+      }
+    }
+    recertOk = recertOkLocal;
+    recertOutput = recertOutputLocal;
     break; // success
   }
 
@@ -1902,7 +1952,8 @@ async function runTuFinal(
   //    with a clean lint + build, restore the best-scoring state captured
   //    across attempts (match-regression-aware) — never the pristine
   //    snapshot blindly, and never mid-session.
-  if (!buildOk && bestSnapshot) {
+  const done = buildOk && recertOk;
+  if (!done && bestSnapshot) {
     await restoreSnapshot(repoRoot, bestSnapshot);
     process.stderr.write(
       `[pi-harness] ${unit}: TU-final restored best-scoring state (score ${bestScore}, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})\n`,
@@ -1911,23 +1962,24 @@ async function runTuFinal(
 
   appendLedger(repoRoot, config.ledgerPath, {
     ts: new Date().toISOString(),
-    event: buildOk ? "tu-final-done" : "tu-final-failed",
+    event: done ? "tu-final-done" : "tu-final-failed",
     tu: unit,
     detail: {
-      buildOk, buildOutput, sizeOutput, attempts: buildOk ? 1 : maxTuFinalAttempts,
+      buildOk, recertOk, recertOutput: recertOutput.slice(-600), sizeOutput, attempts: done ? 1 : maxTuFinalAttempts,
       finalTextPreview: (sessionResult?.finalText ?? "").slice(0, 1000),
       bestScore: bestScore === null ? undefined : bestScore.toString(),
       bestLintCount: bestLintCount === Infinity ? undefined : bestLintCount,
       bestMatched: bestScan?.matched,
       bestTotal: bestScan?.total,
-      restoredBest: !buildOk && !!bestSnapshot,
+      restoredBest: !done && !!bestSnapshot,
     },
   });
   console.log(
-    buildOk
-      ? `[pi-harness] ${unit}: TU-final complete`
+    done
+      ? `[pi-harness] ${unit}: TU-final complete (${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"} matched, mass re-certified)`
       : `[pi-harness] ${unit}: TU-final did not finish clean after ${maxTuFinalAttempts} attempt(s) ` +
-        (bestSnapshot ? `(restored best-scoring state, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})` : ""),
+        (lastReason === "recert-failed" ? "(mass re-certification failed)" : "") +
+        (bestSnapshot ? ` (restored best-scoring state, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})` : ""),
   );
 }
 

@@ -5,11 +5,16 @@
  */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   targetOrder, isMatched, isCertified, diffUnitScans, scoreState,
   buildUnitFeedback, type UnitScan,
 } from "../src/tufinal-scan.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = join(__dirname, "..", "..", "..");
 
 function makeScan(over: Partial<UnitScan> = {}): UnitScan {
   return {
@@ -203,5 +208,28 @@ describe("buildUnitFeedback", () => {
     assert.doesNotMatch(text, /MATCH REGRESSION/);
     assert.doesNotMatch(text, /Match improvements/);
     assert.match(text, /TU Unit Status/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+describe("unitStatusTool (integration)", () => {
+  test("scans a known unit with real output", async () => {
+    const { unitStatusTool } = await import("../src/tufinal-scan.js");
+    const tool = unitStatusTool(REPO_ROOT, ".venv/bin/python3");
+    const r = await tool.execute("t", { unit: "kyoshin/CSaveLoad" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /## unit-status: kyoshin\/CSaveLoad/);
+    assert.match(text, /matched: \d+\/\d+/);
+    assert.match(text, /TU size/);
+    assert.match(text, /data section match/);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+  });
+
+  test("reports build-broken units without crashing", async () => {
+    const { unitStatusTool } = await import("../src/tufinal-scan.js");
+    const tool = unitStatusTool(REPO_ROOT, ".venv/bin/python3");
+    const r = await tool.execute("t", { unit: "kyoshin/__NO_SUCH_UNIT__" });
+    // Should still return a text verdict (possibly 'unavailable'), never throw.
+    assert.ok(r.content?.[0]?.text !== undefined);
   });
 });

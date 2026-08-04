@@ -10,11 +10,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6061 |
+| extern "C" (total lines) | 6062 |
 | extern "C" declarations (non-lbl_*, imports) | 2194 |
 | extern "C" definitions (forced names) | 1799 |
 | `self`/register-style params | 3166 |
-| `void*` (params + locals) | 4688 |
+| `void*` (params + locals) | 4690 |
 | raw pointer offset arithmetic | 2683 |
 | deref-through-cast arithmetic | 1208 |
 | inline asm / `register` | 88 |
@@ -252,7 +252,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_WaveSound.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdPlayer.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/ut/ut_ArchiveFontBase.cpp | 0 | 0 | 7 | 11 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/ut/ut_ArchiveFontBase.cpp | 0 | 0 | 7 | 13 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_DvdFileStream.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_DvdLockedFileStream.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_FileStream.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -1584,7 +1584,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp": {
   "self_params": 7,
-  "void_ptr": 11
+  "void_ptr": 13
  },
  "libs/nw4r/src/ut/ut_DvdFileStream.cpp": {
   "void_ptr": 7

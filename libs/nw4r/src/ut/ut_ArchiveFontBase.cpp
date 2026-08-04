@@ -90,7 +90,34 @@ ConstructOpAnalyzeCMAP__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15A
     return 3;
 }
 
-void ConstructOpAnalyzeCWDH__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+extern "C" int
+ConstructOpAnalyzeCWDH__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(void* ctx,
+                                                                                                                                 void* reader) {
+    unsigned int* c = (unsigned int*)ctx;
+
+    unsigned int cur = c[0x13];      // 0x4c
+    unsigned int block = c[1];       // 0x4
+
+    if (block != 0) {
+        ((unsigned int*)block)[1] = cur; // block->0x4 = cur
+    } else {
+        ((unsigned int*)c[0])[3] = cur;  // base->0xc = cur
+    }
+
+    c[1] = cur;                     // ctx->0x4 = cur
+
+    unsigned int limit = c[5];      // 0x14
+    unsigned int base = c[0x12];    // 0x48
+
+    if (base - c[0x13] < limit - 8) {
+        return 2;
+    }
+
+    c[0x15] = limit - 8;            // 0x54
+    c[3] = 9;                       // 0xc
+    c[0x14] = 0;                    // 0x50
+    return 3;
+}
 
 void ConstructOpAnalyzeTGLP__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 

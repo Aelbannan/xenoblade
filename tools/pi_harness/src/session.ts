@@ -342,6 +342,10 @@ export async function runAgentSession(opts: {
     // ── Initial prompt ──
     process.stderr.write(`[session] ${label}: round 0 starting\n`);
     transcriptContent += `\n\n## Round 0 (initial)\n\n`;
+    // Record the FULL initial prompt so the transcript is self-contained
+    // (what the model was asked, including the brief + harness instructions).
+    const promptBlock = prompt.replace(/```/g, "` ``");
+    transcriptContent += `### 📤 PROMPT (Round 0 — initial)\n\n\`\`\`markdown\n${promptBlock}\n\`\`\`\n\n---\n\n### 🤖 MODEL RESPONSE\n\n`;
     queueTranscriptWrite();
     const usageBefore = sumUsage(session.state.messages);
     const initialResult = await runOnePrompt(session, prompt, timeoutMinutes);
@@ -434,6 +438,11 @@ export async function runAgentSession(opts: {
       rePromptsUsed++;
       process.stderr.write(`[session] ${label}: re-prompt ${rePromptsUsed} starting\n`);
       transcriptContent += `\n\n## Round ${rePromptsUsed} (re-prompt)\n\n`;
+      // Record the harness's injected feedback (the re-prompt prompt) with a
+      // clear delimiter — this is what told the model to continue/fix, and is
+      // essential for debugging why a round went nowhere.
+      const fbBlock = (verifyResult.feedback ?? "(empty feedback)").replace(/```/g, "` ``");
+      transcriptContent += `### 📥 FEEDBACK (Round ${rePromptsUsed} — harness)\n\n\`\`\`markdown\n${fbBlock}\n\`\`\`\n\n---\n\n### 🤖 MODEL RESPONSE\n\n`;
       queueTranscriptWrite();
 
       const roundUsageBefore = sumUsage(session.state.messages);

@@ -29,6 +29,7 @@ import {
   loadUnitTargets,
   writableScopeForTargets,
   targetStatusById,
+  targetRowById,
   isCallGraphReady,
 } from "./targets.js";
 import { extractRetailAsm, buildBatchBrief } from "./brief.js";
@@ -581,14 +582,24 @@ async function releaseBatch(
  */
 async function runWitnessCycle(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
+  opts?: { sessionOwnsClaim?: boolean },
 ): Promise<boolean> {
   console.log(`[pi-harness] ${unit}: witness-only cycle ${targetId} (no model session, no --smt)`);
-  const claim = await claimTargets(repoRoot, config.pythonBin, [targetId], OWNER, (id) => activeClaims.add(id));
-  if (claim.failed.length > 0) {
-    process.stderr.write(
-      `[pi-harness] ${unit}: ${targetId} claim failed for witness cycle — falling back to batch\n`,
-    );
-    return false;
+  // When the target is already claimed by the batch session (certify-request
+  // and 0-mismatch paths), do NOT re-claim or release: re-claim resets
+  // claimed_at, and the finally-release would drop the session's own claim
+  // mid-session (r5 finding 7) — another process could then claim the target
+  // while we still edit it, and the batch-end releaseTargets would warn.
+  // Only the triage path (target not session-owned) claims+releases itself.
+  const sessionOwnsClaim = opts?.sessionOwnsClaim ?? false;
+  if (!sessionOwnsClaim) {
+    const claim = await claimTargets(repoRoot, config.pythonBin, [targetId], OWNER, (id) => activeClaims.add(id));
+    if (claim.failed.length > 0) {
+      process.stderr.write(
+        `[pi-harness] ${unit}: ${targetId} claim failed for witness cycle — falling back to batch\n`,
+      );
+      return false;
+    }
   }
   let certified = false;
   try {
@@ -605,20 +616,27 @@ async function runWitnessCycle(
     } catch (err) {
       // Non-zero exit: witness may not have certified, or the unit-level
       // split size gate failed. The registry records actual acceptance —
-      // re-check instead of trusting the exit code alone.
-      const status = targetStatusById(repoRoot).get(targetId);
-      if (status === "FULL_MATCH" || status === "EQUIVALENT_MATCH") {
+      // re-check instead of trusting the exit code alone. A size-gate
+      // failure records FULL_MATCH but workflow BACKLOG (r5 finding 4):
+      // status alone would falsely accept it.
+      const row = targetRowById(repoRoot).get(targetId);
+      const certifiedStatus =
+        row && (row.status === "FULL_MATCH" || row.status === "EQUIVALENT_MATCH");
+      const backlogged = row?.workflowStatus === "BACKLOG";
+      if (certifiedStatus && !backlogged) {
         certified = true;
       } else {
         process.stderr.write(
           `[pi-harness] ${unit}: witness did not certify ${targetId} ` +
-            `(status ${status ?? "UNKNOWN"}) — re-added to batch pool\n`,
+            `(status ${row?.status ?? "UNKNOWN"}${backlogged ? ", size-gate BACKLOG" : ""}) — re-added to batch pool\n`,
         );
       }
     }
   } finally {
-    await releaseTargets(repoRoot, config.pythonBin, [targetId], OWNER);
-    activeClaims.delete(targetId);
+    if (!sessionOwnsClaim) {
+      await releaseTargets(repoRoot, config.pythonBin, [targetId], OWNER);
+      activeClaims.delete(targetId);
+    }
   }
   return certified;
 }
@@ -737,25 +755,33 @@ function makeVerifyCallback(opts: {
     // certify tool is read-only; this is where the actual (safe) cycle runs
     // — build lock + claim check + registry re-verification, no SMT.
     const certifyIds = parseCertifyRequests(_finalText, targetIds);
+    // Attempt ALL requested certifies (don't return on the first success —
+    // the model may request several; each is an independent witness cycle).
+    // Accept if ANY certified; the registry records each one individually.
+    let certifyAccepted: string | null = null;
     for (const cid of certifyIds) {
       process.stderr.write(`[orchestrator] ${unit}: model requested certify for ${cid} — running witness cycle\n`);
-      const certified = await runWitnessCycle(repoRoot, unit, cid, config);
+      const certified = await runWitnessCycle(repoRoot, unit, cid, config, { sessionOwnsClaim: true });
       process.stderr.write(`[orchestrator] ${unit}: certify request for ${cid}: ${certified ? "CERTIFIED" : "not certified"}\n`);
       // Log EVERY certify attempt so the ledger fully reflects the certify
       // path (the runBatchCycle path logs batch-accept OR batch-cycle per
       // round; the certify path bypasses batch-cycle.py entirely and would
       // otherwise be silent on failed attempts).
       if (certified) {
+        if (!certifyAccepted) certifyAccepted = cid;
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-accept", tu: unit,
           detail: { batchIndex: 0, attempt: 1, acceptedCount: 1, results: [{ targetId: cid, status: "FULL_MATCH" }], source: "certify-request" },
         });
-        return { action: "accept", reason: `CERTIFY: ${cid}` };
+      } else {
+        appendLedger(repoRoot, config.ledgerPath, {
+          ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
+          detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: cid, status: "COMPILES" }], source: "certify-request-failed" },
+        });
       }
-      appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
-        detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: cid, status: "COMPILES" }], source: "certify-request-failed" },
-      });
+    }
+    if (certifyAccepted) {
+      return { action: "accept", reason: `CERTIFY: ${certifyAccepted}` };
     }
 
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
@@ -808,7 +834,7 @@ function makeVerifyCallback(opts: {
           // runBatchCycle already ran at the round start, so certify the exact
           // 0-mismatch state here under the build lock.
           process.stderr.write(`[orchestrator] ${unit}: ${tid} is at mismatch:0 — certifying now\n`);
-          const certified = await runWitnessCycle(repoRoot, unit, tid, config);
+          const certified = await runWitnessCycle(repoRoot, unit, tid, config, { sessionOwnsClaim: true });
           process.stderr.write(`[orchestrator] ${unit}: ${tid} 0-mismatch certify: ${certified ? "ACCEPTED" : "not certified (reloc/witness gate)"}\n`);
           if (certified) {
             appendLedger(repoRoot, config.ledgerPath, {

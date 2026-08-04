@@ -317,11 +317,14 @@ export async function scanUnitState(
         }
         const eq = stdout.match(/equivalence: (\S+)/)?.[1];
         const status = stdout.match(/status: (\S+)/)?.[1];
-        scan.witnessCert.set(
-          f.symbol,
+        // run.py prints lowercase (full_match / equivalent) for the
+        // equivalence: line (r5 finding 5: the old uppercase checks were dead
+        // code — only the status: line, which is uppercase, ever matched).
+        const certified =
           eq === "EQUIVALENT_MATCH" || eq === "FULL_MATCH" ||
-          status === "EQUIVALENT_MATCH" || status === "FULL_MATCH",
-        );
+          eq === "equivalent" || eq === "full_match" ||
+          status === "EQUIVALENT_MATCH" || status === "FULL_MATCH";
+        scan.witnessCert.set(f.symbol, certified);
       }
     }
   } catch {

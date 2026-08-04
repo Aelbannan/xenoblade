@@ -172,6 +172,7 @@ def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
 from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address as extract_dol_slice
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
+    FunctionBytes,
     extract_function,
     extract_function_pair,
     list_text_functions,
@@ -226,6 +227,25 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _current_engine_hash() -> str:
     return hash_engine_tree(_REPO_ROOT)
+
+
+def _byte_identical_with_relocs(left: FunctionBytes, right: FunctionBytes) -> bool:
+    """Byte-identical bodies AND matching relocation sites (r5 Finding 2).
+
+    ``left.code == right.code`` alone is not sound: in ET_REL objects the
+    instruction bytes at a relocation site hold a placeholder/addend, so a
+    ``bl wrong_function`` and ``bl right_function`` compare equal. The
+    relocatable bodies are only truly identical when the (offset, type)
+    multiset of relocations matches too. Symbol names are NOT compared:
+    retail DOL-split objects carry ``(null)`` reloc symbols where the decomp
+    side has real mangled names, so name comparison would false-negative on
+    legitimate FULL_MATCH pairs (verified: us-800d9c70 reloc sites match,
+    symbols differ ``(null)`` vs ``spInstance__...``)."""
+    if left.code != right.code:
+        return False
+    left_sites = sorted((r.offset, r.relocation_type) for r in left.relocations)
+    right_sites = sorted((r.offset, r.relocation_type) for r in right.relocations)
+    return left_sites == right_sites
 
 
 def _current_certifier_hash() -> str:
@@ -3269,7 +3289,7 @@ def certify_unit_symbol(
         # skip SMT prove: incomplete PS capability stubs / timeouts block certs
         # that parents need. Prefer prove only when bytes differ and a reviewed
         # hardware_profile is configured (MMIO/FIFO obligations).
-        bytes_identical = left.code == right.code
+        bytes_identical = _byte_identical_with_relocs(left, right)
         if not bytes_identical:
             # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).  The
             # witness must run before the SMT-first memory-bus block below,
@@ -3307,6 +3327,19 @@ def certify_unit_symbol(
                         return proved
             except Exception:
                 pass
+        if not bytes_identical:
+            # Soundness gate (adversarial review r5, Finding 1): the synthesis
+            # below mints a full-instruction-match certificate. That evidence is
+            # only sound when the two bodies are byte-identical (with matching
+            # reloc sites). A non-byte-identical body that the witness and any
+            # configured memory-bus/SMT proof both failed or abstained on must
+            # NOT receive a full-instruction-match certificate — otherwise a
+            # 0%-match / structurally-different / reg-swap-rejected function
+            # gets persisted as FULL_MATCH and becomes a trusted callee.
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_SMT_DISABLED,
+                "non-byte-identical body without a witness or SMT proof",
+            )
         original = decode_block(
             left.code, left.base, validate_with_capstone=False,
             relocations=left.relocations, local_symbol=left.name,

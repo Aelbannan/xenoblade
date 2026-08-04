@@ -254,7 +254,89 @@ class FullMatchCertWithoutSmtTests(unittest.TestCase):
         )
 
     @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
-    def test_certify_unit_symbol_issues_live_engine_hash_certificate(self) -> None:
+    def test_non_byte_identical_witness_fail_does_not_certify(self) -> None:
+        """r5 finding 1: a non-byte-identical body that the witness rejects
+        must NOT fall through to a full-instruction-match certificate.
+
+        Regression: certify_unit_symbol synthesized full-instruction-match
+        certs for ANY non-byte-identical pair whose callees were accepted —
+        even structurally-different / 0%-match leaves. Live false cert:
+        us-8036c9c0 (99.362% = 6 instruction diffs) was persisted FULL_MATCH.
+        """
+        from tools.coop.lib import objdiff_report as _or
+
+        # retail = _EQ_LEFT, decomp = _NEQ (addi 4 vs addi 5) — bodies differ
+        # in an actual constant, NOT a register rename, so the renaming
+        # witness must reject them.
+        retail = self.root / "build/us/retail_neq.o"
+        decomp = self.root / "build/us/decomp_eq.o"
+        retail.write_bytes(build_reloc_elf({_SYMBOL: _NEQ}))
+        decomp.write_bytes(build_reloc_elf({_SYMBOL: _EQ_LEFT}))
+        unit = ObjdiffUnit(
+            name=_UNIT_NAME,
+            target_path=retail,
+            base_path=decomp,
+            source_path=None,
+        )
+
+        fn_match = _or.FunctionMatch(
+            name=_SYMBOL, demangled_name=None, match_percent=0.0, size=8,
+        )
+        unit_report = _or.UnitReport(
+            unit_name=_UNIT_NAME,
+            code_match_percent=0.0,
+            data_match_percent=100.0,
+            fuzzy_match_percent=0.0,
+            total_functions=1,
+            matched_functions=0,
+            functions=[fn_match],
+        )
+        with mock.patch.object(_or, "report_unit", return_value=unit_report), mock.patch.object(
+            _or, "find_function_match", return_value=fn_match
+        ):
+            ev = _or.evaluate_unit_match(
+                self.project, unit, _SYMBOL, target_id=_TARGET_ID, run_smt=False,
+            )
+        # Must NOT be FULL_MATCH and must NOT carry a full-instruction-match
+        # certificate. The witness rejects (constant differs) and there is no
+        # SMT proof in the no-SMT pipeline.
+        self.assertNotEqual(ev.status, "FULL_MATCH")
+        if ev.equivalence_certificate:
+            self.assertNotEqual(
+                ev.equivalence_certificate.get("evidence"), "full-instruction-match",
+            )
+        self.assertNotEqual(ev.equivalence, ProofStatus.EQUIVALENT)
+
+    def test_byte_identical_with_differing_reloc_sites_does_not_certify(self) -> None:
+        """r5 finding 2: byte-identical bodies with DIFFERENT relocation sites
+        must not certify as full-instruction-match.
+
+        Regression: ``left.code == right.code`` ignored relocations, so in
+        ET_REL a ``bl wrong_function`` and ``bl right_function`` (placeholder
+        bytes at the reloc site) compared equal and minted a false
+        full-instruction-match cert.
+        """
+        from tools.coop.lib import objdiff_report as _or
+        from tools.coop.lib.equivalence_check import _byte_identical_with_relocs
+        from tools.ppc_equivalence.tests.test_elf_symbols import (
+            _EQ_LEFT as _BL_BODY,
+            build_reloc_elf,
+        )
+
+        # Same body, but decomp adds a relocation where retail has none.
+        retail = self.root / "build/us/retail_norel.o"
+        decomp = self.root / "build/us/decomp_rel.o"
+        retail.write_bytes(build_reloc_elf({_SYMBOL: _BL_BODY}))
+        decomp.write_bytes(
+            build_reloc_elf({_SYMBOL: _BL_BODY}, relocations=((0, _SYMBOL, 26, 0),))
+        )
+        from tools.ppc_equivalence.elf_symbols import extract_function_pair
+        left, right = extract_function_pair(retail, decomp, _SYMBOL)
+        self.assertEqual(left.code, right.code, "bodies are byte-identical")
+        self.assertFalse(
+            _byte_identical_with_relocs(left, right),
+            "reloc sites differ — must not count as byte-identical",
+        )
         probe = certify_unit_symbol(
             self.project,
             self.unit,
@@ -555,12 +637,21 @@ class NarrowCalleeReadsValidationTests(unittest.TestCase):
 
         or_ = lambda rd, rs: (31 << 26) | (rs << 21) | (rd << 16) | (rs << 11) | (444 << 1)
         li = lambda rt, v: (14 << 26) | (rt << 21) | (0 << 16) | (v & 0xFFFF)
+        cmpwi = lambda ra, imm: (11 << 26) | (0 << 21) | (ra << 16) | (imm & 0xFFFF)
+        bne_p8 = 0x40820008  # bne +8 (branch over the li; target at +8 bytes)
+        b_abs = (18 << 26) | 2 | 0x00140000  # b 0x00500000 (AA=1, out-of-function)
         blr = 0x4E800020
         self._callees = {
             "reads_r6_live_in": _words(or_(5, 6), blr),        # or r5,r6,r6; blr
             "reads_r3_only": _words(or_(5, 3), blr),           # or r5,r3,r3; blr
             "writes_r6_before_read": _words(li(6, 7), or_(5, 6), blr),
             "reads_f2_live_in": _words((63 << 26) | (5 << 21) | (2 << 11) | (72 << 1), blr),
+            # Round-3 review findings 1/2: branch-skip live-in read and a
+            # tail-call trampoline body both read lanes outside the narrow
+            # window on a path the stream-order scan cannot see — must fall
+            # back to opaque.
+            "branch_skip_r6": _words(cmpwi(3, 0), bne_p8, li(6, 0), or_(3, 6), blr),
+            "tail_call_trampoline": _words(or_(6, 3), b_abs),
         }
         elf = build_reloc_elf(self._callees)
         (self.root / "build/us/retail.o").write_bytes(elf)
@@ -602,6 +693,30 @@ class NarrowCalleeReadsValidationTests(unittest.TestCase):
         # shape) -> still fits.
         self.assertTrue(_full_match_callee_body_fits_narrow(
             self.project, "demo/Narrow", "writes_r6_before_read",
+        ))
+
+    def test_branch_skip_live_in_read_falls_back_to_opaque(self) -> None:
+        # Round-3 review finding 1: ``cmpwi r3,0; bne .L1; li r6,0;
+        # .L1: or r3,r6,r6`` reads ENTRY r6 on the bne-taken path (the li is
+        # skipped).  The R8 STREAM-ORDER scan recorded ``li r6,0`` as a def
+        # before the ``or`` use and certified reads={r3,r4,r5} — dishonest.
+        # The CFG fixpoint (``_cfg_liveness``) sees r6 live-in on the taken
+        # path and falls back to opaque.
+        from tools.coop.lib.equivalence_check import _full_match_callee_body_fits_narrow
+        self.assertFalse(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "branch_skip_r6",
+        ))
+
+    def test_tail_call_trampoline_body_falls_back_to_opaque(self) -> None:
+        # Round-3 review finding 2: a callee body ending in a non-link tail
+        # branch (``b <out-of-function>``) passes its ENTRY arguments
+        # r3–r10/f1–f8 down to the tail target.  The R8 reject was link-only
+        # (``_is_call``) so the trampoline passed with zero register traffic
+        # and certified reads={r3,r4,r5}.  Now any call form (incl. tail
+        # calls) fails closed to opaque.
+        from tools.coop.lib.equivalence_check import _full_match_callee_body_fits_narrow
+        self.assertFalse(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "tail_call_trampoline",
         ))
 
 

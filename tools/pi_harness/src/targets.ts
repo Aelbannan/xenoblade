@@ -246,6 +246,26 @@ export function targetStatusById(repoRoot: string): Map<string, string> {
   return statuses;
 }
 
+/**
+ * Per-target { status, workflowStatus, claimedBy } for post-cycle re-checks.
+ * The exit-1 re-check in runWitnessCycle must not treat a size-gate-failed
+ * target as certified: cmd_cycle records FULL_MATCH + workflow BACKLOG when
+ * the unit exceeds its split budget, so status alone is insufficient
+ * (r5 finding 4).
+ */
+export function targetRowById(repoRoot: string): Map<string, { status: string; workflowStatus?: string; claimedBy?: string }> {
+  const rows = new Map<string, { status: string; workflowStatus?: string; claimedBy?: string }>();
+  for (const raw of readTargetsFile(repoRoot)) {
+    const claim = raw.claim as { owner?: string } | null | undefined;
+    rows.set(raw.id, {
+      status: raw.status,
+      workflowStatus: typeof raw.workflow_status === "string" ? (raw.workflow_status as string) : undefined,
+      claimedBy: claim?.owner,
+    });
+  }
+  return rows;
+}
+
 /** Mirror of `run.py harness --selection ready`
  *  (tools/coop/lib/targets.py::harness_targets): leaf = no direct,
  *  unresolved, or indirect calls; otherwise every direct callee must already

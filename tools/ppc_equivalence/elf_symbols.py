@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -510,8 +511,15 @@ def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[Fun
     ci = [item for item in functions if item.name.lower() == lowered]
     if ci:
         return ci
-    # Substring fallback for mangled stubs when the caller passes a short unique token.
-    partial = [item for item in functions if lowered in item.name.lower()]
+    # Substring fallback for mangled stubs when the caller passes a short
+    # unique token. Also handle the Itanium length-prefix difference: the
+    # registry often stores a short form (`__ct__CCLPCur`) while the object
+    # has the full mangling (`__ct__7CCLPCurFPQ34...` — the `7` is the class
+    # name length). Strip runs of digits from both sides before the substring
+    # check so `__ct__CCLPCur` matches `__ct__7CCLPCurF...`.
+    def _strip_digits(s: str) -> str:
+        return re.sub(r"\d+", "", s)
+    partial = [item for item in functions if _strip_digits(lowered) in _strip_digits(item.name.lower())]
     return partial
 
 

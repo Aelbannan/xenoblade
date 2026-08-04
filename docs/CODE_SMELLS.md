@@ -19,7 +19,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | deref-through-cast arithmetic | 1306 |
 | inline asm / `register` | 88 |
 | rN-named params | 317 |
-| goto | 1055 |
+| goto | 1057 |
 | #pragma | 245 |
 
 ## Top offenders (by cleanable severity)
@@ -331,7 +331,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 5 | 5 | 3 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 1 | 7 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 0 | 2 | 18 | 25 | 23 | 10 | 0 | 5 | 3 |
+| src/kyoshin/cf/CBattleManager.cpp | 0 | 2 | 18 | 25 | 23 | 10 | 0 | 5 | 5 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 8 | 6 | 8 | 23 | 5 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 0 | 0 | 8 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -2060,7 +2060,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/cf/CBattleManager.cpp": {
   "deref_arith": 10,
   "extern_c_nonlbl_def": 2,
-  "goto_count": 3,
+  "goto_count": 5,
   "ptr_arith": 23,
   "rn_params": 5,
   "self_params": 18,

@@ -5,7 +5,17 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-NW4R_UT_RTTI_DEF_DERIVED(SeqSound, BasicSound);
+// Retail .sbss type-info objects: SeqSound::typeInfo at lbl_eu_806654F8,
+// parent = BasicSound::typeInfo (lbl_eu_806654D0).  Same extern-C pattern
+// as StrmSound/WaveSound.
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654F8(
+    &lbl_eu_806654D0);
+
+const nw4r::ut::detail::RuntimeTypeInfo*
+SeqSound::GetRuntimeTypeInfo() const {
+    return &lbl_eu_806654F8;
+}
 
 SeqSound::SeqSound(SoundInstanceManager<SeqSound>* pManager)
     // TODO(kiwi) Fakematch
@@ -90,10 +100,6 @@ void SeqSound::Shutdown() {
     mManager->Free(this);
 }
 
-void SeqSound::SetTempoRatio(f32 tempo) {
-    mSeqPlayer.SetTempoRatio(tempo);
-}
-
 void SeqSound::SetChannelPriority(int priority) {
     mSeqPlayer.SetChannelPriority(priority);
 }
@@ -105,24 +111,6 @@ void SeqSound::SetReleasePriorityFix(bool flag) {
 void SeqSound::SetPlayerPriority(int priority) {
     BasicSound::SetPlayerPriority(priority);
     mManager->UpdatePriority(this, BasicSound::CalcCurrentPlayerPriority());
-}
-
-void SeqSound::SetTrackVolume(u32 trackFlags, f32 volume) {
-    mSeqPlayer.SetTrackVolume(trackFlags, volume);
-}
-
-void SeqSound::SetTrackPitch(u32 trackFlags, f32 pitch) {
-    mSeqPlayer.SetTrackPitch(trackFlags, pitch);
-}
-
-bool SeqSound::WriteVariable(int idx, s16 value) {
-    mSeqPlayer.SetLocalVariable(idx, value);
-    return true;
-}
-
-bool SeqSound::WriteGlobalVariable(int idx, s16 value) {
-    SeqPlayer::SetGlobalVariable(idx, value);
-    return true;
 }
 
 bool SeqSound::IsAttachedTempSpecialHandle() {
@@ -207,6 +195,6 @@ void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqU
 
 void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((u8*)thisPtr + 0x10c), callback, arg); }
 void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(){}
-void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
+extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }

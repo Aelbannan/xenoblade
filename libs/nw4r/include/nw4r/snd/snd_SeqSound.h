@@ -64,15 +64,27 @@ public:
 
     void Skip(SeqPlayer::OffsetType offsetType, int offset);
 
-    void SetTempoRatio(f32 tempo);
+    void SetTempoRatio(f32 tempo) {
+        mSeqPlayer.SetTempoRatio(tempo);
+    }
     void SetChannelPriority(int priority);
     void SetReleasePriorityFix(bool flag);
 
-    void SetTrackVolume(u32 trackFlags, f32 volume);
-    void SetTrackPitch(u32 trackFlags, f32 pitch);
+    void SetTrackVolume(u32 trackFlags, f32 volume) {
+        mSeqPlayer.SetTrackVolume(trackFlags, volume);
+    }
+    void SetTrackPitch(u32 trackFlags, f32 pitch) {
+        mSeqPlayer.SetTrackPitch(trackFlags, pitch);
+    }
 
-    bool WriteVariable(int idx, s16 value);
-    static bool WriteGlobalVariable(int idx, s16 value);
+    bool WriteVariable(int idx, s16 value) {
+        mSeqPlayer.SetLocalVariable(idx, value);
+        return true;
+    }
+    static bool WriteGlobalVariable(int idx, s16 value) {
+        SeqPlayer::SetGlobalVariable(idx, value);
+        return true;
+    }
 
     void* GetFileStreamBuffer() {
         return mFileStreamBuffer;

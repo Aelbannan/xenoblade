@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6110 |
+| extern "C" (total lines) | 6113 |
 | extern "C" declarations (non-lbl_*, imports) | 2199 |
-| extern "C" definitions (forced names) | 1833 |
-| `self`/register-style params | 3199 |
-| `void*` (params + locals) | 4729 |
-| raw pointer offset arithmetic | 2716 |
+| extern "C" definitions (forced names) | 1836 |
+| `self`/register-style params | 3202 |
+| `void*` (params + locals) | 4734 |
+| raw pointer offset arithmetic | 2724 |
 | deref-through-cast arithmetic | 1225 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
@@ -136,9 +136,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemId.cpp | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLight.cpp | 0 | 1 | 3 | 2 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
-| libs/monolib/src/scn/CScnItemModel.cpp | 0 | 12 | 16 | 16 | 15 | 14 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 7 | 28 | 29 | 19 | 7 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 6 | 6 | 7 | 7 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemModel.cpp | 0 | 13 | 17 | 17 | 16 | 14 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 8 | 29 | 32 | 21 | 7 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 7 | 7 | 8 | 12 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 0 | 1 | 1 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 0 | 7 | 3 | 4 | 9 | 9 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 2 | 2 | 12 | 12 | 1 | 1 | 0 | 1 | 0 |
@@ -1111,23 +1111,23 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/scn/CScnItemModel.cpp": {
   "deref_arith": 14,
-  "extern_c_nonlbl_def": 12,
-  "ptr_arith": 15,
-  "self_params": 16,
-  "void_ptr": 16
+  "extern_c_nonlbl_def": 13,
+  "ptr_arith": 16,
+  "self_params": 17,
+  "void_ptr": 17
  },
  "libs/monolib/src/scn/CScnItemModelNw4r.cpp": {
   "deref_arith": 7,
-  "extern_c_nonlbl_def": 7,
-  "ptr_arith": 19,
-  "self_params": 28,
-  "void_ptr": 29
+  "extern_c_nonlbl_def": 8,
+  "ptr_arith": 21,
+  "self_params": 29,
+  "void_ptr": 32
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
-  "extern_c_nonlbl_def": 6,
-  "ptr_arith": 7,
-  "self_params": 6,
-  "void_ptr": 7
+  "extern_c_nonlbl_def": 7,
+  "ptr_arith": 12,
+  "self_params": 7,
+  "void_ptr": 8
  },
  "libs/monolib/src/scn/CScnLightMan.cpp": {
   "extern_c_nonlbl_def": 1,

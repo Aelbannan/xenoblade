@@ -4416,7 +4416,20 @@ locals:
   `addi/subi` prelude + GPR-pure whitelisted body; `slw`/`srw`/memory ops excluded)
   applies, so it unrolls to 2048× and dies at the final byte loop (`0x2bc`).
   Raising limits just trips `max_paths`/`max_instructions`/deadline next — the
-  shape is unsummarizable by design. CODE_MATCH 97.91% objdiff / 65.1% hexdiff
+  shape is unsummarizable by design. **Probe empirically confirmed 2026-08-04:**
+  `cycle --smt` with `declared_return=void` (caller-corroborated by FULL_MATCH
+  memmove us-802c112c) returns `inconclusive_unsupported (loop iteration limit
+  exceeded (2048) at 0x000002bc)` — NOT `not_equivalent`, i.e. the pair is
+  semantically equivalent but the engine cannot certify it; the exit-state
+  analysis (r3 = cps+src_offset value-identical on both sides; r4 = cps vs
+  src_offset differs only by register color and is dropped by the void
+  declaration) closes cleanly. Also re-verified the compiler ladder 2026-08-04:
+  ALL 9 Wii compilers = exactly 15 reg-swaps; all 6 GC/3.0a* = 28 (worse);
+  additional source shapes (adjust-on-word-pointer split, mask-local, named adj,
+  i2-first, cpd-first, rs-before-so, tail-recompute-so, full-unit IPA) all = 15
+  or worse. Next angle: engine loop-summary extension for GPR-counter
+  shift/memory copy loops (lbzu/stbu/lwzu/stw + slw/srw bodies), which would
+  let the SMT probe certify EQUIVALENT_MATCH. CODE_MATCH 97.91% objdiff / 65.1% hexdiff
   (15 pure reg-swaps, 0 structural, size exact) is the documented cap for both
   bars; recorded — revisit after an engine change.
 
@@ -8243,3 +8256,173 @@ retail names and matching is unaffected. Currently applied to
   `__vt__Q310homebutton3gui*`; retail `HBMBase.o` references the renamed name,
   so the link failed. Changed the two `symbols.txt` entries to the true mangled
   names — both retail refs and decompiled defs now agree (56/56 still matched).
+
+## nw4r leaf sweep — reusable techniques (US, GC/3.0a5.2 `-func_align 4` `-O4,p`)
+
+21 nw4r leaf acceptances (16 FULL_MATCH + 5 EQUIVALENT_MATCH) across
+snd/ut/g3d/lyt. Patterns below are ordered by how often they recurred.
+
+### 1. Auto-scaffolded catalog TUs: `extern "C"` keeps retail member names verbatim
+
+**Symptom:** catalog TUs (e.g. `ut_ArchiveFontBase.cpp`, `g3d_scnmdlsmpl.cpp`)
+stub member functions as global free functions whose *identifier* is the
+retail mangled name: `unsigned int GetRemain__Q54…CFv(const void* self)`.
+C++ mangles that free function again → the emitted symbol gets a trailing
+`__FPCv` (params) or `__Fv` (void): `…CFv__FPCv`. objdiff then reports
+`function=0.0` even when hexdiff shows the body is byte-identical (the retail
+split's symbol is the bare member name).
+
+**Fix:** prefix the stub with `extern "C"` — C linkage keeps the identifier
+verbatim, producing exactly the retail mangled name:
+
+```cpp
+extern "C" unsigned int
+GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void* self) {
+    return (*(const unsigned int*)((const char*)self + 8) - …) + …;
+}
+```
+
+r3 = `self` (this), rest of the ABI matches the member call. 100% byte match,
+no class/header needed. Applied to GetRemain/Init/Attach/AdjustIndex/
+ConstructOpFatalError/ConstructOpAnalyzeCMAP/CWDH in `ut_ArchiveFontBase.cpp`
+and GetBasicPlayer in `snd_SeqSound.cpp`. Check for the tell: decomp symbols
+ending in `__Fv`/`__FPCv`/`__FPv` that should be `…Fv`.
+
+### 2. Anonymous-namespace free-function templates eliminate retail-inlined helpers
+
+**Symptom:** a template class defines small helper members out-of-line in the
+cpp (`ut_TagProcessorBase<T>::ProcessTab/ProcessLinefeed`). The explicit
+instantiation (`template class TagProcessorBase<char>;`) forces MWCC to emit
+strong standalone copies (+0x250 over the split), even though retail inlines
+them into `Process`/`CalcRect` (which match 100% via `-ipa file`).
+
+**Fix:** move the helpers to *anonymous-namespace free-function templates* in
+the cpp — internal linkage + fully inlined at every call site ⇒ MWCC emits
+nothing:
+
+```cpp
+namespace {
+template <typename T>
+void ProcessTabImpl(typename TagProcessorBase<T>::ContextType* pCtx) { … }
+} // namespace
+```
+
+Header-inline does NOT work here: explicit class instantiation emits weak
+copies of header-inline members anyway (0x250 stays). Only anon-namespace
+(internal linkage) suppresses the emission. `ut_TagProcessorBase.cpp` unit
+went 0x250 over → exact 0x6D0/0x6D0, 8/8 at 100%.
+
+### 3. Header-inline works for NON-template retail-inlined helpers
+
+**Symptom:** non-template classes define helper members out-of-line in the
+cpp; retail inlines them (no standalone symbols). MWCC emits the standalone
+body AND inlines it into callers via `-ipa file`.
+
+**Fix:** move the definition into the class body in the header (implicit
+inline). For non-template classes MWCC then inlines at every call site and
+does NOT emit a standalone body. Applied to:
+- `snd_EnvGenerator.cpp`: `CalcRelease`/`CalcDecibelSquare` (unit exact budget)
+- `snd_SoundArchiveFile.h`: 11 helpers (6 `impl_Get*` + 5 public methods;
+  unit +0x480 → 0x1BC spare, unlocked the ctor + Init FULL_MATCH)
+- `snd_SeqSound.h`: 5 setters
+
+Safety check before touching a public method: confirm no *accepted* function
+in other TUs calls it out-of-line (if retail inlines it everywhere, no retail
+TU calls it, so any matched caller is safe). Verified 42 accepted fns across 7
+calling TUs stayed byte-identical after the SoundArchiveFile header change.
+
+### 4. Retail "re-reads the field" in the success path — match it, don't reuse the local
+
+**Symptom:** `ConstructOpAnalyzeCMAP`/`CWDH` (ut_ArchiveFontBase): the block
+-link prologue reads `ctx->0x4c` into a local, but the size-check at the
+bottom RE-READS `ctx->0x4c` into a fresh register. Keeping the local alive
+made the decomp 4 bytes SHORT (0x60 vs 0x64) with a `subf` from the stale
+register; re-reading `c[0x13]` in the check produced byte-identical 0x64/0x64.
+
+**Fix:** write the success-path field access as `c[0x13]` (re-read), not the
+earlier local:
+
+```c
+unsigned int cur = c[0x13];
+… block-link writes use cur …
+if (base - c[0x13] < limit - 8) return 2;   // re-read, matches retail
+```
+
+Also: the early-return form (`if (cond) return 2; …success… return 3;`) was
+required to place the fail block after the test exactly like retail
+(`bc 4,0 → success`, fail falls through). The `if (cond) { success } return 2`
+form made MWCC invert the branch placement.
+
+### 5. Signed vs unsigned division: `divw` vs `divwu`
+
+**Symptom:** `AdjustIndex` — retail `divw` (signed), decomp `divwu`
+(unsigned) with `u32`/`unsigned int` operands; one structural diff.
+
+**Fix:** make the division operands `int` (signed): `int sheet = index /
+cellsInASheet;` → `divw`. Byte-identical 0x40/0x40.
+
+### 6. Version-constant mismatch (VERSION in the header vs retail's check)
+
+**Symptom:** `SoundArchiveFileReader::Init` at 95.5% — retail `subfic r0, r6,
+260` / `li r5, 260` vs decomp 259. The header declared `static const int
+VERSION = NW4R_VERSION(1, 3)`; retail checks `version > NW4R_VERSION(1, 4)`
+(260).
+
+**Fix:** bump the constant. This is a common near-miss — the version gate in
+retail is often one minor revision ahead of what the reconstructed header
+declares. 95.5% → 100% (0 structural).
+
+### 7. Reloc-name drift: external-C named pool/table references (extends §1b)
+
+For SDA21 float-pool drift, name the retail pool slot via `extern "C" const
+f32 lbl_eu_80669F30;` and reference it (proven in `snd_EnvGenerator.cpp`: 6
+floats + 2 tables `lbl_eu_8051FC40`/`lbl_eu_8051FD40` → ctor/Init drift 0).
+Caveats learned:
+- Replacing a literal with a named extern can flip *operand order* on
+  commutative ops (`Reset` needed `lbl_x * db` not `db * lbl_x` to emit
+  retail's `fmuls f0, f0, f1`).
+- GetValue-style `mAttack == 0.0f` vs `mAttack == lbl_x` changed the load
+  order (constant-first vs member-first) → keep literals in non-target
+  functions; name externs only where the target needs the reloc name.
+- The int→double conversion magic constant `0x4330000000000000`
+  (`lbl_eu_80669F48`, loaded via `lfd`) is compiler-generated and CANNOT be
+  named from source — `EnvGenerator::Update` stays at 99.8% with 2 pool-name
+  drifts; needs `--smt`.
+
+### 8. Registry gate: `allowed_engine_sha256` staleness blocks ALL EQUIVALENT_MATCH
+
+**Symptom:** witness-certified functions stay `CODE_MATCH` (e.g. EnvGenerator
+ctor at 99.4% with `equivalence: equivalent`). The promotion policy blocker:
+`engine-sha256-<hash>!=allowed-<hash>`. FULL_MATCH auto-certification is
+unaffected (separate `full-instruction-match` path), so it silently only
+blocks EQUIVALENT_MATCH.
+
+**Fix:** sync `coop.json` → `allowed_engine_sha256` to the live engine hash:
+`python3 -c "from pathlib import Path; from tools.ppc_equivalence.provenance
+import hash_engine_tree; print(hash_engine_tree(Path('.')))"`. This is the
+documented "sync engine pin" operation (commit 2605f74c5 pattern). After the
+sync, witness/SMT-equivalent acceptances pass.
+
+### 9. Confirmed hard cap: orphaned weak dtor emissions (adds to KB §1068/§1117)
+
+Reconfirmed on lyt_common (+0x40 `__dt__Color`), snd_SeqSound (+0x118
+`__dt__ NonCopyable/LinkListNode/AutoLock`), snd_MemorySoundArchive (+0x80
+`__dt__ IOStream/FileStream`), ut_ResFontBase (+0x40 `__dt__ Font`), lyt_pane
+(+0x200): MWCC emits orphaned weak copies of inline dtors when a vtable or
+by-value member dtor chain is emitted in the TU. They are vtable-referenced or
+completely orphaned; the only documented fix (`drop_text_symbols` in
+`tools/postprocess_reloc_names.py`) is forbidden by policy. Source-level
+alternatives (header-inline `~X() {}`, removing named temps) do NOT suppress
+them. These units stay over budget until either the policy changes or the
+retail vtable-emission TU layout is reproduced exactly.
+
+### 10. Non-leaf-vs-extra caution: check the retail `.s` `.fn` count before inlining
+
+When a decomp symbol shows as "extra" (not in the retail split), verify with
+`grep -c ".fn .*<name>__" build/us/asm/…` before deciding it is retail-inlined.
+`impl_GetSoundInfoOffset` in snd_SoundArchiveFile was assumed standalone but
+retail's standalone is a DIFFERENT template overload (`…DataRef<v,Seq,Strm,Wave>&`
+with an out-param) — the non-template `(u32)` version is genuinely inlined.
+Also check for symbol *case* drift: the retail split's `__ct__q34nw4r2ut35linklist…`
+(lowercase, from a symbols.txt annotation typo) can never match MWCC's
+`__ct__Q34nw4r2ut35LinkList…` — a symbols.txt annotation fix, not a source fix.

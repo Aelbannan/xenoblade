@@ -29,7 +29,12 @@ void func_eu_804DEB4C(){}
 
 void func_804DA91C(){}
 
-void func_804DA97C(){}
+extern "C" void func_804DA97C(void* param) {
+    extern u8 lbl_eu_806659D0;
+    extern void* lbl_eu_806659D4;
+    lbl_eu_806659D0 = 0;
+    lbl_eu_806659D4 = param;
+}
 
 void func_804DA98C(){}
 

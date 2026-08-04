@@ -65,11 +65,19 @@ extern "C" void func_804EB558(void* self, const void* src) { *(u32*)self = *(con
 
 void func_804EB564(){}
 
-void func_804EB6E0(){}
+extern "C" u32 func_804EB6E0(void* self, u32 idx) {
+    void* base = *(void**)self;
+    u32 off = idx * 0x98;
+    return *(u32*)((char*)base + off);
+}
 
 u32 func_804EB6F0(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-void func_804EB6F8(){}
+extern "C" u32 func_804EB6F8(void* self, u32 idx) {
+    void* base = *(void**)self;
+    u32 off = idx * 0xB0;
+    return *(u32*)((char*)base + off);
+}
 
 void func_804EB708(){}
 
@@ -120,7 +128,11 @@ extern "C" u32 func_804EC3C4(void* self) { return (*(u32*)((u8*)self + 0x7A4) >>
 
 void func_804EC3D0(){}
 
-void func_804EC3EC(){}
+extern "C" void func_804EC3EC(void* self, float a, float b, float c) {
+    *(float*)((u8*)self + 0) = a;
+    *(float*)((u8*)self + 4) = b;
+    *(float*)((u8*)self + 8) = c;
+}
 
 void func_804EC3FC(){}
 

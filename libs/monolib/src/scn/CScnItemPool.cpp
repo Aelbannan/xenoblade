@@ -42,7 +42,7 @@ void func_8048C8C4() {}
 void func_8048C994() {}
 extern "C" void func_8048C9C8(int* self) { *(u32*)self = *(u32*)(*(u32**)self); }
 void func_8048C9D8() {}
-void func_8048CA00() {}
+extern "C" void func_8048CA00(u32* dst, const void* src) { *(u32*)dst = *(u32*)(*(u32**)((const u8*)src + 4)); }
 void func_8048CA10() {}
 extern "C" void func_8048CA28(int* dst, int* src) { *dst = *src; }
 void func_8048CA34() {}

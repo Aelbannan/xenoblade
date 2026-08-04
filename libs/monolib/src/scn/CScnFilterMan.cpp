@@ -76,7 +76,7 @@ void func_8049D3D8(){}
 
 void func_8049D490(){}
 
-void func_8049D520(){}
+extern "C" void func_8049D520(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 extern "C" void* func_8049D530(void* self){ return (void*)((char*)*(void**)self + 8); }
 
@@ -106,7 +106,7 @@ void func_8049D76C(){}
 
 void CScnFilterMan::update() {}
 
-void func_8049D8D4(){}
+extern "C" void func_8049D8D4(u32* self, u32 flags) { *self |= flags; }
 
 void func_8049D8E4(){}
 
@@ -122,7 +122,7 @@ extern "C" void func_8049D994(int* dst, int* src){
     *dst = *src;
 }
 
-void func_8049D9A0(){}
+extern "C" void func_8049D9A0(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 void func_8049D9B0(){}
 
@@ -154,7 +154,7 @@ void func_8049DC04(){}
 
 void func_8049DC5C(){}
 
-void func_8049DCC8(){}
+extern "C" void func_8049DCC8(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 void func_8049DCD8(){}
 

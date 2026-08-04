@@ -201,6 +201,11 @@ export async function runAgentSession(opts: {
   // Track session activity for dead-session detection.
   let lastActivityTime = Date.now();
   let lastAgentEnd: { timestamp: number; willRetry: boolean } | undefined;
+  // Number of tool executions currently in flight. The heartbeat must never
+  // flag a session dead while a tool is running (long tool calls — hexdiff
+  // builds, unit-status witness probes — can exceed the silence threshold;
+  // review H3).
+  let toolInFlight = 0;
 
   const unsubscribe = session.subscribe((event) => {
     // Track activity on meaningful events.
@@ -303,7 +308,6 @@ export async function runAgentSession(opts: {
   // surface the reason in the SessionRunResult.
   const SILENCE_THRESHOLD_MS = 120_000; // 2 minutes
   const HEARTBEAT_INTERVAL_MS = 15_000;
-  let toolInFlight = 0;
   let deadSessionReason: string | undefined;
   const heartbeat = setInterval(() => {
     if (toolInFlight > 0) return; // a tool is executing — it has its own timeout

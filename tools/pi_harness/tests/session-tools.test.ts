@@ -146,6 +146,19 @@ describe("integration: hexdiffTool", () => {
     assert.doesNotMatch(text, /non-JSON output/);
   });
 
+  test("mangled symbol: says 'symbol not found', NOT 'build failed' (base-name hint)", async () => {
+    // The model sometimes passes the C++ mangled form (derived from mangling
+    // rules) while the registry stores the base name. The tool must say the
+    // NAME is wrong, not that the build failed — otherwise the model chases
+    // a phantom build error (seen 3x in run 8A).
+    const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: "func_80242368__16CMenuMapSelectFv" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /symbol 'func_80242368__16CMenuMapSelectFv' not found/i);
+    assert.match(text, /EXACT symbol from the target brief/);
+    assert.match(text, /available:/);
+    assert.doesNotMatch(text, /build failed/);
+  });
+
   test("returns 0-mismatch for a full-match symbol", async () => {
     const r = await tool.execute("t", { unit: FULL_MATCH_UNIT, symbol: FULL_MATCH_SYMBOL, brief: true });
     const text = r.content?.[0]?.text ?? "";

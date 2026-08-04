@@ -104,7 +104,23 @@ async function runHexdiffTool(
     //   #     67:     THIS_SHOULD_NOT_COMPILE_XYZ;
     //   #   Error:     ^^^^^^^^^^^^^^^^^^^
     //   #   (10140) undefined identifier 'THIS_SHOULD_NOT_COMPILE_XYZ'
+    //
+    // A symbol-not-found error is NOT a build failure — the object built
+    // fine; the requested symbol name is wrong. Surface that distinctly
+    // with the available symbols, so the model fixes the NAME (often a
+    // mangled vs base-name mismatch) instead of chasing a phantom build
+    // error.
     const errLines = result.stderr.trim().split("\n");
+    const symErr = errLines.find((l) => /symbol .* not found/i.test(l));
+    if (symErr) {
+      const availIdx = errLines.findIndex((l) => /available:/.test(l));
+      const avail = availIdx >= 0 ? errLines.slice(availIdx).join("\n") : "";
+      return (
+        `ERROR: symbol '${symbol}' not found in ${unit} (the object built fine).\n` +
+        `Use the EXACT symbol from the target brief (base name, no C++ mangling).\n` +
+        `\`\`\`text\n${symErr}\n${avail}\n\`\`\``
+      );
+    }
     const ccIdx = errLines.findIndex((l) => l.includes("mwcceppc.exe Compiler") || l.includes("### "));
     const errTail = (ccIdx >= 0 ? errLines.slice(ccIdx) : errLines.slice(-25)).join("\n");
     return (

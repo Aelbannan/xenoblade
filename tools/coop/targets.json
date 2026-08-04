@@ -449956,8 +449956,8 @@
       "size": "0x40",
       "unit": "nw4r/src/ut/ut_ArchiveFontBase",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -449965,7 +449965,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/ut/ut_ArchiveFontBase.s",
       "abi_helper_calls": [],
-      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp",
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-04T05:02:31.021045+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042f824",

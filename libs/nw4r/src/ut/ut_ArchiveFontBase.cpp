@@ -26,7 +26,28 @@ void SetResourceBuffer__Q44nw4r2ut6detail15ArchiveFontBaseFPvPQ34nw4r2ut15FontIn
 
 void RemoveResourceBuffer__Q44nw4r2ut6detail15ArchiveFontBaseFv(void){}
 
-void AdjustIndex__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(){}
+extern "C" unsigned short
+AdjustIndex__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
+                                                       unsigned short index) {
+    const unsigned char* p = (const unsigned char*)self;
+
+    const void* pInfo = *(const void**)(p + 0x14);
+    const unsigned short* pTable = *(const unsigned short**)(p + 0x1c);
+    const unsigned char* pSub = *(const unsigned char**)((const unsigned char*)pInfo + 8);
+
+    int cellsInASheet =
+        *(const unsigned short*)(pSub + 0xc) *
+        *(const unsigned short*)(pSub + 0xe);
+
+    int sheet = index / cellsInASheet;
+
+    unsigned short mapped = pTable[sheet];
+    if (mapped == 0xffff) {
+        return 0xffff;
+    }
+
+    return index - mapped;
+}
 
 void IncludeName__Q44nw4r2ut6detail15ArchiveFontBaseFPCcPCc(){}
 

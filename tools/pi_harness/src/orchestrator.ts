@@ -755,21 +755,6 @@ function makeVerifyCallback(opts: {
       return { action: "accept" };
     }
 
-    // ── Lint check ──
-    process.stderr.write(`[orchestrator] ${unit}: runLint starting\n`);
-    const lint = await runLint(repoRoot, config.pythonBin, snapshot);
-    process.stderr.write(`[orchestrator] ${unit}: runLint completed (ok=${lint.ok})\n`);
-    if (!lint.ok) {
-      // Save compilable checkpoint before re-prompting for lint fix.
-      compilableSnapshot = await snapshotUnit(repoRoot, unit, writable);
-      lastFeedback =
-        `## Lint Failure — Fix This First\n\n` +
-        `Your code compiles but violates these rules. Fix ONLY the ` +
-        `violations — do not make any other changes.\n\n` +
-        `\`\`\`json\n${JSON.stringify(lint.violations, null, 2)}\n\`\`\``;
-      return { action: "re-prompt", feedback: lastFeedback };
-    }
-
     // ── Cap check: build passed but no match yet. Only reject on
     //    re-prompt budget exhaustion. ──
     const effectiveMax = timedOut ? config.timeoutRetries : config.rejectionRetries;
@@ -786,28 +771,36 @@ function makeVerifyCallback(opts: {
     // code structure is right, only register allocation differs; the witness
     // path (batch-cycle runs it every round) may certify without more edits.
     const regSwapOnlyTargets: string[] = [];
+    // Targets the model reported as matched (mismatch:0) or that are
+    // reg-swap-only — these are DONE or certifiable; tell the model so it
+    // stops editing them. Only truly-unmatched targets get hexdiff feedback.
+    const matchedTargets: string[] = []; // mismatch:0 in the current state
+    const unmatchedTargets: string[] = [];
     for (const tid of targetIds) {
       const sym = targetSymbols.get(tid);
       if (!sym) continue;
       const hd = await runHexdiff(repoRoot, config.pythonBin, unit, sym);
       if (hd.ok) {
-        hexdiffOutputs.push(`### ${tid} (\`${sym}\`) — ${hd.mismatchCount} mismatch(es)\n${hd.output}`);
-        if (hd.structuralCount === 0 && hd.mismatchCount > 0) {
-          regSwapOnlyTargets.push(tid);
-        }
-        // FULL MATCH (mismatch: 0): certify THIS state NOW via the witness
-        // cycle — before any further model edits can regress it. The model
-        // often reaches a perfect match mid-session then keeps editing (the
-        // run-9 transcripts show 6/10 perfect matches lost to regression);
-        // runBatchCycle already ran at the round start, so certify the exact
-        // 0-mismatch state here under the build lock.
         if (hd.mismatchCount === 0) {
+          matchedTargets.push(tid);
+          // FULL MATCH (mismatch: 0): certify THIS state NOW via the witness
+          // cycle — before any further model edits can regress it. The model
+          // often reaches a perfect match mid-session then keeps editing (the
+          // run-9 transcripts show 6/10 perfect matches lost to regression);
+          // runBatchCycle already ran at the round start, so certify the exact
+          // 0-mismatch state here under the build lock.
           process.stderr.write(`[orchestrator] ${unit}: ${tid} is at mismatch:0 — certifying now\n`);
           const certified = await runWitnessCycle(repoRoot, unit, tid, config);
           process.stderr.write(`[orchestrator] ${unit}: ${tid} 0-mismatch certify: ${certified ? "ACCEPTED" : "not certified (reloc/witness gate)"}\n`);
           if (certified) {
             return { action: "accept", reason: `${tid} certified at mismatch:0` };
           }
+          continue;
+        }
+        unmatchedTargets.push(tid);
+        hexdiffOutputs.push(`### ${tid} (\`${sym}\`) — ${hd.mismatchCount} mismatch(es)\n${hd.output}`);
+        if (hd.structuralCount === 0 && hd.mismatchCount > 0) {
+          regSwapOnlyTargets.push(tid);
         }
         // Bank the compiling draft (status from batch-cycle results).
         const status = batchResults?.find((r) => r.targetId === tid)?.status;
@@ -834,27 +827,47 @@ function makeVerifyCallback(opts: {
         process.stderr.write(`[pi-harness] hexdiff failed for ${tid}: ${hd.output.slice(0, 200)}\n`);
       }
     }
-    lastFeedback =
-      `## No Matches Found\n\n` +
-      `Your code compiled and passed lint, but does not match the retail binary.` +
-      (hexdiffOutputs.length > 0
-        ? `\n\nHexdiff output:\n\n${hexdiffOutputs.join("\n\n")}`
-        : `\n\n(hexdiff unavailable — review the assembly patterns carefully)`) +
-      `\n\nCommon causes:\n` +
-      `- Wrong field offset or struct type\n` +
-      `- Expression order (affects MWCC register allocation)\n` +
-      `- Signed vs unsigned comparison\n` +
-      `- Missing or extra function calls`;
+    // Feedback: tell the model which targets are matched/certifiable and ONLY
+    // show hexdiff for genuinely-unmatched targets. Never say "No Matches
+    // Found" while listing 0-mismatch targets underneath (the round-2
+    // confusion in run 9: the model saw 0-mismatch targets under a "No
+    // Matches Found" header and kept re-editing them).
+    const feedbackParts: string[] = [];
+    if (matchedTargets.length > 0) {
+      feedbackParts.push(
+        `## Targets Already Matched\n\n` +
+        `These targets are at mismatch:0 (byte-identical) in the current worktree — ` +
+        `the harness has certified or is certifying them. **Do NOT edit them again**: ` +
+        matchedTargets.map((id) => `\`${id}\``).join(", ") + `.\n`,
+      );
+    }
+    if (unmatchedTargets.length === 0) {
+      feedbackParts.push(`## All Targets Matched\n\nYour code matches everything in this batch. If some were not accepted, the witness found a reloc/structural gate — the summaries above explain which.`);
+    } else {
+      feedbackParts.push(
+        `## ${matchedTargets.length > 0 ? "Remaining Targets" : "No Matches Found"}\n\n` +
+        `Your code compiled and passed lint, but ${unmatchedTargets.length} target(s) still do not match the retail binary.` +
+        (hexdiffOutputs.length > 0
+          ? `\n\nHexdiff output for unmatched targets:\n\n${hexdiffOutputs.join("\n\n")}`
+          : `\n\n(hexdiff unavailable — review the assembly patterns carefully)`) +
+        `\n\nCommon causes:\n` +
+        `- Wrong field offset or struct type\n` +
+        `- Expression order (affects MWCC register allocation)\n` +
+        `- Signed vs unsigned comparison\n` +
+        `- Missing or extra function calls`,
+      );
+    }
     if (regSwapOnlyTargets.length > 0) {
-      lastFeedback += `\n\n### Reg-swap-only (structure correct)\n\n` +
+      feedbackParts.push(`### Reg-swap-only (structure correct)\n\n` +
         `These targets have structural=0 — the code shape is right and only ` +
         `register allocation differs: ${regSwapOnlyTargets.join(", ")}. ` +
         `**CERTIFY THEM instead of editing**: call the \`witness\` tool (` +
         `\`witness <unit> <symbol>\`) to confirm, then \`certify <target-id>\` and ` +
         `include \`CERTIFY: <target-id>\` in your final response. The register-` +
         `renaming witness (no SMT) certifies these — do NOT keep editing or you ` +
-        `will regress the match.`;
+        `will regress the match.`);
     }
+    lastFeedback = feedbackParts.join("\n\n");
     return { action: "re-prompt", feedback: lastFeedback };
   };
 

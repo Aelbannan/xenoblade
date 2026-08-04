@@ -68,7 +68,7 @@ void func_804B6F58(){}
 
 void func_804B7044(){}
 
-void func_804B7074(){}
+extern "C" u32 func_804B7074(void* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
 
 void func_804B708C(){}
 

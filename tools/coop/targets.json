@@ -335167,7 +335167,7 @@
       "size": "0x5CC",
       "unit": "RVL_SDK/src/revolution/kpad/KPAD",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -335180,15 +335180,7 @@
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/kpad/KPAD.c",
       "instruction_match": 96.44,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "hexdiff-agent",
-        "claimed_at": "2026-08-04T04:54:59.461735+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/kpad/KPAD.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80348fe0",
@@ -355245,7 +355237,15 @@
       "instruction_match": 99.923,
       "equivalence_status": "equivalent",
       "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_policy": "auto-promotion-v2",
+      "claim": {
+        "owner": "hexdiff-agent",
+        "claimed_at": "2026-08-04T05:04:09.859557+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/wud/WUD.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8037e2b0",
@@ -450261,8 +450261,8 @@
       "size": "0x10",
       "unit": "nw4r/src/ut/ut_ArchiveFontBase",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -450270,7 +450270,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/ut/ut_ArchiveFontBase.s",
       "abi_helper_calls": [],
-      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+      "source": "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp",
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-04T05:03:35.400221+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80430258",
@@ -494403,8 +494413,8 @@
       "size": "0x18",
       "unit": "monolib/src/scn/CScnMaruShadowNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -494412,7 +494422,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnMaruShadowNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:03:09.403305+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80491be4",
@@ -495630,8 +495650,8 @@
       "size": "0x20",
       "unit": "monolib/src/scn/CScnRootNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -495639,7 +495659,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnRootNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnRootNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnRootNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:03:02.304646+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnRootNw4r.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80493e80",
@@ -495652,8 +495682,8 @@
       "size": "0x20",
       "unit": "monolib/src/scn/CScnRootNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -495661,7 +495691,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnRootNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnRootNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnRootNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:03:04.650967+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnRootNw4r.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80493ea0",
@@ -503051,8 +503091,8 @@
       "size": "0x20",
       "unit": "monolib/src/scn/CScnEffectActNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -503060,7 +503100,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEffectActNw4r.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnEffectActNw4r.cpp"
+      "source": "libs/monolib/src/scn/CScnEffectActNw4r.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:03:07.034151+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnEffectActNw4r.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8049fff0",
@@ -513902,8 +513952,8 @@
       "size": "0x18",
       "unit": "monolib/src/coli/code_804B59C8",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -513911,7 +513961,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/coli/code_804B59C8.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/coli/code_804B59C8.cpp"
+      "source": "libs/monolib/src/coli/code_804B59C8.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:02:57.497627+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/coli/code_804B59C8.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804bb1e8",
@@ -523751,8 +523811,8 @@
       "size": "0x1C",
       "unit": "monolib/src/work/CWorkSystemCache",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -523760,7 +523820,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystemCache.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/work/CWorkSystemCache.cpp"
+      "source": "libs/monolib/src/work/CWorkSystemCache.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T05:02:59.923765+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkSystemCache.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804dd34c",

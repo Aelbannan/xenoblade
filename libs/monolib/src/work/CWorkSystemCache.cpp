@@ -34,7 +34,11 @@ void CWorkSystemCache::wkStandbyLogin(void) {}
 
 void CWorkSystemCache::wkStandbyLogout() {}
 
-void func_804D91BC(){}
+extern "C" void func_804D91BC(void* self) {
+    if (*(u8*)((u8*)self + 0x48) == 0) {
+        *(u32*)((u8*)self + 0x44) -= 1;
+    }
+}
 
 void func_804D91D8(){}
 

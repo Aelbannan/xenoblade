@@ -15,7 +15,12 @@ void func_8049BEB4(void* self){ func_804838DC(); }
 extern void func_8048315C();
 void func_8049BEE4(void* self){ func_8048315C(); }
 
-void func_8049BEEC(){}
+extern "C" void func_8049BEEC(void* self, const void* other) {
+    u8* dst = *(u8**)((u8*)self + 4);
+    *(u32*)(dst + 0x304) = *(u32*)((u8*)other + 0);
+    *(u32*)(dst + 0x308) = *(u32*)((u8*)other + 4);
+    *(u32*)(dst + 0x30C) = *(u32*)((u8*)other + 8);
+}
 
 void func_8049BF0C(){}
 

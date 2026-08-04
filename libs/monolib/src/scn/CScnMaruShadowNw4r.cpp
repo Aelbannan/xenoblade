@@ -25,7 +25,10 @@ void func_8048D264(){}
 void func_8048D500(){}
 
 // us-80491bcc: func_8048DB58 (0x18 bytes)
-void func_8048DB58(){}
+extern "C" void func_8048DB58(void* self, const void* other) {
+    *(u16*)((u8*)self + 0x28) |= 0x40;
+    *(float*)((u8*)self + 0x14) = *(float*)((u8*)other + 4);
+}
 
 // us-80491be4: func_8048DB70 (0x1A8 bytes)
 void func_8048DB70(){}

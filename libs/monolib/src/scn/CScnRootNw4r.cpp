@@ -17,7 +17,15 @@ void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 extern "C" void* func_8048FDE4(void* self) { return (void*)((u8*)self + 0x45c); }
 
 
-void func_8048FE0C(){}
+extern "C" void* func_8048FDEC(void* self) {
+    if (*(u32*)((u8*)self + 0x4C4) == 0xFFFFFFFF) return (u8*)self + 0x44C;
+    return (u8*)self + 0x46C;
+}
+
+extern "C" void* func_8048FE0C(void* self) {
+    if (*(u32*)((u8*)self + 0x4D0) == 0xFFFFFFFF) return (u8*)self + 0x44C;
+    return (u8*)self + 0x47C;
+}
 
 extern "C" void* func_8048FE2C(void* self) { return (void*)((u8*)self + 0x49c); }
 

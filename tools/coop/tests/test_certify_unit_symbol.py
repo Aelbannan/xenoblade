@@ -395,5 +395,139 @@ class RelocBeltTests(CertifyUnitSymbolTests):
         self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_SMT_DISABLED)
 
 
+class RelocFreshnessHelperTests(unittest.TestCase):
+    """Direct tests of ``_ensure_reloc_map_fresh`` internals (round-4 MINOR:
+    the RelocBeltTests mock the helper, so a repeat of round-3 finding 1 —
+    force becoming a no-op or missing cache invalidation — would pass them).
+    """
+
+    def _mk_unit(self, name, target_mtime, base_mtime):
+        import os
+        import tempfile
+
+        d = tempfile.mkdtemp()
+        t = Path(d) / "target.o"
+        b = Path(d) / "base.o"
+        t.write_bytes(b"")
+        b.write_bytes(b"")
+        os.utime(t, (1_000_000_000.0, target_mtime))
+        os.utime(b, (1_000_000_000.0, base_mtime))
+        return ObjdiffUnit(name=name, target_path=t, base_path=b, source_path=None), d
+
+    def _mk_project(self, units):
+        return type(
+            "P", (),
+            {"config": type("C", (), {"region": "us"})(),
+             "load_objdiff_units": lambda self: units},
+        )()
+
+    def _run(self, unit, map_path, mine_side_effect=None):
+        import os
+
+        from tools.coop.lib import equivalence_check as eq
+        from tools.coop import reloc_map as rm
+
+        calls = {"mine": 0, "save": 0}
+
+        def fake_mine(project, *, include_kinds, limit=None):
+            calls["mine"] += 1
+            if mine_side_effect is not None:
+                mine_side_effect()
+            return {"version": 1, "generated": "2026-01-01T00:00:00.000000", "entries": {}}
+
+        def fake_save(data, path):
+            calls["save"] += 1
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            Path(path).write_text(json.dumps(data))
+
+        os.utime(map_path, (1_000_000_000.0, 1_000_000_000.0))
+        with mock.patch.object(eq, "_RELOC_MAP_PATH", map_path), \
+                mock.patch.object(eq, "_reloc_map_loaded", None), \
+                mock.patch.object(rm, "mine", side_effect=fake_mine), \
+                mock.patch.object(rm, "save_map", side_effect=fake_save), \
+                mock.patch.object(rm, "DEFAULT_MAP", map_path):
+            from tools.coop.lib.equivalence_check import _ensure_reloc_map_fresh
+
+            result = _ensure_reloc_map_fresh(self._mk_project([unit]), unit)
+        return result, calls
+
+    def test_fresh_unit_no_mine(self) -> None:
+        import tempfile
+        from datetime import datetime, timezone
+
+        from tools.coop.lib.equivalence_check import _canonical_symbols_for_unit
+
+        unit, d = self._mk_unit("main/u", 1_000_000_000.0, 1_000_000_000.0)
+        map_path = Path(d) / "map.json"
+        future = datetime(2030, 1, 1, tzinfo=timezone.utc).isoformat()
+        map_path.write_text(json.dumps({"version": 1, "generated": future, "entries": {}}))
+        result, calls = self._run(unit, map_path)
+        self.assertTrue(result)
+        self.assertEqual(calls, {"mine": 0, "save": 0})
+
+    def test_stale_unit_mines_and_invalidates(self) -> None:
+        import tempfile
+        from datetime import datetime, timezone
+
+        unit, d = self._mk_unit("main/u", 2_000_000_000.0, 2_000_000_000.0)
+        map_path = Path(d) / "map.json"
+        past = datetime(2020, 1, 1, tzinfo=timezone.utc).isoformat()
+        map_path.write_text(json.dumps({"version": 1, "generated": past, "entries": {}}))
+        result, calls = self._run(unit, map_path)
+        self.assertTrue(result)
+        self.assertEqual(calls, {"mine": 1, "save": 1})
+        # Cache invalidated: the next _load_reloc_map reads the new map.
+        self.assertEqual(calls["mine"], 1)
+
+    def test_force_mines_always(self) -> None:
+        import tempfile
+        from datetime import datetime, timezone
+
+        unit, d = self._mk_unit("main/u", 1_000_000_000.0, 1_000_000_000.0)
+        map_path = Path(d) / "map.json"
+        future = datetime(2030, 1, 1, tzinfo=timezone.utc).isoformat()
+        map_path.write_text(json.dumps({"version": 1, "generated": future, "entries": {}}))
+        from tools.coop.lib.equivalence_check import _ensure_reloc_map_fresh
+
+        result, calls = self._run(unit, map_path)
+        self.assertTrue(result)
+        # Force path via the belt semantics (force=True bypasses the mtime check).
+        from tools.coop import reloc_map as rm
+        from tools.coop.lib import equivalence_check as eq
+        import os
+
+        calls2 = {"mine": 0}
+        orig_mine = rm.mine
+
+        def fake_mine2(project, *, include_kinds, limit=None):
+            calls2["mine"] += 1
+            return {"version": 1, "generated": "2026-01-01T00:00:00.000000", "entries": {}}
+
+        with mock.patch.object(eq, "_RELOC_MAP_PATH", map_path), \
+                mock.patch.object(eq, "_reloc_map_loaded", None), \
+                mock.patch.object(rm, "mine", side_effect=fake_mine2), \
+                mock.patch.object(rm, "save_map", side_effect=lambda d, p: None):
+            r2 = _ensure_reloc_map_fresh(self._mk_project([unit]), unit, force=True)
+        self.assertTrue(r2)
+        self.assertEqual(calls2["mine"], 1)
+
+    def test_mine_failure_fails_closed(self) -> None:
+        import tempfile
+        from datetime import datetime, timezone
+
+        unit, d = self._mk_unit("main/u", 2_000_000_000.0, 2_000_000_000.0)
+        map_path = Path(d) / "map.json"
+        past = datetime(2020, 1, 1, tzinfo=timezone.utc).isoformat()
+        map_path.write_text(json.dumps({"version": 1, "generated": past, "entries": {}}))
+
+        def boom():
+            raise RuntimeError("mine failed")
+
+        result, calls = self._run(unit, map_path, mine_side_effect=boom)
+        self.assertFalse(result)  # fail-closed: caller must not canonicalize
+        self.assertEqual(calls["mine"], 1)
+        self.assertEqual(calls["save"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

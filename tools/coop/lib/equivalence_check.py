@@ -74,7 +74,7 @@ def _invalidate_reloc_map_cache() -> None:
 
 def _ensure_reloc_map_fresh(
     project: Project | None, unit: ObjdiffUnit, *, force: bool = False,
-) -> None:
+) -> bool:
     """Re-mine the reloc map iff THIS unit's objects are newer than it.
 
     Per-unit, per-invocation (doc 33 §0.5 rev-5): TU-local ``@N`` labels shift
@@ -83,12 +83,18 @@ def _ensure_reloc_map_fresh(
     stale retail name — F1) when the map is out of date.  The check is 2 stat
     calls; only a stale unit triggers a repo-wide re-mine (~2 s, no build
     lock).  ``force=True`` re-mines unconditionally (the retry belt path).
-    Fail-open on tooling errors: the belt (retry-once on gate-2 reloc) is the
-    backstop, and staleness only ever over-rejects, never false-certifies.
+
+    Returns True when the map is verified fresh (or was just re-mined), False
+    when freshness could NOT be verified (tooling failure, or no unit/project).
+    The caller must treat False as fail-closed: draw NO canonical symbols from
+    the map (round-4 finding: the old fail-open path could feed a stale map to
+    the witness when ``mine``/``save_map`` threw, and the belt never fires
+    because gate 2 PASSES on an unshifted ``@N`` — a low-probability false
+    certificate; fail-closed turns it into an over-rejection instead).
     """
     unit_name = getattr(unit, "name", None)
     if unit_name is None or project is None:
-        return
+        return False
     try:
         from tools.coop.reloc_map import mine, save_map
 
@@ -104,20 +110,23 @@ def _ensure_reloc_map_fresh(
                 for p in (unit.target_path, unit.base_path):
                     if p is not None and p.is_file():
                         try:
-                            if datetime.fromtimestamp(p.stat().st_mtime) > gen_dt:
+                            mtime_dt = datetime.fromtimestamp(p.stat().st_mtime)
+                            if gen_dt.tzinfo is not None:
+                                # Aware stamp (unusual — mine writes naive):
+                                # compare in the stamp's wall-clock zone so a
+                                # tz-aware stamp cannot raise (round-4 NIT).
+                                mtime_dt = mtime_dt.replace(tzinfo=gen_dt.tzinfo)
+                            if mtime_dt > gen_dt:
                                 stale = True
                                 break
                         except OSError:
                             continue
                 else:
-                    # No object newer than the map: fresh.
-                    return
-            else:
-                stale = True
+                    # No object newer than the map: verified fresh.
+                    return True
+            # generated unparseable ⇒ treat as stale (re-mine below).
         else:
             stale = True
-        if not stale:
-            return
         # Known-stale / forced path: mine directly (the unit's mtime check
         # already proved staleness — a full ``ensure_fresh`` repo scan would be
         # redundant; doc 33 rev-5 round-3 finding 3).
@@ -126,9 +135,13 @@ def _ensure_reloc_map_fresh(
         fresh = mine(project, include_kinds={"data"})
         save_map(fresh, _DEFAULT_MAP)
         _invalidate_reloc_map_cache()
+        return True
     except Exception:
-        # Fail-open: cached map stays in use; the belt is the backstop.
-        pass
+        # Fail-closed (round-4 finding): do NOT canonicalize from a map whose
+        # freshness could not be verified.  The belt (retry-once on gate-2
+        # reloc) recovers when the failure is transient; a persistent failure
+        # over-rejects to SMT — never a false certificate.
+        return False
 
 
 def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
@@ -2758,6 +2771,12 @@ def _prove_bytes(
             if initial_gpr_ranges
             else None
         ),
+        # doc 33 Item 0.5 (round-4 MINOR): bind the reloc-map fingerprint into
+        # the SMT cert too, for a complete F1 audit trail when the SMT path
+        # decodes with canonical symbols.
+        reloc_map_sha256=(
+            _load_reloc_map()[1] if canonical_symbols is not None else None
+        ),
     )
     result = check_equivalence(
         original,
@@ -2951,9 +2970,14 @@ def prove_unit_symbol(
         # doc 33 Item 0.5: verify the reloc map is fresh for THIS unit before
         # drawing canonical symbols from it (per-unit mtime check, lazy,
         # post-build).  A stale map fails witness gate 2 or aliases a rebuilt
-        # ``@N`` to the wrong retail name (F1).
-        _ensure_reloc_map_fresh(project, unit)
-        canonical_symbols = _canonical_symbols_for_unit(unit_name) if unit_name else {}
+        # ``@N`` to the wrong retail name (F1).  Fail-closed: when freshness
+        # cannot be verified, draw NO canonical symbols (over-reject, never
+        # false-certify — round-4 finding).
+        fresh_ok = _ensure_reloc_map_fresh(project, unit)
+        canonical_symbols = (
+            _canonical_symbols_for_unit(unit_name)
+            if (unit_name and fresh_ok) else {}
+        )
 
         # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31): certify
         # position-aligned, same-mnemonic, register-color-only-differing pairs
@@ -2984,9 +3008,10 @@ def prove_unit_symbol(
                 # freshness state — round-3 finding 1: the previous memo made
                 # this a no-op), re-decode + retry the witness once; the
                 # refreshed canonical_symbols also feed the SMT fallback below.
-                _ensure_reloc_map_fresh(project, unit, force=True)
+                fresh_ok = _ensure_reloc_map_fresh(project, unit, force=True)
                 canonical_symbols = (
-                    _canonical_symbols_for_unit(unit_name) if unit_name else {}
+                    _canonical_symbols_for_unit(unit_name)
+                    if (unit_name and fresh_ok) else {}
                 )
                 witness_probe = _try_renaming_witness(
                     project, symbol, left, right, target_id, certified_context,

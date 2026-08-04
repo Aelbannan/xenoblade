@@ -15,8 +15,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" definitions (forced names) | 1679 |
 | `self`/register-style params | 3089 |
 | `void*` (params + locals) | 4606 |
-| raw pointer offset arithmetic | 2580 |
-| deref-through-cast arithmetic | 1128 |
+| raw pointer offset arithmetic | 2582 |
+| deref-through-cast arithmetic | 1129 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -71,7 +71,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 2 | 3 | 5 | 4 | 3 | 3 | 0 | 5 | 0 |
 | libs/monolib/src/device/CDeviceFile.cpp | 0 | 6 | 3 | 9 | 4 | 2 | 0 | 1 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 26 | 3 | 6 | 13 | 4 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFileDvd.cpp | 0 | 1 | 0 | 1 | 32 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFileDvd.cpp | 0 | 1 | 0 | 1 | 34 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileJob.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFont.cpp | 0 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 0 | 11 | 17 | 11 | 2 | 0 | 0 | 0 | 0 |
@@ -726,9 +726,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 13
  },
  "libs/monolib/src/device/CDeviceFileDvd.cpp": {
-  "deref_arith": 5,
+  "deref_arith": 6,
   "extern_c_nonlbl_def": 1,
-  "ptr_arith": 32,
+  "ptr_arith": 34,
   "void_ptr": 1
  },
  "libs/monolib/src/device/CDeviceFileJob.cpp": {

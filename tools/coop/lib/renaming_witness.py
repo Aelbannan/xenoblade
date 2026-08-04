@@ -1967,7 +1967,6 @@ def run_region_sliced_witness(
     if stream_failure is not None:
         return WitnessOutcome(False, failure=stream_failure)
     boundaries = _rho_region_boundaries(original, candidate)
-    boundaries_set = frozenset(original[b].address for b in boundaries)
     # Region rho per boundary interval: [0, b0), [b0, b1), ..., [bn, end).
     region_starts = [0] + boundaries
     regions: list[tuple[int, int, Rho]] = []

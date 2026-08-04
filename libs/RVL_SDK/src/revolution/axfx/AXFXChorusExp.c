@@ -3,20 +3,6 @@
 
 #include <string.h>
 
-// Float constants in .sdata2 (retail pool at 0x806696D0, first-use order):
-// 32, 0, 176, -0, 0.1, 50, 1, 2, 65536, 256, 32000, 0.00390625.
-const f32 float_8066BED0 = 32.0f;
-const f32 float_8066BED4 = 0.0f;
-const f32 float_8066BED8 = 176.0f;
-const f32 float_8066BEDC = -0.0f;
-const f32 float_8066BEE0 = 0.1f;
-const f32 float_8066BEE4 = 50.0f;
-const f32 float_8066BEE8 = 1.0f;
-const f32 float_8066BEEC = 2.0f;
-const f32 float_8066BEF0 = 65536.0f;
-const f32 float_8066BEF4 = 256.0f;
-const f32 float_8066BEF8 = 32000.0f;
-const f32 float_8066BEFC = 0.00390625f;
 
 static BOOL __InitParams(AXFX_CHORUS_EXP* fx);
 static void __CalcLFO(s32* dst, AXFX_CHORUS_EXP_LFO* lfo);
@@ -76,7 +62,7 @@ alloc_done:
         }
     }
     fx->delay.inPos = 0;
-    fx->delay.outPos = (fx->delay.size - (u32)(float_8066BED0 * fx->delayTime)) << 16;
+    fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
     fx->delay.lastPos = fx->delay.outPos;
     fx->delay.sizeFP = fx->delay.size << 16;
     ok = TRUE;
@@ -134,7 +120,7 @@ BOOL AXFXChorusExpSettingsUpdate(AXFX_CHORUS_EXP* fx) {
         memset(*walk, 0, fx->delay.size * 4);
         walk++;
     }    fx->delay.inPos = 0;
-    fx->delay.outPos = (fx->delay.size - (u32)(float_8066BED0 * fx->delayTime)) << 16;
+    fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
     fx->delay.lastPos = fx->delay.outPos;
     fx->delay.sizeFP = fx->delay.size << 16;
     ok = TRUE;
@@ -263,7 +249,7 @@ void AXFXChorusExpCallback(AXFX_BUFFERUPDATE* update, AXFX_CHORUS_EXP* fx) {
         coef = __AXFXGetSrcCoef((frac >> 9) & 0x7F);
 
         for (ch = 0; ch < 3; ch++) {
-            out = float_8066BED4;
+            out = 0.0f;
             out += coef->unk0 * fx->history[ch][histIndex];
             histIndex++;
             histIndex &= 3;
@@ -313,40 +299,40 @@ static BOOL __InitParams(AXFX_CHORUS_EXP* fx) {
     u32 i;
     u32 j;
 
-    if (fx->delayTime < float_8066BEE0 || fx->delayTime > float_8066BEE4) {
+    if (fx->delayTime < 0.1f || fx->delayTime > 50.0f) {
         return FALSE;
     }
-    if (fx->depth < float_8066BED4 || fx->depth > float_8066BEE8) {
+    if (fx->depth < 0.0f || fx->depth > 1.0f) {
         return FALSE;
     }
-    if (fx->rate < float_8066BEE0 || fx->rate > float_8066BEEC) {
+    if (fx->rate < 0.1f || fx->rate > 2.0f) {
         return FALSE;
     }
-    if (fx->feedback < float_8066BED4 || fx->feedback >= float_8066BEE8) {
+    if (fx->feedback < 0.0f || fx->feedback >= 1.0f) {
         return FALSE;
     }
-    if (fx->outGain < float_8066BED4 || fx->outGain > float_8066BEE8) {
+    if (fx->outGain < 0.0f || fx->outGain > 1.0f) {
         return FALSE;
     }
-    if (fx->sendGain < float_8066BED4 || fx->sendGain > float_8066BEE8) {
+    if (fx->sendGain < 0.0f || fx->sendGain > 1.0f) {
         return FALSE;
     }
 
     fx->lfo.table = __AXFXGetLfoSinTable();
 
-    base = float_8066BED0 * fx->delayTime;
+    base = 32.0f * fx->delayTime;
     depthSamp = base * fx->depth;
     if (depthSamp >= base) {
-        depthSamp -= float_8066BEE8;
-        if (depthSamp < float_8066BED4) {
-            depthSamp = float_8066BED4;
+        depthSamp -= 1.0f;
+        if (depthSamp < 0.0f) {
+            depthSamp = 0.0f;
         }
     }
 
     {
         f32 rate = fx->rate;
-        step = (float_8066BEF8 / rate) * float_8066BEFC;
-        phaseAdd = (float_8066BEF4 * rate) / float_8066BEF8;
+        step = (32000.0f / rate) * 0.00390625f;
+        phaseAdd = (256.0f * rate) / 32000.0f;
     }
 
     fx->lfo.lastNum = (u32)-1;
@@ -355,14 +341,14 @@ static BOOL __InitParams(AXFX_CHORUS_EXP* fx) {
     fx->lfo.lastValue = 0;
     fx->lfo.grad = 0;
 
-    fx->lfo.depthSamp = (s32)(float_8066BEF0 * depthSamp);
-    fx->lfo.phaseAdd = (s32)(float_8066BEF0 * phaseAdd);
-    fx->lfo.gradFactor = (s32)(float_8066BEF0 * (depthSamp / step));
-    fx->lfo.stepSamp = (s32)(float_8066BEF0 * step);
+    fx->lfo.depthSamp = (s32)(65536.0f * depthSamp);
+    fx->lfo.phaseAdd = (s32)(65536.0f * phaseAdd);
+    fx->lfo.gradFactor = (s32)(65536.0f * (depthSamp / step));
+    fx->lfo.stepSamp = (s32)(65536.0f * step);
 
     for (i = 0; i < 3; i++) {
         for (j = 0; j < 4; j++) {
-            fx->history[i][j] = float_8066BED4;
+            fx->history[i][j] = 0.0f;
         }
     }
     fx->histIndex = 0;

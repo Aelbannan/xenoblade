@@ -351,10 +351,15 @@ def ensure_fresh(
             if p is None or not p.is_file():
                 continue
             try:
-                if datetime.fromtimestamp(p.stat().st_mtime) > gen_dt:
+                mtime_dt = datetime.fromtimestamp(p.stat().st_mtime)
+                if gen_dt.tzinfo is not None:
+                    # Aware stamp: compare in the stamp's wall-clock zone so a
+                    # tz-aware stamp cannot raise (round-4 NIT).
+                    mtime_dt = mtime_dt.replace(tzinfo=gen_dt.tzinfo)
+                if mtime_dt > gen_dt:
                     stale = True
                     break
-            except OSError:
+            except (OSError, TypeError):
                 continue
         if stale:
             break
@@ -415,11 +420,13 @@ def mine(project: Project, *, include_kinds: set[str], limit: int | None = None)
     total_units = 0
     scanned = 0
     pair_count = 0
-    # Stamp ``generated`` at START (not at write time): the timestamp is the
-    # freshness watermark compared against .o mtimes (``ensure_fresh``); a
-    # stamp written at the end would miss rebuilds that happened during the
-    # mine window (doc 33 §0.5 rev-5 finding).
-    generated = time.strftime("%Y-%m-%dT%H:%M:%S")
+    # Stamp ``generated`` at START (not at write time) with sub-second
+    # precision: the timestamp is the freshness watermark compared against .o
+    # mtimes (``ensure_fresh`` / prove_unit_symbol); a second-resolution stamp
+    # at end would miss rebuilds during the mine window, and a second-
+    # resolution stamp at start spuriously re-mines objects built in the same
+    # second (round-4 finding).
+    generated = datetime.now().isoformat()
     for unit in units:
         if unit.target_path is None or unit.base_path is None:
             continue

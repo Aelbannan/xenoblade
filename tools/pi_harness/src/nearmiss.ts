@@ -159,12 +159,22 @@ export async function bankDraft(
   return candidate;
 }
 
-/** In-process FIFO for index.jsonl appends (see M3). */
+/** In-process FIFO for index.jsonl appends (see M3). A failed append must
+ *  not poison the queue for the rest of the process: swallow the error after
+ *  logging (banking is best-effort — the caller never fails the session on
+ *  it, and a permanently-rejected chain would silently disable all further
+ *  draft banking, review R4). */
 let indexAppendQueue: Promise<void> = Promise.resolve();
 function enqueueIndexAppend(idxPath: string, line: string): Promise<void> {
-  indexAppendQueue = indexAppendQueue.then(async () => {
-    await appendFile(idxPath, line, "utf-8");
-  });
+  indexAppendQueue = indexAppendQueue
+    .then(async () => {
+      await appendFile(idxPath, line, "utf-8");
+    })
+    .catch((err) => {
+      process.stderr.write(
+        `[pi-harness] WARNING: nearmiss index append failed: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+    });
   return indexAppendQueue;
 }
 

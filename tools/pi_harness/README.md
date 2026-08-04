@@ -46,9 +46,10 @@ Per batch (batches run sequentially within a TU, TUs in parallel up to
    - On cap hit or timeout the snapshot is restored and a fresh session
      retries with the rejection history embedded in the brief.
 4. **Acceptance** (`batch-cycle.py` + targets.json). Accepted targets are
-   promoted; failed ones either retry as singleton sessions (large
-   targets) or are collected for a re-batch pass (small targets below
-   `singletonMinSize` bytes), up to `maxBatchRetries` total attempts.
+   promoted; failed ones either retry as singleton sessions (each capped by
+   `maxSingletonSessions`, ledger-bounded by `maxAttemptsPerTarget`) or are
+   collected for a re-batch pass (small targets below
+   `singletonMinSize` bytes, capped by `maxRebatchAttempts`).
    Exhausted targets are skipped (ledgered).
 
 Restore only ever copies back the snapshotted `.c/.cpp/.hpp` files when

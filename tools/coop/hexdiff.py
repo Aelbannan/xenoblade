@@ -914,6 +914,10 @@ def run(argv: list[str] | None = None) -> int:
                     except OSError:
                         pass
                     os.close(lock_fd)
+        except subprocess.TimeoutExpired:
+            print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
+                  file=sys.stderr)
+            return 2
         except Exception:
             if lock_fd is not None:
                 try:
@@ -921,9 +925,6 @@ def run(argv: list[str] | None = None) -> int:
                 except OSError:
                     pass
             raise
-            print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
-                  file=sys.stderr)
-            return 2
 
         if build_result.returncode != 0:
             print(build_result.stdout, file=sys.stderr)

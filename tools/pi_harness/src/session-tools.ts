@@ -662,7 +662,7 @@ export function tuFinalSpawnHook(python: string): BashSpawnHook {
     // arbitrary inner command (adversarial review C2: `build_lock.py us --
     // python3 -c '…'` or `build_lock.py us -- git status`). Validate the
     // inner command against the same allowlist.
-    const blMatch = cmd.match(/build_lock\.py\s+(?:--timeout\s+\d+\s+)?[^\s]+\s+--\s+(.+)$/);
+    const blMatch = cmd.match(/build_lock\.py\s+(?:(?:--timeout|--stale-timeout)\s+\d+\s+)*(?:[^\s]+)\s+--\s+(.+)$/);
     if (blMatch) {
       const inner = blMatch[1].trim();
       const innerSegments = inner.split(/[;&|]\s*/).map((s) => s.trim()).filter(Boolean);

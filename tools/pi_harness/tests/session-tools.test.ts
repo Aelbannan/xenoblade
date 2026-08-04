@@ -129,6 +129,8 @@ describe("tuFinalSpawnHook", () => {
     "ninja `rm -rf build/pi-harness/snapshots`",     // backticks
     `${PY} tools/pi_harness/build_lock.py us -- python3 -c "print(open('/etc/passwd').read())"`, // build_lock passthrough
     `${PY} tools/pi_harness/build_lock.py us -- git status`, // git behind passthrough
+    `${PY} tools/pi_harness/build_lock.py --stale-timeout 3600 us -- python3 -c "print(1)"`, // stale-timeout flag bypass
+    `${PY} tools/pi_harness/build_lock.py --timeout 900 --stale-timeout 3600 us -- git status`, // both flags
   ];
   for (const cmd of injectionBypasses) {
     test(`BLOCKED (C2): ${cmd.slice(0, 70)}`, () => {

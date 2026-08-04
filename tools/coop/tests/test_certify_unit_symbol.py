@@ -529,5 +529,73 @@ class RelocFreshnessHelperTests(unittest.TestCase):
         self.assertEqual(calls["save"], 0)
 
 
+class NarrowCalleeReadsValidationTests(unittest.TestCase):
+    """Round-2 review (Kimi K3 BLOCKER-class): the narrow-EABI FULL_MATCH
+    gate must validate the callee's live-in READS, not just writes — a callee
+    that reads r6 at entry (outside the narrow window) must fall back to
+    opaque, else gate 5's ``contract.reads`` trust re-opens the outgoing-
+    argument false-certificate class."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / "build/us").mkdir(parents=True)
+        (self.root / "tools/coop").mkdir(parents=True)
+
+        def _words(*words: int) -> bytes:
+            return bytes.fromhex("".join(f"{w & 0xFFFFFFFF:08x}" for w in words))
+
+        or_ = lambda rd, rs: (31 << 26) | (rs << 21) | (rd << 16) | (rs << 11) | (444 << 1)
+        li = lambda rt, v: (14 << 26) | (rt << 21) | (0 << 16) | (v & 0xFFFF)
+        blr = 0x4E800020
+        self._callees = {
+            "reads_r6_live_in": _words(or_(5, 6), blr),        # or r5,r6,r6; blr
+            "reads_r3_only": _words(or_(5, 3), blr),           # or r5,r3,r3; blr
+            "writes_r6_before_read": _words(li(6, 7), or_(5, 6), blr),
+            "reads_f2_live_in": _words((63 << 26) | (5 << 21) | (2 << 11) | (72 << 1), blr),
+        }
+        elf = build_reloc_elf(self._callees)
+        (self.root / "build/us/retail.o").write_bytes(elf)
+        (self.root / "objdiff.json").write_text(
+            json.dumps({
+                "units": [{
+                    "name": "demo/Narrow",
+                    "target_path": "build/us/retail.o",
+                    "base_path": "build/us/retail.o",
+                }]
+            }),
+            encoding="utf-8",
+        )
+        self.config = CoopConfig(project_root=self.root, region="us")
+        self.project = Project(self.config)
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_live_in_read_outside_window_falls_back_to_opaque(self) -> None:
+        from tools.coop.lib.equivalence_check import _full_match_callee_body_fits_narrow
+        # r6 is an EABI argument lane outside the narrow window {r3,r4,r5,f1}:
+        # the callee genuinely depends on the caller's r6 -> opaque fallback.
+        self.assertFalse(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "reads_r6_live_in",
+        ))
+        # f2 likewise (FP argument beyond f1).
+        self.assertFalse(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "reads_f2_live_in",
+        ))
+
+    def test_in_window_reads_and_scratch_still_fit(self) -> None:
+        from tools.coop.lib.equivalence_check import _full_match_callee_body_fits_narrow
+        # r3-only reads fit the narrow envelope.
+        self.assertTrue(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "reads_r3_only",
+        ))
+        # r6 written before read is scratch, not a live-in input (GXSetZMode
+        # shape) -> still fits.
+        self.assertTrue(_full_match_callee_body_fits_narrow(
+            self.project, "demo/Narrow", "writes_r6_before_read",
+        ))
+
+
 if __name__ == "__main__":
     unittest.main()

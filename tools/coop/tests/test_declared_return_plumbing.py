@@ -531,9 +531,13 @@ class C6ByteIdenticalCertifyTest(unittest.TestCase):
     def test_certify_byte_identical_summary_semantics(self) -> None:
         """C6: byte-identical certify semantics are explicit and un-narrowed.
 
-        The byte-identical path issues an empty summary by design (no SMT
-        prove, no body-analysis summary); the r4-in-writes invariant for
-        PROVEN certificates is asserted in C8's forced-marker test instead.
+        The byte-identical path synthesizes a CONSERVATIVE opaque-EABI effect
+        summary by design (no SMT prove, no body-analysis): an empty summary
+        would incorrectly model return registers (notably allocator r3) as
+        preserved and make parent memory-layout premises unsatisfiable.  The
+        summary must cover the lanes the body writes (r3/r4 here); the
+        r4-in-writes invariant for PROVEN certificates is asserted in C8's
+        forced-marker test instead.
         """
         from tools.coop.lib.project import ObjdiffUnit, Project
         from tools.coop.lib.equivalence_check import certify_unit_symbol
@@ -596,9 +600,14 @@ class C6ByteIdenticalCertifyTest(unittest.TestCase):
             certificate = probe.certificate
             self.assertIsNotNone(certificate)
             assert certificate is not None
-            # Byte-identical path: empty summary, no narrowing, no declaration.
+            # Byte-identical path: conservative opaque-EABI effect envelope
+            # (covers r3/r4 and every other volatile lane), no declared_return
+            # narrowing.
             summary = certificate.get("summary") or {}
-            self.assertEqual(summary.get("writes"), [])
+            writes = summary.get("writes") or []
+            self.assertIn("r3", writes)
+            self.assertIn("r4", writes)
+            self.assertNotEqual(summary.get("reads"), [])
             cert_abi = certificate.get("abi_shape")
             if isinstance(cert_abi, dict):
                 self.assertNotIn("declared_return", cert_abi)

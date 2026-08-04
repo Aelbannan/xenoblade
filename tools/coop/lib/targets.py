@@ -61,7 +61,12 @@ ACCEPTED_MATCH_STATUSES = {"EQUIVALENT_MATCH", "FULL_MATCH"}
 # window) at every call/tail-call site, and unmodeled absolute tail branches
 # are rejected.  Invalidates witness certs issued against the pre-fix call
 # model (outgoing-argument false-certificate class).
-EQUIVALENCE_CERTIFICATE_VERSION = 19
+# 20 (2026-08-05): round-2 review — the narrow-EABI FULL_MATCH contract gate
+# now validates the callee's live-in READS (was writes-only): 512 callees
+# with r6–r10/f2–f8 live-in reads were certified with reads={r3,r4,r5}, and
+# the narrow reads set is expanded (cr/xer/lr/time_base/r1/r2/r13/f1).
+# Invalidates the 54 v19 certs issued against the broken narrow gate.
+EQUIVALENCE_CERTIFICATE_VERSION = 20
 EQUIVALENCE_PROMOTION_POLICY = "auto-promotion-v2"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -122,17 +127,21 @@ def equivalence_certificate_error(
         if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
             return f"certificate {name} is not a lowercase SHA-256"
     engine_hash = certificate.get("engine_hash")
-    # Relaxed: engine_hash check skipped (accepts pre-v51 certs)
-    # expected_engine = hash_engine_tree(_REPO_ROOT)
-    # if engine_hash != expected_engine:
-    #     return "certificate engine_hash does not match current engine tree"
+    # Enforced (P1-08 provenance; re-enabled 2026-08-05 — the round-1/round-2
+    # witness fixes shipped under a relaxed check, and only the manual version
+    # bump (18→19→20) invalidated certs issued under the vulnerable call
+    # model).  Legacy certs (version < 20) already fail the version check
+    # above, so this applies to current-version certs only: any change to the
+    # engine tree invalidates them without a manual bump.
+    expected_engine = hash_engine_tree(_REPO_ROOT)
+    if engine_hash != expected_engine:
+        return "certificate engine_hash does not match current engine tree"
     certifier_hash = certificate.get("certifier_hash")
-    # Relaxed: certifier_hash check skipped (accepts pre-v51 certs)
-    # if not isinstance(certifier_hash, str) or re.fullmatch(r"[0-9a-f]{64}", certifier_hash) is None:
-    #     return "certificate certifier_hash is missing or not a lowercase SHA-256"
-    # expected_certifier = hash_certifier_tree(_REPO_ROOT)
-    # if certifier_hash != expected_certifier:
-    #     return "certificate certifier_hash does not match current certifier tree"
+    if not isinstance(certifier_hash, str) or re.fullmatch(r"[0-9a-f]{64}", certifier_hash) is None:
+        return "certificate certifier_hash is missing or not a lowercase SHA-256"
+    expected_certifier = hash_certifier_tree(_REPO_ROOT)
+    if certifier_hash != expected_certifier:
+        return "certificate certifier_hash does not match current certifier tree"
     summary = certificate.get("summary")
     if not isinstance(summary, dict):
         return "certificate summary is not an object"

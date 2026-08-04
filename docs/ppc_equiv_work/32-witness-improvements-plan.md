@@ -53,6 +53,70 @@ precise `reads={r3}` still accepts).  Full engine suite 1972 green, fixture
 blob green, `differential` 364/364, docs_sync green, `tools/coop/tests` 5
 pre-existing failures unchanged.
 
+## R8. Round-2 review of the R7 fix (2026-08-05) — narrow-EABI contract BLOCKER closed
+
+GLM-5.2 (soundness) + Kimi K3 (integration) re-reviewed the R7 fix.  GLM:
+**fix SOUND to certify** — both R7 BLOCKERs closed, no false certificate
+constructible, 82/82 green; flagged the pre-existing `mtlr;bclr` indirect-
+tail-call shape (not MWCC-reachable; LR reserved) and the documented opaque-
+non-EABI-callee trust boundary as MAJOR-documentation items.  Kimi: the
+witness-side wiring (keying, reachability, region ordering) verified clean,
+but found a **BLOCKER-class live false certificate** through the production
+`narrow-eabi` FULL_MATCH contract family:
+
+- **Kimi BLOCKER-class:** `_full_match_callee_body_fits_narrow`
+  (equivalence_check.py) validated WRITES only; `_FM_CALLEE_READS` was
+  hardcoded `{r3,r4,r5,...}`.  A census found **512 FULL_MATCH callees**
+  referenced by `called_functions` with live-in reads of r6–r10/f2–f8 (e.g.
+  `setViewRect__5CGameFP5CViewssss` reads r6/r7/r8) that still got the narrow
+  contract — re-opening the outgoing-argument false-certificate class through
+  a dishonest `contract.reads` (gate 5 trusts it; the SMT token path shared
+  the same pre-existing under-declaration).  Reproduced: rho {6:9} across
+  `bl setViewRect...` CERTIFIED with the production narrow contract object,
+  REJECTED under opaque.
+  **Fix (this round):** the narrow gate now runs a precise live-in read scan
+  — GPR/FPR/PS1 lanes via the witness role table (`_use_def_numbered`;
+  audited rlwimi/ps1/stmw, unknown opcodes over-approximate all 96 lanes)
+  plus non-GPR components via `register_effects` (cr-field granularity) — and
+  any live-in read outside the (expanded) narrow envelope falls back to
+  opaque.  Internal-call callees fail closed (`bl` reads nothing
+  syntactically; the body may pass entry args down).  `_FM_CALLEE_READS`
+  expanded to declare the genuinely-read/caller-independent components:
+  {r3,r4,r5,f1, cr, xer.ca/ov/so, msr, lr, time_base, r1,r2,r13, memory,
+  valid, invalid_reason}.  Measured: 2649/5830 FULL_MATCH callees still fit
+  narrow (the 512 dishonest ones now fall back; `GXSetZMode` stays narrow —
+  its r6/r7 are write-before-read scratch, not live-in inputs).
+- **Version:** 19 → 20 (54 v19 certs existed, issued against the broken
+  narrow gate).
+- **Docs/assumptions:** witness cert assumptions text now lists the
+  callee-observed-lane fixedness class; module docstring gains a "Known
+  limitations" block (opaque-EABI callee conformance trust boundary, precise-
+  reads trust, `mtlr;bclr` exclusion).  `_is_tail_call`/`_has_unmodeled_
+  absolute_branch` get the `len(operands)>2` BC guard.
+
+Tests: `test_renaming_witness.py` 82, `test_certify_unit_symbol.py` +2
+(NarrowCalleeReadsValidationTests), full engine 1972, fixture blob,
+`differential` 364/364, docs_sync, coop tests 305 (5 pre-existing failures
+unchanged).
+
+## R9. Hash-check re-enable (2026-08-05) — P1-08 provenance restored
+
+The registry-level `engine_hash`/`certifier_hash` checks in
+`equivalence_certificate_error` (targets.py, commented out since pre-v51) are
+re-enabled.  They were the reason certs under the vulnerable F1/F2/F3 witness
+semantics stayed trusted for 12 days: only a manual `EQUIVALENCE_`
+`CERTIFICATE_VERSION` bump invalidated them.  Legacy certs (version < 20)
+already fail the version check first, so the hash checks apply to
+current-version certs only: any change to the engine tree
+(`tools/ppc_equivalence/**`) or the certifier TCB (`equivalence_check.py`,
+`equivalence_policy.py`, `renaming_witness.py`, `targets.py`) now invalidates
+them automatically — no manual bump required.  The four `test_targets.py`
+hash tests (previously in the 5 pre-existing failures) now pass; the stale
+C6 byte-identical test (asserted an empty summary, which the code replaced
+with a conservative opaque-EABI envelope — an empty summary mis-models return
+registers as preserved) is updated to assert the envelope.  **`tools/coop`
+tests are now fully green (305/305), zero pre-existing failures.**
+
 ## R5. Third adversarial review (2026-08-04) — F1/F2/F3/S1 closed
 
 GLM-5.2 + Kimi K3 (pi/OpenRouter) both AGREE on four new findings, all fixed

@@ -249,9 +249,16 @@ def _current_certifier_hash() -> str:
 #
 # This is an assumption-bearing refinement (callees with >3 GPR args must not
 # be certified through it), gated by coop.json ``full_match_callee_contract``
-# and validated below against the callee's retail body via ``register_effects``
-# (writes must fit the EABI envelope; FP/SPR writes fall back to opaque).
-_FM_CALLEE_READS = frozenset({"r3", "r4", "r5", "msr", "memory", "valid", "invalid_reason"})
+# and validated below against the callee's retail body via a precise live-in
+# read scan (reads AND writes must fit the envelope; anything else falls
+# back to opaque).
+_FM_CALLEE_READS = frozenset({
+    "r3", "r4", "r5", "f1",  # argument window
+    "cr", "xer.ca", "xer.ov", "xer.so",  # genuinely-read volatile components
+    "msr", "lr", "time_base",  # caller-independent (lr=pc+4, clock global)
+    "r1", "r2", "r13",  # frame / SDA bases (caller-independent at a call)
+    "memory", "valid", "invalid_reason",
+})
 _FM_CALLEE_WRITES = frozenset(
     {"r0", *(f"r{i}" for i in range(3, 13))}
     | {"cr", "cr0", "cr1", "cr5", "cr6", "cr7"}
@@ -276,9 +283,22 @@ def _full_match_callee_body_fits_narrow(
 ) -> bool:
     """True when the callee's retail body effects fit the narrow-EABI envelope.
 
-    Uses the syntactic ``register_effects`` table (fast, conservative).  Writes
-    must be a subset of the envelope (LR is allowed — the call model owns the
-    post-call LR); any FP/SPR/GPR-nonvolatile write falls back to opaque.
+    Precise live-in read scan + write-envelope check, both fail-closed.  Round-2
+    review (Kimi K3 BLOCKER-class): the previous gate checked WRITES only, and
+    512 FULL_MATCH callees with live-in reads of r6–r10/f2–f8 were certified
+    with ``reads={r3,r4,r5}`` — the outgoing-argument false-certificate class
+    re-routed through a dishonest contract (gate 5 trusts ``contract.reads``).
+
+    Reads: GPR/FPR/PS1 lanes via the witness role table (``_use_def_numbered``
+    — precise, no immediate/destination artifacts, audited for rlwimi/ps1/
+    stmw; unknown opcodes over-approximate all 96 lanes) plus non-GPR
+    components via ``register_effects`` (cr/xer/msr/…, cr-field granularity).
+    Any live-in read outside ``_FM_CALLEE_READS`` falls back to opaque.
+    Writes must fit ``_FM_CALLEE_ENVELOPE_WRITES`` (register_effects is
+    conservative for live-out, i.e. over-approximates writes).  A callee with
+    an internal call fails closed: ``bl`` reads nothing syntactically, but the
+    body may pass its entry arguments (r3–r10/f1–f8) down to nested callees,
+    so the narrow window cannot certify its entry reads.
     """
     try:
         unit = project.resolve_unit(unit_hint)
@@ -290,10 +310,44 @@ def _full_match_callee_body_fits_narrow(
         )
     except (ElfSymbolError, DecodeError, OSError, ValueError):
         return False
+    from tools.coop.lib.renaming_witness import (
+        _is_call, _use_def_numbered, _PS1_OFFSET,
+    )
+    allowed_gpr = frozenset({1, 2, 3, 4, 5, 13})
     for insn in insns:
         _, writes = register_effects(insn)
         if not writes <= _FM_CALLEE_ENVELOPE_WRITES:
             return False
+        if _is_call(insn):
+            return False  # internal call: entry reads not certifiable
+    written: set[int] = set()
+    for insn in insns:
+        uses, defs = _use_def_numbered(insn)
+        for lane in uses:
+            if lane in written:
+                continue
+            if lane < 32:
+                if lane not in allowed_gpr:
+                    return False
+            elif lane < _PS1_OFFSET:
+                if lane - 32 != 1:  # f1 only
+                    return False
+            else:
+                return False  # ps1 reads not in the narrow envelope
+        written |= defs
+    other_written: set[str] = set()
+    for insn in insns:
+        reads, writes = register_effects(insn)
+        for lane in reads:
+            if lane.startswith("r") or lane.startswith("f"):
+                continue  # GPR/FPR handled above (register_effects is coarse)
+            if lane == "cr" and any(w.startswith("cr") for w in other_written):
+                continue  # branch on the body's OWN cr-field write
+            if lane in other_written:
+                continue
+            if lane not in _FM_CALLEE_READS:
+                return False
+        other_written |= writes
     return True
 
 
@@ -1708,7 +1762,10 @@ def _try_renaming_witness(
             ("rho is a partial bijection consistent across all mnemonics and "
              "positions, and the extended permutation fixes ABI-boundary "
              "registers (r1, r2, r3, r13, returns, live-in EABI args, "
-             "volatiles live across calls; r4/f1 conditionally per trusted "
+             "volatiles live across calls, and every lane a callee READS at "
+             "each call/tail-call site — precise contract.reads, else the "
+             "EABI argument window r3–r10/f1–f8; round-3 review — plus "
+             "r4/f1 conditionally per trusted "
              "declared_return — doc 32 A3; r0 is literal-zero only in "
              "D/DS/X-indexed load-store and ADDI/ADDIS RA positions, which "
              "are bit-equal non-register fields — doc 32 A2)"

@@ -66,6 +66,21 @@ Additional checks (adversarial review 2026-08, all fail-closed):
   not observe.
 - S1: the terminal memory comparison is location-aware (stored ``pc+4``
   constants compare relative to the function base instead of over-rejecting).
+
+Known limitations (round-3 review, documented trust boundaries):
+- Opaque callees are assumed EABI-compliant: they read only r1/r2/r13 + the
+  EABI argument window r3–r10/f1–f8 + memory.  A NON-EABI opaque callee that
+  reads a permuted non-argument lane (e.g. r20/f14) is an unmodeled
+  false-certificate class; precise contracts (certified callees) close it.
+- Precise ``contract.reads`` must be a sound over-approximation of the
+  callee's dataflow-affecting inputs — ``callee_inference``'s responsibility
+  for certified callees, and the live-in read scan in
+  ``_full_match_callee_body_fits_narrow`` (equivalence_check.py) for
+  FULL_MATCH narrow callees (round-2 review).
+- A non-link ``bclr`` used as an INDIRECT TAIL CALL (``mtlr rN; bclr`` with
+  N a callee address) is not a call site here and certifies like a return.
+  Not MWCC-reachable (computed jumps use ``mtctr;bcctr``, rejected by
+  ``_has_indirect_dispatch``); LR is reserved for return addresses.
 """
 
 from __future__ import annotations
@@ -595,9 +610,12 @@ def _is_tail_call(insn: Instruction, by_index: dict[int, int], end_pc: int) -> b
         return False
     if insn.relocation is not None:
         return True
-    target = (
-        insn.operands[0] if insn.opcode == Opcode.B else insn.operands[2]
-    )
+    if insn.opcode == Opcode.B:
+        target = insn.operands[0]
+    elif len(insn.operands) > 2:
+        target = insn.operands[2]
+    else:
+        return False
     return target not in by_index and target != end_pc
 
 
@@ -914,9 +932,12 @@ def _has_unmodeled_absolute_branch(instructions: list[Instruction]) -> bool:
             continue
         if insn.relocation is not None:
             continue
-        target = (
-            insn.operands[0] if insn.opcode == Opcode.B else insn.operands[2]
-        )
+        if insn.opcode == Opcode.B:
+            target = insn.operands[0]
+        elif len(insn.operands) > 2:
+            target = insn.operands[2]
+        else:
+            continue
         if target not in by_index and target != end_pc:
             return True
     return False

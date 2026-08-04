@@ -155,7 +155,19 @@ void func_80291B30(){}
 
 void func_80291BF8(){}
 
-void func_80291C60(){}
+extern "C" int func_80291C60(int v) {
+    if (v < 0) return 0;
+    switch (v) {
+    case 0xf: case 0x10: case 0x12: case 0x13:
+    case 0x6d: case 0x6e: case 0x70:
+    case 0x8b: case 0x8d:
+    case 0xe3: case 0xe5: case 0xe7:
+    case 0x12c:
+        return 0;
+    default:
+        return 1;
+    }
+}
 
 void func_80291D98(){}
 

@@ -1944,7 +1944,21 @@ extern "C" void* func_801491A4(void* self, unsigned int id) {
     return 0;
 }
 void func_801491F4(){}
-void func_80149330(){}
+extern "C" void* func_80149330(void* base, u32 a, u32 b, u32 c, u32 d) {
+    if (a >= 0x12f) return 0;
+    for (int i = 0; i < 0x1a; i++) {
+        u8* e = (u8*)base + i * 0xd0;
+        if (*(u16*)(e + 0x14) == a && *(u32*)(e + 0x8) == b && *(u32*)(e + 0xc) == c && (d == 0 || *(u32*)(e + 0x10) == d))
+            return (u8*)base + (i * 4 + 0) * 0x34 + 8;
+        if (*(u16*)(e + 0x48) == a && *(u32*)(e + 0x3c) == b && *(u32*)(e + 0x40) == c && (d == 0 || *(u32*)(e + 0x44) == d))
+            return (u8*)base + (i * 4 + 1) * 0x34 + 8;
+        if (*(u16*)(e + 0x7c) == a && *(u32*)(e + 0x70) == b && *(u32*)(e + 0x74) == c && (d == 0 || *(u32*)(e + 0x78) == d))
+            return (u8*)base + (i * 4 + 2) * 0x34 + 8;
+        if (*(u16*)(e + 0xb0) == a && *(u32*)(e + 0xa4) == b && *(u32*)(e + 0xa8) == c && (d == 0 || *(u32*)(e + 0xac) == d))
+            return (u8*)base + (i * 4 + 3) * 0x34 + 8;
+    }
+    return 0;
+}
 extern "C" void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv(void* self, u32 flags) {
     *(u16*)((u8*)self + 0x4) = (u16)(*(u16*)((u8*)self + 0x4) | flags);
 }

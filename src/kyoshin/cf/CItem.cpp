@@ -168,7 +168,21 @@ extern "C" void func_8015720C(u32 v, u32 set) {
 
 void func_8015730C(){}
 
-void func_801575B0(){}
+extern "C" u32 func_801575B0(u32 v, u32 kind) {
+    extern char* lbl_eu_806641B8;
+    if (v >= 1 && v <= 0xb) {
+        u32 bit = 1u << v;
+        switch (kind) {
+        case 2: return (*(u32*)((u8*)lbl_eu_806641B8 + 0x1210c) & bit) != 0;
+        case 4: return (*(u16*)((u8*)lbl_eu_806641B8 + 0x12114) & bit) != 0;
+        case 5: return (*(u16*)((u8*)lbl_eu_806641B8 + 0x12116) & bit) != 0;
+        case 6: return (*(u16*)((u8*)lbl_eu_806641B8 + 0x12118) & bit) != 0;
+        case 7: return (*(u16*)((u8*)lbl_eu_806641B8 + 0x1211a) & bit) != 0;
+        case 8: return (*(u16*)((u8*)lbl_eu_806641B8 + 0x1211c) & bit) != 0;
+        }
+    }
+    return 0;
+}
 
 void func_801576C8(){}
 

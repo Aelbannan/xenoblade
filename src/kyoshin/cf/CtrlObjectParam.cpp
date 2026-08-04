@@ -131,7 +131,40 @@ int cf::CtrlObjectParamClear::clearStruct() {
     return 1;
 }
 
-void func_8009E838(){}
+extern "C" void func_8009E838(void* self) {
+    for (int a = 0; a < 3; a++) {
+        void* cur = (u8*)self + a * 4;
+        if (*(u32*)((u8*)cur + 4) == 0) {
+            int found = 0;
+            for (int i = a + 1; i < 3; i++) {
+                if (*(u32*)((u8*)self + (i * 4) + 4) != 0) {
+                    *(u32*)((u8*)cur + 4) = *(u32*)((u8*)self + (i * 4) + 4);
+                    *(u32*)((u8*)self + (i * 4) + 4) = 0;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) {
+                int done = 0;
+                for (int j = 0; j < 6; j++) {
+                    void* cur2 = (u8*)self + j * 4;
+                    if (*(u32*)((u8*)cur2 + 0x10) == 0) {
+                        for (int i = j + 1; i < 6; i++) {
+                            if (*(u32*)((u8*)self + (i * 4) + 0x10) != 0) {
+                                *(u32*)((u8*)cur2 + 0x10) = *(u32*)((u8*)self + (i * 4) + 0x10);
+                                *(u32*)((u8*)self + (i * 4) + 0x10) = 0;
+                                done = 1;
+                                break;
+                            }
+                        }
+                    }
+                    if (done) break;
+                }
+                return;
+            }
+        }
+    }
+}
 
 void func_8009E974(){}
 

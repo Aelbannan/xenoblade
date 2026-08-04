@@ -23708,7 +23708,7 @@
       "size": "0x13C",
       "unit": "kyoshin/action/CActParamData",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -23718,15 +23718,7 @@
       "callgraph_source": "build/us/asm/kyoshin/action/CActParamData.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamData.cpp",
-      "instruction_match": 0.0,
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:20.458912+00:00",
-        "allowed_paths": [
-          "src/kyoshin/action/CActParamData.cpp"
-        ],
-        "note": "batch5"
-      }
+      "instruction_match": 0.0
     },
     {
       "id": "us-80058208",
@@ -23739,7 +23731,7 @@
       "size": "0x13C",
       "unit": "kyoshin/action/CActParamData",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -23749,15 +23741,7 @@
       "callgraph_source": "build/us/asm/kyoshin/action/CActParamData.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamData.cpp",
-      "instruction_match": 0.0,
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:23.077731+00:00",
-        "allowed_paths": [
-          "src/kyoshin/action/CActParamData.cpp"
-        ],
-        "note": "batch5"
-      }
+      "instruction_match": 0.0
     },
     {
       "id": "us-80058344",
@@ -25032,7 +25016,7 @@
       "size": "0x158",
       "unit": "kyoshin/cf/CTaskEnvironment",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -25041,15 +25025,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskEnvironment.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CTaskEnvironment.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:20.093729+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CTaskEnvironment.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CTaskEnvironment.cpp"
     },
     {
       "id": "us-8005a520",
@@ -27340,7 +27316,7 @@
       "size": "0x160",
       "unit": "kyoshin/cf/CfRes",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -27349,15 +27325,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfRes.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfRes.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:33.599920+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfRes.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfRes.cpp"
     },
     {
       "id": "us-8006258c",
@@ -27370,7 +27338,7 @@
       "size": "0x14C",
       "unit": "kyoshin/cf/CfRes",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -27379,15 +27347,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfRes.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfRes.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:09.137587+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfRes.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfRes.cpp"
     },
     {
       "id": "us-800626d8",
@@ -38768,7 +38728,7 @@
       "size": "0x15C",
       "unit": "kyoshin/cf/CfTFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -38777,15 +38737,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfTFile.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfTFile.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:22.747094+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfTFile.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfTFile.cpp"
     },
     {
       "id": "us-8006a7ec",
@@ -63306,7 +63258,7 @@
       "size": "0x13C",
       "unit": "kyoshin/cf/CtrlObjectParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -63315,15 +63267,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CtrlObjectParam.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CtrlObjectParam.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:25.744497+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CtrlObjectParam.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CtrlObjectParam.cpp"
     },
     {
       "id": "us-8009f34c",
@@ -65589,7 +65533,7 @@
       "size": "0x178",
       "unit": "kyoshin/code_800A3B24",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -65598,15 +65542,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800A3B24.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/code_800A3B24.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:54.122482+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_800A3B24.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/code_800A3B24.cpp"
     },
     {
       "id": "us-800a5424",
@@ -69738,7 +69674,7 @@
       "size": "0x120",
       "unit": "kyoshin/cf/object/CfObjectEff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -69747,15 +69683,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectEff.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:07.277916+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CfObjectEff.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/object/CfObjectEff.cpp"
     },
     {
       "id": "us-800ad258",
@@ -81792,7 +81720,7 @@
       "size": "0x118",
       "unit": "kyoshin/cf/object/CfObjectModel",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -81801,15 +81729,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectModel.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/object/CfObjectModel.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:56.631265+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CfObjectModel.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/object/CfObjectModel.cpp"
     },
     {
       "id": "us-800bb220",
@@ -88074,7 +87994,7 @@
       "size": "0x124",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -88083,15 +88003,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/code_800C17DC.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/code_800C17DC.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:09.931668+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/code_800C17DC.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/code_800C17DC.cpp"
     },
     {
       "id": "us-800c2348",
@@ -95204,7 +95116,7 @@
       "size": "0x15C",
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
@@ -95213,15 +95125,7 @@
       "has_indirect_calls": true,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CBattleManager.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:30.960138+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CBattleManager.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-800f48b0",
@@ -95997,7 +95901,7 @@
       "size": "0x14C",
       "unit": "kyoshin/cf/CfObjectEnumList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -96006,15 +95910,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfObjectEnumList.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfObjectEnumList.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:11.951474+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfObjectEnumList.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfObjectEnumList.cpp"
     },
     {
       "id": "us-800f94c4",
@@ -101822,7 +101718,7 @@
       "size": "0x148",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
@@ -101831,15 +101727,7 @@
       "has_indirect_calls": true,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuEnemyState.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:06.376128+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuEnemyState.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-8011272c",
@@ -114069,7 +113957,7 @@
       "size": "0x100",
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUICfManager.cpp",
@@ -114078,15 +113966,7 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUICfManager.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:30.640026+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CUICfManager.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-8013646c",
@@ -123047,7 +122927,7 @@
       "size": "0x13C",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -123056,15 +122936,7 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:28.370255+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CBattleState.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-80149d34",
@@ -123077,7 +122949,7 @@
       "size": "0x160",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
@@ -123086,15 +122958,7 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:35.988977+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CBattleState.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-80149e94",
@@ -126754,7 +126618,7 @@
       "size": "0x100",
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -126763,15 +126627,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CItem.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CItem.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:33.234226+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CItem.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CItem.cpp"
     },
     {
       "id": "us-80157dd8",
@@ -126806,7 +126662,7 @@
       "size": "0x118",
       "unit": "kyoshin/cf/CItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -126815,15 +126671,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CItem.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CItem.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:59.314035+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CItem.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CItem.cpp"
     },
     {
       "id": "us-80158194",
@@ -130771,7 +130619,7 @@
       "size": "0x170",
       "unit": "kyoshin/cf/CCharEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -130780,15 +130628,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CCharEffect.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CCharEffect.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:46.457831+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CCharEffect.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CCharEffect.cpp"
     },
     {
       "id": "us-8015cf48",
@@ -130889,7 +130729,7 @@
       "size": "0x114",
       "unit": "kyoshin/cf/CCharEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -130898,15 +130738,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CCharEffect.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CCharEffect.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:53.932189+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CCharEffect.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CCharEffect.cpp"
     },
     {
       "id": "us-8015d258",
@@ -134799,7 +134631,7 @@
       "size": "0x138",
       "unit": "kyoshin/cf/CInfoCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -134808,15 +134640,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CInfoCf.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CInfoCf.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:15.174201+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CInfoCf.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CInfoCf.cpp"
     },
     {
       "id": "us-8016813c",
@@ -134961,7 +134785,7 @@
       "size": "0x154",
       "unit": "kyoshin/cf/CInfoCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -134970,15 +134794,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CInfoCf.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CInfoCf.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:17.354335+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CInfoCf.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CInfoCf.cpp"
     },
     {
       "id": "us-801687e0",
@@ -146938,7 +146754,7 @@
       "size": "0x168",
       "unit": "kyoshin/menu/code_80187F14",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -146947,15 +146763,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/code_80187F14.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/menu/code_80187F14.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:43.685570+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/code_80187F14.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/menu/code_80187F14.cpp"
     },
     {
       "id": "us-80189ca0",
@@ -151720,7 +151528,7 @@
       "size": "0x10C",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -151729,15 +151537,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CPartsChange.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CPartsChange.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:48.188401+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CPartsChange.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CPartsChange.cpp"
     },
     {
       "id": "us-801947bc",
@@ -151750,7 +151550,7 @@
       "size": "0x130",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -151759,15 +151559,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CPartsChange.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CPartsChange.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:12.597405+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CPartsChange.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CPartsChange.cpp"
     },
     {
       "id": "us-801948ec",
@@ -153036,7 +152828,7 @@
       "size": "0x170",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -153048,15 +152840,7 @@
         "_restgpr_27",
         "_savegpr_27"
       ],
-      "source": "src/kyoshin/cf/CPartsChange.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:49.088938+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CPartsChange.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CPartsChange.cpp"
     },
     {
       "id": "us-80198520",
@@ -153365,7 +153149,7 @@
       "size": "0x14C",
       "unit": "kyoshin/cf/CPartsChange",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -153374,15 +153158,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CPartsChange.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CPartsChange.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:14.695669+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CPartsChange.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CPartsChange.cpp"
     },
     {
       "id": "us-801999a0",
@@ -157925,7 +157701,7 @@
       "size": "0x140",
       "unit": "kyoshin/code_801A929C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -157934,15 +157710,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_801A929C.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/code_801A929C.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:39:58.199164+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_801A929C.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/code_801A929C.cpp"
     },
     {
       "id": "us-801ac1d4",
@@ -161169,7 +160937,7 @@
       "size": "0x164",
       "unit": "kyoshin/menu/CMenuGetItemMulti",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -161178,15 +160946,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuGetItemMulti.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/menu/CMenuGetItemMulti.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:41.007591+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuGetItemMulti.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/menu/CMenuGetItemMulti.cpp"
     },
     {
       "id": "us-801bba24",
@@ -224773,7 +224533,7 @@
       "size": "0x160",
       "unit": "kyoshin/CCollepedia",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -224782,15 +224542,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CCollepedia.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/CCollepedia.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:38.318108+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CCollepedia.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/CCollepedia.cpp"
     },
     {
       "id": "us-8025695c",
@@ -230277,7 +230029,7 @@
       "size": "0x144",
       "unit": "kyoshin/code_8025FB10",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -230286,15 +230038,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_8025FB10.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/code_8025FB10.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:00.915217+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_8025FB10.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/code_8025FB10.cpp"
     },
     {
       "id": "us-80263b68",
@@ -242320,7 +242064,7 @@
       "size": "0x144",
       "unit": "kyoshin/cf/chain/CChainActorList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorList.cpp",
@@ -242329,15 +242073,7 @@
       "has_indirect_calls": true,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorList.s",
-      "abi_helper_calls": [],
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:03.643214+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/chain/CChainActorList.cpp"
-        ],
-        "note": "batch5"
-      }
+      "abi_helper_calls": []
     },
     {
       "id": "us-8027de90",
@@ -251217,7 +250953,7 @@
       "size": "0x138",
       "unit": "kyoshin/CSaveLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -251226,15 +250962,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CSaveLoad.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/CSaveLoad.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:17.829118+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CSaveLoad.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/CSaveLoad.cpp"
     },
     {
       "id": "us-80294394",
@@ -252766,7 +252494,7 @@
       "size": "0x13C",
       "unit": "kyoshin/CTaskGamePic",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -252775,15 +252503,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGamePic.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/CTaskGamePic.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:31.023970+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CTaskGamePic.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/CTaskGamePic.cpp"
     },
     {
       "id": "us-802976f0",
@@ -254323,7 +254043,7 @@
       "size": "0x110",
       "unit": "kyoshin/makecrystal/CMCGetItemBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -254332,15 +254052,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCGetItemBox.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/makecrystal/CMCGetItemBox.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:37:50.970657+00:00",
-        "allowed_paths": [
-          "src/kyoshin/makecrystal/CMCGetItemBox.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/makecrystal/CMCGetItemBox.cpp"
     },
     {
       "id": "us-80299338",
@@ -270251,7 +269963,7 @@
       "size": "0x11C",
       "unit": "kyoshin/cf/CfHikariItemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -270260,15 +269972,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfHikariItemManager.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfHikariItemManager.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:02.026871+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfHikariItemManager.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfHikariItemManager.cpp"
     },
     {
       "id": "us-802b6990",
@@ -270281,7 +269985,7 @@
       "size": "0x11C",
       "unit": "kyoshin/cf/CfHikariItemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -270290,15 +269994,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfHikariItemManager.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfHikariItemManager.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:38:04.645424+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfHikariItemManager.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfHikariItemManager.cpp"
     },
     {
       "id": "us-802b6aac",
@@ -270333,7 +270029,7 @@
       "size": "0x174",
       "unit": "kyoshin/cf/CfHikariItemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "BACKLOG",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -270342,15 +270038,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfHikariItemManager.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/cf/CfHikariItemManager.cpp",
-      "claim": {
-        "owner": "pi-leaf20",
-        "claimed_at": "2026-08-04T06:40:51.803534+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfHikariItemManager.cpp"
-        ],
-        "note": "batch5"
-      }
+      "source": "src/kyoshin/cf/CfHikariItemManager.cpp"
     },
     {
       "id": "us-802b6dc8",

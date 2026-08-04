@@ -97,10 +97,11 @@ namespace cf{
 
 // --- Standalone function access structs (CBattleManager.cpp) ---
 
-// Intrusive linked-list node: +0x00 = next, +0x08 = data ptr
+// Intrusive linked-list node: +0x00 = next, +0x04 = unk, +0x08 = data ptr
 struct SimpleListNode {
-    SimpleListNode* next;
-    void* data;
+    SimpleListNode* next; // +0x00
+    u32 field_4;          // +0x04
+    void* data;           // +0x08
 };
 
 // Return layout of func_8009EC9C (accessed at +0x1C, cast_int_arith L63/L80)

@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6028 |
+| extern "C" (total lines) | 6029 |
 | extern "C" declarations (non-lbl_*, imports) | 2194 |
-| extern "C" definitions (forced names) | 1772 |
-| `self`/register-style params | 3143 |
-| `void*` (params + locals) | 4659 |
-| raw pointer offset arithmetic | 2659 |
-| deref-through-cast arithmetic | 1190 |
+| extern "C" definitions (forced names) | 1771 |
+| `self`/register-style params | 3144 |
+| `void*` (params + locals) | 4661 |
+| raw pointer offset arithmetic | 2656 |
+| deref-through-cast arithmetic | 1187 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -136,7 +136,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemId.cpp | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLight.cpp | 0 | 1 | 3 | 2 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
-| libs/monolib/src/scn/CScnItemModel.cpp | 0 | 8 | 12 | 12 | 8 | 7 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemModel.cpp | 0 | 7 | 11 | 11 | 5 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 5 | 26 | 27 | 16 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 0 | 6 | 6 | 7 | 7 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 0 | 1 | 1 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -251,7 +251,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_WaveSound.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdPlayer.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/ut/ut_ArchiveFontBase.cpp | 0 | 0 | 4 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/ut/ut_ArchiveFontBase.cpp | 0 | 0 | 6 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_DvdFileStream.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_DvdLockedFileStream.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/ut/ut_FileStream.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -1103,11 +1103,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 7
  },
  "libs/monolib/src/scn/CScnItemModel.cpp": {
-  "deref_arith": 7,
-  "extern_c_nonlbl_def": 8,
-  "ptr_arith": 8,
-  "self_params": 12,
-  "void_ptr": 12
+  "deref_arith": 4,
+  "extern_c_nonlbl_def": 7,
+  "ptr_arith": 5,
+  "self_params": 11,
+  "void_ptr": 11
  },
  "libs/monolib/src/scn/CScnItemModelNw4r.cpp": {
   "deref_arith": 6,
@@ -1574,8 +1574,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp": {
-  "self_params": 4,
-  "void_ptr": 2
+  "self_params": 6,
+  "void_ptr": 5
  },
  "libs/nw4r/src/ut/ut_DvdFileStream.cpp": {
   "void_ptr": 7

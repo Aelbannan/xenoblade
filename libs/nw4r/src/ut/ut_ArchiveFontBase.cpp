@@ -52,9 +52,27 @@ void ConstructOpSkip__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15Arc
 
 void ConstructOpFatalError__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 
-void Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(){}
+extern "C" void
+Init__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFv(void* self) {
+    unsigned int* p = (unsigned int*)self;
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 0;
+    p[3] = 0;
+    p[4] = 0;
+    p[5] = 0;
+    p[6] = 0;
+}
 
-void Attach__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPCvUl(){}
+extern "C" void
+Attach__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderFPCvUl(void* self,
+                                                              const void* pStream,
+                                                              unsigned int size) {
+    unsigned int* p = (unsigned int*)self;
+    p[0] = (unsigned int)pStream;
+    p[1] = (unsigned int)pStream;
+    p[2] = (unsigned int)pStream + size;
+}
 
 extern "C" unsigned int
 GetRemain__Q54nw4r2ut6detail15ArchiveFontBase18CachedStreamReaderCFv(const void* self) {

@@ -97,7 +97,7 @@ typedef struct RfcControlBlock {
  * Port array access macro
  * Port index i is at rfc_cb + 0x68 + i * 0xA4
  * ======================================================================== */
-#define port_ptr(idx)  ((RfcPort*)((u8*)&rfc_cb + (idx) * 0xA4 + 0x68))
+#define port_ptr(idx)  (&rfc_cb.port[(idx)])
 
 /* ========================================================================
  * External globals and functions

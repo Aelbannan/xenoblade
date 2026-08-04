@@ -80,7 +80,7 @@ void __OSPlayTimeFadeLastAIDCallback(void) {
 
     fade = (FadeAIData*)__OSExpireAIFade;
     if (fade->state >= 1) {
-        buf = (u16*)((u8*)fade + fade->bufIndex * 0x240);
+        buf = (u16*)&fade->buf[fade->bufIndex * 0x240];
         dst = (s16*)buf;
         len = AIGetDMALength();
         rem = (s32)len;

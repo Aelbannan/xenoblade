@@ -91,15 +91,19 @@ struct RfcMuxChannel {
 /*  tPORT (only fields accessed by this TU)                            */
 /* ------------------------------------------------------------------ */
 struct RfcPortStruct {
-    u8  pad_00[0x0D];
-    u8  dlci;                        /* offset 0x0D              */
+    u8  pad_00[0x01];
+    u8  in_use;                    /* offset 0x01              */
+    u8  pad_02[0x0B];
+    u8  dlci;                      /* offset 0x0D              */
     u8  pad_0E[0x16];
-    u8  state;                       /* offset 0x24              */
-    u8  pad_25[0x47];
-    struct RfcMuxChannel *p_mcb;     /* offset 0x6C              */
-    u8  tle_0x70[0x18];              /* offset 0x70 (rfc.tle)    */
+    u8  state;                     /* offset 0x24              */
+    u8  pad_25[0x43];
+    u8  field_0x68;                /* offset 0x68              */
+    u8  pad_69[0x03];
+    struct RfcMuxChannel *p_mcb;   /* offset 0x6C              */
+    TimerEntry tle;                /* offset 0x70 (rfc.tle)    */
     u8  pad_88[0x10];
-    u16 credit_tx;                   /* offset 0x98              */
+    u16 credit_tx;                 /* offset 0x98              */
 };
 
 /* ------------------------------------------------------------------ */
@@ -255,7 +259,7 @@ void rfc_timer_stop(struct RfcMuxChannel *p)
 /* ================================================================== */
 void rfc_port_timer_start(struct RfcPortStruct *port, u16 tout)
 {
-    TimerEntry *tle = (TimerEntry *)((u8 *)port + 0x70);
+    TimerEntry *tle = &port->tle;
 
     if (TRACE_LEVEL() >= 4) {
         LogMsg_1(0x90003, "rfc_port_timer_start - timeout:%d", tout);
@@ -274,7 +278,7 @@ void rfc_port_timer_stop(struct RfcPortStruct *port)
         LogMsg_0(0x90003, "rfc_port_timer_stop");
     }
 
-    btu_stop_timer((u8 *)port + 0x70);
+    btu_stop_timer(&port->tle);
 }
 
 /* ================================================================== */
@@ -332,8 +336,8 @@ void rfc_sec_check_complete(u8 *bd_addr, void *p_ref_data, u8 res)
     struct RfcPortStruct *port = (struct RfcPortStruct *)p_ref_data;
 
     /* Verify the port is still in use and waiting for security. */
-    if (!*((u8 *)port + 1)
-        || ((*((u8 *)port + 0x68) != 2) && (*((u8 *)port + 0x68) != 3)))
+    if (!port->in_use
+        || ((port->field_0x68 != 2) && (port->field_0x68 != 3)))
     {
         return;
     }
@@ -356,10 +360,10 @@ void rfc_port_closed(struct RfcPortStruct *port)
         LogMsg_0(0x90003, "rfc_port_timer_stop");
     }
 
-    btu_stop_timer((u8 *)port + 0x70);
+    btu_stop_timer(&port->tle);
 
     /* Clear rfc.state. */
-    *((u8 *)port + 0x68) = 0;
+    port->field_0x68 = 0;
 
     if (p_mcb != 0) {
         u8 saved_dlci = port->dlci;

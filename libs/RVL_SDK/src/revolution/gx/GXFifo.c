@@ -249,7 +249,7 @@ void GXSetCPUFifo(GXFifoObj* fifo) {
         u32 count;
 
         /* Retail copies the 0x20 bind word first, then all 8 fields. */
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
+        *(u32*)&dst->wrap = *(u32*)&realFifo->wrap;
         base = realFifo->base;
         end = realFifo->end;
         size = realFifo->size;
@@ -340,7 +340,7 @@ void GXSetGPFifo(GXFifoObj* fifo) {
 
         /* Retail copies the 0x20 bind word first, then loads fields
            end..count, and finally base (stored back last). */
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)realFifo + 0x20);
+        *(u32*)&dst->wrap = *(u32*)&realFifo->wrap;
         end = realFifo->end;
         size = realFifo->size;
         hiWatermark = realFifo->hiWatermark;

@@ -111,6 +111,8 @@ unsigned char _wudPatchNum;
 unsigned int _wudPatchAddress;
 unsigned int _wudPatchOffset;
 unsigned int _wudPatchSize;
+
+u8 _scFlush;
 u8 _wudTarget;
 s8 _wudDiscRssi;
 u8 _wudDiscNumResps;
@@ -913,8 +915,7 @@ void WUDiMoveTopOfDisconnectedSmpDevice(WUDDevInfo* pInfo) {
             }
 
             if (WUD_BDCMP(p->smpListHead->devInfo->devAddr,
-                          (*(WUDDevInfo**)((u8*)p + (u32)i * 12 + 0x1C))
-                              ->devAddr) == 0) {
+                          p->smpList[i].devInfo->devAddr) == 0) {
                 if (pIt == p->smpListHead->next) {
                     break;
                 }
@@ -1540,8 +1541,8 @@ u8 __wudSyncDone(void) {
 
             enabled = OSDisableInterrupts();
             pDev = ((u32)i <= 9)
-                       ? (WUDDevInfo*)((u8*)&_wcb + ((u32)i * 0x60) + 0xE4)
-                       : (WUDDevInfo*)((u8*)&_wcb + (((u32)i - WUD_MAX_DEV_ENTRY_FOR_STD) * 0x60) + 0x4A4);
+                       ? &_wcb.stdDevs[i]
+                       : &_wcb.smpDevs[i - WUD_MAX_DEV_ENTRY_FOR_STD];
             OSRestoreInterrupts(enabled);
 
             if (pDev->status == 8) {
@@ -2679,7 +2680,7 @@ int __wudInitDevInfo(void) {
             memcpy(&_scArray.regist[count].addr, &_scArray.active[4].addr,
                    sizeof(BD_ADDR));
             memcpy(&_scArray.regist[count].info,
-                   (u8*)&_scArray.active[4].info, 0x13);
+                   &_scArray.active[4].info, 0x13);
 
             count++;
         }

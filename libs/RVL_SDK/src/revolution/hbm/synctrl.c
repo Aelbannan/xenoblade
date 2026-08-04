@@ -60,6 +60,30 @@ typedef struct HBMSYNVOICE {
     u8 rest[0x4C - 0x20];
 } HBMSYNVOICE;
 
+// Instrument bank entry: 0x18 bytes, keygroup/region indices at 0x10/0x14.
+typedef struct HBMSYNINSTRUMENT {
+    u8  data[0x10];
+    u32 keyGroupIndex;    /* 0x10 - index into regions */
+    u32 keyGroupDataIdx;  /* 0x14 - index into keygroups */
+} HBMSYNINSTRUMENT;
+
+// Region entry: 0x50 bytes (opaque to this TU).
+typedef struct HBMSYNREGION {
+    u8 data[0x50];
+} HBMSYNREGION;
+
+// Keygroup entry: 0x10 bytes, sample index at 0x0C.
+typedef struct HBMSYNKEYGROUP {
+    u8  data[0x0C];
+    u16 sampleIndex;      /* 0x0C - index into samples */
+    u8  _pad[0x10 - 0x0E]; /* 0x0E - stride is 0x10 */
+} HBMSYNKEYGROUP;
+
+// Sample entry: 0x2E bytes (opaque to this TU).
+typedef struct HBMSYNSAMPLE {
+    u8 data[0x2E];
+} HBMSYNSAMPLE;
+
 typedef struct HBMSYNSYNTH {
     struct HBMSYNSYNTH* next;
     struct HBMSYNSYNTH* prev;
@@ -147,17 +171,17 @@ void __HBMSYNNoteOn(HBMSYNSYNTH* synth, u8 channel, u8 key, u8 velocity)
                 u16 si;
 
                 ok = 1;
-                ie = (u8*)synth->instruments + iid * 0x18;
+                ie = (u8*)((HBMSYNINSTRUMENT*)synth->instruments + iid);
                 sv->instrumentEntry = (void*)ie;
 
-                kgi = *(u32*)(ie + 0x10);
-                sv->region = (void*)((u8*)synth->regions + kgi * 0x50);
+                kgi = ((HBMSYNINSTRUMENT*)ie)->keyGroupIndex;
+                sv->region = (void*)((HBMSYNREGION*)synth->regions + kgi);
 
-                kgdi = *(u32*)(ie + 0x14);
-                sv->keygroup = (void*)((u8*)synth->keygroups + (kgdi << 4));
+                kgdi = ((HBMSYNINSTRUMENT*)ie)->keyGroupDataIdx;
+                sv->keygroup = (void*)((HBMSYNKEYGROUP*)synth->keygroups + kgdi);
 
-                si = *(u16*)((u8*)sv->keygroup + 0x0C);
-                sv->sample = (void*)((u8*)synth->samples + si * 0x2E);
+                si = ((HBMSYNKEYGROUP*)sv->keygroup)->sampleIndex;
+                sv->sample = (void*)((HBMSYNSAMPLE*)synth->samples + si);
             }
 
             if (ok) {

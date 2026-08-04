@@ -28,6 +28,12 @@ typedef struct NANDBootInfo {
     u8 reserved[0x1000]; // 0x20
 } NANDBootInfo; // total 0x1020
 
+// 0x2000 MEM1 buffer: NANDBootInfo at 0xFE0 (0xFE0 + 0x1020 = 0x2000).
+typedef struct OSLaunchBuf {
+    u8  _pad[0xFE0];
+    NANDBootInfo bootInfo;   // 0xFE0
+} OSLaunchBuf;
+
 void __OSRelaunchTitle(u32 flags) {
     ESTicketView* ticketView;
     NANDBootInfo* bootInfo;
@@ -85,7 +91,7 @@ void __OSRelaunchTitle(u32 flags) {
     }
 
     buffer = OSAllocFromMEM1ArenaLo(0x2000, 0x40);
-    bootInfo = (NANDBootInfo*)((u8*)buffer + 0xFE0);
+    bootInfo = &((OSLaunchBuf*)buffer)->bootInfo;
 
     memset(buffer, 0, 0x2000);
 

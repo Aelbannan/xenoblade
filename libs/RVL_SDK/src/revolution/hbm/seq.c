@@ -61,6 +61,16 @@ extern "C" void HBMSYNMidiInput(void *syn, const u8 *data);
 extern "C" void HBMSYNInitSynth(void *syn, u32 config, u32 p3, u32 p4);
 extern "C" void HBMSYNQuitSynth(void *syn);
 
+/* MIDI file chunk header (MThd: signature | body length | format |
+   numTracks | division). Read-only view over the raw chunk bytes. */
+typedef struct _HBMMIDICHUNK {
+    u32 tag;         /* 0x00 'MThd' signature */
+    u32 length;      /* 0x04 chunk body length */
+    u16 format;      /* 0x08 */
+    u16 num_tracks;  /* 0x0A */
+    s16 division;    /* 0x0C */
+} HBMMIDICHUNK;
+
 #pragma push
 #pragma auto_inline off
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
@@ -72,8 +82,8 @@ void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
     track = &seq->tracks[0];
     while (count != 0) {
     retry:
-        tag = *(u32 *)data;
-        len = *(u32 *)(data + 4);
+        tag = ((HBMMIDICHUNK *)data)->tag;
+        len = ((HBMMIDICHUNK *)data)->length;
         data += 8;
         if (tag == 0x4D54726B) {
             track->seq = seq;
@@ -104,14 +114,14 @@ void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
     u32 data_size;
     u16 field_a;
 
-    data_size = *(u32 *)(data + 4);
+    data_size = ((HBMMIDICHUNK *)data)->length;
     track_data = data + 14;
-    num = *(u16 *)(data + 8);
-    field_a = *(u16 *)(data + 0xA);
+    num = ((HBMMIDICHUNK *)data)->format;
+    field_a = ((HBMMIDICHUNK *)data)->num_tracks;
 
     seq->num_tracks = field_a;
     track_data += data_size;
-    seq->field_0x0A = *(s16 *)(data + 0xC);
+    seq->field_0x0A = ((HBMMIDICHUNK *)data)->division;
     event_data = track_data - 6;
 
     switch (num) {

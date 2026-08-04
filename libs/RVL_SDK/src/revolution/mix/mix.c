@@ -307,13 +307,11 @@ void MIXInit(void) {
         ch->fader = 0;
         ch->panL = 0x40;
         ch->panR = 0x7F;
-        {
-            u16* v = (u16*)((u8*)ch + 0x6C);
-            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
-            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
-            *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2; *v = 0; v -= 2;
-            *v = 0;
-        }
+        /* Zero the 13 per-channel current volumes (0x3C-0x6C, stride 4) */
+        ch->volCSCur = 0; ch->volCRCur = 0; ch->volCLCur = 0; ch->volBSCur = 0;
+        ch->volBRCur = 0; ch->volBLCur = 0; ch->volASCur = 0; ch->volARCur = 0;
+        ch->volALCur = 0; ch->volSCur = 0; ch->volRCur = 0; ch->volLCur = 0;
+        ch->volMainCur = 0;
         __MIXSetPan(ch);
         __MIXRmtResetChannel(i);
     }

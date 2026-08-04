@@ -2,6 +2,7 @@
 // Remote channel volume management for Wii Remote audio
 
 #include <types.h>
+#include <revolution/ax/AXVPB.h>
 
 // ----- Forward declarations -----
 
@@ -34,6 +35,12 @@ typedef struct MIXRmtChannel {
     u16 cur7, dst7;  // 0x40-0x43: pair 7 (aux F)
 } MIXRmtChannel;     // total 0x44
 
+// Remote channel info block: index field at 0x18 (caller-provided).
+typedef struct MIXRmtChanInfo {
+    u8  _pad[0x18];
+    s32 index;       // 0x18 - remote channel index
+} MIXRmtChanInfo;
+
 // Flag bit definitions
 #define MIX_RMT_FLAG_COPY_DEST  0x80000000u  // copy dst[] -> cur[] on next update
 #define MIX_RMT_FLAG_UPDATE     0x40000000u  // recalculate dst[] from vol[] params
@@ -47,9 +54,9 @@ typedef struct MIXRmtChannel {
 void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
                       s32 v4, s32 v5, s32 v6, s32 v7)
 {
-    s32 idx = *(s32*)((u8*)chanInfo + 0x18);
+    s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
     u32 bit = mask & 0xF;
-    MIXRmtChannel* ch = (MIXRmtChannel*)((u8*)__MIXRmtChannel + idx * 0x44);
+    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
     u32 tmp;
 
     tmp = ch->flags | bit;
@@ -66,8 +73,8 @@ void MIXRmtSetVolumes(void* chanInfo, u32 mask, s32 v0, s32 v1, s32 v2, s32 v3,
 
 void MIXRmtSetFader(void* chanInfo, s32 selector, s32 value)
 {
-    s32 idx = *(s32*)((u8*)chanInfo + 0x18);
-    MIXRmtChannel* ch = (MIXRmtChannel*)((u8*)__MIXRmtChannel + idx * 0x44);
+    s32 idx = ((MIXRmtChanInfo*)chanInfo)->index;
+    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
 
     switch (selector) {
     case 0:
@@ -86,9 +93,9 @@ void MIXRmtSetFader(void* chanInfo, s32 selector, s32 value)
     ch->flags |= MIX_RMT_FLAG_UPDATE;
 }
 
-void __MIXRmtUpdateSettings(s32 idx, void* out)
+void __MIXRmtUpdateSettings(s32 idx, AXVPB* out)
 {
-    MIXRmtChannel* ch = (MIXRmtChannel*)((u8*)__MIXRmtChannel + idx * 0x44);
+    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
     u32 flags = ch->flags;
 
     if (!(flags & (MIX_RMT_FLAG_COPY_DEST | MIX_RMT_FLAG_UPDATE)))
@@ -140,7 +147,7 @@ void __MIXRmtUpdateSettings(s32 idx, void* out)
         u16 bm;
         u16 cur;
         s32 step;
-        u16* q = (u16*)((u8*)out + 0x102);
+        u16* q = (u16*)&out->pb.rmtMix;
 
         cur = ch->cur0;
         *q++ = cur;
@@ -199,15 +206,15 @@ void __MIXRmtUpdateSettings(s32 idx, void* out)
         *q++ = (u16)step;
         if ((u16)step != 0) bm |= 0x8000;
 
-        ((u16*)out)[0x80] = bm;
+        out->pb.rmtMixerCtrl = bm;
     }
 
-    *(u32*)((u8*)out + 0x1C) |= 0x03000000;
+    out->sync |= 0x03000000;
 }
 
 void __MIXRmtResetChannel(s32 idx)
 {
-    MIXRmtChannel* ch = (MIXRmtChannel*)((u8*)__MIXRmtChannel + idx * 0x44);
+    MIXRmtChannel* ch = (MIXRmtChannel*)__MIXRmtChannel + idx;
 
     ch->flags = 0;
     ch->vol[0] = 0;

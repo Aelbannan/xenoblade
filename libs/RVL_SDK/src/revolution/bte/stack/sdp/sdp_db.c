@@ -165,16 +165,17 @@ tSDP_RECORD *sdp_db_find_record(UINT32 handle) {
 }
 
 void *sdp_db_find_attr_in_rec(void *rec, unsigned short attr_id_low, unsigned short attr_id_high) {
-    unsigned short num_attr = *(unsigned short *)((char *)rec + 8);
-    char *attr_ptr = (char *)rec + 12;
+    tSDP_RECORD* record = (tSDP_RECORD*)rec;
+    unsigned short num_attr = record->num_attributes;
+    tSDP_ATTRIBUTE* attr_ptr = &record->attribute[0];
     unsigned short i = 0;
     while (i < num_attr) {
-        unsigned short attr_id = *(unsigned short *)(attr_ptr + 8);
+        unsigned short attr_id = attr_ptr->attr_id;
         if (attr_id >= attr_id_low && attr_id <= attr_id_high) {
             return attr_ptr;
         }
         i++;
-        attr_ptr += 12;
+        attr_ptr++;
     }
     return 0;
 }

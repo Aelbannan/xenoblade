@@ -57,7 +57,7 @@ s32 __HBMSYNAttackAttnTable[100] = {
 typedef struct HBMSYNVoice {
     u8  _pad0[0x04];          // 0x00
     void* mixChannel;          // 0x04 — HBMMIXChannel pointer
-    void* voiceDataBase;       // 0x08 — base of per-voice data array
+    struct HBMSYNSYNTH* voiceDataBase; // 0x08 — owning synthesizer
     u8   voiceIndex;           // 0x0C
     u8   _padD;                // 0x0D
     u8   volumeIndex;          // 0x0E — index into __HBMSYNVolumeAttenuation
@@ -69,15 +69,24 @@ typedef struct HBMSYNVoice {
     s32  accumInput2;          // 0x34
 } HBMSYNVoice;
 
-// Read a u32 value from the per-voice table at a given base offset.
-// Entries are 4 bytes each, indexed by voiceIndex.
-static s32 voiceTableS32(void* base, u32 baseOffset, u8 index) {
-    return ((s32*)((u8*)base + baseOffset))[index];
+// Synthesizer layout (mirrors synctrl.c HBMSYNSYNTH; only the fields this
+// TU reads are named).
+typedef struct HBMSYNSYNTH {
+    u8  _pad0[0x68];           // 0x00-0x67
+    s32 masterVolume;          // 0x68 - base fader
+    s32 volume[16];            // 0x6C - per-voice volume table
+    s32 pan[16];               // 0xAC - per-voice pan table
+    u8  ctrl[16];              // 0xEC - per-voice control table
+} HBMSYNSYNTH;
+
+// Read a u32 value from a per-voice s32 table, indexed by voiceIndex.
+static s32 voiceTableS32(const s32* table, u8 index) {
+    return table[index];
 }
 
-// Read a u8 value from the per-voice byte table at a given base offset.
-static u8 voiceTableU8(void* base, u32 baseOffset, u8 index) {
-    return ((u8*)base + baseOffset)[index];
+// Read a u8 value from a per-voice byte table, indexed by voiceIndex.
+static u8 voiceTableU8(const u8* table, u8 index) {
+    return table[index];
 }
 
 // All exported functions must use C linkage to match retail symbol names.
@@ -93,7 +102,7 @@ void __HBMSYNSetupVolume(HBMSYNVoice* voice)
 
 void __HBMSYNSetupPan(HBMSYNVoice* voice)
 {
-    voice->pan = voiceTableU8(voice->voiceDataBase, 0xEC, voice->voiceIndex);
+    voice->pan = voiceTableU8(voice->voiceDataBase->ctrl, voice->voiceIndex);
 }
 
 s32 __HBMSYNGetVoiceInput(HBMSYNVoice* voice)
@@ -103,8 +112,8 @@ s32 __HBMSYNGetVoiceInput(HBMSYNVoice* voice)
 
 s32 __HBMSYNGetVoiceFader(HBMSYNVoice* voice)
 {
-    s32 baseFader = *(s32*)((u8*)voice->voiceDataBase + 0x68);
-    s32 voiceFader = voiceTableS32(voice->voiceDataBase, 0x6C, voice->voiceIndex);
+    s32 baseFader = voice->voiceDataBase->masterVolume;
+    s32 voiceFader = voiceTableS32(voice->voiceDataBase->volume, voice->voiceIndex);
     return (baseFader + voiceFader) >> 16;
 }
 
@@ -114,18 +123,18 @@ void __HBMSYNUpdateMix(HBMSYNVoice* voice)
     s32 input = (voice->accumInput + voice->accumInput2) >> 16;
     HBMMIXSetInput(voice->mixChannel, input);
 
-    // AuxA = voiceDataBase[voiceIndex*4 + 0xAC] >> 16
-    s32 auxA = voiceTableS32(voice->voiceDataBase, 0xAC, voice->voiceIndex) >> 16;
+    // AuxA = pan[voiceIndex] >> 16
+    s32 auxA = voiceTableS32(voice->voiceDataBase->pan, voice->voiceIndex) >> 16;
     HBMMIXSetAuxA(voice->mixChannel, auxA);
 
-    // Fader = (voiceDataBase[0x68] + voiceDataBase[voiceIndex*4 + 0x6C]) >> 16
-    s32 baseFader = *(s32*)((u8*)voice->voiceDataBase + 0x68);
-    s32 voiceFader = voiceTableS32(voice->voiceDataBase, 0x6C, voice->voiceIndex);
+    // Fader = (masterVolume + volume[voiceIndex]) >> 16
+    s32 baseFader = voice->voiceDataBase->masterVolume;
+    s32 voiceFader = voiceTableS32(voice->voiceDataBase->volume, voice->voiceIndex);
     s32 fader = (baseFader + voiceFader) >> 16;
     HBMMIXSetFader(voice->mixChannel, fader);
 
-    // Pan = voiceDataBase[voiceIndex + 0xEC] (byte table, no shift)
-    u8 panVal = voiceTableU8(voice->voiceDataBase, 0xEC, voice->voiceIndex);
+    // Pan = ctrl[voiceIndex] (byte table, no shift)
+    u8 panVal = voiceTableU8(voice->voiceDataBase->ctrl, voice->voiceIndex);
     HBMMIXSetPan(voice->mixChannel, panVal);
 }
 

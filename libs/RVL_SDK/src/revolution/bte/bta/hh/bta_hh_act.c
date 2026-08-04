@@ -1047,9 +1047,9 @@ void bta_hh_data_act(void *p_cb, void *p_data)
     unsigned char rpt;
 
     p_buf = *(void **)((char *)p_data + 0xc);
-    off = *(unsigned short *)((char *)p_buf + 4);
+    off = ((BT_HDR *)p_buf)->offset;
     rpt = (unsigned char)(*(unsigned short *)((char *)p_data + 6));
-    len = *(unsigned short *)((char *)p_buf + 2);
+    len = ((BT_HDR *)p_buf)->len;
     bta_hh_co_data(rpt, (char *)p_buf + off + 8, len,
                    *((unsigned char *)p_cb + 0x1b),
                    *((unsigned char *)p_cb + 0x13),

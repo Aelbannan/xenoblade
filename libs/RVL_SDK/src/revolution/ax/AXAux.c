@@ -154,12 +154,12 @@ void __AXGetAuxBInputDpl2(void** out) {
 
 void __AXGetAuxBOutputDpl2R(void** out) {
     u32 pos = __AXAuxDspReadPosition;
-    *out = (void*)((u8*)__AXBufferAuxB + pos * 0x600 + 0x180);
+    *out = &__AXBufferAuxB[pos][0x180];
 }
 
 void __AXGetAuxBOutputDpl2Ls(void** out) {
     u32 pos = __AXAuxDspReadPosition;
-    *out = (void*)((u8*)__AXBufferAuxB + (pos * 0x600) + 0x300);
+    *out = &__AXBufferAuxB[pos][0x300];
 }
 
 void __AXGetAuxBOutputDpl2Rs(void** out) {

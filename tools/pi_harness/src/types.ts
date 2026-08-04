@@ -41,6 +41,9 @@ export interface HarnessConfig {
   /** Pre-batch triage routing ("off" | "route"); see TriageMode. */
   triage: TriageMode;
   maxBatchRetries: number;
+  /** Max singleton sessions per target (1 = one chance per function after
+   *  the batch). Independent of maxBatchRetries (batch re-prompt retries). */
+  maxSingletonSessions: number;
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
   /** Per-TU budget for total rebatch sessions across all small-target

@@ -1487,7 +1487,7 @@ async function runSingleton(
     handleSkipped(repoRoot, config, unit, targetId, "maxAttemptsPerTarget exhausted (ledger)");
     return false;
   }
-  const maxAttempts = Math.min(config.maxBatchRetries, budgetRemaining);
+  const maxAttempts = Math.min(config.maxSingletonSessions, budgetRemaining);
   console.log(`[pi-harness] ${unit}: starting singleton for ${targetId} (up to ${maxAttempts} session(s); ledger says ${ledgerAttempts} so far)`);
 
   for (let sessionAttempt = 1; sessionAttempt <= maxAttempts; sessionAttempt++) {

@@ -2,16 +2,16 @@
   "matchModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "high"
+    "thinkingLevel": "low"
   },
   "cleanupModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "xhigh"
+    "thinkingLevel": "high"
   },
   "batchSize": 5,
-  "maxParallelTUs": 2,
-  "maxBatchRetries": 2,
+  "maxParallelTUs": 3,
+  "maxBatchRetries": 1,
   "singletonEnabled": true,
   "rebatchEnabled": true,
   "maxRebatchAttempts": 0,
@@ -36,8 +36,8 @@
   "retryExhausted": false,
   "bankOnlyOnBetter": true,
   "timeoutRetries": 3,
-  "rejectionRetries": 1,
-  "tuFinalAttempts": 2,
+  "rejectionRetries": 3,
+  "tuFinalAttempts": 3,
   "tuFinalTimeoutMinutes": 0,
   "selection": "claim-order",
   "triage": "off",
@@ -45,11 +45,12 @@
   "singletonModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "xhigh"
+    "thinkingLevel": "high"
   },
   "rebatchModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
     "thinkingLevel": "high"
-  }
+  },
+  "maxSingletonSessions": 1
 }

@@ -35,6 +35,7 @@ function defaultConfig(): HarnessConfig {
     selection: "claim-order", // call-graph wave stays the default
     triage: "off", // no-SMT pre-batch routing is opt-in; "off" == today's behavior
     maxBatchRetries: 2,
+    maxSingletonSessions: 2,
     singletonEnabled: true,
     rebatchEnabled: true,
     maxRebatchAttempts: 0, // 0 = no rebatch attempts
@@ -115,19 +116,20 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
       }
     }
 
-    // Phase models inherit from matchModel when not explicitly set. Because
-    // partial specs merge over the DEFAULT_MODEL defaults, a phase spec that
-    // left `model`/`thinkingLevel` unset still carries DEFAULT_MODEL's values
-    // — those match the inherited default sentinel and get replaced.
+    // Phase models inherit from matchModel when NOT explicitly set. Track
+    // which fields the raw config actually supplied (vs. merged defaults) so
+    // an explicit thinkingLevel (e.g. singleton high while match is low) is
+    // never overwritten by the DEFAULT_MODEL sentinel comparison.
+    const phaseRaw = (name: string): Record<string, unknown> => {
+      const v = raw[name];
+      return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+    };
     for (const phase of ["singletonModel", "rebatchModel"] as const) {
       const spec = config[phase];
-      if (spec.model === DEFAULT_MODEL.model && spec.provider === DEFAULT_MODEL.provider) {
-        spec.model = config.matchModel.model;
-        spec.provider = config.matchModel.provider;
-      }
-      if (spec.thinkingLevel === DEFAULT_MODEL.thinkingLevel) {
-        spec.thinkingLevel = config.matchModel.thinkingLevel;
-      }
+      const explicit = phaseRaw(phase);
+      if (!("provider" in explicit)) spec.provider = config.matchModel.provider;
+      if (!("model" in explicit)) spec.model = config.matchModel.model;
+      if (!("thinkingLevel" in explicit)) spec.thinkingLevel = config.matchModel.thinkingLevel;
     }
   }
 
@@ -184,6 +186,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!Number.isInteger(config.maxBatchRetries) || config.maxBatchRetries < 1) {
     throw new Error("config.maxBatchRetries must be an integer >= 1");
+  }
+  if (!Number.isInteger(config.maxSingletonSessions) || config.maxSingletonSessions < 1) {
+    throw new Error("config.maxSingletonSessions must be an integer >= 1");
   }
   if (!(config.maxBriefChars >= 1000)) {
     throw new Error("config.maxBriefChars must be >= 1000");

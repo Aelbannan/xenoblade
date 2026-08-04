@@ -56,6 +56,43 @@ extern "C" void func_80056128(void* self) { reinterpret_cast<If0x40*>(self)->vf4
 extern "C" void func_80056138(void* self) { reinterpret_cast<If0x38*>(self)->vf38(); }
 extern "C" void func_80056148(void* self) { reinterpret_cast<If0x3C*>(self)->vf3C(); }
 
+// Shared cast-only SI iface for the anonymous vtable tail-call thunks.
+// First user virtual sits at vt+0x08 (RTTI entries at 0x00/0x04), each +0x04.
+struct ActParamThunkIf {
+    virtual void v08(); virtual void v0C(); virtual void v10(); virtual void v14();
+    virtual void v18(); virtual void v1C(); virtual void v20(); virtual void v24();
+    virtual void v28(); virtual void v2C(); virtual void v30(); virtual void v34();
+    virtual void v38(); virtual void v3C(); virtual void v40(); virtual void v44();
+    virtual void v48(); virtual void v4C(); virtual void v50(); virtual void v54();
+    virtual void v58(); virtual void v5C(); virtual void v60(); virtual void v64();
+    virtual void v68(); virtual void v6C(); virtual void v70(); virtual void v74();
+    virtual void v78(); virtual void v7C(); virtual void v80(); virtual void v84();
+    virtual void v88(); virtual void v8C(); virtual void v90(); virtual void v94();
+    virtual void v98(); virtual void v9C(); virtual void vA0(); virtual void vA4();
+    virtual void vA8();
+};
+
+extern "C" void func_80056158(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v44(); }
+extern "C" void func_80056168(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v48(); }
+extern "C" void func_80056178(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v4C(); }
+extern "C" void func_80056188(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v50(); }
+extern "C" void func_80056198(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v58(); }
+extern "C" void func_800561A8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v20(); }
+extern "C" void func_800561B8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v24(); }
+extern "C" void func_800561C8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v28(); }
+extern "C" void func_800561D8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v2C(); }
+extern "C" void func_800561E8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v5C(); }
+extern "C" void func_800561F8(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v60(); }
+extern "C" void func_80056208(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v64(); }
+extern "C" void func_80056218(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v68(); }
+extern "C" void func_80056228(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v6C(); }
+extern "C" void func_80056238(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v70(); }
+extern "C" void func_80056248(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v74(); }
+extern "C" void func_80056258(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v78(); }
+extern "C" void func_80056614(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->v9C(); }
+extern "C" void func_80056660(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vA4(); }
+extern "C" void func_80056670(void* self) { reinterpret_cast<ActParamThunkIf*>(self)->vA8(); }
+
 void initParamDefaults(){}
 void setupParamData(){}
 void calcFloatField(){}

@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5832 |
+| extern "C" (total lines) | 5838 |
 | extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1655 |
+| extern "C" definitions (forced names) | 1661 |
 | `self`/register-style params | 3085 |
-| `void*` (params + locals) | 4600 |
+| `void*` (params + locals) | 4599 |
 | raw pointer offset arithmetic | 2534 |
-| deref-through-cast arithmetic | 1123 |
+| deref-through-cast arithmetic | 1121 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
 | goto | 1048 |
@@ -126,7 +126,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 0 | 2 | 10 | 32 | 37 | 24 | 0 | 3 | 0 |
 | libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 1 | 2 | 5 | 4 | 3 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 0 | 9 | 9 | 7 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 5 | 9 | 9 | 7 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFogMan.cpp | 0 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 2 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnIdMan.cpp | 9 | 2 | 10 | 16 | 2 | 0 | 0 | 7 | 0 |
@@ -137,7 +137,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 0 | 5 | 9 | 9 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 4 | 25 | 26 | 14 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 1 | 5 | 5 | 5 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 2 | 5 | 5 | 5 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 0 | 3 | 0 | 1 | 2 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 2 | 2 | 12 | 12 | 1 | 1 | 0 | 1 | 0 |
@@ -219,7 +219,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_FxReverbHiDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbStdDpl2.cpp | 0 | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_InstancePool.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_MemorySoundArchive.cpp | 0 | 8 | 2 | 14 | 2 | 2 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_MemorySoundArchive.cpp | 0 | 8 | 2 | 13 | 2 | 2 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_MidiSeqPlayer.cpp | 0 | 6 | 5 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_MmlParser.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_MmlSeqTrackAllocator.cpp | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -1022,7 +1022,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 4
  },
  "libs/monolib/src/scn/CScnFilterMan.cpp": {
-  "deref_arith": 5,
+  "deref_arith": 3,
+  "extern_c_nonlbl_def": 5,
   "ptr_arith": 7,
   "self_params": 9,
   "void_ptr": 9
@@ -1091,7 +1092,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 26
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 2,
   "ptr_arith": 5,
   "self_params": 5,
   "void_ptr": 5
@@ -1426,7 +1427,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_def": 8,
   "ptr_arith": 2,
   "self_params": 2,
-  "void_ptr": 14
+  "void_ptr": 13
  },
  "libs/nw4r/src/snd/snd_MidiSeqPlayer.cpp": {
   "extern_c_nonlbl_def": 6,

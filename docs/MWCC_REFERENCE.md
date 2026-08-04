@@ -30,10 +30,13 @@ original source never contained them.
   `.bss`/`.sbss` object;
 - bare `(void)"string";` statements used only to force pool order.
 
-They are fabrication (the source never looked like that), they **inflate the
-linked DOL** (the old `.sdata` was 0x60 bytes over retail from these), they add
-`.init`/`.text` code that does not exist in retail, and the `fake_function`
-pattern cannot link.
+They are fabrication (the source never looked like that), they add `.init`/`.text`
+code and keep dead data alive through fake references (orphan `.init` content is
+placed by the linker into the DOL's init segment), and the `fake_function` pattern
+cannot link. The data pads themselves never change the DOL bytes: they are
+unreferenced, and the linker re-inserts the same zeros from section alignment
+(verified: after removing all of them, every touched unit's data slice is
+byte-identical to retail in the freshly linked `main.dol`).
 
 **Correct handling:**
 

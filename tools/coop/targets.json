@@ -435948,8 +435948,8 @@
       "size": "0x30",
       "unit": "nw4r/src/snd/snd_PlayerHeap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "EQUIVALENT_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -435958,8 +435958,18 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_PlayerHeap.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_PlayerHeap.cpp",
-      "instruction_match": 83.333,
-      "equivalence_status": "not_equivalent"
+      "instruction_match": 99.167,
+      "equivalence_status": "equivalent",
+      "claim": {
+        "owner": "pi-nw4r-leaves",
+        "claimed_at": "2026-08-04T04:56:18.315262+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_PlayerHeap.cpp"
+        ],
+        "note": ""
+      },
+      "equivalence_confidence": "C",
+      "equivalence_policy": "auto-promotion-v2"
     },
     {
       "id": "us-8041acfc",
@@ -495087,7 +495097,7 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CScnRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -495098,7 +495108,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnRoot.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnRoot.cpp"
+      "source": "libs/monolib/src/scn/CScnRoot.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:56:24.650606+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnRoot.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80492df4",
@@ -505655,7 +505673,7 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CScnFogMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -505666,7 +505684,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFogMan.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CScnFogMan.cpp"
+      "source": "libs/monolib/src/scn/CScnFogMan.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:56:27.999659+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnFogMan.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804a1fc4",
@@ -530138,7 +530164,7 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -530149,7 +530175,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlMouth.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlMouth.cpp"
+      "source": "libs/monolib/src/scn/CMdlMouth.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:56:31.403197+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlMouth.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804eaa68",

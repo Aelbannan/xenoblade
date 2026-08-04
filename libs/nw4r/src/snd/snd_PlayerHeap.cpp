@@ -18,12 +18,16 @@ PlayerHeap::~PlayerHeap() {
     {
         SoundThread::AutoLock lock;
 
-        void* pStart = mStart;
-        u32 bytes = static_cast<u32>(static_cast<u8*>(mEnd) -
-                                     static_cast<u8*>(pStart));
-
-        DisposeCallbackManager::GetInstance().Dispose(pStart, bytes, NULL);
-        DisposeCallbackManager::GetInstance().DisposeWave(pStart, bytes, NULL);
+        DisposeCallbackManager::GetInstance().Dispose(
+            mStart,
+            static_cast<u32>(static_cast<u8*>(mEnd) -
+                             static_cast<u8*>(mStart)),
+            NULL);
+        DisposeCallbackManager::GetInstance().DisposeWave(
+            mStart,
+            static_cast<u32>(static_cast<u8*>(mEnd) -
+                             static_cast<u8*>(mStart)),
+            NULL);
         mEnd = mStart;
     }
     mEnd = NULL;

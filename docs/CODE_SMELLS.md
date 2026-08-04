@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 2194 |
 | extern "C" definitions (forced names) | 1771 |
 | `self`/register-style params | 3142 |
-| `void*` (params + locals) | 4659 |
+| `void*` (params + locals) | 4658 |
 | raw pointer offset arithmetic | 2656 |
 | deref-through-cast arithmetic | 1187 |
 | inline asm / `register` | 88 |
@@ -225,7 +225,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_MmlParser.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_MmlSeqTrackAllocator.cpp | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_NandSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_PlayerHeap.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_PlayerHeap.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 3 | 4 | 3 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 2 | 4 | 11 | 3 | 0 | 0 | 0 | 0 |
@@ -1476,7 +1476,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 7
  },
  "libs/nw4r/src/snd/snd_PlayerHeap.cpp": {
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_SeqFile.cpp": {
   "void_ptr": 3

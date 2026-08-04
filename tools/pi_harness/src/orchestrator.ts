@@ -780,6 +780,7 @@ function makeVerifyCallback(opts: {
     // stops editing them. Only truly-unmatched targets get hexdiff feedback.
     const matchedTargets: string[] = []; // mismatch:0 in the current state
     const unmatchedTargets: string[] = [];
+    let hexdiffFailedCount = 0;
     for (const tid of targetIds) {
       const sym = targetSymbols.get(tid);
       if (!sym) continue;
@@ -828,14 +829,17 @@ function makeVerifyCallback(opts: {
           return { action: "fail", reason: lastFeedback };
         }
       } else {
+        hexdiffFailedCount++;
         process.stderr.write(`[pi-harness] hexdiff failed for ${tid}: ${hd.output.slice(0, 200)}\n`);
       }
     }
     // Feedback: tell the model which targets are matched/certifiable and ONLY
     // show hexdiff for genuinely-unmatched targets. Never say "No Matches
-    // Found" while listing 0-mismatch targets underneath (the round-2
-    // confusion in run 9: the model saw 0-mismatch targets under a "No
-    // Matches Found" header and kept re-editing them).
+    // Found" while listing 0-mismatch targets underneath, and NEVER say
+    // "All Targets Matched" when hexdiff could not verify anything (run 9b:
+    // CBattleManager's objects have null symbols — every hexdiff failed, but
+    // the feedback falsely claimed "All Targets Matched", so the model
+    // stopped working and produced empty re-prompts).
     const feedbackParts: string[] = [];
     if (matchedTargets.length > 0) {
       feedbackParts.push(
@@ -845,7 +849,21 @@ function makeVerifyCallback(opts: {
         matchedTargets.map((id) => `\`${id}\``).join(", ") + `.\n`,
       );
     }
-    if (unmatchedTargets.length === 0) {
+    if (hexdiffFailedCount === targetIds.length) {
+      // Every target's hexdiff failed — the objects may have null/stripped
+      // symbols or the build is broken. Do NOT claim matches.
+      feedbackParts.push(
+        `## ⚠️ HEXDIFF UNAVAILABLE — no target could be verified\n\n` +
+        `hexdiff failed for all ${hexdiffFailedCount} target(s). This usually means the ` +
+        `decomp object has NULL/stripped symbols (the ELF parser cannot resolve ` +
+        `function names) or the unit fails to build. The harness could NOT ` +
+        `confirm any match. Use \`symbols <unit>\` and \`targets <id>\` to check ` +
+        `what the registry/objects expose, and review the retail ASM manually. ` +
+        `The acceptance cycle cannot certify targets it cannot resolve.`,
+      );
+    } else if (unmatchedTargets.length === 0 && matchedTargets.length === 0) {
+      feedbackParts.push(`## ⚠️ Verification incomplete — nothing could be confirmed as matched.`);
+    } else if (unmatchedTargets.length === 0) {
       feedbackParts.push(`## All Targets Matched\n\nYour code matches everything in this batch. If some were not accepted, the witness found a reloc/structural gate — the summaries above explain which.`);
     } else {
       feedbackParts.push(

@@ -49,7 +49,7 @@ void func_804DAA98__FPCw(const wchar_t* msg) {
     lbl_eu_80663B64 = msg;
 }
 
-void func_804DAAA0__FPCw(const wchar_t* msg){
+extern "C" void func_804DAAA0__FPCw(const wchar_t* msg){
     extern const wchar_t* lbl_eu_80663B68;
     lbl_eu_80663B68 = msg;
 }

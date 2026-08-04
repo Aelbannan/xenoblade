@@ -52,7 +52,10 @@ void func_8048E67C(void* obj, int condition) {
 void func_8048E69C(){}
 
 // us-80492aac: func_8048EA38 (0x8 bytes) -- stores float to sda21 global
-void func_8048EA38(){}
+extern "C" void func_8048EA38(float v){
+    extern float lbl_eu_80663964;
+    lbl_eu_80663964 = v;
+}
 
 // us-80492ab4: func_8048EA40 (0x8 bytes) -- loads float from sda21 global
 float func_8048EA40()

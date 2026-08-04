@@ -46,23 +46,32 @@ async function runHexdiffTool(
   repoRoot: string, python: string, unit: string, symbol: string, brief: boolean,
 ): Promise<string> {
   const baseArgs = ["tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json"];
-  const build = async (noBuild: boolean): Promise<string | null> => {
+  const build = async (noBuild: boolean): Promise<{ stdout: string | null; stderr: string }> => {
     const args = noBuild ? [...baseArgs, "--no-build"] : baseArgs;
     try {
       const { stdout } = await run(python, args, repoRoot);
-      return stdout;
+      return { stdout, stderr: "" };
     } catch (err) {
       const e = err as { stdout?: string; stderr?: string; message?: string };
-      if (e.stdout) return e.stdout; // exit 5 (mismatches) carries JSON on stdout
-      return null;
+      if (e.stdout) return { stdout: e.stdout, stderr: e.stderr ?? "" }; // exit 5 (mismatches) carries JSON on stdout
+      return { stdout: null, stderr: e.stderr ?? e.message ?? String(err) };
     }
   };
-  let raw = await build(true);
-  if (!raw) raw = await build(false);
-  if (!raw) {
-    return "ERROR: hexdiff failed (object missing and build failed). Check the unit hint and symbol.";
+  // Fast path: --no-build read of the existing object. If it fails (missing
+  // or mid-write object), rebuild — and on build failure surface the ACTUAL
+  // compiler error (stderr), never a generic message.
+  let result = await build(true);
+  if (!result.stdout) result = await build(false);
+  if (!result.stdout) {
+    const errTail = result.stderr.trim().split("\n").slice(-25).join("\n");
+    return (
+      `ERROR: hexdiff build failed for ${unit} ${symbol}.\n` +
+      `The object could not be built — the model must fix the compile error first.\n` +
+      `\`\`\`text\n${errTail || "(no compiler output)"}\n\`\`\``
+    );
   }
 
+  let raw: string | null = result.stdout;
   let d: Record<string, unknown>;
   try {
     d = JSON.parse(raw) as Record<string, unknown>;

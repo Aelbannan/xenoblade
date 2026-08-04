@@ -129,3 +129,43 @@ extern "C" void func_80486084(void) {}
 extern "C" int func_80486088(void* self) { return 0; }
 
 extern "C" u32 func_80486090(void* self) { return ((CScnItemModel*)self)->value7E4; }
+
+extern "C" void func_804828F0(void* self, u32 flags, u32 enable) {
+    if (enable != 0) {
+        *(u32*)((u8*)self + 0) |= flags;
+    } else {
+        *(u32*)((u8*)self + 0) &= ~flags;
+    }
+}
+
+extern "C" void func_804830BC(void* self, u32 enable) {
+    if (enable != 0) {
+        *(u32*)((u8*)self + 0x7A4) |= 0x200000;
+    } else {
+        *(u32*)((u8*)self + 0x7A4) &= ~0x200000;
+    }
+}
+
+extern "C" void func_804830E4(void* self, u32 enable) {
+    if (enable != 0) {
+        *(u32*)((u8*)self + 0x7A8) |= 0x100;
+    } else {
+        *(u32*)((u8*)self + 0x7A8) &= ~0x100;
+    }
+}
+
+extern "C" void func_8048310C(void* self, u32 enable) {
+    if (enable != 0) {
+        *(u32*)((u8*)self + 0x7A4) |= 0x08000000;
+    } else {
+        *(u32*)((u8*)self + 0x7A4) &= ~0x08000000;
+    }
+}
+
+extern "C" void func_80483134(void* self, u32 enable) {
+    if (enable != 0) {
+        *(u32*)((u8*)self + 0x7A4) |= 0x02000000;
+    } else {
+        *(u32*)((u8*)self + 0x7A4) &= ~0x02000000;
+    }
+}

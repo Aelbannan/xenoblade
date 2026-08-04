@@ -71,7 +71,13 @@ float func_8048EA40()
 void func_8048EA48(){}
 
 // us-80492ae8: func_8048EA74 (0x28 bytes) -- sets/clears flag 0x100 in halfword
-void func_8048EA74(){}
+extern "C" void func_8048EA74(void* self, u32 enable) {
+    if (enable != 0) {
+        *(u16*)((u8*)self + 0x28) |= 0x100;
+    } else {
+        *(u16*)((u8*)self + 0x28) &= ~0x100;
+    }
+}
 
 // --- FULL_MATCH functions ---
 

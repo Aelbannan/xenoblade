@@ -106,7 +106,13 @@ void func_8048A17C(){}
 
 void func_8048A588(){}
 
-void func_8048AB0C(){}
+extern "C" void func_8048AB0C(void* self, u32 mode) {
+    if ((s32)mode == 1) {
+        *(void**)((u8*)self + 0x7EC) = (u8*)self + 0x1650;
+    } else {
+        *(void**)((u8*)self + 0x7EC) = 0;
+    }
+}
 
 void func_8048AB2C(){}
 

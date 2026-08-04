@@ -59,7 +59,16 @@ void func_804EB4C0(){}
 
 extern "C" void func_804EB524(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
-void func_804EB530(){}
+extern "C" void func_804EB530(void* self) {
+    u8* s = (u8*)self;
+    *(u32*)(s + 0x8C) = 0;
+    *(u32*)(s + 0x90) = 0;
+    *(u32*)(s + 0x94) = 0;
+    *(u32*)(s + 0x9C) = -1;
+    *(u32*)(s + 0xA0) = 0;
+    *(u32*)(s + 0xA4) = 0;
+    *(u32*)(s + 0xAC) = -1;
+}
 
 extern "C" void func_804EB558(void* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
@@ -86,7 +95,11 @@ extern "C" u32 func_804EB708(void* self, u32 a, u32 b) {
     return b << 2;
 }
 
-void func_804EB720(){}
+extern "C" void func_804EB720(void* self, const void* src) {
+    u32 idx = *(u32*)((u8*)self + 4);
+    *(u32*)(*(u8**)self + idx * 4) = *(u32*)src;
+    *(u32*)((u8*)self + 4) = idx + 1;
+}
 
 extern "C" u32 func_804EB740(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0) = a;

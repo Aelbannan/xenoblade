@@ -61,6 +61,22 @@ When a TU reaches zero unmatched targets, the TU-final session runs
 (serialised process-wide; builds wrapped in `build_lock.py`, which holds
 the same `.hexdiff.lock` as hexdiff).
 
+> **Scope of the TU-final bash allowlist**: the `bash` tool exposed to
+> TU-final sessions (spawnHook allowlist: run.py diff/size/symbols, hexdiff,
+> build_lock.py, configure.py, ninja) is a **best-effort accident guardrail,
+> not a sandbox**. It blocks careless destructive commands (`git reset`,
+> `rm -rf`, `--smt`, `run.py cycle`, targets mutations, redirection,
+> command substitution) but is deliberately not airtight: the model already
+> has full repo read + scoped write access, and `configure.py` / `ninja`
+> must remain executable for TU-final's legit work — both are arbitrary
+> code executors, so a deliberately adversarial model can always escape
+> (e.g. write code into the in-scope `configure.py`, then run the
+> allowlisted `configure.py`). Real containment would require replacing the
+> bash tool with structured subcommands or containerising the session; both
+> are out of scope here. Batch sessions have **no bash at all**, which —
+> together with the scoped edit/write tools — is the actual write
+> boundary.
+
 ## Config (`pi-harness.json` at repo root)
 
 | Key | Default | Meaning |

@@ -24,25 +24,6 @@ void SoundArchiveFileReader::Init(const void* pSoundArchiveBin) {
     mHeader = *static_cast<const SoundArchiveFile::Header*>(pSoundArchiveBin);
 }
 
-bool SoundArchiveFileReader::IsValidFileHeader(const void* pSoundArchiveBin) {
-    const ut::BinaryFileHeader* pFileHeader =
-        static_cast<const ut::BinaryFileHeader*>(pSoundArchiveBin);
-
-    if (pFileHeader->signature != SIGNATURE) {
-        return false;
-    }
-
-    if (pFileHeader->version < NW4R_VERSION(1, 0)) {
-        return false;
-    }
-
-    if (pFileHeader->version > VERSION) {
-        return false;
-    }
-
-    return true;
-}
-
 void SoundArchiveFileReader::SetStringChunk(const void* pChunk, u32 size) {
 #pragma unused(size)
 
@@ -147,29 +128,6 @@ bool SoundArchiveFileReader::ReadSoundInfo(
         pSoundInfo->panMode = PAN_MODE_BALANCE;
         pSoundInfo->panCurve = PAN_CURVE_SQRT;
     }
-
-    return true;
-}
-
-bool SoundArchiveFileReader::ReadSound3DParam(
-    u32 id, SoundArchive::Sound3DParam* pParam) const {
-
-    const SoundArchiveFile::SoundCommonInfo* pCmnInfo = impl_GetSoundInfo(id);
-
-    if (pCmnInfo == NULL) {
-        return false;
-    }
-
-    const SoundArchiveFile::Sound3DParam* pSrc =
-        Util::GetDataRefAddress0(pCmnInfo->param3dRef, mInfo);
-
-    if (pSrc == NULL) {
-        return false;
-    }
-
-    pParam->flags = pSrc->flags;
-    pParam->decayCurve = pSrc->decayCurve;
-    pParam->decayRatio = pSrc->decayRatio;
 
     return true;
 }
@@ -345,16 +303,6 @@ bool SoundArchiveFileReader::ReadSoundArchivePlayerInfo(
     return true;
 }
 
-u32 SoundArchiveFileReader::GetSoundStringId(u32 id) const {
-    const SoundArchiveFile::SoundCommonInfo* pInfo = impl_GetSoundInfo(id);
-
-    if (pInfo == NULL) {
-        return SoundArchive::INVALID_ID;
-    }
-
-    return pInfo->stringId;
-}
-
 u32 SoundArchiveFileReader::GetPlayerCount() const {
     const SoundArchiveFile::PlayerTable* pTable =
         Util::GetDataRefAddress0(mInfo->playerTableRef, mInfo);
@@ -375,10 +323,6 @@ u32 SoundArchiveFileReader::GetGroupCount() const {
     }
 
     return pTable->count - 1;
-}
-
-const char* SoundArchiveFileReader::GetSoundLabelString(u32 id) const {
-    return GetString(GetSoundStringId(id));
 }
 
 u32 SoundArchiveFileReader::GetSoundUserParam(u32 id) const {
@@ -469,19 +413,6 @@ bool SoundArchiveFileReader::ReadFilePos(u32 fileId, u32 id,
     *pPos = *pSrc;
 
     return true;
-}
-
-const char* SoundArchiveFileReader::GetString(u32 id) const {
-    if (id == SoundArchive::INVALID_ID) {
-        return NULL;
-    }
-
-    if (mStringTable == NULL) {
-        return NULL;
-    }
-
-    return static_cast<const char*>(
-        GetPtrConst(mStringBase, mStringTable->offsetTable.items[id]));
 }
 
 u32 SoundArchiveFileReader::ConvertLabelStringToId(

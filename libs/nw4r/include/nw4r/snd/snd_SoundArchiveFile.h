@@ -204,14 +204,52 @@ public:
     SoundArchiveFileReader();
 
     void Init(const void* pSoundArchiveBin);
-    bool IsValidFileHeader(const void* pSoundArchiveBin);
+    bool IsValidFileHeader(const void* pSoundArchiveBin) {
+        const ut::BinaryFileHeader* pFileHeader =
+            static_cast<const ut::BinaryFileHeader*>(pSoundArchiveBin);
+
+        if (pFileHeader->signature != SIGNATURE) {
+            return false;
+        }
+
+        if (pFileHeader->version < NW4R_VERSION(1, 0)) {
+            return false;
+        }
+
+        if (pFileHeader->version > VERSION) {
+            return false;
+        }
+
+        return true;
+    }
 
     void SetStringChunk(const void* pChunk, u32 size);
     void SetInfoChunk(const void* pChunk, u32 size);
 
     SoundType GetSoundType(u32 id) const;
     bool ReadSoundInfo(u32 id, SoundArchive::SoundInfo* pInfo) const;
-    bool ReadSound3DParam(u32 id, SoundArchive::Sound3DParam* pParam) const;
+    bool ReadSound3DParam(u32 id,
+                          SoundArchive::Sound3DParam* pParam) const {
+        const SoundArchiveFile::SoundCommonInfo* pCmnInfo =
+            impl_GetSoundInfo(id);
+
+        if (pCmnInfo == NULL) {
+            return false;
+        }
+
+        const SoundArchiveFile::Sound3DParam* pSrc =
+            Util::GetDataRefAddress0(pCmnInfo->param3dRef, mInfo);
+
+        if (pSrc == NULL) {
+            return false;
+        }
+
+        pParam->flags = pSrc->flags;
+        pParam->decayCurve = pSrc->decayCurve;
+        pParam->decayRatio = pSrc->decayRatio;
+
+        return true;
+    }
     bool ReadSeqSoundInfo(u32 id, SoundArchive::SeqSoundInfo* pInfo) const;
     bool ReadStrmSoundInfo(u32 id, SoundArchive::StrmSoundInfo* pInfo) const;
     bool ReadWaveSoundInfo(u32 id, SoundArchive::WaveSoundInfo* pInfo) const;
@@ -223,17 +261,38 @@ public:
     bool ReadSoundArchivePlayerInfo(
         SoundArchive::SoundArchivePlayerInfo* pInfo) const;
 
-    u32 GetSoundStringId(u32 id) const;
+    u32 GetSoundStringId(u32 id) const {
+        const SoundArchiveFile::SoundCommonInfo* pInfo = impl_GetSoundInfo(id);
+
+        if (pInfo == NULL) {
+            return SoundArchive::INVALID_ID;
+        }
+
+        return pInfo->stringId;
+    }
     u32 GetPlayerCount() const;
     u32 GetGroupCount() const;
 
-    const char* GetSoundLabelString(u32 id) const;
+    const char* GetSoundLabelString(u32 id) const {
+        return GetString(GetSoundStringId(id));
+    }
     u32 GetSoundUserParam(u32 id) const;
 
     bool ReadFileInfo(u32 id, SoundArchive::FileInfo* pInfo) const;
     bool ReadFilePos(u32 fileId, u32 id, SoundArchive::FilePos* pPos) const;
 
-    const char* GetString(u32 id) const;
+    const char* GetString(u32 id) const {
+        if (id == SoundArchive::INVALID_ID) {
+            return NULL;
+        }
+
+        if (mStringTable == NULL) {
+            return NULL;
+        }
+
+        return static_cast<const char*>(
+            GetPtrConst(mStringBase, mStringTable->offsetTable.items[id]));
+    }
 
     u32 ConvertLabelStringToSoundId(const char* pLabel) const {
         return ConvertLabelStringToId(mStringTreeSound, pLabel);

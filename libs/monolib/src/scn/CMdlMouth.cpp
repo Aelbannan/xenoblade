@@ -5,3 +5,5 @@
 extern "C" void func_804E6898(void* self, float val) {
     ((CMdlMouth*)self)->value2C = val;
 }
+
+CMdlMouth::~CMdlMouth() {}

@@ -495097,8 +495097,8 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CScnRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4"
@@ -495116,7 +495116,9 @@
           "libs/monolib/src/scn/CScnRoot.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80492df4",
@@ -505673,8 +505675,8 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CScnFogMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4"
@@ -505692,7 +505694,9 @@
           "libs/monolib/src/scn/CScnFogMan.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804a1fc4",
@@ -530164,8 +530168,8 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4"
@@ -530183,7 +530187,9 @@
           "libs/monolib/src/scn/CMdlMouth.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804eaa68",
@@ -530491,8 +530497,8 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CMdlAnmEye",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4"
@@ -530502,7 +530508,17 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlAnmEye.s",
       "abi_helper_calls": [],
-      "source": "libs/monolib/src/scn/CMdlAnmEye.cpp"
+      "source": "libs/monolib/src/scn/CMdlAnmEye.cpp",
+      "claim": {
+        "owner": "pi-monolib-leaf",
+        "claimed_at": "2026-08-04T04:56:33.896006+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlAnmEye.cpp"
+        ],
+        "note": ""
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804eba54",

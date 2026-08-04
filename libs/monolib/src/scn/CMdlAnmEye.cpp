@@ -5,3 +5,5 @@
 extern "C" void func_804E77BC(void* self, u32 val) {
     ((CMdlAnmEye*)self)->value2C = val;
 }
+
+CMdlAnmEye::~CMdlAnmEye() {}

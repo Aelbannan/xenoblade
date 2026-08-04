@@ -2,6 +2,7 @@
 // Contains CScnRoot class and related helpers.
 
 #include <types.h>
+#include "monolib/scn/CScnRoot.hpp"
 
 // --- CScnRoot class ---
 
@@ -42,3 +43,5 @@ extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);
 
 // Returns some value based on internal state.
 void* func_8048F2F0(void* self);
+
+CScnRoot::~CScnRoot() {}

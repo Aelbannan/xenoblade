@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5838 |
+| extern "C" (total lines) | 5863 |
 | extern "C" declarations (non-lbl_*, imports) | 2187 |
-| extern "C" definitions (forced names) | 1661 |
-| `self`/register-style params | 3085 |
-| `void*` (params + locals) | 4599 |
-| raw pointer offset arithmetic | 2534 |
+| extern "C" definitions (forced names) | 1676 |
+| `self`/register-style params | 3086 |
+| `void*` (params + locals) | 4601 |
+| raw pointer offset arithmetic | 2535 |
 | deref-through-cast arithmetic | 1121 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
@@ -110,6 +110,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 2 |
+| libs/monolib/src/nand/CNReqtaskSave.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 12 | 0 | 0 | 21 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 10 | 14 | 27 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 0 | 10 | 6 | 6 | 5 | 0 | 0 | 0 |
@@ -126,7 +127,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 0 | 2 | 10 | 32 | 37 | 24 | 0 | 3 | 0 |
 | libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 1 | 2 | 5 | 4 | 3 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 5 | 9 | 9 | 7 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 15 | 9 | 10 | 7 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFogMan.cpp | 0 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 2 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnIdMan.cpp | 9 | 2 | 10 | 16 | 2 | 0 | 0 | 7 | 0 |
@@ -137,9 +138,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 0 | 5 | 9 | 9 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 4 | 25 | 26 | 14 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 2 | 5 | 5 | 5 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemPool.cpp | 0 | 5 | 6 | 6 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 0 | 3 | 0 | 1 | 2 | 2 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 0 | 4 | 0 | 1 | 2 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 2 | 2 | 12 | 12 | 1 | 1 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnRoot.cpp | 2 | 0 | 6 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRootNw4r.cpp | 1 | 5 | 7 | 7 | 4 | 1 | 0 | 0 | 0 |
@@ -927,6 +928,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "goto_count": 2,
   "void_ptr": 6
  },
+ "libs/monolib/src/nand/CNReqtaskSave.cpp": {
+  "extern_c_nonlbl_def": 1
+ },
  "libs/monolib/src/nand/CNReqtaskSaveBanner.cpp": {
   "extern_c_nonlbl_decl": 12,
   "ptr_arith": 1,
@@ -1023,10 +1027,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/scn/CScnFilterMan.cpp": {
   "deref_arith": 3,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_def": 15,
   "ptr_arith": 7,
   "self_params": 9,
-  "void_ptr": 9
+  "void_ptr": 10
  },
  "libs/monolib/src/scn/CScnFogMan.cpp": {
   "extern_c_nonlbl_def": 1,
@@ -1092,10 +1096,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 26
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
-  "extern_c_nonlbl_def": 2,
-  "ptr_arith": 5,
-  "self_params": 5,
-  "void_ptr": 5
+  "extern_c_nonlbl_def": 5,
+  "ptr_arith": 6,
+  "self_params": 6,
+  "void_ptr": 6
  },
  "libs/monolib/src/scn/CScnLightMan.cpp": {
   "ptr_arith": 1,
@@ -1103,7 +1107,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp": {
   "deref_arith": 2,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_def": 4,
   "ptr_arith": 2,
   "void_ptr": 1
  },

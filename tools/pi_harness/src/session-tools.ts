@@ -91,11 +91,13 @@ async function runHexdiffTool(
     }
     return { stdout: null, stderr: lastStderr };
   };
-  // Fast path: --no-build read of the existing object. If it fails (missing
-  // or mid-write object), rebuild — and on build failure surface the ACTUAL
-  // compiler error (stderr), never a generic message.
-  let result = await build(true);
-  if (!result.stdout) result = await build(false);
+  // ALWAYS build: the model edits source between hexdiff calls, so a
+  // --no-build fast path would return STALE mismatch counts from the
+  // pre-edit object (adversarial finding 1: a codegen change showed 13
+  // stale mismatches vs 68 fresh). The iteration loop needs fresh bytes
+  // every call. (The acceptance path has its own post-build --no-build
+  // read in acceptance.ts where the object was JUST built.)
+  let result = await build(false);
   if (!result.stdout) {
     // Surface the ACTUAL compiler error, not the ninja command dump that
     // precedes it (which is ~15 lines of flags). mwcceppc errors look like:
@@ -268,7 +270,7 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
     name: "witness",
     label: "witness",
     description:
-      "READ-ONLY equivalence check: runs the register-renaming witness (no SMT) on the current code and reports whether it would certify as FULL_MATCH or EQUIVALENT_MATCH. Call when hexdiff shows structural: 0 (only registers differ) or mismatch: 0 — if certifiable, tell the harness to run the accepting cycle. Never modifies the target registry.",
+      "READ-ONLY equivalence check: runs the register-renaming witness (no SMT) on the current code and reports whether it would certify as FULL_MATCH or EQUIVALENT_MATCH. Call when hexdiff shows structural: 0 (only registers differ) or mismatch: 0 — if certifiable, tell the harness to run the accepting cycle. Never modifies the target registry or the attempt log. (May refresh the reloc-map cache sidecar, which is benign.)",
     promptSnippet: "witness <unit> <symbol> — check current code certifies (no SMT, read-only)",
     parameters: Type.Object({
       unit: Type.String({ description: "objdiff unit hint (e.g. kyoshin/menu/CMenuMapSelect)" }),
@@ -293,7 +295,6 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
             const symMatch = full.match(/symbol: \S+  match: ([\d.]+)%/)?.[1] ?? "?";
             const certifiable =
               eq === "FULL_MATCH" || eq === "EQUIVALENT_MATCH" ||
-              /semantic-certified/.test(full) ||
               status === "FULL_MATCH" || status === "EQUIVALENT_MATCH";
 
             const lines: string[] = [];
@@ -316,6 +317,19 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
           if (attempt < 2) await sleep(2000 * (attempt + 1));
         } catch (err) {
           const e = err as { stdout?: string; stderr?: string; message?: string };
+          // cmd_diff prints the verdict to stdout then exits 1 when the unit
+          // is over the split-size budget. e.stdout carries the verdict —
+          // surface it (with the size note) instead of discarding it for the
+          // generic error (adversarial finding 2: the exit-1 stdout was
+          // dropped, repeating the run() bug class).
+          if (e.stdout && /status: \S+/.test(e.stdout)) {
+            const full = e.stdout.trim();
+            const sizeLine = full.split("\n").find((l) => /size:/.test(l)) ?? "";
+            return {
+              content: [{ type: "text", text: `## witness: ${params.symbol}\n- (verdict delivered; unit size check failed: ${sizeLine || "over budget"})` }],
+              details: { ok: false, certifiable: false, status: "size-failed", equivalence: null },
+            };
+          }
           const detail = e.stderr || e.message || String(err);
           if (/lock|premature|contention/i.test(detail) && attempt < 2) {
             await sleep(2000 * (attempt + 1));

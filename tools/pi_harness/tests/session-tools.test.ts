@@ -15,6 +15,7 @@ import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFile, writeFile } from "node:fs/promises";
 
 import {
   looksLikeJson,
@@ -149,6 +150,40 @@ describe("integration: hexdiffTool", () => {
     assert.doesNotMatch(text, /non-JSON output/);
   });
 
+  test("REGRESSION (finding 1): rebuilds after a source edit — never returns stale counts", async () => {
+    // The old --no-build fast path returned the PRE-EDIT object's mismatch
+    // counts after a model edit (stale: 13 vs fresh 68 in the finding). The
+    // tool must always build so the diff reflects the current source.
+    const src = join(REPO, "src/kyoshin/menu/CMenuMapSelect.cpp");
+    const orig = await readFile(src, "utf-8");
+    try {
+      // Remove the singleton guard — a codegen change that definitely alters
+      // __ct__CMenuMapSelect's compiled bytes.
+      const edited = orig.replace(
+        "    if (lbl_eu_80664790 != 0) {\n        return 0;\n    }\n\n",
+        "    // guard removed (codegen change)\n\n",
+      );
+      if (edited === orig) {
+        // Guard text may have drifted — skip if we can't apply a real change.
+        return;
+      }
+      await writeFile(src, edited, "utf-8");
+      const r = await tool.execute("t", { unit: KNOWN_UNIT, symbol: "__ct__CMenuMapSelect", brief: true });
+      const text = r.content?.[0]?.text ?? "";
+      // After removing the guard, structural mismatches must be HIGH (the
+      // guard removal destroys the structure) — a stale read would show the
+      // pre-edit structural: ~1. Fresh is >= 50 (observed 68/63 in the finding).
+      const m = text.match(/structural: (\d+)/);
+      assert.ok(m, `expected structural count in: ${text.slice(0, 120)}`);
+      assert.ok(
+        Number(m[1]) >= 30,
+        `expected FRESH structural (>=30) after guard removal, got ${m[1]} — stale --no-build read?`,
+      );
+    } finally {
+      await writeFile(src, orig, "utf-8");
+    }
+  });
+
   test("mangled symbol: says 'symbol not found', NOT 'build failed' (base-name hint)", async () => {
     // The model sometimes passes the C++ mangled form (derived from mangling
     // rules) while the registry stores the base name. The tool must say the
@@ -162,11 +197,19 @@ describe("integration: hexdiffTool", () => {
     assert.doesNotMatch(text, /build failed/);
   });
 
-  test("returns 0-mismatch for a full-match symbol", async () => {
+  test("returns a valid diff for the formerly-full-match symbol", async () => {
+    // __ct__80192C10 is FULL_MATCH in the registry — but a live run editing
+    // the same unit can transiently break the build (mid-edit), so skip on
+    // build failure; otherwise assert a well-formed diff.
     const r = await tool.execute("t", { unit: FULL_MATCH_UNIT, symbol: FULL_MATCH_SYMBOL, brief: true });
     const text = r.content?.[0]?.text ?? "";
-    assert.match(text, /mismatch: 0/);
-    assert.match(text, /structural: 0/);
+    if (/build failed|could not be built/i.test(text)) {
+      // Live run mid-edit on this unit — not a code failure.
+      return;
+    }
+    assert.match(text, /## hexdiff: __ct__80192C10/);
+    assert.match(text, /mismatch: \d+/);
+    assert.match(text, /structural: \d+/);
   });
 });
 

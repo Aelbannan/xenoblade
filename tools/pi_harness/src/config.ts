@@ -113,6 +113,14 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
         Object.assign(config[key], value);
       } else if (key in config) {
         (config as unknown as Record<string, unknown>)[key] = value;
+      } else {
+        // Adversarial review M6: a typo'd key (e.g. `batchsize`, or the
+        // README's dead `maxRePrompts`/`maxStuckRePrompts`/`singletonRetry`
+        // names) silently fell back to defaults. Warn loudly instead.
+        process.stderr.write(
+          `[pi-harness] config: WARNING — unknown key "${key}" in ${path}; ignored. ` +
+            `Known keys: ${Object.keys(defaultConfig()).join(", ")}\n`,
+        );
       }
     }
 

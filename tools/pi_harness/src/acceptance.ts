@@ -17,7 +17,15 @@ import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { BatchResult, Target } from "./types.js";
 
-/** Promisified execFile. */
+/** Promisified execFile.
+ *
+ * IMPORTANT: node's execFile error object does NOT carry stdout/stderr — they
+ * are separate callback args. On non-zero exit we attach them to the
+ * rejection, or every hexdiff mismatch (exit 5, JSON on stdout) would lose
+ * the diff payload and the acceptance path would see a generic failure
+ * (adversarial review C1: this was the exact bug that made onVerify blind to
+ * every genuinely-mismatched target).
+ */
 export function execFilePromise(
   command: string,
   args: string[],
@@ -25,8 +33,13 @@ export function execFilePromise(
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     execFile(command, args, { cwd: options.cwd, maxBuffer: 32 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) reject(err);
-      else resolve({ stdout, stderr });
+      if (err) {
+        (err as { stdout?: string; stderr?: string }).stdout = stdout;
+        (err as { stdout?: string; stderr?: string }).stderr = stderr;
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }
@@ -167,6 +180,35 @@ export async function buildUnit(
  * status from targets.json. accepted = FULL_MATCH | EQUIVALENT_MATCH.
  * Non-zero exit is tolerated (failures are per-target, not fatal).
  */
+/** Read per-target statuses from targets.json without running the cycle.
+ *  Used by the certify-request accept path, where the witness cycles already
+ *  updated the registry and a full batch-cycle run would be redundant.
+ *  Applies the same acceptance rule as runBatchCycle (status + BACKLOG gate). */
+export async function readBatchResults(
+  repoRoot: string,
+  targetIds: string[],
+): Promise<BatchResult[]> {
+  let allTargets: Target[] = [];
+  try {
+    const parsed = JSON.parse(
+      await readFile(join(repoRoot, "tools/coop/targets.json"), "utf-8"),
+    ) as { targets?: unknown };
+    if (Array.isArray(parsed.targets)) allTargets = parsed.targets as Target[];
+  } catch {
+    // fall through — everything reports UNKNOWN
+  }
+  const statusById = new Map(allTargets.map((t) => [t.id, t.status]));
+  const workflowById = new Map(
+    allTargets.map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
+  );
+  const acceptedStatuses = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
+  return targetIds.map((id) => {
+    const status = statusById.get(id) ?? "UNKNOWN";
+    const backlogged = workflowById.get(id) === "BACKLOG";
+    return { targetId: id, status, accepted: acceptedStatuses.has(status) && !backlogged };
+  });
+}
+
 export async function runBatchCycle(
   repoRoot: string,
   python: string,
@@ -194,22 +236,7 @@ export async function runBatchCycle(
     // tolerated — read targets.json below for actual results
   }
 
-  let allTargets: Target[] = [];
-  try {
-    const parsed = JSON.parse(
-      await readFile(join(repoRoot, "tools/coop/targets.json"), "utf-8"),
-    ) as { targets?: unknown };
-    if (Array.isArray(parsed.targets)) allTargets = parsed.targets as Target[];
-  } catch {
-    // fall through — everything reports UNKNOWN
-  }
-
-  const statusById = new Map(allTargets.map((t) => [t.id, t.status]));
-  const acceptedStatuses = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
-  return targetIds.map((id) => {
-    const status = statusById.get(id) ?? "UNKNOWN";
-    return { targetId: id, status, accepted: acceptedStatuses.has(status) };
-  });
+  return readBatchResults(repoRoot, targetIds);
 }
 
 // ─────────────────────────────────────────────────────────────────────

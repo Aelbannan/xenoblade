@@ -13,13 +13,18 @@
 // ---------------------------------------------------------------------------
 
 import { execFile } from "node:child_process";
-import { join } from "node:path";
+import { access as fsAccess, readFile, writeFile } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
 import { Type } from "typebox";
 import {
   defineTool,
   createBashTool,
+  createEditToolDefinition,
+  createWriteToolDefinition,
   type BashSpawnHook,
+  type EditOperations,
   type ToolDefinition,
+  type WriteOperations,
 } from "@earendil-works/pi-coding-agent";
 
 // Imported lazily to avoid a module cycle: tufinal-scan imports `run` from
@@ -625,6 +630,22 @@ export function tuFinalSpawnHook(python: string): BashSpawnHook {
     if (/\btools\/coop\/run\.py\s+targets\s+(claim|release|sync|recertify|migrate|import|edit|write)/.test(lower)) {
       throw new Error("BLOCKED: target registry mutations are harness-owned.");
     }
+    // Command-substitution / injection block (adversarial review C2): the
+    // segment-split below only splits on [;&|], so a NEWLINE or `$(...)` /
+    // backtick inside an otherwise-allowed prefix would smuggle a second
+    // command through (e.g. `ninja\nrm -rf …` or `ninja $(rm -rf …)`).
+    if (/[`$]\(/.test(cmd) || /`/.test(cmd)) {
+      throw new Error(
+        `BLOCKED: command substitution (backticks / $()) is not allowed in TU-final bash. Got: ${cmd.slice(0, 120)}`,
+      );
+    }
+    // Newlines are command separators to bash; forbid them so the prefix
+    // allowlist cannot be bypassed with a second line.
+    if (/\n/.test(cmd)) {
+      throw new Error(
+        `BLOCKED: multi-line commands are not allowed in TU-final bash (prefix check is per-line). Got: ${cmd.slice(0, 120)}`,
+      );
+    }
     // Whitelist: everything else is blocked. Multi-command chains are
     // rejected unless EVERY segment starts with an allowed prefix.
     const segments = cmd.split(/[;&|]\s*/).map((s) => s.trim()).filter(Boolean);
@@ -635,6 +656,24 @@ export function tuFinalSpawnHook(python: string): BashSpawnHook {
       throw new Error(
         `BLOCKED: command not in the TU-final allowlist. Allowed: run.py diff/size/symbols, hexdiff, build_lock.py, configure.py, ninja. Got: ${cmd.slice(0, 120)}`,
       );
+    }
+    // build_lock.py is a passthrough runner: whatever follows `--` is
+    // executed. An allowed prefix on the OUTER command must not smuggle an
+    // arbitrary inner command (adversarial review C2: `build_lock.py us --
+    // python3 -c '…'` or `build_lock.py us -- git status`). Validate the
+    // inner command against the same allowlist.
+    const blMatch = cmd.match(/build_lock\.py\s+(?:--timeout\s+\d+\s+)?[^\s]+\s+--\s+(.+)$/);
+    if (blMatch) {
+      const inner = blMatch[1].trim();
+      const innerSegments = inner.split(/[;&|]\s*/).map((s) => s.trim()).filter(Boolean);
+      const innerAllowed = innerSegments.length > 0 && innerSegments.every((seg) =>
+        allowPrefixes.some((p) => seg.startsWith(p) || seg.toLowerCase().startsWith(p.toLowerCase()))
+      );
+      if (!innerAllowed) {
+        throw new Error(
+          `BLOCKED: build_lock.py inner command not in the TU-final allowlist. Got: ${inner.slice(0, 120)}`,
+        );
+      }
     }
     return ctx;
   };
@@ -651,9 +690,68 @@ export function tuFinalBashTool(repoRoot: string, python: string): ToolDefinitio
   return bash as unknown as ToolDefinition;
 }
 
-/** Batch-session tool set: no bash at all. */
-export function batchSessionTools(repoRoot: string, python: string): ToolDefinition[] {
+/** True when an absolute path is inside the session's writable scope
+ *  (adversarial review H4: the writable scope was prompt-level only, so the
+ *  SDK edit/write tools could modify out-of-scope files — including
+ *  configure.py and tools/coop/targets.json — and the snapshot restore never
+ *  reverted them because they were never snapshotted). */
+function assertWritablePath(repoRoot: string, writable: string[], absPath: string): void {
+  const abs = resolve(absPath);
+  const rel = relative(repoRoot, abs);
+  // Allow anything inside build/pi-harness state dirs (transcripts etc.).
+  if (rel.startsWith("build/pi-harness")) return;
+  const allowed = writable.map((w) => resolve(repoRoot, w));
+  if (!allowed.some((a) => abs === a || abs.startsWith(a + "/"))) {
+    throw new Error(
+      `BLOCKED: ${absPath} is outside the writable scope for this session. ` +
+        `Allowed files: ${writable.length > 0 ? writable.join(", ") : "(none)"}`,
+    );
+  }
+}
+
+/** Edit tool restricted to the session's writable scope. Overrides the
+ *  built-in `edit` (custom tools replace built-ins by name). */
+export function scopedEditTool(repoRoot: string, writable: string[]): ToolDefinition {
+  const ops: EditOperations = {
+    readFile: async (p) => {
+      assertWritablePath(repoRoot, writable, p);
+      return readFile(p);
+    },
+    writeFile: async (p, content) => {
+      assertWritablePath(repoRoot, writable, p);
+      await writeFile(p, content, "utf-8");
+    },
+    access: async (p) => {
+      assertWritablePath(repoRoot, writable, p);
+      await fsAccess(p);
+    },
+  };
+  return createEditToolDefinition(repoRoot, { operations: ops }) as unknown as ToolDefinition;
+}
+
+/** Write tool restricted to the session's writable scope. Overrides the
+ *  built-in `write` (custom tools replace built-ins by name). */
+export function scopedWriteTool(repoRoot: string, writable: string[]): ToolDefinition {
+  const ops: WriteOperations = {
+    writeFile: async (p, content) => {
+      assertWritablePath(repoRoot, writable, p);
+      await writeFile(p, content, "utf-8");
+    },
+    mkdir: async (dir) => {
+      const { mkdir } = await import("node:fs/promises");
+      assertWritablePath(repoRoot, writable, dir);
+      await mkdir(dir, { recursive: true });
+    },
+  };
+  return createWriteToolDefinition(repoRoot, { operations: ops }) as unknown as ToolDefinition;
+}
+
+/** Batch-session tool set: no bash at all. The built-in edit/write tools are
+ *  replaced by scoped versions restricted to `writable` (H4). */
+export function batchSessionTools(repoRoot: string, python: string, writable: string[] = []): ToolDefinition[] {
   return [
+    scopedEditTool(repoRoot, writable),
+    scopedWriteTool(repoRoot, writable),
     hexdiffTool(repoRoot, python),
     symbolsTool(repoRoot, python),
     targetsTool(repoRoot, python),
@@ -666,6 +764,6 @@ export function batchSessionTools(repoRoot: string, python: string): ToolDefinit
 }
 
 /** TU-final tool set: batch tools + constrained bash. */
-export function tuFinalSessionTools(repoRoot: string, python: string): ToolDefinition[] {
-  return [...batchSessionTools(repoRoot, python), tuFinalBashTool(repoRoot, python)];
+export function tuFinalSessionTools(repoRoot: string, python: string, writable: string[] = []): ToolDefinition[] {
+  return [...batchSessionTools(repoRoot, python, writable), tuFinalBashTool(repoRoot, python)];
 }

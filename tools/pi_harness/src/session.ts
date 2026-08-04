@@ -62,6 +62,10 @@ export interface SessionRunResult {
   /** The last rejection feedback from onVerify, for carryover to the
    *  next fresh session (set when outcome is "failed" or "gave-up"). */
   lastRejection?: string;
+  /** Set when the heartbeat flagged the session as dead (silence) and
+   *  aborted it. Previously write-only; surfaced so callers can tell a
+   *  dead-session abort apart from a normal completion (review H3). */
+  deadSessionReason?: string;
 }
 
 export interface MultiPromptOpts {
@@ -121,6 +125,10 @@ export async function runAgentSession(opts: {
   kind?: "batch" | "tu-final";
   /** Python interpreter for the structured tools (hexdiff/run.py). */
   python?: string;
+  /** Writable-scope files (repo-relative) for this session — the built-in
+   *  edit/write tools are replaced by scoped versions restricted to these
+   *  (adversarial review H4). Default [] = no writes allowed. */
+  writable?: string[];
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -134,6 +142,7 @@ export async function runAgentSession(opts: {
     multiPrompt,
     kind = "batch",
     python = "python3",
+    writable = [],
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -175,8 +184,8 @@ export async function runAgentSession(opts: {
       ? ["read", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"]
       : ["read", "bash", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"],
     customTools: kind === "batch"
-      ? batchSessionTools(repoRoot, python)
-      : tuFinalSessionTools(repoRoot, python),
+      ? batchSessionTools(repoRoot, python, writable)
+      : tuFinalSessionTools(repoRoot, python, writable),
   });
 
   // Transcript writes are serialised — concurrent fire-and-forget writeFile
@@ -229,6 +238,7 @@ export async function runAgentSession(opts: {
       }
     }
     if (event.type === "tool_execution_start") {
+      toolInFlight++;
       transcriptContent += `\n\n---\n**🛠 Tool: ${event.toolName}**\n\n`;
       // Include the tool's input parameters (compact JSON) so transcripts
       // are self-contained for debugging (which symbol/unit was passed).
@@ -257,6 +267,7 @@ export async function runAgentSession(opts: {
       }
     }
     if (event.type === "tool_execution_end") {
+      toolInFlight = Math.max(0, toolInFlight - 1);
       const result = event.result as { content?: Array<{ type?: string; text?: string }> } | string | undefined;
       let outText = "";
       if (typeof result === "string") {
@@ -283,9 +294,19 @@ export async function runAgentSession(opts: {
   // Heartbeat monitor: detect dead sessions (no activity for 2+ minutes
   // while the session should be working). Uses SDK state to avoid false
   // positives during builds (session.isIdle) and compaction (session.isCompacting).
+  //
+  // Adversarial review H3: the previous logic aborted on 120s of silence
+  // EVEN while a long tool call was in flight (unit-status runs N sequential
+  // witness probes; a hexdiff full build can exceed 2min), and the abort
+  // reason was write-only — invisible in the result. Now we (a) track tool
+  // execution explicitly and never flag a session dead mid-tool, and (b)
+  // surface the reason in the SessionRunResult.
   const SILENCE_THRESHOLD_MS = 120_000; // 2 minutes
+  const HEARTBEAT_INTERVAL_MS = 15_000;
+  let toolInFlight = 0;
   let deadSessionReason: string | undefined;
   const heartbeat = setInterval(() => {
+    if (toolInFlight > 0) return; // a tool is executing — it has its own timeout
     const silenceMs = Date.now() - lastActivityTime;
     if (silenceMs > SILENCE_THRESHOLD_MS) {
       // Only flag as dead if session should be active (not idle, not compacting).
@@ -295,7 +316,7 @@ export async function runAgentSession(opts: {
         session.abort().catch(() => {});
       }
     }
-  }, 15_000); // check every 15 seconds
+  }, HEARTBEAT_INTERVAL_MS); // check every 15 seconds
   if (heartbeat && typeof heartbeat === "object" && "unref" in heartbeat) {
     heartbeat.unref();
   }
@@ -314,6 +335,7 @@ export async function runAgentSession(opts: {
     if (!multiPrompt) {
       process.stderr.write(`[session] ${label}: starting single-prompt (timeout=${timeoutMinutes}min)\n`);
       const result = await runOnePrompt(session, prompt, timeoutMinutes);
+      await result.settle();
       const usage = sumUsage(session.state.messages);
       process.stderr.write(`[session] ${label}: completed single-prompt (timedOut=${result.timedOut})\n`);
       return {
@@ -321,6 +343,7 @@ export async function runAgentSession(opts: {
         sessionFile: session.sessionFile,
         timedOut: result.timedOut,
         usage,
+        ...(deadSessionReason ? { deadSessionReason } : {}),
       };
     }
 
@@ -349,6 +372,10 @@ export async function runAgentSession(opts: {
     queueTranscriptWrite();
     const usageBefore = sumUsage(session.state.messages);
     const initialResult = await runOnePrompt(session, prompt, timeoutMinutes);
+    // L: the initial prompt must fully settle before onVerify runs (it
+    // builds / runs batch-cycle against the worktree — a still-streaming
+    // prompt could keep issuing tool calls concurrently).
+    await initialResult.settle();
     let usageAfter = sumUsage(session.state.messages);
     roundUsages.push(usageDelta(usageBefore, usageAfter));
     finalText = initialResult.finalText;
@@ -378,6 +405,7 @@ export async function runAgentSession(opts: {
           outcome: "accepted",
           rePromptsUsed,
           roundUsages,
+          ...(deadSessionReason ? { deadSessionReason } : {}),
         };
       }
 
@@ -393,6 +421,7 @@ export async function runAgentSession(opts: {
           rePromptsUsed,
           roundUsages,
           lastRejection,
+          ...(deadSessionReason ? { deadSessionReason } : {}),
         };
       }
 
@@ -410,6 +439,7 @@ export async function runAgentSession(opts: {
           rePromptsUsed,
           roundUsages,
           lastRejection,
+          ...(deadSessionReason ? { deadSessionReason } : {}),
         };
       }
 
@@ -426,6 +456,7 @@ export async function runAgentSession(opts: {
           rePromptsUsed,
           roundUsages,
           lastRejection,
+          ...(deadSessionReason ? { deadSessionReason } : {}),
         };
       }
 
@@ -451,6 +482,11 @@ export async function runAgentSession(opts: {
         verifyResult.feedback ?? "",
         remainingMinutes,
       );
+      // L: never let the NEXT prompt start while the previous one is still
+      // settling (a hard-timeout can return while the SDK stream is stuck).
+      // Without this, the loop would issue a concurrent session.prompt() —
+      // SDK behavior for overlapping prompts is undefined.
+      await rePromptResult.settle();
       usageAfter = sumUsage(session.state.messages);
       roundUsages.push(usageDelta(roundUsageBefore, usageAfter));
       finalText = rePromptResult.finalText;
@@ -480,6 +516,11 @@ export async function runAgentSession(opts: {
 interface PromptResult {
   finalText: string;
   timedOut: boolean;
+  /** Resolves when the underlying session.prompt() call has fully settled
+   *  (after abort or hard-timeout). The multi-prompt loop awaits this before
+   *  issuing the NEXT prompt, so we never call session.prompt() concurrently
+   *  on the same session (adversarial review L). */
+  settle: () => Promise<void>;
 }
 
 const POST_ABORT_SETTLE_MS = 30_000;
@@ -491,10 +532,22 @@ async function runOnePrompt(
 ): Promise<PromptResult> {
   let timedOut = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let settled = false;
+  const waitSettled = async (): Promise<void> => {
+    if (settled) return;
+    // Wait for the in-flight prompt to finish settling (resolve or reject),
+    // then clear the abort so the next prompt starts clean.
+    try {
+      await promptPromise.catch(() => {});
+    } finally {
+      settled = true;
+    }
+  };
 
+  let promptPromise: Promise<undefined | string>;
   try {
     const timeoutMs = timeoutMinutes * 60 * 1000;
-    const promptPromise = session
+    promptPromise = session
       .prompt(prompt, { expandPromptTemplates: false })
       .then(() => undefined as undefined | string);
     const timeoutPromise = new Promise<undefined | string>((resolve) => {
@@ -553,7 +606,7 @@ async function runOnePrompt(
       }
     }
 
-    return { finalText, timedOut };
+    return { finalText, timedOut, settle: waitSettled };
   } catch (err) {
     // Attach partial usage so the caller can ledger it even on failure.
     try {
@@ -563,6 +616,9 @@ async function runOnePrompt(
     } catch {
       // ignore
     }
+    // Even on throw, mark the prompt settled so callers don't deadlock
+    // awaiting waitSettled.
+    settled = true;
     throw err;
   } finally {
     if (timer) clearTimeout(timer);

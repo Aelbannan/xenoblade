@@ -30,6 +30,8 @@ import {
   tuFinalSpawnHook,
   batchSessionTools,
   tuFinalSessionTools,
+  scopedEditTool,
+  scopedWriteTool,
 } from "../src/session-tools.js";
 import { parseCertifyRequests } from "../src/orchestrator.js";
 
@@ -117,6 +119,32 @@ describe("tuFinalSpawnHook", () => {
   test("SMT anywhere is blocked even with --no-smt present elsewhere", () => {
     assert.throws(() =>
       hook({ ...ctx, command: `${PY} tools/coop/run.py diff x --no-smt && echo --smt` } as never),
+    );
+  });
+
+  // Adversarial review C2: allowlist bypasses that previously passed.
+  const injectionBypasses = [
+    "ninja\nrm -rf build/pi-harness/snapshots",      // newline = second command
+    "ninja $(rm -rf build/pi-harness/snapshots)",    // command substitution
+    "ninja `rm -rf build/pi-harness/snapshots`",     // backticks
+    `${PY} tools/pi_harness/build_lock.py us -- python3 -c "print(open('/etc/passwd').read())"`, // build_lock passthrough
+    `${PY} tools/pi_harness/build_lock.py us -- git status`, // git behind passthrough
+  ];
+  for (const cmd of injectionBypasses) {
+    test(`BLOCKED (C2): ${cmd.slice(0, 70)}`, () => {
+      assert.throws(() => hook({ ...ctx, command: cmd } as never));
+    });
+  }
+
+  test("ALLOWED: build_lock.py wrapping an allowed inner command", () => {
+    assert.doesNotThrow(() =>
+      hook({ ...ctx, command: `${PY} tools/pi_harness/build_lock.py us -- ${PY} configure.py` } as never),
+    );
+    assert.doesNotThrow(() =>
+      hook({ ...ctx, command: `${PY} tools/pi_harness/build_lock.py us -- ninja` } as never),
+    );
+    assert.doesNotThrow(() =>
+      hook({ ...ctx, command: `${PY} tools/pi_harness/build_lock.py us -- ${PY} tools/coop/run.py size kyoshin/menu/CMenuMapSelect` } as never),
     );
   });
 });
@@ -438,18 +466,50 @@ describe("unit: parseCertifyRequests", () => {
 // Tool-set composition
 // ---------------------------------------------------------------------------
 describe("tool set composition", () => {
-  test("batchSessionTools contains exactly the 8 structured tools, no bash", () => {
-    const tools = batchSessionTools(REPO, PY);
+  test("batchSessionTools contains the structured tools + scoped edit/write, no bash", () => {
+    const tools = batchSessionTools(REPO, PY, ["src/kyoshin/foo.cpp"]);
     const names = tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ["certify", "ctx", "hexdiff", "kb", "symbols", "targets", "unit-status", "witness"]);
+    assert.deepEqual(names, ["certify", "ctx", "edit", "hexdiff", "kb", "symbols", "targets", "unit-status", "witness", "write"]);
   });
 
   test("tuFinalSessionTools = batch tools + bash", () => {
-    const tools = tuFinalSessionTools(REPO, PY);
+    const tools = tuFinalSessionTools(REPO, PY, ["src/kyoshin/foo.cpp"]);
     const names = tools.map((t) => t.name);
     assert.ok(names.includes("bash"), "tu-final must include bash behind the allowlist");
-    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"]) {
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status", "edit", "write"]) {
       assert.ok(names.includes(n), `tu-final must include ${n}`);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UNIT: scoped edit/write (adversarial review H4)
+// ---------------------------------------------------------------------------
+describe("scoped edit/write tools", () => {
+  const writable = ["src/kyoshin/foo.cpp", "src/kyoshin/foo.hpp"];
+  const edit = scopedEditTool(REPO, writable);
+  const write = scopedWriteTool(REPO, writable);
+
+  test("edit blocks an out-of-scope path", async () => {
+    await assert.rejects(
+      () =>
+        edit.execute("id", { path: "src/kyoshin/bar.cpp", edits: [{ oldText: "a", newText: "b" }] } as never, undefined as never, undefined as never, {} as never),
+      /outside the writable scope/,
+    );
+  });
+
+  test("edit allows an in-scope path", async () => {
+    // Must not throw a scope error (the file read itself may fail for a
+    // nonexistent fixture — that is a different, acceptable error).
+    const err = await edit.execute("id", { path: "src/kyoshin/foo.cpp", edits: [{ oldText: "a", newText: "b" }] } as never, undefined as never, undefined as never, {} as never)
+      .then(() => null, (e: Error) => e);
+    assert.ok(err === null || !/outside the writable scope/.test(err.message), "in-scope path must not be scope-blocked");
+  });
+
+  test("write blocks an out-of-scope path", async () => {
+    await assert.rejects(
+      () => write.execute("id", { path: "configure.py", content: "x" } as never, undefined as never, undefined as never, {} as never),
+      /outside the writable scope/,
+    );
   });
 });

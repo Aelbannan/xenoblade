@@ -31,6 +31,10 @@ export interface NearMissRow {
   sessionFile?: string;
   round?: number;
   ts: string;
+  /** Round dir (relative to the bank dir) this row's copies live in. Lets
+   *  restoreBankedDraft restore the BEST row's exact files instead of the
+   *  lexicographically-newest dir (adversarial review M4). */
+  roundDir?: string;
 }
 
 /** Status ladder rank from batch-cycle results; higher = closer to accept. */
@@ -142,13 +146,26 @@ export async function bankDraft(
   }
   if (bankedFiles.length === 0) return undefined;
   candidate.files = bankedFiles;
+  candidate.roundDir = `r${round ?? 0}-${Date.now()}`;
 
   // Append to the index (append-only; last row for a tid is not authoritative,
-  // readers reduce by betterThan — see bestBankedDraft).
+  // readers reduce by betterThan — see bestBankedDraft). Appends are
+  // serialised through a process-wide queue: parallel TU workers bank
+  // concurrently, and interleaved appendFile calls can corrupt the JSONL
+  // (adversarial review M3 — the same class of bug the ledger queue exists for).
   const idx = indexPath(repoRoot, config);
   await mkdir(dirname(idx), { recursive: true });
-  await appendFile(idx, JSON.stringify(candidate) + "\n", "utf-8");
+  await enqueueIndexAppend(idx, JSON.stringify(candidate) + "\n");
   return candidate;
+}
+
+/** In-process FIFO for index.jsonl appends (see M3). */
+let indexAppendQueue: Promise<void> = Promise.resolve();
+function enqueueIndexAppend(idxPath: string, line: string): Promise<void> {
+  indexAppendQueue = indexAppendQueue.then(async () => {
+    await appendFile(idxPath, line, "utf-8");
+  });
+  return indexAppendQueue;
 }
 
 /**
@@ -163,14 +180,30 @@ export async function restoreBankedDraft(
   if (!best) return 0;
   let restored = 0;
   for (const file of best.files) {
-    // Locate the newest round copy under the bank dir.
+    // Restore from the BEST row's own round dir (roundDir, recorded at bank
+    // time) — NOT the lexicographically-newest dir. With bankOnlyOnBetter the
+    // newest dir usually equals the best, but with bankOnlyOnBetter=false (or
+    // drifted index rows) the newest dir can hold a WORSE draft than the one
+    // bestBankedDraft selected (adversarial review M4).
     const dir = join(bankDirFor(repoRoot, config, best.unit, tid));
     if (!existsSync(dir)) continue;
-    const rounds = (await readdir(dir)).sort().reverse();
-    if (rounds.length === 0) continue;
-    const src = join(dir, rounds[0], file);
-    const dst = join(repoRoot, file);
+    const roundDir = best.roundDir;
+    if (!roundDir) {
+      // Legacy row without roundDir — fall back to the newest dir.
+      const rounds = (await readdir(dir)).sort().reverse();
+      if (rounds.length === 0) continue;
+      const src = join(dir, rounds[0], file);
+      if (existsSync(src)) {
+        const dst = join(repoRoot, file);
+        await mkdir(dirname(dst), { recursive: true });
+        await copyFile(src, dst);
+        restored++;
+      }
+      continue;
+    }
+    const src = join(dir, roundDir, file);
     if (existsSync(src)) {
+      const dst = join(repoRoot, file);
       await mkdir(dirname(dst), { recursive: true });
       await copyFile(src, dst);
       restored++;

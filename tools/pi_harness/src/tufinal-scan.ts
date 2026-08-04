@@ -144,6 +144,17 @@ export function scoreState(
   baseline: UnitScan,
   lintViolations: number,
 ): bigint {
+  // Build-broken / unverifiable guard (adversarial review C3): when the unit
+  // fails to build, scanUnitState returns an EMPTY scan (functions: []).
+  // diffUnitScans would then find ZERO regressions vacuously, overBudget=0
+  // and dataPercent=0, so the broken state could outscore a healthy baseline
+  // and be restored at end-of-session. Score any state that lost every
+  // function as worst possible so it can never win best-state selection.
+  if (baseline.functions.length > 0 && scan.functions.length === 0) {
+    // ~1e30: larger than any real score (max ~1e16), and no field can
+    // overflow into it.
+    return 1_000_000_000_000_000_000_000_000_000_000n;
+  }
   const deltas = diffUnitScans(baseline, scan);
   const regressed = deltas.filter((d) => d.regressed);
   const improved = deltas.filter((d) => !d.regressed);

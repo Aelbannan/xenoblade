@@ -21,11 +21,13 @@ Extra modes:
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -861,10 +863,19 @@ def run(argv: list[str] | None = None) -> int:
         print(f"ERROR: no decomp (base) object for unit {unit.name}", file=sys.stderr)
         return 1
 
-    # Build decomp if needed. Ninja's own .ninja_lock serialises concurrent
-    # builds in the shared build directory; no outer lock is needed.
+    # Build decomp if needed. Acquire the repo-wide build lock
+    # (`build/<region>/.hexdiff.lock` — the same advisory flock used by
+    # tools/pi_harness/build_lock.py) around the ninja invocation so hexdiff
+    # builds serialise against harness-driven builds (configure.py, ninja,
+    # batch-cycle). The README/AGENTS.md already claim hexdiff holds this
+    # lock; it did not, which let a TU-final configure.py race an agent's
+    # hexdiff build (adversarial review H5). Ninja's own .ninja_lock still
+    # serialises two ninja invocations, but configure.py regenerates the
+    # build graph outside ninja's lock.
     if not args.no_build:
         rel_path = str(decomp_path.relative_to(project.root))
+        lock_path = project.root / "build" / config.region / ".hexdiff.lock"
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
 
         def _run_build() -> subprocess.CompletedProcess:
             # Output redirected to stderr so --json stdout stays clean
@@ -874,9 +885,42 @@ def run(argv: list[str] | None = None) -> int:
                 timeout=args.build_timeout,
             )
 
+        lock_fd: Optional[int] = None
         try:
-            build_result = _run_build()
-        except subprocess.TimeoutExpired:
+            lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX)
+            except OSError:
+                # Lock not supported on this filesystem (NFS etc.) — build
+                # anyway; ninja's own lock still applies.
+                os.close(lock_fd)
+                lock_fd = None
+            if lock_fd is not None:
+                try:
+                    os.ftruncate(lock_fd, 0)
+                    os.lseek(lock_fd, 0, os.SEEK_SET)
+                    os.write(
+                        lock_fd,
+                        (json.dumps({"pid": os.getpid(), "ts": time.monotonic()})).encode(),
+                    )
+                except OSError:
+                    pass
+            try:
+                build_result = _run_build()
+            finally:
+                if lock_fd is not None:
+                    try:
+                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                    except OSError:
+                        pass
+                    os.close(lock_fd)
+        except Exception:
+            if lock_fd is not None:
+                try:
+                    os.close(lock_fd)
+                except OSError:
+                    pass
+            raise
             print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
                   file=sys.stderr)
             return 2

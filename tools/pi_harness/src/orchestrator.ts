@@ -49,6 +49,7 @@ import {
   runLint,
   buildUnit,
   runBatchCycle,
+  readBatchResults,
   runHexdiff,
   claimTargets,
   releaseTargets,
@@ -59,10 +60,30 @@ import {
 
 const OWNER = `pi-harness-${process.pid}`;
 
+/** True when a live PID is actually a pi-harness process (not a PID-reused
+ *  unrelated process). Best-effort: on macOS/Linux reads `ps -p <pid> -o
+ *  command=`; if ps is unavailable or errors, falls back to treating the
+ *  process as alive (conservative — no false release). */
+function isPiHarnessProcess(pid: number): boolean {
+  try {
+    const out = execFileSync("ps", ["-p", String(pid), "-o", "command="], {
+      encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    // The command line of a pi-harness worker contains "pi-harness" or
+    // "tsx src/index.ts". A reused PID pointing at some other program is not
+    // a claim owner and must be released (adversarial review K).
+    return /pi-harness|tsx\s+src\/index\.ts|run\.py\s+targets/i.test(out);
+  } catch {
+    // ps unavailable / errors — be conservative: assume it is a live harness.
+    return true;
+  }
+}
+
 /**
  * Find claims owned by dead pi-harness processes.
  * Scans targets.json for claims with owner matching `pi-harness-*`,
- * then checks if the owning process is still alive.
+ * then checks if the owning process is still alive AND actually a
+ * pi-harness process (guards against PID reuse marking a stale claim live).
  */
 function findOrphanedClaims(repoRoot: string): Array<{ id: string; owner: string }> {
   const orphaned: Array<{ id: string; owner: string }> = [];
@@ -77,11 +98,17 @@ function findOrphanedClaims(repoRoot: string): Array<{ id: string; owner: string
       // Extract PID from owner name.
       const pid = parseInt(t.claim.owner.replace("pi-harness-", ""), 10);
       if (isNaN(pid)) continue;
-      // Check if process is still alive.
+      // Check if the owning process is still alive AND still a harness.
+      let alive = false;
       try {
         process.kill(pid, 0); // Signal 0 = check existence
+        alive = true;
       } catch {
-        // Process doesn't exist — claim is orphaned.
+        alive = false;
+      }
+      if (!alive || !isPiHarnessProcess(pid)) {
+        // Process doesn't exist, or the PID was reused by a non-harness
+        // process — claim is orphaned.
         orphaned.push({ id: t.id, owner: t.claim.owner });
       }
     }
@@ -220,7 +247,34 @@ export async function runTus(
   process.on("SIGTERM", onSignal);
 
   try {
-    const pool = new ConcurrencyPool(config.maxParallelTUs);
+    // Detect overlapping writable scopes across the requested units. Two
+    // units can share a sibling header (same src/…/ dir); parallel TUs both
+    // snapshot and edit it, and one TU's restore can clobber the other's
+    // in-flight edits (adversarial review M7). When overlaps exist, serialize
+    // the run (concurrency 1) instead of risking cross-TU file races.
+    let effectiveParallel = config.maxParallelTUs;
+    if (units.length > 1) {
+      const scopes = new Map<string, Set<string>>();
+      for (const unit of units) {
+        const files = writableScopeForTargets(repoRoot, loadUnitTargets(repoRoot, config.region, unit));
+        scopes.set(unit, new Set(files));
+      }
+      const overlap = new Set<string>();
+      const seen = new Set<string>();
+      for (const [unit, files] of scopes) {
+        for (const f of files) {
+          if (seen.has(f)) overlap.add(f);
+          seen.add(f);
+        }
+      }
+      if (overlap.size > 0) {
+        process.stderr.write(
+          `[pi-harness] WARNING: overlapping writable scope across TUs (${[...overlap].join(", ")}) — serializing run (maxParallelTUs forced to 1) to prevent cross-TU clobbering\n`,
+        );
+        effectiveParallel = 1;
+      }
+    }
+    const pool = new ConcurrencyPool(effectiveParallel);
     for (const unit of units) {
       pool.add(async () => {
         try {
@@ -236,6 +290,10 @@ export async function runTus(
     }
     await pool.drain();
   } finally {
+    // Flush queued ledger appends before the process exits normally
+    // (drainLedger was previously only called on signals — cheap insurance
+    // against losing the final batch-accept / tu-final-done events).
+    await drainLedger();
     process.removeListener("SIGINT", onSignal);
     process.removeListener("SIGTERM", onSignal);
   }
@@ -675,7 +733,6 @@ function makeVerifyCallback(opts: {
   snapshot: Snapshot;
 }): VerifySession {
   const { repoRoot, config, unit, targetIds, targetSymbols, writable, snapshot } = opts;
-  let compilableSnapshot: Snapshot | null = null;
   let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
   let lastFeedback: string | undefined;
 
@@ -720,32 +777,13 @@ function makeVerifyCallback(opts: {
     const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
     process.stderr.write(`[orchestrator] ${unit}: buildUnit completed (ok=${build.ok})\n`);
     if (!build.ok) {
-      // If we have a compilable checkpoint (from prior lint pass that
-      // later broke), restore to it and tell the model what happened.
-      if (compilableSnapshot) {
-        await restoreSnapshot(repoRoot, compilableSnapshot);
-        compilableSnapshot = null;
-        lastFeedback =
-          `## Build Failure — Lint fix reverted\n\n` +
-          `Your lint fix broke compilation. The code has been reverted ` +
-          `to the last compilable state (which still has lint violations). ` +
-          `Re-apply the lint fix without breaking compilation.\n\n` +
-          `Build error from the broken attempt:\n\`\`\`\n${build.output}\n\`\`\``;
-        return { action: "re-prompt", feedback: lastFeedback };
-      }
-      // No checkpoint: keep broken code in place so the model can fix
-      // it with full context.
+      // Keep broken code in place so the model can fix it with full context.
       lastFeedback =
         `## Build Failure — Fix This First\n\n` +
         `Your code does not compile. Fix the errors below before ` +
         `continuing with any unmatched targets.\n\n` +
         `\`\`\`\n${build.output}\n\`\`\``;
       return { action: "re-prompt", feedback: lastFeedback };
-    }
-
-    // Build passed — clear any stale compilable checkpoint.
-    if (compilableSnapshot) {
-      compilableSnapshot = null;
     }
 
     // ── Acceptance (match check) — run before lint so we never
@@ -775,12 +813,22 @@ function makeVerifyCallback(opts: {
         });
       } else {
         appendLedger(repoRoot, config.ledgerPath, {
-          ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
+          // Distinct event: a failed certify is a witness cycle, NOT a model
+          // session — logging it as batch-cycle would make countLedgerSessions
+          // count it against the per-target session budget (M5).
+          ts: new Date().toISOString(), event: "certify-failed", tu: unit,
           detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: cid, status: "COMPILES" }], source: "certify-request-failed" },
         });
       }
     }
     if (certifyAccepted) {
+      // The witness cycles already updated the registry — read the batch
+      // results WITHOUT re-running batch-cycle (readBatchResults is a pure
+      // registry read). Without this, batchResults stays null and the caller
+      // treats the whole batch as "internal error", pushing every target
+      // (including the certified one) into pass-2 singleton retries
+      // (adversarial review H6).
+      batchResults = await readBatchResults(repoRoot, targetIds);
       return { action: "accept", reason: `CERTIFY: ${certifyAccepted}` };
     }
 
@@ -844,7 +892,10 @@ function makeVerifyCallback(opts: {
             return { action: "accept", reason: `${tid} certified at mismatch:0` };
           }
           appendLedger(repoRoot, config.ledgerPath, {
-            ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
+            // Distinct event (see certify-request-failed above): a failed
+            // 0-mismatch certify is a witness cycle, not a model session — do
+            // not count it against the per-target session budget (M5).
+            ts: new Date().toISOString(), event: "certify-failed", tu: unit,
             detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: tid, status: "COMPILES" }], source: "0-mismatch-certify-failed" },
           });
           continue;
@@ -856,11 +907,15 @@ function makeVerifyCallback(opts: {
         }
         // Bank the compiling draft (status from batch-cycle results).
         const status = batchResults?.find((r) => r.targetId === tid)?.status;
-        await bankTarget(tid, status, rePromptCount);
         // Stale-round tracking: no structural improvement for N rounds ->
         // stop THIS target's loop (cross-session budget still governs retries).
-        const prev = sessionBest.get(tid);
-        if (prev && hd.structuralCount >= prev.structural) {
+        // IMPORTANT: read the session-best BEFORE bankTarget — bankTarget
+        // folds the current count into sessionBest, so comparing after it
+        // would always see current >= best and increment staleRounds on every
+        // round, even when the target improved (adversarial review H1).
+        const prevBest = sessionBest.get(tid);
+        await bankTarget(tid, status, rePromptCount);
+        if (prevBest && hd.structuralCount >= prevBest.structural) {
           staleRounds.set(tid, (staleRounds.get(tid) ?? 0) + 1);
         } else {
           staleRounds.set(tid, 0);
@@ -976,9 +1031,8 @@ function makeVerifyCallback(opts: {
   };
 
   const cleanup = async (): Promise<void> => {
-    // compilableSnapshot is a temp directory; nothing we can easily
-    // delete, but we null the ref so it's not mistakenly used later.
-    compilableSnapshot = null;
+    // No per-phase temp state to release (lint gating is TU-final only).
+    return;
   };
 
   return {
@@ -1135,6 +1189,7 @@ async function runOneTu(
         sessionDir: join(config.sessionDir, sanitized, `batch-${batchIndex}`),
         label: `batch-${batchIndex}-session-1`,
         python: config.pythonBin,
+        writable,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
@@ -1184,6 +1239,10 @@ async function runOneTu(
             batchIndex, attempt: 1, outcome: sessionResult.outcome,
             rePromptsUsed: sessionResult.rePromptsUsed,
             lastRejection: sessionResult.lastRejection,
+            // Include the batch's target ids so the per-target session budget
+            // (countLedgerSessions / maxAttemptsPerTarget) counts batch
+            // exhaustions, not just singleton ones (adversarial review M5).
+            targetIds: currentIds,
           },
         });
         await releaseBatch(repoRoot, config, currentIds);
@@ -1284,7 +1343,6 @@ async function runOneTu(
       const ok = await runSingleton(
         repoRoot, unit, fid, config, modelRuntime, sanitized,
         targetCarryover.get(fid) || carryover, // Use per-target carryover if available
-        config.maxBatchRetries,
         siblingsByTarget,
       );
       if (!ok) {
@@ -1314,7 +1372,6 @@ async function runOneTu(
       const ok = await runSingleton(
         repoRoot, unit, fid, config, modelRuntime, sanitized,
         targetCarryover.get(fid) || carryover,
-        config.maxBatchRetries,
         siblingsByTarget,
       );
       if (!ok) {
@@ -1454,6 +1511,7 @@ async function runRebatchPhase(
           sessionDir: join(config.sessionDir, sanitized, `rebatch-${rbIdx}`),
           label: `rebatch-${rbIdx}-session`,
           python: config.pythonBin,
+          writable,
           timeoutMinutes: config.maxBatchMinutes,
           maxTokens: config.maxTokens,
           multiPrompt: {
@@ -1494,6 +1552,8 @@ async function runRebatchPhase(
               outcome: sessionResult.outcome, rePromptsUsed: sessionResult.rePromptsUsed,
               lastRejection: sessionResult.lastRejection,
               rebatchBudgetRemaining: rebatchBudget,
+              // See pass-1 exhaustions (M5): budget must count these too.
+              targetIds: rbCurrent,
             },
           });
           await releaseBatch(repoRoot, config, rbCurrent);
@@ -1517,10 +1577,12 @@ async function runRebatchPhase(
           const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
           recoveryOutput = recovery.output;
           if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
-        } else {
-          // Snapshot not taken yet — restore pre-loop state.
-          await restoreSnapshot(repoRoot, await snapshotUnit(repoRoot, unit, writable));
         }
+        // No snapshot -> the claim or snapshotUnit failed before any session
+        // ran, so no model edits were made for this batch; the worktree is
+        // already the pre-loop state (nothing to restore). The previous
+        // `restoreSnapshot(await snapshotUnit(...))` here was a no-op that
+        // snapshotted the current state and immediately restored it.
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-error", tu: unit,
           detail: { batchIndex: rbIdx, error: attemptError, recoveryOutput, phase: "rebatch", rebatchBudgetRemaining: rebatchBudget },
@@ -1590,7 +1652,7 @@ async function runRebatchPhase(
 async function runSingleton(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
   modelRuntime: ModelRuntime, sanitized: string,
-  carryover: string, maxBatchRetries: number,
+  carryover: string,
   siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): Promise<boolean> {
   const targets = loadUnmatchedTargets(repoRoot, config.region, unit).filter(
@@ -1662,6 +1724,7 @@ async function runSingleton(
         sessionDir: join(config.sessionDir, sanitized, `singleton-${targetId}`),
         label: `singleton-${targetId}-session-${sessionAttempt}`,
         python: config.pythonBin,
+        writable,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
@@ -1769,10 +1832,20 @@ async function runTuFinal(
   repoRoot: string, unit: string, config: HarnessConfig,
   modelRuntime: ModelRuntime, dryRun: boolean, sanitized: string,
 ): Promise<void> {
-  const writable = writableScopeForTargets(
+  let writable = writableScopeForTargets(
     repoRoot,
     loadUnitTargets(repoRoot, config.region, unit),
   );
+  // The TU-final model is instructed to flip the unit's object in
+  // configure.py from NonMatching to Matching. Include it in the writable
+  // scope so (a) the scoped edit/write tools allow the flip (H4), and (b) it
+  // is snapshotted/restored with everything else — a failed TU-final now
+  // reverts a model-made configure.py flip instead of leaving the unit
+  // marked Matching with regressed code (the previous restore never covered
+  // configure.py because it was outside the writable scope).
+  if (!writable.includes("configure.py")) {
+    writable = [...writable, "configure.py"];
+  }
   const sourceFiles = writable.filter(
     (f) => f.endsWith(".cpp") || f.endsWith(".c") || f.endsWith(".hpp") || f.endsWith(".h"),
   );
@@ -1849,6 +1922,7 @@ async function runTuFinal(
         label: attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`,
         kind: "tu-final",
         python: config.pythonBin,
+        writable,
         timeoutMinutes: tuFinalTimeout,
         maxTokens: config.maxTokens,
       });
@@ -1859,11 +1933,14 @@ async function runTuFinal(
       lastReason = "session-error";
       feedback = `The TU-final session itself failed: ${err instanceof Error ? err.message : String(err)}`;
       if (attempt < maxTuFinalAttempts) continue;
-      appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
-        detail: { reason: lastReason, error: err instanceof Error ? err.message : String(err) },
-      });
-      return;
+      // Fall through to the end-of-session restore: break out of the loop
+      // instead of returning early, so a final-attempt session error still
+      // restores the pristine snapshot (the previous early return skipped the
+      // restore and left the last attempt's state in the worktree —
+      // adversarial review F11).
+      buildOk = false;
+      recertOk = false;
+      break;
     }
 
     // ── Regression-aware state capture (AFTER each session, BEFORE gates) ──
@@ -1872,7 +1949,12 @@ async function runTuFinal(
     // regressed a match is scored worst and NEVER kept — even if it reduced
     // lint. Restore happens only at the very end, to the best snapshot.
     const currentScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
-    const lintAfter = await runLint(repoRoot, config.pythonBin, snapshot);
+    // Lint only the source files, not configure.py (which is in the writable
+    // scope for the flip but is not a C/C++ file runLint can diff).
+    const lintSnapshot: Snapshot = { ...snapshot, files: snapshot.files.filter(
+      (f) => f.endsWith(".cpp") || f.endsWith(".c") || f.endsWith(".hpp") || f.endsWith(".h"),
+    ) };
+    const lintAfter = await runLint(repoRoot, config.pythonBin, lintSnapshot);
     lintViolations = lintAfter.violations;
     const currentScore = scoreState(currentScan, baselineScan, lintAfter.violations.length);
     const unitFeedback = buildUnitFeedback(baselineScan, currentScan, lintAfter.violations.length);
@@ -2017,8 +2099,17 @@ async function runTuFinal(
         // batch-cycle exits non-zero when ANY target fails — re-check the
         // registry for the actual accepted set.
         const postStatus = new Map(loadUnitTargets(repoRoot, config.region, unit).map((t) => [t.id, t.status]));
-        const notAccepted = unitTargets.filter((t) =>
-          !(postStatus.get(t.id) === "FULL_MATCH" || postStatus.get(t.id) === "EQUIVALENT_MATCH" || postStatus.get(t.id) === "ACCEPTED"));
+        // A size-gate-failed target records FULL_MATCH but workflow BACKLOG —
+        // treat it as NOT re-certified (same gate as runBatchCycle/runWitnessCycle,
+        // adversarial review H2).
+        const postWorkflow = new Map(
+          loadUnitTargets(repoRoot, config.region, unit)
+            .map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
+        );
+        const notAccepted = unitTargets.filter((t) => {
+          const ok = postStatus.get(t.id) === "FULL_MATCH" || postStatus.get(t.id) === "EQUIVALENT_MATCH" || postStatus.get(t.id) === "ACCEPTED";
+          return !(ok && postWorkflow.get(t.id) !== "BACKLOG");
+        });
         if (notAccepted.length > 0) {
           recertOkLocal = false;
           lastReason = "recert-failed";
@@ -2040,14 +2131,26 @@ async function runTuFinal(
 
   // ── End-of-session restore: the ONLY restore point. If we did not finish
   //    with a clean lint + build, restore the best-scoring state captured
-  //    across attempts (match-regression-aware) — never the pristine
-  //    snapshot blindly, and never mid-session.
+  //    across attempts (match-regression-aware). When NO attempt beat the
+  //    baseline (bestSnapshot stays null — e.g. every attempt regressed a
+  //    match or build-broke), restore the pristine pre-session snapshot: the
+  //    comment previously claimed this fallback but the code did not do it,
+  //    leaving the last attempt's (possibly broken) state in the worktree
+  //    (adversarial review M2).
   const done = buildOk && recertOk;
-  if (!done && bestSnapshot) {
-    await restoreSnapshot(repoRoot, bestSnapshot);
-    process.stderr.write(
-      `[pi-harness] ${unit}: TU-final restored best-scoring state (score ${bestScore}, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})\n`,
-    );
+  if (!done) {
+    if (bestSnapshot) {
+      await restoreSnapshot(repoRoot, bestSnapshot);
+      process.stderr.write(
+        `[pi-harness] ${unit}: TU-final restored best-scoring state (score ${bestScore}, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})\n`,
+      );
+    } else {
+      // Pristine fallback: restore the pre-session snapshot.
+      await restoreSnapshot(repoRoot, snapshot);
+      process.stderr.write(
+        `[pi-harness] ${unit}: TU-final restored PRISTINE pre-session state (no attempt beat the baseline)\n`,
+      );
+    }
   }
 
   appendLedger(repoRoot, config.ledgerPath, {
@@ -2076,8 +2179,14 @@ async function runTuFinal(
 function handleSkipped(
   repoRoot: string, config: HarnessConfig, unit: string, targetId: string, reason: string,
 ): void {
+  // "no retail asm" is a TRANSIENT condition (the listing may be generated
+  // later); it must not permanently exhaust the target. target-skipped rows
+  // feed scanExhaustedTargets, which permanently excludes the target from
+  // future waves (adversarial review N). Use the distinct target-deferred
+  // event for transient skips so they stay retryable.
+  const event = reason === "no retail asm" ? "target-deferred" : "target-skipped";
   appendLedger(repoRoot, config.ledgerPath, {
-    ts: new Date().toISOString(), event: "target-skipped", tu: unit,
+    ts: new Date().toISOString(), event, tu: unit,
     detail: { targetId, reason },
   });
 }

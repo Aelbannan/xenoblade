@@ -31,7 +31,13 @@ import time
 
 # If the holder PID is alive but the lock is older than this (seconds),
 # send SIGKILL to the holder to unblock ourselves.
-STALE_TIMEOUT = 600
+#
+# Must EXCEED the longest legitimate hold: batch-cycle.py holds the lock up
+# to its own --timeout (1800s in the harness), and a TU-final configure/ninja
+# can hold it for the full build. A smaller stale threshold would SIGKILL a
+# live, legitimately-working holder mid-cycle (adversarial review H5).
+# Override with --stale-timeout N.
+STALE_TIMEOUT = 3600
 
 # Polling interval when waiting for the lock.
 POLL_INTERVAL = 2
@@ -71,7 +77,7 @@ def _write_lock_meta(fd: int) -> None:
     os.write(fd, meta.encode())
 
 
-def _try_kill_holder(lock_path: str) -> bool:
+def _try_kill_holder(lock_path: str, stale_timeout: int = STALE_TIMEOUT) -> bool:
     """If the holder is dead or stale, return True (caller should retry flock).
     If the holder is alive and not stale, return False."""
     meta = _read_lock_meta(lock_path)
@@ -87,7 +93,7 @@ def _try_kill_holder(lock_path: str) -> bool:
         # Holder is dead — kernel already released the flock.
         return True
 
-    if age > STALE_TIMEOUT:
+    if age > stale_timeout:
         # Holder is alive but stuck — kill it.
         print(
             f"build_lock: holder PID {pid} alive for {age:.0f}s, sending SIGKILL...",
@@ -108,13 +114,18 @@ def _try_kill_holder(lock_path: str) -> bool:
 def main() -> int:
     args = sys.argv[1:]
     timeout = 1800
-    if len(args) >= 2 and args[0] == "--timeout":
+    stale_timeout = STALE_TIMEOUT
+    while args and args[0] in ("--timeout", "--stale-timeout"):
+        flag = args.pop(0)
         try:
-            timeout = int(args[1])
-        except ValueError:
-            print("build_lock: --timeout must be an integer", file=sys.stderr)
+            val = int(args.pop(0))
+        except (ValueError, IndexError):
+            print(f"build_lock: {flag} must be an integer", file=sys.stderr)
             return 2
-        args = args[2:]
+        if flag == "--timeout":
+            timeout = val
+        else:
+            stale_timeout = val
     if len(args) < 2 or "--" not in args:
         print(__doc__, file=sys.stderr)
         return 2
@@ -171,7 +182,7 @@ def main() -> int:
             pass
 
         # Couldn't get the lock — check if we should kill the holder.
-        if _try_kill_holder(lock_path):
+        if _try_kill_holder(lock_path, stale_timeout):
             # Retry immediately after killing / detecting dead holder.
             try:
                 fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)

@@ -3356,6 +3356,7 @@ void __wudInstallPatchCallback(tBTM_VSC_CMPL* p1) {
 }
 
 void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
+    char* pMsg = _wudWiiRemoteDescriptor;
     u8 buf2[WUD_PATCH_BUFFER_SIZE + 1];
     u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
     u32 address;
@@ -3364,16 +3365,16 @@ void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
 
     if (p1 != NULL) {
         if (_wudPatchSize == _wudPatchOffset) {
-            _wudPatchNum = _wudWiiRemoteDescriptor[0x1A4];
             _wudInstallNum = 0;
+            _wudPatchNum = pMsg[0x1A4];
 
             length = MIN((s32)_wudPatchNum, WUD_MAX_PATCHES);
             buf2[0] = length;
-            memcpy(&buf2[1], &_wudWiiRemoteDescriptor[0x1A5],
+            memcpy(&buf2[1], &_wudWiiRemoteDescriptor[0x1A4] + 1,
                    length * sizeof(WUDPatchCmd));
 
             _wudInstallNum += length;
-            DEBUGPrint(_wudWiiRemoteDescriptor + 0x8C0);
+            DEBUGPrint(pMsg + 0x8C0);
 
             BTM_VendorSpecificCommand(BT_VSC_NINTENDO_INSTALL_PATCH,
                                       sizeof(u8) + length * sizeof(WUDPatchCmd),
@@ -3384,23 +3385,23 @@ void __wudWritePatchCallback(tBTM_VSC_CMPL* p1) {
             address = _wudPatchAddress + _wudPatchOffset;
 
             buf[0] = (u8)address;
-            buf[1] = (u8)(address >> 16);
-            buf[2] = (u8)(address >> 8);
+            buf[1] = (u8)(address >> 8);
+            buf[2] = (u8)(address >> 16);
             buf[3] = (u8)(address >> 24);
 
             for (i = 0; i < (s32)length; i++) {
-                buf[4 + i] = _wudWiiRemoteDescriptor[0xE8 + 8 + i];
+                buf[4 + i] = pMsg[0xE8 + 8 + _wudPatchOffset + i];
             }
 
             _wudPatchOffset += length;
-            DEBUGPrint(_wudWiiRemoteDescriptor + 0x8D8, length);
+            DEBUGPrint(pMsg + 0x8D8, length);
 
             BTM_VendorSpecificCommand(BT_VSC_NINTENDO_WRITE_PATCH,
                                       sizeof(u32) + length, buf,
                                       __wudWritePatchCallback);
         }
     } else {
-        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8B0);
+        DEBUGPrint(pMsg + 0x8B0);
         BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
     }
 }

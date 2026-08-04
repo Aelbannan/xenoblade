@@ -4,10 +4,14 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { join, resolve, isAbsolute } from "node:path";
-import type { HarnessConfig, ModelSpec, ThinkingLevel } from "./types.js";
+import type { HarnessConfig, ModelSpec, SelectionMode, ThinkingLevel } from "./types.js";
 
 const THINKING_LEVELS: readonly ThinkingLevel[] = [
   "off", "minimal", "low", "medium", "high", "xhigh",
+];
+
+const SELECTION_MODES: readonly SelectionMode[] = [
+  "claim-order", "similarity", "random",
 ];
 
 const DEFAULT_MODEL: ModelSpec = {
@@ -22,6 +26,7 @@ function defaultConfig(): HarnessConfig {
     cleanupModel: { ...DEFAULT_MODEL, thinkingLevel: "medium" },
     batchSize: 5,
     maxParallelTUs: 2,
+    selection: "claim-order", // call-graph wave stays the default
     maxBatchRetries: 2,
     singletonEnabled: true,
     rebatchEnabled: true,
@@ -29,9 +34,17 @@ function defaultConfig(): HarnessConfig {
     maxTokens: 0,
     singletonMinSize: 0,
     maxBriefChars: 80_000,
+    briefTargetChars: 12_000,
     maxBatchMinutes: 60,
     maxTimeoutRePrompts: 3,
     maxNoMatchRePrompts: 1,
+    maxAttemptsPerTarget: 4,
+    staleRoundThreshold: 2,
+    retryExhausted: false,
+    bankOnlyOnBetter: true,
+    nearmissDir: "build/pi-harness/nearmiss",
+    knownWallsPath: "docs/KNOWN_WALLS.md",
+    costModel: { inputPerM: 0, outputPerM: 0, cacheReadPerM: 0, cacheWritePerM: 0 },
     region: "us",
     sessionDir: "build/pi-harness/sessions",
     ledgerPath: "build/pi-harness/ledger.jsonl",
@@ -136,6 +149,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (!Number.isInteger(config.batchSize) || config.batchSize < 1) {
     throw new Error("config.batchSize must be an integer >= 1");
   }
+  if (!SELECTION_MODES.includes(config.selection)) {
+    throw new Error(`config.selection must be one of ${SELECTION_MODES.join(", ")}`);
+  }
   if (!Number.isInteger(config.maxParallelTUs) || config.maxParallelTUs < 1) {
     throw new Error("config.maxParallelTUs must be an integer >= 1");
   }
@@ -145,6 +161,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (!(config.maxBriefChars >= 1000)) {
     throw new Error("config.maxBriefChars must be >= 1000");
   }
+  if (!Number.isInteger(config.briefTargetChars) || config.briefTargetChars < 1) {
+    throw new Error("config.briefTargetChars must be an integer > 0");
+  }
   if (!(config.maxBatchMinutes > 0)) {
     throw new Error("config.maxBatchMinutes must be > 0");
   }
@@ -153,6 +172,30 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (typeof config.maxNoMatchRePrompts !== "number" || config.maxNoMatchRePrompts < 0 || !Number.isInteger(config.maxNoMatchRePrompts)) {
     throw new Error("config.maxNoMatchRePrompts must be an integer >= 0");
+  }
+  if (!Number.isInteger(config.maxAttemptsPerTarget) || config.maxAttemptsPerTarget < 1) {
+    throw new Error("config.maxAttemptsPerTarget must be an integer >= 1");
+  }
+  if (!Number.isInteger(config.staleRoundThreshold) || config.staleRoundThreshold < 1) {
+    throw new Error("config.staleRoundThreshold must be an integer >= 1");
+  }
+  if (typeof config.retryExhausted !== "boolean") {
+    throw new Error("config.retryExhausted must be a boolean");
+  }
+  if (typeof config.bankOnlyOnBetter !== "boolean") {
+    throw new Error("config.bankOnlyOnBetter must be a boolean");
+  }
+  if (typeof config.nearmissDir !== "string" || !config.nearmissDir) {
+    throw new Error("config.nearmissDir must be a non-empty string");
+  }
+  if (typeof config.knownWallsPath !== "string") {
+    throw new Error("config.knownWallsPath must be a string");
+  }
+  for (const k of ["inputPerM", "outputPerM", "cacheReadPerM", "cacheWritePerM"] as const) {
+    const v = config.costModel[k];
+    if (typeof v !== "number" || v < 0 || !Number.isFinite(v)) {
+      throw new Error(`config.costModel.${k} must be a number >= 0`);
+    }
   }
   validateModel(config.matchModel, "matchModel");
   validateModel(config.cleanupModel, "cleanupModel");

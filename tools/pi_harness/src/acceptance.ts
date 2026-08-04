@@ -218,6 +218,10 @@ export async function runBatchCycle(
 
 interface HexdiffJson {
   mismatch_count?: number;
+  structural_count?: number;
+  reg_swap_count?: number;
+  pure_reg_swap_count?: number;
+  size_check?: { ok?: boolean; over_by?: number } | null;
   reg_mapping?: Record<string, string>;
   instructions?: { match: boolean; retail_asm?: string; decomp_asm?: string }[];
 }
@@ -227,6 +231,15 @@ function extractHexdiffSummary(result: HexdiffJson): string {
   const parts: string[] = [];
   if (result.mismatch_count !== undefined) {
     parts.push(`mismatch_count: ${result.mismatch_count}`);
+  }
+  if (result.structural_count !== undefined) {
+    parts.push(`structural: ${result.structural_count}`);
+  }
+  if (result.reg_swap_count !== undefined) {
+    parts.push(`reg_swap: ${result.reg_swap_count}`);
+  }
+  if (result.size_check && result.size_check.ok === false) {
+    parts.push(`size_over_budget: ${result.size_check.over_by ?? "?"}`);
   }
   if (result.reg_mapping && Object.keys(result.reg_mapping).length > 0) {
     parts.push(`reg_mapping: ${JSON.stringify(result.reg_mapping)}`);
@@ -249,7 +262,7 @@ function extractHexdiffSummary(result: HexdiffJson): string {
 /**
  * Run hexdiff for a single symbol and return a compact mismatch summary.
  * Does NOT use build_lock.py — the object was just built by buildUnit/runBatchCycle.
- * Uses --no-lock to avoid flock deadlock with any concurrent build.
+ * Uses --no-build so hexdiff never re-invokes ninja (the object exists already).
  *
  * hexdiff exits 5 when there ARE mismatches (the useful case), so we
  * parse stdout from the error object rather than treating non-zero as failure.
@@ -259,28 +272,53 @@ export async function runHexdiff(
   python: string,
   unit: string,
   symbol: string,
-): Promise<{ ok: boolean; output: string; mismatchCount: number }> {
-  try {
-    const { stdout } = await execFilePromise(python, [
-      "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json", "--no-lock",
-    ], { cwd: repoRoot });
+  opts: { allowBuildRetry?: boolean } = {},
+): Promise<{ ok: boolean; output: string; mismatchCount: number; structuralCount: number }> {
+  const parse = (stdout: string) => {
     const result = JSON.parse(stdout) as HexdiffJson;
-    return { ok: true, output: extractHexdiffSummary(result), mismatchCount: result.mismatch_count ?? -1 };
-  } catch (err) {
-    // hexdiff exits 5 when there ARE mismatches — parse stdout from error.
-    const e = err as { stdout?: string; stderr?: string; code?: number; message?: string };
-    if (e.stdout) {
-      try {
-        const result = JSON.parse(e.stdout) as HexdiffJson;
-        return { ok: true, output: extractHexdiffSummary(result), mismatchCount: result.mismatch_count ?? -1 };
-      } catch {
-        // JSON parse failed — fall through to error path
+    return {
+      ok: true,
+      output: extractHexdiffSummary(result),
+      mismatchCount: result.mismatch_count ?? -1,
+      structuralCount: result.structural_count ?? -1,
+    };
+  };
+  const runOnce = async (noBuild: boolean) => {
+    const args = [
+      "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json",
+    ];
+    if (noBuild) args.push("--no-build");
+    try {
+      const { stdout } = await execFilePromise(python, args, { cwd: repoRoot });
+      return parse(stdout);
+    } catch (err) {
+      // hexdiff exits 5 when there ARE mismatches — parse stdout from error.
+      const e = err as { stdout?: string; stderr?: string; code?: number; message?: string };
+      if (e.stdout) {
+        try {
+          return parse(e.stdout);
+        } catch {
+          // JSON parse failed — fall through to error path
+        }
       }
+      return null;
     }
-    const output = ((e.stdout ?? "") + (e.stderr ?? "") || e.message || String(err)).slice(-1000);
-    process.stderr.write(`[pi-harness] WARNING: hexdiff failed for ${unit} ${symbol}: ${output.slice(0, 200)}\n`);
-    return { ok: false, output, mismatchCount: -1 };
+  };
+
+  // Fast path: the object was just built by buildUnit/runBatchCycle, so read
+  // it without re-invoking ninja. If that read fails (e.g. the object was
+  // mid-rebuild right after a batch-cycle per-target build — seen on the
+  // accept-path banking race), retry once letting hexdiff build it under
+  // ninja's own .ninja_lock. Never more than one retry.
+  let result = await runOnce(true);
+  if (!result && opts.allowBuildRetry) {
+    result = await runOnce(false);
   }
+  if (result) return result;
+
+  const output = `hexdiff failed for ${unit} ${symbol}`;
+  process.stderr.write(`[pi-harness] WARNING: ${output}\n`);
+  return { ok: false, output, mismatchCount: -1, structuralCount: -1 };
 }
 
 // ─────────────────────────────────────────────────────────────────────

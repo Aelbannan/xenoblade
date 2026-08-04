@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pi-harness viewer</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#151b23; --panel2:#1b2430; --border:#2a3341;
+  --text:#d9dee6; --muted:#8b95a3; --accent:#4f8cff; --green:#3fb950;
+  --amber:#d29922; --red:#f85149; --cyan:#39c5cf; --violet:#a371f7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;min-width:1280px}
+aside{width:232px;min-width:232px;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0}
+.brand{padding:18px 16px 12px;font-weight:700;font-size:16px;letter-spacing:.3px}
+.brand small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:3px}
+nav{padding:6px 10px;display:flex;flex-direction:column;gap:2px}
+nav button{background:none;border:1px solid transparent;color:var(--muted);text-align:left;
+  padding:9px 11px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit}
+nav button:hover{color:var(--text);background:var(--panel2)}
+nav button.active{color:#fff;background:var(--panel2);border-color:var(--border)}
+#side-status{margin-top:auto;padding:14px 16px;font-size:11px;color:var(--muted);
+  border-top:1px solid var(--border);line-height:1.7}
+#side-status .err{color:var(--red)}
+#side-status .ok{color:var(--green)}
+main{flex:1;margin-left:232px;padding:22px 28px;overflow-y:auto}
+section{display:none}
+section.active{display:block}
+h1{font-size:18px;margin-bottom:4px}
+h2{font-size:12px;margin:22px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.9px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.card .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.card .v{font-size:23px;font-weight:700;font-variant-numeric:tabular-nums}
+.card .v small{font-size:12px;color:var(--muted);font-weight:400}
+.card.green .v{color:var(--green)} .card.red .v{color:var(--red)}
+.card.amber .v{color:var(--amber)} .card.cyan .v{color:var(--cyan)}
+.card.violet .v{color:var(--violet)}
+table{width:100%;border-collapse:collapse;background:var(--panel);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+th{background:var(--panel2);color:var(--muted);text-align:left;padding:8px 12px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+td{padding:7px 12px;border-top:1px solid var(--border);vertical-align:top}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:rgba(255,255,255,.02)}
+.mono,td.num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;
+  white-space:nowrap;border:1px solid var(--border)}
+.chip.run{color:var(--green);border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.08)}
+.chip.done{color:var(--muted)}
+.chip.ok{color:var(--green);border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.08)}
+.chip.warn{color:var(--amber);border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
+.chip.info{color:var(--cyan);border-color:rgba(57,197,207,.4);background:rgba(57,197,207,.08)}
+.chip.bad{color:var(--red);border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.08)}
+.chip.dim{color:var(--muted)}
+.bar{height:8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;
+  overflow:hidden;display:flex;margin-top:8px}
+.bar-fill{background:var(--green);height:100%}
+.bar-skip{background:#3d4a5f;height:100%}
+.turow{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.turow-top{display:flex;align-items:center;gap:10px}
+.tu-name{color:var(--accent);text-decoration:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.tu-name:hover{text-decoration:underline}
+.tu-meta{color:var(--muted);font-size:12px;margin-top:3px}
+.empty{color:var(--muted);padding:16px;font-size:13px}
+a{color:var(--accent)}
+a:hover{text-decoration:none}
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.controls input[type=text]{background:var(--panel);border:1px solid var(--border);color:var(--text);
+  border-radius:6px;padding:8px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;width:380px}
+.controls input[type=text]:focus{outline:none;border-color:var(--accent)}
+.controls button{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:6px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px}
+.controls button:hover{border-color:var(--accent);color:#fff}
+#tu-status{color:var(--muted);font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips button{background:var(--panel);border:1px solid var(--border);color:var(--muted);
+  border-radius:14px;padding:4px 12px;cursor:pointer;font-size:12px;font-family:inherit}
+.chips button.active{color:#fff;border-color:var(--accent);background:rgba(79,140,255,.12)}
+.log-row{display:grid;grid-template-columns:150px 150px 1fr;gap:12px;padding:6px 12px;
+  border-top:1px solid var(--border);font-size:12px;align-items:baseline}
+.log-row:first-child{border-top:none}
+.log-time{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11px}
+.log-tu{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-summary{color:var(--text);overflow-wrap:anywhere}
+.ev-usage{color:var(--cyan)} .ev-ok{color:var(--green)}
+.ev-warn{color:var(--amber)} .ev-bad{color:var(--red)}
+.ev-dim{color:var(--muted)} .ev-info{color:var(--accent)}
+.session-row{display:grid;grid-template-columns:110px 1fr 180px 150px;gap:10px;
+  padding:6px 12px;border-top:1px solid var(--border);font-size:12px;align-items:baseline}
+.session-row:first-child{border-top:none}
+.session-row .tu{font-family:ui-monospace,Menlo,monospace;color:var(--accent);cursor:pointer}
+.badge{display:inline-block;padding:0 6px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.banked{color:var(--green);background:rgba(63,185,80,.12)}
+.badge.none{color:var(--muted);background:rgba(139,149,163,.12)}
+#toast{position:fixed;bottom:18px;right:18px;background:#3a1d1d;color:#ffb3b3;
+  border:1px solid var(--red);border-radius:8px;padding:10px 14px;font-size:12px;
+  display:none;max-width:420px;z-index:10}
+.cost-note{color:var(--muted);font-size:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand">pi-harness<small>TU batch decomp viewer</small></div>
+  <nav id="nav">
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="tu">TU detail</button>
+    <button data-view="cost">Cost</button>
+    <button data-view="log">Live log</button>
+  </nav>
+  <div id="side-status">connecting…</div>
+</aside>
+<main>
+  <!-- Dashboard -->
+  <section id="view-dashboard" class="active">
+    <h1>Dashboard</h1>
+    <div class="sub" id="d-sub">live TU progress from the pi-harness ledger</div>
+    <div class="cards">
+      <div class="card cyan"><div class="k">Live TUs</div><div class="v" id="d-tus">–</div></div>
+      <div class="card"><div class="k">Running</div><div class="v" id="d-running">–</div></div>
+      <div class="card green"><div class="k">Accepted</div><div class="v" id="d-accepted">–</div></div>
+      <div class="card"><div class="k">Skipped</div><div class="v" id="d-skipped">–</div></div>
+      <div class="card amber"><div class="k">Exhausted</div><div class="v" id="d-exhausted">–</div></div>
+      <div class="card violet"><div class="k" id="d-coin">$/match</div><div class="v" id="d-permatch">–</div></div>
+      <div class="card"><div class="k" id="d-coin2">Total</div><div class="v" id="d-totalcost">–</div></div>
+    </div>
+    <h2>Active runs</h2>
+    <div id="d-tulist"></div>
+    <h2>Recent sessions</h2>
+    <div id="d-sessions" class="session-box"></div>
+  </section>
+
+  <!-- TU detail -->
+  <section id="view-tu">
+    <h1>TU detail</h1>
+    <div class="sub">per-target status, attempts, near-miss drafts and transcript links</div>
+    <div class="controls">
+      <input id="tu-input" type="text" placeholder="unit path, e.g. kyoshin/CGame" list="tu-list">
+      <datalist id="tu-list"></datalist>
+      <button id="tu-go">Load</button>
+      <span id="tu-status"></span>
+    </div>
+    <div id="tu-transcripts"></div>
+    <h2>Targets</h2>
+    <div id="tu-table"></div>
+  </section>
+
+  <!-- Cost -->
+  <section id="view-cost">
+    <h1>Cost</h1>
+    <div class="sub">tokens and estimated spend from session-usage + batch results</div>
+    <div id="cost-summary" class="cards"></div>
+    <div class="cost-note" id="cost-note"></div>
+    <h2>Per TU</h2>
+    <div id="cost-tu"></div>
+    <h2>Per batch</h2>
+    <div id="cost-batch"></div>
+  </section>
+
+  <!-- Live log -->
+  <section id="view-log">
+    <h1>Live log</h1>
+    <div class="sub" id="log-count">ledger tail</div>
+    <div class="chips" id="log-chips"></div>
+    <div id="log-rows"></div>
+  </section>
+</main>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

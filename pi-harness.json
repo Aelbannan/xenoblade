@@ -1,6 +1,14 @@
 {
-  "matchModel": { "provider": "longcat", "model": "LongCat-2.0", "thinkingLevel": "off" },
-  "cleanupModel": { "provider": "longcat", "model": "LongCat-2.0", "thinkingLevel": "off" },
+  "matchModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  },
+  "cleanupModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "thinkingLevel": "off"
+  },
   "batchSize": 5,
   "maxParallelTUs": 2,
   "maxBatchRetries": 2,
@@ -9,11 +17,24 @@
   "maxRebatchAttempts": 0,
   "maxTokens": 0,
   "singletonMinSize": 500,
-  "maxBriefChars": 80000,
+  "maxBriefChars": 40000,
+  "briefTargetChars": 12000,
   "maxBatchMinutes": 45,
   "maxTimeoutRePrompts": 3,
   "maxNoMatchRePrompts": 1,
   "region": "us",
   "sessionDir": "build/pi-harness/sessions",
-  "ledgerPath": "build/pi-harness/ledger.jsonl"
+  "ledgerPath": "build/pi-harness/ledger.jsonl",
+  "costModel": {
+    "inputPerM": 0.14,
+    "outputPerM": 0.28,
+    "cacheReadPerM": 0.0028,
+    "cacheWritePerM": 0.0
+  },
+  "knownWallsPath": "docs/KNOWN_WALLS.md",
+  "nearmissDir": "build/pi-harness/nearmiss",
+  "maxAttemptsPerTarget": 4,
+  "staleRoundThreshold": 2,
+  "retryExhausted": false,
+  "bankOnlyOnBetter": true
 }

@@ -57,6 +57,41 @@ static void SIClearTCInterrupt(void) {
     SI_HW_REGS[SI_SICOMSCR] = csr;
 }
 
+static void GetTypeCallback(s32 chan, u32 status, OSContext* ctx);
+static void SIInterruptHandler(s16 intr, OSContext* ctx);
+u32 CompleteTransfer(void);
+void SIInit(void) {
+    static BOOL Initialized = FALSE;
+
+    if (Initialized) {
+        return;
+    }
+
+    OSRegisterVersion(__SIVersion);
+
+    Packet[SI_CHAN_0].chan = Packet[SI_CHAN_1].chan = Packet[SI_CHAN_2].chan =
+        Packet[SI_CHAN_3].chan = SI_CHAN_NONE;
+
+    Si.poll = 0;
+    SISetSamplingRate(0);
+
+    while (SI_HW_REGS[SI_SICOMSCR] & SI_SICOMCSR_TSTART) {
+        ;
+    }
+
+    SI_HW_REGS[SI_SICOMSCR] = SI_SICOMCSR_TCINT;
+
+    __OSSetInterruptHandler(OS_INTR_PI_SI, (OSInterruptHandler)SIInterruptHandler);
+    __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_SI));
+
+    SIGetType(SI_CHAN_0);
+    SIGetType(SI_CHAN_1);
+    SIGetType(SI_CHAN_2);
+    SIGetType(SI_CHAN_3);
+
+    Initialized = TRUE;
+}
+
 u32 CompleteTransfer(void) {
     u32 i;
     u32 sr;
@@ -108,8 +143,6 @@ u32 CompleteTransfer(void) {
 
     return sr;
 }
-
-static void GetTypeCallback(s32 chan, u32 status, OSContext* ctx);
 
 static void SIInterruptHandler(s16 intr, OSContext* ctx) {
     u32 comsr;
@@ -227,37 +260,6 @@ static void SIInterruptHandler(s16 intr, OSContext* ctx) {
     }
 }
 
-void SIInit(void) {
-    static BOOL Initialized = FALSE;
-
-    if (Initialized) {
-        return;
-    }
-
-    OSRegisterVersion(__SIVersion);
-
-    Packet[SI_CHAN_0].chan = Packet[SI_CHAN_1].chan = Packet[SI_CHAN_2].chan =
-        Packet[SI_CHAN_3].chan = SI_CHAN_NONE;
-
-    Si.poll = 0;
-    SISetSamplingRate(0);
-
-    while (SI_HW_REGS[SI_SICOMSCR] & SI_SICOMCSR_TSTART) {
-        ;
-    }
-
-    SI_HW_REGS[SI_SICOMSCR] = SI_SICOMCSR_TCINT;
-
-    __OSSetInterruptHandler(OS_INTR_PI_SI, (OSInterruptHandler)SIInterruptHandler);
-    __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_SI));
-
-    SIGetType(SI_CHAN_0);
-    SIGetType(SI_CHAN_1);
-    SIGetType(SI_CHAN_2);
-    SIGetType(SI_CHAN_3);
-
-    Initialized = TRUE;
-}
 
 static BOOL __SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr,
                          u32 inSize, SICallback callback) {
@@ -363,9 +365,9 @@ static void AlarmHandler(OSAlarm* alarm, OSContext* ctx) {
 BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
                 SICallback callback, s64 wait) {
     SIPacket* packet;
-    BOOL enabled;
     s64 start;
     s64 fire;
+    BOOL enabled;
 
     packet = &Packet[chan];
     enabled = OSDisableInterrupts();

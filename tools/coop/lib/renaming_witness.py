@@ -37,8 +37,14 @@ Gates (in order):
    (r3–r10, f1–f8), every register live-in at entry (any lane — not just the
    EABI argument ranges: a live-in r11/r12/r14–r31/f0/f9–f31 is an input the
    caller placed in a physical lane), and every volatile register live across
-   a call (opaque-EABI clobber set).  Nonvolatile permutations across calls
-   (e.g. r20<->r25, both preserved by EABI) are SOUND and are NOT pre-rejected
+   a call (opaque-EABI clobber set).  Round-3 review BLOCKER fix: at EVERY
+   call/tail-call site, rho must fix every lane the callee READS — precise
+   ``contract.reads`` when a contract exists, otherwise the EABI argument
+   window r3–r10 / f1–f8 (+ ps1 sub-lanes) — because a callee observes its
+   arguments in physical lanes and the F3 token canonicalization would hide a
+   rename of an observed lane from the structural comparison.  Nonvolatile
+   permutations across calls (e.g. r20<->r25, both preserved by EABI) are
+   SOUND and are NOT pre-rejected
    — that is the Chaitin-cycle class this feature exists for — but the pair
    must additionally PASS the per-terminal nonvolatile preservation check
    (F1, adversarial review 2026-08): each side must restore every nonvolatile
@@ -53,7 +59,11 @@ Gates (in order):
 Additional checks (adversarial review 2026-08, all fail-closed):
 - F3: the callee token is canonicalized through the rho (retail lane order)
   so opaque contracts certify the across-call Chaitin class; sound because a
-  genuine EABI callee observes only fixed/shared lanes.
+  genuine EABI callee observes only fixed/shared lanes — and round-3 review
+  now ENFORCES that: every lane a callee reads (``contract.reads``, or the
+  EABI argument window for opaque callees) is rho-fixed at each call site by
+  gate 5, so the canonicalization only ever reorders lanes the callee does
+  not observe.
 - S1: the terminal memory comparison is location-aware (stored ``pc+4``
   constants compare relative to the function base instead of over-rejecting).
 """
@@ -561,6 +571,82 @@ def _is_call(insn: Instruction) -> bool:
     )
 
 
+def _call_target(insn: Instruction) -> int | str | None:
+    """The callee key for a call/tail-call slot, or None for indirect calls
+    (bctrl/blrl) where the target is unknown — those fall back to the opaque
+    EABI envelope."""
+    if insn.relocation is not None:
+        return insn.relocation.canonical_symbol
+    if insn.opcode == Opcode.B:
+        return insn.operands[0]
+    if insn.opcode == Opcode.BC and len(insn.operands) > 2:
+        return insn.operands[2]
+    return None
+
+
+def _is_tail_call(insn: Instruction, by_index: dict[int, int], end_pc: int) -> bool:
+    """True when a non-link branch is a tail call: the branch leaves the
+    function to a callee the witness cannot see.  Non-link branches WITH a
+    relocation (the normal ``b <sym>`` tail-call form) are always tail calls;
+    relocation-less branches are tail calls only when the static target is
+    out-of-function (absolute form).  In-function gotos and branches to the
+    function end (fallthrough exit) are control flow, not tail calls."""
+    if insn.link or insn.opcode not in (Opcode.B, Opcode.BC):
+        return False
+    if insn.relocation is not None:
+        return True
+    target = (
+        insn.operands[0] if insn.opcode == Opcode.B else insn.operands[2]
+    )
+    return target not in by_index and target != end_pc
+
+
+def _call_observed_lanes(
+    instructions: list[Instruction],
+    callee_contracts: dict[int | str, Any],
+) -> frozenset[int]:
+    """Combined-numbering lanes a callee may READ at any call site (round-3
+    review BLOCKER: outgoing-argument false certificates).
+
+    A call (link ``b``/``bc``/``bctrl``/``blrl``) or a tail call (non-link
+    ``b``/``bc`` to an out-of-function target) hands EABI arguments to a
+    callee the proof cannot see.  A rho that renames a lane the callee READS
+    is observable — the physical callee reads the physical lane — and the F3
+    token canonicalization (semantics.py:4606) would hide the divergence
+    from the structural comparison.  Precise contracts declare the reads;
+    opaque ``*`` contracts (and unknown callees) conservatively expand to the
+    EABI argument window r3–r10 / f1–f8 (plus ps1 sub-lanes).  r1/r2/r13 are
+    unconditionally fixed anyway and memory is shared verbatim.
+    """
+    observed: set[int] = set()
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
+    end_pc = instructions[-1].address + 4 if instructions else 0
+    for insn in instructions:
+        if not (_is_call(insn) or _is_tail_call(insn, by_index, end_pc)):
+            continue
+        target = _call_target(insn)
+        contract = (
+            (callee_contracts or {}).get(target)
+            if target is not None else None
+        )
+        reads = getattr(contract, "reads", None)
+        if contract is None or reads is None or "*" in reads:
+            observed.update(_EABI_ARG_GPRS)
+            observed.update(32 + r for r in _EABI_ARG_FPRS)
+            observed.update(_PS1_OFFSET + r for r in _EABI_ARG_FPRS)
+            continue
+        for name in reads:
+            base = name[:-4] if name.endswith(".ps1") else name
+            if base.startswith("r") and base[1:].isdigit():
+                observed.add(int(base[1:]))
+            elif base.startswith("f") and base[1:].isdigit():
+                n = int(base[1:])
+                observed.add(32 + n)
+                if name.endswith(".ps1"):
+                    observed.add(_PS1_OFFSET + n)
+    return frozenset(observed)
+
+
 # Scalar single-precision FP arithmetic that defines ``ps1[fd]`` as a side
 # effect (semantics.py:4487-4488 ``if is_single: state.with_ps1(fd, d_bits)``
 # over ``_FP_SINGLE_ARITH``, semantics.py:2116-2118).  These are NOT on the
@@ -808,6 +894,31 @@ def _has_indirect_dispatch(instructions: list[Instruction]) -> bool:
             return True  # indirect branch / jump-table dispatch
         if op == Opcode.BCLR and insn.link:
             return True  # blrl — non-return indirect call
+    return False
+
+
+def _has_unmodeled_absolute_branch(instructions: list[Instruction]) -> bool:
+    """True when a non-link branch targets an out-of-function address without
+    a relocation (round-3 review BLOCKER: the absolute tail-call form).  The
+    executor records a ``direct-branch`` terminal for these instead of
+    failing closed, so the witness would compare states at the unmodeled
+    callee boundary — with ZERO callee contracts required — and could certify
+    a permuted-argument pair.  In-function gotos and branches to the function
+    end (fallthrough exit) are control flow, not tail calls."""
+    if not instructions:
+        return False
+    by_index = {insn.address: i for i, insn in enumerate(instructions)}
+    end_pc = instructions[-1].address + 4
+    for insn in instructions:
+        if insn.link or insn.opcode not in (Opcode.B, Opcode.BC):
+            continue
+        if insn.relocation is not None:
+            continue
+        target = (
+            insn.operands[0] if insn.opcode == Opcode.B else insn.operands[2]
+        )
+        if target not in by_index and target != end_pc:
+            return True
     return False
 
 
@@ -1304,6 +1415,26 @@ def _check_abi_fixedness(
         fixed_fpr.update(n - _PS1_OFFSET for n in live_in if n >= _PS1_OFFSET)
         fixed_gpr.update(n for n in live_across if n < 32)
         fixed_fpr.update(n - 32 for n in live_across if 32 <= n < _PS1_OFFSET)
+    # Round-3 review BLOCKER (outgoing-argument false certificates, GLM-5.2
+    # CX-A / Kimi escapes 1-5): a callee READS its argument lanes at every
+    # call/tail-call site.  A rho that renames a lane the callee observes is
+    # observable — the physical callee reads the physical lane — and the F3
+    # token canonicalization (semantics.py:4606) would hide the divergence
+    # from the structural comparison.  Precise contracts declare the reads;
+    # opaque ``*`` contracts and unknown callees conservatively read the EABI
+    # argument window r3–r10 / f1–f8 (+ ps1 sub-lanes).  This subsumes the
+    # r4/f1 tail-call cases in the A3 block above (the gate can only ever
+    # fix, never unfix) and enforces the doc-31 §2.5 call model for every
+    # call form.  Per-function, NOT per-region: a lane observed at any call
+    # site is fixed in every region's rho (over-fixing is sound).
+    for instructions in (original, candidate):
+        for lane in _call_observed_lanes(instructions, callee_contracts):
+            if lane < 32:
+                fixed_gpr.add(lane)
+            elif lane < _PS1_OFFSET:
+                fixed_fpr.add(lane - 32)
+            else:
+                fixed_fpr.add(lane - _PS1_OFFSET)
     # Validate the FULL permutation, not the partial rho (impl-review BLOCKER):
     # execution and the terminal comparison use ``gpr_perm()``/``fpr_perm()``,
     # whose canonical extension can map a fixed register non-identically when
@@ -1844,6 +1975,22 @@ def run_structural_witness(
             "target contains an indirect branch (bcctr/blrl); "
             "dispatch modeling deferred",
         ))
+    # Round-3 review BLOCKER (CX-B): a non-link branch to an out-of-function
+    # address without a relocation (absolute tail-call form) is not fail-
+    # closed by the executor — it records a ``direct-branch`` terminal — so
+    # the witness must reject it before execution.  Gate 5's call-observed
+    # lane rule would reject the permuted-argument shape anyway; this reject
+    # closes the unmodeled-callee boundary for every shape.
+    if (
+        _has_unmodeled_absolute_branch(original)
+        or _has_unmodeled_absolute_branch(candidate)
+    ):
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "loop",
+            "target contains an unmodeled absolute tail branch "
+            "(out-of-function non-link branch without a relocation); "
+            "dispatch modeling deferred",
+        ))
     ops = SymbolicOps()
     z3 = ops.z3
     gpr_perm = rho.gpr_perm()
@@ -2296,6 +2443,19 @@ def run_region_sliced_witness(
         return WitnessOutcome(False, failure=WitnessFailure(
             "loop",
             "target contains an indirect branch (bcctr/blrl); "
+            "dispatch modeling deferred",
+        ))
+    # Round-3 review BLOCKER (CX-B): unmodeled absolute tail branches must be
+    # rejected here too (the executor records a ``direct-branch`` terminal
+    # for them instead of failing closed).
+    if (
+        _has_unmodeled_absolute_branch(original)
+        or _has_unmodeled_absolute_branch(candidate)
+    ):
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "loop",
+            "target contains an unmodeled absolute tail branch "
+            "(out-of-function non-link branch without a relocation); "
             "dispatch modeling deferred",
         ))
     spans_r = _loop_spans(original, local_symbol=local_symbol)

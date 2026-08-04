@@ -156,6 +156,14 @@ export async function runAgentSession(opts: {
     thinkingLevel: spec.thinkingLevel,
     modelRuntime,
     sessionManager: SessionManager.create(repoRoot, sessionDir),
+    // Pin the exact built-in tool surface. The xenoblade-decomp workflow is
+    // CLI-driven (hexdiff/run.py via bash) and the skill mandates those tools;
+    // an explicit allowlist stops future SDK default tool additions from
+    // silently leaking into headless batch sessions. `bash` is load-bearing
+    // (hexdiff + run.py diff/size/symbols are bash invocations); the model is
+    // prevented from running cycle/batch-cycle/ninja/configure/git by prompt
+    // + snapshot-restore, and acceptance is harness-owned regardless.
+    tools: ["read", "bash", "edit", "write", "grep", "find", "ls"],
   });
 
   // Transcript writes are serialised — concurrent fire-and-forget writeFile

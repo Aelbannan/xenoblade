@@ -706,9 +706,9 @@ s8 select_2obj_first(KPADInternal* kp) {
     f32 s;
     Vec2 n;
 
-    one = 1.0f;
     best = kp_err_first_inpr;
-    zero = 0.0f;
+    zero = float_8066C0B0;
+    one = float_8066C0BC;
 
     op1 = kp->kobj_sample;
     do {

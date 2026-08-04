@@ -4,6 +4,12 @@
 
 export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 
+/** Batch-selection mode (Phase 4). Default stays "claim-order" — the
+ *  call-graph wave must remain authoritative; "similarity" re-ranks the
+ *  call-graph-ready subset by opcode similarity to matched siblings, and
+ *  "random" is a plain uniform shuffle of the wave. */
+export type SelectionMode = "claim-order" | "similarity" | "random";
+
 export interface ModelSpec {
   provider: string;
   model: string;
@@ -15,6 +21,7 @@ export interface HarnessConfig {
   cleanupModel: ModelSpec;
   batchSize: number;
   maxParallelTUs: number;
+  selection: SelectionMode;
   maxBatchRetries: number;
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
@@ -28,6 +35,10 @@ export interface HarnessConfig {
    *  rebatch instead of singleton retries. 0 = all use singletons. */
   singletonMinSize: number;
   maxBriefChars: number;
+  /** Per-target ASM share cap inside a batch brief (chars): one huge
+   *  target can't eat the whole budget; freed headroom is redistributed
+   *  to the remaining targets. */
+  briefTargetChars: number;
   maxBatchMinutes: number;
   region: string;
   sessionDir: string;
@@ -40,6 +51,29 @@ export interface HarnessConfig {
   /** In-session re-prompts when the model completed but code still
    *  fails (not a timeout). Lower cap avoids entrenchment on dead ends. */
   maxNoMatchRePrompts: number;
+  /** Unified per-target session budget across pass1 + singleton + rebatch. */
+  maxAttemptsPerTarget: number;
+  /** Consecutive verify rounds with no divergence improvement before early-stop. */
+  staleRoundThreshold: number;
+  /** Re-attempt targets the ledger marked exhausted on a previous run. */
+  retryExhausted: boolean;
+  /** Only bank a near-miss draft that beats the stored best (composite score). */
+  bankOnlyOnBetter: boolean;
+  /** Near-miss draft bank (whole-file snapshots + index.jsonl). */
+  nearmissDir: string;
+  /** Curated known-walls doc (repo-relative, e.g. docs/KNOWN_WALLS.md) included
+   *  in the brief. Empty = omit. */
+  knownWallsPath: string;
+  /** Token price model for $/match reporting (0 = not priced). */
+  costModel: CostModel;
+}
+
+/** Per-million-token prices for cost accounting (0 = not priced). */
+export interface CostModel {
+  inputPerM: number;
+  outputPerM: number;
+  cacheReadPerM: number;
+  cacheWritePerM: number;
 }
 
 export interface Target {
@@ -52,6 +86,12 @@ export interface Target {
   kind?: string;
   size?: number;
   callgraph_source?: string;
+  /** Call-graph fields mirrored from tools/coop/targets.json — used by the
+   *  similarity re-ranker to keep selection call-graph-ready. */
+  called_functions?: string[];
+  unresolved_called_functions?: string[];
+  has_indirect_calls?: boolean;
+  callgraph_status?: string;
 }
 
 export interface TargetBrief {
@@ -59,6 +99,21 @@ export interface TargetBrief {
   symbol: string;
   demangled: string;
   retailAsm: string;
+  /** Optional banked near-miss draft note (Phase 2): where the previous
+   *  best compiling draft lives + its divergence, so the next session
+   *  refines from it instead of starting from scratch. */
+  draftNote?: string;
+  /** Phase 4 sibling pointers: matched same-unit functions with a similar
+   *  opcode profile. Pointer only — NO source bodies (files are
+   *  multi-function, e.g. CGame.cpp holds hundreds of targets). */
+  siblings?: SiblingPointer[];
+}
+
+/** A matched sibling the similarity re-ranker flagged for this target. */
+export interface SiblingPointer {
+  symbol: string;
+  unit: string;
+  status: string;
 }
 
 export interface BatchResult {

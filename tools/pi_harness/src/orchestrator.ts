@@ -20,16 +20,21 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import type {
-  HarnessConfig, Target, TargetBrief, SessionUsage, VerifyResult,
+  HarnessConfig, Target, TargetBrief, SessionUsage, VerifyResult, SiblingPointer,
 } from "./types.js";
 import {
   findClaimsByOwner,
   loadUnmatchedTargets,
   loadUnitTargets,
   writableScopeForTargets,
+  targetStatusById,
+  isCallGraphReady,
 } from "./targets.js";
 import { extractRetailAsm, buildBatchBrief } from "./brief.js";
 import { appendLedger, readLedger, drainLedger } from "./ledger.js";
+import {
+  bankDraft, bestBankedDraft, draftNoteFor, restoreBankedDraft,
+} from "./nearmiss.js";
 import { buildBatchPrompt, buildTuFinalPrompt } from "./prompts.js";
 import { runAgentSession, type SessionRunResult } from "./session.js";
 import {
@@ -137,6 +142,25 @@ export async function runTus(
 ): Promise<void> {
   const modelRuntime = await ModelRuntime.create();
 
+  // Fail fast on a misconfigured model BEFORE claiming targets or spawning
+  // TU workers. runAgentSession would throw mid-run otherwise, burning an
+  // entire TU's claims + a wall-clock session on a config typo (the ledger
+  // has ~113 batch-error events from exactly this: "Model X not found").
+  for (const [label, spec] of [
+    ["matchModel", config.matchModel],
+    ["cleanupModel", config.cleanupModel],
+  ] as const) {
+    if (!modelRuntime.getModel(spec.provider, spec.model)) {
+      const available = await modelRuntime.getAvailable();
+      const names = available.map((m) => `${m.provider}/${m.id}`).join(", ");
+      throw new Error(
+        `[preflight] ${label} "${spec.provider}/${spec.model}" not found. ` +
+          `Available models: ${names || "(none configured)"}. ` +
+          `Fix pi-harness.json before running.`,
+      );
+    }
+  }
+
   // Release claims left behind by crashed/killed previous runs.
   // With PID-based owners, we release:
   // 1. Claims from this exact process (in case of restart with same PID)
@@ -215,6 +239,7 @@ export async function runTus(
 function buildBriefs(
   repoRoot: string,
   targets: Target[],
+  siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): { briefs: TargetBrief[]; missingAsm: string[] } {
   const briefs: TargetBrief[] = [];
   const missingAsm: string[] = [];
@@ -232,10 +257,161 @@ function buildBriefs(
       );
       continue;
     }
-    briefs.push({ targetId: t.id, symbol: t.symbol, demangled: t.function, retailAsm: asm });
+    const siblings = siblingsByTarget?.get(t.id);
+    briefs.push({
+      targetId: t.id,
+      symbol: t.symbol,
+      demangled: t.function,
+      retailAsm: asm,
+      ...(siblings && siblings.length > 0 ? { siblings } : {}),
+    });
   }
   return { briefs, missingAsm };
 }
+
+/**
+ * Attach the best banked near-miss draft note to each brief (Phase 2
+ * refine-from-draft). Async — reads the nearmiss index.
+ */
+async function attachBankedDrafts(
+  repoRoot: string,
+  config: HarnessConfig,
+  briefs: TargetBrief[],
+): Promise<TargetBrief[]> {
+  if (!config.nearmissDir) return briefs;
+  const withDraft: TargetBrief[] = [];
+  for (const b of briefs) {
+    const best = await bestBankedDraft(repoRoot, config, b.targetId);
+    if (best) {
+      withDraft.push({ ...b, draftNote: draftNoteFor(best) });
+    } else {
+      withDraft.push(b);
+    }
+  }
+  return withDraft;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Phase 4: similarity-anchored selection (re-ranker, never a replacer)
+// ─────────────────────────────────────────────────────────────────────
+
+interface SimilarityRank {
+  score: number;
+  topSiblings: SiblingPointer[];
+}
+
+/** Run `tools/coop/sim_schedule.py --json` for the unit (read-only) and
+ *  parse its JSONL output into targetId -> {score, topSiblings}. Returns an
+ *  empty map on any failure — callers fall back to claim-order. */
+function fetchSimilarityRanking(
+  repoRoot: string,
+  unit: string,
+  config: HarnessConfig,
+): Map<string, SimilarityRank> {
+  const ranking = new Map<string, SimilarityRank>();
+  let stdout: string;
+  try {
+    stdout = execFileSync(
+      config.pythonBin,
+      ["tools/coop/sim_schedule.py", "--unit", unit, "--json"],
+      { cwd: repoRoot, encoding: "utf-8", timeout: 30_000, maxBuffer: 64 * 1024 * 1024 },
+    );
+  } catch (err) {
+    process.stderr.write(
+      `[pi-harness] ${unit}: sim_schedule.py failed ` +
+        `(${err instanceof Error ? err.message : String(err)}) — falling back to claim-order\n`,
+    );
+    return ranking;
+  }
+  for (const line of stdout.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    let row: unknown;
+    try {
+      row = JSON.parse(trimmed);
+    } catch {
+      continue; // tolerate malformed rows
+    }
+    const rec = row as {
+      targetId?: unknown; score?: unknown; topSiblings?: unknown;
+    };
+    if (typeof rec.targetId !== "string" || typeof rec.score !== "number") continue;
+    const topSiblings: SiblingPointer[] = [];
+    if (Array.isArray(rec.topSiblings)) {
+      for (const s of rec.topSiblings) {
+        const sb = s as { symbol?: unknown; unit?: unknown; status?: unknown };
+        if (typeof sb.symbol === "string" && typeof sb.status === "string") {
+          topSiblings.push({ symbol: sb.symbol, unit: typeof sb.unit === "string" ? sb.unit : "", status: sb.status });
+        }
+      }
+    }
+    ranking.set(rec.targetId, { score: rec.score, topSiblings });
+  }
+  return ranking;
+}
+
+interface SelectionResult {
+  ordered: Target[];
+  siblingsByTarget: Map<string, SiblingPointer[]>;
+}
+
+/** Order the unmatched wave for pass 1.
+ *  - "claim-order": unchanged (call-graph wave stays the default).
+ *  - "random": plain uniform Fisher-Yates shuffle of the wave.
+ *  - "similarity": intersect the sim_schedule ranking with the
+ *    call-graph-ready subset (leaf, or every callee FULL_MATCH /
+ *    EQUIVALENT_MATCH), re-rank that subset by similarity score, then append
+ *    the rest of the wave as fallback so a small ready set never starves a
+ *    batch. Also returns per-target sibling pointers for the briefs. */
+async function applySelection(
+  repoRoot: string,
+  unit: string,
+  config: HarnessConfig,
+  targets: Target[],
+): Promise<SelectionResult> {
+  const empty: SelectionResult = { ordered: targets, siblingsByTarget: new Map() };
+
+  if (config.selection === "random") {
+    const copy = [...targets];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return { ordered: copy, siblingsByTarget: new Map() };
+  }
+
+  if (config.selection !== "similarity") return empty;
+
+  const ranking = fetchSimilarityRanking(repoRoot, unit, config);
+  if (ranking.size === 0) return empty; // sim_schedule unavailable -> claim-order
+
+  const statusById = targetStatusById(repoRoot);
+  const ready: Target[] = [];
+  const fallback: Target[] = [];
+  for (const t of targets) {
+    (isCallGraphReady(t, statusById) ? ready : fallback).push(t);
+  }
+
+  // Re-rank the call-graph-ready subset by similarity; unranked targets
+  // (e.g. in-progress statuses sim_schedule skips) sort to the back of the
+  // ready subset. Tie-break by id for determinism.
+  ready.sort((a, b) => {
+    const sa = ranking.get(a.id)?.score ?? -1;
+    const sb = ranking.get(b.id)?.score ?? -1;
+    return sb - sa || a.id.localeCompare(b.id);
+  });
+
+  // Sibling pointers attach to every ranked target in the wave (ready and
+  // fallback alike) — they are hints, not readiness claims.
+  const siblingsByTarget = new Map<string, SiblingPointer[]>();
+  for (const t of targets) {
+    const rank = ranking.get(t.id);
+    if (rank && rank.topSiblings.length > 0) siblingsByTarget.set(t.id, rank.topSiblings);
+  }
+
+  return { ordered: [...ready, ...fallback], siblingsByTarget };
+}
+
 
 function usageFromError(err: unknown): SessionUsage | null {
   const usage = (err as { usage?: unknown })?.usage;
@@ -316,6 +492,36 @@ function makeVerifyCallback(opts: {
   let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
   let lastFeedback: string | undefined;
 
+  // Phase 2/3 state: per-target best divergence seen THIS session + how many
+  // consecutive no-match rounds it has failed to improve (stale-round
+  // early-stop). structuralCount is the codegen-shape signal (reg_swap is
+  // noise for the SMT-equivalence acceptance model).
+  const sessionBest = new Map<string, { structural: number; mismatch: number }>();
+  const staleRounds = new Map<string, number>();
+
+  /** Best-effort bank of a failed target's compiling draft (whole-file). */
+  const bankTarget = async (tid: string, status: string | undefined, round: number): Promise<void> => {
+    const sym = targetSymbols.get(tid);
+    if (!sym) return;
+    try {
+      // allowBuildRetry: the accept-path runs right after batch-cycle's
+      // per-target rebuilds, so the --no-build read can race a mid-write
+      // object — retry with a build before giving up on banking.
+      const hd = await runHexdiff(repoRoot, config.pythonBin, unit, sym, { allowBuildRetry: true });
+      if (!hd.ok) return; // hexdiff failed — never bank on a blind draft
+      await bankDraft(
+        repoRoot, config, unit, tid, writable,
+        status, hd.structuralCount, hd.mismatchCount, undefined, round,
+      );
+      const prev = sessionBest.get(tid);
+      if (!prev || hd.structuralCount < prev.structural) {
+        sessionBest.set(tid, { structural: hd.structuralCount, mismatch: hd.mismatchCount });
+      }
+    } catch {
+      // banking is best-effort — never fail the session over it
+    }
+  };
+
   const onVerify = async (
     _finalText: string,
     timedOut: boolean,
@@ -362,6 +568,11 @@ function makeVerifyCallback(opts: {
     const acceptedCount = batchResults.filter(r => r.accepted).length;
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle completed (${acceptedCount} accepted)\n`);
     if (acceptedCount > 0) {
+      // Partial accept: bank the FAILED targets too — their drafts are in
+      // the worktree right now and would otherwise die unbanked (Phase 2).
+      for (const r of batchResults) {
+        if (!r.accepted) await bankTarget(r.targetId, r.status, rePromptCount);
+      }
       return { action: "accept" };
     }
 
@@ -388,14 +599,44 @@ function makeVerifyCallback(opts: {
       return { action: "fail", reason: lastFeedback };
     }
 
-    // Haven't hit cap yet — re-prompt with hexdiff feedback
+    // Haven't hit cap yet — re-prompt with hexdiff feedback, banking each
+    // failed target's compiling draft BEFORE the caller restores the
+    // snapshot (Phase 2), and early-stopping stale rounds (Phase 3).
     const hexdiffOutputs: string[] = [];
+    // Phase 2 triage: track reg-swap-only targets (structural=0, mismatch>0) —
+    // code structure is right, only register allocation differs; the witness
+    // path (batch-cycle runs it every round) may certify without more edits.
+    const regSwapOnlyTargets: string[] = [];
     for (const tid of targetIds) {
       const sym = targetSymbols.get(tid);
       if (!sym) continue;
       const hd = await runHexdiff(repoRoot, config.pythonBin, unit, sym);
       if (hd.ok) {
         hexdiffOutputs.push(`### ${tid} (\`${sym}\`) — ${hd.mismatchCount} mismatch(es)\n${hd.output}`);
+        if (hd.structuralCount === 0 && hd.mismatchCount > 0) {
+          regSwapOnlyTargets.push(tid);
+        }
+        // Bank the compiling draft (status from batch-cycle results).
+        const status = batchResults?.find((r) => r.targetId === tid)?.status;
+        await bankTarget(tid, status, rePromptCount);
+        // Stale-round tracking: no structural improvement for N rounds ->
+        // stop THIS target's loop (cross-session budget still governs retries).
+        const prev = sessionBest.get(tid);
+        if (prev && hd.structuralCount >= prev.structural) {
+          staleRounds.set(tid, (staleRounds.get(tid) ?? 0) + 1);
+        } else {
+          staleRounds.set(tid, 0);
+        }
+        if ((staleRounds.get(tid) ?? 0) >= config.staleRoundThreshold) {
+          process.stderr.write(
+            `[pi-harness] stale-round early-stop for ${tid} (structural stuck at ${hd.structuralCount} for ${staleRounds.get(tid)} round(s))\n`,
+          );
+          lastFeedback =
+            `Target ${tid} has not improved its divergence for ${staleRounds.get(tid)} round(s) — ` +
+            `stopping this attempt (structural=${hd.structuralCount}, mismatch=${hd.mismatchCount}). ` +
+            `Its best draft is banked; a later pass will refine from it.`;
+          return { action: "fail", reason: lastFeedback };
+        }
       } else {
         process.stderr.write(`[pi-harness] hexdiff failed for ${tid}: ${hd.output.slice(0, 200)}\n`);
       }
@@ -411,6 +652,14 @@ function makeVerifyCallback(opts: {
       `- Expression order (affects MWCC register allocation)\n` +
       `- Signed vs unsigned comparison\n` +
       `- Missing or extra function calls`;
+    if (regSwapOnlyTargets.length > 0) {
+      lastFeedback += `\n\n### Reg-swap-only (structure correct)\n\n` +
+        `These targets have structural=0 — the code shape is right and only ` +
+        `register allocation differs: ${regSwapOnlyTargets.join(", ")}. The ` +
+        `register-renaming witness may certify them without further edits. If ` +
+        `they were not accepted this round, try ONE small structural nudge ` +
+        `(declaration order / statement order) and stop — do not grind.`;
+    }
     return { action: "re-prompt", feedback: lastFeedback };
   };
 
@@ -440,7 +689,10 @@ async function runOneTu(
   dryRun: boolean,
 ): Promise<void> {
   const sanitized = unit.replace(/\//g, "__");
-  const targets = loadUnmatchedTargets(repoRoot, config.region, unit);
+  const targetsRaw = loadUnmatchedTargets(repoRoot, config.region, unit, {
+    ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
+  });
+  const { ordered: targets, siblingsByTarget } = await applySelection(repoRoot, unit, config, targetsRaw);
 
   if (targets.length === 0) {
     const entries = readLedger(repoRoot, config.ledgerPath).filter((e) => e.tu === unit);
@@ -478,7 +730,8 @@ async function runOneTu(
     const batchIds = allIds.slice(batchIndex, batchIndex + config.batchSize);
     const batchTargets = targets.filter((t) => batchIds.includes(t.id));
 
-    const { briefs, missingAsm } = buildBriefs(repoRoot, batchTargets);
+    const { briefs: rawBriefs, missingAsm } = buildBriefs(repoRoot, batchTargets, siblingsByTarget);
+    const briefs = await attachBankedDrafts(repoRoot, config, rawBriefs);
     for (const id of missingAsm) {
       if (!dryRun) handleSkipped(repoRoot, config, unit, id, "no retail asm");
     }
@@ -491,7 +744,8 @@ async function runOneTu(
     const brief = buildBatchBrief({
       targets: briefs, unit, writable, carryover,
       maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
-      repoRoot,
+      repoRoot, knownWallsPath: config.knownWallsPath,
+      briefTargetChars: config.briefTargetChars,
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: currentIds, pythonBin: config.pythonBin,
@@ -677,6 +931,7 @@ async function runOneTu(
         repoRoot, unit, fid, config, modelRuntime, sanitized,
         targetCarryover.get(fid) || carryover, // Use per-target carryover if available
         config.maxBatchRetries,
+        siblingsByTarget,
       );
       if (!ok) {
         handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
@@ -689,6 +944,7 @@ async function runOneTu(
     const { skipped: rebatchSkipped, targetCarryover: rebatchCarryover } = await runRebatchPhase(
       repoRoot, unit, config, modelRuntime, sanitized,
       smallRetryPool, targets, carryover, config.maxRebatchAttempts,
+      siblingsByTarget,
     );
     // Merge rebatch carryover into the main map for singleton routing.
     for (const [id, fb] of rebatchCarryover) {
@@ -705,6 +961,7 @@ async function runOneTu(
         repoRoot, unit, fid, config, modelRuntime, sanitized,
         targetCarryover.get(fid) || carryover,
         config.maxBatchRetries,
+        siblingsByTarget,
       );
       if (!ok) {
         handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
@@ -718,10 +975,25 @@ async function runOneTu(
     return;
   }
 
-  const remaining = loadUnmatchedTargets(repoRoot, config.region, unit);
+  const remaining = loadUnmatchedTargets(repoRoot, config.region, unit, {
+    ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
+  });
   if (remaining.length === 0) {
     await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
   } else {
+    // Phase 3 escape: if every remaining target is ledger-exhausted (budget
+    // spent, not just un-attempted), TU-final is still worthwhile — the
+    // exhaustions are stable, so running the finalization pass can't regress
+    // them and unblocks the unit's data/rename/comment work. Without this,
+    // early-stop on the last few targets deadlocks the TU forever.
+    const exhaustedAll = remaining.every((t) => countLedgerSessions(repoRoot, config, t.id) >= config.maxAttemptsPerTarget);
+    if (exhaustedAll) {
+      process.stderr.write(
+        `[pi-harness] ${unit}: all ${remaining.length} remaining target(s) are ledger-exhausted — running TU-final anyway\n`,
+      );
+      await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
+      return;
+    }
     appendLedger(repoRoot, config.ledgerPath, {
       ts: new Date().toISOString(), event: "tu-incomplete", tu: unit,
       detail: { remainingCount: remaining.length, stuckIds: remaining.map((t) => t.id) },
@@ -745,7 +1017,7 @@ async function runRebatchPhase(
   repoRoot: string, unit: string, config: HarnessConfig,
   modelRuntime: ModelRuntime, sanitized: string,
   smallRetryPool: string[], targets: Target[], carryover: string,
-  maxAttempts: number,
+  maxAttempts: number, siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): Promise<{ skipped: string[]; targetCarryover: Map<string, string> }> {
   const uniqueSmall = [...new Set(smallRetryPool)];
   const targetCarryover = new Map<string, string>();
@@ -783,7 +1055,8 @@ async function runRebatchPhase(
     const rbIds = uniqueSmall.slice(rbIdx, rbIdx + config.batchSize);
     const rbTargets = smallTargets.filter((t) => rbIds.includes(t.id));
 
-    const { briefs: rbBriefs, missingAsm: rbMissing } = buildBriefs(repoRoot, rbTargets);
+    const { briefs: rbRawBriefs, missingAsm: rbMissing } = buildBriefs(repoRoot, rbTargets, siblingsByTarget);
+    const rbBriefs = await attachBankedDrafts(repoRoot, config, rbRawBriefs);
     for (const id of rbMissing) {
       handleSkipped(repoRoot, config, unit, id, "no retail asm");
     }
@@ -800,7 +1073,8 @@ async function runRebatchPhase(
       const brief = buildBatchBrief({
         targets: rbBriefs, unit, writable, carryover: sharedCarryover,
         maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
-        repoRoot,
+        repoRoot, knownWallsPath: config.knownWallsPath,
+        briefTargetChars: config.briefTargetChars,
       });
       const prompt = buildBatchPrompt({
         brief, unit, targetIds: rbCurrent, pythonBin: config.pythonBin,
@@ -961,7 +1235,8 @@ async function runRebatchPhase(
 async function runSingleton(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
   modelRuntime: ModelRuntime, sanitized: string,
-  carryover: string, maxAttempts: number,
+  carryover: string, maxBatchRetries: number,
+  siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): Promise<boolean> {
   const targets = loadUnmatchedTargets(repoRoot, config.region, unit).filter(
     (t) => t.id === targetId,
@@ -970,18 +1245,35 @@ async function runSingleton(
 
   const target = targets[0];
   const writable = writableScopeForTargets(repoRoot, [target]);
-  const { briefs, missingAsm } = buildBriefs(repoRoot, [target]);
+  const { briefs: rawBriefs, missingAsm } = buildBriefs(repoRoot, [target], siblingsByTarget);
+  const briefs = await attachBankedDrafts(repoRoot, config, rawBriefs);
   if (missingAsm.length > 0) return false;
 
   let feedback = carryover;
 
-  console.log(`[pi-harness] ${unit}: starting singleton for ${targetId} (up to ${maxAttempts} session(s))`);
+  // Phase 3: unified per-target budget across runs. Count prior sessions the
+  // ledger recorded for this target (batch/rebatch/singleton all log
+  // batch-cycle or batch-session-exhausted rows mentioning the target), then
+  // cap this singleton's iterations so pass1+rebatch+singleton never exceed
+  // maxAttemptsPerTarget in total.
+  const ledgerAttempts = countLedgerSessions(repoRoot, config, targetId);
+  const budgetRemaining = Math.max(0, config.maxAttemptsPerTarget - ledgerAttempts);
+  if (budgetRemaining <= 0) {
+    process.stderr.write(
+      `[pi-harness] ${unit}: ${targetId} already exhausted ${ledgerAttempts} session(s) >= maxAttemptsPerTarget — skipping\n`,
+    );
+    handleSkipped(repoRoot, config, unit, targetId, "maxAttemptsPerTarget exhausted (ledger)");
+    return false;
+  }
+  const maxAttempts = Math.min(config.maxBatchRetries, budgetRemaining);
+  console.log(`[pi-harness] ${unit}: starting singleton for ${targetId} (up to ${maxAttempts} session(s); ledger says ${ledgerAttempts} so far)`);
 
   for (let sessionAttempt = 1; sessionAttempt <= maxAttempts; sessionAttempt++) {
     const brief = buildBatchBrief({
       targets: briefs, unit, writable, carryover: feedback,
       maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
-      repoRoot,
+      repoRoot, knownWallsPath: config.knownWallsPath,
+      briefTargetChars: config.briefTargetChars,
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
@@ -991,6 +1283,18 @@ async function runSingleton(
     try {
       await claimBatch(repoRoot, config, [targetId]);
       snapshot = await snapshotUnit(repoRoot, unit, writable);
+
+      // Phase 2 refine-from-draft: if a banked draft exists, restore it into
+      // the worktree so the session resumes FROM the draft, not from the
+      // pristine snapshot (which would throw the previous best away).
+      try {
+        const restored = await restoreBankedDraft(repoRoot, config, targetId);
+        if (restored > 0) {
+          process.stderr.write(`[pi-harness] ${unit}: restored ${restored} banked draft file(s) for ${targetId}\n`);
+        }
+      } catch {
+        // best-effort — fall back to the pristine snapshot
+      }
 
       const singletonSymbols = new Map([[targetId, target.symbol]]);
       const verify = makeVerifyCallback({
@@ -1220,4 +1524,27 @@ function handleSkipped(
     ts: new Date().toISOString(), event: "target-skipped", tu: unit,
     detail: { targetId, reason },
   });
+}
+
+/**
+ * Count sessions the ledger recorded for one target (Phase 3 unified budget).
+ * Scans batch-cycle / batch-accept / batch-rejected / batch-session-exhausted
+ * rows mentioning the target id. O(ledger) single pass — the ledger is small
+ * enough that one scan per singleton is fine.
+ */
+function countLedgerSessions(
+  repoRoot: string, config: HarnessConfig, targetId: string,
+): number {
+  const events = readLedger(repoRoot, config.ledgerPath);
+  let n = 0;
+  for (const e of events) {
+    const d = (e as { detail?: Record<string, unknown> }).detail ?? {};
+    if (e.event === "batch-session-exhausted" || e.event === "batch-rejected") {
+      if (d.targetId === targetId || (Array.isArray(d.targetIds) && (d.targetIds as string[]).includes(targetId))) n++;
+    } else if (e.event === "batch-cycle" || e.event === "batch-accept") {
+      const results = Array.isArray(d.results) ? (d.results as Array<{ targetId?: string }>) : [];
+      if (results.some((r) => r.targetId === targetId)) n++;
+    }
+  }
+  return n;
 }

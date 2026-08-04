@@ -3,8 +3,9 @@
 // ---------------------------------------------------------------------------
 
 import { readFileSync, existsSync } from "node:fs";
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, isAbsolute } from "node:path";
 import type { Target } from "./types.js";
+import { scanExhaustedTargets } from "./ledger.js";
 
 interface RawTarget {
   id: string;
@@ -17,6 +18,10 @@ interface RawTarget {
   size?: number | string;
   region?: string;
   callgraph_source?: string;
+  called_functions?: string[];
+  unresolved_called_functions?: string[];
+  has_indirect_calls?: boolean;
+  callgraph_status?: string;
   claim?: { owner?: string } | null;
   [key: string]: unknown;
 }
@@ -63,6 +68,10 @@ function toTarget(raw: RawTarget): Target {
     kind: raw.kind,
     size,
     callgraph_source: raw.callgraph_source,
+    called_functions: raw.called_functions,
+    unresolved_called_functions: raw.unresolved_called_functions,
+    has_indirect_calls: raw.has_indirect_calls,
+    callgraph_status: raw.callgraph_status,
   };
 }
 
@@ -109,13 +118,45 @@ export function loadUnitTargets(
   return filtered;
 }
 
-/** Load only unmatched (not FULL_MATCH / EQUIVALENT_MATCH) targets for a unit. */
+/** Optional filtering for loadUnmatchedTargets. Shape-compatible with the
+ *  `ledgerPath` / `retryExhausted` fields of HarnessConfig, so a config object
+ *  can be passed directly as `options`. */
+export interface UnmatchedOptions {
+  /** JSONL ledger path (absolute, or repo-root relative). When set and
+   *  `retryExhausted` is false, targets the ledger marked exhausted are
+   *  removed from the result. */
+  ledgerPath?: string;
+  /** Re-attempt targets the ledger marked exhausted (default: false). */
+  retryExhausted?: boolean;
+}
+
+/** Load only unmatched (not FULL_MATCH / EQUIVALENT_MATCH) targets for a unit.
+ *  Pass `options` to additionally subtract targets marked exhausted in the
+ *  ledger (a no-op when no ledgerPath is given, so existing callers are
+ *  unaffected). */
 export function loadUnmatchedTargets(
   repoRoot: string,
   region: string,
   unit: string,
+  options?: UnmatchedOptions,
 ): Target[] {
-  return loadUnitTargets(repoRoot, region, unit, false);
+  const targets = loadUnitTargets(repoRoot, region, unit, false);
+  if (!options?.ledgerPath || options.retryExhausted) return targets;
+
+  const absLedger = isAbsolute(options.ledgerPath)
+    ? options.ledgerPath
+    : join(repoRoot, options.ledgerPath);
+  const exhausted = scanExhaustedTargets(absLedger);
+  if (exhausted.size === 0) return targets;
+
+  const filtered = targets.filter((t) => !exhausted.has(t.id));
+  const skipped = targets.length - filtered.length;
+  if (skipped > 0) {
+    process.stderr.write(
+      `[pi-harness] skipping ${skipped} exhausted target(s) (use retryExhausted to override)\n`,
+    );
+  }
+  return filtered;
 }
 
 /** Per-TU match summary. */
@@ -188,6 +229,37 @@ export function findClaimsByOwner(repoRoot: string, owner: string): string[] {
     }
   }
   return ids;
+}
+
+// ── Call-graph readiness (Phase 4 similarity re-ranker) ───────────────────
+
+const ACCEPTED_MATCH = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
+
+/** Map of target id -> match status across the whole registry. Callees can
+ *  live in other units, so readiness must be computed against the full file,
+ *  not just the unit's own target list. */
+export function targetStatusById(repoRoot: string): Map<string, string> {
+  const statuses = new Map<string, string>();
+  for (const raw of readTargetsFile(repoRoot)) {
+    statuses.set(raw.id, raw.status);
+  }
+  return statuses;
+}
+
+/** Mirror of `run.py harness --selection ready`
+ *  (tools/coop/lib/targets.py::harness_targets): leaf = no direct,
+ *  unresolved, or indirect calls; otherwise every direct callee must already
+ *  be FULL_MATCH / EQUIVALENT_MATCH. Lenient when callgraph fields are
+ *  absent (treated as leaf) so a small ready set never starves a batch — the
+ *  hard callee gate stays in `run.py cycle`, which fails closed on
+ *  unaccepted callees regardless of this ranking. */
+export function isCallGraphReady(target: Target, statusById: Map<string, string>): boolean {
+  const unresolved = target.unresolved_called_functions ?? [];
+  if (unresolved.length > 0) return false;
+  if (target.has_indirect_calls) return false;
+  const called = target.called_functions ?? [];
+  if (called.length === 0) return true;
+  return called.every((id) => ACCEPTED_MATCH.has(statusById.get(id) ?? ""));
 }
 
 /**

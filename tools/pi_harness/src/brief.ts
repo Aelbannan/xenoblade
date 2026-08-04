@@ -207,8 +207,12 @@ export function buildBatchBrief(opts: {
   pythonBin: string;
   repoRoot?: string;
   headerBudget?: number;
+  knownWallsPath?: string;
+  /** Per-target ASM share cap (chars). Defaults to the equal share when
+   *  unset, preserving the pre-cap behavior. */
+  briefTargetChars?: number;
 }): string {
-  const { targets: targetList, unit, writable, carryover, maxChars, pythonBin, repoRoot, headerBudget } = opts;
+  const { targets: targetList, unit, writable, carryover, maxChars, pythonBin, repoRoot, headerBudget, knownWallsPath, briefTargetChars } = opts;
   const n = targetList.length;
 
   const heading =
@@ -257,6 +261,24 @@ export function buildBatchBrief(opts: {
       "\n```\n\n";
   }
 
+  let wallsSection = "";
+  if (repoRoot && knownWallsPath) {
+    try {
+      const wallsPath = join(repoRoot, knownWallsPath);
+      if (existsSync(wallsPath)) {
+        const walls = readFileSync(wallsPath, "utf-8").slice(0, 4000);
+        if (walls.trim()) {
+          wallsSection = "## Known walls (do not grind these)\n\n";
+          wallsSection += "Proven-unreachable / fixed-codegen shapes. If a target collapses to exactly " +
+            "one of these, stop early and let acceptance decide — do not keep iterating.\n\n";
+          wallsSection += "```text\n" + walls.trim().replace(/`{3,}/g, "'''") + "\n```\n\n";
+        }
+      }
+    } catch {
+      // walls doc is best-effort — never fail the brief over it
+    }
+  }
+
   const closing =
     "Work the targets in order: read the current source and the retail ASM, " +
     "edit, hexdiff, iterate. When finished, end your final message with a " +
@@ -267,27 +289,71 @@ export function buildBatchBrief(opts: {
   const asmFooter = "\n```\n\n";
 
   function targetBlock(i: number, t: TargetBrief, asmBody: string): string {
+    const draftSection = t.draftNote
+      ? `
+> **Banked draft (Phase 2):** ${t.draftNote.replace(/`{3,}/g, "'''")}
+`
+      : "";
+    // Phase 4 sibling pointers — compact, pointer-only, one line each.
+    const siblingsSection =
+      t.siblings && t.siblings.length > 0
+        ? "\n" +
+          t.siblings
+            .map((s) => `> Similar matched siblings (mimic their codegen pattern): ${s.symbol} (${s.status})`)
+            .join("\n") +
+          "\n"
+        : "";
     return (
       `## Target ${i}: ${t.targetId}\n\n` +
       `- mangled symbol: \`${t.symbol}\`\n` +
       `- demangled: \`${t.demangled}\`\n\n` +
+      draftSection +
+      siblingsSection +
       asmHeader + asmBody + asmFooter
     );
   }
 
-  const fixed = heading + overview + writableSection + headersSection + rulesSection(pythonBin) + carryoverSection + closing;
+  const fixed = heading + overview + writableSection + headersSection + wallsSection + rulesSection(pythonBin) + carryoverSection + closing;
   let overhead = 0;
   for (let i = 0; i < n; i++) overhead += targetBlock(i + 1, targetList[i], "").length;
 
   const headroom = maxChars - fixed.length - overhead;
-  const share = n > 0 ? Math.floor(headroom / n) : 0;
+  const baseShare = n > 0 ? Math.floor(headroom / n) : 0;
+  // Per-target ASM share cap (config `briefTargetChars`): one huge target
+  // can't eat the whole budget. Falls back to the equal share when unset.
+  const perTargetCap = briefTargetChars && briefTargetChars > 0 ? briefTargetChars : baseShare;
+  const share = Math.min(baseShare, perTargetCap);
 
   let bodies: string[];
   if (headroom <= 0 || n === 0 || share <= 0) {
     bodies = new Array<string>(n).fill("*[retail ASM omitted — too large for the prompt budget]*\n");
   } else {
-    bodies = targetList.map((t) => {
-      const truncated = truncateAsm(t.retailAsm, share);
+    // Capped equal share per target; the headroom the cap freed is then
+    // redistributed round-robin so small targets still get their full ASM.
+    // Targets that already fit, and giants (ASM larger than the pre-cap
+    // equal share — the very budget hogs the cap exists for), are skipped,
+    // so the freed headroom flows to the targets that can still show more
+    // of their ASM. No target ever exceeds the pre-cap equal share.
+    const budgets = new Array<number>(n).fill(share);
+    let freed = headroom - share * n;
+    let idx = 0;
+    while (freed > 0) {
+      let progressed = false;
+      for (let lap = 0; lap < n && freed > 0; lap++) {
+        const i = (idx + lap) % n;
+        const asmLen = targetList[i].retailAsm.length;
+        if (asmLen > baseShare) continue;            // giant: stays capped
+        if (asmLen <= budgets[i]) continue;          // full ASM already fits
+        const inc = Math.min(freed, asmLen - budgets[i]);
+        budgets[i] += inc;
+        freed -= inc;
+        progressed = true;
+      }
+      if (!progressed) break;
+      idx = (idx + 1) % n;
+    }
+    bodies = targetList.map((t, i) => {
+      const truncated = truncateAsm(t.retailAsm, budgets[i]);
       return truncated || "*[retail ASM omitted — too large for its share of the prompt budget]*\n";
     });
   }
@@ -295,5 +361,5 @@ export function buildBatchBrief(opts: {
   let blocks = "";
   for (let i = 0; i < n; i++) blocks += targetBlock(i + 1, targetList[i], bodies[i]);
 
-  return heading + overview + writableSection + headersSection + blocks + rulesSection(pythonBin) + carryoverSection + closing;
+  return heading + overview + writableSection + headersSection + wallsSection + blocks + rulesSection(pythonBin) + carryoverSection + closing;
 }

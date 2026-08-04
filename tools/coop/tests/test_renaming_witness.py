@@ -425,6 +425,190 @@ class AcrossCallTests(unittest.TestCase):
         self.assertTrue(outcome.certified, outcome.failure)
 
 
+class CallArgumentFixednessTests(unittest.TestCase):
+    """Round-3 adversarial review BLOCKER regressions (GLM-5.2 CX-A/CX-B,
+    Kimi escapes 1-5): a callee READS its argument lanes, so rho must fix
+    every lane the callee observes at every call/tail-call site.  Precise
+    contracts declare reads; opaque ``*`` contracts conservatively read the
+    EABI argument window r3-r10 / f1-f8 (+ ps1 sub-lanes)."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+    _BL = 0x48000001
+
+    def _pair(self, r_words, d_words, relocs_r=(), relocs_d=None):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=relocs_r,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False,
+            relocations=relocs_r if relocs_d is None else relocs_d,
+        )
+        return original, candidate
+
+    def test_permuted_bl_arguments_opaque_rejected(self) -> None:
+        # GLM CX-A: retail passes (r5=7, r6=8) as args, decomp (r5=8, r6=7);
+        # a callee computing sub r3,r5,r6 returns -1 vs +1.  Opaque contract:
+        # the EABI arg window is observed -> r5/r6 must be fixed.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
+        r = [li(5, 7), li(6, 8), self._BL, self._BLR]
+        d = [li(6, 7), li(5, 8), self._BL, self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+            declared_return="i32",
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_permuted_single_bl_argument_opaque_rejected(self) -> None:
+        # Kimi escape 1: li r5,7; bl vs li r9,7; bl (rho {5:9}).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r = [li(5, 7), self._BL, self._BLR]
+        d = [li(9, 7), self._BL, self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_precise_contract_reads_permuted_argument_rejected(self) -> None:
+        # Kimi escape 3: a PRECISE contract reads={r5} with rho renaming
+        # r5->r9 must reject (the callee genuinely reads r5).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r = [li(5, 7), self._BL, self._BLR]
+        d = [li(9, 7), self._BL, self._BLR]
+        reads_r5 = {
+            "callee": CalleeContract(
+                frozenset({"r5"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=reads_r5,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_precise_contract_not_reading_lane_accepts_dead_swap(self) -> None:
+        # Control: a precise contract reads={r3} (only) with a dead r5<->r6
+        # swap at the call site is still SOUND and certifies — the callee
+        # does not observe r5/r6 (their values were consumed before the call).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        reloc = (RelocationRef(12, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(11, 5), _enc_primary(32, 5, 3, 0), _enc_primary(36, 5, 3, 4),
+                   self._BL, mr(3, 11), self._BLR]
+        d_words = [li(11, 5), _enc_primary(32, 6, 3, 0), _enc_primary(36, 6, 3, 4),
+                   self._BL, mr(3, 11), self._BLR]
+        precise = {
+            "callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
+        outcome = certify_renaming_witness(
+            *self._pair(r_words, d_words, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=precise,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_permuted_fpr_argument_opaque_rejected(self) -> None:
+        # Kimi escape 4: fmr f5,f0; bl vs fmr f9,f0; bl — f5/f9 are FP
+        # argument lanes -> must be fixed under an opaque contract.
+        fmr = lambda fd, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fb & 31) << 11) | (72 << 1)
+        )
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r = [fmr(5, 0), self._BL, self._BLR]
+        d = [fmr(9, 0), self._BL, self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_tail_call_permuted_argument_opaque_rejected(self) -> None:
+        # Kimi escape 5: li r5,7; b callee (relocated tail call) vs
+        # li r9,7; b callee — the tail callee reads r5 as an argument.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r = [li(5, 7), 0x48000000]
+        d = [li(9, 7), 0x48000000]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_region_boundary_rebind_of_argument_rejected(self) -> None:
+        # Kimi escape 2: the region path splits at the call site and rebinds
+        # r5/r9 at the boundary; the per-region gate 5 must fix the observed
+        # argument lanes in EVERY region and reject the pre-call rho {5:9}.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        reloc = (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r = [li(5, 7), self._BL, li(6, 1), mr(3, 6), self._BLR]
+        d = [li(9, 7), self._BL, li(5, 1), mr(3, 5), self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d, reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_absolute_tail_branch_rejected_with_zero_contracts(self) -> None:
+        # GLM CX-B: non-link absolute b (AA=1) to an out-of-function address
+        # is neither extracted nor fail-closed by the executor; the witness
+        # must reject it outright (unmodeled absolute tail branch).  With a
+        # permuted EABI ARGUMENT lane the gate-5 observed-lane rule fires
+        # first; the driver-level reject closes the non-arg shape.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        b_abs = (18 << 26) | 2 | 0x00140000  # b 0x00500000 (AA=1)
+        r = [li(5, 7), b_abs]
+        d = [li(6, 7), b_abs]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d),
+            assumed_callees=frozenset(),
+            callee_contracts={},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_absolute_tail_branch_non_argument_permute_rejected(self) -> None:
+        # The residual CX-B shape: a non-argument register permuted across an
+        # unmodeled absolute tail branch passes gate 5 (r20/r21 are not
+        # callee-observed) — the driver-level reject (unmodeled absolute tail
+        # branch) must fail it closed instead of certifying via the
+        # executor's ``direct-branch`` terminal.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        b_abs = (18 << 26) | 2 | 0x00140000  # b 0x00500000 (AA=1)
+        r = [li(20, 7), b_abs]
+        d = [li(21, 7), b_abs]
+        outcome = certify_renaming_witness(
+            *self._pair(r, d),
+            assumed_callees=frozenset(),
+            callee_contracts={},
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "loop")
+
+
 class CertificatePlumbingTests(unittest.TestCase):
     """End-to-end certificate issue through the coop probe helper."""
 
@@ -1596,11 +1780,40 @@ class AdversarialReview2026Tests(unittest.TestCase):
         self.assertEqual(outcome.failure.gate, "loop")
 
     def test_f3_opaque_token_accepts_dead_at_call_rename(self) -> None:
-        # F3: with opaque-eabi contracts the callee token covers every
-        # register; the renaming-aware token canonicalizes the decomp lanes to
-        # retail order so a rename of a register DEAD at the call site (and
-        # not live-in/across the call) certifies instead of diverging the
-        # token.  Both sides store the same literal before the call.
+        # F3 (round-3 rewrite): with a PRECISE contract that does not read
+        # the renamed lane (reads={r3}), a rename of a register DEAD at the
+        # call site (and not live-in/across the call) certifies — the callee
+        # provably does not observe r5/r6, and both sides store the same
+        # literal before the call.  Under an OPAQUE contract the same shape is
+        # now REJECTED (round-3 BLOCKER: an opaque callee may read any EABI
+        # argument lane in its physical color, and the F3 token
+        # canonicalization would hide the divergence — see
+        # test_opaque_dead_at_call_rename_rejected below).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
+        precise = {
+            "callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "inferred:test",
+            )
+        }
+        outcome = certify_renaming_witness(
+            *self._pair(
+                [li(5, 1), stw(5, 3, 0), 0x48000001, self._BLR],
+                [li(6, 1), stw(6, 3, 0), 0x48000001, self._BLR],
+                relocs=reloc,
+            ),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=precise,
+            deadline_ms=20000,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_opaque_dead_at_call_rename_rejected(self) -> None:
+        # Round-3 BLOCKER regression: the same dead-at-call r5<->r6 rename
+        # under an OPAQUE contract must be REJECTED — the opaque callee may
+        # read any EABI argument lane in its physical color, so the F3 token
+        # canonicalization cannot be trusted to hide the rename.
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
         reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
@@ -1615,7 +1828,8 @@ class AdversarialReview2026Tests(unittest.TestCase):
             callee_contracts=contracts,
             deadline_ms=20000,
         )
-        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_s1_location_aware_memory_certifies_pc4_store(self) -> None:
         # S1 (adversarial review 2026-08): the terminal memory comparison is

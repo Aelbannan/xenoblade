@@ -6,6 +6,53 @@ GLM-5.2/max). Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 /
 R2-1-R2-10 are recorded below with resolutions. Companion to
 `31-reg-swap-witness.md` and `docs/witness_expansion_plan.md`.
 
+## R7. Round-3 adversarial review (2026-08-05) — outgoing-argument BLOCKER closed
+
+Question reviewed: **does the register-renaming witness need to be gated
+behind callee checks?**  GLM-5.2 (soundness) + Kimi K3 (integration) both
+AGREE: the callee-CERTIFICATE gate (`_try_renaming_witness`,
+equivalence_check.py:1588) is **policy** (bottom-up certification, doc 09)
+— not soundness-required.  But the witness was **NOT SOUND as implemented,
+with or without the gate**: outgoing call-argument lanes were renameable and
+F3's token canonicalization hid the divergence — reproducible false
+certificates (GLM CX-A, Kimi escapes 1-5, GLM CX-B).
+
+- **BLOCKER (root):** calls have an empty read set in liveness
+  (`B/BC/BCLR/BCCTR` in `_NO_REG_FIELDS` → `_use_def_numbered` `pass`), and
+gate 5 fixed only entry live-in + `live_across = live_out[call] ∩ volatiles`
+(post-call *survivors*).  An outgoing arg (written before a call, dead after
+it) was renameable.  F3 (`_apply_call_summary` canonicalization) then fed the
+canonical lane into the callee token on both sides, so the structural
+comparison self-agreed — while the *physical* callee reads the *physical*
+permuted lane and diverges.  `_EABI_ARG_GPRS/_FPRS` were dead code.
+  **Fix:** gate 5 now fixes every lane a callee READS at every call/tail-call
+  site (`_call_observed_lanes`): precise `contract.reads` when a contract
+  exists, otherwise the EABI argument window r3–r10 / f1–f8 (+ ps1
+  sub-lanes).  Closes doc 31 §2.5's call model for every call form; subsumes
+  the A3 r4/f1 tail-call checks (gate only fixes, never unfixes).
+- **BLOCKER (CX-B):** a non-link branch to an out-of-function address without
+a relocation (absolute tail-call form) is neither extracted by
+`_extract_call_targets` nor fail-closed by the executor (records a
+`direct-branch` terminal) — certified with ZERO callee contracts.
+  **Fix:** `_has_unmodeled_absolute_branch` rejects these in both witness
+  drivers (gate `loop`).
+- **MINOR (version invalidation):** `EQUIVALENCE_CERTIFICATE_VERSION` was not
+bumped for the F1/F2/F3 fix; hash-consumption checks commented out
+(targets.py:59, 121-131).  **Fix:** bumped 18 → 19; existing
+`register-renaming-witness` certs must be treated as suspect (none exist in
+the cache today).
+- **MINOR (doc/code drift):** module docstring + doc 31 gate-5 text claimed
+"r3–r10/f1–f8 fixed"; the code fixed r3 (+ conditional r4/f1) only.  Fixed
+with the new rule; `_EABI_ARG_GPRS/_FPRS` now used.
+
+Tests: `test_renaming_witness.py` 72 → 82 (CallArgumentFixednessTests: 8 new
+reject/accept shapes incl. the region-rebind and absolute-branch escapes;
+`test_f3_opaque_token_accepts_dead_at_call_rename` rewritten — opaque +
+permuted arg lane now REJECTS (the old accept encoded the unsound belief),
+precise `reads={r3}` still accepts).  Full engine suite 1972 green, fixture
+blob green, `differential` 364/364, docs_sync green, `tools/coop/tests` 5
+pre-existing failures unchanged.
+
 ## R5. Third adversarial review (2026-08-04) — F1/F2/F3/S1 closed
 
 GLM-5.2 + Kimi K3 (pi/OpenRouter) both AGREE on four new findings, all fixed

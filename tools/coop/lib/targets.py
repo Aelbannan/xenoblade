@@ -56,7 +56,12 @@ WORKFLOW_STATUSES = {
 }
 
 ACCEPTED_MATCH_STATUSES = {"EQUIVALENT_MATCH", "FULL_MATCH"}
-EQUIVALENCE_CERTIFICATE_VERSION = 18
+# 19 (2026-08-05): register-renaming witness round-3 adversarial review fix —
+# gate 5 now fixes every callee-observed lane (contract.reads / EABI argument
+# window) at every call/tail-call site, and unmodeled absolute tail branches
+# are rejected.  Invalidates witness certs issued against the pre-fix call
+# model (outgoing-argument false-certificate class).
+EQUIVALENCE_CERTIFICATE_VERSION = 19
 EQUIVALENCE_PROMOTION_POLICY = "auto-promotion-v2"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]

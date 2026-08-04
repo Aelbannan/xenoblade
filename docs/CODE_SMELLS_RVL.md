@@ -16,13 +16,13 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 | extern "C" (total lines) | 419 |
 | extern "C" declarations (non-lbl_*) | 89 |
 | extern "C" definitions (forced names) | 21 |
-| `self`/register-style params | 13 |
+| `self`/register-style params | 7 |
 | `void*` (params + locals) | 821 |
 | `(void*)` casts | 137 |
-| raw pointer offset arithmetic | 92 |
+| raw pointer offset arithmetic | 93 |
 | deref-through-cast arithmetic | 13 |
-| inline asm / `register` (incl. asm kernels) | 206 |
-| rN-named params | 13 |
+| inline asm / `register` (incl. asm kernels) | 208 |
+| rN-named params | 7 |
 | goto | 224 |
 | #pragma | 211 |
 
@@ -146,7 +146,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 |
+| libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/cx/CXStreamingUncompression.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 10 |
 | libs/RVL_SDK/src/revolution/cx/CXUncompression.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/db/db.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
@@ -231,7 +231,6 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/os/OSMemory.c | 0 | 0 | 0 | 1 | 0 | 0 | 7 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSNet.c | 0 | 0 | 0 | 9 | 0 | 0 | 1 | 0 | 1 |
 | libs/RVL_SDK/src/revolution/os/OSPlayTime.c | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 13 |
-| libs/RVL_SDK/src/revolution/os/OSReboot.c | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSReset.c | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 2 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSRtc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSStateTM.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 2 |
@@ -244,7 +243,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/si/SIBios.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/usb/usb.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 18 |
 | libs/RVL_SDK/src/revolution/vi/vi.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 14 | 1 | 0 | 0 | 0 | 7 |
+| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 14 | 2 | 0 | 1 | 0 | 7 |
 | libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/wpad/WPADMem.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/wud/WUD.c | 0 | 0 | 0 | 5 | 6 | 0 | 0 | 0 | 3 |
@@ -253,7 +252,7 @@ No files carry the `void* self` offset-deref pattern.
 
 - **Much of the `void*` is valid and must stay.** Allocator APIs (mem, OSAlloc), OS/FS/DVD/IPC buffer transfers, hardware register/address params, and Bluetooth stack callback contexts are `void*` in the retail API; typing them would break the reloc/matching contract. The cleanable subset is `void* self` free functions that walk an existing struct (see the actionable list above) — the same byte-identical type-erasure cleanup as game code, verified with `hexdiff` per function.
 - **Asm kernels are sanctioned** (PLAN.md §17.6 — Gekko paired-single / hardware-register code): OSMemory config, OSContext FPU/stack switching, OSCache, OSAlarm, OSTime, OSInterrupt, OSSync, OS, mtx/vec paired-single, PPCArch, ai callback stack, ipcclt `asm {}` opword blocks, db `__asm__` exception stub. Not fixable; `register` params on asm decls are register bindings, not C smells.
-- **rN-named params** outside asm bodies are genuine register-named code: `cx/CXSecureUncompression.c` (`CXiLHVerifyTable(u16* r3, u32 r4)`). Match-pinned crypto; renaming requires the symbols ceremony.
+- **rN-named params** outside asm bodies: the 7 remaining are `register` bindings on sanctioned asm decls (mtx/vec paired-single, GXLight PS kernel). The former crypto/boot register-mirror names (`cx/CXSecureUncompression.c` `CXiLHVerifyTable`, `os/OSReboot.c` `__OSReboot`) were renamed to semantic identifiers in the 2026 sweep — identifier names do not affect MWCC allocation, so the renames are byte-identical; the retail register mapping is kept in a header comment for audit.
 - **extern "C" forced names** are reloc/retail-mandated (the retail objects reference the exact exported names) and would require the symbols rename ceremony to change.
 - Metrics count lines, not unique occurrences; `//` comments are stripped but `/* */` comment bodies are not — a handful of counts may include retail-ASM notes.
 
@@ -467,8 +466,7 @@ No files carry the `void* self` offset-deref pattern.
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c": {
-  "rn_params": 4,
-  "self_params": 4
+  "asm_code": 1
  },
  "libs/RVL_SDK/src/revolution/cx/CXStreamingUncompression.c": {
   "goto_count": 10,
@@ -778,10 +776,6 @@ No files carry the `void* self` offset-deref pattern.
   "ptr_arith": 1,
   "void_ptr": 3
  },
- "libs/RVL_SDK/src/revolution/os/OSReboot.c": {
-  "rn_params": 2,
-  "self_params": 2
- },
  "libs/RVL_SDK/src/revolution/os/OSReset.c": {
   "rn_params": 2,
   "self_params": 2,
@@ -827,8 +821,9 @@ No files carry the `void* self` offset-deref pattern.
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/wpad/WPAD.c": {
+  "asm_code": 1,
   "goto_count": 7,
-  "ptr_arith": 1,
+  "ptr_arith": 2,
   "void_ptr": 14
  },
  "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c": {

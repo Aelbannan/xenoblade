@@ -565,9 +565,12 @@ def render_report_rvl(rows: dict[str, Stats], ctx: dict[str, dict[str, int]]) ->
         "params on asm decls are register bindings, not C smells."
     )
     lines.append(
-        "- **rN-named params** outside asm bodies are genuine register-named code: "
-        "`cx/CXSecureUncompression.c` (`CXiLHVerifyTable(u16* r3, u32 r4)`). Match-pinned "
-        "crypto; renaming requires the symbols ceremony."
+        "- **rN-named params** outside asm bodies: the 7 remaining are `register` bindings on "
+        "sanctioned asm decls (mtx/vec paired-single, GXLight PS kernel). The former crypto/boot "
+        "register-mirror names (`cx/CXSecureUncompression.c` `CXiLHVerifyTable`, `os/OSReboot.c` "
+        "`__OSReboot`) were renamed to semantic identifiers in the 2026 sweep — identifier names do "
+        "not affect MWCC allocation, so the renames are byte-identical; the retail register mapping "
+        "is kept in a header comment for audit."
     )
     lines.append(
         "- **extern \"C\" forced names** are reloc/retail-mandated (the retail objects reference "

@@ -3,16 +3,16 @@
 static u32 SaveEnd;
 static u32 SaveStart;
 
-void __OSReboot(u32 r3, u32 r4){
+void __OSReboot(u32 restartCode, u32 dolOffset){
     BOOL enabled;
-    u32 r1_8[2];
+    u32 argv[2];
 
     enabled = OSDisableInterrupts();
     OSSetArenaLo((void*)0x81280000);
     OSSetArenaHi((void*)0x812F0000);
-    r1_8[0] = 0;
+    argv[0] = 0;
     __OSNextPartitionType = *(void**)OSPhysicalToCached(OS_PHYS_BOOT_PARTITION_TYPE);
-    __OSBootDol(r4, r3 | 0x80000000, r1_8);
+    __OSBootDol(dolOffset, restartCode | 0x80000000, argv);
 }
 
 void OSGetSaveRegion(u32* saveStartPtr, u32* saveEndPtr){

@@ -17,11 +17,41 @@ void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; 
 
 void func_80497724(){}
 
-void func_80497760(){}
+// Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
+struct VTarget {
+    virtual void v0() = 0;
+    virtual void v1() = 0;
+    virtual void v2() = 0;
+    virtual void v3() = 0;
+    virtual void v4() = 0;
+    virtual void v5() = 0;
+    virtual ~VTarget() {}
+};
 
-void func_80497790(){}
+extern "C" void func_80497760(void* self) {
+    void* p = *(void**)((u8*)self + 8);
+    if (p == 0) return;
+    p = *(void**)((u8*)p + 0x84);
+    if (p == 0) return;
+    ((VTarget*)*(void**)((u8*)p + 0x10))->v5();
+}
 
-void func_804977C0(){}
+extern "C" { extern const float lbl_eu_8066AAC0; }
+extern "C" float func_80497790(void* self) {
+    void* p = *(void**)((u8*)self + 8);
+    if (p == 0) return lbl_eu_8066AAC0;
+    p = *(void**)((u8*)p + 0x84);
+    if (p != 0) return *(float*)((u8*)p + 0x1C);
+    return lbl_eu_8066AAC0;
+}
+
+extern "C" float func_804977C0(void* self) {
+    void* p = *(void**)((u8*)self + 0xC);
+    if (p == 0) return lbl_eu_8066AAC0;
+    p = *(void**)((u8*)p + 0x84);
+    if (p != 0) return *(float*)((u8*)p + 0x1C);
+    return lbl_eu_8066AAC0;
+}
 
 void func_804977F0(){}
 

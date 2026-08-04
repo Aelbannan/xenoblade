@@ -45,11 +45,11 @@
   "singletonModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "off"
+    "thinkingLevel": "xhigh"
   },
   "rebatchModel": {
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "off"
+    "thinkingLevel": "high"
   }
 }

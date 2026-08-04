@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 2213 |
 | extern "C" definitions (forced names) | 1997 |
 | `self`/register-style params | 3335 |
-| `void*` (params + locals) | 4898 |
+| `void*` (params + locals) | 4897 |
 | raw pointer offset arithmetic | 2908 |
 | deref-through-cast arithmetic | 1293 |
 | inline asm / `register` | 88 |
@@ -503,7 +503,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuOption.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 0 | 1 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTGauge.cpp | 4 | 3 | 3 | 10 | 13 | 11 | 2 | 0 | 14 |
-| src/kyoshin/menu/CMenuPTState.cpp | 0 | 0 | 8 | 3 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuPTState.cpp | 0 | 0 | 8 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPause.cpp | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPlayAward.cpp | 0 | 1 | 6 | 7 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuQstCnt.cpp | 2 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -3021,7 +3021,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/menu/CMenuPTState.cpp": {
   "self_params": 8,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "src/kyoshin/menu/CMenuPause.cpp": {
   "extern_c_nonlbl_def": 1,

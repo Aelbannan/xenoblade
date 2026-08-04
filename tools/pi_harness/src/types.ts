@@ -26,8 +26,10 @@ export interface ModelSpec {
 export interface HarnessConfig {
   matchModel: ModelSpec;
   /** Model for singleton retries (fallback after a batch target failed).
-   *  Defaults to matchModel. Often worth a cheaper/different model since
-   *  singletons retry already-failed targets. */
+   *  These are the HARD residue — the batch already failed them at
+   *  matchModel's thinking, so singletons should reason HARDER (xhigh),
+   *  not cheaper: better conversion = fewer retry sessions = less
+   *  cacheRead (the dominant cost). Defaults to matchModel. */
   singletonModel: ModelSpec;
   /** Model for the re-batch phase (small failed targets). Defaults to
    *  matchModel. */

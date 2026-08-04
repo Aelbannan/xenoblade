@@ -9,22 +9,22 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 ## Summary
 
 - Files scanned: 248
-- Inline-asm kernels: 101 functions / 2661 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
+- Inline-asm kernels: 100 functions / 2636 lines (PLAN.md §17.6 sanctioned Gekko paired-single/hardware code)
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 412 |
+| extern "C" (total lines) | 411 |
 | extern "C" declarations (non-lbl_*) | 90 |
-| extern "C" definitions (forced names) | 22 |
+| extern "C" definitions (forced names) | 21 |
 | `self`/register-style params | 13 |
-| `void*` (params + locals) | 833 |
-| `(void*)` casts | 141 |
+| `void*` (params + locals) | 829 |
+| `(void*)` casts | 140 |
 | raw pointer offset arithmetic | 132 |
 | deref-through-cast arithmetic | 24 |
-| inline asm / `register` (incl. asm kernels) | 211 |
+| inline asm / `register` (incl. asm kernels) | 206 |
 | rN-named params | 13 |
 | goto | 224 |
-| #pragma | 202 |
+| #pragma | 211 |
 
 ## void* context
 
@@ -33,12 +33,12 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 | module | TUs | void* lines | api | cb | self-offset (actionable) | other |
 |---|---|---|---|---|---|---|
 | bte | 68 | 409 | 122 | 1 | 0 | 286 |
-| os | 34 | 118 | 4 | 0 | 0 | 114 |
-| hbm | 41 | 117 | 29 | 0 | 0 | 88 |
+| os | 34 | 117 | 4 | 0 | 0 | 113 |
+| hbm | 41 | 116 | 28 | 0 | 0 | 88 |
 | gx | 15 | 46 | 3 | 0 | 0 | 43 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
-| ipc | 4 | 35 | 1 | 0 | 0 | 34 |
 | ax | 10 | 34 | 0 | 0 | 0 | 34 |
+| ipc | 4 | 32 | 0 | 0 | 0 | 32 |
 | usb | 1 | 29 | 0 | 0 | 0 | 29 |
 | nand | 5 | 24 | 0 | 0 | 0 | 24 |
 | dvd | 8 | 22 | 0 | 0 | 0 | 22 |
@@ -173,6 +173,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMController.cpp | 3 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/mix.c | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -180,7 +181,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp | 0 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -195,7 +196,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/hbm/synpitch.c | 3 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/hbm/synvoice.c | 15 | 1 | 0 | 7 | 6 | 3 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/ipc/ipcMain.c | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ipc/ipcMain.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/ipc/ipcclt.c | 0 | 0 | 1 | 21 | 0 | 0 | 3 | 1 | 7 |
 | libs/RVL_SDK/src/revolution/ipc/memory.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 11 |
 | libs/RVL_SDK/src/revolution/kpad/KPAD.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 17 |
@@ -208,7 +209,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/mix/remote.c | 0 | 0 | 0 | 3 | 4 | 3 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/mtx.c | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/mtxvec.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/quat.c | 0 | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mtx/quat.c | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/mtx/vec.c | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/nand/NANDCheck.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/nand/NANDCore.c | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
@@ -216,7 +217,7 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/nand/NANDOpenClose.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/nand/nand.c | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OS.c | 0 | 0 | 0 | 7 | 0 | 0 | 6 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSAlarm.c | 0 | 0 | 0 | 3 | 0 | 0 | 1 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSAlarm.c | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSAlloc.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSArena.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 |
 | libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 16 | 0 | 0 |
@@ -566,6 +567,9 @@ No files carry the `void* self` offset-deref pattern.
   "extern_c_nonlbl_decl": 3,
   "void_ptr": 3
  },
+ "libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp": {
+  "void_ptr": 1
+ },
  "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp": {
   "void_ptr": 6
  },
@@ -589,8 +593,7 @@ No files carry the `void* self` offset-deref pattern.
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp": {
-  "extern_c_nonlbl_def": 1,
-  "void_ptr": 2
+  "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp": {
   "extern_c_nonlbl_def": 1,
@@ -662,7 +665,7 @@ No files carry the `void* self` offset-deref pattern.
   "void_ptr": 7
  },
  "libs/RVL_SDK/src/revolution/ipc/ipcMain.c": {
-  "void_ptr": 9
+  "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/ipc/ipcclt.c": {
   "asm_code": 3,
@@ -711,7 +714,7 @@ No files carry the `void* self` offset-deref pattern.
   "asm_code": 1
  },
  "libs/RVL_SDK/src/revolution/mtx/quat.c": {
-  "asm_code": 30
+  "asm_code": 25
  },
  "libs/RVL_SDK/src/revolution/mtx/vec.c": {
   "asm_code": 21
@@ -737,7 +740,7 @@ No files carry the `void* self` offset-deref pattern.
  },
  "libs/RVL_SDK/src/revolution/os/OSAlarm.c": {
   "asm_code": 1,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/os/OSAlloc.c": {
   "void_ptr": 6

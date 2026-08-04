@@ -742,6 +742,13 @@ function makeVerifyCallback(opts: {
       const certified = await runWitnessCycle(repoRoot, unit, cid, config);
       process.stderr.write(`[orchestrator] ${unit}: certify request for ${cid}: ${certified ? "CERTIFIED" : "not certified"}\n`);
       if (certified) {
+        // Log the accept so the ledger (and cost/match monitoring) records it
+        // — the runBatchCycle path logs batch-accept at :1193, but this
+        // certify path returns accept directly and would otherwise be silent.
+        appendLedger(repoRoot, config.ledgerPath, {
+          ts: new Date().toISOString(), event: "batch-accept", tu: unit,
+          detail: { batchIndex: 0, attempt: 1, acceptedCount: 1, results: [{ targetId: cid, status: "FULL_MATCH" }], source: "certify-request" },
+        });
         return { action: "accept", reason: `CERTIFY: ${cid}` };
       }
     }
@@ -799,6 +806,10 @@ function makeVerifyCallback(opts: {
           const certified = await runWitnessCycle(repoRoot, unit, tid, config);
           process.stderr.write(`[orchestrator] ${unit}: ${tid} 0-mismatch certify: ${certified ? "ACCEPTED" : "not certified (reloc/witness gate)"}\n`);
           if (certified) {
+            appendLedger(repoRoot, config.ledgerPath, {
+              ts: new Date().toISOString(), event: "batch-accept", tu: unit,
+              detail: { batchIndex: 0, attempt: 1, acceptedCount: 1, results: [{ targetId: tid, status: "FULL_MATCH" }], source: "0-mismatch-certify" },
+            });
             return { action: "accept", reason: `${tid} certified at mismatch:0` };
           }
           continue;

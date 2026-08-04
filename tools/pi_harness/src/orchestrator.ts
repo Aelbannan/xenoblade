@@ -741,16 +741,21 @@ function makeVerifyCallback(opts: {
       process.stderr.write(`[orchestrator] ${unit}: model requested certify for ${cid} — running witness cycle\n`);
       const certified = await runWitnessCycle(repoRoot, unit, cid, config);
       process.stderr.write(`[orchestrator] ${unit}: certify request for ${cid}: ${certified ? "CERTIFIED" : "not certified"}\n`);
+      // Log EVERY certify attempt so the ledger fully reflects the certify
+      // path (the runBatchCycle path logs batch-accept OR batch-cycle per
+      // round; the certify path bypasses batch-cycle.py entirely and would
+      // otherwise be silent on failed attempts).
       if (certified) {
-        // Log the accept so the ledger (and cost/match monitoring) records it
-        // — the runBatchCycle path logs batch-accept at :1193, but this
-        // certify path returns accept directly and would otherwise be silent.
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-accept", tu: unit,
           detail: { batchIndex: 0, attempt: 1, acceptedCount: 1, results: [{ targetId: cid, status: "FULL_MATCH" }], source: "certify-request" },
         });
         return { action: "accept", reason: `CERTIFY: ${cid}` };
       }
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
+        detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: cid, status: "COMPILES" }], source: "certify-request-failed" },
+      });
     }
 
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
@@ -812,6 +817,10 @@ function makeVerifyCallback(opts: {
             });
             return { action: "accept", reason: `${tid} certified at mismatch:0` };
           }
+          appendLedger(repoRoot, config.ledgerPath, {
+            ts: new Date().toISOString(), event: "batch-cycle", tu: unit,
+            detail: { batchIndex: 0, attempt: 1, acceptedCount: 0, results: [{ targetId: tid, status: "COMPILES" }], source: "0-mismatch-certify-failed" },
+          });
           continue;
         }
         unmatchedTargets.push(tid);

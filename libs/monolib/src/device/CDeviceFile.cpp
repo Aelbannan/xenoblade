@@ -3,11 +3,16 @@
 
 #include <harness_catalog.h>
 
+// Forward declarations: only names are needed for MWCC mangling; bodies use
+// raw offsets via the retail labels (catalog TU style).
+class CWorkThread;
+class CFileHandle;
+
 struct CDeviceFile {
     CDeviceFile(const char* name, void* parent);
     ~CDeviceFile();
     void cancel() const;
-    void func_8044E770(void* parent);
+    static int func_8044E770(CWorkThread* parent);
     void func_8044E780();
     void func_8044F0E4();
     void func_8044F154() const;
@@ -18,8 +23,8 @@ struct CDeviceFile {
     void readCommonArchiveFile();
     void readFile();
     void removeFileJob();
-    void setHandleFlag1() const;
-    void setHandleFlag2() const;
+    static void setHandleFlag1(CFileHandle* pFileHandle);
+    static void setHandleFlag2(CFileHandle* pFileHandle);
     void wkStandbyLogin();
     void wkStandbyLogout();
 };
@@ -46,7 +51,11 @@ int CDeviceFile::isInitialized() { return 0; }
 extern u8 lbl_eu_806636A8;
 extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
 
-void CDeviceFile::func_8044E770(void* parent) {}
+int CDeviceFile::func_8044E770(CWorkThread* parent) {
+    // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
+    *(void**)((char*)(u32)lbl_eu_80665660 + 0x1C8) = parent;
+    return 1;
+}
 
 void CDeviceFile::func_8044E780() {}
 
@@ -68,9 +77,13 @@ void CDeviceFile::func_8044F1B8() const {}
 
 void CDeviceFile::func_8044F400(void) const {}
 
-void CDeviceFile::setHandleFlag1() const {}
+void CDeviceFile::setHandleFlag1(CFileHandle* pFileHandle) {
+    *(u32*)((char*)pFileHandle + 0x58) |= 2;
+}
 
-void CDeviceFile::setHandleFlag2() const {}
+void CDeviceFile::setHandleFlag2(CFileHandle* pFileHandle) {
+    *(u32*)((char*)pFileHandle + 0x58) |= 4;
+}
 
 void CDeviceFile::wkStandbyLogin() {}
 

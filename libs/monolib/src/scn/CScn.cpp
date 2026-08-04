@@ -1,3 +1,19 @@
+// Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
+struct VTarget {
+    virtual void v0() = 0;
+    virtual void v1() = 0;
+    virtual void v2() = 0;
+    virtual void v3() = 0;
+    virtual void v4() = 0;
+    virtual void v5() = 0;
+    virtual void v6() = 0;
+    virtual void v7() = 0;
+    virtual void v8() = 0;
+    virtual void v9() = 0;
+    virtual void v10() = 0;
+    virtual ~VTarget() {}
+};
+
 #include "monolib/scn/CScn.hpp"
 #include "monolib/core/CView.hpp"
 
@@ -124,11 +140,26 @@ extern "C" void __ct__804820F8();
 extern "C" void func_80495EB0() {
     __ct__804820F8();
 }
-void func_80495FC8(){}
-void func_80495FDC(){}
-void func_80495FF0(){}
-void func_80496004(){}
-void func_80496018(){}
+extern "C" void func_80495FC8(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    obj->v6();
+}
+extern "C" void func_80495FDC(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    obj->v7();
+}
+extern "C" void func_80495FF0(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    obj->v9();
+}
+extern "C" void func_80496004(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    obj->v10();
+}
+extern "C" void func_80496018(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
+    obj->v8();
+}
 extern "C" void func_8049C72C(int);
 extern "C" void func_8049602C(void* p) {
     func_8049C72C(*(int*)((u8*)p + 0x80));
@@ -178,8 +209,14 @@ extern "C" void func_804962A0(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }
 bool func_804962A8(){ return false; }
-void func_8049695C(){}
-void func_80496970(){}
+extern "C" void func_8049695C(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 104);
+    obj->v3();
+}
+extern "C" void func_80496970(void* self) {
+    VTarget* obj = (VTarget*)*(void**)((u8*)self + 96);
+    obj->v4();
+}
 extern "C" void func_80496984(u32 value) {
     lbl_eu_80665908 = (CScn *)value;
 }

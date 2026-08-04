@@ -46,6 +46,6 @@ void func_8049C3A4(void* self){ func_8048856C(); }
 
 void func_8049C3AC(){}
 
-void func_8049C420(){}
+extern "C" u32 func_8049C420(void* self) { return (*(u32*)((char*)*(void**)((u8*)self + 4) + 0x7A4) >> 30) & 1; }
 
 extern "C" u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }

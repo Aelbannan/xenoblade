@@ -25,10 +25,12 @@ import {
   kbTool,
   ctxTool,
   witnessTool,
+  certifyTool,
   tuFinalSpawnHook,
   batchSessionTools,
   tuFinalSessionTools,
 } from "../src/session-tools.js";
+import { parseCertifyRequests } from "../src/orchestrator.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, "..", "..", "..");
@@ -334,21 +336,60 @@ describe("integration: witnessTool", () => {
   });
 });
 
+describe("unit: certifyTool", () => {
+  const tool = certifyTool();
+
+  test("returns the CERTIFY marker instruction + target id", async () => {
+    const r = await tool.execute("t", { targetId: "us-80244520" });
+    const text = r.content?.[0]?.text ?? "";
+    assert.match(text, /CERTIFY: us-80244520/);
+    assert.match(text, /final response/i);
+    assert.equal((r.details as { ok: boolean }).ok, true);
+    assert.equal((r.details as { requested: boolean }).requested, true);
+  });
+
+  test("is read-only (no subprocess, no registry touch)", async () => {
+    const r = await tool.execute("t", { targetId: "us-99999999" });
+    // No ERROR, no mutation — pure instruction text.
+    assert.doesNotMatch(r.content?.[0]?.text ?? "", /ERROR/);
+  });
+});
+
+describe("unit: parseCertifyRequests", () => {
+  test("extracts CERTIFY markers for owned targets", () => {
+    const text = "done. CERTIFY: us-80244520\nAlso CERTIFY: us-801941d4 somewhere";
+    assert.deepEqual(parseCertifyRequests(text, ["us-80244520", "us-801941d4"]), ["us-80244520", "us-801941d4"]);
+  });
+
+  test("ignores markers for targets the session does not own", () => {
+    const text = "CERTIFY: us-99999999";
+    assert.deepEqual(parseCertifyRequests(text, ["us-80244520"]), []);
+  });
+
+  test("no markers -> empty", () => {
+    assert.deepEqual(parseCertifyRequests("just editing", ["us-80244520"]), []);
+  });
+
+  test("case-insensitive-ish: tolerates whitespace after colon", () => {
+    assert.deepEqual(parseCertifyRequests("CERTIFY:  us-80244520", ["us-80244520"]), ["us-80244520"]);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Tool-set composition
 // ---------------------------------------------------------------------------
 describe("tool set composition", () => {
-  test("batchSessionTools contains exactly the 6 structured tools, no bash", () => {
+  test("batchSessionTools contains exactly the 7 structured tools, no bash", () => {
     const tools = batchSessionTools(REPO, PY);
     const names = tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ["ctx", "hexdiff", "kb", "symbols", "targets", "witness"]);
+    assert.deepEqual(names, ["certify", "ctx", "hexdiff", "kb", "symbols", "targets", "witness"]);
   });
 
   test("tuFinalSessionTools = batch tools + bash", () => {
     const tools = tuFinalSessionTools(REPO, PY);
     const names = tools.map((t) => t.name);
     assert.ok(names.includes("bash"), "tu-final must include bash behind the allowlist");
-    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness"]) {
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify"]) {
       assert.ok(names.includes(n), `tu-final must include ${n}`);
     }
   });

@@ -632,6 +632,17 @@ interface VerifySession {
   lastFeedback: () => string | undefined;
 }
 
+/** Parse `CERTIFY: <target-id>` markers from a session's final text.
+ *  Returns ids that are also in the session's owned targets (a certify
+ *  request for an unclaimed target is ignored — the harness only runs the
+ *  accepting cycle for targets this session owns). */
+export function parseCertifyRequests(finalText: string, ownedTargetIds: string[]): string[] {
+  const owned = new Set(ownedTargetIds);
+  return [...finalText.matchAll(/CERTIFY:\s*([A-Za-z0-9_-]+)/g)]
+    .map((m) => m[1])
+    .filter((id) => owned.has(id));
+}
+
 function makeVerifyCallback(opts: {
   repoRoot: string;
   config: HarnessConfig;
@@ -717,6 +728,20 @@ function makeVerifyCallback(opts: {
 
     // ── Acceptance (match check) — run before lint so we never
     //    skip match evaluation due to lint-related re-prompt caps. ──
+    // Model-initiated certify requests: parse `CERTIFY: <target-id>` markers
+    // from the final text and run the harness's witness cycle for each. The
+    // certify tool is read-only; this is where the actual (safe) cycle runs
+    // — build lock + claim check + registry re-verification, no SMT.
+    const certifyIds = parseCertifyRequests(_finalText, targetIds);
+    for (const cid of certifyIds) {
+      process.stderr.write(`[orchestrator] ${unit}: model requested certify for ${cid} — running witness cycle\n`);
+      const certified = await runWitnessCycle(repoRoot, unit, cid, config);
+      process.stderr.write(`[orchestrator] ${unit}: certify request for ${cid}: ${certified ? "CERTIFIED" : "not certified"}\n`);
+      if (certified) {
+        return { action: "accept", reason: `CERTIFY: ${cid}` };
+      }
+    }
+
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
     batchResults = await runBatchCycle(repoRoot, config.pythonBin, config.region, targetIds);
     const acceptedCount = batchResults.filter(r => r.accepted).length;

@@ -336,6 +336,46 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+//  certify — request the harness to run the accepting witness cycle
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * certify custom tool: READ-ONLY request that the harness run the accepting
+ * witness cycle for a target. Does NOT mutate the registry itself — it
+ * instructs the model to emit a structured `CERTIFY: <target-id>` marker in
+ * its FINAL response, which the harness's onVerify parses and executes via
+ * runWitnessCycle (build lock + claim check + registry re-verification, no
+ * SMT). Use after `witness` says CERTIFIABLE (or when hexdiff shows
+ * mismatch: 0 / structural: 0).
+ */
+export function certifyTool(): ToolDefinition {
+  return defineTool({
+    name: "certify",
+    label: "certify",
+    description:
+      "REQUEST acceptance: tells the harness to run the accepting witness cycle for a target. Call AFTER witness reports CERTIFIABLE (or when hexdiff shows mismatch: 0 / structural: 0). Read-only — the harness executes the actual cycle. IMPORTANT: include a line exactly like 'CERTIFY: <target-id>' in your FINAL response so the harness acts on it.",
+    promptSnippet: "certify <target-id> — request the harness's accepting witness cycle",
+    parameters: Type.Object({
+      targetId: Type.String({ description: "target id to certify (from the brief, e.g. us-80244520)" }),
+    }),
+    execute: async (_id, params) => {
+      const text =
+        `CERTIFY request noted for ${params.targetId}.\n\n` +
+        `In your FINAL response, include this exact line so the harness runs ` +
+        `the accepting witness cycle:\n\n` +
+        `CERTIFY: ${params.targetId}\n\n` +
+        `The harness will verify the code still certifies (witness, no SMT) ` +
+        `and record acceptance. If it does not certify, the target returns to ` +
+        `the batch pool and you can keep iterating.`;
+      return {
+        content: [{ type: "text", text }],
+        details: { ok: true, requested: true, targetId: params.targetId },
+      };
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
 //  targets — read-only target identity
 // ─────────────────────────────────────────────────────────────────────
 
@@ -584,6 +624,7 @@ export function batchSessionTools(repoRoot: string, python: string): ToolDefinit
     symbolsTool(repoRoot, python),
     targetsTool(repoRoot, python),
     witnessTool(repoRoot, python),
+    certifyTool(),
     kbTool(repoRoot, python),
     ctxTool(repoRoot, python),
   ];

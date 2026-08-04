@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6415 |
-| extern "C" declarations (non-lbl_*, imports) | 2271 |
-| extern "C" definitions (forced names) | 2007 |
-| `self`/register-style params | 3376 |
+| extern "C" (total lines) | 6421 |
+| extern "C" declarations (non-lbl_*, imports) | 2272 |
+| extern "C" definitions (forced names) | 2012 |
+| `self`/register-style params | 3379 |
 | `void*` (params + locals) | 4941 |
-| raw pointer offset arithmetic | 2941 |
+| raw pointer offset arithmetic | 2943 |
 | deref-through-cast arithmetic | 1306 |
 | inline asm / `register` | 88 |
 | rN-named params | 315 |
@@ -300,7 +300,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CQstLogInfo.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogList.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQuestWindow.cpp | 0 | 1 | 6 | 6 | 3 | 3 | 0 | 0 | 0 |
-| src/kyoshin/CSaveLoad.cpp | 26 | 4 | 10 | 23 | 6 | 2 | 0 | 1 | 2 |
+| src/kyoshin/CSaveLoad.cpp | 27 | 9 | 13 | 23 | 8 | 2 | 0 | 1 | 2 |
 | src/kyoshin/CScrollBar.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 0 | 0 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -1859,12 +1859,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CSaveLoad.cpp": {
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 26,
-  "extern_c_nonlbl_def": 4,
+  "extern_c_nonlbl_decl": 27,
+  "extern_c_nonlbl_def": 9,
   "goto_count": 2,
-  "ptr_arith": 6,
+  "ptr_arith": 8,
   "rn_params": 1,
-  "self_params": 10,
+  "self_params": 13,
   "void_ptr": 23
  },
  "src/kyoshin/CScrollBar.cpp": {

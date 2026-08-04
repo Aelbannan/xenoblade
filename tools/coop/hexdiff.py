@@ -1114,18 +1114,11 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
         print(f"ERROR reading objects: {exc}", file=sys.stderr)
         return 3
 
-    compiler_cfg = _unit_compiler_config(project, unit.name)
-    print(f"unit: {unit.name}  —  {len(retail_fn)} function(s)"
-          + (f"  |  compiler: {compiler_cfg}" if compiler_cfg else ""))
-
     try:
         size_check = check_object_size(
             project_root=project.root, region=config.region, unit_hint=unit.name,
             retail_object=retail_path, decomp_object=decomp_path,
         )
-        if size_check is not None and size_check.budget is not None:
-            color = _GREEN if size_check.ok else _RED
-            print(f"split: {color}{format_size_check(size_check)}{_RESET}")
     except Exception:
         size_check = None
 
@@ -1138,6 +1131,56 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
             rows.append((rf, None, None))
             continue
         rows.append((rf, dm, _counts_for(rf, dm)))
+
+    # --json: machine-readable per-function counts for the harness's
+    # TU-final regression sweep (one call instead of N hexdiff subprocesses).
+    if args.json:
+        out: dict = {
+            "unit": unit.name,
+            "functions": [],
+            "matched": 0,
+            "total": len(retail_fn),
+        }
+        if size_check is not None:
+            out["size_check"] = {
+                "ok": bool(size_check.ok),
+                "budget": size_check.budget,
+                "retail_text": size_check.retail_text,
+                "decomp_text": size_check.decomp_text,
+                "over_by": size_check.over_by,
+                "notes": size_check.notes,
+            }
+        for rf, dm, c in rows:
+            if dm is None:
+                out["functions"].append({
+                    "symbol": rf.name, "present": False,
+                })
+                continue
+            ok = c["mismatch"] == 0
+            if ok:
+                out["matched"] += 1
+            out["functions"].append({
+                "symbol": rf.name,
+                "present": True,
+                "match": ok,
+                "mismatch": c["mismatch"],
+                "structural": c["structural"],
+                "reg_swap": c["reg_swap"],
+                "pure_reg_swap": c["pure_reg_swap"],
+                "reloc": c["reloc"],
+                "retail_size": rf.size,
+                "decomp_size": dm.size,
+            })
+        print(json.dumps(out))
+        return 0 if out["matched"] == out["total"] else 5
+
+    compiler_cfg = _unit_compiler_config(project, unit.name)
+    print(f"unit: {unit.name}  —  {len(retail_fn)} function(s)"
+          + (f"  |  compiler: {compiler_cfg}" if compiler_cfg else ""))
+
+    if size_check is not None and size_check.budget is not None:
+        color = _GREEN if size_check.ok else _RED
+        print(f"split: {color}{format_size_check(size_check)}{_RESET}")
 
     n_match = 0
     print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'SIZE':>12s}  SYMBOL")

@@ -68,7 +68,14 @@ float func_8048EA40()
 }
 
 // us-80492abc: func_8048EA48 (0x2C bytes) -- sets/clears flag 0x80 in halfword + stores float
-void func_8048EA48(){}
+extern "C" void func_8048EA48(void* self, u32 enable, float v) {
+    if (enable != 0) {
+        *(u16*)((u8*)self + 0x28) |= 0x80;
+    } else {
+        *(u16*)((u8*)self + 0x28) &= ~0x80;
+    }
+    *(float*)((u8*)self + 0x24) = v;
+}
 
 // us-80492ae8: func_8048EA74 (0x28 bytes) -- sets/clears flag 0x100 in halfword
 extern "C" void func_8048EA74(void* self, u32 enable) {

@@ -54,7 +54,12 @@ void func_804B6728(){}
 
 void func_804B684C(){}
 
-void func_804B6954(){}
+extern "C" { extern char lbl_eu_8065F1C8[]; }
+extern "C" void func_804B6954(void* a, void* b, void* c) {
+    void (*fn)(void*, void*, void*) = *(void (**)(void*, void*, void*))(lbl_eu_8065F1C8 + 0xA0);
+    void* p = *(void**)(lbl_eu_8065F1C8 + 0x9C);
+    fn(b, c, p);
+}
 
 void func_804B6974(){}
 
@@ -66,7 +71,11 @@ void func_804B6D30(){}
 
 void func_804B6F58(){}
 
-void func_804B7044(){}
+extern "C" u32 func_804B7044(void* self, float f) {
+    u32 r = 0;
+    if (f <= *(float*)((u8*)self + 0x64) && f >= *(float*)((u8*)self + 0x68)) r = 1;
+    return r;
+}
 
 extern "C" u32 func_804B7074(void* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
 

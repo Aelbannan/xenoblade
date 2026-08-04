@@ -6,6 +6,32 @@ GLM-5.2/max). Round-1 findings G1-G11 / I1-I13 and round-2 findings F1-F11 /
 R2-1-R2-10 are recorded below with resolutions. Companion to
 `31-reg-swap-witness.md` and `docs/witness_expansion_plan.md`.
 
+## R5. Third adversarial review (2026-08-04) — F1/F2/F3/S1 closed
+
+GLM-5.2 + Kimi K3 (pi/OpenRouter) both AGREE on four new findings, all fixed
+in `tools/coop/lib/renaming_witness.py` + `semantics.py` (see doc 31 §6 for
+the full record):
+
+- **F1 (BLOCKER, false certificates):** gate 5 fixed only live-in r3–r10;
+  live-in reads of r11/r12/r14–r31/f0/f9–f31 and r0-in-genuine-operand
+  positions, plus nonvolatile clobber-without-restore, were certifiable
+  (F1a/F1b/F1c/H1/H2/H5 — reproduced).  Fixed: gate 5 fixes every live-in
+  lane (spill-only prologue-save carve-out), a per-terminal nonvolatile
+  preservation check runs for permuted lanes, and the region path rejects
+  nonvolatile perms.  A3's r4/f1 `_written_before_return` machinery is the
+  template; the same rule now applies to every permuted nonvolatile via the
+  preservation check.
+- **F2 (BLOCKER):** the global path certified `bcctr`; `_has_indirect_dispatch`
+  is now enforced in `run_structural_witness` too.
+- **F3 (MAJOR):** opaque callee contracts diverged the call token on any
+  non-identity rho; `_apply_call_summary` now canonicalizes through the perm
+  (new `witness_register_perm` kwarg on `execute_cfg`).
+- **S1 (MINOR):** the terminal memory comparison is location-aware
+  (`_memory_arrays_agree` recombines byte stores and compares base-relative).
+
+Residual (documented, EABI-acceptable): volatile clobbers (F1d) still
+certify; aliased save/restore bodies fall to SMT.
+
 ## R4. Implementation-review findings and fixes (2026-08-04)
 
 The committed implementation (78dbecaa3) was adversarially reviewed by

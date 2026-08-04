@@ -113,7 +113,36 @@ class GateAcceptanceTests(unittest.TestCase):
         self.assertEqual(outcome.rho.gpr, {3: 3, 4: 4, 5: 6, 6: 5})
 
     def test_pure_nonvolatile_color_swap_accepted(self) -> None:
-        # r20<->r25 2-cycle over loads/stores (the Chaitin-cycle target class).
+        # The sound Chaitin prologue-save shape (F1 rewrite, adversarial
+        # review 2026-08): both sides spill their nonvolatile temps to the
+        # stack BEFORE any use and restore them before the exit, so every
+        # nonvolatile lane is preserved (restore == entry after simplify).
+        # No intervening stores ⇒ the restore slot's Select(Store(...,X))
+        # reduces under z3.simplify; with body stores the pair falls to SMT
+        # (fail-closed) instead of certifying.  (The pre-review version of
+        # this test loaded into r20/r25 and returned with the loaded values
+        # — no restore — a false certificate: retail's r20-out = M[0(r3)]
+        # while decomp's r20-out = M[4(r3)].)
+        original, candidate = _decode_pair(
+            [_enc_primary(36, 20, 1, 8), _enc_primary(36, 25, 1, 12),
+             _enc_primary(32, 20, 3, 0), _enc_primary(32, 25, 3, 4),
+             _enc_primary(32, 20, 1, 8), _enc_primary(32, 25, 1, 12), _LR],
+            [_enc_primary(36, 25, 1, 8), _enc_primary(36, 20, 1, 12),
+             _enc_primary(32, 25, 3, 0), _enc_primary(32, 20, 3, 4),
+             _enc_primary(32, 25, 1, 8), _enc_primary(32, 20, 1, 12), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.rho.gpr, {1: 1, 3: 3, 20: 25, 25: 20})
+
+    def test_nonvolatile_clobber_without_restore_rejected(self) -> None:
+        # F1c (adversarial review 2026-08): retail loads into r20/r25
+        # (nonvolatile) and returns with the loaded values — neither is
+        # restored, so both sides clobber caller-visible nonvolatiles
+        # differently (retail r20-out = M[0(r3)], decomp r20-out = M[4(r3)]).
+        # This pair was previously CERTIFIED (a false certificate — the
+        # perm-aligned comparison masks the physical-lane divergence); the
+        # EABI nonvolatile preservation check now rejects it (falls to SMT).
         original, candidate = _decode_pair(
             [_enc_primary(32, 20, 3, 0), _enc_primary(32, 25, 3, 4),
              _enc_primary(36, 20, 3, 8), _enc_primary(36, 25, 3, 12), _LR],
@@ -121,8 +150,8 @@ class GateAcceptanceTests(unittest.TestCase):
              _enc_primary(36, 25, 3, 8), _enc_primary(36, 20, 3, 12), _LR],
         )
         outcome = certify_renaming_witness(original, candidate)
-        self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25, 25: 20})
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_cx1_shift_count_swap_rejected(self) -> None:
         # CX-1: slw r3,r4,r5 vs slw r3,r5,r4 — the shift source/amount swap.
@@ -275,12 +304,14 @@ class AcrossCallTests(unittest.TestCase):
     """Nonvolatile permutations across calls are the Chaitin-cycle class."""
 
     def _pair_with_call(self, swap: tuple[int, int]):
-        # retail: lwz r20,0(r3); bl callee; stw r20,8(r3); blr
-        # decomp: same with r20<->r25 swapped.
+        # retail: stw r20,8(r1); lwz r20,0(r3); bl callee; lwz r20,8(r1); blr
+        # decomp: same with r20<->r25 swapped (save/restore — the sound shape).
         (a, b) = swap
-        r_words = [_enc_primary(32, a, 3, 0), 0x48000001, _enc_primary(36, a, 3, 8), _LR]
-        d_words = [_enc_primary(32, b, 3, 0), 0x48000001, _enc_primary(36, b, 3, 8), _LR]
-        reloc = lambda: (RelocationRef(4, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [_enc_primary(36, a, 1, 8), _enc_primary(32, a, 3, 0),
+                   0x48000001, _enc_primary(32, a, 1, 8), _LR]
+        d_words = [_enc_primary(36, b, 1, 8), _enc_primary(32, b, 3, 0),
+                   0x48000001, _enc_primary(32, b, 1, 8), _LR]
+        reloc = lambda: (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
         original = decode_block(
             bytes.fromhex(_words_hex(r_words)), _RETAIL_BASE,
             validate_with_capstone=False, relocations=reloc(),
@@ -292,6 +323,14 @@ class AcrossCallTests(unittest.TestCase):
         return original, candidate
 
     def test_nonvolatile_permutation_across_call_accepted(self) -> None:
+        # The sound across-call Chaitin shape (adversarial review 2026-08):
+        # both sides spill their nonvolatile temp to the stack before the call
+        # and restore it after, with a precise contract that does not rewrite
+        # memory — so the restore reads back the entry variable and the EABI
+        # preservation check passes.  (The pre-review version of this test
+        # certified a CLOBBER pair — `lwz r20,0(r3); bl; stw r20,8(r3); blr`
+        # with no save/restore — a false certificate, since retail clobbers
+        # r20 while decomp preserves it.)
         original, candidate = self._pair_with_call((20, 25))
         precise = {
             "callee": CalleeContract(
@@ -304,13 +343,17 @@ class AcrossCallTests(unittest.TestCase):
             callee_contracts=precise,
         )
         self.assertTrue(outcome.certified, outcome.failure)
-        # retail uses only r20 (never r25), so the renaming is one-way.
-        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 25})
+        # retail uses only r20 (never r25), so the renaming is one-way; the
+        # value-dependent RA rule records the r1 stack base identity.
+        self.assertEqual(outcome.rho.gpr, {1: 1, 3: 3, 20: 25})
 
     def test_opaque_eabi_callee_rejected(self) -> None:
-        # Opaque EABI reads "*" — the call token covers every register, so a
-        # non-identity rho makes the post-call state diverge structurally and
-        # the pair falls through to SMT.
+        # Opaque EABI reads "*" — the call token covers every register.
+        # With the F3 renaming-aware token (adversarial review 2026-08) the
+        # token now AGREES under the rho, so the pair survives the call and is
+        # rejected by the F1 nonvolatile preservation check instead (the body
+        # clobbers the nonvolatile without a restore).  Falls to SMT either
+        # way — never a certificate.
         original, candidate = self._pair_with_call((20, 25))
         opaque = {"callee": CalleeContract.opaque_eabi()}
         outcome = certify_renaming_witness(
@@ -319,7 +362,7 @@ class AcrossCallTests(unittest.TestCase):
             callee_contracts=opaque,
         )
         self.assertFalse(outcome.certified)
-        self.assertEqual(outcome.failure.gate, "structural")
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_volatile_live_across_call_must_be_fixed(self) -> None:
         # r11 is live across the call (written before, read after); rho must
@@ -349,14 +392,18 @@ class AcrossCallTests(unittest.TestCase):
         self.assertEqual(outcome.failure.gate, "abi-boundary")
 
     def test_swap_other_register_while_r11_live_across_call(self) -> None:
-        # r11 stays fixed; a disjoint r20<->r25 swap is fine even with a call.
+        # r11 stays fixed (live across the call); a disjoint volatile r5<->r6
+        # swap, DEAD at the call site, is fine even with a call (F1 rewrite,
+        # adversarial review 2026-08: the original used nonvolatile r20/r25 as
+        # the swap pair — retail clobbered r20 without a restore, which is
+        # exactly the false-cert shape the preservation check now rejects).
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
-        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
-        r_words = [li(11, 5), _enc_primary(32, 20, 3, 0), 0x48000001,
-                   mr(3, 11), _enc_primary(36, 25, 3, 8), _LR]
-        d_words = [li(11, 5), _enc_primary(32, 25, 3, 0), 0x48000001,
-                   mr(3, 11), _enc_primary(36, 20, 3, 8), _LR]
+        reloc = (RelocationRef(12, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(11, 5), _enc_primary(32, 5, 3, 0), _enc_primary(36, 5, 3, 4),
+                   0x48000001, mr(3, 11), _LR]
+        d_words = [li(11, 5), _enc_primary(32, 6, 3, 0), _enc_primary(36, 6, 3, 4),
+                   0x48000001, mr(3, 11), _LR]
         original = decode_block(
             bytes.fromhex(_words_hex(r_words)), _RETAIL_BASE,
             validate_with_capstone=False, relocations=reloc,
@@ -382,10 +429,12 @@ class CertificatePlumbingTests(unittest.TestCase):
     """End-to-end certificate issue through the coop probe helper."""
 
     def _witness_probe(self):
-        r_words = [_enc_primary(32, 20, 3, 0), _enc_primary(32, 25, 3, 4),
-                   _enc_primary(36, 20, 3, 8), _enc_primary(36, 25, 3, 12), _LR]
-        d_words = [_enc_primary(32, 25, 3, 0), _enc_primary(32, 20, 3, 4),
-                   _enc_primary(36, 25, 3, 8), _enc_primary(36, 20, 3, 12), _LR]
+        # Volatile r5<->r6 swap (F1 rewrite: the original r20/r25 pair
+        # clobbered nonvolatiles without restore — a false certificate).
+        r_words = [_enc_primary(32, 5, 3, 0), _enc_primary(32, 6, 3, 4),
+                   _enc_primary(36, 5, 3, 8), _enc_primary(36, 6, 3, 12), _LR]
+        d_words = [_enc_primary(32, 6, 3, 0), _enc_primary(32, 5, 3, 4),
+                   _enc_primary(36, 6, 3, 8), _enc_primary(36, 5, 3, 12), _LR]
         left = _function_bytes("f", r_words, _RETAIL_BASE)
         right = _function_bytes("f", d_words, _DECOMP_BASE)
         context = CertifiedCalleeContext({}, (), ())
@@ -399,7 +448,7 @@ class CertificatePlumbingTests(unittest.TestCase):
         self.assertEqual(certificate["evidence"], "register-renaming-witness")
         self.assertEqual(certificate["contract"], "register-renaming-witness")
         payload = certificate["register_renaming_witness"]
-        self.assertEqual(payload["rho"]["gpr"], {"3": 3, "20": 25, "25": 20})
+        self.assertEqual(payload["rho"]["gpr"], {"3": 3, "5": 6, "6": 5})
         self.assertTrue(payload["structural_eq"])
         self.assertGreaterEqual(payload["terminal_pairs_checked"], 1)
         self.assertEqual(
@@ -475,14 +524,16 @@ class RegionSlicedWitnessTests(unittest.TestCase):
 
     def test_local_temp_swap_dead_at_boundary_accepted(self) -> None:
         # retail: li r5,1 ; mr r3,r5 ; li r5,2 ; mr r3,r5 ; blr
-        # decomp: li r4,1 ; mr r3,r4 ; li r5,2 ; mr r3,r5 ; blr
+        # decomp: li r6,1 ; mr r3,r6 ; li r5,2 ; mr r3,r5 ; blr
         # r5's old value is dead at the boundary (slot 2 redefines it), so the
-        # rebind is sound and the pair certifies.  r20 (not r4: r4 is
-        # default-FIXED under doc 32 A3) is the rename partner.
+        # rebind is sound and the pair certifies.  Volatile r6 (not r20 — the
+        # F1 fix rejects nonvolatile perms in the region path: decomp would
+        # clobber r20 the caller expects preserved while retail leaves it
+        # untouched).
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         r = [li(5, 1), mr(3, 5), li(5, 2), mr(3, 5), self._BLR]
-        d = [li(20, 1), mr(3, 20), li(5, 2), mr(3, 5), self._BLR]
+        d = [li(6, 1), mr(3, 6), li(5, 2), mr(3, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
@@ -533,12 +584,15 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         # bne (bo=4, bi=2) backward 8 bytes (2 instructions): loop latch.
         bne = lambda bd: (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
         # retail: r5 defined slot0; slot1 redefines r5 (dead at boundary).
-        # decomp: r20 slot0; slot1 uses r30 — rho(5) maps 20 then 30 ⇒ global
-        # conflict ⇒ boundary after slot 0; the loop lives in region 1.
+        # decomp: r6 slot0; slot1 uses r8 — rho(5) maps 6 then 8 ⇒ global
+        # conflict ⇒ boundary after slot 0; the loop (r7 counter) lives in
+        # region 1 with rho {5:8, 7:7}.  (F1 rewrite: volatile r6/r8 — the
+        # original r20/r30 pair was a decomp-side nonvolatile clobber and is
+        # now rejected by the region rule.)
         r = [li(5, 1), li(5, 2), li(7, 0), addi(7, 7, 1), cmpwi(7, 3),
              bne(-8), mr(3, 5), self._BLR]
-        d = [li(20, 1), li(30, 2), li(7, 0), addi(7, 7, 1), cmpwi(7, 3),
-             bne(-8), mr(3, 30), self._BLR]
+        d = [li(6, 1), li(8, 2), li(7, 0), addi(7, 7, 1), cmpwi(7, 3),
+             bne(-8), mr(3, 8), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
@@ -553,12 +607,15 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         bne = lambda bd: (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
         # A REAL rho conflict inside the loop body: retail writes r5 twice
-        # (slots 2-3) while decomp uses r20 then r30 ⇒ rho(5) maps to both ⇒
+        # (slots 2-3) while decomp uses r6 then r7 ⇒ rho(5) maps to both ⇒
         # boundary lands at slot 4, inside span [slot1, slot5] ⇒ reject.
+        # (F1 rewrite: volatile r6/r7 — the original r20/r30 pair would now
+        # reject earlier at the nonvolatile region rule, not at the loop
+        # guard.)
         r = [li(7, 0), addi(7, 7, 1), li(5, 1), li(5, 2), cmpwi(7, 3),
              bne(-16), mr(3, 5), self._BLR]
-        d = [li(7, 0), addi(7, 7, 1), li(20, 1), li(30, 2), cmpwi(7, 3),
-             bne(-16), mr(3, 30), self._BLR]
+        d = [li(7, 0), addi(7, 7, 1), li(6, 1), li(7, 2), cmpwi(7, 3),
+             bne(-16), mr(3, 7), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertFalse(outcome.certified)
         self.assertEqual(outcome.failure.gate, "loop")
@@ -766,17 +823,16 @@ class ImplReview2RegressionTests(unittest.TestCase):
 
     def test_three_region_rebind_chain_accepted(self) -> None:
         # A lane whose mapping changes at TWO boundaries (3 regions), dead at
-        # each boundary, must certify (multi-boundary rebind chain).
+        # each boundary, must certify (multi-boundary rebind chain).  Volatile
+        # r5 -> r6 -> r7 -> r8 (F1 rewrite: the original nonvolatile r20..r23
+        # chain clobbered caller-visible nonvolatiles without restore and is
+        # now rejected by the region rule).
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
-        # r20 -> r21 in region 0 (dead), r20 -> r22 in region 1 (dead),
-        # r20 -> r23 in region 2: the same retail lane remapped at TWO
-        # boundaries, dead at each (r20-23 are nonvolatile, non-EABI, not
-        # unconditionally fixed).
-        # retail: li r20,1 ; mr r3,r20 ; li r20,2 ; mr r3,r20 ; li r20,3 ; mr r3,r20 ; blr
-        # decomp: li r21,1 ; mr r3,r21 ; li r22,2 ; mr r3,r22 ; li r23,3 ; mr r3,r23 ; blr
-        r = [li(20, 1), mr(3, 20), li(20, 2), mr(3, 20), li(20, 3), mr(3, 20), self._BLR]
-        d = [li(21, 1), mr(3, 21), li(22, 2), mr(3, 22), li(23, 3), mr(3, 23), self._BLR]
+        # retail: li r5,1 ; mr r3,r5 ; li r5,2 ; mr r3,r5 ; li r5,3 ; mr r3,r5 ; blr
+        # decomp: li r6,1 ; mr r3,r6 ; li r7,2 ; mr r3,r7 ; li r8,3 ; mr r3,r8 ; blr
+        r = [li(5, 1), mr(3, 5), li(5, 2), mr(3, 5), li(5, 3), mr(3, 5), self._BLR]
+        d = [li(6, 1), mr(3, 6), li(7, 2), mr(3, 7), li(8, 3), mr(3, 8), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
@@ -867,23 +923,26 @@ class A2PositionAwareR0Tests(unittest.TestCase):
     def test_cmpwi_r0_rename_accepted(self) -> None:
         # cmpwi RA reads gpr[ra] (semantics.py:3455) — r0 is a real register.
         # r0 is WRITTEN before being read (li r0,0 first), so it is not a
-        # live-in input: rho(0)=20 is sound (impl-review r2: a live-in r0
-        # would be a true input the caller leaves independent).
+        # live-in input: rho(0)=5 is sound (F1 rewrite: the rename partner is
+        # volatile r5 — the original r20 was a nonvolatile clobber now
+        # rejected by the preservation check).
         cmpwi = lambda ra, v: _enc_primary(11, 0, ra, v)
         mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         r = [li(0, 0), cmpwi(0, 5), mr(3, 0), self._BLR]
-        d = [li(20, 0), cmpwi(20, 5), mr(3, 20), self._BLR]
+        d = [li(5, 0), cmpwi(5, 5), mr(3, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 
     def test_xform_arith_r0_rename_accepted(self) -> None:
         # X-form arithmetic RA reads gpr[ra] with no r0 guard — renameable.
-        # r0 written (li) before the read, so rho(0)=20 is sound.
+        # r0 written (li) before the read, so rho(0)=6 is sound (F1 rewrite:
+        # volatile rename partner r6 — r5 would collide with the RB=5
+        # identity entry and break rho injectivity).
         add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         r = [li(0, 0), add(3, 0, 5), self._BLR]
-        d = [li(20, 0), add(3, 20, 5), self._BLR]
+        d = [li(6, 0), add(3, 6, 5), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
 
@@ -1311,10 +1370,10 @@ class ImplReviewRegressionTests(unittest.TestCase):
         )
         from tools.coop.lib.targets import equivalence_certificate_error
 
-        r_words = [_enc_primary(32, 20, 3, 0), _enc_primary(32, 25, 3, 4),
-                   _enc_primary(36, 20, 3, 8), _enc_primary(36, 25, 3, 12), _LR]
-        d_words = [_enc_primary(32, 25, 3, 0), _enc_primary(32, 20, 3, 4),
-                   _enc_primary(36, 25, 3, 8), _enc_primary(36, 20, 3, 12), _LR]
+        r_words = [_enc_primary(32, 5, 3, 0), _enc_primary(32, 6, 3, 4),
+                   _enc_primary(36, 5, 3, 8), _enc_primary(36, 6, 3, 12), _LR]
+        d_words = [_enc_primary(32, 6, 3, 0), _enc_primary(32, 5, 3, 4),
+                   _enc_primary(36, 6, 3, 8), _enc_primary(36, 5, 3, 12), _LR]
         left = _function_bytes("f", r_words, self._R)
         right = _function_bytes("f", d_words, self._D)
         context = CertifiedCalleeContext({}, (), ())
@@ -1379,15 +1438,35 @@ class ValueDependentRATests(unittest.TestCase):
         )
         return original, candidate
 
-    def test_nonzero_ra_rename_accepted(self) -> None:
-        # lwz r3,0(r20) vs lwz r3,0(r21): both RA nonzero -> renameable
-        # (r20/r21 non-EABI, not fixed); the value-dependent rule certifies.
+    def test_nonzero_ra_rename_rejected(self) -> None:
+        # lwz r3,0(r20) vs lwz r3,0(r21): both RA nonzero -> renameable under
+        # the value-dependent rule, BUT r20/r21 are LIVE-IN at entry (read as
+        # address bases before any def).  F1 (adversarial review 2026-08): a
+        # live-in lane is an input the caller placed in a physical lane —
+        # retail loads from the caller's r20, decomp from the caller's r21,
+        # genuinely different addresses — so the live-in fix rejects.  This
+        # test previously asserted certification of an inequivalent pair.
         lwz = lambda rt, ra, dsp: _enc_primary(32, rt, ra, dsp)
         r = [lwz(3, 20, 0), self._BLR]
         d = [lwz(3, 21, 0), self._BLR]
         outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_nonzero_ra_rename_written_first_accepted(self) -> None:
+        # The sound value-dependent RA case: the base register is WRITTEN
+        # before the load (li r5, 0x1000; lwz r3, 0(r5)), so r5 is not a
+        # live-in input and the rename rho(5)=6 certifies.  Volatile base
+        # (F1 rewrite: the original nonvolatile r20 base would clobber a
+        # caller-visible register without restore and is now rejected by the
+        # preservation check).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        lwz = lambda rt, ra, dsp: _enc_primary(32, rt, ra, dsp)
+        r = [li(5, 0x1000), lwz(3, 5, 0), self._BLR]
+        d = [li(6, 0x1000), lwz(3, 6, 0), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
         self.assertTrue(outcome.certified, outcome.failure)
-        self.assertEqual(outcome.rho.gpr, {3: 3, 20: 21})
+        self.assertEqual(outcome.rho.gpr, {3: 3, 5: 6})
 
     def test_zero_vs_nonzero_ra_rejected(self) -> None:
         # addi r3,0,5 vs addi r3,r12,5 (CX-2): RA 0 (literal) vs 12 (register)
@@ -1414,3 +1493,150 @@ class ValueDependentRATests(unittest.TestCase):
         outcome = certify_renaming_witness(original, candidate)
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertIn(3, outcome.rho.gpr)
+
+
+class AdversarialReview2026Tests(unittest.TestCase):
+    """Regressions for the adversarial-review findings (2026-08-04, GLM-5.2 +
+    Kimi K3, both AGREE): F1 entry/exit observability (live-in reads, r0
+    genuine-operand reads, nonvolatile preservation), F2 global-path bcctr,
+    F3 renaming-aware callee token, S1 location-aware memory."""
+
+    _R = 0x80000000
+    _D = 0x80123450
+    _BLR = 0x4E800020
+
+    def _pair(self, r_words, d_words, relocs=()):
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), self._R,
+            validate_with_capstone=False, relocations=relocs,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), self._D,
+            validate_with_capstone=False, relocations=relocs,
+        )
+        return original, candidate
+
+    def test_f1a_live_in_volatile_read_rejected(self) -> None:
+        # r11 live-in, returned via r3: retail returns the caller's r11,
+        # decomp the caller's r12 — genuinely different values.  Previously
+        # CERTIFIED (F1a); the all-live-in fix rejects.
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        outcome = certify_renaming_witness(
+            *self._pair([mr(3, 11), self._BLR], [mr(3, 12), self._BLR]),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_f1b_live_in_nonvolatile_data_read_rejected(self) -> None:
+        # r20 live-in, added into the return: retail returns r3+r20-in, decomp
+        # r3+r25-in — different for the same caller input.  Previously
+        # CERTIFIED (F1b); the all-live-in fix rejects.
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        outcome = certify_renaming_witness(
+            *self._pair([add(3, 3, 20), self._BLR], [add(3, 3, 25), self._BLR]),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_f1c_nonvolatile_clobber_rejected(self) -> None:
+        # li r20,7 vs li r25,7: retail clobbers nonvolatile r20 without a
+        # restore; decomp preserves it.  Previously CERTIFIED (F1c); the
+        # preservation check rejects.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        outcome = certify_renaming_witness(
+            *self._pair([li(20, 7), self._BLR], [li(25, 7), self._BLR]),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_h1_live_in_fpr_read_rejected(self) -> None:
+        # f10 live-in, moved to f3: retail returns the caller's f10, decomp
+        # the caller's f11 (Kimi H1 — the FPR extension of F1a).
+        fmr = lambda fd, fb: (
+            (63 << 26) | ((fd & 31) << 21) | ((fb & 31) << 11) | (72 << 1)
+        )
+        outcome = certify_renaming_witness(
+            *self._pair([fmr(3, 10), self._BLR], [fmr(3, 11), self._BLR]),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_h5_r0_genuine_operand_live_in_rejected(self) -> None:
+        # add r3,r4,r0 vs add r3,r4,r12: r0 in a genuine RB operand is a
+        # live-in read (Kimi H5 — doc 32 A2 dropped r0 from the unconditional
+        # fixed set, but a live-in r0 is still an input the caller placed in
+        # lane 0).  Previously CERTIFIED.
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        outcome = certify_renaming_witness(
+            *self._pair([add(3, 4, 0), self._BLR], [add(3, 4, 12), self._BLR]),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_f2_global_path_rejects_bcctr(self) -> None:
+        # Global path must reject indirect dispatch exactly like the region
+        # path (F2): previously ``run_structural_witness`` certified
+        # mtctr;bcctr pairs (the shared-CTR terminal self-agrees without
+        # jump-table target modeling).
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        mtctr = lambda rs: (31 << 26) | (rs << 21) | (9 << 16) | (467 << 1)
+        outcome = certify_renaming_witness(
+            *self._pair(
+                [li(20, 0x1234), mtctr(20), 0x4E800420],
+                [li(25, 0x1234), mtctr(25), 0x4E800420],
+            ),
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "loop")
+
+    def test_f3_opaque_token_accepts_dead_at_call_rename(self) -> None:
+        # F3: with opaque-eabi contracts the callee token covers every
+        # register; the renaming-aware token canonicalizes the decomp lanes to
+        # retail order so a rename of a register DEAD at the call site (and
+        # not live-in/across the call) certifies instead of diverging the
+        # token.  Both sides store the same literal before the call.
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        reloc = (RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),)
+        contracts = {"callee": CalleeContract.opaque_eabi()}
+        outcome = certify_renaming_witness(
+            *self._pair(
+                [li(5, 1), stw(5, 3, 0), 0x48000001, self._BLR],
+                [li(6, 1), stw(6, 3, 0), 0x48000001, self._BLR],
+                relocs=reloc,
+            ),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=contracts,
+            deadline_ms=20000,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_s1_location_aware_memory_certifies_pc4_store(self) -> None:
+        # S1 (adversarial review 2026-08): the terminal memory comparison is
+        # location-aware — a stored absolute pc-derived constant differs by
+        # the function base, and the raw structural comparison over-rejected
+        # every post-call ``mflr; stw`` save.  The walker recombines the
+        # byte-level store chain into the stored word and compares it with
+        # the base-relative rule, so this pair certifies end-to-end (the
+        # register lane is dead at the exit: ``li r3,0``).
+        mflr = lambda rd: (31 << 26) | (339 << 1) | ((rd & 31) << 21) | (8 << 16)
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        reloc = (RelocationRef(0, R_PPC_REL24, "callee", "callee", 0),)
+        contracts = {"callee": CalleeContract(
+            frozenset({"r3"}), frozenset({"r3"}), "t",
+        )}
+        words = [0x48000001, mflr(3), stw(3, 1, 0), li(3, 0), self._BLR]
+        outcome = certify_renaming_witness(
+            *self._pair(words, words, relocs=reloc),
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts=contracts,
+            deadline_ms=20000,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)

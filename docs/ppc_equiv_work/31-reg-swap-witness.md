@@ -1,7 +1,9 @@
 # 31 — Register-renaming witness: fast-path equivalence certificates
 
 Status: **design revised after adversarial review** (GLM-5.2 soundness review, Kimi K3
-integration review; both verified against code). **Implemented**: the pre-SMT
+integration review; both verified against code). **Third adversarial review** (2026-08-04,
+GLM-5.2 + Kimi K3 via pi/OpenRouter, both AGREE) found and closed three false-certificate
+holes and two doc/reach gaps — see §6. **Implemented**: the pre-SMT
 register-renaming witness (evidence `register-renaming-witness`) ships in
 `tools/coop/lib/renaming_witness.py`, wired as a pre-SMT filter in
 `prove_unit_symbol`/`certify_unit_symbol`, with the evidence whitelist,
@@ -311,3 +313,71 @@ regions; budget exhaustion falls to SMT.
   future work).
 - Indirect `bctrl` targets are out of scope (parked plan
   `indirect_call_certification_plan.md`).
+
+## 6. Third adversarial review (2026-08-04) — false certificates closed
+
+GLM-5.2 and Kimi K3 (pi/OpenRouter) independently reviewed the implemented
+witness against the code; **both AGREE on all findings** (probe:
+`.scratch/witness_review_probe.py`, 13/13 lines confirmed).  All four fixes
+shipped in `tools/coop/lib/renaming_witness.py` + `semantics.py`.
+
+### F1 (BLOCKER) — gate 5 did not enforce entry/exit observability
+
+The input binding (`decomp.gpr[j] = X_{inverse[j]}`) assumes the CALLER
+renamed its registers.  That fiction is sound only for lanes whose
+caller-visible values coincide on both sides; gate 5 fixed only live-in
+r3–r10, returns, and live-across-call volatiles.  Reproduced false
+certificates (all previously CERTIFIED): `mr r3,r11` vs `mr r3,r12` (returns
+r11-in vs r12-in); `add r3,r3,r20` vs `add r3,r3,r25`; `li r20,7` vs
+`li r25,7` (nonvolatile clobber without restore); Kimi H1 (FPR live-in),
+H2 (live-in → real callee arg), H5 (`r0` in a genuine RB operand is a
+live-in read — doc 32 A2's "r0 renameable" claim held only for write-before-
+read uses).  The suite's own `test_nonvolatile_permutation_across_call_accepted`
+and `test_pure_nonvolatile_color_swap_accepted` asserted false certificates.
+
+Fixes: (a) gate 5 fixes **every** live-in lane (all of r0–r31/f0–f31, with a
+spill-only carve-out for prologue `stw rN, c(r1)` saves so the Chaitin class
+survives); (b) a per-terminal **nonvolatile preservation check** for permuted
+nonvolatile lanes (terminal ≡ entry binding after `z3.simplify`); (c) the
+region-sliced path rejects non-identity mappings on nonvolatile lanes
+outright.  Residual (documented, EABI-acceptable): volatile clobbers
+(`li r11,7` vs `li r12,7`) still certify — a conforming caller never reads
+volatile lanes post-call.
+
+### F2 (BLOCKER) — global path certified bcctr
+
+`_has_indirect_dispatch` was enforced only in the region path; the global
+path certified `mtctr; bcctr` pairs (the shared-CTR terminal self-agrees
+without jump-table target modeling — the doc's own reason for the reject).
+`_has_loop_or_non_return_indirect` had no production caller.  Fix: the
+`bcctr`/`blrl` reject now runs in `run_structural_witness` too.
+
+### F3 (MAJOR) — opaque contracts killed the across-call Chaitin class
+
+`SymbolicOps.call_token` keys the transition on every register for opaque
+contracts (the FULL_MATCH default); any non-identity rho at a call site
+rearranged the token arguments and diverged the UF results.  Fix: the witness
+passes its `(gpr_perm, fpr_perm)` to `execute_cfg` (new strictly-additive
+`witness_register_perm` kwarg), and `_apply_call_summary` canonicalizes the
+register tuples to retail lane order for the token and un-canonicalizes the
+summarized writes.  Sound because a genuine EABI callee observes only
+fixed/shared lanes; the SMT path is unchanged.  Note: an opaque summary
+REPLACES memory, so a save/restore ACROSS an opaque call still falls to SMT
+at the preservation check (fail-closed).
+
+### S1 (MINOR) — memory compared structurally
+
+`_terminals_agree` compared memory with raw structural equality while
+LR/exit_target got the base-relative carve-out; a post-call `mflr; stw`
+stores `pc + 4` and over-rejected.  Fix: `_memory_arrays_agree` recombines
+the byte-level store chain into stored words and compares them with the
+base-relative rule.  Full pair (`bl; mflr r3; stw r3,0(r1); li r3,0; blr`)
+now certifies; aliased/uninterpreted memory still rejects.
+
+### Reach after the fixes
+
+The fast path certifies: volatile temp renames (written-before-read, dead at
+calls), spill-only prologue-save Chaitin cycles whose restore simplifies,
+across-call renames of lanes dead at the call (via the F3 token), and
+location-aware memory stores.  Nonvolatile clobbers, live-in reads, indirect
+dispatch, and aliased save/restore bodies fall to SMT — never a certificate.

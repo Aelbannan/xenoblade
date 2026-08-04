@@ -4608,6 +4608,52 @@ def _apply_call_summary(
     ops: WordOps,
     call_id: int | str,
     contract: CalleeContract,
+    register_perm: tuple[list[int], list[int]] | None = None,
+) -> MachineState:
+    """Apply a callee summary, optionally under a witness register perm.
+
+    ``register_perm`` is the register-renaming witness's decomp-side
+    ``(gpr_perm, fpr_perm)`` (F3, adversarial review 2026-08): the decomp
+    state's lane *j* holds retail lane ``perm^{-1}(j)``'s shared variable, so
+    the callee token's positional arguments would be the same variables in a
+    *different order* on the two sides (opaque contracts key the transition on
+    every register) — any non-identity rho at a call site then diverges the
+    tokens and the across-call Chaitin class never certifies.  Canonicalizing
+    the register tuples to retail lane order before the summary (and
+    un-canonicalizing the summarized writes after) makes the tokens identical
+    on both sides.  Sound because a genuine EABI callee observes only
+    r1/r2/r13 + argument lanes + memory — all identity-mapped or shared.  The
+    SMT path passes None (identity) and is unchanged.
+    """
+    if register_perm is not None:
+        gpr_perm, fpr_perm = register_perm
+        state = replace(
+            state,
+            gpr=tuple(state.gpr[gpr_perm[i]] for i in range(32)),
+            fpr=tuple(state.fpr[fpr_perm[i]] for i in range(32)),
+            ps1=tuple(state.ps1[fpr_perm[i]] for i in range(32)),
+        )
+    result = _apply_call_summary_impl(state, ops, call_id, contract)
+    if register_perm is not None:
+        gpr_perm, fpr_perm = register_perm
+        gpr: list[Any] = [None] * 32
+        fpr: list[Any] = [None] * 32
+        ps1: list[Any] = [None] * 32
+        for i in range(32):
+            gpr[gpr_perm[i]] = result.gpr[i]
+            fpr[fpr_perm[i]] = result.fpr[i]
+            ps1[fpr_perm[i]] = result.ps1[i]
+        result = replace(
+            result, gpr=tuple(gpr), fpr=tuple(fpr), ps1=tuple(ps1),
+        )
+    return result
+
+
+def _apply_call_summary_impl(
+    state: MachineState,
+    ops: WordOps,
+    call_id: int | str,
+    contract: CalleeContract,
 ) -> MachineState:
     if not isinstance(ops, SymbolicOps):
         raise ExecutionInconclusive("matched-callee summaries require symbolic execution")
@@ -4859,6 +4905,13 @@ def execute_cfg(
     stop_at_pcs: frozenset[int] | None = None,
     initial_seed: tuple[int, MachineState, Any, dict[int, int], int] | None = None,
     paused_out: list[tuple[int, MachineState, Any, dict[int, int], int]] | None = None,
+    # Register-renaming witness (F3, adversarial review 2026-08): the
+    # (gpr_perm, fpr_perm) of the witness's decomp-side binding, so
+    # ``_apply_call_summary`` can canonicalize the decomp register tuples to
+    # retail lane order before building the callee token (and un-canonicalize
+    # the summarized writes after).  Default None ⇒ identity ⇒ identical
+    # behaviour for all existing callers (the SMT path never passes it).
+    witness_register_perm: tuple[list[int], list[int]] | None = None,
     # Deprecated aliases kept for transitional callers / tests.
     memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
     memory_summaries_used: list[MemoryLoopSummary] | None = None,
@@ -4964,6 +5017,7 @@ def execute_cfg(
             stop_at_pcs=stop_at_pcs,
             initial_seed=initial_seed,
             paused_out=paused_out,
+            witness_register_perm=witness_register_perm,
         )
     finally:
         if coverage_armed:
@@ -4997,6 +5051,7 @@ def _execute_cfg_body(
     stop_at_pcs: frozenset[int] | None = None,
     initial_seed: tuple[int, MachineState, Any, dict[int, int], int] | None = None,
     paused_out: list[tuple[int, MachineState, Any, dict[int, int], int]] | None = None,
+    witness_register_perm: tuple[list[int], list[int]] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -5005,6 +5060,21 @@ def _execute_cfg_body(
         )
     caller_frame_top = state.gpr[1]
     callee_contracts = callee_contracts or {}
+
+    def _summary(state: MachineState, target_key: int | str) -> MachineState:
+        # F3 (adversarial review 2026-08): pass the witness register perm ONLY
+        # when set — mocks/tests of ``_apply_call_summary`` with the legacy
+        # signature keep working (strictly-additive kwarg contract).
+        kwargs = (
+            {"register_perm": witness_register_perm}
+            if witness_register_perm is not None else {}
+        )
+        return _apply_call_summary(
+            state, ops, target_key,
+            callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
+            **kwargs,
+        )
+
     by_address = {item.address: item for item in instructions}
     start = instructions[0].address
     end = instructions[-1].address + 4
@@ -5502,18 +5572,12 @@ def _execute_cfg_body(
             elif insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
-                summarized = _apply_call_summary(
-                    linked, ops, target_key,
-                    callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
-                )
+                summarized = _summary(linked, target_key)
                 enqueue(pc + 4, summarized, condition, new_visits, steps + 1)
             elif not insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
-                summarized = _apply_call_summary(
-                    linked, ops, target_key,
-                    callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
-                )
+                summarized = _summary(linked, target_key)
                 record_terminal(
                     condition, summarized, "return",
                     ops.band(current.lr, ops.const(0xFFFFFFFC)),
@@ -5578,12 +5642,7 @@ def _execute_cfg_body(
                     if callee_key is not None:
                         if assumed_callees_used is not None:
                             assumed_callees_used.add(callee_key)
-                        summarized = _apply_call_summary(
-                            branched_state, ops, callee_key,
-                            callee_contracts.get(
-                                callee_key, CalleeContract.opaque_eabi(),
-                            ),
-                        )
+                        summarized = _summary(branched_state, callee_key)
                         enqueue(
                             pc + 4, summarized, case_condition, new_visits, steps + 1,
                         )
@@ -5617,18 +5676,12 @@ def _execute_cfg_body(
         elif insn.link and kind == "call" and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
-            summarized = _apply_call_summary(
-                branched_state, ops, target_key,
-                callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
-            )
+            summarized = _summary(branched_state, target_key)
             enqueue(pc + 4, summarized, taken_condition, new_visits, steps + 1)
         elif not insn.link and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
-            summarized = _apply_call_summary(
-                branched_state, ops, target_key,
-                callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
-            )
+            summarized = _summary(branched_state, target_key)
             record_terminal(
                 taken_condition, summarized, "return",
                 ops.band(old_lr, ops.const(0xFFFFFFFC)),

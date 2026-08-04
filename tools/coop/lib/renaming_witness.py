@@ -32,16 +32,30 @@ Gates (in order):
 4. rho bijection — single-valued in both directions, consistent across all
    mnemonics/positions.  (hexdiff's ``reg_map`` is keyed by ``(mnem, pos)``
    and allows many-to-one; this rho is built fresh from the role table.)
-5. ABI-boundary fixedness — rho must fix r0 (zero-register encoding), r1, r2,
-   r13, LR/CTR (inherently fixed: SPR indices are non-register fields), all
-   argument/return registers (r3–r10, f1–f8), and every volatile register
-   live across a call.  Nonvolatile permutations across calls (e.g.
-   r20<->r25, both preserved by EABI) are SOUND and are NOT pre-rejected —
-   that is the Chaitin-cycle class this feature exists for.
+5. ABI-boundary fixedness — rho must fix r0, r1, r2, r13, LR/CTR (inherently
+   fixed: SPR indices are non-register fields), all argument/return registers
+   (r3–r10, f1–f8), every register live-in at entry (any lane — not just the
+   EABI argument ranges: a live-in r11/r12/r14–r31/f0/f9–f31 is an input the
+   caller placed in a physical lane), and every volatile register live across
+   a call (opaque-EABI clobber set).  Nonvolatile permutations across calls
+   (e.g. r20<->r25, both preserved by EABI) are SOUND and are NOT pre-rejected
+   — that is the Chaitin-cycle class this feature exists for — but the pair
+   must additionally PASS the per-terminal nonvolatile preservation check
+   (F1, adversarial review 2026-08): each side must restore every nonvolatile
+   lane it touches (terminal value ≡ entry binding after ``z3.simplify``).
 6. Reject-list — ``ps_*``, ``psq_*``, ``mtfsf``/``mffs``/``mcrfs``/
    ``mtfsb*``/``mtfsfi``, ``mtspr``/``mfspr`` to GQRs (912–919) or any
-   non-{LR,CTR,XER} SPR, ``dcbz``/``icbi``/``tlb*``, and privileged/system
-   opcodes fall straight to SMT and are never certified via renaming.
+   non-{LR,CTR,XER} SPR, ``dcbz``/``icbi``/``tlb*``, privileged/system
+   opcodes, and indirect dispatch (``bcctr``/``blrl`` — F2, adversarial
+   review 2026-08: the global path now rejects these exactly like the region
+   path) fall straight to SMT and are never certified via renaming.
+
+Additional checks (adversarial review 2026-08, all fail-closed):
+- F3: the callee token is canonicalized through the rho (retail lane order)
+  so opaque contracts certify the across-call Chaitin class; sound because a
+  genuine EABI callee observes only fixed/shared lanes.
+- S1: the terminal memory comparison is location-aware (stored ``pc+4``
+  constants compare relative to the function base instead of over-rejecting).
 """
 
 from __future__ import annotations
@@ -1259,16 +1273,35 @@ def _check_abi_fixedness(
             candidate, lane,
         ):
             fixed_set.add(register)
-    # Registers read before being written (live-in at entry) in the EABI
-    # argument ranges are the function's input signature and must be fixed.
-    # The two sides are position-aligned with identical control flow, so a
-    # union of both sides' live-in sets is the conservative choice.
+    # Registers read before being written (live-in at entry) are the
+    # function's input signature and must be fixed.  F1 (adversarial review
+    # 2026-08): this is now EVERY live-in lane, not just the EABI argument
+    # ranges — a live-in r11/r12/r14–r31/f0/f9–f31/r0-in-a-genuine-operand
+    # is an input the byte-identical caller placed in a physical lane, and
+    # permuting it assumes the caller renamed its registers (false for
+    # live-in values; F1a/F1b/H1/H2/H5).  Carve-out: a SPILL-ONLY live-in
+    # lane (entry value consumed exclusively by a prologue stack save
+    # ``stw rN, c(r1)`` / ``stfd fN, c(r1)`` before its first def) is not an
+    # input dependency — both sides spill the same shared variable to the
+    # same slot and restore it, so the perm stays sound and the Chaitin
+    # prologue-save class survives.  The two sides are position-aligned with
+    # identical control flow, so a union of both sides' live-in sets is the
+    # conservative choice.
     for instructions in (original, candidate):
         live_in, live_across = _liveness_sets(instructions)
-        fixed_gpr.update(live_in & _EABI_ARG_GPRS)
-        fixed_fpr.update(
-            {n - 32 for n in live_in if 32 <= n < _PS1_OFFSET} & _EABI_ARG_FPRS
+        fixed_gpr.update(
+            n for n in live_in
+            if n < 32 and not _live_in_spill_only(instructions, n, GPR)
         )
+        fixed_fpr.update(
+            n - 32 for n in live_in
+            if 32 <= n < _PS1_OFFSET
+            and not _live_in_spill_only(instructions, n - 32, FPR)
+        )
+        # PS1 sub-lanes are bound together with their owning FPR; a live-in
+        # ps1 lane fixes the FPR too (no spill carve-out: ps1 saves are not
+        # modeled).
+        fixed_fpr.update(n - _PS1_OFFSET for n in live_in if n >= _PS1_OFFSET)
         fixed_gpr.update(n for n in live_across if n < 32)
         fixed_fpr.update(n - 32 for n in live_across if 32 <= n < _PS1_OFFSET)
     # Validate the FULL permutation, not the partial rho (impl-review BLOCKER):
@@ -1481,6 +1514,105 @@ def _value_equal(
     return _structurally_equal(left, right, z3)
 
 
+def _live_in_spill_only(
+    instructions: list[Instruction],
+    lane: int,
+    kind: str,
+) -> bool:
+    """True when ``lane``'s live-in value is used ONLY by a prologue stack
+    save before its first def (F1 carve-out, adversarial review 2026-08).
+
+    ``stw rN, c(r1)`` / ``stfd fN, c(r1)`` with a constant offset and the
+    frame pointer r1 is the EABI prologue-save pattern: the entry value flows
+    only into the spill slot (position-aligned on both sides — the same
+    shared slot holds the same shared variable), so permuting the lane is
+    sound and the Chaitin prologue-save class survives.  ANY other use of the
+    live-in value (data computation, call argument, non-r1 store) makes it a
+    real input dependency → not spill-only → the lane is fixed.  Stream-order
+    approximation (position-aligned pairs; conservative: a helper-call save
+    is invisible to ``_use_def_numbered``, so such a lane has no stream-visible
+    use and is NOT spill-only — it stays fixed, fail-closed).
+    """
+    first_def: int | None = None
+    for i, insn in enumerate(instructions):
+        if lane in _use_def_numbered(insn)[1]:
+            first_def = i
+            break
+    if first_def is None:
+        return False  # never def'd: live-in value flows to an exit — input.
+    for i, insn in enumerate(instructions[:first_def]):
+        if lane not in _use_def_numbered(insn)[0]:
+            continue
+        op = insn.opcode
+        if kind == GPR:
+            # stw/stwu rN, c(r1) — the prologue save.  RA must be r1 and the
+            # displacement a plain immediate (no relocation / symbolic base).
+            if op not in (Opcode.STW, Opcode.STWU):
+                return False
+            if len(insn.operands) < 2 or insn.operands[0] != lane:
+                return False
+            if insn.operands[1] != 1 or insn.relocation is not None:
+                return False
+        else:
+            # stfd/stfdu fN, c(r1).
+            if op not in (Opcode.STFD, Opcode.STFDU):
+                return False
+            if len(insn.operands) < 2 or insn.operands[0] != lane:
+                return False
+            if insn.operands[1] != 1 or insn.relocation is not None:
+                return False
+    return True
+
+
+def _nonvolatile_preservation_failure(
+    exits: list[Any],
+    initial: MachineState,
+    z3: Any,
+    side: str,
+    gpr_perm: list[int],
+    fpr_perm: list[int],
+) -> WitnessFailure | None:
+    """F1 (adversarial review 2026-08): EABI nonvolatile preservation.
+
+    The input binding (``decomp.gpr[j] = X_{inverse[j]}``) assumes the CALLER
+    renamed its registers; that fiction is sound only for lanes whose
+    caller-visible values coincide on both sides.  EABI makes every nonvolatile
+    (r14–r31, f14–f31) caller-visible at the return (the preservation
+    obligation), so a PERMUTED nonvolatile lane (``perm[r] != r``) must be
+    preserved on EACH side: the terminal value must equal the lane's entry
+    binding.  ``z3.simplify``-then-``z3.eq`` proves the simple save/restore
+    pattern (``Select(Store(m, slot, X_r), slot)`` reduces to ``X_r``); an
+    aliased restore that simplify cannot resolve falls through to SMT — never
+    a certificate.  Catches the clobber-without-restore false certificates
+    (F1c: ``li r20,7`` vs ``li r25,7``; the suite's r20/r25 load/store tests).
+    Identity-mapped lanes need no check here: their terminal comparison is
+    already physical (``ls.gpr[j]`` vs ``rs.gpr[j]`` directly), and a
+    byte-identical save/restore on an identity lane (e.g. the A1 psq
+    prologue/epilogue) certifies via the shared-slot restore.
+    """
+    for lane in range(14, 32):
+        if gpr_perm[lane] == lane:
+            continue
+        for insn_exit in exits:
+            if not z3.eq(z3.simplify(insn_exit.state.gpr[lane]), initial.gpr[lane]):
+                return WitnessFailure(
+                    "abi-boundary",
+                    f"{side} nonvolatile r{lane} not preserved at exit "
+                    "(clobbered without restore)",
+                )
+    for lane in range(14, 32):
+        if fpr_perm[lane] == lane:
+            continue
+        for insn_exit in exits:
+            if not z3.eq(z3.simplify(insn_exit.state.fpr[lane]), initial.fpr[lane]):
+                return WitnessFailure(
+                    "abi-boundary",
+                    f"{side} nonvolatile f{lane} not preserved at exit "
+                    "(clobbered without restore)",
+                )
+    return None
+
+
 def _terminals_agree(
     left: Any,
     right: Any,
@@ -1565,9 +1697,94 @@ def _terminals_agree(
             return False
     if getattr(ls, "symbolic_bus", None) is not None or getattr(rs, "symbolic_bus", None) is not None:
         return False
-    if not _structurally_equal(ls.memory, rs.memory, z3):
+    if not _memory_arrays_agree(
+        ls.memory, rs.memory, z3,
+        left_base=left_base, right_base=right_base,
+    ):
         return False
     return True
+
+
+def _memory_arrays_agree(
+    left: Any,
+    right: Any,
+    z3: Any,
+    *,
+    left_base: int,
+    right_base: int,
+) -> bool:
+    """S1 (adversarial review 2026-08): location-aware memory comparison.
+
+    Position-aligned sides produce Store chains from the same shared root with
+    the same addresses in the same order; compare the stored VALUES with the
+    base-relative ``_value_equal`` — a ``mflr; stw`` after a call stores
+    ``pc + 4``, an absolute constant that differs by the function base, so the
+    raw structural comparison over-rejected every post-call LR save.  The
+    store model is byte-level (``_bus_mem_store`` splits words into four
+    per-byte Extracts), so consecutive byte-stores are recombined into the
+    stored 32-bit word before the base-relative comparison — the individual
+    bytes of a base-offset constant do not differ by the base, but the word
+    does.  Any structural mismatch (aliasing, reordering, uninterpreted
+    terms) rejects — fail-closed, the pair falls to SMT.
+    """
+    def _word_group(
+        store: Any,
+    ) -> tuple[Any, Any, Any] | None:
+        """Recombine 4 consecutive byte-stores (big-endian word) into the
+        stored 32-bit value.  The Store chain is innermost-first (byte 0, the
+        MSB, at the bottom): walking down from the top visits bytes 3, 2, 1,
+        0 at addresses a, a-1, a-2, a-3.  Returns (top_addr, word, tail)."""
+        top_addr = store.arg(1)
+        parts = [store.arg(2)]  # byte 3 (top), then 2, 1, 0
+        node = store.arg(0)
+        prev = top_addr
+        for _ in range(3):
+            if not z3.is_store(node):
+                return None
+            delta = z3.simplify(prev - node.arg(1))
+            if not z3.eq(delta, z3.BitVecVal(1, delta.sort().size())):
+                return None
+            parts.append(node.arg(2))
+            prev = node.arg(1)
+            node = node.arg(0)
+        # parts = [b3, b2, b1, b0]; word = b0<<24 | b1<<16 | b2<<8 | b3.
+        word = parts[-1]
+        for part in reversed(parts[:-1]):
+            word = z3.Concat(word, part)
+        return top_addr, word, node
+
+    def _walk(l: Any, r: Any) -> bool:
+        if _structurally_equal(l, r, z3):
+            return True
+        if z3.is_store(l) and z3.is_store(r):
+            gl = _word_group(l)
+            gr = _word_group(r)
+            if gl is not None and gr is not None:
+                base_l, word_l, tail_l = gl
+                base_r, word_r, tail_r = gr
+                if not _structurally_equal(base_l, base_r, z3):
+                    return False
+                if not _value_equal(
+                    word_l, word_r, z3,
+                    left_base=left_base, right_base=right_base,
+                ):
+                    return False
+                return _walk(tail_l, tail_r)
+            if not _structurally_equal(l.arg(1), r.arg(1), z3):
+                return False
+            if not _value_equal(
+                l.arg(2), r.arg(2), z3,
+                left_base=left_base, right_base=right_base,
+            ):
+                return False
+            return _walk(l.arg(0), r.arg(0))
+        return False
+    try:
+        if _structurally_equal(z3.simplify(left), z3.simplify(right), z3):
+            return True
+        return _walk(left, right)
+    except Exception:
+        return False
 
 
 def run_structural_witness(
@@ -1590,6 +1807,18 @@ def run_structural_witness(
     Any divergence or execution inconclusiveness makes the witness fail and
     the caller falls through to the SMT probe.
     """
+    # F2 (adversarial review 2026-08): the region path rejects indirect
+    # dispatch (bcctr/blrl) because the executor records an indirect-branch
+    # terminal with a symbolic CTR that self-agrees under the shared-state
+    # binding, masking unmodeled dispatch targets (doc 31 §5 / doc 33 Item 2).
+    # The global path had no such guard and certified ``mtctr; bcctr`` pairs;
+    # enforce the same soundness-preserving reject here.
+    if _has_indirect_dispatch(original) or _has_indirect_dispatch(candidate):
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "loop",
+            "target contains an indirect branch (bcctr/blrl); "
+            "dispatch modeling deferred",
+        ))
     ops = SymbolicOps()
     z3 = ops.z3
     gpr_perm = rho.gpr_perm()
@@ -1615,6 +1844,10 @@ def run_structural_witness(
             assumed_callees=assumed_callees,
             callee_contracts=callee_contracts or {},
             deadline=deadline,
+            # F3 (adversarial review 2026-08): canonicalize the decomp lanes
+            # for the callee token so opaque contracts certify the across-call
+            # Chaitin class.
+            witness_register_perm=(gpr_perm, fpr_perm),
         )
     except (ProofDeadlineExceeded, Exception) as exc:
         if isinstance(exc, ProofDeadlineExceeded):
@@ -1624,6 +1857,20 @@ def run_structural_witness(
         return WitnessOutcome(False, rho=rho, failure=WitnessFailure(
             "execute", f"{type(exc).__name__}: {exc}",
         ))
+
+    # F1 (adversarial review 2026-08): EABI nonvolatile preservation on each
+    # side — a certified pair must restore every PERMUTED nonvolatile it
+    # touches (identity-mapped lanes are compared physically by the terminal
+    # comparison itself).
+    for exits, initial, side in (
+        (retail_exits, retail_initial, "retail"),
+        (decomp_exits, decomp_initial, "decomp"),
+    ):
+        failure = _nonvolatile_preservation_failure(
+            exits, initial, z3, side, gpr_perm, fpr_perm,
+        )
+        if failure is not None:
+            return WitnessOutcome(False, rho=rho, failure=failure)
 
     pairs_checked = 0
     left_base = original[0].address
@@ -1987,6 +2234,23 @@ def run_region_sliced_witness(
                                   callee_contracts)
         if abi_failure is not None:
             return WitnessOutcome(False, rho=rho, failure=abi_failure)
+        # F1 (adversarial review 2026-08): the region path does not run the
+        # per-terminal nonvolatile preservation check, so a non-identity
+        # mapping on an EABI nonvolatile lane (r14–r31 / f14–f31) in ANY
+        # region is rejected outright — a locally re-allocated nonvolatile
+        # temp is the clobber-without-restore false-cert shape (e.g. retail
+        # r5 vs decomp r20: decomp clobbers r20 the caller expects preserved
+        # while retail leaves it untouched).  Fail-closed: falls to SMT.
+        gpr_perm_region = rho.gpr_perm()
+        fpr_perm_region = rho.fpr_perm()
+        if any(gpr_perm_region[r] != r for r in range(14, 32)) or any(
+            fpr_perm_region[f] != f for f in range(14, 32)
+        ):
+            return WitnessOutcome(False, rho=rho, failure=WitnessFailure(
+                "abi-boundary",
+                f"region [{start}, {end}) permutes an EABI nonvolatile lane; "
+                "falls to SMT",
+            ))
         # A1 post-rho belt-and-suspenders (per region, doc 32 A1 rev 3, I12).
         psq_failure = _psq_operands_rho_fixed(original, rho, start, end)
         if psq_failure is not None:
@@ -2036,6 +2300,7 @@ def run_region_sliced_witness(
         steps: int,
         stop: frozenset[int] | None,
         side: list[Instruction],
+        register_perm: tuple[list[int], list[int]] | None = None,
     ) -> tuple[list[Terminal], list[tuple[int, MachineState, Any, dict[int, int], int]]]:
         paused: list[tuple[int, MachineState, Any, dict[int, int], int]] = []
         if start_state is None:
@@ -2060,6 +2325,10 @@ def run_region_sliced_witness(
                 stop_at_pcs=stop,
                 initial_seed=(start_pc, start_state, condition, visits, steps),
                 paused_out=paused,
+                # F3 (adversarial review 2026-08): the region's rho is the
+                # binding the resumed state carries; canonicalize for the
+                # callee token.
+                witness_register_perm=register_perm,
             )
         except (ProofDeadlineExceeded, Exception) as exc:
             if isinstance(exc, ProofDeadlineExceeded):
@@ -2108,6 +2377,7 @@ def run_region_sliced_witness(
                 terms, paused = _run_region(
                     entry[1], entry[0], entry[2], entry[3], entry[4],
                     decomp_stop, candidate,
+                    register_perm=(rho.gpr_perm(), rho.fpr_perm()),
                 )
                 for t in terms:
                     all_decomp_terms.append((t, region_idx))

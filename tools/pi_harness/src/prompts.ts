@@ -15,16 +15,19 @@ export function buildBatchPrompt(opts: {
     "\n## Harness instructions\n\n" +
     "- The `xenoblade-decomp` skill is already loaded — follow it (MWCC knowledge-base search, hexdiff loop, coding guidelines).\n" +
     `- Match as many of the ${targetIds.length} listed target(s) as possible, in order: ${targetIds.map((id) => `\`${id}\``).join(", ")}. Partial progress is fine — the harness accepts whatever passes.\n` +
-    `- For builds and diffs use ONLY: \`${pythonBin} tools/coop/hexdiff.py ${unit} --symbol <symbol> --json\`. A plain \`python3\` also works (the harness puts the repo venv on PATH).\n` +
-    "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance.\n" +
-    "- NEVER revert using git (`git checkout`, `git reset`, `git restore`, etc.) — other agents share this branch.\n" +
+    "- For diffs use the **`hexdiff` tool**: `hexdiff <unit> <symbol>` (counts + reloc drift + fix suggestions). For symbol lookup use **`symbols`**; for target records use **`targets`**.\n" +
+    "- **Before iterating on a target, search the MWCC knowledge base with `kb`**: `kb <symbol>` (sibling attempts + reference patterns with status/match%) and `kb <short mismatch terms> tag=<category>` for known codegen fixes. Use **`ctx <source>`** for struct layouts when the brief's headers aren't enough.\n" +
+    "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level; the register-renaming witness is the only equivalence path (the harness runs it in acceptance).\n" +
+    "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance (and you have no shell to run them with).\n" +
+    "- NEVER revert using git — other agents share this branch (and you have no shell).\n" +
     "- Put new or updated struct/class/enum type definitions into the corresponding `.hpp` header file, not the `.cpp` source. If a type is only used by this TU, put it in the unit's own header; if it's shared, use the appropriate shared header.\n" +
     "- Reminder: add comments to complicated code.\n" +
     "\n## Tool call budget\n" +
     "- Write code FIRST, then hexdiff to verify. Search only if stuck.\n" +
     "- Maximum 5 grep/search commands per function — if you haven't found it after 3 searches, write your best guess and hexdiff it.\n" +
+    "- Cap `kb` calls too (~3 per function): one symbol query + one mismatch-terms query per function is the expected pattern.\n" +
     "- Do NOT search for the same symbol or pattern more than once.\n" +
-    "- Do NOT use `find`, `ls`, `nm`, `objdump`, or `readelf` — the brief already contains file locations and symbol info.\n" +
+    "- Do NOT use `nm`, `objdump`, or `readelf` — use the `symbols` tool and the brief's provided file/symbol info instead. (`find`/`ls` ARE available and cheap for locating files; cap them like grep.)\n" +
     "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
     "\n## Anti-patterns (will cause lint rejection)\n\n" +
     "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. Existing `extern \"C\"` stubs with `lbl_*` names are fine.\n" +
@@ -58,16 +61,22 @@ ${sourceFiles.map((f) => `- \`${f}\``).join("\n")}
 Other agents share this branch. Do NOT run \`git checkout\`, \`git reset\`,
 \`git restore\`, or any command that would revert or discard changes. If you
 need to undo your own edits, use the editor to make forward fixes.
+(This session's bash is constrained to the TU-final allowlist — git,
+\`cycle\`/\`batch-cycle\`, \`--smt\`/\`--linked\`, and plain \`run.py diff\` are
+blocked at the tool level. The \`hexdiff\`, \`kb\`, \`symbols\`, \`targets\`,
+and \`ctx\` tools are available as in batch sessions.)
 
 ### 1. Verify the full TU matches — including data
 
 \`\`\`bash
-${pythonBin} tools/coop/run.py diff ${unit}
+${pythonBin} tools/coop/run.py diff ${unit} --no-smt
 ${pythonBin} tools/coop/run.py size ${unit}
 \`\`\`
 
 Check every symbol, including data sections. The decompiled object's
-\`.text\` must fit the retail split budget.
+\`.text\` must fit the retail split budget. (\`--no-smt\`: this repo never
+runs the SMT probe — the register-renaming witness is the only equivalence
+path, and it runs inside \`cycle\` when needed.)
 
 ### 2. Create or fix classes and structs
 

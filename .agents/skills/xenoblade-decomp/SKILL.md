@@ -25,11 +25,11 @@ description: >-
 
 **Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes, **but prefer `FULL_MATCH` when it is reachable**: a 100% static match is cheaper to certify (automatic `full-instruction-match` certificate, no `--smt` needed) and is stronger evidence than a semantic proof. Use `EQUIVALENT_MATCH` when 100% static has not yet been reached after the documented levers (register allocation, scheduling, immediate/instruction selection, FP codegen) — a semantic proof is a full-tier acceptance, and the byte-identity route stays open. Unit-level (no symbol) still requires 100% code + data.
 
-**Matching is always possible.** Every retail function is the output of MWCC compiling *some* C/C++ source, so a matching reconstruction exists in principle. A plateau below 100% means the current angle is exhausted — not that the target is unmatchable. Angles to try, roughly in order: another source shape / declaration order / expression order; another compiler version or per-unit flag (`mw_version`, `-func_align 4/16`, `-ipa off`, `-O4,s`); reloc naming via `extern "C" lbl_eu_*`; `EQUIVALENT_MATCH` via `--smt`; a tooling/engine improvement; or a documented `PLAN.md` §17.6 policy exception. `docs/MWCC_REFERENCE.md` is full of targets that once looked like hard caps and later reached FULL_MATCH/EQUIVALENT_MATCH through one of these levers. Never tell another agent (or record) that a target is impossible: record what was tried, the exact residual, and the next angle instead. A target is `BLOCKED` only for a concrete external/tooling limitation, never because it "doesn't match".
+**Matching is always possible.** Every retail function is the output of MWCC compiling *some* C/C++ source, so a matching reconstruction exists in principle. A plateau below 100% means the current angle is exhausted — not that the target is unmatchable. Angles to try, roughly in order: another source shape / declaration order / expression order; another compiler version or per-unit flag (`mw_version`, `-func_align 4/16`, `-ipa off`, `-O4,s`); reloc naming via `extern "C" lbl_eu_*`; the register-renaming witness path to `EQUIVALENT_MATCH` (the SMT probe is disabled by repo policy — see below); a tooling/engine improvement; or a documented `PLAN.md` §17.6 policy exception. `docs/MWCC_REFERENCE.md` is full of targets that once looked like hard caps and later reached FULL_MATCH/EQUIVALENT_MATCH through one of these levers. Never tell another agent (or record) that a target is impossible: record what was tried, the exact residual, and the next angle instead. A target is `BLOCKED` only for a concrete external/tooling limitation, never because it "doesn't match".
 
-**SMT probe is opt-in (cost control):** `coop run cycle` runs only the cheap pre-SMT register-renaming witness by default; the full Z3 probe runs only with `--smt`. `coop run diff` keeps the full probe on by default (use `--no-smt` to skip while iterating). A skipped probe logs `inconclusive_smt_disabled` and can never reach `EQUIVALENT_MATCH` — to accept a function the witness cannot certify (scheduling/immediate/instruction-selection diffs), run `cycle <target-id> --smt` and confirm status is `EQUIVALENT_MATCH`. When a function has plateaued above ~90% and looks semantically equivalent, run `diff <unit> --symbol <sym>` (full probe) for the divergence oracle before rewriting. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) even without `--smt` — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
+**No-SMT policy (hard):** the full Z3 SMT probe is DISABLED in this repo — do not run `cycle --smt`, `diff` without `--no-smt`, or anything passing `--smt`/`--linked`. Acceptance is **FULL_MATCH** (100% static, automatic certificate) or **witness-certified `EQUIVALENT_MATCH`** via the register-renaming witness that runs inside `cycle`/`batch-cycle` by default (no flag). A function the witness cannot certify (scheduling/immediate/instruction-selection diffs) must reach `FULL_MATCH` or stay recorded as a near-miss — the SMT probe is never the answer. Harness sessions additionally block these commands at the tool level. `coop run diff` defaults the probe ON (use `--no-smt` to skip while iterating); a skipped probe logs `inconclusive_smt_disabled` and cannot reach `EQUIVALENT_MATCH` — expected under this policy. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
 
-**Probe etiquette (each probe costs 15-30 min of machine time):** run the probe **once, at acceptance time** — not during iteration (hexdiff is the iteration tool). Before `cycle --smt`, confirm the callee tree is ready: indirect calls, unresolved callees, or `called_functions` not yet FULL_MATCH/EQUIVALENT_MATCH fail closed no matter what the probe does (`cycle` prints this as an early warning). On a callee-blocked target, SMT is closed, so **FULL_MATCH is the only acceptance route — push for it instead of defaulting to moving on**: iterate with hexdiff through the documented levers (source shape, declaration/expression order, per-unit flags/`mw_version`, reloc naming) toward a byte-identical body. A FULL_MATCH here also populates the `callees-accepted` frontier for other agents. Record the blocker and move on only when the byte-identity route is genuinely exhausted for a concrete external/tooling limitation. Never retry the same function with `--contract` variants (strict/live-out/memory/ppc-eabi) — accept the `auto` outcome. Concurrent probes starve hexdiff builds and have hung agents for hours; when other agents are active, prefer deferring the probe to a quiet moment.
+**Probe etiquette (each probe costs 15-30 min of machine time):** run the probe **once, at acceptance time** — not during iteration (hexdiff is the iteration tool). The register-renaming witness runs inside `cycle` and is the only equivalence path (this repo has a **no-SMT policy**: the SMT probe is not run, and harness sessions block `--smt`/`--linked` and plain `run.py diff` at the tool level). Before acceptance, confirm the callee tree is ready: indirect calls, unresolved callees, or `called_functions` not yet FULL_MATCH/EQUIVALENT_MATCH fail closed no matter what (`cycle` prints this as an early warning). On a callee-blocked target, witness certification is closed, so **FULL_MATCH is the only acceptance route — push for it instead of defaulting to moving on**: iterate with hexdiff through the documented levers (source shape, declaration/expression order, per-unit flags/`mw_version`, reloc naming) toward a byte-identical body. A FULL_MATCH here also populates the `callees-accepted` frontier for other agents. Record the blocker and move on only when the byte-identity route is genuinely exhausted for a concrete external/tooling limitation. Never retry the same function with `--contract` variants (strict/live-out/memory/ppc-eabi) — accept the `auto` outcome. Concurrent probes starve hexdiff builds and have hung agents for hours; when other agents are active, prefer deferring the probe to a quiet moment.
 
 **Source language:** reconstruction must be **high-level C or C++ only** (MWCC), except for the isolated Gekko paired-single backend exception in §17.6. Express recovered **semantics** — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail outside that exception.
 
@@ -189,6 +189,31 @@ Equivalent standalone CLI: `python tools/symrecover.py <subcommand> …`
 
 ## Decompilation loop
 
+### pi-harness sessions: structured tools, no bash
+
+When you are running inside the pi-harness batch harness, you have NO bash.
+The whole loop is covered by these structured tools (no shell needed):
+
+- `hexdiff <unit> <symbol>` — per-function diff: mismatch/structural/reg_swap
+  counts, size check, **reloc drift + fix suggestions**. The iteration tool.
+- `symbols <unit> [substr]` — retail symbol table (address | size | name).
+- `targets <id>` — target registry record (identity, status, required_level).
+- `kb <query> [kind=] [tag=] [status=]` — MWCC knowledge base dual search:
+  sibling attempts (status + match%) AND reference patterns. Query by mangled
+  symbol or short mismatch terms (e.g. `kb reg swap mullw`).
+- `ctx <source>` — decomp.me context (struct layouts / types) for a file.
+
+Read/edit/write/grep/find/ls are also available. The skill's CLI examples
+below (`python3 tools/...`) map to these tools as follows:
+`hexdiff.py` → `hexdiff` · `mwcc_kb.py search` → `kb` · `run.py ctx` → `ctx`.
+
+**Hard blocks in harness sessions (enforced at the tool level, not by
+prompt):** no `--smt`/`--linked` anywhere, no plain `run.py diff` (it would
+run the SMT probe), no git revert/push, no `cycle`/`batch-cycle`/`ninja`/
+`configure.py` (harness-owned acceptance), no target-registry writes. The
+register-renaming witness is the only equivalence path — the harness runs it
+inside `cycle` at acceptance time.
+
 For each target:
 
 ```text
@@ -205,7 +230,8 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
     python3 tools/coop/run.py cycle <target-id> \
         --hypothesis "..." --next-change "..." --runtime-test ""
     # If fuzzy is in [50, 100) and the register-renaming witness did not
-    # certify, re-run with --smt so the full probe can reach EQUIVALENT_MATCH.
+    # certify, the SMT probe is NOT available in this repo (no-SMT policy) —
+    # iterate with hexdiff toward FULL_MATCH or record the residual.
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
 → if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat
@@ -237,7 +263,7 @@ python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
     --default-next-change "accept if pass" \
     --summary /tmp/batch-summary.json
 
-# Allow linked DOL/ELF fallback for SMT equivalence
+# (no-SMT policy: --linked / SMT fallback is disabled in this repo)
 python3 tools/coop/batch-cycle.py us-80345678 --linked
 ```
 
@@ -399,10 +425,13 @@ and classifies `name` / `addend` / `layout` / `structural` drift; TU-local
 labels (`@N`, `...bss.0`) get unit-scoped keys. Re-run `mine` after accepting
 reloc fixes so suggestions refresh. Tests: `tools/coop/tests/test_reloc_map.py`.
 
-### PPC semantic equivalence (optional additional evidence)
+### PPC semantic equivalence (DISABLED — Z3/SMT, see no-SMT policy above)
 
-For supported bounded PPC blocks, the field decoder + Z3 checker can prove
-or refute selected live-out state even when bytes differ:
+This section is **disabled by repo policy**: it runs the Z3 SMT checker, which
+the no-SMT policy forbids. Do not use `run.py equivalence` or `tools/
+ppc_equivalence` for acceptance evidence. The only equivalence path is the
+register-renaming witness inside `cycle`/`batch-cycle`. (Kept for reference of
+what exists, not as an instruction.)
 
 ```bash
 python3 tools/coop/run.py equivalence check-hex \
@@ -427,7 +456,10 @@ move on.
 
 ### decomp.me (optional)
 
-For **small** functions that have plateaued: generate ctx → open unit in **objdiff** → Create scratch on decomp.me → paste matched code back → `cycle` again.
+For **small** functions that have plateaued: generate ctx (the `ctx` tool) →
+create a scratch on decomp.me → paste matched code back → `cycle` again.
+(Note: objdiff-cli is not usable in this repo — per-unit diffs return empty
+and the report needs a fully-linked project; hexdiff covers the diff needs.)
 
 ### Large functions
 
@@ -452,6 +484,10 @@ Decompose into leaf symbols/units first. Each leaf and the parent must still end
   python3 tools/mwcc_kb.py search "<short mismatch terms>" --kind attempt --json
   python3 tools/mwcc_kb.py show <result-id> --json
   ```
+
+  In pi-harness sessions, the `kb` tool wraps this dual search (identity +
+  mismatch terms in one call): `kb <symbol>` for sibling attempts, `kb <short
+  mismatch terms> tag=<category>` for reference patterns.
 
   Search in this order: exact function/symbol; one short query per observed
   mismatch category; repo-proven reference patterns; prior attempts. Start with

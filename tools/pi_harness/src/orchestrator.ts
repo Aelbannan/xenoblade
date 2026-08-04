@@ -21,6 +21,7 @@ import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import type {
   HarnessConfig, Target, TargetBrief, SessionUsage, VerifyResult, SiblingPointer,
+  TriageRow, TriageSummary,
 } from "./types.js";
 import {
   findClaimsByOwner,
@@ -350,9 +351,62 @@ function fetchSimilarityRanking(
   return ranking;
 }
 
+interface TriageData {
+  byClass: Map<string, number>;
+  clsById: Map<string, string>;
+}
+
+/** Run `tools/coop/triage.py --unit <unit> --region <region> --json` ONCE per
+ *  TU (read-only classifier; never writes targets.json) and parse its JSONL
+ *  rows into targetId -> cls plus a per-class count. Returns empty maps on
+ *  any failure — callers fall back to today's behavior (no routing). */
+function fetchTriage(
+  repoRoot: string,
+  unit: string,
+  config: HarnessConfig,
+): TriageData {
+  const data: TriageData = { byClass: new Map(), clsById: new Map() };
+  let stdout: string;
+  try {
+    stdout = execFileSync(
+      config.pythonBin,
+      ["tools/coop/triage.py", "--unit", unit, "--region", config.region, "--json"],
+      { cwd: repoRoot, encoding: "utf-8", timeout: 60_000, maxBuffer: 64 * 1024 * 1024 },
+    );
+  } catch (err) {
+    process.stderr.write(
+      `[pi-harness] ${unit}: triage.py failed ` +
+        `(${err instanceof Error ? err.message : String(err)}) — no routing for this TU\n`,
+    );
+    return data;
+  }
+  for (const line of stdout.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    let row: unknown;
+    try {
+      row = JSON.parse(trimmed);
+    } catch {
+      continue; // tolerate malformed rows
+    }
+    const rec = row as Partial<TriageRow>;
+    if (typeof rec.targetId !== "string" || typeof rec.cls !== "string") continue;
+    data.clsById.set(rec.targetId, rec.cls);
+    data.byClass.set(rec.cls, (data.byClass.get(rec.cls) ?? 0) + 1);
+  }
+  return data;
+}
+
 interface SelectionResult {
   ordered: Target[];
   siblingsByTarget: Map<string, SiblingPointer[]>;
+  /** Targets triage classified `regswap_only`: pulled OUT of the LLM batch,
+   *  routed to a witness-only singleton (`run.py cycle`, no model session,
+   *  no --smt). Empty when triage is off. */
+  witnessTargets: Target[];
+  /** Per-TU triage summary for the `triage` ledger event; undefined when
+   *  triage is off or triage.py produced no rows. */
+  triage?: TriageSummary;
 }
 
 /** Order the unmatched wave for pass 1.
@@ -369,47 +423,87 @@ async function applySelection(
   config: HarnessConfig,
   targets: Target[],
 ): Promise<SelectionResult> {
-  const empty: SelectionResult = { ordered: targets, siblingsByTarget: new Map() };
+  // Phase 5 (no-SMT): pre-batch triage classification, once per TU. The
+  // classifier is a read-only PREDICTOR — the register-renaming witness
+  // (run inside `cycle`) stays the source of truth. When triage is off
+  // (default), nothing below changes today's behavior.
+  let clsById = new Map<string, string>();
+  let triage: TriageSummary | undefined;
+  if (config.triage === "route") {
+    const t = fetchTriage(repoRoot, unit, config);
+    if (t.clsById.size > 0) {
+      clsById = t.clsById;
+      triage = {
+        byClass: {
+          regswap_only: t.byClass.get("regswap_only") ?? 0,
+          strict: t.byClass.get("strict") ?? 0,
+          structural: t.byClass.get("structural") ?? 0,
+          unknown: t.byClass.get("unknown") ?? 0,
+        },
+        routedToWitness: targets
+          .filter((x) => clsById.get(x.id) === "regswap_only")
+          .map((x) => x.id),
+      };
+    }
+  }
 
+  // Phase 4: selection order on the full wave (unchanged semantics).
+  let ordered: Target[];
+  let siblingsByTarget = new Map<string, SiblingPointer[]>();
   if (config.selection === "random") {
     const copy = [...targets];
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    return { ordered: copy, siblingsByTarget: new Map() };
+    ordered = copy;
+  } else if (config.selection === "similarity") {
+    const ranking = fetchSimilarityRanking(repoRoot, unit, config);
+    if (ranking.size === 0) {
+      ordered = targets; // sim_schedule unavailable -> claim-order
+    } else {
+      const statusById = targetStatusById(repoRoot);
+      const ready: Target[] = [];
+      const fallback: Target[] = [];
+      for (const t of targets) {
+        (isCallGraphReady(t, statusById) ? ready : fallback).push(t);
+      }
+
+      // Re-rank the call-graph-ready subset by similarity; unranked targets
+      // (e.g. in-progress statuses sim_schedule skips) sort to the back of
+      // the ready subset. Tie-break by id for determinism.
+      ready.sort((a, b) => {
+        const sa = ranking.get(a.id)?.score ?? -1;
+        const sb = ranking.get(b.id)?.score ?? -1;
+        return sb - sa || a.id.localeCompare(b.id);
+      });
+
+      // Sibling pointers attach to every ranked target in the wave (ready
+      // and fallback alike) — they are hints, not readiness claims.
+      for (const t of targets) {
+        const rank = ranking.get(t.id);
+        if (rank && rank.topSiblings.length > 0) siblingsByTarget.set(t.id, rank.topSiblings);
+      }
+      ordered = [...ready, ...fallback];
+    }
+  } else {
+    ordered = targets;
   }
 
-  if (config.selection !== "similarity") return empty;
-
-  const ranking = fetchSimilarityRanking(repoRoot, unit, config);
-  if (ranking.size === 0) return empty; // sim_schedule unavailable -> claim-order
-
-  const statusById = targetStatusById(repoRoot);
-  const ready: Target[] = [];
-  const fallback: Target[] = [];
-  for (const t of targets) {
-    (isCallGraphReady(t, statusById) ? ready : fallback).push(t);
+  // Phase 5 routing: pull `regswap_only` targets OUT of the LLM batch into
+  // the witness-only singleton path, and front-load `strict` targets (the
+  // highest LLM hit rate). When triage is off, `ordered` is untouched.
+  let witnessTargets: Target[] = [];
+  if (triage) {
+    witnessTargets = targets.filter((x) => clsById.get(x.id) === "regswap_only");
+    const witnessIds = new Set(witnessTargets.map((x) => x.id));
+    const rest = ordered.filter((x) => !witnessIds.has(x.id));
+    const strict = rest.filter((x) => clsById.get(x.id) === "strict");
+    const other = rest.filter((x) => clsById.get(x.id) !== "strict");
+    ordered = [...strict, ...other];
   }
 
-  // Re-rank the call-graph-ready subset by similarity; unranked targets
-  // (e.g. in-progress statuses sim_schedule skips) sort to the back of the
-  // ready subset. Tie-break by id for determinism.
-  ready.sort((a, b) => {
-    const sa = ranking.get(a.id)?.score ?? -1;
-    const sb = ranking.get(b.id)?.score ?? -1;
-    return sb - sa || a.id.localeCompare(b.id);
-  });
-
-  // Sibling pointers attach to every ranked target in the wave (ready and
-  // fallback alike) — they are hints, not readiness claims.
-  const siblingsByTarget = new Map<string, SiblingPointer[]>();
-  for (const t of targets) {
-    const rank = ranking.get(t.id);
-    if (rank && rank.topSiblings.length > 0) siblingsByTarget.set(t.id, rank.topSiblings);
-  }
-
-  return { ordered: [...ready, ...fallback], siblingsByTarget };
+  return { ordered, siblingsByTarget, witnessTargets, triage };
 }
 
 
@@ -463,6 +557,63 @@ async function releaseBatch(
 ): Promise<void> {
   await releaseTargets(repoRoot, config.pythonBin, ids, OWNER);
   for (const id of ids) activeClaims.delete(id);
+}
+
+/**
+ * Phase 5 (no-SMT): witness-only singleton. Runs `run.py cycle <id>` under
+ * the repo-wide build lock — NO model session and NO `--smt` (cycle's
+ * default is the cheap register-renaming witness, which certifies
+ * position-aligned same-mnemonic pairs whose diffs are register-only).
+ *
+ * The witness is the source of truth: exit 0 means the required level is
+ * met, but a non-zero exit can still have flipped the registry (e.g. the
+ * unit split-size gate failed after the function itself certified), so
+ * targets.json is re-checked either way. Returns true when the target is
+ * now FULL_MATCH / EQUIVALENT_MATCH; false -> the caller re-adds it to the
+ * LLM batch pool (never dropped).
+ */
+async function runWitnessCycle(
+  repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
+): Promise<boolean> {
+  console.log(`[pi-harness] ${unit}: witness-only cycle ${targetId} (no model session, no --smt)`);
+  const claim = await claimTargets(repoRoot, config.pythonBin, [targetId], OWNER, (id) => activeClaims.add(id));
+  if (claim.failed.length > 0) {
+    process.stderr.write(
+      `[pi-harness] ${unit}: ${targetId} claim failed for witness cycle — falling back to batch\n`,
+    );
+    return false;
+  }
+  let certified = false;
+  try {
+    try {
+      await execFilePromise(config.pythonBin, [
+        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
+        config.pythonBin, "tools/coop/run.py", "cycle", targetId,
+        "--hypothesis",
+        "triage: reg-swap template vs nearest matched sibling — witness-only route (no LLM round)",
+        "--next-change",
+        "accept if the register-renaming witness certifies; otherwise fall back to the LLM batch",
+      ], { cwd: repoRoot });
+      certified = true; // cycle exit 0 = required level met
+    } catch (err) {
+      // Non-zero exit: witness may not have certified, or the unit-level
+      // split size gate failed. The registry records actual acceptance —
+      // re-check instead of trusting the exit code alone.
+      const status = targetStatusById(repoRoot).get(targetId);
+      if (status === "FULL_MATCH" || status === "EQUIVALENT_MATCH") {
+        certified = true;
+      } else {
+        process.stderr.write(
+          `[pi-harness] ${unit}: witness did not certify ${targetId} ` +
+            `(status ${status ?? "UNKNOWN"}) — re-added to batch pool\n`,
+        );
+      }
+    }
+  } finally {
+    await releaseTargets(repoRoot, config.pythonBin, [targetId], OWNER);
+    activeClaims.delete(targetId);
+  }
+  return certified;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -692,13 +843,54 @@ async function runOneTu(
   const targetsRaw = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
   });
-  const { ordered: targets, siblingsByTarget } = await applySelection(repoRoot, unit, config, targetsRaw);
+  const selection = await applySelection(repoRoot, unit, config, targetsRaw);
+  let targets = selection.ordered;
+  const siblingsByTarget = selection.siblingsByTarget;
+
+  // Phase 5 (no-SMT): route triage `regswap_only` targets to witness-only
+  // cycles BEFORE any LLM session. Each is one `run.py cycle` under the
+  // build lock (no model session, no --smt): the register-renaming witness
+  // either certifies EQUIVALENT_MATCH / FULL_MATCH with ZERO tokens, or
+  // fails cheaply and the target goes back into the batch pool below
+  // (never dropped). Skipped in dry-run — witness cycles build objects and
+  // update the registry.
+  const witnessTargets = selection.witnessTargets ?? [];
+  const witnessFallback: string[] = [];
+  if (selection.triage && !dryRun) {
+    if (witnessTargets.length > 0) {
+      console.log(`[pi-harness] ${unit}: triage routed ${witnessTargets.length} regswap_only target(s) to witness-only cycle`);
+      for (const wt of witnessTargets) {
+        const ok = await runWitnessCycle(repoRoot, unit, wt.id, config);
+        if (!ok) witnessFallback.push(wt.id);
+      }
+    }
+    appendLedger(repoRoot, config.ledgerPath, {
+      ts: new Date().toISOString(), event: "triage", tu: unit,
+      detail: {
+        unit,
+        byClass: selection.triage.byClass,
+        routedToWitness: selection.triage.routedToWitness,
+        certified: witnessTargets.filter((w) => !witnessFallback.includes(w.id)).map((w) => w.id),
+        fallback: witnessFallback,
+      },
+    });
+    if (witnessFallback.length > 0) {
+      // Never dropped: re-add failed witness candidates to the FRONT of the
+      // batch pool — they were strong template candidates, so the LLM has a
+      // good shot and they stay ahead of the rest of the wave.
+      const fallbackTargets = targetsRaw.filter((t) => witnessFallback.includes(t.id));
+      targets = [...fallbackTargets, ...targets.filter((t) => !witnessFallback.includes(t.id))];
+      console.log(`[pi-harness] ${unit}: witness did not certify ${witnessFallback.length} target(s) — re-added to batch front`);
+    }
+  } else if (dryRun && witnessTargets.length > 0) {
+    console.log(`[pi-harness] ${unit}: DRY-RUN: ${witnessTargets.length} regswap_only target(s) would route to witness-only cycle (no model session)`);
+  }
 
   if (targets.length === 0) {
     const entries = readLedger(repoRoot, config.ledgerPath).filter((e) => e.tu === unit);
     const wasWorked = entries.some(
       (e) => e.event === "batch-accept" || e.event === "tu-started",
-    );
+    ) || witnessTargets.length > witnessFallback.length; // witness certified >=1
     if ((wasWorked || dryRun) && loadUnitTargets(repoRoot, config.region, unit).length > 0) {
       await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
       return;
@@ -781,6 +973,7 @@ async function runOneTu(
         prompt,
         sessionDir: join(config.sessionDir, sanitized, `batch-${batchIndex}`),
         label: `batch-${batchIndex}-session-1`,
+        python: config.pythonBin,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
@@ -1099,6 +1292,7 @@ async function runRebatchPhase(
           repoRoot, modelRuntime, spec: config.matchModel, prompt,
           sessionDir: join(config.sessionDir, sanitized, `rebatch-${rbIdx}`),
           label: `rebatch-${rbIdx}-session`,
+          python: config.pythonBin,
           timeoutMinutes: config.maxBatchMinutes,
           maxTokens: config.maxTokens,
           multiPrompt: {
@@ -1306,6 +1500,7 @@ async function runSingleton(
         repoRoot, modelRuntime, spec: config.matchModel, prompt,
         sessionDir: join(config.sessionDir, sanitized, `singleton-${targetId}`),
         label: `singleton-${targetId}-session-${sessionAttempt}`,
+        python: config.pythonBin,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         multiPrompt: {
@@ -1438,6 +1633,8 @@ async function runTuFinal(
       repoRoot, modelRuntime, spec: config.cleanupModel, prompt,
       sessionDir: join(config.sessionDir, sanitized, "tu-final"),
       label: "tu-final",
+      kind: "tu-final",
+      python: config.pythonBin,
       timeoutMinutes: config.maxBatchMinutes * 2,
       maxTokens: config.maxTokens,
     });

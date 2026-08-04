@@ -10,6 +10,13 @@ export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhi
  *  "random" is a plain uniform shuffle of the wave. */
 export type SelectionMode = "claim-order" | "similarity" | "random";
 
+/** Pre-batch triage routing (no-SMT efficiency). "off" = today's
+ *  behavior; "route" = classify every unmatched target with
+ *  tools/coop/triage.py once per TU, send `regswap_only` targets to a
+ *  witness-only `run.py cycle` (zero LLM rounds; falls back to the batch
+ *  if the witness does not certify) and front-load `strict` targets. */
+export type TriageMode = "off" | "route";
+
 export interface ModelSpec {
   provider: string;
   model: string;
@@ -22,6 +29,8 @@ export interface HarnessConfig {
   batchSize: number;
   maxParallelTUs: number;
   selection: SelectionMode;
+  /** Pre-batch triage routing ("off" | "route"); see TriageMode. */
+  triage: TriageMode;
   maxBatchRetries: number;
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
@@ -74,6 +83,23 @@ export interface CostModel {
   outputPerM: number;
   cacheReadPerM: number;
   cacheWritePerM: number;
+}
+
+/** One triage.py JSONL row (tools/coop/triage.py, read-only classifier). */
+export interface TriageRow {
+  targetId: string;
+  symbol: string;
+  size?: number;
+  cls: "strict" | "regswap_only" | "structural" | "unknown";
+  nearestMatched?: { symbol: string; score: number };
+  structuralCount?: number;
+}
+
+/** Per-TU triage summary consumed by the routing path (also logged to the
+ *  ledger as a `triage` event). */
+export interface TriageSummary {
+  byClass: { regswap_only: number; strict: number; structural: number; unknown: number };
+  routedToWitness: string[];
 }
 
 export interface Target {

@@ -4,7 +4,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { join, resolve, isAbsolute } from "node:path";
-import type { HarnessConfig, ModelSpec, SelectionMode, ThinkingLevel } from "./types.js";
+import type { HarnessConfig, ModelSpec, SelectionMode, ThinkingLevel, TriageMode } from "./types.js";
 
 const THINKING_LEVELS: readonly ThinkingLevel[] = [
   "off", "minimal", "low", "medium", "high", "xhigh",
@@ -12,6 +12,10 @@ const THINKING_LEVELS: readonly ThinkingLevel[] = [
 
 const SELECTION_MODES: readonly SelectionMode[] = [
   "claim-order", "similarity", "random",
+];
+
+const TRIAGE_MODES: readonly TriageMode[] = [
+  "off", "route",
 ];
 
 const DEFAULT_MODEL: ModelSpec = {
@@ -27,6 +31,7 @@ function defaultConfig(): HarnessConfig {
     batchSize: 5,
     maxParallelTUs: 2,
     selection: "claim-order", // call-graph wave stays the default
+    triage: "off", // no-SMT pre-batch routing is opt-in; "off" == today's behavior
     maxBatchRetries: 2,
     singletonEnabled: true,
     rebatchEnabled: true,
@@ -151,6 +156,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!SELECTION_MODES.includes(config.selection)) {
     throw new Error(`config.selection must be one of ${SELECTION_MODES.join(", ")}`);
+  }
+  if (!TRIAGE_MODES.includes(config.triage)) {
+    throw new Error(`config.triage must be one of ${TRIAGE_MODES.join(", ")}`);
   }
   if (!Number.isInteger(config.maxParallelTUs) || config.maxParallelTUs < 1) {
     throw new Error("config.maxParallelTUs must be an integer >= 1");

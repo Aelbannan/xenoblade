@@ -20,6 +20,7 @@ import {
   type AgentSession,
 } from "@earendil-works/pi-coding-agent";
 import type { ModelSpec, SessionUsage, VerifyResult } from "./types.js";
+import { batchSessionTools, tuFinalSessionTools } from "./session-tools.js";
 
 // Configure HTTP dispatcher with 5-minute body/headers timeout.
 // Without this, undici uses Node.js defaults (no timeout), so HTTP
@@ -113,6 +114,11 @@ export async function runAgentSession(opts: {
   timeoutMinutes: number;
   maxTokens?: number;
   multiPrompt?: MultiPromptOpts;
+  /** Session kind: batch (default) gets structured tools, NO bash;
+   *  tu-final gets the same + bash behind a spawnHook allowlist. */
+  kind?: "batch" | "tu-final";
+  /** Python interpreter for the structured tools (hexdiff/run.py). */
+  python?: string;
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -124,6 +130,8 @@ export async function runAgentSession(opts: {
     timeoutMinutes,
     maxTokens,
     multiPrompt,
+    kind = "batch",
+    python = "python3",
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -156,14 +164,17 @@ export async function runAgentSession(opts: {
     thinkingLevel: spec.thinkingLevel,
     modelRuntime,
     sessionManager: SessionManager.create(repoRoot, sessionDir),
-    // Pin the exact built-in tool surface. The xenoblade-decomp workflow is
-    // CLI-driven (hexdiff/run.py via bash) and the skill mandates those tools;
-    // an explicit allowlist stops future SDK default tool additions from
-    // silently leaking into headless batch sessions. `bash` is load-bearing
-    // (hexdiff + run.py diff/size/symbols are bash invocations); the model is
-    // prevented from running cycle/batch-cycle/ninja/configure/git by prompt
-    // + snapshot-restore, and acceptance is harness-owned regardless.
-    tools: ["read", "bash", "edit", "write", "grep", "find", "ls"],
+    // Tool surface by session kind (see session-tools.ts):
+    //  - batch: read/edit/write/grep/find/ls + hexdiff/symbols/targets, NO
+    //    bash — SMT/git/ninja/registry writes are structurally impossible.
+    //  - tu-final: same + bash behind a spawnHook allowlist (diff/size/
+    //    symbols/build_lock/configure/ninja only).
+    tools: kind === "batch"
+      ? ["read", "edit", "write", "grep", "find", "ls"]
+      : ["read", "bash", "edit", "write", "grep", "find", "ls"],
+    customTools: kind === "batch"
+      ? batchSessionTools(repoRoot, python)
+      : tuFinalSessionTools(repoRoot, python),
   });
 
   // Transcript writes are serialised — concurrent fire-and-forget writeFile

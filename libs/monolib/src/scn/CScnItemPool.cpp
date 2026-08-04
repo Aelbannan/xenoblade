@@ -36,7 +36,16 @@ extern "C" void* func_8048C698(void* self, int kind) {
         return nullptr;
     }
 }
-void func_8048C6F4() {}
+extern "C" void* func_8048C6F4(void* self, s32 kind) {
+    switch (kind) {
+    case 1: return (u8*)self + 0xC;
+    case 2: return (u8*)self + 0x2C;
+    case 3: return (u8*)self + 0x4C;
+    case 4: return (u8*)self + 0x6C;
+    case 5: return (u8*)self + 0x8C;
+    default: return 0;
+    }
+}
 void func_8048C750() {}
 void func_8048C8C4() {}
 void func_8048C994() {}

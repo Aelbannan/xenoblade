@@ -22,12 +22,21 @@ import {
   type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 
-/** Promisified execFile with a generous buffer (hexdiff JSON can be big). */
+/** Promisified execFile with a generous buffer (hexdiff JSON can be big).
+ *  IMPORTANT: node's execFile error object does NOT carry stdout/stderr —
+ *  they are separate callback args. On non-zero exit we must attach them
+ *  to the rejection, or every hexdiff mismatch (exit 5) would lose the
+ *  diff JSON and the tool would fall into the "build failed" path. */
 function run(python: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     execFile(python, args, { cwd, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) reject(err);
-      else resolve({ stdout, stderr });
+      if (err) {
+        (err as { stdout?: string; stderr?: string }).stdout = stdout;
+        (err as { stdout?: string; stderr?: string }).stderr = stderr;
+        reject(err);
+      } else {
+        resolve({ stdout, stderr });
+      }
     });
   });
 }

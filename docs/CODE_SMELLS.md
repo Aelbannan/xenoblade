@@ -10,16 +10,16 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6513 |
-| extern "C" declarations (non-lbl_*, imports) | 2306 |
-| extern "C" definitions (forced names) | 2064 |
-| `self`/register-style params | 3411 |
+| extern "C" (total lines) | 6515 |
+| extern "C" declarations (non-lbl_*, imports) | 2307 |
+| extern "C" definitions (forced names) | 2065 |
+| `self`/register-style params | 3412 |
 | `void*` (params + locals) | 4980 |
 | raw pointer offset arithmetic | 2964 |
 | deref-through-cast arithmetic | 1310 |
 | inline asm / `register` | 88 |
-| rN-named params | 317 |
-| goto | 1059 |
+| rN-named params | 318 |
+| goto | 1058 |
 | #pragma | 245 |
 
 ## Top offenders (by cleanable severity)
@@ -300,7 +300,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CQstLogInfo.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogList.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQuestWindow.cpp | 0 | 1 | 6 | 6 | 3 | 3 | 0 | 0 | 0 |
-| src/kyoshin/CSaveLoad.cpp | 48 | 28 | 28 | 24 | 14 | 2 | 0 | 1 | 3 |
+| src/kyoshin/CSaveLoad.cpp | 48 | 29 | 28 | 24 | 14 | 2 | 0 | 1 | 2 |
 | src/kyoshin/CScrollBar.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 0 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 0 | 0 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -331,7 +331,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 5 | 5 | 3 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 1 | 7 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 2 | 2 | 18 | 48 | 31 | 14 | 0 | 5 | 8 |
+| src/kyoshin/cf/CBattleManager.cpp | 3 | 2 | 19 | 48 | 31 | 14 | 0 | 6 | 8 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 8 | 6 | 8 | 23 | 5 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 0 | 0 | 8 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -1860,8 +1860,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/CSaveLoad.cpp": {
   "deref_arith": 2,
   "extern_c_nonlbl_decl": 48,
-  "extern_c_nonlbl_def": 28,
-  "goto_count": 3,
+  "extern_c_nonlbl_def": 29,
+  "goto_count": 2,
   "ptr_arith": 14,
   "rn_params": 1,
   "self_params": 28,
@@ -2059,12 +2059,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CBattleManager.cpp": {
   "deref_arith": 14,
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 2,
   "goto_count": 8,
   "ptr_arith": 31,
-  "rn_params": 5,
-  "self_params": 18,
+  "rn_params": 6,
+  "self_params": 19,
   "void_ptr": 48
  },
  "src/kyoshin/cf/CCharEffect.cpp": {

@@ -60,18 +60,23 @@ Additional checks (adversarial review 2026-08, all fail-closed):
 - F3: the callee token is canonicalized through the rho (retail lane order)
   so opaque contracts certify the across-call Chaitin class; sound because a
   genuine EABI callee observes only fixed/shared lanes — and round-3 review
-  now ENFORCES that: every lane a callee reads (``contract.reads``, or the
-  EABI argument window for opaque callees) is rho-fixed at each call site by
-  gate 5, so the canonicalization only ever reorders lanes the callee does
-  not observe.
+  now ENFORCES that: every lane a callee reads (``contract.reads`` for
+  precise contracts; ALL 96 lanes for opaque/unknown callees — R3) is
+  rho-fixed at each call site by gate 5, so the canonicalization only ever
+  reorders lanes the callee does not observe.
 - S1: the terminal memory comparison is location-aware (stored ``pc+4``
   constants compare relative to the function base instead of over-rejecting).
 
 Known limitations (round-3 review, documented trust boundaries):
-- Opaque callees are assumed EABI-compliant: they read only r1/r2/r13 + the
-  EABI argument window r3–r10/f1–f8 + memory.  A NON-EABI opaque callee that
-  reads a permuted non-argument lane (e.g. r20/f14) is an unmodeled
-  false-certificate class; precise contracts (certified callees) close it.
+- Opaque/unknown callees are handled conservatively: ``_call_observed_lanes``
+  fixes ALL 96 lanes (GPR/FPR/PS1) at every call/tail-call site when the
+  callee is opaque (``reads="*"``) or has no contract (round-3 review R3),
+  because EABI constrains preservation, not reads — a callee may read any
+  volatile lane or any nonvolatile it preserves.  Precise contracts
+  (certified callees) narrow the fixed set to ``contract.reads``, and the
+  soundness of that narrowing is ``callee_inference``'s responsibility: a
+  precise ``reads`` that under-approximates the callee's dataflow-affecting
+  inputs is the residual false-certificate class (round-8 review, GLM F1).
 - Precise ``contract.reads`` must be a sound over-approximation of the
   callee's dataflow-affecting inputs — ``callee_inference``'s responsibility
   for certified callees, and the live-in read scan in
@@ -89,7 +94,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from tools.ppc_equivalence.deadline import Deadline, ProofDeadlineExceeded
-from tools.ppc_equivalence.ir import Instruction, Opcode
+from tools.ppc_equivalence.ir import (
+    R_PPC_ADDR16_HA,
+    R_PPC_ADDR16_HI,
+    R_PPC_ADDR16_LO,
+    R_PPC_EMB_SDA21,
+    R_PPC_REL14,
+    R_PPC_REL24,
+    Instruction,
+    Opcode,
+)
 from tools.ppc_equivalence.model import MachineState, XerState
 from tools.ppc_equivalence.semantics import (
     DEFAULT_MAX_LOOP_ITERATIONS,
@@ -435,9 +449,6 @@ _CONDITIONALLY_FIXED_FPRS = frozenset({1})
 _TRUSTED_NON_64BIT_RETURNS = frozenset(
     {"void", "i32", "u32", "f32", "f64", "bool", "ptr"}
 )
-# EABI outgoing-argument ranges: registers that may carry live-in inputs.
-_EABI_ARG_GPRS = frozenset(range(3, 11))
-_EABI_ARG_FPRS = frozenset(range(1, 9))
 # EABI volatile GPRs (r0, r3-r12); r1/r2 are unconditionally fixed anyway.
 _VOLATILE_GPRS = frozenset(range(13)) - frozenset({1, 2})
 _VOLATILE_FPRS = frozenset(range(0, 14))
@@ -632,9 +643,10 @@ def _call_observed_lanes(
     is observable — the physical callee reads the physical lane — and the F3
     token canonicalization (semantics.py:4606) would hide the divergence
     from the structural comparison.  Precise contracts declare the reads;
-    opaque ``*`` contracts (and unknown callees) conservatively expand to the
-    EABI argument window r3–r10 / f1–f8 (plus ps1 sub-lanes).  r1/r2/r13 are
-    unconditionally fixed anyway and memory is shared verbatim.
+    opaque ``*`` contracts and unknown callees conservatively fix EVERY lane
+    (round-3 review GLM B1: EABI constrains preservation, not reads — a
+    callee may read volatile f0/f9–f13 or any nonvolatile it preserves).
+    r1/r2/r13 are unconditionally fixed anyway and memory is shared verbatim.
     """
     observed: set[int] = set()
     by_index = {insn.address: i for i, insn in enumerate(instructions)}
@@ -649,20 +661,16 @@ def _call_observed_lanes(
         )
         reads = getattr(contract, "reads", None)
         if contract is None or reads is None or "*" in reads:
-            observed.update(_EABI_ARG_GPRS)
-            observed.update(32 + r for r in _EABI_ARG_FPRS)
-            observed.update(_PS1_OFFSET + r for r in _EABI_ARG_FPRS)
-            # Kimi-K3 adversarial finding (2026-08): custom-ABI callees (the
-            # MWCC _savegpr/_restgpr helper family) read PHYSICAL r11/r12 as
-            # the save-base / scratch registers — registers that are EABI-
-            # volatile but OUTSIDE the r3-r10 argument window and only fixed
-            # by the liveness gate when live ACROSS the call. A r11/r12 perm
-            # with the value DEAD after the call (li r11,X; bl helper; blr)
-            # certifies while the physical callee reads different input on
-            # each side — a false certificate. Fix r11/r12 for opaque/unknown
-            # callees too (conservative; costs only the r11/r12 permute
-            # class, which is already near-useless across calls).
-            observed.update({11, 12})
+            # GLM-5.2 round-3 BLOCKER (B1): an opaque/unknown callee may READ
+            # ANY lane — EABI constrains preservation, not reads (a callee may
+            # read volatile f0/f9–f13 or a nonvolatile it preserves).  The F3
+            # token canonicalization (semantics.py:4606) would hide a permuted
+            # lane from the structural comparison, so every lane must be
+            # rho-fixed at a call to an opaque callee.  The earlier arg-window
+            # model (r3–r10/f1–f8) plus the r11/r12 patch (502e50099) was
+            # GPR-incomplete; the sound rule is the original F3 design: for
+            # ``*`` in reads, fix every lane.
+            observed.update(range(_PS1_OFFSET + 32))
             continue
         for name in reads:
             base = name[:-4] if name.endswith(".ps1") else name
@@ -1229,9 +1237,15 @@ def _stream_validation_failure(
                     f"vs {d_reloc.canonical_symbol}@{d_reloc.addend}",
                 )
         # Gate 3: non-register field equality (raw-bit comparison).  Slots
-        # with a matched relocation are exempt: the relocated bits are
-        # placeholders that resolve to the same canonical symbol on both
-        # sides (gate 2 binds identity).
+        # with a matched relocation exempt ONLY the relocated address-field
+        # bits (the placeholder that resolves to the same canonical symbol on
+        # both sides; gate 2 binds identity).  Every OTHER non-register bit —
+        # LK/AA on B/BC, BO/BI on BC, opcode/XO/Rc, SPR indices, immediates —
+        # must still be bit-equal (round-8 review R8-2: the previous blanket
+        # exemption skipped the whole comparison for relocated slots, leaving
+        # e.g. the LK bit of a relocated ``b`` vs ``bl`` pair — same
+        # ``Opcode.B`` — uncompared and relying solely on the downstream
+        # terminal comparison to catch it).
         gpr_mask, fpr_mask = _gpr_fpr_masks(r_insn.opcode)
         register_mask = gpr_mask | fpr_mask
         # Value-dependent RA (doc 32 A2 rev 5): a both-nonzero RA pair on an
@@ -1240,16 +1254,28 @@ def _stream_validation_failure(
         ra_rename_mask = (
             0x1F << 16 if _ra_field_is_register(r_insn, d_insn) else 0
         )
-        if r_reloc is None:
-            non_register_diff = (
-                (r_insn.raw ^ d_insn.raw) & ~(register_mask | ra_rename_mask)
+        # Address-field masks per relocation type (mirrors the decoder's
+        # fixup masks, decoder.py:589-629): REL24 fixes bits 6-29 (LI), REL14
+        # bits 16-29 (BD), ADDR16_* the low half-word bits 16-31, EMB_SDA21
+        # bits 11-31.  Unknown types default to 0 (full comparison — stricter).
+        reloc_field_mask = {
+            R_PPC_REL24: 0x03FFFFFC,
+            R_PPC_REL14: 0x0000FFFC,
+            R_PPC_ADDR16_LO: 0x0000FFFF,
+            R_PPC_ADDR16_HI: 0x0000FFFF,
+            R_PPC_ADDR16_HA: 0x0000FFFF,
+            R_PPC_EMB_SDA21: 0x001FFFFF,
+        }.get(r_reloc.relocation_type, 0) if r_reloc is not None else 0
+        non_register_diff = (
+            (r_insn.raw ^ d_insn.raw)
+            & ~(register_mask | ra_rename_mask | reloc_field_mask)
+        )
+        if non_register_diff:
+            return WitnessFailure(
+                "fields",
+                f"slot {index}: non-register bits differ "
+                f"(0x{non_register_diff:08x})",
             )
-            if non_register_diff:
-                return WitnessFailure(
-                    "fields",
-                    f"slot {index}: non-register bits differ "
-                    f"(0x{non_register_diff:08x})",
-                )
     return None
 
 
@@ -1453,8 +1479,8 @@ def _check_abi_fixedness(
     # observable — the physical callee reads the physical lane — and the F3
     # token canonicalization (semantics.py:4606) would hide the divergence
     # from the structural comparison.  Precise contracts declare the reads;
-    # opaque ``*`` contracts and unknown callees conservatively read the EABI
-    # argument window r3–r10 / f1–f8 (+ ps1 sub-lanes).  This subsumes the
+    # opaque ``*`` contracts and unknown callees fix every lane (GLM B1).
+    # This subsumes the
     # r4/f1 tail-call cases in the A3 block above (the gate can only ever
     # fix, never unfix) and enforces the doc-31 §2.5 call model for every
     # call form.  Per-function, NOT per-region: a lane observed at any call
@@ -1777,6 +1803,20 @@ def _nonvolatile_preservation_failure(
     already physical (``ls.gpr[j]`` vs ``rs.gpr[j]`` directly), and a
     byte-identical save/restore on an identity lane (e.g. the A1 psq
     prologue/epilogue) certifies via the shared-slot restore.
+
+    Round-8 review (R8-1): the check covers the PS1 shadow half of a permuted
+    nonvolatile FPR as well.  Scalar-single FP arithmetic (``fadds``/``fmuls``/
+    ``fdivs``/``frsp``/…, semantics.py:4500 ``if is_single:
+    state.with_ps1(fd, d_bits)``) and single-precision loads (``lfs``,
+    semantics.py:3626) write ``ps1[fd]`` as a side effect, and a prologue that
+    saves only the double half (``stfd``/``lfd``) does NOT restore it.  A pair
+    that restores ``fpr[lane]`` but leaves ``ps1[lane]`` clobbered previously
+    certified: the terminal comparison indexes ps1 by the same perm, so the
+    clobber self-agrees while the physical caller-visible ps1 lane diverges
+    (retail clobbers the caller's ps1[f20], decomp leaves it untouched) — the
+    F1c class for the ps1 half.  ps1 is bound to its owning FPR everywhere
+    else in the witness (gate-5 live-in, region-boundary deadness), so the
+    preservation obligation must cover it too.
     """
     for lane in range(14, 32):
         if gpr_perm[lane] == lane:
@@ -1796,6 +1836,14 @@ def _nonvolatile_preservation_failure(
                 return WitnessFailure(
                     "abi-boundary",
                     f"{side} nonvolatile f{lane} not preserved at exit "
+                    "(clobbered without restore)",
+                )
+            # R8-1: the paired-single shadow half must be preserved too — the
+            # same simplify-then-eq save/restore test as the double half.
+            if not z3.eq(z3.simplify(insn_exit.state.ps1[lane]), initial.ps1[lane]):
+                return WitnessFailure(
+                    "abi-boundary",
+                    f"{side} nonvolatile f{lane}.ps1 not preserved at exit "
                     "(clobbered without restore)",
                 )
     return None

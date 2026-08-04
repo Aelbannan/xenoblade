@@ -381,3 +381,143 @@ calls), spill-only prologue-save Chaitin cycles whose restore simplifies,
 across-call renames of lanes dead at the call (via the F3 token), and
 location-aware memory stores.  Nonvolatile clobbers, live-in reads, indirect
 dispatch, and aliased save/restore bodies fall to SMT — never a certificate.
+
+## 7. Fourth adversarial review (2026-08-04) — round-3 holes closed
+
+GLM-5.2 and Kimi K3 (pi/OpenRouter) plus the session agent independently
+reviewed HEAD after the R8/R9 and callee-cert-independence commits.  Three
+false-certificate holes and one over-rejection were found and closed:
+
+### R1 (BLOCKER, Kimi + GLM + session) — narrow gate read scan is stream-order
+
+`_full_match_callee_body_fits_narrow`'s "precise live-in read scan"
+accumulated a `written` set in STREAM order, so a live-in read reachable only
+on a branch-skip path (`bne .L1; li r6,0; .L1: mr r3,r6` reads ENTRY r6 on
+the taken path) was shadowed by a later-in-stream def and certified
+`reads={r3,r4,r5}` — re-opening the outgoing-argument false-certificate
+class R8 was meant to close (real corpus: `long2str`/`wprintf` read ENTRY
+r0).  Fix: the gate now uses the witness's own CFG liveness fixpoint
+(`_cfg_liveness` entry-live-in), which is path-accurate; the straight-line
+scratch shape (`li r6,7; …; or r5,r6,r6`) still fits narrow.
+
+### R2 (BLOCKER, Kimi + session) — tail-call trampoline callee bodies
+
+The gate's internal-call reject was link-only (`_is_call`); a FULL_MATCH
+callee ending in a non-link relocated `b` (tail call) passed with zero
+register traffic while physically handing r3–r10 to its tail target
+(corpus: `LogMsg_0..6 = b LogMsg`, 1002/4313 narrow-scan-ok callees).
+Fix: the gate rejects any call form (`_is_call or _is_tail_call`).
+
+### R3 (BLOCKER, GLM-5.2) — opaque callee observed lanes missed f0/f9–f13
+
+`_call_observed_lanes` fixed the EABI argument window r3–r10/f1–f8 (+ps1)
+plus r11/r12 for opaque/unknown callees, but a genuine EABI callee may read
+ANY volatile register (EABI constrains preservation, not reads).  A
+`bl callee; lfs f0,0(r1); fmr f3,f0; blr` vs f9 pair certified while the
+physical callee read divergent entry f0 — the F3 token canonicalization hid
+it.  Fix: opaque/unknown callees now fix ALL 96 lanes (GPR/FPR/PS1) —
+matching the original F3 design ("rebinding any observed lane is unsound").
+The earlier r11/r12 patch (502e50099) was GPR-incomplete and is superseded.
+
+### R4 (MAJOR, Kimi + GLM + session) — `lr` in the narrow reads poisoned the token
+
+R8 added `lr` to `_FM_CALLEE_READS`; for PRECISE contracts `call_token`
+keys on every declared read, and at a `bl` site `lr = pc+4` is a
+location-dependent constant — so every call through a narrow-EABI callee
+over-rejected cross-base (and masked R1/R2 when bases differed).  Fix:
+`call_token` excludes `lr` for precise contracts too (mirroring the opaque
+branch); `lr` stays in the read ENVELOPE (a callee may `mflr`) but never
+keys the token.  The over-rejection is gone and, with R1/R2 fixed, removing
+the accidental mask is sound.
+
+### Closure status
+
+Prior rounds F1/F2/F3/S1, R7, R8/R9, and the freshness rounds 3/4 were
+re-verified intact.  Keying consistency, the errors-gate removal, region-
+path per-region gate 5, and the pi-harness wiring were all verified clean.
+Regression tests: `test_renaming_witness.Round3AdversarialReviewTests` +
+`test_certify_unit_symbol.NarrowCalleeReadsValidationTests`
+(branch-skip and tail-call callees fall back to opaque; opaque FPR perm
+rejected; narrow call-bearing pair certifies cross-base).
+
+## 8. Eighth adversarial review (2026-08-04) — ps1 preservation + reloc-field gate
+
+Session agent + GLM-5.2 (full report) + Kimi K3 (partial, two provider errors).
+The session agent probed 25 candidate shapes; GLM independently re-derived the
+reloc-exemption finding and the contract-reads trust boundary.  **No
+witness-internal false certificate besides R8-1** (below); the store-reorder
+lead (`stw r5,0(r1); stw r6,0(r1)` vs `stw r6,0(r1); stw r5,0(r1)` to the same
+slot, "certified") was verified SOUND: under the actual rho both sides store
+the same shared variables in the same overwrite order, so the final memory is
+identical — a false alarm from probing with the identity perm.
+
+### R8-1 (BLOCKER) — F1 preservation check missed the PS1 half of permuted nonvolatile FPRs
+
+`_nonvolatile_preservation_failure` verified only `fpr[lane]` for permuted
+f14–f31.  Scalar-single FP (`fadds`/`fmuls`/`fdivs`/`frsp`, semantics.py:4500
+`if is_single: state.with_ps1(fd, d_bits)`) and single-precision loads
+(`lfs`, :3626) write `ps1[fd]`; a prologue that restores only the double half
+(`stfd`/`lfd`) leaves the ps1 half clobbered.  Probe P24
+(`stfd f20,8(r1); fadds f20,f21,f22; lfd f20,8(r1); blr` vs f20↔f25) certified:
+the terminal comparison indexes ps1 by the same perm, so the clobber
+self-agreed while the physical caller-visible ps1 lane diverged (retail
+clobbers ps1[20], decomp preserves it) — the F1c class for the ps1 half, and
+the SMT path would reject it (f14.ps1–f31.ps1 are `ppc-eabi` observables).
+Fix: the preservation check now also requires
+`z3.eq(z3.simplify(exit.ps1[lane]), initial.ps1[lane])` for permuted lanes.
+Over-rejection is confined to functions that clobber a permuted nonvolatile's
+ps1 without restoring it — exactly the unsound class; identity-mapped lanes
+are still compared physically and unaffected.
+
+### R8-2 (MAJOR, robustness) — gate 3 relocation exemption skipped ALL non-register bits
+
+`_stream_validation_failure` skipped the entire non-register bit comparison
+for any slot carrying a relocation (`if r_reloc is None:`).  The relocated
+field is only the address field (LI/BD/displacement); LK/AA/BO/BI on
+relocated `b`/`bc` — same `Opcode.B`/`Opcode.BC` regardless of `link` — were
+left to the downstream terminal comparison, which caught every probed shape
+(`bl sym` vs `b sym`, `beq` vs `bne`, `bc` vs `bcl`; exit-kind/LR/clobber
+divergence) but violated the documented gate-3 contract.  Fix: the exemption
+now masks only the relocation's address-field bits per type (REL24: bits 6-29;
+REL14: 16-29; ADDR16_*: 16-31; EMB_SDA21: 11-31 — mirroring the decoder
+fixup masks); all other non-register bits are compared as before.  The
+relocated-branch flag differences are now rejected at gate 3 directly.
+
+### Trust boundaries re-verified (GLM + session)
+
+- **Precise-contract `reads` soundness is load-bearing** (GLM F1): a contract
+  that under-approximates the callee's actual reads lets gate 5 leave an
+  observed lane unfixed and the F3 token hides the rename — demonstrated with
+  mis-inferred contracts for both `bl` and tail-call forms.  Opaque
+  (`reads="*"` → all 96 lanes fixed) and the narrow FULL_MATCH contract
+  (validated by `_full_match_callee_body_fits_narrow`) are sound.  The module
+  docstring's "non-EABI opaque callee" false-certificate class is already
+  closed by the fix-all-lanes rule — the docstring is stale (GLM F3).
+- **Location-independence**: `_value_equal`'s base-relative rule applies to
+  memory store words, not just LR/exit targets (probe P4d certifies a
+  post-call `mflr; stw` storing different absolute addresses).  The SMT path
+  shares the opaque-lr UF model, so witness and SMT agree; the residual is vs
+  real hardware for functions that return/store their own address.
+- **Caller-renaming fiction**: nonvolatile-permutation certificates are
+  equivalence modulo a consistently-renamed caller (P11 class); the SMT path
+  rejects them.  Accepted design, recorded rho in the certificate.
+- **Engine/decoder (R8-5, FIXED)**: the decoder's unary X-form table had
+  the EXTSH/EXTSB XO values swapped (922↔954) — real 16-bit `extsh`
+  (XO 954) executed as an 8-bit extension and real 8-bit `extsb`
+  (XO 922) as 16-bit.  Verified by execution (r4=0x8005: XO 954 produced
+  0x00000005, XO 922 produced 0xFFFF8001) and by the retail census (XO 954
+  = the common 16-bit extend, 3078 sites vs 1265 for XO 922).  The operand
+  convention was CORRECT all along (dest at bits 16-20, source at bits
+  21-25, bits 11-15 reserved — the retail census shows MWCC conforms); only
+  the width mapping was wrong.  Fix: decoder.py unary table now maps
+  922→EXTSB / 954→EXTSH; fixture corpus + blob regenerated; regression test
+  (`test_extsh_extsb_widths_match_isa`) + pinned-encoding test updated.
+  Impact: every equivalence verdict (witness AND SMT) for width-sensitive
+  extsh/extsb pairs was computed under the wrong model; the engine_hash
+  field auto-invalidates previously-issued certificates (hash_engine_tree
+  covers decoder.py).  `dcbt`/`dcbst`/`dcbf` are engine no-ops;
+  `lwarx`/`stwcx`/`eieio` are not decodable at all.
+
+Regression tests: `Round8AdversarialReviewTests` (ps1-clobber reject, identity
+scalar-s certify, relocated b-vs-bl / beq-vs-bne gate-3 rejects, identical
+relocated pair certifies).

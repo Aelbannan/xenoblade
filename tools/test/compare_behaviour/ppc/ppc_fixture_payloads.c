@@ -198,14 +198,14 @@ asm void ppc_fixture_payload_26(void) {
 /* extsb */
 asm void ppc_fixture_payload_27(void) {
     nofralloc
-    opword 0x7CA70775
+    opword 0x7CA70735
     blr
 }
 
 /* extsh */
 asm void ppc_fixture_payload_28(void) {
     nofralloc
-    opword 0x7CA70735
+    opword 0x7CA70775
     blr
 }
 
@@ -828,14 +828,14 @@ asm void ppc_fixture_payload_110(void) {
 /* extsb-positive */
 asm void ppc_fixture_payload_111(void) {
     nofralloc
-    opword 0x7CA70775
+    opword 0x7CA70735
     blr
 }
 
 /* extsh-positive */
 asm void ppc_fixture_payload_112(void) {
     nofralloc
-    opword 0x7CA70735
+    opword 0x7CA70775
     blr
 }
 

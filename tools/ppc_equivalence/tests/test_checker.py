@@ -164,8 +164,8 @@ class DecoderTests(unittest.TestCase):
                 Opcode.CMPLWI,
                 Opcode.CMPW,
                 Opcode.CMPLW,
-                Opcode.EXTSB,
                 Opcode.EXTSH,
+                Opcode.EXTSB,
                 Opcode.CNTLZW,
             ],
         )
@@ -1878,6 +1878,23 @@ class ConcreteSemanticsTests(unittest.TestCase):
         self.assertEqual(final.gpr[3], 0)
         self.assertEqual(final.cr & 0x0FFFFFFF, 0x01234567)
         self.assertEqual((final.cr >> 28) & 0xF, 0x3)  # EQ | SO
+
+    def test_extsh_extsb_widths_match_isa(self) -> None:
+        # R8-5 (round-8 review): the decoder swapped the EXTSH/EXTSB XO
+        # values (922/954), executing real 16-bit `extsh` as an 8-bit
+        # extension and real 8-bit `extsb` as 16-bit.  Verified against the
+        # retail census (XO 954 = the common 16-bit extend, 3078 sites vs
+        # 1265 for XO 922) and by execution.  dest r3 at bits 16-20, source
+        # r4 at bits 21-25, bits 11-15 reserved (must be 0).
+        state = concrete_state({"gpr": {"r3": 0x1234FF56, "r4": 0x00008005}})
+        # extsh r3, r4 (XO 954): 16-bit sign extension of r4 into r3.
+        final = execute_block(state, decode("7c830774"), ConcreteOps())
+        self.assertEqual(final.gpr[3], 0xFFFF8005)
+        self.assertEqual(final.gpr[4], 0x00008005)  # source untouched
+        # extsb r3, r4 (XO 922): 8-bit sign extension of r4 into r3.
+        final = execute_block(state, decode("7c830734"), ConcreteOps())
+        self.assertEqual(final.gpr[3], 0x00000005)
+        self.assertEqual(final.gpr[4], 0x00008005)
 
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")

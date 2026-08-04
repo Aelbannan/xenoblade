@@ -197,7 +197,7 @@ def _decode_word(
             28: Opcode.AND, 60: Opcode.ANDC, 124: Opcode.NOR, 284: Opcode.EQV,
             316: Opcode.XOR, 412: Opcode.ORC, 444: Opcode.OR, 476: Opcode.NAND,
         }
-        unary = {26: Opcode.CNTLZW, 922: Opcode.EXTSH, 954: Opcode.EXTSB}
+        unary = {26: Opcode.CNTLZW, 922: Opcode.EXTSB, 954: Opcode.EXTSH}
         shifts = {24: Opcode.SLW, 536: Opcode.SRW, 792: Opcode.SRAW}
         if xo in logical:
             return _insn(address, word, logical[xo], (ra, rt, rb), record=rc)

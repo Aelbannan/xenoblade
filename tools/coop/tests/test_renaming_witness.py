@@ -595,10 +595,12 @@ class CallArgumentFixednessTests(unittest.TestCase):
 
     def test_absolute_tail_branch_non_argument_permute_rejected(self) -> None:
         # The residual CX-B shape: a non-argument register permuted across an
-        # unmodeled absolute tail branch passes gate 5 (r20/r21 are not
-        # callee-observed) — the driver-level reject (unmodeled absolute tail
-        # branch) must fail it closed instead of certifying via the
-        # executor's ``direct-branch`` terminal.
+        # unmodeled absolute tail branch.  Round-3 GLM B1: an unknown/opaque
+        # callee may READ any lane (EABI constrains preservation, not reads),
+        # so gate 5 now observes r20/r21 and rejects the perm at
+        # ``abi-boundary`` BEFORE execution — strictly stronger than the
+        # driver-level ``loop`` reject, and still fail-closed (never a
+        # certificate).
         li = lambda rt, v: _enc_primary(14, rt, 0, v)
         b_abs = (18 << 26) | 2 | 0x00140000  # b 0x00500000 (AA=1)
         r = [li(20, 7), b_abs]
@@ -609,7 +611,7 @@ class CallArgumentFixednessTests(unittest.TestCase):
             callee_contracts={},
         )
         self.assertFalse(outcome.certified)
-        self.assertEqual(outcome.failure.gate, "loop")
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
 
 
 class CertificatePlumbingTests(unittest.TestCase):
@@ -1954,3 +1956,201 @@ class CalleeCertificateIndependenceTests(unittest.TestCase):
         probe = _try_renaming_witness(None, "f", left, right, "us-test", context)
         self.assertIsNotNone(probe)
         self.assertEqual(probe.status.value, "equivalent")
+
+
+class Round3AdversarialReviewTests(unittest.TestCase):
+    """Round-3 adversarial review (GLM-5.2 + Kimi K3 + session) regressions.
+
+    Three false-certificate holes were closed at HEAD after the round-3
+    reviews:
+    - F1: ``_full_match_callee_body_fits_narrow`` stream-order scan missed
+      branch-skip live-in reads (fixed with the ``_cfg_liveness`` fixpoint;
+      gate tests in ``test_certify_unit_symbol``).
+    - F1b: tail-call trampoline callee bodies passed the link-only internal-
+      call reject (now any call form fails closed).
+    - B1 (GLM-5.2): opaque/unknown callee observed lanes now fix ALL 96
+      lanes — volatile FPRs f0/f9–f13 were previously outside the f1–f8
+      window and a f0↔f9 perm across an opaque call certified.
+    - F2: ``lr`` excluded from precise-contract tokens (base-dependent
+      pc+4); call-bearing narrow pairs now certify cross-base instead of
+      over-rejecting.
+    """
+
+    def test_opaque_callee_volatile_fpr_perm_rejected(self) -> None:
+        # GLM B1: retail ``bl callee; lfs f0,0(r1); fmr f3,f0; blr`` vs decomp
+        # with f9 — f0/f9 written AFTER the call (not live-in, not live-across,
+        # outside the old f1–f8 observed window).  The physical opaque callee
+        # reads entry f0; under the rho the decomp side holds X_f9 there.
+        # Before the fix: certified=True (F3 token canonicalization hid it).
+        # Now: gate 5 observes ALL lanes for opaque callees -> abi-boundary.
+        lfs = lambda fd, ra, d: (48 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (d & 0xFFFF)
+        fmr = lambda fd, fb: (63 << 26) | ((fd & 31) << 21) | ((fb & 31) << 11) | (72 << 1)
+        reloc = (RelocationRef(0, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [0x48000001, lfs(0, 1, 0), fmr(3, 0), _LR]
+        d_words = [0x48000001, lfs(9, 1, 0), fmr(3, 9), _LR]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        outcome = certify_renaming_witness(
+            original, candidate,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract.opaque_eabi()},
+            deadline_ms=20000,
+        )
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_narrow_contract_call_bearing_pair_certifies_cross_base(self) -> None:
+        # F2: with ``lr`` no longer keying the precise-contract token, a dead
+        # r8<->r9 swap around a call to a NARROW-EABI callee certifies even
+        # cross-base (retail 0x80000000 vs decomp 0x80123450).  Before the
+        # fix the token diverged on lr=pc+4 and over-rejected (structural).
+        from tools.coop.lib.equivalence_check import _narrow_full_match_callee_contract
+        li = lambda rt, v: _enc_primary(14, rt, 0, v)
+        lwz = lambda rt, ra, d: _enc_primary(32, rt, ra, d)
+        stw = lambda rs, ra, d: _enc_primary(36, rs, ra, d)
+        mr = lambda rd, rs: _enc_logic(31, 444, rd, rs, rs)
+        reloc = (RelocationRef(12, R_PPC_REL24, "callee", "callee", 0),)
+        r_words = [li(11, 5), lwz(8, 3, 0), stw(8, 3, 4), 0x48000001, mr(3, 11), _LR]
+        d_words = [li(11, 5), lwz(9, 3, 0), stw(9, 3, 4), 0x48000001, mr(3, 11), _LR]
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=reloc,
+        )
+        outcome = certify_renaming_witness(
+            original, candidate,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": _narrow_full_match_callee_contract()},
+            deadline_ms=20000,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+
+
+class Round8AdversarialReviewTests(unittest.TestCase):
+    """Round-8 adversarial review (2026-08-04) regression coverage.
+
+    R8-1 (session agent, probe P24): the F1 nonvolatile-preservation check
+    now covers the PS1 shadow half of a permuted nonvolatile FPR — scalar-s
+    FP (``fadds``) writes ``ps1[fd]``, and a prologue that restores only the
+    double half (``stfd``/``lfd``) leaves ps1 clobbered; the previous check
+    verified ``fpr[lane]`` only and certified a pair whose physical caller-
+    visible ps1 lane diverges.
+    R8-2 (session agent): gate 3 exempts ONLY the relocated address-field
+    bits for relocated slots; LK/AA/BO/BI on relocated ``b``/``bc`` are
+    compared again (previously the whole non-register comparison was
+    skipped, e.g. ``bl sym`` vs ``b sym`` — same ``Opcode.B`` — hid the LK
+    bit behind the matched reloc).
+    """
+
+    def _fadds(self, fd: int, fa: int, fb: int) -> int:
+        return (59 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16) | ((fb & 31) << 11) | (21 << 1)
+
+    def _stfd(self, fd: int, ra: int, disp: int) -> int:
+        return (54 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lfd(self, fd: int, ra: int, disp: int) -> int:
+        return (50 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def test_permuted_nonvolatile_fpr_ps1_clobber_rejected(self) -> None:
+        # R8-1: retail restores fpr[20] (stfd/lfd round-trip) but fadds
+        # clobbers ps1[20] with no restore; decomp does the same on f25.
+        # The double halves are preserved (F1 passes for fpr) but the
+        # physical ps1 lanes diverge — must fall to SMT, never certify.
+        original, candidate = _decode_pair(
+            [self._stfd(20, 1, 8), self._fadds(20, 21, 22), self._lfd(20, 1, 8), _LR],
+            [self._stfd(25, 1, 8), self._fadds(25, 21, 22), self._lfd(25, 1, 8), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+        self.assertIn("ps1", outcome.failure.reason)
+
+    def test_identity_scalar_s_fp_lane_still_certifies(self) -> None:
+        # R8-1 positive control: identity-mapped lanes with scalar-s FP are
+        # compared physically by the terminal comparison (both sides clobber
+        # the same ps1 lane identically) — certification is unaffected.
+        original, candidate = _decode_pair(
+            [self._stfd(20, 1, 8), self._fadds(20, 21, 22), self._lfd(20, 1, 8), _LR],
+            [self._stfd(20, 1, 8), self._fadds(20, 21, 22), self._lfd(20, 1, 8), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_permuted_nonvolatile_fpr_ps1_save_restore_rejected(self) -> None:
+        # R8-1: a GPR-lane analog of the ps1 clobber with the double half
+        # restored — ps1[f20] diverges even though the fpr half round-trips.
+        # (No psq in the stream, so the ps1 divergence is unrecoverable.)
+        original, candidate = _decode_pair(
+            [self._stfd(20, 1, 8), self._fadds(20, 21, 22), self._lfd(20, 1, 8),
+             self._fadds(21, 20, 22), self._lfd(21, 1, 8), _LR],
+            [self._stfd(25, 1, 8), self._fadds(25, 21, 22), self._lfd(25, 1, 8),
+             self._fadds(21, 25, 22), self._lfd(21, 1, 8), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_relocated_b_vs_bl_link_bit_rejected(self) -> None:
+        # R8-2: ``b sym`` vs ``bl sym`` share Opcode.B (LK lives in the link
+        # flag, bit 0 of the raw word).  Gate 3 must reject the LK difference
+        # even though the REL24 relocation is identical — the exemption now
+        # masks only the relocated LI field (bits 6-29).
+        reloc = lambda: (RelocationRef(0, R_PPC_REL24, "sym", "sym", 0),)
+        original = decode_block(
+            bytes.fromhex(_words_hex([0x48000001, _LR])), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex([0x48000000, _LR])), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+    def test_relocated_beq_vs_bne_rejected(self) -> None:
+        # R8-2: BO bits (branch condition) on a relocated bc differ; gate 3
+        # must reject (the old blanket exemption skipped the comparison).
+        from tools.ppc_equivalence.ir import R_PPC_REL14
+        reloc = lambda: (RelocationRef(0, R_PPC_REL14, "sym", "sym", 0),)
+        beq = 0x41000000 | (12 << 21) | (2 << 16)   # beq cr0 -> sym
+        bne = 0x40000000 | (4 << 21) | (2 << 16)    # bne cr0 -> sym
+        original = decode_block(
+            bytes.fromhex(_words_hex([beq, _LR])), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex([bne, _LR])), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "fields")
+
+    def test_identical_relocated_slots_still_certify(self) -> None:
+        # R8-2 positive control: a matched reloc pair with identical flags
+        # (a real cross-base ``bl sym``) still passes gate 3 and certifies.
+        reloc = lambda: (RelocationRef(0, R_PPC_REL24, "sym", "sym", 0),)
+        original = decode_block(
+            bytes.fromhex(_words_hex([0x48000001, _LR])), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex([0x48000001, _LR])), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=reloc(),
+        )
+        outcome = certify_renaming_witness(
+            original, candidate,
+            assumed_callees=frozenset({"sym"}),
+            callee_contracts={"sym": CalleeContract.opaque_eabi()},
+        )
+        self.assertTrue(outcome.certified, outcome.failure)

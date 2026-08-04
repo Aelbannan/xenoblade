@@ -652,6 +652,17 @@ def _call_observed_lanes(
             observed.update(_EABI_ARG_GPRS)
             observed.update(32 + r for r in _EABI_ARG_FPRS)
             observed.update(_PS1_OFFSET + r for r in _EABI_ARG_FPRS)
+            # Kimi-K3 adversarial finding (2026-08): custom-ABI callees (the
+            # MWCC _savegpr/_restgpr helper family) read PHYSICAL r11/r12 as
+            # the save-base / scratch registers — registers that are EABI-
+            # volatile but OUTSIDE the r3-r10 argument window and only fixed
+            # by the liveness gate when live ACROSS the call. A r11/r12 perm
+            # with the value DEAD after the call (li r11,X; bl helper; blr)
+            # certifies while the physical callee reads different input on
+            # each side — a false certificate. Fix r11/r12 for opaque/unknown
+            # callees too (conservative; costs only the r11/r12 permute
+            # class, which is already near-useless across calls).
+            observed.update({11, 12})
             continue
         for name in reads:
             base = name[:-4] if name.endswith(".ps1") else name

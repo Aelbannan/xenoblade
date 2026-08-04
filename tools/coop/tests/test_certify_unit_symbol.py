@@ -647,35 +647,37 @@ class WitnessWithUncertifiedCalleesTests(unittest.TestCase):
         self.assertIsNotNone(probe.certificate)
 
     def test_opaque_callee_preserves_soundness_no_false_cert(self) -> None:
-        # A call to an opaque (uncertified) callee: the witness REJECTS it
-        # (the callee may observe the permuted argument lanes). Never a
-        # false certificate — and crucially it RUNS (returns a verdict, not
-        # None on the missing cert).
-        from tools.coop.lib.equivalence_check import (
-            CertifiedCalleeContext,
-            _try_renaming_witness,
-        )
+        # Kimi-K3 finding: a custom-ABI callee reads PHYSICAL r11/r12 (the
+        # MWCC _savegpr/_restgpr family) — registers EABI-volatile but OUTSIDE
+        # the r3-r10 opaque argument window, fixed only when live ACROSS the
+        # call. A r11<->r12 perm with the value DEAD after the call must NOT
+        # certify: the physical callee reads different input on each side.
+        # Direct certify_renaming_witness (the _try_renaming_witness path
+        # decode-fails on REL24 FunctionBytes and returns None vacuously).
+        from tools.ppc_equivalence.decoder import decode_block
         from tools.ppc_equivalence.elf_symbols import FunctionRelocation
         from tools.ppc_equivalence.ir import R_PPC_REL24
-        relocs = (FunctionRelocation(8, R_PPC_REL24, "callee_fn", 0),)
-        r = [_enc_primary(32, 5, 3, 0), 0x48000001, _enc_primary(32, 5, 3, 8), _LR]
-        d = [_enc_primary(32, 6, 3, 0), 0x48000001, _enc_primary(32, 6, 3, 8), _LR]
-        left = _function_bytes("f", r, _RETAIL_BASE, relocs)
-        right = _function_bytes("f", d, _DECOMP_BASE, relocs)
-        context = CertifiedCalleeContext({}, (), ("callee not accepted",))
-        probe = _try_renaming_witness(
-            None, "f", left, right, "us-witness-callee", context,
+        from tools.ppc_equivalence.semantics import CalleeContract
+        from tools.coop.lib.renaming_witness import certify_renaming_witness
+        li = lambda rt, imm: _enc_primary(14, rt, 0, imm)
+        relocs = (FunctionRelocation(4, R_PPC_REL24, "callee_fn", 0),)
+        r_words = [li(11, 0x1234), 0x48000001, _LR]
+        d_words = [li(12, 0x1234), 0x48000001, _LR]
+        left = _function_bytes("f", r_words, _RETAIL_BASE, relocs)
+        right = _function_bytes("f", d_words, _DECOMP_BASE, relocs)
+        orig = decode_block(left.code, left.base, validate_with_capstone=False,
+                            relocations=left.relocations, local_symbol=left.name)
+        cand = decode_block(right.code, right.base, validate_with_capstone=False,
+                            relocations=right.relocations, local_symbol=right.name)
+        outcome = certify_renaming_witness(
+            orig, cand,
+            assumed_callees=frozenset({"callee_fn"}),
+            callee_contracts={"callee_fn": CalleeContract.opaque_eabi()},
         )
-        # The opaque-call shape is NOT certifiable (the callee may observe the
-        # permuted lane) — the witness returns None, which means "fall through
-        # to SMT", never a certificate. The soundness property: it must NOT
-        # certify. (None vs not_equivalent both mean "not certified"; the
-        # callee-CERT gate removal is proven by the positive test above.)
-        self.assertIsNone(probe) if probe is None else self.assertNotEqual(
-            probe.status.value, "equivalent",
-            "opaque-call must never certify",
+        self.assertFalse(
+            outcome.certified,
+            "r11/r12 perm across an opaque call must be rejected "
+            "(custom-ABI callee reads physical r11); certified = false cert",
         )
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
 
-
-if __name__ == "__main__":
-    unittest.main()

@@ -7,6 +7,14 @@ extern u32 func_801355A0();
 extern void func_80138078(u32);
 extern void func_8013B428(u32);
 
+// func_80137038's retail symbol is the Itanium-mangled name
+// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii. Declaring the
+// short name with C++-linkage here makes the compiler mangle it to exactly
+// that retail symbol (see pre-mangled decl in code_80135FDC.hpp). Do NOT use
+// extern "C" (lint forbids it for non-lbl_ relocs) nor the pre-mangled name
+// (that would double-mangle).
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
 // Retail vtable data symbol (vtable lives in split1.s at 0x80535F48).
 // The class is __declspec(novtable), so the ctor assigns the retail label
 // explicitly instead of the compiler-generated __vt__16CMCCylinderGauge.
@@ -150,6 +158,11 @@ void CMCCylinderGauge::func_802222C4() {
 }
 
 void CMCCylinderGauge::func_80222318() {
+    // State 2: advance the gauge-fill animation. The "in" arrow moves toward
+    // a target frame proportional to the accumulated fill (unk28, capped at
+    // one 1.0 level). When it reaches the end and a full level is pending,
+    // bump the level counter, switch to the "full" burst animation (state 4)
+    // and play a sound; at max level just hold and play the "full" cue.
     float fVar1 = unk28;
     if(fVar1 > 1.0f) {
         fVar1 = 1.0f;

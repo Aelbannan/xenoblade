@@ -1,5 +1,5 @@
 {
-  "count": 1362,
+  "count": 1371,
   "entries": {
     "EndofProgramInstruction$576": {
       "R_PPC_EMB_SDA21": {
@@ -15639,6 +15639,32 @@
         ]
       }
     },
+    "main/kyoshin/CNandData@1793": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14463,
+        "retail_symbol": "lbl_eu_80577348",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "lbl_eu_80577348",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      }
+    },
     "main/kyoshin/cf/CArtsParam@178": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -15989,7 +16015,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6064": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6060": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -16003,7 +16029,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6112": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6108": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -16017,7 +16043,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6117": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6113": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -16031,7 +16057,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6118": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6114": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -16045,7 +16071,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6121": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6117": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -16059,7 +16085,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCCylinderGauge@6137": {
+    "main/kyoshin/makecrystal/CMCCylinderGauge@6133": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -17467,6 +17493,30 @@
         ]
       }
     },
+    "sInstance__9CNandData": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 14463,
+        "retail_symbol": "lbl_eu_80577358",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 7,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "lbl_eu_80577358",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      }
+    },
     "sIsInitialized__11CProcessMan": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -17477,6 +17527,54 @@
         "retail_symbol": "lbl_eu_80665628",
         "units": [
           "main/monolib/src/work/CProcess"
+        ]
+      }
+    },
+    "sNandIconTextureFilenames__9CNandData": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15520,
+        "retail_symbol": "lbl_eu_8053A3D8",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14501,
+        "retail_symbol": "lbl_eu_8053A3D8",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      }
+    },
+    "sNandIconTextureSomething__9CNandData": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14463,
+        "retail_symbol": "lbl_eu_8053A3FC",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "lbl_eu_8053A3FC",
+        "units": [
+          "main/kyoshin/CNandData"
         ]
       }
     },
@@ -17854,6 +17952,19 @@
         ]
       }
     },
+    "scNandBannerFilename__9CNandData": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80662E00",
+        "units": [
+          "main/kyoshin/CNandData"
+        ]
+      }
+    },
     "spColdStartNotRunningDeviceName__7CDevice": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -18090,9 +18201,9 @@
       }
     }
   },
-  "function_pairs": 5012,
-  "generated": "2026-08-06T01:47:17.275310",
+  "function_pairs": 5020,
+  "generated": "2026-08-06T03:12:53.304478",
   "region": "us",
-  "units_scanned": 616,
+  "units_scanned": 617,
   "version": 1
 }

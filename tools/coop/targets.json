@@ -67580,8 +67580,8 @@
       "size": "0x238",
       "unit": "kyoshin/cf/CfCollCylinderImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a7eb4"
@@ -67592,16 +67592,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCollCylinderImpl.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCollCylinderImpl.cpp",
-      "instruction_match": 59.021,
-      "equivalence_status": "inconclusive_unvalidated_callee",
-      "claim": {
-        "owner": "pi-harness-27837",
-        "claimed_at": "2026-08-05T17:58:55.134035+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfCollCylinderImpl.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800abb14",
@@ -67615,7 +67607,7 @@
       "unit": "kyoshin/cf/CfCollCylinderImpl",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800a63e0"
@@ -67626,11 +67618,11 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCollCylinderImpl.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCollCylinderImpl.cpp",
-      "instruction_match": 74.462,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "pi-harness-27837",
-        "claimed_at": "2026-08-05T17:58:51.960701+00:00",
+        "claimed_at": "2026-08-05T19:13:47.507384+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/CfCollCylinderImpl.cpp"
         ],
@@ -200065,7 +200057,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -200075,9 +200067,7 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 99.722,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223cf4",
@@ -200103,7 +200093,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical"
+      "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223d34",
@@ -200134,7 +200125,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.068,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223e20",
@@ -200163,7 +200155,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223eb0",
@@ -200189,7 +200182,7 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223ed0",
@@ -200213,7 +200206,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223f30",
@@ -200237,7 +200231,7 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223f38",
@@ -200261,7 +200255,7 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223f58",
@@ -200287,7 +200281,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.571,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80223fe4",
@@ -200314,7 +200309,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.583,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224074",
@@ -200327,8 +200323,8 @@
       "size": "0x24",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [
@@ -200339,16 +200335,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
-      "instruction_match": 98.889,
-      "equivalence_status": "inconclusive_unvalidated_callee",
-      "claim": {
-        "owner": "pi-harness-27837",
-        "claimed_at": "2026-08-05T17:58:57.008231+00:00",
-        "allowed_paths": [
-          "src/kyoshin/makecrystal/CMCCylinderGauge.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 98.333,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224098",
@@ -200362,7 +200350,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -200372,9 +200360,7 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 99.737,
-      "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802240e4",
@@ -200387,8 +200373,8 @@
       "size": "0x20",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [
@@ -200399,16 +200385,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
-      "instruction_match": 98.75,
-      "equivalence_status": "inconclusive_unvalidated_callee",
-      "claim": {
-        "owner": "pi-harness-27837",
-        "claimed_at": "2026-08-05T17:58:53.556737+00:00",
-        "allowed_paths": [
-          "src/kyoshin/makecrystal/CMCCylinderGauge.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 98.125,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224104",
@@ -200435,7 +200413,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.762,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224158",
@@ -200465,7 +200444,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.412,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802242ac",
@@ -200491,7 +200471,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.706,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802242f0",
@@ -200518,7 +200499,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 99.643,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224360",
@@ -200542,7 +200524,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802243e8",
@@ -200566,7 +200549,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224470",
@@ -200590,7 +200574,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802244f8",
@@ -200614,7 +200599,8 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80224580",
@@ -267683,7 +267669,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CNandData.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b12dc",

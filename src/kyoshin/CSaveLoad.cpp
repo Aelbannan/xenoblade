@@ -11,7 +11,7 @@
 #include "monolib/device/CDeviceFont.hpp"
 
 // External function declarations
-void func_801F369C(void*);
+extern "C" void func_801F369C(void*);
 void func_80138078(u32);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // func_80137510 declared in code_80135FDC.hpp
@@ -78,6 +78,7 @@ struct UnkStruct_3Ptr {
 extern u32 lbl_eu_806649F0;
 
 // Allocate three 0xA000-byte buffers from MEM2 and store globally
+#pragma optimize_for_size on
 extern "C" void func_8028E838(UnkStruct_3Ptr* p) {
     u32 ptrVal;
     ptrVal = (u32)p;
@@ -86,6 +87,7 @@ extern "C" void func_8028E838(UnkStruct_3Ptr* p) {
     p->p4 = allocate_head__Q23mtl10MemManagerFUlUli(getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
     p->p8 = allocate_head__Q23mtl10MemManagerFUlUli(getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
 }
+#pragma optimize_for_size off
 
 extern "C" void func_8028E8A4(UnkStruct_3Ptr* p) {
     mtl::MemManager::deallocate(p->p0);
@@ -267,6 +269,7 @@ void func_8028EC04(void* arg1, const void* arg2) {
     dst[2] = src[2];
 }
 
+#pragma dont_inline on
 extern "C" void func_8028EC28(UnkPtrHolder* self) {
     const float f = lbl_eu_80668B68;
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mField10, f) != 0) {
@@ -276,6 +279,7 @@ extern "C" void func_8028EC28(UnkPtrHolder* self) {
         fn(self);
     }
 }
+#pragma dont_inline off
 
 void func_8028ED0C(CSLCur* data, int r4) {
     data->mField0 = (void*)(uintptr_t)r4;
@@ -564,6 +568,7 @@ void func_8028F6DC(CSaveLoad* p) {
     }
 }
 
+#pragma optimize_for_size on
 extern "C" void func_8028F774(CSaveLoad* p) {
     if (p->mField121 != 3) return;
     p->mField121 = 4;
@@ -574,6 +579,7 @@ extern "C" void func_8028F774(CSaveLoad* p) {
     func_801F369C(p->mScrollbar);
     func_80138078(6);
 }
+#pragma optimize_for_size off
 
 void func_8028F7D0(){}
 

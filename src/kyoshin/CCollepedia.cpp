@@ -100,7 +100,10 @@ bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
 void func_80253F3C(){}
 
 // Stub for func_802540DC - not inlined to match retail call pattern
-extern "C" u8 __attribute__((noinline)) func_802540DC(u8* self) { return 0; }
+extern "C" u8 __attribute__((noinline)) func_802540DC(u8* self) {
+    s8 idx = (s8)self[1];
+    return *(u8*)(self + idx * 0x140 + 4);
+}
 
 void CCollepedia_decrementWrap(unsigned char* obj) {
     obj[1] = obj[1] - 1;

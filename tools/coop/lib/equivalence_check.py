@@ -3223,12 +3223,18 @@ def certify_unit_symbol(
     max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
     declared_return: str | None = None,
     force_declared_return: bool = False,
+    diag: dict | None = None,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair.
 
     When ``coop.json`` configures a reviewed ``hardware_profile``, prefer the
     full SMT prove path so MMIO/FIFO obligations (and Tier-A GX attestations)
     participate in the certificate instead of a bare FULL_MATCH synthesis.
+
+    ``diag`` (optional out-param dict): on witness rejection, records
+    ``witness_gate`` / ``witness_reason`` (r8 WS-1) so the caller can surface
+    the actionable failure (reloc drift vs rho vs callee vs structural) to the
+    model instead of a bare "NOT certifiable".
     """
     if unit.target_path is None or unit.base_path is None:
         return EquivalenceProbe(ProofStatus.INVALID_INPUT, "unit lacks an object pair")
@@ -3306,6 +3312,7 @@ def certify_unit_symbol(
                 max_instructions=max_instructions,
                 max_paths=max_paths,
                 max_loop_iterations=max_loop_iterations,
+                diag=diag,
             )
             if witness_probe is not None:
                 return witness_probe

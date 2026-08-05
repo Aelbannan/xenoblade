@@ -1,7 +1,6 @@
-"""Retail asm listing helpers (Decomp Atlas + prompt briefs).
+"""Retail asm listing helpers (prompt briefs).
 
-Formerly part of the retired ``tools/llm_decomp`` package; relocated here
-because the Decomp Atlas artifact extractor depends on it.
+Formerly part of the retired ``tools/llm_decomp`` package.
 """
 
 from __future__ import annotations

@@ -1,9 +1,8 @@
-"""Shared C++ source-region locator (coop runner + Decomp Atlas).
+"""Shared C++ source-region locator (coop runner).
 
 Resolves function bodies via stable harness markers or demangled-name brace
 matching. Formerly part of the retired ``tools/llm_decomp`` package; relocated
-here because ``tools/coop/scaffold_missing_slots.py`` and the Decomp Atlas
-artifact extractor both depend on it.
+here because ``tools/coop/scaffold_missing_slots.py`` depends on it.
 """
 from __future__ import annotations
 

@@ -12,7 +12,7 @@ namespace cf {
     class UnkClass_800D8DBC {
     public:
         UnkClass_800D8DBC();
-        ~UnkClass_800D8DBC(){}
+        ~UnkClass_800D8DBC();
         void func_8027D1A4();
 
         u16 unk0;

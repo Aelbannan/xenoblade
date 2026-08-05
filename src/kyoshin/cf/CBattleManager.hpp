@@ -27,12 +27,14 @@ namespace cf{
         u8 unk0[0xC];
     };
 
+    // 8 bytes: 4-byte key + 1-byte count + 3 padding
     struct CBattleManager_Struct1 {
-        CBattleManager_Struct1(){
-            std::memset(unk0, 0, sizeof(unk0));
+        CBattleManager_Struct1() : key(0), count(0) {
         }
 
-        u8 unk0[8];
+        s32 key;    // +0x00
+        u8 count;   // +0x04
+        u8 pad[3];  // +0x05..0x07
     };
 
     struct CBattleManager_Struct2 {
@@ -58,7 +60,7 @@ namespace cf{
         virtual void func_800F42A0(); //0x24
         virtual void func_800885F0(); //0x28
         virtual void func_800EA410(); //0x2C
-        virtual void func_800EA420(); //0x30
+        virtual void* func_800EA420(); //0x30
         virtual void func_800EA460(float a, float b, unsigned long c); //0x34
         virtual void func_800EA470(); //0x38
         virtual void func_800EA998(); //0x3C
@@ -120,4 +122,42 @@ struct Func800EA384_Self {
 struct Func800F4004_Self {
     u8 pad_00[0x48];
     SimpleListNode* listHead;
+};
+
+// Object layout used by func_800EA9A8 / func_800DBA2C
+// Has a field at +0x3f00 (flags), +0x3f10 (ptr), +0x3f28 (u16)
+struct BattleObjAccessor {
+    u8 pad_00[0x3f00];
+    u32 field_3f00;     // flags at +0x3f00
+    u8 pad_3f04[0x0C];  // 0x3f04-0x3f0F
+    void* field_3f10;   // ptr at +0x3f10
+    u8 pad_3f14[0x14];  // 0x3f14-0x3f27
+    u16 field_3f28;     // u16 at +0x3f28
+};
+
+// Object layout used by func_800DBA2C for arg2 access at +0x78
+// Has a field at +0x50 (ptr), +0x78 (flags)
+struct BattleMoveObjAccessor {
+    u8 pad_00[0x50];
+    void* field_50;     // ptr at +0x50
+    u8 pad_54[0x24];
+    u32 field_78;       // flags at +0x78
+};
+
+// Object layout used by func_800DBA2C for r31 (*(arg2+0x50))
+// Has fields at +0x3c (u16 type), +0x40 (u16)
+struct BattleSubObjAccessor {
+    u8 pad_00[0x3c];
+    u16 type_3c;        // type at +0x3c
+    u16 field_3e;       // padding?
+    u16 field_40;       // value at +0x40
+};
+
+// Object layout for the removed-target access in FactoryEvent2 / func_800D9CA0
+// +0x3ED4 = ptr to vtable-holder, +0x3F00 = flags
+struct BattleRemoveObjAccessor {
+    u8 pad_00[0x3ED4];
+    void* field_3ed4;    // +0x3ED4 ptr (has vtable[0x7C] call)
+    u8 pad_3ed8[0x28];   // 0x3ED8-0x3EFF
+    u32 field_3f00;      // +0x3F00 flags
 };

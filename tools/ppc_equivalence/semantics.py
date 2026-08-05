@@ -1549,7 +1549,20 @@ class SymbolicOps:
         if "*" in contract.reads:
             names = sorted(name for name in components if name != "lr")
         else:
-            names = sorted(set(contract.reads) | {"valid", "invalid_reason"})
+            # LR is location-dependent (``lr = pc + 4`` at a call site):
+            # keying the token on it embeds an absolute constant that differs
+            # between the retail and decomp bases, so every call through a
+            # contract that declares lr reads (the narrow FULL_MATCH
+            # contract) over-rejects cross-base (round-3 F2).  Exclude it for
+            # precise contracts too, mirroring the opaque branch — LR is
+            # never renamed (SPR indices are non-register bit-equal fields)
+            # and the terminal/memory comparisons already use the base-
+            # relative carve-out, so the callee summary is location-
+            # independent.
+            names = sorted(
+                name for name in (set(contract.reads) | {"valid", "invalid_reason"})
+                if name != "lr"
+            )
         arguments = tuple(components[name] for name in names if name in components) + (
             self._relocation_world,
         )

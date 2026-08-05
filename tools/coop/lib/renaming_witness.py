@@ -138,6 +138,20 @@ CR_BIT = "cr_bit"
 CR_FIELD_BF = "cr_field_bf"
 SPR_INDEX = "spr_index"
 FXM_MASK = "fxm_mask"
+
+# X-form ops whose RA/RB operands commute: `add rA,rB,rC` == `add rA,rC,rB`.
+# The rho builder treats operand positions positionally, so a pure operand-
+# order swap (retail `add r0,r0,r4` vs decomp `add r0,r4,r0`) produced a
+# many-to-one rho conflict and the witness rejected byte-identical-equivalent
+# pairs (us-8025658c / us-8025650c stuck at 99.4-99.6% on exactly this —
+# hexdiff said "2 pure reg-swaps" but the witness refused).
+_COMMUTATIVE_RA_RB = frozenset({
+    Opcode.ADD, Opcode.ADDC, Opcode.ADDE,
+    Opcode.AND, Opcode.ANDC, Opcode.EQV, Opcode.NAND, Opcode.NOR,
+    Opcode.OR, Opcode.ORC, Opcode.XOR,
+    Opcode.MULLW, Opcode.MULHW, Opcode.MULHWU,
+    Opcode.SUBF, Opcode.SUBFC, Opcode.SUBFE,
+})
 IMMEDIATE = "immediate"
 
 # Bit ranges of the register fields, keyed by ``(start, kind)`` for the
@@ -1172,6 +1186,36 @@ def _fail_rho(
     return None
 
 
+def _first_rho_failure(
+    r_insn: Instruction,
+    d_insn: Instruction,
+    rho_gpr: dict[int, int],
+    rho_fpr: dict[int, int],
+    index: int,
+) -> WitnessFailure:
+    """Report the first positional rho conflict for an instruction pair
+    (used after both the normal and commutative-swapped orders fail)."""
+    for start, kind in _register_fields(r_insn.opcode):
+        rv = (r_insn.raw >> start) & 0x1F
+        dv = (d_insn.raw >> start) & 0x1F
+        table = rho_gpr if kind == GPR else rho_fpr
+        if rv in table and table[rv] != dv:
+            return WitnessFailure(
+                "rho",
+                f"slot {index}: {kind} r{rv} maps to both "
+                f"r{table[rv]} and r{dv}",
+            )
+        if dv in table.values():
+            other = next(k for k, v in table.items() if v == dv)
+            return WitnessFailure(
+                "rho",
+                f"slot {index}: {kind} r{rv} and r{other} "
+                f"both map to r{dv}",
+            )
+    return WitnessFailure("rho", f"slot {index}: no consistent bijection")
+    return None
+
+
 def _stream_validation_failure(
     original: list[Instruction],
     candidate: list[Instruction],
@@ -1295,15 +1339,42 @@ def check_gates(
 
     for index, (r_insn, d_insn) in enumerate(zip(original, candidate)):
         # Gate 4: rho accumulation — single-valued and injective, consistent
-        # across all mnemonics/positions.
-        for start, kind in _register_fields(r_insn.opcode):
-            rv = (r_insn.raw >> start) & 0x1F
-            dv = (d_insn.raw >> start) & 0x1F
-            failure = _fail_rho(
-                rho_gpr if kind == GPR else rho_fpr, rv, dv, index, kind,
-            )
-            if failure is not None:
-                return WitnessOutcome(False, failure=failure)
+        # across all mnemonics/positions. For commutative X-form ops, a
+        # positional conflict (retail `add rA,rB,rC` vs decomp `add rA,rC,rB`)
+        # is retried with the decomp RA/RB fields swapped — the computed value
+        # is identical (us-8025658c / us-8025650c were stuck at 99.4-99.6%
+        # on exactly this, hexdiff called it "2 pure reg-swaps" but the
+        # witness rejected the pair at the rho gate).
+        def _with(swap_ra_rb: bool):
+            trial_r, trial_f = dict(rho_gpr), dict(rho_fpr)
+            d_raw = d_insn.raw
+            if swap_ra_rb:
+                ra = (d_raw >> 16) & 0x1F  # old RA (bits 16-20)
+                rb = (d_raw >> 11) & 0x1F  # old RB (bits 11-15)
+                d_raw = (d_raw & ~(0x1F << 16)) | (rb << 16)
+                d_raw = (d_raw & ~(0x1F << 11)) | (ra << 11)
+            for start, kind in _register_fields(r_insn.opcode):
+                rv = (r_insn.raw >> start) & 0x1F
+                dv = (d_raw >> start) & 0x1F
+                failure = _fail_rho(
+                    trial_r if kind == GPR else trial_f, rv, dv, index, kind,
+                )
+                if failure is not None:
+                    return None
+            return trial_r, trial_f
+
+        applied = _with(False)
+        if applied is None and r_insn.opcode in _COMMUTATIVE_RA_RB:
+            # Commutative operand-order swap (retail `add rA,rB,rC` vs decomp
+            # `add rA,rC,rB`): retry with the decomp RA (16-20) <-> RB (11-15)
+            # exchanged — the computed value is identical.
+            applied = _with(True)
+        if applied is None:
+            # Both orders conflicted — report the first positional failure.
+            return WitnessOutcome(False, failure=_first_rho_failure(
+                r_insn, d_insn, rho_gpr, rho_fpr, index,
+            ))
+        rho_gpr, rho_fpr = applied
         # Value-dependent RA (doc 32 A2 rev 5): both-nonzero RA pair on an
         # RA-literal opcode is a real register rename.
         if _ra_field_is_register(r_insn, d_insn):
@@ -1858,6 +1929,7 @@ def _terminals_agree(
     *,
     left_base: int,
     right_base: int,
+    first_divergence: list[str] | None = None,
 ) -> bool:
     """Structural agreement of two terminals under the renaming permutation.
 
@@ -1868,76 +1940,79 @@ def _terminals_agree(
     after a call) are compared relative to the function base per the
     location-independence assumption; symbolic values are compared
     structurally.
+
+    ``first_divergence`` (optional out-param): on failure, receives a short
+    human label of the first diverging component (r8 WS-1 — lets the caller
+    tell the model "memory diverges" vs "gpr r20 diverges" instead of a
+    bare structural rejection).
     """
-    if left.exit_kind != right.exit_kind:
+    def _fail(component: str) -> bool:
+        if first_divergence is not None:
+            first_divergence[:] = [component]
         return False
+    if left.exit_kind != right.exit_kind:
+        return _fail("exit-kind")
     if not _value_equal(
         left.exit_target, right.exit_target, z3,
         left_base=left_base, right_base=right_base,
     ):
-        return False
+        return _fail("exit-target")
     ls, rs = left.state, right.state
-    if any(
-        not _structurally_equal(ls.gpr[i], rs.gpr[gpr_perm[i]], z3)
-        for i in range(32)
-    ):
-        return False
-    if any(
-        not _structurally_equal(ls.fpr[i], rs.fpr[fpr_perm[i]], z3)
-        for i in range(32)
-    ):
-        return False
-    if any(
-        not _structurally_equal(ls.ps1[i], rs.ps1[fpr_perm[i]], z3)
-        for i in range(32)
-    ):
-        return False
+    for i in range(32):
+        if not _structurally_equal(ls.gpr[i], rs.gpr[gpr_perm[i]], z3):
+            return _fail(f"gpr r{i}")
+    for i in range(32):
+        if not _structurally_equal(ls.fpr[i], rs.fpr[fpr_perm[i]], z3):
+            return _fail(f"fpr f{i}")
+    for i in range(32):
+        if not _structurally_equal(ls.ps1[i], rs.ps1[fpr_perm[i]], z3):
+            return _fail(f"ps1 f{i}")
     direct_pairs = [
-        (ls.cr, rs.cr),
-        (ls.xer.ca, rs.xer.ca),
-        (ls.xer.ov, rs.xer.ov),
-        (ls.xer.so, rs.xer.so),
-        (ls.fpscr, rs.fpscr),
-        (ls.ctr, rs.ctr),
-        (ls.msr, rs.msr),
-        (ls.time_base, rs.time_base),
-        (ls.srr0, rs.srr0),
-        (ls.srr1, rs.srr1),
-        (ls.valid, rs.valid),
-        (ls.invalid_reason, rs.invalid_reason),
-        (ls.stack_low, rs.stack_low),
-        (ls.stack_layout_valid, rs.stack_layout_valid),
-        (ls.stack_private, rs.stack_private),
-        (ls.fp_pending_cause, rs.fp_pending_cause),
-        (ls.fp_pending_fault_pc, rs.fp_pending_fault_pc),
-        (ls.fp_pending_recoverable, rs.fp_pending_recoverable),
-        (ls.fp_pending_delivery, rs.fp_pending_delivery),
+        (ls.cr, rs.cr, "cr"),
+        (ls.xer.ca, rs.xer.ca, "xer.ca"),
+        (ls.xer.ov, rs.xer.ov, "xer.ov"),
+        (ls.xer.so, rs.xer.so, "xer.so"),
+        (ls.fpscr, rs.fpscr, "fpscr"),
+        (ls.ctr, rs.ctr, "ctr"),
+        (ls.msr, rs.msr, "msr"),
+        (ls.time_base, rs.time_base, "time_base"),
+        (ls.srr0, rs.srr0, "srr0"),
+        (ls.srr1, rs.srr1, "srr1"),
+        (ls.valid, rs.valid, "valid"),
+        (ls.invalid_reason, rs.invalid_reason, "invalid_reason"),
+        (ls.stack_low, rs.stack_low, "stack_low"),
+        (ls.stack_layout_valid, rs.stack_layout_valid, "stack_layout_valid"),
+        (ls.stack_private, rs.stack_private, "stack_private"),
+        (ls.fp_pending_cause, rs.fp_pending_cause, "fp_pending_cause"),
+        (ls.fp_pending_fault_pc, rs.fp_pending_fault_pc, "fp_pending_fault_pc"),
+        (ls.fp_pending_recoverable, rs.fp_pending_recoverable, "fp_pending_recoverable"),
+        (ls.fp_pending_delivery, rs.fp_pending_delivery, "fp_pending_delivery"),
     ]
-    for left_v, right_v in direct_pairs:
+    for left_v, right_v, label in direct_pairs:
         if not _structurally_equal(left_v, right_v, z3):
-            return False
+            return _fail(label)
     # LR is the one component the summary writes as an absolute constant
     # (``pc + 4`` at the call site); compare it with the location-independent
     # carve-out.
     if not _value_equal(ls.lr, rs.lr, z3, left_base=left_base, right_base=right_base):
-        return False
+        return _fail("lr")
     # Register-file tuples (gqr, sr, aux spr) compare elementwise.
-    for left_t, right_t in (
-        (ls.gqr, rs.gqr),
-        (ls.sr, rs.sr),
-        (ls.spr, rs.spr),
+    for name, left_t, right_t in (
+        ("gqr", ls.gqr, rs.gqr),
+        ("sr", ls.sr, rs.sr),
+        ("spr", ls.spr, rs.spr),
     ):
         if len(left_t) != len(right_t) or any(
             not _structurally_equal(a, b, z3) for a, b in zip(left_t, right_t)
         ):
-            return False
+            return _fail(name)
     if getattr(ls, "symbolic_bus", None) is not None or getattr(rs, "symbolic_bus", None) is not None:
-        return False
+        return _fail("symbolic_bus")
     if not _memory_arrays_agree(
         ls.memory, rs.memory, z3,
         left_base=left_base, right_base=right_base,
     ):
-        return False
+        return _fail("memory")
     return True
 
 
@@ -2136,18 +2211,22 @@ def run_structural_witness(
             if z3.is_false(combined):
                 continue
             pairs_checked += 1
+            divergence: list[str] = []
             if not _terminals_agree(
                 left, right, gpr_perm, fpr_perm, z3,
                 left_base=left_base, right_base=right_base,
+                first_divergence=divergence,
             ):
+                reason = (
+                    f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
+                    f"diverges structurally"
+                )
+                if divergence:
+                    reason += f" — first divergence: {divergence[0]}"
                 return WitnessOutcome(
                     False,
                     rho=rho,
-                    failure=WitnessFailure(
-                        "structural",
-                        f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
-                        "diverges structurally",
-                    ),
+                    failure=WitnessFailure("structural", reason),
                     terminal_pairs_checked=pairs_checked,
                 )
     if pairs_checked == 0:
@@ -2272,14 +2351,36 @@ def _rho_region_boundaries(
             rho_gpr = {}
             rho_fpr = {}
         # Accumulate this slot's register fields into the current region's
-        # bijection; on conflict, start a new region at this slot.
+        # bijection; on conflict, start a new region at this slot. For
+        # commutative X-form ops, a positional conflict (retail add rA,rB,rC
+        # vs decomp add rA,rC,rB) is first retried with the decomp RA/RB
+        # swapped — only a real conflict then splits.
         split_here = False
+        conflicted = None
         for start_bit, kind in _register_fields(r_insn.opcode):
             rv = (r_insn.raw >> start_bit) & 0x1F
             dv = (d_insn.raw >> start_bit) & 0x1F
             if _conflicts(index, kind, rv, dv):
-                split_here = True
+                conflicted = (start_bit, kind, rv, dv)
                 break
+        if conflicted is not None and r_insn.opcode in _COMMUTATIVE_RA_RB:
+            # Commutative retry with decomp RA <-> RB exchanged.
+            d_swapped = d_insn.raw
+            ra = (d_swapped >> 16) & 0x1F  # old RA (bits 16-20)
+            rb = (d_swapped >> 11) & 0x1F  # old RB (bits 11-15)
+            d_swapped = (d_swapped & ~(0x1F << 16)) | (rb << 16)
+            d_swapped = (d_swapped & ~(0x1F << 11)) | (ra << 11)
+            recheck = False
+            for start_bit, kind in _register_fields(r_insn.opcode):
+                rv = (r_insn.raw >> start_bit) & 0x1F
+                dv = (d_swapped >> start_bit) & 0x1F
+                if _conflicts(index, kind, rv, dv):
+                    recheck = True
+                    break
+            if recheck:
+                split_here = True
+        elif conflicted is not None:
+            split_here = True
         # Value-dependent RA (doc 32 A2 rev 5): both-nonzero RA pair is a
         # real register rename participating in the bijection.
         if not split_here and _ra_field_is_register(r_insn, d_insn):
@@ -2320,17 +2421,23 @@ def _region_rho(
     rho_fpr: dict[int, int] = {}
     for index in range(start, end):
         r_insn, d_insn = original[index], candidate[index]
-        for start_bit, kind in _register_fields(r_insn.opcode):
-            rv = (r_insn.raw >> start_bit) & 0x1F
-            dv = (d_insn.raw >> start_bit) & 0x1F
-            table = rho_gpr if kind == GPR else rho_fpr
-            if rv in table:
-                if table[rv] != dv:
+        # Snapshot before this instruction so a failed positional attempt can
+        # roll back cleanly and retry with swapped commutative operands.
+        snap_gpr, snap_fpr = dict(rho_gpr), dict(rho_fpr)
+        if not _apply_rho_fields(
+            r_insn, d_insn, rho_gpr, rho_fpr,
+        ):
+            if r_insn.opcode in _COMMUTATIVE_RA_RB:
+                # Commutative operand-order swap: retail `add rA,rB,rC` vs
+                # decomp `add rA,rC,rB`. Retry with the decomp RA/RB fields
+                # swapped, from the pre-instruction snapshot.
+                rho_gpr, rho_fpr = snap_gpr, snap_fpr
+                if not _apply_rho_fields(
+                    r_insn, d_insn, rho_gpr, rho_fpr, swap_ra_rb=True,
+                ):
                     return None
-            elif dv in table.values():
-                return None
             else:
-                table[rv] = dv
+                return None
         # Value-dependent RA (doc 32 A2 rev 5).
         if _ra_field_is_register(r_insn, d_insn):
             rv = (r_insn.raw >> 16) & 0x1F
@@ -2343,6 +2450,39 @@ def _region_rho(
             else:
                 rho_gpr[rv] = dv
     return Rho(gpr=rho_gpr, fpr=rho_fpr)
+
+
+def _apply_rho_fields(
+    r_insn: Instruction,
+    d_insn: Instruction,
+    rho_gpr: dict[int, int],
+    rho_fpr: dict[int, int],
+    *,
+    swap_ra_rb: bool = False,
+) -> bool:
+    """Apply one instruction pair's register fields to the rho tables.
+    Returns True on success (no conflict). With *swap_ra_rb*, the decomp
+    RA/RB register bits are exchanged before comparison (for commutative
+    operand-order swaps)."""
+    fields = _register_fields(r_insn.opcode)
+    d_raw = d_insn.raw
+    if swap_ra_rb:
+        ra = (d_raw >> 16) & 0x1F
+        rb = (d_raw >> 11) & 0x1F
+        d_raw = (d_raw & ~(0x1F << 16)) | (rb << 16)
+        d_raw = (d_raw & ~(0x1F << 11)) | (ra << 11)
+    for start_bit, kind in fields:
+        rv = (r_insn.raw >> start_bit) & 0x1F
+        dv = (d_raw >> start_bit) & 0x1F
+        table = rho_gpr if kind == GPR else rho_fpr
+        if rv in table:
+            if table[rv] != dv:
+                return False
+        elif dv in table.values():
+            return False
+        else:
+            table[rv] = dv
+    return True
 
 
 def _boundary_deadness_ok(
@@ -2755,17 +2895,21 @@ def run_region_sliced_witness(
                 lrho = regions[lregion][2]
                 gpr_perm = lrho.gpr_perm()
                 fpr_perm = lrho.fpr_perm()
+                divergence: list[str] = []
                 if not _terminals_agree(
                     left, right, gpr_perm, fpr_perm, z3,
                     left_base=left_base, right_base=right_base,
+                    first_divergence=divergence,
                 ):
+                    reason = (
+                        f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
+                        "diverges structurally under region rho"
+                    )
+                    if divergence:
+                        reason += f" — first divergence: {divergence[0]}"
                     return WitnessOutcome(
                         False,
-                        failure=WitnessFailure(
-                            "structural",
-                            f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
-                            "diverges structurally under region rho",
-                        ),
+                        failure=WitnessFailure("structural", reason),
                         terminal_pairs_checked=pairs_checked,
                     )
         if pairs_checked == 0:

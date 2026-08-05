@@ -2,6 +2,7 @@
 // FULL_MATCH: func_80192BE4, func_80192BEC (vtable adjustor thunks).
 
 #include "kyoshin/menu/CMenuPTState.hpp"
+
 extern u32 lbl_eu_80664300;
 
 // Real member functions defined in code_8018F8D8.cpp -- accessed via their
@@ -9,7 +10,44 @@ extern u32 lbl_eu_80664300;
 void cbRenderBefore__12CMenuPTStateFv(CMenuPTState* self);
 void __dt__12CMenuPTStateFv(CMenuPTState* self);
 
-void __ct__CMenuPTState(){}
+// CPartyStateWin constructor takes 2 args despite header saying CPartyStateWin()
+void __ct__14CPartyStateWinFUlUl(CPartyStateWin* self, u32 arg1, u32 arg2);
+void __ct__8CProcessFv(CProcess* self);
+void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
+void* getWorkMem__17CWorkThreadSystemFv();
+void* allocate__Q23mtl10MemManagerFUlUl(u32 size, void* workMem);
+
+// Singleton factory constructor.
+// MWCC allocating constructor: r3 = this (parent for Regist), r4 = storedParent.
+// Allocates a new CMenuPTState singleton, constructs it, and registers it.
+// Returns the singleton pointer, or 0 if already created.
+CMenuPTState::CMenuPTState(CProcess* storedParent) : mBgTex(0) {
+    // If singleton already exists, return 0
+    if (lbl_eu_80664300 != 0) {
+        return;
+    }
+
+    // Allocate memory for the new object
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x6c70, getWorkMem__17CWorkThreadSystemFv());
+    CMenuPTState* obj = static_cast<CMenuPTState*>(mem);
+
+    if (obj != nullptr) {
+        // Construct CProcess (primary base) on the allocated memory
+        __ct__8CProcessFv(static_cast<CProcess*>(mem));
+
+        // CPartyStateWin at +0x80 with args 0, 0
+        __ct__14CPartyStateWinFUlUl(&obj->mPartyStateWin, 0, 0);
+
+        // Initialize byte at +0x6C6C
+        obj->mField_6C6C = 0;
+    }
+
+    // Store singleton
+    lbl_eu_80664300 = reinterpret_cast<u32>(obj);
+
+    // Register with this (parent) -- insertTop = false
+    Regist__8CProcessFP8CProcessb(static_cast<CProcess*>(obj), this, false);
+}
 
 extern "C" unsigned long func_80192BD0() { return lbl_eu_80664300 != 0; }
 
@@ -48,11 +86,11 @@ extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj){
     if (self->field_0x04 > 0.0f) {
         self->field_0x00++;
     }
-    
+
     // Call virtual function at vtable slot 0x61 (offset 0x308)
     void** vtable = *(void***)obj;
     int count = ((int (*)(void*))vtable[0x308 / 4])(obj);
-    
+
     float val = (float)(count * 2 + 6);
     self->field_0x08 = val;
     self->field_0x04 = val;

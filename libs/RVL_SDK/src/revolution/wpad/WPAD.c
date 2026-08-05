@@ -13,7 +13,7 @@
 #define DPD_CONFIG2_SIZE 2
 #define SPK_CONFIG_SIZE 7
 
-RVL_LIB_VERSION(WPAD, "May 17 2007", "01:52:03", "0x4199_60831");
+RVL_LIB_VERSION(WPAD, "Jun 22 2009", "18:33:21", "0x4302_145");
 
 void __wpadSendDataSub(s32 chan, WPADCommand command);
 void __wpadReceiveCallback(UINT8 devHandle, UINT8* pReport, UINT16 len);
@@ -49,42 +49,49 @@ u8 __wpadManageHandlerStack[0x1000] ALIGN(32);
 
 s8 _wpadHandle2PortTable[WUD_MAX_DEV_ENTRY];
 
+// TODO(kiwi) __rvl_wpadcb should be 32-byte aligned, but doing so breaks
+// __wpadInitSub; FAKE_ALIGNMENT pads the retail 0x1050-0x1060 bss gap.
+u8 FAKE_ALIGNMENT[0x10];
+
 WPADCB __rvl_wpadcb[WPAD_MAX_CONTROLLERS];
 
-u8 _wpadSleepTime;
+/* sbss globals - declared in REVERSE of the retail layout (MWCC emits sbss
+   symbols in reverse declaration order). 2-byte symbols with byte-width
+   accesses (lbz/stb at offset 0) are u16 + *(u8*)& views at the use sites. */
+u8 _wpadGameType;
+const char* _wpadGameCode;
+u16 _wpadSleepTime;
 u8 _wpadDpdSense;
 u8 _wpadSensorBarPos;
 u32 _wpadRumbleFlag;
 u8 _wpadSpeakerVol;
-u8 _scFlush;
-u8 _wpadGameType;
-const char* _wpadGameCode;
+u8 _wpadSCSetting;
+u8 _wpadShutdownFlag;
+s8 _wpadAfhChannel;
 u8 _wpadIsUsedChannel[WPAD_MAX_CONTROLLERS];
-
-static u8 _wpadSCSetting;
-static u8 _wpadShutdownFlag;
-static s8 _wpadAfhChannel;
-static BOOL _wpadInitialized;
-static u8 _wpadRumbleCnt[WPAD_MAX_CONTROLLERS];
-static u8 _wpadExtCnt[WPAD_MAX_CONTROLLERS];
-static u16 _wpadAfhCnt;
-static u8 _wpadCheckCnt;
-static u16 _wpadSenseCnt;
-static u8 _wpadRegisterShutdownFunc;
-static BOOL _wpadStartup;
-
+BOOL _wpadInitialized;
 void* _wpadUsedCallback;
+BOOL _enabledDRM;
+BOOL _enabledGTR;
+BOOL _enabledTRN;
+BOOL _enabledVSM;
+void (*_wpadDRMInit)(void);
+void (*_wpadGTRInit)(void);
+void (*_wpadTRNInit)(void);
+void (*_wpadVSMInit)(void);
+s32 _wpadReconnectWait;
+BOOL _wpadStartup;
+u8 _wpadRumbleCnt[WPAD_MAX_CONTROLLERS];
+u8 _wpadExtCnt[WPAD_MAX_CONTROLLERS];
+u16 _wpadAfhCnt;
+u16 _wpadCheckCnt;
+u16 _wpadSenseCnt;
+u16 _wpadRegisterShutdownFunc;
 
 s32 _wpadOnReconnect = -1;
-s32 _wpadReconnectWait;
 
-void (*_wpadVSMInit)(void);
-void (*_wpadTRNInit)(void);
-void (*_wpadGTRInit)(void);
-void (*_wpadDRMInit)(void);
-
-static u16 _wpad_diff_count_threshold[2] = {6, 4};   // acc, dpd
-static u16 _wpad_hyst_count_threshold[2] = {30, 30};  // acc, dpd
+static u16 _wpad_diff_count_threshold[4] = {6, 4, 6, 0};
+static u16 _wpad_hyst_count_threshold[4] = {30, 30, 30, 0};
 
 void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open);
 
@@ -563,7 +570,7 @@ void __wpadManageHandler(void) {
                             if ((s32)OS_TICKS_TO_SEC(__OSGetSystemTime() -
                                                      pCur->lastReportSendTime) >
                                     1 &&
-                                _wpadSleepTime != 0) {
+                                *(u8*)&_wpadSleepTime != 0) {
 
                                 pCur->lastReportSendTime = __OSGetSystemTime();
 
@@ -652,7 +659,7 @@ void __wpadManageHandler(void) {
                             if ((s32)OS_TICKS_TO_SEC(__OSGetSystemTime() -
                                                      pCur->lastReportSendTime) >
                                     1 &&
-                                _wpadSleepTime != 0) {
+                                *(u8*)&_wpadSleepTime != 0) {
 
                                 pCur->lastReportSendTime = __OSGetSystemTime();
 
@@ -730,7 +737,7 @@ void __wpadManageHandler(void) {
     }
 
     _wpadSenseCnt = _wpadSenseCnt == 10 ? 0 : _wpadSenseCnt + 1;
-    _wpadCheckCnt = _wpadCheckCnt == 5 ? 0 : _wpadCheckCnt + 1;
+    *(u8*)&_wpadCheckCnt = *(u8*)&_wpadCheckCnt == 5 ? 0 : *(u8*)&_wpadCheckCnt + 1;
     _wpadAfhCnt = _wpadAfhCnt == 60000 ? 0 : _wpadAfhCnt + 1;
 
     BTA_HhGetAclQueueInfo();
@@ -817,10 +824,10 @@ void __wpadClearControlBlock(s32 chan) {
 
     p->UNK_0x38[0] = -1;
 
+    p->UNK_0x38[1] = -1;
+
     p->stdCmdQueue.buffer = p->stdCmdQueueList;
     p->stdCmdQueue.capacity = ARRAY_SIZE(p->stdCmdQueueList);
-
-    p->UNK_0x38[1] = -1;
 
     p->extCmdQueue.buffer = p->extCmdQueueList;
     p->extCmdQueue.capacity = ARRAY_SIZE(p->extCmdQueueList);
@@ -837,6 +844,13 @@ void __wpadClearControlBlock(s32 chan) {
 // TODO(kiwi) __rvl_wpadcb should be 32-byte aligned, but doing so breaks this function
 u8 FAKE_ALIGNMENT[0x10];
 
+// Pin FAKE_ALIGNMENT between _wpadHandle2PortTable and __rvl_wpadcb in bss
+// (first-reference order; static + never called => MWCC GCs the text after
+// laying out bss). __rvl_wpadcb must land at 0x1060 like retail; ALIGN(32)
+// on it breaks __wpadInitSub codegen.
+// Pin FAKE_ALIGNMENT between _wpadHandle2PortTable and __rvl_wpadcb in bss
+// (first-reference order). __rvl_wpadcb must land at 0x1060 like retail;
+// ALIGN(32) on it breaks __wpadInitSub codegen.
 void __wpadInitSub(void) {
     BOOL enabled;
     s32 chan;
@@ -852,6 +866,7 @@ void __wpadInitSub(void) {
         _wpadHandle2PortTable[i] = WUD_DEV_HANDLE_INVALID;
     }
 
+
     DEBUGPrint("WPADInit()\n");
 
     for (chan = 0; chan < WPAD_MAX_CONTROLLERS; chan++) {
@@ -866,7 +881,7 @@ void __wpadInitSub(void) {
         _wpadRumbleCnt[chan] = 0;
     }
 
-    _wpadSleepTime = 5;
+    *(u8*)&_wpadSleepTime = 5;
     _wpadGameCode = OSGetAppGamename();
     _wpadGameType = OSGetAppType();
     _wpadDpdSense = __GetDpdSensitivity();
@@ -874,7 +889,7 @@ void __wpadInitSub(void) {
     _wpadRumbleFlag = __GetMotorMode();
     _wpadSpeakerVol = __GetSpeakerVolume();
     _wpadSenseCnt = 0;
-    _wpadCheckCnt = 0;
+    *(u8*)&_wpadCheckCnt = 0;
     _wpadAfhCnt = 0;
     _wpadShutdownFlag = FALSE;
     _wpadSCSetting = TRUE;
@@ -907,9 +922,9 @@ void __wpadInitSub(void) {
 void WPADInit(void) {
     _wpadStartup = TRUE;
 
-    if (!_wpadRegisterShutdownFunc) {
+    if (!*(u8*)&_wpadRegisterShutdownFunc) {
         OSRegisterShutdownFunction(&ShutdownFunctionInfo);
-        _wpadRegisterShutdownFunc = TRUE;
+        *(u8*)&_wpadRegisterShutdownFunc = TRUE;
     }
 
     if (WUDInit()) {
@@ -976,6 +991,25 @@ u8 WPADGetSensorBarPosition(void) {
     return pos;
 }
 
+static s32 __wpadGetStatusSafe(s32 chan) {
+    WPADCB* p = __rvl_p_wpadcb[chan];
+    BOOL enabled = OSDisableInterrupts();
+    s32 st = p->status;
+    OSRestoreInterrupts(enabled);
+    return st;
+}
+
+static u8 __wpadGetDevHandleSafe(s32 chan) {
+    WPADCB* p = __rvl_p_wpadcb[chan];
+    BOOL enabled = OSDisableInterrupts();
+    /* u8 lvalue view of the s8 field: plain zero-extended lbz, no
+       sign-extend, and the load result coalesces into the pointer's
+       register (retail codegen; a conversion would force a fresh reg). */
+    u8 devHandle = *(u8*)&p->devHandle;
+    OSRestoreInterrupts(enabled);
+    return devHandle;
+}
+
 void __wpadSetupConnectionCallback(s32 chan, s32 status) {
     WPADCB* p = __rvl_p_wpadcb[chan];
 
@@ -994,16 +1028,11 @@ void __wpadSetupConnectionCallback(s32 chan, s32 status) {
         OSRestoreInterrupts(enabled);
 
         if (st != WPAD_ERR_NO_CONTROLLER) {
-            BOOL enabled;
             u8 devHandle;
             BD_ADDR addr;
             BD_ADDR_PTR pAddr;
 
-            p = __rvl_p_wpadcb[chan];
-
-            enabled = OSDisableInterrupts();
-            devHandle = p->devHandle;
-            OSRestoreInterrupts(enabled);
+            devHandle = __wpadGetDevHandleSafe(chan);
 
             pAddr = _WUDGetDevAddr(devHandle);
 
@@ -1024,38 +1053,22 @@ void __wpadAbortConnectionCallback(s32 chan, s32 status) {
     if (status != WPAD_ERR_OK) {
         WPADiClearQueue(&p->stdCmdQueue);
 
-        {
-            BOOL enabled;
-            s32 st;
+        if (__wpadGetStatusSafe(chan) != WPAD_ERR_NO_CONTROLLER) {
+            u8 devHandle;
+            BD_ADDR addr;
+            BD_ADDR_PTR pAddr;
 
-            p = __rvl_p_wpadcb[chan];
+            devHandle = __wpadGetDevHandleSafe(chan);
 
-            enabled = OSDisableInterrupts();
-            st = p->status;
-            OSRestoreInterrupts(enabled);
+            pAddr = _WUDGetDevAddr(devHandle);
 
-            if (st != WPAD_ERR_NO_CONTROLLER) {
-                BOOL enabled;
-                u8 devHandle;
-                BD_ADDR addr;
-                BD_ADDR_PTR pAddr;
-
-                p = __rvl_p_wpadcb[chan];
-
-                enabled = OSDisableInterrupts();
-                devHandle = p->devHandle;
-                OSRestoreInterrupts(enabled);
-
-                pAddr = _WUDGetDevAddr(devHandle);
-
-                if (pAddr != NULL) {
-                    memcpy(addr, pAddr, sizeof(BD_ADDR));
-                } else {
-                    memset(addr, 0, sizeof(BD_ADDR));
-                }
-
-                btm_remove_acl(addr);
+            if (pAddr != NULL) {
+                memcpy(addr, pAddr, sizeof(BD_ADDR));
+            } else {
+                memset(addr, 0, sizeof(BD_ADDR));
             }
+
+            btm_remove_acl(addr);
         }
     }
 }
@@ -2847,7 +2860,7 @@ void __wpadCalcControllerData(s32 chan) {
     u8 rxBufIndex;
     u8* pRxBuf;
 
-    if (_wpadCheckCnt != 5) {
+    if (*(u8*)&_wpadCheckCnt != 5) {
         return;
     }
 
@@ -2865,11 +2878,11 @@ void __wpadCalcControllerData(s32 chan) {
         changed = TRUE;
         p->lastControllerDataUpdate = __OSGetSystemTime();
         memcpy(p->rxBufMain, pRxBuf, RX_BUFFER_SIZE);
-    } else if (_wpadSleepTime != 0) {
+    } else if (*(u8*)&_wpadSleepTime != 0) {
         s32 time =
             (s32)OS_TICKS_TO_SEC(__OSGetSystemTime() - p->lastControllerDataUpdate);
 
-        if (time > _wpadSleepTime * 60) {
+        if (time > *(u8*)&_wpadSleepTime * 60) {
             BOOL enabled;
             s32 status;
 
@@ -2929,7 +2942,7 @@ u8 WPADGetRadioSensitivity(s32 chan) {
 void WPADSetAutoSleepTime(int min) {
     BOOL enabled = OSDisableInterrupts();
 
-    _wpadSleepTime = min;
+    *(u8*)&_wpadSleepTime = min;
 
     OSRestoreInterrupts(enabled);
 }

@@ -1042,6 +1042,8 @@ function truncate(s, n) {
 // Defaults mirror tools/pi_harness/src/config.ts defaultConfig().
 const CFG_DEFAULTS = {
   matchModel: { provider: "openai-codex", model: "gpt-5.3-codex", thinkingLevel: "high" },
+  singletonModel: { provider: "openai-codex", model: "gpt-5.3-codex", thinkingLevel: "high" },
+  rebatchModel: { provider: "openai-codex", model: "gpt-5.3-codex", thinkingLevel: "high" },
   cleanupModel: { provider: "openai-codex", model: "gpt-5.3-codex", thinkingLevel: "medium" },
   batchSize: 5,
   maxParallelTUs: 2,
@@ -1058,6 +1060,8 @@ const CFG_DEFAULTS = {
   maxBatchMinutes: 60,
   timeoutRetries: 3,
   rejectionRetries: 1,
+  tuFinalAttempts: 2,
+  tuFinalTimeoutMinutes: 0,
   maxAttemptsPerTarget: 4,
   staleRoundThreshold: 2,
   retryExhausted: false,
@@ -1087,10 +1091,16 @@ function mkModelFields(prefix) {
 const SECTIONS = [
   {
     title: "Models",
-    desc: "Which model drives matching and the TU-final cleanup pass.",
+    desc: "Which models drive each phase. Singleton and rebatch inherit from the match model when left at the defaults.",
     panels: [
-      { title: "Match model", fields: mkModelFields("matchModel") },
-      { title: "Cleanup model", fields: mkModelFields("cleanupModel") },
+      { title: "Match model", fields: mkModelFields("matchModel"),
+        note: "Primary model for pass-1 batch sessions." },
+      { title: "Singleton model", fields: mkModelFields("singletonModel"),
+        note: "Retries for the HARD residue after a batch failed a target. Reason HARDER (xhigh), not cheaper — better conversion means fewer retry sessions, and cacheRead is the dominant cost. Inherits from match model when unchanged." },
+      { title: "Rebatch model", fields: mkModelFields("rebatchModel"),
+        note: "Re-batch phase for small failed targets. Inherits from match model when unchanged." },
+      { title: "Cleanup model", fields: mkModelFields("cleanupModel"),
+        note: "TU-final pass: verifies the whole unit, fixes data, creates classes, renames symbols." },
     ],
   },
   {
@@ -1098,27 +1108,27 @@ const SECTIONS = [
     desc: "How targets are grouped and how many sessions run at once.",
     fields: [
       { id: "batchSize", key: "batchSize", label: "Batch size", type: "int", min: 1,
-        desc: "Targets per batch session." },
+        desc: "Targets per batch session (pass 1)." },
       { id: "maxParallelTUs", key: "maxParallelTUs", label: "Parallel TUs", type: "int", min: 1,
-        desc: "Translation units running at the same time." },
+        desc: "Translation units processed simultaneously (batches within a TU run sequentially)." },
       { id: "selection", key: "selection", label: "Target selection", type: "select",
         options: [["claim-order", "Claim order"], ["similarity", "Similarity"], ["random", "Random"]],
-        desc: "How targets are picked for a batch." },
+        desc: "How targets are picked for a batch: claim-order is the default call-graph wave." },
       { id: "triage", key: "triage", label: "Pre-batch triage", type: "select",
         options: [["off", "Off"], ["route", "Route"]],
-        desc: "No-SMT routing before batching (opt-in)." },
+        desc: "No-SMT pre-batch routing. off = today's behavior; route classifies targets and routes some to the witness." },
       { id: "maxBatchRetries", key: "maxBatchRetries", label: "Max batch retries", type: "int", min: 1,
-        desc: "Total re-batch attempts for a group." },
+        desc: "Re-batch attempts for a group after its first failure." },
       { id: "singletonEnabled", key: "singletonEnabled", label: "Singleton retries", type: "bool",
-        desc: "Retry big targets as their own session." },
+        desc: "Retry failed targets as their own single-target session." },
       { id: "rebatchEnabled", key: "rebatchEnabled", label: "Rebatch small targets", type: "bool",
-        desc: "Small targets go back through a rebatch pass." },
+        desc: "Small failed targets (below the singleton threshold) go through a re-batch pass instead of singletons." },
       { id: "maxRebatchAttempts", key: "maxRebatchAttempts", label: "Rebatch budget", type: "int", min: 0,
-        desc: "Sessions for rebatch across a TU. 0 = none." },
+        desc: "Per-TU sessions for rebatch across all small-target groups; once spent, the rest route to singletons or get skipped. 0 = no rebatch." },
       { id: "singletonMinSize", key: "singletonMinSize", label: "Singleton min size", type: "int", min: 0,
-        desc: "Retail bytes below which a target rebatches instead of singleton. 0 = all singletons." },
+        desc: "Retail binary size in bytes below which a target rebatches instead of singleton. 0 = everything uses singletons." },
       { id: "maxAttemptsPerTarget", key: "maxAttemptsPerTarget", label: "Attempts per target", type: "int", min: 1,
-        desc: "Total sessions a target may use across passes." },
+        desc: "Unified per-target session budget across pass 1 + singleton + rebatch." },
     ],
   },
   {
@@ -1126,45 +1136,49 @@ const SECTIONS = [
     desc: "Per-session limits and retry caps.",
     fields: [
       { id: "timeoutRetries", key: "timeoutRetries", label: "Timeout re-prompts", type: "int", min: 0,
-        desc: "In-session retries when the session timed out." },
+        desc: "In-session re-prompts when the session hit the wall-clock timeout while the model was still working. 0 = single prompt, no continuation." },
       { id: "rejectionRetries", key: "rejectionRetries", label: "Rejection re-prompts", type: "int", min: 0,
-        desc: "Retries when the model finished but code still fails." },
+        desc: "In-session re-prompts when the model finished but the harness rejected the result (compile/lint failure or no match). A lower cap avoids entrenchment on dead ends." },
       { id: "maxTokens", key: "maxTokens", label: "Max output tokens", type: "int", min: 0,
-        desc: "Per session. 0 = model default." },
+        desc: "Per session. 0 = model default, no override." },
       { id: "maxBriefChars", key: "maxBriefChars", label: "Max brief chars", type: "int", min: 1000,
-        desc: "Total ASM/context budget per batch brief." },
+        desc: "Total ASM + rules budget per batch brief." },
       { id: "briefTargetChars", key: "briefTargetChars", label: "Brief share per target", type: "int", min: 1,
-        desc: "ASM cap per target inside a brief." },
+        desc: "Per-target ASM share cap inside a brief — one huge target can't eat the whole budget; freed headroom is redistributed to the rest." },
       { id: "maxBatchMinutes", key: "maxBatchMinutes", label: "Batch time limit", type: "number", min: 0.1, step: "any",
         desc: "Minutes before a batch session is cut off." },
+      { id: "tuFinalAttempts", key: "tuFinalAttempts", label: "TU-final attempts", type: "int", min: 1,
+        desc: "How many times the TU-final session retries before the unit is marked failed." },
+      { id: "tuFinalTimeoutMinutes", key: "tuFinalTimeoutMinutes", label: "TU-final timeout", type: "int", min: 0,
+        desc: "TU-final session timeout in minutes. 0 = derive (maxBatchMinutes × 2)." },
       { id: "staleRoundThreshold", key: "staleRoundThreshold", label: "Stale round threshold", type: "int", min: 1,
-        desc: "Verify rounds without improvement before early-stop." },
+        desc: "Consecutive verify rounds with no divergence improvement before early-stop." },
       { id: "retryExhausted", key: "retryExhausted", label: "Retry exhausted targets", type: "bool",
-        desc: "Re-attempt targets the ledger marked exhausted." },
+        desc: "Re-attempt targets the ledger marked exhausted on a previous run." },
       { id: "bankOnlyOnBetter", key: "bankOnlyOnBetter", label: "Bank only when better", type: "bool",
-        desc: "Only bank a near-miss draft that beats the stored best." },
+        desc: "Only bank a near-miss draft that beats the stored best (composite score)." },
     ],
   },
   {
     title: "Paths",
     desc: "Repo-relative locations; pythonBin empty = auto-detect from .venv.",
     fields: [
-      { id: "region", key: "region", label: "Region", type: "text", desc: "Build region, e.g. us." },
-      { id: "sessionDir", key: "sessionDir", label: "Session dir", type: "text", desc: "Where pi sessions and transcripts live." },
-      { id: "ledgerPath", key: "ledgerPath", label: "Ledger path", type: "text", desc: "Event log (JSONL)." },
-      { id: "nearmissDir", key: "nearmissDir", label: "Near-miss dir", type: "text", desc: "Draft bank + index.jsonl." },
-      { id: "knownWallsPath", key: "knownWallsPath", label: "Known walls doc", type: "text", desc: "Included in briefs. Empty = omit." },
-      { id: "pythonBin", key: "pythonBin", label: "Python binary", type: "text", desc: "Empty = auto-detect .venv." },
+      { id: "region", key: "region", label: "Region", type: "text", desc: "Build region, e.g. us (matches build/<region>/)." },
+      { id: "sessionDir", key: "sessionDir", label: "Session dir", type: "text", desc: "Where pi sessions, transcripts and snapshots live." },
+      { id: "ledgerPath", key: "ledgerPath", label: "Ledger path", type: "text", desc: "JSONL event log that this viewer reads." },
+      { id: "nearmissDir", key: "nearmissDir", label: "Near-miss dir", type: "text", desc: "Draft bank: whole-file snapshots + index.jsonl." },
+      { id: "knownWallsPath", key: "knownWallsPath", label: "Known walls doc", type: "text", desc: "Curated known-walls doc included in the brief. Empty = omit." },
+      { id: "pythonBin", key: "pythonBin", label: "Python binary", type: "text", desc: "Interpreter for coop tooling. Empty = auto-detect .venv/bin/python." },
     ],
   },
   {
     title: "Cost model",
-    desc: "USD per 1M tokens. All zeros = not priced (Cost view shows tokens).",
+    desc: "USD per 1M tokens. All zeros = not priced (the Cost view shows tokens instead of $).",
     fields: [
-      { id: "inPerM", key: "costModel.inputPerM", label: "Input $/M", type: "number", min: 0, step: "any" },
-      { id: "outPerM", key: "costModel.outputPerM", label: "Output $/M", type: "number", min: 0, step: "any" },
-      { id: "crPerM", key: "costModel.cacheReadPerM", label: "Cache read $/M", type: "number", min: 0, step: "any" },
-      { id: "cwPerM", key: "costModel.cacheWritePerM", label: "Cache write $/M", type: "number", min: 0, step: "any" },
+      { id: "inPerM", key: "costModel.inputPerM", label: "Input $/M", type: "number", min: 0, step: "any", desc: "USD per 1M input tokens." },
+      { id: "outPerM", key: "costModel.outputPerM", label: "Output $/M", type: "number", min: 0, step: "any", desc: "USD per 1M output tokens." },
+      { id: "crPerM", key: "costModel.cacheReadPerM", label: "Cache read $/M", type: "number", min: 0, step: "any", desc: "USD per 1M cache-read tokens — usually the dominant cost." },
+      { id: "cwPerM", key: "costModel.cacheWritePerM", label: "Cache write $/M", type: "number", min: 0, step: "any", desc: "USD per 1M cache-write tokens." },
     ],
   },
 ];
@@ -1286,6 +1300,7 @@ function renderConfigForm(cfg) {
       sec.panels.forEach((p) => {
         const sub = el("div", "cfg-subpanel");
         sub.appendChild(el("h3", "cfg-sub-title", p.title));
+        if (p.note) sub.appendChild(el("p", "hint", p.note));
         const g2 = el("div", "cfg-grid");
         p.fields.forEach((f) => g2.appendChild(fieldEl(f, cfg)));
         sub.appendChild(g2);
@@ -1331,12 +1346,20 @@ function applyCfg(c) {
     hideCfgErrors();
   }
   unknownKeys = {};
-  // Deprecated alias: harness maps singletonRetry -> singletonEnabled.
+  // Deprecated aliases: the harness maps singletonRetry, and the old
+  // re-prompt key names were renamed (timeoutRetries / rejectionRetries).
   if ("singletonRetry" in parsed && !("singletonEnabled" in parsed)) {
     parsed.singletonEnabled = parsed.singletonRetry;
   }
+  if ("maxTimeoutRePrompts" in parsed && !("timeoutRetries" in parsed)) {
+    parsed.timeoutRetries = parsed.maxTimeoutRePrompts;
+  }
+  if ("maxNoMatchRePrompts" in parsed && !("rejectionRetries" in parsed)) {
+    parsed.rejectionRetries = parsed.maxNoMatchRePrompts;
+  }
+  const MIGRATED = new Set(["singletonRetry", "maxTimeoutRePrompts", "maxNoMatchRePrompts"]);
   Object.keys(parsed).forEach((k) => {
-    if (!(k in CFG_DEFAULTS) && k !== "singletonRetry") unknownKeys[k] = parsed[k];
+    if (!(k in CFG_DEFAULTS) && !MIGRATED.has(k)) unknownKeys[k] = parsed[k];
   });
   renderConfigForm(deepMerge(CFG_DEFAULTS, parsed));
   const raw = c.raw ?? JSON.stringify(parsed, null, 2);
@@ -1383,10 +1406,14 @@ async function saveCfg() {
     const res = await r.json();
     if (res.ok) {
       cfgDirty = false;
-      hideCfgErrors();
       $("#cfg-editor").value = JSON.stringify(data, null, 2);
       $("#cfg-status").textContent = "saved " + res.path +
         (res.backup ? " · backup " + res.backup.split("/").pop() : "");
+      if (res.warnings && res.warnings.length) {
+        showCfgErrors(res.warnings.map((w) => "⚠ " + w), true);
+      } else {
+        hideCfgErrors();
+      }
       flash("settings saved");
     } else {
       showCfgErrors(res.errors || [res.error || "save failed"]);

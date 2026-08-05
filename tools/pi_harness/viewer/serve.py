@@ -62,7 +62,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ACCEPTED_STATUSES = {"FULL_MATCH", "EQUIVALENT_MATCH", "ACCEPTED"}
 RESULT_EVENTS = ("batch-cycle", "batch-accept", "batch-rejected")
-TERMINAL_EVENTS = ("tu-incomplete", "tu-final-failed")
+TERMINAL_EVENTS = ("tu-incomplete", "tu-final-failed", "tu-final-done")
 
 COST_KEYS = ("inputPerM", "outputPerM", "cacheReadPerM", "cacheWritePerM")
 TOKEN_KEYS = ("input", "output", "cacheRead", "cacheWrite")
@@ -165,6 +165,8 @@ def validate_config(data):
     check_int("singletonMinSize", 0)
     check_int("timeoutRetries", 0)
     check_int("rejectionRetries", 0)
+    check_int("tuFinalAttempts", 1)
+    check_int("tuFinalTimeoutMinutes", 0)
     check_int("maxAttemptsPerTarget", 1)
     check_int("staleRoundThreshold", 1)
     check_num("maxBriefChars", 1000)
@@ -192,6 +194,18 @@ def validate_config(data):
                 if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float)) or v < 0):
                     errors.append(f"config.costModel.{f} must be a number >= 0")
     return errors
+
+
+def config_warnings(data):
+    """Non-fatal cross-field warnings, mirroring config.ts loadConfig."""
+    warnings = []
+    if data.get("rebatchEnabled") and data.get("singletonMinSize") == 0:
+        warnings.append("rebatchEnabled=true but singletonMinSize=0 — no target qualifies as small, rebatch will never run")
+    if not data.get("rebatchEnabled") and (data.get("maxRebatchAttempts") or 0) > 0:
+        warnings.append("rebatchEnabled=false but maxRebatchAttempts>0 — budget will be ignored")
+    if not data.get("singletonEnabled") and not data.get("rebatchEnabled"):
+        warnings.append("both singletonEnabled and rebatchEnabled are false — all failed targets will be skipped")
+    return warnings
 
 
 def _mtime_size(path: str):
@@ -388,7 +402,7 @@ class ViewerState:
             return {"ok": False, "errors": ["write failed: %s" % exc]}
         with self._lock:
             self._config = None  # invalidate merged-view cache (cost model)
-        return {"ok": True, "path": path, "backup": backup}
+        return {"ok": True, "path": path, "backup": backup, "warnings": config_warnings(data)}
 
     # -- helpers ------------------------------------------------------------
 

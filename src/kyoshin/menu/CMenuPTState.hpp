@@ -3,6 +3,8 @@
 #include <types.h>
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
+#include "kyoshin/CBgTex.hpp"
+#include "kyoshin/CPartyStateWin.hpp"
 
 // Vtable adjustor thunks -- when a derived class overrides CMenuPTState
 // virtual functions and the vtable slot is at offset +0x58 from the
@@ -16,14 +18,19 @@ extern "C" {
 
 class CMenuPTState : public CProcess, public IScnRender {
 public:
-    CMenuPTState();
+    CMenuPTState(CProcess* storedParent);
     virtual ~CMenuPTState();
     virtual void Init();
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
 
-    // TODO: add fields
+    // +0x3C-0x57: compiler-managed vtable/ptmf data
+    // +0x58: IScnRender vtable (implicit)
+    CProcess* mStoredParent; // 0x5C
+    CBgTex mBgTex; // 0x60
+    CPartyStateWin mPartyStateWin; // 0x80
+    u8 mField_6C6C; // 0x6C6C
 };
 
 namespace cf {
@@ -31,8 +38,13 @@ namespace cf {
 class UnkClass_80192BF4 {
 public:
     UnkClass_80192BF4();
+    void __ct__80192C10();
 
-    // TODO: add fields
+    // +0x00: counter/state
+    u32 field_0x00;
+    // +0x04: float timer/accumulator
+    f32 field_0x04;
+    // +0x08: float value
+    f32 field_0x08;
 };
 } // namespace cf
-

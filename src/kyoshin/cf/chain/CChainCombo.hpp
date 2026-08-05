@@ -43,6 +43,7 @@ struct CChainCombo {
     void* mVtbl;        // 0x14 - lbl_eu_80538994
 
     CChainCombo();
+    ~CChainCombo();
     void func1();
 };
 

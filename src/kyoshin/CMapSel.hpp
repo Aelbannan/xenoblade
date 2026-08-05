@@ -7,12 +7,15 @@
    constructor). Sub-objects are opaque byte arrays; their constructors and
    destructors are called via extern "C" retail symbols.
 
-   Layout (0x8C bytes):
+   Layout (0xB4 bytes):
      +0x00: IWorkEvent vtable pointer (set to lbl_eu_80536E10)
      +0x04: UnkClass_8045F564 (0x10 bytes)
      +0x14-+0x33: various fields
      +0x34: CScrollBar (0x40 bytes)
      +0x74: CCur18 (0x18 bytes)
+     +0x8C: selection Y coordinate (s8)
+     +0x8D: selection X coordinate (s8)
+     +0x8E: grid data (0x26 bytes)
 
    State machine (mState at +0x31):
      0 = uninitialized/hidden
@@ -23,8 +26,9 @@
      5 = post-close cleanup */
 class CMapSel {
 public:
-    u8 mVtbl[4];                              // +0x00 — IWorkEvent vtable ptr
-    u8 mMemRegion[0x10];                      // +0x04 — UnkClass_8045F564
+    CMapSel();
+    u8 mVtbl[4];                              // +0x00 - IWorkEvent vtable ptr
+    u8 mMemRegion[0x10];                      // +0x04 - UnkClass_8045F564
     u32 mFileHandle;                          // +0x14
     u32 mFileHandle2;                         // +0x18
     u32 mArcAccessor;                         // +0x1C
@@ -38,8 +42,11 @@ public:
     u8 mFlag33;                               // +0x33
     u8 func_802436C4() { return mFlag33; }
     void OnFileEvent();
-    u8 mScrollBar[0x40];                      // +0x34 — CScrollBar
-    u8 mCursor[0x18];                         // +0x74 — CCur18
+    u8 mScrollBar[0x40];                      // +0x34 - CScrollBar
+    u8 mCursor[0x18];                         // +0x74 - CCur18
+    s8 mSelY;                                 // +0x8C - selection Y coordinate
+    s8 mSelX;                                 // +0x8D - selection X coordinate
+    u8 mGridData[0x26];                       // +0x8E - grid lookup data
 };
 
 // Extended layout for free-function accessors

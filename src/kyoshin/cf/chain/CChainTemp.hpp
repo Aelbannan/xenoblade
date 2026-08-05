@@ -16,5 +16,6 @@ namespace cf {
             std::memset(unk0, 0, sizeof(unk0));
             unk60 = false;
         }
+        ~CChainTemp(){}
     };
 }

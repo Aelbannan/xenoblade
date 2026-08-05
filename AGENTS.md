@@ -33,8 +33,6 @@ bash .githooks/install.sh                     # pre-commit: refresh README statu
 .venv/bin/python3 tools/coop/batch-cycle.py <target-id> \
     --default-hypothesis "..." --default-next-change "..." \
     --summary sum.json                   # with structured report
-.venv/bin/python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
-.venv/bin/python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
 
 # pi-harness: TU-level batch matching with pi SDK agents (tools/pi_harness)
 cd tools/pi_harness && npm install                # first time only

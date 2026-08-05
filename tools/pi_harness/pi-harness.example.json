@@ -52,5 +52,8 @@
     "model": "deepseek/deepseek-v4-flash",
     "thinkingLevel": "high"
   },
-  "maxSingletonSessions": 1
+  "maxSingletonSessions": 1,
+  "snapshotsEnabled": true,
+  "exhaustionThreshold": 3,
+  "commitOnTuFinal": false
 }

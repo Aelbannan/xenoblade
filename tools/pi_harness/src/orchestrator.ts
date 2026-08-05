@@ -2338,17 +2338,35 @@ async function runTuFinal(
   );
 
   if (done) {
-    await commitUnitOnTuFinal(repoRoot, config, unit, writable, bestScan?.matched ?? 0);
+    // L2: fall back to the baseline matched count instead of 0 when no
+    // attempt beat the baseline (bestScan stays null).
+    const matchedAtDone = bestScan?.matched ?? baselineScan.matched ?? 0;
+    await commitUnitOnTuFinal(repoRoot, config, unit, writable, matchedAtDone);
   }
 }
 
 /**
  * Commit a unit's source files + configure.py flip to git after a
- * successful TU-final. Stages ONLY the files in the unit's writable scope
- * (never `git add -A`), so other agents' / other TUs' dirty state on
- * unrelated paths is never swept in. Best-effort: any failure (dirty
+ * successful TU-final. Stages ONLY the unit's writable-scope files, plus the
+ * registry (targets.json + certs sidecar) and the generated docs refreshed
+ * by the pre-commit scripts (never `git add -A`), so unrelated dirty state
+ * on other paths is never swept in. Best-effort: any failure (dirty
  * porcelain, mid-edit file, git error) is logged and swallowed — a commit
  * must never fail the run or block acceptance.
+ *
+ * r11 review (M1/M2/M3):
+ *  - M1 configure.py is repo-global and dirty by design — the commit stages
+ *    the whole file, which may bundle other units'/agents' uncommitted
+ *    flips. The message therefore does NOT claim exclusive ownership of the
+ *    configure.py diff; it names the unit and reports the flip as part of
+ *    this TU-final. (Staging only this unit's hunk would need `git add -p`
+ *    scripting; accepted tradeoff for now.)
+ *  - M2 the registry (targets.json + targets.certs.jsonl.gz) is staged too,
+ *    so the committed tree's acceptance state matches the source.
+ *  - M3 generated docs are refreshed via the same scripts the pre-commit
+ *    hook runs (progress_map, readme_status, docs_sync, smell_report), then
+ *    staged — the harness commit carries fresh numbers and CI freshness
+ *    gates (smell_report --check / docs_sync --check) stay green.
  */
 async function commitUnitOnTuFinal(
   repoRoot: string,
@@ -2358,19 +2376,69 @@ async function commitUnitOnTuFinal(
   matchedCount: number,
 ): Promise<void> {
   if (!config.commitOnTuFinal) return;
+  const python = config.pythonBin;
   const paths = [...new Set(files.filter((f) => existsSync(join(repoRoot, f))))];
   if (paths.length === 0) return;
   const run = async (args: string[]): Promise<void> => {
     await execFilePromise("git", args, { cwd: repoRoot });
   };
   try {
-    // Stage ONLY this unit's files. If a file is not tracked or was deleted
-    // by the session, `git add` still stages the state; nothing else is
-    // touched.
+    // Stage ONLY this unit's files plus the registry + docs. If a file is
+    // not tracked or was deleted by the session, `git add` still stages the
+    // state; nothing else is touched.
     await run(["add", "--", ...paths]);
-    const msg = `pi-harness: ${unit} TU-final complete (${matchedCount} matched, unit flipped to Matching)`;
-    await run(["commit", "-m", msg, "--no-verify"]);
-    process.stderr.write(`[pi-harness] ${unit}: committed TU-final (${paths.length} file(s))\n`);
+    // M2: registry + certs sidecar reflect this TU-final's acceptances.
+    for (const reg of ["tools/coop/targets.json", "tools/coop/targets.certs.jsonl.gz"]) {
+      if (existsSync(join(repoRoot, reg))) await run(["add", "--", reg]);
+    }
+    // M3: refresh generated docs (same scripts as the pre-commit hook) so
+    // the commit is CI-fresh. Best-effort: a failing refresh script is
+    // logged but does not abort the commit (CI enforces on push anyway).
+    const refreshScripts: Array<[string, string[]]> = [
+      [python, ["tools/coop/progress_map.py"]],
+      [python, ["tools/coop/readme_status.py", "--write"]],
+      [python, ["-m", "tools.ppc_equivalence.docs_sync", "--write"]],
+      [python, ["tools/coop/smell_report.py", "--write"]],
+    ];
+    for (const [cmd, args] of refreshScripts) {
+      try {
+        await execFilePromise(cmd, args, { cwd: repoRoot });
+      } catch (err) {
+        process.stderr.write(
+          `[pi-harness] ${unit}: doc refresh failed (${args.join(" ")}): ${err instanceof Error ? err.message : String(err)}\n`,
+        );
+      }
+    }
+    await run(["add", "--", "README.md", "assets/progress-map.svg",
+      "tools/ppc_equivalence/README.md", "tools/ppc_equivalence/SOUNDNESS.md",
+      "docs/CODE_SMELLS.md"]);
+    // L3: commit with an explicit pathspec so a leftover staged path from a
+    // prior failed commit can never be swept into this one.
+    // L1: verify the configure.py flip actually happened before claiming it
+    // in the message (done=true proves build+recert, not the flip itself).
+    let flipClaim = "";
+    try {
+      const cfgText = readFileSync(join(repoRoot, "configure.py"), "utf-8");
+      // Configure.py names the unit with a .cpp suffix and the flip is
+      // Object(NonMatching, ...) -> Object(Matching...). MatchingFor(...) is
+      // a helper used for region-tagged objects; treat any Object(Matching*,
+      // "<unit>.cpp") as flipped.
+      const q = unit.replace(/[.\\^$|?*+()\[\]{}]/g, "\\$&");
+      const reM = new RegExp(`Object\\(Matching[^)]*\\)?,?\\s*\\"${q}\\.cpp`);
+      const reN = new RegExp(`Object\\(NonMatching,\\s*\\\"${q}\\.cpp`);
+      if (reM.test(cfgText)) flipClaim = ", configure.py flipped to Matching";
+      else if (reN.test(cfgText)) flipClaim = " (configure.py still NonMatching)";
+      else flipClaim = " (unit not found in configure.py)";
+    } catch {
+      // configure.py unreadable — omit the flip claim entirely.
+    }
+    const msg = `pi-harness: ${unit} TU-final complete (${matchedCount} matched${flipClaim})`;
+    await run(["commit", "-m", msg, "--no-verify", "--", ...paths,
+      "tools/coop/targets.json", "tools/coop/targets.certs.jsonl.gz",
+      "README.md", "assets/progress-map.svg",
+      "tools/ppc_equivalence/README.md", "tools/ppc_equivalence/SOUNDNESS.md",
+      "docs/CODE_SMELLS.md"]);
+    process.stderr.write(`[pi-harness] ${unit}: committed TU-final (${paths.length} source file(s) + registry + docs)\n`);
   } catch (err) {
     // Best-effort only. A dirty index or concurrent agent edit is expected;
     // unstage what we staged so the next commit attempt starts clean.

@@ -10,8 +10,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6597 |
-| extern "C" declarations (non-lbl_*, imports) | 2358 |
+| extern "C" (total lines) | 6608 |
+| extern "C" declarations (non-lbl_*, imports) | 2359 |
 | extern "C" definitions (forced names) | 2086 |
 | `self`/register-style params | 3434 |
 | `void*` (params + locals) | 5055 |
@@ -357,7 +357,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCollAABBImpl.cpp | 7 | 1 | 8 | 11 | 6 | 5 | 0 | 3 | 0 |
 | src/kyoshin/cf/CfCollCapsuleImpl.cpp | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollCircleImpl.cpp | 2 | 0 | 9 | 11 | 2 | 2 | 0 | 5 | 0 |
-| src/kyoshin/cf/CfCollCylinderImpl.cpp | 1 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfCollCylinderImpl.cpp | 2 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 2 | 2 | 1 | 7 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGameManager.cpp | 59 | 11 | 2 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmick.cpp | 0 | 1 | 2 | 8 | 6 | 0 | 0 | 0 | 0 |
@@ -2213,7 +2213,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 11
  },
  "src/kyoshin/cf/CfCollCylinderImpl.cpp": {
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 2,
   "self_params": 3,
   "void_ptr": 4
  },

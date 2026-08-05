@@ -32,8 +32,6 @@ public:
     CSaveLoad();
     virtual ~CSaveLoad();
     void func_8028F23C();
-    void OnFileEvent();
-
     u8 func_8028F664();
     u8 func_8028FEC4();
 
@@ -64,7 +62,7 @@ public:
     u8 mField128;                                        // 0x128
     u8 mField129;                                        // 0x129
     u8 mField12A;                                        // 0x12A
-    char _pad_12B[0x12C - 0x12B];                      // 0x12B
+    u8 mField12B;                                        // 0x12B
     u8 mField12C;                                        // 0x12C
     u8 mField12D;                                        // 0x12D
     u8 mField12E;                                        // 0x12E
@@ -137,12 +135,42 @@ public:
     virtual void vf2(int) = 0;
 };
 
+// Abstract class for CCur18 cursor object (0x18 bytes, embedded sub-object).
+// vtable layout: 2 MWCC implicit entries (RTTI/dtor) then user virtuals.
+// Slot 3 (offset 0x0C) is the second user virtual, used by func_8028F4AC.
+class CCur18Obj {
+public:
+    virtual void vf2(int) = 0;  // slot 2 (0x08) - destructor
+    virtual void vf3() = 0;     // slot 3 (0x0C) - cursor update function
+};
+
 // Struct with ArcResourceAccessor at +0x00, Layout at +0x04, AnimTransform at +0x08.
 // Used by func_8028ED70; compatible with UnkTwoPtr (UnkTwoPtr's _pad_00[4] absorbs the accessor).
 struct UnkED70_Struct {
     nw4r::lyt::ArcResourceAccessor* mAccessor;  // +0x00
     nw4r::lyt::Layout* mLayout;                  // +0x04
     nw4r::lyt::AnimTransform* mAnimTrans;        // +0x08
+};
+
+// Abstract class matching the vtable layout of the object pointed to by
+// UnkPtrHolder::mPtr. vf2 is the first user virtual (vtable offset 0x08,
+// after 2 MWCC implicit RTTI/dtor entries). Has virtuals at slots 7 (0x1C),
+// 8 (0x20), 11 (0x2C), and 14 (0x38). Pure abstract so MWCC emits no vtable.
+class UnkPtrObj {
+public:
+    virtual void vf2(int) = 0;      // slot 2 (0x8) - deleting destructor (first user virtual)
+    virtual void v3() = 0;
+    virtual void v4() = 0;
+    virtual void v5() = 0;
+    virtual void v6() = 0;
+    virtual void vf7(void*) = 0;    // slot 7 (0x1C)
+    virtual void vf8(void*) = 0;    // slot 8 (0x20)
+    virtual void vf9() = 0;
+    virtual void vf10() = 0;
+    virtual void vf11(void*, int) = 0;  // slot 11 (0x2C)
+    virtual void vf12() = 0;
+    virtual void vf13() = 0;
+    virtual void vf14(int) = 0;     // slot 14 (0x38)
 };
 
 // Opaque object whose vtable (after 2 RTTI pad slots) has virtuals at

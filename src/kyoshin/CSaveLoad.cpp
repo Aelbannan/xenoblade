@@ -8,10 +8,14 @@
 #include "monolib/lib/CLibHbm.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include <string.h>
+#include <revolution/os/OSCache.h>
+#include "monolib/device/CDeviceSC.hpp"
 
 // External function declarations
-extern "C" void func_801F369C(void*);
+void func_801F369C(void*);
 void func_80138078(u32);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // func_80137510 declared in code_80135FDC.hpp
@@ -45,8 +49,9 @@ extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u8 lbl_eu_8050F7CC[];
 extern "C" CSaveLoad* lbl_eu_806649F4;
-extern u32 lbl_eu_80662AD0;
-extern u32 lbl_eu_80662AC8;
+extern "C" u32 lbl_eu_80662AD0;
+extern "C" s32 lbl_eu_80662AC8;
+extern "C" u32 lbl_eu_80662ACC;
 extern u32 lbl_eu_80663E28;
 extern "C" int CSysWin_isActive(void*);
 extern "C" u32 CSysWin_isReady(void*);
@@ -62,10 +67,32 @@ extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F36BC(void*, int, int);
 extern "C" void func_801F3850(void*, u32);
+extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void func_8022B8E4(void*);
+
+// External function declarations needed by OnFileEvent
+extern "C" void __ct__CCur18(void* self, void* param);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
+extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
+extern "C" u32 func_801355D8();
+extern "C" u32 func_801355BC();
+extern "C" void func_80124270(void* obj, int value);
+extern "C" u16 func_80136254(u16, const char*, u16);
+extern "C" u8 func_80141BA0(u16, u8);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void func_8045F810__17UnkClass_8045F564Fv(void* self);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" void* func_801355F4();
+extern u8 lbl_eu_80664090[];
+extern u8 lbl_eu_806640A8[];
+extern "C" void func_8022B9B4(void*, u32, int);
+extern "C" void func_8022BF6C(void*, u32, u32);
+extern "C" void func_8022BFC8(void*, int);
+extern "C" void func_8022B8B8(void*);
 extern "C" int func_80291C60(int v);
 
 // Struct with three heap pointers at offsets 0, 4, 8
@@ -99,6 +126,7 @@ extern "C" void func_8028E8A4(UnkStruct_3Ptr* p) {
 extern "C" void func_8023FA64(void*, int, void (*)(int, int, u8));
 extern "C" void func_8028E9E0(int, int, u8);
 
+#pragma optimize_for_size on
 extern "C" void func_8028E8EC(CSLCur* p) {
     // Call func_8023FA64 for each of the 3 heap pointers with the callback
     func_8023FA64(p->mField0, 1, func_8028E9E0);
@@ -112,6 +140,7 @@ extern "C" void func_8028E8EC(CSLCur* p) {
     p->mField10 = 0;
     p->mField11 = 0;
 }
+#pragma optimize_for_size off
 
 u8 CSaveLoad::func_8028F664() { return mField123; }
 
@@ -146,7 +175,7 @@ extern "C" void func_8028E7C8(CSLCur* self) {
 // Struct with a pointer at +8 that has virtual functions
 struct UnkPtrHolder {
     char _pad_00[0x08];
-    void* mPtr;       // +0x08 - pointer to object with virtual functions
+    UnkPtrObj* mPtr;       // +0x08 - pointer to object with virtual functions
     void* mField0C;     // +0x0C - pointer to object with float field at +0x10
     void* mField10;     // +0x10 - AnimTransform*
     u8 mField14;      // +0x14
@@ -169,39 +198,42 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
     nw4r::lyt::ArcResourceAccessor* accessor,
     char* name);
 
-// Implement as extern "C" with mangled name to match retail's codegen pattern
-extern "C" void func_8028EA74__6CSLCurFv(CSLCur* self) {
-    // Create layout from the ArcResourceAccessor in mField4
+void CSLCur::func_8028EA74() {
+    nw4r::lyt::Layout* layout;
+    nw4r::lyt::ArcResourceAccessor* accessor;
+    nw4r::lyt::AnimTransform* animTrans;
+
+    // First call: create layout
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        (nw4r::lyt::Layout**)&self->mField8,
-        (nw4r::lyt::ArcResourceAccessor*)self->mField4,
+        (nw4r::lyt::Layout**)&mField8,
+        (nw4r::lyt::ArcResourceAccessor*)mField4,
         (const char*)&lbl_eu_8050F7CC);
 
-    // Create first AnimTransform at the mFieldC region (offset 0x0C)
+    // Write first AnimTransform pointer to offset 0x0C
+    animTrans = 0;
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)self->mField8,
-        (nw4r::lyt::AnimTransform**)&self->mFieldC,
-        (nw4r::lyt::ArcResourceAccessor*)self->mField4,
+        (nw4r::lyt::Layout*)mField8,
+        (nw4r::lyt::AnimTransform**)&mFieldC,
+        (nw4r::lyt::ArcResourceAccessor*)mField4,
         (char*)&lbl_eu_8050F7CC[0x18]);
 
-    // Create second AnimTransform at the mField10 region (offset 0x10)
+    // Write second AnimTransform pointer to offset 0x10
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)self->mField8,
-        (nw4r::lyt::AnimTransform**)&self->mField10,
-        (nw4r::lyt::ArcResourceAccessor*)self->mField4,
+        (nw4r::lyt::Layout*)mField8,
+        (nw4r::lyt::AnimTransform**)&mField10,
+        (nw4r::lyt::ArcResourceAccessor*)mField4,
         (char*)&lbl_eu_8050F7CC[0x35]);
 
     // Virtual call at vtable offset 0x24 (slot 9) on the layout
-    ((void (*)(void*))(((void**)self->mField8)[0x24 / 4]))(self->mField8);
+    layout = (nw4r::lyt::Layout*)mField8;
+    ((void (*)(void*))(((void**)layout)[0x24 / 4]))(layout);
 
-    // Call func_8028EC74 which continues initialization
-    func_8028EC74((UnkPtrHolder*)self);
+    func_8028EC74((UnkPtrHolder*)this);
 }
 
 extern "C" void func_8028EAF8(UnkPtrHolder* self) {
     if (self->mPtr == nullptr) return;
 
-    // Use int cast to force signed comparison (cmpwi not cmplwi)
     int state = self->mField15;
     if (state == 0) goto case0;
     if (state == 1) goto case1;
@@ -212,10 +244,12 @@ case0:
     goto end;
 
 case1:
-    func_8028EC28(self);
+    {
+        void (*fn)(UnkPtrHolder*) = func_8028EC28;
+        fn(self);
+    }
 
 end:
-    // Virtual call at vtable offset 0x38 (slot 14) on mPtr
     ((UnkVtblObj*)self->mPtr)->vf14(0);
 }
 
@@ -231,7 +265,8 @@ extern "C" void func_8028E9E0(int /*unused*/, int index, u8 value) {
     ((u8*)lbl_eu_806649F0 + index)[0xE] = value;
 }
 
-// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii declared in code_80135FDC.hpp
+void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+    nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Render layout with null + active guards; tail-calls func_80137038
 extern "C" void func_8028EB70(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
@@ -344,12 +379,13 @@ extern "C" void func_8028ED70(UnkED70_Struct* s) {
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         s->mLayout, &s->mAnimTrans, s->mAccessor, (char*)&lbl_eu_8050F7CC[0x69]);
     
-    nw4r::lyt::Pane* rootPane = s->mLayout->GetRootPane();
+    // Load root pane from Layout + 0x10 (direct field access, not GetRootPane virtual call)
+    void* rootPane = *(void**)((char*)s->mLayout + 0x10);
     void* fontObj = CDeviceFont::func_80452C10(1, s->mLayout);
-    void** vtable = *(void***)fontObj;
-    u32 (*slot9)(void*) = (u32 (*)(void*))vtable[9];
-    u32 result = slot9(fontObj);
-    func_8013676C(rootPane, result);
+    
+    // Virtual call on fontObj at vtable slot 9 (offset 0x24)
+    u32 result = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    func_8013676C((nw4r::lyt::Pane*)rootPane, result);
     
     func_8028EF74((UnkTwoPtr*)s);
 }
@@ -426,23 +462,121 @@ extern "C" void func_8028EF74(UnkTwoPtr* self) {
     ((UnkVtblObj*)self->mObjA)->vf14(0);
 }
 
-void __ct__CSaveLoad(){}
+extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
+    // Set vtable at offset 0x00
+    extern void* lbl_eu_805387B8;
+    *(void**)self = &lbl_eu_805387B8;
+    
+    extern void __ct__17UnkClass_8045F564Fv(void*);
+    __ct__17UnkClass_8045F564Fv((u8*)self + 0x04);
+    
+    self->mFileHandle = nullptr;
+    self->mArcAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTransA = nullptr;
+    self->mAnimTransB = nullptr;
+    
+    extern void __ct__CSLCur(CSLCur*, int);
+    __ct__CSLCur((CSLCur*)((u8*)self + 0x28), 0);
+    
+    extern void __ct__6CCur18Fv(void*, int);
+    __ct__6CCur18Fv((u8*)self + 0x40, 0);
+    
+    extern void __ct__10CScrollBarFv(void*, int);
+    __ct__10CScrollBarFv(self->mScrollbar, 0);
+    
+    extern void __ct__7CSysWinFv(void*, int);
+    __ct__7CSysWinFv((void*)&self->mSysWin98, 0);
+    __ct__7CSysWinFv((void*)&self->mSysWinD4, 0);
+    
+    extern void func_8028ED0C(void*, int);
+    func_8028ED0C((u8*)self + 0x110, 0);
+    
+    self->mField120 = 0;
+    self->mField121 = 0;
+    self->mField122 = 0;
+    self->mField123 = 1;
+    self->mField124 = 0;
+    self->mField126 = 0;
+    self->mField128 = 1;
+    self->mField129 = (u8)arg4;
+    self->mField12A = 0;
+    self->mField12B = (u8)arg5;
+    self->mField12C = 0;
+    self->mField12D = 0;
+    self->mField12E = 0;
+    self->mField12F = 0;
+    
+    extern void func_8028E7C8(CSLCur*);
+    func_8028E7C8(&self->mCur);
+    
+    self->mField130 = nullptr;
+    self->mField134 = nullptr;
+    self->mField138 = nullptr;
+    
+    // Temporary CScrollBar for copy initialization
+    u8 tempScrollbar[0x40];
+    extern void __ct__10CScrollBarFv(void*, int);
+    __ct__10CScrollBarFv(tempScrollbar, 1);
+    
+    extern void __ct__UnkClass_8011C974(void*, void*);
+    __ct__UnkClass_8011C974((u8*)self + 0x5C, tempScrollbar + 4);
+    
+    // Copy from tempScrollbar+0x14 to self+0x6C
+    *(u32*)((u8*)self + 0x6C) = *(u32*)(tempScrollbar + 0x14);
+    *(u32*)((u8*)self + 0x70) = *(u32*)(tempScrollbar + 0x18);
+    *(u32*)((u8*)self + 0x74) = *(u32*)(tempScrollbar + 0x1C);
+    *(u32*)((u8*)self + 0x78) = *(u32*)(tempScrollbar + 0x20);
+    *(u8*)((u8*)self + 0x7C) = *(u8*)(tempScrollbar + 0x24);
+    *(u8*)((u8*)self + 0x7D) = *(u8*)(tempScrollbar + 0x25);
+    *(u8*)((u8*)self + 0x7E) = *(u8*)(tempScrollbar + 0x26);
+    *(u8*)((u8*)self + 0x7F) = *(u8*)(tempScrollbar + 0x27);
+    *(float*)((u8*)self + 0x80) = *(float*)(tempScrollbar + 0x28);
+    *(float*)((u8*)self + 0x84) = *(float*)(tempScrollbar + 0x2C);
+    *(float*)((u8*)self + 0x88) = *(float*)(tempScrollbar + 0x30);
+    *(float*)((u8*)self + 0x8C) = *(float*)(tempScrollbar + 0x34);
+    *(float*)((u8*)self + 0x90) = *(float*)(tempScrollbar + 0x38);
+    *(u8*)((u8*)self + 0x94) = *(u8*)(tempScrollbar + 0x3C);
+    
+    extern void __dt__10CScrollBarFv(void*, int);
+    __dt__10CScrollBarFv(tempScrollbar, -1);
+    
+    // Temporary CSysWin for copy initialization of mSysWin98
+    u8 tempSysWin[0x3C];
+    __ct__7CSysWinFv(tempSysWin, 2);
+    
+    extern void func_8016742C(void*, void*);
+    func_8016742C((void*)&self->mSysWin98, tempSysWin);
+    
+    extern void __dt__7CSysWinFv(void*, int);
+    __dt__7CSysWinFv(tempSysWin, -1);
+    
+    // Temporary CSysWin2 for copy initialization of mSysWinD4
+    u8 tempSysWin2[0x3C];
+    __ct__7CSysWinFv(tempSysWin2, 0);
+    
+    func_8016742C((void*)&self->mSysWinD4, tempSysWin2);
+    
+    __dt__7CSysWinFv(tempSysWin2, -1);
+    
+    return self;
+}
 
-// Implement destructor as extern "C" with the mangled name to match retail's register save pattern
-// (the header's virtual ~CSaveLoad() declaration still provides the vtable entry)
+#pragma optimize_for_size on
 extern "C" CSaveLoad* __dt__9CSaveLoadFv(CSaveLoad* self, int flags) {
     if (self != nullptr) {
         __dt__7CSysWinFv((u8*)self + 0xD4, -1);
         __dt__7CSysWinFv((u8*)self + 0x98, -1);
-        __dt__10CScrollBarFv(self->mScrollbar, -1);
+        __dt__10CScrollBarFv((u8*)self + 0x58, -1);
         __dt__6CCur18Fv((u8*)self + 0x40, -1);
         __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
         if (flags > 0) {
-            __dl__FPv(self);
+            __dl__FPv((u8*)self);
         }
     }
     return self;
 }
+#pragma optimize_for_size off
 
 void CSaveLoad::func_8028F23C() {
     u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -475,7 +609,9 @@ void func_8028F4AC(CSaveLoad* self) {
     CLibHbm::func_8045D470(false);
     func_801390E0(&self->mFileHandle);
     self->mField120 = 0;
-    func_8028E8A4((UnkStruct_3Ptr*)&self->mCur);
+    // Use local variable to prevent MWCC from optimizing &self->mCur to a load
+    UnkStruct_3Ptr* curPtr = reinterpret_cast<UnkStruct_3Ptr*>(&self->mCur);
+    func_8028E8A4(curPtr);
     
     if (self->mLayout != nullptr) {
         if (self->mLayout != nullptr) {
@@ -500,14 +636,10 @@ void func_8028F4AC(CSaveLoad* self) {
     }
     
     func_8028EB9C((UnkPtrHolder*)((char*)self + 0x28));
-    func_801F35DC(self->mScrollbar);
+    func_801F35DC((u8*)self + 0x58);
     func_8022B7F4(&self->mSysWin98);
-    {
-        void* obj = *(void**)((char*)self + 0x40);
-        if (obj != nullptr) {
-            ((UnkObj*)obj)->vf2(1);
-        }
-    }
+    // Virtual call at self+0x40 (CCur18), vtable slot 3 (offset 0x0C), no null check
+    ((CCur18Obj*)((char*)self + 0x40))->vf3();
     func_8022B7F4(&self->mSysWinD4);
     func_8028EE68((UnkSlot4Ptr*)((char*)self + 0x110));
     ((UnkClass_8045F564*)((char*)self + 0x04))->func_8045F778();
@@ -581,9 +713,115 @@ extern "C" void func_8028F774(CSaveLoad* p) {
 }
 #pragma optimize_for_size off
 
-void func_8028F7D0(){}
+// Handle cursor up/left movement in save/load screen.
+// Decrements cursor position with wrap-around logic for both rows and columns.
+void func_8028F7D0(CSaveLoad* self) {
+    if (self->mField121 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
+    if (self->mField11D != 0) return;
+    
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
+        if (CSysWin_isActive(&self->mSysWin98) == 0) return;
+        
+        // Decrement mField128 with wrap from 0 to 1
+        u8 val = self->mField128 - 1;
+        self->mField128 = val;
+        if ((s8)val < 0) {
+            self->mField128 = 1;
+        }
+        
+        func_802908A4(self);
+        func_80138078(1);
+        return;
+    }
+    
+    // Decrement mField124
+    u8 f124 = self->mField124 - 1;
+    self->mField124 = f124;
+    if ((s8)f124 >= 0) goto normalPath;
+    
+    // Underflow: move to previous row
+    self->mField124 = 0;
+    {
+        s16 row = (s16)self->mField126 - 1;
+        self->mField126 = (u16)row;
+        if (row >= 0) goto normalPath;
+    }
+    
+    // Underflow again: wrap to last row
+    {
+        s32 maxRows = (s32)lbl_eu_80662AC8;
+        if (maxRows >= 3) {
+            self->mField124 = 2;
+            self->mField126 = (u16)((s32)lbl_eu_80662AC8 - 3);
+        } else {
+            u8 prev = (u8)(maxRows - 1);
+            self->mField124 = prev;
+            self->mField126 = 0;
+            if ((s8)prev < 0) {
+                self->mField124 = 0;
+            }
+        }
+    }
+    
+normalPath:
+    func_802908A4(self);
+    func_801F3850(self->mScrollbar, self->mField126);
+    func_80138078(1);
+}
 
-void func_8028F904(){}
+// Handle cursor down/right movement in save/load screen.
+// Increments cursor position with wrap-around logic.
+void func_8028F904(CSaveLoad* self) {
+    if (self->mField121 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
+    if (self->mField11D != 0) return;
+    
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
+        if (CSysWin_isActive(&self->mSysWin98) == 0) return;
+        
+        u8 val = self->mField128 + 1;
+        self->mField128 = val;
+        if ((s8)val > 1) {
+            self->mField128 = 0;
+        }
+        
+        func_802908A4(self);
+        func_80138078(1);
+        return;
+    }
+    
+    // Main scrollbar path
+    if (lbl_eu_80662AC8 >= 3) {
+        u8 f124;
+        f124 = self->mField124 + 1;
+        self->mField124 = f124;
+        if ((s8)f124 >= 3) {
+            s16 row;
+            self->mField124 = 2;
+            row = (s16)self->mField126 + 1;
+            self->mField126 = (u16)row;
+            if (row > (lbl_eu_80662AC8 - 3)) {
+                self->mField124 = 0;
+                self->mField126 = 0;
+            }
+            goto updatePath;
+        }
+    } else {
+        u8 f124;
+        f124 = self->mField124 + 1;
+        self->mField124 = f124;
+        if ((s8)f124 >= lbl_eu_80662AC8) {
+            self->mField124 = 0;
+            self->mField126 = 0;
+        }
+    }
+
+updatePath:
+    func_802908A4(self);
+    func_801F3850(self->mScrollbar, self->mField126);
+    func_80138078(1);
+}
 
 // Handle cursor movement: if global count >= 3, move cursor back by 3 positions
 // with underflow handling. Otherwise reset cursor to 0.
@@ -594,17 +832,15 @@ void func_8028FA54(CSaveLoad* p) {
     if (p->mField11D != 0) return;
 
     if ((s32)lbl_eu_80662AC8 >= 3) {
-        int sub = (s16)p->mField126 - 3;
-        s16 ssub = (s16)sub;
-        p->mField126 = (u16)ssub;
-        if (ssub < 0) {
-            int adj = (int)ssub + 2;
-            ssub = 0;
+        s16 sval = (s16)p->mField126;
+        s16 newVal = sval - 3;
+        p->mField126 = (u16)newVal;
+        if (newVal < 0) {
+            int adj = (int)newVal + 2;
             p->mField124 = (u8)adj;
-            u8 bval = (u8)adj;
-            if ((s8)bval < 0) {
+            p->mField126 = 0;
+            if ((s8)(u8)adj < 0) {
                 p->mField124 = 0;
-                p->mField126 = 0;
             }
         }
     } else {
@@ -619,7 +855,71 @@ void func_8028FA54(CSaveLoad* p) {
 
 void func_8028FB20(){}
 
-void func_8028FC18(){}
+// Handle window state transitions for save/load screen.
+// Checks syswin at 0x98 and 0xD4, sets up cursor strings and state.
+void func_8028FC18(CSaveLoad* self) {
+    char* s1;
+    char* s2;
+    char* s3;
+
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
+        if (CSysWin_isActive(&self->mSysWin98) != 0) {
+            if ((s8)self->mField128 == 0) {
+                func_80138078(3);
+            } else {
+                func_80138078(6);
+                self->mField12C = 0;
+            }
+            func_8022B8E4(&self->mSysWin98);
+            func_801D216C((void*)((u8*)self + 0x40), 0);
+            self->mField121 = 7;
+        }
+        return;
+    }
+
+    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) {
+        if (CSysWin_isActive(&self->mSysWinD4) != 0) {
+            func_8022B8E4(&self->mSysWinD4);
+            self->mField121 = 9;
+            if (self->mField12C != 0) {
+                self->mField12C = 0;
+            }
+            func_80138078(3);
+        }
+        return;
+    }
+
+    if (self->mField121 != 3) return;
+
+    if (func_8028E998(&self->mCur, self->mField124) == 0) goto noCursor;
+
+    if (self->mField129 != 0) {
+        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x43);
+        s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x44);
+        s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x45);
+        goto common;
+    }
+
+    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x33);
+    s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x34);
+    s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x35);
+    goto common;
+
+noCursor:
+    if (self->mField129 != 0) return;
+    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x38);
+    s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x39);
+    s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
+
+common:
+    func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+    func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+    func_8022BFC8(&self->mSysWin98, 0);
+    func_8022B8B8(&self->mSysWin98);
+    self->mField128 = 1;
+    self->mField121 = 6;
+    func_80138078(3);
+}
 
 // Handle window close event: if the first syswin is active and ready,
 // close it, reset the sub-object state, and update status fields
@@ -651,14 +951,14 @@ int func_8028FFD4(CSaveLoad* p) {
     if (p->mField11D != 0) return 0;
 
     if (p->mField129 != 0) {
-        // Cursor active: return 0x6B if valid (non-zero), 0 otherwise.
-        // Call through a cast pointer to keep MWCC from inlining func_8028E998.
+        // Cursor active: return 0x6B if valid, 0 otherwise
+        // Use function pointer to prevent inlining (retail uses direct bl but MWCC inlines it)
         int rv = ((int (*)(CSLCur*, u8))func_8028E998)(&p->mCur, p->mField124);
-        return rv ? 0x6B : 0;
+        return rv > 0 ? 0x6B : 0;
     } else {
-        // Cursor inactive: return 0x6A if valid (non-zero), 0x69 otherwise
+        // Cursor inactive: return 0x6A if valid, 0x69 otherwise
         int rv = ((int (*)(CSLCur*, u8))func_8028E998)(&p->mCur, p->mField124);
-        return rv ? 0x6A : 0x69;
+        return rv > 0 ? 0x6A : 0x69;
     }
 }
 
@@ -708,7 +1008,77 @@ extern "C" void func_802901D8(CSaveLoad* self) {
     }
 }
 
-void func_8029022C(){}
+extern "C" void func_80291204(int, int, int, u8);
+extern "C" void func_8023F860(int, void*);
+extern "C" void func_8023FB28(int, void*);
+extern "C" void func_8023F3C0(int, void*, u8);
+extern "C" void func_8009D018(u32, u32);
+extern "C" void func_80083470__Q22cf13CfGameManagerFv(int, int, int);
+extern "C" int func_8028E998(CSLCur*, u8);
+
+// Handle save/load operation execution.
+// Checks window state, cursor status, and dispatches to save/load logic.
+void func_8029022C(CSaveLoad* self) {
+    if (CSysWin_isActive((void*)&self->mSysWin98) == 0) return;
+    
+    self->mField121 = 3;
+    if ((s8)self->mField128 != 0) return;
+    
+    self->mField121 = 10;
+    if (self->mField12C != 0) {
+        // Delete/overwrite path
+        CWorkSystem::setSaveLoadInvalidReset(true);
+        func_eu_804521BC(0);
+        CLibHbm::func_8045D470(true);
+        
+        extern u8 lbl_eu_8050F7CC[];
+        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        
+        ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
+        
+        func_8023F860((s8)self->mField124 + 1, (void*)func_80291204);
+        
+        lbl_eu_80662AD0 = 0;
+    } else if (self->mField129 != 0) {
+        // Load path
+        extern u8 lbl_eu_8050F7CC[];
+        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        
+        ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
+        
+        func_8023FB28((s8)self->mField124 + 1, (void*)func_80291204);
+        
+        lbl_eu_80662AD0 = 2;
+        
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            int result = func_8028E998(&self->mCur, self->mField124);
+            func_80083470__Q22cf13CfGameManagerFv(*(u16*)((u8*)result + 0x0E), *(u8*)((u8*)result + 0x11), 1);
+        }
+    } else {
+        // Save path
+        if (self->mField12B != 0) {
+            func_8009D018(0x3213, 1);
+        }
+        
+        CWorkSystem::setSaveLoadInvalidReset(true);
+        func_eu_804521BC(0);
+        CLibHbm::func_8045D470(true);
+        
+        extern u8 lbl_eu_8050F7CC[];
+        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        
+        ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
+        
+        func_8023F3C0((s8)self->mField124 + 1, (void*)func_80291204, self->mField12B);
+        
+        lbl_eu_80662AD0 = 3;
+    }
+    
+    func_80138078(0x80);
+}
 
 void func_8029040C(CSaveLoad* p) {
     if (!CSysWin_isActive((void*)&p->mSysWinD4)) return;
@@ -744,7 +1114,88 @@ void func_8029049C(CSaveLoad* p) {
     }
 }
 
-void func_802904B4(){}
+// Handle save/load window state machine.
+// Checks mField11E, mField12E, mField12C, mField129, mField12B
+// and sets up the appropriate syswin with strings.
+void func_802904B4(CSaveLoad* self) {
+    char* s1;
+    char* s2;
+    char* s3;
+
+    if (self->mField11E == 0) return;
+
+    self->mField121 = 8;
+
+    if (self->mField12E != 0) {
+        u8 val = self->mField12F;
+        if (val >= 3 && val <= 4) {
+            // 3-string path: update syswin 0x98 with strings
+            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x56);
+            s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x59);
+            if (self->mField129 != 0) {
+                s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x58);
+            } else {
+                s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x57);
+            }
+            func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+            func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+            func_8022BFC8(&self->mSysWin98, 0);
+            func_8022B8B8(&self->mSysWin98);
+            self->mField128 = 1;
+            self->mField12C = 1;
+            self->mField121 = 6;
+        } else if (val == 1) {
+            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
+            func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
+            func_8022BFC8(&self->mSysWinD4, 1);
+            func_8022B8B8(&self->mSysWinD4);
+        } else if (val == 2) {
+            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
+            func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
+            func_8022BFC8(&self->mSysWinD4, 1);
+            func_8022B8B8(&self->mSysWinD4);
+        }
+        self->mField12E = 0;
+        return;
+    }
+
+    if (self->mField12C != 0) {
+        CWorkSystem::setSaveLoadInvalidReset(false);
+        func_eu_804521BC(1);
+        CLibHbm::func_8045D470(false);
+        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
+        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
+        func_8022BFC8(&self->mSysWinD4, 1);
+        func_8022B8B8(&self->mSysWinD4);
+        func_80138078(0x7A);
+        return;
+    }
+
+    if (self->mField129 != 0) {
+        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
+        func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
+        func_8022BFC8(&self->mSysWinD4, 1);
+        func_8022B8B8(&self->mSysWinD4);
+        lbl_eu_80662ACC = (u32)(s8)self->mField124;
+        self->mField12D = 1;
+        func_80138078(0x28);
+        return;
+    }
+
+    if (self->mField12B != 0) {
+        func_8009D018(0x3213, 0);
+    }
+
+    CWorkSystem::setSaveLoadInvalidReset(false);
+    func_eu_804521BC(1);
+    CLibHbm::func_8045D470(false);
+    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
+    func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
+    func_8022BFC8(&self->mSysWinD4, 1);
+    func_8022B8B8(&self->mSysWinD4);
+    lbl_eu_80662ACC = (u32)(s8)self->mField124;
+    func_80138078(0x28);
+}
 
 extern "C" void func_8029078C(CSaveLoad* p) {
     // Function pointer to prevent MWCC from inlining func_8028E964
@@ -800,52 +1251,456 @@ void func_80290844(CSaveLoad* p) {
 
 void func_802908A4(){}
 
-void func_80290994(){}
+// Render the save/load screen for all 3 slots.
+// Gets localized strings, sets up text elements, buttons, and scrollbar
+// for each save slot based on slot data (or empty if no data).
+void func_80290994(CSaveLoad* self) {
+    char* strBase = (char*)lbl_eu_8050F7CC;
 
-void func_802910D4(){}
+    char* str4a = func_80136190(&strBase[0xa7], &strBase[0xb2], 0x4a);
+    char* str4b = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4b);
+    char* str4c = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4c);
+    char* str4d = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4d);
 
-extern "C" void code80135FDC_thunk_BFE8C(u8*);
+    // Check language: 0 = Japanese, 2 = other
+    u8 lang = CDeviceSC::getLanguage();
+    u32 isJapanese = (lang == 0) ? 1 : 0;
+    u32 isGerman = (lang == 2) ? 1 : 0;
 
-// Load global CSaveLoad* from lbl_eu_806649F4. Takes 4 parameters (r3-r6)
-// but only uses r5 (flag: non-zero = handle mField12C/mField129 branches + play sound)
-// and r6 (byte value stored into mField12F when r5 == 0).
-// r3 and r4 are unused params — they exist so r5/r6 are in the correct register slots.
-// No local variable for the global pointer — access lbl_eu_806649F4 directly
-// to force MWCC to reload after each function call, matching retail's repeated @sda21 loads.
-void func_80291204(int, int, int r5, int r6) {
-    if (lbl_eu_806649F4 == nullptr) return;
+    // Loop through 3 save slots
+    for (u8 slot = 0; slot < 3; slot++) {
+        u8 slotNum = slot + 1;
 
-    if (r5 != 0) {
-        if (lbl_eu_806649F4->mField12C != 0) {
-            lbl_eu_806649F4->mField121 = 0xc;
-            // Cast call prevents MWCC from inlining func_8028E8EC's body
-            // (same TU, -inline auto) while keeping a direct bl call.
-            ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
-        } else if (lbl_eu_806649F4->mField129 != 0) {
-            lbl_eu_806649F4->mField121 = 0xb;
-            // Local pointer so MWCC reuses it for both stores (retail keeps
-            // the reloaded pointer in one register for mField11C/mField11E).
-            CSaveLoad* q = lbl_eu_806649F4;
-            q->mField11C = 3;
-            q->mField11E = 0;
+        // Format slot name string
+        char slotNameBuf[0x80];
+        sprintf(slotNameBuf, (const char*)&strBase[0xd3], slotNum);
+
+        // Set up default background text for the slot
+        func_80136B4C(self->mLayout, slotNameBuf, str4c, 0u);
+
+        // Check if the slot has save data
+        int cursorData = func_8028E998(&self->mCur, slot);
+        if (cursorData == 0) {
+            // Empty slot
+            char emptyBuf[0x80];
+            sprintf(emptyBuf, (const char*)&strBase[0xde], str4d, str4d);
+            sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, emptyBuf, 0u);
+
+            sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
+            func_80136B4C(self->mLayout, slotNameBuf, &strBase[0xfd], 0u);
+
+            char btnBuf[0x80];
+            sprintf(btnBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
+            sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, btnBuf, 0u);
+
+            // Language-specific formatting
+            if (isJapanese != 0) {
+                sprintf(btnBuf, (const char*)&strBase[0x117], str4d, str4d, str4d, str4b, str4d, str4b, str4d);
+            } else if (isGerman != 0) {
+                sprintf(btnBuf, (const char*)&strBase[0x12c], str4d, str4d, str4d, str4d, str4d, str4d, str4d);
+            } else {
+                sprintf(btnBuf, (const char*)&strBase[0x117], str4d, str4d, str4d, str4b, str4d, str4d, str4b);
+            }
+
+            sprintf(slotNameBuf, (const char*)&strBase[0x13f], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, btnBuf, 0u);
+
+            // Format empty slot detail text
+            sprintf(btnBuf, (const char*)&strBase[0xfe], str4d, str4d, str4a, str4d, str4d);
+            sprintf(slotNameBuf, (const char*)&strBase[0x14c], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, btnBuf, 0u);
+
+            // Set up 7 buttons with property "1"
+            void* pane = 0;
+            u32 paneVal = 0;
+            for (u8 btn = 0; btn < 7; btn++) {
+                char btnNameBuf[0x80];
+                sprintf(btnNameBuf, (const char*)&strBase[0x15c], slotNum, btn + 1);
+                pane = *(void**)((char*)self->mLayout + 0x10);
+                paneVal = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+                if (paneVal != 0) {
+                    func_80124270((void*)paneVal, 0);
+                }
+            }
+
+            // Set up empty slot indicator
+            sprintf(slotNameBuf, (const char*)&strBase[0x170], slotNum);
+            func_80136B4C(self->mLayout, slotNameBuf, &strBase[0xfd], 0u);
+
+            // Check for award data
+            nw4r::lyt::ArcResourceAccessor* accessor = self->mArcAccessor;
+            void* awardData = accessor->GetResource(0x656d6777, (const char*)&strBase[0x17c], 0);
+            if (awardData != 0) {
+                sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
+                func_80137E7C(self->mLayout, slotNameBuf, awardData);
+            }
+
+            // Set up button with property "1"
+            sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
+            pane = *(void**)((char*)self->mLayout + 0x10);
+            paneVal = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+            func_80124270((void*)paneVal, 0);
         } else {
-            lbl_eu_806649F4->mField121 = 0xc;
-            ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+            // Slot has save data
+            // Get slot data pointer (cursorData is offset from CSLCur)
+            u8* slotData = (u8*)cursorData;
+
+            // Format slot data strings
+            char dataBuf[0x80];
+            sprintf(dataBuf, (const char*)&strBase[0x1aa], *(u16*)(slotData + 0x64));
+            sprintf(slotNameBuf, (const char*)&strBase[0xe3], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, dataBuf, 0u);
+
+            sprintf(slotNameBuf, (const char*)&strBase[0xf2], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, (char*)(slotData + 0x44), 0u);
+
+            // Format time played string
+            u16 playTime = *(u16*)(slotData + 0xa);
+            u16 maxTime = (playTime > 0x63) ? 0x63 : playTime;
+            u8 maxFlag = 0;
+            if (playTime > 0x63) {
+                if (playTime > 0x3e7) maxFlag = 1;
+                else if (*(u16*)(slotData + 0xc) > 0x3b) maxFlag = 1;
+            }
+            u16 maxKills = (maxFlag != 0) ? 0x3b : *(u16*)(slotData + 0xc);
+            if (playTime > 0x3e7) {
+                sprintf(dataBuf, (const char*)&strBase[0x1af], 0x3e7, str4a, maxKills);
+            } else {
+                sprintf(dataBuf, (const char*)&strBase[0x1ba], maxTime, str4a, maxKills);
+            }
+
+            sprintf(slotNameBuf, (const char*)&strBase[0x109], slotNum);
+            func_80136A1C(self->mLayout, slotNameBuf, dataBuf, 0u);
+
+            // Format slot details based on language and save data
+            // ... (complex formatting with many sprintf calls)
+
+            // Set up buttons
+            for (u8 btn = 0; btn < 7; btn++) {
+                char btnNameBuf[0x80];
+                sprintf(btnNameBuf, (const char*)&strBase[0x15c], slotNum, btn + 1);
+                void* pane = *(void**)((char*)self->mLayout + 0x10);
+                u32 paneVal = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+                
+                // Check if this button has data
+                u8* btnData = slotData + (btn * 4);
+                u8 hasData = *(u8*)(btnData + 0x14);
+                if (hasData != 0) {
+                    if (paneVal != 0) {
+                        func_80124270((void*)paneVal, 1);
+                    }
+                    // Get award icon
+                    u16 iconId = *(u16*)(lbl_eu_80664090 + 0x14);
+                    u16 icon = func_80136254((u16)(u32)lbl_eu_80664090, (const char*)&strBase[0x1f6], iconId);
+                    u16 iconResult = (u16)(u32)func_80138F78(icon);
+                    
+                    // Get award resource
+                    void* awardData = func_801355F4();
+                    void* awardRes = ((void* (*)(void*, u32, const char*, u32))(((void**)awardData)[0x0c / 4]))(awardData, 0x656d6777, 0, iconResult);
+                    if (awardRes != 0) {
+                        sprintf(btnNameBuf, (const char*)&strBase[0x1ff], slotNum, btn + 1);
+                        pane = *(void**)((char*)self->mLayout + 0x10);
+                        paneVal = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+                        func_80137E7C(self->mLayout, btnNameBuf, awardRes);
+                    }
+                } else {
+                    if (paneVal != 0) {
+                        func_80124270((void*)paneVal, 0);
+                    }
+                }
+            }
+
+            // Set up slot indicator
+            sprintf(slotNameBuf, (const char*)&strBase[0x170], slotNum);
+            char* slotIndicator = 0;
+            u16 charLevel = *(u16*)(slotData + 0xe);
+            u8 charId = *(u8*)(slotData + 0x11);
+            u8 charResult = func_80141BA0(charLevel, charId);
+            u8 chClass = *(u8*)(slotData + 0x66);
+            if (chClass != 0) {
+                slotIndicator = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x53);
+            } else {
+                slotIndicator = func_8013639C((void*)lbl_eu_806640A8, &strBase[0xb2], (u16)charResult);
+            }
+
+            u8 chSex = *(u8*)(slotData + 0x67);
+            if (chSex != 0 && charResult == 1) {
+                slotIndicator = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x30);
+            }
+
+            func_80136B4C(self->mLayout, slotNameBuf, slotIndicator, 0u);
+
+            // Copy slot data to heap buffer
+            u8* heapPtr = (u8*)self->mField130 + slot * 4;
+            memcpy(*(void**)((u8*)self + 0x130 + slot * 4), (const void*)(slotData + 0x80), 0x9C00);
+            DCStoreRange(*(void**)((u8*)self + 0x130 + slot * 4), 0x9C00);
+
+            // Handle class-specific data
+            void* classData = 0;
+            if (chClass != 0) {
+                classData = self->mArcAccessor->GetResource(0x656d6777, (const char*)&strBase[0x211], 0);
+            } else {
+                classData = *(void**)((u8*)self + 0x130 + slot * 4);
+            }
+
+            if (classData != 0) {
+                sprintf(slotNameBuf, (const char*)&strBase[0x18f], slotNum);
+                func_80137E7C(self->mLayout, slotNameBuf, classData);
+            }
+
+            // Set up final button
+            sprintf(slotNameBuf, (const char*)&strBase[0x19d], slotNum);
+            void* pane = *(void**)((char*)self->mLayout + 0x10);
+            u32 paneVal = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+            u8 isFemale = *(u8*)(slotData + 0x67);
+            func_80124270((void*)paneVal, isFemale ? 0 : 1);
         }
-        code80135FDC_thunk_BFE8C((u8*)0x80);
-    } else {
-        lbl_eu_806649F4->mField121 = 0xb;
-        // Local pointer so MWCC reuses it for the mField11C/mField11E pair
-        // (retail keeps one register for both stores).
-        CSaveLoad* q = lbl_eu_806649F4;
-        q->mField11C = 3;
-        q->mField11E = 0;
-        lbl_eu_806649F4->mField12E = 1;
-        lbl_eu_806649F4->mField12F = (u8)r6;
     }
 }
 
-void CSaveLoad::OnFileEvent() {}
+// Find the best save slot by comparing fields in priority order.
+// If global value >= 0, use it directly. Otherwise iterate slots 0-2
+// and find the one with the highest field values (lexicographic comparison).
+extern "C" void func_802910D4(CSaveLoad* self) {
+    // Cast to function pointer to prevent MWCC from inlining func_8028E998
+    typedef int (*GetSlotFn)(CSLCur*, u8);
+    
+    s32 globalVal = (s32)lbl_eu_80662ACC;
+    if (globalVal >= 0) {
+        self->mField124 = (u8)globalVal;
+        return;
+    }
+    
+    s32 best = -1;
+    int i;
+    for (i = 0; i < 3; i++) {
+        u8* slot = (u8*)((GetSlotFn)func_8028E998)(&self->mCur, (u8)i);
+        if (slot == nullptr) continue;
+        
+        if (best < 0) {
+            best = i;
+            continue;
+        }
+        
+        u8* bestSlot = (u8*)((GetSlotFn)func_8028E998)(&self->mCur, (u8)best);
+        
+        // Compare fields in priority order: +4, +6, +9, +8, +2, +3
+        if (*(u16*)(bestSlot + 4) < *(u16*)(slot + 4)) {
+            best = i;
+        } else if (*(u16*)(bestSlot + 4) == *(u16*)(slot + 4)) {
+            if (*(u16*)(bestSlot + 6) < *(u16*)(slot + 6)) {
+                best = i;
+            } else if (*(u16*)(bestSlot + 6) == *(u16*)(slot + 6)) {
+                if (*(bestSlot + 9) < *(slot + 9)) {
+                    best = i;
+                } else if (*(bestSlot + 9) == *(slot + 9)) {
+                    if (*(bestSlot + 8) < *(slot + 8)) {
+                        best = i;
+                    } else if (*(bestSlot + 8) == *(slot + 8)) {
+                        if (*(bestSlot + 2) < *(slot + 2)) {
+                            best = i;
+                        } else if (*(bestSlot + 2) == *(slot + 2)) {
+                            if (*(bestSlot + 3) < *(slot + 3)) {
+                                best = i;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (best >= 0) {
+        self->mField124 = (u8)best;
+    }
+}
+
+extern "C" void code80135FDC_thunk_BFE8C(u8*);
+
+extern "C" void func_80291204(int unused, int unused2, int flag, u8 value) {
+    if (lbl_eu_806649F4 == 0) return;
+    if (flag == 0) {
+        lbl_eu_806649F4->mField121 = 0xB;
+        lbl_eu_806649F4->mField11C = 3;
+        lbl_eu_806649F4->mField11E = 0;
+        lbl_eu_806649F4->mField12E = 1;
+        lbl_eu_806649F4->mField12F = value;
+        return;
+    }
+    if (lbl_eu_806649F4->mField12C != 0) {
+        lbl_eu_806649F4->mField121 = 0xC;
+        ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+    } else if (lbl_eu_806649F4->mField129 != 0) {
+        lbl_eu_806649F4->mField121 = 0xB;
+        lbl_eu_806649F4->mField11C = 3;
+        lbl_eu_806649F4->mField11E = 0;
+    } else {
+        lbl_eu_806649F4->mField121 = 0xC;
+        ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+    }
+    code80135FDC_thunk_BFE8C((u8*)0x80);
+}
+
+// Despite Fv mangling, receives (self, event) with event in r4.
+// Checks if the event's file handle matches self->mFileHandle before proceeding
+// with layout initialization, text setup, and cursor state initialization.
+// Returns 1 on success, 0 on failure (file handle mismatch).
+extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
+    if (self->mFileHandle != event->mFileHandle) return 0;
+
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u8* strBase = lbl_eu_8050F7CC;
+
+    // Create region for the base class at offset 4
+    ((UnkClass_8045F564*)((u8*)self + 4))->createRegion(handle, 0x10000, (const char*)&strBase[0x224], 0);
+
+    // Create temporary object from the base class
+    u8 temp8[0x70];
+    __ct__14Class_8045F858FP17UnkClass_8045F564(temp8, (u8*)self + 4);
+
+    // Read file data from the file handle
+    CFileHandle* fh = self->mFileHandle;
+    void* fileData = fh->getData();
+    mtl::MemManager::func_80434A4C(false);
+
+    // Create ArcResourceAccessor and attach the file data
+    self->mArcAccessor = createArcResourceAccessor__10CLibLayoutFv();
+    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(self->mArcAccessor, fileData, (const char*)&strBase[0x22e]);
+
+    // Create Layout
+    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        &self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
+
+    // Create AnimTransform A
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
+
+    // Create AnimTransform B
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
+
+    // Font setup: get root pane, get font object, set up font pane
+    void* rootPane = *(void**)((char*)self->mLayout + 0x10);
+    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
+    u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
+
+    // Call func_801355D8 - if non-null, set up 6 strings
+    u32 d8result = func_801355D8();
+    if (d8result != 0) {
+        func_801368C0(self->mLayout, (char*)&strBase[0x27f], d8result);
+        func_801368C0(self->mLayout, (char*)&strBase[0x288], d8result);
+        func_801368C0(self->mLayout, (char*)&strBase[0x295], d8result);
+        func_801368C0(self->mLayout, (char*)&strBase[0x29e], d8result);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2ab], d8result);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2b4], d8result);
+    }
+
+    // Call func_801355BC - if non-null, set up 15 strings
+    u32 bcresult = func_801355BC();
+    if (bcresult != 0) {
+        func_801368C0(self->mLayout, (char*)&strBase[0x2c1], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2cd], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2d9], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2e5], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2f0], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x2fe], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x30a], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x316], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x322], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x32d], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x33b], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x347], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x353], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x35f], bcresult);
+        func_801368C0(self->mLayout, (char*)&strBase[0x36a], bcresult);
+    }
+
+    // Animation setup
+    func_802907E4(self);
+
+    // Layout virtual call at vtable slot 14 (0x38): set animation enable to false
+    ((void (*)(void*, int))(((void**)self->mLayout)[0x38 / 4]))(self->mLayout, 0);
+
+    // Get localized strings for button labels "31" and "32"
+    char* str31 = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
+    char* str32 = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
+
+    // Set up text on layout with the button labels
+    func_80136B4C(self->mLayout, (char*)&strBase[0x378], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x389], str31, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x39a], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3ab], str31, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3bc], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3cd], str31, 0u);
+
+    // Set up 3 text elements with "1" property
+    void* pane = *(void**)((char*)self->mLayout + 0x10);
+    u32 v38a = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+    func_80124270((void*)v38a, 0);
+    v38a = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+    func_80124270((void*)v38a, 0);
+    v38a = ((u32 (*)(void*))(((void**)pane)[0x3c / 4]))(pane);
+    func_80124270((void*)v38a, 0);
+
+    // Create CSLCur on stack, copy fields to self+0x28
+    u8 cslCurTemp[0x18];
+    __ct__CSLCur((CSLCur*)cslCurTemp, (int)self->mArcAccessor);
+    *(u32*)((u8*)self + 0x28) = *(u32*)(cslCurTemp + 0);
+    *(u32*)((u8*)self + 0x2c) = *(u32*)(cslCurTemp + 4);
+    *(u32*)((u8*)self + 0x30) = *(u32*)(cslCurTemp + 8);
+    *(u32*)((u8*)self + 0x34) = *(u32*)(cslCurTemp + 0xc);
+    *(u8*)((u8*)self + 0x3c) = *(u8*)(cslCurTemp + 0x14);
+    *(u8*)((u8*)self + 0x3d) = *(u8*)(cslCurTemp + 0x15);
+
+    // Virtual call on the cursor at self+0x28 (vtable slot 2 = 0x08)
+    ((void (*)(void*))(((void**)(*(u32*)((u8*)self + 0x28)))[0x08 / 4]))((u8*)self + 0x28);
+
+    // Create CCur18 on stack, copy fields to self+0x40
+    void* ccur18Accessor = (void*)func_801355F4();
+    u8 cur18Temp[0x18];
+    __ct__CCur18(cur18Temp, ccur18Accessor);
+    *(u32*)((u8*)self + 0x44) = *(u32*)(cur18Temp + 4);
+    *(u32*)((u8*)self + 0x48) = *(u32*)(cur18Temp + 8);
+    *(u32*)((u8*)self + 0x4c) = *(u32*)(cur18Temp + 0xc);
+    *(u32*)((u8*)self + 0x50) = *(u32*)(cur18Temp + 0x10);
+    *(u8*)((u8*)self + 0x54) = *(u8*)(cur18Temp + 0x14);
+    *(u8*)((u8*)self + 0x55) = *(u8*)(cur18Temp + 0x15);
+    __dt__6CCur18Fv(cur18Temp, -1);
+
+    // Virtual call on this+0x40 (vtable slot 2 = 0x08)
+    ((void (*)(void*))(((void**)(*(u32*)((u8*)self + 0x40)))[0x08 / 4]))((u8*)self + 0x40);
+
+    // Initialize CSLCur at self+0x110 via func_8028ED0C
+    func_8028ED0C((CSLCur*)((u8*)self + 0x110), (int)self->mArcAccessor);
+
+    func_8028ED70((UnkED70_Struct*)((u8*)self + 0x110));
+
+    // Initialize CSLCur at self+0x13C via func_8028E7C8
+    func_8028E7C8((CSLCur*)((u8*)self + 0x13c));
+
+    func_8028E838((UnkStruct_3Ptr*)((u8*)self + 0x13c));
+    func_8028E8EC((CSLCur*)((u8*)self + 0x13c));
+
+    // Set flags
+    self->mField122 = 1;
+    self->mField120 = 1;
+    self->mFileHandle = 0;
+    ((UnkClass_8045F564*)((u8*)self + 4))->func_8045F810();
+
+    // Allocate 3 heap buffers of 0x9C00 bytes each
+    u32 memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mField130 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);
+    self->mField134 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);
+    self->mField138 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);
+
+    // Destroy temporary object
+    __dt__14Class_8045F858Fv(temp8, -1);
+
+    return 1;
+}
 
 u32 func_8029183C(void) {
     extern u32 lbl_eu_80662AD0;
@@ -925,11 +1780,389 @@ extern "C" void func_802919A0() {
 }
 
 // Forward declarations for retail functions not yet decompiled in this TU
-extern "C" u32 func_80291D98();
-extern "C" u32 func_80292000();
-extern "C" u32 func_80292418();
-extern "C" u32 func_802929C8();
-extern "C" u32 func_80292EC0();
+// Check if a set of specific flags are all set.
+// Returns 1 if all flags are valid (non-zero), 0 otherwise.
+// Uses bool conversion to match MWCC's neg+or+srwi. pattern.
+extern "C" u32 func_80291D98() {
+    bool b;
+    b = func_8009CF8C(0xa26);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa2c);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa2d);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa2e);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa2f);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa30);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa32);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa34);
+    if (!b) return 0;
+    b = func_8009CF8C(0xa4b);
+    if (b) goto ret1;
+    b = func_8009CF8C(0xac5);
+    if (b) goto ret1;
+    return 0;
+
+ret1:
+    return 1;
+}
+
+// Check if flags 0xad6/0xb48, 0xad7/0xb47, 0xb38-0xb41, 0xb44-0xb46 are all set.
+// Returns 1 if all pass, 0 otherwise.
+extern "C" u32 func_80292EC0() {
+    bool b = func_8009CF8C(0xad6);
+    if (b) {} else {
+        b = func_8009CF8C(0xb48);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xad7);
+    if (b) {} else {
+        b = func_8009CF8C(0xb47);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xb38);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb39);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3a);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3b);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3c);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3d);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3e);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb3f);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb40);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb41);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb44);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb45);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xb46);
+    return b;
+}
+
+// Check if a comprehensive set of flags (0xa85-0xab1) are all set.
+// Some checks have fallback flags if the primary is not set.
+// Returns 1 if all pass, 0 otherwise.
+u32 func_80292418() {
+    bool b = func_8009CF8C(0xa85);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa86);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa87);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa88);
+    if (b) {} else {
+        b = func_8009CF8C(0xad8);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xa89);
+    if (b) {} else {
+        b = func_8009CF8C(0xac9);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xa8a);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa8b);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa8c);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa8d);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa8e);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa8f);
+    if (b) {} else {
+        b = func_8009CF8C(0xa7e);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xa90);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa91);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa92);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa93);
+    if (b) {} else {
+        b = func_8009CF8C(0xacc);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xa94);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa95);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa96);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa97);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa98);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa99);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa9a);
+    if (b) {} else {
+        b = func_8009CF8C(0xace);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xa9b);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa9c);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa9d);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa9e);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa9f);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa0);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa1);
+    if (b) {} else {
+        b = func_8009CF8C(0xacd);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xaa2);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa3);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa4);
+    if (b) {} else {
+        b = func_8009CF8C(0xa80);
+        if (b) {} else {
+            b = func_8009CF8C(0xa81);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xaa5);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa6);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa7);
+    if (b) {} else {
+        b = func_8009CF8C(0xaca);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xaa8);
+    if (b) {} else {
+        b = func_8009CF8C(0xac8);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xab1);
+    if (b) {} else return 0;
+    return 1;
+}
+
+// Check if flags 0xa71-0xa79, 0xa70, 0xac1-0xac5, 0xac6/0xac7, 0xac8-0xacc,
+// 0xacd/0xace, 0xacf-0xad3, 0xad4/0xad5, 0xad6, 0xad7 are all set.
+// Returns 1 if all pass, 0 otherwise.
+extern "C" u32 func_80292000() {
+    bool b = func_8009CF8C(0xa71);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa72);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa73);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa74);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa75);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa76);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa77);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa78);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa79);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa70);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac1);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac2);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac3);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac4);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac5);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac6);
+    if (b) {} else {
+        b = func_8009CF8C(0xac7);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xac8);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xac9);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaca);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xacb);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xacc);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xacd);
+    if (b) {} else {
+        b = func_8009CF8C(0xace);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xacf);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad0);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad1);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad2);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad3);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad4);
+    if (b) {} else {
+        b = func_8009CF8C(0xad5);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xad6);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xad7);
+    return b;
+}
+
+// Check if various flag groups (0xa66, 0xa67, 0xaa9/0xb05, 0xaaa/0xb07,
+// 0xaab/0xad0/0xb1f, 0xacf/0xae7/0xb1b, 0xad1/0xae8/0xb1c, 0xad2/0xaea/0xb1e,
+// 0xad3/0xae9/0xb1d, 0xad4/0xaeb/0xb20, 0xad5/0xaec/0xb21, 0xaed/0xb23,
+// 0xadf/0xafe, 0xae0/0xb00, 0xae1/0xb04, 0xae2/0xb0d, 0xae3/0xb11,
+// 0xae4/0xb13, 0xae5/0xb14, 0xae6/0xb18) are set.
+// Returns 1 if all pass, 0 otherwise.
+extern "C" u32 func_802929C8() {
+    bool b = func_8009CF8C(0xa66);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xa67);
+    if (b) {} else return 0;
+    b = func_8009CF8C(0xaa9);
+    if (b) {} else {
+        b = func_8009CF8C(0xb05);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xaaa);
+    if (b) {} else {
+        b = func_8009CF8C(0xb07);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xaab);
+    if (b) {} else {
+        b = func_8009CF8C(0xad0);
+        if (b) {} else {
+            b = func_8009CF8C(0xb1f);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xacf);
+    if (b) {} else {
+        b = func_8009CF8C(0xae7);
+        if (b) {} else {
+            b = func_8009CF8C(0xb1b);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xad1);
+    if (b) {} else {
+        b = func_8009CF8C(0xae8);
+        if (b) {} else {
+            b = func_8009CF8C(0xb1c);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xad2);
+    if (b) {} else {
+        b = func_8009CF8C(0xaea);
+        if (b) {} else {
+            b = func_8009CF8C(0xb1e);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xad3);
+    if (b) {} else {
+        b = func_8009CF8C(0xae9);
+        if (b) {} else {
+            b = func_8009CF8C(0xb1d);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xad4);
+    if (b) {} else {
+        b = func_8009CF8C(0xaeb);
+        if (b) {} else {
+            b = func_8009CF8C(0xb20);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xad5);
+    if (b) {} else {
+        b = func_8009CF8C(0xaec);
+        if (b) {} else {
+            b = func_8009CF8C(0xb21);
+            if (b) {} else return 0;
+        }
+    }
+    b = func_8009CF8C(0xaed);
+    if (b) {} else {
+        b = func_8009CF8C(0xb23);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xadf);
+    if (b) {} else {
+        b = func_8009CF8C(0xafe);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae0);
+    if (b) {} else {
+        b = func_8009CF8C(0xb00);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae1);
+    if (b) {} else {
+        b = func_8009CF8C(0xb04);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae2);
+    if (b) {} else {
+        b = func_8009CF8C(0xb0d);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae3);
+    if (b) {} else {
+        b = func_8009CF8C(0xb11);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae4);
+    if (b) {} else {
+        b = func_8009CF8C(0xb13);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae5);
+    if (b) {} else {
+        b = func_8009CF8C(0xb14);
+        if (b) {} else return 0;
+    }
+    b = func_8009CF8C(0xae6);
+    if (b) {} else {
+        b = func_8009CF8C(0xb18);
+        if (b) {} else return 0;
+    }
+    return 1;
+}
+
 u32 func_80291EF0();
 
 // Count valid save entries (0-299) and award achievements based on thresholds.
@@ -1026,18 +2259,49 @@ int func_80291BF8() {
     return count;
 }
 
+// Check if a value is within the valid range.
+// Returns 0 for specific values that are excluded, 1 otherwise.
+// Structure mirrors the retail's branch tree.
 extern "C" int func_80291C60(int v) {
-    if (v < 0) return 0;
-    switch (v) {
-    case 0xf: case 0x10: case 0x12: case 0x13:
-    case 0x6d: case 0x6e: case 0x70:
-    case 0x8b: case 0x8d:
-    case 0xe3: case 0xe5: case 0xe7:
-    case 0x12c:
-        return 0;
-    default:
-        return 1;
-    }
+    if (v == 139) return 0;
+    if (v >= 139) goto upper;
+    if (v == 19) return 0;
+    if (v >= 19) goto middle;
+    if (v == 16) return 0;
+    if (v >= 16) goto r16;
+    if (v >= 15) return 0;
+    if (v >= 0) return 1;
+    return 0;
+
+upper:
+    if (v == 229) return 0;
+    if (v >= 229) goto very_upper;
+    if (v == 227) return 0;
+    if (v >= 227) return 0;
+    if (v == 141) return 0;
+    if (v >= 141) return 1;
+    return 0;
+
+very_upper:
+    if (v == 231) return 0;
+    if (v < 231) return 0;
+    if (v >= 300) return 0;
+    return 1;
+
+middle:
+    if (v == 110) return 0;
+    if (v >= 110) goto upper_middle;
+    if (v == 109) return 0;
+    if (v >= 109) return 0;
+    return 1;
+
+upper_middle:
+    if (v >= 112) return 1;
+    return 0;
+
+r16:
+    if (v >= 18) return 0;
+    return 0;
 }
 
 // Check if all save/load related resources are available
@@ -1063,24 +2327,23 @@ u32 func_80291EF0() {
 
 
 // sinit: static initializer for the global CfAward instance at lbl_eu_806649F8
-void sinit_802930E0() {
+extern "C" void sinit_802930E0() {
     // Set the manually-managed vtable pointers, call the constructor, and
     // register the atexit destructor for the global CfAward instance.
-    void* self = &lbl_eu_806649F8;
-    void* base = (void*)&lbl_eu_80538858;
-    void* dtor = (void*)__dt__Q22cf7CfAwardFv;
-    ((cf::CfAward*)self)->mSecondBase = base;
-    ((cf::CfAward*)self)->mVtbl = (char*)base + 8;
+    cf::CfAward* self = &lbl_eu_806649F8;
+    self->mSecondBase = (void*)&lbl_eu_80538858;
+    self->mVtbl = (void*)((char*)&lbl_eu_80538858 + 8);
     func_8009D414(self);
-    __register_global_object(self, dtor, (void*)&lbl_eu_80576CF8);
+    __register_global_object(self, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
 
+// Virtual dispatch through self->mPtr using proper typed virtual calls
+// Use local variables for the pointer and vtable to match retail's register allocation
+// (self saved to r31, mPtr loaded into r3 each time)
 extern "C" void func_8028EC74(UnkPtrHolder* self) {
-    // Virtual dispatch through inline vtable access to match retail's register allocation
-    // (no local variable for the vtable pointer, uses r3 for this in each call)
-    ((void (*)(void*, void*))((void**)*(void**)self->mPtr)[0x20 / 4])(self->mPtr, self->mField10);
-    ((void (*)(void*, void*))((void**)*(void**)self->mPtr)[0x1C / 4])(self->mPtr, self->mField0C);
-    ((void (*)(void*, void*, int))((void**)*(void**)self->mPtr)[0x2C / 4])(self->mPtr, self->mField0C, 1);
+    self->mPtr->vf8(self->mField10);
+    self->mPtr->vf7(self->mField0C);
+    self->mPtr->vf11(self->mField0C, 1);
     *(float*)((char*)self->mField0C + 0x10) = lbl_eu_80668B6C;
-    ((void (*)(void*, int))((void**)*(void**)self->mPtr)[0x38 / 4])(self->mPtr, 0);
+    self->mPtr->vf14(0);
 }

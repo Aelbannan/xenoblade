@@ -67,6 +67,10 @@ function toTarget(raw: RawTarget): Target {
     status: raw.status,
     kind: raw.kind,
     size,
+    instructionMatch:
+      typeof raw.instruction_match === "number" ? raw.instruction_match
+      : typeof raw.instruction_match === "string" ? Number.parseFloat(raw.instruction_match)
+      : undefined,
     callgraph_source: raw.callgraph_source,
     called_functions: raw.called_functions,
     unresolved_called_functions: raw.unresolved_called_functions,

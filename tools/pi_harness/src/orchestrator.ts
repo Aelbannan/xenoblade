@@ -59,7 +59,6 @@ import {
 } from "./acceptance.js";
 
 const OWNER = `pi-harness-${process.pid}`;
-
 /** True when a live PID is actually a pi-harness process (not a PID-reused
  *  unrelated process). Best-effort: on macOS/Linux reads `ps -p <pid> -o
  *  command=`; if ps is unavailable or errors, falls back to treating the
@@ -120,6 +119,12 @@ function findOrphanedClaims(repoRoot: string): Array<{ id: string; owner: string
 
 // Currently-held claims, released on SIGINT/SIGTERM.
 const activeClaims = new Set<string>();
+
+// r8 WS-1/WS-2: last witness rejection gate per target (e.g. "reloc | …"),
+// captured when a witness-only cycle fails and surfaced in the near-match
+// singleton brief's diagnosis block so the model gets an actionable hint.
+// Per-process only (not persisted) — safe under the restart model.
+const witnessGateByTarget = new Map<string, string>();
 
 // TU-final phases are serialised process-wide: they run configure.py and
 // full ninja builds, which must never overlap each other.
@@ -684,9 +689,21 @@ async function runWitnessCycle(
       if (certifiedStatus && !backlogged) {
         certified = true;
       } else {
+        // r8 WS-1: surface the witness rejection gate (reloc/rho/execute/
+        // structural + diverging component) so the failure is actionable —
+        // run.py cycle now prints `witness-gate: <gate> | <reason>` on the
+        // no-SMT witness rejection path.
+        const e = err as { stdout?: string; stderr?: string };
+        const gateMatch = `${e.stdout ?? ""}\n${e.stderr ?? ""}`.match(
+          /witness-gate: (\S+?) \| ([^\n]*)/,
+        );
+        const gate = gateMatch ? ` (witness gate: ${gateMatch[1]}${gateMatch[2] ? ` — ${gateMatch[2]}` : ""})` : "";
+        if (gateMatch) {
+          witnessGateByTarget.set(targetId, `${gateMatch[1]}${gateMatch[2] ? ` — ${gateMatch[2]}` : ""}`);
+        }
         process.stderr.write(
           `[pi-harness] ${unit}: witness did not certify ${targetId} ` +
-            `(status ${row?.status ?? "UNKNOWN"}${backlogged ? ", size-gate BACKLOG" : ""}) — re-added to batch pool\n`,
+            `(status ${row?.status ?? "UNKNOWN"}${backlogged ? ", size-gate BACKLOG" : ""}${gate}) — re-added to batch pool\n`,
         );
       }
     }
@@ -1319,15 +1336,40 @@ async function runOneTu(
 
   // ── Pass 2: Retry failed targets ──────────────────────────────
   if (firstPassFailed.length > 0 && !dryRun) {
-    console.log(`[pi-harness] ${unit}: Pass 2 — retrying ${firstPassFailed.length} failed targets`);
-
+    // r8 WS-2: near-match routing — targets at ≥90% instruction match (or
+    // CODE_MATCH/HIGH_MATCH status) are the highest-conversion-probability
+    // singletons and get priority. They ALSO override the singletonMinSize
+    // rebatch routing (the motivating us-8025658c/us-8025650c were 188B/128B
+    // — below the 500B rebatch threshold — so the plain size route would
+    // have starved them exactly as the incident showed).
+    const NEAR_MATCH_MIN = 90;
+    const byId = new Map(targets.map((t) => [t.id, t]));
+    const nearMatch: string[] = [];
+    const rest: string[] = [];
     for (const fid of firstPassFailed) {
+      const target = byId.get(fid);
+      const near =
+        target && (target.status === "CODE_MATCH" || target.status === "HIGH_MATCH"
+          || (target.instructionMatch ?? 0) >= NEAR_MATCH_MIN);
+      (near ? nearMatch : rest).push(fid);
+    }
+    nearMatch.sort((a, b) =>
+      (byId.get(b)?.instructionMatch ?? 0) - (byId.get(a)?.instructionMatch ?? 0));
+    const ordered = [...nearMatch, ...rest];
+    console.log(
+      `[pi-harness] ${unit}: Pass 2 — ${firstPassFailed.length} failed targets ` +
+      `(${nearMatch.length} near-match ≥${NEAR_MATCH_MIN}% prioritized)`,
+    );
+
+    for (const fid of ordered) {
       // Check if already matched (might have been matched in a previous batch)
       const target = targets.find((t) => t.id === fid);
       if (!target) continue;
 
-      if (config.singletonMinSize > 0) {
+      if (config.singletonMinSize > 0 && !nearMatch.includes(fid)) {
         // Route small targets to rebatch pool based on retail binary size.
+        // Near-match targets override this (see above) so they get a
+        // focused singleton with the diagnosis block.
         const targetSize = target.size ?? 0;
         if (targetSize > 0 && targetSize < config.singletonMinSize) {
           smallRetryPool.push(fid);
@@ -1667,6 +1709,24 @@ async function runSingleton(
   if (missingAsm.length > 0) return false;
 
   let feedback = carryover;
+
+  // r8 WS-2: for near-match targets (≥90% or CODE/HIGH_MATCH), prepend the
+  // last witness rejection gate as a diagnosis block so the model gets the
+  // actionable failure (reloc drift / rho / callee / structural + diverging
+  // component) instead of re-deriving it.
+  const near = target.status === "CODE_MATCH" || target.status === "HIGH_MATCH"
+    || (target.instructionMatch ?? 0) >= 90;
+  const gate = witnessGateByTarget.get(targetId);
+  if (near && gate) {
+    feedback =
+      `## Near-match diagnosis (witness gate: ${gate})\n\n` +
+      `This target is close to acceptance but the witness rejected it at the ` +
+      `gate above. If it is a reloc-name drift, run \`hexdiff <unit> <symbol>\` ` +
+      `and apply the Reloc-drift suggestion (usually \`extern \"C\"\` in the ` +
+      `declaring header). If it is structural/memory, compare the hexdiff ` +
+      `mismatch list before editing — the first-divergence label says which ` +
+      `component differs.\n\n${feedback}`;
+  }
 
   // Phase 3: unified per-target budget across runs. Count prior sessions the
   // ledger recorded for this target (batch/rebatch/singleton all log

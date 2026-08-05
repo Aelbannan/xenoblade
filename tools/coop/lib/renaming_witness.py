@@ -1727,6 +1727,24 @@ def _structurally_equal(left: Any, right: Any, z3: Any) -> bool:
         return False
 
 
+def _structurally_equal_simplified(left: Any, right: Any, z3: Any) -> bool:
+    """Structural equality with commutative canonicalization.
+
+    Raw ``z3.eq(a+b, b+a)`` is False — z3 normalizes commutativity only under
+    ``simplify``.  A pure commutative operand-order swap (retail `add rA,rB,rC`
+    vs decomp `add rA,rC,rB`) is value-identical, and the rho fix already lets
+    it pass the gate; the terminal compare must not then re-reject it
+    (us-8025658c / us-8025650c, r8 WS-1).  ``z3.simplify`` is semantics-
+    preserving, so this is strictly more permissive on provably-equal
+    expressions and never accepts an unequal pair."""
+    if _structurally_equal(left, right, z3):
+        return True
+    try:
+        return bool(z3.eq(z3.simplify(left), z3.simplify(right)))
+    except Exception:
+        return False
+
+
 def _constant_int(expr: Any, z3: Any) -> int | None:
     """Return the integer value of a constant expression, else ``None``.
 
@@ -1959,13 +1977,13 @@ def _terminals_agree(
         return _fail("exit-target")
     ls, rs = left.state, right.state
     for i in range(32):
-        if not _structurally_equal(ls.gpr[i], rs.gpr[gpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.gpr[i], rs.gpr[gpr_perm[i]], z3):
             return _fail(f"gpr r{i}")
     for i in range(32):
-        if not _structurally_equal(ls.fpr[i], rs.fpr[fpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.fpr[i], rs.fpr[fpr_perm[i]], z3):
             return _fail(f"fpr f{i}")
     for i in range(32):
-        if not _structurally_equal(ls.ps1[i], rs.ps1[fpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3):
             return _fail(f"ps1 f{i}")
     direct_pairs = [
         (ls.cr, rs.cr, "cr"),

@@ -305,6 +305,11 @@ def cmd_diff(
 
     if evaluation.equivalence is not None:
         print(f"equivalence: {_equivalence_label(evaluation)}")
+    # r8 WS-1: witness rejection telemetry — the model needs the actionable
+    # failure (reloc drift / rho / callee / structural + diverging component)
+    # instead of a bare "NOT certifiable" to fix near-match targets.
+    if evaluation.witness_gate:
+        print(f"witness-gate: {evaluation.witness_gate} | {evaluation.witness_reason or ''}")
 
     if write_function_diff and symbol and fn_match:
         out = config.resolve(Path("build/coop-function-diff.json"))
@@ -468,6 +473,9 @@ def cmd_cycle(
         )
     if evaluation.equivalence is not None:
         print(f"equivalence: {_equivalence_label(evaluation)}")
+    # r8 WS-1: witness rejection telemetry (see cmd_diff).
+    if evaluation.witness_gate:
+        print(f"witness-gate: {evaluation.witness_gate} | {evaluation.witness_reason or ''}")
     if evaluation.equivalence_certificate:
         print(
             "certificate: semantic-certified "

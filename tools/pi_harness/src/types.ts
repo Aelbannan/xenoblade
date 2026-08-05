@@ -128,6 +128,9 @@ export interface Target {
   status: string;
   kind?: string;
   size?: number;
+  /** Latest objdiff instruction-match % from targets.json (r8 WS-2: near-match
+   *  classification for singleton routing — ≥90% targets get priority). */
+  instructionMatch?: number;
   callgraph_source?: string;
   /** Call-graph fields mirrored from tools/coop/targets.json — used by the
    *  similarity re-ranker to keep selection call-graph-ready. */

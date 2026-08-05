@@ -189,6 +189,12 @@ class MatchEvaluation:
     proof: Optional[ProofResult] = None
     equivalence_confidence: Optional[str] = None
     equivalence_policy: Optional[str] = None
+    # r8 WS-1: witness rejection telemetry — ``witness_gate`` (reloc/rho/
+    # execute/structural/...) + ``witness_reason`` (the failing slot detail),
+    # surfaced to the model so it gets an actionable fix hint instead of a
+    # bare "NOT certifiable".
+    witness_gate: Optional[str] = None
+    witness_reason: Optional[str] = None
 
 
 def evaluate_unit_match(
@@ -226,6 +232,8 @@ def evaluate_unit_match(
     certificate = None
     proof: Optional[ProofResult] = None
     certificate_checked = bool(target_id and symbol and fn_match and run_equivalence)
+    witness_gate: Optional[str] = None
+    witness_reason: Optional[str] = None
     pct = fn_match.match_percent if fn_match else None
     # Witness-only path (run_smt=False, the no-SMT pipeline): the objdiff
     # match% gate (should_probe_equivalence) is unreliable — some units' objdiff
@@ -243,11 +251,16 @@ def evaluate_unit_match(
         or (fn_match is None and symbol)
     ):
         with timer("smt"):
-            probe = certify_unit_symbol(project, unit, symbol, target_id)
+            witness_diag: dict[str, Any] = {}
+            probe = certify_unit_symbol(
+                project, unit, symbol, target_id, diag=witness_diag,
+            )
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
         proof = probe.proof
+        witness_gate = witness_diag.get("witness_gate")
+        witness_reason = witness_diag.get("witness_reason")
     elif run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
         with timer("smt"):
             probe: EquivalenceProbe = prove_unit_symbol(
@@ -305,6 +318,8 @@ def evaluate_unit_match(
         proof=proof,
         equivalence_confidence=confidence,
         equivalence_policy=policy_id,
+        witness_gate=witness_gate,
+        witness_reason=witness_reason,
     )
 
 

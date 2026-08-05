@@ -727,6 +727,50 @@ class RegionSlicedWitnessTests(unittest.TestCase):
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual(outcome.details.get("rho_mode"), "region-sliced")
 
+    def test_commutative_add_operand_swap_certifies(self) -> None:
+        """r8 WS-1: pure commutative operand-order swaps (`add rA,rB,rC` vs
+        `add rA,rC,rB`) are value-identical and must certify.
+
+        Regression: `_region_rho`/`check_gates`/`_rho_region_boundaries`
+        treated X-form operands positionally, so retail `add r0,r0,r4` vs
+        decomp `add r0,r4,r0` produced a many-to-one rho conflict and the
+        witness rejected byte-identical-equivalent pairs (us-8025658c /
+        us-8025650c stuck at 99.4-99.6% on exactly this)."""
+        add = lambda rd, ra, rb: _enc_x(31, 266, rd, ra, rb)
+        # retail: add r3,r3,r4 ; add r5,r0,r5 ; blr
+        # decomp: add r3,r4,r3 ; add r5,r5,r0 ; blr  (same values, swapped)
+        r = [add(3, 3, 4), add(5, 0, 5), self._BLR]
+        d = [add(3, 4, 3), add(5, 5, 0), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_commutative_swap_non_commutative_op_still_rejected(self) -> None:
+        """r8 WS-1: the commutative retry must NOT apply to non-commutative
+        ops — `subf r3,r3,r4` vs `subf r3,r4,r3` differ (a-b vs b-a)."""
+        subf = lambda rd, ra, rb: _enc_x(31, 40, rd, ra, rb)
+        r = [subf(3, 3, 4), self._BLR]
+        d = [subf(3, 4, 3), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+
+    def test_structural_failure_reports_first_divergence(self) -> None:
+        """r8 WS-1: a structural terminal rejection carries the diverging
+        component label (e.g. `gpr r3`) so the model gets an actionable hint
+        instead of a bare "diverges structurally".
+
+        Uses `subf` (NON-commutative) with swapped operands: same mnemonic +
+        same register fields (passes the fields/rho gates) but genuinely
+        different values (r3 = r4-r3 vs r3 = r3-r4) — a true structural
+        divergence, unlike the commutative-add case which must certify."""
+        subf = lambda rd, ra, rb: _enc_x(31, 40, rd, ra, rb)
+        r = [subf(3, 3, 4), self._BLR]
+        d = [subf(3, 4, 3), self._BLR]
+        outcome = certify_renaming_witness(*self._pair(r, d), deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertIsNotNone(outcome.failure)
+        self.assertEqual(outcome.failure.gate, "structural")
+        self.assertIn("r3", outcome.failure.reason)
+
     def test_live_across_boundary_rejected(self) -> None:
         # retail: li r5,1 ; add r3,r5,r0 ; add r3,r3,r5 ; blr  (r3 = 2)
         # decomp: li r4,1 ; add r3,r4,r0 ; add r3,r3,r5 ; blr  (r3 = 1 + garbage)

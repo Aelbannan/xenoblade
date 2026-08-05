@@ -315,13 +315,49 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
             lines.push(certifiable
               ? "- ✅ CERTIFIABLE — this code would be accepted (the harness should run the accepting cycle)"
               : "- ❌ NOT certifiable yet — keep iterating (structure and/or semantics still differ)");
+            // r8 WS-1: surface the witness rejection gate + actionable fix hint
+            // (reloc drift / rho / callee / structural + diverging component)
+            // instead of a bare "NOT certifiable".
+            const gate = full.match(/witness-gate: (\S+?) \| ([^\n]*)/)?.[1];
+            const gateReason = full.match(/witness-gate: (\S+?) \| ([^\n]*)/)?.[2]?.trim() ?? "";
+            if (gate && !certifiable) {
+              lines.push(`- witness gate: ${gate}${gateReason ? ` — ${gateReason}` : ""}`);
+              const hints: Record<string, string> = {
+                reloc:
+                  "Reloc name drift: decomp emits a different reloc symbol than retail. " +
+                  "Run `hexdiff <unit> <symbol>` and look at the Reloc-drift suggestions — " +
+                  "approved fixes are usually `extern \"C\" <TYPE> <retail-symbol>;` in the " +
+                  "declaring header/.cpp (PLAN.md §17.6). If a conflicting non-extern-C " +
+                  "declaration already exists, REMOVE/CONVERT it — two declarations with " +
+                  "different linkage cause an illegal-overload build error.",
+                rho:
+                  "Register-bijection conflict (local temp re-allocation). If the only diffs " +
+                  "are commutative operand swaps (`add rA,rB,rC` vs `add rA,rC,rB`) those are " +
+                  "handled; otherwise try reordering statements so MWCC allocates registers " +
+                  "in retail's order.",
+                execute:
+                  "A callee lacks a lemma — the function calls an uncertified target. " +
+                  "Certify the callee first (its target must reach FULL_MATCH/EQUIVALENT_MATCH) " +
+                  "or check whether the call is to a helper that needs an opaque-EABI contract.",
+                structural:
+                  "Terminal state diverges — a real semantic difference remains at a return path. " +
+                  "Compare the hexdiff mismatched-instruction list: the first-divergence label " +
+                  "(e.g. `gpr r20`, `memory`) says which component. If it is `memory` and hexdiff " +
+                  "shows only commutative/reg-swap diffs, this may be a known witness path-" +
+                  "condition over-rejection — re-check the hexdiff diff itself before editing.",
+                size:
+                  "The decompiled body is a different size than retail (often a stub or an " +
+                  "incomplete function). Write the real body — a `void f(){}` stub never certifies.",
+              };
+              if (hints[gate]) lines.push("", "### Fix hint", hints[gate]);
+            }
             const verdictLines = full.split("\n").filter((l) =>
-              /^(status|equivalence|certificate|code|symbol):/.test(l));
+              /^(status|equivalence|certificate|code|symbol|witness-gate):/.test(l));
             if (verdictLines.length > 0) lines.push("", "### raw verdict", ...verdictLines.map((l) => `- ${l}`));
             const text = lines.join("\n");
             return {
               content: [{ type: "text", text }],
-              details: { ok: true, certifiable, status, equivalence: eq ?? null },
+              details: { ok: true, certifiable, status, equivalence: eq ?? null, witnessGate: gate ?? null },
             };
           }
           // No verdict yet — transient (lock contention). Retry.
@@ -336,23 +372,25 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
           if (e.stdout && /status: \S+/.test(e.stdout)) {
             const full = e.stdout.trim();
             const verdictLines = full.split("\n").filter((l) =>
-              /^(status|equivalence|certificate|code|symbol|size):/.test(l));
+              /^(status|equivalence|certificate|code|symbol|size|witness-gate):/.test(l));
             // Include the verdict so the model knows whether the CODE is
             // done (size is a separate unit-level concern) — Kimi finding 5:
             // dropping the verdict made the model keep 'fixing' finished code.
             const eq = full.match(/equivalence: (\S+)/)?.[1];
             const certifiable = eq === "FULL_MATCH" || eq === "EQUIVALENT_MATCH";
+            const gate = full.match(/witness-gate: (\S+?) \| ([^\n]*)/)?.[1];
             const lines = [
               `## witness: ${params.symbol}`,
               `- ❗ UNIT SIZE OVER BUDGET (the function's own verdict is below)`,
               ...verdictLines.map((l) => `- ${l}`),
+              ...(gate && !certifiable ? [`- witness gate: ${gate}`] : []),
               certifiable
                 ? "- ✅ CODE IS CERTIFIABLE — fix the unit split size, then re-run"
                 : "- ❌ NOT certifiable yet — keep iterating",
             ];
             return {
               content: [{ type: "text", text: lines.join("\n") }],
-              details: { ok: false, certifiable, status: "size-failed", equivalence: eq ?? null },
+              details: { ok: false, certifiable, status: "size-failed", equivalence: eq ?? null, witnessGate: gate ?? null },
             };
           }
           const detail = e.stderr || e.message || String(err);
@@ -362,13 +400,13 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
           }
           return {
             content: [{ type: "text", text: `ERROR: ${detail}` }],
-            details: { ok: false, certifiable: false, status: "error", equivalence: null },
+            details: { ok: false, certifiable: false, status: "error", equivalence: null, witnessGate: null },
           };
         }
       }
       return {
         content: [{ type: "text", text: "ERROR: witness tool could not get a verdict after 3 attempts (build lock contention?)" }],
-        details: { ok: false, certifiable: false, status: "error", equivalence: null },
+        details: { ok: false, certifiable: false, status: "error", equivalence: null, witnessGate: null },
       };
     },
   });

@@ -37,6 +37,7 @@ function defaultConfig(): HarnessConfig {
     maxBatchRetries: 2,
     maxSingletonSessions: 2,
     snapshotsEnabled: true,
+    commitOnTuFinal: false,
     singletonEnabled: true,
     rebatchEnabled: true,
     maxRebatchAttempts: 0, // 0 = auto: cover the small pool exactly once
@@ -202,6 +203,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (typeof config.snapshotsEnabled !== "boolean") {
     throw new Error("config.snapshotsEnabled must be a boolean");
+  }
+  if (typeof config.commitOnTuFinal !== "boolean") {
+    throw new Error("config.commitOnTuFinal must be a boolean");
   }
   if (!(config.maxBriefChars >= 1000)) {
     throw new Error("config.maxBriefChars must be >= 1000");

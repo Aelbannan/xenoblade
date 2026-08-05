@@ -16,7 +16,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import type {
@@ -2336,6 +2336,53 @@ async function runTuFinal(
         (lastReason === "recert-failed" ? "(mass re-certification failed)" : "") +
         (bestSnapshot ? ` (restored best-scoring state, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})` : ""),
   );
+
+  if (done) {
+    await commitUnitOnTuFinal(repoRoot, config, unit, writable, bestScan?.matched ?? 0);
+  }
+}
+
+/**
+ * Commit a unit's source files + configure.py flip to git after a
+ * successful TU-final. Stages ONLY the files in the unit's writable scope
+ * (never `git add -A`), so other agents' / other TUs' dirty state on
+ * unrelated paths is never swept in. Best-effort: any failure (dirty
+ * porcelain, mid-edit file, git error) is logged and swallowed — a commit
+ * must never fail the run or block acceptance.
+ */
+async function commitUnitOnTuFinal(
+  repoRoot: string,
+  config: HarnessConfig,
+  unit: string,
+  files: string[],
+  matchedCount: number,
+): Promise<void> {
+  if (!config.commitOnTuFinal) return;
+  const paths = [...new Set(files.filter((f) => existsSync(join(repoRoot, f))))];
+  if (paths.length === 0) return;
+  const run = async (args: string[]): Promise<void> => {
+    await execFilePromise("git", args, { cwd: repoRoot });
+  };
+  try {
+    // Stage ONLY this unit's files. If a file is not tracked or was deleted
+    // by the session, `git add` still stages the state; nothing else is
+    // touched.
+    await run(["add", "--", ...paths]);
+    const msg = `pi-harness: ${unit} TU-final complete (${matchedCount} matched, unit flipped to Matching)`;
+    await run(["commit", "-m", msg, "--no-verify"]);
+    process.stderr.write(`[pi-harness] ${unit}: committed TU-final (${paths.length} file(s))\n`);
+  } catch (err) {
+    // Best-effort only. A dirty index or concurrent agent edit is expected;
+    // unstage what we staged so the next commit attempt starts clean.
+    process.stderr.write(
+      `[pi-harness] ${unit}: TU-final commit skipped (best-effort): ${err instanceof Error ? err.message : String(err)}\n`,
+    );
+    try {
+      await run(["reset", "--", ...paths]);
+    } catch {
+      // ignore unstage failure — nothing else we can do
+    }
+  }
 }
 
 function handleSkipped(

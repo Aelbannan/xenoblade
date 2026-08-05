@@ -48,6 +48,12 @@ export interface HarnessConfig {
    *  (no rollback on failed sessions; the worktree keeps whatever the last
    *  session left). Default true. */
   snapshotsEnabled: boolean;
+  /** When true, commit the unit's source files + configure.py flip to git
+   *  after a successful TU-final (all targets matched, unit flipped to
+   *  Matching). Stages ONLY the unit's own files (never `git add -A`), so
+   *  other agents' / other TUs' dirty state is never swept in. Best-effort:
+   *  a commit failure is logged and never fails the run. Default false. */
+  commitOnTuFinal: boolean;
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
   /** Per-TU budget for total rebatch sessions across all small-target

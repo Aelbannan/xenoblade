@@ -2123,9 +2123,9 @@
 <text x="5782.799999999999" y="1860" font-size="78" fill="#57606a" text-anchor="middle">0x80400000</text>
 <text x="7104" y="1860" font-size="78" fill="#57606a" text-anchor="end">0x804F9FA4</text>
 <rect x="96" y="1980" width="120" height="120" rx="18" fill="#1f883d"/>
-<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 8968</text>
+<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 8970</text>
 <rect x="1497" y="1980" width="120" height="120" rx="18" fill="#0969da"/>
-<text x="1653" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 248</text>
+<text x="1653" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 246</text>
 <rect x="3211" y="1980" width="120" height="120" rx="18" fill="#d4a72c"/>
 <text x="3367" y="2061" font-size="108" fill="#24292f">in progress · 2034</text>
 <rect x="4675" y="1980" width="120" height="120" rx="18" fill="#6e7681"/>

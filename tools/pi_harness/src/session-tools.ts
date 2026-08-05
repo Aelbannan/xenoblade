@@ -32,6 +32,7 @@ import {
 // The cycle is benign (function declarations hoist), but the import sits at
 // the top level for clarity.
 import { unitStatusTool } from "./tufinal-scan.js";
+import { witnessHintForGate } from "./witness-hints.js";
 
 /** Promisified execFile with a generous buffer (hexdiff JSON can be big).
  *  IMPORTANT: node's execFile error object does NOT carry stdout/stderr —
@@ -322,34 +323,11 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
             const gateReason = full.match(/witness-gate: (\S+?) \| ([^\n]*)/)?.[2]?.trim() ?? "";
             if (gate && !certifiable) {
               lines.push(`- witness gate: ${gate}${gateReason ? ` — ${gateReason}` : ""}`);
-              const hints: Record<string, string> = {
-                reloc:
-                  "Reloc name drift: decomp emits a different reloc symbol than retail. " +
-                  "Run `hexdiff <unit> <symbol>` and look at the Reloc-drift suggestions — " +
-                  "approved fixes are usually `extern \"C\" <TYPE> <retail-symbol>;` in the " +
-                  "declaring header/.cpp (PLAN.md §17.6). If a conflicting non-extern-C " +
-                  "declaration already exists, REMOVE/CONVERT it — two declarations with " +
-                  "different linkage cause an illegal-overload build error.",
-                rho:
-                  "Register-bijection conflict (local temp re-allocation). If the only diffs " +
-                  "are commutative operand swaps (`add rA,rB,rC` vs `add rA,rC,rB`) those are " +
-                  "handled; otherwise try reordering statements so MWCC allocates registers " +
-                  "in retail's order.",
-                execute:
-                  "A callee lacks a lemma — the function calls an uncertified target. " +
-                  "Certify the callee first (its target must reach FULL_MATCH/EQUIVALENT_MATCH) " +
-                  "or check whether the call is to a helper that needs an opaque-EABI contract.",
-                structural:
-                  "Terminal state diverges — a real semantic difference remains at a return path. " +
-                  "Compare the hexdiff mismatched-instruction list: the first-divergence label " +
-                  "(e.g. `gpr r20`, `memory`) says which component. If it is `memory` and hexdiff " +
-                  "shows only commutative/reg-swap diffs, this may be a known witness path-" +
-                  "condition over-rejection — re-check the hexdiff diff itself before editing.",
-                size:
-                  "The decompiled body is a different size than retail (often a stub or an " +
-                  "incomplete function). Write the real body — a `void f(){}` stub never certifies.",
-              };
-              if (hints[gate]) lines.push("", "### Fix hint", hints[gate]);
+              // LOW-3: shared gate→hint table (covers ALL 11 gates — the
+              // previous inline table only had reloc/rho/execute/structural/
+              // size, leaving reject-list / mnemonic / abi-boundary / fields /
+              // loop / deadline with no hint).
+              lines.push("", "### Fix hint", witnessHintForGate(gate, gateReason));
             }
             const verdictLines = full.split("\n").filter((l) =>
               /^(status|equivalence|certificate|code|symbol|witness-gate):/.test(l));

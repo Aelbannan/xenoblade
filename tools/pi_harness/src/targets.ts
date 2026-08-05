@@ -49,15 +49,7 @@ function readTargetsFile(repoRoot: string): RawTarget[] {
 }
 
 function toTarget(raw: RawTarget): Target {
-  let size: number | undefined;
-  if (raw.size !== undefined && raw.size !== null) {
-    if (typeof raw.size === "string") {
-      size = Number.parseInt(raw.size, 16);
-      if (Number.isNaN(size)) size = undefined;
-    } else if (typeof raw.size === "number") {
-      size = raw.size;
-    }
-  }
+  const size = parseTargetSize(raw.size);
   return {
     id: raw.id,
     symbol: raw.symbol,
@@ -122,9 +114,28 @@ export function loadUnitTargets(
   return filtered;
 }
 
+/** Parse a target `size` field: hex strings ("0x29C" or "29C" — targets.json
+ *  stores retail sizes as hex) and non-negative numbers pass through;
+ *  anything unparseable yields undefined (size is optional). Guards against
+ *  the parseInt foot-gun where a bare decimal like "668" would silently
+ *  parse as hex 0x668 = 1640 (Kimi L4 / GLM F11b: size-parse guard). */
+export function parseTargetSize(size: unknown): number | undefined {
+  if (typeof size === "number") {
+    return Number.isFinite(size) && size >= 0 ? size : undefined;
+  }
+  if (typeof size === "string") {
+    const s = size.trim();
+    if (s === "" || s === "0x") return undefined;
+    const v = Number.parseInt(s, 16);
+    return Number.isNaN(v) ? undefined : v;
+  }
+  return undefined;
+}
+
 /** Optional filtering for loadUnmatchedTargets. Shape-compatible with the
- *  `ledgerPath` / `retryExhausted` fields of HarnessConfig, so a config object
- *  can be passed directly as `options`. */
+ *  `ledgerPath` / `retryExhausted` / `exhaustionThreshold` fields of
+ *  HarnessConfig, so callers can pass those through directly (they are NOT
+ *  a full config — unknown fields are ignored). */
 export interface UnmatchedOptions {
   /** JSONL ledger path (absolute, or repo-root relative). When set and
    *  `retryExhausted` is false, targets the ledger marked exhausted are
@@ -134,7 +145,7 @@ export interface UnmatchedOptions {
   retryExhausted?: boolean;
   /** Minimum independent dead-end ledger records before a target counts as
    *  exhausted. Threaded to `scanExhaustedTargets`. */
-  minExhaustAttempts?: number;
+  exhaustionThreshold?: number;
 }
 
 /** Load only unmatched (not FULL_MATCH / EQUIVALENT_MATCH) targets for a unit.
@@ -153,7 +164,7 @@ export function loadUnmatchedTargets(
   const absLedger = isAbsolute(options.ledgerPath)
     ? options.ledgerPath
     : join(repoRoot, options.ledgerPath);
-  const exhausted = scanExhaustedTargets(absLedger, options.minExhaustAttempts);
+  const exhausted = scanExhaustedTargets(absLedger, options.exhaustionThreshold);
   if (exhausted.size === 0) return targets;
 
   const filtered = targets.filter((t) => !exhausted.has(t.id));

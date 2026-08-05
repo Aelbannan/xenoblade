@@ -39,6 +39,12 @@ import {
 } from "./nearmiss.js";
 import { buildBatchPrompt, buildTuFinalPrompt } from "./prompts.js";
 import {
+  sessionsNeededForPool,
+  effectiveRebatchBudget,
+  partitionFailedTargets,
+} from "./routing.js";
+import { witnessGateName, witnessHintForGate } from "./witness-hints.js";
+import {
   scanUnitState, scoreState, buildUnitFeedback, diffUnitScans,
   type UnitScan,
 } from "./tufinal-scan.js";
@@ -700,6 +706,17 @@ async function runWitnessCycle(
         const gate = gateMatch ? ` (witness gate: ${gateMatch[1]}${gateMatch[2] ? ` — ${gateMatch[2]}` : ""})` : "";
         if (gateMatch) {
           witnessGateByTarget.set(targetId, `${gateMatch[1]}${gateMatch[2] ? ` — ${gateMatch[2]}` : ""}`);
+          // LOW-3: persist the last witness gate to the ledger so a restart
+          // (which loses the per-process witnessGateByTarget map) can still
+          // key the near-match singleton diagnosis off the actual gate.
+          appendLedger(repoRoot, config.ledgerPath, {
+            ts: new Date().toISOString(), event: "witness-gate", tu: unit,
+            detail: {
+              targetId,
+              gate: gateMatch[1],
+              reason: gateMatch[2]?.trim() ?? "",
+            },
+          });
         }
         process.stderr.write(
           `[pi-harness] ${unit}: witness did not certify ${targetId} ` +
@@ -747,9 +764,8 @@ function makeVerifyCallback(opts: {
   targetIds: string[];
   targetSymbols: Map<string, string>;
   writable: string[];
-  snapshot: Snapshot | null;
 }): VerifySession {
-  const { repoRoot, config, unit, targetIds, targetSymbols, writable, snapshot } = opts;
+  const { repoRoot, config, unit, targetIds, targetSymbols, writable } = opts;
   let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
   let lastFeedback: string | undefined;
 
@@ -1074,7 +1090,7 @@ async function runOneTu(
   const sanitized = unit.replace(/\//g, "__");
   const targetsRaw = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
-    minExhaustAttempts: config.exhaustionThreshold,
+    exhaustionThreshold: config.exhaustionThreshold,
   });
   const selection = await applySelection(repoRoot, unit, config, targetsRaw);
   let targets = selection.ordered;
@@ -1198,7 +1214,7 @@ async function runOneTu(
       const batchTargetSymbols = new Map(briefTargets.map(t => [t.id, t.symbol]));
       const verify = makeVerifyCallback({
         repoRoot, config, unit, targetIds: currentIds,
-        targetSymbols: batchTargetSymbols, writable, snapshot,
+        targetSymbols: batchTargetSymbols, writable,
       });
 
       const sessionResult = await runAgentSession({
@@ -1347,17 +1363,7 @@ async function runOneTu(
     // have starved them exactly as the incident showed).
     const NEAR_MATCH_MIN = 90;
     const byId = new Map(targets.map((t) => [t.id, t]));
-    const nearMatch: string[] = [];
-    const rest: string[] = [];
-    for (const fid of firstPassFailed) {
-      const target = byId.get(fid);
-      const near =
-        target && (target.status === "CODE_MATCH" || target.status === "HIGH_MATCH"
-          || (target.instructionMatch ?? 0) >= NEAR_MATCH_MIN);
-      (near ? nearMatch : rest).push(fid);
-    }
-    nearMatch.sort((a, b) =>
-      (byId.get(b)?.instructionMatch ?? 0) - (byId.get(a)?.instructionMatch ?? 0));
+    const { nearMatch, rest } = partitionFailedTargets(firstPassFailed, byId, NEAR_MATCH_MIN);
     const ordered = [...nearMatch, ...rest];
     console.log(
       `[pi-harness] ${unit}: Pass 2 — ${firstPassFailed.length} failed targets ` +
@@ -1398,7 +1404,7 @@ async function runOneTu(
 
   // ── Re-batch phase for small failed targets ─────────────────────
   if (smallRetryPool.length > 0 && !dryRun) {
-    const { skipped: rebatchSkipped, targetCarryover: rebatchCarryover } = await runRebatchPhase(
+    const { skipped: rebatchSkipped, targetCarryover: rebatchCarryover, rebatchDisabled } = await runRebatchPhase(
       repoRoot, unit, config, modelRuntime, sanitized,
       smallRetryPool, targets, carryover, config.maxRebatchAttempts,
       siblingsByTarget,
@@ -1407,12 +1413,32 @@ async function runOneTu(
     for (const [id, fb] of rebatchCarryover) {
       targetCarryover.set(id, fb);
     }
-    // Small targets (below singletonMinSize, not near-match) never get
-    // routed to singletons — rebatch was their one retry. Near-match small
-    // targets already bypassed the size route in Pass 2 (they ran as
-    // singletons there). So everything rebatch didn't process is skipped.
-    for (const fid of rebatchSkipped) {
-      handleSkipped(repoRoot, config, unit, fid, "below singletonMinSize — rebatch was the only retry");
+    if (rebatchDisabled) {
+      // MEDIUM-3: rebatch DISABLED → small targets fall through to
+      // singletons again (the pre-c447b53e5 fallthrough). Only a rebatch
+      // that RAN and failed skips them (c447b53e5 policy).
+      for (const fid of rebatchSkipped) {
+        if (!config.singletonEnabled) {
+          handleSkipped(repoRoot, config, unit, fid, "singleton retry disabled");
+          continue;
+        }
+        const ok = await runSingleton(
+          repoRoot, unit, fid, config, modelRuntime, sanitized,
+          targetCarryover.get(fid) || carryover,
+          siblingsByTarget,
+        );
+        if (!ok) {
+          handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
+        }
+      }
+    } else {
+      // Small targets (below singletonMinSize, not near-match) never get
+      // routed to singletons — rebatch was their one retry. Near-match small
+      // targets already bypassed the size route in Pass 2 (they ran as
+      // singletons there). So everything rebatch didn't process is skipped.
+      for (const fid of rebatchSkipped) {
+        handleSkipped(repoRoot, config, unit, fid, "below singletonMinSize — rebatch was the only retry");
+      }
     }
   }
 
@@ -1424,7 +1450,7 @@ async function runOneTu(
 
   const remaining = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
-    minExhaustAttempts: config.exhaustionThreshold,
+    exhaustionThreshold: config.exhaustionThreshold,
   });
   if (remaining.length === 0) {
     await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
@@ -1466,33 +1492,42 @@ async function runRebatchPhase(
   modelRuntime: ModelRuntime, sanitized: string,
   smallRetryPool: string[], targets: Target[], carryover: string,
   maxAttempts: number, siblingsByTarget?: Map<string, SiblingPointer[]>,
-): Promise<{ skipped: string[]; targetCarryover: Map<string, string> }> {
+): Promise<{ skipped: string[]; targetCarryover: Map<string, string>; rebatchDisabled: boolean }> {
   const uniqueSmall = [...new Set(smallRetryPool)];
   const targetCarryover = new Map<string, string>();
 
   if (!config.rebatchEnabled) {
+    // MEDIUM-3: rebatch DISABLED is not a skip. Signal the caller so small
+    // targets fall through to singletons again (the pre-c447b53e5
+    // fallthrough) instead of being hard-skipped with a misleading
+    // "routed to singletons" message. Only a rebatch that RAN and failed
+    // skips its targets.
     console.log(`[pi-harness] ${unit}: rebatch disabled — ${uniqueSmall.length} small target(s) routed to singletons`);
-    return { skipped: uniqueSmall, targetCarryover };
+    return { skipped: uniqueSmall, targetCarryover, rebatchDisabled: true };
   }
 
   if (maxAttempts <= 0) {
     console.log(`[pi-harness] ${unit}: rebatch budget auto-derived (0 = cover pool once) — ${uniqueSmall.length} small target(s)`);
   }
 
-  console.log(
-    `[pi-harness] ${unit}: re-batching ${uniqueSmall.length} small target(s) ` +
-    `(below ${config.singletonMinSize} bytes, budget: ${Math.max(maxAttempts, Math.ceil(uniqueSmall.length / config.batchSize))} session(s))`,
-  );
-
-  const smallTargets = targets.filter((t) => uniqueSmall.includes(t.id));
-  let sharedCarryover = carryover;
   // Cover the pool ONCE: each failed function is included in exactly one
   // rebatch session. If the configured budget is too small to fit the whole
   // pool (or 0 = auto), derive it from the pool size so no failed small
   // target is starved of its single rebatch attempt.
-  const sessionsNeeded = Math.ceil(uniqueSmall.length / config.batchSize);
-  let rebatchBudget = Math.max(maxAttempts, sessionsNeeded);
+  const sessionsNeeded = sessionsNeededForPool(uniqueSmall.length, config.batchSize);
+  let rebatchBudget = effectiveRebatchBudget(maxAttempts, uniqueSmall.length, config.batchSize);
+  console.log(
+    `[pi-harness] ${unit}: re-batching ${uniqueSmall.length} small target(s) ` +
+    `(below ${config.singletonMinSize} bytes, budget: ${rebatchBudget} session(s))`,
+  );
+
+  const smallTargets = targets.filter((t) => uniqueSmall.includes(t.id));
+  let sharedCarryover = carryover;
   const skipped: string[] = [];
+  // MEDIUM-1(c): two consecutive group-level infrastructure errors (claim /
+  // snapshot / build failures) mean rebatch itself is broken, not the
+  // targets — stop the phase instead of burning budget on doomed groups.
+  let consecutiveGroupErrors = 0;
 
   for (let rbIdx = 0; rbIdx < uniqueSmall.length; rbIdx += config.batchSize) {
     if (rebatchBudget <= 0) {
@@ -1535,6 +1570,11 @@ async function runRebatchPhase(
       let snapshot: Snapshot | null = null;
       let attemptError: string | null = null;
       let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
+      // MEDIUM-1(b): set right after rebatchBudget--; the catch refund only
+      // applies when the budget was actually decremented (claim/snapshot
+      // failure throws before the decrement — the unconditional refund was a
+      // net +1 budget inflation).
+      let budgetDecremented = false;
 
       try {
         await claimBatch(repoRoot, config, rbCurrent);
@@ -1542,11 +1582,12 @@ async function runRebatchPhase(
           ? await snapshotUnit(repoRoot, unit, writable)
           : null;
         rebatchBudget--; // Only decrement after claim+snapshot succeed.
+        budgetDecremented = true;
 
         const rbTargetSymbols = new Map(rbTargets.map(t => [t.id, t.symbol]));
         const verify = makeVerifyCallback({
           repoRoot, config, unit, targetIds: rbCurrent,
-          targetSymbols: rbTargetSymbols, writable, snapshot,
+          targetSymbols: rbTargetSymbols, writable,
         });
 
         const sessionResult = await runAgentSession({
@@ -1600,6 +1641,12 @@ async function runRebatchPhase(
             },
           });
           await releaseBatch(repoRoot, config, rbCurrent);
+          // MEDIUM-1(a): one session per group — a failed session is NOT
+          // re-run. Route the group to the caller as skipped (c447b53e5
+          // policy: rebatch enabled but failed → skip), never re-loop.
+          skipped.push(...rbCurrent);
+          consecutiveGroupErrors = 0;
+          rbCurrent = [];
           continue;
         }
       } catch (err) {
@@ -1607,10 +1654,6 @@ async function runRebatchPhase(
         const usage = usageFromError(err);
         if (usage) {
           logUsage(repoRoot, config, unit, `rebatch-${rbIdx}`, usage, false);
-        }
-        // Error before session ran — restore budget.
-        if (batchResults === null && attemptError !== null) {
-          rebatchBudget++;
         }
       }
 
@@ -1633,6 +1676,24 @@ async function runRebatchPhase(
         await releaseBatch(repoRoot, config, rbCurrent);
         sharedCarryover = `Previous re-batch attempt failed unexpectedly:\n${attemptError}\n${recoveryOutput}`;
         for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
+        // MEDIUM-1(b): refund the session ONLY when it was actually
+        // decremented (claim/snapshot failure throws before rebatchBudget--)
+        // AND the error streak is below the cap — an infra-broken phase
+        // stops without burning (or refunding) budget.
+        if (budgetDecremented && consecutiveGroupErrors < 2) {
+          rebatchBudget++;
+        }
+        // MEDIUM-1(a): the error'd group is attempted exactly once — clear
+        // it so the while loop cannot re-run the same targets.
+        // MEDIUM-1(c): two consecutive group errors stop the phase.
+        skipped.push(...rbCurrent);
+        rbCurrent = [];
+        if (consecutiveGroupErrors >= 2) {
+          process.stderr.write(
+            `[pi-harness] ${unit}: rebatch aborting after ${consecutiveGroupErrors} consecutive group errors — remaining groups skipped\n`,
+          );
+          rebatchBudget = 0;
+        }
         continue;
       }
 
@@ -1640,6 +1701,13 @@ async function runRebatchPhase(
         await releaseBatch(repoRoot, config, rbCurrent);
         sharedCarryover = "Previous re-batch attempt produced no results.";
         for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
+        // MEDIUM-1(a): no-results groups are attempted once too; route them
+        // to the caller as skipped (never re-run). Counts toward the
+        // consecutive-error streak (internal-error family).
+        consecutiveGroupErrors++;
+        skipped.push(...rbCurrent);
+        rbCurrent = [];
+        if (consecutiveGroupErrors >= 2) rebatchBudget = 0;
         continue;
       }
 
@@ -1662,6 +1730,7 @@ async function runRebatchPhase(
       for (const id of rbFailed) targetCarryover.set(id, sharedCarryover);
       skipped.push(...rbFailed);
 
+      consecutiveGroupErrors = 0;
       rbCurrent = [];
     }
 
@@ -1685,7 +1754,7 @@ async function runRebatchPhase(
     );
   }
 
-  return { skipped, targetCarryover };
+  return { skipped, targetCarryover, rebatchDisabled: false };
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -1698,10 +1767,26 @@ async function runSingleton(
   carryover: string,
   siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): Promise<boolean> {
-  const targets = loadUnmatchedTargets(repoRoot, config.region, unit).filter(
+  const targets = loadUnmatchedTargets(repoRoot, config.region, unit, {
+    // LOW-2: apply the SAME exhaustion filter as every other load site so
+    // the singleton budget bookkeeping is consistent (previously a config
+    // object could not be passed directly — the field is exhaustionThreshold).
+    ledgerPath: config.ledgerPath,
+    retryExhausted: config.retryExhausted,
+    exhaustionThreshold: config.exhaustionThreshold,
+  }).filter(
     (t) => t.id === targetId,
   );
-  if (targets.length === 0) return true; // already matched meanwhile
+  if (targets.length === 0) {
+    // LOW-2: the target is not in the unmatched+unexhausted set — it either
+    // matched meanwhile (fine) or the ledger excluded it (exhausted). Report
+    // skip-not-success instead of "already matched": claiming a run happened
+    // when none did misreports the retry outcome to the caller.
+    process.stderr.write(
+      `[pi-harness] ${unit}: ${targetId} not found in unmatched targets — already matched or ledger-exhausted; skipping singleton\n`,
+    );
+    return false;
+  }
 
   const target = targets[0];
   const writable = writableScopeForTargets(repoRoot, [target]);
@@ -1711,22 +1796,25 @@ async function runSingleton(
 
   let feedback = carryover;
 
-  // r8 WS-2: for near-match targets (≥90% or CODE/HIGH_MATCH), prepend the
-  // last witness rejection gate as a diagnosis block so the model gets the
-  // actionable failure (reloc drift / rho / callee / structural + diverging
-  // component) instead of re-deriving it.
+  // r8 WS-2 / LOW-3: for near-match targets (≥90% or CODE/HIGH_MATCH),
+  // prepend the last witness rejection gate as a diagnosis block so the
+  // model gets the actionable failure (reloc drift / rho / callee /
+  // structural + diverging component) instead of re-deriving it. The gate
+  // comes from the per-process map first, then the persisted ledger event
+  // (survives restarts — the map is per-process only). The advice is keyed
+  // off the ACTUAL gate, not a hard-coded reloc/structural text.
   const near = target.status === "CODE_MATCH" || target.status === "HIGH_MATCH"
     || (target.instructionMatch ?? 0) >= 90;
-  const gate = witnessGateByTarget.get(targetId);
+  const persistedGate = lastWitnessGate(repoRoot, config, targetId);
+  const gate = witnessGateByTarget.get(targetId) ?? persistedGate?.gate;
+  const gateReason = witnessGateByTarget.has(targetId)
+    ? undefined
+    : persistedGate?.reason;
   if (near && gate) {
     feedback =
-      `## Near-match diagnosis (witness gate: ${gate})\n\n` +
+      `## Near-match diagnosis (witness gate: ${witnessGateName(gate)}${gateReason ? ` — ${gateReason}` : ""})\n\n` +
       `This target is close to acceptance but the witness rejected it at the ` +
-      `gate above. If it is a reloc-name drift, run \`hexdiff <unit> <symbol>\` ` +
-      `and apply the Reloc-drift suggestion (usually \`extern \"C\"\` in the ` +
-      `declaring header). If it is structural/memory, compare the hexdiff ` +
-      `mismatch list before editing — the first-divergence label says which ` +
-      `component differs.\n\n${feedback}`;
+      `gate above.\n\n${witnessHintForGate(gate, gateReason)}\n\n${feedback}`;
   }
 
   // Phase 3: unified per-target budget across runs. Count prior sessions the
@@ -1779,7 +1867,7 @@ async function runSingleton(
       const singletonSymbols = new Map([[targetId, target.symbol]]);
       const verify = makeVerifyCallback({
         repoRoot, config, unit, targetIds: [targetId],
-        targetSymbols: singletonSymbols, writable, snapshot,
+        targetSymbols: singletonSymbols, writable,
       });
 
       const sessionResult = await runAgentSession({
@@ -2263,6 +2351,29 @@ function handleSkipped(
     ts: new Date().toISOString(), event, tu: unit,
     detail: { targetId, reason },
   });
+}
+
+/** Last persisted `witness-gate` ledger event for a target (LOW-3). The
+ *  per-process witnessGateByTarget map is lost on restart; the ledger row
+ *  written by runWitnessCycle survives, so runSingleton can still key its
+ *  near-match diagnosis off the actual gate. Returns the most recent row.
+ */
+function lastWitnessGate(
+  repoRoot: string, config: HarnessConfig, targetId: string,
+): { gate: string; reason?: string } | undefined {
+  const events = readLedger(repoRoot, config.ledgerPath);
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.event !== "witness-gate") continue;
+    const d = e.detail ?? {};
+    if (d.targetId === targetId && typeof d.gate === "string" && d.gate) {
+      return {
+        gate: d.gate,
+        reason: typeof d.reason === "string" && d.reason ? d.reason : undefined,
+      };
+    }
+  }
+  return undefined;
 }
 
 /**

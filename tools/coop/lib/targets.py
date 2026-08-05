@@ -669,6 +669,15 @@ def release_target(config: CoopConfig, target_id: str, *, owner: Optional[str]) 
                 )
             row.pop("claim", None)
             if row.get("workflow_status") == "CLAIMED":
+                # Note (LOW-5, deliberate): a claim that never produced a
+                # session (claim -> error -> release) is promoted to ACTIVE
+                # here. That is a known drift — ACTIVE reads as "in progress"
+                # while the target may be untouched — but it is load-bearing
+                # for the 17-target fix (released targets must leave
+                # CLAIMED), it is picked up again by the next harness wave,
+                # and the alternative (reverting to BACKLOG) would re-enqueue
+                # targets mid-flight. Do NOT change this without a status
+                # model that distinguishes "claimed-never-worked".
                 row["workflow_status"] = (
                     "ACCEPTED"
                     if row.get("status") in {"FULL_MATCH", "EQUIVALENT_MATCH"}

@@ -265,7 +265,11 @@ async function main(): Promise<void> {
 
   process.stderr.write("\n[pi-harness] Target summary:\n");
   for (const unit of tus) {
-    const targets = loadUnmatchedTargets(repoRoot, effectiveConfig.region, unit);
+    const targets = loadUnmatchedTargets(repoRoot, effectiveConfig.region, unit, {
+      ledgerPath: effectiveConfig.ledgerPath,
+      retryExhausted: effectiveConfig.retryExhausted,
+      exhaustionThreshold: effectiveConfig.exhaustionThreshold,
+    });
     process.stderr.write(`  ${unit}: ${targets.length} unmatched\n`);
   }
 

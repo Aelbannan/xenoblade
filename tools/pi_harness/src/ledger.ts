@@ -64,6 +64,25 @@ export function readLedger(repoRoot: string, ledgerPath: string): LedgerEntry[] 
 /** `batch-cycle` result statuses that mark a target as a dead end. */
 const DEAD_CYCLE_STATUSES: ReadonlySet<string> = new Set(["NOT_BUILDABLE", "NOT_FOUND"]);
 
+/** `target-skipped` reasons that merely RESTATE an exhaustion already logged
+ *  elsewhere (batch-session-exhausted / batch-error / batch-cycle dead-ends).
+ *  Counting them would double-count one failed run as two dead-end records
+ *  (Kimi M2: threshold 3 ≈ 2 runs). The skipped rows below are emitted by
+ *  the caller AFTER the underlying failure was logged:
+ *   - "exhausted singleton retries" / "maxAttemptsPerTarget exhausted (ledger)"
+ *     restate a singleton budget exhaustion already logged as
+ *     batch-session-exhausted / batch-error;
+ *   - "below singletonMinSize — rebatch was the only retry" restates the
+ *     rebatch batch-session-exhausted for the same targets;
+ *   - "singleton retry disabled" restates a batch failure that was skipped
+ *     purely by configuration. */
+const SKIP_RESTATEMENT_REASONS: ReadonlySet<string> = new Set([
+  "exhausted singleton retries",
+  "below singletonMinSize — rebatch was the only retry",
+  "maxAttemptsPerTarget exhausted (ledger)",
+  "singleton retry disabled",
+]);
+
 /** Extract `targetId` / `targetIds` from an event's detail (tolerant of
  *  missing or oddly-shaped detail). */
 function extractTargetIds(detail: unknown): string[] {
@@ -139,9 +158,16 @@ export function scanExhaustedTargets(
   for (const entry of parseLedgerLines(text)) {
     switch (entry.event) {
       case "batch-session-exhausted":
-      case "target-skipped":
         bump(extractTargetIds(entry.detail));
         break;
+      case "target-skipped": {
+        // Skip restatement rows — see SKIP_RESTATEMENT_REASONS. Only
+        // genuinely new dead-end signals count toward the threshold.
+        const reason = (entry.detail as Record<string, unknown> | null | undefined)?.reason;
+        if (typeof reason === "string" && SKIP_RESTATEMENT_REASONS.has(reason)) break;
+        bump(extractTargetIds(entry.detail));
+        break;
+      }
       case "batch-cycle":
         bump(cycleDeadEndIds(entry.detail, DEAD_CYCLE_STATUSES));
         break;

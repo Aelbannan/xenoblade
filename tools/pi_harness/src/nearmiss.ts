@@ -182,6 +182,42 @@ function enqueueIndexAppend(idxPath: string, line: string): Promise<void> {
   return indexAppendQueue;
 }
 
+/** `void func_XXXXXXXX(){}` (optionally `extern "C"`-prefixed) — the stub
+ *  shape that indicates a function was never written. The hex symbol is
+ *  matched case-insensitively (retail symbols are uppercase, but drafts may
+ *  use lowercase). */
+const STUB_BODY_RE = /func_([0-9A-Fa-f]{8})\s*\(\s*\)\s*\{\s*\}/g;
+
+/** True when restoring `draftText` over `worktreeText` would REPLACE a real
+ *  body with a stub — the stub-poison vector (Kimi H2): a singleton for
+ *  target A restores A's banked whole .cpp over the worktree, silently
+ *  re-stubbing functions B/C that were implemented or matched since the
+ *  draft was banked. Skipping the whole file keeps the worktree's newer
+ *  real bodies.
+ *
+ *  Comparison: every function the DRAFT stubs is checked against the
+ *  WORKTREE. If the worktree still stubs the same symbol, restoring is
+ *  harmless (it is a stub on both sides). If the worktree does NOT stub it —
+ *  it has a real body, or the symbol was removed entirely (the draft is a
+ *  copy of an older worktree state, so an absent symbol means it was
+ *  removed) — the draft is stale and the whole file must not be restored. */
+export function stubRestoreWouldRegressRealBodies(
+  draftText: string,
+  worktreeText: string,
+): boolean {
+  const stubbedInDraft = new Set<string>();
+  for (const m of draftText.matchAll(STUB_BODY_RE)) stubbedInDraft.add(m[1].toUpperCase());
+  if (stubbedInDraft.size === 0) return false;
+  for (const sym of stubbedInDraft) {
+    // Worktree still has a stub for this symbol -> restoring is harmless.
+    if (new RegExp(`func_${sym}\\s*\\(\\s*\\)\\s*\\{\\s*\\}`, "gi").test(worktreeText)) continue;
+    // Worktree does NOT stub this symbol: it has a real body, or the symbol
+    // was removed. Restoring the draft would re-stub it either way.
+    return true;
+  }
+  return false;
+}
+
 /**
  * Restore the banked files into the worktree (used on retry so the session
  * resumes FROM the draft instead of the pristine snapshot). Returns the
@@ -202,12 +238,34 @@ export async function restoreBankedDraft(
     const dir = join(bankDirFor(repoRoot, config, best.unit, tid));
     if (!existsSync(dir)) continue;
     const roundDir = best.roundDir;
+    // Stub-regression guard (Kimi H2): never restore a draft file over a
+    // worktree that has implemented functions the draft still stubs (see
+    // stubRestoreWouldRegressRealBodies). Skip the file — keep the
+    // worktree's newer real bodies.
+    const guardOk = async (src: string): Promise<boolean> => {
+      try {
+        const [draftText, worktreeText] = await Promise.all([
+          readFile(src, "utf-8"),
+          readFile(join(repoRoot, file), "utf-8"),
+        ]);
+        if (stubRestoreWouldRegressRealBodies(draftText, worktreeText)) {
+          process.stderr.write(
+            `[pi-harness] SKIPPED restoring banked draft file ${file} for ${tid} — ` +
+              `it stubs function(s) the worktree now implements (stub-poison guard)\n`,
+          );
+          return false;
+        }
+      } catch {
+        // unreadable side — fall through to the copy (best-effort)
+      }
+      return true;
+    };
     if (!roundDir) {
       // Legacy row without roundDir — fall back to the newest dir.
       const rounds = (await readdir(dir)).sort().reverse();
       if (rounds.length === 0) continue;
       const src = join(dir, rounds[0], file);
-      if (existsSync(src)) {
+      if (existsSync(src) && (await guardOk(src))) {
         const dst = join(repoRoot, file);
         await mkdir(dirname(dst), { recursive: true });
         await copyFile(src, dst);
@@ -216,7 +274,7 @@ export async function restoreBankedDraft(
       continue;
     }
     const src = join(dir, roundDir, file);
-    if (existsSync(src)) {
+    if (existsSync(src) && (await guardOk(src))) {
       const dst = join(repoRoot, file);
       await mkdir(dirname(dst), { recursive: true });
       await copyFile(src, dst);

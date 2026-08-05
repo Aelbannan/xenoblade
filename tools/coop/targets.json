@@ -67580,7 +67580,7 @@
       "size": "0x238",
       "unit": "kyoshin/cf/CfCollCylinderImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
@@ -67593,7 +67593,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCollCylinderImpl.cpp",
       "instruction_match": 59.021,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "pi-harness-27837",
+        "claimed_at": "2026-08-05T17:58:55.134035+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCollCylinderImpl.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800abb14",
@@ -67606,7 +67614,7 @@
       "size": "0x9C",
       "unit": "kyoshin/cf/CfCollCylinderImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -67619,7 +67627,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCollCylinderImpl.cpp",
       "instruction_match": 74.462,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "pi-harness-27837",
+        "claimed_at": "2026-08-05T17:58:51.960701+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCollCylinderImpl.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800abbb0",
@@ -200311,7 +200327,7 @@
       "size": "0x24",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
@@ -200324,7 +200340,15 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 98.889,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "pi-harness-27837",
+        "claimed_at": "2026-08-05T17:58:57.008231+00:00",
+        "allowed_paths": [
+          "src/kyoshin/makecrystal/CMCCylinderGauge.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80224098",
@@ -200363,7 +200387,7 @@
       "size": "0x20",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
@@ -200376,7 +200400,15 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
       "abi_helper_calls": [],
       "instruction_match": 98.75,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "inconclusive_unvalidated_callee",
+      "claim": {
+        "owner": "pi-harness-27837",
+        "claimed_at": "2026-08-05T17:58:53.556737+00:00",
+        "allowed_paths": [
+          "src/kyoshin/makecrystal/CMCCylinderGauge.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80224104",
@@ -224416,7 +224448,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CCollepedia.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CCollepedia.cpp",
-      "instruction_match": 99.375,
+      "instruction_match": 99.219,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -267579,8 +267611,8 @@
       "size": "0x7C",
       "unit": "kyoshin/CNandData",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CNandData.cpp",
       "called_functions": [
@@ -267597,7 +267629,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CNandData.s",
       "abi_helper_calls": [],
       "instruction_match": 98.226,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b123c",
@@ -267610,8 +267642,8 @@
       "size": "0x48",
       "unit": "kyoshin/CNandData",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CNandData.cpp",
       "called_functions": [
@@ -267624,7 +267656,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CNandData.s",
       "abi_helper_calls": [],
       "instruction_match": 98.611,
-      "equivalence_status": "inconclusive_unvalidated_callee"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b1284",

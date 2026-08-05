@@ -10,16 +10,16 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6486 |
-| extern "C" declarations (non-lbl_*, imports) | 2313 |
+| extern "C" (total lines) | 6491 |
+| extern "C" declarations (non-lbl_*, imports) | 2318 |
 | extern "C" definitions (forced names) | 2036 |
 | `self`/register-style params | 3422 |
-| `void*` (params + locals) | 4935 |
-| raw pointer offset arithmetic | 2937 |
-| deref-through-cast arithmetic | 1296 |
+| `void*` (params + locals) | 4942 |
+| raw pointer offset arithmetic | 2941 |
+| deref-through-cast arithmetic | 1298 |
 | inline asm / `register` | 88 |
 | rN-named params | 316 |
-| goto | 1059 |
+| goto | 1061 |
 | #pragma | 245 |
 
 ## Top offenders (by cleanable severity)
@@ -331,7 +331,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 5 | 5 | 3 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 1 | 7 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 2 | 2 | 9 | 11 | 3 | 0 | 0 | 3 | 5 |
+| src/kyoshin/cf/CBattleManager.cpp | 7 | 2 | 9 | 18 | 7 | 2 | 0 | 3 | 7 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 8 | 6 | 8 | 23 | 5 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 0 | 0 | 8 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -2057,13 +2057,14 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 7
  },
  "src/kyoshin/cf/CBattleManager.cpp": {
-  "extern_c_nonlbl_decl": 2,
+  "deref_arith": 2,
+  "extern_c_nonlbl_decl": 7,
   "extern_c_nonlbl_def": 2,
-  "goto_count": 5,
-  "ptr_arith": 3,
+  "goto_count": 7,
+  "ptr_arith": 7,
   "rn_params": 3,
   "self_params": 9,
-  "void_ptr": 11
+  "void_ptr": 18
  },
  "src/kyoshin/cf/CCharEffect.cpp": {
   "extern_c_nonlbl_def": 1

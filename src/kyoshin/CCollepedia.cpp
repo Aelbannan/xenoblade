@@ -30,14 +30,6 @@ extern "C" {
     void func_80254040(u8*);
     void func_8025406C(u8*);
     unsigned char func_80254144(u8*);
-    u32 func_801B481C();
-    void func_8022B9B4(void*, u32, int);
-    void func_8022BFC8(void*, int);
-    void func_8022B8B8(void*);
-    void func_8013B428__FUl(u32);
-    u32 getHandleMEM2__Q23mtl10MemManagerFv();
-    float func_801895EC();
-    void func_80043738(float, int, char*, void*, int, int, int);
 }
 
 void __ct__CCLPCur(){}
@@ -165,10 +157,7 @@ void func_80254350(){}
 
 void func_8025440C(){}
 
-// Returns the byte at offset 6 of the entry at index (s8)self[1] (stride 0x140)
-__declspec(noinline) int func_80254484(u8* self) {
-    return (self + (s8)self[1] * 320)[6];
-}
+void func_80254484(){}
 
 void func_8025449C(){}
 
@@ -365,38 +354,7 @@ void func_80255AB4(CCollepedia* self) {
     }
 }
 
-// Target: us-80257d9c
-// Called when the collection menu is opened: checks guards, sets state,
-// builds a message string, configures the CSysWin dialog, plays sounds,
-// and allocates/frees a memory buffer.
-void func_80255B60(CCollepedia* self) {
-    // Skip if something is already active (non-zero guard)
-    if (func_801B481C()) return;
-
-    // Set state to 3 (initializing)
-    self->field_49 = 3;
-
-    // Check if the sub-array has entries; if not, bail out
-    if (func_80254484(&self->field_E8) == 0) return;
-
-    // State advances to 0xD (dialog open)
-    self->field_49 = 0xD;
-
-    // Build a message string and configure the CSysWin dialog with it
-    func_8022B9B4((void*)&self->field_9C,
-                  (u32)func_80136190(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13), 0);
-    func_8022BFC8((void*)&self->field_9C, 1);
-    func_8022B8B8((void*)&self->field_9C);
-
-    // Play open/selection sounds
-    func_8013B428__FUl(0x85);
-    func_8013B428__FUl(0x86);
-
-    // Get a MEM2 handle, query a float, and pass it to the game task
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    float f = func_801895EC();
-    func_80043738(f, 0, &lbl_eu_8050C6E8[0x200], (void*)handle, 2, 1, 0);
-}
+void func_80255B60(){}
 
 // Target 4: us-80257e64
 // Check if CSysWin is active, then set state and create a UI sound effect

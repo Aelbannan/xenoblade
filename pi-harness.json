@@ -1,12 +1,12 @@
 {
   "matchModel": {
-    "provider": "openrouter",
-    "model": "deepseek/deepseek-v4-flash",
+    "provider": "nube",
+    "model": "DeepSeek-V4-Flash",
     "thinkingLevel": "low"
   },
   "cleanupModel": {
-    "provider": "openrouter",
-    "model": "deepseek/deepseek-v4-flash",
+    "provider": "nube",
+    "model": "DeepSeek-V4-Flash",
     "thinkingLevel": "high"
   },
   "batchSize": 5,
@@ -43,13 +43,13 @@
   "triage": "off",
   "pythonBin": ".venv/bin/python",
   "singletonModel": {
-    "provider": "openrouter",
-    "model": "deepseek/deepseek-v4-flash",
-    "thinkingLevel": "high"
+    "provider": "nube",
+    "model": "DeepSeek-V4-Flash",
+    "thinkingLevel": "low"
   },
   "rebatchModel": {
-    "provider": "openrouter",
-    "model": "deepseek/deepseek-v4-flash",
+    "provider": "nube",
+    "model": "DeepSeek-V4-Flash",
     "thinkingLevel": "high"
   },
   "maxSingletonSessions": 1

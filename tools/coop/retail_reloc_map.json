@@ -1,5 +1,5 @@
 {
-  "count": 1352,
+  "count": 1366,
   "entries": {
     "EndofProgramInstruction$576": {
       "R_PPC_EMB_SDA21": {
@@ -342,6 +342,54 @@
         ]
       }
     },
+    "__vt__29reslist<PQ22cf12IBattleEvent>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14468,
+        "retail_symbol": "lbl_eu_8052BD2C",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 32,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15299,
+        "retail_symbol": "lbl_eu_8052BD2C",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
+    "__vt__30reslist<PQ22cf13CfObjectActor>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15552,
+        "retail_symbol": "lbl_eu_8052BD50",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14595,
+        "retail_symbol": "lbl_eu_8052BD50",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
     "__vt__34_reslist_base<PQ22cf11CChainActor>": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -363,6 +411,54 @@
         "retail_symbol": "lbl_eu_8053832C",
         "units": [
           "main/kyoshin/cf/chain/CChainActorList"
+        ]
+      }
+    },
+    "__vt__35_reslist_base<PQ22cf12IBattleEvent>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
+        "kind": "data",
+        "retail_addend": 14336,
+        "retail_symbol": "lbl_eu_8052BD44",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
+        "kind": "data",
+        "retail_addend": 14499,
+        "retail_symbol": "lbl_eu_8052BD44",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
+    "__vt__36_reslist_base<PQ22cf13CfObjectActor>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 6,
+        "kind": "data",
+        "retail_addend": 36865,
+        "retail_symbol": "lbl_eu_8052BD68",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 6,
+        "kind": "data",
+        "retail_addend": 14659,
+        "retail_symbol": "lbl_eu_8052BD68",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
         ]
       }
     },
@@ -512,6 +608,30 @@
         ]
       }
     },
+    "__vt__Q22cf10CChainTime": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 5,
+        "kind": "data",
+        "retail_addend": 32739,
+        "retail_symbol": "lbl_eu_8052BD74",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 5,
+        "kind": "data",
+        "retail_addend": 37023,
+        "retail_symbol": "lbl_eu_8052BD74",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
     "__vt__Q22cf12CAttackParam": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -581,6 +701,30 @@
         "retail_symbol": "lbl_eu_80532FE0",
         "units": [
           "main/kyoshin/cf/CTaskCulling"
+        ]
+      }
+    },
+    "__vt__Q22cf14CBattleManager": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 15712,
+        "retail_symbol": "lbl_eu_8052BCE0",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 14699,
+        "retail_symbol": "lbl_eu_8052BCE0",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
         ]
       }
     },
@@ -15557,6 +15701,20 @@
         ]
       }
     },
+    "main/kyoshin/cf/CBattleManager@3413": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80666DDC",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
     "main/kyoshin/cf/CTaskCulling@...bss.0": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -17860,6 +18018,19 @@
         ]
       }
     },
+    "spInstance__Q22cf14CBattleManager": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 4,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80663F00",
+        "units": [
+          "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
     "spNotRunningDeviceName__7CDevice": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -17967,8 +18138,8 @@
       }
     }
   },
-  "function_pairs": 4982,
-  "generated": "2026-08-05T20:50:13.794108",
+  "function_pairs": 4969,
+  "generated": "2026-08-06T00:20:14.384393",
   "region": "us",
   "units_scanned": 616,
   "version": 1

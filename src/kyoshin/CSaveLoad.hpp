@@ -67,7 +67,8 @@ public:
     char _pad_12B[0x12C - 0x12B];                      // 0x12B
     u8 mField12C;                                        // 0x12C
     u8 mField12D;                                        // 0x12D
-    char _pad_12E[0x130 - 0x12E];                      // 0x12E-0x12F
+    u8 mField12E;                                        // 0x12E
+    u8 mField12F;                                        // 0x12F
     void* mField130;                                    // 0x130 - heap pointer to deallocate
     void* mField134;                                    // 0x134 - heap pointer to deallocate
     void* mField138;                                    // 0x138 - heap pointer to deallocate

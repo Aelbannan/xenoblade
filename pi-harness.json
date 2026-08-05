@@ -16,7 +16,7 @@
   "rebatchEnabled": true,
   "maxRebatchAttempts": 0,
   "maxTokens": 0,
-  "singletonMinSize": 500,
+  "singletonMinSize": 768,
   "maxBriefChars": 40000,
   "briefTargetChars": 12000,
   "maxBatchMinutes": 45,
@@ -52,5 +52,6 @@
     "model": "DeepSeek-V4-Flash",
     "thinkingLevel": "high"
   },
-  "maxSingletonSessions": 1
+  "maxSingletonSessions": 1,
+  "snapshotsEnabled": false
 }

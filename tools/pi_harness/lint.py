@@ -62,6 +62,16 @@ _RE_VOLATILE_ARR = re.compile(
 _RE_CAST = re.compile(r"\(\s*\w+\s*\*\s*\)")
 _RE_HEX_OFF = re.compile(r"\+\s*0x[0-9A-Fa-f]+")
 _RE_CODEGEN = re.compile(r"DECOMP_PPC_|DECOMP_FORCELITERAL|DECOMP_FORCEACTIVE")
+# Unknown-name placeholders: offset-style `unkN` locals/fields (unk0, unk4,
+# this->unk10, unkC …) and generated unknown types/members (UnkClass_8045F564,
+# UnkVirtualFunc3, CActorParam_UnkStruct2 …). These come from the generated
+# ctx and mass-imported headers; NEW uses in added lines mean the model
+# failed to name the entity it is writing against.
+_RE_UNK_NUM = re.compile(r"\bunk[0-9A-Fa-f]+\b")
+# Unk* generated names may appear as a bare type or as a member/prefix inside
+# a longer identifier (CActorParam_UnkStruct2, CCBattleManager_UnkVirtualFunc9),
+# so allow any word-boundary start with optional prior identifier chars.
+_RE_UNK_GEN = re.compile(r"Unk(?:Class_[0-9A-Fa-f]+|VirtualFunc[0-9]+|Struct[0-9A-Fa-f]+)")
 # Binary-patching escapes (PLAN.md §17.6): forbidden in source. The narrow
 # linker-ADDR16 bake (bake_linker_addrs / force_symbol_relocs) is allowed.
 _RE_BINPATCH = re.compile(
@@ -186,6 +196,16 @@ def lint_delta(path: str, old_text: str | None,
         if _RE_VOID_PTR.search(code):
             add("no_void_ptr", line_no, raw,
                 "void* is forbidden; use a proper struct/class type")
+        if _RE_UNK_NUM.search(code):
+            add("no_unk_name", line_no, raw,
+                "unknown-name placeholder `unkN` is forbidden in new code; "
+                "name the variable/field from the retail symbol or struct "
+                "layout")
+        if _RE_UNK_GEN.search(code):
+            add("no_unk_generated", line_no, raw,
+                "generated unknown type/member (`UnkClass_*`, `UnkVirtualFunc*`, "
+                "`UnkStruct*`) is forbidden in new code; use a real struct/class "
+                "name from the headers or declare it properly")
         if _RE_CAST.search(code) and _RE_HEX_OFF.search(code):
             add("no_offset_arithmetic", line_no, raw,
                 "raw pointer offset arithmetic is forbidden; use struct "

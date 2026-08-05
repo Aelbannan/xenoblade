@@ -48,3 +48,33 @@ test("lint_cli --pair still does delta lint (only added lines)", async () => {
   assert.equal(ok, false);
   assert.ok(rules.includes("no_pragmas"));
 });
+
+test("lint_cli flags unkN unknown-name placeholders in new code", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-unk-var-"));
+  const f = join(dir, "unk.cpp");
+  writeFileSync(f, "u32 unk0 = this->unk0;\n");
+  const { ok, rules } = await lintCli(["--file", f]);
+  assert.equal(ok, false);
+  assert.ok(rules.includes("no_unk_name"), `expected no_unk_name, got ${rules}`);
+});
+
+test("lint_cli flags UnkClass/UnkVirtualFunc generated types in new code", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-unk-gen-"));
+  const f = join(dir, "gen.cpp");
+  writeFileSync(f, "UnkClass_805764CC* p = get();\n");
+  const { ok, rules } = await lintCli(["--file", f]);
+  assert.equal(ok, false);
+  assert.ok(rules.includes("no_unk_generated"), `expected no_unk_generated, got ${rules}`);
+});
+
+test("lint_cli delta mode ignores PRE-EXISTING unk usage (only added lines)", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-unk-delta-"));
+  const oldF = join(dir, "old.cpp");
+  const newF = join(dir, "new.cpp");
+  writeFileSync(oldF, "u32 unk0 = this->unk0;\n");
+  // Adding a clean line next to existing unk code must not flag the unk.
+  writeFileSync(newF, "u32 unk0 = this->unk0;\nint count = 5;\n");
+  const { ok, rules } = await lintCli(["--pair", oldF, newF]);
+  assert.equal(ok, true, `rules=${rules}`);
+  assert.deepEqual(rules, []);
+});

@@ -76,6 +76,7 @@ from .semantics import (
     execute_cfg,
     execute_instruction,
     read_gprs,
+    register_effects,
 )
 from .spr import AUX_SPR_OBSERVABLES
 
@@ -369,6 +370,38 @@ def _validate_callee_contract_impl(
                 component = input_names.get(str(variable.decl().name()))
                 if component is not None:
                     required_reads.add(component)
+        # F1 (round-8 adversarial review): a store's SOURCE register flows only
+        # into the memory array, and memory's final value is deliberately
+        # excluded from get_vars above ("Memory reads are implied by a memory
+        # write" — the comment there is aspirational: the source registers are
+        # NOT implied, they are dropped).  A leaf ``stw r11, 0(r3); blr``
+        # validated to reads={memory, r3, valid} — the address r3 was caught
+        # only because the store's definedness constraint references it, but
+        # r11 (the stored VALUE) was missing.  The witness's gate-5
+        # call-observed rule then left r11 free to rename at a call site and
+        # the F3 token canonicalization hid the divergence — a certified
+        # caller pair whose physical substitution stores a different value
+        # (probe: caller renames r11<->r12 dead at a call to a stw-only
+        # callee; certified=True before this fix).  Enumerate every
+        # register read of memory-WRITING instructions directly (register_effects
+        # is the engine's conservative per-opcode table — over-approximation is
+        # the sound direction here).
+        for insn in instructions:
+            insn_reads, insn_writes = register_effects(insn)
+            if "memory" not in insn_writes:
+                continue
+            for name in insn_reads:
+                if name == "memory" or name == "valid" or name == "invalid_reason":
+                    continue
+                if name.startswith("r") and name[1:].isdigit():
+                    required_reads.add(f"r{int(name[1:])}")
+                elif name.endswith(".ps1"):
+                    required_reads.add(name)
+                elif name.startswith("f") and name[1:].isdigit():
+                    required_reads.add(f"f{int(name[1:])}")
+                else:
+                    # gqr{i}, spr names, cr fields, xer.*, msr, ...
+                    required_reads.add(name)
 
     missing_reads = frozenset(
         name for name in required_reads if not _contract_covers(name, contract.reads)

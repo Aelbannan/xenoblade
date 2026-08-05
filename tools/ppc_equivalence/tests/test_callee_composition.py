@@ -251,3 +251,65 @@ class CliAssumeHygieneTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StoreSourceReadCaptureTests(unittest.TestCase):
+    """F1 (round-8 adversarial review): a store's source register must appear
+    in the validated contract's reads.
+
+    ``_validate_callee_contract_impl`` collects reads from the final values of
+    WRITTEN components plus terminal conditions; a memory write's final value
+    is deliberately excluded from that scan (huge Store/Select cones), so a
+    store-only callee (``stw r11, 0(r3); blr``) validated to
+    reads={memory, r3, valid} — the ADDRESS r3 was captured only via the
+    store's definedness constraint, but the stored VALUE r11 was dropped.
+    The witness's gate-5 call-observed rule then left r11 free to rename at a
+    call site and the F3 token canonicalization hid the divergence: a caller
+    pair renaming r11<->r12 (dead at the call) around such a callee certified
+    while the physical substitution stores a different value.  The validation
+    now enumerates the register reads of memory-writing instructions
+    directly (register_effects), so the store source is captured.
+    """
+
+    def test_store_source_register_in_validated_reads(self) -> None:
+        leaf_bytes = bytes.fromhex("91630000 4e800020")  # stw r11,0(r3); blr
+        elf = build_reloc_elf({"leaf": leaf_bytes})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pair.o"
+            path.write_bytes(elf)
+            contracts = infer_matched_callee_contracts(
+                frozenset({"leaf"}), path, path,
+            )
+        self.assertIn("leaf", contracts)
+        contract = contracts["leaf"]
+        self.assertIn("memory", contract.reads)
+        self.assertIn("r11", contract.reads, contract)
+        self.assertIn("r3", contract.reads)
+
+    def test_fpr_and_ps1_store_sources_captured(self) -> None:
+        # stfd f20,8(r1); blr  ->  reads f20 (FPR store source)
+        leaf_bytes = bytes.fromhex("da810008 4e800020")
+        elf = build_reloc_elf({"leaf": leaf_bytes})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pair.o"
+            path.write_bytes(elf)
+            contracts = infer_matched_callee_contracts(
+                frozenset({"leaf"}), path, path,
+            )
+        self.assertIn("leaf", contracts)
+        self.assertIn("f20", contracts["leaf"].reads, contracts["leaf"])
+
+    def test_store_constant_callee_unchanged(self) -> None:
+        # li r11,7; stw r11,0(r3); blr — r11 written before the store is a
+        # def, not a read; the contract must NOT list r11 as an input.
+        leaf_bytes = bytes.fromhex("39600007 90830000 4e800020")
+        elf = build_reloc_elf({"leaf": leaf_bytes})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pair.o"
+            path.write_bytes(elf)
+            contracts = infer_matched_callee_contracts(
+                frozenset({"leaf"}), path, path,
+            )
+        self.assertIn("leaf", contracts)
+        self.assertNotIn("r11", contracts["leaf"].reads, contracts["leaf"])
+        self.assertIn("memory", contracts["leaf"].reads)

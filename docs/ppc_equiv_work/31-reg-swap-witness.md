@@ -485,14 +485,29 @@ relocated-branch flag differences are now rejected at gate 3 directly.
 
 ### Trust boundaries re-verified (GLM + session)
 
-- **Precise-contract `reads` soundness is load-bearing** (GLM F1): a contract
-  that under-approximates the callee's actual reads lets gate 5 leave an
-  observed lane unfixed and the F3 token hides the rename — demonstrated with
-  mis-inferred contracts for both `bl` and tail-call forms.  Opaque
-  (`reads="*"` → all 96 lanes fixed) and the narrow FULL_MATCH contract
-  (validated by `_full_match_callee_body_fits_narrow`) are sound.  The module
-  docstring's "non-EABI opaque callee" false-certificate class is already
-  closed by the fix-all-lanes rule — the docstring is stale (GLM F3).
+- **Precise-contract `reads` soundness is load-bearing** (GLM F1) — and the
+  session agent FOUND and FIXED a real under-approximation mechanism
+  (2026-08-04): `_validate_callee_contract_impl` collects reads from the
+  final values of WRITTEN components plus terminal conditions, and a memory
+  write's final value is deliberately excluded from that scan (huge
+  Store/Select cones).  A store-only leaf (`stw r11, 0(r3); blr`) therefore
+  validated to reads={memory, r3, valid} — the ADDRESS r3 was captured only
+  via the store's definedness constraint, but the stored VALUE r11 was
+  dropped.  The witness's gate-5 call-observed rule then left r11 free to
+  rename at a call site and the F3 token canonicalization hid the
+  divergence: a caller pair renaming r11<->r12 (dead at the call) around
+  such a callee CERTIFIED while the physical substitution stores a different
+  value (probe reproduced end-to-end, certified=True before the fix).  Fix:
+  the validation now enumerates the register reads of memory-WRITING
+  instructions directly via `register_effects` (sound over-approximation;
+  declared contracts already contain these reads, so validations stay
+  valid).  Regression: `StoreSourceReadCaptureTests` + caller-pair probe now
+  rejects at gate 5 while a constant-store callee (no r11 read) still
+  certifies.  Opaque (`reads="*"` → all 96 lanes fixed) and the narrow
+  FULL_MATCH contract (validated by `_full_match_callee_body_fits_narrow`)
+  are sound.  The module docstring's "non-EABI opaque callee"
+  false-certificate class is already closed by the fix-all-lanes rule — the
+  docstring is stale (GLM F3).
 - **Location-independence**: `_value_equal`'s base-relative rule applies to
   memory store words, not just LR/exit targets (probe P4d certifies a
   post-call `mflr; stw` storing different absolute addresses).  The SMT path

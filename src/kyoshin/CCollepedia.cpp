@@ -13,7 +13,10 @@ extern "C" {
     char lbl_eu_8050C6E8[];
     u16 lbl_eu_8050C6A0[30];
     u32 lbl_eu_806640A8;
+    u32 lbl_eu_806647D8;
     u32 lbl_eu_806647DC;
+    u8 lbl_eu_80537474[];
+    int func_8009EC6C(u16);
     char* func_80136190(char*, char*, u32);
     char* func_8013639C(u32, char*, u16);
     int func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
@@ -32,7 +35,15 @@ extern "C" {
     unsigned char func_80254144(u8*);
 }
 
-void __ct__CCLPCur(){}
+extern "C" void __ct__CCLPCur(CCLPCur* self, int val) {
+    self->vt = (void*)&lbl_eu_80537474;
+    self->field4 = (void*)static_cast<uintptr_t>(val);
+    self->field8 = 0;
+    self->fieldC = 0;
+    self->field10 = 0;
+    self->field14 = 0;
+    self->field15 = 0;
+}
 
 void __dt__802531C4(){}
 
@@ -65,7 +76,13 @@ CCollepedia::~CCollepedia() {}
 
 void func_802534F0(){}
 
-void func_80253794(){}
+// Release the cursor's embedded object (virtual delete, then clear field4).
+extern "C" void func_80253794(CCLPCur* self) {
+    if (self->field4 != 0) {
+        delete (CCurFocusItem*)self->field4;
+        self->field4 = 0;
+    }
+}
 
 void func_802537EC(){}
 
@@ -156,7 +173,25 @@ void func_802542B8(){}
 
 void func_802542D0(){}
 
-void func_80254350(){}
+// Returns a string resource for the grid cell (sub-array) selected by (arg1, arg2),
+// guarded by an sbss flag and covering whether the field slot is populated.
+char* func_80254350(u8* self, u32 arg1, u32 arg2) {
+    if (lbl_eu_806647D8 == 0) return nullptr;
+    if (arg1 >= 6) return nullptr;
+    if (arg2 >= 5) return nullptr;
+    s8 idx = (s8)self[1];
+    // Named left-to-right chain to force retail's add operand order.
+    u8* t1 = self + idx * 0x140;
+    u8* t2 = t1 + arg1 * 0x34;
+    u8* t3 = t2 + arg2 * 0xA;
+    CCollepediaCell* cell = (CCollepediaCell*)t3;
+    u16 v14 = cell->field_14;
+    if (v14 == 0) return nullptr;
+    if (func_8009EC6C(cell->field_10) != 0) {
+        return func_8013639C(lbl_eu_806647D8, &lbl_eu_8050C6E8[0x18F], v14);
+    }
+    return nullptr;
+}
 
 void func_8025440C(){}
 

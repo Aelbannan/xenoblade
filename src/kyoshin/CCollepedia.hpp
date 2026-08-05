@@ -6,10 +6,42 @@
 #include "kyoshin/CSysWin.hpp"
 
 // Full `this` struct for harness decomp of CCollepedia.cpp
+// CCLPCur — cursor/entry sub-object used by CCollepedia.
+// Non-virtual class in the decomp; the vtable pointer sits at +0x00 as a field.
+struct CCLPCur {
+    /* 0x00 */ void* vt;          // vtable (lbl_eu_80537474)
+    /* 0x04 */ void* field4;      // pointer to a deletable object
+    /* 0x08 */ int field8;
+    /* 0x0C */ int fieldC;
+    /* 0x10 */ int field10;
+    /* 0x14 */ u8 field14;
+    /* 0x15 */ u8 field15;
+    void func_80253794();         // release (virtual delete of field4)
+};
+
+// type of the object pointed to by CCLPCur::field4 — its virtual
+// destructor lives at vtable offset +0x8 (slot index 2).
+class CCurFocusItem {
+public:
+    virtual void slot0();
+    virtual void slot1();
+    virtual ~CCurFocusItem();
+};
+
 // Entry within the sub-block array (stride 0xA)
 struct CCollepediaEntry {
     u8 _00[0x08];
     u16 field_08; // u16 at offset +0x08 within entry
+};
+
+// Grid cell within the sub-array at +0xE8. Indexed as
+// base + idx*0x140 (column) + arg1*0x34 (category) + arg2*0xA (row).
+// +0x10 / +0x14 u16 fields are read relative to the cell base.
+struct CCollepediaCell {
+    u8 _00[0x10];
+    u16 field_10;
+    u16 field_12;
+    u16 field_14;
 };
 
 // Sub-range of the CCollepedia class from +0x00 to +0xE8

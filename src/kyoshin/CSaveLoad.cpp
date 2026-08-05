@@ -1072,7 +1072,7 @@ void sinit_802930E0() {
     ((cf::CfAward*)self)->mSecondBase = base;
     ((cf::CfAward*)self)->mVtbl = (char*)base + 8;
     func_8009D414(self);
-    __register_global_object(self, dtor, (void*)lbl_eu_80576CF8);
+    __register_global_object(self, dtor, (void*)&lbl_eu_80576CF8);
 }
 
 extern "C" void func_8028EC74(UnkPtrHolder* self) {

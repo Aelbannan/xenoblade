@@ -51,8 +51,10 @@ export interface HarnessConfig {
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
   /** Per-TU budget for total rebatch sessions across all small-target
-   *  groups. Once exhausted, remaining targets route to singletons
-   *  (or get skipped). 0 = no rebatch attempts. */
+   *  groups. The effective budget is max(configured, sessions needed to
+   *  cover the small pool once) — every failed small target is included in
+   *  exactly one rebatch session. 0 = auto-derive from pool size. Small
+   *  targets never route to singletons (rebatch is their only retry). */
   maxRebatchAttempts: number;
   /** Max output tokens per session (0 = model default, no override). */
   maxTokens: number;

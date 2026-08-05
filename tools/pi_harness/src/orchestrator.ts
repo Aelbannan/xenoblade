@@ -1407,21 +1407,12 @@ async function runOneTu(
     for (const [id, fb] of rebatchCarryover) {
       targetCarryover.set(id, fb);
     }
-    // Route targets that rebatch didn't process (disabled, budget
-    // exhausted, or failed) to singletons or skip.
+    // Small targets (below singletonMinSize, not near-match) never get
+    // routed to singletons — rebatch was their one retry. Near-match small
+    // targets already bypassed the size route in Pass 2 (they ran as
+    // singletons there). So everything rebatch didn't process is skipped.
     for (const fid of rebatchSkipped) {
-      if (!config.singletonEnabled) {
-        handleSkipped(repoRoot, config, unit, fid, "singleton retry disabled");
-        continue;
-      }
-      const ok = await runSingleton(
-        repoRoot, unit, fid, config, modelRuntime, sanitized,
-        targetCarryover.get(fid) || carryover,
-        siblingsByTarget,
-      );
-      if (!ok) {
-        handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
-      }
+      handleSkipped(repoRoot, config, unit, fid, "below singletonMinSize — rebatch was the only retry");
     }
   }
 
@@ -1485,18 +1476,22 @@ async function runRebatchPhase(
   }
 
   if (maxAttempts <= 0) {
-    console.log(`[pi-harness] ${unit}: rebatch budget is 0 — ${uniqueSmall.length} small target(s) routed to singletons`);
-    return { skipped: uniqueSmall, targetCarryover };
+    console.log(`[pi-harness] ${unit}: rebatch budget auto-derived (0 = cover pool once) — ${uniqueSmall.length} small target(s)`);
   }
 
   console.log(
     `[pi-harness] ${unit}: re-batching ${uniqueSmall.length} small target(s) ` +
-    `(below ${config.singletonMinSize} bytes, budget: ${maxAttempts} session(s))`,
+    `(below ${config.singletonMinSize} bytes, budget: ${Math.max(maxAttempts, Math.ceil(uniqueSmall.length / config.batchSize))} session(s))`,
   );
 
   const smallTargets = targets.filter((t) => uniqueSmall.includes(t.id));
   let sharedCarryover = carryover;
-  let rebatchBudget = maxAttempts;
+  // Cover the pool ONCE: each failed function is included in exactly one
+  // rebatch session. If the configured budget is too small to fit the whole
+  // pool (or 0 = auto), derive it from the pool size so no failed small
+  // target is starved of its single rebatch attempt.
+  const sessionsNeeded = Math.ceil(uniqueSmall.length / config.batchSize);
+  let rebatchBudget = Math.max(maxAttempts, sessionsNeeded);
   const skipped: string[] = [];
 
   for (let rbIdx = 0; rbIdx < uniqueSmall.length; rbIdx += config.batchSize) {

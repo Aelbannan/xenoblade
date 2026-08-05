@@ -39,7 +39,7 @@ function defaultConfig(): HarnessConfig {
     snapshotsEnabled: true,
     singletonEnabled: true,
     rebatchEnabled: true,
-    maxRebatchAttempts: 0, // 0 = no rebatch attempts
+    maxRebatchAttempts: 0, // 0 = auto: cover the small pool exactly once
     maxTokens: 0,
     singletonMinSize: 0,
     maxBriefChars: 80_000,

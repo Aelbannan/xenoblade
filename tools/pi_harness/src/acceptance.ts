@@ -111,9 +111,35 @@ export interface LintOutcome {
 export async function runLint(
   repoRoot: string,
   python: string,
-  snapshot: Snapshot,
+  snapshot: Snapshot | null,
+  files?: string[],
 ): Promise<LintOutcome> {
   const all: LintOutcome["violations"] = [];
+
+  // Snapshots disabled: lint each listed file WHOLE (--file mode; every line
+  // counts as added, so the full file is checked — the same rules, just no
+  // delta baseline). The caller passes the source-file subset of the writable
+  // scope. Nothing to check when no file list is given.
+  if (!snapshot) {
+    for (const file of files ?? []) {
+      const repoPath = join(repoRoot, file);
+      if (!existsSync(repoPath)) continue;
+      try {
+        const { stdout } = await execFilePromise(
+          python,
+          ["tools/pi_harness/lint_cli.py", "--file", repoPath],
+          { cwd: repoRoot },
+        );
+        const result = JSON.parse(stdout) as { ok?: boolean; violations?: LintOutcome["violations"] };
+        if (Array.isArray(result.violations)) all.push(...result.violations);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        process.stderr.write(`[pi-harness] WARNING: lint_cli.py failed for ${file}: ${msg}\n`);
+        all.push({ path: file, rule: "lint-crash", detail: msg.slice(0, 500) });
+      }
+    }
+    return { ok: all.length === 0, violations: all };
+  }
 
   for (const file of snapshot.files) {
     const repoPath = join(repoRoot, file);

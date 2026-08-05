@@ -36,6 +36,7 @@ function defaultConfig(): HarnessConfig {
     triage: "off", // no-SMT pre-batch routing is opt-in; "off" == today's behavior
     maxBatchRetries: 2,
     maxSingletonSessions: 2,
+    snapshotsEnabled: true,
     singletonEnabled: true,
     rebatchEnabled: true,
     maxRebatchAttempts: 0, // 0 = no rebatch attempts
@@ -198,6 +199,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!Number.isInteger(config.maxSingletonSessions) || config.maxSingletonSessions < 1) {
     throw new Error("config.maxSingletonSessions must be an integer >= 1");
+  }
+  if (typeof config.snapshotsEnabled !== "boolean") {
+    throw new Error("config.snapshotsEnabled must be a boolean");
   }
   if (!(config.maxBriefChars >= 1000)) {
     throw new Error("config.maxBriefChars must be >= 1000");

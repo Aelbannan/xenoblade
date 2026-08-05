@@ -747,7 +747,7 @@ function makeVerifyCallback(opts: {
   targetIds: string[];
   targetSymbols: Map<string, string>;
   writable: string[];
-  snapshot: Snapshot;
+  snapshot: Snapshot | null;
 }): VerifySession {
   const { repoRoot, config, unit, targetIds, targetSymbols, writable, snapshot } = opts;
   let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
@@ -1191,7 +1191,9 @@ async function runOneTu(
 
     try {
       await claimBatch(repoRoot, config, currentIds);
-      snapshot = await snapshotUnit(repoRoot, unit, writable);
+      snapshot = config.snapshotsEnabled
+        ? await snapshotUnit(repoRoot, unit, writable)
+        : null;
 
       const batchTargetSymbols = new Map(briefTargets.map(t => [t.id, t.symbol]));
       const verify = makeVerifyCallback({
@@ -1541,7 +1543,9 @@ async function runRebatchPhase(
 
       try {
         await claimBatch(repoRoot, config, rbCurrent);
-        snapshot = await snapshotUnit(repoRoot, unit, writable);
+        snapshot = config.snapshotsEnabled
+          ? await snapshotUnit(repoRoot, unit, writable)
+          : null;
         rebatchBudget--; // Only decrement after claim+snapshot succeed.
 
         const rbTargetSymbols = new Map(rbTargets.map(t => [t.id, t.symbol]));
@@ -1761,7 +1765,9 @@ async function runSingleton(
     let snapshot: Snapshot | null = null;
     try {
       await claimBatch(repoRoot, config, [targetId]);
-      snapshot = await snapshotUnit(repoRoot, unit, writable);
+      snapshot = config.snapshotsEnabled
+        ? await snapshotUnit(repoRoot, unit, writable)
+        : null;
 
       // Phase 2 refine-from-draft: if a banked draft exists, restore it into
       // the worktree so the session resumes FROM the draft, not from the
@@ -1918,7 +1924,9 @@ async function runTuFinal(
     return;
   }
 
-  const snapshot = await snapshotUnit(repoRoot, unit, writable);
+  const snapshot: Snapshot | null = config.snapshotsEnabled
+    ? await snapshotUnit(repoRoot, unit, writable)
+    : null;
 
   // TU-final retry loop: lint or build rejection restores the snapshot and
   // re-runs the cleanup session with the violations/errors as feedback
@@ -2013,17 +2021,21 @@ async function runTuFinal(
     const currentScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
     // Lint only the source files, not configure.py (which is in the writable
     // scope for the flip but is not a C/C++ file runLint can diff).
-    const lintSnapshot: Snapshot = { ...snapshot, files: snapshot.files.filter(
-      (f) => f.endsWith(".cpp") || f.endsWith(".c") || f.endsWith(".hpp") || f.endsWith(".h"),
-    ) };
-    const lintAfter = await runLint(repoRoot, config.pythonBin, lintSnapshot);
+    const lintSnapshot: Snapshot | null = snapshot
+      ? { ...snapshot, files: snapshot.files.filter(
+        (f) => f.endsWith(".cpp") || f.endsWith(".c") || f.endsWith(".hpp") || f.endsWith(".h"),
+      ) }
+      : null;
+    const lintAfter = await runLint(repoRoot, config.pythonBin, lintSnapshot, sourceFiles);
     lintViolations = lintAfter.violations;
     const currentScore = scoreState(currentScan, baselineScan, lintAfter.violations.length);
     const unitFeedback = buildUnitFeedback(baselineScan, currentScan, lintAfter.violations.length);
     if (currentScore < bestScore) {
       bestScore = currentScore;
       bestScan = currentScan;
-      bestSnapshot = await snapshotUnit(repoRoot, unit, writable);
+      bestSnapshot = config.snapshotsEnabled
+        ? await snapshotUnit(repoRoot, unit, writable)
+        : null;
       bestLintCount = lintAfter.violations.length;
       process.stderr.write(
         `[pi-harness] ${unit}: attempt ${attempt} is the best state so far ` +
@@ -2206,11 +2218,16 @@ async function runTuFinal(
       process.stderr.write(
         `[pi-harness] ${unit}: TU-final restored best-scoring state (score ${bestScore}, lint ${bestLintCount}, matched ${bestScan?.matched ?? "?"}/${bestScan?.total ?? "?"})\n`,
       );
-    } else {
+    } else if (snapshot) {
       // Pristine fallback: restore the pre-session snapshot.
       await restoreSnapshot(repoRoot, snapshot);
       process.stderr.write(
         `[pi-harness] ${unit}: TU-final restored PRISTINE pre-session state (no attempt beat the baseline)\n`,
+      );
+    } else {
+      // Snapshots disabled — nothing to restore; leave the worktree as-is.
+      process.stderr.write(
+        `[pi-harness] ${unit}: TU-final incomplete with snapshots disabled — worktree left as-is\n`,
       );
     }
   }

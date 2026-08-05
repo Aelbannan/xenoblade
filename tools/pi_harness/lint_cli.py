@@ -30,9 +30,24 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pair", nargs=2, action="append", default=[],
                         metavar=("OLD", "NEW"))
+    # Full-file lint mode (snapshots disabled): lint every line of the file
+    # as "added" (old baseline = None -> _added_lines returns all lines).
+    parser.add_argument("--file", action="append", default=[],
+                        metavar="PATH", help="lint whole file (no delta baseline)")
     args = parser.parse_args()
 
     violations = []
+    for new_path in args.file:
+        new_text = read_text(new_path)
+        if new_text is None:
+            continue
+        for v in lint_delta(new_path, None, new_text):
+            violations.append({
+                "path": new_path,
+                "rule": v.rule,
+                "line": v.line,
+                "detail": v.detail,
+            })
     for old_path, new_path in args.pair:
         old_text = read_text(old_path)
         new_text = read_text(new_path)

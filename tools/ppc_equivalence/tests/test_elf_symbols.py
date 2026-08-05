@@ -260,6 +260,43 @@ class ElfBuilderTests(unittest.TestCase):
             with self.assertRaises(ElfSymbolError):
                 extract_function(path, "missing")
 
+    def test_short_func_name_resolves_uniquely(self) -> None:
+        """r7: `func_80255894` (registry short form) must resolve to the full
+        `func_80255894__FP11CCollepedia` object symbol via PLAIN substring,
+        NOT via digit-strip (which turns `func_80255894` into `func_` and
+        matches every function). The witness falsely reported byte-identical
+        functions as non-byte-identical because the old fallback picked the
+        first of 69 candidates (a 4-byte stub)."""
+        elf = build_reloc_elf(
+            {
+                "func_80255894__FP11CCollepedia": _EQ_LEFT,
+                "func_80253204__Fv": _NEQ,
+                "func_80253970__FP11CCollepediaP15LayoutC": _NEQ,
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.o"
+            path.write_bytes(elf)
+            found = extract_function(path, "func_80255894")
+            self.assertEqual(found.name, "func_80255894__FP11CCollepedia")
+
+    def test_itanium_length_prefix_still_matches(self) -> None:
+        """r7: the digit-strip fallback still handles Itanium class-length
+        prefixes (`__ct__CCLPCur` registry short vs `__ct__7CCLPCurF...`
+        object mangling) when the plain-substring check fails."""
+        elf = build_reloc_elf(
+            {
+                "__ct__7CCLPCurFPQ34nw4r": _EQ_LEFT,
+                "__dt__7CCLPCurFv": _NEQ,
+                "func_80254000": _NEQ,
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "t.o"
+            path.write_bytes(elf)
+            found = extract_function(path, "__ct__CCLPCur")
+            self.assertEqual(found.name, "__ct__7CCLPCurFPQ34nw4r")
+
     def test_rejects_non_elf(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "t.o"

@@ -511,15 +511,25 @@ def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[Fun
     ci = [item for item in functions if item.name.lower() == lowered]
     if ci:
         return ci
-    # Substring fallback for mangled stubs when the caller passes a short
-    # unique token. Also handle the Itanium length-prefix difference: the
-    # registry often stores a short form (`__ct__CCLPCur`) while the object
-    # has the full mangling (`__ct__7CCLPCurFPQ34...` — the `7` is the class
-    # name length). Strip runs of digits from both sides before the substring
-    # check so `__ct__CCLPCur` matches `__ct__7CCLPCurF...`.
+    # Plain-substring fallback first: handles the common registry short form
+    # (`func_80255894`) vs object full mangling (`func_80255894__FP11CCollepedia`)
+    # WITHOUT destroying address digits. The digit-strip below must NOT run
+    # here: stripping `80255894` -> `func_` matches every function in the
+    # object (r7 finding: 69-way ambiguity on CCollepedia, witness falsely
+    # reported non-byte-identical while hexdiff said mismatch:0).
+    partial = [item for item in functions if lowered in item.name.lower()]
+    if partial:
+        return partial
+    # Itanium length-prefix fallback: the registry often stores a short form
+    # (`__ct__CCLPCur`) while the object has the full mangling
+    # (`__ct__7CCLPCurFPQ34...` — the `7` is the class name length). The
+    # plain-substring check above fails for these (digit breaks the match),
+    # so strip runs of digits from both sides as a LAST resort.
     def _strip_digits(s: str) -> str:
         return re.sub(r"\d+", "", s)
-    partial = [item for item in functions if _strip_digits(lowered) in _strip_digits(item.name.lower())]
+    stripped = _strip_digits(lowered)
+    if len(stripped) >= 5:
+        partial = [item for item in functions if stripped in _strip_digits(item.name.lower())]
     return partial
 
 

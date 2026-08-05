@@ -3267,10 +3267,13 @@ def certify_unit_symbol(
                 text_base = min_addr
             else:
                 decomp_fns = list_text_functions(unit.base_path)
-                decomp_fn = _resolve_candidates(decomp_fns, symbol)
-                if not decomp_fn:
-                    raise
-                decomp_fn = decomp_fn[0]
+                decomp_candidates = _resolve_candidates(decomp_fns, symbol)
+                if len(decomp_candidates) != 1:
+                    raise ElfSymbolError(
+                        f"ambiguous decomp symbol {symbol!r} in {unit.base_path} "
+                        f"({len(decomp_candidates)} candidates)"
+                    )
+                decomp_fn = decomp_candidates[0]
                 text_base = (int(str(addr), 0) - decomp_fn.value) & 0xFFFFFFFF
             retail_fns = list_text_functions(unit.target_path)
             retail_target = None
@@ -3281,10 +3284,13 @@ def certify_unit_symbol(
             if retail_target is None:
                 raise
             decomp_fns = list_text_functions(unit.base_path)
-            decomp_fn = _resolve_candidates(decomp_fns, symbol)
-            if not decomp_fn:
-                raise
-            left, right = retail_target, decomp_fn[0]
+            decomp_candidates = _resolve_candidates(decomp_fns, symbol)
+            if len(decomp_candidates) != 1:
+                raise ElfSymbolError(
+                    f"ambiguous decomp symbol {symbol!r} in {unit.base_path} "
+                    f"({len(decomp_candidates)} candidates)"
+                )
+            left, right = retail_target, decomp_candidates[0]
         # Byte-identical FULL_MATCH leaves (common for RVL paired-single MTX)
         # skip SMT prove: incomplete PS capability stubs / timeouts block certs
         # that parents need. Prefer prove only when bytes differ and a reviewed

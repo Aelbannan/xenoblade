@@ -672,7 +672,7 @@ def release_target(config: CoopConfig, target_id: str, *, owner: Optional[str]) 
                 row["workflow_status"] = (
                     "ACCEPTED"
                     if row.get("status") in {"FULL_MATCH", "EQUIVALENT_MATCH"}
-                    else "BACKLOG"
+                    else "ACTIVE"
                 )
             return _write_targets_document_unlocked(config, data)
     raise KeyError(f"Unknown target id: {target_id}")

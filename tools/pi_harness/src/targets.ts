@@ -132,6 +132,9 @@ export interface UnmatchedOptions {
   ledgerPath?: string;
   /** Re-attempt targets the ledger marked exhausted (default: false). */
   retryExhausted?: boolean;
+  /** Minimum independent dead-end ledger records before a target counts as
+   *  exhausted. Threaded to `scanExhaustedTargets`. */
+  minExhaustAttempts?: number;
 }
 
 /** Load only unmatched (not FULL_MATCH / EQUIVALENT_MATCH) targets for a unit.
@@ -150,7 +153,7 @@ export function loadUnmatchedTargets(
   const absLedger = isAbsolute(options.ledgerPath)
     ? options.ledgerPath
     : join(repoRoot, options.ledgerPath);
-  const exhausted = scanExhaustedTargets(absLedger);
+  const exhausted = scanExhaustedTargets(absLedger, options.minExhaustAttempts);
   if (exhausted.size === 0) return targets;
 
   const filtered = targets.filter((t) => !exhausted.has(t.id));

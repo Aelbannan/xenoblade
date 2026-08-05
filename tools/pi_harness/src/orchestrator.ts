@@ -1074,6 +1074,7 @@ async function runOneTu(
   const sanitized = unit.replace(/\//g, "__");
   const targetsRaw = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
+    minExhaustAttempts: config.exhaustionThreshold,
   });
   const selection = await applySelection(repoRoot, unit, config, targetsRaw);
   let targets = selection.ordered;
@@ -1430,6 +1431,7 @@ async function runOneTu(
 
   const remaining = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
+    minExhaustAttempts: config.exhaustionThreshold,
   });
   if (remaining.length === 0) {
     await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);

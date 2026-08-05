@@ -79,6 +79,10 @@ export interface HarnessConfig {
   tuFinalTimeoutMinutes: number;
   /** Unified per-target session budget across pass1 + singleton + rebatch. */
   maxAttemptsPerTarget: number;
+  /** Independent ledger dead-end records required before a target is treated
+   *  as exhausted and excluded from future waves (default 3). A target that
+   *  failed a single batch is retried, not blacklisted. */
+  exhaustionThreshold: number;
   /** Consecutive verify rounds with no divergence improvement before early-stop. */
   staleRoundThreshold: number;
   /** Re-attempt targets the ledger marked exhausted on a previous run. */

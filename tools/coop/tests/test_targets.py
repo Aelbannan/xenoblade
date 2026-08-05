@@ -267,6 +267,50 @@ class TargetRegistryTests(unittest.TestCase):
         release_target(self.config, "a", owner="one")
         claim_target(self.config, "a", owner="two", allowed_paths=[])
 
+    def test_release_marks_worked_target_ACTIVE_not_BACKLOG(self) -> None:
+        # A claimed-then-released target that is NOT yet matched was worked;
+        # it must not read as a fresh BACKLOG target (which would conflate it
+        # with a never-attempted one). BACKLOG -> ACTIVE keeps it retryable.
+        path = self.root / "tools/coop/targets.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "targets": [
+                        {"id": "a", "symbol": "f", "address": "0x1", "status": "COMPILES"}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        claim_target(self.config, "a", owner="one", allowed_paths=["src/a.cpp"])
+        self.assertEqual(
+            json.loads(path.read_text(encoding="utf-8"))["targets"][0]["workflow_status"],
+            "CLAIMED",
+        )
+        release_target(self.config, "a", owner="one")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["targets"][0]["status"], "COMPILES")
+        self.assertEqual(data["targets"][0]["workflow_status"], "ACTIVE")
+
+    def test_release_accepted_target_goes_ACCEPTED(self) -> None:
+        path = self.root / "tools/coop/targets.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "targets": [
+                        {"id": "b", "symbol": "g", "address": "0x2", "status": "FULL_MATCH"}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        claim_target(self.config, "b", owner="one", allowed_paths=["src/b.cpp"])
+        release_target(self.config, "b", owner="one")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["targets"][0]["workflow_status"], "ACCEPTED")
+
     def test_write_targets_document_is_atomic_and_creates_lock_sidecar(self) -> None:
         path = self.root / "tools/coop/targets.json"
         payload = {

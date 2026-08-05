@@ -49,6 +49,7 @@ function defaultConfig(): HarnessConfig {
     tuFinalAttempts: 2,
     tuFinalTimeoutMinutes: 0, // 0 = derive (maxBatchMinutes * 2)
     maxAttemptsPerTarget: 4,
+  exhaustionThreshold: 3,
     staleRoundThreshold: 2,
     retryExhausted: false,
     bankOnlyOnBetter: true,
@@ -221,6 +222,13 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!Number.isInteger(config.maxAttemptsPerTarget) || config.maxAttemptsPerTarget < 1) {
     throw new Error("config.maxAttemptsPerTarget must be an integer >= 1");
+  }
+  if (
+    config.exhaustionThreshold === undefined ||
+    !Number.isInteger(config.exhaustionThreshold) ||
+    config.exhaustionThreshold < 1
+  ) {
+    throw new Error("config.exhaustionThreshold must be an integer >= 1");
   }
   if (!Number.isInteger(config.staleRoundThreshold) || config.staleRoundThreshold < 1) {
     throw new Error("config.staleRoundThreshold must be an integer >= 1");

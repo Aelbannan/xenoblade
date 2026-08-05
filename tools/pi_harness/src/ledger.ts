@@ -116,36 +116,52 @@ function cycleContainsTarget(detail: unknown, targetId: string): boolean {
  * Scan the ledger for targets the harness has marked as dead ends:
  * `batch-session-exhausted` and `target-skipped` events (detail carries
  * `targetId` / `targetIds`), plus `batch-cycle` rows whose `results[]` has a
- * `NOT_BUILDABLE` / `NOT_FOUND` status. Missing or unreadable ledger yields an
- * empty set. Single pass over the file.
+ * `NOT_BUILDABLE` / `NOT_FOUND` status. A target only counts as exhausted
+ * once it has accumulated at least *minAttempts* independent dead-end
+ * records (default 3) — a single failed batch must not permanently blacklist
+ * a target that deserves singleton / near-match retries. Missing or
+ * unreadable ledger yields an empty set. Single pass over the file.
  */
-export function scanExhaustedTargets(ledgerPath: string): Set<string> {
-  const exhausted = new Set<string>();
+export function scanExhaustedTargets(
+  ledgerPath: string,
+  minAttempts = 3,
+): Set<string> {
+  const counts = new Map<string, number>();
   let text: string;
   try {
     text = readFileSync(ledgerPath, "utf-8");
   } catch {
-    return exhausted;
+    return new Set();
   }
+  const bump = (ids: string[]) => {
+    for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
+  };
   for (const entry of parseLedgerLines(text)) {
     switch (entry.event) {
       case "batch-session-exhausted":
       case "target-skipped":
-        for (const id of extractTargetIds(entry.detail)) exhausted.add(id);
+        bump(extractTargetIds(entry.detail));
         break;
       case "batch-cycle":
-        for (const id of cycleDeadEndIds(entry.detail, DEAD_CYCLE_STATUSES)) exhausted.add(id);
+        bump(cycleDeadEndIds(entry.detail, DEAD_CYCLE_STATUSES));
         break;
       default:
         break;
     }
   }
+  const exhausted = new Set<string>();
+  for (const [id, n] of counts) {
+    if (n >= minAttempts) exhausted.add(id);
+  }
   return exhausted;
 }
 
 /** Async API: see {@link scanExhaustedTargets}. */
-export async function readExhaustedTargets(ledgerPath: string): Promise<Set<string>> {
-  return scanExhaustedTargets(ledgerPath);
+export async function readExhaustedTargets(
+  ledgerPath: string,
+  minAttempts?: number,
+): Promise<Set<string>> {
+  return scanExhaustedTargets(ledgerPath, minAttempts);
 }
 
 /**

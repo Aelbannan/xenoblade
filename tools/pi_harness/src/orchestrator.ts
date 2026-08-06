@@ -2356,9 +2356,17 @@ async function runTuFinal(
       if (unitTargets.length > 0) {
         process.stderr.write(`[pi-harness] ${unit}: mass re-certification of ${unitTargets.length} target(s) after polish\n`);
         try {
+          // batch-cycle.py -> cmd_cycle -> cmd_build acquires the repo build
+          // lock ITSELF (run.py _with_build_lock, build-only scope) — do NOT
+          // wrap it in build_lock.py. The wrapper holds the flock while the
+          // inner cmd_build blocks on the SAME flock (subprocess does not
+          // inherit the fd) until the outer --timeout 1800 kills it: every
+          // TU-final recert deadlocked 30 min and reported a silent no-op
+          // (registry re-check found targets still FULL_MATCH → recertOk,
+          // but nothing was ever re-certified — run31 g3d_basic/CTaskManager/
+          // ut_TextWriterBase all hit this).
           const { stdout } = await execFilePromise(config.pythonBin, [
-            "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
-            config.pythonBin, "tools/coop/batch-cycle.py",
+            "tools/coop/batch-cycle.py",
             "--default-hypothesis", "TU-final mass re-certification after polish",
             "--default-next-change", "none (re-certify only)",
             "--witness-timeout", String(config.witnessTimeoutMs),

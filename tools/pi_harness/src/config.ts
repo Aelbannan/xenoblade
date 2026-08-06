@@ -50,6 +50,8 @@ function defaultConfig(): HarnessConfig {
     witnessEnabled: true,
     timeoutRetries: 3,
     silenceThresholdSec: 0, // SECONDS of silence before abort; 0 = auto (xhigh 600 / high 300 / else 120)
+    emptyRoundRetries: 2,
+    roundStartJitterMs: 15_000, // spread parallel round starts to dodge provider concurrency bursts
     rejectionRetries: 1,
     tuFinalAttempts: 2,
     tuFinalTimeoutMinutes: 0, // 0 = derive (maxBatchMinutes * 2)
@@ -230,6 +232,12 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!Number.isInteger(config.silenceThresholdSec) || config.silenceThresholdSec < 0) {
     throw new Error("config.silenceThresholdSec must be an integer >= 0 (seconds; 0 = auto-derive from thinking level)");
+  }
+  if (!Number.isInteger(config.emptyRoundRetries) || config.emptyRoundRetries < 0) {
+    throw new Error("config.emptyRoundRetries must be an integer >= 0");
+  }
+  if (!Number.isInteger(config.roundStartJitterMs) || config.roundStartJitterMs < 0) {
+    throw new Error("config.roundStartJitterMs must be an integer >= 0 (ms)");
   }
   if (typeof config.rejectionRetries !== "number" || config.rejectionRetries < 0 || !Number.isInteger(config.rejectionRetries)) {
     throw new Error("config.rejectionRetries must be an integer >= 0");

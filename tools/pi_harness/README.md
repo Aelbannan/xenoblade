@@ -92,6 +92,8 @@ the same `.hexdiff.lock` as hexdiff).
 | `maxTokens` | 0 | Max output tokens per session (0 = model default) |
 | `timeoutRetries` | 3 | In-session re-prompts when the session hit the wall-clock timeout (0 = single-prompt, no continuation) |
 | `silenceThresholdSec` | 0 | Max SECONDS of model silence before a session is aborted as dead (0 = auto: xhigh 600 / high 300 / else 120). High-thinking models stream nothing while reasoning, so the fixed 120s default killed them mid-think |
+| `emptyRoundRetries` | 2 | Re-run a prompt round that returned EMPTY (no assistant output — the 429-rate-limit give-up case) up to N times with a jitter sleep between, so the 45-min slot isn't burned on an empty verify->re-prompt loop |
+| `roundStartJitterMs` | 15000 | Random 0..N ms delay before each round's first request. All 30 parallel sessions hit round-0 simultaneously -> the provider's per-user concurrency cap trips (run32: 38x 429 in one burst); spreading the wave removes most of it |
 | `rejectionRetries` | 1 | In-session re-prompts when the model finished but code still fails (compile fail or no match; lower cap avoids entrenchment) |
 | `maxBriefChars` | 80000 | Prompt budget; retail ASM is middle-elided to an equal per-target share |
 | `briefTargetChars` | 12000 | Per-target ASM share cap inside a batch brief |

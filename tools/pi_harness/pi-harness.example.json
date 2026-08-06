@@ -24,6 +24,8 @@
   "ledgerPath": "build/pi-harness/ledger.jsonl",
   "timeoutRetries": 3,
   "silenceThresholdSec": 0, // seconds of model silence before abort; 0 = auto
+  "emptyRoundRetries": 2, // re-run a 429-empty round (no assistant output) up to N times
+  "roundStartJitterMs": 15000, // random 0..N ms delay before each round start (spreads concurrency burst)
   "rejectionRetries": 1,
   "tuFinalAttempts": 2,
   "tuFinalTimeoutMinutes": 0,

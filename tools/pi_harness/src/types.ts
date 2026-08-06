@@ -100,6 +100,18 @@ export interface HarnessConfig {
    *  on high-thinking rebatch rounds). Units are SECONDS (a human-facing
    *  timeout), converted to ms internally. Default 0. */
   silenceThresholdSec: number;
+  /** How many times to re-run a prompt round that returned EMPTY (no
+   *  assistant output at all — the 429-rate-limit-empty case: the SDK retry
+   *  gave up after maxRetries and returned nothing, burning the whole 45-min
+   *  slot on a verify->re-prompt loop that finds no changes). Each retry
+   *  sleeps a short jitter first to let the provider's concurrency burst
+   *  pass. 0 = no retry (fail fast). Default 2. */
+  emptyRoundRetries: number;
+  /** Max random delay (ms) applied BEFORE each prompt round's first request.
+   *  All 30 parallel sessions hit round-0 simultaneously -> the provider's
+   *  per-user concurrency cap trips (run32: 38x 429 in one burst). A random
+   *  0..jitter delay per round start spreads the wave. Default 15000. */
+  roundStartJitterMs: number;
   /** In-session re-prompts when the model FINISHED but the harness rejected
    *  the result (compile fail, lint fail, or no match). Lower cap avoids
    *  entrenchment on dead ends. */

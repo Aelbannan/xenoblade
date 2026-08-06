@@ -137,6 +137,14 @@ export async function runAgentSession(opts: {
    *  120). High-thinking models stream nothing while reasoning, so a
    *  low fixed threshold kills them mid-think. */
   silenceThresholdSec?: number;
+  /** Re-run a prompt round that returned EMPTY (no assistant output — the
+   *  429-rate-limit-empty case) up to this many times, with a jitter sleep
+   *  between attempts. 0 = fail fast. Default 2. */
+  emptyRoundRetries?: number;
+  /** Random 0..N ms delay before each round's first request, spreading the
+   *  provider-concurrency burst when many sessions start simultaneously.
+   *  Default 15000. */
+  roundStartJitterMs?: number;
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -153,6 +161,8 @@ export async function runAgentSession(opts: {
     writable = [],
     witnessEnabled = true,
     silenceThresholdSec = 0,
+    emptyRoundRetries = 2,
+    roundStartJitterMs = 15_000,
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -217,6 +227,12 @@ export async function runAgentSession(opts: {
   // means the model stopped responding mid-turn.
   let lastActivityTime: number | null = null;
   let lastAgentEnd: { timestamp: number; willRetry: boolean } | undefined;
+  // True when the CURRENT prompt round produced at least one assistant
+  // message with content (text/thinking/toolCall). A round that returns
+  // empty (429-rate-limit give-up: SDK retries exhausted -> nothing) has
+  // this false — the harness retries the prompt instead of burning the
+  // 45-min slot on a verify->re-prompt loop that finds no changes.
+  let roundProducedOutput = false;
   // Number of tool executions currently in flight. The heartbeat must never
   // flag a session dead while a tool is running (long tool calls — hexdiff
   // builds, unit-status witness probes — can exceed the silence threshold;
@@ -230,6 +246,16 @@ export async function runAgentSession(opts: {
         event.type === "tool_execution_end" ||
         event.type === "auto_retry_start") {
       lastActivityTime = Date.now();    }
+    // Empty-round detection: a message_update carrying an assistant message
+    // with any content (thinking/text/toolCall) means this round produced
+    // output. A 429-give-up round never emits one — the harness can then
+    // retry the prompt instead of burning the session on an empty verify.
+    if (event.type === "message_update") {
+      const msg = (event as { message?: { role?: string; content?: unknown } }).message;
+      if (msg?.role === "assistant" && Array.isArray(msg.content) && msg.content.length > 0) {
+        roundProducedOutput = true;
+      }
+    }
 
     // Log SDK retry events.
     if (event.type === "auto_retry_start") {
@@ -334,6 +360,15 @@ export async function runAgentSession(opts: {
           : 120_000; // low/minimal: streams promptly
   const HEARTBEAT_INTERVAL_MS = 15_000;
   let deadSessionReason: string | undefined;
+
+  // Random 0..roundStartJitterMs delay before each round's first request.
+  // All 30 parallel sessions hit round-0 simultaneously -> the provider's
+  // per-user concurrency cap trips (run32: 38x 429 in one burst); spreading
+  // the wave removes most of it.
+  const jitterDelay = (): Promise<void> =>
+    roundStartJitterMs > 0
+      ? new Promise((r) => setTimeout(r, Math.random() * roundStartJitterMs))
+      : Promise.resolve();
   const heartbeat = setInterval(() => {
     if (toolInFlight > 0) return; // a tool is executing — it has its own timeout
     if (lastActivityTime === null) return; // no first message yet — still thinking, not dead
@@ -364,7 +399,10 @@ export async function runAgentSession(opts: {
     // ── Single-prompt path (no multiPrompt provided) ──
     if (!multiPrompt) {
       process.stderr.write(`[session] ${label}: starting single-prompt (timeout=${timeoutMinutes}min)\n`);
-      const result = await runOnePrompt(session, prompt, timeoutMinutes);
+      const result = await (async () => {
+        await jitterDelay();
+        return runOnePrompt(session, prompt, timeoutMinutes);
+      })();
       await result.settle();
       const usage = sumUsage(session.state.messages);
       process.stderr.write(`[session] ${label}: completed single-prompt (timedOut=${result.timedOut})\n`);
@@ -392,6 +430,34 @@ export async function runAgentSession(opts: {
     let timedOut = false;
     let lastRejection: string | undefined;
 
+    // Run one prompt round with empty-round retries: a round that returned
+    // NO assistant output (429 give-up: SDK retries exhausted -> empty) is
+    // re-run up to emptyRoundRetries times with a jitter sleep between, so
+    // the 45-min slot isn't burned on an empty verify->re-prompt loop.
+    const runRound = async (roundPrompt: string, roundMinutes: number): Promise<PromptResult> => {
+      let result: PromptResult | null = null;
+      for (let attempt = 0; attempt <= emptyRoundRetries; attempt++) {
+        if (attempt > 0) {
+          const waitMs = Math.floor(Math.random() * roundStartJitterMs) + 5_000;
+          process.stderr.write(
+            `[session] ${label}: empty round (no assistant output) — retry ${attempt}/${emptyRoundRetries} after ${waitMs}ms (429 give-up recovery)\n`,
+          );
+          await new Promise((r) => setTimeout(r, waitMs));
+        } else {
+          await jitterDelay();
+        }
+        roundProducedOutput = false;
+        result = await runOnePrompt(session, roundPrompt, roundMinutes);
+        await result.settle();
+        if (!result.timedOut && !roundProducedOutput && emptyRoundRetries > 0) {
+          // Empty + not timed out + retries remain — retry (likely 429 give-up).
+          continue;
+        }
+        break;
+      }
+      return result!;
+    };
+
     // ── Initial prompt ──
     process.stderr.write(`[session] ${label}: round 0 starting\n`);
     transcriptContent += `\n\n## Round 0 (initial)\n\n`;
@@ -401,7 +467,7 @@ export async function runAgentSession(opts: {
     transcriptContent += `### 📤 PROMPT (Round 0 — initial)\n\n\`\`\`markdown\n${promptBlock}\n\`\`\`\n\n---\n\n### 🤖 MODEL RESPONSE\n\n`;
     queueTranscriptWrite();
     const usageBefore = sumUsage(session.state.messages);
-    const initialResult = await runOnePrompt(session, prompt, timeoutMinutes);
+    const initialResult = await runRound(prompt, timeoutMinutes);
     // L: the initial prompt must fully settle before onVerify runs (it
     // builds / runs batch-cycle against the worktree — a still-streaming
     // prompt could keep issuing tool calls concurrently).
@@ -507,8 +573,7 @@ export async function runAgentSession(opts: {
       queueTranscriptWrite();
 
       const roundUsageBefore = sumUsage(session.state.messages);
-      const rePromptResult = await runOnePrompt(
-        session,
+      const rePromptResult = await runRound(
         verifyResult.feedback ?? "",
         remainingMinutes,
       );

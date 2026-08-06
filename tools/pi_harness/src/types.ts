@@ -92,13 +92,14 @@ export interface HarnessConfig {
   /** Total in-session re-prompts when the session hit the wall-clock
    *  timeout (model was still working). 0 = single-prompt, no continuation. */
   timeoutRetries: number;
-  /** Max ms of model silence (no message_update / tool activity) before the
-   *  session is aborted as dead. 0 = auto-derive from the session model's
+  /** Max SECONDS of model silence (no message_update / tool activity) before
+   *  the session is aborted as dead. 0 = auto-derive from the session model's
    *  thinking level (xhigh: 600s, high: 300s, else 120s). High-thinking
    *  models are silent for minutes while reasoning (no streamed tokens) —
    *  the 120s default aborts them mid-think (run31: 40 DEAD SESSION flags
-   *  on high-thinking rebatch rounds). Default 0. */
-  silenceThresholdMs: number;
+   *  on high-thinking rebatch rounds). Units are SECONDS (a human-facing
+   *  timeout), converted to ms internally. Default 0. */
+  silenceThresholdSec: number;
   /** In-session re-prompts when the model FINISHED but the harness rejected
    *  the result (compile fail, lint fail, or no match). Lower cap avoids
    *  entrenchment on dead ends. */

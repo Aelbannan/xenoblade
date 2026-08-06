@@ -1321,7 +1321,7 @@ async function runOneTu(
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         witnessEnabled: config.witnessEnabled,
-        silenceThresholdMs: config.silenceThresholdMs,
+        silenceThresholdSec: config.silenceThresholdSec,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -1695,7 +1695,7 @@ async function runRebatchPhase(
           timeoutMinutes: config.maxBatchMinutes,
           maxTokens: config.maxTokens,
         witnessEnabled: config.witnessEnabled,
-        silenceThresholdMs: config.silenceThresholdMs,
+        silenceThresholdSec: config.silenceThresholdSec,
           multiPrompt: {
             timeoutRetries: config.timeoutRetries,
             rejectionRetries: config.rejectionRetries,
@@ -1983,7 +1983,7 @@ async function runSingleton(
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
         witnessEnabled: config.witnessEnabled,
-        silenceThresholdMs: config.silenceThresholdMs,
+        silenceThresholdSec: config.silenceThresholdSec,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -2185,7 +2185,7 @@ async function runTuFinal(
         timeoutMinutes: tuFinalTimeout,
         maxTokens: config.maxTokens,
         witnessEnabled: config.witnessEnabled,
-        silenceThresholdMs: config.silenceThresholdMs,
+        silenceThresholdSec: config.silenceThresholdSec,
       });
       logUsage(repoRoot, config, unit, attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`, sessionResult.usage, sessionResult.timedOut);
     } catch (err) {

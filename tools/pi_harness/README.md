@@ -91,7 +91,7 @@ the same `.hexdiff.lock` as hexdiff).
 | `rebatchEnabled` / `maxRebatchAttempts` | true / 0 | Per-TU rebatch session budget for small failed targets (0 = none) |
 | `maxTokens` | 0 | Max output tokens per session (0 = model default) |
 | `timeoutRetries` | 3 | In-session re-prompts when the session hit the wall-clock timeout (0 = single-prompt, no continuation) |
-| `silenceThresholdMs` | 0 | Max ms of model silence before a session is aborted as dead (0 = auto: xhigh 600s / high 300s / else 120s). High-thinking models stream nothing while reasoning, so the fixed 120s default killed them mid-think |
+| `silenceThresholdSec` | 0 | Max SECONDS of model silence before a session is aborted as dead (0 = auto: xhigh 600 / high 300 / else 120). High-thinking models stream nothing while reasoning, so the fixed 120s default killed them mid-think |
 | `rejectionRetries` | 1 | In-session re-prompts when the model finished but code still fails (compile fail or no match; lower cap avoids entrenchment) |
 | `maxBriefChars` | 80000 | Prompt budget; retail ASM is middle-elided to an equal per-target share |
 | `briefTargetChars` | 12000 | Per-target ASM share cap inside a batch brief |

@@ -132,11 +132,11 @@ export async function runAgentSession(opts: {
   /** When false, omit the witness/certify tools (witness path disabled).
    *  Default true. */
   witnessEnabled?: boolean;
-  /** Max ms of model silence before the session is aborted as dead.
-   *  0 = auto-derive from spec.thinkingLevel (xhigh 600s, high 300s, else
-   *  120s). High-thinking models stream nothing while reasoning, so a
+  /** Max SECONDS of model silence before the session is aborted as dead.
+   *  0 = auto-derive from spec.thinkingLevel (xhigh 600, high 300, else
+   *  120). High-thinking models stream nothing while reasoning, so a
    *  low fixed threshold kills them mid-think. */
-  silenceThresholdMs?: number;
+  silenceThresholdSec?: number;
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -152,7 +152,7 @@ export async function runAgentSession(opts: {
     python = "python3",
     writable = [],
     witnessEnabled = true,
-    silenceThresholdMs = 0,
+    silenceThresholdSec = 0,
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -323,10 +323,10 @@ export async function runAgentSession(opts: {
   // the reason in the SessionRunResult, (c) start the silence clock only at
   // the first message update (thinking is silent for high-thinking models),
   // and (d) scale the threshold with the thinking level (or a config
-  // override) instead of a fixed 120s.
+  // override, in SECONDS) instead of a fixed 120s.
   const SILENCE_THRESHOLD_MS =
-    silenceThresholdMs > 0
-      ? silenceThresholdMs
+    silenceThresholdSec > 0
+      ? silenceThresholdSec * 1000 // config is in seconds (human-facing)
       : spec.thinkingLevel === "xhigh"
         ? 600_000 // 10 min: xhigh reasoning streams nothing for minutes
         : spec.thinkingLevel === "high"

@@ -53,7 +53,7 @@
     "thinkingLevel": "high"
   },
   "maxSingletonSessions": 1,
-  "silenceThresholdMs": 900,
+  "silenceThresholdSec": 900,
   "snapshotsEnabled": false,
   "commitOnTuFinal": true,
   "witnessEnabled": false

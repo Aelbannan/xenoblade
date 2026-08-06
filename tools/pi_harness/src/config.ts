@@ -49,7 +49,7 @@ function defaultConfig(): HarnessConfig {
     witnessTimeoutMs: 0, // 0 = use the witness's own internal simplify budget/deadline
     witnessEnabled: true,
     timeoutRetries: 3,
-    silenceThresholdMs: 0, // 0 = auto-derive from thinking level (xhigh 600s / high 300s / else 120s)
+    silenceThresholdSec: 0, // SECONDS of silence before abort; 0 = auto (xhigh 600 / high 300 / else 120)
     rejectionRetries: 1,
     tuFinalAttempts: 2,
     tuFinalTimeoutMinutes: 0, // 0 = derive (maxBatchMinutes * 2)
@@ -228,8 +228,8 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (typeof config.timeoutRetries !== "number" || config.timeoutRetries < 0 || !Number.isInteger(config.timeoutRetries)) {
     throw new Error("config.timeoutRetries must be an integer >= 0");
   }
-  if (!Number.isInteger(config.silenceThresholdMs) || config.silenceThresholdMs < 0) {
-    throw new Error("config.silenceThresholdMs must be an integer >= 0 (0 = auto-derive from thinking level)");
+  if (!Number.isInteger(config.silenceThresholdSec) || config.silenceThresholdSec < 0) {
+    throw new Error("config.silenceThresholdSec must be an integer >= 0 (seconds; 0 = auto-derive from thinking level)");
   }
   if (typeof config.rejectionRetries !== "number" || config.rejectionRetries < 0 || !Number.isInteger(config.rejectionRetries)) {
     throw new Error("config.rejectionRetries must be an integer >= 0");

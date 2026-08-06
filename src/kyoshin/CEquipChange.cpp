@@ -22,6 +22,12 @@ extern "C" int func_80287EE8(CEquipItemBox* box);
 extern "C" void func_802870DC(CEquipItemBox* box);
 extern "C" void func_802040FC(CEquipChange* self);
 
+// Forward declarations for functions whose definitions live at the end of this
+// TU. Declaring (not defining) them here prevents MWCC from inlining their
+// bodies into callers like func_80203994 / func_80203FCC, which must emit the
+// retail `bl` (external) calls.
+int func_802031A0(CEquipChange* self);
+
 u8 CEquipChange::func_802023C0() { return field_4D; }
 
 void CEquipChange::func_802023C8() { func_802865A0(&mEquipItemBox); }
@@ -85,39 +91,8 @@ void func_80202CCC(){}
 
 void func_80202EB4(){}
 
-int CEquipChange::func_80203138() {
-    signed char value = field_98;
-    if (value == 0)
-        return 2;
-    if (value == 4)
-        return 4;
-    if (value == 6)
-        return 5;
-    if (value == 8)
-        return 6;
-    if (value == 10)
-        return 7;
-    if (value == 12)
-        return 8;
-    return 3;
-}
-
-// Target us-80204e98: field_98 (s8) maps via a dense jump table to 1..8 for
-// values 0..7; any other value (including 8..13 that fall inside the table
-// bound) returns 0.
-int func_802031A0(CEquipChange* self) {
-    switch (self->field_98) {
-    case 0: return 1;
-    case 1: return 2;
-    case 2: return 3;
-    case 3: return 4;
-    case 4: return 5;
-    case 5: return 6;
-    case 6: return 7;
-    case 13: return 8;
-    default: return 0;
-    }
-}
+// (func_80203138 and func_802031A0 are defined at the END of this TU to avoid
+// inlining them into callers such as func_80203994 / func_80203FCC.)
 
 void func_80203210(){}
 
@@ -138,7 +113,16 @@ void CEquipChange::func_80203984() { func_80287FE0(&mEquipItemBox); }
 void func_802886D8(void* self);
 void CEquipChange::func_8020398C() { func_802886D8(&mEquipItemBox); }
 
-void func_80203994(){}
+// Target us-8020568c: cursor 3 is selected AND the per-slot byte at
+// self[idx+0x99] (index from func_802031A0) equals 2.
+int func_80203994(CEquipChange* self) {
+    if ((u8)self->func_80203138() == 3) {
+        u8 idx = (u8)func_802031A0(self);
+        if (((u8*)self)[0x99 + idx] == 2)
+            return 2;
+    }
+    return 0;
+}
 
 void func_802039F4(){}
 

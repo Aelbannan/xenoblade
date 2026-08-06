@@ -85,7 +85,18 @@ int* func_801A8070(int* param) {
     return &param[1];
 }
 
-void func_801A8138(){}
+// ---------------------------------------------------------------------------
+// us-801a986c: Clear all four vision effect slots (retail func_801A8138).
+// ---------------------------------------------------------------------------
+void func_801A8138(CVision* self) {
+    for (u8 i = 0; i < 4; i++) {
+        if (self->effectArray[i] != 0) {
+            self->effectArray[i]->field_B0 = 0;
+            self->effectArray[i]->field_68 |= 0x40;
+        }
+        self->effectArray[i] = 0;
+    }
+}
 
 void func_801A8244(){}
 

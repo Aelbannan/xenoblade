@@ -1164,29 +1164,14 @@ int vmc_pool_int(VMThread* pThread, u8 code){
 }
 
 int vmc_pool_fixed(VMThread* pThread, u8 code){
-    //Read the opcode parameter: a variable-length big-endian integer.
-    int pc = pThread->reg.pc;
-    int length = vmcOpcodes[code].paramSize;
-    u8* p = &pThread->codeData[pc + 1];
-    u32 result = (u32)*p++;
-    for (int i = 1; i < length; i++) {
-        result = (result << 8) | (u32)*p++;
-    }
+    int no = getOpcodeParam(pThread, code);
+    int val = vmFixedPoolGet((SBHeader*)pThread->scriptData, no);
 
-    //Fetch the fixed-pool value at that parameter index.
-    SBHeader* header = (SBHeader*)pThread->scriptData;
-    SBSectionHeader* pool = header->fixedPoolOfs;
-    u32* entries = (u32*)((char*)pool + pool->entriesOffset);
-    int val = (int)entries[result];
+    VMArg* arg = vmStackNextGet(pThread);
+    arg->value.intVal = val;
+    arg->type = VM_TYPE_FIXED;
 
-    //Push the value onto the stack.
-    int sp = pThread->reg.sp++;
-    pThread->stack[sp].type = VM_TYPE_FIXED;
-    pThread->stack[sp].value.intVal = val;
-
-    //Advance the program counter past the opcode and its parameter.
-    pThread->reg.pc = pc + length + 1;
-
+    incrementPc(pThread, code);
     return VMC_RESULT_0;
 }
 

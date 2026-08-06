@@ -19,7 +19,8 @@ public:
     void cbRenderBefore();
 
 private:
-    // IScnRender base at 0x58 (CProcess occupies 0x0-0x58).
+    // CProcess (0x0-0x3C) + IScnRender (0x3C-0x40) bases, then retail base gap.
+    u8 field_base_pad[0x1C];      // 0x40-0x5C
     CScn* field_0x5C;              // 0x5C
     CBgTex field_0x60;             // 0x60 (0x20 bytes)
     CPartyStateWin field_0x80;     // 0x80

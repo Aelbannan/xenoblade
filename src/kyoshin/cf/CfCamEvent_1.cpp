@@ -32,6 +32,7 @@ void* func_800755B0(void* self, unsigned long idx) {
 // Resolve the shared global 'cam state' object; external C-function tail-call
 // targets used by the shake helpers below.
 extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
+extern "C" u16 lbl_eu_80570C90;
 extern "C" int func_8024125C(int state, int val);
 extern "C" int func_80241344(int state, int val);
 extern "C" int func_80240C98(int state, int arg0, int arg1);
@@ -129,7 +130,62 @@ void func_80078D08(){}
 
 void func_8007990C(){}
 
-void func_80079B34(){}
+// Advance each element of a shake table toward the previous element by 2*PI once
+// the gap reaches PI, wrapping round the circle. Shared update written inline in
+// both branches of the caller (retail keeps two copies).
+static void cf_shake_inner(CfCamEventSub1F4* sub, int start) {
+    s16 count = sub->field_0x166;
+    for (int i = start; i < count; i++) {
+        f32 cur = sub->elems[i].x4;
+        f32 prev = sub->elems[i - 1].x4;
+        f32 d = cur - prev;
+        if (fabsf(d) >= 3.1415927f) {
+            if (d > 0.0f)
+                sub->elems[i].x4 = cur - 6.2831855f;
+            else
+                sub->elems[i].x4 = cur + 6.2831855f;
+        }
+    }
+}
+
+void func_80079B34(CfCamEventManager* self) {
+    self->field_0x1DE = 1;
+    self->field_0x1DF = 0;
+
+    // Whether the global cam manager is inside its busy frame range.
+    int busy = 0;
+    if (lbl_eu_80663DF0 != nullptr) {
+        s16 g = lbl_eu_80663DF0->field_0x3E;
+        if (g >= 0x10 && g <= 0x2b) busy = 1;
+    }
+
+    if (busy) {
+        // Demo-mode flag drives the first shake table update.
+        self->sub_0x1F4.field_0x162 = 1;
+        u16 demo = lbl_eu_80570C90;
+        u8 on = (demo != 0);
+        self->sub_0x1F4.field_0x163 = on;
+        if (on)
+            cf_shake_inner(&self->sub_0x1F4, 1);
+    } else {
+        // When not busy, use field_0x47 to decide whether to shake.
+        if (self->field_0x47) {
+            self->sub_0x1F4.field_0x162 = 1;
+            self->sub_0x1F4.field_0x163 = 0;
+        } else {
+            self->sub_0x1F4.field_0x162 = 1;
+            self->sub_0x1F4.field_0x163 = 1;
+            cf_shake_inner(&self->sub_0x1F4, 1);
+        }
+    }
+
+    if (self->field_0x50 & 0x10000) {
+        self->sub_0x1F4.field_0x2DA = 0;
+    } else {
+        self->sub_0x1F4.field_0x2DA = 1;
+        self->sub_0x1F4.field_0x2DB = 0;
+    }
+}
 
 void func_80079D6C(){}
 

@@ -428,7 +428,7 @@ void func_802200A8(CModelDispMakeCrystal* self)
         u8* e = entries + (i << 3);
         if (e[9]) {
             reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)
-                ->setNumber(slot, *reinterpret_cast<u16*>(e + 6));
+                ->setNumber(slot, (u8)*reinterpret_cast<u16*>(e + 6));
             slot++;
         }
     }
@@ -468,16 +468,17 @@ int func_80221CD0(CModelDispMakeCrystal* self)
 
 void func_80221D58(void* obj, u32 id)
 {
-    u8* base = reinterpret_cast<u8*>(obj);
-    u32 e1 = *reinterpret_cast<u32*>(base + 0x10);
+    u32 e1 = *reinterpret_cast<u32*>((u8*)obj + 0x10);
     if (id == e1) {
-        func_804E3D48(reinterpret_cast<void*>(e1), obj ? base + 0x8 : base);
-        *reinterpret_cast<u32*>(base + 0x10) = 0;
+        func_804E3D48(reinterpret_cast<void*>(e1),
+                      obj ? reinterpret_cast<void*>((u8*)obj + 8) : obj);
+        *reinterpret_cast<u32*>((u8*)obj + 0x10) = 0;
     } else {
-        u32 e2 = *reinterpret_cast<u32*>(base + 0x14);
+        u32 e2 = *reinterpret_cast<u32*>((u8*)obj + 0x14);
         if (id == e2) {
-            func_804E3D48(reinterpret_cast<void*>(e2), obj ? base + 0x8 : base);
-            *reinterpret_cast<u32*>(base + 0x14) = 0;
+            func_804E3D48(reinterpret_cast<void*>(e2),
+                          obj ? reinterpret_cast<void*>((u8*)obj + 8) : obj);
+            *reinterpret_cast<u32*>((u8*)obj + 0x14) = 0;
         }
     }
 }

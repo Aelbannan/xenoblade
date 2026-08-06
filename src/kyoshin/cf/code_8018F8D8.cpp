@@ -253,7 +253,16 @@ float func_80190938() { return lbl_eu_80667A90; }
 
 void func_80190940(){}
 
-CMenuPTState::~CMenuPTState() {}
+CMenuPTState::~CMenuPTState() {
+    // Scalar-deleting destructor: retail guards the whole destruction
+    // (member dtors + CProcess base) with `if (this)` and emits a separate
+    // `__dl` (operator delete) under the deleteFlag. Members are destroyed in
+    // reverse declaration order (field_0x80, then field_0x60), matching retail.
+    if (this) {
+        field_0x80.~CPartyStateWin();
+        field_0x60.~CBgTex();
+    }
+}
 
 void CMenuPTState::Init() {}
 

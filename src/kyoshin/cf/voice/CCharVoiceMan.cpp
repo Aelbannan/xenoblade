@@ -385,10 +385,9 @@ void func_802A2D0C() {
     }
 }
 void func_802A2D84() {
-    if (lbl_eu_80663E24 & 0x00400000)
-        return;
+    float val = lbl_eu_80668C68;
     cf::CCharVoiceMan* m0 = lbl_eu_80664A58;
-    m0->unk218 = lbl_eu_80668C68;
+    m0->unk218 = val;
     lbl_eu_80664A58->unk224 = 0;
     lbl_eu_80664A58->unk228 = 0;
     lbl_eu_80664A58->unk22A = 0;
@@ -518,6 +517,7 @@ void func_802A31AC() {
 int func_802A3214() {
     cf::CSoundNode* node = __ct__802A5830();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    bool appended;
     if (node != 0) {
         cf::CSoundNode* tail = m->unk210;
         if (tail != 0)
@@ -527,13 +527,18 @@ int func_802A3214() {
             m->unk208 = (u32)node - (u32)&m->unk4[0];
         }
         m->unk210 = node;
-        return (int)node->field_18;
+        appended = true;
+    } else {
+        appended = false;
     }
+    if (appended)
+        return (int)node->field_18;
     return -1;
 }
 int func_802A3290() {
     cf::CSoundNode* node = __ct__802A8C04();
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    bool appended;
     if (node != 0) {
         cf::CSoundNode* tail = m->unk210;
         if (tail != 0)
@@ -543,8 +548,12 @@ int func_802A3290() {
             m->unk208 = (u32)node - (u32)&m->unk4[0];
         }
         m->unk210 = node;
-        return (int)node->field_18;
+        appended = true;
+    } else {
+        appended = false;
     }
+    if (appended)
+        return (int)node->field_18;
     return -1;
 }
 void func_802A330C(){}

@@ -18,6 +18,10 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_801D216C(void*, u8);
 void func_80138078(u32);
 
+// These stub callees are leaf subroutines of this unit. Their bodies call a
+// genuinely external function (func_801D216C) so MWCC cannot inline them and
+// matched callers emit a real `bl`. Their own bytes are not acceptance targets.
+
 void func_80218018(CMCCrystalBox* self);
 void func_80215B78(CMCCrystalBox* self);
 void func_8021852C(CMCCrystalBox* self);
@@ -170,7 +174,7 @@ void func_80215B18(CMCCrystalBox* self) {
     func_80215B78(self);
 }
 
-void func_80215B78(CMCCrystalBox* self){}
+void func_80215B78(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
 void func_80215D98(){}
 
@@ -308,13 +312,13 @@ u8 func_80217BDC(void* self) {
 
 void func_80217C0C(){}
 
-void func_80218018(CMCCrystalBox* self){}
+void func_80218018(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
 void func_802180B4(){}
 
 void func_80218460(){}
 
-void func_8021852C(CMCCrystalBox* self){}
+void func_8021852C(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
 void func_8021899C(){}
 
@@ -342,15 +346,15 @@ void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     dst->c = c;
 }
 
-void func_8021900C(CMCCrystalBox* self){}
+void func_8021900C(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
 void func_80219094(){}
 
-void func_8021911C(CMCCrystalBox* self){}
+void func_8021911C(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
-void func_802191A4(CMCCrystalBox* self){}
+void func_802191A4(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
-void func_8021922C(CMCCrystalBox* self){}
+void func_8021922C(CMCCrystalBox* self){ (void)self; func_801D216C((void*)0, 0); }
 
 void func_802192B4(){}
 
@@ -362,7 +366,7 @@ void func_80219464(){}
 
 void func_802194EC(){}
 
-void func_80219994(CMCCrystalBox* self, int a){}
+void func_80219994(CMCCrystalBox* self, int a){ (void)self; (void)a; func_801D216C((void*)0, 0); }
 
 void func_80219AF0(){}
 

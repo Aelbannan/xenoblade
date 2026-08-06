@@ -103,12 +103,25 @@ struct EffPos {
     Mtx field_0x130;
 };
 
+// Target 2: singly-linked node and list-control layout.
+struct Node2 {
+    Node2* field_0x00;       // next
+    Node2* field_0x04;
+};
+
+struct Node2Control {
+    u8 pad_0x00[0x04];
+    Node2* field_0x04;
+};
+
 // Cross-TU firework/placer helpers (retail C-linkage symbols).
 extern "C" EffectNode* func_804E0114(s32 index);
 extern "C" void func_804E0098(s16 index);
 extern "C" s32 func_804DFFA8(s32 index);
 extern "C" u32 func_804E0104(void);
 extern "C" s32 func_804CDF20(void* self, void* b, void* c, f32* out);
+
+void func_804CD0A4(EffectStruct* self);
 
 // Larger scene/effect layout used by targets 3, 8, 9, 10. Only fields touched
 // by the reconstructed functions are declared.
@@ -132,8 +145,7 @@ struct EffectScene {
     u8 pad_0xd0[0xf4 - 0xd0];
     Mtx field_0xf4;              // target 8 matrix
     u8 pad_0x124[0x160 - 0x124];
-    Mtx field_0x160;             // target 9 matrix
-    u8 pad_0x190[0x190 - 0x160 - sizeof(Mtx)];
+    Mtx field_0x160;             // target 9 matrix (ends at 0x190)
     Vec field_0x190_vec;         // target 10 CVec3 out (0x190,0x194,0x198)
     u8 pad_0x19c[0x21c - 0x19c];
     Vec field_0x21c_vec;         // target 8 input vector
@@ -210,7 +222,7 @@ void func_804CE160(EffectScene* self, const ml::CVec3& a, const ml::CVec3& b) {
         if (out.x * out.x + out.y * out.y + out.z * out.z == 0.0f) {
             out = ml::CVec3::zero;
         } else {
-            PSVECNormalize(&out, &out);
+            PSVECNormalize((const Vec*)&out, (Vec*)&out);
         }
     }
     self->field_0x190_vec.x = out.x;
@@ -409,16 +421,16 @@ EffectNode* func_804D5DAC(EffectNode* self) {
 }
 
 void func_804D5E10(EffectNode* self, s32 index) {
-    s16 result = (s16)func_804DFFA8(index);
-    if (result < 0) return;
-    EffectNode* node = func_804E0114(result);
-    if (self->field_0x06 < 0) {
-        self->field_0x06 = result;
-        self->field_0x08 = result;
-    } else {
+    s32 v = func_804DFFA8(index);
+    if ((s16)v < 0) return;
+    func_804E0114((s16)v);
+    if (self->field_0x06 >= 0) {
         EffectNode* last = func_804E0114(self->field_0x08);
-        last->field_0x02 = result;
-        self->field_0x08 = result;
+        last->field_0x02 = (s16)v;
+        self->field_0x08 = (s16)v;
+    } else {
+        self->field_0x06 = (s16)v;
+        self->field_0x08 = (s16)v;
     }
     self->field_0x0a += 1;
 }
@@ -451,7 +463,26 @@ void func_804D6070(void) {}
 
 void func_804D6074(){}
 
-void func_804D6BC0(){}
+s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
+               Node2** p7, Node2** p8, Node2** p9) {
+    *p6 = *p5;
+    *p6 = (*p5)->field_0x04;
+    *p7 = *p5;
+    *p8 = *p5;
+    *p8 = (*p5)->field_0x00;
+    *p9 = *p5;
+    *p9 = (*p5)->field_0x00;
+    *p9 = (*p5)->field_0x00->field_0x00;
+    Node2* e = c->field_0x04;
+    if (*p7 == e->field_0x00) *p6 = *p7;
+    if (*p8 == e) {
+        *p8 = *p7;
+        *p9 = *p7;
+        return 1;
+    }
+    if (*p9 == e) *p9 = *p8;
+    return 0;
+}
 
 // Target 1: us-804d8184 — simple setter: stores two params at offsets 0x10/0x14
 void func_804D4010(EffectStruct* self, u32 a, u32 b) {

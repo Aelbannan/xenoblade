@@ -75,7 +75,6 @@ extern "C" void func_8029C0C4(COption* self) {
 void func_8029C5C8(){}
 
 void func_8029C66C(){}
-
 // Returns the option-window visibility byte only if the embedded scroll bar
 // is visible AND the system window is ready; otherwise 0.
 extern "C" u8 func_8029C734(COptionWindow* self) {
@@ -96,8 +95,6 @@ void func_8029C9E8(){}
 void func_8029CABC(){}
 
 void func_8029CB9C(){}
-
-void func_8029CC30(){}
 
 void func_8029CC9C(){}
 

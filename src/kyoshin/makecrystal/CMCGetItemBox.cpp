@@ -7,6 +7,7 @@
 
 // C-linkage menu/widget helpers (retail symbols are unmangled).
 extern "C" {
+void* CItem_initItemImplInstances(void*);
 void func_801D216C(CMCItemBoxSubObj*, int);
 void func_801599D4(CMCItemBoxEntry*, int);
 u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
@@ -90,7 +91,17 @@ CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
     return p;
 }
 
-void func_80296E00(){}
+s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
+    CMCItemBoxEntry* base = x->listBase;
+    if (base == 0) return 0;
+    u32 idx = (u16)(index + (s8)x->counter * 30);
+    if (idx >= x->count) return 0;
+    s16 off = x->table[idx];
+    CMCItemBoxEntry* p = base + off;
+    if (!p) return 0;
+    void* impl = CItem_initItemImplInstances(p);
+    return (s8)(u16)((u16(*)(void*, void*))(*(void***)impl)[2])(impl, p);
+}
 
 void func_80296E98(){}
 

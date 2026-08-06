@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/CfGimmick.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 
 // Forward declarations for cross-TU callees (resolved via the retail symbol map).
 class UnkClass_805764CC;
@@ -24,6 +25,29 @@ extern "C" int lbl_eu_805765B0[10];
 
 // Shared singleton accessor; refs resolve to the unmangled retail name.
 extern "C" CfGimmickGlobal* getUnk80664658();
+
+// Bdat table data used by func_8020A608 / func_80208F34 columns.
+extern "C" u8 lbl_eu_805357E8[];
+extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
+// Returned when func_8020A608 cannot fetch a column row.
+extern "C" void* lbl_eu_80662788;
+
+// Column-capacity helpers (CBdat row begin/count).
+extern "C" void* func_8003AA34();
+extern "C" u32 func_8003B41C(void* bdat);
+extern "C" u32 func_8003B1EC(void* bdat);
+
+// Player per-heal helpers paired with CfObject_UnkVirtualFunc70.
+extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
+
+// Scale factor for bdat int -> float position conversion.
+extern "C" float lbl_eu_80668364;
+// Sentinel used by the player loops (func_8020A124 / func_8020A1DC).
+extern "C" float lbl_eu_80668350;
+
+// Bdat column/row reader (returns the raw cell value as a 32-bit word).
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 
 namespace cf {
     void CfGimmick::func_8020896C(void* other) {
@@ -104,7 +128,16 @@ void func_80208EE4(cf::CfGimmick* self) {
     }
 }
 
-void func_80208F34(){}
+void func_80208F34(CfGimmick* self, float* out, void* unused, void** holder) {
+    // Read three adjacent bdat columns starting at each +2 prefix, converting
+    // each integer cell to a scaled float written into the output vector.
+    out[0] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x00) + 2, self->field_64);
+    out[1] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x04) + 2, self->field_64);
+    out[2] = lbl_eu_80668364 * (f32)(s32)getBdatStringColumnValue(
+        *holder, *(char**)(lbl_eu_805357E8 + 0x08) + 2, self->field_64);
+}
 
 void func_80209020(){}
 
@@ -169,7 +202,15 @@ void func_8020A03C() {
     *(unsigned int*)((char*)p + 0x214) |= 0x200000;
 }
 
-void func_8020A068(){}
+void func_8020A068(int arg0, int flag, u32 value) {
+    CfGimmickGlobal* p = getUnk80664658();
+    if (flag != 0) {
+        p->field_214 |= 0x80;
+    } else {
+        p->field_214 &= ~0x80;
+    }
+    getUnk80664658()->field_210 = value;
+}
 
 void func_8020A0CC() {
     void* p = getUnk80664658();
@@ -181,9 +222,33 @@ void func_8020A0F8() {
     *(unsigned int*)((char*)p + 0x214) |= 0x400000;
 }
 
-void func_8020A124(){}
+void func_8020A124(float value) {
+    for (s32 i = 0; i < 3; ++i) {
+        CfObjectMove* player = CfGameManager::getPlayer(i);
+        if (player != nullptr) {
+            if (value != lbl_eu_80668350) {
+                player->CfObject_UnkVirtualFunc70(lbl_eu_80668350);
+                func_800BC3D8(player, value);
+            } else {
+                player->CfObject_UnkVirtualFunc70(lbl_eu_80668358);
+            }
+        }
+    }
+}
 
-void func_8020A1DC(){}
+void func_8020A1DC(float value) {
+    for (s32 i = 0; i < 3; ++i) {
+        CfObjectMove* player = CfGameManager::getPlayer(i);
+        if (player != nullptr) {
+            if (value != lbl_eu_80668350) {
+                player->CfObject_UnkVirtualFunc70(lbl_eu_80668358);
+                func_800BC3B0(player, value);
+            } else {
+                player->CfObject_UnkVirtualFunc70(lbl_eu_80668350);
+            }
+        }
+    }
+}
 
 void func_8020A294(){}
 
@@ -205,7 +270,20 @@ unsigned int func_8020A5DC() {
     return ((unsigned int)-(int)x | x) >> 31;
 }
 
-void func_8020A608(){}
+void* func_8020A608(int index, int mod) {
+    void* bdat = lbl_eu_80664148;
+    if (index != 0 && bdat != 0) {
+        func_8003AA34();
+        if (index < (int)(func_8003B41C(bdat) + func_8003B1EC(bdat))) {
+            // Patch the column-name prefix, then read the requested row.
+            u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
+            col[4] = (u8)(mod + 0x31);
+            return (void*)getBdatStringColumnValue(
+                bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
+        }
+    }
+    return lbl_eu_80662788;
+}
 
 void func_8020A6B0(){}
 
@@ -216,11 +294,30 @@ int func_8020A87C(u32 arg) {
     return (a == arg) ? 1 : 0;
 }
 
-void func_8020A8B4(){}
+int func_8020A8B4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+    float dx = center->x - point->x;
+    float dz = center->z - point->z;
+    float r = self->field_30;
+    if (dx * dx + dz * dz <= r * r) {
+        float y = center->y + self->field_34;
+        if (y <= point->y && center->y + self->field_38 >= point->y) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void func_8020A928(){}
 
-void func_8020A9F4(){}
+int func_8020A9F4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+    float r = self->field_30;
+    if (center->x + r <= point->x && center->x - r >= point->x &&
+        center->z + self->field_3C <= point->z && center->z - self->field_3C >= point->z &&
+        center->y + self->field_34 <= point->y && center->y + self->field_38 >= point->y) {
+        return 1;
+    }
+    return 0;
+}
 
 void func_8020AA8C(){}
 

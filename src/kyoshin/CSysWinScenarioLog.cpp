@@ -48,33 +48,12 @@ void func_8027F0A0() {
     lbl_eu_80664914 = 0;
 }
 
-// ---------------------------------------------------------------------------
-// ---- Target 2: func_8027EEF4 (us-80281378) -------------------------------
-// Closes the sequence for `self` once the game is in a progression gate.
-// ---------------------------------------------------------------------------
-void func_8027EEF4(u32 self) {
-    bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
-    if (!booting && lbl_eu_80664772 == 0) {
-        func_800826F0__Q22cf13CfGameManagerFv(self);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// ---- Target 4: func_8027EE88 (us-8028130c) -------------------------------
-// Bump the cf sequence value keyed `self` by `arg` (clamped to 0xFFFF) and
-// store it back; when the pause flag is set, leave it untouched.
-// ---------------------------------------------------------------------------
-u32 func_8027EE88(u32 self, u32 arg) {
-    if (isSceneActive()) {
-        u32 sum = func_80082694__Q22cf13CfGameManagerFv(self) + arg;
-        if (sum >= 0xFFFF) {
-            sum = 0xFFFF;
-        }
-        func_8008269C__Q22cf13CfGameManagerFv(self, sum);
-        arg = sum;
-    }
-    return arg;
-}
+// Definitions of these two helpers are placed at the BOTTOM of this file so
+// that callers below (func_80280D04 / func_80280DBC / func_80280E9C) only see
+// the prototypes here - MWCC then emits a direct `bl` to the retail symbol
+// instead of inlining the body at each call site (retail calls them out-of-line).
+extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg);
+extern "C" void __declspec(noinline) func_8027EEF4(u32 self);
 
 // ---------------------------------------------------------------------------
 // ---- Target 5: CSysWinScenarioLog::~CSysWinScenarioLog (us-80280a38) ------
@@ -243,7 +222,7 @@ void func_80280BF0(){}
 // earlier tier before later tiers can advance (1 / 100 / 1000, then, once
 // self reaches 5, a nested 1 / 20 / 50 ladder).
 // ---------------------------------------------------------------------------
-void func_80280D04(u32 self) {
+void func_80280D04(s32 self) {
     u32 v = func_8027EE88(0x1D, self);
     if (v >= 1) {
         func_8027EEF4(0x1D);
@@ -342,3 +321,25 @@ extern "C" void func_802811FC(void* self){
 }
 
 void func_8028120C(){}
+
+// ---------------------------------------------------------------------------
+// Target-only helper definitions (moved below their callers to block inline).
+// ---------------------------------------------------------------------------
+extern "C" void __declspec(noinline) func_8027EEF4(u32 self) {
+    bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+    if (!booting && lbl_eu_80664772 == 0) {
+        func_800826F0__Q22cf13CfGameManagerFv(self);
+    }
+}
+
+extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
+    if (isSceneActive()) {
+        u32 sum = func_80082694__Q22cf13CfGameManagerFv(self) + arg;
+        if (sum >= 0xFFFF) {
+            sum = 0xFFFF;
+        }
+        func_8008269C__Q22cf13CfGameManagerFv(self, sum);
+        arg = sum;
+    }
+    return arg;
+}

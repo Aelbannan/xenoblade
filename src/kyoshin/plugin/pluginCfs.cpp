@@ -51,7 +51,7 @@ extern "C" {
     void func_801F4AD4(int);
     void func_801F4B68(int);
     void func_801F4BFC(int);
-    void func_801F4C90(int, int);
+    void func_801F4C90(int, int, int);
     int func_80291BF8();
     void func_eu_8049AB50(int, int);
     int getUnk80664658();
@@ -1121,11 +1121,12 @@ int setDispOffArea(VMThread* vmThread) {
         areaId = vmArgFixedGet(3, arg);
     }
 
-    void* obj = func_801864DC(*(void**)((u8*)ocObj + 4), 0);
+    void* ctx = func_801862C0((VMThread*)(s32)areaId);
+    void* obj = func_801864DC(ctx, *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         void* box = func_800B07E8__Fv();
-        float fAreaId = (float)(s32)areaId / 4096.0f;
+        float fAreaId = (float)(s16)areaId;
         func_800B6800(fAreaId, obj, 1);
     }
 
@@ -1147,7 +1148,8 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg) != 0;
     }
 
-    void* obj = func_801864DC(*(void**)((u8*)ocObj + 4), 0);
+    void* ctx = func_801862C0((VMThread*)(s32)enable);
+    void* obj = func_801864DC(ctx, *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);
@@ -1226,8 +1228,9 @@ int setElvGim(VMThread* vmThread) {
         value = vmArgIntGet(3, arg);
     }
 
-    if (getUnk80664658()) {
-        func_801F4C90(gimmickId, value);
+    int unk = getUnk80664658();
+    if (unk) {
+        func_801F4C90(unk, gimmickId, value);
     }
 
     return 0;

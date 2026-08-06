@@ -149,27 +149,40 @@ struct CColiBoundsPoint {
 };
 
 void func_804B45E4(CColiBoundsPoint* p) {
-    if (lbl_eu_80665944->max[0] < p->x + p->radius) {
-        lbl_eu_80665944->max[0] = p->x + p->radius;
+    if (lbl_eu_80665944->max[0] < p->radius + p->x) {
+        lbl_eu_80665944->max[0] = p->radius + p->x;
     }
     if (lbl_eu_80665944->min[0] > p->x - p->radius) {
         lbl_eu_80665944->min[0] = p->x - p->radius;
     }
-    if (lbl_eu_80665944->max[1] < p->y + p->radius) {
-        lbl_eu_80665944->max[1] = p->y + p->radius;
+    if (lbl_eu_80665944->max[1] < p->radius + p->y) {
+        lbl_eu_80665944->max[1] = p->radius + p->y;
     }
     if (lbl_eu_80665944->min[1] > p->y - p->radius) {
         lbl_eu_80665944->min[1] = p->y - p->radius;
     }
-    if (lbl_eu_80665944->max[2] < p->z + p->radius) {
-        lbl_eu_80665944->max[2] = p->z + p->radius;
+    if (lbl_eu_80665944->max[2] < p->radius + p->z) {
+        lbl_eu_80665944->max[2] = p->radius + p->z;
     }
     if (lbl_eu_80665944->min[2] > p->z - p->radius) {
         lbl_eu_80665944->min[2] = p->z - p->radius;
     }
 }
 
-void func_804B46A8(CColiBoundsPoint* p) {
+// Bounds-expansion source sharing the +0x10/+0x20/+0x30 position layout
+// but with the uniform radius at +0x64 instead of +0x70.
+struct CColiBoundsPoint2 {
+    f32 field_0x00[4];  //0x0-0xF
+    f32 x;              //0x10
+    f32 field_0x14[3];  //0x14-0x1F
+    f32 y;              //0x20
+    f32 field_0x24[3];  //0x24-0x2F
+    f32 z;              //0x30
+    f32 field_0x34[12]; //0x34-0x63
+    f32 radius;         //0x64
+};
+
+void func_804B46A8(CColiBoundsPoint2* p) {
     if (lbl_eu_80665944->max[0] < p->x + p->radius) {
         lbl_eu_80665944->max[0] = p->x + p->radius;
     }

@@ -48,21 +48,7 @@ struct TalkListEntryArray {
 };
 
 class CKizunaTalkList : public IWorkEvent {
-    friend u8 func_8027355C(CKizunaTalkList*);
-    friend u8 func_80273518(CKizunaTalkList*);
-    friend void func_80273938(CKizunaTalkList*);
-    friend void func_80273984(CKizunaTalkList*);
-    friend void func_802739D8(CKizunaTalkList*);
-    friend void func_80273A24(CKizunaTalkList*);
-
-    // free-function member-accessors for this TU's matched logic
-    friend void func_802732F4(CKizunaTalkList*);
-    friend void func_8027340C(CKizunaTalkList*, nw4r::lyt::DrawInfo*);
-    friend void func_80273564(CKizunaTalkList*);
-    friend void func_802735F0(CKizunaTalkList*);
-    friend void func_80273A70(CKizunaTalkList*);
-    friend void func_80273AD0(CKizunaTalkList*);
-private:
+public:
     /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
     /* 0x14 */ u32 mEntryCount;     // number of valid entries
     /* 0x18 */ u32 mUnknown18;
@@ -76,9 +62,7 @@ private:
     /* 0x85 */ u8 mState85;         // state machine progression flag
     /* 0x86 */ u8 mUnknown86;
     /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
-public:
     u8 func_8027355C() const { return mNeedsRebuild; }
-private:
     /* 0x88 */ u8 mUnknown88;
     /* 0x89 */ u8 _pad89;           // padding
     /* 0x8A */ u16 mUnknown8A;

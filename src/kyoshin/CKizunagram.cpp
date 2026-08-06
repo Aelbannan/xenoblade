@@ -8,9 +8,9 @@
 // func_80137444 is C++-linkage (mangled retail), func_80137510 / func_80231848 /
 // copyVEC2 are unmangled in retail (extern "C"), and func_80136E84 is referenced
 // by its mangled retail identifier (see CSaveLoad for the same pattern).
-extern float lbl_eu_80668828[];
-extern float lbl_eu_80668834[];
-extern float lbl_eu_80668848[];
+extern const float lbl_eu_80668828;
+extern const float lbl_eu_80668834;
+extern const float lbl_eu_80668848;
 extern char lbl_eu_8050CB20[];
 
 u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
@@ -64,7 +64,7 @@ CKizunaLine::CKizunaLine(u32 arg4, u32 arg8, u8 arg3D) {
     field17 = 0;
     field24 = 0;
     field26 = 0;
-    f32 idle = lbl_eu_80668828[0];
+    f32 idle = lbl_eu_80668828;
     field28 = idle;
     field2C = idle;
     field30 = idle;
@@ -166,7 +166,7 @@ void func_80259DE8(){}
 void func_80257EE0(UnkKizunaSelf57EE0* self) {
     if (self->field8) {
         if (self->field10 == 0) {
-            func_80137444(self->field0C, lbl_eu_80668834[0]);
+            func_80137444(self->field0C, lbl_eu_80668834);
         }
         self->field8->callSlot14(0);
     }
@@ -190,11 +190,11 @@ void func_8025AB04(){}
 
 void func_8025AB84(){}
 
-extern float lbl_eu_80668828[];
+extern const float lbl_eu_80668828;
 void CKizunagram_resetFields(void* self){
     *(u8*)((u8*)self + 0x34) = 0;
     *(u16*)((u8*)self + 0x36) = 0;
-    *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
+    *(float*)((u8*)self + 0x38) = lbl_eu_80668828;
 }
 
 void func_8025AC1C(){}
@@ -226,9 +226,13 @@ void func_8025B870(){}
 
 // Finalize then release/null a +0x08 child: if non-null, finalize it (vtable
 // slot 2) with a 1 flag, then clear the pointer.
+// The nested identical guards reproduce retail's duplicated test: both beqs
+// share the single loaded pointer (MWCC CSEs the load).
 void func_8025B900(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
-        self->field8->target2(1);
+        if (self->field8 != 0) {
+            self->field8->target2(1);
+        }
         self->field8 = 0;
     }
 }
@@ -308,7 +312,7 @@ void func_8025CAB4(UnkKizunaDisp* self) {
 // the embedded func_80259344 sub at +0x68) on vtable slot 14, rebuild the
 // two-word pair, and copy it into the +0xB4 object's child.
 void func_8025CAE4(UnkKizunaSelfCAE4* self) {
-    func_80137444(self->field78, lbl_eu_80668834[0]);
+    func_80137444(self->field78, lbl_eu_80668834);
     ((UnkKizunaObjSlot14*)self->sub.field0C)->callSlot14(0);
     UnkKizunaPair p = func_80259344(&self->sub);
     func_80231848(self->fieldB4->field10, &p);
@@ -316,7 +320,7 @@ void func_8025CAE4(UnkKizunaSelfCAE4* self) {
 
 // Same shape as func_8025CAE4 but the anim step uses func_80137510 instead.
 void func_8025CB50(UnkKizunaSelfCAE4* self) {
-    func_80137510(self->field78, lbl_eu_80668834[0]);
+    func_80137510(self->field78, lbl_eu_80668834);
     ((UnkKizunaObjSlot14*)self->sub.field0C)->callSlot14(0);
     UnkKizunaPair p = func_80259344(&self->sub);
     func_80231848(self->fieldB4->field10, &p);

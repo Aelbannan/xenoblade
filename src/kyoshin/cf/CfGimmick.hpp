@@ -13,7 +13,13 @@ public:
 
     // 0x00 vtable (implicit - first member is virtual dtor)
 
-    /* 0x04 */ u8 gap04[0x60];
+    /* 0x04 */ u8 gap04[0x30 - 0x04];
+    /* 0x30 */ f32 field_30;   // 0x30 - horizontal radius / half-extent
+    /* 0x34 */ f32 field_34;   // 0x34 - vertical extent (low)
+    /* 0x38 */ f32 field_38;   // 0x38 - vertical extent (high)
+    /* 0x3C */ f32 field_3C;   // 0x3C - depth half-extent
+    /* 0x40 */ f32 field_40;   // 0x40 - interaction distance
+    /* 0x44 */ u8 gap44[0x64 - 0x44];
     /* 0x64 */ u16 field_64;
     /* 0x66 */ u16 field_66;
     /* 0x68 */ u16 field_68;
@@ -38,8 +44,16 @@ public:
 
 // Global settings object returned by getUnk80664658 (field_214 flag word).
 struct CfGimmickGlobal {
-    u8 pad[0x214];
+    u8 pad[0x210];
+    u32 field_210;   // 0x210 - value set by func_8020A068
     u32 field_214;   // 0x214 - flag bits set by several setters
+};
+
+// Minimal 3-component vector used by the CfGimmick collision helpers.
+struct CfGimmickVec3 {
+    f32 x;  // 0x00
+    f32 y;  // 0x04
+    f32 z;  // 0x08
 };
 
 // Container whose first member (0x00) is a registered-object pointer used by

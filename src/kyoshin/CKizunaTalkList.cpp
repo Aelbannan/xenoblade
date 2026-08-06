@@ -30,18 +30,20 @@ extern "C" void __dt__10CScrollBarFv(void*, int);
 
 // data / rodata labels
 extern "C" char lbl_eu_8050E990[];            // file-name table (target 7)
-extern "C" u8 lbl_eu_806648C0[];              // .sbss color pairs (target 8)
-extern "C" u8 lbl_eu_806648C8[];
-extern "C" u8 lbl_eu_806648D0[];
-extern "C" u8 lbl_eu_806648D8[];
+extern "C" void* lbl_eu_806648C0;             // .sbss colour entries (target 8)
+extern "C" void* lbl_eu_806648C8;
+extern "C" void* lbl_eu_806648D0;
+extern "C" void* lbl_eu_806648D8;
 extern "C" f32 lbl_eu_806689C8;               // .sdata2 float constants (target 10)
 extern "C" f32 lbl_eu_806689CC;
 extern "C" f32 lbl_eu_806689D0;
 
 // Forward decls for state-transition helpers (defined below / matched later).
-void func_80273AD0(CKizunaTalkList* self);
-void func_80273A70(CKizunaTalkList* self);
-void func_802740E4(CKizunaTalkList* self);
+// extern "C" + noinline keeps callers emitting real unmangled bl branches
+// (retail keeps them as separate out-of-line functions in this TU).
+extern "C" __declspec(noinline) void func_80273AD0(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void func_80273A70(CKizunaTalkList* self);
+extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self);
 
 // BindAnim-style virtual dispatch on nw4r::lyt::Layout vtable slot 0x2C.
 static void bindAnim(nw4r::lyt::Layout* layout, void* anim, u32 flag) {
@@ -234,13 +236,14 @@ void func_80273A24(CKizunaTalkList* self) {
 }
 
 // Bind the scroll-out animations for the talk list (retail func_80273A70).
-void func_80273A70(CKizunaTalkList* self) {
+// Bind the scroll-out animations for the talk list (retail func_80273A70).
+extern "C" __declspec(noinline) void func_80273A70(CKizunaTalkList* self) {
     bindAnim(self->mpLayout20, self->mpAnim28, 0);
     bindAnim(self->mpLayout20, self->mpAnim24, 1);
 }
 
 // Bind the scroll-in animations for the talk list (retail func_80273AD0).
-void func_80273AD0(CKizunaTalkList* self) {
+extern "C" __declspec(noinline) void func_80273AD0(CKizunaTalkList* self) {
     bindAnim(self->mpLayout20, self->mpAnim24, 0);
     bindAnim(self->mpLayout20, self->mpAnim28, 1);
 }
@@ -249,7 +252,7 @@ void func_80273AD0(){}
 
 void func_80273B30(){}
 
-void func_802740E4(CKizunaTalkList* self){}
+extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self){}
 
 void func_802741B0(){}
 

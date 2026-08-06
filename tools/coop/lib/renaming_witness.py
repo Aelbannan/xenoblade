@@ -1727,7 +1727,7 @@ def _structurally_equal(left: Any, right: Any, z3: Any) -> bool:
         return False
 
 
-def _structurally_equal_simplified(left: Any, right: Any, z3: Any) -> bool:
+def _structurally_equal_simplified(left: Any, right: Any, z3: Any, timeout_ms: int = 0) -> bool:
     """Structural equality with commutative canonicalization.
 
     Raw ``z3.eq(a+b, b+a)`` is False — z3 normalizes commutativity only under
@@ -1736,10 +1736,18 @@ def _structurally_equal_simplified(left: Any, right: Any, z3: Any) -> bool:
     it pass the gate; the terminal compare must not then re-reject it
     (us-8025658c / us-8025650c, r8 WS-1).  ``z3.simplify`` is semantics-
     preserving, so this is strictly more permissive on provably-equal
-    expressions and never accepts an unequal pair."""
+    expressions and never accepts an unequal pair.
+
+    ``timeout_ms`` (0 = none) is passed to ``z3.simplify`` as a Z3 param —
+    the rewriter honors it internally, so even a single stuck ``simplify`` on
+    a pathological AST is interrupted instead of spinning (run30 incident:
+    one lane held the build lock ~30 min at 99.7% CPU in th_rewriter)."""
     if _structurally_equal(left, right, z3):
         return True
     try:
+        if timeout_ms > 0:
+            return bool(z3.eq(z3.simplify(left, timeout=timeout_ms),
+                              z3.simplify(right, timeout=timeout_ms)))
         return bool(z3.eq(z3.simplify(left), z3.simplify(right)))
     except Exception:
         return False
@@ -1948,6 +1956,7 @@ def _terminals_agree(
     left_base: int,
     right_base: int,
     first_divergence: list[str] | None = None,
+    simplify_timeout_ms: int = 0,
 ) -> bool:
     """Structural agreement of two terminals under the renaming permutation.
 
@@ -1977,13 +1986,13 @@ def _terminals_agree(
         return _fail("exit-target")
     ls, rs = left.state, right.state
     for i in range(32):
-        if not _structurally_equal_simplified(ls.gpr[i], rs.gpr[gpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.gpr[i], rs.gpr[gpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
             return _fail(f"gpr r{i}")
     for i in range(32):
-        if not _structurally_equal_simplified(ls.fpr[i], rs.fpr[fpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.fpr[i], rs.fpr[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
             return _fail(f"fpr f{i}")
     for i in range(32):
-        if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3):
+        if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
             return _fail(f"ps1 f{i}")
     direct_pairs = [
         (ls.cr, rs.cr, "cr"),
@@ -2225,7 +2234,8 @@ def run_structural_witness(
             # Skip terminal pairs whose path conditions are disjoint: a
             # cheap propositional simplification (no solver).  Pairs that
             # can co-occur must be structurally identical.
-            combined = z3.simplify(z3.And(left.condition, right.condition))
+            combined = z3.simplify(z3.And(left.condition, right.condition),
+                                   timeout=deadline.remaining_ms() if deadline else 0)
             if z3.is_false(combined):
                 continue
             pairs_checked += 1
@@ -2234,6 +2244,7 @@ def run_structural_witness(
                 left, right, gpr_perm, fpr_perm, z3,
                 left_base=left_base, right_base=right_base,
                 first_divergence=divergence,
+                simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
             ):
                 reason = (
                     f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
@@ -2894,7 +2905,8 @@ def run_region_sliced_witness(
         right_base = candidate[0].address
         for left, lregion in all_retail_terms:
             for right, rregion in all_decomp_terms:
-                combined = z3.simplify(z3.And(left.condition, right.condition))
+                combined = z3.simplify(z3.And(left.condition, right.condition),
+                                       timeout=deadline.remaining_ms() if deadline else 0)
                 if z3.is_false(combined):
                     continue
                 pairs_checked += 1
@@ -2918,6 +2930,7 @@ def run_region_sliced_witness(
                     left, right, gpr_perm, fpr_perm, z3,
                     left_base=left_base, right_base=right_base,
                     first_divergence=divergence,
+                    simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
                 ):
                     reason = (
                         f"terminal pair ({left.exit_kind}, {right.exit_kind}) "

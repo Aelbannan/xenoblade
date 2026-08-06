@@ -146,6 +146,7 @@ def _run_single_cycle(
     linked: bool = False,
     dry_run: bool = False,
     smt: bool = False,
+    witness_timeout_ms: int = 0,
 ) -> BatchResult:
     """Run one cycle via the co-op runner's subprocess CLI."""
     from tools.coop.run import cmd_cycle
@@ -199,6 +200,7 @@ def _run_single_cycle(
             runtime_test=hyp.runtime_test,
             linked=linked,
             smt=smt,
+            witness_timeout_ms=witness_timeout_ms,
         )
         elapsed = time.monotonic() - start
         passed = rc == 0
@@ -340,6 +342,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--witness-timeout",
+        type=int,
+        default=0,
+        metavar="MS",
+        help=(
+            "Hard timeout (milliseconds) for the register-renaming witness's z3 "
+            "rewriter calls (0 = no timeout). The harness passes a bounded value "
+            "so a pathological z3.simplify is interrupted instead of spinning "
+            "under the build lock."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print what would be done without actually running cycles",
@@ -392,6 +406,7 @@ def main() -> int:
             linked=args.linked,
             dry_run=args.dry_run,
             smt=args.smt,
+            witness_timeout_ms=args.witness_timeout,
         )
         summary.results.append(result)
         if result.passed:

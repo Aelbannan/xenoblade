@@ -674,8 +674,11 @@ async function runWitnessCycle(
   try {
     try {
       await execFilePromise(config.pythonBin, [
-        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
-        config.pythonBin, "tools/coop/run.py", "cycle", targetId,
+        // cmd_build now takes the repo build lock itself (build-only scope);
+        // do NOT wrap the whole cycle — the witness after the build must run
+        // lock-free (run30 incident: z3 spin under the lock froze all agents).
+        "tools/coop/run.py", "cycle", targetId,
+        "--witness-timeout", String(config.witnessTimeoutMs),
         "--hypothesis",
         "triage: reg-swap template vs nearest matched sibling — witness-only route (no LLM round)",
         "--next-change",
@@ -866,7 +869,7 @@ function makeVerifyCallback(opts: {
     }
 
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
-    batchResults = await runBatchCycle(repoRoot, config.pythonBin, targetIds);
+    batchResults = await runBatchCycle(repoRoot, config.pythonBin, targetIds, config.witnessTimeoutMs);
     const acceptedCount = batchResults.filter(r => r.accepted).length;
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle completed (${acceptedCount} accepted)\n`);
     if (acceptedCount > 0) {
@@ -2247,6 +2250,7 @@ async function runTuFinal(
             config.pythonBin, "tools/coop/batch-cycle.py",
             "--default-hypothesis", "TU-final mass re-certification after polish",
             "--default-next-change", "none (re-certify only)",
+            "--witness-timeout", String(config.witnessTimeoutMs),
             "--", ...unitTargets.map((t) => t.id),
           ], { cwd: repoRoot });
           recertOutputLocal = stdout.slice(-1200);

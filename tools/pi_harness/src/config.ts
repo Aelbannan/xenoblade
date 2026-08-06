@@ -46,6 +46,7 @@ function defaultConfig(): HarnessConfig {
     maxBriefChars: 80_000,
     briefTargetChars: 12_000,
     maxBatchMinutes: 60,
+    witnessTimeoutMs: 20_000,
     timeoutRetries: 3,
     rejectionRetries: 1,
     tuFinalAttempts: 2,
@@ -215,6 +216,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!(config.maxBatchMinutes > 0)) {
     throw new Error("config.maxBatchMinutes must be > 0");
+  }
+  if (!Number.isInteger(config.witnessTimeoutMs) || config.witnessTimeoutMs < 0) {
+    throw new Error("config.witnessTimeoutMs must be an integer >= 0 (0 = no timeout)");
   }
   if (typeof config.timeoutRetries !== "number" || config.timeoutRetries < 0 || !Number.isInteger(config.timeoutRetries)) {
     throw new Error("config.timeoutRetries must be an integer >= 0");

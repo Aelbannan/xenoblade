@@ -442,6 +442,7 @@ def cmd_cycle(
     add_to_kb: str = "",
     contract: str = "auto",
     smt: bool = False,
+    witness_timeout_ms: int = 0,
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -490,6 +491,7 @@ def cmd_cycle(
     evaluation = evaluate_unit_match(
         project, unit, target.symbol, linked=linked, target_id=target.id,
         declared_return=_declared_return, contract=contract, run_smt=smt,
+        witness_timeout_ms=witness_timeout_ms,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -1867,6 +1869,19 @@ def main() -> int:
             "Use live-out to check only live registers, or ppc-eabi for full ABI."
         ),
     )
+    p_cycle.add_argument(
+        "--witness-timeout",
+        type=int,
+        default=0,
+        metavar="MS",
+        help=(
+            "Hard timeout (milliseconds) for the register-renaming witness's z3 "
+            "rewriter calls (0 = z3 default, no timeout). The harness passes a "
+            "bounded value so a pathological z3.simplify on a huge terminal AST "
+            "is interrupted instead of spinning (run30 incident: one lane held "
+            "the build lock ~30 min at 99.7% CPU)."
+        ),
+    )
 
     def add_harness_args(command_parser: argparse.ArgumentParser) -> None:
         command_parser.add_argument(
@@ -2158,6 +2173,7 @@ def main() -> int:
             add_to_kb=args.add_to_kb,
             contract=args.contract,
             smt=args.smt,
+            witness_timeout_ms=args.witness_timeout,
         )
     if args.command == "queue":
         return cmd_queue(

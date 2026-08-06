@@ -1620,6 +1620,7 @@ def _try_renaming_witness(
     max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
     canonical_symbols: dict[str, str] | None = None,
     diag: dict[str, Any] | None = None,
+    witness_timeout_ms: int = 0,
 ) -> EquivalenceProbe | None:
     """Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).
 
@@ -1699,6 +1700,7 @@ def _try_renaming_witness(
             max_loop_iterations=max_loop_iterations,
             assumed_callees=call_targets,
             callee_contracts=contracts,
+            deadline_ms=witness_timeout_ms or 30_000,
             local_symbol=left.name,
             candidate_local_symbol=right.name,
             declared_return=declared_return_value,
@@ -3040,6 +3042,7 @@ def prove_unit_symbol(
     declared_return: str | None = None,
     force_declared_return: bool = False,
     smt: bool = True,
+    witness_timeout_ms: int = 0,
 ) -> EquivalenceProbe:
     """Check one named function from the unit's retail/decomp objects.
 
@@ -3089,6 +3092,7 @@ def prove_unit_symbol(
                 max_loop_iterations=max_loop_iterations,
                 canonical_symbols=canonical_symbols,
                 diag=witness_diag,
+                witness_timeout_ms=witness_timeout_ms,
             )
             if (
                 witness_probe is None
@@ -3115,6 +3119,7 @@ def prove_unit_symbol(
                     max_paths=max_paths,
                     max_loop_iterations=max_loop_iterations,
                     canonical_symbols=canonical_symbols,
+                    witness_timeout_ms=witness_timeout_ms,
                 )
             if witness_probe is not None:
                 return witness_probe
@@ -3224,6 +3229,7 @@ def certify_unit_symbol(
     declared_return: str | None = None,
     force_declared_return: bool = False,
     diag: dict | None = None,
+    witness_timeout_ms: int = 0,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair.
 
@@ -3313,6 +3319,7 @@ def certify_unit_symbol(
                 max_paths=max_paths,
                 max_loop_iterations=max_loop_iterations,
                 diag=diag,
+                witness_timeout_ms=witness_timeout_ms,
             )
             if witness_probe is not None:
                 return witness_probe

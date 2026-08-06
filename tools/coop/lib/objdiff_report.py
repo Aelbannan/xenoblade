@@ -210,6 +210,7 @@ def evaluate_unit_match(
     phase_timer: Optional[PhaseTimer] = None,
     declared_return: str | None = None,
     contract: str = "auto",
+    witness_timeout_ms: int = 0,
 ) -> MatchEvaluation:
     """Score a unit (and optionally SMT-prove one symbol).
 
@@ -254,6 +255,7 @@ def evaluate_unit_match(
             witness_diag: dict[str, Any] = {}
             probe = certify_unit_symbol(
                 project, unit, symbol, target_id, diag=witness_diag,
+                witness_timeout_ms=witness_timeout_ms,
             )
         equivalence = probe.status
         detail = probe.detail
@@ -266,6 +268,7 @@ def evaluate_unit_match(
             probe: EquivalenceProbe = prove_unit_symbol(
                 project, unit, fn_match.name, linked=linked, target_id=target_id,
                 declared_return=declared_return, contract=contract, smt=run_smt,
+                witness_timeout_ms=witness_timeout_ms,
             )
         equivalence = probe.status
         detail = probe.detail
@@ -281,7 +284,8 @@ def evaluate_unit_match(
         and pct >= 100.0
     ):
         with timer("smt"):
-            probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
+            probe = certify_unit_symbol(project, unit, fn_match.name, target_id,
+                                       witness_timeout_ms=witness_timeout_ms)
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate

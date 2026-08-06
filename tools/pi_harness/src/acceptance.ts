@@ -239,6 +239,7 @@ export async function runBatchCycle(
   repoRoot: string,
   python: string,
   targetIds: string[],
+  witnessTimeoutMs = 0,
 ): Promise<BatchResult[]> {
   try {
     await execFilePromise(
@@ -254,6 +255,7 @@ export async function runBatchCycle(
         "tools/coop/batch-cycle.py",
         "--default-hypothesis", "pi-harness batch match",
         "--default-next-change", "accept if pass",
+        "--witness-timeout", String(witnessTimeoutMs),
         // `--` end-of-options: target ids come from targets.json and must
         // never be parsed as argparse flags.
         "--",

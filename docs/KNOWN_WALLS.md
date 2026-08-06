@@ -6,6 +6,16 @@ lever. No wall is proven unreachable in principle (every retail function is
 MWCC output, so a matching C++ reconstruction exists). Cross-check the cited
 MWCC_REFERENCE sections before re-litigating a ruled-out shape.
 
+## Wall classes — read these before the list
+
+- **FULL_MATCH-only**: the register-renaming witness cannot certify the
+  shortcut, but a byte-identical body (`mismatch: 0`) is still **accepted as
+  FULL_MATCH** (no-SMT policy: FULL_MATCH is automatic). Keep iterating
+  toward byte-identity; just don't spend calls on `witness`/`certify`. Do NOT
+  stop at 94% because "the witness rejects" — that is a lost match.
+- **dead-end**: no acceptance path at all (FULL_MATCH impossible + witness
+  impossible). Stop early and record the open-item packet.
+
 ## Reading the hexdiff triage line
 `name: 84.7% | 0 structural | 20 reg_swap | 0x20c/0x20c PASS`
 - `structural`: opcode/immediate/branch differs — real mismatch.
@@ -20,9 +30,11 @@ MWCC_REFERENCE sections before re-litigating a ruled-out shape.
 ## Fixed-codegen artifacts (closest things to walls)
 1. FPR-saving prologue — 0 structural + pure reg-swaps, witness never certifies:
    MWCC always emits stfd+psq_st for f14–f31 saves; witness rejects psq_* (§REF:201).
-   → stop regalloc attempts; FULL_MATCH only.
+   → **FULL_MATCH-only**: push to `mismatch: 0`; stop only regalloc/witness attempts.
 2. Any function containing a `bl` — witness never applies (0/11 certs contain bl;
-   callee effects break terminal-state; §REF:201). → FULL_MATCH is the only no-SMT acceptance.
+   callee effects break terminal-state; §REF:201).
+   → **FULL_MATCH-only**: byte-identity still ACCEPTS. Keep pushing to `mismatch: 0` —
+   the residual reg-swap/structural diffs are winnable; only `witness`/`certify` are off.
 3. `li r0, X@sda21` — assembler accepts only @h/@ha/@l/@loword/@hiword (err 33135; §REF:110).
    → `@l` fallback is byte-identical; catalogue.
 4. `addi rD,base,0` peepholed to `mr` — ruled out across versions/shapes (§REF:947).
@@ -32,15 +44,15 @@ MWCC_REFERENCE sections before re-litigating a ruled-out shape.
 6. mtctr/bdnz loops under unit-locked `-O4` — shape needs `-O4,s`, not per-function (§REF:856).
    → record the -O4 static cap; negotiate a unit flag split.
 7. WGPIPE MMIO stores — GX TEV setters 95–97% + reg rotation; symbolic 0xCC008000 rejected,
-   rho non-injective (§REF:1215). → declaration-order regalloc toward FULL_MATCH.
+   rho non-injective (§REF:1215). → **FULL_MATCH-only**: declaration-order regalloc toward byte-identity.
 8. Solver-scale limits — big multi-branch functions with indirect/cross-object callees:
-   4096-path limit, missing callee lemmas (§REF:874). → byte-identity; match callee frontier first.
+   4096-path limit, missing callee lemmas (§REF:874). → **FULL_MATCH-only**: byte-identity; match callee frontier first.
 9. Auto-unroll of rlwimi/mtctr readers — every loop form unrolls; pragmas no-op (§REF:1371).
    → catalogue at the static cap.
 10. GQR5 mtspr setup — no source OSSetGQR reproduces orphaned GQR writes (§REF:128).
     → revisit after callee frontier; catalogue.
 11. Uncontrollable CSE / rlwimi merge direction — MWCC-internal; 8+ variants ruled out (§REF:889).
-    → record; byte-identity only.
+    → **FULL_MATCH-only**: record; byte-identity still accepts.
 12. `li`-float family — return-constant li floats above an r0-store; ~18 shapes ruled out
     (§REF:1370,2151). → keep best shape; catalogue.
 13. Per-function opt-level conflict — one function needs `-O4,s`, unit needs `-O4` (§REF:856,943).

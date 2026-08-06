@@ -266,11 +266,13 @@ export function buildBatchBrief(opts: {
     try {
       const wallsPath = join(repoRoot, knownWallsPath);
       if (existsSync(wallsPath)) {
-        const walls = readFileSync(wallsPath, "utf-8").slice(0, 4000);
+        const walls = readFileSync(wallsPath, "utf-8").slice(0, 6000);
         if (walls.trim()) {
           wallsSection = "## Known walls (do not grind these)\n\n";
-          wallsSection += "Proven-unreachable / fixed-codegen shapes. If a target collapses to exactly " +
-            "one of these, stop early and let acceptance decide — do not keep iterating.\n\n";
+          wallsSection += "Fixed-codegen shapes. Entries marked **FULL_MATCH-only** mean the witness " +
+            "cannot certify the shortcut, but a byte-identical body (mismatch: 0) still ACCEPTS — " +
+            "keep pushing those to byte-identity; only stop calling `witness`/`certify` on them. " +
+            "Entries marked **dead-end** have no acceptance path at all — stop early on those.\n\n";
           wallsSection += "```text\n" + walls.trim().replace(/`{3,}/g, "'''") + "\n```\n\n";
         }
       }

@@ -631,42 +631,100 @@ def claim_target(
     allowed_paths: List[str],
     note: str = "",
 ) -> Path:
+    return claim_targets_batch(
+        config,
+        [target_id],
+        owner=owner,
+        allowed_paths=allowed_paths,
+        note=note,
+    )[target_id]
+
+
+def claim_targets_batch(
+    config: CoopConfig,
+    target_ids: List[str],
+    *,
+    owner: str,
+    allowed_paths: List[str],
+    note: str = "",
+) -> Dict[str, Path]:
+    """Claim multiple targets under ONE exclusive lock + ONE registry write.
+
+    The per-target `claim_target` holds `exclusive_targets_lock` and rewrites
+    the whole targets.json (+ gzip cert sidecar) for EVERY claim — at 30
+    parallel harness sessions × 10-target batches that is ~300 serialized
+    full-registry rewrites, overwhelming the 120s lock timeout (run32: 7
+    lock timeouts, 50+ release races in the startup storm). Batching the
+    claims into a single lock hold + single write removes the contention.
+
+    All-or-nothing: if any id is unknown or claimed by another owner, raises
+    ValueError BEFORE writing — no partial claims.
+    """
+    if not target_ids:
+        return {}
     with exclusive_targets_lock(config):
         data = load_targets_document(config)
-        for row in data.get("targets", []):
-            if row.get("id") != target_id:
-                continue
+        by_id = {str(row.get("id")): row for row in data.get("targets", [])}
+        # Pre-validate EVERY id before touching any row (all-or-nothing).
+        for tid in target_ids:
+            row = by_id.get(str(tid))
+            if row is None:
+                raise KeyError(f"Unknown target id: {tid}")
             claim = row.get("claim")
             if isinstance(claim, dict) and claim.get("owner") and claim.get("owner") != owner:
                 raise ValueError(
-                    f"target {target_id!r} is already claimed by {claim['owner']!r}; release it first"
+                    f"target {tid!r} is already claimed by {claim['owner']!r}; release it first"
                 )
+        paths: Dict[str, Path] = {}
+        for tid in target_ids:
+            row = by_id[str(tid)]
             row["claim"] = {
                 "owner": owner,
                 "claimed_at": datetime.now(timezone.utc).isoformat(),
-                "allowed_paths": allowed_paths,
+                "allowed_paths": list(allowed_paths),
                 "note": note,
             }
             if row.get("workflow_status") not in {"ACCEPTED", "NOT_REQUIRED"}:
                 row["workflow_status"] = "CLAIMED"
-            return _write_targets_document_unlocked(config, data)
-    raise KeyError(f"Unknown target id: {target_id}")
+        # ONE registry write for the whole batch (the per-id write was the
+        # lock-contention bottleneck — N claims = N full-registry rewrites).
+        path = _write_targets_document_unlocked(config, data)
+        return {tid: path for tid in target_ids}
 
 
 def release_target(config: CoopConfig, target_id: str, *, owner: Optional[str]) -> Path:
+    return release_targets_batch(config, [target_id], owner=owner)[target_id]
+
+
+def release_targets_batch(config: CoopConfig, target_ids: List[str], *, owner: Optional[str]) -> Dict[str, Path]:
+    """Release multiple claims under ONE exclusive lock + ONE registry write.
+
+    Mirror of `claim_targets_batch` (run32: per-target releases also raced
+    and threw `target X is not claimed` when another session re-claimed a
+    target between this session's release subprocess and the target's
+    re-claim). All-or-nothing: raises before writing if any id is unknown,
+    unclaimed, or owned by someone else.
+    """
+    if not target_ids:
+        return {}
     with exclusive_targets_lock(config):
         data = load_targets_document(config)
-        for row in data.get("targets", []):
-            if row.get("id") != target_id:
-                continue
+        by_id = {str(row.get("id")): row for row in data.get("targets", [])}
+        # Pre-validate EVERY id before touching any row (all-or-nothing).
+        for tid in target_ids:
+            row = by_id.get(str(tid))
+            if row is None:
+                raise KeyError(f"Unknown target id: {tid}")
             claim = row.get("claim")
             if not isinstance(claim, dict):
-                raise ValueError(f"target {target_id!r} is not claimed")
+                raise ValueError(f"target {tid!r} is not claimed")
             current_owner = claim.get("owner")
             if owner and current_owner != owner:
                 raise ValueError(
-                    f"target {target_id!r} is claimed by {current_owner!r}, not {owner!r}"
+                    f"target {tid!r} is claimed by {current_owner!r}, not {owner!r}"
                 )
+        for tid in target_ids:
+            row = by_id[str(tid)]
             row.pop("claim", None)
             if row.get("workflow_status") == "CLAIMED":
                 # Note (LOW-5, deliberate): a claim that never produced a
@@ -683,8 +741,9 @@ def release_target(config: CoopConfig, target_id: str, *, owner: Optional[str]) 
                     if row.get("status") in {"FULL_MATCH", "EQUIVALENT_MATCH"}
                     else "ACTIVE"
                 )
-            return _write_targets_document_unlocked(config, data)
-    raise KeyError(f"Unknown target id: {target_id}")
+        # ONE registry write for the whole batch.
+        path = _write_targets_document_unlocked(config, data)
+        return {tid: path for tid in target_ids}
 
 
 def load_targets(config: CoopConfig) -> List[Target]:

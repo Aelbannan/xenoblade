@@ -929,6 +929,49 @@ def cmd_targets_claim(
     return 0
 
 
+def cmd_targets_claim_batch(
+    config: CoopConfig,
+    target_ids: list[str],
+    *,
+    owner: str,
+    allowed_paths: list[str],
+    note: str,
+) -> int:
+    """Claim N targets in ONE lock hold + ONE registry write (run32: the
+    per-target claim rewrote the full 17MB registry under the exclusive lock
+    each time — 30 sessions × 10 targets ≈ 300 serialized rewrites blew the
+    120s lock timeout). Batching removes the contention."""
+    from tools.coop.lib.targets import claim_targets_batch
+
+    # Resolve allowed_paths once (per source file), shared across the batch.
+    if not allowed_paths:
+        srcs: set[str] = set()
+        for t in load_targets(config):
+            if t.id in target_ids and t.source:
+                srcs.add(str(t.source.relative_to(config.project_root)))
+        allowed_paths = sorted(srcs)
+    paths = claim_targets_batch(
+        config,
+        target_ids,
+        owner=owner,
+        allowed_paths=allowed_paths,
+        note=note,
+    )
+    for tid, p in paths.items():
+        print(f"claimed {tid} for {owner}: {p}")
+    return 0
+
+
+def cmd_targets_release_batch(config: CoopConfig, target_ids: list[str], *, owner: Optional[str]) -> int:
+    """Release N claims in ONE lock hold + ONE registry write."""
+    from tools.coop.lib.targets import release_targets_batch
+
+    paths = release_targets_batch(config, target_ids, owner=owner)
+    for tid, p in paths.items():
+        print(f"released {tid}: {p}")
+    return 0
+
+
 def cmd_targets_release(config: CoopConfig, target_id: str, *, owner: Optional[str]) -> int:
     path = release_target(config, target_id, owner=owner)
     print(f"released {target_id}: {path}")
@@ -1971,12 +2014,12 @@ def main() -> int:
     p_targets_claim = p_targets_sub.add_parser(
         "claim", help="Record the current owner and exclusive edit scope in the registry"
     )
-    p_targets_claim.add_argument("target_id")
+    p_targets_claim.add_argument("target_id", nargs="+", help="one or more target ids (batched in one lock hold + one registry write)")
     p_targets_claim.add_argument("--owner", required=True)
     p_targets_claim.add_argument("--allowed-path", action="append", default=[])
     p_targets_claim.add_argument("--note", default="")
     p_targets_release = p_targets_sub.add_parser("release", help="Release a current claim")
-    p_targets_release.add_argument("target_id")
+    p_targets_release.add_argument("target_id", nargs="+", help="one or more target ids (batched)")
     p_targets_release.add_argument("--owner")
     p_targets_audit = p_targets_sub.add_parser(
         "audit-promotion",
@@ -2246,7 +2289,15 @@ def main() -> int:
     if args.command == "targets" and args.targets_cmd == "sync-calls":
         return cmd_targets_sync_calls(project, config, dry_run=args.dry_run)
     if args.command == "targets" and args.targets_cmd == "claim":
-        return cmd_targets_claim(
+        if len(args.target_id) == 1:
+            return cmd_targets_claim(
+                config,
+                args.target_id[0],
+                owner=args.owner,
+                allowed_paths=args.allowed_path,
+                note=args.note,
+            )
+        return cmd_targets_claim_batch(
             config,
             args.target_id,
             owner=args.owner,
@@ -2254,7 +2305,9 @@ def main() -> int:
             note=args.note,
         )
     if args.command == "targets" and args.targets_cmd == "release":
-        return cmd_targets_release(config, args.target_id, owner=args.owner)
+        if len(args.target_id) == 1:
+            return cmd_targets_release(config, args.target_id[0], owner=args.owner)
+        return cmd_targets_release_batch(config, args.target_id, owner=args.owner)
     if args.command == "targets" and args.targets_cmd == "audit-promotion":
         return cmd_targets_audit_promotion(
             config,

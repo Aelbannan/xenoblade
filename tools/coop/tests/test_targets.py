@@ -12,6 +12,7 @@ from tools.coop.lib.targets import (
     EQUIVALENCE_CERTIFICATE_VERSION,
     Target,
     claim_target,
+    claim_targets_batch,
     equivalence_certificate_error,
     exclusive_targets_lock,
     harness_targets,
@@ -22,6 +23,7 @@ from tools.coop.lib.targets import (
     plan_recertify_bottom_up,
     recertify_ready_wave,
     release_target,
+    release_targets_batch,
     targets_lock_path,
     update_target_result,
     validate_targets,
@@ -266,6 +268,59 @@ class TargetRegistryTests(unittest.TestCase):
             claim_target(self.config, "a", owner="two", allowed_paths=[])
         release_target(self.config, "a", owner="one")
         claim_target(self.config, "a", owner="two", allowed_paths=[])
+
+    def _write_multi(self, ids: list[str]) -> Path:
+        path = self.root / "tools/coop/targets.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "targets": [
+                        {"id": i, "symbol": f"f{i}", "address": f"0x{i}", "status": "NOT_STARTED"}
+                        for i in ids
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    def test_batch_claim_release_one_lock_one_write(self) -> None:
+        path = self._write_multi(["a", "b", "c"])
+        paths = claim_targets_batch(self.config, ["a", "b", "c"], owner="one", allowed_paths=[])
+        self.assertEqual(set(paths.keys()), {"a", "b", "c"})
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for row in data["targets"]:
+            self.assertEqual(row["workflow_status"], "CLAIMED")
+            self.assertEqual(row["claim"]["owner"], "one")
+        # Release in one batch call.
+        rel = release_targets_batch(self.config, ["a", "b", "c"], owner="one")
+        self.assertEqual(set(rel.keys()), {"a", "b", "c"})
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for row in data["targets"]:
+            self.assertIsNone(row.get("claim"))
+            self.assertEqual(row["workflow_status"], "ACTIVE")
+
+    def test_batch_claim_all_or_nothing_on_conflict(self) -> None:
+        path = self._write_multi(["a", "b"])
+        claim_targets_batch(self.config, ["a", "b"], owner="one", allowed_paths=[])
+        # b is claimed by one; a conflicting owner for the batch must fail
+        # WITHOUT writing any row (all-or-nothing).
+        with self.assertRaisesRegex(ValueError, "already claimed"):
+            claim_targets_batch(self.config, ["b"], owner="two", allowed_paths=[])
+        # The failed batch must not have touched b's claim.
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["targets"][1]["claim"]["owner"], "one")
+
+    def test_batch_release_all_or_nothing_wrong_owner(self) -> None:
+        path = self._write_multi(["a", "b"])
+        claim_targets_batch(self.config, ["a", "b"], owner="one", allowed_paths=[])
+        with self.assertRaisesRegex(ValueError, "claimed by 'one', not 'two'"):
+            release_targets_batch(self.config, ["a", "b"], owner="two")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        # Nothing released: both still claimed by one.
+        for row in data["targets"]:
+            self.assertEqual(row["claim"]["owner"], "one")
 
     def test_release_marks_worked_target_ACTIVE_not_BACKLOG(self) -> None:
         # A claimed-then-released target that is NOT yet matched was worked;

@@ -405,23 +405,45 @@ async function claimOp(
 ): Promise<{ ok: string[]; failed: string[] }> {
   const ok: string[] = [];
   const failed: string[] = [];
-  for (const id of ids) {
-    try {
-      await execFilePromise(
-        python,
-        ["tools/coop/run.py", "targets", op, id, "--owner", owner],
-        { cwd: repoRoot },
-      );
+  if (ids.length === 0) return { ok, failed };
+  // Batch the whole set into ONE `run.py targets claim/release` subprocess:
+  // per-id subprocesses each rewrote the full registry under the exclusive
+  // lock (run32: ~300 serialized rewrites blew the 120s lock timeout). The
+  // batch path holds the lock once + writes once. On partial failure (an id
+  // claimed by another owner), the whole call fails atomically — fall back
+  // to per-id claims so one bad id doesn't block the rest.
+  try {
+    await execFilePromise(
+      python,
+      ["tools/coop/run.py", "targets", op, "--owner", owner, "--", ...ids],
+      { cwd: repoRoot },
+    );
+    for (const id of ids) {
       ok.push(id);
       if (op === "claim") onClaimed?.(id);
-    } catch (err) {
-      failed.push(id);
-      process.stderr.write(
-        `[pi-harness] WARNING: targets ${op} failed for ${id}: ${err instanceof Error ? err.message : String(err)}\n`,
-      );
     }
+    return { ok, failed };
+  } catch {
+    // Atomic batch failed (unknown id / conflicting owner / lock timeout).
+    // Retry each id individually so a single bad id doesn't fail the batch.
+    for (const id of ids) {
+      try {
+        await execFilePromise(
+          python,
+          ["tools/coop/run.py", "targets", op, id, "--owner", owner],
+          { cwd: repoRoot },
+        );
+        ok.push(id);
+        if (op === "claim") onClaimed?.(id);
+      } catch (err) {
+        failed.push(id);
+        process.stderr.write(
+          `[pi-harness] WARNING: targets ${op} failed for ${id}: ${err instanceof Error ? err.message : String(err)}\n`,
+        );
+      }
+    }
+    return { ok, failed };
   }
-  return { ok, failed };
 }
 
 /**

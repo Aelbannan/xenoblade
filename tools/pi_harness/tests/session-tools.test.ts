@@ -486,6 +486,20 @@ describe("tool set composition", () => {
       assert.ok(names.includes(n), `tu-final must include ${n}`);
     }
   });
+
+  test("witnessEnabled=false omits witness/certify tools", () => {
+    const batch = batchSessionTools(REPO, PY, ["src/kyoshin/foo.cpp"], false);
+    const batchNames = batch.map((t) => t.name);
+    assert.ok(!batchNames.includes("witness"), "batch must omit witness when disabled");
+    assert.ok(!batchNames.includes("certify"), "batch must omit certify when disabled");
+    for (const n of ["hexdiff", "symbols", "targets", "kb", "ctx", "unit-status", "edit", "write"]) {
+      assert.ok(batchNames.includes(n), `batch must keep ${n} when witness disabled`);
+    }
+    const tu = tuFinalSessionTools(REPO, PY, ["src/kyoshin/foo.cpp"], false);
+    const tuNames = tu.map((t) => t.name);
+    assert.ok(!tuNames.includes("witness") && !tuNames.includes("certify"), "tu-final must omit witness/certify when disabled");
+    assert.ok(tuNames.includes("bash"), "tu-final keeps bash");
+  });
 });
 
 // ---------------------------------------------------------------------------

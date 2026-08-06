@@ -261,9 +261,12 @@ export function buildUnitFeedback(
 
 /** One-call whole-unit scan: hexdiff --all --json + size + data%, plus a
  *  witness re-check on every reg-swap-only (structural:0, mismatch>0) target
- *  so EQUIVALENT_MATCH states that stopped certifying are caught. */
+ *  so EQUIVALENT_MATCH states that stopped certifying are caught. When
+ *  `witnessEnabled` is false the witness re-check is skipped entirely
+ *  (reg-swap-only targets are simply not certified — only byte-identical
+ *  FULL_MATCH counts). */
 export async function scanUnitState(
-  repoRoot: string, python: string, unit: string,
+  repoRoot: string, python: string, unit: string, witnessEnabled = true,
 ): Promise<UnitScan> {
   let scan: UnitScan = {
     unit, functions: [], matched: 0, total: 0,
@@ -310,32 +313,35 @@ export async function scanUnitState(
     // Witness re-check: run run.py diff --no-smt per reg-swap-only target to
     // confirm the witness still certifies it (EQUIVALENT_MATCH integrity).
     // Cheap: only structural:0 & mismatch>0 functions get a witness probe.
-    for (const f of scan.functions) {
-      if (f.present && f.structural === 0 && f.mismatch > 0) {
-        let stdout = "";
-        try {
-          const r = await run(
-            python, ["tools/coop/run.py", "diff", unit, "--symbol", f.symbol, "--no-smt"], repoRoot,
-          );
-          stdout = r.stdout;
-        } catch (err) {
-          // run.py diff prints the verdict to stdout then exits 1 on size
-          // over-budget — read the verdict from the rejection (H2: discarding
-          // it produced false 'WITNESS NO LONGER CERTIFIES' regressions).
-          const e = err as { stdout?: string };
-          if (e.stdout && /status: \S+/.test(e.stdout)) stdout = e.stdout;
-          else { scan.witnessCert.set(f.symbol, false); continue; }
+    // Skipped entirely when the witness is disabled (witnessEnabled=false).
+    if (witnessEnabled) {
+      for (const f of scan.functions) {
+        if (f.present && f.structural === 0 && f.mismatch > 0) {
+          let stdout = "";
+          try {
+            const r = await run(
+              python, ["tools/coop/run.py", "diff", unit, "--symbol", f.symbol, "--no-smt"], repoRoot,
+            );
+            stdout = r.stdout;
+          } catch (err) {
+            // run.py diff prints the verdict to stdout then exits 1 on size
+            // over-budget — read the verdict from the rejection (H2: discarding
+            // it produced false 'WITNESS NO LONGER CERTIFIES' regressions).
+            const e = err as { stdout?: string };
+            if (e.stdout && /status: \S+/.test(e.stdout)) stdout = e.stdout;
+            else { scan.witnessCert.set(f.symbol, false); continue; }
+          }
+          const eq = stdout.match(/equivalence: (\S+)/)?.[1];
+          const status = stdout.match(/status: (\S+)/)?.[1];
+          // run.py prints lowercase (full_match / equivalent) for the
+          // equivalence: line (r5 finding 5: the old uppercase checks were dead
+          // code — only the status: line, which is uppercase, ever matched).
+          const certified =
+            eq === "EQUIVALENT_MATCH" || eq === "FULL_MATCH" ||
+            eq === "equivalent" || eq === "full_match" ||
+            status === "EQUIVALENT_MATCH" || status === "FULL_MATCH";
+          scan.witnessCert.set(f.symbol, certified);
         }
-        const eq = stdout.match(/equivalence: (\S+)/)?.[1];
-        const status = stdout.match(/status: (\S+)/)?.[1];
-        // run.py prints lowercase (full_match / equivalent) for the
-        // equivalence: line (r5 finding 5: the old uppercase checks were dead
-        // code — only the status: line, which is uppercase, ever matched).
-        const certified =
-          eq === "EQUIVALENT_MATCH" || eq === "FULL_MATCH" ||
-          eq === "equivalent" || eq === "full_match" ||
-          status === "EQUIVALENT_MATCH" || status === "FULL_MATCH";
-        scan.witnessCert.set(f.symbol, certified);
       }
     }
   } catch {

@@ -209,10 +209,13 @@ export async function buildUnit(
 /** Read per-target statuses from targets.json without running the cycle.
  *  Used by the certify-request accept path, where the witness cycles already
  *  updated the registry and a full batch-cycle run would be redundant.
- *  Applies the same acceptance rule as runBatchCycle (status + BACKLOG gate). */
+ *  Applies the same acceptance rule as runBatchCycle (status + BACKLOG gate).
+ *  When `witnessEnabled` is false, only FULL_MATCH is accepted (no
+ *  EQUIVALENT_MATCH — the witness cannot produce one anyway). */
 export async function readBatchResults(
   repoRoot: string,
   targetIds: string[],
+  witnessEnabled = true,
 ): Promise<BatchResult[]> {
   let allTargets: Target[] = [];
   try {
@@ -227,7 +230,9 @@ export async function readBatchResults(
   const workflowById = new Map(
     allTargets.map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
   );
-  const acceptedStatuses = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
+  const acceptedStatuses = witnessEnabled
+    ? new Set(["FULL_MATCH", "EQUIVALENT_MATCH"])
+    : new Set(["FULL_MATCH"]);
   return targetIds.map((id) => {
     const status = statusById.get(id) ?? "UNKNOWN";
     const backlogged = workflowById.get(id) === "BACKLOG";
@@ -240,6 +245,7 @@ export async function runBatchCycle(
   python: string,
   targetIds: string[],
   witnessTimeoutMs = 0,
+  witnessEnabled = true,
 ): Promise<BatchResult[]> {
   try {
     await execFilePromise(
@@ -256,6 +262,7 @@ export async function runBatchCycle(
         "--default-hypothesis", "pi-harness batch match",
         "--default-next-change", "accept if pass",
         "--witness-timeout", String(witnessTimeoutMs),
+        ...(witnessEnabled ? [] : ["--no-witness"]),
         // `--` end-of-options: target ids come from targets.json and must
         // never be parsed as argparse flags.
         "--",
@@ -267,7 +274,7 @@ export async function runBatchCycle(
     // tolerated — read targets.json below for actual results
   }
 
-  return readBatchResults(repoRoot, targetIds);
+  return readBatchResults(repoRoot, targetIds, witnessEnabled);
 }
 
 // ─────────────────────────────────────────────────────────────────────

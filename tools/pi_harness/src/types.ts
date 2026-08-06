@@ -78,6 +78,12 @@ export interface HarnessConfig {
    *  + memoization + timeout backstop — the recommended default). A nonzero
    *  value overrides the per-call timeout for harness acceptance runs. */
   witnessTimeoutMs: number;
+  /** When false, the register-renaming witness is disabled completely: only
+   *  byte-identical FULL_MATCH (with reloc-site equality) can be accepted —
+   *  EQUIVALENT_MATCH is never produced. The witness/certify session tools
+   *  are removed and the prompts tell the model to chase FULL_MATCH only.
+   *  Default true. */
+  witnessEnabled: boolean;
   region: string;
   sessionDir: string;
   ledgerPath: string;

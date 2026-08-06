@@ -570,13 +570,22 @@ async function applySelection(
   // Phase 5 routing: pull `regswap_only` targets OUT of the LLM batch into
   // the witness-only singleton path, and front-load `strict` targets (the
   // highest LLM hit rate). When triage is off, `ordered` is untouched.
+  // When the witness is disabled (witnessEnabled=false) there is no
+  // witness-only path — regswap_only targets stay in the LLM batch and
+  // chase FULL_MATCH (byte-identical) like everyone else.
   let witnessTargets: Target[] = [];
-  if (triage) {
+  if (triage && config.witnessEnabled) {
     witnessTargets = targets.filter((x) => clsById.get(x.id) === "regswap_only");
     const witnessIds = new Set(witnessTargets.map((x) => x.id));
     const rest = ordered.filter((x) => !witnessIds.has(x.id));
     const strict = rest.filter((x) => clsById.get(x.id) === "strict");
     const other = rest.filter((x) => clsById.get(x.id) !== "strict");
+    ordered = [...strict, ...other];
+  } else if (triage) {
+    // witness disabled: keep the strict front-load, keep regswap_only in the
+    // LLM batch (no witness-only route to pull them into).
+    const strict = ordered.filter((x) => clsById.get(x.id) === "strict");
+    const other = ordered.filter((x) => clsById.get(x.id) !== "strict");
     ordered = [...strict, ...other];
   }
 
@@ -653,7 +662,10 @@ async function runWitnessCycle(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
   opts?: { sessionOwnsClaim?: boolean },
 ): Promise<boolean> {
-  console.log(`[pi-harness] ${unit}: witness-only cycle ${targetId} (no model session, no --smt)`);
+  const witnessEnabled = config.witnessEnabled;
+  console.log(
+    `[pi-harness] ${unit}: witness-only cycle ${targetId} (no model session, no --smt${witnessEnabled ? ", witness" : ", --no-witness"})`,
+  );
   // When the target is already claimed by the batch session (certify-request
   // and 0-mismatch paths), do NOT re-claim or release: re-claim resets
   // claimed_at, and the finally-release would drop the session's own claim
@@ -679,10 +691,15 @@ async function runWitnessCycle(
         // lock-free (run30 incident: z3 spin under the lock froze all agents).
         "tools/coop/run.py", "cycle", targetId,
         "--witness-timeout", String(config.witnessTimeoutMs),
+        ...(witnessEnabled ? [] : ["--no-witness"]),
         "--hypothesis",
-        "triage: reg-swap template vs nearest matched sibling — witness-only route (no LLM round)",
+        witnessEnabled
+          ? "triage: reg-swap template vs nearest matched sibling — witness-only route (no LLM round)"
+          : "triage: byte-identical chase (witness disabled) — FULL_MATCH only, no LLM round",
         "--next-change",
-        "accept if the register-renaming witness certifies; otherwise fall back to the LLM batch",
+        witnessEnabled
+          ? "accept if the register-renaming witness certifies; otherwise fall back to the LLM batch"
+          : "accept if byte-identical (FULL_MATCH); otherwise fall back to the LLM batch",
       ], { cwd: repoRoot });
       certified = true; // cycle exit 0 = required level met
     } catch (err) {
@@ -693,7 +710,7 @@ async function runWitnessCycle(
       // status alone would falsely accept it.
       const row = targetRowById(repoRoot).get(targetId);
       const certifiedStatus =
-        row && (row.status === "FULL_MATCH" || row.status === "EQUIVALENT_MATCH");
+        row && (row.status === "FULL_MATCH" || (witnessEnabled && row.status === "EQUIVALENT_MATCH"));
       const backlogged = row?.workflowStatus === "BACKLOG";
       if (certifiedStatus && !backlogged) {
         certified = true;
@@ -864,12 +881,12 @@ function makeVerifyCallback(opts: {
       // treats the whole batch as "internal error", pushing every target
       // (including the certified one) into pass-2 singleton retries
       // (adversarial review H6).
-      batchResults = await readBatchResults(repoRoot, targetIds);
+      batchResults = await readBatchResults(repoRoot, targetIds, config.witnessEnabled);
       return { action: "accept", reason: `CERTIFY: ${certifyAccepted}` };
     }
 
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
-    batchResults = await runBatchCycle(repoRoot, config.pythonBin, targetIds, config.witnessTimeoutMs);
+    batchResults = await runBatchCycle(repoRoot, config.pythonBin, targetIds, config.witnessTimeoutMs, config.witnessEnabled);
     const acceptedCount = batchResults.filter(r => r.accepted).length;
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle completed (${acceptedCount} accepted)\n`);
     if (acceptedCount > 0) {
@@ -987,9 +1004,12 @@ function makeVerifyCallback(opts: {
 ` +
         `These targets show mismatch:0 in hexdiff, but the acceptance cycle did ` +
         `NOT certify them (this session is still in the re-prompt path = 0 ` +
-        `accepted). They are byte-identical but a witness/reloc/size gate ` +
-        `rejected them. **Do NOT edit the code bytes** — instead investigate ` +
-        `the gate with \`witness <unit> <symbol>\` and \`unit-status <unit>\`: ` +
+        `accepted). They are byte-identical but a ` +
+        (config.witnessEnabled ? "witness/reloc/size gate" : "reloc/size gate (witness disabled)") +
+        ` rejected them. **Do NOT edit the code bytes** — instead investigate ` +
+        `the gate with ` +
+        (config.witnessEnabled ? "`witness <unit> <symbol>` and " : "") +
+        `\`unit-status <unit>\`: ` +
         matchedTargets.map((id) => `\`${id}\``).join(", ") + `.\n`,
       );
     }
@@ -1029,13 +1049,21 @@ function makeVerifyCallback(opts: {
         `## ⚠️ Targets are byte-identical but NOT accepted\n\n` +
         `hexdiff shows mismatch:0 for all targets (${matchedTargets.length} byte-identical), ` +
         `BUT the acceptance cycle did NOT certify them — otherwise this session ` +
-        `would have accepted. A witness/reloc/size gate rejected them. ` +
-        `Investigate with the \`witness\` tool (` +
-        `\`witness <unit> <symbol>\`) on each: it reports the exact equivalence ` +
-        `status. Likely causes:\n` +
-        `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
-        `- unit split-size over budget\n` +
-        `- the witness gate (nonvolatile preservation, ABI fixedness)\n\n` +
+        `would have accepted. A ` +
+        (config.witnessEnabled ? "witness/reloc/size gate" : "reloc/size gate (witness disabled)") +
+        ` rejected them. ` +
+        (config.witnessEnabled
+          ? `Investigate with the \`witness\` tool (` +
+            `\`witness <unit> <symbol>\`) on each: it reports the exact equivalence ` +
+            `status. Likely causes:\n` +
+            `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
+            `- unit split-size over budget\n` +
+            `- the witness gate (nonvolatile preservation, ABI fixedness)`
+          : `Likely causes:\n` +
+            `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
+            `- unit split-size over budget`
+        ) +
+        `\n\n` +
         `Do NOT stop — find and fix the gate.`,
       );
     } else {
@@ -1053,14 +1081,26 @@ function makeVerifyCallback(opts: {
       );
     }
     if (regSwapOnlyTargets.length > 0) {
-      feedbackParts.push(`### Reg-swap-only (structure correct)\n\n` +
-        `These targets have structural=0 — the code shape is right and only ` +
-        `register allocation differs: ${regSwapOnlyTargets.join(", ")}. ` +
-        `**CERTIFY THEM instead of editing**: call the \`witness\` tool (` +
-        `\`witness <unit> <symbol>\`) to confirm, then \`certify <target-id>\` and ` +
-        `include \`CERTIFY: <target-id>\` in your final response. The register-` +
-        `renaming witness (no SMT) certifies these — do NOT keep editing or you ` +
-        `will regress the match.`);
+      feedbackParts.push(config.witnessEnabled
+        ? `### Reg-swap-only (structure correct)
+
+` +
+          `These targets have structural=0 — the code shape is right and only ` +
+          `register allocation differs: ${regSwapOnlyTargets.join(", ")}. ` +
+          `**CERTIFY THEM instead of editing**: call the \`witness\` tool (` +
+          `\`witness <unit> <symbol>\`) to confirm, then \`certify <target-id>\` and ` +
+          `include \`CERTIFY: <target-id>\` in your final response. The register-` +
+          `renaming witness (no SMT) certifies these — do NOT keep editing or you ` +
+          `will regress the match.`
+        : `### Reg-swap-only (structure correct) but witness DISABLED
+
+` +
+          `These targets have structural=0 — the code shape is right and only ` +
+          `register allocation differs: ${regSwapOnlyTargets.join(", ")}. The ` +
+          `witness is DISABLED for this run, so they CANNOT be accepted as-is — ` +
+          `you must eliminate the register differences too (reorder expressions, ` +
+          `match MWCC allocation, fix field types) until hexdiff shows ` +
+          `mismatch: 0. There is no \`witness\`/\`certify\` path.`);
     }
     lastFeedback = feedbackParts.join("\n\n");
     return { action: "re-prompt", feedback: lastFeedback };
@@ -1106,7 +1146,7 @@ async function runOneTu(
   // fails cheaply and the target goes back into the batch pool below
   // (never dropped). Skipped in dry-run — witness cycles build objects and
   // update the registry.
-  const witnessTargets = selection.witnessTargets ?? [];
+  const witnessTargets = config.witnessEnabled ? (selection.witnessTargets ?? []) : [];
   const witnessFallback: string[] = [];
   if (selection.triage && !dryRun) {
     if (witnessTargets.length > 0) {
@@ -1193,6 +1233,7 @@ async function runOneTu(
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: currentIds, pythonBin: config.pythonBin,
+      witnessEnabled: config.witnessEnabled,
     });
 
     if (dryRun) {
@@ -1231,6 +1272,7 @@ async function runOneTu(
         writable,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
+        witnessEnabled: config.witnessEnabled,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -1568,6 +1610,7 @@ async function runRebatchPhase(
       });
       const prompt = buildBatchPrompt({
         brief, unit, targetIds: rbCurrent, pythonBin: config.pythonBin,
+        witnessEnabled: config.witnessEnabled,
       });
 
       let snapshot: Snapshot | null = null;
@@ -1601,6 +1644,7 @@ async function runRebatchPhase(
           writable,
           timeoutMinutes: config.maxBatchMinutes,
           maxTokens: config.maxTokens,
+        witnessEnabled: config.witnessEnabled,
           multiPrompt: {
             timeoutRetries: config.timeoutRetries,
             rejectionRetries: config.rejectionRetries,
@@ -1846,6 +1890,7 @@ async function runSingleton(
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
+      witnessEnabled: config.witnessEnabled,
     });
 
     let snapshot: Snapshot | null = null;
@@ -1881,6 +1926,7 @@ async function runSingleton(
         writable,
         timeoutMinutes: config.maxBatchMinutes,
         maxTokens: config.maxTokens,
+        witnessEnabled: config.witnessEnabled,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -2040,7 +2086,7 @@ async function runTuFinal(
   // lexicographically (match regressions > TU size/data > lint). The best-
   // scoring snapshot is restored ONCE at the very end — never mid-session
   // (the model may be working toward something).
-  const baselineScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
+  const baselineScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit, config.witnessEnabled);
   // M2: seed bestScore with the BASELINE itself (zero regressions by
   // definition) so a state worse than session start never wins the end-of-
   // session restore. bestSnapshot stays null → the pristine snapshot is the
@@ -2081,6 +2127,7 @@ async function runTuFinal(
         writable,
         timeoutMinutes: tuFinalTimeout,
         maxTokens: config.maxTokens,
+        witnessEnabled: config.witnessEnabled,
       });
       logUsage(repoRoot, config, unit, attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`, sessionResult.usage, sessionResult.timedOut);
     } catch (err) {
@@ -2104,7 +2151,7 @@ async function runTuFinal(
     // score, and snapshot the best-scoring state so far. A state that
     // regressed a match is scored worst and NEVER kept — even if it reduced
     // lint. Restore happens only at the very end, to the best snapshot.
-    const currentScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit);
+    const currentScan: UnitScan = await scanUnitState(repoRoot, config.pythonBin, unit, config.witnessEnabled);
     // Lint only the source files, not configure.py (which is in the writable
     // scope for the flip but is not a C/C++ file runLint can diff).
     const lintSnapshot: Snapshot | null = snapshot
@@ -2251,6 +2298,7 @@ async function runTuFinal(
             "--default-hypothesis", "TU-final mass re-certification after polish",
             "--default-next-change", "none (re-certify only)",
             "--witness-timeout", String(config.witnessTimeoutMs),
+            ...(config.witnessEnabled ? [] : ["--no-witness"]),
             "--", ...unitTargets.map((t) => t.id),
           ], { cwd: repoRoot });
           recertOutputLocal = stdout.slice(-1200);
@@ -2268,7 +2316,9 @@ async function runTuFinal(
             .map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
         );
         const notAccepted = unitTargets.filter((t) => {
-          const ok = postStatus.get(t.id) === "FULL_MATCH" || postStatus.get(t.id) === "EQUIVALENT_MATCH" || postStatus.get(t.id) === "ACCEPTED";
+          const ok = postStatus.get(t.id) === "FULL_MATCH"
+            || (config.witnessEnabled && postStatus.get(t.id) === "EQUIVALENT_MATCH")
+            || postStatus.get(t.id) === "ACCEPTED";
           return !(ok && postWorkflow.get(t.id) !== "BACKLOG");
         });
         if (notAccepted.length > 0) {

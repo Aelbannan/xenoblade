@@ -47,6 +47,7 @@ function defaultConfig(): HarnessConfig {
     briefTargetChars: 12_000,
     maxBatchMinutes: 60,
     witnessTimeoutMs: 0, // 0 = use the witness's own internal simplify budget/deadline
+    witnessEnabled: true,
     timeoutRetries: 3,
     rejectionRetries: 1,
     tuFinalAttempts: 2,
@@ -204,6 +205,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (typeof config.snapshotsEnabled !== "boolean") {
     throw new Error("config.snapshotsEnabled must be a boolean");
+  }
+  if (typeof config.witnessEnabled !== "boolean") {
+    throw new Error("config.witnessEnabled must be a boolean");
   }
   if (typeof config.commitOnTuFinal !== "boolean") {
     throw new Error("config.commitOnTuFinal must be a boolean");

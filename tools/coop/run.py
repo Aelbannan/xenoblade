@@ -443,6 +443,7 @@ def cmd_cycle(
     contract: str = "auto",
     smt: bool = False,
     witness_timeout_ms: int = 0,
+    witness_enabled: bool = True,
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -492,6 +493,7 @@ def cmd_cycle(
         project, unit, target.symbol, linked=linked, target_id=target.id,
         declared_return=_declared_return, contract=contract, run_smt=smt,
         witness_timeout_ms=witness_timeout_ms,
+        witness_enabled=witness_enabled,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -1882,6 +1884,16 @@ def main() -> int:
             "the build lock ~30 min at 99.7% CPU)."
         ),
     )
+    p_cycle.add_argument(
+        "--no-witness",
+        action="store_true",
+        help=(
+            "Disable the register-renaming witness probe entirely: only "
+            "byte-identical FULL_MATCH (with reloc-site equality) can be "
+            "accepted. A non-byte-identical function reports "
+            "inconclusive_smt_disabled and never reaches EQUIVALENT_MATCH."
+        ),
+    )
 
     def add_harness_args(command_parser: argparse.ArgumentParser) -> None:
         command_parser.add_argument(
@@ -2174,6 +2186,7 @@ def main() -> int:
             contract=args.contract,
             smt=args.smt,
             witness_timeout_ms=args.witness_timeout,
+            witness_enabled=not args.no_witness,
         )
     if args.command == "queue":
         return cmd_queue(

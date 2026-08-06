@@ -129,6 +129,9 @@ export async function runAgentSession(opts: {
    *  edit/write tools are replaced by scoped versions restricted to these
    *  (adversarial review H4). Default [] = no writes allowed. */
   writable?: string[];
+  /** When false, omit the witness/certify tools (witness path disabled).
+   *  Default true. */
+  witnessEnabled?: boolean;
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -143,6 +146,7 @@ export async function runAgentSession(opts: {
     kind = "batch",
     python = "python3",
     writable = [],
+    witnessEnabled = true,
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -181,11 +185,11 @@ export async function runAgentSession(opts: {
     //  - tu-final: same + bash behind a spawnHook allowlist (diff/size/
     //    symbols/build_lock/configure/ninja only).
     tools: kind === "batch"
-      ? ["read", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"]
-      : ["read", "bash", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", "witness", "certify", "unit-status"],
+      ? ["read", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", ...(witnessEnabled ? ["witness", "certify"] : []), "unit-status"]
+      : ["read", "bash", "edit", "write", "grep", "find", "ls", "hexdiff", "symbols", "targets", "kb", "ctx", ...(witnessEnabled ? ["witness", "certify"] : []), "unit-status"],
     customTools: kind === "batch"
-      ? batchSessionTools(repoRoot, python, writable)
-      : tuFinalSessionTools(repoRoot, python, writable),
+      ? batchSessionTools(repoRoot, python, writable, witnessEnabled)
+      : tuFinalSessionTools(repoRoot, python, writable, witnessEnabled),
   });
 
   // Transcript writes are serialised — concurrent fire-and-forget writeFile

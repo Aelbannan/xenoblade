@@ -147,6 +147,7 @@ def _run_single_cycle(
     dry_run: bool = False,
     smt: bool = False,
     witness_timeout_ms: int = 0,
+    witness_enabled: bool = True,
 ) -> BatchResult:
     """Run one cycle via the co-op runner's subprocess CLI."""
     from tools.coop.run import cmd_cycle
@@ -201,6 +202,7 @@ def _run_single_cycle(
             linked=linked,
             smt=smt,
             witness_timeout_ms=witness_timeout_ms,
+            witness_enabled=witness_enabled,
         )
         elapsed = time.monotonic() - start
         passed = rc == 0
@@ -354,6 +356,16 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--no-witness",
+        action="store_true",
+        help=(
+            "Disable the register-renaming witness probe on every cycled "
+            "target: only byte-identical FULL_MATCH can be accepted (never "
+            "EQUIVALENT_MATCH). The harness sets this when pi-harness.json "
+            "has witnessEnabled=false."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print what would be done without actually running cycles",
@@ -407,6 +419,7 @@ def main() -> int:
             dry_run=args.dry_run,
             smt=args.smt,
             witness_timeout_ms=args.witness_timeout,
+            witness_enabled=not args.no_witness,
         )
         summary.results.append(result)
         if result.passed:

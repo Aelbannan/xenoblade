@@ -3065,13 +3065,16 @@ def prove_unit_symbol(
     force_declared_return: bool = False,
     smt: bool = True,
     witness_timeout_ms: int = 0,
+    witness_enabled: bool = True,
 ) -> EquivalenceProbe:
     """Check one named function from the unit's retail/decomp objects.
 
     ``smt=False`` runs only the pre-SMT register-renaming witness (doc 31)
     and returns ``INCONCLUSIVE_SMT_DISABLED`` when the witness does not apply,
     skipping the Z3 solver entirely.  ``smt=True`` (default) falls through to
-    the full SMT probe on witness failure.
+    the full SMT probe on witness failure.  ``witness_enabled=False`` skips
+    the witness probe entirely — only byte-identical FULL_MATCH (with
+    reloc-site equality) can be accepted.
 
     Supported unresolved ELF relocations are proved symbolically.  With
     ``linked=True``, an unsupported symbolic-relocation case retries once using
@@ -3107,15 +3110,17 @@ def prove_unit_symbol(
         # ``smt=False``, in which case the probe is skipped entirely).
         if target_id is not None:
             witness_diag: dict[str, Any] = {}
-            witness_probe = _try_renaming_witness(
-                project, symbol, left, right, target_id, certified_context,
-                max_instructions=max_instructions,
-                max_paths=max_paths,
-                max_loop_iterations=max_loop_iterations,
-                canonical_symbols=canonical_symbols,
-                diag=witness_diag,
-                witness_timeout_ms=witness_timeout_ms,
-            )
+            witness_probe = None
+            if witness_enabled:
+                witness_probe = _try_renaming_witness(
+                    project, symbol, left, right, target_id, certified_context,
+                    max_instructions=max_instructions,
+                    max_paths=max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    canonical_symbols=canonical_symbols,
+                    diag=witness_diag,
+                    witness_timeout_ms=witness_timeout_ms,
+                )
             if (
                 witness_probe is None
                 and witness_diag.get("witness_gate") == "reloc"
@@ -3135,14 +3140,16 @@ def prove_unit_symbol(
                     _canonical_symbols_for_unit(unit_name)
                     if (unit_name and fresh_ok) else {}
                 )
-                witness_probe = _try_renaming_witness(
-                    project, symbol, left, right, target_id, certified_context,
-                    max_instructions=max_instructions,
-                    max_paths=max_paths,
-                    max_loop_iterations=max_loop_iterations,
-                    canonical_symbols=canonical_symbols,
-                    witness_timeout_ms=witness_timeout_ms,
-                )
+                witness_probe = None
+                if witness_enabled:
+                    witness_probe = _try_renaming_witness(
+                        project, symbol, left, right, target_id, certified_context,
+                        max_instructions=max_instructions,
+                        max_paths=max_paths,
+                        max_loop_iterations=max_loop_iterations,
+                        canonical_symbols=canonical_symbols,
+                        witness_timeout_ms=witness_timeout_ms,
+                    )
             if witness_probe is not None:
                 return witness_probe
 
@@ -3252,6 +3259,7 @@ def certify_unit_symbol(
     force_declared_return: bool = False,
     diag: dict | None = None,
     witness_timeout_ms: int = 0,
+    witness_enabled: bool = True,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair.
 
@@ -3262,7 +3270,8 @@ def certify_unit_symbol(
     ``diag`` (optional out-param dict): on witness rejection, records
     ``witness_gate`` / ``witness_reason`` (r8 WS-1) so the caller can surface
     the actionable failure (reloc drift vs rho vs callee vs structural) to the
-    model instead of a bare "NOT certifiable".
+    model instead of a bare "NOT certifiable".  ``witness_enabled=False``
+    skips the witness probe — only byte-identical FULL_MATCH certifies.
     """
     if unit.target_path is None or unit.base_path is None:
         return EquivalenceProbe(ProofStatus.INVALID_INPUT, "unit lacks an object pair")
@@ -3335,14 +3344,16 @@ def certify_unit_symbol(
             # witness must run before the SMT-first memory-bus block below,
             # which would otherwise eat the solver timeout the fast path
             # exists to avoid.  On witness failure the normal paths still run.
-            witness_probe = _try_renaming_witness(
-                project, symbol, left, right, target_id,
-                max_instructions=max_instructions,
-                max_paths=max_paths,
-                max_loop_iterations=max_loop_iterations,
-                diag=diag,
-                witness_timeout_ms=witness_timeout_ms,
-            )
+            witness_probe = None
+            if witness_enabled:
+                witness_probe = _try_renaming_witness(
+                    project, symbol, left, right, target_id,
+                    max_instructions=max_instructions,
+                    max_paths=max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    diag=diag,
+                    witness_timeout_ms=witness_timeout_ms,
+                )
             if witness_probe is not None:
                 return witness_probe
         if not bytes_identical:

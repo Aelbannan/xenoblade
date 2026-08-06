@@ -54,6 +54,7 @@
   },
   "maxSingletonSessions": 1,
   "snapshotsEnabled": true,
+  "witnessEnabled": true,
   "exhaustionThreshold": 3,
   "commitOnTuFinal": false
 }

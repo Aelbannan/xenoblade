@@ -211,6 +211,7 @@ def evaluate_unit_match(
     declared_return: str | None = None,
     contract: str = "auto",
     witness_timeout_ms: int = 0,
+    witness_enabled: bool = True,
 ) -> MatchEvaluation:
     """Score a unit (and optionally SMT-prove one symbol).
 
@@ -219,7 +220,10 @@ def evaluate_unit_match(
     the cheap pre-SMT register-renaming witness, but skips the Z3 probe: a
     function the witness cannot certify reports
     ``inconclusive_smt_disabled`` and can never reach ``EQUIVALENT_MATCH``
-    without an explicit ``--smt`` run.
+    without an explicit ``--smt`` run.  ``witness_enabled=False`` additionally
+    skips the witness probe entirely — only byte-identical ``FULL_MATCH``
+    (with reloc-site equality) can be accepted; the probe reports
+    ``inconclusive_smt_disabled`` for everything else.
 
     ``phase_timer`` is an optional ``lambda phase: contextmanager`` used by the
     LLM harness to attribute wall time to ``objdiff`` vs ``smt``.
@@ -247,7 +251,7 @@ def evaluate_unit_match(
     # is present (the harness's certify path), even when objdiff found no
     # fn_match (the registry symbol is the lookup key). For run_smt=True keep
     # the historical gate.
-    if (not run_smt) and target_id and symbol and (
+    if witness_enabled and (not run_smt) and target_id and symbol and (
         (fn_match is not None and (pct is None or pct < 100.0))
         or (fn_match is None and symbol)
     ):
@@ -256,6 +260,7 @@ def evaluate_unit_match(
             probe = certify_unit_symbol(
                 project, unit, symbol, target_id, diag=witness_diag,
                 witness_timeout_ms=witness_timeout_ms,
+                witness_enabled=witness_enabled,
             )
         equivalence = probe.status
         detail = probe.detail
@@ -269,6 +274,7 @@ def evaluate_unit_match(
                 project, unit, fn_match.name, linked=linked, target_id=target_id,
                 declared_return=declared_return, contract=contract, smt=run_smt,
                 witness_timeout_ms=witness_timeout_ms,
+                witness_enabled=witness_enabled,
             )
         equivalence = probe.status
         detail = probe.detail
@@ -285,7 +291,8 @@ def evaluate_unit_match(
     ):
         with timer("smt"):
             probe = certify_unit_symbol(project, unit, fn_match.name, target_id,
-                                       witness_timeout_ms=witness_timeout_ms)
+                                       witness_timeout_ms=witness_timeout_ms,
+                                       witness_enabled=witness_enabled)
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate

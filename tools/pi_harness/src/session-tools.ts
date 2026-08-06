@@ -805,16 +805,19 @@ export function scopedWriteTool(repoRoot: string, writable: string[]): ToolDefin
 }
 
 /** Batch-session tool set: no bash at all. The built-in edit/write tools are
- *  replaced by scoped versions restricted to `writable` (H4). */
-export function batchSessionTools(repoRoot: string, python: string, writable: string[] = []): ToolDefinition[] {
+ *  replaced by scoped versions restricted to `writable` (H4). When
+ *  `witnessEnabled` is false, the witness/certify tools are omitted (the
+ *  witness path is disabled — only FULL_MATCH can be accepted). */
+export function batchSessionTools(
+  repoRoot: string, python: string, writable: string[] = [], witnessEnabled = true,
+): ToolDefinition[] {
   return [
     scopedEditTool(repoRoot, writable),
     scopedWriteTool(repoRoot, writable),
     hexdiffTool(repoRoot, python),
     symbolsTool(repoRoot, python),
     targetsTool(repoRoot, python),
-    witnessTool(repoRoot, python),
-    certifyTool(),
+    ...(witnessEnabled ? [witnessTool(repoRoot, python), certifyTool()] : []),
     unitStatusTool(repoRoot, python),
     kbTool(repoRoot, python),
     ctxTool(repoRoot, python),
@@ -822,6 +825,6 @@ export function batchSessionTools(repoRoot: string, python: string, writable: st
 }
 
 /** TU-final tool set: batch tools + constrained bash. */
-export function tuFinalSessionTools(repoRoot: string, python: string, writable: string[] = []): ToolDefinition[] {
-  return [...batchSessionTools(repoRoot, python, writable), tuFinalBashTool(repoRoot, python)];
+export function tuFinalSessionTools(repoRoot: string, python: string, writable: string[] = [], witnessEnabled = true): ToolDefinition[] {
+  return [...batchSessionTools(repoRoot, python, writable, witnessEnabled), tuFinalBashTool(repoRoot, python)];
 }

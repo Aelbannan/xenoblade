@@ -8,17 +8,26 @@ export function buildBatchPrompt(opts: {
   unit: string;
   targetIds: string[];
   pythonBin: string;
+  /** When false: witness disabled — only byte-identical FULL_MATCH accepted
+   *  (never EQUIVALENT_MATCH); no witness/certify tools exist. */
+  witnessEnabled?: boolean;
 }): string {
-  const { brief, unit, targetIds, pythonBin } = opts;
+  const { brief, unit, targetIds, pythonBin, witnessEnabled = true } = opts;
+  const certSection = witnessEnabled
+    ? "- **Certification (IMPORTANT)**: when `hexdiff` shows `mismatch: 0` or `structural: 0` (only registers differ), call the **`witness` tool**: `witness <unit> <symbol>` — it runs the register-renaming witness (no SMT) and tells you if the code would be accepted. If it says CERTIFIABLE, call **`certify <target-id>`** and then include `CERTIFY: <target-id>` in your FINAL response so the harness accepts it. **Do NOT keep editing past a match** — you will regress it. **Witness rejection is NOT a dead end**: it only means the shortcut is closed. A function containing a `bl` (or any callee call) can never witness-certify — but a byte-identical body (`mismatch: 0`) is still accepted as FULL_MATCH. Keep pushing toward `mismatch: 0` on those; just stop calling `witness`/`certify` and don't treat 94%+ as a reason to give up. Only the walls doc's **dead-end** class (no acceptance path at all) justifies stopping early."
+    : "- **Acceptance is FULL_MATCH ONLY (witness disabled)**: this run does NOT use the register-renaming witness — only a **byte-identical** body (`hexdiff` `mismatch: 0` with reloc-site equality) is accepted. `structural: 0` / reg-swap-only is NOT enough — you must eliminate the register differences too (reorder expressions, fix field types/offsets, match MWCC allocation) until the bytes match exactly. There are no `witness`/`certify` tools in this session. Chase `mismatch: 0` relentlessly; a `bl`-containing function is no different — byte-identical FULL_MATCH is the only path. Only the walls doc's **dead-end** class (no acceptance path at all) justifies stopping early.";
+  const toolsLine = witnessEnabled
+    ? "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`, `witness`, `certify`, `unit-status`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level; the register-renaming witness is the only equivalence path (the harness runs it in acceptance)."
+    : "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`, `unit-status`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level, and the register-renaming witness is DISABLED for this run — byte-identical FULL_MATCH is the only acceptance path.";
   return (
     brief +
     "\n## Harness instructions\n\n" +
     "- The `xenoblade-decomp` skill is already loaded — follow it (MWCC knowledge-base search, hexdiff loop, coding guidelines).\n" +
     `- Match as many of the ${targetIds.length} listed target(s) as possible, in order: ${targetIds.map((id) => `\`${id}\``).join(", ")}. Partial progress is fine — the harness accepts whatever passes.\n` +
     "- For diffs use the **`hexdiff` tool**: `hexdiff <unit> <symbol>` (counts + reloc drift + fix suggestions). For symbol lookup use **`symbols`**; for target records use **`targets`**.\n" +
-    "- **Certification (IMPORTANT)**: when `hexdiff` shows `mismatch: 0` or `structural: 0` (only registers differ), call the **`witness` tool**: `witness <unit> <symbol>` — it runs the register-renaming witness (no SMT) and tells you if the code would be accepted. If it says CERTIFIABLE, call **`certify <target-id>`** and then include `CERTIFY: <target-id>` in your FINAL response so the harness accepts it. **Do NOT keep editing past a match** — you will regress it. **Witness rejection is NOT a dead end**: it only means the shortcut is closed. A function containing a `bl` (or any callee call) can never witness-certify — but a byte-identical body (`mismatch: 0`) is still accepted as FULL_MATCH. Keep pushing toward `mismatch: 0` on those; just stop calling `witness`/`certify` and don't treat 94%+ as a reason to give up. Only the walls doc's **dead-end** class (no acceptance path at all) justifies stopping early.\n" +
+    certSection + "\n" +
     "- **Before iterating on a target, search the MWCC knowledge base with `kb`**: `kb <symbol>` (sibling attempts + reference patterns with status/match%) and `kb <short mismatch terms> tag=<category>` for known codegen fixes. Use **`ctx <source>`** for struct layouts when the brief's headers aren't enough.\n" +
-    "- There is NO bash in this session — the structured tools (`hexdiff`, `symbols`, `targets`, `kb`, `ctx`, `witness`, `certify`, `unit-status`) cover the whole loop. No SMT anywhere: `--smt`/`--linked` and plain `run.py diff` are blocked at the tool level; the register-renaming witness is the only equivalence path (the harness runs it in acceptance).\n" +
+    toolsLine + "\n" +
     "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance (and you have no shell to run them with).\n" +
     "- NEVER revert using git — other agents share this branch (and you have no shell).\n" +
     "- Put new or updated struct/class/enum type definitions into the corresponding `.hpp` header file, not the `.cpp` source. If a type is only used by this TU, put it in the unit's own header; if it's shared, use the appropriate shared header.\n" +
@@ -37,7 +46,7 @@ export function buildBatchPrompt(opts: {
     "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
     "- NEVER write `*(u32*)(ptr + 0xNN)` or similar cast+offset arithmetic — define a struct with `field_0xNN` members instead.\n" +
     "- NEVER add new `#pragma` directives (except `#pragma once` in headers) — the build system handles compiler options.\n" +
-    "- NEVER use binary-patching escapes (`insn_patches`, `insert_insns`, `reloc_offset_moves`, `postprocess_reloc_names.py`) — chase EQUIVALENT_MATCH, not byte-identity patches. (`bake_linker_addrs`/`force_symbol_relocs` for DOL-split absolutes are the only allowed exceptions.)\n" +
+    "- NEVER use binary-patching escapes (`insn_patches`, `insert_insns`, `reloc_offset_moves`, `postprocess_reloc_names.py`) — chase " + (witnessEnabled ? "EQUIVALENT_MATCH, not byte-identity patches" : "byte-identical FULL_MATCH — do not patch bytes; fix the source") + ". (`bake_linker_addrs`/`force_symbol_relocs` for DOL-split absolutes are the only allowed exceptions.)\n" +
     "- NEVER write characters with no Shift-JIS encoding (e.g. em-dash `—`, en-dash `–`) — the build rejects them. Use ASCII (`-`) or genuine Japanese that has an SJIS encoding.\n"
   );
 }

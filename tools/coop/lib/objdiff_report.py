@@ -249,9 +249,16 @@ def evaluate_unit_match(
     # (full-instruction-match cert), reg-swap-only -> register-renaming witness
     # internally. Route the witness-only path through it whenever a target_id
     # is present (the harness's certify path), even when objdiff found no
-    # fn_match (the registry symbol is the lookup key). For run_smt=True keep
-    # the historical gate.
-    if witness_enabled and (not run_smt) and target_id and symbol and (
+    # fn_match (the registry symbol is the lookup key). NOT gated on
+    # witness_enabled (adversarial review F1): with the witness disabled the
+    # byte-identity direct read is the ONLY acceptance path left — gating it on
+    # witness_enabled made byte-identical targets with a broken/None objdiff
+    # report (CBattleManager class) un-acceptable by ANY path (the 2nd/3rd
+    # branches require fn_match). certify_unit_symbol(witness_enabled=False)
+    # does the right thing: byte-identical -> FULL_MATCH, else ->
+    # INCONCLUSIVE_SMT_DISABLED (never EQUIVALENT, never Z3). For run_smt=True
+    # keep the historical gate.
+    if (not run_smt) and target_id and symbol and (
         (fn_match is not None and (pct is None or pct < 100.0))
         or (fn_match is None and symbol)
     ):

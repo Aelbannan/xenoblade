@@ -33,7 +33,8 @@ import {
   scopedEditTool,
   scopedWriteTool,
 } from "../src/session-tools.js";
-import { parseCertifyRequests } from "../src/orchestrator.js";
+import { parseCertifyRequests, isCertifiedRow } from "../src/orchestrator.js";
+import { readBatchResults } from "../src/acceptance.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = join(__dirname, "..", "..", "..");
@@ -465,6 +466,69 @@ describe("unit: parseCertifyRequests", () => {
 
   test("case-insensitive-ish: tolerates whitespace after colon", () => {
     assert.deepEqual(parseCertifyRequests("CERTIFY:  us-80244520", ["us-80244520"]), ["us-80244520"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Acceptance predicate + readBatchResults with the witness disabled
+// (adversarial-review H1 / H2 fixes)
+// ---------------------------------------------------------------------------
+describe("isCertifiedRow (runWitnessCycle's shared predicate)", () => {
+  test("FULL_MATCH certifies; EQUIVALENT_MATCH only when the witness is enabled", () => {
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH" }, true), true);
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH" }, false), true);
+    assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH" }, true), true);
+    assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH" }, false), false);
+  });
+
+  test("size-gate BACKLOG never certifies (even FULL_MATCH)", () => {
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, true), false);
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, false), false);
+    assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH", workflowStatus: "BACKLOG" }, true), false);
+  });
+
+  test("missing row is not certified", () => {
+    assert.equal(isCertifiedRow(undefined, true), false);
+    assert.equal(isCertifiedRow(undefined, false), false);
+  });
+});
+
+describe("readBatchResults with witnessEnabled=false", () => {
+  test("does not accept an EQUIVALENT_MATCH row (FULL_MATCH-only)", async () => {
+    const { mkdtemp, mkdir, writeFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "pi-harness-accept-"));
+    try {
+      await mkdir(join(dir, "tools/coop"), { recursive: true });
+      await writeFile(join(dir, "tools/coop/targets.json"), JSON.stringify({
+        targets: [
+          { id: "us-a", status: "FULL_MATCH" },
+          { id: "us-b", status: "EQUIVALENT_MATCH" },
+          { id: "us-c", status: "EQUIVALENT_MATCH", workflow_status: "BACKLOG" },
+          { id: "us-d", status: "CODE_MATCH" },
+        ],
+      }));
+      const disabled = new Map(
+        (await readBatchResults(dir, ["us-a", "us-b", "us-c", "us-d"], false))
+          .map((r) => [r.targetId, r.accepted]),
+      );
+      assert.equal(disabled.get("us-a"), true, "FULL_MATCH accepted when disabled");
+      assert.equal(disabled.get("us-b"), false, "EQUIVALENT_MATCH must NOT be accepted when disabled");
+      assert.equal(disabled.get("us-c"), false, "BACKLOG never accepted");
+      assert.equal(disabled.get("us-d"), false);
+
+      // Sanity: with the witness ENABLED, EQUIVALENT_MATCH is accepted
+      // (unless BACKLOG) — the flag is the only difference.
+      const enabled = new Map(
+        (await readBatchResults(dir, ["us-a", "us-b", "us-c"], true))
+          .map((r) => [r.targetId, r.accepted]),
+      );
+      assert.equal(enabled.get("us-a"), true);
+      assert.equal(enabled.get("us-b"), true);
+      assert.equal(enabled.get("us-c"), false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
 

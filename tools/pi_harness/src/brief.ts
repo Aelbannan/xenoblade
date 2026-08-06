@@ -211,8 +211,14 @@ export function buildBatchBrief(opts: {
   /** Per-target ASM share cap (chars). Defaults to the equal share when
    *  unset, preserving the pre-cap behavior. */
   briefTargetChars?: number;
+  /** When false (witness opt-out), the known-walls text drops the
+   *  "stop calling `witness`/`certify`" clause — there is no witness path to
+   *  call; FULL_MATCH-only entries just keep pushing to byte-identity.
+   *  Defaults to true. */
+  witnessEnabled?: boolean;
 }): string {
   const { targets: targetList, unit, writable, carryover, maxChars, pythonBin, repoRoot, headerBudget, knownWallsPath, briefTargetChars } = opts;
+  const witnessEnabled = opts.witnessEnabled ?? true;
   const n = targetList.length;
 
   const heading =
@@ -269,9 +275,14 @@ export function buildBatchBrief(opts: {
         const walls = readFileSync(wallsPath, "utf-8").slice(0, 6000);
         if (walls.trim()) {
           wallsSection = "## Known walls (do not grind these)\n\n";
+          // LOW (GLM F3 / DeepSeek F6): with the witness disabled there is no
+          // `witness`/`certify` path to stop calling — keep only the
+          // byte-identity push.
           wallsSection += "Fixed-codegen shapes. Entries marked **FULL_MATCH-only** mean the witness " +
             "cannot certify the shortcut, but a byte-identical body (mismatch: 0) still ACCEPTS — " +
-            "keep pushing those to byte-identity; only stop calling `witness`/`certify` on them. " +
+            (witnessEnabled
+              ? "keep pushing those to byte-identity; only stop calling `witness`/`certify` on them. "
+              : "keep pushing those to byte-identity. ") +
             "Entries marked **dead-end** have no acceptance path at all — stop early on those.\n\n";
           wallsSection += "```text\n" + walls.trim().replace(/`{3,}/g, "'''") + "\n```\n\n";
         }

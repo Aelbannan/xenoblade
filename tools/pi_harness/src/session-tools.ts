@@ -818,7 +818,7 @@ export function batchSessionTools(
     symbolsTool(repoRoot, python),
     targetsTool(repoRoot, python),
     ...(witnessEnabled ? [witnessTool(repoRoot, python), certifyTool()] : []),
-    unitStatusTool(repoRoot, python),
+    unitStatusTool(repoRoot, python, witnessEnabled),
     kbTool(repoRoot, python),
     ctxTool(repoRoot, python),
   ];

@@ -3361,6 +3361,17 @@ def certify_unit_symbol(
                 from tools.coop.lib.config import memory_bus_from_config
 
                 if memory_bus_from_config(project.config) is not None:
+                    # witness-disabled (F2): the nested prove MUST inherit the
+                    # caller's witness_enabled and must never re-enable Z3 —
+                    # with the default smt=True this block ran the witness AND
+                    # full solver (timeout_ms=0) on a non-byte-identical
+                    # fuzzy-100 target and could mint an EQUIVALENT probe that
+                    # the FULL_MATCH-only acceptance path then trusted. With
+                    # smt=False + witness_enabled=False the probe always reports
+                    # INCONCLUSIVE_SMT_DISABLED here; when the witness IS
+                    # enabled, the witness probe above already ran (and would
+                    # have returned), so prove_unit_symbol only falls through to
+                    # its own witness re-check — never the solver.
                     proved = prove_unit_symbol(
                         project,
                         unit,
@@ -3372,6 +3383,8 @@ def certify_unit_symbol(
                         max_loop_iterations=max_loop_iterations,
                         declared_return=declared_return,
                         force_declared_return=force_declared_return,
+                        smt=False,
+                        witness_enabled=witness_enabled,
                     )
                     if (
                         proved.status == ProofStatus.EQUIVALENT

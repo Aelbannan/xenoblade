@@ -349,9 +349,13 @@ export async function scanUnitState(
     // the empty scan; the caller scores it as worst (build-broken).
   }
 
-  // data% from run.py diff --no-smt (single call).
+  // data% from run.py diff --no-smt (single call). Thread --no-witness when
+  // the witness is disabled so the scan never re-enables the witness probe
+  // through cmd_diff (DeepSeek F5).
   try {
-    const { stdout } = await run(python, ["tools/coop/run.py", "diff", unit, "--no-smt"], repoRoot);
+    const { stdout } = await run(
+      python, ["tools/coop/run.py", "diff", unit, "--no-smt", ...(witnessEnabled ? [] : ["--no-witness"])], repoRoot,
+    );
     const m = stdout.match(/data:\s*([\d.]+)%/);
     if (m) scan.dataPercent = parseFloat(m[1]);
   } catch { /* data% unavailable */ }
@@ -378,7 +382,7 @@ export async function scanUnitState(
  * the TU-final regression sweep uses. Use in TU-final (or batch) to see the
  * whole unit's state at once instead of per-symbol hexdiff calls.
  */
-export function unitStatusTool(repoRoot: string, python: string): ToolDefinition {
+export function unitStatusTool(repoRoot: string, python: string, witnessEnabled = true): ToolDefinition {
   return defineTool({
     name: "unit-status",
     label: "unit-status",
@@ -389,7 +393,7 @@ export function unitStatusTool(repoRoot: string, python: string): ToolDefinition
       unit: Type.String({ description: "objdiff unit hint (e.g. kyoshin/CSaveLoad)" }),
     }),
     execute: async (_id, params) => {
-      const scan = await scanUnitState(repoRoot, python, params.unit);
+      const scan = await scanUnitState(repoRoot, python, params.unit, witnessEnabled);
       const parts: string[] = [];
       parts.push(`## unit-status: ${scan.unit}`);
       const sz = scan.size_check;
@@ -403,10 +407,16 @@ export function unitStatusTool(repoRoot: string, python: string): ToolDefinition
       parts.push(`- matched: ${scan.matched}/${scan.total}`);
       const regSwap = scan.functions.filter((f) => f.present && f.structural === 0 && f.mismatch > 0);
       if (regSwap.length > 0) {
-        parts.push(`\n### Reg-swap-only (${regSwap.length}) — witness status`);
+        // MEDIUM-LOW (DeepSeek F5): when the witness is disabled the scan
+        // skips the re-check entirely — say so instead of "❌ NOT certified".
+        parts.push(witnessEnabled
+          ? `\n### Reg-swap-only (${regSwap.length}) — witness status`
+          : `\n### Reg-swap-only (${regSwap.length}) — witness disabled (not checked)`);
         for (const f of regSwap.slice(0, 25)) {
           const cert = scan.witnessCert.get(f.symbol);
-          parts.push(`- ${cert === true ? "✅ certifies" : cert === false ? "❌ NOT certified by witness" : "❓ untested"} \`${f.symbol}\` (${f.mismatch} reg-swaps)`);
+          parts.push(witnessEnabled
+            ? `- ${cert === true ? "✅ certifies" : cert === false ? "❌ NOT certified by witness" : "❓ untested"} \`${f.symbol}\` (${f.mismatch} reg-swaps)`
+            : `- ⏭ witness disabled — not checked \`${f.symbol}\` (${f.mismatch} reg-swaps)`);
         }
         if (regSwap.length > 25) parts.push(`- … (${regSwap.length - 25} more)`);
       }

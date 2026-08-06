@@ -645,6 +645,23 @@ async function releaseBatch(
   for (const id of ids) activeClaims.delete(id);
 }
 
+/** Registry acceptance predicate shared by BOTH branches of runWitnessCycle
+ *  (exit-0 and non-zero) and exported for unit tests: a row certifies when its
+ *  status is FULL_MATCH, or (witness enabled) EQUIVALENT_MATCH, and it is not
+ *  size-gate BACKLOG. With the witness disabled, EQUIVALENT_MATCH is never
+ *  accepted — only byte-identical FULL_MATCH counts (adversarial-review H1:
+ *  the exit-0 branch previously trusted the exit code unconditionally, so a
+ *  --no-witness cycle that minted EQUIVALENT_MATCH via the re-enabled
+ *  memory-bus/SMT path would have been accepted). */
+export function isCertifiedRow(
+  row: { status: string; workflowStatus?: string } | undefined,
+  witnessEnabled: boolean,
+): boolean {
+  return !!row
+    && (row.status === "FULL_MATCH" || (witnessEnabled && row.status === "EQUIVALENT_MATCH"))
+    && row.workflowStatus !== "BACKLOG";
+}
+
 /**
  * Phase 5 (no-SMT): witness-only singleton. Runs `run.py cycle <id>` under
  * the repo-wide build lock — NO model session and NO `--smt` (cycle's
@@ -666,6 +683,21 @@ async function runWitnessCycle(
   console.log(
     `[pi-harness] ${unit}: witness-only cycle ${targetId} (no model session, no --smt${witnessEnabled ? ", witness" : ", --no-witness"})`,
   );
+  // HIGH-2 guard: when the witness is disabled, NEVER run the cycle on a
+  // target that is already EQUIVALENT_MATCH — cmd_cycle --no-witness would
+  // demote it (status → CODE_MATCH, cert fields popped, irreversible). A
+  // stray CERTIFY: marker can still parse (parseCertifyRequests is not
+  // witness-aware), and a concurrent agent can flip the row between the
+  // batch load and this cycle, so look the CURRENT status up here.
+  if (!witnessEnabled) {
+    const current = targetRowById(repoRoot).get(targetId);
+    if (current?.status === "EQUIVALENT_MATCH") {
+      process.stderr.write(
+        `[pi-harness] ${unit}: ${targetId} is already EQUIVALENT_MATCH — would downgrade EQUIVALENT_MATCH without witness; skipping\n`,
+      );
+      return false;
+    }
+  }
   // When the target is already claimed by the batch session (certify-request
   // and 0-mismatch paths), do NOT re-claim or release: re-claim resets
   // claimed_at, and the finally-release would drop the session's own claim
@@ -701,7 +733,20 @@ async function runWitnessCycle(
           ? "accept if the register-renaming witness certifies; otherwise fall back to the LLM batch"
           : "accept if byte-identical (FULL_MATCH); otherwise fall back to the LLM batch",
       ], { cwd: repoRoot });
-      certified = true; // cycle exit 0 = required level met
+      // cycle exit 0 = required level met — but NEVER trust the exit code
+      // alone: the registry records actual acceptance (adversarial-review H1).
+      // A size-gate failure records FULL_MATCH with workflow BACKLOG while the
+      // cycle still exits 0, and a --no-witness run can only legitimately
+      // produce FULL_MATCH — re-read the row and apply the same predicate as
+      // the non-zero branch below.
+      const row = targetRowById(repoRoot).get(targetId);
+      certified = isCertifiedRow(row, witnessEnabled);
+      if (!certified) {
+        process.stderr.write(
+          `[pi-harness] ${unit}: witness cycle exited 0 for ${targetId} but the registry does not certify it ` +
+          `(status ${row?.status ?? "UNKNOWN"}${row?.workflowStatus === "BACKLOG" ? ", size-gate BACKLOG" : ""}) — treated as not certified\n`,
+        );
+      }
     } catch (err) {
       // Non-zero exit: witness may not have certified, or the unit-level
       // split size gate failed. The registry records actual acceptance —
@@ -709,10 +754,8 @@ async function runWitnessCycle(
       // failure records FULL_MATCH but workflow BACKLOG (r5 finding 4):
       // status alone would falsely accept it.
       const row = targetRowById(repoRoot).get(targetId);
-      const certifiedStatus =
-        row && (row.status === "FULL_MATCH" || (witnessEnabled && row.status === "EQUIVALENT_MATCH"));
       const backlogged = row?.workflowStatus === "BACKLOG";
-      if (certifiedStatus && !backlogged) {
+      if (isCertifiedRow(row, witnessEnabled)) {
         certified = true;
       } else {
         // r8 WS-1: surface the witness rejection gate (reloc/rho/execute/
@@ -1161,7 +1204,11 @@ async function runOneTu(
       detail: {
         unit,
         byClass: selection.triage.byClass,
-        routedToWitness: selection.triage.routedToWitness,
+        // LOW (GLM F5 / DeepSeek F7): when the witness is disabled the
+        // regswap_only targets went to the LLM batch, NOT a witness cycle —
+        // logging the raw triage routing would claim a witness run that
+        // never happened.
+        routedToWitness: config.witnessEnabled ? selection.triage.routedToWitness : [],
         certified: witnessTargets.filter((w) => !witnessFallback.includes(w.id)).map((w) => w.id),
         fallback: witnessFallback,
       },
@@ -1230,6 +1277,7 @@ async function runOneTu(
       maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
       repoRoot, knownWallsPath: config.knownWallsPath,
       briefTargetChars: config.briefTargetChars,
+      witnessEnabled: config.witnessEnabled,
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: currentIds, pythonBin: config.pythonBin,
@@ -1607,6 +1655,7 @@ async function runRebatchPhase(
         maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
         repoRoot, knownWallsPath: config.knownWallsPath,
         briefTargetChars: config.briefTargetChars,
+        witnessEnabled: config.witnessEnabled,
       });
       const prompt = buildBatchPrompt({
         brief, unit, targetIds: rbCurrent, pythonBin: config.pythonBin,
@@ -1849,7 +1898,11 @@ async function runSingleton(
   // structural + diverging component) instead of re-deriving it. The gate
   // comes from the per-process map first, then the persisted ledger event
   // (survives restarts — the map is per-process only). The advice is keyed
-  // off the ACTUAL gate, not a hard-coded reloc/structural text.
+  // off the ACTUAL gate, not a hard-coded reloc/structural text. When the
+  // witness is DISABLED the block is skipped entirely: stale witness-gate
+  // ledger events from prior witness-enabled runs must not surface a false
+  // "the witness rejected it" header on a run that never consulted it
+  // (adversarial review GLM F3).
   const near = target.status === "CODE_MATCH" || target.status === "HIGH_MATCH"
     || (target.instructionMatch ?? 0) >= 90;
   const persistedGate = lastWitnessGate(repoRoot, config, targetId);
@@ -1857,7 +1910,7 @@ async function runSingleton(
   const gateReason = witnessGateByTarget.has(targetId)
     ? undefined
     : persistedGate?.reason;
-  if (near && gate) {
+  if (config.witnessEnabled && near && gate) {
     feedback =
       `## Near-match diagnosis (witness gate: ${witnessGateName(gate)}${gateReason ? ` — ${gateReason}` : ""})\n\n` +
       `This target is close to acceptance but the witness rejected it at the ` +
@@ -1887,6 +1940,7 @@ async function runSingleton(
       maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
       repoRoot, knownWallsPath: config.knownWallsPath,
       briefTargetChars: config.briefTargetChars,
+      witnessEnabled: config.witnessEnabled,
     });
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
@@ -2283,12 +2337,18 @@ async function runTuFinal(
     //    each FULL_MATCH/EQUIVALENT_MATCH after the polish — catching any
     //    target that silently stopped certifying (reloc drift, size, ABI
     //    gate) that the regression sweep detected but didn't re-certify.
-    //    The unit is only 'done' if every target re-certifies. ──
+    //    The unit is only 'done' if every target re-certifies. When the
+    //    witness is DISABLED, EQUIVALENT_MATCH targets are EXCLUDED from the
+    //    recert list (adversarial-review GLM F1 / DeepSeek F3): batch-cycle
+    //    --no-witness cannot re-prove them, so cycling demotes them
+    //    (status → CODE_MATCH, cert fields popped) — irreversible, and the
+    //    snapshot does not cover targets.json. ──
     let recertOkLocal = true;
     let recertOutputLocal = "";
     if (buildOk) {
       const unitTargets = loadUnitTargets(repoRoot, config.region, unit)
-        .filter((t) => t.status === "FULL_MATCH" || t.status === "EQUIVALENT_MATCH" || t.status === "ACCEPTED");
+        .filter((t) => t.status === "FULL_MATCH" || t.status === "ACCEPTED" ||
+          (config.witnessEnabled && t.status === "EQUIVALENT_MATCH"));
       if (unitTargets.length > 0) {
         process.stderr.write(`[pi-harness] ${unit}: mass re-certification of ${unitTargets.length} target(s) after polish\n`);
         try {

@@ -302,6 +302,7 @@ def cmd_diff(
     write_function_diff: bool,
     linked: bool = False,
     smt: bool = True,
+    witness_enabled: bool = True,
 ) -> int:
     unit = project.resolve_unit(hint)
     if unit.base_path:
@@ -319,6 +320,7 @@ def cmd_diff(
             target_id = registry_matches[0].id
     evaluation = evaluate_unit_match(
         project, unit, symbol, linked=linked, target_id=target_id, run_smt=smt,
+        witness_enabled=witness_enabled,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -1806,6 +1808,16 @@ def main() -> int:
             "for the full probe when stuck or near acceptance."
         ),
     )
+    p_diff.add_argument(
+        "--no-witness",
+        action="store_true",
+        help=(
+            "Disable the register-renaming witness probe entirely (witness "
+            "opt-out): only byte-identical FULL_MATCH can be accepted; a "
+            "non-byte-identical function reports inconclusive_smt_disabled. "
+            "Default keeps the witness enabled (human CLI unchanged)."
+        ),
+    )
 
     p_size = sub.add_parser("size", help="Check decomp .text size against split budget")
     p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
@@ -2133,6 +2145,7 @@ def main() -> int:
         return cmd_diff(
             project, config, args.unit, args.symbol,
             write_function_diff=False, linked=args.linked, smt=not args.no_smt,
+            witness_enabled=not args.no_witness,
         )
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)

@@ -1,5 +1,5 @@
 {
-  "count": 1510,
+  "count": 1515,
   "entries": {
     "EndofProgramInstruction$576": {
       "R_PPC_EMB_SDA21": {
@@ -677,6 +677,30 @@
         "retail_symbol": "lbl_eu_8052BCE0",
         "units": [
           "main/kyoshin/cf/CBattleManager"
+        ]
+      }
+    },
+    "__vt__Q22cf9_sArtsSet": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 36865,
+        "retail_symbol": "lbl_eu_8052F5D8",
+        "units": [
+          "main/kyoshin/cf/CArtsSet"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 37857,
+        "retail_symbol": "lbl_eu_8052F5D8",
+        "units": [
+          "main/kyoshin/cf/CArtsSet"
         ]
       }
     },
@@ -18501,6 +18525,48 @@
         ]
       }
     },
+    "main/nw4r/src/g3d/dcc/g3d_basic@9698": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80669C88",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/g3d/dcc/g3d_basic"
+        ]
+      }
+    },
+    "main/nw4r/src/g3d/dcc/g3d_basic@9699": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80669C8C",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/g3d/dcc/g3d_basic"
+        ]
+      }
+    },
+    "main/nw4r/src/g3d/dcc/g3d_basic@9700": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80669C90",
+        "scoped": true,
+        "units": [
+          "main/nw4r/src/g3d/dcc/g3d_basic"
+        ]
+      }
+    },
     "main/nw4r/src/lyt/lyt_common@5825": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -18915,7 +18981,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@3782": {
+    "main/nw4r/src/ut/ut_TextWriterBase@3780": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -18941,7 +19007,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@4188": {
+    "main/nw4r/src/ut/ut_TextWriterBase@4186": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -18967,7 +19033,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@5430": {
+    "main/nw4r/src/ut/ut_TextWriterBase@5428": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -18981,7 +19047,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@5431": {
+    "main/nw4r/src/ut/ut_TextWriterBase@5429": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -18995,7 +19061,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@5447": {
+    "main/nw4r/src/ut/ut_TextWriterBase@5445": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -19009,7 +19075,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_TextWriterBase@6049": {
+    "main/nw4r/src/ut/ut_TextWriterBase@6047": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -19993,9 +20059,9 @@
       }
     }
   },
-  "function_pairs": 5131,
-  "generated": "2026-08-06T12:02:25.672411",
+  "function_pairs": 5161,
+  "generated": "2026-08-07T02:53:47.969842",
   "region": "us",
-  "units_scanned": 632,
+  "units_scanned": 639,
   "version": 1
 }

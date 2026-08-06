@@ -277,14 +277,14 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
     dataSrc = *(void**)((u8*)mgr + 0x98);
     if (dataSrc == nullptr) return;
 
+    bitFlag = (flags >> 7) & 1;
+    subtype = flags & 0x7F;
+    dataSrc = nullptr;
     if (mgr != nullptr) {
         mgr = (void*)((u8*)mgr - 0x3E9C);
     }
 
-    bitFlag = (flags >> 7) & 1;
-    subtype = flags & 0x7F;
     data = nullptr;
-
     if (type == 0xA || type == 0xC || type == 0xE || type == 0x19 || subtype == 2) {
         data = *(void**)((u8*)mgr + 0x4594);
     } else if (type == 0xB || type == 0xD || type == 0xF || subtype == 3) {
@@ -293,8 +293,6 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
 
     if (data != nullptr) {
         dataSrc = reinterpret_cast<CCharEffectEneVTableIf*>(data)->_v0A8();
-    } else {
-        dataSrc = nullptr;
     }
 
     func_800ACF78(target, self->mManager, (u32)dataSrc);

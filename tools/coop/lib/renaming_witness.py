@@ -1715,6 +1715,117 @@ def _symbolic_initial_pair(
     return retail_state, decomp_state
 
 
+# ── Deterministic simplify budget (B1 node-cap + B2 memoization; timeout backstop) ─
+# The terminal comparison and the preservation check re-run ``z3.simplify`` over
+# shared-AST lanes up to |retail_exits| x |decomp_exits| x 96 times.  simplify is
+# a pure function of the AST (and z3 ASTs are hash-consed: equal expressions
+# share an ``ast_id``), so identical ASTs may share ONE cached result (B2) with
+# zero soundness cost and it collapses the repeated work on branchy/multi-exit
+# functions.  The deterministic primary bound is ``node_cap`` (B1): any AST over
+# the cap is left UNSIMPLIFIED and compared by raw ``z3.eq`` (fail-closed — raw
+# eq is already tried first, so an over-cap lane that needed canonicalization
+# degrades to SMT, never a false certificate).  A wall-clock timeout is only a
+# secondary lateness backstop (non-deterministic); the callers clamp it to
+# ``>=1`` whenever a deadline is active so it is never silently disabled by
+# ``deadline.remaining_ms()`` returning 0 at exhaustion.
+_SIMPLIFY_NODE_CAP = 4096
+_SIMPLIFY_CACHE_LIMIT = 20_000
+
+
+@dataclass(frozen=False)
+class _SimplifyBudget:
+    """Per-witness-run simplify cache + deterministic node cap + timeout.
+
+    ``cache`` maps ``ast_id -> simplified expr``; ``calls`` / ``node_skips``
+    are diagnostics (a test asserts memoization fires).  ``timeout_ms<=0``
+    means no timeout; callers set it via ``_simplify_timeout`` which clamps to
+    ``>=1`` whenever a deadline is active.
+    """
+    node_cap: int = _SIMPLIFY_NODE_CAP
+    timeout_ms: int = 0
+    cache: dict[int, Any] = field(default_factory=dict)
+    calls: int = 0
+    node_skips: int = 0
+
+
+def _simplify_timeout(deadline: Deadline | None) -> int:
+    """Return the simplify timeout for a run.
+
+    ``0`` (none) only when there is no deadline; ``>=1`` ms when a deadline is
+    active — even at ``remaining_ms()==0`` — so the timeout is never silently
+    disabled (a 0 would mean "no timeout", re-opening the run30 spin exactly
+    when the budget is exhausted).
+    """
+    if deadline is None:
+        return 0
+    return max(1, deadline.remaining_ms())
+
+
+def _ast_node_count(node: Any, z3: Any, cap: int) -> int:
+    """Bounded DFS over the AST node count; stops as soon as ``cap`` is
+    exceeded and returns ``cap+1`` for any larger AST (deterministic)."""
+    stack = [node]
+    count = 0
+    while stack and count <= cap:
+        top = stack.pop()
+        if top is None:
+            continue
+        count += 1
+        try:
+            for i in range(top.num_args()):
+                stack.append(top.arg(i))
+        except Exception:
+            pass
+    return count
+
+
+def _z3_simplify(expr: Any, z3: Any, budget: _SimplifyBudget) -> Any:
+    """Deterministic-bounded, memoized, optionally-timed simplify.
+
+    Soundness contract: the ONLY consumer of the result that can ACCEPT a pair
+    is structural ``z3.eq`` (AST identity), and every return value here is a
+    semantics-preserving rewrite of ``expr`` (the unsimplified original on a
+    node-cap skip, or z3.simplify's output).  An accept is therefore always
+    sound; every other return is fail-closed (the witness falls through to
+    SMT).  Requires a non-None ``budget``; callers thread one on hot paths and
+    fall back to plain ``z3.simplify`` otherwise.
+    """
+    try:
+        key = expr.get_id() if hasattr(expr, "get_id") else expr.ast_id()
+    except Exception:
+        return expr
+    hit = budget.cache.get(key)
+    if hit is not None:
+        return hit[1]
+    budget.calls += 1
+    if (
+        budget.node_cap > 0
+        and _ast_node_count(expr, z3, budget.node_cap) > budget.node_cap
+    ):
+        budget.node_skips += 1
+        # Pin the INPUT expr in the cache entry so the Z3 ast_id cannot be
+        # recycled (z3 ids are "unique up to reference counting" — a freed
+        # input's id is reused by a later expression, and a stale cached
+        # result under that id would be a fail-open).  See E1 (adversarial
+        # review 2026-08): transient inputs like the per-pair `And` or the
+        # `prev - node.arg(1)` word-group delta are dropped every iteration.
+        budget.cache[key] = (expr, expr)
+        return expr
+    try:
+        if budget.timeout_ms > 0:
+            out = z3.simplify(expr, timeout=budget.timeout_ms)
+        else:
+            out = z3.simplify(expr)
+    except Exception:
+        out = expr
+    if len(budget.cache) >= _SIMPLIFY_CACHE_LIMIT and budget.cache:
+        budget.cache.pop(next(iter(budget.cache)))
+    # Pin the input alongside the output (see above): keeps the id valid for
+    # the cache lifetime and makes stale-id reuse impossible.
+    budget.cache[key] = (expr, out)
+    return out
+
+
 def _structurally_equal(left: Any, right: Any, z3: Any) -> bool:
     """Structural AST identity (``z3.eq``); ints/strs compare directly."""
     if left is right:
@@ -1727,7 +1838,10 @@ def _structurally_equal(left: Any, right: Any, z3: Any) -> bool:
         return False
 
 
-def _structurally_equal_simplified(left: Any, right: Any, z3: Any, timeout_ms: int = 0) -> bool:
+def _structurally_equal_simplified(
+    left: Any, right: Any, z3: Any, *, timeout_ms: int = 0,
+    budget: _SimplifyBudget | None = None,
+) -> bool:
     """Structural equality with commutative canonicalization.
 
     Raw ``z3.eq(a+b, b+a)`` is False — z3 normalizes commutativity only under
@@ -1741,10 +1855,15 @@ def _structurally_equal_simplified(left: Any, right: Any, z3: Any, timeout_ms: i
     ``timeout_ms`` (0 = none) is passed to ``z3.simplify`` as a Z3 param —
     the rewriter honors it internally, so even a single stuck ``simplify`` on
     a pathological AST is interrupted instead of spinning (run30 incident:
-    one lane held the build lock ~30 min at 99.7% CPU in th_rewriter)."""
+    one lane held the build lock ~30 min at 99.7% CPU in th_rewriter).  When a
+    ``budget`` is provided it carries the timeout, the deterministic node cap
+    and a memoized cache, superseding ``timeout_ms``."""
     if _structurally_equal(left, right, z3):
         return True
     try:
+        if budget is not None:
+            return bool(z3.eq(_z3_simplify(left, z3, budget),
+                              _z3_simplify(right, z3, budget)))
         if timeout_ms > 0:
             return bool(z3.eq(z3.simplify(left, timeout=timeout_ms),
                               z3.simplify(right, timeout=timeout_ms)))
@@ -1753,7 +1872,9 @@ def _structurally_equal_simplified(left: Any, right: Any, z3: Any, timeout_ms: i
         return False
 
 
-def _constant_int(expr: Any, z3: Any) -> int | None:
+def _constant_int(
+    expr: Any, z3: Any, *, budget: _SimplifyBudget | None = None,
+) -> int | None:
     """Return the integer value of a constant expression, else ``None``.
 
     Accepts python ints and (simplified) Z3 constant bitvectors, so
@@ -1769,7 +1890,7 @@ def _constant_int(expr: Any, z3: Any) -> int | None:
     except Exception:
         pass
     try:
-        simplified = z3.simplify(expr)
+        simplified = _z3_simplify(expr, z3, budget) if budget is not None else z3.simplify(expr)
         if z3.is_bv_value(simplified):
             return simplified.as_long()
     except Exception:
@@ -1778,7 +1899,9 @@ def _constant_int(expr: Any, z3: Any) -> int | None:
 
 
 def _value_equal(
-    left: Any, right: Any, z3: Any, *, left_base: int, right_base: int
+    left: Any, right: Any, z3: Any, *,
+    left_base: int, right_base: int,
+    budget: _SimplifyBudget | None = None,
 ) -> bool:
     """Structural equality with the documented location-independence carve-out.
 
@@ -1791,8 +1914,8 @@ def _value_equal(
     expressions (which share variables across the sides) are compared
     structurally.
     """
-    left_const = _constant_int(left, z3)
-    right_const = _constant_int(right, z3)
+    left_const = _constant_int(left, z3, budget=budget)
+    right_const = _constant_int(right, z3, budget=budget)
     if left_const is not None and right_const is not None:
         if left_const == right_const:
             return True
@@ -1882,6 +2005,8 @@ def _nonvolatile_preservation_failure(
     side: str,
     gpr_perm: list[int],
     fpr_perm: list[int],
+    *,
+    budget: _SimplifyBudget | None = None,
 ) -> WitnessFailure | None:
     """F1 (adversarial review 2026-08): EABI nonvolatile preservation.
 
@@ -1915,11 +2040,14 @@ def _nonvolatile_preservation_failure(
     else in the witness (gate-5 live-in, region-boundary deadness), so the
     preservation obligation must cover it too.
     """
+    def _sim(x: Any) -> Any:
+        return _z3_simplify(x, z3, budget) if budget is not None else z3.simplify(x)
+
     for lane in range(14, 32):
         if gpr_perm[lane] == lane:
             continue
         for insn_exit in exits:
-            if not z3.eq(z3.simplify(insn_exit.state.gpr[lane]), initial.gpr[lane]):
+            if not z3.eq(_sim(insn_exit.state.gpr[lane]), initial.gpr[lane]):
                 return WitnessFailure(
                     "abi-boundary",
                     f"{side} nonvolatile r{lane} not preserved at exit "
@@ -1929,7 +2057,7 @@ def _nonvolatile_preservation_failure(
         if fpr_perm[lane] == lane:
             continue
         for insn_exit in exits:
-            if not z3.eq(z3.simplify(insn_exit.state.fpr[lane]), initial.fpr[lane]):
+            if not z3.eq(_sim(insn_exit.state.fpr[lane]), initial.fpr[lane]):
                 return WitnessFailure(
                     "abi-boundary",
                     f"{side} nonvolatile f{lane} not preserved at exit "
@@ -1937,7 +2065,7 @@ def _nonvolatile_preservation_failure(
                 )
             # R8-1: the paired-single shadow half must be preserved too — the
             # same simplify-then-eq save/restore test as the double half.
-            if not z3.eq(z3.simplify(insn_exit.state.ps1[lane]), initial.ps1[lane]):
+            if not z3.eq(_sim(insn_exit.state.ps1[lane]), initial.ps1[lane]):
                 return WitnessFailure(
                     "abi-boundary",
                     f"{side} nonvolatile f{lane}.ps1 not preserved at exit "
@@ -1957,6 +2085,7 @@ def _terminals_agree(
     right_base: int,
     first_divergence: list[str] | None = None,
     simplify_timeout_ms: int = 0,
+    budget: _SimplifyBudget | None = None,
 ) -> bool:
     """Structural agreement of two terminals under the renaming permutation.
 
@@ -1981,18 +2110,18 @@ def _terminals_agree(
         return _fail("exit-kind")
     if not _value_equal(
         left.exit_target, right.exit_target, z3,
-        left_base=left_base, right_base=right_base,
+        left_base=left_base, right_base=right_base, budget=budget,
     ):
         return _fail("exit-target")
     ls, rs = left.state, right.state
     for i in range(32):
-        if not _structurally_equal_simplified(ls.gpr[i], rs.gpr[gpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
+        if not _structurally_equal_simplified(ls.gpr[i], rs.gpr[gpr_perm[i]], z3, timeout_ms=simplify_timeout_ms, budget=budget):
             return _fail(f"gpr r{i}")
     for i in range(32):
-        if not _structurally_equal_simplified(ls.fpr[i], rs.fpr[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
+        if not _structurally_equal_simplified(ls.fpr[i], rs.fpr[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms, budget=budget):
             return _fail(f"fpr f{i}")
     for i in range(32):
-        if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms):
+        if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms, budget=budget):
             return _fail(f"ps1 f{i}")
     direct_pairs = [
         (ls.cr, rs.cr, "cr"),
@@ -2021,7 +2150,7 @@ def _terminals_agree(
     # LR is the one component the summary writes as an absolute constant
     # (``pc + 4`` at the call site); compare it with the location-independent
     # carve-out.
-    if not _value_equal(ls.lr, rs.lr, z3, left_base=left_base, right_base=right_base):
+    if not _value_equal(ls.lr, rs.lr, z3, left_base=left_base, right_base=right_base, budget=budget):
         return _fail("lr")
     # Register-file tuples (gqr, sr, aux spr) compare elementwise.
     for name, left_t, right_t in (
@@ -2037,7 +2166,7 @@ def _terminals_agree(
         return _fail("symbolic_bus")
     if not _memory_arrays_agree(
         ls.memory, rs.memory, z3,
-        left_base=left_base, right_base=right_base,
+        left_base=left_base, right_base=right_base, budget=budget,
     ):
         return _fail("memory")
     return True
@@ -2050,6 +2179,7 @@ def _memory_arrays_agree(
     *,
     left_base: int,
     right_base: int,
+    budget: _SimplifyBudget | None = None,
 ) -> bool:
     """S1 (adversarial review 2026-08): location-aware memory comparison.
 
@@ -2065,6 +2195,9 @@ def _memory_arrays_agree(
     does.  Any structural mismatch (aliasing, reordering, uninterpreted
     terms) rejects — fail-closed, the pair falls to SMT.
     """
+    def _sim(x: Any) -> Any:
+        return _z3_simplify(x, z3, budget) if budget is not None else z3.simplify(x)
+
     def _word_group(
         store: Any,
     ) -> tuple[Any, Any, Any] | None:
@@ -2079,7 +2212,7 @@ def _memory_arrays_agree(
         for _ in range(3):
             if not z3.is_store(node):
                 return None
-            delta = z3.simplify(prev - node.arg(1))
+            delta = _sim(prev - node.arg(1))
             if not z3.eq(delta, z3.BitVecVal(1, delta.sort().size())):
                 return None
             parts.append(node.arg(2))
@@ -2104,7 +2237,7 @@ def _memory_arrays_agree(
                     return False
                 if not _value_equal(
                     word_l, word_r, z3,
-                    left_base=left_base, right_base=right_base,
+                    left_base=left_base, right_base=right_base, budget=budget,
                 ):
                     return False
                 return _walk(tail_l, tail_r)
@@ -2112,13 +2245,13 @@ def _memory_arrays_agree(
                 return False
             if not _value_equal(
                 l.arg(2), r.arg(2), z3,
-                left_base=left_base, right_base=right_base,
+                left_base=left_base, right_base=right_base, budget=budget,
             ):
                 return False
             return _walk(l.arg(0), r.arg(0))
         return False
     try:
-        if _structurally_equal(z3.simplify(left), z3.simplify(right), z3):
+        if _structurally_equal(_sim(left), _sim(right), z3):
             return True
         return _walk(left, right)
     except Exception:
@@ -2173,8 +2306,25 @@ def run_structural_witness(
             "(out-of-function non-link branch without a relocation); "
             "dispatch modeling deferred",
         ))
+    # A1 (adversarial review 2026-08): reject direct backward branches in the
+    # GLOBAL path.  The initial CTR is a fresh symbolic variable, so a
+    # loop's exit predicate never folds; the loop unrolls to the visit/path/
+    # step cap and every iteration forks a terminal — a guaranteed-slow
+    # failure that never reaches the terminal compare (MIX/CfPadTask class:
+    # ~90 s to the deadline).  Fail-closed: these targets never certify today
+    # (they burn the deadline and fail), so the reject is a completeness
+    # no-op in practice and converts the 90 s into <1 s.  The REGION path
+    # (run_region_sliced_witness) already executes direct backward loops
+    # bounded via doc-33 loop summaries, so this gate is global-path only.
+    if _has_direct_backward_branch(original) or _has_direct_backward_branch(candidate):
+        return WitnessOutcome(False, failure=WitnessFailure(
+            "loop",
+            "target contains a direct backward branch (loop); "
+            "global-path symbolic-loop execution deferred; use region path / SMT",
+        ))
     ops = SymbolicOps()
     z3 = ops.z3
+    budget = _SimplifyBudget(timeout_ms=_simplify_timeout(deadline))
     gpr_perm = rho.gpr_perm()
     fpr_perm = rho.fpr_perm()
     retail_initial, decomp_initial = _symbolic_initial_pair(
@@ -2189,6 +2339,8 @@ def run_structural_witness(
             assumed_callees=assumed_callees,
             callee_contracts=callee_contracts or {},
             deadline=deadline,
+            path_feasibility_cache={},
+            track_access_log=False,
         )
         decomp_exits = execute_cfg(
             decomp_initial, candidate, ops,
@@ -2202,6 +2354,8 @@ def run_structural_witness(
             # for the callee token so opaque contracts certify the across-call
             # Chaitin class.
             witness_register_perm=(gpr_perm, fpr_perm),
+            path_feasibility_cache={},
+            track_access_log=False,
         )
     except (ProofDeadlineExceeded, Exception) as exc:
         if isinstance(exc, ProofDeadlineExceeded):
@@ -2220,8 +2374,14 @@ def run_structural_witness(
         (retail_exits, retail_initial, "retail"),
         (decomp_exits, decomp_initial, "decomp"),
     ):
+        if deadline is not None and deadline.expired():
+            return WitnessOutcome(
+                False, rho=rho, terminal_pairs_checked=0,
+                failure=WitnessFailure("deadline", "nonvolatile-preservation"),
+            )
+        budget.timeout_ms = _simplify_timeout(deadline)
         failure = _nonvolatile_preservation_failure(
-            exits, initial, z3, side, gpr_perm, fpr_perm,
+            exits, initial, z3, side, gpr_perm, fpr_perm, budget=budget,
         )
         if failure is not None:
             return WitnessOutcome(False, rho=rho, failure=failure)
@@ -2231,11 +2391,18 @@ def run_structural_witness(
     right_base = candidate[0].address
     for left in retail_exits:
         for right in decomp_exits:
+            if deadline is not None and deadline.expired():
+                return WitnessOutcome(
+                    False, rho=rho, terminal_pairs_checked=pairs_checked,
+                    failure=WitnessFailure("deadline", "terminal-compare"),
+                )
             # Skip terminal pairs whose path conditions are disjoint: a
             # cheap propositional simplification (no solver).  Pairs that
             # can co-occur must be structurally identical.
-            combined = z3.simplify(z3.And(left.condition, right.condition),
-                                   timeout=deadline.remaining_ms() if deadline else 0)
+            budget.timeout_ms = _simplify_timeout(deadline)
+            combined = _z3_simplify(
+                z3.And(left.condition, right.condition), z3, budget,
+            )
             if z3.is_false(combined):
                 continue
             pairs_checked += 1
@@ -2245,6 +2412,7 @@ def run_structural_witness(
                 left_base=left_base, right_base=right_base,
                 first_divergence=divergence,
                 simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
+                budget=budget,
             ):
                 reason = (
                     f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
@@ -2319,7 +2487,7 @@ def certify_renaming_witness(
             )
         return outcome
     deadline = Deadline.after_ms(deadline_ms)
-    return run_structural_witness(
+    result = run_structural_witness(
         original, candidate, outcome.rho,
         max_instructions=max_instructions,
         max_paths=max_paths,
@@ -2328,6 +2496,33 @@ def certify_renaming_witness(
         callee_contracts=callee_contracts,
         deadline=deadline,
     )
+    if (
+        not result.certified
+        and getattr(result.failure, "gate", None) == "loop"
+        and "backward branch" in str(getattr(result.failure, "reason", ""))
+    ):
+        # A1 routing (adversarial review 2026-08): the global path rejects
+        # direct backward branches because it cannot bound symbolic-CTR loops
+        # (the 90 s wall).  But a concrete-trip loop is a common certifiable
+        # MWCC idiom, so rather than lose the pair to SMT, route loop targets to
+        # the region-sliced path — the designated loop handler (doc-33
+        # summaries).  Fail-closed either way (never a false cert); if the
+        # region path also cannot bound it, it degrades to SMT.  (Indirect
+        # dispatch / any other "loop" gate failure is NOT routed — it stays a
+        # hard global-path reject.)
+        return run_region_sliced_witness(
+            original, candidate,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=assumed_callees,
+            callee_contracts=callee_contracts,
+            deadline=Deadline.after_ms(deadline_ms),
+            local_symbol=local_symbol,
+            candidate_local_symbol=candidate_local_symbol,
+            declared_return=declared_return,
+        )
+    return result
 
 
 # ── region-sliced witness (expansion B) ────────────────────────────────────
@@ -2627,6 +2822,7 @@ def run_region_sliced_witness(
 
     ops = SymbolicOps()
     z3 = ops.z3
+    budget = _SimplifyBudget(timeout_ms=_simplify_timeout(deadline))
     # Full-stream validation (gates 1/2/3/6) BEFORE region slicing: the
     # global path returns at the first rho conflict, so slots after it were
     # never checked for reject-list / reloc / non-register-bit equality
@@ -2756,6 +2952,8 @@ def run_region_sliced_witness(
                 assumed_callees=assumed_callees,
                 callee_contracts=callee_contracts or {},
                 deadline=deadline,
+                path_feasibility_cache={},
+                track_access_log=False,
                 stop_at_pcs=stop,
                 initial_seed=(start_pc, start_state, condition, visits, steps),
                 paused_out=paused,
@@ -2905,8 +3103,17 @@ def run_region_sliced_witness(
         right_base = candidate[0].address
         for left, lregion in all_retail_terms:
             for right, rregion in all_decomp_terms:
-                combined = z3.simplify(z3.And(left.condition, right.condition),
-                                       timeout=deadline.remaining_ms() if deadline else 0)
+                if deadline is not None and deadline.expired():
+                    return WitnessOutcome(
+                        False, failure=WitnessFailure(
+                            "deadline", "terminal-compare",
+                        ),
+                        terminal_pairs_checked=pairs_checked,
+                    )
+                budget.timeout_ms = _simplify_timeout(deadline)
+                combined = _z3_simplify(
+                    z3.And(left.condition, right.condition), z3, budget,
+                )
                 if z3.is_false(combined):
                     continue
                 pairs_checked += 1
@@ -2931,6 +3138,7 @@ def run_region_sliced_witness(
                     left_base=left_base, right_base=right_base,
                     first_divergence=divergence,
                     simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
+                    budget=budget,
                 ):
                     reason = (
                         f"terminal pair ({left.exit_kind}, {right.exit_kind}) "

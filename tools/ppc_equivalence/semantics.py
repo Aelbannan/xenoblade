@@ -239,6 +239,16 @@ _MEMORY_BUS: ContextVar[MemoryBus | None] = ContextVar(
     "ppc_equivalence_memory_bus",
     default=None,
 )
+# A6 (adversarial review 2026-08): when disabled, ``_touch_memory`` and the
+# PSQ access-logger become no-ops.  The register-renaming witness never reads
+# ``memory_reads``/``memory_writes``/``memory_touches`` (only the engine's bus
+# and bus-access-coverage consumers do), so the witness passes
+# ``track_access_log=False`` to skip the per-memory-op width ``bvadd`` chains
+# and the quadratic tuple concatenation (incl. the 76-entry EABI save/restore
+# logs).  Default True preserves engine behaviour exactly.
+_TRACK_MEMORY_ACCESS: ContextVar[bool] = ContextVar(
+    "ppc_equivalence_track_memory_access", default=True,
+)
 
 
 def active_fp_domain() -> FloatingPointDomain:
@@ -1151,9 +1161,27 @@ class SymbolicOps:
         self.relocation_uses: set[tuple[str, int, int, int]] = set()
         self._call_functions: dict[tuple[str, str], Any] = {}
         self._relocation_world = z3.BitVec("reloc.world", 32)
+        # A4 (adversarial review 2026-08): constant constructors are pure and
+        # hash-consed in z3; memoizing per SymbolicOps instance cuts the FFI
+        # churn for the ubiquitous 32-bit masks / True / False.
+        self._const_cache: dict[int, Any] = {}
+        self._bool_cache: dict[bool, Any] = {}
 
-    def const(self, value: int) -> Any: return self.z3.BitVecVal(value & MASK32, 32)
-    def bool(self, value: bool) -> Any: return self.z3.BoolVal(value)
+    def const(self, value: int) -> Any:
+        key = value & MASK32
+        cached = self._const_cache.get(key)
+        if cached is None:
+            cached = self.z3.BitVecVal(key, 32)
+            self._const_cache[key] = cached
+        return cached
+
+    def bool(self, value: bool) -> Any:
+        cached = self._bool_cache.get(value)
+        if cached is None:
+            cached = self.z3.BoolVal(value)
+            self._bool_cache[value] = cached
+        return cached
+
     def add(self, left: Any, right: Any) -> Any: return left + right
     def sub(self, left: Any, right: Any) -> Any: return left - right
     def mul(self, left: Any, right: Any) -> Any: return left * right
@@ -1878,6 +1906,10 @@ def _touch_memory(
     if width > 1:
         aligned = ops.eq(ops.band(address, ops.const(width - 1)), ops.const(0))
         state = _constrain_valid(state, aligned, InvalidReason.UNALIGNED_ACCESS, ops)
+    if not _TRACK_MEMORY_ACCESS.get():
+        # A6: the witness never reads the access log; skip building the
+        # per-byte bvadd tuple (the unaligned-valid constraint above stays).
+        return state
     addrs = tuple(ops.add(address, ops.const(offset)) for offset in range(width))
     touches = state.memory_touches + addrs
     if access == "read":
@@ -2073,13 +2105,17 @@ def _psq_domain(
         ),
     )
     state = _constrain_valid(state, ops.land(valid_type, aligned), InvalidReason.PSQ_INVALID_TYPE, ops)
-    # PSQ alignment is type-dependent; record access without _touch_memory's
-    # width-based alignment check.
-    addrs = tuple(ops.add(address, ops.const(offset)) for offset in range(4 if w else 8))
-    touches = state.memory_touches + addrs
-    if access == "read":
-        return replace(state, memory_reads=state.memory_reads + addrs, memory_touches=touches)
-    return replace(state, memory_writes=state.memory_writes + addrs, memory_touches=touches)
+    if _TRACK_MEMORY_ACCESS.get():
+        # PSQ alignment is type-dependent; record access without _touch_memory's
+        # width-based alignment check.  (A6: witness passes track_access_log=False
+        # and never reads this log — skip the per-byte tuple build.)
+        addrs = tuple(ops.add(address, ops.const(offset)) for offset in range(4 if w else 8))
+        touches = state.memory_touches + addrs
+        if access == "read":
+            state = replace(state, memory_reads=state.memory_reads + addrs, memory_touches=touches)
+        else:
+            state = replace(state, memory_writes=state.memory_writes + addrs, memory_touches=touches)
+    return state
 
 
 LOADS = {
@@ -4874,14 +4910,51 @@ DEFAULT_MAX_LOOP_ITERATIONS = 256
 MAX_PRIVATE_STACK_DEPTH = 0x01000000
 
 
-def _path_condition_feasible(condition: Any, ops: WordOps) -> bool:
-    """Return False only when the path condition is concretely unsatisfiable."""
+def _path_condition_feasible(condition: Any, ops: WordOps, *, cache=None, deadline=None) -> bool:
+    """Return False only when the path condition is concretely unsatisfiable.
+
+    Bounded + memoized (A2 / GLM-E1, adversarial review 2026-08): the
+    feasibility simplify ran on a condition that grows by one And per fork, so
+    the per-enqueue simplify was superlinear in branches (the MIX/CfPadTask
+    wall).  The result is memoized by pinned ast_id and clamped by the deadline
+    timeout; on timeout/exception we KEEP the path (fail-closed: extra paths
+    only add terminals that are re-checked at the terminal compare by the
+    caller, or discharged by the SMT solver).
+    """
     if isinstance(ops, ConcreteOps):
         return bool(condition)
-    if isinstance(ops, SymbolicOps):
-        simplified = ops.z3.simplify(condition)
-        return not ops.z3.is_false(simplified)
-    return True
+    if not isinstance(ops, SymbolicOps):
+        return True
+    z3 = ops.z3
+    # Cheapest: syntactically false (constant-folded by the AST builder).
+    try:
+        if z3.is_false(condition):
+            return False
+    except Exception:
+        pass
+    key = None
+    if cache is not None:
+        try:
+            key = condition.get_id() if hasattr(condition, "get_id") else condition.ast_id()
+            hit = cache.get(key)
+            if hit is not None:
+                return hit[1]
+        except Exception:
+            key = None
+    try:
+        if deadline is not None:
+            simplified = z3.simplify(condition, timeout=max(1, deadline.remaining_ms()))
+        else:
+            simplified = z3.simplify(condition)
+    except Exception:
+        simplified = condition
+    result = not bool(z3.is_false(simplified))
+    if key is not None:
+        # Pin the INPUT alongside the result so the ast_id cannot be recycled
+        # (z3 ids are unique up to reference counting) — an unpinned cache
+        # could return a stale result under a recycled id (E1, fail-open).
+        cache[key] = (condition, result)
+    return result
 
 
 def execute_cfg(
@@ -4925,6 +4998,15 @@ def execute_cfg(
     # the summarized writes after).  Default None ⇒ identity ⇒ identical
     # behaviour for all existing callers (the SMT path never passes it).
     witness_register_perm: tuple[list[int], list[int]] | None = None,
+    # A2 / GLM-E1 (adversarial review 2026-08): a run-scoped memo for
+    # ``_path_condition_feasible`` keyed by pinned ast_id.  Strictly additive
+    # (None => the SMT path keeps its plain per-enqueue simplify).  The
+    # witness passes a fresh dict to kill the superlinear per-fork simplify.
+    path_feasibility_cache: dict[int, Any] | None = None,
+    # A6 (adversarial review 2026-08): False disables _touch_memory / PSQ
+    # access-logging (witness never reads it). Strictly additive; default True
+    # preserves engine behaviour exactly.
+    track_access_log: bool = True,
     # Deprecated aliases kept for transitional callers / tests.
     memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
     memory_summaries_used: list[MemoryLoopSummary] | None = None,
@@ -4966,6 +5048,7 @@ def execute_cfg(
     domain.validate()
     domain_token = _FP_DOMAIN.set(domain)
     bus_token = _MEMORY_BUS.set(memory_bus)
+    access_token = _TRACK_MEMORY_ACCESS.set(bool(track_access_log))
     coverage_armed = memory_bus is not None
     if coverage_armed:
         begin_bus_access_coverage()
@@ -5031,6 +5114,7 @@ def execute_cfg(
             initial_seed=initial_seed,
             paused_out=paused_out,
             witness_register_perm=witness_register_perm,
+            path_feasibility_cache=path_feasibility_cache,
         )
     finally:
         if coverage_armed:
@@ -5040,6 +5124,7 @@ def execute_cfg(
             end_bus_access_coverage(side=bus_access_side)
         _MEMORY_BUS.reset(bus_token)
         _FP_DOMAIN.reset(domain_token)
+        _TRACK_MEMORY_ACCESS.reset(access_token)
 
 
 def _execute_cfg_body(
@@ -5065,6 +5150,7 @@ def _execute_cfg_body(
     initial_seed: tuple[int, MachineState, Any, dict[int, int], int] | None = None,
     paused_out: list[tuple[int, MachineState, Any, dict[int, int], int]] | None = None,
     witness_register_perm: tuple[list[int], list[int]] | None = None,
+    path_feasibility_cache: dict[int, Any] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -5097,6 +5183,26 @@ def _execute_cfg_body(
         memory_loop_plans = {}
     if gx_fifo_loop_plans is None:
         gx_fifo_loop_plans = {}
+    # A5 (adversarial review 2026-08): per-path visit counts are only read for
+    # (a) the loop-iteration limit and (b) the ``prior_visits == 0`` summary
+    # gates — both at re-enterable PCs.  A non-re-enterable PC is entered at
+    # most once per path (no back-edge reaches it; a single path is linear), so
+    # skipping its count is value-exact, and a missed cycle target would at
+    # worst spin to the deadline (fail-closed), never a false cert.  Track only
+    # in-function branch targets + all summary headers/latches, collapsing the
+    # per-instruction ``{**visit_counts, pc: …}`` copy from O(n) to O(#targets).
+    counted_visits: set[int] = {start}
+    for _insn in instructions:
+        if _insn.opcode in (Opcode.B, Opcode.BC):
+            try:
+                _tgt, _key = _cfg_branch_target(_insn, ops)
+            except Exception:
+                continue
+            if isinstance(_tgt, int) and _tgt in by_address:
+                counted_visits.add(_tgt)
+    for _map in (affine_loop_summaries, memory_loop_plans, gx_fifo_loop_plans):
+        if _map:
+            counted_visits.update(_map.keys())
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
     if initial_seed is not None:
@@ -5114,7 +5220,7 @@ def _execute_cfg_body(
         next_visits: dict[int, int],
         next_steps: int,
     ) -> None:
-        if not _path_condition_feasible(next_condition, ops):
+        if not _path_condition_feasible(next_condition, ops, cache=path_feasibility_cache, deadline=deadline):
             return
         work.append((next_pc, next_state, next_condition, next_visits, next_steps))
         if len(work) + len(terminals) > max_paths:
@@ -5130,7 +5236,7 @@ def _execute_cfg_body(
     ) -> None:
         # Premise-violation paths must survive until the full solver context can
         # prove them unreachable; do not prune with local simplification alone.
-        if not force and not _path_condition_feasible(term_condition, ops):
+        if not force and not _path_condition_feasible(term_condition, ops, cache=path_feasibility_cache, deadline=deadline):
             return
         if exit_target is None:
             terminals.append(Terminal(term_condition, term_state, exit_kind))
@@ -5431,7 +5537,10 @@ def _execute_cfg_body(
             raise ExecutionInconclusive(
                 f"loop iteration limit exceeded ({max_loop_iterations}) at 0x{pc:08x}"
             )
-        new_visits = {**visit_counts, pc: prior_visits + 1}
+        new_visits = (
+            {**visit_counts, pc: prior_visits + 1}
+            if pc in counted_visits else visit_counts
+        )
         if insn.opcode == Opcode.TWI:
             trap = _trap_condition(current, *insn.operands, ops)
             trapped = _exception_entry(current, pc, 0x00020000, ops)
@@ -5499,32 +5608,50 @@ def _execute_cfg_body(
 
             pre_fpscr = current.fpscr
             next_state = execute_instruction(current, insn, ops)
-            assert current.stack_low is not None
-            next_stack_low = ops.ite(
-                ops.unsigned_lt(next_state.gpr[1], current.stack_low),
-                next_state.gpr[1],
-                current.stack_low,
-            )
-            # Reject r1 above entry SP, and reject wraparound that would make
-            # stack_low near zero with a multi-megabyte "private" interval.
-            not_above_entry = ops.lnot(
-                ops.unsigned_lt(caller_frame_top, next_state.gpr[1]),
-            )
-            stack_low_ordered = ops.lnot(
-                ops.unsigned_lt(caller_frame_top, next_stack_low),
-            )
-            frame_depth = ops.sub(caller_frame_top, next_stack_low)
-            depth_ok = ops.lnot(
-                ops.unsigned_lt(ops.const(MAX_PRIVATE_STACK_DEPTH), frame_depth),
-            )
-            next_state = replace(
-                next_state,
-                stack_low=next_stack_low,
-                stack_layout_valid=ops.land(
-                    current.stack_layout_valid,
-                    ops.land(not_above_entry, ops.land(stack_low_ordered, depth_ok)),
-                ),
-            )
+            if next_state.gpr[1] is current.gpr[1]:
+                # A3 (adversarial review 2026-08): r1 unchanged.  stack_low is
+                # the running min of every r1 value so far, which already
+                # includes this identical r1, so min(r1, stack_low) == stack_low
+                # semantically; the not-above-entry / depth conjuncts reference
+                # the identical r1 AST and are already present in
+                # current.stack_layout_valid.  Omitting the per-instruction
+                # ite/land chain (~8-10 Z3 nodes) is value-exact.  Both sides
+                # skip identically (r1 is never renamed in the witness), so the
+                # structural comparison still matches; the SMT engine's
+                # obligations see a semantically-equal (cheaper) assumption.
+                assert current.stack_low is not None
+                next_state = replace(
+                    next_state,
+                    stack_low=current.stack_low,
+                    stack_layout_valid=current.stack_layout_valid,
+                )
+            else:
+                assert current.stack_low is not None
+                next_stack_low = ops.ite(
+                    ops.unsigned_lt(next_state.gpr[1], current.stack_low),
+                    next_state.gpr[1],
+                    current.stack_low,
+                )
+                # Reject r1 above entry SP, and reject wraparound that would make
+                # stack_low near zero with a multi-megabyte "private" interval.
+                not_above_entry = ops.lnot(
+                    ops.unsigned_lt(caller_frame_top, next_state.gpr[1]),
+                )
+                stack_low_ordered = ops.lnot(
+                    ops.unsigned_lt(caller_frame_top, next_stack_low),
+                )
+                frame_depth = ops.sub(caller_frame_top, next_stack_low)
+                depth_ok = ops.lnot(
+                    ops.unsigned_lt(ops.const(MAX_PRIVATE_STACK_DEPTH), frame_depth),
+                )
+                next_state = replace(
+                    next_state,
+                    stack_low=next_stack_low,
+                    stack_layout_valid=ops.land(
+                        current.stack_layout_valid,
+                        ops.land(not_above_entry, ops.land(stack_low_ordered, depth_ok)),
+                    ),
+                )
             if trap_cfg:
                 from .fp_traps import (
                     apply_fp_pending_to_state,

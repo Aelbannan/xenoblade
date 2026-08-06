@@ -221,6 +221,28 @@ _TIMEOUT_MS_PER_INSN = 100
 _DEFAULT_MAX_INSTRUCTIONS = 65_536
 _DEFAULT_MAX_PATHS = 4_096
 _DEFAULT_MAX_LOOP_ITERATIONS = 2_048
+# O4 (adversarial review 2026-08): the witness is a pre-SMT filter; a smaller
+# max_paths than the SMT probe's 4096 makes path-explosive functions bail to
+# SMT (fail-closed ``ExecutionInconclusive``) instead of grinding the frontier.
+# Fail-closed: reduced witness coverage only increases SMT coverage, never a
+# false certificate.  Kept below the SMT budget; the deadline stays above the
+# structural-fail latency so ``witness_gate=="structural"`` remains diagnostic.
+_WITNESS_MAX_PATHS = 2_048
+# Witness filter budgets (adversarial review 2026-08).  The certifiable class
+# (straight-line reg-swaps, concrete loops via region, branchy/FP) is
+# STEP-bounded — it finishes by instruction/bound count, so dead/iteration
+# limits are contention-immune and don't cut it.  The one wall-clock budget is
+# the deadline: under parallel workers a step-bounded legit case still completes
+# but its wall time inflates, so the deadline must carry real SLACK or a legit
+# target is falsely cut and bounced to SMT mid-execution.  30 s is ~6x the
+# measured ~5 s legit worst real time and matches the SMT probe budget.
+# Beware: without GLM-E3, the call-heavy (opaque-token) class burns this full
+# deadline per target under every parallel worker — E3 is what makes that class
+# cheap so the slack doesn't become a tax.  max_loop_iterations stays at the
+# semantics default (not lower) so concrete-trip loops >64 aren't cut (the
+# A1-region routing already fast-fails symbolic loops via the region span guard).
+_WITNESS_DEADLINE_MS = 30_000
+_WITNESS_MAX_LOOP_ITERATIONS = 256
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -1696,11 +1718,11 @@ def _try_renaming_witness(
             original,
             candidate,
             max_instructions=max_instructions,
-            max_paths=max_paths,
-            max_loop_iterations=max_loop_iterations,
+            max_paths=min(max_paths, _WITNESS_MAX_PATHS),
+            max_loop_iterations=min(max_loop_iterations, _WITNESS_MAX_LOOP_ITERATIONS),
             assumed_callees=call_targets,
             callee_contracts=contracts,
-            deadline_ms=witness_timeout_ms or 30_000,
+            deadline_ms=witness_timeout_ms or _WITNESS_DEADLINE_MS,
             local_symbol=left.name,
             candidate_local_symbol=right.name,
             declared_return=declared_return_value,

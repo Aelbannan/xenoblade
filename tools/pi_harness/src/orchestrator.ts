@@ -866,7 +866,7 @@ function makeVerifyCallback(opts: {
     }
 
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle starting\n`);
-    batchResults = await runBatchCycle(repoRoot, config.pythonBin, config.region, targetIds);
+    batchResults = await runBatchCycle(repoRoot, config.pythonBin, targetIds);
     const acceptedCount = batchResults.filter(r => r.accepted).length;
     process.stderr.write(`[orchestrator] ${unit}: runBatchCycle completed (${acceptedCount} accepted)\n`);
     if (acceptedCount > 0) {

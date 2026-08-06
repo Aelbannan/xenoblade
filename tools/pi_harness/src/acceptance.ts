@@ -238,15 +238,18 @@ export async function readBatchResults(
 export async function runBatchCycle(
   repoRoot: string,
   python: string,
-  region: string,
   targetIds: string[],
 ): Promise<BatchResult[]> {
   try {
     await execFilePromise(
       python,
       [
-        // batch-cycle builds as it cycles — hold the repo build lock.
-        "tools/pi_harness/build_lock.py", "--timeout", "1800", region, "--",
+        // batch-cycle.py builds as it cycles; cmd_build now takes the repo
+        // build lock ITSELF (build-only scope, run.py _with_build_lock) so
+        // the witness / equivalence evaluation that follows the build runs
+        // LOCK-FREE — a slow z3 simplify in the witness must not freeze
+        // every other agent's builds (run30 incident: one acceptance held
+        // the lock ~30 min spinning in z3).
         python,
         "tools/coop/batch-cycle.py",
         "--default-hypothesis", "pi-harness batch match",

@@ -29,8 +29,10 @@ Usage (from repository root):
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -188,23 +190,57 @@ def cmd_ctx(project: Project, source: Path, output: Optional[Path]) -> int:
     return 0
 
 
+def _with_build_lock(region: str, fn) -> int:
+    """Run *fn* while holding the repo-wide build lock.
+
+    Same advisory flock as tools/coop/hexdiff.py (`build/<region>/.hexdiff.lock`)
+    so ninja invocations here serialize against hexdiff builds and
+    configure.py regeneration. The lock is held ONLY around the build — the
+    witness / equivalence evaluation that follows in `cycle` must NOT run
+    under it (a slow z3 simplify would freeze every other agent's builds,
+    observed as a ~30 min lock hold on one acceptance, run30 incident).
+    """
+    lock_path = Path("build") / region / ".hexdiff.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError:
+            # Lock not supported on this filesystem (NFS etc.) — build anyway;
+            # ninja's own lock still applies.
+            os.close(fd)
+            fd = -1
+        return fn()
+    finally:
+        if fd >= 0:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except OSError:
+                pass
+            os.close(fd)
+
+
 def cmd_build(project: Project, hint: str) -> int:
-    hint_path = Path(hint)
-    if hint_path.suffix in {".c", ".cpp", ".cc", ".cxx"}:
-        obj = project.build_object_for_source(
-            hint_path if hint_path.is_absolute() else project.root / hint_path
-        )
-        _postprocess_mtrand_object(project, obj)
-    else:
-        unit = project.resolve_unit(hint)
-        if not unit.base_path:
-            print(f"ERROR: unit has no compiled base path: {unit.name}", file=sys.stderr)
-            return 1
-        project.ninja_build(str(unit.base_path.relative_to(project.root)))
-        obj = unit.base_path
-        _postprocess_mtrand_object(project, obj)
-    print(obj)
-    return 0
+    def _build() -> int:
+        hint_path = Path(hint)
+        if hint_path.suffix in {".c", ".cpp", ".cc", ".cxx"}:
+            obj = project.build_object_for_source(
+                hint_path if hint_path.is_absolute() else project.root / hint_path
+            )
+            _postprocess_mtrand_object(project, obj)
+        else:
+            unit = project.resolve_unit(hint)
+            if not unit.base_path:
+                print(f"ERROR: unit has no compiled base path: {unit.name}", file=sys.stderr)
+                return 1
+            project.ninja_build(str(unit.base_path.relative_to(project.root)))
+            obj = unit.base_path
+            _postprocess_mtrand_object(project, obj)
+        print(obj)
+        return 0
+
+    return _with_build_lock(project.config.region, _build)
 
 
 def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:

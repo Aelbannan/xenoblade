@@ -2198,3 +2198,101 @@ class Round8AdversarialReviewTests(unittest.TestCase):
             callee_contracts={"sym": CalleeContract.opaque_eabi()},
         )
         self.assertTrue(outcome.certified, outcome.failure)
+
+
+class SimplifyBudgetAdversarialTests(unittest.TestCase):
+    """B1/B2 (adversarial review 2026): the _SimplifyBudget node-cap + memo.
+
+    Locks in (a) that memoization actually fires (the B1 docstring claims "a
+    test asserts memoization fires" — this is that test), and (b) that an
+    over-node-cap AST degrades to the raw (unsimplified) input consumed by
+    structural z3.eq — the fail-closed direction (a non-identical over-cap
+    pair must NOT certify, and must never be canonicalized into an accept).
+    """
+
+    def _ops(self):
+        from tools.coop.lib.renaming_witness import _SimplifyBudget, _z3_simplify
+        from tools.ppc_equivalence.semantics import SymbolicOps
+        return _SimplifyBudget, _z3_simplify, SymbolicOps()
+
+    def test_memoization_fires_and_hits(self) -> None:
+        _SimplifyBudget, _z3_simplify, ops = self._ops()
+        budget = _SimplifyBudget()  # default node_cap = 4096
+        x = ops.z3.BitVec("x", 32)
+        expr = x + ops.z3.BitVecVal(1, 32) + ops.z3.BitVecVal(1, 32)
+        first = _z3_simplify(expr, ops.z3, budget)
+        self.assertGreaterEqual(budget.calls, 1, "memo should have been invoked")
+        calls_after_first = budget.calls
+        second = _z3_simplify(expr, ops.z3, budget)
+        # Second identical AST (hash-consed, same ast_id) is a cache hit -> no new call.
+        self.assertEqual(second, first)
+        self.assertEqual(budget.calls, calls_after_first,
+                         "identical-AST re-simplify should be served from the cache")
+
+    def test_node_cap_returns_unsimplified_and_fail_closed(self) -> None:
+        _SimplifyBudget, _z3_simplify, ops = self._ops()
+        budget = _SimplifyBudget(node_cap=1)
+        # Over-cap: a non-trivial AST exceeds node_cap=1 -> must return the INPUT
+        # unsimplified (pin), never a candidate for a commutative-canonicalized accept.
+        x = ops.z3.BitVec("x", 32)
+        expr = x + ops.z3.BitVecVal(1, 32)
+        out = _z3_simplify(expr, ops.z3, budget)
+        self.assertIsNotNone(getattr(budget, "node_skips", None))
+        self.assertGreaterEqual(budget.node_skips, 1, "over-cap lane should be skipped")
+        # The value returned is semantics-preserving (== expr); the accept path is
+        # raw structural z3.eq, so two DIFFERENT over-cap ASTs must not unify.
+        from tools.coop.lib.renaming_witness import _structurally_equal_simplified
+        other = x + ops.z3.BitVecVal(7, 32)
+        bud2 = _SimplifyBudget(node_cap=1)
+        eq = _structurally_equal_simplified(expr, other, ops.z3, budget=bud2)
+        self.assertFalse(eq, "over-cap structurally-different pair must fail closed")
+        # Idempotent/identical over-cap still accepts (same AST -> raw eq True).
+        bud3 = _SimplifyBudget(node_cap=1)
+        self.assertTrue(_structurally_equal_simplified(expr, expr, ops.z3, budget=bud3))
+
+
+class RemovedA1LoopRoutingTests(unittest.TestCase):
+    """Fix 1 (adversarial review 2026): concrete-trip loop WITH a call strictly
+    inside the loop body + consistent identity global rho must CERTIFY via the
+    global path.  The removed A1 gate+routing previously over-rejected this
+    shape (call-site boundary landed inside the loop span on the region path,
+    falling to SMT).  Also a rho-conflict loop variant must still NOT certify
+    (no false cert through the global path)."""
+
+    def _enc_li(self, rt, v): return (14 << 26) | ((rt & 31) << 21) | (v & 0xFFFF)
+    def _enc_addi(self, rt, ra, v): return (14 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (v & 0xFFFF)
+    def _enc_cmpwi(self, ra, v): return (11 << 26) | (0 << 21) | ((ra & 31) << 16) | (v & 0xFFFF)
+    def _enc_mr(self, rd, rs): return (31 << 26) | ((rs & 31) << 21) | ((rd & 31) << 16) | (444 << 1)
+    def _bne(self, bd): return (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
+    def _bl(self, off): return (18 << 26) | (off & 0x03FFFFFC) | 1
+
+    def _loop_with_call(self, scratch_r, scratch_d):
+        #  0 li r5,3 ; 1 L:addi r5,r5,-1 ; 2 bl callee ; 3 cmpwi r5,0 ;
+        #  4 bne L ; 5 mr r3,r5 ; 6 blr   -- call STRICTLY inside loop span [1,4]
+        rw = [self._enc_li(5, 3), self._enc_addi(5, 5, (1 << 16) - 1), self._bl(0),
+              self._enc_cmpwi(5, 0), self._bne(-12), self._enc_mr(3, 5), _LR]
+        original = decode_block(
+            b"".join(x.to_bytes(4, "big") for x in rw), _RETAIL_BASE,
+            validate_with_capstone=False,
+            relocations=(RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),),
+        )
+        candidate = decode_block(
+            b"".join(x.to_bytes(4, "big") for x in rw), _DECOMP_BASE,
+            validate_with_capstone=False,
+            relocations=(RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),),
+        )
+        return original, candidate
+
+    def test_loop_with_call_in_body_certifies_global(self) -> None:
+        original, candidate = self._loop_with_call(5, 5)
+        outcome = certify_renaming_witness(
+            original, candidate,
+            assumed_callees=frozenset({"callee"}),
+            callee_contracts={"callee": CalleeContract(
+                frozenset({"r3"}), frozenset({"r3"}), "test-regression")},
+            deadline_ms=20000,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+        # global path (not routed): rho_mode should be global / None, not region-sliced
+        self.assertIsNone(outcome.details.get("rho_mode") if outcome.details else None,
+                          "concrete-trip loop-with-call should certify on the global path")

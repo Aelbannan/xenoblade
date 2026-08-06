@@ -2306,22 +2306,18 @@ def run_structural_witness(
             "(out-of-function non-link branch without a relocation); "
             "dispatch modeling deferred",
         ))
-    # A1 (adversarial review 2026-08): reject direct backward branches in the
-    # GLOBAL path.  The initial CTR is a fresh symbolic variable, so a
-    # loop's exit predicate never folds; the loop unrolls to the visit/path/
-    # step cap and every iteration forks a terminal — a guaranteed-slow
-    # failure that never reaches the terminal compare (MIX/CfPadTask class:
-    # ~90 s to the deadline).  Fail-closed: these targets never certify today
-    # (they burn the deadline and fail), so the reject is a completeness
-    # no-op in practice and converts the 90 s into <1 s.  The REGION path
-    # (run_region_sliced_witness) already executes direct backward loops
-    # bounded via doc-33 loop summaries, so this gate is global-path only.
-    if _has_direct_backward_branch(original) or _has_direct_backward_branch(candidate):
-        return WitnessOutcome(False, failure=WitnessFailure(
-            "loop",
-            "target contains a direct backward branch (loop); "
-            "global-path symbolic-loop execution deferred; use region path / SMT",
-        ))
+    # Direct backward branches (loops) are NOT rejected here: the global path
+    # executes them through the bounded-iteration executor (max_instructions /
+    # max_paths / max_loop_iterations caps + the deadline), which is fail-closed
+    # (overflow or an infeasible exit -> ExecutionInconclusive -> SMT, never a
+    # false certificate).  The pre-A1 ~90 s wall on symbolic-trip loops was the
+    # superlinear per-fork feasibility simplify, removed by A2 (memoized
+    # _path_condition_feasible) + B1 (simplify node cap) in commit 902964154;
+    # measured wall on symbolic-trip loops is ~0.6-1.4 s to the caps.  Removing
+    # the A1 gate also restores certification of concrete-trip loops with a call
+    # inside the loop body (adversarial-review 2026 Finding 1), which A1's
+    # region-path routing had over-rejected.  (Rho-conflict loop targets still
+    # reach the region path via certify_renaming_witness's gate=="rho" fallback.)
     ops = SymbolicOps()
     z3 = ops.z3
     budget = _SimplifyBudget(timeout_ms=_simplify_timeout(deadline))
@@ -2496,32 +2492,6 @@ def certify_renaming_witness(
         callee_contracts=callee_contracts,
         deadline=deadline,
     )
-    if (
-        not result.certified
-        and getattr(result.failure, "gate", None) == "loop"
-        and "backward branch" in str(getattr(result.failure, "reason", ""))
-    ):
-        # A1 routing (adversarial review 2026-08): the global path rejects
-        # direct backward branches because it cannot bound symbolic-CTR loops
-        # (the 90 s wall).  But a concrete-trip loop is a common certifiable
-        # MWCC idiom, so rather than lose the pair to SMT, route loop targets to
-        # the region-sliced path — the designated loop handler (doc-33
-        # summaries).  Fail-closed either way (never a false cert); if the
-        # region path also cannot bound it, it degrades to SMT.  (Indirect
-        # dispatch / any other "loop" gate failure is NOT routed — it stays a
-        # hard global-path reject.)
-        return run_region_sliced_witness(
-            original, candidate,
-            max_instructions=max_instructions,
-            max_paths=max_paths,
-            max_loop_iterations=max_loop_iterations,
-            assumed_callees=assumed_callees,
-            callee_contracts=callee_contracts,
-            deadline=Deadline.after_ms(deadline_ms),
-            local_symbol=local_symbol,
-            candidate_local_symbol=candidate_local_symbol,
-            declared_return=declared_return,
-        )
     return result
 
 
@@ -2938,8 +2908,17 @@ def run_region_sliced_witness(
         # Seed-time feasibility pre-check (plan §3.2, impl-review Finding 7):
         # the seed bypasses enqueue's _path_condition_feasible, so an
         # infeasible resumed condition would otherwise execute until its
-        # first prune.  Reject the region run outright instead.
-        if not _path_condition_feasible(condition, ops):
+        # first prune.  Reject the region run outright instead.  (Adversarial
+        # review 2026 Finding 3: this was the one unbounded simplify call site
+        # — thread the SAME run-scoped cache + deadline used by the inner
+        # execute_cfg so a large carried frontier condition cannot spin the
+        # th_rewriter.  Fail-open on timeout: an infeasible seed that slips
+        # through is pruned downstream or produces no co-feasible terminal
+        # pairs, both fail-closed.)
+        seed_cache: dict[int, tuple[Any, bool]] = {}
+        if not _path_condition_feasible(
+            condition, ops, cache=seed_cache, deadline=deadline,
+        ):
             raise ExecutionInconclusive(
                 "region driver: infeasible resumed path condition",
             )
@@ -2952,7 +2931,7 @@ def run_region_sliced_witness(
                 assumed_callees=assumed_callees,
                 callee_contracts=callee_contracts or {},
                 deadline=deadline,
-                path_feasibility_cache={},
+                path_feasibility_cache=seed_cache,
                 track_access_log=False,
                 stop_at_pcs=stop,
                 initial_seed=(start_pc, start_state, condition, visits, steps),

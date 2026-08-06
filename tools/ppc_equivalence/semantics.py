@@ -5200,6 +5200,20 @@ def _execute_cfg_body(
                 continue
             if isinstance(_tgt, int) and _tgt in by_address:
                 counted_visits.add(_tgt)
+    # A5 revision (adversarial review 2026 Finding 2): a loop header reachable
+    # ONLY via a bcctr jump-table closed target (engine path; the witness never
+    # passes jump_table_targets) is a re-enterable PC but is not a static B/BC
+    # target, so it was absent from counted_visits and its loop-iteration cap
+    # never fired (it terminated at the step cap instead).  Seed the closed
+    # targets too — ALIGNED (& ~3), matching the executor's own aligned-CTR
+    # comparison at the bcctr enqueue (semantics.py, ``aligned = target_pc &
+    # 0xFFFFFFFC``) so the counted PC equals the PC actually re-entered.
+    if jump_table_targets is not None:
+        for _closed in jump_table_targets.values():
+            for _t in _closed:
+                _aligned = _t & 0xFFFFFFFC
+                if _aligned in by_address:
+                    counted_visits.add(_aligned)
     for _map in (affine_loop_summaries, memory_loop_plans, gx_fifo_loop_plans):
         if _map:
             counted_visits.update(_map.keys())

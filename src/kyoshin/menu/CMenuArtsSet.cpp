@@ -28,7 +28,19 @@ void func_8022FA50(void* self) {
     __dt__12CMenuArtsSetFv(obj);
 }
 
-void __ct__8022FA58(){}
+void __ct__8022FA58(SArtsSub8022FA58* self, u32 a, u32 b) {
+    self->field_0x00 = a;
+    self->field_0x04 = b;
+    self->field_0x08 = 0;
+    self->field_0x0C = 0;
+    self->field_0x10 = 0;
+    self->field_0x14 = 0;
+    self->field_0x15 = 0;
+    self->field_0x16 = 1;
+    self->field_0x17 = 0;
+    self->field_0x18 = 0;
+    self->field_0x21 = 0;
+}
 
 void __dt__8022FA90(){}
 
@@ -40,7 +52,20 @@ void func_8022FDF4(){}
 
 void func_8022FE58(){}
 
-void func_8022FE90(){}
+void func_80230160(SArtsSub8022FA58* self);
+void func_802316F8(SArtsSub8022FA58* self);
+extern "C" void func_80124270(void* p);
+
+void func_8022FE90(SArtsSub8022FA58* self) {
+    self->field_0x16 = 0;
+    self->field_0x17 = 0;
+    int v = (int)self->field_0x14 - 1;
+    self->field_0x14 = (u8)v;
+    if ((s8)v < 0) {
+        self->field_0x14 = (u8)(self->field_0x21 - 1);
+    }
+    return func_80230160(self);
+}
 
 void func_8022FEC4(){}
 
@@ -50,11 +75,17 @@ void func_8022FF74(){}
 
 void func_80230070(){}
 
-void func_80230160(){}
+
 
 void func_80230374(){}
 
-void func_8023040C(){}
+u8 func_8023040C(SArtsSub8022FA58* self, u32 idx) {
+    if (idx < self->field_0x21) {
+        return self->field_0x19[idx];
+    } else {
+        return 0;
+    }
+}
 
 void __ct__8023042C(){}
 
@@ -68,7 +99,14 @@ void func_802306F0(){}
 
 void func_802307A4(){}
 
-void func_8023080C(){}
+void func_8023080C(SArtsSub8022FA58* self, u8 val) {
+    if (self->field_0x27 != 0) {
+        func_80124270(((SArts080C*)(self->field_0x08))->field_0x10);
+    } else {
+        self->field_0x22 = val;
+        return func_802316F8(self);
+    }
+}
 
 void func_8023082C(){}
 
@@ -80,7 +118,11 @@ void func_80230D18(){}
 
 void func_80230D74(){}
 
-void func_80230FF0(){}
+void func_80230FF0(SArtsSubDElem* self, u8 val, u32 idx, u32 sub, u32 off) {
+    SArtsSubDElem* e = &self[idx];
+    e->data[off + sub * 8] = val;
+    e->field_0x30 = 1;
+}
 
 void func_80231014(){}
 
@@ -90,7 +132,13 @@ void func_80231320(void* self){}
 
 void func_802313E0(){}
 
-void func_80231464(){}
+void func_80231464(SArtsSub8022FA58* self) {
+    if (self->field_0x20 != 4) {
+        return;
+    }
+    self->field_0x20 = 3;
+    return func_802316F8(self);
+}
 
 void func_80231480(){}
 
@@ -100,13 +148,9 @@ void func_802315BC(){}
 
 void func_80231648(){}
 
-void func_802316F8(){}
-
-extern "C" void func_80231848(void* self, void* src) {
-    float x = *(float*)src;
-    float y = *(float*)((u8*)src + 4);
-    *(float*)((u8*)self + 0x44) = x;
-    *(float*)((u8*)self + 0x48) = y;
+void func_80231848(CMenuArtsSet* self, const SArtsVec2* src) {
+    self->mField44 = src->x;
+    self->mField48 = src->y;
 }
 
 void func_8023185C(){}
@@ -143,7 +187,13 @@ void func_802324C4(){}
 
 void func_80232638(){}
 
-void func_8023270C(){}
+u8 func_8023270C(SArts3270C* self) {
+    u8 r = 0;
+    if (self->field_0x20 == 0 && self->field_0x21 == 0) {
+        r = 1;
+    }
+    return r;
+}
 
 void func_80232734(){}
 
@@ -220,7 +270,12 @@ void func_80234A08(){}
 
 void func_80234A94(){}
 
-void func_80234C84(){}
+u8 func_80234C84(SArts34C84* self) {
+    if (self->field_0x16F != 0) {
+        return 1;
+    }
+    return self->field_0x2A1;
+}
 
 void func_80234CA0(){}
 
@@ -238,7 +293,12 @@ void func_8023506C(){}
 
 void func_802350B8(){}
 
-void func_80235108(){}
+void func_80235108(SArts35108* self) {
+    if (self->field_0x1C != 0) {
+        self->field_0x30 = 1;
+        self->field_0x28 = 1;
+    }
+}
 
 void func_80235124(){}
 

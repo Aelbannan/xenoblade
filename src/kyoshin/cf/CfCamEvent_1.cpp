@@ -19,11 +19,36 @@ void* func_800755B0(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 2));
 }
 
-void func_800755BC(){}
+// Resolve the shared global 'cam state' object; external C-function tail-call
+// targets used by the shake helpers below.
+extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
+extern "C" int func_8024125C(int state, int val);
+extern "C" int func_80241344(int state, int val);
+extern "C" int func_80240C98(int state, int arg0, int arg1);
 
-void func_8007560C(){}
+// Categorise an environment/prompt id (r4) into a 0/1/2 bucket. The
+// manager pointer in r3 is unused by this helper.
+int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
+    if (idx >= 0x10 && idx <= 0x2b) return 1;
+    if (idx >= 0x8 && idx <= 0xa)   return 2;
+    if (idx <= 1) return 0;
+    if (idx == 0xb) return 2;
+    return 0;
+}
 
-void func_80075640(){}
+// True when the global cam state exists and is in a "busy" frame range.
+int func_8007560C() {
+    if (lbl_eu_80663DF0 == nullptr) return 0;
+    if (lbl_eu_80663DF0->field_0x3E < 0x10 || lbl_eu_80663DF0->field_0x3E > 0x2b) return 0;
+    return 1;
+}
+
+// True when the global cam state exists and is in the "intro" frame range.
+int func_80075640() {
+    if (lbl_eu_80663DF0 == nullptr) return 0;
+    if (lbl_eu_80663DF0->field_0x3E < 0 || lbl_eu_80663DF0->field_0x3E > 1) return 0;
+    return 1;
+}
 
 void func_80075674(){}
 
@@ -65,7 +90,14 @@ void func_80079B34(){}
 
 void func_80079D6C(){}
 
-void func_80079DBC(){}
+// True while any of three "active" flags are set on the manager.
+bool func_80079DBC(CfCamEventManager* manager) {
+    if (manager->field_0x1DE) return true;
+    CfCamEventSub1F4* sub = &manager->sub_0x1F4;
+    if (sub->field_0x162) return true;
+    if (sub->field_0x2DA) return true;
+    return false;
+}
 
 void func_80079E04(){}
 
@@ -77,15 +109,34 @@ extern "C" void func_8007B030(void* self) {
     *(u8*)((u8*)self + 0x4ce) = 0;
 }
 
-void func_8007B044(){}
+// Forward shake state to the shared handler if the global cam state is alive.
+int func_8007B044(int arg0, int arg1) {
+    if (lbl_eu_80663DF0 == nullptr) return 0;
+    if (lbl_eu_80663DF0->field_0x38 == 0) return 0;
+    return func_80240C98(lbl_eu_80663DF0->field_0x38, arg0, arg1);
+}
 
-void func_8007B078(){}
+int func_8007B078(int val) {
+    if (lbl_eu_80663DF0 == nullptr) return val;
+    if (lbl_eu_80663DF0->field_0x38 == 0) return 0;
+    return func_8024125C(lbl_eu_80663DF0->field_0x38, val);
+}
 
-void func_8007B0A0(){}
+int func_8007B0A0(int val) {
+    if (lbl_eu_80663DF0 == nullptr) return val;
+    if (lbl_eu_80663DF0->field_0x38 == 0) return 0;
+    return func_80241344(lbl_eu_80663DF0->field_0x38, val);
+}
 
 void func_8007B0C8(){}
 
-void func_8007BAE4(){}
+u8 func_8007BAE4() {
+    u8 result = 0;
+    if (lbl_eu_80663DF0) {
+        result = lbl_eu_80663DF0->field_0x46;
+    }
+    return result;
+}
 
 void func_8007BAFC(){}
 

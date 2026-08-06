@@ -5,6 +5,39 @@
 // CEquipItemBox vtable (lbl_eu_80538658)
 extern "C" void* lbl_eu_80538658[];
 
+namespace nw4r {
+namespace lyt {
+    class Layout;
+    class DrawInfo;
+}
+}
+
+/* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable. */
+struct CEIBCur {
+    CEIBCur(void* arcResAcc);
+    void* mVtable;          // 0x00
+    void* mArcResAcc;       // 0x04
+    void* mpLayout;         // 0x08
+    void* mpAnimTrans0;     // 0x0C
+    void* mpAnimTrans1;     // 0x10
+    u8 mActive;             // 0x14
+    u8 mVisible;            // 0x15
+    u8 _pad16[2];           // 0x16
+};
+
+/* CEIBCur vtable / CEIBPageCur vtable (in this unit's .data). */
+extern "C" void* lbl_eu_80538704[];
+extern "C" void* lbl_eu_805386EC[];
+
+/* Layout draw w/ visible flag. Retail symbol IS the mangled name; declare
+   with C++ linkage so MWCC mangles func_80137038 to the retail symbol. */
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+/* CEIBPageCur - page-cursor subclass of CEIBCur, overrides vtable. */
+struct CEIBPageCur : CEIBCur {
+    CEIBPageCur(void* arcResAcc);
+};
+
 /* 8-byte item data struct copied by copyEquipItemData */
 struct CEquipItemData {
     s16 unk0;   // 0x0
@@ -30,6 +63,11 @@ struct CEquipItemBox {
     u8 func_80287EE8();
     void func_80287EFC(u32 val);
     void func_8028A07C();
+    void func_8028A0C0(u8 val);
+    void func_80282DF8();
+    void func_80282E24();
+    u8 func_80283280(u32 param);
+    u8 func_802832B4();
 
     void* mVtbl;            // 0x00
 
@@ -82,6 +120,13 @@ struct CEquipItemBox {
     u8 unk_37a;             // 0x37A
     u8 unk_37b;             // 0x37B
     u8 unk_37c;             // 0x37C
+
+    // ---- region used by grid/cursor helpers (large array area) ----
+    u8 _pad37D[0x2003 - 0x37D];  // 0x37D..0x2002
+    u8 field_2003;          // 0x2003 (count/range)
+    s8 field_2004;          // 0x2004 (current index)
+    u8 _pad2005[0x2026 - 0x2005]; // 0x2005..0x2025
+    u8 field_2026[0x400];   // 0x2026
 };
 
 /* Copy 8-byte CEquipItemData struct from src to dst */

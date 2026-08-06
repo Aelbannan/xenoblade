@@ -138,11 +138,13 @@ void CItemBoxInfo::advanceItemBoxState() {
     }
 }
 
-void CItemBoxInfo::tryActivateItemBox() {
-    if (state.layout == 0) return;
-    if (state.resource) {
-        state.current = 1;
-        state.active = 1;
+void tryActivateItemBox(CItemBoxInfo* info) {
+    if (info->state.layout == 0) return;
+    if (info->state.resource != 0) {
+        info->state.current = 1;
+        info->state.active = 1;
+    } else {
+        return;
     }
 }
 
@@ -1690,9 +1692,12 @@ void func_801E4194(CItemBoxInfo2* info) {
 }
 void func_801E4390(CItemBoxInfo2* info) {
     if (info->state.layout == 0) return;
-    if (info->state.resource == 0) return;
-    info->state.current = 1;
-    info->state.active = 1;
+    if (info->state.resource != 0) {
+        info->state.current = 1;
+        info->state.active = 1;
+    } else {
+        return;
+    }
 }
 void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     void* layout = *(void**)((u8*)info + 0x34);

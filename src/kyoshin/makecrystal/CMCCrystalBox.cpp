@@ -7,12 +7,14 @@
 void func_802138B8(){}
 
 void func_80213964(int unused, void* a, void* b) {
-    short a_s = *(short*)a, b_s = *(short*)b;
-    unsigned char a_b = ((unsigned char*)a)[2], b_b = ((unsigned char*)b)[2];
-    *(short*)a = b_s;
-    ((unsigned char*)a)[2] = b_b;
-    *(short*)b = a_s;
-    ((unsigned char*)b)[2] = a_b;
+    short b_lo = *(short*)b;
+    unsigned char b_hi = ((unsigned char*)b)[2];
+    short a_lo = *(short*)a;
+    unsigned char a_hi = ((unsigned char*)a)[2];
+    *(short*)a = b_lo;
+    ((unsigned char*)a)[2] = b_hi;
+    *(short*)b = a_lo;
+    ((unsigned char*)b)[2] = a_hi;
 }
 
 void func_80213988(){}
@@ -279,7 +281,7 @@ void copyShortPair_80219D10(void* dst, void* src){
 
 void CMCCrystalBox::OnFileEvent() {}
 
-extern "C" void func_80219D10(void* dst, void* src) {
-    *(unsigned short*)dst = *(unsigned short*)src;
-    *(unsigned short*)((u8*)dst + 2) = *(unsigned short*)((u8*)src + 2);
+void func_80219D10(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src) {
+    dst->m0 = (unsigned short)src->m0;
+    dst->m2 = (unsigned short)src->m2;
 }

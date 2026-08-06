@@ -4,6 +4,13 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 
+namespace nw4r {
+namespace lyt {
+    class AnimTransform;
+}
+}
+class CBaseCur;
+
 /* Layout verified against extab destroy-member order:
    0x00: IWorkEvent base (vtable ptr)
    0x04: UnkClass_8045F564 (0x10 bytes)
@@ -27,7 +34,16 @@ public:
     // 0x04: UnkClass_8045F564 (size 0x10)
     u8 _pad04[0x10];
     // 0x14: UnkClass_8045F564 (size 0x3C)
-    u8 _pad14[0x39];
+    u8 _pad14[0x1C];                       // 0x14..0x30
+    u32 field_30;                          // 0x30
+    u32 field_34;                          // 0x34
+    nw4r::lyt::AnimTransform* field_38;    // 0x38
+    u8 _pad3C[0x04];                       // 0x3C..0x40
+    nw4r::lyt::AnimTransform* field_40;    // 0x40
+    u8 field_44;                           // 0x44
+    u8 _pad45[0x03];                       // 0x45..0x48
+    u32 field_48;                          // 0x48
+    u8 field_4C;                           // 0x4C
     u8 field_4D;             // 0x4D
     u8 _pad4E[0x02];
     // 0x50: CCur14 (size 0x18)

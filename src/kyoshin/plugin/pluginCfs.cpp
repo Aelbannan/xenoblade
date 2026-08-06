@@ -53,12 +53,12 @@ extern "C" {
     void func_801F4BFC(int);
     void func_801F4C90(int, int);
     int func_80291BF8();
-    void func_8049AB50(int, int);
+    void func_eu_8049AB50(int, int);
     int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
     void* CItem_initItemImplInstances();
     void* getInstance__Q22cf14CBattleManagerFv();
-    void* getInstance__Class_80296898Fv();
+    void* getInstance__14Class_80296898Fv();
     void* getPlayer__Q22cf13CfGameManagerFi(int);
     void func_800B70FC(int, int);
     int func_800B8D5C();
@@ -99,7 +99,7 @@ extern "C" {
     void func_80083888__Q22cf13CfGameManagerFv(const char*);
     bool func_80084BF4__Q22cf13CfGameManagerFv();
     bool func_80087250__Q22cf13CfGameManagerFv();
-    void func_800B94A0();
+    void func_800B94A0(const char*);
     void func_8009E740(void*, int);
     int func_8009E56C(void*, int, int);
     bool func_8009E344(void*, int, int*, int*);
@@ -374,12 +374,14 @@ int setEventArea(VMThread* pThread) {
 
 // --- delEventArea (us-80049130) ---
 int delEventArea(VMThread* pThread) {
-    const char* str = 0;
-    if (!vmArgOmitChk(pThread, 1)) {
+    const char* str;
+    if (vmArgOmitChk(pThread, 1)) {
+        str = 0;
+    } else {
         VMArg* arg = vmArgPtrGet(pThread, 1);
         str = vmArgStringGet(2, arg);
     }
-    func_800B94A0();
+    func_800B94A0(str);
     return 0;
 }
 
@@ -1266,11 +1268,9 @@ int setActMapObj(VMThread* vmThread) {
 
 // --- getMapID (us-8004afac) ---
 int getMapID(VMThread* vmThread) {
-    int mapId = func_80086B1C__Q22cf13CfGameManagerFv();
-
     VMArg ret;
     ret.type = 3;
-    ret.value.intVal = mapId;
+    ret.value.intVal = func_80086B1C__Q22cf13CfGameManagerFv();
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -1278,10 +1278,9 @@ int getMapID(VMThread* vmThread) {
 // --- clearGimmickJump (us-8004aff4) ---
 int clearGimmickJump(VMThread* vmThread) {
     unsigned long flags = lbl_eu_80663E24;
-    bool wasSet = (flags & 0x1000000) != 0;
-    lbl_eu_80663E24 = flags & ~0x40000;
+    lbl_eu_80663E24 = flags & ~0x80000;
 
-    if (wasSet) {
+    if (flags & 0x80) {
         func_80083EA4__Q22cf13CfGameManagerFv();
     }
 
@@ -1321,8 +1320,8 @@ int clearPartyGauge(VMThread* vmThread) {
 // --- waitPop (us-8004b0e4) ---
 int waitPop(VMThread* vmThread) {
     if (!func_800B8D5C()) {
-        if (!(lbl_eu_80663E28 & 0x1000000)) {
-            lbl_eu_80663EDC = 0.0f;
+        if (!(lbl_eu_80663E28 & 0x10)) {
+            lbl_eu_80663EDC = lbl_eu_80665E4C;
         }
         lbl_eu_80663E28 |= 0x10;
         vmWaitModeSet(vmThread);
@@ -1338,10 +1337,8 @@ int partyWarp(VMThread* vmThread) {
     for (int i = 1; i < 3; i++) {
         void* player = getPlayer__Q22cf13CfGameManagerFi(i);
         if (player != NULL) {
-            void* vtable = *(void**)player;
-            void* (*vfunc)(void*);
-            vfunc = (void* (*)(void*))((void**)vtable)[0x110 / 4];
-            void* task = vfunc(player);
+            // Dispatch via virtual table slot 0x110.
+            void* task = (*(void* (***)(void*))player)[0x110 / 4](player);
             if (task != NULL) {
                 func_80199678((u8*)task + 0x8C, 1);
             }
@@ -1379,8 +1376,8 @@ int addMoney(VMThread* vmThread) {
 // --- isTimeSkip (us-8004b24c) ---
 int isTimeSkip(VMThread* vmThread) {
     unsigned long flags = lbl_eu_80663E28;
-    int bit = (flags >> 5) & 1;
-    int result = (bit == 0) ? 1 : 0;
+    int bit = (flags >> 26) & 1;
+    int result = (bit == 0) ? 2 : 1;
 
     VMArg ret;
     ret.type = result;
@@ -1423,11 +1420,10 @@ int getWeaponID(VMThread* vmThread) {
     }
 
     int* charData = func_8009EC9C(charId & 0xFFFF);
-    int weaponId = *(u16*)((u8*)charData + 0x0C);
 
     VMArg ret;
     ret.type = 3;
-    ret.value.intVal = weaponId;
+    ret.value.intVal = *(u16*)((u8*)charData + 0x0C);
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -1447,27 +1443,20 @@ int addItemLimit(VMThread* vmThread) {
 
 // --- setPcCtrl (us-8004b49c) ---
 int setPcCtrl(VMThread* vmThread) {
-    bool enable;
+    int enable;
 
     {
         VMArg* arg = vmArgPtrGet(vmThread, 1);
-        enable = vmArgBoolGet(2, arg) != 0;
+        enable = vmArgBoolGet(2, arg);
     }
 
-    unsigned long flags = lbl_eu_80663E24;
-    if (enable) {
-        lbl_eu_80663E24 = flags | 0x2000;
-    } else {
-        lbl_eu_80663E24 = flags & ~0x2000;
-    }
-
+    lbl_eu_80663E24 = enable ? (lbl_eu_80663E24 & ~0x2000) : (lbl_eu_80663E24 | 0x2000);
     return 0;
 }
 
 // --- saveNamedCount (us-8004b4fc) ---
 int saveNamedCount(VMThread* vmThread) {
-    int count = func_80291BF8();
-    int total = count + func_8009CF8C(0x10A);
+    int total = func_80291BF8() + func_8009CF8C(0x10A);
 
     int clamped;
     if (total < 0) {
@@ -1485,7 +1474,7 @@ int saveNamedCount(VMThread* vmThread) {
 // --- isPal (us-8004b55c) ---
 int isPal(VMThread* vmThread) {
     int isPal = isTvFormatPal__9CDeviceVIFv();
-    int result = (isPal == 0) ? 1 : 0;
+    int result = (isPal == 0) ? 2 : 1;
 
     VMArg ret;
     ret.type = result;
@@ -1495,26 +1484,22 @@ int isPal(VMThread* vmThread) {
 
 // --- setIgnorePal (us-8004b5a8) ---
 int setIgnorePal(VMThread* vmThread) {
-    bool ignore;
-
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 1);
-        ignore = vmArgBoolGet(2, arg) != 0;
-    }
-
-    int ignoreVal = ignore ? 1 : 0;
-    func_8049AB50(lbl_eu_80663E14, ignoreVal);
+    VMArg* arg = vmArgPtrGet(vmThread, 1);
+    int val = vmArgBoolGet(2, arg);
+    int neg = -val;
+    int orVal = neg | val;
+    func_eu_8049AB50(lbl_eu_80663E14, (unsigned int)orVal >> 31);
     return 0;
 }
 
 // --- isVoiceJP (us-8004b5f4) ---
 int isVoiceJP(VMThread* vmThread) {
-    void* instance = getInstance__Class_80296898Fv();
-    unsigned char lang = *(u8*)((u8*)instance + 0x1C);
-    int result = (lang == 1) ? 1 : 0;
+    void* instance = getInstance__14Class_80296898Fv();
+    int lang = *(u8*)((u8*)instance + 0x1C);
+    int orVal = (1 - lang) | (lang - 1);
 
     VMArg ret;
-    ret.type = result;
+    ret.type = ((unsigned int)orVal >> 31) + 1;
     vmRetValSet(vmThread, &ret);
     return 1;
 }

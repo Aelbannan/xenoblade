@@ -455,8 +455,9 @@ void vmExec(){
 
 inline BOOL vmPluginModuleSearch(const char* name){
     for(int i = 0; i < MAX_PLUGINS; i++){
-        VMPlugin* plugin = &vmState.plugins[i];
-        if(name != NULL && strcmp(vmState.plugins[i].unk0, name) == 0){
+        char* pluginName = vmState.plugins[i].unk0;
+        //A plugin is already registered if its name matches
+        if(pluginName != NULL && strcmp(pluginName, name) == 0){
             return TRUE;
         }
     }
@@ -857,6 +858,22 @@ u32 vmDataGet(VMThread* pThread, int startIndex, int length){
     return result;
 }
 
+//Inline-friendly version used by the per-opcode handlers so the reader is inlined
+//into each caller (retail keeps no standalone vmDataGet symbol).
+static inline u32 vmDataGetCached(VMThread* pThread, int startIndex, int length){
+    int i = 1;
+    int index = startIndex;
+    u32 result = pThread->codeData[index];
+
+    while(i < length){
+        result <<= 8;
+        result |= pThread->codeData[++index];
+        i++;
+    }
+
+    return result;
+}
+
 void vmExceptionProc(VMThread* pThread){
     int temp1 = pThread->reg.unk10;
     vmDataGet(pThread, temp1 + 1, vmcOpcodes[pThread->codeData[pThread->reg.unk10]].paramSize);
@@ -973,13 +990,15 @@ u32 vmOCSearch(const char* name){
 
 u32 vmPropertySearch(OCData* pOC, const char* pName){
     int length = strlen(pName);
+    OCProperty* base = pOC->properties;
 
-    if (pOC->properties != NULL) {
-        OCProperty* it = pOC->properties;
+    if (base != NULL) {
+        OCProperty* it = base;
+        //Byte offset used to index an entry relative to the properties base
+        int offset = 0;
 
-        //Why the extra pointer iterator variable?
-        for(u32 i = 0; it->name != NULL; it++, i++) {
-            OCProperty* entry = &pOC->properties[i];
+        for(u32 i = 0; it->name != NULL; it++, i++, offset += sizeof(OCProperty)) {
+            OCProperty* entry = (OCProperty*)((char*)base + offset);
 
             if (length == entry->nameLength && strcmp(pName, entry->name) == 0) {
                 return i;
@@ -1085,7 +1104,7 @@ VMThread* vmThreadCreate(SBHeader* param1, u32 param2){
 
 inline int getOpcodeParam(VMThread* pThread, u8 code){
     int pc = pThread->reg.pc;
-    return vmDataGet(pThread, pc + 1, vmcOpcodes[code].paramSize);
+    return (int)vmDataGetCached(pThread, pc + 1, vmcOpcodes[code].paramSize);
 }
 
 inline void incrementPc(VMThread* pThread, u8 code){
@@ -1111,9 +1130,18 @@ int vmc_const(VMThread* pThread, u8 code){
 }
 
 int vmc_const_i(VMThread* pThread, u8 code){
-    int val = getOpcodeParam(pThread, code);
+    int pc = pThread->reg.pc;
+    int length = vmcOpcodes[code].paramSize;
+    int i = 1;
+    int index = pc + 1;
+    u32 result = pThread->codeData[index];
+    while(i < length){
+        result <<= 8;
+        result |= pThread->codeData[++index];
+        i++;
+    }
     VMArg* arg = vmStackNextGet(pThread);
-    arg->value.intVal = val;
+    arg->value.intVal = (int)result;
     arg->type = VM_TYPE_INT;
 
     incrementPc(pThread, code);

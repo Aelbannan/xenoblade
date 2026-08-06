@@ -36,8 +36,10 @@ struct CItemBoxInfo {
     u8 getItemBoxState();
     void advanceItemBoxState();
     void setItemBoxIndex(unsigned char index, short value);
-    void tryActivateItemBox();
 };
+
+// Free-function helper (retail: tryActivateItemBox__FP12CItemBoxInfo)
+void tryActivateItemBox(CItemBoxInfo* info);
 
 // Recovered free functions (retail: getItemBoxState__FP12CItemBoxInfo)
 u8 getItemBoxState(CItemBoxInfo* self);

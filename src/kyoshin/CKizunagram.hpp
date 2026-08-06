@@ -63,3 +63,70 @@ public:
     u8 field_8C; // 0x8C
 };
 
+// ---------------------------------------------------------------------------
+// Target 7 (func_80259344) support types.
+// ---------------------------------------------------------------------------
+
+// Two-word (8-byte) struct return building block for func_80259344.
+struct UnkKizunaPair {
+    u32 field_00;
+    u32 field_04;
+};
+
+struct UnkKizunaObj59344;
+struct UnkKizunaRes59344;
+
+// Intermediate node at +0x10 of the object hanging off offset +0x0C.
+struct UnkKizunaMid59344 {
+    u8 _00[0x10];
+    UnkKizunaObj59344* field10; // 0x10
+};
+
+// Object whose vfunc at vtable slot 15 (+0x3C) produces an UnkKizunaRes59344*.
+// MWCC prepends two implicit vtable slots, so the target is the 14th declared
+// virtual (declared index 13) to land at retail slot 15.
+struct UnkKizunaObj59344 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual UnkKizunaRes59344* target(int a, int b); // vtable slot 15 (+0x3C)
+};;
+
+struct UnkKizunaRes59344 {
+    u8 _00[0x44];
+    u32 field44; // 0x44
+    u32 field48; // 0x48
+};
+
+// func_80259344 receives: +0x0C -> UnkKizunaMid59344.
+struct UnkKizunaSelf59344 {
+    u8 _00[0x0C];
+    UnkKizunaMid59344* field0C; // 0x0C
+};
+
+// ---------------------------------------------------------------------------
+// Targets 9/10 (func_80257D90 / func_80257F44) support types.
+// ---------------------------------------------------------------------------
+
+// Object with a virtual method at vtable slot 2 (+0x08) taking one int.
+// MWCC prepends two implicit vtable slots, so target2 is the first declared
+// virtual (declared index 0) to land at retail slot 2.
+struct UnkKizunaObj57D90 {
+    virtual void target2(int a); // vtable slot 2 (+0x08)
+};
+
+struct UnkKizunaSelf57D90 {
+    u8 _00[0x08];
+    UnkKizunaObj57D90* field8; // 0x08
+};
+

@@ -12,14 +12,16 @@ struct QstEntry {
     unsigned char f5;
     unsigned char f6;
 
-    void setQstEntry(short a, short b, unsigned char c, unsigned char d, unsigned char e) {
-        f0 = a;
-        f2 = b;
-        f4 = c;
-        f5 = d;
-        f6 = e;
-    }
+    void setQstEntry(short a, short b, unsigned char c, unsigned char d, unsigned char e);
 };
+
+void QstEntry::setQstEntry(short a, short b, unsigned char c, unsigned char d, unsigned char e) {
+    f0 = a;
+    f2 = b;
+    f4 = c;
+    f5 = d;
+    f6 = e;
+}
 
 struct QstInfo {
     unsigned short f0;
@@ -60,14 +62,17 @@ void CMenuQstCnt::cbRenderBefore() {}
 
 void func_802269D8(){}
 
-void func_80226B94(){}
-
 struct Unk80226BA4 {
     unsigned char pad[0x64];
     unsigned char flag;
 };
 
 Unk80226BA4* lbl_eu_80664720;
+
+int func_80226B94() {
+    // subic/subfe is-zero idiom: returns whether the global menu object is unallocated
+    return lbl_eu_80664720 == 0;
+}
 
 void invalidateQstFlag() {
     if (lbl_eu_80664720 != 0) {
@@ -142,12 +147,15 @@ struct QstData {
 unsigned short selectQstIndex(unsigned char* p) {
     QstData* data = reinterpret_cast<QstData*>(p);
     short v = data->field_2002;
-    if (v < 0) {
-        v = data->field_2000;
-    }
+    if (v < 0)
+        return data->field_2000;
     return (unsigned short)v;
 }
 
-void func_802276F4(){}
+QstInfo* func_802276F4(QstInfo* base, unsigned short idx) {
+    // clrlslwi 16,3 = (idx & 0xFFFF) << 3 -> pointer into an 8-byte QstInfo array
+    if (idx >= 0x400) return 0;
+    return base + idx;
+}
 
 void func_80227710(){}

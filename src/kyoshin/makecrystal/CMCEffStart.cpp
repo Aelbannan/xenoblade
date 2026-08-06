@@ -7,10 +7,19 @@
 #include "nw4r/lyt/lyt_pane.h"
 
 extern u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern void func_80138078(u32);
 extern u32 func_801355BC();
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern u32 func_801355A0();
+
+// Retail string pool (SDA-data base for pooled string literals).
+extern "C" char lbl_eu_805095EC[];
+extern "C" float lbl_eu_80668550;
+// func_80136910's retail symbol is the Itanium-mangled C++ name, so it must be
+// referenced by its literal mangled identifier under C linkage (declaring it as
+// a C++ function would re-mangle the name).
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
 
 CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
     : unk4(0), unk5(1), mArcResourceAccessor(arcResourceAccessor), mLayout(nullptr), mAnimTrans(nullptr), unk14(0) {}
@@ -53,7 +62,7 @@ u8 CMCEffStart::isFinished() {
 
 void CMCEffStart::startInAnim() {
     unk4 = 1;
-    mAnimTrans->SetFrame(0.0f);
+    mAnimTrans->SetFrame(lbl_eu_80668550);
     unk5 = 0;
 }
 
@@ -211,7 +220,7 @@ void CMCEffUpPrm::setNumber(u32 arg1, u8 arg2) {
     if(arg1 >= 8) {
         return;
     }
-    func_80136910(unkStruct[arg1].layout, "txt_bns", arg2);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(unkStruct[arg1].layout, &lbl_eu_805095EC[0xf5], arg2);
 }
 /******************************************************************************
  *
@@ -761,7 +770,7 @@ void CMCEffCylinder::startChange() {
 }
 
 void CMCEffCylinder::setNumber(u8 arg) {
-    func_80136910(mLayout, "txt_num", arg);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(mLayout, &lbl_eu_805095EC[0x406], arg);
 }
 
 void CMCEffCylinder::updateIn() {

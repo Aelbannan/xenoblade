@@ -6,6 +6,28 @@
 
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
+// Write a CEquipItemData from 8 separate scalar inputs.
+extern "C" void func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7) {
+    dst->unk0 = a0;
+    dst->unk2 = a2;
+    dst->unk3 = a3;
+    dst->unk4 = a4;
+    dst->unk5 = a5;
+    dst->unk6 = a6;
+    dst->unk7 = a7;
+}
+
+// Copy a CEquipItemData struct (src -> dst).
+extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
+    dst->unk0 = src->unk0;
+    dst->unk2 = src->unk2;
+    dst->unk3 = src->unk3;
+    dst->unk4 = src->unk4;
+    dst->unk5 = src->unk5;
+    dst->unk6 = src->unk6;
+    dst->unk7 = src->unk7;
+}
+
 
 
 
@@ -17,6 +39,24 @@ u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
 extern "C" void func_80282F34(){}
 
+// Advance grid cursor index; wrap to 0 when it reaches the count (field_2003).
+void CEquipItemBox::func_80282DF8() {
+    s8 v = field_2004 + 1;
+    field_2004 = v;
+    if (v >= field_2003) {
+        field_2004 = 0;
+    }
+}
+
+// Step grid cursor index backwards; wrap to (count-1) when it goes below 0.
+void CEquipItemBox::func_80282E24() {
+    s8 v = field_2004 - 1;
+    field_2004 = v;
+    if (v < 0) {
+        field_2004 = field_2003 - 1;
+    }
+}
+
 extern "C" void func_80282FA0(){}
 
 extern "C" void func_80283118(){}
@@ -25,9 +65,20 @@ extern "C" void func_80283190(){}
 
 extern "C" void func_80283208(){}
 
-extern "C" void func_80283280(){}
+// Fetch the byte at grid index field_2004; bounds-guard against 0x400.
+u8 CEquipItemBox::func_80283280(u32 param) {
+    s8 idx = field_2004;
+    int off = (idx * 30 + (int)param) & 0xffff;
+    if (off >= 0x400) return 0;
+    return field_2026[off * 8];
+}
 
-extern "C" void func_802832B4(){}
+// Fetch byte at grid index field_2004, or 0 if index >= 0x400.
+u8 CEquipItemBox::func_802832B4() {
+    s8 idx = field_2004;
+    if (idx >= 0x400) return 0;
+    return field_2026[idx];
+}
 
 extern "C" void func_802832D8(){}
 
@@ -89,7 +140,15 @@ extern "C" void func_802857F0(){}
 
 extern "C" void func_80285890(){}
 
-extern "C" void __ct__CEIBCur(){}
+CEIBCur::CEIBCur(void* arcResAcc) {
+    mVtable = (void*)lbl_eu_80538704;
+    mArcResAcc = arcResAcc;
+    mpLayout = 0;
+    mpAnimTrans0 = 0;
+    mpAnimTrans1 = 0;
+    mActive = 0;
+    mVisible = 0;
+}
 
 extern "C" void __dt__80285954(){}
 
@@ -97,7 +156,12 @@ extern "C" void func_80285994(){}
 
 extern "C" void func_80285A18(){}
 
-extern "C" void func_80285A90(){}
+extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
+    if (layout == nullptr) return;
+    if (self->mActive == 0) return;
+    func_80137038(layout, drawInfo, 0, 1);
+}
 
 extern "C" void func_80285ABC(){}
 
@@ -105,7 +169,9 @@ extern "C" void func_80285B24(){}
 
 extern "C" void func_80285B70(){}
 
-extern "C" void __ct__CEIBPageCur(){}
+CEIBPageCur::CEIBPageCur(void* arcResAcc) : CEIBCur(arcResAcc) {
+    mVtable = (void*)lbl_eu_805386EC;
+}
 
 extern "C" void __dt__80285C44(){}
 
@@ -231,7 +297,12 @@ void CEquipItemBox::func_8028A07C() {
     unk_373 = 0;
 }
 
-extern "C" void func_8028A0C0(){}
+void CEquipItemBox::func_8028A0C0(u8 val) {
+    u8 idx = unk_372;
+    if (idx >= 6) return;
+    unk_36c[idx] = val;
+    unk_372 = idx + 1;
+}
 
 extern "C" void func_8028A0E0(){}
 

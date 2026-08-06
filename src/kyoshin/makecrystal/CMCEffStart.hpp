@@ -27,7 +27,7 @@ public:
     void update();
     void destroy();
     u8 isFinished();
-    void startInAnim();
+    __declspec(noinline) void startInAnim();
     void updateInAnim();
 
     u8 unk4;

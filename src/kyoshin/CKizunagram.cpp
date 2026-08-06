@@ -28,9 +28,32 @@ void func_8025C870() {}
 
 void func_80257F9C(){}
 
+CKizunaRadar::CKizunaRadar() {}
+
+CKizunaRadar::~CKizunaRadar() {}
+
+CKizunaCur::~CKizunaCur() {}
+
 CKizunaLine::CKizunaLine() {}
 
 CKizunaLine::~CKizunaLine() {}
+
+// Release/null a +0x08 child object: if non-null, finalize it (vtable slot 2)
+// with a 1 flag, then clear the pointer.
+void func_80257D90(UnkKizunaSelf57D90* self) {
+    if (self->field8 != 0) {
+        self->field8->target2(1);
+    }
+    self->field8 = 0;
+}
+
+// Same shape as func_80257D90 (sibling release/null helper).
+void func_80257F44(UnkKizunaSelf57D90* self) {
+    if (self->field8 != 0) {
+        self->field8->target2(1);
+    }
+    self->field8 = 0;
+}
 
 void func_802580CC(){}
 
@@ -48,7 +71,13 @@ void func_80259280(){}
 
 void func_802592D8(){}
 
-void func_80259344(){}
+// Dispatch: walk +0x0C -> +0x10, call vtable slot 15 with (0x8B, 1), then
+// return a 2-word struct built from the result's +0x44 / +0x48 words.
+UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
+    UnkKizunaRes59344* res = self->field0C->field10->target(0x8b, 1);
+    UnkKizunaPair out = {res->field44, res->field48};
+    return out;
+}
 
 void func_80259394(){}
 
@@ -180,17 +209,16 @@ void func_8025C994(){}
 
 void func_8025CA24(){}
 
+// Dispatch on display-state byte at +0x3A; each branch is a tail call.
 void func_8025CAB4(UnkKizunaDisp* self) {
-    switch (self->field_0x3A) {
-        case 0:
-            func_8025CE00();
-            return;
-        case 1:
-            func_8025CE78();
-            return;
-        case 2:
-            func_8025CF1C();
-            return;
+    if (self->field_0x3A == 0) {
+        return func_8025CE00();
+    }
+    if (self->field_0x3A == 1) {
+        return func_8025CE78();
+    }
+    if (self->field_0x3A == 2) {
+        return func_8025CF1C();
     }
 }
 

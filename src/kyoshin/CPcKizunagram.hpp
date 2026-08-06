@@ -36,3 +36,61 @@ public:
 // C-linkage accessors matching retail unmangled symbols.
 extern "C" u8 func_8025DA40(CPcKizunagram* pKizunagram);
 extern "C" u8 func_8025DA48(CPcKizunagram* pKizunagram);
+
+// ---------------------------------------------------------------------------
+// CPcKizunaCur - the per-character cursor sub-object (0x18 bytes) embedded at
+// offset 0x2C of CPcKizunagram. Layout-compatible with CBaseCur; the vtable
+// pointer is stored explicitly (lbl_eu_805376AC) by the constructor.
+// ---------------------------------------------------------------------------
+
+// Vtable symbol for CPcKizunaCur.
+extern "C" void* lbl_eu_805376AC[];
+
+class CPcKizunaCur {
+public:
+    void* mVtable;                            // 0x00
+    nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x04
+    nw4r::lyt::Layout* mpLayout;              // 0x08
+    nw4r::lyt::AnimTransform* mpAnim0;        // 0x0C
+    nw4r::lyt::AnimTransform* mpAnim1;        // 0x10
+    u8 mField14;                              // 0x14
+    u8 mField15;                              // 0x15
+    u8 mField16;                              // 0x16
+
+    CPcKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor);
+    ~CPcKizunaCur();
+};
+
+// ---------------------------------------------------------------------------
+// Support types for the free functions in this TU (not part of CPcKizunagram).
+// ---------------------------------------------------------------------------
+
+// Large object func_8025EE7C / func_8025EE94 operate on (u32 field at 0x89C).
+struct CPcKizunagramBig {
+    u8 _00[0x89C];
+    int field_0x89C;                          // 0x89C
+};
+
+// func_8025D6E0: nested pointer chain -> leaf struct holding a Vec3 at 0x2C.
+struct CPcKizunaTreeLeaf {
+    u8 _00[0x2C];
+    f32 x;                                    // 0x2C
+    f32 y;                                    // 0x30
+    f32 z;                                    // 0x34
+};
+
+struct CPcKizunaTreeMid {
+    u8 _00[0x10];
+    CPcKizunaTreeLeaf* field10;               // 0x10
+};
+
+struct CPcKizunaTreeRoot {
+    u8 _00[0x08];
+    CPcKizunaTreeMid* field8;                 // 0x08
+};
+
+struct CPcKizunaVec3 {
+    f32 x;
+    f32 y;
+    f32 z;
+};

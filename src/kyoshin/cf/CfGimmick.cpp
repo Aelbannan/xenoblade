@@ -27,13 +27,24 @@ void __ct__cf_CfGimmick(){}
 
 cf::CfGimmick::~CfGimmick() {}
 
-void func_8020899C(){}
-
+// func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first, float second)
+extern "C" void func_801BFDE8(unsigned int mode, unsigned int value,
+                               unsigned int playerValue, float first, float second);
+// Sound constants loaded in func_80208C48 / func_80208C60 (retail .sda21 loads)
+extern "C" float lbl_eu_80668358;
+extern "C" float lbl_eu_8066835C;
+extern "C" unsigned int func_80124B78();
 void func_802089BC(){}
 
-void func_80208C48(){}
+void func_80208C48(void* self, void* arg) {
+    func_801BFDE8(1, (unsigned int)self, (unsigned int)arg,
+                  lbl_eu_80668358, lbl_eu_8066835C);
+}
 
-void func_80208C60(){}
+void func_80208C60(void* self, void* arg, float second) {
+    func_801BFDE8(1, (unsigned int)self, (unsigned int)arg,
+                  lbl_eu_80668358, second);
+}
 
 void func_80208C78(){}
 
@@ -72,31 +83,50 @@ void func_802098EC(){}
 
 void func_80209F2C(){}
 
+// Shared singleton accessor; refs resolve to the unmangled retail name.
+extern "C" void* getUnk80664658();
+
 void func_80209F5C() {
-    extern void* getUnk80664658();
     void* p = getUnk80664658();
     *(volatile unsigned int*)((unsigned char*)p + 0x214) |= 0x000C0002;
 }
 
-void* getUnk80664658();
 void func_80209F8C() {
     void* p = getUnk80664658();
     *(unsigned int*)((char*)p + 0x214) |= 0x8008;
 }
 
-void func_80209FB8(){}
+void func_80209FB8() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0xD0000;
+}
 
-void func_80209FE4(){}
+void func_80209FE4() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x40000;
+}
 
-void func_8020A010(){}
+void func_8020A010() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x80000;
+}
 
-void func_8020A03C(){}
+void func_8020A03C() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x200000;
+}
 
 void func_8020A068(){}
 
-void func_8020A0CC(){}
+void func_8020A0CC() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x8;
+}
 
-void func_8020A0F8(){}
+void func_8020A0F8() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x400000;
+}
 
 void func_8020A124(){}
 
@@ -110,7 +140,12 @@ void func_8020A434(){}
 
 void func_8020A484(){}
 
-void func_8020A5DC(){}
+// Returns 1 if func_80124B78() is non-zero, else 0 (retail: neg/or/srwi 31 idiom).
+unsigned int func_8020A5DC() {
+    unsigned int x = func_80124B78();
+    /* (-x | x) >> 31: nonzero => 1, zero => 0 */
+    return ((unsigned int)-(int)x | x) >> 31;
+}
 
 void func_8020A608(){}
 

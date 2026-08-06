@@ -1,5 +1,8 @@
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
 #include "kyoshin/UnkClass_805764CC.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "monolib/util/MemManager.hpp"
 
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
@@ -29,42 +32,147 @@ namespace cf{
     }
 }
 
+// ── retail @sda21 globals ────────────────────────────────────────────────────
+extern "C" u32 lbl_eu_80663E24;    // presentation/event bitfield (bit 0x00400000)
+extern "C" void* lbl_eu_80663E14;  // scene / allocation-source handle
+extern "C" u32 lbl_eu_80664A5C;    // global character-voice counter
+cf::CCharVoiceMan* lbl_eu_80664A58; // CCharVoiceMan singleton
+
+// Scene-model helper returning an allocation-region handle (mtl MemManager).
+extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
+
+// Sibling voice-module free functions (cvsys TUs).
+int func_802B03A4(void* self);
+cf::CSoundNode* func_802A9604();
+cf::CSoundNode* __ct__802A4E48();
+cf::CSoundNode* __ct__802A96C0();
+
 bool func_802A1EA0() { return true; }
-unsigned char* lbl_eu_80664A58;
+
 void func_802A1F9C() {
-    unsigned char* voice_man = lbl_eu_80664A58;
+    cf::CCharVoiceMan* voice_man = lbl_eu_80664A58;
     if (voice_man != 0)
-        voice_man[0x222] = 0;
+        voice_man->unk222 = 0;
 }
-void func_802A2CF0(){}
+// If the character-voice-disable flag is clear, flag the manager's byte 0x229.
+void func_802A2CF0() {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    lbl_eu_80664A58->unk229 = 1;
+}
 void func_802A34E4(){}
 unsigned int func_802A35A0(unsigned int value) { extern unsigned int lbl_eu_80664A5C; unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
 int func_802A3740(void* self) { return 0; }
 
-void __ct__CCharVoiceMan(){}
-void func_802A14B8(){}
+// Placement-construction shim for the CCharVoiceMan ctor symbol: returns `self`
+// so a heaped 0x234 buffer keeps `this` in r3 for the caller.
+cf::CCharVoiceMan* __ct__CCharVoiceMan(cf::CCharVoiceMan* self) { return self; }
+// Allocate the 0x234-byte CCharVoiceMan and store it as the singleton.
+void func_802A14B8() {
+    mtl::ALLOC_HANDLE handle = func_80496004(lbl_eu_80663E14);
+    cf::CCharVoiceMan* man =
+        (cf::CCharVoiceMan*)mtl::MemManager::allocate(0x234, handle);
+    if (man != 0)
+        man = __ct__CCharVoiceMan(man);
+    lbl_eu_80664A58 = man;
+    lbl_eu_80664A5C = 0;
+}
 void func_802A1500(){}
 void func_802A1610(){}
 void func_802A1C68(){}
 void func_802A1D04(){}
-void func_802A1DA8(){}
+void func_802A1DA8() {
+    cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    if (m != 0) {
+        m->FactoryEvent2();
+        lbl_eu_80664A58 = 0;
+    }
+}
 void func_802A1DF0(){}
 void func_802A1EA8(){}
-void func_802A1FB4(){}
-void func_802A201C(){}
+// Register a freshly-created sound node, then clear byte 0x22C.
+void func_802A1FB4() {
+    cf::CSoundNode* node = func_802A9604();
+    if (node != 0) {
+        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        if (m->unk210 != 0)
+            m->unk210->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+    lbl_eu_80664A58->unk22C = 0;
+}
+// Append a freshly-created sound node to the manager's voice-event list.
+void func_802A201C() {
+    cf::CSoundNode* node = __ct__802A96C0();
+    if (node != 0) {
+        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        if (m->unk210 != 0)
+            m->unk210->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+}
 void func_802A2078(){}
 void func_802A216C(){}
-void func_802A2210(){}
+// If the passed actor is active, teed a u32 from +0x3F10 into unk230.
+void func_802A2210(cf::CVoiceActorInfo* self) {
+    if (func_802B03A4(self) != 0) {
+        lbl_eu_80664A58->unk230 = self->field_3F10;
+    }
+}
 void func_802A2250(){}
 void func_802A232C(){}
 void func_802A2424(){}
 void func_802A24B4(){}
 void func_802A2558(){}
-void func_802A25EC(){}
+// If the passed actor's move-base is the current player, clear voice count 0x224.
+void func_802A25EC(cf::CVoiceActorBase* actor) {
+    if (!(lbl_eu_80663E24 & 0x00400000)) {
+        const u8* movePc = actor ? (const u8*)&actor->moveBase : 0;
+        if (movePc == (const u8*)cf::CfGameManager::getPlayer(0)) {
+            lbl_eu_80664A58->unk224 = 0;
+        }
+    }
+}
 void func_802A2648(){}
 void func_802A26D8(){}
-void func_802A27F4(){}
-void func_802A285C(){}
+void func_802A27F4() {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    cf::CSoundNode* node = __ct__802A4E48();
+    if (node != 0) {
+        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        if (m->unk210 != 0)
+            m->unk210->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+}
+void func_802A285C() {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    cf::CSoundNode* node = __ct__802A4E48();
+    if (node != 0) {
+        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        if (m->unk210 != 0)
+            m->unk210->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+}
 void func_802A28C4(){}
 void func_802A293C(){}
 void func_802A29A4(){}
@@ -77,7 +185,21 @@ void func_802A2C1C(){}
 void func_802A2C88(){}
 void func_802A2D0C(){}
 void func_802A2D84(){}
-void func_802A2E08(){}
+// If the battle-manager actor ring has any entries and the flag is clear,
+// flag the manager's byte 0x22A.
+void func_802A2E08() {
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    cf::CVoiceBattleNode* sent = ((cf::CBattleListAccessor*)bm)->list0;
+    int count = 0;
+    cf::CVoiceBattleNode* cur = sent->next;
+    do {
+        cur = cur->next;
+        count++;
+    } while (cur != sent);
+    if (count > 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+        lbl_eu_80664A58->unk22A = 1;
+    }
+}
 void func_802A2E68(){}
 void func_802A2EEC(){}
 void func_802A2F54(){}

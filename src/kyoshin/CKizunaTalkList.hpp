@@ -27,6 +27,7 @@
 
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
+#include "kyoshin/CScrollBar.hpp"
 
 // Talk list entry (0x14 bytes each, 256 max)
 struct TalkListEntry {
@@ -47,16 +48,22 @@ struct TalkListEntryArray {
 };
 
 class CKizunaTalkList : public IWorkEvent {
+    friend u8 func_8027355C(CKizunaTalkList*);
+    friend u8 func_80273518(CKizunaTalkList*);
+    friend void func_80273938(CKizunaTalkList*);
+    friend void func_80273984(CKizunaTalkList*);
+    friend void func_802739D8(CKizunaTalkList*);
+    friend void func_80273A24(CKizunaTalkList*);
 private:
     /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
     /* 0x14 */ u32 mEntryCount;     // number of valid entries
     /* 0x18 */ u32 mUnknown18;
     /* 0x1C */ u32 mUnknown1C;
     /* 0x20 */ u32 mUnknown20;
-    /* 0x24 */ u32 mUnknown24;
-    /* 0x28 */ u32 mUnknown28;
+    /* 0x24 */ nw4r::lyt::AnimTransform* mpAnim24;
+    /* 0x28 */ nw4r::lyt::AnimTransform* mpAnim28;
     /* 0x2C */ u8 _pad2C[0x18];     // CCur18 cursor (stub, 0x18 bytes)
-    /* 0x44 */ u8 _pad44[0x40];     // CScrollBar (stub, 0x40 bytes)
+    /* 0x44 */ CScrollBar mScrollBar;
     /* 0x84 */ u8 mState84;
     /* 0x85 */ u8 mState85;         // state machine progression flag
     /* 0x86 */ u8 mUnknown86;

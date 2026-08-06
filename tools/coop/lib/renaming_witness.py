@@ -152,6 +152,79 @@ _COMMUTATIVE_RA_RB = frozenset({
     Opcode.MULLW, Opcode.MULHW, Opcode.MULHWU,
     Opcode.SUBF, Opcode.SUBFC, Opcode.SUBFE,
 })
+# Round-9 R9-1/R9-4: load opcodes that can read a spill slot ``(r1 + c)``.
+# C1/C2 in ``_live_in_spill_only`` scan these to detect slot reads; ``lmw``
+# (loads rD..r31, multi-lane) is handled separately (reject — cannot confine).
+# X-form loads (register-indexed) are tracked separately: with rA == r1 OR
+# rB == r1 (round-9 R9-4 finding N5 — the X-form effective address is
+# ``gpr[rA] + gpr[rB]``, so EITHER base register may carry r1), the register
+# index could alias any spill displacement, so they are treated conservatively
+# as potential slot reads.
+#
+# R9-4 (second adversarial round): the set is scanned across BOTH register
+# kinds (a GPR spill slot read by an FPR load, or vice versa, is an equally
+# observable escape — findings N3/N4), includes the byte-reversed X-form
+# loads ``lwbrx``/``lhbrx`` (GLM finding 1 / Kimi N6/N7) and the paired-single
+# D-form loads ``psq_l``/``psq_lu`` (Kimi N11).
+_SPILL_SLOT_LOAD_GPR = frozenset(
+    {
+        Opcode.LWZ, Opcode.LWZU, Opcode.LWZX, Opcode.LWZUX,
+        Opcode.LBZ, Opcode.LBZU, Opcode.LBZX, Opcode.LBZUX,
+        Opcode.LHZ, Opcode.LHZU, Opcode.LHZX, Opcode.LHZUX,
+        Opcode.LHA, Opcode.LHAU, Opcode.LHAX, Opcode.LHAUX,
+        Opcode.LWBRX, Opcode.LHBRX,
+        Opcode.LMW,
+    }
+)
+_SPILL_SLOT_LOAD_FPR = frozenset(
+    {
+        Opcode.LFS, Opcode.LFSU, Opcode.LFSX, Opcode.LFSUX,
+        Opcode.LFD, Opcode.LFDU, Opcode.LFDX, Opcode.LFDUX,
+        Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX,
+    }
+)
+_SPILL_SLOT_XFORM_LOADS = frozenset(
+    {
+        Opcode.LWZX, Opcode.LWZUX, Opcode.LBZX, Opcode.LBZUX,
+        Opcode.LHZX, Opcode.LHZUX, Opcode.LHAX, Opcode.LHAUX,
+        Opcode.LWBRX, Opcode.LHBRX,
+        Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
+        Opcode.PSQ_LX, Opcode.PSQ_LUX,
+    }
+)
+# Union of every load opcode that can read a spill slot, regardless of the
+# spilled lane's register kind (R9-4: cross-kind slot reads escape).
+_SPILL_SLOT_LOADS_ALL = _SPILL_SLOT_LOAD_GPR | _SPILL_SLOT_LOAD_FPR
+# D-form load access widths (bytes) for the byte-range overlap test (R9-4,
+# Kimi N1: ``lhz`` at disp+2 reads bytes 10-11 of a 4-byte slot at 8).
+_SPILL_SLOT_LOAD_WIDTH = {
+    Opcode.LWZ: 4, Opcode.LWZU: 4, Opcode.LBZ: 1, Opcode.LBZU: 1,
+    Opcode.LHZ: 2, Opcode.LHZU: 2, Opcode.LHA: 2, Opcode.LHAU: 2,
+    Opcode.LFS: 4, Opcode.LFSU: 4, Opcode.LFD: 8, Opcode.LFDU: 8,
+    Opcode.PSQ_L: 4, Opcode.PSQ_LU: 4,
+}
+# Spill-slot width per register kind: GPR ``stw`` stores 4 bytes, FPR
+# ``stfd`` stores 8 bytes.  Used for byte-range overlap and for the
+# cross-kind access-width check.
+_SPILL_SLOT_WIDTH = {GPR: 4, FPR: 8}
+
+
+def _spill_slot_load_width(op: Opcode, insn: Instruction) -> int:
+    """Access width (bytes) of a D-form spill-slot load candidate.
+
+    R9-4 H9 fix: PSQ loads are operand-width-dependent — the engine models
+    ``psq_span = 4 if w else 8`` (semantics.py:3927), and a W=0 psq_l reads
+    TWO 4-byte words (``addr`` and ``addr+4``; the second lands in ps1).  The
+    C1 byte-range overlap test must use the REAL width or a W=0 psq_l at
+    disp-4 of a slot reads [disp, disp+8) ⊇ slot while the width-4 test sees
+    [disp, disp+4) disjoint — an escape (GLM F1 / Kimi H9).  The W bit is
+    operand index 3 of the decoded D-form (fd, ra, d, w, t).
+    """
+    if op in (Opcode.PSQ_L, Opcode.PSQ_LU):
+        return 8 if (len(insn.operands) > 3 and insn.operands[3] == 0) else 4
+    return _SPILL_SLOT_LOAD_WIDTH.get(op, 4)
+
+
 IMMEDIATE = "immediate"
 
 # Bit ranges of the register fields, keyed by ``(start, kind)`` for the
@@ -1153,6 +1226,11 @@ class WitnessOutcome:
     failure: WitnessFailure | None = None
     structural_eq: bool = False
     terminal_pairs_checked: int = 0
+    # R9-4 (option B): True when the certified pair relied on the F1 spill
+    # carve-out (a live-in lane was spilled and the rho permutes it).  The
+    # certificate must then declare the no-stack-slot-aliasing scoped
+    # assumption (H5: computed-pointer reads of the save slot are excluded).
+    spill_carveout_used: bool = False
     details: dict[str, Any] = field(default_factory=dict)
 
 
@@ -1387,8 +1465,9 @@ def check_gates(
     rho = Rho(gpr=rho_gpr, fpr=rho_fpr)
 
     # Gate 5: ABI-boundary fixedness.
+    carveout_used: list[bool] = []
     failure = _check_abi_fixedness(original, candidate, rho, declared_return,
-                              callee_contracts)
+                              callee_contracts, carveout_out=carveout_used)
     if failure is not None:
         return WitnessOutcome(False, rho=rho, failure=failure)
     # A1 post-rho belt-and-suspenders (global path).
@@ -1396,7 +1475,10 @@ def check_gates(
     if failure is not None:
         return WitnessOutcome(False, rho=rho, failure=failure)
 
-    return WitnessOutcome(True, rho=rho)
+    return WitnessOutcome(
+        True, rho=rho,
+        spill_carveout_used=bool(carveout_used and carveout_used[0]),
+    )
 
 
 def _tail_call_reads_lane(
@@ -1488,11 +1570,21 @@ def _check_abi_fixedness(
     rho: Rho,
     declared_return: str | None = None,
     callee_contracts: dict[int | str, Any] | None = None,
+    carveout_out: list[bool] | None = None,
 ) -> WitnessFailure | None:
     # LR/CTR are inherently fixed (SPR indices are non-register bit-equal
     # fields); only GPR/FPR entries are checked here.
     fixed_gpr = set(_UNCONDITIONALLY_FIXED_GPRS)
     fixed_fpr = set(_UNCONDITIONALLY_FIXED_FPRS)
+    # R9-4 (option B): track whether the F1 spill carve-out was actually
+    # LOAD-BEARING — a live-in lane exempted as spill-only that the final rho
+    # permutes.  When true, the certificate must declare the
+    # no-stack-slot-aliasing scoped assumption (the H5 computed-pointer
+    # boundary).  Identity-mapped spill lanes do not engage the fiction and
+    # need no assumption.
+    spill_exempted: set[int] = set()  # combined-numbering lanes exempted
+    gpr_perm = rho.gpr_perm()
+    fpr_perm = rho.fpr_perm()
     # A3 conditional r4/f1 (doc 32 A3 rev 3): default FIXED.  Unfixed ONLY
     # when trusted metadata proves a non-64-bit/non-aggregate return AND the
     # body never writes the register on a forward path to a return AND there
@@ -1529,14 +1621,24 @@ def _check_abi_fixedness(
     # conservative choice.
     for instructions in (original, candidate):
         live_in, live_across = _liveness_sets(instructions)
+        # Combined numbering (GPR r -> r, FPR f -> 32 + f) so r20 and f20 do
+        # not collide in the exemption set.
+        spill_exempted.update(
+            n for n in live_in if n < 32
+            and _live_in_spill_only(instructions, n, GPR, callee_contracts)
+        )
+        spill_exempted.update(
+            n for n in live_in
+            if 32 <= n < _PS1_OFFSET
+            and _live_in_spill_only(instructions, n - 32, FPR, callee_contracts)
+        )
         fixed_gpr.update(
             n for n in live_in
-            if n < 32 and not _live_in_spill_only(instructions, n, GPR)
+            if n < 32 and n not in spill_exempted
         )
         fixed_fpr.update(
             n - 32 for n in live_in
-            if 32 <= n < _PS1_OFFSET
-            and not _live_in_spill_only(instructions, n - 32, FPR)
+            if 32 <= n < _PS1_OFFSET and n not in spill_exempted
         )
         # PS1 sub-lanes are bound together with their owning FPR; a live-in
         # ps1 lane fixes the FPR too (no spill carve-out: ps1 saves are not
@@ -1587,6 +1689,28 @@ def _check_abi_fixedness(
                 f"rho perm maps fpr f{register} -> f{fpr_perm[register]}; "
                 f"ABI registers must be fixed",
             )
+    # R9-4b F4 (fourth review round): the carve-out flag write must NOT be
+    # nested inside the fixed_fpr loop — when fixed_fpr is empty (a trusted
+    # declared_return skips the conditional f1 fix, and there are no live-in /
+    # live-across / call-observed FPRs), the write never executed and the
+    # no-stack-slot-aliasing declaration was silently dropped from the
+    # certificate for a load-bearing GPR carve-out.  Now at function end.
+    if carveout_out is not None:
+        # R9-4 (option B): the carve-out is LOAD-BEARING iff a spill-exempted
+        # live-in lane is actually permuted by the final rho (identity-mapped
+        # spill lanes don't engage the caller-renaming fiction).  The caller
+        # passes a fresh list per call site; the REGION path calls this per
+        # region, so the out-param is a per-call snapshot (the caller ORs
+        # across regions).
+        carveout_out[:] = [
+            any(
+                lane < 32
+                and lane in spill_exempted and gpr_perm[lane] != lane
+                or lane >= 32 and lane < _PS1_OFFSET
+                and lane in spill_exempted and fpr_perm[lane - 32] != lane - 32
+                for lane in spill_exempted
+            )
+        ]
     return None
 
 
@@ -1927,10 +2051,11 @@ def _live_in_spill_only(
     instructions: list[Instruction],
     lane: int,
     kind: str,
+    callee_contracts: dict[int | str, Any] | None = None,
 ) -> bool:
     """True when ``lane``'s live-in value is used ONLY by a prologue stack
     save (F1 carve-out, adversarial review 2026-08; fixed for N1 in round 2
-    2026-08-05).
+    2026-08-05; round-9 R9-1 escape confinement).
 
     ``stw rN, c(r1)`` / ``stfd fN, c(r1)`` with a constant offset and the
     frame pointer r1 is the EABI prologue-save pattern: the entry value flows
@@ -1949,6 +2074,41 @@ def _live_in_spill_only(
     r20 as data while the carve-out called it spill-only).  A def that also
     USES the lane (e.g. ``rlwimi``) observes the entry value at that slot and
     is therefore an input dependency unless it is itself a spill store.
+
+    Round-9 review (R9-1, Kimi K3 probe A; independently reproduced): the
+    pre-round-9 carve-out checked only what flows INTO the lane's entry value
+    and never what flows OUT of the spill slot.  Under rho ``{20:25}`` both
+    sides store the SAME shared variable X_20 to the same slot, so the slot
+    self-agrees structurally — but the PHYSICAL slot content differs (caller
+    r20 vs caller r25).  Any later consumer of that slot content (reload into
+    a different lane, data use of a reloaded value, store to a global, a
+    callee that reads memory while the slot holds the entry value) exposes
+    the divergence while the structural comparison still self-agrees — a
+    false certificate.  ``stw r20,8(r1); lwz r5,8(r1); mr r3,r5; blr`` vs
+    ``stw r25,8(r1); lwz r5,8(r1); mr r3,r5; blr`` CERTIFIED before the fix
+    (retail returns the caller's r20, decomp the caller's r25).
+
+    The carve-out is therefore granted only when the spilled entry value is
+    CONFINED:
+
+    - C1 (slot read confinement): every load from the save slot ``(r1+c)``
+      must write the SAME lane ``lane`` — a reload into any other lane
+      (identity or otherwise) makes the physical divergence caller-visible.
+    - C2 (terminal restore): after a reload of the slot into ``lane``, the
+      lane must not be READ again before its next def or the function exit —
+      the restored value may not flow into computation, a global store, a
+      call argument, or the return.
+    - C3 (memory-observing callee): no call/tail-call whose callee contract
+      READS MEMORY (opaque ``*``, unknown, or precise ``reads`` containing
+      ``"memory"``) may execute while the slot holds the un-restored entry
+      value — such a callee could observe the divergent physical slot
+      content in place.
+
+    All three are fail-closed: any violation makes the lane FIXED (rho must
+    map it to itself) and the pair falls to SMT — never a false certificate.
+    The accepted Chaitin controls (spill; use lane as scratch; restore to the
+    SAME lane; restore is the lane's last touch; precise callee contracts
+    that do not read memory) still certify.
     """
     n = len(instructions)
     if n == 0:
@@ -1973,28 +2133,279 @@ def _live_in_spill_only(
                 if not reaches[s]:
                     reaches[s] = True
                     changed = True
+    # Spill-slot displacements used by the lane's prologue save(s); used by
+    # C1/C3 to identify slot reads and the un-restored-value hazard window.
+    spill_disp: set[int] = set()
     for i in range(n):
         if reaches[i] and nlane in uses[i]:
             insn = instructions[i]
             op = insn.opcode
             if kind == GPR:
-                # stw/stwu rN, c(r1) — the prologue save.  RA must be r1 and
-                # the displacement a plain immediate (no relocation / symbolic
-                # base).
-                if op not in (Opcode.STW, Opcode.STWU):
+                # stw rN, c(r1) — the prologue save.  RA must be r1 and the
+                # displacement a plain immediate (no relocation / symbolic
+                # base).  Update forms (stwu) are REJECTED as saves (R9-4
+                # N9/N9b): the r1 update moves the slot, so its post-update
+                # address never matches spill_disp and C1/C2 would be blind.
+                if op != Opcode.STW:
                     return False
                 if len(insn.operands) < 2 or insn.operands[0] != lane:
                     return False
                 if insn.operands[1] != 1 or insn.relocation is not None:
                     return False
             else:
-                # stfd/stfdu fN, c(r1).
-                if op not in (Opcode.STFD, Opcode.STFDU):
+                # stfd fN, c(r1).  Update forms (stfdu) rejected (R9-4 N9).
+                if op != Opcode.STFD:
                     return False
                 if len(insn.operands) < 2 or insn.operands[0] != lane:
                     return False
                 if insn.operands[1] != 1 or insn.relocation is not None:
                     return False
+            if len(insn.operands) >= 3:
+                spill_disp.add(insn.operands[2])
+
+    # ── C1/C2/C3: confine the spilled entry value (round-9 R9-1) ──────────
+    # Forward CFG reachability from the spill stores: instructions that can
+    # execute while the slot holds the entry value.  Everything that reads
+    # the slot or runs while the slot holds the divergent content is inside
+    # this window.
+    after_spill = [False] * n
+    for i in range(n):
+        if reaches[i] and nlane in uses[i]:
+            after_spill[i] = True
+    changed = True
+    while changed:
+        changed = False
+        for i in range(n):
+            if not after_spill[i]:
+                continue
+            for s in _cfg_successors(instructions, i, by_index, end_pc):
+                if not after_spill[s]:
+                    after_spill[s] = True
+                    changed = True
+
+    # C0 (R9-4 H8, r1-stationarity): the slot-read detection is syntactic on
+    # ``(r1 + c)``, which assumes r1 is constant between the save and every
+    # read.  If ANY instruction in the after_spill window DEFINES r1 (ALU
+    # move, update-form load/store with rA==r1, the frame-alloc stwu r1 in
+    # save-before-alloc order) and that def is reachable-before a subsequent
+    # r1-relative memory access, the recorded displacement no longer matches
+    # the physical slot — a compensating ``lwz r5,72(r1)`` after
+    # ``addi r1,r1,-64`` reads the slot at 8 while C1 sees 72 disjoint
+    # (Kimi H8: certified caller-r20 vs caller-r25).  Reject the carve-out.
+    #
+    # The epilogue ``addi r1,r1,N`` / ``lwz r1,0(r1)`` is NOT rejected here
+    # because it has no SUBSEQUENT r1-relative access in the window (the
+    # reachability is forward from the def; a def after the last slot access
+    # reaches nothing) — so the standard prologue/restore/epilogue Chaitin
+    # shape survives.  (Kimi P6: a blanket "no r1-def in window" would kill
+    # the whole class.)
+    r1_defs = [i for i in range(n) if after_spill[i] and 1 in defs[i]]
+    if r1_defs:
+        r1_def_reaches = [False] * n
+        for d in r1_defs:
+            r1_def_reaches[d] = True
+        changed = True
+        while changed:
+            changed = False
+            for i in range(n):
+                if not r1_def_reaches[i]:
+                    continue
+                for s in _cfg_successors(instructions, i, by_index, end_pc):
+                    if not r1_def_reaches[s]:
+                        r1_def_reaches[s] = True
+                        changed = True
+        for i in range(n):
+            if not r1_def_reaches[i]:
+                continue
+            insn = instructions[i]
+            op = insn.opcode
+            # An r1-relative memory access reachable from an r1 def: the slot
+            # address may have moved.  (The def site itself is not an
+            # "access after movement" — skip it.)
+            if i in r1_defs:
+                continue
+            is_mem = (
+                op in _SPILL_SLOT_LOADS_ALL
+                or op in (Opcode.STW, Opcode.STFD)
+                or op in (Opcode.STWU, Opcode.STFDU, Opcode.STWX, Opcode.STFDX)
+                or op in (Opcode.PSQ_ST, Opcode.PSQ_STU)
+                or op in (Opcode.STB, Opcode.STBU, Opcode.STH, Opcode.STHU)
+            )
+            if not is_mem:
+                continue
+            if len(insn.operands) >= 2 and insn.operands[1] == 1:
+                return False
+
+    # C1: any load from the save slot must write the SAME lane (same register
+    # KIND and number).  R9-4 closes the syntactic gaps the first fix left:
+    #   - byte-reversed X-form loads (lwbrx/lhbrx) and psq_l* are in the sets;
+    #   - cross-kind reads (GPR slot via FPR load, or vice versa) are caught
+    #     because the scan uses the UNION of both load sets and the lane
+    #     comparison includes the register kind;
+    #   - D-form displacement uses a BYTE-RANGE overlap test (a 2-byte lhz at
+    #     disp+2 overlaps a 4-byte slot at disp; an 8-byte lfd at disp
+    #     overlaps a 4-byte GPR slot and vice versa);
+    #   - X-form loads test BOTH base registers (the effective address is
+    #     gpr[rA] + gpr[rB], so rB == r1 with a constant rA also addresses
+    #     the slot);
+    #   - lmw (multi-lane) remains an outright reject.
+    # The residual H5 class (a COMPUTED pointer into the slot, e.g.
+    # ``addi r4,r1,8; lwz r5,0(r4)``) is not syntactically provable; it is
+    # excluded by the DECLARED no-stack-slot-aliasing scoped assumption the
+    # certificate records when the carve-out is used (option B).
+    for i in range(n):
+        insn = instructions[i]
+        op = insn.opcode
+        if op not in _SPILL_SLOT_LOADS_ALL:
+            continue
+        # Only loads reachable after a spill store can read the spilled value
+        # (a load before the prologue save reads the caller's stack — not the
+        # divergent slot content).
+        if not after_spill[i]:
+            continue
+        if op == Opcode.LMW:
+            # lmw rD, c(r1) loads rD..r31 — the slot value would flow into
+            # MANY lanes; cannot confine.
+            return False
+        # D-form loads: (rD, rA, disp).  X-form: (rD, rA, rB) — either base
+        # register may carry r1 (R9-4 N5).
+        if len(insn.operands) < 2:
+            continue
+        d_form = op not in _SPILL_SLOT_XFORM_LOADS
+        if d_form:
+            # D-form: rA must be r1 and the displacement must OVERLAP the
+            # slot byte-range [c, c+slot_width) for some spill displacement c.
+            if insn.operands[1] != 1:
+                continue
+            if len(insn.operands) < 3:
+                continue
+            d = insn.operands[2]
+            width = _spill_slot_load_width(op, insn)
+            slot_width = _SPILL_SLOT_WIDTH[kind]
+            if not any(
+                d < c + slot_width and d + width > c for c in spill_disp
+            ):
+                continue
+        else:
+            # X-form: address = gpr[rA] + gpr[rB]; a slot read if EITHER base
+            # is r1 (the other could carry the displacement).
+            if insn.operands[1] != 1 and (
+                len(insn.operands) < 3 or insn.operands[2] != 1
+            ):
+                continue
+        # The load's destination must be the SAME lane (same kind + number).
+        # Determine the destination register kind from the opcode family.
+        if op in _SPILL_SLOT_LOAD_GPR:
+            dst_kind = GPR
+        else:
+            dst_kind = FPR
+        if dst_kind != kind or insn.operands[0] != lane:
+            return False
+
+    # C2: after a slot→lane reload, the lane must not be READ before its
+    # next def or function exit (the restore is terminal).  A reloaded value
+    # used as data (add r3,r3,r20), stored to a global, passed to a callee,
+    # or returned is the escape (V1/V3/B1 class).  Track whether the lane's
+    # entry value is live from a restore-load: forward reachability from each
+    # reload site, killed by any def of the lane.
+    restored_live = [False] * n
+    # Seed at the SUCCESSORS of each reload site: the reload itself defs the
+    # lane (the restored value), so its live range starts after it.  The
+    # def-kill in the fixpoint below must NOT kill at the reload site itself.
+    changed = True
+    while changed:
+        changed = False
+        for i in range(n):
+            insn = instructions[i]
+            if not after_spill[i]:
+                continue
+            op = insn.opcode
+            if op not in _SPILL_SLOT_LOADS_ALL or op == Opcode.LMW:
+                continue
+            if len(insn.operands) < 2:
+                continue
+            d_form = op not in _SPILL_SLOT_XFORM_LOADS
+            if d_form:
+                if insn.operands[1] != 1 or len(insn.operands) < 3:
+                    continue
+                d = insn.operands[2]
+                width = _spill_slot_load_width(op, insn)
+                slot_width = _SPILL_SLOT_WIDTH[kind]
+                if not any(
+                    d < c + slot_width and d + width > c for c in spill_disp
+                ):
+                    continue
+            else:
+                if insn.operands[1] != 1 and (
+                    len(insn.operands) < 3 or insn.operands[2] != 1
+                ):
+                    continue
+            if op in _SPILL_SLOT_LOAD_GPR:
+                dst_kind = GPR
+            else:
+                dst_kind = FPR
+            # A reload of the slot into lane: the entry value is live again.
+            if dst_kind == kind and insn.operands[0] == lane:
+                for s in _cfg_successors(instructions, i, by_index, end_pc):
+                    if not restored_live[s]:
+                        restored_live[s] = True
+                        changed = True
+    # Propagate the restored value's liveness forward; a def of the lane
+    # (other than the reload site itself, which is upstream) kills it.
+    seeded = True
+    while seeded:
+        seeded = False
+        for i in range(n):
+            if not restored_live[i]:
+                continue
+            if nlane in defs[i]:
+                # A def of the lane kills the restored value — the live
+                # range ends here.
+                continue
+            for s in _cfg_successors(instructions, i, by_index, end_pc):
+                if not restored_live[s]:
+                    restored_live[s] = True
+                    seeded = True
+        for i in range(n):
+            if not restored_live[i]:
+                continue
+            if nlane not in uses[i]:
+                continue
+            insn = instructions[i]
+            # A spill STORE of the restored value back to the same slot is
+            # harmless (the value stays confined in the slot); any OTHER use
+            # of the restored value escapes.  (Update-form stores are not
+            # recognized as saves — R9-4 N9: stwu/stfdu move r1, so the slot
+            # address after the update never matches spill_disp.)
+            if kind == GPR:
+                is_spill = insn.opcode == Opcode.STW
+            else:
+                is_spill = insn.opcode == Opcode.STFD
+            if is_spill and len(insn.operands) >= 3 and insn.operands[1] == 1 \
+                    and insn.operands[2] in spill_disp:
+                continue
+            return False
+
+    # C3: no memory-observing callee while the slot holds the un-restored
+    # entry value.  The slot's PHYSICAL content is divergent (caller r20 vs
+    # caller r25); a callee whose contract reads memory could observe it in
+    # place (round-9 probe A3).  Precise contracts that read only registers
+    # (e.g. ``reads={r3}``) cannot see the slot — the accepted across-call
+    # Chaitin control keeps certifying.
+    for i in range(n):
+        if not after_spill[i]:
+            continue
+        insn = instructions[i]
+        if not (_is_call(insn) or _is_tail_call(insn, by_index, end_pc)):
+            continue
+        target = _call_target(insn)
+        contract = (
+            (callee_contracts or {}).get(target)
+            if target is not None else None
+        )
+        reads = getattr(contract, "reads", None)
+        if contract is None or reads is None or "*" in reads or "memory" in reads:
+            return False
     return True
 
 
@@ -2269,6 +2680,7 @@ def run_structural_witness(
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, Any] | None = None,
     deadline: Deadline | None = None,
+    spill_carveout_used: bool = False,
 ) -> WitnessOutcome:
     """Execute both sides through SymbolicOps and compare terminals.
 
@@ -2439,6 +2851,9 @@ def run_structural_witness(
         rho=rho,
         structural_eq=True,
         terminal_pairs_checked=pairs_checked,
+        # R9-4: propagate the gate-5 carve-out flag so the certificate can
+        # declare the no-stack-slot-aliasing scoped assumption.
+        spill_carveout_used=spill_carveout_used,
     )
 
 
@@ -2491,6 +2906,7 @@ def certify_renaming_witness(
         assumed_callees=assumed_callees,
         callee_contracts=callee_contracts,
         deadline=deadline,
+        spill_carveout_used=outcome.spill_carveout_used,
     )
     return result
 
@@ -2804,6 +3220,10 @@ def run_region_sliced_witness(
     # Region rho per boundary interval: [0, b0), [b0, b1), ..., [bn, end).
     region_starts = [0] + boundaries
     regions: list[tuple[int, int, Rho]] = []
+    # R9-4 F3 fix: OR-accumulate the carve-out flag across ALL regions (each
+    # _check_abi_fixedness call overwrites the out-list with ITS region's
+    # snapshot; the union is what matters for the certificate declaration).
+    carveout_used: list[bool] = [False]
     for i, start in enumerate(region_starts):
         end = region_starts[i + 1] if i + 1 < len(region_starts) else len(original)
         rho = _region_rho(original, candidate, start, end)
@@ -2817,10 +3237,13 @@ def run_region_sliced_witness(
         # volatiles) in EVERY region's rho — otherwise a non-identity mapping
         # on a fixed register (e.g. the return register r3) self-consistently
         # passes the structural comparison under the region perm.
+        region_carveout: list[bool] = [False]
         abi_failure = _check_abi_fixedness(original, candidate, rho, declared_return,
-                                  callee_contracts)
+                                  callee_contracts, carveout_out=region_carveout)
         if abi_failure is not None:
             return WitnessOutcome(False, rho=rho, failure=abi_failure)
+        if region_carveout and region_carveout[0]:
+            carveout_used[0] = True  # OR-accumulate across regions (R9-4 F3)
         # F1 (adversarial review 2026-08): the region path does not run the
         # per-terminal nonvolatile preservation check, so a non-identity
         # mapping on an EABI nonvolatile lane (r14–r31 / f14–f31) in ANY
@@ -3140,6 +3563,7 @@ def run_region_sliced_witness(
             rho=regions[0][2],
             structural_eq=True,
             terminal_pairs_checked=pairs_checked,
+            spill_carveout_used=bool(carveout_used and carveout_used[0]),
             details={
                 "rho_mode": "region-sliced",
                 "regions": [

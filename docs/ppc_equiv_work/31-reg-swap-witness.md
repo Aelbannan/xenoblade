@@ -536,3 +536,217 @@ relocated-branch flag differences are now rejected at gate 3 directly.
 Regression tests: `Round8AdversarialReviewTests` (ps1-clobber reject, identity
 scalar-s certify, relocated b-vs-bl / beq-vs-bne gate-3 rejects, identical
 relocated pair certifies).
+
+## 9. Ninth adversarial review (2026-08-06) — spill-escape false certificates closed
+
+Kimi K3 (pi/OpenRouter) found and reproduced a live BLOCKER the round-8 review
+missed; GLM-5.2's clean bill was wrong on this class.  The session agent
+independently reproduced probe A.  All escape shapes previously CERTIFIED; all
+now reject (lane fixed → SMT).  Regression suite:
+`Round9SpillEscapeTests` (6 reject + 3 controls).
+
+### R9-1 (BLOCKER) — the `_live_in_spill_only` carve-out certified escaped spill values
+
+The F1 carve-out (`renaming_witness.py:1926`) exempted a live-in lane from
+gate-5 fixedness when every use of its entry value is a prologue save
+`stw/stfd rN,c(r1)`.  It checked only what flows INTO the entry value and
+never what flows OUT of the spill slot.  Under rho `{20:25}` both sides store
+the SAME shared variable X_20 to the same slot, so the slot self-agrees
+structurally — but the PHYSICAL slot content differs (caller r20 vs caller
+r25).  Any consumer of that content exposes the divergence while the
+structural comparison still self-agrees:
+
+| Probe | Shape | Pre-fix | Post-fix |
+|---|---|---|---|
+| A | `stw r20,8(r1); lwz r5,8(r1); mr r3,r5; blr` vs r25 | **certified** | reject (C1) |
+| A2 | FPR: `stfd f20,8(r1); lfd f1,8(r1); fmr f1,f1; blr` vs f25 | **certified** | reject (C1) |
+| A3 | spill; `bl` precise `reads={r3,memory}` reads slot in place | **certified** | reject (C3) |
+| B1 | spill → reload → `stw` to global (r2-relative) | **certified** | reject (C2) |
+| B2 | spill → reload into r4; precise `reads={r4}` callee | **certified** | reject (C1) |
+| V1 | spill → reload same lane → `add r3,r3,r20` (data use) | **certified** | reject (C2) |
+| V2/V3 | volatile live-in variants (r11↔r12) | **certified** | reject (C1/C2) |
+| C/B3/V4 | spill; scratch; terminal restore to SAME lane | certify | certify (control) |
+| across-call | spill; `bl` precise `reads={r3}` (no memory); restore | certify | certify (control) |
+
+**Fix (three confinement conditions, all fail-closed in `_live_in_spill_only`):**
+- **C1 — slot-read confinement:** every load from the save slot `(r1+c)` must
+  write the SAME lane.  A reload into any other lane (identity or permuted)
+  makes the physical divergence caller-visible.  D-form displacements are
+  matched exactly; X-form loads with base r1 are treated conservatively as
+  potential slot reads (register index could alias any displacement) — this
+  is a required fail-closed measure, at worst a completeness loss to SMT for
+  indexed-r1 loads in spill functions (rare in MWCC prologue code).
+- **C2 — terminal restore:** after a slot→lane reload, the lane must not be
+  READ again before its next def or function exit (restore is the lane's last
+  touch).  The restored entry value may not flow into computation, a global
+  store, a call argument, or the return.  Implemented as forward CFG
+  reachability from each reload site, killed by any def of the lane.
+- **C3 — memory-observing callee:** no call/tail-call whose callee contract
+  READS MEMORY (opaque `*`, unknown, or precise `reads` containing
+  `"memory"`) may execute while the slot holds the un-restored entry value —
+  such a callee could observe the divergent physical slot content in place.
+  Precise contracts reading only registers (e.g. `reads={r3}`) cannot see the
+  slot, so the accepted across-call Chaitin control still certifies.
+
+`_live_in_spill_only` now takes `callee_contracts` (threaded from
+`_check_abi_fixedness`, which already had it).  Any violation returns False →
+the lane joins the fixed set → rho must map it to itself → the pair falls to
+SMT.  No live certificate was affected: Kimi audited all 18 issued witness
+certs at HEAD and none permute a live-in lane (the vulnerable shape) nor any
+nonvolatile; `renaming_witness.py` ∈ `CERTIFIER_SOURCE_PATHS`, so the fix
+auto-invalidates and re-certifies them through the same path.
+
+### R9-2 (MINOR, open) — sub-word base-relative memory stores
+
+Kimi F2: `_memory_arrays_agree._walk` applies the location-independence
+carve-out (`_value_equal`) to single bytes when a store chain is not a 4-byte
+word group.  Probe B4 (`bl; mflr r5; stb r5,0(r3)` at bases delta 4) certifies
+while the stored byte physically differs (`low8(pc+4)`).  Exotic (no MWCC
+codegen stores lr bytes as data; needs base delta ≢ 0 mod 256); extension of
+the documented S1 residual.  Not fixed in this round — tracked separately.
+
+### R9-3 (cleanup) — non-commutative ops in `_COMMUTATIVE_RA_RB`
+
+`SUBF`/`SUBFC`/`SUBFE` (and `ANDC`/`ORC`) in the commutative retry set are
+not commutative.  Harmless (the retry only proposes a rho; the structural
+terminal comparison under real semantics rejects any wrong sharing — verified
+by probe), but the set is semantically wrong; remove for cleanliness.
+
+## 10. Tenth adversarial review (2026-08-06) — R9-4: option-B syntactic closure + declared assumption
+
+Two independent agents (GLM-5.2 and Kimi K3, pi/OpenRouter) reviewed the
+working-tree R9-1 fix and both found it **not safe to commit**: the R9-1 C1/C2
+slot-read detection was syntactic and incomplete.  Findings H1-H7 (all
+concrete-verified false certificates at the working tree), closed in this
+round:
+
+| Finding | Shape | Fix |
+|---|---|---|
+| H1 (GLM F1 / Kimi N6/N7) | `lwbrx`/`lhbrx` byte-reversed X-form loads absent from the load sets | added to `_SPILL_SLOT_LOAD_GPR` + `_SPILL_SLOT_XFORM_LOADS` |
+| H2 (Kimi N1) | `lhz r5,10(r1)` reads bytes 10-11 of the 4-byte slot at 8 (exact-disp match missed overlap) | byte-range overlap test (`d < c+w && d+width > c`) |
+| H3 (Kimi N3/N4) | GPR lane scanned only GPR loads; `lfd` read of a `stw` slot escaped | union of both load sets; destination KIND is part of the same-lane test |
+| H4 (Kimi N5) | X-form base check only rA; `lwzx r5,r4,r1` (rB==r1) escaped | both base registers tested |
+| H6 (Kimi N9/N9b) | `stwu`/`stfdu` update-form saves move r1; C1/C2 blind after | update-form stores rejected as saves (lane fixed) |
+| H7 (Kimi N11) | `psq_l`/`psq_lu` absent from load sets | added to `_SPILL_SLOT_LOAD_FPR` |
+| H5 (Kimi N8) | computed pointer (`addi r4,r1,8; lwz r5,0(r4)`) — not syntactically provable | **declared** scoped assumption (option B), see below |
+
+**Option B (documented scoping)**: the H5 class (computed-pointer aliasing
+into the save slot) is not provable by any syntactic check.  Rather than
+forfeit the whole Chaitin class (option A — kills the carve-out in practice
+because real prologue bodies load params/globals between save and restore,
+and with SMT phased out a forfeit is a PERMANENT certification loss), the
+carve-out now records when it was load-bearing: `WitnessOutcome` carries
+`spill_carveout_used` (True iff a spill-exempted live-in lane is permuted by
+the final rho), and the certificate's assumptions list then includes the
+declared scoped assumption:
+
+```
+no-stack-slot-aliasing: the prologue spill slot is not read through a computed
+address (any load whose base is not provably r1-relative is assumed not to
+touch the save slot); only same-lane reloads and the witness's confined
+slot-read forms observe the spilled entry value
+```
+
+This mirrors the existing `assumed-ordinary-ram` scoped-assumption model:
+auditable, declared in the certificate, reviewed as a boundary.  With the SMT
+fallback being phased out, the witness is the sole certifier for the
+reg-swap class; option B keeps the intended Chaitin coverage (the 18 existing
+witness certs and the ~10-40 realistic Chaitin targets from §0) while option
+A forfeits the class entirely.
+
+**Verified:** all 7 syntactic holes reject (`certified=False`, gate
+`abi-boundary`); the accepted controls (same-lane terminal restore,
+across-call precise `reads={r3}`) still certify; `spill_carveout_used` is
+True for permuted carve-out pairs and False for identity perms; full
+`test_renaming_witness` (119), `test_certify_unit_symbol`, ppc_equivalence
+(1978), differential (364/364), fixture and docs_sync all pass; the 6
+`tools/coop/tests` failures are the pre-existing unrelated set.  Regression
+suite: `Round9_4SpillEscapeSyntacticClosureTests` (10 tests).
+
+**Remaining open items (unchanged)**: R9-2 sub-word base-relative memory
+(Kimi F2 — MINOR, separate), R9-3 commutative-set cleanup (MINOR), M1 C3
+window never killed by slot overwrite (MINOR over-rejection), M2 production
+opaque/narrow-EABI contracts read memory so the across-call class needs
+precise memory-free inferred contracts (reach note).
+
+## 11. Eleventh adversarial review (2026-08-06) — R9-4b: r1-stationarity, psq width, region-flag OR
+
+A third independent review round (GLM-5.2 + Kimi K3, pi/OpenRouter) on the
+R9-4 option-B working tree found **not safe to commit**: two live
+false-certificate holes in C1/C2 plus one MAJOR audit-trail defect.  All
+independently reproduced by the session agent, fixed, and regression-tested
+(`Round9_4bR1StationarityPsqWidthTests`):
+
+| Finding | Shape | Fix |
+|---|---|---|
+| H8 (Kimi F1) — r1-stationarity | any r1 def in the after_spill window (ALU move, update-form load/store with rA==r1, frame-alloc `stwu r1` in save-before-alloc order) desynchronizes `spill_disp`; a compensating `lwz r5,72(r1)` after `addi r1,r1,-64` reads the slot while C1 sees 72 disjoint | C0: reject the carve-out when an r1 def in the window can REACH a subsequent r1-relative memory access (forward CFG reachability).  The epilogue `addi r1,r1,N` and non-compensating update-form loads still certify (Kimi P6 — a blanket no-r1-def rule would kill the class). |
+| H9 (GLM F1 / Kimi F2) — psq_l W=0 width | `_SPILL_SLOT_LOAD_WIDTH[PSQ_L/PSQ_LU]=4` hardcoded; the engine models `psq_span = 4 if w else 8`, so a W=0 psq_l at disp-4 reads [d,d+8) ⊇ slot while the width-4 test saw [d,d+4) disjoint; ps1 exfiltrates via byte-identical `psq_st` | `_spill_slot_load_width` derives the width from the W operand (index 3): `8 if W==0 else 4`.  W=1 at disp-4 still certifies (reads only the disjoint word; ps1=1.0 — sound). |
+| F3 (both) — region-path flag overwrite | `carveout_out[:] = [...]` per region overwrote the flag; only the LAST region's value survived, silently dropping the no-stack-slot-aliasing declaration when an early region used the carve-out | per-region snapshot + OR-accumulate across regions |
+
+**Verified (all probes):** P1/P2/P2b (r1 move + compensating load) reject;
+P3/P4 (psq W=0) reject; P4b exact-disp control rejects; P5 region flag now
+True (MAJOR closed); P6 MWCC frame-alloc prologue still certifies (no
+over-rejection); P7 lmw over-rejection (documented MINOR); P8 ps1 sub-lane
+reject; P9 negative-disp overlap reject; P10 adjacent-disjoint control
+certifies.  `test_renaming_witness` 129, `test_certify_unit_symbol` +
+StoreSourceReadCapture 23, ppc_equivalence 1978, differential 364/364,
+fixture + docs_sync clean; the 6 tools/coop/tests failures remain the
+pre-existing unrelated set.
+
+**Declared boundary (option B, unchanged)**: H5 computed-pointer aliasing
+remains excluded by the certificate's `no-stack-slot-aliasing` scoped
+assumption, recorded whenever `spill_carveout_used` is True (now OR-accumulated
+across regions too).  The remaining MINORs are unchanged: R9-2 sub-word
+base-relative memory, R9-3 commutative-set cleanup, M1 C3 window never killed
+by slot overwrite, F4 lmw blanket reject (documented completeness loss).
+
+## 12. Twelfth adversarial review (2026-08-06) — R9-4c: carve-out-flag empty-fixed_fpr
+
+A fourth independent review round (GLM-5.2 F-1 + Kimi K3 Finding 1,
+pi/OpenRouter) on the R9-4b working tree found the R9-4b fixes themselves
+(H8 C0 r1-stationarity, H9 psq_l W=0 width, F3 region-flag OR) **sound and
+correctly implemented** — but one **MAJOR** audit-trail defect in the shared
+`_check_abi_fixedness` carve-out-flag plumbing:
+
+### F-1 (MAJOR, both agents) — `carveout_out` write nested inside the `fixed_fpr` loop
+
+The R9-4 carve-out-flag write was accidentally indented INSIDE
+`for register in sorted(fixed_fpr):`.  When `fixed_fpr` was empty — which
+happens for any function with a TRUSTED `declared_return` (e.g. `"void"`,
+`"u32"`, `"f64"` — the A3 conditional f1 fix is skipped) and no live-in /
+live-across / call-observed FPRs — the loop body never executed, so
+`spill_carveout_used` stayed False even for a LOAD-BEARING GPR carve-out.
+The certificate then silently omitted the `no-stack-slot-aliasing` scoped
+assumption — the exact F3 audit-trail class the R9-4b round set out to
+close, re-opened under a different trigger.  Demonstrated live on the actual
+H5 computed-pointer escape shape in a `"void"` function: certified WITHOUT
+the declaration.
+
+**Fix:** dedented the write out of the `fixed_fpr` loop to function end —
+the flag is now computed for every call site regardless of `fixed_fpr`
+contents.  Verified: flag True for `declared_return` in {None, void, u32,
+f64} on both the global and region paths; identity-perm pairs stay False.
+Regression suite: `Round9_4cCarveoutFlagEmptyFprTests` (3 tests: GPR
+carve-out flag with trusted returns, identity-perm flag False, region-path
+flag with trusted returns).
+
+**Other findings (all fail-closed / cosmetic, no action required):**
+- Kimi N5/MINOR: C0 r1-stationarity reachability is path-insensitive
+  (over-rejects r1 defs on non-executed paths) — inherent, fail-closed.
+- GLM F-6/Kimi F8: restore-store-back-to-same-slot over-rejects via the
+  pre-existing `_nonvolatile_preservation_failure` simplify limitation
+  (pre-R9-4b, not a regression).
+- Kimi Finding 5 (cosmetic): `_SPILL_SLOT_LOAD_WIDTH` PSQ_L/PSQ_LU=4 entries
+  are now dead (shadowed by `_spill_slot_load_width`).
+
+**Verified:** all R9-4b probe files pass with correct outcomes; witness
+suite 132 (129 + 3 new), certify_unit_symbol 23, ppc_equivalence 1978,
+differential 364/364, fixture + docs_sync clean; the 6 tools/coop/tests
+failures remain the pre-existing unrelated set.  Prior-round invariants
+(F1/R8/R9-1/R9-4/R9-4b) all hold.
+
+**Both reviewers' verdict after the fix direction:** with the dedent applied,
+the working tree is sound and safe to commit.  Remaining MINORs unchanged:
+R9-2 sub-word base-relative memory, R9-3 commutative-set cleanup, M1 C3
+window never killed by slot overwrite, F4 lmw blanket reject, C0
+path-insensitivity.

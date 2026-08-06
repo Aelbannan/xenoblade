@@ -2346,3 +2346,555 @@ class RemovedA1LoopRoutingTests(unittest.TestCase):
         outcome = self._run(retail, decomp)
         self.assertFalse(outcome.certified, "rho-conflict loop must not certify")
         self.assertIsNotNone(getattr(outcome, "failure", None), "should reject with a failure")
+
+
+class Round9SpillEscapeTests(unittest.TestCase):
+    """Round-9 adversarial review (2026-08-06, Kimi K3 probe A; independently
+    reproduced by the session agent): the F1 ``_live_in_spill_only`` carve-out
+    checked only what flows INTO the lane's entry value (every use must be a
+    prologue ``stw/stfd rN,c(r1)``) and never what flows OUT of the spill
+    slot.  Under rho {20:25} both sides store the SAME shared variable X_20
+    to the same slot, so the slot self-agrees structurally — but the PHYSICAL
+    slot content differs (caller r20 vs caller r25).  Any consumer of that
+    content (reload into a different lane, data use of a reloaded value,
+    global store, memory-reading callee) is a false certificate.
+
+    Fix (R9-1): the carve-out now additionally requires
+      C1 — every load from the save slot writes the SAME lane;
+      C2 — after a slot→lane reload the lane is not read again before its
+           next def or exit (terminal restore);
+      C3 — no call/tail-call whose contract reads memory executes while the
+           slot holds the un-restored entry value.
+    All fail-closed: any violation fixes the lane and the pair falls to SMT.
+    """
+
+    # ── encoding helpers ────────────────────────────────────────────────
+    def _stw(self, rs: int, ra: int, disp: int) -> int:
+        return (36 << 26) | ((rs & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lwz(self, rt: int, ra: int, disp: int) -> int:
+        return (32 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _mr(self, rd: int, rs: int) -> int:
+        return (31 << 26) | ((rs & 31) << 21) | ((rd & 31) << 16) | ((rs & 31) << 11) | (444 << 1)
+
+    def _add(self, rd: int, ra: int, rb: int) -> int:
+        return (31 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | ((rb & 31) << 11) | (266 << 1)
+
+    def _stfd(self, fd: int, ra: int, disp: int) -> int:
+        return (54 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lfd(self, fd: int, ra: int, disp: int) -> int:
+        return (50 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _fmr(self, fd: int, fs: int) -> int:
+        # FMR fd,fs is X-form (primary 63, XO 72): fd at 21-25, FA reserved
+        # (must be 0), source fs at 11-15 (FB).
+        return (63 << 26) | ((fd & 31) << 21) | ((fs & 31) << 11) | (72 << 1)
+
+    def _li(self, rt: int, imm: int) -> int:
+        return (14 << 26) | ((rt & 31) << 21) | (imm & 0xFFFF)
+
+    def _bl(self) -> int:
+        return 0x48000001
+
+    def _decode(self, r_words, d_words):
+        return _decode_pair(r_words, d_words)
+
+    def _run(self, r_words, d_words, contracts=None, call_offset: int | None = None):
+        # The bl must carry a REL24 relocation to resolve the symbol "callee"
+        # (contracts are keyed by canonical symbol).  call_offset = the word
+        # offset of the bl within the stream.
+        # RelocationRef.offset is a BYTE offset; call_offset is the word index.
+        reloc = (RelocationRef(call_offset * 4, R_PPC_REL24, "callee", "callee", 0),)
+        relocs_r = reloc if call_offset is not None else ()
+        original = decode_block(
+            bytes.fromhex(_words_hex(r_words)), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=relocs_r,
+        )
+        candidate = decode_block(
+            bytes.fromhex(_words_hex(d_words)), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=relocs_r,
+        )
+        kw = {}
+        if contracts is not None:
+            kw["assumed_callees"] = frozenset({"callee"})
+            kw["callee_contracts"] = {"callee": CalleeContract(
+                frozenset(contracts[0]), frozenset(contracts[1]), "inferred:test",
+            )}
+        return certify_renaming_witness(original, candidate, deadline_ms=20000, **kw)
+
+    # ── the escape family (must ALL reject; before R9-1 they certified) ──
+    def test_spill_reload_other_lane_return_rejected(self) -> None:
+        # R9-1 probe A: retail spills r20 and returns the slot reloaded via
+        # identity lane r5; decomp spills r25.  Physically r3 = caller-r20 vs
+        # caller-r25 — a false certificate before the fix.
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(5, 1, 8), self._mr(3, 5), _LR],
+            [self._stw(25, 1, 8), self._lwz(5, 1, 8), self._mr(3, 5), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_spill_reload_other_lane_fpr_rejected(self) -> None:
+        # R9-1 probe A2: FPR variant — stfd f20 vs f25, reload into f1.
+        original, candidate = self._decode(
+            [self._stfd(20, 1, 8), self._lfd(1, 1, 8), self._fmr(1, 1), _LR],
+            [self._stfd(25, 1, 8), self._lfd(1, 1, 8), self._fmr(1, 1), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_spill_reload_same_lane_data_use_rejected(self) -> None:
+        # R9-1 probe V1: the slot reloads into the SAME lane r20, but the
+        # restored value is then used as data (add r3,r3,r20) — the restored
+        # (divergent) entry value escapes into the result.
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(20, 1, 8), self._add(3, 3, 20), _LR],
+            [self._stw(25, 1, 8), self._lwz(25, 1, 8), self._add(3, 3, 25), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_spill_reload_store_global_rejected(self) -> None:
+        # R9-1 probe B1: reload the slot then store to a global (r2-relative).
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(20, 1, 8), self._stw(20, 2, 0), _LR],
+            [self._stw(25, 1, 8), self._lwz(25, 1, 8), self._stw(25, 2, 0), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified)
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    def test_spill_reload_call_arg_rejected(self) -> None:
+        # R9-1 probe B2: reload the slot into r4 (a call argument observed by
+        # a precise callee reads={r4}).
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(4, 1, 8), self._bl(), _LR],
+            [self._stw(25, 1, 8), self._lwz(4, 1, 8), self._bl(), _LR],
+        )
+        outcome = self._run(
+            [self._stw(20, 1, 8), self._lwz(4, 1, 8), self._bl(), _LR],
+            [self._stw(25, 1, 8), self._lwz(4, 1, 8), self._bl(), _LR],
+            contracts=({"r4"}, {"r4"}), call_offset=2,
+        )
+        self.assertFalse(outcome.certified)
+
+    def test_spill_callee_reads_memory_rejected(self) -> None:
+        # R9-1 probe A3: a precise callee that reads memory (reads includes
+        # "memory") could observe the divergent slot content in place.
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._bl(), _LR],
+            [self._stw(25, 1, 8), self._bl(), _LR],
+        )
+        outcome = self._run(
+            [self._stw(20, 1, 8), self._bl(), _LR],
+            [self._stw(25, 1, 8), self._bl(), _LR],
+            contracts=({"r3", "memory"}, {"r3"}), call_offset=1,
+        )
+        self.assertFalse(outcome.certified)
+
+    # ── controls that MUST keep certifying (no over-rejection) ───────────
+    def test_spill_same_lane_terminal_restore_certifies(self) -> None:
+        # R9-1 control C/B3: spill, reload into the SAME lane as the lane's
+        # LAST touch (terminal restore), return — the value never leaves the
+        # permuted lane pair; the caller sees both nonvolatiles preserved.
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(20, 1, 8), _LR],
+            [self._stw(25, 1, 8), self._lwz(25, 1, 8), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_spill_redefine_restore_terminal_certifies(self) -> None:
+        # R9-1 control: spill, REDEFINE the lane as scratch (lwz from r3),
+        # restore from the slot as the last touch — the accepted Chaitin
+        # prologue-save shape (test_pure_nonvolatile_color_swap family).
+        original, candidate = self._decode(
+            [self._stw(20, 1, 8), self._lwz(20, 3, 0), self._lwz(20, 1, 8), _LR],
+            [self._stw(25, 1, 8), self._lwz(25, 3, 0), self._lwz(25, 1, 8), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_spill_across_call_precise_no_memory_certifies(self) -> None:
+        # R9-1 control: the across-call Chaitin shape with a PRECISE callee
+        # that reads only registers (reads={r3}) — the callee cannot see the
+        # slot, so C3 passes and the pair certifies.
+        outcome = self._run(
+            [self._stw(20, 1, 8), self._lwz(20, 3, 0), self._bl(), self._lwz(20, 1, 8), _LR],
+            [self._stw(25, 1, 8), self._lwz(25, 3, 0), self._bl(), self._lwz(25, 1, 8), _LR],
+            contracts=({"r3"}, {"r3"}), call_offset=2,
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+
+
+class Round9_4SpillEscapeSyntacticClosureTests(unittest.TestCase):
+    """Second adversarial round (R9-4, GLM-5.2 + Kimi K3): the R9-1 fix's
+    syntactic slot-read detection had gaps.  All closed in this round:
+
+    - H1 (GLM F1 / Kimi N6/N7): byte-reversed X-form loads ``lwbrx``/``lhbrx``
+      were absent from the load sets — a slot read via lwbrx into an identity
+      lane certified.
+    - H2 (Kimi N1): D-form displacement matching was EXACT; a 2-byte ``lhz``
+      at disp+2 (or 1-byte ``lbz`` at disp+3) overlaps the 4-byte slot at
+      disp and escaped.  Now a byte-range overlap test.
+    - H3 (Kimi N3/N4): cross-kind reads — GPR lanes scanned only GPR loads,
+      FPR lanes only FPR loads; ``stw`` slot read by ``lfd`` (or ``stfd`` slot
+      by ``lwz``) escaped.  Now the UNION of both load sets is scanned and
+      the destination register KIND is part of the same-lane test.
+    - H4 (Kimi N5): X-form base test only checked rA; ``lwzx r5,r4,r1``
+      (rB == r1) escaped.  Now BOTH base registers are tested.
+    - H6 (Kimi N9/N9b): update-form spill stores (``stwu``/``stfdu``) were
+      accepted as saves, but the r1 update moves the slot so C1/C2 are blind.
+      Now rejected as saves (lane fixed → SMT).
+    - H7 (Kimi N11): ``psq_l``/``psq_lu`` absent from the load sets.
+      Now included (byte-identical A1-exempted PSQ slots reading the spill
+      slot reject).
+    - H5 (computed pointer, e.g. ``addi r4,r1,8; lwz r5,0(r4)``) is NOT
+      syntactically provable; it is excluded by the DECLARED
+      ``no-stack-slot-aliasing`` scoped assumption recorded in the
+      certificate when the carve-out is used (option B).  The carve-out
+      flag is asserted below.
+    """
+
+    def _stw(self, rs: int, ra: int, disp: int) -> int:
+        return (36 << 26) | ((rs & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _stfd(self, fd: int, ra: int, disp: int) -> int:
+        return (54 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lwz(self, rt: int, ra: int, disp: int) -> int:
+        return (32 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lhz(self, rt: int, ra: int, disp: int) -> int:
+        return (40 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lfd(self, fd: int, ra: int, disp: int) -> int:
+        return (50 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _lwzx(self, rd: int, ra: int, rb: int) -> int:
+        return (31 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | ((rb & 31) << 11) | (23 << 1)
+
+    def _lwbrx(self, rd: int, ra: int, rb: int) -> int:
+        return (31 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | ((rb & 31) << 11) | (534 << 1)
+
+    def _lhbrx(self, rd: int, ra: int, rb: int) -> int:
+        return (31 << 26) | ((rd & 31) << 21) | ((ra & 31) << 16) | ((rb & 31) << 11) | (790 << 1)
+
+    def _li(self, rt: int, imm: int) -> int:
+        return (14 << 26) | ((rt & 31) << 21) | (imm & 0xFFFF)
+
+    def _addi(self, rt: int, ra: int, imm: int) -> int:
+        return (14 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (imm & 0xFFFF)
+
+    def _mr(self, rd: int, rs: int) -> int:
+        return (31 << 26) | ((rs & 31) << 21) | ((rd & 31) << 16) | ((rs & 31) << 11) | (444 << 1)
+
+    def _fmr(self, fd: int, fs: int) -> int:
+        return (63 << 26) | ((fd & 31) << 21) | ((fs & 31) << 11) | (72 << 1)
+
+    def _stwu(self, rs: int, ra: int, disp: int) -> int:
+        return (37 << 26) | ((rs & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFFF)
+
+    def _psq_l(self, fd: int, ra: int, disp: int) -> int:
+        # psq_l fd, disp(rA), 1, qr0 — D-form: primary 56, disp is the raw
+        # 12-bit field at bits 0-11 (decoder: d12 = word & 0xFFF; e.g. 120
+        # for 0xE3E10078).
+        return (56 << 26) | ((fd & 31) << 21) | ((ra & 31) << 16) | (disp & 0xFFF)
+
+    def _assert_rejects(self, r_words, d_words) -> None:
+        original, candidate = _decode_pair(r_words, d_words)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified,
+                         f"pair must not certify (was a false certificate): "
+                         f"{outcome.failure}")
+        self.assertEqual(outcome.failure.gate, "abi-boundary")
+
+    # ── H1: byte-reversed X-form loads ───────────────────────────────────
+    def test_lwbrx_slot_read_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20, 1, 8), self._li(4, 8), self._lwbrx(5, 1, 4), self._mr(3, 5), _LR],
+            [self._stw(25, 1, 8), self._li(4, 8), self._lwbrx(5, 1, 4), self._mr(3, 5), _LR],
+        )
+
+    def test_lhbrx_slot_read_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20, 1, 8), self._li(4, 8), self._lhbrx(5, 1, 4), self._mr(3, 5), _LR],
+            [self._stw(25, 1, 8), self._li(4, 8), self._lhbrx(5, 1, 4), self._mr(3, 5), _LR],
+        )
+
+    # ── H2: sub-word byte-range overlap ─────────────────────────────────
+    def test_lhz_overlapping_disp_rejected(self) -> None:
+        # lhz at disp+2 reads bytes 10-11 of the 4-byte slot at 8.
+        self._assert_rejects(
+            [self._stw(20, 1, 8), self._lhz(5, 1, 10), self._mr(3, 5), _LR],
+            [self._stw(25, 1, 8), self._lhz(5, 1, 10), self._mr(3, 5), _LR],
+        )
+
+    # ── H3: cross-kind reads ────────────────────────────────────────────
+    def test_gpr_slot_read_by_lfd_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20, 1, 8), self._lfd(5, 1, 8), self._fmr(1, 5), _LR],
+            [self._stw(25, 1, 8), self._lfd(5, 1, 8), self._fmr(1, 5), _LR],
+        )
+
+    def test_fpr_slot_read_by_lwz_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stfd(20, 1, 8), self._lwz(5, 1, 12), self._mr(3, 5), _LR],
+            [self._stfd(25, 1, 8), self._lwz(5, 1, 12), self._mr(3, 5), _LR],
+        )
+
+    # ── H4: X-form base in rB ───────────────────────────────────────────
+    def test_xform_rb_base_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20, 1, 8), self._li(4, 8), self._lwzx(5, 4, 1), self._mr(3, 5), _LR],
+            [self._stw(25, 1, 8), self._li(4, 8), self._lwzx(5, 4, 1), self._mr(3, 5), _LR],
+        )
+
+    # ── H6: update-form spill stores ────────────────────────────────────
+    def test_stwu_save_rejected(self) -> None:
+        # stwu r20,-8(r1) updates r1; the slot then lives at new_r1+0, which
+        # never matches the recorded displacement — C1/C2 would be blind.
+        self._assert_rejects(
+            [self._stwu(20, 1, -8 & 0xFFFF), self._lfd(5, 1, 0), self._fmr(1, 5), _LR],
+            [self._stwu(25, 1, -8 & 0xFFFF), self._lfd(5, 1, 0), self._fmr(1, 5), _LR],
+        )
+
+    # ── H7: psq_l slot read ─────────────────────────────────────────────
+    def test_psq_l_slot_read_rejected(self) -> None:
+        # psq_l f5,120(r1) reading the slot spilled by stw r20,120(r1).
+        self._assert_rejects(
+            [self._stw(20, 1, 120), self._psq_l(5, 1, 120), self._fmr(1, 5), _LR],
+            [self._stw(25, 1, 120), self._psq_l(5, 1, 120), self._fmr(1, 5), _LR],
+        )
+
+    # ── H5: computed pointer — declared assumption, not syntactic ───────
+    def test_computed_pointer_uses_carveout_and_flag(self) -> None:
+        # The computed-pointer shape is NOT syntactically provable; option B
+        # excludes it via the DECLARED no-stack-slot-aliasing assumption.  The
+        # certificate must record that the carve-out was used so the
+        # assumption is attached.  (The pair still certifies — the
+        # assumption boundary — but the flag is what makes it auditable.)
+        # lwz r5, 0(r4) with r4 = r1 + 8 — a computed pointer into the slot.
+        r = [self._stw(20, 1, 8), self._addi(4, 1, 8),
+             self._lwz(5, 4, 0), self._mr(3, 5), _LR]
+        d = [self._stw(25, 1, 8), self._addi(4, 1, 8),
+             self._lwz(5, 4, 0), self._mr(3, 5), _LR]
+        original, candidate = _decode_pair(r, d)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        # The carve-out IS engaged (the pair certifies under the declared
+        # assumption) — the flag must be True so the cert carries the
+        # no-stack-slot-aliasing assumption text.
+        self.assertTrue(outcome.spill_carveout_used,
+                        "carve-out engaged -> certificate must declare the "
+                        "no-stack-slot-aliasing scoped assumption")
+
+    # ── control: carve-out flag off for identity ────────────────────────
+    def test_identity_perm_no_carveout_flag(self) -> None:
+        r = [self._stw(20, 1, 8), self._lwz(20, 1, 8), _LR]
+        original, candidate = _decode_pair(r, r)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertFalse(outcome.spill_carveout_used)
+
+
+class Round9_4bR1StationarityPsqWidthTests(unittest.TestCase):
+    """Third adversarial round (R9-4b, GLM-5.2 F1/F2 + Kimi K3 H8/H9): the
+    R9-4 option-B fix's C1/C2 still had two false-certificate holes plus one
+    MAJOR audit-trail defect.  All closed in this round:
+
+    - H8 (Kimi F1): r1-stationarity — C1/C2 match ``(r1 + c)`` assuming r1 is
+      constant between save and read.  Any r1 def inside the after_spill
+      window (ALU move, update-form load/store with rA==r1, frame-alloc stwu
+      r1 in save-before-alloc order) desynchronizes ``spill_disp``; a
+      compensating load (``addi r1,r1,-64; lwz r5,72(r1)``) reads the slot
+      while C1 sees a disjoint displacement.  Now C0 rejects the carve-out
+      when an r1 def in the window can REACH a subsequent r1-relative memory
+      access (forward CFG reachability).  The epilogue ``addi r1,r1,N`` and a
+      non-compensating update-form load (no subsequent slot access) still
+      certify — the standard MWCC prologue/restore/epilogue shape survives.
+    - H9 (GLM F1 / Kimi F2): ``_SPILL_SLOT_LOAD_WIDTH[PSQ_L/PSQ_LU]=4`` was
+      wrong — the engine models ``psq_span = 4 if w else 8``, so a W=0 psq_l
+      reads 8 bytes and a W=0 load at disp-4 overlaps the slot while the
+      width-4 test saw disjoint.  Now ``_spill_slot_load_width`` derives the
+      width from the W operand (index 3).
+    - F3 (both agents): the region path overwrote ``spill_carveout_used`` per
+      region (last-region-only) instead of OR-accumulating, silently dropping
+      the no-stack-slot-aliasing declaration when an EARLY region used the
+      carve-out.  Now OR-accumulated across regions.
+    """
+
+    def _stw(self, rs, ra, d): return (36<<26)|((rs&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lwz(self, rt, ra, d): return (32<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lwzu(self, rt, ra, d): return (33<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _stwu(self, rs, ra, d): return (37<<26)|((rs&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _addi(self, rt, ra, imm): return (14<<26)|((rt&31)<<21)|((ra&31)<<16)|(imm&0xFFFF)
+    def _li(self, rt, v): return (14<<26)|((rt&31)<<21)|(v&0xFFFF)
+    def _mr(self, rd, rs): return (31<<26)|((rs&31)<<21)|((rd&31)<<16)|((rs&31)<<11)|(444<<1)
+    def _psq_l(self, fd, ra, d, w): return (56<<26)|((fd&31)<<21)|((ra&31)<<16)|(d&0xFFF)|((w&1)<<15)
+    def _psq_st(self, fd, ra, d, w): return (60<<26)|((fd&31)<<21)|((ra&31)<<16)|(d&0xFFF)|((w&1)<<15)
+
+    def _assert_rejects(self, r_words, d_words) -> None:
+        original, candidate = _decode_pair(r_words, d_words)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified, f"must reject: {outcome.failure}")
+
+    # ── H8: r1-stationarity ─────────────────────────────────────────────
+    def test_r1_addi_move_compensating_load_rejected(self) -> None:
+        # addi r1,r1,-64; lwz r5,72(r1) reads r1+72 = (r1-64)+72 = the slot.
+        self._assert_rejects(
+            [self._stw(20,1,8), self._addi(1,1,-64), self._lwz(5,1,72),
+             self._addi(1,1,64), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._addi(1,1,-64), self._lwz(5,1,72),
+             self._addi(1,1,64), self._mr(3,5), _LR],
+        )
+
+    def test_r1_lwzu_move_compensating_load_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20,1,8), self._lwzu(4,1,-64), self._lwz(5,1,72), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._lwzu(4,1,-64), self._lwz(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_r1_stwu_other_lane_move_compensating_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20,1,8), self._li(5,0), self._stwu(5,1,-64),
+             self._lwz(5,1,72), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._li(5,0), self._stwu(5,1,-64),
+             self._lwz(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_frame_alloc_save_before_alloc_rejected(self) -> None:
+        # stw r20,8(r1); stwu r1,-32(r1); lwz r5,40(r1) — save-before-alloc
+        # order: 40 = 8+32 reads the slot after the frame alloc moved r1.
+        self._assert_rejects(
+            [self._stw(20,1,8), self._stwu(1,1,-32), self._lwz(5,1,40),
+             self._addi(1,1,32), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._stwu(1,1,-32), self._lwz(5,1,40),
+             self._addi(1,1,32), self._mr(3,5), _LR],
+        )
+
+    def test_noncompensating_lwzu_still_certifies(self) -> None:
+        # lwzu r5,-64(r1) reads r1-64 (NOT the slot); no compensating load.
+        # The r1 def is unreachable to a subsequent slot access -> sound.
+        r = [self._stw(20,1,8), self._lwzu(5,1,-64), self._addi(1,1,64), self._mr(3,5), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._lwzu(5,1,-64), self._addi(1,1,64), self._mr(3,5), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_epilogue_addi_r1_still_certifies(self) -> None:
+        # The standard MWCC epilogue addi r1,r1,N after the last slot access
+        # must NOT forfeit the carve-out (Kimi P6 — blanket reject kills the
+        # class).
+        r = [self._stw(20,1,8), self._lwz(20,1,8), self._addi(1,1,32), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._lwz(25,1,8), self._addi(1,1,32), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    # ── H9: psq_l W=0 access width ──────────────────────────────────────
+    def test_psq_l_w0_disp4_gpr_slot_rejected(self) -> None:
+        # psq_l f5,4(r1),W=0 reads [4,12) ⊇ slot [8,12); width-4 test missed it.
+        self._assert_rejects(
+            [self._stw(20,1,8), self._psq_l(5,1,4,0), self._psq_st(5,3,0,0), _LR],
+            [self._stw(25,1,8), self._psq_l(5,1,4,0), self._psq_st(5,3,0,0), _LR],
+        )
+
+    def test_psq_l_w0_disp4_fpr_slot_rejected(self) -> None:
+        def stfd(fd, ra, d): return (54<<26)|((fd&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+        self._assert_rejects(
+            [stfd(20,1,8), self._psq_l(5,1,4,0), self._psq_st(5,3,0,0), _LR],
+            [stfd(25,1,8), self._psq_l(5,1,4,0), self._psq_st(5,3,0,0), _LR],
+        )
+
+    def test_psq_l_w1_disp4_certifies(self) -> None:
+        # W=1 reads only 4 bytes at disp-4 (disjoint from the slot); ps1=1.0.
+        r = [self._stw(20,1,8), self._psq_l(5,1,4,1), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._psq_l(5,1,4,1), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    # ── F3: region-path flag OR-accumulation ────────────────────────────
+    def test_region_path_flag_or_accumulates(self) -> None:
+        # Region 0 permutes spill-exempted live-in r5->6; a later rho conflict
+        # on dead r7/r8 forces region slicing.  The flag must be True (OR
+        # across regions), so the certificate declares the assumption.
+        li = lambda rt, v: self._li(rt, v)
+        mr = lambda rd, rs: self._mr(rd, rs)
+        r = [self._stw(5,1,8), self._lwz(5,1,8), li(7,1), li(7,2), mr(3,7), _LR]
+        d = [self._stw(6,1,8), self._lwz(6,1,8), li(8,1), li(9,2), mr(3,9), _LR]
+        original, candidate = _decode_pair(r, d)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual((outcome.details or {}).get("rho_mode"), "region-sliced")
+        self.assertTrue(outcome.spill_carveout_used,
+                        "region 0 used the carve-out -> flag must be True")
+
+
+class Round9_4cCarveoutFlagEmptyFprTests(unittest.TestCase):
+    """Fourth review round (R9-4c, GLM-5.2 F-1 + Kimi K3 Finding 1): the
+    ``carveout_out`` write in ``_check_abi_fixedness`` was nested inside the
+    ``for register in sorted(fixed_fpr)`` loop.  When ``fixed_fpr`` was empty
+    (a TRUSTED ``declared_return`` like ``"void"`` skips the conditional f1
+    fix, and there are no live-in / live-across / call-observed FPRs), the
+    write never executed and ``spill_carveout_used`` stayed False even for a
+    LOAD-BEARING GPR carve-out — the certificate silently omitted the
+    ``no-stack-slot-aliasing`` scoped assumption (the F3 audit-trail class
+    re-opened under a different trigger).  Fixed: the write is now at
+    function end, independent of the fixed_fpr loop.
+    """
+
+    def _stw(self, rs, ra, d): return (36<<26)|((rs&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lwz(self, rt, ra, d): return (32<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+
+    def test_gpr_carveout_flag_true_with_trusted_declared_return(self) -> None:
+        # The trigger: trusted declared_return (void) -> fixed_fpr empty ->
+        # the flag must still be True (GPR-only load-bearing carve-out).
+        r = [self._stw(20,1,8), self._lwz(20,1,8), _LR]
+        d = [self._stw(25,1,8), self._lwz(25,1,8), _LR]
+        original, candidate = _decode_pair(r, d)
+        for declared in ("void", "u32", "f64", "bool", "ptr"):
+            outcome = certify_renaming_witness(
+                original, candidate, deadline_ms=20000,
+                declared_return=declared,
+            )
+            self.assertTrue(outcome.certified, outcome.failure)
+            self.assertTrue(
+                outcome.spill_carveout_used,
+                f"declared_return={declared}: load-bearing GPR carve-out "
+                f"must record the no-stack-slot-aliasing assumption",
+            )
+
+    def test_identity_perm_flag_false_with_trusted_declared_return(self) -> None:
+        # Identity perm: no carve-out engagement even with trusted return.
+        r = [self._stw(20,1,8), self._lwz(20,1,8), _LR]
+        original, candidate = _decode_pair(r, r)
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000, declared_return="void",
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertFalse(outcome.spill_carveout_used)
+
+    def test_region_path_flag_true_with_trusted_declared_return(self) -> None:
+        # Region path + trusted declared_return: region 0 permutes a
+        # spill-exempted live-in r5->6; flag must be True (OR-accumulated
+        # AND written despite empty fixed_fpr).
+        li = lambda rt, v: (14<<26)|((rt&31)<<21)|(v&0xFFFF)
+        mr = lambda rd, rs: (31<<26)|((rs&31)<<21)|((rd&31)<<16)|((rs&31)<<11)|(444<<1)
+        r = [self._stw(5,1,8), self._lwz(5,1,8), li(7,1), li(7,2), mr(3,7), _LR]
+        d = [self._stw(6,1,8), self._lwz(6,1,8), li(8,1), li(9,2), mr(3,9), _LR]
+        original, candidate = _decode_pair(r, d)
+        outcome = certify_renaming_witness(
+            original, candidate, deadline_ms=20000, declared_return="void",
+        )
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual((outcome.details or {}).get("rho_mode"), "region-sliced")
+        self.assertTrue(outcome.spill_carveout_used)

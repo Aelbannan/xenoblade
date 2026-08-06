@@ -180,12 +180,17 @@ export async function buildUnit(
   region: string,
   unit: string,
 ): Promise<{ ok: boolean; output: string }> {
+  // cmd_build acquires the repo build lock ITSELF (run.py _with_build_lock,
+  // build-only scope, same flock as hexdiff) — do NOT wrap it in
+  // build_lock.py. The wrapper would hold the flock while the inner
+  // cmd_build blocks on the same flock (subprocess does not inherit the fd)
+  // until the outer 900s timeout kills it: every buildUnit call deadlocked
+  // ~15 min and reported ok=false with no ninja ever running (run31).
   try {
     const { stdout, stderr } = await execFilePromise(
       python,
       [
-        "tools/pi_harness/build_lock.py", "--timeout", "900", region, "--",
-        python, "tools/coop/run.py", "build", unit,
+        "tools/coop/run.py", "build", unit,
       ],
       { cwd: repoRoot },
     );

@@ -46,7 +46,7 @@ function defaultConfig(): HarnessConfig {
     maxBriefChars: 80_000,
     briefTargetChars: 12_000,
     maxBatchMinutes: 60,
-    witnessTimeoutMs: 20_000,
+    witnessTimeoutMs: 0, // 0 = use the witness's own internal simplify budget/deadline
     timeoutRetries: 3,
     rejectionRetries: 1,
     tuFinalAttempts: 2,

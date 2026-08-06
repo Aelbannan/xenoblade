@@ -73,10 +73,10 @@ export interface HarnessConfig {
    *  to the remaining targets. */
   briefTargetChars: number;
   maxBatchMinutes: number;
-  /** Hard timeout (ms) for the witness's z3 rewriter calls; 0 = none. The
-   *  harness passes a bounded value so a pathological z3.simplify on a huge
-   *  terminal AST is interrupted instead of spinning (run30: one lane held
-   *  the build lock ~30 min at 99.7% CPU). Default 20s. */
+  /** Hard timeout (ms) for the witness's z3 rewriter calls; 0 = use the
+   *  witness's own internal simplify budget/deadline (deterministic node-cap
+   *  + memoization + timeout backstop — the recommended default). A nonzero
+   *  value overrides the per-call timeout for harness acceptance runs. */
   witnessTimeoutMs: number;
   region: string;
   sessionDir: string;

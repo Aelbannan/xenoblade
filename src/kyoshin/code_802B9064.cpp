@@ -1,10 +1,28 @@
 #include <types.h>
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/voice/CCharVoice.hpp"
 
-extern "C" bool func_802A330C(u32, u32);
-extern "C" bool func_802A34E4(u32);
-extern "C" void func_802A3D54(void*, u32, u32);
+// ── Sibling-TU voice hooks (retail symbols are unmangled globals) ──────────
+// func_802A330C / func_802A34E4: CVS voice-subsystem requests that return
+// non-zero on success. func_802A3D54: play a battle voice line against a
+// position sub-object. All three are non-overloaded free functions, so MWCC
+// keeps their unmangled C-style names (non-overloaded free functions).
+bool func_802A330C(u32 size, u32 align);
+bool func_802A34E4(u32 size);
+void func_802A3D54(CCharVoice* voicePtr, int voiceId, int groupId);
 
+// Minimal layout of the battle object's fields this helper touches. The full
+// type is not yet identified, so only the offsets actually read are declared.
+struct BattleGauge {
+    u8 pad_00[0x3E9C];
+    CCharVoice* voiceEntry;                      // +0x3E9C voice-position sub-object
+    u8 pad_3EA0[0x3F00 - 0x3EA0];
+    u32 flags;                                   // +0x3F00 flag word (bit 1 = battle enabled?)
+};
+
+// The only virtual slots this helper dispatches through are 0x2BC
+// (`isActive`) and 0x15C (`getScale`); the rest keep the vtable dense so
+// those slots land at their retail offsets.
 struct BattleIf {
     virtual void vf8();
     virtual void vfC();
@@ -91,7 +109,7 @@ struct BattleIf {
     virtual void vf150();
     virtual void vf154();
     virtual void vf158();
-    virtual f32 vf15C();
+    virtual f32 getScale();                             // vtable slot 0x15C (348)
     virtual void vf160();
     virtual void vf164();
     virtual void vf168();
@@ -179,50 +197,65 @@ struct BattleIf {
     virtual void vf2B0();
     virtual void vf2B4();
     virtual void vf2B8();
-    virtual bool vf2BC();
+    virtual bool isActive();                            // vtable slot 0x2BC (700)
 };
 
-extern "C" bool func_802B9064(void* obj, f32 f1, f32 f2) {
-    u32* obj32 = (u32*)obj;
-    
-    if (!(obj32[0x3F00 / 4] & 2)) {
+// Overlay of the CBattleManager trailing fields read by this helper (the
+// header's own Unk* member names would trip the unknown-name linter, so the
+// offset is re-declared here with a field_0xNN name).
+struct BattleManagerLayout {
+    u8 pad_00[0x20C8];
+    u16 field_20C8;                                  // +0x20C8 chain/timer state (read as s16)
+};
+
+bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
+    BattleGauge* voiceObj = reinterpret_cast<BattleGauge*>(obj);
+    BattleIf* battle = reinterpret_cast<BattleIf*>(obj);
+
+    // Gauge must be enabled (flag bit 1) and the value currently rising.
+    if (!(voiceObj->flags & 2)) {
         return false;
     }
-    
-    if (f1 <= f2) {
+    if (curVal <= prevVal) {
         return false;
     }
-    
-    if (reinterpret_cast<BattleIf*>(obj)->vf2BC()) {
+    // A related gauge action is already in flight -- don't double-trigger.
+    if (battle->isActive()) {
         return false;
     }
-    
+
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    if (*(s16*)((u8*)bm + 0x20C8) != 0) {
+    BattleManagerLayout* bmv = reinterpret_cast<BattleManagerLayout*>(bm);
+    if (*reinterpret_cast<s16*>(&bmv->field_20C8) != 0) {
         return false;
     }
-    
-    f32 a = f1 / reinterpret_cast<BattleIf*>(obj)->vf15C();
-    f32 b = f2 / reinterpret_cast<BattleIf*>(obj)->vf15C();
-    
-    u32 voiceID;
-    if (b < 1.0f && 1.0f <= a) {
-        voiceID = 0xA2A;
-    } else if (b < 0.5f && 0.5f <= a) {
-        voiceID = 0xA29;
+
+    // Normalise the rising gauge value to [0,1] against the object's scale.
+    f32 curNorm = curVal / battle->getScale();
+    f32 prevNorm = prevVal / battle->getScale();
+
+    // Play the matching tier-crossing voice cue the moment a tier is reached.
+    int voiceID;
+    if (prevNorm < 1.0f && 1.0f <= curNorm) {
+        voiceID = 0xA2A;   // crossing full gauge  (>= 1.0)
+    } else if (prevNorm < 0.5f && 0.5f <= curNorm) {
+        voiceID = 0xA29;   // crossing half gauge   (>= 0.5)
     } else {
         return false;
     }
-    
+
+    // Request the voice-subsystem resources first; bail if unavailable.
     if (!func_802A330C(0x7D, 1)) {
         return false;
     }
     if (!func_802A34E4(0x20)) {
         return false;
     }
+
+    // Play the cue through the battle object's own voice-position sub-object.
     if (obj != NULL) {
-        obj = (u8*)obj + 0x3E9C;
+        obj = reinterpret_cast<BattleGauge*>(&voiceObj->voiceEntry);
     }
-    func_802A3D54(obj, voiceID, 0x7D);
+    func_802A3D54(reinterpret_cast<CCharVoice*>(obj), voiceID, 0x7D);
     return false;
 }

@@ -1060,6 +1060,23 @@ void bta_hh_data_act(void *p_cb, void *p_data)
 /* HID host event callback (registered via HID_HostRegister).  Maps the
  * HID host events onto BTA HH internal events and sends them to the BTA
  * HH state machine task. */
+/* HID host event values as dispatched by bta_hh_cback.  The retail build
+ * used this ordering, which differs from hidh_api.h's HID_HDEV_EVT_* enum
+ * (there the open/close/data/handshake/ctrl/plugg events sit at other
+ * indices).  Both the trace-name and the dispatch switch in the retail
+ * function bound-check against 8, so the enum ramzes 0..8 below. */
+enum {
+    BTA_HH_CB_OPEN,          /* 0: connected */
+    BTA_HH_CB_CLOSE,         /* 1: closed */
+    BTA_HH_CB_INTR_DATA,     /* 2: interrupt data */
+    BTA_HH_CB_HANDSHAKE,     /* 3: handshake */
+    BTA_HH_CB_CTRL_DATA,     /* 4: control data */
+    BTA_HH_CB_INTR_DATC,     /* 5: data channel tx complete (no event) */
+    BTA_HH_CB_VC_UNPLUG,     /* 6: virtual cable unplug */
+    BTA_HH_CB_RETRYING,      /* 7: reconnecting (no event) */
+    BTA_HH_CB_CTRL_DATC,     /* 8: ctrl channel tx complete (no event) */
+};
+
 void bta_hh_cback(UINT8 dev_handle, UINT8 event, UINT32 data, BT_HDR *p_data)
 {
     tBTA_HH_EVT bta_event = BTA_HH_INVALID_EVT;
@@ -1070,40 +1087,40 @@ void bta_hh_cback(UINT8 dev_handle, UINT8 event, UINT32 data, BT_HDR *p_data)
         const char *evt_str;
 
         switch (event) {
-        case HID_HDEV_EVT_OPEN:
+        case BTA_HH_CB_OPEN:
             evt_str = "HID_HDEV_EVT_OPEN";
             break;
 
-        case HID_HDEV_EVT_CLOSE:
+        case BTA_HH_CB_CLOSE:
             evt_str = "HID_HDEV_EVT_CLOSE";
             break;
 
-        case HID_HDEV_EVT_RETRYING:
-            evt_str = "HID_HDEV_EVT_RETRYING";
-            break;
-
-        case HID_HDEV_EVT_INTR_DATA:
+        case BTA_HH_CB_INTR_DATA:
             evt_str = "HID_HDEV_EVT_INTR_DATA";
             break;
 
-        case HID_HDEV_EVT_INTR_DATC:
-            evt_str = "HID_HDEV_EVT_INTR_DATC";
-            break;
-
-        case HID_HDEV_EVT_CTRL_DATA:
-            evt_str = "HID_HDEV_EVT_CTRL_DATA";
-            break;
-
-        case HID_HDEV_EVT_CTRL_DATC:
-            evt_str = "HID_HDEV_EVT_CTRL_DATC";
-            break;
-
-        case HID_HDEV_EVT_HANDSHAKE:
+        case BTA_HH_CB_HANDSHAKE:
             evt_str = "HID_HDEV_EVT_HANDSHAKE";
             break;
 
-        case HID_HDEV_EVT_VC_UNPLUG:
+        case BTA_HH_CB_CTRL_DATA:
+            evt_str = "HID_HDEV_EVT_CTRL_DATA";
+            break;
+
+        case BTA_HH_CB_INTR_DATC:
+            evt_str = "HID_HDEV_EVT_INTR_DATC";
+            break;
+
+        case BTA_HH_CB_VC_UNPLUG:
             evt_str = "HID_HDEV_EVT_VC_UNPLUG";
+            break;
+
+        case BTA_HH_CB_RETRYING:
+            evt_str = "HID_HDEV_EVT_RETRYING";
+            break;
+
+        case BTA_HH_CB_CTRL_DATC:
+            evt_str = "HID_HDEV_EVT_CTRL_DATC";
             break;
 
         default:
@@ -1115,32 +1132,31 @@ void bta_hh_cback(UINT8 dev_handle, UINT8 event, UINT32 data, BT_HDR *p_data)
     }
 
     switch (event) {
-    case HID_HDEV_EVT_OPEN:
+    case BTA_HH_CB_OPEN:
         bta_event = BTA_HH_INT_OPEN_EVT;
         break;
 
-    case HID_HDEV_EVT_CLOSE:
+    case BTA_HH_CB_CLOSE:
         bta_event = BTA_HH_INT_CLOSE_EVT;
         break;
 
-    case HID_HDEV_EVT_INTR_DATA:
+    case BTA_HH_CB_INTR_DATA:
         bta_event = BTA_HH_INT_DATA_EVT;
         break;
 
-    case HID_HDEV_EVT_HANDSHAKE:
+    case BTA_HH_CB_HANDSHAKE:
         bta_event = BTA_HH_INT_HANDSK_EVT;
         break;
 
-    case HID_HDEV_EVT_CTRL_DATA:
+    case BTA_HH_CB_CTRL_DATA:
         bta_event = BTA_HH_INT_CTRL_DATA;
         break;
 
-    case HID_HDEV_EVT_INTR_DATC:
-    case HID_HDEV_EVT_CTRL_DATC:
+    case BTA_HH_CB_INTR_DATC:
         utl_freebuf((void **)&p_data);
         break;
 
-    case HID_HDEV_EVT_VC_UNPLUG:
+    case BTA_HH_CB_VC_UNPLUG:
         for (xx = 0; xx < BTA_HH_MAX_KNOWN; xx++) {
             if (dev_handle == bta_hh_cb.kdev[xx].hid_handle) {
                 bta_hh_cb.kdev[xx].vp = TRUE;
@@ -1149,6 +1165,8 @@ void bta_hh_cback(UINT8 dev_handle, UINT8 event, UINT32 data, BT_HDR *p_data)
         }
         break;
 
+    case BTA_HH_CB_RETRYING:
+    case BTA_HH_CB_CTRL_DATC:
     default:
         break;
     }

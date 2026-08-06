@@ -275,9 +275,8 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
         pos2 = fx->curPos;
         fx->line[2][pos2] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
 
-        pos2++;
-        fx->curPos = pos2;
-        if (pos2 >= fx->length) {
+        fx->curPos = pos2 + 1;
+        if (fx->curPos >= fx->length) {
             fx->curPos = 0;
         }
         *inputL++ = (delayedL * fx->outGainI) >> 7;

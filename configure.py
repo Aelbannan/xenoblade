@@ -752,7 +752,7 @@ config.libs = [
             Object(MatchingFor("jp", "us"), "kyoshin/help/CHelp_Target.cpp"),
             Object(NonMatching, "kyoshin/code_802B8A3C.cpp"),
             Object(MatchingFor("jp", "us"), "kyoshin/plugin/pluginVoice.cpp"),
-            Object(NonMatching, "kyoshin/code_802B9064.cpp"),
+            Object(Matching, "kyoshin/code_802B9064.cpp"),
             Object(MatchingFor("jp"), "kyoshin/CBattery.cpp", extra_cflags=["-func_align 16"]),
         ],
     },

@@ -26,7 +26,7 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
     u32 byteCount;
     u32 countMax;
     const u8* data;
-    u32 treeBase;
+    const u8* treeBase;
     const u8* tree;
     const u8* words;
     u32 bits;
@@ -39,16 +39,16 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
         data = src + 8;
     }
 
-    shift = src[0] & 0xF;
     bitBuffer = 0;
-    treeBase = (u32)(data + 1);
-    countMax = (src[0] & 7) + 4;
+    treeBase = data + 1;
+    countMax = 4 + (src[0] & 7);
     byteCount = 0;
+    shift = src[0] & 0xF;
     if (size == 0) {
         size = CXLoadBE32(src + 4);
     }
 
-    tree = (const u8*)treeBase;
+    tree = treeBase;
     words = data + 2 * (data[0] + 1);
 
     while (size > 0) {

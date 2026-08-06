@@ -5,6 +5,8 @@ extern "C" UNKWORD func_80124B78();
 namespace cf {
 void CHelp_CloseSysMenu::func_802B7E7C() {
     UNKWORD result = func_80124B78();
-    reinterpret_cast<void (*)(CHelp*, u32)>(mVtbl->mSlots[7])(this, result == 0);
+    typedef void (*Fn)(CHelp*, u32);
+    Fn fn = reinterpret_cast<Fn>(mVtbl->mSlots[7]);
+    fn(this, result == 0);
 }
 } // namespace cf

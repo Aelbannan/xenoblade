@@ -85,10 +85,10 @@ void __HBMSYNSetupVolumeEnvelope(void* voice)
     }
 
     if ((u32)v->volPhase < 2) {
-        params = (HBMSYNVolParams*)v->params;
+        HBMSYNVolParams* p2 = (HBMSYNVolParams*)v->params;
         u8 ch = v->note;
-        s32 decay = params->decay;
-        s32 extra2 = params->decayExtra;
+        s32 decay = p2->decay;
+        s32 extra2 = p2->decayExtra;
         s32 ticks;
 
         if (decay == 0x80000000) {

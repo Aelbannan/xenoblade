@@ -176,8 +176,9 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
     unsigned long i, v1, v2;
     unsigned int right_shift, src_offset, left_shift;
 
-    cps = ((unsigned char*) src) + n;
+    // dst-target pointer first: retail computes r12=dst+n before r4=src+n
     cpd = ((unsigned char*) dst) + n;
+    cps = ((unsigned char*) src) + n;
 
     i = ((unsigned long) cpd) & 3;
 
@@ -194,9 +195,9 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 
     right_shift = 32 - left_shift;
 
-    cps += 4 - src_offset;
-
     i = n >> 3;
+
+    cps += 4 - src_offset;
 
     v1 = *--lps;
 

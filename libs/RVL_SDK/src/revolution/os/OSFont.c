@@ -243,28 +243,22 @@ typedef struct {
     s32 chunksOfs;
 } Yay0Header;
 
-// 'Yay0' decompression (See YAGCD sections 16.1.1, 16.1.2)
+// 'Yay0' decompression (See YAGCD sections 16.1.1, 16.1.2). During the
+// decode, persistent state is kept in registers:
+//   chunk     running read pointer into the compressed block source
+//   maskPtr   position within the 32-bit mask words
+//   linkTblOfs offset of the link table from the source base
+//   i         write position (index) into dst
+//   maskBits  number of valid bits remaining in the current mask
 static void Decode(u8* src, u8* dst) {
     Yay0Header* hdr = (Yay0Header*)src;
-    const u32* maskPtr;
-    int j;
-    s32 linkOfs;
-    s32 chunkPos;
-    int i;
-    s32 chunksOfs;
-    s32 expandSize;
-    s32 linkTblOfs;
-    s32 count;
-    u32 maskBits;
-    u32 mask;
-
-    expandSize = hdr->expandSize;
-    linkTblOfs = hdr->linkTblOfs;
-    chunksOfs = hdr->chunksOfs;
-
-    i = 0;
-    maskBits = 0;
-    maskPtr = (const u32*)(hdr + 1);
+    const u8* chunk = src + hdr->chunksOfs;
+    const u32* maskPtr = (const u32*)(src + 0x10);
+    s32 linkTblOfs = hdr->linkTblOfs;
+    s32 expandSize = hdr->expandSize;
+    s32 i = 0;
+    u32 maskBits = 0;
+    u32 mask = 0;
 
     do {
         // Get next mask
@@ -275,10 +269,15 @@ static void Decode(u8* src, u8* dst) {
 
         // Non-linked chunk
         if (mask & 0x80000000) {
-            dst[i++] = src[chunksOfs++];
+            dst[i++] = *chunk++;
         }
         // Linked chunk
         else {
+            s32 linkOfs;
+            s32 chunkPos;
+            s32 count;
+            s32 j;
+
             // Read offset from link table
             linkOfs = src[linkTblOfs] << 8 | src[linkTblOfs + 1];
             linkTblOfs += sizeof(u16);
@@ -287,7 +286,7 @@ static void Decode(u8* src, u8* dst) {
             chunkPos = i - (linkOfs & 0x0FFF);
             count = linkOfs >> 12;
             if (count == 0) {
-                count = src[chunksOfs++] + 0x12;
+                count = *chunk++ + 0x12;
             } else {
                 count += 2;
             }

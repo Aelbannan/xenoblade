@@ -18,8 +18,8 @@ bool CHelp_OpenPartyMenu::func_802B84EC() {
 // Calls vtbl slot 7 with true only if both func_80293C10 and func_80192BD0 return zero.
 void CHelp_ClosePartyMenu::func_802B8534() {
     bool result = !func_80293C10() && !func_80192BD0();
-    CHelpVtbl* vt = mVtbl;
-    reinterpret_cast<void (*)(CHelp*, u32)>(vt->mSlots[7])(this, result);
+    void (*fn)(CHelp*, u32) = reinterpret_cast<void (*)(CHelp*, u32)>(mVtbl->mSlots[7]);
+    fn(this, result);
 }
 
 } // namespace cf

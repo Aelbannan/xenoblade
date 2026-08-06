@@ -4,6 +4,7 @@
 
 void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self, void* end, ml::CCol4 color, float radius);
 extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
+extern "C" float lbl_eu_80666944; // 0.4 truncation factor
 
 // Debug-render a collision cylinder from its impl, colouring it by collision kind.
 void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {
@@ -41,9 +42,9 @@ void func_800AB248(void* self, cf::CfCollCylinderImpl* impl, void* a, void* b, f
     } else {
         float pos[3];
         pos[0] = impl->mStart.x;
+        float adj = lbl_eu_80666944 * f1;
         pos[1] = impl->mStart.y;
         pos[2] = impl->mStart.z;
-        float adj = 0.4f * f1;
         pos[1] -= adj;
         func_800A5B18(a, pos, b, impl->mRadius + f1, heightDiff + (f1 - adj));
     }

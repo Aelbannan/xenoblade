@@ -793,9 +793,9 @@ void btm_process_clk_off_comp_evt(UINT16 hci_handle, UINT16 clock_offset)
 
 void btm_acl_role_changed(UINT8 hci_status, BD_ADDR bd_addr, UINT8 new_role)
 {
+    UINT8 *p_bda;
     tACL_CONN *p_acl;
     tBTM_ROLE_SWITCH_CMPL *p_ref;
-    UINT8 *p_bda;
 
     /* If the BD address was not passed, use the pending connection. */
     if (bd_addr != NULL)

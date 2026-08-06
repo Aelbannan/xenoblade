@@ -2252,47 +2252,97 @@ class SimplifyBudgetAdversarialTests(unittest.TestCase):
 
 
 class RemovedA1LoopRoutingTests(unittest.TestCase):
-    """Fix 1 (adversarial review 2026): concrete-trip loop WITH a call strictly
-    inside the loop body + consistent identity global rho must CERTIFY via the
-    global path.  The removed A1 gate+routing previously over-rejected this
-    shape (call-site boundary landed inside the loop span on the region path,
-    falling to SMT).  Also a rho-conflict loop variant must still NOT certify
-    (no false cert through the global path)."""
+    """Fix 1 (adversarial review 2026, implementation review round): with the A1
+    gate + routing removed, a concrete-trip loop WITH a call strictly inside the
+    loop body and a consistent register renaming must CERTIFY via the GLOBAL path
+    (the removed A1 routing previously over-rejected these shapes to SMT).  Two
+    locks:
+      (a) the certifying case uses a genuine scratch-rename (r7<->r8,
+          write-before-read, dead at the call/exit) so it actually exercises the
+          global-path rho machinery, not just byte-identical streams; and
+      (b) a RHO-CONFLICT loop variant (retail r7 maps to both decomp r8 and r9
+          across the in-loop call -> no single bijection) must still NOT certify —
+          it routes to the region path and is rejected by the loop-span guard."""
 
-    def _enc_li(self, rt, v): return (14 << 26) | ((rt & 31) << 21) | (v & 0xFFFF)
-    def _enc_addi(self, rt, ra, v): return (14 << 26) | ((rt & 31) << 21) | ((ra & 31) << 16) | (v & 0xFFFF)
-    def _enc_cmpwi(self, ra, v): return (11 << 26) | (0 << 21) | ((ra & 31) << 16) | (v & 0xFFFF)
-    def _enc_mr(self, rd, rs): return (31 << 26) | ((rs & 31) << 21) | ((rd & 31) << 16) | (444 << 1)
+    _R = 0x80000000
+
+    def _li(self, rt, v): return (14 << 26) | (rt << 21) | (v & 0xFFFF)
+    def _addi(self, rt, ra, v): return (14 << 26) | (rt << 21) | (ra << 16) | (v & 0xFFFF)
+    def _add(self, rd, ra, rb): return (31 << 26) | (rd << 21) | (ra << 16) | (rb << 11) | (266 << 1)
+    def _cmpwi(self, ra, v): return (11 << 26) | (0 << 21) | (ra << 16) | (v & 0xFFFF)
+    def _mr(self, rd, rs): return (31 << 26) | (rs << 21) | (rd << 16) | (rs << 11) | (444 << 1)
     def _bne(self, bd): return (16 << 26) | (4 << 21) | (2 << 16) | (bd & 0xFFFC)
     def _bl(self, off): return (18 << 26) | (off & 0x03FFFFFC) | 1
 
-    def _loop_with_call(self, scratch_r, scratch_d):
-        #  0 li r5,3 ; 1 L:addi r5,r5,-1 ; 2 bl callee ; 3 cmpwi r5,0 ;
-        #  4 bne L ; 5 mr r3,r5 ; 6 blr   -- call STRICTLY inside loop span [1,4]
-        rw = [self._enc_li(5, 3), self._enc_addi(5, 5, (1 << 16) - 1), self._bl(0),
-              self._enc_cmpwi(5, 0), self._bne(-12), self._enc_mr(3, 5), _LR]
+    def _decode(self, retail: list[int], decomp: list[int]):
+        relocs = (RelocationRef(0x10, R_PPC_REL24, "callee", "callee", 0),)
         original = decode_block(
-            b"".join(x.to_bytes(4, "big") for x in rw), _RETAIL_BASE,
-            validate_with_capstone=False,
-            relocations=(RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),),
+            b"".join(x.to_bytes(4, "big") for x in retail), _RETAIL_BASE,
+            validate_with_capstone=False, relocations=relocs,
         )
         candidate = decode_block(
-            b"".join(x.to_bytes(4, "big") for x in rw), _DECOMP_BASE,
-            validate_with_capstone=False,
-            relocations=(RelocationRef(8, R_PPC_REL24, "callee", "callee", 0),),
+            b"".join(x.to_bytes(4, "big") for x in decomp), _DECOMP_BASE,
+            validate_with_capstone=False, relocations=relocs,
         )
         return original, candidate
 
-    def test_loop_with_call_in_body_certifies_global(self) -> None:
-        original, candidate = self._loop_with_call(5, 5)
-        outcome = certify_renaming_witness(
+    def _loop_words(self, scr_r: int, scr_d: int, *, conflict: bool = False):
+        #  0: li r5,3           counter = 3 (identity both sides)
+        #  1: L: addi r5,r5,-1  counter--           <- loop header (back-edge target)
+        #  2: li <s>,0          scratch write-before-use (retail scr_r / decomp scr_d)
+        #  3: add <s>,<s>,r5    scratch read-write
+        #  4: bl callee         call STRICTLY inside loop span [slot1, slot6]
+        # (5: add <s>,<s>,r5    only when conflict=True)
+        #  x: cmpwi r5,0
+        #  y: bne L
+        #  z: mr r3,r5
+        #  z+1: blr
+        retail = [self._li(5, 3), self._addi(5, 5, (1 << 16) - 1),
+                  self._li(scr_r, 0), self._add(scr_r, scr_r, 5), self._bl(0),
+                  self._cmpwi(5, 0), self._bne(-20), self._mr(3, 5), _LR]
+        decomp = [self._li(5, 3), self._addi(5, 5, (1 << 16) - 1),
+                  self._li(scr_d, 0), self._add(scr_d, scr_d, 5), self._bl(0),
+                  self._cmpwi(5, 0), self._bne(-20), self._mr(3, 5), _LR]
+        if conflict:
+            # post-call, retail still uses scr_r but decomp switches to a THIRD
+            # scratch -> retail scr_r maps to both scr_d and third -> no bijection.
+            third = ({7, 8, 9} - {scr_d}).pop()
+            retail.insert(5, self._add(scr_r, scr_r, 5))
+            decomp.insert(5, self._add(third, third, 5))
+        return retail, decomp
+
+    def _contracts(self):
+        return {"callee": CalleeContract(
+            frozenset({"r3"}), frozenset({"r3"}), "test-regression")}
+
+    def _run(self, retail, decomp):
+        original, candidate = self._decode(retail, decomp)
+        return certify_renaming_witness(
             original, candidate,
             assumed_callees=frozenset({"callee"}),
-            callee_contracts={"callee": CalleeContract(
-                frozenset({"r3"}), frozenset({"r3"}), "test-regression")},
+            callee_contracts=self._contracts(),
             deadline_ms=20000,
         )
+
+    def test_loop_with_call_scratch_rename_certifies_global(self) -> None:
+        # Consistent {7:8} scratch rename inside a loop with an in-body call -> the
+        # global path must certify (A1 routing no longer over-rejects it).  This is
+        # NOT byte-identical: it exercises the global rho machinery under the loop.
+        retail, decomp = self._loop_words(7, 8)
+        outcome = self._run(retail, decomp)
         self.assertTrue(outcome.certified, outcome.failure)
-        # global path (not routed): rho_mode should be global / None, not region-sliced
         self.assertIsNone(outcome.details.get("rho_mode") if outcome.details else None,
-                          "concrete-trip loop-with-call should certify on the global path")
+                          "concrete-trip loop-with-call+rename should certify on the GLOBAL path")
+
+    def test_rho_conflict_loop_in_body_still_rejected(self) -> None:
+        # retail r7 maps to decomp r8 pre-call but decomp r9 post-call inside the
+        # loop -> no single bijection exists.  check_gates fails the rho gate and
+        # routes to the region path, whose per-region ABI-fixedness (gate 5) then
+        # rejects the live-in rename across the boundary.  Must NOT certify (no
+        # false cert through the global path after A1 removal).  (The exact reject
+        # gate may be abi-boundary or the loop-span guard depending on the split;
+        # the guarantee under test is simply that a conflicting loop never certifies.)
+        retail, decomp = self._loop_words(7, 8, conflict=True)
+        outcome = self._run(retail, decomp)
+        self.assertFalse(outcome.certified, "rho-conflict loop must not certify")
+        self.assertIsNotNone(getattr(outcome, "failure", None), "should reject with a failure")

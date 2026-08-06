@@ -42,7 +42,12 @@ void __ct__8022FA58(SArtsSub8022FA58* self, u32 a, u32 b) {
     self->field_0x21 = 0;
 }
 
-void __dt__8022FA90(){}
+extern "C" void* __dt__8022FA90(void* self, int flags) {
+    if (self && flags > 0) {
+        ::operator delete(self);
+    }
+    return self;
+}
 
 void func_8022FAD0(){}
 
@@ -50,11 +55,20 @@ void func_8022FD9C(){}
 
 void func_8022FDF4(){}
 
-void func_8022FE58(){}
-
-void func_80230160(SArtsSub8022FA58* self);
-void func_802316F8(SArtsSub8022FA58* self);
+extern "C" void func_80230160(SArtsSub8022FA58* self);
+extern "C" void func_802316F8(SArtsSub8022FA58* self);
 extern "C" void func_80124270(void* p);
+
+void func_8022FE58(SArtsSub8022FA58* self) {
+    self->field_0x16 = 0;
+    self->field_0x17 = 1;
+    u8 next = self->field_0x14 + 1;
+    self->field_0x14 = next;
+    if ((s8)next >= self->field_0x21) {
+        self->field_0x14 = 0;
+    }
+    return func_80230160(self);
+}
 
 void func_8022FE90(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
@@ -89,7 +103,12 @@ u8 func_8023040C(SArtsSub8022FA58* self, u32 idx) {
 
 void __ct__8023042C(){}
 
-void __dt__80230484(){}
+extern "C" void* __dt__80230484(void* self, int flags) {
+    if (self && flags > 0) {
+        ::operator delete(self);
+    }
+    return self;
+}
 
 void func_802304C4(){}
 
@@ -108,9 +127,27 @@ void func_8023080C(SArtsSub8022FA58* self, u8 val) {
     }
 }
 
-void func_8023082C(){}
+void func_8023082C(SArtsSub8022FA58* self, int a) {
+    self->field_0x20 = (s8)(self->field_0x20 + 1);
+    if ((s8)self->field_0x20 >= 9) {
+        self->field_0x20 = 0;
+    }
+    if (a != 0 && self->field_0x20 == 4) {
+        self->field_0x20 = 5;
+    }
+    return func_802316F8(self);
+}
 
-void func_80230870(){}
+void func_80230870(SArtsSub8022FA58* self, int a) {
+    self->field_0x20 = (s8)(self->field_0x20 - 1);
+    if ((s8)self->field_0x20 < 0) {
+        self->field_0x20 = 8;
+    }
+    if (a != 0 && self->field_0x20 == 4) {
+        self->field_0x20 = 3;
+    }
+    return func_802316F8(self);
+}
 
 void func_802308B0(){}
 
@@ -157,7 +194,12 @@ void func_8023185C(){}
 
 void __ct__802319AC(){}
 
-void __dt__80231A08(){}
+extern "C" void* __dt__80231A08(void* self, int flags) {
+    if (self && flags > 0) {
+        ::operator delete(self);
+    }
+    return self;
+}
 
 void func_80231A48(){}
 
@@ -177,7 +219,13 @@ void func_80232000(){}
 
 void func_802320C0(){}
 
-void func_802322BC(){}
+u8 func_802322BC(SArts322BC* self) {
+    if (self->field_0x12C != 0) {
+        s32 off = (self->field_0x21 + self->field_0x20) << 4;
+        return self->mTable[off];
+    }
+    return 0;
+}
 
 void func_802322F4(){}
 
@@ -195,9 +243,19 @@ u8 func_8023270C(SArts3270C* self) {
     return r;
 }
 
+void func_80232B88(SArts327B0* self);
+void func_80232C78(SArts327B0* self);
+
 void func_80232734(){}
 
-void func_802327B0(){}
+void func_802327B0(SArts327B0* self) {
+    extern void func_801F3850(void*, u32);
+    self->field_0x20 = 0;
+    self->field_0x21 = 0;
+    func_801F3850(self->field_0x28, 0);
+    func_80232B88(self);
+    func_80232C78(self);
+}
 
 void func_80232800(){}
 
@@ -211,9 +269,9 @@ void func_80232A4C(){}
 
 void func_80232AD8(){}
 
-void func_80232B88(){}
+void func_80232B88(SArts327B0* self) { func_80124270(self); }
 
-void func_80232C78(){}
+void func_80232C78(SArts327B0* self) { func_80124270(self); }
 
 void __ct__CArtsList(){}
 
@@ -289,7 +347,16 @@ void func_80234F7C(){}
 
 void func_80234FDC(){}
 
-void func_8023506C(){}
+// func_80137510 is a flat C symbol (anim-frame check helper).
+extern "C" u32 func_80137510(void*, float);
+
+void func_8023506C(SArts3506C* self) {
+    extern float lbl_eu_80668648;
+    if (func_80137510(self->mAnim20, lbl_eu_80668648) != 0) {
+        self->field_0x31 = 1;
+        self->field_0x2C = 0;
+    }
+}
 
 void func_802350B8(){}
 

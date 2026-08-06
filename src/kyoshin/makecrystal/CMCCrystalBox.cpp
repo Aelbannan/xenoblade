@@ -4,6 +4,28 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
+
+#include <nw4r/lyt.h>
+
+extern float lbl_eu_80668470;  // anim sentinel constant used by completion checks
+extern float lbl_eu_8066845C;
+
+// Retail symbols: func_80137444 keeps the mangled C++ name, but func_80137510
+// is the unmangled C name (per retail relocs).
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+
+void func_801D216C(void*, u8);
+void func_80138078(u32);
+
+void func_80218018(CMCCrystalBox* self);
+void func_80215B78(CMCCrystalBox* self);
+void func_8021852C(CMCCrystalBox* self);
+void func_8021900C(CMCCrystalBox* self);
+void func_8021911C(CMCCrystalBox* self);
+void func_802191A4(CMCCrystalBox* self);
+void func_8021922C(CMCCrystalBox* self);
+void func_80219994(CMCCrystalBox* self, int);
 void func_802138B8(){}
 
 void func_80213964(int unused, void* a, void* b) {
@@ -130,9 +152,25 @@ int lookupIndexedValue_80215AE8(void* self) {
     return lookup->values[lookup->valueIndex[((u8*)obj)[0x29]]];
 }
 
-void func_80215B18(){}
+void func_80215B18(CMCCrystalBox* self) {
+    // Free-slot bookkeeping: unclaim the slot owned at [0x20+slotIdx] and
+    // decrement the header counts.
+    u8 count = self->unk20;
+    if (count == 0) return;
 
-void func_80215B78(){}
+    u8 slotIdx = ((u8*)self)[0x29];
+    int* table = (int*)self;
+    s8 owner = (s8)((u8*)self)[0x20 + slotIdx];
+    if (table[owner] == 0) return;
+
+    table[owner] = 0;
+    self->unk20 = count - 1;
+    ((u8*)self)[0x21 + slotIdx] = 0xFF;
+    ((u8*)self)[0x29] = slotIdx - 1;
+    func_80215B78(self);
+}
+
+void func_80215B78(CMCCrystalBox* self){}
 
 void func_80215D98(){}
 
@@ -163,7 +201,21 @@ void copyCrystalBoxParam_802165E8(CMCCrystalBoxParam *dest, const CMCCrystalBoxP
 
 void func_80216614(){}
 
-void func_80216698(){}
+void func_80216698(CMCCrystalBox* self) {
+    if (self->unk2CE != 0) return;
+    if (self->unk2D1 != 0) return;
+
+    // Countdown timer at +0x14F2; when it wraps sub-range, reload from +0x14F1.
+    u8 v = self->field_14F2 - 1;
+    self->field_14F2 = v;
+    if ((s8)v < 0) {
+        self->field_14F2 = self->field_14F1 - 1;
+    }
+
+    func_80219994(self, 1);
+    func_80218018(self);
+    func_80138078(0x70);
+}
 
 void func_80216718(){}
 
@@ -175,25 +227,65 @@ void func_80216AEC(){}
 
 void func_80216B7C(){}
 
-void func_80216BC8(){}
+void func_80216BC8(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[7], lbl_eu_80668470) == 0) return;
+    self->unk64 = 3;
+    func_8021911C(self);
+    self->unk69 = 1;
+    func_801D216C((u8*)self + 0x6c, 1);
+    func_801D216C((u8*)self + 0x84, 1);
+    func_8021852C(self);
+}
 
-void func_80216C3C(){}
+void func_80216C3C(CMCCrystalBox* self) {
+    if (func_80137510(self->subObjPtrs[7], 1.0f) != 0) {
+        func_8021900C(self);
+        self->unk64 = 5;
+    }
+}
 
-void func_80216C88(){}
+void func_80216C88(CMCCrystalBox* self) {
+    if (func_80137510(self->subObjPtrs[6], lbl_eu_80668470) == 0) return;
+    self->unk69 = 1;
+    self->unk64 = 0;
+    func_801D216C((u8*)self + 0x6c, 0);
+}
 
-void func_80216CE0(){}
+void func_80216CE0(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[14], lbl_eu_80668470) == 0) return;
+    self->unk69 = 1;
+    self->unk64 = 0;
+    func_801D216C((u8*)self + 0x6c, 0);
+}
 
-void func_80216D38(){}
+void func_80216D38(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[9], lbl_eu_80668470) == 0) return;
+    self->unk64 = 9;
+    func_8021922C(self);
+}
 
-void func_80216D84(){}
+void func_80216D84(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[10], lbl_eu_80668470) == 0) return;
+    self->unk69 = 1;
+    func_8021852C(self);
+    self->unk64 = 3;
+}
 
 void func_80216DD8(){}
 
-void func_80216E1C(){}
+void func_80216E1C(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[12], lbl_eu_80668470) == 0) return;
+    self->unk64 = 3;
+    self->subObjPtrs[12]->SetFrame(lbl_eu_8066845C);
+}
 
 void func_80216E6C(){}
 
-void func_80216EB0(){}
+void func_80216EB0(CMCCrystalBox* self) {
+    if (func_80137510(self->subObjPtrs[10], lbl_eu_80668470) == 0) return;
+    self->unk64 = 0xe;
+    func_802191A4(self);
+}
 
 void func_80216EFC(){}
 
@@ -216,13 +308,13 @@ u8 func_80217BDC(void* self) {
 
 void func_80217C0C(){}
 
-void func_80218018(){}
+void func_80218018(CMCCrystalBox* self){}
 
 void func_802180B4(){}
 
 void func_80218460(){}
 
-void func_8021852C(){}
+void func_8021852C(CMCCrystalBox* self){}
 
 void func_8021899C(){}
 
@@ -250,15 +342,15 @@ void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     dst->c = c;
 }
 
-void func_8021900C(){}
+void func_8021900C(CMCCrystalBox* self){}
 
 void func_80219094(){}
 
-void func_8021911C(){}
+void func_8021911C(CMCCrystalBox* self){}
 
-void func_802191A4(){}
+void func_802191A4(CMCCrystalBox* self){}
 
-void func_8021922C(){}
+void func_8021922C(CMCCrystalBox* self){}
 
 void func_802192B4(){}
 
@@ -270,7 +362,7 @@ void func_80219464(){}
 
 void func_802194EC(){}
 
-void func_80219994(){}
+void func_80219994(CMCCrystalBox* self, int a){}
 
 void func_80219AF0(){}
 

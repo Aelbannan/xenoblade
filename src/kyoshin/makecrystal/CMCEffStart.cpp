@@ -814,5 +814,3 @@ void CMCEffCylinder::bindOutAnim() {
     mLayout->SetAnimationEnable(mAnimTrans18, true);
     mLayout->Animate(0);
 }
-
-void __ct__CMCEffStart(){}

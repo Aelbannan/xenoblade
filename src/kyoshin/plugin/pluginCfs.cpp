@@ -545,20 +545,16 @@ int isMainParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int firstOut = 0;
-    int secondOut = -1;
+    int secondOut = 0;
+    int firstOut = -1;
     int* data = func_8009ECB0();
-    func_8009E344((void*)data, val, &firstOut, &secondOut);
+    func_8009E344((void*)data, val, &secondOut, &firstOut);
     
-    int result = firstOut;
-    int sub = result - 1;
-    int neg = -sub;
-    int orVal = neg | sub;
-    int boolVal = ((unsigned int)orVal >> 31) + 1;
+    int result = secondOut;
+    int orVal = (1 - result) | (result - 1);
     
     VMArg ret;
-    ret.type = 1;
-    ret.value.intVal = boolVal;
+    *(u8*)&ret.type = ((unsigned int)orVal >> 31) + 1;
     vmRetValSet(pThread, &ret);
     return 1;
 }
@@ -568,20 +564,16 @@ int isResvParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int firstOut = 0;
-    int secondOut = -1;
+    int secondOut = 0;
+    int firstOut = -1;
     int* data = func_8009ECB0();
-    func_8009E344((void*)data, val, &firstOut, &secondOut);
+    func_8009E344((void*)data, val, &secondOut, &firstOut);
     
-    int result = firstOut;
-    int sub = result - 2;
-    int neg = -sub;
-    int orVal = neg | sub;
-    int boolVal = ((unsigned int)orVal >> 31) + 1;
+    int result = secondOut;
+    int orVal = (2 - result) | (result - 2);
     
     VMArg ret;
-    ret.type = 1;
-    ret.value.intVal = boolVal;
+    *(u8*)&ret.type = ((unsigned int)orVal >> 31) + 1;
     vmRetValSet(pThread, &ret);
     return 1;
 }
@@ -754,8 +746,7 @@ int addItem(VMThread* pThread) {
     int clz = __cntlzw(boolVal);
     
     VMArg ret;
-    ret.type = 1;
-    ret.value.intVal = ((unsigned int)clz >> 5) + 1;
+    *(u8*)&ret.type = ((unsigned int)clz >> 5) + 1;
     vmRetValSet(pThread, &ret);
     return 1;
 }
@@ -765,8 +756,10 @@ int delItem(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int v31 = vmArgIntGet(2, arg);
     
-    int val = 1;
-    if (!vmArgOmitChk(pThread, 2)) {
+    int val;
+    if (vmArgOmitChk(pThread, 2)) {
+        val = 1;
+    } else {
         VMArg* arg2 = vmArgPtrGet(pThread, 2);
         val = vmArgIntGet(3, arg2);
     }
@@ -1299,10 +1292,10 @@ int partyMember(VMThread* vmThread) {
     int* partyData = func_8009ECB0();
     int offset = (memberIdx - 1) * 4;
     int memberVal = *(int*)((u8*)partyData + 4 + offset);
-    bool present = (memberVal == 0) ? false : true;
+    int clz = __cntlzw(memberVal);
 
     VMArg ret;
-    ret.type = present ? 1 : 2;
+    *(u8*)&ret.type = ((unsigned int)clz >> 5) + 1;
     vmRetValSet(vmThread, &ret);
     return 1;
 }
@@ -1335,10 +1328,10 @@ int waitPop(VMThread* vmThread) {
 // --- partyWarp (us-8004b154) ---
 int partyWarp(VMThread* vmThread) {
     for (int i = 1; i < 3; i++) {
-        void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+        cf::unkPartyPlayerDispatch* player =
+            (cf::unkPartyPlayerDispatch*)getPlayer__Q22cf13CfGameManagerFi(i);
         if (player != NULL) {
-            // Dispatch via virtual table slot 0x110.
-            void* task = (*(void* (***)(void*))player)[0x110 / 4](player);
+            void* task = player->getTask();
             if (task != NULL) {
                 func_80199678((u8*)task + 0x8C, 1);
             }
@@ -1456,18 +1449,9 @@ int setPcCtrl(VMThread* vmThread) {
 
 // --- saveNamedCount (us-8004b4fc) ---
 int saveNamedCount(VMThread* vmThread) {
-    int total = func_80291BF8() + func_8009CF8C(0x10A);
-
-    int clamped;
-    if (total < 0) {
-        clamped = 0;
-    } else if (total > 0x3E7) {
-        clamped = 0x3E7;
-    } else {
-        clamped = total;
-    }
-
-    func_8009D018(0x10A, clamped);
+    int count = func_80291BF8();
+    int total = count + func_8009CF8C(0x10A);
+    func_8009D018(0x10A, total < 0 ? 0 : (total > 0x3E7 ? 0x3E7 : total));
     return 0;
 }
 

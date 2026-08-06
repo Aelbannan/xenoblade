@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6817 |
-| extern "C" declarations (non-lbl_*, imports) | 2513 |
-| extern "C" definitions (forced names) | 2101 |
-| `self`/register-style params | 3723 |
-| `void*` (params + locals) | 5109 |
-| raw pointer offset arithmetic | 3141 |
+| extern "C" (total lines) | 6918 |
+| extern "C" declarations (non-lbl_*, imports) | 2596 |
+| extern "C" definitions (forced names) | 2103 |
+| `self`/register-style params | 3786 |
+| `void*` (params + locals) | 5122 |
+| raw pointer offset arithmetic | 3148 |
 | deref-through-cast arithmetic | 1367 |
 | inline asm / `register` | 88 |
 | rN-named params | 315 |
@@ -30,7 +30,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CSaveLoad.cpp | 799 |
 | src/kyoshin/cf/object/CfObjectEne.cpp | 728 |
 | src/kyoshin/cf/IResInfo.cpp | 726 |
-| src/kyoshin/CItemBoxInfo.cpp | 680 |
+| src/kyoshin/CItemBoxInfo.cpp | 682 |
 | src/kyoshin/code_80135FDC.cpp | 546 |
 | src/kyoshin/CFloorMap.cpp | 518 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 494 |
@@ -81,7 +81,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/effect/CETrail.cpp | 23 | 12 | 5 | 26 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8718.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/effect/code_804CC2B8.cpp | 5 | 0 | 17 | 6 | 3 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/effect/code_804CC2B8.cpp | 8 | 0 | 23 | 13 | 5 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804D854C.cpp | 0 | 1 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804D9274.cpp | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804DB938.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -272,17 +272,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CCollepedia.cpp | 54 | 46 | 24 | 23 | 26 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCur.cpp | 1 | 45 | 0 | 21 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CEquipChange.cpp | 12 | 1 | 20 | 4 | 3 | 2 | 0 | 0 | 0 |
-| src/kyoshin/CEquipItemBox.cpp | 10 | 94 | 7 | 6 | 2 | 1 | 0 | 0 | 0 |
+| src/kyoshin/CEquipItemBox.cpp | 11 | 91 | 11 | 7 | 2 | 1 | 0 | 0 | 0 |
 | src/kyoshin/CErrMes.cpp | 1 | 1 | 0 | 3 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CExchangeWin.cpp | 1 | 14 | 16 | 8 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFade.cpp | 0 | 1 | 1 | 1 | 3 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 0 | 4 | 47 | 130 | 152 | 87 | 0 | 1 | 6 |
 | src/kyoshin/CItemBoxGrid.cpp | 283 | 9 | 375 | 283 | 295 | 83 | 0 | 71 | 19 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 10 | 0 | 4 | 4 | 5 | 1 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxInfo.cpp | 1 | 1 | 22 | 220 | 216 | 124 | 0 | 18 | 0 |
+| src/kyoshin/CItemBoxInfo.cpp | 4 | 1 | 22 | 219 | 216 | 124 | 0 | 18 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 6 | 4 | 19 | 10 | 4 | 1 | 0 | 1 | 0 |
-| src/kyoshin/CKizunaTalkList.cpp | 1 | 1 | 15 | 1 | 0 | 0 | 0 | 1 | 0 |
-| src/kyoshin/CKizunagram.cpp | 0 | 0 | 10 | 7 | 7 | 3 | 0 | 0 | 0 |
+| src/kyoshin/CKizunaTalkList.cpp | 21 | 1 | 29 | 8 | 0 | 0 | 0 | 1 | 0 |
+| src/kyoshin/CKizunagram.cpp | 3 | 0 | 19 | 7 | 7 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CLoad.cpp | 0 | 4 | 5 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMainMenu.cpp | 8 | 8 | 10 | 12 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 9 | 1 | 4 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -291,10 +291,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CNandData.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CNumSelect.cpp | 1 | 1 | 5 | 5 | 2 | 0 | 0 | 2 | 0 |
 | src/kyoshin/COccCulling.cpp | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 3 | 0 |
-| src/kyoshin/COption.cpp | 7 | 14 | 24 | 5 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/COption.cpp | 11 | 14 | 24 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CPartyStateWin.cpp | 0 | 0 | 6 | 6 | 4 | 2 | 0 | 1 | 0 |
 | src/kyoshin/CPassiveSkill.cpp | 0 | 1 | 21 | 21 | 13 | 3 | 0 | 0 | 0 |
-| src/kyoshin/CPcKizunagram.cpp | 2 | 0 | 40 | 0 | 0 | 0 | 0 | 2 | 0 |
+| src/kyoshin/CPcKizunagram.cpp | 5 | 3 | 40 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/CPresentWin.cpp | 0 | 1 | 11 | 7 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/CQstLogInfo.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogList.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -308,7 +308,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CSysWin.cpp | 0 | 4 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinBuff.cpp | 0 | 3 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSave.cpp | 0 | 3 | 5 | 5 | 2 | 2 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinScenarioLog.cpp | 10 | 2 | 11 | 10 | 3 | 2 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinScenarioLog.cpp | 10 | 2 | 15 | 10 | 4 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSelect.cpp | 1 | 3 | 10 | 10 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 0 | 13 | 7 | 15 | 9 | 3 | 0 | 0 | 0 |
@@ -351,7 +351,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCam.cpp | 17 | 76 | 53 | 72 | 18 | 10 | 0 | 5 | 0 |
 | src/kyoshin/cf/CfCamDirectionIntf.cpp | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent.cpp | 0 | 2 | 2 | 2 | 2 | 1 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCamEvent_1.cpp | 3 | 1 | 4 | 2 | 4 | 4 | 0 | 0 | 6 |
+| src/kyoshin/cf/CfCamEvent_1.cpp | 4 | 2 | 4 | 2 | 4 | 4 | 0 | 0 | 6 |
 | src/kyoshin/cf/CfCamLookatIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamTargetIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollAABBImpl.cpp | 5 | 1 | 6 | 9 | 0 | 0 | 0 | 1 | 0 |
@@ -398,7 +398,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/IResInfo.cpp | 45 | 73 | 71 | 105 | 189 | 76 | 0 | 4 | 0 |
 | src/kyoshin/cf/chain/CChain.cpp | 0 | 19 | 5 | 5 | 5 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorEne.cpp | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/chain/CChainActorList.cpp | 3 | 0 | 7 | 3 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/chain/CChainActorList.cpp | 5 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorPc.cpp | 8 | 7 | 24 | 4 | 17 | 1 | 0 | 0 | 10 |
 | src/kyoshin/cf/chain/CChainCombo.cpp | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainEffect.cpp | 0 | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 |
@@ -420,7 +420,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/object/CfObjectPoint.cpp | 10 | 1 | 8 | 11 | 1 | 0 | 0 | 0 | 2 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 13 | 8 | 7 | 0 | 0 | 0 |
-| src/kyoshin/cf/voice/CCharVoiceMan.cpp | 6 | 0 | 5 | 4 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/CCharVoiceMan.cpp | 24 | 0 | 5 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 4 | 1 | 6 | 1 | 2 | 1 | 0 | 0 | 13 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -437,7 +437,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cfsys/CfObjectImplPc.cpp | 3 | 0 | 6 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cfsys/CfObjectImplWalker.cpp | 2 | 1 | 8 | 4 | 2 | 1 | 0 | 0 | 0 |
 | src/kyoshin/code_800A3B24.cpp | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/code_800A75FC.cpp | 6 | 1 | 1 | 11 | 2 | 0 | 0 | 1 | 0 |
+| src/kyoshin/code_800A75FC.cpp | 7 | 2 | 1 | 11 | 2 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
 | src/kyoshin/code_800B06A4.cpp | 27 | 12 | 61 | 83 | 63 | 35 | 0 | 0 | 2 |
 | src/kyoshin/code_80135FDC.cpp | 56 | 71 | 12 | 164 | 82 | 14 | 0 | 0 | 12 |
@@ -469,16 +469,16 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/help/CHelp_Target.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/main.cpp | 15 | 0 | 1 | 7 | 0 | 0 | 1 | 1 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1 | 0 | 53 | 9 | 6 | 0 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 8 | 4 | 16 | 2 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 13 | 4 | 19 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalSupport.cpp | 9 | 8 | 10 | 9 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCEffStart.cpp | 1 | 0 | 1 | 3 | 3 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCGetItemBox.cpp | 8 | 0 | 14 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 0 | 4 | 4 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 20 | 0 | 17 | 8 | 2 | 1 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 38 | 0 | 39 | 10 | 2 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/code_80213488.cpp | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 40 | 6 | 9 | 32 | 0 | 0 | 3 | 1 | 16 |
-| src/kyoshin/menu/CMenuArtsSet.cpp | 3 | 4 | 42 | 10 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuArtsSet.cpp | 4 | 4 | 42 | 10 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleChain.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 0 | 0 | 0 | 0 | 3 | 3 | 0 | 0 | 0 |
@@ -529,7 +529,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/plugin/ocUnit.cpp | 31 | 50 | 27 | 111 | 54 | 41 | 0 | 4 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 6 | 55 | 16 | 7 | 0 | 1 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 19 | 10 | 10 | 0 | 0 | 0 |
-| src/kyoshin/plugin/pluginCfs.cpp | 88 | 0 | 2 | 37 | 23 | 14 | 0 | 0 | 2 |
+| src/kyoshin/plugin/pluginCfs.cpp | 88 | 0 | 2 | 37 | 27 | 14 | 0 | 0 | 2 |
 | src/kyoshin/plugin/pluginEve.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginHelp.cpp | 6 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginSnd.cpp | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -793,10 +793,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/effect/code_804CC2B8.cpp": {
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 5,
-  "ptr_arith": 3,
-  "self_params": 17,
-  "void_ptr": 6
+  "extern_c_nonlbl_decl": 8,
+  "ptr_arith": 5,
+  "self_params": 23,
+  "void_ptr": 13
  },
  "libs/monolib/src/effect/code_804D854C.cpp": {
   "deref_arith": 3,
@@ -1680,11 +1680,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CEquipItemBox.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 10,
-  "extern_c_nonlbl_def": 94,
+  "extern_c_nonlbl_decl": 11,
+  "extern_c_nonlbl_def": 91,
   "ptr_arith": 2,
-  "self_params": 7,
-  "void_ptr": 6
+  "self_params": 11,
+  "void_ptr": 7
  },
  "src/kyoshin/CErrMes.cpp": {
   "extern_c_nonlbl_decl": 1,
@@ -1733,12 +1733,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CItemBoxInfo.cpp": {
   "deref_arith": 124,
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 1,
   "ptr_arith": 216,
   "rn_params": 18,
   "self_params": 22,
-  "void_ptr": 220
+  "void_ptr": 219
  },
  "src/kyoshin/CItemBoxLine.cpp": {
   "deref_arith": 1,
@@ -1750,16 +1750,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 10
  },
  "src/kyoshin/CKizunaTalkList.cpp": {
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 21,
   "extern_c_nonlbl_def": 1,
   "rn_params": 1,
-  "self_params": 15,
-  "void_ptr": 1
+  "self_params": 29,
+  "void_ptr": 8
  },
  "src/kyoshin/CKizunagram.cpp": {
   "deref_arith": 3,
+  "extern_c_nonlbl_decl": 3,
   "ptr_arith": 7,
-  "self_params": 10,
+  "self_params": 19,
   "void_ptr": 7
  },
  "src/kyoshin/CLoad.cpp": {
@@ -1811,7 +1812,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "src/kyoshin/COption.cpp": {
-  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_decl": 11,
   "extern_c_nonlbl_def": 14,
   "self_params": 24,
   "void_ptr": 5
@@ -1831,7 +1832,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 21
  },
  "src/kyoshin/CPcKizunagram.cpp": {
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 5,
+  "extern_c_nonlbl_def": 3,
   "rn_params": 2,
   "self_params": 40
  },
@@ -1914,8 +1916,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "deref_arith": 2,
   "extern_c_nonlbl_decl": 10,
   "extern_c_nonlbl_def": 2,
-  "ptr_arith": 3,
-  "self_params": 11,
+  "ptr_arith": 4,
+  "self_params": 15,
   "void_ptr": 10
  },
  "src/kyoshin/CSysWinSelect.cpp": {
@@ -2191,8 +2193,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CfCamEvent_1.cpp": {
   "deref_arith": 4,
-  "extern_c_nonlbl_decl": 3,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 2,
   "goto_count": 6,
   "ptr_arith": 4,
   "self_params": 4,
@@ -2479,9 +2481,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "src/kyoshin/cf/chain/CChainActorList.cpp": {
-  "extern_c_nonlbl_decl": 3,
-  "self_params": 7,
-  "void_ptr": 3
+  "extern_c_nonlbl_decl": 5,
+  "self_params": 8
  },
  "src/kyoshin/cf/chain/CChainActorPc.cpp": {
   "deref_arith": 1,
@@ -2623,7 +2624,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 13
  },
  "src/kyoshin/cf/voice/CCharVoiceMan.cpp": {
-  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_decl": 24,
   "self_params": 5,
   "void_ptr": 4
  },
@@ -2706,8 +2707,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "src/kyoshin/code_800A75FC.cpp": {
-  "extern_c_nonlbl_decl": 6,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_def": 2,
   "ptr_arith": 2,
   "rn_params": 1,
   "self_params": 1,
@@ -2862,9 +2863,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 9
  },
  "src/kyoshin/makecrystal/CMCCrystalInfo.cpp": {
-  "extern_c_nonlbl_decl": 8,
+  "extern_c_nonlbl_decl": 13,
   "extern_c_nonlbl_def": 4,
-  "self_params": 16,
+  "self_params": 19,
   "void_ptr": 2
  },
  "src/kyoshin/makecrystal/CMCCrystalSupport.cpp": {
@@ -2898,10 +2899,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 20,
+  "extern_c_nonlbl_decl": 38,
   "ptr_arith": 2,
-  "self_params": 17,
-  "void_ptr": 8
+  "self_params": 39,
+  "void_ptr": 10
  },
  "src/kyoshin/makecrystal/code_80213488.cpp": {
   "self_params": 2,
@@ -2917,7 +2918,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 32
  },
  "src/kyoshin/menu/CMenuArtsSet.cpp": {
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 4,
   "self_params": 42,
   "void_ptr": 10
@@ -3209,7 +3210,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "deref_arith": 14,
   "extern_c_nonlbl_decl": 88,
   "goto_count": 2,
-  "ptr_arith": 23,
+  "ptr_arith": 27,
   "self_params": 2,
   "void_ptr": 37
  },

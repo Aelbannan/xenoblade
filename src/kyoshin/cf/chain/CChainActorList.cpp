@@ -45,8 +45,28 @@ void func_8027BA0C(){}
 void func_8027BB4C(){}
 void func_8027BC14(){}
 void func_8027BE84(){}
-void func_8027BF58(){}
-void func_8027EEF4(int);
+extern "C" void func_8027EEF4(int);
+extern "C" u32 func_8027EE88(int, int);
+
+// When the chain flag bit 1 is set, query a value and emit threshold events.
+void func_8027BF58(cf::CChainFlag* self) {
+    if (self->field_0x3F00 & 2) {
+        u32 v = func_8027EE88(0x2f, 1);
+        if (v >= 1) {
+            func_8027EEF4(0x2f);
+        }
+        if (v >= 0x32) {
+            func_8027EEF4(0x30);
+        }
+        if (v >= 0xc8) {
+            func_8027EEF4(0x31);
+        }
+        if (v >= 0x3e8) {
+            func_8027EEF4(0x32);
+        }
+        lbl_eu_80662A80 = 1;
+    }
+}
 
 void func_8027BFE0(unsigned int param) {
     if (param >= 0xBB8) {

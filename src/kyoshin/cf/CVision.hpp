@@ -36,6 +36,31 @@ namespace cf{
         float unk74;            // 0x74
     };
 
+    // Sub-object anchored at CVision+0x4 (valid when field_00 != 0). Size 0x834.
+    class CVisionSub {
+    public:
+        u32 field_00;        // 0x00 model / id
+        u32 field_04;        // 0x04
+        u8 unk08[0x0C - 0x08];
+        void* field_0C;      // 0x0C
+        u8 unk10[0x824 - 0x10];
+        u32 field_824;       // 0x824 flag bits
+        u8 unk828[0x834 - 0x828]; // 0x828 pad to 0x834
+    };
+
+    // Member-function pointer triplet (ptmf) at CVision+0x261B8.
+    struct CVisionPtmf {
+        u32 mPfn;    // 0x00
+        u32 mObj;    // 0x04
+        u32 mDelta;  // 0x08
+    };
+
+    // One of the 0x4818-byte members of CVision::unk20D4 (per-slot sub-state).
+    class CVisionSlot {
+    public:
+        u8 unk0[0x4818];
+    };
+
     //size: 0x2623C
     class CVision : public IObjectInfo {
     public:
@@ -47,11 +72,17 @@ namespace cf{
 
         //0x0: vtable
         //0x0-4: IObjectInfo
-        u8 unk4[0x20D4 - 0x4];
+        CVisionSub sub; //0x04 (0x834 bytes)
+        u8 unk838[0x20D4 - 0x838]; //0x838..0x20D4
         UnkClass_801A36D0 unk20D4[8]; //0x20D4 (0x240C0 bytes, ends 0x26194)
-        u8 unk26194[0x261A8 - 0x26194]; //0x26194
+        f32 field_26194; //0x26194
+        f32 field_26198; //0x26198
+        f32 field_2619C; //0x2619C
+        f32 field_261A0; //0x261A0
+        u8 field_261A4; //0x261A4
+        u8 unk261A5[3]; //0x261A5
         CVisionEffect* effectArray[4]; //0x261A8 (four pointed-to effect objects)
-        u8 unk261B8[0x261C4 - 0x261B8]; //0x261B8
+        CVisionPtmf mPtmf; //0x261B8 (12 bytes)
         UnkClass_801A3728 unk261C4; //0x261C4 (size 0x78, ends 0x2623C)
     };
 

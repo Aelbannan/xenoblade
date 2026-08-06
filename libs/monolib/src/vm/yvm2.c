@@ -809,6 +809,8 @@ VMArg* vmStackNextGet(VMThread* pThread){
 #define rotrBytes(a, b, n) (a >> n) | ((b & rotrMask(n)) << (8 - n))
 
 //I have no idea how to match this
+//optimize_for_size is scoped to THIS function only: the vmc read loops below
+//must stay -O4 so MWCC auto-unrolls them to match retail.
 #pragma optimize_for_size on
 DECOMP_DONT_INLINE void encodeScrambleSub(u8* pData, int length) {
     //Rotate each group of 32 bits by 2 to the right
@@ -826,6 +828,7 @@ DECOMP_DONT_INLINE void encodeScrambleSub(u8* pData, int length) {
         pData += 4;
     }
 }
+#pragma optimize_for_size off
 
 void encodeScramble(u8* pData){
     SBHeader* header = (SBHeader*)pData;
@@ -1102,12 +1105,12 @@ VMThread* vmThreadCreate(SBHeader* param1, u32 param2){
     return NULL;
 }
 
-inline int getOpcodeParam(VMThread* pThread, u8 code){
+static inline int getOpcodeParam(VMThread* pThread, u8 code){
     int pc = pThread->reg.pc;
     return (int)vmDataGetCached(pThread, pc + 1, vmcOpcodes[code].paramSize);
 }
 
-inline void incrementPc(VMThread* pThread, u8 code){
+static inline void incrementPc(VMThread* pThread, u8 code){
     //Increment PC by the number of bytes for the parameter plus 1 for the opcode byte
     pThread->reg.pc += vmcOpcodes[code].paramSize + 1;
 }
@@ -1161,14 +1164,29 @@ int vmc_pool_int(VMThread* pThread, u8 code){
 }
 
 int vmc_pool_fixed(VMThread* pThread, u8 code){
-    int no = getOpcodeParam(pThread, code);
-    int val = vmFixedPoolGet((SBHeader*)pThread->scriptData, no);
+    //Read the opcode parameter: a variable-length big-endian integer.
+    int pc = pThread->reg.pc;
+    int length = vmcOpcodes[code].paramSize;
+    u8* p = &pThread->codeData[pc + 1];
+    u32 result = (u32)*p++;
+    for (int i = 1; i < length; i++) {
+        result = (result << 8) | (u32)*p++;
+    }
 
-    VMArg* arg = vmStackNextGet(pThread);
-    arg->value.intVal = val;
-    arg->type = VM_TYPE_FIXED;
+    //Fetch the fixed-pool value at that parameter index.
+    SBHeader* header = (SBHeader*)pThread->scriptData;
+    SBSectionHeader* pool = header->fixedPoolOfs;
+    u32* entries = (u32*)((char*)pool + pool->entriesOffset);
+    int val = (int)entries[result];
 
-    incrementPc(pThread, code);
+    //Push the value onto the stack.
+    int sp = pThread->reg.sp++;
+    pThread->stack[sp].type = VM_TYPE_FIXED;
+    pThread->stack[sp].value.intVal = val;
+
+    //Advance the program counter past the opcode and its parameter.
+    pThread->reg.pc = pc + length + 1;
+
     return VMC_RESULT_0;
 }
 

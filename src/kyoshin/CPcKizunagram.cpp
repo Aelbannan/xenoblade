@@ -3,10 +3,13 @@
 
 #include "kyoshin/CPcKizunagram.hpp"
 
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/util/MemManager.hpp"
+
 // Forward declarations of intra-TU callees (free unmangled functions).
-void func_8025DCFC(CPcKizunagram* self);
-void func_8025E3A4(CPcKizunagram* self, u32 arg);
-void func_8025E4A4(CPcKizunagram* self);
+extern "C" void func_8025DCFC(CPcKizunagram* self);
+extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg);
+extern "C" void func_8025E4A4(CPcKizunagram* self);
 void func_8025E56C(CPcKizunagram* self);
 void func_8025E5A8(CPcKizunagram* self);
 void func_8025E5E4(u32 arg);
@@ -14,6 +17,13 @@ void func_8025EE94(CPcKizunagramBig* self);
 
 // Sound / effect helper (C-linkage retail symbol func_80138078__FUl).
 extern "C" void func_80138078__FUl(u32 arg);
+
+// Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+// String base for the affinity-chart layout paths (targets add byte offsets).
+extern char lbl_eu_8050D868[];
 
 // Named float constants in .sdata2 referenced via @sda21 by func_8025E56C/E5A8.
 extern const float lbl_eu_8066887C;
@@ -34,7 +44,16 @@ u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 void func_8025D8C4(){}
 
-void func_8025D954(){}
+// Draw the main layout and, if present, the embedded cursor layout.
+void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mStateByte1 == 0) return;
+    if (self->mStateByte2 == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mLayout, drawInfo, 0, 1);
+    nw4r::lyt::Layout* cursorLayout = ((CPcKizunaCur*)self->mKizunaCur)->mpLayout;
+    if (cursorLayout != 0) {
+        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(cursorLayout, drawInfo, 0, 1);
+    }
+}
 
 void func_8025D9C4(){}
 
@@ -86,9 +105,19 @@ void func_8025DB30(CPcKizunagram* self) {
     func_80138078__FUl(1);
 }
 
-void func_8025DB78(){}
+void func_8025DB78(CPcKizunagram* self) {
+    func_8025E3A4(self, 1);
+    func_8025E4A4(self);
+    func_8025DCFC(self);
+    func_80138078__FUl(1);
+}
 
-void func_8025DBC0(){}
+void func_8025DBC0(CPcKizunagram* self) {
+    func_8025E3A4(self, 0);
+    func_8025E4A4(self);
+    func_8025DCFC(self);
+    func_80138078__FUl(1);
+}
 
 void func_8025DC08(){}
 
@@ -101,15 +130,33 @@ void func_8025DC8C(CPcKizunagram* self) {
     }
 }
 
-void func_8025DCB0(){}
+// Start an async file read of the affinity-chart layout; stash the handle and
+// mark the file job for flag-2 handling.
+void func_8025D874(CPcKizunagram* self) {
+    self->mFileHandle = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), lbl_eu_8050D868 + 0x66, (IWorkEvent*)self, 0, 0);
+    CDeviceFile::setHandleFlag2(self->mFileHandle);
+}
 
-void func_8025DCFC(CPcKizunagram* self){}
+// When the opening animation (mAnimTransform at +0x20) finishes, mark the
+// window as open (sub-state 0, mIsOpen = 1).
+void func_8025DCB0(CPcKizunagram* self) {
+    if (func_80137510(self->mAnimTransform, lbl_eu_8066887C) != 0) {
+        self->mStateByte2 = 0;
+        self->mIsOpen = 1;
+    }
+}
+
+// These three are large retail functions (0x100/0xc8/0x3dc) not yet
+// implemented here; noinline keeps callers emitting real bl instructions, and
+// extern "C" keeps the unmangled retail symbol names.
+extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self){}
 
 void func_8025E0D8(){}
 
-void func_8025E3A4(CPcKizunagram* self, u32 arg){}
+extern "C" __declspec(noinline) void func_8025E3A4(CPcKizunagram* self, u32 arg){}
 
-void func_8025E4A4(CPcKizunagram* self){}
+extern "C" __declspec(noinline) void func_8025E4A4(CPcKizunagram* self){}
 
 void func_8025E56C(CPcKizunagram* self) {
     self->mFloat48 += lbl_eu_8066887C;

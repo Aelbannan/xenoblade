@@ -21,12 +21,11 @@ struct RangeData {
 };
 
 // BSS symbols for the global singleton at lbl_eu_80572B94
-extern char lbl_eu_80572B94[];
 extern char lbl_eu_80572B88[];
 extern s8 lbl_eu_80663E98;
 
 void* memset(void*, int, unsigned long);
-void* __register_global_object(void* object, void* destructor, void* registration);
+extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
 // --- Global singleton struct at lbl_eu_80572B94 (0xB4 bytes, BSS) ---
 struct GlobalStruct_80572B94 {
@@ -47,21 +46,28 @@ struct GlobalStruct_80572B94 {
     int field_0x44;   // 0 (BSS)
     u8 _48[0x50 - 0x48];
     int field_0x50;   // 0
-    u8 _54[0x5C - 0x54];
-    u8 _5C[0x34];      // memset 0 (0x5C-0x90)
+    u8 _54[4];         // 0x54-0x58
+    int field_0x58;   // 0x58-0x5C
+    u8 field_0x5C[0x34];      // memset 0 (0x5C-0x90)
     u8 _90[0xA0 - 0x90];
-    u8 _A0[0xC];       // memset 0 (0xA0-0xAC)
-    u8 _AC[0xB0 - 0xAC];
+    int field_0xA0;    // 0xA0
+    int field_0xA4;    // 0xA4
+    int field_0xA8;    // 0xA8
+    int field_0xAC;    // 0xAC
     int field_0xB0;   // 0
 };
 
-void __dt__800A75FC(){}
+// Global singleton object at lbl_eu_80572B94
+extern GlobalStruct_80572B94 lbl_eu_80572B94;
+
+extern "C" void __dt__800A75FC(){}
 
 extern "C" void func_800A76EC(){}
 
 void func_800A7CDC() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -75,8 +81,8 @@ void func_800A7CDC() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
@@ -87,7 +93,8 @@ void func_800A7D9C(){}
 
 int func_800A7EFC() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -101,27 +108,188 @@ int func_800A7EFC() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x10;
+    return lbl_eu_80572B94.field_0x10;
 }
 
-void func_800A7FBC(){}
+int func_800A7FBC() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0x18;
+}
 
-void func_800A807C(){}
+int func_800A807C() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0x34;
+}
 
-void func_800A813C(){}
+int func_800A813C() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0x20;
+}
 
-void func_800A81FC(){}
+int func_800A81FC() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0x1C;
+}
 
-void func_800A82BC(){}
+int func_800A82BC() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0xA0;
+}
 
-void func_800A837C(){}
+int func_800A837C() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0xA4;
+}
 
-void func_800A843C(){}
+int func_800A843C() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0xA8;
+}
 
 void func_800A84FC(){}
 
@@ -210,7 +378,30 @@ void func_800A8CD4(){}
 
 u32 func_800A8DA4(){ return 0x500000; }
 
-void func_800A8DAC(){}
+int func_800A8DAC() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0x58;
+}
 
 void func_800A8E6C(){}
 
@@ -263,12 +454,36 @@ void func_800A9784(){}
 
 void func_800A98A8(){}
 
-void func_800A99D0(){}
+int func_800A99D0() {
+    if (lbl_eu_80663E98 == 0) {
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(g->field_0x5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return lbl_eu_80572B94.field_0xAC;
+}
 
 
 int func_800A9A90() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        // Lazy-init the global singleton once.
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -282,17 +497,17 @@ int func_800A9A90() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x50;
+    return lbl_eu_80572B94.field_0x50;
 }
 
 int func_800A9B50() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -306,17 +521,17 @@ int func_800A9B50() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x38;
+    return lbl_eu_80572B94.field_0x38;
 }
 
 int func_800A9C10() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -330,17 +545,17 @@ int func_800A9C10() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x3C;
+    return lbl_eu_80572B94.field_0x3C;
 }
 
 int func_800A9CD0() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -354,17 +569,17 @@ int func_800A9CD0() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x40;
+    return lbl_eu_80572B94.field_0x40;
 }
 
 int func_800A9D90() {
     if (lbl_eu_80663E98 == 0) {
-        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        GlobalStruct_80572B94* g = &lbl_eu_80572B94;
         g->field_0x00 = -1;
         g->field_0x04 = -1;
         g->field_0x08 = -1;
@@ -378,12 +593,12 @@ int func_800A9D90() {
         g->field_0x38 = 0;
         g->field_0x3C = 0;
         g->field_0x50 = 0;
-        memset(g->_A0, 0, 0xC);
-        memset(g->_5C, 0, 0x34);
+        memset(&g->field_0xA0, 0, 0xC);
+        memset(&g->field_0x5C, 0, 0x34);
         __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
         lbl_eu_80663E98 = 1;
     }
-    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x44;
+    return lbl_eu_80572B94.field_0x44;
 }
 
 void func_800A9E50(){}

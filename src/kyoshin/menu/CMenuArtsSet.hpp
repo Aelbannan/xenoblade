@@ -70,6 +70,40 @@ public:
     void* field_0x10;
 };
 
+// 2-byte-cursor + arts table object used by func_802322BC. The arts table
+// is an array of 16-byte rows starting at 0x2C (0x100 bytes = 16 rows),
+// indexed by (field_0x20 + field_0x21) << 4.
+class SArts322BC {
+public:
+    char _pad_00[0x20];
+    s8 field_0x20;
+    s8 field_0x21;
+    char _pad_22[0x2C - 0x22];
+    u8 mTable[0x100];   // 0x2C-0x12B
+    u8 field_0x12C;     // 0x12C
+};
+
+// AnimTransform driver used by func_8023506C.
+class SArts3506C {
+public:
+    char _pad_00[0x20];
+    void* mAnim20;      // 0x20 nw4r::lyt::AnimTransform*
+    char _pad_24[0x2C - 0x24];
+    u32 field_0x2C;     // 0x2C
+    char _pad_30[0x31 - 0x30];
+    u8 field_0x31;      // 0x31
+};
+
+// Cursor/state object used by func_802327B0.
+class SArts327B0 {
+public:
+    char _pad_00[0x20];
+    u8 field_0x20;
+    u8 field_0x21;
+    char _pad_22[0x28 - 0x22];
+    void* field_0x28;   // 0x28
+};
+
 // Element of the 0x49-byte array indexed by func_80230FF0.
 class SArtsSubDElem {
 public:

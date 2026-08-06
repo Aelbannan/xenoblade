@@ -49,19 +49,21 @@ bool StrmPlayer::Setup(StrmBufferPool* pBufferPool) {
 }
 
 void StrmPlayer::Shutdown() {
-    SoundThread::AutoLock lock;
-
     Stop();
 
-    if (!mSetupFlag) {
-        return;
+    {
+        SoundThread::AutoLock lock;
+
+        if (!mSetupFlag) {
+            return;
+        }
+
+        mBufferPool = NULL;
+        mStrmDataLoadTaskPool.Destroy(
+            mStrmDataLoadTaskArea, DATA_BLOCK_COUNT_MAX * sizeof(StrmDataLoadTask));
+
+        mSetupFlag = false;
     }
-
-    mBufferPool = NULL;
-    mStrmDataLoadTaskPool.Destroy(
-        mStrmDataLoadTaskArea, DATA_BLOCK_COUNT_MAX * sizeof(StrmDataLoadTask));
-
-    mSetupFlag = false;
 }
 
 bool StrmPlayer::Prepare(ut::FileStream* pFileStream, int voices,

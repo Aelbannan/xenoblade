@@ -4,6 +4,21 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 
+// --- referenced retail symbols (C linkage: plain symbol names) ---
+extern "C" void* __dl__FPv(void*);
+extern "C" int CSysWin_isActive(void*);
+extern "C" void func_801D216C(void*, int);
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_80139198(void*);
+extern "C" void func_80138078(u32);
+extern "C" void func_8022B8E4(void*);
+extern "C" void func_80285B70(CEIBCur*);
+extern "C" void func_80289CC0(CEquipItemBox*);
+extern "C" void func_80289E70(CEquipItemBox*);
+// Float constant in .sdata2, referenced via sda21 reloc.
+extern float lbl_eu_80668B28;
+
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
 // Write a CEquipItemData from 8 separate scalar inputs.
@@ -116,6 +131,14 @@ extern "C" void func_802848C4(){}
 
 extern "C" void func_80284A00(){}
 
+// Destructor clone: free object memory when this is non-null and delete flag set.
+void* __dt__802825D0(void* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
 extern "C" void func_80284B18(){}
 
 extern "C" void func_80284C30(){}
@@ -150,7 +173,13 @@ CEIBCur::CEIBCur(void* arcResAcc) {
     mVisible = 0;
 }
 
-extern "C" void __dt__80285954(){}
+// Destructor clone: free object memory when this is non-null and delete flag set.
+void* __dt__80285954(void* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 extern "C" void func_80285994(){}
 
@@ -165,15 +194,28 @@ extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 extern "C" void func_80285ABC(){}
 
-extern "C" void func_80285B24(){}
+void CEIBCur::func_80285B24() {
+    // Advance the layout's animation; when the animation finishes, hide the
+    // cursor and update the page state.
+    if (func_80137444((nw4r::lyt::AnimTransform*)mpAnimTrans1, lbl_eu_80668B28) != 0) {
+        mVisible = 0;
+        func_80285B70(this);
+    }
+}
 
-extern "C" void func_80285B70(){}
+extern "C" void func_80285B70(CEIBCur* self){}
 
 CEIBPageCur::CEIBPageCur(void* arcResAcc) : CEIBCur(arcResAcc) {
     mVtable = (void*)lbl_eu_805386EC;
 }
 
-extern "C" void __dt__80285C44(){}
+// Destructor clone: free object memory when this is non-null and delete flag set.
+void* __dt__80285C44(void* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 extern "C" void func_80285C84(){}
 
@@ -208,9 +250,25 @@ int CEquipItemBox::func_80286650() {
 
 u8 CEquipItemBox::func_80286698() { return unk_375; }
 
-extern "C" void func_802866A0(){}
+// Returns 1 when the first system window is active, otherwise queries the
+// sort menu window's state.
+int CEquipItemBox::func_802866A0() {
+    if (CSysWin_getUnk34(_padSysWin1) != 0) {
+        return 1;
+    }
+    return CSysWin_getUnk34(_padSysWin2);
+}
 
-extern "C" void func_802866E8(){}
+// Initialise the equip item box state (idempotent via unk_41 guard).
+void CEquipItemBox::func_802866E8() {
+    if (unk_41 != 0) return;
+    unk_41 = 1;
+    unk_43 = 0;
+    unk_1fe = 0;
+    func_80289E70(this);
+    unk_40 = 1;
+    func_80138078(0x6d);
+}
 
 extern "C" void func_80286740(){}
 
@@ -232,7 +290,13 @@ extern "C" void func_80287250(){}
 
 extern "C" void func_802873D8(){}
 
-extern "C" void func_80287D58(){}
+// Advance page-2 system-window state while it is visible and active.
+void CEquipItemBox::func_80287D58() {
+    if (unk_375 != 0 && CSysWin_getUnk34(_padSysWin2) != 0
+        && CSysWin_isActive(_padSysWin2) != 0) {
+        func_8022B8E4(_padSysWin2);
+    }
+}
 
 extern "C" void func_80287DB4(){}
 
@@ -267,11 +331,32 @@ extern "C" void func_80288948(){}
 
 extern "C" void func_802889C0(){}
 
-extern "C" void func_80288A1C(){}
+// Playback of the layout animation at 0x3C; when it finishes reset the state
+// bytes 0x40-0x43 (unk_43=active-mark, unk_41/unk_40 cleared).
+void CEquipItemBox::func_80288A1C() {
+    if (func_80137510((nw4r::lyt::AnimTransform*)field_3C, lbl_eu_80668B28) != 0) {
+        unk_43 = 1;
+        unk_41 = 0;
+        unk_40 = 0;
+    }
+}
 
-extern "C" void func_80288A6C(){}
+// When the first system window is active, switch page-cursor state and refresh.
+void CEquipItemBox::func_80288A6C() {
+    if (CSysWin_isActive(_padSysWin1) != 0) {
+        unk_41 = 2;
+        func_801D216C(&_pad44[0x30], 1);
+        func_80289CC0(this);
+    }
+}
 
-extern "C" void func_80288AC0(){}
+// If both pointer fields 0x34 and 0x38 are non-null, clear the sort menu and set unk_42.
+void CEquipItemBox::func_80288AC0() {
+    if (field_38 != 0 && field_34 != 0) {
+        func_80139198(0);
+        unk_42 = 1;
+    }
+}
 
 extern "C" void func_80288B14(){}
 
@@ -287,9 +372,9 @@ extern "C" void func_80289754(){}
 
 extern "C" void func_80289AA4(){}
 
-extern "C" void func_80289CC0(){}
+extern "C" void func_80289CC0(CEquipItemBox* self){}
 
-extern "C" void func_80289E70(){}
+extern "C" void func_80289E70(CEquipItemBox* self){}
 
 void CEquipItemBox::func_8028A07C() {
     memset(unk_36c, 0, 6);

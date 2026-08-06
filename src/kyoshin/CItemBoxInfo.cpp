@@ -12,13 +12,13 @@ extern "C" char lbl_eu_805063BC[];
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136910(nw4r::lyt::Layout*, const char*, u8);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void* func_8009EC9C(u32);
 u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
-void func_80124270(void*, void*);
+extern "C" void func_80124270(void*, void*);
 void func_80127BD8(void*, float*);
 void func_801390E0__FPP11CFileHandle(void*);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
@@ -105,15 +105,15 @@ extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80506330;
 extern float lbl_eu_80668040;
 extern float lbl_eu_8066800C;
-extern float lbl_eu_80668010;
+extern const float lbl_eu_80668010;
 u32 getLanguage__9CDeviceSCFv();
 void* CItem_initItemImplInstances(void*);
 u32 func_801393CC(void*);
 extern void* lbl_eu_80664110;
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
-void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
-void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
+extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -254,7 +254,8 @@ void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
 }
 
 void func_801D4C9C(CItemBoxInfo* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+    float arg = lbl_eu_80668010;
+    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform1, arg) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, true);
         info->state.state = 2;
@@ -269,7 +270,7 @@ void func_801D4D18(CItemBoxInfo* info) {
 }
 
 void func_801D4D64(CItemBoxInfo* info) {
-    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
@@ -467,13 +468,15 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
 }
 
+extern "C" char lbl_eu_8052E590[];
+extern "C" char lbl_eu_8052E568[];
+
 void func_801D62F8(void* arr, u32 index, const void* color) {
     if (index >= 3) {
-        Panic__Q24nw4r2dbFPCciPCce("file", 0x8f, "message");
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
-void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 void func_80137924(void*, void*, void*, void*);
 void func_801D4C9C(CItemBoxInfo*);
 void func_801D4D64(CItemBoxInfo*);
@@ -512,12 +515,6 @@ void func_801E1348(CItemBoxInfo2* info) {
     }
 }
 
-void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
-    ((s16*)dst)[0] = ((s16*)src)[0];
-    ((s16*)dst)[1] = ((s16*)src)[1];
-    ((s16*)dst)[2] = ((s16*)src)[2];
-    ((s16*)dst)[3] = ((s16*)src)[3];
-}
 void func_801D6394(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_801D85D8(info);
     func_801D69FC(info);
@@ -1279,7 +1276,7 @@ void func_801E174C(void* arg0, CItemBoxInfo2* info, u32 arg2) {
 }
 
 void func_801E17EC(CItemBoxInfo2* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), -0.0f) != 0) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), lbl_eu_80668010) != 0) {
         ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
         ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
         *(u32*)((u8*)info + 0x94) = 2;
@@ -1294,7 +1291,7 @@ void func_801E1868(CItemBoxInfo2* info) {
 }
 
 void func_801E18B4(CItemBoxInfo2* info) {
-    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
         ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;

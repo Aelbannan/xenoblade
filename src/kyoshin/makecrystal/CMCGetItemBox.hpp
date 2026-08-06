@@ -26,11 +26,19 @@ struct CMCGetItemBoxSysWin {
 struct CMCItemBoxSub {
     s16 table[0x80];                // 0x000-0x0FF: offset table
     u16 count;                      // 0x100: number of entries
-    u8  pad_102;                    // 0x102
+    u8  pad_102;                    // 0x102 (also read as an index source)
     u8  limit;                      // 0x103
     u8  counter;                    // 0x104
-    u8  pad_105[0x1D0 - 0x105];     // 0x105-0x1CF
+    u8  pad_105[0x108 - 0x105];     // 0x105-0x107
+    u8  field_108;                  // 0x108
+    u8  pad_109[0x148 - 0x109];     // 0x109-0x147
+    u32 field_148;                  // 0x148
+    u8  field_14C;                  // 0x14C
+    u8  pad_14D[0x1CC - 0x14D];     // 0x14D-0x1CB
+    u32 field_1CC;                  // 0x1CC
     CMCItemBoxEntry* listBase;      // 0x1D0: 52-byte Entry array base
+    u8  field_1D4;                  // 0x1D4
+    u8  pad_1D5[0x1D8 - 0x1D5];     // 0x1D5-0x1D7
 };
 
 class CMCGetItemBox {
@@ -45,9 +53,9 @@ public:
     // +0x00: vtable
     u8 _pad_04[0x3C - 0x04];          // 0x04-0x3B
     u32 field_3C;                     // 0x3C
-    u32 field_40;                     // 0x40
-    void* field_44;                   // 0x44
-    u8 _pad_48[0x4C - 0x48];          // 0x48-0x4B
+    u32 field_40;                     // 0x40 (layout/anim object w/ vtable)
+    void* field_44;                   // 0x44 (AnimTransform)
+    void* field_48;                   // 0x48 (AnimTransform)
     u8 field_4C;                      // 0x4C
     u8 field_4D;                      // 0x4D
     u8 _pad_4E[0x54 - 0x4E];          // 0x4E-0x53
@@ -55,12 +63,18 @@ public:
     u8 mField55;                      // 0x55
     u8 _pad_56[0x58 - 0x56];          // 0x56-0x57
     CMCItemBoxSubObj subObj_58;       // 0x58
-    u8 _pad_59[0xA0 - 0x59];          // 0x59-0x9F
+    u8 _pad_59[0x70 - 0x59];          // 0x59-0x6F
+    CMCItemBoxSubObj subObj_70;       // 0x70
+    u8 _pad_71[0x88 - 0x71];          // 0x71-0x87
+    CMCItemBoxSubObj subObj_88;       // 0x88
+    u8 _pad_89[0xA0 - 0x89];          // 0x89-0x9F
     CMCItemBoxSubObj subObj_A0;       // 0xA0
     u8 _pad_A1[0xB8 - 0xA1];          // 0xA1-0xB7
     CMCGetItemBoxSysWin sysWin_B8;    // 0xB8-0xF3
     CItemBoxInfo itemBox;             // 0xF4
-    u8 _pad[0x303 - (0xF4 + sizeof(CItemBoxInfo))];  // pad to 0x303
+    u8 _pad[0x301 - (0xF4 + sizeof(CItemBoxInfo))];  // pad to 0x301
+    u8 field_301;                     // 0x301
+    u8 _pad_302;                      // 0x302
     u8 mField303;                     // 0x303
     u8 _pad_304[0x314 - 0x304];       // 0x304-0x313
     CMCItemBoxSub sub_314;            // 0x314

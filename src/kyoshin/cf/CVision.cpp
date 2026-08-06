@@ -31,8 +31,63 @@ cf::CVision::CVision() {}
 
 void __ct__801A33AC(){}
 
+void func_801A380C(){}
+
+void func_801A39D8(){}
+
+void func_801A4194(){}
+
+void func_801A4578(){}
+
+void func_801A47D0(){}
+
+void func_801A4BC8(){}
+
+void func_801A4CF8(){}
+
+void func_801A506C(){}
+
+void func_801A5260(){}
+
+void func_801A5360(){}
+
+void func_801A5444(){}
+
+void func_801A5BA8(){}
+
+void func_801A5E58(){}
+
+void func_801A60B0(){}
+
+void func_801A6340(){}
+
 // Sub-object VFX management function (retail func_801A897C), stubbed here.
 void func_801A897C(CVision* self, int a, int b) {}
+
+void func_801A6540(){}
+
+void func_801A6A7C(){}
+
+void func_801A6BCC(){}
+
+void func_801A70DC(){}
+
+void func_801A74DC(){}
+
+void func_801A7704(){}
+
+void func_801A7D6C(){}
+
+int* func_801A8070(int* param) {
+    if (param[1] == 0) {
+        return 0;
+    }
+    return &param[1];
+}
+
+void func_801A8138(){}
+
+void func_801A8244(){}
 
 // ---------------------------------------------------------------------------
 // us-801a4df0: UnkClass_801A36D0 deleting destructor (__dt__801A36D0).
@@ -109,10 +164,9 @@ void func_801A808C(CVision* self, int index) {
 // us-801a9830: Clear the vision effect at `index` (retail func_801A80FC).
 // ---------------------------------------------------------------------------
 void func_801A80FC(CVision* self, int index) {
-    CVisionEffect* eff = self->effectArray[index];
-    if (eff != 0) {
-        eff->field_B0 = 0;
-        eff->field_68 |= 0x40;
+    if (self->effectArray[index] != 0) {
+        self->effectArray[index]->field_B0 = 0;
+        self->effectArray[index]->field_68 |= 0x40;
     }
     self->effectArray[index] = 0;
 }
@@ -123,7 +177,7 @@ void func_801A80FC(CVision* self, int index) {
 // ---------------------------------------------------------------------------
 void func_801A81FC(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
-        if ((u32)self->effectArray[i] == value) {
+        if (self->effectArray[i] == (CVisionEffect*)value) {
             self->effectArray[i] = 0;
             return;
         }
@@ -136,7 +190,7 @@ void func_801A81FC(CVision* self, u32 value) {
 // ---------------------------------------------------------------------------
 void func_801A924C(CVision* self, u32 value) {
     for (int i = 0; i < 4; i++) {
-        if ((u32)self->effectArray[i] == value) {
+        if (self->effectArray[i] == (CVisionEffect*)value) {
             CVisionEffect* e = self->effectArray[i];
             e->field_B0 = 0;
             self->effectArray[i] = 0;

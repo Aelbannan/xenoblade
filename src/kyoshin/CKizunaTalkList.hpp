@@ -54,15 +54,23 @@ class CKizunaTalkList : public IWorkEvent {
     friend void func_80273984(CKizunaTalkList*);
     friend void func_802739D8(CKizunaTalkList*);
     friend void func_80273A24(CKizunaTalkList*);
+
+    // free-function member-accessors for this TU's matched logic
+    friend void func_802732F4(CKizunaTalkList*);
+    friend void func_8027340C(CKizunaTalkList*, nw4r::lyt::DrawInfo*);
+    friend void func_80273564(CKizunaTalkList*);
+    friend void func_802735F0(CKizunaTalkList*);
+    friend void func_80273A70(CKizunaTalkList*);
+    friend void func_80273AD0(CKizunaTalkList*);
 private:
     /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
     /* 0x14 */ u32 mEntryCount;     // number of valid entries
     /* 0x18 */ u32 mUnknown18;
     /* 0x1C */ u32 mUnknown1C;
-    /* 0x20 */ u32 mUnknown20;
+    /* 0x20 */ nw4r::lyt::Layout* mpLayout20; // layout used for BindAnim-style anim control
     /* 0x24 */ nw4r::lyt::AnimTransform* mpAnim24;
     /* 0x28 */ nw4r::lyt::AnimTransform* mpAnim28;
-    /* 0x2C */ u8 _pad2C[0x18];     // CCur18 cursor (stub, 0x18 bytes)
+    /* 0x2C */ u8 mCursor[0x18];     // CCur18 cursor (stub, 0x18 bytes)
     /* 0x44 */ CScrollBar mScrollBar;
     /* 0x84 */ u8 mState84;
     /* 0x85 */ u8 mState85;         // state machine progression flag

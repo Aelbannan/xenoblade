@@ -13,9 +13,38 @@ u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
 u32 CSysWin_getUnk34(CMCGetItemBoxSysWin*);
 int  CSysWin_isActive(CMCGetItemBoxSysWin*);
 void func_8022B8E4(CMCGetItemBoxSysWin*);
+u32 func_80157CD0(u8);
+void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
 }
 
-void func_80296B44(){}
+// Foreign retail helpers (C++ visibility matched through the symbol map).
+namespace nw4r { namespace lyt { class AnimTransform; } }
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+void func_80138078(u32);
+extern float lbl_eu_80668BF0;
+
+// Same-unit helper functions (implemented as stubs below).
+void func_8029967C(CMCGetItemBox*);
+void func_802998C8(CMCGetItemBox*);
+void func_802999B0(CMCGetItemBox*);
+
+// Initialise a CMCItemBoxSub: clear the offset table to 0xFFFF, zero the
+// counters and index fields, then reset the whole table again.
+void func_80296B44(CMCItemBoxSub* x) {
+    for (int i = 0; i < 0x80; i++) x->table[i] = -1;
+    x->count = 0;
+    x->pad_102 = 0;
+    x->limit = 0;
+    x->counter = 0;
+    x->field_108 = 0;
+    x->field_148 = 0;
+    x->field_14C = 0;
+    x->field_1CC = 0;
+    x->listBase = (CMCItemBoxEntry*)0;
+    x->field_1D4 = 0;
+    for (int i = 0; i < 0x80; i++) x->table[i] = -1;
+}
 
 void __dt__80296BB0(){}
 
@@ -92,7 +121,18 @@ u8 CMCGetItemBox::func_80297D24() { return mField303; }
 
 void func_80297D2C(){}
 
-void func_80297E18(){}
+// When the item-box widget is done (state 3), advance to state 4, detach the
+// helper widgets and advance the item-box state machine.
+void func_80297E18(CMCGetItemBox* self) {
+    if (self->field_4D != 3) return;
+    self->field_4D = 4;
+    self->mField55 = 0;
+    func_801D216C(&self->subObj_58, 0);
+    func_801D216C(&self->subObj_70, 0);
+    func_801D216C(&self->subObj_88, 0);
+    advanceItemBoxState__FP12CItemBoxInfo(&self->itemBox);
+    func_80138078(0x6);
+}
 
 void func_80297E90(){}
 
@@ -102,11 +142,47 @@ void func_802980DC(){}
 
 void func_80298228(){}
 
-void func_80298378(){}
+// Increment the sub counter, refresh helper widgets, and play a sound when the
+// item-box limit is anything other than 1.
+void func_80298378(CMCGetItemBox* self) {
+    CMCItemBoxSub* x = &self->sub_314;
+    func_80296D00(x);
+    func_8029967C(self);
+    func_802998C8(self);
+    u8 lim = x->limit;
+    if (lim == 0) lim = 1;
+    if (lim != 1) func_80138078(0xa);
+}
 
-void func_802983E4(){}
+// Decrement the sub counter, refresh helper widgets, and play a sound when the
+// item-box limit is anything other than 1.
+void func_802983E4(CMCGetItemBox* self) {
+    CMCItemBoxSub* x = &self->sub_314;
+    func_80296D2C(x);
+    func_8029967C(self);
+    func_802998C8(self);
+    u8 lim = x->limit;
+    if (lim == 0) lim = 1;
+    if (lim != 1) func_80138078(0xa);
+}
 
-void func_80298450(){}
+// Toggle the item-box help window: close it when active, otherwise detach the
+// helper widgets when the layout flag is set.
+void func_80298450(CMCGetItemBox* self) {
+    if (CSysWin_getUnk34(&self->sysWin_B8) != 0) {
+        if (CSysWin_isActive(&self->sysWin_B8) != 0) {
+            func_8022B8E4(&self->sysWin_B8);
+            func_801D216C(&self->subObj_A0, 1);
+        }
+    } else {
+        if (self->mField303 != 0) {
+            self->mField303 = 0;
+            func_801D216C(&self->subObj_58, 1);
+            func_801D216C(&self->subObj_A0, 0);
+            func_80138078(0x6);
+        }
+    }
+}
 
 // When the sys-win is both present and active, close it and reset the A0 widget.
 void func_802984E4(CMCGetItemBox* self) {
@@ -116,7 +192,17 @@ void func_802984E4(CMCGetItemBox* self) {
     func_801D216C(&self->subObj_A0, 1);
 }
 
-void func_80298540(){}
+// Unless the widget is busy and the sort field is -1, report the selected
+// item-box entry's place relative to its full range.
+u32 func_80298540(CMCGetItemBox* self) {
+    if (self->field_4D == 0) return 0;
+    if ((s8)self->field_301 == -1) {
+        u16 count = self->sub_314.count;
+        u16 v = (u16)func_80157CD0(self->sub_314.pad_102);
+        return (v >= count) ? 1 : 2;
+    }
+    return 0;
+}
 
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
 void func_802985B4(CMCGetItemBox* self) {
@@ -130,7 +216,13 @@ void func_8029860C(void* self) {}
 
 void func_80298614(){}
 
-void func_80298850(){}
+// Return a UI part index: 0 when the window exists, 0x36 when the layout flag
+// is set, otherwise 0x39/0x3A based on the sign of the sort field.
+u32 func_80298850(CMCGetItemBox* self) {
+    if (CSysWin_getUnk34(&self->sysWin_B8) != 0) return 0;
+    if (self->mField303 != 0) return 0x36;
+    return 0x39 + ((s8)self->field_301 == -1);
+}
 
 void func_802988BC(){}
 
@@ -150,10 +242,10 @@ void func_80299490(){}
 
 void func_80299530(){}
 
-void func_8029967C(){}
+void func_8029967C(CMCGetItemBox*) {}
 
-void func_802998C8(){}
+void func_802998C8(CMCGetItemBox*) {}
 
-void func_802999B0(){}
+void func_802999B0(CMCGetItemBox*) {}
 
 void CMCGetItemBox::OnFileEvent() {}

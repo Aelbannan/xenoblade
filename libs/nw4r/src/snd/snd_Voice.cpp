@@ -5,6 +5,48 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Retail-accurate mirror of the Voice object field layout. The class defined
+// in snd_Voice.h has different (non-retail) member offsets, so the setter/loop
+// helpers below access the fields through this mirror at their exact retail
+// offsets (mSyncFlag=0xA2, mBiquadType=0xA5, mBiquadFreq=0xB8, ...).
+struct VoiceLayout {
+    u8 _pad0[0xC];                                 // 0x0
+    AxVoice* mAxVoice[CHANNEL_MAX][4];            // 0xC  (VOICES_MAX=4)
+    float mVoiceOutParam[4][6];                   // 0x2C  (VOICES_MAX=4, 6 f32/elt)
+    int mChannelCount;                             // 0x8C
+    int mVoiceOutCount;                            // 0x90
+    void* mCallback;                               // 0x94
+    void* mCallbackArg;                            // 0x98
+    bool mIsActive;                                // 0x9C
+    bool mIsStarting;                              // 0x9D
+    bool mIsStarted;                               // 0x9E
+    bool mIsPause;                                 // 0x9F
+    bool mIsPausing;                               // 0xA0
+    u16 mSyncFlag;                                 // 0xA2
+    u8 mRemoteFilter;                              // 0xA4
+    u8 mBiquadType;                                // 0xA5
+    int mPriority;                                 // 0xA8
+    float mPan;                                    // 0xAC
+    float mSurroundPan;                            // 0xB0
+    float mLpfFreq;                                // 0xB4
+    float mBiquadFreq;                             // 0xB8
+    int mOutputLineFlag;                           // 0xBC
+    float mMainOutVolume;                          // 0xC0
+    float mMainSend;                               // 0xC4
+    float mFxSend[AUX_BUS_NUM];                    // 0xC8
+    float mRemoteOutVolume[WPAD_MAX_CONTROLLERS];  // 0xD4
+    float mRemoteSend[WPAD_MAX_CONTROLLERS];       // 0xE4
+    float mRemoteFxSend[WPAD_MAX_CONTROLLERS];     // 0xF4
+    float mPitch;                                  // 0x104
+    float mVolume;                                 // 0x108
+    float mVeInitVolume;                           // 0x10C
+    float mVeTargetVolume;                         // 0x110
+};
+
+static inline VoiceLayout& VoiceRef(Voice* self) {
+    return *reinterpret_cast<VoiceLayout*>(self);
+}
+
 Voice::Voice()
     : mCallback(NULL),
       mIsActive(false),
@@ -71,13 +113,16 @@ void Voice::InitParam(int channels, int voices, VoiceCallback pCallback,
 }
 
 void Voice::StopFinished() {
-    if (mIsActive && mIsStarted && IsPlayFinished()) {
-        if (mCallback != NULL) {
-            mCallback(this, CALLBACK_STATUS_FINISH_WAVE, mCallbackArg);
+    VoiceLayout& v = VoiceRef(this);
+
+    if (v.mIsActive && v.mIsStarted && IsPlayFinished()) {
+        if (v.mCallback != NULL) {
+            ((VoiceCallback)v.mCallback)(this, CALLBACK_STATUS_FINISH_WAVE,
+                                        v.mCallbackArg);
         }
 
-        mIsStarted = false;
-        mIsStarting = false;
+        v.mIsStarted = false;
+        v.mIsStarting = false;
     }
 }
 
@@ -349,9 +394,10 @@ AxVoice::Format Voice::GetFormat() const {
 void Voice::SetVolume(f32 volume) {
     volume = ut::Clamp(volume, 0.0f, 1.0f);
 
-    if (volume != mVolume) {
-        mVolume = volume;
-        mSyncFlag |= SYNC_AX_VE;
+    VoiceLayout& v = VoiceRef(this);
+    if (volume != v.mVolume) {
+        v.mVolume = volume;
+        v.mSyncFlag |= SYNC_AX_VE;
     }
 }
 
@@ -359,24 +405,26 @@ void Voice::SetVeVolume(f32 target, f32 init) {
     target = ut::Clamp(target, 0.0f, 1.0f);
     init = ut::Clamp(init, 0.0f, 1.0f);
 
+    VoiceLayout& v = VoiceRef(this);
+
     // @bug Unreachable code
     if (init < 0.0f) {
-        if (target == mVeTargetVolume) {
+        if (target == v.mVeTargetVolume) {
             return;
         }
 
-        mVeTargetVolume = target;
-        mSyncFlag |= SYNC_AX_VE;
+        v.mVeTargetVolume = target;
+        v.mSyncFlag |= SYNC_AX_VE;
         return;
     }
 
-    if (init == mVeInitVolume && target == mVeTargetVolume) {
+    if (init == v.mVeInitVolume && target == v.mVeTargetVolume) {
         return;
     }
 
-    mVeInitVolume = init;
-    mVeTargetVolume = target;
-    mSyncFlag |= SYNC_AX_VE;
+    v.mVeInitVolume = init;
+    v.mVeTargetVolume = target;
+    v.mSyncFlag |= SYNC_AX_VE;
 }
 
 void Voice::SetPitch(f32 pitch) {
@@ -524,16 +572,18 @@ void Voice::SetRemoteFxSend(int remote, f32 send) {
 }
 
 void Voice::SetPriority(int priority) {
-    mPriority = priority;
+    VoiceLayout& v = VoiceRef(this);
+
+    v.mPriority = priority;
     VoiceManager::GetInstance().ChangeVoicePriority(this);
 
-    if (mPriority != 1) {
+    if (v.mPriority != 1) {
         return;
     }
 
-    for (int i = 0; i < mChannelCount; i++) {
-        for (int j = 0; j < mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = mAxVoice[i][j];
+    for (int i = 0; i < v.mChannelCount; i++) {
+        for (int j = 0; j < v.mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = v.mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetPriority(AX_PRIORITY_MAX / 2);
@@ -543,13 +593,13 @@ void Voice::SetPriority(int priority) {
 }
 
 void Voice::UpdateVoicesPriority() {
-    if (mPriority == 1) {
+    if (VoiceRef(this).mPriority == 1) {
         return;
     }
 
-    for (int i = 0; i < mChannelCount; i++) {
-        for (int j = 0; j < mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = mAxVoice[i][j];
+    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
+        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetPriority((AX_PRIORITY_MAX / 2) + 1);
@@ -559,8 +609,10 @@ void Voice::UpdateVoicesPriority() {
 }
 
 void Voice::SetAdpcmLoop(int channel, const AdpcmLoopParam* pParam) {
-    for (int i = 0; i < mVoiceOutCount; i++) {
-        AxVoice* pAxVoice = mAxVoice[channel][i];
+    VoiceLayout& v = VoiceRef(this);
+
+    for (int i = 0; i < v.mVoiceOutCount; i++) {
+        AxVoice* pAxVoice = v.mAxVoice[channel][i];
 
         if (pAxVoice != NULL) {
             pAxVoice->SetAdpcmLoop(pParam);
@@ -597,9 +649,9 @@ void Voice::SetLoopEnd(int channel, const void* pBase, u32 samples) {
 }
 
 void Voice::SetLoopFlag(bool loop) {
-    for (int i = 0; i < mChannelCount; i++) {
-        for (int j = 0; j < mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = mAxVoice[i][j];
+    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
+        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetLoopFlag(loop);
@@ -609,8 +661,10 @@ void Voice::SetLoopFlag(bool loop) {
 }
 
 void Voice::StopAtPoint(int channel, const void* pBase, u32 samples) {
-    for (int i = 0; i < mVoiceOutCount; i++) {
-        AxVoice* pAxVoice = mAxVoice[channel][i];
+    VoiceLayout& v = VoiceRef(this);
+
+    for (int i = 0; i < v.mVoiceOutCount; i++) {
+        AxVoice* pAxVoice = v.mAxVoice[channel][i];
 
         if (pAxVoice != NULL) {
             pAxVoice->StopAtPoint(pBase, samples);
@@ -619,9 +673,9 @@ void Voice::StopAtPoint(int channel, const void* pBase, u32 samples) {
 }
 
 void Voice::SetVoiceType(AxVoice::VoiceType type) {
-    for (int i = 0; i < mChannelCount; i++) {
-        for (int j = 0; j < mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = mAxVoice[i][j];
+    for (int i = 0; i < VoiceRef(this).mChannelCount; i++) {
+        for (int j = 0; j < VoiceRef(this).mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = VoiceRef(this).mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetVoiceType(type);
@@ -733,9 +787,11 @@ void Voice::SyncAxVoice() {
 }
 
 void Voice::ResetDelta() {
-    for (int i = 0; i < mVoiceOutCount; i++) {
-        for (int j = 0; j < mChannelCount; j++) {
-            AxVoice* pAxVoice = mAxVoice[j][i];
+    VoiceLayout& v = VoiceRef(this);
+
+    for (int i = 0; i < v.mVoiceOutCount; i++) {
+        for (int j = 0; j < v.mChannelCount; j++) {
+            AxVoice* pAxVoice = v.mAxVoice[j][i];
 
             if (pAxVoice != NULL) {
                 pAxVoice->ResetDelta();

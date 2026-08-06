@@ -17,6 +17,7 @@
 extern "C" u32  func_80082694__Q22cf13CfGameManagerFv(u32 id);   // get sequence value
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+extern "C" u32  func_800822F4__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
 extern "C" void* getInstance__Q22cf14CBattleManagerFv();
 extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
 extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton
@@ -36,11 +37,6 @@ static inline bool isSceneActive() {
     return lbl_eu_80664772 == 0;
 }
 
-// True when the cf frame counter has advanced past the boot 3 frames.
-static inline bool isSeqAdvanceable() {
-    return cf::CfGameManager::func_800822F4() >= 4;
-}
-
 // ---------------------------------------------------------------------------
 // ---- Target 1: func_8027F0A0 (us-80281524) -------------------------------
 // Clears the "scenario log open / state" globals to their closed values.
@@ -57,7 +53,8 @@ void func_8027F0A0() {
 // Closes the sequence for `self` once the game is in a progression gate.
 // ---------------------------------------------------------------------------
 void func_8027EEF4(u32 self) {
-    if (isSeqAdvanceable() && isSceneActive()) {
+    bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+    if (!booting && lbl_eu_80664772 == 0) {
         func_800826F0__Q22cf13CfGameManagerFv(self);
     }
 }
@@ -135,16 +132,16 @@ struct CBattleListOwner {
 };
 
 void func_8027F0B8() {
-    CBattleListOwner* bm = (CBattleListOwner*)getInstance__Q22cf14CBattleManagerFv();
+    CBattleListNode* head =
+        ((CBattleListOwner*)getInstance__Q22cf14CBattleManagerFv())->list;
     s32 count = 0;
-    CBattleListNode* p = bm->list->next;
-    while (p != bm->list) {
-        p = p->next;
+    for (CBattleListNode* p = head->next; p != head; p = p->next) {
         ++count;
     }
     if (count > 0) {
         if (lbl_eu_80664912 != 0) {
-            if (isSeqAdvanceable() && isSceneActive()) {
+            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+            if (!booting && isSceneActive()) {
                 func_800826F0__Q22cf13CfGameManagerFv(0x3A);
             }
         }
@@ -173,7 +170,8 @@ void func_80280804(CScenarioFlagObj* self) {
             cur = bumped;
         }
         if (cur >= 0x64) {
-            if (isSeqAdvanceable() && isSceneActive()) {
+            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+            if (!booting && isSceneActive()) {
                 func_800826F0__Q22cf13CfGameManagerFv(0xB);
             }
         }
@@ -200,12 +198,142 @@ void func_80280588(){}
 void func_80280640(){}
 void func_802807A0(){}
 void func_802808AC(){}
-void func_802809C8(){}
+
+// ---------------------------------------------------------------------------
+// ---- Target 10: func_802809C8 (us-80282e4c) -------------------------------
+// Bump/close the scenario-log sequence counters at three gates (10 / 100 /
+// 500). Retails only clamps once per open window and only closes each gate
+// when the scene is not booting and no subwindow is freezing the game.
+// ---------------------------------------------------------------------------
+void func_802809C8() {
+    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x23);
+    if (isSceneActive()) {
+        seq = seq + 1;
+        if (seq >= 0xFFFF) {
+            seq = 0xFFFF;
+        }
+        func_8008269C__Q22cf13CfGameManagerFv(0x23, seq);
+    }
+    if (seq >= 0xA) {
+        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            func_800826F0__Q22cf13CfGameManagerFv(0x23);
+        }
+    }
+    if (seq >= 0x64) {
+        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            func_800826F0__Q22cf13CfGameManagerFv(0x24);
+        }
+    }
+    if (seq >= 0x1F4) {
+        bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
+        if (!booting && isSceneActive()) {
+            func_800826F0__Q22cf13CfGameManagerFv(0x25);
+        }
+    }
+}
+
 void func_80280ADC(){}
 void func_80280BF0(){}
-void func_80280D04(){}
-void func_80280DBC(){}
-void func_80280E9C(){}
+
+// ---------------------------------------------------------------------------
+// ---- Target 5: func_80280D04 (us-80283188) --------------------------------
+// Progress the scenario-log sequence through its tiers. Each gate closes an
+// earlier tier before later tiers can advance (1 / 100 / 1000, then, once
+// self reaches 5, a nested 1 / 20 / 50 ladder).
+// ---------------------------------------------------------------------------
+void func_80280D04(u32 self) {
+    u32 v = func_8027EE88(0x1D, self);
+    if (v >= 1) {
+        func_8027EEF4(0x1D);
+    }
+    if (v >= 0x64) {
+        func_8027EEF4(0x1E);
+    }
+    if (v >= 0x3E8) {
+        func_8027EEF4(0x1F);
+    }
+    if (self >= 5) {
+        u32 w = func_8027EE88(0x20, 1);
+        if (w >= 1) {
+            func_8027EEF4(0x20);
+        }
+        if (w >= 0x14) {
+            func_8027EEF4(0x21);
+        }
+        if (w >= 0x32) {
+            func_8027EEF4(0x22);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ---- Target 6: func_80280DBC (us-80283240) --------------------------------
+// Scan a 2x2 grid of 8 u8 samples (stride 2) for values exceeding thresholds
+// and notify the scenario log at ascending severities; count how many entries
+// are >= 10 and emit a summary gate at 5 / 10 / 16.
+// ---------------------------------------------------------------------------
+void func_80280DBC(u8* self) {
+    u32 count = 0;
+    for (int o = 0; o < 2; o++) {
+        u8* p1 = self + o * 0x49;
+        for (int m = 0; m < 2; m++) {
+            u8* p2 = p1 + m * 0x10;
+            for (int i = 0; i < 8; i++) {
+                u8 val = p2[i * 2];
+                if (val >= 2) {
+                    func_8027EEF4(0x48);
+                }
+                if (val >= 5) {
+                    func_8027EEF4(0x49);
+                }
+                if (val >= 10) {
+                    func_8027EEF4(0x4A);
+                }
+                if (val >= 10) {
+                    count++;
+                }
+            }
+        }
+    }
+    if (count >= 5) {
+        func_8027EEF4(0x4B);
+    }
+    if (count >= 10) {
+        func_8027EEF4(0x4C);
+    }
+    if (count >= 0x10) {
+        func_8027EEF4(0x4D);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ---- Target 1: func_80280E9C (us-80283320) --------------------------------
+// Walk 2 segments of 3 runs; each run scans 5 slots (stride 0x20) for a free
+// one at +0x24. Returns the run base when a whole run is free; otherwise
+// closes the sequence for 0x4E once all segments have at least one taken slot.
+// ---------------------------------------------------------------------------
+u8* func_80280E9C(u8* self) {
+    u8* p = self + 0x3D4;
+    for (int s = 0; s < 2; s++) {
+        for (int run = 0; run < 3; run++) {
+            int i;
+            for (i = 0; i < 5; i++) {
+                if (*(u16*)(p + 0x20 * i + 0x24) != 0) {
+                    break;
+                }
+            }
+            if (i >= 5) {
+                return p;
+            }
+            p += 0xC4;
+        }
+    }
+    func_8027EEF4(0x4E);
+    return p;
+}
+
 void func_80280F44(){}
 
 extern "C" void func_802811FC(void* self){

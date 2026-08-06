@@ -14,6 +14,12 @@ struct CfCamEventGlobal {
 };
 
 // Sub-object embedded at manager offset 0x1F4.
+// A single effect slot object referenced by the manager's 3-element slot
+// array at offset 0.  Destructor is virtual (defined in another TU).
+class CfCamEventSlot {
+public:
+    virtual ~CfCamEventSlot();
+};
 struct CfCamEventSub1F4 {
     u8 _000[0x162];
     u8 field_0x162;    // 0x1F4 + 0x162 = 0x356
@@ -25,7 +31,8 @@ struct CfCamEventSub1F4 {
 // is reconstructed here from the cam-event accessors.
 class CfCamEventManager {
 public:
-    u8  _000[0x54];
+    CfCamEventSlot* slots[3];  // 0x00 - 3 effect slot pointers
+    u8  _00C[0x54 - 0x0C];
     u32 field_0x54;     // 0x54
     u32 field_0x58;     // 0x58
     u32 field_0x5C;     // 0x5C

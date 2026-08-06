@@ -9,12 +9,14 @@ namespace nw4r {
 namespace lyt {
     class Layout;
     class DrawInfo;
+    class AnimTransform;
 }
 }
 
 /* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable. */
 struct CEIBCur {
     CEIBCur(void* arcResAcc);
+    void func_80285B24();
     void* mVtable;          // 0x00
     void* mArcResAcc;       // 0x04
     void* mpLayout;         // 0x08
@@ -59,13 +61,19 @@ struct CEquipItemBox {
     u8 func_802865A0();
     u8 func_802865A8();
     int func_80286650();
+    int func_802866A0();
+    void func_802866E8();
     u8 func_80286698();
     u8 func_80287EE8();
     void func_80287EFC(u32 val);
     void func_8028A07C();
     void func_8028A0C0(u8 val);
+    void func_80288A1C();
+    void func_80288A6C();
+    void func_80288AC0();
     void func_80282DF8();
     void func_80282E24();
+    void func_80287D58();
     u8 func_80283280(u32 param);
     u8 func_802832B4();
 
@@ -74,7 +82,10 @@ struct CEquipItemBox {
     // +0x04: UnkClass_8045F564 mMemRegion1 (0x10 bytes)
     // +0x14: UnkClass_8045F564 mMemRegion2 (0x10 bytes)
     // +0x24: u32[7]
-    u8 _pad04[0x3C];
+    u8 _pad04[0x30];
+    void* field_34;         // 0x34
+    void* field_38;         // 0x38
+    void* field_3C;         // 0x3C
 
     u8 unk_40;              // 0x40
     u8 unk_41;              // 0x41

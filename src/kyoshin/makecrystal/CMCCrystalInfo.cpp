@@ -15,11 +15,62 @@ extern "C" void func_8021B5B4();
 extern "C" void func_8021B63C();
 extern "C" void func_8021B6C4();
 
-void __ct__CMCCrystalInfo(){}
+extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" char lbl_eu_80508DF8[];
 
-CMCCrystalInfo::~CMCCrystalInfo() {}
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);
 
-void func_8021A718(){}
+// The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
+// (not a mangled member name), so it is written as a C-linkage function that
+// explicitly sets the vptr and constructs the UnkClass sub-objects.
+extern "C" CMCCrystalInfo* __ct__CMCCrystalInfo(CMCCrystalInfo* self)
+{
+    *(void**)self = (void*)lbl_eu_80535CF8;   // vptr at +0x00
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion1);
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion2);
+
+    self->mFileHandle1 = 0;
+    self->mFileHandle2 = 0;
+    self->mArcResAccessor = 0;
+    self->mField30 = 0;
+    self->mLayout = 0;
+    self->mAnimTransform1 = 0;
+    self->mAnimTransform2 = 0;
+    self->mAnimTransform3 = 0;
+    self->mAnimTransform4 = 0;
+    self->mEnabled = 0;
+    self->mState = 0;
+    self->mIsActive = 0;
+    self->mField51 = 1;
+    return self;
+}
+
+// The retail dtor is emitted under the mangled symbol `__dt__14CMCCrystalInfoFv`.
+// Written as a C-linkage function (CItemBoxInfo precedent) for byte-exact
+// control over the null/delete-flag checks.
+extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 flags)
+{
+    if (self != NULL) {
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion2, -1);
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion1, -1);
+        if (flags > 0) __dl__FPv(self);
+    }
+    return self;
+}
+
+void func_8021A718(CMCCrystalInfo* self)
+{
+    // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a)
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mFileHandle1 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        handle, &lbl_eu_80508DF8[0], self, 0, 0);
+    handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mFileHandle2 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
+}
 
 void func_8021A780(){}
 
@@ -120,11 +171,29 @@ void func_8021B058(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B0A4(){}
+void func_8021B0A4(CMCCrystalInfo* self)
+{
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
+        self->mField51 = 1;
+        self->mState = 0;
+    }
+}
 
-void func_8021B0F0(){}
+void func_8021B0F0(CMCCrystalInfo* self)
+{
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
+        self->mField51 = 1;
+        self->mState = 3;
+    }
+}
 
-void func_8021B13C(){}
+void func_8021B13C(CMCCrystalInfo* self)
+{
+    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
+        self->mField51 = 1;
+        self->mState = 3;
+    }
+}
 
 void func_8021B188(){}
 

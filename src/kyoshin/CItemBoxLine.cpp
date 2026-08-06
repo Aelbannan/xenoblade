@@ -119,6 +119,23 @@ void func_801EDA08(CItemBoxLine* self) {
     self->field6D = 0;
 }
 
+// ============================================================================
+// func_801EC3D0: format entry index's name into a FixStr buffer; null if out of range.
+// ============================================================================
+extern "C" void* func_801394D4(u32);
+extern "C" char lbl_eu_805071B0[]; // rodata string pool
+
+ml::FixStr<32>* func_801EC3D0(CIBLTabFormat* self, unsigned int index) {
+    if (index < self->count) {
+        self->str94.format(lbl_eu_805071B0 + 0x57, func_801394D4(self->entries[index].f0));
+        return &self->str94;
+    }
+    return 0;
+}
+
+// ============================================================================
+// func_801EC438
+// ============================================================================
 void func_801EC438(){}
 
 void func_801EC808(){}
@@ -144,7 +161,22 @@ void func_801ED618(){}
 void func_801ED774(){}
 
 
-void func_801ED808(){}
+// ============================================================================
+// func_801ED808: busy-check — a CSysWin or num-select member is active, else return byte.
+// ============================================================================
+// External retail helpers (unmangled C-linkage names).
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" u32 func_801EB020(void*);
+
+u8 func_801ED808(CItemBoxLine* self) {
+    if (CSysWin_getUnk34(&self->mSysWin)) {
+        return 1;
+    }
+    if (func_801EB020(&self->mNumSel)) {
+        return 1;
+    }
+    return self->field3A0;
+}
 
 void func_801ED864(){}
 

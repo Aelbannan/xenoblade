@@ -4,6 +4,8 @@
 #include <harness_catalog.h>
 
 #include <revolution/gx/GXLight.h>
+#include <revolution/MTX.h>
+#include "monolib/math/CVec3.hpp"
 
 // Float constant 0.0f, shared across this TU
 extern f32 lbl_eu_8066B0DC;
@@ -22,20 +24,50 @@ struct EffectStruct {
     s16 field_0x02;
     s16 field_0x04;
     u16 field_0x06; // flags/bitfield
-    s16 field_0x08;
-    s16 field_0x0a;
-    s16 field_0x0c;
-    u8 pad_0x0e[0x10 - 0x0e];
+    u32 field_0x08; // pointer (signalled object)
+    u32 field_0x0c;
     u32 field_0x10; // also used as float via type punning
     u32 field_0x14;
     f32 field_0x18;
     f32 field_0x1c;
     u8 pad_0x20[0x328 - 0x20];
-    u32 field_0x328;
-    u32 field_0x32c;
-    u32 field_0x330;
-    u32 field_0x334;
+    void* field_0x328;
+    void* field_0x32c;
+    void* field_0x330;
+    void* field_0x334;
+    ~EffectStruct();
 };
+
+// Cross-TU destructor/free helpers used by EffectStruct::~EffectStruct().
+extern "C" void func_80495E84(void* p);
+extern "C" void __dt__804D80F0(void* p, int flag);
+extern "C" void __dl__FPv(void* p);
+
+EffectStruct::~EffectStruct() {
+    if (field_0x32c) {
+        func_80495E84(*(void**)((u8*)field_0x08 + 0x10));
+        field_0x32c = 0;
+    }
+    if (field_0x328) {
+        if (field_0x328) {
+            void** vt = *(void***)((u8*)field_0x328 + 0x184);
+            ((void (*)(void*, int))vt[1])(field_0x328, 1);
+        }
+        field_0x328 = 0;
+    }
+    if (field_0x330) {
+        __dt__804D80F0(field_0x330, 1);
+        field_0x330 = 0;
+    }
+    if (field_0x334) {
+        __dl__FPv(field_0x334);
+        field_0x334 = 0;
+    }
+    field_0x00 = -1;
+    field_0x02 = -1;
+    field_0x04 = -1;
+    field_0x06 = 0;
+}
 
 // Node used by the firework/placer list helpers (targets 8-10). Overlaps the
 // EffectStruct ranges, but several fields are read sign-extended (lha) here.
@@ -51,9 +83,61 @@ struct EffectNode {
     u32 field_0x18;
 };
 
+// Target 6: object pointed to by a list owner (field_0x14 at 0x14).
+struct EffectInfo {
+    u8 pad_0x00[0x1c];
+    u16 field_0x1c;
+};
+
+struct ListOwner {
+    u8 pad_0x00[0x14];
+    EffectInfo* field_0x14;
+};
+
+// Target 3: position/transform layout.
+struct EffPos {
+    u8 pad_0x00[0xac];
+    Vec field_0xac;          // 0xac,0xb0,0xb4
+    Vec field_0xb8;          // 0xb8,0xbc,0xc0
+    u8 pad_0xc4[0x130 - 0xc4];
+    Mtx field_0x130;
+};
+
 // Cross-TU firework/placer helpers (retail C-linkage symbols).
 extern "C" EffectNode* func_804E0114(s32 index);
 extern "C" void func_804E0098(s16 index);
+extern "C" s32 func_804DFFA8(s32 index);
+extern "C" u32 func_804E0104(void);
+extern "C" s32 func_804CDF20(void* self, void* b, void* c, f32* out);
+
+// Larger scene/effect layout used by targets 3, 8, 9, 10. Only fields touched
+// by the reconstructed functions are declared.
+struct SceneSubObj {
+    u32 field_0x00;              // 0x00
+    u8 pad_0x04[0xec - 0x04];
+    u8* field_0xec;              // 0xec
+    u8 pad_0xf0[0xf8 - 0xf0];
+    u32 field_0xf8;              // 0xf8
+};
+
+struct EffectScene {
+    u8 pad_0x00[0x06];
+    u16 field_0x06;              // flags
+    u8 pad_0x08[0x0c - 0x08];
+    SceneSubObj* field_0x0c;     // pointer to a sub-object
+    u8 pad_0x10[0x1c - 0x10];
+    f32 field_0x1c;
+    u8 pad_0x20[0xc4 - 0x20];
+    Vec field_0xc4_vec;          // target 9 input vector (0xc4,0xc8,0xcc)
+    u8 pad_0xd0[0xf4 - 0xd0];
+    Mtx field_0xf4;              // target 8 matrix
+    u8 pad_0x124[0x160 - 0x124];
+    Mtx field_0x160;             // target 9 matrix
+    u8 pad_0x190[0x190 - 0x160 - sizeof(Mtx)];
+    Vec field_0x190_vec;         // target 10 CVec3 out (0x190,0x194,0x198)
+    u8 pad_0x19c[0x21c - 0x19c];
+    Vec field_0x21c_vec;         // target 8 input vector
+};
 
 void func_804CC800(void* self) { *(u32*)((u8*)self + 0x0) = 0; }
 
@@ -61,11 +145,47 @@ void func_804CCF84(){}
 
 void func_804CD0CC(){}
 
-void func_804CDE50(){}
+void func_804CDE50(EffectScene* self, void* p2, void* p3) {
+    SceneSubObj* sub = self->field_0x0c;
+    u32 cls = sub->field_0x00;
+    if ((u32)(cls - 9) <= 2) return;
+    u8* fo = (u8*)sub->field_0xf8;
+    if (!fo) return;
+    if (!*(s8*)(fo - 0xd)) return;
+    Vec out;
+    PSMTXMultVec(self->field_0xf4, &self->field_0x21c_vec, &out);
+    Vec res;
+    res.x = out.x;
+    res.y = out.y;
+    res.z = out.z;
+    if (!func_804CDF20((void*)self, p2, p3, (f32*)&res)) return;
+    f32 z = lbl_eu_8066B0DC;
+    u32 fl = self->field_0x06 & (u32)~0x8000;
+    self->field_0x06 = (u16)fl;
+    self->field_0x1c = z;
+}
 
 void func_804CDF20(){}
 
-void func_804CE160(){}
+void func_804CDD78(EffectScene* self, void* p2, void* p3) {
+    if (self->field_0x06 & 0x0100) return;
+    Vec out;
+    PSMTXMultVec(self->field_0x160, &self->field_0xc4_vec, &out);
+    Vec res;
+    res.x = out.x;
+    res.y = out.y;
+    res.z = out.z;
+    if (!func_804CDF20((void*)self, p2, p3, (f32*)&res)) return;
+    self->field_0x06 = (u16)(self->field_0x06 | 0x300);
+    u32* sub = (u32*)self->field_0x0c;
+    u8* fo = (u8*)(sub[0x3b]);
+    if (!fo) return;
+    if (!*(s8*)(fo - 0xa)) return;
+    f32 z = lbl_eu_8066B0DC;
+    u32 fl = self->field_0x06 & (u32)~0x8000;
+    self->field_0x06 = (u16)fl;
+    self->field_0x1c = z;
+}
 
 void func_804CE264(){}
 
@@ -75,7 +195,40 @@ u32 func_804CE380(void* self) { return *(u32*)((u8*)self + 0x5c); }
 
 void func_804CE388(){}
 
-void func_804CE418(){}
+// Bounds constants for the target-10 direction-normalization guard.
+extern "C" f32 lbl_eu_8066B108;
+extern "C" f32 lbl_eu_8066B10C;
+
+void func_804CE160(EffectScene* self, const ml::CVec3& a, const ml::CVec3& b) {
+    ml::CVec3 delta = a - b;
+    ml::CVec3 out = delta;
+    // If every component already lies inside [c1, c2], the direction is safe and
+    // needs no re-normalization.
+    f32 c1 = lbl_eu_8066B108;
+    f32 c2 = lbl_eu_8066B10C;
+    if (out.x < c1 || c2 < out.x || out.y < c1 || c2 < out.y || out.z < c1 || c2 < out.z) {
+        if (out.x * out.x + out.y * out.y + out.z * out.z == 0.0f) {
+            out = ml::CVec3::zero;
+        } else {
+            PSVECNormalize(&out, &out);
+        }
+    }
+    self->field_0x190_vec.x = out.x;
+    self->field_0x190_vec.y = out.y;
+    self->field_0x190_vec.z = out.z;
+}
+
+void func_804CE418(EffPos* self, Vec* out) {
+    Vec src = self->field_0xac;
+    out->x = src.x;
+    out->y = src.y;
+    out->z = src.z;
+    Vec res;
+    PSMTXMultVec(self->field_0x130, out, &res);
+    out->x = res.x + self->field_0xb8.x;
+    out->y = res.y + self->field_0xb8.y;
+    out->z = res.z + self->field_0xb8.z;
+}
 
 void func_804CE4C0(){}
 
@@ -169,9 +322,57 @@ void func_804D3F94(EffectNode* self) {
 
 void func_804D401C(){}
 
-void func_804D4144(){}
+void func_804D4144(EffectNode* self) {
+    if (self->field_0x0a <= 0) return;
+    EffectNode* node;
+    if (self->field_0x06 < 0) {
+        node = 0;
+    } else {
+        node = func_804E0114(self->field_0x06);
+        self->field_0x00 = -1;
+        self->field_0x02 = self->field_0x06;
+        self->field_0x04 = node->field_0x02;
+        self->field_0x0c = 0;
+    }
+    while (node) {
+        func_804CD0A4((EffectStruct*)(void*)node);
+        if (self->field_0x04 >= 0) {
+            node = func_804E0114(self->field_0x04);
+            self->field_0x00 = self->field_0x02;
+            self->field_0x02 = self->field_0x04;
+            self->field_0x04 = node->field_0x02;
+            self->field_0x0c += 1;
+        } else {
+            node = 0;
+        }
+    }
+}
 
-void func_804D41F8(){}
+// Target 6: scan node slots for one matching the pattern in r28; return 0 if a
+// candidate lacks the "fixed" bit, else 1. Flag map: 0x2000 gate, 0x8000 slot
+// busy, 0x0800 already-linked.
+s32 func_804D41F8(ListOwner* self, const EffectNode* target) {
+    if (!(self->field_0x14->field_0x1c & 0x2000)) return 1;
+    s32 result = 1;
+    s32 i = 0;
+    while ((s16)i < (s32)func_804E0104()) {
+        EffectNode* node = func_804E0114(i);
+        if (node) {
+            u32 nf = node->field_0x06;
+            if (nf & 0x8000) {
+                if (node->field_0x04 == target->field_0x00) {
+                    if (nf & 0x0800) {
+                        node->field_0x04 = -1;
+                    } else {
+                        result = 0;
+                    }
+                }
+            }
+        }
+        i++;
+    }
+    return result;
+}
 
 void func_804D42B8(){}
 
@@ -207,9 +408,42 @@ EffectNode* func_804D5DAC(EffectNode* self) {
     return node;
 }
 
-void func_804D5E10(){}
+void func_804D5E10(EffectNode* self, s32 index) {
+    s16 result = (s16)func_804DFFA8(index);
+    if (result < 0) return;
+    EffectNode* node = func_804E0114(result);
+    if (self->field_0x06 < 0) {
+        self->field_0x06 = result;
+        self->field_0x08 = result;
+    } else {
+        EffectNode* last = func_804E0114(self->field_0x08);
+        last->field_0x02 = result;
+        self->field_0x08 = result;
+    }
+    self->field_0x0a += 1;
+}
 
-void func_804D5E90(){}
+void func_804D5E90(EffectNode* self) {
+    if (self->field_0x02 == self->field_0x08) {
+        self->field_0x08 = self->field_0x00;
+    }
+    if (self->field_0x00 < 0) {
+        EffectNode* node = func_804E0114(self->field_0x02);
+        s16 next = node->field_0x02;
+        self->field_0x04 = next;
+        self->field_0x06 = next;
+        func_804E0098(self->field_0x02);
+        self->field_0x02 = -1;
+    } else {
+        EffectNode* nodeA = func_804E0114(self->field_0x02);
+        EffectNode* nodeB = func_804E0114(self->field_0x00);
+        nodeB->field_0x02 = nodeA->field_0x02;
+        self->field_0x04 = nodeA->field_0x02;
+        func_804E0098(self->field_0x02);
+        self->field_0x02 = self->field_0x00;
+    }
+    if (self->field_0x0a > 0) self->field_0x0a -= 1;
+}
 
 void func_804D5F54(){}
 

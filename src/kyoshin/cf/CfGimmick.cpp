@@ -4,8 +4,26 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfGimmick.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+
+// Forward declarations for cross-TU callees (resolved via the retail symbol map).
+class UnkClass_805764CC;
+UnkClass_805764CC* func_800B07E8();  // MWCC free-fn mangling -> func_800B07E8__Fv
+extern "C" void func_800B3A88(UnkClass_805764CC* self, void* target);
+extern "C" void func_801BFED0(int a, u16 b, int c);
+extern "C" int func_8009CF8C(void*);
 
 using namespace cf;
+
+// Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
+extern "C" u32 lbl_eu_806646B4;
+extern "C" u32 lbl_eu_806646BC;
+extern "C" float lbl_eu_80662784;
+extern "C" u16 lbl_eu_806646C0;
+extern "C" int lbl_eu_805765B0[10];
+
+// Shared singleton accessor; refs resolve to the unmangled retail name.
+extern "C" CfGimmickGlobal* getUnk80664658();
 
 namespace cf {
     void CfGimmick::func_8020896C(void* other) {
@@ -23,7 +41,22 @@ namespace cf {
     int CfGimmick::func_8020A8AC() { return 1; }
 }
 
-void __ct__cf_CfGimmick(){}
+cf::CfGimmick::CfGimmick() {
+    field_64 = 0;
+    field_80 = 0;
+    field_66 = 0;
+    field_68 = 0;
+    field_6A = 0;
+    field_6C = 0;
+    field_6E = 0;
+    field_78 = 0;
+    field_7C = 0;
+    field_73 = 0;
+    field_72 = 0;
+    field_71 = 0;
+    field_70 = 0;
+    field_74 = 0;
+}
 
 cf::CfGimmick::~CfGimmick() {}
 
@@ -46,15 +79,30 @@ void func_80208C60(void* self, void* arg, float second) {
                   lbl_eu_80668358, second);
 }
 
-void func_80208C78(){}
+void func_80208C78(cf::CfGimmick* self) {
+    if (self->field_80 != 0) {
+        func_801BFED0(1, self->field_80, 0xa);
+        self->field_80 = 0;
+    }
+}
 
 void func_80208CC0(){}
 
-void func_80208E98(){}
+void func_80208E98() {
+    lbl_eu_80662784 = lbl_eu_80668358;
+    lbl_eu_806646C0 = 0;
+    for (int i = 0; i < 10; i++) lbl_eu_805765B0[i] = -1;
+}
 
 bool func_80208EDC() { return false; }
 
-void func_80208EE4(){}
+void func_80208EE4(cf::CfGimmick* self) {
+    if (self->field_78) {
+        self->field_78->unkB0 = 0;
+        self->field_78->func_80080F44();
+        self->field_78 = 0;
+    }
+}
 
 void func_80208F34(){}
 
@@ -70,9 +118,15 @@ void func_80209488(){}
 
 void func_802095D8(){}
 
-void func_802096EC(){}
+int func_802096EC(void* obj) {
+    int v = func_8009CF8C((void*)((u32)obj + 0x1d44));
+    return (v == 1) ? 1 : 0;
+}
 
-void func_8020971C(){}
+int func_8020971C(void* obj) {
+    int v = func_8009CF8C((void*)((u32)obj + 0x2cc8));
+    return (v == 1) ? 1 : 0;
+}
 
 void func_8009D018(void* self);
 void func_8020974C(void* self) { ((void(*)(void*))func_8009D018)((char*)self + 0x2cc8); }
@@ -81,10 +135,9 @@ void func_80209754(){}
 
 void func_802098EC(){}
 
-void func_80209F2C(){}
-
-// Shared singleton accessor; refs resolve to the unmangled retail name.
-extern "C" void* getUnk80664658();
+void func_80209F2C() {
+    getUnk80664658()->field_214 |= 0x000C0042;
+}
 
 void func_80209F5C() {
     void* p = getUnk80664658();
@@ -136,7 +189,12 @@ void func_8020A294(){}
 
 void func_8020A35C(){}
 
-void func_8020A434(){}
+void func_8020A434(CfGimmickReg* self) {
+    if (self->field_00) {
+        func_800B3A88(func_800B07E8(), self->field_00);
+        self->field_00 = 0;
+    }
+}
 
 void func_8020A484(){}
 
@@ -151,7 +209,12 @@ void func_8020A608(){}
 
 void func_8020A6B0(){}
 
-void func_8020A87C(){}
+int func_8020A87C(u32 arg) {
+    u32 a = lbl_eu_806646B4;
+    if (a == 0) return 0;
+    if ((lbl_eu_806646BC & 1) == 0) return 0;
+    return (a == arg) ? 1 : 0;
+}
 
 void func_8020A8B4(){}
 

@@ -102,7 +102,22 @@ int CEquipChange::func_80203138() {
     return 3;
 }
 
-void func_802031A0(){}
+// Target us-80204e98: field_98 (s8) maps via a dense jump table to 1..8 for
+// values 0..7; any other value (including 8..13 that fall inside the table
+// bound) returns 0.
+int func_802031A0(CEquipChange* self) {
+    switch (self->field_98) {
+    case 0: return 1;
+    case 1: return 2;
+    case 2: return 3;
+    case 3: return 4;
+    case 4: return 5;
+    case 5: return 6;
+    case 6: return 7;
+    case 13: return 8;
+    default: return 0;
+    }
+}
 
 void func_80203210(){}
 
@@ -184,14 +199,16 @@ void func_802040A0(CEquipChange* self) {
     }
 }
 
-// Not a target; body kept non-empty (and non-redundant with target 8) so the
-// call in func_8020404C cannot be optimized away.
+// Not a target; body kept non-empty
 extern "C" void func_802040FC(CEquipChange* self) {
     self->field_48 = 0;
 }
 
 
-void func_802042C0(CEquipChange* self){}
+// func_802042C0 is a large retail function (0x80205FB8, 0x10BC bytes) not
+// recreated in this TU; reference the external retail symbol rather than
+// redefining it (a stub definition would inline away the call in
+// func_802040A0/func_8020404C).
 
 void func_80205294(void* dst, void* src) {
     u16 a = *(u16*)src;

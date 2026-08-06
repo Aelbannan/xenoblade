@@ -3,6 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+
 #include "kyoshin/menu/CMenuQstCnt.hpp"
 
 struct QstEntry {
@@ -32,6 +35,19 @@ struct QstInfo {
     unsigned char f6;
     unsigned char f7;
 };
+
+// The quest-status menu object. Fields are read/written by the address-named
+// update helpers below; only the tail (0x88 onward) is referenced here.
+struct QstMenuData {
+    u8 mPad88[0x88];                            // 0x00
+    nw4r::lyt::AnimTransform* mAnim88;          // 0x88
+    u32 mState8C;                               // 0x8C
+    f32 mValue90;                               // 0x90
+};
+
+extern "C" int func_80144FF0();
+extern "C" int func_80145030(void);
+extern void func_80138078(u32);
 
 extern "C" {
 void __dt__11CMenuQstCntFv();
@@ -80,11 +96,31 @@ void invalidateQstFlag() {
     }
 }
 
-void func_80226BBC(){}
+// Quest-log gating: when the CF-game resource gate reports the scene is open
+// (not mid-load) and the input state allows it, play the sound and set state 1.
+void func_80226BBC(QstMenuData* self) {
+    if (func_80144FF0() == 0 || cf::CfGameManager::func_800829B8() || func_80145030()) {
+        func_80138078(0x1f);
+        self->mState8C = 1;
+    }
+}
 
-void func_80226C18(){}
+// Advance the open/close animation at 0x88 by one frame; when it finishes the
+// animation (func_80137444 returns 1), move to state 2.
+void func_80226C18(QstMenuData* self) {
+    if (func_80137444(self->mAnim88, 1.0f) != 0) {
+        self->mState8C = 2;
+    }
+}
 
-void func_80226C5C(){}
+// Per-frame timer: 0x90 counts frames (1 per call); once it reaches 90 frames
+// it clamps to state 3. Uses >= (cror eq,gt,eq; bnelr returns while below).
+void func_80226C5C(QstMenuData* self) {
+    self->mValue90 += 1.0f;
+    if (self->mValue90 >= 90.0f) {
+        self->mState8C = 3;
+    }
+}
 
 void func_80226C88(){}
 

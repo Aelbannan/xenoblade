@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+namespace nw4r { namespace lyt { class AnimTransform; } }
+
 class CMCCrystalBox {
 public:
     CMCCrystalBox();
@@ -12,7 +14,7 @@ public:
     u8 pad_00[0x1C];                    // +0x04 to +0x1F
     u8 unk20;                           // +0x20: entry count (0 = no entries)
     u8 pad_21[0x24 - 0x21];
-    void* subObjPtrs[0x0F];            // +0x24 to +0x5F: array of 15 sub-object pointers
+    nw4r::lyt::AnimTransform* subObjPtrs[0x0F]; // +0x24 to +0x5F: array of 15 sub-object pointers
     u8 unk60;                           // +0x60
     u32 pad_61_pad_63;
     u32 unk64;                          // +0x64: state/status
@@ -40,7 +42,10 @@ public:
     u8 unk2D3;                          // +0x2D3
     u8 unk2D4;                          // +0x2D4: read by getByte_2D4_8021624C
     u8 unk2D5;                          // +0x2D5: read by getByte_2D5_80216254
-    u8 pad_2D6[0x1500 - 0x2D6];
+    u8 pad_2D6[0x14F1 - 0x2D6];
+    u8 field_14F1;                      // +0x14F1
+    u8 field_14F2;                      // +0x14F2: countdown ticker
+    u8 pad_14F3[0x1500 - 0x14F3];
     u8 unk1500;                         // +0x1500
     u8 pad_1501[0x1504 - 0x1501];
     u16 unk1504;                        // +0x1504

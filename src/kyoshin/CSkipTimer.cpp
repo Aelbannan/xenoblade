@@ -5,7 +5,12 @@
 
 #include <cstdio>
 
-#include "kyoshin/code_80135FDC.hpp"
+// Retail linking: func_80137444 is mangled (C++ linkage), func_80137510 /
+// func_80136A1C are unmangled in US retail (extern "C"). code_80135FDC.hpp
+// declares func_80137510 with C++ linkage, so declare manually here.
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 
 // --- shared data (retail split symbols) ---
 
@@ -23,12 +28,14 @@ extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
 // func_8029F364 is matched upstream (no stub needed); exposed via declaration.
-void func_8029F364(CSkipTimer2*, u8);
-int func_802A04F0(CSkipTimer*);
+extern "C" void func_8029F364(CSkipTimer2*, u8);
+extern "C" int func_802A04F0(CSkipTimer*);
 
-// Unmatched siblings kept as stubs with retail signatures so target callers link.
-void func_8029F82C(CSkipTimer2* self, u8 arg) {}
-void func_802A05E4(CSkipTimer* self) {}
+// Unmatched same-unit siblings referenced as extern (linker resolves to retail
+// address) so in-unit callers emit a direct `bl` instead of inlining a stub.
+// Retail strips mangling for these func_ names in US, hence extern "C".
+extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
+extern "C" void func_802A05E4(CSkipTimer* self);
 
 // ============================================================================
 // CSkipTimer2 constructor
@@ -118,8 +125,12 @@ void func_802A0234(CSkipTimer* self) {
     if (func_80137444(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
         self->mField29 = 2;
         func_802A05E4(self);
+        // Function pointer prevents MWCC from inlining func_802A04F0
+        // (retail keeps a direct `bl`).
+        int (*fn)(CSkipTimer*) = func_802A04F0;
+        int idx = fn(self);
         func_8029F364(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]),
-                      static_cast<u8>(func_802A04F0(self)));
+                      static_cast<u8>(idx));
     }
 }
 
@@ -132,8 +143,14 @@ void func_802A02D4(CSkipTimer* self) {
 }
 
 // func_802A04F0: map skip-timer index (mField2C) to an action id (1..7).
-int func_802A04F0(CSkipTimer* self) {
+extern "C" int func_802A04F0(CSkipTimer* self) {
     switch (self->mField2C) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        return 7;
     case 5:
         return 1;
     case 6:
@@ -154,7 +171,7 @@ int func_802A04F0(CSkipTimer* self) {
     case 18:
         return 5;
     default:
-        return (self->mField2C < 5) ? 7 : 6;
+        return 6;
     }
 }
 

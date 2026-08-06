@@ -9,6 +9,8 @@ namespace cf{
     struct CSoundNode {
         u8 unk0[0xC];
         CSoundNode* next;   // +0x0C
+        u8 unk10[0x8];      // +0x10 .. +0x17
+        u32 field_18;       // +0x18
     };
 
     // Actor layout for func_802A2210 (reads a u32 at +0x3F10).

@@ -26,6 +26,10 @@ extern "C" void __dl__FPv(void*);
 // Option window scroll-bar / system-window state checks (C-linkage).
 extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
+extern "C" int CSysWin_isActive(u8*);
+extern "C" u32 CSysWin_getUnk34(u8*);
+extern "C" void func_801F369C(CScrollBar*);
+extern "C" void func_80138078__FUl(u32);
 
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -36,6 +40,7 @@ void func_8029E254(COption*);
 void func_8029E1CC(COption*);
 void func_8029E144(COption*);
 void func_8029D420(COption*);
+int func_8029E3F8(COption*);
 extern "C" void func_8029D634(COption*, u8);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }

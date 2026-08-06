@@ -23,6 +23,7 @@
   "sessionDir": "build/pi-harness/sessions",
   "ledgerPath": "build/pi-harness/ledger.jsonl",
   "timeoutRetries": 3,
+  "silenceThresholdMs": 0,
   "rejectionRetries": 1,
   "tuFinalAttempts": 2,
   "tuFinalTimeoutMinutes": 0,

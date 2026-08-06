@@ -132,6 +132,11 @@ export async function runAgentSession(opts: {
   /** When false, omit the witness/certify tools (witness path disabled).
    *  Default true. */
   witnessEnabled?: boolean;
+  /** Max ms of model silence before the session is aborted as dead.
+   *  0 = auto-derive from spec.thinkingLevel (xhigh 600s, high 300s, else
+   *  120s). High-thinking models stream nothing while reasoning, so a
+   *  low fixed threshold kills them mid-think. */
+  silenceThresholdMs?: number;
 }): Promise<SessionRunResult> {
   const {
     repoRoot,
@@ -147,6 +152,7 @@ export async function runAgentSession(opts: {
     python = "python3",
     writable = [],
     witnessEnabled = true,
+    silenceThresholdMs = 0,
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -203,7 +209,13 @@ export async function runAgentSession(opts: {
   };
 
   // Track session activity for dead-session detection.
-  let lastActivityTime = Date.now();
+  // lastActivityTime is null until the FIRST activity event (message_update /
+  // tool start / tool end / retry): a session that has not yet emitted
+  // anything is in its thinking phase (high-thinking models stream no tokens
+  // while reasoning), NOT dead — the silence clock must not run before the
+  // first message update. After first activity, silence beyond the threshold
+  // means the model stopped responding mid-turn.
+  let lastActivityTime: number | null = null;
   let lastAgentEnd: { timestamp: number; willRetry: boolean } | undefined;
   // Number of tool executions currently in flight. The heartbeat must never
   // flag a session dead while a tool is running (long tool calls — hexdiff
@@ -217,8 +229,7 @@ export async function runAgentSession(opts: {
         event.type === "tool_execution_start" ||
         event.type === "tool_execution_end" ||
         event.type === "auto_retry_start") {
-      lastActivityTime = Date.now();
-    }
+      lastActivityTime = Date.now();    }
 
     // Log SDK retry events.
     if (event.type === "auto_retry_start") {
@@ -300,21 +311,32 @@ export async function runAgentSession(opts: {
     }
   });
 
-  // Heartbeat monitor: detect dead sessions (no activity for 2+ minutes
-  // while the session should be working). Uses SDK state to avoid false
-  // positives during builds (session.isIdle) and compaction (session.isCompacting).
+  // Heartbeat monitor: detect dead sessions (no activity for the silence
+  // threshold while the session should be working). Uses SDK state to avoid
+  // false positives during builds (session.isIdle) and compaction (session.isCompacting).
   //
   // Adversarial review H3: the previous logic aborted on 120s of silence
   // EVEN while a long tool call was in flight (unit-status runs N sequential
   // witness probes; a hexdiff full build can exceed 2min), and the abort
   // reason was write-only — invisible in the result. Now we (a) track tool
-  // execution explicitly and never flag a session dead mid-tool, and (b)
-  // surface the reason in the SessionRunResult.
-  const SILENCE_THRESHOLD_MS = 120_000; // 2 minutes
+  // execution explicitly and never flag a session dead mid-tool, (b) surface
+  // the reason in the SessionRunResult, (c) start the silence clock only at
+  // the first message update (thinking is silent for high-thinking models),
+  // and (d) scale the threshold with the thinking level (or a config
+  // override) instead of a fixed 120s.
+  const SILENCE_THRESHOLD_MS =
+    silenceThresholdMs > 0
+      ? silenceThresholdMs
+      : spec.thinkingLevel === "xhigh"
+        ? 600_000 // 10 min: xhigh reasoning streams nothing for minutes
+        : spec.thinkingLevel === "high"
+          ? 300_000 // 5 min: high reasoning is silent up to several minutes
+          : 120_000; // low/minimal: streams promptly
   const HEARTBEAT_INTERVAL_MS = 15_000;
   let deadSessionReason: string | undefined;
   const heartbeat = setInterval(() => {
     if (toolInFlight > 0) return; // a tool is executing — it has its own timeout
+    if (lastActivityTime === null) return; // no first message yet — still thinking, not dead
     const silenceMs = Date.now() - lastActivityTime;
     if (silenceMs > SILENCE_THRESHOLD_MS) {
       // Only flag as dead if session should be active (not idle, not compacting).

@@ -1843,7 +1843,27 @@ def _try_renaming_witness(
             "absolute link-register return address is not a semantic input; "
             "constant return targets / LR values are compared relative to "
             "the function base",
-        ],
+        ]
+        + (
+            # R9-4 (option B): when the F1 spill carve-out was load-bearing
+            # (a permuted live-in lane spilled to the stack), the certificate
+            # DECLARES the residual boundary: the divergent physical slot
+            # content (caller r_i vs caller r_rho(i)) is observable only via
+            # loads the witness has syntactically confined (same-lane reloads,
+            # byte-range/opcode/kind-complete slot-read detection).  A
+            # COMPUTED-pointer read of the save slot (e.g. addi r4,r1,8;
+            # lwz r5,0(r4)) cannot be ruled out syntactically and is excluded
+            # by this scoped assumption — mirroring the witness's existing
+            # assumed-ordinary-ram scoped assumption.
+            [
+                "no-stack-slot-aliasing: the prologue spill slot is not "
+                "read through a computed address (any load whose base is "
+                "not provably r1-relative is assumed not to touch the save "
+                "slot); only same-lane reloads and the witness's confined "
+                "slot-read forms observe the spilled entry value",
+            ]
+            if outcome.spill_carveout_used else []
+        ),
         opcodes_used=opcodes_used,
         assumed_callees=sorted(call_targets, key=str),
         callee_contracts={

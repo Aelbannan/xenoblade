@@ -2898,3 +2898,110 @@ class Round9_4cCarveoutFlagEmptyFprTests(unittest.TestCase):
         self.assertTrue(outcome.certified, outcome.failure)
         self.assertEqual((outcome.details or {}).get("rho_mode"), "region-sliced")
         self.assertTrue(outcome.spill_carveout_used)
+
+
+class Round9_4dUpdateFormLoadCompensatingTests(unittest.TestCase):
+    """Fifth review round (R9-4d, Kimi K3 Finding 1): the C0 r1-stationarity
+    check seeded r1_def_reaches AT the r1-def sites and skipped def sites
+    (``if i in r1_defs: continue``).  An UPDATE-FORM LOAD (lwzu/lbzu/lhzu/
+    lhau/lfsu/lfdu/psq_lu with rA==r1) is BOTH an r1 def AND a memory read
+    whose EA uses the PRE-update r1 — after a prior ``addi r1,r1,-64``, a
+    compensating ``lwzu r5,72(r1)`` reads the physical slot (old r1+8) but
+    was invisible: C0 skipped the def site, C1 saw disp 72 disjoint from
+    slot 8, C2 never recognized the reload.  Certified caller-r20 vs
+    caller-r25 (probe A class, physically divergent, end-to-end cert issued).
+
+    Fix: seed r1_def_reaches at the SUCCESSORS of each r1 def (a def does not
+    "reach itself") and drop the def-site skip — the update-form load's own
+    EA (pre-update r1) is then checked as the memory access.  Pure ALU
+    ``addi r1`` defs are not memory and are skipped by is_mem; the epilogue
+    ``addi r1,r1,N`` and non-compensating lone update-form loads survive.
+    """
+
+    def _stw(self, rs, ra, d): return (36<<26)|((rs&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _addi(self, rt, ra, imm): return (14<<26)|((rt&31)<<21)|((ra&31)<<16)|(imm&0xFFFF)
+    def _lwzu(self, rt, ra, d): return (33<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lbzu(self, rt, ra, d): return (35<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lfdu(self, fd, ra, d): return (51<<26)|((fd&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _stfd(self, fd, ra, d): return (54<<26)|((fd&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _stwu(self, rs, ra, d): return (37<<26)|((rs&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _lwz(self, rt, ra, d): return (32<<26)|((rt&31)<<21)|((ra&31)<<16)|(d&0xFFFF)
+    def _mr(self, rd, rs): return (31<<26)|((rs&31)<<21)|((rd&31)<<16)|((rs&31)<<11)|(444<<1)
+    def _li(self, rt, v): return (14<<26)|((rt&31)<<21)|(v&0xFFFF)
+
+    def _assert_rejects(self, r_words, d_words) -> None:
+        original, candidate = _decode_pair(r_words, d_words)
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertFalse(outcome.certified, f"must reject: {outcome.failure}")
+
+    def test_lwzu_compensating_read_rejected(self) -> None:
+        # addi r1,-64; lwzu r5,72(r1): the update-form load's pre-update EA
+        # (r1-64+72 = r1+8) hits the slot at 8.
+        self._assert_rejects(
+            [self._stw(20,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_lbzu_compensating_read_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20,1,8), self._addi(1,1,-64), self._lbzu(5,1,72), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._addi(1,1,-64), self._lbzu(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_lfdu_crosskind_compensating_rejected(self) -> None:
+        # FPR slot read by lfdu (cross-kind) after r1 move, exfil via stfd.
+        self._assert_rejects(
+            [self._stfd(20,1,8), self._addi(1,1,-64), self._lfdu(5,1,72), self._stfd(5,2,0), _LR],
+            [self._stfd(25,1,8), self._addi(1,1,-64), self._lfdu(5,1,72), self._stfd(5,2,0), _LR],
+        )
+
+    def test_stwu_mover_lwzu_reader_rejected(self) -> None:
+        self._assert_rejects(
+            [self._stw(20,1,8), self._li(5,0), self._stwu(5,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+            [self._stw(25,1,8), self._li(5,0), self._stwu(5,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_volatile_lane_compensating_rejected(self) -> None:
+        # Volatile live-in r11<->r12: the carve-out engages (no nonvolatile
+        # preservation backstop), the escape must still reject.
+        self._assert_rejects(
+            [self._stw(11,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+            [self._stw(12,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5), _LR],
+        )
+
+    def test_region_path_volatile_compensating_rejected(self) -> None:
+        # Region-sliced path with a volatile spill lane + compensating read,
+        # forced through region slicing by a dead-lane rho conflict.
+        r = [self._stw(11,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5),
+             self._li(7,1), self._li(7,2), self._mr(3,7), _LR]
+        d = [self._stw(12,1,8), self._addi(1,1,-64), self._lwzu(5,1,72), self._mr(3,5),
+             self._li(8,1), self._li(9,2), self._mr(3,9), _LR]
+        self._assert_rejects(r, d)
+
+    # ── controls (must still certify) ────────────────────────────────────
+    def test_noncompensating_lwzu_still_certifies(self) -> None:
+        # Lone update-form load reading r1-64 (NOT the slot), no prior r1 move:
+        # no r1 def reaches it -> certifies.
+        r = [self._stw(20,1,8), self._lwzu(5,1,-64), self._addi(1,1,64), self._mr(3,5), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._lwzu(5,1,-64), self._addi(1,1,64), self._mr(3,5), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_epilogue_addi_r1_still_certifies(self) -> None:
+        r = [self._stw(20,1,8), self._lwz(20,1,8), self._addi(1,1,32), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._lwz(25,1,8), self._addi(1,1,32), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)
+
+    def test_restore_then_mover_still_certifies(self) -> None:
+        # restore then stwu mover with no subsequent r1-relative access.
+        r = [self._stw(20,1,8), self._lwz(20,1,8), self._stwu(1,1,-32), _LR]
+        original, candidate = _decode_pair(
+            r, [self._stw(25,1,8), self._lwz(25,1,8), self._stwu(1,1,-32), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate, deadline_ms=20000)
+        self.assertTrue(outcome.certified, outcome.failure)

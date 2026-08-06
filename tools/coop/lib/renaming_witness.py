@@ -2183,27 +2183,38 @@ def _live_in_spill_only(
                     after_spill[s] = True
                     changed = True
 
-    # C0 (R9-4 H8, r1-stationarity): the slot-read detection is syntactic on
-    # ``(r1 + c)``, which assumes r1 is constant between the save and every
-    # read.  If ANY instruction in the after_spill window DEFINES r1 (ALU
-    # move, update-form load/store with rA==r1, the frame-alloc stwu r1 in
-    # save-before-alloc order) and that def is reachable-before a subsequent
-    # r1-relative memory access, the recorded displacement no longer matches
-    # the physical slot — a compensating ``lwz r5,72(r1)`` after
-    # ``addi r1,r1,-64`` reads the slot at 8 while C1 sees 72 disjoint
-    # (Kimi H8: certified caller-r20 vs caller-r25).  Reject the carve-out.
+    # C0 (R9-4 H8 + R9-4b, r1-stationarity): the slot-read detection is
+    # syntactic on ``(r1 + c)``, which assumes r1 is constant between the
+    # save and every read.  If ANY instruction in the after_spill window
+    # DEFINES r1 (ALU move, update-form load/store with rA==r1, the
+    # frame-alloc stwu r1 in save-before-alloc order), the recorded
+    # displacement may no longer match the physical slot — a compensating
+    # ``lwz r5,72(r1)`` after ``addi r1,r1,-64`` reads the slot at 8 while C1
+    # sees 72 disjoint (Kimi H8: certified caller-r20 vs caller-r25).
+    # Reject the carve-out when an r1-relative memory access is reachable
+    # from a prior r1 def.
     #
-    # The epilogue ``addi r1,r1,N`` / ``lwz r1,0(r1)`` is NOT rejected here
-    # because it has no SUBSEQUENT r1-relative access in the window (the
-    # reachability is forward from the def; a def after the last slot access
-    # reaches nothing) — so the standard prologue/restore/epilogue Chaitin
-    # shape survives.  (Kimi P6: a blanket "no r1-def in window" would kill
-    # the whole class.)
+    # R9-4b fix (Kimi H-a, fifth round): the reachability is seeded at the
+    # SUCCESSORS of each r1 def, NOT at the def site, and the def-site skip
+    # is removed.  An UPDATE-FORM LOAD (lwzu/lbzu/lhzu/lhau/lfsu/lfdu/
+    # psq_lu with rA==r1) is BOTH an r1 def AND a memory read whose EA uses
+    # the PRE-update r1 — after a prior move, that EA hits the slot, so the
+    # def site itself must be checked as the access (the old def-site skip
+    # made it invisible).  A pure ALU ``addi r1,r1,-64`` is not a memory
+    # access and is skipped by the is_mem test; the epilogue
+    # ``addi r1,r1,N`` / ``lwz r1,0(r1)`` has no SUBSEQUENT r1-relative
+    # access (successor-seeding reaches nothing) — the standard
+    # prologue/restore/epilogue Chaitin shape survives.  (Kimi P6: a
+    # blanket "no r1-def in window" would kill the whole class.)
     r1_defs = [i for i in range(n) if after_spill[i] and 1 in defs[i]]
     if r1_defs:
         r1_def_reaches = [False] * n
         for d in r1_defs:
-            r1_def_reaches[d] = True
+            # Seed at SUCCESSORS: the def itself is not "after the move"
+            # (its own EA uses the pre-update r1), but everything reachable
+            # from it executes with the moved r1.
+            for s in _cfg_successors(instructions, d, by_index, end_pc):
+                r1_def_reaches[s] = True
         changed = True
         while changed:
             changed = False
@@ -2220,10 +2231,9 @@ def _live_in_spill_only(
             insn = instructions[i]
             op = insn.opcode
             # An r1-relative memory access reachable from an r1 def: the slot
-            # address may have moved.  (The def site itself is not an
-            # "access after movement" — skip it.)
-            if i in r1_defs:
-                continue
+            # address may have moved.  The def site of an update-form LOAD is
+            # itself such an access (its EA uses the pre-update r1, which a
+            # prior move has desynchronized) — it must NOT be skipped.
             is_mem = (
                 op in _SPILL_SLOT_LOADS_ALL
                 or op in (Opcode.STW, Opcode.STFD)

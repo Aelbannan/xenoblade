@@ -750,3 +750,65 @@ the working tree is sound and safe to commit.  Remaining MINORs unchanged:
 R9-2 sub-word base-relative memory, R9-3 commutative-set cleanup, M1 C3
 window never killed by slot overwrite, F4 lmw blanket reject, C0
 path-insensitivity.
+
+## 13. Thirteenth adversarial review (2026-08-06) — R9-4d: update-form-load compensating reads
+
+A fifth independent review round (Kimi K3, pi/OpenRouter — GLM-5.2 found no
+defect) on the COMMITTED HEAD found one **BLOCKER** in the R9-4b C0
+r1-stationarity check.  Independently reproduced by the session agent and
+fixed; regression suite `Round9_4dUpdateFormLoadCompensatingTests`:
+
+### R9-4d-1 (BLOCKER, Kimi K3) — C0 def-site skip made update-form loads invisible
+
+`_live_in_spill_only`'s C0 r1-stationarity check seeded `r1_def_reaches` AT
+the r1-def sites and skipped def sites (`if i in r1_defs: continue`).  An
+UPDATE-FORM LOAD (`lwzu`/`lbzu`/`lhzu`/`lhau`/`lfsu`/`lfdu`/`psq_lu` with
+rA==r1) is BOTH an r1 def AND a memory read whose effective address uses the
+PRE-update r1.  After a prior `addi r1,r1,-64`, a compensating
+`lwzu r5,72(r1)` reads the physical slot (old r1+8) but was invisible to
+every gate: C0 skipped the def site, C1 saw disp 72 disjoint from slot 8,
+C2 never recognized the reload.  Certified `caller-r20` vs `caller-r25`
+(the probe-A class) — false certificate on the global AND region paths, GPR
+and FPR slots, volatile and nonvolatile lanes, end-to-end certificate
+issued, physical divergence demonstrated (r3=111 vs r3=222).
+
+```
+stw r20,8(r1); addi r1,r1,-64; lwzu r5,72(r1); mr r3,r5; blr   # retail
+stw r25,8(r1); addi r1,r1,-64; lwzu r5,72(r1); mr r3,r5; blr   # decomp
+```
+
+**Fix:** seed `r1_def_reaches` at the SUCCESSORS of each r1 def (a def does
+not "reach itself"), and drop the def-site skip — the update-form load's own
+EA (pre-update r1) is then checked as the memory access.  Controls preserved:
+pure ALU `addi r1,r1,-64` defs are not memory (skipped by `is_mem`);
+the epilogue `addi r1,r1,N` / `lwz r1,0(r1)` has no subsequent r1-relative
+access (successor-seeding reaches nothing); a lone non-compensating
+`lwzu r5,-64(r1)` (no PRIOR r1 def reaches it) certifies; the standard
+prologue/restore/epilogue Chaitin shape survives.
+
+**Verified:** all five H-a variants (lwzu return, lfdu cross-kind exfil,
+lbzu byte exfil, stwu-mover+lwzu-reader, volatile lane) reject on both
+global and region paths; controls certify; witness suite 141, certify_unit
+23, ppc_equivalence 1978, differential 364/364, fixture + docs_sync clean;
+the 6 tools/coop/tests failures remain the pre-existing unrelated set.
+Prior-round invariants (F1/R8/R9-1/R9-4/R9-4b/R9-4c) all hold.
+
+**Other findings (all VERIFIED-SOUND / MINOR, no action required):**
+- GLM F-NEW-1/Kimi Finding 2: C0 `is_mem` store-set asymmetry (X-form update
+  stores and some store forms absent) — benign (stores cannot exfiltrate slot
+  content; loads are fully covered; C2 rejects lane-sourcing stores).
+- Kimi Finding 2: X-form rB==r1 loads missed by C0's `operands[1]==1` test —
+  benign (C1's any-r1-base X-form rule confines them).
+- Kimi Finding 3: `.scratch/r9_edge_probes.py` probe-1 mis-expectation
+  (probe artifact, not a code defect).
+- F-NEW-5 (GLM): `spill_carveout_used` not recorded in the witness payload —
+  MINOR audit-trail observation; the assumption text (its effect) IS
+  recorded.
+- GLM F-NEW-2: C0 path-insensitivity (no-op `addi r1,r1,0` or restore-to-same
+  value over-rejects) — documented Kimi N5/MINOR, fail-closed.
+- GLM F-NEW-4: F8 restore-store-back over-rejection via the pre-existing
+  `_nonvolatile_preservation_failure` simplify limitation — MINOR,
+  pre-existing.
+- Documented MINOR open items unchanged: R9-2 sub-word base-relative memory,
+  R9-3 commutative-set cleanup, M1 C3 window never killed by slot overwrite,
+  F4 lmw blanket reject.

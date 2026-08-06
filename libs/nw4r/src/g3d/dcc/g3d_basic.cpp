@@ -7,7 +7,6 @@ namespace dcc {
 
 bool CalcTexMtx_Basic(math::MTX34 *pMtx, bool bSet, const TexSrt &srt, TexSrt::Flag flag)
 {
-    u32 funcIndex; //unused
     f32 sinR;
     f32 cosR;
 

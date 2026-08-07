@@ -1499,6 +1499,128 @@ def import_symbols(
     return data, added, skipped
 
 
+def sync_symbol_names(
+    project: Any,
+    config: CoopConfig,
+    *,
+    _data: Optional[Dict[str, Any]] = None,
+) -> tuple[Dict[str, Any], int, int, int]:
+    """Re-sync imported registry symbol names from the current symbols.txt.
+
+    Address-based rows imported from symbols.txt drift when symbol recovery
+    renames a function afterwards: the row keeps the old placeholder name
+    (e.g. ``func_80058714``) while symbols.txt (and the retail objects, and
+    usually the decompiled source) now use the recovered name (e.g.
+    ``getSubField78``).  This pass rewrites ``symbol`` / ``function`` /
+    ``size`` for ``origin == symbols.txt`` rows whose address still maps to
+    a current symbols.txt entry with a different name.
+
+    Curated rows (origin != symbols.txt) are never touched.  Rows whose
+    address no longer has a symbols.txt entry are left as-is.
+
+    Returns (data, renamed, size_only, unchanged).
+    """
+    data = load_targets_document(config) if _data is None else _data
+    rows = data.setdefault("targets", [])
+    symbols_path = project.root / "config" / config.region / "symbols.txt"
+    symbols = load_symbols(symbols_path)
+    # address -> current SymbolEntry (last entry wins; addresses are unique)
+    by_address: Dict[str, Any] = {}
+    for entry in symbols:
+        by_address[entry.address_hex] = entry
+
+    renamed = 0
+    size_only = 0
+    unchanged = 0
+    for row in rows:
+        if row.get("origin") != "symbols.txt":
+            continue
+        address = row.get("address")
+        entry = by_address.get(address) if address else None
+        if entry is None:
+            unchanged += 1
+            continue
+        symbol = row.get("symbol")
+        new_symbol = entry.name
+        changed = False
+        if symbol != new_symbol:
+            row["symbol"] = new_symbol
+            row["function"] = _display_name(new_symbol)
+            changed = True
+        new_size = f"0x{entry.size:X}" if entry.size is not None else None
+        if row.get("size") != new_size and new_size is not None:
+            row["size"] = new_size
+        if changed:
+            renamed += 1
+        elif row.get("size") != new_size and new_size is not None:
+            size_only += 1
+        else:
+            unchanged += 1
+    return data, renamed, size_only, unchanged
+
+
+def dedupe_registry(
+    config: CoopConfig,
+    *,
+    _data: Optional[Dict[str, Any]] = None,
+) -> tuple[Dict[str, Any], int, int]:
+    """Drop duplicate address rows (e.g. ``us-80058d7c-2`` alongside
+    ``us-80058d7c``) keeping the canonical base row, and re-point callgraph
+    references from the dropped ids to the kept id.
+
+    Duplicates arise when ``import_symbols`` runs before a stale-name sync:
+    a row carrying an old placeholder name causes the same address to be
+    imported again under a ``-2`` suffix id.  Returns (data, removed, repointed).
+    """
+    data = load_targets_document(config) if _data is None else _data
+    rows = data.setdefault("targets", [])
+    region = str(data.get("region") or config.region)
+
+    by_addr: Dict[str, list[Dict[str, Any]]] = {}
+    for row in rows:
+        by_addr.setdefault(row.get("address"), []).append(row)
+
+    keep_ids: Dict[str, str] = {}  # dropped id -> kept id
+    for addr, group in by_addr.items():
+        if not addr or len(group) < 2:
+            continue
+        base_id = f"{region}-{addr[2:].lower()}" if str(addr).lower().startswith("0x") else None
+        base = next((r for r in group if r.get("id") == base_id), None)
+        if base is None:
+            def _suffix(r: Dict[str, Any]) -> int:
+                m = re.search(r"-(\d+)$", str(r.get("id", "")))
+                return int(m.group(1)) if m else 0
+
+            base = min(group, key=_suffix)
+        for row in group:
+            if row is base:
+                continue
+            # carry over fields the base row may lack (kept row is authoritative)
+            for key in ("source_present", "size", "symbol", "function"):
+                if key in row and key not in base:
+                    base[key] = row[key]
+            keep_ids[row["id"]] = base["id"]
+
+    removed = len(keep_ids)
+    if not removed:
+        return data, 0, 0
+    drop_ids = set(keep_ids)
+    rows[:] = [row for row in rows if row.get("id") not in drop_ids]
+    repointed = 0
+    for row in rows:
+        for key in ("called_functions", "unresolved_called_functions", "depends_on"):
+            refs = row.get(key)
+            if not isinstance(refs, list):
+                continue
+            rewritten = [keep_ids.get(r, r) for r in refs]
+            if rewritten != refs:
+                row[key] = rewritten
+                repointed += sum(1 for a, b in zip(rewritten, refs) if a != b)
+    return data, removed, repointed
+
+
+
+
 @dataclass
 class FunctionCalls:
     symbol: str

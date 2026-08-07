@@ -36,6 +36,363 @@ from tools.coop.lib.source_regions import (
 from tools.symbolrecover.lib.mwcc import demangle_symbol
 
 _INCLUDE_RE = re.compile(r'^\s*#\s*include\s+(?:"([^"]+)"|<([^>]+)>)', re.M)
+
+# ---------------------------------------------------------------------------
+# MWCC anonymous-namespace symbol decoding
+#
+# Anonymous namespaces are mangled as `@unnamed@<primary-file>@` and the linker
+# name embeds the full lexical scope, e.g.
+#   IsIncludeAnimationGroupRef__Q34nw4r3lyt24@unnamed@lyt_layout_cpp@F...
+#   = nw4r::lyt::@unnamed@lyt_layout_cpp@::IsIncludeAnimationGroupRef(...)
+# A stub reproduces that name by defining the function inside the same nested
+# anonymous namespace of the same TU. Template instantiations must be forced
+# via a typed function-pointer address-take (MWCC rejects explicit
+# instantiation inside anonymous namespaces: "illegal explicit template
+# specialization"). Both mechanisms are verified against mwcceppc 3.0a5.2.
+# ---------------------------------------------------------------------------
+
+_LLMH_T = "__LLMH_T__"  # template-arg placeholder (cannot collide with type names)
+
+_MWCC_PRIM = {
+    "v": "void",
+    "b": "bool",
+    "c": "char",
+    "s": "short",
+    "i": "int",
+    "l": "long",
+    "f": "float",
+    "d": "double",
+    "w": "wchar_t",
+    "x": "long long",
+}
+_MWCC_UNSIGNED = {
+    "c": "unsigned char",
+    "s": "unsigned short",
+    "i": "unsigned int",
+    "l": "unsigned long",
+    "x": "unsigned long long",
+    "w": "wchar_t",
+}
+
+
+class _AnonNsUnsupported(Exception):
+    """Raised with a skip reason when an anon-ns symbol cannot be stubbed."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(detail)
+        self.reason = reason
+        self.detail = detail
+
+
+def _parse_mwcc_components(text: str, pos: int, count: int) -> Tuple[List[str], int]:
+    """Parse `count` length-prefixed MWCC name components at text[pos].
+
+    ``count == -1`` parses greedily until the next character is not a digit.
+    """
+    parts: List[str] = []
+    while count == -1 or len(parts) < count:
+        if pos >= len(text) or not text[pos].isdigit():
+            if count == -1:
+                break
+            raise _AnonNsUnsupported("anon_ns_bad_mangle", "expected length prefix")
+        m = re.match(r"\d+", text[pos:])
+        if not m:
+            raise _AnonNsUnsupported("anon_ns_bad_mangle", "expected length prefix")
+        length = int(m.group(0))
+        pos += m.end()
+        if pos + length > len(text):
+            raise _AnonNsUnsupported("anon_ns_bad_mangle", "truncated component")
+        parts.append(text[pos : pos + length])
+        pos += length
+    return parts, pos
+
+
+def _parse_mwcc_qualified(
+    text: str, pos: int, tmpl_code: Optional[str]
+) -> Tuple[str, List[str], int]:
+    """Parse a ``Q<n>``-prefixed qualified name at text[pos].
+
+    MWCC runs the count directly into the first component's length digit
+    (e.g. ``Q34nw4r`` = 3 components, first is ``4nw4r``), so the split is
+    ambiguous; try every prefix of the digit run and accept the one whose
+    components parse and leave a plausible continuation.
+
+    Returns (rendered_name, raw_components, next_pos).
+    """
+    digit_run = re.match(r"\d+", text[pos + 1 :])
+    if not digit_run:
+        raise _AnonNsUnsupported("anon_ns_bad_mangle", "Q without count")
+    run = digit_run.group(0)
+    for k in range(1, len(run) + 1):
+        try:
+            parts, p2 = _parse_mwcc_components(text, pos + 1 + k, int(run[:k]))
+        except _AnonNsUnsupported:
+            continue
+        rendered = "::".join(
+            (p.replace("<" + tmpl_code + ">", "<" + _LLMH_T + ">") if tmpl_code else p)
+            for p in parts
+        )
+        if (
+            p2 == len(text)
+            or text[p2] in ("F", "_")
+            or text[p2] in _MWCC_PRIM
+            or text[p2] in "PRCQU"
+            or text[p2].isdigit()
+        ):
+            return rendered, parts, p2
+    raise _AnonNsUnsupported("anon_ns_bad_mangle", "Q parse failed")
+
+
+def _decode_mwcc_type(
+    text: str, pos: int, tmpl_code: Optional[str]
+) -> Tuple[str, int]:
+    """Decode one MWCC type code at text[pos] into a C type string.
+
+    When the code equals tmpl_code (the template argument from the leaf, e.g.
+    ``w`` in ``CalcStringRectImpl<w>``), the type is rendered as the _LLMH_T
+    placeholder so the stub can be emitted both as a template definition and
+    as a forced concrete instantiation.
+    """
+    if pos >= len(text):
+        raise _AnonNsUnsupported("anon_ns_bad_args", "type underflow")
+    ch = text[pos]
+    if ch == "P":
+        inner, pos = _decode_mwcc_type(text, pos + 1, tmpl_code)
+        return inner + "*", pos
+    if ch == "R":
+        inner, pos = _decode_mwcc_type(text, pos + 1, tmpl_code)
+        return inner + "&", pos
+    if ch == "C":
+        inner, pos = _decode_mwcc_type(text, pos + 1, tmpl_code)
+        return "const " + inner, pos
+    if ch == "U":
+        base = text[pos + 1] if pos + 1 < len(text) else ""
+        if base not in _MWCC_UNSIGNED:
+            raise _AnonNsUnsupported("anon_ns_bad_args", f"bad unsigned code {base!r}")
+        if tmpl_code and "U" + base == tmpl_code:
+            return _LLMH_T, pos + 2
+        return _MWCC_UNSIGNED[base], pos + 2
+    if ch == "Q":
+        name, _parts, npos = _parse_mwcc_qualified(text, pos, tmpl_code)
+        return name, npos
+    if ch.isdigit():
+        # Bare length-prefixed name (e.g. 9ARCHandle, 14_GXIndTexMtxID).
+        part, pos = _parse_mwcc_components(text, pos, 1)
+        name = (
+            part[0].replace("<" + tmpl_code + ">", "<" + _LLMH_T + ">")
+            if tmpl_code
+            else part[0]
+        )
+        return name, pos
+    if ch in _MWCC_PRIM:
+        if tmpl_code and ch == tmpl_code:
+            return _LLMH_T, pos + 1
+        return _MWCC_PRIM[ch], pos + 1
+    raise _AnonNsUnsupported("anon_ns_bad_args", f"unknown type code {ch!r}")
+
+
+def _concrete_tmpl_type(code: str) -> str:
+    """Concrete C type for a template-argument code (w -> wchar_t, Uc -> unsigned char)."""
+    if code.startswith("U") and code[1:] in _MWCC_UNSIGNED:
+        return _MWCC_UNSIGNED[code[1:]]
+    if code in _MWCC_PRIM:
+        return _MWCC_PRIM[code]
+    raise _AnonNsUnsupported("anon_ns_bad_args", f"bad template arg code {code!r}")
+
+
+def _parse_anon_ns_head(
+    symbol: str,
+) -> Tuple[List[str], str, Optional[str], str, str]:
+    """Parse the head of an @unnamed@ linker name (no argument decoding).
+
+    Returns (ns_path, leaf_base, tmpl_code, args_part, ret_code). The leaf
+    and namespace path are available even when the argument encoding is not
+    decodable, so the duplicate guard can run on leaf presence alone.
+    """
+    if symbol.startswith("__ct__") or symbol.startswith("__dt__"):
+        raise _AnonNsUnsupported(
+            "anon_ns_member", "ctor/dtor of an anonymous-namespace class"
+        )
+    head, sep, rest = symbol.partition("__")
+    if not sep:
+        raise _AnonNsUnsupported("anon_ns_bad_mangle", "no __ separator")
+
+    pos = 0
+    if rest.startswith("Q"):
+        _name, components, pos = _parse_mwcc_qualified(rest, 0, None)
+    else:
+        m = re.match(r"\d+", rest)
+        if not m:
+            raise _AnonNsUnsupported("anon_ns_bad_mangle", "no Q or length prefix")
+        components, pos = _parse_mwcc_components(rest, 0, -1)
+
+    anon_idx = None
+    for i, comp in enumerate(components):
+        if "@unnamed@" in comp:
+            anon_idx = i
+            break
+    if anon_idx is None:
+        raise _AnonNsUnsupported("anon_ns_bad_mangle", "no @unnamed@ component")
+    if anon_idx < len(components) - 1:
+        # Class member of an anonymous-namespace class: the class must be
+        # reconstructed in the stub, and unused class members are not emitted
+        # by MWCC (verified), so these are not stubbable.
+        raise _AnonNsUnsupported(
+            "anon_ns_member",
+            f"member of anonymous-namespace class {components[anon_idx + 1]}",
+        )
+    ns_path = [c for c in components[:anon_idx]]
+
+    tmpl_code: Optional[str] = None
+    leaf_base = head
+    tm = re.match(r"^(.+)<([^,>]+)>$", head)
+    if tm:
+        leaf_base, tmpl_code = tm.group(1), tm.group(2)
+
+    if not rest[pos:].startswith("F"):
+        raise _AnonNsUnsupported("anon_ns_bad_mangle", "expected F args")
+    args_part = rest[pos + 1 :]
+    ret_code = "v"
+    if "_" in args_part:
+        args_part, ret_code = args_part.rsplit("_", 1)
+    return ns_path, leaf_base, tmpl_code, args_part, ret_code
+
+
+def _decode_anon_ns_args(
+    args_part: str, ret_code: str, tmpl_code: Optional[str]
+) -> Tuple[List[str], str]:
+    """Decode MWCC argument/return encodings into C type strings."""
+    arg_types: List[str] = []
+    i = 0
+    while i < len(args_part):
+        if args_part[i] == "e":
+            arg_types.append("...")
+            i += 1
+            continue
+        t, i = _decode_mwcc_type(args_part, i, tmpl_code)
+        arg_types.append(t)
+    ret = _decode_mwcc_type(ret_code, 0, tmpl_code)[0]
+    return arg_types, ret
+
+
+def _anon_ns_leaf_defined(source: str, leaf_base: str) -> bool:
+    """True when the leaf already has a definition-like occurrence in the TU.
+
+    Guards against appending a duplicate definition into the (merged) unnamed
+    namespace of the TU. ``Min<u8>(...)`` call sites do not match ``Min(``.
+    """
+    return re.search(r"\b" + re.escape(leaf_base) + r"\s*\(", source) is not None
+
+
+def _anon_ns_stub_text(
+    target_id: str,
+    ns_path: List[str],
+    leaf_base: str,
+    tmpl_code: Optional[str],
+    arg_types: List[str],
+    ret: str,
+    concrete: Optional[str],
+    template_available: bool = False,
+    headers: Sequence[Path] = (),
+) -> str:
+    """Build the anonymous-namespace stub block (with harness markers).
+
+    MWCC quirks (all verified against mwcceppc 3.0a5.2 with -ipa file):
+
+    * Anonymous-namespace free functions and templates are only emitted when
+      referenced by an EXTERN-linkage variable — internal-linkage anon-ns
+      variables/functions get dead-code-eliminated by -ipa file.
+    * A template defined inside the anon ns is mangled with the anon scope
+      (e.g. CalcStringRectImpl<w>__Q34nw4r3lyt25@unnamed@lyt_textBox_cpp@...)
+      when the forced address-take happens in the enclosing namespace.
+    * A template DECLARED IN A HEADER (e.g. nw4r::ut::Min from ut_algorithm.h)
+      is mangled with the anon scope when the TU contains any anonymous
+      namespace and the address-take happens at global scope; it must NOT be
+      redefined (that collides once any second header is included).
+    """
+    is_tmpl = tmpl_code is not None and concrete is not None
+    if is_tmpl:
+        params = ", ".join(f"{t} a{i + 1}" for i, t in enumerate(arg_types))
+        params = params.replace(_LLMH_T, "T")
+        ret_def = ret.replace(_LLMH_T, "T")
+        body = _stub_body(ret_def)
+    else:
+        params = ", ".join(f"{t} a{i + 1}" for i, t in enumerate(arg_types))
+        ret_def = ret
+        body = _stub_body(ret)
+    force_tag = target_id.replace("-", "_")
+    lines = [begin_marker(target_id)]
+
+    if is_tmpl and template_available:
+        # Header template (e.g. nw4r::ut::Min): reference it at global scope;
+        # the TU's anonymous namespace supplies the anon-scope mangling.
+        qualified = "::".join(ns_path + [leaf_base])
+        force_params = ", ".join(
+            t.replace(_LLMH_T, concrete) if t != _LLMH_T else concrete
+            for t in arg_types
+        )
+        fn_ret = concrete if ret == _LLMH_T else ret.replace(_LLMH_T, concrete)
+        lines.append(
+            f"typedef {fn_ret} (*LLMH_ForceFn_{force_tag})({force_params});"
+        )
+        lines.append(
+            f"LLMH_ForceFn_{force_tag} LLMH_force_{force_tag} = "
+            f"&{qualified}<{concrete}>;"
+        )
+        lines.append(end_marker(target_id))
+        return "\n".join(lines) + "\n"
+
+    for ns in ns_path:
+        lines.append(f"namespace {ns} {{")
+    # Forward-declare qualified types that no header declares (e.g.
+    # nw4r::lyt::AnimationGroupRef is not recovered in this fork).
+    for t in arg_types + ([ret] if ret != "void" and not is_tmpl else []):
+        if _LLMH_T in t:
+            continue
+        m = re.match(r"^(?:const\s+)?([\w:]+)(?:\s*[&*]|\s*<.*>)?$", t)
+        if not m:
+            continue
+        qname = m.group(1)
+        leaf = qname.split("::")[-1]
+        if qname.startswith("::") or leaf in {"void", "bool", "char", "short", "int", "long", "float", "double", "wchar_t", "unsigned", "signed"}:
+            continue
+        if not _header_has_type(headers, leaf):
+            lines.append(f"struct {leaf};")
+    lines.append("namespace {")
+    if is_tmpl:
+        lines.append("template <typename T>")
+        lines.append(f"{ret_def} {leaf_base}({params}) {body}")
+        force_params = ", ".join(
+            t.replace(_LLMH_T, concrete) if t != _LLMH_T else concrete
+            for t in arg_types
+        )
+        fn_ret = concrete if ret == _LLMH_T else ret.replace(_LLMH_T, concrete)
+        lines.append(
+            f"typedef {fn_ret} (*LLMH_ForceFn_{force_tag})({force_params});"
+        )
+    else:
+        lines.append(f"{ret_def} {leaf_base}({params}) {body}")
+    lines.append("}")
+    # Extern-linkage force reference in the enclosing namespace: keeps the
+    # anon-ns definition alive under -ipa file.
+    if is_tmpl:
+        force_params = ", ".join(
+            t.replace(_LLMH_T, concrete) if t != _LLMH_T else concrete
+            for t in arg_types
+        )
+        fn_ret = concrete if ret == _LLMH_T else ret.replace(_LLMH_T, concrete)
+        lines.append(
+            f"extern LLMH_ForceFn_{force_tag} LLMH_force_{force_tag} = "
+            f"&{leaf_base}<{concrete}>;"
+        )
+    else:
+        lines.append(
+            f"extern void* LLMH_force_{force_tag} = (void*)&{leaf_base};"
+        )
+    for _ in ns_path:
+        lines.append("}")
+    lines.append(end_marker(target_id))
+    return "\n".join(lines) + "\n"
 _BROKEN_ARG_TOKEN_RE = re.compile(
     r"^(?:\.\.\.\*|const \.\.\.\*|[A-Za-z_]|unsigned char|int|long|double|float|"
     r"char|short|bool|wchar_t)$"
@@ -393,6 +750,198 @@ def _undemangled_ctor_dtor_matches_home(symbol: str, home_class: str) -> bool:
     return home_class in body
 
 
+def _transitive_headers(
+    source_path: Path,
+    source_text: str,
+    roots: Sequence[Path],
+    header_index: Dict[str, List[Path]],
+    max_depth: int = 4,
+) -> List[Path]:
+    """Resolve the direct + transitive include closure of a TU's headers.
+
+    The flat ``_resolve_includes`` only sees direct includes, but type/template
+    lookups (e.g. ``nw4r::ut::Min`` in ut_algorithm.h pulled in by ut.h, or
+    lyt_group.h pulled in by lyt.h) need the closure.
+    """
+    found: List[Path] = []
+    seen: set[Path] = set()
+    queue: List[Tuple[Path, int]] = [
+        (p, 0)
+        for p in _resolve_includes(source_path, source_text, roots, header_index)
+    ]
+    while queue:
+        path, depth = queue.pop(0)
+        try:
+            resolved = path.resolve()
+        except OSError:
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        found.append(path)
+        if depth >= max_depth:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for match in _INCLUDE_RE.findall(text):
+            rel = match[0] or match[1]
+            if not rel:
+                continue
+            cands = [path.parent / rel]
+            for root in roots:
+                cands.append(root / rel)
+            cands.extend(header_index.get(Path(rel).stem, []))
+            for cand in cands:
+                try:
+                    cres = cand.resolve()
+                except OSError:
+                    continue
+                if cres not in seen and cres.is_file():
+                    queue.append((cres, depth + 1))
+    return found
+
+
+def _header_has_type(headers: Sequence[Path], type_name: str) -> bool:
+    """True when a class/struct/typedef/using declaration for type_name exists.
+
+    Used to decide whether a decoded qualified type needs a forward
+    declaration in the stub (the type may not have been recovered in this
+    fork, e.g. ``nw4r::lyt::AnimationGroupRef``).
+    """
+    pattern = re.compile(
+        r"\b(?:class|struct|union)\s+" + re.escape(type_name) + r"\b"
+        r"|\btypedef\b[^;]*\b" + re.escape(type_name) + r"\b"
+        r"|\busing\s+" + re.escape(type_name) + r"\s*="
+    )
+    for header in headers:
+        try:
+            text = header.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if pattern.search(text):
+            return True
+    return False
+
+
+def _free_template_in_headers(
+    headers: Sequence[Path], leaf: str
+) -> bool:
+    """True when a header declares a FREE function template named `leaf`.
+
+    Matches ``template <...> [inline] <ret> leaf(...)`` at namespace scope.
+    Class members (``template <...> class X { ... leaf(...) ... }``) do not
+    match because the class body ``{`` breaks the ``[A-Za-z_:<>,\\s]*`` gap.
+    Used to decide whether an anon-ns stub may skip the template definition
+    and only force-emit the existing instantiation (e.g. nw4r::ut::Min).
+    """
+    pattern = re.compile(
+        r"\btemplate\s*<[^>]*>\s*(?:inline\s+)?"
+        r"[A-Za-z_:<>,\s]*?\b"
+        + re.escape(leaf)
+        + r"\s*\("
+    )
+    for header in headers:
+        try:
+            text = header.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if pattern.search(text):
+            return True
+    return False
+
+
+def _try_plan_anon_ns(
+    target: Target,
+    source: str,
+    roots: Sequence[Path],
+    header_index: Dict[str, List[Path]],
+) -> Tuple[Optional[StubPlan], Optional[SkipPlan]]:
+    """Plan a stub for an anonymous-namespace symbol, or explain the skip."""
+    symbol = target.symbol
+    # Duplicate guard runs on the head parse (leaf + scope) so it works even
+    # when the argument encoding is not decodable.
+    try:
+        ns_path, leaf_base, tmpl_code, args_part, ret_code = _parse_anon_ns_head(
+            symbol
+        )
+    except _AnonNsUnsupported as exc:
+        return None, SkipPlan(
+            target.id, symbol, target.function, target.source, exc.reason, exc.detail
+        )
+    if _anon_ns_leaf_defined(source, leaf_base):
+        return None, SkipPlan(
+            target.id,
+            symbol,
+            target.function,
+            target.source,
+            "anon_ns_duplicate",
+            f"{leaf_base} already defined in {target.source.name}; "
+            "needs decomp-level scope fix, not a stub",
+        )
+    headers = _transitive_headers(
+        target.source,
+        source,
+        roots,
+        header_index,
+    )
+    if target.source not in headers:
+        headers = list(headers) + [target.source]
+    try:
+        arg_types, ret = _decode_anon_ns_args(args_part, ret_code, tmpl_code)
+        concrete = _concrete_tmpl_type(tmpl_code) if tmpl_code else None
+    except _AnonNsUnsupported as exc:
+        return None, SkipPlan(
+            target.id, symbol, target.function, target.source, exc.reason, exc.detail
+        )
+    # When the template already exists in a header (e.g. nw4r::ut::Min), the
+    # stub must NOT redefine it — MWCC instantiates header templates used from
+    # an anonymous namespace into the anon-ns scope, so redefining Min there
+    # collides. Emit only the forced address-take in that case.
+    template_available = _free_template_in_headers(headers, leaf_base)
+    if template_available:
+        qualified = "::".join(ns_path + [leaf_base])
+        concrete = _concrete_tmpl_type(tmpl_code) if tmpl_code else None
+        if concrete and f"&{qualified}<{concrete}>" in source:
+            # The emission hook already exists in the TU (moved-in-place form).
+            return None, SkipPlan(
+                target.id,
+                symbol,
+                target.function,
+                target.source,
+                "region_exists",
+                f"{qualified}<{concrete}> already referenced in {target.source.name}",
+            )
+    stub_text = _anon_ns_stub_text(
+        target.id,
+        ns_path,
+        leaf_base,
+        tmpl_code,
+        arg_types,
+        ret,
+        concrete,
+        template_available=template_available,
+        headers=headers,
+    )
+    display = "::".join(ns_path + [leaf_base])
+    if tmpl_code:
+        display += f"<{concrete}>"
+    plan = StubPlan(
+        target_id=target.id,
+        symbol=symbol,
+        function=target.function,
+        source=target.source,
+        unit=target.unit or "",
+        stub_text=stub_text,
+        return_type=ret if ret != _LLMH_T else (concrete or "T"),
+        qualified_name=display,
+        args="",
+        reason="anon_ns",
+    )
+    return plan, None
+
+
 def collect_plans(
     targets: Sequence[Target],
     *,
@@ -402,6 +951,7 @@ def collect_plans(
     skip_sinit: bool,
     allow_undeclared: bool,
     allow_foreign_class: bool,
+    allow_anon_ns: bool,
     tu: Optional[str],
 ) -> Tuple[List[StubPlan], List[SkipPlan]]:
     roots = _include_roots(project_root)
@@ -442,18 +992,101 @@ def collect_plans(
                 )
             )
             continue
-        if _is_thunk_symbol(target.symbol) or _symbol_has_invalid_identifier_chars(
-            target.symbol
-        ):
+        if _is_thunk_symbol(target.symbol):
             skips.append(
                 SkipPlan(
                     target.id,
                     target.symbol,
                     target.function,
                     target.source,
-                    "thunk" if _is_thunk_symbol(target.symbol) else "invalid_symbol",
-                    "linker name contains '@' (thunk/anonymous namespace); "
-                    "cannot emit as a C++ identifier",
+                    "thunk",
+                    "MWCC virtual-adjustment thunks are compiler-generated; "
+                    "no source construct produces a @NN@-prefixed symbol",
+                )
+            )
+            continue
+        if "@unnamed@" in target.symbol:
+            if not allow_anon_ns:
+                skips.append(
+                    SkipPlan(
+                        target.id,
+                        target.symbol,
+                        target.function,
+                        target.source,
+                        "invalid_symbol",
+                        "anonymous-namespace encoding; pass --allow-anon-ns",
+                    )
+                )
+                continue
+            if target.source is None or not target.source.is_file():
+                skips.append(
+                    SkipPlan(
+                        target.id,
+                        target.symbol,
+                        target.function,
+                        target.source,
+                        "missing_source",
+                    )
+                )
+                continue
+            try:
+                anon_source = target.source.read_text(encoding="utf-8")
+            except OSError as exc:
+                skips.append(
+                    SkipPlan(
+                        target.id,
+                        target.symbol,
+                        target.function,
+                        target.source,
+                        "unreadable",
+                        str(exc),
+                    )
+                )
+                continue
+            try:
+                find_function_region(anon_source, target)
+            except ValueError:
+                pass
+            else:
+                skips.append(
+                    SkipPlan(
+                        target.id,
+                        target.symbol,
+                        target.function,
+                        target.source,
+                        "region_exists",
+                    )
+                )
+                continue
+            if (
+                begin_marker(target.id) in anon_source
+                or end_marker(target.id) in anon_source
+            ):
+                skips.append(
+                    SkipPlan(
+                        target.id,
+                        target.symbol,
+                        target.function,
+                        target.source,
+                        "markers_exist",
+                    )
+                )
+                continue
+            plan, skip = _try_plan_anon_ns(target, anon_source, roots, header_index)
+            if skip is not None:
+                skips.append(skip)
+                continue
+            plans.append(plan)
+            continue
+        if _symbol_has_invalid_identifier_chars(target.symbol):
+            skips.append(
+                SkipPlan(
+                    target.id,
+                    target.symbol,
+                    target.function,
+                    target.source,
+                    "invalid_symbol",
+                    "linker name cannot be emitted as a C++ identifier",
                 )
             )
             continue
@@ -880,6 +1513,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--allow-anon-ns",
+        action="store_true",
+        help=(
+            "Also scaffold symbols inside anonymous namespaces (@unnamed@ link "
+            "names) by reconstructing the nested namespace + signature from the "
+            "mangling, and free templates (e.g. Min<Uc>) via a forced typed "
+            "address-take. Off by default (thunks and anon-ns class members "
+            "remain un-stubbable)."
+        ),
+    )
+    parser.add_argument(
         "--status",
         default="NOT_STARTED",
         help="Only consider targets with this match status (default: NOT_STARTED)",
@@ -919,6 +1563,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         skip_sinit=not args.keep_sinit,
         allow_undeclared=args.allow_undeclared,
         allow_foreign_class=args.allow_foreign_class,
+        allow_anon_ns=args.allow_anon_ns,
         tu=args.tu,
     )
     if args.limit > 0:

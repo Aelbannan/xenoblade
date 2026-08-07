@@ -417,16 +417,19 @@ def extract_allocatable_section(path: Path | str, section_name: str) -> Allocata
     return matches[0]
 
 
-def list_text_functions(path: Path | str) -> list[FunctionBytes]:
-    """Return every sized .text symbol (FUNC or NOTYPE) from an ELF32 BE object."""
+def list_text_functions(path: Path | str, section: str = ".text") -> list[FunctionBytes]:
+    """Return every sized symbol (FUNC or NOTYPE) from one executable section.
+
+    Defaults to ``.text``; pass ``".init"`` for boot-vector objects whose
+    code lives in the init section (e.g. ``__start``)."""
     obj = Path(path)
     data = obj.read_bytes()
     e_type = _require_elf32_be(data, obj)
     sections, by_name = _section_table(data)
 
-    text_idx = by_name.get(".text")
+    text_idx = by_name.get(section)
     if text_idx is None:
-        raise ElfSymbolError(f"missing .text section: {obj}")
+        raise ElfSymbolError(f"missing {section} section: {obj}")
     text = sections[text_idx]
     symtab, sym_idx, str_off, str_size, entsize = _symtab_context(
         data, obj, sections, by_name,

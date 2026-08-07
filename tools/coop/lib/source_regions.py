@@ -74,20 +74,30 @@ def find_function_region(source: str, target: _TargetLike) -> SourceRegion:
     function_identity = target.function.split("(", 1)[0].strip()
     parts = function_identity.split("::")
     qualified = "::".join(parts[-2:]) if len(parts) >= 2 else function_identity
-    pattern = re.compile(re.escape(qualified) + r"\s*\(")
-    for match in pattern.finditer(source):
-        brace = signature_open_brace(source, match.end() - 1)
-        if brace is None:
-            continue
-        close = matching_brace(source, brace)
-        line_start = source.rfind("\n", 0, match.start()) + 1
-        return SourceRegion(
-            start=line_start,
-            end=close + 1,
-            content_start=line_start,
-            content_end=close + 1,
-            marked=False,
-        )
+    candidates = [qualified]
+    # Registry demangles of anonymous-namespace / template symbols are often
+    # corrupted (e.g. 'nw4r3lyt24@unnamed@lyt_layout_cpp@::IsIncludeAnimation'
+    # with type-crumb garbage). Fall back to the bare leaf name (template
+    # crumbs stripped) so real source definitions are still locatable.
+    leaf = parts[-1] if len(parts) >= 2 else function_identity
+    leaf = re.sub(r"<.*>", "", leaf)
+    if leaf and re.match(r"^[A-Za-z_][\w$]*$", leaf) and leaf not in candidates:
+        candidates.append(leaf)
+    for candidate in candidates:
+        pattern = re.compile(r"\b" + re.escape(candidate) + r"\s*\(")
+        for match in pattern.finditer(source):
+            brace = signature_open_brace(source, match.end() - 1)
+            if brace is None:
+                continue
+            close = matching_brace(source, brace)
+            line_start = source.rfind("\n", 0, match.start()) + 1
+            return SourceRegion(
+                start=line_start,
+                end=close + 1,
+                content_start=line_start,
+                content_end=close + 1,
+                marked=False,
+            )
     raise ValueError(
         f"Could not locate {target.function} in source; add stable harness markers first"
     )

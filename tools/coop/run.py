@@ -54,6 +54,13 @@ from tools.coop.lib.objdiff_report import (
 )
 from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
 from tools.coop.lib.project import ObjdiffUnit, Project
+from tools.coop.lib.source_scan import (
+    apply_to_registry,
+    scan_project,
+    summarize,
+    symbol_status_map,
+    write_scan_report,
+)
 
 from tools.coop.lib.targets import (
     _write_targets_document_unlocked,
@@ -74,6 +81,8 @@ from tools.coop.lib.targets import (
     release_target,
     sync_results_from_attempts,
     sync_called_functions,
+    sync_symbol_names,
+    dedupe_registry,
     targets_path,
     update_target_result,
     validate_targets,
@@ -713,6 +722,9 @@ def cmd_targets_show(config: CoopConfig, target_id: str) -> int:
     print(f"workflow: {target.workflow_status}")
     print(f"match:    {target.status}")
     print(f"kind:     {target.kind}")
+    source_present = target.extra.get("source_present")
+    if isinstance(source_present, bool):
+        print(f"source:   {'present' if source_present else 'absent'} (from scan-source)")
     if target.notes:
         print(f"notes:    {target.notes}")
     claim = target.extra.get("claim")
@@ -759,6 +771,7 @@ def _resolved_target_rows(config: CoopConfig) -> list[dict]:
                 "buildable": target.buildable,
                 "unit": target.unit,
                 "catalog": target.extra.get("origin") == "symbols.txt",
+                "source_present": target.extra.get("source_present"),
                 "owner": (
                     target.extra.get("claim", {}).get("owner")
                     if isinstance(target.extra.get("claim"), dict)
@@ -812,17 +825,20 @@ def _render_target_status_markdown(rows: list[dict], region: str) -> str:
                 "",
                 f"## {milestone}",
                 "",
-                "| Target | Function | Workflow | Match | Percent | Owner | Buildable |",
-                "|---|---|---|---|---|---:|---|",
+                "| Target | Function | Workflow | Match | Percent | Src | Owner | Buildable |",
+                "|---|---|---|---|---|---:|---|---|---|",
             ]
         )
         for row in sorted(by_milestone[milestone], key=lambda item: item["id"]):
             percent = row["instruction_match"]
             percent_text = f"{percent:.1f}%" if isinstance(percent, (int, float)) else "—"
             function = str(row["function"]).replace("|", "\\|")
+            src = row.get("source_present")
+            src_text = "yes" if src is True else ("no" if src is False else "—")
             lines.append(
                 f"| `{row['id']}` | {function} | "
                 f"{row['workflow_status']} | {row['match_status']} | {percent_text} | "
+                f"{src_text} | "
                 f"{row['owner'] or '—'} | "
                 f"{'yes' if row['buildable'] else 'no'} |"
             )
@@ -904,6 +920,44 @@ def cmd_targets_sync_calls(project: Project, config: CoopConfig, *, dry_run: boo
             f"call graph: {scanned} function record(s), "
             f"{resolved} resolved direct edge(s), {unresolved} unresolved direct edge(s)"
         )
+        if dry_run:
+            print("dry-run: registry not changed")
+            return 0
+        path = write()
+        print(f"updated: {path}")
+    return cmd_targets_validate(config)
+
+
+def cmd_targets_sync_symbols(project: Project, config: CoopConfig, *, dry_run: bool) -> int:
+    """Re-sync imported registry symbol names from the current symbols.txt.
+
+    Fixes rows whose address-based entries drifted: symbol recovery renamed
+    the function in symbols.txt after the row was imported, so the row still
+    carries the old placeholder name (e.g. ``func_80058714`` vs the current
+    ``getSubField78``).  Curated rows are never touched.
+    """
+    with locked_targets_document(config) as (data, write):
+        data, renamed, size_only, unchanged = sync_symbol_names(
+            project, config, _data=data
+        )
+        print(
+            f"symbol-name sync: {renamed} renamed, "
+            f"{size_only} size-only, {unchanged} unchanged"
+        )
+        if dry_run:
+            print("dry-run: registry not changed")
+            return 0
+        path = write()
+        print(f"updated: {path}")
+    return cmd_targets_validate(config)
+
+
+def cmd_targets_dedupe(config: CoopConfig, *, dry_run: bool) -> int:
+    """Drop duplicate address rows (e.g. ``us-80058d7c-2``) keeping the
+    canonical base row, re-pointing callgraph references to the kept id."""
+    with locked_targets_document(config) as (data, write):
+        data, removed, repointed = dedupe_registry(config, _data=data)
+        print(f"dedupe: {removed} duplicate row(s) removed, {repointed} reference(s) re-pointed")
         if dry_run:
             print("dry-run: registry not changed")
             return 0
@@ -1059,6 +1113,83 @@ def cmd_targets_claim_smallest(
             print(line)
 
     return 0 if count == len(selected) else 1
+
+
+def cmd_targets_scan_source(
+    project: Project,
+    config: CoopConfig,
+    *,
+    update: bool,
+    dry_run: bool,
+) -> int:
+    """Scan the whole binary for which retail functions exist in source.
+
+    Parses the existing retail/decompiled object pairs (no build) and, for
+    every retail function, records whether a decompiled implementation exists
+    in the same unit (matched by mangled symbol).  Writes the catalog-wide
+    scan to ``build/<region>/coop-source-scan.json`` and, with ``--update``,
+    stamps ``source_present`` onto every matching registry row so status
+    reflects source existence rather than just match state.
+    """
+    report_path = (
+        config.project_root
+        / "build"
+        / config.region
+        / "coop-source-scan.json"
+    )
+    print(f"scanning {config.region} retail vs decompiled objects (no build)...")
+    by_unit = scan_project(project)
+    summary = summarize(by_unit)
+    write_scan_report(project, by_unit, report_path)
+    print(f"report: {report_path}")
+    print(
+        f"units scanned {summary['scanned_units']}/{summary['units']} "
+        f"({summary['unscanned_units']} unscanned)"
+    )
+    print(
+        f"retail functions {summary['retail_functions']}: "
+        f"{summary['in_source']} in source, "
+        f"{summary['absent_from_source']} absent, "
+        f"{summary['byte_identical']} byte-identical (reloc-free), "
+        f"{summary['reloc_compatible']} reloc-compatible (masked), "
+        f"{summary['unbuilt_source']} unbuilt-source, "
+        f"{summary['stale_objects']} stale objects"
+    )
+    if summary["decompiled_only"]:
+        print(
+            f"note: {summary['decompiled_only']} decompiled-only symbols "
+            "(extras / renamed / emitted elsewhere) not counted as retail functions"
+        )
+
+    by_symbol = symbol_status_map(by_unit)
+    targets = load_targets(config)
+    curated = [
+        t for t in targets
+        if t.extra.get("origin") != "symbols.txt" and t.symbol in by_symbol
+    ]
+    print(
+        f"\ncurated targets with a scanned symbol: {len(curated)}"
+    )
+    not_started = [t for t in curated if t.status == "NOT_STARTED"]
+    if not_started:
+        print("NOT_STARTED curated targets:")
+        for t in sorted(not_started, key=lambda t: t.id):
+            st = by_symbol[t.symbol]
+            mark = "src" if st.in_source else "no-src"
+            print(f"  {t.id:28} {mark:7} {t.function}")
+
+    if update:
+        changed = apply_to_registry(config, by_symbol, dry_run=dry_run)
+        if dry_run:
+            print(f"\ndry-run: {changed} registry row(s) would get source_present updated")
+        else:
+            print(f"\nupdated source_present on {changed} registry row(s)")
+    else:
+        print(
+            "\nregistry untouched (pass --update to stamp source_present on "
+            "matching rows; --dry-run to preview)"
+        )
+    return 0
 
 
 def _render_target_brief(config: CoopConfig, target_id: str) -> str:
@@ -2016,6 +2147,16 @@ def main() -> int:
         "sync-calls", help="Populate called_functions from generated retail assembly"
     )
     p_targets_calls.add_argument("--dry-run", action="store_true")
+    p_targets_syms = p_targets_sub.add_parser(
+        "sync-symbols",
+        help="Re-sync imported registry symbol names from the current symbols.txt",
+    )
+    p_targets_syms.add_argument("--dry-run", action="store_true")
+    p_targets_dedupe = p_targets_sub.add_parser(
+        "dedupe",
+        help="Drop duplicate address rows, keeping the canonical base row",
+    )
+    p_targets_dedupe.add_argument("--dry-run", action="store_true")
     p_targets_claim = p_targets_sub.add_parser(
         "claim", help="Record the current owner and exclusive edit scope in the registry"
     )
@@ -2128,6 +2269,23 @@ def main() -> int:
         help="Import every function by default; use 'all' for every game symbol",
     )
     p_targets_import.add_argument("--dry-run", action="store_true")
+    p_targets_scan = p_targets_sub.add_parser(
+        "scan-source",
+        help=(
+            "Scan the whole binary for which retail functions have a decompiled "
+            "implementation in source (no build; parses existing objects)"
+        ),
+    )
+    p_targets_scan.add_argument(
+        "--update",
+        action="store_true",
+        help="Stamp source_present onto every matching registry row",
+    )
+    p_targets_scan.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --update: report what would change without writing",
+    )
 
     p_log = sub.add_parser("log", help="Show JSONL attempt log")
     p_log.add_argument("--tail", type=int)
@@ -2293,6 +2451,10 @@ def main() -> int:
         return cmd_targets_sync_attempts(config)
     if args.command == "targets" and args.targets_cmd == "sync-calls":
         return cmd_targets_sync_calls(project, config, dry_run=args.dry_run)
+    if args.command == "targets" and args.targets_cmd == "sync-symbols":
+        return cmd_targets_sync_symbols(project, config, dry_run=args.dry_run)
+    if args.command == "targets" and args.targets_cmd == "dedupe":
+        return cmd_targets_dedupe(config, dry_run=args.dry_run)
     if args.command == "targets" and args.targets_cmd == "claim":
         if len(args.target_id) == 1:
             return cmd_targets_claim(
@@ -2347,6 +2509,13 @@ def main() -> int:
     if args.command == "targets" and args.targets_cmd == "import-symbols":
         return cmd_targets_import_symbols(
             project, config, kind=args.kind, dry_run=args.dry_run
+        )
+    if args.command == "targets" and args.targets_cmd == "scan-source":
+        return cmd_targets_scan_source(
+            project,
+            config,
+            update=bool(args.update),
+            dry_run=bool(args.dry_run),
         )
     if args.command == "log":
         return cmd_log(config, args.tail, args.target)

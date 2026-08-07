@@ -42,6 +42,11 @@ class UnitRules:
     # Zero-pad .sdata2 up to this size (retail 8-byte tail after final f32).
     # AXFXDelayExp: MWCC emits 0x14 (…, 0.95f) but retail is 0x18 (…, 0.95f, 0).
     pad_sdata2_size: int | None = None
+    # Shrink .sdata2 to this size, dropping trailing pool entries that no
+    # surviving relocation references (retail linker GC'd the weak constant).
+    # e_pow: MWCC pools an extra orphaned 1.0 after two53 (0x110) that retail
+    # never references (+8 over the 0x110 split slice).
+    trim_sdata2_size: int | None = None
     # Reloc-referenced @ pool symbols matched by .sdata2 content prefix -> retail name.
     pool_patterns: tuple[tuple[bytes, str], ...] = ()
     # Exact symbol renames (old -> new), applied after pool content matches.
@@ -104,6 +109,12 @@ class UnitRules:
 
 
 UNIT_RULES: dict[str, UnitRules] = {
+    "e_pow.o": UnitRules(
+        # MWCC pools an orphaned 1.0 after two53 (0x110) the final code never
+        # references (no .rela.sdata2 entry touches it); the retail linker GC'd
+        # it. Trimming restores the 0x110 retail slice (+8 over before).
+        trim_sdata2_size=0x110,
+    ),
     "NANDCheck.o": UnitRules(
         exact_renames=(
             ("s_nandUserAreaCallbackName", "lbl_8055127C"),
@@ -2086,6 +2097,86 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     return True
 
 
+def trim_sdata2_section(path: Path, keep_size: int) -> bool:
+    """Shrink .sdata2 to keep_size, dropping trailing orphaned pool entries.
+
+    MWCC occasionally emits a constant the final code never references (the
+    retail linker's GC dead-strips it, e.g. e_pow's extra 1.0 after two53).
+    Symbols past the cut are ABS'd; relocs pointing past it are dropped.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sdata2_idx = sdata2_hoff = sdata2_off = sdata2_size = None
+    sym_idx = rela_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".sdata2":
+            sdata2_idx, sdata2_hoff = i, hoff
+            sdata2_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sdata2_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".rela.sdata2":
+            rela_idx = i
+    if sdata2_idx is None or sdata2_size is None or sdata2_hoff is None:
+        return False
+    if sdata2_size <= keep_size:
+        return False
+
+    # Drop trailing bytes.
+    sec_end = sdata2_off + sdata2_size
+    new_end = sdata2_off + keep_size
+    data = data[:new_end] + data[sec_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= sec_end:
+        e_shoff -= (sec_end - new_end)
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == sdata2_idx:
+            struct.pack_into(">I", data, hoff + 20, keep_size)
+        elif sh_offset >= sec_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset - (sec_end - new_end))
+
+    # ABS symbols past the cut (objdiff ignores bounds); drop relocs past it.
+    if sym_idx is not None:
+        sym_off = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 16)[0]
+        sym_size = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 20)[0]
+        for so in range(0, sym_size, 16):
+            st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+            st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+            if st_shndx == sdata2_idx and st_value >= keep_size:
+                struct.pack_into(">I", data, sym_off + so + 8, 0)  # st_size
+                struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
+    if rela_idx is not None:
+        rela_hoff = e_shoff + rela_idx * e_shentsize
+        rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+        rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+        keep = bytearray()
+        for ro in range(0, rela_size, 12):
+            r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+            if r_offset < keep_size:
+                keep.extend(data[rela_off + ro : rela_off + ro + 12])
+        data[rela_off : rela_off + rela_size] = b"\0" * rela_size
+        data[rela_off : rela_off + len(keep)] = keep
+        struct.pack_into(">I", data, rela_hoff + 20, len(keep))
+
+    path.write_bytes(data)
+    return True
+
+
 def pad_text_section(path: Path, new_size: int) -> bool:
     """Zero-pad .text to new_size (retail alignment tail)."""
     data = bytearray(path.read_bytes())
@@ -2316,6 +2407,8 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = reverse_sdata2_trailing_f32x4(path) or changed
     if rules.pad_sdata2_size is not None:
         changed = pad_sdata2_section(path, rules.pad_sdata2_size) or changed
+    if rules.trim_sdata2_size is not None:
+        changed = trim_sdata2_section(path, rules.trim_sdata2_size) or changed
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     changed = rename_exact(path, rules.exact_renames) or changed
     changed = rename_by_prefix(path, rules.prefix_renames) or changed

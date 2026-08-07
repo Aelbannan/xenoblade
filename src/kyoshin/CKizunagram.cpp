@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CKizunagram.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/util/MemManager.hpp"
 
 // --- C-linkage / mangled-symbol callees used by the target functions ---
 // func_80137444 is C++-linkage (mangled retail), func_80137510 / func_80231848 /
@@ -11,7 +13,17 @@
 extern const float lbl_eu_80668828;
 extern const float lbl_eu_80668834;
 extern const float lbl_eu_80668848;
+extern const float lbl_eu_8066885C;
+extern const float lbl_eu_80668860;
+extern const float lbl_eu_80668864;
+extern const float lbl_eu_80668868;
+extern const float lbl_eu_8066886C;
+extern const float lbl_eu_80668870;
+extern const u32 lbl_eu_80668838;
+extern const u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
+
+extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
 
 u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
@@ -21,9 +33,22 @@ void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout,
     nw4r::lyt::ArcResourceAccessor* accessor,
     const char* name);
+void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+    nw4r::lyt::Layout* layout,
+    nw4r::lyt::AnimTransform** ppAnimTrans,
+    nw4r::lyt::ArcResourceAccessor* accessor,
+    char* name);
+void func_801390E0(CFileHandle** ppHandle);
+void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
+void func_80138078(u32 number);
+
+// Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84.
+extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
 
 // Forward declarations for callees used in func_8025CAB4
-static void func_8025CE00();
+// func_8025CE00 is target 5 (takes the display self); the tail calls pass the
+// same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
+extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);
 static void func_8025CE78();
 static void func_8025CF1C();
 
@@ -44,7 +69,19 @@ void func_8025C870() {}
 
 
 
-void func_80257F9C(){}
+// Toggle both pane entries each frame: walk the +0x08 child to its +0x10
+// sub-object, pull its slot-15 layout pane for each id in a 2-word table, and
+// repaint the pane matching the given phase byte.
+extern "C" __declspec(noinline) void func_80257F9C(UnkKizunaSelf57D90* self, u32 a) {
+    u32 paneIds[2];
+    paneIds[0] = lbl_eu_80668838;
+    paneIds[1] = lbl_eu_8066883C;
+    for (u8 i = 0; i < 2; i++) {
+        UnkKizunaRes59344* res =
+            ((UnkKizunaMid59344*)self->field8)->field10->target((int)paneIds[i], 1);
+        func_80124270((nw4r::lyt::Pane*)res, (u32)(a == i));
+    }
+}
 
 CKizunaRadar::CKizunaRadar() {}
 
@@ -80,7 +117,9 @@ CKizunaLine::~CKizunaLine() {}
 
 // Release/null a +0x08 child object: if non-null, finalize it (vtable slot 2)
 // with a 1 flag, then clear the pointer.
-void func_80257D90(UnkKizunaSelf57D90* self) {
+// extern "C" + noinline keeps same-TU callers emitting an unmangled `bl
+// func_80257D90` (retail links this symbol unmangled) instead of inlining.
+extern "C" __declspec(noinline) void func_80257D90(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
         self->field8->target2(1);
     }
@@ -88,11 +127,23 @@ void func_80257D90(UnkKizunaSelf57D90* self) {
 }
 
 // Same shape as func_80257D90 (sibling release/null helper).
-void func_80257F44(UnkKizunaSelf57D90* self) {
+extern "C" __declspec(noinline) void func_80257F44(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
         self->field8->target2(1);
     }
     self->field8 = 0;
+}
+
+// Build the current-line layout (+0x08) from the shared arc string at +0x27,
+// attach its anim transform at +0x0C, then publish both via the layout's
+// vtable slots 11 / 14.
+extern "C" __declspec(noinline) void func_80257E58(UnkKizunaSelf57E58* self) {
+    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        (nw4r::lyt::Layout**)&self->field8, self->field4, lbl_eu_8050CB20 + 0x27);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        (nw4r::lyt::Layout*)self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0x3f);
+    self->field8->slot11((u32)self->field0C, 1);
+    self->field8->slot14(0);
 }
 
 void func_802580CC(){}
@@ -103,7 +154,7 @@ void func_80258F80(){}
 
 void func_80258F9C(){}
 
-void func_80259098(){}
+extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf57D90* self) {}
 
 // Set an anim child state flag (1), publish it to the object at +0x0C's
 // vtable slot 8, then write the shared "idle" float constant at +0x40.
@@ -115,7 +166,7 @@ void func_80259228(UnkKizunaSelf59228* self) {
 }
 
 // Same shape as func_80259228 but with state flag 3 and a different idle float.
-void func_80259280(UnkKizunaSelf59228* self) {
+extern "C" __declspec(noinline) void func_80259280(UnkKizunaSelf59228* self) {
     self->field14 = 3;
     self->field15 = 0;
     self->field0C->target8(self->field10);
@@ -129,7 +180,10 @@ bool func_802592D8(UnkKizunaSelf592D8* self) {
 
 // Dispatch: walk +0x0C -> +0x10, call vtable slot 15 with (0x8B, 1), then
 // return a 2-word struct built from the result's +0x44 / +0x48 words.
-UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
+// extern "C" + noinline keeps callers (func_8025CAE4/CB50) emitting real
+// unmangled bl branches (retail links func_80259344 unmangled) without
+// inlining — the CKizunaTalkList pattern for same-TU callees.
+extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
     UnkKizunaRes59344* res = self->field0C->field10->target(0x8b, 1);
     UnkKizunaPair out = {res->field44, res->field48};
     return out;
@@ -137,7 +191,7 @@ UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
 
 void func_80259394(){}
 
-void func_8025949C(){}
+extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf57D90* self) { return 0; }
 
 void func_80259820(){}
 
@@ -186,9 +240,33 @@ void func_8025AA38(){}
 
 void func_8025AAE0(){}
 
-void func_8025AB04(){}
+void func_8025AB04(UnkKizunaSelfAB* self) {
+    f32 f = self->field38 + lbl_eu_80668834;
+    self->field38 = f;
+    if (f >= lbl_eu_80668860) {
+        self->field34 = 2;
+        self->field38 = lbl_eu_80668828;
+        func_8025AC1C(self, 1);
+    }
+    if (self->field26 == 0) {
+        self->field34 = 3;
+        func_8025AC1C(self, 0);
+    }
+}
 
-void func_8025AB84(){}
+void func_8025AB84(UnkKizunaSelfAB* self) {
+    f32 f = self->field38 + lbl_eu_80668834;
+    self->field38 = f;
+    if (f >= lbl_eu_80668864) {
+        self->field34 = 1;
+        self->field38 = lbl_eu_80668828;
+        func_8025AC1C(self, 0);
+    }
+    if (self->field26 == 0) {
+        self->field34 = 3;
+        func_8025AC1C(self, 0);
+    }
+}
 
 extern const float lbl_eu_80668828;
 void CKizunagram_resetFields(void* self){
@@ -197,7 +275,7 @@ void CKizunagram_resetFields(void* self){
     *(float*)((u8*)self + 0x38) = lbl_eu_80668828;
 }
 
-void func_8025AC1C(){}
+extern "C" __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {}
 
 void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
@@ -228,7 +306,7 @@ void func_8025B870(){}
 // slot 2) with a 1 flag, then clear the pointer.
 // The nested identical guards reproduce retail's duplicated test: both beqs
 // share the single loaded pointer (MWCC CSEs the load).
-void func_8025B900(UnkKizunaSelf57D90* self) {
+extern "C" __declspec(noinline) void func_8025B900(UnkKizunaSelf57D90* self) {
     if (self->field8 != 0) {
         if (self->field8 != 0) {
             self->field8->target2(1);
@@ -237,15 +315,38 @@ void func_8025B900(UnkKizunaSelf57D90* self) {
     }
 }
 
-void func_8025B958(){}
+// Set display mode 1 for the current-line child: publish the frame value via
+// vtable slots 7/11 of the child at +0x08, and clear the animation flags.
+extern "C" __declspec(noinline) void func_8025B958(UnkKizunaSelfB958* self) {
+    self->field14 = 1;
+    self->field15 = 0;
+    self->field16 = 0;
+    self->field8->slot7(self->field0C);
+    self->field8->slot11(self->field0C, 1);
+}
 
-void func_8025B9C8(){}
+// Same shape as func_8025B958 but display mode 4 and value from +0x10.
+extern "C" __declspec(noinline) void func_8025B9C8(UnkKizunaSelfB958* self) {
+    self->field14 = 4;
+    self->field15 = 0;
+    self->field16 = 0;
+    self->field8->slot7(self->field10);
+    self->field8->slot11(self->field10, 1);
+}
 
 void func_8025BA38(){}
 
 void func_8025C16C(){}
 
-void func_8025C21C(){}
+void func_8025C21C(UnkKizunaSelfC21C* self) {
+    if (func_80137444(self->field10, lbl_eu_80668834) != 0) {
+        // anim reached its last frame: switch to mode 3, publish via the child.
+        self->field14 = 3;
+        self->field15 = 1;
+        self->field8->target14(0);
+        self->field8->target8((u32)self->field10);
+    }
+}
 
 void func_8025C298(){}
 
@@ -255,13 +356,42 @@ CKizunagram::CKizunagram() {}
 
 CKizunagram::~CKizunagram() {}
 
-void func_8025C510(){}
+// Load both bind files into the +0x28 / +0x2C file handles (self is the
+// IWorkEvent receiver), flagging each handle after it is read. Locals let MWCC
+// reuse the readFile return register for the flag calls (no reload).
+void func_8025C510(UnkKizunaSelfC510* self) {
+    CFileHandle* h2 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
+                                            lbl_eu_8050CB20 + 0xcd1,
+                                            (IWorkEvent*)self, 0, 0);
+    self->field2C = h2;
+    CDeviceFile::setHandleFlag2(h2);
+    CFileHandle* h1 = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(),
+                                            lbl_eu_8050CB20 + 0xcf0,
+                                            (IWorkEvent*)self, 0, 0);
+    self->field28 = h1;
+    CDeviceFile::setHandleFlag2(h1);
+}
 
 void func_8025C580(){}
 
 void func_8025C61C(){}
 
-void func_8025C6F0(){}
+// Destruction: release both file handles, clear the anim flag byte, then
+// release each child object (0x4C / 0x68 / 0xAC / 0xC0) and the two resource
+// accessors, and tear down the two memory regions at +0x08 / +0x18.
+void func_8025C6F0(UnkKizunaSelfC6F0* self) {
+    func_801390E0(&self->field28);
+    func_801390E0(&self->field2C);
+    self->field38 = 0;
+    func_8025B900(&self->sub4C);
+    func_80259098(&self->sub68);
+    func_80257F44(&self->subAC);
+    func_80257D90(&self->subC0);
+    func_80139124(self->field30);
+    func_80139124(self->field34);
+    self->mRegA.func_8045F778();
+    self->mRegB.func_8045F778();
+}
 
 unsigned char CKizunagram_getField7E(void* this_ptr) {
     if (*(unsigned char*)((unsigned char*)this_ptr + 0x7e) != 0) {
@@ -284,7 +414,20 @@ unsigned char CKizunagram_checkFields(void* arg1)
 
 void func_8025C7D0(){}
 
-void func_8025C7FC(){}
+void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
+    if (self->field39 == 3) {
+        // switch to mode 4, reset the sub-flag, re-publish all children.
+        self->field39 = 4;
+        self->field3C = 0;
+        func_8025B9C8(&self->sub4C);
+        func_80259280(&self->sub68);
+        func_80257F9C(&self->subAC, 0xff);
+        if (arg4 != 0) {
+            func_80138078(6);
+        }
+    }
+}
+
 
 
 void func_8025C874(){}
@@ -298,7 +441,7 @@ void func_8025CA24(){}
 // Dispatch on display-state byte at +0x3A; each branch is a tail call.
 void func_8025CAB4(UnkKizunaDisp* self) {
     if (self->field_0x3A == 0) {
-        return func_8025CE00();
+        return func_8025CE00((UnkKizunaSelfCE00*)self);
     }
     if (self->field_0x3A == 1) {
         return func_8025CE78();
@@ -363,7 +506,26 @@ void CKizunagram_resetState(void* self) {
 
 void func_8025CD40(){}
 
-void func_8025CE00(){}
+// If the sub-state at +0x68 reports active, scale the stored int bit patterns
+// at +0x80..0x88 down by the constant and publish the results. The u32 words
+// are routed through a stack array so MWCC emits the retail lwz/stw/lfs
+// bit-cast round-trips for +0x88 without consuming its result.
+extern "C" __declspec(noinline) void func_8025CE00(UnkKizunaSelfCE00* self) {
+    if (func_8025949C(&self->sub68) != 0) {
+        u32 raw[3];
+        raw[0] = self->field80;
+        raw[1] = self->field84;
+        raw[2] = self->field88;
+        f32 denom = lbl_eu_80668870;
+        // field48 carries the constant; +0x88 never feeds a published field.
+        *(u32*)&raw[2] = (u32)denom - (u32)denom; // keep raw write alive
+        self->field48 = denom;
+        self->field3A = 1;
+        self->field44 = *(f32*)&raw[1] / denom;
+        self->field40 = *(f32*)&raw[0] / denom;
+    }
+}
+
 
 void func_8025CE78(){}
 

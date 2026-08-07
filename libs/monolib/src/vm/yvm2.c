@@ -848,9 +848,12 @@ void encodeScramble(u8* pData){
 
 u32 vmDataGet(VMThread* pThread, int startIndex, int length){
     //BUG: This code assumes the length is at least 1. Why??
-    int i = 1;
+    //NOTE: declaration order is load-bearing for MWCC regalloc. `result` must be
+    //declared before the loop counters so the accumulator lands in a higher GPR,
+    //byte-matching the retail decode loop. (vmc_call_far relies on this exact order.)
     int index = startIndex;
     u32 result = pThread->codeData[index];
+    int i = 1;
 
     while(i < length){
         result <<= 8;
@@ -864,9 +867,10 @@ u32 vmDataGet(VMThread* pThread, int startIndex, int length){
 //Inline-friendly version used by the per-opcode handlers so the reader is inlined
 //into each caller (retail keeps no standalone vmDataGet symbol).
 static inline u32 vmDataGetCached(VMThread* pThread, int startIndex, int length){
-    int i = 1;
+    //NOTE: declaration order is load-bearing for MWCC regalloc, same as vmDataGet.
     int index = startIndex;
     u32 result = pThread->codeData[index];
+    int i = 1;
 
     while(i < length){
         result <<= 8;
@@ -891,17 +895,18 @@ inline void vmExceptionThrow(VMThread* pThread, u32 exception){
 }
 
 //TODO: volatile feels fake
-inline void* poolEntryGet(volatile SBSectionHeader* sectionHeader, u32 no){
+inline void* poolEntryGet(SBSectionHeader* sectionHeader, u32 no){
     int size = sectionHeader->offsetSize;
     u8* entriesPtr = (u8*)sectionHeader + sectionHeader->entriesOffset;
+    //Compute the entry byte offset via a runtime multiply so MWCC emits the retail
+    //"mullw r0, size, no" (then select 2/4-byte load width) instead of a compile-time shift.
+    u8* entry = entriesPtr + size * no;
 
     u32 result;
     if (size == 2) {
-        u16* entries = (u16*)entriesPtr;
-        result = entries[no];
+        result = *(u16*)entry;
     } else {
-        u32* entries = (u32*)entriesPtr;
-        result = entries[no];
+        result = *(u32*)entry;
     }
     return entriesPtr + result;
 }
@@ -1180,9 +1185,9 @@ int vmc_pool_string(VMThread* pThread, u8 code){
     const char* val = vmStringPoolGet((SBHeader*)pThread->scriptData, no);
 
     VMArg* arg = vmStackNextGet(pThread);
-    arg->value.pointerVal = (void*)val;
+    arg->type = VM_TYPE_STRING;
     arg->unk2 = strlen(val);
-    arg->type = VM_TYPE_INT;
+    arg->value.pointerVal = (void*)val;
 
     incrementPc(pThread, code);
     return VMC_RESULT_0;
@@ -2120,7 +2125,7 @@ int vmc_setter(VMThread* pThread, u8 code){
 
 int vmc_send(VMThread* pThread, u8 code){
     int pc = pThread->reg.pc;
-    int no = vmDataGet(pThread, pc + 1, vmcOpcodes[code].paramSize);
+    int no = vmDataGetCached(pThread, pc + 1, vmcOpcodes[code].paramSize);
     VMArg* arg = vmStackPrevGet(pThread);
 
     if (arg->type != VM_TYPE_OC) {
@@ -2129,25 +2134,75 @@ int vmc_send(VMThread* pThread, u8 code){
       return VMC_RESULT_0;
     }
 
-    int uVar10 = pThread->stack[pThread->reg.sp - 1].value.intVal;
-    OCData* iVar7 = vmState.ocs[arg->unk2].unk0;
-    const char* funcName = vmIdPoolGet(pThread->scriptData, no);
-    int selectorId = vmSelectorSearch(iVar7,funcName);
-    OCData* pvVar3 = vmState.builtinOC;
-    int result = VMC_RESULT_0;
+    int argCnt = pThread->stack[pThread->reg.sp - 1].value.intVal;
+    OCData* ocData = vmState.ocs[arg->unk2].unk0;
+    const char* name = vmIdPoolGet(pThread->scriptData, no);
 
-    if (selectorId < 0) {
-      if (vmState.builtinOC == NULL || vmSelectorSearch(vmState.builtinOC, funcName) < 0) {
-        saveArg(pThread, arg, 0);
-        vmExceptionThrow(pThread, VM_EXCEPTION_SEND_ERROR);
-        return VMC_RESULT_0;
-      }
+    //Inline vmSelectorSearch against this OC's selectors (retail keeps no call)
+    int len = strlen(name);
+    int sel = -1;
+    if(ocData->selectors != NULL){
+        OCSelector* it = ocData->selectors;
+        for(u32 i = 0; it->name != NULL; it++, i++){
+            OCSelector* entry = &ocData->selectors[i];
+            if(len == entry->nameLength && strcmp(name, entry->name) == 0){
+                sel = (int)i;
+                break;
+            }
+        }
     }
 
-    OCSelectorFunc func = pvVar3->selectors->func;
+    OCSelectorFunc func;
+    if(sel < 0){
+        //Fall back to the builtin OC's selectors (re-reading the name pool entry)
+        OCData* builtin = vmState.builtinOC;
+        int bsel = -1;
+        if(builtin != NULL){
+            const char* name2 = vmIdPoolGet(pThread->scriptData, no);
+            int len2 = strlen(name2);
+            if(builtin->selectors != NULL){
+                OCSelector* it = builtin->selectors;
+                for(u32 i = 0; it->name != NULL; it++, i++){
+                    OCSelector* entry = &builtin->selectors[i];
+                    if(len2 == entry->nameLength && strcmp(name2, entry->name) == 0){
+                        bsel = (int)i;
+                        break;
+                    }
+                }
+            }
+        }
+        if(bsel < 0){
+            saveArg(pThread, arg, 0);
+            vmExceptionThrow(pThread, VM_EXCEPTION_SEND_ERROR);
+            return VMC_RESULT_0;
+        }
+        func = builtin->selectors[bsel].func;
+    }else{
+        func = ocData->selectors[sel].func;
+    }
+
     pThread->waitMode = FALSE;
-    int uVar6 = func(pThread,arg->value.intVal);
-    result = vmc_plugin_sub(pThread, code, uVar10, uVar6);
+    int ret = func(pThread, arg->value.intVal);
+
+    int result;
+    if(pThread->reg.exception != 0){
+        result = VMC_RESULT_0;
+    }else if(pThread->waitMode != FALSE){
+        result = VMC_RESULT_1;
+    }else{
+        if(ret > 1 || ((argCnt >> 8) & 0xFF) > ret){
+            vmExceptionThrow(pThread, VM_EXCEPTION_8);
+            result = VMC_RESULT_0;
+        }else{
+            int base = pThread->reg.sp - 1;
+            pThread->reg.sp -= ret + (argCnt & 0xFF) + 1;
+            if(((argCnt >> 8) & 0xFF) != 0){
+                vmPush(pThread, &pThread->stack[base]);
+            }
+            pThread->reg.pc += vmcOpcodes[code].paramSize + 1;
+            result = VMC_RESULT_0;
+        }
+    }
 
     if(result == VMC_RESULT_1) pThread->reg.sp++;
 

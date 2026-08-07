@@ -4,9 +4,27 @@
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 
+// Entry in the crystal-state table rooted at CMCCrystalBox+0x3D8.
+struct CMCCrystalDataEntry {
+    s16  id;     // +0x00
+    u8   flag;   // +0x02
+    u8   pad3;   // +0x03
+};
+
+// Crystal-state table rooted at CMCCrystalBox+0x3D8: 1024 entries (4 bytes
+// each), then a small state header, then the name buffer for sprintf.
+struct CMCCrystalData {
+    CMCCrystalDataEntry entries[0x400]; // +0x000
+    u16  count;                         // +0x1000
+    u8   byte_1002;                     // +0x1002 (category)
+    u8   limit;                         // +0x1003
+    s8   current;                       // +0x1004
+    char name[0x10C8 - 0x1005];         // +0x1005 (buffer passed to sprintf)
+};
+
 class CMCCrystalBox {
 public:
-    CMCCrystalBox();
+    CMCCrystalBox(u8 parentType);
     virtual ~CMCCrystalBox();
     void OnFileEvent();
 
@@ -16,7 +34,7 @@ public:
     u8 pad_21[0x24 - 0x21];
     nw4r::lyt::AnimTransform* subObjPtrs[0x0F]; // +0x24 to +0x5F: array of 15 sub-object pointers
     u8 unk60;                           // +0x60
-    u32 pad_61_pad_63;
+    u8 pad_61_pad_63[3];
     u32 unk64;                          // +0x64: state/status
     u8 unk68;                           // +0x68
     u8 unk69;                           // +0x69: active flag
@@ -42,12 +60,17 @@ public:
     u8 unk2D3;                          // +0x2D3
     u8 unk2D4;                          // +0x2D4: read by getByte_2D4_8021624C
     u8 unk2D5;                          // +0x2D5: read by getByte_2D5_80216254
-    u8 pad_2D6[0x14F1 - 0x2D6];
+    u8 pad_2D6[0x3D8 - 0x2D6];
+    CMCCrystalData data;                // +0x3D8: crystal-state table (ends at +0x14A0)
+    u8 field_14A0;                      // +0x14A0
+    u8 pad_14A1[0x14EC - 0x14A1];       // +0x14A1..0x14EB
+    u8 field_14EC[5];                   // +0x14EC..0x14F0 (indexed by field_14F2)
     u8 field_14F1;                      // +0x14F1
-    u8 field_14F2;                      // +0x14F2: countdown ticker
+    u8 field_14F2;                      // +0x14F2: countdown ticker / index
     u8 pad_14F3[0x1500 - 0x14F3];
     u8 unk1500;                         // +0x1500
     u8 pad_1501[0x1504 - 0x1501];
     u16 unk1504;                        // +0x1504
-    u8 pad_1506[0x1508 - 0x1506];
+    u8 field_1506;                      // +0x1506
+    u8 field_1507;                      // +0x1507
 };

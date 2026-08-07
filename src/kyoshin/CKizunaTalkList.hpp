@@ -63,13 +63,13 @@ public:
     /* 0x86 */ u8 mUnknown86;
     /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
     u8 func_8027355C() const { return mNeedsRebuild; }
-    /* 0x88 */ u8 mUnknown88;
+    /* 0x88 */ s8 mUnknown88;
     /* 0x89 */ u8 _pad89;           // padding
-    /* 0x8A */ u16 mUnknown8A;
+    /* 0x8A */ s16 mUnknown8A;
     /* 0x8C */ TalkListEntryArray mEntryArray;
     CKizunaTalkList();
     virtual ~CKizunaTalkList();
-    void OnFileEvent();
+    virtual bool OnFileEvent(CEventFile* pEventFile);
 };
 
 

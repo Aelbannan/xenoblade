@@ -11,6 +11,13 @@ namespace lyt {
 }
 class CBaseCur;
 
+/* Sets mVtbl before members are constructed (retail ctor order).
+   Manual vtable base (non-polymorphic) so MWCC does not emit a vptr re-seat
+   store in ~CEquipChange (retail shape) - same trick as CBatteryVtblBase. */
+struct CEquipChangeVtblBase {
+    void* mVtbl; // 0x0
+};
+
 /* Layout verified against extab destroy-member order:
    0x00: IWorkEvent base (vtable ptr)
    0x04: UnkClass_8045F564 (0x10 bytes)
@@ -20,8 +27,9 @@ class CBaseCur;
    0x80: CSubCur          (0x24 bytes)
    0xA4: CItemBoxInfo     (0x20C bytes)
    0x2B0: CEquipItemBox */
-class CEquipChange : public IWorkEvent {
+class CEquipChange : public CEquipChangeVtblBase {
 public:
+    ~CEquipChange();
     bool OnFileEvent(CEventFile*);
     u8 func_802023C0();
     void func_802023C8();
@@ -34,11 +42,14 @@ public:
     // 0x04: UnkClass_8045F564 (size 0x10)
     u8 _pad04[0x10];
     // 0x14: UnkClass_8045F564 (size 0x3C)
-    u8 _pad14[0x1C];                       // 0x14..0x30
+    u8 _pad14[0x10];                       // 0x14..0x24
+    u32 field_24;                          // 0x24 - file handle 1
+    u32 field_28;                          // 0x28 - file handle 2
+    u8 _pad2C[0x04];                       // 0x2C..0x30
     u32 field_30;                          // 0x30
     u32 field_34;                          // 0x34
     nw4r::lyt::AnimTransform* field_38;    // 0x38
-    u8 _pad3C[0x04];                       // 0x3C..0x40
+    nw4r::lyt::AnimTransform* field_3C;    // 0x3C
     nw4r::lyt::AnimTransform* field_40;    // 0x40
     u8 field_44;                           // 0x44
     u8 _pad45[0x03];                       // 0x45..0x48
@@ -53,7 +64,8 @@ public:
     // 0x80: CSubCur (size 0x24)
     u8 field_80[0x18];       // 0x80
     s8 field_98;              // 0x98
-    u8 _pad99[0x0B];
+    u8 field_99;              // 0x99
+    u8 _pad9A[0x0A];          // 0x9A..0xA4
     // 0xA4: CItemBoxInfo (size 0x20C)
     u8 _padA4[0x20C];
     // 0x2B0: CEquipItemBox

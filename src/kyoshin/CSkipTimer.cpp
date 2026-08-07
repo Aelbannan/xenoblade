@@ -2,24 +2,18 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/CSkipTimer.hpp"
+#include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 #include <cstdio>
-
-// Retail linking: func_80137444 is mangled (C++ linkage), func_80137510 /
-// func_80136A1C are unmangled in US retail (extern "C"). code_80135FDC.hpp
-// declares func_80137510 with C++ linkage, so declare manually here.
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-
-// --- shared data (retail split symbols) ---
 
 // .sdata2 float constant used as the "animation reached frame" bound.
 extern const float lbl_eu_80668C30;
 // CSkipTimer2 vtable pointer stored at +0x00.
 extern "C" void* lbl_eu_80539884[];
 // CSkipTimer vtable pointer stored at +0x00.
-extern "C" void* lbl_eu_80539878[];
+extern "C" void* lbl_eu_805397F0[];
 // String pool used by func_8029F440 (pane name + sprintf format).
 extern "C" char lbl_eu_80510568[];
 
@@ -27,15 +21,40 @@ extern "C" char lbl_eu_80510568[];
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
-// func_8029F364 is matched upstream (no stub needed); exposed via declaration.
-extern "C" void func_8029F364(CSkipTimer2*, u8);
-extern "C" int func_802A04F0(CSkipTimer*);
+extern "C" void func_80138078__FUl(u32);
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" u32 CSysWin_isReady(void*);
+
+// .sdata2 float constants used by the sinit_802A07D8 static initializer.
+extern "C" float lbl_eu_80664A50;
+extern "C" const float lbl_eu_80668C4C;
+extern "C" const float lbl_eu_80662C78;
+extern "C" const float lbl_eu_80668C48;
+void func_8006A234(u16*, u16*);
+extern "C" void func_8022B7C8(void*, void*);
+extern "C" void func_8022B7F4(void*);
+// C-exported retail symbol: unmangled reloc name must be emitted at call sites.
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+// (func_80137510 stays as declared in code_80135FDC.hpp - read-only header)
+extern "C" int CSysWin_isActive(void*);
+extern "C" void func_8022B8E4(void*);
+extern "C" u32 func_800FEDF8();
+extern "C" void func_800FF914();
 
 // Unmatched same-unit siblings referenced as extern (linker resolves to retail
 // address) so in-unit callers emit a direct `bl` instead of inlining a stub.
 // Retail strips mangling for these func_ names in US, hence extern "C".
 extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
-extern "C" void func_802A05E4(CSkipTimer* self);
+void func_8029F504(CSkipTimer2* self);
+void func_8029F5CC(CSkipTimer2* self);
+extern "C" void func_8029F6EC(CSkipTimer2* self);
+extern "C" void func_8029F73C(CSkipTimer2* self);
+void func_802A041C(CSkipTimer* self);
+void func_8029F364(CSkipTimer2* self, u8 arg);
+void func_8029F440(CSkipTimer* self, int arg1, int arg2);
+void func_802A055C(CSkipTimer* self);
+void func_802A05E4(CSkipTimer* self);
+extern "C" int func_802A04F0(CSkipTimer* self);
 
 // ============================================================================
 // CSkipTimer2 constructor
@@ -61,31 +80,132 @@ CSkipTimer2::~CSkipTimer2() {
 }
 
 // func_8029F2FC: reset the sub-controller.
-void func_8029F2FC(CSkipTimer2* self) {
-    self->mField20 = 0;
-    if (self->mField18 != 0) {
-        if (self->mField18 != 0) {
-            self->mField18->vf2(1);
-        }
-        self->mField18 = 0;
-    }
-    self->mMemRegion.func_8045F778();
-}
+// Body lives in retail; declared extern so func_8029FE30 emits a direct `bl`
+// instead of inlining this defined-in-TU copy.
+extern "C" void func_8029F2FC(CSkipTimer2* self);
 
 // func_8029F6EC: check forward-anim reached end -> state 5.
-void func_8029F6EC(CSkipTimer2* self) {
-    if (func_80137510(self->mAnimTransform, lbl_eu_80668C30) != 0) {
-        self->mField21 = 5;
-        func_8029F82C(self, self->mField24);
+// Body lives in retail; declared extern so func_8029F26C emits a direct `bl`
+// instead of inlining (functions defined in this TU are otherwise inlined).
+// func_8029F82C (CSkipTimer2): clear the alpha of all 7 slot panes, then
+// (for arg 1..7) activate the pane selected by arg. The panes are named by
+// the 9-byte-strided strings str[0x5a..0x90] in the pool.
+void func_8029F82C(CSkipTimer2* self, u8 arg) {
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true),
+                  0);
+    func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                      ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true),
+                  0);
+    switch (arg) {
+    case 1:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x5a], true),
+                      1);
+        break;
+    case 2:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x63], true),
+                      1);
+        break;
+    case 3:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x6c], true),
+                      1);
+        break;
+    case 4:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x75], true),
+                      1);
+        break;
+    case 5:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x7e], true),
+                      1);
+        break;
+    case 6:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x87], true),
+                      1);
+        break;
+    case 7:
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x90], true),
+                      1);
+        break;
     }
 }
 
-// func_8029F73C: check forward-anim reached end -> ready state.
-void func_8029F73C(CSkipTimer2* self) {
+// func_8029F73C: check forward-anim reached end -> ready state (retail body).
+// func_8029F5CC likewise lives in retail (mirror pane alpha);
+// all three are extern here so func_8029F26C calls them with a `bl`, matching
+// the retail dispatch (defined-in-TU copies would be inlined).
+//
+// func_8029F504: when the forward anim has reached the end frame (delta > 0),
+// set state 2 and mirror the color-alpha byte (offset 0xB8) from the slot pane
+// "str[0x52]" onto "str[0x41]".
+void func_8029F504(CSkipTimer2* self) {
     if (func_80137444(self->mAnimTransform, lbl_eu_80668C30) != 0) {
         self->mField21 = 2;
         self->mField23 = 1;
     }
+    nw4r::lyt::Pane* pan52 =
+        reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+            ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x52], true);
+    reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true))
+        ->field_0xB8 =
+        reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
+}
+
+// func_8029F5CC: when the reverse anim has reached the end frame (delta == 0),
+// clear state 0, clear the slot pane "str[0x41]", then (always) mirror the
+// color-alpha byte (offset 0xB8) from "str[0x52]" onto "str[0x41]".
+void func_8029F5CC(CSkipTimer2* self) {
+    if (func_80137510(self->mAnimTransform, lbl_eu_80668C30) != 0) {
+        self->mField21 = 0;
+        self->mField23 = 1;
+        func_80124270(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                          ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true),
+                      0);
+    }
+    nw4r::lyt::Pane* pan52 =
+        reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+            ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x52], true);
+    reinterpret_cast<PaneAlphaB8*>(reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)
+                                       ->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true))
+        ->field_0xB8 =
+        reinterpret_cast<PaneAlphaB8*>(pan52)->field_0xB8;
+}
+
+// func_802A041C: advance the skip-timer animation to the frame computed from
+// the slot key (mField2C*60 + mField2E), wrapped to the anim frame count, then
+// stamp the slot text and run the sub-controller.
+void func_802A041C(CSkipTimer* self) {
+    int total = (int)self->mField2C * 0x3c + (int)(s16)self->mField2E;
+    float cur = lbl_eu_80662C78 * (float)total + lbl_eu_80664A50;
+    float max = (float)(u16)self->mAnimTransform24->GetFrameSize();
+    if (cur > max) {
+        cur -= max;
+    }
+    self->mAnimTransform24->SetFrame(cur);
+    self->mLayout2->Animate(0);
+    func_8029F440(self, self->mField2C, (s16)self->mField2E);
 }
 
 // func_8029F440: format slot name and stamp it into the layout pane.
@@ -95,14 +215,15 @@ void func_8029F440(CSkipTimer* self, int arg1, int arg2) {
     func_80136A1C(self->mLayout, &lbl_eu_80510568[0x41], buf, 0);
 }
 
-// CSkipTimer constructor (not a harness target; scaffolding).
+// CSkipTimer constructor.
 CSkipTimer::CSkipTimer() {
-    mVtbl = lbl_eu_80539878;
-    mParent = 0;
+    mVtbl = lbl_eu_805397F0;
+    __ct__17UnkClass_8045F564Fv(&mMemRegion);
+    mFileHandle = 0;
     mLayout = 0;
-    mAnimTransform = 0;
+    mLayout2 = 0;
     mAnimTransform20 = 0;
-    mField24 = 0;
+    mAnimTransform24 = 0;
     mField28 = 0;
     mField29 = 0;
     mField2A = 0;
@@ -110,6 +231,8 @@ CSkipTimer::CSkipTimer() {
     mField2C = 0;
     mField2E = 0;
     mActive = 0;
+    new (&mSysWinData[0]) CSysWin();
+    new (&mSkipTimer2Data[0]) CSkipTimer2(0);
 }
 
 // CSkipTimer destructor.
@@ -125,12 +248,8 @@ void func_802A0234(CSkipTimer* self) {
     if (func_80137444(self->mAnimTransform20, lbl_eu_80668C30) != 0) {
         self->mField29 = 2;
         func_802A05E4(self);
-        // Function pointer prevents MWCC from inlining func_802A04F0
-        // (retail keeps a direct `bl`).
-        int (*fn)(CSkipTimer*) = func_802A04F0;
-        int idx = fn(self);
         func_8029F364(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]),
-                      static_cast<u8>(idx));
+                      static_cast<u8>(func_802A04F0(self)));
     }
 }
 
@@ -142,37 +261,67 @@ void func_802A02D4(CSkipTimer* self) {
     }
 }
 
-// func_802A04F0: map skip-timer index (mField2C) to an action id (1..7).
-extern "C" int func_802A04F0(CSkipTimer* self) {
-    switch (self->mField2C) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-        return 7;
-    case 5:
-        return 1;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-        return 2;
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-        return 3;
-    case 17:
-        return 4;
-    case 18:
-        return 5;
-    default:
-        return 6;
+// func_8029F26C (CSkipTimer2): per-frame state machine driver.
+// Sparse switch (1,3,4,5) reproduces retail's linear cmpwi+beq dispatch; the
+// four handlers are extern retail bodies so each arm is a direct `bl`.
+void func_8029F26C(CSkipTimer2* self) {
+    if (self->mField20 == 0) return;
+    switch (self->mField21) {
+    case 1: func_8029F504(self); break;
+    case 3: func_8029F5CC(self); break;
+    case 4: func_8029F6EC(self); break;
+    case 5: func_8029F73C(self); break;
     }
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->Animate(0);
+}
+
+// func_8029F364 (CSkipTimer2): start the skip-timer UI sub-state.
+void func_8029F364(CSkipTimer2* self, u8 arg) {
+    if (self->mField21 != 0) return;
+    self->mField21 = 1;
+    self->mField24 = arg;
+    self->mField23 = 0;
+    nw4r::lyt::Layout* layout = reinterpret_cast<nw4r::lyt::Layout*>(self->mField18);
+    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(&lbl_eu_80510568[0x41], true);
+    func_80124270(pane, 1);
+    func_8029F82C(self, self->mField24);
+}
+
+// func_802A05E4 (CSkipTimer): bind anim24 to layout2 + animate.
+// No cached `layout` temp: retail reloads mLayout2 before each virtual call.
+void func_802A05E4(CSkipTimer* self) {
+    self->mLayout2->UnbindAllAnimation();
+    self->mLayout2->BindAnimation(self->mAnimTransform24);
+    self->mLayout2->SetAnimationEnable(self->mAnimTransform24, true);
+    self->mLayout2->Animate(0);
+}
+
+// func_802A055C (CSkipTimer): bind anim20 to layout2 + animate.
+// Same no-temp shape as func_802A05E4; retail reloads mLayout2 per call.
+void func_802A055C(CSkipTimer* self) {
+    self->mLayout2->UnbindAllAnimation();
+    self->mLayout2->BindAnimation(self->mAnimTransform20);
+    self->mLayout2->SetAnimationEnable(self->mAnimTransform20, true);
+    self->mLayout2->Animate(0);
+}
+
+// func_802A04F0: map skip-timer index (mField2C s16) to an action id (1..7).
+// if/else gives the exact retail dispatch tree (structural-0): 17 first, then
+// the >=17 (<=18->5, >=19->6) arm, then <5->7 / ==5->1 / <10->2 / else->3.
+// (Retail's leaf-block grouping implies a switch; this MWCC revision builds a
+// 10-pivot tree for that switch, so the if/else chain is the byte-closest.)
+extern "C" int func_802A04F0(CSkipTimer* self) {
+    s16 key = self->mField2C;
+    if (key == 17) return 4;
+    if (key >= 17) {              // 18,19,20,...
+        if (key >= 19) return 6;  // >=19
+        return 5;                 // 18
+    }
+    // key <= 16
+    if (key == 5) return 1;
+    if (key < 5) return 7;        // 0..4 (and negatives)
+    if (key >= 10) return 3;      // 10..16
+    return 2;                     // 6..9
 }
 
 // --- remaining scaffolding stubs (not harness targets) ---
@@ -184,18 +333,85 @@ void func_8029F788(void* self) {
     }
 }
 
-void func_8029F7A4(){}
+// func_8029F7A4 (CSkipTimer2): rebind + animate the sub-controller layout.
+// No cached `layout` temp: retail reloads mField18 before each virtual call.
+void func_8029F7A4(CSkipTimer2* self) {
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->UnbindAllAnimation();
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->BindAnimation(self->mAnimTransform);
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->SetAnimationEnable(self->mAnimTransform, true);
+    reinterpret_cast<nw4r::lyt::Layout*>(self->mField18)->Animate(0);
+}
 
 void func_8029FBE0(){}
 void func_8029FCDC(){}
-void func_8029FDBC(){}
-void func_8029FE30(){}
-void func_8029FEBC(){}
-void func_8029FF00(){}
 
+// func_8029FDBC (CSkipTimer): draw helper - render both layouts + syswin.
+void func_8029FDBC(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mField28 == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mLayout2, drawInfo, 0, 1);
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    if (sub->mField20 != 0) {
+        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+            reinterpret_cast<nw4r::lyt::Layout*>(sub->mField18), drawInfo, 0, 1);
+    }
+    func_8022B7C8(&self->mSysWinData[0], drawInfo);
+}
 
-void func_8029FF24(){}
-void func_8029FF98(){}
+// func_8029FE30 (CSkipTimer): tear down the whole widget (dtor-style cleanup).
+void func_8029FE30(CSkipTimer* self) {
+    func_801390E0(&self->mFileHandle);
+    nw4r::lyt::Layout* layout = self->mLayout2;
+    self->mField28 = 0;
+    if (layout != 0) {
+        delete layout;
+        self->mLayout2 = 0;
+    }
+    func_8029F2FC(reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]));
+    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mLayout));
+    self->mLayout = 0;
+    func_8022B7F4(&self->mSysWinData[0]);
+    self->mMemRegion.func_8045F778();
+}
+
+// func_8029FEBC: return the syswin panel's ready flag when ready, else 0.
+u8 func_8029FEBC(CSkipTimer* self) {
+    if (CSysWin_isReady(&self->mSysWinData[0]) != 0) {
+        return self->mField2A;
+    }
+    return 0;
+}
+
+// func_8029FF00: return the skip button state only while the sub-controller is
+// mid-anim (mField23), else the "released" value 0.
+u8 func_8029FF00(CSkipTimer* self) {
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    if (sub->mField23 != 0) {
+        return self->mField2B;
+    }
+    return 0;
+}
+
+// func_8029FF24 (CSkipTimer): advance the switch key (wrap up) + cue sound.
+void func_8029FF24(CSkipTimer* self) {
+    if (self->mField29 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) return;
+    s16 t = self->mField2C + 1;
+    self->mField2C = t;
+    if (t > 0x17) self->mField2C = 0;
+    func_802A041C(self);
+    func_80138078__FUl(0x22);
+}
+
+// func_8029FF98 (CSkipTimer): retreat the switch key (wrap down) + cue sound.
+void func_8029FF98(CSkipTimer* self) {
+    if (self->mField29 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) return;
+    s16 t = self->mField2C - 1;
+    self->mField2C = t;
+    if (t < 0) self->mField2C = 0x17;
+    func_802A041C(self);
+    func_80138078__FUl(0x22);
+}
 
 void func_802A0008(void* obj) {
     unsigned char* bytes = (unsigned char*)obj;
@@ -204,29 +420,94 @@ void func_802A0008(void* obj) {
     bytes[0x2b] = 0;
 }
 
-void func_802A0028(){}
+// func_802A0028: leave the skip state machine (state 3 -> 4), zero the sub
+// controller's anim fields, and raise the leave sound.
+void func_802A0028(CSkipTimer* self) {
+    if (self->mField29 != 3) return;
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    self->mField29 = 4;
+    self->mField2B = 0;
+    sub->mField21 = 3;
+    sub->mField23 = 0;
+    func_80138078__FUl(6);
+}
 
 void func_802A005C(){}
 
 void func_802A0148(){}
 
-void func_802A01F0(){}
+// func_802A01F0: report 1 while the syswin panel is engaged (getUnk34 != 0),
+// otherwise the plain active flag at +0x30.
+u8 func_802A01F0(CSkipTimer* self) {
+    if (CSysWin_getUnk34(&self->mSysWinData[0]) != 0) {
+        return 1;
+    }
+    return self->mActive;
+}
 
-void func_802A0298(){}
+// func_802A0298: (re)engage skip input: frame 3, button state 1.
+void func_802A0298(CSkipTimer* self) {
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    if (sub->mField23 == 0) return;
+    self->mField29 = 3;
+    self->mField2B = 1;
+}
 
-void func_802A02B8(){}
+// func_802A02B8: end the skip: frame 5, then rebind the forward anim (tail call).
+void func_802A02B8(CSkipTimer* self) {
+    CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
+    if (sub->mField23 == 0) return;
+    self->mField29 = 5;
+    func_802A055C(self);
+}
 
-void func_802A0320(){}
+// func_802A0320: (re)activate skip UI: frame 3 + button state 1 when the syswin
+// panel is engaged.
+void func_802A0320(CSkipTimer* self) {
+    if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
+    self->mField29 = 3;
+    self->mField2B = 1;
+}
 
-void func_802A0368(){}
+// func_802A0368: lock the skip button on while the syswin panel is engaged.
+void func_802A0368(CSkipTimer* self) {
+    if (CSysWin_isActive(&self->mSysWinData[0]) == 0) return;
+    self->mField2B = 1;
+    self->mActive = 1;
+}
 
-void func_802A03AC(){}
+// func_8029F410 (CSkipTimer2): hold-and-release transition for the sub
+// controller: from anim state 2 to 4, unless the target pane already matches.
+void func_8029F410(CSkipTimer2* self, u8 arg) {
+    if (self->mField21 != 2) return;
+    if (arg == self->mField24) return;
+    self->mField21 = 4;
+    self->mField23 = 0;
+    self->mField24 = arg;
+}
 
-void func_802A041C(){}
+// func_802A03AC (CSkipTimer): (re)activate the skip timer state.
+void func_802A03AC(CSkipTimer* self) {
+    if (self->mLayout == 0) return;
+    func_802A05E4(self);
+    self->mField2C = 0;
+    self->mField2E = 0;
+    func_8006A234(reinterpret_cast<u16*>(&self->mField2C), &self->mField2E);
+    self->mField2E = 0;
+    func_802A041C(self);
+    func_802A055C(self);
+    self->mField2A = 1;
+    self->mField28 = 1;
+}
 
-void func_802A055C(){}
+// func_802A041C (CSkipTimer): sibling helper, not a harness target.
+// Declared extern "C" at top (resolved to retail at link); not defined here.
 
 bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) { return false; }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_802A07D8(){}
+// --- hard-symbol stub (scaffold_hard_symbols) ---
+// sinit_802A07D8: static initializer folding the skip-timer fade bound into
+// lbl_eu_80664A50 as (mConst8C48 * (mConst68C4C * mConst2C78)).
+void sinit_802A07D8() {
+    lbl_eu_80664A50 = lbl_eu_80668C48 * (lbl_eu_80668C4C * lbl_eu_80662C78);
+}

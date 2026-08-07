@@ -8,18 +8,17 @@ class CfGameManager;
 
 class CfGimmick {
 public:
-    virtual ~CfGimmick();
-    CfGimmick();
+    ~CfGimmick();
 
-    // 0x00 vtable (implicit - first member is virtual dtor)
-
+    /* 0x00 */ void* vtable;   // set to lbl_eu_80535844 by __ct__cf_CfGimmick
     /* 0x04 */ u8 gap04[0x30 - 0x04];
     /* 0x30 */ f32 field_30;   // 0x30 - horizontal radius / half-extent
     /* 0x34 */ f32 field_34;   // 0x34 - vertical extent (low)
     /* 0x38 */ f32 field_38;   // 0x38 - vertical extent (high)
     /* 0x3C */ f32 field_3C;   // 0x3C - depth half-extent
     /* 0x40 */ f32 field_40;   // 0x40 - interaction distance
-    /* 0x44 */ u8 gap44[0x64 - 0x44];
+    /* 0x44 */ s32 field_44;   // 0x44 - rotation/placement kind (0..4); switch index for jumptable_eu_80535830
+    /* 0x48 */ u8 gap48[0x64 - 0x48];
     /* 0x64 */ u16 field_64;
     /* 0x66 */ u16 field_66;
     /* 0x68 */ u16 field_68;
@@ -60,4 +59,43 @@ struct CfGimmickVec3 {
 // func_8020A434 to unregister from the global resource manager.
 struct CfGimmickReg {
     void* field_00;
+};
+
+// Object spawned by func_8020A6B0 via func_800B20B4.  The vtable is used to
+// invoke slots 0x158 (activate) and 0x9C (set position); field_90 is the
+// spawned/active flag.
+struct CfGimmickObject {
+    void** vtable;              // 0x00
+    u8 gap04[0x90 - 0x04];      // 0x04..0x8F
+    u8 field_90;                // 0x90
+};
+
+// Circular object list returned by func_800B6BC8 / func_800B6BEC.  The head
+// node stored at +0x04 is the sentinel; real nodes are reached from head->next
+// and terminate when they wrap back to head.
+struct CfGimmickListNode {
+    CfGimmickListNode* next;    // 0x00
+    u8 gap04[0x08 - 0x04];      // 0x04..0x07
+    void* object;               // 0x08
+};
+struct CfGimmickList {
+    void* field_00;             // 0x00
+    CfGimmickListNode* head;    // 0x04
+};
+
+// Player sub-object (base at getPlayer(i)-0x3E9C) used for the per-player
+// eligibility checks in func_802098EC.
+struct CfPlayerSub3F60 {
+    u8 pad[0x4EC];
+    u32 field_4EC;              // 0x4EC
+};
+struct CfPlayerSpot {
+    void** vtable;              // 0x00 (object at player+0x3E9C; slot 0xAC yields the target)
+};
+struct CfPlayerBase {
+    void** vtable;              // 0x00 (slot 0x128 yields HP)
+    u8 pad[0x3E9C - 0x04];
+    CfPlayerSpot spot;          // 0x3E9C - object handed to the jumptable checkers
+    u8 pad2[0x3F60 - 0x3EA0];
+    void* subField3F60;         // 0x3F60
 };

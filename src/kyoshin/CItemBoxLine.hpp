@@ -49,7 +49,9 @@ public:
     // Tab storage (byte entries + count) + unknown byte fields.
     // CItemBoxLine has an implicit vtable pointer at +0x00, so the first
     // explicit member starts at +0x04.
-    u8 pad_04[0x59 - 0x04]; // 0x04..0x58
+    u8 pad_04[0x50 - 0x04]; // 0x04..0x4F
+    int field50;            // +0x50: navigation state machine
+    u8 pad_54[0x59 - 0x54]; // 0x54..0x58
     u8 unk59;               // +0x59: read by func_801ED800
     u8 tabEntries[9];           // 0x5A..0x62: entry bytes, cleared by func_801EDA08
     u8 tabCount;                // +0x63: count
@@ -64,8 +66,9 @@ public:
     s16 unk38E;                 // +0x38E: read by func_801EECC8
     u8 pad_390[0x0E];           // 0x390..0x39D
     u8 unk39E;                  // +0x39E: read by func_801EECC0
-    u8 pad_39F;                 // 0x39F..0x39F
+    u8 field39F;                // +0x39F: current cursor position (func_801EED6C)
     u8 field3A0;                // +0x3A0: returned by func_801ED808
-    u8 pad_3A1[0x3A4 - 0x3A1];  // 0x3A1..0x3A3
+    u8 pad_3A1[0x3A3 - 0x3A1];  // 0x3A1..0x3A2
+    u8 field3A3;                // +0x3A3: wrote by func_801EE684
     CIBLTab unk3A4;             // +0x3A4: target of func_801EC3B0 call
 };

@@ -30,7 +30,6 @@ StrmPlayer::~StrmPlayer() {
 }
 
 StrmPlayer::PlayerTrack* StrmPlayer::GetPlayerTrack(int index) {
-    if (index > 7) return NULL;
     return &mPlayerTracks[index];
 }
 

@@ -5,6 +5,9 @@
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
 
+#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
 // These retail symbols are defined in other TUs / the linked library.
 extern "C" {
@@ -12,7 +15,23 @@ extern "C" {
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80664300;
     extern float lbl_eu_80667A70;
+    extern float lbl_eu_80667A74;
+    extern u16 lbl_eu_80663E3C;
+    extern u8  lbl_eu_8066476D;
+    int*  func_8009ECB0();
+    void* func_8023C1B4();
+    void func_800628C4(u32 a, u32 b);
+    void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
+    void func_8007FE18__Q22cf13CfGameManagerFv(int flag);
+    int  func_80174C98(void* actor, int* outVal, int flags);
+    bool func_8006EF04__Fi(s32 mask);
+    u32  func_8009CF8C(u32 resource);
+    int  func_8017FD44();
+    int  func_80148778(void* obj, int id);
+    int  func_8027E018(void* obj, void* arg);
+    void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
+    int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     void func_800BE12C(void* obj, int a, int b, int c, int d);
     void func_8012F860();
     void func_801338C8();
@@ -37,6 +56,7 @@ extern "C" {
     void func_801FA254(u8* obj);
     void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const UnkFloat4* value, u32 third);
     void func_80085878__Q22cf13CfGameManagerFv();
+    int  func_80085840__Q22cf13CfGameManagerFv();
     int  func_80085838__Q22cf13CfGameManagerFv();
     void func_8007FECC__Q22cf13CfGameManagerFv();
     void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
@@ -63,7 +83,18 @@ int func_8018F924(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 1;
 }
 
-void func_8018F9A0(){}
+int func_8018F9A0(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
+    // Clear the event-pending flag when an event is already active/disabled
+    // (busy manager, bit9 latching, or bit7 set); otherwise forward the request.
+    if (func_80085840__Q22cf13CfGameManagerFv() != 0 ||
+        (lbl_eu_80663E24 & 0x400000) ||
+        (lbl_eu_80663E28 & 0x1000000)) {
+        lbl_eu_80663E24 &= ~0x2000;
+    } else {
+        func_80061A80(p0, 0x25, p1, p2, p3, p4);
+    }
+    return 1;
+}
 
 void func_8018FA2C(){}
 
@@ -72,7 +103,73 @@ int func_8018FC78(void* p0, void* p1, cf::CfGameManager* gm, u32* p3) {
     return 0;
 }
 
-void func_8018FCA8(){}
+int func_8018FCA8(CFuncHost* self, u32 a, u32 b, u32 c, u32 d) {
+    // The manager pointer is intentionally re-read from self (+0x408) at every
+    // use site; retail reloads it each time rather than caching it in one
+    // register, which is what fixes the callee-saved register allocation.
+    if (self->manager->unk94[0] != 0) {
+        func_8009ECB0();
+        if (lbl_eu_80663E24 & 0x100000) {
+            // Fixed setup: force players 0..2 into-or-out-of "command" mode
+            // (bit 4 at +0x68) and move them by an offset vector before the
+            // per-player notify calls.
+            u8 tag = lbl_eu_8066476D;
+            float* base = reinterpret_cast<float*>(func_8023C1B4());
+            float ox = lbl_eu_80667A70;
+            float oy = lbl_eu_80667A74;
+            for (int i = 0; i < 3; i++) {
+                cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
+                if (p == 0) continue;
+                CPlayerFlags* pf = reinterpret_cast<CPlayerFlags*>(p);
+                if (tag != 0) pf->flags |= 0x10;
+                else pf->flags &= ~0x10;
+                float v[3] = { ox + base[i*4 + 0], oy + base[i*4 + 1], ox + base[i*4 + 2] };
+                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, v);
+                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_d4(p, &base[i*4], base[i*4 + 3]);
+            }
+        } else {
+            // Alternate path: only players 1..2, gated on the busy flag.
+            float stk[8];
+            for (int i = 1; i < 3; i++) {
+                cf::CfObjectMove* p = self->manager->unk94[i];
+                if (p == 0) continue;
+                func_8008064C__Q22cf13CfGameManagerFv(self->manager->unk94[0], i, stk);
+                if (lbl_eu_80663E28 & 0x100) continue;
+                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_a8(p, stk);
+                (*reinterpret_cast<CPlayerVtbl**>(self->manager->unk94[0]))->fw_cc(self->manager->unk94[0]);
+                (*reinterpret_cast<CPlayerVtbl**>(p))->fw_c8(p);
+            }
+        }
+    }
+
+    cf::CfObjectMove* e0 = self->manager->unk94[0];
+    if (e0 != 0 && (*reinterpret_cast<CPlayerVtbl**>(e0))->fw_74(e0) == 0) {
+        func_80061A80((u32)self, 4, a, b, c, d);
+        return 1;
+    }
+
+    if (lbl_eu_80663E24 & 0x200) {
+        lbl_eu_80663E3C = 0;
+        lbl_eu_80663E24 = (lbl_eu_80663E24 & ~0x200) | 0x8;
+    }
+    if (lbl_eu_80663E24 & 0x400000) {
+        lbl_eu_80663E24 &= ~0x2000;
+    } else {
+        if (b == 0) func_80061870((u32)self, 0x25, 0, 0, 0, 0);
+    }
+    if (lbl_eu_80663E24 & 0x100000) {
+        func_80061A80((u32)self, 0x24, 0, 0, 0, 0);
+        func_80061A80((u32)self, 6, 2, 0, 0, 0);
+        func_80061870((u32)self, 0x1f, 0, 0, 0, 0);
+    }
+    lbl_eu_80663E24 = (lbl_eu_80663E24 & 0xffefbfff) | 0x80;
+    lbl_eu_80663E28 &= ~0x200;
+    func_800628C4(0x35300001, 5);
+    func_80061870((u32)self, 6, 0xf, 0, 0, 0);
+    func_80061A80((u32)self, 0xf, 0, 0, 0, 0);
+    func_8007FE18__Q22cf13CfGameManagerFv(1);
+    return 0;
+}
 
 int func_80190034(CFuncHost* self) {
     cf::CfGameManager* gm =
@@ -171,7 +268,24 @@ int func_80190464(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
     return 0;
 }
 
-void func_801904D0(){}
+int func_801904D0(void* self) {
+    // If the colour-fade is already active (bit30 of lbl28), just clear it.
+    // Otherwise set up an all-zero colour mix and dispatch a full-colour
+    // request event when the colour-change latch (bit12) is set.
+    if (!(lbl_eu_80663E28 & 0x2)) {
+        float f = lbl_eu_80667A70;
+        UnkFloat4 v;
+        v.field_0x0 = v.field_0x4 = v.field_0x8 = v.field_0xC = f;
+        func_8008566C__Q22cf13CfGameManagerFv(0x1e, &v, 1);
+        if (lbl_eu_80663E24 & 0x80000) {
+            func_80061870((u32)self, 0x1c, 0x28, 0, 0, 0);
+        }
+    } else {
+        lbl_eu_80663E28 &= ~0x2;
+    }
+    func_80085878__Q22cf13CfGameManagerFv();
+    return 0;
+}
 
 void func_80190568(){}
 
@@ -253,22 +367,281 @@ float func_80190938() { return lbl_eu_80667A90; }
 
 void func_80190940(){}
 
-CMenuPTState::~CMenuPTState() {
-    // Scalar-deleting destructor: retail guards the whole destruction
-    // (member dtors + CProcess base) with `if (this)` and emits a separate
-    // `__dl` (operator delete) under the deleteFlag. Members are destroyed in
-    // reverse declaration order (field_0x80, then field_0x60), matching retail.
-    if (this) {
-        field_0x80.~CPartyStateWin();
-        field_0x60.~CBgTex();
-    }
-}
+CMenuPTState::~CMenuPTState() {}
 
 void CMenuPTState::Init() {}
 
-void func_80191C88(){}
+// Memberwise copy of the SCopy_80191C88 state blob from src to dst, in the
+// exact order retail reads them (regions 0x00/0x10/0x39/0x499/0x4db are not
+// copied). The three 8-byte runs compile to mtctr/bdnz lwzu+stwu copy loops
+// (loop counts: 52, 16, 16). Note: the retail bloat-free form (f0 reuse, no
+// FPR-save prologue) requires -O4,s; under unit -O4,p MWCC over-schedules the
+// float copies into f14-f31.
+void func_80191C88(SCopy_80191C88* dst, const SCopy_80191C88* src) {
+    dst->f_04 = src->f_04;
+    dst->f_08 = src->f_08;
+    dst->f_0c = src->f_0c;
+    dst->f_14 = src->f_14;
+    dst->f_18 = src->f_18;
+    dst->f_1c = src->f_1c;
+    dst->f_20 = src->f_20;
+    dst->f_24 = src->f_24;
+    dst->f_28 = src->f_28;
+    dst->f_2c = src->f_2c;
+    dst->f_30 = src->f_30;
+    dst->f_34 = src->f_34;
+    dst->b_38 = src->b_38;
+    dst->f_3c = src->f_3c;
 
-void func_80192268(){}
+    for (int i = 0; i < 52; i++) {
+        dst->arrA[i].lo = src->arrA[i].lo;
+        dst->arrA[i].hi = src->arrA[i].hi;
+    }
+
+    dst->f_1e0 = src->f_1e0; dst->f_1e4 = src->f_1e4;
+    dst->f_1e8 = src->f_1e8; dst->f_1ec = src->f_1ec;
+    dst->f_1f0 = src->f_1f0; dst->f_1f4 = src->f_1f4;
+    dst->f_1f8 = src->f_1f8; dst->f_1fc = src->f_1fc;
+    dst->f_200 = src->f_200; dst->f_204 = src->f_204;
+    dst->f_208 = src->f_208; dst->f_20c = src->f_20c;
+    dst->f_210 = src->f_210; dst->f_214 = src->f_214;
+    dst->f_218 = src->f_218; dst->f_21c = src->f_21c;
+    dst->f_220 = src->f_220;
+    dst->b_224 = src->b_224; dst->b_225 = src->b_225;
+    dst->b_226 = src->b_226;
+
+    dst->f_228 = src->f_228; dst->f_22c = src->f_22c;
+    dst->f_230 = src->f_230; dst->f_234 = src->f_234;
+    dst->f_238 = src->f_238; dst->f_23c = src->f_23c;
+    dst->f_240 = src->f_240; dst->f_244 = src->f_244;
+    dst->f_248 = src->f_248; dst->f_24c = src->f_24c;
+    dst->f_250 = src->f_250; dst->f_254 = src->f_254;
+    dst->f_258 = src->f_258; dst->f_25c = src->f_25c;
+    dst->f_260 = src->f_260; dst->f_264 = src->f_264;
+    dst->f_268 = src->f_268;
+    dst->f_26c = src->f_26c;
+
+    for (int i = 0; i < 16; i++) {
+        dst->arrB[i].lo = src->arrB[i].lo;
+        dst->arrB[i].hi = src->arrB[i].hi;
+    }
+    for (int i = 0; i < 16; i++) {
+        dst->arrC[i].lo = src->arrC[i].lo;
+        dst->arrC[i].hi = src->arrC[i].hi;
+    }
+
+    dst->f_370 = src->f_370; dst->f_374 = src->f_374;
+    dst->f_378 = src->f_378; dst->f_37c = src->f_37c;
+    dst->f_380 = src->f_380; dst->f_384 = src->f_384;
+    dst->f_388 = src->f_388; dst->f_38c = src->f_38c;
+    dst->f_390 = src->f_390; dst->f_394 = src->f_394;
+    dst->f_398 = src->f_398; dst->f_39c = src->f_39c;
+
+    dst->f_3a0 = src->f_3a0; dst->f_3a4 = src->f_3a4;
+    dst->f_3a8 = src->f_3a8; dst->f_3ac = src->f_3ac;
+    dst->f_3b0 = src->f_3b0; dst->f_3b4 = src->f_3b4;
+    dst->f_3b8 = src->f_3b8; dst->f_3bc = src->f_3bc;
+    dst->f_3c0 = src->f_3c0; dst->f_3c4 = src->f_3c4;
+    dst->f_3c8 = src->f_3c8; dst->f_3cc = src->f_3cc;
+    dst->f_3d0 = src->f_3d0; dst->f_3d4 = src->f_3d4;
+    dst->f_3d8 = src->f_3d8; dst->f_3dc = src->f_3dc;
+    dst->f_3e0 = src->f_3e0; dst->f_3e4 = src->f_3e4;
+    dst->f_3e8 = src->f_3e8; dst->f_3ec = src->f_3ec;
+    dst->f_3f0 = src->f_3f0; dst->f_3f4 = src->f_3f4;
+    dst->f_3f8 = src->f_3f8; dst->f_3fc = src->f_3fc;
+    dst->f_400 = src->f_400; dst->f_404 = src->f_404;
+    dst->f_408 = src->f_408; dst->f_40c = src->f_40c;
+    dst->f_410 = src->f_410; dst->f_414 = src->f_414;
+    dst->f_418 = src->f_418; dst->f_41c = src->f_41c;
+    dst->f_420 = src->f_420; dst->f_424 = src->f_424;
+    dst->f_428 = src->f_428; dst->f_42c = src->f_42c;
+
+    dst->f_430 = src->f_430; dst->f_434 = src->f_434;
+    dst->f_438 = src->f_438; dst->f_43c = src->f_43c;
+    dst->f_440 = src->f_440; dst->f_444 = src->f_444;
+    dst->f_448 = src->f_448; dst->f_44c = src->f_44c;
+    dst->f_450 = src->f_450; dst->f_454 = src->f_454;
+    dst->f_458 = src->f_458; dst->f_45c = src->f_45c;
+    dst->f_460 = src->f_460; dst->f_464 = src->f_464;
+    dst->f_468 = src->f_468; dst->f_46c = src->f_46c;
+    dst->f_470 = src->f_470; dst->f_474 = src->f_474;
+    dst->f_478 = src->f_478; dst->f_47c = src->f_47c;
+    dst->f_480 = src->f_480; dst->f_484 = src->f_484;
+    dst->f_488 = src->f_488; dst->f_48c = src->f_48c;
+    dst->f_490 = src->f_490; dst->f_494 = src->f_494;
+    dst->b_498 = src->b_498;
+    dst->f_49c = src->f_49c; dst->f_4a0 = src->f_4a0;
+    dst->f_4a4 = src->f_4a4;
+
+    dst->f_4a8 = src->f_4a8; dst->f_4ac = src->f_4ac;
+    dst->f_4b0 = src->f_4b0; dst->f_4b4 = src->f_4b4;
+    dst->f_4b8 = src->f_4b8;
+    dst->b_4bc = src->b_4bc; dst->b_4bd = src->b_4bd;
+    dst->b_4be = src->b_4be; dst->b_4bf = src->b_4bf;
+    dst->f_4c0 = src->f_4c0; dst->f_4c4 = src->f_4c4;
+    dst->f_4c8 = src->f_4c8;
+    dst->f_4cc = src->f_4cc; dst->f_4d0 = src->f_4d0;
+    dst->h_4d4 = src->h_4d4; dst->h_4d6 = src->h_4d6;
+    dst->h_4d8 = src->h_4d8;
+    dst->b_4da = src->b_4da;
+    dst->h_4dc = src->h_4dc;
+    dst->f_4e0 = src->f_4e0; dst->f_4e4 = src->f_4e4;
+    dst->f_4e8 = src->f_4e8; dst->f_4ec = src->f_4ec;
+    dst->f_4f0 = src->f_4f0; dst->f_4f4 = src->f_4f4;
+    dst->f_4f8 = src->f_4f8; dst->f_4fc = src->f_4fc;
+    dst->f_500 = src->f_500; dst->f_504 = src->f_504;
+    dst->f_508 = src->f_508; dst->f_50c = src->f_50c;
+    dst->f_510 = src->f_510;
+    dst->f_514 = src->f_514; dst->f_518 = src->f_518;
+    dst->f_51c = src->f_51c; dst->f_520 = src->f_520;
+    dst->f_524 = src->f_524; dst->f_528 = src->f_528;
+    dst->f_52c = src->f_52c;
+    dst->h_530 = src->h_530;
+    dst->h_532 = src->h_532; dst->h_534 = src->h_534;
+    dst->h_536 = src->h_536; dst->h_538 = src->h_538;
+}
+
+// Per-field copy of a large (~0x27A8-byte) state blob from src to dst, in the
+// exact order retail reads them. The five runs of 8-byte elements compile to
+// mtctr/bdnz lwzu+stwu copy loops (loop counts: 16, 18, 16, 0x400, 0x80).
+void func_80192268(SCopy_80192268* dst, const SCopy_80192268* src) {
+    dst->f_04 = src->f_04; dst->f_08 = src->f_08;
+    dst->f_0c = src->f_0c; dst->f_10 = src->f_10;
+    dst->f_14 = src->f_14; dst->f_18 = src->f_18;
+    dst->f_1c = src->f_1c; dst->f_20 = src->f_20;
+    dst->f_24 = src->f_24; dst->f_28 = src->f_28;
+    dst->f_2c = src->f_2c; dst->f_30 = src->f_30;
+    dst->f_34 = src->f_34; dst->f_38 = src->f_38;
+    dst->f_3c = src->f_3c;
+
+    dst->b_40 = src->b_40; dst->b_41 = src->b_41;
+    dst->b_42 = src->b_42; dst->b_43 = src->b_43;
+
+    dst->f_48 = src->f_48; dst->f_4c = src->f_4c;
+    dst->f_50 = src->f_50; dst->f_54 = src->f_54;
+    dst->b_58 = src->b_58; dst->b_59 = src->b_59;
+
+    dst->f_60 = src->f_60; dst->f_64 = src->f_64;
+    dst->f_68 = src->f_68; dst->f_6c = src->f_6c;
+    dst->b_70 = src->b_70; dst->b_71 = src->b_71;
+
+    dst->f_78 = src->f_78; dst->f_7c = src->f_7c;
+    dst->f_80 = src->f_80; dst->f_84 = src->f_84;
+    dst->b_88 = src->b_88; dst->b_89 = src->b_89;
+
+    dst->f_90 = src->f_90; dst->f_94 = src->f_94;
+    dst->f_98 = src->f_98; dst->f_9c = src->f_9c;
+    dst->f_a0 = src->f_a0; dst->f_a4 = src->f_a4;
+    dst->f_a8 = src->f_a8; dst->f_ac = src->f_ac;
+    dst->f_b0 = src->f_b0;
+
+    dst->b_b4 = src->b_b4; dst->b_b5 = src->b_b5;
+    dst->b_b6 = src->b_b6; dst->b_b7 = src->b_b7;
+
+    dst->f_bc = src->f_bc; dst->f_c0 = src->f_c0;
+    dst->f_c4 = src->f_c4; dst->f_c8 = src->f_c8;
+    dst->f_cc = src->f_cc; dst->f_d0 = src->f_d0;
+    dst->f_d4 = src->f_d4; dst->f_d8 = src->f_d8;
+    dst->b_dc = src->b_dc; dst->b_dd = src->b_dd;
+    dst->b_de = src->b_de; dst->b_df = src->b_df;
+
+    dst->f_e0 = src->f_e0; dst->f_e4 = src->f_e4;
+    dst->f_e8 = src->f_e8; dst->f_ec = src->f_ec;
+    dst->f_f0 = src->f_f0;
+    dst->b_f4 = src->b_f4;
+
+    for (int i = 0; i < 16; i++) {
+        dst->arr1[i].lo = src->arr1[i].lo;
+        dst->arr1[i].hi = src->arr1[i].hi;
+    }
+
+    dst->b_178 = src->b_178; dst->b_179 = src->b_179;
+    dst->b_17a = src->b_17a;
+
+    dst->f_180 = src->f_180; dst->f_184 = src->f_184;
+    dst->f_188 = src->f_188; dst->f_18c = src->f_18c;
+    dst->f_190 = src->f_190; dst->f_194 = src->f_194;
+    dst->f_198 = src->f_198; dst->f_19c = src->f_19c;
+    dst->f_1a0 = src->f_1a0;
+    dst->b_1a4 = src->b_1a4;
+    dst->f_1a8 = src->f_1a8; dst->f_1ac = src->f_1ac;
+
+    dst->b_1b0 = src->b_1b0; dst->b_1b1 = src->b_1b1;
+    dst->b_1b2 = src->b_1b2; dst->b_1b3 = src->b_1b3;
+    dst->b_1b4 = src->b_1b4; dst->b_1b5 = src->b_1b5;
+
+    dst->f_1bc = src->f_1bc; dst->f_1c0 = src->f_1c0;
+    dst->f_1c4 = src->f_1c4; dst->f_1c8 = src->f_1c8;
+    dst->f_1cc = src->f_1cc; dst->f_1d0 = src->f_1d0;
+    dst->f_1d4 = src->f_1d4; dst->f_1d8 = src->f_1d8;
+    dst->f_1dc = src->f_1dc;
+    dst->b_1e0 = src->b_1e0;
+    dst->f_1e4 = src->f_1e4; dst->f_1e8 = src->f_1e8;
+
+    dst->b_1ec = src->b_1ec; dst->b_1ed = src->b_1ed;
+    dst->b_1ee = src->b_1ee; dst->b_1ef = src->b_1ef;
+    dst->b_1f0 = src->b_1f0; dst->b_1f1 = src->b_1f1;
+
+    dst->b_1f4 = src->b_1f4; dst->b_1f5 = src->b_1f5;
+    dst->b_1f6 = src->b_1f6;
+    dst->h_1f8 = src->h_1f8; dst->h_1fa = src->h_1fa;
+    dst->h_1fc = src->h_1fc;
+    dst->b_1fe = src->b_1fe;
+
+    dst->f_200 = src->f_200; dst->f_204 = src->f_204;
+    dst->f_208 = src->f_208; dst->f_20c = src->f_20c;
+    dst->f_210 = src->f_210; dst->f_214 = src->f_214;
+    dst->f_218 = src->f_218; dst->f_21c = src->f_21c;
+    dst->f_220 = src->f_220;
+    dst->f_224 = src->f_224;
+
+    for (int i = 0; i < 18; i++) {
+        dst->arr2[i].lo = src->arr2[i].lo;
+        dst->arr2[i].hi = src->arr2[i].hi;
+    }
+
+    dst->f_2b8 = src->f_2b8; dst->f_2bc = src->f_2bc;
+    dst->f_2c0 = src->f_2c0; dst->f_2c4 = src->f_2c4;
+    dst->f_2c8 = src->f_2c8; dst->f_2cc = src->f_2cc;
+    dst->f_2d0 = src->f_2d0; dst->f_2d4 = src->f_2d4;
+    dst->f_2d8 = src->f_2d8; dst->f_2dc = src->f_2dc;
+    dst->f_2e0 = src->f_2e0; dst->f_2e4 = src->f_2e4;
+    dst->b_2e8 = src->b_2e8;
+
+    for (int i = 0; i < 16; i++) {
+        dst->arr3[i].lo = src->arr3[i].lo;
+        dst->arr3[i].hi = src->arr3[i].hi;
+    }
+
+    dst->f_36c = src->f_36c;
+    dst->h_370 = src->h_370;
+    dst->b_372 = src->b_372; dst->b_373 = src->b_373;
+    dst->b_374 = src->b_374; dst->b_375 = src->b_375;
+    dst->b_376 = src->b_376; dst->b_377 = src->b_377;
+    dst->b_378 = src->b_378; dst->b_379 = src->b_379;
+    dst->b_37a = src->b_37a; dst->b_37b = src->b_37b;
+    dst->b_37c = src->b_37c;
+
+    for (int i = 0; i < 1024; i++) {
+        dst->arr4[i].lo = src->arr4[i].lo;
+        dst->arr4[i].hi = src->arr4[i].hi;
+    }
+
+    dst->h_237e = src->h_237e;
+    dst->b_2380 = src->b_2380; dst->b_2381 = src->b_2381;
+    dst->b_2382 = src->b_2382; dst->b_2383 = src->b_2383;
+    dst->f_2384 = src->f_2384; dst->f_2388 = src->f_2388;
+    dst->f_238c = src->f_238c; dst->f_2390 = src->f_2390;
+    dst->f_2394 = src->f_2394; dst->f_2398 = src->f_2398;
+    dst->f_239c = src->f_239c; dst->f_23a0 = src->f_23a0;
+
+    for (int i = 0; i < 128; i++) {
+        dst->arr5[i].lo = src->arr5[i].lo;
+        dst->arr5[i].hi = src->arr5[i].hi;
+    }
+
+    dst->f_27a4 = src->f_27a4;
+}
 
 void CMenuPTState::Term() {
     CDeviceVI::waitForDrawDone();
@@ -284,4 +657,24 @@ void CMenuPTState::Term() {
 
 void CMenuPTState::Move() {}
 
-void CMenuPTState::cbRenderBefore() {}
+extern "C" int code80135FDC_getByte_621F0();
+extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+
+void CMenuPTState::cbRenderBefore() {
+    // Gate: skip while a task event is running or a realtime event is busy,
+    // then disable Z testing and draw the background texture via a temp
+    // DrawInfo (construct -> setup -> CBgTex draw -> destroy).
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        return;
+    }
+    if (!(lbl_eu_80663E28 & (1u << 21))) {
+        if (code80135FDC_getByte_621F0() == 0) {
+            return;
+        }
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+        field_0x60.func_801C3D7C(&drawInfo);
+    }
+}

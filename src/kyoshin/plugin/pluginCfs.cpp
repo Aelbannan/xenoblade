@@ -48,9 +48,9 @@ extern "C" {
     void func_8016DF4C(int);
     void func_8018C8F4(void*, int);
     void func_80199678(void*, int);
-    void func_801F4AD4(int);
-    void func_801F4B68(int);
-    void func_801F4BFC(int);
+    void func_801F4AD4(int, int);
+    void func_801F4B68(int, int);
+    void func_801F4BFC(int, int);
     void func_801F4C90(int, int, int);
     int func_80291BF8();
     void func_eu_8049AB50(int, int);
@@ -63,7 +63,7 @@ extern "C" {
     void func_800B70FC(int, int);
     int func_800B8D5C();
     void func_800BE12C(int, int, int, int, int);
-    void func_800BE28C(int, int);
+    void func_800BE28C(int, bool);
     bool func_8009CF8C(int);
     void func_8009D018(int, int);
     int* func_8009EC9C(int);
@@ -103,19 +103,21 @@ extern "C" {
     void func_8009E740(void*, int);
     int func_8009E56C(void*, int, int);
     bool func_8009E344(void*, int, int*, int*);
+    void func_80083D50__Q22cf13CfGameManagerFv(u32, u32, u32, u32, float);
+    void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, float, u8);
     void func_8009E3C0();
     int  func_801586D4(int, int);
     void func_80159C04(int, int);
     int  func_80158068(int);
     void func_8007F1FC__Q22cf13CfGameManagerFv(void*, int);
     void func_800F4004(void*);
-    void func_80462D04(int);
-    void func_80462D5C(int);
-    void func_804BC9EC__Fv();
-    void func_804BCC30(int);
-    void func_804BCC3C(int);
-    void func_8047BD8C(void*, int);
-    void func_8047BD94(void*, int);
+    void func_80462D04__8CTaskLODFv(int);
+    void func_80462D5C__8CTaskLODFv(int);
+    void* func_804BC9EC__Fv();
+    void func_804BCC30(void*, int);
+    void func_804BCC3C(void*, int);
+    void func_8047BD8C__17UnkClass_8047BB54Fv(void*, int);
+    void func_8047BD94__17UnkClass_8047BB54Fv(void*, int);
     void* func_80083298__Q22cf13CfGameManagerFv();
 }
 
@@ -359,6 +361,44 @@ int setMapPreloadArea(VMThread* pThread) {
 
 // --- mapJump (us-80048a5c) ---
 int mapJump(VMThread* pThread) {
+    int r25 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int r26 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    int r27 = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    int r28 = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    int r29 = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
+    int r30 = vmArgIntGet(7, vmArgPtrGet(pThread, 6));
+
+    int r31 = 8;
+    const char* r24;
+    if (vmArgOmitChk(pThread, 7) == 0) {
+        r24 = vmArgStringGet(8, vmArgPtrGet(pThread, 7));
+    } else {
+        r24 = 0;
+    }
+
+    int r23;
+    if (vmArgOmitChk(pThread, r31) == 0) {
+        r23 = vmArgIntGet(r31 + 1, vmArgPtrGet(pThread, r31));
+    } else {
+        r23 = 0;
+    }
+    r31++;
+
+    if (vmArgOmitChk(pThread, r31) == 0) {
+        r31 = vmArgIntGet(r31 + 1, vmArgPtrGet(pThread, r31));
+    } else {
+        r31 = 0;
+    }
+
+    float pt[3] = {
+        (float)(s32)r27 / 4096.0f,
+        (float)(s32)r28 / 4096.0f,
+        (float)(s32)r29 / 4096.0f,
+    };
+
+    func_80083D50__Q22cf13CfGameManagerFv((u32)(r25 & 0xFFFF), (u32)(r26 & 0xFFFF),
+                                         (u32)(u8*)&pt[0], (u32)r24, (float)(s32)r30);
+    func_8007C374__Q22cf13CfGameManagerFv((u32)r23, (u32)r31, 1.0f, 1);
     return 0;
 }
 
@@ -512,13 +552,13 @@ int setMapDispID(VMThread* pThread) {
     void* gm = func_80083298__Q22cf13CfGameManagerFv();
     if (gm) {
         if (v27) {
-            if (v28) func_80462D04(v26);
-            if (v29) { func_804BC9EC__Fv(); func_804BCC30(v26); }
-            if (v30) func_8047BD8C((u8*)gm + 0xF0, v26);
+            if (v28) func_80462D04__8CTaskLODFv(v26);
+            if (v29) { func_804BCC30(func_804BC9EC__Fv(), v26); }
+            if (v30) func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         } else {
-            if (v28) func_80462D5C(v26);
-            if (v29) { func_804BC9EC__Fv(); func_804BCC3C(v26); }
-            if (v30) func_8047BD94((u8*)gm + 0xF0, v26);
+            if (v28) func_80462D5C__8CTaskLODFv(v26);
+            if (v29) { func_804BCC3C(func_804BC9EC__Fv(), v26); }
+            if (v30) func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v26);
         }
     }
     return 0;
@@ -718,9 +758,9 @@ int makeGuestParty(VMThread* pThread) {
     else { VMArg* arg = vmArgPtrGet(pThread, v31); v31++; v31 = vmArgIntGet(v31, arg); }
     
     int* data = func_8009ECB0();
-    data[1] = (data[1] & 0xFFFF0000) | (v30 & 0xFFFF);
-    data[2] = (data[2] & 0xFFFF0000) | (v29 & 0xFFFF);
-    data[3] = (data[3] & 0xFFFF0000) | (v31 & 0xFFFF);
+    data[0x28 / 4] = v30 & 0xFFFF;
+    data[0x2C / 4] = v29 & 0xFFFF;
+    data[0x30 / 4] = v31 & 0xFFFF;
     func_8009E3C0();
     return 0;
 }
@@ -968,14 +1008,14 @@ int getWeaponSlot(VMThread* vmThread) {
     int* slotData = func_8009D790(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItem_initItemImplInstances();
-        // Virtual call omitted - placeholder
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+        itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
     } else if (charId >= 1 && charId <= 11) {
         void* invSlot = func_8015783C(2, charId, 0);
         int slotType = (*(int*)invSlot) >> 12 & 0xF;
         if (slotType == 2) {
-            CItem_initItemImplInstances();
-            // Virtual call omitted - placeholder
+            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+            itemId = inst->getWeaponSlot(invSlot) & 0xFFFF;
         }
     }
 
@@ -1121,8 +1161,7 @@ int setDispOffArea(VMThread* vmThread) {
         areaId = vmArgFixedGet(3, arg);
     }
 
-    void* ctx = func_801862C0((VMThread*)(s32)areaId);
-    void* obj = func_801864DC(ctx, *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(func_801862C0((VMThread*)(s32)areaId), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         void* box = func_800B07E8__Fv();
@@ -1136,7 +1175,7 @@ int setDispOffArea(VMThread* vmThread) {
 // --- setScheduleType (us-8004ace0) ---
 int setScheduleType(VMThread* vmThread) {
     void* ocObj;
-    bool enable;
+    int enable;
 
     {
         VMArg* arg = vmArgPtrGet(vmThread, 1);
@@ -1145,16 +1184,15 @@ int setScheduleType(VMThread* vmThread) {
 
     {
         VMArg* arg = vmArgPtrGet(vmThread, 2);
-        enable = vmArgBoolGet(3, arg) != 0;
+        enable = vmArgBoolGet(3, arg);
     }
 
-    void* ctx = func_801862C0((VMThread*)(s32)enable);
-    void* obj = func_801864DC(ctx, *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(func_801862C0((VMThread*)(s32)enable), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);
-        if (flags & 0x10) {
-            func_800BE28C((int)obj, enable ? 1 : 0);
+        if (flags & 0x08) {
+            func_800BE28C((int)obj, enable);
         }
     }
 
@@ -1202,12 +1240,14 @@ int setGimmick(VMThread* vmThread) {
         state = vmArgIntGet(3, arg);
     }
 
-    if (getUnk80664658()) {
-        switch (state) {
-            case 0: func_801F4AD4(gimmickId); break;
-            case 1: func_801F4B68(gimmickId); break;
-            case 2: func_801F4BFC(gimmickId); break;
-        }
+    int unk = getUnk80664658();
+    if (unk) {
+        if (state == 0)
+            func_801F4AD4(unk, gimmickId);
+        else if (state == 1)
+            func_801F4B68(unk, gimmickId);
+        else if (state == 2)
+            func_801F4BFC(unk, gimmickId);
     }
 
     return 0;
@@ -1396,10 +1436,11 @@ int delHoldBox(VMThread* vmThread) {
 
     func_8015730C(charId, 0, 2);
 
+    int buf;
     for (int k = 0; k < 8; k++) {
         void* slotRef = func_80157948(charId, k);
         if ((signed char)(*(u8*)slotRef) != 0) {
-            func_80159B40(charId, k, &charId);
+            func_80159B40(charId, k, &buf);
         }
     }
 

@@ -10,12 +10,14 @@ namespace lyt {
     class Layout;
     class DrawInfo;
     class AnimTransform;
+    class ArcResourceAccessor;
 }
 }
 
 /* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable. */
 struct CEIBCur {
     CEIBCur(void* arcResAcc);
+    void func_80285A18();
     void func_80285B24();
     void* mVtable;          // 0x00
     void* mArcResAcc;       // 0x04
@@ -51,6 +53,17 @@ struct CEquipItemData {
     u8 unk7;    // 0x7
 };
 
+/* Grid of 8-byte items used by the equip-box list helpers. Header fields
+   (count / category / cursor row) sit right after the element array. */
+struct CEquipItemGrid {
+    CEquipItemData data[0x400];  // 0x0000..0x2000 (8-byte elements)
+    u16 count;                   // 0x2000 (index limit)
+    u8 cat;                      // 0x2002 (category passed to item lookup)
+    u8 _pad2003;                 // 0x2003 (count/range)
+    s8 idx;                      // 0x2004 (current cursor row)
+    u8 _pad2005;                 // 0x2005
+};
+
 /* CEquipItemBox - equip item box UI widget.
    Layout reconstructed from __ct__CEquipItemBox. */
 struct CEquipItemBox {
@@ -81,11 +94,14 @@ struct CEquipItemBox {
 
     // +0x04: UnkClass_8045F564 mMemRegion1 (0x10 bytes)
     // +0x14: UnkClass_8045F564 mMemRegion2 (0x10 bytes)
-    // +0x24: u32[7]
-    u8 _pad04[0x30];
-    void* field_34;         // 0x34
-    void* field_38;         // 0x38
-    void* field_3C;         // 0x3C
+    u8 _pad04[0x20];        // 0x04..0x23 (memregions at 0x04 / 0x14)
+    void* field_24;         // 0x24 file handle 1
+    void* field_28;         // 0x28 file handle 2
+    void* field_2C;         // 0x2C file handle 3
+    nw4r::lyt::ArcResourceAccessor* field_30; // 0x30 arc resource accessor
+    nw4r::lyt::ArcResourceAccessor* field_34; // 0x34 arc resource accessor
+    nw4r::lyt::Layout* field_38;              // 0x38 layout object
+    void* field_3C;         // 0x3C entry animation transform
 
     u8 unk_40;              // 0x40
     u8 unk_41;              // 0x41
@@ -95,7 +111,12 @@ struct CEquipItemBox {
     // +0x44: CEIBCur   (0x18 bytes)
     // +0x5C: CEIBPageCur (0x18 bytes)
     // +0x74: CCur18     (0x18 bytes)
-    u8 _pad44[0x48];
+    u8 _pad44[0x14];    // 0x44..0x57
+    u8 unk_58;          // 0x58 (cursor0 mActive)
+    u8 _pad59[0x17];    // 0x59..0x6F
+    u8 unk_70;          // 0x70 (page-cur mActive)
+    u8 _pad71[0x3];     // 0x71..0x73
+    u8 ccur18[0x18];    // 0x74..0x8B
 
     // +0x8C: CSortMenu (0xF0 bytes)
     u8 _padSortMenu[0xF0];

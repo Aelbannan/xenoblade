@@ -37,15 +37,24 @@ namespace cf{
     };
 
     // Sub-object anchored at CVision+0x4 (valid when field_00 != 0). Size 0x834.
+    class CVisionSubRef {
+    public:
+        u8 unk0[0x2C];      // 0x00
+        float field_2C;     // 0x2C
+        u8 unk30[0x7C - 0x30];
+        float field_7C;     // 0x7C
+    };
+
     class CVisionSub {
     public:
         u32 field_00;        // 0x00 model / id
         u32 field_04;        // 0x04
         u8 unk08[0x0C - 0x08];
-        void* field_0C;      // 0x0C
+        CVisionSubRef* field_0C;  // 0x0C
         u8 unk10[0x824 - 0x10];
         u32 field_824;       // 0x824 flag bits
-        u8 unk828[0x834 - 0x828]; // 0x828 pad to 0x834
+        u8 unk828[0x830 - 0x828];
+        f32 field_830;       // 0x830 (effective alpha/fader)
     };
 
     // Member-function pointer triplet (ptmf) at CVision+0x261B8.
@@ -55,10 +64,27 @@ namespace cf{
         u32 mDelta;  // 0x08
     };
 
-    // One of the 0x4818-byte members of CVision::unk20D4 (per-slot sub-state).
+    // One of the 0x4818-byte members of CVision::unk20D4.
     class CVisionSlot {
     public:
-        u8 unk0[0x4818];
+        float f_15E8;   // 0x15E8
+        u16 h_15EC;     // 0x15EC
+        u16 h_15EE;     // 0x15EE
+        u8 unk15F0[0x2CC0 - 0x15F0];
+        u32 w_2CC0;     // 0x2CC0
+        u32 w_2CC4;     // 0x2CC4
+        u8 unk2CC8[0x3D6C - 0x2CC8];
+        float f_3D6C;   // 0x3D6C
+        u8 unk3D70[0x3FBC - 0x3D70];
+        u32 w_3FBC;     // 0x3FBC
+        float f_3FC0;   // 0x3FC0
+        u8 unk3FC4[0x4800 - 0x3FC4];
+        u32 w_4800;     // 0x4800
+        u32 w_4804;     // 0x4804
+        float f_4808;   // 0x4808
+        float f_480C;   // 0x480C
+        u32 w_4810;     // 0x4810
+        u32 w_4814;     // 0x4814
     };
 
     //size: 0x2623C
@@ -67,14 +93,23 @@ namespace cf{
         CVision();
         virtual ~CVision();
         virtual void IObjectInfo_UnkVirtualFunc1();
-        void func_801A380C();
+        virtual void vt_10();       //0x10
+        virtual void vt_14();       //0x14
+        virtual void vt_18();       //0x18
+        virtual void vt_1C();       //0x1C (no-arg state refresh)
+        virtual void vt_20(u32 r4); //0x20
+        virtual void vt_24();       //0x24
+        virtual void vt_28();       //0x28
+        virtual void vt_2C(u32 r4); //0x2C
+        virtual void vt_30(u32 r4);  //0x30
+        virtual void vt_34();       //0x34
         void func_801A929C(u32 r4);
 
         //0x0: vtable
         //0x0-4: IObjectInfo
         CVisionSub sub; //0x04 (0x834 bytes)
         u8 unk838[0x20D4 - 0x838]; //0x838..0x20D4
-        UnkClass_801A36D0 unk20D4[8]; //0x20D4 (0x240C0 bytes, ends 0x26194)
+        CVisionSlot unk20D4[8]; //0x20D4 (0x240C0 bytes, ends 0x26194)
         f32 field_26194; //0x26194
         f32 field_26198; //0x26198
         f32 field_2619C; //0x2619C

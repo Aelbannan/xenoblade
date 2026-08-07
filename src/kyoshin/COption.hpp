@@ -5,6 +5,10 @@
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/CScrollBar.hpp"
 #include "kyoshin/CSysWin.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/device/CFileHandle.hpp"
+
+class CEventFile;
 
 // Cursor widget class (embedded on top of CBaseCur base at +0x00).
 // Retail symbol names are the plain `__ct__CCur19` / `__dt__8029BF18` forms.
@@ -40,10 +44,9 @@ struct COptionFull {
 
 // Option sub-object referenced at +0x1C. Virtual dispatch used by the
 // func_8029E144 / func_8029E1CC animation-configurators (vtable offsets
-// 0x1C/0x24/0x2C/0x38).
+// 0x1C/0x24/0x2C/0x38 = v5/v7/v9/v12 after MWCC's 2 implicit vtable entries).
 class COptionSub {
 public:
-    virtual ~COptionSub();
     virtual void v0() = 0;                        // 0x08
     virtual void v1() = 0;                        // 0x0C
     virtual void v2() = 0;                        // 0x10
@@ -59,13 +62,29 @@ public:
     virtual void v12(int) = 0;                    // 0x38
 };
 
+// OnFileEvent loads the option layout into the early region of the object.
+// The true retail early layout (recovered from the load sequence) differs from
+// the approximate COption members above, so OnFileEvent accesses those offsets
+// through this overlay. mFHandle is the file this panel was last loaded from.
+struct COptionMem {
+    void* mVtbl;                            // 0x00
+    UnkClass_8045F564 mRegion;              // 0x04
+    CFileHandle* mFHandle;                  // 0x14
+    nw4r::lyt::ArcResourceAccessor* mArcAcc; // 0x18
+    nw4r::lyt::Layout* mpLayout;            // 0x1C
+    nw4r::lyt::AnimTransform* mAnim0;       // 0x20
+    nw4r::lyt::AnimTransform* mAnim1;       // 0x24
+};
+
 class COption {
 public:
     COption();
-    virtual ~COption();
-    void OnFileEvent();
+    ~COption();
+    bool OnFileEvent(CEventFile* pEventFile);
 
-    // Fields start after implicit vtable pointer (offset 0x04)
+    // Explicit vtable pointer (CBaseCur-style convention, NOT C++ `virtual`, so
+    // MWCC does not inject a vptr-reset into the destructor).
+    void* mVtable;                                // +0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x04
     nw4r::lyt::Layout* mpLayout;                  // 0x08
     nw4r::lyt::AnimTransform* mpAnimTrans0;       // 0x0C
@@ -81,17 +100,20 @@ public:
     u8 field_0x2A;                                 // 0x2A
     u8 field_0x2B;                                 // 0x2B
     u8 field_0x2C;                                 // 0x2C
-    u8 field_0x2D;                                 // 0x2D
+    s8 field_0x2D;                                  // 0x2D (signed byte in retail: extsb'd)
     u8 field_0x2E;                                 // 0x2E
     u8 field_0x2F;                                 // 0x2F
     u8 field_0x30;                                 // 0x30
     u8 field_0x31;                                 // 0x31
     u8 field_0x32;                                 // 0x32
-    u8 _33[0x38 - 0x33];                          // 0x33-0x37
-    CScrollBar mScrollBar;                         // 0x38 (size 0x40)
+    u8 field_0x33;                                 // 0x33
+    u8 _34[0x38 - 0x34];                          // 0x34-0x37
+    u8 mScrollBar[0x40];                           // 0x38 CScrollBar storage (raw; destroyed via retail __dt__10CScrollBarFv)
     CBaseCur mSubCur1;                             // 0x78 (size 0x18)
     CBaseCur mSubCur2;                             // 0x90 (size 0x18)
     u8 mSysWin[0x3C];                              // 0xA8 CSysWin region (size 0x3C)
     CBaseCur mSubCur3;                             // 0xE4 (size 0x18)
+    u32 field_0xFC;                       // 0xFC (advance/state word set by handlers)
+    u32 field_0x100;                      // 0x100
 };
 

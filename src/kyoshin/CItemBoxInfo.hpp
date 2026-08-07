@@ -61,6 +61,12 @@ struct CItemBoxInfoEntry {
     u32 value;
     u8 state;
 
+};
 
+// 6-byte slot table: a u32 (bytes 0..3) + u16 (bytes 4..5), read from two
+// consecutive .sdata2 constants (lbl_eu_8066805C + 80668060, etc.).
+union CItemBoxSlotBytes {
+    struct { u32 a; u16 b; } ab;
+    u8 bytes[6];
 };
 

@@ -7,6 +7,9 @@
 // vtable at lbl_eu_80535CF8
 extern "C" void* lbl_eu_80535CF8[];
 
+// 4 packed shorts returned in r3:r4 by func_801397AC.
+struct FourShorts { s16 a, b, c, d; };
+
 /* Crystal info for the makecrystal UI. Manages crystal information display
    state. Inherits from IWorkEvent for file-load callbacks. */
 class CMCCrystalInfo : public IWorkEvent {

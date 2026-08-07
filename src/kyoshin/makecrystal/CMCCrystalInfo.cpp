@@ -2,15 +2,15 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/makecrystal/CMCCrystalInfo.hpp"
+#include "kyoshin/code_80135FDC.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/work/CEventFile.hpp"
 
-namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
+namespace nw4r { namespace lyt { class DrawInfo; } }
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-    nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-
-extern "C" void func_8021B52C();
+extern "C" void func_8021B52C(CMCCrystalInfo* self);
 extern "C" void func_8021B5B4();
 extern "C" void func_8021B63C();
 extern "C" void func_8021B6C4();
@@ -19,9 +19,52 @@ extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" char lbl_eu_80508DF8[];
 
+// Retail symbols from other TUs referenced by these functions.
+extern "C" u32 func_801355BC();
+extern "C" FourShorts func_801397AC(void*, u32);
+extern "C" void CopyVec4s(short* dst, const short* src);
+// Retail symbols for these three helpers are the *mangled* names; the shared
+// code_80135FDC.hpp declares them extern "C" with the short unmangled forms,
+// so alias them under the mangled retail identifiers to emit correct relocs.
+extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+void func_80137924(void*, void*, void*, void*);
+u32 func_801392E4(void*);
+u16 func_80139358(u32);
+void* CItem_initItemImplInstances(void*);
+void func_801D1F9C(void*, u32);
+void func_801C4B60(void*, u32, u32, u32, u32);
+void func_8021AF74(CMCCrystalInfo*);
+void func_8021AFC0(CMCCrystalInfo*);
+void func_8021B00C(CMCCrystalInfo*);
+void func_8021B058(CMCCrystalInfo*);
+void func_8021B0A4(CMCCrystalInfo*);
+void func_8021B0F0(CMCCrystalInfo*);
+void func_8021B13C(CMCCrystalInfo*);
+void func_8021B2E0(CMCCrystalInfo*, u32, void*);
+void func_8021B188(void*, void*, void*, void*);
+
+// Small-data symbols: colors + packed values used by crystal-info UI.
+extern "C" void* lbl_eu_806646D8;
+extern "C" void* lbl_eu_806646E0;
+extern "C" void* lbl_eu_806646E8;
+extern "C" void* lbl_eu_806646F0;
+extern "C" void* lbl_eu_806646F8;
+extern "C" void* lbl_eu_80664700;
+extern "C" void* lbl_eu_80664708;
+extern "C" void* lbl_eu_80664710;
+extern u32 lbl_eu_806640D8;
+
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dl__FPv(void*);
+
+// func_80136910 uses its mangled retail name in this TU (the shared header's
+// unmangled decl would emit a wrong reloc). func_80139A18 is C-linkage offline
+// but the header declares it C++-linkage (can't redeclare), so its mangled reloc
+// is resolved by the harness reloc_map.
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
 
 // The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
 // (not a mangled member name), so it is written as a C-linkage function that
@@ -72,7 +115,36 @@ void func_8021A718(CMCCrystalInfo* self)
         handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
 }
 
-void func_8021A780(){}
+void func_8021A780(CMCCrystalInfo* self)
+{
+    if (self->mEnabled) {
+        switch (self->mState) {
+        case 1:
+            func_8021AF74(self);
+            break;
+        case 2:
+            func_8021AFC0(self);
+            break;
+        case 4:
+            func_8021B00C(self);
+            break;
+        case 5:
+            func_8021B058(self);
+            break;
+        case 6:
+            func_8021B0A4(self);
+            break;
+        case 7:
+            func_8021B0F0(self);
+            break;
+        case 8:
+            func_8021B13C(self);
+            break;
+        }
+        nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
+        (*(void(**)(nw4r::lyt::Layout*, int))(*(void***)layout + 14))(layout, 0);
+    }
+}
 
 void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
 {
@@ -82,7 +154,23 @@ void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
     }
 }
 
-void func_8021A860(){}
+void func_8021A860(CMCCrystalInfo* self)
+{
+    func_801390E0((CFileHandle**)&self->mFileHandle1);
+    func_801390E0((CFileHandle**)&self->mFileHandle2);
+    void* layout = self->mLayout;
+    self->mEnabled = 0;
+    if (layout != 0) {
+        if (layout != 0) {
+            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
+        }
+        self->mLayout = 0;
+    }
+    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor);
+    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mField30);
+    self->mMemRegion1.func_8045F778();
+    self->mMemRegion2.func_8045F778();
+}
 
 // Converted to inline member function in header
 
@@ -91,7 +179,7 @@ void func_8021A8F4(CMCCrystalInfo* self)
     if (self->mState == 0) {
         self->mState = 1;
         self->mField51 = 0;
-        return func_8021B52C();
+        return func_8021B52C(self);
     }
 }
 
@@ -133,11 +221,107 @@ void func_8021A984(CMCCrystalInfo* self)
 
 void func_8021A9A8(){}
 
-void func_8021AA9C(){}
+void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
+{
+    char buf[0x20];
+    u32 idx;
+    char* msgName;
+    char* msgDesc;
 
-void func_8021ADC4(){}
+    // Crystal name for slot idx, then colour it (colour pair depends on arg7).
+    msgName = func_8013639C((void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], arg5);
+    idx = idxBase + 1;
+    sprintf(buf, &lbl_eu_80508DF8[0x3b], idx);
+    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
+    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+        (GXColorS10*)(arg7 ? &lbl_eu_806646E8 : &lbl_eu_806646D8),
+        (GXColorS10*)(arg7 ? &lbl_eu_806646F0 : &lbl_eu_806646E0));
 
-void func_8021AED0(){}
+    // Slot number text + element image index, coloured with the second pair.
+    sprintf(buf, &lbl_eu_80508DF8[0x4c], idx);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc((nw4r::lyt::Layout*)self->mLayout, buf, arg6);
+    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+        (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
+        (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
+
+    // Description string + colour.
+    sprintf(buf, &lbl_eu_80508DF8[0x5e], idx);
+    msgDesc = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
+    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgDesc, 0);
+    func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
+        (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
+        (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
+
+    // Pick the crystal picture to show for this slot based on the item code.
+    u8 code = func_801361E8((void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
+    void* res = 0;
+    switch (code) {
+    case 0:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x81], 0);
+        break;
+    case 4:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x97], 0);
+        break;
+    case 5:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xad], 0);
+        break;
+    case 6:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xc3], 0);
+        break;
+    case 7:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xd9], 0);
+        break;
+    case 8:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xef], 0);
+        break;
+    case 9:
+        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
+            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x105], 0);
+        break;
+    }
+
+    if (res != 0) {
+        sprintf(buf, &lbl_eu_80508DF8[0x11b], idx);
+        func_80137E7C((nw4r::lyt::Layout*)self->mLayout, buf, res);
+    }
+}
+
+extern "C" void func_8021ADC4(CMCCrystalInfo* self)
+{
+    char buf[0x20];
+    for (u8 i = 1; i <= 8; i++) {
+        sprintf(buf, &lbl_eu_80508DF8[0x3b], i);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        void* res =
+            ((void*(*)(void*, u32, void*, u32))(*(void***)self->mArcResAccessor)[3])(
+                self->mArcResAccessor, 0x74696d67, &lbl_eu_80508DF8[0x12b], 0);
+        if (res != 0) {
+            sprintf(buf, &lbl_eu_80508DF8[0x11b], i);
+            func_80137E7C((nw4r::lyt::Layout*)self->mLayout, buf, res);
+        }
+    }
+}
+
+void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
+{
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_80508DF8[0x13e], r5 + 1);
+    nw4r::lyt::Pane* pane =
+        *(nw4r::lyt::Pane**)((u8*)*(void**)((u8*)other + 0x34) + 0x10);
+    void* r1 = (void*)pane->FindPaneByName(buf, true);
+    void* r2 = (void*)pane->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
+    func_80137924(self, r1, r2, pane);
+}
 
 void func_8021AF74(CMCCrystalInfo* self)
 {
@@ -159,7 +343,7 @@ void func_8021B00C(CMCCrystalInfo* self)
 {
     if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 5;
-        return func_8021B52C();
+        return func_8021B52C(self);
     }
 }
 
@@ -199,9 +383,22 @@ void func_8021B188(){}
 
 void func_8021B2E0(){}
 
-void func_8021B42C(){}
+void func_8021B42C(CMCCrystalInfo* self)
+{
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
+    func_80136B4C(layout, &lbl_eu_80508DF8[0x15a], &lbl_eu_80508DF8[0x12a], 0);
+    char buf[0x20];
+    for (u8 i = 0; i < 4; i++) {
+        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+    }
+}
 
-void func_8021B500(void* this_) {
+extern "C" void func_8021B500(void* this_) {
     unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
     unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
     if (*p34 != 0) {
@@ -221,7 +418,7 @@ static volatile u32 s_stubSink;
 // noinline forces a real branch call in the matched callers instead of the
 // stub body being inlined into them. extern "C" keeps the retail (unmangled)
 // linker names for the callers' tail branches.
-extern "C" __declspec(noinline) void func_8021B52C() { s_stubSink = 1; }
+extern "C" __declspec(noinline) void func_8021B52C(CMCCrystalInfo* self) { s_stubSink = 1; }
 
 extern "C" __declspec(noinline) void func_8021B5B4() { s_stubSink = 1; }
 
@@ -229,7 +426,103 @@ extern "C" __declspec(noinline) void func_8021B63C() { s_stubSink = 1; }
 
 extern "C" __declspec(noinline) void func_8021B6C4() { s_stubSink = 1; }
 
-bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile) { return false; }
+bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
+{
+    if (mFileHandle1 == (u32)pEventFile->mFileHandle) {
+        // === crystal info file 1 loaded ===
+        mMemRegion1.createRegion(
+            mtl::MemManager::getHandleMEM2(), 0x18000,
+            &lbl_eu_80508DF8[0x181], 0);
+        Class_8045F858 regionGuard1(&mMemRegion1);
+
+        CFileHandle* h1 = (CFileHandle*)mFileHandle1;
+        void* fileData = h1->mData;
+        h1->mData = nullptr;
+        mtl::MemManager::func_80434A4C(false);
+
+        mArcResAccessor = CLibLayout::createArcResourceAccessor();
+        ((nw4r::lyt::ArcResourceAccessor*)mArcResAccessor)
+            ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
+
+        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+            (nw4r::lyt::Layout**)&mLayout,
+            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x194]);
+
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)mLayout,
+            (nw4r::lyt::AnimTransform**)&mAnimTransform1,
+            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ab]);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)mLayout,
+            (nw4r::lyt::AnimTransform**)&mAnimTransform2,
+            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1c5]);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)mLayout,
+            (nw4r::lyt::AnimTransform**)&mAnimTransform3,
+            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1e4]);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)mLayout,
+            (nw4r::lyt::AnimTransform**)&mAnimTransform4,
+            (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
+
+        {
+            nw4r::lyt::Pane* rootPane =
+                ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
+            u32 fontResult = 0;
+            func_8013676C(rootPane, fontResult);
+        }
+
+        u32 sh = func_801355BC();
+
+        func_8021B52C(this);
+        ((nw4r::lyt::Layout*)mLayout)->Animate(0);
+
+        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
+            func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
+        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x292],
+            func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
+        func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
+            func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
+
+        func_8021ADC4(this);
+
+        func_8021B500(this);
+        mFileHandle1 = 0;
+        mMemRegion1.func_8045F810();
+        return true;
+    } else if (mFileHandle2 == (u32)pEventFile->mFileHandle) {
+        // === crystal info file 2 loaded ===
+        mMemRegion2.createRegion(
+            mtl::MemManager::getHandleMEM2(), 0x100, &lbl_eu_80508DF8[0x2d0], 0);
+        Class_8045F858 regionGuard2(&mMemRegion2);
+
+        CFileHandle* h2 = (CFileHandle*)mFileHandle2;
+        void* fileData = h2->mData;
+        h2->mData = nullptr;
+        mtl::MemManager::func_80434A4C(false);
+
+        mField30 = (u32)CLibLayout::createArcResourceAccessor();
+        ((nw4r::lyt::ArcResourceAccessor*)mField30)
+            ->Attach(fileData, &lbl_eu_80508DF8[0x190]);
+
+        func_8021B500(this);
+        mFileHandle2 = 0;
+        mMemRegion2.func_8045F810();
+        return true;
+    }
+
+    return false;
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_8021BBC4(){}
+void sinit_8021BBC4()
+{
+    func_801D1F9C(&lbl_eu_806646D8, 0);
+    func_801D1F9C(&lbl_eu_806646E0, 0);
+    func_801C4B60(&lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
+    func_801C4B60(&lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
+    func_801D1F9C(&lbl_eu_806646F8, 0);
+    func_801D1F9C(&lbl_eu_80664700, 0);
+    func_801C4B60(&lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(&lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
+}

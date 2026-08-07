@@ -4,6 +4,8 @@
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
+struct CFileHandle;  // monolib/device/CFileHandle.hpp
+
 // Vtable symbols
 extern "C" void* lbl_eu_805375FC[];
 extern "C" void* lbl_eu_805375E4[];
@@ -289,5 +291,172 @@ struct UnkKizunaSelfAFC {
     nw4r::lyt::Layout* field8;               // 0x08
     u8 _0C[0x14-0x0C];
     f32 field14[2];                          // 0x14
+};
+
+// ---------------------------------------------------------------------------
+// Targets 1/2 (func_8025B958 / func_8025B9C8) support types.
+// ---------------------------------------------------------------------------
+
+// Child object whose vfuncs at retail slots 7 (+0x1C) and 11 (+0x2C) receive
+// the cur value / the (cur, flag) pair. MWCC prepends two implicit vtable
+// slots, so slot7 = declared idx 5 and slot11 = declared idx 9.
+struct UnkKizunaObjB958 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void slot7(u32 a);             // retail slot 7 (+0x1C)
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void slot11(u32 a, u32 b);     // retail slot 11 (+0x2C)
+};
+
+// Self layout for func_8025B958 / func_8025B9C8 (mode byte at +0x14, child at
+// +0x08, value at +0x0C / +0x10).
+struct UnkKizunaSelfB958 {
+    u8 _00[0x08];
+    UnkKizunaObjB958* field8;  // 0x08
+    u32 field0C;               // 0x0C
+    u32 field10;               // 0x10
+    u8 field14;                // 0x14
+    u8 field15;                // 0x15
+    u8 field16;                // 0x16
+};
+
+// ---------------------------------------------------------------------------
+// Target 3 (func_8025C510) support type: two file handles (0x28 / 0x2C).
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfC510 {
+    u8 _00[0x28];
+    CFileHandle* field28;      // 0x28
+    CFileHandle* field2C;      // 0x2C
+};
+
+// ---------------------------------------------------------------------------
+// Target 4 (func_8025C7FC) support type.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfC7FC {
+    u8 _00[0x39];
+    u8 field39;                // 0x39
+    u8 _3A[0x3C-0x3A];
+    u8 field3C;                // 0x3C
+    u8 _3D[0x4C-0x3D];
+    UnkKizunaSelfB958 sub4C;   // 0x4C
+    u8 _64[0x68-0x64];
+    UnkKizunaSelf59228 sub68;  // 0x68
+    u8 _7C[0xAC-0x7C];
+    UnkKizunaSelf57D90 subAC;  // 0xAC
+};
+
+// ---------------------------------------------------------------------------
+// Target 5 (func_8025CE00) support type.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfCE00 {
+    u8 _00[0x3A];
+    u8 field3A;                // 0x3A
+    u8 _3B[0x40-0x3B];
+    f32 field40;               // 0x40
+    f32 field44;               // 0x44
+    f32 field48;               // 0x48
+    u8 _4C[0x68-0x4C];
+    UnkKizunaSelf57D90 sub68;  // 0x68
+    u8 _74[0x80-0x74];
+    u32 field80;               // 0x80
+    u32 field84;               // 0x84
+    u32 field88;               // 0x88
+};
+
+// ---------------------------------------------------------------------------
+// Target 6 (func_8025C21C) support types.
+// ---------------------------------------------------------------------------
+
+// Child object with retail slots 8 (+0x20) and 14 (+0x38); declared idx 6 / 12.
+struct UnkKizunaObjC21C {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void target8(u32 a);     // retail slot 8 (+0x20)
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void target14(u32 a);    // retail slot 14 (+0x38)
+};
+
+struct UnkKizunaSelfC21C {
+    u8 _00[0x08];
+    UnkKizunaObjC21C* field8;        // 0x08
+    u32 field0C;                     // 0x0C
+    nw4r::lyt::AnimTransform* field10; // 0x10
+    u8 field14;                      // 0x14
+    u8 field15;                      // 0x15
+};
+
+// ---------------------------------------------------------------------------
+// Targets 7/8 (func_8025AB04 / func_8025AB84) support type.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfAB {
+    u8 _00[0x26];
+    u16 field26;               // 0x26
+    u8 _28[0x34-0x28];
+    u8 field34;                // 0x34
+    u8 _35[0x38-0x35];
+    f32 field38;               // 0x38
+};
+
+// ---------------------------------------------------------------------------
+// Target 9 (func_8025C6F0) support type.
+// ---------------------------------------------------------------------------
+struct UnkKizunaSelfC6F0 {
+    u8 _00[0x08];
+    UnkClass_8045F564 mRegA;                 // 0x08
+    UnkClass_8045F564 mRegB;                 // 0x18
+    CFileHandle* field28;                    // 0x28
+    CFileHandle* field2C;                    // 0x2C
+    nw4r::lyt::ArcResourceAccessor* field30; // 0x30
+    nw4r::lyt::ArcResourceAccessor* field34; // 0x34
+    u8 field38;                              // 0x38
+    u8 _39[0x4C-0x39];
+    UnkKizunaSelf57D90 sub4C;                // 0x4C
+    u8 _58[0x68-0x58];
+    UnkKizunaSelf57D90 sub68;                // 0x68
+    u8 _74[0xAC-0x74];
+    UnkKizunaSelf57D90 subAC;                // 0xAC
+    u8 _B8[0xC0-0xB8];
+    UnkKizunaSelf57D90 subC0;                // 0xC0
+};
+
+// ---------------------------------------------------------------------------
+// Target 10 (func_80257E58) support types.
+// ---------------------------------------------------------------------------
+
+// Child layout object with retail slots 11 (+0x2C) and 14 (+0x38); declared idx 9 / 12.
+struct UnkKizunaObj57E58 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void slot11(u32 a, u32 b);  // retail slot 11 (+0x2C)
+    virtual void v10();
+    virtual void v11();
+    virtual void slot14(u32 a);         // retail slot 14 (+0x38)
+};
+
+struct UnkKizunaSelf57E58 {
+    u8 _00[0x04];
+    nw4r::lyt::ArcResourceAccessor* field4; // 0x04
+    UnkKizunaObj57E58* field8;              // 0x08
+    nw4r::lyt::AnimTransform* field0C;      // 0x0C
 };
 

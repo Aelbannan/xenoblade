@@ -45,4 +45,20 @@ namespace cf {
         u8 field_0[0x3F00]; //0x0
         u32 field_0x3F00;   //0x3F00
     };
+
+    // 3x8 float table mirroring arts-param tuning values plus an enable flag
+    // (manipulated by func_8027CC3C / func_8027CD08).
+    class CChainMusic {
+    public:
+        float mSlots[3][8]; //0x0
+        u8 mEnabled;        //0x60
+    };
+
+    // State object manipulated by func_8027C33C (s16 at 0x0, u8 at 0xC).
+    class CChainAction {
+    public:
+        s16 field_0;  //0x0
+        u8 unk2[10];  //0x2
+        u8 field_0xc; //0xc
+    };
 }

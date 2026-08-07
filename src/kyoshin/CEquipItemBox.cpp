@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
+#include <nw4r/lyt/lyt_layout.h>
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
 extern "C" void* __dl__FPv(void*);
@@ -10,19 +11,71 @@ extern "C" int CSysWin_isActive(void*);
 extern "C" void func_801D216C(void*, int);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void* func_80157C4C(u8, s16);
+extern "C" u32 func_801D32DC(u8*);
+extern "C" u32 CSysWin_isReady(u8*);
 extern "C" void func_80139198(void*);
 extern "C" void func_80138078(u32);
+extern "C" u8 func_801392B4(int);
+extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
+extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
+extern "C" void func_8028AA64(CEquipItemBox* self);
+extern "C" void func_80289500(CEquipItemBox* self, int a);
+extern "C" void func_80289CC0(CEquipItemBox* self);
+extern "C" void func_80285B70(CEIBCur* self);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_80285B70(CEIBCur*);
 extern "C" void func_80289CC0(CEquipItemBox*);
 extern "C" void func_80289E70(CEquipItemBox*);
+// Forward decls for the grid/array helpers (defined in this TU).
+extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
+extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
 // Float constant in .sdata2, referenced via sda21 reloc.
 extern float lbl_eu_80668B28;
+// String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
+extern "C" char lbl_eu_8050EFDC[];
+extern "C" char* func_80136190(char*, char*, u32);
+
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void func_801D3258(void*);
+extern "C" void func_8022B7F4(void*);
 
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
+#pragma push
+#pragma auto_inline off
+// Initialise a full item grid: clear every cell and reset the header fields.
+extern "C" CEquipItemGrid* func_802824B4(CEquipItemGrid* grid) {
+    // Reset each 8-byte cell to { unk0 = -1, rest = 0 }.
+    CEquipItemData* p = grid->data;
+    CEquipItemData* const end = &grid->data[0x400];
+    do {
+        func_80282574(p, -1, 0, 0, 0, 0, 0, 0);
+        p++;
+    } while (p < end);
+    grid->count = 0;
+    grid->cat = 0;
+    grid->_pad2003 = 0;
+    grid->idx = 0;
+    grid->_pad2005 = 0;
+    // Repopulate every cell from a cleared local (round-trips through copy).
+    u16 i = 0;
+    do {
+        CEquipItemData temp;
+        func_80282594(&grid->data[i], func_80282574(&temp, -1, 0, 0, 0, 0, 0, 0));
+        i++;
+    } while (i < 0x400);
+    return grid;
+}
+#pragma pop
+
 // Write a CEquipItemData from 8 separate scalar inputs.
-extern "C" void func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7) {
+#pragma push
+#pragma auto_inline off
+extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7) {
     dst->unk0 = a0;
     dst->unk2 = a2;
     dst->unk3 = a3;
@@ -30,9 +83,11 @@ extern "C" void func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, 
     dst->unk5 = a5;
     dst->unk6 = a6;
     dst->unk7 = a7;
+    return dst;
 }
 
 // Copy a CEquipItemData struct (src -> dst).
+#pragma auto_inline off
 extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
     dst->unk0 = src->unk0;
     dst->unk2 = src->unk2;
@@ -42,6 +97,7 @@ extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
     dst->unk6 = src->unk6;
     dst->unk7 = src->unk7;
 }
+#pragma pop
 
 
 
@@ -52,7 +108,41 @@ extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
 
 
 
-extern "C" void func_80282F34(){}
+// Look up a grid element and return the item object pointer when present.
+extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *(u32*)obj) {
+            return obj;
+        }
+    }
+    return 0;
+}
+
+// Return the item kind (word >> 20) for the grid element, or 0.
+extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *(u32*)obj) {
+            return *(u32*)obj >> 20;
+        }
+    }
+    return 0;
+}
+
+// Return the stored item short for a valid grid cell, or -1.
+extern "C" s16 func_80282E4C(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *(u32*)obj) {
+            return grid->data[offset].unk0;
+        }
+    }
+    return -1;
+}
 
 // Advance grid cursor index; wrap to 0 when it reaches the count (field_2003).
 void CEquipItemBox::func_80282DF8() {
@@ -74,11 +164,44 @@ void CEquipItemBox::func_80282E24() {
 
 extern "C" void func_80282FA0(){}
 
-extern "C" void func_80283118(){}
+// Return the grid cell's byte 3 when its item object is valid, else 0.
+extern "C" u8 func_80283118(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        CEquipItemData* item = &grid->data[offset];
+        void* obj = func_80157C4C(grid->cat, item->unk0);
+        if (obj && *(u32*)obj) {
+            return item->unk3;
+        }
+    }
+    return 0;
+}
 
-extern "C" void func_80283190(){}
+// Return the grid cell's byte 4 when its item object is valid, else 0.
+extern "C" u8 func_80283190(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        CEquipItemData* item = &grid->data[offset];
+        void* obj = func_80157C4C(grid->cat, item->unk0);
+        if (obj && *(u32*)obj) {
+            return item->unk4;
+        }
+    }
+    return 0;
+}
 
-extern "C" void func_80283208(){}
+// Return the grid cell's byte 6 when its item object is valid, else 0.
+extern "C" u8 func_80283208(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        CEquipItemData* item = &grid->data[offset];
+        void* obj = func_80157C4C(grid->cat, item->unk0);
+        if (obj && *(u32*)obj) {
+            return item->unk6;
+        }
+    }
+    return 0;
+}
 
 // Fetch the byte at grid index field_2004; bounds-guard against 0x400.
 u8 CEquipItemBox::func_80283280(u32 param) {
@@ -95,7 +218,21 @@ u8 CEquipItemBox::func_802832B4() {
     return field_2026[idx];
 }
 
-extern "C" void func_802832D8(){}
+// Return the grid cell's byte 2 when its item object is valid, else 0.
+#pragma push
+#pragma auto_inline off
+extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx) {
+    u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
+    if ((u32)offset < (u32)grid->count) {
+        CEquipItemData* item = &grid->data[offset];
+        void* obj = func_80157C4C(grid->cat, item->unk0);
+        if (obj && *(u32*)obj) {
+            return item->unk2;
+        }
+    }
+    return 0;
+}
+#pragma pop
 
 extern "C" void func_80283350(){}
 
@@ -183,7 +320,20 @@ void* __dt__80285954(void* self, int mode) {
 
 extern "C" void func_80285994(){}
 
-extern "C" void func_80285A18(){}
+// Per-frame cursor update: play the entry animation (mpAnimTrans0) when idle,
+// advance the page-cursor state when active, then animate the layout.
+void CEIBCur::func_80285A18() {
+    if (mpLayout == nullptr) return;
+    switch (mVisible) {
+    case 0:
+        func_80137444((nw4r::lyt::AnimTransform*)mpAnimTrans0, lbl_eu_80668B28);
+        break;
+    case 1:
+        func_80285B24();
+        break;
+    }
+    ((nw4r::lyt::Layout*)mpLayout)->Animate(0);
+}
 
 extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
@@ -192,8 +342,23 @@ extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(layout, drawInfo, 0, 1);
 }
 
-extern "C" void func_80285ABC(){}
+// Reset a cursor object: stop it, clear its animation transforms, and release
+// the bound layout if one is present.
+extern "C" void func_80285ABC(CEIBCur* self) {
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
+    self->mActive = 0;
+    self->mpAnimTrans0 = 0;
+    self->mpAnimTrans1 = 0;
+    if (layout != 0) {
+        layout->~Layout();
+        self->mpLayout = 0;
+    }
+}
 
+// Retail compiled func_802832D8/80285B24/80285B70 as separate functions; keep
+// them out-of-line so callers reproduce the retail `bl` (sibling-TU pattern).
+#pragma push
+#pragma auto_inline off
 void CEIBCur::func_80285B24() {
     // Advance the layout's animation; when the animation finishes, hide the
     // cursor and update the page state.
@@ -204,6 +369,8 @@ void CEIBCur::func_80285B24() {
 }
 
 extern "C" void func_80285B70(CEIBCur* self){}
+#pragma pop
+
 
 CEIBPageCur::CEIBPageCur(void* arcResAcc) : CEIBCur(arcResAcc) {
     mVtable = (void*)lbl_eu_805386EC;
@@ -229,9 +396,36 @@ extern "C" void func_80286264(){}
 
 extern "C" void func_80286340(){}
 
-extern "C" void func_80286454(){}
 
-extern "C" void func_8028652C(){}
+// Close/release the equip-item box: unload bdat, free the three file handles,
+// delete the layout object, release the arc accessors and both memory regions,
+// then tear down the embedded cursors, sort menu and both system windows.
+extern "C" void func_80286454(CEquipItemBox* self) {
+    func_8003AA8C__5CBdatFUl(5);
+    func_801390E0__FPP11CFileHandle(&self->field_24);
+    func_801390E0__FPP11CFileHandle(&self->field_28);
+    func_801390E0__FPP11CFileHandle(&self->field_2C);
+    self->unk_40 = 0;
+    if (self->field_38) {
+        delete self->field_38;
+        self->field_38 = 0;
+    }
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_30);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_34);
+    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0]);
+    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
+    func_80285ABC((CEIBCur*)((u8*)self + 0x44));
+    func_80285ABC((CEIBCur*)((u8*)self + 0x5c));
+    func_801D3258(self->_padSortMenu);
+}
+
+// Check the sort menu and both system windows are ready; return unk_42.
+extern "C" u8 func_8028652C(CEquipItemBox* self) {
+    if (func_801D32DC(self->_padSortMenu) == 0) return 0;
+    if (CSysWin_isReady(self->_padSysWin1) == 0) return 0;
+    if (CSysWin_isReady(self->_padSysWin2) == 0) return 0;
+    return self->unk_42;
+}
 
 
 u8 CEquipItemBox::func_802865A8() { return unk_43; }
@@ -327,9 +521,28 @@ extern "C" void func_802886D8(){}
 
 extern "C" void func_8028876C(){}
 
-extern "C" void func_80288948(){}
+// Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
+// func_801392B4's category byte; an unk_1f5 of -1 always returns 0.
+extern "C" u8 func_80288948(CEquipItemBox* self) {
+    s8 row = (s8)self->unk_1f5;
+    if (row == -1) return 0;
+    int idx = row * 5 + (int)self->unk_1f4;
+    int cat = (self->unk_1fc >> 16) & 0xff;
+    u8 a = func_802832D8((CEquipItemGrid*)((u8*)self + 0x37E), (u8)idx);
+    u8 b = func_801392B4(cat);
+    return (a == b);
+}
 
-extern "C" void func_802889C0(){}
+// Play the entry animation at 0x3C; when it completes mark the cursors active.
+extern "C" void func_802889C0(CEquipItemBox* self) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->field_3C, lbl_eu_80668B28) != 0) {
+        self->unk_41 = 2;
+        self->unk_43 = 1;
+        self->unk_58 = 1;
+        self->unk_70 = 1;
+        func_80289CC0(self);
+    }
+}
 
 // Playback of the layout animation at 0x3C; when it finishes reset the state
 // bytes 0x40-0x43 (unk_43=active-mark, unk_41/unk_40 cleared).
@@ -345,7 +558,7 @@ void CEquipItemBox::func_80288A1C() {
 void CEquipItemBox::func_80288A6C() {
     if (CSysWin_isActive(_padSysWin1) != 0) {
         unk_41 = 2;
-        func_801D216C(&_pad44[0x30], 1);
+        func_801D216C(ccur18, 1);
         func_80289CC0(this);
     }
 }
@@ -366,13 +579,16 @@ extern "C" void func_802891B8(){}
 
 extern "C" void func_8028939C(){}
 
-extern "C" void func_80289500(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_80289500(CEquipItemBox* self, int a) {}
 
 extern "C" void func_80289754(){}
 
 extern "C" void func_80289AA4(){}
 
 extern "C" void func_80289CC0(CEquipItemBox* self){}
+#pragma pop
 
 extern "C" void func_80289E70(CEquipItemBox* self){}
 
@@ -389,31 +605,82 @@ void CEquipItemBox::func_8028A0C0(u8 val) {
     unk_372 = idx + 1;
 }
 
-extern "C" void func_8028A0E0(){}
+// Step the sort-menu page selection backwards (wrapping from the first page to
+// the last) with the current page stored in unk_373.
+extern "C" void func_8028A0E0(CEquipItemBox* self) {
+    if (func_801D3320(self->_padSortMenu) != 0) return;
+    u8 v = self->unk_373 + 1;
+    self->unk_373 = v;
+    if ((int)(s8)v >= self->unk_372) {
+        self->unk_373 = 0;
+    }
+    func_8028A5D8(self, 0);
+    func_80289500(self, 0);
+    func_80138078(0x70);
+}
 
-extern "C" void func_8028A160(){}
+// Step the sort-menu page selection forwards (wrapping back to page 0 after the
+// last page) with the current page stored in unk_373.
+extern "C" void func_8028A160(CEquipItemBox* self) {
+    if (func_801D3320(self->_padSortMenu) != 0) return;
+    u8 v = self->unk_373 - 1;
+    self->unk_373 = v;
+    if ((s8)v < 0) {
+        self->unk_373 = self->unk_372 - 1;
+    }
+    func_8028A5D8(self, 1);
+    func_80289500(self, 0);
+    func_80138078(0x70);
+}
 
 extern "C" void func_8028A1DC(){}
 
 extern "C" void func_8028A374(){}
 
-extern "C" void func_8028A5D8(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {}
+
 
 extern "C" void func_8028A9CC(){}
 
-extern "C" void func_8028AA64(){}
+extern "C" void func_8028AA64(CEquipItemBox* self){}
 
 extern "C" void func_8028AF98(){}
 
 extern "C" void func_8028B7CC(){}
 
 extern "C" void func_8028BE74(){}
+#pragma pop
+
 
 extern "C" void func_8028C280(){}
 
 extern "C" void func_8028CBCC(){}
 
-extern "C" void func_8028D0EC(){}
+// Return a sound/SE id (0x33-0x3e) derived from the page byte, or tail-call a
+// string lookup for the current page when a valid id was selected.
+extern "C" char* func_8028D0EC(CEquipItemBox* self) {
+    u32 val = 0;
+    u8 v = self->unk_36c[(s8)self->unk_373];
+    switch (v) {
+    case 0x00: val = 0x33; break;
+    case 0x01: val = 0x3c; break;
+    case 0x02: val = 0x34; break;
+    case 0x03: val = 0x35; break;
+    case 0x04: val = 0x36; break;
+    case 0x05: val = 0x37; break;
+    case 0x06: val = 0x38; break;
+    case 0x07: val = 0x3d; break;
+    case 0x08: val = 0x3e; break;
+    case 0x09: val = 0x39; break;
+    case 0x0a: val = 0x3b; break;
+    case 0x0b: val = 0x3a; break;
+    case 0x0d: break;
+    }
+    if (val == 0) return 0;
+    return func_80136190(&lbl_eu_8050EFDC[0x2d], &lbl_eu_8050EFDC[0x36], val);
+}
 
 extern "C" void OnFileEvent__13CEquipItemBoxFP10CEventFile(){}
 

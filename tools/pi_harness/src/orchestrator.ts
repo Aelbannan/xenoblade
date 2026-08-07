@@ -892,7 +892,13 @@ function makeVerifyCallback(opts: {
     // from the final text and run the harness's witness cycle for each. The
     // certify tool is read-only; this is where the actual (safe) cycle runs
     // — build lock + claim check + registry re-verification, no SMT.
-    const certifyIds = parseCertifyRequests(_finalText, targetIds);
+    // With the witness DISABLED the certify path is pointless (only
+    // byte-identical FULL_MATCH can certify, and the prompt omits the tools
+    // + never mentions CERTIFY:) — skip the parse so a stray marker can't
+    // burn a full witness-cycle build (run32: 22 certify-request-failed).
+    const certifyIds = config.witnessEnabled
+      ? parseCertifyRequests(_finalText, targetIds)
+      : [];
     // Attempt ALL requested certifies (don't return on the first success —
     // the model may request several; each is an independent witness cycle).
     // Accept if ANY certified; the registry records each one individually.

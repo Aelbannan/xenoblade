@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CArtsInfo.hpp"
+#include <nw4r/lyt.h>
 
 // Extern declarations for referenced symbols
 

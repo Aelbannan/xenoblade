@@ -51,8 +51,7 @@ void func_8010D4B0(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot, u32 index);
 void func_8010D8D4(CMenuBattlePlayerState* self,
                    CMenuBattlePlayerStateSlot* slot);
-// Unmangled retail name (distinct from AnimTransform-mangled overload).
-u32 func_80137510(void* anim, float frame);
+// Unmangled retail name (extern "C" in code_80135FDC.hpp).
 extern char lbl_eu_804FD720[];
 extern const f32 lbl_eu_80666F90; // 1.0f
 extern const f32 lbl_eu_80666F94; // 0.0f
@@ -894,9 +893,9 @@ after_bit21:
                 func_8010D8D4(this, slot);
                 break;
             case 3: {
-                u32 a = func_80137510(static_cast<void*>(slot->unk04),
+                u32 a = func_80137510(slot->unk04,
                                       lbl_eu_80666F90);
-                u32 b = func_80137510(static_cast<void*>(slot->unk1C),
+                u32 b = func_80137510(slot->unk1C,
                                       lbl_eu_80666F90);
                 // Retail: ori 0xc0; rlwinm clear PPC bits 21-23 (= 0x700)
                 slot->unk25C = (slot->unk25C | 0xC0u) & ~0x700u;
@@ -945,7 +944,7 @@ after_bit21:
             func_80137444(unk7F0, lbl_eu_80666F90);
             break;
         case 3:
-            if (func_80137510(static_cast<void*>(unk7E8), lbl_eu_80666F90) !=
+            if (func_80137510(unk7E8, lbl_eu_80666F90) !=
                 0) {
                 unk7F4 = 1;
                 unk7F8 = 0;

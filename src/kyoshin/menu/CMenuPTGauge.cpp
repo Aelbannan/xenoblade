@@ -22,12 +22,10 @@ extern const f32 lbl_eu_806679E4; // 300.0f
 extern const f32 lbl_eu_806679E8; // 128.0f
 extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
-// void* params avoid C++ name-mangling conflict with typed decls in
-// code_80135FDC.hpp (MWCC extern "C" would otherwise collide).
+// Layout/anim helpers: declared extern "C" where the retail symbol is
+// unmangled (func_801355F4, func_8013676C, func_80137510 in code_80135FDC.hpp).
 int func_8013BE50(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
-u32 func_80137510(void* anim, float frame); // Checks if animation has reached/exceeded given frame
-nw4r::lyt::ArcResourceAccessor* func_801355F4(); // Returns shared ARC resource accessor
-void func_8013676C(void* pane, u32 val); // Configures font renderer on a pane
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // shared ARC accessor (retail unmangled)
 }
 
 extern void func_80138078(u32);
@@ -81,7 +79,7 @@ void CMenuPTGauge::Init() {
     void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
     typedef u32 (*FontVFn)(void*);
     u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
-    func_8013676C(static_cast<void*>(rootPane), fontResult);
+    func_8013676C(rootPane, fontResult);
 
     mLayout->Animate(0);
     mLayout->UnbindAllAnimation();
@@ -262,7 +260,7 @@ after_bit21:
         break;
     }
     case 3: {
-        if (func_80137510(static_cast<void*>(mAnimDefault), lbl_eu_806679EC) != 0) {
+        if (func_80137510(mAnimDefault, lbl_eu_806679EC) != 0) {
             mPhase = 0;
         }
         break;

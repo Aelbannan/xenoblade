@@ -135,7 +135,7 @@ void CMainMenu::cbRenderBefore() {}
 // Finds the "Param" pane in the layout's root pane and sets its translate
 // to the given position (3 floats: x, y, z).
 void CMainMenu::func_800FEB14(float* pos) {
-    nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+    nw4r::lyt::Pane* pane = field_0x7C->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
     if (pane != NULL) {
         pane->SetSRTElement(0, pos[0]);
         pane->SetSRTElement(1, pos[1]);

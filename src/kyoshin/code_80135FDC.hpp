@@ -36,6 +36,14 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
 // UNMANGLED identifier so MWCC mangles func_80137038 to the retail symbol
 // (func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii); declaring the
 // pre-mangled name here would double-mangle it (see CEquipItemBox.hpp).
+// The extern "C" + mangled-identifier declarations above serve the pre-mangled
+// call sites (CMenuUpdate, CMCCrystalSupport, CMCEffStart, CPcKizunagram); the
+// unmangled forms below serve the (majority) unmangled call sites. Both bind
+// to the same retail symbols.
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);

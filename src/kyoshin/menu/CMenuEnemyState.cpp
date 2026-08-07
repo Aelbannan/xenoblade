@@ -313,10 +313,8 @@ int func_8013A4B4(void* a, void* b, void* c);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_80496264(void* obj, int index);
 
-// Retail leaves this unmangled (distinct from the FPAnimTransformf-mangled
-// overload in code_80135FDC.hpp); call via a void* so overload resolution
-// selects this one, same trick as CMenuPTGauge::Move.
-u32 func_80137510(void* anim, float frame);
+// Retail leaves func_80137510 unmangled (declared extern "C" in
+// code_80135FDC.hpp); calls pass the AnimTransform* directly.
 }
 
 struct Vec3f {
@@ -812,7 +810,7 @@ after_bit21:
         }
         break;
     case 3:
-        if (func_80137510(static_cast<void*>(selectCursor.anim20), lbl_eu_80666FE8) != 0) {
+        if (func_80137510(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
             selectCursor.byte40 = 1;
             selectCursor.field44 = 0;
         }

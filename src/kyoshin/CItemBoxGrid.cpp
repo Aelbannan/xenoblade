@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 #include <stdio.h>
+#include <nw4r/lyt.h>
 
 // Forward declarations for external functions
 extern "C" int func_8022D09C(void*);
@@ -139,9 +140,9 @@ extern "C" u32 func_801C62AC(void*, u32);
 extern "C" u32 func_801C631C(void*, u32);
 extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
 extern "C" u32 func_80137E7C(void*, void*, u32);
-extern "C" void func_80136910(void*, const char*, u8);
 extern "C" char* func_eu_802B148C(void);
 extern "C" char* func_eu_802B1474(void);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
 
 // Forward declarations for functions defined later in this file
 s32 func_801C7958(void* self, void* item);
@@ -4087,7 +4088,7 @@ extern "C" void func_801CFF28(void* self) {
     {
         u32 rows = func_801C5E5C((void*)subGrid);
         u32 layout = *(u32*)(p + 0x44);
-        func_80136910((void*)layout, &lbl_eu_8050566C[0x53e], (u8)(rows & 0xFF));
+        func_80136910(reinterpret_cast<nw4r::lyt::Layout*>(layout), const_cast<char*>(&lbl_eu_8050566C[0x53e]), (u8)(rows & 0xFF));
     }
     func_801CFFEC(self);
     func_801D0328(self);
@@ -4120,7 +4121,7 @@ void func_801CFFEC(void* self) {
             func_80124270(ret2, hidden);
         }
         u32* layout2 = *(u32**)(p + 0x44);
-        func_80136910(layout2, &lbl_eu_8050566C[0x55d], (u8)(sub->field_2804 + 1));
+        func_80136910(reinterpret_cast<nw4r::lyt::Layout*>(layout2), const_cast<char*>(&lbl_eu_8050566C[0x55d]), (u8)(sub->field_2804 + 1));
         u32* pane3 = *(u32**)(layout2 + 0x10);
         void** vtbl3 = *(void***)pane3;
         void* ret3 = ((void*(*)(void*, const char*, int))vtbl3[0x3c/4])(pane3, &lbl_eu_8050566C[0x566], 1);

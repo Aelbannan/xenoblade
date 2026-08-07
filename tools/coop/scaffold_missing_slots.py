@@ -28,7 +28,7 @@ if str(ROOT) not in sys.path:
 from tools.coop.lib.config import load_config
 from tools.coop.lib.project import Project
 from tools.coop.lib.targets import Target, harness_targets, load_targets
-from tools.llm_decomp.source_regions import (
+from tools.coop.lib.source_regions import (
     begin_marker,
     end_marker,
     find_function_region,

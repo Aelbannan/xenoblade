@@ -75,7 +75,6 @@ u8 func_8013BEB8();
 int func_8012FA5C();
 void func_80138078(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 extern "C" void* func_8016FE34(void* r3);
 void* getArtsParamAtCnt(void* obj, s32 index);
@@ -1007,7 +1006,7 @@ after_ce48:
                     break;
                 case 0x13:
                     unk314 |= (1u << i) | (1u << (i + 9));
-                    if (func_80137510(static_cast<void*>(unk194[i]),
+                    if (func_80137510(unk194[i],
                                       lbl_eu_80666F2C) != 0) {
                         unk2E4[i] = 0x10;
                     }

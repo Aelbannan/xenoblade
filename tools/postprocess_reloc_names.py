@@ -1877,11 +1877,28 @@ def repack_text(path: Path, align: int) -> bool:
         rela_hdr = sh_hdr_off[rela_idx]
         rela_off = struct.unpack_from(">I", data, rela_hdr + 16)[0]
         rela_size = struct.unpack_from(">I", data, rela_hdr + 20)[0]
+
+        # Old span of each surviving FUNC: (start, end). Relocs that fall in
+        # bytes NOT covered by any surviving function belong to anonymous
+        # orphan blobs (weak copies the retail linker GC'd) that the packed
+        # layout drops. remap() would otherwise collide them onto surviving
+        # relocs (e.g. lyt_window 0x260E/0x261E -> both 0x2602, duplicate
+        # .rela.text entries) — drop them instead.
+        spans = [(o, n, s) for o, n, s in moves]
+
+        def _containing(old_off: int) -> bool:
+            for o, _n, s in spans:
+                if o <= old_off < o + s:
+                    return True
+            return False
+
         keep = bytearray()
         for ro in range(0, rela_size, 12):
             r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
             if r_offset >= len(old_text):
                 continue
+            if not _containing(r_offset):
+                continue  # reloc of a dropped anonymous orphan blob
             new_off = remap(r_offset)
             if new_off >= new_size:
                 continue

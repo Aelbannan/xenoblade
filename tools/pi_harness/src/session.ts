@@ -17,10 +17,31 @@ import {
   createAgentSession,
   ModelRuntime,
   SessionManager,
+  SettingsManager,
   type AgentSession,
 } from "@earendil-works/pi-coding-agent";
 import type { ModelSpec, SessionUsage, VerifyResult } from "./types.js";
 import { batchSessionTools, tuFinalSessionTools } from "./session-tools.js";
+import { getSharedRateLimiter } from "./rate-limit.js";
+
+/**
+ * SettingsManager for throttled runs: disables SDK auto-retry so 429s surface
+ * immediately and re-enter the pacer queue (SDK retries would double-count
+ * tokens and slip past the throttle). Exported for tests.
+ */
+export function createThrottledSettingsManager(): SettingsManager {
+  const sm = SettingsManager.create(process.cwd());
+  sm.setRetryEnabled(false);
+  return sm;
+}
+
+/** 0 when no pacer is configured, else the number of requests queued on the
+ *  cross-session limiter (used by the dead-session heartbeat to avoid aborting
+ *  a session parked in the queue). */
+function pacerQueueDepth(): number {
+  const limiter = getSharedRateLimiter();
+  return limiter ? limiter.queueDepth : 0;
+}
 
 // Configure HTTP dispatcher with 5-minute body/headers timeout.
 // Without this, undici uses Node.js defaults (no timeout), so HTTP
@@ -141,6 +162,11 @@ export async function runAgentSession(opts: {
    *  429-rate-limit-empty case) up to this many times, with a jitter sleep
    *  between attempts. 0 = fail fast. Default 2. */
   emptyRoundRetries?: number;
+  /** Global cross-session request budget (requests/min). When > 0, SDK
+   *  auto-retry is DISABLED (the harness pacer owns backoff — a retry that
+   *  429s would merely re-enter the queue and double-count tokens). When 0,
+   *  pass no SettingsManager (SDK auto-retry stays ON = current behavior). */
+  rpmLimit?: number;
   /** Random 0..N ms delay before each round's first request, spreading the
    *  provider-concurrency burst when many sessions start simultaneously.
    *  Default 15000. */
@@ -163,6 +189,7 @@ export async function runAgentSession(opts: {
     silenceThresholdSec = 0,
     emptyRoundRetries = 2,
     roundStartJitterMs = 15_000,
+    rpmLimit = 0,
   } = opts;
 
   const model = modelRuntime.getModel(spec.provider, spec.model);
@@ -190,11 +217,19 @@ export async function runAgentSession(opts: {
   // Ensure HTTP dispatcher has proper timeouts before creating sessions.
   ensureHttpDispatcher();
 
+  // When rpmLimit > 0 the process-wide pacer owns backoff: disable the SDK's
+  // auto-retry so a 429 surfaces immediately and re-enters the pacer queue
+  // (retrying inside the SDK would double-count tokens and let retries slip
+  // past the throttle). When rpmLimit = 0 pass no settingsManager — SDK
+  // auto-retry stays ON (current behavior).
+  const settingsManager = rpmLimit > 0 ? createThrottledSettingsManager() : undefined;
+
   const { session } = await createAgentSession({
     model,
     thinkingLevel: spec.thinkingLevel,
     modelRuntime,
     sessionManager: SessionManager.create(repoRoot, sessionDir),
+    ...(settingsManager ? { settingsManager } : {}),
     // Tool surface by session kind (see session-tools.ts):
     //  - batch: read/edit/write/grep/find/ls + hexdiff/symbols/targets, NO
     //    bash — SMT/git/ninja/registry writes are structurally impossible.
@@ -372,6 +407,12 @@ export async function runAgentSession(opts: {
   const heartbeat = setInterval(() => {
     if (toolInFlight > 0) return; // a tool is executing — it has its own timeout
     if (lastActivityTime === null) return; // no first message yet — still thinking, not dead
+    // Global pacer queue: while ANY request is waiting on the cross-session
+    // rate limiter, a session may be parked there (no events fire while
+    // queued) and would look dead to this heartbeat. Skip aborting while the
+    // queue is non-empty (adversarial review C-3: per-request throttling must
+    // not convert 429-stalls into false DEAD SESSION aborts).
+    if (pacerQueueDepth() > 0) return;
     const silenceMs = Date.now() - lastActivityTime;
     if (silenceMs > SILENCE_THRESHOLD_MS) {
       // Only flag as dead if session should be active (not idle, not compacting).

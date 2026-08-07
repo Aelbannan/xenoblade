@@ -54,6 +54,7 @@
   },
   "maxSingletonSessions": 1,
   "silenceThresholdSec": 900,
+  "rpmLimit": 20,
   "snapshotsEnabled": false,
   "commitOnTuFinal": true,
   "witnessEnabled": false

@@ -1,5 +1,5 @@
 {
-  "count": 2230,
+  "count": 2228,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -27010,7 +27010,7 @@
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 6,
+        "count": 5,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_8066543C",
@@ -27283,32 +27283,6 @@
         "retail_symbol": "lbl_eu_8066557C",
         "units": [
           "main/monolib/src/util/MemManager"
-        ]
-      }
-    },
-    "sLCImpl__Q34nw4r2ut28@unnamed@ut_LockedCache_cpp@": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 6,
-        "kind": "data",
-        "retail_addend": 14336,
-        "retail_symbol": "lbl_eu_80653E88",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/ut/ut_LockedCache"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 11,
-        "kind": "data",
-        "retail_addend": 38916,
-        "retail_symbol": "lbl_eu_80653E88",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/ut/ut_LockedCache"
         ]
       }
     },
@@ -29469,8 +29443,8 @@
       }
     }
   },
-  "function_pairs": 8436,
-  "generated": "2026-08-07T22:19:02.754837",
+  "function_pairs": 8442,
+  "generated": "2026-08-08T02:19:22.252182",
   "region": "us",
   "units_scanned": 1125,
   "version": 1

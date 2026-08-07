@@ -77,17 +77,19 @@ const u8 *MPV_BsearchDelim(const u8 *end, int count, int flags) {
 /* Search forward for MPEG start code */
 const u8 *MPV_SearchDelim(const u8 *start, int count, int flags) {
     int i;
-    u32 state = 0xFFFFFF00;
+    const u8 *q;
+    u32 byte;
+    u32 state;
+    state = 0xFFFFFF00;
     for (i = 0; i < count; i++) {
-        const u8 *q = start + i;
-        u32 byte = *q;
-        if (state == 0x00000100) {
-            u8 type = lbl_eu_8051C090[byte];
-            if (flags & type) {
+        q = start + i;
+        byte = *q;
+        if (state == 0x100) {
+            if (flags & lbl_eu_8051C090[byte]) {
                 return q - 3;
             }
         }
-        state = (byte | state) << 8;
+        state = (state | byte) << 8;
     }
     return NULL;
 }

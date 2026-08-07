@@ -112,6 +112,15 @@ export interface HarnessConfig {
    *  per-user concurrency cap trips (run32: 38x 429 in one burst). A random
    *  0..jitter delay per round start spreads the wave. Default 15000. */
   roundStartJitterMs: number;
+  /** Global cross-session request budget (requests per minute) for the model
+   *  provider. 0 = disabled (no throttle; SDK auto-retry stays on — current
+   *  behavior). When > 0, paces ALL concurrent sessions' HTTP requests to
+   *  this rate (wrapping ModelRuntime.streamSimple/simple) AND disables SDK
+   *  auto-retry so the harness/limiter own backoff. The nube gateway serves
+   *  DeepSeek with a hard ~20 rpm per-deployment cap; 14-20 parallel sessions
+   *  saturate it (79% of session wall-clock wasted on 429/empty-retry churn).
+   *  Default 0. */
+  rpmLimit: number;
   /** In-session re-prompts when the model FINISHED but the harness rejected
    *  the result (compile fail, lint fail, or no match). Lower cap avoids
    *  entrenchment on dead ends. */

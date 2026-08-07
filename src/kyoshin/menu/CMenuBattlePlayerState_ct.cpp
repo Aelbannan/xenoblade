@@ -41,7 +41,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     u32 v6;
     u32 vB;
     u8 i;
-    UnkClass_8045F564* unk64p;
     u8* padStart;
     u8* padEnd;
     u8* padLim;
@@ -64,7 +63,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     vtWork = vtFinal + 0x24;
     vtRender = vtFinal + 0xac;
     z = 0;
-    unk64p = &unk64;
     ptmfWord1 = __ptmf_null[1];
     process->callbacks[1] = ptmfWord1;
     process->callbacks[0] = ptmfWord0;
@@ -83,7 +81,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     *reinterpret_cast<char**>(reinterpret_cast<u8*>(this) + 0x5c) = vtRender;
     mScn = scn;
 
-    __ct__17UnkClass_8045F564Fv(unk64p);
+    __ct__17UnkClass_8045F564Fv(&unk64);
     __construct_array(mSlots, reinterpret_cast<void*>(func_8010B324),
                       reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
 
@@ -98,16 +96,16 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         f32 zeroF;
         f32 neg1F;
         CMenuBattlePlayerStateSlot slot;
-        s32 sizeSign;
-        s32 plusSign;
-        s32 q12Sign;
-        s32 q12p1Sign;
+        u32 pMask;
+        u32 spMask;
+        u32 qMask;
+        u32 qpMask;
         u32 ok;
         u32 ok2;
         u32 ok3;
 
-        // Retail hoists pad math and interleaves unk7F4 / unk7E* stores with
-        // signed /12 (lis 0x2AAB / mulhw under retail schedule).
+        // Retail masks off the top bit (clrrwi ..,31) for the pad/size overflow
+        // guard checks; sign-bit extraction (srawi+srwi) is a mismatch + cost.
         padStart = slot.pad90;
         padEnd = reinterpret_cast<u8*>(&slot.unk204);
         padSize = static_cast<s32>(padEnd - padStart);
@@ -115,18 +113,18 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         unk7F4 = 1;
         // Signed /12: under -O4,s stays divw (retail lis 0x2AAB/mulhw). Soft-cap.
         q12 = sizePlus / 12;
-        sizeSign = padSize >> 31;
+        pMask = padSize & 0x7FFFFFFF;
+        q12p1 = q12 + 1;
         padLim = padEnd - 0x60;
         zeroF = lbl_eu_80666F94;
-        plusSign = sizePlus >> 31;
+        spMask = sizePlus & 0x7FFFFFFF;
         unk7E0 = (void*)z;
         neg1F = lbl_eu_80666FB0;
         unk7E4 = (nw4r::lyt::Layout*)z;
-        q12p1 = q12 + 1;
+        qMask = q12 & 0x7FFFFFFF;
         unk7E8 = (nw4r::lyt::AnimTransform*)z;
-        q12Sign = q12 >> 31;
+        qpMask = q12p1 & 0x7FFFFFFF;
         unk7EC = (nw4r::lyt::AnimTransform*)z;
-        q12p1Sign = q12p1 >> 31;
         v4 = 4;
         unk7F0 = (nw4r::lyt::AnimTransform*)z;
         v6 = 6;
@@ -153,12 +151,13 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
 
                 if (bp < be) {
                     if (q12p1 > 8) {
-                        // Retail dual bool gate (padSize/sizePlus then q12/q12p1).
+                        // Retail dual bool gate (padSize/sizePlus then q12/q12p1),
+                        // with top-bit-masked checks (clrrwi ..,31).
                         ok = 0;
                         ok2 = 0;
                         if (!(padStart > be)) {
                             ok3 = 1;
-                            if (sizeSign == 0 && plusSign != 0) {
+                            if (pMask == 0 && spMask != 0) {
                                 ok3 = 0;
                             }
                             if (ok3 != 0) {
@@ -167,7 +166,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                         }
                         if (ok2 != 0) {
                             ok3 = 1;
-                            if (q12Sign == 0 && q12Sign != q12p1Sign) {
+                            if (qMask == 0 && qMask != qpMask) {
                                 ok3 = 0;
                             }
                             if (ok3 != 0) {

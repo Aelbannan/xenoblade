@@ -65,26 +65,31 @@ private:
     mutable OSMutex mMutex; // at 0x4
 };
 
-static LCImpl sLCImpl;
-
 } // namespace
+
+// BSS object (retail symbol lbl_eu_80653E88). C-linkage definition so the
+// static-init reloc carries the retail global name instead of an
+// anonymous-namespace mangling.
+extern "C" {
+LCImpl lbl_eu_80653E88;
+}
 
 namespace LC {
 
 void Enable() {
-    sLCImpl.Enable();
+    lbl_eu_80653E88.Enable();
 }
 
 void Disable() {
-    sLCImpl.Disable();
+    lbl_eu_80653E88.Disable();
 }
 
 bool Lock() {
-    return sLCImpl.Lock();
+    return lbl_eu_80653E88.Lock();
 }
 
 void Unlock() {
-    sLCImpl.Unlock();
+    lbl_eu_80653E88.Unlock();
 }
 
 void LoadBlocks(void* pDst, void* pSrc, u32 blocks) {

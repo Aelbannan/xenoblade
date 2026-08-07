@@ -7,6 +7,8 @@ SoundStartable::StartResult SoundStartable::detail_StartSound(
     SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientArgInfo* pArgInfo,
     detail::ExternalSoundPlayer* pPlayer, const StartInfo* pStartInfo) {
 
+    // Retail signature is a slim 3-arg form (no pArgInfo/pPlayer); the
+    // extra params exist here only to match the header's StartSound wiring.
     StartResult result =
         detail_SetupSound(pHandle, id, pArgInfo, pPlayer, false, pStartInfo);
 

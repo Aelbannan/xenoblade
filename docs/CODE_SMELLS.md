@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 3259 |
 | extern "C" definitions (forced names) | 2643 |
 | `self`/register-style params | 4472 |
-| `void*` (params + locals) | 5539 |
+| `void*` (params + locals) | 5538 |
 | raw pointer offset arithmetic | 3422 |
 | deref-through-cast arithmetic | 1425 |
 | inline asm / `register` | 88 |
@@ -462,7 +462,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/help/CHelp_CloseQuestMenu.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_CloseSysMenu.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_EnemyCount.cpp | 1 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 2 |
-| src/kyoshin/help/CHelp_EnemyEnable.cpp | 2 | 0 | 0 | 6 | 4 | 0 | 0 | 0 | 1 |
+| src/kyoshin/help/CHelp_EnemyEnable.cpp | 2 | 0 | 0 | 5 | 4 | 0 | 0 | 0 | 1 |
 | src/kyoshin/help/CHelp_EtherMake.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_Exchange.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_GameOver.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -2865,7 +2865,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_decl": 2,
   "goto_count": 1,
   "ptr_arith": 4,
-  "void_ptr": 6
+  "void_ptr": 5
  },
  "src/kyoshin/help/CHelp_EtherMake.cpp": {
   "extern_c_nonlbl_decl": 2

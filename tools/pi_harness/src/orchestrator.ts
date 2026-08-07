@@ -19,6 +19,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
+import { configureSharedRateLimiter, getSharedRateLimiter, paceStream } from "./rate-limit.js";
 import type {
   HarnessConfig, Target, TargetBrief, SessionUsage, VerifyResult, SiblingPointer,
   TriageRow, TriageSummary,
@@ -186,6 +187,39 @@ export async function runTus(
   opts: { dryRun: boolean },
 ): Promise<void> {
   const modelRuntime = await ModelRuntime.create();
+
+  // Global request throttle: when rpmLimit > 0, wrap ModelRuntime so every
+  // HTTP request (each assistant tool-call turn + compaction — all go through
+  // streamSimple/completeSimple) waits for the process-wide pacer before the
+  // provider call starts. This is the true choke point: one session.prompt()
+  // drives the SDK's agentic loop with one streamSimple per model turn, so a
+  // limiter at runOnePrompt would not bound the provider's rpm_limit. The
+  // pacer (one request per 60_000/rpm ms, FIFO, AbortSignal-interruptible)
+  // is configured here ONCE so all sessions share a single budget.
+  if (config.rpmLimit > 0) {
+    configureSharedRateLimiter(config.rpmLimit);
+    const limiter = getSharedRateLimiter();
+    if (limiter) {
+      const rawStreamSimple = modelRuntime.streamSimple.bind(modelRuntime);
+      const rawCompleteSimple = modelRuntime.completeSimple.bind(modelRuntime);
+      modelRuntime.streamSimple = (model, context, options) => {
+        // Gate the provider call behind the pacer: the HTTP request only
+        // starts when a slot opens. The wrapper mirrors the SDK's stream
+        // contract, so the agent-session consumes it identically.
+        const gate = limiter.acquire({ signal: options?.signal });
+        return paceStream(gate, () => rawStreamSimple(model, context, options)) as unknown as ReturnType<
+          typeof modelRuntime.streamSimple
+        >;
+      };
+      modelRuntime.completeSimple = async (model, context, options) => {
+        await limiter.acquire({ signal: options?.signal });
+        return rawCompleteSimple(model, context, options);
+      };
+      process.stderr.write(
+        `[pi-harness] global request throttle active: rpmLimit=${config.rpmLimit} (SDK auto-retry will be disabled; harness pacer owns backoff)\n`,
+      );
+    }
+  }
 
   // Fail fast on a misconfigured model BEFORE claiming targets or spawning
   // TU workers. runAgentSession would throw mid-run otherwise, burning an
@@ -1334,6 +1368,7 @@ async function runOneTu(
         silenceThresholdSec: config.silenceThresholdSec,
         emptyRoundRetries: config.emptyRoundRetries,
         roundStartJitterMs: config.roundStartJitterMs,
+        rpmLimit: config.rpmLimit,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -1710,6 +1745,7 @@ async function runRebatchPhase(
         silenceThresholdSec: config.silenceThresholdSec,
         emptyRoundRetries: config.emptyRoundRetries,
         roundStartJitterMs: config.roundStartJitterMs,
+        rpmLimit: config.rpmLimit,
           multiPrompt: {
             timeoutRetries: config.timeoutRetries,
             rejectionRetries: config.rejectionRetries,
@@ -2000,6 +2036,7 @@ async function runSingleton(
         silenceThresholdSec: config.silenceThresholdSec,
         emptyRoundRetries: config.emptyRoundRetries,
         roundStartJitterMs: config.roundStartJitterMs,
+        rpmLimit: config.rpmLimit,
         multiPrompt: {
           timeoutRetries: config.timeoutRetries,
           rejectionRetries: config.rejectionRetries,
@@ -2204,6 +2241,7 @@ async function runTuFinal(
         silenceThresholdSec: config.silenceThresholdSec,
         emptyRoundRetries: config.emptyRoundRetries,
         roundStartJitterMs: config.roundStartJitterMs,
+        rpmLimit: config.rpmLimit,
       });
       logUsage(repoRoot, config, unit, attempt === 1 ? "tu-final" : `tu-final-retry-${attempt}`, sessionResult.usage, sessionResult.timedOut);
     } catch (err) {

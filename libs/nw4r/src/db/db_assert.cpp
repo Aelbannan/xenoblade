@@ -15,6 +15,7 @@ namespace nw4r
         static u32 sWarningTime;
         static ConsoleHead* sAssertionConsole;
         static bool sDispWarningAuto = true;
+        extern "C" ConsoleHead* lbl_eu_8066543C;
 
         static void Assertion_Printf_(const char* fmt, ...)
         {
@@ -213,8 +214,8 @@ namespace nw4r
 
         static void WarningAlarmFunc_(OSAlarm* alarm, OSContext* context)
         {
-            if (sAssertionConsole != nullptr) {
-                Console_SetVisible(sAssertionConsole, false);
+            if (lbl_eu_8066543C != nullptr) {
+                Console_SetVisible(lbl_eu_8066543C, false);
             }
         }
     }

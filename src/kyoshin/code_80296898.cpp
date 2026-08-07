@@ -2,7 +2,10 @@
 
 #include <cstring>
 
-extern "C" Class_80296898 lbl_eu_805772C8;
+// Singleton storage. Defining it here (with non-trivial ctor) makes MWCC emit
+// the auto `__sinit_\code_80296898_cpp` static initializer that tail-calls
+// init() on this object before main() runs.
+Class_80296898 lbl_eu_805772C8;
 
 // External function referenced by both init() and func_80296AE8.
 // Takes a boolean (0 or 1) derived from mConfigData[0x0C].
@@ -11,12 +14,6 @@ extern "C" void func_eu_802B14F8(u8);
 Class_80296898* func_80296A04(Class_80296898* obj){
     obj->init();
     return obj;
-}
-
-// Static initializer: construct the singleton before main() runs.
-// Retail shape is a tail-call: load singleton address, branch to init().
-static void __sinit_code_80296898_cpp(void) {
-    func_80296A04(&lbl_eu_805772C8);
 }
 
 Class_80296898* Class_80296898::getInstance(void) {

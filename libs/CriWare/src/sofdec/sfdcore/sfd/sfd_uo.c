@@ -53,10 +53,10 @@ s32 SFUO_ExecServer(void* self) {
 
 
 s32 SFUO_Create(void* self) {
-    u8* end = (u8*)self + 0x2638;
-    u8* e = end + 4;
-    s32 i = 0;
     void* x = *(void**)((u8*)self + 0x2208);
+    u8* e = (u8*)self + 0x263c;
+    u8* end = (u8*)self + 0x2638;
+    s32 i = 0;
     *(void**)((u8*)self + 0x2200) = end;
     *(u32*)((u8*)self + 0x2638) = 0;
     do {

@@ -96,7 +96,12 @@ namespace lyt {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor() : mArcBuf(NULL) {}
+ArcResourceAccessor::ArcResourceAccessor()
+    : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
+// Residual: schedule/store-order/size byte-identical; only a pure 3-cycle
+// Chaitin color rotation differs (vt/r0-zero/this+0x28). Member-list,
+// init-order, and body-vs-list perturbations all leave it fixed (empty body;
+// members fixed by the locked header).
 
 bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     BOOL success = ARCInitHandle(pArchive, &mArcHandle);

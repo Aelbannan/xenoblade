@@ -67,9 +67,11 @@ ret0:
 
 // us-804df738: sinit_804DB420
 // Static initializer: sets vtable pointer for CNReqtaskCheck.
-// Best-effort form: retail emits li r3,dest@sda21; b .+4; lis/addi src;
-// stw r4,0(r3) (24 bytes) which MWCC cannot reproduce (always folds the
-// store to stw rX,dest@sda21(r0)); returning p gives the closest 20-byte form.
+// Retail emits li r3,dest@sda21; b .+4; lis/addi src; stw r4,0(r3); blr
+// (24B). The `b .+4` sinit barrier (wall #5) is a fixed MWCC artifact not
+// producible from high-level C: MWCC always folds the store to
+// stw rX,dest@sda21(r0), so retail's unfolded register-store shape is
+// unreachable. Return-p gives the closest 20-byte form.
 void** sinit_804DB420() {
     void** p = &lbl_eu_80665A00;
     void* v = (void*)lbl_eu_8056FDE8;

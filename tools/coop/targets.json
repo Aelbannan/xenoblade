@@ -371242,8 +371242,8 @@
       "size": "0x74",
       "unit": "CriWare/src/adx/lsc/lsc_ini",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350",
@@ -371257,18 +371257,10 @@
       "callgraph_source": "build/us/asm/CriWare/src/adx/lsc/lsc_ini.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/lsc/lsc_ini.c",
-      "instruction_match": 46.034,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "declared_return": "i32",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-16491",
-        "claimed_at": "2026-08-07T17:53:28.489434+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/lsc/lsc_ini.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80394b24",
@@ -382948,8 +382940,8 @@
       "size": "0x58",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_deli",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -382958,17 +382950,9 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/mpv/mpv_deli.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c",
-      "instruction_match": 98.864,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-16491",
-        "claimed_at": "2026-08-07T17:13:03.906875+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "source_present": true
     },
     {
       "id": "us-803a9288",
@@ -397423,7 +397407,7 @@
       "size": "0x64",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_vom",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -397438,15 +397422,7 @@
       "declared_return": "i32",
       "instruction_match": 92.0,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-16491",
-        "claimed_at": "2026-08-07T17:39:48.396313+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_vom.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-803d17f0",
@@ -429314,8 +429290,8 @@
       "size": "0x74",
       "unit": "nw4r/src/lyt/lyt_drawInfo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_drawInfo.cpp",
       "called_functions": [
@@ -429327,7 +429303,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/lyt/lyt_drawInfo.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.31,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8040aa40",
@@ -463244,7 +463222,7 @@
       "size": "0x58",
       "unit": "monolib/src/work/CWorkSystemMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
@@ -463259,15 +463237,7 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-16491",
-        "claimed_at": "2026-08-07T17:24:28.581862+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/work/CWorkSystemMem.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "worksysmem-get-handle",

@@ -18,9 +18,11 @@ void LSC_EntryErrFunc(u32 param1, u32 param2);
 extern u32 lbl_eu_805E7D38;
 extern u8 lbl_eu_805E7D40[0x4700];
 
-// Opaque critical section type (8 bytes, allocated on stack)
+// Opaque critical section type (8 bytes, allocated on stack).
+// field_0x0 is volatile so its read carries a side effect.
 struct LSC_CriticalSection {
-    u8 field_0x0[8];
+    volatile u32 field_0x0;
+    u32 field_0x4;
 };
 
 // Stream entry struct (size 0x238, used in LSC_Finish loop)
@@ -31,6 +33,10 @@ struct LSC_StmEntry {
 
 void LSC_Init(void) {
     struct LSC_CriticalSection cs;
+
+    // Retail carries a dead read of the global critical section here.
+    (void)lbl_eu_80518418.field_0x0;
+
     LSC_LockCrs(&cs);
     if (lbl_eu_805E7D38 == 0) {
         memset(lbl_eu_805E7D40, 0, 0x4700);

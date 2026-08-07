@@ -24,9 +24,9 @@ struct CHelpCkKizunaIf : CHelpCkKizunaIfShift {
 };
 
 void CHelp_CkKizuna::func_802B7DEC() {
-    u32 result = func_801BCF38();
-    // Dispatch through the manual iface with r12-based virtual-call codegen.
-    reinterpret_cast<CHelpCkKizunaIf*>(this)->_v01C(result == 0);
+    // Inline the comparison so MWCC keeps func_801BCF38's return in r3 for the
+    // cntlzw/srwi boolean conversion (matching retail's scheduling exactly).
+    reinterpret_cast<CHelpCkKizunaIf*>(this)->_v01C(func_801BCF38() == 0);
 }
 
 } // namespace cf

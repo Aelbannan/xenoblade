@@ -26,6 +26,7 @@
   "silenceThresholdSec": 0, // seconds of model silence before abort; 0 = auto
   "emptyRoundRetries": 2, // re-run a 429-empty round (no assistant output) up to N times
   "roundStartJitterMs": 15000, // random 0..N ms delay before each round start (spreads concurrency burst)
+  "rpmLimit": 0, // global cross-session request throttle (req/min). 0 = off (SDK auto-retry stays on). >0 paces ALL HTTP requests + disables SDK auto-retry (harness owns backoff). nube DeepSeek cap is ~20; set 18-20 for multi-session runs.
   "rejectionRetries": 1,
   "tuFinalAttempts": 2,
   "tuFinalTimeoutMinutes": 0,

@@ -65,7 +65,7 @@ extern "C" int func_8003A68C(VMThread* pThread, void* target) {
     int count = *(int*)((char*)target + 0x10);
     int x = count ^ 0x0a;
     VMArg args;
-    *(u8*)&args.type = 1 + ((u32)((x >> 1) - (x & 0x0a)) >> 31);
+    args.type = 1 + ((u32)((x >> 1) - (x & 0x0a)) >> 31);
     vmRetValSet(pThread, &args);
     return 1;
 }

@@ -71,8 +71,15 @@ ret0:
 }
 
 // us-804df648: sinit_804DB330
-// Static initializer: sets vtable pointer for CNReqtaskRemove.
-// Returning p keeps &lbl_eu_806659F8 live in r3 (best-effort 20-byte form).
+// Static initializer: sets the vtable pointer for CNReqtaskRemove.
+//
+// OPEN-ITEM (wall #5 in the walls doc / MWCC_REFERENCE sinit barrier):
+// retail emits a 24-byte `li r3,dest@sda21; b .+4; lis/addi src; stw r4,0(r3); blr`
+// shape. The `b .+4` scheduler barrier is a fixed MWCC/reloc artifact ruled out
+// for high-level C across 17+ forms and 6 MWCC versions; clean C is capped at the
+// 20-byte form below (structural=6, mismatch=6, all springing from the missing
+// barrier and dest-vs-source compute order). No byte-identical path from C.
+// Best-effort form retained: returns &lbl_eu_806659F8 (keeps dest live in r3).
 void** sinit_804DB330() {
     void** p = &lbl_eu_806659F8;
     void* v = (void*)lbl_eu_8056FDC8;

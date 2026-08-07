@@ -230,6 +230,7 @@ async function main(): Promise<void> {
   process.stderr.write(`  singletonMinSize: ${effectiveConfig.singletonMinSize === 0 ? "off (all use singletons)" : effectiveConfig.singletonMinSize + " bytes"}\n`);
   process.stderr.write(`  timeoutRetries:   ${effectiveConfig.timeoutRetries} (in-session continuation after wall-clock timeout, 0=off)\n`);
   process.stderr.write(`  rejectionRetries: ${effectiveConfig.rejectionRetries} (re-prompts when the model finished but code failed)\n`);
+  process.stderr.write(`  rpmLimit:       ${effectiveConfig.rpmLimit === 0 ? "off (SDK auto-retry on)" : effectiveConfig.rpmLimit + " req/min (SDK auto-retry off)"}\n`);
   process.stderr.write(`  pythonBin:      ${effectiveConfig.pythonBin}\n`);
   process.stderr.write(`  dryRun:         ${args.dryRun}\n`);
 

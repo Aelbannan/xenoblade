@@ -72,11 +72,20 @@ int SFAOAP_ExecServer(void* self) {
     return 0;
 }
 
+struct SFAOAPImpl {
+    u8 pad0[0x21BC];
+    void* field_0x21BC;
+    u8 pad1[0x261C - 0x21C0];
+    u8 field_0x261C;
+};
+
+/* Create the AOAP player and hook its implementation vtable. */
 int SFAOAP_Create(void* self) {
     if (SFSET_GetCond(self, 6) == 0) {
         return 0;
     }
-    *(void**)((u8*)self + 0x21BC) = (void*)((u8*)self + 0x261C);
+    struct SFAOAPImpl* impl = (struct SFAOAPImpl*)self;
+    impl->field_0x21BC = &impl->field_0x261C;
     return 0;
 }
 int SFAOAP_Destroy(void) { return 0x0; }

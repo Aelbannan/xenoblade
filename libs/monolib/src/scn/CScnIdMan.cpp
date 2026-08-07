@@ -8,7 +8,7 @@ extern "C" {
     extern char lbl_eu_8056EC80[];   // CScnIdMan vtable
     extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* r3, u32 r4, u32 r5, u32 r6);
     extern void removeRenderCB__4CScnFP10IScnRender(void* r3, u32 r4);
-    extern void* func_8048C698(void* r3, int r4);
+    extern CScnIdPoolSlot* func_8048C698(void* r3, int r4);
     extern void* func_80496264(void* r3, u32 r4);
     extern void* func_804961D4(void* r3, u32 r4);
     extern void func_8049B764(void* r3, void* r4);
@@ -17,7 +17,7 @@ extern "C" {
 }
 
 extern "C" CScnIdMan* __ct__CScnIdMan(CScnIdMan* self, void* param) {
-    self->mParam = param;
+    self->mParam = (CScnIdParam*)param;
     *(void**)self = (void*)lbl_eu_8056EC80;
     self->mFlag = 0;
     addRenderCB__4CScnFP10IScnRenderUlUl(param, (u32)self, 6, 0);
@@ -30,13 +30,17 @@ CScnIdMan::~CScnIdMan() {
 }
 
 extern "C" int func_8049E51C(CScnIdMan* self) {
-    void* target = *(void**)((char*)self->mParam + 0x60);
-    void* obj = func_8048C698(target, 5);
-    void* list = *(void**)((char*)obj + 4);
-    int count = 0;
-    void* node = *(void**)list;
-    while (node != list) {
-        node = *(void**)node;
+    // Fetch the scene-id pool slot and count its live nodes; return 1 if empty.
+    CScnIdNode* node;
+    u32 count;
+    CScnIdNode* anchor;
+    CScnIdPoolSlot* slot = func_8048C698(self->mParam->mPool, 5);
+
+    anchor = slot->mAnchor;
+    count = 0;
+    node = anchor->next;
+    while (node != anchor) {
+        node = node->next;
         count++;
     }
     return static_cast<u32>(__cntlzw(count)) >> 5;

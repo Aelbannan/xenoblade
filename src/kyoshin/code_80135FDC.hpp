@@ -20,16 +20,23 @@ char* func_80136190(const void*, const void*, int);
 u32 func_801361E8(const void*, const char*, u32);
 char* func_8013639C(const void*, const void*, int);
 void func_8013676C(nw4r::lyt::Pane*, u32);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
 void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+// Retail symbols for these ARE the Itanium-mangled names; declare them under
+// C linkage so calls bind to the literal mangled identifier (declaring them
+// as C++ functions would re-derive the same mangling, but the extern "C" +
+// mangled-identifier form is what the definitions in code_80135FDC.cpp use).
+void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
+void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 }
 
-// Retail symbols that ARE the mangled C++ names stay C++-linkage.
-void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+// Retail symbols that ARE the mangled C++ names stay C++-linkage. Declare the
+// UNMANGLED identifier so MWCC mangles func_80137038 to the retail symbol
+// (func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii); declaring the
+// pre-mangled name here would double-mangle it (see CEquipItemBox.hpp).
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);

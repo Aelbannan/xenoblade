@@ -152,7 +152,7 @@ protected:
         ut::Color vtxColors[VERTEXCOLOR_MAX]; // at 0x0
         detail::TexCoordAry texCoordAry;      // at 0x10
 
-        ~Content() {}
+        ~Content() {} // inline-empty; orphan weak copy dropped in postprocess (retail linker GC'd it)
     };
 
 protected:

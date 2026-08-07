@@ -124,7 +124,7 @@ class AnimTransform {
 public:
     AnimTransform() : mpRes(NULL), mFrame(0.0f) {}
 
-    virtual ~AnimTransform() {}
+    virtual ~AnimTransform() {} // at 0x8 (inline-empty; orphan weak copy dropped in postprocess, retail linker GC'd it)
 
     virtual void SetResource(const res::AnimationBlock* pBlock,
                              ResourceAccessor* pAccessor) = 0; // at 0xC

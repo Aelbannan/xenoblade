@@ -5,11 +5,13 @@
 // ── Sibling-TU voice hooks (retail symbols are unmangled globals) ──────────
 // func_802A330C / func_802A34E4: CVS voice-subsystem requests that return
 // non-zero on success. func_802A3D54: play a battle voice line against a
-// position sub-object. All three are non-overloaded free functions, so MWCC
-// keeps their unmangled C-style names (non-overloaded free functions).
-bool func_802A330C(u32 size, u32 align);
-bool func_802A34E4(u32 size);
-void func_802A3D54(CCharVoice* voicePtr, int voiceId, int groupId);
+// position sub-object. The retail symbols are unmangled C globals (defined in
+// the NonMatching retail CVS_* objects), so the declarations must be
+// extern "C" - MWCC mangles C++ free functions, which would leave the refs
+// unresolved at link.
+extern "C" bool func_802A330C(u32 size, u32 align);
+extern "C" bool func_802A34E4(u32 size);
+extern "C" void func_802A3D54(CCharVoice* voicePtr, int voiceId, int groupId);
 
 // Minimal layout of the battle object's fields this helper touches. The full
 // type is not yet identified, so only the offsets actually read are declared.
@@ -208,7 +210,10 @@ struct BattleManagerLayout {
     u16 field_20C8;                                  // +0x20C8 chain/timer state (read as s16)
 };
 
-bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
+// Retail symbol is the unmangled func_802B9064 (C linkage) - CCharVoiceMan
+// and other TUs reference it via extern "C"; without this the mangled
+// __FP11BattleGaugeff breaks the main.dol link.
+extern "C" bool func_802B9064(BattleGauge* obj, f32 curVal, f32 prevVal) {
     BattleGauge* voiceObj = reinterpret_cast<BattleGauge*>(obj);
     BattleIf* battle = reinterpret_cast<BattleIf*>(obj);
 

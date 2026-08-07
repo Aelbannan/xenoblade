@@ -57,6 +57,13 @@ class UnitRules:
     # Remove named .text FUNC symbols retail never put in this split (shift later
     # content). Used for weak inline-virtual dtors e.g. __dt__14IGameExceptionFv.
     drop_text_symbols: tuple[str, ...] = ()
+    # Like drop_text_symbols, but the dropped symbol is converted to UNDEF
+    # (shndx=0) instead of SHN_ABS so surviving .data/.extabindex relocations
+    # resolve to the strong copy in another TU at link (the retail linker's
+    # GC keeps the strong definition; the DOL-extracted retail .o shows the
+    # ref as UNDEF). Use when the dropped weak has a LIVE .data reference
+    # (e.g. __dt__FontFv referenced by the Font vtable in ut_ResFontBase).
+    drop_text_symbols_as_undef: tuple[str, ...] = ()
     # After drop_text_symbols, re-pack surviving .text FUNCs at this alignment
     # (e.g. 16). The drop shift preserves MWCC's pre-drop padding residue, while
     # the retail linker's GC re-lays survivors at their natural alignment
@@ -605,6 +612,15 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the retail offsets (same fix as lyt_group/lyt_window).
         repack_after_drop=16,
     ),
+    "lyt_drawInfo.o": UnitRules(
+        # MWCC emits the unreferenced weak inline-empty ut::Rect dtor
+        # (__dt__Q36nw4hbm2ut4RectFv, 0x40 deleting wrapper) with the DrawInfo
+        # code; ~DrawInfo inlines the trivial member destruction, so no .text/
+        # .data reference survives and the retail linker dead-stripped it
+        # (no __dt__Rect anywhere in the DOL). Dropping the orphan restores
+        # the retail split layout and fits the 0xC0 budget.
+        drop_text_symbols=("__dt__Q36nw4hbm2ut4RectFv",),
+    ),
     "lyt_group.o": UnitRules(
         # MWCC emits unreferenced weak in-charge dtors for the instantiated
         # ut::LinkList<Group,4> (GroupContainer::mGroupList) and
@@ -621,6 +637,16 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         repack_after_drop=16,
     ),
+    "HBMAnmController.o": UnitRules(
+        # MWCC emits the unreferenced weak inline-empty base dtor
+        # __dt__Q210homebutton15FrameControllerFv (0x40 deleting wrapper) with
+        # the GroupAnmController vtable; nothing in the DOL references it (no
+        # FrameController vtable/dtor anywhere in retail; the derived dtor
+        # elides the base call), so the retail linker dead-stripped it.
+        # Dropping the orphan restores the retail split layout and fits the
+        # 0x110 budget.
+        drop_text_symbols=("__dt__Q210homebutton15FrameControllerFv",),
+    ),
     "lyt_arcResourceAccessor.o": UnitRules(
         # MWCC emits the unreferenced weak in-charge dtor of the implicit
         # ut::LinkList<FontRefLink,0> template (mFontList). The Arc dtor is
@@ -635,6 +661,38 @@ UNIT_RULES: dict[str, UnitRules] = {
             "__dt__Q36nw4hbm2ut38LinkList<Q36nw4hbm3lyt11FontRefLink,0>Fv",
         ),
         repack_after_drop=16,
+    ),
+    "dvd_broadway.o": UnitRules(
+        # DECOMP_FORCEACTIVE emitters (dvdContexts .bss anchor at line 155;
+        # tmd strings + coverStatus/coverRegister pool anchor at line 495) are
+        # unreferenced text the retail linker GC'd (the retail .o keeps the
+        # .bss/.rodata anchors but no emitter functions). Dropping the two
+        # orphans (0x10 + 0x28) restores the retail split layout and fits the
+        # 0x26B0 budget.
+        drop_text_symbols=(
+            "FORCEACTIVEdvd_broadway_c155",
+            "FORCEACTIVEdvd_broadway_c495",
+        ),
+    ),
+    "ut_ResFontBase.o": UnitRules(
+        # MWCC emits the weak inline-empty Font dtor
+        # (__dt__Q36nw4hbm2ut4FontFv / __dt__Q34nw4r2ut4FontFv, 0x40 deleting
+        # wrapper) wherever the Font vtable is emitted. The retail linker GC'd
+        # the weak copies: the DOL-extracted retail .o shows the Font vtable's
+        # dtor slot referencing the strong copy in the lyt_textBox TU (UNDEF
+        # here; lyt_textBox.o defines __dt__FontFv at 0x1270/0x153c). Dropping
+        # as UNDEF lets the live vtable ref resolve to that strong copy at
+        # link (resFontBase ctor also references __vt__Font, so the vtable is
+        # NOT orphaned — plain drop would leave a dangling ABS pointer).
+        drop_text_symbols_as_undef=(
+            "__dt__Q36nw4hbm2ut4FontFv",
+            "__dt__Q34nw4r2ut4FontFv",
+        ),
+    ),
+    "ut_RomFont.o": UnitRules(
+        # Same weak inline-empty Font dtor orphan as ut_ResFontBase (nw4r
+        # variant); strong copy lives in nw4r lyt_textBox.o.
+        drop_text_symbols_as_undef=("__dt__Q34nw4r2ut4FontFv",),
     ),
     "lyt_window.o": UnitRules(
         # MWCC emits the unreferenced weak in-charge dtor of the nested
@@ -1569,13 +1627,19 @@ def trim_text_section(path: Path, new_size: int) -> bool:
     return True
 
 
-def drop_text_symbols(path: Path, names: tuple[str, ...]) -> bool:
+def drop_text_symbols(
+    path: Path, names: tuple[str, ...], as_undef: tuple[str, ...] = ()
+) -> bool:
     """Remove named .text functions and compact the section.
 
     Weak inline-virtual dtors (IGameException) are emitted into every
     implementing TU; retail omits some from a given split. Deleting the
     bytes and shifting later symbols/relocs restores the retail budget
     without growing real derived dtors (out-of-line empty bases add a bl).
+
+    Symbols in *as_undef* are converted to UNDEF (shndx=0) instead of SHN_ABS
+    so surviving relocations (e.g. a live vtable entry) resolve to the strong
+    definition in another TU at link, mirroring the DOL-extracted retail .o.
     """
     if not names:
         return False
@@ -1651,9 +1715,18 @@ def drop_text_symbols(path: Path, names: tuple[str, ...]) -> bool:
         del text[start:end]
         changed = True
 
-        # Invalidate the dropped symbol.
+        # Invalidate the dropped symbol. as_undef names become UNDEF so live
+        # .data/.extabindex relocations resolve to the strong copy elsewhere
+        # (retail linker GC behaviour); everything else is ABS-empty (orphan
+        # weaks whose referencing vtables are also GC'd).
+        st_name = struct.unpack_from(">I", data, sym_off + so)[0]
+        name_end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : name_end].decode("ascii")
         struct.pack_into(">I", data, sym_off + so + 8, 0)
-        struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
+        if sname in as_undef:
+            struct.pack_into(">H", data, sym_off + so + 14, 0)  # SHN_UNDEF
+        else:
+            struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
 
         # Shift later .text symbols.
         for so2 in range(0, sym_size, 16):
@@ -2234,8 +2307,15 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     # the retail name also exists in another section. Re-apply content-based
     # pool naming last so @N numbering never becomes part of a unit rule.
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
-    if rules.drop_text_symbols:
-        changed = drop_text_symbols(path, rules.drop_text_symbols) or changed
+    if rules.drop_text_symbols or rules.drop_text_symbols_as_undef:
+        changed = (
+            drop_text_symbols(
+                path,
+                rules.drop_text_symbols + rules.drop_text_symbols_as_undef,
+                as_undef=rules.drop_text_symbols_as_undef,
+            )
+            or changed
+        )
     if rules.repack_after_drop:
         changed = repack_text(path, rules.repack_after_drop) or changed
     if rules.trim_text_size is not None:

@@ -42,7 +42,8 @@ u32 ResMdl::GetResNodeNumEntries() const {
  * RexVtxPos
  *
  ******************************************************************************/
-ResVtxPos ResMdl::GetResVtxPos(const ResName name) const {
+// Not in retail (only CFi/CFUl overloads exist) - inline folds the call sites.
+inline ResVtxPos ResMdl::GetResVtxPos(const ResName name) const {
     return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[name]);
 }
 
@@ -63,7 +64,8 @@ u32 ResMdl::GetResVtxPosNumEntries() const {
  * ResVtxNrm
  *
  ******************************************************************************/
-ResVtxNrm ResMdl::GetResVtxNrm(const ResName name) const {
+// Not in retail - inline (see GetResVtxPos(ResName) note).
+inline ResVtxNrm ResMdl::GetResVtxNrm(const ResName name) const {
     return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[name]);
 }
 
@@ -84,7 +86,8 @@ u32 ResMdl::GetResVtxNrmNumEntries() const {
  * ResVtxClr
  *
  ******************************************************************************/
-ResVtxClr ResMdl::GetResVtxClr(const ResName name) const {
+// Not in retail - inline (see GetResVtxPos(ResName) note).
+inline ResVtxClr ResMdl::GetResVtxClr(const ResName name) const {
     return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[name]);
 }
 
@@ -109,7 +112,8 @@ ResVtxTexCoord ResMdl::GetResVtxTexCoord(int idx) const {
     return ResVtxTexCoord(ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic)[idx]);
 }
 
-u32 ResMdl::GetResVtxTexCoordNumEntries() const {
+// Not in retail (retail has GetResVtxTexCoord(CFi) only) - inline.
+inline u32 ResMdl::GetResVtxTexCoordNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic).GetNumData();
 }
 
@@ -143,7 +147,8 @@ u32 ResMdl::GetResMatNumEntries() const {
  * ResShp
  *
  ******************************************************************************/
-ResShp ResMdl::GetResShp(const char* pName) const {
+// Not in retail (only CFi/CFUl overloads exist) - inline.
+inline ResShp ResMdl::GetResShp(const char* pName) const {
     return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[pName]);
 }
 
@@ -164,7 +169,8 @@ u32 ResMdl::GetResShpNumEntries() const {
  * ResTexPlttInfo
  *
  ******************************************************************************/
-ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(int idx) const {
+// Not in retail (only the FUl overload exists) - inline.
+inline ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(int idx) const {
     return ResTexPlttInfo(
         ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
 }
@@ -281,16 +287,19 @@ ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
  * GetResVtxFurVec
  *
  ******************************************************************************/
-ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
+// Not in retail (only GetResVtxFurPos(CFi) exists) - inline.
+inline ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
     return ResVtxFurVec(
         ofs_to_obj<ResDic>(ref().toResVtxFurVecDic)[idx]);
 }
 
-u32 ResMdl::GetResVtxFurVecNumEntries() const {
+// Not in retail - inline.
+inline u32 ResMdl::GetResVtxFurVecNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxFurVecDic).GetNumData();
 }
 
-u32 ResMdl::GetResVtxFurPosNumEntries() const {
+// Not in retail - inline.
+inline u32 ResMdl::GetResVtxFurPosNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxFurPosDic).GetNumData();
 }
 

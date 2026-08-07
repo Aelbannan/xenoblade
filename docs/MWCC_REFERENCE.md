@@ -6324,6 +6324,30 @@ decomp Build is 0x2fc (retail 0x304, another agent's target) — the shift
 resolves itself when Build matches; per-function matches are unaffected
 (by-name comparison).
 
+**Weak dtor with a LIVE vtable ref — drop as UNDEF, not ABS (ut_ResFontBase,
+us-80331d10 area; also nw4r ut_RomFont / ut_ResFontBase):** the Font dtor
+(`virtual ~Font() {}` inline-empty in ut_font.h) is a 0x40 weak deleting
+wrapper emitted wherever the Font vtable is emitted. Unlike the orphans above,
+the Font VTABLE here is NOT orphaned: the ResFontBase ctor writes `__vt__Font`
+(relocs +0x2/+0xa) and the vtable's dtor slot is live, so the retail linker
+resolved the slot to the STRONG copy in the lyt_textBox TU (extracted retail .o
+shows the ref as UNDEF; lyt_textBox.o defines __dt__FontFv at 0x1270 hbm /
+0x153c nw4r). A plain `drop_text_symbols` marks the symbol SHN_ABS (garbage
+pointer baked into the linked vtable). New opt-in
+`drop_text_symbols_as_undef` in tools/postprocess_reloc_names.py marks the
+dropped symbol SHN_UNDEF instead, so the live vtable/extabindex refs resolve
+to the strong copy at link — exactly the retail extraction state. Do NOT try
+to source-fix this: declared-only header dtors grow the derived dtor (real
+`bl` to the base, 0x58 vs 0x40 — the base body must stay inline-visible for
+call-site elision), and pure `= 0` base dtors emit an undefined `bl` from the
+derived dtor.
+
+**Complementary source-side suppression (`__declspec(novtable)`, concurrent
+run):** lyt_pane.h (PaneBase + Pane) and CProcRoot.hpp gained `novtable` so
+consumer TUs stop emitting weak vtable/RTTI copies; the inline-empty weak
+dtor copies still appear and are dropped as above. Both mechanisms coexist:
+the drops stay load-bearing (verified still active after the header change).
+
 **AnimationLink ctor store order (SetResource, us-8032e180):** retail's
 placement-new loop writes the inlined ctor as `stw 0; stw 4; stb 14; stw 8;
 sth 12` (node, mbDisable, mAnimTrans, mIdx). The `: mbDisable(false) {

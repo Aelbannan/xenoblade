@@ -22,7 +22,7 @@ public:
 
 public:
     FrameController() {}
-    virtual ~FrameController() {} // at 0x8
+    virtual ~FrameController() {} // at 0x8 (inline-empty; orphan weak copy dropped in postprocess, retail linker GC'd it)
 
     virtual void calc(); // at 0xC
 

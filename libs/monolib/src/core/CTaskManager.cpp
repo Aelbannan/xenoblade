@@ -39,7 +39,10 @@ void CTaskManager::Create() {
     Start();
 }
 
-void CTaskManager::Start() {
+// Inline: retail inlines Start into Create/Reset (both 0x23C bodies contain
+// the full registration sequence) and emits NO standalone Start symbol.
+// Non-inline MWCC would emit an out-of-line copy (+0x234 over split budget).
+inline void CTaskManager::Start() {
     //All register with NULL parent because they are root-level processes
     spRootProcRealTime = new (CWorkThreadSystem::getWorkMem()) CRootProc();
     spRootProcRealTime->Regist(nullptr, false);

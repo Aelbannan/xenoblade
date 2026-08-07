@@ -46,7 +46,7 @@ public:
 
 public:
     Font() : mReadFunc(&CharStrmReader::ReadNextCharCP1252) {}
-    virtual ~Font() {} // at 0x8
+    virtual ~Font() {} // at 0x8 (inline-empty; weak copy dropped in postprocess - retail linker GC'd it; Font vtable dtor slot resolves to the strong copy in the lyt_textBox TU)
 
     virtual int GetWidth() const = 0;  // at 0xC
     virtual int GetHeight() const = 0; // at 0x10

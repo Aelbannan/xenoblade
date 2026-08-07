@@ -229,16 +229,6 @@ void func_80213B1C(CMCCrystalData* d) {
 
 void __ct__CMCCrystalBox(){}
 
-struct CMCCrystalBoxParam {
-    s16 m0;
-    s16 m2;
-    s16 m4;
-    u8 m6;
-    u8 m7;
-
-    void initCrystalBoxParam_80213E04(s16 a, s16 b);
-};
-
 void initCrystalBoxParam_80213E04_impl(CMCCrystalBoxParam* self, s16 a, s16 b);
 
 void copyCrystalBoxParam_80213E20(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src) {

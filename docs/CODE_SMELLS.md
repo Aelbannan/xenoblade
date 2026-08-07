@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8316 |
-| extern "C" declarations (non-lbl_*, imports) | 3259 |
+| extern "C" (total lines) | 8317 |
+| extern "C" declarations (non-lbl_*, imports) | 3260 |
 | extern "C" definitions (forced names) | 2642 |
 | `self`/register-style params | 4466 |
-| `void*` (params + locals) | 5524 |
-| raw pointer offset arithmetic | 3417 |
+| `void*` (params + locals) | 5520 |
+| raw pointer offset arithmetic | 3418 |
 | deref-through-cast arithmetic | 1422 |
 | inline asm / `register` | 88 |
 | rN-named params | 350 |
@@ -109,7 +109,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/mpfsys/code_8047CA88.cpp | 4 | 0 | 7 | 4 | 3 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 4 |
-| libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 3 |
+| libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 0 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 12 | 0 | 0 | 21 | 1 | 0 | 0 | 0 | 0 |
@@ -358,7 +358,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCamLookatIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamTargetIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollAABBImpl.cpp | 5 | 1 | 6 | 9 | 0 | 0 | 0 | 1 | 0 |
-| src/kyoshin/cf/CfCollCapsuleImpl.cpp | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfCollCapsuleImpl.cpp | 2 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollCircleImpl.cpp | 2 | 0 | 9 | 11 | 2 | 2 | 0 | 5 | 0 |
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 1 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 2 | 2 | 1 | 7 | 0 | 0 | 0 | 0 | 0 |
@@ -540,7 +540,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/plugin/pluginSnd.cpp | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginUi.cpp | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginUnit.cpp | 17 | 6 | 1 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/pluginVoice.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
+| src/kyoshin/plugin/pluginVoice.cpp | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 |
 | src/kyoshin/realtimeevt/CREvtCamera.cpp | 33 | 13 | 16 | 51 | 21 | 8 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 29 | 13 | 28 | 39 | 34 | 26 | 0 | 3 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 9 | 7 | 9 | 18 | 12 | 6 | 0 | 0 | 0 |
@@ -956,8 +956,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/nand/CNReqtaskReaddir.cpp": {
   "extern_c_nonlbl_decl": 2,
-  "goto_count": 3,
-  "void_ptr": 4
+  "goto_count": 3
  },
  "libs/monolib/src/nand/CNReqtaskRemove.cpp": {
   "extern_c_nonlbl_decl": 3,
@@ -2254,7 +2253,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 9
  },
  "src/kyoshin/cf/CfCollCapsuleImpl.cpp": {
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 2,
   "void_ptr": 2
  },
  "src/kyoshin/cf/CfCollCircleImpl.cpp": {
@@ -3299,6 +3298,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "src/kyoshin/plugin/pluginVoice.cpp": {
+  "ptr_arith": 1,
   "rn_params": 1,
   "self_params": 1
  },

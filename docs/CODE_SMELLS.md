@@ -10,11 +10,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 7863 |
+| extern "C" (total lines) | 7864 |
 | extern "C" declarations (non-lbl_*, imports) | 3262 |
 | extern "C" definitions (forced names) | 2178 |
 | `self`/register-style params | 4455 |
-| `void*` (params + locals) | 5542 |
+| `void*` (params + locals) | 5543 |
 | raw pointer offset arithmetic | 3424 |
 | deref-through-cast arithmetic | 1425 |
 | inline asm / `register` | 88 |
@@ -472,7 +472,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 107 | 0 | 108 | 18 | 92 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalInfo.cpp | 19 | 5 | 37 | 18 | 1 | 0 | 0 | 1 | 0 |
 | src/kyoshin/makecrystal/CMCCrystalSupport.cpp | 9 | 8 | 10 | 9 | 1 | 1 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/CMCEffStart.cpp | 2 | 0 | 1 | 3 | 3 | 1 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/CMCEffStart.cpp | 2 | 0 | 1 | 4 | 3 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMCGetItemBox.cpp | 31 | 2 | 45 | 23 | 10 | 0 | 0 | 3 | 2 |
 | src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 0 | 4 | 4 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -2905,7 +2905,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_decl": 2,
   "ptr_arith": 3,
   "self_params": 1,
-  "void_ptr": 3
+  "void_ptr": 4
  },
  "src/kyoshin/makecrystal/CMCGetItemBox.cpp": {
   "extern_c_nonlbl_decl": 31,

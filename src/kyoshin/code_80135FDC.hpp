@@ -28,19 +28,22 @@ void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const c
 void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 }
 
-// Retail symbol for func_80137038 IS the mangled name
-// (func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii), so it stays
-// C++-linkage — do NOT move it into the extern "C" block above.
+// Retail symbols that ARE the mangled C++ names stay C++-linkage.
 void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-u8 func_801372B4(u32);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+
+// Retail symbols are unmangled (C linkage) — keep them extern "C" so calls
+// bind to the unmangled name, not an Itanium-mangled re-derivation.
+extern "C" {
+u8 func_801372B4(u32);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
 char* func_80138F78(u16);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+}
 extern "C" u8 code80135FDC_getByte_621F0();
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" u8 func_801392B4(u8);

@@ -17,6 +17,12 @@ extern u32 func_801355A0();
 extern "C" char lbl_eu_805095EC[];
 extern "C" float lbl_eu_80668550;
 extern "C" const float lbl_eu_80668554;
+// SDA global: retail refers to cf::CfBdat::spBtlSkillListFileData by its raw
+// symbol name lbl_eu_806640D8; referencing the C++ static member would emit
+// the mangled reloc (spBtlSkillListFileData__Q22cf6CfBdat) which retail does
+// not have.
+extern "C" void* lbl_eu_806640D8;
+// (func_80137E7C is declared extern "C" in code_80135FDC.hpp)
 // func_80136910's retail symbol is the Itanium-mangled C++ name, so it must be
 // referenced by its literal mangled identifier under C linkage (declaring it as
 // a C++ function would re-mangle the name).
@@ -505,41 +511,41 @@ void CMCEffCrystal::setTraceVisible(u32 arg1) {
 void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     unk36 = arg1;
     unk38 = arg2;
-    char* name = func_8013639C(cf::CfBdat::spBtlSkillListFileData, "name", arg1);
-    char* itemName = func_80136190("MNU_item", "name", 0x1e - (arg2 - 1));
+    char* name = func_8013639C(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], arg1);
+    char* itemName = func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
     char buffer[0x20];
-    sprintf(buffer, "%s%s", name, itemName);
-    func_80136A1C(mLayout18, "txt_listname01", buffer, 0);
+    sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
+    func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     void* resource = nullptr;
-    u8 result = func_801361E8(cf::CfBdat::spBtlSkillListFileData, "atr_type", arg1);
+    u8 result = func_801361E8(lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
     switch(result) {
         case 0:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf00_com00_dmy.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x29f], 0);
             break;
         case 4:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys01.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2b2], 0);
             break;
         case 5:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys02.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2c8], 0);
             break;
         case 6:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys03.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2de], 0);
             break;
         case 7:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys04.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x2f4], 0);
             break;
         case 8:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys05.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x30a], 0);
             break;
         case 9:
-            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, "mf10_cry00_crys06.tpl", 0);
+            resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x320], 0);
             break;
         default:
             break;
     }
     if(resource != nullptr) {
-        func_80137E7C(mLayout18, "pic_crs", resource);
-        func_80137E7C(mLayout18, "pic_crs01", resource);
+        func_80137E7C(mLayout18, &lbl_eu_805095EC[0x336], resource);
+        func_80137E7C(mLayout18, &lbl_eu_805095EC[0x33e], resource);
     }
 }
 
@@ -572,11 +578,11 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
         unk5 = 1;
     }
     if(mAnimTrans20->GetFrame() >= 5.0f) {
-        char* name = func_8013639C(cf::CfBdat::spBtlSkillListFileData, "name", unk36);
-        char* itemName = func_80136190("MNU_item", "name", 0x1e - unk38);
+        char* name = func_8013639C(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], unk36);
+        char* itemName = func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];
-        sprintf(buffer, "%s%s", name, itemName);
-        func_80136A1C(mLayout18, "txt_listname01", buffer, 0);
+        sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
+        func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     }
 }
 

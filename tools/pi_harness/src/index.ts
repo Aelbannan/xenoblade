@@ -78,8 +78,8 @@ function parseArgs(argv: string[]): Args {
       }
       case "--order": {
         const v = rest[++i];
-        if (!v || !["most-remaining", "least-remaining", "alphabetical"].includes(v)) {
-          throw new Error("--order must be one of: most-remaining, least-remaining, alphabetical");
+        if (!v || !["most-remaining", "least-remaining", "smallest", "alphabetical"].includes(v)) {
+          throw new Error("--order must be one of: most-remaining, least-remaining, smallest, alphabetical");
         }
         args.order = v as UnitOrder;
         break;
@@ -135,7 +135,7 @@ Options:
   --all                Auto-discover all TUs with unmatched targets and process them
   --status             Print per-TU match summary table and exit (no sessions run)
   --order <order>      TU ordering for --all and --status: most-remaining (default),
-                       least-remaining, alphabetical
+                       least-remaining, smallest (unmatched .text bytes), alphabetical
   --config <path>      Config file (default: <repoRoot>/pi-harness.json)
   --dry-run            Print batch prompts without running sessions
   --max-parallel <n>   Override maxParallelTUs

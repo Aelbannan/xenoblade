@@ -183,9 +183,11 @@ export interface UnitSummary {
   total: number;
   matched: number;
   remaining: number;
+  /** Sum of .text sizes (bytes) of unmatched targets; 0 when none has a size. */
+  remainingSize: number;
 }
 
-export type UnitOrder = "most-remaining" | "least-remaining" | "alphabetical";
+export type UnitOrder = "most-remaining" | "least-remaining" | "smallest" | "alphabetical";
 
 /**
  * Scan all function-kind targets grouped by unit and return per-TU match
@@ -198,7 +200,7 @@ export function loadAllUnitSummaries(
   order: UnitOrder = "most-remaining",
 ): UnitSummary[] {
   const accepted = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
-  const map = new Map<string, { total: number; matched: number }>();
+  const map = new Map<string, { total: number; matched: number; remainingSize: number }>();
 
   for (const raw of readTargetsFile(repoRoot)) {
     if (raw.kind !== undefined && raw.kind !== null && raw.kind !== "function") continue;
@@ -206,11 +208,19 @@ export function loadAllUnitSummaries(
     const unit = raw.unit ?? "unknown";
     let entry = map.get(unit);
     if (!entry) {
-      entry = { total: 0, matched: 0 };
+      entry = { total: 0, matched: 0, remainingSize: 0 };
       map.set(unit, entry);
     }
     entry.total++;
-    if (accepted.has(raw.status)) entry.matched++;
+    if (accepted.has(raw.status)) {
+      entry.matched++;
+    } else {
+      // Sum unmatched .text size (bytes) for the "smallest" order: a TU
+      // with few, large functions may be bigger than one with many small
+      // ones, so remaining-COUNT is a poor size proxy. Missing sizes count 0.
+      const sz = parseTargetSize(raw.size);
+      if (typeof sz === "number") entry.remainingSize += sz;
+    }
   }
 
   const summaries: UnitSummary[] = [];
@@ -221,6 +231,7 @@ export function loadAllUnitSummaries(
       total: counts.total,
       matched: counts.matched,
       remaining: counts.total - counts.matched,
+      remainingSize: counts.remainingSize,
     });
   }
 
@@ -230,6 +241,15 @@ export function loadAllUnitSummaries(
       break;
     case "least-remaining":
       summaries.sort((a, b) => a.remaining - b.remaining || a.unit.localeCompare(b.unit));
+      break;
+    case "smallest":
+      // Smallest total UNMATCHED size first (sum of target .text bytes).
+      // Ties broken by remaining count, then unit name.
+      summaries.sort(
+        (a, b) => (a.remainingSize - b.remainingSize)
+          || (a.remaining - b.remaining)
+          || a.unit.localeCompare(b.unit),
+      );
       break;
     case "alphabetical":
       summaries.sort((a, b) => a.unit.localeCompare(b.unit));

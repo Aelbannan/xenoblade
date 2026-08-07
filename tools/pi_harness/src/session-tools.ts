@@ -163,7 +163,13 @@ async function runHexdiffTool(
   lines.push(`- mismatch: ${n("mismatch_count") ?? "?"} | structural: ${n("structural_count") ?? "?"} | reg_swap: ${n("reg_swap_count") ?? "?"}`);
   const sizeCheck = d.size_check as { ok?: boolean; over_by?: number } | null | undefined;
   if (sizeCheck && sizeCheck.ok === false) {
-    lines.push(`- SIZE OVER BUDGET by ${sizeCheck.over_by ?? "?"} bytes (never matches)`);
+    // Function acceptance is per-function (user policy 2026-08): a
+    // byte-identical function is ACCEPTED regardless of the unit split
+    // size — the size gate only blocks the unit's configure.py promotion.
+    // Do NOT tell the model "never matches" — that made it keep editing
+    // finished code (run33 db_assert: mismatch:0 regressed to 6 chasing
+    // the unit size).
+    lines.push(`- ⚠️ unit split size OVER BUDGET by ${sizeCheck.over_by ?? "?"} bytes — the FUNCTION below can still be accepted if byte-identical (mismatch: 0); only the unit's configure.py promotion waits on size`);
   }
   lines.push(`- retail ${n("retail_size") ?? "?"}B vs decomp ${n("decomp_size") ?? "?"}B`);
 
@@ -363,7 +369,7 @@ export function witnessTool(repoRoot: string, python: string): ToolDefinition {
               ...verdictLines.map((l) => `- ${l}`),
               ...(gate && !certifiable ? [`- witness gate: ${gate}`] : []),
               certifiable
-                ? "- ✅ CODE IS CERTIFIABLE — fix the unit split size, then re-run"
+                ? "- ✅ CODE IS CERTIFIABLE — the function is accepted NOW (unit size only gates configure.py promotion)"
                 : "- ❌ NOT certifiable yet — keep iterating",
             ];
             return {

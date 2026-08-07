@@ -10,17 +10,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8312 |
+| extern "C" (total lines) | 8314 |
 | extern "C" declarations (non-lbl_*, imports) | 3258 |
 | extern "C" definitions (forced names) | 2642 |
 | `self`/register-style params | 4471 |
-| `void*` (params + locals) | 5543 |
+| `void*` (params + locals) | 5542 |
 | raw pointer offset arithmetic | 3424 |
 | deref-through-cast arithmetic | 1425 |
 | inline asm / `register` | 88 |
 | rN-named params | 355 |
 | goto | 1125 |
-| #pragma | 338 |
+| #pragma | 337 |
 
 ## Top offenders (by cleanable severity)
 
@@ -131,7 +131,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnFilterMan.cpp | 0 | 19 | 13 | 10 | 7 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFogMan.cpp | 0 | 4 | 4 | 3 | 4 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 2 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnIdMan.cpp | 9 | 2 | 10 | 16 | 2 | 0 | 0 | 7 | 0 |
+| libs/monolib/src/scn/CScnIdMan.cpp | 9 | 2 | 10 | 15 | 2 | 0 | 0 | 7 | 0 |
 | libs/monolib/src/scn/CScnItemAnim.cpp | 0 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemCameraNw4r.cpp | 1 | 5 | 4 | 4 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemId.cpp | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -1097,7 +1097,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "ptr_arith": 2,
   "rn_params": 7,
   "self_params": 10,
-  "void_ptr": 16
+  "void_ptr": 15
  },
  "libs/monolib/src/scn/CScnItemAnim.cpp": {
   "extern_c_nonlbl_def": 4,

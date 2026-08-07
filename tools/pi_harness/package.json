@@ -10,6 +10,7 @@
     "test:tools": "node --import tsx --test tests/session-tools.test.ts"
   },
   "dependencies": {
+    "@earendil-works/pi-ai": "^0.83.0",
     "@earendil-works/pi-coding-agent": "file:/Users/ahmedelbannan/.local/lib/node_modules/@earendil-works/pi-coding-agent",
     "undici": "^8.5.0"
   },

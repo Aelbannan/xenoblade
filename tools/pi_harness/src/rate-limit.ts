@@ -1,306 +1,320 @@
 // ---------------------------------------------------------------------------
-// Global cross-session request-rate PACER.
+// Process-wide request-rate limiter (PACER) for the pi-harness.
 //
-// Problem: the nube provider serves DeepSeek-V4-Flash via LiteLLM with a hard
-// `rpm_limit` (observed ~20 req/min) on the serving deployment. 14-20 parallel
-// harness sessions each issue many model requests/min (every assistant tool-call
-// turn inside one `session.prompt()` is a separate HTTP request via
-// `ModelRuntime.streamSimple`). Aggregate rate far exceeds the cap, so the
-// gateway 429s; the SDK retry-amplifier then multiplies each failed request
-// into ~5 gateway calls, consuming the whole rpm budget on retries. Measured:
-// 79% of session wall-clock spent in 429/empty stall gaps.
+// ONE HTTP request per `60_000 / rpm` ms, with NO burst allowance. This is a
+// strict emission-interval pacer, NOT a token bucket with capacity=rpm (which
+// would permit a 2x-rpm burst — the startup thundering herd). The pacer wraps
+// `ModelRuntime.streamSimple` / `completeSimple` (the per-HTTP-request choke
+// points: every assistant tool-call turn inside a session.prompt() is a separate
+// streamSimple call), so it is genuinely process-wide, covering all 4
+// runAgentSession call sites, every turn within rounds, agent-level retries and
+// compaction.
 //
-// This is a PACER, not a token bucket with capacity=rpm (which permits 2x rpm
-// in any window / startup bursts). Exactly one request is admitted every
-// `60_000 / rpm` ms. Semantics:
-//   - If no waiter is queued AND the inter-request interval has elapsed,
-//     acquire() grants immediately.
-//   - Otherwise the request enqueues; a single self-rescheduling timer fires
-//     every `60_000/rpm` ms, grants the FRONT waiter (FIFO), and reschedules
-//     only while waiters remain.
-//   - acquire() is AbortSignal-interruptible: an aborted waiter is removed and
-//     rejects without consuming a token (dead-session / timeout safety).
-//
-// The module singleton (configureSharedRateLimiter, called once at orchestrator
-// startup) is shared by all sessions because the harness runs in a single
-// `tsx src/index.ts` process.
+// Semantics:
+//  - FIFO resolve-queue. A single timer fires at each emission slot; it grants
+//    the head waiter and schedules the next slot only while waiters remain.
+//  - `acquire()` grants immediately when the pacer is idle and the current slot
+//    is open (first request after init); otherwise it enqueues.
+//  - `acquire()` is AbortSignal-interruptible: an aborted waiter is removed from
+//    the queue, rejected with an AbortError, and does NOT consume a token (the
+//    slot is re-served to the promoted waiter).
+//  - When `rpm === 0` the pacer is inert (no pacing, immediate grants) and the
+//    shared singleton is not installed — behavior is unchanged.
+//  - Injectable `now()` + `tick()` for deterministic tests (no real timers).
 // ---------------------------------------------------------------------------
 
-export interface RateLimiterAcquireOptions {
-  /** Aborting the signal rejects a queued acquire without consuming a token. */
-  signal?: AbortSignal;
-}
+import {
+  lazyStream,
+  type Api,
+  type AssistantMessage,
+  type AssistantMessageEventStream,
+  type Context,
+  type Model,
+  type ModelsSimpleStreamOptions,
+} from "@earendil-works/pi-ai";
+import { SettingsManager } from "@earendil-works/pi-coding-agent";
 
 export interface RateLimiter {
-  readonly rpm: number;
-  /** Number of waiters currently queued (observability). */
-  readonly queueDepth: number;
-  acquire(opts?: RateLimiterAcquireOptions): Promise<void>;
+  acquire(opts?: { signal?: AbortSignal }): Promise<void>;
   dispose(): void;
+  readonly rpm: number;
+  readonly queueDepth: number;
 }
 
 interface Waiter {
   resolve: () => void;
-  reject: (err: unknown) => void;
+  reject: (err: Error) => void;
   signal?: AbortSignal;
-  onSignal?: () => void;
+  onAbort?: () => void;
 }
 
-interface PacerClock {
-  now(): number;
-  schedule(fn: () => void, delayMs: number): ReturnType<typeof setTimeout>;
-  clear(t: ReturnType<typeof setTimeout>): void;
+export interface RateLimiterOptions {
+  /** Injected monotonic clock. When provided the limiter runs in MANUAL mode:
+   *  no real timers are scheduled and time only advances via `tick(ms)`. */
+  now?: () => number;
 }
 
-const realClock: PacerClock = {
-  now: () => performance.now(),
-  schedule: (fn, delayMs) => setTimeout(fn, delayMs),
-  clear: (t) => clearTimeout(t),
-};
-
-export class Pacer implements RateLimiter {
-  private readonly intervalMs: number;
-  private readonly clock: PacerClock;
-  private waiters: Waiter[] = [];
-  private nextAvailableAt = Number.NEGATIVE_INFINITY;
+export class RateLimiterImpl implements RateLimiter {
+  readonly rpm: number;
+  readonly intervalMs: number;
+  /** Manual mode (injected clock): `now()` reads this fake clock; `tick()`
+   *  advances it. Real mode uses `performance.now()` + setTimeout. */
+  private readonly manual: boolean;
+  private time: number;
+  private readonly queue: Waiter[] = [];
+  /** Absolute (clock-unit) time the NEXT request may start. Advanced only on
+   *  grant — never on enqueue — so aborted waiters consume no token. */
+  private nextFreeAt: number;
   private disposed = false;
-  private tickTimer: ReturnType<typeof setTimeout> | null = null;
+  private pumpTimer?: ReturnType<typeof setTimeout>;
+  private pumpPending = false;
 
-  constructor(rpm: number, clock: PacerClock = realClock) {
-    this.intervalMs = Math.max(1, 60_000 / rpm);
-    this.clock = clock;
-  }
-
-  get rpm(): number {
-    return Math.round(60_000 / this.intervalMs);
+  constructor(rpm: number, opts: RateLimiterOptions = {}) {
+    if (!Number.isInteger(rpm) || rpm < 0) {
+      throw new Error(`rpm must be a non-negative integer (got ${String(rpm)})`);
+    }
+    this.rpm = rpm;
+    this.intervalMs = rpm > 0 ? 60_000 / rpm : Infinity;
+    this.manual = typeof opts.now === "function";
+    this.time = this.manual ? (opts.now as () => number)() : 0;
+    this.nextFreeAt = this.now();
   }
 
   get queueDepth(): number {
-    return this.waiters.length;
+    return this.queue.length;
   }
 
-  acquire(opts?: RateLimiterAcquireOptions): Promise<void> {
-    if (this.disposed) return Promise.resolve();
-    const signal = opts?.signal;
-    return new Promise<void>((resolve, reject) => {
-      const now = this.clock.now();
-      if (now >= this.nextAvailableAt) {
-        // Slot open right now — grant immediately, no queue.
-        this.nextAvailableAt = now + this.intervalMs;
-        return resolve();
-      }
+  /** Current clock time (fake time in manual mode). Exposed for observability
+   *  and so tests can record the exact grant timestamp. */
+  get nowMs(): number {
+    return this.now();
+  }
 
-      const waiter: Waiter = { resolve, reject, signal };
-      const onAbort = () => this.removeWaiter(waiter, new Error("aborted while queued"));
-      if (signal) {
-        if (signal.aborted) {
-          return reject(new Error("aborted while queued"));
+  private now(): number {
+    return this.manual ? this.time : performance.now();
+  }
+
+  acquire(opts: { signal?: AbortSignal } = {}): Promise<void> {
+    if (this.disposed || this.rpm <= 0) return Promise.resolve();
+    const now = this.now();
+    // Idle pacer with an open slot → grant immediately (no burst: the slot is
+    // reserved for the NEXT caller, so stack-up here just queues).
+    if (this.queue.length === 0 && now >= this.nextFreeAt) {
+      this.nextFreeAt = now + this.intervalMs;
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve, reject) => {
+      const waiter: Waiter = { resolve, reject, signal: opts.signal };
+      waiter.onAbort = () => {
+        const i = this.queue.indexOf(waiter);
+        // Aborted while queued → remove WITHOUT consuming a token; the slot is
+        // re-served to the promoted waiter.
+        if (i >= 0) {
+          this.queue.splice(i, 1);
+          this.schedulePump();
         }
-        waiter.onSignal = onAbort;
-        signal.addEventListener("abort", onAbort);
+        waiter.signal?.removeEventListener("abort", waiter.onAbort!);
+        const err = new Error("rate-limiter acquire aborted");
+        err.name = "AbortError";
+        reject(err);
+      };
+      if (opts.signal) {
+        if (opts.signal.aborted) {
+          waiter.onAbort();
+          return;
+        }
+        opts.signal.addEventListener("abort", waiter.onAbort, { once: true });
       }
-      this.waiters.push(waiter);
-      this.ensureTicker();
+      this.queue.push(waiter);
+      this.schedulePump();
     });
   }
 
-  private removeWaiter(waiter: Waiter, err: unknown): void {
-    const idx = this.waiters.indexOf(waiter);
-    if (idx >= 0) this.waiters.splice(idx, 1);
-    if (waiter.signal && waiter.onSignal) {
-      waiter.signal.removeEventListener("abort", waiter.onSignal);
+  /** Advance the manual clock by `ms` and deliver any grants whose slots are
+   *  now due. Only valid when an injected `now` was provided. */
+  tick(ms: number): void {
+    if (!this.manual) {
+      throw new Error("RateLimiter.tick() requires an injected clock (pass now: () => number)");
     }
-    waiter.reject(err);
-    // If nothing left queued, stop ticking (no timer leak).
-    if (this.waiters.length === 0 && this.tickTimer) {
-      this.stopTicking();
+    if (!Number.isFinite(ms) || ms < 0) {
+      throw new Error(`tick(ms) must be a non-negative number (got ${String(ms)})`);
+    }
+    this.time += ms;
+    this.drainManual();
+  }
+
+  /** Deliver grants due as of the current fake time. Strict pacing means at
+   *  most one grant is ever due at a time: after each grant the next slot is
+   *  exactly `intervalMs` later, so a large tick still emits only one (the
+   *  remainder requires more ticks) — no burst even after a long idle. */
+  private drainManual(): void {
+    while (!this.disposed && this.queue.length > 0) {
+      const now = this.time;
+      const slot = Math.max(this.nextFreeAt, now);
+      if (slot > now) return; // nothing due yet — wait for more tick()
+      this.time = slot; // keep consecutive grants intervalMs apart in fake time
+      this.grantHead(slot);
     }
   }
 
-  /** Start a timer for the next grant, aligned to nextAvailableAt (exact
-   *  pacing: a queued request waits until the slot actually opens, not a tick
-   *  earlier). If a timer is already scheduled, leave it. */
-  private ensureTicker(): void {
-    if (this.tickTimer !== null) return;
-    const waitMs = Math.max(1, this.nextAvailableAt - this.clock.now());
-    this.tickTimer = this.clock.schedule(() => this.tick(), waitMs);
-  }
-
-  private tick(): void {
-    this.tickTimer = null;
-    if (this.disposed) return;
-    if (this.waiters.length === 0) {
-      return;
-    }
-    const now = this.clock.now();
-    // Slot opens at nextAvailableAt; if we fired a hair early (clock drift),
-    // defer to exactly nextAvailableAt.
-    if (now < this.nextAvailableAt) {
-      this.ensureTicker();
-      return;
-    }
-    this.nextAvailableAt = now + this.intervalMs;
-    const waiter = this.waiters.shift()!;
-    if (waiter.signal && waiter.onSignal) {
-      waiter.signal.removeEventListener("abort", waiter.onSignal);
-    }
+  private grantHead(slot: number): void {
+    const waiter = this.queue.shift()!;
+    this.nextFreeAt = slot + this.intervalMs;
+    waiter.signal?.removeEventListener("abort", waiter.onAbort!);
     waiter.resolve();
-    if (this.waiters.length > 0) {
-      this.ensureTicker();
-    }
   }
 
-  private stopTicking(): void {
-    if (this.tickTimer !== null) {
-      this.clock.clear(this.tickTimer);
-      this.tickTimer = null;
+  /** Ensure a real-timer pump is scheduled for the head waiter's slot. */
+  private schedulePump(): void {
+    if (this.disposed || this.manual || this.pumpPending || this.queue.length === 0) return;
+    const now = this.now();
+    const slot = Math.max(this.nextFreeAt, now);
+    const wait = Math.max(0, slot - now);
+    this.pumpPending = true;
+    this.pumpTimer = setTimeout(() => {
+      this.pumpPending = false;
+      this.pump();
+    }, wait);
+    if (typeof this.pumpTimer.unref === "function") this.pumpTimer.unref();
+  }
+
+  private pump(): void {
+    if (this.disposed || this.queue.length === 0) {
+      this.pumpPending = false;
+      return;
     }
+    const now = this.now();
+    const slot = Math.max(this.nextFreeAt, now);
+    if (now < slot) {
+      // Fired early (event-loop lag). Re-arm for the true slot.
+      this.schedulePump();
+      return;
+    }
+    this.grantHead(slot);
+    this.schedulePump(); // schedule the NEXT head (queue non-empty)
   }
 
   dispose(): void {
+    if (this.disposed) return;
     this.disposed = true;
-    this.stopTicking();
-    for (const w of this.waiters) {
-      if (w.signal && w.onSignal) w.signal.removeEventListener("abort", w.onSignal);
-      w.reject(new Error("rate limiter disposed"));
+    if (this.pumpTimer) clearTimeout(this.pumpTimer);
+    this.pumpTimer = undefined;
+    this.pumpPending = false;
+    // Reject any still-queued waiters so nothing hangs on a disposed limiter.
+    for (const waiter of this.queue.splice(0)) {
+      waiter.signal?.removeEventListener("abort", waiter.onAbort!);
+      const err = new Error("rate-limiter disposed");
+      err.name = "AbortError";
+      waiter.reject(err);
     }
-    this.waiters = [];
   }
 }
 
-let shared: Pacer | null = null;
+// ---------------------------------------------------------------------------
+// Shared singleton — configured ONCE at orchestrator startup (right after
+// ModelRuntime.create). Configured with rpmLimit>0 installs a live pacer;
+// rpmLimit=0 (or never configured) leaves the singleton null, so downstream
+// code (e.g. SDK auto-retry) is untouched.
+// ---------------------------------------------------------------------------
 
-/** Configure the process-wide pacer ONCE at orchestrator startup. First config
- *  wins; rmp<=0 disables (returns null). */
+let shared: RateLimiterImpl | null = null;
+
 export function configureSharedRateLimiter(rpm: number): void {
   if (rpm <= 0) {
     shared = null;
     return;
   }
   if (shared) {
-    if (shared.rpm !== Math.round(rpm)) {
-      console.warn(
-        `[rate-limit] configureSharedRateLimiter: already configured with rpm=${shared.rpm}; ignoring rpm=${rpm} (first config wins)`,
+    if (shared.rpm !== rpm) {
+      process.stderr.write(
+        `[rate-limit] WARNING: configureSharedRateLimiter called with rpm=${rpm} but ` +
+          `${shared.rpm} is already configured; keeping the first (must configure once at startup)\n`,
       );
     }
     return;
   }
-  shared = new Pacer(rpm);
+  shared = new RateLimiterImpl(rpm);
 }
 
-export function getSharedRateLimiter(): RateLimiter | null {
+export function getSharedRateLimiter(): RateLimiterImpl | null {
   return shared;
 }
 
-export { realClock };
-
-// ---------------------------------------------------------------------------
-// Paced stream wrapper: gate a provider stream behind the shared pacer without
-// touching SDK internals. The SDK's streamFn calls modelRuntime.streamSimple
-// once per model turn; each call returns a push-based stream whose events the
-// agent-session consumes. We wrap it so the REAL provider call (and its HTTP
-// request) only starts once a pacer slot opens.
-//
-// The wrapper mirrors the public EventStream contract (push/end/asyncIterator/
-// result) so the SDK consumes it identically. It is deliberately minimal:
-// events are buffered and delivered FIFO; `result()` resolves with the final
-// message extracted from the stream's done/error event, matching the SDK's
-// AssistantMessageEventStream semantics.
-// ---------------------------------------------------------------------------
-
-export interface PacedStreamLike<T> extends AsyncIterable<T> {
-  push(event: T): void;
-  end(result?: unknown): void;
-  result(): Promise<unknown>;
+/** True when the shared limiter is installed and currently has queued waiters
+ *  (a session waiting for a rate-limit slot emits no events, so the heartbeat
+ *  must not flag it dead). Always false when throttling is off. */
+export function sharedLimiterPending(): boolean {
+  return shared !== null && shared.queueDepth > 0;
 }
 
-/** Cast a PacedStreamLike to the SDK's concrete stream type. The wrapper
- *  reimplements the EventStream public contract (push/end/asyncIterator/
- *  result); the private fields the class uses internally are not accessed by
- *  consumers, so the cast is safe. Kept here so callers don't spread casts. */
+/**
+ * Settings manager for a session, mirroring the throttle state of the shared
+ * limiter (configured once at orchestrator startup).
+ *
+ * - rpmLimit = 0 (shared limiter not installed) → returns undefined →
+ *   createAgentSession uses its default (file-backed) SettingsManager and SDK
+ *   auto-retry stays ON (current behavior). HARD requirement: retry is never
+ *   disabled on this path.
+ * - rpmLimit > 0 (limiter installed) → returns an IN-MEMORY SettingsManager
+ *   with `retry.enabled = false`. When the limiter owns pacing, an SDK
+ *   auto-retry that 429s would merely re-enter the queue and re-consume a
+ *   token (double-counting and letting retries slip past the pacer), so
+ *   auto-retry is turned off and the harness+limiter own all backoff.
+ *
+ * InMemory is used (rather than SettingsManager.create + setRetryEnabled,
+ * which calls save() and would PERSIST retry:false into the user's real
+ * ~/.pi global settings file) so this has zero side effects on the user's
+ * pi configuration.
+ */
+export function sessionSettingsManagerForThrottle(): SettingsManager | undefined {
+  if (!shared) return undefined;
+  return SettingsManager.inMemory({ retry: { enabled: false } });
+}
 
-/** Wrap a lazy provider stream so its setup (HTTP request) starts only after
- *  `gate` resolves. `gate` is the pacer acquire (abort-aware). */
-export function paceStream<T>(
-  gate: Promise<void>,
-  start: () => AsyncIterable<T> & { result(): Promise<unknown> },
-): PacedStreamLike<T> {
-  const queue: T[] = [];
-  const waiting: Array<(r: { value?: T; done: boolean }) => void> = [];
-  let done = false;
-  let finalResult: Promise<unknown>;
-  let resolveFinal: (r: unknown) => void;
-  finalResult = new Promise((res) => {
-    resolveFinal = res;
-  });
+// ---------------------------------------------------------------------------
+// ModelRuntime wrapper. Installed once, immediately after ModelRuntime.create.
+// Wraps streamSimple + completeSimple (the per-HTTP-request choke points) so a
+// token is acquired BEFORE the underlying request is issued. `lazyStream` lets
+// us return a live AssistantMessageEventStream synchronously while running the
+// async acquire in its setup phase; an aborted acquire terminates the stream
+// with an error event (the calling session was aborted anyway) and never issues
+// a request. When throttling is off the runtime is returned untouched.
+// ---------------------------------------------------------------------------
 
-  let started = false;
-  const ensureStarted = (): Promise<void> => {
-    if (started) return Promise.resolve();
-    started = true;
-    return gate
-      .then(() => start())
-      .then(async (inner) => {
-        for await (const event of inner) {
-          push(event);
-        }
-        try {
-          const res = await inner.result();
-          end(res);
-        } catch {
-          end(undefined);
-        }
-      })
-      .catch((err) => {
-        // Gate rejected (abort) or provider setup failed — terminate the
-        // stream with an error marker like the SDK's lazyStream does.
-        end(undefined);
-        queue.length = 0;
-        // Surface as a done with undefined result; the SDK treats a missing
-        // final message as a failed round.
-        void err;
-      });
+export function throttleModelRuntime(
+  modelRuntime: {
+    streamSimple: (
+      model: Model<Api>,
+      context: Context,
+      options?: ModelsSimpleStreamOptions,
+    ) => AssistantMessageEventStream;
+    completeSimple: (
+      model: Model<Api>,
+      context: Context,
+      options?: ModelsSimpleStreamOptions,
+    ) => Promise<AssistantMessage>;
+  },
+  limiter: RateLimiter,
+): void {
+  const rawStream = modelRuntime.streamSimple.bind(modelRuntime);
+
+  // Note: we deliberately use `rawStream(...).result()` here, NOT the original
+  // completeSimple — the original completeSimple routes through
+  // `this.streamSimple()`, which has been replaced by the wrapper above, so
+  // calling it would acquire the pacer a SECOND time (double token). By using
+  // the bound ORIGINAL streamSimple we pace the completion exactly once and
+  // still deliver the same AssistantMessage. (compaction and every other
+  // complete/completeSimple path ultimately run through streamSimple, so
+  // wrapping that alone would also cover them — this explicit wrap keeps the
+  // pacing of the completion path obvious and bounded.)
+  modelRuntime.streamSimple = (model, context, options) =>
+    lazyStream(model, async () => {
+      await limiter.acquire({ signal: options?.signal });
+      return rawStream(model, context, options);
+    });
+
+  modelRuntime.completeSimple = async (model, context, options) => {
+    await limiter.acquire({ signal: options?.signal });
+    return rawStream(model, context, options).result() as Promise<AssistantMessage>;
   };
-
-  const push = (event: T): void => {
-    if (done) return;
-    const waiter = waiting.shift();
-    if (waiter) waiter({ value: event, done: false });
-    else queue.push(event);
-  };
-
-  const end = (result?: unknown): void => {
-    if (done) return;
-    done = true;
-    if (result !== undefined) resolveFinal(result);
-    while (waiting.length > 0) {
-      const waiter = waiting.shift()!;
-      waiter({ value: undefined, done: true });
-    }
-  };
-
-  return {
-    push,
-    end,
-    result: () => {
-      void ensureStarted();
-      return finalResult;
-    },
-    async *[Symbol.asyncIterator]() {
-      void ensureStarted();
-      while (true) {
-        if (queue.length > 0) {
-          yield queue.shift() as T;
-        } else if (done) {
-          return;
-        } else {
-          const r = await new Promise<{ value?: T; done: boolean }>((res) =>
-            waiting.push(res),
-          );
-          if (r.done) return;
-          yield r.value as T;
-        }
-      }
-    },
-  } as unknown as PacedStreamLike<T>;
 }

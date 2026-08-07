@@ -1,220 +1,287 @@
-import { test, describe } from "node:test";
+// Unit tests for the process-wide request PACER (tools/pi_harness/src/rate-limit.ts).
+//
+// Uses the injected manual clock (now + tick) for deterministic pacing tests —
+// no real timers fire unless a test explicitly exercises the real-timer path.
+import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Pacer, paceStream } from "../src/rate-limit.js";
-import { createThrottledSettingsManager } from "../src/session.js";
+import {
+  RateLimiterImpl,
+  configureSharedRateLimiter,
+  getSharedRateLimiter,
+  sessionSettingsManagerForThrottle,
+} from "../src/rate-limit.js";
 
-describe("conditional SDK retry policy", () => {
-  test("throttled settings manager disables SDK auto-retry (rpmLimit > 0)", () => {
-    const sm = createThrottledSettingsManager();
-    const retry = sm.getRetrySettings();
-    assert.equal(retry.enabled, false, "SDK auto-retry must be OFF when throttled");
-  });
+const INTERVAL = (rpm: number): number => 60_000 / rpm;
+
+test("pacer grants the first request immediately when idle", async () => {
+  const limiter = new RateLimiterImpl(60, { now: () => 0 });
+  await limiter.acquire();
+  assert.equal(limiter.nowMs, 0); // granted at t=0, no wait
+  assert.equal(limiter.queueDepth, 0);
+  limiter.dispose();
 });
 
-// Manual clock: tests drive time + scheduled callbacks deterministically.
-class ManualClock {
-  nowValue = 0;
-  timers = new Map<number, { at: number; fn: () => void }>();
-  nextId = 1;
+test("pacer admits ~rpm per 60s with strict spacing (no bursts)", async () => {
+  const rpm = 5; // 1 request per 12000ms
+  const interval = INTERVAL(rpm);
+  const limiter = new RateLimiterImpl(rpm, { now: () => 0 });
 
-  now = (): number => this.nowValue;
-  schedule = (fn: () => void, delayMs: number) => {
-    const id = this.nextId++;
-    this.timers.set(id, { at: this.nowValue + delayMs, fn });
-    return id as unknown as ReturnType<typeof setTimeout>;
-  };
-  clear = (t: ReturnType<typeof setTimeout>) => {
-    this.timers.delete(t as unknown as number);
-  };
+  const times: number[] = [];
+  await limiter.acquire(); // immediate at t=0
+  times.push(limiter.nowMs);
 
-  /** Advance the clock and fire due timers (in order, repeatedly until stable). */
-  advance(ms: number): void {
-    const target = this.nowValue + ms;
-    while (true) {
-      const due = [...this.timers.values()]
-        .filter((t) => t.at <= target)
-        .sort((a, b) => a.at - b.at)[0];
-      if (!due) break;
-      this.nowValue = Math.max(this.nowValue, due.at);
-      this.timers.delete([...this.timers.entries()].find(([, v]) => v === due)![0]);
-      due.fn();
-    }
-    this.nowValue = target;
+  const N = 12;
+  const grants: Array<Promise<void>> = [];
+  for (let i = 0; i < N; i++) {
+    grants.push(limiter.acquire().then(() => times.push(limiter.nowMs)));
   }
-}
 
-describe("Pacer (process-wide request-rate limiter)", () => {
-  test("first acquire grants immediately (no queue, interval elapsed)", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock); // 1 per 3000ms
-    let granted = false;
-    const promise = p.acquire().then(() => {
-      granted = true;
-    });
-    await promise;
-    assert.equal(granted, true);
-    assert.equal(p.queueDepth, 0);
-    p.dispose();
-  });
+  for (let i = 0; i < N; i++) {
+    limiter.tick(interval); // advance one slot
+    await grants[i];
+  }
 
-  test("queued acquires are FIFO and paced at 1 per interval", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock); // interval 3000ms
-    const order: number[] = [];
-    // First acquire grants immediately.
-    await p.acquire();
-    // Next three queue.
-    const a2 = p.acquire().then(() => order.push(2));
-    const a3 = p.acquire().then(() => order.push(3));
-    const a4 = p.acquire().then(() => order.push(4));
-    assert.equal(p.queueDepth, 3);
-    // No grant before the interval elapses.
-    clock.advance(2999);
-    assert.equal(order.length, 0);
-    clock.advance(1);
-    await Promise.resolve(); // let timer callbacks settle
-    assert.deepEqual(order, [2]);
-    clock.advance(3000);
-    await Promise.resolve();
-    assert.deepEqual(order, [2, 3]);
-    clock.advance(3000);
-    await Promise.resolve();
-    assert.deepEqual(order, [2, 3, 4]);
-    assert.equal(p.queueDepth, 0);
-    p.dispose();
-  });
-
-  test("grants are spaced at least intervalMs apart (rate guarantee)", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(6, clock); // 1 per 10000ms
-    const granted: number[] = [];
-    // Keep a full queue for 2 minutes.
-    const pend = (): void => {
-      p.acquire().then(
-        () => granted.push(clock.nowValue),
-        () => {
-          /* disposed at end */
-        },
-      );
-    };
-    for (let i = 0; i < 20; i++) pend();
-    await Promise.resolve(); // drain microtasks: the immediate grant records at t=0
-    for (let t = 0; t <= 120_000; t += 10_000) {
-      clock.advance(10_000);
-      await Promise.resolve();
-      for (let i = 0; i < 3; i++) pend(); // keep demand
-    }
-    // Every pair of consecutive grants must be >= intervalMs apart.
-    for (let i = 1; i < granted.length; i++) {
-      const gap = granted[i] - granted[i - 1];
-      assert.ok(
-        gap >= 10_000,
-        `grant ${i} at t=${granted[i]} is only ${gap}ms after t=${granted[i - 1]} (need >= 10000)`,
-      );
-    }
-    p.dispose();
-  });
-
-  test("abort during queue rejects without consuming a token", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock);
-    await p.acquire(); // slot taken
-    const ac = new AbortController();
-    const promise = p.acquire({ signal: ac.signal }).then(
-      () => "resolved",
-      (err) => `rejected:${(err as Error).message}`,
+  // Strict spacing: every pair of consecutive grants is >= interval apart.
+  for (let i = 1; i < times.length; i++) {
+    assert.ok(
+      times[i] - times[i - 1] >= interval,
+      `grant ${i}: gap ${times[i] - times[i - 1]}ms < interval ${interval}ms`,
     );
-    assert.equal(p.queueDepth, 1);
-    ac.abort();
-    const result = await promise;
-    assert.ok(result.startsWith("rejected"), `expected reject, got ${result}`);
-    // The aborted waiter must be removed — the next acquire should still need
-    // to wait for the ORIGINAL slot, not steal the aborted one's position.
-    assert.equal(p.queueDepth, 0);
-    p.dispose();
-  });
+  }
 
-  test("dispose clears timers and rejects waiters", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock);
-    await p.acquire();
-    const promise = p.acquire().then(
-      () => "resolved",
-      () => "rejected",
-    );
-    p.dispose();
-    assert.equal(await promise, "rejected");
-    assert.equal(p.queueDepth, 0);
-  });
+  // Sliding-window cap: at most `rpm` grants in ANY 60s (60000ms) window.
+  for (let i = 0; i < times.length; i++) {
+    const count = times.filter((t) => t > times[i] && t < times[i] + 60_000).length;
+    assert.ok(count <= rpm, `window starting ${times[i]}: ${count} > rpm ${rpm}`);
+  }
 
-  test("no timer leak after queue drains", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock);
-    await p.acquire();
-    const a2 = p.acquire();
-    clock.advance(3000);
-    await a2;
-    // After all grants, no timers should remain scheduled.
-    assert.equal(clock.timers.size, 0);
-    p.dispose();
-  });
+  limiter.dispose();
 });
 
-describe("paceStream (provider stream gate)", () => {
-  test("delays start until the gate resolves", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock);
-    await p.acquire(); // take the open slot so the next acquire queues
-    let started = false;
-    const events: string[] = [];
-    // Fake provider stream.
-    const makeInner = () => {
-      started = true;
-      const inner: AsyncIterable<string> & { result(): Promise<unknown> } = {
-        async *[Symbol.asyncIterator]() {
-          yield "a";
-          yield "b";
-        },
-        result: async () => "final",
-      };
-      return inner;
-    };
-    const gated = paceStream(p.acquire(), makeInner);
-    assert.equal(started, false, "provider must not start before gate");
-    const consumed: string[] = [];
-    const done = (async () => {
-      for await (const ev of gated) consumed.push(ev);
-    })();
-    await Promise.resolve();
-    assert.equal(started, false, "still gated (slot not open yet)");
-    clock.advance(3000); // open the slot
-    await done;
-    assert.equal(started, true);
-    assert.deepEqual(consumed, ["a", "b"]);
-    assert.equal(await gated.result(), "final");
-    p.dispose();
-  });
+test("pacer is FIFO (fairness): waiters granted in arrival order", async () => {
+  const limiter = new RateLimiterImpl(10, { now: () => 0 });
+  const order: string[] = [];
 
-  test("aborted gate terminates the stream without starting the provider", async () => {
-    const clock = new ManualClock();
-    const p = new Pacer(20, clock);
-    await p.acquire(); // slot taken
-    let started = false;
-    const ac = new AbortController();
-    const gated = paceStream(p.acquire({ signal: ac.signal }), () => {
-      started = true;
-      return {
-        async *[Symbol.asyncIterator]() {
-          yield "x";
-        },
-        result: async () => "x",
-      };
-    });
-    ac.abort();
-    const consumed: string[] = [];
-    for await (const ev of gated) consumed.push(ev);
-    assert.equal(started, false, "provider must not start after abort");
-    assert.deepEqual(consumed, []);
-    p.dispose();
-  });
+  const a = limiter.acquire().then(() => order.push("a"));
+  const b = limiter.acquire().then(() => order.push("b"));
+  const c = limiter.acquire().then(() => order.push("c"));
+
+  const interval = INTERVAL(10); // 6000ms
+  limiter.tick(interval);
+  await a;
+  limiter.tick(interval);
+  await b;
+  limiter.tick(interval);
+  await c;
+
+  assert.deepEqual(order, ["a", "b", "c"]);
+  limiter.dispose();
+});
+
+test("abort of the queued HEAD rejects without consuming a token", async () => {
+  const limiter = new RateLimiterImpl(10, { now: () => 0 });
+  const interval = INTERVAL(10); // 6000ms
+
+  await limiter.acquire(); // immediate at t=0, nextFreeAt = 6000
+
+  // Two queued: the first (b) holds the head slot at 6000.
+  const bCtrl = new AbortController();
+  const b = limiter.acquire({ signal: bCtrl.signal });
+  const c = limiter.acquire();
+  assert.equal(limiter.queueDepth, 2);
+
+  // Abort b (the head) while queued.
+  bCtrl.abort();
+  await assert.rejects(b, (err: unknown) => (err as Error).name === "AbortError");
+
+  // c was promoted to the head and must still be granted at the SAME slot
+  // (6000) — the aborted waiter consumed no token (no extra wait).
+  assert.equal(limiter.queueDepth, 1);
+  limiter.tick(interval);
+  await c;
+  assert.equal(limiter.nowMs, interval); // granted at 6000 as originally scheduled
+
+  assert.equal(limiter.queueDepth, 0);
+  limiter.dispose();
+});
+
+test("abort of a mid-queue waiter does not disturb its neighbors", async () => {
+  const limiter = new RateLimiterImpl(10, { now: () => 0 });
+  const interval = INTERVAL(10);
+
+  await limiter.acquire(); // t=0
+  const a = limiter.acquire(); // slot 6000
+  const midCtrl = new AbortController();
+  const mid = limiter.acquire({ signal: midCtrl.signal }); // slot 12000
+  const tail = limiter.acquire(); // slot 18000
+
+  midCtrl.abort();
+  await assert.rejects(mid, /abort/i);
+
+  limiter.tick(interval);
+  await a;
+  limiter.tick(interval);
+  await tail; // tail moves up, granted at 12000 (not 18000) — no wasted slot
+  assert.equal(limiter.nowMs, interval * 2);
+  assert.equal(limiter.queueDepth, 0);
+  limiter.dispose();
+});
+
+test("dispose() clears the real timer and rejects queued waiters (no leak)", async () => {
+  // Real clock path (no injected now) — exercises setTimeout scheduling.
+  const limiter = new RateLimiterImpl(60);
+  await limiter.acquire(); // immediate — no timer yet expected
+  const q = limiter.acquire(); // queued → pump timer armed
+  assert.equal((limiter as unknown as { pumpPending: boolean }).pumpPending, true);
+
+  limiter.dispose();
+  assert.equal((limiter as unknown as { pumpPending: boolean }).pumpPending, false);
+  await assert.rejects(q, /disposed|aborted/i);
+  assert.equal(limiter.queueDepth, 0);
+});
+
+test("real-timer pacer drains and leaves no pending timer", async () => {
+  const limiter = new RateLimiterImpl(120); // 500ms interval
+  await limiter.acquire(); // immediate
+  const marks: number[] = [];
+  const started = Date.now();
+  // The pump timer is unref()ed (correct for production: it must not keep the
+  // process alive), so the test keeps its OWN ref'd handle alive so the
+  // unreffed pump timer actually fires while we await.
+  const keepAlive = setInterval(() => {}, 1000);
+  const second = limiter.acquire().then(() => marks.push(Date.now() - started));
+  const third = limiter.acquire().then(() => marks.push(Date.now() - started));
+
+  await second;
+  await third;
+  clearInterval(keepAlive);
+  assert.equal(limiter.queueDepth, 0);
+  assert.equal((limiter as unknown as { pumpPending: boolean }).pumpPending, false);
+  // second and third must be spaced by the interval (500ms), with tolerance.
+  assert.ok(marks[1] - marks[0] >= 400, `spacing ${marks[1] - marks[0]}ms`);
+  limiter.dispose();
+});
+
+test("injected clock: no real timers are started in manual mode", async () => {
+  const before = (process as unknown as { _getActiveHandles(): unknown[] })._getActiveHandles().length;
+  const limiter = new RateLimiterImpl(10, { now: () => 0 });
+  const a = limiter.acquire();
+  limiter.tick(INTERVAL(10));
+  await a;
+  const after = (process as unknown as { _getActiveHandles(): unknown[] })._getActiveHandles().length;
+  assert.ok(after <= before, "manual mode should not grow active handles");
+  limiter.dispose();
+});
+
+// ── Shared singleton + conditional SDK auto-retry policy ──
+
+test("rpmLimit=0: shared limiter is NOT installed and SDK auto-retry is NOT disabled", () => {
+  configureSharedRateLimiter(0); // disabled → null
+  assert.equal(getSharedRateLimiter(), null);
+  // HARD requirement: when the throttle is off, we pass NO settingsManager,
+  // so createAgentSession's default (SDK auto-retry ON) is used.
+  assert.equal(sessionSettingsManagerForThrottle(), undefined);
+});
+
+test("rpmLimit>0: shared limiter installed and SDK auto-retry disabled in-memory", () => {
+  configureSharedRateLimiter(60);
+  const limiter = getSharedRateLimiter();
+  assert.ok(limiter);
+  assert.equal(limiter!.rpm, 60);
+
+  const sm = sessionSettingsManagerForThrottle();
+  assert.ok(sm, "throttle active → a settings manager is provided");
+  assert.equal(sm!.getRetrySettings().enabled, false, "SDK auto-retry must be off when throttling");
+  configureSharedRateLimiter(0); // cleanup
+  assert.equal(getSharedRateLimiter(), null);
+});
+
+test("configureSharedRateLimiter: first config wins (no first-call-wins hazard)", () => {
+  configureSharedRateLimiter(60);
+  const first = getSharedRateLimiter();
+  configureSharedRateLimiter(30); // would-be second config at a different rpm
+  assert.equal(getSharedRateLimiter(), first, "keeps the first-configured limiter");
+  assert.equal(first!.rpm, 60);
+  configureSharedRateLimiter(0); // cleanup
+});
+
+// ── ModelRuntime wrapper ──
+
+test("throttleModelRuntime: streamSimple paces the request before it starts", async () => {
+  const { throttleModelRuntime, RateLimiterImpl } = await import("../src/rate-limit.js");
+  const { createAssistantMessageEventStream } = await import("@earendil-works/pi-ai");
+
+  let acquireCount = 0;
+  const limiter = new RateLimiterImpl(60, { now: () => 0 });
+  const origAcquire = limiter.acquire.bind(limiter);
+  limiter.acquire = (o?: { signal?: AbortSignal }) => {
+    acquireCount++;
+    return origAcquire(o);
+  };
+
+  const msg = {
+    role: "assistant", content: [], api: "x", provider: "p", model: "m",
+    usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    stopReason: "stop", timestamp: Date.now(),
+  };
+  let streamCalls = 0;
+  const fakeRuntime = {
+    streamSimple: () => {
+      streamCalls++;
+      const s = createAssistantMessageEventStream();
+      queueMicrotask(() => { s.push({ type: "done", reason: "stop", message: msg }); s.end(msg); });
+      return s;
+    },
+    completeSimple: async () => {
+      // Mirrors the real ModelRuntime: routes through streamSimple.
+      return (fakeRuntime.streamSimple() as { result(): Promise<unknown> }).result();
+    },
+  };
+
+  throttleModelRuntime(fakeRuntime as never, limiter);
+
+  // streamSimple: the acquire happens in the lazy setup (before the request).
+  const stream = fakeRuntime.streamSimple();
+  await new Promise((r) => setImmediate(r)); // let the lazy setup run
+  assert.equal(acquireCount, 1, "streamSimple must acquire before starting");
+  assert.equal(streamCalls, 1);
+  await stream.result();
+  limiter.dispose();
+});
+
+test("throttleModelRuntime: completeSimple acquires exactly ONCE (no double token)", async () => {
+  const { throttleModelRuntime, RateLimiterImpl } = await import("../src/rate-limit.js");
+  const { createAssistantMessageEventStream } = await import("@earendil-works/pi-ai");
+
+  let acquireCount = 0;
+  const limiter = new RateLimiterImpl(60, { now: () => 0 });
+  const origAcquire = limiter.acquire.bind(limiter);
+  limiter.acquire = (o?: { signal?: AbortSignal }) => {
+    acquireCount++;
+    return origAcquire(o);
+  };
+
+  const msg = {
+    role: "assistant", content: [], api: "x", provider: "p", model: "m",
+    usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    stopReason: "stop", timestamp: Date.now(),
+  };
+  const fakeRuntime = {
+    streamSimple: () => {
+      const s = createAssistantMessageEventStream();
+      queueMicrotask(() => { s.push({ type: "done", reason: "stop", message: msg }); s.end(msg); });
+      return s;
+    },
+    completeSimple: async () => {
+      // Mirrors the real ModelRuntime: routes through streamSimple.
+      return (fakeRuntime.streamSimple() as { result(): Promise<unknown> }).result();
+    },
+  };
+
+  throttleModelRuntime(fakeRuntime as never, limiter);
+
+  const result = await fakeRuntime.completeSimple();
+  assert.equal(acquireCount, 1, "completeSimple must consume exactly one token");
+  assert.equal(result, msg);
+  limiter.dispose();
 });

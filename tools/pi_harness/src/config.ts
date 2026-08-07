@@ -52,7 +52,7 @@ function defaultConfig(): HarnessConfig {
     silenceThresholdSec: 0, // SECONDS of silence before abort; 0 = auto (xhigh 600 / high 300 / else 120)
     emptyRoundRetries: 2,
     roundStartJitterMs: 15_000, // spread parallel round starts to dodge provider concurrency bursts
-    rpmLimit: 0, // global cross-session request throttle (req/min); 0 = disabled (SDK auto-retry on)
+    rpmLimit: 0, // process-wide HTTP request throttle (req/min); 0 = disabled (SDK auto-retry on)
     rejectionRetries: 1,
     tuFinalAttempts: 2,
     tuFinalTimeoutMinutes: 0, // 0 = derive (maxBatchMinutes * 2)
@@ -241,7 +241,7 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
     throw new Error("config.roundStartJitterMs must be an integer >= 0 (ms)");
   }
   if (!Number.isInteger(config.rpmLimit) || config.rpmLimit < 0) {
-    throw new Error("config.rpmLimit must be an integer >= 0 (requests/min; 0 = disabled)");
+    throw new Error("config.rpmLimit must be an integer >= 0 (requests/min; 0 = disabled, SDK auto-retry stays on)");
   }
   if (typeof config.rejectionRetries !== "number" || config.rejectionRetries < 0 || !Number.isInteger(config.rejectionRetries)) {
     throw new Error("config.rejectionRetries must be an integer >= 0");

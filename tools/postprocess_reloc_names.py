@@ -55,6 +55,9 @@ class UnitRules:
     # Retarget the reloc at (section, offset) to an UNDEF symbol (retail name):
     # ((section, offset, symbol_name), ...). Runs before drop_data_tail.
     retarget_relocs: tuple[tuple[str, int, str], ...] = ()
+    # Point a reloc at a LOCAL symbol in another section (section, offset,
+    # target_section, target_offset): ((str, int, str, int), ...).
+    retarget_relocs_local: tuple[tuple[str, int, str, int], ...] = ()
     # Zero a data-section range ((section, start, end)) where MWCC placed a
     # weak typeinfo name inside what is zero padding in retail; the range's
     # relocs are dropped. Runs before drop_data_tail.
@@ -125,6 +128,32 @@ class UnitRules:
 
 
 UNIT_RULES: dict[str, UnitRules] = {
+    "CTaskManager.o": UnitRules(
+        # Retail .data holds ONLY the CRootProc vtable (0x24, typeinfo ->
+        # external __RTTI__/CProcess). MWCC also emits the CTTask<CRootProc>
+        # base vtable (0x20) the retail linker GC'd (+0x24 .data over the
+        # 0x24 slice); it is unreferenced (the derived vtable covers all
+        # slots). Drop the mid-section base vtable.
+        drop_data_range=((".data", 0x24, 0x48),),
+    ),
+
+    "MWRTTI.o": UnitRules(
+        # The bad_cast typeinfo (.sdata `ta`) base ptr must reference the
+        # bad_cast typeinfo struct in .data (+0x10); MWCC pointed it at a weak
+        # local std::exception typeinfo (name in .rodata 0x10, structs in
+        # .sdata/.sdata2) the retail linker GC'd (retail refs __RTTI__Q23std9
+        # exception externally from New.o). Retarget the base ptr to the .data
+        # struct, drop the weak name/structs, and zero the .sdata2.
+        retarget_relocs_local=(
+            (".sdata", 0xC, ".data", 0x10),
+        ),
+        drop_data_range=(
+            (".rodata", 0x10, 0x20),
+            (".sdata", 0x0, 0x8),
+            (".sdata", 0x8, 0x10),
+        ),
+        drop_data_tail=((".sdata2", 0x0),),
+    ),
     "lyt_picture.o": UnitRules(
         # Retail keeps Picture's typeinfo chain local but references the
         # Pane/PaneBase typeinfo NAMES externally (__RTTI__Q36nw4hbm3lyt4Pane
@@ -2493,6 +2522,65 @@ def drop_data_range(path: Path, section: str, start: int, end: int) -> bool:
     return True
 
 
+
+def retarget_reloc_to_local(path: Path, section: str, offset: int, target_sec: str, target_off: int) -> bool:
+    """Point the reloc at (section, offset) at the LOCAL symbol in target_sec
+    at target_off (e.g. MWCC's bad_cast typeinfo struct in .data that the
+    .sdata base ptr must reference; anon @N names collide across sections)."""
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = rela_idx = None
+    sec_of = {}
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        e = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : e].decode("ascii")
+        sec_of[name] = i
+        if name == section:
+            sec_idx = i
+        elif name == ".rela" + section:
+            rela_idx = i
+        elif name == ".symtab":
+            sym_idx = i
+    if sec_idx is None or rela_idx is None or sym_idx is None:
+        return False
+    if target_sec not in sec_of:
+        return False
+    tgt_idx = sec_of[target_sec]
+
+    sym_off = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 16)[0]
+    sym_size = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 20)[0]
+    tgt_sym = None
+    for so in range(0, sym_size, 16):
+        st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+        st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+        if st_shndx == tgt_idx and st_value == target_off:
+            tgt_sym = so // 16
+            break
+    if tgt_sym is None:
+        return False
+
+    rela_off = struct.unpack_from(">I", data, e_shoff + rela_idx * e_shentsize + 16)[0]
+    rela_size = struct.unpack_from(">I", data, e_shoff + rela_idx * e_shentsize + 20)[0]
+    for ro in range(0, rela_size, 12):
+        r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+        if r_offset == offset:
+            info = struct.unpack_from(">I", data, rela_off + ro + 4)[0]
+            struct.pack_into(">I", data, rela_off + ro + 4, (tgt_sym << 8) | (info & 0xFF))
+            path.write_bytes(data)
+            return True
+    return False
+
+
 def pad_text_section(path: Path, new_size: int) -> bool:
     """Zero-pad .text to new_size (retail alignment tail)."""
     data = bytearray(path.read_bytes())
@@ -2735,6 +2823,8 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     for sec, off, sym_name in rules.retarget_relocs:
         changed = retarget_reloc_to_symbol(path, sec, off, sym_name) or changed
+    for sec, off, tsec, toff in rules.retarget_relocs_local:
+        changed = retarget_reloc_to_local(path, sec, off, tsec, toff) or changed
     for sec, start, end in rules.zero_data_range:
         changed = zero_data_range(path, sec, start, end) or changed
     for sec, start, end in rules.drop_data_range:

@@ -246,75 +246,6 @@ BOOLEAN SDP_DeleteRecord(UINT32 handle) {
     return FALSE;
 } 
 
-BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
-                         UINT32 attr_len, UINT8 *p_val) {
-    UINT16 xx, yy, zz;
-    tSDP_RECORD *p_rec;
-    tSDP_ATTRIBUTE *p_attr;
-
-    p_rec = &sdp_cb.server_db.record[0];
-    for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
-        if (p_rec->record_handle == handle) {
-            /* found the record — check the attribute */
-            p_attr = &p_rec->attribute[0];
-            for (zz = 0; zz < p_rec->num_attributes; zz++, p_attr++) {
-                if (p_attr->attr_id == attr_id) {
-                    /* delete the attribute */
-                    SDP_DeleteAttribute(handle, attr_id);
-                    break;
-                }
-                if (p_attr->attr_id > attr_id) {
-                    break;
-                }
-            }
-
-            if (p_rec->num_attributes == SDP_MAX_ATTR_PER_RECORD) {
-                return FALSE;
-            }
-
-            if (zz == p_rec->num_attributes) {
-                /* add the attribute at the end */
-                p_attr = &p_rec->attribute[p_rec->num_attributes];
-            } else {
-                /* shift the attributes up by one to make room */
-                for (yy = p_rec->num_attributes; yy > zz; yy--) {
-                    p_rec->attribute[yy] = p_rec->attribute[yy - 1];
-                }
-            }
-
-            p_rec->num_attributes++;
-            p_attr->attr_id = attr_id;
-            p_attr->len = attr_len;
-            p_attr->type = attr_type;
-
-            if (p_rec->attr_data_end + attr_len >= SDP_MAX_PAD_LEN) {
-                if (sdp_cb.trace_level >= 2) {
-                    LogMsg_2(0xA0001,
-                             "SDP_AddAttribute: attr_len:%d too long. truncate to (%d)",
-                             attr_len, SDP_MAX_PAD_LEN - p_rec->attr_data_end);
-                }
-                attr_len = SDP_MAX_PAD_LEN - p_rec->attr_data_end;
-                p_val[SDP_MAX_PAD_LEN - p_rec->attr_data_end] = 0;
-                p_val[SDP_MAX_PAD_LEN + 1 - p_rec->attr_data_end] = 0;
-            }
-
-            if (attr_len != 0 && p_val != NULL) {
-                memcpy(&p_rec->attr_data[p_rec->attr_data_end], p_val, attr_len);
-                p_attr->value_ptr = &p_rec->attr_data[p_rec->attr_data_end];
-                p_rec->attr_data_end += attr_len;
-            }
-
-            if (handle == sdp_cb.server_db.di_primary_handle &&
-                attr_id == 0x8001) {
-                sdp_cb.server_db.brcm_di_registered = 1;
-            }
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
 BOOLEAN SDP_AddServiceClassIdList(UINT32 handle, UINT16 num_services, UINT16 *p_service_ids) {
     UINT8 buff[SDP_MAX_ATTR_LEN * 2 + 8];
     UINT16 num = 0;
@@ -420,4 +351,73 @@ BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UIN
     }
 
     return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
+}
+
+BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
+                         UINT32 attr_len, UINT8 *p_val) {
+    UINT16 xx, yy, zz;
+    tSDP_RECORD *p_rec;
+    tSDP_ATTRIBUTE *p_attr;
+
+    p_rec = &sdp_cb.server_db.record[0];
+    for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
+        if (p_rec->record_handle == handle) {
+            /* found the record — check the attribute */
+            p_attr = &p_rec->attribute[0];
+            for (zz = 0; zz < p_rec->num_attributes; zz++, p_attr++) {
+                if (p_attr->attr_id == attr_id) {
+                    /* delete the attribute */
+                    SDP_DeleteAttribute(handle, attr_id);
+                    break;
+                }
+                if (p_attr->attr_id > attr_id) {
+                    break;
+                }
+            }
+
+            if (p_rec->num_attributes == SDP_MAX_ATTR_PER_RECORD) {
+                return FALSE;
+            }
+
+            if (zz == p_rec->num_attributes) {
+                /* add the attribute at the end */
+                p_attr = &p_rec->attribute[p_rec->num_attributes];
+            } else {
+                /* shift the attributes up by one to make room */
+                for (yy = p_rec->num_attributes; yy > zz; yy--) {
+                    p_rec->attribute[yy] = p_rec->attribute[yy - 1];
+                }
+            }
+
+            p_rec->num_attributes++;
+            p_attr->attr_id = attr_id;
+            p_attr->len = attr_len;
+            p_attr->type = attr_type;
+
+            if (p_rec->attr_data_end + attr_len >= SDP_MAX_PAD_LEN) {
+                if (sdp_cb.trace_level >= 2) {
+                    LogMsg_2(0xA0001,
+                             "SDP_AddAttribute: attr_len:%d too long. truncate to (%d)",
+                             attr_len, SDP_MAX_PAD_LEN - p_rec->attr_data_end);
+                }
+                attr_len = SDP_MAX_PAD_LEN - p_rec->attr_data_end;
+                p_val[SDP_MAX_PAD_LEN - p_rec->attr_data_end] = 0;
+                p_val[SDP_MAX_PAD_LEN + 1 - p_rec->attr_data_end] = 0;
+            }
+
+            if (attr_len != 0 && p_val != NULL) {
+                memcpy(&p_rec->attr_data[p_rec->attr_data_end], p_val, attr_len);
+                p_attr->value_ptr = &p_rec->attr_data[p_rec->attr_data_end];
+                p_rec->attr_data_end += attr_len;
+            }
+
+            if (handle == sdp_cb.server_db.di_primary_handle &&
+                attr_id == 0x8001) {
+                sdp_cb.server_db.brcm_di_registered = 1;
+            }
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }

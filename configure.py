@@ -1754,7 +1754,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CToken.cpp"),
             Object(Matching, "monolib/src/work/CEvent1.cpp"),
             Object(NonMatching, "monolib/src/core/CSplitFrame.cpp"),
-            Object(Matching, "monolib/src/core/CTaskManager.cpp"),
+            Object(Matching, "monolib/src/core/CTaskManager.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI data in this TU (rodata/sdata/sbss all 0; .data = CRootProc vtable only)
             Object(NonMatching, "monolib/src/core/CView.cpp"),
             Object(NonMatching, "monolib/src/core/CViewFrame.cpp"),
             Object(NonMatching, "monolib/src/core/CViewRoot.cpp"),

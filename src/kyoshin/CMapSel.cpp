@@ -34,13 +34,13 @@ void func_802434A0(){}
 
 /* func_80243560 — Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
-extern "C" void func_80137038(void*, void*, int, int);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
-        func_80137038((void*)self->mLayout, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(self->mLayout), drawInfo, 0, 1);
         func_801F35B0(self->mScrollBar, drawInfo);
         func_801D20B0(self->mCursor, drawInfo);
     }

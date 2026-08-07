@@ -70,7 +70,7 @@ extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
 extern "C" void* lbl_eu_806640D8;
 extern "C" void drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(void*, void*);
-extern "C" void func_80137038(void*, void*, int, int);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801EAF7C(void*, void*);
@@ -262,7 +262,7 @@ void func_801ED4FC(void* self, void* drawInfo) {
     unsigned char* p = (unsigned char*)self;
     if (p[0x4c] == 0) return;
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(p + 0xd0, drawInfo);
-    func_80137038(*(void**)(p + 0x40), drawInfo, 0, 1);
+    func_80137038(*(nw4r::lyt::Layout**)(p + 0x40), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     int r31 = 0;
     if (func_801D2ED8(p + 0xb8) == 0 && func_801EB020(p + 0x2dc) == 0) r31 = 1;
     if (r31 != 0) {

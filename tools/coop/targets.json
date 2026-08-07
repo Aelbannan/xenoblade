@@ -193637,8 +193637,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -193648,7 +193648,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80225e0c",
@@ -193741,8 +193743,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -193752,7 +193754,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80225f40",
@@ -193845,8 +193849,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -193856,7 +193860,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80226074",
@@ -193949,8 +193955,8 @@
       "size": "0x48",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -193958,7 +193964,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802261b4",
@@ -194182,8 +194190,8 @@
       "size": "0x34",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -194191,7 +194199,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80226560",
@@ -194512,8 +194522,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -194523,7 +194533,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802269bc",
@@ -194589,8 +194601,8 @@
       "size": "0x58",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -194598,7 +194610,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80226ae4",
@@ -195244,8 +195258,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -195255,7 +195269,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80227914",
@@ -195348,8 +195364,8 @@
       "size": "0x3C",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [
@@ -195359,7 +195375,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80227a48",
@@ -195452,8 +195470,8 @@
       "size": "0x38",
       "unit": "kyoshin/makecrystal/CMCEffStart",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCEffStart.cpp",
       "called_functions": [],
@@ -195461,7 +195479,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCEffStart.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80227b78",

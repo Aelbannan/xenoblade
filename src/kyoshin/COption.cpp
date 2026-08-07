@@ -53,7 +53,6 @@ extern "C" void func_801F3850(void*, u16);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801F3540(void*);
 extern "C" void func_801F35DC(void*);
-extern "C" void func_80137038(void*, void*, int, int);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_8022B7C8(void*, void*);
 void func_80138078(u32);
@@ -119,7 +118,7 @@ extern "C" void func_8029C14C(COption* self) {
 
 void func_8029C5C8(COption* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x28 != 0) {
-        func_80137038(self->mSubObj, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(self->mSubObj), drawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, drawInfo);
         if (CSysWin_getUnk34(self->mSysWin) == 0) {
             if (self->field_0x2E != 0) {

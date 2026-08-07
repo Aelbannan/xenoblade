@@ -347,7 +347,7 @@ void CMenuQstCnt::cbRenderBefore() {
         GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, &drawInfo, 0, 1);
+        func_80137038(mLayout, &drawInfo, 0, 1);
         __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo, -1);
     }
 done:

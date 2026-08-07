@@ -27,7 +27,7 @@ extern u32 func_8009CF8C(u32);
 extern void func_80138078(u32);
 
 // Draw helpers used by CFloorMap::Draw and related functions
-void func_80137038(void* layout, void* drawInfo, int, int);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_801F35B0(void* scrollBar, void* drawInfo);
 void func_8022B7C8(void* sysWin, void* drawInfo);
 void func_801D20B0(void* cursor, void* drawInfo);
@@ -421,26 +421,26 @@ void func_8024C8F8(void* self, void* drawInfo) {
     if (!p->field_40) return;
     if (!p->field_41) return;
     if (p->mLayout130)
-        func_80137038((void*)p->mLayout130, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout130), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (p->mLayout138)
-        func_80137038((void*)p->mLayout138, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout138), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (p->mLayout140)
-        func_80137038((void*)p->mLayout140, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout140), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     if (*(void**)((u8*)p + 0x150)) {
         u8 i = 0;
         do {
             void* s = *(void**)((u8*)p + 0x150 + i * 8);
-            func_80137038(s, drawInfo, 0, 1);
+            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(s), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
             i++;
         } while (i < p->field_1F0);
     }
     if (p->field_208) {
         if (p->mLayout1FC)
-            func_80137038((void*)p->mLayout1FC, drawInfo, 0, 1);
+            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout1FC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->mLayout32D4 && p->field_32E5)
-            func_80137038((void*)p->mLayout32D4, drawInfo, 0, 1);
+            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32D4), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if (p->field_204 && p->mLayout32EC && p->field_32FD)
-            func_80137038((void*)p->mLayout32EC, drawInfo, 0, 1);
+            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout32EC), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
         if ((s8)p->field_206 >= 0) {
             u8 cond;
             if (p->mLayout32D4) {
@@ -454,17 +454,17 @@ void func_8024C8F8(void* self, void* drawInfo) {
                 s8 idx = (s8)p->field_205;
                 if (*(u8*)((u8*)p + idx * 0x30C + 0x514)) {
                     if (p->mLayout3304 && p->field_3315)
-                        func_80137038((void*)p->mLayout3304, drawInfo, 0, 1);
+                        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3304), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
                 }
             }
         }
         if (p->mLayout331C && p->field_332D)
-            func_80137038((void*)p->mLayout331C, drawInfo, 0, 1);
+            func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout331C), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     }
     if (p->field_208)
         func_801F35B0((void*)p->mScrollBar, drawInfo);
     if (p->field_333C && p->mLayout3334)
-        func_80137038((void*)p->mLayout3334, drawInfo, 0, 1);
+        func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(p->mLayout3334), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     func_8022B7C8((void*)p->mSysWinB8, drawInfo);
     func_8022B7C8((void*)p->mSysWinF4, drawInfo);
     if ((s8)p->field_5C >= 0)

@@ -66,7 +66,7 @@ extern "C" {
     void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
     void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
     void func_8013676C(void*, void*);
-    void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+    extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
     void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
     bool func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
     void func_80137E7C(void*, const char*, void*);

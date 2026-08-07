@@ -164,7 +164,7 @@ extern "C" void func_80255748(CCollepedia* this_) {
 extern "C" __declspec(noinline) void func_80253360(CBaseCur* this_, nw4r::lyt::DrawInfo* drawInfo) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mActive == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(this_->mpLayout, drawInfo, 0, 1);
+    func_80137038(this_->mpLayout, drawInfo, 0, 1);
 }
 
 extern "C" void func_8025338C(CBaseCur* this_) {
@@ -594,11 +594,11 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
     if (this_->field_48 == 0) return;
     if (this_->field_49 == 0) return;
     
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(this_->field_38, drawInfo, 0, 1);
+    func_80137038(this_->field_38, drawInfo, 0, 1);
     func_80253360((CBaseCur*)((u8*)this_ + 0x6c), drawInfo);
     
     if (this_->field_28F0 != NULL) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(this_->field_28F0, drawInfo, 0, 1);
+        func_80137038(this_->field_28F0, drawInfo, 0, 1);
     }
     
     func_801D20B0((CBaseCur*)((u8*)this_ + 0x54), drawInfo);

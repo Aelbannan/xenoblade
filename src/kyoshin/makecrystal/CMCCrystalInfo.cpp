@@ -149,7 +149,7 @@ void func_8021A780(CMCCrystalInfo* self)
 void func_8021A840(CMCCrystalInfo* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     if (self->mEnabled) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+        func_80137038(
             (nw4r::lyt::Layout*)self->mLayout, drawInfo, 0, 1);
     }
 }

@@ -37,7 +37,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
-extern "C" void func_80137038(void*, void*, int, int);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern "C" u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(void*, const char*, void*, u32);
@@ -212,8 +212,8 @@ void func_8023587C(CArtsInfo* self) {
 void func_80235958(CArtsInfo* self, void* drawInfo) {
     if (self->field_0x40 == 0) return;
 
-    func_80137038(self->mpLayout1, drawInfo, 0, 1);
-    func_80137038(self->mpLayout2, drawInfo, 0, 1);
+    func_80137038(self->mpLayout1, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
+    func_80137038(self->mpLayout2, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
 
     s8 cursorActive = self->field_0x5A;
     if (cursorActive >= 0) {

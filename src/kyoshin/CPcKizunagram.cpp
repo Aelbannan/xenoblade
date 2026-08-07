@@ -29,7 +29,7 @@ extern "C" void func_80138078__FUl(u32 arg);
 
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // String base for the affinity-chart layout paths (targets add byte offsets).
 extern char lbl_eu_8050D868[];
@@ -152,10 +152,10 @@ extern "C" void func_8025D8C4(CPcKizunagram* self) {
 void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mStateByte1 == 0) return;
     if (self->mStateByte2 == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mLayout, drawInfo, 0, 1);
+    func_80137038(self->mLayout, drawInfo, 0, 1);
     nw4r::lyt::Layout* cursorLayout = ((CPcKizunaCur*)self->mKizunaCur)->mpLayout;
     if (cursorLayout != 0) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(cursorLayout, drawInfo, 0, 1);
+        func_80137038(cursorLayout, drawInfo, 0, 1);
     }
 }
 

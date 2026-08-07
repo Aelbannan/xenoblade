@@ -348,10 +348,10 @@ void func_8029FCDC(){}
 // func_8029FDBC (CSkipTimer): draw helper - render both layouts + syswin.
 void func_8029FDBC(CSkipTimer* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mField28 == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mLayout2, drawInfo, 0, 1);
+    func_80137038(self->mLayout2, drawInfo, 0, 1);
     CSkipTimer2* sub = reinterpret_cast<CSkipTimer2*>(&self->mSkipTimer2Data[0]);
     if (sub->mField20 != 0) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+        func_80137038(
             reinterpret_cast<nw4r::lyt::Layout*>(sub->mField18), drawInfo, 0, 1);
     }
     func_8022B7C8(&self->mSysWinData[0], drawInfo);

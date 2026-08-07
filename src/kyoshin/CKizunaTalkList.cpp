@@ -125,7 +125,7 @@ void func_8027336C(){}
 // cursor when the list is visible.
 void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
     if (self->mState84 != 0) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mpLayout20, pDrawInfo, 0, 1);
+        func_80137038(self->mpLayout20, pDrawInfo, 0, 1);
         func_801F35B0(&self->mScrollBar, (void*)pDrawInfo);
         func_801D20B0(&self->mCursor, (void*)pDrawInfo);
     }

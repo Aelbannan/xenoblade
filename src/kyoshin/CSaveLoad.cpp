@@ -265,7 +265,7 @@ extern "C" void func_8028E9E0(int /*unused*/, int index, u8 value) {
     ((u8*)lbl_eu_806649F0 + index)[0xE] = value;
 }
 
-void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+void func_80137038(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Render layout with null + active guards; tail-calls func_80137038
@@ -273,7 +273,7 @@ extern "C" void func_8028EB70(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mField8;
     if (layout == nullptr) return;
     if (self->mField14 == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(layout, drawInfo, 0, 1);
+    func_80137038(layout, drawInfo, 0, 1);
 }
 
 extern "C" void func_8028EB9C(UnkPtrHolder* self) {

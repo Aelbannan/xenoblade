@@ -232,16 +232,15 @@ export async function readBatchResults(
     // fall through — everything reports UNKNOWN
   }
   const statusById = new Map(allTargets.map((t) => [t.id, t.status]));
-  const workflowById = new Map(
-    allTargets.map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
-  );
   const acceptedStatuses = witnessEnabled
     ? new Set(["FULL_MATCH", "EQUIVALENT_MATCH"])
     : new Set(["FULL_MATCH"]);
+  // Function acceptance is per-function (unit size no longer gates it — the
+  // size gate lives in TU-final promotion, user policy 2026-08). A BACKLOG
+  // workflow is a legacy size artifact; it must not block acceptance.
   return targetIds.map((id) => {
     const status = statusById.get(id) ?? "UNKNOWN";
-    const backlogged = workflowById.get(id) === "BACKLOG";
-    return { targetId: id, status, accepted: acceptedStatuses.has(status) && !backlogged };
+    return { targetId: id, status, accepted: acceptedStatuses.has(status) };
   });
 }
 

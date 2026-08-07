@@ -590,17 +590,8 @@ def cmd_cycle(
         certificate_checked=evaluation.certificate_checked,
         equivalence_confidence=evaluation.equivalence_confidence,
         equivalence_policy=evaluation.equivalence_policy,
-        override_workflow=None if size_check.ok else "BACKLOG",
     )
     print(f"target registry updated: {target.id}")
-
-    if not size_check.ok:
-        print(
-            f"FAIL: unit size exceeds split budget "
-            f"(function match recorded but needs unit-level size fix)",
-            file=sys.stderr,
-        )
-        return 1
 
     fn_percent = fn_match.match_percent if fn_match else None
     if not meets_required_level(
@@ -620,6 +611,20 @@ def cmd_cycle(
             file=sys.stderr,
         )
         return 1
+
+    # Function acceptance is gated ONLY on the function's own match — NOT the
+    # unit split size. A byte-identical function is proven correct regardless
+    # of whether the unit's object exceeds its retail split budget (the
+    # overrun comes from OTHER functions in the unit). The unit size gate
+    # lives in TU-final, where it gates the configure.py NonMatching->Matching
+    # promotion — not per-function acceptance (user policy 2026-08).
+    if not size_check.ok:
+        print(
+            f"NOTE: unit split size exceeds budget (decomp .text over by "
+            f"{size_check.over_by} bytes) — function accepted, but the unit "
+            f"cannot be promoted to Matching until the size is fixed",
+            file=sys.stderr,
+        )
     print(f"PASS: meets required level {target.required_level}")
     return 0
 

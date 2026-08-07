@@ -657,9 +657,13 @@ export function isCertifiedRow(
   row: { status: string; workflowStatus?: string } | undefined,
   witnessEnabled: boolean,
 ): boolean {
+  // Function acceptance is gated ONLY on the function's match status — NOT
+  // the unit split size (user policy 2026-08). cmd_cycle no longer records
+  // BACKLOG for unit-size overruns; the size gate lives in TU-final and
+  // gates the configure.py promotion. A lingering BACKLOG from BEFORE that
+  // change is a size artifact and must not block the function's acceptance.
   return !!row
-    && (row.status === "FULL_MATCH" || (witnessEnabled && row.status === "EQUIVALENT_MATCH"))
-    && row.workflowStatus !== "BACKLOG";
+    && (row.status === "FULL_MATCH" || (witnessEnabled && row.status === "EQUIVALENT_MATCH"));
 }
 
 /**
@@ -2391,15 +2395,16 @@ async function runTuFinal(
         // A size-gate-failed target records FULL_MATCH but workflow BACKLOG —
         // treat it as NOT re-certified (same gate as runBatchCycle/runWitnessCycle,
         // adversarial review H2).
-        const postWorkflow = new Map(
-          loadUnitTargets(repoRoot, config.region, unit)
-            .map((t) => [t.id, (t as { workflow_status?: string }).workflow_status]),
-        );
         const notAccepted = unitTargets.filter((t) => {
           const ok = postStatus.get(t.id) === "FULL_MATCH"
             || (config.witnessEnabled && postStatus.get(t.id) === "EQUIVALENT_MATCH")
             || postStatus.get(t.id) === "ACCEPTED";
-          return !(ok && postWorkflow.get(t.id) !== "BACKLOG");
+          // Function acceptance is per-function (cmd_cycle no longer records
+          // BACKLOG for unit-size overruns). A lingering BACKLOG from BEFORE
+          // that change still means the function matched but the unit was
+          // over budget — treat it as re-certified (the unit size gate is now
+          // the TU-final sizeOk, below).
+          return !ok;
         });
         if (notAccepted.length > 0) {
           recertOkLocal = false;
@@ -2428,7 +2433,15 @@ async function runTuFinal(
   //    comment previously claimed this fallback but the code did not do it,
   //    leaving the last attempt's (possibly broken) state in the worktree
   //    (adversarial review M2).
-  const done = buildOk && recertOk;
+  //
+  //  Function acceptance is per-function (cmd_cycle no longer gates on unit
+  //  size); the UNIT split-size gate lives HERE, gating the configure.py
+  //  NonMatching->Matching promotion. A unit whose decompiled object exceeds
+  //  its retail split budget cannot be promoted even if every function
+  //  matches — the overrun must be fixed first (user policy 2026-08).
+  const sizeOk = sizeOutput.includes("size:    PASS")
+    || (sizeOutput.includes("size:") && sizeOutput.includes("within split budget"));
+  const done = buildOk && recertOk && sizeOk;
   if (!done) {
     if (bestSnapshot) {
       await restoreSnapshot(repoRoot, bestSnapshot);

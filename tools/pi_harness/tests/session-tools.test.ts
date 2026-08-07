@@ -481,10 +481,14 @@ describe("isCertifiedRow (runWitnessCycle's shared predicate)", () => {
     assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH" }, false), false);
   });
 
-  test("size-gate BACKLOG never certifies (even FULL_MATCH)", () => {
-    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, true), false);
-    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, false), false);
-    assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH", workflowStatus: "BACKLOG" }, true), false);
+  test("size-gate BACKLOG no longer blocks acceptance (unit size gates promotion only)", () => {
+    // User policy 2026-08: function acceptance is per-function; unit split
+    // size gates configure.py promotion (TU-final), not the function's cert.
+    // A lingering BACKLOG from before that change is a size artifact and
+    // must NOT block the function's acceptance.
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, true), true);
+    assert.equal(isCertifiedRow({ status: "FULL_MATCH", workflowStatus: "BACKLOG" }, false), true);
+    assert.equal(isCertifiedRow({ status: "EQUIVALENT_MATCH", workflowStatus: "BACKLOG" }, true), true);
   });
 
   test("missing row is not certified", () => {
@@ -514,18 +518,20 @@ describe("readBatchResults with witnessEnabled=false", () => {
       );
       assert.equal(disabled.get("us-a"), true, "FULL_MATCH accepted when disabled");
       assert.equal(disabled.get("us-b"), false, "EQUIVALENT_MATCH must NOT be accepted when disabled");
-      assert.equal(disabled.get("us-c"), false, "BACKLOG never accepted");
+      // us-c is EQUIVALENT_MATCH with BACKLOG — witness disabled so rejected
+      // on status; BACKLOG itself no longer blocks (size gates promotion only).
+      assert.equal(disabled.get("us-c"), false, "EQUIVALENT_MATCH rejected when disabled");
       assert.equal(disabled.get("us-d"), false);
 
-      // Sanity: with the witness ENABLED, EQUIVALENT_MATCH is accepted
-      // (unless BACKLOG) — the flag is the only difference.
+      // Sanity: with the witness ENABLED, EQUIVALENT_MATCH is accepted — the
+      // flag is the only difference (BACKLOG no longer blocks acceptance).
       const enabled = new Map(
         (await readBatchResults(dir, ["us-a", "us-b", "us-c"], true))
           .map((r) => [r.targetId, r.accepted]),
       );
       assert.equal(enabled.get("us-a"), true);
       assert.equal(enabled.get("us-b"), true);
-      assert.equal(enabled.get("us-c"), false);
+      assert.equal(enabled.get("us-c"), true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

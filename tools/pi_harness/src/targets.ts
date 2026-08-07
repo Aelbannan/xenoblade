@@ -266,10 +266,10 @@ export function targetStatusById(repoRoot: string): Map<string, string> {
 
 /**
  * Per-target { status, workflowStatus, claimedBy } for post-cycle re-checks.
- * The exit-1 re-check in runWitnessCycle must not treat a size-gate-failed
- * target as certified: cmd_cycle records FULL_MATCH + workflow BACKLOG when
- * the unit exceeds its split budget, so status alone is insufficient
- * (r5 finding 4).
+ * Function acceptance is per-function: cmd_cycle no longer records BACKLOG
+ * for unit-size overruns (the size gate lives in TU-final promotion, user
+ * policy 2026-08), so the status alone is sufficient. This helper remains
+ * for the workflowStatus/claimedBy fields used elsewhere.
  */
 export function targetRowById(repoRoot: string): Map<string, { status: string; workflowStatus?: string; claimedBy?: string }> {
   const rows = new Map<string, { status: string; workflowStatus?: string; claimedBy?: string }>();

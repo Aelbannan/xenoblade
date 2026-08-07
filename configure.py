@@ -1618,7 +1618,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/lyt/lyt_texMap.cpp"),
             Object(NonMatching, "nw4r/src/lyt/lyt_drawInfo.cpp"),
             Object(NonMatching, "nw4r/src/lyt/lyt_animation.cpp"),
-            Object(NonMatching, "nw4r/src/lyt/lyt_resourceAccessor.cpp"),
+            Object(Matching, "nw4r/src/lyt/lyt_resourceAccessor.cpp"),
             Object(NonMatching, "nw4r/src/lyt/lyt_arcResourceAccessor.cpp"),
             Object(NonMatching, "nw4r/src/lyt/lyt_common.cpp"),
             Object(NonMatching, "nw4r/src/lyt/lyt_util.cpp"),

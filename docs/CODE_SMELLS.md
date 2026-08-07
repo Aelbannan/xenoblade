@@ -10,15 +10,15 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8316 |
+| extern "C" (total lines) | 8314 |
 | extern "C" declarations (non-lbl_*, imports) | 3259 |
-| extern "C" definitions (forced names) | 2643 |
-| `self`/register-style params | 4472 |
-| `void*` (params + locals) | 5538 |
-| raw pointer offset arithmetic | 3422 |
-| deref-through-cast arithmetic | 1425 |
+| extern "C" definitions (forced names) | 2641 |
+| `self`/register-style params | 4464 |
+| `void*` (params + locals) | 5534 |
+| raw pointer offset arithmetic | 3418 |
+| deref-through-cast arithmetic | 1422 |
 | inline asm / `register` | 88 |
-| rN-named params | 355 |
+| rN-named params | 350 |
 | goto | 1125 |
 | #pragma | 337 |
 
@@ -69,7 +69,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/code_804E36DC.cpp | 21 | 15 | 17 | 15 | 3 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 3 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/core/monolib_eu_804F9E98.cpp | 2 | 3 | 5 | 4 | 3 | 3 | 0 | 5 | 0 |
+| libs/monolib/src/core/monolib_eu_804F9E98.cpp | 3 | 2 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFile.cpp | 0 | 6 | 3 | 9 | 4 | 2 | 0 | 1 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 26 | 3 | 6 | 13 | 4 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileDvd.cpp | 0 | 1 | 0 | 1 | 34 | 6 | 0 | 0 | 0 |
@@ -107,7 +107,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp | 1 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047BB54.cpp | 4 | 7 | 9 | 10 | 5 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047CA88.cpp | 4 | 0 | 7 | 4 | 3 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 2 |
+| libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 2 |
@@ -228,7 +228,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_MmlSeqTrackAllocator.cpp | 1 | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_NandSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_PlayerHeap.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 3 | 4 | 3 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 3 | 4 | 11 | 3 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqTrack.cpp | 1 | 1 | 1 | 2 | 21 | 0 | 0 | 0 | 0 |
@@ -462,7 +462,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/help/CHelp_CloseQuestMenu.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_CloseSysMenu.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_EnemyCount.cpp | 1 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 2 |
-| src/kyoshin/help/CHelp_EnemyEnable.cpp | 2 | 0 | 0 | 5 | 4 | 0 | 0 | 0 | 1 |
+| src/kyoshin/help/CHelp_EnemyEnable.cpp | 2 | 0 | 0 | 5 | 3 | 0 | 0 | 0 | 1 |
 | src/kyoshin/help/CHelp_EtherMake.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_Exchange.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_GameOver.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -550,7 +550,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 52 | 18 | 56 | 77 | 18 | 6 | 0 | 10 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelPc.cpp | 32 | 15 | 36 | 78 | 4 | 0 | 0 | 3 | 1 |
 | src/kyoshin/realtimeevt/CREvtMovie.cpp | 15 | 7 | 11 | 13 | 3 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtObj.cpp | 4 | 6 | 5 | 7 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtObj.cpp | 3 | 5 | 2 | 6 | 0 | 0 | 0 | 0 | 0 |
 
 ## Notes
 
@@ -731,12 +731,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "libs/monolib/src/core/monolib_eu_804F9E98.cpp": {
-  "deref_arith": 3,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 3,
-  "ptr_arith": 3,
-  "rn_params": 5,
-  "self_params": 5,
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 2,
   "void_ptr": 4
  },
  "libs/monolib/src/device/CDeviceFile.cpp": {
@@ -951,8 +947,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/nand/CNReqtaskCheck.cpp": {
   "extern_c_nonlbl_decl": 1,
-  "goto_count": 2,
-  "void_ptr": 4
+  "goto_count": 2
  },
  "libs/monolib/src/nand/CNReqtaskLoad.cpp": {
   "extern_c_nonlbl_decl": 6,
@@ -1520,7 +1515,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_SeqFile.cpp": {
-  "void_ptr": 3
+  "void_ptr": 4
  },
  "libs/nw4r/src/snd/snd_SeqPlayer.cpp": {
   "deref_arith": 3,
@@ -2864,7 +2859,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/help/CHelp_EnemyEnable.cpp": {
   "extern_c_nonlbl_decl": 2,
   "goto_count": 1,
-  "ptr_arith": 4,
+  "ptr_arith": 3,
   "void_ptr": 5
  },
  "src/kyoshin/help/CHelp_EtherMake.cpp": {
@@ -3384,10 +3379,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 13
  },
  "src/kyoshin/realtimeevt/CREvtObj.cpp": {
-  "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 6,
-  "self_params": 5,
-  "void_ptr": 7
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 5,
+  "self_params": 2,
+  "void_ptr": 6
  }
 }
 <!-- END BASELINE -->

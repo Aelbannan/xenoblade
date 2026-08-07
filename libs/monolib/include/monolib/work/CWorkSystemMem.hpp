@@ -3,7 +3,7 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/util.hpp"
 
-class CWorkSystemMem : public CWorkThread {
+class __declspec(novtable) CWorkSystemMem : public CWorkThread {
 public:
     CWorkSystemMem(const char* pName, CWorkThread* pParent);
     virtual ~CWorkSystemMem();

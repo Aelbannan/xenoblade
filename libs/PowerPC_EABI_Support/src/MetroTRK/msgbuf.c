@@ -225,14 +225,14 @@ DSError TRKAppendBuffer_ui32(MessageBuffer* buffer, const ui32* data, int count)
 //not present in the retail binary; kept commented out for reference
 //DSError TRKAppendBuffer_ui128(MessageBuffer* buffer, const ui128* data, int count) {}
 
-DSError TRKReadBuffer1_ui8(MessageBuffer* buffer, ui8* data) {
+static inline DSError TRKReadBuffer1_ui8(MessageBuffer* buffer, ui8* data) {
     return TRK_ReadBuffer(buffer, (void*)data, 1);
 }
 
 //not present in the retail binary; kept commented out for reference
 //DSError TRKReadBuffer1_ui16(MessageBuffer* buffer, ui16* data) {}
 
-DSError TRKReadBuffer1_ui32(MessageBuffer* buffer, ui32* data) {
+static inline DSError TRKReadBuffer1_ui32(MessageBuffer* buffer, ui32* data) {
     DSError err;
 
     ui8* bigEndianData;

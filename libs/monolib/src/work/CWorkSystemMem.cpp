@@ -3,11 +3,15 @@
 // Retail SDA singleton (getHandle / ctor / dtor reloc name).
 extern "C" CWorkSystemMem* lbl_eu_80665620;
 
-// Keep for ABI; retail sbss slot is lbl_eu_80665620.
-CWorkSystemMem* CWorkSystemMem::spInstance;
+// Retail CWorkSystemMem vtable (0x8057BAA8, outside this .text-only split —
+// retail ctor stores it explicitly; no vtable/RTTI data lives in this TU).
+extern "C" char lbl_eu_8056BAA8[];
 
-CWorkSystemMem::CWorkSystemMem(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 1),
-mHandle(mtl::INVALID_HANDLE){
+CWorkSystemMem::CWorkSystemMem(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 1) {
+    // novtable: write the retail vptr (0x8056BAA8) + mHandle = -1 by hand so
+    // the stores land in retail order (vptr first, then mHandle).
+    *(void**)this = lbl_eu_8056BAA8;
+    mHandle = mtl::INVALID_HANDLE;
     lbl_eu_80665620 = this;
     mHandle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), REGION_SIZE, mName.c_str());
 }

@@ -10,9 +10,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 7851 |
-| extern "C" declarations (non-lbl_*, imports) | 3250 |
-| extern "C" definitions (forced names) | 2178 |
+| extern "C" (total lines) | 7856 |
+| extern "C" declarations (non-lbl_*, imports) | 3253 |
+| extern "C" definitions (forced names) | 2179 |
 | `self`/register-style params | 4455 |
 | `void*` (params + locals) | 5538 |
 | raw pointer offset arithmetic | 3424 |
@@ -449,6 +449,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/code_8027513C.cpp | 0 | 0 | 15 | 6 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_80296898.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_802B8A3C.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/code_802B9064.cpp | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp.cpp | 4 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_ArtsAttack.cpp | 1 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/help/CHelp_ArtsSet.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -2792,6 +2793,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/code_802B8A3C.cpp": {
   "self_params": 1
+ },
+ "src/kyoshin/code_802B9064.cpp": {
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 1
  },
  "src/kyoshin/help/CHelp.cpp": {
   "extern_c_nonlbl_decl": 4,

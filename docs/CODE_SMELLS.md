@@ -14,7 +14,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" declarations (non-lbl_*, imports) | 3258 |
 | extern "C" definitions (forced names) | 2642 |
 | `self`/register-style params | 4471 |
-| `void*` (params + locals) | 5542 |
+| `void*` (params + locals) | 5543 |
 | raw pointer offset arithmetic | 3424 |
 | deref-through-cast arithmetic | 1425 |
 | inline asm / `register` | 88 |
@@ -197,7 +197,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/lyt/lyt_animation.cpp | 0 | 0 | 0 | 3 | 2 | 1 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_common.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/lyt/lyt_layout.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_material.cpp | 0 | 0 | 10 | 20 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/lyt/lyt_textBox.cpp | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/math/math_arithmetic.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
@@ -1405,7 +1405,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "libs/nw4r/src/lyt/lyt_layout.cpp": {
-  "void_ptr": 4
+  "void_ptr": 5
  },
  "libs/nw4r/src/lyt/lyt_material.cpp": {
   "self_params": 10,

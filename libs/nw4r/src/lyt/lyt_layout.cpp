@@ -26,6 +26,20 @@ void SetTagProcessorImpl(Pane* pPane, ut::WideTagProcessor* pProcessor) {
 namespace nw4r {
 namespace lyt {
 
+// IsIncludeAnimationGroupRef: anonymous-namespace helper (retail scope
+// nw4r::lyt::@unnamed@lyt_layout_cpp@). The extern reference keeps MWCC's
+// -ipa file from dead-code-eliminating the unused anon-ns function.
+struct AnimationGroupRef;
+
+namespace {
+void IsIncludeAnimationGroupRef(nw4r::lyt::GroupContainer* a1,
+                                const nw4r::lyt::AnimationGroupRef* a2,
+                                unsigned short a3, bool a4,
+                                nw4r::lyt::Pane* a5) {}
+}
+
+extern void* LLMH_force_us_80402184 = (void*)&IsIncludeAnimationGroupRef;
+
 MEMAllocator* Layout::mspAllocator = NULL;
 
 /******************************************************************************
@@ -351,3 +365,8 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 } // namespace nw4r
 
 void BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(){}
+
+
+
+
+

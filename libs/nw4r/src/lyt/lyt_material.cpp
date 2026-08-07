@@ -21,6 +21,14 @@ namespace nw4r { namespace lyt { namespace detail {
     template const char* ConvertOffsToPtr<char>(const void*, unsigned int);
 }}}
 
+// Force emission of nw4r::ut::Min<unsigned char> (retail scope
+// nw4r::ut::@unnamed@lyt_material_cpp@). The TU's anonymous namespace below
+// supplies the anon-scope mangling; the extern reference keeps MWCC's -ipa
+// file from dead-code-eliminating the unused inline template instantiation.
+typedef unsigned char (*LLMH_ForceFn_us_80408554)(unsigned char, unsigned char);
+LLMH_ForceFn_us_80408554 LLMH_force_us_80408554 =
+    &nw4r::ut::Min<unsigned char>;
+
 /******************************************************************************
  *
  * Utility functions
@@ -1336,3 +1344,8 @@ void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, co
 void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(){}
 void __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare(){}
 void __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode(){}
+
+
+
+
+

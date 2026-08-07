@@ -24,7 +24,32 @@ ut::Color GetColor(const GXColorS10& rColor16) {
     return ut::Color(color8);
 }
 
+// CalcStringRectImpl / CalcLineRectImpl: anonymous-namespace helpers (retail
+// scope nw4r::lyt::@unnamed@lyt_textBox_cpp@). The extern references below
+// keep MWCC's -ipa file from dead-code-eliminating the unused templates.
+template <typename T>
+void CalcStringRectImpl(nw4r::ut::Rect* a1, nw4r::ut::TextWriterBase<T>* a2,
+                        const T* a3, int a4, float a5) {}
+
+template <typename T>
+int CalcLineRectImpl(nw4r::ut::Rect* a1, nw4r::ut::TextWriterBase<T>* a2,
+                     const T* a3, int a4, float a5, bool* a6) {
+    return 0;
+}
+
+typedef void (*LLMH_ForceFn_us_80404fa4)(nw4r::ut::Rect*,
+                                         nw4r::ut::TextWriterBase<wchar_t>*,
+                                         const wchar_t*, int, float);
+typedef int (*LLMH_ForceFn_us_80404368)(nw4r::ut::Rect*,
+                                        nw4r::ut::TextWriterBase<wchar_t>*,
+                                        const wchar_t*, int, float, bool*);
+
 } // namespace
+
+extern LLMH_ForceFn_us_80404fa4 LLMH_force_us_80404fa4 =
+    &CalcStringRectImpl<wchar_t>;
+extern LLMH_ForceFn_us_80404368 LLMH_force_us_80404368 =
+    &CalcLineRectImpl<wchar_t>;
 
 
 /******************************************************************************
@@ -401,3 +426,9 @@ const nw4r::ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {
 
 } // namespace lyt
 } // namespace nw4r
+
+
+
+
+
+

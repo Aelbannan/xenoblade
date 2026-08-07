@@ -404,6 +404,27 @@ struct SArtsManagerRoot {
     SArtsManager mObj17C;   // 0x17C
 };
 
+// Pointee of CMenuArtsSet.field_0x1C; vtable slot 14 (+0x38) is driven by
+// func_8023359C etc.
+class SArts1C {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual void v13();
+    virtual void v14(int a);   // vtable +0x38
+};
+
 class CMenuArtsSet {
 public:
     CMenuArtsSet();
@@ -416,13 +437,17 @@ public:
 
     // +0x00: vtable (placeholder for the 4-byte vtable pointer)
     void* _vtable;                       // 0x00
-    char _pad_04[0x24 - 0x04];   // 0x04-0x23
+    char _pad_04[0x1C - 0x04];   // 0x04-0x1B
+    SArts1C* field_0x1C;                // 0x1C
+    char _pad_20[0x24 - 0x20];   // 0x20-0x23
     nw4r::lyt::AnimTransform* field_0x24; // 0x24
-    char _pad_28[0x2C - 0x28];   // 0x28-0x2B
-    u32 field_0x2C;                // 0x2C
+    u8 field_0x28;                   // 0x28
+    char _pad_29[0x2C - 0x29];   // 0x29-0x2B
+    s32 field_0x2C;                // 0x2C
     char _pad_30[0x31 - 0x30];   // 0x30
     u8 mField31;                   // 0x31
-    char _pad_32[0x44 - 0x32];   // 0x32-0x43
+    char _pad_32[0x34 - 0x32];   // 0x32-0x33
+    u8 field_0x34[0x10];          // 0x34-0x43 opaque (draw object)
     float mField44;                // 0x44
     float mField48;                // 0x48
     char _pad_4C[0x58 - 0x4C];   // 0x4C-0x57
@@ -430,7 +455,9 @@ public:
     char _pad_59[0x74 - 0x59];   // 0x59-0x73
     CArtsInfo mSubObj74;           // 0x74-0xE7
     CSysWinFull mSubObjE8;         // 0xE8 (field_34 read by CSysWin_getUnk34)
-    char _pad_11F[0x139 - 0x11F]; // 0x11F-0x138
+    char _pad_11F[0x124 - 0x11F]; // 0x11F-0x123
+    SArts2FDF4 field_0x124;       // 0x124 func_8022FDF4
+    char _pad_130[0x139 - 0x130]; // 0x130-0x138
     u8 mField139;               // 0x139
     char _pad_13A[0x148 - 0x13A]; // 0x13A-0x147
     u8 mSubObj148[0x32];        // 0x148-0x179 opaque SArtsSub8022FA58 storage

@@ -666,19 +666,28 @@ extern "C" void func_8025ECE4(CPcKizunagramBig* dst, const CPcKizunaCompact* src
 }
 
 // Clear the 11 affinity slots (each 0xC4 bytes) and the trailing counters.
-extern "C" void func_8025EDC8(CPcKizunagramBig* self) {
-    for (int i = 0; i < 0xb; i++) {
-        self->slots[i].byteC0 = 0;
-        memset(&self->slots[i].data00, 0, 0x20);
-        for (int j = 0; j < 5; j++) {
-            memset(&self->slots[i].sub[j], 0, 0x20);
+extern "C" CPcKizunagramBig* func_8025EDC8(CPcKizunagramBig* self) {
+    int i = 0;
+    CPcKizunaSlot* slot = &self->slots[0];
+    while (i < 0xb) {
+        slot->byteC0 = 0;
+        memset(slot, 0, 0x20);
+        int j = 0;
+        CPcKizunaSlotEntry* sub = &slot->sub[0];
+        while (j < 5) {
+            memset(sub, 0, 0x20);
+            j++;
+            sub++;
         }
+        i++;
+        slot++;
     }
     memset(self->data870, 0, 0x14);
     memset(self->data888, 0, 0x14);
     self->field_0x884 = 0;
     self->field_0x89C = 0;
     self->field_0x86C = 0;
+    return self;
 }
 
 void func_8025EE7C(CPcKizunagramBig* self, int r4) {

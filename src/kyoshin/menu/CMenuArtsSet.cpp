@@ -87,7 +87,7 @@ void func_8022FD9C(SArts2FDF4* self) {
     }
 }
 
-void func_8022FDF4(SArts2FDF4* self) {
+extern "C" __declspec(noinline) void func_8022FDF4(SArts2FDF4* self) {
     switch (self->field_0x18) {
         case 0: func_8022FF74(); break;
         case 1: func_80230070(); break;
@@ -434,7 +434,38 @@ void func_8023352C(CArtsList* self) {
     ((SArtsWinE8*)&self->mSysWinE8)->v32();
 }
 
-void func_8023359C(){}
+extern "C" void func_801F3540(void* obj34);
+extern "C" void func_8023587C(CArtsInfo* self);
+extern "C" void func_8022B748(CSysWinFull* self);
+extern "C" void func_802306F0(void* obj148);
+extern "C" void func_80231CB4(void* obj174);
+extern "C" void func_80234EB8(CMenuArtsSet* self);
+extern "C" void func_80234FDC(CMenuArtsSet* self);
+extern "C" void func_80234F7C(CMenuArtsSet* self);
+extern "C" void func_8023506C(SArts3506C* self);
+extern "C" void func_802350B8(CMenuArtsSet* self);
+
+// lib/lyt draw (func_801F3540).
+extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
+
+void func_8023359C(CMenuArtsSet* self) {
+    if (self->field_0x28 != 0 && self->field_0x2C != 0) {
+        switch (self->field_0x2C) {
+            case 1: func_80234EB8(self); break;
+            case 2: func_80234F7C(self); break;
+            case 4: func_80234FDC(self); break;
+            case 5: func_8023506C((SArts3506C*)self); break;
+            case 6: func_802350B8(self); break;
+        }
+        self->field_0x1C->v14(0);
+        func_801F3540(self->field_0x34);
+        func_8023587C(&self->mSubObj74);
+        func_8022B748(&self->mSubObjE8);
+        func_8022FDF4(&self->field_0x124);
+        func_802306F0(self->mSubObj148);
+        func_80231CB4(&self->mSubObj148[0x2C]);
+    }
+}
 
 void func_80233674(){}
 
@@ -536,7 +567,7 @@ void func_80234D68(){}
 
 void func_80234EB8(){}
 
-void func_80234F7C(CMenuArtsSet* self) {
+extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
     extern float lbl_eu_80668648;
     if (func_80137444(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
@@ -551,7 +582,7 @@ void func_80234FDC(){}
 // func_80137510 is a flat C symbol (anim-frame check helper).
 extern "C" u32 func_80137510(void*, float);
 
-void func_8023506C(SArts3506C* self) {
+extern "C" __declspec(noinline) void func_8023506C(SArts3506C* self) {
     extern float lbl_eu_80668648;
     if (func_80137510(self->mAnim20, lbl_eu_80668648) != 0) {
         self->field_0x31 = 1;
@@ -559,7 +590,7 @@ void func_8023506C(SArts3506C* self) {
     }
 }
 
-void func_802350B8(CMenuArtsSet* self) {
+extern "C" __declspec(noinline) void func_802350B8(CMenuArtsSet* self) {
     if (func_80235A98(&self->mSubObj74) != 0) {
         self->mField31 = 1;
         self->field_0x2C = 3;

@@ -63,6 +63,18 @@ struct CItemBoxInfoEntry {
 
 };
 
+// 8-byte color (4 s16 channels) used by the item-box layout renderer.
+struct CItemBoxQuadColor {
+    s16 r, g, b, a;
+    CItemBoxQuadColor() : r(0), g(0), b(0), a(0) {}
+    CItemBoxQuadColor(s16 _r, s16 _g, s16 _b, s16 _a) : r(_r), g(_g), b(_b), a(_a) {}
+};
+
+// 4 selection/vertex colors (0x20 bytes) built per-slot in func_801E2928.
+struct CItemBoxQuad {
+    CItemBoxQuadColor col[4];
+};
+
 // 6-byte slot table: a u32 (bytes 0..3) + u16 (bytes 4..5), read from two
 // consecutive .sdata2 constants (lbl_eu_8066805C + 80668060, etc.).
 union CItemBoxSlotBytes {

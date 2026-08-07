@@ -4,6 +4,19 @@
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 
+// 8-byte crystal box param: two s16 counters (selected id, quantity), a
+// spare s16, and two flag bytes. Inlined low-level value type for the
+// 32-slot sub-tables at CMCCrystalBox+0x2D8 and the transient sort table.
+struct CMCCrystalBoxParam {
+    s16 m0;   // +0x00 selected id
+    s16 m2;   // +0x02 quantity
+    s16 m4;   // +0x04 spare
+    u8  m6;   // +0x06 flag
+    u8  m7;   // +0x07 flag
+
+    void initCrystalBoxParam_80213E04(s16 a, s16 b);
+};
+
 // Entry in the crystal-state table rooted at CMCCrystalBox+0x3D8.
 struct CMCCrystalDataEntry {
     s16  id;     // +0x00
@@ -60,7 +73,9 @@ public:
     u8 unk2D3;                          // +0x2D3
     u8 unk2D4;                          // +0x2D4: read by getByte_2D4_8021624C
     u8 unk2D5;                          // +0x2D5: read by getByte_2D5_80216254
-    u8 pad_2D6[0x3D8 - 0x2D6];
+    u8 unk2D6;                          // +0x2D6: selected-crystal table cursor (written/returned by func_8021625C)
+    u8 unk2D7;                          // +0x2D7: current item id byte
+    CMCCrystalBoxParam subTable[32];    // +0x2D8 to +0x3D8: selected-crystal table (32 slots)
     CMCCrystalData data;                // +0x3D8: crystal-state table (ends at +0x14A0)
     u8 field_14A0;                      // +0x14A0
     u8 pad_14A1[0x14EC - 0x14A1];       // +0x14A1..0x14EB

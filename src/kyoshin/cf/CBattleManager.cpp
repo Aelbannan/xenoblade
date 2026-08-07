@@ -22,6 +22,10 @@ extern "C" void __dla__FPv(void*);
 // Game state check function
 extern bool func_8006EF04__Fi(s32 mask);
 
+// Initialise all vision slots/effects (retail func_801A380C). Free function,
+// not a CVision member — declared here because CVision.hpp stays opaque.
+extern void func_801A380C(cf::CVision* self);
+
 // ============================================================
 // Explicit template specializations: _reslist_base / reslist
 // destructors for CfObjectActor* and IBattleEvent*
@@ -198,7 +202,7 @@ CBattleManager* CBattleManager::getInstance() {
         mActorList1.clear();
         mActorList2.clear();
         mActorList3.clear();
-        mVision.func_801A380C();
+        func_801A380C(&mVision);
         unk19C.__ct__80192C10();
         mChain.func_8027728C();
         unk20C8.func_8027D1A4();

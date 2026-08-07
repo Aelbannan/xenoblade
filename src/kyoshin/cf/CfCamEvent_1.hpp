@@ -22,16 +22,13 @@ public:
     virtual ~CfCamEventSlot();
 };
 
-// Single element of the manager's shake table (0x14 bytes each,
-// element 0 base sits at manager offset 0x1F8).
+// Single element of the manager's internal shake table (0x14 bytes each,
+// element 0 base sits at manager offset 0x1F8). Only +0x04 is used for the
+// shake update; the rest of the stride is padding.
 struct CfCamEventElem {
-    f32 x0;      // +0x00
-    f32 x4;      // +0x04 - value that gets shaken toward the previous element
-    f32 x8;      // +0x08
-    u16 id;      // +0x0C
-    u16 c;       // +0x0E
-    u16 d;       // +0x10
-    u8  _12[2];  // +0x12
+    f32 x0;       // +0x00
+    f32 x4;       // +0x04 - value that gets shaken toward the previous element
+    u8  _08[0x14 - 0x08];
 };
 
 struct CfCamEventSub1F4 {
@@ -48,7 +45,7 @@ struct CfCamEventSub1F4 {
 };
 
 // Secondary shake table located just past sub_0x1F4 at manager offset
-// 0x4D0. (Modeled separately; the canonical third table starts at 0x36C.)
+// 0x4D0. Count stored at +0x02 (=0x4D2); element stride is 0x14.
 struct CfCamEventSub4D0 {
     u8 _00[0x02];
     s16 count;         // 0x4D2
@@ -56,55 +53,19 @@ struct CfCamEventSub4D0 {
     CfCamEventElem elems[42];  // base 0x4D8
 };
 
-// Generic shake table (used at manager offsets 0x7C and 0x36C): element
-// array from +0, a base-copy anchor at +0x154, count at +0x166.
-struct CfCamShakeTab {
-    CfCamEventElem elems[16];      // +0x00, 16*0x14 = 0x140
-    u8 _140[0x154 - 0x140];
-    f32 baseX;                     // 0x154
-    f32 baseY;                     // 0x158
-    f32 baseZ;                     // 0x15C
-    u8 _160[0x166 - 0x160];
-    s16 count;                     // 0x166
-};
-
-// First shake table at manager offset 0x7C: same shape as CfCamShakeTab,
-// but its flag bytes at +0x162/+0x163 double as the manager's 0x1DE/0x1DF
-// and its count at +0x166 as the manager's 0x1E2.
-struct CfCamEventTab7C {
-    CfCamEventElem elems[16];      // 0x00..0x140
-    u8 _140[0x154 - 0x140];
-    f32 baseX;                     // 0x154
-    f32 baseY;                     // 0x158
-    f32 baseZ;                     // 0x15C
-    u8 _160[0x162 - 0x160];
-    u8 flag0;                      // 0x162 == 0x1DE
-    u8 flag1;                      // 0x163 == 0x1DF
-    u8 _164[0x166 - 0x164];
-    s16 count;                     // 0x166 == 0x1E2
-};
-
-// Camera event manager - only forward-declared elsewhere; the complete layout
+// Camera event manager — only forward-declared elsewhere; the complete layout
 // is reconstructed here from the cam-event accessors.
 class CfCamEventManager {
 public:
     CfCamEventSlot* slots[3];  // 0x00 - 3 effect slot pointers
-    u8  _00C[0x10 - 0x0C];
-    u32 field_0x10;     // 0x10
-    u8  _14[0x24 - 0x14];
-    u32 field_0x24;     // 0x24
-    u8  _28[0x34 - 0x28];
+    u8  _00C[0x34 - 0x0C];
     u32 field_0x34;     // 0x34 - pointer/result slot
     u32 field_0x38;     // 0x38
     u8  _03C[0x3E - 0x3C];
     s16 field_0x3E;     // 0x3E - cam state id
-    u16 field_0x40;     // 0x40
-    u8  _042[0x44 - 0x42];
-    u16 field_0x44;     // 0x44
-    u8  field_0x46;     // 0x46
+    u8  _040[0x47 - 0x40];
     u8  field_0x47;     // 0x47
-    u32 field_0x48;     // 0x48
-    u8  _4C[0x50 - 0x4C];
+    u8  _048[0x50 - 0x48];
     u32 field_0x50;     // 0x50 - flags word
     u32 field_0x54;     // 0x54
     u32 field_0x58;     // 0x58
@@ -116,10 +77,14 @@ public:
     u32 field_0x70;     // 0x70
     u32 field_0x74;     // 0x74
     f32 field_0x78;     // 0x78
-    CfCamEventTab7C tab0;       // 0x7C (decl has 0x7C..0x1E4)
+    u8  _07C[0x1DE - 0x7C];
+    u8  field_0x1DE;    // 0x1DE
+    u8  field_0x1DF;    // 0x1DF
+    u8  _1E0[0x1E2 - 0x1E0];
+    s16 field_0x1E2;    // 0x1E2
     u8  _1E4[0x1F4 - 0x1E4];
     CfCamEventSub1F4 sub_0x1F4;  // 0x1F4
-    CfCamShakeTab     sub_0x36C;  // 0x36C
+    CfCamEventSub4D0 sub_0x4D0;  // 0x4D0
 };
 
 // Body object returned by the camera-source virtual accessors: three f32
@@ -157,14 +122,11 @@ struct CinemCamSrc {
 };
 
 // Sub-object (a CCharVoice) embedded at source offset 0x3E9C.
-// Holds a vtable with fns at 0x4C (returns object ptr) and 0xAC
-// (returns a camera aim/source vector).
+// Holds a vtable whose fn at offset 0x4C returns an object pointer.
 struct CamEventVoiceVtbl {
-    void*           p00[0x4C / 4];
-    void* (*fn_0x4C)(void* self);          // 0x4C
-    void*           r50[(0xAC - 0x50) / 4];
-    CinemVecOut* (*fn_0xAC)(void* self);   // 0xAC
-    void*           rB0[8];
+    void*         p00[0x4C / 4];
+    void* (*fn_0x4C)(void* self);  // 0x4C
+    void*         r50[8];
 };
 
 struct CamEventVoice {
@@ -192,29 +154,6 @@ struct CamEventSrc {
     void*           field_0x3F10; // 0x3F10
 };
 
-// Camera-source object used by the depth computation (targets 2/3).
-// vtable fns at 0xAC (returns a vector) and 0x5B4 (returns a scalar);
-// also embeds a voice with the same 0xAC accessor.
-struct CamCamSrcVtbl {
-    void*           p00[0xAC / 4];
-    CinemVecOut* (*fn_0xAC)(void* self);   // 0xAC
-    void*           rB0[(0x5B4 - 0xB0) / 4];
-    f32 (*fn_0x5B4)(void* self);           // 0x5B4
-};
-
-struct CamCamSrc {
-    CamCamSrcVtbl* vtable;  // 0x00
-    u8 _04[0x3E9C - 0x04];
-    CamEventVoice voice;    // 0x3E9C
-};
-
-// Object returned by the game-manager factory used in the cam-event update;
-// only its +0x04 flags word is inspected here.
-struct CfDynMgr {
-    void* m_vtable;
-    u32   m_field04;   // 0x04
-};
-
 // Cam data table stored at the global lbl_eu_80570C90 / 0x80570C90.
 struct CfCamDataTable {
     u16 h00;   // 0x00
@@ -229,16 +168,12 @@ struct CfCamDataTable {
     u8  _12[0x14 - 0x12];
     f32 f14;   // 0x14
     f32 f18;   // 0x18
-    f32 f1C;
-    f32 f20;
-    f32 f24;
-    f32 f28;
-    f32 f2C;
-    f32 f30;
-    f32 f34;
-    f32 f38;
-    f32 f3C;
-    f32 f40;
-    f32 f44;
-    f32 f48;
+    u32 w1C;
+    u32 w20;
+    u32 w24;
+    u32 w28;
+    u32 w2C;
+    u32 w30;
+    u32 w34;
+    u32 w38;
 };

@@ -962,7 +962,9 @@ void func_802A2D0C() {
     }
 }
 void func_802A2D84() {
-    lbl_eu_80664A58->unk218 = lbl_eu_80668C68;
+    float reset = lbl_eu_80668C68;
+    cf::CCharVoiceMan* m0 = lbl_eu_80664A58;
+    m0->unk218 = reset;
     lbl_eu_80664A58->unk224 = 0;
     lbl_eu_80664A58->unk228 = 0;
     lbl_eu_80664A58->unk22A = 0;

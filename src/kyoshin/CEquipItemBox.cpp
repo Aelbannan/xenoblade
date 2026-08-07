@@ -35,6 +35,7 @@ extern float lbl_eu_80668B28;
 // String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* func_80136190(char*, char*, u32);
+extern "C" u32 func_801361E8(const void*, const char*, u32);
 
 extern "C" void func_8003AA8C__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
@@ -42,6 +43,10 @@ extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
+extern "C" u16 func_80139358(u32);
+extern "C" void* CItem_initItemImplInstances(void*);
+extern "C" char lbl_eu_806640D8[];
+extern "C" char lbl_eu_806640F8[];
 
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
@@ -290,7 +295,31 @@ extern "C" void func_802851BC(){}
 
 extern "C" void func_8028530C(){}
 
-extern "C" void func_80285478(){}
+// Bubble-sort the grid entries ascending by the item name lookup byte.
+extern "C" void func_80285478(CEquipItemGrid* grid) {
+    for (u16 i = 0; i < grid->count - 1; i++) {
+        int swapped = 0;
+        for (u16 j = 0; j < grid->count - 1 - i; j++) {
+            CEquipItemData* a = &grid->data[j];
+            CEquipItemData* b = &grid->data[j + 1];
+            void* objA = func_80157C4C(grid->cat, a->unk0);
+            void* objB = func_80157C4C(grid->cat, b->unk0);
+            u16 kindA = func_80139358(*(u32*)objA >> 20);
+            u16 kindB = func_80139358(*(u32*)objB >> 20);
+            u32 nameA = func_801361E8(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
+            if ((u8)nameA > (u8)func_801361E8(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB)) {
+                CEquipItemData tA;
+                CEquipItemData tB;
+                func_80283B24(&tA, a);
+                func_80283B24(&tB, b);
+                func_80282594(a, &tB);
+                func_80282594(b, &tA);
+                swapped = 1;
+            }
+        }
+        if (!swapped) break;
+    }
+}
 
 extern "C" void func_802855C8(){}
 

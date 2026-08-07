@@ -497,8 +497,10 @@ unsigned long battleEventStart() {
 
 // --- eventEnd (us-800496fc) ---
 int eventEnd(VMThread* pThread) {
-    int val = 0;
-    if (!vmArgOmitChk(pThread, 1)) {
+    int val;
+    if (vmArgOmitChk(pThread, 1)) {
+        val = 0;
+    } else {
         VMArg* arg = vmArgPtrGet(pThread, 1);
         val = vmArgIntGet(2, arg);
     }
@@ -585,8 +587,8 @@ int isMainParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int secondOut = 0;
     int firstOut = -1;
+    int secondOut = 0;
     int* data = func_8009ECB0();
     func_8009E344((void*)data, val, &secondOut, &firstOut);
     
@@ -604,8 +606,8 @@ int isResvParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int secondOut = 0;
     int firstOut = -1;
+    int secondOut = 0;
     int* data = func_8009ECB0();
     func_8009E344((void*)data, val, &secondOut, &firstOut);
     

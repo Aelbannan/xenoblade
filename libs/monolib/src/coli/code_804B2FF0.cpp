@@ -282,6 +282,8 @@ struct CColiSphereOb {
 
 void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
                    const CColiSphereOb* other) {
+    // Select the matrix source: the flagged root (identity/bind) matrix, or
+    // the per-node bone table entry addressed by the signed bone index.
     const f32 (*src)[4];
     if (self->hd.flags & 2) {
         src = mgr->mesh->rootMtx;
@@ -289,11 +291,15 @@ void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
         src = mgr->mesh->boneTable[self->hd.index];
     }
 
+    // Copy the source matrix word-by-word into self-space (retail keeps the
+    // temp on the stack), then derive inverse world from the same source.
     CObjMtx tmp;
     PSMTXCopy(src, tmp.m);
     self->mtxW = tmp;
     PSMTXInverse(src, self->invW.m);
 
+    // Build a (radius, 0, 0) normal in world space and record its magnitude
+    // as the node's scalar radius.
     Vec n;
     n.x = other->radius;
     n.y = lbl_eu_8066AEB0;
@@ -301,11 +307,12 @@ void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&n,
                                     (const nw4r::math::MTX34*)&self->mtxW,
                                     (const nw4r::math::VEC3*)&n);
-    f32 mag = PSVECMag(&n);
+    f32 mag = PSVECMag((const Vec*)&n);
 
     self->radius = mag;
     self->hd.flags |= 1;
 
+    // Expand the global box around each translation-column axis by the radius.
     CColiBounds* b = lbl_eu_80665944;
     if (b->max[0] < self->mtxW.m[0][3] + self->radius)
         b->max[0] = self->mtxW.m[0][3] + self->radius;

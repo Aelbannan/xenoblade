@@ -56,6 +56,7 @@ extern "C" void* lbl_eu_806640A8;                            // .sbss table poin
 
 // data / rodata labels
 extern "C" char lbl_eu_8050E990[];            // file-name table (target 7)
+extern "C" void* lbl_eu_80664090;            // .sbss shared character table (target 7)
 extern "C" void* lbl_eu_806648B8;             // .sbss loaded file pointer (target 8)
 extern "C" void* lbl_eu_806648C0;             // .sbss colour entries (target 8)
 extern "C" void* lbl_eu_806648C8;
@@ -176,6 +177,26 @@ void func_80273004(TalkListEntry* dst, const TalkListEntry* src) {
     dst->field_10 = src->field_10;
     dst->field_12 = src->field_12;
     dst->field_13 = src->field_13;
+}
+
+// Whether an icon/texture row exists for the given subtype, by asking the
+// owning layout's shared resource accessor for the "timg" resource (retail
+// func_8027305C). v==0 queries the parent accessor directly; v!=0 re-resolves
+// the icon name through the shared character table first.
+extern "C" char* func_80138F78(u16 idx);
+extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v) {
+    if (v == 0) {
+        void* iconList = (void*)self->mParent;
+        u32 ok = ((u32 (*)(void*, u32, const char*, u32))(((void**)iconList)[3]))(
+            iconList, 0x74696d67, &lbl_eu_8050E990[0x46], 0);
+        return ok != 0;
+    }
+    u16 id = func_80136254(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
+    char* name = func_80138F78(id);
+    void* resAcc = (void*)func_801355F4();
+    u32 ok = ((u32 (*)(void*, u32, const char*, u32))(((void**)resAcc)[3]))(
+        resAcc, 0x74696d67, name, 0);
+    return ok != 0;
 }
 
 // Build the talk-list entry table from the affinity talk data (retail

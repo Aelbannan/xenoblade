@@ -489,7 +489,7 @@ void func_8027FC04(){}
 // best-effort ladder over ids 0x13..0x1b (the 0x1b close is visible in
 // retail); only 0x13/0x1b and the surrounding control flow are byte-visible.
 // ---------------------------------------------------------------------------
-void func_8027FC80(void* arg0, void* arg1) {
+void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
     u32 dev = csysWinCallE0(arg0);
     u32 guard = 0;
 
@@ -814,11 +814,13 @@ void func_80280E9C(u8* self) {
     u8* p = self + 0x3D4;
     for (int s = 0; s < 2; s++) {
         for (int run = 0; run < 3; run++) {
+            u16* q = (u16*)(p + 0x24);
             int i;
             for (i = 0; i < 5; i++) {
-                if (*(u16*)(p + 0x20 * i + 0x24) != 0) {
+                if (q[0] != 0) {
                     break;
                 }
+                q += 0x10;   /* slot stride 0x20 / sizeof(u16) */
             }
             if (i >= 5) {
                 return;

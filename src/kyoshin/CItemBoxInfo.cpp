@@ -1482,20 +1482,79 @@ void func_801E27D0(void* out, void* arg2) {
         ((u8*)out)[i + 0x1C] = val;
     }
 }
-void func_801E2928(CItemBoxInfo2* info) {
+extern "C" u8 code80135FDC_getByte_64077();
+
+// Render the item-box slot info: for each slot (count from the slot-table
+// byte getter) set up a labelled layout pane, per-slot vertex colours, and
+// (when a selection applies) a texture/name tag.
+void func_801E2928(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
     func_801E3918(info);
-    char* base = (char*)&lbl_eu_805063BC;
+    CItemBoxQuad quad;
+    char label[0x20];
+    char paneName[0x20];
+    u8 slotData[0x30];
+    u8 slotCopy[0x30];
     void* layout = *(void**)((u8*)info + 0x34);
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
-    char buf[0x20];
-    u32 max = func_801392C0();
-    for (u32 i = 0; i < max; i++) {
-        sprintf(buf, base + 0x303, i + 1);
-        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
+    func_801E197C(slotData, (u16)(u32)info, (void*)arg1);
+    memcpy(slotCopy, slotData, 0x30);
+
+    char* base = (char*)&lbl_eu_805063BC;
+    u32 max = code80135FDC_getByte_64077();
+    for (u8 i = 0; i < (u8)max; i++) {
+        u8 flag = slotCopy[i + 0x1A];
+        int colorVal = flag ? -1 : 0x777777ff;
+
+        sprintf(paneName, &base[0x303], i + 1);
+        func_80137B44((nw4r::lyt::Layout*)layout, paneName, colorVal);
+
+        // Build the two per-slot colour pairs; the selection colour comes from
+        // the info block when the slot is active, otherwise from the defaults.
+        s16 va2 = *(s16*)((u8*)info + 0xA2);
+        s16 vaa = *(s16*)((u8*)info + 0xAA);
+        quad.col[1] = CItemBoxQuadColor(0, 0, 0, va2);
+        quad.col[0] = CItemBoxQuadColor(0, 0, 0, vaa);
+        quad.col[2] = CItemBoxQuadColor();
+        quad.col[3] = CItemBoxQuadColor();
+        quad.col[2] = flag ? *(CItemBoxQuadColor*)((u8*)info + 0x9C) : quad.col[1];
+        quad.col[3] = flag ? *(CItemBoxQuadColor*)((u8*)info + 0xA4) : quad.col[0];
+
+        sprintf(paneName, &base[0x161], i + 1);
         void* child = *(void**)((u8*)layout + 0x10);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
-        if (pane != NULL) {
-            for (u32 j = 0; j < 2; j++) func_801D62F8((u8*)pane + 0x10, j, buf);
+        void* pane = ((void*(*)(void*, void*, int))(*(void***)child)[15])(child, paneName, 1);
+        if (pane != 0) {
+            void* obj = ((void*(*)(void*))(*(void***)pane)[26])(pane);
+            for (int j = 0; j < 2; j++) {
+                func_801D62F8(obj, j, &quad.col[2 + j]);
+            }
+        }
+
+        if (flag != 0) {
+            if (arg2 != 0 || arg1 != 0) {
+                u8 idx = (u8)func_801392B4(i);
+                if (idx != 0) {
+                    void* lookup = func_8009EC9C(idx);
+                    void* item = ((void*(*)(u32, u32))func_80157C4C)(2, *(s16*)((u8*)lookup + 0x26));
+                    if (item != 0) {
+                        u32 val = *(u32*)item;
+                        if (val != 0 && (arg2 == item || arg1 == (u32)(val >> 20))) {
+                            sprintf(label, &base[0x30e], i + 1);
+                            void* arc = *(void**)((u8*)info + 0x2C);
+                            void* tex;
+                            if (idx == (u8)func_801392B4(arg3)) {
+                                tex = ((void*(*)(void*, u32, const char*, int))(*(void***)arc)[3])(arc, 0x74696d67, &base[0x319], 0);
+                            } else {
+                                tex = ((void*(*)(void*, u32, const char*, int))(*(void***)arc)[3])(arc, 0x74696d67, &base[0x32d], 0);
+                            }
+                            if (tex == 0) {
+                                tex = ((void*(*)(void*, u32, const char*, int))(*(void***)arc)[3])(arc, 0x74696d67, &base[0x341], 0);
+                            }
+                            if (tex != 0) {
+                                func_80137E7C((nw4r::lyt::Layout*)layout, label);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

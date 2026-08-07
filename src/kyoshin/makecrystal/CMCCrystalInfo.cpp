@@ -302,9 +302,9 @@ extern "C" void func_8021ADC4(CMCCrystalInfo* self)
         func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
         func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
-        void* res =
-            ((void*(*)(void*, u32, void*, u32))(*(void***)self->mArcResAccessor)[3])(
-                self->mArcResAccessor, 0x74696d67, &lbl_eu_80508DF8[0x12b], 0);
+        void* res = ((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor)
+                        ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                                      &lbl_eu_80508DF8[0x12b], NULL);
         if (res != 0) {
             sprintf(buf, &lbl_eu_80508DF8[0x11b], i);
             func_80137E7C((nw4r::lyt::Layout*)self->mLayout, buf, res);

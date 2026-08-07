@@ -4,7 +4,14 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
-namespace nw4r { namespace lyt { class DrawInfo; } }
+class CFileHandle;
+
+namespace nw4r { namespace lyt {
+class DrawInfo;
+class Layout;
+class AnimTransform;
+class ArcResourceAccessor;
+} }
 
 // vtable at lbl_eu_80535F80
 extern "C" void* lbl_eu_80535F80[];
@@ -24,16 +31,16 @@ public:
     /* 0x00 */ // IWorkEvent base (vptr)
     /* 0x04 */ UnkClass_8045F564 mMemRegion1;
     /* 0x14 */ UnkClass_8045F564 mMemRegion2;
-    /* 0x24 */ u32 mFileHandle1;
-    /* 0x28 */ u32 mFileHandle2;
-    /* 0x2C */ u32 mField2C;
-    /* 0x30 */ u32 mField30;
-    /* 0x34 */ u32 mField34;
-    /* 0x38 */ u32 mField38;
-    /* 0x3C */ u32 mField3C;
-    /* 0x40 */ u32 mField40;
-    /* 0x44 */ u32 mField44;
-    /* 0x48 */ u32 mField48;
+    /* 0x24 */ CFileHandle* mFileHandle1;
+    /* 0x28 */ CFileHandle* mFileHandle2;
+    /* 0x2C */ nw4r::lyt::ArcResourceAccessor* mArcResAccessor;
+    /* 0x30 */ nw4r::lyt::ArcResourceAccessor* mArcResAccessor2;
+    /* 0x34 */ nw4r::lyt::Layout* mLayout;
+    /* 0x38 */ nw4r::lyt::AnimTransform* mAnimTrans1;
+    /* 0x3C */ nw4r::lyt::AnimTransform* mAnimTrans2;
+    /* 0x40 */ nw4r::lyt::AnimTransform* mAnimTrans3;
+    /* 0x44 */ nw4r::lyt::AnimTransform* mAnimTrans4;
+    /* 0x48 */ nw4r::lyt::AnimTransform* mAnimTrans5;
     /* 0x4C */ u8 mState;
     /* 0x4D */ u8 mStateIdx;
     /* 0x4E */ u8 mSlotStates[8];

@@ -20,7 +20,7 @@
 void __dt__21CModelDispMakeCrystalFv(void*);
 void func_8021FC28(CModelDispMakeCrystal*, u8);
 void func_8021FD44(CModelDispMakeCrystal*);
-void func_80220E14(CModelDispMakeCrystal*, u8*);
+void func_80220E14(CModelDispMakeCrystal*, CMCrystalDispSub*);
 void func_802211CC(CModelDispMakeCrystal*, u8*);
 
 // --- external C-linkage helpers and global data for this TU ---
@@ -41,10 +41,11 @@ void func_80220C34(void*);
 int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 void func_8004B6BC(void*, void*);
 void func_80495E60(void*);
-void* func_80495E8C(void*, int, int);
+void* func_80495E8C(void*, int, int, ...);
 void func_80485684(void*, int);
 void func_80482DF4(void*, int);
 void* func_8048315C(void*);
+void func_804831C4(void*, void*);
 void func_804E3CCC(void*);
 void func_804E3D0C(void*, void*);
 void* func_804CC1F4(void*, void*, void*, int, int, int);
@@ -96,6 +97,19 @@ void func_80297FB4(void*);
 void func_8029860C(void*, int);
 void func_80298614(void*);
 char lbl_eu_805090FC[];
+extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for func_800F4A98
+int sprintf(char*, const char*, ...);
+void func_80043D90(CMCryListHolder*);
+void* func_80043F18(CMCryListHolder*); // returns holder->list
+void __dt__80043E88(CMCryListHolder*, int);
+void func_800F4A98(void*, unsigned int, unsigned int);
+void* func_800F6EC0(void*, unsigned int); // &slot -> +0x4 holds the move ptr
+void* func_800BFC68__FPQ22cf12CfObjectMove(void*);
+void* func_80062C28(short, int);
+short func_800BE954(void*);
+void* func_800584B8(void*, unsigned int, const char*);
+void func_8004B624(void*, void*, void*, unsigned int);
+void func_80200388(void*, void*);
 void func_8021E8E4(void*);
 void func_80222D9C(void*, u8);
 void func_80222B14(void*, u8, u16, u16);
@@ -1300,7 +1314,7 @@ void func_80220C34(CModelDispMakeCrystal* self)
         if (base[(u32)i * 0x5cc + 0x60c] == 0) {
             s8 v = reinterpret_cast<s8*>(s + 0x44)[0x5ac];
             if (v >= 0 && v < 3) {
-                func_80220E14(self, s + 0x44);
+                func_80220E14(self, reinterpret_cast<CMCrystalDispSub*>(s + 0x44));
             } else {
                 func_802211CC(self, s + 0x44);
             }
@@ -1308,7 +1322,102 @@ void func_80220C34(CModelDispMakeCrystal* self)
     }
 }
 
-void func_80220E14(CModelDispMakeCrystal* self, u8* sub){}
+void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
+{
+    CMCCrySelfFields* objs = reinterpret_cast<CMCCrySelfFields*>(self);
+    // The 3 state-specific enum filter types (keyed by sub->field_5ac state).
+    u32 src[3];
+    src[0] = reinterpret_cast<u32*>(lbl_eu_805090D8)[0];
+    src[1] = reinterpret_cast<u32*>(lbl_eu_805090D8)[1];
+    src[2] = reinterpret_cast<u32*>(lbl_eu_805090D8)[2];
+
+    CMCryListHolder holder;
+    func_80043D90(&holder);
+
+    // Select the crystal list for the current char state and check it's loaded.
+    func_800F4A98(func_80043F18(&holder), src[(s8)sub->field_5ac], 0);
+    if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(func_80043F18(&holder)) + 0x620) == 0) {
+        func_8021FB68(self, reinterpret_cast<u8*>(sub));
+        __dt__80043E88(&holder, -1);
+        return;
+    }
+
+    // Grab the first crystal object from the enum list.
+    void* slot = func_800F6EC0(func_80043F18(&holder), 0);
+    void* cfMove = *reinterpret_cast<void**>(reinterpret_cast<u8*>(slot) + 4);
+    if (cfMove == nullptr) {
+        func_8021FB68(self, reinterpret_cast<u8*>(sub));
+        __dt__80043E88(&holder, -1);
+        return;
+    }
+
+    CMCCryChgActor* actor =
+        reinterpret_cast<CMCCryChgActor*>(func_800BFC68__FPQ22cf12CfObjectMove(cfMove));
+    int ready = actor != nullptr ? 1 : 0;
+    int m = 0;
+    if (actor != nullptr) {
+        m = actor->field_3f2c;
+        if (m == 0) ready = 0;
+        if (reinterpret_cast<CMCryMoveVt*>(&actor->move)->m74() == 0) ready = 0;
+        if (sub->field_5a4 == 0) {
+            if (sub->field_5a0 == 0) {
+                // Load the crystal model file for this actor.
+                char buf[0x20];
+                sprintf(buf, &lbl_eu_805090FC[0xd1],
+                        actor->field_3f28 == 3 ? 8 : (int)actor->field_3f28);
+                u32 h = getHandleMEM2__Q23mtl10MemManagerFv();
+                sub->field_5a0 =
+                    reinterpret_cast<u32>(readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+                        h, buf, self, 0, 0));
+            }
+            ready = 0;
+        }
+    }
+
+    if (sub->field_00 == nullptr && ready != 0) {
+        CMCryMoveVt* mv = reinterpret_cast<CMCryMoveVt*>(&actor->move);
+        // Build the crystal display model for this slot.
+        sub->field_00 = func_80495E8C(objs->field_0c, m, -1, 1);
+        sub->mCrystalVals[1] = (static_cast<u32>(mv->m82(1)) >> 12) & 0x3ff;
+        s16 be = func_800BE954(&actor->move);
+        CMCCryParamSlot* param =
+            reinterpret_cast<CMCCryParamSlot*>(func_80062C28(be, 0));
+        for (int idx = 2; idx <= 5; idx++) {
+            if (mv->m82(idx) != 0) {
+                void* obj = param[idx].field_2c;
+                func_804831C4(sub->field_00, reinterpret_cast<CMCCryParamObjVt*>(obj)->m02());
+                sub->mCrystalVals[idx] = (static_cast<u32>(mv->m82(idx)) >> 12) & 0x3ff;
+            }
+        }
+        m = sub->field_5a4;
+        sub->field_04 = func_800584B8(objs->field_0c, m, &lbl_eu_805090FC[0xef]);
+        sub->mAnim.m38();
+        func_8004B624(&sub->mAnim, sub->field_00, sub->field_04, m);
+        sub->field_14 |= 0x160;
+        func_80200388(&sub->mAnim,
+                      self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4) : self);
+        u32* group0 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        group0[0] = sub->field_5b0;
+        group0[1] = sub->field_5b4;
+        group0[2] = sub->field_5b8;
+        u32* group1 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        group1[3] = sub->field_5bc;
+        group1[4] = sub->field_5c0;
+        group1[5] = sub->field_5c4;
+        reinterpret_cast<CMCModelVt*>(sub->field_00)->m12(objs->field_be0);
+        reinterpret_cast<CMCModelVt*>(sub->field_00)->m27(3, 0);
+        if (sub->field_00 != nullptr) {
+            func_8004B9D4(&sub->mAnim, 0x21, 0, -1, 0);
+        }
+        sub->field_5c8 = 1;
+    } else {
+        if (sub->field_00 != nullptr && ready == 0) {
+            func_8021FB68(self, reinterpret_cast<u8*>(sub));
+        }
+    }
+
+    __dt__80043E88(&holder, -1);
+}
 
 void func_802211CC(CModelDispMakeCrystal* self, u8* sub){}
 

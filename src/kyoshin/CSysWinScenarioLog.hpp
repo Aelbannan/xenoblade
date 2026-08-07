@@ -111,17 +111,30 @@ struct CSysWinDevEntry {
     u32 field_0;                          // +0x0
 };
 
+// func_8027FC80 arg0 view: the device object. Only the flag word at +0x3374
+// is read directly here; the vtable calls are dispatched via the helpers below.
+struct CSysWinDevice {
+    u8 _0[0x3374];
+    u32 field_0x3374;                     // +0x3374 flags
+};
+
 // func_8027FC80 helper: invoke a virtual at a runtime vtable offset on a raw
 // object pointer. MWCC cannot express these as member calls without emitting a
 // whole new vtable, so the call goes through the object's stored vtable.
 inline u32 csysWinCallE0(void* self) {
-    return (*(u32(**)(void*))(*(void**)self + 0xE0))(self);
+    typedef u32 (*Fn)(void*);
+    void** vt = (void**)*(void**)self;
+    return ((Fn)vt[0xE0 / 4])(self);
 }
 inline CScenarioLogOwner* csysWinCall9C(void* self) {
-    return (*(CScenarioLogOwner*(**)(void*))(*(void**)self + 0x9C))(self);
+    typedef CScenarioLogOwner* (*Fn)(void*);
+    void** vt = (void**)*(void**)self;
+    return ((Fn)vt[0x9C / 4])(self);
 }
 inline CSysWinDevEntry* csysWinCall224(void* self) {
-    return (*(CSysWinDevEntry*(**)(void*))(*(void**)self + 0x224))(self);
+    typedef CSysWinDevEntry* (*Fn)(void*);
+    void** vt = (void**)*(void**)self;
+    return ((Fn)vt[0x224 / 4])(self);
 }
 
 // arg2 view for func_8027F848: window/state dword at +0x74 (bit 8) and

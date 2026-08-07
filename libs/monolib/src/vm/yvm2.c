@@ -1427,10 +1427,13 @@ int vmc_ld_func(VMThread* pThread, u8 code){
 int vmc_ld_plugin(VMThread* pThread, u8 code){
     SBHeader* header = (SBHeader*)pThread->scriptData;
     SBSectionHeader* pluginImports = header->pluginImportsOfs;
+    //Retail computes the import entry base BEFORE the decode loop so it is kept
+    //live across the loop (r6), shifting the loop's temp-byte regs to r7/r0.
+    PluginImportEntry* entryBase = (PluginImportEntry*)poolEntryOfsGet(pluginImports, 0);
     int val = getOpcodeParam(pThread, code);
     VMArg* puVar3 = vmStackNextGet(pThread);
     puVar3->type = VM_TYPE_PLUGIN;
-    PluginImportEntry* entry = poolEntryOfsGet(pluginImports, val);
+    PluginImportEntry* entry = &entryBase[val];
     puVar3->unk2 = entry->unk0;
     puVar3->value.intVal = entry->unk2;
 
@@ -1441,10 +1444,13 @@ int vmc_ld_plugin(VMThread* pThread, u8 code){
 int vmc_ld_func_far(VMThread* pThread, u8 code){
     SBHeader* header = (SBHeader*)pThread->scriptData;
     SBSectionHeader* funcImports = header->functionImportsOfs;
+    //Retail computes the import entry base BEFORE the decode loop so it is kept
+    //live across the loop (r6), mirroring vmc_ld_plugin.
+    FunctionImportEntry* entryBase = (FunctionImportEntry*)poolEntryOfsGet(funcImports, 0);
     int uVar2 = getOpcodeParam(pThread, code);
     VMArg* puVar3 = vmStackNextGet(pThread);
     puVar3->type = VM_TYPE_FUNCTION;
-    FunctionImportEntry* entry = poolEntryOfsGet(funcImports, uVar2);
+    FunctionImportEntry* entry = &entryBase[uVar2];
     puVar3->unk2 = entry->unk0;
     puVar3->value.intVal = entry->unk2;
 

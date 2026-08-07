@@ -41,7 +41,7 @@ extern "C" void func_801E174C(void*, void*, unsigned int);
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern float lbl_eu_80668114;
 extern "C" u32 func_801393CC(u32);
-extern "C" u32 func_801392E4(void*);
+extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_80139358(u32);
 extern "C" void func_801586D4(u32, u32);
 extern "C" s32 func_801571FC(void);

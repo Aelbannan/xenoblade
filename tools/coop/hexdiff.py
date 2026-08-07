@@ -1027,7 +1027,24 @@ def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[Fun
     ci = [f for f in functions if f.name.lower() == lowered]
     if ci:
         return ci
+    # Plain-substring first (registry short form -> full mangling), then
+    # Itanium length-prefix digit-strip as LAST resort (r7 fix parity with
+    # elf_symbols._resolve_candidates): `__ct__CMCEffUpPrm` (registry) must
+    # resolve to `__ct__11CMCEffUpPrmFPQ34...` (object) — the length prefix
+    # `11` breaks the plain substring, and stripping digits would be wrong
+    # BEFORE the plain check (func_80255894 would match every func_).
     partial = [f for f in functions if lowered in f.name.lower()]
+    if partial:
+        return partial
+
+    import re as _re
+
+    def _strip_digits(s: str) -> str:
+        return _re.sub(r"\d+", "", s)
+
+    stripped = _strip_digits(lowered)
+    if len(stripped) >= 5:
+        partial = [f for f in functions if stripped in _strip_digits(f.name.lower())]
     return partial
 
 

@@ -284,7 +284,14 @@ void func_80202CCC(CEquipChange* self) {
 // (func_80203138 and func_802031A0 are defined at the END of this TU to avoid
 // inlining them into callers such as func_80203994 / func_80203FCC.)
 
-void func_80203210(){}
+void func_80203210(){
+    // Address-take forces out-of-line bodies + external `bl` calls in all
+    // callers (retail calls these helpers externally, never inlines).
+    int (*volatile pa)(CEquipChange*) = func_802031A0;
+    int (CEquipChange::*volatile p38)() = &CEquipChange::func_80203138;
+    (void)pa;
+    (void)p38;
+}
 
 // Target us-80205624: raw box count, cleared when the current selection is 3.
 int func_8020392C(CEquipChange* self) {
@@ -409,12 +416,18 @@ extern "C" void func_802042C0(CEquipChange* self);
 // Target us-80205d98: when both file handles (0x34, 0x30) are set, load the
 // retail bind data and clear the cursor-run flag 0x98.
 void func_802040A0(CEquipChange* self) {
-    if (self->field_34 != 0 && self->field_30 != 0) {
-        func_802042C0(self);
-        self->field_4C = 1;
-        self->field_44 = 1;
-        self->field_98 = 0;
-    }
+    if (self->field_34 == 0)
+        goto end;
+    if (self->field_30 != 0)
+        goto body;
+    goto end;
+body:
+    func_802042C0(self);
+    self->field_4C = 1;
+    self->field_44 = 1;
+    self->field_98 = 0;
+end:
+    ;
 }
 
 // Not a target; body kept non-empty

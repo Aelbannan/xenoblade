@@ -38,6 +38,7 @@ void func_801D4174(void*);
 void func_801D4260(void*, u16);
 void func_8022B7F4(void*);
 void* func_801D3C74(void*, u32);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Retail mangled names kept as source names so the reloc matches exactly.
 void func_8003AA8C__5CBdatFUl(u32);
 void func_801390E0__FPP11CFileHandle(void*);
@@ -47,6 +48,7 @@ void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAcc
 void func_80136910(nw4r::lyt::Layout*, char*, u8);   // func_80136910__FPQ34nw4r3lyt6LayoutPcUc
 void func_80138078(u32);                             // func_80138078__FUl
 u8 getItemBoxState(CItemBoxInfo*);                   // getItemBoxState__FP12CItemBoxInfo
+u32 func_80137444(nw4r::lyt::AnimTransform*, float); // func_80137444__FPQ34nw4r3lyt13AnimTransformf
 
 // Foreign rodata (string pool used by the item-box layout).
 extern "C" char lbl_eu_8050FF8C[];
@@ -55,12 +57,13 @@ extern "C" void* lbl_eu_806640D8;
 extern "C" void* lbl_eu_80664100;
 extern "C" void* lbl_eu_80664A18;
 extern "C" void* lbl_eu_80664A1C;
+extern "C" float lbl_eu_80668BF0;
 
 // Same-unit helper functions.
 void func_80296BF0(CMCItemBoxSub*);
 void func_8029967C(CMCGetItemBox*);
 void func_802998C8(CMCGetItemBox*);
-void func_802999B0(CMCGetItemBox*);
+extern "C" void func_802999B0(CMCGetItemBox*);
 void func_80299490(CMCGetItemBox*, int, u32);
 extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
@@ -448,9 +451,38 @@ u32 func_80298850(CMCGetItemBox* self) {
     return 0x39 + ((s8)self->field_301 == -1);
 }
 
-void func_802988BC(){}
-void func_80298938(){}
-void func_802989A4(){}
+// Open the item box: advance the second layout animation and, once it has
+// finished, initialise the state/widgets and refresh the cursor.
+void func_80298938(CMCGetItemBox* self) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
+        self->field_4D = 3;
+        self->mField55 = 1;
+        func_801D216C(&self->subObj_58, 1);
+        func_801D216C(&self->subObj_70, 1);
+        func_802999B0(self);
+    }
+}
+
+// Advance the first layout animation; when it has finished, enable the two
+// anim transforms on the layout and move to state 2.
+void func_802988BC(CMCGetItemBox* self) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->animTrans1, lbl_eu_80668BF0) != 0) {
+        self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, false);
+        self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, true);
+        self->field_4D = 2;
+    }
+}
+
+// Rewind the second layout animation via func_80137510; when finished, enable
+// the two anim transforms on the layout and move to state 5.
+void func_802989A4(CMCGetItemBox* self) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)self->animTrans2, lbl_eu_80668BF0) != 0) {
+        self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans2, false);
+        self->layout40->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->animTrans1, true);
+        self->field_4D = 5;
+    }
+}
+
 void func_80298A20(){}
 void func_80298A78(){}
 
@@ -598,7 +630,7 @@ void func_8029967C(CMCGetItemBox* self) {
 void func_802998C8(CMCGetItemBox* self) {}
 
 // Refresh the cursor widgets / page label.
-void func_802999B0(CMCGetItemBox* self) {
+extern "C" void func_802999B0(CMCGetItemBox* self) {
     if ((s8)self->field_301 == -1) {
         nw4r::lyt::Pane* root = *(nw4r::lyt::Pane**)((u8*)self->layout40 + 0x10);
         void* p1 = root->FindPaneByName(&lbl_eu_8050FF8C[0x1dc], true);

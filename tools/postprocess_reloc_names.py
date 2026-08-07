@@ -47,6 +47,22 @@ class UnitRules:
     # e_pow: MWCC pools an extra orphaned 1.0 after two53 (0x110) that retail
     # never references (+8 over the 0x110 split slice).
     trim_sdata2_size: int | None = None
+    # Drop the trailing tail of a data section ((section, keep_size)): weak
+    # base-class typeinfo names/structs the retail linker GC'd. Surviving
+    # relocs must be retargeted first (retarget_relocs) so live references
+    # resolve to the strong copy in the retail-correct TU at link.
+    drop_data_tail: tuple[tuple[str, int], ...] = ()
+    # Retarget the reloc at (section, offset) to an UNDEF symbol (retail name):
+    # ((section, offset, symbol_name), ...). Runs before drop_data_tail.
+    retarget_relocs: tuple[tuple[str, int, str], ...] = ()
+    # Zero a data-section range ((section, start, end)) where MWCC placed a
+    # weak typeinfo name inside what is zero padding in retail; the range's
+    # relocs are dropped. Runs before drop_data_tail.
+    zero_data_range: tuple[tuple[str, int, int], ...] = ()
+    # Remove a data-section range ((section, start, end)), shifting later
+    # symbols/relocs: weak base vtables/typeinfo the retail linker GC'd that
+    # sit mid-section. Runs before drop_data_tail.
+    drop_data_range: tuple[tuple[str, int, int], ...] = ()
     # Reloc-referenced @ pool symbols matched by .sdata2 content prefix -> retail name.
     pool_patterns: tuple[tuple[bytes, str], ...] = ()
     # Exact symbol renames (old -> new), applied after pool content matches.
@@ -109,6 +125,32 @@ class UnitRules:
 
 
 UNIT_RULES: dict[str, UnitRules] = {
+    "lyt_picture.o": UnitRules(
+        # Retail keeps Picture's typeinfo chain local but references the
+        # Pane/PaneBase typeinfo NAMES externally (__RTTI__Q36nw4hbm3lyt4Pane
+        # / __RTTI__Q46nw4hbm3lyt6detail8PaneBase, defined in the retail
+        # lyt_pane.o which links as NonMatching). MWCC emits weak local copies
+        # (+0x50 .data over the 0xA0 slice); retarget the surviving struct
+        # name/base ptrs to the retail symbols and drop the weak tail.
+        retarget_relocs=(
+            (".data", 0x84, "__RTTI__Q36nw4hbm3lyt4Pane"),
+            (".data", 0x8C, "__RTTI__Q46nw4hbm3lyt6detail8PaneBase"),
+        ),
+        drop_data_tail=((".data", 0xA0),),
+    ),
+    "lyt_resourceAccessor.o": UnitRules(
+        # ResourceAccessor vtable typeinfo ptr (+0x0) references the base RTTI
+        # externally in retail (__RTTI__Q36nw4hbm3lyt16ResourceAccessor, strong
+        # copy in the lyt_arcResourceAccessor TU); MWCC emits a weak local copy
+        # (+0x28 .data over the 0x18 slice). Retarget + drop the tail.
+        retarget_relocs=(
+            (".data", 0x0, "__RTTI__Q36nw4hbm3lyt16ResourceAccessor"),
+        ),
+        # The name string started at +0x14 inside the kept 0x18 (retail's
+        # vtable is 6 words with a trailing NULL); zero the stub.
+        zero_data_range=((".data", 0x14, 0x18),),
+        drop_data_tail=((".data", 0x18),),
+    ),
     "e_pow.o": UnitRules(
         # MWCC pools an orphaned 1.0 after two53 (0x110) the final code never
         # references (no .rela.sdata2 entry touches it); the retail linker GC'd
@@ -602,6 +644,12 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the base call since the base dtor is inline-empty). Dropping the
         # orphan restores the retail split layout and fits the 0xBB0 budget.
         drop_text_symbols=("__dt__Q36nw4hbm3lyt13AnimTransformFv",),
+        # The AnimTransform base vtable (0x20) + its RTTI struct sit between
+        # AnimTransformBasic's typeinfo and name (+0x20 .data over the 0x80
+        # slice); retail references AnimTransform's RTTI externally. Drop the
+        # mid-section vtable; the RTTI struct's live refs (reloc at +0x40)
+        # keep resolving to the shifted struct.
+        drop_data_range=((".data", 0x58, 0x78),),
     ),
     "lyt_layout.o": UnitRules(
         # MWCC emits unreferenced weak orphans the retail linker GC'd: the
@@ -657,6 +705,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Dropping the orphan restores the retail split layout and fits the
         # 0x110 budget.
         drop_text_symbols=("__dt__Q210homebutton15FrameControllerFv",),
+        # GroupAnmController vtable typeinfo ptr (+0x30) references the base
+        # FrameController RTTI externally in retail; MWCC emits a weak local
+        # copy (+0x28 .data over the 0x48 slice). Retarget + drop the tail.
+        retarget_relocs=(
+            (".data", 0x30, "__RTTI__Q210homebutton15FrameController"),
+        ),
+        drop_data_tail=((".data", 0x48),),
     ),
     "lyt_arcResourceAccessor.o": UnitRules(
         # MWCC emits the unreferenced weak in-charge dtor of the implicit
@@ -699,6 +754,18 @@ UNIT_RULES: dict[str, UnitRules] = {
             "__dt__Q36nw4hbm2ut4FontFv",
             "__dt__Q34nw4r2ut4FontFv",
         ),
+        # ResFontBase vtable typeinfo ptr (+0x10) and the Font vtable
+        # typeinfo ptr (+0x88) reference the class RTTI externally in retail
+        # (strong copies in the lyt_textBox TU); MWCC emits weak local names +
+        # structs (+0x58 .data over the 0xC0 slice). Retarget, drop the
+        # mid-section ResFontBase name (0x68..0x88), then cut the Font name +
+        # RTTI tail.
+        retarget_relocs=(
+            (".data", 0x10, "__RTTI__Q46nw4hbm2ut6detail11ResFontBase"),
+            (".data", 0x88, "__RTTI__Q36nw4hbm2ut4Font"),
+        ),
+        drop_data_range=((".data", 0x68, 0x88),),
+        drop_data_tail=((".data", 0xC0),),
     ),
     "ut_RomFont.o": UnitRules(
         # Same weak inline-empty Font dtor orphan as ut_ResFontBase (nw4r
@@ -718,6 +785,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # align(prev_end, 16) exactly like the retail linker GC (same fix as
         # lyt_group).
         repack_after_drop=16,
+        # Window's typeinfo chain (base ptrs at +0xCC/+0xD4) references the
+        # Pane/PaneBase RTTI EXTERNALLY in retail; MWCC emits weak local
+        # copies (+0x50 .data over the 0xE8 slice). Retarget + drop the tail.
+        retarget_relocs=(
+            (".data", 0xCC, "__RTTI__Q46nw4hbm3lyt6detail8PaneBase"),
+            (".data", 0xD4, "__RTTI__Q36nw4hbm3lyt4Pane"),
+        ),
+        drop_data_tail=((".data", 0xE8),),
     ),
     "lyt_pane.o": UnitRules(
         # MWCC emits unreferenced weak orphans the retail linker GC'd: the
@@ -2097,12 +2172,14 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     return True
 
 
-def trim_sdata2_section(path: Path, keep_size: int) -> bool:
-    """Shrink .sdata2 to keep_size, dropping trailing orphaned pool entries.
+def drop_data_tail(path: Path, section: str, keep_size: int) -> bool:
+    """Shrink *section* to keep_size, dropping trailing orphaned data.
 
-    MWCC occasionally emits a constant the final code never references (the
-    retail linker's GC dead-strips it, e.g. e_pow's extra 1.0 after two53).
-    Symbols past the cut are ABS'd; relocs pointing past it are dropped.
+    MWCC occasionally emits weak copies of data the retail linker GC'd (pool
+    constants no relocation references, base-class typeinfo names/structs
+    whose live references retail keeps external). Symbols past the cut are
+    ABS'd; relocs pointing past it are dropped. Callers retarget surviving
+    relocs to the retail symbols first (see retarget_reloc_to_symbol).
     """
     data = bytearray(path.read_bytes())
     if data[:4] != b"\x7fELF" or data[5] != 2:
@@ -2114,29 +2191,29 @@ def trim_sdata2_section(path: Path, keep_size: int) -> bool:
     e_shstrndx = struct.unpack_from(">H", data, 50)[0]
     shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
 
-    sdata2_idx = sdata2_hoff = sdata2_off = sdata2_size = None
+    sec_idx = sec_hoff = sec_off = sec_size = None
     sym_idx = rela_idx = None
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_name = struct.unpack_from(">I", data, hoff)[0]
         end = data.index(0, shstr_off + sh_name)
         name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == ".sdata2":
-            sdata2_idx, sdata2_hoff = i, hoff
-            sdata2_off = struct.unpack_from(">I", data, hoff + 16)[0]
-            sdata2_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        if name == section:
+            sec_idx, sec_hoff = i, hoff
+            sec_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
         elif name == ".symtab":
             sym_idx = i
-        elif name == ".rela.sdata2":
+        elif name == ".rela" + section:
             rela_idx = i
-    if sdata2_idx is None or sdata2_size is None or sdata2_hoff is None:
+    if sec_idx is None or sec_size is None or sec_hoff is None:
         return False
-    if sdata2_size <= keep_size:
+    if sec_size <= keep_size:
         return False
 
     # Drop trailing bytes.
-    sec_end = sdata2_off + sdata2_size
-    new_end = sdata2_off + keep_size
+    sec_end = sec_off + sec_size
+    new_end = sec_off + keep_size
     data = data[:new_end] + data[sec_end:]
     e_shoff = struct.unpack_from(">I", data, 32)[0]
     if e_shoff >= sec_end:
@@ -2145,7 +2222,7 @@ def trim_sdata2_section(path: Path, keep_size: int) -> bool:
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
-        if i == sdata2_idx:
+        if i == sec_idx:
             struct.pack_into(">I", data, hoff + 20, keep_size)
         elif sh_offset >= sec_end:
             struct.pack_into(">I", data, hoff + 16, sh_offset - (sec_end - new_end))
@@ -2157,7 +2234,7 @@ def trim_sdata2_section(path: Path, keep_size: int) -> bool:
         for so in range(0, sym_size, 16):
             st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
             st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
-            if st_shndx == sdata2_idx and st_value >= keep_size:
+            if st_shndx == sec_idx and st_value >= keep_size:
                 struct.pack_into(">I", data, sym_off + so + 8, 0)  # st_size
                 struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
     if rela_idx is not None:
@@ -2169,6 +2246,245 @@ def trim_sdata2_section(path: Path, keep_size: int) -> bool:
             r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
             if r_offset < keep_size:
                 keep.extend(data[rela_off + ro : rela_off + ro + 12])
+        data[rela_off : rela_off + rela_size] = b"\0" * rela_size
+        data[rela_off : rela_off + len(keep)] = keep
+        struct.pack_into(">I", data, rela_hoff + 20, len(keep))
+
+    path.write_bytes(data)
+    return True
+
+
+def trim_sdata2_section(path: Path, keep_size: int) -> bool:
+    """Shrink .sdata2 to keep_size (see drop_data_tail)."""
+    return drop_data_tail(path, ".sdata2", keep_size)
+
+
+
+def retarget_reloc_to_symbol(path: Path, section: str, offset: int, new_name: str) -> bool:
+    """Point the reloc at (section, offset) at an UNDEF symbol *new_name*.
+
+    Used with drop_data_tail: the dropped weak copy's live references must
+    resolve to the retail-correct strong definition in another TU at link
+    (NonMatching TUs link the extracted retail .o, so __RTTI__/typeinfo
+    symbols resolve there). The reloc's target symbol becomes SHN_UNDEF and
+    is renamed, mirroring the DOL-extracted retail .o.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = sym_idx = rela_idx = str_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".rela" + section:
+            rela_idx = i
+        elif name == ".strtab":
+            str_idx = i
+    if sec_idx is None or sym_idx is None or rela_idx is None or str_idx is None:
+        return False
+
+    rela_hoff = e_shoff + rela_idx * e_shentsize
+    rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+    rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+    target_sym = None
+    for ro in range(0, rela_size, 12):
+        r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+        if r_offset == offset:
+            target_sym = struct.unpack_from(">I", data, rela_off + ro + 4)[0] >> 8
+            break
+    if target_sym is None:
+        return False
+
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_entry = sym_off + target_sym * 16
+    struct.pack_into(">I", data, sym_entry + 4, 0)  # st_value
+    struct.pack_into(">I", data, sym_entry + 8, 0)  # st_size
+    struct.pack_into(">H", data, sym_entry + 14, 0)  # SHN_UNDEF
+
+    # Rename: append to .strtab (grow section + shift later sections).
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    str_size = struct.unpack_from(">I", data, str_hoff + 20)[0]
+    name_bytes = new_name.encode("utf-8") + b"\0"
+    old_end = str_off + str_size
+    data = data[:old_end] + name_bytes + data[old_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= old_end:
+        e_shoff += len(name_bytes)
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == str_idx:
+            struct.pack_into(">I", data, hoff + 20, str_size + len(name_bytes))
+        elif sh_offset >= old_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + len(name_bytes))
+    struct.pack_into(">I", data, sym_entry + 0, str_size)  # st_name -> new string
+
+    path.write_bytes(data)
+    return True
+
+
+
+def zero_data_range(path: Path, section: str, start: int, end: int) -> bool:
+    """Zero bytes [start, end) of *section* and drop relocs pointing into it.
+
+    Used when MWCC places a weak typeinfo NAME inside a region that is plain
+    zero padding in retail (the name resolves externally there). Keeps section
+    sizes and offsets stable; the region's relocs (the local name-ptr) are
+    dropped, mirroring the retail .o.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_off = sec_size = None
+    rela_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        e = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : e].decode("ascii")
+        if name == section:
+            sec_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        elif name == ".rela" + section:
+            rela_idx = i
+    if sec_off is None or sec_size is None:
+        return False
+    end = min(end, sec_size)
+    if start >= end:
+        return False
+
+    # Zero the bytes (only if they aren't already).
+    changed = any(data[sec_off + start : sec_off + end])
+    data[sec_off + start : sec_off + end] = b"\0" * (end - start)
+
+    # Drop relocs whose r_offset falls inside the range.
+    if rela_idx is not None:
+        rela_hoff = e_shoff + rela_idx * e_shentsize
+        rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+        rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+        keep = bytearray()
+        for ro in range(0, rela_size, 12):
+            r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+            if not (start <= r_offset < end):
+                keep.extend(data[rela_off + ro : rela_off + ro + 12])
+        data[rela_off : rela_off + rela_size] = b"\0" * rela_size
+        data[rela_off : rela_off + len(keep)] = keep
+        struct.pack_into(">I", data, rela_hoff + 20, len(keep))
+
+    if changed:
+        path.write_bytes(data)
+    return changed
+
+
+
+def drop_data_range(path: Path, section: str, start: int, end: int) -> bool:
+    """Remove bytes [start, end) of *section*, shifting later symbols/relocs.
+
+    Used for weak base-class vtables/typeinfo the retail linker GC'd that sit
+    in the middle of the section (lyt_animation: the AnimTransform vtable
+    between AnimTransformBasic's typeinfo and name). Relocs inside the range
+    are dropped; later reloc r_offsets and symbol values shift by -len.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = sec_hoff = sec_off = sec_size = None
+    sym_idx = rela_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        e = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : e].decode("ascii")
+        if name == section:
+            sec_idx, sec_hoff = i, hoff
+            sec_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".rela" + section:
+            rela_idx = i
+    if sec_idx is None or sec_size is None or sec_hoff is None:
+        return False
+    end = min(end, sec_size)
+    length = end - start
+    if length <= 0 or start > sec_size:
+        return False
+
+    # Remove bytes in place; shift later sections (the section is usually
+    # followed by .rela + .symtab etc.).
+    sec_end = sec_off + sec_size
+    data = data[: sec_off + start] + data[sec_off + end :]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= sec_end:
+        e_shoff -= length
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == sec_idx:
+            struct.pack_into(">I", data, hoff + 20, sec_size - length)
+        elif sh_offset >= sec_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset - length)
+
+    # Shift symbols with value >= end; ABS symbols inside the range.
+    if sym_idx is not None:
+        sym_off = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 16)[0]
+        sym_size = struct.unpack_from(">I", data, e_shoff + sym_idx * e_shentsize + 20)[0]
+        for so in range(0, sym_size, 16):
+            st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+            st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+            if st_shndx != sec_idx:
+                continue
+            if start <= st_value < end:
+                struct.pack_into(">I", data, sym_off + so + 8, 0)
+                struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)
+            elif st_value >= end:
+                struct.pack_into(">I", data, sym_off + so + 4, st_value - length)
+
+    # Drop relocs inside the range; shift later r_offsets.
+    if rela_idx is not None:
+        rela_hoff = e_shoff + rela_idx * e_shentsize
+        rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+        rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+        keep = bytearray()
+        for ro in range(0, rela_size, 12):
+            entry = bytearray(data[rela_off + ro : rela_off + ro + 12])
+            r_offset = struct.unpack_from(">I", entry, 0)[0]
+            if start <= r_offset < end:
+                continue
+            if r_offset >= end:
+                struct.pack_into(">I", entry, 0, r_offset - length)
+            keep.extend(entry)
         data[rela_off : rela_off + rela_size] = b"\0" * rela_size
         data[rela_off : rela_off + len(keep)] = keep
         struct.pack_into(">I", data, rela_hoff + 20, len(keep))
@@ -2417,6 +2733,14 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     # the retail name also exists in another section. Re-apply content-based
     # pool naming last so @N numbering never becomes part of a unit rule.
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
+    for sec, off, sym_name in rules.retarget_relocs:
+        changed = retarget_reloc_to_symbol(path, sec, off, sym_name) or changed
+    for sec, start, end in rules.zero_data_range:
+        changed = zero_data_range(path, sec, start, end) or changed
+    for sec, start, end in rules.drop_data_range:
+        changed = drop_data_range(path, sec, start, end) or changed
+    for sec, keep in rules.drop_data_tail:
+        changed = drop_data_tail(path, sec, keep) or changed
     if rules.drop_text_symbols or rules.drop_text_symbols_as_undef:
         changed = (
             drop_text_symbols(

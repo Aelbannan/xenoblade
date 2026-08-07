@@ -181,3 +181,9 @@ extern "C" void func_80483134(void* self, u32 enable) {
         *(u32*)((u8*)self + 0x7A4) &= ~0x02000000;
     }
 }
+
+extern "C" void func_804827DC() {}
+extern "C" void func_80482918() {}
+extern "C" void func_804829E8() {}
+extern "C" void func_80482AD4() {}
+extern "C" void func_80482B3C() {}

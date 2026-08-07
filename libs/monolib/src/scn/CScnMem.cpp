@@ -6,11 +6,6 @@
 u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 
 
-
-
-
-
-
 void func_8048ECD8(void){}
 
 extern void func_8048FDDC();
@@ -36,3 +31,6 @@ extern "C" void WorkEvent3__4CScnFPv(void* self, void* r4) { ((void(*)(void*))fu
 
 extern "C" void __dt__8CScnNw4rFv(void* self, int deleteFlag);
 void func_8048ED1C(void* self){ ((void(*)(void*))__dt__8CScnNw4rFv)((char*)self - 0x54); }
+
+extern "C" void func_8048EB30() {}
+extern "C" void func_8048EC14() {}

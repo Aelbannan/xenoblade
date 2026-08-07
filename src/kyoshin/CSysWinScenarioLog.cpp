@@ -861,3 +861,8 @@ extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg) {
     }
     return arg;
 }
+
+extern "C" void func_8027EC80() {}
+
+extern "C" void Init__18CSysWinScenarioLogFv() {}
+extern "C" void Term__18CSysWinScenarioLogFv() {}

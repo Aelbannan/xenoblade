@@ -16,3 +16,6 @@ extern "C" void func_8049E350(void* self, const void* src) {
     *(u32*)((u8*)self + 0x14) = *(u32*)((u8*)src + 8);
     *(u32*)((u8*)self + 0x18) = *(u32*)((u8*)src + 0xC);
 }
+
+extern "C" void func_8049DE74() {}
+extern "C" void func_8049DEC4() {}

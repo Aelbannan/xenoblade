@@ -38,3 +38,5 @@ extern "C" char* func_8049E8B4(CScnItemAnim* self) {
 extern "C" nw4r::g3d::ResFile func_8049E8BC(CScnItemAnim* self) {
     return self->mResFileCopy;
 }
+
+extern "C" void func_8049E648() {}

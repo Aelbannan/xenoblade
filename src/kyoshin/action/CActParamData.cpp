@@ -425,3 +425,45 @@ namespace ml {
 template <int N> class FixStr { public: void format(const char*, ...); };
 template <> void FixStr<16>::format(const char*, ...) {}
 }
+
+extern "C" void func_80053A90() {}
+extern "C" void func_80053F40() {}
+extern "C" void func_80053F7C() {}
+extern "C" void func_80054170() {}
+extern "C" void func_80054438() {}
+extern "C" void func_80054614() {}
+extern "C" void func_80054980() {}
+extern "C" void func_80054A94() {}
+extern "C" void func_80054D3C() {}
+extern "C" void func_800550E8() {}
+extern "C" void func_80055700() {}
+extern "C" void func_80055AC4() {}
+extern "C" void func_80055B88() {}
+extern "C" void func_80055DB8() {}
+extern "C" void func_80055DD4() {}
+extern "C" void func_80055DF0() {}
+extern "C" void func_80055EBC() {}
+extern "C" void func_80055EE4() {}
+extern "C" void func_80055F08() {}
+extern "C" void func_800563BC() {}
+extern "C" void func_80056730() {}
+extern "C" void func_80056760() {}
+extern "C" void func_80056808() {}
+extern "C" void func_80056888() {}
+extern "C" void func_800568A8() {}
+extern "C" void func_800568C8() {}
+extern "C" void func_80056C34() {}
+extern "C" void func_80056C54() {}
+extern "C" void func_80056CC8() {}
+extern "C" void func_80056CE4() {}
+extern "C" void func_80056EAC() {}
+extern "C" void func_80056EC8() {}
+extern "C" void func_80057084() {}
+extern "C" void func_80057244() {}
+extern "C" void func_80057264() {}
+extern "C" void func_80057470() {}
+extern "C" void func_80057490() {}
+extern "C" void func_80057654() {}
+extern "C" void func_8005789C() {}
+
+extern "C" void func_80057CDC__13CActParamDataFv() {}

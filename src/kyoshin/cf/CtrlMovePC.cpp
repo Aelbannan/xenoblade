@@ -318,3 +318,14 @@ extern "C" void func_80199810(CCtrlMovePC* self, const Vec* pos) {
     self->mVec6C = *(const ml::CVec3*)pos;
     self->mPos   = *(const ml::CVec3*)pos;
 }
+
+extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {}
+extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) { return 0; }
+extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) { return 0; }
+extern "C" void func_8019C304(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019CDA0(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019D9E0(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019DD54(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019E710(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019EF90(cf::CCtrlMovePC* self) {}
+extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {}

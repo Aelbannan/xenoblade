@@ -4,14 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/CUIErrMesWin.hpp"
+extern "C" void cbRenderBefore__12CUIErrMesWinFv();
+extern "C" void __dt__12CUIErrMesWinFv();
 void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
-
-
-
-
-
-
-
 
 
 void CUIErrMesWin::Move() {}
@@ -51,15 +46,15 @@ void func_802B5970(){}
 
 void func_802B5AC8(){}
 
-void CMenuTitle::~CMenuTitle() {}
+extern "C" void __dt__10CMenuTitleFv() {}
 
-void CMenuTitle::Init() {}
+extern "C" void Init__10CMenuTitleFv() {}
 
-void CMenuTitle::Term() {}
+extern "C" void Term__10CMenuTitleFv() {}
 
-void CMenuTitle::Move() {}
+extern "C" void Move__10CMenuTitleFv() {}
 
-void CMenuTitle::cbRenderBefore() {}
+extern "C" void cbRenderBefore__10CMenuTitleFv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
@@ -78,3 +73,10 @@ template<> void CTTask<CUIErrMesWin>::Move() {}
 template<> void CTTask<CUIErrMesWin>::Draw() {}
 class CMenuTitle;
 template<> CTTask<CMenuTitle>::~CTTask() {}
+
+extern "C" void func_802B48A0() {}
+extern "C" void func_802B48B8() {}
+extern "C" void func_802B48E4() {}
+extern "C" void func_802B4968() {}
+extern "C" void func_802B4A68() {}
+extern "C" void func_802B4B84() {}

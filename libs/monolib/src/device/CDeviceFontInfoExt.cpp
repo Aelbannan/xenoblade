@@ -26,3 +26,7 @@ extern "C" u32 func_80453608__18CDeviceFontInfoExtFv(void* self) {
     s32 v = (s32)((CDeviceFontInfoExt*)self)->field_60;
     return v >= 3;
 }
+
+
+extern "C" void func_80453468__18CDeviceFontInfoExtFv() {}
+extern "C" void create__18CDeviceFontInfoExtFv() {}

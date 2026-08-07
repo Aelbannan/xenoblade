@@ -210,3 +210,6 @@ bool BankFileReader::ReadWaveParam(WaveData* pData, int waveIndex,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+extern "C" void GetInstParam__Q44nw4r3snd6detail14BankFileReaderCFiii() {}
+extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14BankFileReaderCFPQ44nw4r3snd6detail8WaveInfoRCQ54nw4r3snd6detail8InstInfo16WaveDataLocationPCvPPCQ44nw4r3snd6detail8WaveInfo() {}

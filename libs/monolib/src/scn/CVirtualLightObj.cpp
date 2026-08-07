@@ -26,3 +26,12 @@ void func_804958B8() {}
 void func_804959E8() {}
 
 void func_80495AF4() {}
+
+extern "C" void func_804947EC() {}
+extern "C" void func_8049488C() {}
+extern "C" void func_804948F4() {}
+extern "C" void func_80494A64() {}
+extern "C" void func_80494C30() {}
+extern "C" void func_80494D84() {}
+extern "C" void func_80494F10() {}
+extern "C" void func_804950F4() {}

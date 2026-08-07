@@ -571,3 +571,5 @@ const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const 
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+extern "C" void SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo() {}

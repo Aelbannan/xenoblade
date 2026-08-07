@@ -203,3 +203,6 @@ extern "C" s16 getSplitLine__11CSplitFrameFv(void* self) {
     if (*(u8*)((u8*)self + 8) != 0) return *(s16*)((u8*)self + 0xC);
     return *(s16*)((u8*)self + 0xA);
 }
+
+
+extern "C" void setSplitLine__11CSplitFrameFs() {}

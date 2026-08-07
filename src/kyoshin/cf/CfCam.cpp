@@ -417,3 +417,13 @@ void func_80074CEC(){}
 extern "C" int CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
+
+extern "C" bool func_8006B6C0() { return false; }
+extern "C" void func_8006BF08() {}
+extern "C" void func_8006BF14() {}
+extern "C" void func_8006C1BC() {}
+extern "C" void func_8006CA20() {}
+extern "C" void func_8006DF9C() {}
+extern "C" bool func_8006E5B8() { return false; }
+extern "C" bool func_80071B6C() { return false; }
+extern "C" bool func_80071CEC() { return false; }

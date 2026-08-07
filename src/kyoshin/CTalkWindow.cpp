@@ -28,3 +28,10 @@ extern "C" bool func_8012CD24() {
     u32 v = lbl_eu_80664044;
     return ((-v) & ~v) >> 31;
 }
+
+extern "C" void func_8012CC78() {}
+extern "C" void func_8012CD38() {}
+
+extern "C" void Init__11CTalkWindowFv() {}
+extern "C" void Term__11CTalkWindowFv() {}
+extern "C" void Move__11CTalkWindowFv() {}

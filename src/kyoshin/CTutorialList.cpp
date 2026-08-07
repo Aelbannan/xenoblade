@@ -7,15 +7,7 @@
 u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
 
 
-
-
 void __ct__CTutorialList(){}
-
-
-
-
-
-
 
 
 void func_802AD308(){}
@@ -76,3 +68,11 @@ extern "C" void func_802ACBDC(void* self) {
     *(unsigned short*)((u8*)self + 0x102) = 0;
     *(unsigned short*)((u8*)self + 0x104) = 0;
 }
+
+extern "C" void func_802ACC30() {}
+extern "C" void func_802ACE04() {}
+extern "C" void func_802AD060() {}
+extern "C" void func_802AD0E0() {}
+extern "C" void func_802AD188() {}
+extern "C" void func_802AD1F4() {}
+extern "C" void func_802AD2A4() {}

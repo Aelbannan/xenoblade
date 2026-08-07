@@ -6,13 +6,7 @@
 void sinit_804CC2B4(void) {}
 
 
-
-
 void func_804C9D24(void){}
-
-
-
-
 
 
 void func_804CB3E4(){}
@@ -62,3 +56,12 @@ void func_804CC1F4(){}
 void func_804CC2B0(void){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
+
+extern "C" void func_804C8790() {}
+extern "C" void func_804C8830() {}
+extern "C" void func_804C8D90() {}
+extern "C" void func_804C9D30() {}
+extern "C" void func_804CAA94() {}
+extern "C" void func_804CAAD4() {}
+extern "C" void func_804CAC08() {}
+extern "C" void func_804CB274() {}

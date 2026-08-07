@@ -415,3 +415,8 @@ extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
 void CViewFrame::CView_UnkVirtualFunc1() {}
 void CViewFrame::CView_UnkVirtualFunc8() {}
 void CViewFrame::CView_UnkVirtualFunc9() {}
+
+
+extern "C" void func_80441290__10CViewFrameFi() {}
+extern "C" void func_80441310__10CViewFrameFP11CWorkThread() {}
+extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame() {}

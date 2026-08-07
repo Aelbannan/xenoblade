@@ -17,14 +17,6 @@ void func_80268C38(void* self);
 void UI_CPassiveSkill::thunk28_68594() { ((void(*)(void*))func_80268594)((char*)this + 0x28); }
 
 
-
-
-
-
-
-
-
-
 void func_8026439C(){}
 
 void func_8026440C(){}
@@ -262,3 +254,16 @@ void func_8026DD3C(){}
 void func_8026DD84(){}
 
 void CPassiveSkill::OnFileEvent() {}
+
+extern "C" void func_80263F30() {}
+extern "C" void func_80263FE8() {}
+extern "C" void func_80264060() {}
+extern "C" void func_802640B8() {}
+extern "C" void func_80264140() {}
+extern "C" void func_802641D0() {}
+extern "C" void func_80264204() {}
+extern "C" void func_80264344() {}
+extern "C" void func_8026DB34() {}
+extern "C" void func_8026DB44() {}
+extern "C" void func_8026DB54() {}
+extern "C" void func_8026DB64() {}

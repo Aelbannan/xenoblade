@@ -395,3 +395,30 @@ cf::CfObjectMove* cf::CfObjectMove::testFlag8() {
 } // namespace cf
 
 extern "C" void func_800BE9AC(void* self) { reinterpret_cast<OMIf*>(self)->vf0014(); }
+
+extern "C" void func_800BC3B0() {}
+extern "C" void func_800BC3F0() {}
+extern "C" void func_800BC458() {}
+extern "C" void func_800BC4CC() {}
+extern "C" void func_800BC68C() {}
+extern "C" void func_800BC8D8() {}
+extern "C" void func_800BC9EC() {}
+extern "C" void func_800BCD04() {}
+extern "C" void func_800BCFA0() {}
+extern "C" void func_800BD644() {}
+extern "C" void func_800BE0F8() {}
+extern "C" void func_800BE12C() {}
+extern "C" void func_800BE1A4() {}
+extern "C" void func_800BE28C() {}
+extern "C" void func_800BE33C() {}
+extern "C" void func_800BE3E8() {}
+extern "C" void func_800BE824() {}
+extern "C" void func_800BE8B4() {}
+extern "C" void func_800BEA34() {}
+extern "C" bool func_800BEA38() { return false; }
+extern "C" void func_800BED6C() {}
+extern "C" void func_800BED80() {}
+extern "C" void func_800BEDC4() {}
+extern "C" void func_800BEE08() {}
+extern "C" void func_800BEE30() {}
+extern "C" void func_800BF2F4() {}

@@ -116,3 +116,6 @@ extern "C" void func_8049BED0(void* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 4);
     obj->v16();
 }
+
+extern "C" void func_8049B9EC() {}
+extern "C" void func_8049BA58() {}

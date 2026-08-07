@@ -53,7 +53,6 @@ void func_80097E00(){}
 void func_80098194(){}
 
 
-
 void func_800983B8(){}
 
 void cf::CtrlPc::setField380(u32 val) { mField380 = val; }
@@ -97,3 +96,15 @@ extern "C" void CtrlPc_setArrayVal(int idx, int val)
 {
     lbl_eu_80527E98[idx] = val;
 }
+
+extern "C" void func_80096F18() {}
+extern "C" void func_80096F24() {}
+extern "C" void func_80096F30() {}
+extern "C" void func_80096F48() {}
+extern "C" void func_80096F54() {}
+extern "C" void func_80096F60() {}
+extern "C" void func_80096F78() {}
+extern "C" void func_80096F84() {}
+extern "C" void func_80096F90() {}
+extern "C" bool func_8009868C() { return false; }
+extern "C" bool func_800987F8() { return false; }

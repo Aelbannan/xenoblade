@@ -61,14 +61,6 @@ struct UnkKizunaDisp {
 void func_8025C870() {}
 
 
-
-
-
-
-
-
-
-
 // Toggle both pane entries each frame: walk the +0x08 child to its +0x10
 // sub-object, pull its slot-15 layout pane for each id in a 2-word table, and
 // repaint the pane matching the given phase byte.
@@ -429,7 +421,6 @@ void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
 }
 
 
-
 void func_8025C874(){}
 
 void func_8025C904(){}
@@ -537,3 +528,6 @@ void CKizunagram::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8025D304(){}
+
+extern "C" void func_80257B6C() {}
+extern "C" void func_8025A11C() {}

@@ -8,17 +8,9 @@ struct CNumSelectFull;
 u8 func_801EB018(void* self) { return static_cast<CNumSelectFull*>(self)->field_2D; }
 
 
-
-
-
-
-
 u8 func_801EB020(void* self) { return static_cast<CNumSelectFull*>(self)->field_2C; }
 
 u8 func_801EB028(void* self) { return static_cast<CNumSelectFull*>(self)->field_2E; }
-
-
-
 
 
 void func_801EB178(){}
@@ -45,3 +37,11 @@ extern "C" void func_801EB04C(void* self, u8 r4) {
     void* layout = *(void**)((u8*)self + 0x1C);
     func_80136910__FPQ34nw4r3lyt6LayoutPcUc(layout, (char*)lbl_eu_80506C14 + 0x20, r4);
 }
+
+extern "C" void func_801EAE8C() {}
+extern "C" void func_801EAED4() {}
+extern "C" void func_801EAF7C() {}
+extern "C" void func_801EAF9C() {}
+extern "C" void func_801EB030() {}
+extern "C" void func_801EB064() {}
+extern "C" void func_801EB0D4() {}

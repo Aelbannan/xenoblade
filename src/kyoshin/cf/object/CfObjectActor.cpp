@@ -94,3 +94,14 @@ extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(void* self,
     *(float*)((u8*)self + 0x15e8) = v;
     reinterpret_cast<IfDC*>((u8*)self + 0x3e9c)->vfDC();
 }
+
+
+extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc33__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv() {}
+extern "C" void CActorParam_UnkVirtualFunc4__Q22cf13CfObjectActorFv() {}

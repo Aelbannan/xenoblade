@@ -416,3 +416,5 @@ void func_800A3998(){}
 void func_800A39E8(){}
 
 void func_800A3A6C(){}
+
+extern "C" void func_8009E0A8() {}

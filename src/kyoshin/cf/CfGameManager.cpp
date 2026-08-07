@@ -990,3 +990,26 @@ cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
     return field_0x15D8;
 }
 
+
+void cf::CfGameManager::func_8007C6C0() {}
+void cf::CfGameManager::func_8007CBEC() {}
+void cf::CfGameManager::func_8007CF64() const {}
+void cf::CfGameManager::func_8007D1A0() {}
+void cf::CfGameManager::func_8007DCB8() {}
+void cf::CfGameManager::func_8007E9CC() {}
+void cf::CfGameManager::func_8007F1FC() {}
+void cf::CfGameManager::func_8007F9C4() {}
+void cf::CfGameManager::func_80080888() {}
+void cf::CfGameManager::func_800826F0() {}
+void cf::CfGameManager::func_800827E4() {}
+void cf::CfGameManager::func_80082C48() {}
+void cf::CfGameManager::func_80083EA4() {}
+void cf::CfGameManager::func_80083F28() {}
+void cf::CfGameManager::func_8008402C() {}
+void cf::CfGameManager::func_8008413C() {}
+void cf::CfGameManager::func_80084654() {}
+void cf::CfGameManager::func_80084F50() {}
+void cf::CfGameManager::func_800853C8() {}
+void cf::CfGameManager::func_80085978() {}
+void cf::CfGameManager::func_80085FB8() {}
+void cf::CfGameManager::func_80086778() {}

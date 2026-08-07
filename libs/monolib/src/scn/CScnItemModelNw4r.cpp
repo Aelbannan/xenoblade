@@ -214,3 +214,11 @@ extern "C" void func_8048BD7C(void* self) { ((void(*)(void*))func_80489924)((cha
 extern "C" void func_8048BD84(void* self) { ((void(*)(void*))func_80489584)((char*)self - 0x1468); }
 
 extern "C" void func_8048BD8C(void* self) { ((void(*)(void*))__dt__17CScnItemModelNw4rFv)((char*)self - 0x1468); }
+
+extern "C" void func_80487374() {}
+extern "C" void func_804873EC() {}
+extern "C" void func_804875B8() {}
+extern "C" void func_804876EC() {}
+extern "C" void func_8048776C() {}
+extern "C" void func_80487818() {}
+extern "C" void func_80487B18() {}

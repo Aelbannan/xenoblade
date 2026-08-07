@@ -15,13 +15,7 @@ void func_8049CB6C(void) {}
 void func_8049C9F8(void){}
 
 
-
-
-
-
 void func_8049CB70(void){}
-
-
 
 
 void func_8049CC70(){}
@@ -165,3 +159,5 @@ void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 void func_8049DD30(){}
 
 void CScnFilterMan::cbRenderBefore() {}
+
+extern "C" void func_8049CAF4() {}

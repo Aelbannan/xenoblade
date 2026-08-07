@@ -228,3 +228,6 @@ extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(void* self) { reinterpret_ca
 extern "C" void func_800AD830__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00D0(); }
 
 extern "C" void func_800AD840__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }
+
+
+extern "C" void func_800AC86C__Q22cf11CfObjectEffFv() {}

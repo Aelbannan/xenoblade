@@ -88,13 +88,6 @@ extern "C" void* __dt__9CMainMenuFv(CMainMenu* _this, int flags) {
 }
 
 
-
-
-
-
-
-
-
 extern u32 lbl_eu_8052BDF4[];
 
 // Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
@@ -279,3 +272,6 @@ void CTTask<IUICf>::Draw() {
 template<>
 CTTask<IUICf>::~CTTask() {
 }
+
+
+extern "C" void Term__9CMainMenuFv() {}

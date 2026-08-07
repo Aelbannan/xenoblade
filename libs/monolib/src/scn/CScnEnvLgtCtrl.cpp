@@ -11,14 +11,6 @@ struct CScnEnvLgtCtrl {
 void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 
 
-
-
-
-
-
-
-
-
 void func_804C1500(){}
 
 void func_804C1600(){}
@@ -334,3 +326,9 @@ void func_804C8054(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804C8174(){}
+
+extern "C" void func_804C1094() {}
+extern "C" void func_804C123C() {}
+extern "C" void func_804C1270() {}
+extern "C" void func_804C12A4() {}
+extern "C" void func_804C1338() {}

@@ -828,3 +828,27 @@ void sinit_800B9A40() {
     lbl_eu_80663ED4 = f0_sq;
     lbl_eu_80663EE0 = 0;
 }
+
+extern "C" void func_800B14D4() {}
+extern "C" void func_800B14FC() {}
+extern "C" bool func_800B2D28() { return false; }
+extern "C" void func_800B31D4() {}
+extern "C" void func_800B3D34() {}
+extern "C" void func_800B3D40() {}
+extern "C" void func_800B4A24() {}
+extern "C" void func_800B4F6C() {}
+extern "C" bool func_800B4FA4() { return false; }
+extern "C" void func_800B64D0() {}
+extern "C" void func_800B7058() {}
+extern "C" void func_800B7320() {}
+extern "C" void func_800B7A18() {}
+extern "C" void func_800B87FC() {}
+extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent() {}
+extern "C" void func_800B92D8() {}
+extern "C" void func_800B93D0() {}
+extern "C" void func_800B9404() {}
+extern "C" void func_800B9438() {}
+extern "C" void func_800B946C() {}
+extern "C" void func_800B94A0() {}
+extern "C" void func_800B9548() {}
+extern "C" bool func_800B96D8() { return false; }

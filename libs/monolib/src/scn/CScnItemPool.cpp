@@ -63,3 +63,9 @@ void func_8048CCC0() {}
 void func_8048CD0C() {}
 void func_8048CDA8(void) {}
 extern "C" void func_8048CDAC(int* dst, int* src) { *dst = *src; }
+
+extern "C" void func_8048C0EC() {}
+extern "C" void func_8048C400() {}
+extern "C" void func_8048C480() {}
+extern "C" void func_8048C4F8() {}
+extern "C" void func_8048CF5C() {}

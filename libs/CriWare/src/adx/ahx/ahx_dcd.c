@@ -265,9 +265,6 @@ void AHXDCD_BhdrToDinf(void* self, s32* out) {
 }
 
 
-
-
-
 s32 AHXDCD_DecodeBhdr(void* self, s32* out) {
     out[0] = AHXBSR_GetBitStm(self, 1);
     out[1] = 4 - AHXBSR_GetBitStm(self, 2);
@@ -339,3 +336,5 @@ s32 AHXDCD_DecodeBitalloc2(void* self, void* inf, s32* out) {
     return 0;
 }
 s32 AHXDCD_DecodeScale2(s32 a, void* b, void* c, void* d, void* e) { return 0; }
+
+void AHXDCD_DecodeFrmHdr() {}

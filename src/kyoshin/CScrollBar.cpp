@@ -7,16 +7,9 @@
 u8 CScrollBar::isVisible() { return mVisible; }
 
 
-
-
-
-
-
 u8 CScrollBar::func_801F3668() { return mActive; }
 
 void func_801F3670(void){}
-
-
 
 
 void func_801F3850(){}
@@ -34,3 +27,11 @@ extern "C" void func_801F39B4(void* self) {
 }
 
 bool CScrollBar::OnFileEvent(CEventFile*) { return true; }
+
+extern "C" void func_801F34F4() {}
+extern "C" void func_801F3540() {}
+extern "C" void func_801F35B0() {}
+extern "C" void func_801F35DC() {}
+extern "C" void func_801F367C() {}
+extern "C" void func_801F369C() {}
+extern "C" void func_801F36BC() {}

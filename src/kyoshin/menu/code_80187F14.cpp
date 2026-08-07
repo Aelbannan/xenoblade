@@ -429,3 +429,5 @@ void func_8018B224() {}
 void func_8018B230() {}
 void func_8018B23C() {}
 void func_8018B31C() {}
+
+extern "C" void func_80189450() {}

@@ -86,3 +86,15 @@ extern CMenuBattleDamage* lbl_eu_80663F28;
 extern "C" void func_80109874(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x777) = val; }
 extern "C" void func_80109888(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x778) = val; }
 extern "C" void func_8010989C(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x779) = val; }
+
+extern "C" void func_801096B8() {}
+extern "C" void func_80109734() {}
+extern "C" void func_8010975C() {}
+extern "C" void func_80109784() {}
+extern "C" void func_801098B0() {}
+extern "C" void func_8010A710() {}
+extern "C" void func_8010A7A8() {}
+extern "C" void func_8010A848() {}
+extern "C" void func_8010A8E4() {}
+extern "C" void func_8010A940() {}
+extern "C" void func_8010ACC4() {}

@@ -711,9 +711,7 @@ extern "C" void Init__Q22cf9CfResTaskFv() {}
 void cf::CfResTask::Term() {}
 
 
-
 cf::CfRes::CfRes() {}
-
 
 
 extern "C" char* CfRes_strcatAppend(char* buffer, const char* suffix) {
@@ -827,3 +825,6 @@ namespace cf { class CfResTask; }
 template<> CTTask<cf::CfResTask>::~CTTask() {}
 template<> void CTTask<cf::CfResTask>::Move() {}
 template<> void CTTask<cf::CfResTask>::Draw() {}
+
+extern "C" void func_80062BA0() {}
+extern "C" void func_80062CD0() {}

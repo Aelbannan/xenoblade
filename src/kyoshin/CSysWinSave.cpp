@@ -11,13 +11,6 @@ void cbRenderBefore__11CSysWinSaveFv(void*);
 void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 
 
-
-
-
-
-
-
-
 void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
 
 void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
@@ -42,3 +35,9 @@ extern "C" unsigned long func_80294624() {
     extern unsigned long lbl_eu_80664A08;
     return lbl_eu_80664A08 != 0;
 }
+
+extern "C" void func_80294638() {}
+
+extern "C" void Init__11CSysWinSaveFv() {}
+extern "C" void Term__11CSysWinSaveFv() {}
+extern "C" void Move__11CSysWinSaveFv() {}

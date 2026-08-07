@@ -19,3 +19,9 @@ void func_801252C0(void* self) { ((void(*)(void*))cbRenderBefore__13CSysWinSelec
 extern "C" void func_801252C8(void* self) { ((void(*)(void*))__dt__13CSysWinSelectFv)((char*)self - 0x70); }
 
 
+extern "C" void func_80125070() {}
+extern "C" void func_801250FC() {}
+
+extern "C" void Init__13CSysWinSelectFv() {}
+extern "C" void Term__13CSysWinSelectFv() {}
+extern "C" void Move__13CSysWinSelectFv() {}

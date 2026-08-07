@@ -23,7 +23,7 @@ void func_801226C8(){}
 
 void func_8012278C(void* self){}
 
-void CQuestWindow::cbRenderBefore() {}
+extern "C" void cbRenderBefore__12CQuestWindowFv() {}
 
 void func_80122B2C(){}
 
@@ -74,3 +74,8 @@ public:
 class IUIWindow;
 template<> void CTTask<IUIWindow>::Move() {}
 template<> void CTTask<IUIWindow>::Draw() {}
+
+extern "C" void func_8012246C() {}
+
+extern "C" void Init__12CQuestWindowFv() {}
+extern "C" void Term__12CQuestWindowFv() {}

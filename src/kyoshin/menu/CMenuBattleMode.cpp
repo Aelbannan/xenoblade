@@ -58,3 +58,7 @@ extern void __dt__15CMenuBattleModeFv();
 void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
 void __ct__CMenuBattleMode(){}
+
+
+extern "C" void Term__15CMenuBattleModeFv() {}
+extern "C" void Move__15CMenuBattleModeFv() {}

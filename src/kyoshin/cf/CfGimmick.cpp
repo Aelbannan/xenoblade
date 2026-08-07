@@ -678,3 +678,5 @@ void func_8020AA8C(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8020AB7C() {}
+
+extern "C" void func_8020899C() {}

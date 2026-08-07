@@ -23,6 +23,9 @@ u8 func_801EC23C(const CIBLTab* self, unsigned int index);
 u32 func_801EC260(const CIBLTab* self, unsigned int index);
 u8 func_801EC8B4(const CIBLTab* self, unsigned int index);
 void func_801EDA08(CItemBoxLine* self);
+void func_801F1E64(CItemBoxLine* self, u32 itemData);
+void func_801F20F0(CItemBoxLine* self, u32 itemData);
+void func_801F2298(CItemBoxLine* self, u32 itemData);
 
 // --- external retail helpers (C-linkage or literal mangled symbols) ---
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
@@ -590,3 +593,7 @@ extern "C" void func_801EBB88(void* self, u16 r4, u32 r5, u8 r6, u8 r7) {
     *((u8*)self + 8) = r6;
     *((u8*)self + 9) = r7;
 }
+
+extern "C" void func_801EBAD4() {}
+extern "C" void func_801EBC00() {}
+extern "C" void func_801EC284() {}

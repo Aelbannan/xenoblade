@@ -11,15 +11,7 @@ u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 void func_80227994(){}
 
 
-
-
-
-
-
-
 u8 CQstLogList::func_80227CD4() { return mSortDescending; }
-
-
 
 
 void func_80227EC8(){}
@@ -60,7 +52,7 @@ void func_80228C04(){}
 
 void func_80228C98(){}
 
-void CQstLogList::OnFileEvent() {}
+extern "C" void OnFileEvent__12CQstLogListFv() {}
 
 void func_80229398(){}
 
@@ -71,3 +63,12 @@ extern u8 lbl_eu_80576670[];
 extern "C" void sinit_80229378() {
     __construct_array(lbl_eu_80576670, (void*)func_80229398, 0, 0x22, 0x20);
 }
+
+extern "C" void func_80227A60() {}
+extern "C" void func_80227AC4() {}
+extern "C" void func_80227B6C() {}
+extern "C" void func_80227BD8() {}
+extern "C" void func_80227C70() {}
+extern "C" void func_80227CDC() {}
+extern "C" void func_80227D78() {}
+extern "C" void func_80227DE8() {}

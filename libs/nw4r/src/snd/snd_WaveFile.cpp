@@ -134,3 +134,5 @@ WaveArchiveReader::WaveArchiveReader(const void* pData) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+extern "C" void* GetWaveFile__Q44nw4r3snd6detail17WaveArchiveReaderCFi(int index) { return 0; }

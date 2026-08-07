@@ -108,3 +108,6 @@ namespace{
 
 bool CDesktop::OnFileEvent(CEventFile* pFile) { return false; }
 bool CDesktop::WorkEvent3(void* pThing) { return false; }
+
+
+extern "C" void getCurrentProc__8CDesktopFv() {}

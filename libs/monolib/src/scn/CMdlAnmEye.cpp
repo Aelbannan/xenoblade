@@ -7,3 +7,6 @@ extern "C" void func_804E77BC(void* self, u32 val) {
 }
 
 CMdlAnmEye::~CMdlAnmEye() {}
+
+extern "C" void func_804E75B8() {}
+extern "C" void func_804E77C4() {}

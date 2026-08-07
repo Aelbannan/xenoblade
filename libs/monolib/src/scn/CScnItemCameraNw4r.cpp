@@ -14,3 +14,6 @@ extern "C" void func_80482048(void) {}
 
 extern "C" void* func_8048204C(void* self) { return (void*)((u8*)self + 0x10); }
 
+
+extern "C" void func_80481F00() {}
+extern "C" void func_80481F9C() {}

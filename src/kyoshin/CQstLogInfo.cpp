@@ -68,3 +68,8 @@ void CQstLogInfo::func_80229600(){
     if (mUnk30 == 0) return;
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mUnk20, 0, 0, 1);
 }
+
+extern "C" void func_802294C0() {}
+extern "C" void func_80229510() {}
+extern "C" void func_80229570() {}
+extern "C" void func_80229620() {}

@@ -7,10 +7,6 @@
 void func_80492030(void) {}
 
 
-
-
-
-
 void func_80492158(void) {}
 
 void func_8049215C(void){}
@@ -18,10 +14,7 @@ void func_8049215C(void){}
 void func_80492168(void){}
 
 
-
 void func_8049239C(void){}
-
-
 
 
 void func_804929C0(){}
@@ -180,3 +173,7 @@ void func_804942BC(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80494300(){}
+
+extern "C" void func_804920E0() {}
+extern "C" void func_8049216C() {}
+extern "C" void func_804923F8() {}

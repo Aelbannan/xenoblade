@@ -307,9 +307,6 @@ int func_8013A4B4(void* a, void* b, void* c);
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
 
 
-
-
-
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_80496264(void* obj, int index);
 
@@ -837,3 +834,14 @@ after_bit21:
 done:
     ;
 }
+
+extern "C" void func_8010EB44() {}
+extern "C" void func_8010ED58() {}
+extern "C" void func_8010EDE4() {}
+extern "C" void func_801109D8() {}
+extern "C" void func_80110A78() {}
+extern "C" void func_80111C50() {}
+extern "C" void func_801124C8() {}
+
+extern "C" void Init__15CMenuEnemyStateFv() {}
+extern "C" void Term__15CMenuEnemyStateFv() {}

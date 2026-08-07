@@ -110,3 +110,6 @@ void GDSetCurrentMtx(const u32* pIdArray) {
 } // namespace fifo
 } // namespace g3d
 } // namespace nw4r
+
+extern "C" void GDSetIndTexMtx__Q34nw4r3g3d4fifoFUlRCQ34nw4r4math5MTX34(u32 id, const nw4r::math::MTX34& rMtx) {}
+extern "C" void GDLoadTexMtxImm3x3__Q34nw4r3g3d4fifoFRCQ34nw4r4math5MTX33Ul(const nw4r::math::MTX33& rMtx, u32 id) {}

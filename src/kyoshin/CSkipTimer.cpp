@@ -511,3 +511,5 @@ bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) { return false; }
 void sinit_802A07D8() {
     lbl_eu_80664A50 = lbl_eu_80668C48 * (lbl_eu_80668C4C * lbl_eu_80662C78);
 }
+
+extern "C" void func_8029F168() {}

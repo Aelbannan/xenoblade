@@ -6,14 +6,6 @@
 void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
 
-
-
-
-
-
-
-
-
 extern "C" void* func_8048FDE4(void* self) { return (void*)((u8*)self + 0x45c); }
 
 
@@ -61,3 +53,12 @@ extern "C" void func_804900A0__FUl(u32 param) {
         lbl_eu_806658FC -= 1;
     }
 }
+
+extern "C" void func_8048F4D0() {}
+extern "C" void func_8048F5C8() {}
+extern "C" void func_8048F630() {}
+extern "C" void func_8048F7A8() {}
+extern "C" void func_8048F8E8() {}
+extern "C" void func_8048F994() {}
+extern "C" void func_8048FAA8() {}
+extern "C" void func_8048FC68() {}

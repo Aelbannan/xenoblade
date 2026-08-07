@@ -76,7 +76,6 @@ void copyWord4Offset(u32* dst, const u32* src) {
 }
 
 
-
 void func_800599E0(){}
 
 void func_80059A48(){}
@@ -102,3 +101,5 @@ template<> CTTask<CTaskEnvironment>::~CTTask() {}
 template<> void CTTask<CTaskEnvironment>::Move() {}
 template<> void CTTask<CTaskEnvironment>::Draw() {}
 void sinit_80059D60(){}
+
+extern "C" void func_800586E8() {}

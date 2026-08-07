@@ -75,3 +75,8 @@ void func_8049A318(){}
 void func_8049A850(){}
 
 void func_8049AA74(){}
+
+extern "C" void func_804996E8() {}
+extern "C" void func_80499718() {}
+extern "C" void func_80499810() {}
+extern "C" void func_80499FD0() {}

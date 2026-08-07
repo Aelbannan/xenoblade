@@ -732,3 +732,5 @@ public:
 // (mapped to __ct__80449548 above)
 // (mapped to __ct__80449548 above)
 template <> void CMsgParam<32>::func_80449B94(unsigned long) {}
+
+extern "C" void func_80449550__FRQ22ml5CCol4() {}

@@ -54,3 +54,5 @@ extern "C" unsigned long func_802B0D10() {
     extern unsigned long lbl_eu_80664C00;
     return lbl_eu_80664C00 != 0;
 }
+
+extern "C" void func_802B0D24() {}

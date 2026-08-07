@@ -493,3 +493,6 @@ SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+extern "C" void GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv() {}
+extern "C" void GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv() {}

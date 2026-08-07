@@ -6,15 +6,6 @@
 void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
 
-
-
-
-
-
-
-
-
-
 void func_80497724(){}
 
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
@@ -80,3 +71,12 @@ void func_80498288(){}
 void func_804986F8(){}
 
 void func_80498A5C(){}
+
+extern "C" void func_80496D74() {}
+extern "C" void func_80496F14() {}
+extern "C" void func_80496FC4() {}
+extern "C" void func_804970D0() {}
+extern "C" void func_8049715C() {}
+extern "C" void func_80497190() {}
+extern "C" void func_804972E8() {}
+extern "C" void func_80497544() {}

@@ -199,3 +199,7 @@ void func_804ECEB4(){}
 void func_804ED18C(){}
 
 void func_804ED67C(){}
+
+extern "C" void func_804E95E0() {}
+extern "C" void func_804E9FD0() {}
+extern "C" void func_804EA038() {}

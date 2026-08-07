@@ -50,3 +50,7 @@ void func_800FE860(){}
 void func_800FE96C(){}
 
 void sinit_800FEA14(){}
+
+extern "C" void func_800FD774() {}
+extern "C" void func_800FDE4C() {}
+extern "C" void func_800FE104() {}

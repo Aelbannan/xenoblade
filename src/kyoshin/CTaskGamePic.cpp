@@ -12,13 +12,6 @@ void cbRenderBefore__12CTaskGamePicFv(void*);
 void Draw__12CTaskGamePicFv() {}
 
 
-
-
-
-
-
-
-
 void func_8029539C(void* self){}
 
 void CTaskGamePic::create() {}
@@ -50,3 +43,9 @@ template<> void CTTask<CTaskGamePic>::Draw() {}
 extern "C" s16 func_80295388(void* self) {
     return (s16)(*(s16*)((u8*)self + 2) + *(s16*)((u8*)self + 6));
 }
+
+extern "C" void func_80294E58() {}
+extern "C" void func_80294EC0() {}
+
+extern "C" void Init__12CTaskGamePicFv() {}
+extern "C" void Term__12CTaskGamePicFv() {}

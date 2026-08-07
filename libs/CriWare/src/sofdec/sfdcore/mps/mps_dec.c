@@ -366,3 +366,5 @@ void mpsdec_DecPketHd(MPS_WORK *hn, const u8 *src, u32 *size_out, u32 count) {
     *size_out = sz;
     hn->pket.payload = hn->pket.length + consumed - sz;
 }
+
+void mpsdec_DecSysHd() {}

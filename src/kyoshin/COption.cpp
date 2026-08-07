@@ -75,14 +75,6 @@ int func_8029E3F8(COption* self);
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
 
-
-
-
-
-
-
-
-
 // Show pane "name1", hide pane "name2", then activate cursor.
 extern "C" void func_8029C03C(COption* self) {
     nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x50, true);
@@ -643,3 +635,7 @@ extern "C" void func_80296A04__FP14Class_80296898(void*);
 extern "C" void sinit_8029E7D8(){
     func_80296A04__FP14Class_80296898(&lbl_eu_80577308);
 }
+
+extern "C" void func_8029BF68() {}
+extern "C" void func_8029C35C() {}
+extern "C" void func_8029C4F4() {}

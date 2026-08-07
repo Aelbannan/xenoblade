@@ -47,14 +47,6 @@ typedef void* (*VFuncPtr)(void*, const char*, u32);
 u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
-
-
-
-
-
-
-
-
 void func_80245450(void* self) {
     extern void func_80246200(void*);
     extern void func_80138078(u32);
@@ -1013,3 +1005,10 @@ void sinit_80250CB4() {
     lbl_eu_806647B8[2] = 0x43;
     lbl_eu_806647B8[3] = 0xFFFF;
 }
+
+extern "C" void func_80244764() {}
+extern "C" void func_80244944() {}
+extern "C" void func_80244AE8() {}
+extern "C" void func_80244C60() {}
+extern "C" void func_80244DD8() {}
+extern "C" void func_802452C4() {}

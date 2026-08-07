@@ -7,17 +7,9 @@
 u8 CPartyState::func_801FD17C() { return field_0x30; }
 
 
-
-
-
-
-
 u8 CPartyState::func_801FD184() { return field_0x31; }
 
 u8 CPartyState::func_801FD18C() { return field_0x57; }
-
-
-
 
 
 void func_801FD304(){}
@@ -65,3 +57,12 @@ void func_801FE20C(){}
 void func_801FE39C(){}
 
 void CPartyState::OnFileEvent() {}
+
+extern "C" void func_801FCF5C() {}
+extern "C" void func_801FCFF4() {}
+extern "C" void func_801FD0A0() {}
+extern "C" void func_801FD0F4() {}
+extern "C" void func_801FD194() {}
+extern "C" void func_801FD1BC() {}
+extern "C" void func_801FD220() {}
+extern "C" void func_801FD290() {}

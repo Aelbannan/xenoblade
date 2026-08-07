@@ -152,3 +152,7 @@ bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+extern "C" void ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi() {}
+extern "C" void GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv() {}
+extern "C" void ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi() {}

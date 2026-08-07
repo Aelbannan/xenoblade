@@ -26,3 +26,12 @@ extern "C" void func_8022CA6C(void* self) {
 }
 
 bool CSelShopWin::OnFileEvent(CEventFile*) { return true; }
+
+extern "C" void func_8022C770() {}
+extern "C" void func_8022C7C0() {}
+extern "C" void func_8022C830() {}
+extern "C" void func_8022C85C() {}
+extern "C" void func_8022C8E0() {}
+extern "C" void func_8022C908() {}
+extern "C" void func_8022C930(int) {}
+extern "C" void func_8022C9D4() {}

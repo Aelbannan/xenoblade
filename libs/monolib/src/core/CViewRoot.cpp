@@ -650,3 +650,6 @@ bool CViewRoot::wkStandbyLogin() {
 bool CViewRoot::wkStandbyLogout() {
     return false;
 }
+
+
+extern "C" void getRootView__9CViewRootFP5CView() {}

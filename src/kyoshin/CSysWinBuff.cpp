@@ -15,12 +15,6 @@ u32 getInstance__11CSysWinBuffFv(void) {
 }
 
 
-
-
-
-
-
-
 void OnFileEvent__11CSysWinBuffFP10CEventFile(void* self) { ((void(*)(void*))func_80274A84)((char*)self - 0x6c); }
 
 void func_80274B08(void* self) { ((void(*)(void*))__dt__11CSysWinBuffFv)((char*)self - 0x6c); }
@@ -32,3 +26,9 @@ extern "C" void func_80274B18(void* self) { ((void(*)(void*))__dt__11CSysWinBuff
 extern "C" void func_80274B20() {}
 
 extern "C" void func_80274B24() {}
+
+
+extern "C" void Init__11CSysWinBuffFv() {}
+extern "C" void Term__11CSysWinBuffFv() {}
+extern "C" void Move__11CSysWinBuffFv() {}
+extern "C" void create__11CSysWinBuffFv() {}

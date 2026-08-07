@@ -21,11 +21,6 @@ void func_8022DAD8(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
 u8 func_8022DB6C(void* self) { return static_cast<CPresentWin*>(self)->mField30; }
 
 
-
-
-
-
-
 u8 func_8022DB74(void* self) { return static_cast<CPresentWin*>(self)->mField38; }
 
 // State-machine transition: if state == 2, advance to state 3 and clear sub-state
@@ -86,3 +81,7 @@ extern "C" u8 func_8022E868(void* self, u32 r4) {
     if (r4 >= limit) return 0;
     return p->mDataArray[r4];
 }
+
+extern "C" void func_8022D614() {}
+extern "C" void func_8022DA58() {}
+extern "C" void func_8022DB7C() {}

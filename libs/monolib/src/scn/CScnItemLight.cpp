@@ -10,3 +10,6 @@ void __ct__CScnItemLightNw4r(void*, int);
 extern "C" void func_80482398(void* self, int val) {
     __ct__CScnItemLightNw4r(self, (s32)(s16)val);
 }
+
+extern "C" void func_80482388() {}
+extern "C" void func_80482400() {}

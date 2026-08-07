@@ -105,14 +105,6 @@ extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
 #pragma pop
 
 
-
-
-
-
-
-
-
-
 // Look up a grid element and return the item object pointer when present.
 extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
@@ -717,3 +709,6 @@ void CEquipItemBox::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8028DAB0(){}
+
+extern "C" void func_80282610() {}
+extern "C" void func_80282D60() {}

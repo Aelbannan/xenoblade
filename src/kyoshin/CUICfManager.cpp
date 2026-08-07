@@ -465,7 +465,6 @@ u32 lbl_eu_80663E28;
 f32 lbl_eu_806672CC;
 
 
-
 void* __ct__CMenuKeyAssign(void*, u32);
 void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
 void* func_8011E4C4(void*, u32);
@@ -1127,3 +1126,5 @@ void OnFileEvent__12CUICfManagerFv();
 void CUICfManager::func_80135FBC() {
     OnFileEvent__12CUICfManagerFv();
 }
+
+extern "C" void func_801355BC() {}

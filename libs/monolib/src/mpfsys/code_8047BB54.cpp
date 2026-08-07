@@ -45,3 +45,7 @@ void UnkClass_8047BB54::func_8047C904() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8047CA2C(){}
+
+
+extern "C" void func_8047BC54__17UnkClass_8047BB54Fv() {}
+extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv() {}

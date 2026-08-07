@@ -381,3 +381,7 @@ char* CTaskGame_FixStr_append(ml::FixStr<32>* str, const char* r4_str) {
 void func_8004312C(); void Draw__9CTaskGameFv() {
     func_8004312C();
 }
+
+extern "C" void func_8004347C() {}
+extern "C" void func_800434AC() {}
+extern "C" void func_800440C4() {}

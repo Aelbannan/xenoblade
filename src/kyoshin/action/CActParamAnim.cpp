@@ -752,3 +752,7 @@ extern "C" void sinit_800539E0() {
     extern float lbl_eu_80663D48;
     lbl_eu_80663D48 = lbl_eu_8066AF20;
 }
+
+extern "C" void func_8004B6A4() {}
+extern "C" bool func_8004DAC4() { return false; }
+extern "C" void func_80051BA0() {}

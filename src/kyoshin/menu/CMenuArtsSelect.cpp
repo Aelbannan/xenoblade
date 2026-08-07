@@ -82,19 +82,6 @@ int func_8010EDD4(void*);
 int func_8010A840(void*);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 extern char lbl_eu_804FD1E0[];
 extern u8 lbl_eu_804FD0D0[];
 
@@ -1247,3 +1234,6 @@ void CMenuArtsSelect::func_801080F8(){}
 void func_801086D0(){}
 void func_801088CC(){}
 void CMenuArtsSelect::func_80108994(){}
+
+extern "C" void func_801041F4() {}
+extern "C" void func_801042F0() {}

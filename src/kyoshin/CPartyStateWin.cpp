@@ -11,16 +11,9 @@ u32 func_801F9694(void) {
 }
 
 
-
 u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
 
 u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
-
-
-
-
-
-
 
 
 void func_801F9894(){}
@@ -99,3 +92,11 @@ void CPartyStateWin::cbRenderBefore() {}
 void func_801FBDB8(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->cbRenderBefore(); }
 
 void func_801FBDC0(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->~CPartyStateWin(); }
+
+extern "C" void func_801F941C() {}
+extern "C" void func_801F969C() {}
+extern "C" void func_801F970C() {}
+extern "C" void func_801F9730() {}
+extern "C" void func_801F9754() {}
+extern "C" void func_801F981C() {}
+extern "C" void func_801F9864() {}

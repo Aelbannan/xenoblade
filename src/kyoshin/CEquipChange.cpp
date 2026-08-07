@@ -494,3 +494,7 @@ int func_802031A0(CEquipChange* self) {
     default: return 0;
     }
 }
+
+extern "C" void func_80202110() {}
+extern "C" void func_802021E4() {}
+extern "C" void func_8020228C() {}

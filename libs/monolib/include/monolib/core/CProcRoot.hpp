@@ -2,7 +2,7 @@
 
 #include "monolib/work/CWorkThread.hpp"
 
-class CProcRoot : public CWorkThread {
+class __declspec(novtable) CProcRoot : public CWorkThread {
 public:
     // No out-of-line ctor - retail create inlines CWorkThread + vtable init.
     ~CProcRoot();

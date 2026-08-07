@@ -112,5 +112,3 @@ s32 ResDic::GetIndex(const ResName name) const {
 } // namespace g3d
 } // namespace nw4r
 
-void __vc__Q34nw4r3g3d6ResDicCFPCc(){}
-void __vc__Q34nw4r3g3d6ResDicCFQ34nw4r3g3d7ResName(){}

@@ -963,7 +963,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_main.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/main/btu_task1.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bd.c", extra_cflags=["-func_align 16"]),
-            Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c", extra_cflags=["-func_align 16"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c", extra_cflags=["-func_align 4"]),  # retail bte packed (not 16-aligned): -func_align 16 pads 4x0xC after fn bodies, .text 0x30 over slice (0x254); align 4 restores packed layout (see bta_dm_act note)
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
@@ -979,7 +979,7 @@ config.libs = [
             # btm_devctl notes); Wii/1.1 schedules mr-before-sth after the event
             # store and keeps the AddDevice loop counter in a volatile reg.
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 16"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),  # retail packed: -func_align 16 pads 0x98->0xA0, .text 0x8 over slice (0x160)
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
             # btm_devctl notes); Wii/1.1 lowers dense event switches to cmp
@@ -996,7 +996,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
-            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 16"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 4"]),  # retail packed: -func_align 16 pads 0x78->0x80 and 0x130->0x140, .text 0x10 over slice (0x134)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # GC/3.0a3.4 reproduces the BTM_StartInquiry retail constant-hoist (li r4,1 into the inqparms copy) byte-for-byte; a5.2 allocates r4 as the copy-pair reg and cannot hoist (MWCC_REFERENCE constant-hoist note). -func_align 4 / -ipa off avoid the scheduling NOPs before mtctr-counted loops.
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte family is packed (no 16-byte fn padding); -func_align 4 packs .text into the split budget (MWCC_REFERENCE btm_devctl/btm_inq notes)

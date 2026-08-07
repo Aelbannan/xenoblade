@@ -34,7 +34,7 @@ namespace detail {
  * PaneBase
  *
  ******************************************************************************/
-class PaneBase {
+class __declspec(novtable) PaneBase {
 public:
     PaneBase() {}
     virtual ~PaneBase() {} // at 0x8
@@ -75,7 +75,7 @@ struct Pane {
  * Pane
  *
  ******************************************************************************/
-class Pane : public detail::PaneBase {
+class __declspec(novtable) Pane : public detail::PaneBase {
 public:
     NW4R_UT_RTTI_DECL(Pane);
 

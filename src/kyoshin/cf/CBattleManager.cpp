@@ -466,8 +466,9 @@ s32 func_800D7D24(void* self) {
         }
 
         if (found) {
-            extern int func_800B708C__Fi(int);
-            if (func_800B708C__Fi(targetVal) != 0) return 0;
+            // C++-linkage decl: MWCC mangles func_800B708C to func_800B708C__Fi.
+            extern void* func_800B708C(int);
+            if (func_800B708C(targetVal) != 0) return 0;
         }
     }
 

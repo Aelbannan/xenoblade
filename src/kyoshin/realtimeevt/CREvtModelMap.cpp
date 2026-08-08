@@ -49,13 +49,6 @@ extern "C" {
     void func_804C1BA0(void* pData, int r5);
     void func_80490098__Fv();
     void getGlobalSda();
-    bool func_8016D094(CREvtModelMap* self, s32* pId);
-    void func_80169710();
-    void func_8016B600();
-    void func_80181D5C();
-    void func_80181D74();
-    void func_80181D8C();
-    void func_80171008();
     void __dt__80185754();
     void __ct__80172668(CREvtModelMap* self, int dealloc);
     void func_8016A354();

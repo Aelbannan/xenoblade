@@ -254,7 +254,6 @@ extern "C" void* cfCam_getUnk3D8Ptr(void* self) { return static_cast<char*>(self
 extern "C" int cfCam_getBit9_Arg1(unsigned int* arg0) {
     return (arg0[1] >> 9) & 1;
 }
-void func_8006EF04__Fi(){}
 void func_8006EF1C(){}
 void func_8006F9D4(){}
 void func_80071694(){}
@@ -290,6 +289,13 @@ extern "C" int cfCam_getBit19_0x0C(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
 }
 extern "C" unsigned int lbl_eu_80663E24;
+
+// func_8006EF04__Fi: flag-bit probe.  Retail codegen is the branchless idiom
+// r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
+extern "C" bool func_8006EF04__Fi(s32 mask) {
+    unsigned int flag = lbl_eu_80663E24;
+    return ((flag | (unsigned int)-(int)(flag & (unsigned int)mask)) & 1) != 0;
+}
 
 extern "C" int cfCam_getBit6_GlobalE24() {
     return (lbl_eu_80663E24 >> 6) & 1;

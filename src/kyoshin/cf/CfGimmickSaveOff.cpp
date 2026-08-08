@@ -11,12 +11,12 @@ extern "C" void func_80209020(void*, void*, void*, void*);
 extern "C" void func_80209288(void*, void*, void*, void*);
 extern "C" const char* getBdatStringColumnValue(void*, const char*, int);
 extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
-extern "C" void func_8020BE1C(void*, void*, void*);
-extern "C" void func_8020BEAC(void*, void*, void*);
 extern "C" void func_8020A03C();
 extern "C" void func_8020A0CC();
 extern "C" void* func_800B6BC8();
 extern "C" void func_8008B95C(void*);
+// State dispatch table (jumptable_eu_80535830, 5 entries).
+extern "C" int (*jumptable_eu_80535830[])(void*, void*, void*);
 
 extern u8 lbl_eu_805357E8[];
 extern u8 lbl_eu_80510B28[];
@@ -82,15 +82,11 @@ extern "C" void func_802ABCB4(void* self) {
     void* self1C = (u8*)self + 0x1C;
     void* self04 = (u8*)self + 0x04;
 
-    switch (state) {
-        case 0:
-            func_8020BE1C(self1C, (void*)lbl_eu_805765A0, self04);
-            break;
-        case 1:
-            func_8020BEAC(self1C, (void*)lbl_eu_805765A0, self04);
-            break;
-        default:
-            return;
+    // State dispatch via jumptable_eu_80535830 (5 case handlers); a zero
+    // handler result returns early (retail checks the dispatched call's r3).
+    int dispatchResult = jumptable_eu_80535830[state](self1C, (void*)lbl_eu_805765A0, self04);
+    if (dispatchResult == 0) {
+        return;
     }
 
     if (*(u32*)((u8*)self + 0x84) == 2) {

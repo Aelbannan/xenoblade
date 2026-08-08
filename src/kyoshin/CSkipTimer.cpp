@@ -19,6 +19,7 @@ extern "C" char lbl_eu_80510568[];
 
 // External callees.
 extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __ct__CSysWin(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
 extern "C" void func_80138078__FUl(u32);
@@ -231,7 +232,9 @@ CSkipTimer::CSkipTimer() {
     mField2C = 0;
     mField2E = 0;
     mActive = 0;
-    new (&mSysWinData[0]) CSysWin();
+    // Retail calls the C-linkage ctor symbol __ct__CSysWin; the C++ placement
+    // new would emit MWCC's natural __ct__7CSysWinFv instead.
+    __ct__CSysWin(&mSysWinData[0]);
     new (&mSkipTimer2Data[0]) CSkipTimer2(0);
 }
 

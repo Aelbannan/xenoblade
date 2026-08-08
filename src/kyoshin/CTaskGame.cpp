@@ -79,7 +79,7 @@ CTaskGame* CTaskGame::getInstance(){
     return spInstance;
 }
 
-u32 CTaskGame::isUnk68Bit13Set() {
+u32 CTaskGame::func_800404F0() {
     CTaskGame* instance = spInstance;
     if (instance == NULL) {
         return 0;

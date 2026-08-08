@@ -42,8 +42,7 @@ public:
     virtual ~CTaskGame();
 
     static CTaskGame* getInstance();
-    static u32 func_800404F0();
-    static u32 isUnk68Bit13Set();
+    static u32 func_800404F0(); // isUnk68Bit13Set: (spInstance->unk68 >> 13) & 1
     virtual void Init();
 
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);

@@ -16,10 +16,10 @@ struct CNReqtaskReaddirData;  // defined below; forward decl for the extern bloc
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    CNReqtaskReaddirVtbl* lbl_eu_806659F0; // installed task vtable pointer
+    extern CNReqtaskReaddirVtbl* lbl_eu_806659F0; // installed task vtable pointer
     extern char lbl_eu_8056FDA8[];         // task vtable data - array type avoids sda21
-    u8  lbl_eu_806659D0;                   // global NAND "busy" flag
-    s32 lbl_eu_806659D4;                   // global NAND result/error latch
+    extern u8  lbl_eu_806659D0;            // global NAND "busy" flag
+    extern s32 lbl_eu_806659D4;            // global NAND result/error latch
 
     u32* func_804DA98C(u8 arg);                               // NAND entry-buffer primitive
     s32  func_804DA898(u32* entries, u32* dir, u32* result);  // NAND readdir primitive
@@ -43,7 +43,7 @@ struct CNReqtaskReaddirData {
 // Configures the CNReqtaskReaddir sub-task: records the entry buffer, max count,
 // directory handle and type filter, resets the async state, clears the entry
 // buffer and directory, then returns the task vtable pointer.
-CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg) {
+extern "C" CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* entries, u32 count, u32* dir, u8 arg) {
     d->mBuf = entries;
     d->mCount = count;
     d->mDir = dir;
@@ -61,7 +61,7 @@ CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* entries, u32 
 //   0 -> begin listing the directory (func_804DA898)
 //   1 -> read entries into mBuf (func_804DA898)
 //   2..3 -> finish the listing and report the result
-s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d) {
+extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
     }
@@ -128,7 +128,7 @@ ret0:
 // readable 20-byte folded-store endpoint shared by all five monolib NAND sinits.
 // Returning p keeps &lbl_eu_806659F0 live in r3 (closest match). No assembly
 // is added per policy.
-CNReqtaskReaddirVtbl** sinit_804DB228() {
+extern "C" CNReqtaskReaddirVtbl** sinit_804DB228() {
     CNReqtaskReaddirVtbl** p = &lbl_eu_806659F0;
     CNReqtaskReaddirVtbl* v = (CNReqtaskReaddirVtbl*)lbl_eu_8056FDA8;
     *p = v;

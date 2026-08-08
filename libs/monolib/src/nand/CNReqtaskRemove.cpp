@@ -20,10 +20,10 @@ struct CNReqtaskRemoveData;  // defined below; forward decl for the extern block
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    CNReqtaskRemoveVtbl* lbl_eu_806659F8; // installed vtable pointer for this task
+    extern CNReqtaskRemoveVtbl* lbl_eu_806659F8; // installed vtable pointer for this task
     extern char lbl_eu_8056FDC8[];  // vtable data - array type prevents sda21
-    u8   lbl_eu_806659D0;           // global NAND "busy" flag
-    s32  lbl_eu_806659D4;           // global NAND result/error latch
+    extern u8   lbl_eu_806659D0;    // global NAND "busy" flag
+    extern s32  lbl_eu_806659D4;    // global NAND result/error latch
 
     s32 func_804DA9C4(CNReqtaskRemoveData* data, u8 arg);  // NAND remove request setup primitive
     s32 func_804DA76C(u8* ptr);                            // NAND remove request execute primitive
@@ -53,7 +53,7 @@ struct CNReqtaskRemoveData {
 // `CNReqtaskRemoveData*`) on purpose - keeping it distinct from the typed local
 // `d` preserves the two-register colouring that matches retail; the
 // byte-identical form comes from `u8*` + a typed local.
-CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 arg) {
+extern "C" CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 arg) {
     CNReqtaskRemoveData* d = (CNReqtaskRemoveData*)data;
     u8 flags = arg;                       // hoisted into r30 before strcpy
     strcpy(d->path, path);
@@ -69,7 +69,7 @@ CNReqtaskRemoveVtbl** func_804DB240(u8* data, const char* path, u8 arg) {
 //   0 -> start the removal (func_804DA9C4 + func_804DA76C)
 //   1 -> mark the request done (return 1 on the following poll)
 //   2 -> done (return 1)
-s32 func_804DB278(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveData* d) {
+extern "C" s32 func_804DB278(CNReqtaskRemoveVtbl* vtable_ptr, CNReqtaskRemoveData* d) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
     }
@@ -114,7 +114,7 @@ ret0:
 // readable 20-byte folded-store endpoint for all five monolib NAND sinits.
 // Returning p keeps &lbl_eu_806659F8 live in r3 (closest match). No assembly
 // is added per policy.
-CNReqtaskRemoveVtbl** sinit_804DB330() {
+extern "C" CNReqtaskRemoveVtbl** sinit_804DB330() {
     CNReqtaskRemoveVtbl** p = &lbl_eu_806659F8;
     CNReqtaskRemoveVtbl* v = (CNReqtaskRemoveVtbl*)lbl_eu_8056FDC8;
     *p = v;

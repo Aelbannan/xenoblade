@@ -78,7 +78,7 @@ struct CNReqtaskSaveBannerData {
 // Configures the CNReqtaskSaveBanner sub-task: records the NAND data object and
 // banner id, resets the async state to step 0, then returns the task vtable
 // pointer.
-CNReqtaskSaveBannerVtbl** func_804F4D7C(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2) {
+extern "C" CNReqtaskSaveBannerVtbl** func_804F4D7C(CNReqtaskSaveBannerData* data, CNReqtaskSaveBannerTarget* arg1, u8 arg2) {
     data->f0 = arg1;
     data->fC = arg2;
     data->state = 0;
@@ -137,7 +137,7 @@ struct CNReqtaskSaveBannerTarget {
 //   0xA -> destroy the in-progress block, move the banner into place
 //          (func_804DA7CC)
 //   0xB -> done (return 1)
-s32 func_804F4D90(void* vtable_ptr, void* data) {
+extern "C" s32 func_804F4D90(void* vtable_ptr, void* data) {
     CNReqtaskSaveBannerData* d = (CNReqtaskSaveBannerData*)data;
     CNReqtaskSaveBannerTarget* t = (CNReqtaskSaveBannerTarget*)d->f0;
     if (t->unk324 != 0) {
@@ -277,7 +277,7 @@ s32 func_804F4D90(void* vtable_ptr, void* data) {
 // documented readable 20-byte folded-store endpoint shared by the monolib NAND
 // sinits. Returning p keeps &lbl_eu_80665A90 live in r3 (closest match). No
 // assembly is added per policy.
-CNReqtaskSaveBannerVtbl** sinit_804F5140() {
+extern "C" CNReqtaskSaveBannerVtbl** sinit_804F5140() {
     CNReqtaskSaveBannerVtbl** p = &lbl_eu_80665A90;
     CNReqtaskSaveBannerVtbl* v = (CNReqtaskSaveBannerVtbl*)lbl_eu_80570358;
     *p = v;

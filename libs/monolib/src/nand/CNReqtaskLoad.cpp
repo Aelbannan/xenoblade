@@ -21,10 +21,10 @@ struct CNReqtaskLoadData;  // defined below; forward decl for the extern block
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    CNReqtaskLoadVtbl* lbl_eu_806659E8; // installed vtable pointer for this task
+    extern CNReqtaskLoadVtbl* lbl_eu_806659E8; // installed vtable pointer for this task
     extern char lbl_eu_8056FD88[];      // vtable data - array type prevents sda21
-    u8  lbl_eu_806659D0;                // global NAND "busy" flag
-    s32 lbl_eu_806659D4;                // global NAND result/error latch
+    extern u8  lbl_eu_806659D0;         // global NAND "busy" flag
+    extern s32 lbl_eu_806659D4;         // global NAND result/error latch
 
     // NAND subsystem primitives (defined in the CNReqtaskSave unit). These are
     // stripped retail placeholder names, so they need C linkage to emit the same
@@ -57,7 +57,7 @@ struct CNReqtaskLoadData {
 // Note: the first parameter is an opaque byte handle (`u8*`), matching how the
 // NAND open primitive hands the caller back an unwrapped task buffer. The typed
 // local `d` gives the rest of the body clean struct access.
-CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
+extern "C" CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
     CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
     strcpy(d->path, path);
     d->mBuffer = arg2;
@@ -76,7 +76,7 @@ CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3
 //   2 -> close the file (func_804DA69C)
 //   3 -> flush dcache on the read buffer (DCFlushRange)
 //   4 -> done (return 1)
-s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
+extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl* vtable_ptr, CNReqtaskLoadData* data) {
     CNReqtaskLoadData* d = data;
 
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
@@ -142,7 +142,7 @@ ret0:
 // readable 20-byte folded-store endpoint for all five monolib NAND sinits.
 // Returning p keeps &lbl_eu_806659E8 live in r3 (closest match). No assembly
 // is added per policy.
-CNReqtaskLoadVtbl** sinit_804DB0D8() {
+extern "C" CNReqtaskLoadVtbl** sinit_804DB0D8() {
     CNReqtaskLoadVtbl** p = &lbl_eu_806659E8;
     CNReqtaskLoadVtbl* v = (CNReqtaskLoadVtbl*)lbl_eu_8056FD88;
     *p = v;

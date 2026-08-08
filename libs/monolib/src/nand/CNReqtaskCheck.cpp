@@ -18,10 +18,10 @@ struct CNReqtaskCheckVtbl;
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    CNReqtaskCheckVtbl* lbl_eu_80665A00; // installed vtable pointer for this task
+    extern CNReqtaskCheckVtbl* lbl_eu_80665A00; // installed vtable pointer for this task
     extern char lbl_eu_8056FDE8[]; // vtable data - array type prevents sda21
-    u8  lbl_eu_806659D0;          // global NAND "busy" flag
-    s32 lbl_eu_806659D4;          // global NAND result/error latch
+    extern u8  lbl_eu_806659D0;    // global NAND "busy" flag
+    extern s32 lbl_eu_806659D4;    // global NAND result/error latch
 
     s32 func_804DA4E0(u32 arg1, u32 arg2, u32 arg3); // NAND check primitive
 }
@@ -41,7 +41,7 @@ struct CNReqtaskCheckData {
 // us-804df660: func_804DB348
 // Initializes the check task data block (three check arguments and resets the
 // state to step 0), then returns the task vtable pointer.
-CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1, u32 arg2, u32 arg3) {
+extern "C" CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1, u32 arg2, u32 arg3) {
     CNReqtaskCheckData* d = data;
     d->field_0x0 = arg1;
     d->field_0x4 = arg2;
@@ -57,7 +57,7 @@ CNReqtaskCheckVtbl** func_804DB348(CNReqtaskCheckData* data, u32 arg1, u32 arg2,
 //   0 -> run the NAND check (func_804DA4E0) with the stored arguments
 //   1 -> mark the request complete (return 1 on the following poll)
 //   2 -> done (return 1)
-s32 func_804DB364(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData* data) {
+extern "C" s32 func_804DB364(CNReqtaskCheckVtbl* vtable_ptr, CNReqtaskCheckData* data) {
     CNReqtaskCheckData* d = data;
 
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
@@ -110,7 +110,7 @@ ret0:
 // function MWCC emits no `.ctors` entry. Producing that entry requires the real
 // `__sinit_` static-initializer machinery (unreachable without the `b .+4`
 // artifact), so the `.ctors` data residual is deferred together with the code.
-CNReqtaskCheckVtbl** sinit_804DB420() {
+extern "C" CNReqtaskCheckVtbl** sinit_804DB420() {
     CNReqtaskCheckVtbl** p = &lbl_eu_80665A00;
     CNReqtaskCheckVtbl* v = (CNReqtaskCheckVtbl*)lbl_eu_8056FDE8;
     *p = v;

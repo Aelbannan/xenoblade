@@ -40,7 +40,7 @@ export function buildBatchPrompt(opts: {
     "- Do NOT use `nm`, `objdump`, or `readelf` — use the `symbols` tool and the brief's provided file/symbol info instead. (`find`/`ls` ARE available and cheap for locating files; cap them like grep.)\n" +
     "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
     "\n## Anti-patterns (avoid these — they are flagged by the repo lint in TU-final)\n\n" +
-    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header. Only `lbl_*` reloc/data names may stay `extern \"C\"`.\n" +
+    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header. Only `lbl_*` reloc/data names, and genuine unmangled C-ABI imports (e.g. `OSReport`), may stay `extern \"C\"`.\n" +
     "- NEVER write constructors/destructors as C-style free functions taking `* self` (e.g. `extern \"C\" CFoo* __ct__4CFooFv(CFoo* self)`). The retail symbols are mangled members — write real member ctors/dtors: `CFoo::CFoo(...)` / `CFoo::~CFoo(...)`.\n" +
     "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +
     "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
@@ -123,7 +123,10 @@ Specifically:
 - A small number of genuine \`extern "C"\` for real C ABI entry points
   (SDK callbacks, fixed C-exported functions) is acceptable only where the
   retail symbol is genuinely C-linkage — not as a way to dodge a header
-  declaration or to name a function.
+  declaration or to name a function. For example,
+  \`extern "C" void OSReport(const char* fmt, ...);\` is CORRECT when the
+  retail symbol is the unmangled \`OSReport\` — do not rewrite a genuine
+  unmangled C-ABI SDK import as a C++ member.
 
 ### 4. Rename to human-readable names — only when confident
 

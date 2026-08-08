@@ -264,6 +264,7 @@ async function main(): Promise<void> {
         unitHasActionableWork(
           repoRoot, effectiveConfig.region, s.unit,
           effectiveConfig.ledgerPath, effectiveConfig.exhaustionThreshold,
+          effectiveConfig.retryExhausted, effectiveConfig.maxAttemptsPerTarget,
         ),
       );
       if (selected.length < before) {

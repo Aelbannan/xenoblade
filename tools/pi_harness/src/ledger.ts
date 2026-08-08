@@ -4,10 +4,27 @@
 // than PIPE_BUF interleave and corrupt the JSONL.
 // ---------------------------------------------------------------------------
 
-import { readFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { appendFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { LedgerEntry } from "./types.js";
+
+// ---------------------------------------------------------------------------
+// scanExhaustedTargets memo. The ledger is read+parsed once per TU during
+// --all selection (641 TUs = 641 full reads) and again by loadUnmatchedTargets.
+// The exhausted set is identical across those calls within a short window, so
+// we memoize keyed by (path, mtimeMs, size). appendLedger bumps mtime on every
+// write (and we clear the memo explicitly), so the cache stays correct.
+// ---------------------------------------------------------------------------
+interface ExhaustedMemo {
+  key: string; // "mtimeMs:size"
+  set: Set<string>;
+}
+const exhaustedMemo = new Map<string, ExhaustedMemo>();
+
+export function clearExhaustedMemo(): void {
+  exhaustedMemo.clear();
+}
 
 let writeQueue: Promise<void> = Promise.resolve();
 
@@ -21,6 +38,9 @@ export function appendLedger(repoRoot: string, ledgerPath: string, entry: Ledger
   const absPath = join(repoRoot, ledgerPath);
   const parent = dirname(absPath);
   if (!existsSync(parent)) mkdirSync(parent, { recursive: true });
+  // Any write changes the ledger -> the exhausted/session-count memos are
+  // stale. Bump by clearing them (mtime alone would also work, but explicit).
+  clearLedgerMemos(absPath);
 
   const line = JSON.stringify(entry) + "\n";
   writeQueue = writeQueue.then(async () => {
@@ -54,6 +74,59 @@ export function readLedger(repoRoot: string, ledgerPath: string): LedgerEntry[] 
   const absPath = join(repoRoot, ledgerPath);
   if (!existsSync(absPath)) return [];
   return parseLedgerLines(readFileSync(absPath, "utf-8"));
+}
+
+// Memoized per-target session counts (same semantics as the orchestrator's
+// countLedgerSessions: batch-session-exhausted + batch-rejected + batch-cycle
+// + batch-accept rows naming the target). Used by --all's phase-3 escape
+// check so we don't re-read the whole ledger once per TU.
+const sessionCountsMemo = new Map<string, { key: string; counts: Map<string, number> }>();
+
+export function scanTargetSessionCounts(repoRoot: string, ledgerPath: string): Map<string, number> {
+  const absPath = join(repoRoot, ledgerPath);
+  let text: string;
+  let key: string | undefined;
+  try {
+    const st = statSync(absPath);
+    key = `${Number(st.mtimeMs)}:${Number(st.size)}`;
+    const memo = sessionCountsMemo.get(absPath);
+    if (memo && memo.key === key) return memo.counts;
+    text = readFileSync(absPath, "utf-8");
+  } catch {
+    sessionCountsMemo.delete(absPath);
+    return new Map();
+  }
+  const counts = new Map<string, number>();
+  const bump = (id: string): void => {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  };
+  for (const entry of parseLedgerLines(text)) {
+    const d = (entry.detail as Record<string, unknown> | null | undefined) ?? {};
+    const ids: string[] = [];
+    if (typeof d.targetId === "string") ids.push(d.targetId);
+    if (Array.isArray(d.targetIds)) {
+      for (const x of d.targetIds) if (typeof x === "string") ids.push(x);
+    }
+    if (Array.isArray(d.results)) {
+      for (const r of d.results) {
+        if (r && typeof (r as { targetId?: unknown }).targetId === "string") {
+          ids.push((r as { targetId: string }).targetId);
+        }
+      }
+    }
+    if (entry.event === "batch-session-exhausted" || entry.event === "batch-rejected"
+      || entry.event === "batch-cycle" || entry.event === "batch-accept") {
+      for (const id of ids) bump(id);
+    }
+  }
+  if (key) sessionCountsMemo.set(absPath, { key, counts });
+  return counts;
+}
+
+/** Drop ledger memos (exhausted + session counts) — called by appendLedger. */
+function clearLedgerMemos(absPath: string): void {
+  exhaustedMemo.delete(absPath);
+  sessionCountsMemo.delete(absPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -145,13 +218,22 @@ export function scanExhaustedTargets(
   ledgerPath: string,
   minAttempts = 3,
 ): Set<string> {
-  const counts = new Map<string, number>();
+  let key: string | undefined;
   let text: string;
   try {
+    const st = statSync(ledgerPath);
+    key = `${Number(st.mtimeMs)}:${Number(st.size)}:t${minAttempts}`;
+    const memo = exhaustedMemo.get(ledgerPath);
+    if (memo && memo.key === key) {
+      return memo.set;
+    }
     text = readFileSync(ledgerPath, "utf-8");
   } catch {
+    // No stat/read (e.g. ledger missing) — fall through to empty.
+    exhaustedMemo.delete(ledgerPath);
     return new Set();
   }
+  const counts = new Map<string, number>();
   const bump = (ids: string[]) => {
     for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
   };
@@ -179,6 +261,7 @@ export function scanExhaustedTargets(
   for (const [id, n] of counts) {
     if (n >= minAttempts) exhausted.add(id);
   }
+  if (key) exhaustedMemo.set(ledgerPath, { key, set: exhausted });
   return exhausted;
 }
 

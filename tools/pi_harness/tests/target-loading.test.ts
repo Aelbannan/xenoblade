@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { unitHasActionableWork, loadAllUnitSummaries, readTargetsFile, invalidateTargetsCache } from "../src/targets.ts";
@@ -36,6 +36,38 @@ describe("targets.json in-memory cache", () => {
       const r3 = readTargetsFile(dir);
       assert.equal(r3.length, 2);
       assert.notEqual(r3, r1, "after invalidation a fresh parse occurs");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("readTargetsFile re-reads when the file mtime changes (new content served)", async () => {
+    const dir = await makeRepo([T("a", "KY/U1")]);
+    try {
+      const before = readTargetsFile(dir);
+      assert.equal(before.length, 1);
+      // Rewrite with a different target, then force a future mtime.
+      await writeFile(join(dir, "tools/coop/targets.json"), JSON.stringify({ targets: [T("a", "KY/U1"), T("b", "KY/U1")] }));
+      const future = Date.now() / 1000 + 5;
+      await utimes(join(dir, "tools/coop/targets.json"), future, future);
+      const after = readTargetsFile(dir);
+      assert.equal(after.length, 2, "mtime-driven invalidation should serve the new content");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("cached array is frozen (a caller cannot mutate the shared cache)", async () => {
+    const dir = await makeRepo([T("a", "KY/U1"), T("b", "KY/U1")]);
+    try {
+      const r1 = readTargetsFile(dir);
+      assert.ok(Object.isFrozen(r1), "returned cached array should be frozen");
+      assert.throws(() => {
+        (r1 as { pop(): unknown }).pop();
+      });
+      // Second read still returns the intact array.
+      const r2 = readTargetsFile(dir);
+      assert.equal(r2.length, 2);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -81,6 +113,35 @@ describe("unitHasActionableWork (skip exhausted TUs in --all)", () => {
     const dir = await makeRepo([T("a", "KY/Full", "FULL_MATCH"), T("b", "KY/Full", "FULL_MATCH")]);
     try {
       assert.equal(unitHasActionableWork(dir, "us", "KY/Full", "build/pi-harness/ledger.jsonl", 3), false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("unit with all remaining targets at the session budget is kept (phase-3 TU-final escape)", async () => {
+    // 3 dead-end records -> scanExhausted(threshold 3) marks it exhausted.
+    // But countLedgerSessions counts batch-accept/batch-cycle too, so bump the
+    // session count to maxAttemptsPerTarget=4 and the unit is kept for TU-final.
+    const led = [
+      JSON.stringify({ ts: "2026-01-01T00:00:00Z", event: "batch-session-exhausted", tu: "KY/Ex", detail: { targetIds: ["a"], targetId: "a" } }),
+      JSON.stringify({ ts: "2026-01-01T00:00:01Z", event: "batch-session-exhausted", tu: "KY/Ex", detail: { targetIds: ["a"], targetId: "a" } }),
+      JSON.stringify({ ts: "2026-01-01T00:00:02Z", event: "batch-session-exhausted", tu: "KY/Ex", detail: { targetIds: ["a"], targetId: "a" } }),
+      JSON.stringify({ ts: "2026-01-01T00:00:03Z", event: "batch-cycle", tu: "KY/Ex", detail: { results: [{ targetId: "a", status: "COMPILES" }] } }),
+    ];
+    const dir = await makeRepo([T("a", "KY/Ex")], led);
+    try {
+      // exhausted (3 dead-end >=3) AND session count (4) >= maxAttempts(4)
+      // -> phase-3 escape fires -> actionable (kept for TU-final).
+      assert.equal(
+        unitHasActionableWork(dir, "us", "KY/Ex", "build/pi-harness/ledger.jsonl", 3, false, 4),
+        true,
+        "TU-final-escape unit must be kept",
+      );
+      // Without maxAttempts (escape not considered), it is not actionable.
+      assert.equal(
+        unitHasActionableWork(dir, "us", "KY/Ex", "build/pi-harness/ledger.jsonl", 3, false),
+        false,
+      );
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

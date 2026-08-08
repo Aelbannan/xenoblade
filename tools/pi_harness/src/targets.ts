@@ -40,7 +40,7 @@ function isSafeRelPath(p: string | undefined | null): p is string {
 import { readFileSync, existsSync, statSync } from "node:fs";
 import { join, dirname, basename, isAbsolute } from "node:path";
 import type { Target } from "./types.js";
-import { scanExhaustedTargets } from "./ledger.js";
+import { scanExhaustedTargets, scanTargetSessionCounts } from "./ledger.js";
 
 // ---------------------------------------------------------------------------
 // In-memory targets.json cache. targets.json is large (~17.8 MB / 19k targets)
@@ -53,38 +53,67 @@ import { scanExhaustedTargets } from "./ledger.js";
 interface TargetsCacheEntry {
   mtimeMs: number;
   size: number;
-  targets: RawTarget[];
+  targets: readonly RawTarget[];
 }
 const targetsCache = new Map<string, TargetsCacheEntry>();
 
 export function readTargetsFile(repoRoot: string, opts?: { force?: boolean }): RawTarget[] {
   const targetsPath = join(repoRoot, "tools/coop/targets.json");
+  // Single pre-read stat: used BOTH for the cache lookup AND the cache store.
+  // Keying the store on a separate POST-read stat opens a TOCTOU — a
+  // concurrent write between read and stat would pin OLD content under the NEW
+  // (mtime,size) and serve stale data until the next write (adversarial review:
+  // Kimi HIGH-1 / GLM CRITICAL-1). One stat describes the content we read.
+  // mtimeNs (BigInt, nanosecond) + size eliminates same-size/same-ms-tick flips
+  // (Kimi LOW-3 / GLM MED).
+  let st: ReturnType<typeof statSync> | undefined;
   if (!opts?.force) {
     try {
-      const st = statSync(targetsPath);
-      const cached = targetsCache.get(targetsPath);
-      if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) {
-        return cached.targets;
-      }
-      if (cached) targetsCache.delete(targetsPath);
+      st = statSync(targetsPath);
     } catch {
-      /* fall through to read below */
+      /* stat failed (e.g. ENOENT) — fall through to read below */
     }
   }
-  let data: TargetsFile;
+  if (st) {
+    const cached = targetsCache.get(targetsPath);
+    if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) {
+      return cached.targets as RawTarget[];
+    }
+    if (cached) targetsCache.delete(targetsPath);
+  }
+  let data: TargetsFile | undefined;
   try {
     data = JSON.parse(readFileSync(targetsPath, "utf-8")) as TargetsFile;
-  } catch {
-    // Parse failure (mid-write or corrupt) — return any cache we have rather
-    // than crashing the run; the next call re-checks mtime.
-    return targetsCache.get(targetsPath)?.targets ?? [];
+  } catch (err) {
+    // Parse/read failure. ENOENT is a legitimately-empty registry -> []. A
+    // mid-write / corrupt read is NOT: fall back to ANY cached content for THIS
+    // call only, but EVICT so the next caller re-reads, and warn loudly.
+    const cached = targetsCache.get(targetsPath);
+    if (cached) {
+      targetsCache.delete(targetsPath);
+      process.stderr.write(
+        `[pi-harness] WARNING: targets.json read failed ("${(err as Error).message}") — serving cached targets for this call; will re-read next call\n`,
+      );
+      return cached.targets as RawTarget[];
+    }
+    return [];
   }
   const targets = Array.isArray(data.targets) ? data.targets : [];
-  try {
-    const st = statSync(targetsPath);
-    targetsCache.set(targetsPath, { mtimeMs: st.mtimeMs, size: st.size, targets });
-  } catch {
-    /* best-effort */
+  if (st) {
+    const frozen = Object.freeze(targets);
+    // Shallow-freeze each raw target + its shared arrays so a future caller
+    // cannot mutate the cached array through a returned reference (Kimi LOW-2 /
+    // GLM LOW). Object.freeze on 19k objects is done once per cache fill.
+    for (const t of frozen) {
+      if (t && typeof t === "object") {
+        Object.freeze(t);
+        const rf = t as unknown as Record<string, unknown>;
+        if (Array.isArray(rf.called_functions)) Object.freeze(rf.called_functions);
+        if (Array.isArray(rf.unresolved_called_functions)) Object.freeze(rf.unresolved_called_functions);
+      }
+    }
+    targetsCache.set(targetsPath, { mtimeMs: Number(st.mtimeMs), size: Number(st.size), targets: frozen });
+    return frozen as RawTarget[];
   }
   return targets;
 }
@@ -226,7 +255,14 @@ export function loadUnmatchedTargets(
 /** True if the unit has at least one unmatched target that is NOT exhausted.
  *  Used by --order/--all selection to skip TUs whose remaining work is all
  *  exhausted (they'd be picked up by the pool only to instantly return,
- *  starving the ConcurrencyPool of real work — see the run33 v5 stall). */
+ *  starving the ConcurrencyPool of real work — see the run33 v5 stall).
+ *
+ *  Also returns true if the PHASE-3 TU-final escape would fire for the unit
+ *  (every remaining target has >= maxAttemptsPerTarget ledger sessions): that
+ *  path finalises the unit's already-matched functions + data/rename work, so
+ *  dropping it from --all would silently lose that work (adversarial review:
+ *  GLM HIGH — snd_MidiSeqPlayer was mis-dropped by the threshold-3 exhausted
+ *  check even though the orchestrator would have TU-final'd it). */
 export function unitHasActionableWork(
   repoRoot: string,
   region: string,
@@ -234,12 +270,28 @@ export function unitHasActionableWork(
   ledgerPath: string | undefined,
   exhaustionThreshold?: number,
   retryExhausted?: boolean,
+  maxAttemptsPerTarget?: number,
 ): boolean {
-  return loadUnmatchedTargets(repoRoot, region, unit, {
+  const targets = loadUnmatchedTargets(repoRoot, region, unit, {
     ledgerPath,
     exhaustionThreshold,
     retryExhausted: retryExhausted ?? false,
-  }).length > 0;
+  });
+  if (targets.length > 0) return true;
+  // No non-exhausted targets. If the phase-3 TU-final escape would fire (all
+  // remaining unmatched targets ledger-exhausted at the session budget), the
+  // unit still has TU-final work — keep it so the orchestrator can run it.
+  if (maxAttemptsPerTarget && maxAttemptsPerTarget > 0 && ledgerPath) {
+    const remaining = loadUnitTargets(repoRoot, region, unit, false);
+    if (remaining.length > 0) {
+      const sessionsByTarget = scanTargetSessionCounts(repoRoot, ledgerPath);
+      const allExhausted = remaining.every(
+        (t) => (sessionsByTarget.get(t.id) ?? 0) >= maxAttemptsPerTarget,
+      );
+      if (allExhausted) return true;
+    }
+  }
+  return false;
 }
 
 /** Per-TU match summary. */

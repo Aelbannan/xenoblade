@@ -32,6 +32,7 @@ import {
   targetStatusById,
   targetRowById,
   isCallGraphReady,
+  readTargetsFile,
 } from "./targets.js";
 import { extractRetailAsm, buildBatchBrief } from "./brief.js";
 import { appendLedger, readLedger, drainLedger } from "./ledger.js";
@@ -94,9 +95,8 @@ function isPiHarnessProcess(pid: number): boolean {
 function findOrphanedClaims(repoRoot: string): Array<{ id: string; owner: string }> {
   const orphaned: Array<{ id: string; owner: string }> = [];
   try {
-    const targetsPath = join(repoRoot, "tools", "coop", "targets.json");
-    const raw = JSON.parse(readFileSync(targetsPath, "utf-8"));
-    const targets = raw.targets ?? [];
+    // Use the shared in-memory cache rather than a fresh 17.8MB parse.
+    const targets = readTargetsFile(repoRoot);
     for (const t of targets) {
       if (!t.claim?.owner?.startsWith("pi-harness-")) continue;
       // Skip our own claims (handled separately).

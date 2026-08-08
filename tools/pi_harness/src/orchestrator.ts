@@ -1204,6 +1204,7 @@ async function runOneTu(
   const targetsRaw = loadUnmatchedTargets(repoRoot, config.region, unit, {
     ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
     exhaustionThreshold: config.exhaustionThreshold,
+    greenfieldOnly: config.greenfieldOnly,
   });
   const selection = await applySelection(repoRoot, unit, config, targetsRaw);
   let targets = selection.ordered;
@@ -1253,6 +1254,26 @@ async function runOneTu(
   }
 
   if (targets.length === 0) {
+    // Greenfield mode: a unit whose only remaining work is previously-worked
+    // (stuck) targets must NOT TU-final — those targets are out of scope for
+    // the sweep, so the unit is finished-incomplete, not done. Use the RAW
+    // unmatched set (no ledger-exhaustion subtraction — an exhausted stuck
+    // target is still unmatched and must block TU-final).
+    if (config.greenfieldOnly) {
+      const unfiltered = loadUnitTargets(repoRoot, config.region, unit, false);
+      if (unfiltered.length > 0) {
+        console.log(
+          `[pi-harness] ${unit}: no greenfield targets (${unfiltered.length} previously-worked remain) — skipping`,
+        );
+        if (!dryRun) {
+          appendLedger(repoRoot, config.ledgerPath, {
+            ts: new Date().toISOString(), event: "greenfield-skip", tu: unit,
+            detail: { remainingCount: unfiltered.length, stuckIds: unfiltered.map((t) => t.id) },
+          });
+        }
+        return;
+      }
+    }
     const entries = readLedger(repoRoot, config.ledgerPath).filter((e) => e.tu === unit);
     const wasWorked = entries.some(
       (e) => e.event === "batch-accept" || e.event === "tu-started",
@@ -1571,32 +1592,44 @@ async function runOneTu(
     return;
   }
 
-  const remaining = loadUnmatchedTargets(repoRoot, config.region, unit, {
-    ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
-    exhaustionThreshold: config.exhaustionThreshold,
-  });
-  if (remaining.length === 0) {
+  const remaining = config.greenfieldOnly
+    ? []
+    : loadUnmatchedTargets(repoRoot, config.region, unit, {
+        ledgerPath: config.ledgerPath, retryExhausted: config.retryExhausted,
+        exhaustionThreshold: config.exhaustionThreshold,
+      });
+  // TU-final gate in greenfield mode: the unit must be genuinely fully
+  // matched. Use the RAW unmatched set (loadUnitTargets, no ledger-exhaustion
+  // subtraction) — an exhausted stuck target is still unmatched and must
+  // block TU-final, and the phase-3 escape below is disabled so it can never
+  // fire TU-final on stragglers (the deadlock the escape prevents is out of
+  // scope for a sweep; the unit just finishes incomplete).
+  const tuFinalGate = config.greenfieldOnly
+    ? loadUnitTargets(repoRoot, config.region, unit, false)
+    : remaining;
+  if (tuFinalGate.length === 0) {
     await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
   } else {
     // Phase 3 escape: if every remaining target is ledger-exhausted (budget
     // spent, not just un-attempted), TU-final is still worthwhile — the
     // exhaustions are stable, so running the finalization pass can't regress
     // them and unblocks the unit's data/rename/comment work. Without this,
-    // early-stop on the last few targets deadlocks the TU forever.
-    const exhaustedAll = remaining.every((t) => countLedgerSessions(repoRoot, config, t.id) >= config.maxAttemptsPerTarget);
+    // early-stop on the last few targets deadlocks the TU forever. Disabled
+    // under greenfieldOnly (see tuFinalGate comment above).
+    const exhaustedAll = !config.greenfieldOnly && tuFinalGate.every((t) => countLedgerSessions(repoRoot, config, t.id) >= config.maxAttemptsPerTarget);
     if (exhaustedAll) {
       process.stderr.write(
-        `[pi-harness] ${unit}: all ${remaining.length} remaining target(s) are ledger-exhausted — running TU-final anyway\n`,
+        `[pi-harness] ${unit}: all ${tuFinalGate.length} remaining target(s) are ledger-exhausted — running TU-final anyway\n`,
       );
       await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
       return;
     }
     appendLedger(repoRoot, config.ledgerPath, {
       ts: new Date().toISOString(), event: "tu-incomplete", tu: unit,
-      detail: { remainingCount: remaining.length, stuckIds: remaining.map((t) => t.id) },
+      detail: { remainingCount: tuFinalGate.length, stuckIds: tuFinalGate.map((t) => t.id) },
     });
-    console.log(`[pi-harness] ${unit}: ${remaining.length} target(s) remain unmatched after retries`);
-    for (const t of remaining) console.log(`  - ${t.id} (${t.status})`);
+    console.log(`[pi-harness] ${unit}: ${tuFinalGate.length} target(s) remain unmatched after retries`);
+    for (const t of tuFinalGate) console.log(`  - ${t.id} (${t.status})`);
   }
 }
 
@@ -1897,6 +1930,9 @@ async function runSingleton(
   siblingsByTarget?: Map<string, SiblingPointer[]>,
 ): Promise<boolean> {
   const targets = loadUnmatchedTargets(repoRoot, config.region, unit, {
+    // Deliberately NO greenfieldOnly: a singleton target was already sessioned
+    // by the batch (and a failed cycle may have flipped its status off
+    // NOT_STARTED), so filtering by NOT_STARTED would silently drop the retry.
     // LOW-2: apply the SAME exhaustion filter as every other load site so
     // the singleton budget bookkeeping is consistent (previously a config
     // object could not be passed directly — the field is exhaustionThreshold).

@@ -45,10 +45,11 @@ interface Args {
   all: boolean;
   order: UnitOrder;
   matchLessThan?: number;
+  greenfield: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { tus: [], dryRun: false, showStatus: false, all: false, order: "most-remaining" };
+  const args: Args = { tus: [], dryRun: false, showStatus: false, all: false, order: "most-remaining", greenfield: false };
   const rest = argv.slice(2);
 
   for (let i = 0; i < rest.length; i++) {
@@ -102,6 +103,9 @@ function parseArgs(argv: string[]): Args {
       case "--all":
         args.all = true;
         break;
+      case "--greenfield":
+        args.greenfield = true;
+        break;
       case "--dry-run":
         args.dryRun = true;
         break;
@@ -145,6 +149,10 @@ function printUsage(): void {
 Options:
   --tu <unit>          Translation unit to process (repeatable), e.g. kyoshin/CGame
   --all                Auto-discover all TUs with unmatched targets and process them
+  --greenfield         Broad-sweep mode: only session targets with status NOT_STARTED
+                       (never worked). Previously-attempted targets (STRUCTURAL /
+                       HIGH_MATCH / CODE_MATCH / …) are excluded from batches and
+                       TUs whose only remaining work is previously-worked are skipped
   --status             Print per-TU match summary table and exit (no sessions run)
   --order <order>      TU ordering for --all and --status: most-remaining (default),
                        least-remaining, smallest (unmatched .text bytes), alphabetical
@@ -165,7 +173,7 @@ function filterMatchLessThan(summaries: UnitSummary[], threshold: number): UnitS
 }
 
 /** Print a terminal-wide progress-bar table of per-TU match status. */
-function printStatusTable(summaries: UnitSummary[]): void {
+function printStatusTable(summaries: UnitSummary[], greenfieldOnly = false): void {
   const unitWidth = Math.max(14, ...summaries.map((s) => s.unit.length)) + 2;
   const numWidth = 8;
 
@@ -176,11 +184,13 @@ function printStatusTable(summaries: UnitSummary[]): void {
 
   let grandTotal = 0;
   let grandMatched = 0;
+  let grandRemaining = 0;
   let fullyMatched = 0;
 
   for (const s of summaries) {
     grandTotal += s.total;
     grandMatched += s.matched;
+    grandRemaining += s.remaining;
     if (s.remaining === 0) fullyMatched++;
 
     // Progress bar: use block chars scaled to fit ~30 cols
@@ -197,10 +207,10 @@ function printStatusTable(summaries: UnitSummary[]): void {
 
   console.log("─".repeat(header.length));
   console.log(
-    `${pad(`${summaries.length} TUs`, unitWidth)} ${padR(String(grandTotal), numWidth)} ${padR(String(grandMatched), numWidth)} ${padR(String(grandTotal - grandMatched), numWidth)}`,
+    `${pad(`${summaries.length} TUs`, unitWidth)} ${padR(String(grandTotal), numWidth)} ${padR(String(grandMatched), numWidth)} ${padR(String(grandRemaining), numWidth)}`,
   );
   console.log(
-    `\nFully matched: ${fullyMatched}/${summaries.length} TUs  |  ` +
+    `\n${greenfieldOnly ? "No greenfield work left" : "Fully matched"}: ${fullyMatched}/${summaries.length} TUs  |  ` +
     `Functions: ${grandMatched}/${grandTotal} (${((grandMatched / grandTotal) * 100).toFixed(1)}%)`,
   );
 }
@@ -236,6 +246,10 @@ async function main(): Promise<void> {
   const effectiveConfig: HarnessConfig = args.maxParallel !== undefined
     ? { ...config, maxParallelTUs: args.maxParallel }
     : config;
+  // CLI --greenfield overrides the config key (like --max-parallel).
+  if (args.greenfield) {
+    effectiveConfig.greenfieldOnly = true;
+  }
 
   process.stderr.write("[pi-harness] Effective config:\n");
   process.stderr.write(`  matchModel:     ${effectiveConfig.matchModel.provider}/${effectiveConfig.matchModel.model} (thinking: ${effectiveConfig.matchModel.thinkingLevel})\n`);
@@ -253,12 +267,13 @@ async function main(): Promise<void> {
   process.stderr.write(`  timeoutRetries:   ${effectiveConfig.timeoutRetries} (in-session continuation after wall-clock timeout, 0=off)\n`);
   process.stderr.write(`  rejectionRetries: ${effectiveConfig.rejectionRetries} (re-prompts when the model finished but code failed)\n`);
   process.stderr.write(`  rpmLimit:         ${effectiveConfig.rpmLimit === 0 ? "off (SDK auto-retry ON)" : `${effectiveConfig.rpmLimit} req/min (pacer active, SDK auto-retry OFF)`}\n`);
+  process.stderr.write(`  greenfieldOnly:   ${effectiveConfig.greenfieldOnly}\n`);
   process.stderr.write(`  pythonBin:      ${effectiveConfig.pythonBin}\n`);
   process.stderr.write(`  dryRun:         ${args.dryRun}\n`);
 
   // ── --status mode: print table and exit ─────────────────────────
   if (args.showStatus) {
-    let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
+    let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order, effectiveConfig.greenfieldOnly);
     if (args.matchLessThan !== undefined) {
       const before = summaries.length;
       summaries = filterMatchLessThan(summaries, args.matchLessThan);
@@ -277,14 +292,14 @@ async function main(): Promise<void> {
         return;
       }
     }
-    printStatusTable(summaries);
+    printStatusTable(summaries, effectiveConfig.greenfieldOnly);
     return;
   }
 
   // ── --all mode: discover TUs from targets.json ──────────────────
   let tus = args.tus;
   if (args.all) {
-    let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
+    let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order, effectiveConfig.greenfieldOnly);
     if (args.matchLessThan !== undefined) {
       const before = summaries.length;
       summaries = filterMatchLessThan(summaries, args.matchLessThan);
@@ -307,6 +322,7 @@ async function main(): Promise<void> {
           repoRoot, effectiveConfig.region, s.unit,
           effectiveConfig.ledgerPath, effectiveConfig.exhaustionThreshold,
           effectiveConfig.retryExhausted, effectiveConfig.maxAttemptsPerTarget,
+          effectiveConfig.greenfieldOnly,
         ),
       );
       if (selected.length < before) {
@@ -318,7 +334,7 @@ async function main(): Promise<void> {
     tus = selected.map((s) => s.unit);
     process.stderr.write(
       `\n[pi-harness] --all: discovered ${tus.length} TU(s) with unmatched targets ` +
-      `(order: ${args.order})${effectiveConfig.retryExhausted ? " (retryExhausted)" : ""}\n`,
+      `(order: ${args.order})${effectiveConfig.retryExhausted ? " (retryExhausted)" : ""}${effectiveConfig.greenfieldOnly ? " (greenfieldOnly)" : ""}\n`,
     );
     if (tus.length === 0) {
       console.log("No TUs match the current filters (--all) — nothing to do.");
@@ -332,6 +348,7 @@ async function main(): Promise<void> {
       ledgerPath: effectiveConfig.ledgerPath,
       retryExhausted: effectiveConfig.retryExhausted,
       exhaustionThreshold: effectiveConfig.exhaustionThreshold,
+      greenfieldOnly: effectiveConfig.greenfieldOnly,
     });
     process.stderr.write(`  ${unit}: ${targets.length} unmatched\n`);
   }

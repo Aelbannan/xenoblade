@@ -10,17 +10,17 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5868 |
-| extern "C" declarations (non-lbl_*, imports) | 1526 |
-| extern "C" definitions (forced names) | 2633 |
-| `self`/register-style params | 4392 |
-| `void*` (params + locals) | 4987 |
+| extern "C" (total lines) | 5895 |
+| extern "C" declarations (non-lbl_*, imports) | 1534 |
+| extern "C" definitions (forced names) | 2644 |
+| `self`/register-style params | 4406 |
+| `void*` (params + locals) | 5018 |
 | raw pointer offset arithmetic | 3437 |
 | deref-through-cast arithmetic | 1403 |
 | inline asm / `register` | 88 |
 | rN-named params | 338 |
 | goto | 1122 |
-| #pragma | 358 |
+| #pragma | 366 |
 
 ## Top offenders (by cleanable severity)
 
@@ -89,7 +89,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/lib/CLibCriMoviePlay.cpp | 12 | 1 | 21 | 13 | 1 | 1 | 0 | 0 | 4 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 23 | 0 | 0 | 36 | 138 | 0 | 0 | 0 | 3 |
 | libs/monolib/src/lib/CLibHbm.cpp | 0 | 0 | 6 | 2 | 0 | 0 | 0 | 6 | 0 |
-| libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/lib/CLibVM.cpp | 0 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 6 | 1 | 0 | 0 | 0 |
@@ -215,9 +215,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_DvdSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FrameHeap.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxChorus.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxDelay.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHi.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHiDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbStdDpl2.cpp | 0 | 0 | 2 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -248,7 +248,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_TaskThread.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Util.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Voice.cpp | 0 | 2 | 3 | 10 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_VoiceManager.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_VoiceManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WaveFile.cpp | 0 | 1 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WaveSound.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_WsdFile.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -401,7 +401,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/ICamControlRemote.cpp | 1 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/IResInfo.cpp | 42 | 73 | 70 | 104 | 189 | 76 | 0 | 4 | 0 |
 | src/kyoshin/cf/chain/CChain.cpp | 0 | 19 | 5 | 5 | 5 | 1 | 0 | 0 | 0 |
-| src/kyoshin/cf/chain/CChainActorEne.cpp | 0 | 1 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/chain/CChainActorEne.cpp | 8 | 12 | 19 | 30 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorList.cpp | 0 | 0 | 24 | 3 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorPc.cpp | 0 | 7 | 24 | 4 | 17 | 1 | 0 | 0 | 10 |
 | src/kyoshin/cf/chain/CChainCombo.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -427,7 +427,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 13 | 8 | 7 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 0 | 0 | 18 | 18 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 4 | 1 | 6 | 1 | 2 | 1 | 0 | 0 | 13 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 0 | 0 | 8 | 1 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -838,7 +838,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/monolib/src/lib/CLibLayout.cpp": {
   "extern_c_nonlbl_def": 1,
   "self_params": 4,
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "libs/monolib/src/lib/CLibStaticData.cpp": {
   "rn_params": 1,
@@ -1441,16 +1441,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxChorusDpl2.cpp": {
-  "ptr_arith": 2,
-  "self_params": 2,
   "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxDelay.cpp": {
   "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxDelayDpl2.cpp": {
-  "ptr_arith": 2,
-  "self_params": 2,
   "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxReverbHi.cpp": {
@@ -1572,7 +1568,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 10
  },
  "libs/nw4r/src/snd/snd_VoiceManager.cpp": {
-  "void_ptr": 2
+  "void_ptr": 5
  },
  "libs/nw4r/src/snd/snd_WaveFile.cpp": {
   "extern_c_nonlbl_def": 1,
@@ -2444,9 +2440,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 5
  },
  "src/kyoshin/cf/chain/CChainActorEne.cpp": {
-  "extern_c_nonlbl_def": 1,
-  "self_params": 1,
-  "void_ptr": 2
+  "extern_c_nonlbl_decl": 8,
+  "extern_c_nonlbl_def": 12,
+  "ptr_arith": 4,
+  "self_params": 19,
+  "void_ptr": 30
  },
  "src/kyoshin/cf/chain/CChainActorList.cpp": {
   "ptr_arith": 4,
@@ -2608,8 +2606,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp": {
-  "self_params": 8,
-  "void_ptr": 1
+  "self_params": 8
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp": {
   "self_params": 6

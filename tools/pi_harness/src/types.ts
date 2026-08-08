@@ -140,6 +140,14 @@ export interface HarnessConfig {
   staleRoundThreshold: number;
   /** Re-attempt targets the ledger marked exhausted on a previous run. */
   retryExhausted: boolean;
+  /** When true, only targets that have NEVER been worked (status
+   *  NOT_STARTED) are sessioned: previously-attempted targets
+   *  (STRUCTURAL / HIGH_MATCH / CODE_MATCH / COMPILES / ACTIVE / …) are
+   *  excluded from batches, and `--all` discovery skips TUs whose only
+   *  remaining work is previously-worked. Broad-sweep mode: sessions never
+   *  burn budget on the known-stuck pool. TU-final still requires the unit
+   *  to be genuinely fully matched. Default false. */
+  greenfieldOnly: boolean;
   /** Only bank a near-miss draft that beats the stored best (composite score). */
   bankOnlyOnBetter: boolean;
   /** Near-miss draft bank (whole-file snapshots + index.jsonl). */

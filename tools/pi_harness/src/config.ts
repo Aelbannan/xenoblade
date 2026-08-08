@@ -60,6 +60,7 @@ function defaultConfig(): HarnessConfig {
   exhaustionThreshold: 3,
     staleRoundThreshold: 2,
     retryExhausted: false,
+    greenfieldOnly: false,
     bankOnlyOnBetter: true,
     nearmissDir: "build/pi-harness/nearmiss",
     knownWallsPath: "docs/KNOWN_WALLS.md",
@@ -267,6 +268,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (typeof config.retryExhausted !== "boolean") {
     throw new Error("config.retryExhausted must be a boolean");
+  }
+  if (typeof config.greenfieldOnly !== "boolean") {
+    throw new Error("config.greenfieldOnly must be a boolean");
   }
   if (typeof config.bankOnlyOnBetter !== "boolean") {
     throw new Error("config.bankOnlyOnBetter must be a boolean");

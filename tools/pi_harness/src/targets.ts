@@ -221,6 +221,10 @@ export interface UnmatchedOptions {
   /** Minimum independent dead-end ledger records before a target counts as
    *  exhausted. Threaded to `scanExhaustedTargets`. */
   exhaustionThreshold?: number;
+  /** When true, keep only targets with status NOT_STARTED (never worked).
+   *  Excludes the previously-stuck pool (STRUCTURAL / HIGH_MATCH /
+   *  CODE_MATCH / COMPILES / …) so broad sweeps never session it. */
+  greenfieldOnly?: boolean;
 }
 
 /** Load only unmatched (not FULL_MATCH / EQUIVALENT_MATCH) targets for a unit.
@@ -234,6 +238,30 @@ export function loadUnmatchedTargets(
   options?: UnmatchedOptions,
 ): Target[] {
   const targets = loadUnitTargets(repoRoot, region, unit, false);
+  // Greenfield first (status filter), then the ledger-exhaustion subtraction.
+  if (options?.greenfieldOnly) {
+    const greenfield = targets.filter((t) => t.status === "NOT_STARTED");
+    const skipped = targets.length - greenfield.length;
+    if (skipped > 0) {
+      process.stderr.write(
+        `[pi-harness] skipping ${skipped} previously-worked target(s) (greenfieldOnly — status != NOT_STARTED)\n`,
+      );
+    }
+    if (!options?.ledgerPath || options.retryExhausted) return greenfield;
+    const absLedger = isAbsolute(options.ledgerPath)
+      ? options.ledgerPath
+      : join(repoRoot, options.ledgerPath);
+    const exhausted = scanExhaustedTargets(absLedger, options.exhaustionThreshold);
+    if (exhausted.size === 0) return greenfield;
+    const filtered = greenfield.filter((t) => !exhausted.has(t.id));
+    const skippedLedger = greenfield.length - filtered.length;
+    if (skippedLedger > 0) {
+      process.stderr.write(
+        `[pi-harness] skipping ${skippedLedger} exhausted target(s) (use retryExhausted to override)\n`,
+      );
+    }
+    return filtered;
+  }
   if (!options?.ledgerPath || options.retryExhausted) return targets;
 
   const absLedger = isAbsolute(options.ledgerPath)
@@ -271,11 +299,13 @@ export function unitHasActionableWork(
   exhaustionThreshold?: number,
   retryExhausted?: boolean,
   maxAttemptsPerTarget?: number,
+  greenfieldOnly?: boolean,
 ): boolean {
   const targets = loadUnmatchedTargets(repoRoot, region, unit, {
     ledgerPath,
     exhaustionThreshold,
     retryExhausted: retryExhausted ?? false,
+    greenfieldOnly,
   });
   if (targets.length > 0) return true;
   // No non-exhausted targets. If the phase-3 TU-final escape would fire (all
@@ -310,14 +340,20 @@ export type UnitOrder = "most-remaining" | "least-remaining" | "smallest" | "alp
  * Scan all function-kind targets grouped by unit and return per-TU match
  * summaries. Only units with at least one function-kind target are included.
  * Ordered by `order` (default: most-remaining first).
+ *
+ * With `greenfieldOnly`, `remaining` / `remainingSize` count ONLY
+ * NOT_STARTED targets (never-worked): the summary then reflects what a
+ * greenfield sweep would do, and `--all` discovery keeps only TUs with
+ * greenfield work.
  */
 export function loadAllUnitSummaries(
   repoRoot: string,
   region: string,
   order: UnitOrder = "most-remaining",
+  greenfieldOnly = false,
 ): UnitSummary[] {
   const accepted = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
-  const map = new Map<string, { total: number; matched: number; remainingSize: number }>();
+  const map = new Map<string, { total: number; matched: number; remainingSize: number; greenfield: number }>();
 
   for (const raw of readTargetsFile(repoRoot)) {
     if (raw.kind !== undefined && raw.kind !== null && raw.kind !== "function") continue;
@@ -325,13 +361,22 @@ export function loadAllUnitSummaries(
     const unit = raw.unit ?? "unknown";
     let entry = map.get(unit);
     if (!entry) {
-      entry = { total: 0, matched: 0, remainingSize: 0 };
+      entry = { total: 0, matched: 0, remainingSize: 0, greenfield: 0 };
       map.set(unit, entry);
     }
     entry.total++;
     if (accepted.has(raw.status)) {
       entry.matched++;
-    } else {
+    } else if (raw.status === "NOT_STARTED") {
+      entry.greenfield++;
+      if (greenfieldOnly) {
+        // Sum unmatched .text size (bytes) for the "smallest" order: a TU
+        // with few, large functions may be bigger than one with many small
+        // ones, so remaining-COUNT is a poor size proxy. Missing sizes count 0.
+        const sz = parseTargetSize(raw.size);
+        if (typeof sz === "number") entry.remainingSize += sz;
+      }
+    } else if (!greenfieldOnly) {
       // Sum unmatched .text size (bytes) for the "smallest" order: a TU
       // with few, large functions may be bigger than one with many small
       // ones, so remaining-COUNT is a poor size proxy. Missing sizes count 0.
@@ -347,7 +392,7 @@ export function loadAllUnitSummaries(
       unit,
       total: counts.total,
       matched: counts.matched,
-      remaining: counts.total - counts.matched,
+      remaining: greenfieldOnly ? counts.greenfield : counts.total - counts.matched,
       remainingSize: counts.remainingSize,
     });
   }

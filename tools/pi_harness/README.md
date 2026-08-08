@@ -20,7 +20,7 @@ cp pi-harness.example.json ../../pi-harness.json   # then edit models
 ## Usage
 
 ```bash
-npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame [--tu other/Unit] [--dry-run] [--max-parallel 3] [--config path]
+npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame [--tu other/Unit] [--dry-run] [--max-parallel 3] [--greenfield] [--config path]
 ```
 
 May be run from anywhere inside the repo (the root is auto-detected).
@@ -105,6 +105,7 @@ the same `.hexdiff.lock` as hexdiff).
 | `selection` | `claim-order` | Batch ordering: `claim-order` \| `similarity` \| `random` |
 | `triage` | `off` | Pre-batch routing: `off` \| `route` (reg-swap-only → witness-only cycle) |
 | `retryExhausted` | false | Re-attempt targets the ledger marked exhausted on a previous run |
+| `greenfieldOnly` | false | Broad-sweep mode: only session targets with status NOT_STARTED (never worked). Previously-attempted targets are excluded from batches and `--all` discovery skips TUs whose only remaining work is previously-worked. TU-final only fires on genuinely fully-matched units. CLI: `--greenfield` |
 | `bankOnlyOnBetter` | true | Only bank a near-miss draft that beats the stored best |
 | `nearmissDir` / `knownWallsPath` | build/pi-harness/nearmiss / docs/KNOWN_WALLS.md | Draft bank + known-walls doc |
 | `costModel` | zeros | Token price model for $/match reporting (0 = not priced) |

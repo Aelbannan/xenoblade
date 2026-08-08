@@ -994,7 +994,7 @@ extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(
 
 extern "C" Unk8187CData* func_8008187C__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager::getInstance();
-    u32 packedId = func_8007DCA8__Q22cf13CfGameManagerFv(14, 1);
+    u32 packedId = func_8007DCA8(14, 1);
     u32 resource = func_eu_80065640(14, 1, 0, value);
     Unk8187CData* result =
         func_80080F40__Q22cf13CfGameManagerFv(packedId, resource, 0);

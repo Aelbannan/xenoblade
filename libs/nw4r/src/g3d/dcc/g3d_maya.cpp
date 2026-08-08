@@ -160,7 +160,7 @@ void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
-    pMtx->m[0][3] -= rSrt.Tu;
+    pMtx->m[0][3] += -rSrt.Tu;
     pMtx->m[1][3] += rSrt.Tv;
 }
 
@@ -275,6 +275,13 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 #pragma dont_inline reset
 
 } // namespace
+
+DECOMP_FORCEACTIVE(g3d_maya_cpp,
+                   MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
+                   MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
+                   MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
+                   ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
+                   ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
 
 bool CalcTexMtx_Maya(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);

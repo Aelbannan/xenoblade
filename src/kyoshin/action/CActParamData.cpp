@@ -254,10 +254,10 @@ void actCallVt34(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x
 void actCallVt98(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x98/4])(self); }
 void actCallVt88(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x88/4])(self); }
 void actCallVt8C(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x8c/4])(self); }
-void actCallVt90(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x90/4])(self); }
-void actCallVt94(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x94/4])(self); }
+extern "C" void func_800560E4(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x90/4])(self); }
+extern "C" void func_800560F4(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x94/4])(self); }
 void actCallVt84_u16(){}
-void actCallVt30(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x30/4])(self); }
+extern "C" void func_80056118(void* self) { void** v = *(void***)self; ((void (*)(void*))v[0x30/4])(self); }
 
 void actCallVt40(){}
 void actCallVt38(){}

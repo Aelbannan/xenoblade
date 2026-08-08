@@ -21103,7 +21103,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamData.cpp",
       "instruction_match": 97.5,
-      "equivalence_status": "inconclusive_unsupported",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": false
     },
     {
@@ -21128,7 +21128,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamData.cpp",
       "instruction_match": 97.5,
-      "equivalence_status": "inconclusive_unsupported",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": false
     },
     {
@@ -21178,7 +21178,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/action/CActParamData.cpp",
       "instruction_match": 97.5,
-      "equivalence_status": "inconclusive_unsupported",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": false
     },
     {

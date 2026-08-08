@@ -10,10 +10,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5848 |
+| extern "C" (total lines) | 5851 |
 | extern "C" declarations (non-lbl_*, imports) | 1516 |
-| extern "C" definitions (forced names) | 2625 |
-| `self`/register-style params | 4351 |
+| extern "C" definitions (forced names) | 2628 |
+| `self`/register-style params | 4367 |
 | `void*` (params + locals) | 4969 |
 | raw pointer offset arithmetic | 3425 |
 | deref-through-cast arithmetic | 1403 |
@@ -31,7 +31,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CItemBoxInfo.cpp | 702 |
 | src/kyoshin/cf/object/CfObjectEne.cpp | 690 |
 | src/kyoshin/CSaveLoad.cpp | 684 |
-| src/kyoshin/action/CActParamData.cpp | 543 |
+| src/kyoshin/action/CActParamData.cpp | 549 |
 | src/kyoshin/CFloorMap.cpp | 520 |
 | src/kyoshin/code_80135FDC.cpp | 505 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 491 |
@@ -327,7 +327,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CUIErrMesWin.cpp | 0 | 11 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIWindowManager.cpp | 3 | 8 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/action/CActParamAnim.cpp | 1 | 30 | 46 | 29 | 94 | 68 | 0 | 0 | 4 |
-| src/kyoshin/action/CActParamData.cpp | 2 | 100 | 102 | 110 | 7 | 7 | 0 | 0 | 0 |
+| src/kyoshin/action/CActParamData.cpp | 2 | 103 | 102 | 110 | 7 | 7 | 0 | 0 | 0 |
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 5 | 5 | 3 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 9 | 8 | 1 | 0 | 0 | 0 | 0 |
@@ -433,6 +433,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp | 5 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 2 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp | 0 | 0 | 8 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -2006,7 +2007,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/action/CActParamData.cpp": {
   "deref_arith": 7,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 100,
+  "extern_c_nonlbl_def": 103,
   "ptr_arith": 7,
   "self_params": 102,
   "void_ptr": 110
@@ -2620,6 +2621,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp": {
   "self_params": 11
+ },
+ "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp": {
+  "self_params": 16
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp": {
   "self_params": 9

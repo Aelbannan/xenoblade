@@ -1806,7 +1806,9 @@ Combined with (1) this took `func_804F4D90` (0x2F8 state machine with 12-case ju
 
 All five `sinit_804DB4xx/804DB2xx/804DB0xx/804F51xx` functions store one vtable pointer. Retail shape: `li r3, dest@sda21; b .+4; lis r4, src@ha; addi r4, r4, src@l; stw r4, 0(r3); blr` (24 bytes). The `b .+4` is a scheduler barrier and the store is deliberately unfolded through r3.
 
-MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no tested source form emits the branch. Ruled out: return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, `-O4,p`/`-O4,s`, and MWCC Wii versions 1.0/1.0a/1.1/1.3/1.5/1.6/1.7. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL).
+**Why the global-object-with-ctor route (CRect16/CVec3) does NOT apply here:** the matched `__sinit_` functions in this repo (CRect16 `__sinit_\\CRect16_cpp`, CVec3 `__sinit_\\CVec3_cpp`, CCol3, etc.) are generated from a **global object definition with a constructor call in the TU** (`ml::CRect16 lbl_eu_80665588(0,0,0,0);` / `CVec3 CVec3::zero = CVec3(...)`). That works because the TU **owns** the object's bss/sbss slice and MWCC emits the auto-`__sinit_` that inlines the constructor (`li r3, obj@sda21; li r0,0; sth r0, obj@sda21(r0); sth r0, 2(r3); …`). The NAND sinits (and `sinit_eu_804F9FA4`) instead reference a **retail-owned sbss slot** (`lbl_eu_806659E8`/`lbl_eu_80665A98` live in the `monolibdata2.s` data slice — the retail object has them as `U` undefined, and the split assigns them to the retail data object). A TU cannot define those slots, so the global-object-with-ctor route (which requires the TU to own the object and emit the auto-`__sinit_` + `.ctors` pointer) is closed; the decompiled source must hand-write `sinit_804DB0D8` as an `extern "C"` free function.
+
+MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no tested source form emits the branch. 2026-08 probe (Wii/1.1 default + GC/1.3, 2.0, 2.5, 2.6, 2.7, 3.0a3, 3.0a3.2-3.4, 3.0a5, 3.0a5.2, Wii/1.0, 1.0a, 1.1, 1.3, 1.5, 1.6, 1.7 × `-O4,p/-O4,s` × `-ipa file/off/program`): ruled out return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, explicit `__ct__` tail call with named sbss symbol (produces `lis r4,src@ha; li r3,dest@sda21; addi r4,src@l; stw r4,dest@sda21(r0)` — 5-insn folded, same 20 bytes), placement-new/manual-ctor, function-local static guard, static class member object, derived-class static object, `-O4,p`/`-O4,s`, and all MWCC versions above. Under `-O4,p` the auto-`__sinit_` inlines a trivial ctor into a **folded** store; under `-O4,s` it keeps the tail call `li r3,obj@sda21; b __ct__` (which is the CNand `sinit_804DA4C0` FULL_MATCH shape when the ctor is a real out-of-line `__ct__` symbol). No combination produces `b .+4` + unfolded store through r3. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL); its dest is also retail-owned.
 
 These 5 sinits are deferred at COMPILES; fuzzy 0/6 < 50% excludes EQUIVALENT_MATCH. The `.ctors`-registered vtable-pointer sinits likely came from a different codegen path (hand-written `.s` or toolchain emission). If a policy exception is ever granted, a single `asm { }` for the `b .+4` plus the unfolded-store source would close them.
 
@@ -3897,6 +3899,26 @@ unaccepted external callees (`us-80435c98`, `us-804375c4`).
 The `__sinit_` function for a TU with `static` class members allocated in `.bss`
 can generate section-relative relocation symbols (`...bss.0`) instead of the
 mangled names (`zero__Q22ml5CVec4`) that the retail object uses.
+
+### How to make MWCC emit an auto-`__sinit_` (verified 2026-08)
+
+MWCC emits `__sinit_\<tu>_cpp` + a `.ctors` pointer when the TU **defines a
+global/static object with a constructor call** (not a hand-written function):
+- `ml::CRect16 lbl_eu_80665588(0, 0, 0, 0);` (global object with ctor args)
+- `CVec3 CVec3::zero = CVec3(...)` (static class member with ctor call)
+
+MWCC then auto-generates `__sinit_` that **inlines the constructor**:
+`li r3, obj@sda21; li r0,0; sth r0, obj@sda21(r0); sth r0, 2(r3); …` —
+byte-identical to retail (CRect16 is FULL_MATCH this way). Under `-O4,p` a
+trivial ctor inlines into a folded store; under `-O4,s` the sinit keeps the
+tail call `li r3,obj@sda21; b __ct__` (the CNand `sinit_804DA4C0` FULL_MATCH
+shape when the ctor is a real out-of-line `__ct__` symbol).
+
+This route requires the TU to **own** the object's bss/sbss slice. It does NOT
+work for the NAND sinits (`sinit_804DB0D8` etc.) or `sinit_eu_804F9FA4`,
+whose dest slots (`lbl_eu_806659E8`, `lbl_eu_80665A98`) live in the retail
+`monolibdata2.s` data slice — the TU can only reference them, so those sinits
+must be hand-written `extern "C"` free functions (see §4 `b .+4` ceiling).
 
 ### Fix
 1. **Float literal pool:** Declare `extern const float lbl_eu_<addr>;` at TU

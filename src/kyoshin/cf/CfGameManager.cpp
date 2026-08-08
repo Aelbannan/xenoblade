@@ -172,7 +172,7 @@ u32 func_8007DCA8(u32 first, u32 second) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
+void func_8007E4CC(u32 mask) {
     lbl_eu_80663E24 &= ~mask;
 }
 #pragma dont_inline reset
@@ -200,7 +200,7 @@ extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 in
 }
 
 #pragma dont_inline on
-extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask) {
+bool func_8007CBD4(u32 mask) {
     return (lbl_eu_80663E24 & mask) != 0;
 }
 #pragma dont_inline reset
@@ -224,7 +224,7 @@ extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u3
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
+void func_8007F990(u32 mask, bool enable) {
     if (enable) {
         lbl_eu_80663E28 |= mask;
     } else {

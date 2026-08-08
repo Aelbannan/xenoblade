@@ -113,10 +113,10 @@ void func_804630C0__Q23LOD17CLODCacheManagerSFv(void*);
 void* func_8046323C__Q23LOD17CLODCacheManagerSFv(void*);
 void func_8046368C__Q23LOD17UnkClass_8046368CFv(void);
 void func_8046369C__Q23LOD17UnkClass_8046368CFv(void);
-void func_80465704__Q23LOD17UnkClass_804645CCFv(s32);
+void func_80465704(s32);
 void func_80465718__Q23LOD17UnkClass_804645CCFv(void);
-void func_80465730__Q23LOD17UnkClass_804645CCFv(f32);
-void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32);
+void func_80465730(f32);
+void func_8046577C(s32);
 void func_8006BEC0(void*);
 
 // ---------------------------------------------------------------------------
@@ -314,7 +314,7 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
 // ===========================================================================
 // us-80467bf4  func_80463C24  (matrix slot upload with 1-entry cache)
 // ===========================================================================
-extern "C" void func_80463C24__Q23LOD17UnkClass_8046368CFv(s32 index, s32 offset, const Mtx* mtx) {
+void func_80463C24(s32 index, s32 offset, const Mtx* mtx) {
     LodGlobal* g = &lbl_eu_80657FB0;
 
     s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
@@ -372,7 +372,7 @@ extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 
     lbl_eu_806657A0 = p->f1A;
     lbl_eu_806657A8 = p->f0C;
-    func_8046577C__Q23LOD17UnkClass_804645CCFv(p->f0E);
+    func_8046577C(p->f0E);
 
     if (p->flags & 0x1000) {
         lbl_eu_806657BC = p->f1E;
@@ -427,7 +427,7 @@ extern "C" s32 func_80463F60__Q23LOD17UnkClass_8046368CFv(const LodPickObj* obj)
 // ===========================================================================
 // us-80467f5c  func_80463F8C  (conditional scalar updates, args in f1..f3)
 // ===========================================================================
-extern "C" void func_80463F8C__Q23LOD17UnkClass_8046368CFv(f32 a, f32 b, f32 c) {
+void func_80463F8C(f32 a, f32 b, f32 c) {
     if (lbl_eu_8066A5F4 != a) {
         lbl_eu_80658038[0] = a;
         lbl_eu_806657B0 |= 0x8;
@@ -483,7 +483,7 @@ return_zero:
 // ===========================================================================
 // us-8046803c  func_8046406C  (register vertex arrays with GX)
 // ===========================================================================
-extern "C" void func_8046406C__Q23LOD17UnkClass_8046368CFv(s32 count) {
+void func_8046406C(s32 count) {
     if (!(lbl_eu_806657B0 & 0x2)) {
         lbl_eu_806657B0 |= 0x2;
         GXSetArray(GX_VA_CLR0, lbl_eu_80665774, 4);
@@ -509,14 +509,14 @@ extern "C" void func_8046406C__Q23LOD17UnkClass_8046368CFv(s32 count) {
 // ===========================================================================
 // us-804680f8  func_80464128  (flag-driven fade update, returns "unchanged")
 // ===========================================================================
-extern "C" s32 func_80464128__Q23LOD17UnkClass_8046368CFv(u32 arg) {
+s32 func_80464128(u32 arg) {
     if (arg & 0x4) {
         s32 v = lbl_eu_806657A8;
         if (v == 0) {
             return 1;
         }
         if (v != 0xFF) {
-            func_80465704__Q23LOD17UnkClass_804645CCFv(v);
+            func_80465704(v);
         }
     }
 
@@ -530,13 +530,13 @@ extern "C" s32 func_80464128__Q23LOD17UnkClass_8046368CFv(u32 arg) {
             if (lbl_eu_8066A5F8 == cur) {
                 return 1;
             }
-            func_80465730__Q23LOD17UnkClass_804645CCFv(lbl_eu_8066A5F8 - cur);
+            func_80465730(lbl_eu_8066A5F8 - cur);
             return 0;
         }
         if ((arg & 0x60) == 0x60) {
             f32 cur = lbl_eu_80658038[2];
             if (lbl_eu_8066A5F8 != cur) {
-                func_80465730__Q23LOD17UnkClass_804645CCFv(cur);
+                func_80465730(cur);
             }
             return 0;
         }
@@ -548,13 +548,13 @@ extern "C" s32 func_80464128__Q23LOD17UnkClass_8046368CFv(u32 arg) {
                     if (lbl_eu_8066A5F8 == cur) {
                         return 1;
                     }
-                    func_80465730__Q23LOD17UnkClass_804645CCFv(lbl_eu_8066A5F8 - cur);
+                    func_80465730(lbl_eu_8066A5F8 - cur);
                     return 0;
                 }
                 if (arg & (0x20u << i)) {
                     f32 cur = lbl_eu_80658038[i];
                     if (lbl_eu_8066A5F8 != cur) {
-                        func_80465730__Q23LOD17UnkClass_804645CCFv(cur);
+                        func_80465730(cur);
                     }
                     return 0;
                 }
@@ -574,7 +574,7 @@ extern "C" s32 func_80464128__Q23LOD17UnkClass_8046368CFv(u32 arg) {
 // ===========================================================================
 // us-8046828c  func_804642BC  (fade ratio by group id)
 // ===========================================================================
-extern "C" s32 func_804642BC__Q23LOD17UnkClass_8046368CFv(s32 a, u32 b) {
+s32 func_804642BC(s32 a, u32 b) {
     if (lbl_eu_806657B0 & 0x40) {
         if ((s32)lbl_eu_806657BC == a) {
             if ((s32)lbl_eu_806657C4 >= (s32)b) {
@@ -584,7 +584,7 @@ extern "C" s32 func_804642BC__Q23LOD17UnkClass_8046368CFv(s32 a, u32 b) {
                 return 0;
             }
             lbl_eu_806657B0 |= 0x80;
-            func_80465730__Q23LOD17UnkClass_804645CCFv((f32)lbl_eu_806657C4 / (f32)b);
+            func_80465730((f32)lbl_eu_806657C4 / (f32)b);
             return 0;
         }
         if ((s32)lbl_eu_806657C0 == a) {
@@ -595,7 +595,7 @@ extern "C" s32 func_804642BC__Q23LOD17UnkClass_8046368CFv(s32 a, u32 b) {
                 return 1;
             }
             lbl_eu_806657B0 |= 0x80;
-            func_80465730__Q23LOD17UnkClass_804645CCFv(
+            func_80465730(
                 lbl_eu_8066A5F8 - (f32)lbl_eu_806657C4 / (f32)b);
             return 0;
         }
@@ -610,7 +610,7 @@ extern "C" s32 func_804642BC__Q23LOD17UnkClass_8046368CFv(s32 a, u32 b) {
 // ===========================================================================
 // us-804683a8  func_804643D8  (range fade with entry/exit interpolation)
 // ===========================================================================
-extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, s32 db) {
+s32 func_804643D8(s32 a, s32 b, s32 da, s32 db) {
     s32 lim = lbl_eu_806657B8;
 
     if (a <= b) {
@@ -620,7 +620,7 @@ extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, 
     if (a <= lim) {
         if (da != 0 && a + da > lim) {
             s32 over = a + da - lim;
-            func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over * 255) / da);
+            func_80465704(255 - (over * 255) / da);
         } else {
             func_80465718__Q23LOD17UnkClass_804645CCFv();
         }
@@ -631,7 +631,7 @@ extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, 
     }
     if (db != 0 && b - db < lim) {
         s32 under = b - lim;
-        func_80465704__Q23LOD17UnkClass_804645CCFv((under * 255) / db);
+        func_80465704((under * 255) / db);
     } else {
         func_80465718__Q23LOD17UnkClass_804645CCFv();
     }
@@ -646,12 +646,12 @@ ordered:
     }
     if (da != 0 && a + da > lim) {
         s32 over2 = a + da - lim;
-        func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over2 * 255) / da);
+        func_80465704(255 - (over2 * 255) / da);
         return 0;
     }
     if (db != 0 && b - db < lim) {
         s32 under2 = b - lim;
-        func_80465704__Q23LOD17UnkClass_804645CCFv((under2 * 255) / db);
+        func_80465704((under2 * 255) / db);
         return 0;
     }
     func_80465718__Q23LOD17UnkClass_804645CCFv();
@@ -661,7 +661,7 @@ ordered:
 // ===========================================================================
 // us-804684ec  func_8046451C  (does [a,b] straddle the distance limit?)
 // ===========================================================================
-extern "C" s32 func_8046451C__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b) {
+s32 func_8046451C(s32 a, s32 b) {
     s32 lim;
     if (a <= b) {
         goto ordered;

@@ -84,7 +84,7 @@ void LOD::UnkClass_804645CC::func_80465298() {
 typedef void (*LodTexCoordSetup)(s32, s32);
 extern "C" LodTexCoordSetup lbl_eu_8056D728[];
 
-extern "C" void func_80465314__Q23LOD17UnkClass_804645CCFv(s32 value) {
+void func_80465314(s32 value) {
     if (lbl_eu_806657D0 == value) {
         return;
     }
@@ -126,18 +126,18 @@ void LOD::UnkClass_804645CC::func_80465BC0() {}
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker
 // names explicit and model those values as ordinary C++ parameters.
-extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
+void func_80465704(s32 value) {
     lbl_eu_80665814 = value;
     lbl_eu_806657E8 |= 2;
 }
 
-extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
+void func_80465730(f32 scale) {
     s32 value = lbl_eu_80665814;
     lbl_eu_806657E8 |= 2;
     lbl_eu_80665814 = (s32)((f32)value * scale);
 }
 
-extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
+void func_8046577C(s32 value) {
     if (value == 0xFF) {
         value = lbl_eu_806657E8;
         lbl_eu_80665804 = 0;
@@ -151,7 +151,7 @@ extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
 }
 
-extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv(s16 value) {
+void func_804657E4(s16 value) {
     s16 local = value;
     OSs16tof32(&local, &lbl_eu_806657E4);
 }

@@ -10,7 +10,7 @@ FixStr<64>::FixStr() {
 }
 
 extern "C" void func_8016EC58(u32 object);
-extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask);
+bool func_8007CBD4(u32 mask);
 extern "C" void func_8007CE94__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -27,7 +27,7 @@ extern "C" void func_8007CE94__Q22cf13CfGameManagerFv() {
                                      lbl_eu_80571748);
             lbl_eu_80663E70 = 1;
         }
-        if (func_8007CBD4__Q22cf13CfGameManagerFv(0x1000)) {
+        if (func_8007CBD4(0x1000)) {
             cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
             if (player != nullptr) {
                 func_8016EC58(player->CfObject_UnkVirtualFunc23());
@@ -1934,7 +1934,7 @@ extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable) {
         func_8007C188__Q22cf13CfGameManagerFv(0x40000000);
         func_80496294(lbl_eu_80663E14, lbl_eu_80666498);
     } else {
-        func_8007E4CC__Q22cf13CfGameManagerFv(0x40000000);
+        func_8007E4CC(0x40000000);
         func_80496294(lbl_eu_80663E14, lbl_eu_8066649C);
     }
     func_801C011C(enable, 10);
@@ -2187,7 +2187,7 @@ extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 first, u32 second,
     if (!active || special) {
         CfRes_callFunc_67E78(active);
         func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
-        func_8007F990__Q22cf13CfGameManagerFv(0x10000, special);
+        func_8007F990(0x10000, special);
     }
     func_80083550__Q22cf13CfGameManagerFv();
 }

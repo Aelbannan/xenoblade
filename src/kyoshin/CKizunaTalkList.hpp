@@ -147,7 +147,7 @@ extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self);
 
 // Misc helpers used by the row-draw / visibility paths.
 extern "C" u8 CScrollBar_isVisible(void*);
-extern "C" void func_80124270(void* obj, int value);
+extern "C" void func_80124270(void*, u32);
 extern "C" __declspec(noinline) void* func_80273040(void* self, u32 r4);
 
 

@@ -5,26 +5,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// Forward declarations for sibling TU functions.
-extern "C" {
-    int func_802A3E88(CVS_THREAD* self);
-    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-    int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-    CVS_THREAD_DOWN* func_802A330C(int size, int align);
-    u8* func_802A34E4(int size);
-}
-
-// Base constructor: no explicit params — takes self from r3.
-extern "C" void __ct__cf_CVS_THREAD();
-
-// Init data tables for slot states (3 u32s each).
-extern "C" u32 lbl_eu_80539A68[3];
-extern "C" u32 lbl_eu_80539A74[3];
-extern "C" u32 lbl_eu_80539A80[3];
-
-// Vtable for CVS_THREAD_DOWN.
-extern "C" u32 lbl_eu_80539A8C[7];
-
 // ── Target 1: us-802a8540 (func_802A5E0C) ──────────────────────────────────
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A5E0C(CVS_THREAD_DOWN* self) {

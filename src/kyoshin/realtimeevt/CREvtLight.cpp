@@ -35,9 +35,6 @@ extern f32 lbl_eu_8066A1FC;  // 2π
 extern f32 lbl_eu_8066A210;  // π/2
 }
 
-// Vtable for CREvtLight
-extern "C" void* lbl_eu_80533D90[];
-
 // ============================================================================
 // Constructor: __ct__CREvtLight
 // r3 = this, r4 = arg
@@ -223,9 +220,3 @@ extern "C" int func_801C3850(CREvtLight* self, void* target) {
     }
     return 1;
 }
-
-// Declaration for Atan2FIdx
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-
-// Declaration for PSVECMag
-extern "C" f32 PSVECMag(const f32* vec);

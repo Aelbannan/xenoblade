@@ -58,12 +58,10 @@ extern "C" void* __dt__Q22cf18CfObjectImplWalkerFv(void* self, int deleteFlag) {
 
 void func_800C596C(void) {}
 
-extern "C" void func_800C6EC0(void* self);
 void func_800C5978(char* self) { ((void(*)(void*))func_800C6EC0)(self - 0xc); }
 
 void func_800C5980(char* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)(self - 0xc); }
 
-extern "C" void func_800CFFA0(void* self);
 void func_800C5988(char* self) { ((void(*)(void*))func_800CFFA0)(self - 0x10); }
 
 void func_800C5990(char* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)(self - 0x10); }

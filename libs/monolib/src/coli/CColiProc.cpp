@@ -2,6 +2,7 @@
 // Contains CColiProc constructor and field-management helpers.
 
 #include <types.h>
+#include "monolib/coli/CColiProc.hpp"
 
 struct CColiProcTarget {
     u32 field_0x0;
@@ -15,9 +16,6 @@ struct CColiProc {
     u32 field_0x8;
     u32 field_0xC;
 };
-
-// Default target data referenced by the constructor.
-extern "C" u8 lbl_eu_8056F398[0x10];
 
 extern "C" void __ct__CColiProc(CColiProc* self) {
     self->field_0x0 = (CColiProcTarget*)lbl_eu_8056F398;

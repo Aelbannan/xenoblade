@@ -4,6 +4,9 @@
 #include "monolib/util/reslist.hpp"
 #include "monolib/work.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* func_8016FE34(void* r3);
+
 // Minimal battle-UI child type (IUIWindow-like) for Move's mark/remove walk.
 class CUIBattleChild {
 private:

@@ -7,12 +7,6 @@
 
 void __ct__CMapSel(){}
 
-/* Retail destructor symbols for embedded sub-objects. */
-extern "C" void __dt__6CCur18Fv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
-
 /* CMapSel complete-object destructor.  Matches the retail __dt__7CMapSelFv
    byte-exact: null-check, member dtors in reverse-declaration order, then
    conditional delete if flags > 0. */
@@ -35,8 +29,6 @@ void func_802434A0(){}
 /* func_80243560 — Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
@@ -77,10 +69,6 @@ void func_80243B88(){}
 
 /* func_80243BE8 — Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
-extern "C" void func_801F369C(void*);
-extern "C" u32 func_80137510(void*, float);
-extern "C" float lbl_eu_8066873C;
-
 void func_80243BE8(CMapSel* self) {
     /* Check if mAnimTransform2 has reached the target frame. */
     if (func_80137510((void*)self->mAnimTransform2, lbl_eu_8066873C)) {

@@ -3,12 +3,6 @@
 
 #include "kyoshin/code_801862C0.hpp"
 
-// SDA singleton pointer for the arts select object (opaque pointer)
-extern "C" u32 lbl_eu_806642D0;
-
-// memset prototype
-extern "C" void* memset(void*, int, unsigned long);
-
 // CArtsSelectSlot: per-slot entry in the arts selection array (stride 0x170)
 struct CArtsSelectSlot {
     u32 unk00;  // +0x00: opaque pointer value

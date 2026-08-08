@@ -86,9 +86,6 @@ extern "C" {
 // Named wrappers (forward decls)
 bool testResInfoFlag(u32 flags);
 bool testWordFlag(const u32* p, u32 mask);
-extern "C" void clearWordFlag(u32* self, u32 mask);
-extern "C" void* func_80068494(void*, u32, u32*, u32*, int, int);
-extern "C" bool func_800686E4(void*, bool);
 
 // ============================================================
 // Tiny functions

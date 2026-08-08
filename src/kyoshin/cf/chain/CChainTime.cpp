@@ -4,8 +4,6 @@
 #include "kyoshin/cf/chain/CChainTime.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 
-extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
-extern "C" void func_802A0818(int, int);
 extern const float lbl_eu_80668A88;
 extern const float lbl_eu_80668A8C;
 

@@ -172,9 +172,6 @@ extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(void* self, float a,
     *(float*)((char*)self + 0x44) = b;
 }
 
-// Forward declaration - function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
-extern "C" void func_80142428();
-
 void func_800BBC04() {
     func_80142428();
 }

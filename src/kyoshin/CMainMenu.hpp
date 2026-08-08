@@ -100,3 +100,13 @@ public:
 
     void OnFileEvent();
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void cbRenderBefore__9CMainMenuFv();
+extern "C" void __ct__800FF300();
+extern "C" void __dt__8CBaseCurFv(void*, int);   // defined in kyoshin/CCur.cpp
+extern "C" void __dt__8CProcessFv(void*, int);   // CProcess base destructor
+extern "C" void* __dt__7CSubCurFv(CBaseCur*, int); // defined in kyoshin/CCur.cpp
+extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
+extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
+extern "C" int func_800FF778__9CMainMenuFv();   // mangled member symbol, prevents IPA inlining

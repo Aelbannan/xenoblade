@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
-
 namespace nw4r {
 namespace g3d {
 
@@ -845,5 +843,4 @@ const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
     return lbl_eu_8051D630;
 }
 void GetTypeName__Q34nw4r3g3d6AnmScnCFv(){}
-extern "C" const char lbl_eu_8051D620[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d6AnmScnCFv(void) { return (void*)lbl_eu_8051D620; }

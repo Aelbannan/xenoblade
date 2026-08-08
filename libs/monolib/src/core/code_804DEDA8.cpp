@@ -4,16 +4,7 @@
 #include <harness_catalog.h>
 
 #include "monolib/core/CScheduleItem.hpp"
-
-// Schedule item pool (lbl_eu_80661718, 0x10 bytes in .bss).
-struct CScheduleItemPool {
-    CScheduleItem* base; // 0x0: item array (stride 0x58)
-    s32 count;           // 0x4
-    s32 freeCount;       // 0x8
-    s32 lastHandle;      // 0xC
-};
-extern "C" CScheduleItemPool lbl_eu_80661718;
-extern "C" void func_804E3E2C(CScheduleItem* item);
+#include "monolib/core/code_804DEDA8.hpp"
 
 void func_804DEDA8(void* r3) {
     char* base = (char*)r3;

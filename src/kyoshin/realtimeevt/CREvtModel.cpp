@@ -65,10 +65,6 @@ extern const char lbl_eu_80530E88[];
 
 #define FLD(type, base, off) (*(type*)((char*)(base) + (off)))
 
-// Forward declarations
-extern "C" void func_80172EA4(void* self, void* animData, void* model, int flag);
-extern "C" void func_80172CE4(void* self, void* model);
-
 // All functions with C linkage
 extern "C" {
 

@@ -5,7 +5,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538(&lbl_eu_806654D0);
 
 WaveSound::WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg)
@@ -60,8 +59,6 @@ void WaveSound::DetachTempSpecialHandle() {
 namespace nw4r {
 namespace snd {
 namespace detail {
-
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538;
 
 const nw4r::ut::detail::RuntimeTypeInfo* WaveSound::GetRuntimeTypeInfo() const {
     return &lbl_eu_80665538;

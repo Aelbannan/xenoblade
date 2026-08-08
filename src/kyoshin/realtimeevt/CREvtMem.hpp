@@ -23,3 +23,7 @@ struct CREvtMem {
 };
 
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* lbl_eu_80530A30[];
+extern "C" cf::CREvtMem* lbl_eu_80664260;

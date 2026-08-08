@@ -1,9 +1,7 @@
 // Decompiled for monolib/src/scn/CVirtualLightDir
 
 #include <types.h>
-
-// Retail base-class ctor (no header declares it in this unit's scope).
-extern "C" void __ct__CVirtualLightObj(void* self);
+#include "monolib/scn/CVirtualLightDir.hpp"
 
 // CVirtualLightObj-compatible prefix laid out exactly to 0x34 so that the
 // derived CVirtualLightDir extension fields land at 0x34/0x38. Keeping the

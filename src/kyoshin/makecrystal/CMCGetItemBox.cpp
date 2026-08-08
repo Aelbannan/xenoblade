@@ -13,36 +13,19 @@ namespace nw4r { namespace lyt { class AnimTransform; } }
 // Only unmangled retail symbols (confirmed via config/us/symbols.txt) are
 // declared extern "C"; the mangled ones are declared as normal C++ so the
 // Itanium-mangled reloc name is emitted (matches the retail reloc).
+// Most imports live in the C-linkage imports section of CMCGetItemBox.hpp.
+// The six below stay TU-local: func_801D216C / CSysWin_getUnk34 /
+// CSysWin_isActive / func_8022B8E4 conflict with CModelDispMakeCrystal.cpp's
+// own extern "C" decls ((void*, u8) / (void*) forms), and func_80137E7C /
+// func_8013639C conflict with code_80135FDC.hpp's signatures - hoisting them
+// would make that TU ill-formed.
 extern "C" {
-void* CItem_initItemImplInstances(void*);
-char* func_80138F78(u16);
-int   func_801C6E90(void*);
-u32   func_80136254(void*, const char*, u16);
 void  func_80137E7C(void*, const char*, void*);
-u32   func_801361E8(void*, const char*, u32);
 char* func_8013639C(void*, const char*, ...);
 void func_801D216C(void*, int);
-void func_801599D4(CMCItemBoxEntry*, int);
-u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
 u32 CSysWin_getUnk34(CMCGetItemBoxSysWin*);
 int  CSysWin_isActive(CMCGetItemBoxSysWin*);
 void func_8022B8E4(CMCGetItemBoxSysWin*);
-u32 func_80157CD0(u8);
-void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
-u16 ArrayGet12(const unsigned short*, unsigned char);
-void func_801CB9D8(u32*, void*, u32);
-void func_80137924(void*, void*, void*, void*);
-char* func_80136190(const void*, const void*, int);
-void func_80124270(nw4r::lyt::Pane*, u32);
-void func_801D4174(void*);
-void func_801D4260(void*, u16);
-void func_8022B7F4(void*);
-void* func_801D3C74(void*, u32);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-// Retail mangled names kept as source names so the reloc matches exactly.
-void func_8003AA8C__5CBdatFUl(u32);
-void func_801390E0__FPP11CFileHandle(void*);
-void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 }
 // C++-linkage (mangled) retail symbols.
 void func_80136910(nw4r::lyt::Layout*, char*, u8);   // func_80136910__FPQ34nw4r3lyt6LayoutPcUc
@@ -50,23 +33,11 @@ void func_80138078(u32);                             // func_80138078__FUl
 u8 getItemBoxState(CItemBoxInfo*);                   // getItemBoxState__FP12CItemBoxInfo
 u32 func_80137444(nw4r::lyt::AnimTransform*, float); // func_80137444__FPQ34nw4r3lyt13AnimTransformf
 
-// Foreign rodata (string pool used by the item-box layout).
-extern "C" char lbl_eu_8050FF8C[];
-extern "C" void* lbl_eu_806640EC;
-extern "C" void* lbl_eu_806640D8;
-extern "C" void* lbl_eu_80664100;
-extern "C" void* lbl_eu_80664A18;
-extern "C" void* lbl_eu_80664A1C;
-extern "C" float lbl_eu_80668BF0;
-
 // Same-unit helper functions.
 void func_80296BF0(CMCItemBoxSub*);
 void func_8029967C(CMCGetItemBox*);
 void func_802998C8(CMCGetItemBox*);
-extern "C" void func_802999B0(CMCGetItemBox*);
 void func_80299490(CMCGetItemBox*, int, u32);
-extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
-extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 void func_80298378(CMCGetItemBox*);
 void func_802983E4(CMCGetItemBox*);
 

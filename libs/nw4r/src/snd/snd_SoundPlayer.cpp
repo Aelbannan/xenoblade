@@ -1,12 +1,6 @@
 #include <nw4r/snd/snd_SoundPlayer.h>
 #include <nw4r/snd/snd_SoundThread.h>
 
-// Retail .sdata2 constants used by the ctor pool (lbl_eu_8066A058 = 1.0f,
-// lbl_eu_8066A05C = 0.0f). Declaration only — MWCC emits sda21 relocs with
-// the retail names instead of TU-local @N pool cookies (MWCC_REFERENCE §1b).
-extern "C" const float lbl_eu_8066A058;
-extern "C" const float lbl_eu_8066A05C;
-
 namespace nw4r {
 namespace snd {
 

@@ -15,11 +15,6 @@ extern void func_8013B428(u32);
 // (that would double-mangle).
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-// Retail vtable data symbol (vtable lives in split1.s at 0x80535F48).
-// The class is __declspec(novtable), so the ctor assigns the retail label
-// explicitly instead of the compiler-generated __vt__16CMCCylinderGauge.
-extern "C" u8 lbl_eu_80535F48[];
-
 CMCCylinderGauge::CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg) {
     *(void**)this = (void*)lbl_eu_80535F48;
     mArcResourceAccessor = arg;

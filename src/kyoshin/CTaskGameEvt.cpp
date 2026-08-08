@@ -1,10 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/CTaskGameEvt
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/CTaskGameEvt.hpp"
 #include "kyoshin/harness_catalog.hpp"
-extern "C" void __dt__12CTaskGameEvtFv();
-extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self);
-extern "C" int func_80295764(void* self);
 
 void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 
@@ -37,7 +35,6 @@ public:
     virtual void Draw();
 };
 
-class CTaskGameEvt;
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 extern "C" void Term__12CTaskGameEvtFv(void* self) {
     void* r4 = self ? (u8*)self + 0x58 : 0;

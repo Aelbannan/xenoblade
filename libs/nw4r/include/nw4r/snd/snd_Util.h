@@ -4,6 +4,20 @@
 
 #include <nw4r/snd/snd_Types.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Retail .sdata2/.rodata pool constants referenced by name so SDA21/data
+// relocations match the stripped retail object (PLAN.md §17.6 approved
+// extern "C" lbl_eu_* pattern, docs/MWCC_REFERENCE.md §1b float pools).
+extern "C" const f32 lbl_eu_8066A0D0; // 1.0f
+extern "C" const f32 lbl_eu_8066A0F0; // 0.0f
+extern "C" const f32 lbl_eu_8066A0F4; // LPF scale lower bound
+extern "C" const f32 lbl_eu_8066A0F8; // LPF scale upper bound
+extern "C" const f32 lbl_eu_8066A0FC; // LPF scale step
+extern "C" const u16 lbl_eu_805223E0[]; // LPF freq table 80..16000 (24 entries)
+
 namespace nw4r {
 namespace snd {
 namespace detail {

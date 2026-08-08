@@ -252,3 +252,42 @@ struct CfDynMgr {
     u8  _00[0x04];
     u32 m_field04;   // +0x04
 };
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" CfCamDataTable lbl_eu_80570C90;
+extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
+extern "C" void* func_8016FE34(void* source);
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
+extern "C" void* func_800B708C__Fi(int id);
+extern "C" void* func_800BBC0C();
+extern "C" f32   lbl_eu_8066A1F8;
+extern "C" f32   lbl_eu_8066A1FC;
+extern "C" f32   lbl_eu_8066641C;
+extern "C" f32   lbl_eu_80666418;
+extern "C" f32   lbl_eu_80666420;
+extern "C" f32   lbl_eu_80666428;
+extern "C" f32   lbl_eu_80666448;
+extern "C" f32   lbl_eu_80666454;
+extern "C" f32   lbl_eu_8066A208;
+extern "C" f32   lbl_eu_8066A210;
+extern "C" void* lbl_eu_806640BC;
+extern "C" u8    lbl_eu_804FB5D0[];
+extern "C" int   func_8003B1EC(void* self);
+extern "C" int   getBdatStringColumnValue(void* a, const u8* b, int c);
+extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
+extern "C" int   CfRes_getD80Flag();
+extern "C" f32   func_80496288();
+extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
+extern "C" int __declspec(noinline) func_800755BC(CfCamEventManager* mgr, u32 idx);
+extern "C" f32 lbl_eu_8066642C;
+extern "C" f32 lbl_eu_80666430;
+extern "C" f32 lbl_eu_8066A200;
+extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
+extern "C" void func_800A41BC(f32* out, CfCamEventElem* a, CfCamEventElem* b,
+                              CfCamEventElem* c, CfCamEventElem* d);
+extern "C" void func_800A40E8(f32* out, CfCamEventElem* a, CfCamEventElem* b);
+extern "C" int func_8024125C(int state, int val);
+extern "C" int func_80241344(int state, int val);
+extern "C" int func_80240C98(int state, int arg0, int arg1);
+extern "C" u32 func_800AA300(int a, int b, int c);

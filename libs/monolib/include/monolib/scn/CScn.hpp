@@ -57,3 +57,21 @@ public:
     u8 unk_3E9; //0x3E9
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+class CView;
+
+extern "C" s32 func_8049AF80(UnkScn68* cam);
+extern "C" CView* func_8049B0A0(UnkScn68* cam, s16 idx);
+extern "C" void* func_80486068(void*, void*, void*, void*, int);
+extern "C" int func_80486070(int, int, int);
+extern "C" void __ct__8049E710();
+extern "C" void __ct__804820F8();
+extern "C" void func_8049C72C(int);
+extern "C" void* func_8049C794(void*);
+extern "C" void* func_8049C7B0(void*);
+extern "C" int func_8049AED4(int);
+extern "C" int func_8049B158(int);
+extern "C" bool func_8049B240(int);
+extern "C" void* func_8049B2C4(void*);

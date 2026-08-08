@@ -5,6 +5,16 @@
 #include <nw4r/g3d/g3d_anmobj.h>
 #include <nw4r/g3d/res/g3d_resanmchr.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+// Shared sdata2 0.0f / 1.0f slots used by the node-loop accessor defaults.
+extern "C" const float lbl_eu_80669B88; // 0.0f
+extern "C" const float lbl_eu_80669B8C; // 1.0f
+extern "C" const char lbl_eu_8051D5C0[];
+
 namespace nw4r {
 namespace g3d {
 

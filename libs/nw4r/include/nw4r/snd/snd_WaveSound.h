@@ -7,6 +7,10 @@
 
 #include <nw4r/ut.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538;
+
 namespace nw4r {
 namespace snd {
 

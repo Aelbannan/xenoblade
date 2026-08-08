@@ -12,23 +12,6 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Arts archive path string (accessed via sda21 small-data relocation).
 extern char lbl_eu_8050AC70[];
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" u32 readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" void func_801F34F4(void*);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" u32 CScrollBar_isVisible(void*);
-extern "C" void func_80138078__FUl(u32);
-extern "C" void* func_8009EC9C(u32);
-extern "C" u32 func_800A32BC(void*);
-
-// CArtsInfo helpers defined in CArtsInfo.cpp (plain-C retail symbols).
-extern "C" int func_80235A90(CArtsInfo* self);
-extern "C" void func_80235AC0(CArtsInfo* self);
-extern "C" void func_80235814(CArtsInfo* self);
-
-// Table lookup helper (defined later in this TU). Plain-C retail symbol;
-// kept out-of-line so callers emit a real bl instead of inlining.
-extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx);
 
 void __ct__CMenuArtsSet(){}
 
@@ -95,19 +78,9 @@ extern "C" __declspec(noinline) void func_8022FDF4(SArts2FDF4* self) {
     self->field_0x8->v14(0);
 }
 
-extern "C" void func_80230160(SArtsSub8022FA58* self);
-extern "C" void func_802316F8(SArtsSub8022FA58* self);
-extern "C" void func_80124270(void* p);
 // 2-arg C++ overload of func_80124270 (separate mangled symbol), used by func_80230D18.
 void func_80124270(void*, u32);
 
-// Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
-// Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).
-extern "C" u32 func_80235A98(CArtsInfo* self);
-extern "C" void func_80235AA0(CArtsInfo* self);
-extern "C" u32 func_80235F50(CArtsInfo* self);
-// C-linkage CSysWin state query (defined in CSysWin.cpp).
-extern "C" u32 CSysWin_getUnk34(void* self);
 // AnimTransform frame-check helper (defined in COption.cpp / CArtsInfo.cpp).
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // State-progression byte table (sdata).
@@ -115,8 +88,6 @@ extern u8 lbl_eu_806628A8[];
 // Switch-case handlers used by func_8022FDF4 (same TU, defined below).
 void func_8022FF74();
 void func_80230070();
-// Drive/refresh helper (same TU, defined below; C-name for reloc parity).
-extern "C" void func_80235124(CMenuArtsSet* self);
 
 void func_8022FE58(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
@@ -434,20 +405,6 @@ void func_8023352C(CArtsList* self) {
     ((SArtsWinE8*)&self->mSysWinE8)->v32();
 }
 
-extern "C" void func_801F3540(void* obj34);
-extern "C" void func_8023587C(CArtsInfo* self);
-extern "C" void func_8022B748(CSysWinFull* self);
-extern "C" void func_802306F0(void* obj148);
-extern "C" void func_80231CB4(void* obj174);
-extern "C" void func_80234EB8(CMenuArtsSet* self);
-extern "C" void func_80234FDC(CMenuArtsSet* self);
-extern "C" void func_80234F7C(CMenuArtsSet* self);
-extern "C" void func_8023506C(SArts3506C* self);
-extern "C" void func_802350B8(CMenuArtsSet* self);
-
-// lib/lyt draw (func_801F3540).
-extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
-
 void func_8023359C(CMenuArtsSet* self) {
     if (self->field_0x28 != 0 && self->field_0x2C != 0) {
         switch (self->field_0x2C) {
@@ -578,9 +535,6 @@ extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
 }
 
 void func_80234FDC(){}
-
-// func_80137510 is a flat C symbol (anim-frame check helper).
-extern "C" u32 func_80137510(void*, float);
 
 extern "C" __declspec(noinline) void func_8023506C(SArts3506C* self) {
     extern float lbl_eu_80668648;

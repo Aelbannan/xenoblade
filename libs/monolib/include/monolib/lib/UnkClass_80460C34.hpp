@@ -119,3 +119,7 @@ extern const z_ushort lbl_eu_80523D20[]; // dext
 z_ulong func_80460308__17UnkClass_80460308Fv(z_ulong adler, const z_uchar* buf, z_uint len);
 void    func_80460728__17UnkClass_80460308Fv(z_stream* strm, z_uint out);
 }
+
+// C-linkage imports
+// (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* memcpy(void* dest, const void* src, unsigned long n);

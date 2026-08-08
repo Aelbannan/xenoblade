@@ -1,8 +1,6 @@
 // zlib 1.2.3 inflate -- see UnkClass_80460C34.hpp for layout/rationale.
 #include "monolib/lib/UnkClass_80460C34.hpp"
 
-extern "C" void* memcpy(void* dest, const void* src, unsigned long n);
-
 // ---------------------------------------------------------------------------
 // inflateReset  (retail func_80460C34__17UnkClass_80460C34Fv, 0x80)
 // ---------------------------------------------------------------------------

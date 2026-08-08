@@ -10,6 +10,7 @@
 // retail names via extern "C" (same pattern as CLibVM.cpp).
 
 #include <harness_catalog.h>
+#include "monolib/lib/UnkClass_80460308.hpp"
 
 /*
  * ============================ Adler-32 ============================
@@ -135,8 +136,6 @@ struct InfStream {
 #define INF_MODE_TYPE 0xB
 #define INF_MODE_BAD  0x1B
 
-/* Retail error string pool (DOL .rodata string table). */
-extern "C" const char lbl_eu_805231F8[];
 #define INF_MSG_DIST_TOOFAR ((char*)(lbl_eu_805231F8 + 0x00))
 #define INF_MSG_DIST_CODE   ((char*)(lbl_eu_805231F8 + 0x1E))
 #define INF_MSG_LEN_CODE    ((char*)(lbl_eu_805231F8 + 0x34))

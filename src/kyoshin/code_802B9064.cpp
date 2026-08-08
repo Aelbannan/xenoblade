@@ -1,17 +1,7 @@
 #include <types.h>
+#include "kyoshin/code_802B9064.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
-
-// ── Sibling-TU voice hooks (retail symbols are unmangled globals) ──────────
-// func_802A330C / func_802A34E4: CVS voice-subsystem requests that return
-// non-zero on success. func_802A3D54: play a battle voice line against a
-// position sub-object. The retail symbols are unmangled C globals (defined in
-// the NonMatching retail CVS_* objects), so the declarations must be
-// extern "C" - MWCC mangles C++ free functions, which would leave the refs
-// unresolved at link.
-extern "C" bool func_802A330C(u32 size, u32 align);
-extern "C" bool func_802A34E4(u32 size);
-extern "C" void func_802A3D54(CCharVoice* voicePtr, int voiceId, int groupId);
 
 // Minimal layout of the battle object's fields this helper touches. The full
 // type is not yet identified, so only the offsets actually read are declared.

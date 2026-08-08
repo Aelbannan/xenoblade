@@ -31,3 +31,7 @@ public:
     //0x0-1c8: CDeviceBase
     u8 unk1C8[0x1F0 - 0x1C8];
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u8 lbl_eu_806636AA[6];
+extern "C" u8 lbl_eu_806636A9;

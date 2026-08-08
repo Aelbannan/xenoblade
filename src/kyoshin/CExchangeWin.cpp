@@ -20,10 +20,6 @@ extern float lbl_eu_80668610;
 
 
 
-// Constructor — extern "C" to match retail C-linkage symbol __ct__CExchangeWin
-// (avoids 12-prefix mangling).
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-
 extern "C" CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
     self->mVtbl = lbl_eu_80536640;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);

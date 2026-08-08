@@ -2,12 +2,6 @@
 
 #include <nw4r/g3d.h>
 
-extern "C" const float lbl_eu_80669AE0;
-extern "C" const float lbl_eu_80669AE4;
-extern "C" const float lbl_eu_80669B00;
-extern "C" const float lbl_eu_80669B04;
-extern "C" const float lbl_eu_80669B08;
-
 namespace nw4r {
 namespace g3d {
 namespace {

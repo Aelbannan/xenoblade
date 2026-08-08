@@ -4,6 +4,7 @@
 #include <harness_catalog.h>
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
+#include "monolib/coli/code_804B2FF0.hpp"
 #include "monolib/work/CProcess.hpp"
 #include <revolution/MTX.h>
 #include <nw4r/math.h>
@@ -35,8 +36,6 @@ struct CColiBounds {
     f32 max[3]; //0x0 max x/y/z
     f32 min[3]; //0xC min x/y/z
 };
-
-extern "C" CColiBounds* lbl_eu_80665944;
 
 // Position (x/y/z at +0x4/+0x8/+0xC) and radius at +0x10 used for
 // sphere-like bounds expansion.
@@ -206,14 +205,8 @@ void func_804B46A8(CColiBoundsPoint2* p) {
 struct CColiHx { f32 ax; f32 ay; f32 f8; };        //0x0/0x4/0x8
 struct CColiQx { f32 qx; f32 qy; f32 qz; }; //0x0/0x4/0x8
 
-extern "C" CColiHx* lbl_eu_8066594C;
-extern "C" CColiQx* lbl_eu_80665948;
-
 // sdata2 literals and the shared "master node index" used by the
 // bounds/transform helpers.
-extern "C" s16 lbl_eu_80665950; // master node index (lha)
-extern "C" f32 lbl_eu_8066AEB0; // 0.0f
-extern "C" f32 lbl_eu_8066AEB4; // 1.0f
 
 // --- Shared collision-node / matrix-source types ---
 
@@ -667,8 +660,6 @@ void func_804B49B8(const CColiHead* hd, CColiMtxOut* dst, const CColiMgr* mgr) {
     dst->m3[2][3] = dst->m1[2][3];
 }
 
-extern "C" void func_804B1DC0(void*, int);
-
 // Doubly-linked list used by the coli tasks: head pointer stored on the
 // owner at +0x5C, each node links forward via next (+0x9C) and backward
 // via prev (+0xA0).
@@ -778,8 +769,6 @@ struct CColiWalkState {
     u8 flag;       //0x60
 };
 
-extern "C" CColiWalkState* lbl_eu_8065D138;
-
 // Static initializer (.ctors) for the shared collision walk object at
 // lbl_eu_8065D138: run the CColiProc base constructor, then point its default
 // target data at the alternate table lbl_eu_8056F4F0.
@@ -788,24 +777,13 @@ struct CColiProcLocal {
     u32 field_0x4;   //0x4
 };
 
-extern "C" u8 lbl_eu_8056F4F0;
-extern "C" void __ct__CColiProc(CColiProcLocal* self);
-
 extern "C" void sinit_804B598C() {
     CColiProcLocal* self = (CColiProcLocal*)&lbl_eu_8065D138;
     __ct__CColiProc(self);
     self->field_0x0 = &lbl_eu_8056F4F0;
 }
 
-extern "C" f32 lbl_eu_8066AEC0;
-extern "C" f32 lbl_eu_8066AEC4;
-extern "C" f32 lbl_eu_8066AEC8;
-
 // Walk/traverse helpers (C-linkage retail symbols in the sibling coli unit).
-extern "C" void func_804A7ACC(void*, const Vec*, const Vec*, void*);
-extern "C" void func_804B077C(void*, const Vec*, const Vec*);
-extern "C" int func_804B0818(const void*, const CColiQueryNode*);
-extern "C" int func_804B21A8(const CColiQueryNode*, const void*, int);
 
 // Walk the segment query: reject degenerate (equal) vectors, otherwise run
 // the segment build + node query and expand the result AABB.
@@ -905,11 +883,6 @@ private:
     char pad_0x60[0x18];     //0x60
     u32 mFlags;              //0x78
 };
-
-extern "C" void func_804B0CE8(CColiMoveNode* node);
-extern "C" void func_804B0DF4(CColiMoveNode* node);
-
-extern "C" int lbl_eu_80665958;
 
 void CTaskColiManager::Init() {
     // Empty override — no initialization required.

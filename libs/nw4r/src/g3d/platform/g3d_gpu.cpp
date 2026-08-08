@@ -3,11 +3,6 @@
 
 #include <nw4r/g3d/platform/g3d_gpu.h>
 
-// cull-mode → hardware bit remap table (retail sdata2 blob at 80669BC8, owned
-// by nw4r_data.o — extern only). Declared as float so the documented
-// `register const f32* p = &sym;` form emits the sda21 addi like retail's `li`.
-extern "C" const float lbl_eu_80669BC8;
-
 namespace nw4r {
 namespace g3d {
 namespace fifo {

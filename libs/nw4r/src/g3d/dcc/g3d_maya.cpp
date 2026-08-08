@@ -1,11 +1,6 @@
 #include <nw4r/g3d.h>
+#include <nw4r/g3d/dcc/g3d_maya.h>
 #include <decomp.h>
-
-// Maya DCC float constants (SDA21)
-extern "C" const float lbl_eu_80669C98; // 0.0f
-extern "C" const float lbl_eu_80669C9C; // 1.0f
-extern "C" const float lbl_eu_80669CA0; // 256.0f/360.0f (deg_to_fidx)
-extern "C" const float lbl_eu_80669CA4; // 0.5f
 
 namespace nw4r {
 namespace g3d {
@@ -278,11 +273,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][3] = m13 + tv;
 }
 #pragma dont_inline reset
-
-typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
-
-extern "C" const TexSrtMtxFunc lbl_eu_8051D6C0[];
-extern "C" const TexSrtMtxFunc lbl_eu_8051D6DC[];
 
 } // namespace
 

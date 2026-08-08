@@ -10,25 +10,6 @@
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
-extern "C" void func_8021B52C(CMCCrystalInfo* self);
-extern "C" void func_8021B5B4();
-extern "C" void func_8021B63C();
-extern "C" void func_8021B6C4();
-
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" char lbl_eu_80508DF8[];
-
-// Retail symbols from other TUs referenced by these functions.
-extern "C" u32 func_801355BC();
-extern "C" FourShorts func_801397AC(void*, u32);
-extern "C" void CopyVec4s(short* dst, const short* src);
-// Retail symbols for these three helpers are the *mangled* names; the shared
-// code_80135FDC.hpp declares them extern "C" with the short unmangled forms,
-// so alias them under the mangled retail identifiers to emit correct relocs.
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 void func_80137924(void*, void*, void*, void*);
 u32 func_801392E4(void*);
 u16 func_80139358(u32);
@@ -45,26 +26,8 @@ void func_8021B13C(CMCCrystalInfo*);
 void func_8021B2E0(CMCCrystalInfo*, u32, void*);
 void func_8021B188(void*, void*, void*, void*);
 
-// Small-data symbols: colors + packed values used by crystal-info UI.
-extern "C" void* lbl_eu_806646D8;
-extern "C" void* lbl_eu_806646E0;
-extern "C" void* lbl_eu_806646E8;
-extern "C" void* lbl_eu_806646F0;
-extern "C" void* lbl_eu_806646F8;
-extern "C" void* lbl_eu_80664700;
-extern "C" void* lbl_eu_80664708;
-extern "C" void* lbl_eu_80664710;
+// Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
-
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
-
-// func_80136910 uses its mangled retail name in this TU (the shared header's
-// unmangled decl would emit a wrong reloc). func_80139A18 is C-linkage offline
-// but the header declares it C++-linkage (can't redeclare), so its mangled reloc
-// is resolved by the harness reloc_map.
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
 
 // The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
 // (not a mangled member name), so it is written as a C-linkage function that

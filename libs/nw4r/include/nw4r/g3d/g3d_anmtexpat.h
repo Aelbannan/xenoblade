@@ -5,6 +5,13 @@
 #include <nw4r/g3d/g3d_anmobj.h>
 #include <nw4r/g3d/res/g3d_resanmtexpat.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports
+// ---------------------------------------------------------------------------
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+extern "C" const char lbl_eu_8051D560[];
+
 namespace nw4r {
 namespace g3d {
 

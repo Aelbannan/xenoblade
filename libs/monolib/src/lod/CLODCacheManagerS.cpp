@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/lod/CLODCacheManagerS.hpp"
 #include "monolib/lod/LODMemMan.hpp"
 
 namespace LOD {
@@ -22,14 +23,6 @@ struct UnkClass_8046368C {
 }
 
 using namespace LOD;
-
-extern "C" void* lbl_eu_80665738;
-extern "C" void* lbl_eu_8066573C;
-extern "C" void* lbl_eu_8066574C;
-extern "C" void* lbl_eu_80665750;
-extern "C" void* lbl_eu_80665740;
-extern "C" void* lbl_eu_80665748;
-extern "C" void* lbl_eu_80665744;
 
 extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(void* self)
 {

@@ -9,6 +9,14 @@
 
 #include <revolution/WPAD.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Retail .sdata2 pools (US).
+extern "C" {
+extern const f32 lbl_eu_80669EE8; // 1.0f
+extern const f32 lbl_eu_80669EEC; // 0.0f
+extern const f64 lbl_eu_80669EF0; // int→double magic
+}
+
 namespace nw4r {
 namespace snd {
 

@@ -4,10 +4,7 @@
 #include <revolution/OS.h>
 #include <revolution/PAD.h>
 #include <revolution/WPAD.h>
-
-extern "C" void* WPADIsUsedCallbackByKPAD();
-extern "C" void WPADSetCallbackByKPAD(void* callback);
-extern "C" u8 WPADGetRadioSensitivity(s32 chan);
+#include <revolution/hbm/HBMController.hpp>
 
 namespace homebutton {
 
@@ -203,8 +200,6 @@ void Controller::clrKpadButton() {
 }
 
 extern const float lbl_80518684;
-extern "C" const float lbl_80518688;
-extern "C" const float lbl_8051868C;
 
 void Controller::setInValidPos() {
     mHBController.x = lbl_80518684;

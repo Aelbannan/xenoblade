@@ -36,3 +36,28 @@ public:
     u8 func_8021A8EC() const { return mIsActive; }
     /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0→1
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void func_8021B52C(CMCCrystalInfo* self);
+extern "C" void func_8021B5B4();
+extern "C" void func_8021B63C();
+extern "C" void func_8021B6C4();
+extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" char lbl_eu_80508DF8[];
+extern "C" u32 func_801355BC();
+extern "C" FourShorts func_801397AC(void*, u32);
+extern "C" void CopyVec4s(short* dst, const short* src);
+extern "C" void* lbl_eu_806646D8;
+extern "C" void* lbl_eu_806646E0;
+extern "C" void* lbl_eu_806646E8;
+extern "C" void* lbl_eu_806646F0;
+extern "C" void* lbl_eu_806646F8;
+extern "C" void* lbl_eu_80664700;
+extern "C" void* lbl_eu_80664708;
+extern "C" void* lbl_eu_80664710;
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);

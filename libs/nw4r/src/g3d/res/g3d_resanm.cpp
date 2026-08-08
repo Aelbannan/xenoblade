@@ -7,10 +7,6 @@ namespace g3d {
 namespace detail {
 namespace {
 
-extern "C" const float lbl_eu_80669AB0; // 1.0f
-extern "C" const float lbl_eu_80669AB4; // 2.0f
-extern "C" const float lbl_eu_80669AB8; // 3.0f
-
 /**
  * The Hermite interpolating polynomial f satisfies the following conditions:
  *        f(0)  = v0

@@ -7,9 +7,6 @@
 
 #include <cstring>
 
-extern "C" const float lbl_eu_80669D38; // 0.0f
-extern "C" const float lbl_eu_80669D3C; // 1.0f
-
 /******************************************************************************
  *
  * Utility functions
@@ -31,6 +28,7 @@ void ReverseYAxis(math::MTX34* pMtx) {
 namespace nw4r {
 namespace lyt {
 
+// Definition of the Pane RTTI object (extern + initializer = definition).
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470(NULL);
 
 namespace detail {
@@ -501,8 +499,6 @@ Material* Pane::GetMaterial(u32 index) const {
 
 namespace nw4r {
 namespace lyt {
-
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470;
 
 const nw4r::ut::detail::RuntimeTypeInfo* Pane::GetRuntimeTypeInfo() const {
     return &lbl_eu_80665470;

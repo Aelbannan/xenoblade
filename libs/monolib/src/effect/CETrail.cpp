@@ -12,6 +12,7 @@
 #include "monolib/math/CVec3.hpp"
 #include "monolib/math/CVec4.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/effect/CETrail.hpp"
 
 // ---------------------------------------------------------------------------
 // External vtables / constants / globals (absolute DOL addresses)
@@ -257,11 +258,6 @@ static void trailClearListDerived(CETrail* t) {
     head->m_next = head;
     head->m_prev = head;
 }
-
-// ---------------------------------------------------------------------------
-// func_804D70A0: POINT node constructor (array element init)
-// ---------------------------------------------------------------------------
-extern "C" void func_804D70A0(CETrailNode* node);
 
 // ---------------------------------------------------------------------------
 // __dt__804D6C60: CETrail constructor (retail placeholder name)
@@ -568,12 +564,6 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
 
     mtl::MemManager::func_80434A4C(true);
 }
-
-// ---------------------------------------------------------------------------
-// func_804D7B28: append/update one trail segment
-// ---------------------------------------------------------------------------
-extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
-                              const ml::CVec4* color, const ml::CVec4* scale);
 
 // ---------------------------------------------------------------------------
 // func_804D77E4: update trail geometry from link matrices

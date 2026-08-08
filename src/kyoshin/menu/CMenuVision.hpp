@@ -43,3 +43,8 @@ public:
     UnkClass_8045F564 mLayoutMem;               // 0x64 - layout memory region (MEM2 alloc)
     CMenuVisionEntry mEntries[6];               // 0x74 - 6 vision slots (stride 0x30)
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" void __dt__11CMenuVisionFv(void*);
+extern "C" void cbRenderBefore__11CMenuVisionFv(void*);

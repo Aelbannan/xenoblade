@@ -21,3 +21,13 @@ public:
     void func_8047BDA0();
 };
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// mpfsys::UnkClass_80471EC8 methods (defined in monolib/src/mpfsys)
+extern "C" void func_80472870__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
+extern "C" void func_8047233C__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
+extern "C" void func_80472370__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
+extern "C" void func_80472864__Q26mpfsys17UnkClass_80471EC8Fv(void* self);
+

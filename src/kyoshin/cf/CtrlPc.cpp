@@ -73,7 +73,6 @@ void cf::CtrlPc::delegateTo89B24() { func_80089B24(mSubObj8C); }
 void func_80089E88(void* self);
 void cf::CtrlPc::delegateTo89E88() { func_80089E88(mSubObj8C); }
 
-extern "C" void func_80089F68(void* self);
 void cf::CtrlPc::delegateTo89F68() { func_80089F68(mSubObj8C); }
 
 void func_80098810(){}
@@ -89,8 +88,6 @@ u32 cf::CtrlPc::getField1D4() { return mField1D4; }
 int cf::CtrlPc::returnTrue() { return 1; }
 
 void func_80098B74(){}
-
-extern "C" int lbl_eu_80527E98[];
 
 extern "C" void CtrlPc_setArrayVal(int idx, int val)
 {

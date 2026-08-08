@@ -13,7 +13,6 @@ extern void func_801390E0(CFileHandle**);
 // +0x1D "CBattery"
 // +0x26 "arc"
 // +0x2A "mf00_btry.brlyt"
-extern "C" char lbl_eu_8051399C[];
 
 CBattery::CBattery(u8 batteryLevel) : CBatteryVtblBase(), mMemRegion() {
     mFileHandle = nullptr;
@@ -42,8 +41,6 @@ void CBattery::func_802B92FC() {
 }
 
 // r4 inherits from DrawInfo
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-
 void CBattery::func_802B9334(void* param) {
     if (mDrawn == 0 || mLayoutReady == 0)
         return;

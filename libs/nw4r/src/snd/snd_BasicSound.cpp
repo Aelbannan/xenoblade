@@ -2,13 +2,6 @@
 
 #include <climits>
 
-// Retail .sdata2 pools (US).
-extern "C" {
-extern const f32 lbl_eu_80669EE8; // 1.0f
-extern const f32 lbl_eu_80669EEC; // 0.0f
-extern const f64 lbl_eu_80669EF0; // int→double magic
-}
-
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -561,8 +554,6 @@ void BasicSound::SetId(u32 id) {
 namespace nw4r {
 namespace snd {
 namespace detail {
-
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
 
 const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const {
     return &lbl_eu_806654D0;

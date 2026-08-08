@@ -49,3 +49,8 @@ public:
 };
 } // namespace cf
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" int func_80068078(int);
+extern "C" int func_80068254(int);
+extern "C" int func_801BFA64(int);
+

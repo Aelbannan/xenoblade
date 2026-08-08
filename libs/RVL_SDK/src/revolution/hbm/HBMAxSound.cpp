@@ -8,6 +8,7 @@
 #include <revolution/AX.h>
 #include <revolution/OS.h>
 #include <revolution/arc/arc.h>
+#include <revolution/hbm/HBMAxSound.hpp>
 
 namespace homebutton {
 
@@ -21,20 +22,11 @@ void SetSoundMode(u32 mode);
 
 } // namespace homebutton
 
-// MSL libm export referenced by retail (not declared in stl/math.h).
-extern "C" double log10(double);
-
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-namespace {
 
-/******************************************************************************
- *
- * sWork (retail .bss 0x805DA058: pointer to the work area)
- *
- * Players: 7 HBMSEQSEQUENCE blocks of 0x2E2C bytes each.
- * The first 4 form the "normal" pool (count 4), the last 3 the "special"
- * pool (count 3, selected for seq ids 4/0x17/0x19).
- ******************************************************************************/
+// Player block layout (shared with the C-linkage HBMSEQ* imports declared in
+// revolution/hbm/HBMAxSound.hpp; global scope so the type matches the
+// header's forward declaration).
 struct HBMSEQSEQUENCE {
     u8 pad0[0x418];          // 0x00000
     u32 finished;            // 0x418 (synth track-end flag)
@@ -46,6 +38,16 @@ struct HBMSEQSEQUENCE {
     s32 seqId;               // 0x2E28
 };                           // stride 0x2E2C
 
+namespace {
+
+/******************************************************************************
+ *
+ * sWork (retail .bss 0x805DA058: pointer to the work area)
+ *
+ * Players: 7 HBMSEQSEQUENCE blocks of 0x2E2C bytes each.
+ * The first 4 form the "normal" pool (count 4), the last 3 the "special"
+ * pool (count 3, selected for seq ids 4/0x17/0x19).
+ ******************************************************************************/
 struct SeqPool {
     HBMSEQSEQUENCE* first;   // 0x00
     HBMSEQSEQUENCE* last;    // 0x04
@@ -101,24 +103,7 @@ extern "C" const char* SOUND_FILENAME[] = {
 
 // Sound data filenames inside the sound archive.
 
-// seq.c exports (unmangled in retail).
-extern "C" void HBMSEQInit(void);
-extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE* seq, const u8* data,
-                                  void* synth, void* p1, u32 p2);
-extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE* seq);
-extern "C" void HBMSEQSetState(HBMSEQSEQUENCE* seq, u32 state);
-extern "C" u32 HBMSEQGetState(HBMSEQSEQUENCE* seq);
-extern "C" void HBMSEQRunAudioFrame(void);
-extern "C" void HBMSEQQuit(void);
-extern "C" void HBMSYNInit(void);
-extern "C" void HBMSYNRunAudioFrame(void);
-extern "C" void HBMSYNQuit(void);
-extern "C" void HBMMIXInit(void);
-extern "C" void HBMMIXUpdateSettings(void);
-extern "C" void HBMMIXQuit(void);
-extern "C" void HBMMIXSetSoundMode(u32 mode);
-// Retail declares (void*, int) here but the retail body ignores the volume.
-extern "C" void HBMSEQSetVolume(HBMSEQSEQUENCE* seq, int volume);
+// seq.c exports are declared in revolution/hbm/HBMAxSound.hpp (C-linkage imports).
 
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;

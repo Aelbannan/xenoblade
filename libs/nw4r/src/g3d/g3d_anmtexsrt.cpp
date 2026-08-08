@@ -3,9 +3,7 @@
 
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+#include <nw4r/g3d/g3d_anmtexsrt.h>
 
 namespace nw4r {
 namespace g3d {
@@ -322,5 +320,4 @@ void* GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv(void) { return (void*)lbl_eu_8
 
 void __dt__Q34nw4r3g3d15AnmObjTexSrtResFv(){}
 
-extern "C" const char lbl_eu_8051D590[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv(void) { return (void*)lbl_eu_8051D590; }

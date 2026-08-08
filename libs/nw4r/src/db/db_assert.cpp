@@ -15,7 +15,6 @@ namespace nw4r
         static u32 sWarningTime;
         static ConsoleHead* sAssertionConsole;
         static bool sDispWarningAuto = true;
-        extern "C" ConsoleHead* lbl_eu_8066543C;
 
         static void Assertion_Printf_(const char* fmt, ...)
         {

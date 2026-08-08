@@ -11,55 +11,8 @@
 // Forward declarations for cross-TU callees (resolved via the retail symbol map).
 class UnkClass_805764CC;
 UnkClass_805764CC* func_800B07E8();  // MWCC free-fn mangling -> func_800B07E8__Fv
-extern "C" void func_800B3A88(UnkClass_805764CC* self, void* target);
-extern "C" void func_801BFED0(int a, u16 b, int c);
-extern "C" int func_8009CF8C(void*);
 
 using namespace cf;
-
-// Small-data globals accessed by CfGimmick-region helpers (@sda21 loads/stores).
-extern "C" u32 lbl_eu_806646B4;
-extern "C" u32 lbl_eu_806646BC;
-extern "C" float lbl_eu_80662784;
-extern "C" u16 lbl_eu_806646C0;
-extern "C" int lbl_eu_805765B0[10];
-// CfGimmick vtable (stored at +0x00 by the constructor).
-extern "C" u8 lbl_eu_80535844[];
-
-// Reference point the gimmick range checks are measured from.
-extern "C" CfGimmickVec3 lbl_eu_805765A0;
-
-// Shared singleton accessor; refs resolve to the unmangled retail name.
-extern "C" CfGimmickGlobal* getUnk80664658();
-
-// Bdat table data used by func_8020A608 / func_80208F34 columns.
-extern "C" u8 lbl_eu_805357E8[];
-extern "C" void* lbl_eu_80664148;   // .sbss - current bdat file pointer
-// Returned when func_8020A608 cannot fetch a column row.
-extern "C" void* lbl_eu_80662788;
-
-// Column-capacity helpers (CBdat row begin/count).
-extern "C" void* func_8003AA34();
-extern "C" u32 func_8003B41C(void* bdat);
-extern "C" u32 func_8003B1EC(void* bdat);
-
-// Player per-heal helpers paired with CfObject_UnkVirtualFunc70.
-extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
-extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
-
-// Scale factor for bdat int -> float position conversion.
-extern "C" float lbl_eu_80668364;
-// Alternative scale factor used by the +0x1C-family column readers.
-extern "C" float lbl_eu_8066A210;
-// Scale factor for the field_30..3C extent setters.
-extern "C" f32 lbl_eu_80668370;
-// Base of the +0, +0xA, +0x15, +0x20 column-name string block.
-extern "C" char lbl_eu_80508634[];
-// Sentinel used by the player loops (func_8020A124 / func_8020A1DC).
-extern "C" float lbl_eu_80668350;
-
-// Bdat column/row reader (returns the raw cell value as a 32-bit word).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 
 namespace cf {
     void CfGimmick::func_8020896C(void* other) {
@@ -101,16 +54,6 @@ extern "C" void __ct__cf_CfGimmick(CfGimmick* self) {
 }
 
 cf::CfGimmick::~CfGimmick() {}
-
-// func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first, float second)
-extern "C" void func_801BFDE8(unsigned int mode, unsigned int value,
-                               unsigned int playerValue, float first, float second);
-// Sound constants loaded in func_80208C48 / func_80208C60 (retail .sda21 loads)
-extern "C" float lbl_eu_80668358;
-extern "C" float lbl_eu_8066835C;
-extern "C" unsigned int func_80124B78();
-// FIdx scale applied to the rotation point before MTX34RotXYZFIdx.
-extern "C" f32 lbl_eu_80668354;
 
 // Build a rotation/placement matrix for the gimmick's collider box from its
 // axis-extents (field_30/34/38/3C) and the requested point direction, then
@@ -315,14 +258,6 @@ void func_8009D018(void* self);
 void func_8020974C(void* self) { ((void(*)(void*))func_8009D018)((char*)self + 0x2cc8); }
 
 void func_80209754(){}
-
-// Checker functions dispatched by gimmick->field_44 (jumptable_eu_80535830).
-typedef int (*CfGimmickChecker)(CfGimmick*, void*, const CfGimmickVec3*);
-extern "C" CfGimmickChecker jumptable_eu_80535830[];
-extern "C" CfGimmickList* func_800B6BC8();
-extern "C" CfGimmickList* func_800B6BEC();
-// Fixed rotation angle used by func_802098EC's mask-0x4 occlusion test.
-extern "C" f32 lbl_eu_806646B0;
 
 // Resolve each list node to the object handed to the checkers by calling its
 // +0xAC vtable slot, then run every checker against the circular list until
@@ -555,13 +490,8 @@ void* func_8020A608(int index, int mod) {
     return lbl_eu_80662788;
 }
 
-// Reference point the gimmick range check is measured from.
-extern "C" CfGimmickVec3 lbl_eu_805765A0;
-// Height offset added to a spawned object's Y position.
-extern "C" f32 lbl_eu_80668378;
 // Create/attach gimmick object and name it (resolved via retail symbol map).
 CfGimmickObject* func_800B20B4(int a, int b, int c);
-extern "C" void func_800C13FC(void* obj, const char* name, int arg);
 
 void func_8020A6B0(CfGimmickReg* self, const CfGimmickVec3* point, f32 radius,
                    int index, int mod, int arg7) {

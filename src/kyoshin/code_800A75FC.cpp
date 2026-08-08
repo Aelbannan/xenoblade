@@ -3,19 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/code_800A75FC.hpp"
 #include "monolib/util/MemManager.hpp"
 
 // Forward declarations for external functions in other TUs.
 struct GlobalStruct_80572B94;
-// func_800A37CC/3594/36A4/3998/76EC are plain C symbols in retail (referenced
-// unmangled), so they need C linkage for the call-site reloc names to match.
-extern "C" void func_800A37CC(void*, void*);
-extern "C" int func_800A3594(void*, int, int);
-extern "C" int func_800A36A4(void*, int, int);
-extern "C" u32 func_800A3998(void*);
-extern "C" void func_800A76EC(GlobalStruct_80572B94*);
-extern "C" int func_800A39E8(void*, void*, void*, void*);
-extern "C" void func_800A3520(void*, int, int, int);
 
 extern char lbl_eu_804FBF60[];
 extern char lbl_eu_80572AC8[];
@@ -34,7 +26,6 @@ extern char lbl_eu_80572B58[];
 extern s8 lbl_eu_80663E98;
 
 void* memset(void*, int, unsigned long);
-extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
 // --- Global singleton struct at lbl_eu_80572B94 (0xB4 bytes, BSS) ---
 struct GlobalStruct_80572B94 {
@@ -1435,8 +1426,6 @@ int func_800A9E50(int index) {
 // Each 0x20-wide entry holds a registration node at +0x0 and object data at
 // +0x10; func_800A34C8 constructs the object and __register_global_object
 // attaches the destructor (__dt__800A34E0).
-extern "C" void func_800A34C8(void*);
-extern "C" void __dt__800A34E0();
 extern char lbl_eu_80572AC8[];
 
 void sinit_800A9F40() {

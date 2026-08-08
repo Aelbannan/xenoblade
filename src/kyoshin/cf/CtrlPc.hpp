@@ -57,3 +57,7 @@ public:
 };
 
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_80089F68(void* self);
+extern "C" int lbl_eu_80527E98[];

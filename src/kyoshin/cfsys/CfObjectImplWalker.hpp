@@ -15,3 +15,7 @@ public:
 };
 } // namespace cf
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_800C6EC0(void* self);
+extern "C" void func_800CFFA0(void* self);
+

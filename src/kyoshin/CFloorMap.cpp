@@ -5,7 +5,6 @@
 #include "kyoshin/CFloorMap.hpp"
 #include <cstdio>
 
-extern "C" char lbl_eu_8050BEA8[];
 extern u32 lbl_eu_8066479C;
 extern u32 func_8003B1EC(u32);
 extern u32 lbl_eu_8050BDF8[];

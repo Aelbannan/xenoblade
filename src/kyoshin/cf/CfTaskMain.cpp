@@ -3,16 +3,8 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 
-// Raw constructor symbol used to construct the CProcess base in place.
-extern "C" void __ct__8CProcessFv(void* self);
-
-// CfGameManager methods called by CfTaskMain - no CfGameManager.hpp exists
-// in the writable scope, so these are declared here with C linkage to match
-// the retail symbol names exactly.
-extern "C" void func_8007F9C4__Q22cf13CfGameManagerFv(void);
-extern "C" void func_8007FBFC__Q22cf13CfGameManagerFv(void);
-extern "C" void func_8007FC2C__Q22cf13CfGameManagerFv(void);
-extern "C" unsigned long lbl_eu_80663E28;
+// CfGameManager methods and raw CProcess ctor are declared in CfTaskMain.hpp
+// with C linkage to match the retail symbol names exactly.
 
 // Global null pointer-to-member-function constant (3 words), used to zero-fill
 // the CTTask move/draw callback slots. Non-const: the object stores made during
@@ -24,8 +16,8 @@ extern u32 __ptmf_null[3];
 extern const u8 lbl_eu_80526F58[];
 extern const u8 lbl_eu_80526E80[];
 
-// The complete-object destructor, tail-called by the IWorkEvent dtor thunk.
-extern "C" void __dt__Q22cf10CfTaskMainFv(void* self);
+// The complete-object destructor is declared in CfTaskMain.hpp (tail-called
+// by the IWorkEvent dtor thunk).
 
 namespace cf {
 

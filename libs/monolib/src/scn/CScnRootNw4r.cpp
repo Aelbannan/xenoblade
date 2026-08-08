@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/scn/CScnRootNw4r.hpp"
 
 void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
@@ -37,7 +38,6 @@ void func_80490040(){}
 
 extern "C" void func_80490088(void* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }
 
-extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);
 void func_80490090(void* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
 
 extern "C" u32 func_80490098__Fv(void) {

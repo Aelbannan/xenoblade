@@ -21,3 +21,10 @@ public:
     // TODO: add fields
 };
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" bool isIdle__11CTitleAHelpFv(void*);
+extern "C" bool func_80227CCC(void*);
+extern "C" unsigned int func_80228394(void*);
+extern "C" void func_80229768(void*, unsigned short);
+extern "C" void func_80229510(void*);
+

@@ -130,3 +130,8 @@ public:
     CMenuBattlePlayerState(CScn* scn);
     virtual ~CMenuBattlePlayerState();
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
+extern "C" void __dt__22CMenuBattlePlayerStateFv(void*);
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();

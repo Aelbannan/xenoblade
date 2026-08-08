@@ -4,12 +4,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051E808[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051EC68[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F034[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F4F8[];
-extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F89C[];
-
 void BiquadFilterLpf::GetCoef(int /*order*/, f32 freq,
                               BiquadFilterCallback::BiquadCoef* pCoef) const {
     int maxIdx = 0x6F;

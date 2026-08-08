@@ -103,3 +103,8 @@ namespace {
         static CDesktopException* spInstance;
     };
 }; //namespace
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+
+// Retail sbss singleton (getView / getInstance / getException SDA reloc).
+extern "C" CDesktop* lbl_eu_806656AC;

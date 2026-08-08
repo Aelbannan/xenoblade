@@ -44,3 +44,13 @@ public:
     void func_804819AC();
     void func_804819C4();
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Walk-graph float constants used by func_804808A0 (retail .rodata pool)
+extern "C" const f32 lbl_eu_8066A898;
+extern "C" const f32 lbl_eu_8066A8A8;
+extern "C" const f32 lbl_eu_8066A8AC;
+extern "C" const f32 lbl_eu_8066A8B8;

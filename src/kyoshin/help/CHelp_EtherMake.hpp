@@ -10,3 +10,7 @@ public:
     void func_802B80EC();
 };
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" UNKWORD func_80212480();
+extern "C" UNKWORD func_80212490();

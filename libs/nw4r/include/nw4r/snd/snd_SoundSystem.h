@@ -8,6 +8,12 @@
 
 #include <revolution/OS.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u8 lbl_eu_80638C40[];   // external symbols from BSS/SBSS
+extern "C" bool lbl_eu_80665508;
+extern "C" int lbl_eu_8066550C;
+extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv(); // defined in snd_SeqPlayer.cpp
+
 namespace nw4r {
 namespace snd {
 

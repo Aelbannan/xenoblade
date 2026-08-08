@@ -163,3 +163,40 @@ struct CEquipItemBox {
 
 /* Copy 8-byte CEquipItemData struct from src to dst */
 void copyEquipItemData(CEquipItemData* dst, const CEquipItemData* src);
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* __dl__FPv(void*);
+extern "C" int CSysWin_isActive(void*);
+extern "C" void func_801D216C(void*, int);
+extern "C" u32 func_801D32DC(u8*);
+extern "C" u32 CSysWin_isReady(u8*);
+extern "C" void func_80139198(void*);
+extern "C" void func_80138078__FUl(u32);
+extern "C" u8 func_801392B4(int);
+extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
+extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
+extern "C" void func_8028AA64(CEquipItemBox* self);
+extern "C" void func_80289500(CEquipItemBox* self, int a);
+extern "C" void func_80289CC0(CEquipItemBox* self);
+extern "C" void func_80285B70(CEIBCur* self);
+extern "C" void func_8022B8E4(void*);
+extern "C" void func_80289E70(CEquipItemBox*);
+// Forward decls for the grid/array helpers (defined in CEquipItemBox.cpp).
+extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
+extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
+// String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
+extern "C" char lbl_eu_8050EFDC[];
+extern "C" char* func_80136190(char*, char*, u32);
+extern "C" u32 func_801361E8(const void*, const char*, u32);
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void func_801D3258(void*);
+extern "C" void func_8022B7F4(void*);
+extern "C" u16 func_80139358(u32);
+extern "C" void* CItem_initItemImplInstances(void*);
+extern "C" char lbl_eu_806640D8[];
+extern "C" char lbl_eu_806640F8[];
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" int func_801D3320(void*);

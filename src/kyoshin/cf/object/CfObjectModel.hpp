@@ -76,3 +76,7 @@ namespace cf {
     };
 }
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
+extern "C" void func_80142428();
+

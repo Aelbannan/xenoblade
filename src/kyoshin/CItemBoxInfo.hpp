@@ -5,7 +5,7 @@
 
 class CEventFile;
 
-namespace nw4r { namespace lyt { class DrawInfo; } }
+namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; } }
 
 struct CItemBoxInfoState {
     u8 _00[0x04];
@@ -81,4 +81,34 @@ union CItemBoxSlotBytes {
     struct { u32 a; u16 b; } ab;
     u8 bytes[6];
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" char lbl_eu_805063BC[];
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void* func_8009EC9C(u32);
+extern "C" void func_80124270(void*, u32);
+extern "C" u32 func_801361E8(const void*, const char*, u32);
+extern "C" u16 func_80139358(u32);
+extern "C" u32 func_801392E4(void*);
+extern "C" void* func_80157C4C(u32);
+extern "C" void func_801D8B08(CItemBoxInfo*);
+extern "C" void func_801D85D8(CItemBoxInfo*);
+extern "C" void func_801D59C0(u32*, void*, void*);
+extern "C" void func_801D1F9C(void*, u32);
+extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
+extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
+extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" char lbl_eu_8052E590[];
+extern "C" char lbl_eu_8052E568[];
+extern "C" void func_801D4C9C(CItemBoxInfo*);
+extern "C" void func_801D4D64(CItemBoxInfo*);
+extern "C" void func_801E17EC(CItemBoxInfo2*);
+extern "C" void func_801E1868(CItemBoxInfo2*);
+extern "C" void func_801E18B4(CItemBoxInfo2*);
+extern "C" void func_801E1930(CItemBoxInfo2*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, s32);
+extern "C" void __ct__17UnkClass_8045F564Fv(void*);
+extern "C" void* lbl_eu_80534B28[];
+extern "C" void* lbl_eu_80534A90[];
+extern "C" u8 code80135FDC_getByte_64077();
 

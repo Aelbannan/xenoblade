@@ -256,7 +256,6 @@ extern "C" int CBattleState_UnkVirtualFunc1__Q22cf11CActorParamFv(void* self) {
 }
 
 // us-80180188
-extern "C" void CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();
 extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv)((char*)self - 8);
 }

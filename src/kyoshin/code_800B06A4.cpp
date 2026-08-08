@@ -20,11 +20,6 @@ extern void func_801F45B4(u32);
 extern void func_802074F0(u32);
 extern void func_80195E5C(float);
 
-// Forward declarations for callees of my targets
-extern "C" unsigned long func_800B1C00();
-extern "C" s32 func_800B1C0C(u32 mask);
-extern "C" void func_800B6DD0(void* reslist, void* obj);
-
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
 extern void func_80206BD4(CfMapMineManager* self);
@@ -32,27 +27,8 @@ extern void func_800B44A0(UnkClass_805764CC* self, void* arg);
 extern void* func_800B61FFC();
 extern void func_800B137C(void* self, void* arg, int count);
 extern void func_800B8524(void* singleton, void* self, void* other);
-extern "C" void func_800B1B2C(void* obj);
 void* func_800B47A8(void* a, void* b, void* c, void* d, void* e, void* f, void* g);
 
-// Calees used by target functions in this TU (defined in other TUs or this TU later)
-extern "C" int func_800B2D88(void* reslist);
-extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
-extern "C" void func_800B1C24(int arg, void* ptr);
-extern "C" void* func_800B39C0(void* arg);
-extern "C" void func_800B68A8(void* self, void* a, void* b, int c, float f);
-extern "C" void* func_800B708C__Fi(int arg);
-extern "C" void func_80193CD0(void* a, void* b);
-
-// Declarations for callees used by the target functions below
-extern "C" unsigned long func_80061FFC();
-extern "C" void __dl__FPv(void*);
-extern "C" void __dt__8047BDA8(void*);
-extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count);
-extern "C" unsigned long func_800B0FEC(void* self);
-extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
-extern "C" void* func_800B20B4(void* self, unsigned long arg1, void* arg2, unsigned long arg3);
-extern "C" void func_800B084C(UnkClass_805764CC* self, unsigned long count);
 void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
 

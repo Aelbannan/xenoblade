@@ -119,6 +119,71 @@ public:
     void setField64(u8 val) { mField64 = val; }
 };
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void __dt__10IScnRenderFv(void*, int);
+extern "C" void __dt__10IWorkEventFv(void*, int);
+extern "C" void __dt__9IUIWindowFv(void*, int);
+extern "C" void __ct__8CProcessFv(void*);
+extern "C" void __dl__FPv(void*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dt__14Class_8045F858Fv(void*, int);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+extern "C" void* getInstance__9CTaskGameFv();
+extern "C" bool func_800426F0__9CTaskGameFv(void*);
+extern "C" void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
+extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+extern "C" void* getWorkMem__17CWorkThreadSystemFv();
+extern "C" void* func_801355F4();
+extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
+extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
+extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
+extern "C" void func_8013676C(void*, void*);
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+extern "C" bool func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
+extern "C" void func_80137E7C(void*, const char*, void*);
+extern "C" void func_80137B44(void*, const char*, int);
+extern "C" void func_80136B4C(void*, const char*, void*, int);
+extern "C" void func_8013639C(void*, const char*, int);
+extern "C" u16 func_80136254(void*, const char*, int);
+extern "C" u16 func_8013606C(const char*, const char*, int);
+extern "C" void func_80136190(const char*, const char*, int);
+extern "C" void func_80138078__FUl(u32);
+extern "C" void func_80135898();
+extern "C" void func_80133A08(u32);
+extern "C" void func_801347EC(u32);
+extern "C" void func_8013D7C0(u32);
+extern "C" void func_80134F2C(u32);
+extern "C" bool func_80122450();
+extern "C" bool func_80226B94();
+extern "C" void func_80124270(void*, bool);
+extern "C" void func_80124288(void*, void*);
+extern "C" bool func_8006EF04__Fi(int);
+extern "C" bool func_801BCF38();
+extern "C" bool func_8029A658();
+extern "C" bool func_8029EE58();
+extern "C" bool func_8013BFA8();
+extern "C" void* func_8049603C();
+extern "C" bool code80135FDC_getByte_64059();
+extern "C" bool code80135FDC_getByte_621F0();
+extern "C" void* CfRes_getE14();
+extern "C" bool func_8009CF8C(int);
+extern "C" void func_8009D018(int, int);
+extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
+extern "C" void* func_80138F78(u32);
+extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
+extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" bool func_80085840__Q22cf13CfGameManagerFv();
+
 // C-linkage helpers for thunks
 extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8);
 extern "C" void func_80142C64(void* self);

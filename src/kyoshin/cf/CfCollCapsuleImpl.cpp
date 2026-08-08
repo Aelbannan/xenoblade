@@ -1,10 +1,6 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollCapsuleImpl.hpp"
 
-// cf::CfDebugDrawManager::renderCapsule(Vec3* start, Vec3* end, float* color, float radius)
-extern "C" void renderCapsule__Q22cf18CfDebugDrawManagerFv(
-    const ml::CVec3* start, const ml::CVec3* end, const float* color, float radius);
-
 // Shared float constants used for capsule debug colors.
 extern float lbl_eu_80666910; // 0.0f
 extern float lbl_eu_80666914; // 1.0f

@@ -6,6 +6,7 @@
 #include "monolib/util/FixStr.hpp"
 
 namespace nw4r { namespace lyt {
+class AnimTransform;
 class ArcResourceAccessor;
 class Layout;
 class Pane;
@@ -99,3 +100,41 @@ public:
     u32 field_310;                   // 0x310
     CMCItemBoxSub sub_314;           // 0x314
 };
+
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+extern "C" void* CItem_initItemImplInstances(void*);
+extern "C" char* func_80138F78(u16);
+extern "C" int   func_801C6E90(void*);
+extern "C" u32   func_80136254(void*, const char*, u16);
+extern "C" void func_801599D4(CMCItemBoxEntry*, int);
+extern "C" u32 CSysWin_isReady(CMCGetItemBoxSysWin*);
+extern "C" u32 func_80157CD0(u8);
+extern "C" void advanceItemBoxState__FP12CItemBoxInfo(CItemBoxInfo*);
+extern "C" u16 ArrayGet12(const unsigned short*, unsigned char);
+extern "C" void func_801CB9D8(u32*, void*, u32);
+extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" char* func_80136190(const void*, const void*, int);
+extern "C" void func_80124270(void*, u32);
+extern "C" void func_801D4174(void*);
+extern "C" void func_801D4260(void*, u16);
+extern "C" void func_8022B7F4(void*);
+extern "C" void* func_801D3C74(void*, u32);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+// Retail mangled names kept as source names so the reloc matches exactly.
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+extern "C" char lbl_eu_8050FF8C[];
+extern "C" void* lbl_eu_806640EC;
+extern "C" void* lbl_eu_806640D8;
+extern "C" void* lbl_eu_80664100;
+extern "C" void* lbl_eu_80664A18;
+extern "C" void* lbl_eu_80664A1C;
+extern "C" float lbl_eu_80668BF0;
+extern "C" void func_802999B0(CMCGetItemBox*);
+extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);

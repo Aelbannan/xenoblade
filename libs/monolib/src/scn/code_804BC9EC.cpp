@@ -6,10 +6,6 @@
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
 
-// Forward-declare __register_global_object instead of including NMWException.h
-// (which conflicts with __ppc_eabi_init.h's _stack_addr declaration)
-extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
-
 // Entry in the top-level chunk list (8 bytes each)
 struct ScnResEntry {
     u16 type;
@@ -116,7 +112,6 @@ extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
 extern u32 lbl_eu_80665968;
-extern "C" void __dt__804BD8E8();
 extern u8 lbl_eu_8065F418[0x10];
 int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 

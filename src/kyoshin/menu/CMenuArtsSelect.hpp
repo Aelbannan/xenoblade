@@ -125,3 +125,26 @@ extern "C" {
 extern CMenuArtsSelect* lbl_eu_80663F20;
 extern UnkArtsSelectRef* lbl_eu_80663F24;
 }
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void CMenuArtsSelect_clearArtsRef();
+extern "C" void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref);
+extern "C" void CMenuArtsSelect_setDisabled();
+extern "C" bool CMenuArtsSelect_isFinished();
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance();
+extern "C" bool CMenuArtsSelect_isCreated();
+extern "C" int CMenuArtsSelect_isInteractable();
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState();
+extern "C" int CMenuArtsSelect_isNotReady();
+extern "C" void CMenuArtsSelect_workEventDraw(void* self);
+extern "C" void CMenuArtsSelect_workEventDtor(void* p);
+extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr);
+extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
+extern "C" void* func_80110A70();
+extern "C" void* func_8010CE48();
+extern "C" void func_8010EDE4(void*);
+extern "C" void func_8010A8E4(void*);
+extern "C" void func_80133770();
+extern "C" void* func_8016FE34(void* r3);

@@ -2,6 +2,11 @@
 
 #include "monolib/nand/CNBanner.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Cross-TU BDAT string getters defined in the CErrMes TU.
+extern "C" const char* func_eu_802B14A4();
+extern "C" const char* func_eu_802B14BC();
+
 // Unmangled global C symbols (retail func_eu_802B11C0). Declared with C
 // linkage to match the retail symbols.txt names exactly.
 extern "C" void func_eu_802B11C0();

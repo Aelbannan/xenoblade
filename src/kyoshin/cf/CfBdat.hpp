@@ -3,6 +3,10 @@
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const char lbl_eu_80500FA4[];
+extern "C" const char* lbl_eu_8052E6F0[];
+
 namespace cf{
 
     class CfBdat : IWorkEvent {

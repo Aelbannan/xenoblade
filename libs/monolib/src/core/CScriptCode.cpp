@@ -2,6 +2,7 @@
 // Uses extern "C" linkage to match MWCC mangled symbols.
 
 #include <harness_catalog.h>
+#include "monolib/core/CScriptCode.hpp"
 
 extern "C" {
     extern void* lbl_eu_806655B0;
@@ -19,12 +20,7 @@ extern "C" {
     void* getInstance__9CProcRootFv();
     void* getInstance__9CViewRootFv();
     int wkStandbyLogout__11CWorkThreadFv(void* self);
-    void memset(void* dest, int val, unsigned long count);
 }
-
-// Forward declarations
-extern "C" long func_8043A2F8__11CScriptCodeFv(void* self, void* pOut, void* pIn);
-extern "C" void func_8043A390__11CScriptCodeFv(void* self, void* pData, int doSecondary);
 
 extern "C" void __dt__11CScriptCodeFv(void* self, int freeFlag) {
     int i;

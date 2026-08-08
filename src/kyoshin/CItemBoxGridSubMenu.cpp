@@ -5,21 +5,13 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 
-extern "C" void func_80138078__FUl(u32);
+// C-linkage pseudo-imports for this TU (func_80138078__FUl, lbl_eu_805084BC,
+// the lbl_eu_806683xx sdata2 constants, func_801355A0__Fv,
+// func_80086F9C__Q22cf13CfGameManagerFv, func_801355F4,
+// func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii) now live in the
+// "C-linkage imports" section of kyoshin/CItemBoxGridSubMenu.hpp.
+
 extern void* lbl_eu_80535750[];
-
-// String pool for this TU
-extern "C" char lbl_eu_805084BC[];
-
-// Float constants (from .sdata2)
-extern "C" const float lbl_eu_80668300; // 80.0f
-extern "C" const float lbl_eu_80668304; // 0.0f
-extern "C" const float lbl_eu_80668308; // 3.0f
-extern "C" const float lbl_eu_8066830C; // 100.0f
-extern "C" const float lbl_eu_80668310; // -17.0f
-extern "C" const float lbl_eu_80668314; // 120.0f
-extern "C" const float lbl_eu_80668318; // -37.0f
-extern "C" const double lbl_eu_806682F8;
 
 // Forward declarations for functions not in included headers
 void func_80136D74(char*, const char*, int);
@@ -27,10 +19,6 @@ void func_80127BC4(char*, const char*);
 void func_80124288(char*, char*);
 void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
-
-extern "C" u32 func_801355A0__Fv();
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
-extern "C" void* func_801355F4();
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
@@ -246,7 +234,6 @@ void func_80208844(){}
 
 void func_80208890(){}
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 void func_802082D0(void* self){
     if (*(u8*)((u8*)self + 0x20) == 0) return;
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);

@@ -11,6 +11,9 @@ struct UnkStruct_8044F65C {
 
 class CDeviceFileJobReadDvd;
 class CFileHandle;
+class CDeviceFileJob;
+class CException;
+class IException;
 
 class CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
 public:
@@ -61,3 +64,46 @@ private:
 
     static CDeviceFileCri* sInstance;
 };
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" {
+    int func_eu_804521C4();
+    int func_eu_804520D0(const char*);
+    int func_804DDCD4(const char*, const char*);
+    extern wchar_t* lbl_eu_806636C8;
+    extern wchar_t* lbl_eu_806636CC;
+    extern wchar_t* lbl_eu_806636D0;
+    extern u32 lbl_eu_8056C354[];
+    extern u8 lbl_eu_806576C8[];
+}
+
+extern "C" {
+    void func_804591BC__10CExceptionFP10IException(CException* self, IException* pException);
+    void func_804591DC__10CExceptionFP10IException(CException* self);
+    void func_80459118__10CExceptionFv(const char* msg);
+    void func_8045925C__10CExceptionFv(CException* self);
+    CException* func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
+    void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);
+}
+
+extern "C" {
+    void ADXF_Stop(void* adxf);
+    int ADXF_GetNumReqSct(void* adxf);
+    void ADXF_Close(void* adxf);
+    int ADXF_IsOpened(void* adxf);
+    int ADXF_GetFsizeByte(void* adxf);
+    int ADXF_GetFsizeSct(void* adxf);
+    void ADXF_ReadNw(void* adxf, int sectors, void* buffer);
+    void* ADXF_OpenNw(const char* filename, int arg);
+}
+
+extern "C" bool isOff__11CWorkSystemFv();
+extern "C" void* getInstance__11CWorkSystemFv();
+extern "C" void* getInstance__4CLibFv();
+extern "C" void func_80451CBC__11CFileHandleFi(CFileHandle* handle, int val);
+extern "C" void destroy__11CFileHandleFv(CFileHandle* handle);
+extern "C" void call__11CFileHandleF3CBM(CFileHandle* handle, int cbm);
+extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvd* job);
+extern "C" u32 getTargetFramerate__9CDeviceVIFv();
+extern "C" void func_8044F744__14CDeviceFileCriFv(CDeviceFileCri* self);

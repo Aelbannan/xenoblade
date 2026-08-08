@@ -92,3 +92,9 @@ public:
     u8 _pad74[4]; // 0x74
     void* mAlignedData; // 0x78
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
+struct PTMF;
+extern "C" long __ptmf_test(PTMF* ptmf);
+extern "C" void __ptmf_scall(...);

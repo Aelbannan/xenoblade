@@ -40,7 +40,6 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}
 
-extern "C" void getBdatStringColumnValue(void*, void*, int);
 extern u32 lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 extern "C" void func_eu_802B133C() {

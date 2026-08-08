@@ -65,3 +65,16 @@ public:
     u32 mWorkPackDataSize;           // 0x84 - pack data size from work system
     const char* mFilePath;           // 0x88 - full path to the pack file
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Device-file helpers (defined in monolib/src/device/CDeviceFile.cpp).
+// func_eu_804520D0 is NOT declared here: its canonical C-linkage declaration
+// lives in monolib/device/CDeviceFileCri.hpp (int, const char*) and the
+// inline copy in CPackItem.cpp drifted (void, char*), breaking the build with
+// "illegal function overloading" - it was deleted instead of relocated.
+extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
+extern "C" void func_eu_804521A8(s8);
+extern "C" void func_eu_804521B0();

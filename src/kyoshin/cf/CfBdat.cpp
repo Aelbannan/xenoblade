@@ -3,7 +3,6 @@
 #include "monolib/util.hpp"
 
 extern u32 func_800AA714(const char* pString);
-extern "C" const char lbl_eu_80500FA4[];
 
 using namespace ml;
 
@@ -285,8 +284,6 @@ void CfBdat::resetMapBdatFileDataPointers(){
 
         return 0;
     }
-
-extern "C" const char* lbl_eu_8052E6F0[];
 
 const char* CfBdat::func_801424A8(u16 index) {
     return lbl_eu_8052E6F0[index];

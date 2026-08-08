@@ -35,3 +35,7 @@ public:
     u8 field_27;                                    // 0x27
 };
 
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+

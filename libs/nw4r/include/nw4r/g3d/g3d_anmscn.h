@@ -9,6 +9,10 @@
 #include <nw4r/g3d/g3d_obj.h>
 #include <nw4r/g3d/res/g3d_resanmscn.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+extern "C" const char lbl_eu_8051D620[];
+
 namespace nw4r {
 namespace g3d {
 

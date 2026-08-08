@@ -63,7 +63,6 @@ void func_8022AFF8(){}
 
 void CQstLogInfo::OnFileEvent() {}
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 void CQstLogInfo::func_80229600(){
     if (mUnk30 == 0) return;
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mUnk20, 0, 0, 1);

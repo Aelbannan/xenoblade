@@ -2,6 +2,12 @@
 
 #include <harness_catalog.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Forward-declared instead of including NMWException.h (which conflicts with
+// __ppc_eabi_init.h's _stack_addr declaration).
+extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
+extern "C" void __dt__804BD8E8();
+
 // Minimal layout for the global data at lbl_eu_8065F32C.
 // Field offsets 0x60 and 0x78 are used by func_804B80A4 / func_804B8078.
 struct ScnResData {

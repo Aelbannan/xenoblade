@@ -5,13 +5,6 @@
 
 void __ct__7CDrawGXFv(void* self);
 void __dt__7CDrawGXFv(void* self, int param);
-extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const ml::CCol4* col);
-extern "C" void setMatrix__7CDrawGXFRCQ22ml6CMat34(void* self, const ml::CMat34* mat);
-extern "C" void renderCube__7CDrawGXFRCQ22ml5CVec3RCQ22ml5CVec3(void* self, const ml::CVec3* min, const ml::CVec3* max);
-extern "C" void func_8049034C(void* a, void* b, int c);
-extern "C" void func_800A5FE8(void* a, void* b, void* c, void* d, void* e);
-
-extern "C" void* lbl_eu_80663E14;
 
 // Render an AABB debug box: builds a Y-axis rotation matrix from the shape's
 // angle plus its world position, then draws the min/max cube through CDrawGX.

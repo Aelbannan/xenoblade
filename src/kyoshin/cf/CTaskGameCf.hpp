@@ -64,3 +64,10 @@ namespace cf{
     }; //size = 0x90
 
 } //namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
+extern "C" void __ct__8CProcessFv(CProcess*);

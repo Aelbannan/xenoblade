@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void* memcpy(void* pDst, const void* pSrc, unsigned long size);
+#include <nw4r/ut/ut_ArchiveFontBase.hpp>
 
 void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(){}
 

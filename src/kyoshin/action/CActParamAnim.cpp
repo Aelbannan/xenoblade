@@ -9,8 +9,6 @@
 
 CActParamAnim::CActParamAnim() {}
 
-extern "C" void __dl__FPv(void* object);
-
 extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
         __dl__FPv(self);
@@ -52,7 +50,6 @@ struct CActParamAnimData3 {
     u32 z;
 };
 
-extern "C" void* func_8048315C(void* object);
 extern "C" bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnimObjectView* view =
         reinterpret_cast<CActParamAnimObjectView*>(self);
@@ -160,7 +157,6 @@ float CActParamAnim::getScale() {
     return *(float*)((char*)this + 0x444);
 }
 
-extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
 extern "C" void func_8004B624(CActParamAnim* self, void* object, void* state,
                                 u32 first, u32 second, u32 third) {
     CActParamAnimFlagView* flags = reinterpret_cast<CActParamAnimFlagView*>(self);
@@ -180,7 +176,6 @@ void CActParamAnim::updateSubAnim() {
     if (*(int*)((char*)this + 0x3A4) != 0) func_80055AC4((char*)this + 16);
 }
 
-extern "C" bool func_80055B88(void* data);
 extern "C" void func_8004B6BC(CActParamAnim* self, void* object) {
     CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
     if (view->objectState != 0 && func_80055B88(reinterpret_cast<u8*>(self) + 0x10)) {
@@ -704,9 +699,6 @@ void func_80053198(){}
 
 void func_80053490(){}
 
-extern "C" {
-extern float lbl_eu_80665ECC;
-}
 extern "C" float CActParamAnim_getAnimConstant() { return lbl_eu_80665ECC; }
 
 int CActParamAnim::getChainInt() {
@@ -720,7 +712,6 @@ int CActParamAnim::getChainInt() {
 extern u8 lbl_eu_80663D4C;
 extern "C" void func_eu_80053FC8() { lbl_eu_80663D4C = 0; }
 
-extern "C" u8 lbl_eu_80663D4C;
 extern "C" u8 func_eu_80053FD4() { return lbl_eu_80663D4C; }
 
 extern u8 lbl_eu_80663D4C;

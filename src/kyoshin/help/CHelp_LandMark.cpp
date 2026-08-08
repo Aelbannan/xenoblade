@@ -1,14 +1,7 @@
 #include "kyoshin/help/CHelp_LandMark.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-extern "C" int func_8009CF8C(void*);
-extern "C" void* func_8009D414(void*);
-extern "C" void func_8009D514(void*);
 extern u32 lbl_eu_80663E24;
-extern "C" void __dl__FPv(void*);
-
-// CHelp base constructor with Fv symbol (retail name)
-extern "C" void __ct__Q22cf5CHelpFv(cf::CHelp* self, void* owner, u32 param);
 
 // Vtable symbol
 extern cf::CHelpVtbl lbl_eu_8053B5F8;

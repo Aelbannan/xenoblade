@@ -3,9 +3,6 @@
 #include "kyoshin/help/CHelp_ClosePartyMenu.hpp"
 #include "kyoshin/help/CHelp_OpenPartyMenu.hpp"
 
-extern "C" u32 func_80293C10();
-extern "C" u32 func_80192BD0();
-
 namespace cf {
 
 // Cast-only fake SI iface: the non-polymorphic 8-byte base pushes the vptr to

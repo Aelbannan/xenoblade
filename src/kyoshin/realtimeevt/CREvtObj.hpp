@@ -2,6 +2,12 @@
 
 #include <types.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
+extern "C" void func_80167FFC(void* ptr);
+extern "C" long __ptmf_test(void* ptmf);
+extern "C" void* lbl_eu_80532320[]; // vtable for cf::CREvtObj
+
 namespace cf {
 
 // CREvtObj - base class for realtime event objects

@@ -10,6 +10,7 @@ namespace lyt {
     class Pane;
     class AnimTransform;
     class ArcResourceAccessor;
+    class DrawInfo;
 }
 }
 
@@ -131,3 +132,60 @@ struct CSysWinProxy {
     virtual void v31() = 0;
     virtual void v32() = 0; // vtable slot 34 = offset 0x88 (after 2 implicit entries)
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void code80135FDC_setVec3(float*, float, float, float);
+extern "C" void __dl__FPv(void*);
+extern "C" u32 CSysWin_isReady(u8*);
+extern "C" u32 CSysWin_getUnk34(u8*);
+extern "C" int CSysWin_isActive(u8*);
+extern "C" u32 func_801B481C();
+extern "C" u32 func_80158068(u16);
+extern "C" char lbl_eu_8050C6E8[];
+extern "C" void* lbl_eu_806640A8;
+extern "C" void* lbl_eu_80664104;
+extern "C" const float lbl_eu_80668800;
+extern "C" const float lbl_eu_806687F0;
+extern "C" const float lbl_eu_806687F4;
+extern "C" const float lbl_eu_806687F8;
+extern "C" const float lbl_eu_806687FC;
+extern "C" void func_80138078__FUl(u32);
+extern "C" void* lbl_eu_80537474[];
+extern "C" void func_801D20B0(CBaseCur*, nw4r::lyt::DrawInfo*);
+extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
+extern "C" u32 func_80136254(char*, char*, u16);
+extern "C" void func_8013E2E0(u32, u32, u32, u32, u32, u32, u32, u32, u32);
+extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" char* lbl_eu_806647DC;
+extern "C" void* lbl_eu_806647D8;
+extern "C" u32 func_8009EC6C(u16);
+extern "C" u16 lbl_eu_8050C6A0[];
+extern "C" void func_801D216C(void*, u8);
+extern "C" u32 lbl_eu_806640EC;
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__6CCur07Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void func_8022B9B4(void*, void*, int);
+extern "C" void func_8022BFC8(void*, int);
+extern "C" void func_8022B8B8(void*);
+extern "C" void func_8022B8E4(void*);
+extern "C" void func_8022B7F4(void*);
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void func_8009EC18(u16, u32);
+extern "C" u32 func_801587E8(u16);
+extern "C" void* CItem_initItemImplInstances();
+extern "C" void func_80158118(void*, u16, u32);
+extern "C" void func_8013B428__FUl(u32);
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" u32 func_800A9D90();
+extern "C" float func_801895EC();
+extern "C" void func_80043738(u32, const char*, void*, u32, u32, u32);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void copyVEC3(void*, void*);

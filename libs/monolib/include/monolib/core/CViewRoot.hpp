@@ -1,11 +1,14 @@
 #pragma once
 
+#include <revolution/GX.h>
 #include "monolib/monolib_types.hpp"
 #include "monolib/util/reslist.hpp"
 #include "monolib/work/CWorkThread.hpp"
 
 class CProc;
 class CView;
+class CDesktop;
+class CViewFrame;
 
 struct CViewRootPool {
     _reslist_node<CWorkThread*> mSentinel;
@@ -48,3 +51,26 @@ public:
     CProc* mAttachedProc0; //0x518
     CProc* mAttachedProc1; //0x51C
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" {
+CViewRoot* lbl_eu_806655D0;
+u8 lbl_eu_806655D4;
+char lbl_eu_8052266C[];
+char lbl_eu_8056B710[];
+char lbl_eu_8056B280[];
+char lbl_eu_8056B298[];
+mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
+void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
+void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
+void __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const char* name, CWorkThread* parent, int cap);
+void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread* ths, CWorkThread* parent, bool prepend);
+CWorkThread* getWorkThread__9CWorkUtilFUl(WORK_ID wid);
+CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
+CView* getView__8CDesktopFv();
+CDesktop* getInstance__8CDesktopFv();
+GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
+void renderView__5CViewFv(CView* view);
+}
+extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c);

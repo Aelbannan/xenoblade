@@ -416,8 +416,6 @@ void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(){}
 namespace nw4r {
 namespace lyt {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470;
-
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665488(&lbl_eu_80665470);
 
 const nw4r::ut::detail::RuntimeTypeInfo* TextBox::GetRuntimeTypeInfo() const {

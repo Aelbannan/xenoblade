@@ -157,3 +157,7 @@ public:
     CPcSelectCursor();
     virtual ~CPcSelectCursor();
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __ct__CPcSelectCursor(void* self);
+extern "C" void* func_8016FE34(void* r3);

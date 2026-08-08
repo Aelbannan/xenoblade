@@ -96,10 +96,6 @@ extern "C" {
 #define FLD(type, base, off) (*(type*)((char*)(base) + (off)))
 #define FLDP(type, base, off) ((type*)((char*)(base) + (off)))
 
-// Forward declarations for functions defined in this file
-extern "C" void func_801832D4(void* self);
-extern "C" void func_801836CC(void* self, unsigned long value);
-
 // ============================================================
 // __ct__CREvtModelObj (us-80182e64) - Constructor
 // ============================================================

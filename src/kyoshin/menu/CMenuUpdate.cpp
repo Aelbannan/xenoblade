@@ -12,26 +12,6 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 #include <nw4r/lyt/lyt_resourceAccessor.h>
 
-extern "C" {
-    void __dt__10IScnRenderFv(void*, int);
-    void __dt__10IWorkEventFv(void*, int);
-    void __dt__9IUIWindowFv(void*, int);
-    void __ct__8CProcessFv(void*);
-    void __dl__FPv(void*);
-    void __dt__17UnkClass_8045F564Fv(void*, int);
-    void __dt__14Class_8045F858Fv(void*, int);
-    void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-    void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-    void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
-    void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
-    void func_80143ADC(void*, u32, u32, u32, u32);
-    int func_80143F78(void*);
-    void func_80144070(void*);
-    void func_801440A8(void*);
-    void func_80144410(void*);
-    void func_80142D60(void*);
-}
-
 extern u32 lbl_eu_80525A10[];
 extern u32 lbl_eu_80525A00[];
 extern u32 lbl_eu_8052D1F0[];
@@ -50,59 +30,6 @@ extern f64 lbl_eu_806673B8;
 extern f32 lbl_eu_806673C0;
 extern f32 lbl_eu_806673C4;
 extern u32 __ptmf_null[];
-
-extern "C" {
-    void* getInstance__9CTaskGameFv();
-    bool func_800426F0__9CTaskGameFv(void*);
-    void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
-    void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-    void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
-    void waitForDrawDone__9CDeviceVIFv();
-    void* getHandleMEM2__Q23mtl10MemManagerFv();
-    void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-    void* getWorkMem__17CWorkThreadSystemFv();
-    void* func_801355F4();
-    void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-    void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
-    void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
-    void func_8013676C(void*, void*);
-    extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-    void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
-    bool func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
-    void func_80137E7C(void*, const char*, void*);
-    void func_80137B44(void*, const char*, int);
-    void func_80136B4C(void*, const char*, void*, int);
-    void func_8013639C(void*, const char*, int);
-    u16 func_80136254(void*, const char*, int);
-    u16 func_8013606C(const char*, const char*, int);
-    void func_80136190(const char*, const char*, int);
-    void func_80138078__FUl(u32);
-    void func_80135898();
-    void func_80133A08(u32);
-    void func_801347EC(u32);
-    void func_8013D7C0(u32);
-    void func_80134F2C(u32);
-    bool func_80122450();
-    bool func_80226B94();
-    void func_80124270(void*, bool);
-    void func_80124288(void*, void*);
-    bool func_8006EF04__Fi(int);
-    bool func_801BCF38();
-    bool func_8029A658();
-    bool func_8029EE58();
-    bool func_8013BFA8();
-    void* func_8049603C();
-    bool code80135FDC_getByte_64059();
-    bool code80135FDC_getByte_621F0();
-    void* CfRes_getE14();
-    bool func_8009CF8C(int);
-    void func_8009D018(int, int);
-    void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-    void* func_80138F78(u32);
-    bool func_800829B8__Q22cf13CfGameManagerFv();
-    bool func_8008585C__Q22cf13CfGameManagerFv();
-    bool func_80085840__Q22cf13CfGameManagerFv();
-}
 
 // IWorkEvent
 extern "C" void __ct__IWorkEvent(void* self) {

@@ -1,12 +1,5 @@
 #include "kyoshin/help/CHelp.hpp"
 
-extern "C" cf::CHelpVtbl lbl_eu_8053B3A0;
-
-extern "C" void func_80134D18(u32 param0, UNKWORD param1, UNKWORD param2);
-extern "C" void func_8009D018(void* owner, u32 flag);
-extern "C" void func_8013DB6C(u32 mode, u32 param, u32 a, u32 b);
-extern "C" void func_8029A658();
-
 cf::CHelp::CHelp(void* owner, u32 param) {
     this->mOwner = owner;
     this->mVtbl = &lbl_eu_8053B3A0;

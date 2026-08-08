@@ -76,3 +76,7 @@ int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
 CVoiceHandleList* func_800B6BC8();
 int func_802A7FE4(CVoiceHandle* handle);
 }
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, func_802A6408}
+extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}

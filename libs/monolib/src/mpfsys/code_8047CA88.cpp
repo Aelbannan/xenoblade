@@ -17,12 +17,6 @@ UnkClass_8047CA88* UnkClass_8047CA88::getInstance(){
     return (UnkClass_8047CA88*)&lbl_eu_80658518;
 }
 
-// Retail symbols are Fv but the functions actually receive extra args in
-// r4 (and r5/r6/f1 for func_8047CC4C). Declare extern "C" with the exact
-// mangled name to match the calling convention and reloc names.
-extern "C" void* func_8047C034__17UnkClass_8047BB54Fv(void* self);
-extern "C" void func_8047C040__17UnkClass_8047BB54Fv(void* self, void* ptr, u32 count);
-
 struct UnkParam_8047CA88 {
     u8 count;
     u8 type;

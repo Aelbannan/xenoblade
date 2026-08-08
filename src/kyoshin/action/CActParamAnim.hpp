@@ -108,3 +108,13 @@ public:
     bool func_800539D8();
 };
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __dl__FPv(void* object);
+extern "C" void* func_8048315C(void* object);
+extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
+extern "C" bool func_80055B88(void* data);
+extern "C" {
+extern float lbl_eu_80665ECC;
+}
+extern "C" u8 lbl_eu_80663D4C;
+

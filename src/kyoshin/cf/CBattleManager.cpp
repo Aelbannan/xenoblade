@@ -15,10 +15,6 @@ struct BMIf {
 extern UNKTYPE* func_8009EC9C(u16 r3);
 extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 
-// MWCC runtime deallocation functions
-extern "C" void __dl__FPv(void*);
-extern "C" void __dla__FPv(void*);
-
 // Game state check function
 extern bool func_8006EF04__Fi(s32 mask);
 
@@ -394,10 +390,13 @@ void cf::CBattleManager::func_800EA460(float a, float b, unsigned long c) {
     unk90 = a;
     func_800EA484(this);
 }
-extern "C" float lbl_eu_80666DDC;
-extern "C" float lbl_eu_80666DD4;
-
-extern "C" void func_800EA484(cf::CBattleManager*, float, u32);
+// NB: func_800EA484 stays declared inline here (not in CBattleManager.hpp):
+// CVision.cpp re-declares it as (cf::CBattleManager*, f32, int) and
+// CChainTime.hpp (concurrent agent edit) now declares (cf::CBattleManager*,
+// f32, int) repo-wide; MWCC rejects a second visible (float, u32) form as
+// overload (error 10197). The (f32, int) form is ABI-identical to the
+// original (float, u32) C-linkage decl (same 4-byte args, same symbol).
+extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
 
 void cf::CBattleManager::func_800EA470() {
     unk88 = lbl_eu_80666DDC;
@@ -960,10 +959,6 @@ void func_800E85F0(){}
 void CBattleManager_preCalcTotalDamage(){}
 void func_800E921C(){}
 void func_800E9B54(){}
-extern "C" {
-    extern f64 lbl_eu_80666DE0;
-    extern f32 lbl_eu_80666DDC;
-}
 
 // Iterates through actor lists and calls virtual functions based on flags.
 void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, void* arg6) {
@@ -1172,19 +1167,6 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
     buf.field_30 |= 1;
     func_800EC918((u32)self, 0, arg2, &buf, 0);
 }
-// Table entry for lbl_eu_804FC828 (12 bytes each)
-struct BattleTableEntry {
-    u32 selector;
-    s16 val;
-    s8 byteVal;
-    u8 pad_07;
-    u32 pad_08;
-};
-
-extern "C" {
-    extern BattleTableEntry lbl_eu_804FC828[];
-}
-
 // Dispatches battle event calls to actor objects based on a table entry.
 void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
     u32 selector = lbl_eu_804FC828[idx].selector;
@@ -1360,7 +1342,6 @@ s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
 
     return 0;
 }
-extern "C" u32 lbl_eu_80663E24;
 
 void func_800F3F8C(cf::CBattleManager* mgr) {
     mgr->func_800E2584(0x10);

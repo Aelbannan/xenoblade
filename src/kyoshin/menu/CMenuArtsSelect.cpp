@@ -15,25 +15,6 @@
 
 
 extern "C" {
-void CMenuArtsSelect_clearArtsRef();
-void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref);
-void CMenuArtsSelect_setDisabled();
-bool CMenuArtsSelect_isFinished();
-CMenuArtsSelect* CMenuArtsSelect_getInstance();
-bool CMenuArtsSelect_isCreated();
-int CMenuArtsSelect_isInteractable();
-CMenuArtsSelect* CMenuArtsSelect_getSelectState();
-int CMenuArtsSelect_isNotReady();
-void CMenuArtsSelect_workEventDraw(void* self);
-void CMenuArtsSelect_workEventDtor(void* p);
-void CMenuArtsSelect_scnRenderRelease(void* ptr);
-void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
-void* func_80110A70();
-void* func_8010CE48();
-void func_8010EDE4(void*);
-void func_8010A8E4(void*);
-void func_80133770();
-
 // Batch 2026-07-14g: menu-arts-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14j: menu-arts-move owns Move exclusively.
 // Batch 2026-07-14k: menu-arts-ctor owns __ct__CMenuArtsSelect exclusively.
@@ -69,14 +50,12 @@ int func_8013BE50();
 int func_8018A608();
 int func_80122448();
 
-void* getInstance__11CSysWinBuffFv();
 u8 func_8013BEB8();
 
 int func_8012FA5C();
 void func_80138078__FUl(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-extern "C" void* func_8016FE34(void* r3);
+int func_80174C98(void* actor, int* outVal, int flags);
 void* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
@@ -715,7 +694,7 @@ after_ce48:
             typedef void* (*GetPtrFn)(void*);
             void* sub = actor->mSecondaryVtable;
             u32* pVal = reinterpret_cast<u32*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
-            u32 localVal = pVal[0];
+            int localVal = pVal[0];
             if (func_80174C98(actor, &localVal, 0x803) != 0) {
                 if (unk348 == 0) {
                     unk348 = 1;

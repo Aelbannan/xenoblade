@@ -6,9 +6,6 @@ struct CHelpFlagBag {
     u8 mByte18; // +0x18
 };
 
-extern "C" CHelpFlagBag* lbl_eu_80664A10;
-extern "C" UNKWORD func_80295D30(CHelpFlagBag* bag);
-
 namespace cf {
 bool CHelp_GameOver::func_802B80F4() {
     if (func_80295D30(lbl_eu_80664A10) == 0) {

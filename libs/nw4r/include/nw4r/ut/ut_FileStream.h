@@ -4,10 +4,18 @@
 
 #include <nw4r/ut/ut_IOStream.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Retail .sbss RTTI type-info objects: lbl_eu_80665548 = FileStream's own
+// (defined in ut_FileStream.cpp), parent = IOStream type info
+// (lbl_eu_80665540, defined in ut_IOStream.cpp).
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665540;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665548;
+
 namespace nw4r {
 namespace ut {
-
-extern "C" detail::RuntimeTypeInfo lbl_eu_80665548;
 
 class FileStream : public IOStream {
 public:

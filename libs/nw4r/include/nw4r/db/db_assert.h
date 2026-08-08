@@ -12,6 +12,9 @@ namespace nw4r
             class ConsoleHead;
         }
 
+        // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+        extern "C" detail::ConsoleHead* lbl_eu_8066543C;
+
         #define NW4R_WARNING(...) nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
         #define NW4R_PANIC(...) nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
         #define NW4R_DB_ASSERT(exp, ...) \

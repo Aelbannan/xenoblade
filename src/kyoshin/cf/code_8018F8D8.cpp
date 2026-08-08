@@ -26,7 +26,6 @@ extern "C" {
     int  func_80174C98(void* actor, int* outVal, int flags);
     bool func_8006EF04__Fi(s32 mask);
     u32  func_8009CF8C(u32 resource);
-    int  func_8017FD44();
     int  func_80148778(void* obj, int id);
     int  func_8027E018(void* obj, void* arg);
     void __dt__80043E88(void* holder, int flag);
@@ -656,9 +655,6 @@ void CMenuPTState::Term() {
 }
 
 void CMenuPTState::Move() {}
-
-extern "C" int code80135FDC_getByte_621F0();
-extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
 
 void CMenuPTState::cbRenderBefore() {
     // Gate: skip while a task event is running or a realtime event is busy,

@@ -18,14 +18,6 @@ public:
     virtual void Draw() {}
 };
 
-// Root process pointers. Retail keeps them in the sbss data object
-// (lbl_eu_806655B8/BC/C0/C4), not in this TU (.sbss slice = 0); declare them
-// extern so the SDA refs resolve to the retail slots at link.
-extern "C" CRootProc* lbl_eu_806655B8;  // lbl_eu_806655B8
-extern "C" CRootProc* lbl_eu_806655BC;  // lbl_eu_806655BC
-extern "C" CRootProc* lbl_eu_806655C0;  // lbl_eu_806655C0
-extern "C" CRootProc* lbl_eu_806655C4;  // lbl_eu_806655C4
-
 } // namespace
 
 void CTaskManager::Create() {

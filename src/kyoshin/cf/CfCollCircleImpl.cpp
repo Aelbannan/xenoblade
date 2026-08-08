@@ -1,13 +1,10 @@
 #include "types.h"
+#include "kyoshin/cf/CfCollCircleImpl.hpp"
 
 void __ct__7CDrawGXFv(void* self);
 void __dt__7CDrawGXFv(void* self, int param);
 void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const void* col);
 void renderCircle__7CDrawGXFRCQ22ml5CVec3if(void* self, const void* pos, int verts, float r);
-extern "C" void func_8049034C(void* a, void* b, int c);
-extern "C" void func_800A50AC(void* a, void* b, float c, void* d);
-
-extern "C" void* lbl_eu_80663E14;
 
 void func_800AABD4(void* r3, void* r4){
     char gx[0xF0];

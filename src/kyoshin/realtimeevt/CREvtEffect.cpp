@@ -11,76 +11,8 @@
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 #include "kyoshin/code_801862C0.hpp"
 
-// ============================================================================
-// External function declarations
-// ============================================================================
-
-// CREvtObj functions
-extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg);
-extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag);
-extern "C" void __dt__80185754(void* ptr);
-
-// Bdat / data loading
-extern "C" void* func_8016A24C(u32 arg);
-extern "C" void* func_8016A27C(void* ptr);
-extern "C" int func_8016A35C();
-extern "C" bool func_8016C410();
-extern "C" bool func_80180954();
-extern "C" void func_8016AF4C(void* obj, const char* name, s32* out);
-
-// Effect system
-extern "C" void func_804CC1BC(void* mgr, void* data);
-extern "C" void func_804CC1D8(void* mgr, void* data);
-extern "C" void* func_804CC1F4(void* mgr, void* bdat, void* global, int r6, int r7, int r8);
-extern "C" void func_804E3CCC(void* effect);
-extern "C" void func_804E3D0C(void* effect, void* parent);
-extern "C" void func_804E3CDC(void* effect, f32 f1, f32 f2);
-extern "C" void func_804E3D48(void* effect, void* parent);
-
-// Model / animation
-extern "C" nw4r::g3d::ChrAnmResult* func_8048BAD4(void* model, const char* animName, f32 time);
-extern "C" void* func_80489A60(void* global, void* handle, int, int, int, int);
-extern "C" void func_80484E5C(void* model, f32 val);
-extern "C" void func_804827DC(void* model, int val);
-extern "C" void func_804839D4(void* model, void* animData, int, int, int, int, int);
-
-// Memory
-extern "C" void func_80495E60(void* ptr);
-extern "C" void* func_80495EAC(void* global, void* bdat, int val);
-
-// Random
-extern "C" f32 func_80496288(void* global);
-
-// Device
-extern "C" u8 getLanguage__9CDeviceSCFv();
-extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
-    const char* name, void* handle, u32* outSize);
-
-// Globals
-extern "C" {
-    extern void* lbl_eu_805322D8[];
-    extern u8 lbl_eu_8065FC18;
-    extern u8 lbl_eu_80663E14;
-    extern const char* lbl_eu_80662470;  // "effTgt"
-    extern const char* lbl_eu_80662474;  // "effAtr"
-    extern const char* lbl_eu_80662478;  // "eff"
-    extern const char lbl_eu_80503800[]; // "EFFMonochrome\0MonoRGB\0"
-    extern const f32 lbl_eu_8066793C;    // 1.0f
-    extern const f32 lbl_eu_80667940;    // 0.0f
-    extern const f32 lbl_eu_80667944;    // epsilon
-    extern const f32 lbl_eu_80667948;    // 1.0f threshold
-    extern const f32 lbl_eu_8066794C;    // 0.0f
-    extern const double lbl_eu_80667950; // double magic for int->float
-    extern const f32 lbl_eu_80667958;    // -1.0f
-    extern const f32 lbl_eu_8066795C;    // frame rate divisor
-    extern const f32 lbl_eu_80667960;    // 0.5f
-    extern const f32 lbl_eu_8066A1F8;    // 60.0f
-}
-
-// Forward declarations for functions defined later in this file
-extern "C" void func_80184D90(CREvtEffect* self);
-extern "C" bool func_80184F90(CREvtEffect* self);
-extern "C" void func_8018515C(CREvtEffect* self);
+// C-linkage imports relocated to CREvtEffect.hpp (see the "C-linkage imports"
+// section there). This TU still defines the CREvt* functions below.
 
 // ============================================================================
 // Constructor: __ct__CREvtEffect (0x80185F54)

@@ -3,6 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+// code_80135FDC.hpp declares this TU's exported functions with caller-tuned
+// signatures that differ from the (not-yet-matched) definitions below, so
+// suppress those declarations when included from this defining TU.
+#define CODE_80135FDC_CPP
+#include "kyoshin/code_80135FDC.hpp"
 #include <nw4r/math/math_types.h>
 #include <nw4r/lyt/lyt_animation.h>
 #include <nw4r/lyt/lyt_layout.h>
@@ -25,144 +30,54 @@
 #include <ctype.h>
 
 extern "C" {
-extern nw4r::lyt::Layout* createLayout__10CLibLayoutFv();
-extern void getAllocHandle__10CLibLayoutFv();
-extern void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-extern void deallocate__Q23mtl10MemManagerFPv(void*);
-extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);
-extern void PSVECNormalize(const Vec*, Vec*);
-extern void* getCurrentView__5CViewFv();
-extern void* func_8049626C(void*, void*);
-extern u32 identity__Q22ml6CMat34;
-extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
+// copyVEC3 stays inline: CCollepedia.hpp declares it as (void*, void*) — a
+// move into code_80135FDC.hpp would clash in CCollepedia.cpp.
 extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
+// func_8009CF8C stays inline: include/functions.hpp declares it as
+// bool func_8009CF8C(int) — a move into code_80135FDC.hpp would clash in
+// CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern u32 func_8009CF8C(u32);
-extern void func_8006A234(u16*, u16*);
-extern int func_8006A6D0();
-extern u16 func_8016DF2C();
-extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern u8 lbl_eu_8052E524[];
-extern u8 lbl_eu_8052E4F0[];
-extern u32 lbl_eu_805001C0;
-extern char lbl_eu_80573B30[];
-extern char lbl_eu_80573BB0[];
 }
 
 // ---------- globals ----------
 extern "C" {
-extern u8 lbl_eu_806621F0;
-extern u8 lbl_eu_80664058;
-extern u8 lbl_eu_80664059;
-extern u8 lbl_eu_8066405A;
-extern u8 lbl_eu_8066405B;
-extern u32 lbl_eu_8066405C;
-extern u32 lbl_eu_80664060;
-extern u8 lbl_eu_80664064;
-extern u32 lbl_eu_80664068;
-extern u32 lbl_eu_8066406C;
-extern u8 lbl_eu_80664070;
-extern u8 lbl_eu_80664077;
-extern u16 lbl_eu_80664078[3];
-extern u8  lbl_eu_8066407E;
-extern u8 lbl_eu_8066407F;
-extern u8 lbl_eu_80664080;
-extern u32 lbl_eu_806640EC;
-extern u32 lbl_eu_80664098;
+// lbl_eu_806640A8 / lbl_eu_806640D8 / lbl_eu_80664104 stay inline: they are
+// declared as void* in CCollepedia.hpp / CKizunaTalkList.hpp / CMCEffStart.hpp
+// (u32 here) — moving them into code_80135FDC.hpp would clash in those callers.
 extern u32 lbl_eu_806640A8;
 extern u32 lbl_eu_806640D8;
-extern u32 lbl_eu_806640F0;
-extern u32 lbl_eu_806640F4;
-extern u32 lbl_eu_806640F8;
-extern u32 lbl_eu_806640FC;
 extern u32 lbl_eu_80664104;
-extern u32 lbl_eu_80664108;
-extern u32 lbl_eu_8066410C;
-extern u32 lbl_eu_80664110;
-extern u32 lbl_eu_80664184;
-extern f32 lbl_eu_806672D8;
-extern f32 lbl_eu_806672DC;
-extern f32 lbl_eu_806672E0;
-extern f32 lbl_eu_806672E4;
-extern f32 lbl_eu_806672E8;
-extern f32 lbl_eu_806672EC;
-extern f32 lbl_eu_806672F0;
-extern f64 lbl_eu_806672F8;
-extern f32 lbl_eu_80667300;
-extern f32 lbl_eu_80667304;
-extern f32 lbl_eu_80667308;
-extern f32 lbl_eu_8066730C;
-extern f32 lbl_eu_80667310;
-extern f32 lbl_eu_80667314;
-extern f32 lbl_eu_80667318;
-extern f32 lbl_eu_8066731C;
-extern f32 lbl_eu_80667320;
-extern f32 lbl_eu_80667324;
-extern f32 lbl_eu_80667328;
-extern f32 lbl_eu_8066732C;
-extern f32 lbl_eu_80667330;
-extern f32 lbl_eu_80667334;
-extern f32 lbl_eu_80667338;
-extern f32 lbl_eu_8066733C;
-extern f32 lbl_eu_80667340;
-extern f32 lbl_eu_80667344;
-extern f32 lbl_eu_80667348;
-extern f32 lbl_eu_80667350;
-extern f32 lbl_eu_80667358;
-extern f32 lbl_eu_80667360;
-extern u32 lbl_eu_8066A208;
-extern u32 lbl_eu_8066A20C;
-extern u32 lbl_eu_806621F4;
-extern u32 lbl_eu_80663E14;
-extern u32 lbl_eu_80663E24;
-extern char lbl_eu_80500664[];
+// lbl_eu_806640EC stays inline: CMCGetItemBox.hpp declares it as void* — a
+// move into code_80135FDC.hpp would clash in CMCGetItemBox.cpp.
+extern u32 lbl_eu_806640EC;
 }
 
-extern "C" void func_8003AA34(const char*);
-extern "C" void* getFP__FPCc(const char*);
-extern "C" void* getBdatStringColumnValue(void*, const char*, const char*);
-
+// lbl_eu_8052E568 / lbl_eu_8052E590 stay inline: CItemBoxInfo.hpp declares
+// them as char[] (u8[] here) — a move into code_80135FDC.hpp would clash in
+// CMCGetItemBox.cpp.
 extern "C" {
-extern u8 lbl_eu_8052CB40[];
-extern u8 lbl_eu_8052CB1C[];
-extern u8 lbl_eu_8052E4E4[];
-extern u8 lbl_eu_8052E4C0[];
-extern u8 lbl_eu_8052E558[];
-extern u8 lbl_eu_8052E530[];
-extern u8 lbl_eu_8052E590[];
 extern u8 lbl_eu_8052E568[];
-extern u8 lbl_eu_80526324[];
-extern u8 lbl_eu_80526300[];
-extern u8 lbl_eu_805262F0[];
-extern u8 lbl_eu_805262C8[];
-extern u8 lbl_eu_80500108[];
-extern u8 lbl_eu_80500230[];
-extern u8 lbl_eu_80500480[];
-extern u8 lbl_eu_805005A8[];
-extern u8 lbl_eu_80500630[];
-extern char lbl_eu_80573C30[];
-extern nw4r::math::VEC3 zero__Q22ml5CVec3;
+extern u8 lbl_eu_8052E590[];
 }
+
+// func_8003AA34 stays inline: CKizunaTalkList.hpp declares it as (void) — a
+// move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
+extern "C" void func_8003AA34(const char*);
+
+
 
 // --- helpers ---
-extern "C" void* func_8009ECB0(void);
-extern "C" void* func_8009EC9C(u32 idx);
-extern "C" void func_8009D018(u32 destination, u32 value);
-extern "C" int func_8009EBE8(u32 idx);
-extern "C" void func_8009EB94(u32 idx, u32 value);
+// func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) — a
+// move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
 extern "C" u32 func_8003B1EC(u32);
-extern "C" void func_80157824(u8, u32);
-extern "C" void* func_8049603C(void*);
-extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
-extern "C" void func_80462D04__8CTaskLODFv(s8);
-extern "C" void func_80462D5C__8CTaskLODFv(u8);
-extern "C" int func_80462E1C__8CTaskLODFv(u8);
-extern "C" void* func_804BC9EC__Fv(void);
-extern "C" void func_804BCC30(void*, s8);
-extern "C" void func_804BCC3C(void*, u8);
-extern "C" void func_8047BD8C__17UnkClass_8047BB54Fv(void*, s8);
-extern "C" void func_8047BD94__17UnkClass_8047BB54Fv(void*, u8);
-extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+// func_8009ECB0 stays inline: include/functions.hpp and CChainActorPc.hpp
+// declare it as int* — a move into code_80135FDC.hpp would clash in
+// CGame / CMenu* units that pull those headers transitively.
+extern "C" void* func_8009ECB0(void);
+// func_8009D018 stays inline: include/functions.hpp declares it as
+// void func_8009D018(int, int) — a move into code_80135FDC.hpp would clash in
+// CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
+extern "C" void func_8009D018(u32 destination, u32 value);
 
 // Cast-only interfaces. RTTI slots (offset 0x0/0x4) are omitted, so each
 // virtual lands at its retail vtable offset (dtor slot at 0x8).
@@ -531,8 +446,6 @@ extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
     }
 }
 
-extern "C" void func_80136A1C(nw4r::lyt::Layout* layout, char* name, char* text, u32 tagProc);
-
 extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
     nw4r::lyt::Layout* layout, char* name, u32 font) {
     nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName(name, true);
@@ -591,9 +504,6 @@ extern "C" void func_80136B4C(
     sprintf(buf, fmt, value);
     func_80136A1C(layout, name, buf, 0);
 }
-
-extern "C" void func_80136D74(
-    nw4r::lyt::Layout* layout, char* text, u32 tagProc);
 
 extern "C" void func_80136C98(nw4r::lyt::Layout* layout, u32 value) {
     char buf[512];
@@ -1108,8 +1018,6 @@ void code80135FDC_thunk_BFE8C(u8* arg) {
 struct Table_80500188 {
     u32 words[14];
 };
-
-extern "C" struct Table_80500188 lbl_eu_80500188;
 
 extern "C" u16 func_801380A0(u32 idx) {
     struct Table_80500188 t = lbl_eu_80500188;
@@ -2671,8 +2579,6 @@ extern "C" u32 code80135FDC_getWord_64060(void) {
 
 extern u8 lbl_eu_806621F0;
 extern "C" u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }
-
-extern "C" void* getInstance__14Class_80296898Fv();
 
 int func_8013BE58(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];

@@ -15,36 +15,7 @@
 #include <revolution/gx/GXGeometry.h>
 #include <revolution/gx/GXTransform.h>
 #include <revolution/os/OSFastCast.h>
-
-// ---- shared LOD renderer state (retail .sbss, small-data) ----
-extern "C" {
-extern u32 lbl_eu_80665770;
-extern u32 lbl_eu_80665774;
-extern s32 lbl_eu_806657D0;
-extern u32 lbl_eu_806657D4;
-extern u32 lbl_eu_806657D8;
-extern u32 lbl_eu_806657DC;
-extern u32 lbl_eu_806657E0;
-extern f32 lbl_eu_806657E4;
-extern u32 lbl_eu_806657E8;
-extern u32 lbl_eu_806657EC;
-extern u32 lbl_eu_806657F0;
-extern u32 lbl_eu_806657F4;
-extern u32 lbl_eu_806657F8;
-extern u32 lbl_eu_806657FC;
-extern f32 lbl_eu_80665800;
-extern u32 lbl_eu_80665804;
-extern f32 lbl_eu_80665808;
-extern u32 lbl_eu_8066580C;
-extern u32 lbl_eu_80665810;
-extern u32 lbl_eu_80665814;
-extern u32 lbl_eu_80665818;
-extern u32 lbl_eu_8066581C;
-extern u32 lbl_eu_80665820;
-extern u32 lbl_eu_80665824;
-extern const double lbl_eu_8066A628;
-extern const float lbl_eu_8066A630;
-}
+#include "monolib/lod/code_804645CC.hpp"
 
 namespace LOD {
 struct UnkClass_804645CC {
@@ -52,7 +23,6 @@ struct UnkClass_804645CC {
     void func_80464B84();
     void func_8046513C();
     void func_80465298();
-    void func_80465314();
     void func_8046534C();
     void func_8046568C();
     void func_80465704();
@@ -80,9 +50,6 @@ void LOD::UnkClass_804645CC::func_80465298() {
     GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
     GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
-
-typedef void (*LodTexCoordSetup)(s32, s32);
-extern "C" LodTexCoordSetup lbl_eu_8056D728[];
 
 void func_80465314(s32 value) {
     if (lbl_eu_806657D0 == value) {
@@ -126,18 +93,18 @@ void LOD::UnkClass_804645CC::func_80465BC0() {}
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker
 // names explicit and model those values as ordinary C++ parameters.
-void func_80465704(s32 value) {
+extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
     lbl_eu_80665814 = value;
     lbl_eu_806657E8 |= 2;
 }
 
-void func_80465730(f32 scale) {
+extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
     s32 value = lbl_eu_80665814;
     lbl_eu_806657E8 |= 2;
     lbl_eu_80665814 = (s32)((f32)value * scale);
 }
 
-void func_8046577C(s32 value) {
+extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     if (value == 0xFF) {
         value = lbl_eu_806657E8;
         lbl_eu_80665804 = 0;
@@ -151,7 +118,7 @@ void func_8046577C(s32 value) {
     lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
 }
 
-void func_804657E4(s16 value) {
+extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv(s16 value) {
     s16 local = value;
     OSs16tof32(&local, &lbl_eu_806657E4);
 }

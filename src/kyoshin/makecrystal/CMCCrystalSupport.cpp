@@ -1,4 +1,5 @@
 #include <types.h>
+#include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 
 extern "C" {
 extern void* lbl_eu_80536770[];
@@ -11,8 +12,6 @@ void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     void**, void*, const char*);
 void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     void*, void**, void*, char*);
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-    void*, void*, int, int);
 u16 func_80136254(void*, const char*);
 char* func_80138F78(u16);
 void func_80137E7C(void*, const char*, void*);
@@ -84,8 +83,6 @@ extern "C" void __ct__CMCCrystalSupport(CMCCrystalSupport* self, void* accessor)
 }
 
 CMCCrystalSupport::~CMCCrystalSupport() {}
-
-extern "C" void func_8022EB0C(CMCCrystalSupport* self);
 
 extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(

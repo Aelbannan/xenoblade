@@ -22,10 +22,8 @@ extern const f32 lbl_eu_806679E4; // 300.0f
 extern const f32 lbl_eu_806679E8; // 128.0f
 extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
-// Layout/anim helpers: declared extern "C" where the retail symbol is
-// unmangled (func_801355F4, func_8013676C, func_80137510 in code_80135FDC.hpp).
+// Layout/anim helpers: declared extern "C" where the retail symbol is unmangled.
 int func_8013BE50(); // Returns nonzero when battle is active (gate for all menu HUD widgets)
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // shared ARC accessor (retail unmangled)
 }
 
 extern void func_80138078(u32);
@@ -322,8 +320,6 @@ after_bit21:
 done:
     ;
 }
-
-extern "C" int lbl_eu_806642D8;
 
 extern "C" int func_80187710() {
     return lbl_eu_806642D8;

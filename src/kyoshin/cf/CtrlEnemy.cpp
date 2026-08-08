@@ -42,13 +42,10 @@ void CtrlEnemy_UnkFunc_80088800(){}
 
 void CtrlEnemy_UnkFunc_8008884C(){}
 
-extern "C" void func_80089B24(void* self);
 void cf::CtrlEnemy::delegateTo80089B24() { func_80089B24((char*)this + 0x84); }
 
-extern "C" void func_80089E88(void* self);
 void cf::CtrlEnemy::delegateTo80089E88() { func_80089E88((char*)this + 0x84); }
 
-extern "C" void func_80089F68(void* self);
 void cf::CtrlEnemy::delegateTo80089F68() { func_80089F68((char*)this + 0x84); }
 
 int cf::CtrlEnemy::ret0_80088870() { return 0; }

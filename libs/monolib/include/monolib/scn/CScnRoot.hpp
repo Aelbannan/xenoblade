@@ -14,3 +14,6 @@ private:
     void* mpMgr;      // 0x04
     u32 mReserved;    // 0x08
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);

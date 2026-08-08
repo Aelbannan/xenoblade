@@ -166,3 +166,8 @@ public:
     // TODO: add fields
 };
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for func_800F4A98
+extern "C" u8 lbl_eu_80664718;
+extern "C" u8 lbl_eu_80535D90[];
+

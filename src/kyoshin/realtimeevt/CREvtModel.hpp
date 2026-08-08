@@ -63,3 +63,7 @@ public:
     /* 0x30 */ int mField30;
     /* 0x34 */ int mField34;            // animation index counter
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_80172EA4(void* self, void* animData, void* model, int flag);
+extern "C" void func_80172CE4(void* self, void* model);

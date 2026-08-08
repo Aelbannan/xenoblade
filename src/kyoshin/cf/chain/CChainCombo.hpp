@@ -66,3 +66,7 @@ struct CChainCombo_ArtsCategory {
 struct CChainVObj {
     void** mVtbl;
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_8013EAB0();
+extern "C" void func_802A07F4(int, void*);

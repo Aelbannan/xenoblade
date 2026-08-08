@@ -85,7 +85,6 @@ void cf::CfObjectImplMove::func_800CFFA0(unsigned int* param) {
     }
 }
 
-extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);
 void cf::CfObjectImplMove::func_800CFFBC() { __dt__Q22cf16CfObjectImplMoveFv(this); }
 
 void cf::CfObjectImplMove::func_800CFFC4() { __dt__Q22cf16CfObjectImplMoveFv(this); }

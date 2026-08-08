@@ -7,6 +7,17 @@
 
 #include <nw4r/lyt.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+
+// Shared string pool (split1 .rodata).
+extern "C" char lbl_eu_80505370[];
+
+// SDA globals (retail names; defined in common/sbss splits).
+extern "C" u32 lbl_eu_80664184;
+extern "C" s32 lbl_eu_80664460;
+extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
+
 // IWorkEvent-compatible vtable (split1 .data).
 extern "C" void* lbl_eu_80533DC8[];
 

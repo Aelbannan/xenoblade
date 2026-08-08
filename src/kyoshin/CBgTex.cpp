@@ -15,16 +15,6 @@ extern void func_801390E0(CFileHandle**);
 void func_80124270(nw4r::lyt::Pane*, u32);
 u8 func_801372B4(u8);
 
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-
-// Shared string pool (split1 .rodata).
-extern "C" char lbl_eu_80505370[];
-
-// SDA globals (retail names; defined in common/sbss splits).
-extern "C" u32 lbl_eu_80664184;
-extern "C" s32 lbl_eu_80664460;
-extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
-
 // Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
 CBgTex::CBgTex(u8 arg) {
     mVtbl = lbl_eu_80533DC8;

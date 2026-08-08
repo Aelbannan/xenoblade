@@ -1,12 +1,6 @@
 #include <nw4r/g3d.h>
+#include <nw4r/g3d/dcc/g3d_3dsmax.h>
 #include <decomp.h>
-
-// 3dsmax DCC float constants (SDA21)
-extern "C" const float lbl_eu_80669CC0; // 0.0f
-extern "C" const float lbl_eu_80669CC4; // 0.5f
-extern "C" const float lbl_eu_80669CC8; // 1.0f
-extern "C" const float lbl_eu_80669CCC; // 256.0f/360.0f (deg_to_fidx)
-extern "C" const float lbl_eu_80669CD0; // -0.5f
 
 namespace nw4r {
 namespace g3d {
@@ -270,9 +264,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 #pragma dont_inline reset
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
-
-extern "C" const TexSrtMtxFunc lbl_eu_8051D730[];
-extern "C" const TexSrtMtxFunc lbl_eu_8051D74C[];
 
 } // namespace
 

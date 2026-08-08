@@ -5,6 +5,16 @@
 #include "monolib/work/CMsgParam.hpp"
 #include "revolution/GX.h"
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" { extern char lbl_eu_8056BFE4[]; }
+extern "C" { extern char lbl_eu_8056BFF0[]; }
+extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void func_8044BE3C__8CGXCacheFv(void* self);
+extern "C" void func_8044C034__8CGXCacheFv(void* self);
+extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
+
 //size: 0x4
 class IStateCache {
 public:

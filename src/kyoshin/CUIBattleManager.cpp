@@ -38,7 +38,6 @@ int func_80164410();
 int func_801042A4();
 int func_801042B4();
 int func_800FF738();
-extern "C" void* func_8016FE34(void* r3);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 UNKWORD func_8006EF04__Fi(UNKWORD r3);
 void* func_801355F4();

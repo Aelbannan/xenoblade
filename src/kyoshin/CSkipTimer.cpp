@@ -10,52 +10,15 @@
 
 // .sdata2 float constant used as the "animation reached frame" bound.
 extern const float lbl_eu_80668C30;
-// CSkipTimer2 vtable pointer stored at +0x00.
-extern "C" void* lbl_eu_80539884[];
-// CSkipTimer vtable pointer stored at +0x00.
-extern "C" void* lbl_eu_805397F0[];
-// String pool used by func_8029F440 (pane name + sprintf format).
-extern "C" char lbl_eu_80510568[];
-
-// External callees.
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __ct__CSysWin(void*);
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
-
-extern "C" void func_80138078__FUl(u32);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" u32 CSysWin_isReady(void*);
-
-// .sdata2 float constants used by the sinit_802A07D8 static initializer.
-extern "C" float lbl_eu_80664A50;
-extern "C" const float lbl_eu_80668C4C;
-extern "C" const float lbl_eu_80662C78;
-extern "C" const float lbl_eu_80668C48;
 void func_8006A234(u16*, u16*);
-extern "C" void func_8022B7C8(void*, void*);
-extern "C" void func_8022B7F4(void*);
-// C-exported retail symbol: unmangled reloc name must be emitted at call sites.
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 // (func_80137510 stays as declared in code_80135FDC.hpp - read-only header)
-extern "C" int CSysWin_isActive(void*);
-extern "C" void func_8022B8E4(void*);
-extern "C" u32 func_800FEDF8();
-extern "C" void func_800FF914();
-
-// Unmatched same-unit siblings referenced as extern (linker resolves to retail
-// address) so in-unit callers emit a direct `bl` instead of inlining a stub.
-// Retail strips mangling for these func_ names in US, hence extern "C".
-extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
 void func_8029F504(CSkipTimer2* self);
 void func_8029F5CC(CSkipTimer2* self);
-extern "C" void func_8029F6EC(CSkipTimer2* self);
-extern "C" void func_8029F73C(CSkipTimer2* self);
 void func_802A041C(CSkipTimer* self);
 void func_8029F364(CSkipTimer2* self, u8 arg);
 void func_8029F440(CSkipTimer* self, int arg1, int arg2);
 void func_802A055C(CSkipTimer* self);
 void func_802A05E4(CSkipTimer* self);
-extern "C" int func_802A04F0(CSkipTimer* self);
 
 // ============================================================================
 // CSkipTimer2 constructor
@@ -81,9 +44,8 @@ CSkipTimer2::~CSkipTimer2() {
 }
 
 // func_8029F2FC: reset the sub-controller.
-// Body lives in retail; declared extern so func_8029FE30 emits a direct `bl`
-// instead of inlining this defined-in-TU copy.
-extern "C" void func_8029F2FC(CSkipTimer2* self);
+// Body lives in retail; declared in CSkipTimer.hpp so func_8029FE30 emits a
+// direct `bl` instead of inlining a defined-in-TU copy.
 
 // func_8029F6EC: check forward-anim reached end -> state 5.
 // Body lives in retail; declared extern so func_8029F26C emits a direct `bl`

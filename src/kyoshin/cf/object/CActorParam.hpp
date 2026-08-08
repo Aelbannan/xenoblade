@@ -452,3 +452,6 @@ inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620
 inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
 inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
 }
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();

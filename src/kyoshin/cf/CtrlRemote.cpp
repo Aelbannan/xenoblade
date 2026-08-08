@@ -7,14 +7,6 @@
 
 #include <string.h>
 
-extern "C" {
-extern u32 lbl_eu_80571848[];
-extern u8 lbl_eu_80663E80;
-extern u32 lbl_eu_80661C70[2];
-extern u32 lbl_eu_80528048[4];
-extern u32 lbl_eu_80528058[32];
-}
-
 void __ct__CtrlRemote(){}
 
 void func_80098CB8(){}
@@ -63,7 +55,6 @@ void func_8009CF0C(){}
 
 int func_8009CF84(void* self) { return 4628; }
 
-extern "C" u32 func_8009D1F8(u32* buffer, s32 index);
 u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
 
 extern "C" void func_8009CF8C(void* arg)

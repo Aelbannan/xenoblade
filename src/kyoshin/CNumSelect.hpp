@@ -19,3 +19,7 @@ public:
     // TODO: add fields
 };
 
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(void*, void*, u8);
+

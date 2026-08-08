@@ -5,19 +5,8 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 #include <cstring>
 
-// Cross-unit C-linkage callees / globals referenced by the functions below.
-extern "C" void func_802A07F4(int, void*);
-extern "C" u32 func_8013C54C();
-extern "C" void func_8013E800(int);
-extern "C" int lbl_eu_80662A80;
-extern "C" int func_800B8920(void* addr);
-extern "C" int func_80148778(void*, int);
-extern "C" int func_80174C98(void*, int*, int);
-extern "C" void func_80082568__Q22cf13CfGameManagerFv(int, int, int);
-extern "C" int func_8017FD44(void*);
-extern "C" int func_8017FD4C(int);
-extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
-extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
+// C-linkage pseudo-imports for this TU now live in the "C-linkage imports"
+// section of kyoshin/cf/chain/CChainActorList.hpp (real imports).
 
 bool func_8027C1A8();
 void func_8027C45C(cf::CChainList* self);
@@ -495,9 +484,6 @@ int func_8027BE84(cf::CChainActorList* self){
     }
     return 0;
 }
-extern "C" void func_8027EEF4(int);
-extern "C" u32 func_8027EE88(int, int);
-
 // When the chain flag bit 1 is set, query a value and emit threshold events.
 void func_8027BF58(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {

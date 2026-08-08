@@ -26,3 +26,11 @@ public:
 };
 
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" int func_8009CF8C(void*);
+extern "C" void* func_8009D414(void*);
+extern "C" void func_8009D514(void*);
+extern "C" void __dl__FPv(void*);
+// CHelp base constructor with Fv symbol (retail name)
+extern "C" void __ct__Q22cf5CHelpFv(cf::CHelp* self, void* owner, u32 param);

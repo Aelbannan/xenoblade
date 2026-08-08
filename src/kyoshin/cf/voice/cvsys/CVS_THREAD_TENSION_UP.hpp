@@ -1,7 +1,14 @@
 #pragma once
 
+#include <types.h>
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 lbl_eu_80539D20[3];
+extern "C" u32 lbl_eu_80539D2C[3];
+extern "C" u32 lbl_eu_80539D38[3];
+extern "C" u32 lbl_eu_80539D44;  // vtable for CVS_THREAD_TENSION_UP
 
 /**
  * CVS_THREAD_TENSION_UP - voice thread for tension-up audio events.

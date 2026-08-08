@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
-
 namespace nw4r {
 namespace g3d {
 

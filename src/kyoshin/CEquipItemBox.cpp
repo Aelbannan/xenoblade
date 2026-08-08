@@ -6,47 +6,15 @@
 #include <nw4r/lyt/lyt_layout.h>
 
 // --- referenced retail symbols (C linkage: plain symbol names) ---
-extern "C" void* __dl__FPv(void*);
-extern "C" int CSysWin_isActive(void*);
-extern "C" void func_801D216C(void*, int);
+// C-linkage imports live in kyoshin/CEquipItemBox.hpp.
+// func_80157C4C stays inline: CEquipChange.hpp / CItemBoxInfo.hpp declare it
+// with different signatures and CEquipChange.cpp includes both (via
+// CEquipChange.hpp -> CEquipItemBox.hpp).
+extern "C" void* func_80157C4C(u8, s16);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void* func_80157C4C(u8, s16);
-extern "C" u32 func_801D32DC(u8*);
-extern "C" u32 CSysWin_isReady(u8*);
-extern "C" void func_80139198(void*);
-extern "C" void func_80138078__FUl(u32);
-extern "C" u8 func_801392B4(int);
-extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
-extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
-extern "C" void func_8028AA64(CEquipItemBox* self);
-extern "C" void func_80289500(CEquipItemBox* self, int a);
-extern "C" void func_80289CC0(CEquipItemBox* self);
-extern "C" void func_80285B70(CEIBCur* self);
-extern "C" void func_8022B8E4(void*);
-extern "C" void func_80285B70(CEIBCur*);
-extern "C" void func_80289CC0(CEquipItemBox*);
-extern "C" void func_80289E70(CEquipItemBox*);
-// Forward decls for the grid/array helpers (defined in this TU).
-extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
-extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
 // Float constant in .sdata2, referenced via sda21 reloc.
 extern float lbl_eu_80668B28;
-// String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
-extern "C" char lbl_eu_8050EFDC[];
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" u32 func_801361E8(const void*, const char*, u32);
-
-extern "C" void func_8003AA8C__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
-extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
-extern "C" void func_801D3258(void*);
-extern "C" void func_8022B7F4(void*);
-extern "C" u16 func_80139358(u32);
-extern "C" void* CItem_initItemImplInstances(void*);
-extern "C" char lbl_eu_806640D8[];
-extern "C" char lbl_eu_806640F8[];
 
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
@@ -452,9 +420,6 @@ extern "C" u8 func_8028652C(CEquipItemBox* self) {
 u8 CEquipItemBox::func_802865A8() { return unk_43; }
 
 extern "C" void func_802865B0(){}
-
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" int func_801D3320(void*);
 
 int CEquipItemBox::func_80286650() {
     if (CSysWin_getUnk34(_padSysWin1) != 0) {

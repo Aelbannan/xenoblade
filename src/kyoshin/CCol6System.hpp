@@ -61,3 +61,10 @@ public:
     /* 0xD8 */ u8 mSysWin1[0x3C];         // CSysWin
     /* 0x114 */ u8 mSysWin2[0x3C];        // CSysWin
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const u32 lbl_eu_80667540;
+extern "C" const u8 lbl_eu_80667544;
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);

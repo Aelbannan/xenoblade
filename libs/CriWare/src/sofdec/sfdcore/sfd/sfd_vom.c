@@ -62,17 +62,18 @@ s32 SFVOM_AddWrite(void* h) {
     return SFLIB_SetErr(h, 0xff000701);
 }
 
-extern s32 SFBUF_VfrmGetRead(void* self, void* buf, void* out, void* arg3);
+extern s32 SFBUF_VfrmGetRead(void* self, s32 idx, s32* out, s32 size);
 
-s32 SFVOM_GetRead(void* self, void* out, void* arg3) {
+s32 SFVOM_GetRead(void* self, s32* out, s32 arg3) {
     s32 type = *(s32*)((u8*)self + 0x54);
-    if (type != 3 && type != 4) {
-        *(s32*)out = 0;
-        return 0;
-    }
+    if (type == 3 || type == 4)
+        goto call;
+    *out = 0;
+    return 0;
+call:
     {
         s32 r = SFBUF_VfrmGetRead(
-            self, *(void**)((u8*)self + 0x2180), out, arg3);
+            self, *(s32*)((u8*)self + 0x2180), out, arg3);
         if (r != 0)
             return r;
         return 0;

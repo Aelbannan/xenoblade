@@ -2,6 +2,9 @@
 
 #include <types.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+struct CfGimmickElvData;
+
 // Forward declarations for external functions used by CfGimmickElv
 extern "C" {
 void __ct__cf_CfGimmick(void* self);
@@ -53,6 +56,7 @@ void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(int a, u16 b, int c, int d, int 
 void func_801BFAE8(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);
+void func_8020B34C(CfGimmickElvData* self);
 }
 
 // CfGimmickElv field layout (derived from retail ASM analysis)

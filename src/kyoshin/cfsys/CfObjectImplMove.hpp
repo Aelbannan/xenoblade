@@ -28,3 +28,6 @@ struct CfObjectImplMoveSubObj {
     u8 _00_C3[0xc4];              // 0x00-0xc3
     unsigned int mSomeId;         // 0xc4
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);

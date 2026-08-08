@@ -39,8 +39,6 @@ void CCol6CheckBat::Move() {}
 void __ct__CCol6CheckBat(){}
 
 extern u32 func_8009CF8C(u32 resourceId);
-extern "C" const u32 lbl_eu_80667540;
-extern "C" const u8 lbl_eu_80667544;
 
 int func_8015D310() {
     union {
@@ -87,10 +85,6 @@ void func_8015DD4C(){}
 void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
-
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 CCol6System::~CCol6System() {
     __dt__7CSysWinFv(mSysWin2, -1);
@@ -145,8 +139,5 @@ void func_80163AF4(){}
 CCol6Invite::~CCol6Invite() {}
 
 void CCol6Invite::Init() {}
-
-extern u32 lbl_eu_8066423C;
-
 
 void CCol6Invite::Move() {}

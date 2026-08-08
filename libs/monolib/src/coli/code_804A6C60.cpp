@@ -3,16 +3,12 @@
 // Each stub below is a catalog placeholder pending decompilation.
 
 #include <harness_catalog.h>
+#include <monolib/coli/code_804A6C60.hpp>
 #include <monolib/coli/coli_types.hpp>
 #include <nw4r/math.h>
 
 using ml::coli::CColiObject;
 using nw4r::math::VEC3;
-
-// SDA2 float constants referenced by the retail code (@sda21 relocs).
-extern "C" const float lbl_eu_8066AE3C; // 1.0f
-extern "C" const float lbl_eu_8066AE44; // 0.0f
-extern "C" const float lbl_eu_8066AE50; // -1.0f
 
 static inline f32 clamp01(f32 value) {
     if (value < lbl_eu_8066AE44) return lbl_eu_8066AE44;

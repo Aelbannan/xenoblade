@@ -13,3 +13,6 @@ struct CfObjectImplPcSubObj {
     u8 _00_3E97[0x3e98];          // 0x00-0x3e97
     int mSomeValue;               // 0x3e98
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);

@@ -3,8 +3,10 @@
 #include <types.h>
 
 class CPad;
+class CScn;
 class CScnNw4r;
 class CView;
+struct VoiceSource;
 class UnkClass_80186D20;
 class CfCamEventManager;
 class UnkClass_800821F8;
@@ -426,3 +428,50 @@ public:
     void func_80087448();
     }; //size = 0xB8
 } // namespace cf
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+extern "C" void func_801A9FC0(UnkClass_8007E864* object);
+extern "C" void func_8016EEB0(u32 object);
+extern "C" void func_800754C0(CfCamEventManager* object);
+extern "C" void* __dt__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, s32 deleteFlag);
+extern "C" void func_8009D790(CfGameManagerData1C* data);
+extern "C" void func_800B9340();
+extern "C" void func_800B9364();
+extern "C" void func_80079B34(CfCamEventManager* manager);
+extern "C" bool func_80079DBC(CfCamEventManager* manager);
+extern "C" cf::CfObject* func_8006E5A4(CfCamEventManager* manager);
+extern "C" bool func_80068E44(u32 flag);
+extern "C" bool func_800B45A0();
+extern "C" void func_80141B20(cf::CfGameManager* manager);
+extern "C" void func_800B1E2C(cf::CfGameManager* manager);
+extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* subobject);
+extern "C" bool func_800FF778__9CMainMenuFv();
+extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
+extern "C" bool isInitialized__10CMenuPauseFv();
+extern "C" bool func_80496044(CScn* scene);
+extern "C" bool func_804960A8(CScn* scene);
+extern "C" void func_80189510(float value);
+extern "C" void func_801895F4(float value);
+extern "C" void func_800B76CC();
+extern "C" VoiceSource* func_800B76F4();
+extern "C" void func_800B781C(void);
+extern "C" VoiceSource* func_800B7854(VoiceSource* source = 0);
+extern "C" u32 lbl_eu_8065FC18[];
+extern "C" void func_800B93D0();
+extern "C" void func_800B6C10();
+extern "C" void func_800B6C34();
+extern "C" void func_80141B54();
+extern "C" void func_80069EA0();
+extern "C" void func_8006A12C();
+extern "C" void func_8006A1A0();
+extern "C" void func_8006A234(u16*, u16*);
+extern "C" void func_8006A2E0();
+extern "C" void func_8006A37C();
+extern "C" void func_8006A3BC();
+extern "C" void func_8006A3FC();
+extern "C" void func_8006A404();
+extern "C" void func_80141C6C(void*, void*);

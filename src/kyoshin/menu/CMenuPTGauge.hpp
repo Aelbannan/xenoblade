@@ -36,3 +36,7 @@ public:
     virtual ~CMenuPTGauge();
     void Term();
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // shared ARC accessor (retail unmangled)
+extern "C" int lbl_eu_806642D8;

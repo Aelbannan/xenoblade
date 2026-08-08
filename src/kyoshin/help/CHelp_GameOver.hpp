@@ -12,3 +12,9 @@ public:
     u8 mFlag10; // 0x10
 };
 } // namespace cf
+
+struct CHelpFlagBag;
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" CHelpFlagBag* lbl_eu_80664A10;
+extern "C" UNKWORD func_80295D30(CHelpFlagBag* bag);

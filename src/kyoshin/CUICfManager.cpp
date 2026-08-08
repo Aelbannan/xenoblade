@@ -39,7 +39,6 @@ void CUICfManager::func_80135FC4() {
 }
 
 // us-80136aa0
-extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
 void CUICfManager::func_80135FCC() {
     func_80133324__12CUICfManagerFv((CUICfManager*)((char*)this - 0x58), 0, 0, 0);
 }

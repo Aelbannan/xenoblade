@@ -8,27 +8,19 @@
 
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
-extern "C" char lbl_eu_805063BC[];
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136910(nw4r::lyt::Layout*, const char*, u8);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" void* func_8009EC9C(u32);
 u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
-extern "C" void func_80124270(void*, void*);
 void func_80127BD8(void*, float*);
 void func_801390E0__FPP11CFileHandle(void*);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void func_8045F778__17UnkClass_8045F564Fv(void*);
-extern "C" u32 func_801361E8(void*, char*, u32);
 char* func_80136190(char*, char*, u32);
 char* func_8013639C(void*, char*);
-extern "C" u16 func_80139358(u32);
-extern "C" u32 func_801392E4(void*);
-extern "C" void* func_80157C4C(u32);
 u32 func_801392B4(u32);
 u32 func_801392C0();
 u8 func_8013600C(void*, void*, u32);
@@ -40,8 +32,6 @@ void func_80139C98(u32);
 extern void* lbl_eu_806645A8;
 extern void* lbl_eu_806645B0;
 void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
-extern "C" void func_801D8B08(CItemBoxInfo*);
-extern "C" void func_801D85D8(CItemBoxInfo*);
 void func_801D8930(CItemBoxInfo*);
 void func_801D885C(CItemBoxInfo*);
 void func_801D5564(void*, void*, void*, void*);
@@ -81,7 +71,6 @@ void func_801394D4(void*, u16);
 u32 func_801E9774(void*, u16, void*);
 void func_801E98E4(void*, u16, void*, void*);
 void func_801D62F8(void*, u32, const void*);
-extern "C" void func_801D59C0(u32*, void*, void*);
 u32 func_801DFD60(void*, void*, u32);
 u32 func_801DF610(void*, void*, u32, void*);
 u32 func_801DFE48(void*, u16, void*);
@@ -119,11 +108,6 @@ u32 getLanguage__9CDeviceSCFv();
 void* CItem_initItemImplInstances(void*);
 u32 func_801393CC(void*);
 extern void* lbl_eu_80664110;
-extern "C" void func_801D1F9C(void*, u32);
-extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
-extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
-extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
@@ -259,7 +243,7 @@ void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
     nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
     nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
-    func_80124270(result, arg2);
+    func_80124270(result, (u32)arg2);
 }
 
 #pragma push
@@ -483,9 +467,6 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
 }
 
-extern "C" char lbl_eu_8052E590[];
-extern "C" char lbl_eu_8052E568[];
-
 void func_801D62F8(void* arr, u32 index, const void* color) {
     if (index >= 3) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
@@ -493,16 +474,6 @@ void func_801D62F8(void* arr, u32 index, const void* color) {
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
 void func_80137924(void*, void*, void*, void*);
-extern "C" void func_801D4C9C(CItemBoxInfo*);
-extern "C" void func_801D4D64(CItemBoxInfo*);
-extern "C" void func_801E17EC(CItemBoxInfo2*);
-extern "C" void func_801E1868(CItemBoxInfo2*);
-extern "C" void func_801E18B4(CItemBoxInfo2*);
-extern "C" void func_801E1930(CItemBoxInfo2*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, s32);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void* lbl_eu_80534B28[];
-extern "C" void* lbl_eu_80534A90[];
 void func_801D3FF0(void*);
 void __dl__FPv(void*);
 
@@ -582,7 +553,7 @@ void func_801D69FC(CItemBoxInfo* info) {
         func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x2ab], (char*)&lbl_eu_805063BC[0x2aa], 0);
         func_80137F88(layout, v);
         func_80127BD8(layout, (float*)&lbl_eu_80668010);
-        func_80124270(pane, (void*)(u32)i);
+        func_80124270(pane, (u32)i);
     }
 }
 
@@ -1482,8 +1453,6 @@ void func_801E27D0(void* out, void* arg2) {
         ((u8*)out)[i + 0x1C] = val;
     }
 }
-extern "C" u8 code80135FDC_getByte_64077();
-
 // Render the item-box slot info: for each slot (count from the slot-table
 // byte getter) set up a labelled layout pane, per-slot vertex colours, and
 // (when a selection applies) a texture/name tag.

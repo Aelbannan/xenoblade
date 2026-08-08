@@ -31,7 +31,6 @@ void func_801EB644(){}
 
 void CNumSelect::OnFileEvent() {}
 
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(void*, void*, u8);
 extern u8 lbl_eu_80506C14[];
 extern "C" void func_801EB04C(void* self, u8 r4) {
     void* layout = *(void**)((u8*)self + 0x1C);

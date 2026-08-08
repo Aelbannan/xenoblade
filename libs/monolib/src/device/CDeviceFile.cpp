@@ -99,6 +99,10 @@ extern "C" void func_eu_804520B0(void* r3) {
 
 void func_eu_804520D0(){}
 
+// These two retail data symbols are also declared in the "C-linkage imports"
+// section of monolib/device/CDeviceFile.hpp. They stay declared here too
+// because this catalog TU defines a local `struct CDeviceFile` that conflicts
+// with the class in that header, so this TU cannot include it.
 extern "C" u8 lbl_eu_806636AA[6];
 extern "C" void func_eu_804521A8(s8 val) {
     lbl_eu_806636AA[0] = val;

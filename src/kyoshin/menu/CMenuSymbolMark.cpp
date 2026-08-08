@@ -15,11 +15,6 @@ extern "C" u32 func_8011D338() {
 CMenuSymbolMark::CMenuSymbolMark(CScn* scn) {
 }
 
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
-struct PTMF;
-extern "C" long __ptmf_test(PTMF* ptmf);
-extern "C" void __ptmf_scall(...);
-
 // ---------- CMenuSymbolMark destructor ----------
 CMenuSymbolMark::~CMenuSymbolMark() {
     if (this) {

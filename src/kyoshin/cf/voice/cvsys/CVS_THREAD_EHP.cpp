@@ -8,8 +8,6 @@
 // Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries
 // a {field_0, field_4, callback} triple that the rotation function copies into
 // unk0/unk4/unk8 when the rotating index is not at the stop index.
-extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, func_802A6408}
-extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; EHP subclass returns 0xB4 (180).

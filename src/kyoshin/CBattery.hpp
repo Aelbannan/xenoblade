@@ -8,6 +8,11 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Shared string pool in split1 .rodata: "/menu/jp/Battery.arc", "pic_%02d"...
+extern "C" char lbl_eu_8051399C[];
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
 // IWorkEvent vtable for CBattery (split1 .data on US/EU; __vt__8CBattery on JP).
 extern "C" void* lbl_eu_8053B890[];
 

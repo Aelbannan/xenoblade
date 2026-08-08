@@ -24,3 +24,8 @@ public:
 
 Class_80296898* func_80296A04(Class_80296898* obj);
 void func_80296AE8(u8* src);
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// External function referenced by both init() and func_80296AE8.
+// Takes a boolean (0 or 1) derived from mConfigData[0x0C].
+extern "C" void func_eu_802B14F8(u8);

@@ -7,6 +7,7 @@
 #include "kyoshin/CSysWin.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "kyoshin/code_80296898.hpp"
 
 class CEventFile;
 
@@ -116,4 +117,48 @@ public:
     u32 field_0xFC;                       // 0xFC (advance/state word set by handlers)
     u32 field_0x100;                      // 0x100
 };
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void __ct__CCur18(void* self, void* accessor);
+extern "C" void func_8018B0FC(void* dest, void* src);
+extern "C" void* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+extern "C" void* lbl_eu_805396D0[];
+extern "C" Class_80296898 lbl_eu_80577308;
+extern "C" u8 lbl_eu_8053948C[0x30];
+extern "C" void __ct__8CBaseCurFv(CBaseCur*);
+extern "C" void __dt__8CBaseCurFv(void*, int);
+extern "C" void* __dt__6CCur18Fv(void*, int);
+extern "C" void* __dt__7CSysWinFv(void*, int);
+extern "C" void* __dt__10CScrollBarFv(void*, int);
+extern "C" void* __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);
+extern "C" int CScrollBar_isVisible(void*);
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" int CSysWin_isActive(u8*);
+extern "C" u32 CSysWin_getUnk34(u8*);
+extern "C" void func_801F369C(void*);
+extern "C" void func_801F36BC(void*, int, int);
+extern "C" void func_801F3670(void*, void*);
+extern "C" void func_801F367C(void*);
+extern "C" void func_801F3850(void*, u16);
+extern "C" void func_801F35B0(void*, void*);
+extern "C" void func_801F3540(void*);
+extern "C" void func_801F35DC(void*);
+extern "C" void func_801D20B0(void*, void*);
+extern "C" void func_8022B7C8(void*, void*);
+extern "C" void func_801D216C(void*, u8);
+extern "C" void func_801D2174(CBaseCur*);
+extern "C" void func_801D21CC(void*);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_8029E254(COption*);
+extern "C" void func_8029E1CC(COption*);
+extern "C" void func_8029E144(COption*);
+extern "C" void func_8029D420(COption*);
+extern "C" u8 func_8029D634(COption*, u8);
+extern "C" u8 func_8029D7E8(COption* self);
+extern "C" void func_8022B8E4(void*);
+extern "C" void func_80296A04__FP14Class_80296898(void*);
 

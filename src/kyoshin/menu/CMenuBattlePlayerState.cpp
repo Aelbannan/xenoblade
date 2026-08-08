@@ -70,7 +70,6 @@ extern u32 func_801355D8();
 }
 
 extern void func_80138078(u32);
-extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
 
 extern "C" {
 extern s16 lbl_eu_80663F30[4];
@@ -1152,13 +1151,11 @@ extern "C" void func_8010CF5C(void* p) {
     static_cast<CMenuBattlePlayerState*>(p)->unk7C9 = 1;
 }
 extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
-extern "C" void __dt__22CMenuBattlePlayerStateFv(void*);
 extern "C" {
 void func_8010EA4C(void* _this) {
     __dt__22CMenuBattlePlayerStateFv((char*)_this - 0x58);
 }
 }
-extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
 bool func_8010EA54(){
     cbRenderBefore__22CMenuBattlePlayerStateFv();
     return false;

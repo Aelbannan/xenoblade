@@ -43,6 +43,13 @@ public:
     void GetCoef(int order, f32 freq, BiquadCoef* pCoef) const;
 };
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051E808[];
+extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051EC68[];
+extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F034[];
+extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F4F8[];
+extern "C" const BiquadFilterCallback::BiquadCoef lbl_eu_8051F89C[];
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r

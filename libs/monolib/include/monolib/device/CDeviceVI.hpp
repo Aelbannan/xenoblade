@@ -190,3 +190,6 @@ framerate stuff */
 static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" GXRenderModeObj lbl_eu_8056BE38;

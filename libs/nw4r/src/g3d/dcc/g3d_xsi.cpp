@@ -1,11 +1,6 @@
 #include <nw4r/g3d.h>
 #include <decomp.h>
 
-// XSI DCC float constants (SDA21)
-extern "C" const float lbl_eu_80669CB0; // 0.0f
-extern "C" const float lbl_eu_80669CB4; // 1.0f
-extern "C" const float lbl_eu_80669CB8; // 256.0f/360.0f (deg_to_fidx)
-
 namespace nw4r {
 namespace g3d {
 namespace detail {
@@ -259,11 +254,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 #pragma dont_inline reset
 
 typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
-
-extern "C" const TexSrtMtxFunc lbl_eu_8051D6F8[];
-extern "C" const TexSrtMtxFunc lbl_eu_8051D714[];
-
-
 
 } // namespace
 

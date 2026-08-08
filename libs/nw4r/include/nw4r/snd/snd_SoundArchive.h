@@ -6,6 +6,11 @@
 
 #include <nw4r/ut.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
+extern "C" u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
+extern "C" bool ReadFilePos__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlUlPQ44nw4r3snd12SoundArchive7FilePos(void*, u32, u32, void*);
+
 namespace nw4r {
 namespace snd {
 

@@ -21,12 +21,6 @@ struct CVoiceFactory {
     u32 flags;
 };
 
-// Init-data tables (3 u32s each: {field_0, field_4, callback}).
-extern "C" u32 lbl_eu_80539D20[3];
-extern "C" u32 lbl_eu_80539D2C[3];
-extern "C" u32 lbl_eu_80539D38[3];
-extern "C" u32 lbl_eu_80539D44;  // vtable for CVS_THREAD_TENSION_UP
-
 // ── Target 1: us-802ab968 (func_802A9230) ──────────────────────────────────
 // Completion callback: if no active voice is playing, invoke the
 // playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 2).

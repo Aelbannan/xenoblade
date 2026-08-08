@@ -7,42 +7,15 @@
 #include "monolib/device/CFileHandle.hpp"
 
 // External symbols
-extern "C" void* lbl_eu_805349D0[];  // CSortMenu vtable
-extern "C" void* lbl_eu_805349B8[];  // String table for sort menu pane names
-extern char lbl_eu_8050624C[];       // String table for resource names
+extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
 
-extern "C" void __dl__FPv(void*);
-extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void __dt__14Class_8045F858Fv(void*, int);
-extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
-
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
-extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(unsigned long, nw4r::lyt::Layout*);
-extern "C" void func_8015780C(int);
-
-// CScrollBar functions
-extern "C" void __ct__CScrollBar(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3540(void*);
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_801F35DC(void*);
-extern "C" u8 CScrollBar_isVisible(void*);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F367C(void*);
-extern "C" void func_801F369C(void*);
-extern "C" void func_801F3850(void*, int);
-extern "C" void func_801F34F4(void*);
-extern "C" void func_80137924(void*, void*, void*, void*);
+// Intra-TU forward declarations (definitions in this file; pre-existing missing
+// declarations — required for the TU to compile under -lang=c++)
+extern "C" void func_801D3878(CSortMenu*);
+extern "C" void func_801D390C(CSortMenu*);
+extern "C" void func_801D3958(CSortMenu*);
+extern "C" void func_801D39EC(CSortMenu*);
+extern "C" void func_801D3A3C(CSortMenu*);
 
 // ============================================================================
 // CSortMenu constructor

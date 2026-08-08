@@ -18,6 +18,10 @@ struct ResContainer {
     u8* findResEntry(u32 id, u32* outIndex, u32* outValue);
 };
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void clearWordFlag(u32* self, u32 mask);
+extern "C" void* func_80068494(void*, u32, u32*, u32*, int, int);
+extern "C" bool func_800686E4(void*, bool);
+
 bool testResInfoFlag(u32 flags);

@@ -12,3 +12,6 @@ public:
     s32 unkC; // 0xC
 };
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" bool func_8022F530();

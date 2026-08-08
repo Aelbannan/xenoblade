@@ -3,11 +3,6 @@
 #include "monolib/math/CCol4.hpp"
 
 void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self, void* end, ml::CCol4 color, float radius);
-extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
-extern "C" float lbl_eu_80666940; // 0.01 threshold
-// 0.4 truncation factor
-// (lbl_eu_80666944 declared below)
-extern "C" float lbl_eu_80666944;
 
 // Debug-render a collision cylinder from its impl, colouring it by collision kind.
 void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {

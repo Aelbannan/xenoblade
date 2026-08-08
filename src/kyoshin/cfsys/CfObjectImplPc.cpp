@@ -53,8 +53,6 @@ void func_800CA42C(){}
 
 void func_800CA458(){}
 
-extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
-
 // Adjuster thunk for CfObjectImplPc virtual destructor at vtable slot this-0xc.
 // Adjusts this pointer to the complete object, then tail-calls the real destructor.
 extern "C" void func_800CA4DC(void* self)

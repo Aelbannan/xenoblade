@@ -1,7 +1,5 @@
 #include "kyoshin/help/CHelp_CkKizuna.hpp"
 
-extern "C" UNKWORD func_801BCF38();
-
 namespace cf {
 
 // Cast-only SI iface: CHelp's manual interface-table pointer sits at this+8 (not a

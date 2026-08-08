@@ -11,13 +11,6 @@
 #include <nw4r/lyt.h>
 #include <cstring>
 
-// Cursor helpers and layout-loader (C-linkage retail symbols).
-extern "C" void __ct__CCur18(void* self, void* accessor);
-extern "C" void func_8018B0FC(void* dest, void* src);
-extern "C" void* func_801355F4();
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-
 // External labels and functions used by COption methods
 extern float lbl_eu_80668C10;
 extern float lbl_eu_80668C14;
@@ -25,51 +18,10 @@ extern float lbl_eu_80668C18;
 extern float lbl_eu_80668C1C;
 extern char lbl_eu_805103D8[];
 
-// CCur19 vtable and the Class_80296898 singleton for this TU.
-extern "C" void* lbl_eu_805396D0[];
-extern "C" Class_80296898 lbl_eu_80577308;
-// Signed-index lookup table used by func_8029D96C.
-extern "C" u8 lbl_eu_8053948C[0x30];
-
-// CBaseCur base ctor/dtor and the C++ allocator free (C-linkage symbols).
-extern "C" void __ct__8CBaseCurFv(CBaseCur*);
-extern "C" void __dt__8CBaseCurFv(void*, int);
-extern "C" void* __dt__6CCur18Fv(void*, int);
-extern "C" void* __dt__7CSysWinFv(void*, int);
-extern "C" void* __dt__10CScrollBarFv(void*, int);
-extern "C" void* __dt__17UnkClass_8045F564Fv(void*, int);
-extern "C" void __dl__FPv(void*);
-
-// Option window scroll-bar / system-window state checks (C-linkage).
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" int CSysWin_isActive(u8*);
-extern "C" u32 CSysWin_getUnk34(u8*);
-extern "C" void func_801F369C(void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F367C(void*);
-extern "C" void func_801F3850(void*, u16);
-extern "C" void func_801F35B0(void*, void*);
-extern "C" void func_801F3540(void*);
-extern "C" void func_801F35DC(void*);
-extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_8022B7C8(void*, void*);
 void func_80138078(u32);
 
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_801D216C(void*, u8);
-extern "C" void func_801D2174(CBaseCur*);
-extern "C" void func_801D21CC(void*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-extern "C" void func_8029E254(COption*);
-extern "C" void func_8029E1CC(COption*);
-extern "C" void func_8029E144(COption*);
-extern "C" void func_8029D420(COption*);
-extern "C" u8 func_8029D634(COption*, u8);
-extern "C" u8 func_8029D7E8(COption* self);
-extern "C" void func_8022B8E4(void*);
 int func_8029E3F8(COption* self);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
@@ -628,7 +580,6 @@ bool COption::OnFileEvent(CEventFile* pEventFile) {
 
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void func_80296A04__FP14Class_80296898(void*);
 
 // sinit: constructor run for the Class_80296898 global at lbl_eu_80577308.
 // Tail-calls the global constructor with the object address.

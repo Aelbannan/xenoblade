@@ -40,9 +40,6 @@ int CNandData::sNandIconTextureSomething[] = {
 // linkage is mandatory here - C++ linkage would mangle the call target to
 // `...__Fv` and break the FULL_MATCH. They return BDAT-driven display strings.
 // ---------------------------------------------------------------------------
-extern "C" const char* func_eu_802B14A4();
-extern "C" const char* func_eu_802B14BC();
-
 CNandData CNandData::sInstance;
 
 // Initializes the NAND save banner shown in the system menu:

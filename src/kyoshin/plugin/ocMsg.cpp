@@ -12,9 +12,6 @@ struct OcMsgRingHdr {
     u32 count;
 };
 
-extern "C" void* func_8003A4E0();
-extern "C" void* func_8003A4EC();
-
 extern "C" int func_8003A53C(VMThread* pThread, void* r4, s16 r5) {
     VMArg args;
     *(u8*)&args.type = 9;
@@ -205,7 +202,6 @@ extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" BOOL vmOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524CE8[];
 extern OCData lbl_eu_80524D80[];
 void ocMsgRegist() {

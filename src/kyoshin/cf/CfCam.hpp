@@ -2,6 +2,19 @@
 
 #include <types.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+extern "C" bool func_800755B0(void*, int);
+extern "C" bool func_8049EB60(void* obj);
+extern "C" unsigned int lbl_eu_80663E24;
+extern "C" void func_8004B3F0(void*);
+extern "C" float lbl_eu_80527230[];
+extern "C" float lbl_eu_80661BA8;
+extern "C" void func_804BE4B4(void*, int);
+extern "C" void* func_804BE4E0(void*, int);
+
 namespace cf {
 
 // Minimal layout for cf::CfCamFollow ctor (__ct__cf_CfCamFollow).

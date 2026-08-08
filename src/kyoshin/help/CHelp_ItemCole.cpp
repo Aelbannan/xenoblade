@@ -6,8 +6,6 @@ struct CHelpFlagBag {
     u8 mKizuna; // +0x15
 };
 
-extern "C" CHelpFlagBag* lbl_eu_80664A10;
-
 namespace cf {
 u8 CHelp_ItemCole::func_802B8180() {
     return lbl_eu_80664A10->mItemCole;

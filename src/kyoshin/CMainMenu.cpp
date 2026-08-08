@@ -13,20 +13,9 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
-extern "C" void cbRenderBefore__9CMainMenuFv();
-extern "C" void __ct__800FF300();
 
 // CBaseCur shared helpers (defined in CCur.cpp)
 extern void func_801D21CC(CBaseCur* cur);
-
-// CBaseCur base destructor (defined in kyoshin/CCur.cpp)
-extern "C" void __dt__8CBaseCurFv(void*, int);
-// CProcess base destructor
-extern "C" void __dt__8CProcessFv(void*, int);
-// CSubCur destructor (defined in kyoshin/CCur.cpp)
-extern "C" void* __dt__7CSubCurFv(CBaseCur*, int);
-// UnkClass_8045F564 destructor
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 // Destructor for CBaseCur-derived class at vtable 0x800FEA30.
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
@@ -111,7 +100,6 @@ void __ct__800FF300(void* self){}
 // offset 0x19: brlan name (e.g. "mf00_menu_in.brlan")
 // offset 0x37: brlan name (e.g. "mf00_menu_out.brlan")
 // offset 0x53: pane name "Param"
-extern "C" char lbl_eu_804FCEBC[];
 
 // VUpdate() override for the CBaseCur-derived class embedded at CMainMenu+0x90.
 // Loads the layout and two animation transforms, then initializes via func_801D21CC.
@@ -138,8 +126,6 @@ void CMainMenu::func_800FEB14(float* pos) {
 
 extern u32 lbl_eu_80663F18;
 
-extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-
 // Creates the CMainMenu singleton: allocates from work memory via placement new,
 // stores in lbl_eu_80663F18, and registers as a child of the given CProcess.
 // Returns NULL if already created.
@@ -154,9 +140,6 @@ extern "C" void* func_800FF6BC(void* parent, void* param) {
 }
 
 extern u32 lbl_eu_80663F18;
-
-// Declare the mangled symbol to prevent IPA from inlining the stub.
-extern "C" int func_800FF778__9CMainMenuFv();
 
 // Returns 1 if func_800FF778() is non-zero, else booleanizes lbl_eu_80663F18.
 extern "C" u32 func_800FF738(CMainMenu* self) {

@@ -21,19 +21,6 @@ void func_800ACF78(cf::CfObjectEff* eff, cf::CfObjectMove* obj, int arg);
 void func_801BFDE8(int arg0, int arg1, float* pos, float arg3, float arg4);
 UnkCamObj* func_8049603C(CScn* arg);
 
-// Float constants from sdata2 (retail .sda21 loads); extern refs match retail relocs
-extern "C" float lbl_eu_806689D8; // -4.0
-extern "C" float lbl_eu_806689DC; // 0.9
-extern "C" float lbl_eu_806689E0; // 0.0
-extern "C" float lbl_eu_806689E4; // 0.01
-extern "C" float lbl_eu_806689E8; // 1.0
-extern "C" float lbl_eu_806689EC; // 30.0
-extern "C" float lbl_eu_806689F0; // 0.001
-extern "C" float lbl_eu_806689F4; // 0.1
-extern "C" float lbl_eu_806689F8; // 0.4
-
-extern "C" CScn* lbl_eu_80663E14;
-
 // Vtable helper structs for calling methods whose return type
 // or signature differs from the header declaration.
 struct CfObjectMove_VTable43 {

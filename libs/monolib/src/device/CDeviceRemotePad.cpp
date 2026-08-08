@@ -2,8 +2,6 @@
 #include "monolib/core.hpp"
 #include "monolib/lib.hpp"
 
-extern "C" CDeviceRemotePad* lbl_eu_80665638; // singleton pointer (retail sbss label)
-
 // Own TU owns CDeviceBase's dtor: retail places it (0x8044A2AC) at the head
 // of this unit's slice, right before CDeviceRemotePad's dtor.
 CDeviceBase::~CDeviceBase() {}

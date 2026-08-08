@@ -1,7 +1,6 @@
 #include "monolib/core/CViewRectData.hpp"
+#include "monolib/core/CViewRectDataCore.hpp"
 #include "monolib/device.hpp"
-
-extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 
 // Initialises view rect from the current framebuffer display mode.
 // Copies the framebuffer width/height into both mViewSize and mBoundsSize,

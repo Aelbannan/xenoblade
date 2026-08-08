@@ -56,3 +56,15 @@ struct CMapSelFull {
     s8 field_8D;  // x coordinate
     u8 mGridData[128]; // grid lookup data starting at +0x8E
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+namespace nw4r { namespace lyt { class DrawInfo; } }
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__10CScrollBarFv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);
+extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801F369C(void*);
+extern "C" u32 func_80137510(void*, float);
+extern "C" float lbl_eu_8066873C;

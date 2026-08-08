@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CItem.hpp"
 
 // Forward declarations for item-related classes
 struct CItemInfo;
@@ -214,8 +215,6 @@ void func_80157948(){}
 void func_8015796C(){}
 
 void func_801579A4(){}
-
-extern "C" u32 func_8009CF8C(u32 resourceId);
 
 extern "C" void* func_801579C4(u8 arg, u32* out1, u32* out2) {
     void* result = 0;

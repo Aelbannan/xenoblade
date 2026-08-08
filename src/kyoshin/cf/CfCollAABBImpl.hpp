@@ -3,6 +3,22 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 
+namespace ml {
+    struct CCol4;
+    struct CMat34;
+}
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const ml::CCol4* col);
+extern "C" void setMatrix__7CDrawGXFRCQ22ml6CMat34(void* self, const ml::CMat34* mat);
+extern "C" void renderCube__7CDrawGXFRCQ22ml5CVec3RCQ22ml5CVec3(void* self, const ml::CVec3* min, const ml::CVec3* max);
+extern "C" void func_8049034C(void* a, void* b, int c);
+extern "C" void func_800A5FE8(void* a, void* b, void* c, void* d, void* e);
+extern "C" void* lbl_eu_80663E14;
+
 namespace cf {
 
 // Collision AABB shape implementation.

@@ -2,28 +2,7 @@
 // High-level C++ reconstruction from retail ASM.
 
 #include "kyoshin/harness_catalog.hpp"
-
-// -- External data tables (u16 ID lookup arrays, 44 entries each) --
-extern "C" u16 lbl_eu_80501E48[];
-extern "C" u16 lbl_eu_80501EB8[];
-extern "C" u16 lbl_eu_80501F28[];
-extern "C" u16 lbl_eu_80501F98[];
-
-// -- External functions called by this TU --
-// CfGameManager utilities
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 value);
-extern "C" void* func_800817BC__Q22cf13CfGameManagerFv(u32 value, u32 unused);
-extern "C" void func_800ACF78(void* obj, void* mgr, u32 val);
-extern "C" void func_800ACEF8(void* obj, void* ptr);
-extern "C" void func_800ACC50(void* obj);
-extern "C" void func_80484EB0(void* ptr);
-extern "C" void func_800ACF78(void* obj, void* mgr, u32 val);
-
-// vtable for CCharEffectEne
-extern "C" u8 lbl_eu_8052FDD8[];
-
-// Base constructor
-extern "C" void __ct__CCharEffect(void* self);
+#include "kyoshin/cf/CCharEffectEne.hpp"
 
 // -- CCharEffectEne class layout --
 // Inherits from CCharEffect. vtable: lbl_eu_8052FDD8.

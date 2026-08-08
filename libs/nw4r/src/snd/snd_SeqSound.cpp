@@ -5,10 +5,9 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Retail .sbss type-info objects: SeqSound::typeInfo at lbl_eu_806654F8,
-// parent = BasicSound::typeInfo (lbl_eu_806654D0).  Same extern-C pattern
-// as StrmSound/WaveSound.
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+// Retail .sbss type-info object: SeqSound::typeInfo at lbl_eu_806654F8
+// (parent = BasicSound::typeInfo lbl_eu_806654D0). Definition stays in
+// this TU.
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654F8(
     &lbl_eu_806654D0);
 

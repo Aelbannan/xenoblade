@@ -161,3 +161,25 @@ struct BattleRemoveObjAccessor {
     u8 pad_3ed8[0x28];   // 0x3ED8-0x3EFF
     u32 field_3f00;      // +0x3F00 flags
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Battle event dispatch table entry for lbl_eu_804FC828 (12 bytes each)
+struct BattleTableEntry {
+    u32 selector;
+    s16 val;
+    s8 byteVal;
+    u8 pad_07;
+    u32 pad_08;
+};
+
+extern "C" void __dl__FPv(void*);
+extern "C" void __dla__FPv(void*);
+extern "C" float lbl_eu_80666DDC;
+extern "C" float lbl_eu_80666DD4;
+extern "C" f64 lbl_eu_80666DE0;
+extern "C" BattleTableEntry lbl_eu_804FC828[];
+extern "C" u32 lbl_eu_80663E24;
+

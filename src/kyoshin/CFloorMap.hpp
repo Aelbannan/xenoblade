@@ -185,3 +185,7 @@ public:
     u32 field_3340;                          // 0x3340
     u32 field_3344;                          // 0x3344
 };
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" char lbl_eu_8050BEA8[];

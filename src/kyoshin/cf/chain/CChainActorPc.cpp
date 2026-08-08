@@ -6,20 +6,11 @@ namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; cl
 // Retail symbol: cf::CBattleManager::getInstance()
 cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
 
-// Forward: free function operating on the CChain/CChainActor memory layout
-extern "C" void CChain_setFieldAndClear(void*, int);
-
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
 
 void func_80282020(){}
 int func_802A0804(int, int);
-extern "C" void func_802A08F4(void*);
-extern "C" void func_802A0904(void*);
-extern "C" void func_80279DC0(void*);
-extern "C" int func_80148778(void*, int);
-extern "C" int func_8027A024(void*, void*);
-extern "C" int* func_8009ECB0();
 
 int func_80282048(int arg) {
     return func_802A0804(0xb3, arg);
@@ -227,7 +218,6 @@ done:
     func_80279E48(self, arg);
 }
 // Retail symbol: func_80279F6C
-extern "C" void func_80279F6C(void*, int);
 
 // Sets a chain actor flag and optionally resets chain field via func_804B1DC0
 // when arg is 0 and the current bit state differs.

@@ -2,10 +2,6 @@
 
 CLibVM::CLibVM(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {}
 
-extern "C" void* lbl_eu_80665720;
-extern "C" void __dt__11CWorkThreadFv(void*, int);
-extern "C" void __dl__FPv(void*);
-
 extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
     if (self != 0) {
         lbl_eu_80665720 = 0;

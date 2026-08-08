@@ -116,7 +116,6 @@ extern "C" int CfRes_callFunc_67F10() {
 }
 
 extern u32 lbl_eu_80663D7C;
-extern "C" int func_80068078(int);
 extern "C" int CfRes_callFunc_68078() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
@@ -146,7 +145,6 @@ extern "C" int CfRes_callFunc_68110(void* self) {
 }
 
 extern u32 lbl_eu_80663D7C;
-extern "C" int func_80068254(int);
 extern "C" int CfRes_callFunc_68254() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
@@ -789,7 +787,6 @@ extern "C" void* CfRes_dispatchTypeA(void* unused, const void* obj) {
     return 0;
 }
 
-extern "C" int func_801BFA64(int);
 extern "C" int CfRes_dispatchTypeB(void* self, void* param) {
     u8 val = *(u8*)((char*)param + 0x32);
     if (val == 10) {

@@ -5,6 +5,7 @@
  * ```bash
  * npm --prefix tools/pi_harness run pi-harness -- \
  *   --tu kyoshin/CGame [--tu other/Unit] [--dry-run] [--max-parallel 2] [--config path]
+ *   --all --order smallest --match-less-than 50
  * ```
  *
  * May be run from anywhere inside the repository.
@@ -43,6 +44,7 @@ interface Args {
   showStatus: boolean;
   all: boolean;
   order: UnitOrder;
+  matchLessThan?: number;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -82,6 +84,16 @@ function parseArgs(argv: string[]): Args {
           throw new Error("--order must be one of: most-remaining, least-remaining, smallest, alphabetical");
         }
         args.order = v as UnitOrder;
+        break;
+      }
+      case "--match-less-than": {
+        const v = rest[++i];
+        if (!v || v.startsWith("--")) throw new Error("--match-less-than requires a value");
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < 0 || n > 100) {
+          throw new Error("--match-less-than requires a percentage in [0, 100]");
+        }
+        args.matchLessThan = n;
         break;
       }
       case "--status":
@@ -136,10 +148,20 @@ Options:
   --status             Print per-TU match summary table and exit (no sessions run)
   --order <order>      TU ordering for --all and --status: most-remaining (default),
                        least-remaining, smallest (unmatched .text bytes), alphabetical
+  --match-less-than <pct>
+                       Keep only TUs with match % strictly below <pct> (0-100);
+                       applies to --all discovery and --status preview
   --config <path>      Config file (default: <repoRoot>/pi-harness.json)
   --dry-run            Print batch prompts without running sessions
   --max-parallel <n>   Override maxParallelTUs
   --help               This message`);
+}
+
+/** Keep only TUs whose match % (matched/total*100) is strictly below the
+ *  threshold. Shared by --all (run selection) and --status (preview) so the
+ *  preview table always matches what a run would select. */
+function filterMatchLessThan(summaries: UnitSummary[], threshold: number): UnitSummary[] {
+  return summaries.filter((s) => s.total > 0 && (s.matched / s.total) * 100 < threshold);
 }
 
 /** Print a terminal-wide progress-bar table of per-TU match status. */
@@ -237,6 +259,16 @@ async function main(): Promise<void> {
   // ── --status mode: print table and exit ─────────────────────────
   if (args.showStatus) {
     let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
+    if (args.matchLessThan !== undefined) {
+      const before = summaries.length;
+      summaries = filterMatchLessThan(summaries, args.matchLessThan);
+      const excluded = before - summaries.length;
+      if (excluded > 0) {
+        process.stderr.write(
+          `[pi-harness] --match-less-than ${args.matchLessThan}: excluding ${excluded} TU(s) with match % >= ${args.matchLessThan}\n`,
+        );
+      }
+    }
     if (args.tus.length > 0) {
       const filter = new Set(args.tus);
       summaries = summaries.filter((s) => filter.has(s.unit));
@@ -252,7 +284,17 @@ async function main(): Promise<void> {
   // ── --all mode: discover TUs from targets.json ──────────────────
   let tus = args.tus;
   if (args.all) {
-    const summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
+    let summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
+    if (args.matchLessThan !== undefined) {
+      const before = summaries.length;
+      summaries = filterMatchLessThan(summaries, args.matchLessThan);
+      const excluded = before - summaries.length;
+      if (excluded > 0) {
+        process.stderr.write(
+          `[pi-harness] --match-less-than ${args.matchLessThan}: excluding ${excluded} TU(s) with match % >= ${args.matchLessThan}\n`,
+        );
+      }
+    }
     // Skip fully-matched TUs AND TUs whose remaining work is all exhausted
     // (they'd be added to the pool only to instantly return 0 unmatched,
     // starving the ConcurrencyPool of real work and collapsing parallelism
@@ -279,7 +321,7 @@ async function main(): Promise<void> {
       `(order: ${args.order})${effectiveConfig.retryExhausted ? " (retryExhausted)" : ""}\n`,
     );
     if (tus.length === 0) {
-      console.log("All TUs are fully matched — nothing to do.");
+      console.log("No TUs match the current filters (--all) — nothing to do.");
       return;
     }
   }

@@ -82,3 +82,9 @@ struct Ptmf {
 // 0x00: BOOL unk0
 // 0x04: CFileHandle* mFileHandle
 // 0x14: u32 field_14
+
+// ---------------------------------------------------------------------------
+// C-linkage imports
+// ---------------------------------------------------------------------------
+extern "C" void func_801832D4(void* self);
+extern "C" void func_801836CC(void* self, unsigned long value);

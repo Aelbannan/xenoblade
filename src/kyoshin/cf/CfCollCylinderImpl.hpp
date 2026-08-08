@@ -3,6 +3,12 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
+extern "C" float lbl_eu_80666940; // 0.01 threshold
+// 0.4 truncation factor
+extern "C" float lbl_eu_80666944;
+
 namespace cf {
 
 // Collision cylinder shape implementation.

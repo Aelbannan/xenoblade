@@ -10,14 +10,6 @@ NW4R_LIB_VERSION(SND, "Jun  8 2007", "11:17:15", "0x4199_60831");
 
 } // namespace
 
-// External symbols from BSS/SBSS
-extern "C" u8 lbl_eu_80638C40[];
-extern "C" bool lbl_eu_80665508;
-extern "C" int lbl_eu_8066550C;
-
-// Forward declaration for InitSeqPlayer (defined in snd_SeqPlayer.cpp)
-extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
-
 namespace nw4r {
 namespace snd {
 

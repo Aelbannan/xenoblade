@@ -38,8 +38,8 @@ using std::strcpy;
 using std::strcat;
 }
 
-// Vtable for CREvtMovie
-extern "C" void* lbl_eu_80538AA0[];
+// Vtable for CREvtMovie lives in kyoshin/realtimeevt/CREvtMovie.hpp
+// (C-linkage imports section).
 
 // String constants for movie path building
 // lbl_eu_8050FD98 contains "/ev/realtime/\0.sfd\0" packed together

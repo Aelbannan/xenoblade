@@ -26,11 +26,6 @@ struct ScnWalkGraph {
     u16* edges;
 };
 
-extern "C" const f32 lbl_eu_8066A898;
-extern "C" const f32 lbl_eu_8066A8A8;
-extern "C" const f32 lbl_eu_8066A8AC;
-extern "C" const f32 lbl_eu_8066A8B8;
-
 static inline void setWalkRect(CVec3& min, CVec3& max, const ScnWalkNode& node) {
     min.x = lbl_eu_8066A898 * node.x;
     max.x = min.x + lbl_eu_8066A898 * (node.width + 1);

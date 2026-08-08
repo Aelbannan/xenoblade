@@ -1,10 +1,6 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
-// Retail SDA names (US) - Free/Alloc/Hook must use these for reloc match.
-extern "C" nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8;
-extern "C" u32 lbl_eu_806654CC;
-
 namespace nw4r {
 namespace snd {
 namespace detail {

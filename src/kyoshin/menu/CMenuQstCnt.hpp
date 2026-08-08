@@ -73,3 +73,48 @@ struct CMenuQstCnt {
     void Move();
     void cbRenderBefore();
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+extern "C" int func_80144FF0();
+extern "C" int func_80145030(void);
+extern "C" void initQstInfo(QstInfo* ptr);
+extern "C" void __dt__80227030();
+extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);
+extern "C" void func_80227660(QstInfo* dst, const QstInfo* src);
+extern "C" void func_8022769C(QstInfo* dst, const QstInfo* src);
+extern "C" void __ct__8CProcessFv(void*);
+extern "C" void __dt__9IUIWindowFv(void*, int);
+extern "C" void __ct__17UnkClass_8045F564Fv(void*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void __dl__FPv(void*);
+extern "C" void __construct_array(void*, void*, void*, u32, u32);
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
+extern "C" int func_80293C10();
+extern "C" int func_8029A658();
+extern "C" int func_801B481C();
+extern "C" int func_80124B78();
+extern "C" int func_8011CD5C();
+extern "C" char* func_801394D4(u16);
+extern "C" u16 func_801380A0(u16);
+extern "C" u32 func_80138138(u16);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
+extern "C" u32 __ptmf_null[];
+extern "C" u32 lbl_eu_8052D238[];
+extern "C" u32 lbl_eu_80536128[];
+extern "C" u32 lbl_eu_80663E28;
+extern "C" u32 lbl_eu_80663E24;
+extern "C" CScn* lbl_eu_80663E14;
+extern "C" f32 lbl_eu_8066856C;
+extern "C" f32 lbl_eu_80668568;
+extern "C" void* lbl_eu_80664094;
+extern "C" void* lbl_eu_806640A8;
+extern "C" u32 lbl_eu_80573D18[];
+extern "C" char lbl_eu_80509A10[];
+extern "C" char lbl_eu_80509AB4[];

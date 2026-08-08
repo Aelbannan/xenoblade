@@ -2,10 +2,6 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <monolib/math/Random.hpp>
 
-// Forward declarations for functions called by the two decompiled functions.
-extern "C" void func_8013EAB0();
-extern "C" void func_802A07F4(int, void*);
-
 // Function pointer type for CfObjectModel_UnkVirtualFunc4 (vtable[0x184]).
 // Header declares it with no args, but retail passes an int.
 typedef void (*CfObjectModel_UnkVirtualFunc4_t)(cf::CfObjectModel*, int);

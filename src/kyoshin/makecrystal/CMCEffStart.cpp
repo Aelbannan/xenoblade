@@ -6,26 +6,10 @@
 
 #include "nw4r/lyt/lyt_pane.h"
 
-extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80138078__FUl(u32);
-extern u32 func_801355BC();
+// Kept inline (not promoted to CMCEffStart.hpp): see the NOTE in the header.
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-extern "C" u32 func_801355A0__Fv();
 
-// Retail string pool (SDA-data base for pooled string literals).
-extern "C" char lbl_eu_805095EC[];
-extern "C" float lbl_eu_80668550;
-extern "C" const float lbl_eu_80668554;
-// SDA global: retail refers to cf::CfBdat::spBtlSkillListFileData by its raw
-// symbol name lbl_eu_806640D8; referencing the C++ static member would emit
-// the mangled reloc (spBtlSkillListFileData__Q22cf6CfBdat) which retail does
-// not have.
-extern "C" void* lbl_eu_806640D8;
-// (func_80137E7C is declared extern "C" in code_80135FDC.hpp)
-// func_80136910's retail symbol is the Itanium-mangled C++ name, so it must be
-// referenced by its literal mangled identifier under C linkage (declaring it as
-// a C++ function would re-mangle the name).
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
+extern u32 func_801355BC();
 
 // Minimal abstract mirror of the font object returned by
 // CDeviceFont::func_80452C10. Its slot 9 sits at vtable offset 0x24 and

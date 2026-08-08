@@ -2,12 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <nw4r/g3d.h>
+#include <nw4r/g3d/g3d_scnmdlexpand.hpp>
 
 // lbl_* are the ONLY symbols allowed with extern "C".
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
 
 // Concrete type forward for Remove parameter.
 

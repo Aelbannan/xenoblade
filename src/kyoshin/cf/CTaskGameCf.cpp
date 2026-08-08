@@ -239,17 +239,9 @@ void CTaskGameCf::finishExit() {
 
 } //namespace cf
 
-// Forward declarations
-extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
-extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
-extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
-
 extern const u32 lbl_eu_80525B9C[];
 extern const u32 lbl_eu_80525B54[];
 extern const u32 __ptmf_null[3];
-
-extern "C" void __ct__8CProcessFv(CProcess*);
 
 extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
     __ct__8CProcessFv(pThis);

@@ -524,3 +524,55 @@ public:
     CArtsInfo mSubObj74;            // 0x74 (0x74 bytes)
     CSysWin mSysWinE8;              // 0xE8
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" u32 readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void func_801F34F4(void*);
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" u32 CScrollBar_isVisible(void*);
+extern "C" void func_80138078__FUl(u32);
+extern "C" void* func_8009EC9C(u32);
+extern "C" u32 func_800A32BC(void*);
+
+// CArtsInfo helpers defined in CArtsInfo.cpp (plain-C retail symbols).
+extern "C" int func_80235A90(CArtsInfo* self);
+extern "C" void func_80235AC0(CArtsInfo* self);
+extern "C" void func_80235814(CArtsInfo* self);
+
+// Table lookup helper (defined later in this TU). Plain-C retail symbol;
+// kept out-of-line so callers emit a real bl instead of inlining.
+extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx);
+
+extern "C" void func_80230160(SArtsSub8022FA58* self);
+extern "C" void func_802316F8(SArtsSub8022FA58* self);
+extern "C" void func_80124270(void* p);
+
+// Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
+// Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).
+extern "C" u32 func_80235A98(CArtsInfo* self);
+extern "C" void func_80235AA0(CArtsInfo* self);
+extern "C" u32 func_80235F50(CArtsInfo* self);
+// C-linkage CSysWin state query (defined in CSysWin.cpp).
+extern "C" u32 CSysWin_getUnk34(void* self);
+// Drive/refresh helper (same TU, defined below; C-name for reloc parity).
+extern "C" void func_80235124(CMenuArtsSet* self);
+
+extern "C" void func_801F3540(void* obj34);
+extern "C" void func_8023587C(CArtsInfo* self);
+extern "C" void func_8022B748(CSysWinFull* self);
+extern "C" void func_802306F0(void* obj148);
+extern "C" void func_80231CB4(void* obj174);
+extern "C" void func_80234EB8(CMenuArtsSet* self);
+extern "C" void func_80234FDC(CMenuArtsSet* self);
+extern "C" void func_80234F7C(CMenuArtsSet* self);
+extern "C" void func_8023506C(SArts3506C* self);
+extern "C" void func_802350B8(CMenuArtsSet* self);
+
+// lib/lyt draw (func_801F3540).
+extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
+
+// func_80137510 is a flat C symbol (anim-frame check helper).
+extern "C" u32 func_80137510(void*, float);

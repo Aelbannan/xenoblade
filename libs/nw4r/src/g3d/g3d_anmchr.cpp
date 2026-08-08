@@ -4,9 +4,6 @@
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObj")> lbl_eu_8051D650;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
-
 namespace nw4r {
 namespace g3d {
 
@@ -119,7 +116,6 @@ int Detach__Q34nw4r3g3d9AnmObjChrFi(void) { return 0x0; }
 
 void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
 
-extern float lbl_eu_80669B88;
 float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
 
 void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
@@ -213,10 +209,6 @@ AnmObjChrRes* AnmObjChrNode::Detach(int idx) {
 
 namespace nw4r {
 namespace g3d {
-
-// Shared sdata2 0.0f / 1.0f slots used by the node-loop accessor defaults.
-extern "C" const float lbl_eu_80669B88; // 0.0f
-extern "C" const float lbl_eu_80669B8C; // 1.0f
 
 void AnmObjChrNode::SetFrame(f32 frame) {
     for (int i = 0; i < mChildrenArraySize; i++) {
@@ -455,5 +447,4 @@ extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*
 
 void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}
 
-extern "C" const char lbl_eu_8051D5C0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return (void*)lbl_eu_8051D5C0; }

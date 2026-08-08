@@ -8,6 +8,10 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/scn/CScn.hpp>
 #include <monolib/math/CVec3.hpp>
+#include "kyoshin/CBgTex.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
+#include "kyoshin/CMapSel.hpp"
+#include "kyoshin/CFade.hpp"
 
 // Copy helpers for member sub-object initialization
 // func_801BE108: copies CBgTex field-by-field from src to dest

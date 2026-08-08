@@ -23,12 +23,6 @@ u32 func_80166778(void);
 extern f32 lbl_eu_80667650;
 }
 
-// Vtable
-extern "C" void* lbl_eu_80530A30[];
-
-// Singleton pointer
-extern "C" cf::CREvtMem* lbl_eu_80664260;
-
 // ============================================================================
 // Constructor: __ct__cf_CREvtMem
 // Initializes all fields to 0, stores a float, sets singleton

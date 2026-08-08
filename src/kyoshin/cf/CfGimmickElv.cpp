@@ -34,9 +34,6 @@ static inline u8 getCol8(void* table, void* col, int row) {
     return (u8)getBdatStringColumnValue(table, col, row);
 }
 
-// Forward declarations of functions defined in this TU
-extern "C" void func_8020B34C(CfGimmickElvData* self);
-
 // ============================================================
 // Constructor: __ct__cf_CfGimmickElv (0x600 bytes)
 // ============================================================

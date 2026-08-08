@@ -7,13 +7,12 @@ struct CHelpFlagBag {
     u8 mLearnArtsFlag; // +0x16
 };
 
-extern "C" CHelpFlagBag* lbl_eu_80664A10;
-extern "C" void* lbl_eu_806640F4;
-extern "C" UNKWORD func_80122450();
-extern "C" u8 func_8012246C();
-extern "C" u32 func_801B481C();
-extern "C" void* func_8009EC9C(u16 index);
-extern "C" bool func_801F9268(unsigned char* p, int i, int j);
+// Kept inline (not in CHelp_LearnArts.hpp): ocBdat.hpp (included below) carries
+// a conflicting in-flight decl of the same retail symbol (u32 return / s32 arg).
+// Retail callers (e.g. CUIWindowManager) halfword-load through the r3 result, so
+// this const char* return is the retail-correct one; reconcile when ocBdat.hpp
+// is updated. See reference commit c4a1c0604 (CVision kept conflicting decls
+// inline for the same reason).
 extern "C" const char* getBdatStringColumnValue(void* pData, const char* pCol, int index);
 
 namespace cf {

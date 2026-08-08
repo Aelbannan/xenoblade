@@ -18,3 +18,14 @@ struct CREvtLight {
     /* 0x1C */ u32 field_1C;  // set by func_801C36C4
     /* 0x20 */ u32 field_20;  // resource handle (0 initially)
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Own vtable (defined in this TU)
+extern "C" void* lbl_eu_80533D90[];
+
+// Math helpers (nw4r math / PPC PS vector math)
+extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
+extern "C" f32 PSVECMag(const f32* vec);

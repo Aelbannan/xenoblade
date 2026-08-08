@@ -10,8 +10,6 @@ using namespace ml;
 
 CDeviceVI* CDeviceVI::spInstance;
 
-extern "C" GXRenderModeObj lbl_eu_8056BE38;
-
 const VIGamma CDeviceVI::gammaLevels[] = {
     VI_GM_0_1,
     VI_GM_0_2,

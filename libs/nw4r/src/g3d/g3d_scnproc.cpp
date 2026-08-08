@@ -1,8 +1,5 @@
 #include <nw4r/g3d.h>
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnLeaf")> lbl_eu_8051D778;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+#include <nw4r/g3d/g3d_scnproc.h>
 
 namespace nw4r {
 namespace g3d {

@@ -39,4 +39,18 @@ private:
 
 } // namespace cf
 
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
+extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
+extern "C" void func_800ADDA8__Q22cf11CfObjectEneFv(void* self);
+extern "C" void CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);
+extern "C" void func_800ADBD4__Q22cf11CfObjectEneFv(void* self);
+extern "C" void __dt__Q22cf11CfObjectEneFv(void* self);
+
 #endif

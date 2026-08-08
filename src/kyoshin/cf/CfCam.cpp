@@ -233,7 +233,6 @@ extern "C" int cfCam_getGlobal_80663DF0()
 {
     return lbl_eu_80663DF0;
 }
-extern "C" bool func_800755B0(void*, int);
 extern "C" bool cfCam_callCheckFlag(void* self) { return func_800755B0(self, 0); }
 extern "C" void cfCam_copyInt(int* dst, int* src) {
     *dst = *src;
@@ -269,7 +268,6 @@ extern "C" int cfCam_getBit12_Unk04(void* ptr) {
     return (*(unsigned int*)((char*)ptr + 4) >> 12) & 1;
 }
 extern "C" void cfCam_clearUnk04Bits_EDFF(void* self) { static_cast<cf::CfCamFollow*>(self)->unk04 &= 0xFFFFEDFFu; }
-extern "C" bool func_8049EB60(void* obj);
 
 extern "C" bool cfCam_setUnk1E0AndValidate(void* obj, float val) {
     *(float*)((char*)obj + 0x1e0) = val;
@@ -288,8 +286,6 @@ extern "C" void* cfCam_getUnk6CPtr(void* ptr) {
 extern "C" int cfCam_getBit19_0x0C(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
 }
-extern "C" unsigned int lbl_eu_80663E24;
-
 // func_8006EF04__Fi: flag-bit probe.  Retail codegen is the branchless idiom
 // r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
 extern "C" bool func_8006EF04__Fi(s32 mask) {
@@ -301,8 +297,6 @@ extern "C" int cfCam_getBit6_GlobalE24() {
     return (lbl_eu_80663E24 >> 6) & 1;
 }
 extern "C" float cfCam_getUnk14Float(const void* arg) { return *(const float*)((const char*)arg + 0x14); }
-extern "C" void func_8004B3F0(void*);
-
 extern "C" void cfCam_resetUnk10(void* p) {
     func_8004B3F0((char*)p + 0x10);
 }
@@ -329,9 +323,6 @@ void sinit_80074D7C(){}
 
 void func_8006B720(){}
 void func_8006B8E4(){}
-extern "C" float lbl_eu_80527230[];
-extern "C" float lbl_eu_80661BA8;
-
 struct Class_80296898 {
     static void* getInstance();
 };
@@ -380,9 +371,6 @@ void func_80070088(){}
 void func_80070518(){}
 void func_800705D8(){}
 void func_80070674(){}
-extern "C" void func_804BE4B4(void*, int);
-extern "C" void* func_804BE4E0(void*, int);
-
 extern "C" void* cfCam_initAndGetSomething(void* a, void* b) {
     func_804BE4B4(a, 0);
     return func_804BE4E0(b, 0);

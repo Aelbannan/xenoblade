@@ -144,3 +144,56 @@ struct CScenarioLogArg2 {
     u32 field_0x74;                      // +0x74 (bit 8 = battle window)
     u32 field_0x78;                      // +0x78 (bit 1)
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names — do not "fix" the mangled forms).
+// Relocated from CSysWinScenarioLog.cpp so every TU that uses these symbols
+// gets them from this header instead of inline pseudo-import declarations.
+// ---------------------------------------------------------------------------
+
+// Retail callees referenced by the (still-unmatched) CSysWinScenarioLog unit.
+// The CfGameManager "sequence/flag" helpers are mangled Fv in retail even
+// though they take an argument (see CfMapMineManager / code_80135FDC for the
+// same convention), so reference them via their retail mangled names.
+extern "C" u32  func_80082694__Q22cf13CfGameManagerFv(u32 id);   // get sequence value
+extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
+extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
+extern "C" u32  func_800822F4__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
+extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+extern "C" void* func_8016FE34(void* source);
+extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
+extern "C" u16  lbl_eu_80663E42;          // current area id (func_8027FC80 gate)
+extern "C" u32  lbl_eu_80664908;          // CSysWinScenarioLog singleton
+extern "C" u8   lbl_eu_80664910;
+extern "C" u8   lbl_eu_80664911;
+extern "C" u8   lbl_eu_80664912;
+extern "C" u32  lbl_eu_80664914;
+extern "C" u8   lbl_eu_80664918;
+
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dt__8CProcessFv(void*, int);
+extern "C" void* __dl__FPv(void*);
+extern "C" void __ct__CSysWinScenarioLog(void* _this, void* param);
+
+// Float thresholds used by func_8027EF50's player-range check.
+extern "C" f32 lbl_eu_80668AE0;
+extern "C" f32 lbl_eu_80668AE4;
+
+// CSysWinScenarioLog::Move helpers.
+extern "C" u8   code80135FDC_getByte_621F0();
+extern "C" s32  func_8029A658();
+extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_80138078__FUl(u32);
+extern "C" bool func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" u32  lbl_eu_80663E28;
+extern "C" f32  lbl_eu_80668AD0;
+extern "C" void func_8027EA6C(CSysWinScenarioLog* self);
+
+// Bottom-of-file helper definitions (see CSysWinScenarioLog.cpp): declared
+// here so callers below emit a direct `bl` to the retail symbol instead of an
+// inline body at each call site (retail calls them out-of-line).
+extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg);
+extern "C" void __declspec(noinline) func_8027EEF4(u32 self);
+
+extern "C" void cbRenderBefore__18CSysWinScenarioLogFv(void* self);

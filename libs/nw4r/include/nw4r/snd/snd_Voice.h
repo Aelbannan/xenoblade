@@ -10,6 +10,24 @@
 
 #include <revolution/WPAD.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Retail float-pool constants (SDA) used by Voice field initialisation.
+extern "C" const float lbl_eu_8066A098; // 1.0f
+extern "C" const float lbl_eu_8066A09C; // 0.0f
+extern "C" const float lbl_eu_8066A0A8; // 0.5f
+extern "C" const float lbl_eu_8066A0B8; // 2.0f
+extern "C" const float lbl_eu_8066A0C0; // -1.0f
+extern "C" const float lbl_eu_8066A0C4; // -3.0f
+extern "C" const float lbl_eu_8066A0C8; // 32768.0f
+
+// AxVoice::SetBiquad is not (yet) declared in snd_AxVoice.h; reference the
+// retail symbol directly (member ABI: this=r3, u8 type=r4, f32 freq=f1).
+extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
+    nw4r::snd::detail::AxVoice* self, u8 type, f32 freq);
+
 namespace nw4r {
 namespace snd {
 namespace detail {

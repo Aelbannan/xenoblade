@@ -30,10 +30,8 @@ void func_802B6240(){}
 
 extern "C" void func_802B6280(void) {}
 
-extern "C" void __dt__10CMenuTitleFv(void* self);
 extern "C" void func_802B6314(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x54); }
 
-extern "C" void cbRenderBefore__10CMenuTitleFv(void* self);
 extern "C" void func_802B631C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuTitleFv)((char*)self - 0x58); }
 
 extern "C" void func_802B6324(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x58); }

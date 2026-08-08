@@ -172,3 +172,7 @@ struct SCopy_80192268 {
     SCopyPair arr5[128];
     float f_27a4;
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" int code80135FDC_getByte_621F0();
+extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);

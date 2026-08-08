@@ -23,12 +23,7 @@ extern const u32 lbl_eu_80668838;
 extern const u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
-extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
-
 u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
-extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
-extern "C" void copyVEC2(float* dst, const float* src);
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout,
     nw4r::lyt::ArcResourceAccessor* accessor,
@@ -42,13 +37,12 @@ void func_801390E0(CFileHandle** ppHandle);
 void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
 void func_80138078(u32 number);
 
-// Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84.
-extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
+// Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84
+// (declaration moved to CKizunagram.hpp C-linkage imports).
 
 // Forward declarations for callees used in func_8025CAB4
 // func_8025CE00 is target 5 (takes the display self); the tail calls pass the
 // same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
-extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);
 static void func_8025CE78();
 static void func_8025CF1C();
 

@@ -34,8 +34,6 @@ struct QstMenuData {
     f32 mValue90;                               // 0x90
 };
 
-extern "C" int func_80144FF0();
-extern "C" int func_80145030(void);
 extern void func_80138078(u32);
 
 // The quest-info buffer func_80226FAC / func_802270CC maintain.
@@ -55,55 +53,10 @@ void func_80226C18(QstMenuData* self);
 void func_80226C5C(QstMenuData* self);
 void func_80226C88(CMenuQstCnt* self);
 void func_80226E54(CMenuQstCnt* self);
-extern "C" void initQstInfo(QstInfo* ptr);
-extern "C" void __dt__80227030();
 QstData* func_80226FAC(QstData* self);
-extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);
 void func_802270CC(QstData* self);
-extern "C" void func_80227660(QstInfo* dst, const QstInfo* src);
-extern "C" void func_8022769C(QstInfo* dst, const QstInfo* src);
 
-// --- OOL base/subobject + helper functions (retail-linked symbols) ---
-extern "C" {
-void __ct__8CProcessFv(void*);
-void __dt__9IUIWindowFv(void*, int);
-void __ct__17UnkClass_8045F564Fv(void*);
-void __dt__17UnkClass_8045F564Fv(void*, int);
-void func_8045F778__17UnkClass_8045F564Fv(void*);
-void __dl__FPv(void*);
-void __construct_array(void*, void*, void*, u32, u32);
-
-void* getWorkMem__17CWorkThreadSystemFv();
-void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-void waitForDrawDone__9CDeviceVIFv();
-void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-
-void* func_8049603C(void*);
-int func_80293C10();
-int func_8029A658();
-int func_801B481C();
-int func_80124B78();
-int func_8011CD5C();
-char* func_801394D4(u16);
-u16 func_801380A0(u16);
-u32 func_80138138(u16);
-void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
-}
-
-extern "C" u32 __ptmf_null[];
-extern "C" u32 lbl_eu_8052D238[];
-extern "C" u32 lbl_eu_80536128[];
-extern "C" u32 lbl_eu_80663E28;
-extern "C" u32 lbl_eu_80663E24;
-extern "C" void* lbl_eu_80663E14;
-extern "C" f32 lbl_eu_8066856C;
-extern "C" f32 lbl_eu_80668568;
-extern "C" void* lbl_eu_80664094;
-extern "C" void* lbl_eu_806640A8;
-extern "C" u32 lbl_eu_80573D18[];
-extern "C" char lbl_eu_80509A10[];
-extern "C" char lbl_eu_80509AB4[];
+// --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
 
 CMenuQstCnt* lbl_eu_80664720;
 
@@ -392,8 +345,8 @@ CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsi
         }
         return 0;
     }
-    void* mem = getWorkMem__17CWorkThreadSystemFv();
-    CMenuQstCnt* obj = (CMenuQstCnt*)allocate__Q23mtl10MemManagerFUlUl(0x1A0, (u32)mem);
+    u32 mem = getWorkMem__17CWorkThreadSystemFv();
+    CMenuQstCnt* obj = (CMenuQstCnt*)allocate__Q23mtl10MemManagerFUlUl(0x1A0, mem);
     if (obj) {
         __ct__CMenuQstCnt(obj, scene, a, b, c, d, e);
     }

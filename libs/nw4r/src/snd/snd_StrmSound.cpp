@@ -5,7 +5,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520(&lbl_eu_806654D0);
 
 StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
@@ -69,8 +68,6 @@ void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv(){}
 namespace nw4r {
 namespace snd {
 namespace detail {
-
-extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520;
 
 const nw4r::ut::detail::RuntimeTypeInfo* StrmSound::GetRuntimeTypeInfo() const {
     return &lbl_eu_80665520;

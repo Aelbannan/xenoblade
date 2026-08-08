@@ -10,6 +10,17 @@
 
 #include <revolution/OS.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Retail .sbss type-info objects: SeqSound::typeInfo at lbl_eu_806654F8
+// (defined in snd_SeqSound.cpp), parent = BasicSound::typeInfo
+// (lbl_eu_806654D0, defined in snd_BasicSound.cpp). Same extern-C pattern
+// as StrmSound/WaveSound.
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654F8;
+
 namespace nw4r {
 namespace snd {
 

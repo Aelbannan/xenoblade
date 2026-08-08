@@ -162,4 +162,7 @@ private:
 } // namespace snd
 } // namespace nw4r
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 ConvertLabelStringToSoundId__Q34nw4r3snd12SoundArchiveCFPCc(void*, const char*);
+
 #endif

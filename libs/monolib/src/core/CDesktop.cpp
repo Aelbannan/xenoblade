@@ -2,9 +2,6 @@
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 
-// Retail sbss singleton (getView / getInstance / getException SDA reloc).
-extern "C" CDesktop* lbl_eu_806656AC;
-
 DesktopIcon* CDesktop::spIcon;
 CDesktop* CDesktop::spInstance;
 bool CDesktop::sIconInitialized = false;

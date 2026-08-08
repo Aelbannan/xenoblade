@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/util/reslist.hpp"
+#include "kyoshin/CTimeLightGrp.hpp"
 
 // Forward declare the opaque pointer type used in this TU
 class CVirtualLightObj;
@@ -31,16 +32,6 @@ struct CTimeLightGrp_BaseLayout {
     float mVal3;                                                     // +0x34
     float mScale;                                                    // +0x38
 };
-
-extern "C" u8 lbl_eu_80526418[];
-extern "C" u8 lbl_eu_80526430[];
-extern "C" u8 lbl_eu_80526448[];
-extern "C" const float lbl_eu_80666038;
-
-extern "C" void* __dl__FPv(void* ptr);
-extern "C" void* __dla__FPv(void* ptr);
-extern "C" void* func_80496004(void* ptr);
-extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 
 // ================== __ct__CTimeLightGrp ==================
 extern "C" void __ct__CTimeLightGrp(void* self, void* parent) {

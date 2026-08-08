@@ -5,6 +5,9 @@
 #include <nw4r/snd/snd_InstancePool.h>
 #include <nw4r/snd/snd_SeqTrackAllocator.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(void*, void*, u32, u32);
+
 namespace nw4r {
 namespace snd {
 namespace detail {

@@ -62,3 +62,20 @@ public:
     //0x1c8-1cc: IErrorWii
     u32 unk1D0;
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// CLibCriStreamingPlay factory function (static, 8 args)
+// Called from func_8045997C with various parameters
+extern "C" int func_8045B5AC(
+    const char* filename,
+    u32 allocHandle,
+    int fileHandle,
+    int arg3,
+    int arg4,
+    bool useExtended,
+    int arg6,
+    int arg7
+);
+
+// String constant (CRI file extension marker: lbl_eu_80522FD8)
+extern "C" const char lbl_eu_80522FD8[];

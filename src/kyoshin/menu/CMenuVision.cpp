@@ -19,7 +19,6 @@ extern u32 lbl_eu_805041C0[];     // 6 pane-name pointers
 }
 
 extern u32 func_801355A0();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 extern void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
 extern f32 func_800F4424(void*);
@@ -63,8 +62,6 @@ void func_801AF934(){}
 void func_801AFAD0(CMenuVision*, CMenuVisionEntry*){}
 
 // Mangled linker names used by adjustor thunks below
-extern "C" void __dt__11CMenuVisionFv(void*);
-extern "C" void cbRenderBefore__11CMenuVisionFv(void*);
 
 void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 

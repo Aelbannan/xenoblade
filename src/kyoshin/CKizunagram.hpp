@@ -6,11 +6,6 @@
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 
-// Vtable symbols
-extern "C" void* lbl_eu_805375FC[];
-extern "C" void* lbl_eu_805375E4[];
-extern "C" void* lbl_eu_805375F0[];
-
 class CKizunaRadar {
 public:
     CKizunaRadar();
@@ -460,3 +455,18 @@ struct UnkKizunaSelf57E58 {
     nw4r::lyt::AnimTransform* field0C;      // 0x0C
 };
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Vtable symbols
+// (relocated from top of header: same order, now grouped with the other imports)
+extern "C" void* lbl_eu_805375FC[];
+extern "C" void* lbl_eu_805375E4[];
+extern "C" void* lbl_eu_805375F0[];
+extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
+extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
+extern "C" void copyVEC2(float* dst, const float* src);
+extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
+extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);

@@ -2,6 +2,23 @@
 #define NW4R_SND_ENV_GENERATOR_H
 #include <nw4r/types_nw4r.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// Retail .sdata2/.rodata pool constants and tables referenced by name so the
+// SDA21/data relocations match the stripped retail object (PLAN.md §17.6
+// approved extern "C" lbl_eu_* pattern, MWCC_REFERENCE §1b float pools).
+extern "C" const f32 lbl_eu_80669F30; // -90.4f (volume min dB)
+extern "C" const f32 lbl_eu_80669F34; // 65535.0f
+extern "C" const f32 lbl_eu_80669F38; // 10.0f
+extern "C" const f32 lbl_eu_80669F3C; // 0.0f
+extern "C" const f32 lbl_eu_80669F40; // -1/32
+extern "C" const f32 lbl_eu_80669F48; // 176.0f
+
+// Attack table (128 f32 entries).  Retail: lbl_eu_8051FD40.
+extern "C" const f32 lbl_eu_8051FD40[128];
+
 namespace nw4r {
 namespace snd {
 namespace detail {

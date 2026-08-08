@@ -21,11 +21,6 @@ static const char* const kAttributeNames[] = {
     nullptr
 };
 
-// Retail vtable data symbol (vtable lives in monolibdata1.s at 0x8056B52C).
-// The class is __declspec(novtable), so the ctor assigns the retail label
-// explicitly instead of the compiler-generated __vt__6CToken.
-extern "C" u8 lbl_eu_8056B52C[];
-
 CToken::CToken() {
     *(void**)this = (void*)lbl_eu_8056B52C;
     m_fieldCount = 0;

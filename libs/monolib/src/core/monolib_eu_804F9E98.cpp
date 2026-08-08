@@ -15,6 +15,7 @@
 // `NonMatching` in configure.py.
 
 #include <types.h>
+#include "monolib/core/monolib_eu_804F9E98.hpp"
 #include <string.h>
 
 // ---- Global storage referenced by this TU ---------------------------------
@@ -29,13 +30,9 @@ u8   lbl_eu_806659D0;           // sbss:0x380 - activity guard flag.
 s32  lbl_eu_806659D4;           // sbss:0x384 - last client error code.
 
 // ---- External request-processing functions (retail C-linkage names) ------
+// Declarations live in monolib/core/monolib_eu_804F9E98.hpp.
 
 struct MonoRequestState;  // forward decl; full layout below
-
-// Retail C-linkage names are unmangled free functions, so they stay in the
-// same C-linkage pool as the lbl_* data above.
-extern "C" s32 func_804DA9C4(MonoRequestState* request, u8 flagA);  // lbl_eu_* pool
-extern "C" s32 func_eu_804DEB4C(s32 result, u8 flagB, u32 mode);    // lbl_eu_* pool
 
 // ---- Request record shared by both helpers --------------------------------
 

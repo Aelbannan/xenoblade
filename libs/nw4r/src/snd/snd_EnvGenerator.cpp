@@ -4,16 +4,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// Retail .sdata2/.rodata pool constants and tables referenced by name so the
-// SDA21/data relocations match the stripped retail object (PLAN.md §17.6
-// approved extern "C" lbl_eu_* pattern, MWCC_REFERENCE §1b float pools).
-extern "C" const f32 lbl_eu_80669F30; // -90.4f (volume min dB)
-extern "C" const f32 lbl_eu_80669F34; // 65535.0f
-extern "C" const f32 lbl_eu_80669F38; // 10.0f
-extern "C" const f32 lbl_eu_80669F3C; // 0.0f
-extern "C" const f32 lbl_eu_80669F40; // -1/32
-extern "C" const f32 lbl_eu_80669F48; // 176.0f
-
 // Decibel square table (128 s16 entries).  Retail: lbl_eu_8051FC40.
 extern "C" const s16 lbl_eu_8051FC40[128] = {
     -723, -722, -721, -651, -601, -562, -530, -503, -480, -460, -442, -425,
@@ -27,9 +17,6 @@ extern "C" const s16 lbl_eu_8051FC40[128] = {
     -49,  -47,  -45,  -43,  -42,  -40,  -38,  -36,  -35,  -33,  -31,  -30,
     -28,  -27,  -25,  -23,  -22,  -20,  -19,  -17,  -16,  -14,  -13,  -11,
     -10,  -8,   -7,   -6,   -4,   -3,   -1,   0};
-
-// Attack table (128 f32 entries).  Retail: lbl_eu_8051FD40.
-extern "C" const f32 lbl_eu_8051FD40[128];
 
 // VOLUME_INIT stays defined (referenced by the header's default args); the
 // ctor passes lbl_eu_80669F30 explicitly to match retail relocs.

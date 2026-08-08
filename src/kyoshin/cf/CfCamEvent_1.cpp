@@ -7,43 +7,6 @@
 
 #include "kyoshin/cf/CfCamEvent_1.hpp"
 
-// External retail symbols referenced by this TU's decomps.
-extern "C" CfCamDataTable lbl_eu_80570C90;
-extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
-extern "C" void* func_8016FE34(void* source);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void* func_800B708C__Fi(int id);
-extern "C" void* func_800BBC0C();
-extern "C" f32   lbl_eu_8066A1F8;   // PI
-extern "C" f32   lbl_eu_8066A1FC;   // 2*PI
-extern "C" f32   lbl_eu_8066641C;   // 0.0f
-extern "C" f32   lbl_eu_80666418;
-extern "C" f32   lbl_eu_80666420;
-extern "C" f32   lbl_eu_80666428;
-extern "C" f32   lbl_eu_80666448;
-extern "C" f32   lbl_eu_80666454;
-extern "C" f32   lbl_eu_8066A208;
-extern "C" f32   lbl_eu_8066A210;
-extern "C" void* lbl_eu_806640BC;
-extern "C" u8    lbl_eu_804FB5D0[];
-extern "C" int   func_8003B1EC(void* self);
-extern "C" int   getBdatStringColumnValue(void* a, const u8* b, int c);
-extern "C" f32   Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
-extern "C" int   CfRes_getD80Flag();
-extern "C" f32   func_80496288();
-extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
-
-extern "C" int __declspec(noinline) func_800755BC(CfCamEventManager* mgr, u32 idx);
-
-// Frame constants used by the shake interpolation (retail .sdata2 slots).
-extern "C" f32 lbl_eu_8066642C;
-extern "C" f32 lbl_eu_80666430;
-extern "C" f32 lbl_eu_8066A200;
-extern "C" f32 SinFIdx__Q24nw4r4mathFf(f32);
-extern "C" void func_800A41BC(f32* out, CfCamEventElem* a, CfCamEventElem* b,
-                              CfCamEventElem* c, CfCamEventElem* d);
-extern "C" void func_800A40E8(f32* out, CfCamEventElem* a, CfCamEventElem* b);
-
 // Advance one frame of a shake-table object. Returns whether the table was
 // still "active" at entry. Each element has an id (used as a time point) and
 // a waveform type (c: 1 = bell, 2 = bump, 4 = sine, 3 = clamp-sine); the
@@ -173,14 +136,6 @@ void* func_800755B0(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 2));
 }
 
-// Resolve the shared global 'cam state' object; external C-function tail-call
-// targets used by the shake helpers below.
-extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
-extern "C" CfCamDataTable lbl_eu_80570C90;
-extern "C" int func_8024125C(int state, int val);
-extern "C" int func_80241344(int state, int val);
-extern "C" int func_80240C98(int state, int arg0, int arg1);
-
 // Categorise an environment/prompt id (r4) into a 0/1/2 bucket. The
 // manager pointer in r3 is unused by this helper.
 extern "C" int __declspec(noinline) func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
@@ -211,7 +166,6 @@ void func_80075674(){}
 // aim point) from the source's body/virtual accessors, applying a vertical
 // follow/lag that approaches the source's anchor value. Rows mirror the
 // retail branch structure.
-extern "C" u32 func_800AA300(int a, int b, int c);
 void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
     if (src == nullptr) {
         *out = ml::CVec3::zero;
@@ -256,8 +210,6 @@ void func_800756D0(ml::CVec3* out, CinemCamSrc* src) {
 // Camera depth/pose solver. Computes two aim vectors from a pair of camera
 // sources; b == null skips the paired branch. The retail body is very large
 // (paired-single vector math); this is a faithful structural reconstruction.
-extern "C" f32 lbl_eu_80666454;
-extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
 void func_80075934(ml::CVec3* out1, ml::CVec3* out2, CamCamSrc* a, CamCamSrc* b,
                    ml::CVec3* v1, ml::CVec3* v2, u16 c1, u16 c2, u8 s0, u8 s1) {
     f32 f31 = a->vtable->fn_0x5B4(a);
@@ -546,10 +498,6 @@ void func_80078D08(CfCamEventManager* self, int add, void* p5, ml::CVec3* r6, in
 
 
 void func_8007990C(){}
-
-extern "C" f32 lbl_eu_8066641C;   // 0.0f
-extern "C" f32 lbl_eu_8066A1F8;   // PI
-extern "C" f32 lbl_eu_8066A1FC;   // 2*PI
 
 // Advance each element of the shake table toward its predecessor by 2*PI once
 // the gap reaches PI. Written inline in both branches below (retail keeps two

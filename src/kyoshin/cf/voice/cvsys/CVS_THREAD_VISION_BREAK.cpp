@@ -8,19 +8,6 @@
 #include "monolib/math/Random.hpp"
 #include "monolib/util/reslist.hpp"
 
-// Init-data triples (3 u32s each: {field_0, field_4, callback}).
-extern "C" u32 lbl_eu_80539D70[3]; // Initial state triple
-extern "C" u32 lbl_eu_80539D7C[3]; // Reset state triple (for func_802A93FC)
-extern "C" u32 lbl_eu_80539D88[];  // CVS_THREAD_VISION_BREAK vtable
-
-// Voice-ID tables indexed by mtRand(3)*2 (halfword entries).
-extern "C" s16 lbl_eu_80662D40[4]; // Voice IDs for field_0x24 >= 3 phase
-extern "C" s16 lbl_eu_80662D48[4]; // Voice IDs for field_0x24 < 3 phase
-
-// Functions from sibling TUs (not yet in headers).
-extern "C" void* func_8016FE34(void* r3);
-extern "C" void func_800BE924(void* voice);
-
 // Returns a reslist of CfObject pointers from the global object manager.
 extern reslist<cf::CfObject*>* func_800B6BA4();
 
@@ -32,8 +19,8 @@ CVoiceHandle* func_802A330C(int size, int align);
 void* func_802A34E4(int size);
 CVoiceHandle* func_802A7A54(int arg);
 
-// Base CVS_THREAD constructor (C-linkage).
-extern "C" void __ct__cf_CVS_THREAD(void* self);
+// Base CVS_THREAD constructor (C-linkage) is declared in
+// CVS_THREAD_VISION_BREAK.hpp.
 
 // Active-check function type: vtable[0x2BC/4] on a CVoiceHandle.
 typedef int (*IsActiveFunc)(CVoiceHandle*);

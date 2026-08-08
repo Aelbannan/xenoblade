@@ -6,6 +6,9 @@
 
 #include <nw4r/math.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+
 namespace nw4r {
 namespace g3d {
 

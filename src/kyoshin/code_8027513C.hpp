@@ -2,6 +2,23 @@
 
 #include <types.h>
 
+// ---------------------------------------------------------------------------
+// C-linkage imports
+// ---------------------------------------------------------------------------
+
+class CScn;
+
+extern "C" float lbl_eu_806689D8; // -4.0
+extern "C" float lbl_eu_806689DC; // 0.9
+extern "C" float lbl_eu_806689E0; // 0.0
+extern "C" float lbl_eu_806689E4; // 0.01
+extern "C" float lbl_eu_806689E8; // 1.0
+extern "C" float lbl_eu_806689EC; // 30.0
+extern "C" float lbl_eu_806689F0; // 0.001
+extern "C" float lbl_eu_806689F4; // 0.1
+extern "C" float lbl_eu_806689F8; // 0.4
+extern "C" CScn* lbl_eu_80663E14;
+
 namespace cf {
 
 class CfObjectImplTbox {

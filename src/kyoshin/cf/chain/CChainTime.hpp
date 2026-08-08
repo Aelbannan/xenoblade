@@ -29,3 +29,8 @@ namespace cf {
 
 extern "C" void func_8027CEB0(cf::CChainTime*, u8);
 extern "C" void func_8027CF3C(cf::CChainTime*);
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+namespace cf { class CBattleManager; }
+extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
+extern "C" void func_802A0818(int, int);

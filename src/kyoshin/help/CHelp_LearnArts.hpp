@@ -24,3 +24,15 @@ struct CHelpLearnArtsCharData {
 };
 
 } // namespace cf
+
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+struct CHelpFlagBag;
+
+extern "C" CHelpFlagBag* lbl_eu_80664A10;
+extern "C" void* lbl_eu_806640F4;
+extern "C" UNKWORD func_80122450();
+extern "C" u8 func_8012246C();
+extern "C" u32 func_801B481C();
+extern "C" void* func_8009EC9C(u16 index);
+extern "C" bool func_801F9268(unsigned char* p, int i, int j);

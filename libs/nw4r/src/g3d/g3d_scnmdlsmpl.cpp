@@ -110,13 +110,7 @@ void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d12ScnMdlSimpleCFv(){}
 
-extern "C" const char lbl_eu_8051D7A8[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void) { return (void*)lbl_eu_8051D7A8; }
-
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnLeaf")> lbl_eu_8051D778;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
+extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void) { return (void*)&lbl_eu_8051D7A8; }
 
 namespace nw4r {
 namespace g3d {

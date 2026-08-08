@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 #include <string.h>
-#include "libs/monolib/src/scn/CMdlMaterial.hpp"
+#include "monolib/scn/CMdlMaterial.hpp"
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
 #include <nw4r/g3d/g3d_scnmdl.h>
@@ -17,7 +17,6 @@ void* func_80488954(void* owner, u32 size);
 u32 func_80496018(u32 handle);
 
 // User data string constant for comparison
-extern "C" const char* lbl_eu_80663C30;
 
 // =============================================================================
 // ResUserData — Resource user data structure

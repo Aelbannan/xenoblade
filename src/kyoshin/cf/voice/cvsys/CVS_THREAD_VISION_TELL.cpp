@@ -18,18 +18,6 @@ CVS_THREAD_VISION_TELL* func_802A330C(int size, int align);
 u8* func_802A34E4(int size);
 void __ct__cf_CVS_THREAD(CVS_THREAD_VISION_TELL* self);
 
-// Init data tables for slot states (3 u32s each).
-extern "C" u32 lbl_eu_80539DB0[3];
-extern "C" u32 lbl_eu_80539DBC[3];
-extern "C" u32 lbl_eu_80539DC8[3];
-
-// Random voice ID tables (short arrays in .sdata).
-extern "C" short lbl_eu_80662D58[4];
-extern "C" short lbl_eu_80662D60[4];
-
-// Vtable for CVS_THREAD_VISION_TELL (0x1C = 28 bytes = 7 entries).
-extern "C" u32 lbl_eu_80539DD4[7];
-
 // ── Target 1: us-802ac1fc (func_802A9AC4) ──────────────────────────────────
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A9AC4(CVS_THREAD_VISION_TELL* self) {

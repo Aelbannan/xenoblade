@@ -97,7 +97,6 @@ void func_80297FB4(void*);
 void func_8029860C(void*, int);
 void func_80298614(void*);
 char lbl_eu_805090FC[];
-extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for func_800F4A98
 int sprintf(char*, const char*, ...);
 void func_80043D90(CMCryListHolder*);
 void* func_80043F18(CMCryListHolder*); // returns holder->list
@@ -169,8 +168,6 @@ extern const f32 lbl_eu_806684FC;
 extern const f32 lbl_eu_80668504;
 extern const f32 lbl_eu_806684C4;
 extern const f32 lbl_eu_806684C8;
-extern "C" u8 lbl_eu_80664718;
-extern "C" u8 lbl_eu_80535D90[];
 extern u8 lbl_eu_80576658[0x20];
 extern u8 lbl_eu_80576664[0x20];
 extern u8 lbl_eu_8065FC18[0x10];

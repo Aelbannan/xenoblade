@@ -98,7 +98,6 @@ struct CMenuEnemyCtorProcess {
     u32 callbacks[6]; // 0x3C / 0x48 PTMF blocks
 };
 
-extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" {
 char lbl_eu_8052BF70[];
 char lbl_eu_8052C438[];
@@ -296,8 +295,8 @@ extern const f32 lbl_eu_80667014; // distance^2 threshold
 extern const f32 lbl_eu_80666FEC; // anim-state marker value
 extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 
-cf::CfObjectSelectorObj* func_800FE68C();
 extern "C" void* func_8016FE34(void* r3);
+cf::CfObjectSelectorObj* func_800FE68C();
 int func_8013BF48();
 void func_800BBA08(void* r3);
 void func_800BBA7C(void* r3);
@@ -307,7 +306,7 @@ int func_8013A4B4(void* a, void* b, void* c);
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
 
 
-u32 func_80174C98(void* actor, u32* outVal, u32 flags);
+int func_80174C98(void* actor, int* outVal, int flags);
 void* func_80496264(void* obj, int index);
 
 // Retail leaves func_80137510 unmangled (declared extern "C" in
@@ -745,7 +744,7 @@ after_bit21:
                 void* subObj = static_cast<Actor2Layout*>(actor2)->subObj4;
                 typedef void* (*SubGetFn)(void*);
                 void* result = vslot<SubGetFn>(subObj, 0x30)(subObj);
-                u32 localVal = *reinterpret_cast<u32*>(result);
+                int localVal = *reinterpret_cast<int*>(result);
                 u32 ret = func_80174C98(actor2, &localVal, 0x803);
                 panel.drawLayout0Flag = (ret == 0) ? 1 : 0;
             }

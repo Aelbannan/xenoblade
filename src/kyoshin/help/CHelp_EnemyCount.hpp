@@ -25,3 +25,6 @@ public:
     u32 unk10; // 0x10
 };
 } // namespace cf
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" cf::CHelp_EnemyList* func_800B6C7C();

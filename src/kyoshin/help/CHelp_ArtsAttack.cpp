@@ -3,7 +3,6 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
-extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 struct D { u8 pad[8]; virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual bool _v01C(u32); };
 struct A { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void* _v030(); };
 

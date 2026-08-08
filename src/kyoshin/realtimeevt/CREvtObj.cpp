@@ -6,17 +6,9 @@
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 
-// Forward declarations for functions in CREvtMem
-extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
-extern "C" void func_80167FFC(void* ptr);
-
 // __ptmf intrinsics and null sentinel
 // __ptmf_null: zero/null member-function-pointer constant (3 words at +0x08)
 extern void (cf::CREvtObj::*const __ptmf_null)();
-extern "C" long __ptmf_test(void* ptmf);
-
-// Vtable for cf::CREvtObj
-extern "C" void* lbl_eu_80532320[];
 
 // ============================================================================
 // Constructor: __ct__cf_CREvtObj

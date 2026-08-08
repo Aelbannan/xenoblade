@@ -8,11 +8,6 @@
 extern const char lbl_eu_80524714[];
 extern u32 lbl_eu_80663BC8;
 extern const char lbl_eu_806623C0[];
-extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
-extern "C" void func_eu_804520D0(char*);
-extern "C" void func_eu_804521A8(s8);
-extern "C" void func_eu_804521B0();
-
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
 mPkbFilename(),

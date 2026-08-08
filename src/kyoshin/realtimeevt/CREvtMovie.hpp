@@ -38,3 +38,6 @@ struct CREvtMovie {
     /* 0x18 */ u8 mFlag18;         // Flag byte (initialized to 0)
     /* 0x19 */ u8 mFlag19;         // Flag byte (loading/playback state)
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void* lbl_eu_80538AA0[];

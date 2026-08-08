@@ -28,3 +28,15 @@ public:
 
     int blank1() override;
 };
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" u32 lbl_eu_80539DB0[3];  // Init data tables for slot states (3 u32s each)
+extern "C" u32 lbl_eu_80539DBC[3];
+extern "C" u32 lbl_eu_80539DC8[3];
+
+// Random voice ID tables (short arrays in .sdata).
+extern "C" short lbl_eu_80662D58[4];
+extern "C" short lbl_eu_80662D60[4];
+
+// Vtable for CVS_THREAD_VISION_TELL (0x1C = 28 bytes = 7 entries).
+extern "C" u32 lbl_eu_80539DD4[7];

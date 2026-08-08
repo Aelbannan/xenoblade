@@ -32,12 +32,6 @@ void func_8011CE44(){}
 
 void func_8011D03C(){}
 
-extern "C" bool isIdle__11CTitleAHelpFv(void*);
-extern "C" bool func_80227CCC(void*);
-extern "C" unsigned int func_80228394(void*);
-extern "C" void func_80229768(void*, unsigned short);
-extern "C" void func_80229510(void*);
-
 void func_8011D08C(void* self)
 {
     unsigned char* base = static_cast<unsigned char*>(self);

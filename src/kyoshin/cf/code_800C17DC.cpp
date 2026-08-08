@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/code_800C17DC.hpp"
 
 void func_800C17DC(){}
 
@@ -27,15 +28,6 @@ void func_800C1EB8(){}
 // Called by func_800C1EB8 when it iterates the callback array and a slot has no
 // registered handler.  The empty body corresponds to a single blr instruction.
 extern "C" void func_800C1F28(void) {}
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-struct Unk805739F8 {
-    unsigned char pad[0x20];
-    unsigned int field20;
-    unsigned char field24;
-};
-
-extern "C" Unk805739F8 lbl_eu_805739F8;
 
 extern "C" void sinit_800C1F2C() {
     lbl_eu_805739F8.field20 = 0;

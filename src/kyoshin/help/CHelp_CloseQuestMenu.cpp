@@ -1,7 +1,5 @@
 #include "kyoshin/help/CHelp_CloseQuestMenu.hpp"
 
-extern "C" UNKWORD func_80122450();
-
 namespace cf {
 
 // Cast-only fake SI iface: the non-polymorphic 8-byte base pushes the vptr to

@@ -3,6 +3,10 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" void renderCapsule__Q22cf18CfDebugDrawManagerFv(
+    const ml::CVec3* start, const ml::CVec3* end, const float* color, float radius);
+
 namespace cf {
 
 // Collision capsule shape implementation.

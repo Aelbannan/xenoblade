@@ -4,8 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/CUIErrMesWin.hpp"
-extern "C" void cbRenderBefore__12CUIErrMesWinFv();
-extern "C" void __dt__12CUIErrMesWinFv();
+
 void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 
 

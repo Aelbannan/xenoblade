@@ -2,6 +2,13 @@
 
 #include <types.h>
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// renderSphere: member of cf::CfDebugDrawManager; retail passes (manager,
+// float_radius) despite the Fv mangling. func_800A5738: defined in
+// kyoshin/code_800A3B24.
+extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
+extern "C" void func_800A5738(void* a, void* b, float val, void* c);
+
 namespace cf {
 
 // Forward declaration

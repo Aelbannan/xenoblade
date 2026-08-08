@@ -728,7 +728,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/help/CHelp_CloseSysMenu.cpp"),
             Object(NonMatching, "kyoshin/help/CHelp_EndEvent.cpp"),
             Object(NonMatching, "kyoshin/help/CHelp_EnemyCount.cpp"),
-            Object(NonMatching, "kyoshin/help/CHelp_EnemyEnable.cpp"),
+            Object(Matching, "kyoshin/help/CHelp_EnemyEnable.cpp"),
             Object(NonMatching, "kyoshin/help/CHelp_EtherMake.cpp"),
             Object(NonMatching, "kyoshin/help/CHelp_Exchange.cpp"),
             Object(Matching, "kyoshin/help/CHelp_GameOver.cpp"),
@@ -1905,7 +1905,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/util/CErrorWii.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
-            Object(NonMatching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(Matching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/nand/CNBanner.cpp"),
             Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
         ],

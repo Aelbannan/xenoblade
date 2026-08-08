@@ -1,53 +1,81 @@
-// Auto-scaffolded catalog TU for monolib/src/core/monolib_eu_804F9E98
-// Replace stubs with high-level C/C++ during decomp.
+// monolib_eu_804F9E98 - request-record setup/poll helpers and a `.ctors`
+// static initializer.
+//
+// Both helpers operate on a small "request" record: a fixed inline string
+// payload (0x00-0x0c) followed by two byte flags (0x0d, 0x0e) and a signed
+// lifecycle-state byte (0x0f). func_eu_804F9E98 builds such a record and
+// returns a module-global string pointer; func_eu_804F9EE0 polls the record's
+// lifecycle state.
+//
+// sinit_eu_804F9FA4 is subject to the documented `b .+4` MWCC sinit ceiling
+// (MWCC_REFERENCE wall #5): retail emits `li r3,dest@sda21; b .+4; lis/addi
+// src; stw r4,0(r3); blr`, which MWCC cannot reproduce from high-level C. The
+// readable folded-store form below is the documented endpoint. Like the
+// sibling NAND sinits it stays NONMATCHING, so this object must remain
+// `NonMatching` in configure.py.
 
 #include <types.h>
 #include <string.h>
 
-// Global symbols referenced by this TU
-void* lbl_eu_80665A98;           // sbss:0x448 - pointer initialized by sinit
-extern char lbl_eu_80570410[];   // data:0x44A8 - label as char[] to prevent sda21 addressing
-u8 lbl_eu_806659D0;              // sbss:0x380 - guard flag (u8; retail uses cmpwi)
-s32 lbl_eu_806659D4;             // sbss:0x384
+// ---- Global storage referenced by this TU ---------------------------------
+// These names must equal the retail linker symbols, so they are not renamed.
 
-// External function declarations
-extern "C" s32 func_804DA9C4(void* r3, u8 r4);
-extern "C" s32 func_eu_804DEB4C(s32 r3, u8 r4, u32 r5);
+char* lbl_eu_80665A98;          // sbss:0x448 - module-global string pointer;
+                                //               filled by sinit, returned by
+                                //               func_eu_804F9E98.
+extern char lbl_eu_80570410[];  // data:0x44A8 - a string constant. Declared as
+                                // char[] to avoid SDA-based addressing.
+u8   lbl_eu_806659D0;           // sbss:0x380 - activity guard flag.
+s32  lbl_eu_806659D4;           // sbss:0x384 - last client error code.
+
+// ---- External request-processing functions (retail C-linkage names) ------
+
+struct MonoRequestState;  // forward decl; full layout below
+
+// Retail C-linkage names are unmangled free functions, so they stay in the
+// same C-linkage pool as the lbl_* data above.
+extern "C" s32 func_804DA9C4(MonoRequestState* request, u8 flagA);  // lbl_eu_* pool
+extern "C" s32 func_eu_804DEB4C(s32 result, u8 flagB, u32 mode);    // lbl_eu_* pool
+
+// ---- Request record shared by both helpers --------------------------------
+
+struct MonoRequestState {
+    char payload[0xd];  // inline string data, 0x00-0x0c
+    u8   field_0xD;     // 0x0d
+    u8   field_0xE;     // 0x0e
+    s8   state;         // 0x0f lifecycle state
+};
 
 // us-804f9e98: func_eu_804F9E98  size=0x48
-// Copies src string into dest, then stores a at dest[0xd], b at dest[0xe],
-// 0 at dest[0xf], and returns &lbl_eu_80665A98.
-extern "C" void** func_eu_804F9E98(void* dest, const void* src, u8 a, u8 b) {
-    char* d = (char*)dest;
-    u8 y = b;
-    u8 x = a;
-    strcpy(d, (const char*)src);
-    d[0xd] = x;
-    d[0xe] = y;
-    d[0xf] = 0;
+// Copies src into the request's string payload, stamps the two payload bytes,
+// clears the lifecycle state, and returns the module-global string pointer.
+extern "C" char** func_eu_804F9E98(MonoRequestState* req, const char* src,  // returns &lbl_eu_80665A98
+                                   u8 flagD, u8 flagE) {
+    strcpy(req->payload, src);
+    req->field_0xD = flagD;
+    req->field_0xE = flagE;
+    req->state = 0;
     return &lbl_eu_80665A98;
 }
 
 // us-804f9ee0: func_eu_804F9EE0  size=0xC4
-// State machine: reads signed state byte from r4[0xf] and dispatches.
-// Returns 0=busy, 1=done, 2=error.
-extern "C" int func_eu_804F9EE0(void* r3, void* r4) {
+// Lifecycle poll. The record's signed state byte drives a small state machine:
+//   returns 0 = still busy, 1 = done, 2 = error.
+extern "C" int func_eu_804F9EE0(u8* unused, MonoRequestState* req) {  // polls lbl_eu_806659D0/D4
     if (lbl_eu_806659D0 != 0) return 0;
-    
-    switch (*(s8*)((u8*)r4 + 0xf)) {
-        case 0: {
-            s32 result = func_804DA9C4(r4, ((u8*)r4)[0xe]);
-            if (func_eu_804DEB4C(result, ((u8*)r4)[0xd], 0) != 0) return 2;
-            *(s8*)((u8*)r4 + 0xf) = 1;
+
+    switch (req->state) {
+        case 0: {  // kick off the request
+            s32 result = func_804DA9C4(req, req->field_0xE);
+            if (func_eu_804DEB4C(result, req->field_0xD, 0) != 0) return 2;
+            req->state = 1;
             break;
         }
-        case 1: {
-            s32 val = lbl_eu_806659D4;
-            if (val != 0 && val != -6) return 2;
-            *(s8*)((u8*)r4 + 0xf) = 2;
+        case 1:  // wait for completion
+            if (lbl_eu_806659D4 != 0 && lbl_eu_806659D4 != -6) return 2;
+            req->state = 2;
             break;
-        }
-        case 2:
+        case 2:  // done
             return 1;
         default:
             break;
@@ -56,9 +84,9 @@ extern "C" int func_eu_804F9EE0(void* r3, void* r4) {
 }
 
 // us-804f9fa4: sinit_eu_804F9FA4  size=0x18
-// Static initializer: stores address of lbl_eu_80570410 into lbl_eu_80665A98.
-// Best-effort: 16-byte body; retail has 24 bytes with li dest@sda21 + b .+4
-// artifact + store-through-r3 that MWCC cannot reproduce (see stall packet).
-extern "C" void sinit_eu_804F9FA4() {
+// `.ctors` static initializer: installs the module-global string pointer.
+// (Wall #5 ceiling - see header comment. Body is the documented folded-store
+// candidate and intentionally remains non-matching.)
+extern "C" void sinit_eu_804F9FA4() {  // installs lbl_eu_80665A98
     lbl_eu_80665A98 = lbl_eu_80570410;
 }

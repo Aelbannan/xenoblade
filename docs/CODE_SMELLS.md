@@ -10,11 +10,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5853 |
-| extern "C" declarations (non-lbl_*, imports) | 1517 |
-| extern "C" definitions (forced names) | 2629 |
-| `self`/register-style params | 4369 |
-| `void*` (params + locals) | 4970 |
+| extern "C" (total lines) | 5860 |
+| extern "C" declarations (non-lbl_*, imports) | 1519 |
+| extern "C" definitions (forced names) | 2632 |
+| `self`/register-style params | 4380 |
+| `void*` (params + locals) | 4978 |
 | raw pointer offset arithmetic | 3425 |
 | deref-through-cast arithmetic | 1403 |
 | inline asm / `register` | 88 |
@@ -149,6 +149,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 2 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 0 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 0 | 2 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/UnkClass_8047E110.cpp | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 |
@@ -159,7 +160,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/work/CEvent1.cpp | 1 | 1 | 2 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkRoot.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/work/CWorkSystem.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 |
-| libs/monolib/src/work/CWorkSystemCache.cpp | 1 | 2 | 6 | 3 | 3 | 2 | 0 | 0 | 0 |
+| libs/monolib/src/work/CWorkSystemCache.cpp | 2 | 2 | 7 | 5 | 3 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkSystemPack.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/work/CWorkThread.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | libs/nw4r/src/db/db_assert.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
@@ -427,7 +428,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 0 | 0 | 18 | 18 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 4 | 1 | 6 | 1 | 2 | 1 | 0 | 0 | 13 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -446,7 +447,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/code_800A3B24.cpp | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 2 | 13 | 9 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| src/kyoshin/code_800B06A4.cpp | 9 | 36 | 55 | 72 | 63 | 35 | 0 | 0 | 2 |
+| src/kyoshin/code_800B06A4.cpp | 10 | 38 | 58 | 76 | 63 | 35 | 0 | 0 | 2 |
 | src/kyoshin/code_80135FDC.cpp | 20 | 71 | 12 | 153 | 82 | 14 | 0 | 0 | 12 |
 | src/kyoshin/code_801862C0.cpp | 0 | 2 | 6 | 13 | 2 | 2 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 0 | 2 | 3 | 4 | 2 | 0 | 0 | 1 | 0 |
@@ -1184,6 +1185,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_def": 9,
   "self_params": 1
  },
+ "libs/monolib/src/scn/UnkClass_8047CD0C.cpp": {
+  "extern_c_nonlbl_def": 2,
+  "self_params": 1,
+  "void_ptr": 2
+ },
  "libs/monolib/src/scn/UnkClass_8047E110.cpp": {
   "extern_c_nonlbl_decl": 1,
   "extern_c_nonlbl_def": 1,
@@ -1238,11 +1244,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/work/CWorkSystemCache.cpp": {
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 2,
   "extern_c_nonlbl_def": 2,
   "ptr_arith": 3,
-  "self_params": 6,
-  "void_ptr": 3
+  "self_params": 7,
+  "void_ptr": 5
  },
  "libs/monolib/src/work/CWorkSystemPack.cpp": {
   "goto_count": 2,
@@ -2605,7 +2611,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_def": 1
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp": {
-  "extern_c_nonlbl_def": 1
+  "self_params": 6
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp": {
   "self_params": 12
@@ -2685,12 +2691,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/code_800B06A4.cpp": {
   "deref_arith": 35,
-  "extern_c_nonlbl_decl": 9,
-  "extern_c_nonlbl_def": 36,
+  "extern_c_nonlbl_decl": 10,
+  "extern_c_nonlbl_def": 38,
   "goto_count": 2,
   "ptr_arith": 63,
-  "self_params": 55,
-  "void_ptr": 72
+  "self_params": 58,
+  "void_ptr": 76
  },
  "src/kyoshin/code_80135FDC.cpp": {
   "deref_arith": 14,

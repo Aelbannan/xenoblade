@@ -12,7 +12,7 @@ void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
     unkAFC = 0;
 }
-UnkClass_805764CC* func_800B07E8();
+__declspec(noinline) UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
 extern void func_80193810(u32);
 extern void func_801F3CCC(u32);
@@ -605,9 +605,10 @@ extern "C" {
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
     extern void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+    extern int func_800B64AC(void* p);
 }
 // Target: us-800b10b4 - func_800B07E8 (singleton sinit: init once, then return &singleton)
-UnkClass_805764CC* func_800B07E8() {
+__declspec(noinline) UnkClass_805764CC* func_800B07E8() {
     if (lbl_eu_80663EE8 == 0) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
@@ -627,6 +628,33 @@ extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, uns
     // (aliasing pattern); 3 source shapes tried (local arr, ptr loop, member-cast),
     // best 23.4%/44 structural/0x134 vs 0x12c. Next: element-struct type or
     // reslist-method access form.
+}
+// Target: us-800b70fc - func_800B6800
+extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, float value) {
+    extern float lbl_eu_806669D8;
+    if (flag) {
+        self->field_0xCF4 = (u32)func_800B39C0(arg);
+        self->field_0xCF8 = value;
+    } else {
+        self->field_0xCF8 = lbl_eu_806669D8;
+        self->field_0xCF4 = 0;
+        func_800B68A8(self, 0, (void*)&self->field_0xB48, flag, lbl_eu_806669D8);
+        func_800B68A8(self, 0, (void*)&self->field_0xB68, flag, lbl_eu_806669D8);
+        // OPEN ITEM: best 46.5%/19 structural; residual is lfs/stfs f0-vs-f1 PS-float
+        // juggling (retail loads const into f1 once at top; decomp splits f0/f1). Next:
+        // PS-float angle per MWCC_REFERENCE.
+    }
+    func_800B1C24(4, (void*)flag);
+}
+// Target: us-800b79ac - func_800B708C (singleton lookup + flag check)
+extern "C" void* func_800B708C__Fi(int id) {
+    UnkClass_805764CC* obj = func_800B07E8();
+    void* result = func_800B6EC0(obj, id);
+    bool valid = false;
+    if (result != 0 && func_800B64AC(result) == 0) {
+        valid = true;
+    }
+    return valid ? result : 0;
 }
 // Target 5: us-800b923c - func_800B8920
 // Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),

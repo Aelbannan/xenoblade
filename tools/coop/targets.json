@@ -326376,7 +326376,7 @@
       "size": "0x54",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
@@ -326390,15 +326390,7 @@
       "abi_helper_calls": [],
       "instruction_match": 97.619,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T04:39:30.885965+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8032ec20",
@@ -463249,7 +463241,7 @@
       "size": "0x58",
       "unit": "monolib/src/work/CWorkSystemMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
@@ -463264,7 +463256,15 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-63782",
+        "claimed_at": "2026-08-08T04:52:40.477464+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkSystemMem.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "worksysmem-get-handle",
@@ -509856,7 +509856,7 @@
       "size": "0x54",
       "unit": "monolib/src/scn/CScnIdMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -509870,15 +509870,7 @@
       "source": "libs/monolib/src/scn/CScnIdMan.cpp",
       "instruction_match": 88.762,
       "equivalence_status": "inconclusive_unvalidated_callee",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T04:35:07.303933+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/CScnIdMan.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-804a26cc",

@@ -10,11 +10,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5851 |
-| extern "C" declarations (non-lbl_*, imports) | 1516 |
-| extern "C" definitions (forced names) | 2628 |
-| `self`/register-style params | 4367 |
-| `void*` (params + locals) | 4969 |
+| extern "C" (total lines) | 5853 |
+| extern "C" declarations (non-lbl_*, imports) | 1517 |
+| extern "C" definitions (forced names) | 2629 |
+| `self`/register-style params | 4369 |
+| `void*` (params + locals) | 4970 |
 | raw pointer offset arithmetic | 3425 |
 | deref-through-cast arithmetic | 1403 |
 | inline asm / `register` | 88 |
@@ -446,7 +446,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/code_800A3B24.cpp | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 2 | 13 | 9 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| src/kyoshin/code_800B06A4.cpp | 8 | 35 | 54 | 71 | 63 | 35 | 0 | 0 | 2 |
+| src/kyoshin/code_800B06A4.cpp | 9 | 36 | 55 | 72 | 63 | 35 | 0 | 0 | 2 |
 | src/kyoshin/code_80135FDC.cpp | 20 | 71 | 12 | 153 | 82 | 14 | 0 | 0 | 12 |
 | src/kyoshin/code_801862C0.cpp | 0 | 2 | 6 | 13 | 2 | 2 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 0 | 2 | 3 | 4 | 2 | 0 | 0 | 1 | 0 |
@@ -509,7 +509,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuShopBuy.cpp | 0 | 0 | 4 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSkipTimer.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuSymbolMark.cpp | 4 | 8 | 19 | 8 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuTitle.cpp | 0 | 4 | 5 | 4 | 1 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuTitle.cpp | 0 | 4 | 6 | 4 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuTutorial.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuUpdate.cpp | 0 | 40 | 58 | 54 | 36 | 26 | 0 | 11 | 0 |
 | src/kyoshin/menu/CMenuVision.cpp | 0 | 1 | 3 | 5 | 17 | 0 | 0 | 0 | 0 |
@@ -2685,12 +2685,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/code_800B06A4.cpp": {
   "deref_arith": 35,
-  "extern_c_nonlbl_decl": 8,
-  "extern_c_nonlbl_def": 35,
+  "extern_c_nonlbl_decl": 9,
+  "extern_c_nonlbl_def": 36,
   "goto_count": 2,
   "ptr_arith": 63,
-  "self_params": 54,
-  "void_ptr": 71
+  "self_params": 55,
+  "void_ptr": 72
  },
  "src/kyoshin/code_80135FDC.cpp": {
   "deref_arith": 14,
@@ -3035,7 +3035,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/menu/CMenuTitle.cpp": {
   "extern_c_nonlbl_def": 4,
   "ptr_arith": 1,
-  "self_params": 5,
+  "self_params": 6,
   "void_ptr": 4
  },
  "src/kyoshin/menu/CMenuTutorial.cpp": {

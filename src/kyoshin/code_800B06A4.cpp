@@ -604,6 +604,29 @@ extern "C" {
     extern void __dt__17UnkClass_805764CCFv(void*, int);
     extern void __ct__17UnkClass_805764CCFv(void*);
     extern void __register_global_object(void*, void*, void*);
+    extern void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+}
+// Target: us-800b10b4 - func_800B07E8 (singleton sinit: init once, then return &singleton)
+UnkClass_805764CC* func_800B07E8() {
+    if (lbl_eu_80663EE8 == 0) {
+        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
+        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
+        lbl_eu_80663EE8 = 1;
+    }
+    return (UnkClass_805764CC*)lbl_eu_80572CD4;
+}
+// Target: us-800b1160 - func_800B0894 (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
+extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count) {
+    u32* arr = (u32*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
+    self->field_0x14 = (u32)arr;
+    for (int i = 0; i < (int)count; i++) {
+        arr[i * 3] = 0;
+    }
+    self->field_0x18 = (u32)count;
+    // OPEN ITEM: retail unrolls this loop 8x with per-store reload of self->field_0x14
+    // (aliasing pattern); 3 source shapes tried (local arr, ptr loop, member-cast),
+    // best 23.4%/44 structural/0x134 vs 0x12c. Next: element-struct type or
+    // reslist-method access form.
 }
 // Target 5: us-800b923c - func_800B8920
 // Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),

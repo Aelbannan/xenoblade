@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8317 |
-| extern "C" declarations (non-lbl_*, imports) | 3260 |
+| extern "C" (total lines) | 8318 |
+| extern "C" declarations (non-lbl_*, imports) | 3261 |
 | extern "C" definitions (forced names) | 2642 |
-| `self`/register-style params | 4466 |
-| `void*` (params + locals) | 5520 |
+| `self`/register-style params | 4467 |
+| `void*` (params + locals) | 5515 |
 | raw pointer offset arithmetic | 3418 |
-| deref-through-cast arithmetic | 1422 |
+| deref-through-cast arithmetic | 1421 |
 | inline asm / `register` | 88 |
 | rN-named params | 350 |
 | goto | 1123 |
@@ -93,7 +93,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/lib/CLibVM.cpp | 2 | 1 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 6 | 2 | 0 | 0 | 0 |
+| libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 6 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_80460308.cpp | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/lib/UnkClass_80460C34.cpp | 5 | 3 | 0 | 1 | 15 | 0 | 0 | 0 | 7 |
 | libs/monolib/src/lod/CLODCacheManagerS.cpp | 1 | 0 | 9 | 8 | 0 | 0 | 0 | 0 | 0 |
@@ -110,7 +110,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
-| libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 2 |
+| libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 0 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 12 | 0 | 0 | 21 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 10 | 14 | 27 | 6 | 0 | 0 | 0 | 0 | 0 |
@@ -386,7 +386,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfScript.cpp | 18 | 0 | 2 | 16 | 3 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfSoundMan.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfTFile.cpp | 0 | 3 | 2 | 1 | 1 | 1 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfTaskMain.cpp | 4 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfTaskMain.cpp | 5 | 0 | 4 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlAct.cpp | 0 | 0 | 6 | 7 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlEnemy.cpp | 3 | 23 | 7 | 7 | 9 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CtrlMoveBase.cpp | 0 | 2 | 2 | 3 | 3 | 1 | 0 | 0 | 0 |
@@ -868,7 +868,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "libs/monolib/src/lib/UnkClass_8045F564.cpp": {
-  "deref_arith": 2,
+  "deref_arith": 1,
   "ptr_arith": 6,
   "void_ptr": 1
  },
@@ -960,8 +960,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/nand/CNReqtaskRemove.cpp": {
   "extern_c_nonlbl_decl": 3,
-  "goto_count": 2,
-  "void_ptr": 6
+  "goto_count": 2
  },
  "libs/monolib/src/nand/CNReqtaskSave.cpp": {
   "extern_c_nonlbl_def": 2,
@@ -2421,9 +2420,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "src/kyoshin/cf/CfTaskMain.cpp": {
-  "extern_c_nonlbl_decl": 4,
-  "self_params": 3,
-  "void_ptr": 4
+  "extern_c_nonlbl_decl": 5,
+  "self_params": 4,
+  "void_ptr": 5
  },
  "src/kyoshin/cf/CtrlAct.cpp": {
   "ptr_arith": 2,

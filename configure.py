@@ -1885,7 +1885,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/nand/CNReqtaskSave.cpp"),
             Object(Matching, "monolib/src/nand/CNReqtaskLoad.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskReaddir.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/nand/CNReqtaskRemove.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
+            Object(Matching, "monolib/src/nand/CNReqtaskRemove.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskCheck.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/effect/CERand.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804DB938.cpp"),

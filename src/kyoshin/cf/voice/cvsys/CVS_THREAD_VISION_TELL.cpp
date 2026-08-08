@@ -6,18 +6,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
 
-// Forward declarations for sibling TU functions.
-int func_802A3E88(CVS_THREAD* self);
-void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-int func_802A77E8(CVoiceHandle* handle);
-int func_802A7850(int iter);
-int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
-int func_802A7EB0(CVoiceHandle* handle1, CVoiceHandle* handle2);
-CVS_THREAD_VISION_TELL* func_802A330C(int size, int align);
-u8* func_802A34E4(int size);
-void __ct__cf_CVS_THREAD(CVS_THREAD_VISION_TELL* self);
-
 // ── Target 1: us-802ac1fc (func_802A9AC4) ──────────────────────────────────
 // Completion callback: if no active voice, call the playback-start virtual.
 void func_802A9AC4(CVS_THREAD_VISION_TELL* self) {
@@ -58,25 +46,26 @@ void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
 // calls the base constructor, sets vtable/owner fields, and copies init data.
 CVS_THREAD_VISION_TELL* __ct__802A96C0(CVS_THREAD_VISION_TELL* owner1, CVS_THREAD_VISION_TELL* owner2) try {
     // Allocate handle buffer (discarded)
-    CVS_THREAD_VISION_TELL* handleBuf = func_802A330C(0x32, 1);
+    CVoiceHandle* handleBuf = func_802A330C(0x32, 1);
     if (handleBuf == NULL) return NULL;
 
     // Allocate the actual CVS_THREAD_VISION_TELL object
     CVS_THREAD_VISION_TELL* self = (CVS_THREAD_VISION_TELL*)func_802A34E4(0x28);
     if (self == NULL) return NULL;
 
-    // Base constructor
-    __ct__cf_CVS_THREAD(self);
+    // Base constructor (self already in r3).
+    __ct__cf_CVS_THREAD();
 
-    // Set vtable at offset 0x1C (7th u32)
-    ((u32*)self)[7] = (u32)lbl_eu_80539DD4;
+    // Set vtable at offset 0x1C (right after the 7 CVS_THREAD base words).
+    ((void**)self)[7] = (void**)lbl_eu_80539DD4;
     self->field_0x20 = (CVoiceHandle*)owner1;
     self->field_0x24 = (CVoiceHandle*)owner2;
 
-    // Copy init data from global table
-    self->unk0 = (u32*)lbl_eu_80539DB0[0];
-    self->unk4 = lbl_eu_80539DB0[1];
-    self->unk8 = lbl_eu_80539DB0[2];
+    // Copy init data from global table using a single base pointer
+    const u32* base = lbl_eu_80539DB0;
+    self->unk0 = (u32*)base[0];
+    self->unk4 = base[1];
+    self->unk8 = base[2];
 
     return self;
 } catch (...) {
@@ -86,12 +75,12 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVS_THREAD_VISION_TELL* owner1, CVS_THREA
 // ── Target 4: us-802abed8 (func_802A97A0) ──────────────────────────────────
 // Advance/play function for voice slot 1 (field_0x20).
 void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
-    // Copy init data using pointer to force shared base register
-    u32* p = lbl_eu_80539DBC;
+    // Copy init data -- read index 0 first so MWCC emits the lwzu base-load
+    // form (lis @ha + lwzu @l), then the handle, then the remaining elements.
+    self->unk0 = (u32*)lbl_eu_80539DBC[0];
     CVoiceHandle* handle20 = self->field_0x20;
-    self->unk4 = p[1];
-    self->unk0 = (u32*)p[0];
-    self->unk8 = p[2];
+    self->unk4 = lbl_eu_80539DBC[1];
+    self->unk8 = lbl_eu_80539DBC[2];
 
     // Both slots must be populated
     if (handle20 == NULL) return;
@@ -162,12 +151,12 @@ void func_802A9924(CVS_THREAD_VISION_TELL* self) {
         return;
     }
 
-    // Copy init data using pointer to force shared base register
-    u32* p = lbl_eu_80539DC8;
+    // Copy init data -- read index 0 first so MWCC emits the lwzu base-load
+    // form, then the handle, then the remaining elements.
+    self->unk0 = (u32*)lbl_eu_80539DC8[0];
     CVoiceHandle* handle24 = self->field_0x24;
-    self->unk4 = p[1];
-    self->unk0 = (u32*)p[0];
-    self->unk8 = p[2];
+    self->unk4 = lbl_eu_80539DC8[1];
+    self->unk8 = lbl_eu_80539DC8[2];
 
     if (handle24 == NULL) return;
 

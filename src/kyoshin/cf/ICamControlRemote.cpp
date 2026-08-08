@@ -28,15 +28,16 @@ CPad* func_80274B28() {
     return cf::CfGameManager::getCurrentPad();
 }
 
-bool func_80274B2C(ICamControlRemoteIf* self, int controllerId) {
+u32 func_80274B2C(ICamControlRemoteIf* self, int controllerId) {
     ICamRemoteStatus* st = self->getObject();
-    if (func_8006D700(controllerId) != 0) {
-        u32 flags = st->field_0x0;
-        if ((flags & (1 << 3)) != 0 && (flags & (1 << 5)) == 0) {
-            return true;
-        }
+    if (func_8006D700(controllerId) == 0) {
+        return 0;
     }
-    return false;
+    u32 flags = st->field_0x0;
+    if ((flags & (1 << 4)) == 0 || (flags & (1 << 5)) != 0) {
+        return 0;
+    }
+    return (flags >> 4) & 1; // bit 27 (MSB)
 }
 
 bool func_80274BA4(ICamControlRemoteIf* self, int controllerId) {

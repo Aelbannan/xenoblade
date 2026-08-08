@@ -1,5 +1,9 @@
 #include <nw4r/snd.h>
 
+// Retail .sdata2 pool constant 1.0f, referenced by name so the SDA21
+// float relocation matches the stripped retail object (PLAN.md §17.6).
+extern const f32 lbl_eu_8066A100;
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -16,7 +20,7 @@ bool WsdFileReader::IsValidFileHeader(const void* pWsdBin) {
         return false;
     }
 
-    if (pFileHeader->version > VERSION) {
+    if (pFileHeader->version > NW4R_VERSION(1, 3)) {
         return false;
     }
 
@@ -31,11 +35,51 @@ WsdFileReader::WsdFileReader(const void* pWsdBin)
 
     mHeader = static_cast<const WsdFile::Header*>(pWsdBin);
 
-    mDataBlock = static_cast<const WsdFile::DataBlock*>(
-        ut::AddOffsetToPtr(mHeader, mHeader->dataBlockOffset));
+    if (mHeader->dataBlockOffset != 0) {
+        mDataBlock = static_cast<const WsdFile::DataBlock*>(
+            ut::AddOffsetToPtr(mHeader, mHeader->dataBlockOffset));
+    }
 
-    mWaveBlock = static_cast<const WsdFile::WaveBlock*>(
-        ut::AddOffsetToPtr(mHeader, mHeader->waveBlockOffset));
+    if (mHeader->waveBlockOffset != 0) {
+        mWaveBlock = static_cast<const WsdFile::WaveBlock*>(
+            ut::AddOffsetToPtr(mHeader, mHeader->waveBlockOffset));
+    }
+}
+
+bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
+                                 const void* pWaveAddr) const {
+    const WaveInfo* pWaveIn;
+
+    if (mWaveBlock == NULL) {
+        WaveArchiveReader archive(pWaveAddr);
+        const void* waveFile = archive.GetWaveFile(id);
+
+        if (waveFile == NULL) {
+            return false;
+        }
+
+        WaveFileReader reader(static_cast<const FileHeader*>(waveFile));
+        return reader.ReadWaveInfo(pWaveInfo, NULL);
+    }
+
+    // Use the embedded wave block.
+    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
+        if (id >= mWaveBlock->waveCount) {
+            return false;
+        }
+
+        pWaveIn = static_cast<const WaveInfo*>(ut::AddOffsetToPtr(
+            mWaveBlock, mWaveBlock->offsetTable[id]));
+    } else {
+        const WsdFile::WaveBlockOld* pWaveBlockOld =
+            reinterpret_cast<const WsdFile::WaveBlockOld*>(mWaveBlock);
+
+        pWaveIn = static_cast<const WaveInfo*>(ut::AddOffsetToPtr(
+            pWaveBlockOld, pWaveBlockOld->offsetTable[id]));
+    }
+
+    WaveFileReader reader(pWaveIn);
+    return reader.ReadWaveInfo(pWaveInfo, pWaveAddr);
 }
 
 bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
@@ -45,7 +89,7 @@ bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
     const WsdFile::WsdInfo* pWsdInfo =
         Util::GetDataRefAddress0(pWsd->refWsdInfo, &mDataBlock->wsdCount);
 
-    if (mHeader->fileHeader.version == NW4R_VERSION(1, 2)) {
+    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 2)) {
         pSoundInfo->pitch = pWsdInfo->pitch;
         pSoundInfo->pan = pWsdInfo->pan;
         pSoundInfo->surroundPan = pWsdInfo->surroundPan;
@@ -53,7 +97,7 @@ bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
         pSoundInfo->fxSendB = pWsdInfo->fxSendB;
         pSoundInfo->fxSendC = pWsdInfo->fxSendC;
         pSoundInfo->mainSend = pWsdInfo->mainSend;
-    } else if (mHeader->fileHeader.version == NW4R_VERSION(1, 1)) {
+    } else if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
         pSoundInfo->pitch = pWsdInfo->pitch;
         pSoundInfo->pan = pWsdInfo->pan;
         pSoundInfo->surroundPan = pWsdInfo->surroundPan;
@@ -62,7 +106,7 @@ bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
         pSoundInfo->fxSendC = 0;
         pSoundInfo->mainSend = 127;
     } else {
-        pSoundInfo->pitch = 1.0f;
+        pSoundInfo->pitch = lbl_eu_8066A100;
         pSoundInfo->pan = 64;
         pSoundInfo->surroundPan = 0;
         pSoundInfo->fxSendA = 0;
@@ -87,6 +131,7 @@ bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
 
     pSoundNoteInfo->waveIndex = pNoteInfo->waveIndex;
     pSoundNoteInfo->attack = pNoteInfo->attack;
+    pSoundNoteInfo->hold = pNoteInfo->hold;
     pSoundNoteInfo->decay = pNoteInfo->decay;
     pSoundNoteInfo->sustain = pNoteInfo->sustain;
     pSoundNoteInfo->release = pNoteInfo->release;
@@ -100,7 +145,7 @@ bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
     } else {
         pSoundNoteInfo->pan = 64;
         pSoundNoteInfo->surroundPan = 0;
-        pSoundNoteInfo->pitch = 1.0f;
+        pSoundNoteInfo->pitch = lbl_eu_8066A100;
     }
 
     return true;
@@ -108,20 +153,20 @@ bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
 
 bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
                                   const void* pWaveAddr) const {
-    const WaveFile::WaveInfo* pWaveInfo;
+    const WaveInfo* pWaveInfo;
 
     if (mHeader->fileHeader.version == NW4R_VERSION(1, 0)) {
         const WsdFile::WaveBlockOld* pWaveBlockOld =
             reinterpret_cast<const WsdFile::WaveBlockOld*>(mWaveBlock);
 
-        pWaveInfo = static_cast<const WaveFile::WaveInfo*>(
+        pWaveInfo = static_cast<const WaveInfo*>(
             ut::AddOffsetToPtr(pWaveBlockOld, pWaveBlockOld->offsetTable[id]));
     } else {
         if (id >= mWaveBlock->waveCount) {
             return false;
         }
 
-        pWaveInfo = static_cast<const WaveFile::WaveInfo*>(
+        pWaveInfo = static_cast<const WaveInfo*>(
             ut::AddOffsetToPtr(mWaveBlock, mWaveBlock->offsetTable[id]));
     }
 
@@ -133,4 +178,3 @@ bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
 } // namespace snd
 } // namespace nw4r
 
-void ReadWaveInfo__Q44nw4r3snd6detail13WsdFileReaderCFiPQ44nw4r3snd6detail8WaveInfoPCv(){}

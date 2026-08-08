@@ -1,5 +1,5 @@
 {
-  "count": 2319,
+  "count": 2308,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -2093,6 +2093,30 @@
         ]
       }
     },
+    "__vt__Q22cf12CChainEffect": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14336,
+        "retail_symbol": "lbl_eu_80539890",
+        "units": [
+          "main/kyoshin/cf/chain/CChainEffect"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 36995,
+        "retail_symbol": "lbl_eu_80539890",
+        "units": [
+          "main/kyoshin/cf/chain/CChainEffect"
+        ]
+      }
+    },
     "__vt__Q22cf12CTaskCulling": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -2812,30 +2836,6 @@
         "retail_symbol": "lbl_eu_8056A810",
         "units": [
           "main/nw4r/src/snd/snd_MemorySoundArchive"
-        ]
-      }
-    },
-    "__vt__Q44nw4r3snd6detail10BasicSound": {
-      "R_PPC_ADDR16_HA": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14560,
-        "retail_symbol": "lbl_eu_8056A710",
-        "units": [
-          "main/nw4r/src/snd/snd_BasicSound"
-        ]
-      },
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14528,
-        "retail_symbol": "lbl_eu_8056A710",
-        "units": [
-          "main/nw4r/src/snd/snd_BasicSound"
         ]
       }
     },
@@ -8146,146 +8146,6 @@
         "scoped": true,
         "units": [
           "main/RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp@669": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE20",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp@712": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE24",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp@805": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE28",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp@806": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE2C",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp@807": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE30",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExp"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2@774": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE38",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2@818": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE3C",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2@900": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 2,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE40",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2@901": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 3,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE44",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2"
-        ]
-      }
-    },
-    "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2@902": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "float_8066BE48",
-        "scoped": true,
-        "units": [
-          "main/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2"
         ]
       }
     },
@@ -22148,6 +22008,20 @@
         ]
       }
     },
+    "main/kyoshin/CItemBoxGrid@14548": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80667F48",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CItemBoxGrid"
+        ]
+      }
+    },
     "main/kyoshin/CItemBoxInfo@7678": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -22910,7 +22784,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuPTState@5933": {
+    "main/kyoshin/menu/CMenuPTState@5968": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22924,28 +22798,14 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuPTState@5934": {
+    "main/kyoshin/menu/CMenuPTState@5969": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 1,
+        "count": 2,
         "kind": "data",
         "retail_addend": 0,
         "retail_symbol": "lbl_eu_80667A9C",
-        "scoped": true,
-        "units": [
-          "main/kyoshin/menu/CMenuPTState"
-        ]
-      }
-    },
-    "main/kyoshin/menu/CMenuPTState@5943": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80667AA0",
         "scoped": true,
         "units": [
           "main/kyoshin/menu/CMenuPTState"
@@ -26721,20 +26581,6 @@
         "scoped": true,
         "units": [
           "main/nw4r/src/snd/snd_AxVoiceManager"
-        ]
-      }
-    },
-    "main/nw4r/src/snd/snd_BasicSound@9618": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 4,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80669EF0",
-        "scoped": true,
-        "units": [
-          "main/nw4r/src/snd/snd_BasicSound"
         ]
       }
     },
@@ -30621,9 +30467,9 @@
       }
     }
   },
-  "function_pairs": 8441,
-  "generated": "2026-08-08T22:05:28.886757",
+  "function_pairs": 8499,
+  "generated": "2026-08-08T23:46:46.777037",
   "region": "us",
-  "units_scanned": 1132,
+  "units_scanned": 1133,
   "version": 1
 }

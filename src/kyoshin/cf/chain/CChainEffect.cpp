@@ -6,6 +6,7 @@
 
 namespace cf {}
 
+cf::CChainEffect::CChainEffect() : unk4(0), unk8(0) {}
 cf::CChainEffect::~CChainEffect() {}
 
 // Look up an effect linkage object by (class-id, member pointer). The member
@@ -31,7 +32,7 @@ void* func_802A0804(u32 cls, u32* src) {
 // Bind a chain effect (target 8). When `a` is non-zero, unlink the previous
 // owner (if any) and link `self` to the resolved object; when `a` is zero,
 // tear down the current link and clear.
-void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d, int e) {
+extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d, int e) {
     if (a != 0) {
         if (self->unk8 != (u32)d) {
             func_802A0950(self, 0, 0, 0, 0, 0);
@@ -80,7 +81,7 @@ void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d, int e) {
 
 // Release helper wrappers (targets 4-6).
 void func_802A0AE0(cf::CChainEffect* self, u32 obj) {
-    if (self->unk4 != obj) {
+    if (obj != self->unk4) {
         return;
     }
     self->unk4 = 0;

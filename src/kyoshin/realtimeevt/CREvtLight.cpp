@@ -40,12 +40,13 @@ extern f32 lbl_eu_8066A210;  // π/2
 // r3 = this, r4 = arg
 // Calls CREvtObj(this, 2), sets own vtable, initializes fields
 // ============================================================================
-extern "C" void __ct__CREvtLight(CREvtLight* self, u32 arg) {
+extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg) {
     __ct__cf_CREvtObj((cf::CREvtObj*)self, 2);
     self->vtable = (void*)lbl_eu_80533D90;
     self->field_14 = 0;
     self->field_18 = arg;
     self->field_20 = 0;
+    return self;
 }
 
 // ============================================================================

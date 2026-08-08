@@ -1,47 +1,142 @@
-// Auto-scaffolded catalog TU for kyoshin/CTaskGameEvt
-// Replace stubs with high-level C/C++ during decomp.
+// kyoshin/CTaskGameEvt.cpp
+// CTaskGameEvt task wrapper: CProcess-derived task that hosts a scene render
+// callback and a small state flag set.
 
 #include "kyoshin/CTaskGameEvt.hpp"
-#include "kyoshin/harness_catalog.hpp"
+
+#include "monolib/work/CWorkThreadSystem.hpp"
+
+// CTTask<CTaskGameEvt> out-of-line Move/Draw/dtors (retail emits these as
+// standalone functions; the inline CTTask header copy would mark them inline).
+#pragma optimize_for_size on
+template <>
+CTTask<CTaskGameEvt>::~CTTask() {}
+#pragma optimize_for_size off
+
+template <>
+void CTTask<CTaskGameEvt>::Move() {
+    if (mMoveFunc) {
+        (this->*mMoveFunc)();
+    }
+}
+
+template <>
+void CTTask<CTaskGameEvt>::Draw() {
+    if (mDrawFunc) {
+        (this->*mDrawFunc)();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Non-target glue stubs (preserved from scaffold; not part of the match set).
+// ---------------------------------------------------------------------------
+
+extern "C" int func_80295764(void* self);
 
 void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 
+// Tail-call wrappers into the cf event-task helper calls.
+void func_802956A4(void) { func_80165038(); }
 
-void func_802956A4(void){}
+void func_802956A8(void) { func_80164CFC(); }
 
-void func_802956A8(void){}
+extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) { (void)self; }
 
+extern "C" int func_80295764(void* self) { (void)self; return 0; }
 
-extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
+extern "C" void func_80295870(void* self) { (void)self; }
+extern "C" void func_80295878(void* self) { (void)self; }
+extern "C" void func_80295880(void* self) { (void)self; }
 
-extern "C" int func_80295764(void* self) { return 0; }
+// ---------------------------------------------------------------------------
+// Target members.
+// ---------------------------------------------------------------------------
 
+// Retail constructor `__ct__CTaskGameEvt` is a *stripped* symbol (no length
+// mangling), reconstructed as a free function (cf. CTaskGameCf / CfTaskMain):
+// it calls the CProcess base ctor, then performs the in-place vtable / NULL
+// PTMF / field setup inline so every store matches retail ordering. Written as
+// a free function (not a C++ member ctor) so no `__ct__12CTaskGameEvtFi`
+// symbol is emitted and the interim CTTask vtable write can be reproduced.
+#pragma optimize_for_size on
+CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
+    __ct__8CProcessFv(pThis);
 
-void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
+    u32* p = reinterpret_cast<u32*>(pThis);
 
-extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
+    // Interim CTTask<CTaskGameEvt> vtable (overwritten later).
+    p[4] = reinterpret_cast<u32>(lbl_eu_80538CE8);
 
-extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
+    // Materialise the final vtable base (r6) and its two sub-vtable pointers
+    // (r5 = +0x24 for field_54, r4 = +0xac for the IScnRender member) up front,
+    // before the PTMF loads, matching the retail schedule.
+    u32 vtbl = reinterpret_cast<u32>(lbl_eu_80538C00);
+    u32 vtbl_54 = vtbl + 0x24;
+    u32 vtbl_58 = vtbl + 0xac;
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
+    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48) in the retail store
+    // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50. Post-increment derefs of a local
+    // pointer make MWCC fold the first access into `lwzu` (single base register
+    // r9 via @ha/@l, offsets on the rest) instead of an extra `addi`-materialised
+    // pointer - cf. MWCC_REFERENCE btm_sco_init lwzu shape. The stores into p can
+    // alias the non-const global, forcing the 4..6/4..5 reloads between slots.
+    const u32* src = __ptmf_null;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    p[0x10] = w1;        // 0x40 mMoveFunc[1]
+    p[0xF] = w0;         // 0x3C mMoveFunc[0]
+    u32 w2 = *src++;     // load [2] after the w1 store (retail lwz r7,8(r9) late)
+    p[0x11] = w2;        // 0x44 mMoveFunc[2]
+    src = __ptmf_null;
+    w0 = *src++;
+    w1 = *src++;
+    p[0x13] = w1;        // 0x4C mDrawFunc[1]
+    p[0x12] = w0;        // 0x48 mDrawFunc[0]
+    w2 = *src++;
+    p[0x14] = w2;        // 0x50 mDrawFunc[2]
 
-extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-extern "C" void Term__12CTaskGameEvtFv(void* self) {
-    void* r4 = self ? (u8*)self + 0x58 : 0;
-    void* scn = *(void**)((u8*)self + 0x5C);
-    removeRenderCB__4CScnFP10IScnRender(scn, r4);
+    // Final CTaskGameEvt vtable + member fields.
+    p[4] = vtbl;
+    p[0x15] = vtbl_54;      // 0x54 field_54
+    p[0x16] = vtbl_58;      // 0x58 mRenderCB (IScnRender vtable)
+    p[0x17] = static_cast<u32>(arg); // 0x5C mScene
+    p[0x18] = 0;             // 0x60 mFlags
+
+    return pThis;
+}
+#pragma optimize_for_size off
+
+CTaskGameEvt::~CTaskGameEvt() {}
+
+void CTaskGameEvt::Init() {
+    IScnRender* rp = this ? &mRenderCB : 0;
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, rp, 0xb, 0);
 }
 
+void CTaskGameEvt::Term() {
+    IScnRender* rp = this ? &mRenderCB : 0;
+    removeRenderCB__4CScnFP10IScnRender(mScene, rp);
+}
 
-extern "C" void Init__12CTaskGameEvtFv() {}
-extern "C" void create__12CTaskGameEvtFv() {}
+void CTaskGameEvt::Move() {
+    u32 flags = mFlags;
+    if ((flags & 0x2) && !(flags & 0x1) &&
+        cf::CTaskGameCf::getInstance() != 0 &&
+        func_80164C48() != 0) {
+        if (func_80164954()) {
+            mFlags |= 1;
+        } else {
+            mFlags &= ~1;
+        }
+    }
+}
+
+CTaskGameEvt* CTaskGameEvt::create(CProcess* pParent, int arg) {
+    u32 handle = CWorkThreadSystem::getWorkMem();
+    CTaskGameEvt* obj = (CTaskGameEvt*)mtl::MemManager::allocate(0x64, handle);
+    if (obj) {
+        obj = __ct__CTaskGameEvt(obj, arg);
+    }
+    obj->Regist(pParent, false);
+    return obj;
+}

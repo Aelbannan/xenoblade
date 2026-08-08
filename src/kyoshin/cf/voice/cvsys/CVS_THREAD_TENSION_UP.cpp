@@ -62,7 +62,7 @@ void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
 // Takes a factory/manager pointer and a thread index (must be >= 3).
 // Allocates a buffer and the thread object, constructs the base,
 // sets vtable/fields, copies init data, returns the object (or NULL).
-CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
+CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) try {
     if ((factory->flags & 0x2) == 0) {
         return NULL;
     }
@@ -72,26 +72,29 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     if (func_802A330C(0x82, 1) == NULL) {
         return NULL;
     }
-    CVS_THREAD_TENSION_UP* obj = (CVS_THREAD_TENSION_UP*)func_802A34E4(0x2c);
-    if (obj == NULL) {
+    CVS_THREAD_TENSION_UP* self = (CVS_THREAD_TENSION_UP*)func_802A34E4(0x2c);
+    if (self == NULL) {
         return NULL;
     }
     __ct__cf_CVS_THREAD();
 
     // Set the vtable for this subclass.
-    obj->unk0 = (u32*)&lbl_eu_80539D44;
+    ((void**)self)[7] = (void**)&lbl_eu_80539D44;
 
     // Set fields.
-    obj->field_0x20 = (CVoiceHandle*)factory;
-    obj->field_0x24 = index;
-    obj->field_0x28 = 0;
+    self->field_0x20 = (CVoiceHandle*)factory;
+    self->field_0x24 = index;
+    self->field_0x28 = 0;
 
     // Copy the slot-state init data triple into the object's first 3 u32s.
-    obj->unk4 = lbl_eu_80539D20[1];
-    obj->unk0 = (u32*)lbl_eu_80539D20[0];
-    obj->unk8 = lbl_eu_80539D20[2];
+    const u32* base = lbl_eu_80539D20;
+    self->unk0 = (u32*)base[0];
+    self->unk4 = base[1];
+    self->unk8 = base[2];
 
-    return obj;
+    return self;
+} catch (...) {
+    throw;
 }
 
 // ── Target 4: us-802ab628 (func_802A8EEC) ──────────────────────────────────

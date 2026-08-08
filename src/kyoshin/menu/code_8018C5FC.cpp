@@ -3,6 +3,18 @@
 #include <monolib/device/CDeviceVI.hpp>
 #include <functions.hpp>
 
+// __cntlzw is a compiler builtin available as an intrinsic; drop the macro
+// wrapper so we can call it directly to reproduce retail's cntlzw+srwi guard.
+#undef __cntlzw
+
+// Global-scope lbl_* (data imports); declaring them outside namespace cf keeps
+// their global (unmangled) symbol name instead of cf::-mangling them.
+extern f32 lbl_eu_80667A30;
+extern f32 lbl_eu_80667A34;
+extern f32 lbl_eu_80667A38;
+extern u32 lbl_eu_80663E14;
+extern u32 lbl_eu_80663E24;
+
 namespace cf {
 
 class UnkClass_8018C5FC {
@@ -12,17 +24,55 @@ public:
     f32 unk4;
 };
 
-extern f32 lbl_eu_80667A30;
-extern f32 lbl_eu_80667A34;
-extern f32 lbl_eu_80667A38;
-extern u32 lbl_eu_80663E14;
-extern u32 lbl_eu_80663E24;
+// --- linked-list / battle-object types used by func_8018C610 ---
+
+struct CMB_CfObjEnt_8018C5FC; // fwd
+
+// Intrusive singly-linked node: next @ +0, data @ +8.
+struct CMB_ListNode_8018C5FC {
+    CMB_ListNode_8018C5FC* next;    // +0x00
+    u32 field_04;                   // +0x04
+    CMB_CfObjEnt_8018C5FC* data;    // +0x08
+};
+
+// Battle manager getInstance() result: only +0x08 (a node ptr) is used here.
+struct CMB_Bm_8018C5FC {
+    u8 pad_00[0x8];
+    CMB_ListNode_8018C5FC* listHead; // +0x08
+};
+
+// Party list returned by func_800B6BA4__Fv: head node ptr at +0x04.
+struct CMB_PartyList_8018C5FC {
+    u8 pad_00[0x4];
+    CMB_ListNode_8018C5FC* headNode; // +0x04
+};
+
+// Canonical cf object: vtable with a callable at +0x290.
+struct CMB_CfObj_8018C5FC;
+struct CMB_CfObjVtable_8018C5FC {
+    u8 pad_00[0x290];
+    s32 (*func_290)(CMB_CfObj_8018C5FC*); // +0x290
+};
+struct CMB_CfObj_8018C5FC {
+    CMB_CfObjVtable_8018C5FC* vtable;    // +0x00
+};
+
+// The object referenced at node->data; the low-priority object lives at
+// +0x3e9c within it (so “obj = data - 0x3e9c” is expressed as a member).
+struct CMB_CfObjEnt_8018C5FC {
+    u8 pad_00[0x3e9c];
+    CMB_CfObj_8018C5FC obj;    // +0x3e9c
+};
 
 extern "C" {
+    // C-ABI retail symbol (functions.hpp declares the C++-mangled bool f(int)
+    // which would emit func_8009CF8C__Fi; the cf-namespace extern "C" decl
+    // below shadows it so the unmangled func_8009CF8C reloc is emitted.
+    u32 func_8009CF8C(u32);
     f32 func_80496288(u32*);
-    void* getInstance__Q22cf14CBattleManagerFv();
-    void* func_800B6BA4__Fv();
-    u32 func_8026178C(void*, u32);
+    CMB_Bm_8018C5FC* getInstance__Q22cf14CBattleManagerFv();
+    CMB_PartyList_8018C5FC* func_800B6BA4__Fv();
+    s32 func_8026178C(s32, u32);
     void func_802A293C(s32, s32);
     void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
@@ -36,7 +86,9 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() {
 // When the timer elapses and there are no active battles, the counter
 // decrements by 1 (if a qualifying party member is present) or by 2.
 void func_8018C610(UnkClass_8018C5FC* _this) {
-    if (!func_8009CF8C(0x3357)) return;
+    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cntlz = (u32)__cntlzw(cf8cVal);
+    if ((cntlz >> 5) != 0) return;
     if (cf::CfGameManager::func_800829B8()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
@@ -46,57 +98,57 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
     if (_this->unk4 >= lbl_eu_80667A34) {
         _this->unk4 = 0.0f;
 
-        // Count active battles from the battle manager's actor list
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
-        void** sentinel = (void**)((u8*)bm + 8);
+        // Count active battles by walking the battle manager's actor list.
+        // Retail hoists the head-sentinel into a register once (r5).
         s32 battleCount = 0;
-        for (void* node = *sentinel; node != sentinel; node = *(void**)node) {
+        s32 adjust = 0;
+        CMB_Bm_8018C5FC* bm = getInstance__Q22cf14CBattleManagerFv();
+        CMB_ListNode_8018C5FC* head = bm->listHead;
+        for (CMB_ListNode_8018C5FC* node = head->next;
+             node != head; node = node->next)
+        {
             battleCount++;
         }
 
-        s32 adjust;
         if (battleCount == 0) {
-            // Search the party member list for a qualifying character
-            void* list = func_800B6BA4__Fv();
-            void** startNodePtr = (void**)((u8*)list + 4);
-            void* curr = *startNodePtr;
+            // No active battle: scan the party member list for a qualifying
+            // character (virtual call via vtable+0x290 on the low-priority
+            // subobject) to decide whether to drop the gauge by 1 or 2. The
+            // loop reloads list->headNode at its bottom like retail.
+            CMB_PartyList_8018C5FC* list = func_800B6BA4__Fv();
             s32 found = 0;
-
-            while (curr != startNodePtr) {
-                void* cfObj = *(void**)((u8*)curr + 8);
-                if (cfObj != 0) {
-                    cfObj = (void*)((u8*)cfObj - 0x3e9c);
+            for (CMB_ListNode_8018C5FC* node = list->headNode->next;
+                 node != list->headNode; node = node->next)
+            {
+                CMB_CfObj_8018C5FC* obj = 0;
+                if (node->data != 0) {
+                    obj = &node->data->obj;
                 }
 
-                if (cfObj != 0) {
-                    void* vtable = *(void**)cfObj;
-                    typedef u32 (*VirtualFunc)(void*);
-                    VirtualFunc vf = (VirtualFunc)((void**)vtable)[0x290 / 4];
-                    u32 ret = vf(cfObj);
-
-                    if (ret != 0) {
-                        ret = vf(cfObj);
-                        ret = func_8026178C((void*)ret, 0x69);
-                    }
-
-                    if (ret != 0) {
-                        found = 1;
-                        break;
-                    }
+                s32 ret = obj->vtable->func_290(obj);
+                if (ret != 0) {
+                    ret = obj->vtable->func_290(obj);
+                    ret = func_8026178C(ret, 0x69);
                 }
-                curr = *(void**)curr;
+
+                if (ret != 0) {
+                    found = 1;
+                    break;
+                }
             }
-
             adjust = found ? -1 : -2;
-        } else {
-            adjust = 0;
         }
 
         if (adjust != 0) {
-            if (!func_8009CF8C(0x3357)) return;
+            // newVal is computed before the re-check guard (retail loads
+            // unk0+adjust into a reg ahead of the call); oldVal is reloaded
+            // only after the guard passes.
+            s32 newVal = _this->unk0 + adjust;
+            u32 cf8cVal2 = func_8009CF8C(0x3357);
+            u32 cntlz2 = (u32)__cntlzw(cf8cVal2);
+            if ((cntlz2 >> 5) != 0) return;
 
             s32 oldVal = _this->unk0;
-            s32 newVal = oldVal + adjust;
             _this->unk0 = newVal;
 
             if (newVal < 0) {
@@ -121,24 +173,26 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
 s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
     s32 newVal = _this->unk0 + delta;
 
-    if (func_8009CF8C(0x3357)) {
-        s32 oldVal = _this->unk0;
-        _this->unk0 = newVal;
+    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cntlz = (u32)__cntlzw(cf8cVal);
+    if ((cntlz >> 5) != 0) return _this->unk0;
 
-        if (newVal < 0) {
-            _this->unk0 = 0;
-        } else if (newVal > 0x12c) {
-            _this->unk0 = 0x12c;
-        }
+    s32 oldVal = _this->unk0;
+    _this->unk0 = newVal;
 
-        func_802A293C(_this->unk0, oldVal);
+    if (newVal < 0) {
+        _this->unk0 = 0;
+    } else if (newVal > 0x12c) {
+        _this->unk0 = 0x12c;
+    }
 
-        s32 clamped = _this->unk0;
-        if ((oldVal < 0x64 && clamped >= 0x64) ||
-            (oldVal < 0xc8 && clamped >= 0xc8))
-        {
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
-        }
+    func_802A293C(_this->unk0, oldVal);
+
+    s32 clamped = _this->unk0;
+    if ((oldVal < 0x64 && clamped >= 0x64) ||
+        (oldVal < 0xc8 && clamped >= 0xc8))
+    {
+        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
     return _this->unk0;
@@ -146,24 +200,26 @@ s32 func_8018C820(UnkClass_8018C5FC* _this, s32 delta) {
 
 // Set the party gauge counter to a value, clamp to [0, 300], and return the new value.
 s32 func_8018C8F4(UnkClass_8018C5FC* _this, s32 val) {
-    if (func_8009CF8C(0x3357)) {
-        s32 oldVal = _this->unk0;
-        _this->unk0 = val;
+    u32 cf8cVal = func_8009CF8C(0x3357);
+    u32 cntlz = (u32)__cntlzw(cf8cVal);
+    if ((cntlz >> 5) != 0) return _this->unk0;
 
-        if (val < 0) {
-            _this->unk0 = 0;
-        } else if (val > 0x12c) {
-            _this->unk0 = 0x12c;
-        }
+    s32 oldVal = _this->unk0;
+    _this->unk0 = val;
 
-        func_802A293C(_this->unk0, oldVal);
+    if (val < 0) {
+        _this->unk0 = 0;
+    } else if (val > 0x12c) {
+        _this->unk0 = 0x12c;
+    }
 
-        s32 clamped = _this->unk0;
-        if ((oldVal < 0x64 && clamped >= 0x64) ||
-            (oldVal < 0xc8 && clamped >= 0xc8))
-        {
-            func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
-        }
+    func_802A293C(_this->unk0, oldVal);
+
+    s32 clamped = _this->unk0;
+    if ((oldVal < 0x64 && clamped >= 0x64) ||
+        (oldVal < 0xc8 && clamped >= 0xc8))
+    {
+        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x64, 0, 0, lbl_eu_80667A38);
     }
 
     return _this->unk0;

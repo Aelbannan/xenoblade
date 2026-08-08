@@ -28,18 +28,19 @@ extern f32 lbl_eu_80667650;
 // Initializes all fields to 0, stores a float, sets singleton
 // ============================================================================
 extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
-    self->vtable = (void*)lbl_eu_80530A30;
+    f32 f = lbl_eu_80667650;
     self->flags = 0;
+    self->vtable = (void*)lbl_eu_80530A30;
     self->field_08 = 0;
     self->field_0C = 0;
-    self->ptr1 = nullptr;
-    self->ptr2 = nullptr;
     self->arenaStart = 0;
     self->arenaEnd = 0;
     self->arenaSize = 0;
     self->currentPos = 0;
-    self->someFloat = lbl_eu_80667650;
+    self->someFloat = f;
     lbl_eu_80664260 = self;
+    self->ptr1 = nullptr;
+    self->ptr2 = nullptr;
 }
 
 // ============================================================================
@@ -196,12 +197,12 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
 extern "C" void func_80167FFC(void* ptr) {
     cf::CREvtMem* mem = lbl_eu_80664260;
 
-    // Check if ptr is within the arena
-    if (ptr >= (void*)mem->arenaStart && ptr < (void*)mem->arenaEnd) {
-        return;  // Inside arena - do nothing
+    // If ptr lies inside the arena, it was arena-allocated - do nothing.
+    if (mem->arenaStart <= (u32)ptr && mem->arenaEnd > (u32)ptr) {
+        return;
     }
 
-    // Outside arena - deallocate
+    // Otherwise the pointer came from the heap - free it.
     if (ptr != nullptr) {
         deallocate__Q23mtl10MemManagerFPv(ptr);
     }

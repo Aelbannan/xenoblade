@@ -46,11 +46,13 @@ s32 SFD_SetVideoPts(void* self, void* pts, s32 size) {
     if (SFLIB_CheckHn(self)) {
         return SFLIB_SetErr(0, 0xFF000165);
     }
-    u8* aligned = (u8*)(((u32)pts + 7) & ~7);
-    s32 n = size - (s32)(aligned - (u8*)pts);
-    memset(aligned, 0, n);
+    s32 count;
+    u8* aligned;
+    aligned = (u8*)(((u32)pts + 7) & ~7);
+    count = size - (s32)(aligned - (u8*)pts);
+    memset(aligned, 0, count);
     *(u32*)((u8*)self + 0x1464) = (u32)aligned;
-    *(s32*)((u8*)self + 0x1468) = n / 16;
+    *(s32*)((u8*)self + 0x1468) = count / 16;
     *(u32*)((u8*)self + 0x146c) = 0;
     *(u32*)((u8*)self + 0x1470) = 0;
     *(u32*)((u8*)self + 0x1474) = 0;
@@ -139,21 +141,27 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
 }
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
-    s32 count = (s32)q->count;
-    u32 win_end = win_start + win_len;
-    s32 maxIdx = (s32)q->maxIdx;
-    s32 i = 0;
-    s32 start = (s32)q->start;
+    s32 start;
+    s32 i;
+    s32 maxIdx;
+    u32 win_end;
+    s32 count;
+    win_end = win_start + win_len;
+    count = (s32)q->count;
+    maxIdx = (s32)q->maxIdx;
+    start = (s32)q->start;
+    i = 0;
 
     for (; i < count; i++) {
-        SfdPtsEntry* e = &q->entries[start];
-        u32 entry_end = e->pos + e->size;
+        u32 entry_pos = q->entries[start].pos;
+        u32 entry_size = q->entries[start].size;
+        u32 entry_end = entry_pos + entry_size;
 
         if (entry_end <= win_end) {
-            if (e->pos <= target && target < entry_end)
+            if (entry_pos <= target && target < entry_end)
                 return (s32)i;
         } else {
-            if (e->pos <= target && target < win_end)
+            if (entry_pos <= target && target < win_end)
                 goto found;
             if (win_start <= target && target < entry_end - win_len) {
             found:

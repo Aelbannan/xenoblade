@@ -80,7 +80,8 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
 cf::CVS_THREAD_CHAIN* __ct__802A5830() try {
-    if (func_802A330C(1, 0) == NULL) {
+    CVoiceHandle* handleBuf = func_802A330C(1, 0);
+    if (handleBuf == NULL) {
         return NULL;
     }
     cf::CVS_THREAD_CHAIN* self = (cf::CVS_THREAD_CHAIN*)func_802A34E4(0x24);

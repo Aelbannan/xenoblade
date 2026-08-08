@@ -34,3 +34,18 @@ extern "C" short lbl_eu_80662D60[4];
 
 // Vtable for CVS_THREAD_VISION_TELL (0x1C = 28 bytes = 7 entries).
 extern "C" u32 lbl_eu_80539DD4[7];
+
+// C-linkage imports used by this TU's thread helpers / factory. Genuine
+// retail C/ABI symbols imported from sibling voice modules.
+extern "C" {
+    int           func_802A3E88(CVS_THREAD* self);
+    void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+    int           func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int           func_802A77E8(CVoiceHandle* handle);
+    int           func_802A7850(int iter);
+    int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    int           func_802A7EB0(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    CVoiceHandle* func_802A330C(int size, int align);
+    u8*           func_802A34E4(int size);
+    void          __ct__cf_CVS_THREAD();
+}

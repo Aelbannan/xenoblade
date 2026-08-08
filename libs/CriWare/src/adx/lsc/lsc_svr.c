@@ -1,164 +1,193 @@
+// LSC stream server entry: state machine that advances/binds stream entries.
+// The LSC handle holds a fixed ring of up-to-16 stat entries. The "entry" for
+// the active slot is address h + (index << 5); the index loops modulo 16.
+// Entry fields live at +0x3C..+0x54 inside each fixed-size slot.
+
 #include <harness_catalog.h>
 #include <string.h>
 
 extern void ADXSTM_StopNw(void *);
 extern void ADXSTM_ReleaseFileNw(void *);
-extern int ADXSTM_BindFileNw(void *, const char *, int, int, int);
-extern void ADXSTM_SetEos(void *, int);
-extern void ADXSTM_SetBufSize(void *, int, int);
-extern void ADXSTM_Seek(void *, int);
+extern int ADXSTM_BindFileNw(void *, const char *, s32, s32, s64);
+extern void ADXSTM_SetEos(void *, s32);
+extern void ADXSTM_SetBufSize(void *, s32, s32);
+extern void ADXSTM_Seek(void *, s32);
 extern void ADXSTM_Start(void *);
 extern int ADXSTM_GetStat(void *);
 extern int ADXSTM_Tell(void *);
 extern void LSC_CallErrFunc_(const char *, ...);
 extern void LSC_CallStatFunc(void *);
-extern int LSC_EntryFileRange(void *, const char *, int, int, int);
+extern int LSC_EntryFileRange(void *, const char *, s32, s32, s32);
 
 extern char lbl_eu_80518420[];
 
-/* LSC stream server entry: each entry is 0x20 (32) bytes
- *   +0x00: handle ptr? 
- *   +0x3C: filename string ptr (relative to lsc handle base)
- *   +0x40: filename checksum
- *   +0x44: offset low
- *   +0x48: offset high
- *   +0x4C: size (shifted by 11 for 64-bit)
- *   +0x50: state (0=idle, 1=binding, 2=done)
- *   +0x54: current position
- */
+/* One stream slot. Only the fields below +0x3C are referenced by this server. */
+struct LSC_Entry {
+    u8 pad[0x3C];      /* unreferenced slot header */
+    const char *fname; /* +0x3C */
+    u32 checksum;      /* +0x40 */
+    s32 offLo;         /* +0x44 */
+    s32 offHi;         /* +0x48 */
+    s32 size;          /* +0x4C */
+    s32 state;         /* +0x50: 0 idle, 1 binding, 2 done */
+    s32 pos;           /* +0x54 */
+};
 
-#define ENTRY_SIZE 0x20
+/* LSC stream-server handle. Header fields, then the ring of slots. */
+struct LSC_Hndl {
+    u8  pad0;      /* +0x00 */
+    s8  st;        /* +0x01 status */
+    u8  busy;      /* +0x02 */
+    s8  mode3;     /* +0x03 */
+    s8  paused;    /* +0x04 */
+    u8  pad1[0x0F];/* +0x05..0x13 */
+    s32 bufLo;     /* +0x14 */
+    s32 bufHi;     /* +0x18 */
+    u8  pad2[0x04];/* +0x1C */
+    s32 index;     /* +0x20 active slot index */
+    s32 count;     /* +0x24 remaining count */
+    void *stream;  /* +0x28 */
+    s32 curpos;    /* +0x2C */
+};
 
-/* Get entry pointer from handle and index */
-u8 *get_entry(u8 *h, int idx) {
-    return h + (idx << 5);
+/* Resolve the active slot: entry = h + (index << 5). */
+static inline struct LSC_Entry *lsc_entry(struct LSC_Hndl *h) {
+    return (struct LSC_Entry *)((char *)h + (h->index << 5));
 }
 
-/* Wait for a stream operation to complete, then bind next file */
-void lsc_StatWait(u8 *h);
-void lsc_StatEnd(u8 *h);
+void lsc_StatWait(struct LSC_Hndl *h);
+void lsc_StatEnd(struct LSC_Hndl *h);
 
-void lsc_StatWait(u8 *h) {
-    int retry = *(s32 *)(h + 0x24);
-    int idx = *(s32 *)(h + 0x20);
+/* Wait for a stream operation, then bind (or re-bind) the active file entry. */
+void lsc_StatWait(struct LSC_Hndl *h) {
+    struct LSC_Entry *e = lsc_entry(h);
+    const char *fname;
+    s32 flen, sum, i, cnt;
 
-    if (retry <= 0) return;
+    if (h->count <= 0) {
+        return;
+    }
 
-    ADXSTM_StopNw(*(void **)(h + 0x28));
-    ADXSTM_ReleaseFileNw(*(void **)(h + 0x28));
+    ADXSTM_StopNw(h->stream);
+    ADXSTM_ReleaseFileNw(h->stream);
 
-    {
-        u8 *entry = get_entry(h, idx);
-        const char *fname = *(const char **)(entry + 0x3C);
-        int flen = (int)strlen(fname);
-        int sum = 0;
-
-        if (flen > 0) {
-            int i;
-            for (i = 0; i < flen; i++) {
-                sum += (unsigned char)fname[i];
+    fname = e->fname;
+    flen = (s32)strlen(fname);
+    sum = 0;
+    i = 0;
+    if (flen > 0) {
+        cnt = (flen - 1) >> 3;
+        if (flen - 8 > 0) {
+            /* Unrolled checksum pass, 8 bytes per iteration. */
+            for (; cnt > 0; cnt--) {
+                sum += (u8)fname[i] + (u8)fname[i + 1] + (u8)fname[i + 2]
+                     + (u8)fname[i + 3] + (u8)fname[i + 4] + (u8)fname[i + 5]
+                     + (u8)fname[i + 6] + (u8)fname[i + 7];
+                i += 8;
             }
         }
-
-        if (sum != *(int *)(entry + 0x40)) {
-            LSC_CallErrFunc_(lbl_eu_80518420, fname);
-            return;
+        /* Remainder bytes. */
+        for (; i < flen; i++) {
+            sum += (u8)fname[i];
         }
-
-        {
-            int off_low = *(int *)(entry + 0x44);
-            int off_high = *(int *)(entry + 0x48);
-            int size = *(int *)(entry + 0x4C);
-            int size_hi = (size >> 31) & 1; /* sign extend */
-            int shift_lo = size << 11;
-            int shift_hi = (size_hi << 11) | ((unsigned int)size >> 21);
-            /* pack into single 64-bit value, pass high and low separately */
-            ADXSTM_BindFileNw(*(void **)(h + 0x28), fname, off_low, off_high, size);
-            ADXSTM_SetEos(*(void **)(h + 0x28), size);
-        }
-
-        *(int *)(h + 0x2C) = *(int *)(entry + 0x4C);
-        *(int *)(entry + 0x54) = 0;
-        h[0x02] = 0;
-
-        ADXSTM_SetBufSize(*(void **)(h + 0x28), *(int *)(h + 0x14), *(int *)(h + 0x18));
-        ADXSTM_Seek(*(void **)(h + 0x28), 0);
-        ADXSTM_Start(*(void **)(h + 0x28));
-
-        h[0x02] = 1;
-        *(int *)(entry + 0x50) = 1;
     }
+
+    if ((u32)sum != e->checksum) {
+        LSC_CallErrFunc_(lbl_eu_80518420, fname);
+        return;
+    }
+
+    ADXSTM_BindFileNw(h->stream, fname, e->offLo, e->offHi, (s64)e->size << 11);
+    ADXSTM_SetEos(h->stream, e->size);
+
+    h->curpos = e->size;
+    e->pos = 0;
+    h->busy = 0;
+
+    ADXSTM_SetBufSize(h->stream, h->bufLo, h->bufHi);
+    ADXSTM_Seek(h->stream, 0);
+    ADXSTM_Start(h->stream);
+
+    h->busy = 1;
+    e->state = 1;
 }
 
-/* End a stat operation: advance to next entry */
-void lsc_StatEnd(u8 *h) {
-    int idx, count;
+/* End a stat operation: advance to the next slot and start it if eligible. */
+void lsc_StatEnd(struct LSC_Hndl *h) {
     const char *fname = NULL;
-    int off_low = 0, off_high = 0, size = 0;
+    s32 offLo = 0, offHi = 0, size = 0, cnt, idx, hb, rot;
 
-    if (*(void **)(h + 0x28) == NULL) goto skip_state;
-
-    if (h[0x03] == 1) {
-        u8 *entry = get_entry(h, *(int *)(h + 0x20));
-        fname = *(const char **)(entry + 0x3C);
-        off_low = *(int *)(entry + 0x44);
-        off_high = *(int *)(entry + 0x48);
-        size = *(int *)(entry + 0x4C);
+    if (h->stream == NULL) {
+        return;
     }
 
-    /* advance to next entry (circular, 4-bit) */
-    idx = *(int *)(h + 0x20);
-    count = *(int *)(h + 0x24) - 1;
-    idx = (idx + 1) & 0x0FFFFFFF;
-    *(int *)(h + 0x24) = count;
-    *(int *)(h + 0x20) = idx;
+    if (h->mode3 == 1) {
+        struct LSC_Entry *e = lsc_entry(h);
+        fname = e->fname;
+        offLo = e->offLo;
+        offHi = e->offHi;
+        size = e->size;
+    }
 
-    if (count <= 0) {
+    /* Advance slot index (circular over 16) and decrement the count. */
+    idx = h->index + 1;
+    cnt = h->count - 1;
+    rot = (idx << 28) & 0xF0000000;
+    h->count = cnt;
+    hb = idx >> 31;
+    rot = rot - hb;
+    h->index = ((rot << 4) | ((u32)rot >> 28)) + hb;
+
+    if (cnt <= 0) {
         LSC_CallStatFunc(h);
-        h[0x01] = 1;
+        h->st = 1;
     }
 
-skip_state:
-    if (h[0x03] == 1) {
-        LSC_EntryFileRange(h, fname, off_low, off_high, size);
+    if (h->mode3 == 1) {
+        LSC_EntryFileRange(h, fname, offLo, offHi, size);
     }
 }
 
-/* Execute handler for active stream */
-void lsc_ExecHndl(u8 *h) {
-    if (h[0x04] == 1) return;
-    if (h[0x01] != 2) return;
-    if (*(int *)(h + 0x24) <= 0) return;
+/* Handle status of the active stream and drive the state machine. */
+void lsc_ExecHndl(struct LSC_Hndl *h) {
+    struct LSC_Entry *e;
+    void *stream;
 
-    {
-        u8 *entry = get_entry(h, *(int *)(h + 0x20));
+    if (h->paused == 1) {
+        return;
+    }
+    if (h->st != 2) {
+        return;
+    }
+    if (h->count <= 0) {
+        return;
+    }
 
-        if (*(int *)(entry + 0x50) == 1) {
-            void *stream = *(void **)(h + 0x28);
-            if (stream == NULL) {
-                LSC_CallErrFunc_(lbl_eu_80518420 + 0x40);
-            } else {
-                int stat = ADXSTM_GetStat(stream);
-                switch (stat) {
-                case 4: /* finished */
-                    h[0x01] = 3;
-                    break;
-                case 2: /* paused */
-                    *(int *)(entry + 0x54) = ADXSTM_Tell(stream);
-                    break;
-                case 3: /* completed */
-                    *(int *)(entry + 0x54) = *(int *)(h + 0x2C);
-                    *(int *)(entry + 0x50) = 2;
-                    break;
-                }
+    e = lsc_entry(h);
+    if (e->state == 1) {
+        stream = h->stream;
+        if (stream == NULL) {
+            LSC_CallErrFunc_(&lbl_eu_80518420[0x40]);
+        } else {
+            int stat = ADXSTM_GetStat(stream);
+            if (stat == 4) {
+                h->st = 3;
+            } else if (stat == 2) {
+                e->pos = ADXSTM_Tell(h->stream);
+            } else if (stat == 3) {
+                e->pos = h->curpos;
+                e->state = 2;
             }
         }
+    }
 
-        if (*(int *)(entry + 0x50) == 2) {
-            lsc_StatEnd(h);
-        }
-        if (*(int *)(entry + 0x50) == 0) {
-            lsc_StatWait(h);
-        }
+    e = lsc_entry(h);
+    if (e->state == 2) {
+        lsc_StatEnd(h);
+    }
+
+    e = lsc_entry(h);
+    if (e->state == 0) {
+        lsc_StatWait(h);
     }
 }

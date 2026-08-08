@@ -10,10 +10,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5846 |
-| extern "C" declarations (non-lbl_*, imports) | 1515 |
-| extern "C" definitions (forced names) | 2624 |
-| `self`/register-style params | 4349 |
+| extern "C" (total lines) | 5848 |
+| extern "C" declarations (non-lbl_*, imports) | 1516 |
+| extern "C" definitions (forced names) | 2625 |
+| `self`/register-style params | 4351 |
 | `void*` (params + locals) | 4969 |
 | raw pointer offset arithmetic | 3425 |
 | deref-through-cast arithmetic | 1403 |
@@ -313,7 +313,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CSystemWindow.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 0 | 13 | 7 | 15 | 9 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CTalkWindow.cpp | 0 | 6 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CTaskGame.cpp | 0 | 5 | 11 | 15 | 2 | 1 | 0 | 5 | 0 |
+| src/kyoshin/CTaskGame.cpp | 1 | 6 | 13 | 15 | 2 | 1 | 0 | 5 | 0 |
 | src/kyoshin/CTaskGameEff.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGameEvt.cpp | 1 | 5 | 7 | 7 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGamePic.cpp | 0 | 5 | 6 | 6 | 1 | 1 | 0 | 0 | 0 |
@@ -1915,10 +1915,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CTaskGame.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_def": 6,
   "ptr_arith": 2,
   "rn_params": 5,
-  "self_params": 11,
+  "self_params": 13,
   "void_ptr": 15
  },
  "src/kyoshin/CTaskGameEff.cpp": {

@@ -49,9 +49,8 @@ public:
     static bool func_800426F0();
     void func_80042710();
     void func_80042720();
-    static bool func_8004368C();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
-    s32 callStubReturnZero_800436A8();
+    s32 func_8004368C();
 
     virtual void Term();
     void stub_80040A3C();
@@ -59,7 +58,6 @@ public:
     void setFlag_200(bool enabled, unsigned int mode);
     void setFlag_400(int enabled, unsigned int mode, unsigned int value);
     void setFlag_100000(int enabled, int unused, unsigned int value);
-    void setFlag_1000000(int enabled);
     void setFlag_1000(int value);
     virtual void ITitleMenu__UnkVirtualFunc1();
     virtual void IErrMesWinSel__UnkVirtualFunc1();

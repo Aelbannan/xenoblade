@@ -204,16 +204,13 @@ void CTaskGame::setFlag_100000(int enabled, int unused, unsigned int value) {
     unkFC = value;
 }
 void CTaskGame_stub_8004350C(){}
-void CTaskGame::setFlag_1000000(int enabled) {
-    unsigned int value = unk68;
-    value &= ~0x00000100u;
-    unk68 = value;
+extern "C" void func_8004350C(CTaskGame* self, int enabled) {
+    unsigned int flags = self->unk68 & ~0x00000100u;
+    self->unk68 = flags;
     if (enabled != 0) {
-        value |= 0x01000000u;
-        unk68 = value;
+        self->unk68 = flags | 0x00800000u;
     } else {
-        value &= ~0x01000000u;
-        unk68 = value;
+        self->unk68 = flags & ~0x00800000u;
     }
 }
 void CTaskGame_stub_80043564(){}
@@ -222,13 +219,13 @@ void func_80039364__5CGameFv();
 void CTaskGame_callCGameFunc() {
     func_80039364__5CGameFv();
 }
-s32 CTaskGame_stubReturnZero_800436A8();
-s32 CTaskGame::callStubReturnZero_800436A8() {
+extern "C" s32 func_800436A8(CTaskGame* self);
+s32 CTaskGame::func_8004368C() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) {
         return 0;
     }
-    return CTaskGame_stubReturnZero_800436A8();
+    return func_800436A8(lbl_eu_80663D18);
 }
 // Object pointed to by CTaskGame::unkF0 has a flag byte at offset 0xEA
 struct CTaskGameFlag1000Object {

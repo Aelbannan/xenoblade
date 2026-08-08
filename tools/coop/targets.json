@@ -2864,7 +2864,7 @@
       "size": "0x48",
       "unit": "kyoshin/plugin/ocMsg",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -2878,15 +2878,7 @@
       "source": "src/kyoshin/plugin/ocMsg.cpp",
       "instruction_match": 98.056,
       "equivalence_status": "equivalent",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T03:47:28.715472+00:00",
-        "allowed_paths": [
-          "src/kyoshin/plugin/ocMsg.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8003aab4",
@@ -437840,7 +437832,7 @@
       "size": "0x40",
       "unit": "nw4r/src/snd/snd_MemorySoundArchive",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_MemorySoundArchive.cpp",
@@ -437852,15 +437844,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_MemorySoundArchive.s",
       "abi_helper_calls": [],
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T03:31:29.713820+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/snd/snd_MemorySoundArchive.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80419900",
@@ -509864,7 +509848,7 @@
       "size": "0x54",
       "unit": "monolib/src/scn/CScnIdMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -509878,7 +509862,15 @@
       "source": "libs/monolib/src/scn/CScnIdMan.cpp",
       "instruction_match": 88.762,
       "equivalence_status": "inconclusive_unvalidated_callee",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-63782",
+        "claimed_at": "2026-08-08T04:35:07.303933+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScnIdMan.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804a26cc",

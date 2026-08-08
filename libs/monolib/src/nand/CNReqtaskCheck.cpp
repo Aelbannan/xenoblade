@@ -10,7 +10,6 @@
 // linkage for exactly those names (exempt in PLAN.md §17.6). Everything that
 // is meaningful C++ (the task data layout) is expressed as a real struct.
 #include <types.h>
-#include <string.h>
 
 // Vtable of the CNReqtaskCheck task. Its layout is unknown (we only ever
 // install it / take its address), so it is used as an opaque pointer type.
@@ -105,6 +104,12 @@ ret0:
 // readable 20-byte folded-store endpoint for all five monolib NAND sinits.
 // Returning p keeps &lbl_eu_80665A00 live in r3 (closest match). No assembly
 // is added per policy.
+//
+// This same ceiling accounts for the TU's one unmatched data slot (data 83.3%):
+// the retail .o registers `sinit_804DB420` in `.ctors`, but as a plain free
+// function MWCC emits no `.ctors` entry. Producing that entry requires the real
+// `__sinit_` static-initializer machinery (unreachable without the `b .+4`
+// artifact), so the `.ctors` data residual is deferred together with the code.
 CNReqtaskCheckVtbl** sinit_804DB420() {
     CNReqtaskCheckVtbl** p = &lbl_eu_80665A00;
     CNReqtaskCheckVtbl* v = (CNReqtaskCheckVtbl*)lbl_eu_8056FDE8;

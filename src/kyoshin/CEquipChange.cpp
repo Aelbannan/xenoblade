@@ -11,22 +11,6 @@
 extern float lbl_eu_806682A8;
 extern char lbl_eu_80508168[];
 
-// Retail emits these as C-style (unmangled) symbols, so reference them with C
-// linkage. func_801D2ED8/CEquipItemBox gates take the object and return status.
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" u8 func_801D2ED8(CBaseCur*);
-extern "C" int func_802865A0(CEquipItemBox* box);
-extern "C" int func_802865A8(CEquipItemBox* box);
-extern "C" int func_80286650(CEquipItemBox* box);
-extern "C" int func_80286698(CEquipItemBox* box);
-extern "C" int func_802866A0(CEquipItemBox* box);
-extern "C" int func_8028652C(CEquipItemBox* box);
-extern "C" int func_80287EE8(CEquipItemBox* box);
-extern "C" void func_802870DC(CEquipItemBox* box);
-extern "C" void func_802040FC(CEquipChange* self);
-extern "C" void func_801D4054(CItemBoxInfo* info);
-extern "C" void func_802861A8(CEquipItemBox* box);
-extern "C" u8 code80135FDC_getByte_64077();
 void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
 void func_801D4260(CItemBoxInfo* info, u8 arg2);
 void func_80138078__FUl(u32 op);
@@ -40,22 +24,10 @@ void func_802873D8(CEquipItemBox* box);
 int func_80286698(CEquipItemBox* box);
 void func_80287F04(CEquipItemBox* box, u16 arg2, void* arg3, u16 arg4);
 void func_801D216C(void* obj, int arg);
-extern "C" void func_802042C0(CEquipChange* self);
-extern "C" void* func_8009EC9C(u32);
-extern "C" void* func_80157C4C(u32 index, s16 value);
 u32 func_801392B4(u32);
 void* func_802052A8(CEquipChange* self);
 int func_802031A0(CEquipChange* self);
 void func_80202EB4(CEquipChange* self, u8 cat);
-
-// Sub-object destructors referenced by ~CEquipChange. Defined in CCur.cpp /
-// CItemBoxInfo.cpp / CEquipItemBox.cpp.
-extern "C" void* __dt__7CSubCurFv(CBaseCur* _this, int flags);
-extern "C" void* __dt__6CCur14Fv(CBaseCur* _this, int flags);
-extern "C" void* __dt__6CCur15Fv(CBaseCur* _this, int flags);
-extern "C" void* __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* _this, int flags);
-extern "C" void* __dt__12CItemBoxInfoFv(CItemBoxInfo* _this, int flags);
-extern "C" void* __dt__13CEquipItemBoxFv(CEquipItemBox* _this, int flags);
 
 // Target us-80203cec: destructor. Destroys sub-objects at fixed member
 // offsets (descending layout order), then frees the top-level object when
@@ -410,8 +382,6 @@ void func_8020404C(CEquipChange* self) {
         func_802040FC(self);
     }
 }
-
-extern "C" void func_802042C0(CEquipChange* self);
 
 // Target us-80205d98: when both file handles (0x34, 0x30) are set, load the
 // retail bind data and clear the cursor-run flag 0x98.

@@ -261,6 +261,65 @@ def parse_qualifier_class(mangled: str) -> str | None:
     return tokens[-1] if tokens else None
 
 
+def first_mention_is_read(body: list[tuple[str, str]], reg: str) -> bool | None:
+    """Is the register's first use in the function a READ (i.e. a consumed param)?
+    Returns None if the register never appears."""
+    READ_ONLY = ("stw", "stb", "sth", "stfs", "stfd", "stwx", "cmpwi", "cmpw",
+                 "cmplwi", "cmplw", "cmp", "mtctr", "mtlr", "bctrl", "bl", "bc")
+    for mnem, ops in body:
+        if not re.search(rf"\b{reg}\b", ops):
+            continue
+        if mnem in READ_ONLY:
+            return True  # store/cmp/ctrl: register is read
+        op = [x.strip().rstrip(",") for x in ops.replace("  ", " ").split(" ") if x.strip()]
+        if op and op[0] == reg:
+            # write to reg — but read-modify-write (reg also a source, e.g.
+            # `slwi r3, r3, N`, `add r3, r3, r0`) still consumes the input value
+            if len(op) > 1 and any(o == reg for o in op[1:]):
+                return True
+            return False
+        return True
+    return None
+
+
+def callee_params(body: list[tuple[str, str]]) -> dict:
+    """Binary param evidence: which GPR/FPR arguments the callee consumes.
+    Returns {'gprs': [(reg, class)], 'fprs': [reg...]} for consumed registers.
+    Class: 'ptr' (deref base), 'int' (arithmetic/cmp), 'bool' (only 0/1 cmp),
+    'opaque' (only moved/passed on)."""
+    if not body:
+        return {"gprs": [], "fprs": []}
+    gprs, fprs = [], []
+    for n in range(3, 11):
+        reg = f"r{n}"
+        if first_mention_is_read(body, reg) is True:
+            is_ptr = any(re.search(rf"\(({reg})\)", f"{m} {o}") for m, o in body)
+            is_int = any(
+                m in INTEGER_OPS or m.startswith("cmp")
+                and re.search(rf"\b{reg}\b", o)
+                for m, o in body
+            )
+            # bool: compared only against 0/1
+            cmps = [
+                o for m, o in body
+                if m.startswith("cmp") and re.search(rf"\b{reg}\b", o)
+            ]
+            if is_ptr:
+                cls = "ptr"
+            elif cmps and all(re.search(r"0x[01]$", o) for o in cmps):
+                cls = "bool"
+            elif is_int:
+                cls = "int"
+            else:
+                cls = "opaque"
+            gprs.append((reg, cls))
+    for n in range(1, 5):
+        reg = f"f{n}"
+        if first_mention_is_read(body, reg) is True:
+            fprs.append(reg)
+    return {"gprs": gprs, "fprs": fprs}
+
+
 def classify_symbol(symbol: str, idx: AsmIndex, class_size: int = 0,
                     symbol_addr: int | None = None,
                     data_hits: dict[int, list[tuple[str, int]]] | None = None) -> dict:
@@ -275,6 +334,7 @@ def classify_symbol(symbol: str, idx: AsmIndex, class_size: int = 0,
         rel, fs, fe = fr
         body = idx.files[rel][fs:fe]
     usage = callee_r3_usage(body) if body else {}
+    params = callee_params(body) if body else {"gprs": [], "fprs": []}
 
     # ---- verdict rules (verified tiered classifier) ----
     # N1: constant in r3 (NON-ZERO, non-address) at any call site — zero is
@@ -327,6 +387,7 @@ def classify_symbol(symbol: str, idx: AsmIndex, class_size: int = 0,
         "call_sites": len(calls),
         "r3_provenance": dict(kinds),
         "callee": usage,
+        "binary_params": params,
         "class_size": class_size,
         "verdict": verdict,
         "vtable_hints": vtable_hints,
@@ -344,3 +405,98 @@ def symbol_address(symbol: str, region: str = "us") -> int | None:
         if m:
             return int(m.group(1), 16)
     return None
+
+
+def find_class_tu(class_name: str) -> Path | None:
+    """Locate the class's source TU (e.g. CfGameManager -> src/kyoshin/cf/CfGameManager.cpp)."""
+    for base in (ROOT / "src", ROOT / "libs"):
+        hits = sorted(base.rglob(f"{class_name}.cpp"))
+        if hits:
+            return hits[0]
+    # fall back: file defining ClassName:: members
+    for base in (ROOT / "src", ROOT / "libs"):
+        for f in base.rglob("*.cpp"):
+            try:
+                if re.search(rf"{class_name}::\w+\s*\(", f.read_text(encoding="utf-8", errors="replace")[:40000]):
+                    return f
+            except OSError:
+                continue
+    return None
+
+
+TRICK_RE = re.compile(
+    r"this\s*(?:==|!=)\s*(?:nullptr|NULL|0)"
+    r"|(?:r3|r4|r5|r6)\s*==\s*0"
+)
+
+
+def fake_members(class_name: str) -> list[tuple[str, int, str]]:
+    """Source-side scan: member definitions using the 'this == nullptr' register-read
+    trick (a recovered-as-member function that actually takes args in r3..)."""
+    tu = find_class_tu(class_name)
+    if tu is None:
+        return []
+    hits = []
+    for i, line in enumerate(tu.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        if TRICK_RE.search(line) and re.search(rf"{class_name}::\w+\s*\(", line) is None:
+            # trick inside a member body — find the enclosing member def line
+            hits.append((str(tu.relative_to(ROOT)), i, line.strip()))
+    return hits
+
+
+def header_drift(class_name: str, idx: AsmIndex) -> list[dict]:
+    """Header declarations contradicted by binary evidence (header-as-error-surface).
+    For each header member decl, classify the retail symbol; report where the binary
+    disagrees with the header's declared form (static-ness / param count)."""
+    hdr = None
+    for base in (ROOT / "include", ROOT / "src", ROOT / "libs"):
+        hits = sorted(base.rglob(f"{class_name}.hpp"))
+        if hits:
+            hdr = hits[0]
+            break
+    if hdr is None:
+        return []
+    out = []
+    for i, line in enumerate(hdr.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        m = re.search(r"(static\s+)?[\w:<>*&]+\s+(func_[0-9A-Fa-f]{8})\s*\(", line)
+        if not m:
+            continue
+        is_static = bool(m.group(1))
+        base = m.group(2)
+        p_open = line.find("(")
+        p_close = line.rfind(")")
+        params_hdr = line[p_open + 1:p_close] if p_open >= 0 and p_close > p_open else ""
+        nparams_hdr = 0 if params_hdr.strip() == "" else params_hdr.count(",") + 1
+        # find the retail symbol by name prefix
+        retail = None
+        sym_path = ROOT / "config" / "us" / "symbols.txt"
+        for sl in sym_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if sl.startswith(base):
+                retail = sl.split("=")[0].strip()
+                break
+        if retail is None:
+            continue
+        r = classify_symbol(retail, idx)
+        bp = r.get("binary_params", {})
+        nparams_bin = len(bp.get("gprs", [])) + len(bp.get("fprs", []))
+        v = r["verdict"]
+        confident_not_member = v.startswith("NOT non-static member")
+        confident_member = "possible member" in v or "possible virtual" in v
+        drift = []
+        if is_static and confident_member:
+            drift.append("header declares static but binary shows this-taking")
+        if not is_static and confident_not_member:
+            drift.append("header declares member but binary proves no-this")
+        if nparams_bin and nparams_bin != nparams_hdr:
+            drift.append(f"header {nparams_hdr} params, binary {nparams_bin}")
+        if drift:
+            out.append({
+                "header": str(hdr.relative_to(ROOT)),
+                "line": i,
+                "decl": line.strip(),
+                "retail": retail,
+                "binary_params": bp,
+                "verdict": v,
+                "drift": drift,
+            })
+    return out

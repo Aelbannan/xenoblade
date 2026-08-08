@@ -471,12 +471,19 @@ def cmd_member_check(args: argparse.Namespace) -> int:
     for r in results:
         v = r["verdict"].split("(")[0].strip()
         verdict_counts[v] += 1
+        bp = r.get("binary_params", {})
+        gpr = ",".join(f"{reg}:{cls}" for reg, cls in bp.get("gprs", []))
+        fpr = ",".join(bp.get("fprs", []))
+        params_str = (gpr + (" + fpr:" + fpr if fpr else "")) or "-"
         print(f"{r['symbol']}  ({r['call_sites']} calls)")
         prov = ",".join(f"{k}:{n}" for k, n in sorted(r["r3_provenance"].items()))
         print(f"    prov[{prov}] deref={r['callee'].get('deref')} "
               f"maxoff={r['callee'].get('deref_max_offset', 0):#x} "
               f"intonly={r['callee'].get('integer_only')} vtbl={r['callee'].get('vtable_dispatch')}")
+        print(f"    binary params: {params_str}")
         print(f"    => {r['verdict']}")
+        if r["verdict"].startswith("NOT non-static member"):
+            print(f"    convention ({args.qualifier_policy}): {_qualifier_proposal(r, args.qualifier_policy)}")
         if r.get("vtable_hints"):
             print(f"    [data-pointer hints] "
                   + "; ".join(f"{o} x{f}" for o, f in r["vtable_hints"][:4]))
@@ -491,6 +498,51 @@ def cmd_member_check(args: argparse.Namespace) -> int:
             json.dumps(results, indent=1, default=str) + "\n"
         )
         print(f"\nwrote {args.json}")
+    return 0
+
+
+def _qualifier_proposal(r: dict, policy: str) -> str:
+    """Convention-only static-vs-free labeling. No independent evidence exists;
+    this applies the documented policy and labels it as such."""
+    bp = r.get("binary_params", {})
+    nparams = len(bp.get("gprs", [])) + len(bp.get("fprs", []))
+    header_static = "?"  # header input is convention, not evidence — resolved by callers
+    if policy == "free":
+        return f"free-function (policy=free; params={nparams}) — NO independent evidence, convention only"
+    if policy == "keep-class":
+        return f"static-member-candidate (policy=keep-class; params={nparams}) — NO independent evidence, convention only"
+    return (f"proposal: static-member-candidate OR free-function (params={nparams}) — "
+            f"NO independent evidence exists; pick a convention (header static decls are "
+            f"convention input, not evidence)")
+
+
+def cmd_fake_members(args: argparse.Namespace) -> int:
+    from tools.coop import member_check as mc
+
+    hits = mc.fake_members(args.class_name)
+    print(f"fake-member defs (this==nullptr / register-read trick) for {args.class_name}: {len(hits)}")
+    for rel, ln, line in hits:
+        print(f"  {rel}:{ln}  {line}")
+    if not hits:
+        print("  (none — check the class TU exists and the trick pattern)")
+    return 0
+
+
+def cmd_header_drift(args: argparse.Namespace) -> int:
+    from tools.coop import member_check as mc
+
+    print("indexing retail asm...", file=sys.stderr)
+    idx = mc.AsmIndex()
+    drifts = mc.header_drift(args.class_name, idx)
+    print(f"header-vs-binary drift for {args.class_name}: {len(drifts)}")
+    for d in drifts:
+        bp = d["binary_params"]
+        gpr = ",".join(f"{reg}:{cls}" for reg, cls in bp.get("gprs", []))
+        print(f"  {d['header']}:{d['line']}  {d['decl']}")
+        print(f"      retail {d['retail']}  params[{gpr}]  {d['verdict']}")
+        print(f"      drift: {'; '.join(d['drift'])}")
+    if not drifts:
+        print("  (no drift found)")
     return 0
 
 
@@ -535,6 +587,25 @@ def main(argv: list[str] | None = None) -> int:
         help="cap on --all output (summary still prints full counts)",
     )
     p_mc.add_argument("--json", metavar="PATH", help="write verdicts JSON")
+    p_mc.add_argument(
+        "--qualifier-policy",
+        choices=("proposal", "free", "keep-class"),
+        default="proposal",
+        help="static-vs-free convention policy (no independent evidence exists; "
+        "proposal labels both sides, free drops the qualifier, keep-class keeps it)",
+    )
+
+    p_fm = sub.add_parser(
+        "fake-members",
+        help="source scan: member defs using the 'this == nullptr' register-read trick",
+    )
+    p_fm.add_argument("class_name", metavar="class", help="class name (e.g. CfGameManager)")
+
+    p_hd = sub.add_parser(
+        "header-drift",
+        help="header declarations contradicted by binary evidence (header-as-error-surface)",
+    )
+    p_hd.add_argument("class_name", metavar="class", help="class name (e.g. CfGameManager)")
 
     args = parser.parse_args(argv)
     args.regions = ["us", "eu"] if args.region == "us" else [args.region]
@@ -544,6 +615,10 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_plan(args)
     if args.cmd == "member-check":
         return cmd_member_check(args)
+    if args.cmd == "fake-members":
+        return cmd_fake_members(args)
+    if args.cmd == "header-drift":
+        return cmd_header_drift(args)
     parser.error(f"unknown subcommand: {args.cmd}")
     return 2
 

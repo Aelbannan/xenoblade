@@ -139,5 +139,99 @@ class QualifierTest(unittest.TestCase):
         )
 
 
+class ParamExtractionTest(unittest.TestCase):
+    F = "/* 80070000 00000000  00 00 00 00 */\t"
+
+    def _fn(self, name: str, insns: str) -> mc.AsmIndex:
+        return _mk_asm(f".fn {name}, global\n{insns}.endfn {name}\n")
+
+    def _params(self, idx: mc.AsmIndex, name: str) -> dict:
+        rel, fs, fe = idx.fn_range[name]
+        return mc.callee_params(idx.files[rel][fs:fe])
+
+    def test_bitpack_two_ints(self):
+        idx = self._fn("f", f"{self.F}slwi r3, r3, 27\n{self.F}slwi r0, r4, 20\n{self.F}or r3, r3, r0\n{self.F}blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [("r3", "int"), ("r4", "int")])
+
+    def test_ptr_and_index(self):
+        idx = self._fn("f", f"{self.F}clrlwi r0, r4, 16\n{self.F}add r3, r3, r0\n{self.F}lhz r3, 0x2(r3)\n{self.F}blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [("r3", "ptr"), ("r4", "int")])
+
+    def test_bool_flag(self):
+        idx = self._fn("f", f"{self.F}cmpwi r3, 0x0\n{self.F}bne .L1\n{self.F}.L1: blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [("r3", "bool")])
+
+    def test_two_ptrs(self):
+        idx = self._fn("f", f"{self.F}lwz r5, 0x0(r3)\n{self.F}lwz r0, 0x0(r4)\n{self.F}subf r3, r5, r0\n{self.F}blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [("r3", "ptr"), ("r4", "ptr")])
+
+    def test_no_params(self):
+        idx = self._fn("f", f"{self.F}lis r3, lbl_eu_80571758@ha\n{self.F}addi r3, r3, lbl_eu_80571758@l\n{self.F}blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [])
+
+    def test_first_write_is_not_param(self):
+        idx = self._fn("f", f"{self.F}li r3, 0x0\n{self.F}blr\n")
+        p = self._params(idx, "f")
+        self.assertEqual(p["gprs"], [])
+
+
+class FakeMemberTest(unittest.TestCase):
+    def test_detects_null_this_trick(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "src"
+            src.mkdir()
+            (src / "CFake.hpp").write_text("class CFake {};")
+            (src / "CFake.cpp").write_text(
+                "#include \"CFake.hpp\"\n"
+                "void CFake::func_8007C140() {\n"
+                "    if (this == nullptr) { lbl_eu_80663E24 |= 8; }\n"
+                "}\n"
+            )
+            old_src = mc.ROOT / "src"
+            # point find_class_tu at the temp tree via ROOT override
+            saved = mc.ROOT
+            mc.ROOT = Path(td)
+            try:
+                hits = mc.fake_members("CFake")
+            finally:
+                mc.ROOT = saved
+            self.assertEqual(len(hits), 1)
+            self.assertIn("this == nullptr", hits[0][2])
+
+
+class HeaderDriftTest(unittest.TestCase):
+    def test_drift_detection(self):
+        # header says no-arg non-static member; binary proves bool param + no this
+        idx = _mk_asm(
+            fn("caller", f"{F}li r3, 0x1\n{F}bl func_8007C140__Q22cf13CfGameManagerFv\n")
+            + fn("func_8007C140__Q22cf13CfGameManagerFv", f"{F}cmpwi r3, 0x0\n{F}blr\n")
+        )
+        with tempfile.TemporaryDirectory() as td:
+            inc = Path(td) / "include"
+            inc.mkdir(parents=True)
+            (inc / "CfGameManager.hpp").write_text(
+                "class CfGameManager {\npublic:\n    void func_8007C140();\n};\n"
+            )
+            cfg = Path(td) / "config" / "us"
+            cfg.mkdir(parents=True)
+            (cfg / "symbols.txt").write_text(
+                "func_8007C140__Q22cf13CfGameManagerFv = .text:0x8007CADC; // type:function size:0x48 scope:global align:4\n"
+            )
+            saved = mc.ROOT
+            mc.ROOT = Path(td)
+            try:
+                drifts = mc.header_drift("CfGameManager", idx)
+            finally:
+                mc.ROOT = saved
+            self.assertEqual(len(drifts), 1)
+            self.assertTrue(any("proves no-this" in d for d in drifts[0]["drift"]))
+            self.assertTrue(any("binary 1" in d for d in drifts[0]["drift"]))
+
+
 if __name__ == "__main__":
     unittest.main()

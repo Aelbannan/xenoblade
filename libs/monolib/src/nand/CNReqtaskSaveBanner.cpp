@@ -32,14 +32,18 @@ struct CNandTask {                       // NAND task/alloc block
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;  // installed task vtable pointer
+    // All of these are external data objects owned by the retail image at the
+    // absolute addresses below; this unit only references (or, for the vtable
+    // slot, writes to) them. Declared without a definition so MWCC does not
+    // emit a local .bss slot or a __sinit_ constructor for the FixStr cache.
+    extern CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;  // installed task vtable pointer
     extern unsigned char lbl_eu_80570358[];    // vtable data - array type prevents sda21
-    u8  lbl_eu_806659D0;        // global NAND "busy" flag
-    s32 lbl_eu_806659D4;        // global NAND result/error latch
-    u8  lbl_eu_80665A94;        // banner-path string cache init flag
-    s32 lbl_eu_80663CD0;        // NAND banner meta: offset
-    s32 lbl_eu_80663CD4;        // NAND banner meta: length
-    ml::FixStr<32> lbl_eu_80661850;  // banner path string cache
+    extern u8  lbl_eu_806659D0;        // global NAND "busy" flag
+    extern s32 lbl_eu_806659D4;        // global NAND result/error latch
+    extern u8  lbl_eu_80665A94;        // banner-path string cache init flag
+    extern s32 lbl_eu_80663CD0;        // NAND banner meta: offset
+    extern s32 lbl_eu_80663CD4;        // NAND banner meta: length
+    extern ml::FixStr<32> lbl_eu_80661850;  // banner path string cache
     extern const char lbl_eu_805248A8[];  // path format string
 
     u32* func_804DA98C(u8 arg);         // NAND banner-id primitive

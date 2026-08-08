@@ -538846,7 +538846,7 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNReqtaskSaveBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNReqtaskSaveBanner.cpp",
-      "instruction_match": 98.214,
+      "instruction_match": 100.0,
       "source_present": true,
       "equivalence_status": "equivalent"
     },

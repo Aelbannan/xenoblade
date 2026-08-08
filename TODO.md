@@ -1,0 +1,7 @@
+- [ ] Move all classes and structs into headers
+- [ ] Get rid of all extern "C" imports
+- [ ] Get rid of void *
+- [ ] Convert possible member functions (symbols.txt)
+- [ ] Convert possible static functions
+- [ ] Get rid of pointer math
+- [ ] Start renaming functions and labels

@@ -17,17 +17,17 @@ void AHXSBF_Synthesize(s32 *base, s32 pcm, s32 idx, s32 *out) {
     s32 masked = (p[1] - 0x40) & 0x3FF;
     p[1] = masked;
 
-    /* read after the store: p[1] (= base[idx+1]) may alias base[3] */
+    /* read after the store: p[1] (= base[idx+1]) is distinct from base[3] */
     s32 coeff = base[3];
 
     if ((pcm & 0x1F) != 0 || (coeff & 0x1F) != 0) {
-        /* gate: spinloop while pcm/coeff pointers are misaligned */
+        /* misalignment gate: pcm/coeff descriptors must be 32-byte aligned */
         while (1) { }
     }
 
     ahxsbf_mult_flt_ex(pcm, coeff);
 
-    /* p[1] == masked; reload it once and reuse for both the table index
+    /* p[1] == masked; reload it once and reuse for the table index
        and the buffer offset (retail: lwz r4,4(r31)). */
     AHXSBF_SynthFunc synth = lbl_eu_805620E0[p[1] >> 6];
     synth(buf + p[1], base[4], out);

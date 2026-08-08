@@ -11,8 +11,8 @@ extern "C" {
 }
 
 extern "C" void __ct__CScnFilter(CScnFilter* self) {
-    self->mEnabled = 0;
     *(void**)self = (void*)lbl_eu_8056EB60;
+    self->mEnabled = 0;
     self->mUnk0C = 0;
     self->mIntensity = lbl_eu_8066ABA0;
     self->mUnk14 = 0;

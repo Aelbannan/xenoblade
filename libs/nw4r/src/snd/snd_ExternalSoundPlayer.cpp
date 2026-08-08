@@ -60,19 +60,29 @@ bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
         return true;
     }
 
-    BasicSound* pLowest = GetLowestPrioritySound();
+    BasicSound* pLowest = NULL;
+    int lowestPrio = BasicSound::PRIORITY_MAX + 1;
+
+    for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
+         it != mSoundList.GetEndIter(); ++it) {
+
+        int currentPrio = it->CalcCurrentPlayerPriority();
+
+        if (lowestPrio > currentPrio) {
+            lowestPrio = currentPrio;
+            pLowest = &*it;
+        }
+    }
 
     if (pLowest == NULL) {
         return false;
     }
 
-    int lowestPrio = pLowest->CalcCurrentPlayerPriority();
-
-    if (count >= lowestPrio) {
-        return false;
+    if (count >= pLowest->CalcCurrentPlayerPriority()) {
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 } // namespace detail

@@ -1,7 +1,19 @@
 #include <harness_catalog.h>
 
-extern int MPVLIB_CheckHn(void *);
-extern int MPVERR_SetCode(void *, int);
+extern int MPVLIB_CheckHn(void*);
+extern int MPVERR_SetCode(void*, int);
+
+/* Sofdec MPV handle fields accessed by the MPV_Get* accessors. */
+typedef struct MpfGetHd {
+    u8 _00[0xB58];
+    u32 picAtr[32];   /* 0xB58 */
+    u8 _B58end[0xC48 - 0xBD8];
+    u32 bitRate;      /* 0xC48 */
+    u32 vbvBufSiz;    /* 0xC4C */
+    u8 _C50[0x54 - 0x50];
+    u32 linkFlg[2];   /* 0xC54, 0xC58 */
+    u32 frameRate;    /* 0xC5C */
+} MpfGetHd;
 
 /* Copy picture attributes from handle to output buffer */
 int MPV_GetPicAtr(void *handle, u32 *out) {
@@ -24,11 +36,12 @@ int MPV_GetPicAtr(void *handle, u32 *out) {
 }
 
 /* Get bitrate from handle */
-int MPV_GetBitRate(void *handle, u32 *out) {
-    if (MPVLIB_CheckHn(handle)) {
+int MPV_GetBitRate(void* handle, u32* out) {
+    MpfGetHd* h = (MpfGetHd*)handle;
+    if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020D);
     }
-    *out = *(u32 *)((u8 *)handle + 0xC48);
+    *out = h->bitRate;
     return 0;
 }
 

@@ -26,7 +26,7 @@ namespace ml {
         float t = -val1/val2;
         
         //Calculate the intersection point
-        outVec.set(rayOrigin + rayDir*t);
+        outVec = rayOrigin + rayDir*t;
     }
 
 }

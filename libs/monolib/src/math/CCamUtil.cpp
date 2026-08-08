@@ -11,10 +11,10 @@ namespace ml {
         float sZ = math::sin(vec.z);
         float cZ = math::cos(vec.z);
 
-        mat.m[0][1] = sX*sY*cZ - cX*sZ;
-        mat.m[0][2] = cZ*cX*sY + sX*sZ;
         mat.m[0][0] = cY*cZ;
         mat.m[1][2] = cX*sY*sZ - sX*cZ;
+        mat.m[0][1] = sX*sY*cZ - cX*sZ;
+        mat.m[0][2] = cX*sY*cZ + sX*sZ;
         mat.m[1][0] = cY*sZ;
         mat.m[1][1] = sX*sY*sZ + cX*cZ;
         mat.m[2][0] = -sY;

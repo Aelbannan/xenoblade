@@ -10,9 +10,7 @@ void BiquadFilterLpf::GetCoef(int /*order*/, f32 freq,
     int idx = (int)((f32)maxIdx * freq);
 
     if (idx <= maxIdx) {
-        if (idx < 0) {
-            idx = 0;
-        }
+        idx &= ~(idx >> 31); // clamp to >= 0 (branchless max(idx, 0))
     } else {
         idx = maxIdx;
     }

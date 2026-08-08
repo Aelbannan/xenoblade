@@ -11,11 +11,6 @@
 // CMenuPTState subobject, these thunks adjust 'this' by -0x58 before
 // tail-calling the real member function.
 
-extern "C" {
-    void func_80192BE4(void* self);
-    void func_80192BEC(void* self);
-}
-
 class CMenuPTState : public CProcess, public IScnRender {
 public:
     CMenuPTState(CProcess* storedParent);
@@ -24,6 +19,10 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks.
+    void func_80192BE4();
+    void func_80192BEC();
 
     // +0x3C-0x57: compiler-managed vtable/ptmf data
     // +0x58: IScnRender vtable (implicit)

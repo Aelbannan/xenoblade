@@ -8566,3 +8566,30 @@ with an out-param) — the non-template `(u32)` version is genuinely inlined.
 Also check for symbol *case* drift: the retail split's `__ct__q34nw4r2ut35linklist…`
 (lowercase, from a symbols.txt annotation typo) can never match MWCC's
 `__ct__Q34nw4r2ut35LinkList…` — a symbols.txt annotation fix, not a source fix.
+
+## Symbol-name resolution: retail symbol mangling ↔ source linkage (US, Wii/1.1)
+
+The equivalence probe resolves the decomp side **by symbol name only** (`_resolve_candidates` in `tools/ppc_equivalence/elf_symbols.py`). A byte-identical body under a different name reads as `inconclusive_unsupported (0 candidates)` — the sweep's 24 blocked targets were mostly this. Rule:
+
+- **Mangled retail symbol** (`func_800B07E8__Fv`, `func_80133324__12CUICfManagerFiii`) → the source must be a **C++ function** (member or free, MWCC emits the mangling). `extern "C"` emits the bare name → 0-candidate probe failure even at 100% bytes.
+- **Bare retail symbol** (`func_8004350C`, `func_800B1A5C`, `lbl_eu_80663D18`) → `extern "C"` free function (explicit `self` param for member-like bodies).
+- Verify the retail symbol's mangled signature against retail asm (arg registers r4-r10/f1-f8) before trusting it — `func_80133324__12CUICfManagerFv` was a wrong `Fv`; retail used r4/r5/r6 → corrected to `Fiii` in symbols.txt + target record.
+
+## MWCC `-inline auto` inlines same-TU helpers — use `__declspec(noinline)`
+
+`-inline auto` (kyoshin TUs) inlines any small function defined in the same TU, even when retail made a real `bl` (e.g. a 0x64 sinit inlined into a caller, or a 0x30 list-clear inlined at 10 call sites — body ballooned 0x108 → 0x278). Established fix: `extern "C" __declspec(noinline) void f(...)`. Also apply to the forward decl so callers before the definition see it.
+
+## Struct layout verification via retail field stores
+
+A named member's offset can be wrong even when its comment is right. `FixStr<N>` in code_800B06A4.hpp had `u8 _pad[8]` (size N+12) shifting `field_0xCF4`/`field_0xCF8` to 0xCFC/0xD00 — retail stored u32/f32 at 0xCF4/0xCF8 (inside the pad region; writing real string data there would be nonsensical). Check the retail store offsets against the member comment before trusting a struct. Fixing the struct lifted func_800B6800 34.9% → 46.5% with zero regressions to FULL_MATCH neighbors.
+
+## Mask↔rlwinm encoding (empirical, -O4,p)
+
+MWCC's `rlwinm` encoding for AND-masks is inverted vs naive bit math:
+- `x & ~0x00000100` (clear bit 8) → `rlwinm rX,rX,0,24,22`
+- `x & ~0x00800000` (clear bit 23) → `rlwinm rX,rX,0,9,7`
+Verify with `.scratch/` probes (compile a tiny TU with the unit's exact flags) before hand-decoding masks.
+
+## Byte-identical rename path to FULL_MATCH
+
+For a target whose decomp body exists under another name: find the byte-identical counterpart (compare `FunctionBytes.code` across the decomp unit), rename source to the retail symbol (linkage per the rule above), rebuild, hexdiff 100%, cycle → FULL_MATCH. Worked on: `isUnk68Bit13Set`→`func_800404F0`, `actCallVt90/94/30`→`func_800560E4/F4/118`, `callStubReturnZero_800436A8`→`func_8004368C`, plus symbols.txt mangling fixes (`UnkVirtualFunc29 Fv→Ff`, `getRsrc Fv→CFv`).

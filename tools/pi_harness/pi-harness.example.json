@@ -42,6 +42,7 @@
   "maxAttemptsPerTarget": 4,
   "staleRoundThreshold": 2,
   "retryExhausted": false,
+  "greenfieldOnly": false,
   "bankOnlyOnBetter": true,
   "selection": "claim-order",
   "triage": "off",

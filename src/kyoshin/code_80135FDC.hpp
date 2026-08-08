@@ -90,7 +90,7 @@ extern "C" {
 // Block A - imports
 
 extern nw4r::lyt::Layout* createLayout__10CLibLayoutFv();
-extern void getAllocHandle__10CLibLayoutFv();
+extern u32 getAllocHandle__10CLibLayoutFv();
 extern void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern void deallocate__Q23mtl10MemManagerFPv(void*);
 extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);

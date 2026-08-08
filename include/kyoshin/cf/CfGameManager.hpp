@@ -463,7 +463,6 @@ extern "C" VoiceSource* func_800B7854(VoiceSource* source = 0);
 extern "C" u32 lbl_eu_8065FC18[];
 extern "C" void func_800B93D0();
 extern "C" void func_800B6C10();
-extern "C" void func_800B6C34();
 extern "C" void func_80141B54();
 extern "C" void func_80069EA0();
 extern "C" void func_8006A12C();

@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5842 |
-| extern "C" declarations (non-lbl_*, imports) | 1517 |
-| extern "C" definitions (forced names) | 2627 |
-| `self`/register-style params | 4344 |
-| `void*` (params + locals) | 4967 |
-| raw pointer offset arithmetic | 3424 |
+| extern "C" (total lines) | 5849 |
+| extern "C" declarations (non-lbl_*, imports) | 1518 |
+| extern "C" definitions (forced names) | 2624 |
+| `self`/register-style params | 4349 |
+| `void*` (params + locals) | 4969 |
+| raw pointer offset arithmetic | 3425 |
 | deref-through-cast arithmetic | 1403 |
 | inline asm / `register` | 88 |
 | rN-named params | 338 |
@@ -159,7 +159,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/work/CEvent1.cpp | 1 | 1 | 2 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkRoot.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/work/CWorkSystem.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 |
-| libs/monolib/src/work/CWorkSystemCache.cpp | 0 | 1 | 1 | 1 | 2 | 2 | 0 | 0 | 0 |
+| libs/monolib/src/work/CWorkSystemCache.cpp | 1 | 2 | 6 | 3 | 3 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkSystemPack.cpp | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/work/CWorkThread.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
 | libs/nw4r/src/db/db_assert.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
@@ -207,7 +207,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_AxVoiceManager.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_AxfxImpl.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Bank.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_BankFile.cpp | 0 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_BankFile.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_BasicSound.cpp | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Channel.cpp | 0 | 0 | 0 | 3 | 6 | 6 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_DisposeCallbackManager.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
@@ -478,7 +478,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 0 | 11 | 0 | 0 | 3 | 3 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleEnd.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuBattleMode.cpp | 1 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuBattleMode.cpp | 1 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattlePlayerState.cpp | 15 | 3 | 7 | 15 | 0 | 0 | 2 | 0 | 19 |
 | src/kyoshin/menu/CMenuBattlePlayerState_ct.cpp | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuCollepedia.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
@@ -1237,10 +1237,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/work/CWorkSystemCache.cpp": {
   "deref_arith": 2,
-  "extern_c_nonlbl_def": 1,
-  "ptr_arith": 2,
-  "self_params": 1,
-  "void_ptr": 1
+  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_def": 2,
+  "ptr_arith": 3,
+  "self_params": 6,
+  "void_ptr": 3
  },
  "libs/monolib/src/work/CWorkSystemPack.cpp": {
   "goto_count": 2,
@@ -1408,7 +1409,6 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 1
  },
  "libs/nw4r/src/snd/snd_BankFile.cpp": {
-  "extern_c_nonlbl_def": 2,
   "void_ptr": 3
  },
  "libs/nw4r/src/snd/snd_BasicSound.cpp": {
@@ -2864,7 +2864,6 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/menu/CMenuBattleMode.cpp": {
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 2,
   "self_params": 2,
   "void_ptr": 2
  },

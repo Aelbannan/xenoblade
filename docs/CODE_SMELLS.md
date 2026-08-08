@@ -10,15 +10,15 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5818 |
-| extern "C" declarations (non-lbl_*, imports) | 1479 |
-| extern "C" definitions (forced names) | 2645 |
-| `self`/register-style params | 4280 |
-| `void*` (params + locals) | 4955 |
-| raw pointer offset arithmetic | 3417 |
-| deref-through-cast arithmetic | 1404 |
+| extern "C" (total lines) | 5830 |
+| extern "C" declarations (non-lbl_*, imports) | 1493 |
+| extern "C" definitions (forced names) | 2640 |
+| `self`/register-style params | 4308 |
+| `void*` (params + locals) | 4960 |
+| raw pointer offset arithmetic | 3415 |
+| deref-through-cast arithmetic | 1402 |
 | inline asm / `register` | 88 |
-| rN-named params | 342 |
+| rN-named params | 339 |
 | goto | 1122 |
 | #pragma | 354 |
 
@@ -49,7 +49,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/CDesktop.cpp | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/CDrawGX.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 |
 | libs/monolib/src/core/CException.cpp | 46 | 10 | 15 | 22 | 13 | 6 | 0 | 0 | 0 |
-| libs/monolib/src/core/CFontLayer.cpp | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CFontLayer.cpp | 10 | 6 | 23 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPackItem.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 3 | 0 | 0 | 0 | 1 | 0 |
 | libs/monolib/src/core/CProc.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -134,7 +134,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnItemAnim.cpp | 0 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemCameraNw4r.cpp | 0 | 5 | 3 | 3 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemId.cpp | 0 | 5 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemLight.cpp | 0 | 3 | 3 | 2 | 1 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemLight.cpp | 4 | 1 | 8 | 9 | 1 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 0 | 18 | 17 | 17 | 16 | 14 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 0 | 15 | 29 | 32 | 21 | 7 | 0 | 0 | 0 |
@@ -344,7 +344,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CTaskCulling.cpp | 0 | 0 | 9 | 1 | 0 | 0 | 0 | 9 | 0 |
 | src/kyoshin/cf/CTaskEnvironment.cpp | 0 | 5 | 5 | 7 | 5 | 5 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskGameCf.cpp | 0 | 2 | 0 | 0 | 5 | 3 | 0 | 0 | 1 |
-| src/kyoshin/cf/CTaskGameEffAfter.cpp | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CTaskGameEffAfter.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskREvent.cpp | 0 | 2 | 10 | 11 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskREvtSequence.cpp | 0 | 4 | 6 | 7 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CVision.cpp | 13 | 2 | 41 | 50 | 64 | 41 | 0 | 10 | 0 |
@@ -357,7 +357,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCamTargetIntf.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollAABBImpl.cpp | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfCollCapsuleImpl.cpp | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCollCircleImpl.cpp | 0 | 0 | 9 | 8 | 2 | 2 | 0 | 5 | 0 |
+| src/kyoshin/cf/CfCollCircleImpl.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 0 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGameManager.cpp | 16 | 7 | 1 | 3 | 0 | 0 | 0 | 0 | 0 |
@@ -429,6 +429,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp | 5 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 2 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp | 0 | 0 | 8 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -594,7 +595,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 22
  },
  "libs/monolib/src/core/CFontLayer.cpp": {
-  "extern_c_nonlbl_def": 7
+  "extern_c_nonlbl_decl": 10,
+  "extern_c_nonlbl_def": 6,
+  "self_params": 23
  },
  "libs/monolib/src/core/CPackItem.cpp": {
   "void_ptr": 1
@@ -1079,10 +1082,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "libs/monolib/src/scn/CScnItemLight.cpp": {
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 1,
   "ptr_arith": 1,
-  "self_params": 3,
-  "void_ptr": 2
+  "rn_params": 2,
+  "self_params": 8,
+  "void_ptr": 9
  },
  "libs/monolib/src/scn/CScnItemLightNw4r.cpp": {
   "deref_arith": 1,
@@ -2104,7 +2109,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "ptr_arith": 5
  },
  "src/kyoshin/cf/CTaskGameEffAfter.cpp": {
-  "extern_c_nonlbl_def": 2
+  "void_ptr": 2
  },
  "src/kyoshin/cf/CTaskREvent.cpp": {
   "deref_arith": 1,
@@ -2180,11 +2185,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "src/kyoshin/cf/CfCollCircleImpl.cpp": {
-  "deref_arith": 2,
-  "ptr_arith": 2,
-  "rn_params": 5,
-  "self_params": 9,
-  "void_ptr": 8
+  "void_ptr": 4
  },
  "src/kyoshin/cf/CfCollCylinderImpl.cpp": {
   "self_params": 3,
@@ -2601,6 +2602,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp": {
   "self_params": 11
+ },
+ "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp": {
+  "self_params": 9
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp": {
   "extern_c_nonlbl_decl": 5,

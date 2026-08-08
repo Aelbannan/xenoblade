@@ -49,19 +49,19 @@ extern "C" {
     extern void func_80484F80(void*, float);
     extern void func_804838DC(void*, int);
     extern void func_80483448(void*, void*);
-    extern void* func_80490098(void);
+    extern void* func_80490098__Fv(void);
     extern void* func_80087250__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
     extern void* func_8016C118(void*);
     extern void* func_80164838(void*, int);
     extern int func_800AA33C(const char*, u32, int, int);
-    extern int func_8044F154(void*, int);
-    extern int func_8044F400(void*, u32);
-    extern int func_8044E768(void);
-    extern void func_80136E84(void*, void*, const char*);
-    extern void func_80139124(void*);
-    extern void func_801390E0(void**);
+    extern int func_8044F154__11CDeviceFileFP11CFileHandlei(void*, int);
+    extern int func_8044F400__11CDeviceFileFP11CFileHandleUl(void*, u32);
+    extern int func_8044E768__11CDeviceFileFv(void);
+    extern void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
+    extern void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+    extern void func_801390E0__FPP11CFileHandle(void**);
     extern int labs(int);
 }
 

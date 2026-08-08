@@ -36,9 +36,9 @@ extern "C" {
     s32 func_80180978();
     s32 func_80180990();
     void func_8016FC0C(int val);
-    void func_80462B30();
-    void func_80462B68();
-    void func_80462B4C();
+    void func_80462B30__8CTaskLODFv();
+    void func_80462B68__8CTaskLODFv();
+    void func_80462B4C__8CTaskLODFv();
     void func_80495FF0();
     void func_80495E60(void* pEmote);
     void* func_80495E8C(int r5, int r6);
@@ -47,7 +47,7 @@ extern "C" {
     void func_80484F80(void* pEmote, float time);
     void func_804C1D7C(void* pData);
     void func_804C1BA0(void* pData, int r5);
-    void func_80490098();
+    void func_80490098__Fv();
     void getGlobalSda();
     bool func_8016D094(CREvtModelMap* self, s32* pId);
     void func_80169710();
@@ -56,8 +56,8 @@ extern "C" {
     void func_80181D74();
     void func_80181D8C();
     void func_80171008();
-    void func_80186BDC();
-    void func_80173A64(CREvtModelMap* self, int dealloc);
+    void __dt__80185754();
+    void __ct__80172668(CREvtModelMap* self, int dealloc);
     void func_8016A354();
     void func_801729F0();
     void func_80172768(CREvtModelMap* self, int r4);
@@ -219,7 +219,7 @@ void __ct__80180B00(CREvtModelMap* self, int dealloc)
             ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 1);
         }
 
-        func_80462B30();
+        func_80462B30__8CTaskLODFv();
 
         if (self->mCreatureCount > 0) {
             for (s32 i = 0; i < self->mCreatureCount; i++) {
@@ -240,10 +240,10 @@ void __ct__80180B00(CREvtModelMap* self, int dealloc)
     // Call virtual at vtable+0x3C (vfunc_3C = cleanup)
     // In C++ this is the destructor chain, handled by the compiler
 
-    func_80462B68();
+    func_80462B68__8CTaskLODFv();
 
     // Call __ct__80172668 (the base destructor for CREvtModel)
-    func_80173A64(self, 0);
+    __ct__80172668(self, 0);
 
     if (dealloc <= 0) {
         return;
@@ -350,7 +350,7 @@ void CREvtModelMap::setGuestModeOff()
     if (mgr) {
         // virtual call: CfGameManager::setGuestMode(0)
         ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 0);
-        func_80462B4C();
+        func_80462B4C__8CTaskLODFv();
     }
 }
 
@@ -367,7 +367,7 @@ void CREvtModelMap::setGuestModeOn()
     if (mgr) {
         // virtual call: CfGameManager::setGuestMode(1)
         ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 1);
-        func_80462B30();
+        func_80462B30__8CTaskLODFv();
     }
 }
 
@@ -468,7 +468,7 @@ void CREvtModelMap::loadFiles()
                 CDeviceFile::func_8044F400(mFileHandle1, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {  // This is a bit odd — re-call
-                    mtl::ALLOC_HANDLE h = func_80490098();
+                    mtl::ALLOC_HANDLE h = func_80490098__Fv();
                     CDeviceFile::func_8044F400(mFileHandle1, h);
                 }
                 CDeviceFile::func_8044F400(mFileHandle1, mtl::MemManager::getHandleMEM1());
@@ -503,7 +503,7 @@ void CREvtModelMap::loadFiles()
                 CDeviceFile::func_8044F400(mFileHandle2, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {
-                    mtl::ALLOC_HANDLE h = func_80490098();
+                    mtl::ALLOC_HANDLE h = func_80490098__Fv();
                     CDeviceFile::func_8044F400(mFileHandle2, h);
                 }
                 CDeviceFile::func_8044F400(mFileHandle2, mtl::MemManager::getHandleMEM1());
@@ -539,7 +539,7 @@ void CREvtModelMap::loadFiles()
                 CDeviceFile::func_8044F400(mFileHandle3, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {
-                    mtl::ALLOC_HANDLE h = func_80490098();
+                    mtl::ALLOC_HANDLE h = func_80490098__Fv();
                     CDeviceFile::func_8044F400(mFileHandle3, h);
                 }
                 CDeviceFile::func_8044F400(mFileHandle3, mtl::MemManager::getHandleMEM1());
@@ -662,11 +662,11 @@ void CREvtModelMap::onEvent(int r4)
         }
 
         if (r4) {
-            func_80462B68();
+            func_80462B68__8CTaskLODFv();
             lbl_eu_806642B4 = this;
         } else {
             if (lbl_eu_806642B4 == this) {
-                func_80462B4C();
+                func_80462B4C__8CTaskLODFv();
                 lbl_eu_806642B4 = 0;
             }
         }
@@ -721,7 +721,7 @@ void CREvtModelMap::onEvent(int r4)
             lbl_eu_806642B4 = this;
         } else {
             if (lbl_eu_806642B4 == this) {
-                func_80462B4C();
+                func_80462B4C__8CTaskLODFv();
                 lbl_eu_806642B4 = 0;
             }
 

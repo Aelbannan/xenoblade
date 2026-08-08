@@ -45,7 +45,7 @@ extern "C" f32 lbl_eu_80668AE4;
 // CSysWinScenarioLog::Move helpers.
 extern "C" u8   code80135FDC_getByte_621F0();
 extern "C" s32  func_8029A658();
-extern "C" u32  func_80137444(nw4r::lyt::AnimTransform*, float);
+extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80138078__FUl(u32);
 extern "C" bool func_80086F9C__Q22cf13CfGameManagerFv(int arg);
@@ -280,7 +280,7 @@ void CSysWinScenarioLog::Move() {
             func_8027EA6C(this);
             break;
         case 1:
-            if (func_80137444(mpAnim, lbl_eu_80668AD0) != 0) {
+            if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(mpAnim, lbl_eu_80668AD0) != 0) {
                 mState = 2;
             }
             break;

@@ -83,7 +83,7 @@ extern "C" {
     extern void func_80484F80(void* model, f32 val);
 
     // __ptmf intrinsics
-    extern void func_8044F400(CFileHandle* pFileHandle, u32 val);
+    extern void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle* pFileHandle, u32 val);
 
     extern u32 __ptmf_null[3];
     extern int __ptmf_cmpr(void* ptmf, void* other);
@@ -560,7 +560,7 @@ extern "C" void func_80183C90(void* self) {
                 (IWorkEvent*)workEvent, 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
 
-            func_8044F400((CFileHandle*)reqHandle, (u32)h2);
+            func_8044F400__11CDeviceFileFP11CFileHandleUl((CFileHandle*)reqHandle, (u32)h2);
 
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x1) {

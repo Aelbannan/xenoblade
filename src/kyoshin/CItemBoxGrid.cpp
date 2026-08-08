@@ -76,7 +76,7 @@ extern "C" void func_801571FC(void);
 extern "C" void func_80157184(int);
 extern "C" void func_801EB030(void*, u32);
 extern "C" void func_8013B428__FUl(u32);
-extern "C" void* func_80452C10__11CDeviceFontFUl(u32, void*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
 extern "C" u32 func_80138F78(u32);
 extern "C" void func_8003AA8C__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void**);
@@ -3496,10 +3496,10 @@ void func_801CE4B4(void* self) {
     func_801D216C(p + 0xa0, 1);
 }
 
-extern "C" u32 func_8008235C(u32);
+extern "C" u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_800A18A4(void*, u8);
 extern "C" void func_8013B428__FUl(u32);
-extern "C" void* func_80452C10__11CDeviceFontFUl(u32, void*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
 extern "C" u32 func_80138F78(u32);
 extern "C" void func_8022E204(void*, u32);
 
@@ -3555,7 +3555,7 @@ void func_801CE524(void* self) {
         u32 subtitleVisible = 0;
         u32 showFull = 0;
         
-        if (func_8008235C(itemNameIdx & 0xFF)) {
+        if (func_8008235C__Q22cf13CfGameManagerFv(itemNameIdx & 0xFF)) {
             u32 obj = func_8009EC9C(itemNameIdx & 0xFF);
             u32 someVal = func_800A32BC();
             s8 cat = (s8)(catVal & 0xFF);
@@ -4749,10 +4749,10 @@ void func_801C53D8(void* self) {
         }
     }
 }
-extern "C" void* getHandleMEM2(void);
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
-extern "C" void func_80434A4C(u32);
+extern "C" void func_80434A4C__Q23mtl10MemManagerFb(u32);
 extern "C" void* getAllocHandle__10CLibLayoutFv(void);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void* __ct__CTagProcessor(void*);
@@ -4762,7 +4762,7 @@ extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAcc
 extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
 extern "C" void func_8013676C(void*, void*);
-extern "C" void* func_801355A0(void);
+extern "C" void* func_801355A0__Fv(void);
 extern "C" void* func_801355BC(void);
 extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(void*, char*, u32);
 extern "C" void func_80139198(u32);
@@ -4787,20 +4787,20 @@ extern "C" void func_801D24E8(void*, void*, void*);
 extern "C" void func_8022D614(void*, void*);
 extern "C" void func_80207FC8(void*, void*);
 extern "C" void func_801397AC(void*, u32);
-extern "C" u32 func_80086F9C(int);
+extern "C" u32 func_80086F9C__Q22cf13CfGameManagerFv(int);
 
 void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) {
     u8* p = (u8*)self;
     u32 evtHandle = *(u32*)((u8*)event + 4);
     if (*(u32*)(p + 0x28) != evtHandle) return;
-    void* memHandle = getHandleMEM2();
+    void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
     createRegion__17UnkClass_8045F564FiiPCci((void*)(p + 8), 0x28000, (int)&lbl_eu_8050566C[0x64d], (const char*)memHandle, 0);
     u8 regionBuf[16];
     __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, p + 8);
     u32* fileData = *(u32**)(p + 0x28);
     void* fileBuf = (void*)fileData[4];
     fileData[4] = 0;
-    func_80434A4C(0);
+    func_80434A4C__Q23mtl10MemManagerFb(0);
     void* allocHandle = getAllocHandle__10CLibLayoutFv();
     void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, (u32)allocHandle);
     if (tpMem) __ct__CTagProcessor(tpMem);
@@ -4818,7 +4818,7 @@ void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) {
     void** vtblFont = *(void***)font;
     void* fontData = ((void*(*)())vtblFont[9])();
     func_8013676C(rootPane, fontData);
-    u32 screenW = (u32)func_801355A0();
+    u32 screenW = (u32)func_801355A0__Fv();
     func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x55d], screenW);
     func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, (char*)&lbl_eu_8050566C[0x53e], screenW);
     u32 screenH = (u32)func_801355BC();
@@ -4847,7 +4847,7 @@ void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) {
     func_80136B4C(layout, &lbl_eu_8050566C[0x642], (u32)&lbl_eu_8050566C[0x3af], 0);
     // Check game mode
     const char* modeStr;
-    if (func_80086F9C(-1)) {
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1)) {
         modeStr = &lbl_eu_8050566C[0x6dd];
     } else {
         modeStr = &lbl_eu_8050566C[0x6e6];

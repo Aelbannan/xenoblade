@@ -79,15 +79,15 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 // Member-subobject constructors (placed subobjects, called with an int arg).
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__6CCur07Fv(void*, int);
-extern "C" void __ct__6CCur09Fv(void*, int);
-extern "C" void __ct__6CCur18Fv(void*, int);
-extern "C" void __ct__6CCur11Fv(void*, int);
-extern "C" void __ct__6CCur16Fv(void*, int);
-extern "C" void __ct__9CSortMenuFv(void*);
-extern "C" void __ct__14CMCCrystalInfoFv(void*);
-extern "C" void __ct__10CScrollBarFv(void*, int);
-extern "C" void __ct__7CSysWinFv(void*, int);
+extern "C" void __ct__CCur07(void*, int);
+extern "C" void __ct__CCur09(void*, int);
+extern "C" void __ct__CCur18(void*, int);
+extern "C" void __ct__CCur11(void*, int);
+extern "C" void __ct__CCur16(void*, int);
+extern "C" void __ct__CSortMenu(void*);
+extern "C" void __ct__CMCCrystalInfo(void*);
+extern "C" void __ct__CScrollBar(void*, int);
+extern "C" void __ct__CSysWin(void*, int);
 
 // External leaf helpers referenced by the targets below (C retail names).
 extern "C" void func_8003AA8C__5CBdatFUl(u32);

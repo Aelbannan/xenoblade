@@ -28,7 +28,7 @@ void func_80124288(char*, char*);
 void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
 
-extern "C" u32 func_801355A0();
+extern "C" u32 func_801355A0__Fv();
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
 extern "C" void* func_801355F4();
 
@@ -195,7 +195,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
     func_8013676C(root, fontVal);
 
-    u32 color = func_801355A0();
+    u32 color = func_801355A0__Fv();
     func_801368C0(self->mLayout, &lbl_eu_805084BC[0x35], color);
 
     self->mLayout->BindAnimation(self->mAnimDefault);

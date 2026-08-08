@@ -16,7 +16,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__14Class_8045F858Fv(void*, void*);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
 
@@ -29,7 +29,7 @@ extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(unsigned lon
 extern "C" void func_8015780C(int);
 
 // CScrollBar functions
-extern "C" void __ct__10CScrollBarFv(void*, int);
+extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3540(void*);
@@ -58,7 +58,7 @@ extern "C" CSortMenu* __ct__CSortMenu(CSortMenu* _this) {
     _this->field_0x29 = 0;
     _this->field_0x2A = 0;
     _this->field_0x2B = 1;
-    __ct__10CScrollBarFv((u8*)_this + 0x2C, 0);
+    __ct__CScrollBar((u8*)_this + 0x2C, 0);
     _this->mCount = 0;
     _this->mPage = 0;
     _this->mSubPage = 0;
@@ -90,7 +90,7 @@ extern "C" void func_801D3064(CSortMenu* _this) {
 
     // Create a temporary CScrollBar to initialize the scrollbar data fields
     u8 stackScrollBar[0x48];
-    __ct__10CScrollBarFv(stackScrollBar, 2);
+    __ct__CScrollBar(stackScrollBar, 2);
 
     // Copy CScrollBar data fields from stack to member
     // CScrollBar data starts at offset 0x0C within the struct
@@ -521,7 +521,7 @@ extern "C" int OnFileEvent__9CSortMenuFP10CEventFile(CSortMenu* _this, CEventFil
     createRegion__17UnkClass_8045F564FiiPCci((u8*)_this + 0x04, (int)memHandle, 0x2000, lbl_eu_8050624C + 0x3f, 1);
 
     u8 fileBuf[0x10];
-    __ct__14Class_8045F858Fv(fileBuf, (u8*)_this + 0x04);
+    __ct__14Class_8045F858FP17UnkClass_8045F564(fileBuf, (u8*)_this + 0x04);
 
     void* fileData = _this->mFileHandle->mData;
     _this->mFileHandle->mData = NULL;

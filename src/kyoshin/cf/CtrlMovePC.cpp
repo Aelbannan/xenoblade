@@ -32,9 +32,9 @@ void __ptmf_scall(...);
 // Engine helpers.
 void* func_8016FE34(void* obj);
 void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
-void* func_8047CE7C(void);                       // UnkClass_8047CD0C::func
-void  func_8047DE14(void* a, Vec* b, f32 c, f32 d);
-void  func_8047DD4C(void* a, Vec* b, void* c, f32 d, f32 e, int f);
+void* func_8047CE7C__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
+void  func_8047DE14__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
+void  func_8047DD4C__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
 void* getInstance__Q22cf14CBattleManagerFv(void);
 f32 SinFIdx__Q24nw4r4mathFf(f32);
 f32 CosFIdx__Q24nw4r4mathFf(f32);

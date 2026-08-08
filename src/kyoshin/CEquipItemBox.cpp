@@ -15,7 +15,7 @@ extern "C" void* func_80157C4C(u8, s16);
 extern "C" u32 func_801D32DC(u8*);
 extern "C" u32 CSysWin_isReady(u8*);
 extern "C" void func_80139198(void*);
-extern "C" void func_80138078(u32);
+extern "C" void func_80138078__FUl(u32);
 extern "C" u8 func_801392B4(int);
 extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
 extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
@@ -482,7 +482,7 @@ void CEquipItemBox::func_802866E8() {
     unk_1fe = 0;
     func_80289E70(this);
     unk_40 = 1;
-    func_80138078(0x6d);
+    func_80138078__FUl(0x6d);
 }
 
 extern "C" void func_80286740(){}
@@ -637,7 +637,7 @@ extern "C" void func_8028A0E0(CEquipItemBox* self) {
     }
     func_8028A5D8(self, 0);
     func_80289500(self, 0);
-    func_80138078(0x70);
+    func_80138078__FUl(0x70);
 }
 
 // Step the sort-menu page selection forwards (wrapping back to page 0 after the
@@ -651,7 +651,7 @@ extern "C" void func_8028A160(CEquipItemBox* self) {
     }
     func_8028A5D8(self, 1);
     func_80289500(self, 0);
-    func_80138078(0x70);
+    func_80138078__FUl(0x70);
 }
 
 extern "C" void func_8028A1DC(){}

@@ -187,11 +187,11 @@ extern "C" cf::CSoundNode* __ct__802A4870(int a);
 // Battle-participant gauge-list probe (fills an array, returns count).
 extern "C" int func_802A7870(void* arr, int capacity, int unused);
 // Convert a CfObjectMove to a battle-participant object.
-extern "C" void* func_800BFC68(cf::CfObjectMove* self);
+extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* self);
 // Create a battle-voice node from a voice-action source.
 extern "C" cf::CSoundNode* func_802B0344(void* src);
 // Current battle/field phase id.
-extern "C" int func_800822F4(void);
+extern "C" int func_800822F4__Q22cf13CfGameManagerFv(void);
 // Create a battle-voice trigger node.
 extern "C" void* func_802A7A54(int a);
 // Run one node's level-thread handler (list sweep).
@@ -263,7 +263,7 @@ void func_802A1610(){
         // action source (unk230) as a node.
         if (!(lbl_eu_80663E24 & 0x00400000)) {
             cf::CVoiceBFC68* br =
-                (cf::CVoiceBFC68*)func_800BFC68(cf::CfGameManager::getPlayer(0));
+                (cf::CVoiceBFC68*)func_800BFC68__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
             if (br != 0) {
                 cf::CVoiceEdge* edge = (cf::CVoiceEdge*)br->field_3ED4;
                 if (edge != 0 && edge->vtable->fn_40(edge, 0x800) == 0) {
@@ -349,7 +349,7 @@ void func_802A1610(){
         }
 
         // Field-id window [0x108, 0x116): flag byte 0x222 on a mask hit.
-        int phase = func_800822F4();
+        int phase = func_800822F4__Q22cf13CfGameManagerFv();
         if (phase > 0x108 && phase < 0x116) {
             u32 mask = 1u << (lbl_eu_80663E42 - 1);
             if (mask & 0x7F)

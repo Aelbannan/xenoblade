@@ -84,7 +84,7 @@ extern "C" {
     extern char lbl_eu_806618D8[];
     extern char lbl_eu_806619A0[];
     void* __dynamic_cast(void*, int, void*, void*, int);
-    void* func_800B708C(int);
+    void* func_800B708C__Fi(int);
 }
 
 // --- pluginBtl function implementations ---
@@ -339,7 +339,7 @@ int breakVision(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     void* visionList = bm->func_800EA444();
     if (visionList != 0) {
-        void* actor = func_800B708C(*(u32*)((u8*)visionList + 0));
+        void* actor = func_800B708C__Fi(*(u32*)((u8*)visionList + 0));
         void* voiceAction = func_8016FE34(actor);
         func_801A8244((u8*)bm + 0x219C, visionList, 5, 1, 0);
         if (voiceAction != 0) {

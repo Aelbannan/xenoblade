@@ -8,8 +8,8 @@
 extern "C" {
 extern const char lbl_eu_804FC044[];
 extern const u8 lbl_eu_805283B0[];
-extern const u32 lbl_eu_805285A0[];
-extern const u32 lbl_eu_805285C4[];
+extern const u32 jumptable_eu_805285A0[];
+extern const u32 jumptable_eu_805285C4[];
 extern char lbl_eu_80572C80[0x44];
 extern const char lbl_eu_80661A40[];
 }

@@ -13,9 +13,9 @@ void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
 void __ct__CBgTex(CBgTex* self, u8 arg);
 void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
-void __ct__7CMapSelFv(CMapSel* self);
-void __ct__5CFadeFv(CFade* self);
-void __ct__9CFloorMapFv(CFloorMap* self);
+void __ct__CMapSel(CMapSel* self);
+void __ct__CFade(CFade* self);
+void __ct__CFloorMap(CFloorMap* self);
 
 extern u32 __ptmf_null[3];
 extern char lbl_eu_8052BF70[];
@@ -39,7 +39,7 @@ struct CfPadDataLocal {
 };
 
 // Callee functions
-void func_80138078(u32 arg);
+void func_80138078__FUl(u32 arg);
 int func_800FEDF8();
 void func_800FF914();
 void func_80244518(CFade* self);
@@ -50,8 +50,8 @@ void func_8024391C(CMapSel* self);
 void func_802439CC(CMapSel* self);
 
 // CfGameManager static methods
-CfPadDataLocal* getCfPadData();
-int func_80086F9C(int arg);
+CfPadDataLocal* getCfPadData__Q22cf13CfGameManagerFv();
+int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 }
 
 // Byte-range shim over the CProcess header + PTMF zone, so the constructor
@@ -111,9 +111,9 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
 
         __ct__CBgTex(&self->mBgTex, 0);
         __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
-        __ct__7CMapSelFv(&self->mMapSel);
-        __ct__5CFadeFv(&self->mFade);
-        __ct__9CFloorMapFv(&self->mFloorMap);
+        __ct__CMapSel(&self->mMapSel);
+        __ct__CFade(&self->mFade);
+        __ct__CFloorMap(&self->mFloorMap);
 
         self->mState = 0;
         self->mTimer = lbl_eu_80668728;
@@ -136,14 +136,14 @@ extern "C" u32 func_80242354() {
 // Target: func_80242368 -- world map input handler
 // ---------------------------------------------------------------------------
 void CMenuMapSelect::func_80242368() {
-    CfPadDataLocal* padData = getCfPadData();
+    CfPadDataLocal* padData = getCfPadData__Q22cf13CfGameManagerFv();
     u32 turboFlags = padData->mTurboPressButtonFlags;
     u32 pressedFlags = padData->mPadPressedFlags;
 
     // Extract trigger/stick direction bits from pressed button flags.
     // The bit positions differ between Classic Controller and Wiimote/Nunchuk.
     u32 triggerBit1, triggerBit2, triggerBit3;
-    if (func_80086F9C(-1) != 0) {
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         // Classic controller: bits 21, 22, 23 from right
         triggerBit1 = (pressedFlags >> 21) & 1;
         triggerBit2 = (pressedFlags >> 22) & 1;
@@ -172,7 +172,7 @@ void CMenuMapSelect::func_80242368() {
         // Cancel/back action
         func_80244518(&this->mFade);
         this->mState = 4;
-        func_80138078(3);
+        func_80138078__FUl(3);
     } else if (triggerBit2 != 0) {
         // Show help
         this->mTitleAHelp.func_801C414C();
@@ -194,7 +194,7 @@ void CMenuMapSelect::func_80242368() {
         // Confirm selection
         if (func_800FEDF8() != 0) {
             func_800FF914();
-            func_80138078(6);
+            func_80138078__FUl(6);
         }
         this->mState = 11;
     }

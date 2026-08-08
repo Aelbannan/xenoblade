@@ -73,7 +73,7 @@ void* getInstance__11CSysWinBuffFv();
 u8 func_8013BEB8();
 
 int func_8012FA5C();
-void func_80138078(u32);
+void func_80138078__FUl(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 extern "C" void* func_8016FE34(void* r3);
@@ -736,7 +736,7 @@ after_ce48:
         unk308 |= 0x10u;
         if (func_8012FA5C() != 0) {
             func_80107580();
-            func_80138078(0x42);
+            func_80138078__FUl(0x42);
             unk298 = 1;
         }
         break;

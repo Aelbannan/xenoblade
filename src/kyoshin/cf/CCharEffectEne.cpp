@@ -17,7 +17,7 @@ extern "C" void func_800ACF78(void* obj, void* mgr, u32 val);
 extern "C" void func_800ACEF8(void* obj, void* ptr);
 extern "C" void func_800ACC50(void* obj);
 extern "C" void func_80484EB0(void* ptr);
-extern "C" void func_800AD844(void* obj, void* mgr, u32 val);
+extern "C" void func_800ACF78(void* obj, void* mgr, u32 val);
 
 // vtable for CCharEffectEne
 extern "C" u8 lbl_eu_8052FDD8[];

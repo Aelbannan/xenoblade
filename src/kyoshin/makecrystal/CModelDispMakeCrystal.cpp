@@ -61,7 +61,7 @@ void func_802A1500(void);
 void func_80189C88(void);
 void func_80043C88(void);
 void func_80133E58(u32, u32, u32);
-void func_80138078(u32);
+void func_80138078__FUl(u32);
 void func_8045F778__17UnkClass_8045F564Fv(void* self);
 // --- target callees (retail C-linkage / mangled-name symbols) ---
 void func_804E3D48(void*, void*);
@@ -398,7 +398,7 @@ void func_8021CC60(CModelDispMakeCrystal* self)
         func_80222F64(&v, base + 0xc18, i);
         reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)->setTranslate(i, v);
     }
-    func_80138078(0x3d);
+    func_80138078__FUl(0x3d);
 L_EB70:
     void* p20 = *reinterpret_cast<void**>(base + 0x20);
     if (p20) {
@@ -615,7 +615,7 @@ void func_8021D564(CModelDispMakeCrystal* self)
     if (*reinterpret_cast<u32*>(base + 0x10)) {
         reinterpret_cast<u8*>(*reinterpret_cast<u32*>(base + 0x10))[0x59] = 7;
     }
-    func_80138078(0x3f);
+    func_80138078__FUl(0x3f);
 }
 
 void func_8021D6B4(){}
@@ -649,7 +649,7 @@ void func_8021D9B8(CModelDispMakeCrystal* self)
                 func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x26, 0, -1, 0);
             }
         }
-        func_80138078(0x91);
+        func_80138078__FUl(0x91);
         if (r31 < 0xc8) {
             func_80220954(self, 5, 0);
         } else {
@@ -664,7 +664,7 @@ void func_8021D9B8(CModelDispMakeCrystal* self)
                 func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x27, 0, -1, 0);
             }
         }
-        func_80138078(0xb2);
+        func_80138078__FUl(0xb2);
     }
 }
 
@@ -777,7 +777,7 @@ void func_8021ECD4(CModelDispMakeCrystal* self)
                 base[0xbdd] = 0x19;
                 func_802985B4(base + 0xecc);
                 func_80297E18(base + 0xecc);
-                func_80138078(3);
+                func_80138078__FUl(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x1a;
@@ -791,7 +791,7 @@ void func_8021ECD4(CModelDispMakeCrystal* self)
                 func_8022BFC8(base + 0xe78, 0);
                 func_8022B8B8(base + 0xe78);
                 func_8029860C(base + 0xecc, 0);
-                func_80138078(5);
+                func_80138078__FUl(5);
             }
         } else {
             func_802984E4(base + 0xecc);
@@ -873,14 +873,14 @@ void func_8021F058(CModelDispMakeCrystal* self)
         base[0xbdd] = 0x1c;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(3);
+        func_80138078__FUl(3);
     } else if (trigger2) {
         // Forward cursor button: reset step and play forward sound.
         base[0xbdd] = 0x1c;
         base[0x2dd1] = 1;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(6);
+        func_80138078__FUl(6);
     } else if (cancel) {
         // Cursor back: decrement step (wrapping to 1).
         u8 v = base[0x2dd1] - 1;
@@ -890,7 +890,7 @@ void func_8021F058(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     } else if (dir) {
         // Cursor forward: increment step (resetting to 0).
         u8 v = base[0x2dd1] + 1;
@@ -900,7 +900,7 @@ void func_8021F058(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     }
 }
 
@@ -945,7 +945,7 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
                 base[0xbdd] = 0x20;
                 func_802985B4(base + 0xecc);
                 func_80297E18(base + 0xecc);
-                func_80138078(3);
+                func_80138078__FUl(3);
             } else if (r == 2) {
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x21;
@@ -959,7 +959,7 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
                 func_8022BFC8(base + 0xe78, 0);
                 func_8022B8B8(base + 0xe78);
                 func_8029860C(base + 0xecc, 0);
-                func_80138078(5);
+                func_80138078__FUl(5);
             }
         } else {
             func_802984E4(base + 0xecc);
@@ -1016,13 +1016,13 @@ void func_8021F5A8(CModelDispMakeCrystal* self)
         base[0xbdd] = 0x23;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(3);
+        func_80138078__FUl(3);
     } else if (trigger2) {
         base[0xbdd] = 0x23;
         base[0x2dd1] = 1;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(6);
+        func_80138078__FUl(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
         base[0x2dd1] = v;
@@ -1031,7 +1031,7 @@ void func_8021F5A8(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
         base[0x2dd1] = v;
@@ -1040,7 +1040,7 @@ void func_8021F5A8(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     }
 }
 
@@ -1100,13 +1100,13 @@ void func_8021F958(CModelDispMakeCrystal* self)
         base[0xbdd] = 0x28;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(3);
+        func_80138078__FUl(3);
     } else if (trigger2) {
         base[0xbdd] = 0x28;
         base[0x2dd1] = 1;
         func_801D216C(base + 0xeb4, 0);
         func_8022B8E4(base + 0xe78);
-        func_80138078(6);
+        func_80138078__FUl(6);
     } else if (cancel) {
         u8 v = base[0x2dd1] - 1;
         base[0x2dd1] = v;
@@ -1115,7 +1115,7 @@ void func_8021F958(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     } else if (dir) {
         u8 v = base[0x2dd1] + 1;
         base[0x2dd1] = v;
@@ -1124,7 +1124,7 @@ void func_8021F958(CModelDispMakeCrystal* self)
         u8 buf[16];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
-        func_80138078(1);
+        func_80138078__FUl(1);
     }
 }
 

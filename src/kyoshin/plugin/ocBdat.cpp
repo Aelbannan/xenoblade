@@ -12,8 +12,8 @@ extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
 extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
 extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index);
 extern "C" void func_8003B800(VMArg* out, void* data, u32 type);
-extern "C" int getVal_8003BDB8(VMThread* t, void* bdat);
-extern "C" int getArrayVal_8003BE70(VMThread* t, void* bdat);
+extern "C" int getVal(VMThread* t, void* bdat);
+extern "C" int getArrayVal(VMThread* t, void* bdat);
 extern "C" {
 extern s8 lbl_eu_80663D10;
 extern u32 lbl_eu_80663D14;
@@ -557,7 +557,7 @@ extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getVal_8003BDB8(VMThread* t, void* bdat){
+extern "C" int getVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;
@@ -579,7 +579,7 @@ extern "C" int getVal_8003BDB8(VMThread* t, void* bdat){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getArrayVal_8003BE70(VMThread* t, void* bdat){
+extern "C" int getArrayVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;

@@ -17,14 +17,14 @@ extern "C" {
     extern unsigned long lbl_eu_80663E14;  // ignore PAL flag
     extern float lbl_eu_80665E30;          // fixed-point divisor (4096.0f)
     extern float lbl_eu_80665E34;          // 0.5f
-    extern float lbl_eu_80665E38;          // scale factor
+    extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
     extern float lbl_eu_80665E3C;          // 1.0f
     extern float lbl_eu_80665E40;          // 4503601774854144.0f (for xoris)
     extern float lbl_eu_80665E48;          // various constants
     extern float lbl_eu_80665E4C;          // 0.0f
     extern float lbl_eu_80665E30;          // fixed-point divisor
     extern float lbl_eu_80665E34;          // 0.5f
-    extern float lbl_eu_80665E38;          // scale factor
+    extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
     extern float lbl_eu_80665E3C;          // 1.0f
     extern float lbl_eu_80665E40;          // 4503601774854144.0f
     extern float lbl_eu_80665E48;          // misc constant
@@ -224,9 +224,9 @@ int setMapJumpArea(VMThread* pThread) {
         sum[2] = t1[2] + t2[2];
         
         float scaled[3];
-        scaled[0] = sum[0] * lbl_eu_80665E38;
-        scaled[1] = sum[1] * lbl_eu_80665E38;
-        scaled[2] = sum[2] * lbl_eu_80665E38;
+        scaled[0] = sum[0] * lbl_80665E38__Q23mtl10MemManager;
+        scaled[1] = sum[1] * lbl_80665E38__Q23mtl10MemManager;
+        scaled[2] = sum[2] * lbl_80665E38__Q23mtl10MemManager;
         
         func_800AC30C(args[0], args[1], (const char*)v17);
         

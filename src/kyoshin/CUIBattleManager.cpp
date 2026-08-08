@@ -40,7 +40,7 @@ int func_801042B4();
 int func_800FF738();
 extern "C" void* func_8016FE34(void* r3);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-UNKWORD func_8006EF04(UNKWORD r3);
+UNKWORD func_8006EF04__Fi(UNKWORD r3);
 void* func_801355F4();
 }
 
@@ -439,7 +439,7 @@ after_assets:
     if (lbl_eu_80664048->unkE8 != 0) {
         if (func_801042A4() == 0) {
             cf::CfGameManager::getInstance();
-            if (func_8006EF04(0x10000000) == 0) {
+            if (func_8006EF04__Fi(0x10000000) == 0) {
                 objMove = cf::CfGameManager::getPlayer(0);
                 if (objMove != NULL) {
                     actor2 = func_8016FE34(NULL);
@@ -462,7 +462,7 @@ after_assets:
                                     if (obj != NULL) {
                                         if ((*(u32*)((u8*)obj + 0x64) & 4) != 0) {
                                             cf::CfGameManager::getInstance();
-                                            if (func_8006EF04(0x1000000) == 0) {
+                                            if (func_8006EF04__Fi(0x1000000) == 0) {
                                                 if (func_800FF738() == 0) {
                                                     if (lbl_eu_8066404C == (void*)handle) {
                                                         if (func_801042B4() != 0) {

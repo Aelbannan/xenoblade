@@ -31,7 +31,7 @@ extern "C" {
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
     int func_80174C98(cf::CfObjectActor*, u32*, int);
-    int func_8006EF04(int mask);
+    int func_8006EF04__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
@@ -261,7 +261,7 @@ int onPcArtsAttack(VMThread* pThread) {
 
     // Gate on game-manager flag 0x400.
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x400) != 0) {
+    if (func_8006EF04__Fi(0x400) != 0) {
         vmRetValSet(pThread, &result);
         return 1;
     }
@@ -380,7 +380,7 @@ int onEneArtsAttack(VMThread* pThread) {
 
     // Gate on game-manager flag 0x400.
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x400) != 0) {
+    if (func_8006EF04__Fi(0x400) != 0) {
         vmRetValSet(pThread, &result);
         return 1;
     }

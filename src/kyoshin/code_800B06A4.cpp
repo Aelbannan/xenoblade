@@ -41,7 +41,7 @@ extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
 extern "C" void func_800B1C24(int arg, void* ptr);
 extern "C" void* func_800B39C0(void* arg);
 extern "C" void func_800B68A8(void* self, void* a, void* b, int c, float f);
-extern "C" void* func_800B708C(int arg);
+extern "C" void* func_800B708C__Fi(int arg);
 extern "C" void func_80193CD0(void* a, void* b);
 
 // Declarations for callees used by the target functions below

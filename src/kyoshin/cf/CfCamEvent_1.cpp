@@ -12,7 +12,7 @@ extern "C" CfCamDataTable lbl_eu_80570C90;
 extern "C" CfCamEventGlobal* lbl_eu_80663DF0;
 extern "C" void* func_8016FE34(void* source);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void* func_800B708C(int id);
+extern "C" void* func_800B708C__Fi(int id);
 extern "C" void* func_800BBC0C();
 extern "C" f32   lbl_eu_8066A1F8;   // PI
 extern "C" f32   lbl_eu_8066A1FC;   // 2*PI
@@ -297,8 +297,8 @@ int func_800762A0(CfCamEventManager* self) {
     v[2].set(lbl_eu_80570C90.f34, lbl_eu_80570C90.f38, lbl_eu_80570C90.f3C);
     v[3].set(lbl_eu_80570C90.f40, lbl_eu_80570C90.f44, lbl_eu_80570C90.f48);
 
-    void* hA = func_800B708C((int)self->field_0x10);
-    void* hB = func_800B708C((int)self->field_0x24);
+    void* hA = func_800B708C__Fi((int)self->field_0x10);
+    void* hB = func_800B708C__Fi((int)self->field_0x24);
     CamCamSrc* sa = (CamCamSrc*)func_8016FE34(hA);
     CamCamSrc* sb = (CamCamSrc*)func_8016FE34(hB);
     if (hA == 0 || hB == 0) return 0;
@@ -352,7 +352,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34, void* srcArg, CfCamDataT
     // r29 points at the source's embedded voice (or null when no source).
     CamEventVoice* r29 = (src != 0) ? &src->voice : (CamEventVoice*)src;
     if (p31 == 0) {
-        func_800B708C((int)field_0x3F10);
+        func_800B708C__Fi((int)field_0x3F10);
         r29 = (CamEventVoice*)func_800BBC0C();
     }
     func_8016FE34((src != 0) ? &src->voice : (void*)src);
@@ -367,7 +367,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34, void* srcArg, CfCamDataT
 
     if (band && p31 == 0) {
         void* v = src->voice.vtable->fn_0x4C(&src->voice);
-        func_800B708C((int)v);
+        func_800B708C__Fi((int)v);
         r29 = (CamEventVoice*)func_800BBC0C();
         if (unk34 == 0x2b) {
             CamEventVoice* p0 = (CamEventVoice*)getPlayer__Q22cf13CfGameManagerFi(0);
@@ -377,7 +377,7 @@ void* func_80076F88(CfCamEventManager* self, int unk34, void* srcArg, CfCamDataT
                 r29 = 0;
                 void* q = p0->vtable->fn_0x4C(p0);
                 if (q != 0)
-                    r29 = (CamEventVoice*)func_800B708C((int)q);
+                    r29 = (CamEventVoice*)func_800B708C__Fi((int)q);
                 if (r29 == 0)
                     r29 = (CamEventVoice*)getPlayer__Q22cf13CfGameManagerFi(1);
             }

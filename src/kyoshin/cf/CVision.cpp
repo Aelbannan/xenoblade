@@ -171,8 +171,8 @@ extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" u32 __ptmf_null[3];
 extern "C" u32 lbl_eu_8053317C[3];
 extern "C" u32 lbl_eu_80533200[3];
-extern "C" int func_80053FD4(void);
-extern "C" bool func_8006EF04(s32 mask);
+extern "C" int func_eu_80053FD4(void);
+extern "C" bool func_8006EF04__Fi(s32 mask);
 extern "C" s32 CfRes_getE24Bit22(void);
 extern "C" u32 func_801B481C(void);
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
@@ -309,7 +309,7 @@ void func_801A39D8(CVision* self) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x40000) != 0) {
+    if (func_8006EF04__Fi(0x40000) != 0) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -812,7 +812,7 @@ void func_801A897C(CVision* self, int slot, int r28) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x400) != 0) {
+    if (func_8006EF04__Fi(0x400) != 0) {
         return;
     }
     CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444();
@@ -965,7 +965,7 @@ int func_801A6BCC(CVision* self, CVisionObj* obj, CVisionObj* r5) {
     if (((s32 (*)(void*))((void**)obj)[0x2BC / 4])(obj) != 0) {
         return 0;
     }
-    if (func_80053FD4() != 0) {
+    if (func_eu_80053FD4() != 0) {
         return 0;
     }
     u8 nc = *((u8*)CBattleManager::getInstance() + 0x1aa);
@@ -976,7 +976,7 @@ int func_801A6BCC(CVision* self, CVisionObj* obj, CVisionObj* r5) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x40000) != 0) {
+    if (func_8006EF04__Fi(0x40000) != 0) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -984,7 +984,7 @@ int func_801A6BCC(CVision* self, CVisionObj* obj, CVisionObj* r5) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04(0x200) != 0) {
+    if (func_8006EF04__Fi(0x200) != 0) {
         return 0;
     }
     if (((void* (*)(void*, u32))((void**)CBattleManager::getInstance())[0x28 / 4])(

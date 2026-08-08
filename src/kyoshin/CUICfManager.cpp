@@ -23,8 +23,8 @@ void __ct__8CProcessFv(CProcess*);
 void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void func_801390E0__FPP11CFileHandle(CFileHandle**);
+void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 }
 
 IWorkEvent* CUICfManager::cfWorkEvent() {
@@ -149,13 +149,13 @@ void CUICfManager::Init() {
 }
 
 void CUICfManager::Term() {
-    func_801390E0(&mFileHandle);
+    func_801390E0__FPP11CFileHandle(&mFileHandle);
 
     mtl::MemManager::deallocate(mPackedFont60.Destroy());
     mtl::MemManager::deallocate(mPackedFont9C.Destroy());
     mtl::MemManager::deallocate(mPackedFontD8.Destroy());
 
-    func_80139124(mArcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(mArcResourceAccessor);
     mArcResourceAccessor = NULL;
     unk118 = -1;
 

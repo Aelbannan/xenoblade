@@ -64,10 +64,10 @@ void CDeviceFileCri::func_80450AB8(unsigned long) {
     }
 }
 
-extern "C" void func_80450AB8__14CDeviceFileCriFv(CDeviceFileCri* self);
+extern "C" void func_8044F744__14CDeviceFileCriFv(CDeviceFileCri* self);
 
 extern "C" void func_80450B44(void* self, u32 arg) {
-    func_80450AB8__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
+    func_8044F744__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
 extern "C" void func_80450B4C(void* self) {

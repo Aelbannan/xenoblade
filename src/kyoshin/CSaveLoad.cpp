@@ -479,15 +479,15 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     extern void __ct__CSLCur(CSLCur*, int);
     __ct__CSLCur((CSLCur*)((u8*)self + 0x28), 0);
     
-    extern void __ct__6CCur18Fv(void*, int);
-    __ct__6CCur18Fv((u8*)self + 0x40, 0);
+    extern void __ct__CCur18(void*, int);
+    __ct__CCur18((u8*)self + 0x40, 0);
     
-    extern void __ct__10CScrollBarFv(void*, int);
-    __ct__10CScrollBarFv(self->mScrollbar, 0);
+    extern void __ct__CScrollBar(void*, int);
+    __ct__CScrollBar(self->mScrollbar, 0);
     
-    extern void __ct__7CSysWinFv(void*, int);
-    __ct__7CSysWinFv((void*)&self->mSysWin98, 0);
-    __ct__7CSysWinFv((void*)&self->mSysWinD4, 0);
+    extern void __ct__CSysWin(void*, int);
+    __ct__CSysWin((void*)&self->mSysWin98, 0);
+    __ct__CSysWin((void*)&self->mSysWinD4, 0);
     
     extern void func_8028ED0C(void*, int);
     func_8028ED0C((u8*)self + 0x110, 0);
@@ -516,8 +516,8 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     
     // Temporary CScrollBar for copy initialization
     u8 tempScrollbar[0x40];
-    extern void __ct__10CScrollBarFv(void*, int);
-    __ct__10CScrollBarFv(tempScrollbar, 1);
+    extern void __ct__CScrollBar(void*, int);
+    __ct__CScrollBar(tempScrollbar, 1);
     
     extern void __ct__UnkClass_8011C974(void*, void*);
     __ct__UnkClass_8011C974((u8*)self + 0x5C, tempScrollbar + 4);
@@ -543,7 +543,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     
     // Temporary CSysWin for copy initialization of mSysWin98
     u8 tempSysWin[0x3C];
-    __ct__7CSysWinFv(tempSysWin, 2);
+    __ct__CSysWin(tempSysWin, 2);
     
     extern void func_8016742C(void*, void*);
     func_8016742C((void*)&self->mSysWin98, tempSysWin);
@@ -553,7 +553,7 @@ extern "C" CSaveLoad* __ct__CSaveLoad(CSaveLoad* self, int arg4, int arg5) {
     
     // Temporary CSysWin2 for copy initialization of mSysWinD4
     u8 tempSysWin2[0x3C];
-    __ct__7CSysWinFv(tempSysWin2, 0);
+    __ct__CSysWin(tempSysWin2, 0);
     
     func_8016742C((void*)&self->mSysWinD4, tempSysWin2);
     

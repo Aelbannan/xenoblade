@@ -960,8 +960,8 @@ void CBattleManager_preCalcTotalDamage(){}
 void func_800E921C(){}
 void func_800E9B54(){}
 extern "C" {
-    extern f64 lbl_80666DE0;
-    extern f32 lbl_80666DDC;
+    extern f64 lbl_eu_80666DE0;
+    extern f32 lbl_eu_80666DDC;
 }
 
 // Iterates through actor lists and calls virtual functions based on flags.
@@ -1171,7 +1171,7 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
     buf.field_30 |= 1;
     func_800EC918((u32)self, 0, arg2, &buf, 0);
 }
-// Table entry for lbl_804FC828 (12 bytes each)
+// Table entry for lbl_eu_804FC828 (12 bytes each)
 struct BattleTableEntry {
     u32 selector;
     s16 val;
@@ -1181,14 +1181,14 @@ struct BattleTableEntry {
 };
 
 extern "C" {
-    extern BattleTableEntry lbl_804FC828[];
+    extern BattleTableEntry lbl_eu_804FC828[];
 }
 
 // Dispatches battle event calls to actor objects based on a table entry.
 void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
-    u32 selector = lbl_804FC828[idx].selector;
+    u32 selector = lbl_eu_804FC828[idx].selector;
     s32 val2 = -1;
-    s32 val3 = lbl_804FC828[idx].val;
+    s32 val3 = lbl_eu_804FC828[idx].val;
 
     if (val3 == 0x3e7) {
         val2 = 4;
@@ -1197,13 +1197,13 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
 
     val3 += addVal;
 
-    if (lbl_804FC828[idx].byteVal != 0) {
+    if (lbl_eu_804FC828[idx].byteVal != 0) {
         extern s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
         u16 u1 = *(u16*)((u8*)obj1 + 0x3f28);
         u16 u2 = *(u16*)((u8*)obj2 + 0x3f28);
         int result = func_800824FC__Q22cf13CfGameManagerFv(u1, u2);
         if (result != -1) {
-            val3 += (result / 100) * lbl_804FC828[idx].byteVal;
+            val3 += (result / 100) * lbl_eu_804FC828[idx].byteVal;
         }
     }
 

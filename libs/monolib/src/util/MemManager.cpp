@@ -7,7 +7,7 @@
 // Retail SDA slot for MemManager::sHandleMEM2 (getHandleMEM2 / setHandleMEM2).
 extern "C" {
 mtl::ALLOC_HANDLE lbl_eu_8066350C;
-mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> lbl_eu_80653EE0;
+mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> sRegionBuffer__Q23mtl10MemManager;
 bool lbl_eu_8066557C;
 }
 
@@ -816,7 +816,7 @@ bool MemManager::deallocate(void* p) {
 Gets a pointer to the memory region indicated by 'handle'.
 */
 MemManager::MemRegion* MemManager::getRegion(ALLOC_HANDLE handle) {
-    return lbl_eu_80653EE0[ALLOC_HANDLE_REGION(handle)];
+    return sRegionBuffer__Q23mtl10MemManager[ALLOC_HANDLE_REGION(handle)];
 }
 
 /*

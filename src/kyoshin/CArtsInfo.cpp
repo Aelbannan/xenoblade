@@ -39,7 +39,7 @@ extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern "C" u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(void*, const char*, void*, u32);
 extern "C" void func_80136A1C(void*, const char*, void*, u32);
@@ -439,7 +439,7 @@ u32 func_80235F50(CArtsInfo* self) {
 // func_80235F6C — animation state 0
 // .text:0x864, size 0xB4
 void func_80235F6C(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans1, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, lbl_eu_80668684) == 0) return;
 
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
@@ -452,7 +452,7 @@ void func_80235F6C(CArtsInfo* self) {
 // func_80236020 — animation state 1
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans2, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 3;
     self->field_0x49 = 1;
@@ -483,7 +483,7 @@ void func_80236120(CArtsInfo* self) {
 // func_8023616C — animation state 4
 // .text:0xA64, size 0xB4
 void func_8023616C(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 7;
 
@@ -496,7 +496,7 @@ void func_8023616C(CArtsInfo* self) {
 // func_80236220 — animation state 5
 // .text:0xB18, size 0xB4
 void func_80236220(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 8;
 
@@ -509,7 +509,7 @@ void func_80236220(CArtsInfo* self) {
 // func_802362D4 — animation state 6
 // .text:0xBCC, size 0x60
 void func_802362D4(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 9;
     self->field_0x49 = 1;
@@ -545,7 +545,7 @@ void func_80236408(CArtsInfo* self) {
 // func_80236454 — animation state 9
 // .text:0xD4C, size 0xB4
 void func_80236454(CArtsInfo* self) {
-    if (func_80137444(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
 
     self->field_0x44 = 0xB;
 

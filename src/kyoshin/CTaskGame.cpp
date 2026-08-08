@@ -1,5 +1,6 @@
 #include "kyoshin/CTaskGame.hpp"
 
+CTaskGame* lbl_eu_80663D18;
 void* CTaskGame_cLoadInstance;
 u32 lbl_80666624;
 u32 lbl_80666630;
@@ -64,7 +65,7 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
     unk170(0),
     unk188(0) {
     unk18C.func_8004041C(0, -1, 2, 0, 0, 0, 1);
-    spInstance = this;
+    lbl_eu_80663D18 = this;
     CTaskGame_cLoadInstance = nullptr;
     lbl_80666624 = 0;
     lbl_80666630 = 0;
@@ -72,15 +73,15 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
 }
 
 CTaskGame::~CTaskGame(){
-    spInstance = nullptr;
+    lbl_eu_80663D18 = nullptr;
 }
 
 CTaskGame* CTaskGame::getInstance(){
-    return spInstance;
+    return lbl_eu_80663D18;
 }
 
 u32 CTaskGame::func_800404F0() {
-    CTaskGame* instance = spInstance;
+    CTaskGame* instance = lbl_eu_80663D18;
     if (instance == NULL) {
         return 0;
     }

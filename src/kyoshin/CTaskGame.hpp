@@ -123,7 +123,6 @@ public:
     UnkClass_8004041C unk18C;
 
 protected:
-    static CTaskGame* spInstance;
     CTaskGame();
     void cbRenderBefore();
     void OnFileEvent();

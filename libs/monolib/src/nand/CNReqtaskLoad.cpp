@@ -11,6 +11,7 @@
 // is meaningful C++ (the task data layout) is expressed as a real struct.
 #include <types.h>
 #include <string.h>
+#include "revolution/os/OSCache.h"  // DCFlushRange (C linkage)
 
 // Vtable of the CNReqtaskLoad task. Its layout is unknown (we only ever
 // install it / take its address), so it is used as an opaque pointer type.
@@ -25,12 +26,14 @@ extern "C" {
     u8  lbl_eu_806659D0;                // global NAND "busy" flag
     s32 lbl_eu_806659D4;                // global NAND result/error latch
 
-    char* strcpy(char* dest, const char* src);
+    // NAND subsystem primitives (defined in the CNReqtaskSave unit). These are
+    // stripped retail placeholder names, so they need C linkage to emit the same
+    // unmangled reloc. `strcpy` comes from <string.h> and `DCFlushRange` from
+    // <revolution/os/OSCache.h> (both already included above).
     s32 func_804DA9C4(CNReqtaskLoadData* data, u8 arg);  // NAND open primitive
     s32 func_804DA540(u8* ptr, u32 arg);  // NAND set-buffer primitive
     s32 func_804DA5B4(u32 arg1, u32 arg2);  // NAND read primitive
     s32 func_804DA69C(void);                // NAND close primitive
-    void DCFlushRange(void* addr, u32 size);
 }
 
 // CNReqtaskLoad task parameter block (the sub-task embedded in CNRequest):
@@ -51,10 +54,9 @@ struct CNReqtaskLoadData {
 // Configures the CNReqtaskLoad sub-task: records the path/buffer/size/flag and
 // resets the async state to step 0, then returns the task vtable pointer.
 //
-// Note: the first parameter stays an opaque byte pointer (`u8*`, not
-// `CNReqtaskLoadData*`) on purpose - keeping it distinct from the typed local
-// `d` preserves the two-register colouring that matches retail; the
-// byte-identical form comes from `u8*` + a typed local.
+// Note: the first parameter is an opaque byte handle (`u8*`), matching how the
+// NAND open primitive hands the caller back an unwrapped task buffer. The typed
+// local `d` gives the rest of the body clean struct access.
 CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
     CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
     strcpy(d->path, path);

@@ -426,6 +426,74 @@ def cmd_plan(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── member-check ────────────────────────────────────────────────────────────
+
+def cmd_member_check(args: argparse.Namespace) -> int:
+    from tools.coop import member_check as mc
+
+    class_size = int(args.class_size, 16) if args.class_size else 0
+    print("indexing retail asm...", file=sys.stderr)
+    idx = mc.AsmIndex()
+    print(f"indexed {len(idx.files)} asm files, {len(idx.fn_range)} functions, "
+          f"{sum(len(v) for v in idx.calls.values())} call sites", file=sys.stderr)
+
+    if args.all:
+        targets = sorted(
+            s for s in idx.calls if re.search(r"^func_[0-9A-F]{8}__Q\d", s)
+        )
+        if not targets:
+            targets = sorted(s for s in idx.calls if "__Q" in s and "__Q" in s)
+        print(f"auditing {len(targets)} func_XXXX__Q* symbols")
+    else:
+        targets = args.symbols
+    if not targets:
+        print("no symbols: pass names or --all")
+        return 2
+
+    results = []
+    # one-pass data-pointer index for all target addresses
+    addrs = {}
+    for sym in targets:
+        a = mc.symbol_address(sym, "us")
+        if a:
+            addrs[sym] = a
+    data_hits = mc.build_data_hits(set(addrs.values()))
+    for i, sym in enumerate(targets):
+        r = mc.classify_symbol(sym, idx, class_size=class_size,
+                               symbol_addr=addrs.get(sym), data_hits=data_hits)
+        results.append(r)
+        if args.all and args.limit and i + 1 >= args.limit:
+            break
+
+    from collections import Counter as _C
+
+    verdict_counts: _C = _C()
+    for r in results:
+        v = r["verdict"].split("(")[0].strip()
+        verdict_counts[v] += 1
+        print(f"{r['symbol']}  ({r['call_sites']} calls)")
+        prov = ",".join(f"{k}:{n}" for k, n in sorted(r["r3_provenance"].items()))
+        print(f"    prov[{prov}] deref={r['callee'].get('deref')} "
+              f"maxoff={r['callee'].get('deref_max_offset', 0):#x} "
+              f"intonly={r['callee'].get('integer_only')} vtbl={r['callee'].get('vtable_dispatch')}")
+        print(f"    => {r['verdict']}")
+        if r.get("vtable_hints"):
+            print(f"    [data-pointer hints] "
+                  + "; ".join(f"{o} x{f}" for o, f in r["vtable_hints"][:4]))
+
+    print()
+    print("== summary ==")
+    for v, n in verdict_counts.most_common():
+        print(f"  {n:4d}  {v}")
+
+    if args.json:
+        Path(args.json).write_text(
+            json.dumps(results, indent=1, default=str) + "\n"
+        )
+        print(f"\nwrote {args.json}")
+    return 0
+
+
 # ── CLI ────────────────────────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> int:
@@ -440,12 +508,42 @@ def main(argv: list[str] | None = None) -> int:
     p_plan.add_argument("token", help="class name or symbol substring (e.g. CExchangeWin)")
     p_plan.add_argument("--json", metavar="PATH", help="write plan JSON")
 
+    p_mc = sub.add_parser(
+        "member-check",
+        help="ABI-level member-vs-free classification from retail asm (verified tiered rules)",
+    )
+    p_mc.add_argument(
+        "symbols",
+        nargs="*",
+        help="retail symbol names to classify (e.g. func_8007EEE0__Q22cf13CfGameManagerFv)",
+    )
+    p_mc.add_argument(
+        "--class-size",
+        metavar="HEX",
+        default="0",
+        help="annotated class size for the N3 layout rule (e.g. 0xB8 for CfGameManager)",
+    )
+    p_mc.add_argument(
+        "--all",
+        action="store_true",
+        help="audit every func_XXXX__Q* symbol found in the retail asm",
+    )
+    p_mc.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="cap on --all output (summary still prints full counts)",
+    )
+    p_mc.add_argument("--json", metavar="PATH", help="write verdicts JSON")
+
     args = parser.parse_args(argv)
     args.regions = ["us", "eu"] if args.region == "us" else [args.region]
     if args.cmd == "scan":
         return cmd_scan(args)
     if args.cmd == "plan":
         return cmd_plan(args)
+    if args.cmd == "member-check":
+        return cmd_member_check(args)
     parser.error(f"unknown subcommand: {args.cmd}")
     return 2
 

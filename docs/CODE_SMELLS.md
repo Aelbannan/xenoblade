@@ -10,9 +10,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8302 |
+| extern "C" (total lines) | 8301 |
 | extern "C" declarations (non-lbl_*, imports) | 3238 |
-| extern "C" definitions (forced names) | 2639 |
+| extern "C" definitions (forced names) | 2638 |
 | `self`/register-style params | 4477 |
 | `void*` (params + locals) | 5476 |
 | raw pointer offset arithmetic | 3394 |
@@ -362,7 +362,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCollCircleImpl.cpp | 2 | 0 | 9 | 11 | 2 | 2 | 0 | 5 | 0 |
 | src/kyoshin/cf/CfCollCylinderImpl.cpp | 1 | 0 | 3 | 4 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 2 | 2 | 1 | 7 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGameManager.cpp | 59 | 11 | 2 | 5 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGameManager.cpp | 59 | 10 | 2 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmick.cpp | 15 | 3 | 27 | 40 | 23 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 2 | 14 | 56 | 19 | 13 | 6 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -2273,7 +2273,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CfGameManager.cpp": {
   "extern_c_nonlbl_decl": 59,
-  "extern_c_nonlbl_def": 11,
+  "extern_c_nonlbl_def": 10,
   "self_params": 2,
   "void_ptr": 5
  },

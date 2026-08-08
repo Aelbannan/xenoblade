@@ -87,7 +87,7 @@ extern "C" char lbl_eu_805063BC[];
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void func_80124270(void*, u32);
-extern "C" u32 func_801361E8(const void*, const char*, u32);
+extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" u16 func_80139358(u32);
 extern "C" u32 func_801392E4(void*);
 extern "C" void* func_80157C4C(u32);

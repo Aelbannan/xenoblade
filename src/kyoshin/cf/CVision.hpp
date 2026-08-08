@@ -185,7 +185,7 @@ extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 
 // Player-list enumeration (CfObjectEnumList).
-extern "C" void func_800F4A98(void* list, int type, int filter);
+extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 a, u32 b);
 extern "C" void func_80174B4C(void* obj, u32 flag);
@@ -201,8 +201,8 @@ extern "C" void* func_800F4648(void* self);
 extern "C" int func_800F46C0(void* a, void* b);
 extern "C" void* func_800EA444(void);
 extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
-extern "C" void func_8026178C(int mode);
-extern "C" void func_80496288(void);
+extern "C" int func_8026178C(void* data, u32 mode);
+extern "C" f32 func_80496288(void*);
 extern "C" void func_80170AB0(void* self, void* dst);
 extern "C" void func_80174C24(void* obj, u32 flag);
 extern "C" f64 lbl_eu_80667D18;
@@ -229,7 +229,7 @@ extern "C" u32 lbl_eu_80533224[3];
 extern "C" f32 lbl_eu_80667CD8;
 extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void func_8009D018(u32 a, u32 b);
-extern "C" void func_801412D0(u32 a);
+extern "C" void* func_801412D0(u32 a);
 extern "C" void func_8013F244(void);
 extern "C" void func_8016FF14(void* obj, void* dst);
 extern "C" void func_801C01A8(u32 a, u32 b, f32 c);

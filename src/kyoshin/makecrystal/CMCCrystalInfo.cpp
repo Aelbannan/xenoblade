@@ -70,7 +70,7 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
 void func_8021A718(CMCCrystalInfo* self)
 {
     // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a)
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     self->mFileHandle1 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         handle, &lbl_eu_80508DF8[0], self, 0, 0);
     handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -209,14 +209,14 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
     // Description string + colour.
     sprintf(buf, &lbl_eu_80508DF8[0x5e], idx);
-    msgDesc = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
+    msgDesc = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
     func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgDesc, 0);
     func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
 
     // Pick the crystal picture to show for this slot based on the item code.
-    u8 code = func_801361E8((void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
+    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
     void* res = 0;
     switch (code) {
     case 0:
@@ -441,11 +441,11 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         ((nw4r::lyt::Layout*)mLayout)->Animate(0);
 
         func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x276],
-            func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
+            (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x18), 0);
         func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x292],
-            func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
+            (char*)func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2c), 0);
         func_80136B4C((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x2a1],
-            func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
+            (char*)func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
 
         func_8021ADC4(this);
 

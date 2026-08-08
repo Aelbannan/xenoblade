@@ -92,10 +92,10 @@ extern "C" u32 func_801EB020(void*);          // num-select busy flag (+0x2C)
 extern "C" u32 func_801EB018(void*);          // num-select busy flag (+0x2D)
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void advanceItemBox2State__FP13CItemBoxInfo2(void*);
-extern "C" u32 CScrollBar_isVisible(void*);
+extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
-extern "C" u32 CSysWin_isActive(void*);
-extern "C" void func_801D216C(void*, int);
+extern "C" int CSysWin_isActive(void*);
+extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801F369C(void*);
 extern "C" void func_80138078__FUl(unsigned int);
 extern "C" u8 code80135FDC_getByte_64077();
@@ -103,24 +103,24 @@ extern "C" void func_801E174C(void*, void*, unsigned int);
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" u32 func_801393CC(u32);
 extern "C" u32 func_801392E4(u32);
-extern "C" u32 func_80139358(u32);
+extern "C" u16 func_80139358(u32);
 extern "C" void func_801586D4(u32, u32);
-extern "C" s32 func_801571FC(void);
+extern "C" void* func_801571FC(void);
 extern "C" void func_80157184(s32);
 extern "C" void func_801EB030(void*, void*);
-extern "C" void func_801EB04C(void*, unsigned int);
+extern "C" void func_801EB04C(void*, u8);
 extern "C" void func_801EB064(void*, unsigned int);
 extern "C" void func_801EB0D4(void*);
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
-extern "C" void func_800A9D90(void);
+extern "C" int func_800A9D90(void);
 extern "C" void func_801E12E0(void*);
 extern "C" void func_801EAE8C(void*);
 extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3850(void*, unsigned short);
-extern "C" u32 func_801361E8(void*, char*, u32);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_801F3850(void*, u32);
+extern "C" u8 func_801361E8(u32, const char*, u32);
+extern "C" void func_80124270(void*, u32);
 extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
@@ -130,7 +130,7 @@ extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801EAF7C(void*, void*);
 extern "C" void func_8022B7C8(void*, void*);
-extern "C" int func_801D2ED8(void*);
+extern "C" int func_801D2ED8(CBaseCur*);
 
 // Forward declarations for sibling functions resolved at link via the symbol map
 // (retail treats these as external relocs, not same-TU symbols)

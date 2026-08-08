@@ -480,7 +480,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
                                               pt->mFlags >> 22);
     char nameBuf[0x40];
     u8 nameLenByte = 0;
-    const char* nm = getBdatStringColumnValue((BdatFilePointer*)fp, cols + 0x4E, resId);
+    const char* nm = (const char*)getBdatStringColumnValue((BdatFilePointer*)fp, (const char*)(cols + 0x4E), resId);
     u32 len = strlen(nm);
     strcpy(nameBuf, nm);
     func_800C13FC(obj, nameBuf, 0xC);
@@ -568,8 +568,7 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
 extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
-    CfRes_getD80Flag();
-    f32 dt = func_80496288();
+    f32 dt = func_80496288((void*)CfRes_getD80Flag());
 
     if (pt->mTimer14 > 0.0f) {
         if (func_80207C08(pt->mPointId1C, pt->mArea1E, pt->mAreaSub1F) == 0) {
@@ -611,8 +610,7 @@ extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
 // func_802073CC - advance message-ring timers, pop the oldest when expired.
 // ---------------------------------------------------------------------------
 extern "C" void func_802073CC(CfMapMineManager* self) {
-    CfRes_getD80Flag();
-    f32 dt = func_80496288();
+    f32 dt = func_80496288((void*)CfRes_getD80Flag());
 
     MineMsgRing* ring = &self->mMsgs;
     int changed = 0;
@@ -658,7 +656,7 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
 
     u32 marker;
     if (func_800FE68C() != 0) {
-        u32 base = func_800FE68C() + 0x10000;
+        u32 base = (u32)func_800FE68C() + 0x10000;
         marker = *(u32*)(base - 0x6F1C);
     } else {
         marker = 0;
@@ -980,8 +978,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     if (player == 0) return;
 
     func_802073CC(self);
-    CfRes_getD80Flag();
-    f32 dt = func_80496288();
+    f32 dt = func_80496288((void*)CfRes_getD80Flag());
 
     for (int i = 0; i < 16; i++) {
         if (self->mSnd[i].mId != 0) {
@@ -1002,7 +999,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
 
     if (self->mTime > 0.0f) {
         CfRes_getD80Flag();
-        self->mTime -= func_80496288();
+        self->mTime -= func_80496288((void*)CfRes_getD80Flag());
         if (self->mTime < 0.0f) self->mTime = 0.0f;
         return;
     }

@@ -76,7 +76,11 @@ public:
     void cbRenderBefore();
     void Term();
     void Init();
-    void Move();
+    // NOTE: no Move() override - retail leaves the vtable's Move slot on
+    // CTTask<CArrow3D>::Move (see split1 .data vtable) and emits the empty
+    // Move__8CArrow3DFv as a separate symbol (stubbed below). Declaring an
+    // override here would shadow the CTTask<CArrow3D>::Move specialization
+    // and MWCC would drop the retail Move__17CTTask<8CArrow3D>Fv symbol.
 
     // 0x00-0x54: CTTask<CArrow3D>
     // 0x54: IScnRender vtable ptr (manual)
@@ -95,6 +99,3 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
-struct PTMF;
-extern "C" long __ptmf_test(PTMF* ptmf);
-extern "C" void __ptmf_scall(...);

@@ -4,7 +4,6 @@
 // update function, and voice-select + play function.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp"
-#include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
@@ -13,6 +12,17 @@ extern char* func_802A34E4(int size);
 extern void __ct__cf_CVS_THREAD();
 extern int func_802A77E8(CVoiceHandle* handle);
 extern int func_802A7B90(CVoiceHandle* handle, CVoiceHandle* owner);
+
+// C-linkage imports previously supplied by CVS_THREAD_EHP.hpp, which is no
+// longer included here (it redefines CVoiceHandle; the canonical definition
+// now lives in the shared base header CVS_THREAD.hpp).
+extern "C" {
+    int func_802A3E88(CVS_THREAD* self);
+    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+    int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    CVoiceHandle* func_802A330C(int size, int align);
+    CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+}
 
 // The voice manager/factory object. The flags field at offset 0x3F00
 // controls thread construction (bit 1 = TENSION_UP factory active).

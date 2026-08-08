@@ -22,7 +22,7 @@ void* func_801864DC(void* pObj, int slot);
 void* func_80186664(void* p);
 void* func_801866F0(void* p);
 void* func_80186A70(void* p);
-void* func_80186BC8(void* p);
+void* func_80186BC8(int p);
 void* func_80186C7C(void* p);
 void* func_80186D20(void* p);
 

@@ -26,6 +26,7 @@
  */
 
 #include <types.h>
+class CBaseCur;
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
@@ -83,18 +84,18 @@ public:
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u32 func_800A9D90();
+extern "C" int func_800A9D90();
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F367C(void*);
 extern "C" void func_801F369C(void*);
 extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3850(void*, u16);
+extern "C" void func_801F3850(void*, u32);
 extern "C" void func_801D20B0(void*, void*);
-extern "C" void func_801D216C(void*, int);
+extern "C" void func_801D216C(void*, u8);
 extern "C" void func_80138078__FUl(u32);
-extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
+extern "C" void func_801C4B60(void*, s16, s16, s16, s16);
 extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int n);
 extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
@@ -109,9 +110,9 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void* func_801355F4();
-extern "C" void __ct__CCur18(void* self, void* param);
+extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" void* getFP__FPCc(const char* name);
@@ -120,7 +121,7 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 // Data/build helpers used by func_80272810.
 extern "C" u32 func_8003B1EC(void* fp);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u16 func_80136254(const void* fp, const char* name, u16 id);
+extern "C" u16 func_80136254(const void* fp, const void* name, int id);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
 extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v);
 extern "C" void* lbl_eu_806640A8;                            // .sbss table pointer
@@ -146,7 +147,7 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self);
 
 // Misc helpers used by the row-draw / visibility paths.
-extern "C" u8 CScrollBar_isVisible(void*);
+extern "C" int CScrollBar_isVisible(void*);
 extern "C" void func_80124270(void*, u32);
 extern "C" __declspec(noinline) void* func_80273040(void* self, u32 r4);
 

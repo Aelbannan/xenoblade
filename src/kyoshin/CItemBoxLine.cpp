@@ -197,7 +197,7 @@ void func_801ED4FC(void* self, void* drawInfo) {
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(p + 0xd0, drawInfo);
     func_80137038(*(nw4r::lyt::Layout**)(p + 0x40), reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), 0, 1);
     int r31 = 0;
-    if (func_801D2ED8(p + 0xb8) == 0 && func_801EB020(p + 0x2dc) == 0) r31 = 1;
+    if (func_801D2ED8((CBaseCur*)(p + 0xb8)) == 0 && func_801EB020(p + 0x2dc) == 0) r31 = 1;
     if (r31 != 0) {
         if (CSysWin_getUnk34(p + 0x350) == 0) {
             func_801D20B0(p + 0x88, drawInfo);
@@ -336,7 +336,7 @@ u8 func_801EF0EC(CItemBoxLine* self) {
     if (self->field50 >= 6) return 0;
     if (func_801EB020((char*)self + 0x2dc)) return 0;
     if (CSysWin_getUnk34((char*)self + 0x350)) return 0;
-    if (func_801D2ED8((char*)self + 0xb8)) return 0xa;
+    if (func_801D2ED8((CBaseCur*)((char*)self + 0xb8))) return 0xa;
     bool flag = code80135FDC_getByte_64077() > 1;
     if (self->field3A0 != 0) return 0xb;
     if (self->unk38C == -1) {
@@ -480,13 +480,13 @@ void func_801F20F0(CItemBoxLine* self, u32 itemData) {
     func_80124270(root->FindPaneByName(&lbl_eu_805071B0[0x583], true), 1);
     func_801392E4(itemData);
     u32 cat = func_80139358(itemData);
-    u8 v = (u8)func_801361E8(lbl_eu_80664104, &lbl_eu_805071B0[0x5ff], (u16)cat);
-    char* name = func_80136190(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], v);
+    u8 v = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_805071B0[0x5ff], (u16)cat);
+    char* name = (char*)func_80136190(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], v);
     func_80136B4C(layout, &lbl_eu_805071B0[0x577], name, 0);
-    u8 v2 = (u8)func_801361E8(lbl_eu_80664104, &lbl_eu_805071B0[0x610], (u16)cat);
+    u8 v2 = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_805071B0[0x610], (u16)cat);
     char* name2;
     if (v2 == 0x1a) {
-        name2 = func_80136190(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], 0x14);
+        name2 = (char*)func_80136190(&lbl_eu_805071B0[0x604], &lbl_eu_805071B0[0x6c], 0x14);
     } else {
         name2 = func_8013639C(lbl_eu_806640A8, &lbl_eu_805071B0[0x6c]);
     }

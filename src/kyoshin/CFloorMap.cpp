@@ -263,7 +263,7 @@ void* func_80248920(void* self, const char* name, float x, float y, void* arg5, 
     if (!name) return NULL;
     if (!paneName) return NULL;
 
-    void* result = func_80136190(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], name);
+    void* result = (char*)func_80136190(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], name);
 
     char buf[48];
     sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
@@ -793,7 +793,7 @@ void func_801F34F4(void*);
 
 void func_8024C104(void* self) {
     u8* p = (u8*)self;
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_8050BEA8[0x4e7], self, 0, 0);
     u32 handle2 = func_800A9D90();
     *(void**)(p + 0x30) = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(handle2, &lbl_eu_8050BEA8[0x4fc], self, 0, 0);

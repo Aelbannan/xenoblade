@@ -210,7 +210,7 @@ extern "C" u8 getField64(void* self) { return ((u8*)self)[0x64]; }
 extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
 extern "C" int getGlobal0E0() { return lbl_eu_806640E0; }
 extern "C" void func_80142C64(void* self) { ((u8*)self)[0x15] = 1; }
-extern "C" void func_80142C80(void* self) { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
+extern "C" void func_80142C80() { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" void* noop_80142D5C(void* self) { return self; }
 extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
 extern "C" void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }

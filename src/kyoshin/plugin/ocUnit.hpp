@@ -23,7 +23,7 @@ void ocUnitRegist();
 void func_8013D07C(void* obj, const char* str, int mode);
 void func_8013D448(void* obj, const char* str);
 unsigned int func_8013EC58();
-int func_80174C98(void* player, int* val, int mode);
+int func_80174C98(void* player, u32* val, int mode);
 u8 code80135FDC_getByte_64058();
 unsigned int func_8013EC58();
 

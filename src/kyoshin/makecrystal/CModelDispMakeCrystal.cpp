@@ -124,7 +124,7 @@ void func_801F367C(void*);
 s32 getInstance__Q22ml6MTRandFv();
 u32 rand31__Q22ml6MTRandFv();
 u16 func_8013A7D0(u8, u8);
-void* func_8009EC9C(u8);
+void* func_8009EC9C(u32);
 int func_8026178C(void*, int);
 u8 func_8025FB10(void*, int);
 void func_80220128(void*);
@@ -779,9 +779,9 @@ void func_8021ECD4(CModelDispMakeCrystal* self)
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x1a;
                 base[0x2dd1] = 0;
-                char* a = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
-                char* b = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
-                char* c = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
+                char* a = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
+                char* b = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
+                char* c = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
                 func_8022B90C(base + 0xe78, 2);
                 func_8022B9B4(base + 0xe78, a, 0);
                 func_8022BF6C(base + 0xe78, b, c);
@@ -947,9 +947,9 @@ void func_8021F2D8(CModelDispMakeCrystal* self)
                 // Jump to gauge-tuning state: rebuild the confirmation UI.
                 base[0xbdd] = 0x21;
                 base[0x2dd1] = 0;
-                char* a = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
-                char* b = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
-                char* c = func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
+                char* a = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 2);
+                char* b = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 4);
+                char* c = (char*)func_80136190(&lbl_eu_805090FC[0x47], &lbl_eu_805090FC[0x52], 5);
                 func_8022B90C(base + 0xe78, 2);
                 func_8022B9B4(base + 0xe78, a, 0);
                 func_8022BF6C(base + 0xe78, b, c);
@@ -1050,9 +1050,9 @@ void func_8021F828(CModelDispMakeCrystal* self)
     u8* base = reinterpret_cast<u8*>(self);
     base[0xbdd] = 0x26;
     base[0x2dd1] = 0x0;
-    char* a = func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
-    char* b = func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
-    char* c = func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
+    char* a = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3d);
+    char* b = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3e);
+    char* c = (char*)func_80136190(&lbl_eu_805090FC[0x57], &lbl_eu_805090FC[0x63], 0x3f);
     func_8022B90C(base + 0xe78, 2);
     func_8022B9B4(base + 0xe78, a, 0);
     func_8022BF6C(base + 0xe78, b, c);
@@ -1362,7 +1362,7 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
                 char buf[0x20];
                 sprintf(buf, &lbl_eu_805090FC[0xd1],
                         actor->field_3f28 == 3 ? 8 : (int)actor->field_3f28);
-                u32 h = getHandleMEM2__Q23mtl10MemManagerFv();
+                u32 h = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
                 sub->field_5a0 =
                     reinterpret_cast<u32>(readFile__11CDeviceFileFUlPCcP10IWorkEventii(
                         h, buf, self, 0, 0));

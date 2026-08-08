@@ -187,7 +187,7 @@ int func_8014A1D4(void*, u32, u8, int);
 void func_8013DA60(int, int, int);
 void* func_8009EC9C(u16);
 void func_800A21F8(void*, u16, int, int);
-u32 func_801361E8(void*, char*, u32);
+u8 func_801361E8(u32, const char*, u32);
 u16 func_8013606C(char*, char*, u16);
 void* lbl_eu_80573D18[];
 u8 lbl_eu_805000A8[];
@@ -260,7 +260,7 @@ range_221_607: {
 
     int idx = func_80138138(off);
     void* tableVal = lbl_eu_80573D18[idx];
-    u8 res = (u8)func_801361E8(tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
+    u8 res = (u8)func_801361E8((u32)tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
     if (res == 2) {
         goto end;
     }

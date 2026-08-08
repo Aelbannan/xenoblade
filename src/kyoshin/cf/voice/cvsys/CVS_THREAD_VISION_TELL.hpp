@@ -3,13 +3,7 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 
-// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
-// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
-struct CVoiceHandle {
-    void** vtable;                     // 0x00: vtable pointer
-    u8 _pad[0x3E9C - sizeof(u32)];    // 0x04-0x3E9B: handle data (u32 = ptr width on PPC32)
-    CCharVoice voice;                  // 0x3E9C: the actual voice object
-};
+// CVoiceHandle is defined once in the shared base header CVS_THREAD.hpp.
 
 /**
  * CVS_THREAD_VISION_TELL - voice thread for vision-tell audio events.

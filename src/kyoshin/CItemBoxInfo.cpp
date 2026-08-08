@@ -198,7 +198,7 @@ void func_801D4A2C(void* sub) {
 
 
 void func_801D4054(CItemBoxInfo* info) {
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
     setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle1);
     handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -287,12 +287,12 @@ void func_801D4E2C(void* out, u16 arg2, void* arg3) {
     char buf[0x20];
     func_80136254(buf, (char*)&lbl_eu_805063BC[0x1ab], v2);
     func_80136254(buf, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
     void* lookup = func_8009EC9C(v2);
     func_800A082C(lookup);
     func_800A082C(lookup);
@@ -300,18 +300,18 @@ void func_801D4E2C(void* out, u16 arg2, void* arg3) {
     for (u32 i = 0; i < max; i++) {
         u8 v = func_801392B4(i);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
-        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         func_8013B380(v);
         void* lookup2 = func_8009EC9C(v);
         void* r = func_80157C4C(v + 4);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
             func_80136254(buf, (char*)&lbl_eu_805063BC[0x1f4], cat);
-            func_801361E8(lbl_eu_806640F8, buf, v2);
+            func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         }
         func_80139C98(v);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
         func_80139C98(v + 1);
     }
 }
@@ -322,16 +322,16 @@ void func_801D5274(void* out, u16 arg2, void* arg3) {
     }
     u16 v1 = func_801392E4(arg3);
     u16 v2 = func_80139358((u32)arg3);
-    ((u16*)out)[0] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
-    ((u16*)out)[1] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    ((u16*)out)[2] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    ((u16*)out)[0] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    ((u16*)out)[1] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    ((u16*)out)[2] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
     u32 max = func_801392C0();
     for (u32 i = 0; i < max; i++) {
         u8 v = func_801392B4(i);
         char buf[0x10];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
-        ((u8*)out)[i] = func_801361E8(lbl_eu_806640F8, buf, v2);
+        ((u8*)out)[i] = func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         void* lookup = func_8009EC9C(v);
         u32 t1 = func_8026178C(lookup, v2);
         u32 t2 = func_8026178C(lookup, v2);
@@ -340,7 +340,7 @@ void func_801D5274(void* out, u16 arg2, void* arg3) {
         void* r = func_80157C4C(v);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
-            ((u8*)out)[i + 12] = func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], cat);
+            ((u8*)out)[i + 12] = func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], cat);
         }
     }
 }
@@ -350,14 +350,14 @@ void func_801D5564(void* out, void* unused, void* data, void* arg3) {
     u16 v2 = func_80139358((u32)data);
     void* inst = CItem_initItemImplInstances(arg3);
     u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
-    char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    char* s1 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s2 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
     void* inst2 = CItem_initItemImplInstances(arg3);
     for (u32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
-        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
         ((u32*)((u8*)out + 0xC))[i] = (u32)t;
     }
@@ -368,12 +368,12 @@ void func_801D5564(void* out, void* unused, void* data, void* arg3) {
 extern "C" void func_801D59C0(u32* out, void* unused, void* arg2) {
     func_801392E4(arg2);
     u16 vcat = func_80139358((u32)arg2);
-    u8 v0 = (u8)func_801361E8(lbl_eu_80664104, &lbl_eu_805063BC[0x214], vcat);
-    char* v1 = func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], v0);
-    u8 v2 = (u8)func_801361E8(lbl_eu_80664104, &lbl_eu_805063BC[0x225], vcat);
+    u8 v0 = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_805063BC[0x214], vcat);
+    char* v1 = (char*)func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], v0);
+    u8 v2 = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_805063BC[0x225], vcat);
     char* v3;
     if (v2 == 0x1A) {
-        v3 = func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], 0x14);
+        v3 = (char*)func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], 0x14);
     } else {
         v3 = func_8013639C(lbl_eu_806640A8, &lbl_eu_805063BC[0x139]);
     }
@@ -388,15 +388,15 @@ void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* arg3) {
     void* global = lbl_eu_80664110;
     u16 v1 = func_801392E4(arg3);
     u16 v2 = func_80139358((u32)arg3);
-    u8 flag1 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x22b], v2);
-    u8 count = func_801361E8(global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 flag1 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    u8 count = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
     u8 arr[4] = {flag1, 0, 0, 0};
     u32 max = func_801392C0();
     for (u32 i = 0; i < max; i++) {
         u8 a = func_801392B4(i);
         arr[i + 1] = (a != count ? 1 : 0);
     }
-    u8 r5 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u8 r5 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
     u8 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], r5);
     void* lookup = func_8009EC9C(count);
     u8 cat = func_800A32BC();
@@ -419,7 +419,7 @@ void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
     u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, item);
     u8 buf[0x30];
     buf[0] = r;
-    char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     ((u32*)(buf + 4))[0] = (u32)s;
     u8 count = 0;
     buf[0x21] = 0;
@@ -539,13 +539,13 @@ void func_801D69FC(CItemBoxInfo* info) {
     for (int i = 0; i < 3; i++) {
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
         func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
-        char* s = func_80136190(buf, (char*)&lbl_eu_805063BC[0x130], 0);
+        char* s = (char*)func_80136190(buf, (char*)&lbl_eu_805063BC[0x130], 0);
         func_80136B4C((nw4r::lyt::Layout*)layout, s, (char*)&lbl_eu_805063BC[0x2aa], 0);
         void* inst = CItem_initItemImplInstances(info);
         u16 v = func_801393CC(inst);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v);
         func_801394D4(layout, v);
         func_801D5564(info, 0, (void*)(u32)v, info);
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
@@ -970,7 +970,7 @@ u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
     u16 r5 = func_80139358(*(u32*)arg2 >> 20);
-    u32 result = func_801361E8(lbl_eu_806640F8, buf, r5);
+    u32 result = func_801361E8((u32)lbl_eu_806640F8, buf, r5);
     return (u8)result != 0;
 }
 u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
@@ -997,10 +997,10 @@ u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
         u32 v = *(u32*)r;
         if (v == 0) continue;
         u16 cat = func_80139358(v >> 20);
-        result += (u8)func_801361E8(g, (char*)&lbl_eu_805063BC[0x1e2], cat);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], cat);
     }
     if (arg3 != NULL) {
-        result += (u8)func_801361E8(g, (char*)&lbl_eu_805063BC[0x1e2], v2);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], v2);
     }
     return result;
 }
@@ -1176,7 +1176,7 @@ CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, s32 flags) {
 }
 
 void func_801E12E0(CItemBoxInfo2* info) {
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
     handle = getHandleMEM2__Q23mtl10MemManagerFv();
     info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
@@ -1310,12 +1310,12 @@ void func_801E197C(void* out, u16 arg2, void* arg3) {
     char buf[0x20];
     func_80136254(buf, (char*)&lbl_eu_805063BC[0x1ab], v2);
     func_80136254(buf, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
     void* lookup = func_8009EC9C(v2);
     func_800A082C(lookup);
     func_800A082C(lookup);
@@ -1323,18 +1323,18 @@ void func_801E197C(void* out, u16 arg2, void* arg3) {
     for (u32 i = 0; i < max; i++) {
         u8 v = func_801392B4(i);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
-        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         func_8013B380(v);
         void* lookup2 = func_8009EC9C(v);
         void* r = func_80157C4C(v + 4);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
             func_80136254(buf, (char*)&lbl_eu_805063BC[0x1f4], cat);
-            func_801361E8(lbl_eu_806640F8, buf, v2);
+            func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         }
         func_80139C98(v);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
         func_80139C98(v + 1);
     }
 }
@@ -1345,16 +1345,16 @@ void func_801E1E0C(void* out, u16 arg2, void* arg3) {
     }
     u16 v1 = func_801392E4(arg3);
     u16 v2 = func_80139358((u32)arg3);
-    ((u16*)out)[0] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
-    ((u16*)out)[1] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
-    ((u16*)out)[2] = (u16)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    ((u16*)out)[0] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    ((u16*)out)[1] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    ((u16*)out)[2] = (u16)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
     u32 max = func_801392C0();
     for (u32 i = 0; i < max; i++) {
         u8 v = func_801392B4(i);
         char buf[0x10];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
-        ((u8*)out)[i] = func_801361E8(lbl_eu_806640F8, buf, v2);
+        ((u8*)out)[i] = func_801361E8((u32)lbl_eu_806640F8, buf, v2);
         void* lookup = func_8009EC9C(v);
         u32 t1 = func_8026178C(lookup, v2);
         u32 t2 = func_8026178C(lookup, v2);
@@ -1363,7 +1363,7 @@ void func_801E1E0C(void* out, u16 arg2, void* arg3) {
         void* r = func_80157C4C(v);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
-            ((u8*)out)[i + 12] = func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], cat);
+            ((u8*)out)[i + 12] = func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], cat);
         }
     }
 }
@@ -1373,16 +1373,16 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     u16 v2 = func_80139358((u32)data);
     void* inst = CItem_initItemImplInstances(arg3);
     u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
-    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
-    char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
-    char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
+    func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    char* s1 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s2 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
     void* inst2 = CItem_initItemImplInstances(arg3);
     for (u32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i + 1);
-        func_801361E8(lbl_eu_806640F8, buf, v2);
-        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+        func_801361E8((u32)lbl_eu_806640F8, buf, v2);
+        func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
         ((u32*)((u8*)out + 0xC))[i] = (u32)t;
         u8 lang = getLanguage__9CDeviceSCFv();
@@ -1392,12 +1392,12 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
 void func_801E2558(u32* out, void* arg2) {
     u32 v0 = func_801392E4(arg2);
     u16 v2 = func_80139358((u32)arg2);
-    u8 r1 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
-    char* r2 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
-    u8 r3 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x225], v2);
+    u8 r1 = func_801361E8((u32)lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
+    char* r2 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
+    u8 r3 = func_801361E8((u32)lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x225], v2);
     char* r4;
     if (r3 == 0x1A) {
-        r4 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], 0x14);
+        r4 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], 0x14);
     } else {
         r4 = func_8013639C(lbl_eu_806640A8, (char*)&lbl_eu_805063BC[0x139]);
     }
@@ -1411,15 +1411,15 @@ void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* arg3) {
     void* global = lbl_eu_80664110;
     u16 v1 = func_801392E4(arg3);
     u16 v2 = func_80139358((u32)arg3);
-    u8 flag1 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x22b], v2);
-    u8 count = func_801361E8(global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 flag1 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    u8 count = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
     u8 arr[4] = {flag1, 0, 0, 0};
     u32 max = func_801392C0();
     for (u32 i = 0; i < max; i++) {
         u8 a = func_801392B4(i);
         arr[i + 1] = (a != count ? 1 : 0);
     }
-    u8 r5 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u8 r5 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
     u8 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], r5);
     void* lookup = func_8009EC9C(count);
     u8 cat = func_800A32BC();
@@ -1439,7 +1439,7 @@ void func_801E27D0(void* out, void* arg2) {
     u16 v2 = func_80139358((u32)arg2);
     void* inst = CItem_initItemImplInstances(arg2);
     u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg2);
-    char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     ((u32*)out)[0] = 0;
     ((u8*)out)[4] = 0;
     for (u32 i = 0; i < 3; i++) {
@@ -1836,7 +1836,7 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
         void* r = func_80157C4C(i);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
-            func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
+            func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
         }
     }
     return 0;
@@ -1846,7 +1846,7 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
     u16 r5 = func_80139358(arg2);
-    u32 result = func_801361E8(lbl_eu_806640F8, buf, r5);
+    u32 result = func_801361E8((u32)lbl_eu_806640F8, buf, r5);
     return !!(u8)result;
 }
 u32 func_801E9774(void* global, u16 arg2, void* arg3) {
@@ -1873,10 +1873,10 @@ u32 func_801E9774(void* global, u16 arg2, void* arg3) {
         u32 v = *(u32*)r;
         if (v == 0) continue;
         u16 cat = func_80139358(v >> 20);
-        result += (u8)func_801361E8(g, (char*)&lbl_eu_805063BC[0x1e2], cat);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], cat);
     }
     if (arg3 != NULL) {
-        result += (u8)func_801361E8(g, (char*)&lbl_eu_805063BC[0x1e2], v2);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], v2);
     }
     return result;
 }
@@ -1889,7 +1889,7 @@ void func_801E98E4(void* a, u16 b, void* c, void* d) {
         void* r = func_80157C4C(i);
         if (r != NULL && *(u32*)r != 0) {
             u16 cat = func_80139358(*(u32*)r >> 20);
-            func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
+            func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
         }
     }
     char buf[0x20];
@@ -1959,7 +1959,7 @@ char* func_801D3C74(void* item_data, u8 index) {
     s16 val = *(s16*)((u8*)item_data + index * 2 + 0xC0);
     char buf[0x80];
     sprintf(buf, (char*)&lbl_eu_805063BC, val);
-    func_801361E8(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x3], item_id);
+    func_801361E8((u32)lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x3], item_id);
     func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0xC]);
     char* result = (char*)item_data + 0xD9;
     sprintf(result, (char*)&lbl_eu_805063BC[0x18], 0);
@@ -2023,7 +2023,7 @@ void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         r12 = *(void**)((u8*)r3 + 0); \
         r12 = *(void**)((u8*)r12 + 0x3C); \
         pane = ((void*(*)(void*,char*,u32))r12)(r3, base + _off, 1); \
-        func_80124270(pane, (void*)(_a2)); \
+        func_80124270(pane, (u32)(_a2)); \
     } while(0)
     FP(0xc2, 0x0);
     FP(0xce, 0x0);
@@ -2098,7 +2098,7 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         func_801D8B08(info);
         func_801D8B60(info);
     }
-    char* s = func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
+    char* s = (char*)func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
     char buf[0x20];
     buf[0] = 0;
     *(u32*)(buf + 0x20) = 0;

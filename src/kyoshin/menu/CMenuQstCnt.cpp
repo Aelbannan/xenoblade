@@ -173,7 +173,7 @@ void CMenuQstCnt::Init() {
     func_80136B4C(mLayout, &lbl_eu_80509A10[0x8a], &lbl_eu_80509A10[0x73], 0);
 
     char* text =
-        func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 11);
+        (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 11);
     func_80136B4C(mLayout, &lbl_eu_80509A10[0x59], text, 0);
 
     // Start the open animation from frame 0 and tick it once.
@@ -445,9 +445,9 @@ void func_80226E54(CMenuQstCnt* self) {
     }
     func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x74], s, 0);
     if (self->mSelEntry.f6 == 0) {
-        s = func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
+        s = (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 12);
     } else {
-        s = func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
+        s = (char*)func_80136190(&lbl_eu_80509A10[0x7b], &lbl_eu_80509A10[0x85], 13);
     }
     func_80136B4C(self->mLayout, &lbl_eu_80509A10[0x8a], s, 0);
     func_80136910(self->mLayout, &lbl_eu_80509A10[0x41], self->mSelEntry.f4);
@@ -496,11 +496,11 @@ void func_802270CC(QstData* self) {
             }
             u32 v = func_80138138(i);
             void* tbl = (void*)lbl_eu_80573D18[v];
-            u32 res = func_801361E8(tbl, &lbl_eu_80509AB4[0], i);
+            u32 res = func_801361E8((u32)tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;
             u32 r21 = (res & 0xff) == 1;
             if (r22 == 3) r21 = 0;
-            u8 x = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
+            u8 x = (u8)func_801361E8((u32)lbl_eu_806640A8, &lbl_eu_80509AB4[0xa], cat);
             u16 idx = self->field_2000;
             self->field_2000 = idx + 1;
             QstInfo src;

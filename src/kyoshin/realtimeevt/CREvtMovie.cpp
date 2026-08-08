@@ -16,8 +16,8 @@ void __dt__80185754(void* ptr);
 
 // Movie playback functions
 void func_80164F6C(void);
-void func_80164FE8(void);
-void func_80164FB4(void);
+int func_80164FE8(void);
+int func_80164FB4(void);
 void func_80165014(void);
 void func_80164ED0(const char* path, int flag, void* handle);
 void* func_8016C3DC(void);

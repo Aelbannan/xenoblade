@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+class CBaseCur;
 #include <nw4r/lyt.h>
 
 class CFileHandle;
@@ -213,7 +214,7 @@ extern "C" void func_8028EF24(CSLCur* self);
 extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
 extern "C" u8 lbl_eu_80538858[];
 extern "C" void func_8009D514(void*);
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" u8 lbl_eu_8050F7CC[];
 extern "C" CSaveLoad* lbl_eu_806649F4;
@@ -238,13 +239,13 @@ extern "C" u32 func_8009CF8C(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void func_8022B8E4(void*);
-extern "C" void __ct__CCur18(void* self, void* param);
+extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" u32 func_801355D8();
-extern "C" u32 func_801355BC();
-extern "C" void func_80124270(void* obj, int value);
-extern "C" u16 func_80136254(u16, const char*, u16);
+extern "C" void* func_801355BC();
+extern "C" void func_80124270(void* obj, u32 value);
+extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" u8 func_80141BA0(u16, u8);
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);

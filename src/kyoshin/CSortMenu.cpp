@@ -141,7 +141,8 @@ extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
 extern "C" void func_801D3258(CSortMenu* _this) {
     func_801390E0(&_this->mFileHandle);
     if (_this->mpLayout != NULL) {
-        _this->mpLayout->Destroy(1);
+        // Retail calls the virtual deleting destructor (vtable slot +0x8, r4=1).
+        delete _this->mpLayout;
         _this->mpLayout = NULL;
     }
     func_80139124(_this->mArcResAcc);
@@ -428,8 +429,8 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 extern "C" void func_801D3878(CSortMenu* _this) {
     if (func_80137444(_this->mpAnimTrans0, 1.0f) != 0) {
         _this->field_0x2A = 2;
-        _this->mpLayout->BindAnimation(_this->mpAnimTrans0, false);
-        _this->mpLayout->BindAnimation(_this->mpAnimTrans1, true);
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, true);
         _this->mpLayout->Animate(0);
     }
 }
@@ -450,8 +451,8 @@ extern "C" void func_801D390C(CSortMenu* _this) {
 extern "C" void func_801D3958(CSortMenu* _this) {
     if (func_80137510(_this->mpAnimTrans1, 1.0f) != 0) {
         _this->field_0x2A = 5;
-        _this->mpLayout->BindAnimation(_this->mpAnimTrans1, false);
-        _this->mpLayout->BindAnimation(_this->mpAnimTrans0, true);
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
         _this->mpLayout->Animate(0);
     }
 }
@@ -474,9 +475,9 @@ extern "C" void func_801D3A3C(CSortMenu* _this) {
     for (int i = 0; i < 5; i++) {
         int idx = i + (s8)_this->mSubPage;
         if (idx >= (int)_this->mCount) {
-            func_80136B4C(_this->mpLayout, (const char*)lbl_eu_805349B8[i], lbl_eu_8050624C + 0x3e, 0);
+            func_80136B4C(_this->mpLayout, (char*)lbl_eu_805349B8[i], lbl_eu_8050624C + 0x3e, 0);
         } else {
-            func_80136B4C(_this->mpLayout, (const char*)lbl_eu_805349B8[i], (const char*)(uintptr_t)_this->mArray[idx], 0);
+            func_80136B4C(_this->mpLayout, (char*)lbl_eu_805349B8[i], (char*)(uintptr_t)_this->mArray[idx], 0);
         }
     }
     func_801F3850((u8*)_this + 0x2C, (s8)_this->mSubPage);
@@ -513,8 +514,8 @@ extern "C" int OnFileEvent__9CSortMenuFP10CEventFile(CSortMenu* _this, CEventFil
     void (*setFontFunc)(void*, void*) = (void (*)(void*, void*))((void**)fontVtable)[9];
     setFontFunc(fontHandle, rootPane);
 
-    _this->mpLayout->BindAnimation(_this->mpAnimTrans1, false);
-    _this->mpLayout->BindAnimation(_this->mpAnimTrans0, true);
+    _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
+    _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
     _this->mpLayout->Animate(0);
 
     if (_this->mpLayout != NULL) {

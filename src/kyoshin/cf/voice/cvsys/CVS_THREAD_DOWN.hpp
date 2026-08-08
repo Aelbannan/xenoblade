@@ -6,15 +6,6 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 
 /**
- * CVoiceHandle - voice handle with embedded CCharVoice at +0x3E9C.
- */
-struct CVoiceHandle {
-    void** vtable;                     // 0x00: vtable pointer
-    u8 _pad[0x3E9C - sizeof(void*)];    // 0x04-0x3E9B: handle data
-    CCharVoice voice;                  // 0x3E9C: the actual voice object
-};
-
-/**
  * CVS_THREAD_DOWN - voice thread variant for "Down" (knocked-down) audio.
  *
  * Inherits from CVS_THREAD and returns a thread-local buffer.

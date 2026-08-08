@@ -166,7 +166,7 @@ void CMCEffUpPrm::init() {
         func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&unkStructure->layout, mArcResourceAccessor, &lbl_eu_805095EC[0xc4]);
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(unkStructure->layout, &unkStructure->animTrans, mArcResourceAccessor, &lbl_eu_805095EC[0xdb]);
         nw4r::lyt::Pane* rootPane = unkStructure->layout->GetRootPane();
-        func_8013676C(rootPane, func_801355BC());
+        func_8013676C(rootPane, (u32)func_801355BC());
         unkStructure->layout->SetAnimationEnable(unkStructure->animTrans, true);
         unkStructure->layout->Animate(0);
     }
@@ -512,12 +512,12 @@ void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     unk36 = arg1;
     unk38 = arg2;
     char* name = func_8013639C(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], arg1);
-    char* itemName = func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
+    char* itemName = (char*)func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - (arg2 - 1));
     char buffer[0x20];
     sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
     func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);
     void* resource = nullptr;
-    u8 result = func_801361E8(lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
+    u8 result = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805095EC[0x296], arg1);
     switch(result) {
         case 0:
             resource = mArcResourceAccessor->GetResource(mArcResourceAccessor->RES_TYPE_TEXTURE, &lbl_eu_805095EC[0x29f], 0);
@@ -579,7 +579,7 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
     }
     if(mAnimTrans20->GetFrame() >= 5.0f) {
         char* name = func_8013639C(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], unk36);
-        char* itemName = func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
+        char* itemName = (char*)func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];
         sprintf(buffer, &lbl_eu_805095EC[0x282], name, itemName);
         func_80136A1C(mLayout18, &lbl_eu_805095EC[0x287], buffer, 0);

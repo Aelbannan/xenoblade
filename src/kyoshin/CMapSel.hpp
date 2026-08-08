@@ -27,6 +27,7 @@
 class CMapSel {
 public:
     CMapSel();
+    ~CMapSel();  // defined in CMapSel.cpp as extern "C" __dt__7CMapSelFv
     u8 mVtbl[4];                              // +0x00 - IWorkEvent vtable ptr
     u8 mMemRegion[0x10];                      // +0x04 - UnkClass_8045F564
     u32 mFileHandle;                          // +0x14
@@ -66,5 +67,13 @@ extern "C" void __dl__FPv(void*);
 extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801F369C(void*);
+// The canonical func_80137510 (nw4r::lyt::AnimTransform*, float) is declared in
+// code_80135FDC.hpp. CMapSel.cpp's call site passes a raw u32-held pointer, so
+// this legacy void*-typed pseudo-import is kept for that TU; TUs that include
+// code_80135FDC.hpp (which redeclares the same extern "C" symbol with the
+// canonical signature) define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
+// before including this header to avoid the redeclaration clash (10197).
+#ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 extern "C" u32 func_80137510(void*, float);
+#endif
 extern "C" float lbl_eu_8066873C;

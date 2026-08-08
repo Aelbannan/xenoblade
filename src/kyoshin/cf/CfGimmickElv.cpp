@@ -28,10 +28,10 @@ extern u32 jumptable_eu_80535830[]; // jump table
 
 // Helper: get bdat column value (returns u16/u8 depending on column type)
 static inline u16 getCol16(void* table, void* col, int row) {
-    return (u16)getBdatStringColumnValue(table, col, row);
+    return (u16)getBdatStringColumnValue(table, (const char*)col, row);
 }
 static inline u8 getCol8(void* table, void* col, int row) {
-    return (u8)getBdatStringColumnValue(table, col, row);
+    return (u8)getBdatStringColumnValue(table, (const char*)col, row);
 }
 
 // ============================================================
@@ -716,7 +716,7 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
                             func_801BFF78(1, sfxId, 0x10);
                         }
                     } else {
-                        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(1, self->val1BC, 0, 0, 0, lbl_eu_80668384);
+                        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(1, self->val1BC, 0, 0, lbl_eu_80668384);
                         self->unk80 = 1;
                         self->val1D4 = 0xFFFF;
                     }

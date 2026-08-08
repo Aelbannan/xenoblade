@@ -1216,8 +1216,8 @@ void func_804D5E90(EffectNode* self) {
 f32* func_804D5F54(void* this_, s32 count) {
     const void* mem = lbl_eu_8065FC18.field_0x04;
     u32 req = (u32)((u32)count << 4);
-    if (req > getMaxAllocSize__Q23mtl10MemManagerFUl(mem, (u32)count)) return 0;
-    f32* buf = (f32*)allocate_array__Q23mtl10MemManagerFUlUl(req, mem);
+    if (req > getMaxAllocSize__Q23mtl10MemManagerFUl((u32)mem)) return 0;
+    f32* buf = (f32*)allocate_array__Q23mtl10MemManagerFUlUl(req, (u32)mem);
     if (!buf) return 0;
     f32 f8 = lbl_eu_8066B158;
     f32 f5 = lbl_eu_8066B160;

@@ -114,22 +114,22 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     // Set text fields from message table
     char* t1 =
-        func_80136190((char*)&lbl_eu_8050A740[0x94],
+        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
                        (char*)&lbl_eu_8050A740[0x9d], 0x24);
     func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xa2], t1, 0);
 
     char* t2 =
-        func_80136190((char*)&lbl_eu_8050A740[0x94],
+        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
                        (char*)&lbl_eu_8050A740[0x9d], 0x25);
     func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xaf], t2, 0);
 
     char* t3 =
-        func_80136190((char*)&lbl_eu_8050A740[0x94],
+        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
                        (char*)&lbl_eu_8050A740[0x9d], 0x26);
     func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xba], t3, 0);
 
     char* t4 =
-        func_80136190((char*)&lbl_eu_8050A740[0xc5],
+        (char*)func_80136190((char*)&lbl_eu_8050A740[0xc5],
                        (char*)&lbl_eu_8050A740[0xd3], 0x2b);
     func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xd8], t4, 0);
 

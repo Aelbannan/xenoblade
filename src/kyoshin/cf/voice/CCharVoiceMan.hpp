@@ -209,6 +209,7 @@ extern "C" int func_80148778(void* self, int id);
 // MWCC member-function-pointer runtime helpers (compare / probe).
 extern "C" int __ptmf_cmpr(void* a, void* b);
 extern "C" long __ptmf_test(void* ptmf);
+class CVS_THREAD;
 // Reference member-function-pointer the voice nodes are matched against.
 extern "C" void* lbl_eu_805398C0;
 // Resolve a voice-action object from a voice source id (C-linkage).
@@ -218,7 +219,7 @@ extern "C" void func_802AF9D0(void* r3, int voiceId, int r5);
 extern "C" cf::CSoundNode* func_802AF56C(void* c);
 extern "C" int func_802A7870(void* arr, int capacity, int unused);
 extern "C" cf::CSoundNode* __ct__802A92D8(void* b, void* a);
-extern "C" void* func_802A3E88(void* node);
+extern "C" int func_802A3E88(CVS_THREAD* node);
 // Create a battle-voice source node from an old battle-count (cvsys sibling).
 extern "C" cf::CSoundNode* func_802A6820(int oldCount);
 // Pure voice nodes created with an int argument (1=levelled, 0=normal).
@@ -226,11 +227,11 @@ extern "C" cf::CSoundNode* __ct__802AF5CC(int a);
 extern "C" cf::CSoundNode* __ct__802AB5F0();
 extern "C" cf::CSoundNode* __ct__802A4870(int a);
 // Convert a CfObjectMove to a battle-participant object.
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* self);
+extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* self);
 // Create a battle-voice node from a voice-action source.
 extern "C" cf::CSoundNode* func_802B0344(void* src);
 // Current battle/field phase id.
-extern "C" int func_800822F4__Q22cf13CfGameManagerFv(void);
+extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv(void);
 // Create a battle-voice trigger node.
 extern "C" void* func_802A7A54(int a);
 // Run one node's level-thread handler (list sweep).

@@ -198,9 +198,9 @@ void func_80214408(CMCCrystalBox* self, nw4r::lyt::DrawInfo* di) {
 // resources, then destroys every placed member sub-object.
 void func_802144F4(CMCCrystalBox* self) {
     func_8003AA8C__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle(&self->subObjPtrs[0]);
-    func_801390E0__FPP11CFileHandle(&self->subObjPtrs[1]);
-    func_801390E0__FPP11CFileHandle(&self->subObjPtrs[2]);
+    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[0]);
+    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[1]);
+    func_801390E0__FPP11CFileHandle((void**)&self->subObjPtrs[2]);
 
     if (self->unk60 != 0) {
         void* layout = self->subObjPtrs[5];
@@ -587,7 +587,7 @@ void func_8021899C(CMCCrystalBox* self) {
     arr[2] = lbl_eu_80508870[2];
     unsigned long id = func_8015780C(9);
     int idx = (int)id & 0xFFFF;
-    char* s1 = func_80136190(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, arr[idx]);
+    char* s1 = (char*)func_80136190(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, arr[idx]);
     func_80136B4C((nw4r::lyt::Layout*)self->subObjPtrs[5],
                   lbl_eu_8050888C + 0x1ca, s1, 0);
     if (func_801D32DC((u8*)self + 0xfc) != 0) {
@@ -595,7 +595,7 @@ void func_8021899C(CMCCrystalBox* self) {
         u8 i = 0;
         while (arr[i] > 0) {
             func_801D3518((u8*)self + 0xfc,
-                          func_80136190(lbl_eu_8050888C + 0xf4,
+                          (char*)func_80136190(lbl_eu_8050888C + 0xf4,
                                         lbl_eu_8050888C + 0xfd, arr[i]));
             i++;
         }

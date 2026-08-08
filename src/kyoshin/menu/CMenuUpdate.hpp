@@ -179,7 +179,7 @@ extern "C" void* CfRes_getE14();
 extern "C" bool func_8009CF8C(int);
 extern "C" void func_8009D018(int, int);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-extern "C" void* func_80138F78(u32);
+extern "C" char* func_80138F78(u32);
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
 extern "C" bool func_80085840__Q22cf13CfGameManagerFv();
@@ -189,7 +189,7 @@ extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r
 extern "C" void func_80142C64(void* self);
 extern "C" void* getGlobalA10();
 extern "C" int getGlobal0E0();
-extern "C" void func_80142C80(void* self);
+extern "C" void func_80142C80();
 extern "C" void func_80142CA0(void* self, void* r4, void* r5);
 extern "C" void* noop_80142D5C(void* self);
 extern "C" void func_80142D60(void* self);

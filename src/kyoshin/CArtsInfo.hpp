@@ -78,7 +78,7 @@ extern "C" void func_80136A1C(void*, const char*, void*, u32);
 extern "C" void* func_80136190(const char*, const char*, int);
 extern "C" void func_80138078__FUl(u32);
 extern "C" u32 func_8013639C(u32, const char*, u32);
-extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" u32 func_80139A18(void*, const char*, void*, void*);
 extern "C" u32 func_80137924(void*, void*, void*, void*);
 extern "C" u32 func_8009EC9C(u32);

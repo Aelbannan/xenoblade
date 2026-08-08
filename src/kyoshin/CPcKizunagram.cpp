@@ -233,7 +233,7 @@ extern "C" void __declspec(noinline) func_8025DCB0(CPcKizunagram* self) {
 // func_8025DCFC: refresh all 6 affinity rows for the current character.
 extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    int count = func_8003B1EC() & 0xff;
+    int count = func_8003B1EC((void*)table) & 0xff;
     func_8009CF8C(0x20);
 
     for (int n = 1; n <= count; n++) {
@@ -248,7 +248,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             for (int k = 1; k <= 6; k++) {
                 char buf[0x20];
                 sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                u32 e8 = func_801361E8(table, buf, (u8)n);
+                u32 e8 = func_801361E8((u32)table, buf, (u8)n);
                 int rnd = (e8 & 0xff) + 0x29;
                 func_8009CF8C(rnd);
                 u8 lb8 = 0, lb9 = 0;
@@ -258,17 +258,17 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                     r21 = 1;
                 }
                 int id = (e8 & 0xff) + 1;
-                char* str = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                char* str = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                 if (p != 0) func_80124270(p, r21);
                 if (r21 != 0) {
                     void* tex = self->mArcRes->GetResource(0x74696d67, lbl_eu_8050D868 + 0xb5, 0);
                     if (tex != 0) func_80137F88(p, tex);
                 }
-                char* str2 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                 nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                 if (p2 != 0) func_80124270(p2, 0);
-                char* str3 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                 nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                 if (p3 != 0) func_80124270(p3, 0);
             }
@@ -281,15 +281,15 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                     for (int k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-                        u32 e8 = func_801361E8(table, buf, (u8)n);
+                        u32 e8 = func_801361E8((u32)table, buf, (u8)n);
                         int id = (e8 & 0xff) + 1;
-                        char* str = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+                        char* str = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
                         nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                         if (p != 0) func_80124270(p, 0);
-                        char* str2 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+                        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
                         nw4r::lyt::Pane* p2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
                         if (p2 != 0) func_80124270(p2, 0);
-                        char* str3 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+                        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
                         nw4r::lyt::Pane* p3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
                         if (p3 != 0) func_80124270(p3, 0);
                     }
@@ -303,7 +303,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
 void func_8025E0D8(CPcKizunagram* self) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     // First pass: build the character-row lookup table (BDAT indexed by row).
-    int count = func_8003B1EC() & 0xff;
+    int count = func_8003B1EC((void*)table) & 0xff;
     for (int i = 0; i < count; i++) {
         func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
@@ -312,11 +312,11 @@ void func_8025E0D8(CPcKizunagram* self) {
     for (int k = 1; k <= 6; k++) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = func_801361E8(table, buf, (s8)self->mField28 + 1);
+        u32 e8 = func_801361E8((u32)table, buf, (s8)self->mField28 + 1);
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (e8 & 0xff) + 1;
 
-        char* str1 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+        char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
         if (func_801C4648() == 0) continue;
@@ -335,7 +335,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         void* tex1 = self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) func_80137F88(pane, tex1);
 
-        char* str2 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         const char* s2;
         if (val >= 0xbb8) {
             s2 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x1ad : lbl_eu_8050D868 + 0x195;
@@ -351,7 +351,7 @@ void func_8025E0D8(CPcKizunagram* self) {
             if (pane2 != 0) func_80124270(pane2, 1);
         }
 
-        char* str3 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, (u8)val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
@@ -387,7 +387,7 @@ extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
     order.w[1] = lbl_eu_80668888.w[1];
     func_8003AA34();
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    int count = func_8003B1EC();
+    int count = func_8003B1EC((void*)table);
     // Locate the current character row inside the 8-entry order list.
     u32 idx = 0;
     for (u32 k = 0; k < 8; k++) {
@@ -418,7 +418,7 @@ extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
 // Target a text pane by name, then move the cursor so it sits over the row
 // matching the current character index.
 extern "C" void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
-    char* path = func_80136190(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
+    char* path = (char*)func_80136190(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
     nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(path, true);
     nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x1c5, true);
     CPcKizunaVec3 pos;
@@ -450,7 +450,7 @@ void func_8025E5A8(CPcKizunagram* self) {
 
 void func_8025E5E4(CPcKizunagram* self, u32 value) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    u8 count = (u8)func_8003B1EC();
+    u8 count = (u8)func_8003B1EC((void*)table);
     for (u8 i = 0; i < count; i++) {
         func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
@@ -458,11 +458,11 @@ void func_8025E5E4(CPcKizunagram* self, u32 value) {
     for (u32 k = 1; k <= 6; k++) {
         char buf1[0x20];
         sprintf(buf1, lbl_eu_8050D868 + 0x96, (u8)k);
-        u32 e8 = func_801361E8(table, buf1, (s8)self->mField28 + 1);
+        u32 e8 = func_801361E8((u32)table, buf1, (s8)self->mField28 + 1);
         u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (e8 & 0xff) + 1;
 
-        char* str1 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
+        char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
         if (pane == 0) continue;
         if (func_801C4648() == 0) continue;
@@ -481,7 +481,7 @@ void func_8025E5E4(CPcKizunagram* self, u32 value) {
         // Second panel: build its resource name from a value-dependent format.
         // Each range chooses a distinct format string; the val>=0x2711 range
         // skips the sprintf entirely (falls straight to the resource fetch).
-        char* str2 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
+        char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
         char buf2[0x20];
         if (val < 0xbb8) {
             if (val < 0x7d0) {
@@ -505,7 +505,7 @@ void func_8025E5E4(CPcKizunagram* self, u32 value) {
             if (pane2 != 0) func_80124270(pane2, 1);
         }
 
-        char* str3 = func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
+        char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
         func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, (u8)val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
@@ -527,8 +527,8 @@ extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val) {
 
 // BDAT range check: random row must fall between two bounded column values.
 extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id) {
-    u16 v1 = (u16)func_80136254(table, lbl_eu_8050D868 + 0xdd, (const void*)id);
-    u16 v2 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x256, (const void*)id);
+    u16 v1 = (u16)func_80136254(table, lbl_eu_8050D868 + 0xdd, id);
+    u16 v2 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x256, id);
     u32 check = func_8009CF8C(0x20) & 0xFFFF;
     int result = 0;
     if (v1 <= check && check <= v2) result = 1;
@@ -536,8 +536,8 @@ extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id) {
 }
 
 extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id) {
-    u16 v1 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x25d, (const void*)id);
-    u16 v2 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x264, (const void*)id);
+    u16 v1 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x25d, id);
+    u16 v2 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x264, id);
     u32 check = func_8009CF8C(0x20) & 0xFFFF;
     int result = 0;
     if (v1 <= check && check <= v2) result = 1;

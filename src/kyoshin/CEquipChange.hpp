@@ -79,7 +79,7 @@ public:
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
 // linkage. func_801D2ED8/CEquipItemBox gates take the object and return status.
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" u8 func_801D2ED8(CBaseCur*);
+extern "C" int func_801D2ED8(CBaseCur*);
 extern "C" int func_802865A0(CEquipItemBox* box);
 extern "C" int func_802865A8(CEquipItemBox* box);
 extern "C" int func_80286650(CEquipItemBox* box);
@@ -89,7 +89,7 @@ extern "C" int func_8028652C(CEquipItemBox* box);
 extern "C" int func_80287EE8(CEquipItemBox* box);
 extern "C" void func_802870DC(CEquipItemBox* box);
 extern "C" void func_802040FC(CEquipChange* self);
-extern "C" void func_801D4054(CItemBoxInfo* info);
+extern "C" void func_801D4054(void* info);
 extern "C" void func_802861A8(CEquipItemBox* box);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_802042C0(CEquipChange* self);
@@ -101,6 +101,6 @@ extern "C" void* func_80157C4C(u32 index, s16 value);
 extern "C" void* __dt__7CSubCurFv(CBaseCur* _this, int flags);
 extern "C" void* __dt__6CCur14Fv(CBaseCur* _this, int flags);
 extern "C" void* __dt__6CCur15Fv(CBaseCur* _this, int flags);
-extern "C" void* __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* _this, int flags);
+extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
 extern "C" void* __dt__12CItemBoxInfoFv(CItemBoxInfo* _this, int flags);
 extern "C" void* __dt__13CEquipItemBoxFv(CEquipItemBox* _this, int flags);

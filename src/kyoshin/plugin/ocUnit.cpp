@@ -82,7 +82,7 @@ extern "C" {
     void func_8013D07C(void* subObj, const char* str, int flag);
     void func_8013D448(void* subObj, const char* str);
     unsigned int func_8013EC58();
-    int func_80174C98(void* player, int* val, int flag);
+    int func_80174C98(void* player, u32* val, int flag);
     unsigned char code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
@@ -271,7 +271,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         if (!code80135FDC_getByte_64058()) {
             u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
             u32 val = *valPtr;
-            if (!func_80174C98((void*)player, (int*)&val, 1)) {
+            if (!func_80174C98((void*)player, (u32*)&val, 1)) {
                 cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
                 state->CObjectState_UnkVirtualFunc1(1);
                 ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);
@@ -283,7 +283,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         }
         u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
         u32 val = *valPtr;
-        if (!func_80174C98((void*)player, (int*)&val, 1)) {
+        if (!func_80174C98((void*)player, (u32*)&val, 1)) {
             cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
             state->CObjectState_UnkVirtualFunc1(1);
             ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);

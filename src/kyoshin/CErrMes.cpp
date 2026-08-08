@@ -3,6 +3,10 @@
 #include "kyoshin/CErrMes.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
+// Bdat column lookup import (retail signature from defining TU ocBdat.cpp;
+// deliberately not promoted to ocBdat.hpp - see note there).
+extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
+
 void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 
 
@@ -35,7 +39,7 @@ void* func_eu_802B14D4(void){ return 0; }
 
 void* func_eu_802B14E0(void){ return 0; }
 
-u32 lbl_eu_8053A478[];
+extern u32 lbl_eu_8053A478[];
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}

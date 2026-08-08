@@ -1,6 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/code_802405F4
 // Replace stubs with high-level C/C++ during decomp.
 
+// CMapSel.hpp carries a legacy (void*, float) pseudo-import for func_80137510;
+// code_80135FDC.hpp (included below) declares the canonical
+// (nw4r::lyt::AnimTransform*, float). Skip the legacy decl so the two
+// extern "C" declarations don't clash (10197). Must be defined before any
+// header that pulls in CMapSel.hpp (code_802405F4.hpp includes it).
+#define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/code_802405F4.hpp"
@@ -19,7 +25,10 @@ extern void func_801BE108(CBgTex* dest, CBgTex* src);
 // func_801BE16C: copies CTitleAHelp field-by-field from src to dest
 extern void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
 
-// Init helpers for sub-objects
+// Init helpers for sub-objects (defined later in this TU)
+void func_80241640(CMapSel* dest, CMapSel* src);
+void func_8024189C(CFade* dest, CFade* src);
+void func_80241920(CFloorMap* dest, CFloorMap* src);
 extern void func_8024343C(CMapSel* mapSel);
 extern void func_8024439C(CFade* fade);
 
@@ -110,44 +119,85 @@ void func_8024125C(){}
 
 void func_80241344(){}
 
-void CMenuMapSelect::~CMenuMapSelect() {}
+// CMenuMapSelect::~CMenuMapSelect() - virtual destructor (D1/D2 merged; the
+// class header declares the virtual dtor, the vtable entry binds to this
+// extern "C" symbol). Destroys subobjects in reverse declaration order:
+// CFloorMap at +0x194, CFade at +0x16C, CMapSel at +0xB8, CTitleAHelp at +0x80,
+// CBgTex at +0x60, then the CProcess base, then conditionally frees memory.
+// The nested CProcess null-checks reproduce MWCC's D2-inlined-into-D1
+// artifacts (same shape as __dt__9CMainMenuFv in CMainMenu.cpp).
+extern "C" void __dt__9CFloorMapFv(void*, int);
+extern "C" void __dt__5CFadeFv(void*, int);
+extern "C" void __dt__7CMapSelFv(void*, int);
+extern "C" void __dt__11CTitleAHelpFv(void*, int);
+extern "C" void __dt__6CBgTexFv(void*, int);
+extern "C" void __dt__8CProcessFv(void*, int);
+extern "C" void* __dt__14CMenuMapSelectFv(CMenuMapSelect* _this, int flags) {
+    if (_this) {
+        __dt__9CFloorMapFv((char*)_this + 0x194, -1);
+        __dt__5CFadeFv((char*)_this + 0x16C, -1);
+        __dt__7CMapSelFv((char*)_this + 0xB8, -1);
+        __dt__11CTitleAHelpFv((char*)_this + 0x80, -1);
+        __dt__6CBgTexFv((char*)_this + 0x60, -1);
+        if (_this) {
+            if (_this) {
+                __dt__8CProcessFv(_this, 0);
+            }
+        }
+        if (flags > 0) {
+            __dl__FPv(_this);
+        }
+    }
+    return _this;
+}
 
 void CMenuMapSelect::Init() {
     func_8008294C__Q22cf13CfGameManagerFv(1);
 
-    CBgTex bgTex(0);
-    func_801BE108(&mBgTex, &bgTex);
-    // bgTex destructor runs here
+    {
+        CBgTex bgTex(0);
+        func_801BE108(&mBgTex, &bgTex);
+    } // bgTex destructor runs here
     mBgTex.func_801C3C14();
 
-    char* helpStr = func_80136190(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
-    CTitleAHelp titleHelp(helpStr, 0x4a);
-    func_801BE16C(&mTitleHelp, &titleHelp);
-    // titleHelp destructor runs here
+    char* helpStr = (char*)func_80136190(lbl_eu_8050B498, lbl_eu_8050B498 + 8, 1);
+    {
+        CTitleAHelp titleHelp(helpStr, 0x4a);
+        func_801BE16C(&mTitleHelp, &titleHelp);
+    } // titleHelp destructor runs here
     mTitleHelp.CTitleAHelp_load();
 
-    CMapSel mapSel;
-    func_80241640(&mMapSel, &mapSel);
-    // mapSel destructor runs here
+    {
+        CMapSel mapSel;
+        func_80241640(&mMapSel, &mapSel);
+    } // mapSel destructor runs here
     func_8024343C(&mMapSel);
 
-    CFade fade;
-    func_8024189C(&mFade, &fade);
-    // fade destructor runs here
+    {
+        CFade fade;
+        func_8024189C(&mFade, &fade);
+    } // fade destructor runs here
     func_8024439C(&mFade);
 
-    CFloorMap floorMap;
-    func_80241920(&mFloorMap, &floorMap);
-    // floorMap destructor runs here
+    {
+        CFloorMap floorMap;
+        func_80241920(&mFloorMap, &floorMap);
+    } // floorMap destructor runs here
 
     mScn->addRenderCB(this, 0xd, 1);
 }
 
+// Copy helpers for member sub-object initialization (retail calls these from
+// Init; empty stubs must not be inlined away at -O4,p, so disable auto-inline
+// for their definitions).
+#pragma push
+#pragma auto_inline off
 void func_80241640(CMapSel* dest, CMapSel* src){}
 
 void func_8024189C(CFade* dest, CFade* src){}
 
 void func_80241920(CFloorMap* dest, CFloorMap* src){}
+#pragma pop
 
 void CMenuMapSelect::Term() {}
 

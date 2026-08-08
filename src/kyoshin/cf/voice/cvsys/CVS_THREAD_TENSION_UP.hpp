@@ -2,7 +2,6 @@
 
 #include <types.h>
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
-#include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_80539D20[3];

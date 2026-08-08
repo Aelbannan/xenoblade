@@ -244,7 +244,7 @@ extern "C" void func_801A9FC0(UnkClass_8007E864* object);
 extern "C" void func_80188774(u32 object);
 extern "C" void func_8018EFB4(UnkClass_80085334* object);
 extern "C" void func_800B93AC();
-extern "C" void func_800FE68C();
+extern "C" void* func_800FE68C();
 extern "C" void __dt__800FDEF8();
 
 struct ResetVectorWords {
@@ -456,8 +456,8 @@ extern "C" ItemListManager* func_800B6BA4__Fv();
 extern "C" void func_800B06C8();
 extern "C" void func_800620F0();
 extern "C" void func_8016FC0C(bool enable);
-extern "C" Unk80EE4Data* func_800BFC68__FPQ22cf12CfObjectMove(
-    ItemListSubobject* object);
+extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(
+    void* object);
 extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -501,7 +501,7 @@ extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
     Unk80EE4Data* object;
     ItemListNode* node = manager->sentinel->next;
     while (node != manager->sentinel) {
-        object = func_800BFC68__FPQ22cf12CfObjectMove(node->object);
+        object = (Unk80EE4Data*)func_800BFC68__FPQ22cf12CfObjectMove(node->object);
         if (object != nullptr) {
             object->vfunc_0xA8(true);
             object->vfunc_0xB8();
@@ -762,7 +762,7 @@ typedef UnkClass_800817BC Unk8187CData;
 extern const float lbl_eu_806664A0;
 extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 value,
                                                                       u32 index);
-extern "C" void func_800ACF78(UnkClass_800817BC* object, cf::CfObjectMove* player,
+extern "C" void func_800ACF78(void* object, void* player,
                                 u32 value);
 extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first,
                                 float second);
@@ -863,10 +863,10 @@ extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(
     func_80083F28__Q22cf13CfGameManagerFv(fifth, sixth, lbl_eu_8066653C);
 }
 
-extern "C" UnkClass_8009EC9C* func_8009EC9C(u16 index);
+extern "C" void* func_8009EC9C(u32 index);
 extern "C" const void* func_8009E120(UnkClass_8009EC9C* object, u16 value);
 extern "C" void func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value) {
-    func_8009E120(func_8009EC9C(index), value);
+    func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(index), value);
 }
 
 #pragma dont_inline on
@@ -1081,7 +1081,7 @@ extern "C" CfGameManagerData1C* func_8007EEF0__Q22cf13CfGameManagerFv(
 extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data);
 #pragma dont_inline on
 extern "C" void func_8007EF4C__Q22cf13CfGameManagerFv(u16 dataId) {
-    UnkClass_8009EC9C* data = func_8009EC9C(dataId);
+    UnkClass_8009EC9C* data = (UnkClass_8009EC9C*)func_8009EC9C(dataId);
     u32 total = 0;
     for (s32 i = 0; i < 5; ++i) {
         total += func_8007F044__Q22cf13CfGameManagerFv(&data->itemCounts_0x3534, i);
@@ -1347,19 +1347,19 @@ extern "C" Unk80EE4Data* func_80081D2C__Q22cf13CfGameManagerFv(
 #pragma dont_inline reset
 
 class BdatFilePointer;
-extern "C" void func_8003AA34();
-extern "C" BdatFilePointer* getFP__FPCc(const char* name);
-extern "C" const char* getBdatStringColumnValue(BdatFilePointer* file,
-                                                  const char* column, u16 index);
-extern "C" void func_8003B1EC(BdatFilePointer* file);
-extern "C" void func_8003B41C(BdatFilePointer* file);
+extern "C" void* func_8003AA34();
+extern "C" void* getFP__FPCc(const char* name);
+extern "C" u32 getBdatStringColumnValue(void* file,
+                                                  const char* column, s32 index);
+extern "C" u32 func_8003B1EC(void* file);
+extern "C" u32 func_8003B41C(void* file);
 #pragma dont_inline on
 extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
     const char* name, u16 index) {
     func_8003AA34();
     const char* value;
-    BdatFilePointer* file = getFP__FPCc(name);
-    value = getBdatStringColumnValue(file, &lbl_eu_804FB824[0x84], index);
+    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(name);
+    value = (const char*)getBdatStringColumnValue(file, &lbl_eu_804FB824[0x84], index);
     func_8003B1EC(file);
     func_8003B41C(file);
     Unk80EE4Data* data = func_80081D2C__Q22cf13CfGameManagerFv(
@@ -1404,7 +1404,7 @@ extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(
 }
 #pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
-extern "C" UnkClass_8009ECB0* func_8009ECB0();
+extern "C" int* func_8009ECB0();
 extern "C" s32* func_8007E0C8__Q22cf13CfGameManagerFv(
     UnkClass_8009ECB0* data);
 extern "C" void func_80082B38__Q22cf13CfGameManagerFv() {
@@ -1414,7 +1414,7 @@ extern "C" void func_80082B38__Q22cf13CfGameManagerFv() {
     oldPlayers[0] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
     oldPlayers[1] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 1);
     oldPlayers[2] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 2);
-    UnkClass_8009ECB0* data = func_8009ECB0();
+    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
     s32* requestedIds = func_8007E0C8__Q22cf13CfGameManagerFv(data);
     for (s32 destination = 0; destination < 3; ++destination) {
         if (requestedIds[destination] != 0) {
@@ -1457,7 +1457,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     cf::CfGameManager::getInstance();
     if (!testResInfoFlag(0x400)) {
         s32 byteOffset;
-        UnkClass_8009ECB0* data = func_8009ECB0();
+        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
         volatile s32* values = func_8007E0C8__Q22cf13CfGameManagerFv(data);
         CfRes_getInstanceField();
         byteOffset = 0;
@@ -1819,7 +1819,7 @@ extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {
 }
 #pragma dont_inline reset
 
-extern "C" UnkClass_8009ECB0* func_8009ECB0();
+extern "C" int* func_8009ECB0();
 extern "C" s32 func_80063560(s32 value, u32 second, u32 third);
 extern "C" void func_80062928(s32 destination, const void* source, u32 size);
 extern "C" const void* func_801422A8__Q22cf6CfBdatFUl(u32 textId);
@@ -1828,24 +1828,24 @@ extern "C" bool func_8007DECC__Q22cf13CfGameManagerFv(s32 value, s32* current,
                                                         u32 size) {
     bool changed = false;
     if (value > 0) {
-        UnkClass_8009EC9C* data = func_8009EC9C(static_cast<u16>(value));
+        UnkClass_8009EC9C* data = (UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value));
         s32 destination = func_80063560(value, 0, 0);
         if (destination >= 0 && destination != *current) {
-            func_8009E120(func_8009EC9C(static_cast<u16>(value)), 0);
+            func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 0);
             func_80062928(destination,
-                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 0),
+                          func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 0),
                           size);
             func_80062928(destination,
-                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 1),
+                          func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 1),
                           size);
             func_80062928(destination,
-                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 2),
+                          func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 2),
                           size);
             func_80062928(destination,
-                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 3),
+                          func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 3),
                           size);
             func_80062928(destination,
-                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 4),
+                          func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(value)), 4),
                           size);
             func_80062928(destination,
                           func_801422A8__Q22cf6CfBdatFUl(data->textId_0x18), size);
@@ -1859,7 +1859,7 @@ extern "C" bool func_8007DECC__Q22cf13CfGameManagerFv(s32 value, s32* current,
 }
 extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntries) {
     if (searchEntries) {
-        UnkClass_8009ECB0* data = func_8009ECB0();
+        UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
         s32* entry = &data->entries_0x4[0];
         for (u32 i = 0; i < 7; ++i, ++entry) {
             if (*entry == static_cast<s32>(value)) {
@@ -1878,7 +1878,7 @@ extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntri
 
 extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
 extern "C" void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate) {
-    UnkClass_8009ECB0* data = func_8009ECB0();
+    UnkClass_8009ECB0* data = (UnkClass_8009ECB0*)func_8009ECB0();
     s32* entry = &data->entries_0x4[0];
     s32 start = 0;
     u32 size = 4;
@@ -1911,7 +1911,7 @@ extern "C" bool func_8009E344(UnkClass_8009ECB0* object, u32 value, s32* firstOu
 extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value) {
     s32 firstOut;
     s32 secondOut;
-    UnkClass_8009ECB0* object = func_8009ECB0();
+    UnkClass_8009ECB0* object = (UnkClass_8009ECB0*)func_8009ECB0();
     bool found = func_8009E344(object, value, &firstOut, &secondOut);
     bool result = false;
     if (found && firstOut == 1) result = true;
@@ -2073,7 +2073,7 @@ extern "C" bool func_8007FD8C__Q22cf13CfGameManagerFv(u32 mode) {
 }
 
 extern "C" VoiceList* func_800B6BA0();
-extern "C" VoiceAction* func_8016FE34(VoiceSource* source);
+extern "C" void* func_8016FE34(void* source);
 extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask) {
     VoiceList* list = func_800B6BA0();
     VoiceListNode* node = list->end->next;
@@ -2081,7 +2081,7 @@ extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask) {
         VoiceSource* source = node->value;
         u32 flags = source->flags_0x64;
         if ((flags & 0x18E) != 0 && (mask & flags) != 0) {
-            VoiceAction* action = func_8016FE34(source);
+            VoiceAction* action = (VoiceAction*)func_8016FE34(source);
             if (action != nullptr) {
                 action->vfunc_0xA8(true);
             }
@@ -2217,7 +2217,7 @@ class CfPlayerComposite : public cf::CActorParam,
 
 extern "C" u32 func_80082EC0__Q22cf13CfGameManagerFv(
     cf::UnkClass_CActorParam15E0* data, u32 value);
-extern "C" u32 func_8025FB10(cf::UnkClass_CActorParam15E0* data, u32 value);
+extern "C" u32 func_8025FB10(void* data, u32 value);
 extern "C" u32 func_80082E50__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
     CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
@@ -2296,7 +2296,7 @@ extern "C" void func_80082A0C__Q22cf13CfGameManagerFv() {
 
 class UnkClass_800B07E8;
 extern "C" void func_80068D14();
-extern "C" UnkClass_800B07E8* func_800B07E8__Fv();
+extern "C" void* func_800B07E8__Fv();
 extern "C" void func_800B4278(UnkClass_800B07E8* object, u32 mask);
 extern "C" u32 func_80084C10__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
@@ -2309,7 +2309,7 @@ extern "C" u32 func_80084C10__Q22cf13CfGameManagerFv() {
     u32 checkFlags = lbl_eu_80663E24;
     if (checkFlags & 0x40) {
         func_80068D14();
-        func_800B4278(func_800B07E8__Fv(), 0x10000000);
+        func_800B4278((UnkClass_800B07E8*)func_800B07E8__Fv(), 0x10000000);
         u32 flags = lbl_eu_80663E24;
         manager->field_0x86 = 0;
         lbl_eu_80663E24 = flags & ~0x40;
@@ -2345,7 +2345,7 @@ extern "C" u8 func_80113E24(void* object);
 extern "C" u8 code80135FDC_getByte_64059();
 extern "C" void func_80134628();
 extern "C" void* func_80496034(CScn* scene);
-extern "C" void* func_80496264(CScn* scene, s32 index);
+extern "C" void* func_80496264(void* scene, int index);
 extern "C" void func_80075674(CfCamEventManager* manager, void* object);
 extern "C" bool func_800865E8__Q22cf13CfGameManagerFv() {
     bool result = func_80164C28();
@@ -2367,7 +2367,7 @@ extern "C" bool func_800865E8__Q22cf13CfGameManagerFv() {
     return result;
 }
 
-extern "C" void func_800B9404(UnkClass_80083298* object);
+extern "C" void func_800B9404(void* object);
 extern "C" UnkClass_80083298* func_800B9524(u32 first, u32 second);
 extern "C" bool func_8007DA0C__Q22cf13CfGameManagerFv(cf::CfGameManager* manager,
                                                        u32 first, u32 second) {
@@ -2413,9 +2413,9 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
         }
         return;
     }
-    BdatFilePointer* file = getFP__FPCc(lbl_eu_804FB824);
-    const char* val_a = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
-    const char* val_b = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
+    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(lbl_eu_804FB824);
+    const char* val_a = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
+    const char* val_b = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
     if (mode == 0) {
         if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
             lbl_eu_80663E24 |= 8;
@@ -2472,9 +2472,9 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
         }
         return;
     }
-    BdatFilePointer* file = getFP__FPCc(lbl_eu_804FB824);
-    const char* val_a = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
-    const char* val_b = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
+    BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(lbl_eu_804FB824);
+    const char* val_a = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
+    const char* val_b = (const char*)getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
     if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
         lbl_eu_80663E24 |= 8;
     }

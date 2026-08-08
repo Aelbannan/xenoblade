@@ -16,12 +16,18 @@ CMenuSymbolMark::CMenuSymbolMark(CScn* scn) {
 }
 
 // ---------- CMenuSymbolMark destructor ----------
+// auto_inline off: the IScnRender vtable thunks (func_8012213C/4C) must
+// tail-call the retail symbol, not inline the dtor body (which would add a
+// vtable-set prologue the retail thunk doesn't have).
+#pragma push
+#pragma auto_inline off
 CMenuSymbolMark::~CMenuSymbolMark() {
     if (this) {
         __dt__17UnkClass_8045F564Fv(&mUnkClass, -1);
         this->CProcess::~CProcess();
     }
 }
+#pragma pop
 
 // ---------- CMenuSymbolMark::Init ----------
 void CMenuSymbolMark::Init() {
@@ -85,34 +91,46 @@ void func_801209BC(CMenuSymbolMark* self) {
 }
 
 // ---------- CArrow3D destructor ----------
+#pragma push
+#pragma auto_inline off
 CArrow3D::~CArrow3D() {
     if (this) {
         this->CTTask<CArrow3D>::~CTTask();
     }
 }
+#pragma pop
 
 // ---------- CTTask<CArrow3D>::Move ----------
+// MWCC lowers the PTMF dispatch to the retail __ptmf_test/__ptmf_scall calls
+// (r3=this, r12=&ptmf) - same shape as CTaskGameEff/CMainMenu. (The old
+// explicit __ptmf_test/__ptmf_scall calls passed the ptmf in r4 and never
+// matched retail.) static_cast mirrors CTTask.hpp's inline body.
 template<>
 void CTTask<CArrow3D>::Move() {
-    if (__ptmf_test(&mMoveFunc)) {
-        __ptmf_scall(this, &mMoveFunc);
+    if (mMoveFunc) {
+        (static_cast<CArrow3D*>(this)->*mMoveFunc)();
     }
 }
 
 // ---------- CTTask<CArrow3D>::Draw ----------
 template<>
 void CTTask<CArrow3D>::Draw() {
-    if (__ptmf_test(&mDrawFunc)) {
-        __ptmf_scall(this, &mDrawFunc);
+    if (mDrawFunc) {
+        (static_cast<CArrow3D*>(this)->*mDrawFunc)();
     }
 }
 
 // ---------- CArrow3D::cbRenderBefore ----------
+#pragma push
+#pragma auto_inline off
 void CArrow3D::cbRenderBefore() {
 }
+#pragma pop
 
-// ---------- CArrow3D::Move ----------
-void CArrow3D::Move() {
+// ---------- CArrow3D::Move (retail empty override, kept as extern "C" stub;
+// the class deliberately declares no Move() so the vtable keeps the
+// CTTask<CArrow3D>::Move dispatch - see CMenuSymbolMark.hpp) ----------
+extern "C" void Move__8CArrow3DFv() {
 }
 
 // ---------- CArrow3D::Term ----------
@@ -127,29 +145,32 @@ void CArrow3D::Init() {
 // These are vtable thunks for multiple inheritance.
 // When called through the IWorkEvent vtable (offset 0x58) or IScnRender vtable (offset 0x5C),
 // the this pointer needs adjustment before calling the actual implementation.
-// Using non-virtual scoped calls to avoid vtable dispatch in the thunk.
+// Retail emits 8-byte tail calls (addi this-adjust + branch). The C++ member-scoped
+// call form would inline the tiny bodies, so call the retail symbols directly as
+// extern "C" functions (same pattern as the CMenuMapSelect/CMapSel dtors).
+// Note: the dtors are declared 1-arg here (matching the retail thunk ABI - only
+// r3 is set before the tail branch; the flags arg is caller-leftover, as retail).
+extern "C" void __dt__15CMenuSymbolMarkFv(CMenuSymbolMark* self);
+extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(CMenuSymbolMark* self);
+extern "C" void __dt__8CArrow3DFv(CArrow3D* self);
+extern "C" void cbRenderBefore__8CArrow3DFv(CArrow3D* self);
 
 extern "C" void func_8012213C(void* self) {
-    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x58);
-    obj->CMenuSymbolMark::~CMenuSymbolMark();
+    __dt__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x58));
 }
 
 extern "C" void func_80122144(void* self) {
-    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x5C);
-    obj->CMenuSymbolMark::cbRenderBefore();
+    cbRenderBefore__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x5C));
 }
 
 extern "C" void func_8012214C(void* self) {
-    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x5C);
-    obj->CMenuSymbolMark::~CMenuSymbolMark();
+    __dt__15CMenuSymbolMarkFv((CMenuSymbolMark*)((char*)self - 0x5C));
 }
 
 extern "C" void func_80122154(void* self) {
-    CArrow3D* obj = (CArrow3D*)((char*)self - 0x54);
-    obj->CArrow3D::cbRenderBefore();
+    cbRenderBefore__8CArrow3DFv((CArrow3D*)((char*)self - 0x54));
 }
 
 extern "C" void func_8012215C(void* self) {
-    CArrow3D* obj = (CArrow3D*)((char*)self - 0x54);
-    obj->CArrow3D::~CArrow3D();
+    __dt__8CArrow3DFv((CArrow3D*)((char*)self - 0x54));
 }

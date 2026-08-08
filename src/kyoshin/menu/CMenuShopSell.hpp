@@ -15,7 +15,7 @@ extern "C" void Init__13CMenuShopSellFv();
 extern "C" void Term__13CMenuShopSellFv();
 extern "C" void Move__13CMenuShopSellFv();
 extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self);
-extern "C" void func_8018B0FC();
+extern "C" void func_8018B0FC(void*, void*);
 extern "C" void func_8018B130();
 extern "C" void func_8018B324();
 extern "C" void func_8018B398();

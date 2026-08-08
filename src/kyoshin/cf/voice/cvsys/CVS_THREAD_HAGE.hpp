@@ -5,7 +5,6 @@
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 
 // Forward declarations for the C-linkage imports below.
-struct CVoiceHandle;
 class CVS_THREAD_HAGE;
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -46,10 +45,4 @@ public:
     int blank1() override;
 };
 
-// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
-// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
-struct CVoiceHandle {
-    u32* vtable;                         // 0x00: vtable pointer
-    u8 _pad[0x3E9C - sizeof(u32*)];       // 0x04-0x3E9B: handle data
-    CCharVoice voice;                    // 0x3E9C: the actual voice object
-};
+// CVoiceHandle is defined once in the shared base header CVS_THREAD.hpp.

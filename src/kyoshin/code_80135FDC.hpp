@@ -22,15 +22,15 @@ class CScn;
 // Params use const void* so both const char* (CArtsInfo, CExchangeWin) and
 // const void* (CCollepedia) call sites bind without conversions.
 extern "C" {
-u16 func_8013606C(const void*, const void*, u16);
+u16 func_8013606C(const void*, const void*, u32);
 #ifndef CODE_80135FDC_CPP
 // The definitions of these in code_80135FDC.cpp use different (not-yet-)
 // matched signatures/linkage; code_80135FDC.cpp defines CODE_80135FDC_CPP
 // before including so these caller-tuned exports don't clash with them.
 char* func_80136190(const void*, const void*, int);
-u32 func_801361E8(const void*, const char*, u32);
+u8 func_801361E8(u32, const char*, u32);
 char* func_8013639C(const void*, const void*, int);
-void func_8013676C(nw4r::lyt::Pane*, u32);
+void func_8013676C(void*, u32);
 #endif
 void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
@@ -70,15 +70,15 @@ u8 func_801372B4(u32);
 #endif
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 #ifndef CODE_80135FDC_CPP
-void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
-char* func_80138F78(u16);
-void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+void func_80137E7C(void*, void*, void*);
+char* func_80138F78(u32);
+void func_80139A18(void*, void*, void*, void*);
 #endif
 }
 extern "C" u8 code80135FDC_getByte_621F0();
 extern "C" u8 code80135FDC_getByte_64077();
 #ifndef CODE_80135FDC_CPP
-extern "C" u8 func_801392B4(u8);
+extern "C" u8 func_801392B4(u32);
 #endif
 
 // ---------------------------------------------------------------------------

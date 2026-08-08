@@ -107,7 +107,7 @@ public:
 // ---------------------------------------------------------------------------
 
 extern "C" void* CItem_initItemImplInstances(void*);
-extern "C" char* func_80138F78(u16);
+extern "C" char* func_80138F78(u32);
 extern "C" int   func_801C6E90(void*);
 extern "C" u32   func_80136254(void*, const char*, u16);
 extern "C" void func_801599D4(CMCItemBoxEntry*, int);

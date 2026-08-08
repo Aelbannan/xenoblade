@@ -18,7 +18,7 @@
 #include <string.h>
 
 extern "C" CScn* lbl_eu_80663E14;
-extern "C" void func_800B9404(UnkClass_80083298* object);
+extern "C" void func_800B9404(void* object);
 
 cf::CfGameManager::~CfGameManager() {
     func_800B9404(unk90);

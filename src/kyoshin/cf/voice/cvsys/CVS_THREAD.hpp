@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/cf/voice/CCharVoice.hpp"
 
 // ── Helper types for voice-ID selector functions ──────────────────────────
 
@@ -30,6 +31,10 @@ struct UnkWorkObj {
 
 // Extended voice-handle covering the target field at 0x3F60.
 // Low-offset fields mirror CVS_THREAD layout for shared access.
+// Canonical definition: the embedded CCharVoice lives at +0x3E9C and the
+// manager flags at +0x3F00 (bit 1 = thread factory active). Subclass
+// headers must NOT redefine this type -- it is shared by every
+// CVS_THREAD_* variant TU.
 struct CVoiceHandle {
     u32* vtable;                         // 0x00
     u32 unk4;                            // 0x04
@@ -39,7 +44,10 @@ struct CVoiceHandle {
     u32 unk14;                           // 0x14
     u32 unk18;                           // 0x18
     u8 _pad[0x3E9C - 0x1C];             // 0x1C-0x3E9B
-    u8 voiceArea[0x3F60 - 0x3E9C];       // 0x3E9C-0x3F5F (CCharVoice)
+    CCharVoice voice;                    // 0x3E9C-0x3EDB: embedded voice object
+    u8 _pad2[0x3F00 - 0x3EDC];          // 0x3EDC-0x3EFF
+    u32 field_0x3F00;                    // 0x3F00: manager flags (bit 1 = factory active)
+    u8 _pad3[0x3F60 - 0x3F04];          // 0x3F04-0x3F5F
     UnkTarget* unkTarget;                // 0x3F60
 };
 

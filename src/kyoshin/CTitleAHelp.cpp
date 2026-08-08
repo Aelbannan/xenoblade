@@ -131,7 +131,7 @@ void CTitleAHelp::func_801C4198() {
 
 void CTitleAHelp::func_801C41C0(char* arg) {
     if(mLayout == nullptr) return;
-    func_80136B4C(mLayout, "txt_tit", arg, 0);
+    func_80136B4C(mLayout, (char*)"txt_tit", arg, 0);
 }
 
 void CTitleAHelp::func_801C41E8(u8 arg) {
@@ -174,7 +174,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
                 }
             }
 
-            char* helpText = func_80136190("MNU_kyeassign", "help", tableVal);
+            char* helpText = (char*)func_80136190("MNU_kyeassign", "help", tableVal);
             func_80136B4C(mLayout, buf2, helpText, 0);
         } else {
             nw4r::lyt::Pane* root = mLayout->GetRootPane();
@@ -258,11 +258,11 @@ void CTitleAHelp::func_801C473C(u8 arg) {
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D58, &lbl_80666D60);
+    func_80139A18((void*)mLayout, (void*)"txt_tit", (void*)&lbl_80666D58, (void*)&lbl_80666D60);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
+    func_80139A18((void*)mLayout, (void*)"txt_tit", (void*)&lbl_80666D68, (void*)&lbl_80666D70);
 }
 
 void CTitleAHelp::func_801C477C() {

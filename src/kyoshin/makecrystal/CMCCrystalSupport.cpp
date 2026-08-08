@@ -108,7 +108,7 @@ extern "C" void func_8022E9E4(CMCCrystalSupport* self, void* drawInfo) {
         return;
     }
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-        self->mLayout, drawInfo, 0, 1);
+        (nw4r::lyt::Layout*)self->mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
 }
 
 extern "C" void func_8022EA04(CMCCrystalSupport* self) {

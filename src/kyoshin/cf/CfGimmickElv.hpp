@@ -4,13 +4,14 @@
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 struct CfGimmickElvData;
+class UnkClass_800817BC;
 
 // Forward declarations for external functions used by CfGimmickElv
 extern "C" {
 void __ct__cf_CfGimmick(void* self);
 void __dt__Q22cf9CfGimmickFv(void* self, int mode);
 void* func_8003AA34();
-int getBdatStringColumnValue(void* table, void* colName, int rowId);
+u32 getBdatStringColumnValue(void* table, const char* colName, s32 rowId);
 void func_8020938C(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802095D8(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_80209488(void* self, void* subobj, void* bdat, void* stack, int idx);
@@ -48,11 +49,11 @@ void func_804BCC3C(void* ptr, u8 id);
 void func_804BCC54(void* ptr, u16 id);
 void func_804BCC6C(void* ptr, u8 id);
 f32 func_80496288(void* ptr);
-void* func_800817BC__Q22cf13CfGameManagerFv(u8 id, int mode);
+UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void func_801BFED0(int a, u16 b, int c);
 int func_801BFABC(int a);
 void func_801BFF78(int a, u16 b, int c);
-void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(int a, u16 b, int c, int d, int e, f32 f);
+void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
 void func_801BFAE8(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);

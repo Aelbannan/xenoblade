@@ -74,7 +74,7 @@ extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(unsigned long, nw4r::lyt::Layout*);
-extern "C" void func_8015780C(int);
+extern "C" u32 func_8015780C(int);
 
 // CScrollBar functions
 extern "C" void __ct__CScrollBar(void*, int);

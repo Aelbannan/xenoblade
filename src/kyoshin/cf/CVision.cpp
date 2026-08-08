@@ -7,6 +7,8 @@
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 
+extern "C" void* lbl_eu_80663E14;
+
 using namespace cf;
 
 // Most C-linkage pseudo-imports for this TU now live in the "C-linkage
@@ -223,7 +225,7 @@ void func_801A39D8(CVision* self) {
             // nop -- retail just reads the element base via the divwu index
         }
         // ... (elided middle: per-element switch calling func_801AD504)
-        func_80496288();
+        func_80496288((void*)lbl_eu_80663E14);
         break;
     }
     // ... (elided rest)

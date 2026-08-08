@@ -134,7 +134,7 @@ char* func_80296E98(CMCItemBoxSub* sub, u16 index) {
     if (sub->pad_102 == 3) {
         void* inst2 = CItem_initItemImplInstances(p);
         u8 v = (u8)((u8(*)(void*, void*))(*(void***)inst2)[2])(inst2, p);
-        char* itemName = func_80136190(&b[3], &b[0xc], 0x1e - (v - 1));
+        char* itemName = (char*)func_80136190(&b[3], &b[0xc], 0x1e - (v - 1));
         char copy[64];
         u32 len = strlen(((ml::FixStr<64>*)((char*)sub + 0x108))->c_str());
         strcpy(copy, ((ml::FixStr<64>*)((char*)sub + 0x108))->c_str());

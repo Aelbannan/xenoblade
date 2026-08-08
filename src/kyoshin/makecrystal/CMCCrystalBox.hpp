@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+class CBaseCur;
 
 namespace nw4r { namespace lyt { class AnimTransform; class Layout; } }
 
@@ -100,7 +101,7 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_801D216C(void*, u8);  // retail symbol is unmangled
 extern "C" u32 func_801D32DC(void*);
 extern "C" u8 func_8021A8EC(void*);
-extern "C" u32 CScrollBar_isVisible(void*);
+extern "C" int CScrollBar_isVisible(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_8021A984(void*);
 extern "C" void func_8021A918(void*);
@@ -119,7 +120,7 @@ extern "C" void func_801D31F8(void*, void*);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D350C(void*);
 extern "C" void func_801D3518(void*, void*);
-extern "C" void func_801D353C(void*, unsigned char);
+extern "C" void func_801D353C(void*, u8);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_8022B7C8(void*, void*);
 extern "C" void func_801F3670(void*, void*);
@@ -127,10 +128,10 @@ extern "C" void func_801F36BC(void*, unsigned long, unsigned long);
 extern "C" void func_801F3850(void*, unsigned long);
 extern "C" void func_801F367C(void*);
 extern "C" void* CItem_initItemInstances();
-extern "C" unsigned long func_8015780C(unsigned long);
-extern "C" char* func_80136190(char*, char*, unsigned long);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, unsigned long);
-extern "C" void* func_80157C4C(unsigned char, short);
+extern "C" u16 func_8015780C(int);
+extern "C" char* func_80136190(const void*, const void*, int);
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void* func_80157C4C(u32, s16);
 extern "C" int func_80213710(void*, unsigned char);
 extern "C" unsigned char func_8021384C(void*, unsigned char);
 extern "C" unsigned short func_802137DC(void*, unsigned char);
@@ -145,17 +146,17 @@ extern "C" void __dt__6CCur09Fv(void*, int);
 extern "C" void __dt__6CCur07Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(void*);
-extern "C" void __ct__CCur07(void*, int);
-extern "C" void __ct__CCur09(void*, int);
-extern "C" void __ct__CCur18(void*, int);
-extern "C" void __ct__CCur11(void*, int);
-extern "C" void __ct__CCur16(void*, int);
+extern "C" CBaseCur* __ct__CCur07(void*, void*);
+extern "C" CBaseCur* __ct__CCur09(void*, void*);
+extern "C" CBaseCur* __ct__CCur18(void*, void*);
+extern "C" CBaseCur* __ct__CCur11(void*, void*);
+extern "C" CBaseCur* __ct__CCur16(void*, void*);
 extern "C" void __ct__CSortMenu(void*);
 extern "C" void __ct__CMCCrystalInfo(void*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSysWin(void*, int);
 extern "C" void func_8003AA8C__5CBdatFUl(u32);
-extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_801390E0__FPP11CFileHandle(void**);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_80139198(u32);
@@ -169,14 +170,14 @@ extern "C" void func_801D3330(void*);
 extern "C" void func_801D3430(void*, void*);
 extern "C" void func_801D3454(void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
-extern "C" void* CSysWin_getUnk34(void*);
-extern "C" void  CSysWin_isActive(void*);
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" int CSysWin_isActive(void*);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_8022B90C(void*, int);
-extern "C" void func_8022B9B4(void*, void*, int);
+extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BFC8(void*, int);
 extern "C" void func_8022B8B8(void*);
-extern "C" char* func_8013639C(void*, char*, int);
+extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_801D3160(void*);
 extern "C" void func_8021A780(void*);
 extern "C" void func_801D202C(void*);

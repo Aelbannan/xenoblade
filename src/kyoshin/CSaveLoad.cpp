@@ -53,9 +53,9 @@ extern "C" void func_8028E838(UnkStruct_3Ptr* p) {
     u32 ptrVal;
     ptrVal = (u32)p;
     lbl_eu_806649F0 = ptrVal;
-    p->p0 = allocate_head__Q23mtl10MemManagerFUlUli(getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
-    p->p4 = allocate_head__Q23mtl10MemManagerFUlUli(getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
-    p->p8 = allocate_head__Q23mtl10MemManagerFUlUli(getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
+    p->p0 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
+    p->p4 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
+    p->p8 = allocate_head__Q23mtl10MemManagerFUlUli((u32)getHandleMEM2__Q23mtl10MemManagerFv(), 0xA000, 0x40);
 }
 #pragma optimize_for_size off
 
@@ -511,7 +511,7 @@ extern "C" CSaveLoad* __dt__9CSaveLoadFv(CSaveLoad* self, int flags) {
 #pragma optimize_for_size off
 
 void CSaveLoad::func_8028F23C() {
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     mFileHandle = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (const char*)&lbl_eu_8050F7CC[0x92], this, 0, 0);
     func_801F34F4(mScrollbar);
 
@@ -823,22 +823,22 @@ void func_8028FC18(CSaveLoad* self) {
     if (func_8028E998(&self->mCur, self->mField124) == 0) goto noCursor;
 
     if (self->mField129 != 0) {
-        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x43);
-        s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x44);
-        s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x45);
+        s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x43);
+        s2 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x44);
+        s3 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x45);
         goto common;
     }
 
-    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x33);
-    s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x34);
-    s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x35);
+    s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x33);
+    s2 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x34);
+    s3 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x35);
     goto common;
 
 noCursor:
     if (self->mField129 != 0) return;
-    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x38);
-    s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x39);
-    s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
+    s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x38);
+    s2 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x39);
+    s3 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3a);
 
 common:
     func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
@@ -953,7 +953,7 @@ void func_8029022C(CSaveLoad* self) {
         CLibHbm::func_8045D470(true);
         
         extern u8 lbl_eu_8050F7CC[];
-        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
+        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
         func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
@@ -964,7 +964,7 @@ void func_8029022C(CSaveLoad* self) {
     } else if (self->mField129 != 0) {
         // Load path
         extern u8 lbl_eu_8050F7CC[];
-        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
+        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
         func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
@@ -988,7 +988,7 @@ void func_8029022C(CSaveLoad* self) {
         CLibHbm::func_8045D470(true);
         
         extern u8 lbl_eu_8050F7CC[];
-        char* r5 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
+        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
         func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
@@ -1051,12 +1051,12 @@ void func_802904B4(CSaveLoad* self) {
         u8 val = self->mField12F;
         if (val >= 3 && val <= 4) {
             // 3-string path: update syswin 0x98 with strings
-            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x56);
-            s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x59);
+            s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x56);
+            s2 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x59);
             if (self->mField129 != 0) {
-                s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x58);
+                s3 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x58);
             } else {
-                s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x57);
+                s3 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x57);
             }
             func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
             func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
@@ -1066,12 +1066,12 @@ void func_802904B4(CSaveLoad* self) {
             self->mField12C = 1;
             self->mField121 = 6;
         } else if (val == 1) {
-            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
+            s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x54);
             func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
             func_8022BFC8(&self->mSysWinD4, 1);
             func_8022B8B8(&self->mSysWinD4);
         } else if (val == 2) {
-            s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
+            s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x55);
             func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
             func_8022BFC8(&self->mSysWinD4, 1);
             func_8022B8B8(&self->mSysWinD4);
@@ -1084,7 +1084,7 @@ void func_802904B4(CSaveLoad* self) {
         CWorkSystem::setSaveLoadInvalidReset(false);
         func_eu_804521BC(1);
         CLibHbm::func_8045D470(false);
-        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
+        s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3E);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
         func_8022B8B8(&self->mSysWinD4);
@@ -1093,7 +1093,7 @@ void func_802904B4(CSaveLoad* self) {
     }
 
     if (self->mField129 != 0) {
-        s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
+        s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x47);
         func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
         func_8022BFC8(&self->mSysWinD4, 1);
         func_8022B8B8(&self->mSysWinD4);
@@ -1110,7 +1110,7 @@ void func_802904B4(CSaveLoad* self) {
     CWorkSystem::setSaveLoadInvalidReset(false);
     func_eu_804521BC(1);
     CLibHbm::func_8045D470(false);
-    s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
+    s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x37);
     func_8022B9B4(&self->mSysWinD4, (u32)s1, 0);
     func_8022BFC8(&self->mSysWinD4, 1);
     func_8022B8B8(&self->mSysWinD4);
@@ -1178,10 +1178,10 @@ void func_802908A4(){}
 void func_80290994(CSaveLoad* self) {
     char* strBase = (char*)lbl_eu_8050F7CC;
 
-    char* str4a = func_80136190(&strBase[0xa7], &strBase[0xb2], 0x4a);
-    char* str4b = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4b);
-    char* str4c = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4c);
-    char* str4d = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4d);
+    char* str4a = (char*)func_80136190(&strBase[0xa7], &strBase[0xb2], 0x4a);
+    char* str4b = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4b);
+    char* str4c = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4c);
+    char* str4d = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x4d);
 
     // Check language: 0 = Japanese, 2 = other
     u8 lang = CDeviceSC::getLanguage();
@@ -1314,7 +1314,7 @@ void func_80290994(CSaveLoad* self) {
                     }
                     // Get award icon
                     u16 iconId = *(u16*)(lbl_eu_80664090 + 0x14);
-                    u16 icon = func_80136254((u16)(u32)lbl_eu_80664090, (const char*)&strBase[0x1f6], iconId);
+                    u16 icon = func_80136254((const void*)(u16)(u32)lbl_eu_80664090, (const char*)&strBase[0x1f6], iconId);
                     u16 iconResult = (u16)(u32)func_80138F78(icon);
                     
                     // Get award resource
@@ -1341,14 +1341,14 @@ void func_80290994(CSaveLoad* self) {
             u8 charResult = func_80141BA0(charLevel, charId);
             u8 chClass = *(u8*)(slotData + 0x66);
             if (chClass != 0) {
-                slotIndicator = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x53);
+                slotIndicator = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x53);
             } else {
                 slotIndicator = func_8013639C((void*)lbl_eu_806640A8, &strBase[0xb2], (u16)charResult);
             }
 
             u8 chSex = *(u8*)(slotData + 0x67);
             if (chSex != 0 && charResult == 1) {
-                slotIndicator = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x30);
+                slotIndicator = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x30);
             }
 
             func_80136B4C(self->mLayout, slotNameBuf, slotIndicator, 0u);
@@ -1469,7 +1469,7 @@ extern "C" void func_80291204(int unused, int unused2, int flag, u8 value) {
 extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     if (self->mFileHandle != event->mFileHandle) return 0;
 
-    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     u8* strBase = lbl_eu_8050F7CC;
 
     // Create region for the base class at offset 4
@@ -1518,7 +1518,7 @@ extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     }
 
     // Call func_801355BC - if non-null, set up 15 strings
-    u32 bcresult = func_801355BC();
+    u32 bcresult = (u32)func_801355BC();
     if (bcresult != 0) {
         func_801368C0(self->mLayout, (char*)&strBase[0x2c1], bcresult);
         func_801368C0(self->mLayout, (char*)&strBase[0x2cd], bcresult);
@@ -1544,8 +1544,8 @@ extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     ((void (*)(void*, int))(((void**)self->mLayout)[0x38 / 4]))(self->mLayout, 0);
 
     // Get localized strings for button labels "31" and "32"
-    char* str31 = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
-    char* str32 = func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
+    char* str31 = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
+    char* str32 = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
 
     // Set up text on layout with the button labels
     func_80136B4C(self->mLayout, (char*)&strBase[0x378], str32, 0u);
@@ -1610,7 +1610,7 @@ extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     ((UnkClass_8045F564*)((u8*)self + 4))->func_8045F810();
 
     // Allocate 3 heap buffers of 0x9C00 bytes each
-    u32 memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 memHandle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     self->mField130 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);
     self->mField134 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);
     self->mField138 = allocate_head__Q23mtl10MemManagerFUlUli(memHandle, 0x9C00, 0x20);

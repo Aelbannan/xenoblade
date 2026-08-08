@@ -30,7 +30,7 @@ extern "C" {
     void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
-    int func_80174C98(cf::CfObjectActor*, u32*, int);
+    int func_80174C98(void*, u32*, int);
     int func_8006EF04__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 

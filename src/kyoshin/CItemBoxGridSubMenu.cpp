@@ -117,15 +117,15 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
     func_80136D74((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        func_80136D74((char*)mTxtBoxB, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        func_80136D74((char*)mTxtBoxB, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, (char*)func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -197,7 +197,7 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     nw4r::lyt::Pane* collPane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0x6f], true);
     collPane->SetVisible(false);
 
-    char* str = func_80136190(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
+    char* str = (char*)func_80136190(&lbl_eu_805084BC[0x78], &lbl_eu_805084BC[0x86], 0x2b);
     func_80136B4C(self->mLayout, &lbl_eu_805084BC[0x8b], str, 0);
 
     int gmVal = func_80086F9C__Q22cf13CfGameManagerFv(-1);

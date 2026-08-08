@@ -137,8 +137,8 @@ extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v) {
 extern "C" void func_80272810(TalkListEntryArray* arr) {
     void* fp = lbl_eu_806648B8;
     u16 charCount = (u16)func_8003B1EC(fp);
-    char* fmt12 = func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
-    char* fmt13 = func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13);
+    char* fmt12 = (char*)func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
+    char* fmt13 = (char*)func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13);
 
     arr->mCount = 0;
     u16 collect[0x100];
@@ -162,8 +162,8 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         if ((u32)a > func_8009CF8C(0x20)) continue;
 
         u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if (v >= 0x2a && v < 0x113) {
             if (m1 == 3) continue;
@@ -176,9 +176,9 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         TalkListEntry* e = &tmpB;
         func_80272FA8(e, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
@@ -194,8 +194,8 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
 
-        u8 m1 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if (v >= 0x2a && v < 0x113) {
             if (m1 == 3) continue;
@@ -208,9 +208,9 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         TalkListEntry* e = &tmpC;
         func_80272FA8(e, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
@@ -228,8 +228,8 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
 
         char* name0 = func_8013639C(fp, &lbl_eu_8050E990[0x40], (int)id);
         u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u8 m1 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x1e], id);
-        u8 m2 = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x27], id);
+        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
         if (v >= 0x113) {
             if (m1 == 3) m1 = 8;
@@ -238,9 +238,9 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
-        u8 x = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x30], id);
+        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
-        u8 y = (u8)func_801361E8(fp, &lbl_eu_8050E990[0x3b], id);
+        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
         TalkListEntry* e = &tmpD;
         func_80272FA8(e, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);

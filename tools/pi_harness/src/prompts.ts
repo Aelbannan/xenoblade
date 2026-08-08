@@ -40,9 +40,10 @@ export function buildBatchPrompt(opts: {
     "- Do NOT use `nm`, `objdump`, or `readelf` — use the `symbols` tool and the brief's provided file/symbol info instead. (`find`/`ls` ARE available and cheap for locating files; cap them like grep.)\n" +
     "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
     "\n## Anti-patterns (avoid these — they are flagged by the repo lint in TU-final)\n\n" +
-    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header. Only `lbl_*` reloc/data names, and genuine unmangled C-ABI imports (e.g. `OSReport`), may stay `extern \"C\"`.\n" +
+    "- NEVER declare an **import** (a function or variable you use from another TU/library) as a local `extern \"C\"` symbol — `#include` the proper header that declares it instead, and **update that header** to add the real C++ declaration if it is missing. This includes `lbl_*` data symbols: they are imports too — declare them in a header, never in the `.cpp`. At global scope they do NOT need `extern \"C\"` (MWCC does not mangle global-scope variable names — plain `extern u32 lbl_eu_80664184;` emits the same symbol); `extern \"C\"` is only required when the declaration sits inside a `namespace`, where C++ linkage would mangle it (e.g. the nw4r g3d `.inl` kernels). Headers that declare genuine C-ABI SDK functions already wrap their declarations in `extern \"C\"` blocks themselves (e.g. `OSReport` in `libs/RVL_SDK/include/revolution/os/OSError.h`), so you never need a local `extern \"C\"` at the use site. The repo lint flags any non-`lbl_*` `extern \"C\"` on added lines (`no_extern_c`).\n" +
+    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. `extern \"C\"` is a crutch; use proper C++ declarations from the appropriate header.\n" +
     "- NEVER write constructors/destructors as C-style free functions taking `* self` (e.g. `extern \"C\" CFoo* __ct__4CFooFv(CFoo* self)`). The retail symbols are mangled members — write real member ctors/dtors: `CFoo::CFoo(...)` / `CFoo::~CFoo(...)`.\n" +
-    "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +
+    "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header (imports: include the declaring header, adding the declaration to the header if missing).\n" +
     "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
     "- NEVER write `*(u32*)(ptr + 0xNN)` or similar cast+offset arithmetic — define a struct with `field_0xNN` members instead.\n" +
     "- NEVER add new `#pragma` directives (except `#pragma once` in headers) — the build system handles compiler options.\n" +
@@ -111,6 +112,15 @@ retail symbols are mangled members (\`__ct__\`/\`__dt__\`).
 
 **NEVER use \`extern "C"\` as a crutch for imports or function naming.**
 Specifically:
+- Do NOT declare **imports** (functions/variables you use from another TU
+  or library) as \`extern "C"\` symbols — \`#include\` the proper header
+  that declares them, and **update that header** to add the real C++
+  declaration when it is missing. Headers that declare genuine C-ABI SDK
+  functions already wrap their declarations in \`extern "C"\` blocks
+  themselves (e.g. \`OSReport\` is declared in
+  \`libs/RVL_SDK/include/revolution/os/OSError.h\`) — you never need a
+  local \`extern "C"\` at the use site. The repo lint flags any added
+  non-\`lbl_*\` \`extern "C"\` (\`no_extern_c\`).
 - Do NOT wrap a callee call in \`extern "C"\` to make a symbol resolve / to
   avoid writing the proper declaration. Add a real declaration (member
   function, or a namespace-level function with the correct mangled name) in
@@ -120,13 +130,15 @@ Specifically:
   symbols rename-all\`), not by C linkage. An \`extern "C"\` body that exists
   only to produce a specific retail symbol is wrong — implement it as the
   real C++ / member function (it compiles to the same bytes when correct).
-- A small number of genuine \`extern "C"\` for real C ABI entry points
-  (SDK callbacks, fixed C-exported functions) is acceptable only where the
-  retail symbol is genuinely C-linkage — not as a way to dodge a header
-  declaration or to name a function. For example,
-  \`extern "C" void OSReport(const char* fmt, ...);\` is CORRECT when the
-  retail symbol is the unmangled \`OSReport\` — do not rewrite a genuine
-  unmangled C-ABI SDK import as a C++ member.
+- \`lbl_*\` reloc/data names are imports too: declare them in a header and
+  \`#include\` it — never declare them locally in a \`.cpp\`. At global
+  scope they do NOT need \`extern "C"\` (MWCC does not mangle
+  global-scope variable names — plain \`extern u32 lbl_eu_80664184;\`
+  emits the same symbol); \`extern "C"\` is only needed where the
+  declaration sits inside a \`namespace\` and C++ linkage would mangle
+  it (e.g. the nw4r g3d \`.inl\` kernels). Every other \`extern "C"\`
+  occurrence should be a proper header declaration, not a local
+  \`extern "C"\`.
 
 ### 4. Rename to human-readable names — only when confident
 

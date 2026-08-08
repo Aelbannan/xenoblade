@@ -69,7 +69,7 @@ extern "C" void func_8003AA34(const char*);
 // --- helpers ---
 // func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
-extern "C" u32 func_8003B1EC(u32);
+extern "C" u32 func_8003B1EC(void*);
 // func_8009ECB0 stays inline: include/functions.hpp and CChainActorPc.hpp
 // declare it as int* - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull those headers transitively.
@@ -2177,7 +2177,7 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
         u32 p = table[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
-            sum += func_8003B1EC((u32)fp) * 0x240;
+            sum += func_8003B1EC((void*)fp) * 0x240;
         }
     }
     sum += (count - 1) * 0x240;
@@ -2229,7 +2229,7 @@ extern "C" void func_8013ACFC() {
     u32 name = table[flag - 1];
     if (name == 0) return;
     void* fp = getFP__FPCc((const char*)name);
-    u8 n = (u8)func_8003B1EC((u32)fp);
+    u8 n = (u8)func_8003B1EC((void*)fp);
 
     u16 idx = 0;
     for (u8 i = 1; i <= n; i++) {
@@ -2267,7 +2267,7 @@ extern "C" void func_8013ACFC() {
                 u32 p = table2[j - 1];
                 if (p != 0) {
                     void* fp2 = getFP__FPCc((const char*)p);
-                    sum += func_8003B1EC((u32)fp2) * 0x240;
+                    sum += func_8003B1EC((void*)fp2) * 0x240;
                 }
             }
             sum += baseOff;
@@ -2281,7 +2281,7 @@ extern "C" void func_8013ACFC() {
                     u32 p = table3[j - 1];
                     if (p != 0) {
                         void* fp2 = getFP__FPCc((const char*)p);
-                        sum2 += func_8003B1EC((u32)fp2) * 0x240;
+                        sum2 += func_8003B1EC((void*)fp2) * 0x240;
                     }
                 }
                 sum2 += baseOff;
@@ -2302,11 +2302,11 @@ extern "C" void func_8013B1C4(u32 v) {
         u32 p = table[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
-            sum += func_8003B1EC((u32)fp) * 0x240;
+            sum += func_8003B1EC((void*)fp) * 0x240;
         }
     }
     void* fp = getFP__FPCc((const char*)table[v - 1]);
-    u32 n = func_8003B1EC((u32)fp);
+    u32 n = func_8003B1EC((void*)fp);
     for (u8 j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
@@ -2402,7 +2402,7 @@ extern "C" void func_8013B88C(u8 v) {
     if (v == 0) return;
     if (v > 0x1D) return;
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
-    int n = func_8003B1EC((u32)fp);
+    int n = func_8003B1EC((void*)fp);
     u8 count = 0;
     u8 good = 0;
     for (int i = 1; i <= n; i++) {

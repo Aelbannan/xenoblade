@@ -266,8 +266,8 @@ extern "C" void func_80285478(CEquipItemGrid* grid) {
             void* objB = func_80157C4C(grid->cat, b->unk0);
             u16 kindA = func_80139358(*(u32*)objA >> 20);
             u16 kindB = func_80139358(*(u32*)objB >> 20);
-            u32 nameA = func_801361E8(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
-            if ((u8)nameA > (u8)func_801361E8(lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB)) {
+            u32 nameA = func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
+            if ((u8)nameA > (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB)) {
                 CEquipItemData tA;
                 CEquipItemData tB;
                 func_80283B24(&tA, a);

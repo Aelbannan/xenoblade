@@ -187,7 +187,7 @@ extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
 // String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* func_80136190(char*, char*, u32);
-extern "C" u32 func_801361E8(const void*, const char*, u32);
+extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" void func_8003AA8C__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);

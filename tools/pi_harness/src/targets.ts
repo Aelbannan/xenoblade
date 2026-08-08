@@ -2,11 +2,6 @@
 // Target loading from tools/coop/targets.json + writable-scope computation.
 // ---------------------------------------------------------------------------
 
-import { readFileSync, existsSync } from "node:fs";
-import { join, dirname, basename, isAbsolute } from "node:path";
-import type { Target } from "./types.js";
-import { scanExhaustedTargets } from "./ledger.js";
-
 interface RawTarget {
   id: string;
   symbol: string;
@@ -42,10 +37,61 @@ function isSafeRelPath(p: string | undefined | null): p is string {
   return !p.split("/").includes("..");
 }
 
-function readTargetsFile(repoRoot: string): RawTarget[] {
+import { readFileSync, existsSync, statSync } from "node:fs";
+import { join, dirname, basename, isAbsolute } from "node:path";
+import type { Target } from "./types.js";
+import { scanExhaustedTargets } from "./ledger.js";
+
+// ---------------------------------------------------------------------------
+// In-memory targets.json cache. targets.json is large (~17.8 MB / 19k targets)
+// and read repeatedly (once per TU × 15+ calls per TU). Reading + JSON.parse
+// wholesale on every access is the dominant cost during a run (it starved the
+// ConcurrencyPool). We cache the parsed array keyed by (path, mtime, size):
+// a stat() syscall is ~free vs. 17.8MB of JSON.parse. Any subprocess write
+// (run.py cycle/claim/etc) bumps mtime/size, so the cache stays correct.
+// ---------------------------------------------------------------------------
+interface TargetsCacheEntry {
+  mtimeMs: number;
+  size: number;
+  targets: RawTarget[];
+}
+const targetsCache = new Map<string, TargetsCacheEntry>();
+
+export function readTargetsFile(repoRoot: string, opts?: { force?: boolean }): RawTarget[] {
   const targetsPath = join(repoRoot, "tools/coop/targets.json");
-  const data = JSON.parse(readFileSync(targetsPath, "utf-8")) as TargetsFile;
-  return Array.isArray(data.targets) ? data.targets : [];
+  if (!opts?.force) {
+    try {
+      const st = statSync(targetsPath);
+      const cached = targetsCache.get(targetsPath);
+      if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) {
+        return cached.targets;
+      }
+      if (cached) targetsCache.delete(targetsPath);
+    } catch {
+      /* fall through to read below */
+    }
+  }
+  let data: TargetsFile;
+  try {
+    data = JSON.parse(readFileSync(targetsPath, "utf-8")) as TargetsFile;
+  } catch {
+    // Parse failure (mid-write or corrupt) — return any cache we have rather
+    // than crashing the run; the next call re-checks mtime.
+    return targetsCache.get(targetsPath)?.targets ?? [];
+  }
+  const targets = Array.isArray(data.targets) ? data.targets : [];
+  try {
+    const st = statSync(targetsPath);
+    targetsCache.set(targetsPath, { mtimeMs: st.mtimeMs, size: st.size, targets });
+  } catch {
+    /* best-effort */
+  }
+  return targets;
+}
+
+/** Drop the cache (e.g. after the harness itself rewrote targets.json). */
+export function invalidateTargetsCache(repoRoot: string): void {
+  targetsCache.delete(join(repoRoot, "tools/coop/targets.json"));
 }
 
 function toTarget(raw: RawTarget): Target {
@@ -175,6 +221,25 @@ export function loadUnmatchedTargets(
     );
   }
   return filtered;
+}
+
+/** True if the unit has at least one unmatched target that is NOT exhausted.
+ *  Used by --order/--all selection to skip TUs whose remaining work is all
+ *  exhausted (they'd be picked up by the pool only to instantly return,
+ *  starving the ConcurrencyPool of real work — see the run33 v5 stall). */
+export function unitHasActionableWork(
+  repoRoot: string,
+  region: string,
+  unit: string,
+  ledgerPath: string | undefined,
+  exhaustionThreshold?: number,
+  retryExhausted?: boolean,
+): boolean {
+  return loadUnmatchedTargets(repoRoot, region, unit, {
+    ledgerPath,
+    exhaustionThreshold,
+    retryExhausted: retryExhausted ?? false,
+  }).length > 0;
 }
 
 /** Per-TU match summary. */

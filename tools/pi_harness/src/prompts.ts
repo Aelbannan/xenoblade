@@ -109,6 +109,22 @@ Constructors/destructors must be real member functions (\`Class::Class\` /
 \`Class::~Class\`), never C-style free functions taking \`* self\` — the
 retail symbols are mangled members (\`__ct__\`/\`__dt__\`).
 
+**NEVER use \`extern "C"\` as a crutch for imports or function naming.**
+Specifically:
+- Do NOT wrap a callee call in \`extern "C"\` to make a symbol resolve / to
+  avoid writing the proper declaration. Add a real declaration (member
+  function, or a namespace-level function with the correct mangled name) in
+  the header instead.
+- Do NOT use \`extern "C"\` to rename a function or to force a symbol name.
+  Symbol naming is handled by the symbol-recovery tooling (\`run.py
+  symbols rename-all\`), not by C linkage. An \`extern "C"\` body that exists
+  only to produce a specific retail symbol is wrong — implement it as the
+  real C++ / member function (it compiles to the same bytes when correct).
+- A small number of genuine \`extern "C"\` for real C ABI entry points
+  (SDK callbacks, fixed C-exported functions) is acceptable only where the
+  retail symbol is genuinely C-linkage — not as a way to dodge a header
+  declaration or to name a function.
+
 ### 4. Rename to human-readable names — only when confident
 
 Class/struct fields, parameters, local variables, and function names. For

@@ -16,6 +16,7 @@ import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { BatchResult, Target } from "./types.js";
+import { readTargetsFile } from "./targets.js";
 
 /** Promisified execFile.
  *
@@ -222,15 +223,9 @@ export async function readBatchResults(
   targetIds: string[],
   witnessEnabled = true,
 ): Promise<BatchResult[]> {
-  let allTargets: Target[] = [];
-  try {
-    const parsed = JSON.parse(
-      await readFile(join(repoRoot, "tools/coop/targets.json"), "utf-8"),
-    ) as { targets?: unknown };
-    if (Array.isArray(parsed.targets)) allTargets = parsed.targets as Target[];
-  } catch {
-    // fall through — everything reports UNKNOWN
-  }
+  // Use the shared in-memory cache (targets.json is 17.8MB; readBatchResults
+  // is called after every witness cycle, so wholesale re-parse is costly).
+  const allTargets: Target[] = readTargetsFile(repoRoot) as unknown as Target[];
   const statusById = new Map(allTargets.map((t) => [t.id, t.status]));
   const acceptedStatuses = witnessEnabled
     ? new Set(["FULL_MATCH", "EQUIVALENT_MATCH"])

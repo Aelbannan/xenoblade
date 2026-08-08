@@ -16,7 +16,7 @@ import { chdir, cwd } from "node:process";
 import { resolve, dirname, join } from "node:path";
 import { existsSync } from "node:fs";
 import { loadConfig } from "./config.js";
-import { loadUnmatchedTargets, loadAllUnitSummaries, type UnitOrder, type UnitSummary } from "./targets.js";
+import { loadUnmatchedTargets, loadAllUnitSummaries, unitHasActionableWork, type UnitOrder, type UnitSummary } from "./targets.js";
 import { runTus } from "./orchestrator.js";
 import type { HarnessConfig } from "./types.js";
 
@@ -253,10 +253,29 @@ async function main(): Promise<void> {
   let tus = args.tus;
   if (args.all) {
     const summaries = loadAllUnitSummaries(repoRoot, effectiveConfig.region, args.order);
-    tus = summaries.filter((s) => s.remaining > 0).map((s) => s.unit);
+    // Skip fully-matched TUs AND TUs whose remaining work is all exhausted
+    // (they'd be added to the pool only to instantly return 0 unmatched,
+    // starving the ConcurrencyPool of real work and collapsing parallelism
+    // — the run33 v5 stall where only 4/10 slots ran sessions).
+    let selected = summaries.filter((s) => s.remaining > 0);
+    if (!effectiveConfig.retryExhausted) {
+      const before = selected.length;
+      selected = selected.filter((s) =>
+        unitHasActionableWork(
+          repoRoot, effectiveConfig.region, s.unit,
+          effectiveConfig.ledgerPath, effectiveConfig.exhaustionThreshold,
+        ),
+      );
+      if (selected.length < before) {
+        process.stderr.write(
+          `[pi-harness] --all: excluding ${before - selected.length} TU(s) with only exhausted targets\n`,
+        );
+      }
+    }
+    tus = selected.map((s) => s.unit);
     process.stderr.write(
       `\n[pi-harness] --all: discovered ${tus.length} TU(s) with unmatched targets ` +
-      `(order: ${args.order})\n`,
+      `(order: ${args.order})${effectiveConfig.retryExhausted ? " (retryExhausted)" : ""}\n`,
     );
     if (tus.length === 0) {
       console.log("All TUs are fully matched — nothing to do.");

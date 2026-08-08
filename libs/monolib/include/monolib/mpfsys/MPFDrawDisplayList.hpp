@@ -9,7 +9,7 @@ class MPFDrawDisplayList {
 public:
     static MPFDrawDisplayList* getInstance();
 
-    // Empty stubs (address-based names — semantics unknown)
+    // Empty stubs (address-based names - semantics unknown)
     void func_80474FB0();
     void func_8047509C();
     void func_80475238();

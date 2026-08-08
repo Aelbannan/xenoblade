@@ -10,7 +10,7 @@ unk210(0){
     mType = THREAD_CDEVICEFILEJOB;
 }
 
-// CDeviceFileJob::cancel(CDeviceFileJob_UnkStruct1*) — returns false
+// CDeviceFileJob::cancel(CDeviceFileJob_UnkStruct1*) - returns false
 
 
 bool CDeviceFileJob::cancel(const char* pFilename){

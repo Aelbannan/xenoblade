@@ -25,7 +25,7 @@ void LOD::UnkClass_8046A530::func_8046CFD8() {
 }
 
 // ---------------------------------------------------------------------------
-// Stubs for non-FULL_MATCH functions — marked NonMatching in configure.py.
+// Stubs for non-FULL_MATCH functions - marked NonMatching in configure.py.
 // These compile but do not yet produce matching code.
 // ---------------------------------------------------------------------------
 

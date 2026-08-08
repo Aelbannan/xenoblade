@@ -60,7 +60,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc38() { }
 
 void cf::CActParamAnimGame::func_8005DC30() {}
 
-// cf::CActParamAnimGame::func_8005DCA0 — trivial leaf, returns false
+// cf::CActParamAnimGame::func_8005DCA0 - trivial leaf, returns false
 // Retail symbol lacks Fv suffix; preserves exact mangling for FULL_MATCH
 bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 

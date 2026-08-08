@@ -257,7 +257,7 @@ void func_80275850(UnkCode8027513C* self) {
     }
     
     u32 moveFlags = obj->mFlags68;
-    // Bit 25 set means effect already cleaned up — skip
+    // Bit 25 set means effect already cleaned up - skip
     if (moveFlags & 0x40) {
         return;
     }

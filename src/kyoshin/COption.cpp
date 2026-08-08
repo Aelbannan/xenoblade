@@ -507,7 +507,7 @@ int func_8029E3F8(COption* self) {
     return g[0x31] == b[0x31];
 }
 
-// COption::~COption() — complete-object destructor (virtual). Destroys the
+// COption::~COption() - complete-object destructor (virtual). Destroys the
 // embedded sub-objects in reverse declaration order, then conditionally frees
 // the object. The null-guard on mSubCur2 reproduces MWCC's addic-register
 // check before destroying the polymorphic CBaseCur sub-object (D2-inlined-into-

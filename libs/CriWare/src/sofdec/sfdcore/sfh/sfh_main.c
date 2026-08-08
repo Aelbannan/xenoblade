@@ -5,7 +5,7 @@
 
 extern u32 lbl_eu_80619BE8;
 
-/* SFH runtime context — 0x18 bytes */
+/* SFH runtime context - 0x18 bytes */
 typedef struct SFHContext {
     s32 active;       /* 0x00: set to 1 when created */
     u32 field_0x04;   /* 0x04: arg0 from SFH_Create */

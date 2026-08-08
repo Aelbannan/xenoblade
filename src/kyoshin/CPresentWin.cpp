@@ -7,7 +7,7 @@
 
 extern void func_80138078(u32);
 
-// Destructor — base object destructor (D2); MWCC emits D1 with delete check
+// Destructor - base object destructor (D2); MWCC emits D1 with delete check
 CPresentWin::~CPresentWin() {
 }
 

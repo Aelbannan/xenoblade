@@ -56,7 +56,7 @@ struct CfCamEventSub4D0 {
     CfCamEventElem elems[42];  // base 0x4D8
 };
 
-// Camera event manager — only forward-declared elsewhere; the complete layout
+// Camera event manager - only forward-declared elsewhere; the complete layout
 // is reconstructed here from the cam-event accessors.
 // Shake table 0 at manager offset 0x7C (16-entry cap).
 struct CfCamEventTable {

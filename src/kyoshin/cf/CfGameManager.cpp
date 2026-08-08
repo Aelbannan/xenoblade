@@ -699,7 +699,7 @@ extern u32 lbl_eu_80661BC0;
 u32* cf::CfObject::CfObject_UnkVirtualFunc58() {
     return &lbl_eu_80661BC0;
 }
-// lwz getters — return global vars
+// lwz getters - return global vars
 extern u32 lbl_eu_80664188;
 u32 cf::CfGameManager::func_80083458() { return lbl_eu_80664188; }
 extern u32 lbl_eu_80664184;

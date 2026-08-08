@@ -15,7 +15,7 @@ void func_8016676C(){}
 
 void func_80166778(){}
 
-// FULL_MATCH — no-op virtual function (vtable slot 2).  Immediately returns.
+// FULL_MATCH - no-op virtual function (vtable slot 2).  Immediately returns.
 void func_80166784() {
 }
 
@@ -23,7 +23,7 @@ void func_80166788(){}
 
 void func_801667AC(){}
 
-// FULL_MATCH — Returns the global UI state flag value (lbl_eu_80663E24).
+// FULL_MATCH - Returns the global UI state flag value (lbl_eu_80663E24).
 u32 func_80166830() {
     return lbl_eu_80663E24;
 }

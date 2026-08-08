@@ -1,7 +1,7 @@
 #include <revolution/GX.h>
 
 // Isolated Gekko paired-single kernel (PLAN.md §17.6): projection matrix
-// write through the GX FIFO port — the 3x `psq_st 0(dst)` at the same
+// write through the GX FIFO port - the 3x `psq_st 0(dst)` at the same
 // address are correct (the port auto-advances per store). VERIFIED 100% vs
 // retail (16/16 TU). FRAGILE: register-pinned operands; do not extend the
 // asm, prefer __psq_st builtins for new code.

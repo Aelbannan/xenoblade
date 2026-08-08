@@ -47,13 +47,13 @@ void func_800B06A4(float a) {
 }
 
 void init_0A90(void){}
-// Target 1: us-800b1118 — func_800B084C
+// Target 1: us-800b1118 - func_800B084C
 // Calls func_80061FFC() to get a handle, then passes it along with `count` to func_800B0894.
 void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
     func_800B0894(self, func_80061FFC(), count);
 }
 
-// Target 1: us-800b15d8 — reslist<cf::IFactoryEvent*>::reslist() constructor
+// Target 1: us-800b15d8 - reslist<cf::IFactoryEvent*>::reslist() constructor
 void __ct__reslist_cf_IFactoryEvent(void* self) {
     extern void* lbl_eu_805290B8;
     extern void* lbl_eu_805290A0;
@@ -68,7 +68,7 @@ void __ct__reslist_cf_IFactoryEvent(void* self) {
     ((u32*)self)[3] = sentinelAddr;
     base[0] = (u32)&lbl_eu_805290A0;
 }
-// Target 3: us-800b186c — func_800B0FA0
+// Target 3: us-800b186c - func_800B0FA0
 void func_800B0FA0(UnkClass_805764CC* self) {
     if (func_800B0FEC(&self->field_0xC80) == 0) {
         func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
@@ -106,7 +106,7 @@ void func_800B93AC() {
     func_800B1B2C(func_800B07E8());
 }
 
-// Target 4: us-800b9df0 — func_800B94D4
+// Target 4: us-800b9df0 - func_800B94D4
 void func_800B94D4(cf::CfObject* obj) {
     u8 stackBuf[0x28];
     func_80081258(stackBuf);
@@ -173,7 +173,7 @@ void func_800B2048(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F45B4
 void func_800B20A0(UnkClass_805764CC* self){if (self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
 void init_20B4(){}
 u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
-// Target 5: us-800b35fc — __dt__800B2D30
+// Target 5: us-800b35fc - __dt__800B2D30
 // Destructor that calls subobject destructor, then frees memory if flags > 0.
 // Returns self (standard MWCC destructor convention).
 void* __dt__800B2D30(void* self, int flags) {
@@ -411,7 +411,7 @@ void UnkClass_805764CC::clear_380(){*(u32*)((u8*)this + 896) = 0;}
 void* UnkClass_805764CC::getNull(){return 0;}
 u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
 
-// Target 2: us-800b13c0 — __dt__800B0AF4
+// Target 2: us-800b13c0 - __dt__800B0AF4
 // Destructor for UnkClass_800B0AD8. Clears counters and frees memory if flags > 0.
 // Returns self (standard MWCC destructor convention).
 extern "C"
@@ -555,19 +555,19 @@ void func_800B78C4(cf::CfObject* obj) {
     func_800B6DD0(&ctx->field_0xBE8, obj);
 }
 
-// Target 1: us-800b8218 — Add CfObject to reslist at field_0xBC8
+// Target 1: us-800b8218 - Add CfObject to reslist at field_0xBC8
 void func_800B78FC(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xBC8, obj);
 }
 
-// Target 2: us-800b8250 — Add CfObject to reslist at field_0xBA8
+// Target 2: us-800b8250 - Add CfObject to reslist at field_0xBA8
 void func_800B7934(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xBA8, obj);
 }
 
-// Target 3: us-800b8288 — Add CfObject to reslist at field_0xC08
+// Target 3: us-800b8288 - Add CfObject to reslist at field_0xC08
 void func_800B796C(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xC08, obj);
@@ -580,7 +580,7 @@ void init_8524(){}
 void init_dispatchTarget_3(){}
 void init_dispatchTarget_4(){}
 void init_8804(){}
-// Target 4: us-800b91fc — func_800B88E0
+// Target 4: us-800b91fc - func_800B88E0
 // Remove nodes matching a given ID from a linked list at offset 0xC84
 void func_800B88E0(u8* self, u32 targetId) {
     u32* head = *(u32**)(self + 0xC84);
@@ -778,17 +778,17 @@ reslist<cf::TboxInfo>::~reslist(){}
 _reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
 reslist<cf::IFactoryEvent*>::~reslist(){}
 
-// Target 3: us-800ba2a8 — func_800B998C
+// Target 3: us-800ba2a8 - func_800B998C
 void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
     return func_800B47A8((void*)1, self, a1, a2, a3, a4, a5);
 }
 
-// Target 4: us-800ba2d8 — func_800B99BC
+// Target 4: us-800ba2d8 - func_800B99BC
 void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
     return func_800B47A8((void*)0, self, a1, a2, a3, a4, a5);
 }
 
-// Target 5: us-800ba35c — sinit_800B9A40
+// Target 5: us-800ba35c - sinit_800B9A40
 void sinit_800B9A40() {
     extern float lbl_eu_80661CC8, lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;

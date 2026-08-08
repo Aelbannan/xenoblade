@@ -33,7 +33,7 @@ CMenuFade::~CMenuFade() {
 void CMenuFade::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     mLayoutMem.createRegion(handle, 0x4000, lbl_eu_804FDEA8, 0);
-    // Scoped region guard — destructor releases the region when Init finishes
+    // Scoped region guard - destructor releases the region when Init finishes
     Class_8045F858 regionGuard(&mLayoutMem);
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();

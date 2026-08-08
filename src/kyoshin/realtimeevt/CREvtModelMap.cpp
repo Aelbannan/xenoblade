@@ -1,4 +1,4 @@
-// Decompiled CREvtModelMap — realtime event model map
+// Decompiled CREvtModelMap - realtime event model map
 // High-level C++ reconstruction.
 
 #include <string.h>
@@ -9,7 +9,7 @@
 #include "include/kyoshin/cf/CfGameManager.hpp"
 
 // ---------------------------------------------------------------------------
-// Action table entries — {startTime, creatureId, callback}
+// Action table entries - {startTime, creatureId, callback}
 // ---------------------------------------------------------------------------
 struct ActionEntry {
     s32 startTime;
@@ -106,7 +106,7 @@ extern "C" {
 }
 
 // ---------------------------------------------------------------------------
-// 1. __ct__CREvtModelMap — constructor (0x80181DB4)
+// 1. __ct__CREvtModelMap - constructor (0x80181DB4)
 // ---------------------------------------------------------------------------
 CREvtModelMap::CREvtModelMap()
 {
@@ -168,7 +168,7 @@ CREvtModelMap::CREvtModelMap()
             // Store as global visible model
             lbl_eu_806642B4 = this;
         } else {
-            // Non-guest — set up the default action table
+            // Non-guest - set up the default action table
             ActionEntry* entry = &lbl_eu_80531D2C[0];
             mPtmf[0] = entry->startTime;
             mPtmf[1] = entry->creatureId;
@@ -185,7 +185,7 @@ CREvtModelMap::CREvtModelMap()
 }
 
 // ---------------------------------------------------------------------------
-// 2. __ct__80180B00 — destructor / reset constructor (0x80181EFC)
+// 2. __ct__80180B00 - destructor / reset constructor (0x80181EFC)
 // Called as both the primary destructor and a reset.
 // ---------------------------------------------------------------------------
 void __ct__80180B00(CREvtModelMap* self, int dealloc)
@@ -243,11 +243,11 @@ void __ct__80180B00(CREvtModelMap* self, int dealloc)
     }
 
     // Deallocate memory
-    // (handled by the compiler in C++ — operator delete)
+    // (handled by the compiler in C++ - operator delete)
 }
 
 // ---------------------------------------------------------------------------
-// 3. func_80180C60 — isMapModel (0x8018205C)
+// 3. func_80180C60 - isMapModel (0x8018205C)
 // ---------------------------------------------------------------------------
 bool CREvtModelMap::isMapModel()
 {
@@ -262,7 +262,7 @@ bool CREvtModelMap::isMapModel()
 }
 
 // ---------------------------------------------------------------------------
-// 4. func_80180C88 — isBusy (0x80182084)
+// 4. func_80180C88 - isBusy (0x80182084)
 // ---------------------------------------------------------------------------
 bool CREvtModelMap::isBusy()
 {
@@ -273,7 +273,7 @@ bool CREvtModelMap::isBusy()
 }
 
 // ---------------------------------------------------------------------------
-// 5. func_80180CBC — reset (0x801820B8)
+// 5. func_80180CBC - reset (0x801820B8)
 // ---------------------------------------------------------------------------
 bool CREvtModelMap::reset()
 {
@@ -331,7 +331,7 @@ bool CREvtModelMap::reset()
 }
 
 // ---------------------------------------------------------------------------
-// 6. func_80180DCC — setGuestModeOff (0x801821C8)
+// 6. func_80180DCC - setGuestModeOff (0x801821C8)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::setGuestModeOff()
 {
@@ -348,7 +348,7 @@ void CREvtModelMap::setGuestModeOff()
 }
 
 // ---------------------------------------------------------------------------
-// 7. func_80180E1C — setGuestModeOn (0x80182218)
+// 7. func_80180E1C - setGuestModeOn (0x80182218)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::setGuestModeOn()
 {
@@ -365,7 +365,7 @@ void CREvtModelMap::setGuestModeOn()
 }
 
 // ---------------------------------------------------------------------------
-// 8. func_80180E60 — loadCreature (0x8018225C)
+// 8. func_80180E60 - loadCreature (0x8018225C)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::loadCreature()
 {
@@ -381,7 +381,7 @@ void CREvtModelMap::loadCreature()
 }
 
 // ---------------------------------------------------------------------------
-// 9. func_80180EBC — loadFiles (0x801822B8)
+// 9. func_80180EBC - loadFiles (0x801822B8)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::loadFiles()
 {
@@ -460,7 +460,7 @@ void CREvtModelMap::loadFiles()
 
                 CDeviceFile::func_8044F400(mFileHandle1, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
-                if (func_8016846C()) {  // This is a bit odd — re-call
+                if (func_8016846C()) {  // This is a bit odd - re-call
                     mtl::ALLOC_HANDLE h = func_80490098__Fv();
                     CDeviceFile::func_8044F400(mFileHandle1, h);
                 }
@@ -555,7 +555,7 @@ void CREvtModelMap::loadFiles()
 }
 
 // ---------------------------------------------------------------------------
-// 10. func_8018140C — workEvent (0x80182814)
+// 10. func_8018140C - workEvent (0x80182814)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::workEvent()
 {
@@ -595,7 +595,7 @@ void CREvtModelMap::workEvent()
         mPtmf[1] = entry->creatureId;
         mPtmf[2] = (u32)entry->callback;
     } else {
-        // No LOD flag — set ptmf to {0, -1, updatePosition}
+        // No LOD flag - set ptmf to {0, -1, updatePosition}
         ActionEntry* entry = (ActionEntry*)&lbl_eu_80531D74[0];
         mPtmf[0] = entry->startTime;
         mPtmf[1] = entry->creatureId;
@@ -604,7 +604,7 @@ void CREvtModelMap::workEvent()
 }
 
 // ---------------------------------------------------------------------------
-// 11. func_8018152C — updatePosition (0x80182934)
+// 11. func_8018152C - updatePosition (0x80182934)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::updatePosition()
 {
@@ -623,7 +623,7 @@ void CREvtModelMap::updatePosition()
 }
 
 // ---------------------------------------------------------------------------
-// 12. func_801815AC — onEvent (0x801829B4)
+// 12. func_801815AC - onEvent (0x801829B4)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::onEvent(int r4)
 {
@@ -753,7 +753,7 @@ check_guest:
 }
 
 // ---------------------------------------------------------------------------
-// 13. func_801818BC — setVisible (0x80182CC4)
+// 13. func_801818BC - setVisible (0x80182CC4)
 // ---------------------------------------------------------------------------
 void CREvtModelMap::setVisible(int r4)
 {
@@ -782,7 +782,7 @@ void CREvtModelMap::setVisible(int r4)
 }
 
 // ---------------------------------------------------------------------------
-// 14. func_8018196C — getGuestState (0x80182D74)
+// 14. func_8018196C - getGuestState (0x80182D74)
 // ---------------------------------------------------------------------------
 int CREvtModelMap::getGuestState()
 {
@@ -793,7 +793,7 @@ int CREvtModelMap::getGuestState()
 }
 
 // ---------------------------------------------------------------------------
-// 15. func_80181988 — handleFileEvent (0x80182D90)
+// 15. func_80181988 - handleFileEvent (0x80182D90)
 // ---------------------------------------------------------------------------
 bool CREvtModelMap::handleFileEvent(CEventFile* pEvent)
 {
@@ -802,11 +802,11 @@ bool CREvtModelMap::handleFileEvent(CEventFile* pEvent)
     // Check if this event matches mFileHandle1
     if (handle == mFileHandle1) {
         if (pEvent->unk0 == 1) {
-            // Success — extract data
+            // Success - extract data
             mFileData1 = mFileHandle1->getData();
             mFileHandle1->mData = 0;
         } else {
-            // Error — set flag
+            // Error - set flag
             mFlags |= 4;
         }
         mFileHandle1 = 0;

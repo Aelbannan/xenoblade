@@ -1,5 +1,5 @@
 // Translation unit for kyoshin/cf/CCtrlMoveBase
-// This file implements the CtrlMoveBase class — base for move-control objects.
+// This file implements the CtrlMoveBase class - base for move-control objects.
 // Two virtual stubs are FULL_MATCH (100% instruction match, semantically equivalent).
 // The remaining functions are scaffolded stubs awaiting decompilation.
 

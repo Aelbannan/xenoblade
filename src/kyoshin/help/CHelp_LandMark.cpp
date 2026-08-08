@@ -32,7 +32,7 @@ extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
     return self;
 }
 
-// Destructor — extern "C" with explicit deleteFlag parameter matching retail __dt__ symbol
+// Destructor - extern "C" with explicit deleteFlag parameter matching retail __dt__ symbol
 // Uses the same pattern as the constructor (which is 100% matched)
 extern "C" __declspec(noinline) void* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
     if (self != nullptr) {
@@ -56,7 +56,7 @@ extern "C" __declspec(noinline) void* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_La
     return self;
 }
 
-// func_802B8290 — extern "C" to match the Fv retail symbol (takes params in registers)
+// func_802B8290 - extern "C" to match the Fv retail symbol (takes params in registers)
 // 100% matched
 extern "C" __declspec(noinline) void func_802B8290__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
     // Use bool to trigger MWCC's neg/or/rlwinm idiom for != 0 check
@@ -71,14 +71,14 @@ extern "C" __declspec(noinline) void func_802B8290__Q22cf14CHelp_LandMarkFv(cf::
     self->mTimer = 0x4B;
 }
 
-// func_802B8388 — thunk: adjusts this by -0xC and tail-calls func_802B8290
+// func_802B8388 - thunk: adjusts this by -0xC and tail-calls func_802B8290
 // Retail is 0x8 bytes (subi r3, r3, 12; b func_802B8290); cannot be expressed in C++
 extern "C" __declspec(noinline) void func_802B8388__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, u32 param1, u32 param2) {
     // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.
     func_802B8290__Q22cf14CHelp_LandMarkFv((cf::CHelp_LandMark*)((char*)self - 0xc), param1, param2);
 }
 
-// func_802B8390 — thunk: adjusts this by -0xC and tail-calls destructor
+// func_802B8390 - thunk: adjusts this by -0xC and tail-calls destructor
 // Retail is 0x8 bytes (subi r3, r3, 12; b __dt__); cannot be expressed in C++
 extern "C" __declspec(noinline) void func_802B8390__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
     // Adjusted-this thunk: restore real object pointer (-0xC) and tail-call.

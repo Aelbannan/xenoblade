@@ -13,13 +13,13 @@ namespace nw4r {
 namespace g3d {
 
 // ---------------------------------------------------------------------------
-// ResMatFur — fur rendering data attached to a material.
+// ResMatFur - fur rendering data attached to a material.
 // Not fully defined in headers; minimal layout inferred from binary.
 // ---------------------------------------------------------------------------
 struct ResMatFurData {
     u8 pad_0x0[0xC];
-    f32 param1; // at 0xC — first pow exponent
-    f32 param2; // at 0x10 — second pow exponent
+    f32 param1; // at 0xC - first pow exponent
+    f32 param2; // at 0x10 - second pow exponent
 };
 
 class ResMatFur : public ResCommon<ResMatFurData> {

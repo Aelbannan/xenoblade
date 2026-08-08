@@ -30,11 +30,11 @@
 #include <ctype.h>
 
 extern "C" {
-// copyVEC3 stays inline: CCollepedia.hpp declares it as (void*, void*) — a
+// copyVEC3 stays inline: CCollepedia.hpp declares it as (void*, void*) - a
 // move into code_80135FDC.hpp would clash in CCollepedia.cpp.
 extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // func_8009CF8C stays inline: include/functions.hpp declares it as
-// bool func_8009CF8C(int) — a move into code_80135FDC.hpp would clash in
+// bool func_8009CF8C(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern u32 func_8009CF8C(u32);
 }
@@ -43,39 +43,39 @@ extern u32 func_8009CF8C(u32);
 extern "C" {
 // lbl_eu_806640A8 / lbl_eu_806640D8 / lbl_eu_80664104 stay inline: they are
 // declared as void* in CCollepedia.hpp / CKizunaTalkList.hpp / CMCEffStart.hpp
-// (u32 here) — moving them into code_80135FDC.hpp would clash in those callers.
+// (u32 here) - moving them into code_80135FDC.hpp would clash in those callers.
 extern u32 lbl_eu_806640A8;
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_80664104;
-// lbl_eu_806640EC stays inline: CMCGetItemBox.hpp declares it as void* — a
+// lbl_eu_806640EC stays inline: CMCGetItemBox.hpp declares it as void* - a
 // move into code_80135FDC.hpp would clash in CMCGetItemBox.cpp.
 extern u32 lbl_eu_806640EC;
 }
 
 // lbl_eu_8052E568 / lbl_eu_8052E590 stay inline: CItemBoxInfo.hpp declares
-// them as char[] (u8[] here) — a move into code_80135FDC.hpp would clash in
+// them as char[] (u8[] here) - a move into code_80135FDC.hpp would clash in
 // CMCGetItemBox.cpp.
 extern "C" {
 extern u8 lbl_eu_8052E568[];
 extern u8 lbl_eu_8052E590[];
 }
 
-// func_8003AA34 stays inline: CKizunaTalkList.hpp declares it as (void) — a
+// func_8003AA34 stays inline: CKizunaTalkList.hpp declares it as (void) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
 extern "C" void func_8003AA34(const char*);
 
 
 
 // --- helpers ---
-// func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) — a
+// func_8003B1EC stays inline: CKizunaTalkList.hpp declares it as (void*) - a
 // move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
 extern "C" u32 func_8003B1EC(u32);
 // func_8009ECB0 stays inline: include/functions.hpp and CChainActorPc.hpp
-// declare it as int* — a move into code_80135FDC.hpp would clash in
+// declare it as int* - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull those headers transitively.
 extern "C" void* func_8009ECB0(void);
 // func_8009D018 stays inline: include/functions.hpp declares it as
-// void func_8009D018(int, int) — a move into code_80135FDC.hpp would clash in
+// void func_8009D018(int, int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern "C" void func_8009D018(u32 destination, u32 value);
 

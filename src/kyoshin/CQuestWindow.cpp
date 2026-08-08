@@ -61,7 +61,7 @@ extern "C" void func_801245E4(void* self) { ((void(*)(void*))__dt__12CQuestWindo
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
 template <typename T>
 class CTTask {
 public:

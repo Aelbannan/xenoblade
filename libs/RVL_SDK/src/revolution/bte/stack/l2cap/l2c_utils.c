@@ -54,7 +54,7 @@ enum {
 /* Max ACL payload the echo responder will reflect. */
 #define L2CAP_ECHO_MAX_DATA_SIZE    0x294
 
-/* TRUE/FALSE trace strings — retail .sdata locals (lbl_80665948 / lbl_80665950).
+/* TRUE/FALSE trace strings - retail .sdata locals (lbl_80665948 / lbl_80665950).
    Non-const fixed-size arrays so MWCC keeps them in .sdata (sda21-accessed),
    matching the retail layout: TRUE at +0x0, FALSE at +0x8, 8 bytes each. */
 static char lbl_80665948[8] = "TRUE";

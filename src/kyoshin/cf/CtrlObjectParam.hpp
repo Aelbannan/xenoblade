@@ -19,7 +19,7 @@ namespace cf {
     // ── 32-byte sub-struct entry (getSubStruct / getShortAt1C / getByteE4) ──
     struct CtrlObjectParamSubEntry {
         u8  pad_00[0x10];        // 0x00..0x0F
-        s16 shortArr[8];         // 0x10..0x1F  — accessed at work+0x1C = entry[0].shortArr
+        s16 shortArr[8];         // 0x10..0x1F  - accessed at work+0x1C = entry[0].shortArr
     };
 
     // ── Opaque data block with sub-entries (getSubStruct, getShortAt1C, getByteE4) ──

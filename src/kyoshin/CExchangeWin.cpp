@@ -34,7 +34,7 @@ extern "C" CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
     return self;
 }
 
-// Destructor — compiler handles member destructors automatically.
+// Destructor - compiler handles member destructors automatically.
 // The explicit mMemRegion.~UnkClass_8045F564() call is NOT added here
 // because MWCC generates it automatically for non-trivial members,
 // and adding it explicitly causes a double call.
@@ -75,7 +75,7 @@ extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {
     }
 }
 
-// OnFileEvent — loads the layout from a file, sets up fonts, animations,
+// OnFileEvent - loads the layout from a file, sets up fonts, animations,
 // text fields, and a texture resource with pane sizing from TPL dimensions.
 bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle != pEventFile->mFileHandle) {
@@ -210,7 +210,7 @@ extern "C" void func_8022CF2C(CExchangeWin* self) {
     self->field_25 = 0;
 }
 
-// func_8022CF7C — update loop: drives animation state machine and calls
+// func_8022CF7C - update loop: drives animation state machine and calls
 // mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
 // for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
 extern "C" void func_8022CF7C(CExchangeWin* self) {
@@ -239,7 +239,7 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(s->mLayout, drawInfo, 0, 1);
 }
 
-// func_8022D018 — teardown: releases file handle, destroys the layout,
+// func_8022D018 - teardown: releases file handle, destroys the layout,
 // releases the arc resource accessor, and cleans up the memory region.
 extern "C" void func_8022D018(CExchangeWin* self) {
     func_801390E0(&self->mFileHandle);

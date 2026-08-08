@@ -748,7 +748,7 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 } // namespace nw4r
 
 // extern "C" is required here because the retail calling convention does
-// not pass 'this' — the function uses r3 for the offset parameter directly.
+// not pass 'this' - the function uses r3 for the offset parameter directly.
 extern "C" u32
 ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(const void* pBuffer,
                                                         u32 offset,

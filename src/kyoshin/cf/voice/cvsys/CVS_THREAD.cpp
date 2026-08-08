@@ -65,7 +65,7 @@ void func_802A3FD4(){}
 void func_802A4120(){}
 // ── func_802A4430 ─────────────────────────────────────────────────────────
 // Voice-ID selector for battle-voice context.  Dispatches on
-// voice-thread state (1–7) and character type to pick the appropriate
+// voice-thread state (1-7) and character type to pick the appropriate
 // voice line for tension, arts, chain-attack, revive, etc.
 
 int func_802A4430(CVoiceHandle* self) {
@@ -203,7 +203,7 @@ char_ok:
     }
 
     case 4:
-        // Character types 7–10 map linearly to voice IDs.
+        // Character types 7-10 map linearly to voice IDs.
         if (charType < 7) goto fail;
         if (charType > 10) goto fail;
         return charType + 0xDCA;
@@ -221,7 +221,7 @@ char_ok:
         return 0xDD1;
 
     case 7:
-        // Character types 8–13 map to dynamic voice IDs.
+        // Character types 8-13 map to dynamic voice IDs.
         if (charType < 8) goto fail;
         if (charType > 13) goto fail;
         if (isLeader == 0) {

@@ -26,7 +26,7 @@ void func_8024343C(){}
 
 void func_802434A0(){}
 
-/* func_80243560 — Draw the map-select UI: layout, scrollbar, and cursor.
+/* func_80243560 - Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
@@ -67,7 +67,7 @@ void func_80243ABC(){}
 
 void func_80243B88(){}
 
-/* func_80243BE8 — Poll animation completion on mAnimTransform2, then enable both
+/* func_80243BE8 - Poll animation completion on mAnimTransform2, then enable both
    animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
 void func_80243BE8(CMapSel* self) {
     /* Check if mAnimTransform2 has reached the target frame. */

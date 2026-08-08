@@ -291,7 +291,7 @@ void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
                      pHeader->wrapT, mipmap);
     }
 
-    // Set up LOD — reload header pointer since r9 clobbered by GXInitTexObj*
+    // Set up LOD - reload header pointer since r9 clobbered by GXInitTexObj*
     pHeader = pDesc->textureHeader;
     GXInitTexObjLOD(pTexObj, pHeader->minFilter, pHeader->magFilter,
                     static_cast<f32>(pHeader->minLOD),

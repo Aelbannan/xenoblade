@@ -5,7 +5,7 @@
 #include <nw4r/g3d/res/g3d_resmat.h>
 
 /**
- * CMdlMaterial — model material descriptor.
+ * CMdlMaterial - model material descriptor.
  *
  * Layout derived from constructor (__ct__CMdlMaterial at 0x804E98E0)
  * and vtable at lbl_eu_805700D8 (single virtual: destructor).

@@ -27,10 +27,10 @@ namespace cf {
         CCtrlMoveBase();
         virtual ~CCtrlMoveBase();
 
-        // Empty virtual stub — no-op override for interface slot.
+        // Empty virtual stub - no-op override for interface slot.
         virtual void func_80089628();
 
-        // Empty virtual stub — no-op override for interface slot.
+        // Empty virtual stub - no-op override for interface slot.
         virtual void func_8008A0C4();
     };
 

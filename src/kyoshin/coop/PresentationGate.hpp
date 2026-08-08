@@ -3,21 +3,21 @@
 #include <types.h>
 
 // Fork-only presentation gating for single-instance split-screen (PLAN.md /
-// DISCOVERY.md §10). Not a retail TU — do not expect MWCC FULL_MATCH.
+// DISCOVERY.md §10). Not a retail TU - do not expect MWCC FULL_MATCH.
 
 namespace coop {
 
-// lbl_eu_80663E24 — primary event / presentation bitfield (IBM bit 0 = MSB).
-static const u32 kEventVision = 0x04000000u;      // IBM bit 5 — isVisionEvent
-static const u32 kEventREvent = 0x02000000u;      // IBM bit 6 — realtime / CTaskREvent
-static const u32 kEventTalk = 0x01000000u;        // IBM bit 7 — isTalkEvent
-static const u32 kEventIsEvent = 0x00400000u;     // IBM bit 9 — isEvent
+// lbl_eu_80663E24 - primary event / presentation bitfield (IBM bit 0 = MSB).
+static const u32 kEventVision = 0x04000000u;      // IBM bit 5 - isVisionEvent
+static const u32 kEventREvent = 0x02000000u;      // IBM bit 6 - realtime / CTaskREvent
+static const u32 kEventTalk = 0x01000000u;        // IBM bit 7 - isTalkEvent
+static const u32 kEventIsEvent = 0x00400000u;     // IBM bit 9 - isEvent
 
-// lbl_eu_80663E28 — secondary mode bitfield.
-static const u32 kModeRealtimeBusy = 0x00000001u; // bit 0 — realtimeEventStart
-static const u32 kModeFade = 0x00000002u;         // IBM bit 30 — pluginEve fade
+// lbl_eu_80663E28 - secondary mode bitfield.
+static const u32 kModeRealtimeBusy = 0x00000001u; // bit 0 - realtimeEventStart
+static const u32 kModeFade = 0x00000002u;         // IBM bit 30 - pluginEve fade
 static const u32 kModeKizunaTalk = 0x00001000u;   // IBM bit 19
-static const u32 kModeFieldVision = 0x20000000u;  // IBM bit 2 — setFieldVision
+static const u32 kModeFieldVision = 0x20000000u;  // IBM bit 2 - setFieldVision
 
 // Wide UI suppress mask used by MainMenu / ArtsSelect (andis 0xAFA4).
 static const u32 kEventUiSuppressComposite = 0xAFA40000u;

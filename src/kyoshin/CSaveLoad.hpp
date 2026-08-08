@@ -193,7 +193,7 @@ public:
     virtual void vf14(int) = 0;                 // vtable 0x38
 };
 
-// C-linkage imports — retail symbol names; extern "C" so calls bind to the
+// C-linkage imports - retail symbol names; extern "C" so calls bind to the
 // literal (un)mangled identifiers. (Retail names are the true symbol names;
 // do not rename.) Forward decls for structs whose full definitions live in
 // the TU.

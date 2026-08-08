@@ -304,7 +304,7 @@ struct MenuBpsMoveIf {
 };
 
 // Length-first decl so inlined size homes match retail (length r4, cur r3, end r5).
-// Do not change shared reslist::size() — that regresses other units.
+// Do not change shared reslist::size() - that regresses other units.
 static inline u32 menuBpsActorListSize(const reslist<cf::CfObjectActor*>* list) {
     u32 length = 0;
     _reslist_node<cf::CfObjectActor*>* endNode = list->mStartNodePtr;

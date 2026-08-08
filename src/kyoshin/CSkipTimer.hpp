@@ -85,7 +85,7 @@ public:
 };
 // Total size: 0x98 bytes (verified via CMenuSkipTimer mTimerData[0x98])
 
-// C-linkage imports — retail symbol names; extern "C" so calls bind to the
+// C-linkage imports - retail symbol names; extern "C" so calls bind to the
 // literal (un)mangled identifiers. (Retail names are the true symbol names;
 // do not rename.)
 // CSkipTimer2 vtable pointer stored at +0x00.

@@ -32,7 +32,7 @@ struct Obj64_91 {
     u8 byte91;            // +0x91  animation state id
 };
 
-// Actor2 from func_8016FE34 — has a sub-object pointer at +0x04 and
+// Actor2 from func_8016FE34 - has a sub-object pointer at +0x04 and
 // a larger sub-object pointer at +0x3F34.
 struct Actor2Layout {
     u8 gap00[0x04];
@@ -169,7 +169,7 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
     fieldA0 = zero;
 
     // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
-    // panelEnd/one r0/r3 Chaitin soft-cap — keep iterating in high-level C.
+    // panelEnd/one r0/r3 Chaitin soft-cap - keep iterating in high-level C.
     do {
         panel->actorId = zero;
         panel->layout1 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
@@ -476,7 +476,7 @@ after_bit21:
         int noTarget = 1;
 
         if (cf::CfGameManager::getPlayer(0) != NULL) {
-            // (Not in the 47-reinterpret_arith findings — reading offset
+            // (Not in the 47-reinterpret_arith findings - reading offset
             //  0x90E4 from func_800FE68C().  Overlay struct with a u32 at
             //  that offset would be unwieldy; keep the original expression.)
             u32 lastId = *reinterpret_cast<u32*>(
@@ -550,7 +550,7 @@ after_bit21:
     func_801127B0(this);
 
     // Retail pre-loop materialization (80110A88..AA4): pc call, then
-    // f30/r30/f31/r29/f28/r28/r27/r31 — declare in that dependence order.
+    // f30/r30/f31/r29/f28/r28/r27/r31 - declare in that dependence order.
     cf::CfObjectPc* pc =
         func_800BFC68(cf::CfGameManager::getPlayer(0));
     f32 animMarker = lbl_eu_80666FEC;

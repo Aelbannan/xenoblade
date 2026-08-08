@@ -230,7 +230,7 @@ void __MIXRmtUpdateSettings(s32 idx, void* out);
 // loads a 3-term sum s0+s1+s2 (no trailing constant) in [s2,s0,s1] order,
 // loads a 3-term sum with a trailing constant in source order, and rotates a
 // flat 4-term sum; explicit (a+b)+(c+d) parens load in written order.  See
-// docs/MWCC_REFERENCE.md "RVL_SDK mix — MIXInitChannel".
+// docs/MWCC_REFERENCE.md "RVL_SDK mix - MIXInitChannel".
 static u16 MIXGetVolumeInline(s32 db)
 {
     s32 idx;
@@ -754,7 +754,7 @@ void MIXUpdateSettings(void)
 
         if (mixChanged) {
             // Walk pb.mix as a u16 stream (retail materialises addi r3,r4,0x3e
-            // and stores value/delta through base-relative offsets) — same
+            // and stores value/delta through base-relative offsets) - same
             // trick as MIXInitChannel; plain field stores fold to direct
             // offsets and break the match. The != 0 tests use locals because
             // q is an opaque pointer and field tests would force reloads.

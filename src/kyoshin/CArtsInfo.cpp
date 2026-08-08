@@ -88,7 +88,7 @@ u8 CArtsInfo::getField48() { return field_0x48; }
 
 u8 CArtsInfo::getField49() { return field_0x49; }
 
-// __ct__CArtsInfo — constructor
+// __ct__CArtsInfo - constructor
 // .text:0x0, size 0xAC
 CArtsInfo::CArtsInfo() {
     // Set vtable pointer
@@ -125,7 +125,7 @@ CArtsInfo::CArtsInfo() {
     __ct__CCur18(mCursor, nullptr);
 }
 
-// __dt__9CArtsInfoFv — destructor
+// __dt__9CArtsInfoFv - destructor
 // .text:0xAC, size 0x60
 CArtsInfo::~CArtsInfo() {
     // Destroy CCur18 cursor
@@ -135,7 +135,7 @@ CArtsInfo::~CArtsInfo() {
     __dt__17UnkClass_8045F564Fv(&mMemRegion, -1);
 }
 
-// func_80235814 — file loading
+// func_80235814 - file loading
 // .text:0x10C, size 0x68
 void func_80235814(CArtsInfo* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -147,7 +147,7 @@ void func_80235814(CArtsInfo* self) {
         (u32)(lbl_eu_8050B00C + 0x15), (const char*)self, (void*)handle, 0, 0);
 }
 
-// func_8023587C — state machine dispatch
+// func_8023587C - state machine dispatch
 // .text:0x174, size 0xDC
 void func_8023587C(CArtsInfo* self) {
     if (self->field_0x40 == 0) return;
@@ -177,7 +177,7 @@ void func_8023587C(CArtsInfo* self) {
     func_801D202C(self->mCursor);
 }
 
-// func_80235958 — draw
+// func_80235958 - draw
 // .text:0x250, size 0x74
 void func_80235958(CArtsInfo* self, void* drawInfo) {
     if (self->field_0x40 == 0) return;
@@ -191,7 +191,7 @@ void func_80235958(CArtsInfo* self, void* drawInfo) {
     }
 }
 
-// func_802359CC — cleanup
+// func_802359CC - cleanup
 // .text:0x2C4, size 0xC4
 void func_802359CC(CArtsInfo* self) {
     func_8003AA8C__5CBdatFUl(2);
@@ -223,15 +223,15 @@ void func_802359CC(CArtsInfo* self) {
     func_8045F778__17UnkClass_8045F564Fv(&self->mMemRegion);
 }
 
-// func_80235A90 — get field_0x48
+// func_80235A90 - get field_0x48
 // .text:0x388, size 0x8
 u8 func_80235A90(CArtsInfo* self) { return self->field_0x48; }
 
-// func_80235A98 — get field_0x49
+// func_80235A98 - get field_0x49
 // .text:0x390, size 0x8
 u8 func_80235A98(CArtsInfo* self) { return self->field_0x49; }
 
-// func_80235AA0 — state check (state==0 -> 1)
+// func_80235AA0 - state check (state==0 -> 1)
 // .text:0x398, size 0x20
 void func_80235AA0(CArtsInfo* self) {
     if (self->field_0x44 != 0) return;
@@ -239,7 +239,7 @@ void func_80235AA0(CArtsInfo* self) {
     self->field_0x49 = 0;
 }
 
-// func_80235AC0 — state check (state==3 -> 4)
+// func_80235AC0 - state check (state==3 -> 4)
 // .text:0x3B8, size 0x20
 void func_80235AC0(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
@@ -247,7 +247,7 @@ void func_80235AC0(CArtsInfo* self) {
     self->field_0x49 = 0;
 }
 
-// func_80235AE0 — large state machine (state==3 -> 6, layout animation setup)
+// func_80235AE0 - large state machine (state==3 -> 6, layout animation setup)
 // .text:0x3D8, size 0x244
 void func_80235AE0(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
@@ -301,7 +301,7 @@ void func_80235AE0(CArtsInfo* self) {
     func_80138078__FUl(0x6D);
 }
 
-// func_80235D24 — state machine (state==9 -> 0xA)
+// func_80235D24 - state machine (state==9 -> 0xA)
 // .text:0x61C, size 0xB4
 void func_80235D24(CArtsInfo* self) {
     if (self->field_0x44 != 9) return;
@@ -324,7 +324,7 @@ void func_80235D24(CArtsInfo* self) {
     func_80138078__FUl(6);
 }
 
-// func_80235DD8 — state machine (state==9 -> 0xC)
+// func_80235DD8 - state machine (state==9 -> 0xC)
 // .text:0x6D0, size 0xAC
 void func_80235DD8(CArtsInfo* self) {
     if (self->field_0x44 != 9) return;
@@ -345,23 +345,23 @@ void func_80235DD8(CArtsInfo* self) {
     callVirt_38_0(self->mpLayout2);
 }
 
-// func_80235E84 — set field_0x54
+// func_80235E84 - set field_0x54
 // .text:0x77C, size 0x8
 void func_80235E84(CArtsInfo* self, u8 val) { self->field_0x54 = val; }
 
-// func_80235E8C — set field_0x55
+// func_80235E8C - set field_0x55
 // .text:0x784, size 0x8
 void func_80235E8C(CArtsInfo* self, u8 val) { self->field_0x55 = val; }
 
-// func_80235E94 — set field_0x56
+// func_80235E94 - set field_0x56
 // .text:0x78C, size 0x8
 void func_80235E94(CArtsInfo* self, u8 val) { self->field_0x56 = val; }
 
-// func_80235E9C — set field_0x58
+// func_80235E9C - set field_0x58
 // .text:0x794, size 0x8
 void func_80235E9C(CArtsInfo* self, u16 val) { self->field_0x58 = val; }
 
-// func_80235EA4 — call func_80236508, check fields, call func_802369C0
+// func_80235EA4 - call func_80236508, check fields, call func_802369C0
 // .text:0x79C, size 0x4C
 void func_80235EA4(CArtsInfo* self) {
     func_80236508(self);
@@ -371,7 +371,7 @@ void func_80235EA4(CArtsInfo* self) {
     }
 }
 
-// func_80235EF0 — decrement field_0x5A, tail-call func_80236CF4
+// func_80235EF0 - decrement field_0x5A, tail-call func_80236CF4
 // .text:0x7E8, size 0x24
 void func_80235EF0(CArtsInfo* self) {
     s8 val = self->field_0x5A;
@@ -381,7 +381,7 @@ void func_80235EF0(CArtsInfo* self) {
     func_80236CF4(self);
 }
 
-// func_80235F14 — increment field_0x5A, tail-call func_80236CF4
+// func_80235F14 - increment field_0x5A, tail-call func_80236CF4
 // .text:0x80C, size 0x28
 void func_80235F14(CArtsInfo* self) {
     s8 val = self->field_0x5A;
@@ -391,21 +391,21 @@ void func_80235F14(CArtsInfo* self) {
     func_80236CF4(self);
 }
 
-// func_80235F3C — check if field_0x5A is zero
+// func_80235F3C - check if field_0x5A is zero
 // .text:0x834, size 0x14
 u32 func_80235F3C(CArtsInfo* self) {
     s8 val = self->field_0x5A;
     return (val == 0) ? 1 : 0;
 }
 
-// func_80235F50 — check if field_0x44 < 6
+// func_80235F50 - check if field_0x44 < 6
 // .text:0x848, size 0x1C
 u32 func_80235F50(CArtsInfo* self) {
     int state = self->field_0x44;
     return (state < 6) ? 1 : 0;
 }
 
-// func_80235F6C — animation state 0
+// func_80235F6C - animation state 0
 // .text:0x864, size 0xB4
 void func_80235F6C(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, lbl_eu_80668684) == 0) return;
@@ -418,7 +418,7 @@ void func_80235F6C(CArtsInfo* self) {
     self->field_0x44 = 2;
 }
 
-// func_80236020 — animation state 1
+// func_80236020 - animation state 1
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, lbl_eu_80668684) == 0) return;
@@ -427,7 +427,7 @@ void func_80236020(CArtsInfo* self) {
     self->field_0x49 = 1;
 }
 
-// func_8023606C — animation state 2
+// func_8023606C - animation state 2
 // .text:0x964, size 0xB4
 void func_8023606C(CArtsInfo* self) {
     if (func_80137510(self->mpAnimTrans2, lbl_eu_80668684) == 0) return;
@@ -440,7 +440,7 @@ void func_8023606C(CArtsInfo* self) {
     self->field_0x44 = 5;
 }
 
-// func_80236120 — animation state 3
+// func_80236120 - animation state 3
 // .text:0xA18, size 0x4C
 void func_80236120(CArtsInfo* self) {
     if (func_80137510(self->mpAnimTrans1, lbl_eu_80668684) == 0) return;
@@ -449,7 +449,7 @@ void func_80236120(CArtsInfo* self) {
     self->field_0x44 = 0;
 }
 
-// func_8023616C — animation state 4
+// func_8023616C - animation state 4
 // .text:0xA64, size 0xB4
 void func_8023616C(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
@@ -462,7 +462,7 @@ void func_8023616C(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 1);
 }
 
-// func_80236220 — animation state 5
+// func_80236220 - animation state 5
 // .text:0xB18, size 0xB4
 void func_80236220(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans4, lbl_eu_80668684) == 0) return;
@@ -475,7 +475,7 @@ void func_80236220(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 1);
 }
 
-// func_802362D4 — animation state 6
+// func_802362D4 - animation state 6
 // .text:0xBCC, size 0x60
 void func_802362D4(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans5, lbl_eu_80668684) == 0) return;
@@ -486,7 +486,7 @@ void func_802362D4(CArtsInfo* self) {
     func_80236CF4(self);
 }
 
-// func_80236334 — animation state 7
+// func_80236334 - animation state 7
 // .text:0xC2C, size 0xD4
 void func_80236334(CArtsInfo* self) {
     u32 done1 = func_80137510(self->mpAnimTrans4, lbl_eu_80668684);
@@ -502,7 +502,7 @@ void func_80236334(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 1);
 }
 
-// func_80236408 — animation state 8
+// func_80236408 - animation state 8
 // .text:0xD00, size 0x4C
 void func_80236408(CArtsInfo* self) {
     if (func_80137510(self->mpAnimTrans3, lbl_eu_80668684) == 0) return;
@@ -511,7 +511,7 @@ void func_80236408(CArtsInfo* self) {
     self->field_0x49 = 1;
 }
 
-// func_80236454 — animation state 9
+// func_80236454 - animation state 9
 // .text:0xD4C, size 0xB4
 void func_80236454(CArtsInfo* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans6, lbl_eu_80668684) == 0) return;
@@ -524,7 +524,7 @@ void func_80236454(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 1);
 }
 
-// func_80236508 — large layout setup (bind all pane animations)
+// func_80236508 - large layout setup (bind all pane animations)
 // .text:0xE00, size 0x4B8
 void func_80236508(CArtsInfo* self) {
     // Bind animations for all named panes on layout 1

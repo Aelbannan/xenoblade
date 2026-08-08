@@ -1129,17 +1129,32 @@ def generate_build_ninja(
                 source_inputs.append(obj.src_obj_path)
 
             # Link-only transform: emit a *.link.o copy with selected symbols
-            # renamed (objdiff/split checks keep the original object).
+            # renamed / globalized (objdiff/split checks keep the original
+            # object). `renames` uses --redefine-sym (old=new); `globalize`
+            # uses --globalize-symbol (local -> global binding, e.g. for
+            # compiler-emitted `__sinit_` functions that the retail object
+            # table declares as global and the lcf FORCEACTIVE block requires).
             link_transform = obj.options.get("link_transform")
             if link_transform:
                 link_obj = obj.src_obj_path.with_name(
                     obj.src_obj_path.stem + ".link.o"
                 )
-                renames = " ".join(
-                    f"--redefine-sym={old}={new}"
-                    for old, new in link_transform["renames"]
-                )
-                n.comment(f"{obj.name}: link symbol rename (link-only)")
+                args = []
+                if link_transform.get("renames"):
+                    args.extend(
+                        f"--redefine-sym={old}={new}"
+                        for old, new in link_transform["renames"]
+                    )
+                if link_transform.get("globalize"):
+                    args.extend(
+                        f"--globalize-symbol={sym}"
+                        for sym in link_transform["globalize"]
+                    )
+                # ninja executes rules via sh -c, so backslashes in symbol
+                # names (e.g. `__sinit_\CRect16_cpp`) must be doubled in the
+                # rule string or the shell eats them.
+                renames = " ".join(args).replace("\\", "\\\\")
+                n.comment(f"{obj.name}: link symbol transform (link-only)")
                 n.build(
                     outputs=link_obj,
                     rule="link_symbol_rename",

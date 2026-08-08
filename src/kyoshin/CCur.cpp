@@ -1,4 +1,4 @@
-// Cursor layout overlay widgets — CCur unit
+// Cursor layout overlay widgets - CCur unit
 // High-level C/C++ reconstruction from retail PPC
 
 #include "kyoshin/harness_catalog.hpp"

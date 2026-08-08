@@ -10,7 +10,7 @@ class CEventFile;
 // Vtable for CExchangeWin (split1 .data)
 extern "C" void* lbl_eu_80536640[];
 
-/* CExchangeWin — layout-compatible with IWorkEvent (vptr @ 0) for
+/* CExchangeWin - layout-compatible with IWorkEvent (vptr @ 0) for
    CDeviceFile::readFile, but not a C++ IWorkEvent subclass.  Vtable is
    provided by split1; the constructor stores it manually. */
 class CExchangeWin {
@@ -18,7 +18,7 @@ public:
     ~CExchangeWin();
     bool OnFileEvent(CEventFile* pEventFile);
 
-    // field accessors — retail func_8022D094/08C/09C (recovered as members)
+    // field accessors - retail func_8022D094/08C/09C (recovered as members)
     u8 getField24();
     u8 getField25();
     u8 getField27();

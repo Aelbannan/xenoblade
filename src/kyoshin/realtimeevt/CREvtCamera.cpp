@@ -54,7 +54,7 @@ extern float lbl_eu_806678B0;
 #define GET_CAMERA() ((CREvtCamera*)([]{ extern unsigned long lbl_eu_806642A8; return lbl_eu_806642A8; }()))
 
 // ============================================================================
-// func_80180940 (0x80181D3C, size 0x14) — already implemented
+// func_80180940 (0x80181D3C, size 0x14) - already implemented
 // ============================================================================
 extern "C" unsigned long func_80180940() {
     extern unsigned long lbl_eu_806642A8;

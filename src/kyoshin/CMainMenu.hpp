@@ -66,29 +66,29 @@ public:
     u8 field_0x54;                             // 0x54
     u8 field_0x55;                             // 0x55
     u8 _56[0x58 - 0x56];                      // 0x56-0x57
-    u32 mIWorkEventVtbl;                       // 0x58 — IWorkEvent vtable (raw)
+    u32 mIWorkEventVtbl;                       // 0x58 - IWorkEvent vtable (raw)
     u32 field_0x5C;                            // 0x5C
-    u8 _60[0x70 - 0x60];                       // 0x60-0x6F — UnkClass_8045F564 embedded
-    void* field_0x70;                          // 0x70 — param from constructor
-    CFileHandle* field_0x74;                   // 0x74 — file handle
-    nw4r::lyt::ArcResourceAccessor* field_0x78; // 0x78 — arc resource accessor
-    nw4r::lyt::Layout* field_0x7C;             // 0x7C — main layout
-    nw4r::lyt::AnimTransform* field_0x80;      // 0x80 — anim0
-    nw4r::lyt::AnimTransform* field_0x84;      // 0x84 — anim1
-    nw4r::lyt::AnimTransform* field_0x88;      // 0x88 — anim2
-    nw4r::lyt::AnimTransform* field_0x8C;      // 0x8C — anim3
+    u8 _60[0x70 - 0x60];                       // 0x60-0x6F - UnkClass_8045F564 embedded
+    void* field_0x70;                          // 0x70 - param from constructor
+    CFileHandle* field_0x74;                   // 0x74 - file handle
+    nw4r::lyt::ArcResourceAccessor* field_0x78; // 0x78 - arc resource accessor
+    nw4r::lyt::Layout* field_0x7C;             // 0x7C - main layout
+    nw4r::lyt::AnimTransform* field_0x80;      // 0x80 - anim0
+    nw4r::lyt::AnimTransform* field_0x84;      // 0x84 - anim1
+    nw4r::lyt::AnimTransform* field_0x88;      // 0x88 - anim2
+    nw4r::lyt::AnimTransform* field_0x8C;      // 0x8C - anim3
     // CBaseCur at +0x90 (16 bytes), CSubCur at +0xA8
-    u8 _90[0xC0 - 0x90];                       // 0x90-0xBF — CBaseCur + CSubCur
-    s32 field_0xC0;                            // 0xC0 — cursor index
-    s32 field_0xC4;                            // 0xC4 — sub-index
-    u8 field_0xC8[8];                          // 0xC8-0xCF — cursor availability flags
-    u8 field_0xD0;                             // 0xD0 — flag: hasSave
-    u8 field_0xD1;                             // 0xD1 — flag: something1
-    u8 field_0xD2;                             // 0xD2 — flag: something2
-    u8 field_0xD3;                             // 0xD3 — flag: something3
-    u8 field_0xD4;                             // 0xD4 — flag: something4
-    u8 field_0xD5;                             // 0xD5 — flag: something5
-    u8 field_0xD6;                             // 0xD6 — flag: something6
+    u8 _90[0xC0 - 0x90];                       // 0x90-0xBF - CBaseCur + CSubCur
+    s32 field_0xC0;                            // 0xC0 - cursor index
+    s32 field_0xC4;                            // 0xC4 - sub-index
+    u8 field_0xC8[8];                          // 0xC8-0xCF - cursor availability flags
+    u8 field_0xD0;                             // 0xD0 - flag: hasSave
+    u8 field_0xD1;                             // 0xD1 - flag: something1
+    u8 field_0xD2;                             // 0xD2 - flag: something2
+    u8 field_0xD3;                             // 0xD3 - flag: something3
+    u8 field_0xD4;                             // 0xD4 - flag: something4
+    u8 field_0xD5;                             // 0xD5 - flag: something5
+    u8 field_0xD6;                             // 0xD6 - flag: something6
     u8 field_0xD7;                             // 0xD7
     u8 field_0xD8;                             // 0xD8
     u8 field_0xD9;                             // 0xD9
@@ -96,7 +96,7 @@ public:
     u8 field_0xDB;                             // 0xDB
     u8 field_0xDC;                             // 0xDC
     u8 _DD[0xE0 - 0xDD];                       // 0xDD-0xDF padding
-    s32 field_0xE0;                            // 0xE0 — state
+    s32 field_0xE0;                            // 0xE0 - state
 
     void OnFileEvent();
 };

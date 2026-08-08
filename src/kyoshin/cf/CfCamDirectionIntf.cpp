@@ -10,7 +10,7 @@ extern "C" {
     void func_800749AC(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* out);
     extern const f32 lbl_eu_80666268;
 
-// Stub: CfCamDirectionIntf vtable update entry — does nothing for directional cameras.
+// Stub: CfCamDirectionIntf vtable update entry - does nothing for directional cameras.
 void CfCamDirectionIntf_update(CfCamDirectionIntf* /*self*/) {
 }
 

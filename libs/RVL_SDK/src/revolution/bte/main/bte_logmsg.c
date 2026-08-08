@@ -1,4 +1,4 @@
-// Decompiled bte_logmsg — RVL_SDK BTE logging
+// Decompiled bte_logmsg - RVL_SDK BTE logging
 // High-level C reconstruction. No inline asm, no register tricks.
 
 #include <types.h>

@@ -19,7 +19,7 @@ u32 func_80496018(u32 handle);
 // User data string constant for comparison
 
 // =============================================================================
-// ResUserData — Resource user data structure
+// ResUserData - Resource user data structure
 // =============================================================================
 // Layout recovered from func_804E54B8's access pattern.
 // The header occupies 0x28 bytes, followed by an offset table (stride 0x10).
@@ -52,12 +52,12 @@ struct ResUserDataNamed {
 // =============================================================================
 // CMdlMaterial destructor
 // =============================================================================
-// CMdlMaterial::~CMdlMaterial() — D0 deleting destructor.
+// CMdlMaterial::~CMdlMaterial() - D0 deleting destructor.
 // Body is empty; MWCC generates the conditional operator delete via the r4 flag.
 CMdlMaterial::~CMdlMaterial() {}
 
 // =============================================================================
-// func_804E54B8 — CMdlMaterial setup from model resource
+// func_804E54B8 - CMdlMaterial setup from model resource
 // =============================================================================
 // Initializes the material descriptor from a CScnItemModelNw4r's embedded
 // model resource. Allocates a GXColor buffer (4 channels per material),
@@ -78,7 +78,7 @@ void CMdlMaterial::func_804E54B8(void* arg) {
     void* alloc = func_80488938(arg, bufSize);
 
     if (alloc != NULL) {
-        // Fast path succeeded — use the allocation and mark as externally owned
+        // Fast path succeeded - use the allocation and mark as externally owned
         buffer = func_80488954(arg, bufSize);
         flag_0x10 = 1;
     } else {
@@ -86,7 +86,7 @@ void CMdlMaterial::func_804E54B8(void* arg) {
         u32 allocHandle = func_80496018(
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 4));
         buffer = mtl::MemManager::allocate_array(bufSize, allocHandle);
-        // flag_0x10 remains 0 (ctor default) — buffer is owned
+        // flag_0x10 remains 0 (ctor default) - buffer is owned
     }
 
     // Iterate over all materials
@@ -136,7 +136,7 @@ void CMdlMaterial::func_804E54B8(void* arg) {
             reinterpret_cast<ResUserDataHeader*>(resMat.GetResUserData());
 
         if (userData != NULL) {
-            // r31 = (u8*)userData + 4 — base for offset calculations
+            // r31 = (u8*)userData + 4 - base for offset calculations
             u8* udBase = reinterpret_cast<u8*>(userData) + 4;
 
             // Validate alignment (must be 4-byte aligned)
@@ -177,7 +177,7 @@ void CMdlMaterial::func_804E54B8(void* arg) {
                     : NULL;
 
                 if (strcmp(name, lbl_eu_80663C30) == 0) {
-                    // Found the target entry — extract its data value
+                    // Found the target entry - extract its data value
                     if (named->field_0x0C != 0) {
                         nw4r::db::Panic("CMdlMaterial.cpp", 0x36,
                             "ResUserData: field_0x0C expected to be 0.\n", NULL);

@@ -1,7 +1,7 @@
 #include <types.h>
 
 // Retail New.o is data-only (.text = 0): it carries ONLY std::exception's
-// typeinfo — the name string (".rodata", 0xF = "std::exception\0") and the
+// typeinfo - the name string (".rodata", 0xF = "std::exception\0") and the
 // 8-byte {name ptr, NULL base} typeinfo struct (".sdata", 0x8, with a reloc
 // from +0x0 to the .rodata string). There is no operator new/delete in this
 // retail TU, and no throw code. The bad_alloc / exception RTTI that a dummy

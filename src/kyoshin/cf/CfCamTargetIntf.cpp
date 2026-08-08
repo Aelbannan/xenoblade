@@ -9,7 +9,7 @@ extern "C" {
     // Default Z value for the camera direction vector, reset on setPos/setLookat.
     extern const f32 lbl_eu_80666268;
 
-// Stub: CfCamTargetIntf vtable update entry — does nothing for target cameras.
+// Stub: CfCamTargetIntf vtable update entry - does nothing for target cameras.
 void CfCamTargetIntf_update(CfCamTargetIntf* /*self*/) {
 }
 

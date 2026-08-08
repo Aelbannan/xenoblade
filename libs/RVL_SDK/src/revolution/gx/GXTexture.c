@@ -708,7 +708,7 @@ void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
     t->image3 = image3Val;
     *(volatile u32*)pipe = image3Val;
 
-    /* rlwinm. flags bit1 — skip tlut when set. */
+    /* rlwinm. flags bit1 - skip tlut when set. */
     if ((flags & 2) == 0) {
         GXTlutRegionImpl* tlr =
             (GXTlutRegionImpl*)(gxdt->tlutRegionCallback)(t->tlutName);
@@ -974,7 +974,7 @@ void __GXSetSUTexRegs(void) {
 
 void __GXSetTmemConfig(u32 config) {
     /* Retail BP payloads (SETIMAGE1/2 even+odd banks). Do not rebuild via
-       TX_SETIMAGE*(addr>>5, 3, 3, …) — that overflows tmem into the RID byte
+       TX_SETIMAGE*(addr>>5, 3, 3, …) - that overflows tmem into the RID byte
        and emits 0xBB001E00-style junk vs retail 0xB30DDC00. */
     switch (config) {
     case 2:

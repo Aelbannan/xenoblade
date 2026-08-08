@@ -1,4 +1,4 @@
-// ICamControlGc — bitfield property getters
+// ICamControlGc - bitfield property getters
 // Each calls a virtual function (vtable+0x8) and extracts one flag bit.
 
 #include "kyoshin/harness_catalog.hpp"

@@ -16,7 +16,7 @@
 // Float constant 0.0f, shared across this TU
 extern f32 lbl_eu_8066B0DC;
 
-// Effect struct — partial layout; only fields accessed by matching functions
+// Effect struct - partial layout; only fields accessed by matching functions
 // are declared. The struct is large (~0x338 bytes).
 struct EffectStruct {
     s16 field_0x00;
@@ -193,7 +193,7 @@ struct EffectScene {
     void* field_0x334;
 };
 
-// Retail: lwz r3,0(r3); blr  — returns the node/scene type from field_0x00.
+// Retail: lwz r3,0(r3); blr  - returns the node/scene type from field_0x00.
 u32 func_804CC800(const SceneSubObj* self) { return self->field_0x00; }
 
 // Sample/tone table node for func_804CD9EC (r8): s16 values, a u8 flag and a f32 scale.
@@ -1265,16 +1265,16 @@ s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
     return 0;
 }
 
-// Target 1: us-804d8184 — simple setter: stores two params at offsets 0x10/0x14
+// Target 1: us-804d8184 - simple setter: stores two params at offsets 0x10/0x14
 void func_804D4010(EffectStruct* self, u32 a, u32 b) {
     self->field_0x10 = a;
     self->field_0x14 = b;
 }
 
-// Target 2: us-804d22b4 — if field_0x1c <= 0.0f, clear bit 15 (0x8000) of field_0x06
+// Target 2: us-804d22b4 - if field_0x1c <= 0.0f, clear bit 15 (0x8000) of field_0x06
 // SOFT-CAP: MWCC optimizes wrapping mask 0xFFFF7FFF (rlwinm 17,15) to
 // non-wrapping 0x00007FFF (rlwinm 17,31) because upper bits are zero after lhz.
-// Semantically equivalent — same result for all inputs.
+// Semantically equivalent - same result for all inputs.
 void func_804CE140(EffectScene* self) {
     if (lbl_eu_8066B0DC < self->field_0x1c) return;
     u32 tmp = self->field_0x06;
@@ -1282,7 +1282,7 @@ void func_804CE140(EffectScene* self) {
     self->field_0x06 = (u16)tmp;
 }
 
-// Target 3: us-804d1218 — if bits 0x0800 and 0x8000 of field_0x06 are set, add field_0x18 to field_0x10
+// Target 3: us-804d1218 - if bits 0x0800 and 0x8000 of field_0x06 are set, add field_0x18 to field_0x10
 extern "C" void func_804CD0A4(EffectStruct* self) {
     u32 flags = self->field_0x06;
     if (!((flags >> 11) & 1)) return;
@@ -1291,7 +1291,7 @@ extern "C" void func_804CD0A4(EffectStruct* self) {
     *(f32*)&self->field_0x10 += self->field_0x18;
 }
 
-// Target 4: us-804d0414 — init: set first three fields to -1, rest to 0
+// Target 4: us-804d0414 - init: set first three fields to -1, rest to 0
 void func_804CC2B8(EffectStruct* self) {
     self->field_0x00 = -1;
     self->field_0x02 = -1;
@@ -1303,7 +1303,7 @@ void func_804CC2B8(EffectStruct* self) {
     self->field_0x334 = 0;
 }
 
-// Target 5: us-804d255c — if field_0x328 != 0 and field_0x18 > 0.0f, set bit 6 (0x40) of field_0x06
+// Target 5: us-804d255c - if field_0x328 != 0 and field_0x18 > 0.0f, set bit 6 (0x40) of field_0x06
 void func_804CE3E8(EffectScene* self) {
     if (self->field_0x328 == 0) return;
     if (self->field_0x18 <= lbl_eu_8066B0DC) return;

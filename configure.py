@@ -1163,7 +1163,12 @@ config.libs = [
                 Matching,
                 "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
                 mw_version = "Wii/1.0a" if sdk_hbm_version > 20090303 else sdk_hbm_compiler), # Only matches on 1.0a in EU/US
-            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp", link_transform={
+                # Retail declares __sinit_\lyt_bounding_cpp as a global symbol
+                # (symbols.txt, FORCEACTIVE in ldscript.lcf); MWCC emits the
+                # auto-generated sinit as local. Globalize on the link-only copy.
+                "globalize": [r"__sinit_\lyt_bounding_cpp"],
+            }),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp"),  # demoted 2026-08: DrawQuad detail 68 structural — re-match before promoting
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group.cpp"),
@@ -1730,8 +1735,14 @@ config.libs = [
             Object(NonMatching, "monolib/src/util/MemManager.cpp"),
             Object(NonMatching, "monolib/src/util/CPathUtil.cpp"),
             Object(Matching, "monolib/src/math/MTRand.cpp"),
-            Object(Matching, "monolib/src/math/CRect16.cpp"),
-            Object(Matching, "monolib/src/math/CVec3.cpp"),
+            Object(Matching, "monolib/src/math/CRect16.cpp", link_transform={
+                # Retail __sinit_\CRect16_cpp is global; MWCC emits it local.
+                "globalize": [r"__sinit_\CRect16_cpp"],
+            }),
+            Object(Matching, "monolib/src/math/CVec3.cpp", link_transform={
+                # Retail __sinit_\CVec3_cpp is global; MWCC emits it local.
+                "globalize": [r"__sinit_\CVec3_cpp"],
+            }),
             Object(NonMatching, "monolib/src/math/CVec4.cpp"),
             Object(Matching, "monolib/src/math/Main.cpp"),
             Object(NonMatching, "monolib/src/math/MathConstants.cpp"),
@@ -1767,7 +1778,10 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-func_align 16"]),
             Object(Matching, "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-func_align 16"]),
-            Object(Matching, "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"]),
+            Object(Matching, "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"], link_transform={
+                # Retail __sinit_\CProcess_cpp is global; MWCC emits it local.
+                "globalize": [r"__sinit_\CProcess_cpp"],
+            }),
             Object(NonMatching, "monolib/src/util/CDoubleListNode.cpp"),
             Object(NonMatching, "monolib/src/util/CChildListNode.cpp"),
             Object(NonMatching, "monolib/src/core/CPadManager.cpp"),

@@ -57,7 +57,7 @@ extern "C" void cbRenderBefore__10CMenuTitleFv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
 template <typename T>
 class CTTask {
 public:

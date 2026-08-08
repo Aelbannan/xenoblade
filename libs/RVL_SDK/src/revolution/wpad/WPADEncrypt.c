@@ -1,4 +1,4 @@
-// RVL_SDK WPADEncrypt — high-level C reconstruction
+// RVL_SDK WPADEncrypt - high-level C reconstruction
 // Functions: WPADiCreateKey, WPADiCreateKeyFor3rd, WPADiDecode
 
 #include <revolution/WPAD.h>

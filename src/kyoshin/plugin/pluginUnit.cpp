@@ -62,7 +62,7 @@ using namespace cf;
 // CfObjectModel vtable. The slot at 0x128 (CfObject_UnkVirtualFunc54) is the
 // one getPcHp/getEneHp call: the recovered header declares it `void`, but the
 // retail caller treats the return as float (per PPC ABI f1), so we override
-// its signature here. Never constructed — only used for reinterpret_cast.
+// its signature here. Never constructed - only used for reinterpret_cast.
 struct CfObjectHpIf {
     virtual void _v008();
     virtual void _v00C();

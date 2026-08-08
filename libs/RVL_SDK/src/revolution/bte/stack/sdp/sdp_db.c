@@ -362,7 +362,7 @@ BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type,
     p_rec = &sdp_cb.server_db.record[0];
     for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
         if (p_rec->record_handle == handle) {
-            /* found the record — check the attribute */
+            /* found the record - check the attribute */
             p_attr = &p_rec->attribute[0];
             for (zz = 0; zz < p_rec->num_attributes; zz++, p_attr++) {
                 if (p_attr->attr_id == attr_id) {

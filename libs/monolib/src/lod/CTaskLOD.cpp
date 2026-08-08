@@ -7,7 +7,7 @@
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide
 // with these explicit specialisations.
 template <typename T>
 class CTTask : public CProcess {
@@ -78,7 +78,7 @@ public:
     void func_80463014();
 };
 
-// CTaskLOD::Init() — no-op; initialisation is performed in create().
+// CTaskLOD::Init() - no-op; initialisation is performed in create().
 void CTaskLOD::Init() {}
 
 // --- Remaining harness stubs (empty bodies) ---

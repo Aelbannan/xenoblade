@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-// Multiple targets map to the same function — single definition
+// Multiple targets map to the same function - single definition
 u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 
 u32 func_8048736C(void* self) { return *(u32*)((u8*)self + 0x14c0); }

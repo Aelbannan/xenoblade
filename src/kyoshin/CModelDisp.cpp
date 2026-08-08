@@ -27,7 +27,7 @@ void func_801FC15C(CModelDisp* self) {
             CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
             void* ctrl = sub->mpController;
             if (ctrl != NULL) {
-                // vcall: vtable[0x48/4 = 18] — takes field_2FDC as float arg
+                // vcall: vtable[0x48/4 = 18] - takes field_2FDC as float arg
                 typedef void (*VMethod48)(void*, f32);
                 VMethod48* vtbl = *(VMethod48**)ctrl;
                 vtbl[18](ctrl, self->field_2FDC);

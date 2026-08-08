@@ -18,10 +18,10 @@ public:
     void func_802B86BC();
     bool func_802B86F0();
 
-    u32 field_0x10;  // 0x10 — compared against a u16 from another object
-    u8 field_0x14;   // 0x14 — flag checked before func_8009CF8C call
-    u8 field_0x15;   // 0x15 — flag checked before final block
-    u8 field_0x16;   // 0x16 — main state/result byte, read and written throughout
+    u32 field_0x10;  // 0x10 - compared against a u16 from another object
+    u8 field_0x14;   // 0x14 - flag checked before func_8009CF8C call
+    u8 field_0x15;   // 0x15 - flag checked before final block
+    u8 field_0x16;   // 0x16 - main state/result byte, read and written throughout
 };
 
 } // namespace cf

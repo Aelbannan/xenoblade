@@ -1,4 +1,4 @@
-// CMcaFile — MCA file container
+// CMcaFile - MCA file container
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/util/CPathUtil.hpp"

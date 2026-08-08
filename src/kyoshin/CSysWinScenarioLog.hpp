@@ -146,7 +146,7 @@ struct CScenarioLogArg2 {
 };
 
 // ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names — do not "fix" the mangled forms).
+// C-linkage imports (retail symbol names - do not "fix" the mangled forms).
 // Relocated from CSysWinScenarioLog.cpp so every TU that uses these symbols
 // gets them from this header instead of inline pseudo-import declarations.
 // ---------------------------------------------------------------------------

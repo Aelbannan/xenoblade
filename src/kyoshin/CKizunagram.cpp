@@ -46,7 +46,7 @@ void func_80138078(u32 number);
 static void func_8025CE78();
 static void func_8025CF1C();
 
-// Object with a dispatch byte at 0x3A — drives display state in CKizunagram
+// Object with a dispatch byte at 0x3A - drives display state in CKizunagram
 struct UnkKizunaDisp {
     u8 _00[0x3A];
     u8 field_0x3A;
@@ -168,7 +168,7 @@ bool func_802592D8(UnkKizunaSelf592D8* self) {
 // return a 2-word struct built from the result's +0x44 / +0x48 words.
 // extern "C" + noinline keeps callers (func_8025CAE4/CB50) emitting real
 // unmangled bl branches (retail links func_80259344 unmangled) without
-// inlining — the CKizunaTalkList pattern for same-TU callees.
+// inlining - the CKizunaTalkList pattern for same-TU callees.
 extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
     UnkKizunaRes59344* res = self->field0C->field10->target(0x8b, 1);
     UnkKizunaPair out = {res->field44, res->field48};

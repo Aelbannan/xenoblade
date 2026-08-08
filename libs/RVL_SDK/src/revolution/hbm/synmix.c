@@ -1,5 +1,5 @@
 // Decompiled RVL_SDK/src/revolution/hbm/synmix
-// High-level C reconstruction — no inline asm, no register tricks
+// High-level C reconstruction - no inline asm, no register tricks
 
 #include <harness_catalog.h>
 
@@ -56,13 +56,13 @@ s32 __HBMSYNAttackAttnTable[100] = {
 // Per-voice mixer state (layout inferred from retail ASM offsets)
 typedef struct HBMSYNVoice {
     u8  _pad0[0x04];          // 0x00
-    void* mixChannel;          // 0x04 — HBMMIXChannel pointer
-    struct HBMSYNSYNTH* voiceDataBase; // 0x08 — owning synthesizer
+    void* mixChannel;          // 0x04 - HBMMIXChannel pointer
+    struct HBMSYNSYNTH* voiceDataBase; // 0x08 - owning synthesizer
     u8   voiceIndex;           // 0x0C
     u8   _padD;                // 0x0D
-    u8   volumeIndex;          // 0x0E — index into __HBMSYNVolumeAttenuation
+    u8   volumeIndex;          // 0x0E - index into __HBMSYNVolumeAttenuation
     u8   pan;                  // 0x0F
-    void* volumeInfo;          // 0x10 — volume info struct (value at +0x04)
+    void* volumeInfo;          // 0x10 - volume info struct (value at +0x04)
     u8   _pad14[0x18];         // 0x14-0x2B
     s32  accumInput;           // 0x2C
     u8   _pad30[0x04];         // 0x30

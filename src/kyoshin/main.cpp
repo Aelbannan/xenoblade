@@ -36,7 +36,7 @@ void func_eu_802B1334();
 void func_eu_804520B0(const void* p);
 void func_eu_80457318(const wchar_t* msg);
 
-// Mangled CDesktop::entryTable — asm bl target (PLAN.md §17.6).
+// Mangled CDesktop::entryTable - asm bl target (PLAN.md §17.6).
 void entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(DesktopIcon*, bool);
 }
 

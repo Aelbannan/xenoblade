@@ -59,7 +59,7 @@ struct CREvtEffect {
 };
 
 // ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names — do not "fix" the mangled forms).
+// C-linkage imports (retail symbol names - do not "fix" the mangled forms).
 // Relocated from CREvtEffect.cpp so every TU that uses these symbols gets them
 // from this header instead of inline pseudo-import declarations.
 // ---------------------------------------------------------------------------

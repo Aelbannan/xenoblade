@@ -26,7 +26,7 @@ class CMenuFadeBase : public IUICf {
 public:
     u8 field_0x54;                              // 0x54
     u8 pad55[3];                                // 0x55-0x57
-    u32 mIWorkEventVtbl;                        // 0x58 — IWorkEvent vtable (raw)
+    u32 mIWorkEventVtbl;                        // 0x58 - IWorkEvent vtable (raw)
 };
 
 class CMenuFade : public CMenuFadeBase, public IScnRender {
@@ -45,13 +45,13 @@ public:
     UnkClass_8045F564 mLayoutMem;               // 0x64
     nw4r::lyt::Layout* mLayout;                 // 0x74
     nw4r::lyt::AnimTransform* mAnimDefault;     // 0x78
-    float field_0x7c;                           // 0x7c — current animation frame (initial position set by state)
-    float field_0x80;                           // 0x80 — fade-in duration (frame_size / field_0x80 if >= 0, else 1.0)
-    float field_0x84;                           // 0x84 — fade-out duration (clamped to 30.0 if negative)
-    float field_0x88;                           // 0x88 — third speed param (frame_size / field_0x88 if >= 0, else 1.0)
+    float field_0x7c;                           // 0x7c - current animation frame (initial position set by state)
+    float field_0x80;                           // 0x80 - fade-in duration (frame_size / field_0x80 if >= 0, else 1.0)
+    float field_0x84;                           // 0x84 - fade-out duration (clamped to 30.0 if negative)
+    float field_0x88;                           // 0x88 - third speed param (frame_size / field_0x88 if >= 0, else 1.0)
     u8 pad8C[4];                                // 0x8c
-    s32 field_0x90;                             // 0x90 — initial frame state (0/1 = start at frame 0; 2 = start at frame_size-1)
-    u8 field_0x94;                              // 0x94 — fade flag (read by func_80113E24)
+    s32 field_0x90;                             // 0x90 - initial frame state (0/1 = start at frame 0; 2 = start at frame_size-1)
+    u8 field_0x94;                              // 0x94 - fade flag (read by func_80113E24)
     u8 pad95[3];                                // 0x95-0x97
-    s32 field_0x98;                             // 0x98 — fade direction (0 = one-shot 0xff, 1 = -1)
+    s32 field_0x98;                             // 0x98 - fade direction (0 = one-shot 0xff, 1 = -1)
 };

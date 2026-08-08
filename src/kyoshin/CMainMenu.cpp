@@ -50,7 +50,7 @@ void* __dt__800FED0C(void* _this, int flags) {
     return _this;
 }
 
-// CMainMenu::~CMainMenu() — virtual destructor (D1/D2 merged).
+// CMainMenu::~CMainMenu() - virtual destructor (D1/D2 merged).
 // Destroys subobjects in reverse order: CSubCur at +0xA8, CBaseCur at +0x90,
 // UnkClass_8045F564 at +0x60, CProcess at 0x00, then conditionally frees memory.
 // The addic. for CBaseCur and the nested CProcess null-checks are MWCC
@@ -171,7 +171,7 @@ extern "C" u32 func_800FF8B0() {
     return (menu->field_0xE0 == 8) ? 1 : 0;
 }
 
-// CMainMenu::Init — loads the menu layout file via CDeviceFile::readFile.
+// CMainMenu::Init - loads the menu layout file via CDeviceFile::readFile.
 // The IWorkEvent at offset 0x58 receives OnFileEvent when the load completes.
 extern u32 lbl_eu_80661DC0;
 
@@ -211,7 +211,7 @@ extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
 // Layout: inherits CProcess (0x00-0x3C), adds mMoveFunc at 0x3C and mDrawFunc at 0x48.
 // Size: 0x54.
 
@@ -231,11 +231,11 @@ public:
     virtual void Draw();
 
 protected:
-    MoveFunc mMoveFunc;  // 0x3C — pointer-to-member-function (12 bytes)
-    DrawFunc mDrawFunc;  // 0x48 — pointer-to-member-function (12 bytes)
+    MoveFunc mMoveFunc;  // 0x3C - pointer-to-member-function (12 bytes)
+    DrawFunc mDrawFunc;  // 0x48 - pointer-to-member-function (12 bytes)
 };
 
-// CTTask<IUICf>::Move — test PTMF at +0x3C, call if non-null
+// CTTask<IUICf>::Move - test PTMF at +0x3C, call if non-null
 template<>
 void CTTask<IUICf>::Move() {
     if (mMoveFunc) {
@@ -243,7 +243,7 @@ void CTTask<IUICf>::Move() {
     }
 }
 
-// CTTask<IUICf>::Draw — test PTMF at +0x48, call if non-null
+// CTTask<IUICf>::Draw - test PTMF at +0x48, call if non-null
 template<>
 void CTTask<IUICf>::Draw() {
     if (mDrawFunc) {

@@ -870,9 +870,9 @@ void func_8028FECC(){}
 
 // Check save/load state and return a status code:
 // 0 = not ready (state mismatch, window active, or sub-window active)
-// 0x69 = ready (no cursor) — mField129 == 0, func_8028E998 returns 0
-// 0x6A = ready (has cursor) — mField129 == 0, func_8028E998 returns > 0
-// 0x6B = ready (has cursor, mField129 != 0) — func_8028E998 returns > 0
+// 0x69 = ready (no cursor) - mField129 == 0, func_8028E998 returns 0
+// 0x6A = ready (has cursor) - mField129 == 0, func_8028E998 returns > 0
+// 0x6B = ready (has cursor, mField129 != 0) - func_8028E998 returns > 0
 int func_8028FFD4(CSaveLoad* p) {
     if (p->mField121 != 3) return 0;
     if (CSysWin_getUnk34((void*)&p->mSysWin98) != 0) return 0;

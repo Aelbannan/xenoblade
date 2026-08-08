@@ -39,7 +39,7 @@ struct CGXCache {
 };
 
 
-// __ct__80449548 (constructor at 0x80449548) defined once — all harness stubs
+// __ct__80449548 (constructor at 0x80449548) defined once - all harness stubs
 // that map to this same symbol reference it rather than redefining.
 void __ct__80449548(void) {}
 
@@ -155,7 +155,7 @@ struct C1FCCacheLayout {
     u32 unk50C;
 };
 
-// Optional ring pair pointers in r4–r6 update cached scissor rects, then enqueue
+// Optional ring pair pointers in r4-r6 update cached scissor rects, then enqueue
 // GX commands for tags 0xB / 0xC via func_8044CE68 (this+4).
 void CGXCache::func_8044B298(void* a, void* b, void* c) {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;

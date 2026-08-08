@@ -1,4 +1,4 @@
-// L2CAP Channel State Machine — RVL retail slice (ogws/Petari donors adapted).
+// L2CAP Channel State Machine - RVL retail slice (ogws/Petari donors adapted).
 // High-level C reconstruction of the Broadcom bluedroid l2c_csm module.
 //
 // NOTE: function order in this file is REVERSED relative to the retail text
@@ -66,7 +66,7 @@ enum {
     L2CEVT_ACK_TIMEOUT          = 32,
 };
 
-/* Registration control block — one per registered PSM. */
+/* Registration control block - one per registered PSM. */
 typedef struct {
     BOOLEAN             in_use;   /* 0x00 */
     /* 1 byte padding */
@@ -110,7 +110,7 @@ typedef struct t_l2c_ccb {
     UINT16              out_mtu;         /* 0x3a */
     UINT16              our_flush_to;    /* 0x3c */
     UINT8               pad3e[0x32];     /* 0x3E .. 0x6F */
-    BUFFER_Q            xmit_hold_q;     /* 0x70 — pending outbound data */
+    BUFFER_Q            xmit_hold_q;     /* 0x70 - pending outbound data */
 } tL2C_CCB;
 
 /* Connection event data passed to the CSM connect events. Layout matches
@@ -124,7 +124,7 @@ typedef struct {
     UINT16  rcid;                       /* 0x0E */
 } tL2C_CONN_INFO;                       /* 0x10 */
 
-/* L2CAP control block (global `l2cb`). Full retail size 0x7E8 — MWCC picks
+/* L2CAP control block (global `l2cb`). Full retail size 0x7E8 - MWCC picks
  * sda21 addressing for small extern types (assumes sbss), so the struct must
  * be declared at the full retail size to get the retail lis@ha/lbz@l pair
  * (see MWCC_REFERENCE sda21/extern-size note). */
@@ -138,9 +138,9 @@ typedef struct {
  * Local constants (normally in l2c_int.h)
  ******************************************************************************/
 
-#define L2CAP_CHNL_CONNECT_TOUT  60     /* 0x3c — L2CAP channel connect timeout */
-#define L2CAP_CHNL_CFG_TOUT      30     /* 0x1e — L2CAP channel config timeout */
-#define L2CAP_CHNL_RSP_TOUT     120     /* 0x78 — L2CAP channel rsp/pending timeout */
+#define L2CAP_CHNL_CONNECT_TOUT  60     /* 0x3c - L2CAP channel connect timeout */
+#define L2CAP_CHNL_CFG_TOUT      30     /* 0x1e - L2CAP channel config timeout */
+#define L2CAP_CHNL_RSP_TOUT     120     /* 0x78 - L2CAP channel rsp/pending timeout */
 #define L2CAP_PKT_TYPE_CONNECT_REQ 9    /* first L2CAP signalling opcode */
 #define L2CAP_CFG_DONE_OURS      0x01   /* our config response received */
 #define L2CAP_CFG_DONE_PEER      0x02   /* peer config response received */

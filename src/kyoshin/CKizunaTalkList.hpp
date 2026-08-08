@@ -73,7 +73,7 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// C-linkage imports (retail symbol names — do not "fix" the mangled forms).
+// C-linkage imports (retail symbol names - do not "fix" the mangled forms).
 // Relocated from CKizunaTalkList.cpp so every TU that uses these symbols gets
 // them from this header instead of inline pseudo-import declarations.
 // ---------------------------------------------------------------------------
@@ -138,7 +138,7 @@ extern "C" f32 lbl_eu_806689CC;
 extern "C" f32 lbl_eu_806689D0;
 
 // State-transition helpers for CKizunaTalkList (defined in CKizunaTalkList.cpp;
-// extern "C" + noinline keeps callers emitting real unmangled bl branches —
+// extern "C" + noinline keeps callers emitting real unmangled bl branches -
 // retail keeps them as separate out-of-line functions in this TU).
 extern "C" __declspec(noinline) void func_80273AD0(CKizunaTalkList* self);
 extern "C" __declspec(noinline) void func_80273A70(CKizunaTalkList* self);

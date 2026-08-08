@@ -842,7 +842,7 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     return 1;
 }
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide
 // with the explicit out-of-line instantiations below.
 template <typename T>
 class CTTask : public CProcess {
@@ -885,11 +885,11 @@ private:
 };
 
 void CTaskColiManager::Init() {
-    // Empty override — no initialization required.
+    // Empty override - no initialization required.
 }
 
 void CTaskColiManager::Term() {
-    // Empty override — no termination required.
+    // Empty override - no termination required.
 }
 
 // Walk the collision-node list every tick: condition the nodes (func_804B0CE8),
@@ -924,7 +924,7 @@ void CTaskColiManager::Move() {
 }
 
 void CTaskColiManager::Draw() {
-    // Empty override — no draw-time work required.
+    // Empty override - no draw-time work required.
 }
 
 // Reset the shared walk flag then invoke the base (CProcess) destructor path.

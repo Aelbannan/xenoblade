@@ -133,7 +133,7 @@ void BasicSound::Stop(int frames) {
     int t = frames * mFadeVolume.GetValue();
     mFadeVolume.SetTarget(lbl_eu_80669EEC, t);
 
-    // Inlined SetPlayerPriority(0) — retail does not bl.
+    // Inlined SetPlayerPriority(0) - retail does not bl.
     mPriority = 0;
     if (mSoundPlayer != NULL) {
         mSoundPlayer->detail_SortPriorityList(this);

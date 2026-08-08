@@ -1,4 +1,4 @@
-// CDeviceFontInfoRom — ROM font info provider.
+// CDeviceFontInfoRom - ROM font info provider.
 // FULL_MATCH getters: getRomFont / getRomFont const are inline in header.
 
 #include <harness_catalog.h>
@@ -53,19 +53,19 @@ CDeviceFontInfoRom::~CDeviceFontInfoRom(void) {
     lbl_eu_80665688 = NULL;
 }
 
-// ---- func_804536DC (0x80457808) — OSGetFontTexture wrapper ----
+// ---- func_804536DC (0x80457808) - OSGetFontTexture wrapper ----
 const char* CDeviceFontInfoRom::func_804536DC(const char* str, void** texOut,
                                               u32* xOut, u32* yOut,
                                               u32* widthOut) {
     return OSGetFontTexture(str, texOut, xOut, yOut, widthOut);
 }
 
-// ---- create() (0x80457820) — static factory ----
+// ---- create() (0x80457820) - static factory ----
 CDeviceFontInfoRom* CDeviceFontInfoRom::create() {
     return new (CDeviceFont::getInstance()->mAllocHandle) CDeviceFontInfoRom();
 }
 
-// ---- func_8045378C (0x8045785C) — state machine step ----
+// ---- func_8045378C (0x8045785C) - state machine step ----
 void CDeviceFontInfoRom::func_8045378C(void) {
     // Increment mState when it is 1 or 2 (unsigned range check)
     if (mState - 1 <= 1) {
@@ -73,50 +73,50 @@ void CDeviceFontInfoRom::func_8045378C(void) {
     }
 }
 
-// ---- func_804537A8 (0x80457878) — state check ----
+// ---- func_804537A8 (0x80457878) - state check ----
 void CDeviceFontInfoRom::func_804537A8(void) {
     if (mState == 0) {
         mState++;
     }
 }
 
-// ---- func_804537C0 (0x80457890) — returns (mState != 0) ----
+// ---- func_804537C0 (0x80457890) - returns (mState != 0) ----
 int CDeviceFontInfoRom::func_804537C0() {
     return mState != 0;
 }
 
-// ---- func_804537D4 (0x804578A4) — state comparison ----
+// ---- func_804537D4 (0x804578A4) - state comparison ----
 int CDeviceFontInfoRom::func_804537D4(void) {
     return (int)mState >= 3;
 }
 
-// ---- func_804537F0 (0x804578C0) — returns &mRomFont (non-const) ----
+// ---- func_804537F0 (0x804578C0) - returns &mRomFont (non-const) ----
 // FULL_MATCH: size 0x8
 
 
-// ---- func_804537F8 (0x804578C8) — returns &mRomFont (const) ----
+// ---- func_804537F8 (0x804578C8) - returns &mRomFont (const) ----
 // FULL_MATCH: size 0x8
 
 
-// ---- func_80453800 (0x804578D0) — returns mFontInfo->cellHeight ----
+// ---- func_80453800 (0x804578D0) - returns mFontInfo->cellHeight ----
 u16 CDeviceFontInfoRom::func_80453800() {
     return static_cast<OSFontHeader*>(mFontInfo)->cellHeight;
 }
 
-// ---- func_8045380C (0x804578DC) — returns mFontInfo->sheetFormat ----
+// ---- func_8045380C (0x804578DC) - returns mFontInfo->sheetFormat ----
 u16 CDeviceFontInfoRom::func_8045380C() {
     return static_cast<OSFontHeader*>(mFontInfo)->sheetFormat;
 }
 
-// ---- func_80453818 (0x804578E8) — returns mFontInfo->sheetHeight ----
+// ---- func_80453818 (0x804578E8) - returns mFontInfo->sheetHeight ----
 u16 CDeviceFontInfoRom::func_80453818() {
     return static_cast<OSFontHeader*>(mFontInfo)->sheetHeight;
 }
 
-// ---- func_80453824 (0x804578F4) — returns mFontInfo->sheetWidth ----
+// ---- func_80453824 (0x804578F4) - returns mFontInfo->sheetWidth ----
 u16 CDeviceFontInfoRom::func_80453824() {
     return static_cast<OSFontHeader*>(mFontInfo)->sheetWidth;
 }
 
-// ---- func_80453830 (0x80457900) — returns field_0x04 ----
+// ---- func_80453830 (0x80457900) - returns field_0x04 ----
 

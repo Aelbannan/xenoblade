@@ -47,8 +47,8 @@ static ui32* lc_base;
 /*
  * Wii boot-entry vectors (policy exception, PLAN.md §17.6):
  * InitMetroTRK / InitMetroTRK_BBA are entered by the Wii boot code with a
- * non-standard ABI — no valid stack frame, no return address, hardware ID in
- * r5 — and their retail bodies hand-roll the GPR save/restore (stmw/lmw),
+ * non-standard ABI - no valid stack frame, no return address, hardware ID in
+ * r5 - and their retail bodies hand-roll the GPR save/restore (stmw/lmw),
  * MSR/SRR1 and IABR/DABR SPR setup, and a fixed debug-stack switch. MWCC's
  * mandatory frame prologue makes a C reconstruction impossible. The matching
  * build therefore uses whole-function `asm void` + `nofralloc` transcribed
@@ -73,7 +73,7 @@ void InitMetroTRK_BBA(void) {
     InitMetroTRK_Common(HARDWARE_BBA);
 }
 
-#else /* MWCC matching build — boot-entry vectors */
+#else /* MWCC matching build - boot-entry vectors */
 
 // r5: hardware id (non-standard boot ABI)
 asm void InitMetroTRK(){

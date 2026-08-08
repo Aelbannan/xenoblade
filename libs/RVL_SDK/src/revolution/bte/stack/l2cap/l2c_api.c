@@ -29,7 +29,7 @@ typedef enum {
  * Internal types (normally in l2c_int.h, inlined here for this TU)
  ******************************************************************************/
 
-/* Link control block (size 0x5C) — only the fields referenced by this TU. */
+/* Link control block (size 0x5C) - only the fields referenced by this TU. */
 typedef struct t_l2c_linkcb tL2C_LCB;
 typedef struct t_l2c_rcb    tL2C_RCB;
 
@@ -51,7 +51,7 @@ typedef struct {
     void (*cb[10])(void);
 } tL2C_APPL_INFO10;
 
-/* Registration control block — one per registered PSM (size 0x2C). */
+/* Registration control block - one per registered PSM (size 0x2C). */
 struct t_l2c_rcb {
     BOOLEAN        in_use;      /* 0x00 */
     UINT8          pad01;       /* 0x01 */
@@ -59,7 +59,7 @@ struct t_l2c_rcb {
     tL2C_APPL_INFO10 api;       /* 0x04: application callbacks (10) */
 };
 
-/* Channel control block — only the fields referenced by this TU. */
+/* Channel control block - only the fields referenced by this TU. */
 typedef struct t_l2c_ccb {
     UINT8     pad00[0x10];
     tL2C_LCB *p_lcb;                         /* 0x10 */
@@ -87,7 +87,7 @@ typedef struct {
 
 /* L2CAP control block (global `l2cb`). Only the fields referenced here are
  * named; the rest is opaque padding (must stay > 8 bytes so MWCC does not
- * treat `l2cb` as small data — retail references it via lis/@l, not @sda21). */
+ * treat `l2cb` as small data - retail references it via lis/@l, not @sda21). */
 typedef struct {
     UINT8   l2cap_trace_level;              /* 0x000 */
     UINT8   pad001[0x008 - 0x001];          /* 0x001..0x007 */

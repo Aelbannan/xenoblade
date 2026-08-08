@@ -1,4 +1,4 @@
-// nw4r/src/g3d/platform/g3d_gpu — fifo GPU command emitters
+// nw4r/src/g3d/platform/g3d_gpu - fifo GPU command emitters
 // Matched against retail via hexdiff; GX fifo writes via the 0xCC008000 port.
 
 #include <nw4r/g3d/platform/g3d_gpu.h>

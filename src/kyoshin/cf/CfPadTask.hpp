@@ -90,6 +90,6 @@ namespace cf {
     };
 
     // Thunk symbols present in object (@84@gameExceptionCB, @88@onDeleteHbm, @88@onInitHbm);
-    // Declared manually — MWCC does not accept @ in identifiers.
+    // Declared manually - MWCC does not accept @ in identifiers.
 }
 

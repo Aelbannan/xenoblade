@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  bta_dm_int.h — BTA device-manager message types (tBTA_DM_MSG).
+ *  bta_dm_int.h - BTA device-manager message types (tBTA_DM_MSG).
  *
  *  Port of Broadcom's bta/bta/dm/bta_dm_int.h message union for the Wii-era
  *  (RVL SDK) BTE stack. The Wii-era layout differs from later AOSP bluedroid:

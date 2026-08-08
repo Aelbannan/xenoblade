@@ -1,7 +1,7 @@
-// Decompiled btm_dev.c — high-level C reconstruction
+// Decompiled btm_dev.c - high-level C reconstruction
 // Retail struct layout: sec_dev_rec entries are 0x88 bytes,
 // BTM_SEC_MAX_DEVICE_RECORDS = 16, BTM_MAX_REM_BD_NAME_LEN = 64,
-// BTM_SEC_SERVICE_ARRAY_SIZE = 2 (BTM_SEC_MAX_SERVICES ≤ 64).
+// BTM_SEC_SERVICE_ARRAY_SIZE = 2 (BTM_SEC_MAX_SERVICES <= 64).
 
 #include <string.h>
 #include "revolution/BTE/stack/include/bt_types.h"
@@ -17,15 +17,15 @@ typedef struct
     void   *p_callback;          /* 0x04 */
     void   *p_ref_data;          /* 0x08 */
     u32     timestamp;           /* 0x0C */
-    u32     trusted_mask[2];     /* 0x10 — BTM_SEC_SERVICE_ARRAY_SIZE = 2 */
+    u32     trusted_mask[2];     /* 0x10 - BTM_SEC_SERVICE_ARRAY_SIZE = 2 */
     u16     hci_handle;          /* 0x18 */
     u16     clock_offset;        /* 0x1A */
-    u8      bd_addr[6];          /* 0x1C — BD_ADDR */
-    u8      dev_class[3];        /* 0x22 — DEV_CLASS */
-    u8      link_key[16];        /* 0x25 — LINK_KEY */
-    char    sec_bd_name[65];     /* 0x35 — BTM_MAX_REM_BD_NAME_LEN = 64 + 1 */
+    u8      bd_addr[6];          /* 0x1C - BD_ADDR */
+    u8      dev_class[3];        /* 0x22 - DEV_CLASS */
+    u8      link_key[16];        /* 0x25 - LINK_KEY */
+    char    sec_bd_name[65];     /* 0x35 - BTM_MAX_REM_BD_NAME_LEN = 64 + 1 */
     u8      sec_flags;           /* 0x76 */
-    u8      features[8];         /* 0x77 — BD_FEATURES */
+    u8      features[8];         /* 0x77 - BD_FEATURES */
     u8      sec_state;           /* 0x7F */
     u8      is_originator;       /* 0x80 */
     u8      role_master;         /* 0x81 */
@@ -36,7 +36,7 @@ typedef struct
 } BtmSecDevRec;                  /* total 0x88 */
 
 /* ------------------------------------------------------------------ */
-/*  Local btm_cb surrogate — only the fields we touch.                */
+/*  Local btm_cb surrogate - only the fields we touch.                */
 /*  The real symbol is declared elsewhere; we supply our own layout.   */
 /* ------------------------------------------------------------------ */
 typedef struct
@@ -46,7 +46,7 @@ typedef struct
     u8      _pad1[0x1f30 - 0x1978];       /* 0x1978-0x1F2F */
     BtmSecDevRec sec_dev_rec[16];        /* 0x1F30-0x27AF (16 * 0x88 = 0x880) */
     u8      _pad2[0x27ba - 0x27b0];       /* 0x27B0-0x27B9 (p_out_serv, mkey_cback, connecting_bda) */
-    u8      default_dev_class[3];         /* 0x27BA — DEV_CLASS fallback */
+    u8      default_dev_class[3];         /* 0x27BA - DEV_CLASS fallback */
 } BtmCb;
 
 /* The real global */
@@ -66,7 +66,7 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr);
 BtmSecDevRec *btm_find_oldest_dev(void);
 
 /* ------------------------------------------------------------------ */
-/*  BTM_SecAddDevice — Add/modify a device in the security database.  */
+/*  BTM_SecAddDevice - Add/modify a device in the security database.  */
 /* ------------------------------------------------------------------ */
 BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
                          BD_NAME bd_name, BD_FEATURES features,
@@ -80,14 +80,14 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
 
     if (p_rec == NULL)
     {
-        /* Not found — allocate a new device record */
+        /* Not found - allocate a new device record */
         p_rec = (BtmSecDevRec *)btm_sec_alloc_dev(bd_addr);
         if (p_rec == NULL)
             return FALSE;
     }
     else
     {
-        /* Found existing — assign a fresh timestamp */
+        /* Found existing - assign a fresh timestamp */
         p_rec->timestamp = btm_cb.dev_rec_count++;
     }
 
@@ -124,7 +124,7 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
 }
 
 /* ------------------------------------------------------------------ */
-/*  BTM_SecDeleteDevice — Remove a device from the security database. */
+/*  BTM_SecDeleteDevice - Remove a device from the security database. */
 /* ------------------------------------------------------------------ */
 static __inline BtmSecDevRec *btm_sec_find_dev_bda(BD_ADDR bd_addr)
 {
@@ -160,7 +160,7 @@ BOOLEAN BTM_SecDeleteDevice(BD_ADDR bd_addr)
 }
 
 /* ------------------------------------------------------------------ */
-/*  BTM_SecReadDevName — Look up the device name for a BD address.    */
+/*  BTM_SecReadDevName - Look up the device name for a BD address.    */
 /*  Returns pointer to the name string or NULL if not found.          */
 /* ------------------------------------------------------------------ */
 BtmSecDevRec *btm_find_dev(BD_ADDR bd_addr);
@@ -177,7 +177,7 @@ char *BTM_SecReadDevName(BD_ADDR bd_addr)
 }
 
 /* ------------------------------------------------------------------ */
-/*  btm_sec_alloc_dev — Allocate a new device record, zero it out,    */
+/*  btm_sec_alloc_dev - Allocate a new device record, zero it out,    */
 /*  initialise fields, and look up inquiry data for the BD address.   */
 /* ------------------------------------------------------------------ */
 BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
@@ -227,7 +227,7 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
 }
 
 /* ------------------------------------------------------------------ */
-/*  btm_find_dev_by_handle — Locate a device record by HCI handle.    */
+/*  btm_find_dev_by_handle - Locate a device record by HCI handle.    */
 /* ------------------------------------------------------------------ */
 BtmSecDevRec *btm_find_dev_by_handle(UINT16 handle)
 {
@@ -248,7 +248,7 @@ BtmSecDevRec *btm_find_dev_by_handle(UINT16 handle)
 }
 
 /* ------------------------------------------------------------------ */
-/*  btm_find_dev — Locate a device record by BD address.              */
+/*  btm_find_dev - Locate a device record by BD address.              */
 /* ------------------------------------------------------------------ */
 BtmSecDevRec *btm_find_dev(BD_ADDR bd_addr)
 {
@@ -270,7 +270,7 @@ BtmSecDevRec *btm_find_dev(BD_ADDR bd_addr)
 }
 
 /* ------------------------------------------------------------------ */
-/*  btm_find_oldest_dev — Return the device record with the oldest    */
+/*  btm_find_oldest_dev - Return the device record with the oldest    */
 /*  timestamp that is still in use and not marked as keep.            */
 /*  Fallback: if all candidates are marked keep, pick the oldest      */
 /*  in-use record regardless of the keep flag.                        */

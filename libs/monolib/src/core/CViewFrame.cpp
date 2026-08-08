@@ -314,7 +314,7 @@ void CViewFrame::func_804409D0(CDrawGX* draw, ml::CRect16* rect) {
     draw->end();
 }
 
-// CViewFrame default constructor — empty; initialisation is done by the
+// CViewFrame default constructor - empty; initialisation is done by the
 // placement-new caller or caller-side inline init.
 void __ct__CViewFrame(){}
 // Compute the offset from the frame's outer rect to its viewport content

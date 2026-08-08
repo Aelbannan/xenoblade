@@ -1,4 +1,4 @@
-// Decompiled adx_stmc.c — ADX stream management (CriWare)
+// Decompiled adx_stmc.c - ADX stream management (CriWare)
 #include <harness_catalog.h>
 
 extern volatile s32 lbl_eu_805E3E98;
@@ -567,7 +567,7 @@ void adxstmf_stat_exec(ADXSTMHndl* h) {
         }
         h->retryCount = 0;
     } else if (stat == 3) {
-        /* Error — retry */
+        /* Error - retry */
         h->subState = 0;
         ADXCRS_Unlock();
 
@@ -663,7 +663,7 @@ epilogue:
     *(u32*)((u8*)h + 0x2C) = tmp[1];
 
     if (h->reqId <= 0) {
-        /* Request failed — notify SJ */
+        /* Request failed - notify SJ */
         getAddr(sj, 0, &h->rdAddr, NULL);
         h->reqId = 0;
         h->rdAddr = 0;

@@ -19,7 +19,7 @@ char* CRICRW_Strncpy(char* dst, const char* ignored, const char* src, size_t n) 
     return strncpy(dst, src, n);
 }
 
-// mr r4, r5; b strcat — copies 3rd arg to 2nd and calls strcat
+// mr r4, r5; b strcat - copies 3rd arg to 2nd and calls strcat
 char* strcat(char*, const char*);
 char* CRICRW_Strcat(char* dst, const char* src1, const char* src2) {
     return strcat(dst, src2);

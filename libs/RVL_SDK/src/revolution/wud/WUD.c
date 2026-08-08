@@ -98,7 +98,7 @@ SCBtCmpDevInfoArray _spArray;
 u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
 
-// Small-data (sbss) globals — retail accesses them via sda21 (r13).
+// Small-data (sbss) globals - retail accesses them via sda21 (r13).
 u32 _wudNandWbcCrc;
 int _wudNandPhase;
 u8 _wudNandLocked;

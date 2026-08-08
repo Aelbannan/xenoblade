@@ -33,7 +33,7 @@ bool CLibHbmControl::isActive(){
 // Phase 0: load arc file   → 1
 // Phase 1: wait for file I/O, countdown timer, then → 2 (or back to 0 on error)
 // Phase 2: init HBM system  → 3
-// Phase 3: active — polls WPAD controllers, processes HBM button selections
+// Phase 3: active - polls WPAD controllers, processes HBM button selections
 void CLibHbmControl::wkUpdate(){
     switch(mHbmPhase){
         case 0:

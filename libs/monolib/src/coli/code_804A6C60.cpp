@@ -1,5 +1,5 @@
 // Translation unit: monolib/src/coli/code_804A6C60
-// Collision subsystem — method dispatch table handlers and utilities.
+// Collision subsystem - method dispatch table handlers and utilities.
 // Each stub below is a catalog placeholder pending decompilation.
 
 #include <harness_catalog.h>

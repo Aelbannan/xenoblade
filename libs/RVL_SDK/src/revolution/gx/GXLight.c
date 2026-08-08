@@ -195,10 +195,10 @@ void GXInitLightColor(GXLightObj* light, GXColor color) {
 // Isolated Gekko paired-single kernel (PLAN.md §17.6): GX light object
 // writes through the FIFO write ports (WGPIPE 0xCC008000 for stw, the
 // 0xCC000000 region for psq_st). The 3x `stw r6,0(dst)` at the same address
-// are correct — the FIFO port auto-advances per store (3 zero words).
+// are correct - the FIFO port auto-advances per store (3 zero words).
 // VERIFIED 100% vs retail (GXLoadLightObjImm 0x80/0x80, 16/16 TU): retail
 // also zeroes r6 at the same point and splits the stw/psq_st bases the same
-// way. FRAGILE: r6 is hardcoded and the operands are register-pinned — if
+// way. FRAGILE: r6 is hardcoded and the operands are register-pinned - if
 // surrounding allocation ever keeps a live value in r6 across this block it
 // is silently clobbered. Do not extend the asm; prefer __vec2x32float__ /
 // __psq_st builtins for new code.

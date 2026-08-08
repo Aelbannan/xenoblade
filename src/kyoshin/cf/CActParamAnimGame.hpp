@@ -6,7 +6,7 @@ namespace cf {
 
 class CActParamAnimGame : public CActorParam {
 public:
-    // Fully matched methods — see .cpp for extern "C" definitions
+    // Fully matched methods - see .cpp for extern "C" definitions
     bool func_8005DCA0();
     CActParamAnimGame();
     virtual ~CActParamAnimGame();

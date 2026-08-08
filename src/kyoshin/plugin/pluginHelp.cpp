@@ -1,5 +1,5 @@
 // Decompiled functions for kyoshin/plugin/pluginHelp.
-// Help system plugin registrations — checks resource availability,
+// Help system plugin registrations - checks resource availability,
 // creates help entries, and manages pad input gating.
 
 #include "kyoshin/plugin/pluginHelp.hpp"

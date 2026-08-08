@@ -3902,6 +3902,22 @@ mangled names (`zero__Q22ml5CVec4`) that the retail object uses.
 
 ### How to make MWCC emit an auto-`__sinit_` (verified 2026-08)
 
+**Sinit symbol binding (2026-08):** MWCC always emits the auto-`__sinit_` as a
+**local** symbol (`nm: t`), while `symbols.txt` declares the retail sinits as
+`scope:global` and dtk's ldscript `FORCEACTIVE` block lists them — mwldeppc's
+FORCEACTIVE only matches **global** symbols, so every link printed `FORCEACTIVE
+symbol 'X' is either not a global symbol or doesn't exist. Ignored.` for each
+matched TU with a global-scope sinit (CRect16, CVec3, CProcess, hbm
+lyt_bounding). No compiler flag/pragma/version (Wii/1.1, GC/3.0a5.2,
+-O4,p/-O4,s, -ipa file/off, `#pragma global_constructors`) changes the
+binding. Fix: use the `link_transform={"globalize": [...]}` object option
+(configure.py) — it emits a `*.link.o` objcopy copy with
+`--globalize-symbol=<sinit>` for the link while the original object (objdiff /
+split checks) keeps MWCC's local binding. Note: ninja runs rules via `sh -c`, so
+backslash symbol names (`__sinit_\\CRect16_cpp`) are doubled in the rule
+string by tools/project.py. Bytes are untouched; only the symbol-table entry
+changes.
+
 MWCC emits `__sinit_\<tu>_cpp` + a `.ctors` pointer when the TU **defines a
 global/static object with a constructor call** (not a hand-written function):
 - `ml::CRect16 lbl_eu_80665588(0, 0, 0, 0);` (global object with ctor args)

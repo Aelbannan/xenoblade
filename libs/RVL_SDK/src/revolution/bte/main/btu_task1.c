@@ -2,7 +2,7 @@
 // Functions: btu_task_init, btu_task_msg_handler, btu_start_timer, btu_stop_timer
 
 // NOTE: btu.h declares btu_hcif_process_event/send_cmd with (UINT8, BT_HDR *)
-// but retail ASM shows they are called with single (BT_HDR *) argument — the
+// but retail ASM shows they are called with single (BT_HDR *) argument - the
 // controller_id parameter is absent in the actual implementations on this
 // single-controller (BR/EDR only) build. We include btu.h for types, then
 // override those three via function-pointer casts in the call sites.
@@ -10,7 +10,7 @@
 #include "revolution/os/OSTime.h"
 #include "revolution/bte/bta/sys/bta_sys.h"
 
-// Globals (in .sdata/.sbss) — defined here per retail btu_task1.o
+// Globals (in .sdata/.sbss) - defined here per retail btu_task1.o
 UINT8 btu_count = 1;
 INT32 execute_btu = 1;
 UINT32 _btu_g_count;
@@ -86,7 +86,7 @@ void btu_task_msg_handler(void)
     while (!has_processed) {
         has_processed = TRUE;
 
-        /* Process mailbox 0 — HCI events/data */
+        /* Process mailbox 0 - HCI events/data */
         if (flags & 0x01) {
             while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_0)) != NULL) {
                 has_processed = FALSE;
@@ -195,7 +195,7 @@ void btu_task_msg_handler(void)
             }
         }
 
-        /* Process mailbox 2 — BTA events */
+        /* Process mailbox 2 - BTA events */
         if (flags & 0x04) {
             while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_2)) != NULL) {
                 has_processed = FALSE;

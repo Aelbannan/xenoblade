@@ -82,12 +82,12 @@ extern "C" u8 func_801392B4(u8);
 #endif
 
 // ---------------------------------------------------------------------------
-// C-linkage imports — moved verbatim from code_80135FDC.cpp. These are retail
+// C-linkage imports - moved verbatim from code_80135FDC.cpp. These are retail
 // linker symbol names; keep linkage/signatures exactly as-is (do not "fix" the
 // pre-mangled identifiers, they are the retail names).
 // ---------------------------------------------------------------------------
 extern "C" {
-// Block A — imports
+// Block A - imports
 
 extern nw4r::lyt::Layout* createLayout__10CLibLayoutFv();
 extern void getAllocHandle__10CLibLayoutFv();
@@ -193,7 +193,7 @@ extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 
 // helpers
 // (func_8003B1EC / func_8009ECB0 / func_8009D018 stay inline in
-//  code_80135FDC.cpp — functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
+//  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
 extern "C" void* func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);

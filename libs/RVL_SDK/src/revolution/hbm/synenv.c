@@ -1,4 +1,4 @@
-// Decompiled RVL_SDK/src/revolution/hbm/synenv — volume envelope setup/run
+// Decompiled RVL_SDK/src/revolution/hbm/synenv - volume envelope setup/run
 #include <harness_catalog.h>
 #include <math.h>
 

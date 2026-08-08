@@ -1,4 +1,4 @@
-// CSortMenu — sort menu UI widget
+// CSortMenu - sort menu UI widget
 // High-level C/C++ reconstruction from retail PPC
 
 #include "kyoshin/harness_catalog.hpp"
@@ -10,7 +10,7 @@
 extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
-// declarations — required for the TU to compile under -lang=c++)
+// declarations - required for the TU to compile under -lang=c++)
 extern "C" void func_801D3878(CSortMenu*);
 extern "C" void func_801D390C(CSortMenu*);
 extern "C" void func_801D3958(CSortMenu*);
@@ -53,7 +53,7 @@ extern "C" CSortMenu* __dt__9CSortMenuFv(CSortMenu* _this, int flags) {
 }
 
 // ============================================================================
-// func_801D3064: Init sort menu — read file, create scrollbar data
+// func_801D3064: Init sort menu - read file, create scrollbar data
 // ============================================================================
 extern "C" void func_801D3064(CSortMenu* _this) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -100,7 +100,7 @@ extern "C" void func_801D3064(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3160: Move — state machine dispatch
+// func_801D3160: Move - state machine dispatch
 // ============================================================================
 extern "C" void func_801D3160(CSortMenu* _this) {
     if (_this->field_0x28 == 0) return;
@@ -136,7 +136,7 @@ extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 // ============================================================================
-// func_801D3258: Term — cleanup
+// func_801D3258: Term - cleanup
 // ============================================================================
 extern "C" void func_801D3258(CSortMenu* _this) {
     func_801390E0(&_this->mFileHandle);
@@ -423,7 +423,7 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 }
 
 // ============================================================================
-// func_801D3878: State 1 handler — opening animation
+// func_801D3878: State 1 handler - opening animation
 // ============================================================================
 extern "C" void func_801D3878(CSortMenu* _this) {
     if (func_80137444(_this->mpAnimTrans0, 1.0f) != 0) {
@@ -435,7 +435,7 @@ extern "C" void func_801D3878(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D390C: State 2 handler — wait for anim1
+// func_801D390C: State 2 handler - wait for anim1
 // ============================================================================
 extern "C" void func_801D390C(CSortMenu* _this) {
     if (func_80137444(_this->mpAnimTrans1, 1.0f) != 0) {
@@ -445,7 +445,7 @@ extern "C" void func_801D390C(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D3958: State 4 handler — scroll animation
+// func_801D3958: State 4 handler - scroll animation
 // ============================================================================
 extern "C" void func_801D3958(CSortMenu* _this) {
     if (func_80137510(_this->mpAnimTrans1, 1.0f) != 0) {
@@ -457,7 +457,7 @@ extern "C" void func_801D3958(CSortMenu* _this) {
 }
 
 // ============================================================================
-// func_801D39EC: State 5 handler — closing animation
+// func_801D39EC: State 5 handler - closing animation
 // ============================================================================
 extern "C" void func_801D39EC(CSortMenu* _this) {
     if (func_80137510(_this->mpAnimTrans0, 1.0f) != 0) {
@@ -483,7 +483,7 @@ extern "C" void func_801D3A3C(CSortMenu* _this) {
 }
 
 // ============================================================================
-// CSortMenu::OnFileEvent — file load completion callback
+// CSortMenu::OnFileEvent - file load completion callback
 // ============================================================================
 extern "C" int OnFileEvent__9CSortMenuFP10CEventFile(CSortMenu* _this, CEventFile* event) {
     if (_this->mFileHandle != (CFileHandle*)((u8*)event + 4)) {

@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-// func_804E9FC8 (inline getter at 0x804E9FC8) defined once — all harness stubs
+// func_804E9FC8 (inline getter at 0x804E9FC8) defined once - all harness stubs
 // mapping to the same symbol reference it rather than redefining.
 u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
 

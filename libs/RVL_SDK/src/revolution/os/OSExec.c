@@ -469,11 +469,11 @@ void __OSLaunchNextFirmware(void) {
     }
 }
 
-/* .sdata:0x80663240 "%016llx" — retail snprintf format, referenced via
+/* .sdata:0x80663240 "%016llx" - retail snprintf format, referenced via
  * sda21 from __OSBootDolSimple. */
 extern const char lbl_80665B70[8];
 
-/* .data:0x8054E8B0 "2004/02/01" — retail apploader date string. */
+/* .data:0x8054E8B0 "2004/02/01" - retail apploader date string. */
 extern const char lbl_80551F90[0x10];
 
 /* Missing from revolution/dvd.h. */
@@ -676,7 +676,7 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
     }
 }
 
-/* .sdata:0x80663248 "%d" — retail sprintf format string, referenced via
+/* .sdata:0x80663248 "%d" - retail sprintf format string, referenced via
  * sda21 from __OSBootDol (MWCC_REFERENCE §1h: fixed-size extern keeps the
  * retail pool label instead of a TU-local @N pool symbol). */
 extern const char lbl_80665B78[8];

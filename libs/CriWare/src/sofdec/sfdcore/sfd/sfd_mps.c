@@ -1,4 +1,4 @@
-// Decompiled CriWare sfd_mps TU — high-level C reconstruction
+// Decompiled CriWare sfd_mps TU - high-level C reconstruction
 // Matches retail assembly at 0x803C3798..0x803C570C
 
 #include <harness_catalog.h>

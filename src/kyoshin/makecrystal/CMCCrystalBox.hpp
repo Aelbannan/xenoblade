@@ -41,7 +41,7 @@ public:
     virtual ~CMCCrystalBox();
     void OnFileEvent();
 
-    // Fields — vtable at +0x00 (implicit), user fields start at +0x04
+    // Fields - vtable at +0x00 (implicit), user fields start at +0x04
     u8 pad_00[0x1C];                    // +0x04 to +0x1F
     u8 unk20;                           // +0x20: entry count (0 = no entries)
     u8 pad_21[0x24 - 0x21];

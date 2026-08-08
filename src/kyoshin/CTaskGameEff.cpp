@@ -18,7 +18,7 @@ void __dt___reslist_base_CScn(){}
 // Forward-declare base destructor with MWCC ABI signature (this, flags)
 void* __dt___reslist_base_CScn(void* _this, int flags);
 
-// reslist<CScn> destructor — standard MWCC virtual dtor pattern.
+// reslist<CScn> destructor - standard MWCC virtual dtor pattern.
 // #pragma optimize_for_size on keeps stmw r30 instead of individual stw
 // (same pattern as CTTask<CTaskGameEff>::~CTTask below).
 #pragma optimize_for_size on
@@ -95,7 +95,7 @@ bool func_80045558(){ return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
 class CTaskGameEff;
 
 template <typename T>
@@ -110,15 +110,15 @@ public:
     virtual void Draw();
 
 protected:
-    MoveFunc mMoveFunc;  // 0x3C — pointer-to-member-function (12 bytes)
-    DrawFunc mDrawFunc;  // 0x48 — pointer-to-member-function (12 bytes)
+    MoveFunc mMoveFunc;  // 0x3C - pointer-to-member-function (12 bytes)
+    DrawFunc mDrawFunc;  // 0x48 - pointer-to-member-function (12 bytes)
 };
 
-// CTTask<CTaskGameEff> constructor — out-of-line
+// CTTask<CTaskGameEff> constructor - out-of-line
 template<>
 CTTask<CTaskGameEff>::CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
 
-// CTTask<CTaskGameEff>::~CTTask — dtor body is empty; compiler emits:
+// CTTask<CTaskGameEff>::~CTTask - dtor body is empty; compiler emits:
 //   null check → CProcess::~CProcess(this, 0) → conditional operator delete
 // #pragma optimize_for_size on keeps stmw r30 instead of individual stw.
 #pragma optimize_for_size on
@@ -126,7 +126,7 @@ template<>
 CTTask<CTaskGameEff>::~CTTask() {}
 #pragma optimize_for_size off
 
-// CTTask<CTaskGameEff>::Move — test PTMF at +0x3C, call if non-null
+// CTTask<CTaskGameEff>::Move - test PTMF at +0x3C, call if non-null
 template<>
 void CTTask<CTaskGameEff>::Move() {
     if (mMoveFunc) {
@@ -134,7 +134,7 @@ void CTTask<CTaskGameEff>::Move() {
     }
 }
 
-// CTTask<CTaskGameEff>::Draw — test PTMF at +0x48, call if non-null
+// CTTask<CTaskGameEff>::Draw - test PTMF at +0x48, call if non-null
 template<>
 void CTTask<CTaskGameEff>::Draw() {
     if (mDrawFunc) {

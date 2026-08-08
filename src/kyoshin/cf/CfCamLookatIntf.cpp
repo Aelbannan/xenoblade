@@ -9,7 +9,7 @@ extern "C" {
     // Compute result position from lookat, direction, and camera speed.
     extern const f32 lbl_eu_80666268;
 
-// Stub: CfCamLookatIntf vtable update entry — does nothing for lookat cameras.
+// Stub: CfCamLookatIntf vtable update entry - does nothing for lookat cameras.
 void CamLookatIntf_update(CfCamLookatIntf* /*self*/) {
 }
 

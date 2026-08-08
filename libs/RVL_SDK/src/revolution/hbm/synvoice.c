@@ -43,7 +43,7 @@ typedef struct HBMSYNSYNTH {
     u32 voiceTable[16][128];   // 0x408 - 16 rows x 128 cols, row stride 0x200
 } HBMSYNSYNTH;
 
-// Voice pointer — points to the dynamically allocated voice state table
+// Voice pointer - points to the dynamically allocated voice state table
 extern HBMSYNVoice* __HBMSYNVoice;
 
 void __HBMSYNClearVoiceReferences(AXVPB* vpb)

@@ -1,4 +1,4 @@
-// Decompiled CriWare ax_rna TU — high-level C reconstruction
+// Decompiled CriWare ax_rna TU - high-level C reconstruction
 // Matches retail assembly at 0x8039C384..0x8039DD7C
 
 #include <harness_catalog.h>

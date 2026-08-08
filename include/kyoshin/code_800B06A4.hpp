@@ -26,7 +26,7 @@ public:
     // total 0x10
 };
 
-// Generic reslist template — adds 0x10 bytes of padding (total 0x20)
+// Generic reslist template - adds 0x10 bytes of padding (total 0x20)
 template <typename T>
 class reslist : public _reslist_base<T> {
 public:
@@ -34,7 +34,7 @@ public:
     u8 _pad_10[0x10];   // 0x10-0x1f
 };
 
-// Specialization for cf::CfObject — replaces padding with named fields (0x20)
+// Specialization for cf::CfObject - replaces padding with named fields (0x20)
 template <>
 class reslist<cf::CfObject> : public _reslist_base<cf::CfObject> {
 public:
@@ -48,7 +48,7 @@ public:
     // total 0x20
 };
 
-// Specialization for cf::TboxInfo — adds fields at 0x10-0x37 (total 0x38)
+// Specialization for cf::TboxInfo - adds fields at 0x10-0x37 (total 0x38)
 template <>
 class reslist<cf::TboxInfo> : public _reslist_base<cf::TboxInfo> {
 public:

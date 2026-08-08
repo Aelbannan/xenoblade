@@ -14,7 +14,7 @@ public:
 
 // Skip-timer widget shown during cutscene skipping.
 // Inherits from IScnRender for the +0x58 subobject layout (vtable + virtual dispatch).
-// NOTE: Does NOT re-declare virtual overrides — the base class IScnRender provides
+// NOTE: Does NOT re-declare virtual overrides - the base class IScnRender provides
 // the virtual slot; actual dispatch goes through the auto-generated thunks
 // (@88@... symbols in the object file).
 class CMenuSkipTimer : public CMenuSkipTimerBase, public IScnRender {
@@ -33,8 +33,8 @@ public:
 
     // --- member fields ---
     u32 mParam;                    // 0x5C
-    u8 mBgTexData[0x20];           // 0x60 — CBgTex placeholder
-    u8 mHelpData[0x38];            // 0x80 — CTitleAHelp placeholder
-    u8 mTimerData[0x98];           // 0xB8 — CSkipTimer placeholder
+    u8 mBgTexData[0x20];           // 0x60 - CBgTex placeholder
+    u8 mHelpData[0x38];            // 0x80 - CTitleAHelp placeholder
+    u8 mTimerData[0x98];           // 0xB8 - CSkipTimer placeholder
     u8 mFlag3;                     // 0x150
 };

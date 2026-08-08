@@ -19,7 +19,7 @@ extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 extern bool func_8006EF04__Fi(s32 mask);
 
 // Initialise all vision slots/effects (retail func_801A380C). Free function,
-// not a CVision member — declared here because CVision.hpp stays opaque.
+// not a CVision member - declared here because CVision.hpp stays opaque.
 extern void func_801A380C(cf::CVision* self);
 
 // ============================================================

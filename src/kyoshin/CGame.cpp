@@ -26,7 +26,7 @@ extern void func_80044FBC(u32 value);
 
 // Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
 // 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)
-// after it packs @stringBase0 — stubs already fill the split to 0xD08.
+// after it packs @stringBase0 - stubs already fill the split to 0xD08.
 void force_cgame_strings(const char*, const char*, const char*, const char*, const char*);
 void FORCEACTIVECGame_cpp_wkStandbyLogin(void);
 void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {

@@ -219,7 +219,7 @@ void func_801ED618(){}
 
 
 // ============================================================================
-// func_801ED808: busy-check — a CSysWin or num-select member is active, else return byte.
+// func_801ED808: busy-check - a CSysWin or num-select member is active, else return byte.
 // ============================================================================
 u8 func_801ED808(CItemBoxLine* self) {
     if (CSysWin_getUnk34(&self->mSysWin)) {

@@ -12,7 +12,7 @@ struct CfCamDirectionIntf;
 struct CfCamLookatIntf;
 struct CfCamTargetIntf;
 
-// Camera event state — used as a shared state block by camera interface vtable functions
+// Camera event state - used as a shared state block by camera interface vtable functions
 // (CfCamDirectionIntf, CfCamLookatIntf, CfCamTargetIntf). Functions receive a
 // typed interface pointer (unused self, vtable compat) and a CfCamEvent* for state.
 class CfCamEvent {

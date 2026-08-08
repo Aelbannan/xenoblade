@@ -1,4 +1,4 @@
-// CriWare Sofdec player core — sfd_ply TU
+// CriWare Sofdec player core - sfd_ply TU
 // High-level C reconstruction for MWCC matching.
 
 #include <types.h>
@@ -176,7 +176,7 @@ int SFD_ExecOne(void* self) {
 }
 
 // ---------------------------------------------------------------------------
-// sfply_ExecOne — main player state machine
+// sfply_ExecOne - main player state machine
 // ---------------------------------------------------------------------------
 void sfply_ExecOne(void* self) {
     int status;
@@ -1079,7 +1079,7 @@ int SFPLY_GetResetFlg(void) {
 // sfply_ResetHn
 // ---------------------------------------------------------------------------
 int sfply_ResetHn(void* self) {
-    // Simplified reset — the full implementation is very complex
+    // Simplified reset - the full implementation is very complex
     // For now, just reset transport and reinitialize
     void* hnTable;
     void* cs;

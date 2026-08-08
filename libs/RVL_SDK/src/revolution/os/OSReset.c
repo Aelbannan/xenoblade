@@ -12,7 +12,7 @@ static u32 bootThisDol;
 volatile BOOL __OSIsReturnToIdle;
 
 /*
- * Retail .data pools (sized arrays, not bare OS_ERROR literals — those leave
+ * Retail .data pools (sized arrays, not bare OS_ERROR literals - those leave
  * size-0 relocs and soft-cap ~98%). Layout targets: file 0xC, hot 0x60,
  * menu+orphans 0x180, obsolete 0x7C. MWCC may 8-align after the 0xC file
  * object (unit data soft-cap); function match uses reloc *sizes*. Big callers

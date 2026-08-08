@@ -69,7 +69,7 @@ CView* CView::getCurrentView() {
 
 // Enqueue tag 6 onto the context ring (CMsgParam<10>). High-level enqueue
 // restores signed ring index + stwux; retail -0x40 spill interleave is closed
-// Chaitin near-miss — keep iterating in high-level C. behaviour:view-set-current-ring.
+// Chaitin near-miss - keep iterating in high-level C. behaviour:view-set-current-ring.
 void CView::setCurrent() {
     CMsgParam<10>& messages =
         *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
@@ -262,7 +262,7 @@ void CView::updateMsg() {
         u8 pad;
     };
     // Three uninit 0x24 snaps (retail -0x150 homes @ 0x48 / 0x28 / 0x08).
-    // Keep only these — dual fan-copy volatiles force -0x140 / stmw r17.
+    // Keep only these - dual fan-copy volatiles force -0x140 / stmw r17.
     volatile CtxSnap snapFan0;
     volatile CtxSnap snapFan1;
     volatile CtxSnap snapTag1;

@@ -1,5 +1,5 @@
 /**
- * synpitch.c — HBM synth pitch/sample-rate conversion routines
+ * synpitch.c - HBM synth pitch/sample-rate conversion routines
  */
 
 #include <harness_catalog.h>
@@ -66,7 +66,7 @@ f32 __HBMSYNSemitonesTableDown[128] = {
 };
 
 /* ================================================================== */
-/*  HBMSYNVOICE — local struct                                         */
+/*  HBMSYNVOICE - local struct                                         */
 /* ================================================================== */
 
 struct HBMSYNPitchPreset {

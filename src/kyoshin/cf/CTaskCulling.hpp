@@ -57,6 +57,6 @@ namespace cf{
     };
 
     // Thunk symbols present in object (@88@cbRenderBefore, @92@ICulling_UnkVirtualFunc*);
-    // Declared manually — MWCC does not accept @ in identifiers.
+    // Declared manually - MWCC does not accept @ in identifiers.
 } //namespace  cf
 

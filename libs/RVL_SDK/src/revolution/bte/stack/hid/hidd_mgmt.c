@@ -1,5 +1,5 @@
 // Decompiled from RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt
-// hidd_proc_repage_timeout — timeout callback for HID device re-paging.
+// hidd_proc_repage_timeout - timeout callback for HID device re-paging.
 
 #include <harness_catalog.h>
 
@@ -34,7 +34,7 @@ extern UINT8 hidd_conn_initiate(void);
 extern void btu_start_timer(TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout);
 
 /* ------------------------------------------------------------------ */
-/*  hd_cb — HID device control block (BSS, 0x144 bytes).             */
+/*  hd_cb - HID device control block (BSS, 0x144 bytes).             */
 /*  Partial layout covering only the fields accessed here.            */
 /* ------------------------------------------------------------------ */
 typedef void (*tHIDD_APP_CBACK)(UINT32 event, UINT32 data, UINT32 param);

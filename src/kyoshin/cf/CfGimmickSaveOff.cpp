@@ -1,4 +1,4 @@
-// CfGimmickSaveOff — save point gimmick
+// CfGimmickSaveOff - save point gimmick
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickSaveOff.hpp"

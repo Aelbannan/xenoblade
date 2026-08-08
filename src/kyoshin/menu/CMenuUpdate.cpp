@@ -168,7 +168,7 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     void* taskGame = getInstance__9CTaskGameFv();
     if (func_800426F0__9CTaskGameFv(taskGame)) return;
     if (func_8006EF04__Fi(0x20)) return;
-    if (!code80135FDC_getByte_621F0()) return;
+    if (!func_8013BE50()) return;
     if (func_80143F78(self)) return;
 
     switch (obj->mMode) {
@@ -187,7 +187,7 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     void* taskGame = getInstance__9CTaskGameFv();
     if (func_800426F0__9CTaskGameFv(taskGame)) return;
     if (func_8006EF04__Fi(0x20)) return;
-    if (!code80135FDC_getByte_621F0()) return;
+    if (!func_8013BE50()) return;
     if (func_80143F78(self)) return;
 
     GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);

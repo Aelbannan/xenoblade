@@ -2578,7 +2578,7 @@ extern "C" u32 code80135FDC_getWord_64060(void) {
 
 
 extern u8 lbl_eu_806621F0;
-extern "C" u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }
+extern "C" int func_8013BE50() { return lbl_eu_806621F0; }
 
 int func_8013BE58(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];

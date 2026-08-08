@@ -46,7 +46,6 @@ struct BattleActor {
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
-int func_8013BE50();
 int func_8018A608();
 int func_80122448();
 

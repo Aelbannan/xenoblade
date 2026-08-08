@@ -211,7 +211,7 @@ void CMenuQstCnt::Move() {
     if (lbl_eu_80663E28 & (1u << 21)) {
         goto done;
     }
-    if (!code80135FDC_getByte_621F0()) {
+    if (!func_8013BE50()) {
         goto done;
     }
     if (!(lbl_eu_80663E24 & (1u << 24)) && (lbl_eu_80663E24 & 0xAFE40000u)) {
@@ -266,7 +266,7 @@ void CMenuQstCnt::cbRenderBefore() {
     if (lbl_eu_80663E28 & (1u << 21)) {
         goto done;
     }
-    if (!code80135FDC_getByte_621F0()) {
+    if (!func_8013BE50()) {
         goto done;
     }
     if (!(lbl_eu_80663E24 & (1u << 24)) && (lbl_eu_80663E24 & 0xAFE40000u)) {

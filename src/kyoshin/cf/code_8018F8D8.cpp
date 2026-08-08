@@ -665,7 +665,7 @@ void CMenuPTState::cbRenderBefore() {
         return;
     }
     if (!(lbl_eu_80663E28 & (1u << 21))) {
-        if (code80135FDC_getByte_621F0() == 0) {
+        if (func_8013BE50() == 0) {
             return;
         }
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);

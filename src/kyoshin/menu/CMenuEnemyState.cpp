@@ -263,7 +263,6 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
 extern "C" {
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
-int func_8013BE50();
 }
 
 // func_800B708C(BOOL)/func_800BFC68(CfObjectMove*) declared (not extern "C")

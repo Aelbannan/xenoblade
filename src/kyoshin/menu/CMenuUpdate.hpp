@@ -174,7 +174,7 @@ extern "C" bool func_8029EE58();
 extern "C" bool func_8013BFA8();
 extern "C" void* func_8049603C();
 extern "C" bool code80135FDC_getByte_64059();
-extern "C" bool code80135FDC_getByte_621F0();
+extern "C" int func_8013BE50();
 extern "C" void* CfRes_getE14();
 extern "C" bool func_8009CF8C(int);
 extern "C" void func_8009D018(int, int);

@@ -80,7 +80,7 @@ void CMenuVision::Move() {
     if (lbl_eu_80663E28 & 0x400) { // bit 10 (IBM bit 21)
         return;
     }
-    if (!code80135FDC_getByte_621F0()) {
+    if (!func_8013BE50()) {
         return;
     }
     if (lbl_eu_80663E24 & 0x40) { // bit 6 (IBM bit 25)

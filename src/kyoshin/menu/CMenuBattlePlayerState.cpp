@@ -43,7 +43,6 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // Unmangled retail name; int (not u8) avoids clrlwi before cmpwi.
-int func_8013BE50();
 void* func_800B8B94(int id);
 void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
                    CMenuBattlePlayerStateSlot* slot);

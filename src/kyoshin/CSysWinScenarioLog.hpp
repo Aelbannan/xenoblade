@@ -180,7 +180,7 @@ extern "C" f32 lbl_eu_80668AE0;
 extern "C" f32 lbl_eu_80668AE4;
 
 // CSysWinScenarioLog::Move helpers.
-extern "C" u8   code80135FDC_getByte_621F0();
+extern "C" int func_8013BE50();
 extern "C" s32  func_8029A658();
 extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);

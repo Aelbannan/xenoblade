@@ -228,7 +228,7 @@ void CSysWinScenarioLog::Move() {
     if (CTaskGame::getInstance()->func_800426F0() == false) {
         if (lbl_eu_80663E28 & 0x200000) {
             // pause/scenario bit set: skip the whole update
-        } else if (code80135FDC_getByte_621F0() != 0 &&
+        } else if (func_8013BE50() != 0 &&
                    func_8029A658() == 0 &&
                    mpLayout != 0) {
             switch (mState) {

@@ -75,7 +75,7 @@ char* func_80138F78(u32);
 void func_80139A18(void*, void*, void*, void*);
 #endif
 }
-extern "C" u8 code80135FDC_getByte_621F0();
+extern "C" int func_8013BE50();
 extern "C" u8 code80135FDC_getByte_64077();
 #ifndef CODE_80135FDC_CPP
 extern "C" u8 func_801392B4(u32);

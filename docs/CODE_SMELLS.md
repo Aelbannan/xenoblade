@@ -10,10 +10,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8301 |
-| extern "C" declarations (non-lbl_*, imports) | 3238 |
-| extern "C" definitions (forced names) | 2638 |
-| `self`/register-style params | 4477 |
+| extern "C" (total lines) | 8300 |
+| extern "C" declarations (non-lbl_*, imports) | 3236 |
+| extern "C" definitions (forced names) | 2639 |
+| `self`/register-style params | 4476 |
 | `void*` (params + locals) | 5476 |
 | raw pointer offset arithmetic | 3394 |
 | deref-through-cast arithmetic | 1404 |
@@ -305,7 +305,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CScrollBar.cpp | 0 | 8 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 0 | 9 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 0 | 6 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSkipTimer.cpp | 17 | 2 | 55 | 5 | 3 | 3 | 0 | 0 | 0 |
+| src/kyoshin/CSkipTimer.cpp | 18 | 2 | 55 | 5 | 3 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CSortMenu.cpp | 29 | 30 | 0 | 12 | 28 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CSysWin.cpp | 0 | 11 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinBuff.cpp | 0 | 7 | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
@@ -333,7 +333,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 5 | 5 | 3 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 9 | 8 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 3 | 2 | 25 | 100 | 121 | 54 | 0 | 8 | 22 |
+| src/kyoshin/cf/CBattleManager.cpp | 4 | 2 | 25 | 100 | 121 | 54 | 0 | 8 | 22 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 8 | 6 | 8 | 23 | 5 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 0 | 0 | 8 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -351,7 +351,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CTaskREvtSequence.cpp | 0 | 4 | 6 | 7 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CVision.cpp | 64 | 2 | 45 | 83 | 64 | 41 | 0 | 10 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 0 | 0 | 0 | 66 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCam.cpp | 17 | 85 | 53 | 72 | 18 | 10 | 0 | 5 | 0 |
+| src/kyoshin/cf/CfCam.cpp | 17 | 86 | 53 | 72 | 18 | 10 | 0 | 5 | 0 |
 | src/kyoshin/cf/CfCamDirectionIntf.cpp | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent.cpp | 0 | 2 | 2 | 2 | 2 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCamEvent_1.cpp | 19 | 2 | 16 | 19 | 4 | 4 | 0 | 3 | 6 |
@@ -368,7 +368,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 30 | 7 | 28 | 42 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 0 | 2 | 3 | 3 | 4 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickSaveOff.cpp | 14 | 3 | 10 | 14 | 18 | 10 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickSaveOff.cpp | 17 | 3 | 10 | 14 | 18 | 10 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickWarp.cpp | 35 | 15 | 42 | 11 | 4 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfHikariItemManager.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapEffectManager.cpp | 0 | 2 | 1 | 1 | 1 | 1 | 0 | 1 | 0 |
@@ -546,7 +546,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 8 | 7 | 9 | 17 | 12 | 6 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 13 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 36 | 1 | 80 | 76 | 9 | 0 | 0 | 1 | 0 |
-| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 77 | 0 | 28 | 26 | 17 | 10 | 0 | 17 | 3 |
+| src/kyoshin/realtimeevt/CREvtModelMap.cpp | 70 | 0 | 27 | 26 | 17 | 10 | 0 | 17 | 3 |
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 51 | 18 | 56 | 76 | 18 | 6 | 0 | 10 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelPc.cpp | 32 | 15 | 36 | 78 | 4 | 0 | 0 | 3 | 1 |
 | src/kyoshin/realtimeevt/CREvtMovie.cpp | 15 | 7 | 11 | 13 | 3 | 0 | 0 | 0 | 0 |
@@ -1909,7 +1909,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CSkipTimer.cpp": {
   "deref_arith": 3,
-  "extern_c_nonlbl_decl": 17,
+  "extern_c_nonlbl_decl": 18,
   "extern_c_nonlbl_def": 2,
   "ptr_arith": 3,
   "self_params": 55,
@@ -2093,7 +2093,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CBattleManager.cpp": {
   "deref_arith": 54,
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 2,
   "goto_count": 22,
   "ptr_arith": 121,
@@ -2206,7 +2206,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/cf/CfCam.cpp": {
   "deref_arith": 10,
   "extern_c_nonlbl_decl": 17,
-  "extern_c_nonlbl_def": 85,
+  "extern_c_nonlbl_def": 86,
   "ptr_arith": 18,
   "rn_params": 5,
   "self_params": 53,
@@ -2310,7 +2310,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CfGimmickSaveOff.cpp": {
   "deref_arith": 10,
-  "extern_c_nonlbl_decl": 14,
+  "extern_c_nonlbl_decl": 17,
   "extern_c_nonlbl_def": 3,
   "ptr_arith": 18,
   "self_params": 10,
@@ -3334,11 +3334,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/realtimeevt/CREvtModelMap.cpp": {
   "deref_arith": 10,
-  "extern_c_nonlbl_decl": 77,
+  "extern_c_nonlbl_decl": 70,
   "goto_count": 3,
   "ptr_arith": 17,
   "rn_params": 17,
-  "self_params": 28,
+  "self_params": 27,
   "void_ptr": 26
  },
  "src/kyoshin/realtimeevt/CREvtModelObj.cpp": {

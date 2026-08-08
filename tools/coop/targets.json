@@ -45657,7 +45657,7 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "cf::CfGameManager::func_8007DCA8()",
+      "function": "func_8007DCA8(unsigned int, unsigned int)",
       "symbol": "func_8007DCA8__FUiUi",
       "address": "0x8007E644",
       "size": "0x10",

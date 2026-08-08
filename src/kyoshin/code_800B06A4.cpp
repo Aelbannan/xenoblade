@@ -459,7 +459,7 @@ void init_66AC(){}
 void init_66BC(){}
 
 // Target 3: us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
-int func_800B67CC(void* self) {
+extern "C" __declspec(noinline) int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
     return (val >= 1 && val <= 24) ? 1 : 0;
 }
@@ -671,6 +671,45 @@ extern "C" void func_800B1954(UnkClass_805764CC* self) {
         }
     }
 }
+// Target: us-800b6fb8 - func_800B66BC (guard-chain + event queue dispatch)
+extern "C" void func_800B655C(void* self, void* list);
+extern "C" void* func_800B67EC();
+extern "C" void func_800B67F4(void* buf);
+extern "C" void func_800B5994(void* self, void* arg, void* list, void* buf, float f);
+extern "C" void func_800B4D84(void* self, void* buf);
+extern "C" int CfRes_getE24Bit22();
+extern "C" float func_80069EA0();
+extern "C" int func_800829B8__Q22cf13CfGameManagerFv();
+extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+extern float lbl_eu_80663ED8;
+extern float lbl_eu_80663EC8;
+extern float lbl_eu_80661CCC;
+extern "C" void func_800B66BC(UnkClass_805764CC* self, void* arg) {
+    if (arg == 0) return;
+    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
+    if (func_800B1C0C(2) == 0) {
+        func_800B655C(self, (void*)((u8*)self + 0xb48));
+    }
+    if (lbl_eu_80663ED8 > 0.0f) {
+        float dt = func_80069EA0();
+        lbl_eu_80663ED8 -= dt;
+        if (lbl_eu_80663ED8 < 0.0f) {
+            lbl_eu_80663ED8 = 0.0f;
+        }
+    }
+    int result = 0;
+    if (CfRes_getE24Bit22() == 0 && getInstance__Q22cf14CBattleManagerFv() != 0) {
+        void* tmp = func_800B67EC();
+        result = func_800B67CC(tmp);
+    }
+    if (result == 0) {
+        char buf[0x700];
+        func_800B67F4(buf);
+        func_800B5994(self, arg, (void*)((u8*)self + 0xb48), buf, lbl_eu_80663EC8);
+        func_800B5994(self, arg, (void*)((u8*)self + 0xb68), buf, lbl_eu_80661CCC);
+        func_800B4D84(self, buf);
+    }
+}
 // Target: us-800b70fc - func_800B6800
 extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, float value) {
     extern float lbl_eu_806669D8;
@@ -682,9 +721,9 @@ extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, floa
         self->field_0xCF4 = 0;
         func_800B68A8(self, 0, (void*)&self->field_0xB48, flag, lbl_eu_806669D8);
         func_800B68A8(self, 0, (void*)&self->field_0xB68, flag, lbl_eu_806669D8);
-        // OPEN ITEM: best 46.5%/19 structural; residual is lfs/stfs f0-vs-f1 PS-float
-        // juggling (retail loads const into f1 once at top; decomp splits f0/f1). Next:
-        // PS-float angle per MWCC_REFERENCE.
+        // OPEN ITEM: best 46.5%/19 structural; residual lfs/stfs f0-vs-f1 PS-float juggling
+        // (retail: single lfs f1 hoisted to top, stfs f1; decomp: lfs f0 for stfs + lfs f1
+        // per call). 7 source shapes tried; next: PS-float angle / expression order.
     }
     func_800B1C24(4, (void*)flag);
 }

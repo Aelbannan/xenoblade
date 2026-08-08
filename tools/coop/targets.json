@@ -76995,8 +76995,8 @@
       "size": "0x110",
       "unit": "kyoshin/code_800B06A4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800645a4",
@@ -77017,8 +77017,8 @@
       "callgraph_source": "build/us/asm/kyoshin/code_800B06A4.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_800B06A4.cpp",
-      "instruction_match": 99.779,
-      "equivalence_status": "inconclusive_unsupported",
+      "instruction_match": 99.853,
+      "equivalence_status": "equivalent",
       "source_present": false
     },
     {

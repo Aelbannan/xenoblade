@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 5895 |
-| extern "C" declarations (non-lbl_*, imports) | 1534 |
-| extern "C" definitions (forced names) | 2644 |
-| `self`/register-style params | 4406 |
-| `void*` (params + locals) | 5018 |
-| raw pointer offset arithmetic | 3437 |
+| extern "C" (total lines) | 5906 |
+| extern "C" declarations (non-lbl_*, imports) | 1543 |
+| extern "C" definitions (forced names) | 2646 |
+| `self`/register-style params | 4414 |
+| `void*` (params + locals) | 5026 |
+| raw pointer offset arithmetic | 3440 |
 | deref-through-cast arithmetic | 1403 |
 | inline asm / `register` | 88 |
 | rN-named params | 338 |
@@ -32,10 +32,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/object/CfObjectEne.cpp | 690 |
 | src/kyoshin/CSaveLoad.cpp | 684 |
 | src/kyoshin/action/CActParamData.cpp | 549 |
+| src/kyoshin/code_800B06A4.cpp | 527 |
 | src/kyoshin/CFloorMap.cpp | 520 |
 | src/kyoshin/code_80135FDC.cpp | 505 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 491 |
-| src/kyoshin/code_800B06A4.cpp | 484 |
 
 ## Per-TU metrics
 
@@ -447,7 +447,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/code_800A3B24.cpp | 0 | 1 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 2 | 13 | 9 | 0 | 0 | 1 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| src/kyoshin/code_800B06A4.cpp | 17 | 40 | 62 | 84 | 75 | 35 | 0 | 0 | 2 |
+| src/kyoshin/code_800B06A4.cpp | 26 | 42 | 70 | 92 | 78 | 35 | 0 | 0 | 2 |
 | src/kyoshin/code_80135FDC.cpp | 20 | 71 | 12 | 153 | 82 | 14 | 0 | 0 | 12 |
 | src/kyoshin/code_801862C0.cpp | 0 | 2 | 6 | 13 | 2 | 2 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 0 | 2 | 3 | 4 | 2 | 0 | 0 | 1 | 0 |
@@ -2689,12 +2689,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/code_800B06A4.cpp": {
   "deref_arith": 35,
-  "extern_c_nonlbl_decl": 17,
-  "extern_c_nonlbl_def": 40,
+  "extern_c_nonlbl_decl": 26,
+  "extern_c_nonlbl_def": 42,
   "goto_count": 2,
-  "ptr_arith": 75,
-  "self_params": 62,
-  "void_ptr": 84
+  "ptr_arith": 78,
+  "self_params": 70,
+  "void_ptr": 92
  },
  "src/kyoshin/code_80135FDC.cpp": {
   "deref_arith": 14,

@@ -92812,8 +92812,8 @@
       "size": "0x40",
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [
@@ -92827,8 +92827,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CBattleManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.25,
+      "source_present": true,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-800d9cb8",
@@ -97691,7 +97692,7 @@
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "called_functions": [
@@ -97725,7 +97726,9 @@
         "_savegpr_19"
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 67.478,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "menu-arts-term",
@@ -97768,7 +97771,7 @@
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14j; HUD Move; leave Term/cbRenderBefore; size 0xBB4",
       "status": "HIGH_MATCH",
-      "instruction_match": 79.845,
+      "instruction_match": 78.252,
       "workflow_status": "ACTIVE",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -97819,7 +97822,7 @@
         "_restgpr_20",
         "_savegpr_20"
       ],
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -110701,8 +110704,8 @@
       "unit": "kyoshin/CUIBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14j; battle UI coordinator Move; leave Init; size 0xB00",
-      "status": "CODE_MATCH",
-      "instruction_match": 95.574,
+      "status": "HIGH_MATCH",
+      "instruction_match": 94.023,
       "workflow_status": "ACTIVE",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -110737,7 +110740,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUIBattleManager.s",
       "abi_helper_calls": [],
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -111919,7 +111922,7 @@
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Manager-owned menu/window setup; leave Term alone; size 0x2E0",
       "status": "HIGH_MATCH",
-      "instruction_match": 94.788,
+      "instruction_match": 94.005,
       "workflow_status": "ACTIVE",
       "called_functions": [
         "us-80157b18",
@@ -111935,7 +111938,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUICfManager.s",
       "abi_helper_calls": [],
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -142033,7 +142036,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80173a64",
@@ -142049,7 +142052,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelObj.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelObj.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 95.662,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80183098",
@@ -142151,7 +142156,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016d094",
@@ -142163,7 +142168,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelObj.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelObj.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 90.645,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80183508",
@@ -142326,7 +142333,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelObj",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80169710",
@@ -142340,7 +142347,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelObj.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelObj.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 92.407,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801846f0",
@@ -142678,7 +142687,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80173a64",
@@ -142690,7 +142699,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelPc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 94.903,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80184cf4",
@@ -142785,7 +142796,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8016d094"
@@ -142796,7 +142807,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelPc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 81.103,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801850ac",
@@ -142810,7 +142823,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -142844,7 +142857,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelPc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 42.562,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80185a18",
@@ -142883,7 +142898,7 @@
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80169710",
@@ -142896,7 +142911,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtModelPc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 84.286,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80185b5c",
@@ -143128,8 +143145,8 @@
       "size": "0x8",
       "unit": "kyoshin/realtimeevt/CREvtModelPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80184c78"
@@ -143141,8 +143158,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtModelPc.cpp",
       "claim": null,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -168621,7 +168638,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -168635,7 +168652,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 71.738,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cced4",
@@ -168702,7 +168721,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -168716,7 +168735,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 96.765,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801ccfc0",
@@ -169009,7 +169030,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -169028,7 +169049,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 54.082,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cdf3c",
@@ -169042,7 +169065,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -169061,7 +169084,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 57.934,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801ce030",
@@ -169075,7 +169100,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801382e8",
@@ -169099,7 +169124,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 88.376,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801ce204",
@@ -169113,7 +169140,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -169147,7 +169174,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 87.736,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801ce544",
@@ -169392,7 +169421,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -169409,7 +169438,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 91.745,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cfa08",
@@ -169453,7 +169484,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0"
@@ -169464,7 +169495,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 50.184,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cfbf4",
@@ -169478,7 +169511,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80136c64",
@@ -169497,7 +169530,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 61.443,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801cfd30",
@@ -169524,7 +169559,7 @@
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -169651,7 +169686,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80082ce0",
@@ -169685,7 +169720,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CItemBoxGrid.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 19.663,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801d03c8",
@@ -194038,7 +194075,7 @@
       "unit": "kyoshin/makecrystal/CMCCrystalBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -194053,7 +194090,9 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCrystalBox.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/CMCCrystalBox.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 40.5,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80216784",
@@ -212003,7 +212042,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -212017,7 +212056,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CArtsInfo.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CArtsInfo.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 51.962,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80237774",
@@ -212031,7 +212072,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801d3a78",
@@ -212052,7 +212093,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CArtsInfo.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CArtsInfo.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80237850",
@@ -212092,7 +212135,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae74",
@@ -212106,7 +212149,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CArtsInfo.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CArtsInfo.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 86.429,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80237988",
@@ -212222,7 +212267,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -212240,7 +212285,9 @@
         "_savegpr_28"
       ],
       "source": "src/kyoshin/CArtsInfo.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 86.434,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80237c1c",
@@ -212254,7 +212301,7 @@
       "unit": "kyoshin/CArtsInfo",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80138a3c",
@@ -212266,7 +212313,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CArtsInfo.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CArtsInfo.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.333,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80237cd0",
@@ -241492,7 +241541,7 @@
       "unit": "kyoshin/CSysWinScenarioLog",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-current-pad",
@@ -241512,7 +241561,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CSysWinScenarioLog.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSysWinScenarioLog.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 98.011,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80280dc0",
@@ -245117,7 +245168,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae74",
@@ -245134,7 +245185,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CEquipItemBox.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CEquipItemBox.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 54.259,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-802889b0",
@@ -246114,7 +246167,7 @@
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137dc0",
@@ -246126,7 +246179,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CEquipItemBox.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CEquipItemBox.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 65.217,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8028aea0",
@@ -248039,7 +248094,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CSaveLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSaveLoad.cpp",
-      "instruction_match": 32.618,
+      "instruction_match": 30.118,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -248551,7 +248606,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CSaveLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSaveLoad.cpp",
-      "instruction_match": 100.0,
+      "instruction_match": 99.783,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -249366,7 +249421,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CSaveLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSaveLoad.cpp",
-      "instruction_match": 56.861,
+      "instruction_match": 54.928,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -454807,7 +454862,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -454820,7 +454875,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.618,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8043607c",
@@ -454966,7 +455023,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -454985,7 +455042,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 96.708,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80436978",
@@ -455011,8 +455070,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.583,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804369d8",
@@ -455041,8 +455101,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.65,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80436b68",
@@ -455056,7 +455117,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455072,7 +455133,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 96.316,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80436d30",
@@ -455169,9 +455232,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 99.355,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80436dc4",
@@ -455197,8 +455261,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.889,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80436de8",
@@ -455212,7 +455277,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455225,7 +455290,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 64.676,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80436e70",
@@ -455253,8 +455320,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.825,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80437038",
@@ -455278,8 +455346,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.571,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80437054",
@@ -455302,9 +455371,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 99.444,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043709c",
@@ -455352,9 +455422,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 99.615,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80437170",
@@ -455377,9 +455448,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 99.545,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804371c8",
@@ -455403,8 +455475,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.138,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043723c",
@@ -455428,8 +455501,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.571,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80437258",
@@ -455530,7 +455604,7 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
+      "instruction_match": 98.889,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -455558,7 +455632,7 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
+      "instruction_match": 98.889,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -455574,7 +455648,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455587,7 +455661,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 81.333,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804374fc",
@@ -455601,7 +455677,7 @@
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455614,7 +455690,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 81.333,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804375bc",
@@ -455652,8 +455730,8 @@
       "size": "0x1B4",
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455666,7 +455744,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.817,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80437778",
@@ -455679,8 +455759,8 @@
       "size": "0x1B4",
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "called_functions": [
@@ -455693,7 +455773,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/util/MemManager.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.817,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8043792c",
@@ -470106,7 +470188,7 @@
       "unit": "monolib/src/device/CDeviceFileCri",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceFileCri.cpp",
       "called_functions": [
@@ -470125,7 +470207,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceFileCri.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 54.797,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804536c8",
@@ -470210,7 +470294,7 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceFileCri.s",
       "abi_helper_calls": [],
       "instruction_match": 97.875,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -470367,7 +470451,7 @@
       "abi_helper_calls": [],
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {

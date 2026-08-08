@@ -115,7 +115,7 @@ void func_800B94D4(cf::CfObject* obj) {
 }
 
 // Target 2: func_800B1A5C
-void func_800B1A5C(void* list) {
+extern "C" __declspec(noinline) void func_800B1A5C(void* list) {
     u32 sentinel, cur, next, zero;
     u32* p;
     sentinel = *(u32*)((u32*)list + 1);
@@ -628,6 +628,48 @@ extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, uns
     // (aliasing pattern); 3 source shapes tried (local arr, ptr loop, member-cast),
     // best 23.4%/44 structural/0x134 vs 0x12c. Next: element-struct type or
     // reslist-method access form.
+}
+// Target: us-800b2220 - func_800B1954 (list cleanup)
+extern "C" void func_800B1A8C(void* a, void* b);
+extern "C" void* func_800B1A9C(void* a);
+extern "C" void func_800B1AA8(void* a, void* b, int c);
+extern "C" void func_800B1ACC(void* a, void* b);
+extern "C" int func_800B1AD8(void* a, void* b);
+extern "C" void func_800B0B40(void* a);
+extern "C" void func_800B4278(void* object, u32 mask);
+extern float lbl_eu_80663EDC;
+extern u32 lbl_eu_80663EE4;
+extern "C" void func_800B1954(UnkClass_805764CC* self) {
+    func_800B4278(self, 0xFFFFFDFF); // retail: lis 1, subi 0x201 = 0x0000FDFF; li-form here aligns rest better (OPEN ITEM)
+    func_800B4278(self, 0xFFFFFFFF);
+    func_800B1A5C((void*)((u8*)self + 0xc28));
+    func_800B1A5C((void*)((u8*)self + 0xc08));
+    func_800B1A5C((void*)((u8*)self + 0xbc8));
+    func_800B1A5C((void*)((u8*)self + 0xbe8));
+    func_800B1A5C((void*)((u8*)self + 0xb88));
+    func_800B1A5C((void*)((u8*)self + 0xb68));
+    func_800B1A5C((void*)((u8*)self + 0xb48));
+    func_800B1A5C((void*)((u8*)self + 0xb28));
+    func_800B1A5C((void*)((u8*)self + 0xba8));
+    func_800B1A5C(self);
+    func_800B0B40((void*)((u8*)self + 0x20));
+    self->field_0xD0E = 0;
+    self->field_0xD10 = 0;
+    self->field_0xD04 = 0;
+    lbl_eu_80663EDC = 0.0f;
+    lbl_eu_80663EE4 = 0;
+    u32 sbA[4], sbB[4], sbC[4];
+    func_800B1A8C(sbA, (void*)((u8*)self + 0xc48));
+    for (;;) {
+        func_800B1ACC(sbB, (void*)((u8*)self + 0xc48));
+        if (func_800B1AD8(sbA, sbB) != 0) {
+            void* item = func_800B1A9C(sbA);
+            *(u32*)item = 0;
+            func_800B1AA8(sbC, sbA, 0);
+        } else {
+            break;
+        }
+    }
 }
 // Target: us-800b70fc - func_800B6800
 extern "C" void func_800B6800(UnkClass_805764CC* self, void* arg, int flag, float value) {

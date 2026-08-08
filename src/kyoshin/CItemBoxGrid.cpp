@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include "kyoshin/CExchangeWin.hpp"
 #include <stdio.h>
 #include <nw4r/lyt.h>
 
 // Forward declarations for external functions
-extern "C" int func_8022D09C(void*);
 extern "C" int func_8022DB74(void*);
 extern "C" void __dl__FPv(void*);
 extern "C" void* func_801394D4(u32);
@@ -32,14 +32,12 @@ extern "C" void func_8022D0F8(void*, void*, u8);
 extern "C" u32 func_801D32DC(void*);
 extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
 extern "C" u32 func_801EB018(void*);
-extern "C" u32 func_8022D08C(void*);
 extern "C" u32 CSysWin_isReady(void*);
 void* __dt__13CArtsBookItemFv(void* self, int mode);
 void* __dt__11CVisionItemFv(void* self, int mode);
 void* __dt__10CQuestItemFv(void* self, int mode);
 extern "C" u32 func_801EB020(void*);
 extern "C" u32 func_80208358(void*);
-extern "C" u32 func_8022D094(void*);
 extern "C" u32 func_8022DB6C(void*);
 extern "C" void advanceItemBoxState__FP12CItemBoxInfo(void*);
 extern "C" void func_801EB410(void*, int);
@@ -2053,7 +2051,7 @@ u32 func_801CB038(void* self) {
     if (!func_801D32DC(p + 0xe8)) return 0;
     if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
     if (!func_801EB018(p + 0x3e4)) return 0;
-    if (!func_8022D08C(p + 0x440)) return 0;
+    if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
     if (!CSysWin_isReady(p + 0x4ac)) return 0;
     if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
     return 0;
@@ -2085,7 +2083,7 @@ u32 func_801CB1E4(void* self) {
     u8* p = (u8*)self;
     if (func_801EB020(p + 0x3e4)) return 1;
     if (func_80208358(p + 0x418)) return 1;
-    if (func_8022D094(p + 0x440)) return 1;
+    if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
     if (func_8022DB6C(p + 0x468)) return 1;
     if (CSysWin_getUnk34(p + 0x4ac)) return 1;
     return CSysWin_getUnk34(p + 0x4e8);
@@ -2263,7 +2261,7 @@ void func_801CB5F0(void* self) {
             }
             return;
         } else if (p[0x527] == 2) {
-            if (func_8022D09C(p + 0x440)) {
+            if (((CExchangeWin*)(p + 0x440))->getField27()) {
                 s8 val = (s8)p[0x529] - 1;
                 p[0x529] = (u8)val;
                 if (val < 0) p[0x529] = 1;
@@ -2397,7 +2395,7 @@ void func_801CBA04(void* self) {
             }
             return;
         } else if (p[0x527] == 2) {
-            if (func_8022D09C(p + 0x440)) {
+            if (((CExchangeWin*)(p + 0x440))->getField27()) {
                 s8 val = (s8)p[0x529] + 1;
                 p[0x529] = (u8)val;
                 if (val > 1) p[0x529] = 0;
@@ -2743,7 +2741,7 @@ void func_801CC7B0(void* self, int r4) {
             func_801EB178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
         } else if (p[0x527] == 2) {
-            if (!func_8022D09C(p + 0x440)) return;
+            if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
             func_8022D0D0(p + 0x440);
             *(u32*)(p + 0x58) = 0x0e;
             func_801D216C(p + 0x70, 1);
@@ -3143,7 +3141,7 @@ after_fs:
         if (p[0x542]) return;
         if (p[0x52c]) return;
         if (p[0x528]) {
-            if (func_8022D09C(p + 0x440)) {
+            if (((CExchangeWin*)(p + 0x440))->getField27()) {
                 if (*(u32*)(p + 0x58) == 0xd) {
                     if ((s8)p[0x529] == 0) {
                         u8* sub = p + 0x54c;
@@ -3194,7 +3192,7 @@ after_fs:
             }
             return;
         }
-        if (func_8022D09C(p + 0x440)) {
+        if (((CExchangeWin*)(p + 0x440))->getField27()) {
             if (*(u32*)(p + 0x58) == 3) {
                 u8* sub = p + 0x54c;
                 u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
@@ -3264,7 +3262,7 @@ void func_801CDB94(void* self, u32 val) {
 
 // Get field depending on obj state.
 u8 func_801CDBE0(void* self) {
-    if (!func_8022D09C((u8*)self + 0x440)) return 0;
+    if (!((CExchangeWin*)((u8*)self + 0x440))->getField27()) return 0;
     s32 state = *(s32*)((u8*)self + 0x58);
     if (state != 3) return 0;
     return ((u8*)self)[0x52c];
@@ -3361,7 +3359,7 @@ u32 func_801CDFB4(void* self) {
     if (*(u32*)(p + 0x58) != 3) return 0;
     if (func_801EB020(p + 0x3e4)) return 0;
     if (func_80208358(p + 0x418)) return 0;
-    if (func_8022D094(p + 0x440)) return 0;
+    if (((CExchangeWin*)(p + 0x440))->getField24()) return 0;
     if (func_8022DB6C(p + 0x468)) return 0;
     if (CSysWin_getUnk34(p + 0x4ac)) return 0;
     if (CSysWin_getUnk34(p + 0x4e8)) return 0;
@@ -3638,7 +3636,7 @@ void func_801CE524(void* self) {
 // Handle sub-object activation with copy.
 void func_801CE974(void* self) {
     u8* p = (u8*)self;
-    if (!func_8022D09C(p + 0x440)) return;
+    if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
     *(u32*)(p + 0x58) = 0xd;
     func_801D216C(p + 0xa0, 1);
     u8 temp[16];
@@ -3650,7 +3648,7 @@ void func_801CE974(void* self) {
 // Check if sub-obj is active; set state to 3 and clear flag.
 void func_801CE9E8(void* self) {
     u8* p = (u8*)self;
-    if (func_8022D09C(p + 0x440)) {
+    if (((CExchangeWin*)(p + 0x440))->getField27()) {
         *(u32*)(p + 0x58) = 3;
         p[0x528] = 0;
     }

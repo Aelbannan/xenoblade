@@ -45,11 +45,11 @@ extern "C" CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
 CExchangeWin::~CExchangeWin() {
 }
 
-extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWin*)self)->field_25; }
+u8 CExchangeWin::getField25() { return field_25; }
 
-extern "C" u8 func_8022D094(void* self) { return ((CExchangeWin*)self)->field_24; }
+u8 CExchangeWin::getField24() { return field_24; }
 
-extern "C" u8 func_8022D09C(void* self) { return ((CExchangeWin*)self)->field_27; }
+u8 CExchangeWin::getField27() { return field_27; }
 
 // If _26 is already non-zero, do nothing; otherwise initialize state and fire event 0xd
 extern "C" void func_8022D0A4(CExchangeWin* self) {

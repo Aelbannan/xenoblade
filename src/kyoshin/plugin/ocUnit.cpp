@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/plugin/ocUnit.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 struct CfObjIf {
     virtual void _v0008();
@@ -87,8 +88,6 @@ extern "C" {
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);
     void* getInstance__Q22cf14CBattleManagerFv();
-    void* getInstance__Q22cf13CfGameManagerFv();
-    void* getPlayer__Q22cf13CfGameManagerFi(int i);
     void* func_80081694__Q22cf13CfGameManagerFv(unsigned short a, unsigned short b);
     void* func_80081CBC__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
     void* func_80081CB8__Q22cf13CfGameManagerFv();

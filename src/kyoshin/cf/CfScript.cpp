@@ -2,6 +2,7 @@
 // Based on retail assembly analysis
 
 #include "kyoshin/cf/CfScript.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
@@ -18,7 +19,6 @@ extern "C" {
     void* func_800A82BC();
     void* func_800A837C();
     void* func_800A843C();
-    int func_800829B8__Q22cf13CfGameManagerFv();
     void* CfRes_readCommonArchive(void* fileHandle, const char* path, void* callback);
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void cancel__11CDeviceFileFP11CFileHandle(void* fileHandle);
@@ -480,7 +480,7 @@ void CfScriptManager::func_800694B0() {
         }
     }
 
-    if (func_800829B8__Q22cf13CfGameManagerFv() == 0) {
+    if (cf::CfGameManager::func_800829B8() == 0) {
         vmExec();
     }
 }

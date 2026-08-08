@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 struct UnkClass_8009ECB0;
 
@@ -59,7 +60,6 @@ extern "C" {
     void* CItem_initItemImplInstances();
     void* getInstance__Q22cf14CBattleManagerFv();
     void* getInstance__14Class_80296898Fv();
-    void* getPlayer__Q22cf13CfGameManagerFi(int);
     void func_800B70FC(int, int);
     int func_800B8D5C();
     void func_800BE12C(int, int, int, int, int);
@@ -118,7 +118,6 @@ extern "C" {
     void func_804BCC3C(void*, int);
     void func_8047BD8C__17UnkClass_8047BB54Fv(void*, int);
     void func_8047BD94__17UnkClass_8047BB54Fv(void*, int);
-    void* func_80083298__Q22cf13CfGameManagerFv();
 }
 
 // ============================================================================
@@ -551,7 +550,7 @@ int setMapDispID(VMThread* pThread) {
         v30 = vmArgBoolGet(6, arg);
     }
     
-    void* gm = func_80083298__Q22cf13CfGameManagerFv();
+    void* gm = cf::CfGameManager::func_80083298();
     if (gm) {
         if (v27) {
             if (v28) func_80462D04__8CTaskLODFv(v26);
@@ -710,7 +709,7 @@ int makeParty(VMThread* pThread) {
     for (int i = 0; i < 3; i++) {
         pos[i][0] = pos[i][1] = pos[i][2] = 0.0f;
         scale[i] = 0.0f;
-        void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+        void* player = cf::CfGameManager::getPlayer(i);
         if (player) {
             void* ppos = (*(void*(*)(void*))(*(void**)player))(player);
             pos[i][0] = *(float*)((u8*)ppos + 0);
@@ -732,7 +731,7 @@ int makeParty(VMThread* pThread) {
     }
     
     for (int i = 0; i < 3; i++) {
-        void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+        void* player = cf::CfGameManager::getPlayer(i);
         if (player) {
             (*(void(*)(void*, float*))(*(void**)player))(player, pos[i]);
             (*(void(*)(void*, float))(*(void**)player))(player, scale[i]);
@@ -1374,7 +1373,7 @@ int waitPop(VMThread* vmThread) {
 int partyWarp(VMThread* vmThread) {
     for (int i = 1; i < 3; i++) {
         cf::unkPartyPlayerDispatch* player =
-            (cf::unkPartyPlayerDispatch*)getPlayer__Q22cf13CfGameManagerFi(i);
+            (cf::unkPartyPlayerDispatch*)cf::CfGameManager::getPlayer(i);
         if (player != NULL) {
             void* task = player->getTask();
             if (task != NULL) {

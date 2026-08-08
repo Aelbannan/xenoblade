@@ -1,4 +1,5 @@
 #include <types.h>
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/device/CDeviceVI.hpp>
 #include <functions.hpp>
 
@@ -18,7 +19,6 @@ extern u32 lbl_eu_80663E14;
 extern u32 lbl_eu_80663E24;
 
 extern "C" {
-    bool func_800829B8__Q22cf13CfGameManagerFv();
     f32 func_80496288(u32*);
     void* getInstance__Q22cf14CBattleManagerFv();
     void* func_800B6BA4__Fv();
@@ -37,7 +37,7 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() {
 // decrements by 1 (if a qualifying party member is present) or by 2.
 void func_8018C610(UnkClass_8018C5FC* _this) {
     if (!func_8009CF8C(0x3357)) return;
-    if (func_800829B8__Q22cf13CfGameManagerFv()) return;
+    if (cf::CfGameManager::func_800829B8()) return;
     if (lbl_eu_80663E24 & 0xafa40000) return;
 
     f32 scale = func_80496288(&lbl_eu_80663E14);

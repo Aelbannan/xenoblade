@@ -2,6 +2,7 @@
 // High-level C/C++ reconstruction.
 
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // External function declarations
 extern "C" {
@@ -9,7 +10,6 @@ extern "C" {
     void __dt__Q22cf8CREvtObjFv(CREvtCamera* self, int deleteFlag);
     void __dt__80185754(CREvtCamera* self);
     void* func_800821F8__Q22cf13CfGameManagerFv();
-    void* func_800829B8__Q22cf13CfGameManagerFv();
     void  func_8006BBF4(void* mgr, u32 mask, int flag);
     unsigned char func_80462E1C__8CTaskLODFv(s16 taskID);
     void func_80462D04__8CTaskLODFv(s16 taskID);
@@ -294,7 +294,7 @@ extern "C" void func_801804CC(CREvtCamera* self) {
     void* mgr = func_800821F8__Q22cf13CfGameManagerFv();
     if (mgr) func_8006BBF4(mgr, 0x400, 1);
     if (!self->mField1C) return;
-    if (func_800829B8__Q22cf13CfGameManagerFv()) return;
+    if (cf::CfGameManager::func_800829B8()) return;
 
     void* sceneObj = (void*)self->mField1C;
     {

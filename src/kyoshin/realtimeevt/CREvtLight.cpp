@@ -8,10 +8,10 @@
 #include <cmath>
 #include "kyoshin/realtimeevt/CREvtLight.hpp"
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 extern "C" {
 // CfGameManager accessor
-void* func_80083298__Q22cf13CfGameManagerFv(void);
 
 // Resource management (via CScn at lbl_eu_80663E14)
 void* lbl_eu_80663E14;
@@ -75,7 +75,7 @@ extern "C" void __ct__801C3604(CREvtLight* self, int dealloc_flag) {
         self->field_20 = 0;
 
         // Notify game manager
-        void* gameMgr = func_80083298__Q22cf13CfGameManagerFv();
+        void* gameMgr = cf::CfGameManager::func_80083298();
         if (gameMgr != nullptr) {
             void* obj = *(void**)((u8*)gameMgr + 0x2F3C);
             if (obj != nullptr) {
@@ -109,7 +109,7 @@ extern "C" void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fi
         func_804C1D7C(mgr, (void*)self->field_20);
         self->field_20 = 0;
 
-        void* gameMgr = func_80083298__Q22cf13CfGameManagerFv();
+        void* gameMgr = cf::CfGameManager::func_80083298();
         if (gameMgr != nullptr) {
             void* obj = *(void**)((u8*)gameMgr + 0x2F3C);
             if (obj != nullptr) {
@@ -126,7 +126,7 @@ extern "C" void func_801C36C4(CREvtLight* self, const char* resourceName, u32 fi
         void* handle = func_804C1BA0(mgr, resourceName, 7);
         self->field_20 = (u32)handle;
 
-        void* gameMgr = func_80083298__Q22cf13CfGameManagerFv();
+        void* gameMgr = cf::CfGameManager::func_80083298();
         if (gameMgr != nullptr) {
             void* obj = *(void**)((u8*)gameMgr + 0x2F3C);
             if (obj != nullptr) {

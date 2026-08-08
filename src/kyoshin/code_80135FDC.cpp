@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <nw4r/math/math_types.h>
 #include <nw4r/lyt/lyt_animation.h>
 #include <nw4r/lyt/lyt_layout.h>
@@ -35,7 +36,6 @@ extern void* func_8049626C(void*, void*);
 extern u32 identity__Q22ml6CMat34;
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
 extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
-extern void* getPlayer__Q22cf13CfGameManagerFi(int);
 extern u32 func_8009CF8C(u32);
 extern void func_8006A234(u16*, u16*);
 extern int func_8006A6D0();
@@ -152,7 +152,6 @@ extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" void func_80157824(u8, u32);
 extern "C" void* func_8049603C(void*);
-extern "C" void* func_80083298__Q22cf13CfGameManagerFv(void);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_80462D04__8CTaskLODFv(s8);
 extern "C" void func_80462D5C__8CTaskLODFv(u8);
@@ -1212,7 +1211,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
 }
 
 extern "C" u32 func_80138574(const char* name, u32 id) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return 0;
 
     u8 v1 = 0;
@@ -1833,7 +1832,7 @@ extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
 extern "C" void func_80139CEC(const char* arg) {
     func_8003AA34(arg);
     getFP__FPCc(&lbl_eu_80500664[0x1F9]);
-    void* gm = func_80083298__Q22cf13CfGameManagerFv();
+    void* gm = cf::CfGameManager::func_80083298();
     if (gm == NULL) return;
 
     for (u8 i = 0; i <= 0x63; i++) {
@@ -2284,7 +2283,7 @@ extern "C" void func_8013ACFC() {
     f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
     if (f < lbl_eu_806672E8) return;
 
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == NULL) return;
     u8 flag = (u8)lbl_eu_80664184;
     if (flag == 0) return;

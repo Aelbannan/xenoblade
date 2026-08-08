@@ -9,6 +9,7 @@
 
 #include "kyoshin/cf/CtrlMovePC.hpp"
 #include "kyoshin/cf/CtrlMovePC_intf.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include <monolib/math/CVec3.hpp>
 
 using cf::CCtrlMovePC;
@@ -30,7 +31,6 @@ void __ptmf_scall(...);
 
 // Engine helpers.
 void* func_8016FE34(void* obj);
-void* func_80083298__Q22cf13CfGameManagerFv(void); // cf::CfGameManager accessor
 void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
 void* func_8047CE7C(void);                       // UnkClass_8047CD0C::func
 void  func_8047DE14(void* a, Vec* b, f32 c, f32 d);
@@ -115,7 +115,7 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
 // ============================================================================
 extern "C" void func_80199618(CCtrlMovePC* self) {
     if (self->mTask != 0) {
-        void* gm = func_80083298__Q22cf13CfGameManagerFv();
+        void* gm = cf::CfGameManager::func_80083298();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
@@ -254,7 +254,7 @@ static inline void zeroArr(CCtrlMovePC* s) {
 
 // Release mTask through the game manager (shared by reset paths).
 static inline void releaseTask(CCtrlMovePC* s) {
-    void* gm = func_80083298__Q22cf13CfGameManagerFv();
+    void* gm = cf::CfGameManager::func_80083298();
     if (gm != 0) {
         void* p = (char*)gm + 0x2f2c;
         if (p != 0) {

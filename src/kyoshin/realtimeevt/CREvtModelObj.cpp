@@ -5,6 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/realtimeevt/CREvtModelObj.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/work/CEventFile.hpp"
@@ -49,7 +50,6 @@ extern "C" {
     extern void func_804838DC(void*, int);
     extern void func_80483448(void*, void*);
     extern void* func_80490098(void);
-    extern void* func_80083298__Q22cf13CfGameManagerFv(void);
     extern void* func_80087250__Q22cf13CfGameManagerFv(void);
     extern void* CLibLayout_getAllocHandle(void);
     extern int __ptmf_cmpr(void* a, void* b);
@@ -644,7 +644,7 @@ extern "C" void func_80182B2C(void* self) {
                 // Check model flags
                 u32 modelFlags = FLD(u32, model, 0x7A4);
                 if (modelFlags & 0x100) {
-                    void* gm = func_80083298__Q22cf13CfGameManagerFv();
+                    void* gm = cf::CfGameManager::func_80083298();
                     if (gm != 0) {
                         void* view = FLD(void*, gm, 0x98);
                         if (view != 0) {

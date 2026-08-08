@@ -2321,6 +2321,16 @@ def main() -> int:
         help="equivalence subcommand (decode, check-hex, check, check-objects, check-unit, extract, replay, differential)",
     )
 
+    p_extc = sub.add_parser(
+        "extc",
+        help="extern \"C\" declaration classification + member-conversion planning",
+    )
+    p_extc.add_argument(
+        "extc_args",
+        nargs=argparse.REMAINDER,
+        help="extc subcommand and flags (scan, plan <class>, --json PATH)",
+    )
+
     p_opcodes = sub.add_parser(
         "opcodes",
         help="List PowerPC opcodes used in main.dol (wraps tools.dol_opcodes)",
@@ -2521,6 +2531,10 @@ def main() -> int:
         return cmd_log(config, args.tail, args.target)
     if args.command == "symbols":
         return cmd_symbols(args.symrecover_args)
+    if args.command == "extc":
+        from tools.coop import extc
+
+        return extc.main(args.extc_args)
     if args.command == "behaviour":
         return cmd_behaviour(args.behaviour_args)
     if args.command == "equivalence":

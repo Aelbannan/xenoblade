@@ -1,4 +1,5 @@
 // CfMapMineManager - mine-point management (field collection points)
+#include "kyoshin/cf/CfGameManager.hpp"
 // High-level C++ reconstruction from retail ASM (US, 0x8020785C..0x80209D20).
 // All 20 TU functions carry placeholder retail symbol names; they are emitted
 // with C linkage so the object exports the exact retail symbols.
@@ -27,8 +28,6 @@ extern "C" void __dl__FPv(void* ptr);
 extern "C" void __dla__FPv(void* ptr);
 extern "C" int mtRand__Q22ml4mathFi(int n);
 extern "C" int mtRand__Q22ml4mathFii(int lo, int hi);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
 extern "C" void* func_800B8920(void* obj);
 extern "C" void func_800B9404(void* obj);
 extern "C" int func_80186BC8(u16 id);
@@ -64,7 +63,6 @@ extern "C" int func_80085840__Q22cf13CfGameManagerFv();
 extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u32 id);
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 id);
-extern "C" void* getCurrentPad__Q22cf13CfGameManagerFv();
 extern "C" void* getFP__FPCc(const char* name);
 
 // ---------------------------------------------------------------------------
@@ -629,7 +627,7 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
     else if (kind == 8) sfx = 0xF;
     else if (kind == 9) sfx = 0x10;
 
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == 0) return;
     void* obj = func_8008187C__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
@@ -727,7 +725,7 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
     BdatFilePointer* file = lbl_eu_806640C8;
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
-    u32 playerId = func_800822F4__Q22cf13CfGameManagerFv();
+    u32 playerId = cf::CfGameManager::func_800822F4();
     *out = 0;
     playerId &= 0xFFFF;
 
@@ -1051,7 +1049,7 @@ extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
 // func_802074F0 - top-level update: timers, nearest point, collection input.
 // ---------------------------------------------------------------------------
 extern "C" void func_802074F0(CfMapMineManager* self) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == 0) return;
 
     func_802073CC(self);
@@ -1070,7 +1068,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
         }
     }
 
-    void* p2 = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* p2 = cf::CfGameManager::getPlayer(0);
     void* vt = *(void**)p2;
     f32 px = ((f32 (*)(void*))(*(u32*)((u8*)vt + 0xAC)))(p2);
     // (position fetch elided in this reconstruction stub)
@@ -1103,7 +1101,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
     if (pad2 != 0 && (*(u32*)((u8*)pad2 + 0x4) & 0x01000000) != 0) return;
     if (func_80085840__Q22cf13CfGameManagerFv() == 0) return;
     if ((lbl_eu_80663E24 & 0x00002000) != 0) return;
-    void* pad = getCurrentPad__Q22cf13CfGameManagerFv();
+    void* pad = cf::CfGameManager::getCurrentPad();
     if ((*(u32*)((u8*)pad + 0x4) & 0x00000010) == 0) return;
 
     u8 itemBuf[0x80];

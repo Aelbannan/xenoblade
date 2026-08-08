@@ -2,6 +2,7 @@
 #include "kyoshin/cf/CfGimmickJump.hpp"
 
 #include "kyoshin/cf/object/CfObjectActor.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 namespace cf {
 
@@ -49,7 +50,6 @@ extern void func_80209F5C();
 extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern f32 func_80496288(void* scene);
-extern void* getPlayer__Q22cf13CfGameManagerFi(int index);
 extern void* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
 extern u16 func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
@@ -197,7 +197,7 @@ static inline void* jumpActorFromPlayer(void* player) {
 }
 
 static inline const CfGimmickJumpVec3* jumpPlayerPosition(int index) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+    void* player = cf::CfGameManager::getPlayer(index);
     if (player == 0) {
         return 0;
     }
@@ -349,7 +349,7 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
             func_80209F5C();
         }
 
-        void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+        void* player = cf::CfGameManager::getPlayer(index);
         void* actor = jumpActorFromPlayer(player);
         if (actor == 0) {
             continue;
@@ -421,7 +421,7 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
 }
 
 extern "C" void func_8020F984(CfGimmickJump* self) {
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* player = cf::CfGameManager::getPlayer(0);
     if (player == 0) {
         return;
     }
@@ -562,7 +562,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             if ((self->flags & stateBit) != 0) {
                 u32 moveBit = 0x10u << index;
                 if ((self->flags & moveBit) == 0) {
-                    void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+                    void* player = cf::CfGameManager::getPlayer(index);
                     void* actor = jumpActorFromPlayer(player);
                     if (actor != 0) {
                         JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
@@ -599,7 +599,7 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             u32 stateBit = 2u << index;
             u32 moveBit = 0x10u << index;
             if ((self->flags & stateBit) != 0 && (self->flags & moveBit) == 0) {
-                void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+                void* player = cf::CfGameManager::getPlayer(index);
                 void* actor = jumpActorFromPlayer(player);
                 if (actor != 0) {
                     JumpTargetData* target = reinterpret_cast<JumpTargetData*>(

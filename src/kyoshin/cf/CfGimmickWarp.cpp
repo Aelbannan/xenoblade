@@ -4,6 +4,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickWarp.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 struct WarpData;
 struct WarpObject;
@@ -332,7 +333,6 @@ void func_8020A6B0(WarpObject**, WarpVec3*, u16, f32, int, int);
 int func_8020A5DC(WarpData*);
 int func_8020A87C(WarpData*, WarpObject*);
 void func_8020A484(u16);
-u32 func_800822F4__Q22cf13CfGameManagerFv();
 u32 func_80082354__Q22cf13CfGameManagerFv();
 int func_8020971C(WarpData*);
 int func_80209754(u8, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
@@ -343,7 +343,6 @@ void func_8020A124(WarpData*, f32);
 void func_8020A1DC(WarpData*);
 void func_801BFED0(int, u16, int);
 WarpObject* func_800817BC__Q22cf13CfGameManagerFv(u8, int);
-WarpPlayerTail* getPlayer__Q22cf13CfGameManagerFv(int);
 void func_8006CC4C();
 u32 func_80174C98(WarpPlayer*, u32*, u32);
 void func_800ACF78(WarpObject*, WarpPlayerTail*, int);
@@ -395,21 +394,21 @@ static void preparePlayers(WarpData* self) {
     WarpObject* first = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object7c = first;
     if (first != 0) {
-        WarpPlayerTail* p0 = getPlayer__Q22cf13CfGameManagerFv(0);
+        WarpPlayerTail* p0 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(0);
         func_800ACF78(first, p0, 0);
     }
 
     WarpObject* second = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object100 = second;
     if (second != 0) {
-        WarpPlayerTail* p1 = getPlayer__Q22cf13CfGameManagerFv(1);
+        WarpPlayerTail* p1 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(1);
         func_800ACF78(second, p1, 0);
     }
 
     WarpObject* third = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
     self->object104 = third;
     if (third != 0) {
-        WarpPlayerTail* p2 = getPlayer__Q22cf13CfGameManagerFv(2);
+        WarpPlayerTail* p2 = (WarpPlayerTail*)cf::CfGameManager::getPlayer(2);
         func_800ACF78(third, p2, 0);
     }
 
@@ -567,7 +566,7 @@ extern "C" void func_8020D824(WarpData* self) {
 
     self->flags |= 0x10;
     if (self->maxValue != 0) {
-        u32 current = func_800822F4__Q22cf13CfGameManagerFv();
+        u32 current = cf::CfGameManager::func_800822F4();
         if (current < self->minValue || current > self->maxValue) {
             return;
         }
@@ -610,7 +609,7 @@ extern "C" void func_8020D998(WarpData* self) {
 
     func_80209F5C();
     func_80209FB8();
-    WarpPlayer* player = playerFromTail(getPlayer__Q22cf13CfGameManagerFv(0));
+    WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
     if (player != 0) {
         WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
         u32 value = *sub->v30();
@@ -708,7 +707,7 @@ extern "C" void func_8020E27C(WarpData* self) {
 extern "C" void func_8020E3F0(WarpData* self) {
     bool allReady = true;
     for (int i = 0; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail(getPlayer__Q22cf13CfGameManagerFv(i));
+        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
         if (player == 0) {
             continue;
         }
@@ -773,7 +772,7 @@ extern "C" void func_8020E704(WarpData* self) {
     }
     self->flags &= ~2u;
     func_8006CC4C();
-    WarpPlayer* first = playerFromTail(getPlayer__Q22cf13CfGameManagerFv(0));
+    WarpPlayer* first = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
     f32 distance;
     if (self->phase != 0) {
         distance = (f32)self->unkEA * lbl_eu_8066A210;
@@ -791,7 +790,7 @@ extern "C" void func_8020E704(WarpData* self) {
     }
 
     for (int i = 1; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail(getPlayer__Q22cf13CfGameManagerFv(i));
+        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
         if (player != 0) {
             WarpVec3 centre;
             centre.x = self->position.x;
@@ -854,7 +853,7 @@ extern "C" void func_8020EA2C(WarpData* self) {
     self->flags |= 8;
 
     for (int i = 0; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail(getPlayer__Q22cf13CfGameManagerFv(i));
+        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
         if (player != 0) {
             reinterpret_cast<WarpPlayerHeadIf*>(player)->v168(lbl_eu_806683E8);
         }

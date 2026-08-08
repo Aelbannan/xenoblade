@@ -207316,8 +207316,8 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022D08C",
-      "symbol": "func_8022D08C",
+      "function": "CExchangeWin::getField25()",
+      "symbol": "getField25__12CExchangeWinFv",
       "address": "0x8022EF84",
       "size": "0x8",
       "unit": "kyoshin/CExchangeWin",
@@ -207342,8 +207342,8 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022D094",
-      "symbol": "func_8022D094",
+      "function": "CExchangeWin::getField24()",
+      "symbol": "getField24__12CExchangeWinFv",
       "address": "0x8022EF8C",
       "size": "0x8",
       "unit": "kyoshin/CExchangeWin",
@@ -207368,8 +207368,8 @@
       "region": "us",
       "kind": "function",
       "milestone": "unassigned",
-      "function": "func_8022D09C",
-      "symbol": "func_8022D09C",
+      "function": "CExchangeWin::getField27()",
+      "symbol": "getField27__12CExchangeWinFv",
       "address": "0x8022EF94",
       "size": "0x8",
       "unit": "kyoshin/CExchangeWin",
@@ -444065,7 +444065,7 @@
       "size": "0x60",
       "unit": "nw4r/src/snd/snd_SoundStartable",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SoundStartable.cpp",
@@ -444078,15 +444078,7 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SoundStartable.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T04:57:24.231025+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/snd/snd_SoundStartable.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-80423384",

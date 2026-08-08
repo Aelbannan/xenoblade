@@ -18,6 +18,11 @@ public:
     ~CExchangeWin();
     bool OnFileEvent(CEventFile* pEventFile);
 
+    // field accessors — retail func_8022D094/08C/09C (recovered as members)
+    u8 getField24();
+    u8 getField25();
+    u8 getField27();
+
     void* mVtbl;                                  // 0x00
     UnkClass_8045F564 mMemRegion;                 // 0x04
     CFileHandle* mFileHandle;                      // 0x14

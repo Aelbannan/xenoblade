@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-namespace nw4r { namespace lyt { class AnimTransform; } }
+namespace nw4r { namespace lyt { class AnimTransform; class Layout; } }
 
 // 8-byte crystal box param: two s16 counters (selected id, quantity), a
 // spare s16, and two flag bytes. Inlined low-level value type for the
@@ -89,3 +89,116 @@ public:
     u8 field_1506;                      // +0x1506
     u8 field_1507;                      // +0x1507
 };
+
+// C-linkage imports
+// -----------------
+// Retail symbols with C linkage (unmangled names, per retail relocs).
+// Previously declared inline in each TU as pseudo-imports; kept here as real
+// imports. The names ARE the retail symbol names - keep verbatim.
+extern "C" void code80135FDC_setVec3(float*, float, float, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_801D216C(void*, u8);  // retail symbol is unmangled
+extern "C" u32 func_801D32DC(void*);
+extern "C" u8 func_8021A8EC(void*);
+extern "C" u32 CScrollBar_isVisible(void*);
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" void func_8021A984(void*);
+extern "C" void func_8021A918(void*);
+extern "C" void func_8021A960(void*);
+extern "C" void func_801F369C(void*);
+extern "C" char lbl_eu_8050888C[];
+extern "C" unsigned long lbl_eu_80508870[];
+extern "C" void func_80213570(void*, u8);
+extern "C" char* func_802138B8(CMCCrystalData*, int);
+extern "C" void func_8021A93C(void*);
+extern "C" void func_8021A8F4(void*);
+extern "C" void func_8021A840(void*, void*);
+extern "C" void func_8021A9A8(void*, unsigned short, unsigned char);
+extern "C" int func_801D3320(void*);
+extern "C" void func_801D31F8(void*, void*);
+extern "C" void func_801D20B0(void*, void*);
+extern "C" void func_801D350C(void*);
+extern "C" void func_801D3518(void*, void*);
+extern "C" void func_801D353C(void*, unsigned char);
+extern "C" void func_801F35B0(void*, void*);
+extern "C" void func_8022B7C8(void*, void*);
+extern "C" void func_801F3670(void*, void*);
+extern "C" void func_801F36BC(void*, unsigned long, unsigned long);
+extern "C" void func_801F3850(void*, unsigned long);
+extern "C" void func_801F367C(void*);
+extern "C" void* CItem_initItemInstances();
+extern "C" unsigned long func_8015780C(unsigned long);
+extern "C" char* func_80136190(char*, char*, unsigned long);
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, unsigned long);
+extern "C" void* func_80157C4C(unsigned char, short);
+extern "C" int func_80213710(void*, unsigned char);
+extern "C" unsigned char func_8021384C(void*, unsigned char);
+extern "C" unsigned short func_802137DC(void*, unsigned char);
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__10CScrollBarFv(void*, int);
+extern "C" void __dt__14CMCCrystalInfoFv(void*, int);
+extern "C" void __dt__9CSortMenuFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__6CCur16Fv(void*, int);
+extern "C" void __dt__6CCur11Fv(void*, int);
+extern "C" void __dt__6CCur09Fv(void*, int);
+extern "C" void __dt__6CCur07Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __ct__17UnkClass_8045F564Fv(void*);
+extern "C" void __ct__CCur07(void*, int);
+extern "C" void __ct__CCur09(void*, int);
+extern "C" void __ct__CCur18(void*, int);
+extern "C" void __ct__CCur11(void*, int);
+extern "C" void __ct__CCur16(void*, int);
+extern "C" void __ct__CSortMenu(void*);
+extern "C" void __ct__CMCCrystalInfo(void*);
+extern "C" void __ct__CScrollBar(void*, int);
+extern "C" void __ct__CSysWin(void*, int);
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void func_80139198(u32);
+extern "C" void func_801D3258(void*);
+extern "C" void func_8021A860(void*);
+extern "C" void func_801F35DC(void*);
+extern "C" void func_8022B7F4(void*);
+extern "C" int  func_801D3328(void*);
+extern "C" void func_801D3408(void*);
+extern "C" void func_801D3330(void*);
+extern "C" void func_801D3430(void*, void*);
+extern "C" void func_801D3454(void*, void*);
+extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void* CSysWin_getUnk34(void*);
+extern "C" void  CSysWin_isActive(void*);
+extern "C" void func_8022B8E4(void*);
+extern "C" void func_8022B90C(void*, int);
+extern "C" void func_8022B9B4(void*, void*, int);
+extern "C" void func_8022BFC8(void*, int);
+extern "C" void func_8022B8B8(void*);
+extern "C" char* func_8013639C(void*, char*, int);
+extern "C" void func_801D3160(void*);
+extern "C" void func_8021A780(void*);
+extern "C" void func_801D202C(void*);
+extern "C" void func_801F3540(void*);
+extern "C" void func_8022B748(void*);
+extern "C" void func_80213488(void*);
+extern "C" u32  func_801C6E90(void*);
+extern "C" u16 func_80139358(u32);
+extern "C" void func_80218018(CMCCrystalBox* self);
+extern "C" void func_8021488C(CMCCrystalBox* self);
+extern "C" int func_80216A20(CMCCrystalBox* self);
+extern "C" void func_80219094(CMCCrystalBox* self);
+extern "C" void func_80215B78(CMCCrystalBox* self);
+extern "C" void func_8021852C(CMCCrystalBox* self);
+extern "C" void func_8021900C(CMCCrystalBox* self);
+extern "C" void func_8021911C(CMCCrystalBox* self);
+extern "C" void func_802191A4(CMCCrystalBox* self);
+extern "C" void func_8021922C(CMCCrystalBox* self);
+extern "C" void func_80219994(CMCCrystalBox* self, int);
+extern "C" void func_80213788(void* self);
+extern "C" void func_802137B4(void* self);
+extern "C" void func_802180B4(CMCCrystalBox* self);
+extern "C" void func_80218460(CMCCrystalBox* self);
+extern "C" void func_80218B10(CMCCrystalBox* self);
+extern "C" void func_8021899C(CMCCrystalBox* self);

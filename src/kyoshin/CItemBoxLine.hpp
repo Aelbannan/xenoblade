@@ -72,3 +72,84 @@ public:
     u8 field3A3;                // +0x3A3: wrote by func_801EE684
     CIBLTab unk3A4;             // +0x3A4: target of func_801EC3B0 call
 };
+
+// ---------------------------------------------------------------------------
+// C-linkage imports - moved verbatim from CItemBoxLine.cpp. The names ARE the
+// retail linker symbols; do NOT rename or "fix" the mangled forms.
+// ---------------------------------------------------------------------------
+
+// CIBLTabCur vtable (.data)
+extern "C" void* lbl_eu_80534D80[];
+
+// CBaseCur ctor/dtor + operator delete (defined in CCur unit).
+extern "C" void __ct__8CBaseCurFv(CBaseCur* _this);
+extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags);
+extern "C" void __dl__FPv(void*);
+
+// --- external retail helpers (C-linkage or literal mangled symbols) ---
+extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
+extern "C" u32 func_801EB020(void*);          // num-select busy flag (+0x2C)
+extern "C" u32 func_801EB018(void*);          // num-select busy flag (+0x2D)
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" void advanceItemBox2State__FP13CItemBoxInfo2(void*);
+extern "C" u32 CScrollBar_isVisible(void*);
+extern "C" u32 CSysWin_isReady(void*);
+extern "C" u32 CSysWin_isActive(void*);
+extern "C" void func_801D216C(void*, int);
+extern "C" void func_801F369C(void*);
+extern "C" void func_80138078__FUl(unsigned int);
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" void func_801E174C(void*, void*, unsigned int);
+extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+extern "C" u32 func_801393CC(u32);
+extern "C" u32 func_801392E4(u32);
+extern "C" u32 func_80139358(u32);
+extern "C" void func_801586D4(u32, u32);
+extern "C" s32 func_801571FC(void);
+extern "C" void func_80157184(s32);
+extern "C" void func_801EB030(void*, void*);
+extern "C" void func_801EB04C(void*, unsigned int);
+extern "C" void func_801EB064(void*, unsigned int);
+extern "C" void func_801EB0D4(void*);
+extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
+extern "C" void func_800A9D90(void);
+extern "C" void func_801E12E0(void*);
+extern "C" void func_801EAE8C(void*);
+extern "C" void func_801F34F4(void*);
+extern "C" void func_801F3850(void*, unsigned short);
+extern "C" u32 func_801361E8(void*, char*, u32);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void* lbl_eu_80664104;
+extern "C" void* lbl_eu_806640A8;
+extern "C" void* lbl_eu_806640EC;
+extern "C" void* lbl_eu_806640D8;
+extern "C" void drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(void*, void*);
+extern "C" void func_801D20B0(void*, void*);
+extern "C" void func_801F35B0(void*, void*);
+extern "C" void func_801EAF7C(void*, void*);
+extern "C" void func_8022B7C8(void*, void*);
+extern "C" int func_801D2ED8(void*);
+
+// Forward declarations for sibling functions resolved at link via the symbol map
+// (retail treats these as external relocs, not same-TU symbols)
+extern "C" void func_801EFFC4(void*);
+extern "C" void func_801F0030(void*);
+extern "C" void func_801F0488(void*);
+extern "C" void func_801F071C(void*);
+
+extern "C" void* func_801394D4(u32);
+extern "C" char lbl_eu_805071B0[]; // rodata string pool
+
+// These tab accessors are external retail symbols (owned by other TUs); the
+// calls from this unit must be C-linkage relocs, so they are declared, not
+// defined, here. The bodies live in their owning unit and the symbol map
+// resolves the addresses.
+extern "C" void* func_801EC3D0(void*, unsigned int);
+extern "C" u32 func_801EC260(void*, unsigned int);
+extern "C" u16 func_801EC3B0(void*, unsigned int);
+
+extern "C" void func_8022B8E4(void*);
+extern "C" int func_801EB028(void*);
+extern "C" void func_801EB178(void*);

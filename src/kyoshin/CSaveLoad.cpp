@@ -19,7 +19,6 @@ void func_801F369C(void*);
 void func_80138078(u32);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // func_80137510 declared in code_80135FDC.hpp
-extern "C" void func_801D216C(void*, u8);
 extern const float lbl_eu_80668B68;
 extern const float lbl_eu_80668B6C;
 extern const float lbl_eu_80668B70;
@@ -27,73 +26,17 @@ extern const float lbl_eu_80668B74;
 
 // Forward declarations for functions called before their definitions
 // extern "C" to match retail unmangled reloc names
-extern "C" int func_8028E964(CSLCur* cur);
-extern "C" int func_8028E998(CSLCur* cur, u8 index);
-extern "C" void func_80290844(CSaveLoad* p);
-extern "C" void func_802908A4(CSaveLoad* p);
-extern "C" void func_80290994(CSaveLoad* p);
-extern "C" void func_802907E4(CSaveLoad* p);
-extern "C" void func_802910D4(CSaveLoad* p);
-extern "C" void func_8028EED8(CSLCur* cur);
-extern "C" void func_8028EF24(CSLCur* self);
-extern "C" void* __dt__Q22cf7CfAwardFv(cf::CfAward*, int);
-extern "C" u8 lbl_eu_80538858[];
-extern "C" void func_8009D514(void*);
 extern cf::CfAward lbl_eu_806649F8;
 extern u8 lbl_eu_80576CF8[];
 extern void __register_global_object(void*, void*, void*);
 extern void func_8009D414(void*);
 
 // CDeviceFile / MemManager / CSysWin / game system function declarations
-extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-extern "C" u8 lbl_eu_8050F7CC[];
-extern "C" CSaveLoad* lbl_eu_806649F4;
-extern "C" u32 lbl_eu_80662AD0;
-extern "C" s32 lbl_eu_80662AC8;
-extern "C" u32 lbl_eu_80662ACC;
 extern u32 lbl_eu_80663E28;
-extern "C" int CSysWin_isActive(void*);
-extern "C" u32 CSysWin_isReady(void*);
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" void func_80145018();
-extern "C" void func_80142C80();
-extern "C" void func_8014A2D0();
-extern "C" void invalidateQstFlag();
-extern "C" void* getInstance__9CTaskGameFv();
-extern "C" void func_800426A8();
-extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
-extern "C" void func_801F34F4(void*);
-extern "C" void func_801F3670(void*, void*);
-extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3850(void*, u32);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
-extern "C" u32 func_8009CF8C(u32);
-extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" void func_8022B8E4(void*);
 
 // External function declarations needed by OnFileEvent
-extern "C" void __ct__CCur18(void* self, void* param);
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
-extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
-extern "C" u32 func_801355D8();
-extern "C" u32 func_801355BC();
-extern "C" void func_80124270(void* obj, int value);
-extern "C" u16 func_80136254(u16, const char*, u16);
-extern "C" u8 func_80141BA0(u16, u8);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void func_8045F810__17UnkClass_8045F564Fv(void* self);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_801355F4();
 extern u8 lbl_eu_80664090[];
 extern u8 lbl_eu_806640A8[];
-extern "C" void func_8022B9B4(void*, u32, int);
-extern "C" void func_8022BF6C(void*, u32, u32);
-extern "C" void func_8022BFC8(void*, int);
-extern "C" void func_8022B8B8(void*);
-extern "C" int func_80291C60(int v);
 
 // Struct with three heap pointers at offsets 0, 4, 8
 struct UnkStruct_3Ptr {
@@ -122,9 +65,6 @@ extern "C" void func_8028E8A4(UnkStruct_3Ptr* p) {
     mtl::MemManager::deallocate(p->p8);
     lbl_eu_806649F0 = 0;
 }
-
-extern "C" void func_8023FA64(void*, int, void (*)(int, int, u8));
-extern "C" void func_8028E9E0(int, int, u8);
 
 #pragma optimize_for_size on
 extern "C" void func_8028E8EC(CSLCur* p) {
@@ -184,8 +124,6 @@ struct UnkPtrHolder {
 
 // func_8028EC74 is a C-linkage function in retail (unmangled symbol); declare
 // it extern "C" so the call reloc inside func_8028EC28 resolves unmangled.
-extern "C" void func_8028EC74(UnkPtrHolder* self);
-extern "C" void func_8028EC28(UnkPtrHolder* self);
 
 // Declarations for functions called by func_8028EA74
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -325,11 +263,6 @@ void func_8028ED0C(CSLCur* data, int r4) {
     data->mFieldE = 1;
 }
 
-extern "C" void __dl__FPv(void*);
-extern "C" void __dt__7CSysWinFv(void*, int);
-extern "C" void __dt__10CScrollBarFv(void*, int);
-extern "C" void __dt__6CCur18Fv(void*, int);
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 extern "C" void* __dt__8028E7F8(void* self, int dealloc_flag) {
     if (self != nullptr && dealloc_flag > 0) {
@@ -353,7 +286,6 @@ extern "C" void* __dt__8028ED30(void* self, int dealloc_flag) {
 }
 
 struct UnkTwoPtr;
-extern "C" void func_8028EF74(UnkTwoPtr*);
 
 // Abstract class to match the font object's vtable layout
 // The vtable has 2 MWCC implicit entries (RTTI/dtor) before user virtuals
@@ -598,9 +530,6 @@ void func_8028F2CC(){}
 
 void func_8028F3D4(){}
 
-extern "C" void func_eu_804521BC(int);
-extern "C" void func_801F35DC(void*);
-extern "C" void func_8022B7F4(void*);
 
 // Cleanup/reset function for CSaveLoad
 void func_8028F4AC(CSaveLoad* self) {
@@ -1007,14 +936,6 @@ extern "C" void func_802901D8(CSaveLoad* self) {
         }
     }
 }
-
-extern "C" void func_80291204(int, int, int, u8);
-extern "C" void func_8023F860(int, void*);
-extern "C" void func_8023FB28(int, void*);
-extern "C" void func_8023F3C0(int, void*, u8);
-extern "C" void func_8009D018(u32, u32);
-extern "C" void func_80083470__Q22cf13CfGameManagerFv(int, int, int);
-extern "C" int func_8028E998(CSLCur*, u8);
 
 // Handle save/load operation execution.
 // Checks window state, cursor status, and dispatches to save/load logic.
@@ -1517,8 +1438,6 @@ extern "C" void func_802910D4(CSaveLoad* self) {
     }
 }
 
-extern "C" void code80135FDC_thunk_BFE8C(u8*);
-
 extern "C" void func_80291204(int unused, int unused2, int flag, u8 value) {
     if (lbl_eu_806649F4 == 0) return;
     if (flag == 0) {
@@ -1719,7 +1638,6 @@ cf::CfAward::~CfAward() {
 
 // Count valid entries (0-299) and award achievements based on thresholds.
 // Returns immediately if the initial parameter check fails.
-extern "C" void func_8027EEF4(u32);
 
 // Count valid entries (0-299) and award achievements based on thresholds.
 // Returns immediately if the initial parameter check fails.
@@ -1752,9 +1670,6 @@ void func_802918AC(int val) {
         func_8027EEF4(10);
     }
 }
-
-extern "C" u32 func_8027EE88(u32, u32);
-extern "C" void func_8027EEF4(u32);
 
 extern "C" void func_8029194C() {
     u32 result = func_8027EE88(0x8f, 1);
@@ -2192,8 +2107,6 @@ void func_80291A04() {
 
 // Despite Fv mangling, receives (self, val) with val in r4 -
 // the value is checked against the [0x28, 0x3e) window.
-extern "C" int func_800824FC__Q22cf13CfGameManagerFv(int, int);
-
 // Check all pairs of values (1-7) and award achievements based on results.
 // allFlag is set if all pairs have result >= 2000.
 // allFlag2 is set if all pairs have result >= 5000.

@@ -11,50 +11,10 @@
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/effect/code_804CC2B8.hpp"
 
 // Float constant 0.0f, shared across this TU
 extern f32 lbl_eu_8066B0DC;
-// s16->f32 conversion base (0x4330000000000000 as f64) and scale constants.
-extern "C" f64 lbl_eu_8066B0F0;
-extern "C" f32 lbl_eu_8066B100;
-extern "C" f32 lbl_eu_8066B0D8;
-extern "C" f32 lbl_eu_8066B0E4;
-extern "C" f64 lbl_eu_8066B0E8;
-extern "C" f32 lbl_eu_8066B0E0;
-extern "C" f32 lbl_eu_8066B140;
-extern "C" f32 lbl_eu_8066B158;
-extern "C" f32 lbl_eu_8066B15C;
-extern "C" f32 lbl_eu_8066B160;
-extern "C" f32 lbl_eu_8066B164;
-extern "C" f32 lbl_eu_8066B168;
-extern "C" f32 lbl_eu_8066B110;
-extern "C" f32 lbl_eu_8066B140;
-extern "C" f32 lbl_eu_8066B144;
-extern "C" f32 lbl_eu_8066B148;
-extern "C" f32 lbl_eu_8066B14C;
-extern "C" f32 lbl_eu_8066B150;
-extern "C" u8 lbl_eu_80524500[];
-extern "C" u8 lbl_eu_80524520[];
-
-// Cross-TU render helpers for the GX setup functions (targets 2/3).
-extern "C" void func_804D8AA4(int type, int flag);
-extern "C" void* func_80496264(void* src, int index);
-
-// mtl::MemManager alloc helpers for target 2.
-extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(const void* mem, u32 hint);
-extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 count_bytes, const void* mem);
-struct MemManGlob {
-    u32 field_0x00;
-    const void* field_0x04;
-};
-extern "C" MemManGlob lbl_eu_8065FC18;
-
-// Placer color globals and a shared material-color constant (retail C names).
-extern "C" s32 lbl_eu_806659A8;
-extern "C" s32 lbl_eu_806659AC;
-extern "C" s32 lbl_eu_806659B0;
-extern "C" s32 lbl_eu_806659B4;
-extern "C" u32 lbl_eu_8066B124;
 
 // Effect struct — partial layout; only fields accessed by matching functions
 // are declared. The struct is large (~0x338 bytes).
@@ -76,11 +36,6 @@ struct EffectStruct {
     void* field_0x334;
     ~EffectStruct();
 };
-
-// Cross-TU destructor/free helpers used by EffectStruct::~EffectStruct().
-extern "C" void func_80495E84(void* p);
-extern "C" void __dt__804D80F0(void* p, int flag);
-extern "C" void __dl__FPv(void* p);
 
 EffectStruct::~EffectStruct() {
     if (field_0x32c) {
@@ -107,20 +62,6 @@ EffectStruct::~EffectStruct() {
     field_0x04 = -1;
     field_0x06 = 0;
 }
-
-// Node used by the firework/placer list helpers (targets 8-10). Overlaps the
-// EffectStruct ranges, but several fields are read sign-extended (lha) here.
-struct EffectNode {
-    s16 field_0x00;
-    s16 field_0x02;
-    s16 field_0x04;
-    s16 field_0x06;
-    s16 field_0x08;
-    s16 field_0x0a;
-    s16 field_0x0c;
-    u8 pad_0x0e[0x18 - 0x0e];
-    u32 field_0x18;
-};
 
 // Target 6: object pointed to by a list owner (field_0x14 at 0x14).
 struct EffectInfo {
@@ -161,24 +102,6 @@ struct Node2Control {
     u8 pad_0x00[0x04];
     Node2* field_0x04;
 };
-
-// Cross-TU firework/placer helpers (retail C-linkage symbols).
-extern "C" EffectNode* func_804E0114(s32 index);
-extern "C" void func_804E0098(s16 index);
-extern "C" s32 func_804DFFA8(s32 index);
-extern "C" u32 func_804E0104(void);
-// Cross-TU init helpers for on-stack vectors (used by targets 1/3).
-extern "C" void func_8006BEC0(Vec* p);
-extern "C" void func_8004B0B0(Vec* p);
-extern "C" void func_804EE60C(void* obj);
-extern "C" void func_804EE658(void* obj, void* node);
-extern "C" void func_804EE8FC(void* obj, void* node);
-extern "C" void func_804EE558(void* obj, u32 a, u32 b, u32 c, u32 d);
-struct U16Pair {
-    u16 a;
-    u16 b;
-};
-extern "C" U16Pair* func_804DF2A8(const void* p);
 
 // 3D segment-vs-region test used by func_804CDE50 / func_804CDD78.
 s32 func_804CDF20(void* self, Vec* a, Vec* b, Vec* c);
@@ -467,9 +390,6 @@ void func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3) {
     self->field_0x1c = z;
 }
 
-// Radius bound for the equal-points proximity test in target 8.
-extern "C" f32 lbl_eu_8066B104;
-
 s32 func_804CDF20(void* self, Vec* a, Vec* b, Vec* c) {
     if (a->x == b->x && a->y == b->y && a->z == b->z) {
         f32 dx = a->x - c->x;
@@ -543,10 +463,6 @@ void func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3) {
     self->field_0x1c = z;
 }
 
-// Cross-TU init helpers for on-stack vectors.
-extern "C" void func_8006BEC0(Vec* p);
-extern "C" void func_8004B0B0(Vec* p);
-
 // Forward decls used by func_804CE264 and func_804CCF84.
 u32 func_804CE378(const SceneSubObj* self);
 u32 func_804CE380(const SceneSubObj* self);
@@ -580,10 +496,6 @@ void func_804CE264(EffectScene* self, Vec* p1, Vec* p3) {
     }
 }
 
-// Child helpers referenced by func_804CE264 / func_804CCF84. Stubs for now.
-extern "C" void func_804DD4F8(Mtx* out);
-extern "C" void func_804DB980(Mtx* out, const Vec* p, s32 field);
-extern "C" void func_804DCA88(Mtx* out, const Vec* angles);
 // Target 2: identity-fill then per-type axis/rotation setup from the sub-object.
 void func_804CE4C0(EffectScene* self, Vec* a, u32 type, Vec* p3) {
     Mtx& out = *reinterpret_cast<Mtx*>(a);
@@ -634,10 +546,6 @@ u32 func_804CE380(const SceneSubObj* self) { return *(u32*)((u8*)self + 0x5c); }
 
 void func_804CE388(EffectScene* self, Vec* p){}
 
-// Bounds constants for the target-10 direction-normalization guard.
-extern "C" f32 lbl_eu_8066B108;
-extern "C" f32 lbl_eu_8066B10C;
-
 void func_804CE160(EffectScene* self, const ml::CVec3& a, const ml::CVec3& b) {
     ml::CVec3 delta = a - b;
     ml::CVec3 out = delta;
@@ -668,13 +576,6 @@ void func_804CE418(EffectScene* self, Vec* out) {
     out->y = res.y + self->field_0xb8.y;
     out->z = res.z + self->field_0xb8.z;
 }
-
-// Sub-object helpers used by target 9.
-extern "C" void func_804EE60C(void* obj);
-extern "C" void func_804EE658(void* obj, void* node);
-extern "C" void func_804EE8FC(void* obj, void* node);
-extern "C" EffectNode* func_804E0114(s32 index);
-extern "C" void func_804EE558(void* obj, u32 a, u32 b, u32 c, u32 d);
 
 // Target 7: compute the inherited/dir vector `out` for a node from self position
 // and scale by per-sub-node u16 factors based on its type.
@@ -808,10 +709,6 @@ void func_804D3098(){}
 
 void func_804D361C(){}
 
-// Fill the projection matrix from the scene's screen-space source, then project
-// `vec` (perspective divide by -z) and map to framebuffer pixels. An optional
-// second point `vec2` is projected the same way without the half-screen offset.
-extern "C" void func_80496120(const void* src, Mtx out, s32 flag);
 // u16 -> float through the shared 0x4330000000000000 magic constant.
 inline f32 u16ToF_b0e8(u16 v) {
     union {

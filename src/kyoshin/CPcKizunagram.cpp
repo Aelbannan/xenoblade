@@ -7,45 +7,21 @@
 #include "monolib/util/MemManager.hpp"
 
 // Forward declarations of intra-TU callees (free unmangled functions).
-extern "C" void func_8025DCFC(CPcKizunagram* self);
-extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg);
-extern "C" void func_8025E4A4(CPcKizunagram* self);
-extern "C" void func_8025DC08(CPcKizunagram* self);
-extern "C" void func_8025DC8C(CPcKizunagram* self);
-extern "C" void func_8025DCB0(CPcKizunagram* self);
 void func_8025E56C(CPcKizunagram* self);
 void func_8025E5A8(CPcKizunagram* self);
 void func_8025E5E4(CPcKizunagram* self, u32 value);
 void func_8025EE94(CPcKizunagramBig* self);
 void func_8025E0D8(CPcKizunagram* self);
-extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val);
-extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id);
-extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id);
-extern "C" void* getFP__FPCc(const char* path);
-extern "C" int func_8003B1EC(void);
-
-// Sound / effect helper (C-linkage retail symbol func_80138078__FUl).
-extern "C" void func_80138078__FUl(u32 arg);
 
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // String base for the affinity-chart layout paths (targets add byte offsets).
 extern char lbl_eu_8050D868[];
 
-// BDAT table pointer (loaded via sda21 by func_8025EE94).
-extern "C" u32 lbl_eu_8066415C;
-
-// Format-string constants blended into a column-name buffer (func_8025EE94).
-extern "C" u32 lbl_eu_806688A8;
-extern "C" u32 lbl_eu_806688AC;
-
 // Column-name format base (func_8025EE94 uses +0x06).
 extern char lbl_eu_8050DB18[];
 
-// BDAT column lookup (unmangled C-linkage retail symbol).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 void func_8025F114();
 
 // Named float constants in .sdata2 referenced via @sda21 by func_8025E56C/E5A8.
@@ -59,42 +35,6 @@ extern const float lbl_eu_80668878;
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-
-// nw4r layout/animation loaders used by the cursor init (func_8025D4E4).
-extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** dst, nw4r::lyt::ArcResourceAccessor* acc, const char* name);
-extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* lay, nw4r::lyt::AnimTransform** dst, nw4r::lyt::ArcResourceAccessor* acc, char* name);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-    nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
-extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void func_8013676C(nw4r::lyt::Layout*);
-
-// BDAT / random / pane-text helpers with unmangled retail names.
-extern "C" u32 func_80136254(const void*, const void*, const void*);
-extern "C" char* func_80136190(const void*, const void*, int);
-extern "C" char* func_8013639C(const void*, const void*, int);
-extern "C" u32 func_801361E8(const void*, char*, int);
-extern "C" int func_801C4648(void);
-extern "C" int func_8013606C(const void*, const void*, int);
-extern "C" int func_8009CF8C(int);
-extern "C" void func_80137F88(nw4r::lyt::Pane*, void*);
-extern "C" void func_80137C1C(void*, u32);
-extern "C" void func_8013AB0C(u8*, u8*, int);
-extern "C" int sprintf(char*, const char*, ...);
-extern "C" u32 lbl_eu_80668898;
-extern "C" u32 lbl_eu_8066889C;
-extern "C" u32 lbl_eu_806688A0;
-extern "C" u32 lbl_eu_806688A4;
-extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
-extern "C" int func_80137924(CPcKizunaVec3*, void*, void*, void*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-
-// Cursor destroy helper (external retail symbol, not in this TU).
-extern "C" void func_8025D688(CPcKizunaCur* cur);
 
 u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
@@ -438,21 +378,6 @@ extern "C" void func_8025D4E4(CPcKizunaCur* self) {
     func_80124270(p2, 0);
     self->mpLayout->GetRootPane()->SetScale(nw4r::math::VEC2(lbl_eu_80668878, lbl_eu_80668878));
 }
-
-// Fixed 8-entry cursor-row ordering (signed bytes) kept in .sdata2.
-extern "C" void* getFP__FPCc(const char* path);
-extern "C" int func_8003B1EC(void);
-extern "C" void func_8003AA34(void);
-struct S8Bytes {
-    union {
-        u32 w[2];   // copied as two words (lwz/stw pair into the local)
-        u8  b[8];   // byte access for the order lookups
-    };
-};
-extern "C" S8Bytes lbl_eu_80668888;
-
-// Forward decl (defined later in this TU).
-extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id);
 
 // Move the affinity-chart cursor by one row in the given direction (arg!=0
 // steps backward, wrapping 0->7), skipping invalid target rows.

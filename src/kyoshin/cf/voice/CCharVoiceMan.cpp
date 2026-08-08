@@ -5,12 +5,6 @@
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
 
-// CCharVoiceMan ctor symbol (placement construction of a heaped 0x234 buffer);
-// kept external so the call site emits a real call rather than being inlined.
-extern "C" cf::CCharVoiceMan* __ct__CCharVoiceMan(cf::CCharVoiceMan* self);
-// Retail @sda21 reset float for unk218 (declared early so the ctor can use it).
-extern "C" float lbl_eu_80668C68;
-
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
         float resetFloat = lbl_eu_80668C68;
@@ -41,57 +35,10 @@ namespace cf{
     }
 }
 
-// ── retail @sda21 globals ────────────────────────────────────────────────────
-extern "C" u32 lbl_eu_80663E24;    // presentation/event bitfield (bit 0x00400000)
-extern "C" void* lbl_eu_80663E14;  // scene / allocation-source handle
-extern "C" u32 lbl_eu_80664A5C;    // global character-voice counter
-extern "C" float lbl_eu_80668C68;  // single-precision reset value for unk218
 cf::CCharVoiceMan* lbl_eu_80664A58; // CCharVoiceMan singleton
 
-// Scene-model helper returning an allocation-region handle (mtl MemManager).
-extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
-
-// Sibling voice-module free functions (cvsys TUs) — un-mangled retail names.
-extern "C" int func_802B03A4(void* self);
-extern "C" cf::CSoundNode* func_802A9604();
-extern "C" cf::CSoundNode* __ct__802A4E48();
-extern "C" cf::CSoundNode* __ct__802A96C0();
-// Additional retail node constructors / helpers used by the enqueue functions.
-extern "C" cf::CSoundNode* func_802A8B6C();
-extern "C" cf::CSoundNode* func_802B5970();
-extern "C" cf::CSoundNode* __ct__CVS_THREAD_ORDER(int order);
-extern "C" cf::CSoundNode* __ct__802A8DE8();
-extern "C" cf::CSoundNode* func_802A6958();
-extern "C" cf::CSoundNode* __ct__802A5830();
-extern "C" cf::CSoundNode* __ct__802A8C04();
-extern "C" cf::CSoundNode* func_802B8D4C();
-// Node factory helpers for the frequency / level-up voice enqueue functions.
-extern "C" cf::CSoundNode* func_802A3EF0();
-extern "C" cf::CSoundNode* func_802AF3DC(void* self);
-extern "C" cf::CSoundNode* func_802A5A14(void* a, void* c);
-extern "C" cf::CSoundNode* __ct__802A7254(void* self, void* c);
-extern "C" cf::CSoundNode* __ct__802A5ED4();
-extern "C" cf::CSoundNode* func_802AF4FC(void* self, void* c);
-extern "C" cf::CSoundNode* func_802AF43C(void* a, void* b, void* c);
-extern "C" cf::CSoundNode* func_802A5B04(void* self, int flag);
-extern "C" cf::CSoundNode* func_802AF49C(void* self);
-// Per-object state flag lookup (tests a slot at self+0x8 against an id).
-extern "C" int func_80148778(void* self, int id);
-// MWCC member-function-pointer runtime helpers (compare / probe).
-extern "C" int __ptmf_cmpr(void* a, void* b);
-extern "C" long __ptmf_test(void* ptmf);
-// Reference member-function-pointer the voice nodes are matched against.
-extern "C" void* lbl_eu_805398C0;
-// Resolve a voice-action object from a voice source id (C-linkage).
-extern "C" void* func_8016FE34(void* src);
 // C++-mangled func_800B708C__Fi (actor-id -> action source).
 extern void* func_800B708C(BOOL id);
-// Play a specific character-voice sound (cvsys sibling; C-linkage retail name).
-extern "C" void func_802AF9D0(void* r3, int voiceId, int r5);
-extern "C" cf::CSoundNode* func_802AF56C(void* c);
-extern "C" int func_802A7870(void* arr, int capacity, int unused);
-extern "C" cf::CSoundNode* __ct__802A92D8(void* b, void* a);
-extern "C" void* func_802A3E88(void* node);
 
 bool func_802A1EA0() { return true; }
 
@@ -178,35 +125,6 @@ void func_802A1500() {
     lbl_eu_80664A58->unk22C = 0;
     lbl_eu_80664A58->unk230 = 0;
 }
-// Create a battle-voice source node from an old battle-count (cvsys sibling).
-extern "C" cf::CSoundNode* func_802A6820(int oldCount);
-// Pure voice nodes created with an int argument (1=levelled, 0=normal).
-extern "C" cf::CSoundNode* __ct__802AF5CC(int a);
-extern "C" cf::CSoundNode* __ct__802AB5F0();
-extern "C" cf::CSoundNode* __ct__802A4870(int a);
-// Battle-participant gauge-list probe (fills an array, returns count).
-extern "C" int func_802A7870(void* arr, int capacity, int unused);
-// Convert a CfObjectMove to a battle-participant object.
-extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* self);
-// Create a battle-voice node from a voice-action source.
-extern "C" cf::CSoundNode* func_802B0344(void* src);
-// Current battle/field phase id.
-extern "C" int func_800822F4__Q22cf13CfGameManagerFv(void);
-// Create a battle-voice trigger node.
-extern "C" void* func_802A7A54(int a);
-// Run one node's level-thread handler (list sweep).
-extern "C" void func_802A3ACC(void* node);
-// Check a just-resolved voice action against a source handle.
-extern "C" int func_80174C98(void* r3, u32* r4, int r5);
-// Byte/word/shift @sda21 globals used by func_802A1610.
-extern "C" u8  lbl_eu_80663DA0;
-extern "C" u16 lbl_eu_80663E42;
-extern "C" float lbl_eu_80668C6C;
-extern "C" float lbl_eu_80668C70;
-extern "C" float lbl_eu_80668C74;
-extern "C" float lbl_eu_80668C78;
-extern "C" float lbl_eu_80668C7C;
-
 // Party-gauge gate check (defined below); forward-declared for func_802A1610.
 int func_802A38C8(cf::CCharVoiceMan* self);
 
@@ -633,7 +551,6 @@ void func_802A232C(cf::CVoiceActorState* self) {
         }
     }
 }
-extern "C" cf::CSoundNode* func_802A6DF4();
 // Construct a FAINT voice node and enqueue it; return its event id (or -1).
 int func_802A2424(void) {
     if (lbl_eu_80663E24 & 0x00400000)
@@ -671,8 +588,6 @@ void func_802A25EC(cf::CVoiceActorBase* actor) {
         }
     }
 }
-extern "C" float lbl_eu_80668C80;  // 0x3F00-flag probability divisor
-extern "C" float lbl_eu_80668C70;  // battle-state gauge threshold
 // If both actors are flagged and luck holds, enqueue a battle-voice event.
 void func_802A2648(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
     if (lbl_eu_80663E24 & 0x00400000)
@@ -785,19 +700,6 @@ void func_802A28C4(int a, int b, int c) {
         }
     }
 }
-// ── retail node constructors (cvsys TUs) — un-mangled retail names ──────────
-extern "C" cf::CSoundNode* __ct__CVS_THREAD_PARTY_GAGE();
-extern "C" cf::CSoundNode* __ct__802A6AA8();
-extern "C" cf::CSoundNode* __ct__802A5B88();
-extern "C" cf::CSoundNode* __ct__802A86CC();
-extern "C" cf::CSoundNode* __ct__802A6E84();
-extern "C" cf::CSoundNode* func_802B9064();
-extern "C" cf::CSoundNode* func_802A4798();
-extern "C" cf::CSoundNode* func_802AE38C();
-extern "C" cf::CSoundNode* func_802A7674();
-extern "C" cf::CSoundNode* func_802A8AC8();
-
-
 // Append a freshly constructed sound node to the voice-event list.
 void func_802A293C() {
     if (lbl_eu_80663E24 & 0x00400000)
@@ -993,9 +895,6 @@ void func_802A2E08() {
         lbl_eu_80664A58->unk22A = 1;
     }
 }
-// Convert an actor id to a voice action; C-linkage retail name func_8016FE34.
-extern "C" void* func_8016FE34(void* r3);
-extern "C" cf::CSoundNode* func_802A7744();
 // C++-mangled func_800B708C__Fi (declared not extern "C" so MWCC mangles it).
 extern void* func_800B708C(BOOL id);
 

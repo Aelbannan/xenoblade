@@ -9,102 +9,28 @@
 
 using namespace cf;
 
-// --- Callees defined in other TUs as plain-C functions (no C++ header). ----
-extern "C" void func_800ACC50(void* self, float v);
-extern "C" void func_804E36DC(CSchedule* self, f32 dt);
-extern "C" void* func_800451D8(u32 cls, int param);
-extern "C" void __dl__FPv(void* ptr);
-extern "C" void __destroy_arr(void* block, ConstructorDestructor* dtor, size_t size, size_t n);
+// Most C-linkage pseudo-imports for this TU now live in the "C-linkage
+// imports" section of kyoshin/cf/CVision.hpp (real imports). The few kept
+// inline below stay because sibling TUs that include this header declare the
+// same retail symbols with different signatures or stub definitions -- moving
+// them here would break those TUs' builds (see the task report).
 
 // Fragment-anchored destructors for the UnkClass_801A36D0 / UnkClass_801A3728
 // sub-objects are defined below and passed by address to __destroy_arr.
 
-// Class-spec table (8-byte stride, only low word used) for func_801A808C.
-struct CVisionClassTableEntry { u32 field_00; u32 field_04; };
-extern "C" CVisionClassTableEntry lbl_eu_80503F60[4];
+// Kept inline (not moved to CVision.hpp): sibling TUs that include this
+// header declare the same retail symbols with conflicting signatures/stubs.
+extern "C" void func_800EA484(cf::CBattleManager* bm, f32 volume, int id); // CBattleManager.cpp re-declares (float,u32) + defines stub
+extern "C" int func_80148778(void* obj, int id);   // CBattleManager.cpp declares with C++ linkage
+extern "C" void func_801AD504(int id);             // CMenuVision.cpp defines an empty stub
+extern "C" void* func_8016FE34(int id);            // 4 TUs declare a void* -param version
+extern "C" void func_802A1DF0(u32 a);              // CCharVoiceMan.cpp defines an empty stub
+extern "C" int func_80260264(void* self, u32 id, void* result); // CBattleManager.cpp declares (void*,int,void*)
 
-// sdata2 float constants used by func_801A929C / vision state checks.
-extern "C" f32 lbl_eu_80667CD4;
-extern "C" f32 lbl_eu_80667CF0;
-extern "C" f32 lbl_eu_80667CD0;
-extern "C" f32 lbl_eu_80667CE4;
-extern "C" f32 lbl_eu_80667CEC;
-extern "C" f32 lbl_eu_80667CF8;
-extern "C" f32 lbl_eu_80667CFC;
-extern "C" f32 lbl_eu_80667D04;
-extern "C" f32 lbl_eu_80667CF4;
-extern "C" f32 lbl_eu_80667D00;
-extern "C" f32 lbl_eu_80667CE0;
-extern "C" f32 lbl_eu_80667D08;
-extern "C" f32 lbl_eu_80667D0C;
-extern "C" f32 lbl_eu_80667D10;
-extern "C" f64 lbl_eu_80667D28;
-extern "C" f32 lbl_eu_80667D30;
-extern "C" f32 lbl_eu_80667D34;
-extern "C" f32 lbl_eu_80667D38;
-extern "C" f32 lbl_eu_80667D3C;
-extern "C" f32 lbl_eu_80667D40;
-extern "C" f32 lbl_eu_80667D44;
-extern "C" f32 lbl_eu_80667D48;
-extern "C" f32 lbl_eu_80667CE8;
-
-extern "C" void func_800EA484(cf::CBattleManager* bm, f32 volume, int id);
-extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 a, u32 b, u32 c);
-extern "C" void func_8006E5D8();
-extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" void* func_8004392C(u32 a, u32 b, void* c, u32 d, u32 e, f32 f = 0.0f);
-extern "C" int func_80148778(void* obj, int id);
-extern "C" void func_801AD504(int id);
-extern "C" bool func_801537E0(void* obj);
-extern "C" void func_801537F0(void* obj);
-extern "C" void* func_8016FE34(int id);
-extern "C" int func_800B708C__Fi(int id);
-extern "C" float func_800F42AC(void* obj);
-extern "C" void func_800F449C(void* obj);
-extern "C" int func_80133F48(int id, float f);
-extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int idx);
-extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
-extern "C" void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 e);
-extern "C" void func_80043D90(void* list);
-extern "C" void* func_80043F18(void* list);
-extern "C" void __dt__80043E88(void* list, int tags);
-extern "C" u8* getGlobalSda(void);
-extern "C" void func_802A1DF0(u32 a);
-extern "C" int func_80260264(void* self, u32 id, void* result);
-extern "C" void func_8006E2FC(int id);
-extern "C" u32 lbl_eu_80663E24;
-extern "C" u8 lbl_eu_80663DA0;
-extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
-                                const void* dst_type, void* src2dst);
-
-// Player-list enumeration (CfObjectEnumList).
-extern "C" void func_800F4A98(void* list, int type, int filter);
-extern "C" void* func_800F6EAC(void* list, u32 idx);
-extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 a, u32 b);
-extern "C" void func_800BE12C(void* a, u32 b, u32 c, s32 d, u32 e);
-extern "C" void func_80174B4C(void* obj, u32 flag);
-
-// Typeinfo names for __dynamic_cast in the player-list loops.
-extern "C" const void* lbl_eu_806618E8;
-extern "C" const void* lbl_eu_806618F0;
-
-extern "C" void func_8014AC38(void* a, void* b);
-extern "C" int func_8014B8BC(void* a, void* b);
-extern "C" int func_800F4730(void);
-extern "C" void* func_800F4648(void* self);
-extern "C" int func_800F46C0(void* a, void* b);
-extern "C" void func_800E921C(void* a, void* b, void* c, void* d, void* e);
-extern "C" void* func_800EA444(void);
-extern "C" void func_8009EC9C(void);
-extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
-extern "C" void func_8026178C(int mode);
-extern "C" void func_80496288(void);
-extern "C" void func_80170AB0(void* self, void* dst);
-extern "C" void func_80174C24(void* obj, u32 flag);
-extern "C" f64 lbl_eu_80667D18;
-extern "C" f64 lbl_eu_80667D20;
-extern "C" f32 lbl_eu_80667CDC;
-extern "C" f32 lbl_eu_80667CD8;
+// Kept inline (not moved to CVision.hpp): sibling TUs declare/stub these.
+extern "C" void func_800BE12C(void* a, u32 b, u32 c, s32 d, u32 e); // code_8018F8D8.cpp declares int-args version
+extern "C" void func_800E921C(void* a, void* b, void* c, void* d, void* e); // CBattleManager.cpp defines an empty stub
+extern "C" void func_8009EC9C(void); // CBattleManager.cpp/pluginUnit.cpp declare different signatures
 
 // Per-battle-slot object iterated in func_801A897C (stride 0x834).
 struct CVisionBtlSlot {
@@ -117,15 +43,6 @@ struct CVisionBtlSlot {
     u32 w_828;      // 0x828
     u32 w_82C;      // 0x82C
 };
-
-// Callback ptmf tables (12-byte triplets).
-extern "C" u32 lbl_eu_805331D0[3];
-extern "C" u32 lbl_eu_805331F4[3];
-extern "C" u32 lbl_eu_8053320C[3];
-extern "C" u32 lbl_eu_805331E8[3];
-extern "C" u32 lbl_eu_805331E0[3];
-extern "C" u32 lbl_eu_805331CC[3];
-extern "C" u32 lbl_eu_80533128[3];
 
 // Parameter block used by func_801A6540's FX-setup path.
 struct CVisionFxParam {
@@ -140,23 +57,9 @@ struct CVisionFxParam {
     u8 unk18[0x20 - 0x18];
 };
 
-extern "C" u32 lbl_eu_805331DC[3];
-extern "C" u32 lbl_eu_805331C4[3];
-extern "C" u32 lbl_eu_80533164[3];
-extern "C" u32 lbl_eu_80533230[3];
-extern "C" u32 lbl_eu_80533134[3];
-extern "C" u32 lbl_eu_80533158[3];
-extern "C" u32 lbl_eu_80533224[3];
-extern "C" f32 lbl_eu_80667CD8;
-extern "C" void* __RTTI__Q22cf13CfObjectActor;
-extern "C" void func_8009D018(u32 a, u32 b);
-extern "C" void func_801412D0(u32 a);
-extern "C" void func_8013F244(void);
-extern "C" void func_8016FF14(void* obj, void* dst);
-extern "C" void func_802A1FB4(void* a, void* b);
-extern "C" void func_801C01A8(u32 a, u32 b, f32 c);
-extern "C" void func_801C028C(u32 a, u32 b);
-extern "C" void func_801AF934(u32 a);
+// Kept inline (not moved to CVision.hpp): sibling TUs stub these.
+extern "C" void func_802A1FB4(void* a, void* b); // CCharVoiceMan.cpp defines an empty stub
+extern "C" void func_801AF934(u32 a);            // CMenuVision.cpp defines an empty stub
 
 // Object handed to func_801A5E58 by func_800F477C (reads byte at 0x42).
 struct CVisionRefObj {
@@ -165,17 +68,9 @@ struct CVisionRefObj {
     u8 unk43[0x78 - 0x43];
     u32 w_78;        // 0x78
 };
-extern "C" CVisionRefObj* func_800F477C(void* self);
-extern "C" long __ptmf_test(void* ptmf);
-extern "C" int __ptmf_cmpr(void* a, void* b);
-extern "C" u32 __ptmf_null[3];
-extern "C" u32 lbl_eu_8053317C[3];
-extern "C" u32 lbl_eu_80533200[3];
-extern "C" int func_eu_80053FD4(void);
-extern "C" bool func_8006EF04__Fi(s32 mask);
-extern "C" s32 CfRes_getE24Bit22(void);
-extern "C" u32 func_801B481C(void);
-extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+// Kept inline (not moved to CVision.hpp): sibling TUs declare these.
+extern "C" CVisionRefObj* func_800F477C(void* self); // pluginUnit.cpp declares CfUnknownSub* version
+extern "C" bool func_8006EF04__Fi(s32 mask);         // CBattleManager.cpp/pluginUnit.cpp declare different versions
 
 // Object passed to func_801A6A7C / func_801A380C-family (battle object).
 struct CVisionObj {

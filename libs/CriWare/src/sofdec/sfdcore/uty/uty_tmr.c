@@ -8,25 +8,39 @@ extern s32 lbl_eu_80619BF0;
 extern s32 CRICFG_Read(const char* key, s32* out);
 extern u32 lbl_eu_80619BF8[2];
 
-void UTY_InitTmr(void* self) {
+struct UtyTmrData {
+    s32 count;        // 0x00
+    s32 id;           // 0x04
+    u32 pair[2];      // 0x08: [0]=active, [1]=unit
+};
+
+void UTY_InitTmr(s32 newId) {
     s32 val;
-    volatile u32* tmr = (volatile u32*)&lbl_eu_80619BF0;
-    volatile u32* p2 = tmr + 2;
+    volatile struct UtyTmrData* t = (volatile struct UtyTmrData*)&lbl_eu_80619BF0;
+
+    // Allow a config override of the id.
     if (CRICFG_Read(lbl_eu_8051CF20, &val) == 0) {
-        self = (void*)val;
+        newId = val;
     }
-    tmr[0]++;
-    if (!((s32)tmr[0] > 1 && (s32)tmr[1] == (s32)self)) {
-        tmr[1] = (u32)self;
-        if ((s32)self == -1) {
-            p2[1] = 1;
-            p2[0] = 0;
-        } else {
-            p2[1] = (*(volatile u32*)0x800000F8) >> 2;
-            p2[0] = 0;
-        }
+
+    t->count++;
+    // Only (re)arm once for a given id.
+    if (t->count > 1 && t->id == newId) {
+        return;
     }
-}void UTY_FinishTmr(void) {
+
+    t->id = newId;
+    if (newId == -1) {
+        // Uninitialised: unit = 1, timer not running.
+        t->pair[1] = 1;
+        t->pair[0] = 0;
+    } else {
+        // Otherwise unit = (bus clock / 4), timer running.
+        t->pair[1] = *(volatile u32*)0x800000F8 >> 2;
+        t->pair[0] = 0;
+    }
+}
+void UTY_FinishTmr(void) {
     if (--lbl_eu_80619BF0 < 0) {
         lbl_eu_80619BF0 = 0;
     }

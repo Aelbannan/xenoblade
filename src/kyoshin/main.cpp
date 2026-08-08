@@ -170,6 +170,7 @@ void vmInitCallback() {
 }
 
 #ifdef __MWERKS__
+#pragma optimize_for_size on
 void main(){
 #else
 int main(){
@@ -218,3 +219,4 @@ int main(){
     CWorkRoot::run();
     func_eu_802B1334();
 }
+#pragma optimize_for_size off

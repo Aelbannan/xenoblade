@@ -43,20 +43,65 @@ namespace cf {
     }
 }
 
-void func_80153CAC(){}
+// Record viewed as a 0x8c-strided element within CArtsSet where the
+// CArtsParam begins 0x38 bytes in (relative to the CArtsSet base).
+// Field offsets below are relative to the record origin, matching the
+// retail loads of 0xaf (unk77 + 0x38) and 0x58 (unk20 + 0x38).
+struct CArtsRecord {
+    u8 field_0[0x58];
+    u32 field58;  // 0x58  (unk20 of the nested CArtsParam)
+    u8 field_5c[0xaf - 0x5c];
+    u8 fieldAF;   // 0xaf  (unk77 of the nested CArtsParam)
+};
 
-unsigned short getArtsSlotAtCnt(const void* this_, unsigned int index) {
-    const unsigned char* base = static_cast<const unsigned char*>(this_);
-    unsigned short count = *reinterpret_cast<const unsigned short*>(base);
-    unsigned int indexOffset = index << 1;
-    unsigned int countOffset = static_cast<unsigned int>(count) << 4;
-    const unsigned char* record = base + countOffset;
-    record += indexOffset;
-    return *reinterpret_cast<const unsigned short*>(record + 4);
+extern cf::CArtsParam lbl_eu_80573D88;
+
+unsigned short func_80153CAC(const void* self, int index) {
+    int row = index / 8;
+    int col = index % 8;
+    const char* p = static_cast<const char*>(self);
+    p += row * 0x10;
+    p += col * 2;
+    return *reinterpret_cast<const unsigned short*>(p + 4);
 }
 
 extern "C" void* getArtsParamAtCnt(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
-void func_80153DCC(){}
+
+cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
+    unsigned char* outer = reinterpret_cast<unsigned char*>(self);
+    unsigned char* inner;
+    int row = 0;
+    do {
+        inner = outer;
+        for (int col = 0; col < 8; col++) {
+            if (id == reinterpret_cast<CArtsRecord*>(inner)->fieldAF &&
+                reinterpret_cast<CArtsRecord*>(inner)->field58 != 0) {
+                unsigned char* rp = reinterpret_cast<unsigned char*>(self);
+                rp += row * 0x460;
+                rp += col * 0x8c;
+                return reinterpret_cast<cf::CArtsParam*>(rp + 0x38);
+            }
+            inner += 0x8c;
+        }
+        row++;
+        outer += 0x460;
+    } while (row < 3);
+    return &lbl_eu_80573D88;
+}
+
 extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
 
-void func_80153E88(){}
+// Function-pointer table for the per-CAttackParam virtual slot used when
+// constructing the six attack-param members. vtable slot +2 is invoked.
+struct CFunc88Rec {
+    u8 field_0[0x84];
+    void (**vtbl)(void*);  // 0x84: pointer to a function-pointer table
+};
+
+void func_80153E88(void* self) {
+    memset(self, 0, 0xc);
+    CFunc88Rec* arr = reinterpret_cast<CFunc88Rec*>(reinterpret_cast<unsigned char*>(self) + 0x10);
+    for (int i = 0; i < 6; i++) {
+        (*(arr[i].vtbl + 2))(&arr[i]);
+    }
+}

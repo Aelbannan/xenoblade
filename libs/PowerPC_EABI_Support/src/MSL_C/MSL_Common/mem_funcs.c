@@ -215,10 +215,13 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 
     n &= 3;
 
+    // retail computes the tail source from the running pointer (cps + src_offset),
+    // not from the original src — this lets cps stay coalesced in the src param reg.
     if (n) {
-        cps = ((unsigned char*) src) + src_offset;
+        // fresh pointer (retail reuses the dead dst param reg r3 for this)
+        unsigned char* t = cps + src_offset;
         do {
-            *--cpd = *--cps;
+            *--cpd = *--t;
         } while (--n);
     }
 }

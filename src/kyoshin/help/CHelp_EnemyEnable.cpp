@@ -1,30 +1,33 @@
 #include "kyoshin/help/CHelp_EnemyEnable.hpp"
+#include "kyoshin/cf/CfGimmick.hpp"
 
-extern "C" void* func_800B6BC8();
-extern "C" void* func_800AD860__FPv(void*);
+// Retail circular-object-list accessor (the "active objects" registry).
+// main.dol ships it as the unmangled C-style symbol func_800B6BC8.
+extern CfGimmickList* func_800B6BC8();
+
+// Resolves a CfGimmickListNode's object slot into the live object. Retail
+// mangled C++ symbol func_800AD860__FPv (single void* parameter), so a plain
+// C++ declaration (not extern "C") yields the matching linker symbol.
+extern cf::CHelp_EnemyEnableObj* func_800AD860(void* obj);
 
 namespace cf {
+
+// Active-state gate used by the Help subsystem: returns true only when every
+// currently-spawned object reports its "enable" flag (the sub-object's vtable
+// slot 0x74) as set. Walks the circular CfGimmickList sentinel-headed list.
 bool CHelp_EnemyEnable::func_802B8028() {
-    void* list = func_800B6BC8();
-    void* cur = *(void**)((u8*)list + 4);
-    cur = *(void**)cur;
+    CfGimmickList* list = func_800B6BC8();
+    CfGimmickListNode* cur = list->head->next;
 
-    goto check;
-
-    do {
-        void* obj = func_800AD860__FPv(*(void**)((u8*)cur + 8));
-        u8* subObj = (u8*)obj + 0x3E9C;
-        void** vt = *reinterpret_cast<void***>(subObj);
-        bool (*check)(void*) = reinterpret_cast<bool (*)(void*)>(vt[0x74 / 4]);
-        if (!check(subObj)) {
+    while (cur != list->head) {
+        CHelp_EnemyEnableObj* obj = func_800AD860(cur->object);
+        if (!obj->mSub.func74()) {
             return false;
         }
-
-        cur = *(void**)cur;
-check:
-        ;
-    } while (cur != *(void**)((u8*)list + 4));
+        cur = cur->next;
+    }
 
     return true;
 }
-}
+
+} // namespace cf

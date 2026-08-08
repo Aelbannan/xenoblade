@@ -10,7 +10,8 @@ namespace cf {
 struct CREvtObj {
     /* 0x00 */ void* vtable;
     /* 0x04 */ u32 field_04;
-    /* 0x08 */ u32 ptmf[3];  // __ptmf (12 bytes: 3 x u32)
+    /* 0x08 */ void (CREvtObj::*mCallback)();  // __ptmf (12 bytes: 3 x u32)
+    // mCallback layout at +0x08: [0]=pfn, [1]=obj/this, [2]=delta
 };
 
 } // namespace cf

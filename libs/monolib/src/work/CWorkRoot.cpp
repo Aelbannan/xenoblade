@@ -7,6 +7,15 @@
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
+#pragma push
+#pragma auto_inline off
+// Emit the standalone reslist<CWorkThread*> constructor for the retail symbol
+// __ct__23reslist<P11CWorkThread>Fv. With -inline auto MWCC else folds the
+// template default-ctor into every call site and never emits a global body;
+// instantiate BEFORE any use so the out-of-line copy is authoritative.
+template reslist<CWorkThread*>::reslist();
+#pragma pop
+
 namespace {
     class CWorkRootThread : public CWorkThread {
     public:

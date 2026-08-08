@@ -41,14 +41,10 @@ extern "C" void* __dt__804943A0(void* self, int deleteFlag) {
 
 extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 h, GXBool p3, GXBool p4) {
     s16 x = rect->mPos.x;
-    u16 ww = w;
     s16 y = rect->mPos.y;
-    u16 hh = h;
-    bool xOdd = (x & 1) != 0;
     s16 rw = rect->mSize.x;
     s16 rh = rect->mSize.y;
-    GXBool p3b = p3;
-    GXBool p4b = p4;
+    bool xOdd = (x & 1) != 0;
     if (xOdd) x = (s16)(x - 1);
     if (y & 1) y = (s16)(y - 1);
     if (rw & 1) rw = (s16)(rw - 1);
@@ -58,9 +54,9 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
         func_8044A94C__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
         func_8044ABAC__8CGXCacheFv(cacheInstance__9CDeviceGX);
         func_8044A7F8__8CGXCacheFv(cacheInstance__9CDeviceGX, 1, 4, 5, 0, 0);
-        GXSetTexCopySrc(x, y, rw, rh);
-        GXSetTexCopyDst(ww, hh, GXGetTexObjFmt((GXTexObj*)self), p3b);
-        GXCopyTex((GXTexObj*)self->mField20, p4b);
+        GXSetTexCopySrc((u16)x, (u16)y, (u16)rw, (u16)rh);
+        GXSetTexCopyDst(w, h, GXGetTexObjFmt((GXTexObj*)self), p3);
+        GXCopyTex((void*)self->mField20, p4);
         GXPixModeSync();
         GXInvalidateTexAll();
         DCFlushRange((void*)self->mField20, self->mField24);

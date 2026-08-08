@@ -71,7 +71,8 @@ s32 SFVOM_GetRead(void* self, void* out, void* arg3) {
         return 0;
     }
     {
-        s32 r = SFBUF_VfrmGetRead(self, *(void**)((u8*)self + 0x2180), out, arg3);
+        s32 r = SFBUF_VfrmGetRead(
+            self, *(void**)((u8*)self + 0x2180), out, arg3);
         if (r != 0)
             return r;
         return 0;

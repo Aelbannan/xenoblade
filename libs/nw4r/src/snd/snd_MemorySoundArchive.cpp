@@ -10,6 +10,7 @@ class MemorySoundArchive::MemoryFileStream : public ut::FileStream {
 public:
     MemoryFileStream(const void* pBuffer, u32 size)
         : mData(pBuffer), mSize(size), mOffset(0) {}
+    virtual ~MemoryFileStream(); // at 0xC
 
     virtual void Close();                      // at 0x10
     virtual s32 Read(void* pDst, u32 size);    // at 0x14
@@ -52,6 +53,8 @@ private:
 MemorySoundArchive::MemorySoundArchive() : mData(NULL) {}
 
 MemorySoundArchive::~MemorySoundArchive() {}
+
+MemorySoundArchive::MemoryFileStream::~MemoryFileStream() {}
 
 bool MemorySoundArchive::Setup(const void* pBuffer) {
     mFileReader.Init(pBuffer);

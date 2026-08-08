@@ -27,6 +27,22 @@ extern "C" void* lbl_eu_806640D8;
 // a C++ function would re-mangle the name).
 extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
 
+// Minimal abstract mirror of the font object returned by
+// CDeviceFont::func_80452C10. Its slot 9 sits at vtable offset 0x24 and
+// returns the u32 bound into the crystal's font pane. Never instantiated (no
+// ctor), so no vtable is emitted; declaring the call as a genuine virtual
+// member makes MWCC emit retail's native r12 dispatch sequence.
+struct CFontPanel {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0;
+};
+
 CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
     : unk4(0), unk5(1), mArcResourceAccessor(arcResourceAccessor), mLayout(nullptr), mAnimTrans(nullptr), unk14(0) {}
 
@@ -389,10 +405,10 @@ void CMCEffCrystal::func_80224CE4(){
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans28, mArcResourceAccessor, &lbl_eu_805095EC[0x221]);
 
     nw4r::lyt::Pane* rootPane = mLayout18->GetRootPane();
-    void* something = CDeviceFont::func_80452C10(1, mLayout18);
-    void* fontVtable = *(void**)something;
-    u32 (*fontVFn)(void*) = (u32 (*)(void*))((void**)fontVtable)[0x24 / 4];
-    u32 result = fontVFn(something);
+    void* fontObj = CDeviceFont::func_80452C10(1, mLayout18);
+    // Virtual slot 9 (offset 0x24) on the font object yields the u32 the
+    // crystal's font pane is set from.
+    u32 result = ((CFontPanel*)fontObj)->sf9();
     func_8013676C(rootPane, result);
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);

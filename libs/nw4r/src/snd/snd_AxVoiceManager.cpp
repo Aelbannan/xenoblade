@@ -32,9 +32,9 @@ void AxVoiceManager::Setup(void* pBuffer, u32 size) {
 
     AxVoice* pVoice = static_cast<AxVoice*>(pBuffer);
 
-    for (u32 i = 0; i < mVoiceCount; i++, pVoice++) {
+    for (u32 i = 0; i < mVoiceCount; pVoice++, i++) {
         if (pVoice != NULL) {
-            new (pVoice) AxVoice();
+            pVoice = new (pVoice) AxVoice();
         }
 
         mFreeVoiceList.PushBack(pVoice);

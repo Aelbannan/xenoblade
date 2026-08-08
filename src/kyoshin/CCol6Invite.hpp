@@ -19,8 +19,8 @@ public:
     void Move() override;
     void Draw() override;
 
-    /* 0x3C */ u8 mCallbackA[12]; // pointer-to-member-function null (3 words)
-    /* 0x48 */ u8 mCallbackB[12]; // pointer-to-member-function null (3 words)
+    /* 0x3C */ u32 mCallbackA[3]; // pointer-to-member-function null (3 words)
+    /* 0x48 */ u32 mCallbackB[3]; // pointer-to-member-function null (3 words)
     /* 0x54 */ u32 mField54;      // init 0
     /* 0x58 */ u32 mField58;      // init 0
     /* 0x5C */ u32 mField5C;      // init 0
@@ -38,7 +38,7 @@ public:
 };
 
 // Singleton instance pointer (lbl_eu_8066423C in retail).
-extern CCol6Invite* gCol6Invite;
+extern "C" CCol6Invite* lbl_eu_8066423C;
 
 // Standalone string formatting helper.
 void func_eu_801651A0(char* buffer, const char* format, ...);

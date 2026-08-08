@@ -2,6 +2,9 @@
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
+#include <revolution/BASE.h>
+#include <revolution/OS.h>
+#include <revolution/VI.h>
 
 extern void func_80496998();
 extern void func_80496994();
@@ -55,16 +58,38 @@ void CWorkSystem::setSaveLoadInvalidReset(bool state){
 }
 
 void CWorkSystem::wkUpdate(){
-    if(mSaveLoadInvalidReset == false){
-        if(mPowerOff == false && CErrorWii::isPowerCallbackCalled()){
-            mPowerOff = true;
-            shutdownGame(false);
-        }
-    
-        if(mReset == false && CErrorWii::isResetCallbackCalled()){
-            mReset = true;
-            resetGame(false);
-        }
+    if(mSaveLoadInvalidReset) return;
+
+    //Power-button shutdown request.
+    if(mPowerOff == false && CErrorWii::isPowerCallbackCalled()){
+        mPowerOff = true;
+        VISetBlack(TRUE);
+        VIFlush();
+        VIWaitForRetrace();
+        callExitFunc();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        OSReport("exit wii power off\n");
+        OSShutdownSystem();
+    }
+
+    //Reset-button restart request.
+    if(mReset == false && CErrorWii::isResetCallbackCalled()){
+        mReset = true;
+        VISetBlack(TRUE);
+        VIFlush();
+        VIWaitForRetrace();
+        callExitFunc();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        VIWaitForRetrace();
+        OSReport("exit wii reset\n");
+        OSRestart(0);
     }
 }
 

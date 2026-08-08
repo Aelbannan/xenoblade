@@ -352,10 +352,12 @@ void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
     else
         event = L2CEVT_SEC_COMP_NEG;
 
-    for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL; p_ccb = p_next_ccb)
+    p_ccb = p_lcb->p_first_ccb;
+    while (p_ccb != NULL)
     {
         p_next_ccb = p_ccb->p_next_ccb;
         l2c_csm_execute(p_ccb, (UINT8)event, &ci);
+        p_ccb = p_next_ccb;
     }
 }
 

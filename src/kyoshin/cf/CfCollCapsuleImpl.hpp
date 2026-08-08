@@ -7,6 +7,13 @@ namespace cf {
 
 // Collision capsule shape implementation.
 // Layout offsets derived from CfCollCapsuleImpl.s.
+// RGBA debug color for capsule rendering (passed to CfDebugDrawManager).
+// Written as floats but copied as words, matching retail stfs/lwz/stw.
+union CfDebugCol {
+    float f[4]; // 0x00
+    u32 u[4];
+};
+
 struct CfCollCapsuleImpl {
     u8 pad_00[0x94];            // 0x00: vtable + unknown fields
     u32 mKind;                  // 0x94: collision kind (1=player, 6=enemy)

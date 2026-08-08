@@ -4,8 +4,18 @@
 extern s32 lbl_eu_805E66E0;
 extern s32 lbl_eu_805E66E4;
 
+/* Search the 16-byte config entries; returns the matching entry or NULL. */
+static inline char *cfg_find_key(int count, const char *key, char *p) {
+    int i;
+    for (i = 0; i < count; i++, p += 16) {
+        if (strncmp(p, key, 12) == 0)
+            return p;
+    }
+    return NULL;
+}
+
 int CRICFG_Read(const char *key, int *value) {
-    int i, count;
+    int count;
     char *p;
     
     p = (char *)lbl_eu_805E66E0;
@@ -16,14 +26,8 @@ int CRICFG_Read(const char *key, int *value) {
         p = NULL;
     } else {
         count = *(s32 *)&lbl_eu_805E66E4;
-        for (i = 0; i < count; i++, p += 16) {
-            if (strncmp(p, key, 12) != 0)
-                continue;
-            goto found;
-        }
-        p = NULL;
+        p = cfg_find_key(count, key, p);
     }
-found:
     if (p == NULL)
         return -3;
     

@@ -10,8 +10,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 8323 |
-| extern "C" declarations (non-lbl_*, imports) | 3260 |
+| extern "C" (total lines) | 8322 |
+| extern "C" declarations (non-lbl_*, imports) | 3259 |
 | extern "C" definitions (forced names) | 2642 |
 | `self`/register-style params | 4480 |
 | `void*` (params + locals) | 5492 |
@@ -110,7 +110,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskLoad.cpp | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
-| libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
+| libs/monolib/src/nand/CNReqtaskRemove.cpp | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 0 | 2 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 10 | 14 | 27 | 6 | 0 | 0 | 0 | 0 | 0 |
@@ -957,7 +957,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "goto_count": 3
  },
  "libs/monolib/src/nand/CNReqtaskRemove.cpp": {
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 2,
   "goto_count": 2
  },
  "libs/monolib/src/nand/CNReqtaskSave.cpp": {

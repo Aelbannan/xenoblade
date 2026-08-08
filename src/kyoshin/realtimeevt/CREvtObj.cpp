@@ -11,11 +11,9 @@ extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
 extern "C" void func_80167FFC(void* ptr);
 
 // __ptmf intrinsics and null sentinel
-extern "C" {
-extern u32 __ptmf_null[3];
-long __ptmf_test(void* ptmf);
-void __ptmf_scall(void* obj, ...);
-}
+// __ptmf_null: zero/null member-function-pointer constant (3 words at +0x08)
+extern void (cf::CREvtObj::*const __ptmf_null)();
+extern "C" long __ptmf_test(void* ptmf);
 
 // Vtable for cf::CREvtObj
 extern "C" void* lbl_eu_80532320[];
@@ -28,33 +26,29 @@ extern "C" void* lbl_eu_80532320[];
 extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
     self->field_04 = arg;
     self->vtable = (void*)lbl_eu_80532320;
-    const u32* src = &__ptmf_null[0];
-    u32* dst = &self->ptmf[0];
-    u32 tmp0 = *src++;
-    dst[1] = *src++;
-    dst[2] = *src;
-    dst[0] = tmp0;
+    self->mCallback = __ptmf_null;
 }
 
 // ============================================================================
 // Destructor: __dt__Q22cf8CREvtObjFv
-// r3 = this, r4 = dealloc_flag
-// If dealloc_flag > 0, calls func_80167FFC(this) to deallocate from CREvtMem
+// Two-arg POD-destructor form returning `this` (MWCC dtor ABI), matching the
+// repo DEFINE_POD_DTOR convention. deleteFlag>0 means the memory-manager free
+// (func_80167FFC) should run -- CREvtObj instances are freed through CREvtMem,
+// not operator delete, hence the direct call instead of MWCC's __dl__FPv.
 // ============================================================================
-extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag) {
-    if (self != nullptr) {
-        if (dealloc_flag > 0) {
-            func_80167FFC(self);
-        }
+extern "C" cf::CREvtObj* __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int deleteFlag) {
+    if (self != nullptr && deleteFlag > 0) {
+        func_80167FFC(self);
     }
+    return self;
 }
 
 // ============================================================================
 // func_80185700: Calls the stored __ptmf if non-null
 // ============================================================================
 extern "C" void func_80185700(cf::CREvtObj* self) {
-    if (__ptmf_test(&self->ptmf)) {
-        __ptmf_scall(self, &self->ptmf);
+    if (__ptmf_test(&self->mCallback)) {
+        (self->*self->mCallback)();
     }
 }
 

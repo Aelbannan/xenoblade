@@ -1,83 +1,102 @@
 // Decompiled code for kyoshin/CCol6Invite
 
 #include "kyoshin/CCol6Invite.hpp"
+#include "monolib/util/MemManager.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
-// External functions
+// Retail data symbols referenced by this factory.
 extern "C" {
-    // Returns pool ID from global variable (r13 - 0x6364).
-    u32 sub_80439F4C();
-    // operator new(size, pool) - allocates from pool.
-    void* operator_new_804373F4(u32 size, u32 pool);
-    // CProcess constructor.
-    void __ct__8CProcessFv(CProcess* proc);
-    // CProcess::Regist
-    void Regist__8CProcessFP8CProcessb(CProcess* proc, CProcess* parent, bool insertTop);
+CCol6Invite* lbl_eu_8066423C; // singleton instance (sda21-accessed)
+char lbl_eu_8052D238[];       // temporary vtable written before copying __ptmf_null
+char lbl_eu_8052FF3C[];       // CCol6Invite final vtable
+u32 __ptmf_null[3];           // null pointer-to-member-function constant
+void __ct__8CProcessFv(CProcess*); // CProcess base constructor (abstract class, so extern)
 }
 
-// Singleton instance pointer (lbl_eu_8066423C in retail).
-CCol6Invite* gCol6Invite;
+// Byte-range shim over the CProcess header + owned fields so the factory can
+// write the vtable (+0x10), the __ptmf_null callback slots (+0x3C..0x53) and
+// the trailing scalars without raw pointer arithmetic. Matches CProcess's
+// 0x00-0x3B layout exactly (CProcess.hpp: CProcess : CChildListNode).
+struct CCol6InviteCtorShim {
+    u8 _00[0x10];
+    void* vtable;        // 0x10 - CProcess vtable, overwritten by this factory
+    u8 _14[0x28];        // 0x14-0x3B - rest of CProcess
+    u32 callbacks[6];    // 0x3C-0x53 - __ptmf_null callback slots
+    u32 field54;         // 0x54
+    u32 field58;         // 0x58
+    u32 field5C;         // 0x5C
+    s32 index;           // 0x60 - init -1
+    u8 flag64;           // 0x64
+    u8 flag65;           // 0x65
+    u8 flag66;           // 0x66
+    u8 active;           // 0x67 - init 1
+    u32 field68;         // 0x68
+    u32 field6C;         // 0x6C - lbl_eu_8052FF3C + 0x24
+    u16 arg2;            // 0x70
+    u8 arg3;             // 0x72
+    u8 arg4;             // 0x73
+    u8 field74;          // 0x74
+};
 
-// Symbols from data sections
-extern u32 lbl_eu_8052FF3C;  // vtable for CCol6Invite
-extern u32 lbl_eu_8052D238;  // temporary vtable
-extern u8 __ptmf_null[12];   // null pointer-to-member-function (lbl_eu_805139E8)
-
-// Factory function for CCol6Invite singleton.
-// Returns the singleton instance, or NULL if already created.
+// Factory for the CCol6Invite singleton. Allocates 0x78 bytes from work
+// memory, constructs the CProcess base, fills the callback/field block, stores
+// itself as the singleton and registers as a child of `parent`. Mirrors retail
+// control flow: the singleton store + Regist run even when the allocation
+// failed (r31 stays NULL) and the object (possibly NULL) is returned.
 CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
-    // Check if singleton already exists.
-    if (gCol6Invite != nullptr) {
-        return nullptr;
+    // Return NULL if the singleton already exists.
+    if (lbl_eu_8066423C != 0) {
+        return 0;
     }
 
-    // Get pool ID and allocate.
-    u32 pool = sub_80439F4C();
-    CCol6Invite* obj = (CCol6Invite*)operator_new_804373F4(0x78, pool);
-    if (obj == nullptr) {
-        return nullptr;
+    CCol6InviteCtorShim* obj =
+        (CCol6InviteCtorShim*)mtl::MemManager::allocate(
+            0x78, CWorkThreadSystem::getWorkMem());
+
+    if (obj != 0) {
+        __ct__8CProcessFv((CProcess*)obj);
+        obj->vtable = (void*)lbl_eu_8052D238;
+
+        // Copy the null member-function pointer into both callback slots.
+        // Retail loads __ptmf_null[1],[0],[2] then stores per slot (load-both /
+        // store-both), so use intermediate locals to force the retail ordering.
+        const u32* ptmf = __ptmf_null;
+        u32 ptmfWord1 = ptmf[1];
+        u32 ptmfWord0 = ptmf[0];
+        obj->callbacks[0] = ptmfWord0;
+        obj->callbacks[1] = ptmfWord1;
+        u32 ptmfWord2 = ptmf[2];
+        obj->callbacks[2] = ptmfWord2;
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
+        obj->callbacks[3] = ptmfWord0;
+        obj->callbacks[4] = ptmfWord1;
+        ptmfWord2 = ptmf[2];
+        obj->callbacks[5] = ptmfWord2;
+
+        obj->field54 = 0;
+        obj->field58 = 0;
+        obj->field5C = 0;
+        obj->index = -1;
+        obj->flag64 = 0;
+        obj->flag65 = 0;
+        obj->flag66 = 0;
+        obj->active = 1;
+        obj->field68 = 0;
+
+        obj->vtable = (void*)lbl_eu_8052FF3C;
+        obj->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
+        obj->arg2 = arg2;
+        obj->arg3 = arg3;
+        obj->arg4 = arg4;
+        obj->field74 = 0;
     }
 
-    // Call CProcess constructor.
-    __ct__8CProcessFv(obj);
-
-    // Set temporary vtable.
-    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052D238;
-
-    // Initialize callback fields from __ptmf_null (all zeros).
-    memcpy((u8*)obj + 0x3C, __ptmf_null, 12);
-    memcpy((u8*)obj + 0x48, __ptmf_null, 12);
-
-    // Initialize remaining fields.
-    *(u32*)((u8*)obj + 0x54) = 0;
-    *(u32*)((u8*)obj + 0x58) = 0;
-    *(u32*)((u8*)obj + 0x5C) = 0;
-    *(s32*)((u8*)obj + 0x60) = -1;
-    *(u8*)((u8*)obj + 0x64) = 0;
-    *(u8*)((u8*)obj + 0x65) = 0;
-    *(u8*)((u8*)obj + 0x66) = 0;
-    *(u8*)((u8*)obj + 0x67) = 1;
-    *(u32*)((u8*)obj + 0x68) = 0;
-
-    // Set final vtable and field at 0x6C.
-    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052FF3C;
-    *(u32*)((u8*)obj + 0x6C) = lbl_eu_8052FF3C + 0x24;
-
-    // Store arguments.
-    *(u16*)((u8*)obj + 0x70) = arg2;
-    *(u8*)((u8*)obj + 0x72) = arg3;
-    *(u8*)((u8*)obj + 0x73) = arg4;
-    *(u8*)((u8*)obj + 0x74) = 0;
-
-    // Store singleton.
-    gCol6Invite = obj;
-
-    // Register with parent.
-    Regist__8CProcessFP8CProcessb(obj, parent, false);
-
-    return gCol6Invite;
+    lbl_eu_8066423C = (CCol6Invite*)obj;
+    ((CProcess*)obj)->Regist(parent, false);
+    return lbl_eu_8066423C;
 }
 
 // Destructor stub.

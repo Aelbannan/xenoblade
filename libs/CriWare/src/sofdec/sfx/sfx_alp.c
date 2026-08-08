@@ -12,10 +12,9 @@ void SFXA_Init(void) {
 SFXAlphaState* SFXA_Create(void) {
     SFXAlphaState* state;
     s32 count = *(s32*)(lbl_eu_8061A138 + 4);
-    s32 i;
 
     state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
-    for (i = 0; i < count; i++) {
+    for (; count > 0; count--) {
         if (state->_00 == 0)
             goto found;
         state++;
@@ -43,7 +42,12 @@ void SFXA_Destroy(void* self) {
 }
 void SFXA_MakeAlpLumiTbl(void* self, u32 a, u32 b, u32 c) {
     SFXAlphaState* state = (SFXAlphaState*)self;
-    if (state->makeLumiTable) state->makeLumiTable(state->arg0, state->arg1, state->arg2, c);
+    SFXAlphaCallback cb = state->makeLumiTable;
+    u32 a0 = state->arg0;
+    u32 a1 = state->arg1;
+    u32 a2 = state->arg2;
+    if (cb != 0)
+        cb(a0, a1, a2, b);
     state->needsUpdate = 0;
 }
 void SFXA_MakeAlp3110Tbl(void* self, int a, int b) {

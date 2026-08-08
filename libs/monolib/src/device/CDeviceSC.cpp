@@ -3,6 +3,10 @@
 
 CDeviceSC* CDeviceSC::spInstance;
 
+// Retail SDA reloc for the TU singleton (MWCC_REFERENCE §1a).
+extern "C" CDeviceSC* lbl_eu_80665640;
+
+
 CDeviceSC::CDeviceSC(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD),
 mAspectRatio(SC_ASPECT_STD),
@@ -32,7 +36,10 @@ bool CDeviceSC::isSoundModeMono(){
 }
 
 u8 CDeviceSC::getLanguage(){
-    return spInstance->mLanguage;
+    if(lbl_eu_80665640 == nullptr){
+        return SCGetLanguage();
+    }
+    return lbl_eu_80665640->mLanguage;
 }
 
 bool CDeviceSC::isInitialized(){
@@ -65,4 +72,6 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-void func_eu_8044A600(){}
+bool func_eu_8044A600(){
+    return SCGetLanguage() == 0;
+}

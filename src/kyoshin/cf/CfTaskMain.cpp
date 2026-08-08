@@ -3,10 +3,10 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 
-// Raw constructor symbols used to construct base classes in-place
+// Raw constructor symbol used to construct the CProcess base in place.
 extern "C" void __ct__8CProcessFv(void* self);
 
-// CfGameManager methods called by CfTaskMain — no CfGameManager.hpp exists
+// CfGameManager methods called by CfTaskMain - no CfGameManager.hpp exists
 // in the writable scope, so these are declared here with C linkage to match
 // the retail symbol names exactly.
 extern "C" void func_8007F9C4__Q22cf13CfGameManagerFv(void);
@@ -14,19 +14,29 @@ extern "C" void func_8007FBFC__Q22cf13CfGameManagerFv(void);
 extern "C" void func_8007FC2C__Q22cf13CfGameManagerFv(void);
 extern "C" unsigned long lbl_eu_80663E28;
 
+// Global null pointer-to-member-function constant (3 words), used to zero-fill
+// the CTTask move/draw callback slots. Non-const: the object stores made during
+// construction may alias it, which forces MWCC to reload each word per slot.
+extern u32 __ptmf_null[3];
+
+// Retail vtables in .data. lbl_eu_80526F58 is the CTTask<CfTaskMain> vtable;
+// lbl_eu_80526E80 is the CfTaskMain primary vtable (IWorkEvent sub-vtable at +0x24).
+extern const u8 lbl_eu_80526F58[];
+extern const u8 lbl_eu_80526E80[];
+
+// The complete-object destructor, tail-called by the IWorkEvent dtor thunk.
+extern "C" void __dt__Q22cf10CfTaskMainFv(void* self);
+
 namespace cf {
 
 // Complete object destructor.
-// MWCC generates: null check, CTTask::~CTTask() → CProcess::~CProcess(),
-// conditional delete. IWorkEvent is not a C++ base so no ~IWorkEvent() call.
 CfTaskMain::~CfTaskMain() {}
 
 void CfTaskMain::Init() {}
-
 void CfTaskMain::Term() {}
 
 void CfTaskMain::Move() {
-    if ((lbl_eu_80663E28 & 0x400) != 0) return;
+    if ((lbl_eu_80663E28 & 0x200000) != 0) return;
     func_8007F9C4__Q22cf13CfGameManagerFv();
 }
 
@@ -44,46 +54,47 @@ void CfTaskMain::Tail() {
 //   r3 = parent CProcess* (for Regist)
 //   r4 = u32 value stored at field_0x58
 // Returns new CfTaskMain* (null if allocation failed).
-// 
-// Construction is done manually (without placement new) to avoid the extra
-// null-check that MWCC's placement new inserts.
+//
+// Construction is done in place (calling the raw CProcess ctor and writing the
+// CfTaskMain fields directly) so that no separate CfTaskMain ctor symbol is
+// emitted; retail keeps the whole body inline in this creator.
 void* __ct__800697E8(CProcess* parent, u32 field58val) {
-    // Extern data symbols used during construction
-    extern const u8 lbl_eu_80526F58[];   // CTTask<CfTaskMain> vtable
-    extern const u8 lbl_eu_80526E80[];   // CfTaskMain vtable (primary + IWorkEvent)
-    extern const u8 __ptmf_null[12];     // null pointer-to-member-function
-
-    void* mem = mtl::MemManager::allocate(sizeof(cf::CfTaskMain), CWorkThreadSystem::getWorkMem());
+    void* mem = mtl::MemManager::allocate(sizeof(cf::CfTaskMain),
+                                          CWorkThreadSystem::getWorkMem());
     cf::CfTaskMain* obj = static_cast<cf::CfTaskMain*>(mem);
     if (obj) {
-        // Construct CProcess base
         __ct__8CProcessFv(obj);
-        
-        // CTTask<CfTaskMain> constructor (inlined):
-        // Set CTTask vtable
-        reinterpret_cast<void**>(obj)[4] = const_cast<u8*>(lbl_eu_80526F58); // 0x10 / 4 = 4
-        
-        // Copy __ptmf_null to mMoveFunc (0x3C) and mDrawFunc (0x48)
-        for (int i = 0; i < 12; i++) {
-            reinterpret_cast<u8*>(obj)[0x3C + i] = __ptmf_null[i];
-            reinterpret_cast<u8*>(obj)[0x48 + i] = __ptmf_null[i];
-        }
-        
-        // CfTaskMain constructor (inlined):
-        // Overwrite vtable with CfTaskMain vtable
-        reinterpret_cast<void**>(obj)[4] = const_cast<u8*>(lbl_eu_80526E80); // 0x10
-        // Set IWorkEvent vtable (at offset 0x24 in CfTaskMain vtable)
-        obj->mIWorkEventVtable = const_cast<u8*>(lbl_eu_80526E80 + 0x24); // 0x54
-        // Store field
-        obj->field_0x58 = field58val;
+
+        // In-place construction of CTTask<CfTaskMain> + CfTaskMain, using
+        // u32 word indexing (see CTaskGameCf): reassigning w0/w1 from
+        // __ptmf_null between the two callback slots forces MWCC to reload
+        // each null PTMF word (retail issues six separate loads, not CSE'd).
+        u32* p = reinterpret_cast<u32*>(obj);
+        const u32* nullPt = &__ptmf_null[0];
+        p[4] = reinterpret_cast<u32>(lbl_eu_80526F58);   // interim CTTask vtable
+        u32 ptmf1 = nullPt[1];
+        u32 ptmf0 = nullPt[0];
+        p[0xF] = ptmf0;        // 0x3C mMoveFunc[0]
+        p[0x10] = ptmf1;       // 0x40 mMoveFunc[1]
+        p[0x11] = nullPt[2];   // 0x44 mMoveFunc[2]
+        ptmf1 = nullPt[1];
+        ptmf0 = nullPt[0];
+        p[0x12] = ptmf0;       // 0x48 mDrawFunc[0]
+        p[0x13] = ptmf1;       // 0x4C mDrawFunc[1]
+        p[0x14] = nullPt[2];   // 0x50 mDrawFunc[2]
+        p[4] = reinterpret_cast<u32>(lbl_eu_80526E80);    // CfTaskMain vtable
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(obj) + 0x54) =
+            reinterpret_cast<u32>(lbl_eu_80526E80 + 0x24); // IWorkEvent vtable
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(obj) + 0x58) = field58val;
     }
-    // Regist is called even when obj is null (retail behavior)
+    // Regist runs even when the allocation failed (retail behaviour).
     obj->Regist(parent, false);
     return obj;
 }
 
-// IWorkEvent dtor adjusting thunk.
-// Subtracts 0x54 from IWorkEvent* to recover CfTaskMain*, then calls the dtor.
+// IWorkEvent dtor adjusting thunk: subtracts 0x54 from IWorkEvent* to recover
+// CfTaskMain*, then tail-calls the complete-object destructor.
+// Retail: subi r3, r3, 0x54; b __dt__Q22cf10CfTaskMainFv
 void func_80069944(void* self) {
-    reinterpret_cast<cf::CfTaskMain*>(reinterpret_cast<u8*>(self) - 0x54)->~CfTaskMain();
+    __dt__Q22cf10CfTaskMainFv(static_cast<char*>(self) - 0x54);
 }

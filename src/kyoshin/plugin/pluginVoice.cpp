@@ -20,10 +20,17 @@ int voice_play(VMThread* pThread) {
     reslist<cf::CfObject*>* list = func_800B6BA4();
     
     for(reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); it++){
-        cf::CfObjectPc* object = static_cast<cf::CfObjectPc*>(*it);
+        // List items point at the embedded CfObjectMove (base+0x3E9C); recover the actor base.
+        cf::CfObject* obj = *it;
+        cf::CfObjectPc* object;
+        if(obj != NULL){
+            object = (cf::CfObjectPc*)((u8*)obj - 0x3E9C);
+        }else{
+            object = NULL;
+        }
         if(object->CActorParam_UnkVirtualFunc138() == 0){
-            if(r30 == object->unk8C_3){
-                object->func_800BE898(r27, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
+            if(r30 == ((VoiceActorVoiceId*)object)->field_3F28){
+                ((cf::CfObject*)((u8*)object + 0x3E9C))->func_800BE898(r27, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
                 break;
             }
         }

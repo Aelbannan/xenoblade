@@ -54,39 +54,44 @@ struct TraceCb {
     const TraceCbVtable* vtable;
 };
 
-extern TraceCb* lbl_eu_805FF3A0;
-extern u8 lbl_eu_80566AC8[];
-
-extern void SVM_CallErr1(const char* msg);
-
-extern char lbl_eu_805FF1E0[];
-
-void MWSFSVM_Error(const char* fmt, ...) {
-    va_list ap;
-    char* msg = lbl_eu_805FF1E0;
-
-    memset(msg, 0, 256);
-    va_start(ap, fmt);
-    vsprintf(msg, fmt, ap);
-    va_end(ap);
-
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, msg);
-    }
-    SVM_CallErr1(msg);
-    if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
-            (void*)(lbl_eu_80566AC8 + 0x6C));
-    }
-}
-
+/* Error data record. Entry sub-record at +0x04, exit at +0x6c; the
+ * formatted message pointer is stashed at +0x0c. */
 typedef struct TraceRec TraceRec;
 struct TraceRec {
     u8 pad_0x00[0x4];
     u32 field_0x04;                            /* 0x04 (entry sub-record) */
-    u8 pad_0x08[0x64];                         /* 0x08..0x6b */
+    u8 pad_0x08[0x4];
+    u32 field_0x0c;                            /* 0x0c (message pointer) */
+    u8 pad_0x10[0x5c];                         /* 0x10..0x6b */
     u32 field_0x6c;                            /* 0x6c (exit sub-record) */
 };
+
+extern TraceCb* lbl_eu_805FF3A0;
+extern TraceRec lbl_eu_80566AC8;
+
+extern void SVM_CallErr1(const char* msg);
+
+extern char lbl_eu_805FF1E0[256];
+
+void MWSFSVM_Error(const char* fmt, ...) {
+    va_list ap;
+
+    memset(lbl_eu_805FF1E0, 0, 256);
+    va_start(ap, fmt);
+    vsprintf(lbl_eu_805FF1E0, fmt, ap);
+    va_end(ap);
+
+    if (lbl_eu_805FF3A0 != NULL) {
+        lbl_eu_80566AC8.field_0x0c = (u32)lbl_eu_805FF1E0;
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
+            &lbl_eu_80566AC8.field_0x04);
+    }
+    SVM_CallErr1(lbl_eu_805FF1E0);
+    if (lbl_eu_805FF3A0 != NULL) {
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
+            &lbl_eu_80566AC8.field_0x6c);
+    }
+}
 
 extern TraceRec lbl_eu_80566B9C;
 extern int SVM_GotoSvrBorder(int svrId);

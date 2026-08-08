@@ -2,12 +2,16 @@
 #include "monolib/core.hpp"
 #include "monolib/lib.hpp"
 
-CDeviceRemotePad* CDeviceRemotePad::spInstance;
+extern "C" CDeviceRemotePad* lbl_eu_80665638; // singleton pointer (retail sbss label)
+
+// Own TU owns CDeviceBase's dtor: retail places it (0x8044A2AC) at the head
+// of this unit's slice, right before CDeviceRemotePad's dtor.
+CDeviceBase::~CDeviceBase() {}
 
 CDeviceRemotePad::CDeviceRemotePad(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD),
 mPadUpdateFunc(nullptr){
-    spInstance = this;
+    lbl_eu_80665638 = this;
 
     for(int i = 0; i < TOTAL_CONTROLLERS; i++){
         mpPads[i] = nullptr;
@@ -15,23 +19,23 @@ mPadUpdateFunc(nullptr){
 }
 
 CDeviceRemotePad::~CDeviceRemotePad(){
-    spInstance = nullptr;
+    lbl_eu_80665638 = nullptr;
 }
 
 CDeviceRemotePad* CDeviceRemotePad::getInstance(){
-    return spInstance;
+    return lbl_eu_80665638;
 }
 
 bool CDeviceRemotePad::isConnected(u32 index){
-    return spInstance->mpPads[index]->mConnected;
+    return lbl_eu_80665638->mpPads[index]->mConnected;
 }
 
 u32 CDeviceRemotePad::getHeldButtonFlags(u32 index){
-    return spInstance->mpPads[index]->mHeldButtonFlags;
+    return lbl_eu_80665638->mpPads[index]->mHeldButtonFlags;
 }
 
 u32 CDeviceRemotePad::getPressedButtonFlags(u32 index){
-    return spInstance->mpPads[index]->mPressedButtonFlags;
+    return lbl_eu_80665638->mpPads[index]->mPressedButtonFlags;
 }
 
 CPad* CDeviceRemotePad::getMainGCPad(){

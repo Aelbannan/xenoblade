@@ -1,13 +1,17 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollCapsuleImpl.hpp"
 
-struct CfCollCapsuleImpl_Col {
-    struct { float x, y, z, w; };
-};
-
 // cf::CfDebugDrawManager::renderCapsule(Vec3* start, Vec3* end, float* color, float radius)
-void renderCapsule__Q22cf18CfDebugDrawManagerFv(
+extern "C" void renderCapsule__Q22cf18CfDebugDrawManagerFv(
     const ml::CVec3* start, const ml::CVec3* end, const float* color, float radius);
+
+// Shared float constants used for capsule debug colors.
+extern float lbl_eu_80666910; // 0.0f
+extern float lbl_eu_80666914; // 1.0f
+extern float lbl_eu_8066692C; // 0.1f
+extern float lbl_eu_80666930; // 0.5f
+extern float lbl_eu_80666934; // 0.15f
+extern float lbl_eu_80666948; // 0.75f
 
 // Collision query helper: process capsule against collision context.
 void func_800A4C48(void* query, const ml::CVec3* start,
@@ -16,26 +20,38 @@ void func_800A4C48(void* query, const ml::CVec3* start,
 // Render the capsule for debug visualization.
 // r3 is unused (this of CfDebugDrawManager).
 void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
-    CfCollCapsuleImpl_Col col;
-    col.x = 0.0f;
-    col.y = 0.5f;
-    col.z = 1.0f;
-    col.w = 0.15f;
+    cf::CfDebugCol col;
+    col.f[0] = lbl_eu_80666910;
+    col.f[1] = lbl_eu_80666930;
+    col.f[2] = lbl_eu_80666914;
+    col.f[3] = lbl_eu_80666934;
 
-    if (capsule->mKind == 1) {
-        col.x = 0.0f;
-        col.y = 1.0f;
-        col.z = 1.0f;
-        col.w = 0.1f;
-    } else if (capsule->mKind == 6) {
-        col.x = 0.0f;
-        col.y = 0.75f;
-        col.z = 0.75f;
-        col.w = 0.1f;
+    if ((int)capsule->mKind == 1) {
+        // Build the branch color as floats, then copy word-by-word (lwz/stw).
+        // Mirrors retail's stfs-build-then-block-copy codegen.
+        cf::CfDebugCol tmp;
+        tmp.f[0] = lbl_eu_80666910;
+        tmp.f[1] = lbl_eu_80666914;
+        tmp.f[2] = lbl_eu_80666914;
+        tmp.f[3] = lbl_eu_8066692C;
+        col.u[0] = tmp.u[0];
+        col.u[1] = tmp.u[1];
+        col.u[2] = tmp.u[2];
+        col.u[3] = tmp.u[3];
+    } else if ((int)capsule->mKind == 6) {
+        cf::CfDebugCol tmp;
+        tmp.f[0] = lbl_eu_80666910;
+        tmp.f[1] = lbl_eu_80666948;
+        tmp.f[2] = lbl_eu_80666948;
+        tmp.f[3] = lbl_eu_8066692C;
+        col.u[0] = tmp.u[0];
+        col.u[1] = tmp.u[1];
+        col.u[2] = tmp.u[2];
+        col.u[3] = tmp.u[3];
     }
 
     renderCapsule__Q22cf18CfDebugDrawManagerFv(
-        &capsule->mStart, &capsule->mEnd, (const float*)&col, capsule->mRadius);
+        &capsule->mStart, &capsule->mEnd, col.f, capsule->mRadius);
 }
 
 // Forward capsule collision data to the collision query system.

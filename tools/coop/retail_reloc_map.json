@@ -1,5 +1,5 @@
 {
-  "count": 2228,
+  "count": 2235,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -1221,6 +1221,30 @@
         ]
       }
     },
+    "__vt__23reslist<P11CWorkThread>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14468,
+        "retail_symbol": "lbl_eu_8056B1BC",
+        "units": [
+          "main/monolib/src/work/CWorkRoot"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 36867,
+        "retail_symbol": "lbl_eu_8056B1BC",
+        "units": [
+          "main/monolib/src/work/CWorkRoot"
+        ]
+      }
+    },
     "__vt__27CTTask<Q22cf12CTaskCulling>": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -1266,6 +1290,30 @@
         "retail_symbol": "lbl_eu_8056BB84",
         "units": [
           "main/monolib/src/work/CProcess"
+        ]
+      }
+    },
+    "__vt__29_reslist_base<P11CWorkThread>": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14336,
+        "retail_symbol": "lbl_eu_8056B1D4",
+        "units": [
+          "main/monolib/src/work/CWorkRoot"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 36995,
+        "retail_symbol": "lbl_eu_8056B1D4",
+        "units": [
+          "main/monolib/src/work/CWorkRoot"
         ]
       }
     },
@@ -3773,6 +3821,43 @@
         "retail_symbol": "lbl_eu_806046A8",
         "units": [
           "main/CriWare/src/sofdec/sfdcore/mpv/mpvabdec"
+        ]
+      }
+    },
+    "lbl_eu_8051CEC0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 32,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15488,
+        "retail_symbol": "lbl_eu_80568CF0",
+        "units": [
+          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_seeki"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 33,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14468,
+        "retail_symbol": "lbl_eu_80568CF0",
+        "units": [
+          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_seeki"
+        ]
+      }
+    },
+    "lbl_eu_80568CF0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": -33,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14501,
+        "retail_symbol": "lbl_eu_8051CEC0",
+        "units": [
+          "main/CriWare/src/sofdec/sfdcore/sfd/sfd_seeki"
         ]
       }
     },
@@ -21887,6 +21972,20 @@
         ]
       }
     },
+    "main/kyoshin/cf/CfCollSphereImpl@61": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80666920",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/CfCollSphereImpl"
+        ]
+      }
+    },
     "main/kyoshin/code_80135FDC@10818": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -22053,7 +22152,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCEffStart@11306": {
+    "main/kyoshin/makecrystal/CMCEffStart@11304": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22067,7 +22166,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCEffStart@11340": {
+    "main/kyoshin/makecrystal/CMCEffStart@11338": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22081,7 +22180,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCEffStart@11526": {
+    "main/kyoshin/makecrystal/CMCEffStart@11524": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22095,7 +22194,7 @@
         ]
       }
     },
-    "main/kyoshin/makecrystal/CMCEffStart@11586": {
+    "main/kyoshin/makecrystal/CMCEffStart@11584": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -26673,7 +26772,7 @@
         ]
       }
     },
-    "main/nw4r/src/ut/ut_RomFont@3637": {
+    "main/nw4r/src/ut/ut_RomFont@3633": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -28758,19 +28857,6 @@
         ]
       }
     },
-    "spInstance__16CDeviceRemotePad": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 5,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80665638",
-        "units": [
-          "main/monolib/src/device/CDeviceRemotePad"
-        ]
-      }
-    },
     "spInstance__16CWorkFlowWiiMenu": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -29443,8 +29529,8 @@
       }
     }
   },
-  "function_pairs": 8442,
-  "generated": "2026-08-08T02:19:22.252182",
+  "function_pairs": 8462,
+  "generated": "2026-08-08T12:55:13.643313",
   "region": "us",
   "units_scanned": 1125,
   "version": 1

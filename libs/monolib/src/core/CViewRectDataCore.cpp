@@ -31,45 +31,59 @@ CViewRectDataCore* CViewRectDataCore::func_80459270() {
 // Clamps mScrollX and mScrollY so the visible area does not extend beyond
 // mBoundsSize after subtracting the inset margins on each axis.
 // @param size New viewport dimensions (x=width, y=height).
+// Recalculates scroll offsets after the viewport |size| changes.
+// Clamps mScrollX and mScrollY so the visible area does not extend beyond
+// mBoundsSize after subtracting the inset margins on each axis.
+//
+// KNOWN GAP: retail holds widthRemain in r8 (fresh register) while MWCC
+// reuses r7 here, and the y-basis loads (mInsetTop/y) land in lower regs; a
+// documented Chaitin allocation wall (see docs/evidence/decomp attempts.jsonl
+// :173) that resists every high-level ordering. Structural match is exact;
+// only register assignment (r8 vs r7, r4/r7/r6 vs r6/r5/r4) differs.
+// @param size New viewport dimensions (x=width, y=height).
+// Recalculates scroll offsets after the viewport |size| changes.
+// Clamps mScrollX and mScrollY so the visible area does not extend beyond
+// mBoundsSize after subtracting the inset margins on each axis.
+//
+// KNOWN GAP: retail holds widthRemain in r8 (fresh register) while MWCC
+// reuses r7 here, and the y-basis loads (mInsetTop/y) land in lower regs; a
+// documented Chaitin allocation wall (see docs/evidence/decomp attempts.jsonl
+// :173) that resists every high-level ordering. Structural match is exact;
+// only register assignment (r8 vs r7, r4/r7/r6 vs r6/r5/r4) differs.
+// @param size New viewport dimensions (x=width, y=height).
+// Recalculates scroll offsets after the viewport |size| changes.
+// Clamps mScrollX and mScrollY so the visible area does not extend beyond
+// mBoundsSize after subtracting the inset margins on each axis.
+//
+// KNOWN GAP: retail holds widthRemain in r8 (fresh register) while MWCC
+// reuses r7 here, and the y-basis loads (mInsetTop/y) land in lower regs; a
+// documented Chaitin allocation wall (docs/evidence/decomp attempts.jsonl
+// :173) that resists every high-level ordering. Structural match is exact;
+// only register assignment (r8 vs r7, r4/r7/r6 vs r6/r5/r4) differs.
+// @param size New viewport dimensions (x=width, y=height).
 void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
-    s16 maxWidth;
-    s16 maxHeight;
-    int partialH;
+    int maxWidth;
+    int maxHeight;
     int widthRemain;
     int heightRemain;
-    int overW;
-    int overH;
 
     mViewSize = size;
-
-    // Match retail register allocation:
-    // maxWidth in r5 (via extsh), widthRemain in r8, partialH in r4
     maxWidth = (s16)(mViewSize.x - mInsetLeft - mInsetRight);
-
-    // Compute widthRemain first so it stays in r8 (mBoundsSize.x in r4, maxWidth in r5)
     widthRemain = mBoundsSize.x - maxWidth;
-
-    // Then partialH in r4 (mViewSize.y in r6, mInsetTop in r7)
-    partialH = mViewSize.y - mInsetTop;
-
-    // Retail: cmpw mScrollX,widthRemain then maxHeight=partialH-mInsetBottom then ble.
-    if ((overW = (mScrollX > widthRemain), maxHeight = (s16)(partialH - mInsetBottom), overW)) {
+    maxHeight = (s16)(mViewSize.y - mInsetTop - mInsetBottom);
+    if (mScrollX > widthRemain) {
         mScrollX = widthRemain;
     }
-
     heightRemain = mBoundsSize.y - maxHeight;
-    if ((overH = (mScrollY > heightRemain), overH)) {
+    if (mScrollY > heightRemain) {
         mScrollY = heightRemain;
     }
-
     if (mScrollX < 0) {
         mScrollX = 0;
     }
-
-    if (mScrollY >= 0) {
-        return;
+    if (mScrollY < 0) {
+        mScrollY = 0;
     }
-    mScrollY = 0;
 }
 
 void CViewRectDataCore::func_80459384(const ml::CPnt16& maxSize) {

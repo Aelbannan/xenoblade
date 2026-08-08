@@ -53,21 +53,21 @@ s32 SFUO_ExecServer(void* self) {
 
 
 s32 SFUO_Create(void* self) {
-    void* x = *(void**)((u8*)self + 0x2208);
-    u8* e = (u8*)self + 0x263c;
-    u8* end = (u8*)self + 0x2638;
     s32 i = 0;
-    *(void**)((u8*)self + 0x2200) = end;
+    u8* end = (u8*)self + 0x2638;
+    u8* e = end + 4;
+    void* field = *(void**)((u8*)self + 0x2208);
     *(u32*)((u8*)self + 0x2638) = 0;
+    *(void**)((u8*)self + 0x2200) = end;
     do {
         *(u32*)((u8*)end + 4) = 0;
         *(u32*)((u8*)end + 8) = 0;
         *(u32*)((u8*)end + 12) = 0;
         *(u32*)((u8*)end + 16) = 0;
-        SFBUF_SetUoch(self, x, (void*)i, e);
+        SFBUF_SetUoch(self, field, (void*)i, e);
         i++;
-        e += 16;
         end += 16;
+        e += 16;
     } while (i < 3);
     return 0;
 }

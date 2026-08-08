@@ -32,21 +32,25 @@ UnkClass_8045F564::~UnkClass_8045F564() {
         unk0 = 0xFFFFFFFF;
     }
     
-    // Remove this from CLibLayout tracking array.
-    // Opaque byte-offset arithmetic intentionally mirrors retail codegen:
-    // struct-field access would let MWCC cache instanceCount across the
-    // shift loop, but retail reloads the singleton from the global each
-    // iteration (stores through a pointer derived from the same global).
-    u8* base = (u8*)lbl_eu_80665710;
-    u32 cnt = *(u32*)(base + 0x2B8);
+    // Remove this instance from CLibLayout's tracking array.
+    // Opaque byte-offset arithmetic forces MWCC to reload the lbl_eu_80665710
+    // singleton from sbss every iteration (raw-pointer stores alias with the
+    // global), matching retail's per-iteration `lwz r6, lbl_eu_80665710@sda21`.
+    // `clp` is loaded once per inner iteration and reused for both the count
+    // test and the element pointer so retail's single reload (`r6`) is reused
+    // in the shift body (`add r3, r6, r5`).
     u32 i = 0;
-    u8* it = base;
+    u8* it = (u8*)lbl_eu_80665710;
+    u32 cnt = *(u32*)(it + 0x2B8);
     while (i < cnt) {
         if (*(u32*)(it + 0x238) == (u32)this) {
             u32 bo = i * 4;
             u32 curCnt;
-            while (i < (curCnt = *(u32*)((u8*)lbl_eu_80665710 + 0x2B8)) - 1) {
-                u8* cur = (u8*)lbl_eu_80665710 + bo;
+            for (;;) {
+                u8* clp = (u8*)lbl_eu_80665710;
+                curCnt = *(u32*)(clp + 0x2B8);
+                if (i >= curCnt - 1) break;
+                u8* cur = clp + bo;
                 bo += 4;
                 u32 next = *(u32*)(cur + 0x23C);
                 i++;

@@ -25,7 +25,6 @@ extern "C" {
     u8   lbl_eu_806659D0;           // global NAND "busy" flag
     s32  lbl_eu_806659D4;           // global NAND result/error latch
 
-    char* strcpy(char* dest, const char* src);
     s32 func_804DA9C4(CNReqtaskRemoveData* data, u8 arg);  // NAND remove request setup primitive
     s32 func_804DA76C(u8* ptr);                            // NAND remove request execute primitive
 }

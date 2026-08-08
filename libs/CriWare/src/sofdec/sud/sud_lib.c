@@ -43,7 +43,7 @@ void SUD_SearchSudDat(char* data, s32 id, s32* out1, s32* out2) {
     return;
 L:
     while (i < id) {
-        if (memcmp(p, lbl_eu_8051D47C + 31, 1) == 0 &&
+        if (memcmp(p, lbl_eu_8051D47C + 0x1f, 1) == 0 &&
             memcmp(p, lbl_eu_8051D47C, 8) == 0) {
             *out1 = (s32)p;
             *out2 = ((__cntlzw((u32)p) >> 5) & 1) ? 0 : 35;
@@ -51,5 +51,4 @@ L:
         p++;
         i++;
     }
-    return;
 }

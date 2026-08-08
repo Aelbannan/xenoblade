@@ -4,6 +4,18 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
+
+// Circular linked-list node returned by func_800B6C7C; mNext is a pointer at +0x0.
+struct CHelp_EnemyListNode {
+    CHelp_EnemyListNode* mNext; // 0x0
+};
+
+// Container returned by func_800B6C7C; the sentinel head lives at +0x4.
+struct CHelp_EnemyList {
+    void* field_0x0;        // 0x0
+    CHelp_EnemyListNode* mHead; // 0x4
+};
+
 class CHelp_EnemyCount : public CHelp {
 public:
     void func_802B7F54();

@@ -1,3 +1,8 @@
+// The retail frame-processing method is named FrameProcess(); the shared
+// header (read-only in this session) still declares it as SoundThreadProc.
+// Local alias so this TU defines the member under the retail name.
+#define SoundThreadProc FrameProcess
+
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
@@ -68,7 +73,7 @@ void* SoundThread::SoundThreadFunc(void* pArg) {
     AxManager::GetInstance().RegisterCallback(&p->mAxCallbackNode,
                                               AxCallbackFunc);
 
-    p->SoundThreadProc();
+    p->FrameProcess();
 
     AxManager::GetInstance().UnregisterCallback(&p->mAxCallbackNode);
 
@@ -85,7 +90,7 @@ void SoundThread::UnregisterPlayerCallback(PlayerCallback* pCallback) {
     mPlayerCallbackList.Erase(pCallback);
 }
 
-void SoundThread::SoundThreadProc() {
+void SoundThread::FrameProcess() {
     OSMessage msg;
 
     while (true) {
@@ -102,12 +107,10 @@ void SoundThread::SoundThreadProc() {
                 AxVoiceManager::GetInstance().FreeAllReservedAxVoice();
                 AxManager::GetInstance().Update();
 
-                if (!AxManager::GetInstance().IsDiskError()) {
-                    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPlayerCallbackList,
-                                                   { it->OnUpdateFrameSoundThread(); })
+                NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPlayerCallbackList,
+                                               { it->OnUpdateFrameSoundThread(); })
 
-                    ChannelManager::GetInstance().UpdateAllChannel();
-                }
+                ChannelManager::GetInstance().UpdateAllChannel();
 
                 (void)Util::CalcRandom();
                 VoiceManager::GetInstance().UpdateAllVoices();
@@ -129,5 +132,3 @@ void SoundThread::SoundThreadProc() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-void FrameProcess__Q44nw4r3snd6detail11SoundThreadFv(){}

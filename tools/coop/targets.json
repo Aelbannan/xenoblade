@@ -444065,7 +444065,7 @@
       "size": "0x60",
       "unit": "nw4r/src/snd/snd_SoundStartable",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SoundStartable.cpp",
@@ -444078,7 +444078,15 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SoundStartable.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-63782",
+        "claimed_at": "2026-08-08T04:57:24.231025+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SoundStartable.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80423384",
@@ -463241,7 +463249,7 @@
       "size": "0x58",
       "unit": "monolib/src/work/CWorkSystemMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
@@ -463256,15 +463264,7 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-63782",
-        "claimed_at": "2026-08-08T04:52:40.477464+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/work/CWorkSystemMem.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "worksysmem-get-handle",

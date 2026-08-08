@@ -13,13 +13,19 @@ AxfxImpl* AxfxImpl::mCurrentFx = NULL;
 u32 AxfxImpl::mAllocatedSize = 0;
 
 bool AxfxImpl::CreateHeap(void* pBuffer, u32 size) {
-    mHeap = MEMCreateFrmHeap(pBuffer, size);
+    if (pBuffer == NULL || size == 0) {
+        mHeap = NULL;
+        return false;
+    }
+
+    mHeap = MEMCreateFrmHeapEx(pBuffer, size, 0);
     return mHeap != NULL;
 }
 
 void AxfxImpl::DestroyHeap() {
     if (mHeap != NULL) {
         MEMDestroyFrmHeap(mHeap);
+        mHeap = NULL;
     }
 }
 
@@ -27,10 +33,14 @@ void AxfxImpl::HookAlloc(AXFXAllocHook* pAllocHook, AXFXFreeHook* pFreeHook) {
     AXFXGetHooks(pAllocHook, pFreeHook);
     AXFXSetHooks(Alloc, Free);
     lbl_eu_806654C8 = this;
+    lbl_eu_806654CC = 0;
 }
 
 void AxfxImpl::RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook) {
     AXFXSetHooks(allocHook, freeHook);
+    // Retail has a dead load of mAllocatedSize here (lwz lbl_eu_806654CC,
+    // result unused) - forced via volatile read to reproduce byte-identity.
+    (void)*(volatile u32*)&lbl_eu_806654CC;
     lbl_eu_806654C8 = NULL;
 }
 

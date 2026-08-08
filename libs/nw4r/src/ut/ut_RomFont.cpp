@@ -236,39 +236,11 @@ void* RomFont::Unload() {
 
 bool RomFont::HasGlyph(u16 ch) const {
     switch (mFontEncode) {
-    case 0: {
-        bool valid = IsCP1252Char(ch);
-        return valid;
-    }
+    case 0:
+        return ch >= 0x20 && ch <= 0xFF;
 
     case 1:
-        if (IsSJISHalfWidthChar(ch)) {
-            return true;
-        }
-
-        {
-            bool valid;
-            u8 hi = ch >> 8;
-            u8 lo = ch & 0xFF;
-
-            valid = false;
-
-            if (hi >= 0x81) {
-                if (hi <= 0x98) {
-                    if (lo >= 0x40) {
-                        if (lo <= 0xFC) {
-                            valid = true;
-                        }
-                    }
-                }
-            }
-
-            if (valid) {
-                return true;
-            }
-        }
-
-        return false;
+        return IsSJISHalfWidthChar(ch) || IsSJISFullWidthChar(ch);
 
     default:
         return false;

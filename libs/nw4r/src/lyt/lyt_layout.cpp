@@ -121,16 +121,10 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
     }
 
     // Header version must be 0x0008..0x000A (minor byte in [8, 10], major
-    // byte zero), like animation resources. The validity is accumulated into
-    // a flag that is tested once, matching the retail flag-in-r3 shape.
+    // byte zero), like animation resources.
     u32 version = pHeader->version;
-    u32 versionOk = ((version >> 8) & 0xFF) == 0;
-    if (versionOk) {
-        versionOk = (version & 0xFF) >= 8;
-    }
-    if (versionOk) {
-        versionOk = (version & 0xFF) <= 0xA;
-    }
+    bool versionOk = ((version >> 8) & 0xFF) == 0 && (version & 0xFF) >= 8 &&
+                     (version & 0xFF) <= 0xA;
     if (!versionOk) {
         return false;
     }

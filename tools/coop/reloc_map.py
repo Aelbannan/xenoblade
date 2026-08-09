@@ -593,7 +593,10 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"  NOT reloc-NAME fixable — no extern \"C\" rename applies",
         ]
     if drift.kind == "presence":
-        side = "decomp" if drift.retail_symbol == "" else "retail"
+        # retail_type is None ⇔ retail has no reloc at this offset (a
+        # section/null-symbol reloc decodes to "" on its present side, so the
+        # symbol strings cannot determine the side).
+        side = "decomp" if drift.retail_type is None else "retail"
         other = "retail" if side == "decomp" else "decomp"
         sym = drift.decomp_symbol or drift.retail_symbol
         lines = [

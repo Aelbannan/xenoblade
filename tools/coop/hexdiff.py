@@ -1544,7 +1544,11 @@ def _output_terminal(
                 pair = f"{d.retail_type_name} vs {d.decomp_type_name}"
                 syms = f"({d.retail_symbol} / {d.decomp_symbol})" if (d.retail_symbol or d.decomp_symbol) else ""
             elif d.kind == "presence":
-                side = "decomp" if d.retail_symbol == "" else "retail"
+                # Side is determined by which RELOC is absent — use the type
+                # fields (retail_type None ⇔ retail has no reloc here), NOT the
+                # symbol strings: a section-relative (null-symbol) reloc decodes
+                # to "" on its present side and would mislabel the side.
+                side = "decomp" if d.retail_type is None else "retail"
                 syms = (d.decomp_symbol or d.retail_symbol or "")
                 pair = f"{d.type_name} [{side}-side only]"
             else:

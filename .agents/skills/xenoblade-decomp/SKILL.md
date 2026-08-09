@@ -378,7 +378,7 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --asm
 - **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
 - **Compiler config line** — the unit's configured `mw_version`/`extra_cflags` from configure.py is printed (e.g. `GC/3.0a5.2 -func_align 4`), so you know the exact compiler contract before touching flags.
 - **KB hints** — detects known MWCC_REFERENCE plateau signatures (alignment nop `ori r0,r0,0` near `mtctr` on one side; bte-family unit without `-func_align 4`) and prints the documented flag fix.
-- **Reloc name-drift section** — terminal ends with `Reloc name drift (N):` listing each byte-identical/reloc-name-different site with the approved source fix (`extern "C"` declaration) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
+- **Reloc-drift section** — terminal ends with `Reloc drift (N):` listing each diverging reloc site with the approved source fix (`extern "C"` declaration for name drift; inline/emit-the-symbol guidance for presence drift; builtin/expression guidance for type drift) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
 - **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
 
 **Workflow rules:**

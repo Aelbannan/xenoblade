@@ -70,8 +70,8 @@ Region: `us` · acceptance bar: `EQUIVALENT_MATCH` or `FULL_MATCH` (policy `equi
 |---|---|
 | Targets (registry) | 19300 |
 | Buildable | 19300 |
-| Accepted | 9942 (`FULL_MATCH` 9695 · `EQUIVALENT_MATCH` 247) |
-| Active (in progress) | 3397 |
+| Accepted | 9948 (`FULL_MATCH` 9701 · `EQUIVALENT_MATCH` 247) |
+| Active (in progress) | 3388 |
 
 <!-- END GENERATED COOP STATUS -->
 
@@ -254,11 +254,10 @@ Equivalence applies only to its printed observables; unsupported instructions,
 timeouts, and solver `unknown` are inconclusive. This evidence feeds
 `EQUIVALENT_MATCH` — it does not replace split-size checks.
 
-### Reloc name-drift (#1 cause of 99%+ near-misses)
+### Reloc drift (#1 cause of 99%+ near-misses)
 
-Bytes identical but relocation **names** differ. `reloc_map.py` detects the
-drift per function and suggests the approved source fix (an
-`extern "C" lbl_eu_*` declaration):
+Bytes identical but relocation **sites** differ — **name** drift (same site, different symbol), **presence** drift (reloc on one side only), **type** drift (same offset, different reloc class), plus addend/layout/structural. `reloc_map.py` detects the drift per function and suggests the approved source fix (an
+`extern "C" lbl_eu_*` declaration for name drift; inline/emit-the-symbol guidance for presence drift; builtin/expression guidance for type drift):
 
 ```sh
 .venv/bin/python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> --no-build

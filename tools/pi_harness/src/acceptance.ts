@@ -288,6 +288,16 @@ interface HexdiffJson {
   size_check?: { ok?: boolean; over_by?: number } | null;
   reg_mapping?: Record<string, string>;
   instructions?: { match: boolean; retail_asm?: string; decomp_asm?: string }[];
+  reloc_drift?: {
+    offset?: number;
+    type?: string;
+    kind?: string;
+    retail_symbol?: string;
+    decomp_symbol?: string;
+    retail_type?: string;
+    decomp_type?: string;
+  }[];
+  reloc_suggestions?: Record<string, string[]>;
 }
 
 /** Extract a compact, model-readable summary from hexdiff JSON output. */
@@ -307,6 +317,35 @@ function extractHexdiffSummary(result: HexdiffJson): string {
   }
   if (result.reg_mapping && Object.keys(result.reg_mapping).length > 0) {
     parts.push(`reg_mapping: ${JSON.stringify(result.reg_mapping)}`);
+  }
+  // Reloc drift (the reloc-SITE gate byte-identity cannot reveal): surface
+  // every kind (name / addend / type / presence) with its fix suggestions so
+  // the re-prompt feedback carries exactly what the agent's own hexdiff run
+  // would show. Without this, a mismatch:0 target stuck at the reloc gate got
+  // feedback with no hint of why (the lost-certify class).
+  if (Array.isArray(result.reloc_drift) && result.reloc_drift.length > 0) {
+    const partsPush = parts;
+    partsPush.push(`reloc_drift (${result.reloc_drift.length}):`);
+    for (const d of result.reloc_drift) {
+      const off = d.offset !== undefined ? `+0x${Number(d.offset).toString(16).padStart(4, "0")}` : "?";
+      const types =
+        d.kind === "type"
+          ? `${d.retail_type ?? "?"} vs ${d.decomp_type ?? "?"}`
+          : d.kind === "presence"
+            ? `${d.type ?? "?"} [${d.retail_type ? "retail" : "decomp"}-side only]`
+            : (d.type ?? "?");
+      const syms =
+        d.kind === "presence"
+          ? (d.decomp_symbol || d.retail_symbol || "")
+          : `${d.retail_symbol ?? ""} → ${d.decomp_symbol ?? ""}`;
+      partsPush.push(`  ${off} ${types} ${d.kind}: ${syms}`);
+    }
+    const sug = result.reloc_suggestions as Record<string, string[]> | undefined;
+    if (sug && Object.keys(sug).length > 0) {
+      for (const [off, lines] of Object.entries(sug)) {
+        for (const l of lines) partsPush.push(`    ${off}: ${l}`);
+      }
+    }
   }
   // Show up to 10 mismatched instructions
   if (result.instructions) {

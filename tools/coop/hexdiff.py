@@ -1533,15 +1533,27 @@ def _output_terminal(
             joined = ", ".join(parts_list)
             print(f"  {instr_part:<12s}  {joined}")
 
-    # Reloc name-drift summary (MWCC_REFERENCE §1) — the #1 cause of
-    # 99.3-99.9% near-misses: instructions byte-identical, reloc names differ.
+    # Reloc-drift summary (MWCC_REFERENCE §1) — the #1 cause of
+    # 99.3-99.9% near-misses: instructions byte-identical, reloc sites differ
+    # (name / addend / layout / structural, plus the reloc-SITE classes type /
+    # presence that the byte-equality verdict alone cannot reveal).
     if reloc_drifts:
-        print(f"\n{_YELLOW}Reloc name drift ({len(reloc_drifts)}):{_RESET}")
+        print(f"\n{_YELLOW}Reloc drift ({len(reloc_drifts)}):{_RESET}")
         for d in reloc_drifts:
+            if d.kind == "type":
+                pair = f"{d.retail_type_name} vs {d.decomp_type_name}"
+                syms = f"({d.retail_symbol} / {d.decomp_symbol})" if (d.retail_symbol or d.decomp_symbol) else ""
+            elif d.kind == "presence":
+                side = "decomp" if d.retail_symbol == "" else "retail"
+                syms = (d.decomp_symbol or d.retail_symbol or "")
+                pair = f"{d.type_name} [{side}-side only]"
+            else:
+                syms = f"{d.retail_symbol} → {d.decomp_symbol}"
+                pair = d.type_name
             delta = f" (addend delta {d.addend_delta:+d})" if d.addend_delta else ""
             print(
-                f"  +0x{d.offset:04x} {d.type_name:20s} {d.kind:10s} "
-                f"{d.retail_symbol} → {d.decomp_symbol}{delta}"
+                f"  +0x{d.offset:04x} {pair:36s} {d.kind:10s} "
+                f"{syms}{delta}"
             )
             for line in reloc_suggestions.get(f"0x{d.offset:04x}", []):
                 print(f"      {line}")

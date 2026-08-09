@@ -129,9 +129,16 @@ class RelocDrift:
     # "layout"  → same symbol, only the addend field differs (pool offset drift;
     #             report-only, not a map candidate)
     # "structural" → other fields differ (not reloc-name fixable)
+    # "type"    → both sides have a reloc at the same offset but a different
+    #             relocation_type (bytes may match; linker semantics differ)
+    # "presence" → reloc at an offset on ONE side only (the other has none)
     kind: str
     retail_addend: Optional[int]
     decomp_addend: Optional[int]
+    # Site-drift types (set for kind="type" — the reloc_type field then holds
+    # the retail side's type; for kind="presence" the present side's type).
+    retail_type: Optional[int] = None
+    decomp_type: Optional[int] = None
 
     @property
     def addend_delta(self) -> Optional[int]:
@@ -142,6 +149,14 @@ class RelocDrift:
     @property
     def type_name(self) -> str:
         return relocation_type_name(self.reloc_type)
+
+    @property
+    def retail_type_name(self) -> str:
+        return relocation_type_name(self.retail_type) if self.retail_type is not None else "—"
+
+    @property
+    def decomp_type_name(self) -> str:
+        return relocation_type_name(self.decomp_type) if self.decomp_type is not None else "—"
 
     @property
     def category(self) -> str:
@@ -159,6 +174,8 @@ class RelocDrift:
             "retail_addend": self.retail_addend,
             "decomp_addend": self.decomp_addend,
             "addend_delta": self.addend_delta,
+            "retail_type": self.retail_type_name,
+            "decomp_type": self.decomp_type_name,
         }
 
 
@@ -235,11 +252,50 @@ def classify_drift(
 
 def _drifts_from_pairs(unit_name: str, r_by_off, d_by_off, r_data, r_size, d_data, d_size) -> list[RelocDrift]:
     drifts: list[RelocDrift] = []
-    for off, r in sorted(r_by_off.items()):
+    for off in sorted(set(r_by_off) | set(d_by_off)):
+        r = r_by_off.get(off)
         d = d_by_off.get(off)
-        if d is None or d.relocation_type != r.relocation_type:
-            continue
         if off + 4 > r_size or off + 4 > d_size:
+            continue
+        # Presence drift: reloc at this offset on one side only. Previously
+        # skipped (d is None -> continue); now reported so agents can see a
+        # reloc the retail resolves inline (or vice versa) — the reloc-site
+        # gate that byte-identity alone cannot reveal.
+        if r is None or d is None:
+            if r is None and d is None:
+                continue
+            present = r if r is not None else d
+            drifts.append(
+                RelocDrift(
+                    offset=off,
+                    reloc_type=present.relocation_type,
+                    retail_symbol=(r.symbol or "") if r else "",
+                    decomp_symbol=(d.symbol or "") if d else "",
+                    kind="presence",
+                    retail_addend=r.addend if r else None,
+                    decomp_addend=d.addend if d else None,
+                    retail_type=r.relocation_type if r else None,
+                    decomp_type=d.relocation_type if d else None,
+                )
+            )
+            continue
+        # Type drift: same offset, both sides have a reloc, different type
+        # (HI vs HA, REL24 vs ADDR24, ...). Bytes may match while the linked
+        # value differs — the reloc-site gate. Previously skipped.
+        if d.relocation_type != r.relocation_type:
+            drifts.append(
+                RelocDrift(
+                    offset=off,
+                    reloc_type=r.relocation_type,
+                    retail_symbol=r.symbol or "",
+                    decomp_symbol=d.symbol or "",
+                    kind="type",
+                    retail_addend=r.addend,
+                    decomp_addend=d.addend,
+                    retail_type=r.relocation_type,
+                    decomp_type=d.relocation_type,
+                )
+            )
             continue
         r_word = int.from_bytes(r_data[off:off + 4], "big")
         d_word = int.from_bytes(d_data[off:off + 4], "big")
@@ -525,6 +581,40 @@ def _lookup(drift: RelocDrift, unit_name: str, reloc_map: dict) -> Optional[dict
 
 def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_map: dict) -> list[str]:
     """Concrete fix lines for one drift (empty when nothing to suggest)."""
+    if drift.kind == "type":
+        return [
+            f"reloc TYPE differs at 0x{drift.offset:04x} "
+            f"(retail {drift.retail_type_name} vs decomp {drift.decomp_type_name}) "
+            f"— bytes may match but the linker-generated value's reloc class differs",
+            f"  fix: alter the instruction/expression selection that produces this reloc "
+            f"(docs/MWCC_REFERENCE.md reloc categories) — e.g. an MWCC builtin "
+            f"(__rlwinm/__lwz) vs pointer arithmetic, or a symbol reached via SDA "
+            f"(EMB_SDA21/SDA16) vs absolute (ADDR16/ADDR24)",
+            f"  NOT reloc-NAME fixable — no extern \"C\" rename applies",
+        ]
+    if drift.kind == "presence":
+        side = "decomp" if drift.retail_symbol == "" else "retail"
+        other = "retail" if side == "decomp" else "decomp"
+        sym = drift.decomp_symbol or drift.retail_symbol
+        lines = [
+            f"reloc present on {side} side ONLY at 0x{drift.offset:04x} "
+            f"({sym} [{drift.type_name}]) — {other} has no reloc at this offset",
+        ]
+        if side == "decomp":
+            lines.append(
+                f"  decomp references a linker symbol retail resolves INLINE — reference the "
+                f"retail symbol via extern, or inline the value so no reloc is emitted"
+            )
+        else:
+            lines.append(
+                f"  retail references a linker symbol decomp resolved INLINE — add an "
+                f"extern reference to that retail name so MWCC emits the reloc"
+            )
+        lines.append(
+            f"  NOT reloc-NAME fixable; check the expression/operand shape "
+            f"(docs/MWCC_REFERENCE.md §1a SDA globals / §1b float pools)"
+        )
+        return lines
     if drift.kind not in ("name", "addend"):
         return []
     entry = _lookup(drift, unit_name, reloc_map)

@@ -36,6 +36,52 @@ def _drift(**kw) -> RelocDrift:
     return RelocDrift(**base)
 
 
+class SiteDriftTests(unittest.TestCase):
+    """The reloc-SITE classes (type / presence) added so hexdiff can surface
+    the reloc-site gate that byte-identity alone cannot reveal."""
+
+    def test_type_drift_fields(self):
+        d = _drift(kind="type", reloc_type=20, retail_type=20, decomp_type=109)
+        self.assertEqual(d.type_name, "R_PPC_GLOB_DAT")
+        self.assertEqual(d.retail_type_name, "R_PPC_GLOB_DAT")
+        self.assertEqual(d.decomp_type_name, "R_PPC_EMB_SDA21")
+        self.assertEqual(d.to_dict()["retail_type"], "R_PPC_GLOB_DAT")
+        self.assertEqual(d.to_dict()["decomp_type"], "R_PPC_EMB_SDA21")
+
+    def test_type_drift_suggestion(self):
+        d = _drift(kind="type", reloc_type=20, retail_type=20, decomp_type=109)
+        lines = suggestions(d, "u", "o", {})
+        # type / presence drifts ARE reported (with fixes) even though they are
+        # NOT reloc-NAME fixable — they must never be silently skipped.
+        self.assertTrue(any("TYPE differs" in l for l in lines))
+        self.assertTrue(any("NOT reloc-NAME" in l for l in lines))
+
+    def test_presence_decomp_only_suggestion(self):
+        # decomp has a reloc at offset 0, retail has none.
+        d = RelocDrift(offset=0, reloc_type=109, retail_symbol="", decomp_symbol="lbl_x",
+                       kind="presence", retail_addend=None, decomp_addend=0)
+        lines = suggestions(d, "u", "o", {})
+        self.assertTrue(any("decomp" in l and "INLINE" in l for l in lines))
+        self.assertTrue(any("NOT reloc-NAME" in l for l in lines))
+
+    def test_presence_retail_only_suggestion(self):
+        d = RelocDrift(offset=0, reloc_type=109, retail_symbol="lbl_y", decomp_symbol="",
+                       kind="presence", retail_addend=0, decomp_addend=None)
+        lines = suggestions(d, "u", "o", {})
+        self.assertTrue(any("retail" in l and "extern" in l for l in lines))
+
+    def test_presence_to_dict(self):
+        d = RelocDrift(offset=4, reloc_type=109, retail_symbol="lbl_y", decomp_symbol="",
+                       kind="presence", retail_addend=0, decomp_addend=None,
+                       retail_type=109, decomp_type=None)
+        self.assertEqual(d.to_dict()["retail_type"], "R_PPC_EMB_SDA21")
+        self.assertEqual(d.to_dict()["decomp_type"], "—")
+
+    def test_structural_still_not_suggested(self):
+        d = _drift(kind="structural")
+        self.assertEqual(suggestions(d, "u", "o", {}), [])
+
+
 class InplaceAddendTests(unittest.TestCase):
     def test_sda21_low16(self):
         # lwz r3, 0x12(r0) — addend field is the low 16 bits.

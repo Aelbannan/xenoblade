@@ -49,7 +49,7 @@ extern "C" void __ct__CMenuPTState(CProcess* _this, CProcess* storedParent) {
 
         u32 ptmf1 = ptmf[1];
         u32 ptmf0 = ptmf[0];
-        void* iscnVtbl = vtFinal + 0x24;
+        char* iscnVtbl = vtFinal + 0x24;
         u32 ptmf2 = ptmf[2];
 
         shim->callbacks[0] = ptmf0;

@@ -65,6 +65,6 @@ void func_800A72E0(){}
 
 void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { static_cast<cf::CfDebugDrawManager*>(self)->renderCylinder(); }
 
-extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(void* self, bool b) { static_cast<cf::CfDebugDrawManager*>(self)->renderCylinder(); }
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(cf::CfDebugDrawManager* self, bool b) { self->renderCylinder(); }
 
 void cf::CfDebugDrawManager::renderCapsule() { renderCylinder__Q22cf18CfDebugDrawManagerFb(this, false); }

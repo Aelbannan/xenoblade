@@ -625,7 +625,7 @@ void func_80079E04(CfCamEventManager* self) {
 
 void func_8007AA4C(){}
 
-extern "C" void func_8007B030(void* self) {
+extern "C" void func_8007B030(u8* self) {
     *(u8*)((u8*)self + 0x1de) = 0;
     *(u8*)((u8*)self + 0x356) = 0;
     *(u8*)((u8*)self + 0x4ce) = 0;

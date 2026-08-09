@@ -34,7 +34,7 @@ public:
 private:
     // 0x00-0x54 CTTask
     // 0x54-0x58 IWorkEvent
-    void* unk58;                           // 0x58 - scene / create arg
+    u8* unk58;                           // 0x58 - scene / create arg
     reslist<CUIBattleChild*> mChildList;   // 0x5C
     CProcess* unk7C;                       // 0x7C - Init child process
     u8 unk80;                              // 0x80 - remove-all request

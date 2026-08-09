@@ -510,6 +510,6 @@ Channel* SeqTrack::NoteOn(int key, int velocity, s32 length, bool tie) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" u32 detail_ConvertLabelStringToSoundId__Q34nw4r3snd18SoundArchivePlayerFPCc(void* self, const char* str) {
+extern "C" u32 detail_ConvertLabelStringToSoundId__Q34nw4r3snd18SoundArchivePlayerFPCc(nw4r::snd::SoundArchivePlayer* self, const char* str) {
     return ConvertLabelStringToSoundId__Q34nw4r3snd12SoundArchiveCFPCc(*(void**)((u8*)self + 0x10), str);
 }

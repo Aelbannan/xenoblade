@@ -65,20 +65,20 @@ DECL_BSS_SECTION(_sbss);
 DECL_BSS_SECTION(_sbss2);
 
 typedef struct RomSection {
-    void* phys;  // at 0x4
-    void* virt;  // at 0x0
+    u8* phys;   // at 0x4
+    u8* virt;   // at 0x0
     size_t size; // at 0x8
 } RomSection;
 
 typedef struct BssSection {
-    void* virt;  // at 0x0
+    u8* virt;   // at 0x0
     size_t size; // at 0x8
 } BssSection;
 
 typedef struct ExtabIndexInfo {
-    void* section;                // at 0x0
+    u8* section;                  // at 0x0
     struct ExtabIndexInfo* extab; // at 0x4
-    void* codeStart;              // at 0x8
+    u8* codeStart;                // at 0x8
     u32 codeSize;                 // at 0xC
 } ExtabIndexInfo;
 

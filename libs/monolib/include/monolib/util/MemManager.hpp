@@ -90,8 +90,8 @@ namespace mtl {
             MemBlock* mTail; //0x4
             MemBlock* mOldest; //0x8
             MemBlock* mYoungest; //0xC
-            void* mStartAddress; //0x10
-            void* mEndAddress; //0x14
+            void* mStartAddress; //0x10 (region base - written from create()'s void* head param)
+            void* mEndAddress; //0x14 (region end - byte address)
             u32 mNumAlloc; //0x18
             u32 mSize; //0x1C
             u32 mFreeBytes; //0x20

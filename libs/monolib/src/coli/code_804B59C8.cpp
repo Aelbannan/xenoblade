@@ -71,13 +71,13 @@ void func_804B6D30(){}
 
 void func_804B6F58(){}
 
-extern "C" u32 func_804B7044(void* self, float f) {
+extern "C" u32 func_804B7044(u8* self, float f) {
     u32 r = 0;
     if (f <= *(float*)((u8*)self + 0x64) && f >= *(float*)((u8*)self + 0x68)) r = 1;
     return r;
 }
 
-extern "C" u32 func_804B7074(void* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
+extern "C" u32 func_804B7074(u8* self, float f) { return f <= *(float*)((u8*)self + 0x64); }
 
 void func_804B708C(){}
 
@@ -141,7 +141,7 @@ void func_804BA7BC(){}
 
 void func_804BA8B4(){}
 
-extern "C" u32 func_804BADA0(void* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
+extern "C" u32 func_804BADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BADB4(){}

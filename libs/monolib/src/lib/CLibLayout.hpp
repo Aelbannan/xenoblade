@@ -11,6 +11,8 @@
 #include <nw4r/lyt/lyt_texMap.h>
 #include <nw4r/lyt/lyt_textBox.h>
 
+class UnkClass_8045F564;
+
 // Hash-table element referenced by CLibLayout's creator ebook. field_0 is an
 // allocation handle for the accelerator allocator; field_4 (when non-NULL) is a
 // frame heap that takes priority for the buffer.
@@ -51,7 +53,7 @@ public:
     s32 hashDivisor;                   // 0x22C
     u32 mRangeStart;                   // 0x230
     u32 mRangeEnd;                     // 0x234
-    void* instanceArray[32];           // 0x238-0x2B7: tracked layout-instance pointers
+    UnkClass_8045F564* instanceArray[32];     // 0x238-0x2B7: tracked layout-instance pointers
     u32 instanceCount;                 // 0x2B8
     u8 pad_2BC[0x4];                   // 0x2BC-0x2BF
 };

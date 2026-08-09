@@ -52,13 +52,13 @@ extern "C" void func_801AACA8(unsigned char v) {
     if (p) *(unsigned char*)((u8*)p + 0x1b) = v;
 }
 
-void func_801AACBC(void *r3, void *r4) {
+void func_801AACBC(unsigned int* r3, unsigned int* r4) {
     extern unsigned char lbl_eu_80664330;
     unsigned int *p = (unsigned int *)&lbl_eu_80664330;
     if (!*p) return;
     unsigned int *dst = (unsigned int *)*p;
-    unsigned int *src1 = (unsigned int *)r3;
-    unsigned int *src2 = (unsigned int *)r4;
+    unsigned int *src1 = r3;
+    unsigned int *src2 = r4;
     dst[0] = src1[0];
     dst[1] = src1[1];
     dst[2] = src1[2];

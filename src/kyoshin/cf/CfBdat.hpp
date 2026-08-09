@@ -104,3 +104,8 @@ namespace cf{
     };
 
 } //namespace cf
+
+// Data-pool constants referenced by CfBdat.cpp free functions (global scope so
+// MWCC emits them unmangled).
+extern float lbl_eu_80667368;
+extern char lbl_eu_80662228[];

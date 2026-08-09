@@ -13,7 +13,7 @@ CMdlAnmEye::CMdlAnmEye() {
     value2C = 1;
 }
 
-void func_804E77BC(void* self, u32 val) {
+void func_804E77BC(u8* self, u32 val) {
     ((CMdlAnmEye*)self)->value2C = val;
 }
 

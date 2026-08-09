@@ -86,7 +86,7 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
 
         u32 ptmf1 = ptmf[1];
         u32 ptmf0 = ptmf[0];
-        void* iscnVtbl = vtFinal + 0x24;
+        char* iscnVtbl = vtFinal + 0x24;
 
         shim->callbacks[0] = ptmf0;
         shim->callbacks[1] = ptmf1;

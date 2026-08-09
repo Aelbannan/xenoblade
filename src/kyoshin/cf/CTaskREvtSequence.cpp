@@ -152,6 +152,6 @@ void func_8016C7D8(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*
 
 void func_8016C7E0(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->cbRenderBefore(); }
 
-extern "C" void func_8016C7E8(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->~CTaskREvtSequence(); }
+extern "C" void func_8016C7E8(u8* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->~CTaskREvtSequence(); }
 
 // CTTask<cf::CTaskREvtSequence> specializations provided by header

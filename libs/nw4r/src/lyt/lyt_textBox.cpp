@@ -99,7 +99,7 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
             ArcResourceAccessor::RES_TYPE_FONT, pFontName, NULL);
 
         if (pFontBinary != NULL) {
-            void* pFontBuf = Layout::AllocMemory(sizeof(ut::ResFont));
+            ut::ResFont* pFontBuf = static_cast<ut::ResFont*>(Layout::AllocMemory(sizeof(ut::ResFont)));
 
             if (pFontBuf != NULL) {
                 ut::ResFont* pResFont = new (pFontBuf) ut::ResFont();
@@ -111,7 +111,7 @@ TextBox::TextBox(const res::TextBox* pRes, const ResBlockSet& rBlockSet)
         }
     }
 
-    void* pMaterialBuf = Layout::AllocMemory(sizeof(Material));
+    Material* pMaterialBuf = static_cast<Material*>(Layout::AllocMemory(sizeof(Material)));
 
     if (pMaterialBuf != NULL) {
         const u32* const pMatOffsetTbl = detail::ConvertOffsToPtr<u32>(

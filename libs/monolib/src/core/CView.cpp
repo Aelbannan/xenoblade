@@ -1,6 +1,6 @@
 #include <types.h>
 void __dt__5CViewFv(void*);
-void func_8043FBC4(void* self) {
+void func_8043FBC4(u8* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
 

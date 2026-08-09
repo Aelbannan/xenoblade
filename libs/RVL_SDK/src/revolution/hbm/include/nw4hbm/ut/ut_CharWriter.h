@@ -219,7 +219,7 @@ private:
 
     struct LoadingTexture {
         GXTexMapID slot;      // at 0x0
-        void* texture;        // at 0x4
+        u8* texture;          // at 0x4
         TextureFilter filter; // at 0x8
 
         bool operator!=(const LoadingTexture& rOther) const {

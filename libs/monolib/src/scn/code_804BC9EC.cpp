@@ -113,7 +113,7 @@ extern const char lbl_eu_80526300[];
 
 extern u32 lbl_eu_80665968;
 extern u8 lbl_eu_8065F418[0x10];
-int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
+int func_804BC9EC__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 int func_804BC9F4(u32* outStruct, u32 data) {
     *outStruct = 0;

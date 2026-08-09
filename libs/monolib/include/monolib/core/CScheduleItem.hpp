@@ -16,7 +16,7 @@ struct CScheduleItem {
     s16 mSlots[32];   // 0x08: effect object handles
     u8 mCount;        // 0x48: number of active slots
     u8 _pad49[3];     // 0x49
-    void* mOwner;     // 0x4C: owning CSchedule
+    CSchedule* mOwner;  // 0x4C: owning CSchedule
     s16 mPoolIndex;   // 0x50: index in the pool (-1 = free)
     u8 _pad52[6];     // 0x52
 };                  // size 0x58

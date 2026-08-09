@@ -23,9 +23,9 @@ extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
 
     // Call func_8009D414 on second base subobject, or self if null
     // Retail: default r3 = self (mr), then conditionally override with self+0xc (beq+addi)
-    void* subobj = (void*)self;
+    u8* subobj = (u8*)self;
     if (self != nullptr) {
-        subobj = (char*)self + 0xc;
+        subobj = (u8*)self + 0xc;
     }
     func_8009D414(subobj);
 
@@ -34,7 +34,7 @@ extern "C" cf::CHelp_LandMark* __ct__cf_CHelp_LandMark(cf::CHelp_LandMark* self,
 
 // Destructor - extern "C" with explicit deleteFlag parameter matching retail __dt__ symbol
 // Uses the same pattern as the constructor (which is 100% matched)
-extern "C" __declspec(noinline) void* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
+extern "C" __declspec(noinline) cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_LandMark* self, s32 deleteFlag) {
     if (self != nullptr) {
         // Restore vtable before destruction
         cf::CHelpVtbl* vtbl = &lbl_eu_8053B5F8;
@@ -42,9 +42,9 @@ extern "C" __declspec(noinline) void* __dt__Q22cf14CHelp_LandMarkFv(cf::CHelp_La
         self->mSecondBase = reinterpret_cast<void*>(reinterpret_cast<u32>(vtbl) + 0x1c);
 
         // Call subobject destructor on second base (same pattern as constructor)
-        void* subobj = reinterpret_cast<void*>(self);
+        u8* subobj = reinterpret_cast<u8*>(self);
         if (self != nullptr) {
-            subobj = reinterpret_cast<void*>(reinterpret_cast<u32>(subobj) + 0xc);
+            subobj = reinterpret_cast<u8*>(reinterpret_cast<u32>(subobj) + 0xc);
         }
         func_8009D514(subobj);
 

@@ -32,19 +32,19 @@ struct Obj64_91 {
     u8 byte91;            // +0x91  animation state id
 };
 
+// The object that actor2->sub3F34 points to.
+struct Sub3F34Layout {
+    u8 gap00[0x7A4];
+    u32 bits7A4;          // +0x7A4  bitfield (bit 26 checked)
+};
+
 // Actor2 from func_8016FE34 - has a sub-object pointer at +0x04 and
 // a larger sub-object pointer at +0x3F34.
 struct Actor2Layout {
     u8 gap00[0x04];
     void* subObj4;        // +0x04
     u8 gap08[0x3F34 - 0x08];
-    void* sub3F34;        // +0x3F34
-};
-
-// The object that actor2->sub3F34 points to.
-struct Sub3F34Layout {
-    u8 gap00[0x7A4];
-    u32 bits7A4;          // +0x7A4  bitfield (bit 26 checked)
+    Sub3F34Layout* sub3F34;  // +0x3F34
 };
 
 // CfObjectPc has an embedded sub-object at +0x3E9C with its own vtable.
@@ -294,8 +294,7 @@ extern const f32 lbl_eu_80667014; // distance^2 threshold
 extern const f32 lbl_eu_80666FEC; // anim-state marker value
 extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 
-extern "C" void* func_8016FE34(void* r3);
-cf::CfObjectSelectorObj* func_800FE68C();
+extern "C" void* func_8016FE34(void* r3);cf::CfObjectSelectorObj* func_800FE68C();
 int func_8013BF48();
 void func_800BBA08(void* r3);
 void func_800BBA7C(void* r3);
@@ -482,11 +481,10 @@ after_bit21:
                 reinterpret_cast<u8*>(func_800FE68C()) + 0x90E4);
 
             if (lastId != 0) {
-                void* obj = func_800B708C(static_cast<int>(lastId));
+                Obj64_91* obj = reinterpret_cast<Obj64_91*>(func_800B708C(static_cast<int>(lastId)));
 
                 if (obj != NULL) {
-                    bool active =
-                        (static_cast<Obj64_91*>(obj)->word64 & 4) != 0;
+                    bool active = (obj->word64 & 4) != 0;
 
                     if (active) {
                         if (unk834 != 0) {
@@ -581,25 +579,25 @@ after_bit21:
         }
 
         u32 actorId = panel.actorId;
-        void* handle = func_800B708C(static_cast<int>(actorId));
+        Obj64_91* handle = reinterpret_cast<Obj64_91*>(func_800B708C(static_cast<int>(actorId)));
         if (handle == NULL) {
             panel.visible = z;
             continue;
         }
 
         // r24 in retail's loop = result of func_8016FE34 (not the early target).
-        void* actor2 = func_8016FE34(NULL);
+        Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(NULL));
         int skipDist = 0;
         int hasSub = 0;
         if (actor2 != NULL) {
-            void* sub3f34 = static_cast<Actor2Layout*>(actor2)->sub3F34;
+            Sub3F34Layout* sub3f34 = actor2->sub3F34;
             if (sub3f34 != NULL) {
                 hasSub = 1;
             }
         }
         if (hasSub) {
-            void* sub3f34 = static_cast<Actor2Layout*>(actor2)->sub3F34;
-            u32 bits = static_cast<Sub3F34Layout*>(sub3f34)->bits7A4;
+            Sub3F34Layout* sub3f34 = actor2->sub3F34;
+            u32 bits = sub3f34->bits7A4;
             if ((bits >> 26) & 1) {
                 skipDist = 1;
             }
@@ -672,9 +670,9 @@ after_bit21:
                     b1 = (b1 & 0xFE) | 1;
                     b2 = b2 & 0xFE;
 
-                    typedef void* (*GetPtrFn)(void*);
-                    void* r = vslot<GetPtrFn>(actor2, 0x258)(actor2);
-                    u32 v = *reinterpret_cast<u32*>(r);
+                    typedef u32* (*GetPtrFn)(void*);
+                    u32* r = vslot<GetPtrFn>(actor2, 0x258)(actor2);
+                    u32 v = *r;
                     if (v - 1 <= 3) {
                         b2 = (b2 & 0xFE) | 1;
                     }
@@ -701,13 +699,12 @@ after_bit21:
             Vec3f posB;
             Vec3f* posTmpPtr = &posTmp;
 
-            typedef void* (*GetVecFn)(void*, int);
-            void* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
+            typedef RLayout* (*GetVecFn)(void*, int);
+            RLayout* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
             if (r != NULL) {
-                RLayout* rl = static_cast<RLayout*>(r);
-                posTmpPtr->x = rl->val0C;
-                posTmpPtr->y = rl->val1C;
-                posTmpPtr->z = rl->val2C;
+                posTmpPtr->x = r->val0C;
+                posTmpPtr->y = r->val1C;
+                posTmpPtr->z = r->val2C;
                 posA = *posTmpPtr;
             } else {
                 typedef void* (*GetPosFn)(void*);
@@ -719,7 +716,7 @@ after_bit21:
             void* p2 = vslot<GetPosFn>(handle, 0xAC)(handle);
             posB = *static_cast<const Vec3f*>(p2);
 
-            Obj64_91* hf = static_cast<Obj64_91*>(handle);
+            Obj64_91* hf = handle;
             u32 flagWord = hf->word64;
             if ((flagWord & 0x4000) != 0 || (flagWord & 0x8000) != 0) {
                 if (handle != NULL) {
@@ -740,10 +737,10 @@ after_bit21:
                 u32 count = cf::CBattleManager::getInstance()->mActorList1.size();
                 panel.drawLayout0Flag = (count == 0) ? 1 : 0;
             } else {
-                void* subObj = static_cast<Actor2Layout*>(actor2)->subObj4;
-                typedef void* (*SubGetFn)(void*);
-                void* result = vslot<SubGetFn>(subObj, 0x30)(subObj);
-                int localVal = *reinterpret_cast<int*>(result);
+                void* subObj = actor2->subObj4;
+                typedef int* (*SubGetFn)(void*);
+                int* result = vslot<SubGetFn>(subObj, 0x30)(subObj);
+                int localVal = *result;
                 u32 ret = func_80174C98(actor2, &localVal, 0x803);
                 panel.drawLayout0Flag = (ret == 0) ? 1 : 0;
             }

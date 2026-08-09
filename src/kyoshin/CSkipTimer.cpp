@@ -291,10 +291,10 @@ extern "C" int func_802A04F0(CSkipTimer* self) {
 
 // --- remaining scaffolding stubs (not harness targets) ---
 
-void func_8029F788(void* self) {
-    if (*(u32*)((u8*)self + 0x14) != 0) {
-        *(u8*)((u8*)self + 0x22) = 1;
-        *(u8*)((u8*)self + 0x20) = 1;
+void func_8029F788(u8* self) {
+    if (*(u32*)(self + 0x14) != 0) {
+        self[0x22] = 1;
+        self[0x20] = 1;
     }
 }
 
@@ -378,11 +378,10 @@ void func_8029FF98(CSkipTimer* self) {
     func_80138078__FUl(0x22);
 }
 
-void func_802A0008(void* obj) {
-    unsigned char* bytes = (unsigned char*)obj;
-    if (bytes[0x29] != 0) return;
-    bytes[0x29] = 1;
-    bytes[0x2b] = 0;
+void func_802A0008(u8* obj) {
+    if (obj[0x29] != 0) return;
+    obj[0x29] = 1;
+    obj[0x2b] = 0;
 }
 
 // func_802A0028: leave the skip state machine (state 3 -> 4), zero the sub

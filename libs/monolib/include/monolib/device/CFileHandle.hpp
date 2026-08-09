@@ -14,7 +14,7 @@ enum CBM {
 
 struct CFileHandle {
     int unk0;
-    void* mData; //0x4
+    u8* mData; //0x4 (loaded file buffer)
     u8 unk8[0x10 - 0x8];
     int unk10;
     u32 unk14;

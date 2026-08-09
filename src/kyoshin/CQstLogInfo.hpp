@@ -24,7 +24,7 @@ public:
 
     // +0x00: vtable (implicit)
     u8 _04[0x1C];                             // 0x04 - padding to 0x1F
-    void* mUnk20;                             // 0x20
+    nw4r::lyt::Layout* mUnk20;                             // 0x20
     nw4r::lyt::AnimTransform* field_0x24;     // 0x24
     nw4r::lyt::AnimTransform* field_0x28;     // 0x28
     u8 _2C[4];                                // 0x2C - padding to 0x2F

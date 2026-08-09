@@ -298,7 +298,7 @@ void func_804B1BDC(){}
 
 void func_804B1C9C(){}
 
-void func_804B1DC0(void* self, int arg) {
+void func_804B1DC0(u8* self, int arg) {
     int* flags = (int*)((char*)self + 0xa8);
     if (arg != 0) {
         *flags &= ~0x100;

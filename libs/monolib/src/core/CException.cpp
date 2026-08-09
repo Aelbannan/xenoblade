@@ -86,8 +86,8 @@ extern "C" {
     void func_8012B204(void* writer, f32 a);
     void* func_80457ED4__10CExceptionFv(CMsgParamEntry* entries, u32 value);
     void func_80458084__10CExceptionFv(const void* message);
-    void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z);
-    void func_80458CBC__10CExceptionFv(void* writer, const wchar_t* text);
+    void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z);
+    void func_80458CBC__10CExceptionFv(u8* writer, const wchar_t* text);
 
     // Device exception is an unnamed class in CDevice.cpp.
     void* CDeviceException_getInstance();
@@ -317,7 +317,7 @@ void CException::wkRender() {
 // Main exception text renderer.
 #pragma dont_inline on
 extern "C" void func_80458084__10CExceptionFv(const void* message) {
-    void* writer = (void*)func_eu_804558F4__11CDeviceFontFv(0);
+    u8* writer = (u8*)func_eu_804558F4__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     func_80458B78__10CExceptionFv(writer, 0.0f, 0.0f, 0.0f);
     func_80458CBC__10CExceptionFv(writer, (const wchar_t*)message);
@@ -325,7 +325,7 @@ extern "C" void func_80458084__10CExceptionFv(const void* message) {
 #pragma dont_inline reset
 
 // Set the nw4r TextWriter font pointer.
-extern "C" void func_eu_8045C964__10CExceptionFv(void* writer, void* font) {
+extern "C" void func_eu_8045C964__10CExceptionFv(u8* writer, void* font) {
     u32 writerAddress = (u32)writer;
     bool writerMem1 = true;
     bool writerMem2 = true;
@@ -398,7 +398,7 @@ extern "C" void func_80458B64__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a
 }
 
 // Set a TextWriter cursor position.
-extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z) {
+extern "C" void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
     u32 address = (u32)writer;
     bool validMem1 = true;
     bool validMem2 = true;
@@ -434,7 +434,7 @@ extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z)
 }
 
 // Print a wide string through a TextWriter.
-extern "C" void func_80458CBC__10CExceptionFv(void* writer, const wchar_t* text) {
+extern "C" void func_80458CBC__10CExceptionFv(u8* writer, const wchar_t* text) {
     u32 writerAddress = (u32)writer;
     bool writerMem1 = true;
     bool writerMem2 = true;

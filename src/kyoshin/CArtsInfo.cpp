@@ -45,20 +45,20 @@ void func_80236454(CArtsInfo*);
 
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
 static inline void callVirt_38_0(nw4r::lyt::Layout* layout) {
-    typedef void (*VirtFn)(void*, u32);
+    typedef void (*VirtFn)(nw4r::lyt::Layout*, u32);
     VirtFn fn = ((VirtFn*)*(u32*)layout)[14]; // 0x38 / 4 = 14
     fn(layout, 0);
 }
 
-static inline void callVirt_2C_50(nw4r::lyt::Layout* layout, void* arg1, u32 arg2) {
-    typedef void (*VirtFn)(void*, void*, u32);
+static inline void callVirt_2C_50(nw4r::lyt::Layout* layout, nw4r::lyt::AnimTransform* arg1, u32 arg2) {
+    typedef void (*VirtFn)(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform*, u32);
     VirtFn fn = ((VirtFn*)*(u32*)layout)[11]; // 0x2C / 4 = 11
     fn(layout, arg1, arg2);
 }
 
 // Vtable virtual method at offset 0x08 with flags=1 (destructor)
-static inline void callVirtDelete_08(void* obj) {
-    typedef void (*VirtFn)(void*, int);
+static inline void callVirtDelete_08(nw4r::lyt::Layout* obj) {
+    typedef void (*VirtFn)(nw4r::lyt::Layout*, int);
     VirtFn fn = ((VirtFn*)*(u32*)obj)[2]; // 0x08 / 4 = 2
     fn(obj, 1);
 }
@@ -79,7 +79,7 @@ static inline void callVirt_10(void* obj, void* arg) {
 
 // Vtable virtual method at offset 0x3C with two args
 static inline u32 callVirt_3C(nw4r::lyt::Layout* layout, const char* arg1, u32 arg2) {
-    typedef u32 (*VirtFn)(void*, const char*, u32);
+    typedef u32 (*VirtFn)(nw4r::lyt::Layout*, const char*, u32);
     VirtFn fn = ((VirtFn*)*(u32*)layout)[15]; // 0x3C / 4 = 15
     return fn(layout, arg1, arg2);
 }
@@ -291,7 +291,7 @@ void func_80235AE0(CArtsInfo* self) {
 
     // Update layout elements with arts data
     u32 artsData = func_8009EC9C(self->field_0x54);
-    void* str1 = (char*)func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, 0x18);
+    char* str1 = (char*)func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, 0x18);
 
     char buf[64];
     sprintf(buf, lbl_eu_8050B00C + 0x42, *(u32*)((u8*)artsData + 0x17C), str1);

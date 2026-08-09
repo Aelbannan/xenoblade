@@ -109,33 +109,33 @@ extern "C" int func_eu_800693E8() { return 0x200; }
 extern "C" int func_8006846C(int a) { return a * 11 + 13; }
 extern "C" int func_800689AC() { return 0x10004; }
 
-extern "C" void func_800665F4(void* self) {
+extern "C" void func_800665F4(u8* self) {
     u8 b = *(u8*)((char*)self + 0x32);
     if (b < 8) func_801BFA64(b + 5);
 }
 
-extern "C" void* func_80066160(void* self) {
+extern "C" void* func_80066160(u8* self) {
     u8 type = *(u8*)((char*)self + 0x33);
     s16 val = *(s16*)((char*)self + 0x34);
     if (type == 10 && val < 3) return *(void**)((char*)self + 0x18);
     return 0;
 }
 
-extern "C" void* func_80066184(void* self) {
+extern "C" void* func_80066184(u8* self) {
     u8 type = *(u8*)((char*)self + 0x33);
     s16 val = *(s16*)((char*)self + 0x34);
     if (type == 0 && val < 3) return *(void**)((char*)self + 0x18);
     return 0;
 }
 
-extern "C" int func_8006626C(void* self) {
+extern "C" int func_8006626C(u8* self) {
     u8 type = *(u8*)((char*)self + 0x33);
     s16 val = *(s16*)((char*)self + 0x34);
     if (type == 9 && val >= 0) return val + 2;
     return val;
 }
 
-extern "C" int func_8006611C(void* self) {
+extern "C" int func_8006611C(u8* self) {
     u8 type = *(u8*)((char*)self + 0x33);
     s16 val = *(s16*)((char*)self + 0x34);
     if (type == 10 && val < 3) return func_800A8AAC(val);
@@ -146,7 +146,7 @@ extern "C" int func_8006611C(void* self) {
 // func_80062430 wrapper functions
 // ============================================================
 
-extern "C" u32 func_8006638C(void* self) {
+extern "C" u32 func_8006638C(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -155,7 +155,7 @@ extern "C" u32 func_8006638C(void* self) {
     return result;
 }
 
-extern "C" u32 func_800663D8(void* self) {
+extern "C" u32 func_800663D8(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -164,7 +164,7 @@ extern "C" u32 func_800663D8(void* self) {
     return result;
 }
 
-extern "C" u32 func_80066424(void* self) {
+extern "C" u32 func_80066424(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -173,7 +173,7 @@ extern "C" u32 func_80066424(void* self) {
     return result;
 }
 
-extern "C" u32 func_8006646C(void* self) {
+extern "C" u32 func_8006646C(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -182,7 +182,7 @@ extern "C" u32 func_8006646C(void* self) {
     return result;
 }
 
-extern "C" u32 func_800664B8(void* self) {
+extern "C" u32 func_800664B8(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r != 0) {
@@ -192,7 +192,7 @@ extern "C" u32 func_800664B8(void* self) {
     return *(u32*)((char*)self + 0x10);
 }
 
-extern "C" u32 func_8006650C(void* self) {
+extern "C" u32 func_8006650C(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -201,7 +201,7 @@ extern "C" u32 func_8006650C(void* self) {
     return result;
 }
 
-extern "C" u32 func_80066554(void* self) {
+extern "C" u32 func_80066554(u8* self) {
     if (self == 0) return 0;
     u32* r = *(u32**)((char*)self + 0x08);
     if (r == 0) return 0;
@@ -210,7 +210,7 @@ extern "C" u32 func_80066554(void* self) {
     return result;
 }
 
-extern "C" void func_800665A0(void* self) {
+extern "C" void func_800665A0(u8* self) {
     void* f = *(void**)((char*)self + 0x28);
     if (f != 0) {
         cancel__11CDeviceFileFP11CFileHandle(f);
@@ -226,7 +226,7 @@ extern "C" void func_800665A0(void* self) {
 // ============================================================
 // func_80065F24 (0x90)
 // ============================================================
-extern "C" void func_80065F24(void* self, void* param) {
+extern "C" void func_80065F24(u8* self, void* param) {
     u32* ptr10 = *(u32**)((char*)param + 0x10);
     if (ptr10 == 0) {
         u16 a, b;
@@ -247,7 +247,7 @@ extern "C" void func_80065F24(void* self, void* param) {
 // ============================================================
 // func_eu_80066940 (0x4C)
 // ============================================================
-extern "C" void func_eu_80066940(void* self, void* param) {
+extern "C" void func_eu_80066940(u8* self, void* param) {
     void* obj = *(void**)((char*)param + 0x2C);
     void* (*fn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 8);
     void* result = fn(obj, 0);
@@ -258,7 +258,7 @@ extern "C" void func_eu_80066940(void* self, void* param) {
 // ============================================================
 // func_80065FB4 (0x168) - switch dispatch
 // ============================================================
-extern "C" int func_80065FB4(void* self, int param) {
+extern "C" int func_80065FB4(u8* self, int param) {
     u8 type = *(u8*)((char*)self + 0x33);
     u8 subtype = *(u8*)((char*)self + 0x32);
     s16 v34 = *(s16*)((char*)self + 0x34);
@@ -282,7 +282,7 @@ extern "C" int func_80065FB4(void* self, int param) {
 // ============================================================
 // func_800661A8 (0xC4) - bit test
 // ============================================================
-extern "C" bool func_800661A8(void* self, int r5, int r6) {
+extern "C" bool func_800661A8(u8* self, int r5, int r6) {
     u8 type = *(u8*)((char*)self + 0x33);
     int mask = 0;
     switch (type) {
@@ -301,7 +301,7 @@ extern "C" bool func_800661A8(void* self, int r5, int r6) {
 // ============================================================
 // func_80066290 (0xE4)
 // ============================================================
-extern "C" void func_80066290(void* self, void* param) {
+extern "C" void func_80066290(u8* self, void* param) {
     u8 type = *(u8*)((char*)param + 0x33);
     s16 v34 = *(s16*)((char*)param + 0x34);
     if (type == 10) {
@@ -330,7 +330,7 @@ extern "C" void func_80066290(void* self, void* param) {
 // ============================================================
 // func_8006660C (0x108)
 // ============================================================
-extern "C" void func_8006660C(void* self) {
+extern "C" void func_8006660C(u8* self) {
     void* r = func_80066CF8(self);
     u32* p10 = *(u32**)((char*)self + 0x10);
     if (p10 == 0 && r != 0) {
@@ -363,7 +363,7 @@ extern "C" void func_8006660C(void* self) {
 // ============================================================
 // func_80066714 (0x74)
 // ============================================================
-extern "C" void func_80066714(void* self, bool cleanup) {
+extern "C" void func_80066714(u8* self, bool cleanup) {
     u32* fc18 = &lbl_eu_8065FC18;
     if (fc18 != 0) {
         u32* p10 = *(u32**)((char*)self + 0x10);
@@ -380,7 +380,7 @@ extern "C" void func_80066714(void* self, bool cleanup) {
 // ============================================================
 // func_80066C74 (0x84)
 // ============================================================
-extern "C" void func_80066C74(void* self, void* data, void* size) {
+extern "C" void func_80066C74(u8* self, void* data, void* size) {
     void* obj = *(void**)((char*)self + 0x2C);
     u32 (*fn)(void*) = (u32 (*)(void*))*(void**)(*(u32*)obj + 0xC);
     u32 f = fn(obj);
@@ -554,7 +554,7 @@ extern "C" void* func_80068494(void* self, u32 id, u32* outIdx, u32* outVal, int
 // ============================================================
 // func_80068564 (0x58)
 // ============================================================
-extern "C" void* func_80068564(void* self, u32 id, u32* outIdx, u32* outVal) {
+extern "C" void* func_80068564(u8* self, u32 id, u32* outIdx, u32* outVal) {
     void* r = func_80068494(self, id, outIdx, outVal, 0x59, 0x61);
     if (r == 0) CfRes_orBits_649B4(self, 2);
     return r;
@@ -563,7 +563,7 @@ extern "C" void* func_80068564(void* self, u32 id, u32* outIdx, u32* outVal) {
 // ============================================================
 // func_800685C8 (0x54) - search entries at 0x2D0
 // ============================================================
-extern "C" void* func_800685C8(void* self, u32 id, u32* outIdx) {
+extern "C" void* func_800685C8(u8* self, u32 id, u32* outIdx) {
     *outIdx = 0;
     if (id == 0) return 0;
     for (int i = 0xC; i < 0x4D + 0xC; i++) {
@@ -579,7 +579,7 @@ extern "C" void* func_800685C8(void* self, u32 id, u32* outIdx) {
 // ============================================================
 // func_8006861C (0x64) - search entries at 0x16BC
 // ============================================================
-extern "C" void* func_8006861C(void* self, u32 id, u32* outIdx, u32* outVal) {
+extern "C" void* func_8006861C(u8* self, u32 id, u32* outIdx, u32* outVal) {
     *outIdx = 0;
     *outVal = -1;
     if (id == 0) return 0;
@@ -630,7 +630,7 @@ extern "C" bool func_800686E4(void* self, bool param) {
 // ============================================================
 // func_80068928 (0x68) - search
 // ============================================================
-extern "C" void* func_80068928(void* self, u32 id, int start, int end) {
+extern "C" void* func_80068928(u8* self, u32 id, int start, int end) {
     for (int i = start; i < end; i++) {
         u32* entry = (u32*)((char*)self + i * 0x3C);
         if (entry[2] == id) {
@@ -643,7 +643,7 @@ extern "C" void* func_80068928(void* self, u32 id, int start, int end) {
 // ============================================================
 // func_800685BC (0xC) - wrapper
 // ============================================================
-extern "C" void* func_800685BC(void* self, u32 id, u32* outIdx, u32* outVal) {
+extern "C" void* func_800685BC(u8* self, u32 id, u32* outIdx, u32* outVal) {
     return func_80068494(self, id, outIdx, outVal, 0x61, 0x81);
 }
 
@@ -672,7 +672,7 @@ extern "C" void func_80067D38(void* self) {
 // ============================================================
 
 // func_80067DB4 (0xC4) - init entries
-extern "C" void func_80067DB4(void* self) {
+extern "C" void func_80067DB4(u8* self) {
     memset((char*)self + 0x1518, 0, 8);
     memset((char*)self + 0x1554, 0, 8);
     memset((char*)self + 0x1590, 0, 8);
@@ -696,7 +696,7 @@ extern "C" void func_80067DB4(void* self) {
 }
 
 // func_80067E78 (0x98) - load entries
-extern "C" void func_80067E78(void* self, bool param) {
+extern "C" void func_80067E78(u8* self, bool param) {
     void* base = (char*)self + 0x16BC;
     void* target = (char*)self + 0x16C0;
     for (int i = 0x61; i < 0x81; i++) {
@@ -710,7 +710,7 @@ extern "C" void func_80067E78(void* self, bool param) {
 }
 
 // func_80067F10 (0xD0)
-extern "C" void func_80067F10(void* self, bool param) {
+extern "C" void func_80067F10(u8* self, bool param) {
     func_800A9068(self);
     if (!func_800A9068(self)) {
         void* base = (char*)self + 0x16BC;
@@ -733,7 +733,7 @@ extern "C" void func_80067F10(void* self, bool param) {
 }
 
 // func_80067FE0 (0x98)
-extern "C" void func_80067FE0(void* self) {
+extern "C" void func_80067FE0(u8* self) {
     void* base = (char*)self + 0x16BC;
     void* target = (char*)self + 0x16C0;
     for (int i = 0x61; i < 0x81; i++) {
@@ -752,7 +752,7 @@ extern "C" void func_80067FE0(void* self) {
 }
 
 // func_80068078 (0x98)
-extern "C" void func_80068078(void* self) {
+extern "C" void func_80068078(u8* self) {
     void* base = (char*)self + 0x14DC;
     void* target = (char*)self + 0x14E0;
     for (int i = 0x59; i < 0x81; i++) {
@@ -770,7 +770,7 @@ extern "C" void func_80068078(void* self) {
 }
 
 // func_80068110 (0x144)
-extern "C" void func_80068110(void* self, bool param) {
+extern "C" void func_80068110(u8* self, bool param) {
     waitForDrawDone__9CDeviceVIFv();
     u32 flags24 = lbl_eu_80663E24;
     bool hasFlag = (flags24 >> 18) & 1;
@@ -811,7 +811,7 @@ extern "C" void func_80068110(void* self, bool param) {
 }
 
 // func_80068254 (0x104)
-extern "C" void func_80068254(void* self) {
+extern "C" void func_80068254(u8* self) {
     bool first = true;
     void* base = (char*)self + 0x14DC;
     void* target = (char*)self + 0x14E0;
@@ -843,7 +843,7 @@ extern "C" void func_80068254(void* self) {
 // ============================================================
 // func_80068358 (0xD4) - flag handling
 // ============================================================
-extern "C" void func_80068358(void* self) {
+extern "C" void func_80068358(u8* self) {
     bool flag2 = false;
     if (lbl_eu_80663E24 & 2) flag2 = true;
     bool f10 = testResInfoFlag(0x10);
@@ -863,7 +863,7 @@ extern "C" void func_80068358(void* self) {
 // ============================================================
 // Constructor (stub)
 // ============================================================
-extern "C" void __ct__80066F9C(void* self) {
+extern "C" void __ct__80066F9C(u8* self) {
     // Large constructor - stub for now
     memset(self, 0, 0x1E78);
 }
@@ -871,13 +871,13 @@ extern "C" void __ct__80066F9C(void* self) {
 // ============================================================
 // Destructors (stubs)
 // ============================================================
-extern "C" void __dt___reslist_base_unsigned_short(void* self, int mode) {
+extern "C" void __dt___reslist_base_unsigned_short(u8* self, int mode) {
     if (self == 0) return;
     *(u32*)((char*)self + 0x00) = (u32)&lbl_eu_80526938;
     if (mode > 0) __dl__FPv(self);
 }
 
-extern "C" void __dt__reslist_unsigned_short(void* self, int mode) {
+extern "C" void __dt__reslist_unsigned_short(u8* self, int mode) {
     if (self == 0) return;
     *(u32*)((char*)self + 0x00) = (u32)&lbl_eu_80526938;
     u8 owns = *(u8*)((char*)self + 0x1C);
@@ -888,7 +888,7 @@ extern "C" void __dt__reslist_unsigned_short(void* self, int mode) {
     if (mode > 0) __dl__FPv(self);
 }
 
-extern "C" void __dt__8006754C(void* self, int mode) {
+extern "C" void __dt__8006754C(u8* self, int mode) {
     if (self == 0) return;
     *(u32*)((char*)self + 0x00) = (u32)&lbl_eu_80526938;
     u8 owns = *(u8*)((char*)self + 0x1ECC);
@@ -899,7 +899,7 @@ extern "C" void __dt__8006754C(void* self, int mode) {
     if (mode > 0) __dl__FPv(self);
 }
 
-extern "C" void __dt__80067670(void* self) {
+extern "C" void __dt__80067670(u8* self) {
     u8 owns = *(u8*)((char*)self + 0x1ECC);
     if (owns == 0) {
         void* buf = *(void**)((char*)self + 0x1EC4);
@@ -911,7 +911,7 @@ extern "C" void __dt__80067670(void* self) {
 // ============================================================
 // func_800676F8 (0x658) - initializer (stub)
 // ============================================================
-extern "C" void func_800676F8(void* self) {
+extern "C" void func_800676F8(u8* self) {
     memset((char*)self + 4, 0, 0x1E78);
     *(u32*)self |= 1;
     *(float*)((char*)self + 0x1ED0) = 0.0f;
@@ -945,7 +945,7 @@ extern "C" u32 getResEntryId(int unused, const ResEntry* p) {
     return (p != 0) ? p->id : 0;
 }
 
-extern "C" int getResMaxCount(void* self) { return 0x200; }
+extern "C" int getResMaxCount(u8* self) { return 0x200; }
 
 extern "C" bool isResFlag0() { return false; }
 extern "C" bool isResFlag1() { return false; }

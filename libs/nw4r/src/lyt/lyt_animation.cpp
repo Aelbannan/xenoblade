@@ -613,7 +613,7 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
     }
 }
 
-void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
+void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(nw4r::lyt::AnimResource* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;
     return (void*)((char*)ptr + *(int32_t*)((char*)ptr + 0x8));

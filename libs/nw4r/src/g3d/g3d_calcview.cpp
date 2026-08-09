@@ -689,7 +689,7 @@ void CalcView(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
 
             s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(i);
             ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
-            void* pData = NULL;
+            u8* pData = NULL;
 
             if (node.IsValid()) {
                 s32 toData = node.ref().toResUserData;
@@ -816,7 +816,7 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
 
                 s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
                 ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
-                void* pData = NULL;
+                u8* pData = NULL;
 
                 if (node.IsValid()) {
                     s32 toData = node.ref().toResUserData;
@@ -967,7 +967,7 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
 
                 s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
                 ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
-                void* pData = NULL;
+                u8* pData = NULL;
 
                 if (node.IsValid()) {
                     s32 toData = node.ref().toResUserData;

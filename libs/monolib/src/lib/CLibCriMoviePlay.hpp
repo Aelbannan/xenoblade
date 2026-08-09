@@ -27,16 +27,16 @@ extern "C" {
 // Movie playback entry (0x124 bytes)
 struct MovieEntry {
     u32 mFlags;              // 0x00
-    void* mPlyHandle;        // 0x04 - CRI movie player handle
+    void* mPlyHandle;        // 0x04 - CRI movie player handle (opaque)
     u8 mCprmData[0x1C];      // 0x08 - CRI cprm structure inline data
     u32 mWorkSize;           // 0x24 - calculated work buffer size (inside cprm)
     u8 mCprmData2[0x2C];     // 0x28 - remaining cprm fields
-    void* mAllocHandle;      // 0x54 - memory allocation handle
+    void* mAllocHandle;      // 0x54 - CRI alloc handle stored in a pointer slot
     u32 mAllocHandle2;       // 0x58 - secondary allocation handle
     bool mActive;            // 0x5C - entry active/has-filename flag
     char mFilename[0x43];    // 0x5D - filename buffer
     u32 mStreamId;           // 0xA0 - stream ID
-    void* mTexBufY;          // 0xA4 - Y texture buffer pointer
+    void* mTexBufY;          // 0xA4 - Y texture buffer pointer (written from void* allocate)
     u32 mTexBufYSize;        // 0xA8 - Y texture buffer size
     void* mTexBufCbCr;       // 0xAC - CbCr texture buffer pointer
     u32 mTexBufCbCrSize;     // 0xB0 - CbCr texture buffer size

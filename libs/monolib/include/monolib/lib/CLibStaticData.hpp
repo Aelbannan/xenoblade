@@ -14,7 +14,7 @@ enum MemHandleType {
 };
 
 struct StaticDataHandle {
-    void* data; //0x0
+    void* data; //0x0 (opaque static file data blob; written from CItem::mData void*)
     u32 unk4;
 };
 
@@ -48,7 +48,7 @@ public:
         //0x0: vtable
         StaticArcFileData* mFileData; //0x4
         CFileHandle* mFileHandle; //0x8
-        void* mData; //0xC
+        void* mData; //0xC (written from CFileHandle::getData() void*)
         u32 mLength; //0x10
         bool unk14;
     };

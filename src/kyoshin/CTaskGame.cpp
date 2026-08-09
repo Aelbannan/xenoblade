@@ -6,17 +6,18 @@ u32 lbl_80666624;
 u32 lbl_80666630;
 u32 lbl_80666634;
 
-void func_8004041C(void* self, u8 a1, float a2, int a3, u32 a4, u8 a5, u32 a6, u32 a7) {
-    struct Fields {
-        u8 field0;
-        float field4;
-        int field8;
-        u32 fieldC;
-        u8 field10;
-        u32 field14;
-        u32 field18;
-    };
-    Fields& f = *(Fields*)self;
+struct Fields {
+    u8 field0;
+    float field4;
+    int field8;
+    u32 fieldC;
+    u8 field10;
+    u32 field14;
+    u32 field18;
+};
+
+void func_8004041C(Fields* self, u8 a1, float a2, int a3, u32 a4, u8 a5, u32 a6, u32 a7) {
+    Fields& f = *self;
     f.field0 = a1;
     f.field4 = a2;
     f.field8 = a3;
@@ -263,7 +264,7 @@ bool CTaskGame_checkUnkD8NotNegOne() {
     unsigned int value = static_cast<unsigned int>(lbl_eu_80663D18->unkD8);
     return value != 0xffffffffu;
 }
-u32 CTaskGame_readU32FromPtr(void *ptr) { return *(u32 *)ptr; }
+u32 CTaskGame_readU32FromPtr(u32* ptr) { return *ptr; }
 void Tail__8CProcessFv() {}
 void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {

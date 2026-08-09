@@ -17,6 +17,7 @@ struct FixStr {
 template <typename T>
 class _reslist_base {
 public:
+    _reslist_base();
     ~_reslist_base();
     u32 field_0x00;        // 0x00: vtable pointer
     u32 field_0x04;        // 0x04: head pointer (this+8)
@@ -134,17 +135,25 @@ extern "C" unsigned long func_800B1C00();
 extern "C" s32 func_800B1C0C(u32 mask);
 extern "C" void func_800B6DD0(void* reslist, void* obj);
 extern "C" void func_800B1B2C(void* obj);
-extern "C" int func_800B2D88(void* reslist);
+extern "C" void func_800B2D88(void* self, void* arg);
+extern "C" void func_800B2DB0(void* self, void* arg);
+extern "C" void func_800B15A4(UnkClass_805764CC* self);
+extern "C" void func_800B1E18(UnkClass_805764CC* self, void* arg);
+extern "C" void func_800B7058(void* obj);
+extern "C" void func_800B93D0(void* obj);
+extern "C" void func_800B9404(void* obj);
 extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
 extern "C" void func_800B1C24(int arg, void* ptr);
 extern "C" void* func_800B39C0(void* arg);
 extern "C" void func_800B68A8(void* self, void* a, void* b, int c, float f);
 extern "C" void* func_800B708C__Fi(int arg);
-extern "C" void func_80193CD0(void* a, void* b);
+extern "C" void* func_80193CD0(void* a, void* b);
 extern "C" unsigned long func_80061FFC();
 extern "C" void __dl__FPv(void*);
 extern "C" void __dt__8047BDA8(void*);
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count);
+extern "C" void func_800B4278(void* object, u32 arg);
+extern "C" void func_800B42E8(void* object, u32 arg);
 extern "C" unsigned long func_800B0FEC(void* self);
 extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
 extern "C" void* func_800B20B4(void* self, unsigned long arg1, void* arg2, unsigned long arg3);

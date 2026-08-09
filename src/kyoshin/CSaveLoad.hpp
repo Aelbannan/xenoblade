@@ -12,10 +12,10 @@ public:
     void func_8028EA74();
     void func_8028EEC0();
 
-    // Vtable-like pointer set manually (initialized to lbl_eu_8053884C)
+    // Vtable-like pointer set manually (initialized to lbl_eu_8053884C); kept void*.
     void* mField0;    // 0x00
-    void* mField4;    // 0x04 - ArcResourceAccessor* (or int from constructor)
-    void* mField8;    // 0x08 - Layout* (or null)
+    void* mField4;    // 0x04 - ArcResourceAccessor* (or int from constructor); assigned from void* rvalue -> kept void*
+    nw4r::lyt::Layout* mField8;    // 0x08 - Layout* (or null)
     u8 mFieldC;       // 0x0C
     u8 mFieldD;       // 0x0D
     u8 mFieldE;       // 0x0E
@@ -68,7 +68,7 @@ public:
     u8 mField12D;                                        // 0x12D
     u8 mField12E;                                        // 0x12E
     u8 mField12F;                                        // 0x12F
-    void* mField130;                                    // 0x130 - heap pointer to deallocate
+    void* mField130;                                    // 0x130 - heap pointer to deallocate (assigned from void* allocate_head -> kept void*)
     void* mField134;                                    // 0x134 - heap pointer to deallocate
     void* mField138;                                    // 0x138 - heap pointer to deallocate
     CSLCur mCur;                                         // 0x13C - cursor/save slot state

@@ -118,11 +118,11 @@ struct TagContext {
     void addToCharSpace(float val) { charSpace = *(float*)((u8*)this + 4) + val; }
 };
 
-extern "C" const wchar_t* getContextStr(void* self) { return *(const wchar_t**)((u8*)self + 0x4); }
+extern "C" const wchar_t* getContextStr(u8* self) { return *(const wchar_t**)(self + 0x4); }
 
-extern "C" const wchar_t** getContextStrPtr(void* self) { return (const wchar_t**)((u8*)self + 0x4); }
+extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
-extern "C" void addToCharSpace(void* self, float val) { *(float*)((u8*)self + 0xC) = *(float*)((u8*)self + 0x4) + val; };
+extern "C" void addToCharSpace(u8* self, float val) { *(float*)(self + 0xC) = *(float*)(self + 0x4) + val; };
 
 void func_80127670(){}
 
@@ -138,9 +138,9 @@ void func_801276F4(){}
 
 void func_80127764(){}
 
-extern "C" void func_80127BC4(void* dst, void* src) {
-    *(float*)dst = *(float*)src;
-    *(float*)((u8*)dst + 4) = *(float*)((u8*)src + 4);
+extern "C" void func_80127BC4(float* dst, float* src) {
+    dst[0] = src[0];
+    dst[1] = src[1];
 }
 
 extern "C" void copyVEC3(float* dst, const float* src) {
@@ -220,8 +220,8 @@ void func_80129AEC(){}
 
 void func_80129C04(){}
 
-extern "C" void func_80129D1C(void* dst, const void* src) {
-    *(TagCopyBlock*)dst = *(const TagCopyBlock*)src;
+extern "C" void func_80129D1C(TagCopyBlock* dst, const TagCopyBlock* src) {
+    *dst = *src;
 }
 
 void func_80129E20(){}
@@ -240,9 +240,9 @@ void func_8012A460(){}
 
 void func_8012AAA4(){}
 
-extern "C" u32 func_8012AD2C(void* a, void* b, void* c, void* p) {
-    void* base = *(void**)((u8*)p + 4);
-    *(void**)((u8*)p + 4) = (u8*)base + 4;
+extern "C" u32 func_8012AD2C(void* a, void* b, void* c, u8* p) {
+    void* base = *(void**)(p + 4);
+    *(void**)(p + 4) = (u8*)base + 4;
     return 0;
 }
 

@@ -79,7 +79,7 @@ struct ResReloadIf {
     virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC(); virtual int vf200();
 };
 
-extern "C" void func_8016DCE4(void* self) {
+extern "C" void func_8016DCE4(u8* self) {
     if (!((ResReloadIf*)*(void**)self)->vf44()) {
         void* r = ((ResReloadIf*)*(void**)self)->vf180();
         ((ResReloadIf*)*(void**)self)->vf3C(r);

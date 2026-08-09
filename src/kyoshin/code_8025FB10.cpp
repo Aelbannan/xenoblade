@@ -27,8 +27,8 @@ void func_80261844(){}
 
 void func_8026187C(){}
 
-void func_802618AC(void* obj, int value) {
-    int* field = (int*)((char*)obj + 0x884);
+void func_802618AC(u8* obj, int value) {
+    int* field = (int*)(obj + 0x884);
     *field = value;
     if (value < 0) *field = 0;
     else if (value > 0x3e7) *field = 0x3e7;

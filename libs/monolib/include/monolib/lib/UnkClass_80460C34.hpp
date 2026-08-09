@@ -14,6 +14,9 @@ typedef unsigned short z_ushort;
 typedef unsigned int   z_uint;
 typedef unsigned long  z_ulong;
 
+typedef void* (*z_alloc_func)(void* opaque, z_uint items, z_uint size);
+typedef void  (*z_free_func)(void* opaque, void* address);
+
 // ---- zlib return / flush codes -------------------------------------------
 #define Z_OK            0
 #define Z_STREAM_END    1
@@ -49,8 +52,8 @@ typedef struct z_stream_s {
     z_ulong  total_out;          // 0x14
     char*    msg;                // 0x18
     z_inflate_state* state;      // 0x1C
-    void*    zalloc;             // 0x20
-    void*    zfree;              // 0x24
+    z_alloc_func zalloc;         // 0x20
+    z_free_func  zfree;          // 0x24
     void*    opaque;             // 0x28
     int      data_type;          // 0x2C
     z_ulong  adler;              // 0x30
@@ -64,9 +67,6 @@ typedef enum {
     DICTID, DICT, TYPE, TYPEDO, STORED, COPY_, TABLE, LENLENS, CODELENS,
     LEN, LENEXT, DIST, DISTEXT, MATCH, LIT, CHECK, LENGTH, DONE, BAD, MEM, SYNC
 } z_inflate_mode;
-
-typedef void* (*z_alloc_func)(void* opaque, z_uint items, z_uint size);
-typedef void  (*z_free_func)(void* opaque, void* address);
 
 #define Z_ENOUGH 2048
 

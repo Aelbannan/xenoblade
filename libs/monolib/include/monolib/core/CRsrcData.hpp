@@ -24,7 +24,7 @@ public:
     u32 mAltPathLength;    // 0x3C8
     char mPath[0x100];     // 0x3CC
     u32 mPathLength;       // 0x4CC
-    void* mCacheData;      // 0x4D0
+    void* mCacheData;      // 0x4D0 (opaque file/resource cache blob; written from void* data param)
     u32 mCacheLength;      // 0x4D4
     u32 mRefCount;         // 0x4D8
     u32 mFlags4DC;         // 0x4DC

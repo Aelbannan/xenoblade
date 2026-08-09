@@ -37,7 +37,7 @@ struct ResTable {
     u32 indexOffset;
 };
 
-void* func_804DF2A8(void* self, int index) {
+void* func_804DF2A8(u8* self, int index) {
     ResTable* base = *(ResTable**)((u8*)self + 0x10);
     ResTableIndex* entries = (ResTableIndex*)((u8*)base + base->indexOffset);
     return (u8*)base + entries[index].offset;

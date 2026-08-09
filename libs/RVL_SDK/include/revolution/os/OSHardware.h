@@ -56,9 +56,9 @@ typedef struct OSBootInfo {
     u32 aplVersion;   // at 0x24
     u32 physMemSize;  // at 0x28
     u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
+    u8* arenaLo;      // at 0x30
+    u8* arenaHi;      // at 0x34
+    u8* fstStart;     // at 0x38
     u32 fstSize;      // at 0x3C
 } OSBootInfo;
 

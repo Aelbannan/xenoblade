@@ -23,6 +23,8 @@ struct CLODCacheManagerS {
     u32 field_0x8;   // 0x08 table index
 
     s32 func_80463590();
+    f32 func_80463118();
+    f32 func_8046323C();
 };
 
 /**
@@ -45,6 +47,39 @@ struct LODCacheIndex {
     u16 field_0x2;   // 0x02 far distance
 };
 
+/**
+ * LOD linear distance-table entry (lbl_eu_8066573C, stride 8).
+ * near is a float distance (0x00); far an unsigned cutoff (0x04).
+ */
+struct LODDistEntry {
+    f32 near;   // 0x00
+    u16 far;    // 0x04
+};
+
+/**
+ * LOD level-table entry (lbl_eu_80665740, stride 0x10) used by the cubic
+ * catmull-rom interpolator.  Four float sample slots plus an unsigned far
+ * cutoff.
+ */
+struct LODLevelEntry {
+    f32 f00;    // 0x00
+    f32 f04;    // 0x04
+    f32 f08;    // 0x08
+    u16 far;    // 0x0C
+};
+
+/**
+ * LOD short-table entry (lbl_eu_80665744, stride 8) backing the 2D
+ * interpolator.  val is a signed sample, outX/outY are output words, and
+ * far is an unsigned cutoff.
+ */
+struct LODShortEntry {
+    s16 val;    // 0x00
+    s16 outX;   // 0x02
+    s16 outY;   // 0x04
+    u16 far;    // 0x06
+};
+
 // Live LOD record dispatch function pointer (set by func_8046368C/69C).
 typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 
@@ -55,11 +90,11 @@ typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 // ---------------------------------------------------------------------------
 
 extern LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
-extern void* lbl_eu_8066573C;   // distance table, stride 8
+extern LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
 extern u32* lbl_eu_8066574C;    // index -> pair-table offset
 extern void* lbl_eu_80665750;   // pair table, stride 2 (u16 entries)
-extern void* lbl_eu_80665740;   // level table, stride 0x10
-extern void* lbl_eu_80665744;   // short table, stride 8
+extern LOD::LODLevelEntry* lbl_eu_80665740;   // level table, stride 0x10
+extern LOD::LODShortEntry* lbl_eu_80665744;   // short table, stride 8
 extern LOD::LODCacheIndex* lbl_eu_80665748;   // distance-key index table, stride 4
 
 extern LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn
@@ -70,6 +105,7 @@ extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 // sdata2 constants used by the interpolation helpers.
 extern const f32 lbl_eu_8066A5C0;  // 1.0f
 extern const f32 lbl_eu_8066A5C4;  // default LOD value
+extern const f64 lbl_eu_8066A5C8;  // 2^52 int-to-float magic (double)
 extern const f32 lbl_eu_8066A5D8;
 extern const f32 lbl_eu_8066A5DC;
 extern const f32 lbl_eu_8066A5E0;
@@ -105,12 +141,12 @@ extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(void* self)
 
     Layout* cache = static_cast<Layout*>(self);
     lbl_eu_80665738 = (CLODCacheManagerS*)(static_cast<char*>(self) + cache->p00);
-    lbl_eu_8066573C = static_cast<char*>(self) + cache->p08;
+    lbl_eu_8066573C = (LOD::LODDistEntry*)(static_cast<char*>(self) + cache->p08);
     lbl_eu_8066574C = (u32*)(static_cast<char*>(self) + cache->p10);
     lbl_eu_80665750 = static_cast<char*>(self) + cache->p18;
-    lbl_eu_80665740 = static_cast<char*>(self) + cache->p20;
+    lbl_eu_80665740 = (LOD::LODLevelEntry*)(static_cast<char*>(self) + cache->p20);
     lbl_eu_80665748 = reinterpret_cast<LOD::LODCacheIndex*>(static_cast<char*>(self) + cache->p30);
-    lbl_eu_80665744 = static_cast<char*>(self) + cache->p28;
+    lbl_eu_80665744 = (LOD::LODShortEntry*)(static_cast<char*>(self) + cache->p28);
 }
 
 // ===========================================================================
@@ -152,8 +188,8 @@ extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* se
 {
     u16* pair = (u16*)lbl_eu_80665750;       // pair table (u16 stride)
     u32 entry = lbl_eu_8066574C[index];      // offset into the pair table
-    u16 n = pair[entry];                     // record count for this pair
     u16* cursor = &pair[entry];
+    u16 n = pair[entry];                     // record count for this pair
 
     PSMTXIdentity(*(Mtx*)(void*)self);   // identity into self+0
 
@@ -177,30 +213,159 @@ extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* se
 // ===========================================================================
 s32 CLODCacheManagerS::func_80463590()
 {
-    f32 dist = lbl_eu_80665754;
+    f32 lim = lbl_eu_80665754;
 
-    // Sweep up to the near distance: first element whose near is nonzero.
-    if (dist <= (f32)field_0x0) {
+    // Sweep up to the near distance: report the first element's near state.
+    if (lim <= (f32)field_0x0) {
         return lbl_eu_80665748[field_0x8].field_0x0 != 0 ? 1 : 0;
     }
 
-    // Sweep past the far distance: last element of the range.
-    if (dist >= (f32)field_0x2) {
+    // Sweep past the far distance: report the last element's near state.
+    if (lim >= (f32)field_0x2) {
         return lbl_eu_80665748[field_0x8 + field_0x6 - 1].field_0x0 != 0 ? 1 : 0;
     }
 
-    // Inside the sweep: walk forward until a bin's far cutoff exceeds the
-    // key threshold; report whether the preceding element's near is nonzero.
+    // Inside the sweep: walk forward until a bin's far cutoff exceeds the key.
     u16 key = lbl_eu_80665758;
     s32 cnt = field_0x6;
-    if (cnt > 1) {
-        LODCacheIndex* e = &lbl_eu_80665748[field_0x8 + 1];
-        for (s32 j = 1; j < cnt; j++) {
-            if (key < e->field_0x2) {
-                return (e - 1)->field_0x0 != 0 ? 1 : 0;
-            }
-            e++;
+    LODCacheIndex* e = &lbl_eu_80665748[field_0x8 + 1];
+    for (s32 j = 1; j < cnt; j++) {
+        if (key < e->field_0x2) {
+            return (e - 1)->field_0x0 != 0 ? 1 : 0;
         }
+        e++;
     }
     return 0;
+}
+
+// ===========================================================================
+// us-804670e8  func_80463118  (linear distance lookup)
+//
+// Return the base level distance when it precedes the sweep, the last bin
+// distance when it follows, otherwise linearly interpolate the two bins
+// that straddle the current LOD threshold key.
+// ===========================================================================
+f32 CLODCacheManagerS::func_80463118()
+{
+    f32 nearF = (f32)field_0x0;
+    f32 lim = lbl_eu_80665754;
+
+    if (lim <= nearF) {
+        return lbl_eu_8066573C[field_0x8].near;
+    }
+
+    f32 farF = (f32)field_0x2;
+    if (lim >= farF) {
+        return lbl_eu_8066573C[field_0x8 + field_0x6 - 1].near;
+    }
+
+    u16 key = lbl_eu_80665758;
+    s32 cnt = (s32)field_0x6;
+    s32 base = (s32)field_0x8;
+    for (s32 i = base + 1; i < base + cnt; i++) {
+        u16 A = lbl_eu_8066573C[i].far;
+        if (key < A) {
+            u16 B = lbl_eu_8066573C[i - 1].far;
+            f32 t = (lim - (f32)B) / (f32)(A - B);
+            return lbl_eu_8066573C[i - 1].near * (1.0f - t) +
+                   lbl_eu_8066573C[i].near * t;
+        }
+    }
+    return lbl_eu_8066A5C4;
+}
+
+// ===========================================================================
+// us-8046720c  func_8046323C  (cubic catmull-rom distance lookup)
+//
+// Same sweep as func_80463118, but the straddling pair is interpolated with a
+// catmull-rom cubic over four consecutive level samples.  Basis constants
+// lbl_eu_8066A5D8 / _DC / _E0.
+// ===========================================================================
+f32 CLODCacheManagerS::func_8046323C()
+{
+    f32 lim = lbl_eu_80665754;
+
+    if (lim <= (f32)field_0x0) {
+        return lbl_eu_80665740[field_0x8].f00;
+    }
+
+    if (lim >= (f32)field_0x2) {
+        return lbl_eu_80665740[field_0x8 + field_0x6 - 1].f00;
+    }
+
+    u16 key = lbl_eu_80665758;
+    s32 cnt = (s32)field_0x6;
+    s32 base = (s32)field_0x8;
+    for (s32 k = base + 1; k < base + cnt; k++) {
+        u16 A = lbl_eu_80665740[k].far;
+        if (key < A) {
+            u16 B = lbl_eu_80665740[k - 1].far;
+            f32 t  = (lim - (f32)B) / (f32)(A - B);
+            f32 t2 = t * t;
+            f32 t3 = t * t2;
+            f32 u = t + (t3 - lbl_eu_8066A5D8 * t2);
+            f32 v = lbl_eu_8066A5C0 + (lbl_eu_8066A5D8 * t3 - lbl_eu_8066A5DC * t2);
+            f32 c3 = lbl_eu_8066A5E0 * t3 + lbl_eu_8066A5DC * t2;
+            f32 w = t3 - t2;
+            return lbl_eu_80665740[k - 1].f04 * u +
+                   lbl_eu_80665740[k - 1].f00 * v +
+                   lbl_eu_80665740[k].f00 * c3 +
+                   lbl_eu_80665740[k].f08 * w;
+        }
+    }
+    return lbl_eu_8066A5C4;
+}
+
+// ===========================================================================
+// us-8046736c  func_8046339C  (2D distance -> integer sample lookup)
+//
+// Looks up a cache record by the pair table, then over each straddling bin
+// rounds `offset + (1-t)*cur + t*prev` to an integer and emits the bin's
+// 2D word pair (outX/outY) when it equals the current sample, else the
+// previous bin's pair.  Returns Fv (args via r3/r4/r5: outputs, index).
+// ===========================================================================
+extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
+                                                           u32 index)
+{
+    u16* pairTbl = (u16*)lbl_eu_80665750;
+    u32 entry = lbl_eu_8066574C[index];
+    u16 recIdx = pairTbl[entry + 1];
+    CLODCacheManagerS* rec = lbl_eu_80665738 + recIdx;
+    f32 lim = lbl_eu_80665754;
+
+    if (lim <= (f32)rec->field_0x0) {
+        *outA = lbl_eu_80665744[rec->field_0x8].outX;
+        *outB = lbl_eu_80665744[rec->field_0x8].outY;
+        return;
+    }
+
+    if (lim >= (f32)rec->field_0x2) {
+        *outA = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outX;
+        *outB = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outY;
+        return;
+    }
+
+    u16 key = lbl_eu_80665758;
+    s32 cnt = (s32)rec->field_0x6;
+    s32 base = (s32)rec->field_0x8;
+    for (s32 k = base + 1; k < base + cnt; k++) {
+        u16 A = lbl_eu_80665744[k].far;
+        if (key < A) {
+            u16 B = lbl_eu_80665744[k - 1].far;
+            f32 t = (lim - (f32)B) / (f32)(A - B);
+            f32 lerp = (f32)lbl_eu_80665744[k].val * (1.0f - t) +
+                       (f32)lbl_eu_80665744[k - 1].val * t;
+            s32 ri = (s32)(lbl_eu_8066A5E4 + lerp);
+            if (ri == lbl_eu_80665744[k].val) {
+                *outA = lbl_eu_80665744[k].outX;
+                *outB = lbl_eu_80665744[k].outY;
+            } else {
+                *outA = lbl_eu_80665744[k - 1].outX;
+                *outB = lbl_eu_80665744[k - 1].outY;
+            }
+            return;
+        }
+    }
+    *outA = 0;
+    *outB = 0;
 }

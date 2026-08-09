@@ -4,13 +4,18 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CNumSelect.hpp"
 struct CNumSelectFull;
+namespace nw4r {
+namespace lyt {
+class Layout;
+}
+}
 
-u8 func_801EB018(void* self) { return static_cast<CNumSelectFull*>(self)->field_2D; }
+u8 func_801EB018(CNumSelectFull* self) { return self->field_2D; }
 
 
-u8 func_801EB020(void* self) { return static_cast<CNumSelectFull*>(self)->field_2C; }
+u8 func_801EB020(CNumSelectFull* self) { return self->field_2C; }
 
-u8 func_801EB028(void* self) { return static_cast<CNumSelectFull*>(self)->field_2E; }
+u8 func_801EB028(CNumSelectFull* self) { return self->field_2E; }
 
 
 void func_801EB178(){}
@@ -32,8 +37,8 @@ void func_801EB644(){}
 void CNumSelect::OnFileEvent() {}
 
 extern u8 lbl_eu_80506C14[];
-extern "C" void func_801EB04C(void* self, u8 r4) {
-    void* layout = *(void**)((u8*)self + 0x1C);
+extern "C" void func_801EB04C(u8* self, u8 r4) {
+    nw4r::lyt::Layout* layout = *(nw4r::lyt::Layout**)(self + 0x1C);
     func_80136910__FPQ34nw4r3lyt6LayoutPcUc(layout, (char*)lbl_eu_80506C14 + 0x20, r4);
 }
 

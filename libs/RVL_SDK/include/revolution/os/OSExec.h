@@ -9,8 +9,8 @@ typedef struct OSExecParams {
     UNKWORD WORD_0x0;
     UNKWORD WORD_0x4;
     char UNK_0x8[0x4];
-    void* regionStart; // at 0xC
-    void* regionEnd;   // at 0x10
+    u8* regionStart; // at 0xC
+    u8* regionEnd;   // at 0x10
     char UNK_0x14[0x1C - 0x14];
 } OSExecParams;
 

@@ -29,13 +29,13 @@ extern void* lbl_eu_80663D58;
 
 extern "C" void* getGlobalSda() { return lbl_eu_80663D58; }
 
-extern "C" u32 getField68(void* self) { return *(u32*)((u8*)self + 0x68); }
+extern "C" u32 getField68(u8* self) { return *(u32*)((u8*)self + 0x68); }
 
-extern "C" u32 getSubField7C(void* self) { return *(u32*)((u8*)self + 0x7C); }
+extern "C" u32 getSubField7C(u8* self) { return *(u32*)((u8*)self + 0x7C); }
 
 void func_800587F8(){}
 
-extern "C" u32 getField5C(void* self) { return *(u32*)((u8*)self + 0x5C); }
+extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
 
 void func_80058844(){}
 
@@ -58,7 +58,7 @@ void func_800596B8(){}
 
 void func_800598A8(){}
 
-extern "C" u32 checkBitFlag(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
+extern "C" u32 checkBitFlag(u8* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 
 // Converted to inline member function in header
 

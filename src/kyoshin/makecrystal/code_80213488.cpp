@@ -56,9 +56,10 @@ extern "C" void func_80213B1C(MakeCrystalTable* d);
 // Copy a 4-byte {s16, u8} crystal entry (id + flag).
 // DECOMP_DONT_INLINE: retail calls this through a real `bl` from the loop
 // callers; without it MWCC inlines the tiny body and unrolls those loops.
-extern "C" DECOMP_DONT_INLINE void func_8021351C(void* dst, const void* src) {
-    *(short*)dst = *(short*)src;
-    ((unsigned char*)dst)[2] = ((unsigned char*)src)[2];
+extern "C" DECOMP_DONT_INLINE void func_8021351C(MakeCrystalEntry* dst,
+                                                 const MakeCrystalEntry* src) {
+    dst->id = src->id;
+    dst->flag = src->flag;
 }
 
 // Retail 0x80213488: initialise the whole table. Directly resets all 1024

@@ -370,7 +370,7 @@ void* func_800EA3AC(void* self, void* val) {
     notfound:
     return nullptr;
 }
-extern "C" void func_800EA410(void* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0010(); }
+extern "C" void func_800EA410(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0010(); }
 void* cf::CBattleManager::func_800EA420() {
     if (spInstance != nullptr) {
         // Call virtual function at vtable offset 0x14 (BMIf::_v014) on mVision at offset 0x219c
@@ -402,7 +402,7 @@ void cf::CBattleManager::func_800EA470() {
     unk88 = lbl_eu_80666DDC;
     return func_800EA484(this, lbl_eu_80666DD4, unk8C);
 }
-extern "C" void func_800EA998(void* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
+extern "C" void func_800EA998(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
 void func_800EC918(u32 r3, u32 r4, u32 r5, void* r6, u32 r7);
 
 void func_800EC8FC(u32 a, u32 b, void* c, u32 d) {

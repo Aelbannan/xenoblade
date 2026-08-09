@@ -31,7 +31,7 @@ public:
 // (i.e. handle + 0x3E9C).
 struct CVoiceListNode {
     CVoiceListNode* field_0;  // 0x00: next node
-    void* field_4;            // 0x04
+    CVoiceListNode* field_4;  // 0x04: previous node (mirrors CVS_THREAD_EHP.hpp CVoiceHandleListNode)
     CCharVoice* field_8;      // 0x08: &handle->voice
 };
 

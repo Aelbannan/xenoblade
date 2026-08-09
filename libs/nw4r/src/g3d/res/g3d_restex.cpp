@@ -4,7 +4,7 @@ namespace nw4r {
 namespace g3d {
 
 void ResPltt::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResPlttData* pBase = &ref();
     u32 size = ref().header.size;
 
     if (sync) {

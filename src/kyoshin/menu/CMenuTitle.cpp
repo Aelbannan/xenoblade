@@ -34,10 +34,10 @@ void func_802B5F18(CMenuTitleInput* self) {
     }
 }
 
-void func_802B5F58(void* self) {
-    extern void func_802B75B8(void*);
+void func_802B5F58(CMenuTitleInput* self) {
+    extern void func_802B75B8(CMenuTitleSub*);
     ((unsigned char*)self)[0xe8] = 3;
-    func_802B75B8((char*)self + 0x60);
+    func_802B75B8(&self->mSub);
 }
 
 void func_802B5F68(CMenuTitleInput* self) {

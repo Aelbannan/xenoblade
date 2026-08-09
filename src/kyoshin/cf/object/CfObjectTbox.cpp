@@ -28,7 +28,7 @@ void cf::CfObjectTbox::func_801F8DD0() {
     this->func_800BFB90();
 }
 
-extern "C" void func_801F8E20(void* self) {
+extern "C" void func_801F8E20(u8* self) {
     extern void func_802753F8(void*);
     void* ptr = *(void**)((char*)self + 0x38);
     if (ptr != 0) func_802753F8(ptr);

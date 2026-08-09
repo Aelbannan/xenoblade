@@ -60,9 +60,9 @@ void CDeviceFileDvd::wkStandbyLogout() {}
 
 int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
     if (*(s32*)((u8*)this + 0x1C4) == 3) {
-        void* p = *(void**)((u8*)this + 0x60);
-        p = *(void**)((u8*)p + 0x0);
-        p = *(void**)((u8*)p + 0x8);
+        u8* p = *(u8**)((u8*)this + 0x60);
+        p = *(u8**)((u8*)p + 0x0);
+        p = *(u8**)((u8*)p + 0x8);
         if (p == 0) {
             p = 0;
         } else if (*(s32*)((u8*)p + 0x50) != 0x44) {

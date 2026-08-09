@@ -36,7 +36,7 @@ void func_8049B3FC(void){}
 
 extern void func_8043A57C__11CScriptCodeFv();
 extern u32 lbl_eu_80663A08;
-void func_8049B408(void* self){ func_8043A57C__11CScriptCodeFv(); }
+void func_8049B408(u8* self){ func_8043A57C__11CScriptCodeFv(); }
 
 void CScnCameraMan::WorkEvent1() {}
 

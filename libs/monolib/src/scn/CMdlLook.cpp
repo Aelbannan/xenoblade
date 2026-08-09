@@ -16,7 +16,7 @@ void func_804E7B38(){}
 
 void func_804E8220(){}
 
-void func_804E8284(void* self, float a, float b){}
+void func_804E8284(u8* self, float a, float b){}
 
 void func_804E8290(){}
 

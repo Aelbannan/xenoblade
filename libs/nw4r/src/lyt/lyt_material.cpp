@@ -346,10 +346,10 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
                 const char* const pName = detail::ConvertOffsToPtr<char>(
                     pTexture, pTexture[pResTexMap[i].texIdx].nameStrOffset);
 
-                void* const pTexPalette = rBlockSet.pResAccessor->GetResource(
-                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
+                TPLPalette* const pTexPalette = static_cast<TPLPalette*>(rBlockSet.pResAccessor->GetResource(
+                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL));
 
-                TexMap texMap(static_cast<TPLPalette*>(pTexPalette), 0);
+                TexMap texMap(pTexPalette, 0);
                 SetTextureNoWrap(num, texMap);
 
                 pTexMap[num].SetWrapMode(
@@ -1256,37 +1256,37 @@ nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const
     *(u32*)self = *(const u32*)other;
     return self;
 }
-unsigned int GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* p) {
+unsigned int GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* p) {
     return *(const unsigned int*)p & 0xF;
 }
-u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
     return ((*(const u32*)_this) >> 4) & 0xF;
 }
-int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const unsigned int*)self >> 8) & 0x0F;
 }
-int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const u32*)self >> 25) & 1;
 }
-u32 GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+u32 GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
     return (*(const u32*)_this >> 27) & 1;
 }
-bool HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+bool HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const u32*)self & 0x1000) != 0;
 }
-int HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+int HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
     return (*(const unsigned int*)_this >> 23) & 1;
 }
-bool HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+bool HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const u32*)self >> 24) & 1;
 }
-int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* _this) {
     return (*(const u32*)_this >> 13) & 3;
 }
-unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const unsigned int*)self >> 15) & 7;
 }
-unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const nw4r::lyt::MaterialResourceNum* self) {
     return (*(const unsigned int*)self >> 18) & 0x1F;
 }
 namespace {
@@ -1305,37 +1305,37 @@ struct TexMapBits {
 } // namespace
 
 void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode(
-    void* self, GXTexWrapMode wrapS, GXTexWrapMode wrapT) {
+    nw4r::lyt::TexMap* self, GXTexWrapMode wrapS, GXTexWrapMode wrapT) {
     TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
     bits->wrapS = wrapS;
     bits->wrapT = wrapT;
 }
-int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
     return (*(const unsigned char*)((const unsigned char*)this_ + 2)) & 3;
 }
-unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const void* p_this) {
+unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* p_this) {
     return ((const unsigned char*)p_this)[3] & 3;
 }
 void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter(
-    void* self, GXTexFilter minFilt, GXTexFilter magFilt) {
+    nw4r::lyt::TexMap* self, GXTexFilter minFilt, GXTexFilter magFilt) {
     TexMapBits* bits = (TexMapBits*)((unsigned char*)self + 0x18);
     bits->minFilter = minFilt;
     bits->magFilter = magFilt;
 }
-int GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+int GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
     return (((((const unsigned char*)this_)[2] >> 2) & 7) + 1) & 7;
 }
-int GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+int GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
     return (((((const unsigned char*)this_)[3] >> 2) & 1) + 1) & 1;
 }
 void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(){}
 void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(){}
-void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, const void* other) {
+void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(nw4r::lyt::TevSwapMode* self, const nw4r::lyt::TevSwapMode* other) {
     *(unsigned char*)self = *(const unsigned char*)other;
     return self;
 }
 void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(){}
-void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
+void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(nw4r::lyt::IndirectStage* dst, const nw4r::lyt::IndirectStage* src) {
     ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
     ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
     ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];

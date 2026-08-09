@@ -117,7 +117,7 @@ void ResVtxTexCoord::GetArray(const void** ppBase, u8* pStride) const {
  *
  ******************************************************************************/
 void ResVtxPos::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxPosData* pBase = &ref();
     u32 size = GetSize();
 
     if (sync) {
@@ -128,7 +128,7 @@ void ResVtxPos::DCStore(bool sync) {
 }
 
 void ResVtxNrm::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxNrmData* pBase = &ref();
     u32 size = GetSize();
 
     if (sync) {
@@ -139,7 +139,7 @@ void ResVtxNrm::DCStore(bool sync) {
 }
 
 void ResVtxClr::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxClrData* pBase = &ref();
     u32 size = GetSize();
 
     if (sync) {
@@ -150,7 +150,7 @@ void ResVtxClr::DCStore(bool sync) {
 }
 
 void ResVtxTexCoord::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxTexCoordData* pBase = &ref();
     u32 size = GetSize();
 
     if (sync) {
@@ -166,7 +166,7 @@ void ResVtxTexCoord::DCStore(bool sync) {
  *
  ******************************************************************************/
 void ResVtxFurVec::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxFurVecData* pBase = &ref();
     u32 size = ref().size;
 
     if (sync) {
@@ -182,7 +182,7 @@ void ResVtxFurVec::DCStore(bool sync) {
  *
  ******************************************************************************/
 void ResVtxFurPos::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResVtxFurPosData* pBase = &ref();
     u32 size = ref().size;
 
     if (sync) {
@@ -215,7 +215,7 @@ void ResVtxFurPos::SetArray(unsigned short idx) {
         }
     }
 
-    void* pData;
+    u8* pData;
     if (valid != 0) {
         pData = (u8*)&r + r.toFurPosArray + idx * r.ofsLayer;
     } else {

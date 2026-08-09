@@ -78,7 +78,7 @@ float CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv(void* self) {
     }
 }
 
-extern "C" void CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv(void* self, float f) {
+extern "C" void CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float f) {
     extern float lbl_eu_8066A210;
     // Thunk: scale f by global factor, then tail-call through vtable[0xC4] (CfObject_UnkVirtualFunc29)
     // Single-expression load to encourage MWCC to keep the vtable pointer in r12
@@ -133,7 +133,7 @@ void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc13() {}
 
 void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc14() {}
 
-extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(void* self, int val) {
+extern "C" void CfObjectModel_UnkVirtualFunc15__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int val) {
     // Compute (-val | val) >> 31 = (val != 0) ? 1 : 0, store at field_BC
     // Then tail-call to CfObjectModel_UnkVirtualFunc14 (vtable+0x1AC) passing val in r4
     u8 flag = (u8)(((u32)(-val) | (u32)(val)) >> 31);
@@ -164,7 +164,7 @@ int CfObjectModel_UnkVirtualFunc6__Q22cf13CfObjectModelFv(void* self) { return 0
 
 // CfObject.hpp declares this with (float, float) params but the retail symbol is Fv (no params),
 // so we emit the exact mangled name via extern "C" to match the retail .o symbol table.
-extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(void* self, float a, float b) {
+extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b) {
     extern float lbl_eu_80666A68;
     float c = lbl_eu_80666A68;
     *(float*)((char*)self + 0x3c) = a;

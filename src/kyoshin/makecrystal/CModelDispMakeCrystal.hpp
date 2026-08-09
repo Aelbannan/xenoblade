@@ -2,6 +2,8 @@
 
 #include <types.h>
 
+namespace cf { class CfObjEnumList; }
+
 // Full object layout for CModelDispMakeCrystal (used by C-linkage accessors)
 struct CModelDispMakeCrystalFull {
     u8 _00[0xBE8];
@@ -97,7 +99,7 @@ struct CMCCryParamObjVt {
 
 // 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
 struct CMCryListHolder {
-    void* list;   // 0x0
+    cf::CfObjEnumList* list;   // 0x0
     u32 handle;   // 0x4
 };
 
@@ -112,14 +114,14 @@ struct CMCCryChgActor {
 // Per-crystal param slot (stride 0x3c); +0x2c holds a vtable-slot-2 object.
 struct CMCCryParamSlot {
     u8 _00[0x2c];
-    void* field_2c;            // +0x2c
+    CMCCryParamObjVt* field_2c;            // +0x2c
     u8 _30[0x3c - 0x30];
 };
 
 // Crystal display sub-object (per 0x5cc slot, embedded at +0x44).
 struct CMCrystalDispSub {
-    void* field_00;            // +0x00 built model pointer
-    void* field_04;            // +0x04
+    void* field_00;            // +0x00 built model pointer (assigned from void* func -> kept void*)
+    void* field_04;            // +0x04 (assigned from void* func -> kept void*)
     CMCryAnimVt mAnim;         // +0x08 inline anim object (flush at +0xE0)
     u32 field_14;              // +0x14 flags
     u8 _18[0x544 - 0x18];
@@ -142,7 +144,7 @@ struct CMCrystalDispSub {
 // CModelDispMakeCrystal fields used by func_80220E14.
 struct CMCCrySelfFields {
     u8 _00[0xc];
-    void* field_0c;            // +0x0c allocator/parent
+    u8* field_0c;            // +0x0c allocator/parent
     u8 _10[0xbe0 - 0x10];
     f32 field_be0;             // +0xbe0
 };

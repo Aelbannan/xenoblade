@@ -63,7 +63,7 @@ extern const f32 lbl_eu_80666FC4; // 360.0f
 }
 
 extern "C" {
-extern void* func_8012FDBC();
+extern nw4r::lyt::ArcResourceAccessor* func_8012FDBC();
 extern u32 func_801355BC();
 extern u32 func_801355D8();
 }
@@ -330,8 +330,7 @@ void CMenuBattlePlayerState::Init() {
     IScnRender* cb;
 
     handle = mtl::MemManager::getHandleMEM2();
-    accessor = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
-        func_8012FDBC());
+    accessor = func_8012FDBC();
     unk64.createRegion(reinterpret_cast<int>(accessor), 0xE00,
                        lbl_eu_804FD720 + 0xF7, 0);
 
@@ -844,9 +843,9 @@ after_bit21:
                     if (move != NULL) {
                         int id = move->vf4C();
                         if (id != 0) {
-                            void* handle = func_800B708C(id);
+                            Func800B708C_Ret* handle = reinterpret_cast<Func800B708C_Ret*>(func_800B708C(id));
                             if (handle != NULL) {
-                                u32 bits = static_cast<Func800B708C_Ret*>(handle)->unk64;
+                                u32 bits = handle->unk64;
                                 if (bits & 4) {
                                     slot->unk240 = 1;
                                 }
@@ -1146,8 +1145,8 @@ void func_8010B324(CMenuBattlePlayerStateSlot* slot){
     }
 }
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
-extern "C" void func_8010CF5C(void* p) {
-    static_cast<CMenuBattlePlayerState*>(p)->unk7C9 = 1;
+extern "C" void func_8010CF5C(CMenuBattlePlayerState* p) {
+    p->unk7C9 = 1;
 }
 extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
 extern "C" {

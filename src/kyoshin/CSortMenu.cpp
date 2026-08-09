@@ -8,6 +8,7 @@
 
 // External symbols
 extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
+extern const float lbl_eu_80668000;  // 1.0f literal pool (SDA21): animation completion threshold
 
 // Intra-TU forward declarations (definitions in this file; pre-existing missing
 // declarations - required for the TU to compile under -lang=c++)
@@ -140,6 +141,7 @@ extern "C" void func_801D31F8(CSortMenu* _this, nw4r::lyt::DrawInfo* drawInfo) {
 // ============================================================================
 extern "C" void func_801D3258(CSortMenu* _this) {
     func_801390E0(&_this->mFileHandle);
+    _this->field_0x28 = 0;
     if (_this->mpLayout != NULL) {
         // Retail calls the virtual deleting destructor (vtable slot +0x8, r4=1).
         delete _this->mpLayout;
@@ -147,7 +149,6 @@ extern "C" void func_801D3258(CSortMenu* _this) {
     }
     func_80139124(_this->mArcResAcc);
     _this->mArcResAcc = NULL;
-    _this->field_0x28 = 0;
     func_8045F778__17UnkClass_8045F564Fv((u8*)_this + 0x04);
     func_801F35DC((u8*)_this + 0x2C);
 }
@@ -427,7 +428,7 @@ extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outS
 // func_801D3878: State 1 handler - opening animation
 // ============================================================================
 extern "C" void func_801D3878(CSortMenu* _this) {
-    if (func_80137444(_this->mpAnimTrans0, 1.0f) != 0) {
+    if (func_80137444(_this->mpAnimTrans0, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 2;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, true);
@@ -449,7 +450,7 @@ extern "C" void func_801D390C(CSortMenu* _this) {
 // func_801D3958: State 4 handler - scroll animation
 // ============================================================================
 extern "C" void func_801D3958(CSortMenu* _this) {
-    if (func_80137510(_this->mpAnimTrans1, 1.0f) != 0) {
+    if (func_80137510(_this->mpAnimTrans1, lbl_eu_80668000) != 0) {
         _this->field_0x2A = 5;
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
         _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);

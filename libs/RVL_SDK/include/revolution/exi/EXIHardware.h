@@ -9,7 +9,7 @@ extern "C" {
 
 typedef struct EXIChannelParam {
     u32 cpr;    // at 0x0
-    void* mar;  // at 0x4
+    u8* mar;    // at 0x4
     u32 length; // at 0x8
     u32 cr;     // at 0xC
     u32 data;   // at 0x10

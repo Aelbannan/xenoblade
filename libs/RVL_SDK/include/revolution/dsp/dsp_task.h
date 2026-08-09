@@ -35,10 +35,10 @@ typedef struct DSPTask {
     volatile u32 state;              // at 0x0
     volatile u32 prio;               // at 0x4
     volatile u32 flags;              // at 0x8
-    void* iramMmemAddr;              // at 0xC
+    u8* iramMmemAddr;              // at 0xC
     u32 iramMmemLen;                 // at 0x10
     uintptr_t iramDspAddr;           // at 0x14
-    void* dramMmemAddr;              // at 0x18
+    u8* dramMmemAddr;              // at 0x18
     u32 dramMmemLen;                 // at 0x1C
     uintptr_t dramDspAddr;           // at 0x20
     u16 startVector;                 // at 0x24

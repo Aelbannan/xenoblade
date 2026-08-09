@@ -408,7 +408,7 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
 // the retail function unlinks from a linked-list render-work chain.
 void CViewFrame::detachRenderWork(CWorkThread* pThread) {}
 
-extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
+extern "C" void func_8043FC60__10CViewFrameFUl(CViewFrame* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;
 }
 

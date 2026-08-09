@@ -146,11 +146,13 @@ static const f32 cMinDelay = 0.0f;    // delay / delayTimeMax lower bound
 static const f32 cMaxFeedback = 0.9f; // feedback upper bound
 
 bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
-    // Declared before `changed` so MWCC's reverse declaration-order callee-saved
-    // allocation puts affected (mono memsize) in r31 and `changed` in r30.
+    // Register-allocation-sensitive: MWCC assigns callee-saved locals in reverse
+    // declaration order (last-declared live local -> lowest r30/r31), so `memSize`
+    // (mono) is declared before `changed` to land mono in r31 and changed in r30.
+    // The heap-total is read through named `pHeap`/`total` locals so the DPL2
+    // memsize (`required`) keeps the call-return register r3 (matches retail).
     u32 memSize;
     u32 required;
-    u32 heapTotal;
 
     mDelay = rParam.delay;
     mFeedback = rParam.feedback;
@@ -201,8 +203,15 @@ bool FxDelayDpl2::SetParam(const detail::FxDelayParam& rParam) {
     if (required < memSize) {
         required = memSize;
     }
-    heapTotal = (u32)GetAxfxImpl()->GetHeapTotalSize();
-    if (required > heapTotal) {
+
+    u32 total;
+    MEMiHeapHead* pHeap = mHeap;
+    if (pHeap == NULL) {
+        total = 0;
+    } else {
+        total = (u32)MEMGetHeapTotalSize(pHeap);
+    }
+    if (required > total) {
         return false;
     }
 

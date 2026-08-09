@@ -207,7 +207,7 @@ ResTev ResTev::CopyTo(void* pDst) {
 }
 
 void ResTev::DCStore(bool sync) {
-    void* pBase = &ref();
+    ResTevData* pBase = &ref();
     u32 size = ref().size;
 
     if (sync) {

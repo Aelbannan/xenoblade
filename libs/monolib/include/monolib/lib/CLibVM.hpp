@@ -27,6 +27,6 @@ public:
 // ---------------------------------------------------------------------------
 // C-linkage imports
 // ---------------------------------------------------------------------------
-extern "C" void* lbl_eu_80665720;
+extern "C" CLibVM* lbl_eu_80665720;
 extern "C" void __dt__11CWorkThreadFv(void*, int);
 extern "C" void __dl__FPv(void*);

@@ -52,8 +52,8 @@ void TexCoordAry::Reserve(u8 num) {
 
         //TODO(amber) according to tfp2 this should be NewArray, but it's not?
         //mpData = Layout::NewArray<TexCoord>(num);
-        void* pMem = Layout::AllocMemory(num * sizeof(TexCoord));
-        mpData = pMem != NULL ? static_cast<TexCoord*>(pMem) : NULL;
+        TexCoord* pMem = static_cast<TexCoord*>(Layout::AllocMemory(num * sizeof(TexCoord)));
+        mpData = pMem != NULL ? pMem : NULL;
 
         if (mpData != NULL) {
             mCap = num;

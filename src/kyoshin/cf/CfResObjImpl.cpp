@@ -25,13 +25,13 @@ void func_8016CCDC(void) {}
 
 void func_8016CCE0(){}
 
-extern "C" int func_8016CD54(void* self) { return 0; }
+extern "C" int func_8016CD54(u8* self) { return 0; }
 
-extern "C" int func_8016CD5C(void* self) { return 0; }
+extern "C" int func_8016CD5C(u8* self) { return 0; }
 
 extern "C" void func_8016CD64(void) {}
 
-extern "C" void func_8016CD68(void* self, int index, int value) {
+extern "C" void func_8016CD68(u8* self, int index, int value) {
     if (index < 2) {
         int* arr = (int*)((char*)self + 0x14);
         arr[index] = value;

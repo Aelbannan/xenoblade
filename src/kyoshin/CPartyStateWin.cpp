@@ -11,9 +11,9 @@ u32 func_801F9694(void) {
 }
 
 
-u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
+u32 func_801F9684(u8* self) { return *(u32*)(self + 0x6C); }
 
-u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
+u32 func_801F968C(u8* self) { return *(u32*)(self + 0x70); }
 
 
 void func_801F9894(){}
@@ -28,9 +28,9 @@ void func_801F9B18(){}
 
 void func_801F9CB4(){}
 
-void func_801FA220(void* r3, const void* r4) {
-    unsigned int* destWords = (unsigned int*)((char*)r3 + 4);
-    const unsigned int* srcWords = (const unsigned int*)((char*)r4 + 4);
+void func_801FA220(u8* r3, const u8* r4) {
+    unsigned int* destWords = (unsigned int*)(r3 + 4);
+    const unsigned int* srcWords = (const unsigned int*)(r4 + 4);
     destWords[0] = srcWords[0];
     destWords[1] = srcWords[1];
     destWords[2] = srcWords[2];
@@ -45,7 +45,7 @@ void func_801FA254(){}
 
 void func_801FA338(){}
 
-u8 func_801FA4EC(void* self) { return ((CPartyStateWin*)self)->field_6BE5; }
+u8 func_801FA4EC(CPartyStateWin* self) { return self->field_6BE5; }
 
 void func_801FA4F4(){}
 

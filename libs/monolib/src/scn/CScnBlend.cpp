@@ -80,7 +80,7 @@ void func_80498D98(void* r3, int r4) {
     }
 }
 
-extern "C" void func_80498DC0(void* self, u32 enable) {
+extern "C" void func_80498DC0(u8* self, u32 enable) {
     if (enable != 0) {
         *(u8*)((u8*)self + 0x54) |= 2;
     } else {

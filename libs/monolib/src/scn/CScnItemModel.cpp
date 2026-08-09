@@ -4,8 +4,8 @@
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 
-void func_804970D0(void* self);
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
+void func_804970D0(u8* self);
+void func_8048472C(u8* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 
 void func_80482DF4(){}
 
@@ -39,7 +39,7 @@ void func_80484734(){}
 
 void func_80484838(){}
 
-float func_8048490C(void* self) { return ((CScnItemModel*)self)->value858; }
+float func_8048490C(u8* self) { return ((CScnItemModel*)self)->value858; }
 
 void func_80484914(){}
 
@@ -53,11 +53,11 @@ void func_80484C84(){}
 
 void func_80484D3C(){}
 
-void func_80484E04(void* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
+void func_80484E04(u8* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
 
 void func_80484E0C(void) {}
 
-extern "C" void func_80484E10(void* self, u32 a, u32 b) {
+extern "C" void func_80484E10(u8* self, u32 a, u32 b) {
     volatile u32* f = (volatile u32*)((u8*)self + 0x7A8);
     if (a != 0) {
         *f |= 0x1;
@@ -95,12 +95,12 @@ void func_80485684(){}
 
 void func_80485774(){}
 
-extern "C" void func_804857DC(void* self, u32 param) {
+extern "C" void func_804857DC(u8* self, u32 param) {
     *(u32*)((u8*)self + 0x7A4) |= 0x20;
     *(u32*)((u8*)self + 0x7C8) = param;
 }
 
-extern "C" void func_804857F0(void* self, u32 param) {
+extern "C" void func_804857F0(u8* self, u32 param) {
     *(u32*)((u8*)self + 0x7A4) |= 0x100;
     *(u32*)((u8*)self + 0x7C8) = param;
 }
@@ -126,23 +126,23 @@ void func_80485CE8(){}
 void func_80485D64(){}
 
 extern void func_80489A60();
-void func_80486068(void* self){ func_80489A60(); }
+void func_80486068(u8* self){ func_80489A60(); }
 
 void func_80486070(void){}
 
 void func_eu_8048A084(){}
 
-extern "C" int func_80486074(void* self) { return 0; }
+extern "C" int func_80486074(u8* self) { return 0; }
 
-extern "C" int func_8048607C(void* self) { return 1; }
+extern "C" int func_8048607C(u8* self) { return 1; }
 
 extern "C" void func_80486084(void) {}
 
-extern "C" int func_80486088(void* self) { return 0; }
+extern "C" int func_80486088(u8* self) { return 0; }
 
-extern "C" u32 func_80486090(void* self) { return ((CScnItemModel*)self)->value7E4; }
+extern "C" u32 func_80486090(u8* self) { return ((CScnItemModel*)self)->value7E4; }
 
-extern "C" void func_804828F0(void* self, u32 flags, u32 enable) {
+extern "C" void func_804828F0(u8* self, u32 flags, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0) |= flags;
     } else {
@@ -150,7 +150,7 @@ extern "C" void func_804828F0(void* self, u32 flags, u32 enable) {
     }
 }
 
-extern "C" void func_804830BC(void* self, u32 enable) {
+extern "C" void func_804830BC(u8* self, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0x7A4) |= 0x200000;
     } else {
@@ -158,7 +158,7 @@ extern "C" void func_804830BC(void* self, u32 enable) {
     }
 }
 
-extern "C" void func_804830E4(void* self, u32 enable) {
+extern "C" void func_804830E4(u8* self, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0x7A8) |= 0x100;
     } else {
@@ -166,7 +166,7 @@ extern "C" void func_804830E4(void* self, u32 enable) {
     }
 }
 
-extern "C" void func_8048310C(void* self, u32 enable) {
+extern "C" void func_8048310C(u8* self, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0x7A4) |= 0x08000000;
     } else {
@@ -174,7 +174,7 @@ extern "C" void func_8048310C(void* self, u32 enable) {
     }
 }
 
-extern "C" void func_80483134(void* self, u32 enable) {
+extern "C" void func_80483134(u8* self, u32 enable) {
     if (enable != 0) {
         *(u32*)((u8*)self + 0x7A4) |= 0x02000000;
     } else {

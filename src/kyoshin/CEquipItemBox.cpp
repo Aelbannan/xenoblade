@@ -77,8 +77,8 @@ extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src) {
 extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
-        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *obj) {
             return obj;
         }
     }
@@ -89,9 +89,9 @@ extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx) {
 extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
-        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
-        if (obj && *(u32*)obj) {
-            return *(u32*)obj >> 20;
+        u32* obj = (u32*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *obj) {
+            return *obj >> 20;
         }
     }
     return 0;
@@ -101,8 +101,8 @@ extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx) {
 extern "C" s16 func_80282E4C(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
-        void* obj = func_80157C4C(grid->cat, grid->data[offset].unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, grid->data[offset].unk0);
+        if (obj && *obj) {
             return grid->data[offset].unk0;
         }
     }
@@ -134,8 +134,8 @@ extern "C" u8 func_80283118(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        void* obj = func_80157C4C(grid->cat, item->unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        if (obj && *obj) {
             return item->unk3;
         }
     }
@@ -147,8 +147,8 @@ extern "C" u8 func_80283190(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        void* obj = func_80157C4C(grid->cat, item->unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        if (obj && *obj) {
             return item->unk4;
         }
     }
@@ -160,8 +160,8 @@ extern "C" u8 func_80283208(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        void* obj = func_80157C4C(grid->cat, item->unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        if (obj && *obj) {
             return item->unk6;
         }
     }
@@ -190,8 +190,8 @@ extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
-        void* obj = func_80157C4C(grid->cat, item->unk0);
-        if (obj && *(u32*)obj) {
+        u32* obj = (u32*)func_80157C4C(grid->cat, item->unk0);
+        if (obj && *obj) {
             return item->unk2;
         }
     }
@@ -262,10 +262,10 @@ extern "C" void func_80285478(CEquipItemGrid* grid) {
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
             CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
-            void* objA = func_80157C4C(grid->cat, a->unk0);
-            void* objB = func_80157C4C(grid->cat, b->unk0);
-            u16 kindA = func_80139358(*(u32*)objA >> 20);
-            u16 kindB = func_80139358(*(u32*)objB >> 20);
+            u32* objA = (u32*)func_80157C4C(grid->cat, a->unk0);
+            u32* objB = (u32*)func_80157C4C(grid->cat, b->unk0);
+            u16 kindA = func_80139358(*objA >> 20);
+            u16 kindB = func_80139358(*objB >> 20);
             u32 nameA = func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindA);
             if ((u8)nameA > (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_8050EFDC[0x82], kindB)) {
                 CEquipItemData tA;
@@ -496,9 +496,9 @@ extern "C" void func_802882A4(){}
 
 extern "C" void func_8028847C(){}
 
-extern "C" unsigned char func_80288530(void* self) {
-    s8 idx = *(s8*)((u8*)self + 0x373);
-    return *(unsigned char*)((u8*)self + 0x36c + idx);
+extern "C" unsigned char func_80288530(u8* self) {
+    s8 idx = *(s8*)(self + 0x373);
+    return *(unsigned char*)(self + 0x36c + idx);
 }
 
 extern "C" void func_80288544(){}

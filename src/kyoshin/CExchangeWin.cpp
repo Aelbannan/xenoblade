@@ -173,8 +173,8 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 }
 
 // Stub functions needed by CItemBoxGrid
-extern "C" void func_8022D0D0(void* self) {
-    CExchangeWin* s = (CExchangeWin*)self;
+extern "C" void func_8022D0D0(CExchangeWin* self) {
+    CExchangeWin* s = self;
     if (s->_26 != 2) {
         return;
     }
@@ -187,13 +187,13 @@ extern "C" void func_8022D19C(CExchangeWin* self, char* text1, char* text2) {
     func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
 }
 
-extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
+extern "C" void func_8022D0F8(void* dst, CExchangeWin* src, u8 val) {
     char buf[40];
     CExchangeWin* win;
     nw4r::lyt::Pane* pane1;
     nw4r::lyt::Pane* pane2;
 
-    win = (CExchangeWin*)src;
+    win = src;
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
     pane1 = win->mLayout->GetRootPane()->FindPaneByName(buf, true);
     pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
@@ -228,8 +228,8 @@ extern "C" void func_8022CF7C(CExchangeWin* self) {
     self->mLayout->Animate(0);
 }
 
-extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
-    CExchangeWin* s = (CExchangeWin*)self;
+extern "C" void func_8022CFEC(CExchangeWin* self, nw4r::lyt::DrawInfo* drawInfo) {
+    CExchangeWin* s = self;
     if (s->field_24 == 0) {
         return;
     }

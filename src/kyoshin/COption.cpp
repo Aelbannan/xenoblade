@@ -84,9 +84,9 @@ extern "C" u8 func_8029C734(COptionWindow* self) {
     if (CSysWin_isReady(&self->mSysWin) == 0) return 0;
     return self->field_0x2A;
 }
-u8 func_8029C798(void* self) { return static_cast<COptionFull*>(self)->field_30; }
+u8 func_8029C798(COptionFull* self) { return self->field_30; }
 
-u8 func_8029C7A0(void* self) { return static_cast<COptionFull*>(self)->field_32; }
+u8 func_8029C7A0(COptionFull* self) { return self->field_32; }
 
 // func_8029C7A8: cursor-left. In state 3/9 with the system window busy, decrement
 // the sub-page counter 0x31; otherwise (window idle) decrement the column 0x2C and

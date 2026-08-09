@@ -69,7 +69,7 @@ public:
     u32 mIWorkEventVtbl;                       // 0x58 - IWorkEvent vtable (raw)
     u32 field_0x5C;                            // 0x5C
     u8 _60[0x70 - 0x60];                       // 0x60-0x6F - UnkClass_8045F564 embedded
-    void* field_0x70;                          // 0x70 - param from constructor
+    u8* field_0x70;                          // 0x70 - opaque param from constructor
     CFileHandle* field_0x74;                   // 0x74 - file handle
     nw4r::lyt::ArcResourceAccessor* field_0x78; // 0x78 - arc resource accessor
     nw4r::lyt::Layout* field_0x7C;             // 0x7C - main layout

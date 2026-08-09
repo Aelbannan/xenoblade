@@ -118,12 +118,11 @@ void func_802B7800(){}
 
 void func_802B7838() {}
 
-void func_802B783C(void* thisPtr) {
-    uint8_t* bytes = static_cast<uint8_t*>(thisPtr);
-    if (bytes[0x6d] == 0) {
+void func_802B783C(u8* thisPtr) {
+    if (thisPtr[0x6d] == 0) {
         return;
     }
-    bytes[0x24] = 2;
+    thisPtr[0x24] = 2;
 }
 
 void func_802B7854() {}

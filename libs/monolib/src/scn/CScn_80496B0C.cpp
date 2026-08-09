@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(u8* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
 
 void func_80497724(){}
@@ -19,7 +19,7 @@ struct VTarget {
     virtual ~VTarget() {}
 };
 
-extern "C" void func_80497760(void* self) {
+extern "C" void func_80497760(u8* self) {
     void* p = *(void**)((u8*)self + 8);
     if (p == 0) return;
     p = *(void**)((u8*)p + 0x84);
@@ -28,7 +28,7 @@ extern "C" void func_80497760(void* self) {
 }
 
 extern "C" { extern const float lbl_eu_8066AAC0; }
-extern "C" float func_80497790(void* self) {
+extern "C" float func_80497790(u8* self) {
     void* p = *(void**)((u8*)self + 8);
     if (p == 0) return lbl_eu_8066AAC0;
     p = *(void**)((u8*)p + 0x84);
@@ -36,7 +36,7 @@ extern "C" float func_80497790(void* self) {
     return lbl_eu_8066AAC0;
 }
 
-extern "C" float func_804977C0(void* self) {
+extern "C" float func_804977C0(u8* self) {
     void* p = *(void**)((u8*)self + 0xC);
     if (p == 0) return lbl_eu_8066AAC0;
     p = *(void**)((u8*)p + 0x84);
@@ -48,13 +48,13 @@ void func_804977F0(){}
 
 void func_8049782C(){}
 
-extern "C" u32 func_804978B8(void* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
+extern "C" u32 func_804978B8(u8* self) { return *(u32*)(*(u32*)((u8*)self + 8) + 0x84) != 0; }
 
 void func_804978D0(){}
 
 void func_80497914(){}
 
-extern "C" u32 func_8049798C(void* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
+extern "C" u32 func_8049798C(u8* self) { return *(u32*)(*(u32*)((u8*)self + 0xC) + 0x84) != 0; }
 
 void func_804979A4(){}
 

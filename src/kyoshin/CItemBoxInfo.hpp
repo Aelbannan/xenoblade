@@ -4,20 +4,21 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
 class CEventFile;
+class CFileHandle;
 
-namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; } }
+namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcResourceAccessor; class Layout; } }
 
 struct CItemBoxInfoState {
     u8 _00[0x04];
     UnkClass_8045F564 memRegion1;   // 0x04
     UnkClass_8045F564 memRegion2;   // 0x14
-    void* fileHandle1;              // 0x24 - CFileHandle
+    void* fileHandle1;              // 0x24 - CFileHandle (assigned from void* readFile -> kept void*)
     void* fileHandle2;              // 0x28 - CFileHandle
-    void* arcResourceAccessor;     // 0x2C - nw4r::lyt::ArcResourceAccessor
-    void* resource;
-    void* layout;
-    void* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
-    void* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
+    nw4r::lyt::ArcResourceAccessor* arcResourceAccessor;     // 0x2C - nw4r::lyt::ArcResourceAccessor
+    u8* resource;
+    nw4r::lyt::Layout* layout;
+    nw4r::lyt::AnimTransform* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
+    nw4r::lyt::AnimTransform* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
     u8 _40[0x50];
     u8 active;
     u8 _91[3];

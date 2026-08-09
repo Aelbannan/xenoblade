@@ -57,8 +57,7 @@ void func_80240878(){}
 
 void func_802408D4(){}
 
-void func_80240A64(void *r3) {
-    unsigned char *base = (unsigned char *)r3;
+void func_80240A64(u8* base) {
     base[0x0] = 0;
     *(int *)(base + 0x4) = 0;
     base[0x188] = 0;

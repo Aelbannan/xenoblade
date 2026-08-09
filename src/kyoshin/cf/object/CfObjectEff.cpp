@@ -72,7 +72,7 @@ void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 
 namespace cf {
 void CfObjectEff::func_800AC7CC() {}
-extern "C" u32 func_800AC7FC__Q22cf11CfObjectEffFv(void* self) { return *(u32*)((u8*)self + 0x94) != 0; }
+extern "C" u32 func_800AC7FC__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { return *(u32*)((u8*)self + 0x94) != 0; }
 void CfObjectEff::func_800AC810() {}
 } // namespace cf
 
@@ -96,7 +96,7 @@ void func_800ACC14(void* self, unsigned char val) {
 void func_800ACC28(){}
 
 namespace cf {
-extern "C" void func_800ACC3C__Q22cf11CfObjectEffFv(void* self, float v) {
+extern "C" void func_800ACC3C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self, float v) {
     void* o = *(void**)((u8*)self + 0x94);
     if (o) *(float*)((u8*)o + 0x50) = v;
 }
@@ -221,13 +221,13 @@ void func_800AD858__Q22cf11CfObjectEffFv(void* self) {
 
 void func_800AD860__FPv(){}
 
-extern "C" void func_800ACCD4__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
+extern "C" void func_800ACCD4__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
 
-extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00B4(); }
+extern "C" void func_800ACD4C__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00B4(); }
 
-extern "C" void func_800AD830__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00D0(); }
+extern "C" void func_800AD830__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00D0(); }
 
-extern "C" void func_800AD840__Q22cf11CfObjectEffFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }
+extern "C" void func_800AD840__Q22cf11CfObjectEffFv(cf::CfObjectEff* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }
 
 
 extern "C" void func_800AC86C__Q22cf11CfObjectEffFv() {}

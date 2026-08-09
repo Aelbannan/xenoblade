@@ -5,6 +5,8 @@
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "monolib/util/FixStr.hpp"
 
+class CFileHandle;
+
 namespace nw4r { namespace lyt {
 class AnimTransform;
 class ArcResourceAccessor;
@@ -64,20 +66,20 @@ public:
     // +0x00 vtable
     UnkClass_8045F564 memRegion1;    // 0x04-0x13
     UnkClass_8045F564 memRegion2;    // 0x14-0x23
-    void* fileHandle1;               // 0x24
-    void* fileHandle2;               // 0x28
-    void* fileHandle3;               // 0x2C
-    void* fileHandle4;               // 0x30
-    void* memManagerPtr;             // 0x34 (deallocated via mtl::MemManager)
-    void* arcAcc1;                   // 0x38 (nw4r::lyt::ArcResourceAccessor)
-    void* arcAcc2;                   // 0x3C
+    CFileHandle* fileHandle1;               // 0x24
+    CFileHandle* fileHandle2;               // 0x28
+    CFileHandle* fileHandle3;               // 0x2C
+    CFileHandle* fileHandle4;               // 0x30
+    u8* memManagerPtr;             // 0x34 (deallocated via mtl::MemManager)
+    nw4r::lyt::ArcResourceAccessor* arcAcc1;                   // 0x38 (nw4r::lyt::ArcResourceAccessor)
+    nw4r::lyt::ArcResourceAccessor* arcAcc2;                   // 0x3C
     nw4r::lyt::Layout* layout40;     // 0x40 (root pane at +0x10)
-    void* animTrans1;                // 0x44 (nw4r::lyt::AnimTransform)
-    void* animTrans2;                // 0x48
+    nw4r::lyt::AnimTransform* animTrans1;                // 0x44 (nw4r::lyt::AnimTransform)
+    nw4r::lyt::AnimTransform* animTrans2;                // 0x48
     u8 field_4C;                     // 0x4C
     u8 field_4D;                     // 0x4D
     u8 _pad_4E[0x50 - 0x4E];         // 0x4E-0x4F
-    void* objAt50;                   // 0x50 (deallocated; has vtable)
+    u8* objAt50;                   // 0x50 (deallocated; has vtable)
     u8 field_54;                     // 0x54
     u8 mField55;                     // 0x55
     u8 _pad_56[0x58 - 0x56];         // 0x56-0x57
@@ -129,11 +131,11 @@ extern "C" void func_8003AA8C__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_8050FF8C[];
-extern "C" void* lbl_eu_806640EC;
-extern "C" void* lbl_eu_806640D8;
-extern "C" void* lbl_eu_80664100;
-extern "C" void* lbl_eu_80664A18;
-extern "C" void* lbl_eu_80664A1C;
+extern "C" void* lbl_eu_806640EC;  // declared u32 in CCollepedia.hpp, void* in CItemBoxLine.hpp -> kept void*
+extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBoxLine.hpp -> kept void*
+extern "C" void* lbl_eu_80664100;  // unused address anchor - kept void*
+extern "C" void* lbl_eu_80664A18;  // unused address anchor - kept void*
+extern "C" void* lbl_eu_80664A1C;  // unused address anchor - kept void*
 extern "C" float lbl_eu_80668BF0;
 extern "C" void func_802999B0(CMCGetItemBox*);
 extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);

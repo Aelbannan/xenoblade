@@ -24,8 +24,8 @@ void func_800AABD4(void* context, cf::CfCollCircleImpl* shape){
     gx.setCol(col);
 
     u32 uval = static_cast<u32>(shape->field_B8);
-    void* pos = reinterpret_cast<cf::CfCollCircleVTableIf*>(shape)->_v0AC();
-    gx.renderCircle(*reinterpret_cast<ml::CVec3*>(pos), 0x24, static_cast<float>(uval));
+    ml::CVec3* pos = reinterpret_cast<ml::CVec3*>(reinterpret_cast<cf::CfCollCircleVTableIf*>(shape)->_v0AC());
+    gx.renderCircle(*pos, 0x24, static_cast<float>(uval));
 }
 
 // func_800AAC98: debug draw helper that forwards position + radius to

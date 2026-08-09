@@ -5,22 +5,22 @@
 
 struct ICamControlGcIf { virtual void* getObject(); };
 
-extern "C" int func_80274DD8(void* self) {
-    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
+extern "C" int func_80274DD8(ICamControlGcIf* self) {
+    void* obj = self->getObject();
     return (*(int*)obj >> 19) & 1;
 }
 
-extern "C" int func_80274E0C(void* self) {
-    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
+extern "C" int func_80274E0C(ICamControlGcIf* self) {
+    void* obj = self->getObject();
     return (*(int*)obj >> 20) & 1;
 }
 
-extern "C" int func_80274E40(void* self) {
-    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
+extern "C" int func_80274E40(ICamControlGcIf* self) {
+    void* obj = self->getObject();
     return (*(int*)obj >> 17) & 1;
 }
 
-extern "C" int func_80274E74(void* self) {
-    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
+extern "C" int func_80274E74(ICamControlGcIf* self) {
+    void* obj = self->getObject();
     return (*(int*)obj >> 18) & 1;
 }

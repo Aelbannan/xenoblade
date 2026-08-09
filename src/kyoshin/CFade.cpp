@@ -15,10 +15,10 @@ u8 CFade::func_80244508() { return mReady; }
 u8 CFade::func_80244510() { return mVisible; }
 
 
-extern "C" void func_802445F0(void* self) {
-    if (*(u32*)((u8*)self + 0x1C) != 0) {
-        *(u8*)((u8*)self + 0x26) = 1;
-        *(u8*)((u8*)self + 0x24) = 1;
+extern "C" void func_802445F0(u8* self) {
+    if (*(u32*)(self + 0x1C) != 0) {
+        self[0x26] = 1;
+        self[0x24] = 1;
     }
 }
 
@@ -58,7 +58,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         mLayout->Animate(0);
 
         // Mark the fade overlay loaded/ready now that the layout is attached.
-        func_802445F0(this);
+        func_802445F0((u8*)this);
 
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();

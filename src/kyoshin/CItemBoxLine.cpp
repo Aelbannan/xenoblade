@@ -506,11 +506,11 @@ void CItemBoxLine::OnFileEvent() {}
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801F32EC(){}
 
-extern "C" void func_801EBB88(void* self, u16 r4, u32 r5, u8 r6, u8 r7) {
+extern "C" void func_801EBB88(u8* self, u16 r4, u32 r5, u8 r6, u8 r7) {
     *(u16*)self = r4;
-    *(u32*)((u8*)self + 4) = r5;
-    *((u8*)self + 8) = r6;
-    *((u8*)self + 9) = r7;
+    *(u32*)(self + 4) = r5;
+    self[8] = r6;
+    self[9] = r7;
 }
 
 extern "C" void func_801EBAD4() {}

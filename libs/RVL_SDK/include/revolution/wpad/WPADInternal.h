@@ -95,8 +95,8 @@ typedef enum {
 typedef struct WPADCommand {
     u32 reportID;              // at 0x0
     u8 dataBuf[RPT_MAX_SIZE];  // at 0x4
-    u16 dataLength;            // at 0x1A
-    void* dstBuf;              // at 0x1C
+    u16 dataLength;             // at 0x1A
+    u8* dstBuf;                 // at 0x1C
     u16 readLength;            // at 0x20
     u32 readAddress;           // at 0x24
     WPADInfo* statusReportOut; // at 0x28

@@ -52,14 +52,14 @@ public:
         return mpImage;
     }
     void SetImage(void* pImage) {
-        mpImage = pImage;
+        mpImage = static_cast<u8*>(pImage);
     }
 
     void* GetPalette() const {
         return mpPalette;
     }
     void SetPalette(void* pPalette) {
-        mpPalette = pPalette;
+        mpPalette = static_cast<u8*>(pPalette);
     }
 
     u16 GetWidth() const {
@@ -166,8 +166,8 @@ public:
     }
 
 private:
-    void* mpImage;        // at 0x0
-    void* mpPalette;      // at 0x4
+    u8* mpImage;          // at 0x0
+    u8* mpPalette;        // at 0x4
     u16 mWidth;           // at 0x8
     u16 mHeight;          // at 0xA
     f32 mMinLOD;          // at 0xC

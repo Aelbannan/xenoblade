@@ -26,7 +26,7 @@ void __dt__reslist_CPackItem(){}
 
 void __dt___reslist_base_CArcItem(){}
 
-void func_804DDBD8(void* self) {
+void func_804DDBD8(u8* self) {
     uint32_t* head = *(uint32_t**)((uint8_t*)self + 4);
     uint32_t* node = (uint32_t*)*head;
     goto loop_cond;

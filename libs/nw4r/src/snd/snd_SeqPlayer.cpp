@@ -458,7 +458,7 @@ void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {
 }
 
 void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack(
-    void* selfPtr, unsigned short usertype, void* trackPtr)
+    nw4r::snd::detail::SeqPlayer* selfPtr, unsigned short usertype, nw4r::snd::detail::SeqTrack* trackPtr)
 {
     struct SeqUserprocCallbackParam {
         volatile s16* variablePtr;   // 0x0
@@ -489,7 +489,7 @@ void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail
     SeqUserprocCallbackParam param;
     param.variablePtr = &self->variableV; // player variable region (0x160)
     param.variablePtr2 = lbl_eu_806382C0; // global variable array
-    param.variablePtr3 = ((nw4r::snd::detail::SeqTrack*)trackPtr)->GetVariablePtr(0);
+    param.variablePtr3 = trackPtr->GetVariablePtr(0);
     param.value = ((SeqTrackProcLayout*)trackPtr)->value;
 
     self->callback(usertype, &param, self->arg);

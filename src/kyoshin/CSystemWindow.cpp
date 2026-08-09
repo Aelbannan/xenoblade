@@ -9,22 +9,62 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <revolution/gx/GXPixel.h>
+#include <string.h>
 
 // Retail declares the constructor as a C-ABI global `__ct__CSystemWindow` (the
 // split symbol carries no class-length mangling), so it is kept as a plain
-// global function rather than a member ctor. Its body is matched elsewhere.
-extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, void* arg1,
-                                              void* arg2, void* arg3, void* arg4) {
-    // Placeholder/black-box body. Not a matching target - it only needs a real
-    // out-of-line call that consumes all four construction args and returns
-    // `this` (the MWCC ctor ABI returns the object pointer in r3), so
-    // func_80124AEC preserves/forwards args and keeps `obj` in r3 like retail.
-    CProcess* proc = reinterpret_cast<CProcess*>(self);
-    __ct__8CProcessFv(proc);
-    self->mWorkEvent = (u32)arg1;
-    self->mScnRender = (u32)arg2;
-    self->field_B5 = (u8)((u32)arg3);
-    self->mFlag2B6 = (u8)((u32)arg4);
+// global function rather than a member ctor.
+//
+// Runs CProcess's ctor then fills the IUIWindow base region by hand (base ctor
+// is out-of-line in retail, its effects are emitted inline here): the vtable at
+// +0x10 is written twice (temp IUIWindow vtable, then the composite vtable),
+// the two __ptmf_null callback slots are copied, then the scalar fields and the
+// embedded CSysWin instance are constructed and the two text strings copied.
+extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
+                                              u8 opt, const char* str1,
+                                              const char* str2) {
+    __ct__8CProcessFv((CProcess*)self);
+
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D238;
+    u32* ptmf = __ptmf_null;
+    self->ptmf0[0] = ptmf[0];
+    self->ptmf0[1] = ptmf[1];
+    self->ptmf0[2] = ptmf[2];
+    self->ptmf1[0] = ptmf[0];
+    self->ptmf1[1] = ptmf[1];
+    self->ptmf1[2] = ptmf[2];
+
+    self->field_54 = 0;
+    self->field_58 = 0;
+    self->field_5C = 0;
+    self->field_60 = -1;
+    self->field_64 = 0;
+    self->field_65 = 0;
+    self->field_66 = 0;
+    self->field_67 = 1;
+    self->field_68 = 0;
+
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D378;
+    self->mWorkEvent = (u32)lbl_eu_8052D378 + 0x24;
+    self->mScnRender = (u32)lbl_eu_8052D378 + 0xac;
+    self->mScene = scene;
+
+    __ct__CSysWin(&self->mSysWin[0], 0);
+
+    // Default window state + optional flags, then copy the two title strings
+    // (empty-string cases zero the first byte to match strcpy(null-copy).
+    self->mState = 0;
+    self->field_B5 = opt;
+    self->mFlag2B6 = 0;
+    if (str1)
+        strcpy(&self->mStr1[0], str1);
+    else
+        self->mStr1[0] = 0;
+    if (str2)
+        strcpy(&self->mStr2[0], str2);
+    else
+        self->mStr2[0] = 0;
+
     return self;
 }
 
@@ -71,8 +111,11 @@ void CSystemWindow::Term() {
 }
 
 void CSystemWindow::Move() {
-    if (CTaskGame::getInstance()->func_800426F0()) return;
-    if (lbl_eu_80663E28 & 0x200000) return;
+    // Bail out if the task is busy or the global render flag is set.
+    // (single OR so MWCC emits short-circuit branches: A -> bne exit,
+    //  B -> beq continue / b exit)
+    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
     if (func_8013BE50() == 0) return;
 
     switch (mState) {
@@ -145,7 +188,8 @@ CSystemWindow* func_80124AEC(CProcess* parent, void* arg1, void* arg2,
     CSystemWindow* obj =
         (CSystemWindow*)mtl::MemManager::allocate(0x2b8, workMem);
     if (obj != 0) {
-        obj = __ct__CSystemWindow(obj, arg1, arg2, arg3, arg4);
+        obj = __ct__CSystemWindow(obj, (CScn*)arg1, (u8)(u32)arg2,
+                                  (const char*)arg3, (const char*)arg4);
     }
     lbl_eu_80663FD8 = obj;
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);

@@ -53,8 +53,9 @@ CTaskGameEffAfter::~CTaskGameEffAfter() {}
 // under `parent`, and returns it.
 // ============================================================================
 void* __ct__CTaskGameEffAfter(CProcess* parent) {
-    void* mem = mtl::MemManager::allocate(sizeof(CTaskGameEffAfter),
-                                          CWorkThreadSystem::getWorkMem());
+    CTaskGameEffAfter* mem = static_cast<CTaskGameEffAfter*>(
+        mtl::MemManager::allocate(sizeof(CTaskGameEffAfter),
+                                  CWorkThreadSystem::getWorkMem()));
     CTaskGameEffAfter* obj = static_cast<CTaskGameEffAfter*>(mem);
     if (obj) {
         __ct__8CProcessFv(obj);

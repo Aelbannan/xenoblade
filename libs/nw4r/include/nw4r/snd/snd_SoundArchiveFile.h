@@ -422,7 +422,7 @@ private:
 private:
     SoundArchiveFile::Header mHeader;                      // at 0x0
     const SoundArchiveFile::Info* mInfo;                   // at 0x28
-    const void* mStringBase;                               // at 0x2C
+    const SoundArchiveFile::StringBlock* mStringBase;      // at 0x2C
     const SoundArchiveFile::StringTable* mStringTable;     // at 0x30
     const SoundArchiveFile::StringTree* mStringTreeSound;  // at 0x34
     const SoundArchiveFile::StringTree* mStringTreePlayer; // at 0x38

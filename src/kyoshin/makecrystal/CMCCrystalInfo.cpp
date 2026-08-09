@@ -281,8 +281,8 @@ void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
     sprintf(buf, &lbl_eu_80508DF8[0x13e], r5 + 1);
     nw4r::lyt::Pane* pane =
         *(nw4r::lyt::Pane**)((u8*)*(void**)((u8*)other + 0x34) + 0x10);
-    void* r1 = (void*)pane->FindPaneByName(buf, true);
-    void* r2 = (void*)pane->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
+    nw4r::lyt::Pane* r1 = pane->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* r2 = pane->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
     func_80137924(self, r1, r2, pane);
 }
 

@@ -327,7 +327,7 @@ void AnmObjChrRes::SetUpdateRate(f32 rate) {
 
 
 
-float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 28); }
+float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(const nw4r::g3d::AnmObjChrRes* self) { return *(float *)((char *)self + 28); }
 
 namespace nw4r {
 namespace g3d {

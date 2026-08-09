@@ -38,5 +38,5 @@ public:
 
     // 0x00-0x13: CDeviceFontInfo base class
     nw4r::ut::RomFont mRomFont;  // 0x14 - embedded ROM font instance
-    void* mFontBuffer;            // 0x30 - allocated buffer for RomFont
+    void* mFontBuffer;            // 0x30 - allocated buffer for RomFont (written from allocate_tail void*)
 };

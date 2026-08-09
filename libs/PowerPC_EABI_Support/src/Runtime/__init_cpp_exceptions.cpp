@@ -8,11 +8,11 @@ extern "C"{
 
 static int fragmentID = -2;
 
-static inline void __exception_info_constants(void** info, char** R2) {
+static inline void __exception_info_constants(struct __eti_init_info** info, char** R2) {
     register char* temp;
     asm { mr temp, r2; }
     *R2 = temp;
-    *info = (void*)_eti_init_info;
+    *info = _eti_init_info;
 }
 
 // not present in the retail binary; kept commented out for reference
@@ -21,10 +21,10 @@ static inline void __exception_info_constants(void** info, char** R2) {
 
 extern void __init_cpp_exceptions(void) {
     char* R2;
-    void* info;
+    struct __eti_init_info* info;
     if (fragmentID == -2) {
         __exception_info_constants(&info, &R2);
-        fragmentID = __register_fragment((struct __eti_init_info*)info, R2);
+        fragmentID = __register_fragment(info, R2);
     }
 }
 

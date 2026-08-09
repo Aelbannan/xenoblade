@@ -78,7 +78,7 @@ struct If158 {
     virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
     virtual void vf158(u32 a);
 };
-extern "C" void func_800AB498__Q22cf12CfObjectCollFv(void* self) {
+extern "C" void func_800AB498__Q22cf12CfObjectCollFv(cf::CfObjectColl* self) {
     reinterpret_cast<If158*>(self)->vf158(1);
 }
 
@@ -149,13 +149,13 @@ extern "C" float CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return lbl_eu_8
 
 extern "C" void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv() {}
 
-extern "C" int CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
 void cf::CfObject::CfObject_UnkVirtualFunc67() {}
 
 void cf::CfObject::CfObject_UnkVirtualFunc65() {}
 
-extern "C" int CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
 extern "C" void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv() {}
 
@@ -166,41 +166,41 @@ extern "C" void CfObject_UnkVirtualFunc59__Q22cf8CfObjectFv() {}
 
 extern "C" void CfObject_UnkVirtualFunc57__Q22cf8CfObjectFv() {}
 
-extern "C" int CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv(void* self) { return -1; }
+extern "C" int CfObject_UnkVirtualFunc51__Q22cf8CfObjectFv(cf::CfObject* self) { return -1; }
 
 extern "C" void CfObject_UnkVirtualFunc45__Q22cf8CfObjectFv() {}
 
-extern "C" int CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc42__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc43__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc44__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc39__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc40__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc41__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc38__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" int CfObject_UnkVirtualFunc37__Q22cf8CfObjectFv(cf::CfObject* self) { return 0; }
 
-extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x60); }
+extern "C" float CfObject_UnkVirtualFunc36__Q22cf8CfObjectFv(cf::CfObject* self) { return *(float*)((u8*)self + 0x60); }
 
-extern "C" void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv(void* self, float val) { *(float*)((u8*)self + 0x60) = val; }
+extern "C" void CfObject_UnkVirtualFunc35__Q22cf8CfObjectFv(cf::CfObject* self, float val) { *(float*)((u8*)self + 0x60) = val; }
 
-extern "C" void* CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv(void* self) { return (void*)((u8*)self + 0x48); }
+extern "C" void* CfObject_UnkVirtualFunc28__Q22cf8CfObjectFv(cf::CfObject* self) { return (void*)((u8*)self + 0x48); }
 
-extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(void* self) { return (void*)((u8*)self + 0x3c); }
+extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(cf::CfObject* self) { return (void*)((u8*)self + 0x3c); }
 
-extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(void* self, float a, float b, float c) {
+extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b, float c) {
     *(float*)((char*)self + 0x3c) = a;
     *(float*)((char*)self + 0x40) = b;
     *(float*)((char*)self + 0x44) = c;
 }
 
-extern "C" int CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv(void* self) { return 1; }
+extern "C" int CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 
 extern float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
@@ -212,7 +212,7 @@ extern "C" float CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return lbl_eu_8
 
 extern "C" void CfObject_UnkVirtualFunc14__Q22cf8CfObjectFv() {}
 
-extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(void* self) { return 1; }
+extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
@@ -239,6 +239,6 @@ extern "C" void* func_800AC610(void* param_1) {
     return NULL;
 }
 
-extern "C" void func_800AB798__Q22cf12CfObjectCollFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
+extern "C" void func_800AB798__Q22cf12CfObjectCollFv(cf::CfObjectColl* self) { reinterpret_cast<CfObjIf*>(self)->vf009C(); }
 
-extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf0074(); }
+extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(cf::CfObject* self) { reinterpret_cast<CfObjIf*>(self)->vf0074(); }

@@ -3,6 +3,8 @@
 #include <types.h>
 
 // Sub-object struct within CModelDisp, stride 0xFF0
+// Kept void*: the only includer (CModelDisp.cpp) has a pre-existing compile
+// failure (undefined mSubObj) and mixed void*-assignment usage; unverifiable.
 struct CModelDispSub {
     void* field_00;                  // 0x00
     void* field_04;                  // 0x04

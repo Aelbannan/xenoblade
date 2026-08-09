@@ -9,8 +9,8 @@
 // emitted relocations keep the exact retail symbol names).
 extern "C" {
     void* func_80496018(void* r3);
-    void func_804950F4(void* self, void* r4);
-    void __dt__80495200(void* self, int deleting);
+    void func_804950F4(u8* self, void* r4);
+    void __dt__80495200(u8* self, int deleting);
     void func_804936AC(void* a, void* b, void* c);
 }
 
@@ -19,10 +19,10 @@ extern "C" {
 // with lis+addi exactly like retail.
 extern char lbl_eu_8056DD08[];
 
-void* func_804823A0(void* self) { return (void*)((u8*)self + 0x11d8); }
+void* func_804823A0(u8* self) { return (void*)((u8*)self + 0x11d8); }
 
 void __ct__CScnItemLightNw4r(void*, int);
-extern "C" void func_80482398(void* self, int val) {
+extern "C" void func_80482398(u8* self, int val) {
     __ct__CScnItemLightNw4r(self, (s32)(s16)val);
 }
 

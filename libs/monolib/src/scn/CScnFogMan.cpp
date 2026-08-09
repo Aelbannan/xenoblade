@@ -53,15 +53,15 @@ extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
     self->field_0x70 = lbl_eu_8066ABB4;
 }
 
-extern "C" void func_8049DE68(void* self, u32 val) {
+extern "C" void func_8049DE68(u8* self, u32 val) {
     ((CScnFogMan*)self)->value08 = val;
 }
 void func_8049DE70(void) {}
-void func_8049E374(void* self, float a, float b) {}
+void func_8049E374(u8* self, float a, float b) {}
 
 CScnFogMan::~CScnFogMan() {}
 
-extern "C" void func_8049E350(void* self, const void* src) {
+extern "C" void func_8049E350(u8* self, const void* src) {
     *(u32*)((u8*)self + 0xC) = *(u32*)((u8*)src + 0);
     *(u32*)((u8*)self + 0x10) = *(u32*)((u8*)src + 4);
     *(u32*)((u8*)self + 0x14) = *(u32*)((u8*)src + 8);

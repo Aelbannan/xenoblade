@@ -19,6 +19,21 @@ struct CMdlOwnerCtx {
 
 extern const f32 lbl_eu_8066A1F8; // pi
 
+// Resource/assert string constants referenced by CMdlMouth::func_804E65CC
+// (retail C-linkage names; global-scope names are not mangled by MWCC).
+extern const char lbl_eu_80663C58[]; // node name passed to ResMdl::GetResNode
+extern const char lbl_eu_80663C5C[]; // material-name needle for strstr
+extern const char lbl_eu_8056E1C8[]; // Panic file (GetResNode assert)
+extern const char lbl_eu_8056E1A8[]; // Panic fmt
+extern const char lbl_eu_8056E194[]; // Panic file (node-null assert)
+extern const char lbl_eu_8056E178[]; // Panic fmt
+extern const char lbl_eu_80663910[]; // Panic arg
+extern const char lbl_eu_80663C6C[]; // Panic arg
+extern const char lbl_eu_8056E068[]; // Panic file (material assert)
+extern const char lbl_eu_8056E04C[]; // Panic fmt
+extern const char lbl_eu_806638E8[]; // Panic arg
+extern const char lbl_eu_80663C68[]; // Panic arg
+
 class CMdlMouth {
 public:
     CMdlMouth();

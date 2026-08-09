@@ -24,7 +24,7 @@ ScnProc* ScnProc::Construct(MEMAllocator* pAllocator, u32* pSize,
         u8* pBuffer = reinterpret_cast<u8*>(Alloc(pAllocator, size));
 
         if (pBuffer != NULL) {
-            void* pUserData = userDataSize != 0 ? pBuffer + userDataOfs : NULL;
+            u8* pUserData = userDataSize != 0 ? pBuffer + userDataOfs : NULL;
 
             pScnProc =
                 new (pBuffer) ScnProc(pAllocator, pProc, pUserData, opa, xlu);

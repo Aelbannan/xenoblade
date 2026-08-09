@@ -110,9 +110,10 @@ namespace cf{
 
     // Result of func_800BFC68 (a move-converted object); +0x3ED4 is a pointer
     // to an object holding a vtable whose +0x40 slot is probed with 0x800.
+    struct CVoiceEdge;
     struct CVoiceBFC68 {
         u8 pad0[0x3ED4];
-        void* field_3ED4;   // +0x3ED4
+        CVoiceEdge* field_3ED4;   // +0x3ED4
     };
     struct CVoiceEdgeVTable {
         u8 pad[0x40];
@@ -176,7 +177,8 @@ extern "C" cf::CCharVoiceMan* __ct__CCharVoiceMan(cf::CCharVoiceMan* self);
 extern "C" float lbl_eu_80668C68;
 // Retail @sda21 globals.
 extern "C" u32 lbl_eu_80663E24;    // presentation/event bitfield (bit 0x00400000)
-extern "C" void* lbl_eu_80663E14;  // scene / allocation-source handle
+class CScn;
+extern "C" CScn* lbl_eu_80663E14;  // scene / allocation-source handle (defined CScn* in kyoshin/cf/CfGameManager.cpp)
 extern "C" u32 lbl_eu_80664A5C;    // global character-voice counter
 // Scene-model helper returning an allocation-region handle (mtl MemManager).
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);

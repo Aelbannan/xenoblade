@@ -85,12 +85,12 @@ struct IfDC {
     virtual void _v0D8();
     virtual void vfDC();
 };
-extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(void* self) {
+extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(cf::CfObjectActor* self) {
     reinterpret_cast<IfE0*>((u8*)self + 0x3e9c)->vfE0();
 }
 
 // CActorParam_UnkVirtualFunc21: store float then adjust-tail-call vt+0xDC
-extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(void* self, float v) {
+extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float v) {
     *(float*)((u8*)self + 0x15e8) = v;
     reinterpret_cast<IfDC*>((u8*)self + 0x3e9c)->vfDC();
 }

@@ -178,7 +178,7 @@ struct If11C {
     virtual void _v118();
     virtual void vf11C();
 };
-extern "C" void CActorParam_UnkVirtualFunc35__Q22cf11CActorParamFv(void* self) {
+extern "C" void CActorParam_UnkVirtualFunc35__Q22cf11CActorParamFv(cf::CActorParam* self) {
     reinterpret_cast<If11C*>(self)->vf11C();
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc54() {}
@@ -247,21 +247,21 @@ void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
 }
 
 // us-80180178
-extern "C" void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(*(void**)((u8*)self + 0x15dc))->vf0040(); }
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self) { reinterpret_cast<APIf*>(*(void**)((u8*)self + 0x15dc))->vf0040(); }
 
 // us-80180180
 int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self);
-extern "C" int CBattleState_UnkVirtualFunc1__Q22cf11CActorParamFv(void* self) {
+extern "C" int CBattleState_UnkVirtualFunc1__Q22cf11CActorParamFv(cf::CActorParam* self) {
     return ((int(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv)((char*)self - 8);
 }
 
 // us-80180188
-extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) {
+extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(cf::CActorParam* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv)((char*)self - 8);
 }
 
-extern "C" void CActorParam_UnkVirtualFunc40__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf011C(*(float*)((u8*)self + 0x17f4)); }
+extern "C" void CActorParam_UnkVirtualFunc40__Q22cf11CActorParamFv(cf::CActorParam* self) { reinterpret_cast<APIf*>(self)->vf011C(*(float*)((u8*)self + 0x17f4)); }
 
-extern "C" void CActorParam_UnkVirtualFunc46__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf013C(*(float*)((u8*)self + 0x17f8)); }
+extern "C" void CActorParam_UnkVirtualFunc46__Q22cf11CActorParamFv(cf::CActorParam* self) { reinterpret_cast<APIf*>(self)->vf013C(*(float*)((u8*)self + 0x17f8)); }
 
-extern "C" void CActorParam_UnkVirtualFunc52__Q22cf11CActorParamFv(void* self) { reinterpret_cast<APIf*>(self)->vf0154(*(float*)((u8*)self + 0x17fc)); }
+extern "C" void CActorParam_UnkVirtualFunc52__Q22cf11CActorParamFv(cf::CActorParam* self) { reinterpret_cast<APIf*>(self)->vf0154(*(float*)((u8*)self + 0x17fc)); }

@@ -9,9 +9,41 @@
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
+#include <nw4r/lyt/lyt_drawInfo.h>
+#include <nw4r/math/math_types.h>
 
 // CSelShopWin vtable (lbl_eu_805365A8)
 extern "C" void* lbl_eu_805365A8[];
+
+// Retail imports (defined outside this TU). Animation frame constant.
+extern float lbl_eu_80668600;
+// Shop window arc file path string (split1 .rodata).
+extern "C" char lbl_eu_8050A62C[];
+// Animate the attached anim-transform forward to a frame (returns true when done).
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+// Animate the attached anim-transform in reverse (returns true when done).
+// Retail symbol is unmangled (C linkage).
+extern "C" {
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+}
+// Draw a nw4r layout with the given draw info.
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+// Fire a per-window sound/effect event by id.
+void func_80138078(u32);
+// Sum the translate of a pane and its ancestors into an output VEC3. C-ABI.
+extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+
+// OnFileEvent imports (retail symbols, unmangled / pre-mangled C-ABI names).
+extern "C" {
+void* func_801355F4();
+void* func_80138DA4(const char*);
+void func_80124288(nw4r::lyt::Pane*, float*);
+void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void* getPlayer__Q22cf13CfGameManagerFi(int);
+int func_80086F9C__Q22cf13CfGameManagerFv(int);
+}
+// C++-mangled retail helper (actor id -> action source).
+void* func_800B708C(int id);
 
 /* Vtable base for CSelShopWin. Stores the vtable pointer at +0x00 so layout
 matches retail (IWorkEvent-compatible vptr), without inheriting from IWorkEvent
@@ -32,13 +64,11 @@ public:
     ~CSelShopWin();
     void func_8022C770();
     void func_8022C7C0();
-    void func_8022C830();
+    void func_8022C830(nw4r::lyt::DrawInfo* drawInfo);
     void func_8022C85C();
     void func_8022C8E0();
     void func_8022C908();
     void func_8022C930(int);
-    void func_8022C9D4();
-    void func_8022CA20();
     void func_8022CA6C();
     bool OnFileEvent(CEventFile* pEventFile);
 

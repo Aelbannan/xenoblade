@@ -375,6 +375,7 @@ public:
     virtual void vfunc_0x120();
     virtual void vfunc_0x124();
     virtual float vfunc_0x128();
+    virtual float vfunc_0x12C();
 };
 
 class PlayerVirtualInterface : public Unk80EE4Data {
@@ -413,6 +414,43 @@ extern "C" bool func_80083100__Q22cf13CfGameManagerFv(u32 state);
 extern "C" bool func_8008310C__Q22cf13CfGameManagerFv(u32 state);
 extern "C" bool func_8004B848(u32 state);
 extern "C" bool func_8006CA20(u32 state);
+extern "C" u32 func_80083284__Q22cf13CfGameManagerFv(const u8* state);
+extern "C" s32 func_80083290__Q22cf13CfGameManagerFv(const u8* state);
+extern "C" float lbl_eu_80666530;
+extern "C" float lbl_eu_8066655C;
+extern "C" bool func_80083118__Q22cf13CfGameManagerFv() {
+    bool result = false;
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    PlayerObjectContainer* container = static_cast<PlayerObjectContainer*>(
+        reinterpret_cast<PlayerVirtualInterface*>(player));
+    if (container != nullptr &&
+        CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(player) &&
+        func_80082FCC__Q22cf13CfGameManagerFv(player, 0x100000)) {
+        u32 state = func_8006C670(player);
+        if (state != 0) {
+            if (func_80083100__Q22cf13CfGameManagerFv(state) ||
+                func_80083284__Q22cf13CfGameManagerFv(
+                    reinterpret_cast<const u8*>(state))) {
+                ContainerRootInterface* root =
+                    reinterpret_cast<ContainerRootInterface*>(container);
+                float duration = root->vfunc_0x12C() *
+                    static_cast<float>(func_80083290__Q22cf13CfGameManagerFv(
+                        reinterpret_cast<const u8*>(state))) /
+                    lbl_eu_80666530;
+                if (root->vfunc_0x128() - duration > lbl_eu_8066655C) {
+                    result = true;
+                }
+            } else {
+                ContainerRootInterface* root =
+                    reinterpret_cast<ContainerRootInterface*>(container);
+                if (root->vfunc_0x128() > lbl_eu_80666498) {
+                    result = !func_8008310C__Q22cf13CfGameManagerFv(state);
+                }
+            }
+        }
+    }
+    return result;
+}
 extern "C" bool func_80082FE4__Q22cf13CfGameManagerFv() {
     bool result = false;
     PlayerObjectContainer* container = static_cast<PlayerObjectContainer*>(
@@ -697,7 +735,9 @@ extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool enabled) {
     }
 
     if (enabled) {
-        lbl_eu_80663DF8 = 0x200310;
+        lbl_eu_80663DF8 = 0;
+        lbl_eu_80663DF8 |= 0x200000;
+        lbl_eu_80663DF8 |= 0x310;
     } else {
         lbl_eu_80663DF8 |= 0xFFFFFFFF;
     }
@@ -718,7 +758,9 @@ extern "C" u32 func_80081318__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 
 
 #pragma dont_inline on
 extern "C" u32 func_80083718__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    return 0x58000000 | (first << 20) | (second << 10);
+    u32 result = first << 20;
+    result |= 0x58000000;
+    return (second << 10) | result;
 }
 #pragma dont_inline reset
 
@@ -866,7 +908,7 @@ extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(
 extern "C" void* func_8009EC9C(u32 index);
 extern "C" const void* func_8009E120(UnkClass_8009EC9C* object, u16 value);
 extern "C" void func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value) {
-    func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(index), value);
+    func_8009E120((UnkClass_8009EC9C*)func_8009EC9C(static_cast<u16>(index)), value);
 }
 
 #pragma dont_inline on
@@ -974,6 +1016,7 @@ done:
 }
 
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
+#pragma dont_inline on
 extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(
     u32 value, u32 unused) {
     cf::CfGameManager::getInstance();
@@ -991,6 +1034,7 @@ extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(
     }
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" Unk8187CData* func_8008187C__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager::getInstance();
@@ -1024,8 +1068,116 @@ extern "C" Unk8187CData* func_80081900__Q22cf13CfGameManagerFv(u32 first,
     return result;
 }
 
-extern "C" void func_80081358__Q22cf13CfGameManagerFv(const char* name, u32 value,
-                                                        u32 third, u32 fourth);
+struct CfResStackObject {
+    u8 field_0x0[0x30];
+};
+struct CfResStackObject81358 {
+    u8 field_0x0[0x20];
+};
+extern "C" void func_80080F48__Q22cf13CfGameManagerFv(
+    u32 value, CfResStackObject* resource, u32 first, u32 second);
+extern "C" Unk80EE4Data* func_80081D88__Q22cf13CfGameManagerFv(
+    void* object, u32 value);
+extern "C" u32 func_80061FE8();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
+extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self);
+extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self);
+extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(
+    Unk80EE4Data* data, const char* text, u32 value);
+extern "C" Unk80EE4Data* func_80081358__Q22cf13CfGameManagerFv(
+    const char* name, u32 value, u32 third, u32 fourth) {
+    cf::CfGameManager::getInstance();
+    if (static_cast<u16>(value + 0xFFFF) > 12) {
+        return nullptr;
+    }
+    CfResStackObject81358 resource;
+    func_80080F48__Q22cf13CfGameManagerFv(
+        value, reinterpret_cast<CfResStackObject*>(&resource), third, true);
+    Unk80EE4Data* result =
+        func_80081D88__Q22cf13CfGameManagerFv(&resource, 0);
+    if (result != nullptr) {
+        func_80080EE4__Q22cf13CfGameManagerFv(
+            result, name, value);
+        void* object;
+        if (third != 0) {
+            u32 heap = func_80061FE8();
+            void* memory = allocate__Q23mtl10MemManagerFUlUl(0x36C, heap);
+            object = memory;
+            if (memory != nullptr) {
+                object = __ct__800814BC(
+                    static_cast<Unk814BCObject*>(memory));
+            }
+            result->vfunc_0x70(object);
+            result->vfunc_0x10C(9);
+        } else {
+            u32 heap = func_80061FE8();
+            void* memory = allocate__Q23mtl10MemManagerFUlUl(0x384, heap);
+            object = memory;
+            if (memory != nullptr) {
+                object = __ct__80080338(
+                    static_cast<Unk80338Object*>(memory));
+            }
+            result->vfunc_0x70(object);
+            result->vfunc_0x10C(10);
+        }
+        result->vfunc_0x48();
+    }
+    return result;
+}
+extern "C" void func_8007D794__Q22cf13CfGameManagerFv(Unk87588Data* data);
+extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
+    const char* name, u32 index);
+extern "C" void* getFP__FPCc(const char* name);
+extern "C" u32 func_8003B1EC(void* file);
+extern "C" u32 func_8003B41C(void* file);
+extern "C" u32 func_80061FFC();
+extern "C" void func_80081CB0__Q22cf13CfGameManagerFv(u8* data, u16 value);
+extern "C" Unk81B80Object* __ct__80081B80(Unk81B80Object* self);
+struct FixStr32Storage {
+    u8 data[0x24];
+};
+extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
+    const char* name, u32 value, u16 third, u32 fourth) {
+    const char* sourceName = name;
+    u32 index = value;
+    Unk80EE4Data* result =
+        func_80080E44__Q22cf13CfGameManagerFv(sourceName, index);
+    if (result != nullptr) {
+        FixStr32Storage text;
+        func_8007D794__Q22cf13CfGameManagerFv(
+            reinterpret_cast<Unk87588Data*>(&text));
+        reinterpret_cast<ml::FixStr<32>*>(&text)->format(
+            &lbl_eu_804FB824[0x8D], name,
+            lbl_eu_80663E42, lbl_eu_80663E44);
+        void* textPointer =
+            reinterpret_cast<cf::CfGameManager*>(&text)->func_8007C4B4();
+        func_80080EE4__Q22cf13CfGameManagerFv(
+            result, static_cast<const char*>(textPointer), value);
+        u32 heap = func_80061FFC();
+        void* memory = allocate__Q23mtl10MemManagerFUlUl(0x370, heap);
+        void* object = memory;
+        if (memory != nullptr) {
+            object = __ct__80081B80(static_cast<Unk81B80Object*>(memory));
+        }
+        result->vfunc_0x70(object);
+        result->vfunc_0x10C(8);
+        func_80081CA0__Q22cf13CfGameManagerFv(
+            reinterpret_cast<Unk81CA0Data*>(result), third, fourth);
+        textPointer =
+            reinterpret_cast<cf::CfGameManager*>(&text)->func_8007C4B4();
+        void* file = getFP__FPCc(static_cast<const char*>(textPointer));
+        s32 first = func_8003B41C(file);
+        s32 count = func_8003B1EC(file);
+        s32 end = first + count;
+        if (static_cast<s32>(value) < first ||
+            static_cast<s32>(value) >= end) {
+            func_80081CB0__Q22cf13CfGameManagerFv(
+                reinterpret_cast<u8*>(result), 1);
+        }
+        result->vfunc_0x48();
+    }
+    return result;
+}
 extern "C" void func_80081A24__Q22cf13CfGameManagerFv(u32 value) {
     func_80081358__Q22cf13CfGameManagerFv(&lbl_eu_804FB824[0x6F], value, 0, 0);
 }
@@ -1263,6 +1415,7 @@ extern "C" s32 func_80082768__Q22cf13CfGameManagerFv(const cf::CfGameManager* qu
 #pragma dont_inline reset
 extern "C" bool func_80087250__Q22cf13CfGameManagerFv();
 extern "C" bool func_80082680__Q22cf13CfGameManagerFv();
+#pragma dont_inline on
 extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable) {
     if (func_800822F4__Q22cf13CfGameManagerFv() > 3 ||
         func_80087250__Q22cf13CfGameManagerFv()) {
@@ -1271,6 +1424,7 @@ extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable) {
         }
     }
 }
+#pragma dont_inline reset
 
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(
     cf::CfGameManager* manager, u32 value) {
@@ -1281,7 +1435,7 @@ extern "C" void func_8008269C__Q22cf13CfGameManagerFv(
 
 extern "C" u16 func_80082770__Q22cf13CfGameManagerFv(cf::CfGameManager* queue);
 extern "C" cf::CfGameManager lbl_eu_80570CF0;
-extern "C" bool func_80082614__Q22cf13CfGameManagerFv(u32 value);
+extern "C" u32 func_80082614__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value) {
     if (!func_80082614__Q22cf13CfGameManagerFv(value)) {
         if (static_cast<u32>(func_80082768__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0)) >= 32) {
@@ -1316,7 +1470,7 @@ extern "C" void func_800827E4__Q22cf13CfGameManagerFv() {
 
 #pragma dont_inline on
 extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
-                                                        const char* text, u16 value) {
+                                                        const char* text, u32 value) {
     data->textLength_0x88 = strlen(text);
     strcpy(data->text_0x78, text);
     data->value_0x8C = value;
@@ -1355,7 +1509,7 @@ extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 #pragma dont_inline on
 extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
-    const char* name, u16 index) {
+    const char* name, u32 index) {
     func_8003AA34();
     const char* value;
     BdatFilePointer* file = (BdatFilePointer*)getFP__FPCc(name);
@@ -1437,15 +1591,6 @@ nextDestination:
     }
 }
 
-struct CfResStackObject {
-    u8 field_0x0[0x30];
-};
-
-extern "C" void func_80080F48__Q22cf13CfGameManagerFv(
-    u16 value, CfResStackObject* resource, bool first, bool second);
-
-extern "C" void func_80081358__Q22cf13CfGameManagerFv(const char* name, u32 value,
-                                                        u32 third, u32 fourth);
 extern "C" void* CfRes_getInstanceField();
 extern "C" s32 func_80062A84(u32 handle);
 extern "C" void func_80062B3C(u32 handle, u32 state);
@@ -1644,15 +1789,16 @@ static inline Unk814BCObject* initializeUnk814Base(Unk814BCObject* base) {
 #pragma dont_inline on
 extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     Unk814BCObject* result = self;
-    self->field_0x4 = 0;
-    self->field_0x8 = 0;
-    self->vtable_0x0 = lbl_eu_8052AC98;
-    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
-    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
-    self->field_0x14 = 0;
-    self->field_0x18 = 0;
-    self->field_0x1C = 0;
-    __ct__CCharVoice(&self->voice_0x28);
+    Unk814BCObject* base = result;
+    base->field_0x4 = 0;
+    base->field_0x8 = 0;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = 0;
+    base->field_0x18 = 0;
+    base->field_0x1C = 0;
+    __ct__CCharVoice(&base->voice_0x28);
     result->vtable_0x0 = lbl_eu_8052AA28;
     result->vtable_0xC = &lbl_eu_8052AA28[0xB4];
     result->vtable_0x10 = &lbl_eu_8052AA28[0xC4];
@@ -1782,12 +1928,14 @@ extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
 
 extern "C" void loadMapBdatFileDataPointers__Q22cf6CfBdatFii(u32 first, u32 second);
 extern "C" cf::CfGameManager* CfRes_stub_63ACC(ml::FixStr<64>* text);
+#pragma dont_inline on
 extern "C" void func_8008228C__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     ml::FixStr<64> text;
     text.format(&lbl_eu_804FB824[0x98], first, second);
     cf::CfGameManager* manager = CfRes_stub_63ACC(&text);
     manager->func_80082258();
 }
+#pragma dont_inline reset
 extern "C" void func_801AA04C(UnkClass_8007E864* object);
 extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     if (!lbl_eu_80663E70) {
@@ -1934,7 +2082,7 @@ extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable) {
         func_8007C188__Q22cf13CfGameManagerFv(0x40000000);
         func_80496294(lbl_eu_80663E14, lbl_eu_80666498);
     } else {
-        func_8007E4CC(0x40000000);
+        func_8007E4CC__Q22cf13CfGameManagerFv(0x40000000);
         func_80496294(lbl_eu_80663E14, lbl_eu_8066649C);
     }
     func_801C011C(enable, 10);
@@ -1946,6 +2094,70 @@ class UnkClass_80113E1C;
 extern "C" UnkClass_80113E1C* func_80113E1C();
 extern "C" void func_80113E2C(UnkClass_80113E1C* object);
 extern "C" void func_80164A50(ml::FixStr<64>* text, u32 second, u32 third);
+extern "C" void func_800B94A0(u32 value);
+extern "C" void func_800B06A4(float amount);
+extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
+extern "C" void func_800B92FC(cf::CfObjectMove* player, u32 value);
+extern "C" void CfRes_callFunc_68110(u32 value);
+extern "C" float lbl_eu_8066656C;
+extern "C" u32 getUnk80664658();
+extern "C" void func_801F4CE4();
+extern "C" u32 func_80061870(UnkClass_80085334* object, u32 mode, u32 value,
+                                u32 fourth, u32 fifth, u32 sixth);
+extern "C" void func_800862D0__Q22cf13CfGameManagerFv() {
+    func_800B94A0(0);
+    lbl_eu_80663DF8 |= 0x600230;
+    func_800B06A4(lbl_eu_8066656C);
+    cf::CfObjectMove* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    func_800B92FC(player, 0);
+    CfRes_callFunc_68110(0);
+    lbl_eu_80663E24 |= 0x2000000;
+    lbl_eu_80663E28 |= 1;
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    cf::CfGameManager* manager = &lbl_eu_80571758;
+    if (manager->unkAC != nullptr) {
+        func_80061870(manager->unkAC, 0x13, 2, 0, 0, 0);
+    }
+    if (getUnk80664658() != 0) {
+        getUnk80664658();
+        func_801F4CE4();
+    }
+}
+
+extern "C" float lbl_eu_8066653C;
+extern "C" void* func_80186C7C(void* object);
+extern "C" void func_80085E58__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+    func_800B94A0(0);
+    lbl_eu_80663DF8 |= 0x600230;
+    lbl_eu_80663E24 |= 0x40000;
+    lbl_eu_80663E28 |= 1;
+    func_800B06A4(lbl_eu_8066653C);
+    cf::CfObjectMove* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    func_800B92FC(player, 0);
+    CfRes_callFunc_68110(0);
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    lbl_eu_80571758.field_0x88 = static_cast<u16>(first);
+    lbl_eu_80571758.field_0x8A = static_cast<u16>(second);
+    func_800858B8__Q22cf13CfGameManagerFv(0);
+    func_80186C7C(nullptr);
+}
+
 extern "C" void func_800863F4__Q22cf13CfGameManagerFv(const char* name) {
     lbl_eu_80571628.textLength = std::strlen(name);
     std::strcpy(lbl_eu_80571628.text, name);
@@ -2048,6 +2260,7 @@ extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
 
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" bool func_80061E8C(UnkClass_80085334* object, u32 mode);
+#pragma dont_inline on
 extern "C" bool func_8007FD00__Q22cf13CfGameManagerFv(u32 mode) {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -2059,6 +2272,7 @@ extern "C" bool func_8007FD00__Q22cf13CfGameManagerFv(u32 mode) {
                ? func_80061D2C(lbl_eu_80571758.unkAC, mode)
                : false;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_8007FD8C__Q22cf13CfGameManagerFv(u32 mode) {
     if (!lbl_eu_80663E70) {
@@ -2187,7 +2401,7 @@ extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 first, u32 second,
     if (!active || special) {
         CfRes_callFunc_67E78(active);
         func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
-        func_8007F990(0x10000, special);
+        func_8007F990__Q22cf13CfGameManagerFv(0x10000, special);
     }
     func_80083550__Q22cf13CfGameManagerFv();
 }
@@ -2298,7 +2512,8 @@ class UnkClass_800B07E8;
 extern "C" void func_80068D14();
 extern "C" void* func_800B07E8__Fv();
 extern "C" void func_800B4278(UnkClass_800B07E8* object, u32 mask);
-extern "C" u32 func_80084C10__Q22cf13CfGameManagerFv() {
+#pragma dont_inline on
+extern "C" void func_80084C10__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
         __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
@@ -2313,10 +2528,9 @@ extern "C" u32 func_80084C10__Q22cf13CfGameManagerFv() {
         u32 flags = lbl_eu_80663E24;
         manager->field_0x86 = 0;
         lbl_eu_80663E24 = flags & ~0x40;
-        return flags;
     }
-    return lbl_eu_80663E24;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_8010CE48();
 extern "C" bool func_8012E6DC();
@@ -2580,4 +2794,94 @@ extern "C" void func_8007CBEC__Q22cf13CfGameManagerFv() {
 }
 
 // === NOT_STARTED function implementations ===
+
+extern "C" u32 lbl_eu_80663E50;
+extern "C" const char* func_8007339C(void* object);
+extern "C" void func_80068B24(const char* name, u32 value);
+extern "C" void func_80068BD0();
+extern "C" void func_8008372C__Q22cf13CfGameManagerFv(
+    void* first, void* second, u32 value) {
+    if (CfRes_checkFlags_2000400()) {
+        return;
+    }
+    if (CfRes_getE24Bit18()) {
+        return;
+    }
+    if (first == nullptr || second == nullptr) {
+        return;
+    }
+
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    if (manager->func_80086D9C()) {
+        if (manager->field_0x86 != 1) {
+            func_80084C10__Q22cf13CfGameManagerFv();
+            manager->field_0x86 = 1;
+        }
+    } else if (!manager->func_80086D9C()) {
+        if (manager->field_0x86 != 2) {
+            func_80084C10__Q22cf13CfGameManagerFv();
+            manager->field_0x86 = 2;
+            first = second;
+        }
+    } else if (value != lbl_eu_80663E50) {
+        func_80084C10__Q22cf13CfGameManagerFv();
+        if (!manager->func_80086D9C()) {
+            first = second;
+        }
+        manager->field_0x86 = manager->func_80086D9C() ? 1 : 2;
+    } else if (!manager->func_80086D9C()) {
+        first = second;
+    }
+
+    if (!manager->func_80086D9C()) {
+        lbl_eu_80663E50 = value;
+        const char* name = func_8007339C(first);
+        func_80068B24(name, lbl_eu_80663E50);
+        func_80068BD0();
+        func_8007C188__Q22cf13CfGameManagerFv(8);
+        manager->func_80083878();
+    }
+}
+
+struct Unk83328Object {
+    u8 field_0x0[0x6C];
+    ml::FixStr<16> text_0x6C;
+};
+extern "C" bool func_800A8DAC();
+extern "C" void func_800A9360();
+extern "C" void CfRes_delegateCleanup(void* object);
+extern "C" void CfRes_initStruct_64994();
+extern "C" u32 func_800AA2BC(u32 first, u32 second);
+extern "C" void func_800A9444();
+extern "C" void CfRes_clearE28Mask(u32 mask);
+extern "C" void func_80082940__Q22cf13CfGameManagerFv(
+    void* object, void* first, void* second);
+extern "C" void func_80083328__Q22cf13CfGameManagerFv(
+    Unk83328Object* object, u32 first, u32 second) {
+    if (func_800A8DAC()) {
+        CfRes_callFunc_67E78(1);
+        func_800620F0();
+        func_800A9360();
+        Unk866A0Data* data = func_80062F60();
+        CfRes_delegateCleanup(data);
+        CfRes_initStruct_64994();
+    }
+    u32 packed = func_800AA2BC(first, second);
+    func_800A9444();
+    func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
+    CfRes_clearE28Mask(0x2000);
+    func_8007FC5C__Q22cf13CfGameManagerFv(0x27, 0, packed, 0, 0);
+    func_8007FC5C__Q22cf13CfGameManagerFv(1, 0, packed, 0, 0);
+    func_8007FC5C__Q22cf13CfGameManagerFv(0x28, first, second, 0, 0);
+    func_8007FC5C__Q22cf13CfGameManagerFv(2, first, second, 0, 0);
+    object->text_0x6C.format(&lbl_eu_804FB824[0xA8], first, second);
+    u32 lower = func_80083458__Q22cf13CfGameManagerFv();
+    u32 upper = func_80083460__Q22cf13CfGameManagerFv();
+    func_80082940__Q22cf13CfGameManagerFv(
+        object, reinterpret_cast<void*>(first), reinterpret_cast<void*>(second));
+    u32 value = func_80083460__Q22cf13CfGameManagerFv();
+    func_80083468__Q22cf13CfGameManagerFv(
+        value == lower || value == upper);
+    func_8007FC5C__Q22cf13CfGameManagerFv(10, 0, packed, 0, 0);
+}
 

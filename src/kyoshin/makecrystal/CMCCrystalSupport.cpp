@@ -1,6 +1,13 @@
 #include <types.h>
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 
+namespace nw4r {
+namespace lyt {
+class ArcResourceAccessor;
+class AnimTransform;
+}
+} // namespace nw4r
+
 extern "C" {
 extern void* lbl_eu_80536770[];
 extern char lbl_eu_8050AA3C[];
@@ -9,13 +16,15 @@ extern const float lbl_eu_80668630;
 extern const float lbl_eu_80668634;
 
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    void**, void*, const char*);
+    nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    void*, void**, void*, char*);
+    nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*,
+    char*);
 u16 func_80136254(void*, const char*);
 char* func_80138F78(u16);
 void func_80137E7C(void*, const char*, void*);
-u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
+                                                  float);
 void func_80138078__FUl(u32);
 }
 
@@ -63,16 +72,17 @@ class __declspec(novtable) CMCCrystalSupport {
 public:
     virtual ~CMCCrystalSupport();
 
-    void* mAccessor;
-    void* mLayout;
-    void* mAnimTransform;
+    nw4r::lyt::ArcResourceAccessor* mAccessor;
+    nw4r::lyt::Layout* mLayout;
+    nw4r::lyt::AnimTransform* mAnimTransform;
     u8 mLoaded;
     u8 _pad11[3];
     s32 mState;
     u8 mFinished;
 };
 
-extern "C" void __ct__CMCCrystalSupport(CMCCrystalSupport* self, void* accessor) {
+extern "C" void __ct__CMCCrystalSupport(CMCCrystalSupport* self,
+                                        nw4r::lyt::ArcResourceAccessor* accessor) {
     *(void**)self = lbl_eu_80536770;
     self->mAccessor = accessor;
     self->mLayout = nullptr;
@@ -103,12 +113,13 @@ extern "C" void func_8022E988(CMCCrystalSupport* self) {
     }
 }
 
-extern "C" void func_8022E9E4(CMCCrystalSupport* self, void* drawInfo) {
+extern "C" void func_8022E9E4(CMCCrystalSupport* self,
+                              nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mLoaded == 0) {
         return;
     }
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
-        (nw4r::lyt::Layout*)self->mLayout, (nw4r::lyt::DrawInfo*)drawInfo, 0, 1);
+        self->mLayout, drawInfo, 0, 1);
 }
 
 extern "C" void func_8022EA04(CMCCrystalSupport* self) {

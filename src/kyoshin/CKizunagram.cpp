@@ -255,10 +255,10 @@ void func_8025AB84(UnkKizunaSelfAB* self) {
 }
 
 extern const float lbl_eu_80668828;
-void CKizunagram_resetFields(void* self){
-    *(u8*)((u8*)self + 0x34) = 0;
-    *(u16*)((u8*)self + 0x36) = 0;
-    *(float*)((u8*)self + 0x38) = lbl_eu_80668828;
+void CKizunagram_resetFields(u8* self){
+    *(u8*)(self + 0x34) = 0;
+    *(u16*)(self + 0x36) = 0;
+    *(float*)(self + 0x38) = lbl_eu_80668828;
 }
 
 extern "C" __declspec(noinline) void func_8025AC1C(UnkKizunaSelfAB* self, u32 a) {}
@@ -379,22 +379,22 @@ void func_8025C6F0(UnkKizunaSelfC6F0* self) {
     self->mRegB.func_8045F778();
 }
 
-unsigned char CKizunagram_getField7E(void* this_ptr) {
-    if (*(unsigned char*)((unsigned char*)this_ptr + 0x7e) != 0) {
-        return *(unsigned char*)((unsigned char*)this_ptr + 0x3b);
+unsigned char CKizunagram_getField7E(u8* this_ptr) {
+    if (*(unsigned char*)(this_ptr + 0x7e) != 0) {
+        return *(unsigned char*)(this_ptr + 0x3b);
     } else {
         return 0;
     }
 }
 
-unsigned char CKizunagram_checkFields(void* arg1)
+unsigned char CKizunagram_checkFields(u8* arg1)
 {
-    if (*(unsigned char*)((char*)arg1 + 0x61) == 0)
+    if (*(unsigned char*)(arg1 + 0x61) == 0)
         return 0;
-    if (*(unsigned char*)((char*)arg1 + 0x7d) == 0)
+    if (*(unsigned char*)(arg1 + 0x7d) == 0)
         return 0;
-    if (*(unsigned char*)((char*)arg1 + 0xbd) != 0)
-        return *(unsigned char*)((char*)arg1 + 0x3c);
+    if (*(unsigned char*)(arg1 + 0xbd) != 0)
+        return *(unsigned char*)(arg1 + 0x3c);
     return 0;
 }
 
@@ -461,8 +461,8 @@ struct CKizunagramState {
     u8 field8C;
 };
 
-u8 CKizunagram_getField8C(void* self) {
-    return ((CKizunagramState*)self)->field8C;
+u8 CKizunagram_getField8C(CKizunagramState* self) {
+    return self->field8C;
 }
 
 void func_8025CBCC(){}
@@ -473,15 +473,13 @@ void func_8025CC88(){}
 
 void func_8025CCA8(){}
 
-void CKizunagram_setField39(void* arg) {
-    unsigned char* ptr = (unsigned char*)arg;
+void CKizunagram_setField39(u8* ptr) {
     if (ptr[0x62] != 0) {
         ptr[0x39] = 5;
     }
 }
 
-void CKizunagram_resetState(void* self) {
-    uint8_t* b = static_cast<uint8_t*>(self);
+void CKizunagram_resetState(u8* b) {
     if (!b[0x61]) return;
     if (!b[0x7d]) return;
     b[0x39] = 0;

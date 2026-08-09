@@ -9,10 +9,14 @@
 extern "C" {
 #endif
 
+// Forward declarations (defined in arc.c)
+struct ARCNode;
+struct ARCHeader;
+
 typedef struct ARCHandle {
-    void* archiveStartAddr; // at 0x0
-    void* FSTStart;         // at 0x4
-    void* fileStart;        // at 0x8
+    struct ARCHeader* archiveStartAddr; // at 0x0
+    struct ARCNode* FSTStart;           // at 0x4
+    u8* fileStart;                      // at 0x8
     u32 entryNum;           // at 0xC
     char* FSTStringStart;   // at 0x10
     u32 FSTLength;          // at 0x14

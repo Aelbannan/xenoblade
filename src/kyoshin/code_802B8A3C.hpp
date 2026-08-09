@@ -21,10 +21,10 @@ public:
 struct OrderGimmickNode {
     OrderGimmickNode* next; // 0x00
     u8 _04[4];              // 0x04..0x07
-    void* object;           // 0x08
+    u8* object;           // 0x08
 };
 struct OrderGimmickList {
-    void* field_00;         // 0x00
+    u8* field_00;         // 0x00
     OrderGimmickNode* head; // 0x04
 };
 
@@ -41,7 +41,7 @@ struct CVS_THREAD_ORDER_Data {
 // (matching the retail lwz/lha loads).
 struct BattleMgrView {
     u8 _00[0x48];
-    void* listHead;        // +0x48 battle object list sentinel
+    u8* listHead;        // +0x48 battle object list sentinel
     u8 _4C[0x20C8 - 0x4C];
     s16 field_0x20C8;      // +0x20C8 active-battle flag
 };
@@ -49,7 +49,7 @@ struct BattleMgrView {
 // Handle view produced by de-biasing a gimmick object pointer (-0x3E9C).
 struct GimmickHandleData {
     u8 _00[0x4];
-    void* field_4;         // +0x04
+    u8* field_4;         // +0x04
     u8 _08[0x3F28 - 0x08];
     u16 field_3F28;        // +0x3F28 voice-id selector
 };

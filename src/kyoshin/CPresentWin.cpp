@@ -18,10 +18,10 @@ void func_8022DAD8(CPresentWin* self, nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(self->mpLayout, drawInfo, 0, 1);
 }
 
-u8 func_8022DB6C(void* self) { return static_cast<CPresentWin*>(self)->mField30; }
+u8 func_8022DB6C(CPresentWin* self) { return self->mField30; }
 
 
-u8 func_8022DB74(void* self) { return static_cast<CPresentWin*>(self)->mField38; }
+u8 func_8022DB74(CPresentWin* self) { return self->mField38; }
 
 // State-machine transition: if state == 2, advance to state 3 and clear sub-state
 void func_8022DD68(CPresentWin* self) {
@@ -43,15 +43,15 @@ void func_8022E3A8(void){}
 
 void func_8022E3AC(){}
 
-u8 func_8022E488(void* self) { return static_cast<CPresentWin*>(self)->mField31; }
+u8 func_8022E488(CPresentWin* self) { return self->mField31; }
 
-u8 func_8022E490(void* self) { return static_cast<CPresentWin*>(self)->mField36; }
+u8 func_8022E490(CPresentWin* self) { return self->mField36; }
 
 void func_8022E498(){}
 
-u8 func_8022E4FC(void* self){ return static_cast<CPresentWin*>(self)->mField32; }
+u8 func_8022E4FC(CPresentWin* self){ return self->mField32; }
 
-u8 func_8022E504(void* self){ return static_cast<CPresentWin*>(self)->mField33; }
+u8 func_8022E504(CPresentWin* self){ return self->mField33; }
 
 void func_8022E50C(){}
 
@@ -75,11 +75,10 @@ void func_8022E7F0(CPresentWin* self) {
     }
 }
 
-extern "C" u8 func_8022E868(void* self, u32 r4) {
-    CPresentWin* p = static_cast<CPresentWin*>(self);
-    u8 limit = p->mDataCount;
+extern "C" u8 func_8022E868(CPresentWin* self, u32 r4) {
+    u8 limit = self->mDataCount;
     if (r4 >= limit) return 0;
-    return p->mDataArray[r4];
+    return self->mDataArray[r4];
 }
 
 extern "C" void func_8022D614() {}

@@ -18,8 +18,8 @@ void func_800CA590(){}
 
 cf::CfObjectImplObj::~CfObjectImplObj() {}
 
-extern "C" void __dt__Q22cf15CfObjectImplObjFv(void* self) {
-    static_cast<cf::CfObjectImplObj*>(self)->~CfObjectImplObj();
+extern "C" void __dt__Q22cf15CfObjectImplObjFv(cf::CfObjectImplObj* self) {
+    self->~CfObjectImplObj();
 }
 
 void func_800CEE28(void* self);

@@ -11,16 +11,16 @@ struct CScnItemPoolState {
     u32 value8C;
 };
 
-u32 func_8048C478(void* self) { return ((CScnItemPoolState*)self)->value18; }
-u16 func_8048C690(void* self) { return ((CScnItemPoolState*)self)->value08; }
-u32 func_8048C8BC(void* self) { return ((CScnItemPoolState*)self)->value8C; }
-u32 func_8048C9F4(void* self) { return ((CScnItemPoolState*)self)->value00; }
+u32 func_8048C478(u8* self) { return ((CScnItemPoolState*)self)->value18; }
+u16 func_8048C690(u8* self) { return ((CScnItemPoolState*)self)->value08; }
+u32 func_8048C8BC(u8* self) { return ((CScnItemPoolState*)self)->value8C; }
+u32 func_8048C9F4(u8* self) { return ((CScnItemPoolState*)self)->value00; }
 void func_8048C524() {}
 extern "C" void func_8048C5AC(int* dst, const void* src) { *(u32*)dst = *(const u32*)((const u8*)src + 4); }
 void func_8048C5B8() {}
 void func_8048C60C() {}
 void func_8048C630() {}
-extern "C" void* func_8048C698(void* self, int kind) {
+extern "C" void* func_8048C698(u8* self, int kind) {
     switch (kind) {
     case 1:
         return (void*)((char*)self + 0x0C);
@@ -36,7 +36,7 @@ extern "C" void* func_8048C698(void* self, int kind) {
         return nullptr;
     }
 }
-extern "C" void* func_8048C6F4(void* self, s32 kind) {
+extern "C" void* func_8048C6F4(u8* self, s32 kind) {
     switch (kind) {
     case 1: return (u8*)self + 0xC;
     case 2: return (u8*)self + 0x2C;

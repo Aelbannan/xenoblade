@@ -132,7 +132,7 @@ extern "C" {
 extern u32 lbl_eu_80663D7C;
 extern int func_80068110(int, void*);
 }
-extern "C" int CfRes_callFunc_68110(void* self) {
+extern "C" int CfRes_callFunc_68110(u8* self) {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
@@ -226,7 +226,7 @@ void func_800628C4(){}
 
 void func_80062928(){}
 
-extern "C" u32 CfRes_getField18(void* self) { return *(u32*)((u8*)self + 0x18); }
+extern "C" u32 CfRes_getField18(u8* self) { return *(u32*)((u8*)self + 0x18); }
 
 void func_80062998(){}
 
@@ -263,37 +263,37 @@ bool func_80062C80(){ return false; }
 
 void func_80062C88(){}
 
-extern "C" void* CfRes_getArrayElem12(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem12(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 12) * 60 + 8);
 }
 
 void func_80062CE4(){}
 
-extern "C" void* CfRes_getArrayElem21(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem21(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 21) * 60 + 8);
 }
 
 void func_80062D44(){}
 
-extern "C" void* CfRes_getArrayElem22(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem22(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 22) * 60 + 8);
 }
 
 void func_80062DA4(){}
 
-extern "C" void* CfRes_getArrayElem18(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem18(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 18) * 60 + 8);
 }
 
 void func_80062E04(){}
 
-extern "C" void* CfRes_getArrayElem19(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem19(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 19) * 60 + 8);
 }
 
 void func_80062E64(){}
 
-extern "C" void* CfRes_getArrayElem20(void* self, int idx) {
+extern "C" void* CfRes_getArrayElem20(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 20) * 60 + 8);
 }
 
@@ -353,19 +353,19 @@ bool func_80063158(){ return false; }
 
 void func_80063160(){}
 
-extern "C" void CfResEntry_init(void* self) {
+extern "C" void CfResEntry_init(u8* self) {
     *(int*)((char*)self + 0) = 0;
     *(int*)((char*)self + 4) = 0;
     *(int*)((char*)self + 8) = 0;
 }
 
-extern "C" void* CfRes_getResEntry(void* self, u32 idx) { return (u8*)self + idx * 12; }
+extern "C" void* CfRes_getResEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
 void func_800631FC(){}
 
-extern "C" void* CfRes_getTblEntry(void* self, u32 idx) { return (u8*)self + idx * 12; }
+extern "C" void* CfRes_getTblEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
-extern "C" u32 CfResEntry_getHandle(void* self) { return *(u32*)((u8*)self + 0x0); }
+extern "C" u32 CfResEntry_getHandle(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_8006328C(){}
 
@@ -373,21 +373,21 @@ void func_80063310(){}
 
 void func_80063394(){}
 
-extern "C" u32 CfResEntry_getField4(void* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" u32 CfResEntry_getField4(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
-extern "C" void CfResEntry_setHandle(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+extern "C" void CfResEntry_setHandle(u8* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void func_8006349C(){}
 
-extern "C" u32 CfResEntry_getField8(void* self) { return *(u32*)((u8*)self + 0x8); }
+extern "C" u32 CfResEntry_getField8(u8* self) { return *(u32*)((u8*)self + 0x8); }
 
-extern "C" void CfResEntry_setField4(void* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
+extern "C" void CfResEntry_setField4(u8* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
 
-extern "C" void CfResEntry_clearField8(void* self) { *(u32*)((u8*)self + 8) = 0; }
+extern "C" void CfResEntry_clearField8(u8* self) { *(u32*)((u8*)self + 8) = 0; }
 
 void func_80063560(){}
 
-extern "C" void CfRes_clearField4(void* self) { *(u32*)((u8*)self + 4) = 0; }
+extern "C" void CfRes_clearField4(u8* self) { *(u32*)((u8*)self + 4) = 0; }
 
 void func_800638B4(){}
 
@@ -411,14 +411,14 @@ extern "C" void CfRes_stub_63ACC() {}
 
 void func_80063AD0(){}
 
-extern "C" void CfRes_initFields4(void* self, int a, int b, int c, int d) {
+extern "C" void CfRes_initFields4(u8* self, int a, int b, int c, int d) {
     *(int*)((char*)self + 4) = a;
     *(int*)((char*)self + 0x28) = b;
     *(int*)((char*)self + 8) = c;
     *(int*)((char*)self + 0x18) = d;
 }
 
-extern "C" void CfRes_setBits1_2(void* self) {
+extern "C" void CfRes_setBits1_2(u8* self) {
     int val = *(int*)self;
     *(int*)self = (val & ~2) | 1;
 }
@@ -431,7 +431,7 @@ struct CfResSub_63C04 {
     virtual void _v02C(); virtual void _v030(); virtual void* _v034(void* outer);
 };
 struct CfResObj_63C04 { u8 _00[0x2C]; CfResSub_63C04* sub; };
-extern "C" void* CfRes_vcall34(void* self) {
+extern "C" void* CfRes_vcall34(u8* self) {
     CfResSub_63C04* sub = ((CfResObj_63C04*)self)->sub;
     if (!sub) return self;
     return sub->_v034(self);
@@ -439,7 +439,7 @@ extern "C" void* CfRes_vcall34(void* self) {
 
 extern "C" void CfRes_stub_63C2C() {}
 
-extern "C" void CfRes_resetState2(void* self) {
+extern "C" void CfRes_resetState2(u8* self) {
     u32 v = *(u32*)self;
     u32 z = 0;
     u32 m = 0xFFFFFFAE;
@@ -457,7 +457,7 @@ struct CfResSub_63C50 {
     virtual void* _v038(void* outer);
 };
 struct CfResObj_63C50 { u8 _00[0x2C]; CfResSub_63C50* sub; };
-extern "C" void* CfRes_vcall38(void* self) {
+extern "C" void* CfRes_vcall38(u8* self) {
     CfResSub_63C50* sub = ((CfResObj_63C50*)self)->sub;
     if (!sub) return self;
     return sub->_v038(self);
@@ -568,7 +568,7 @@ extern "C" void CfRes_delegateCleanup(void* self) {
     func_80065CA4(static_cast<CfResData*>(self)->field_2C, self);
 }
 
-extern "C" unsigned long CfRes_isField4Zero(void* self) {
+extern "C" unsigned long CfRes_isField4Zero(u8* self) {
     unsigned long v = *(unsigned long*)((char*)self + 4);
     return v == 0 ? 1 : 0;
 }
@@ -582,14 +582,14 @@ void CfRes_64994::initStruct() {
     field_20 = 0;
 }
 
-extern "C" void CfRes_orBits_649B4(void* self, u32 bits) {
+extern "C" void CfRes_orBits_649B4(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
 
 extern u32 lbl_eu_80663E14;
 extern "C" int CfRes_getE14() { return lbl_eu_80663E14; }
 
-extern "C" void CfRes_orBits_649CC(void* self, u32 bits) {
+extern "C" void CfRes_orBits_649CC(u8* self, u32 bits) {
     *(u32*)self |= bits;
 }
 
@@ -607,18 +607,18 @@ void func_800649F4(void* self){
     func(obj);
 }
 
-extern "C" int CfRes_checkMask_64A08(void* self, u32 mask) {
+extern "C" int CfRes_checkMask_64A08(u8* self, u32 mask) {
     u32 val = *(u32*)self;
     return (val & mask) != 0 ? 1 : 0;
 }
 
 void cf::CfRes::OnFileEvent() {}
 
-extern "C" u32 CfRes_getField4_64A6C(void* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" u32 CfRes_getField4_64A6C(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 void func_80064A74(){}
 
-extern "C" u32 CfRes_getAddrLow10_64B70(void* self) { return (u32)(uintptr_t)self & 0x3FF; }
+extern "C" u32 CfRes_getAddrLow10_64B70(u8* self) { return (u32)(uintptr_t)self & 0x3FF; }
 
 void func_80064B78(){}
 
@@ -631,7 +631,7 @@ struct CfResSub_64CB8 {
     virtual void m17(void* self, void* arg);
 };
 struct CfResObj_64CB8 { u8 _00[0x2C]; CfResSub_64CB8* sub; };
-extern "C" void CfRes_vcall17(void* self, void* arg) {
+extern "C" void CfRes_vcall17(u8* self, void* arg) {
     ((CfResObj_64CB8*)self)->sub->m17(self, arg);
 }
 
@@ -652,9 +652,9 @@ void func_80064DC4(){}
 
 void func_80064EB0(){}
 
-extern "C" u32 CfRes_getField18_64F58(void* self) { return *(u32*)((u8*)self + 0x18); }
+extern "C" u32 CfRes_getField18_64F58(u8* self) { return *(u32*)((u8*)self + 0x18); }
 
-extern "C" void CfRes_setBits11_64F60(void* self) {
+extern "C" void CfRes_setBits11_64F60(u8* self) {
     u32 val = *(u32*)self;
     *(u32*)self = (val & ~0x42) | 0x11;
 }
@@ -685,7 +685,7 @@ void func_800655C4(){}
 
 void func_80065694(){}
 
-extern "C" int CfResEntry_incRefCount(void* self) {
+extern "C" int CfResEntry_incRefCount(u8* self) {
     return ++*(int*)((char*)self + 4);
 }
 
@@ -696,7 +696,7 @@ int CfRes_65818::decRefCount() {
     return field_04;
 }
 
-extern "C" int CfRes_incField8(void* self) {
+extern "C" int CfRes_incField8(u8* self) {
     return ++*(int*)((char*)self + 8);
 }
 
@@ -723,7 +723,7 @@ extern "C" int CfRes_isField40NonZero(int dummy, void* self) {
     return *(int*)((char*)self + 40) != 0 ? 1 : 0;
 }
 
-extern "C" int CfRes_checkObjState(void* self, void* obj) {
+extern "C" int CfRes_checkObjState(u8* self, void* obj) {
     int ret = 0;
     if (*(u32*)((u8*)obj + 4)) {
         if (*(u32*)((u8*)obj + 0x28) == 0) {
@@ -752,7 +752,7 @@ void func_80065D0C(){}
 // C++ virtual call forces MWCC to use r12 for vtable dispatch
 // 14 dummies + RTTI overhead = offset 64 at vtable+0x40
 struct CfResVtabClass { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11(); virtual void m13(); virtual void m14(); virtual void m16(); };
-extern "C" void CfRes_vcall16(void* self) {
+extern "C" void CfRes_vcall16(u8* self) {
     ((CfResVtabClass*)self)->m16();
 }
 
@@ -787,7 +787,7 @@ extern "C" void* CfRes_dispatchTypeA(void* unused, const void* obj) {
     return 0;
 }
 
-extern "C" int CfRes_dispatchTypeB(void* self, void* param) {
+extern "C" int CfRes_dispatchTypeB(u8* self, void* param) {
     u8 val = *(u8*)((char*)param + 0x32);
     if (val == 10) {
         return func_801BFA64(0);

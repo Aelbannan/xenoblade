@@ -51,8 +51,9 @@ void CfTaskMain::Tail() {
 // CfTaskMain fields directly) so that no separate CfTaskMain ctor symbol is
 // emitted; retail keeps the whole body inline in this creator.
 void* __ct__800697E8(CProcess* parent, u32 field58val) {
-    void* mem = mtl::MemManager::allocate(sizeof(cf::CfTaskMain),
-                                          CWorkThreadSystem::getWorkMem());
+    cf::CfTaskMain* mem = static_cast<cf::CfTaskMain*>(
+        mtl::MemManager::allocate(sizeof(cf::CfTaskMain),
+                                  CWorkThreadSystem::getWorkMem()));
     cf::CfTaskMain* obj = static_cast<cf::CfTaskMain*>(mem);
     if (obj) {
         __ct__8CProcessFv(obj);

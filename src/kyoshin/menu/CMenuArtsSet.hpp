@@ -124,7 +124,7 @@ public:
 class SArts080C {
 public:
     char _pad[0x10];
-    void* field_0x10;
+    u8* field_0x10;
 };
 
 // 2-byte-cursor + arts table object used by func_802322BC. The arts table
@@ -152,7 +152,7 @@ public:
 class SArts3506C {
 public:
     char _pad_00[0x20];
-    void* mAnim20;      // 0x20 nw4r::lyt::AnimTransform*
+    nw4r::lyt::AnimTransform* mAnim20;      // 0x20 nw4r::lyt::AnimTransform*
     char _pad_24[0x2C - 0x24];
     u32 field_0x2C;     // 0x2C
     char _pad_30[0x31 - 0x30];
@@ -166,7 +166,7 @@ public:
     u8 field_0x20;
     u8 field_0x21;
     char _pad_22[0x28 - 0x22];
-    void* field_0x28;   // 0x28
+    u8* field_0x28;   // 0x28
 };
 
 // Element of the 0x49-byte array indexed by func_80230FF0.

@@ -129,7 +129,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
     accessor = func_801355F4();
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
-    void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->mLayout);
+    u8* font = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->mLayout);
     void* fontVtab = *(void**)font;
     void* result2 = ((void* (*)(void*))((void**)fontVtab)[0x24 / 4])(font);
     func_8013676C((void*)*(u32*)((u8*)obj + 0x10), result2);
@@ -151,7 +151,7 @@ extern "C" void Init__11CMenuUpdateFv(void* self) {
 extern "C" void Term__11CMenuUpdateFv(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     waitForDrawDone__9CDeviceVIFv();
-    void* renderPtr = self ? (u8*)self + 0x70 : 0;
+    u8* renderPtr = self ? (u8*)self + 0x70 : 0;
     removeRenderCB__4CScnFP10IScnRender(obj->mScene, renderPtr);
     if (obj->mLayout) {
         void* vtab = *(void**)obj->mLayout;
@@ -199,14 +199,14 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
 }
 
 // Helper accessors
-extern "C" u32 func_80142954(void* self) { return *(u32*)((u8*)self + 0x10); }
-extern "C" void func_8014295C(void* self, u8 val) { ((u8*)self)[0x67] = val; }
-extern "C" u32 getField10(void* self) { return *(u32*)((u8*)self + 0x10); }
-extern "C" void setField67(void* self, u8 val) { ((u8*)self)[0x67] = val; }
-extern "C" void func_80142C98(void* self, u8 val) { ((u8*)self)[0x64] = val; }
-extern "C" void setField64(void* self, u8 val) { ((u8*)self)[0x64] = val; }
-extern "C" u8 func_80143F4C(void* self) { return ((u8*)self)[0x64]; }
-extern "C" u8 getField64(void* self) { return ((u8*)self)[0x64]; }
+extern "C" u32 func_80142954(u8* self) { return *(u32*)(self + 0x10); }
+extern "C" void func_8014295C(u8* self, u8 val) { self[0x67] = val; }
+extern "C" u32 getField10(u8* self) { return *(u32*)(self + 0x10); }
+extern "C" void setField67(u8* self, u8 val) { self[0x67] = val; }
+extern "C" void func_80142C98(u8* self, u8 val) { self[0x64] = val; }
+extern "C" void setField64(u8* self, u8 val) { self[0x64] = val; }
+extern "C" u8 func_80143F4C(u8* self) { return self[0x64]; }
+extern "C" u8 getField64(u8* self) { return self[0x64]; }
 extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
 extern "C" int getGlobal0E0() { return lbl_eu_806640E0; }
 extern "C" void func_80142C64(void* self) { ((u8*)self)[0x15] = 1; }
@@ -219,11 +219,11 @@ extern "C" void func_80143AD4(void* self, f32 val) { setFieldFloat10(self, val);
 extern "C" void init_8014274C(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
     self->field_0 = v0; self->field_4 = v1; self->field_8 = v2; self->field_C = v3;
 }
-extern "C" void func_80143F38(void* self, u32 v0, u32 v1, u32 v2, u32 v3) {
-    init_8014274C((CMenuUpdate_8014274C*)self, v0, v1, v2, v3);
+extern "C" void func_80143F38(CMenuUpdate_8014274C* self, u32 v0, u32 v1, u32 v2, u32 v3) {
+    init_8014274C(self, v0, v1, v2, v3);
 }
-extern "C" void func_80143F54(void* dest, const void* src) {
-    const u32* s = (const u32*)src; u32* d = (u32*)dest;
+extern "C" void func_80143F54(u32* dest, const u32* src) {
+    const u32* s = src; u32* d = dest;
     d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
 }
 

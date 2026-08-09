@@ -150,7 +150,7 @@ void AnmObjMatClrRes::UpdateFrame() {
 
 void SetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResFf(){}
 
-float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(float *)((char *)self + 28); }
+float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(const nw4r::g3d::AnmObjMatClrRes* self) { return *(float *)((char *)self + 28); }
 
 void UpdateFrame__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 

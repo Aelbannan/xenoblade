@@ -51,12 +51,12 @@ void CMenuBattleMode::Init() {
 }
 
 void CMenuBattleMode::func_801A048C() {
-    extern void* __dt__15CMenuBattleModeFv(CMenuBattleMode*, int);
+    extern CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode*, int);
     __dt__15CMenuBattleModeFv(this, 1);
 }
 extern void cbRenderBefore__15CMenuBattleModeFv();
 void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
-extern void* __dt__15CMenuBattleModeFv(void*, int);
+extern CMenuBattleMode* __dt__15CMenuBattleModeFv(void*, int);
 void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
 // Deleting virtual destructor (D1 shape): destroys the mLayoutMem member
@@ -64,7 +64,7 @@ void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((ch
 // backing block when the delete flag is nonzero. Written as a plain free C-ABI
 // shim on the mangled symbol so MWCC does not re-install the class vtables at
 // the top of the dtor (retail emits no vptr stores here).
-extern "C" void* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
+extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
     if (self) {
         self->mLayoutMem.~UnkClass_8045F564();
         if (self) {
@@ -124,7 +124,7 @@ extern "C" CMenuBattleMode* __ct__CMenuBattleMode(CProcess* parent, CScn* scene)
 
         u32 ptmf1 = ptmf[1];
         u32 ptmf0 = ptmf[0];
-        void* iweVtbl = vtFinal + 0x24;   // IWorkEvent secondary vtable
+        char* iweVtbl = vtFinal + 0x24;   // IWorkEvent secondary vtable
 
         shim->callbacks[0] = ptmf0;
         shim->callbacks[1] = ptmf1;

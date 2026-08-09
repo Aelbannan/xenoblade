@@ -192,7 +192,7 @@ void SeqSound::SeqLoadTask::OnCancel() {
 
 void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* self, void (*callback)(unsigned short, void*, void*), void* arg);
 
-void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((u8*)thisPtr + 0x10c), callback, arg); }
+void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(nw4r::snd::detail::SeqSound* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((u8*)thisPtr + 0x10c), callback, arg); }
 void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(){}
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }

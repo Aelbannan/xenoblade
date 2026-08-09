@@ -84,8 +84,8 @@ void func_800966E8(){}
 
 void func_800967F8(){}
 
-extern "C" int func_8009684C(void* self) { return 1; }
+extern "C" int func_8009684C(u8* self) { return 1; }
 
-extern "C" int func_80096854(void* self) { return 0; }
+extern "C" int func_80096854(u8* self) { return 0; }
 
 cf::CtrlNpc::~CtrlNpc() {}

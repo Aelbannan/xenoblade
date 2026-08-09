@@ -95,8 +95,8 @@ inline float u16ToF(u16 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = v;
+    c.w[0] = 0x43300000u;
     return (float)(c.d - lbl_eu_8066B428);
 }
 
@@ -443,7 +443,7 @@ extern "C" float func_804EFB38(ml::CVec3* verts) {
     float fbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
 
     float scale = lbl_eu_8066B40C;
-    for (u32 i = 1; i <= 8; i++) {
+    for (s32 i = 1; i < 9; i++) {
         float t = lbl_eu_8066B40C;
         float dx = ml::math::abs(verts[i].x - verts[0].x);
         if (dx != lbl_eu_8066B408) {
@@ -473,10 +473,8 @@ extern "C" float func_804EFB38(ml::CVec3* verts) {
     for (s16 i = 1; i < 10; i++) {
         if (i < 9) {
             ml::CVec3 d = verts[i] - verts[0];
-            d.x *= scale;
-            d.y *= scale;
-            d.z *= scale;
-            verts[i] = verts[0] + d;
+            ml::CVec3 scaled = d * scale;
+            verts[i] = verts[0] + scaled;
         } else {
             verts[i] = verts[1];
         }
@@ -517,7 +515,7 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, CFanColor* color
             continue;
         }
 
-        ml::CVec3 d = verts[0] - verts[i];
+        ml::CVec3 d = orig - verts[0];
         float rx = (d.x == lbl_eu_8066B408)
                        ? lbl_eu_8066B40C
                        : ml::math::abs((verts[i].x - verts[0].x) / d.x);
@@ -526,9 +524,8 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, CFanColor* color
                        : ml::math::abs((verts[i].y - verts[0].y) / d.y);
 
         ml::CVec3 tdiff = tex[i] - tex[0];
-        tex[i].x = tex[0].x + tdiff.x * rx;
-        tex[i].y = tex[0].y + tdiff.y * ry;
-        tex[i].z = tex[0].z + tdiff.z * lbl_eu_8066B40C;
+        tex[i] = tex[0] + ml::CVec3(tdiff.x * rx, tdiff.y * ry,
+                                    tdiff.z * lbl_eu_8066B40C);
         if (tex[i].x < lbl_eu_8066B408) {
             tex[i].x = lbl_eu_8066B408;
         } else if (lbl_eu_8066B40C < tex[i].x) {
@@ -540,13 +537,13 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, CFanColor* color
             tex[i].y = lbl_eu_8066B40C;
         }
 
-        ml::CVec3 cdiff((float)colors[i].r, (float)colors[i].g, (float)colors[i].b);
-        cdiff.x -= colors[0].r;
-        cdiff.y -= colors[0].g;
-        cdiff.z -= colors[0].b;
-        colors[i].r = colors[0].r + cdiff.x * rx;
-        colors[i].g = colors[0].g + cdiff.y * ry;
-        colors[i].b = colors[0].b + cdiff.z * lbl_eu_8066B40C;
+        ml::CVec3 ci(colors[i].r, colors[i].g, colors[i].b);
+        ml::CVec3 c0(colors[0].r, colors[0].g, colors[0].b);
+        ml::CVec3 cdiff = ci - c0;
+        ci = c0 + ml::CVec3(cdiff.x * rx, cdiff.y * ry, cdiff.z * lbl_eu_8066B40C);
+        colors[i].r = ci.x;
+        colors[i].g = ci.y;
+        colors[i].b = ci.z;
         if (colors[i].r < lbl_eu_8066B408) {
             colors[i].r = lbl_eu_8066B408;
         } else if (lbl_eu_8066B40C < colors[i].r) {

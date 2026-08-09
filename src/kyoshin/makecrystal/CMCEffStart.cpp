@@ -389,10 +389,11 @@ void CMCEffCrystal::func_80224CE4(){
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout18, &mAnimTrans28, mArcResourceAccessor, &lbl_eu_805095EC[0x221]);
 
     nw4r::lyt::Pane* rootPane = mLayout18->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout18);
+    CFontPanel* fontObj =
+        static_cast<CFontPanel*>(CDeviceFont::func_80452C10(1, mLayout18));
     // Virtual slot 9 (offset 0x24) on the font object yields the u32 the
     // crystal's font pane is set from.
-    u32 result = ((CFontPanel*)fontObj)->sf9();
+    u32 result = fontObj->sf9();
     func_8013676C(rootPane, result);
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(&mLayout2c, mArcResourceAccessor, &lbl_eu_805095EC[0x23b]);
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(mLayout2c, &mAnimTrans30, mArcResourceAccessor, &lbl_eu_805095EC[0x250]);

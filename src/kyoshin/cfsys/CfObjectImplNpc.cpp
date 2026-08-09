@@ -12,7 +12,8 @@ void func_800CA850(void) {}
 
 void func_800CA854(){}
 
-extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(void* self, int deleteFlag) {
+extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(cf::CfObjectImplNpc* self,
+                                               int deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
         operator delete(self);
     }

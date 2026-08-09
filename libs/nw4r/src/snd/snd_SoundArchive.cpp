@@ -228,5 +228,5 @@ void SoundArchive::SetExternalFileRoot(const char* pExtFileRoot) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
-extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
+extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(nw4r::snd::SoundArchive* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
+extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(nw4r::snd::SoundArchive* self) { return ((u32(*)(void*))GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }

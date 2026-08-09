@@ -12,7 +12,7 @@ struct CHelp_EnemyListNode {
 
 // Container returned by func_800B6C7C; the sentinel head lives at +0x4.
 struct CHelp_EnemyList {
-    void* field_0x0;        // 0x0
+    u8* field_0x0;        // 0x0
     CHelp_EnemyListNode* mHead; // 0x4
 };
 

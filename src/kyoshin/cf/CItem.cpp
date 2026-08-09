@@ -90,7 +90,7 @@ int CItemInfo_isEnabled0(CItemInfo*) { return 0; }
 
 int CItemInfo_getFlag0(CItemInfo*) { return 0; }
 
-extern "C" void func_80156050(void* self) { reinterpret_cast<If20*>(self)->vf20(); }
+extern "C" void func_80156050(If20* self) { self->vf20(); }
 
 void func_80156060(){}
 
@@ -431,14 +431,14 @@ int CItemData_isFalse2(CItemData*) { return 0; }
 
 int CItemData_isFalse3(CItemData*) { return 0; }
 
-extern "C" void func_8015B404(void* u, void* p, u32 val) { ((ItemWord8*)((u8*)p + 8))->f7 = val; }
+extern "C" void func_8015B404(void* u, u8* p, u32 val) { ((ItemWord8*)(p + 8))->f7 = val; }
 
 void func_8015B414(){}
 
-extern "C" void func_8015B420(void* u, void* p, u32 val) { ((ItemWord8*)((u8*)p + 8))->f11 = val; }
+extern "C" void func_8015B420(void* u, u8* p, u32 val) { ((ItemWord8*)(p + 8))->f11 = val; }
 
-extern "C" s16 func_8015B430(void* u, void* p) {
-    u32 x = *(u32*)((u8*)p + 8);
+extern "C" s16 func_8015B430(void* u, u8* p) {
+    u32 x = *(u32*)(p + 8);
     return (s16)((x >> 10) & 0x7FF);
 }
 
@@ -456,7 +456,7 @@ int CItemData_getSize16(CItemData*) { return 16; }
 
 u32 CItemData_getBits7to9(u32, CItemData* obj) { return (*(u32*)((char*)obj + 8) >> 7) & 7; }
 
-extern "C" void func_8015B4C8(void* u, void* p, u32 val) { ((ItemByte7*)((u8*)p + 7))->b01 = (u8)val; }
+extern "C" void func_8015B4C8(void* u, u8* p, u32 val) { ((ItemByte7*)(p + 7))->b01 = (u8)val; }
 
 u32 CItemData_getByte7Bits01(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
@@ -480,15 +480,15 @@ u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { *(u16*)((char*
 
 u16 CItemParam_getField16(u32, CItemParam* obj) { return *(u16*)((char*)obj + 16); }
 
-extern "C" void func_8015B56C(void* u, void* p, u32 val) { ((ItemHalf18*)((u8*)p + 0x18))->bit15 = (u16)val; }
+extern "C" void func_8015B56C(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->bit15 = (u16)val; }
 
 u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 24) >> 15) & 1; }
 
-extern "C" void func_8015B588(void* u, void* p, u32 val) { ((ItemHalf18*)((u8*)p + 0x18))->low15 = (u16)val; }
+extern "C" void func_8015B588(void* u, u8* p, u32 val) { ((ItemHalf18*)(p + 0x18))->low15 = (u16)val; }
 
 u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
 
-extern "C" void func_8015B5A4(void* u, void* p, u32 val) { ((ItemByte7*)((u8*)p + 7))->b01 = (u8)val; }
+extern "C" void func_8015B5A4(void* u, u8* p, u32 val) { ((ItemByte7*)(p + 7))->b01 = (u8)val; }
 
 u32 CItemData_getByte7Bits01_dup(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
@@ -501,9 +501,9 @@ extern "C" u8* func_8015B5CC(u32 unused, u8* obj, u32 idx, u8 val) {
 
 extern "C" u8 func_8015B5D8(u32 unused, u8* obj, u32 idx) { return obj[idx + 0x12]; }
 
-extern "C" u32 func_8015B5E4(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 2 + 8) >> 1) & 7; }
+extern "C" u32 func_8015B5E4(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 2 + 8) >> 1) & 7; }
 
-extern "C" u32 func_8015B5F8(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 2 + 8) >> 4) & 0xFFF; }
+extern "C" u32 func_8015B5F8(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 2 + 8) >> 4) & 0xFFF; }
 
 void func_8015B60C(){}
 
@@ -519,7 +519,7 @@ void func_8015B75C(){}
 
 void func_8015B86C(){}
 
-extern "C" u32 func_8015B88C(void* u, void* p, u32 idx) { return (*(u16*)((u8*)p + idx * 8 + 0xc) >> 4) & 0xFFF; }
+extern "C" u32 func_8015B88C(void* u, u8* p, u32 idx) { return (*(u16*)(p + idx * 8 + 0xc) >> 4) & 0xFFF; }
 
 u32 CItemExt_setByte49(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 49) = val; return unused; }
 
@@ -529,7 +529,7 @@ u32 CItemExt_setByte48(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 
 
 u8 CItemExt_getByte48(u32, CItemExt* obj) { return *(u8*)((char*)obj + 48); }
 
-extern "C" void* func_8015B8C0(void* u, void* p, u32 idx) { return (u8*)p + idx * 8 + 8; }
+extern "C" void* func_8015B8C0(void* u, u8* p, u32 idx) { return p + idx * 8 + 8; }
 
 void func_8015B8D0(){}
 

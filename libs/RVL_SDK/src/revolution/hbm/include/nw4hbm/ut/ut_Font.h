@@ -25,7 +25,7 @@ struct CharWidths {
 };
 
 struct Glyph {
-    void* pTexture;     // at 0x0
+    u8* pTexture;       // at 0x0
     CharWidths widths;  // at 0x4
     u8 height;          // at 0x7
     GXTexFmt texFormat; // at 0x8

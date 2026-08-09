@@ -89,7 +89,7 @@ extern u8 lbl_eu_8056FD24[];
 extern "C" {
 
 // Decrement a login-state refcount if it isn't flagged.
-__attribute__((never_inline)) void func_804D91BC(void* self);
+__attribute__((never_inline)) void func_804D91BC(CCacheItem* self);
 
 // _reslist_base<CCacheItem>::clearList() - walk nodes clearing only mNext.
 __attribute__((never_inline)) void func_804D8EC8(CacheList* list) {
@@ -260,7 +260,7 @@ CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     mCache.mCapacity = 32;
 }
 
-extern "C" void func_804D91BC(void* self) {
+extern "C" void func_804D91BC(CCacheItem* self) {
     if (*(u8*)((u8*)self + 0x48) == 0) {
         *(u32*)((u8*)self + 0x44) -= 1;
     }

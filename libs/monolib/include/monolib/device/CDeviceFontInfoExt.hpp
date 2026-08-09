@@ -14,7 +14,7 @@ public:
     void func_80453608();
 
     u32 field_04;
-    void* mFontData;
+    void* mFontData;  //written from allocate_tail void*
     void* mFontInfo;
     u16 mState;
     u16 mMode;

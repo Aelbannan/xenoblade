@@ -30,7 +30,7 @@ struct CHelpLearnArtsCharData {
 struct CHelpFlagBag;
 
 extern "C" CHelpFlagBag* lbl_eu_80664A10;
-extern "C" void* lbl_eu_806640F4;
+extern "C" u8* lbl_eu_806640F4;
 extern "C" UNKWORD func_80122450();
 extern "C" u8 func_8012246C();
 extern "C" u32 func_801B481C();

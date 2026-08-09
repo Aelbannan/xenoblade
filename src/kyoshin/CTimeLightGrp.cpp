@@ -34,8 +34,8 @@ struct CTimeLightGrp_BaseLayout {
 };
 
 // ================== __ct__CTimeLightGrp ==================
-extern "C" void __ct__CTimeLightGrp(void* self, void* parent) {
-    CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
+extern "C" void __ct__CTimeLightGrp(CTimeLightGrp_BaseLayout* self, void* parent) {
+    CTimeLightGrp_BaseLayout* p = self;
     _reslist_base<CVirtualLightObjPtr>* base =
         (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     int i;
@@ -206,7 +206,7 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
 }
 
 // ================== func_8005A2F0 ==================
-extern "C" void func_8005A2F0(void* self, void* item) {
+extern "C" void func_8005A2F0(u8* self, CVirtualLightObjPtr item) {
     // reslist<CVirtualLightObj*> push_back, inlined through the template so the
     // try/catch setItem materialises the mr r31,r1 / stw r1 frame (retail ABI).
     // This reproduces the retail text structure exactly (structural=0); the
@@ -219,8 +219,8 @@ extern "C" void func_8005A2F0(void* self, void* item) {
 }
 
 // ================== func_8005A374 ==================
-extern "C" void func_8005A374(void* self) {
-    CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
+extern "C" void func_8005A374(CTimeLightGrp_BaseLayout* self) {
+    CTimeLightGrp_BaseLayout* p = self;
     _reslist_base<CVirtualLightObjPtr>* base =
         (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     _reslist_node<CVirtualLightObjPtr>* head;

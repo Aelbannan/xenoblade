@@ -49,7 +49,8 @@ void func_800C551C(){}
 
 void func_800C5928(void) {}
 
-extern "C" void* __dt__Q22cf18CfObjectImplWalkerFv(void* self, int deleteFlag) {
+extern "C" void* __dt__Q22cf18CfObjectImplWalkerFv(
+    cf::CfObjectImplWalker* self, int deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
         operator delete(self);
     }

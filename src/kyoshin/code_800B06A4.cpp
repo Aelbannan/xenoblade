@@ -5,8 +5,9 @@
 #include "kyoshin/code_800B06A4.hpp"
 #include <string.h>
 
-// Forward declaration for func_800B3A88 (defined in this TU)
-void func_800B3A88(UnkClass_805764CC* self, void* target);
+// C-ABI import for func_800B3A88
+// Forward declaration (defined elsewhere in this unit; unmangled name)
+extern "C" void func_800B3A88(UnkClass_805764CC* self, void* target);
 
 void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
@@ -334,7 +335,7 @@ void init_42E8(){}
 // find entries where data->field_0x94 == 2, and if name is NULL or
 // strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
 // The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
-extern "C" void func_800B4368(UnkClass_805764CC* self, const char* name) {
+extern "C" __declspec(noinline) void func_800B4368(UnkClass_805764CC* self, const char* name) {
     u8* sentinel = *(u8**)((u8*)self + 0xBCC);
     u8* cur = *(u8**)sentinel;
 
@@ -375,7 +376,7 @@ extern "C" void func_800B4400(UnkClass_805764CC* self) {
         u32* data = (u32*)*(node2 + 2); // node->field_0x08 = data pointer
         u32 val = *(data + 0x94 / 4);   // data->field_0x94
         if (val == 1 || val == 6) {
-            func_800B2D88((u8*)self + 0xC28);
+            func_800B2D88((u8*)self + 0xC28, data);
         }
         node2 = (u32*)*node2;
     }
@@ -824,8 +825,7 @@ extern "C" void* func_800B8AFC(void* self) {
 
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
-        func_80193CD0(ca0, self);
-        result = ca0;
+        result = func_80193CD0(ca0, self);
     }
 
     return result;
@@ -905,6 +905,24 @@ void init_99BC(){}
 void fwd_99EC_body(){}
 void init_9A30(){}
 
+// Target 5: us-800b141c - __ct__reslist_cf_TboxInfo
+// Base reslist ctor: links the sentinel at this+8 to itself. Inlined into the
+// derived ctor below, reproducing the retail store schedule.
+template <typename T>
+_reslist_base<T>::_reslist_base() {
+    this->field_0x04 = (u32)((u8*)this + 8);
+    this->sentinel_prev = (u32)((u8*)this + 8);
+    this->sentinel_next = (u32)((u8*)this + 8);
+}
+
+// TboxInfo reslist ctor: zeroes the 0x2c/0x30/0x34 fields over the base.
+template <>
+reslist<cf::TboxInfo>::reslist() : _reslist_base<cf::TboxInfo>() {
+    this->field_0x2c = 0;
+    this->field_0x30 = 0;
+    this->field_0x34 = 0;
+}
+
 _reslist_base<cf::TboxInfo>::~_reslist_base(){}
 reslist<cf::TboxInfo>::~reslist(){}
 _reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
@@ -937,26 +955,99 @@ void sinit_800B9A40() {
     lbl_eu_80663EE0 = 0;
 }
 
-extern "C" void func_800B14D4() {}
-extern "C" void func_800B14FC() {}
-extern "C" bool func_800B2D28() { return false; }
-extern "C" void func_800B31D4() {}
-extern "C" void func_800B3D34() {}
-extern "C" void func_800B3D40() {}
+// Target 4: us-800b1da0 - deref field at +0x0 and add 8
+u32 func_800B14D4(u8* self) {
+    return *(u32*)self + 8;
+}
+// Target 5: us-800b1dc8 - compare two u32 for inequality (dual-subf/or/srwi idiom)
+u32 func_800B14FC(int* a, int* b) {
+    int va = *a;
+    int vb = *b;
+    return va != vb;
+}
+// Target 1: us-800b35f4 - accessor returning field at +0x4
+u32 func_800B2D28(u8* self) {
+    return *(u32*)(self + 0x4);
+}
+// Target 5: us-800b3aa0 - extract bit 7 of field at +0x64
+u32 func_800B31D4(u8* self) {
+    return (*(u32*)(self + 0x64) >> 7) & 1;
+}
+// Target 1: us-800b4630 - return bit 31 of field at +0x64
+u32 func_800B3D34(u8* self) {
+    return (*(u32*)(self + 0x64) >> 31) & 1;
+}
+// Target 2: us-800b463c - return bit 27 of field at +0x6C
+u32 func_800B3D40(u8* self) {
+    return (*(u32*)(self + 0x6C) >> 27) & 1;
+}
 extern "C" void func_800B4A24() {}
-extern "C" void func_800B4F6C() {}
-extern "C" bool func_800B4FA4() { return false; }
-extern "C" void func_800B64D0() {}
-extern "C" void func_800B7058() {}
+// Target 4: us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
+void func_800B4F6C(u8* self) {
+    *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
+}
+// Target 2: us-800b58a0 - accessor returning field at +0x70
+u32 func_800B4FA4(u8* self) {
+    return *(u32*)(self + 0x70);
+}
+// Target 3: us-800b6dcc - return mask & field at +0x6C
+u32 func_800B64D0(u8* self, u32 mask) {
+    return mask & *(u32*)(self + 0x6C);
+}
+// Target 2: us-800b3654 - func_800B2D88
+// Thunk: copy arg to a stack local, then forward its address to func_800B2DB0.
+void func_800B2D88(void* self, void* arg) {
+    func_800B2DB0(self, &arg);
+}
+
+// Target 1: us-800b9bf4 - func_800B92D8
+// Wrapper: fetch the singleton and forward it to func_800B15A4.
+void func_800B92D8() {
+    func_800B15A4(func_800B07E8());
+}
+
+// Target 4: us-800b9cec - func_800B93D0
+// Wrapper: fetch the singleton and forward (singleton, obj) to func_800B1E18.
+void func_800B93D0(void* obj) {
+    func_800B1E18(func_800B07E8(), obj);
+}
+
+// Target 5: us-800b9d20 - func_800B9404
+// Wrapper: fetch the singleton and forward (singleton, obj) to func_800B3A88.
+void func_800B9404(void* obj) {
+    func_800B3A88(func_800B07E8(), obj);
+}
+
+// Target 3: us-800b7978 - func_800B7058
+// Wrapper: fetch the singleton and insert obj into it via func_800B6DD0.
+void func_800B7058(void* obj) {
+    func_800B6DD0(func_800B07E8(), obj);
+}
 extern "C" void func_800B7320() {}
 extern "C" void func_800B7A18() {}
 extern "C" void func_800B87FC() {}
 extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent() {}
-extern "C" void func_800B92D8() {}
-extern "C" void func_800B93D0() {}
-extern "C" void func_800B9404() {}
-extern "C" void func_800B9438() {}
-extern "C" void func_800B946C() {}
-extern "C" void func_800B94A0() {}
-extern "C" void func_800B9548() {}
-extern "C" bool func_800B96D8() { return false; }
+// Target 1: us-800b9d54 - func_800B9438
+// Fetch the singleton and forward (singleton, arg) to func_800B4278.
+void func_800B9438(void* arg) {
+    func_800B4278(func_800B07E8(), (u32)arg);
+}
+// Target 2: us-800b9d88 - func_800B946C
+// Fetch the singleton and forward (singleton, arg) to func_800B42E8.
+void func_800B946C(void* arg) {
+    func_800B42E8(func_800B07E8(), (u32)arg);
+}
+// Target 3: us-800b9dbc - func_800B94A0
+// Fetch the singleton and forward (singleton, name) to func_800B4368.
+void func_800B94A0(const char* name) {
+    func_800B4368(func_800B07E8(), name);
+}
+// Target 4: us-800b9e64 - func_800B9548
+// Fetch the singleton and forward (singleton, 0x8000, 0, 0) to func_800B20B4.
+void func_800B9548() {
+    func_800B20B4(func_800B07E8(), 0x8000, 0, 0);
+}
+// Target 3: us-800b9ff4 - setter storing val at +0x720
+void func_800B96D8(u8* self, u32 val) {
+    *(u32*)(self + 0x720) = val;
+}

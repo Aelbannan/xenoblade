@@ -98,6 +98,6 @@ void func_800FD68C(void* self){}
 
 void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
 
-extern "C" void func_800FD6A0(void* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }
+extern "C" void func_800FD6A0(u8* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }
 
 cf::CfObjectSelectorObj::~CfObjectSelectorObj() {}

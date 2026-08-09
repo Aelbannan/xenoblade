@@ -39,9 +39,9 @@ void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((cha
 
 void func_80270654(){}
 
-void func_802706C4(void* self) {
-    *(unsigned long*)((char*)self + 0) = 0;
-    *(unsigned long*)((char*)self + 4) = 0;
+void func_802706C4(u8* self) {
+    *(unsigned long*)(self + 0) = 0;
+    *(unsigned long*)(self + 4) = 0;
 }
 
 void __dt__802706D4(){}
@@ -50,15 +50,15 @@ void __dt__80270714(){}
 
 void func_80270770(){}
 
-extern "C" void func_80270AD8(void* dst, void* src) {
+extern "C" void func_80270AD8(u8* dst, u8* src) {
     *(unsigned long*)dst = *(unsigned long*)src;
-    *(unsigned long*)((u8*)dst + 4) = *(unsigned long*)((u8*)src + 4);
+    *(unsigned long*)(dst + 4) = *(unsigned long*)(src + 4);
 }
 
-void* func_80270AEC(void* self, int param) {
+u8* func_80270AEC(CMenuPlayAward* self, int param) {
     if (param >= 256) return 0;
-    CMenuPlayAward* menu = static_cast<CMenuPlayAward*>(self);
-    return (void*)((unsigned char*)menu + (menu->mPageIndex << 11) + ((param & 0xFF) << 3));
+    CMenuPlayAward* menu = self;
+    return (u8*)menu + (menu->mPageIndex << 11) + ((param & 0xFF) << 3);
 }
 
 void __ct__CPlayAwardList(){}
@@ -75,14 +75,14 @@ void func_80270E64(){}
 
 bool CScrollBar_isVisible(void*);
 
-unsigned char func_80270F28(void* this_) {
-    if (CScrollBar_isVisible((void*)((char*)this_ + 0x48))) {
-        return *((unsigned char*)this_ + 0x8a);
+unsigned char func_80270F28(u8* this_) {
+    if (CScrollBar_isVisible(this_ + 0x48)) {
+        return this_[0x8a];
     }
     return 0;
 }
 
-u8 func_80270F6C(void* self) { return static_cast<CMenuPlayAward*>(self)->mField_8B; }
+u8 func_80270F6C(CMenuPlayAward* self) { return self->mField_8B; }
 
 void func_80270F74(){}
 

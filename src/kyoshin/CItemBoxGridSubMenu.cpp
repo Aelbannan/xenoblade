@@ -234,7 +234,7 @@ void func_80208844(){}
 
 void func_80208890(){}
 
-void func_802082D0(void* self){
-    if (*(u8*)((u8*)self + 0x20) == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);
+void func_802082D0(u8* self){
+    if (self[0x20] == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), 0, 0, 1);
 }

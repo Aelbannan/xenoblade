@@ -25,19 +25,19 @@ CLight::CLight(){
     mFlags = r0;
 }
 
-void func_804C02E4(void* self, int value){
+void func_804C02E4(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 void func_804C0398(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
-void func_804C03A0(void* self, int value){
+void func_804C03A0(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void func_804C0454(void* self, int value){
+void func_804C0454(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void func_804C0484(void* self, int value){
+void func_804C0484(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Computes a direction vector by rotating the +Z unit vector (0,0,1)
@@ -101,7 +101,7 @@ void func_804C0570(CLight* self, f32 angleX, f32 angleY) {
         break;
     }
 }
-void func_804C07F0(void* self, int value){
+void func_804C07F0(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Toggles a light-enable flag (bit 16 of mFlags) and propagates it
@@ -122,5 +122,5 @@ void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
 }
 void func_804C0928(){}
 extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
-void func_804C09E0(void* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
+void func_804C09E0(u8* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
 void func_804C09E8(){}

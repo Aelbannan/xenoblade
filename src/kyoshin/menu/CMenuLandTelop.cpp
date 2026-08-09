@@ -22,18 +22,18 @@ void func_80144FC8(){}
 
 void func_80144FF0(){}
 
-extern int lbl_eu_806641A0;
+extern u8* lbl_eu_806641A0;
 
 void func_80145018() {
-    void* p = (void*)lbl_eu_806641A0;
+    u8* p = lbl_eu_806641A0;
     if (p != 0) {
-        *(unsigned char*)((char*)p + 0x64) = 1;
+        p[0x64] = 1;
     }
 }
 
 unsigned char func_80145030(void) {
     if (lbl_eu_806641A0 != 0) {
-        return *((unsigned char*)lbl_eu_806641A0 + 0xe0);
+        return lbl_eu_806641A0[0xe0];
     }
     return 0;
 }

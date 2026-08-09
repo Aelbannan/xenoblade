@@ -204,23 +204,27 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
     u32 a0 = self->unk0;
     if (a0 != 0) a0 += 0x3e9c;
     EneChainObj* o0 = (EneChainObj*)func_800AD860((void*)a0);
-    // Materialised 0/1 flag: 1 when the timeline is a special enemy-chain type.
-    int b0 = (o0 != 0) && ((o0->type == 0x96b) || (o0->type == 0x96c));
-    if (b0) {
+    int special = 0;
+    if (o0 != 0) {
+        special = (o0->type == 0x96b) || (o0->type == 0x96c);
+    }
+    if (special) {
         // Scan the gimmick-object list for a 0x96b timeline and clear the
         // "rework" bit (bit 1 of the 0xa0 flag) on its battle actor.
         GlistList* list = (GlistList*)func_800B6BC8();
-        GlistNode* node = list->field_04->next;
-        EneChainObj* found = 0;
-        while (node != list->field_04) {
+        EneChainObj* found;
+        for (GlistNode* node = list->field_04->next;; node = node->next) {
+            if (node == list->field_04) {
+                found = 0;
+                break;
+            }
             EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
             if (o != 0 && o->type == 0x96b) {
                 found = o;
                 break;
             }
-            node = node->next;
         }
-        BattleActor* act = found ? (BattleActor*)func_80193AB0(func_80193670(), found->id) : 0;
+        BattleActor* act = (found != 0) ? (BattleActor*)func_80193AB0(func_80193670(), found->id) : 0;
         if (act != 0) act->flagA0 &= ~2;
     }
     // Always also clear the bit on the actor found through our own timeline.

@@ -238,8 +238,8 @@ extern "C" void func_80253904(CCollepedia* this_, char* arg2, char* arg3) {
 extern "C" void func_80253970(CCollepedia* this_, LayoutContainer* container, int arg3) {
     char buf[0x28];
     sprintf(buf, &lbl_eu_8050C6E8[0x14f], arg3 + 1);
-    nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)container->mpLayout + 0x10))->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)container->mpLayout + 0x10))->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
+    nw4r::lyt::Pane* pane1 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pane2 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
     func_80137924(this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
 }
 #pragma pop
@@ -847,9 +847,8 @@ void func_802552B4(CCollepedia* this_) {
 
 void func_802553AC(){}
 
-void func_80255688(void* self) {
-    CCollepediaFull* full = static_cast<CCollepediaFull*>(self);
-    func_80253EE8((u8*)self + 0xE8, full->field_D9, full->field_D8);
+void func_80255688(CCollepediaFull* self) {
+    func_80253EE8((u8*)self + 0xE8, self->field_D9, self->field_D8);
 }
 
 extern "C" u8 func_80255698(CCollepedia* self) {

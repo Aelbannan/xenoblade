@@ -110,11 +110,11 @@ void CScn::Draw() {
 }
 
 
-bool func_80495E60(void* self){
+bool func_80495E60(u8* self){
     extern bool func_8048CB14(void*);
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }
-extern "C" bool func_80495E84(void* self) {
+extern "C" bool func_80495E84(u8* self) {
     extern bool func_8048CB14(void*);
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }
@@ -133,23 +133,23 @@ extern "C" void func_80495EAC() {
 extern "C" void func_80495EB0() {
     __ct__804820F8();
 }
-extern "C" void func_80495FC8(void* self) {
+extern "C" void func_80495FC8(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v6();
 }
-extern "C" void func_80495FDC(void* self) {
+extern "C" void func_80495FDC(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v7();
 }
-extern "C" void func_80495FF0(void* self) {
+extern "C" void func_80495FF0(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v9();
 }
-extern "C" void func_80496004(void* self) {
+extern "C" void func_80496004(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v10();
 }
-extern "C" void func_80496018(void* self) {
+extern "C" void func_80496018(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 140);
     obj->v8();
 }
@@ -159,13 +159,13 @@ extern "C" void func_8049602C(void* p) {
 extern "C" void* func_80496034(void* _this) {
     return func_8049C794(*(void**)((char*)_this + 0x80));
 }
-extern "C" u32 func_8049603C(void* self) {
+extern "C" u32 func_8049603C(u8* self) {
     extern u32 func_8049C7A8(u32);
     return func_8049C7A8(*(u32*)((char*)self + 0x80));
 }
 void func_80496044(){}
 void func_804960A8(){}
-extern "C" void* func_80496110(void* self) {
+extern "C" void* func_80496110(u8* self) {
     return func_8049C7B0(*(void**)((char*)self + 0x80));
 }
 extern "C" int func_80496118(void* _this) {
@@ -183,18 +183,18 @@ extern "C" bool func_8049626C(void* _this) {
 extern "C" void* func_80496274(void* _this) {
     return func_8049B2C4(*(void**)((char*)_this + 0x68));
 }
-extern "C" void func_8049627C(void* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
+extern "C" void func_8049627C(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
 void func_80496288(){}
 extern "C" void func_80496294() {}
 extern "C" void func_804962A0(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }
 bool func_804962A8(){ return false; }
-extern "C" void func_8049695C(void* self) {
+extern "C" void func_8049695C(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 104);
     obj->v3();
 }
-extern "C" void func_80496970(void* self) {
+extern "C" void func_80496970(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 96);
     obj->v4();
 }
@@ -209,7 +209,7 @@ void func_80496998__Fv(void){}
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 
 
-extern "C" void func_eu_8049AB50(void* self, unsigned char byte) {
+extern "C" void func_eu_8049AB50(u8* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
 }
 void __dt__4CScnFv(void*, int);
@@ -217,7 +217,7 @@ extern "C" void func_80496B04(void* pThis, int r4) {
     __dt__4CScnFv((char*)pThis - 0x54, r4);
 }
 
-extern "C" void func_8049699C(void* self) {
+extern "C" void func_8049699C(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 0x8C);
     obj->v11();
 }

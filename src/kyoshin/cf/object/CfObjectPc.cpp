@@ -403,35 +403,35 @@ void cf::CfObjectPc::func_800C0080() {}
 
 void cf::CfObjectPc::func_800C00C0() {}
 
-extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C00C0();
 }
 
-extern "C" void func_800C0080__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800C0080__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C0080();
 }
 
-extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800BFF20();
 }
 
-extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800BFFEC();
 }
 
-extern "C" void func_800C0524__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C0524();
 }
 
-extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C11CC();
 }
 
-extern "C" void __dt__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->~CfObjectPc();
 }
 
-extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self) {
+extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C02EC();
 }
 
@@ -496,6 +496,6 @@ void func_800C1228__FPv(){}
 
 void cf::CfObjectPoint::func_800C1244() {}
 
-extern "C" void func_800C0504__Q22cf10CfObjectPcFv(void* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
+extern "C" void func_800C0504__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
 
-extern "C" void func_800C0514__Q22cf10CfObjectPcFv(void* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
+extern "C" void func_800C0514__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }

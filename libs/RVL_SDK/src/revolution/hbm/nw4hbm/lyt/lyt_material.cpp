@@ -326,14 +326,14 @@ Material::Material(const res::Material* pRes, const ResBlockSet& rBlockSet) {
                         reinterpret_cast<const u8*>(pTexture) +
                         pTexture[pResTexMap[i].texIdx].nameStrOffset);
 
-                void* const pTexPalette = rBlockSet.pResAccessor->GetResource(
-                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
+                TPLPalette* const pTexPalette =
+                    static_cast<TPLPalette*>(rBlockSet.pResAccessor->GetResource(
+                        ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL));
 
                 GXTexObj* const pTexObj =
                     reinterpret_cast<GXTexObj*>(GetTexMapAry()) + i;
 
-                detail::InitGXTexObjFromTPL(
-                    pTexObj, static_cast<TPLPalette*>(pTexPalette), 0);
+                detail::InitGXTexObjFromTPL(pTexObj, pTexPalette, 0);
 
                 GXInitTexObjWrapMode(
                     pTexObj,

@@ -84,7 +84,7 @@ private:
 
 private:
     OutputMode mOutputMode;                          // at 0x0
-    void* mZeroBufferAddress;                        // at 0x4
+    u8* mZeroBufferAddress;                          // at 0x4
     CallbackListNodeList mCallbackList;              // at 0x8
     AXOutCallback mNextAxRegisterCallback;           // at 0x14
     bool mInitialized;                               // at 0x18

@@ -4,7 +4,7 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "kyoshin/cf/CMcaFile.hpp"
 
-extern "C" void __ct__CMcaFile(void* self, void* data) {
+extern "C" void __ct__CMcaFile(u8* self, void* data) {
     extern u8 lbl_eu_80526348[];
     u8* s = (u8*)self;
     u8* d = (u8*)data;
@@ -24,7 +24,7 @@ CMcaFile::~CMcaFile() {
     // Nothing to destroy; deletion is handled by MWCC ABI flag
 }
 
-extern "C" void func_800584B8(void* self, void* data, const char* name) {
+extern "C" void func_800584B8(u8* self, void* data, const char* name) {
     u8* d = (u8*)data;
     s32 hasMagic = 0;
     void* dataAdj = data;

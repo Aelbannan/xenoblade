@@ -67,7 +67,7 @@ public:
     BOOL mDevicesInitialized; //0x1CC
     GXFifoObj mFifo; //0x1D0
     u8* mGxHeap; //0x250
-    void* mGxHeapEndAddr; //0x254
+    u8* mGxHeapEndAddr; //0x254
     u8 mVFilter[8]; //0x258
     float unk260;
     float unk264;

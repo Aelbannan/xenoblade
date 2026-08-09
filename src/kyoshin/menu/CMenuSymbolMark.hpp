@@ -10,7 +10,7 @@ class CScn;
 struct SymbolMarkEntry {
     u32 unk00;    // 0x00
     u32 unk04;    // 0x04
-    void* layout; // 0x08
+    u8* layout; // 0x08
     u8 flag0;     // 0x0C
     u8 flag1;     // 0x0D
     u8 flag2;     // 0x0E
@@ -38,9 +38,9 @@ public:
     u8 mUnk54; // 0x54
     u8 mUnk55; // 0x55
     u8 _pad56[2]; // 0x56
-    // 0x58: IWorkEvent vtable ptr (manual, not via inheritance)
+    // 0x58: IWorkEvent vtable ptr (manual, not via inheritance) - kept void*
     void* mIWorkEventVt; // 0x58
-    // 0x5C: IScnRender vtable ptr (manual)
+    // 0x5C: IScnRender vtable ptr (manual) - kept void*
     void* mIScnRenderVt; // 0x5C
     CScn* mScn; // 0x60
     UnkClass_8045F564 mUnkClass; // 0x64 (size 0x10)
@@ -51,9 +51,9 @@ public:
     u8 mEntryCount; // 0x275
     u8 _pad276[2]; // 0x276
     f32 mTimer; // 0x278
-    void* mArchiveFP; // 0x27C
-    void* mSomeFP; // 0x280
-    void* mAnotherFP; // 0x284
+    u8* mArchiveFP; // 0x27C
+    u8* mSomeFP; // 0x280
+    u8* mAnotherFP; // 0x284
     u32 mSomeValue; // 0x288
     u32 mSomeValue2; // 0x28C
     u32 mSomeValue3; // 0x290
@@ -67,7 +67,7 @@ public:
     u32 mArray6A8[8][4]; // 0x6A8-0x8A7
     u32 mField_8A8; // 0x8A8
     f32 mField_8AC; // 0x8AC
-    void* mRenderItem; // 0x8B0
+    u8* mRenderItem; // 0x8B0
 };
 
 class CArrow3D : public CTTask<CArrow3D> {
@@ -83,18 +83,18 @@ public:
     // and MWCC would drop the retail Move__17CTTask<8CArrow3D>Fv symbol.
 
     // 0x00-0x54: CTTask<CArrow3D>
-    // 0x54: IScnRender vtable ptr (manual)
+    // 0x54: IScnRender vtable ptr (manual) - kept void*
     void* mIScnRenderVt; // 0x54
-    void* mDataHandle; // 0x58
-    void* mDataPtr; // 0x5C
+    u8* mDataHandle; // 0x58
+    u8* mDataPtr; // 0x5C
     f32 mPosX; // 0x60
     f32 mPosY; // 0x64
     f32 mPosZ; // 0x68
     u8 mFlag6C; // 0x6C
     u8 _pad6D[3]; // 0x6D
-    void* mLayout; // 0x70
+    u8* mLayout; // 0x70
     u8 _pad74[4]; // 0x74
-    void* mAlignedData; // 0x78
+    u8* mAlignedData; // 0x78
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

@@ -85,7 +85,7 @@ void func_800BA440(){}
 
 void cf::CfObjectMap::func_800BA610() {}
 
-extern "C" void func_800BA650__Q22cf11CfObjectMapFv(void* self, float f) {
+extern "C" void func_800BA650__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
     extern void func_80484E5C(void*);
     void* unk = *(void**)((char*)self + 0x98);
     *(float*)((char*)self + 0x2F48) = f;
@@ -96,7 +96,7 @@ extern "C" void func_800BA650__Q22cf11CfObjectMapFv(void* self, float f) {
 
 void cf::CfObjectMap::func_800BA66C() {}
 
-extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv(void* self, int arg) {
+extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int arg) {
     unsigned int* field = (unsigned int*)((char*)self + 0x68);
     if (arg != 0)
         *field |= 0x200000;
@@ -104,9 +104,9 @@ extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv(void* sel
         *field &= ~0x200000;
 }
 
-extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(void* self) { return 0; }
+extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return 0; }
 
-extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(void* self) { return 0; }
+extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { return 0; }
 
 
 
@@ -114,6 +114,6 @@ extern "C" void func_800BA764__Q22cf11CfObjectMapFv() {}
 
 cf::CfObjectMap::~CfObjectMap() {}
 
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(void* self) { reinterpret_cast<CMIf*>(self)->vf00D0(); }
+extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { reinterpret_cast<CMIf*>(self)->vf00D0(); }
 
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(void* self) { reinterpret_cast<CMIf*>(self)->vf00C4(); }
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { reinterpret_cast<CMIf*>(self)->vf00C4(); }

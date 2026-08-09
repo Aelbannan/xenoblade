@@ -559,4 +559,4 @@ CPad* CPadManager::getMainGCPad(){
     return spPadData->mMainGCPad;
 }
 
-extern "C" void* func_eu_80449F30(int index) { extern unsigned char* lbl_eu_80665630; return lbl_eu_80665630 + index * 0xf8 + 0x24; }
+extern "C" u8* func_eu_80449F30(int index) { extern unsigned char* lbl_eu_80665630; return lbl_eu_80665630 + index * 0xf8 + 0x24; }

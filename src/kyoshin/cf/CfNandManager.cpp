@@ -111,7 +111,7 @@ void func_802405FC__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__
 
 void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
-extern "C" void func_8024060C__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
+extern "C" void func_8024060C__Q22cf13CfNandManagerFv(cf::CfNandManager* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

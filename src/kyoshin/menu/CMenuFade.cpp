@@ -117,8 +117,8 @@ void CMenuFade::Term() {
 int func_80113E1C() {
     return lbl_eu_80663FA0;
 }
-u8 func_80113E24(void* pthis) {
-    return *(u8*)((char*)pthis + 0x94);
+u8 func_80113E24(u8* pthis) {
+    return pthis[0x94];
 }
 // Converted to inline member function in header
 void __dt__9CMenuFadeFv(CMenuFade*);

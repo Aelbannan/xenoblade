@@ -141,13 +141,13 @@ extern const float lbl_eu_80666510;
 extern const float lbl_eu_80666548;
 
 #pragma dont_inline on
-u32 func_8007DCA8(u32 first, u32 second) {
+unsigned int func_8007DCA8(unsigned int first, unsigned int second) {
     return (first << 27) | (second << 20);
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
-void func_8007E4CC(u32 mask) {
+extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
     lbl_eu_80663E24 &= ~mask;
 }
 #pragma dont_inline reset
@@ -169,10 +169,14 @@ extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(UnkF8C0Node* destination,
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 index,
                                                         u32 offset) {
-    data->field_0x6D0 = offset + index * 16;
+    u32 value = index * 16;
+    value += offset;
+    data->field_0x6D0 = value;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 bool func_8007CBD4(u32 mask) {
@@ -199,7 +203,7 @@ extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u3
 #pragma dont_inline reset
 
 #pragma dont_inline on
-void func_8007F990(u32 mask, bool enable) {
+extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
     if (enable) {
         lbl_eu_80663E28 |= mask;
     } else {
@@ -319,17 +323,28 @@ CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
 } // namespace cf
 
 #pragma dont_inline on
-cf::CfObjectMove** cf::CfGameManager::func_8007C6B4(cf::CfObjectMove** slots,
-                                                                    int index) {
+extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots,
+                                                                              int index) {
     return &slots[index];
 }
 #pragma dont_inline off
 
-void cf::CfGameManager::func_8007C188(unsigned long flags) {}
+#pragma dont_inline on
+extern "C" void func_8007C188__Q22cf13CfGameManagerFv(u32 flags) {
+    lbl_eu_80663E24 |= flags;
+}
+#pragma dont_inline reset
 
-void cf::CfGameManager::func_8007D190(unsigned long flags) {}
+extern "C" void func_8007D190__Q22cf13CfGameManagerFv(u32 flags) {
+    lbl_eu_80663E24 &= ~flags;
+}
 
-void cf::CfGameManager::func_8007D794() {}
+#pragma dont_inline on
+extern "C" void func_8007D794__Q22cf13CfGameManagerFv(Unk87588Data* data) {
+    data->field_0x0 = 0;
+    data->field_0x20 = 0;
+}
+#pragma dont_inline reset
 
 #pragma dont_inline on
 bool cf::CfGameManager::func_8007E1B4() {
@@ -349,7 +364,7 @@ UnkClass_80083298* cf::CfGameManager::func_80083298() {
     return getInstance()->unk90;
 }
 #pragma dont_inline reset
-void func_eu_800874CC(){ func_800B76CC(); }
+extern "C" void func_eu_800874CC(){ func_800B76CC(); }
 struct VoiceSource;
 
 extern "C" void func_eu_800874D0()
@@ -357,13 +372,13 @@ extern "C" void func_eu_800874D0()
     func_800B76F4();
 }
 
-void func_eu_800874D4(void){
+extern "C" void func_eu_800874D4(void){
     func_800B781C();
 }
 
-extern "C" void func_eu_800874D8()
+extern "C" VoiceSource* func_eu_800874D8(VoiceSource* source)
 {
-    func_800B7854();
+    return func_800B7854(source);
 }
 void cf::CfGameManager::func_80086B5C(int arg1, int arg2, int arg3) {}
 void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
@@ -404,39 +419,9 @@ bool cf::CfGameManager::func_80086F9C() {
 CPad* cf::CfGameManager::getPad(int channel) {
     return &lbl_eu_80570D40[channel & 7];
 }
-extern "C" void setPad__Q22cf13CfGameManagerFv(int channel, CPad* pad, u32 arg3) {
-    CPad* destination = &lbl_eu_80570D40[channel & 7];
-    destination->mHeldButtonFlags = pad->mHeldButtonFlags;
-    destination->mPressedButtonFlags = pad->mPressedButtonFlags;
-    destination->mTurboPressButtonFlags = pad->mTurboPressButtonFlags;
-    destination->mReleasedButtonFlags = pad->mReleasedButtonFlags;
-    destination->mShortPressButtonFlags = pad->mShortPressButtonFlags;
-    destination->mLongHoldButtonFlags = pad->mLongHoldButtonFlags;
-    for (s32 i = 0; i < 0x40; ++i) {
-        destination->mButtonHoldTimersTurbo[i] = pad->mButtonHoldTimersTurbo[i];
-        destination->mButtonHoldTimers[i] = pad->mButtonHoldTimers[i];
-    }
-    destination->mLStickX = pad->mLStickX;
-    destination->mLStickY = pad->mLStickY;
-    destination->mRStickX = pad->mRStickX;
-    destination->mRStickY = pad->mRStickY;
-    destination->mLeftTriggerByte = pad->mLeftTriggerByte;
-    destination->mRightTriggerByte = pad->mRightTriggerByte;
-    destination->mLStickXRaw = pad->mLStickXRaw;
-    destination->mLStickYRaw = pad->mLStickYRaw;
-    destination->mRStickXRaw = pad->mRStickXRaw;
-    destination->mRStickYRaw = pad->mRStickYRaw;
-    destination->mLeftTriggerFloat = pad->mLeftTriggerFloat;
-    destination->mRightTriggerFloat = pad->mRightTriggerFloat;
-    destination->mWpadData = pad->mWpadData;
-    destination->mWiimoteAccelData = pad->mWiimoteAccelData;
-    destination->mNunchuckAccelData = pad->mNunchuckAccelData;
-    destination->mPadType = pad->mPadType;
-    destination->mWpadErr = pad->mWpadErr;
-    destination->mConnected = pad->mConnected;
-    destination->mChannel = pad->mChannel;
-    destination->mMotorTimer = pad->mMotorTimer;
-    if (channel <= 3 && arg3 != 0) {
+extern "C" void setPad__Q22cf13CfGameManagerFv(u32 channel, CPad* pad, u32 arg3) {
+    lbl_eu_80570D40[channel & 7] = *pad;
+    if (lbl_eu_80661BC8 == 0xFFFFFFFF && channel <= 3 && arg3 != 0) {
         lbl_eu_80661BC8 = channel;
     }
 }
@@ -549,7 +534,7 @@ void cf::CfGameManager::func_800873D4() {
 }
 
 void cf::CfGameManager::func_800873E8() {
-    field_0x4->CfObject_UnkVirtualFunc29(0.0f);
+    reinterpret_cast<Unk80EE4Data*>(field_0x4)->vfunc_0xC4();
 }
 
 void cf::CfGameManager::func_800873FC() {
@@ -621,8 +606,9 @@ cf::CfObject* cf::CfGameManager::func_8008221C() {
 
 u16 cf::CfGameManager::func_80082770() {
     s32 oldIndex = field_0x44;
+    field_0x44++;
+    field_0x44 %= field_0x4C;
     field_0x48--;
-    field_0x44 = (oldIndex + 1) % field_0x4C;
     return field_0x40[oldIndex];
 }
 
@@ -665,9 +651,11 @@ void cf::CfGameManager::func_800835FC() {
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 void cf::CfGameManager::func_80083878() {
     lbl_eu_80663E24 |= 0x40;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80083CC8() {
     lbl_eu_80663E24 &= ~0x20;
@@ -679,7 +667,9 @@ bool cf::CfGameManager::func_80087250() {
 }
 #pragma dont_inline reset
 
-void cf::CfGameManager::func_8007C4B4() {}
+#pragma dont_inline on
+void* cf::CfGameManager::func_8007C4B4() { return this; }
+#pragma dont_inline reset
 void cf::CfGameManager::func_8007EF44() {}
 void cf::CfGameManager::func_80087330() {}
 void cf::CfObject::CfObject_UnkVirtualFunc46() {}
@@ -689,9 +679,9 @@ void cf::CfGameManager::func_8007EF48() {}
 void cf::CfGameManager::func_8007FE18() {}
 void cf::CfGameManager::func_8007FE1C() {}
 void cf::CfGameManager::func_8007FE20() {}
-void cf::CfGameManager::func_8007F0A4() {}
-void cf::CfGameManager::func_8007F114() {}
-void cf::CfGameManager::func_8007FE24() {}
+extern "C" void* func_8007F0A4__Q22cf13CfGameManagerFv() { return nullptr; }
+extern "C" void* func_8007F114__Q22cf13CfGameManagerFv() { return nullptr; }
+extern "C" void* func_8007FE24__Q22cf13CfGameManagerFv() { return nullptr; }
 cf::CfObject* cf::CfObject::CfObject_UnkVirtualFunc53() {
     return nullptr;
 }
@@ -704,75 +694,91 @@ extern u32 lbl_eu_80664188;
 u32 cf::CfGameManager::func_80083458() { return lbl_eu_80664188; }
 extern u32 lbl_eu_80664184;
 u32 cf::CfGameManager::func_80083460() { return lbl_eu_80664184; }
-void cf::CfGameManager::func_80086B1C() {}
+extern "C" u32 func_80086B1C__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
 extern u32 lbl_eu_8066409C;
-void cf::CfGameManager::func_80086B24() {}
+extern "C" u32 func_80086B24__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
 extern u32 lbl_eu_806640A8;
-void cf::CfGameManager::func_80086B2C() {}
+extern "C" u32 func_80086B2C__Q22cf13CfGameManagerFv() { return lbl_eu_806640A8; }
 extern u32 lbl_eu_806640A4;
-void cf::CfGameManager::func_80086B34() {}
+extern "C" u32 func_80086B34__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
 extern u32 lbl_eu_806640F4;
-void cf::CfGameManager::func_80086B3C() {}
+extern "C" u32 func_80086B3C__Q22cf13CfGameManagerFv() { return lbl_eu_806640F4; }
 extern u32 lbl_eu_80663D90;
-void cf::CfGameManager::func_80086DB4() {}
+extern "C" u32 func_80086DB4__Q22cf13CfGameManagerFv() { return lbl_eu_80663D90; }
 extern u8 lbl_eu_80663E34;
-void cf::CfGameManager::func_8007F9BC() {}
+extern "C" u8 func_8007F9BC__Q22cf13CfGameManagerFv() { return lbl_eu_80663E34; }
 extern u8 lbl_eu_80663E5D;
 u8 cf::CfGameManager::func_80080E20() { return lbl_eu_80663E5D; }
 extern u8 lbl_eu_8066476D;
 u8 cf::CfGameManager::func_80080E28() { return lbl_eu_8066476D; }
 void* cf::CfGameManager::func_8007DA00() { return lbl_eu_8065FC18; }
 
-void cf::CfGameManager::func_80080F40() {}
+#pragma dont_inline on
+extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {
+    return reinterpret_cast<Unk8187CData*>(func_800B985C(reinterpret_cast<UnkClass_800AA714*>(first), reinterpret_cast<UnkClass_800AA714*>(second), third));
+}
+#pragma dont_inline reset
 
-void cf::CfGameManager::func_80080F44() {}
+void cf::CfGameManager::func_80080F44() { func_800B9404(this); }
 
 void cf::CfGameManager::func_80081CB8() { func_800B9548(); }
 
-void cf::CfGameManager::func_80081D88() {}
+extern "C" void* func_800B97A0(void* object);
+#pragma dont_inline on
+extern "C" Unk80EE4Data* func_80081D88__Q22cf13CfGameManagerFv(
+    void* object, u32 value) {
+    return static_cast<Unk80EE4Data*>(func_800B97A0(object));
+}
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80082254() { func_800B93D0(); }
 
-void cf::CfGameManager::func_80082EC0() {}
+extern "C" void func_8026178C(void* object);
+void cf::CfGameManager::func_80082EC0() { func_8026178C(this); }
 
-void cf::CfGameManager::func_80086B04() {}
+void cf::CfGameManager::func_80086B04() { func_800B6BA4__Fv(); }
 
 extern "C" void func_800B6BC8();
-void cf::CfGameManager::func_80086B08() {}
+void cf::CfGameManager::func_80086B08() { func_800B6BC8(); }
 
 extern "C" void func_800B6BEC();
-void cf::CfGameManager::func_80086B0C() {}
+void cf::CfGameManager::func_80086B0C() { func_800B6BEC(); }
 
-void cf::CfGameManager::func_80086B10() {}
+void cf::CfGameManager::func_80086B10() { func_800B6C10(); }
 
-void cf::CfGameManager::func_80086B14() {}
+extern "C" void func_800B6C34();
+void cf::CfGameManager::func_80086B14() { func_800B6C34(); }
 
 extern "C" void func_800B8920();
-void cf::CfGameManager::func_80086B18() {}
+void cf::CfGameManager::func_80086B18() { func_800B8920(); }
 
-void cf::CfGameManager::func_80086B44() {}
+void cf::CfGameManager::func_80086B44() { func_80141B54(); }
 
-void cf::CfGameManager::func_80086B48() {}
+void cf::CfGameManager::func_80086B48() { func_80069EA0(); }
 
-void cf::CfGameManager::func_80086D90() {}
+void cf::CfGameManager::func_80086D90() { func_8006A12C(); }
 
-void cf::CfGameManager::func_80086D94() {}
+void cf::CfGameManager::func_80086D94() { func_8006A1A0(); }
 
-void cf::CfGameManager::func_80086D98() {}
+extern "C" void func_80086D98__Q22cf13CfGameManagerFv(u16* first, u16* second) { func_8006A234(first, second); }
 
-void cf::CfGameManager::func_80086D9C() {}
+#pragma dont_inline on
+bool cf::CfGameManager::func_80086D9C() { return func_8006A2E0(); }
+#pragma dont_inline reset
 
-u32 cf::CfGameManager::func_80086DA0() { return 0; }
+extern "C" u32 func_8006A33C();
+u32 cf::CfGameManager::func_80086DA0() { return func_8006A33C(); }
 
-void cf::CfGameManager::func_80086DA4() {}
+void cf::CfGameManager::func_80086DA4() { func_8006A37C(); }
 
-void cf::CfGameManager::func_80086DA8() {}
+void cf::CfGameManager::func_80086DA8() { func_8006A3BC(); }
 
-void cf::CfGameManager::func_80086DAC() {}
+void cf::CfGameManager::func_80086DAC() { func_8006A3FC(); }
 
-void cf::CfGameManager::func_80086DB0() {}
+void cf::CfGameManager::func_80086DB0() { func_8006A404(); }
 
-u32 cf::CfGameManager::func_80086DBC() { return 0; }
+extern "C" u32 func_8006A6D0();
+u32 cf::CfGameManager::func_80086DBC() { return func_8006A6D0(); }
 
 #pragma dont_inline on
 u16 cf::CfGameManager::func_8007F8B8() {
@@ -782,82 +788,85 @@ u16 cf::CfGameManager::func_8007F8B8() {
 #pragma dont_inline reset
 
 extern u16 lbl_eu_80663E3A;
-void cf::CfGameManager::func_8007F9AC() {}
+extern "C" u16 func_8007F9AC__Q22cf13CfGameManagerFv() { return lbl_eu_80663E3A; }
 
-extern u16 lbl_eu_80663E3A;
-void cf::CfGameManager::func_8007F9B4() {}
+extern "C" void func_8007F9B4__Q22cf13CfGameManagerFv(u16 value) {
+    lbl_eu_80663E3A = value;
+}
 
-void cf::CfGameManager::func_80081264() {}
+struct Unk812Data {
+    u32 field_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    u16 field_0xC;
+    u16 field_0xE;
+    u32 field_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u16 field_0x1C;
+    u16 field_0x1E;
+    u16 field_0x20;
+    u16 field_0x22;
+    u16 field_0x24;
+};
 
-void cf::CfGameManager::func_8008126C() {}
+extern "C" void func_80081264__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x4 = value; }
+extern "C" void func_8008126C__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 0); }
+extern "C" void func_80081274__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x8 = value; }
+extern "C" void func_8008127C__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 1); }
+extern "C" void func_80081284__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x10 = value; }
+extern "C" void func_8008128C__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 2); }
+extern "C" void func_80081294__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { *reinterpret_cast<u32*>(reinterpret_cast<u8*>(data) + 0xC) = value; }
+extern "C" void func_8008129C__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 3); }
+extern "C" void func_800812A4__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x14 = value; }
+extern "C" void func_800812AC__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 4); }
+extern "C" u16 func_800812B4__Q22cf13CfGameManagerFv(Unk812Data* data) { return data->field_0xE; }
+extern "C" u16 func_800812BC__Q22cf13CfGameManagerFv(const u8* data) { return *reinterpret_cast<const u16*>(data + 0x10); }
+extern "C" u16 func_800812C4__Q22cf13CfGameManagerFv(const u8* data) { return *reinterpret_cast<const u16*>(data + 0x12); }
+extern "C" u16 func_800812CC__Q22cf13CfGameManagerFv(const u8* data) { return *reinterpret_cast<const u16*>(data + 0x14); }
+extern "C" u16 func_800812D4__Q22cf13CfGameManagerFv(const u8* data) { return *reinterpret_cast<const u16*>(data + 0x16); }
+extern "C" void func_800812DC__Q22cf13CfGameManagerFv(UnkClass_8009EC9C* data) { func_8009E120(data, 5); }
+extern "C" u16 func_800812E4__Q22cf13CfGameManagerFv(Unk812Data* data) { return data->field_0xC; }
+extern "C" void func_800812EC__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x24 = value; }
+extern "C" void func_800812F4__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x0 = value; }
+extern "C" void func_80081330__Q22cf13CfGameManagerFv(Unk812Data* data, u32 value) { data->field_0x18 = value; }
+extern "C" void func_80081338__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x20 = value; }
+extern "C" void func_80081340__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x22 = value; }
+extern "C" void func_80081348__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x1C = value; }
+extern "C" void func_80081350__Q22cf13CfGameManagerFv(Unk812Data* data, u16 value) { data->field_0x1E = value; }
 
-void cf::CfGameManager::func_80081274() {}
+Unk817A8Object* cf::CfGameManager::func_800817A8() {
+    return *reinterpret_cast<Unk817A8Object**>(reinterpret_cast<u8*>(this) + 8);
+}
 
-void cf::CfGameManager::func_8008127C() {}
+#pragma dont_inline on
+extern "C" void func_80081874__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) { *reinterpret_cast<u32*>(reinterpret_cast<u8*>(data) + 0x64) = value; }
+#pragma dont_inline reset
 
-void cf::CfGameManager::func_80081284() {}
-
-void cf::CfGameManager::func_8008128C() {}
-
-void cf::CfGameManager::func_80081294() {}
-
-void cf::CfGameManager::func_8008129C() {}
-
-void cf::CfGameManager::func_800812A4() {}
-
-void cf::CfGameManager::func_800812AC() {}
-
-void cf::CfGameManager::func_800812B4() {}
-
-void cf::CfGameManager::func_800812BC() {}
-
-void cf::CfGameManager::func_800812C4() {}
-
-void cf::CfGameManager::func_800812CC() {}
-
-void cf::CfGameManager::func_800812D4() {}
-
-void cf::CfGameManager::func_800812DC() {}
-
-void cf::CfGameManager::func_800812E4() {}
-
-void cf::CfGameManager::func_800812EC() {}
-
-void cf::CfGameManager::func_800812F4() {}
-
-void cf::CfGameManager::func_80081330() {}
-
-void cf::CfGameManager::func_80081338() {}
-
-void cf::CfGameManager::func_80081340() {}
-
-void cf::CfGameManager::func_80081348() {}
-
-void cf::CfGameManager::func_80081350() {}
-
-void cf::CfGameManager::func_800817A8() {}
-
-void cf::CfGameManager::func_80081874() {}
-
-
-void cf::CfGameManager::func_80081CB0() {}
+#pragma dont_inline on
+extern "C" void func_80081CB0__Q22cf13CfGameManagerFv(u8* data, u16 value) { *reinterpret_cast<u16*>(data + 0x8C) = value; }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 UNKWORD cf::CfGameManager::func_800822F4() { return func_8009CF8C(0x20); }
 #pragma dont_inline reset
 
-void cf::CfGameManager::func_80082614() {}
-void cf::CfGameManager::func_80082694() {}
+#pragma dont_inline on
+extern "C" u32 func_80082614__Q22cf13CfGameManagerFv(u32 data) { return func_8009CF8C(data + 0x312C); }
+#pragma dont_inline reset
+extern "C" u32 func_80082694__Q22cf13CfGameManagerFv(u8* data) { return func_8009CF8C(reinterpret_cast<u32>(data + 0x40)); }
 
 
-void cf::CfGameManager::func_80083290() {}
+extern "C" s32 func_80083290__Q22cf13CfGameManagerFv(const u8* data) {
+    return *reinterpret_cast<const s16*>(data + 0x532);
+}
 
 extern u8 lbl_eu_80664298;
 void cf::CfGameManager::func_80083468(u32 value) { lbl_eu_80664298 = value; }
 
-void cf::CfGameManager::func_80083C70() {}
+extern "C" void* func_80083C70__Q22cf13CfGameManagerFv(u8* data) { return data + 0x219C; }
 
-void cf::CfGameManager::func_80085838() {}
+void cf::CfGameManager::func_80085838() { func_80496034(lbl_eu_80663E14); }
 
 float cf::CfObject::CfObject_UnkVirtualFunc56() {
     return lbl_eu_80666498;
@@ -891,9 +900,13 @@ void** cf::CfGameManager::func_8007F8D0() {
 extern void __fill_mem(void*, int, int);
 
 extern u32 lbl_eu_80663E24;
-void cf::CfGameManager::func_800817B0() {}
+bool cf::CfGameManager::func_800817B0() {
+    return (*reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(this) + 0x82C) >> 2) & 1;
+}
 
-void cf::CfGameManager::func_80082940() {}
+#pragma dont_inline on
+extern "C" void func_80082940__Q22cf13CfGameManagerFv(void*, void* first, void* second) { func_80141C6C(first, second); }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 u32 cf::CfGameManager::func_80083100() {
@@ -905,9 +918,12 @@ u32 cf::CfGameManager::func_8008310C() {
 }
 #pragma dont_inline reset
 
-void cf::CfGameManager::func_80083284() {}
+extern "C" u32 func_80083284__Q22cf13CfGameManagerFv(const u8* data) {
+    return (*reinterpret_cast<const u32*>(data + 0x4EC) >> 20) & 1;
+}
 
-void cf::CObjectParam::CObjectParam_UnkVirtualFunc4() {
+extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(u8* data) {
+    *reinterpret_cast<u32*>(data + 0x34) = 0;
 }
 
 extern u32 lbl_eu_80663E24;
@@ -934,10 +950,12 @@ void cf::CfGameManager::func_8008743C() {
     mObjectFlags = 0;
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc89() {
+extern "C" void CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv(u8* data, u32 value) {
+    *reinterpret_cast<u32*>(data + 0x1608) = value;
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc91() {
+extern "C" u32 CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv(const u8* data) {
+    return *reinterpret_cast<const u32*>(data + 0x1608);
 }
 
 cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
@@ -946,7 +964,6 @@ cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
 
 
 void cf::CfGameManager::func_8007C6C0() {}
-void cf::CfGameManager::func_8007CBEC() {}
 void cf::CfGameManager::func_8007CF64() const {}
 void cf::CfGameManager::func_8007D1A0() {}
 void cf::CfGameManager::func_8007DCB8() {}
@@ -954,12 +971,7 @@ void cf::CfGameManager::func_8007E9CC() {}
 void cf::CfGameManager::func_8007F1FC() {}
 void cf::CfGameManager::func_8007F9C4() {}
 void cf::CfGameManager::func_80080888() {}
-void cf::CfGameManager::func_800826F0() {}
-void cf::CfGameManager::func_800827E4() {}
 void cf::CfGameManager::func_80082C48() {}
-void cf::CfGameManager::func_80083EA4() {}
-void cf::CfGameManager::func_80083F28() {}
-void cf::CfGameManager::func_8008402C() {}
 void cf::CfGameManager::func_8008413C() {}
 void cf::CfGameManager::func_80084654() {}
 void cf::CfGameManager::func_80084F50() {}

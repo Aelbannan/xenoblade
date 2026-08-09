@@ -13,7 +13,7 @@ void func_80069A78(){}
 
 void func_80069ACC(){}
 
-extern "C" u32 func_80069C14(void* self) {
+extern "C" u32 func_80069C14(u8* self) {
     u32 x = *(u32*)((u8*)self + 0x828);
     return !(0 - x);
 }

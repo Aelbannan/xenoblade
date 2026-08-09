@@ -105,3 +105,9 @@ void func_80138078__FUl(u32 op);
 extern CSystemWindow* lbl_eu_80663FD8;   // singleton instance pointer (.sbss)
 extern u32 lbl_eu_80663E28;              // cbRenderBefore flag (.sbss)
 extern u32 lbl_eu_80663E24;              // Init flag (.sbss)
+
+extern u32 __ptmf_null[3];               // null pointer-to-member-function constant
+// IUIWindow base vtable (written at +0x10 before the __ptmf_null copy, then
+// overwritten by lbl_eu_8052D378). Plain byte arrays so we can take &arr+off.
+extern char lbl_eu_8052D238[];
+extern char lbl_eu_8052D378[];

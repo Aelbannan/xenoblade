@@ -13,6 +13,8 @@ class UnkClass_800821F8;
 class UnkClass_80085334;
 class UnkClass_8007E864;
 class CSysWinBuff;
+class Unk817A8Object;
+class Unk80EE4Data;
 
 struct CfGameManagerData1C {
     u8 field_0x0[0xC];
@@ -124,7 +126,8 @@ namespace cf{
         u32 unk7C;
         u8 unk80[0x86 - 0x80];
         u16 field_0x86;
-        u8 field_0x88[0x8C - 0x88];
+        u16 field_0x88;
+        u16 field_0x8A;
         s32 unk8C;
         UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
@@ -151,7 +154,7 @@ public:
     void func_8007C344();
     void func_8007C360();
     void func_8007C374();
-    void func_8007C4B4();
+    void* func_8007C4B4();
     ~CfGameManager();
     void func_8007C5B8();
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
@@ -256,8 +259,8 @@ public:
     void func_80081350();
     void func_80081358();
     void func_80081694();
-    void func_800817A8();
-    void func_800817B0();
+    Unk817A8Object* func_800817A8();
+    bool func_800817B0();
     void func_800817BC();
     void func_80081874();
     void func_8008187C();
@@ -270,7 +273,6 @@ public:
     void func_80081CB8();
     void func_80081CBC();
     void func_80081D2C();
-    void func_80081D88();
     void func_80081D8C();
     void func_80081DD8();
     void func_80081E90();
@@ -398,7 +400,7 @@ public:
     void func_80086D90();
     void func_80086D94();
     void func_80086D98();
-    void func_80086D9C();
+    bool func_80086D9C();
     static u32 func_80086DA0();
     void func_80086DA4();
     void func_80086DA8();
@@ -468,7 +470,7 @@ extern "C" void func_80069EA0();
 extern "C" void func_8006A12C();
 extern "C" void func_8006A1A0();
 extern "C" void func_8006A234(u16*, u16*);
-extern "C" void func_8006A2E0();
+extern "C" bool func_8006A2E0();
 extern "C" void func_8006A37C();
 extern "C" void func_8006A3BC();
 extern "C" void func_8006A3FC();

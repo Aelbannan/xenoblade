@@ -922,13 +922,13 @@ using nw4r::snd::detail::StrmPlayer;
 void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int){}
 void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
 void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(){}
-extern "C" void* GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(void* self, int index) {
+extern "C" void* GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* self, int index) {
     if (index > 7) return nullptr;
-    return static_cast<StrmPlayer*>(self)->GetPlayerTrack(index);
+    return self->GetPlayerTrack(index);
 }
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 
-extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return static_cast<StrmPlayer*>(self)->IsPause(); }
-extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return static_cast<StrmPlayer*>(self)->IsStarted(); }
-extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return static_cast<StrmPlayer*>(self)->IsActive(); }
+extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsPause(); }
+extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsStarted(); }
+extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(StrmPlayer* self) { return self->IsActive(); }

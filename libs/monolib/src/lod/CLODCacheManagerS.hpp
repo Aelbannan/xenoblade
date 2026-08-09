@@ -19,6 +19,41 @@ public:
 
     void func_804630C0();
     s32 func_80463590();
+    f32 func_80463118();
+    f32 func_8046323C();
+};
+
+/**
+ * LOD linear distance-table entry (lbl_eu_8066573C, stride 8).
+ * near is a float distance (0x00); far is an unsigned cutoff (0x04).
+ */
+struct LODDistEntry {
+    f32 near;   // 0x00
+    u16 far;    // 0x04
+};
+
+/**
+ * LOD level-table entry (lbl_eu_80665740, stride 0x10) used by the cubic
+ * catmull-rom interpolator.  Four float sample slots (0x00/0x04/0x08) and an
+ * unsigned far cutoff (0x0C).
+ */
+struct LODLevelEntry {
+    f32 f00;    // 0x00
+    f32 f04;    // 0x04
+    f32 f08;    // 0x08
+    u16 far;    // 0x0C
+};
+
+/**
+ * LOD short-table entry (lbl_eu_80665744, stride 8) backing the 2D
+ * interpolator.  val is a signed sample, outX/outY are output words, and
+ * far is an unsigned cutoff.
+ */
+struct LODShortEntry {
+    s16 val;    // 0x00
+    s16 outX;   // 0x02
+    s16 outY;   // 0x04
+    u16 far;    // 0x06
 };
 
 /**
@@ -53,11 +88,11 @@ typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 
 // Cache record / pair-table bases (set up by func_804630C0).
 extern LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
-extern void* lbl_eu_8066573C;   // distance table, stride 8
+extern LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
 extern u32* lbl_eu_8066574C;    // index -> pair-table offset
 extern void* lbl_eu_80665750;   // pair table, stride 2 (u16 entries)
-extern void* lbl_eu_80665740;   // level table, stride 0x10
-extern void* lbl_eu_80665744;   // short table, stride 8
+extern LOD::LODLevelEntry* lbl_eu_80665740;   // level table, stride 0x10
+extern LOD::LODShortEntry* lbl_eu_80665744;   // short table, stride 8
 extern LOD::LODCacheIndex* lbl_eu_80665748;   // distance-key index table, stride 4
 
 extern LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn

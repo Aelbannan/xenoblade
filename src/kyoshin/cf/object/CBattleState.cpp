@@ -1910,10 +1910,10 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc12() {}
 void* cf::CBattleState::CBattleState_UnkVirtualFunc13(int index) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)this + 0x8))[index];
 }
-extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(void* self, unsigned long idx) {
+extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x8))[idx];
 }
-extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(void* self, unsigned long idx) {
+extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(cf::CBattleState* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x688))[idx];
 }
 // Recovered extern "C" forms keep the retail Fv symbol (vfunc15 precedent).
@@ -1959,10 +1959,10 @@ extern "C" void* func_80149330(void* base, u32 a, u32 b, u32 c, u32 d) {
     }
     return 0;
 }
-extern "C" void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv(void* self, u32 flags) {
+extern "C" void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 flags) {
     *(u16*)((u8*)self + 0x4) = (u16)(*(u16*)((u8*)self + 0x4) | flags);
 }
-extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(void* self, u32 flags) {
+extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 flags) {
     *(u16*)((u8*)self + 0x6) = (u16)(*(u16*)((u8*)self + 0x6) | flags);
 }
 int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return (int)&lbl_eu_80662248; }

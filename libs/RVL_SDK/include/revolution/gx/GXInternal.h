@@ -29,13 +29,13 @@ extern "C" {
     } name;
 
 typedef struct _GXFifoObjImpl {
-    void* base;        // at 0x0
-    void* end;         // at 0x4
-    u32 size;          // at 0x8
-    void* hiWatermark; // at 0xC
-    void* loWatermark; // at 0x10
-    void* readPtr;     // at 0x14
-    void* writePtr;    // at 0x18
+    u8* base;         // at 0x0
+    u8* end;          // at 0x4
+    u32 size;         // at 0x8
+    u8* hiWatermark;  // at 0xC
+    u8* loWatermark;  // at 0x10
+    u8* readPtr;      // at 0x14
+    u8* writePtr;     // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
     u8 bind_cpu;       // at 0x21

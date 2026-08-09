@@ -103,16 +103,16 @@ const char* AnmScnRes::GetTypeName() const {
 } // namespace g3d
 } // namespace nw4r
 
-void GetLightSet__Q34nw4r3g3d12LightSettingFi(void* result, void* self, int index) {
-    nw4r::g3d::LightSetting* setting = static_cast<nw4r::g3d::LightSetting*>(self);
-    nw4r::g3d::LightSet* lightSet = static_cast<nw4r::g3d::LightSet*>(result);
+void GetLightSet__Q34nw4r3g3d12LightSettingFi(nw4r::g3d::LightSet* result, nw4r::g3d::LightSetting* self, int index) {
+    nw4r::g3d::LightSetting* setting = self;
+    nw4r::g3d::LightSet* lightSet = result;
     *lightSet = setting->GetLightSet(index);
 }
 int Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes(void) { return 0x0; }
 int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
 unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
-unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
+unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
     return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
         reinterpret_cast<const char*>(this_ptr) + 0x20);
 }
@@ -124,38 +124,38 @@ int GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* ths) {
 }
 u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
 
-u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
+u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* self) {
     return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
         reinterpret_cast<const void*>(reinterpret_cast<const char*>(self) + 0x20));
 }
-unsigned short GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv(const void* __this) {
+unsigned short GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* __this) {
     return *reinterpret_cast<const unsigned short*>(
         *reinterpret_cast<const unsigned char* const*>(
             reinterpret_cast<const unsigned char*>(__this) + 0x20) + 0x36);
 }
-int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
+int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) {
     extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
     return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
 }
 void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
-void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) {
+void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(nw4r::g3d::AnmScnRes* self) {
     reinterpret_cast<void(*)(void*)>(GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)(
-        static_cast<char*>(self) + 0x20);
+        reinterpret_cast<char*>(self) + 0x20);
 }
-u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
+u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* _this) {
     return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);
 }
-unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* self) {
+unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* self) {
     const unsigned char* res = *reinterpret_cast<const unsigned char* const*>(
         reinterpret_cast<const unsigned char*>(self) + 0x20);
     return *reinterpret_cast<const unsigned short*>(res + 0x3e);
 }
-int GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* p) {
+int GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* p) {
     return *reinterpret_cast<const unsigned short*>(
         *reinterpret_cast<const char* const*>(
             reinterpret_cast<const char*>(p) + 0x20) + 0x40);
 }
-unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
+unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) {
     return *reinterpret_cast<const unsigned short*>(
         *reinterpret_cast<const char* const*>(
             reinterpret_cast<const char*>(this_) + 0x20) + 0x42);
@@ -365,7 +365,7 @@ void AnmScnRes::SetFrame(f32 frame) {
 } // namespace nw4r
 
 
-float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
+float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_ptr) {
     return *(const float*)((const unsigned char*)this_ptr + 0xC);
 }
 namespace nw4r {
@@ -383,7 +383,7 @@ void AnmScnRes::SetUpdateRate(f32 rate) {
 } // namespace nw4r
 
 
-float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
+float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* this_) { return *(const float*)((const char*)this_ + 0x10); }
 namespace nw4r {
 namespace g3d {
 

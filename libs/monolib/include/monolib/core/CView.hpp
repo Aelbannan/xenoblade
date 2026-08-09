@@ -116,7 +116,7 @@ public:
     u32 unk27C; //0x27C
     u32 mContextMsgVtable; //0x280
     u8 mContextRing[0x3EC - 0x284]; //0x284
-    void* mContextRingBase; //0x3EC
+    u8* mContextRingBase; //0x3EC
     u32 unk3F0; //0x3F0
     u32 mContextRingWriteIndex; //0x3F4
     u32 mContextRingCapacity; //0x3F8
@@ -125,7 +125,7 @@ public:
     ml::CVec4 unk444; //0x444
     u32 mGXCacheId; //0x454
     float mAlpha; //0x458
-    void* unk45C; //0x45C
+    void* unk45C; //0x45C (CSplitFrame*, but CView.cpp writes (void*)zero - kept void*)
     u32 unk460; //0x460
     s16 unk464;
     s16 unk466;

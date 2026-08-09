@@ -105,6 +105,6 @@ void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self 
 
 void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
 
-extern "C" void func_801B2554(void* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
+extern "C" void func_801B2554(u8* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
 
-extern "C" void func_801B255C(void* self) { reinterpret_cast<cf::CPcEffect07*>((char*)self - 0x4)->~CPcEffect07(); }
+extern "C" void func_801B255C(u8* self) { reinterpret_cast<cf::CPcEffect07*>((char*)self - 0x4)->~CPcEffect07(); }

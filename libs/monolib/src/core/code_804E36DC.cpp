@@ -57,7 +57,7 @@ extern "C" void func_804E3E2C(CScheduleItem* item) {
 
 // us-804e8350: bind an entry blob slice to the item.
 extern "C" int func_804E3EB4(CScheduleItem* item, u8* base,
-                             const CScheduleEntryData* data, void* owner) {
+                             const CScheduleEntryData* data, CSchedule* owner) {
     item->mLifetime = data->mLifetime;
     u8* entryData = (data->mOffset != 0) ? base + data->mOffset : NULL;
     item->mEntryData = entryData;
@@ -303,11 +303,11 @@ extern "C" void func_804E3B6C(CSchedule* self) {
     if (self->field_0x14 != 0) {
         CSchedulePosLink* link = reinterpret_cast<CSchedulePosLink*>(self->field_0x14);
         const ml::CVec3* pos = (const ml::CVec3*)link->vfunc11();
-        void* target = func_80496264(self->field_0x10, -1);
+        u8* target = (u8*)func_80496264(self->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *pos;
         dist = PSVECMag(diff);
     } else {
-        void* target = func_80496264(self->field_0x10, -1);
+        u8* target = (u8*)func_80496264(self->field_0x10, -1);
         ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *(const ml::CVec3*)&self->field_0x1c;
         dist = PSVECMag(diff);
     }

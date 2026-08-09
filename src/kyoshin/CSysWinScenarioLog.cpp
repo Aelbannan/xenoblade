@@ -789,9 +789,9 @@ void func_80280E9C(u8* self) {
 
 void func_80280F44(){}
 
-extern "C" void func_802811FC(void* self){
-    *(u32*)((u8*)self + 0x1D80) = 0;
-    *(u32*)((u8*)self + 0x1D84) = 0;
+extern "C" void func_802811FC(u8* self){
+    *(u32*)(self + 0x1D80) = 0;
+    *(u32*)(self + 0x1D84) = 0;
 }
 
 void func_8028120C(){}

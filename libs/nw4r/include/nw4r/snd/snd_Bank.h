@@ -20,12 +20,12 @@ public:
     Channel* NoteOn(const NoteOnInfo& rInfo) const;
 
     void SetWaveDataAddress(const void* pData) {
-        mWaveDataAddress = pData;
+        mWaveDataAddress = static_cast<const u8*>(pData);
     }
 
 private:
     BankFileReader mBankReader;   // at 0x0
-    const void* mWaveDataAddress; // at 0xC
+    const u8* mWaveDataAddress;   // at 0xC
 };
 
 } // namespace detail

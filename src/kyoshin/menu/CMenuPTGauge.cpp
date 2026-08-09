@@ -74,7 +74,7 @@ void CMenuPTGauge::Init() {
     // so the call binds the unmangled reloc (not Pane*-mangled from
     // code_80135FDC.hpp).
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, mLayout);
     typedef u32 (*FontVFn)(void*);
     u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
     func_8013676C(rootPane, fontResult);
@@ -344,26 +344,26 @@ void func_80187718(){}
 void func_80187778(){}
 extern double lbl_eu_806679F0;
 extern float lbl_eu_806679F8;
-struct PTGaugeIf { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual void* vf3C(void* a, u32 b); };
+struct PTGaugeIf { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034(); virtual void _v038(); virtual u8* vf3C(char* a, u32 b); };
 
-extern "C" void func_80187858(void* self) {
-    s32 v = (s32)((float)*(s32*)((u8*)self + 0x9c) - 1.0f);
-    *(u32*)((u8*)self + 0x9c) = (u32)v;
+extern "C" void func_80187858(u8* self) {
+    s32 v = (s32)((float)*(s32*)(self + 0x9c) - 1.0f);
+    *(u32*)(self + 0x9c) = (u32)v;
     if (v < 0) {
-        *(u32*)((u8*)self + 0x90) = 0;
-        *(u32*)((u8*)self + 0x94) = 0;
-        *(u32*)((u8*)self + 0x9c) = 0;
+        *(u32*)(self + 0x90) = 0;
+        *(u32*)(self + 0x94) = 0;
+        *(u32*)(self + 0x9c) = 0;
     }
-    u32 cur = *(u32*)((u8*)self + 0x9c);
-    void* sub = *(void**)((u8*)self + 0x74);
+    u32 cur = *(u32*)(self + 0x9c);
+    u8* sub = *reinterpret_cast<u8**>(self + 0x74);
     if (sub) {
-        if (*(u32*)((u8*)self + 0xa0) != cur) {
-            *(u32*)((u8*)self + 0xa0) = cur;
-            void* r = ((PTGaugeIf*)*(void**)((u8*)sub + 0x10))->vf3C(lbl_eu_805039C8 + 0xd8, 1);
+        if (*(u32*)(self + 0xa0) != cur) {
+            *(u32*)(self + 0xa0) = cur;
+            u8* r = (*reinterpret_cast<PTGaugeIf**>(sub + 0x10))->vf3C(lbl_eu_805039C8 + 0xd8, 1);
             if (r) {
-                float old = *(float*)((u8*)r + 0x50);
-                *(float*)((u8*)r + 0x4c) = lbl_eu_806679E8 * ((float)(s32)cur / lbl_eu_806679E4);
-                *(float*)((u8*)r + 0x50) = old;
+                float old = *(float*)(r + 0x50);
+                *(float*)(r + 0x4c) = lbl_eu_806679E8 * ((float)(s32)cur / lbl_eu_806679E4);
+                *(float*)(r + 0x50) = old;
             }
         }
     }

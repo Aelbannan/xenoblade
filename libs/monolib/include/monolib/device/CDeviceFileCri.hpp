@@ -55,8 +55,8 @@ private:
     u32 mState;                         //0x1C8
     WORK_ID mActiveWorkID;              //0x1CC
     u32 unk1D0;                         //0x1D0
-    void* mADXFHandle;                  //0x1D4
-    void* mBuffer;                      //0x1D8
+    void* mADXFHandle;                  //0x1D4 (opaque CRI ADXF handle)
+    void* mBuffer;                      //0x1D8 (written from allocate_head void*)
     u32 mIdleCounter;                   //0x1DC
     u32 mRetryCounter;                  //0x1E0
     u8 mExceptionPending;               //0x1E4

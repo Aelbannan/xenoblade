@@ -760,15 +760,15 @@ void func_8024F1FC(void* self, u32 arg2) {
     lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
 }
 
-extern "C" u32 func_8024F538(void* self) {
-    u8 val = *(u8*)((u8*)self + 0x41);
+extern "C" u32 func_8024F538(u8* self) {
+    u8 val = *(u8*)(self + 0x41);
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
+extern "C" u16 func_8024F54C(u8* self) { return *(u16*)(self + 0x5A); }
 
-extern "C" u8 func_8024F554(void* self) { return static_cast<CFloorMapFull*>(self)->field_58; }
+extern "C" u8 func_8024F554(CFloorMapFull* self) { return self->field_58; }
 
 void func_8024F55C(void* self) {
     extern int CSysWin_isActive(void*);
@@ -848,7 +848,7 @@ u8 func_8024F6BC(void* self) {
     return full->field_208;
 }
 
-extern "C" u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
+extern "C" u8 func_8024F6D8(CFloorMapFull* self) { return self->field_208; }
 
 u32 func_8024F6E0(void* self) {
     s8 idx1 = *(s8*)((u8*)self + 0x206);

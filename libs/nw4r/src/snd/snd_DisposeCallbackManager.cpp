@@ -25,8 +25,8 @@ void DisposeCallbackManager::UnregisterDisposeCallback(
 void DisposeCallbackManager::Dispose(void* pData, u32 size, void* pArg) {
 #pragma unused(pArg)
 
-    const void* pStart = pData;
-    const void* pEnd = static_cast<u8*>(pData) + size;
+    const u8* pStart = static_cast<const u8*>(pData);
+    const u8* pEnd = static_cast<const u8*>(pData) + size;
     SoundThread::AutoLock lock;
 
     DisposeCallbackList::Iterator it =
@@ -42,8 +42,8 @@ void DisposeCallbackManager::Dispose(void* pData, u32 size, void* pArg) {
 void DisposeCallbackManager::DisposeWave(void* pData, u32 size, void* pArg) {
 #pragma unused(pArg)
 
-    const void* pStart = pData;
-    const void* pEnd = static_cast<u8*>(pData) + size;
+    const u8* pStart = static_cast<const u8*>(pData);
+    const u8* pEnd = static_cast<const u8*>(pData) + size;
     SoundThread::AutoLock lock;
 
     DisposeCallbackList::Iterator it =

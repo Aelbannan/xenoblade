@@ -98,7 +98,7 @@ typedef struct IPCOpenArgs {
 } IPCOpenArgs;
 
 typedef struct IPCReadWriteArgs {
-    void* data; // at 0x0
+    u8* data;   // at 0x0
     u32 length; // at 0x4
 } IPCReadWriteArgs;
 
@@ -108,10 +108,10 @@ typedef struct IPCSeekArgs {
 } IPCSeekArgs;
 
 typedef struct IPCIoctlArgs {
-    s32 type;    // at 0x0
-    void* in;    // at 0x4
-    s32 inSize;  // at 0x8
-    void* out;   // at 0xC
+    s32 type;   // at 0x0
+    u8* in;     // at 0x4
+    s32 inSize; // at 0x8
+    u8* out;    // at 0xC
     s32 outSize; // at 0x10
 } IPCIoctlArgs;
 

@@ -61,7 +61,7 @@ public:
     //0x0-1c4: CWorkThread
     mtl::ALLOC_HANDLE mHandle; //0x1C4
     int unk1C8; //0x1C8
-    void* mpLayoutBuf; //0x1CC
+    void* mpLayoutBuf; //0x1CC (written from ARCGetStartAddrInMem void*)
     void* mpSpkSeBuf; //0x1D0
     void* mpHbmSeBuf; //0x1D4
     void* mpMsgBuf; //0x1D8

@@ -4,12 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWin.hpp"
 
-extern "C" u8 CSysWin_isReady(void* self) { return ((CSysWinFull*)self)->field_28; }
+extern "C" u8 CSysWin_isReady(CSysWinFull* self) { return self->field_28; }
 
 
-extern "C" u8 CSysWin_getUnk34(void* self) { return ((CSysWinFull*)self)->field_34; }
+extern "C" u8 CSysWin_getUnk34(CSysWinFull* self) { return self->field_34; }
 
-extern "C" u8 CSysWin_isActive(void* self) { return ((CSysWinFull*)self)->field_36; }
+extern "C" u8 CSysWin_isActive(CSysWinFull* self) { return self->field_36; }
 
 
 void func_8022BF6C(){}

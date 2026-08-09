@@ -60,7 +60,7 @@ CScnItemCameraNw4r::~CScnItemCameraNw4r() {}
 // Only frees the memory if a deletion flag is set; otherwise it's a plain
 // non-deleting dtor call target.
 // ===========================================================================
-extern "C" void* __dt__80482054(void* self, int deleting) {
+extern "C" void* __dt__80482054(u8* self, int deleting) {
     if (self != 0 && deleting > 0)
         operator delete(self);
     return self;
@@ -105,7 +105,7 @@ void func_80481F9C(CScnItemCameraNw4r* self) {
 // ===========================================================================
 // Keep the remaining (unmatched) unit symbols as stubs.
 // ===========================================================================
-void func_80482038(void* self) {}
-void func_80482040(void* self) {}
+void func_80482038(u8* self) {}
+void func_80482040(u8* self) {}
 void func_80482048() {}
-void* func_8048204C(void* self) { return (void*)((u8*)self + 0x10); }
+void* func_8048204C(u8* self) { return (void*)((u8*)self + 0x10); }

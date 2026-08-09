@@ -102,10 +102,10 @@ void func_801666DC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self 
 
 void func_801666E4(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-extern "C" void func_801666EC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->~CTaskREvent(); }
+extern "C" void func_801666EC(u8* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->~CTaskREvent(); }
 
 void cf::CTaskREvent::OnFileEvent() { func_801663A8(this); }
 
-extern "C" void func_801666FC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x60)->~CTaskREvent(); }
+extern "C" void func_801666FC(u8* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x60)->~CTaskREvent(); }
 
 // CTTask<cf::CTaskREvent> specializations provided by header

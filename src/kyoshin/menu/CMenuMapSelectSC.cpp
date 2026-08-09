@@ -4,16 +4,25 @@
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
+struct S {
+    int dummy;
+    int a;
+    int b;
+    int c;
+    int d;
+    unsigned char e;
+    unsigned char f;
+};
+
 void __ct__CMenuMapSelectSC(){}
 
 CMenuMapSelectSC::~CMenuMapSelectSC() {}
 
 void CMenuMapSelectSC::Init() {}
 
-void func_80251294(void* r3, const void* r4) {
-    struct S { int dummy; int a; int b; int c; int d; unsigned char e; unsigned char f; };
-    S* dst = (S*)r3;
-    const S* src = (const S*)r4;
+void func_80251294(S* r3, const S* r4) {
+    S* dst = r3;
+    const S* src = r4;
     dst->a = src->a;
     dst->b = src->b;
     dst->c = src->c;

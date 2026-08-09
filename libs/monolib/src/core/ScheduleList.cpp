@@ -30,11 +30,11 @@ void func_804E4AD4(){}
 
 void func_804E4B24(){}
 
-void* func_804E4B48(void* self) {
-    void* head = *(void**)((char*)self + 8);
-    void* cur = *(void**)head;
+void* func_804E4B48(u8* self) {
+    u8* head = *(u8**)((u8*)self + 8);
+    u8* cur = *(u8**)head;
     while (cur != head) {
-        cur = *(void**)cur;
+        cur = *(u8**)cur;
     }
     return head;
 }

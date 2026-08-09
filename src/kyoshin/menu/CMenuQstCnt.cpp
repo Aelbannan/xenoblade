@@ -154,7 +154,7 @@ void CMenuQstCnt::Init() {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, mLayout);
     u32 fontResult =
         ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
     func_8013676C(rootPane, fontResult);
@@ -192,7 +192,7 @@ void CMenuQstCnt::Init() {
 
 void CMenuQstCnt::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    void* renderPtr = this ? (u8*)this + 0x70 : 0;
+    u8* renderPtr = this ? (u8*)this + 0x70 : 0;
     removeRenderCB__4CScnFP10IScnRender(mScene, renderPtr);
     if (mLayout) {
         void* vtab = *(void**)mLayout;
@@ -224,7 +224,7 @@ void CMenuQstCnt::Move() {
         goto done;
     }
     {
-        void* cam = func_8049603C((void*)lbl_eu_80663E14);
+        void* cam = func_8049603C(lbl_eu_80663E14);
         if (lbl_eu_8066856C - *(f32*)((u8*)cam + 0xC) < lbl_eu_8066856C) {
             goto done;
         }
@@ -276,7 +276,7 @@ void CMenuQstCnt::cbRenderBefore() {
         goto done;
     }
     {
-        void* cam = func_8049603C((void*)lbl_eu_80663E14);
+        void* cam = func_8049603C(lbl_eu_80663E14);
         if (lbl_eu_8066856C - *(f32*)((u8*)cam + 0xC) < lbl_eu_8066856C) {
             goto done;
         }
@@ -495,8 +495,8 @@ void func_802270CC(QstData* self) {
                 r22 = 2;
             }
             u32 v = func_80138138(i);
-            void* tbl = (void*)lbl_eu_80573D18[v];
-            u32 res = func_801361E8((u32)tbl, &lbl_eu_80509AB4[0], i);
+            u32 tbl = lbl_eu_80573D18[v];
+            u32 res = func_801361E8(tbl, &lbl_eu_80509AB4[0], i);
             if ((res & 0xff) == 2) continue;
             u32 r21 = (res & 0xff) == 1;
             if (r22 == 3) r21 = 0;

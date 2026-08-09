@@ -43,7 +43,7 @@ extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param
 // Destructor provided by extern "C" function to match retail ABI.
 // Class header declares virtual ~CfGimmickSaveOff(); for vtable entry.
 
-extern "C" void* __dt__Q22cf16CfGimmickSaveOffFv(void* self, int flag) {
+extern "C" void* __dt__Q22cf16CfGimmickSaveOffFv(cf::CfGimmickSaveOff* self, int flag) {
     if (self != NULL) {
         __dt__Q22cf9CfGimmickFv(self, 0);
         if (flag > 0) {

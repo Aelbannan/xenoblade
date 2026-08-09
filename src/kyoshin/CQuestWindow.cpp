@@ -37,11 +37,11 @@ void func_801231C4(){}
 
 void func_80124270(){}
 
-void func_80124288(void* self, void* src){
-    float a = *(float*)src;
-    float b = *(float*)((u8*)src + 4);
-    *(float*)((u8*)self + 0x4C) = a;
-    *(float*)((u8*)self + 0x50) = b;
+void func_80124288(u8* self, float* src){
+    float a = src[0];
+    float b = src[1];
+    *(float*)(self + 0x4C) = a;
+    *(float*)(self + 0x50) = b;
 }
 
 void func_8012429C(){}

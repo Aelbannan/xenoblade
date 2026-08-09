@@ -241,7 +241,7 @@ void CMenuVision::Init() {
 
         // Per-index special setup
         if (i == 1) {
-            void* fontObj = CDeviceFont::func_80452C10(1, layout);
+            u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, layout);
             typedef u32 (*FontVFn)(void*);
             u32 fontVal = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
 

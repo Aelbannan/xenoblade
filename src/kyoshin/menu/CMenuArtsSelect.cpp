@@ -55,7 +55,7 @@ int func_8012FA5C();
 void func_80138078__FUl(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int func_80174C98(void* actor, int* outVal, int flags);
-void* getArtsParamAtCnt(void* obj, s32 index);
+ArtsParamInfo* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 
@@ -67,7 +67,7 @@ extern u8 lbl_eu_804FD0D0[];
 u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+u8* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 
 void func_80139198(u32);
 u32 func_801392C0();
@@ -269,7 +269,7 @@ void CMenuArtsSelect::Init() {
 
     {
         nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
-        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
+        u8* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
         typedef u32 (*FontVFn)(void*);
         u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
         func_8013676C(rootPane, fontResult);
@@ -684,7 +684,7 @@ after_ce48:
     }
 
     if (unk298 >= 2) {
-        void* move = cf::CfGameManager::getPlayer(0);
+        cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
         BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
             actor = (BattleActor*)((char*)move - 0x3e9c);
@@ -800,7 +800,7 @@ after_ce48:
     }
 
     if (unk298 != 0) {
-        void* move = cf::CfGameManager::getPlayer(0);
+        cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
         BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
             actor = (BattleActor*)((char*)move - 0x3e9c);
@@ -848,9 +848,9 @@ after_ce48:
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
                             artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
-                        void* infoRaw = getArtsParamAtCnt(skill, i);
+                        ArtsParamInfo* infoRaw = getArtsParamAtCnt(skill, i);
                         if (ready == 0) {
-                            ArtsParamInfo* info = static_cast<ArtsParamInfo*>(infoRaw);
+                            ArtsParamInfo* info = infoRaw;
                             if (info->mCheckFlag != 0) {
                                 typedef f32 (*GetF32Fn)(void*);
                                 ArtsParamTable* table = static_cast<ArtsParamTable*>(info->mTablePtr);

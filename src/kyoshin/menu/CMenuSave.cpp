@@ -22,14 +22,14 @@ void stub_us_802908bc() {}
 
 void func_8028E450(){}
 
-int func_8028F664(void*);
+int func_8028F664(u8*);
 
-int isIdle__11CTitleAHelpFv(void*);
+int isIdle__11CTitleAHelpFv(u8*);
 
-void func_8028E4E0(void* this_) {
-    if (isIdle__11CTitleAHelpFv((void*)((char*)this_ + 0x80)) != 0 &&
-        func_8028F664((void*)((char*)this_ + 0xb8)) != 0) {
-        *(unsigned char*)((char*)this_ + 0x20b) = 2;
+void func_8028E4E0(u8* this_) {
+    if (isIdle__11CTitleAHelpFv(this_ + 0x80) != 0 &&
+        func_8028F664(this_ + 0xb8) != 0) {
+        this_[0x20b] = 2;
     }
 }
 

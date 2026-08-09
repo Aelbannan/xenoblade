@@ -88,7 +88,7 @@ public:
     u16 mViHeight; //0x27E
     u8* mXfbBuffersPtr; //0x280
     u32 unk284;
-    void* mFrameBufferPtrArray[3]; //0x288
+    void* mFrameBufferPtrArray[3]; //0x288 (XFB frame buffer addresses; written via (void*) casts)
     u32 unk294;
     u32 unk298;
     u32 unk29C;

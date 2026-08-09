@@ -79,15 +79,17 @@ bool Component::update(int i, f32 x, f32 y, u32 /* trig */, u32 /* hold */,
 }
 
 Manager::~Manager() {
-    void* pIt = nw4hbm::ut::List_GetFirst(&mIDToComponent);
+    IDToComponent* pIt = static_cast<IDToComponent*>(
+        nw4hbm::ut::List_GetFirst(&mIDToComponent));
 
-    for (; pIt != NULL; pIt = nw4hbm::ut::List_GetFirst(&mIDToComponent)) {
+    for (; pIt != NULL; pIt = static_cast<IDToComponent*>(
+             nw4hbm::ut::List_GetFirst(&mIDToComponent))) {
         nw4hbm::ut::List_Remove(&mIDToComponent, pIt);
 
         if (mpAllocator != NULL) {
             MEMFreeToAllocator(mpAllocator, pIt);
         } else {
-            delete static_cast<IDToComponent*>(pIt);
+            delete pIt;
         }
     }
 }

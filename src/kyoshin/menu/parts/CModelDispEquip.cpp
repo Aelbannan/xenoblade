@@ -6,8 +6,8 @@
 // ============================================================
 // Target: us-80201254 | __ct__CModelDispEquip (constructor)
 // ============================================================
-extern "C" void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
-    CModelDispEquip* obj = (CModelDispEquip*)self;
+extern "C" void __ct__CModelDispEquip(CModelDispEquip* self, u32 somePtr, s32 equipSlot) {
+    CModelDispEquip* obj = self;
     obj->somePtr = somePtr;
     obj->equipSlot = equipSlot;
     obj->state = 0;
@@ -38,10 +38,10 @@ extern "C" void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
 // ============================================================
 // Target: us-802013cc | func_801FF6DC
 // ============================================================
-extern "C" void func_801FF6DC(void* ptr) {
+extern "C" void func_801FF6DC(u8* ptr) {
     *(u32*)ptr = 0;
-    *(u32*)((u8*)ptr + 4) = 0;
-    *(u8*)((u8*)ptr + 8) = 0;
+    *(u32*)(ptr + 4) = 0;
+    *(u8*)(ptr + 8) = 0;
 }
 
 // ============================================================
@@ -55,7 +55,7 @@ extern "C" void __dt__801FF6F0(void* self, int param) {
 // ============================================================
 // Target: us-8020144c | __dt__15CModelDispEquipFv
 // ============================================================
-extern "C" void __dt__15CModelDispEquipFv(void* self, int param) {
+extern "C" void __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
     if (self == nullptr) return;
 }
 

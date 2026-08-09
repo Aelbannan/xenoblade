@@ -95,8 +95,8 @@ typedef struct NANDCommandBlock {
     void* userData;             // at 0x0
     NANDAsyncCallback callback; // at 0x4
     NANDFileInfo* info;         // at 0x8
-    void* bytes;                // at 0xC
-    void* inodes;               // at 0x10
+    u32* bytes;                 // at 0xC
+    u32* inodes;                // at 0x10
     NANDStatus* status;         // at 0x14
     u32 ownerId;                // at 0x18
     u16 groupId;                // at 0x1C
@@ -110,7 +110,7 @@ typedef struct NANDCommandBlock {
     u32* length;                // at 0x74
     u32* position;              // at 0x78
     s32 state;                  // at 0x7C
-    void* buffer;               // at 0x80
+    u8* buffer;                 // at 0x80
     u32 bufferSize;             // at 0x84
     u8* type;                   // at 0x88
     u32 uniqueNo;               // at 0x8C

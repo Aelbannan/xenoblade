@@ -32,9 +32,9 @@ void func_8011CE44(){}
 
 void func_8011D03C(){}
 
-void func_8011D08C(void* self)
+void func_8011D08C(unsigned char* self)
 {
-    unsigned char* base = static_cast<unsigned char*>(self);
+    unsigned char* base = self;
     if (isIdle__11CTitleAHelpFv(base + 0x80) && func_80227CCC(base + 0xB8)) {
         unsigned int value = func_80228394(base + 0xB8);
         func_80229768(base + 0x2240, static_cast<unsigned short>(value));

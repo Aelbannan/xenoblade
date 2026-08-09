@@ -63,10 +63,10 @@ void CTutorialList::OnFileEvent() {}
 
 void func_802AE38C(){}
 
-extern "C" void func_802ACBDC(void* self) {
-    *(unsigned short*)((u8*)self + 0x100) = 0;
-    *(unsigned short*)((u8*)self + 0x102) = 0;
-    *(unsigned short*)((u8*)self + 0x104) = 0;
+extern "C" void func_802ACBDC(u8* self) {
+    *(unsigned short*)(self + 0x100) = 0;
+    *(unsigned short*)(self + 0x102) = 0;
+    *(unsigned short*)(self + 0x104) = 0;
 }
 
 extern "C" void func_802ACC30() {}

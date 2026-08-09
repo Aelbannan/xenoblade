@@ -131,7 +131,7 @@ int cf::CtrlObjectParamClear::clearStruct() {
     return 1;
 }
 
-extern "C" void func_8009E838(void* self) {
+extern "C" void func_8009E838(u8* self) {
     for (int a = 0; a < 3; a++) {
         void* cur = (u8*)self + a * 4;
         if (*(u32*)((u8*)cur + 4) == 0) {

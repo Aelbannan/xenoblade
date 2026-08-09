@@ -19,6 +19,6 @@ public:
     int unk2C;
     u8 unk30;
     const char* unk34;
-    void* unk38;
+    void* unk38; //loaded file buffer (written from CFileHandle::getData() void*)
     ARCHandle mArcHandle; //0x3C
 };

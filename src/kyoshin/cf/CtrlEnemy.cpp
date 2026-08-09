@@ -90,10 +90,10 @@ extern "C" int CtrlEnemy_ret0_800888E8() { return 0; }
 extern "C" int CtrlEnemy_ret1_800888F4() { return 1; }
 extern "C" int CtrlEnemy_ret1_800888FC() { return 1; }
 
-extern "C" void CtrlEnemy_delegateTo80089B24(void* self) { func_80089B24((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089E88(void* self) { func_80089E88((char*)self + 0x84); }
-extern "C" void CtrlEnemy_delegateTo80089F68(void* self) { func_80089F68((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089B24(u8* self) { func_80089B24((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089E88(u8* self) { func_80089E88((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089F68(u8* self) { func_80089F68((char*)self + 0x84); }
 
-extern "C" int CBattleManager_CheckUnk84Flag(void* self, u32 mask) {
+extern "C" int CBattleManager_CheckUnk84Flag(u8* self, u32 mask) {
     return (*(u32*)((char*)self + 0x84) & mask) != 0;
 }

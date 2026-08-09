@@ -22,7 +22,7 @@ struct PartsChangeIf {
     virtual void _v028(); virtual void _v02C(); virtual void vf30(u8 a, u32 b);
     virtual void _v034(); virtual int vf34();
 };
-extern "C" void func_80192F94(void* self) {
+extern "C" void func_80192F94(u8* self) {
     if (!((u8*)self)[0x2c]) return;
     if (!*(void**)((u8*)self + 8)) return;
     if (((u8*)self)[4]) return;

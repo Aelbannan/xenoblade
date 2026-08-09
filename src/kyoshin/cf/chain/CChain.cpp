@@ -221,7 +221,7 @@ extern "C" int CChain_getZero_A9EC() { return 0; }
 extern "C" int CChain_getZero_A9F4() { return 0; }
 extern "C" int CChain_getZero_A9FC() { return 0; }
 extern "C" int CChain_getZero_AA04() { return 0; }
-extern "C" u16 CChain_getChainCount(void* self) { return *(u16*)((u8*)*(void**)self + 0x3f28); }
+extern "C" u16 CChain_getChainCount(u8* self) { return *(u16*)((u8*)*(void**)self + 0x3f28); }
 
 bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
     unsigned char v = a1[2];
@@ -237,11 +237,11 @@ void func_80277154(){}
 void func_80277A7C(){}
 void func_80277B34(void){}
 extern "C" void CChain_noop_78E00() {}
-extern "C" void func_80278F5C(void* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf0050(); }
-extern "C" void func_80278F70(void* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf004C(); }
+extern "C" void func_80278F5C(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf0050(); }
+extern "C" void func_80278F70(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf004C(); }
 extern "C" void CChain_noop_795D0() {}
 extern "C" void CChain_noop_79768() {}
-extern "C" void func_8027A324(void* self) { reinterpret_cast<ChIf2*>(*(void**)self)->vf02BC(); }
+extern "C" void func_8027A324(u8* self) { reinterpret_cast<ChIf2*>(*(void**)self)->vf02BC(); }
 extern "C" void CChain_noop_A9E8() {}
 extern "C" void CChain_noop_AA0C() {}
 

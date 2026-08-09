@@ -62,9 +62,9 @@ struct HBMWork {
     OSThread thread;               // 0x14368 (0x318 bytes)
     OSMessageQueue msgQueue;       // 0x14680 (0x20 bytes)
     OSMessage msgBuffer[4];        // 0x146A0 (0x10 bytes)
-    void* workEnd;                 // 0x146B0
-    void* seqWork1;                // 0x146B4
-    void* seqWork2;                // 0x146B8
+    u8* workEnd;                 // 0x146B0
+    void* seqWork1;              // 0x146B4
+    void* seqWork2;              // 0x146B8
 };
 
 HBMWork* sWork;
@@ -276,10 +276,10 @@ namespace homebutton {
 
 void PlaySeq(int seqId) {
     ARCFileInfo fileInfo;
-    void* pData;
+    const u8* pData;
 
     if (ARCOpen(&sWork->archive, SOUND_FILENAME[seqId], &fileInfo) != 0) {
-        pData = ARCGetStartAddrInMem(&fileInfo);
+        pData = static_cast<const u8*>(ARCGetStartAddrInMem(&fileInfo));
     } else {
         pData = NULL;
     }
@@ -288,8 +288,7 @@ void PlaySeq(int seqId) {
         HBMSEQSEQUENCE* player = GetFreePlayer(seqId);
         SeqPool* pool;
 
-        HBMSEQAddSequence(player, reinterpret_cast<const u8*>(pData),
-                          sWork->seqWork1, sWork->seqWork2, 0);
+        HBMSEQAddSequence(player, pData, sWork->seqWork1, sWork->seqWork2, 0);
         HBMSEQSetState(player, 1);
         player->seqId = seqId;
 
@@ -358,8 +357,7 @@ void InitAxSound(const void* pWork, void* pWorkEnd, u32 workSize) {
                 OSInitMessageQueue(&work->msgQueue, work->msgBuffer, 4);
                 if (OSCreateThread(
                         &work->thread, AudioSoundThreadProc, NULL,
-                        reinterpret_cast<u8*>(work->workEnd) + workSize -
-                            0x14700,
+                        work->workEnd + workSize - 0x14700,
                         workSize - 0x14700, 4, 0) != 0) {
                     sWork = work;
                     OSResumeThread(&work->thread);

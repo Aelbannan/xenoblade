@@ -41,10 +41,10 @@ char** cf::CfCamEvent::initCamIntfInstances() {
     return result;
 }
 
-extern "C" void func_8006ACB0(void* self, float value) {
+extern "C" void func_8006ACB0(u8* self, float value) {
     *(float*)((uintptr_t)self + 0x280) = value;
 }
-extern "C" float func_8006ACB8(void* self) {
+extern "C" float func_8006ACB8(u8* self) {
     return *(float*)((char*)self + 0x280);
 }
 

@@ -49,9 +49,9 @@ bool CfObjectNpc::func_800BF46C() {
 // Per-frame NPC update: decides whether to show the NPC's dialogue bubble
 // and advances the trigger timer.
 void CfObjectNpc::func_800BF4DC() {
-    bool resetTimer = true;
-
     this->CObjectState_UnkVirtualFunc13();
+
+    bool resetTimer = true;
 
     // Nothing pending if the global mask is clear AND the NPC is not already
     // in its "meet" state: skip straight to the timer reset below.

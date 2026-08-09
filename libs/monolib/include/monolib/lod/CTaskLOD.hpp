@@ -67,10 +67,10 @@ private:
     //   0x1D3C    : mpSecondaryLOD (optional separately-allocated LODMemMan)
     //   0x1D40    : mpActiveLOD (preferred: points to &mLODMemMan or mpSecondaryLOD)
 
-    void*       mParam1;          // 0x54
-    void*       mParam2;          // 0x58
+    void*       mParam1;          // 0x54 (unknowable pointee - never used in code)
+    void*       mParam2;          // 0x58 (unknowable pointee - never used in code)
     LOD::LODMemMan mLODMemMan;   // 0x5C
-    void*       mpSecondaryLOD;  // 0x1D3C
+    LOD::LODMemMan* mpSecondaryLOD; // 0x1D3C
     LOD::LODMemMan* mpActiveLOD; // 0x1D40
 };
 // Size: 0x1D44 bytes

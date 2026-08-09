@@ -33,7 +33,7 @@ extern void* GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* resFile, int index);
 extern void* GetResUserData__Q34nw4r3g3d9ResAnmChrFv(void* self);
 extern void* __vc__Q34nw4r3g3d6ResDicCFPCc(void* self, const char* key);
 extern void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
-extern void* __dynamic_cast(void* obj, int offset, void* srcType, void* dstType, int flag);
+extern void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* src2dst);
 extern void __ct__CREvtModelMap(void* self, void* parent);
 extern void __ct__CREvtModelObj(void* self, void* parent);
 extern void __ct__CREvtModelPc(void* self, void* parent);

@@ -195,7 +195,7 @@ extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 // (func_8003B1EC / func_8009ECB0 / func_8009D018 stay inline in
 //  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
-extern "C" u32 func_8009EC9C(u32 idx);
+extern "C" void* func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);

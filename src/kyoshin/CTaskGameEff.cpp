@@ -6,6 +6,8 @@
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
+extern u32 __ptmf_null[3];
+
 #pragma optimize_for_size on
 CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
     __ct__8CProcessFv(pThis);

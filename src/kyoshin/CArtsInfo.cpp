@@ -290,7 +290,7 @@ void func_80235AE0(CArtsInfo* self) {
     self->field_0x5A = 0;
 
     // Update layout elements with arts data
-    u32 artsData = func_8009EC9C(self->field_0x54);
+    u32 artsData = (u32)func_8009EC9C(self->field_0x54);
     char* str1 = (char*)func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, 0x18);
 
     char buf[64];

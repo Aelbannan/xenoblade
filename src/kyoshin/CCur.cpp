@@ -12,6 +12,9 @@ extern char lbl_eu_80505DE8[];
 // Shared helper: set pane visibility
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 
+// func_801C4648: pane-visible check (defined in CTitleAHelp.cpp)
+extern bool func_801C4648(nw4r::lyt::Pane*);
+
 // ============================================================================
 // func_801D2150: Set pane translate from VEC3
 // ============================================================================
@@ -28,8 +31,8 @@ extern "C" void func_801D21CC(CBaseCur* cur) {
     nw4r::lyt::Layout* layout = cur->mpLayout;
     layout->UnbindAnimation(cur->mpAnimTrans1);
     layout->UnbindAnimation(cur->mpAnimTrans0);
-    layout->BindAnimation(cur->mpAnimTrans0, true);
-    cur->mpAnimTrans0->SetCurrentFrame(0.0f);
+    layout->SetAnimationEnable(cur->mpAnimTrans0, true);
+    cur->mpAnimTrans0->SetFrame(0.0f);
     layout->Animate(0);
 }
 
@@ -42,8 +45,8 @@ extern "C" void func_801D2264(CBaseCur* cur) {
     nw4r::lyt::Layout* layout = cur->mpLayout;
     layout->UnbindAnimation(cur->mpAnimTrans0);
     layout->UnbindAnimation(cur->mpAnimTrans1);
-    layout->BindAnimation(cur->mpAnimTrans1, true);
-    cur->mpAnimTrans1->SetCurrentFrame(0.0f);
+    layout->SetAnimationEnable(cur->mpAnimTrans1, true);
+    cur->mpAnimTrans1->SetFrame(0.0f);
     layout->Animate(0);
 }
 

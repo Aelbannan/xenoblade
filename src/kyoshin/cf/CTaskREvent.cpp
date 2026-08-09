@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CTaskREvent
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 #include "kyoshin/cf/CTaskREvent.hpp"
 
 namespace cf {}

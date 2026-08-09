@@ -12,23 +12,6 @@
 namespace nw4r {
 namespace g3d {
 
-// ---------------------------------------------------------------------------
-// ResMatFur - fur rendering data attached to a material.
-// Not fully defined in headers; minimal layout inferred from binary.
-// ---------------------------------------------------------------------------
-struct ResMatFurData {
-    u8 pad_0x0[0xC];
-    f32 param1; // at 0xC - first pow exponent
-    f32 param2; // at 0x10 - second pow exponent
-};
-
-class ResMatFur : public ResCommon<ResMatFurData> {
-public:
-    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatFur);
-
-    f32 GetLyrRate(u32 layer) const;
-};
-
 namespace detail {
 
 // ---------------------------------------------------------------------------
@@ -226,8 +209,10 @@ void Draw1Mat1ShpDirectly(ResMat mat, ResShp shp, const math::MTX34* pViewPos,
         volatile u32 furConst0 = 0, furConst1 = 0, furConst2 = 0, furConst3 = 0;
         (void)furConst0; (void)furConst1; (void)furConst2; (void)furConst3;
 
-        f32 furParam1 = furData.ref().param1;
-        f32 furParam2 = furData.ref().param2;
+        // ResMatFurData is defined in g3d_resmat.h (u32 size/value/type);
+        // the fur params used here live at +0xC/+0x10 of the resource data.
+        f32 furParam1 = *(f32*)((u8*)&furData.ref() + 0xC);
+        f32 furParam2 = *(f32*)((u8*)&furData.ref() + 0x10);
 
         // ---- TEV colour source (swap or material default) ----
         ResMatTevColor tevColor;

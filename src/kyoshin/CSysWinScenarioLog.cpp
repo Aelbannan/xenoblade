@@ -2,7 +2,6 @@
 
 #include <types.h>
 
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWinScenarioLog.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"

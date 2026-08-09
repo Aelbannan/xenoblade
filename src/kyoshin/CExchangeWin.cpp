@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CExchangeWin
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 #include <stdio.h>
 #include <revolution/tpl/TPL.h>
 #include "kyoshin/CExchangeWin.hpp"

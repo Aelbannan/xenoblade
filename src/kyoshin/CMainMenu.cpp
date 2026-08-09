@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CMainMenu
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"

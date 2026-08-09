@@ -10,6 +10,7 @@ extern "C" {
     void __dt__Q22cf8CREvtObjFv(CREvtCamera* self, int deleteFlag);
     void __dt__80185754(CREvtCamera* self);
     void* func_800821F8__Q22cf13CfGameManagerFv();
+    void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);
     void  func_8006BBF4(void* mgr, u32 mask, int flag);
     unsigned char func_80462E1C__8CTaskLODFv(s16 taskID);
     void func_80462D04__8CTaskLODFv(s16 taskID);
@@ -50,8 +51,11 @@ extern float lbl_eu_806678A8;
 extern float lbl_eu_806678AC;
 extern float lbl_eu_806678B0;
 
-// Global singleton accessor
-#define GET_CAMERA() ((CREvtCamera*)([]{ extern unsigned long lbl_eu_806642A8; return lbl_eu_806642A8; }()))
+// Global singleton accessor (MWCC has no lambdas)
+static CREvtCamera* GetCamera() {
+    extern unsigned long lbl_eu_806642A8;
+    return (CREvtCamera*)lbl_eu_806642A8;
+}
 
 // ============================================================================
 // func_80180940 (0x80181D3C, size 0x14) - already implemented
@@ -359,7 +363,7 @@ extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* somePara
         func_8016AF4C(taskObj, lbl_eu_805036D8 + 23, &self->mFieldA0);
         func_8016AF4C(taskObj, lbl_eu_805036D8 + 30, &self->mField2B0);
 
-        if (!((CREvtCamera*)([]{ extern unsigned long lbl_eu_806642A8; return lbl_eu_806642A8; }()))->mFieldA5) {
+        if (!GetCamera()->mFieldA5) {
             *(u32*)((u8*)func_801644B4() + 0x1B8) = 1;
         }
 

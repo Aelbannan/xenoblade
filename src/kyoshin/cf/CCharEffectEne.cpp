@@ -282,5 +282,5 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
 
     func_80484EB0(*(void**)((u8*)self->mManager + 0x98));
 
-    func_800ACC50(target);
+    ((void(*)(void*))func_800ACC50)(target);
 }

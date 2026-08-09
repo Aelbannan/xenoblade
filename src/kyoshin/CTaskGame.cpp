@@ -118,7 +118,7 @@ extern "C" void func_80040AF4(CTaskGame* self) {
 void CTaskGame_stub_800419BC(){}
 void CTaskGame_stub_80041AFC(){}
 void CTaskGame_stub_800426A4() {}
-int CTaskGame_checkLblUnk68Bit0() {
+bool CTaskGame::func_800426F0() {
     extern CTaskGame* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == nullptr) return 1;
     return lbl_eu_80663D18->unk68 & 1;

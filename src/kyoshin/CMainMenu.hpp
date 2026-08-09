@@ -109,4 +109,4 @@ extern "C" void __dt__8CProcessFv(void*, int);   // CProcess base destructor
 extern "C" void* __dt__7CSubCurFv(CBaseCur*, int); // defined in kyoshin/CCur.cpp
 extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-extern "C" int func_800FF778__9CMainMenuFv();   // mangled member symbol, prevents IPA inlining
+extern "C" bool func_800FF778__9CMainMenuFv();   // mangled member symbol, prevents IPA inlining

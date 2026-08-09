@@ -7,10 +7,6 @@
 // cf::CfGameManager / cf::CBattleManager have no shared standalone header;
 // declare just the statics this TU uses.
 namespace cf {
-class CfGameManager {
-public:
-    static void* getPlayer(int idx);
-};
 class CBattleManager {
 public:
     static CBattleManager* getInstance();

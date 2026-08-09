@@ -3,7 +3,7 @@
 // IUIWindow region inline; its ctor/dtor and member hooks are emitted under the
 // retail symbol names.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/work/CProcess.hpp"

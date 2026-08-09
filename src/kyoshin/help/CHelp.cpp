@@ -13,7 +13,7 @@ void CHelp::CHelp_UnkVirtualFunc2() {
     UNKWORD a = reinterpret_cast<SlotFn>(this->mVtbl->mSlots[6])(this);
     UNKWORD b = reinterpret_cast<SlotFn>(this->mVtbl->mSlots[5])(this);
     func_80134D18(static_cast<u8>(mParam), b, a);
-    func_8009D018(mOwner, 1);
+    func_8009D018((u32)mOwner, 1);
 }
 
 void CHelpSwitch::func_802B7CB0() {
@@ -28,7 +28,7 @@ extern "C" void func_802B7C64() {
 
 void cf::CHelp::func_802B7C68() {
     func_8013DB6C(3, this->mParam, 0, 0);
-    func_8009D018(this->mOwner, 1);
+    func_8009D018((u32)this->mOwner, 1);
 }
 
 u32 cf::CHelpSwitch::func_802B7CBC(u32 flag) {

@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/chain/UnkClass_800D8DBC.hpp"
 
-cf::UnkClass_800D8DBC::UnkClass_800D8DBC() const {}
+cf::UnkClass_800D8DBC::UnkClass_800D8DBC() {}
 
 void func_8027D1A4(){}
 

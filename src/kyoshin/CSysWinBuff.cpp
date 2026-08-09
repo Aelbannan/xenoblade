@@ -9,8 +9,8 @@ void __dt__11CSysWinBuffFv(void*);
 void cbRenderBefore__11CSysWinBuffFv(void*);
 
 
-u32 getInstance__11CSysWinBuffFv(void) {
-    extern u32 lbl_eu_806648E0;
+CSysWinBuff* getInstance__11CSysWinBuffFv(void) {
+    extern CSysWinBuff* lbl_eu_806648E0;
     return lbl_eu_806648E0;
 }
 

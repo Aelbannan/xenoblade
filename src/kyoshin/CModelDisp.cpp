@@ -64,15 +64,15 @@ void func_801FCDB4(CModelDisp* self, void* param, int r5) {
         }
 
         if (sub->mFlagFD0 != 0) {
-            void* result = func_8004B9B8(sub->mSubObj);
+            void* result = func_8004B9B8((u8*)sub + 0x14);
             sub->mResultA = result;
             func_8004B9D4(sub->mBuffer, r5, 0, -1, 0);
         }
 
         if (sub->mFlagFD4 != 0) {
-            void* result2 = func_8004B9B8(sub->mSubObj);
+            void* result2 = func_8004B9B8((u8*)sub + 0x14);
             sub->mResultB = result2;
-            func_8004B9D4(sub->mBuffer2, r5, 0, -1, 0);
+            func_8004B9D4(sub->_A94, r5, 0, -1, 0);
         }
 
         break;

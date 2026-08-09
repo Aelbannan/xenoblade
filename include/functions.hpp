@@ -10,7 +10,7 @@ func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
 
 void func_8004302C(int, int);
 bool func_8009CF8C(int);
-void func_8009D018(int, int);
+extern "C" void func_8009D018(u32, u32);
 // Unmangled retail symbol (not func_8009ECB0__Fv).
 extern "C" int* func_8009ECB0();
 void func_8009E574(int*, int, int, int);

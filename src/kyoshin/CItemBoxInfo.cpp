@@ -6,6 +6,11 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 
+// TU-local stub decl: CItemBoxInfo.hpp removed its 1-arg form (retail is
+// 2-arg: index + s16 value, see CEquipChange.hpp). Stub calls below still use
+// the 1-arg form until matched.
+extern "C" void* func_80157C4C(u32);
+
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);

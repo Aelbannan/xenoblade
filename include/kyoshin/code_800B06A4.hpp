@@ -25,14 +25,7 @@ struct CEvtTypeArg {
     u8 _pad04[0x64 - 0x4];
     u32 flags;              // +0x64 (bit 26 => 0x04000000)
 };
-namespace ml {
-template <int N>
-struct FixStr {
-    char mString[N];
-    int mLength;
-    FixStr();
-};
-}
+#include "monolib/util/FixStr.hpp"
 template <typename T>
 class _reslist_base {
 public:

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_800B06A4
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 #include "kyoshin/code_800B06A4.hpp"
 #include <string.h>
 

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuQstCnt
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"

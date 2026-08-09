@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/makecrystal/CModelDispMakeCrystal
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 
@@ -170,7 +170,7 @@ extern const f32 lbl_eu_806684C4;
 extern const f32 lbl_eu_806684C8;
 extern u8 lbl_eu_80576658[0x20];
 extern u8 lbl_eu_80576664[0x20];
-extern u8 lbl_eu_8065FC18[0x10];
+extern u32 lbl_eu_8065FC18[];
 
 // Virtual-call helper: represents the UI sub-object at this+0xEB4 whose
 // vtable has methods at slots 3 (offset 0x0c, no-arg) and 4 (offset 0x10,

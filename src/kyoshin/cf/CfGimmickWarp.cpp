@@ -345,7 +345,6 @@ void func_801BFED0(int, u16, int);
 WarpObject* func_800817BC__Q22cf13CfGameManagerFv(u8, int);
 void func_8006CC4C();
 u32 func_80174C98(WarpPlayer*, u32*, u32);
-void func_800ACF78(WarpObject*, WarpPlayerTail*, int);
 void func_800ACC14(WarpObject*, int);
 f32 func_80496288(void*);
 void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec3*, int);

@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6138 |
-| extern "C" declarations (non-lbl_*, imports) | 1706 |
+| extern "C" (total lines) | 6139 |
+| extern "C" declarations (non-lbl_*, imports) | 1707 |
 | extern "C" definitions (forced names) | 2650 |
-| `self`/register-style params | 4675 |
-| `void*` (params + locals) | 4458 |
-| raw pointer offset arithmetic | 3541 |
+| `self`/register-style params | 4677 |
+| `void*` (params + locals) | 4460 |
+| raw pointer offset arithmetic | 3545 |
 | deref-through-cast arithmetic | 1475 |
 | inline asm / `register` | 90 |
 | rN-named params | 341 |
@@ -27,7 +27,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | TU | severity |
 |---|---|
 | src/kyoshin/CItemBoxGrid.cpp | 1900 |
-| src/kyoshin/CItemBoxInfo.cpp | 702 |
+| src/kyoshin/CItemBoxInfo.cpp | 704 |
 | src/kyoshin/cf/IResInfo.cpp | 690 |
 | src/kyoshin/CSaveLoad.cpp | 684 |
 | src/kyoshin/cf/object/CfObjectEne.cpp | 617 |
@@ -175,6 +175,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/g3d/g3d_anmvis.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_calcvtx.cpp | 0 | 0 | 0 | 15 | 0 | 0 | 21 | 0 | 2 |
 | libs/nw4r/src/g3d/g3d_calcworld.cpp | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_draw1mat1shp.cpp | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_fog.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnmdl.cpp | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnmdlexpand.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -236,7 +237,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/snd/snd_Sound3DActor.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SoundArchive.cpp | 0 | 2 | 2 | 4 | 2 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_SoundArchiveFile.cpp | 0 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_SoundArchiveFile.cpp | 0 | 2 | 2 | 5 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SoundArchiveLoader.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SoundArchivePlayer.cpp | 0 | 0 | 0 | 49 | 1 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SoundHeap.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
@@ -280,7 +281,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CFloorMap.cpp | 0 | 10 | 47 | 125 | 152 | 85 | 0 | 1 | 6 |
 | src/kyoshin/CItemBoxGrid.cpp | 21 | 9 | 374 | 258 | 295 | 83 | 0 | 71 | 19 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 0 | 4 | 2 | 3 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxInfo.cpp | 0 | 12 | 22 | 225 | 215 | 123 | 0 | 18 | 0 |
+| src/kyoshin/CItemBoxInfo.cpp | 1 | 12 | 22 | 226 | 215 | 123 | 0 | 18 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 0 | 7 | 49 | 16 | 24 | 0 | 0 | 1 | 0 |
 | src/kyoshin/CKizunaTalkList.cpp | 0 | 7 | 41 | 12 | 16 | 7 | 0 | 1 | 0 |
 | src/kyoshin/CKizunagram.cpp | 0 | 15 | 36 | 1 | 3 | 0 | 0 | 0 | 0 |
@@ -288,7 +289,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CMainMenu.cpp | 0 | 9 | 10 | 10 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMapSel.cpp | 0 | 1 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CMiniMap.cpp | 0 | 12 | 3 | 6 | 8 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CModelDisp.cpp | 0 | 1 | 10 | 10 | 4 | 4 | 0 | 3 | 0 |
+| src/kyoshin/CModelDisp.cpp | 0 | 1 | 10 | 10 | 6 | 4 | 0 | 3 | 0 |
 | src/kyoshin/CNandData.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CNumSelect.cpp | 0 | 8 | 5 | 0 | 1 | 0 | 0 | 2 | 0 |
 | src/kyoshin/COccCulling.cpp | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 3 | 0 |
@@ -369,7 +370,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfGimmickJump.cpp | 30 | 7 | 28 | 42 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 0 | 2 | 3 | 1 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 3 | 9 | 13 | 13 | 5 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickWarp.cpp | 35 | 15 | 42 | 11 | 4 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickWarp.cpp | 34 | 15 | 42 | 11 | 4 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfHikariItemManager.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfMapEffectManager.cpp | 0 | 2 | 1 | 1 | 1 | 1 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfMapItemManager.cpp | 0 | 0 | 7 | 4 | 0 | 0 | 0 | 0 | 0 |
@@ -529,7 +530,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/plugin/ocMsg.cpp | 0 | 19 | 2 | 19 | 14 | 14 | 0 | 2 | 0 |
 | src/kyoshin/plugin/ocThread.cpp | 1 | 9 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/plugin/ocUnit.cpp | 29 | 65 | 30 | 125 | 71 | 50 | 0 | 4 | 0 |
-| src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 6 | 55 | 16 | 7 | 0 | 1 | 0 |
+| src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 6 | 54 | 16 | 7 | 0 | 1 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 19 | 10 | 10 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCfs.cpp | 88 | 0 | 8 | 36 | 27 | 16 | 0 | 6 | 2 |
 | src/kyoshin/plugin/pluginEve.cpp | 15 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -538,7 +539,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/plugin/pluginUi.cpp | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginUnit.cpp | 17 | 6 | 1 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginVoice.cpp | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 |
-| src/kyoshin/realtimeevt/CREvtCamera.cpp | 32 | 13 | 16 | 50 | 21 | 8 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtCamera.cpp | 33 | 13 | 16 | 50 | 21 | 8 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 22 | 18 | 34 | 26 | 0 | 2 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 9 | 6 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 15 | 0 | 0 | 0 | 0 | 0 |
@@ -1310,6 +1311,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "libs/nw4r/src/g3d/g3d_calcworld.cpp": {
   "extern_c_nonlbl_def": 2
  },
+ "libs/nw4r/src/g3d/g3d_draw1mat1shp.cpp": {
+  "ptr_arith": 2
+ },
  "libs/nw4r/src/g3d/g3d_fog.cpp": {
   "asm_code": 3,
   "void_ptr": 1
@@ -1530,7 +1534,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/nw4r/src/snd/snd_SoundArchiveFile.cpp": {
   "extern_c_nonlbl_def": 2,
-  "void_ptr": 3
+  "self_params": 2,
+  "void_ptr": 5
  },
  "libs/nw4r/src/snd/snd_SoundArchiveLoader.cpp": {
   "void_ptr": 3
@@ -1715,11 +1720,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CItemBoxInfo.cpp": {
   "deref_arith": 123,
+  "extern_c_nonlbl_decl": 1,
   "extern_c_nonlbl_def": 12,
   "ptr_arith": 215,
   "rn_params": 18,
   "self_params": 22,
-  "void_ptr": 225
+  "void_ptr": 226
  },
  "src/kyoshin/CItemBoxLine.cpp": {
   "extern_c_nonlbl_def": 7,
@@ -1767,7 +1773,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/CModelDisp.cpp": {
   "deref_arith": 4,
   "extern_c_nonlbl_def": 1,
-  "ptr_arith": 4,
+  "ptr_arith": 6,
   "rn_params": 3,
   "self_params": 10,
   "void_ptr": 10
@@ -2248,7 +2254,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CfGimmickWarp.cpp": {
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 35,
+  "extern_c_nonlbl_decl": 34,
   "extern_c_nonlbl_def": 15,
   "ptr_arith": 4,
   "self_params": 42,
@@ -3159,7 +3165,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "ptr_arith": 16,
   "rn_params": 1,
   "self_params": 6,
-  "void_ptr": 55
+  "void_ptr": 54
  },
  "src/kyoshin/plugin/pluginCam.cpp": {
   "deref_arith": 10,
@@ -3207,7 +3213,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/realtimeevt/CREvtCamera.cpp": {
   "deref_arith": 8,
-  "extern_c_nonlbl_decl": 32,
+  "extern_c_nonlbl_decl": 33,
   "extern_c_nonlbl_def": 13,
   "ptr_arith": 21,
   "self_params": 16,

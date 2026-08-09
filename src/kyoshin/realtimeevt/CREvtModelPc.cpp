@@ -696,7 +696,7 @@ extern "C" void func_80184730(void* self) {
     void* model = func_80495E8C(lbl_eu_80663E14, data0, -1, 1);
     FLD(u32, s, 0x20) = (u32)model;
 
-    func_80484E5C(model);
+    func_80484E5C(model, lbl_eu_80667918);
     func_804827DC(model, 1);
     func_80485684(model, 1);
     FLD(u32, model, 0x7A8) |= 0x4;

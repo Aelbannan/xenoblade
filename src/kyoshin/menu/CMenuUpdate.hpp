@@ -177,7 +177,7 @@ extern "C" bool code80135FDC_getByte_64059();
 extern "C" int func_8013BE50();
 extern "C" void* CfRes_getE14();
 extern "C" bool func_8009CF8C(int);
-extern "C" void func_8009D018(int, int);
+extern "C" void func_8009D018(u32, u32);
 extern "C" void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
 extern "C" char* func_80138F78(u32);
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();

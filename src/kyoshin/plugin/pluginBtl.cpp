@@ -16,10 +16,6 @@ public:
     // +0x194: UnkClass_8018C5FC
     // +0x219C: CVision
 };
-class CfGameManager {
-public:
-    static void* getPlayer(int index);
-};
 }
 
 // --- C-linkage retail helpers ---
@@ -83,7 +79,7 @@ extern "C" {
     // RTTI type info for dynamic_cast (attack function)
     extern char lbl_eu_806618D8[];
     extern char lbl_eu_806619A0[];
-    void* __dynamic_cast(void*, int, void*, void*, int);
+    void* __dynamic_cast(void*, long, const void*, const void*, void*);
     void* func_800B708C__Fi(int);
 }
 

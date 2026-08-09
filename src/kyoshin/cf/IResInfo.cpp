@@ -12,7 +12,7 @@ extern "C" {
     extern u32 lbl_eu_80663E24;
     extern u32 lbl_eu_80663E28;
     extern u32 lbl_eu_80663E30;
-    extern u32 lbl_eu_8065FC18;
+    extern u32 lbl_eu_8065FC18[];
     extern float lbl_eu_80666200;
     extern float lbl_eu_80666204;
     extern float lbl_eu_80666208;
@@ -234,7 +234,7 @@ extern "C" void func_80065F24(u8* self, void* param) {
         u32 val = (a << 20) | 0x60000000 | (b << 10);
         void* result = func_80066E7C(param, val);
         if (result != 0) {
-            u32* fc18 = &lbl_eu_8065FC18;
+            u32* fc18 = lbl_eu_8065FC18;
             if (fc18 != 0) {
                 *(u32**)((char*)param + 0x10) = (u32*)result;
                 func_804CC1BC(fc18);
@@ -311,7 +311,7 @@ extern "C" void func_80066290(u8* self, void* param) {
             void* (*fn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 8);
             void* r = fn(obj, 0);
             if (r != 0) {
-                u32* fc18 = &lbl_eu_8065FC18;
+                u32* fc18 = lbl_eu_8065FC18;
                 if (fc18 != 0) {
                     *(u32**)((char*)param + 0x10) = (u32*)r;
                     func_804CC1BC(fc18);
@@ -334,7 +334,7 @@ extern "C" void func_8006660C(u8* self) {
     void* r = func_80066CF8(self);
     u32* p10 = *(u32**)((char*)self + 0x10);
     if (p10 == 0 && r != 0) {
-        u32* fc18 = &lbl_eu_8065FC18;
+        u32* fc18 = lbl_eu_8065FC18;
         if (fc18 != 0) {
             *(u32**)((char*)self + 0x10) = (u32*)r;
             func_804CC1BC(fc18);
@@ -364,7 +364,7 @@ extern "C" void func_8006660C(u8* self) {
 // func_80066714 (0x74)
 // ============================================================
 extern "C" void func_80066714(u8* self, bool cleanup) {
-    u32* fc18 = &lbl_eu_8065FC18;
+    u32* fc18 = lbl_eu_8065FC18;
     if (fc18 != 0) {
         u32* p10 = *(u32**)((char*)self + 0x10);
         if (p10 != 0) {

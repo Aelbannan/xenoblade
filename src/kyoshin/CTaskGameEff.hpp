@@ -24,7 +24,6 @@ extern "C" void func_804CBAA8(void*, void*, int);
 // Raw CProcess constructor + global null pointer-to-member-function constant
 // (used by the raw-init style ctor, mirroring CTaskGameEffAfter).
 extern "C" void __ct__8CProcessFv(void* self);
-extern u32 __ptmf_null[3];
 
 // Retail vtables / thunk pointers in .data. lbl_eu_80525BFC is the final
 // CTaskGameEff vtable; lbl_eu_80525CAC the interim; the 0x54/0x58/0x70/0x74
@@ -36,9 +35,9 @@ extern const u8 lbl_eu_80525C84[];
 extern const u8 lbl_eu_80525C6C[];
 
 // C-linkage retail effect helpers (CfObjectMove/CScn management).
-extern "C" void func_800ACF78(void* obj, void* target, int child);
+extern "C" void func_800ACF78(void* obj, void* target, u32 child);
 extern "C" void func_800ACEF8(void* obj, const void* src);
-extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(int index);
+extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
 extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);
 

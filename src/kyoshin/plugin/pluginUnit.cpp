@@ -30,8 +30,8 @@ extern "C" {
     void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
-    int func_80174C98(void*, u32*, int);
-    int func_8006EF04__Fi(int mask);
+    int func_80174C98(void*, int*, int);
+    bool func_8006EF04__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
@@ -279,12 +279,12 @@ int onPcArtsAttack(VMThread* pThread) {
     u32 val = *reinterpret_cast<u32*>(subObj->subFunc0x34());
 
     bool matched = false;
-    if (func_80174C98(actor, &val, 0xa) != 0) {
+    if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable[12] (offset 0x30) value.
         val = *reinterpret_cast<u32*>(subObj->subFunc0x30());
-        if (func_80174C98(actor, &val, 0xa) != 0) {
+        if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
     }
@@ -398,12 +398,12 @@ int onEneArtsAttack(VMThread* pThread) {
     u32 val = *subObj->subFunc0x34();
 
     bool matched = false;
-    if (func_80174C98(actor, &val, 0xa) != 0) {
+    if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable[12] (offset 0x30) value.
         val = *subObj->subFunc0x30();
-        if (func_80174C98(actor, &val, 0xa) != 0) {
+        if (func_80174C98(actor, (int*)&val, 0xa) != 0) {
             matched = true;
         }
     }

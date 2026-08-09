@@ -7,7 +7,7 @@
 // extern "C" declarations don't clash (10197). Must be defined before any
 // header that pulls in CMapSel.hpp (code_802405F4.hpp includes it).
 #define KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 
 #include "kyoshin/code_802405F4.hpp"
 #include "kyoshin/code_80135FDC.hpp"

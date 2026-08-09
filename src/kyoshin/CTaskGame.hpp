@@ -50,7 +50,7 @@ public:
     void func_80042710();
     void func_80042720();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
-    s32 func_8004368C();
+    static s32 func_8004368C();
 
     virtual void Term();
     void stub_80040A3C();

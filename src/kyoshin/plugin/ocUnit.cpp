@@ -249,7 +249,24 @@ int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
 }
 
-void func_8003CB70(){}
+extern void func_800BC458(void* obj);
+extern "C" int func_8003CB70(VMThread* pThread, int handle) {
+    int arg;
+    if (vmArgOmitChk(pThread, 1)) {
+        arg = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        arg = vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (arg == 0) {
+        obj->CfObject_UnkVirtualFunc66(0);
+    } else {
+        func_800BC458(obj);
+    }
+    return 0;
+}
 
 void func_8003CC0C(){}
 
@@ -257,7 +274,15 @@ void func_8003CC9C(){}
 
 void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
-void func_8003CD6C(){}
+extern "C" int func_8003CD6C(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 3;
+    retVal.value.intVal = obj->CfObject_UnkVirtualFunc50();
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
 

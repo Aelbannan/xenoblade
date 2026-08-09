@@ -4879,8 +4879,8 @@
       "size": "0x9C",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bcd7c",
@@ -4896,7 +4896,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.872,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003d188",
@@ -4993,8 +4995,8 @@
       "size": "0x6C",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5007,7 +5009,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003d354",
@@ -482321,7 +482325,7 @@
       "size": "0x124",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482331,15 +482335,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:08:56.359059+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8046720c",
@@ -482352,7 +482348,7 @@
       "size": "0x160",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482362,15 +482358,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:08:56.359270+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8046736c",
@@ -482383,7 +482371,7 @@
       "size": "0x1F4",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482393,15 +482381,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:08:56.359274+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80467560",
@@ -539544,7 +539524,7 @@
       "size": "0xD4",
       "unit": "monolib/src/nand/CNBanner",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -539556,7 +539536,15 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNBanner.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T05:00:00.902936+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9794",
@@ -539569,7 +539557,7 @@
       "size": "0xDC",
       "unit": "monolib/src/nand/CNBanner",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -539583,7 +539571,15 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNBanner.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T05:00:00.902938+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9870",
@@ -539677,7 +539673,7 @@
       "size": "0xC0",
       "unit": "monolib/src/nand/CNBanner",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -539689,7 +539685,15 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNBanner.cpp",
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T05:00:00.902932+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9954",
@@ -539735,7 +539739,7 @@
       "size": "0xB8",
       "unit": "monolib/src/nand/CNBanner",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -539749,7 +539753,15 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNBanner.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T05:00:00.902706+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9d7c",
@@ -539762,7 +539774,7 @@
       "size": "0x11C",
       "unit": "monolib/src/nand/CNBanner",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -539775,7 +539787,15 @@
       "callgraph_source": "build/us/asm/monolib/src/nand/CNBanner.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/nand/CNBanner.cpp",
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T05:00:00.902940+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9e98",

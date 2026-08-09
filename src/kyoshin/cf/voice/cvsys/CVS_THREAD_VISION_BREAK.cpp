@@ -9,18 +9,13 @@
 #include "monolib/util/reslist.hpp"
 
 // Returns a reslist of CfObject pointers from the global object manager.
+// C++ linkage (retail mangled name func_800B6BA4__Fv).
 extern reslist<cf::CfObject*>* func_800B6BA4();
 
-// Free functions from the CVS_THREAD_EHP TU (sibling voice module).
-int func_802A3E88(CVS_THREAD* self);
-int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
-CVoiceHandle* func_802A330C(int size, int align);
-void* func_802A34E4(int size);
-CVoiceHandle* func_802A7A54(int arg);
-
-// Base CVS_THREAD constructor (C-linkage) is declared in
-// CVS_THREAD_VISION_BREAK.hpp.
+// Sibling-voice imports (func_802A3E88, func_802A3BEC, func_802A3C44,
+// func_802A3D54, func_802A330C, func_802A34E4, func_802A7A54,
+// func_8016FE34, func_800BE924) and the base constructor
+// __ct__cf_CVS_THREAD are declared in CVS_THREAD_VISION_BREAK.hpp.
 
 // Active-check function type: vtable[0x2BC/4] on a CVoiceHandle.
 typedef int (*IsActiveFunc)(CVoiceHandle*);
@@ -40,7 +35,6 @@ void func_802A955C(CVS_THREAD_VISION_BREAK* self) {
 // is biased by 0x3E9C before comparing against the incoming voice pointer.
 void func_802A95A4(CVS_THREAD_VISION_BREAK* self, CCharVoice* voicePtr) {
     // Direct call to the free function at 0x802A3BEC.
-    extern void func_802A3BEC(CVS_THREAD*, CCharVoice*);
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
@@ -97,20 +91,19 @@ int func_802A9604() {
 // Factory constructor for CVS_THREAD_VISION_BREAK. Takes a CVoiceHandle
 // (manager) and a parameter; validates both, allocates a new 0x28-byte
 // object, initialises it, and returns it. Returns NULL on failure.
-CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
+CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) try {
     // Parameter must be positive.
     if (param <= 0) {
         return NULL;
     }
 
-    // The handle's +0x3F00 flag (bit 30) must be set.
+    // The handle's +0x3F00 flag (bit 30 = value bit 1) must be set.
     if ((handle->field_0x3F00 & 2) == 0) {
         return NULL;
     }
 
     // Check that the handle is not already active (vtable[0x2BC/4]).
-    IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
-    if (isActive(handle) != 0) {
+    if (((IsActiveFunc)handle->vtable[0x2BC / 4])(handle) != 0) {
         return NULL;
     }
 
@@ -128,19 +121,20 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     // Call the base CVS_THREAD constructor.
     __ct__cf_CVS_THREAD(obj);
 
-    // Override the vtable (at offset 0x1C) with the CVS_THREAD_VISION_BREAK vtable.
-    struct VTableSlot { u8 _pad[0x1C]; void** vtablePtr; };
-    static_cast<VTableSlot*>(static_cast<void*>(obj))->vtablePtr = (void**)lbl_eu_80539D88;
-
+    // Override the vtable (at 0x1C, index 7) with the VISION_BREAK vtable.
+    ((void**)obj)[7] = (void**)lbl_eu_80539D88;
     obj->field_0x20 = handle;
     obj->field_0x24 = param;
 
     // Copy the initial-state triple (lbl_eu_80539D70) to obj's base fields.
-    obj->unk0 = (u32*)lbl_eu_80539D70[0];
-    obj->unk4 = lbl_eu_80539D70[1];
-    obj->unk8 = lbl_eu_80539D70[2];
+    const u32* base = lbl_eu_80539D70;
+    obj->unk0 = (u32*)base[0];
+    obj->unk4 = base[1];
+    obj->unk8 = base[2];
 
     return obj;
+} catch (...) {
+    throw;
 }
 
 // ── Target 5: us-802abb34 (func_802A93FC) ──────────────────────────────────
@@ -149,7 +143,8 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
 // voice handles, then selects a voice ID from one of two tables (based on
 // field_0x24 threshold) and plays it. Falls back to vtable[2] if play fails.
 void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
-    // Reset the state triple from lbl_eu_80539D7C.
+    // Reset the state triple from lbl_eu_80539D7C (consecutive reads so
+    // MWCC keeps the base register and emits the lwzu form).
     self->unk0 = (u32*)lbl_eu_80539D7C[0];
     self->unk4 = lbl_eu_80539D7C[1];
     self->unk8 = lbl_eu_80539D7C[2];
@@ -160,8 +155,7 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     }
 
     // Check if the handle is already active.
-    IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
-    if (isActive(handle) != 0) {
+    if (((IsActiveFunc)handle->vtable[0x2BC / 4])(handle) != 0) {
         return;
     }
 
@@ -169,7 +163,6 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
     reslist<cf::CfObject*>* list = func_800B6BA4();
     for (reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); ++it) {
         cf::CfObject* obj = *it;
-        // Extract a voice handle from the object and process its CCharVoice.
         // func_8016FE34 returns a CVoiceHandle*, and the CCharVoice is embedded at +0x3E9C.
         CVoiceHandle* resultHandle = (CVoiceHandle*)func_8016FE34(obj);
         if (resultHandle != NULL) {
@@ -177,26 +170,32 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         }
     }
 
-    // Bias the handle to its embedded CCharVoice.
-    CCharVoice* voicePtr = (CCharVoice*)handle;
-    if (handle != NULL) {
-        voicePtr = &handle->voice;
-    }
-
-    // Select a voice ID from the appropriate phase table.
+    // Select a voice ID from the appropriate phase table based on field_0x24.
+    CCharVoice* voicePtr;
     int voiceId;
     if (self->field_0x24 >= 3) {
-        // Late phase: voice IDs from lbl_eu_80662D40.
-        int idx = ml::math::mtRand(3);
-        voiceId = lbl_eu_80662D40[idx];
+        // Late phase: handle + voice IDs from lbl_eu_80662D40.
+        CVoiceHandle* h = self->field_0x20;
+        voicePtr = (CCharVoice*)h;
+        if (h != NULL) {
+            voicePtr = &h->voice;
+        }
+        voiceId = lbl_eu_80662D40[ml::math::mtRand(3)];
+        if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+            // Play failed -- end the sequence via the blank1() virtual.
+            static_cast<CVS_THREAD*>(self)->blank1();
+        }
     } else {
-        // Early phase: voice IDs from lbl_eu_80662D48.
-        int idx = ml::math::mtRand(3);
-        voiceId = lbl_eu_80662D48[idx];
-    }
-
-    if (func_802A3C44(self, voicePtr, voiceId) == 0) {
-        // Play failed -- fall back to the playback-start virtual.
-        self->func_802A3B50();
+        // Early phase: handle + voice IDs from lbl_eu_80662D48.
+        CVoiceHandle* h = self->field_0x20;
+        voicePtr = (CCharVoice*)h;
+        if (h != NULL) {
+            voicePtr = &h->voice;
+        }
+        voiceId = lbl_eu_80662D48[ml::math::mtRand(3)];
+        if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+            // Play failed -- end the sequence via the blank1() virtual.
+            static_cast<CVS_THREAD*>(self)->blank1();
+        }
     }
 }

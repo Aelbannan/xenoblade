@@ -65,14 +65,13 @@ extern "C" void func_802A0950(cf::CChainEffect* self, int a, int b, int c, int d
     }
 
     // Release: unbind the linked object and clear the effect fields.
-    CChainObj* obj = (CChainObj*)self->unk4;
-    if (obj != 0) {
-        obj->field_b0 = 0;
-        if (obj->field_98 != 0) {
-            func_800ACFD8(obj, 0);
+    if (self->unk4 != 0) {
+        ((CChainObj*)self->unk4)->field_b0 = 0;
+        if (((CChainObj*)self->unk4)->field_98 != 0) {
+            func_800ACFD8((void*)self->unk4, 0);
             func_800ACC14((void*)self->unk4, 1);
         } else {
-            func_800B3A88(func_800B07E8(), obj);
+            func_800B3A88(func_800B07E8(), (void*)self->unk4);
         }
         self->unk4 = 0;
         self->unk8 = 0;
@@ -118,23 +117,36 @@ void func_802A08F4(void* self) {
 int func_802A0818(s32 id, u32 p2) {
     int found = 0;
     int matched;
-    do {
-        CChainManager* mgr = func_800B6C34();
-        CChainNode* node = mgr->field_04->field_00;
-        matched = 0;
-        do {
-            CChainItem* item = (CChainItem*)func_800AC610(node->field_08);
-            if (item != 0 && item->field_8C == id
-                && (p2 == 0 || p2 == (item->field_9C != 0 ? item->field_9C - 0x3E9C : 0))) {
-                func_800B3A88(func_800B07E8(), item);
-                matched = 1;
-                break;
+    CChainManager* mgr;
+    CChainNode* node;
+    CChainItem* item;
+    goto scan;
+loopback:
+    found = 1;
+scan:
+    {
+        mgr = func_800B6C34();
+        node = mgr->field_04->field_00;
+        while (node != mgr->field_04) {
+            item = (CChainItem*)func_800AC610(node->field_08);
+            if (item != 0 && id == item->field_8C) {
+                u32 member = item->field_9C;
+                if (member != 0) {
+                    member -= 0x3E9C;
+                }
+                if (p2 == 0 || p2 == member) {
+                    func_800B3A88(func_800B07E8(), item);
+                    matched = 1;
+                    goto check;
+                }
             }
             node = node->field_00;
-        } while (node != mgr->field_04);
-        if (matched) {
-            found = 1;
         }
-    } while (matched);
-    return found;
+        matched = 0;
+    check:
+        if (matched) {
+            goto loopback;
+        }
+        return found;
+    }
 }

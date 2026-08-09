@@ -30,38 +30,41 @@ extern "C" void func_802445F0(void* self) {
 //   +0x1B layout brlyt name
 //   +0x2B animation brlan name
 bool CFade::OnFileEvent(CEventFile* pEventFile) {
-    // Only run when this event's file matches the handle we started reading.
-    if (mFileHandle != pEventFile->mFileHandle)
-        return false;
+    if (mFileHandle == pEventFile->mFileHandle) {
+        // Cache the shared string pool base so MWCC keeps it in a callee-saved
+        // register across the bl calls (retail: r30 + per-use addi offsets).
+        char* str = lbl_eu_8050B5A0;
 
-    // Reserve a scratch region inside the memory handle for the layout build,
-    // then RAII-register it with CLibLayout (frees on scope exit).
-    mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x400,
-                            &lbl_eu_8050B5A0[0x11], 0);
-    Class_8045F858 sp8(&mMemRegion);
+        // Reserve a scratch region inside the memory handle for the layout build,
+        // then RAII-register it with CLibLayout (frees on scope exit).
+        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x400,
+                                &str[0x11], 0);
+        Class_8045F858 sp8(&mMemRegion);
 
-    // Detach the loaded file buffer for the font/pack archive.
-    void* data = mFileHandle->getData();
-    mtl::MemManager::func_80434A4C(false);
+        // Detach the loaded file buffer for the layout archive.
+        void* data = mFileHandle->getData();
+        mtl::MemManager::func_80434A4C(false);
 
-    // Build the arc resource accessor and attach the archive buffer.
-    mArcResAcc = CLibLayout::createArcResourceAccessor();
-    mArcResAcc->Attach(data, &lbl_eu_8050B5A0[0x17]);
+        // Build the arc resource accessor and attach the archive buffer.
+        mArcResAcc = CLibLayout::createArcResourceAccessor();
+        mArcResAcc->Attach(data, &str[0x17]);
 
-    // Load the fade layout and its animation transform.
-    func_80136E84(&mLayout, mArcResAcc, &lbl_eu_8050B5A0[0x1B]);
-    func_80136F08(mLayout, &mAnimTrans, mArcResAcc, &lbl_eu_8050B5A0[0x2B]);
+        // Load the fade layout and its animation transform.
+        func_80136E84(&mLayout, mArcResAcc, &str[0x1B]);
+        func_80136F08(mLayout, &mAnimTrans, mArcResAcc, &str[0x2B]);
 
-    // Enable the animation and kick off the first frame.
-    mLayout->SetAnimationEnable(mAnimTrans, true);
-    mLayout->Animate(0);
+        // Enable the animation and kick off the first frame.
+        mLayout->SetAnimationEnable(mAnimTrans, true);
+        mLayout->Animate(0);
 
-    // Mark the fade overlay loaded/ready now that the layout is attached.
-    func_802445F0(this);
+        // Mark the fade overlay loaded/ready now that the layout is attached.
+        func_802445F0(this);
 
-    mFileHandle = nullptr;
-    mMemRegion.func_8045F810();
-    return true;
+        mFileHandle = nullptr;
+        mMemRegion.func_8045F810();
+        return true;
+    }
+    return false;
 }
 
 // Target 8: constructor. Store the shared vtable first, then init the scratch
@@ -147,8 +150,7 @@ void CFade::func_80244558() {
 
 // Target 6: once the fade-out animation rewinds, return to idle.
 void CFade::func_802445A4() {
-    f32 target = lbl_eu_80668750;
-    if (func_80137510(mAnimTrans, target) != 0) {
+    if (func_80137510(mAnimTrans, lbl_eu_80668750) != 0) {
         mFadeState = 0;
         mVisible = 1;
     }

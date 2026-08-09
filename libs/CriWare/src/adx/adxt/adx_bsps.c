@@ -3,6 +3,59 @@
 
 #include <harness_catalog.h>
 
+// ADXB (ADX Buffer) SPSD decode object. Byte layout recovered from
+// ADXB_DecodeHeaderSpsd / ADXB_ExecOneSpsd retail ASM and cross-checked
+// against the sibling ADXB decode helpers in adx_bsc.c.
+struct AdxBsp {
+    char field_0x0[2]; // 0x00
+    s16 field_0x2;     // 0x02
+    s32 field_0x4;     // 0x04 - decode state
+    void* field_0x8;   // 0x08 - ADXPD handle
+    s8 field_0xC;      // 0x0C - outCodec
+    u8 field_0xD;      // 0x0D - outVer
+    s8 field_0xE;      // 0x0E - outX / channel-mode selector
+    s8 field_0xF;      // 0x0F - outCh (channel count)
+    u32 field_0x10;    // 0x10 - outBlk
+    u32 field_0x14;    // 0x14 - outNum
+    u32 field_0x18;    // 0x18 - outSmp
+    s16 field_0x1C;    // 0x1C
+    char field_0x1E[2];// 0x1E
+    u32 field_0x20;    // 0x20
+    s16 field_0x24;    // 0x24
+    s16 field_0x26;    // 0x26
+    u32 field_0x28;    // 0x28
+    u32 field_0x2C;    // 0x2C
+    u32 field_0x30;    // 0x30
+    u32 field_0x34;    // 0x34
+    char field_0x38[4];// 0x38
+    u32 field_0x3C;    // 0x3C
+    u32 field_0x40;    // 0x40
+    u32 field_0x44;    // 0x44
+    void* field_0x48;  // 0x48 - source data ptr
+    s32 field_0x4C;    // 0x4C - maxBlks
+    s32 field_0x50;    // 0x50 - blkSmpl
+    s32 field_0x54;    // 0x54 - numBlkSmpl
+    u32 field_0x58;    // 0x58 - blkSize
+    u32 field_0x5C;    // 0x5C - pcmBase
+    u32 field_0x60;    // 0x60
+    u32 field_0x64;    // 0x64
+    u32 field_0x68;    // 0x68 - pcmOfst
+    u32 field_0x6C;    // 0x6C - availWrPos
+    u32 field_0x70;    // 0x70 - wrPos
+    char field_0x74[4];// 0x74
+    void* field_0x78;  // 0x78 - getWr callback
+    void* field_0x7C;  // 0x7C - getWr context
+    void* field_0x80;  // 0x80 - end-of-stream callback
+    void* field_0x84;  // 0x84 - eos context
+    u32 field_0x88;    // 0x88
+    u32 field_0x8C;    // 0x8C
+    u32 field_0x90;    // 0x90 - decSmpl
+    u32 field_0x94;    // 0x94 - decDtLen
+    s16 field_0x98;    // 0x98
+    char field_0x9A[2];// 0x9A
+    s16 field_0x9C;    // 0x9C - outX2
+};
+
 int ADX_DecodeInfoSpsd(const u8 *data, int size, u16 *outBps, s8 *outCodec,
     u8 *outVer, s8 *outCh, s8 *outX, u32 *outNum, u32 *outSmp,
     u32 *outBlk, s16 *outX2)
@@ -39,9 +92,92 @@ int ADX_DecodeInfoSpsd(const u8 *data, int size, u16 *outBps, s8 *outCodec,
     return 0;
 }
 
-void ADXB_DecodeHeaderSpsd() {}
+s16 ADXB_DecodeHeaderSpsd(struct AdxBsp* self, const u8* data, s32 size)
+{
+    u16 outBps;
 
-void ADXB_ExecOneSpsd() {}
+    self->field_0x2 = 1;
+    if (ADX_DecodeInfoSpsd(data, size, &outBps, &self->field_0xC,
+            &self->field_0xD, &self->field_0xF, &self->field_0xE,
+            &self->field_0x14, &self->field_0x18, &self->field_0x10,
+            &self->field_0x9C) < 0) {
+        return 0;
+    }
+
+    self->field_0x1C = 0;
+    self->field_0x26 = 0;
+    self->field_0x24 = 0;
+    self->field_0x34 = 0;
+    self->field_0x30 = 0;
+    self->field_0x2C = 0;
+    self->field_0x28 = 0;
+    self->field_0x20 = 0;
+    self->field_0x50 = self->field_0xE;
+    self->field_0x54 = self->field_0xF;
+    self->field_0x58 = self->field_0x10;
+    self->field_0x5C = self->field_0x3C;
+    self->field_0x60 = self->field_0x40;
+    self->field_0x64 = self->field_0x44;
+    self->field_0x8C = 0;
+    self->field_0x88 = 0;
+    self->field_0x98 = 2;
+    return outBps;
+}
+
+extern u32 ADXPD_GetStat(void* self);
+
+void ADXB_ExecOneSpsd(struct AdxBsp* self)
+{
+    s32 w;
+    s8 ch;
+    // Source sample buffer, kept live across the whole function (r31).
+    s16* src = (s16*)self->field_0x48;
+
+    if (self->field_0x4 == 1) {
+        if (ADXPD_GetStat(self->field_0x8) == 0) {
+            void (*getWr)(void*, u32*, u32*, u32*);
+            void* ctx;
+
+            getWr = (void (*)(void*, u32*, u32*, u32*))self->field_0x78;
+            ctx = self->field_0x7C;
+            getWr(ctx, &self->field_0x68, &self->field_0x6C, &self->field_0x70);
+
+            w = (s32)self->field_0x60 - (s32)self->field_0x68;
+            if (w > (s32)self->field_0x6C) w = (s32)self->field_0x6C;
+            if (w > (s32)self->field_0x4C) w = (s32)self->field_0x4C;
+
+            ch = self->field_0xE;
+            {
+                s16* dst1 = (s16*)((u8*)self->field_0x5C + (self->field_0x68 << 1));
+                if (ch == 2) {
+                    s16* dst2 = (s16*)((u8*)self->field_0x5C + ((self->field_0x68 + self->field_0x64) << 1));
+                    s32 i;
+                    for (i = 0; i < w; i++) {
+                        dst1[i] = src[i * 2];
+                        dst2[i] = src[i * 2 + 1];
+                    }
+                } else {
+                    s32 i;
+                    for (i = 0; i < w; i++) {
+                        dst1[i] = src[i];
+                    }
+                }
+            }
+            self->field_0x90 = (u32)w;
+            self->field_0x4 = 2;
+            self->field_0x94 = (u32)(ch * (w << 1));
+        }
+    }
+
+    if (self->field_0x4 == 2) {
+        void (*eosCb)(void*, u32, u32);
+        void* ctx2;
+        eosCb = (void (*)(void*, u32, u32))self->field_0x80;
+        ctx2 = self->field_0x84;
+        eosCb(ctx2, self->field_0x94, self->field_0x90);
+        self->field_0x4 = 3;
+    }
+}
 
 s32 memcmp(const void* s1, const void* s2, size_t n);
 extern const u8 lbl_eu_80519108[4];

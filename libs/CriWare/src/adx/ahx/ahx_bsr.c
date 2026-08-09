@@ -4,6 +4,20 @@
 #include <harness_catalog.h>
 #include <string.h>
 
+// CRI I/O object vtable (index 6-9 are the streaming queries used here).
+typedef struct AHXBSR_IoVtbl {
+    void (*field_0x00)();
+    void (*field_0x04)();
+    void (*field_0x08)();
+    void (*field_0x0C)();
+    void (*field_0x10)();
+    void (*field_0x14)();
+    void (*field_0x18)(void* self, s32 mode, u32* pos, s32 size); /* 0x18 */
+    void (*field_0x1C)(void* self, s32 mode, u32* pos);           /* 0x1C */
+    void (*seek)(void* self, s32 mode, u32* pos);                 /* 0x20 */
+    s32 (*field_0x24)(void* self, s32 idx);                       /* 0x24 */
+} AHXBSR_IoVtbl;
+
 typedef struct AHXBSR {
     /*0x00*/ s32 initialized;
     /*0x04*/ void* streamObj;
@@ -14,7 +28,7 @@ typedef struct AHXBSR {
     /*0x18*/ s32 bufSizeWords;
     /*0x1C*/ u32 readPos;
     /*0x20*/ u32 readLen;
-    /*0x24*/ u32 dataRemain;
+    /*0x24*/ s32 dataRemain;
     /*0x28*/ u8* dataPtr;
 } AHXBSR;
 
@@ -22,7 +36,7 @@ extern u32 lbl_eu_805175A0[];
 
 void* AHXBSR_Create(void* allocator, void* buf, s32 minSize) {
     AHXBSR* bsr;
-    u32 size0, size1;
+    s32 size0, size1;
 
     if (minSize < 0x34) {
         return NULL;
@@ -34,11 +48,11 @@ void* AHXBSR_Create(void* allocator, void* buf, s32 minSize) {
     bsr->streamObj = allocator;
     bsr->position = 0;
 
-    size0 = ((s32 (*)(void*, s32))(*(u32***)allocator)[9])(allocator, 0);
-    size1 = ((s32 (*)(void*, s32))(*(u32***)allocator)[9])(allocator, 1);
+    size0 = ((AHXBSR_IoVtbl*)*(void**)allocator)->field_0x24(allocator, 0);
+    size1 = ((AHXBSR_IoVtbl*)*(void**)allocator)->field_0x24(allocator, 1);
 
-    bsr->bufSize = size0 + size1;
-    bsr->bufSizeWords = (size0 + size1) >> 2;
+    bsr->bufSize = size1 + size0;
+    bsr->bufSizeWords = bsr->bufSize / 4;
 
     bsr->dataRemain = 0;
     bsr->readPos = 0;
@@ -54,8 +68,7 @@ void AHXBSR_Destroy(void* self) {
     memset(self, 0, 0x2C);
 }
 
-void AHXBSR_Restruct(void* self, void* allocator) {
-    AHXBSR* bsr = (AHXBSR*)self;
+void AHXBSR_Restruct(AHXBSR* bsr, void* allocator) {
     u32 size0, size1;
 
     if (bsr == NULL) return;
@@ -64,11 +77,11 @@ void AHXBSR_Restruct(void* self, void* allocator) {
     bsr->streamObj = allocator;
     bsr->position = 0;
 
-    size0 = ((s32 (*)(void*, s32))(*(u32***)allocator)[9])(allocator, 0);
-    size1 = ((s32 (*)(void*, s32))(*(u32***)allocator)[9])(allocator, 1);
+    size0 = ((AHXBSR_IoVtbl*)*(void**)allocator)->field_0x24(allocator, 0);
+    size1 = ((AHXBSR_IoVtbl*)*(void**)allocator)->field_0x24(allocator, 1);
 
-    bsr->bufSize = size0 + size1;
-    bsr->bufSizeWords = (size0 + size1) >> 2;
+    bsr->bufSize = size1 + size0;
+    bsr->bufSizeWords = bsr->bufSize / 4;
     bsr->dataRemain = 0;
     bsr->readPos = 0;
     bsr->readLen = 0;
@@ -77,42 +90,38 @@ void AHXBSR_Restruct(void* self, void* allocator) {
 }
 
 static void ahxbsr_get_data(AHXBSR* bsr) {
-    s32 needed = (32 - bsr->bitCnt) >> 3;
-    u32 avail = bsr->dataRemain;
-    u32 count;
-    u32** vt;
+    s32 needed = (32 - bsr->bitCnt) / 8;
+    s32 avail = bsr->dataRemain;
+    s32 count;
+    AHXBSR_IoVtbl* vt;
 
     if (avail < 4) {
         u32 tmpPos = bsr->readPos;
         u32 tmpLen = bsr->readLen;
 
         if (tmpLen != 0) {
+            u32 len0 = tmpLen;
             u32 chunk = tmpLen - avail;
+            u32 newPos;
             if (tmpLen > chunk) {
                 tmpLen = chunk;
             }
-            u32 remain = tmpLen - chunk;
-            u32 newPos;
-            if (remain == 0) {
-                newPos = 0;
-            } else {
-                newPos = tmpPos + chunk;
-            }
+            newPos = ((len0 - tmpLen) != 0) ? (tmpPos + tmpLen) : 0;
 
-            vt = *(u32***)bsr->streamObj;
-            ((void (*)(void*, s32, u32*))vt[8])(bsr->streamObj, 0, &tmpPos);
-            ((void (*)(void*, s32, u32*))vt[7])(bsr->streamObj, 1, &newPos);
+            vt = (AHXBSR_IoVtbl*)*(void**)bsr->streamObj;
+            vt->seek(bsr->streamObj, 0, &tmpPos);
+            vt->field_0x1C(bsr->streamObj, 1, &newPos);
         }
 
-        vt = *(u32***)bsr->streamObj;
-        ((void (*)(void*, s32, u32*, s32))vt[6])(bsr->streamObj, 1, &bsr->readPos, bsr->bufSizeWords);
+        vt = (AHXBSR_IoVtbl*)*(void**)bsr->streamObj;
+        vt->field_0x18(bsr->streamObj, 1, &bsr->readPos, bsr->bufSizeWords);
 
         bsr->dataPtr = (u8*)bsr->readPos;
         bsr->dataRemain = bsr->readLen;
     }
 
     count = bsr->dataRemain;
-    if (needed < (s32)count) {
+    if (needed < count) {
         count = needed;
     }
 
@@ -188,9 +197,8 @@ s32 AHXBSR_Tell(AHXBSR* bsr) {
 }
 
 s32 AHXBSR_SearchSync(AHXBSR* bsr) {
-    s32 bits, skip, shift;
-    u32** vt;
-    s32 sync, val, count;
+    u32 bits, sync, val;
+    s32 skip, shift, count;
     s32 avail;
 
     bits = bsr->position & 7;
@@ -218,18 +226,19 @@ s32 AHXBSR_SearchSync(AHXBSR* bsr) {
         sync = 0;
     } else {
         shift = bsr->bitCnt - 12;
-        sync = (bsr->bitBuf >> shift) & 0xFFF;
+        sync = ((s32)bsr->bitBuf >> shift) & 0xFFF;
         bsr->bitCnt -= 12;
         bsr->position += 12;
     }
 
     count = 0;
-    while (1) {
+    while (avail = ((AHXBSR_IoVtbl*)*(void**)bsr->streamObj)->field_0x24(bsr->streamObj, 1),
+           avail != 0 || bsr->bitCnt != 0 || bsr->dataRemain != 0) {
         val = sync & 0xFFF;
         if (val == 0xFFF) {
             return 1;
         }
-        if ((val + 0x7FFF0000) == 0x8000000C) {
+        if ((sync + 0x7FFF0000) == 0xC) {
             return 2;
         }
 
@@ -240,21 +249,15 @@ s32 AHXBSR_SearchSync(AHXBSR* bsr) {
 
         if (bsr->bitCnt < 4) {
             bsr->position += bsr->bitCnt;
-            bsr->bitCnt = 0;
+            bsr->bitCnt = count;
             val = 0;
         } else {
             shift = bsr->bitCnt - 4;
-            val = (bsr->bitBuf >> shift) & 0xF;
+            val = ((s32)bsr->bitBuf >> shift) & 0xF;
             bsr->bitCnt -= 4;
             bsr->position += 4;
         }
         sync |= val;
-
-        vt = *(u32***)bsr->streamObj;
-        avail = ((s32 (*)(void*, s32))vt[9])(bsr->streamObj, 1);
-        if (avail == 0 && bsr->bitCnt == 0 && bsr->dataRemain == 0) {
-            break;
-        }
     }
 
     return -1;

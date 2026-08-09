@@ -12,9 +12,11 @@ extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
  * Written to the row-major table and the transposed table.
  * int->double uses the itof reform (bias read from c[3]). */
 void DCT_AcInit(void) {
-    const double *c = lbl_eu_8051C388;
-    double *tbl_base = (double *)&lbl_eu_806046B8[1];  /* +0x08 */
+    const double *c = (const double *)lbl_eu_8051C388;
+    double *tbl_base = (double *)&lbl_eu_806046B8[2];  /* +0x08 */
     double *tbl_trans = tbl_base + 0x40;               /* +0x208 */
+    double pi8 = c[2];                                 /* pi/8 */
+    double half = c[1];                                /* 0.5 */
     int i;
 
     lbl_eu_806046B8[0] = (u32)DCT_GetVerStr();
@@ -26,7 +28,7 @@ void DCT_AcInit(void) {
         int j;
 
         for (j = 0; j < 8; j++) {
-            double v = cos(c[2] * (double)i * (c[1] + (double)j)) * scale;
+            double v = cos(pi8 * (double)i * (half + (double)j)) * scale;
             *row++ = v;
             *col = v;
             col += 8;

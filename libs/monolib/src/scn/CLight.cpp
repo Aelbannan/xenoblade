@@ -40,47 +40,64 @@ void func_804C0454(void* self, int value){
 void func_804C0484(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-// Computes a direction vector from two Euler angles (degrees) and stores it.
-// Then applies the direction to the light object based on the light type.
+// Computes a direction vector by rotating the +Z unit vector (0,0,1)
+// by the given Euler angles (X=angleX, Y=angleY, Z=0), then applies the
+// resulting direction to the light object based on its light type.
 void func_804C0570(CLight* self, f32 angleX, f32 angleY) {
-    // Convert degrees to radians, then radians to SinFIdx index
-    f32 radX = angleX * lbl_eu_8066A210;
+    // Convert angles into the SinFIdx lookup index space.
+    f32 radZ = lbl_eu_8066AFA8; // 0.0f (angleZ is fixed at 0)
     f32 radY = angleY * lbl_eu_8066A210;
-    f32 radZ = lbl_eu_8066AFA8; // 0.0f
+    f32 radX = angleX * lbl_eu_8066A210;
 
-    // Compute sin/cos via nw4r lookup tables
-    f32 sinX = nw4r::math::SinFIdx(radX * lbl_eu_8066AFBC);
-    f32 cosX = nw4r::math::CosFIdx(radX * lbl_eu_8066AFBC);
-    f32 sinY = nw4r::math::SinFIdx(radY * lbl_eu_8066AFBC);
-    f32 cosY = nw4r::math::CosFIdx(radY * lbl_eu_8066AFBC);
+    // Base +Z unit vector that gets rotated. Written to memory before the
+    // trig calls below (so it is read back as an unknown value, echoing the
+    // retail frame layout at [0x20..0x28]).
+    ml::CVec3 v;
+    v.x = lbl_eu_8066AFA8; // 0
+    v.y = lbl_eu_8066AFA8; // 0
+    v.z = lbl_eu_8066AFB0; // 1
+
+    // Compute sin/cos via nw4r lookup tables. Matrix uses x=angleY,
+    // y=angleX, z=0 (so sinX below is the trig of angleY).
+    f32 sinX = nw4r::math::SinFIdx(radY * lbl_eu_8066AFBC);
+    f32 cosX = nw4r::math::CosFIdx(radY * lbl_eu_8066AFBC);
+    f32 sinY = nw4r::math::SinFIdx(radX * lbl_eu_8066AFBC);
+    f32 cosY = nw4r::math::CosFIdx(radX * lbl_eu_8066AFBC);
     f32 sinZ = nw4r::math::SinFIdx(radZ * lbl_eu_8066AFBC);
     f32 cosZ = nw4r::math::CosFIdx(radZ * lbl_eu_8066AFBC);
 
-    // Rotate the Z unit vector (0,0,1) by the three angles.
-    // Equivalent to extracting the third column of a YXZ rotation matrix.
-    f32 dirX = cosZ * cosX * sinY + sinX * sinZ;
-    f32 dirY = sinZ * cosX * sinY - sinX * cosZ;
-    f32 dirZ = cosX * cosY;
+    // XYZ rotation matrix elements (matches ml::CMat33::setRotXYZ).
+    f32 m00 = cosY * cosZ;
+    f32 m01 = sinX * sinY * cosZ - cosX * sinZ;
+    f32 m02 = cosX * sinY * cosZ + sinX * sinZ;
+    f32 m10 = cosY * sinZ;
+    f32 m11 = sinX * sinY * sinZ + cosX * cosZ;
+    f32 m12 = cosX * sinY * sinZ - sinX * cosZ;
+    f32 m20 = -sinY;
+    f32 m21 = sinX * cosY;
+    f32 m22 = cosX * cosY;
 
+    // Rotate the +Z base vector by the matrix and store the direction.
+    f32 dirX = v.x * m00 + v.y * m01 + v.z * m02;
+    f32 dirY = v.x * m10 + v.y * m11 + v.z * m12;
+    f32 dirZ = v.x * m20 + v.y * m21 + v.z * m22;
     self->unk20 = dirX;
     self->unk24 = dirY;
     self->unk28 = dirZ;
 
     switch (self->unk34) {
     case 1: {
-        // Scale direction to position and set light position
-        f32 posX = dirX * lbl_eu_8066AFB8;
-        f32 posY = dirY * lbl_eu_8066AFB8;
-        f32 posZ = dirZ * lbl_eu_8066AFB8;
-        self->unk4 = ml::CVec3(posX, posY, posZ);
-        self->mpLightObj->InitLightPos(posX, posY, posZ);
+        // Scale direction to a position and set the light position.
+        ml::CVec3 pos = ml::CVec3(self->unk20, self->unk24, self->unk28) * lbl_eu_8066AFB8;
+        self->unk4 = pos;
+        self->mpLightObj->InitLightPos(pos.x, pos.y, pos.z);
         break;
     }
     case 2:
-        self->mpLightObj->InitSpecularDir(dirX, dirY, dirZ);
+        self->mpLightObj->InitSpecularDir(self->unk20, self->unk24, self->unk28);
         break;
     case 4:
-        self->mpLightObj->InitLightDir(dirX, dirY, dirZ);
+        self->mpLightObj->InitLightDir(self->unk20, self->unk24, self->unk28);
         break;
     }
 }

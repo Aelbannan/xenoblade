@@ -1,17 +1,19 @@
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 
+#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+
+#include <revolution/GX.h>
+#include <nw4r/lyt.h>
 
 // CLEANUP: renamed all unk fields to descriptive names (see header).
-
-extern "C" {
-extern char lbl_eu_80503D80[];       // String table base; string offsets 0x10/0x29/0x45 select ARC resource names
-extern const f32 lbl_eu_80667C80;    // Initial frame value for the default animation
-// Retail calls this unmangled (matches CUIBattleManager.cpp / CMenuPTGauge.cpp
-// usage) rather than through the CUICfManager::func_801355F4 mangled name.
-nw4r::lyt::ArcResourceAccessor* func_801355F4();  // Shared ARC resource accessor
-}
 
 /**
  * Initialises the battle mode layout.
@@ -49,16 +51,224 @@ void CMenuBattleMode::Init() {
 }
 
 void CMenuBattleMode::func_801A048C() {
-    extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
-    return __dt__15CMenuBattleModeFv(this);
+    extern void* __dt__15CMenuBattleModeFv(CMenuBattleMode*, int);
+    __dt__15CMenuBattleModeFv(this, 1);
 }
 extern void cbRenderBefore__15CMenuBattleModeFv();
 void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
-extern void __dt__15CMenuBattleModeFv();
+extern void* __dt__15CMenuBattleModeFv(void*, int);
 void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
-void __ct__CMenuBattleMode(){}
+// Deleting virtual destructor (D1 shape): destroys the mLayoutMem member
+// (delete flag -1), then the CProcess base (via IUICf/CTTask), then frees the
+// backing block when the delete flag is nonzero. Written as a plain free C-ABI
+// shim on the mangled symbol so MWCC does not re-install the class vtables at
+// the top of the dtor (retail emits no vptr stores here).
+extern "C" void* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
+    if (self) {
+        self->mLayoutMem.~UnkClass_8045F564();
+        if (self) {
+            self->CProcess::~CProcess();
+        }
+    }
+    if (deleteFlag > 0) {
+        operator delete(self);
+    }
+    return self;
+}
 
+/**
+ * Factory-style constructor for the single battle-mode menu instance.
+ *
+ * If no instance exists yet (global is null), allocates a 0x84-byte block from
+ * work memory, constructs the CProcess base + UnkClass_8045F564 member on top
+ * of it, installs the three vtables (primary / IWorkEvent / IScnRender), then
+ * stores the pointer in the singleton global and registers off the parent.
+ */
 
-extern "C" void Term__15CMenuBattleModeFv() {}
-extern "C" void Move__15CMenuBattleModeFv() {}
+// Byte-range shim over the retconned object so the factory ctor can write the
+// vtables (+0x10, +0x58, +0x5C) and the PTMF callback slots (+0x3C..0x53)
+// without raw pointer arithmetic. Mirrors CMenuBattleMode layout exactly.
+struct CMenuBattleModeShim {
+    u8 unk00[0x10];
+    void* vtable;                    // 0x10
+    u8 unk14[0x3C - 0x14];          // 0x14-0x3B (CProcess tail)
+    u32 callbacks[6];               // 0x3C-0x53 (__ptmf_null copies)
+    u8 field54;                     // 0x54
+    u8 field55;                     // 0x55
+    void* iweVtable;                // 0x58 (IWorkEvent)
+    void* iscnVtable;               // 0x5C (IScnRender)
+    UnkClass_8045F564 mLayoutMem;    // 0x60-0x6F
+    CScn* mScn;                     // 0x70
+    nw4r::lyt::Layout* mLayout;      // 0x74
+    nw4r::lyt::AnimTransform* mAnimDefault; // 0x78
+    nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C
+    u8 mState;                      // 0x80
+    u8 pad81[3];                    // 0x81-0x83
+};
+extern "C" CMenuBattleMode* __ct__CMenuBattleMode(CProcess* parent, CScn* scene) {
+    if (lbl_eu_80664318 != 0) {
+        return 0;
+    }
+
+    u32 handle = CWorkThreadSystem::getWorkMem();
+    CMenuBattleModeShim* shim =
+        (CMenuBattleModeShim*)mtl::MemManager::allocate(0x84, handle);
+
+    if (shim != 0) {
+        __ct__8CProcessFv((CProcess*)shim);
+        shim->vtable = lbl_eu_8052BF70;   // CProcess base vtable first
+
+        u32* ptmf = __ptmf_null;
+        char* vtFinal = lbl_eu_80532DD0;  // CMenuBattleMode primary vtable
+
+        u32 ptmf1 = ptmf[1];
+        u32 ptmf0 = ptmf[0];
+        void* iweVtbl = vtFinal + 0x24;   // IWorkEvent secondary vtable
+
+        shim->callbacks[0] = ptmf0;
+        shim->callbacks[1] = ptmf1;
+
+        u32 ptmf2 = ptmf[2];
+        shim->callbacks[2] = ptmf2;
+
+        ptmf1 = ptmf[1];
+        ptmf0 = ptmf[0];
+        shim->callbacks[3] = ptmf0;
+        shim->callbacks[4] = ptmf1;
+        ptmf2 = ptmf[2];
+        shim->callbacks[5] = ptmf2;
+
+        shim->field54 = 0;
+        shim->field55 = 0;
+
+        shim->vtable = vtFinal;
+        shim->iweVtable = iweVtbl;
+        shim->iscnVtable = vtFinal + 0xac;  // IScnRender secondary vtable
+
+        ::new (&shim->mLayoutMem) UnkClass_8045F564();
+        shim->mScn = scene;
+        shim->mLayout = 0;
+        shim->mAnimDefault = 0;
+        shim->mAnimLabel = 0;
+        shim->mState = 0;
+    }
+
+    lbl_eu_80664318 = (u32)shim;
+    ((CProcess*)shim)->Regist(parent, false);
+    return (CMenuBattleMode*)lbl_eu_80664318;
+}
+
+void CMenuBattleMode::Term() {
+    CDeviceVI::waitForDrawDone();
+
+    mScn->removeRenderCB(this);
+
+    if (mLayout) {
+        delete mLayout;
+        mLayout = 0;
+    }
+
+    mLayoutMem.func_8045F778();
+    lbl_eu_80664318 = 0;
+}
+
+void CMenuBattleMode::Move() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        return;
+    }
+    if (lbl_eu_80663E28 & 0x200000) {  // bit 21: realtime event busy
+        return;
+    }
+    if (!func_8013BE50()) {
+        return;
+    }
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0xafa40000)) {
+        return;
+    }
+
+    switch (mState) {
+    case 0: {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+        if (player != 0) {
+            func_8016FE34(player);
+            if (cf::CBattleManager::getInstance()->mActorList1.size() != 0) {
+                mLayout->SetAnimationEnable(mAnimLabel, false);
+                mLayout->SetAnimationEnable(mAnimDefault, true);
+                mState = 1;
+            }
+        }
+        break;
+    }
+
+    case 1:
+        if (func_80137444(mAnimDefault, lbl_eu_80667C84)) {
+            mLayout->SetAnimationEnable(mAnimLabel, false);
+            mLayout->SetAnimationEnable(mAnimDefault, true);
+            mAnimLabel->SetFrame(lbl_eu_80667C80);
+            mState = 2;
+        }
+        break;
+
+    case 2: {
+        func_80137444(mAnimLabel, lbl_eu_80667C84);
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+        if (player != 0) {
+            func_8016FE34(player);
+            if (cf::CBattleManager::getInstance()->mActorList1.size() == 0) {
+                mLayout->SetAnimationEnable(mAnimLabel, false);
+                mLayout->SetAnimationEnable(mAnimDefault, true);
+                mState = 3;
+            }
+        }
+        break;
+    }
+
+    case 3:
+        if (func_80137510(mAnimDefault, lbl_eu_80667C84)) {
+            mState = 0;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    if (mState != 0) {
+        mLayout->Animate(0);
+    }
+}
+
+void CMenuBattleMode::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        return;
+    }
+    // bit 21 set (realtime event busy) -> early out. MWCC emits the guard as
+    // `beq draw; b ret` (skip over a standalone return) so keep the return as
+    // its own statement after the guard, not a merged `if(bit) return`.
+    if ((lbl_eu_80663E28 & 0x200000) == 0) {
+        goto draw;
+    }
+    return;
+draw:
+    if (!func_8013BE50()) {
+        return;
+    }
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0xafa40000)) {
+        return;
+    }
+    if (mState == 0) {
+        return;
+    }
+
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);  // disable Z compare, always pass
+    {
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        func_80137038(mLayout, &drawInfo, 0, 1);
+    }
+}

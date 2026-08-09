@@ -98,22 +98,24 @@ extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
     lbl_eu_806657E8 |= 2;
 }
 
-extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
+// Scale the pending colour value: convert s32 to f32, scale, and round back to s32.
+// (retail free function func_80465730__Ff)
+void func_80465730(f32 scale) {
     s32 value = lbl_eu_80665814;
     lbl_eu_806657E8 |= 2;
     lbl_eu_80665814 = (s32)((f32)value * scale);
 }
 
-extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
+// 0xFF clears the colourfulness flag; otherwise record the colour and its alpha
+// divisor (6) into the shared state. (retail free function func_8046577C__Fl)
+void func_8046577C(s32 value) {
     if (value == 0xFF) {
-        value = lbl_eu_806657E8;
+        lbl_eu_806657E8 &= 0xFFFFFFFB;
         lbl_eu_80665804 = 0;
-        lbl_eu_806657E8 = value & ~4;
         return;
     }
 
-    u32 flags = lbl_eu_806657E8 | 4;
-    lbl_eu_806657E8 = flags;
+    lbl_eu_806657E8 |= 4;
     lbl_eu_80665804 = 6;
     lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
 }

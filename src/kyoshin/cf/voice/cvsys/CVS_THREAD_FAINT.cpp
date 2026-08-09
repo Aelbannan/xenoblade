@@ -81,8 +81,7 @@ void func_802A6BB0(CVS_THREAD_FAINT* self) {
             if (handle20 != NULL) {
                 voicePtr = &handle20->voice;
             }
-            int voiceId = ml::math::mtRand(2) + 0x709;
-            if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+            if (func_802A3C44(self, voicePtr, ml::math::mtRand(2) + 0x709) == 0) {
                 self->func_802A3B50();
             }
         }
@@ -99,20 +98,22 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
         return;
     }
 
-    u32 v0 = lbl_eu_80539B70[0];
+    u32* src = lbl_eu_80539B70;
+    u32 v0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    u32 v1 = lbl_eu_80539B70[1];
-    u32 v2 = lbl_eu_80539B70[2];
+    u32 v1 = *src++;
     self->unk4 = v1;
     self->unk0 = (u32*)v0;
+    u32 v2 = *src++;
     self->unk8 = v2;
 
     if (handle24 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check)
         if (((int (*)(CVoiceHandle*))handle24->vtable[0x2BC / 4])(handle24) == 0) {
-            // Voice is not active -- choose a weighted random voice
-            int voiceId = 0x712;
-            if (ml::math::mtRand(2) != 0) voiceId = 0x70B;
+            // Voice is not active -- play a weighted random voice.
+            // Retail computes the random voice ID first, then reloads the
+            // slot handle so it is NOT live across the mtRand call.
+            int voiceId = ml::math::mtRand(2) != 0 ? 0x70B : 0x712;
             handle24 = self->field_0x24;
             CCharVoice* voicePtr = (CCharVoice*)handle24;
             if (handle24 != NULL) {
@@ -131,10 +132,10 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
 // (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
 // base constructor, sets vtable/owner fields, and copies init data from
 // lbl_eu_80539B58.
-CVS_THREAD_FAINT* __ct__802A6AA8(CVS_THREAD_FAINT* owner1, CVS_THREAD_FAINT* owner2) {
+CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // Both owners must have their 0x3F00 field's bit 1 set
-    if (!(((u32*)owner1)[0x3F00 / 4] & 2)) return NULL;
-    if (!(((u32*)owner2)[0x3F00 / 4] & 2)) return NULL;
+    if (!(owner1->field_0x3F00 & 2)) return NULL;
+    if (!(owner2->field_0x3F00 & 2)) return NULL;
 
     // Allocate handle buffer (0xF0 bytes, discarded)
     if (func_802A330C(0xF0, 1) == NULL) return NULL;
@@ -143,14 +144,18 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVS_THREAD_FAINT* owner1, CVS_THREAD_FAINT* own
     CVS_THREAD_FAINT* self = (CVS_THREAD_FAINT*)func_802A34E4(0x28);
     if (self == NULL) return NULL;
 
-    try {
-        // Base constructor (self in r3), then vtable/owner fields.
-        __ct__cf_CVS_THREAD();
-        ((void**)self)[7] = (void**)lbl_eu_80539B7C;
-        self->field_0x20 = (CVoiceHandle*)owner1;
-        self->field_0x24 = (CVoiceHandle*)owner2;
-    } catch (...) {
-        throw;
+    // Retail emits a redundant null re-check here (the `beq` at .L_802A9264)
+    // guarding the constructor try-block; mirror it so the guard survives.
+    if (self != NULL) {
+        try {
+            // Base constructor (self in r3), then vtable/owner fields.
+            __ct__cf_CVS_THREAD();
+            ((void**)self)[7] = (void**)lbl_eu_80539B7C;
+            self->field_0x20 = owner1;
+            self->field_0x24 = owner2;
+        } catch (...) {
+            throw;
+        }
     }
 
     // Copy init data from global table using a single base pointer

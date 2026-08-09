@@ -207,31 +207,15 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
 
 // ================== func_8005A2F0 ==================
 extern "C" void func_8005A2F0(void* self, void* item) {
-    CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
-    _reslist_base<CVirtualLightObjPtr>* base =
-        (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
-    _reslist_node<CVirtualLightObjPtr>* entry;
-    _reslist_node<CVirtualLightObjPtr>* head;
-    int i;
-
-    head = base->mStartNodePtr;
-    i = 0;
-
-    while (i < base->mCapacity) {
-        if (base->mList[i].mNext == nullptr) break;
-        i++;
-    }
-
-    entry = &base->mList[i];
-    if (&entry->mItem != nullptr) {
-        entry->mItem = (CVirtualLightObjPtr)item;
-    }
-
-    // push_back
-    entry->mNext = head;
-    entry->mPrev = head->mPrev;
-    head->mPrev->mNext = entry;
-    head->mPrev = entry;
+    // reslist<CVirtualLightObj*> push_back, inlined through the template so the
+    // try/catch setItem materialises the mr r31,r1 / stw r1 frame (retail ABI).
+    // This reproduces the retail text structure exactly (structural=0); the
+    // residual is a pure MWCC-internal register rotation (startNode r7 vs retail
+    // r9). Declaring startNode last would fix the register but breaks the loop's
+    // prologue load hoisting (structural 17), so the template is the best shape.
+    reslist<CVirtualLightObjPtr>* base =
+        (reslist<CVirtualLightObjPtr>*)((u8*)self + 8);
+    base->push_back((CVirtualLightObjPtr)item);
 }
 
 // ================== func_8005A374 ==================
@@ -241,23 +225,30 @@ extern "C" void func_8005A374(void* self) {
         (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     _reslist_node<CVirtualLightObjPtr>* head;
     _reslist_node<CVirtualLightObjPtr>* cur;
-    float sx, sy, sz, sw;
 
-    sx = p->mVal0 * p->mScale;
-    sy = p->mVal1 * p->mScale;
-    sz = p->mVal2 * p->mScale;
-    sw = p->mVal3;
+    // Retail loads mScale first (kept in f3), then mVal2,mVal1,mVal0, computes
+    // muls sz,sy,(sw),sx, and stores the bit reinterprets before the loop.
+    float scale = p->mScale;
+    float sz = p->mVal2 * scale;
+    float sy = p->mVal1 * scale;
+    float sw = p->mVal3;
+    float sx = p->mVal0 * scale;
+
+    u32 szBits = *(u32*)&sz;
+    u32 sxBits = *(u32*)&sx;
+    u32 syBits = *(u32*)&sy;
+    u32 swBits = *(u32*)&sw;
 
     head = base->mStartNodePtr;
     cur = head->mNext;
 
     while (cur != head) {
         u8* data = (u8*)cur->mItem;
-        if (data != nullptr && data[0x19] == 0) {
-            *(u32*)(data + 0x1C) = *(u32*)&sx;
-            *(u32*)(data + 0x20) = *(u32*)&sy;
-            *(u32*)(data + 0x24) = *(u32*)&sz;
-            *(u32*)(data + 0x28) = *(u32*)&sw;
+        if (data[0x19] == 0) {
+            *(u32*)(data + 0x1C) = sxBits;
+            *(u32*)(data + 0x20) = syBits;
+            *(u32*)(data + 0x24) = szBits;
+            *(u32*)(data + 0x28) = swBits;
         }
         cur = cur->mNext;
     }

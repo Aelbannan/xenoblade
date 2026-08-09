@@ -212,9 +212,18 @@ void func_80242A28(){}
 
 // ---------------------------------------------------------------------------
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
+//
+// Entered with r3 = IScnRender subobject pointer (CMenuMapSelect base + 0x58).
+// Convert back to the CMenuMapSelect base and tail-call the real cbRenderBefore
+// (retail symbol at 0x802442FC, implemented in code_802405F4.cpp).
+//
+// Retail: subi r3, r3, 0x58; b cbRenderBefore__14CMenuMapSelectFv
 // ---------------------------------------------------------------------------
-void CMenuMapSelect::func_8024309C() {
-    cbRenderBefore();
+void func_8024309C(CMenuMapSelect* self) {
+    CMenuMapSelect* base = (CMenuMapSelect*)((u8*)self - 0x58);
+    // Static dispatch (cbRenderBefore is virtual via IScnRender); the retargeted
+    // receiver is the CMenuMapSelect base where the real body lives.
+    base->CMenuMapSelect::cbRenderBefore();
 }
 
 // ---------------------------------------------------------------------------

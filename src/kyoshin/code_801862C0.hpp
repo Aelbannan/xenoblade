@@ -33,3 +33,7 @@ void* func_80186D20(void* p);
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_806642D0; // SDA singleton pointer for the arts select object (opaque pointer)
 extern "C" void* memset(void*, int, unsigned long);
+
+// Imported data symbols (other splits) referenced by func_801862C0
+// One-time init guard flag in SDA.
+extern s8 lbl_eu_806642C8;

@@ -177,14 +177,14 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
         // Access the hash table as u32* for word-by-word comparison (required for matching)
         u32* pHashTable = (u32*)&mFileHashTable[startIndex];
         int i = startIndex;
-
-        while(i < endIndex){
-            if(pHashTable[0] == mHashLowerHalf && pHashTable[1] == mHashUpperHalf){
-                return i;
-            }
-
-            i++;
-            pHashTable += 2; // advance by two u32s per entry
+        if(i < endIndex){
+            do {
+                if(pHashTable[0] == mHashLowerHalf && pHashTable[1] == mHashUpperHalf){
+                    return i;
+                }
+                i++;
+                pHashTable += 2; // advance by two u32s per entry
+            }while(--length > 0);
         }
         
         //If the hash couldn't be found, return -1
@@ -217,23 +217,6 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
 
 bool CPackItem::isNotLoaded(){
     return mLoadState != LOAD_STATE_LOADED && !mIsAhxAdxFile;
-}
-
-/* Sets up the hash table and per-file ID pointers from the pack header.
-   The layout after the hash table is: mFileIds (u16 per file), then optionally
-   mFileDataOffsets (u32 per file) if the pkh file is large enough. */
-void CPackItem::setupHashTable() {
-    if(mPackHeader != nullptr){
-        mFileHashTable = mPackHeader->mFileHashTable;
-        // mFileIds starts right after the hash table entries
-        mFileIds = (u16*)&mFileHashTable[mPackHeader->mFiles];
-
-        // Check if there is room for mFileDataOffsets after mFileIds
-        u32 fileIdsEnd = (u32)(mFileIds + mPackHeader->mFiles);
-        if(mPackHeader->mPkhFilesize > fileIdsEnd - (u32)mPackHeader){
-            mFileDataOffsets = (u32*)(mFileIds + mPackHeader->mFiles);
-        }
-    }
 }
 
 /* Handles async file read completion events.
@@ -279,16 +262,16 @@ bool CPackItem::calculatePackFileHash(const char* filename){
     u32 hashValTableLength = mPackHeader->mHashValTableLength;
     
     for(u32 i = 0; i < hashValTableLength; i++){
-        u32 byteIndex = mPackHeader->mHashValTable[i] / 8;
-        u32 bitIndex = mPackHeader->mHashValTable[i] % 8;
-        u8 mask = 1 << bitIndex;
-        if(length - 1 >= byteIndex){
-            bool bit = (u8)filename[length - 1 - byteIndex] & mask;
+        u8 val = mPackHeader->mHashValTable[i];
+        u32 byteIndex = val / 8;
+        u8 mask = (u8)(1u << (val % 8));
+        if((u32)(length - 1) >= byteIndex){
+            bool bit = ((u8)filename[(length - 1) - byteIndex] & mask) != 0;
             //If the index is more than 32, write to the high 32 bit variable
             if(i >= 32){
-                mHashUpperHalf |= (1 << (i - 32)) * bit;
+                mHashUpperHalf |= (1u << (i - 32)) * bit;
             }else{
-                mHashLowerHalf |= (1 << i) * bit;
+                mHashLowerHalf |= (1u << i) * bit;
             }
         }
     }

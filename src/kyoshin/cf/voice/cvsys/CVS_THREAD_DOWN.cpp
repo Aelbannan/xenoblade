@@ -45,13 +45,13 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x70C).
 void func_802A5C90(CVS_THREAD_DOWN* self) {
-    const u32* base = lbl_eu_80539A74;
-    u32 v0 = base[0];
+    u32* src = lbl_eu_80539A74;
+    u32 v0 = *src++;
     CVoiceHandle* handle20 = self->field_0x20;
-    u32 v1 = base[1];
-    u32 v2 = base[2];
+    u32 v1 = *src++;
     self->unk4 = v1;
     self->unk0 = (u32*)v0;
+    u32 v2 = *src++;
     self->unk8 = v2;
 
     if (handle20 != NULL) {
@@ -63,8 +63,7 @@ void func_802A5C90(CVS_THREAD_DOWN* self) {
             if (handle20 != NULL) {
                 voicePtr = &handle20->voice;
             }
-            int voiceId = ml::math::mtRand(2) + 0x70C;
-            if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+            if (func_802A3C44(self, voicePtr, ml::math::mtRand(2) + 0x70C) == 0) {
                 self->func_802A3B50();
             }
         }
@@ -81,26 +80,22 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
         return;
     }
 
-    const u32* base = lbl_eu_80539A80;
-    u32 v0 = base[0];
+    u32* src = lbl_eu_80539A80;
+    u32 v0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    u32 v1 = base[1];
-    u32 v2 = base[2];
+    u32 v1 = *src++;
     self->unk4 = v1;
     self->unk0 = (u32*)v0;
+    u32 v2 = *src++;
     self->unk8 = v2;
 
     if (handle24 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check)
         if (((int (*)(CVoiceHandle*))handle24->vtable[0x2BC / 4])(handle24) == 0) {
             // Voice is not active -- try to play a weighted random voice
-            int voiceId = 0x713;
-            if (ml::math::mtRand(2) != 0) voiceId = 0x70E;
-            handle24 = self->field_0x24;
-            CCharVoice* voicePtr = (CCharVoice*)handle24;
-            if (handle24 != NULL) {
-                voicePtr = &handle24->voice;
-            }
+            int voiceId = (ml::math::mtRand(2) != 0) ? 0x70E : 0x713;
+            CVoiceHandle* h = self->field_0x24;
+            CCharVoice* voicePtr = h != NULL ? &h->voice : (CCharVoice*)h;
             if (func_802A3C44(self, voicePtr, voiceId) == 0) {
                 self->func_802A3B50();
             }

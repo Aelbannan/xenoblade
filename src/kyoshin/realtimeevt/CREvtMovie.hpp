@@ -52,5 +52,13 @@ struct CREvtMovie {
 // [0x00 .. 0x0D] = "/ev/realtime/", [0x0E .. ] = ".sfd"
 extern const char lbl_eu_8050FD98[];
 
+// Path-building buffer used by CREvtMovie playback functions.
+// Holds the concatenated SFD path in mPath and tracks its length in mLength;
+// the struct is passed to opaque playback routines, so mLength stores are kept.
+struct CREvtMoviePathBuf {
+    /* 0x00 */ char mPath[0x20];
+    /* 0x20 */ u32 mLength;
+};
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* lbl_eu_80538AA0[];

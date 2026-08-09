@@ -5,6 +5,47 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// The retail RBNK reader works against field layouts that differ from the
+// placeholder headers shipped in snd_BankFile.h (the header InstParam packs
+// bytes 0x8..0xb into one padded array, and the header InstInfo is a smaller
+// public-only structure). These mirror types expose the exact on-disk offsets
+// the reader touches; the pointers are re-cast to them at the use site.
+struct InstParamData {
+    s32 waveIndex;     // at 0x0
+    u8 attack;         // at 0x4
+    u8 decay;          // at 0x5
+    u8 sustain;        // at 0x6
+    u8 release;        // at 0x7
+    u8 field_0x8;      // at 0x8
+    u8 waveIndexRange; // at 0x9
+    u8 field_0xa;      // at 0xA
+    u8 field_0xb;      // at 0xB
+    u8 originalKey;    // at 0xC
+    u8 volume;         // at 0xD
+    u8 pan;            // at 0xE
+    u8 field_0xf;      // at 0xF
+    f32 tune;          // at 0x10
+};
+
+struct InstInfoData {
+    s32 waveIndexType; // at 0x0
+    s32 waveIndex;     // at 0x4
+    u8 attack;         // at 0x8
+    u8 field_0x9;      // at 0x9
+    u8 decay;          // at 0xA
+    u8 sustain;        // at 0xB
+    u8 release;        // at 0xC
+    u8 field_0xd;      // at 0xD
+    u8 field_0xe;      // at 0xE
+    u8 field_0xf;      // at 0xF
+    s32 field_0x10;    // at 0x10
+    u8 field_0x14;     // at 0x14
+    u8 originalKey;    // at 0x15
+    u8 pan;            // at 0x16
+    u8 volume;         // at 0x17
+    f32 tune;          // at 0x18
+};
+
 // See BankFile::Region
 enum {
     DATATYPE_NONE = Util::DATATYPE_T0,
@@ -210,6 +251,3 @@ bool BankFileReader::ReadWaveParam(WaveData* pData, int waveIndex,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-extern "C" void GetInstParam__Q44nw4r3snd6detail14BankFileReaderCFiii() {}
-extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14BankFileReaderCFPQ44nw4r3snd6detail8WaveInfoRCQ54nw4r3snd6detail8InstInfo16WaveDataLocationPCvPPCQ44nw4r3snd6detail8WaveInfo() {}

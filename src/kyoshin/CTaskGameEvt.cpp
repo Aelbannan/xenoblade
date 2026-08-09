@@ -62,17 +62,17 @@ extern "C" void func_80295880(void* self) { (void)self; }
 CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
     __ct__8CProcessFv(pThis);
 
+    // Final CTaskGameEvt vtable base + its two sub-vtable pointers (kept as the
+    // label pointer so it is a first-class pointer live to the final 0x10 store;
+    // retail holds the base in r6, sub-vtables in r5/r4, PTMF temps in r7/r8).
+    char* vtbl = lbl_eu_80538C00;
+    u32 v54 = (u32)(vtbl + 0x24);
+    u32 v58 = (u32)(vtbl + 0xac);
+
     u32* p = reinterpret_cast<u32*>(pThis);
 
     // Interim CTTask<CTaskGameEvt> vtable (overwritten later).
     p[4] = reinterpret_cast<u32>(lbl_eu_80538CE8);
-
-    // Materialise the final vtable base (r6) and its two sub-vtable pointers
-    // (r5 = +0x24 for field_54, r4 = +0xac for the IScnRender member) up front,
-    // before the PTMF loads, matching the retail schedule.
-    u32 vtbl = reinterpret_cast<u32>(lbl_eu_80538C00);
-    u32 vtbl_54 = vtbl + 0x24;
-    u32 vtbl_58 = vtbl + 0xac;
 
     // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48) in the retail store
     // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50. Post-increment derefs of a local
@@ -88,17 +88,17 @@ CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
     u32 w2 = *src++;     // load [2] after the w1 store (retail lwz r7,8(r9) late)
     p[0x11] = w2;        // 0x44 mMoveFunc[2]
     src = __ptmf_null;
-    w0 = *src++;
     w1 = *src++;
-    p[0x13] = w1;        // 0x4C mDrawFunc[1]
-    p[0x12] = w0;        // 0x48 mDrawFunc[0]
+    w0 = *src++;
+    p[0x13] = w0;        // 0x4C mDrawFunc[1]
+    p[0x12] = w1;        // 0x48 mDrawFunc[0]
     w2 = *src++;
     p[0x14] = w2;        // 0x50 mDrawFunc[2]
 
     // Final CTaskGameEvt vtable + member fields.
-    p[4] = vtbl;
-    p[0x15] = vtbl_54;      // 0x54 field_54
-    p[0x16] = vtbl_58;      // 0x58 mRenderCB (IScnRender vtable)
+    p[4] = (u32)vtbl;
+    p[0x15] = v54;       // 0x54 field_54
+    p[0x16] = v58;       // 0x58 mRenderCB (IScnRender vtable)
     p[0x17] = static_cast<u32>(arg); // 0x5C mScene
     p[0x18] = 0;             // 0x60 mFlags
 
@@ -106,16 +106,20 @@ CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
 }
 #pragma optimize_for_size off
 
+#pragma optimize_for_size on
 CTaskGameEvt::~CTaskGameEvt() {}
+#pragma optimize_for_size off
 
 void CTaskGameEvt::Init() {
-    IScnRender* rp = this ? &mRenderCB : 0;
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, rp, 0xb, 0);
+    IScnRender* rp = reinterpret_cast<IScnRender*>(this); // default: null-this -> this(0)
+    if (this) rp = &mRenderCB;                            // override: this + 0x58
+    mScene->addRenderCB(rp, 11, 0);
 }
 
 void CTaskGameEvt::Term() {
-    IScnRender* rp = this ? &mRenderCB : 0;
-    removeRenderCB__4CScnFP10IScnRender(mScene, rp);
+    IScnRender* rp = reinterpret_cast<IScnRender*>(this); // default: null-this -> this(0)
+    if (this) rp = &mRenderCB;                            // override: this + 0x58
+    mScene->removeRenderCB(rp);
 }
 
 void CTaskGameEvt::Move() {

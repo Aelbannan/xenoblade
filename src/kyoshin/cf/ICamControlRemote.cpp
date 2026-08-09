@@ -30,14 +30,16 @@ CPad* func_80274B28() {
 
 u32 func_80274B2C(ICamControlRemoteIf* self, int controllerId) {
     ICamRemoteStatus* st = self->getObject();
-    if (func_8006D700(controllerId) == 0) {
-        return 0;
+    if (func_8006D700(controllerId) != 0) {
+        u32 flags = st->field_0x0;
+        if ((flags >> 4) & 1) {
+            if ((flags & (1 << 5)) != 0) {
+                return 0; // both set -> 0
+            }
+        }
+        return (flags >> 4) & 1; // bit4-clear or bit5-clear -> 0 or 1
     }
-    u32 flags = st->field_0x0;
-    if ((flags & (1 << 4)) == 0 || (flags & (1 << 5)) != 0) {
-        return 0;
-    }
-    return (flags >> 4) & 1; // bit 27 (MSB)
+    return 0;
 }
 
 bool func_80274BA4(ICamControlRemoteIf* self, int controllerId) {

@@ -75,20 +75,26 @@ void lsc_StatWait(struct LSC_Hndl *h) {
     flen = (s32)strlen(fname);
     sum = 0;
     i = 0;
-    if (flen > 0) {
-        cnt = (flen - 1) >> 3;
-        if (flen - 8 > 0) {
-            /* Unrolled checksum pass, 8 bytes per iteration. */
-            for (; cnt > 0; cnt--) {
-                sum += (u8)fname[i] + (u8)fname[i + 1] + (u8)fname[i + 2]
-                     + (u8)fname[i + 3] + (u8)fname[i + 4] + (u8)fname[i + 5]
-                     + (u8)fname[i + 6] + (u8)fname[i + 7];
-                i += 8;
+    if ((u32)flen > 0) {
+        s32 d8 = flen - 8; /* residual bytes afer one unrolled chunk */
+        if ((u32)flen > 8) {
+            cnt = (s32)((u32)(d8 + 7) >> 3);
+            if ((u32)d8 > 0) {
+                /* Unrolled checksum pass, 8 bytes per iteration. */
+                do {
+                    sum += (u8)fname[i + 0] + (u8)fname[i + 1] + (u8)fname[i + 2]
+                         + (u8)fname[i + 3] + (u8)fname[i + 4] + (u8)fname[i + 5]
+                         + (u8)fname[i + 6] + (u8)fname[i + 7];
+                    i += 8;
+                } while (--cnt > 0);
             }
         }
-        /* Remainder bytes. */
-        for (; i < flen; i++) {
-            sum += (u8)fname[i];
+        /* Remainder bytes after the unrolled pass. */
+        if ((u32)i < (u32)flen) {
+            cnt = flen - i;
+            do {
+                sum += (u8)fname[i++];
+            } while (--cnt > 0);
         }
     }
 
@@ -114,8 +120,9 @@ void lsc_StatWait(struct LSC_Hndl *h) {
 
 /* End a stat operation: advance to the next slot and start it if eligible. */
 void lsc_StatEnd(struct LSC_Hndl *h) {
+    s32 offLo = 0, offHi = 0, size = 0;
     const char *fname = NULL;
-    s32 offLo = 0, offHi = 0, size = 0, cnt, idx, hb, rot;
+    s32 idx, hb, rot, cnt;
 
     if (h->stream == NULL) {
         return;
@@ -129,14 +136,14 @@ void lsc_StatEnd(struct LSC_Hndl *h) {
         size = e->size;
     }
 
-    /* Advance slot index (circular over 16) and decrement the count. */
+    /* Advance slot index (circular over 16): rotate (idx<<28 - hb) left by 4. */
     idx = h->index + 1;
+    rot = idx << 28;
     cnt = h->count - 1;
-    rot = (idx << 28) & 0xF0000000;
+    hb = (u32)idx >> 31;
+    rot -= hb;
     h->count = cnt;
-    hb = idx >> 31;
-    rot = rot - hb;
-    h->index = ((rot << 4) | ((u32)rot >> 28)) + hb;
+    h->index = ((u32)rot << 4 | (u32)rot >> 28) + hb;
 
     if (cnt <= 0) {
         LSC_CallStatFunc(h);
@@ -151,7 +158,7 @@ void lsc_StatEnd(struct LSC_Hndl *h) {
 /* Handle status of the active stream and drive the state machine. */
 void lsc_ExecHndl(struct LSC_Hndl *h) {
     struct LSC_Entry *e;
-    void *stream;
+    int stat;
 
     if (h->paused == 1) {
         return;
@@ -165,11 +172,10 @@ void lsc_ExecHndl(struct LSC_Hndl *h) {
 
     e = lsc_entry(h);
     if (e->state == 1) {
-        stream = h->stream;
-        if (stream == NULL) {
+        if (h->stream == NULL) {
             LSC_CallErrFunc_(&lbl_eu_80518420[0x40]);
         } else {
-            int stat = ADXSTM_GetStat(stream);
+            stat = ADXSTM_GetStat(h->stream);
             if (stat == 4) {
                 h->st = 3;
             } else if (stat == 2) {

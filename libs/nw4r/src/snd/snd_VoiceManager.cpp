@@ -13,6 +13,56 @@ struct LinkListImplAccess : ut::detail::LinkListImpl {
     using ut::detail::LinkListImpl::Insert;
 };
 
+// Retail-accurate mirror of the Voice object field layout. The class defined
+// in snd_Voice.h has different (non-retail) member offsets, so the VoiceManager
+// list/priority logic below accesses fields through this mirror at their exact
+// retail offsets (node=0x11C, mPriority=0xA8, mCallback=0x94, mSyncFlag=0xA2,
+// mIsActive=0x9C, ...). Kept local to this TU like the mirror in snd_Voice.cpp.
+struct VoiceLayout {
+    u8 _pad0[0xC];                                 // 0x0
+    void* mAxVoice[2][4];                          // 0xC
+    float mVoiceOutParam[4][6];                    // 0x2C
+    int mChannelCount;                             // 0x8C
+    int mVoiceOutCount;                            // 0x90
+    void* mCallback;                               // 0x94
+    void* mCallbackArg;                            // 0x98
+    bool mIsActive;                                // 0x9C
+    bool mIsStarting;                              // 0x9D
+    bool mIsStarted;                               // 0x9E
+    bool mIsPause;                                 // 0x9F
+    bool mIsPausing;                               // 0xA0
+    u8 field_0xA1;                                 // 0xA1
+    u16 mSyncFlag;                                 // 0xA2
+    u8 mRemoteFilter;                              // 0xA4
+    u8 mBiquadType;                                // 0xA5
+    int mPriority;                                 // 0xA8
+    float mPan;                                    // 0xAC
+    float mSurroundPan;                            // 0xB0
+    float mLpfFreq;                                // 0xB4
+    float mBiquadFreq;                             // 0xB8
+    int mOutputLineFlag;                           // 0xBC
+    float mMainOutVolume;                          // 0xC0
+    float mMainSend;                               // 0xC4
+    float mFxSend[AUX_BUS_NUM];                    // 0xC8
+    float mRemoteOutVolume[WPAD_MAX_CONTROLLERS];  // 0xD4
+    float mRemoteSend[WPAD_MAX_CONTROLLERS];       // 0xE4
+    float mRemoteFxSend[WPAD_MAX_CONTROLLERS];     // 0xF4
+    float mPitch;                                  // 0x104
+    float mVolume;                                 // 0x108
+    float mVeInitVolume;                           // 0x10C
+    float mVeTargetVolume;                         // 0x110
+    int field_0x114;                               // 0x114
+    int field_0x118;                               // 0x118
+    ut::LinkListNode node;                         // 0x11C
+};
+
+// VoiceList equivalent over the retail-accurate overlay (node at 0x11C).
+// Cast a VoiceManager list member to this when iterating / inserting.
+typedef ut::LinkList<VoiceLayout, 0x11C> VoiceLayoutList;
+static inline Voice* ToVoice(VoiceLayout* pLayout) {
+    return reinterpret_cast<Voice*>(pLayout);
+}
+
 VoiceManager& VoiceManager::GetInstance() {
     static VoiceManager instance;
     return instance;
@@ -44,7 +94,7 @@ void VoiceManager::Setup(void* pBuffer, u32 size) {
             pVoice = new (pPtr) Voice();
         }
 
-        // Insert at back of free list: node at pVoice + 0x11C
+        // Insert at back of free list: node at pVoice + 0x11C.
         ut::LinkListNode* pNode = reinterpret_cast<ut::LinkListNode*>(
             reinterpret_cast<u8*>(pVoice) + 0x11C);
         ut::detail::LinkListImpl::Iterator it(
@@ -255,21 +305,19 @@ void VoiceManager::UpdateEachVoicePriority(const VoiceList::Iterator& rBegin,
 void VoiceManager::UpdateAllVoicesSync(u32 syncFlag) {
     BOOL enabled = OSDisableInterrupts();
 
-    // Traverse priority list manually, matching retail pattern
-    u8* pBase = reinterpret_cast<u8*>(&mPrioVoiceList);
-    ut::LinkListNode* pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x4);
+    // Traverse mPrioVoiceList manually, matching the retail node loop.
+    ut::LinkListNode* pEnd = reinterpret_cast<ut::LinkListNode*>(
+        reinterpret_cast<u8*>(&mPrioVoiceList) + 0x4);
     ut::LinkListNode* pNode = pEnd->GetNext();
 
     while (pNode != pEnd) {
         ut::LinkListNode* pCurr = pNode;
         pNode = pNode->GetNext();
 
-        // Get Voice* from node using retail offset (0x11C)
-        Voice* pVoice = reinterpret_cast<Voice*>(
+        VoiceLayout* pVoice = reinterpret_cast<VoiceLayout*>(
             reinterpret_cast<u8*>(pCurr) - 0x11C);
 
         if (pVoice->mIsActive) {
-            // mSyncFlag accessed as u16 to match retail lhz/sth
             pVoice->mSyncFlag |= syncFlag;
         }
     }

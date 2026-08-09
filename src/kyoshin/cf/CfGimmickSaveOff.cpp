@@ -5,42 +5,43 @@
 
 extern u8 lbl_eu_805357E8[];
 extern u8 lbl_eu_80510B28[];
+extern u8 lbl_eu_8053A1E0[];  // CfGimmickSaveOff vtable
+extern void* lbl_eu_80664140;  // bdat holder seed (sda21 pointer global)
 extern u8 lbl_eu_805765A0[];
+
+// The retail ctor symbol __ct__cf_CfGimmickSaveOff is a C-linkage name (no
+// C++ mangling markers), so it is emitted as an extern "C" free function
+// rather than a C++ member constructor (same convention as __ct__cf_CfGimmick).
+// The class carries a manual vptr at +0x00 (set to lbl_eu_8053A1E0).
+extern "C" void* __ct__cf_CfGimmickSaveOff(cf::CfGimmickSaveOff* self, s32 param) {
+    __ct__cf_CfGimmick(self);
+    *(void**)self = (void*)lbl_eu_8053A1E0;
+    self->mFlag = 8;
+
+    void* mgr = func_8003AA34();
+    void* holder = lbl_eu_80664140;
+    self->mParam = (u16)param;
+
+    func_80208F34(self, (u8*)self + 4, mgr, &holder);
+    func_80209020(self, (u8*)self + 0x1C, mgr, &holder);
+    func_80209288(self, (u8*)self + 0x10, mgr, &holder);
+
+    // Read three bdat string cells; lower 16 bits of pointer stored in the
+    // u16 bounds, and the low byte stored (byte-extended) into the type.
+    const char* s1 = getBdatStringColumnValue(holder, *(char**)(lbl_eu_805357E8 + 0x34), param);
+    self->mMinVal = *(u16*)&s1;
+    const char* s2 = getBdatStringColumnValue(holder, *(char**)(lbl_eu_805357E8 + 0x38), param);
+    self->mMaxVal = *(u16*)&s2;
+    const char* s3 = getBdatStringColumnValue(holder, (const char*)lbl_eu_80510B28, param);
+    self->mType = *(u8*)&s3;
+
+    // Invoke the derived vtable's init hook (slot 0x20: a real virtual call).
+    self->vinit();
+    return self;
+}
 
 // Destructor provided by extern "C" function to match retail ABI.
 // Class header declares virtual ~CfGimmickSaveOff(); for vtable entry.
-
-extern "C" void __ct__cf_CfGimmickSaveOff(void* self, s32 param) {
-    extern u8 __vt__Q22cf16CfGimmickSaveOff[];
-
-    __ct__cf_CfGimmick(self);
-    *(void**)self = (void*)__vt__Q22cf16CfGimmickSaveOff;
-    *(u16*)((u8*)self + 0x82) = 8;
-
-    void* alloc = func_8003AA34();
-    u32 localVar = 0;
-
-    *(u16*)((u8*)self + 0x64) = param;
-
-    func_80208F34(self, (u8*)self + 4, alloc, &localVar);
-    func_80209020(self, (u8*)self + 0x1C, alloc, &localVar);
-    func_80209288(self, (u8*)self + 0x10, alloc, &localVar);
-
-    void* filePtr = *(void**)&localVar;
-
-    const char* s1 = getBdatStringColumnValue(filePtr, *(const char**)(lbl_eu_805357E8 + 0x34), param);
-    *(u16*)((u8*)self + 0x6C) = *(u16*)&s1;
-
-    const char* s2 = getBdatStringColumnValue(filePtr, *(const char**)(lbl_eu_805357E8 + 0x38), param);
-    *(u16*)((u8*)self + 0x6E) = *(u16*)&s2;
-
-    const char* s3 = getBdatStringColumnValue(filePtr, (const char*)lbl_eu_80510B28, param);
-    *(u32*)((u8*)self + 0x84) = *(u8*)s3;
-
-    void** vtable = *(void***)self;
-    void (*vfunc)(void*) = (void (*)(void*))vtable[0x20 / 4];
-    vfunc(self);
-}
 
 extern "C" void* __dt__Q22cf16CfGimmickSaveOffFv(void* self, int flag) {
     if (self != NULL) {

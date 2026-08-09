@@ -79,7 +79,7 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
 // Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
-cf::CVS_THREAD_CHAIN* __ct__802A5830() try {
+cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     CVoiceHandle* handleBuf = func_802A330C(1, 0);
     if (handleBuf == NULL) {
         return NULL;
@@ -89,22 +89,26 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() try {
         return NULL;
     }
 
-    // Base constructor (self in r3).
-    __ct__cf_CVS_THREAD();
+    // Construct the base (can throw -> EH guard), then set vtable + link slot.
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD();
 
-    // Set the vtable at offset 0x1C (right after the 7 CVS_THREAD base words).
-    ((void**)self)[7] = (void**)lbl_eu_80539A3C;
-    self->field_0x20 = NULL;
+            // Set the vtable at offset 0x1C (right after the 7 CVS_THREAD base words).
+            ((void**)self)[7] = (void**)lbl_eu_80539A3C;
+            self->field_0x20 = NULL;
+        } catch (...) {
+            throw;
+        }
+    }
 
-    // Copy the init-state triple into the first 3 u32s.
+    // Copy the init-state triple into the first 3 u32s (outside try).
     const u32* base = lbl_eu_80539A30;
     self->unk0 = (u32*)base[0];
     self->unk4 = base[1];
     self->unk8 = base[2];
 
     return self;
-} catch (...) {
-    throw;
 }
 
 // ── Target 6: us-802a8148 (func_802A5A14) ──────────────────────────────────

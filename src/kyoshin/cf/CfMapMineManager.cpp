@@ -503,10 +503,10 @@ extern "C" int func_80207C08(u32 pointId, int area, int sub) {
     MineNode* head = lbl_eu_806646A0->mPoints.mStartPtr;
     MineNode* n = head->mNext;
     while (n != head) {
-        if (n->mItem.mId18 != 0 && ((n->mItem.mFlags >> 16) & 1) != 0 &&
+        if (n->mItem.mId18 != 0 && (n->mItem.mFlagKind & 1) != 0 &&
             area == n->mItem.mArea1E && sub == n->mItem.mAreaSub1F &&
             pointId == n->mItem.mPointId1C &&
-            ((n->mItem.mFlags >> 8) & 0xFF) != 0) {
+            (*(volatile u32*)&n->mItem.mFlags >> 8 & 0xFF) != 0) {
             return 0;
         }
         n = n->mNext;
@@ -527,10 +527,8 @@ struct MineSnapshot {
 
 extern "C" void func_80207C94(u8* out) {
     memset(out, 0, 0x384);
-    MineNode* start = lbl_eu_806646A0->mPoints.mStartPtr;
-    MineNode* n = start->mNext;
-    (void)start;
-    while (n != start) {
+    MineNode* n = lbl_eu_806646A0->mPoints.mStartPtr->mNext;
+    while (n != lbl_eu_806646A0->mPoints.mStartPtr) {
         MineSnapshot* snapshot = (MineSnapshot*)out;
         snapshot->mTimer = (s16)n->mItem.mTimer14;
         snapshot->mCount = (u8)((n->mItem.mFlags >> 8) & 0xFF);
@@ -1169,65 +1167,64 @@ extern "C" void func_80207D2C(u8* rec) {
         }
     }
 
+    // Rebuild a MinePoint from each saved record.  mPosX/Y/Z are left as
+    // untouched stack garbage, exactly as retail reads them back out.
     MinePoint tmp;
     tmp.mObj0 = 0;
     tmp.mObj4 = 0;
-    tmp.mPosX = 0.0f;
-    tmp.mPosY = 0.0f;
-    tmp.mPosZ = 0.0f;
     tmp.mTimer14 = 0.0f;
     tmp.mId18 = 0;
     tmp.mCounter1A = 0;
     tmp.mPointId1C = 0;
-    tmp.mArea1E = 0;
-    tmp.mAreaSub1F = 0;
     u32 fl = tmp.mFlags;
     fl &= 0x003FFFFF;
     fl &= 0xFFFF00FF;
-    fl &= 0xFF1FFFFF;
+    fl &= 0xFFFFE3FF;
     tmp.mFlags = fl;
 
     for (int i = 0; i < 150; i++) {
-        u8 cnt = rec[3];
-        if (cnt == 0) break;
+        u8 pidHi = rec[3];
+        if (pidHi == 0) break;
         u16 pid = *(u16*)(rec + 0);
         u8 area = rec[4];
         u8 sub = rec[5];
         u8 count = rec[2];
-        tmp.mTimer14 = (f32)(176.0 - (f32)sub);
-        u32 f2 = tmp.mFlags;
-        f2 = (f2 & 0xFFFF00FF) | ((count & 0xFF) << 8);
-        f2 = (f2 & 0x003FFFFF) | ((cnt & 0x3FF) << 22);
-        tmp.mFlags = f2;
-        tmp.mArea1E = area;
-        tmp.mAreaSub1F = (u8)(176.0 - (f32)sub);
 
-        CfMapMineManager* m2 = lbl_eu_806646A0;
+        tmp.mTimer14 = (f32)(u32)pid;
+        u32 f2 = tmp.mFlags;
+        f2 = (f2 & 0xFF00FFFF) | ((u32)count << 8);
+        f2 = (f2 & 0x003FFFFF) | ((u32)pidHi << 22);
+        tmp.mFlags = f2;
+        MineNode* head = mgr->mPoints.mStartPtr;
+        tmp.mArea1E = area;
+        tmp.mAreaSub1F = sub;
+
+        u32 cap = mgr->mPoints.mCapacity;
         u32 idx = 0;
-        while (idx < m2->mPoints.mCapacity) {
-            if (((MineNode*)((u8*)m2->mPoints.mList + idx * 0x2C))->mNext == 0) break;
+        while (idx < cap) {
+            if (mgr->mPoints.mList[idx].mNext == 0) break;
             idx++;
         }
-        MineNode* slot = (MineNode*)((u8*)m2->mPoints.mList + idx * 0x2C);
-        MinePoint* dst = &slot->mItem;
-        *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
-        *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
-        *(f32*)((u8*)dst + 0x08) = *(f32*)((u8*)&tmp + 0x08);
-        *(f32*)((u8*)dst + 0x0C) = *(f32*)((u8*)&tmp + 0x0C);
-        *(f32*)((u8*)dst + 0x10) = *(f32*)((u8*)&tmp + 0x10);
-        *(f32*)((u8*)dst + 0x14) = *(f32*)((u8*)&tmp + 0x14);
-        *(u16*)((u8*)dst + 0x18) = *(u16*)((u8*)&tmp + 0x18);
-        *(s16*)((u8*)dst + 0x1A) = *(s16*)((u8*)&tmp + 0x1A);
-        *(u16*)((u8*)dst + 0x1C) = *(u16*)((u8*)&tmp + 0x1C);
-        *(u8*)((u8*)dst + 0x1E) = *(u8*)((u8*)&tmp + 0x1E);
-        *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
-        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
-
-        MineNode* head = m2->mPoints.mStartPtr;
-        slot->mNext = head;
-        slot->mPrev = head->mPrev;
-        head->mPrev->mNext = slot;
-        head->mPrev = slot;
+        MineNode* node = &mgr->mPoints.mList[idx];
+        MinePoint* dst = &node->mItem;
+        if (dst != 0) {
+            dst->mObj0 = tmp.mObj0;
+            dst->mObj4 = tmp.mObj4;
+            dst->mPosX = tmp.mPosX;
+            dst->mPosY = tmp.mPosY;
+            dst->mPosZ = tmp.mPosZ;
+            dst->mTimer14 = tmp.mTimer14;
+            dst->mId18 = tmp.mId18;
+            dst->mCounter1A = tmp.mCounter1A;
+            dst->mPointId1C = tmp.mPointId1C;
+            dst->mArea1E = tmp.mArea1E;
+            dst->mAreaSub1F = tmp.mAreaSub1F;
+            dst->mFlags = tmp.mFlags;
+        }
+        node->mNext = head;
+        node->mPrev = head->mPrev;
+        head->mPrev->mNext = node;
+        head->mPrev = node;
         rec += 6;
     }
 }

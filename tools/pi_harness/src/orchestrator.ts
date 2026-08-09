@@ -994,7 +994,11 @@ function makeVerifyCallback(opts: {
     for (const tid of targetIds) {
       const sym = targetSymbols.get(tid);
       if (!sym) continue;
-      const hd = await runHexdiff(repoRoot, config.pythonBin, unit, sym);
+      // allowBuildRetry: this runs right after batch-cycle's per-target
+      // rebuilds, so the --no-build read can race a mid-write object (same
+      // race the accept-path handles at the draft-banking call site) — retry
+      // with a build before degrading this round's feedback.
+      const hd = await runHexdiff(repoRoot, config.pythonBin, unit, sym, { allowBuildRetry: true });
       if (hd.ok) {
         if (hd.mismatchCount === 0) {
           matchedTargets.push(tid);

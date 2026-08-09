@@ -57,7 +57,10 @@ void func_802A8D60(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr, int voiceId) {
 // Factory for CVS_THREAD_SUDDEN. Allocates the handle buffer (1, 0 - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539CE8.
-CVS_THREAD_SUDDEN* __ct__802A8C04() try {
+CVS_THREAD_SUDDEN* __ct__802A8C04() {
+    // Allocate the (effectively discarded) handle buffer, then the 0x24-byte
+    // thread object. Allocation failures return NULL directly (bypassing the
+    // construction try/catch cleanup, matching retail's return-NULL jumps).
     CVoiceHandle* handleBuf = func_802A330C(1, 0);
     if (handleBuf == NULL) {
         return NULL;
@@ -67,22 +70,27 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() try {
         return NULL;
     }
 
-    // Base constructor (self in r3).
-    __ct__cf_CVS_THREAD();
+    // Base constructor (self in r3), then vtable and the null voice slot,
+    // inside a construction try/catch so MVWCC emits the frame-pointer EH
+    // prologue/epilogue retail shows (the allocation failures above bypass
+    // this region and jump straight to the epilogue, matching retail).
+    try {
+        __ct__cf_CVS_THREAD();
 
-    // Set the vtable at offset 0x1C (right after the 7 CVS_THREAD base words).
-    ((void**)self)[7] = (void**)lbl_eu_80539CF4;
-    self->field_0x20 = NULL;
+        // Set the vtable at offset 0x1C (right after the 7 base words).
+        ((void**)self)[7] = (void**)lbl_eu_80539CF4;
+        self->field_0x20 = NULL;
+    } catch (...) {
+        throw;
+    }
 
-    // Copy the slot-state init data triple into the first 3 u32s.
+    // Copy the slot-state init data triple into the first 3 u32s (outside try).
     const u32* base = lbl_eu_80539CE8;
     self->unk0 = (u32*)base[0];
     self->unk4 = base[1];
     self->unk8 = base[2];
 
     return self;
-} catch (...) {
-    throw;
 }
 
 // Virtual override of blank1(): returns 1 for SUDDEN thread (minimal buffer flag).

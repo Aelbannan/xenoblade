@@ -24,8 +24,8 @@ bool ExternalSoundPlayer::AppendSound(BasicSound* pSound) {
             int currentPrio = it->CalcCurrentPlayerPriority();
 
             if (lowestPrio > currentPrio) {
-                pLowest = &*it;
                 lowestPrio = currentPrio;
+                pLowest = &*it;
             }
         }
 
@@ -52,37 +52,39 @@ void ExternalSoundPlayer::RemoveSound(BasicSound* pSound) {
 }
 
 bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
+    // No playable slots configured: nothing can play.
     if (mPlayableCount == 0) {
         return false;
     }
 
-    if (GetPlayingSoundCount() < mPlayableCount) {
-        return true;
-    }
+    // At (or above) the playable limit we need a lowest-priority candidate to
+    // evict; otherwise playback is always allowed (retail structure funnels
+    // all allowed paths into the single trailing return true).
+    if (GetPlayingSoundCount() >= mPlayableCount) {
+        int lowestPrio = BasicSound::PRIORITY_MAX + 1;
+        BasicSound* pLowest = NULL;
 
-    BasicSound* pLowest = NULL;
-    int lowestPrio = BasicSound::PRIORITY_MAX + 1;
+        for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
+             it != mSoundList.GetEndIter(); ++it) {
 
-    for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
-         it != mSoundList.GetEndIter(); ++it) {
+            int currentPrio = it->CalcCurrentPlayerPriority();
 
-        int currentPrio = it->CalcCurrentPlayerPriority();
+            if (lowestPrio > currentPrio) {
+                pLowest = &*it;
+                lowestPrio = currentPrio;
+            }
+        }
 
-        if (lowestPrio > currentPrio) {
-            lowestPrio = currentPrio;
-            pLowest = &*it;
+        if (pLowest == NULL) {
+            return false;
+        }
+
+        if (count < pLowest->CalcCurrentPlayerPriority()) {
+            return false;
         }
     }
 
-    if (pLowest == NULL) {
-        return false;
-    }
-
-    if (count >= pLowest->CalcCurrentPlayerPriority()) {
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 } // namespace detail

@@ -13,7 +13,7 @@ extern "C" void* lbl_eu_80536EA8[];
 // Shared string pool (split1 .rodata): fade layout arc filename.
 extern char lbl_eu_8050B5A0[];
 // SDA float - fade animation frame target.
-extern f32 lbl_eu_80668750;
+extern const f32 lbl_eu_80668750;
 
 // UnkClass_8045F564 ctor, called by hand by CFade's ctor to reproduce the
 // retail member-init order (vtable store first). See CBgTex.cpp.

@@ -5,8 +5,19 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
-class CScn;
 class CEventFile;
+
+// Minimal CScn declaration local to this TU: only the two OOL render-callback
+// members are needed. Declared with the real class tag (CScn) and parameter
+// list so member calls emit the retail mangled symbols
+// removeRenderCB__4CScnFP10IScnRender / addRenderCB__4CScnFP10IScnRenderUlUl.
+// A full #include of monolib/scn/CScn.hpp would drag the real CTTask (via
+// work.hpp) and collide with the local CTask<CTaskGameEvt> copy below.
+class CScn {
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+};
 
 // CProcess base constructor imported from another TU (C-ABI, retail C-linkage
 // symbol name - do not let C++ mangle its parameter list).
@@ -68,12 +79,14 @@ public:
 };
 } // namespace cf
 
-// CScn OOL render-callback registration.
-void addRenderCB__4CScnFP10IScnRenderUlUl(CScn* scn, IScnRender* cb, u32 prio, u32 flag);
-void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
-
 // Free-function imports defined in sibling TUs (cf/CTaskREvent.cpp).
+// These are genuine C-ABI functions (retail unmangled symbols), so they are
+// declared extern "C" here: `decltype`/member-reference would otherwise mangle
+// the call relocs to func_80164C48__Fv / func_80164954__Fv and drift from the
+// retail reloc sites (func_80164C48 / func_80164954).
+extern "C" {
 void func_80165038();
 void func_80164CFC();
 int func_80164C48();
 int func_80164954();
+}

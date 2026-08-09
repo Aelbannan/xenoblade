@@ -7,12 +7,13 @@ namespace detail {
 void BiquadFilterLpf::GetCoef(int /*order*/, f32 freq,
                               BiquadFilterCallback::BiquadCoef* pCoef) const {
     int maxIdx = 0x6F;
-    int idx = (int)((f32)maxIdx * freq);
+    int t = (int)((f32)maxIdx * freq);
+    int idx;
 
-    if (idx <= maxIdx) {
-        idx &= ~(idx >> 31); // clamp to >= 0 (branchless max(idx, 0))
+    if (t > maxIdx) {
+        idx = maxIdx; // upper clamp
     } else {
-        idx = maxIdx;
+        idx = (t < 0) ? 0 : t;
     }
 
     pCoef->b0 = lbl_eu_8051E808[idx].b0;
@@ -25,14 +26,13 @@ void BiquadFilterLpf::GetCoef(int /*order*/, f32 freq,
 void BiquadFilterHpf::GetCoef(int /*order*/, f32 freq,
                               BiquadFilterCallback::BiquadCoef* pCoef) const {
     int maxIdx = 0x60;
-    int idx = (int)((f32)maxIdx * freq);
+    int t = (int)((f32)maxIdx * freq);
+    int idx;
 
-    if (idx <= maxIdx) {
-        if (idx < 0) {
-            idx = 0;
-        }
+    if (t > maxIdx) {
+        idx = maxIdx; // upper clamp
     } else {
-        idx = maxIdx;
+        idx = (t < 0) ? 0 : t;
     }
 
     pCoef->b0 = lbl_eu_8051EC68[idx].b0;
@@ -46,14 +46,13 @@ void BiquadFilterBpf512::GetCoef(int /*order*/, f32 freq,
                                  BiquadFilterCallback::BiquadCoef* pCoef) const {
     f32 scale = freq * (1.0f - freq);
     int maxIdx = 0x79;
-    int idx = (int)((f32)maxIdx * scale);
+    int t = (int)((f32)maxIdx * scale);
+    int idx;
 
-    if (idx <= maxIdx) {
-        if (idx < 0) {
-            idx = 0;
-        }
+    if (t > maxIdx) {
+        idx = maxIdx; // upper clamp
     } else {
-        idx = maxIdx;
+        idx = (t < 0) ? 0 : t;
     }
 
     pCoef->b0 = lbl_eu_8051F034[idx].b0;
@@ -67,14 +66,13 @@ void BiquadFilterBpf1024::GetCoef(int /*order*/, f32 freq,
                                   BiquadFilterCallback::BiquadCoef* pCoef) const {
     f32 scale = freq * (1.0f - freq);
     int maxIdx = 0x5C;
-    int idx = (int)((f32)maxIdx * scale);
+    int t = (int)((f32)maxIdx * scale);
+    int idx;
 
-    if (idx <= maxIdx) {
-        if (idx < 0) {
-            idx = 0;
-        }
+    if (t > maxIdx) {
+        idx = maxIdx; // upper clamp
     } else {
-        idx = maxIdx;
+        idx = (t < 0) ? 0 : t;
     }
 
     pCoef->b0 = lbl_eu_8051F4F8[idx].b0;
@@ -88,14 +86,13 @@ void BiquadFilterBpf2048::GetCoef(int /*order*/, f32 freq,
                                   BiquadFilterCallback::BiquadCoef* pCoef) const {
     f32 scale = freq * (1.0f - freq);
     int maxIdx = 0x5C;
-    int idx = (int)((f32)maxIdx * scale);
+    int t = (int)((f32)maxIdx * scale);
+    int idx;
 
-    if (idx <= maxIdx) {
-        if (idx < 0) {
-            idx = 0;
-        }
+    if (t > maxIdx) {
+        idx = maxIdx; // upper clamp
     } else {
-        idx = maxIdx;
+        idx = (t < 0) ? 0 : t;
     }
 
     pCoef->b0 = lbl_eu_8051F89C[idx].b0;

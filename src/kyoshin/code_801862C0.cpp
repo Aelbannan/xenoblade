@@ -18,7 +18,18 @@ struct CArtsSelectContainer {
     CArtsSelectSlot slots[46];   // 46 slots at appropriate offsets
 };
 
-void* func_801862C0(VMThread* pThread){ return 0; }
+// Returned singleton object backing func_801862C0's accessor.
+// Sized to land in normal .bss (not SDA) so its address materializes as lis+addi.
+u8 lbl_eu_80574090[0x20];
+
+/* One-time init guard: set the SDA flag on first call, then hand out the
+   singleton object's address. Sign-extension in retail matches a signed byte. */
+void* func_801862C0(VMThread* pThread) {
+    if (lbl_eu_806642C8 == 0) {
+        lbl_eu_806642C8 = 1;
+    }
+    return &lbl_eu_80574090;
+}
 
 void* func_801862E0(void* p){ return 0; }
 

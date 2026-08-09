@@ -1,8 +1,10 @@
-#ifndef CMdlMaterial_HPP
-#define CMdlMaterial_HPP
+#pragma once
 
 #include <types.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+extern "C" const char* lbl_eu_80663C30;
 
 /**
  * CMdlMaterial - model material descriptor.
@@ -28,5 +30,3 @@ public:
     /* 0x30 */ u32 field_0x30;
     /* 0x34 */ u32 field_0x34;      // Write index for field_0x18 array
 };
-
-#endif // CMdlMaterial_HPP

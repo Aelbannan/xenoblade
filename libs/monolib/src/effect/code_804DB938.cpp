@@ -64,6 +64,8 @@ static inline void CERotTrig(Mtx m, f32 rad, char axis) {
 
 extern "C" {
 
+// Cardinal axis rotation builders: build a 4x4 matrix rotating about the
+// given axis by `rad` radians (table-interpolated sin/cos).
 void func_804DD388(Mtx mtx, f32 rad) {
     CERotTrig(mtx, rad, 'x');
 }

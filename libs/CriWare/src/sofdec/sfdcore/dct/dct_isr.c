@@ -2,8 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-
-#include <harness_catalog.h>
 #include <math.h>
 
 extern u32 lbl_eu_80604AC0[];       /* BSS, 0x208 bytes: [0]=verstr ptr, [2..]=8x8 doubles */
@@ -16,26 +14,27 @@ extern void initSparseTbl(void);
 extern void DCT_AcInit(void);
 extern void DCT_AcIdctDouble(const double *in, double *out);
 
-/* Initialize DCT ISR coefficient tables and sparse lookup */
+/* Initialize DCT ISR coefficient tables (8x8 cos matrix scaled to s16). */
 void DCT_IsrInit(void) {
     double *cos_tbl = lbl_eu_8051C3B0;
-    double *out_dbl = (double *)&lbl_eu_80604AC0[2];
-    s16 *out_s1 = (s16 *)&lbl_eu_80604AC0[0x82]; /* lbl_eu_80604CC8 */
-    s16 *out_s2 = (s16 *)&lbl_eu_80604AC0[0xA2]; /* lbl_eu_80604CC8 + 64 */
-    double s1 = cos_tbl[11];   /* 131072.0 */
-    double bias = cos_tbl[10]; /* 0.5 */
-    double s2 = cos_tbl[12];   /* 2097152.0 */
+    double s1 = cos_tbl[11];
+    double bias = cos_tbl[10];
+    double s2 = cos_tbl[12];
     int i, j;
 
     lbl_eu_80604AC0[0] = (u32)DCT_GetVerStr();
 
     for (i = 0; i < 8; i++) {
         double row = cos_tbl[i];
+        double *pd = (double *)&lbl_eu_80604AC0[2] + i * 8;
+        s16 *ps1 = (s16 *)&lbl_eu_80604AC0[0x82] + i * 8;
+        s16 *ps2 = (s16 *)&lbl_eu_80604AC0[0xA2] + i * 8;
+        double *pc = cos_tbl;
         for (j = 0; j < 8; j++) {
-            double p = row * cos_tbl[j];
-            out_dbl[i * 8 + j] = p;
-            out_s1[i * 8 + j] = (s16)(int)(s1 * p + bias);
-            out_s2[i * 8 + j] = (s16)(int)(s2 * p + bias);
+            double p = row * *pc++;
+            *pd++ = p;
+            *ps1++ = (s16)(s32)(s1 * p + bias);
+            *ps2++ = (s16)(s32)(s2 * p + bias);
         }
     }
 
@@ -57,7 +56,49 @@ void DCT_IsrTrans(void* self, s32 val) {
     }
 }
 
-void initSparseTbl() {}
+void initSparseTbl() {
+    memset(lbl_eu_80604DC8, 0, 0x2000);
+    DCT_AcInit();
+
+    double *cos = lbl_eu_8051C3B0;
+    double bias = cos[10];  /* 0.5 */
+    double scale = cos[14]; /* 4194304.0 */
+    double zero = cos[15];  /* 0.0 */
+
+    for (int i = 0; i < 0x40; i++) {
+        double tmp[64];
+        s16 *row = lbl_eu_80604DC8 + i * 64;
+        int col;
+
+        for (col = 0; col < 0x40; col++) {
+            if (col == i)
+                tmp[col] = scale / (double)lbl_eu_80604CC8[i];
+            else
+                tmp[col] = zero;
+        }
+
+        {
+            double out[64];
+            DCT_AcIdctDouble(tmp, out);
+            for (col = 0; col < 0x40; col++) {
+                double v = out[col];
+                if (v >= 0.0)
+                    row[col] = (s16)(s32)(v + bias);
+                else
+                    row[col] = (s16)(s32)(-(bias - v));
+            }
+        }
+
+        /* mirror the row: forward-copy to stack buffer, then write back reversed */
+        {
+            s16 buf[64];
+            for (col = 0; col < 0x40; col++)
+                buf[col] = row[col];
+            for (col = 0; col < 0x40; col++)
+                row[0x3F - col] = buf[col];
+        }
+    }
+}
 
 void MSID_JRevDctSparse() {}
 

@@ -15,7 +15,9 @@ extern "C" {
 }
 
 // VTable for CScnItemLight (manually-managed data pointer at +0x00).
-extern void* lbl_eu_8056DD08;
+// char[] array type prevents SDA21 addressing so the address is materialised
+// with lis+addi exactly like retail.
+extern char lbl_eu_8056DD08[];
 
 void* func_804823A0(void* self) { return (void*)((u8*)self + 0x11d8); }
 
@@ -42,10 +44,9 @@ void func_80482400(CScnItemLightNw4r* self) {
 
 CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2,
                              void* a3) {
-    void* vt = (void*)&lbl_eu_8056DD08;
-    field_0x0 = vt;
     mpNw4r = pNw4r;
     field_0x8 = 3;
+    field_0x0 = (void*)lbl_eu_8056DD08;
     field_0xc = a3;
     field_0x10 = a2;
     func_804950F4(mEnv, func_80496018(pNw4r));
@@ -54,10 +55,15 @@ CScnItemLight::CScnItemLight(CScnItemLightNw4r* pNw4r, char* name, u16 a2,
     field_0x121c = 0;
 }
 
-CScnItemLight::~CScnItemLight() {
-    __dt__80495200(mEnv, -1);
-}
-
+// The base CScnItemLight dtor is declared `__declspec(noinline)` below, so this
+// derived dtor must emit an external `bl __dt__13CScnItemLightFv` instead of
+// inlining its body (retail keeps the base-dtor call out-of-line).
 CScnItemLightNw4r::~CScnItemLightNw4r() {
     // base CScnItemLight destructor runs automatically (flag 0).
+}
+
+// `__declspec(noinline)` on the base dtor so the derived Nw4r dtor emits a
+// real `bl __dt__13CScnItemLightFv` instead of inlining this body.
+__declspec(noinline) CScnItemLight::~CScnItemLight() {
+    __dt__80495200(mEnv, -1);
 }

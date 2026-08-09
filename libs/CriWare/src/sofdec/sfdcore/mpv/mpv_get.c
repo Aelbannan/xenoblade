@@ -47,23 +47,26 @@ int MPV_GetBitRate(void* handle, u32* out) {
 
 /* Get VBV buffer size */
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
-    if (MPVLIB_CheckHn(handle)) {
+    MpfGetHd *h = (MpfGetHd *)handle;
+    if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020F);
     }
 
-    *out_size = *(u32 *)((u8 *)handle + 0xC4C) << 11;
-    *out_avg = *(u32 *)((u8 *)handle + 0xC5C);
+    *out_size = h->vbvBufSiz << 11;
+    *out_avg = h->frameRate;
 
     {
-        u32 bitrate = *(u32 *)((u8 *)handle + 0xC48);
-        if ((u32)(bitrate - 0x30000) == 0xFFFF) {
+        u32 bitRate = h->bitRate;
+        if ((u32)(bitRate - 0x30000) == 0xFFFF) {
             *out_max = (u32)-1;
         } else {
-            u32 vbv = *(u32 *)((u8 *)handle + 0xC5C);
-            u32 m = vbv * bitrate;
-            s32 hi = __mulhw((s32)0x91A3B3C5, (s32)m);
-            s32 x = ((s32)hi + (s32)m) >> 10;
-            *out_max = (u32)x + ((x & 0x40000000) << 1);
+            /* m starts as frameRate, then *= bitRate; reuse m's register for x (retail add r0,r3,r0) */
+            s32 m = (s32)h->frameRate;
+            m *= (s32)bitRate;
+            s32 hi = __mulhw((s32)0x91A2B3C5, (s32)m);
+            m += hi;                    /* x = hi + m, reusing m */
+            s32 x = m >> 10;            /* x / 1024 (arith shift) */
+            *out_max = (u32)x + ((u32)x >> 31);   /* round toward zero */
         }
     }
     return 0;

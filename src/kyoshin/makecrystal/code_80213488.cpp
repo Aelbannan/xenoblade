@@ -24,6 +24,16 @@ struct MakeCrystalTable {
     u8  current;                     // +0x1004 current row cursor
 };
 
+// Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
+// object comes from CItem_initItemImplInstances(); only the getter is
+// dispatched. The first declared virtual lands at memory slot 2 because MWCC
+// reserves two RTTI slots (0x0/0x4) at the head of the vtable.
+struct CrystalItemImpl {
+    virtual u32 getCrystalItemId(void* slot) = 0; // vtable offset 8
+    virtual void vf04() = 0;
+    virtual void vf08() = 0;
+};
+
 // --- imports (retail unmangled C symbols) ---
 extern "C" void* func_80157C4C(u32 cat, s16 id);
 extern "C" u32   func_80157C20(u8 cat);
@@ -31,15 +41,22 @@ extern "C" u32   func_8015780C(int index);
 extern "C" void* CItem_initItemImplInstances(void* arg);
 
 // sdata2 constants used by func_80213570's ceil(count / scale) computation.
-extern f32 lbl_eu_80668458;
-extern f64 lbl_eu_80668460;
-extern f64 lbl_eu_80668468;
+extern f32 lbl_eu_80668458; // 30.0f scale
+// lbl_eu_8066845C is the 0.0f used for the fractional-part comparison.
+extern f32 lbl_eu_8066845C;
+// NOTE: the two 2^52 (4503599627370496.0) f64 constants the retail references
+// (lbl_eu_80668460 for the u16->float and lbl_eu_80668468 for the int->float
+// conversion) are synthesised internally by MWCC for the (f32)d->count and
+// (f32)t casts; they cannot be named in source, so their reloc labels stay as
+// decomp-pool entries (@...) and register as un-fixable reloc drift.
 
 // sibling unit (CMCCrystalBox.cpp) helpers
 extern "C" void func_80213988(MakeCrystalTable* d);
 extern "C" void func_80213B1C(MakeCrystalTable* d);
 // Copy a 4-byte {s16, u8} crystal entry (id + flag).
-void func_8021351C(void* dst, const void* src) {
+// DECOMP_DONT_INLINE: retail calls this through a real `bl` from the loop
+// callers; without it MWCC inlines the tiny body and unrolls those loops.
+extern "C" DECOMP_DONT_INLINE void func_8021351C(void* dst, const void* src) {
     *(short*)dst = *(short*)src;
     ((unsigned char*)dst)[2] = ((unsigned char*)src)[2];
 }
@@ -89,9 +106,8 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         void* obj = func_80157C4C(d->byte_1002, (s16)i);
         if (obj != 0 && *(void**)obj != 0) {
             void* inst = CItem_initItemImplInstances(obj);
-            void** vtbl = *(void***)inst;
-            u16 rid = (u16)((u32(*)(void*, void*))vtbl[2])(inst, obj);
-            if (rid == target) {
+            u32 rid = ((CrystalItemImpl*)inst)->getCrystalItemId(obj);
+            if (target == (u16)rid) {
                 u16 n = d->count;
                 d->count = n + 1;
                 d->entries[n].id = (s16)i;
@@ -100,7 +116,14 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         i++;
     }
     // Row count = ceil(filled count / 30); each row holds up to 30 crystals.
-    d->limit = (u8)((int)(float)ceil((f32)d->count / lbl_eu_80668458));
+    // Manual ceiling (retail inlines the rounding instead of calling libm).
+    f32 v = (f32)d->count;
+    v = v / lbl_eu_80668458;
+    int t = (int)v;                      // floor since v >= 0 (fctiwz trunc)
+    f32 frac = v - (f32)t;
+    if (lbl_eu_8066845C != frac)
+        t++;
+    d->limit = (u8)t;
     d->current = 0;
     func_80213988(d);
     if ((func_8015780C(9) & 0xffffU) == 0) {

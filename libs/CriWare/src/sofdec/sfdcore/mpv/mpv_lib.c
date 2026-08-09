@@ -12,27 +12,26 @@ extern u32 lbl_eu_8051C29C[];
 extern s32 MPVERR_SetCode(s32 val, u32 err_code);
 extern s32 MPVDEC_CheckVersion(void* a, s32 b, s32 c);
 
-void mpvlib_ChkFatal(void) {
+s32 mpvlib_ChkFatal(void) {
+    s32 endian;
     if (MPVVLC_IsVlcSizErr()) {
-        MPVERR_SetCode(0, 0xFF04FF03);
-        return;
+        return MPVERR_SetCode(0, 0xff03ff03);
     }
-    if (MPVDEC_CheckVersion(lbl_eu_8051C29C, 0xdac, 0x80) == 0) {
-        MPVERR_SetCode(0, 0xFF04FF07);
-        return;
+    if (MPVDEC_CheckVersion(lbl_eu_8051C29C, 0xdac, 0x80)) {
+        return MPVERR_SetCode(0, 0xff03ff07);
     }
-    if (criware_803A59B0() == 0) {
-        MPVERR_SetCode(0, 0xFF04FF09);
-        return;
+    if (criware_803A59B0()) {
+        return MPVERR_SetCode(0, 0xff03ff09);
     }
-    {
-        u32 x = 0x01020304;
+    /* endianness self-test: on big-endian (target) the first stored byte is 1 */
+    endian = 0x01020304;
+    if (((u8*)&endian)[0] != 1) {
+        /* illegal endianness — spin forever in an unusable ctr loop */
         for (;;) {
-            if ((u8)x == 1)
-                break;
             ((void (*)(void))-1)();
         }
     }
+    return 0;
 }
 
 extern u8 lbl_eu_80602BE8[];
@@ -111,12 +110,38 @@ void MPV_Finish(void) {
         u8* base = (u8*)lbl_eu_80602B88[0x50/4];
         u32 off;
         for (off = 0; off < 0x1BE0; off += 0x20) {
-            __dcbi(base + off);
+            __dcbi(base, off);
         }
     }
 }
 
-void MPV_Create() {}
+void* mpvlib_InitHn(void* self);
+
+void* MPV_Create(void* pool) {
+    u8* base = (u8*)lbl_eu_80602B88[0x58 / 4];
+    s32 n = lbl_eu_80602B88[0x54 / 4];
+    void* h = 0;
+    s32 i;
+    for (i = 0; i < n; i++) {
+        if (*(s32*)(base + 0xb08) == 1) {
+            h = base;
+            break;
+        }
+        base += 0xdc0;
+    }
+    if (h != 0) {
+        if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
+            u8* b = (u8*)h;
+            u32 off;
+            for (off = 0; off < 0x6e * 0x20; off += 0x20) {
+                __dcbi(b, off);
+                __dcbz_l(b, off);
+            }
+        }
+        return mpvlib_InitHn(h);
+    }
+    return h;
+}
 
 extern u32 lbl_eu_8060464C;
 extern u32 lbl_eu_80604650;
@@ -134,7 +159,7 @@ int MPVM2V_Create(void* self);
 void MPV_SetUsrSj(void* self, u32 idx, u32 a, u32 b, u32 c);
 void MPV_SetPicUsrBuf(void* self, void* a, void* b);
 
-void mpvlib_InitHn(void* self) {
+void* mpvlib_InitHn(void* self) {
     u8* b = (u8*)self;
     u32 base = lbl_eu_80602B88[0x50 / 4];
     s32 i;
@@ -186,6 +211,7 @@ void mpvlib_InitHn(void* self) {
     MPVSL_Create(self);
     *(u32*)(b + 0xD54) = (u32)MPVM2V_Create(self);
     *(u32*)(b + 0xB08) = 2;
+    return self;
 }
 
 void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
@@ -199,17 +225,26 @@ extern u32 lbl_eu_80602FEC;
 extern u32 lbl_eu_80602B88[];
 
 s32 MPV_Destroy(void* self) {
-    if (self == NULL)
-        return -1;
-    if (*(s32*)((u8*)self + 0xb08) == 2)
-        return -1;
-    lbl_eu_80602FEC = 0;
+    s32 err;
+    /* validate handle: NULL or state != 2(active) is an error; on success
+       (state == 2) publish the handle to the globals before tearing down. */
+    if (self == NULL) {
+        err = -1;
+    } else if (*(s32*)((u8*)self + 0xb08) != 2) {
+        err = -1;
+    } else {
+        lbl_eu_80602FEC = (u32)self;
+        err = 0;
+    }
+    if (err != 0) {
+        return MPVERR_SetCode(0, 0xff030201);
+    }
     MPVM2V_Destroy(self);
     MPVSL_Destroy(self);
     if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
         s32 i;
         for (i = 0; i < 0x6e; i++) {
-            __dcbi((void*)((u8*)self + i * 0x20));
+            __dcbi(self, i * 0x20);
         }
     }
     *(s32*)((u8*)self + 0xb08) = 1;
@@ -221,19 +256,22 @@ void MPVM2V_SetCond(void* mpv);
 s32 MPVERR_SetCode(s32 val, u32 err_code);
 
 s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
-    u32* tbl;
+    u8* tbl;
     if (mpv == NULL) {
-        u32* base = *(u32**)((u8*)lbl_eu_80602B88 + 0x58);
+        u32 c4 = cond * 4;
+        u8* base = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
         s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
-        tbl = base + cond;
+        u8* p;
+        tbl = base + c4;
+        p = base;
         while (n-- > 0) {
-            if (*(s32*)((u8*)base + 0xb08) == 2) {
-                *(u32*)((u8*)tbl + 0xb10) = val;
+            if (*(s32*)(p + 0xb08) == 2) {
+                *(u32*)(tbl + 0xb10) = val;
             }
-            tbl = (u32*)((u8*)tbl + 0xdc0);
-            base = (u32*)((u8*)base + 0xdc0);
+            p += 0xdc0;
+            tbl += 0xdc0;
         }
-        tbl = (u32*)lbl_eu_80602B88;
+        tbl = (u8*)lbl_eu_80602B88;
     } else {
         s32 err;
         if (mpv == NULL) {
@@ -247,9 +285,9 @@ s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
         if (err != 0) {
             return MPVERR_SetCode(0, 0xff030202);
         }
-        tbl = (u32*)((u8*)mpv + 0xb10);
+        tbl = (u8*)mpv + 0xb10;
     }
-    tbl[cond] = val;
+    *(u32*)(tbl + 4 * cond) = val;
     MPVM2V_SetCond(mpv);
     return 0;
 }

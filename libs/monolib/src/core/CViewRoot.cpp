@@ -5,6 +5,9 @@
 #include "monolib/core/CDesktop.hpp"
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/device/CGXCache.hpp"
+#include "monolib/device/CDevice.hpp"
+#include "monolib/core/CProcRoot.hpp"
+#include "monolib/lib/CLib.hpp"
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/work/CMsgParam.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -409,8 +412,9 @@ CView* CViewRoot::getFullScreenView() {
     _reslist_node<CWorkThread*>* walkNode;
     u32 viewFlags;
     u32 msgQualified;
-    u32 loginRunKeep;
     u32 keepGoing;
+    bool loginRunKeep;
+    int rState;
     ml::CRect16 frameOffset;
     s16 posSumY;
     s16 posSumX;
@@ -434,19 +438,20 @@ CView* CViewRoot::getFullScreenView() {
 
         // One flags load into viewFlags (retail r7) for EXCEPTION + later NO_EVENT.
         viewFlags = childView->mFlags;
-        msgQualified = (viewFlags & THREAD_FLAG_EXCEPTION)
-                           ? 1
-                           : (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
+        if (viewFlags & THREAD_FLAG_EXCEPTION) {
+            msgQualified = true;
+        } else {
+            msgQualified = (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
+        }
 
-        // keepGoing=0 before the branch: retail cmpwi/li/bne shape (size 0x1D8).
-        // MWCC homes keepGoing in r4 vs retail r0 (cascades mState); closed by
-        // Chaitin near-miss - keep iterating in high-level C.
+        // keepGoing=0 before the branch: retail cmpwi/li/bne shape.
         keepGoing = 0;
         if (msgQualified != 0) {
         } else {
             loginRunKeep = 1;
-            if (childView->mState == THREAD_STATE_LOGIN) {
-            } else if (childView->mState == THREAD_STATE_RUN) {
+            rState = childView->mState;
+            if (rState == THREAD_STATE_LOGIN) {
+            } else if (rState == THREAD_STATE_RUN) {
             } else {
                 loginRunKeep = 0;
             }
@@ -524,10 +529,36 @@ void CViewRoot::renderView() {
     }
 
     _reslist_node<CWorkThread*>* walkNode = lbl_eu_806655D0->mChildren.mStartNodePtr->mNext;
+    u32 msgQualified;
+    u32 keepGoing;
+    bool loginRunKeep;
+    int rState;
     while (walkNode != lbl_eu_806655D0->mChildren.mStartNodePtr) {
         CView* childView = CView::convertToView(walkNode->mItem);
-        if (childView->isRunning()) {
-            renderView__5CViewFv(childView);
+
+        // isRunning() inlined to match retail: exception -> stateOK -> keepGoing.
+        if (childView->mFlags & THREAD_FLAG_EXCEPTION) {
+            msgQualified = true;
+        } else {
+            msgQualified = (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
+        }
+
+        keepGoing = 0;
+        if (msgQualified != 0) {
+        } else {
+            loginRunKeep = 1;
+            rState = childView->mState;
+            if (rState == THREAD_STATE_LOGIN) {
+            } else if (rState == THREAD_STATE_RUN) {
+            } else {
+                loginRunKeep = 0;
+            }
+            if (loginRunKeep != 0) {
+                keepGoing = 1;
+            }
+        }
+        if (keepGoing != 0) {
+            childView->renderView();
         }
         walkNode = walkNode->mNext;
     }
@@ -621,12 +652,168 @@ create_entry_work:
 }
 
 bool CViewRoot::wkStandbyLogin() {
-    return false;
+    GXRenderModeObj* renderMode;
+    s16 width;
+    s16 height;
+    CViewRoot* root;
+    ml::CRect16 rect1;
+    ml::CRect16 rect2;
+    u32 index;
+    u32 used;
+    u32 cap;
+    u32 slot;
+    u32 w0;
+    u32 w1;
+    PoolPair* pair;
+    PoolPair* pairBase;
+
+    if (!CDevice::isAllReady()) {
+        return false;
+    }
+    if (!CLib::isInitialized()) {
+        return false;
+    }
+
+    renderMode = getRenderModeObj__9CDeviceVIFv();
+    height = renderMode->efbHeight;
+    renderMode = getRenderModeObj__9CDeviceVIFv();
+    width = renderMode->fbWidth;
+
+    rect1.mPos.x = 0;
+    rect1.mPos.y = 0;
+    rect1.mSize.x = width;
+    rect1.mSize.y = height;
+
+    rect2.mPos.x = 0;
+    rect2.mPos.y = 0;
+    rect2.mSize.x = width;
+    rect2.mSize.y = height;
+
+    root = lbl_eu_806655D0;
+    if (root != nullptr) {
+        pair = reinterpret_cast<PoolPair*>(&rect1);
+        w0 = pair->w0;
+        w1 = pair->w1;
+        index = *(u32*)&root->mPool0.mList;
+        used = root->mPool0.mUsed;
+        cap = (u32)root->mPool0.mCapacity;
+        pairBase = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr);
+        slot = (index + used) % cap;
+        pairBase[slot].w0 = w0;
+        pairBase[slot].w1 = w1;
+        root->mPool0.mUsed = used + 1;
+
+        root = lbl_eu_806655D0;
+        pair = reinterpret_cast<PoolPair*>(&rect1);
+        w0 = pair->w0;
+        w1 = pair->w1;
+        index = *(u32*)&root->mPool1.mList;
+        used = root->mPool1.mUsed;
+        cap = (u32)root->mPool1.mCapacity;
+        pairBase = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr);
+        slot = (index + used) % cap;
+        pairBase[slot].w0 = w0;
+        pairBase[slot].w1 = w1;
+        root->mPool1.mUsed = used + 1;
+
+        root = lbl_eu_806655D0;
+        pair = reinterpret_cast<PoolPair*>(&rect2);
+        w0 = pair->w0;
+        w1 = pair->w1;
+        index = *(u32*)&root->mPool2.mList;
+        used = root->mPool2.mUsed;
+        cap = (u32)root->mPool2.mCapacity;
+        pairBase = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr);
+        slot = (index + used) % cap;
+        pairBase[slot].w0 = w0;
+        pairBase[slot].w1 = w1;
+        root->mPool2.mUsed = used + 1;
+
+        func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
+    }
+
+    return CWorkThread::wkStandbyLogin();
 }
 
 bool CViewRoot::wkStandbyLogout() {
-    return false;
+    CViewRoot* root;
+
+    if (!mChildren.empty()) {
+        return false;
+    }
+    if (CProcRoot::getInstance() != nullptr) {
+        return false;
+    }
+
+    root = lbl_eu_806655D0;
+    if (root != nullptr) {
+        if (root->mPool0.mUsed != 0) {
+            root->mPool0.mUsed = root->mPool0.mUsed - 1;
+        }
+        root = lbl_eu_806655D0;
+        if (root->mPool2.mUsed != 0) {
+            root->mPool2.mUsed = root->mPool2.mUsed - 1;
+        }
+        root = lbl_eu_806655D0;
+        if (root->mPool1.mUsed != 0) {
+            root->mPool1.mUsed = root->mPool1.mUsed - 1;
+        }
+        root = lbl_eu_806655D0;
+        if (root->mPool0.mUsed == 0) {
+            goto wkStandbyLogout_base;
+        }
+        if (root->mPool1.mUsed == 0) {
+            goto wkStandbyLogout_base;
+        }
+        if (root->mPool2.mUsed == 0) {
+            goto wkStandbyLogout_base;
+        }
+        func_8044B298__8CGXCacheFv(
+            CDeviceGX::getCacheInstance(),
+            poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
+            poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
+            poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
+    }
+
+wkStandbyLogout_base:
+    return CWorkThread::wkStandbyLogout();
 }
 
 
-extern "C" void getRootView__9CViewRootFP5CView() {}
+// Walk up self's parent chain (retail unrolls the walk 3x then recurses) to
+// find a "root" view that is neither the CViewRoot singleton nor the desktop;
+// the recursion tail re-enters via convertToView(self->mParent).
+extern "C" CView* getRootView__9CViewRootFP5CView(CViewRoot* self) {
+    CViewRoot* root;
+    CView* cur;
+    CWorkThread* parent;
+    int i;
+
+    root = lbl_eu_806655D0;
+    if (root == nullptr) {
+        return nullptr;
+    }
+    if (root == (CViewRoot*)self->mParent) {
+        return nullptr;
+    }
+    if (getView__8CDesktopFv() == (CView*)self->mParent) {
+        return (CView*)self;
+    }
+
+    cur = CView::convertToView(self->mParent);
+    for (i = 0; i < 3; i++) {
+        if (root == nullptr) {
+            return nullptr;
+        }
+        parent = cur->mParent;
+        if (root == (CViewRoot*)parent) {
+            return nullptr;
+        }
+        if (getView__8CDesktopFv() == (CView*)parent) {
+            return cur;
+        }
+        cur = CView::convertToView(parent);
+    }
+
+    return getRootView__9CViewRootFP5CView((CViewRoot*)CView::convertToView(cur->mParent));
+}

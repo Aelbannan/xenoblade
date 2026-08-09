@@ -5,6 +5,18 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Node-anchored mirror used by the VoiceList scan in Acquire(). Retail reads
+// the voice's priority / voice-count fields at fixed NEGATIVE offsets off the
+// list node pointer (retail embeds the LinkListNode at 0x11C, so e.g. node-0x74
+// is mPriority). The snd_Voice.h class places `node` at a different offset, so
+// these reads are routed through this node-relative mirror instead.
+struct VoiceNodeLayout {
+    int mChannelCount; // 0x0  (node - 0x90)
+    int mVoiceOutCount; // 0x4  (node - 0x8c)
+    u8 _pad[0x14];     // 0x8..0x1b
+    int mPriority;     // 0x1c (node - 0x74)
+};
+
 // Retail-accurate mirror of the Voice object field layout. The class defined
 // in snd_Voice.h has different (non-retail) member offsets, so the setter/loop
 // helpers below access the fields through this mirror at their exact retail
@@ -50,6 +62,14 @@ static inline VoiceLayout& VoiceRef(Voice* self) {
     return *reinterpret_cast<VoiceLayout*>(self);
 }
 
+// Recover a VoiceNodeLayout* from a VoiceList const-iterator. The iterator
+// stores the LinkListNode*; retracing the model's `node` offset and then
+// stepping back to the retail node-0x90 anchor yields the node-relative view.
+static inline const VoiceNodeLayout& VoiceNodeRef(Voice* pItVoice) {
+    const u8* pNode = reinterpret_cast<const u8*>(pItVoice) + offsetof(Voice, node);
+    return *reinterpret_cast<const VoiceNodeLayout*>(pNode - 0x90);
+}
+
 // Local mirror of the shared CalcMixVolume that adds the explicit `volume <= 0`
 // early-return retail emits before every output conversion. The shared header
 // variant (snd_AxVoice.h) omits that clamp and therefore cannot reproduce the
@@ -61,19 +81,41 @@ static inline u16 mixVolume(f32 volume) {
     return ut::Min<u32>(USHRT_MAX, lbl_eu_8066A0C8 * volume);
 }
 
-Voice::Voice()
-    : mCallback(NULL),
-      mIsActive(false),
-      mIsStarting(false),
-      mIsStarted(false),
-      mIsPause(false),
-      mSyncFlag(0) {
+Voice::Voice() {
+    VoiceLayout& v = VoiceRef(this);
+
+    // Default every voice-out param to { volume=1, pitch=1, pan=0, surround=0,
+    // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest.
+    v.mVoiceOutParam[0][0] = lbl_eu_8066A098;
+    v.mVoiceOutParam[0][1] = lbl_eu_8066A098;
+    v.mVoiceOutParam[0][2] = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0][3] = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0][4] = lbl_eu_8066A09C;
+    v.mVoiceOutParam[0][5] = lbl_eu_8066A09C;
+
+    for (int i = 1; i < VOICES_MAX; i++) {
+        v.mVoiceOutParam[i][0] = lbl_eu_8066A098;
+        v.mVoiceOutParam[i][1] = lbl_eu_8066A098;
+        v.mVoiceOutParam[i][2] = lbl_eu_8066A09C;
+        v.mVoiceOutParam[i][3] = lbl_eu_8066A09C;
+        v.mVoiceOutParam[i][4] = lbl_eu_8066A09C;
+        v.mVoiceOutParam[i][5] = lbl_eu_8066A09C;
+    }
 
     for (int i = 0; i < CHANNEL_MAX; i++) {
         for (int j = 0; j < VOICES_MAX; j++) {
-            mAxVoice[i][j] = NULL;
+            v.mAxVoice[i][j] = NULL;
         }
     }
+
+    v.mCallback = NULL;
+    v.mIsActive = false;
+    v.mIsStarting = false;
+    v.mIsStarted = false;
+    v.mIsPause = false;
+    v.mSyncFlag = 0;
+    v.field_0x114 = 0;
+    v.field_0x118 = 0;
 }
 
 Voice::~Voice() {
@@ -332,11 +374,15 @@ bool Voice::Acquire(int channels, int voices, int priority,
             for (VoiceList::ConstIterator it = rVoiceList.GetBeginIter();
                  it != rVoiceList.GetEndIter(); ++it) {
 
-                if (priority < it->GetPriority()) {
+                // Read priority / voice-count via the node-anchored retail
+                // mirror (the class header node offset differs from retail).
+                const VoiceNodeLayout& vn = VoiceNodeRef(const_cast<Voice*>(&*it));
+
+                if (priority < vn.mPriority) {
                     break;
                 }
 
-                rest -= it->GetAxVoiceCount();
+                rest -= vn.mChannelCount * vn.mVoiceOutCount;
                 if (rest <= 0) {
                     break;
                 }
@@ -1286,7 +1332,28 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
 } // namespace snd
 } // namespace nw4r
 
-void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float){}
+// SetBiquadFilter(int, float): clamp the frequency into [0, 1], then if either
+// the type or the frequency actually changed, mark the biquad sync flag so a
+// later Calc() re-arms the AX biquad filter.
+void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(nw4r::snd::detail::Voice* self,
+                                                  int type, f32 frequency) {
+    frequency = nw4r::ut::Clamp(frequency, lbl_eu_8066A09C, lbl_eu_8066A098);
+
+    nw4r::snd::detail::VoiceLayout& v = nw4r::snd::detail::VoiceRef(self);
+    bool changed = false;
+
+    if (type != v.mBiquadType) {
+        v.mBiquadType = type;
+        changed = true;
+    }
+    if (frequency != v.mBiquadFreq) {
+        v.mBiquadFreq = frequency;
+        changed = true;
+    }
+    if (changed) {
+        v.mSyncFlag |= nw4r::snd::detail::Voice::SYNC_AX_BIQUAD;
+    }
+}
 extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(unsigned char* self, int index, const float* param) {
     float* dst = reinterpret_cast<float*>(self + index * 0x18 + 0x2c);
     dst[0] = param[0];

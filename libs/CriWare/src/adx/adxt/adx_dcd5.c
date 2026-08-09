@@ -147,8 +147,8 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             else if (avg_a > 0x7FFF)
                 avg_a = 0x7FFF;
         }
-            out1[0] = (s16)avg_a;
             out2[0] = (s16)avg_a;
+            out1[0] = (s16)avg_a;
 
             tbl1 = lbl_eu_80517428[byte1 & 0xF];
             pcm1b = ((c1 * pcm1a + c2 * ch1_lo) >> 12) + tbl1 * scale1;
@@ -175,8 +175,8 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             else if (avg_b > 0x7FFF)
                 avg_b = 0x7FFF;
         }
-            out1[1] = (s16)avg_b;
             out2[1] = (s16)avg_b;
+            out1[1] = (s16)avg_b;
 
             ch1_lo = pcm1b;
             ch1_hi = pcm1a;

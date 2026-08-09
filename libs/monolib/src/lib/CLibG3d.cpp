@@ -24,16 +24,11 @@ CLibG3d* CLibG3d::getInstance() {
 bool CLibG3d::isInitialized() {
     // G3D counts as "not initialized" while an exception is pending, or while
     // an EVENT_2 message is still queued waiting to be processed.
+    bool busy = lbl_eu_806656F0->isException();
     CLibG3d* inst = lbl_eu_806656F0;
-    bool result;
-    if (inst->mFlags & THREAD_FLAG_EXCEPTION) {
-        result = true;
-    } else {
-        result = inst->mMsgQueue.find(2) >= 0;
-    }
-    if (result)
-        return false;
-    return inst->mState == THREAD_STATE_LOGIN || inst->mState == THREAD_STATE_RUN;
+    return !busy
+        && (inst->mState == THREAD_STATE_LOGIN
+            || inst->mState == THREAD_STATE_RUN);
 }
 
 bool CLibG3d::wkStandbyLogin() {

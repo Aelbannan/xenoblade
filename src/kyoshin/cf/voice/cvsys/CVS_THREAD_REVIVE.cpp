@@ -1,18 +1,185 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_REVIVE: Voice thread variant for revival/healing audio.
+// Seven functions: factory ctor, play/init, completion callback, voice
+// removal, and buffer-size getter.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/math/Random.hpp"
 
-void __ct__802A86CC(){}
+// ── Target 6: us-802aae00 (__ct__802A86CC) ────────────────────────────────
+// Factory/constructor for CVS_THREAD_REVIVE. Takes two owner objects (with a
+// field at offset 0x3F00 that must have bit 1 set), allocates a voice-handle
+// buffer (0xE6 bytes, discarded) and the object itself (0x28 bytes), calls
+// the base constructor, sets vtable/owner fields, and copies init data from
+// lbl_eu_80539C98.
+CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+    // Both owners must have their 0x3F00 field's bit 1 set
+    if (!(owner1->field_0x3F00 & 2)) return NULL;
+    if (!(owner2->field_0x3F00 & 2)) return NULL;
 
-void func_802A87D4(){}
+    // Allocate voice-handle buffer (0xE6 bytes, discarded)
+    if (func_802A330C(0xE6, 1) == NULL) return NULL;
 
-void func_802A8904(){}
+    // Allocate the actual CVS_THREAD_REVIVE object
+    CVS_THREAD_REVIVE* self = (CVS_THREAD_REVIVE*)func_802A34E4(0x28);
+    if (self == NULL) return NULL;
 
-void func_802A8A00(){}
+    // Retail emits a redundant self null re-check (the `beq`) guarding the
+    // constructor try-block; mirror it so the guard survives.
+    if (self != NULL) {
+        try {
+            // Base constructor (self in r3 - no arg form)
+            __ct__cf_CVS_THREAD();
 
-void func_802A8A48(){}
+            // Set vtable at offset 0x1C (right after the CVS_THREAD base fields)
+            ((void**)self)[7] = (void**)lbl_eu_80539CBC;
+            self->field_0x20 = owner1;
+            self->field_0x24 = owner2;
+        } catch (...) {
+            throw;
+        }
+    }
+
+    // Copy init data from global table using a single base pointer
+    const u32* base = lbl_eu_80539C98;
+    self->unk0 = (u32*)base[0];
+    self->unk4 = base[1];
+    self->unk8 = base[2];
+
+    return self;
+}
+
+// ── Target 7: us-802aaf08 (func_802A87D4) ─────────────────────────────────
+// Advance/play function. Copies init data from lbl_eu_80539CA4, then if both
+// voice slots are populated and slot 1 is inactive, plays a state-based voice
+// (slot-2 iterator + 0x204) or a fallback voice (0x21E) depending on iterator
+// validity, slot conflict, and a random gate.
+void func_802A87D4(CVS_THREAD_REVIVE* self) {
+    // Copy init data using pointer increment to force lwzu pattern
+    u32 v0;
+    const u32* p = lbl_eu_80539CA4;
+    v0 = *p++;
+    CVoiceHandle* handle20 = self->field_0x20;
+    self->unk4 = *p++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *p;
+
+    // Both voice slots must be populated
+    if (handle20 == NULL) return;
+    if (self->field_0x24 == NULL) return;
+
+    // Check if slot 1 voice is still active (virtual dispatch -> r12 chain)
+    if (((CVoiceHandleVTV*)handle20)->isActive() != 0) return;
+
+    // Get voice iterator from slot 2 handle
+    int iter = func_802A77E8(self->field_0x24);
+
+    if (func_802A7850(iter) != 0 &&
+        func_802A7B90(self->field_0x20, self->field_0x24) == 0 &&
+        ml::math::mtRand(2) != 0) {
+        // Valid state -- play the state-specific voice (iter + 0x204)
+        CVoiceHandle* tmpHandle = self->field_0x20;
+        CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+        if (tmpHandle != NULL) {
+            voicePtr = &tmpHandle->voice;
+        }
+        if (func_802A3C44(self, voicePtr, iter + 0x204) == 0) {
+            self->func_802A3B50();
+        }
+    } else {
+        // Fallback voice 0x21E
+        CVoiceHandle* tmpHandle = self->field_0x20;
+        CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+        if (tmpHandle != NULL) {
+            voicePtr = &tmpHandle->voice;
+        }
+        if (func_802A3C44(self, voicePtr, 0x21E) == 0) {
+            self->func_802A3B50();
+        }
+    }
+}
+
+// ── Target 5: us-802ab038 (func_802A8904) ─────────────────────────────────
+// Advance/play function for voice slot 2 (field_0x24). Copies init data from
+// lbl_eu_80539CB0, checks the slot-2 voice state (vtable method at 0x308);
+// if >= 3 plays 0x711, otherwise a random voice (0x714 when mtRand==0, else
+// 0x710).
+void func_802A8904(CVS_THREAD_REVIVE* self) {
+    if (func_802A3E88(self) != 0) {
+        return;
+    }
+
+    // Copy init data using named-temp form (single incrementing source ptr)
+    // so MWCC keeps self in r31 like retail.
+    u32* src = lbl_eu_80539CB0;
+    u32 v0 = *src++;
+    CVoiceHandle* handle24 = self->field_0x24;
+    u32 v1 = *src++;
+    self->unk4 = v1;
+    self->unk0 = (u32*)v0;
+    u32 v2 = *src++;
+    self->unk8 = v2;
+
+    if (handle24 != NULL) {
+        // State check at vtable 0x308 via virtual dispatch (r12 chain).
+        if (((CVoiceHandleVTV*)handle24)->state() >= 3) {
+            // High state -- play 0x711
+            CVoiceHandle* tmpHandle = self->field_0x24;
+            CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+            if (tmpHandle != NULL) {
+                voicePtr = &tmpHandle->voice;
+            }
+            if (func_802A3C44(self, voicePtr, 0x711) == 0) {
+                self->func_802A3B50();
+            }
+        } else {
+            // Low state -- play weighted random voice
+            int voiceId = ml::math::mtRand(2) != 0 ? 0x710 : 0x714;
+            CVoiceHandle* tmpHandle = self->field_0x24;
+            CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+            if (tmpHandle != NULL) {
+                voicePtr = &tmpHandle->voice;
+            }
+            if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+                self->func_802A3B50();
+            }
+        }
+    }
+}
+
+// ── Target 1: us-802ab134 (func_802A8A00) ──────────────────────────────────
+// Completion callback: if no active voice, call the playback-start virtual.
+void func_802A8A00(CVS_THREAD_REVIVE* self) {
+    if (func_802A3E88(self) == 0) {
+        self->func_802A3B50();
+    }
+}
+
+// ── Target 2: us-802ab17c (func_802A8A48) ──────────────────────────────────
+// Remove a voice from the slots by matching its embedded CCharVoice pointer.
+void func_802A8A48(CVS_THREAD_REVIVE* self, CCharVoice* voicePtr) {
+    func_802A3BEC(self, voicePtr);
+
+    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+
+    // Slot 0x24: same pattern
+    handle = self->field_0x24;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
+    }
+}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; REVIVE subclass returns 0xE6 (230).
@@ -20,6 +187,44 @@ int CVS_THREAD_REVIVE::blank1() {
     return BUFFER_SIZE;
 }
 
-void func_802A8AC8(){}
+// ── Target 4: us-802ab1fc (func_802A8AC8) ──────────────────────────────────
+// Voice-ID init helper: if the handle is active-gated, allocate a 0x6E-byte
+// handle buffer, then play voice (arg + 0x1005) via func_802A3D54.
+int func_802A8AC8(CVoiceHandle* self, int arg) {
+    // Handle must have its 0x3F00 field's bit 1 set
+    if (!(self->field_0x3F00 & 2)) return 0;
 
-void func_802A8B6C(){}
+    // Handle must not be active (virtual dispatch -> r12 chain)
+    if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
+
+    // Allocate voice-handle buffer (0x6E bytes)
+    if (func_802A330C(0x6E, 1) == NULL) return 0;
+
+    CCharVoice* voicePtr = (CCharVoice*)self;
+    if (self != NULL) {
+        voicePtr = &self->voice;
+    }
+    func_802A3D54(voicePtr, arg + 0x1005, 0x6E);
+    return 0;
+}
+
+// ── Target 3: us-802ab2a0 (func_802A8B6C) ──────────────────────────────────
+// Voice-ID init helper: if the handle is active-gated, allocate a 0x3C-byte
+// handle buffer, then play voice 0x100E via func_802A3D54.
+int func_802A8B6C(CVoiceHandle* self) {
+    // Handle must have its 0x3F00 field's bit 1 set
+    if (!(self->field_0x3F00 & 2)) return 0;
+
+    // Handle must not be active (virtual dispatch -> r12 chain)
+    if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
+
+    // Allocate voice-handle buffer (0x3C bytes)
+    if (func_802A330C(0x3C, 1) == NULL) return 0;
+
+    CCharVoice* voicePtr = (CCharVoice*)self;
+    if (self != NULL) {
+        voicePtr = &self->voice;
+    }
+    func_802A3D54(voicePtr, 0x100E, 0x3C);
+    return 0;
+}

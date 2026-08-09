@@ -85353,7 +85353,7 @@
       "size": "0xB8",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -85382,8 +85382,8 @@
       "size": "0x74",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bc690",
@@ -85395,7 +85395,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectNpc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectNpc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.655,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800bfe74",
@@ -85408,8 +85410,8 @@
       "size": "0x70",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bb220",
@@ -85423,7 +85425,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectNpc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectNpc.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800bfee4",
@@ -85436,7 +85440,7 @@
       "size": "0x288",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -85452,7 +85456,15 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectNpc.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectNpc.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:12:48.244947+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectNpc.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800c016c",
@@ -85465,7 +85477,7 @@
       "size": "0x1A8",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -85493,7 +85505,7 @@
       "size": "0x54",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -85520,7 +85532,7 @@
       "size": "0x64",
       "unit": "kyoshin/cf/object/CfObjectNpc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -85681,8 +85693,8 @@
       "size": "0xE0",
       "unit": "kyoshin/cf/object/CfObjectObj",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -85691,7 +85703,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectObj.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectObj.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800c05d8",
@@ -85755,8 +85769,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/object/CfObjectObj",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -85765,7 +85779,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CfObjectObj.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/object/CfObjectObj.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800c06d8",
@@ -87021,7 +87037,7 @@
       "size": "0x124",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -87044,7 +87060,7 @@
       "size": "0x118",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87069,7 +87085,7 @@
       "size": "0x118",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87094,7 +87110,7 @@
       "size": "0x17C",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87120,7 +87136,7 @@
       "size": "0x18",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87145,7 +87161,7 @@
       "size": "0x12C",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87174,7 +87190,7 @@
       "size": "0x50",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -87197,7 +87213,7 @@
       "size": "0x5C",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -87222,7 +87238,7 @@
       "size": "0x1C",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -87245,7 +87261,7 @@
       "size": "0x70",
       "unit": "kyoshin/cf/code_800C17DC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -94738,8 +94754,8 @@
       "size": "0x178",
       "unit": "kyoshin/cf/code_800F42AC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-instance",
@@ -94755,7 +94771,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/code_800F42AC.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/code_800F42AC.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800f4f0c",
@@ -94946,8 +94964,8 @@
       "size": "0x30",
       "unit": "kyoshin/cf/code_800F42AC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -94956,7 +94974,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/code_800F42AC.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/code_800F42AC.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-800f52b0",
@@ -105849,7 +105869,7 @@
       "size": "0x124",
       "unit": "kyoshin/CSystemWindow",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -105863,7 +105883,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CSystemWindow.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSystemWindow.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:14:25.142626+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CSystemWindow.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801251ec",
@@ -105931,8 +105959,8 @@
       "size": "0x68",
       "unit": "kyoshin/CSystemWindow",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "scn-remove-render-cb",
@@ -105946,7 +105974,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CSystemWindow.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSystemWindow.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801253e4",
@@ -105959,7 +105989,7 @@
       "size": "0x158",
       "unit": "kyoshin/CSystemWindow",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -105983,7 +106013,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CSystemWindow.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSystemWindow.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:14:25.142823+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CSystemWindow.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8012553c",
@@ -106082,7 +106120,7 @@
       "size": "0x150",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106110,7 +106148,7 @@
       "size": "0x80",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106138,7 +106176,7 @@
       "size": "0xBC",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106166,7 +106204,7 @@
       "size": "0x68",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106193,7 +106231,7 @@
       "size": "0x164",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106232,7 +106270,7 @@
       "size": "0x98",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106265,7 +106303,7 @@
       "size": "0x8C",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106293,7 +106331,7 @@
       "size": "0x1A4",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -106491,7 +106529,7 @@
       "size": "0x40",
       "unit": "kyoshin/CSysWinSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -133312,8 +133350,8 @@
       "size": "0x94",
       "unit": "kyoshin/realtimeevt/CREvtMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80436e70"
@@ -133324,7 +133362,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtMem.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtMem.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80169168",
@@ -144329,8 +144369,8 @@
       "size": "0x20",
       "unit": "kyoshin/code_801862C0",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -144339,7 +144379,9 @@
       "callgraph_source": "build/us/asm/kyoshin/code_801862C0.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_801862C0.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 98.75,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80187768",
@@ -150077,8 +150119,8 @@
       "size": "0x8",
       "unit": "kyoshin/menu/CMenuPTState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80192b3c"
@@ -150089,8 +150131,9 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuPTState.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuPTState.cpp",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 0.0,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80194310",
@@ -153435,8 +153478,8 @@
       "size": "0x80",
       "unit": "kyoshin/menu/CMenuBattleMode",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
       "called_functions": [
@@ -153449,7 +153492,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuBattleMode.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801a1794",
@@ -164928,8 +164973,8 @@
       "size": "0xC0",
       "unit": "kyoshin/realtimeevt/CREvtLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80083c1c",
@@ -164943,7 +164988,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtLight.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtLight.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801c5088",
@@ -188325,8 +188372,8 @@
       "size": "0x8C",
       "unit": "kyoshin/cf/CfMapMineManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -188335,7 +188382,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CfMapMineManager.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfMapMineManager.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80209a74",
@@ -193222,8 +193271,8 @@
       "size": "0x170",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801565d4",
@@ -193243,7 +193292,9 @@
         "_savegpr_27"
       ],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80215538",
@@ -193284,8 +193335,8 @@
       "size": "0x38",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -193294,7 +193345,9 @@
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/code_80213488.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802155a0",
@@ -216841,8 +216894,8 @@
       "size": "0x8",
       "unit": "kyoshin/menu/CMenuMapSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802442fc"
@@ -216853,9 +216906,9 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuMapSelect.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuMapSelect.cpp",
-      "claim": null,
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 0.0,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8024525c",
@@ -217764,8 +217817,8 @@
       "size": "0x7C",
       "unit": "kyoshin/CFade",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80139aa4",
@@ -217778,7 +217831,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CFade.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CFade.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802466c0",
@@ -217868,8 +217923,8 @@
       "size": "0x20",
       "unit": "kyoshin/CFade",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -217878,7 +217933,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CFade.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CFade.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80246710",
@@ -236943,8 +237000,8 @@
       "size": "0x48",
       "unit": "kyoshin/cf/ICamControlRemote",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -236953,7 +237010,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/ICamControlRemote.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/ICamControlRemote.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802770ec",
@@ -236991,8 +237050,8 @@
       "size": "0x34",
       "unit": "kyoshin/cf/ICamControlRemote",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -237001,7 +237060,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/ICamControlRemote.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/ICamControlRemote.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027718c",
@@ -237234,8 +237295,8 @@
       "size": "0x34",
       "unit": "kyoshin/cf/ICamControlClassic",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -237244,7 +237305,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/ICamControlClassic.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/ICamControlClassic.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80277368",
@@ -237257,8 +237320,8 @@
       "size": "0x50",
       "unit": "kyoshin/cf/ICamControlClassic",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -237267,7 +237330,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/ICamControlClassic.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/ICamControlClassic.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802773b8",
@@ -242595,7 +242660,7 @@
       "size": "0xB4",
       "unit": "kyoshin/cf/chain/CChainActorEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -242610,7 +242675,15 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorEne.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:46.160028+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorEne.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802838bc",
@@ -242623,8 +242696,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/chain/CChainActorEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a3084"
@@ -242635,7 +242708,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorEne.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802838e4",
@@ -242702,7 +242777,7 @@
       "size": "0xD4",
       "unit": "kyoshin/cf/chain/CChainActorEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -242714,7 +242789,15 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorEne.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:46.160031+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorEne.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80283a3c",
@@ -242744,8 +242827,8 @@
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:42:57.689252+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:46.160035+00:00",
         "allowed_paths": [
           "src/kyoshin/cf/chain/CChainActorEne.cpp"
         ],
@@ -242763,7 +242846,7 @@
       "size": "0x140",
       "unit": "kyoshin/cf/chain/CChainActorEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -242778,7 +242861,15 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorEne.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:46.160033+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorEne.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80283cc0",
@@ -242791,7 +242882,7 @@
       "size": "0x98",
       "unit": "kyoshin/cf/chain/CChainActorEne",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -242803,7 +242894,15 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorEne.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainActorEne.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:46.159801+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorEne.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80283d58",
@@ -250932,8 +251031,8 @@
       "size": "0x5C",
       "unit": "kyoshin/realtimeevt/CREvtMovie",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80186b18"
@@ -250944,7 +251043,9 @@
       "callgraph_source": "build/us/asm/kyoshin/realtimeevt/CREvtMovie.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtMovie.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80296ecc",
@@ -251712,8 +251813,8 @@
       "size": "0x54",
       "unit": "kyoshin/CTaskGameEvt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4",
@@ -251725,7 +251826,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CTaskGameEvt.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CTaskGameEvt.cpp",
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80297ca0",
@@ -251816,8 +251919,8 @@
       "size": "0x18",
       "unit": "kyoshin/CTaskGameEvt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "scn-remove-render-cb"
@@ -251828,7 +251931,9 @@
       "callgraph_source": "build/us/asm/kyoshin/CTaskGameEvt.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CTaskGameEvt.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80297ce0",
@@ -258705,8 +258810,8 @@
       "size": "0x14",
       "unit": "kyoshin/cf/chain/CChainEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80045778"
@@ -258717,7 +258822,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainEffect.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/chain/CChainEffect.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a2f4c",
@@ -258831,8 +258938,8 @@
       "size": "0x150",
       "unit": "kyoshin/cf/chain/CChainEffect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80045778",
@@ -258852,7 +258959,9 @@
         "_savegpr_27"
       ],
       "source": "src/kyoshin/cf/chain/CChainEffect.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a31d4",
@@ -261165,7 +261274,7 @@
       "size": "0x10C",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -261182,15 +261291,7 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:40:58.332333+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802a70b0",
@@ -261203,7 +261304,7 @@
       "size": "0xFC",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -261217,15 +261318,7 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:40:58.332331+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802a71ac",
@@ -261238,7 +261331,7 @@
       "size": "0x28C",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -261252,15 +261345,7 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:40:58.332335+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802a7438",
@@ -261273,8 +261358,8 @@
       "size": "0xC4",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a65bc"
@@ -261286,14 +261371,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:40:58.332328+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a74fc",
@@ -261306,7 +261385,7 @@
       "size": "0x78",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -261318,15 +261397,7 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:40:58.332149+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802a7574",
@@ -261581,8 +261652,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -261593,7 +261664,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a80c0",
@@ -261822,8 +261895,8 @@
       "size": "0x78",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -261834,7 +261907,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a8600",
@@ -262264,8 +262339,8 @@
       "size": "0x78",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -262276,7 +262351,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802a9520",
@@ -263074,8 +263151,8 @@
       "size": "0x194",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6378",
@@ -263092,7 +263169,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802aac94",
@@ -263105,8 +263184,8 @@
       "size": "0x48",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a65bc"
@@ -263117,7 +263196,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802aacdc",
@@ -263236,8 +263317,8 @@
       "size": "0x130",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6378",
@@ -263252,7 +263333,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ab038",
@@ -263319,8 +263402,8 @@
       "size": "0x78",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -263331,7 +263414,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ab1f4",
@@ -263477,8 +263562,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -263489,7 +263574,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ab494",
@@ -263803,8 +263890,8 @@
       "size": "0x58",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -263815,7 +263902,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802abd34",
@@ -263996,8 +264085,8 @@
       "size": "0x78",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a6320"
@@ -264008,7 +264097,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ac2bc",
@@ -264722,8 +264813,8 @@
       "size": "0x50",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a65bc"
@@ -264734,7 +264825,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ae1f8",
@@ -264798,8 +264891,8 @@
       "size": "0x11C",
       "unit": "kyoshin/cf/CfGimmickSaveOff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae14",
@@ -264815,7 +264908,9 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGimmickSaveOff.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfGimmickSaveOff.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ae394",
@@ -266548,7 +266643,7 @@
       "size": "0x78",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266560,15 +266655,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067780+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-802b0bec",
@@ -266581,7 +266668,7 @@
       "size": "0x54",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266594,15 +266681,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067776+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-802b0c40",
@@ -266615,8 +266694,8 @@
       "size": "0x58",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -266631,14 +266710,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067778+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b0c98",
@@ -266651,7 +266724,7 @@
       "size": "0x90",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266665,15 +266738,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067783+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b0d28",
@@ -266686,7 +266751,7 @@
       "size": "0x3C",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266698,15 +266763,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067556+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b0d64",
@@ -266719,7 +266776,7 @@
       "size": "0x80",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266734,15 +266791,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067781+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b0de4",
@@ -266833,8 +266882,8 @@
       "size": "0x94",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -266844,14 +266893,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067784+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b0e90",
@@ -266864,7 +266907,7 @@
       "size": "0x94",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -266874,15 +266917,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067786+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b0f24",
@@ -266895,7 +266930,7 @@
       "size": "0xA8",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -266907,15 +266942,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CLoad.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067787+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b0fcc",
@@ -266928,8 +266955,8 @@
       "size": "0x4C",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80137ea4"
@@ -266941,14 +266968,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CLoad.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:29:25.067769+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CLoad.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b1018",
@@ -266986,7 +267007,7 @@
       "size": "0x18C",
       "unit": "kyoshin/CLoad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -270945,8 +270966,8 @@
       "size": "0x40",
       "unit": "kyoshin/menu/CMenuTitle",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802b9fd4"
@@ -270957,7 +270978,9 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuTitle.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuTitle.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b89c8",
@@ -271077,7 +271100,7 @@
       "size": "0x134",
       "unit": "kyoshin/menu/CMenuTitle",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -271094,15 +271117,7 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuTitle.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuTitle.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T16:23:46.590809+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuTitle.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802b8c70",
@@ -271217,8 +271232,8 @@
       "size": "0x48",
       "unit": "kyoshin/menu/CMenuTitle",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc760",
@@ -271230,7 +271245,9 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuTitle.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuTitle.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802b8d84",
@@ -274246,8 +274263,8 @@
       "size": "0x48",
       "unit": "kyoshin/code_802B8A3C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a65bc"
@@ -274258,7 +274275,9 @@
       "callgraph_source": "build/us/asm/kyoshin/code_802B8A3C.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/code_802B8A3C.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802bb7b4",
@@ -288106,7 +288125,7 @@
       "size": "0x1F8",
       "unit": "RVL_SDK/src/revolution/axfx/AXFXChorusExp",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -349712,7 +349731,7 @@
       "size": "0x114",
       "unit": "RVL_SDK/src/revolution/os/OSPlayTime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "STALLED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -349838,7 +349857,7 @@
       "size": "0x1CC",
       "unit": "RVL_SDK/src/revolution/os/OSPlayTime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -369577,7 +369596,7 @@
       "size": "0xD8",
       "unit": "CriWare/src/adx/ahx/ahx_bsr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -369592,15 +369611,7 @@
       "declared_return": "i32",
       "instruction_match": 86.389,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:30:02.189938+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/ahx/ahx_bsr.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80390678",
@@ -369640,8 +369651,8 @@
       "size": "0xC4",
       "unit": "CriWare/src/adx/ahx/ahx_bsr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004350"
@@ -369653,17 +369664,9 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/ahx/ahx_bsr.c",
       "declared_return": "i32",
-      "instruction_match": 94.898,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:30:02.189935+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/ahx/ahx_bsr.c"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "source_present": true
     },
     {
       "id": "us-80390754",
@@ -369676,7 +369679,7 @@
       "size": "0x244",
       "unit": "CriWare/src/adx/ahx/ahx_bsr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -369686,15 +369689,7 @@
       "callgraph_source": "build/us/asm/CriWare/src/adx/ahx/ahx_bsr.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/ahx/ahx_bsr.c",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:30:02.189942+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/ahx/ahx_bsr.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80390998",
@@ -369735,7 +369730,7 @@
       "size": "0x9C",
       "unit": "CriWare/src/adx/ahx/ahx_bsr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -369750,15 +369745,7 @@
       "declared_return": "i32",
       "instruction_match": 87.692,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:30:02.189745+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/ahx/ahx_bsr.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80390a90",
@@ -369797,7 +369784,7 @@
       "size": "0x1CC",
       "unit": "CriWare/src/adx/ahx/ahx_bsr",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -369812,15 +369799,7 @@
       "declared_return": "i32",
       "instruction_match": 90.078,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:30:02.189940+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/ahx/ahx_bsr.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80390c64",
@@ -375529,8 +375508,8 @@
       "size": "0xEC",
       "unit": "CriWare/src/adx/adxt/adx_bsps",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8039ad88"
@@ -375542,7 +375521,9 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/adx/adxt/adx_bsps.c",
       "declared_return": "i32",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8039af94",
@@ -382708,7 +382689,7 @@
       "size": "0x60",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_cdec",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -382724,15 +382705,7 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c",
       "instruction_match": 97.917,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:39:34.818414+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-803a7770",
@@ -382813,8 +382786,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:39:34.818605+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:47.479680+00:00",
         "allowed_paths": [
           "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c"
         ],
@@ -382844,8 +382817,8 @@
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:39:34.818601+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:54:47.479488+00:00",
         "allowed_paths": [
           "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c"
         ],
@@ -383302,8 +383275,8 @@
       "declared_return": "i32",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:48:24.654461+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:29:24.355548+00:00",
         "allowed_paths": [
           "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_emp.c"
         ],
@@ -383337,8 +383310,8 @@
       "declared_return": "i32",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:48:24.654672+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:29:24.355737+00:00",
         "allowed_paths": [
           "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_emp.c"
         ],
@@ -384198,8 +384171,8 @@
       "size": "0xB8",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_lib",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a7ea0",
@@ -384213,7 +384186,9 @@
       "callgraph_source": "build/us/asm/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.s",
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803ab8e0",
@@ -429816,7 +429791,7 @@
       "size": "0x84",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
@@ -430049,7 +430024,7 @@
       "size": "0x110",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
@@ -430200,7 +430175,7 @@
       "size": "0xD8",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
@@ -430226,7 +430201,7 @@
       "size": "0x68",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
@@ -430254,8 +430229,8 @@
       "size": "0x38",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
       "called_functions": [],
@@ -430264,7 +430239,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/lyt/lyt_animation.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8040ba74",
@@ -430277,7 +430254,7 @@
       "size": "0x260",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
@@ -435407,8 +435384,8 @@
       "size": "0x88",
       "unit": "nw4r/src/snd/snd_BiquadFilterPreset",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -435417,7 +435394,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_BiquadFilterPreset.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_BiquadFilterPreset.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.853,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80415f00",
@@ -436753,8 +436732,8 @@
       "size": "0x1FC",
       "unit": "nw4r/src/snd/snd_FxChorusDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802dbd80",
@@ -436768,7 +436747,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_FxChorusDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_FxChorusDpl2.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80418204",
@@ -436807,8 +436788,8 @@
       "size": "0x70",
       "unit": "nw4r/src/snd/snd_FxChorusDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ece8",
@@ -436820,7 +436801,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_FxChorusDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_FxChorusDpl2.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80418314",
@@ -437000,7 +436983,7 @@
       "size": "0x25C",
       "unit": "nw4r/src/snd/snd_FxDelayDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437019,7 +437002,15 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_FxDelayDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_FxDelayDpl2.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T02:34:27.709016+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_FxDelayDpl2.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80418804",
@@ -437058,8 +437049,8 @@
       "size": "0x70",
       "unit": "nw4r/src/snd/snd_FxDelayDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8040ece8",
@@ -437071,7 +437062,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_FxDelayDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/nw4r/src/snd/snd_FxDelayDpl2.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80418914",
@@ -437084,7 +437077,7 @@
       "size": "0xC4",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437109,7 +437102,7 @@
       "size": "0x54",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437189,7 +437182,7 @@
       "size": "0x128",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437221,7 +437214,7 @@
       "size": "0x7C",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437249,7 +437242,7 @@
       "size": "0x31C",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437281,7 +437274,7 @@
       "size": "0xA0",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -437307,7 +437300,7 @@
       "size": "0x70",
       "unit": "nw4r/src/snd/snd_FxReverbStdDpl2",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -439591,8 +439584,8 @@
       "size": "0x4C",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
       "called_functions": [],
@@ -439601,7 +439594,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SeqPlayer.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8041bab8",
@@ -439614,7 +439609,7 @@
       "size": "0x148",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
@@ -439639,7 +439634,7 @@
       "size": "0x17C",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
@@ -439969,7 +439964,7 @@
       "size": "0x98",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
@@ -440052,7 +440047,7 @@
       "size": "0x138",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
@@ -440259,8 +440254,8 @@
       "size": "0x8",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
       "called_functions": [
@@ -440271,7 +440266,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SeqPlayer.s",
       "abi_helper_calls": [],
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8041cf18",
@@ -440284,7 +440281,7 @@
       "size": "0x8",
       "unit": "nw4r/src/snd/snd_SeqPlayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqPlayer.cpp",
@@ -448140,8 +448137,8 @@
       "size": "0x68",
       "unit": "nw4r/src/snd/snd_Voice",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_Voice.cpp",
       "called_functions": [],
@@ -448150,7 +448147,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_Voice.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80429708",
@@ -449456,8 +449455,8 @@
       "size": "0x88",
       "unit": "nw4r/src/snd/snd_WaveFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_WaveFile.cpp",
       "called_functions": [
@@ -449468,7 +449467,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_WaveFile.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042bcac",
@@ -461526,7 +461527,7 @@
       "size": "0x4C",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
@@ -461681,7 +461682,7 @@
       "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS",
       "status": "NOT_STARTED",
       "instruction_match": 100.0,
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACTIVE",
       "called_functions": [
         "us-8043b494",
         "us-8043b958"
@@ -461757,7 +461758,7 @@
       "size": "0x2C",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
@@ -461804,9 +461805,9 @@
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; ~99.7%; lbl_eu_806655D0 SDA; leave setCurrent/renderView/create",
-      "status": "NOT_STARTED",
+      "status": "FULL_MATCH",
       "instruction_match": 100.0,
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACCEPTED",
       "called_functions": [
         "us-80442600",
         "us-8044ade4",
@@ -461817,7 +461818,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/core/CViewRoot.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804454ec",
@@ -461936,7 +461938,7 @@
       "size": "0x1AC",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
@@ -461964,7 +461966,7 @@
       "notes": "Root mChildren walk + CView render dispatch; 97.1% CODE_MATCH",
       "status": "NOT_STARTED",
       "instruction_match": 100.0,
-      "workflow_status": "BACKLOG",
+      "workflow_status": "ACTIVE",
       "called_functions": [
         "cview-render-view",
         "us-80459b88"
@@ -461987,7 +461989,7 @@
       "size": "0x174",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
@@ -462016,7 +462018,7 @@
       "size": "0x174",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
@@ -466825,8 +466827,8 @@
       "size": "0x3C",
       "unit": "monolib/src/core/CFontLayer",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80455308"
@@ -466837,7 +466839,9 @@
       "callgraph_source": "build/us/asm/monolib/src/core/CFontLayer.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/core/CFontLayer.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044ba88",
@@ -478650,8 +478654,8 @@
       "size": "0x54",
       "unit": "monolib/src/lib/CLibG3d",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803ed040",
@@ -478666,7 +478670,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibG3d.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibG3d.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461344",
@@ -479695,8 +479701,8 @@
       "size": "0x7C",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80439f54"
@@ -479707,7 +479713,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibLayout.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.516,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80462fd0",
@@ -479900,7 +479908,7 @@
       "size": "0xA8",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -479915,15 +479923,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibLayout.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:32:57.943391+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibLayout.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80463264",
@@ -479963,8 +479963,8 @@
       "size": "0x10",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8034c670"
@@ -479975,7 +479975,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibLayout.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 98.75,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804632ec",
@@ -480014,8 +480016,8 @@
       "size": "0xB4",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "mem-get-handle-mem2",
@@ -480032,14 +480034,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:32:57.943607+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibLayout.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804633a4",
@@ -480079,7 +480075,7 @@
       "size": "0xAC",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -480093,15 +480089,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibLayout.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:32:57.943603+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibLayout.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-804634b4",
@@ -480692,8 +480680,8 @@
       "size": "0x4C",
       "unit": "monolib/src/lib/CLibVM",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80439f54"
@@ -480704,7 +480692,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibVM.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibVM.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.474,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804640fc",
@@ -482114,7 +482104,7 @@
       "size": "0x124",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482124,15 +482114,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370253+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8046720c",
@@ -482145,7 +482127,7 @@
       "size": "0x160",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482155,15 +482137,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370254+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8046736c",
@@ -482176,7 +482150,7 @@
       "size": "0x1F4",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -482186,15 +482160,7 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370256+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80467560",
@@ -482219,8 +482185,8 @@
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
       "source_present": true,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370252+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:23:28.914861+00:00",
         "allowed_paths": [
           "libs/monolib/src/lod/CLODCacheManagerS.cpp"
         ],
@@ -482238,8 +482204,8 @@
       "size": "0x10",
       "unit": "monolib/src/lod/CLODCacheManagerS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -482248,16 +482214,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/CLODCacheManagerS.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370022+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/CLODCacheManagerS.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8046766c",
@@ -482282,8 +482241,8 @@
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
       "source_present": false,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370243+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:23:28.914654+00:00",
         "allowed_paths": [
           "libs/monolib/src/lod/CLODCacheManagerS.cpp"
         ],
@@ -482315,8 +482274,8 @@
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
       "source_present": false,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370250+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:23:28.914859+00:00",
         "allowed_paths": [
           "libs/monolib/src/lod/CLODCacheManagerS.cpp"
         ],
@@ -482346,8 +482305,8 @@
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
       "source_present": false,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370247+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:23:28.914854+00:00",
         "allowed_paths": [
           "libs/monolib/src/lod/CLODCacheManagerS.cpp"
         ],
@@ -482377,8 +482336,8 @@
       "source": "libs/monolib/src/lod/CLODCacheManagerS.cpp",
       "source_present": false,
       "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:43:38.370249+00:00",
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:23:28.914858+00:00",
         "allowed_paths": [
           "libs/monolib/src/lod/CLODCacheManagerS.cpp"
         ],
@@ -483082,7 +483041,7 @@
       "size": "0x4C",
       "unit": "monolib/src/lod/code_804645CC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -483105,8 +483064,8 @@
       "size": "0x68",
       "unit": "monolib/src/lod/code_804645CC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -483115,7 +483074,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lod/code_804645CC.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/code_804645CC.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.808,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804697b4",
@@ -490921,7 +490882,7 @@
       "size": "0xB0",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -490935,15 +490896,7 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886338+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-80480d8c",
@@ -490956,7 +490909,7 @@
       "size": "0xC0",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -490970,15 +490923,7 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886345+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-80480e4c",
@@ -490991,7 +490936,7 @@
       "size": "0xA4",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -491003,15 +490948,7 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886336+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-80480ef0",
@@ -491024,8 +490961,8 @@
       "size": "0x9C",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -491035,14 +490972,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
       "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886333+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80480f8c",
@@ -491055,8 +490986,8 @@
       "size": "0x14",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80480ffc"
@@ -491067,7 +490998,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80480fa0",
@@ -491080,8 +491013,8 @@
       "size": "0x54",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80480ffc",
@@ -491093,7 +491026,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80480ff4",
@@ -491183,8 +491118,8 @@
       "size": "0xB8",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80436dc4",
@@ -491197,14 +491132,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
       "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886343+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804810c0",
@@ -491217,7 +491146,7 @@
       "size": "0x88",
       "unit": "monolib/src/scn/UnkClass_8047CD0C",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -491227,15 +491156,7 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/UnkClass_8047CD0C.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-5439",
-        "claimed_at": "2026-08-08T17:26:27.886130+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-80481148",
@@ -492380,8 +492301,8 @@
       "size": "0x3C",
       "unit": "monolib/src/scn/CScnItemCameraNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804a2a20"
@@ -492392,7 +492313,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemCameraNw4r.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemCameraNw4r.cpp",
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80485e78",
@@ -492941,8 +492864,8 @@
       "size": "0x40",
       "unit": "monolib/src/scn/CScnItemLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803fffec"
@@ -492953,7 +492876,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnItemLight.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemLight.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80486410",
@@ -498981,8 +498906,8 @@
       "size": "0x48",
       "unit": "monolib/src/scn/CScnMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804369d8"
@@ -498993,7 +498918,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnMem.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnMem.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80492bec",
@@ -499184,8 +499111,8 @@
       "size": "0x8",
       "unit": "monolib/src/scn/CScnMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80493e60"
@@ -499196,7 +499123,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnMem.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnMem.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80492d70",
@@ -506021,8 +505950,8 @@
       "size": "0x58",
       "unit": "monolib/src/scn/CScnBlend",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804375c4",
@@ -506034,7 +505963,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnBlend.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnBlend.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8049ce7c",
@@ -507813,8 +507744,8 @@
       "size": "0x144",
       "unit": "monolib/src/scn/CScnFadeMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -507823,7 +507754,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFadeMan.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFadeMan.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.877,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804a075c",
@@ -507950,8 +507883,8 @@
       "size": "0x48",
       "unit": "monolib/src/scn/CScnFadeMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -507960,7 +507893,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFadeMan.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFadeMan.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804a0954",
@@ -510119,8 +510054,8 @@
       "size": "0x50",
       "unit": "monolib/src/scn/CScnFogMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -510129,7 +510064,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFogMan.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFogMan.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804a2020",
@@ -521637,7 +521574,7 @@
       "size": "0x280",
       "unit": "monolib/src/scn/CLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/scn/CLight.cpp",
@@ -528447,8 +528384,8 @@
       "size": "0x30",
       "unit": "monolib/src/work/CWorkSystemCache",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -528457,7 +528394,9 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystemCache.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/work/CWorkSystemCache.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804dd06c",
@@ -528546,8 +528485,8 @@
       "size": "0x60",
       "unit": "monolib/src/work/CWorkSystemCache",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -528556,7 +528495,9 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystemCache.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/work/CWorkSystemCache.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804dd1b0",
@@ -530991,7 +530932,7 @@
       "size": "0xB8",
       "unit": "monolib/src/effect/code_804DB938",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -531016,7 +530957,7 @@
       "size": "0xB8",
       "unit": "monolib/src/effect/code_804DB938",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -531041,7 +530982,7 @@
       "size": "0xB8",
       "unit": "monolib/src/effect/code_804DB938",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -531066,7 +531007,7 @@
       "size": "0x138",
       "unit": "monolib/src/effect/code_804DB938",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -531117,7 +531058,7 @@
       "size": "0x148",
       "unit": "monolib/src/effect/code_804DB938",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -531855,7 +531796,7 @@
       "size": "0x2CC",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
@@ -531928,7 +531869,7 @@
       "size": "0xCC",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
@@ -532006,8 +531947,8 @@
       "size": "0x78",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
       "called_functions": [
@@ -532019,7 +531960,8 @@
       "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804e2ea4",
@@ -532032,7 +531974,7 @@
       "size": "0x10C",
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
@@ -535005,7 +534947,7 @@
       "size": "0x4D8",
       "unit": "monolib/src/scn/CMdlMaterial",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -535253,8 +535195,8 @@
       "size": "0x48",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -535263,7 +535205,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlMouth.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlMouth.cpp",
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804eaa28",
@@ -535303,7 +535247,7 @@
       "size": "0x1D0",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -535323,7 +535267,15 @@
         "_savegpr_25"
       ],
       "source": "libs/monolib/src/scn/CMdlMouth.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:13:01.950458+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlMouth.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804eac38",
@@ -535336,7 +535288,7 @@
       "size": "0xFC",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -535348,7 +535300,15 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlMouth.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlMouth.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:13:01.950265+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlMouth.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804ead34",
@@ -535387,7 +535347,7 @@
       "size": "0x188",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -535403,7 +535363,15 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlMouth.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlMouth.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:13:01.950455+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlMouth.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804eaec4",
@@ -535416,7 +535384,7 @@
       "size": "0x1EC",
       "unit": "monolib/src/scn/CMdlMouth",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -535433,7 +535401,15 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CMdlMouth.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CMdlMouth.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T03:13:01.950460+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CMdlMouth.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804eb0b0",

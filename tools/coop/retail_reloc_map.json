@@ -1,5 +1,5 @@
 {
-  "count": 2308,
+  "count": 2311,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -978,6 +978,30 @@
         "retail_symbol": "lbl_eu_8056BF80",
         "units": [
           "main/monolib/src/core/CFontLayer"
+        ]
+      }
+    },
+    "__vt__10CLibLayout": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14464,
+        "retail_symbol": "lbl_eu_8056D350",
+        "units": [
+          "main/monolib/src/lib/CLibLayout"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14527,
+        "retail_symbol": "lbl_eu_8056D350",
+        "units": [
+          "main/monolib/src/lib/CLibLayout"
         ]
       }
     },
@@ -3633,13 +3657,9 @@
           {
             "count": 2,
             "retail_symbol": "lbl_eu_80653E24"
-          },
-          {
-            "count": 2,
-            "retail_symbol": "lbl_eu_80653E6C"
           }
         ],
-        "count": 10,
+        "count": 8,
         "kind": "data",
         "retail_addend": 14336,
         "retail_symbol": "lbl_eu_80637F74",
@@ -3655,15 +3675,11 @@
             "retail_symbol": "lbl_eu_80637FB0"
           },
           {
-            "count": 3,
-            "retail_symbol": "lbl_eu_80653E6C"
-          },
-          {
             "count": 2,
             "retail_symbol": "lbl_eu_80653E24"
           }
         ],
-        "count": 15,
+        "count": 12,
         "kind": "data",
         "retail_addend": 15488,
         "retail_symbol": "lbl_eu_80637F74",
@@ -3693,6 +3709,30 @@
         "retail_symbol": "lbl_eu_80637FDC",
         "units": [
           "main/nw4r/src/snd/snd_DisposeCallbackManager"
+        ]
+      }
+    },
+    "instance$8809": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 2,
+        "kind": "data",
+        "retail_addend": 14336,
+        "retail_symbol": "lbl_eu_80653E6C",
+        "units": [
+          "main/nw4r/src/snd/snd_VoiceManager"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 15488,
+        "retail_symbol": "lbl_eu_80653E6C",
+        "units": [
+          "main/nw4r/src/snd/snd_VoiceManager"
         ]
       }
     },
@@ -27368,7 +27408,7 @@
         ]
       }
     },
-    "main/nw4r/src/snd/snd_VoiceManager@8808": {
+    "main/nw4r/src/snd/snd_VoiceManager@8812": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -27394,7 +27434,7 @@
         ]
       }
     },
-    "main/nw4r/src/snd/snd_VoiceManager@GUARD@instance$8805": {
+    "main/nw4r/src/snd/snd_VoiceManager@GUARD@instance$8809": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -29964,19 +30004,6 @@
         ]
       }
     },
-    "spInstance__9CTaskGame": {
-      "R_PPC_EMB_SDA21": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80663D18",
-        "units": [
-          "main/kyoshin/CTaskGame"
-        ]
-      }
-    },
     "spInstance__Q221@unnamed@CDevice_cpp@16CDeviceException": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -30467,8 +30494,8 @@
       }
     }
   },
-  "function_pairs": 8499,
-  "generated": "2026-08-08T23:46:46.777037",
+  "function_pairs": 8554,
+  "generated": "2026-08-09T01:57:47.875260",
   "region": "us",
   "units_scanned": 1133,
   "version": 1

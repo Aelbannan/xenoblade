@@ -29,18 +29,22 @@ namespace cf {
 class CfGimmickSaveOff {
 public:
     CfGimmickSaveOff(s32 param);
-    virtual ~CfGimmickSaveOff();
-
-    // CfGimmick base class fields (layout unknown) occupy 0x00-0x5F
-    u8 _00[0x60];       // 0x00-0x5F: base class
-    u32 mState;         // 0x60: jump table index
-    u16 mParam;         // 0x64: saved constructor param
-    u8 _66[6];          // 0x66-0x6B
-    u16 mMinVal;        // 0x6C: lower bound
-    u16 mMaxVal;        // 0x6E: upper bound
-    u8 _70[0x12];       // 0x70-0x81
-    u16 mFlag;          // 0x82: = 8
-    u32 mType;          // 0x84: type (byte-extended)
+    virtual ~CfGimmickSaveOff();          // vtable index 0
+    virtual void virt01();                // index 1
+    virtual void virt02();                // index 2
+    virtual void virt03();                // index 3
+    virtual void virt04();                // index 4
+    virtual void virt05();                // index 5
+    virtual void vinit();                 // dispatch offset 0x20 (slot 8)
+    u8 _04[0x5C];       // 0x04-0x5F: CfGimmick base class fields
+    /* 0x60 */ u32 mState;      // 0x60: jump table index
+    /* 0x64 */ u16 mParam;      // 0x64: saved constructor param
+    /* 0x66 */ u8 _66[6];       // 0x66-0x6B
+    /* 0x6C */ u16 mMinVal;     // 0x6C: lower bound
+    /* 0x6E */ u16 mMaxVal;     // 0x6E: upper bound
+    /* 0x70 */ u8 _70[0x12];    // 0x70-0x81
+    /* 0x82 */ u16 mFlag;       // 0x82: = 8
+    /* 0x84 */ u32 mType;       // 0x84: type (byte-extended)
 };
 
 } // namespace cf

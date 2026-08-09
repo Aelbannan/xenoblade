@@ -293,7 +293,7 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
     bool active = false;
 
     for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
+        SeqTrack* pTrack = (i > TRACK_NUM - 1) ? NULL : mTracks[i];
         if (pTrack == NULL) {
             continue;
         }
@@ -301,7 +301,15 @@ int SeqPlayer::ParseNextTick(bool doNoteOn) {
         pTrack->UpdateChannelLength();
 
         if (pTrack->ParseNextTick(doNoteOn) < 0) {
-            CloseTrack(i);
+            // Inlined CloseTrack (retail inlines it; owns its own lock).
+            SoundThread::AutoLock lock2;
+
+            SeqTrack* pClose = (i > TRACK_NUM - 1) ? NULL : mTracks[i];
+            if (pClose != NULL) {
+                pClose->Close();
+                mSeqTrackAllocator->FreeTrack(pClose);
+                mTracks[i] = NULL;
+            }
         }
 
         if (pTrack->IsOpened()) {
@@ -433,12 +441,59 @@ Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
 } // namespace snd
 } // namespace nw4r
 
-void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv(){}
+
 void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
     void* _this, void* callback, void* arg)
 {
     *(u32*)((u8*)_this + 0x118) = (u32)callback;
     *(u32*)((u8*)_this + 0x11C) = (u32)arg;
 }
-void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack(){}
+// Retail global variable array; attached to SeqPlayer via the symbol map.
+extern volatile s16 lbl_eu_806382C0[16];
+
+void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {
+    for (int i = 0; i < 16; i++) {
+        lbl_eu_806382C0[i] = -1;
+    }
+}
+
+void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack(
+    void* selfPtr, unsigned short usertype, void* trackPtr)
+{
+    struct SeqUserprocCallbackParam {
+        volatile s16* variablePtr;   // 0x0
+        volatile s16* variablePtr2;  // 0x4
+        volatile s16* variablePtr3;  // 0x8
+        u8 value;                    // 0xC
+        u8 field_0xD;
+        u8 field_0xE;
+        u8 field_0xF;
+    };
+    struct SeqPlayerProcLayout {
+        char field_0x0[0x118];
+        void (*callback)(unsigned short, SeqUserprocCallbackParam*, void*); // 0x118
+        void* arg;                                            // 0x11C
+        char field_0x120[0x160 - 0x120];
+        volatile s16 variableV;                               // 0x160
+    };
+    struct SeqTrackProcLayout {
+        char field_0x0[0x24];
+        u8 value; // 0x24
+    };
+
+    SeqPlayerProcLayout* self = (SeqPlayerProcLayout*)selfPtr;
+    if (self->callback == NULL) {
+        return;
+    }
+
+    SeqUserprocCallbackParam param;
+    param.variablePtr = &self->variableV; // player variable region (0x160)
+    param.variablePtr2 = lbl_eu_806382C0; // global variable array
+    param.variablePtr3 = ((nw4r::snd::detail::SeqTrack*)trackPtr)->GetVariablePtr(0);
+    param.value = ((SeqTrackProcLayout*)trackPtr)->value;
+
+    self->callback(usertype, &param, self->arg);
+
+    ((SeqTrackProcLayout*)trackPtr)->value = param.value;
+}
 extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}

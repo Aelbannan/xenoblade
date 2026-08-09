@@ -7,7 +7,7 @@ extern void (*lbl_eu_80665724)();
 extern void (*lbl_eu_80665728)();
 
 CLibVM::CLibVM(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
-    spInstance = this;
+    lbl_eu_80665720 = this;
     mType = THREAD_CLIBVM;
 }
 
@@ -30,13 +30,8 @@ CLibVM* CLibVM::getInstance() {
 
 bool CLibVM::isInitialized() {
     CLibVM* inst = reinterpret_cast<CLibVM*>(lbl_eu_80665720);
-    // Busy if exception-flagged or a "2" message is queued.
-    bool busy = (inst->mFlags & THREAD_FLAG_EXCEPTION) != 0;
-    if (!busy) {
-        busy = inst->mMsgQueue.find(2) >= 0;
-    }
-    if (busy) return false;
-    return inst->mState == 2 || inst->mState == 3;
+    // Initialized when not busy (exception-flagged / event queued) and logged in.
+    return !inst->isException() && (inst->mState == THREAD_STATE_LOGIN || inst->mState == THREAD_STATE_RUN);
 }
 
 void CLibVM::setCallbacks(void (*pLogin)(), void (*pLogout)()) {

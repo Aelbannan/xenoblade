@@ -94,20 +94,19 @@ extern "C" void func_80294980(CREvtMovie* self) {
     if (func_80164FE8() != 0) return;
 
     // Build file path on stack
-    const char* basePath = &lbl_eu_8050FD98[0];     // "/ev/realtime/"
-    const char* scriptName = self->mScriptData->mScriptName;
-    const char* extension = &lbl_eu_8050FD98[0x0E]; // ".sfd"
+    CREvtMoviePathBuf buf;
+    buf.mLength = strlen(lbl_eu_8050FD98);
+    strcpy(buf.mPath, lbl_eu_8050FD98);
 
-    char buf[0x20];
-    s32 totalLen = strlen(basePath);
-    strcpy(buf, basePath);
-    totalLen += strlen(scriptName);
-    strcat(buf, scriptName);
-    totalLen += strlen(extension);
-    strcat(buf, extension);
+    u32 sLen = strlen(self->mScriptData->mScriptName);
+    strcat(buf.mPath, self->mScriptData->mScriptName);
+    buf.mLength += sLen;
 
-    void* handle = func_8016C3DC();
-    func_80164ED0(buf, 1, handle);
+    u32 eLen = strlen(lbl_eu_8050FD98 + 14);        // ".sfd"
+    strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+    buf.mLength += eLen;
+
+    func_80164ED0(buf.mPath, 1, func_8016C3DC());
     self->mFlag19 = 0;
 }
 
@@ -122,34 +121,30 @@ extern "C" void func_80294A70(CREvtMovie* self) {
     if (func_80164FE8() != 0) return;
 
     // Check timing: elapsed time since last event
-    s32 t1 = func_8016A378();
-    s32 t2 = func_8016A35C();
-    if (t1 - t2 >= 25) return;  // too early
+    if (func_8016A378() - func_8016A35C() >= 25) return;  // too early
 
     // Check memory availability
     u32 criSize = (u32)func_80459AD0__7CLibCriFv();
     void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    u32 maxSize = getMaxAllocSize__Q23mtl10MemManagerFUl(memHandle);
-    if (maxSize + 0x200 <= criSize) return;  // not enough memory
+    if (getMaxAllocSize__Q23mtl10MemManagerFUl(memHandle) + 0x200 <= criSize) return;
 
     // Double-check not playing
     if (func_80164FE8() != 0) return;
 
     // Build file path
-    const char* basePath = &lbl_eu_8050FD98[0];
-    const char* scriptName = self->mScriptData->mScriptName;
-    const char* extension = &lbl_eu_8050FD98[0x0E];
+    CREvtMoviePathBuf buf;
+    buf.mLength = strlen(lbl_eu_8050FD98);
+    strcpy(buf.mPath, lbl_eu_8050FD98);
 
-    char buf[0x20];
-    s32 totalLen = strlen(basePath);
-    strcpy(buf, basePath);
-    totalLen += strlen(scriptName);
-    strcat(buf, scriptName);
-    totalLen += strlen(extension);
-    strcat(buf, extension);
+    u32 sLen = strlen(self->mScriptData->mScriptName);
+    strcat(buf.mPath, self->mScriptData->mScriptName);
+    buf.mLength += sLen;
 
-    void* handle = func_8016C3DC();
-    func_80164ED0(buf, 1, handle);
+    u32 eLen = strlen(lbl_eu_8050FD98 + 14);        // ".sfd"
+    strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+    buf.mLength += eLen;
+
+    func_80164ED0(buf.mPath, 1, func_8016C3DC());
     self->mFlag19 = 0;
 }
 
@@ -166,20 +161,19 @@ extern "C" void func_80294BA4(CREvtMovie* self) {
     }
     // Otherwise if not finished, start playback
     else if (func_80164FE8() == 0) {
-        const char* basePath = &lbl_eu_8050FD98[0];
-        const char* scriptName = self->mScriptData->mScriptName;
-        const char* extension = &lbl_eu_8050FD98[0x0E];
+        CREvtMoviePathBuf buf;
+        buf.mLength = strlen(lbl_eu_8050FD98);
+        strcpy(buf.mPath, lbl_eu_8050FD98);
 
-        char buf[0x20];
-        s32 totalLen = strlen(basePath);
-        strcpy(buf, basePath);
-        totalLen += strlen(scriptName);
-        strcat(buf, scriptName);
-        totalLen += strlen(extension);
-        strcat(buf, extension);
+        u32 sLen = strlen(self->mScriptData->mScriptName);
+        strcat(buf.mPath, self->mScriptData->mScriptName);
+        buf.mLength += sLen;
 
-        void* handle = func_8016C3DC();
-        func_80164ED0(buf, 0, handle);
+        u32 eLen = strlen(lbl_eu_8050FD98 + 14);    // ".sfd"
+        strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+        buf.mLength += eLen;
+
+        func_80164ED0(buf.mPath, 0, func_8016C3DC());
         self->mFlag19 = 1;
     }
     self->mFlag19 = 1;

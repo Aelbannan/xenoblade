@@ -10,9 +10,6 @@
 // Forward declarations for external functions not yet in headers.
 extern char* func_802A34E4(int size);
 extern void __ct__cf_CVS_THREAD();
-extern int func_802A77E8(CVoiceHandle* handle);
-extern int func_802A7B90(CVoiceHandle* handle, CVoiceHandle* owner);
-
 // C-linkage imports previously supplied by CVS_THREAD_EHP.hpp, which is no
 // longer included here (it redefines CVoiceHandle; the canonical definition
 // now lives in the shared base header CVS_THREAD.hpp).
@@ -22,6 +19,8 @@ extern "C" {
     int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
     CVoiceHandle* func_802A330C(int size, int align);
     CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+    int func_802A7B90(CVoiceHandle* handle, CVoiceHandle* owner);
+    int func_802A77E8(CVoiceHandle* handle);
 }
 
 // The voice manager/factory object. The flags field at offset 0x3F00
@@ -101,9 +100,11 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) try {
 // Update function: reloads the slot-state triple, checks voice state,
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
 void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
-    self->unk4 = lbl_eu_80539D2C[1];
-    self->unk0 = (u32*)lbl_eu_80539D2C[0];
-    self->unk8 = lbl_eu_80539D2C[2];
+    u32* src = lbl_eu_80539D2C;
+    u32 b0 = *src++;
+    self->unk4 = *src++;
+    self->unk0 = (u32*)b0;
+    self->unk8 = *src++;
 
     CVoiceHandle* handle = self->field_0x20;
     if (handle != NULL) {
@@ -130,7 +131,10 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
         int ownerState = func_802A77E8(self->field_0x20);
         int isThird;
         if (ownerState == 4) {
-            isThird = (cf::CfGameManager::func_800822F4() < 4) ? 1 : 0;
+            u32 x = cf::CfGameManager::func_800822F4();
+            u32 dif = 3u - x;        // subfic r0, x, 3
+            u32 mask = 3u | ~x;      // li r4, 3; orc
+            isThird = (mask - (dif >> 1)) >> 31;  // srwi, subf, srwi
         } else {
             isThird = 0;
         }
@@ -181,31 +185,23 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
 
     int voiceId;
     int ownerState = func_802A77E8(self->field_0x20);
-    switch (ownerState) {
-    case 1:
+    // Retail lowers this as a sequential cmpwi/beq if-else-if chain.
+    if (ownerState == 1) {
         voiceId = (self->field_0x28 != 0) ? 0x5DF : 0x5E6;
-        break;
-    case 2:
+    } else if (ownerState == 2) {
         voiceId = (self->field_0x28 != 0) ? 0x5E0 : 0x5E7;
-        break;
-    case 3:
+    } else if (ownerState == 3) {
         voiceId = (self->field_0x28 != 0) ? 0x5E1 : 0x5E8;
-        break;
-    case 4:
+    } else if (ownerState == 4) {
         voiceId = (self->field_0x28 != 0) ? 0x5E2 : 0x5E9;
-        break;
-    case 5:
+    } else if (ownerState == 5) {
         voiceId = (self->field_0x28 != 0) ? 0x5E3 : 0x5EA;
-        break;
-    case 6:
+    } else if (ownerState == 6) {
         voiceId = (self->field_0x28 != 0) ? 0x5E4 : 0x5EB;
-        break;
-    case 7:
+    } else if (ownerState == 7) {
         voiceId = (self->field_0x28 != 0) ? 0x5E5 : 0x5EC;
-        break;
-    default:
+    } else {
         voiceId = -1;
-        break;
     }
 
     if (voiceId == 0x5E4 && func_802A7B90(handle, self->field_0x20) != 0) {
@@ -216,12 +212,11 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
     }
 
     if (voiceId > 0) {
-        CVoiceHandle* h = handle;
-        CCharVoice* voicePtr = (CCharVoice*)h;
-        if (h != NULL) {
-            voicePtr = &h->voice;
+        CCharVoice* vp = (CCharVoice*)handle;
+        if (handle != NULL) {
+            vp = &handle->voice;
         }
-        if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+        if (func_802A3C44(self, vp, voiceId) != 0) {
             return;
         }
     }

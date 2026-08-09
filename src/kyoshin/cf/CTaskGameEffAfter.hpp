@@ -1,12 +1,12 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CTTask.hpp"
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" long __ptmf_test(void* ptmf);
 // Raw CProcess constructor (CProcess is abstract, so it cannot be placement-\n\'d).
-extern "C" void __ct__8CProcessFv(void* self);
+extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // Global null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];
@@ -17,25 +17,10 @@ extern u32 __ptmf_null[3];
 extern const u8 lbl_eu_80526650[];
 extern const u8 lbl_eu_80526608[];
 
-// Local CRTP task base (mirrors monolib/work/CTTask.hpp but with out-of-line
-// template specializations emitted in the unit cpp so they produce the retail
-// Move/Draw/dtor symbols). Member-function-pointer callbacks are dispatched via
-// the retail __ptmf_test/__ptmf_scall machinery.
-template <typename TDerived>
-class CTTask : public CProcess {
-public:
-    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    //0x0-0x10: CDoubleListNode
-    //0x10: vtable
-    //0x14-0x3C: CProcess
-    void (TDerived::*mMoveFunc)();  //0x3C
-    void (TDerived::*mDrawFunc)();  //0x48
-}; // size 0x54
+// CRTP task base - canonical monolib template (declared-only members so the
+// unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via explicit
+// `template<>` specializations). Member-function-pointer callbacks are
+// dispatched via the retail __ptmf_test/__ptmf_scall machinery.
 
 class CTaskGameEffAfter : public CTTask<CTaskGameEffAfter> {
 public:

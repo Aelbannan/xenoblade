@@ -5,7 +5,7 @@
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
 #include "monolib/coli/code_804B2FF0.hpp"
-#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CTTask.hpp"
 #include <revolution/MTX.h>
 #include <nw4r/math.h>
 
@@ -841,28 +841,10 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     self->bbMax[2] = lbl_eu_8065D138->bbMax[2];
     return 1;
 }
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide
-// with the explicit out-of-line instantiations below.
-template <typename T>
-class CTTask : public CProcess {
-public:
-    typedef void (T::*MoveFunc)();
-    typedef void (T::*DrawFunc)();
-
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    //0x14-3C: CProcess
-    MoveFunc mMoveFunc; //0x3C (12-byte __ptmf)
-    DrawFunc mDrawFunc; //0x48
-};
-
+// CRTP task base — canonical monolib template (declared-only members so the
+// explicit out-of-line specializations below emit the retail Move/Draw/dtor
+// symbols). The full class definition lives here (single-TU scope) because
+// CTaskColiManager's full layout is only needed in this TU.
 // --- CTaskColiManager class definition ---
 // Full class definition lives here (single-TU scope) because CTTask must
 // be defined locally to avoid inline-method codegen from CTTask.hpp.

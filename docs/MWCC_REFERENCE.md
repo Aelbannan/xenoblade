@@ -3222,6 +3222,58 @@ typedef in your compilation unit.
 All 7 `ConvertOffsToPtr<T>` instantiations in `libs/nw4r/src/lyt/lyt_material.cpp`
 were fixed with this pattern. See commit for details.
 
+### CRTP task base (`CTTask<T>`) — declared-only members are mandatory
+
+`monolib/work/CTTask.hpp` (and every derived-task header that used to carry its
+own local copy) must keep `~CTTask/Move/Draw` **declared only** (ctor stays
+inline). Explicit `template<>` specializations of members that have inline
+bodies in the primary template are silently dropped by MWCC (same emission rule
+as TextWriterBase above); the CTaskLOD unit demonstrated the failure: its
+Move/Draw specializations emitted nothing until the template went declared-only.
+
+Confirmed working pattern (all 100% against retail):
+
+```cpp
+// header (the ONE definition, included everywhere)
+template <typename TDerived>
+class CTTask : public CProcess {
+public:
+    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
+    virtual ~CTTask();
+    virtual void Move();
+    virtual void Draw();
+protected:
+    void (TDerived::*mMoveFunc)();  // 0x3C
+    void (TDerived::*mDrawFunc)();  // 0x48
+};
+
+// owning TU
+// PTMF member is declared as TDerived member, so dispatch needs the downcast:
+template<> void CTTask<MyTask>::Move() {
+    if (mMoveFunc) (static_cast<MyTask*>(this)->*mMoveFunc)();
+}
+template<> void CTTask<MyTask>::Draw() {
+    if (mDrawFunc) (static_cast<MyTask*>(this)->*mDrawFunc)();
+}
+template<> CTTask<MyTask>::~CTTask() {}
+```
+
+Notes:
+- Local copies of the template in kyoshin headers are gone — they all include
+  `monolib/work/CTTask.hpp` now; any TU can include any combination of the task
+  headers + `work.hpp`.
+- The dtor specialization is legal inside an **anonymous namespace** only
+  because the template dtor is declared-only; with inline bodies MWCC raises
+  `(10333) object redefined`. Anonymous-ns derived classes (e.g.
+  `CTaskManager`'s `CRootProc`) must keep their specializations inside the ns
+  so the `@unnamed@…` mangling matches the retail data relocs.
+- `virtual void Move() { … }` bodies in the OLD template were `0x48` dispatch
+  bodies; the declared-only + `template<>` pattern emits byte-identical code
+  (static_cast folds away, MWCC lowers to `__ptmf_test`/`__ptmf_scall`).
+- Retail emits NO out-of-line `CTTask<X>::CTTask()` ctor, so the ctor stays
+  inline (a `template<>` ctor specialization against the declared-only ctor is
+  accepted but emits nothing — leave it out).
+
 ---
 
 ## Quick checklist before claiming FULL_MATCH

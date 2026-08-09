@@ -7,6 +7,26 @@
 namespace cf {}
 using namespace cf;
 
+// --- CTTask<cf::CTaskREvent> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<cf::CTaskREvent>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CTaskREvent*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CTaskREvent>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CTaskREvent*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<cf::CTaskREvent>::~CTTask() {}
+
 class CEventFile;
 
 void __ct__cf_CTaskREvent(){}

@@ -9,15 +9,19 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
-// Minimal CScn declaration local to this TU: only the render-callback members
-// used by Init/Term are needed. Declared with the real class tag (CScn) and
-// parameter list so member calls emit the retail mangled symbols
+// Minimal CScn declaration local to this TU set: only the render-callback
+// members used by Init/Term are needed. Declared with the real class tag
+// (CScn) and parameter list so member calls emit the retail mangled symbols
 // addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
+// Guarded so the kyoshin task headers can be included together.
+#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
+#define KYOSHIN_MINIMAL_CSCN_DECLARED
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
     void removeRenderCB(IScnRender* cb);
 };
+#endif
 
 // CProcess base constructor imported from another TU (retail C-linkage symbol
 // name - do not let C++ mangle its parameter list).
@@ -45,26 +49,10 @@ extern "C" func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f
 // handler (func_8029539C).
 extern f32 lbl_eu_80668BB0;
 
-// Generic task wrapper.
-//
-// Local copy (instead of monolib/work/CTTask.hpp) so that the Move/Draw/dtor
-// methods are emitted out-of-line to match retail (the inline header versions
-// would mark them inline and bloat the vtable / split budget).
-template <typename T>
-class CTTask : public CProcess {
-public:
-    typedef void (CProcess::*MoveFunc)();
-    typedef void (CProcess::*DrawFunc)();
-
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    MoveFunc mMoveFunc; // 0x3C - pointer-to-member-function (12 bytes)
-    DrawFunc mDrawFunc; // 0x48
-}; // size: 0x54
+// Generic task wrapper - canonical monolib template (declared-only members so
+// the unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via
+// explicit `template<>` specializations).
+#include "monolib/work/CTTask.hpp"
 
 class CTaskGamePic : public CTTask<CTaskGamePic> {
 public:

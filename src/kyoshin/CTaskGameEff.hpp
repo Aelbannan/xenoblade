@@ -23,7 +23,7 @@ extern "C" void func_804CBAA8(void*, void*, int);
 
 // Raw CProcess constructor + global null pointer-to-member-function constant
 // (used by the raw-init style ctor, mirroring CTaskGameEffAfter).
-extern "C" void __ct__8CProcessFv(void* self);
+extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // Retail vtables / thunk pointers in .data. lbl_eu_80525BFC is the final
 // CTaskGameEff vtable; lbl_eu_80525CAC the interim; the 0x54/0x58/0x70/0x74
@@ -45,15 +45,20 @@ extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
 extern "C" const void* lbl_eu_80661970;
 extern "C" const void* lbl_eu_806618F0;
 
-// Minimal CScn declaration local to this TU: only the render-callback members
-// used by Init/Term/func_800452EC/func_800453EC. Declared with the real class
-// tag so member calls emit the retail mangled symbols
+// Minimal CScn declaration local to this TU set: only the render-callback
+// members used by Init/Term/func_800452EC/func_800453EC. Declared with the
+// real class tag so member calls emit the retail mangled symbols
 // addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender.
+// Guarded so the kyoshin task headers can be included together in one TU
+// (same minimal declaration appears in CTaskGameEvt.hpp / CTaskGamePic.hpp).
+#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
+#define KYOSHIN_MINIMAL_CSCN_DECLARED
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
     void removeRenderCB(IScnRender* cb);
 };
+#endif
 
 // Doubly-linked node of the effect scene list (embedded in CTaskGameEff at
 // 0x7C; the mSceneList field at 0x78 points at the self-linked header node).
@@ -63,20 +68,10 @@ struct EffListNode {
     CScn* scene;         // 0x08
 };
 
-// Local CRTP task base (mirrors monolib/work/CTTask.hpp with out-of-line
-// specializations emitted in the unit cpp).
-template <typename TDerived>
-class CTTask : public CProcess {
-public:
-    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    void (TDerived::*mMoveFunc)();  //0x3C
-    void (TDerived::*mDrawFunc)();  //0x48
-}; // size 0x54
+// CRTP task base - canonical monolib template (declared-only members so the
+// owning unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via
+// explicit `template<>` specializations).
+#include "monolib/work/CTTask.hpp"
 
 class CTaskGameEff : public CTTask<CTaskGameEff> {
 public:

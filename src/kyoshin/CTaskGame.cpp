@@ -1,5 +1,32 @@
 #include "kyoshin/CTaskGame.hpp"
 
+// --- CTTask<CTaskGame> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+// (static_cast mirrors the CTTask.hpp inline body; MWCC lowers the PTMF
+// dispatch to __ptmf_test/__ptmf_scall.)
+template<>
+void CTTask<CTaskGame>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CTaskGame*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CTaskGame>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CTaskGame*>(this)->*mDrawFunc)();
+    }
+}
+
+// Retail __dt__18CTTask<9CTaskGame>Fv is 0x50 (stmw r30 frame); the default
+// frame spills stw individually (0x58), so keep optimize_for_size on like
+// CTaskGameEff's dtor.
+#pragma optimize_for_size on
+template<>
+CTTask<CTaskGame>::~CTTask() {}
+#pragma optimize_for_size off
+
 CTaskGame* lbl_eu_80663D18;
 void* CTaskGame_cLoadInstance;
 u32 lbl_80666624;

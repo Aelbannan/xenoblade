@@ -30,6 +30,26 @@ extern "C" {
     extern u32 lbl_eu_80664444;
 }
 
+// --- CTTask<cf::CfPadTask> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<cf::CfPadTask>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CfPadTask*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CfPadTask>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CfPadTask*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<cf::CfPadTask>::~CTTask() {}
+
 namespace cf{
     u8 CfPadTask::sMainPadExtension;
     u8 CfPadTask::sDpadDisableTimer;

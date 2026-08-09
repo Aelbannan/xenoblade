@@ -32,8 +32,12 @@ void CTTask<CTaskGameEffAfter>::Draw() {
 }
 
 // Base destructor: destruct CProcess and free the block if the delete flag is set.
+// Retail __dt__27CTTask<17CTTaskGameEffAfter>Fv is 0x50 (stmw r30 frame); keep
+// optimize_for_size on like CTaskGameEff's dtor.
+#pragma optimize_for_size on
 template<>
 CTTask<CTaskGameEffAfter>::~CTTask() {}
+#pragma optimize_for_size off
 
 // ============================================================================
 // CTaskGameEffAfter methods.

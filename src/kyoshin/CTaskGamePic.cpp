@@ -29,14 +29,14 @@ CTTask<CTaskGamePic>::~CTTask() {}
 template <>
 void CTTask<CTaskGamePic>::Move() {
     if (mMoveFunc) {
-        (this->*mMoveFunc)();
+        (static_cast<CTaskGamePic*>(this)->*mMoveFunc)();
     }
 }
 
 template <>
 void CTTask<CTaskGamePic>::Draw() {
     if (mDrawFunc) {
-        (this->*mDrawFunc)();
+        (static_cast<CTaskGamePic*>(this)->*mDrawFunc)();
     }
 }
 

@@ -120,6 +120,12 @@ void CTTask<CArrow3D>::Draw() {
     }
 }
 
+// ---------- CTTask<CArrow3D>::~CTTask ----------
+// Referenced by the explicit base-dtor call in CArrow3D::~CArrow3D; emits the
+// retail __dt__17CTTask<8CArrow3D>Fv body.
+template<>
+CTTask<CArrow3D>::~CTTask() {}
+
 // ---------- CArrow3D::cbRenderBefore ----------
 #pragma push
 #pragma auto_inline off

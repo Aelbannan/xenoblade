@@ -3,6 +3,26 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
 
+// --- CTTask<cf::CfTaskMain> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<cf::CfTaskMain>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CfTaskMain*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CfTaskMain>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CfTaskMain*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<cf::CfTaskMain>::~CTTask() {}
+
 // CfGameManager methods and raw CProcess ctor are declared in CfTaskMain.hpp
 // with C linkage to match the retail symbol names exactly.
 

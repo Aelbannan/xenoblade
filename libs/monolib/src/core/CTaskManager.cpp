@@ -18,6 +18,29 @@ public:
     virtual void Draw() {}
 };
 
+// --- CTTask<CRootProc> out-of-line specializations ---
+// CRootProc is anonymous-namespace-local (no retail counterpart); the
+// canonical declared-only template emits no bodies, so these provide the
+// definitions referenced by the emitted interim CTTask<CRootProc> vtable.
+// (MWCC accepts these inside the unnamed namespace only because the template
+// members are declared-only; inline bodies would raise 10333 redefined.)
+template<>
+void CTTask<CRootProc>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CRootProc*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CRootProc>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CRootProc*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CRootProc>::~CTTask() {}
+
 } // namespace
 
 void CTaskManager::Create() {

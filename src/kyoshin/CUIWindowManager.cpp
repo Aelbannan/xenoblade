@@ -1,5 +1,25 @@
 #include "kyoshin/CUIWindowManager.hpp"
 
+// --- CTTask<CUIWindowManager> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<CUIWindowManager>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUIWindowManager*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUIWindowManager>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUIWindowManager*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CUIWindowManager>::~CTTask() {}
+
 #include <types.h>
 
 // Batch 2026-07-14g: window-mgr-move owns Move() exclusively in this TU.

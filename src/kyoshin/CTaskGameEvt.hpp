@@ -7,17 +7,21 @@
 
 class CEventFile;
 
-// Minimal CScn declaration local to this TU: only the two OOL render-callback
+// Minimal CScn declaration local to this TU set: only the two OOL render-callback
 // members are needed. Declared with the real class tag (CScn) and parameter
 // list so member calls emit the retail mangled symbols
 // removeRenderCB__4CScnFP10IScnRender / addRenderCB__4CScnFP10IScnRenderUlUl.
-// A full #include of monolib/scn/CScn.hpp would drag the real CTTask (via
-// work.hpp) and collide with the local CTask<CTaskGameEvt> copy below.
+// (A full #include of monolib/scn/CScn.hpp is safe now that the CTTask template
+// lives only in monolib/work/CTTask.hpp, but this minimal form keeps the TU
+// lean.) Guarded so the kyoshin task headers can be included together.
+#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
+#define KYOSHIN_MINIMAL_CSCN_DECLARED
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
     void removeRenderCB(IScnRender* cb);
 };
+#endif
 
 // CProcess base constructor imported from another TU (C-ABI, retail C-linkage
 // symbol name - do not let C++ mangle its parameter list).
@@ -33,26 +37,10 @@ extern char lbl_eu_80538CE8[];     // CTTask<CTaskGameEvt> vtable
 // null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];
 
-// Generic task wrapper.
-//
-// Local copy (instead of monolib/work/CTTask.hpp) so that the Move/Draw/dtor
-// methods are emitted out-of-line to match retail (the inline header versions
-// would mark them inline and bloat the vtable / split budget).
-template <typename T>
-class CTTask : public CProcess {
-public:
-    typedef void (CProcess::*MoveFunc)();
-    typedef void (CProcess::*DrawFunc)();
-
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    MoveFunc mMoveFunc; // 0x3C - pointer-to-member-function (12 bytes)
-    DrawFunc mDrawFunc; // 0x48
-}; // size: 0x54
+// Generic task wrapper - canonical monolib template (declared-only members so
+// the unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via
+// explicit `template<>` specializations).
+#include "monolib/work/CTTask.hpp"
 
 class CTaskGameEvt : public CTTask<CTaskGameEvt> {
 public:
@@ -71,7 +59,7 @@ public:
 }; // size: 0x64
 
 // Minimal declaration for the cf event-task singleton query (avoids pulling
-//) the cf header, which would collide with the local CTTask copy).
+// in the full cf header).
 namespace cf {
 class CTaskGameCf {
 public:

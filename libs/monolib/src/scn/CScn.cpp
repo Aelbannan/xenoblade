@@ -18,6 +18,27 @@ struct VTarget {
 #include "monolib/scn/CScn.hpp"
 #include "monolib/core/CView.hpp"
 
+// --- CTTask<CScn> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move__13CTTask<4CScn>Fv /
+// Draw__13CTTask<4CScn>Fv / __dt__13CTTask<4CScn>Fv symbols.
+template<>
+void CTTask<CScn>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CScn*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CScn>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CScn*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CScn>::~CTTask() {}
+
 extern "C" {
 CScn* lbl_eu_80665908;
 }

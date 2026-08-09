@@ -1,5 +1,25 @@
 #include "kyoshin/CUICfManager.hpp"
 
+// --- CTTask<CUICfManager> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<CUICfManager>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUICfManager*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUICfManager>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUICfManager*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CUICfManager>::~CTTask() {}
+
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 

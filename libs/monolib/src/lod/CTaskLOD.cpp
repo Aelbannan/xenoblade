@@ -323,3 +323,8 @@ void CTTask<CTaskLOD>::Draw() {
         (static_cast<CTaskLOD*>(this)->*mDrawFunc)();
     }
 }
+
+// Out-of-line dtor: emits the retail `__dt__17CTTask<8CTaskLOD>Fv` body
+// (base CProcess dtor call + conditional operator delete).
+template<>
+CTTask<CTaskLOD>::~CTTask() {}

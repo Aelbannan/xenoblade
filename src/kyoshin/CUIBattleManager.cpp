@@ -1,5 +1,25 @@
 #include "kyoshin/CUIBattleManager.hpp"
 
+// --- CTTask<CUIBattleManager> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<CUIBattleManager>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUIBattleManager*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUIBattleManager>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUIBattleManager*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CUIBattleManager>::~CTTask() {}
+
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"

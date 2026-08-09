@@ -1,24 +1,13 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CTTask.hpp"
 
-// Local CRTP task base (mirrors monolib/work/CTTask.hpp) with out-of-line
-// template specializations emitted in the unit cpp so they produce the retail
-// Move__20CTTask<10CMenuTitle>Fv / Draw__20CTTask<10CMenuTitle>Fv symbols.
-// Member-function-pointer callbacks are dispatched by MWCC through the retail
-// __ptmf_test / __ptmf_scall machinery (r3=this, r12=&ptmf).
-template <typename TDerived>
-class CTTask : public CProcess {
-public:
-    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    void (TDerived::*mMoveFunc)(); // 0x3C
-    void (TDerived::*mDrawFunc)(); // 0x48
-}; // size: 0x54
+// CRTP task base - canonical monolib template (declared-only members so the
+// unit cpp can emit the retail out-of-line Move__20CTTask<10CMenuTitle>Fv /
+// Draw__20CTTask<10CMenuTitle>Fv symbols via explicit `template<>`
+// specializations). Member-function-pointer callbacks are dispatched by MWCC
+// through the retail __ptmf_test / __ptmf_scall machinery (r3=this, r12=&ptmf).
 
 class CMenuTitle : public CTTask<CMenuTitle> {
 public:

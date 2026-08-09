@@ -8,6 +8,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <nw4r/lyt/lyt_layout.h>
@@ -209,37 +210,13 @@ void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)(
 
 extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-// Layout: inherits CProcess (0x00-0x3C), adds mMoveFunc at 0x3C and mDrawFunc at 0x48.
-// Size: 0x54.
-
-#include "monolib/work/CProcess.hpp"
-
-class IUICf;
-
-template <typename T>
-class CTTask : public CProcess {
-public:
-    typedef void (CProcess::*MoveFunc)();
-    typedef void (CProcess::*DrawFunc)();
-
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-
-protected:
-    MoveFunc mMoveFunc;  // 0x3C - pointer-to-member-function (12 bytes)
-    DrawFunc mDrawFunc;  // 0x48 - pointer-to-member-function (12 bytes)
-};
 
 // CTTask<IUICf>::Move - test PTMF at +0x3C, call if non-null
+// (static_cast mirrors the canonical CTTask.hpp inline body).
 template<>
 void CTTask<IUICf>::Move() {
     if (mMoveFunc) {
-        (this->*mMoveFunc)();
+        (static_cast<IUICf*>(this)->*mMoveFunc)();
     }
 }
 
@@ -247,7 +224,7 @@ void CTTask<IUICf>::Move() {
 template<>
 void CTTask<IUICf>::Draw() {
     if (mDrawFunc) {
-        (this->*mDrawFunc)();
+        (static_cast<IUICf*>(this)->*mDrawFunc)();
     }
 }
 

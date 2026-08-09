@@ -4,6 +4,26 @@
 #include "monolib/scn.hpp"
 #include <cstring>
 
+// --- CTTask<cf::CTaskCulling> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<cf::CTaskCulling>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CTaskCulling*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CTaskCulling>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CTaskCulling*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<cf::CTaskCulling>::~CTTask() {}
+
 // cf::CfGameManager accessor (returns void* due to UnkClass type mismatch)
 void* func_80083298__Q22cf13CfGameManagerFv(void);
 

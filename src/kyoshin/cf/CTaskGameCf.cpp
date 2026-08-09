@@ -14,6 +14,30 @@
 #include "kyoshin/code_80296898.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
+// --- CTTask<cf::CTaskGameCf> out-of-line specializations ---
+// The canonical declared-only template emits no bodies; these explicit
+// specializations produce the retail standalone Move/Draw/dtor symbols.
+template<>
+void CTTask<cf::CTaskGameCf>::Move() {
+    if (mMoveFunc) {
+        (static_cast<cf::CTaskGameCf*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<cf::CTaskGameCf>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<cf::CTaskGameCf*>(this)->*mDrawFunc)();
+    }
+}
+
+// Retail __dt__26CTTask<Q22cf11CTaskGameCf>Fv is 0x50 (stmw r30 frame); keep
+// optimize_for_size on like CTaskGameEff's dtor.
+#pragma optimize_for_size on
+template<>
+CTTask<cf::CTaskGameCf>::~CTTask() {}
+#pragma optimize_for_size off
+
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 

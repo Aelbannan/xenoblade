@@ -16,14 +16,14 @@ CTTask<CTaskGameEvt>::~CTTask() {}
 template <>
 void CTTask<CTaskGameEvt>::Move() {
     if (mMoveFunc) {
-        (this->*mMoveFunc)();
+        (static_cast<CTaskGameEvt*>(this)->*mMoveFunc)();
     }
 }
 
 template <>
 void CTTask<CTaskGameEvt>::Draw() {
     if (mDrawFunc) {
-        (this->*mDrawFunc)();
+        (static_cast<CTaskGameEvt*>(this)->*mDrawFunc)();
     }
 }
 

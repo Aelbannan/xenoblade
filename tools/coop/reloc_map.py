@@ -586,10 +586,12 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"reloc TYPE differs at 0x{drift.offset:04x} "
             f"(retail {drift.retail_type_name} vs decomp {drift.decomp_type_name}) "
             f"— bytes may match but the linker-generated value's reloc class differs",
-            f"  fix: alter the instruction/expression selection that produces this reloc "
-            f"(docs/MWCC_REFERENCE.md reloc categories) — e.g. an MWCC builtin "
-            f"(__rlwinm/__lwz) vs pointer arithmetic, or a symbol reached via SDA "
-            f"(EMB_SDA21/SDA16) vs absolute (ADDR16/ADDR24)",
+            f"  fix: reloc class follows the expression/operand shape, not a builtin — "
+            f"`@ha` vs `@hi` (sign-corrected high half) is chosen by how the address is "
+            f"formed, and SDA-eligibility (EMB_SDA21/SDA16) vs absolute (ADDR16/ADDR24) "
+            f"follows from which section the referenced symbol lives in (.sdata/.sdata2 "
+            f"vs ordinary data) and how the address is computed "
+            f"(docs/MWCC_REFERENCE.md §1a SDA globals / §1b float pools)",
             f"  NOT reloc-NAME fixable — no extern \"C\" rename applies",
         ]
     if drift.kind == "presence":
@@ -604,9 +606,15 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"({sym} [{drift.type_name}]) — {other} has no reloc at this offset",
         ]
         if side == "decomp":
+            # Retail has NO reloc here — the reloc-site gate requires decomp to
+            # have none either. Adding/referencing an extern only KEEPS the
+            # reloc and cannot fix this; the reloc must be removed.
             lines.append(
-                f"  decomp references a linker symbol retail resolves INLINE — reference the "
-                f"retail symbol via extern, or inline the value so no reloc is emitted"
+                f"  decomp emits a reloc where retail resolves the value INLINE — the fix is "
+                f"to make decomp emit NO reloc at this offset: inline the constant/value or "
+                f"restructure the expression so the reference is resolved at compile time "
+                f"(do NOT add an extern reference — that keeps the reloc and cannot pass "
+                f"the reloc-site gate)"
             )
         else:
             lines.append(

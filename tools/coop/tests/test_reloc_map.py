@@ -57,18 +57,32 @@ class SiteDriftTests(unittest.TestCase):
         self.assertTrue(any("NOT reloc-NAME" in l for l in lines))
 
     def test_presence_decomp_only_suggestion(self):
-        # decomp has a reloc at offset 0, retail has none.
+        # decomp has a reloc at offset 0, retail has none. (Production
+        # _drifts_from_pairs sets retail_type=None, decomp_type=<type>.)
         d = RelocDrift(offset=0, reloc_type=109, retail_symbol="", decomp_symbol="lbl_x",
-                       kind="presence", retail_addend=None, decomp_addend=0)
+                       kind="presence", retail_addend=None, decomp_addend=0,
+                       retail_type=None, decomp_type=109)
         lines = suggestions(d, "u", "o", {})
         self.assertTrue(any("decomp" in l and "INLINE" in l for l in lines))
         self.assertTrue(any("NOT reloc-NAME" in l for l in lines))
+        # Retail has NO reloc here -> decomp must emit NO reloc. Adding an
+        # extern would KEEP the reloc and cannot fix the gate — the suggestion
+        # must say so explicitly (review follow-up C1). The 'add an extern'
+        # phrase appears only as a warning NOT to do it.
+        joined = "\n".join(lines)
+        self.assertIn("reloc present on decomp side ONLY", joined)
+        self.assertIn("emit NO reloc at this offset", joined)
+        self.assertIn("do NOT add an extern", joined)
 
     def test_presence_retail_only_suggestion(self):
         d = RelocDrift(offset=0, reloc_type=109, retail_symbol="lbl_y", decomp_symbol="",
-                       kind="presence", retail_addend=0, decomp_addend=None)
+                       kind="presence", retail_addend=0, decomp_addend=None,
+                       retail_type=109, decomp_type=None)
         lines = suggestions(d, "u", "o", {})
         self.assertTrue(any("retail" in l and "extern" in l for l in lines))
+        joined = "\n".join(lines)
+        self.assertIn("reloc present on retail side ONLY", joined)
+        self.assertIn("add an", joined)
 
     def test_presence_to_dict(self):
         d = RelocDrift(offset=4, reloc_type=109, retail_symbol="lbl_y", decomp_symbol="",

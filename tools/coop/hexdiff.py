@@ -1554,7 +1554,13 @@ def _output_terminal(
             else:
                 syms = f"{d.retail_symbol} → {d.decomp_symbol}"
                 pair = d.type_name
-            delta = f" (addend delta {d.addend_delta:+d})" if d.addend_delta else ""
+            delta = ""
+            # addend delta is only meaningful when both sides use the SAME reloc
+            # type (name/addend/layout/structural). For type drift the two
+            # addends sit in different reloc-type masks — showing a delta there
+            # implies a comparability that does not exist.
+            if d.kind in ("name", "addend", "layout", "structural") and d.addend_delta:
+                delta = f" (addend delta {d.addend_delta:+d})"
             print(
                 f"  +0x{d.offset:04x} {pair:36s} {d.kind:10s} "
                 f"{syms}{delta}"

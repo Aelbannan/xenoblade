@@ -73,13 +73,12 @@ extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80136B4C(void*, const char*, void*, u32);
-extern "C" void func_80136A1C(void*, const char*, void*, u32);
-extern "C" void* func_80136190(const char*, const char*, int);
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" char* func_80136190(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
 extern "C" void func_80138078__FUl(u32);
-extern "C" u32 func_8013639C(u32, const char*, u32);
 extern "C" u8 func_801361E8(u32, const char*, u32);
-extern "C" u32 func_80139A18(void*, const char*, void*, void*);
+extern "C" void func_80139A18(void*, void*, void*, void*);
 extern "C" u32 func_80137924(void*, void*, void*, void*);
 extern "C" u32 func_8009EC9C(u32);
 extern "C" void func_801D202C(void*);

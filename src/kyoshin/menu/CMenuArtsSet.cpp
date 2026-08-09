@@ -398,8 +398,8 @@ CArtsList::~CArtsList() {}
 
 void func_8023352C(CArtsList* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    self->field_0x14 =
-        readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)handle, lbl_eu_8050AC70 + 0x2ba, self, 0, 0);
+    self->field_0x14 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        (u32)handle, lbl_eu_8050AC70 + 0x2ba, self, 0, 0);
     func_801F34F4(&self->mScrollBar);
     func_80235814(&self->mSubObj74);
     ((SArtsWinE8*)&self->mSysWinE8)->v32();
@@ -511,7 +511,7 @@ int func_80234CA0(SArts34D14* self) {
     if ((int)self->field_0x168 != 4) return 0;
     u8 v = func_8023040C(&self->mSubObj124, self->mSubObj124.field_0x14);
     if (v != 1) return 0;
-    return func_800A32BC(func_8009EC9C(v)) == 0;
+    return func_800A32BC((void*)func_8009EC9C(v)) == 0;
 }
 
 u8 func_80234D14(SArts34D14* self) {

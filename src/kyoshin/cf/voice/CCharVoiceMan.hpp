@@ -221,7 +221,7 @@ extern "C" void func_802AF9D0(void* r3, int voiceId, int r5);
 extern "C" cf::CSoundNode* func_802AF56C(void* c);
 extern "C" int func_802A7870(void* arr, int capacity, int unused);
 extern "C" cf::CSoundNode* __ct__802A92D8(void* b, void* a);
-extern "C" int func_802A3E88(CVS_THREAD* node);
+extern "C" void* func_802A3E88(void* node);
 // Create a battle-voice source node from an old battle-count (cvsys sibling).
 extern "C" cf::CSoundNode* func_802A6820(int oldCount);
 // Pure voice nodes created with an int argument (1=levelled, 0=normal).
@@ -239,7 +239,7 @@ extern "C" void* func_802A7A54(int a);
 // Run one node's level-thread handler (list sweep).
 extern "C" void func_802A3ACC(void* node);
 // Check a just-resolved voice action against a source handle.
-extern "C" int func_80174C98(void* r3, u32* r4, int r5);
+extern "C" int func_80174C98(void* r3, int* r4, int r5);
 // Byte/word/shift @sda21 globals used by func_802A1610.
 extern "C" u8  lbl_eu_80663DA0;
 extern "C" u16 lbl_eu_80663E42;

@@ -30,7 +30,7 @@ extern "C" {
     void func_8016BC1C(CREvtModelMap* self);
     bool func_8016BDA8(s32* pId);
     u32 func_8016A35C();
-    void func_8016846C();
+    u32 func_8016846C();
     void func_80168514(CREvtModelMap* self);
     void func_80180960(CREvtModelMap* self, s32* out);
     s32 func_80180978();
@@ -39,16 +39,16 @@ extern "C" {
     void func_80462B30__8CTaskLODFv();
     void func_80462B68__8CTaskLODFv();
     void func_80462B4C__8CTaskLODFv();
-    void func_80495FF0();
+    extern mtl::ALLOC_HANDLE func_80495FF0(void* self); // retail: virtual at vtable[0x2C] of *(lbl_eu_80663E14)
     void func_80495E60(void* pEmote);
     void* func_80495E8C(int r5, int r6);
     void func_804838DC(void* pEmote, int r4);
     void func_80484E5C(void* pEmote, float scale);
     void func_80484F80(void* pEmote, float time);
     void func_804C1D7C(void* pData);
-    void func_804C1BA0(void* pData, int r5);
-    void func_80490098__Fv();
-    void getGlobalSda();
+    void* func_804C1BA0(void* pData, int r5);
+    mtl::ALLOC_HANDLE func_80490098__Fv();
+    void* getGlobalSda();
     void __dt__80185754();
     void __ct__80172668(CREvtModelMap* self, int dealloc);
     void func_8016A354();
@@ -103,12 +103,14 @@ extern "C" {
     extern void* lbl_eu_80663E14;            // CDeviceFile instance
     extern float lbl_eu_806678C0;            // 1.0f scale
     extern double lbl_eu_806678C8;           // 0x43300000_80000000 double for int→float conv
+extern "C" void* func_80086B10__Q22cf13CfGameManagerFv();
+extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
 }
 
 // ---------------------------------------------------------------------------
 // 1. __ct__CREvtModelMap - constructor (0x80181DB4)
 // ---------------------------------------------------------------------------
-CREvtModelMap::CREvtModelMap()
+CREvtModelMap::CREvtModelMap() : CREvtModel(nullptr, nullptr)
 {
     // Call base constructor: CREvtModel(self, pDataFromCaller, 1)
     // The memory for this is allocated by the caller, __ct__CREvtModel
@@ -206,17 +208,20 @@ void __ct__80180B00(CREvtModelMap* self, int dealloc)
         // Call virtual setVisible(0)
         self->setVisible(0);
 
-        cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         if (mgr) {
             // virtual call to CfGameManager::someMethod(1)
-            ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 1);
+            ((void(*)(void*, int))((void**)mgr)[0x158/4])(mgr, 1);
         }
 
         func_80462B30__8CTaskLODFv();
 
         if (self->mCreatureCount > 0) {
             for (s32 i = 0; i < self->mCreatureCount; i++) {
-                void* creature = *(void**)((u8*)cf::CfGameManager::func_80086B10()->field_0x4 + i * 4);
+                // retail: func_80086B10() returns CfGameManager*; field_0x4 (offset 4) holds the
+                // creature list head (declared via mangled name at file scope; the header's
+                // void signature is a placeholder stub).
+                void* creature = *(void**)((u8*)func_80086B10__Q22cf13CfGameManagerFv() + 4 + i * 4);
                 // Actually need to iterate through the list
                 // Simplified: iterate through the list
             }
@@ -225,7 +230,8 @@ void __ct__80180B00(CREvtModelMap* self, int dealloc)
         // Clear global pointer
         lbl_eu_806642B0 = 0;
 
-        if (cf::CfGameManager::func_800828DC()) {
+        cf::CfGameManager* gm = (cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv();
+        if (gm && gm->func_800828DC()) {
             func_8016FC0C(1);
         }
     }
@@ -339,10 +345,10 @@ void CREvtModelMap::setGuestModeOff()
         return;
     }
 
-    cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+    cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
     if (mgr) {
         // virtual call: CfGameManager::setGuestMode(0)
-        ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 0);
+        ((void(*)(void*, int))((void**)mgr)[0x158/4])(mgr, 0);
         func_80462B4C__8CTaskLODFv();
     }
 }
@@ -356,10 +362,10 @@ void CREvtModelMap::setGuestModeOn()
         return;
     }
 
-    cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+    cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
     if (mgr) {
         // virtual call: CfGameManager::setGuestMode(1)
-        ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, 1);
+        ((void(*)(void*, int))((void**)mgr)[0x158/4])(mgr, 1);
         func_80462B30__8CTaskLODFv();
     }
 }
@@ -390,7 +396,7 @@ void CREvtModelMap::loadFiles()
 
     if (mIsGuest) {
         // Guest path: set up base path from CfGameManager
-        cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         if (mgr) {
             func_800AA33C(mBasePath, mgr->unk70, 1, 0);
         }
@@ -448,7 +454,7 @@ void CREvtModelMap::loadFiles()
                 u32 innerFlags = *(u32*)((u8*)inner + 0x58);
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
                     // Read from archive
-                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0();
+                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0(*(void**)lbl_eu_80663E14);
                     IWorkEvent* pEvent = static_cast<IWorkEvent*>(this);
                     mFileHandle1 = CDeviceFile::readFile(archiveHandle, filePath, pEvent, 0, 0);
                 } else {
@@ -458,13 +464,13 @@ void CREvtModelMap::loadFiles()
                     mFileHandle1 = CDeviceFile::readFile(mem2Handle, filePath, pEvent, 0, 0);
                 }
 
-                CDeviceFile::func_8044F400(mFileHandle1, mtl::MemManager::getHandleMEM2());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle1, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {  // This is a bit odd - re-call
                     mtl::ALLOC_HANDLE h = func_80490098__Fv();
-                    CDeviceFile::func_8044F400(mFileHandle1, h);
+                    func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle1, h);
                 }
-                CDeviceFile::func_8044F400(mFileHandle1, mtl::MemManager::getHandleMEM1());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle1, mtl::MemManager::getHandleMEM1());
 
                 inner = mPtr1C;
                 if (*(u32*)((u8*)inner + 0x58) & 1) {
@@ -484,7 +490,7 @@ void CREvtModelMap::loadFiles()
                 void* inner = mPtr1C;
                 u32 innerFlags = *(u32*)((u8*)inner + 0x58);
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
-                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0();
+                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0(*(void**)lbl_eu_80663E14);
                     IWorkEvent* pEvent = static_cast<IWorkEvent*>(this);
                     mFileHandle2 = CDeviceFile::readFile(archiveHandle, filePath, pEvent, 0, 0);
                 } else {
@@ -493,13 +499,13 @@ void CREvtModelMap::loadFiles()
                     mFileHandle2 = CDeviceFile::readFile(mem2Handle, filePath, pEvent, 0, 0);
                 }
 
-                CDeviceFile::func_8044F400(mFileHandle2, mtl::MemManager::getHandleMEM2());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle2, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {
                     mtl::ALLOC_HANDLE h = func_80490098__Fv();
-                    CDeviceFile::func_8044F400(mFileHandle2, h);
+                    func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle2, h);
                 }
-                CDeviceFile::func_8044F400(mFileHandle2, mtl::MemManager::getHandleMEM1());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle2, mtl::MemManager::getHandleMEM1());
 
                 inner = mPtr1C;
                 if (*(u32*)((u8*)inner + 0x58) & 1) {
@@ -520,7 +526,7 @@ void CREvtModelMap::loadFiles()
                 void* inner = mPtr1C;
                 u32 innerFlags = *(u32*)((u8*)inner + 0x58);
                 if ((innerFlags & 2) && !(innerFlags & 0x40)) {
-                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0();
+                    mtl::ALLOC_HANDLE archiveHandle = func_80495FF0(*(void**)lbl_eu_80663E14);
                     IWorkEvent* pEvent = static_cast<IWorkEvent*>(this);
                     mFileHandle3 = CDeviceFile::readFile(archiveHandle, filePath, pEvent, 0, 0);
                 } else {
@@ -529,13 +535,13 @@ void CREvtModelMap::loadFiles()
                     mFileHandle3 = CDeviceFile::readFile(mem2Handle, filePath, pEvent, 0, 0);
                 }
 
-                CDeviceFile::func_8044F400(mFileHandle3, mtl::MemManager::getHandleMEM2());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle3, mtl::MemManager::getHandleMEM2());
                 func_8016846C();
                 if (func_8016846C()) {
                     mtl::ALLOC_HANDLE h = func_80490098__Fv();
-                    CDeviceFile::func_8044F400(mFileHandle3, h);
+                    func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle3, h);
                 }
-                CDeviceFile::func_8044F400(mFileHandle3, mtl::MemManager::getHandleMEM1());
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle3, mtl::MemManager::getHandleMEM1());
 
                 inner = mPtr1C;
                 if (*(u32*)((u8*)inner + 0x58) & 1) {
@@ -628,7 +634,7 @@ void CREvtModelMap::updatePosition()
 void CREvtModelMap::onEvent(int r4)
 {
     if (mIsGuest) {
-        cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         if (mgr) {
             s32 result = func_80180978();
             if (result) {
@@ -648,10 +654,10 @@ void CREvtModelMap::onEvent(int r4)
     }
 
     if (mIsGuest) {
-        cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         if (mgr) {
             // virtual call: CfGameManager::setGuestMode(r4)
-            ((void(*)(void*, int))mgr->vtable[0x158/4])(mgr, r4);
+            ((void(*)(void*, int))((void**)mgr)[0x158/4])(mgr, r4);
         }
 
         if (r4) {
@@ -664,24 +670,30 @@ void CREvtModelMap::onEvent(int r4)
             }
         }
 
-        if (cf::CfGameManager::func_800828DC()) {
+        cf::CfGameManager* gm = (cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv();
+        if (gm && gm->func_800828DC()) {
             func_8016FC0C(r4);
         }
 
-        // Iterate creature list
+        // Iterate creature list: circular list whose head is stored at +4 of the
+        // CfGameManager instance (retail: lwz r3,4(r3) after func_80086B10; nodes link
+        // at offset 0, creature object at offset 8; each node dispatches vfunc_0x158).
         s32 i = 0;
-        // ... list iteration ...
-        // Simplified: iterate through CfGameManager's creature list
-        for (void* it = /* first element */; it != /* list end */; it = /* next */) {
+        cf::CfGameManager* cgm = (cf::CfGameManager*)func_80086B10__Q22cf13CfGameManagerFv();
+        u8* listHead = *(u8**)((u8*)cgm + 4);
+        for (u8* it = *(u8**)listHead; it != listHead; it = *(u8**)it) {
+            void* creatureObj = *(void**)(it + 8);
+            // retail: r4 = byte at (r28+0xE8) negated + bit-extracted; reconstructed as 0.
+            u32 visible = 0;
+            ((void(*)(void*, u32))((void**)creatureObj)[0x158 / 4])(creatureObj, visible);
             if (!r4) {
-                u8 val = /* get creature value */;
+                u8 val = mBasePath[i];
                 mBasePath[i] = val;
                 mCreatureCount++;
-                // virtual call on creature
             } else {
-                // Restore creature visibility
+                // Restore creature visibility (byte from mBasePath[i])
                 u8 val = mBasePath[i];
-                // virtual call on creature
+                (void)val;
             }
             i++;
         }
@@ -705,8 +717,8 @@ void CREvtModelMap::onEvent(int r4)
                 // Load model data
                 void* deviceFile = *(void**)lbl_eu_80663E14;
                 mLoadedModelData = func_804C1BA0(mFileData3, 7);
-                cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
-                if (mgr && mgr->unk2F3C) {
+                cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+                if (mgr && *(u32*)((u8*)mgr + 0x2F3C)) {
                     // virtual call
                 }
             }
@@ -724,8 +736,8 @@ void CREvtModelMap::onEvent(int r4)
                 mLoadedModelData = 0;
             }
 
-            cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
-            if (mgr && mgr->unk2F3C) {
+            cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
+            if (mgr && *(u32*)((u8*)mgr + 0x2F3C)) {
                 // virtual call
             }
         }
@@ -739,12 +751,12 @@ check_guest:
     if (mIsGuest) {
         s32 val = func_80180990();
         if (val) {
-            cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+            cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
             if (mgr) {
                 mgr->unk68 |= 0x10;
             }
         } else {
-            cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+            cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
             if (mgr) {
                 mgr->unk68 &= ~0x10;
             }
@@ -758,10 +770,10 @@ check_guest:
 void CREvtModelMap::setVisible(int r4)
 {
     if (mIsGuest) {
-        cf::CfGameManager* mgr = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         if (mgr) {
             // virtual call at vtable+0x190
-            ((void(*)(void*, int))mgr->vtable[0x190/4])(mgr, r4);
+            ((void(*)(void*, int))((void**)mgr)[0x190/4])(mgr, r4);
         }
 
         void* sda = getGlobalSda();
@@ -776,7 +788,7 @@ void CREvtModelMap::setVisible(int r4)
             s32 val;
             func_80180960(this, &val);
             // virtual call on emote model at vtable+0xB4
-            ((void(*)(void*, s32))mEmoteModel->vtable[0xB4/4])(mEmoteModel, val);
+            ((void(*)(void*, s32))((void**)mEmoteModel)[0xB4/4])(mEmoteModel, val);
         }
     }
 }

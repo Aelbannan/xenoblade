@@ -85,7 +85,7 @@ extern "C" {
     extern void* lbl_eu_806642B8;    // global data ptr
     extern void* lbl_eu_806642BC;    // global file handle
     extern s32 lbl_eu_806642C0;      // global counter
-    extern u32 lbl_eu_8065FC18;      // some object
+    // lbl_eu_8065FC18 declared u32[] in CfGameManager.hpp (included above)
     extern float lbl_eu_80667904;    // float constant
     extern float lbl_eu_80667908;    // float constant
     extern float lbl_eu_8066790C;    // float constant

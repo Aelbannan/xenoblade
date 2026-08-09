@@ -284,7 +284,7 @@ void func_802A1610(){
                 cf::CVoiceSrcInner* inner = srcNode->field_4;
                 void* ret = inner->vtable->fn_30(inner);
                 u32 sv = *(u32*)ret;
-                if (func_80174C98(srcNode, &sv, 6) != 0) {
+                if (func_80174C98(srcNode, (int*)&sv, 6) != 0) {
                     if (!(lbl_eu_80663E24 & 0x00400000))
                         func_802AF9D0(player, 0xbb9, 0x14);
                     // fn_08 resolved OK: clear the pending flag.

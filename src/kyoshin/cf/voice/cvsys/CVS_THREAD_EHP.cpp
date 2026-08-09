@@ -160,7 +160,7 @@ int func_802A6820(int a, int b) {
 
     // Read a u32 value from the handle's sub-object (vtable offset 0x30) and
     // gate the selection on a category check (func_80174C98).
-    CVSubObj* subobj = handle->field_0x04;
+    CVSubObj* subobj = (CVSubObj*)handle->unk4; // CVoiceHandle shared layout (CVS_THREAD.hpp)
     typedef u32* (*GetPtrFunc)(CVSubObj*);
     GetPtrFunc getPtr = (GetPtrFunc)subobj->vtable[0x30 / 4];
     u32* result = getPtr(subobj);

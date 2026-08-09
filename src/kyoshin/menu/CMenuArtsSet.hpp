@@ -529,12 +529,12 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
-extern "C" u32 readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void func_801F34F4(void*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
 extern "C" void func_80138078__FUl(u32);
-extern "C" void* func_8009EC9C(u32);
+extern "C" u32 func_8009EC9C(u32);
 extern "C" u32 func_800A32BC(void*);
 
 // CArtsInfo helpers defined in CArtsInfo.cpp (plain-C retail symbols).
@@ -575,4 +575,4 @@ extern "C" void func_802350B8(CMenuArtsSet* self);
 extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
 
 // func_80137510 is a flat C symbol (anim-frame check helper).
-extern "C" u32 func_80137510(void*, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);

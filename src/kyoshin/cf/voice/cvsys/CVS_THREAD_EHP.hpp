@@ -41,18 +41,6 @@ struct CVSubObj {
 
 // Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
 // within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
-// Code biases a handle pointer by 0x3E9C to reach the embedded CCharVoice.
-struct CVoiceHandle {
-    void** vtable;               // 0x00: vtable pointer
-    CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
-    u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
-    CCharVoice voice;            // 0x3E9C: the actual voice object
-    u8 _pad_after_voice[0x3F08 - 0x3EDC];
-    u32 field_0x3f08;            // manager flag tested by func_802A6958
-};
-
-// The global voice-handle list is a circular list.  The node's payload is
-// stored at +8; +0 is the next node and the list's +4 is its end marker.
 struct CVoiceHandleListNode {
     CVoiceHandleListNode* next;
     CVoiceHandleListNode* previous;

@@ -27,7 +27,7 @@ u16 func_8013606C(const void*, const void*, u32);
 // The definitions of these in code_80135FDC.cpp use different (not-yet-)
 // matched signatures/linkage; code_80135FDC.cpp defines CODE_80135FDC_CPP
 // before including so these caller-tuned exports don't clash with them.
-char* func_80136190(const void*, const void*, int);
+extern "C" char* func_80136190(const void*, const void*, int);
 u8 func_801361E8(u32, const char*, u32);
 char* func_8013639C(const void*, const void*, int);
 void func_8013676C(void*, u32);
@@ -195,7 +195,7 @@ extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 // (func_8003B1EC / func_8009ECB0 / func_8009D018 stay inline in
 //  code_80135FDC.cpp - functions.hpp / CChainActorPc.hpp / CKizunaTalkList.hpp
 //  declare them with different signatures and are co-included by callers)
-extern "C" void* func_8009EC9C(u32 idx);
+extern "C" u32 func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);

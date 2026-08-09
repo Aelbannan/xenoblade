@@ -6,13 +6,32 @@
 #include "monolib/work/CWorkControl.hpp"
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/device/CDeviceVI.hpp"
-#include "monolib/render/CDrawGX.hpp"
-#include "monolib/render/CViewRoot.hpp"
-#include <revolution/gx/GX.h>
+#include "monolib/core/CDrawGX.hpp"
+#include "monolib/core/CViewRoot.hpp"
+#include <revolution/GX.h>
 #include <cstring>
 
 using namespace mtl;
 using namespace ml;
+
+// CRI Sofdec player API (mwPly*) - declared locally; not in vendored headers.
+extern "C" {
+u32 mwPlyCalcWorkCprmSfd(u32* cprm);
+void mwPlyStartFname(void* handle, const char* filename);
+void mwPlyPause(void* handle, int pause);
+int mwPlyGetStat(void* handle);
+void mwPlyStop(void* handle);
+void mwPlyGetCurFrm(void* handle, u32* frameData);
+void mwPlyFxSetOutBufPitchHeight(void* handle, u16 width, u16 height);
+void mwPlyFxCnvFrmY84C44(void* handle, u32* frameData, void* texBufY, void* texBufCbCr);
+void mwPlyRelCurFrm(void* handle);
+int mwPlyGetOutVol(void* handle);
+void mwPlySetOutVol(void* handle, int vol);
+void mwPlyInitSfdFx(u32* fxData);
+void* criware_8039FF34(u32* cprm);
+void criware_803A09B4(void* handle);
+void ADXM_ExecMain(void);
+}
 
 // Singleton instance pointer (sda21: lbl_eu_806656E0)
 CLibCriMoviePlay* CLibCriMoviePlay::sInstance = nullptr;
@@ -50,9 +69,6 @@ extern "C" {
     bool hasFlow__12CWorkControlFv();
 
     // CRT
-    void memset(void* dest, int val, size_t count);
-    size_t strlen(const char* str);
-    char* strcpy(char* dest, const char* src);
     void __dl__FPv(void* ptr);
 }
 
@@ -129,49 +145,49 @@ void CLibCriMoviePlay::setupGXState() {
     GXSetNumTexGens(2);
 
     // Tex coord gen 0 and 1
-    GXSetTexCoordGen2(0, 1, 4, 0x3C, 0, 0x7D);
-    GXSetTexCoordGen2(1, 1, 4, 0x3C, 0, 0x7D);
+    GXSetTexCoordGen2((GXTexCoordID)0, (GXTexGenType)1, (GXTexGenSrc)4, 0x3C, (GXBool)0, (GXPTTexMtx)0x7D);
+    GXSetTexCoordGen2((GXTexCoordID)1, (GXTexGenType)1, (GXTexGenSrc)4, 0x3C, (GXBool)0, (GXPTTexMtx)0x7D);
 
     GXSetNumTevStages(4);
 
     // TEV Stage 0 - YUV to RGB conversion (Y * Cr)
-    GXSetTevOrder(0, 0, 0, 0xFF);
-    GXSetTevColorIn(0, 0xF, 8, 0xE, 2);
-    GXSetTevColorOp(0, 0, 0, 0, 0, 0);
-    GXSetTevAlphaIn(0, 7, 4, 6, 1);
-    GXSetTevAlphaOp(0, 1, 0, 0, 0, 0);
-    GXSetTevKColorSel(0, 0xC);
-    GXSetTevKAlphaSel(0, 0x1C);
-    GXSetTevSwapMode(0, 0, 1);
+    GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0xFF);
+    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)2);
+    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)0, (GXTevRegID)0);
+    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)1);
+    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)1, (GXTevBias)0, (GXTevScale)0, (GXBool)0, (GXTevRegID)0);
+    GXSetTevKColorSel((GXTevStageID)0, (GXTevKColorSel)0xC);
+    GXSetTevKAlphaSel((GXTevStageID)0, (GXTevKAlphaSel)0x1C);
+    GXSetTevSwapMode((GXTevStageID)0, (GXTevSwapSel)0, (GXTevSwapSel)1);
 
     // TEV Stage 1 - YUV to RGB conversion (Cb component)
-    GXSetTevOrder(1, 1, 1, 0xFF);
-    GXSetTevColorIn(1, 0xF, 8, 0xE, 0);
-    GXSetTevColorOp(1, 0, 0, 1, 0, 0);
-    GXSetTevAlphaIn(1, 7, 4, 6, 0);
-    GXSetTevAlphaOp(1, 1, 0, 0, 0, 0);
-    GXSetTevKColorSel(1, 0xD);
-    GXSetTevKAlphaSel(1, 0x1D);
-    GXSetTevSwapMode(1, 0, 0);
+    GXSetTevOrder((GXTevStageID)1, (GXTexCoordID)1, (GXTexMapID)1, (GXChannelID)0xFF);
+    GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)0);
+    GXSetTevColorOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)0, (GXTevRegID)0);
+    GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)0);
+    GXSetTevAlphaOp((GXTevStageID)1, (GXTevOp)1, (GXTevBias)0, (GXTevScale)0, (GXBool)0, (GXTevRegID)0);
+    GXSetTevKColorSel((GXTevStageID)1, (GXTevKColorSel)0xD);
+    GXSetTevKAlphaSel((GXTevStageID)1, (GXTevKAlphaSel)0x1D);
+    GXSetTevSwapMode((GXTevStageID)1, (GXTevSwapSel)0, (GXTevSwapSel)0);
 
     // TEV Stage 2 - Color combination
-    GXSetTevOrder(2, 0, 0, 0xFF);
-    GXSetTevColorIn(2, 0xF, 8, 0xE, 0);
-    GXSetTevColorOp(2, 0, 0, 0, 1, 0);
-    GXSetTevAlphaIn(2, 7, 4, 6, 0);
-    GXSetTevAlphaOp(2, 1, 0, 0, 1, 0);
-    GXSetTevKColorSel(2, 0xE);
-    GXSetTevKAlphaSel(2, 0x1E);
-    GXSetTevSwapMode(2, 0, 2);
+    GXSetTevOrder((GXTevStageID)2, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0xFF);
+    GXSetTevColorIn((GXTevStageID)2, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)0);
+    GXSetTevColorOp((GXTevStageID)2, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
+    GXSetTevAlphaIn((GXTevStageID)2, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)0);
+    GXSetTevAlphaOp((GXTevStageID)2, (GXTevOp)1, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
+    GXSetTevKColorSel((GXTevStageID)2, (GXTevKColorSel)0xE);
+    GXSetTevKAlphaSel((GXTevStageID)2, (GXTevKAlphaSel)0x1E);
+    GXSetTevSwapMode((GXTevStageID)2, (GXTevSwapSel)0, (GXTevSwapSel)2);
 
     // TEV Stage 3 - Final output
-    GXSetTevOrder(3, 0xFF, 0xFF, 0xFF);
-    GXSetTevColorIn(3, 0, 1, 0xE, 0xF);
-    GXSetTevColorOp(3, 0, 0, 0, 1, 0);
-    GXSetTevAlphaIn(3, 7, 7, 7, 7);
-    GXSetTevAlphaOp(3, 0, 0, 0, 1, 0);
-    GXSetTevSwapMode(3, 0, 0);
-    GXSetTevKColorSel(3, 0xF);
+    GXSetTevOrder((GXTevStageID)3, (GXTexCoordID)0xFF, (GXTexMapID)0xFF, (GXChannelID)0xFF);
+    GXSetTevColorIn((GXTevStageID)3, (GXTevColorArg)0, (GXTevColorArg)1, (GXTevColorArg)0xE, (GXTevColorArg)0xF);
+    GXSetTevColorOp((GXTevStageID)3, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
+    GXSetTevAlphaIn((GXTevStageID)3, (GXTevAlphaArg)7, (GXTevAlphaArg)7, (GXTevAlphaArg)7, (GXTevAlphaArg)7);
+    GXSetTevAlphaOp((GXTevStageID)3, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
+    GXSetTevSwapMode((GXTevStageID)3, (GXTevSwapSel)0, (GXTevSwapSel)0);
+    GXSetTevKColorSel((GXTevStageID)3, (GXTevKColorSel)0xF);
 
     // Set TEV register colors (signed 10-bit)
     GXColorS10 regColor;
@@ -179,7 +195,7 @@ void CLibCriMoviePlay::setupGXState() {
     regColor.g = (s16)((lbl_eu_8066A4D8 >> 16) & 0xFFFF);
     regColor.b = (s16)(lbl_eu_8066A4DC & 0xFFFF);
     regColor.a = (s16)((lbl_eu_8066A4DC >> 16) & 0xFFFF);
-    GXSetTevColorS10(GX_TEVREG1, &regColor);
+    GXSetTevColorS10(GX_TEVREG1, regColor);
 
     // Set KColors
     GXColor kColor0;
@@ -187,33 +203,33 @@ void CLibCriMoviePlay::setupGXState() {
     kColor0.g = (u8)((lbl_eu_8066A4E0 >> 8) & 0xFF);
     kColor0.b = (u8)((lbl_eu_8066A4E0 >> 16) & 0xFF);
     kColor0.a = (u8)((lbl_eu_8066A4E0 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR0, &kColor0);
+    GXSetTevKColor(GX_KCOLOR0, kColor0);
 
     GXColor kColor1;
     kColor1.r = (u8)(lbl_eu_8066A4E4 & 0xFF);
     kColor1.g = (u8)((lbl_eu_8066A4E4 >> 8) & 0xFF);
     kColor1.b = (u8)((lbl_eu_8066A4E4 >> 16) & 0xFF);
     kColor1.a = (u8)((lbl_eu_8066A4E4 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR1, &kColor1);
+    GXSetTevKColor(GX_KCOLOR1, kColor1);
 
     GXColor kColor2;
     kColor2.r = (u8)(lbl_eu_8066A4E8 & 0xFF);
     kColor2.g = (u8)((lbl_eu_8066A4E8 >> 8) & 0xFF);
     kColor2.b = (u8)((lbl_eu_8066A4E8 >> 16) & 0xFF);
     kColor2.a = (u8)((lbl_eu_8066A4E8 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR2, &kColor2);
+    GXSetTevKColor(GX_KCOLOR2, kColor2);
 
     GXColor kColor3;
     kColor3.r = (u8)(lbl_eu_8066A4EC & 0xFF);
     kColor3.g = (u8)((lbl_eu_8066A4EC >> 8) & 0xFF);
     kColor3.b = (u8)((lbl_eu_8066A4EC >> 16) & 0xFF);
     kColor3.a = (u8)((lbl_eu_8066A4EC >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR3, &kColor3);
+    GXSetTevKColor(GX_KCOLOR3, kColor3);
 
     // Set swap mode tables
-    GXSetTevSwapModeTable(GX_TEV_SWAP0, 3, 3, 3, 3);
-    GXSetTevSwapModeTable(GX_TEV_SWAP1, 3, 0, 0, 0);
-    GXSetTevSwapModeTable(GX_TEV_SWAP2, 0, 3, 0, 0);
+    GXSetTevSwapModeTable(GX_TEV_SWAP0, (GXTevColorChan)3, (GXTevColorChan)3, (GXTevColorChan)3, (GXTevColorChan)3);
+    GXSetTevSwapModeTable(GX_TEV_SWAP1, (GXTevColorChan)3, (GXTevColorChan)0, (GXTevColorChan)0, (GXTevColorChan)0);
+    GXSetTevSwapModeTable(GX_TEV_SWAP2, (GXTevColorChan)0, (GXTevColorChan)3, (GXTevColorChan)0, (GXTevColorChan)0);
 
     GXSetNumChans(0);
     GXSetNumIndStages(0);
@@ -278,7 +294,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
     entry->mWorkSize = workSize;
 
     // Allocate work buffer
-    void* workBuf = MemManager::allocate_tail((void*)allocHandle, workSize, 0x20);
+    void* workBuf = MemManager::allocate_tail(allocHandle, workSize, 0x20);
     entry->mTexBufCbCr = workBuf;  // reuse field for work buffer
 
     if (workBuf == nullptr) {
@@ -295,7 +311,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
     strcpy(entry->mFilename, filename);
 
     // Store allocation handles
-    entry->mAllocHandle = (void*)allocHandle;
+    entry->mAllocHandle = allocHandle;
     entry->mAllocHandle2 = allocHandle2;
 
     // Generate unique stream ID
@@ -563,8 +579,8 @@ bool CLibCriMoviePlay::renderMovie(int id) {
         func_8044B5C0__8CGXCacheFv(cacheInstance__9CDeviceGX);
 
         // Load textures
-        GXLoadTexObj(cur->mTexObjY, GX_TEXMAP0);
-        GXLoadTexObj(cur->mTexObjCbCr, GX_TEXMAP1);
+        GXLoadTexObj(&cur->mTexObjY, GX_TEXMAP0);
+        GXLoadTexObj(&cur->mTexObjCbCr, GX_TEXMAP1);
 
         // Setup GX state for movie rendering
         setupGXState();
@@ -574,13 +590,13 @@ bool CLibCriMoviePlay::renderMovie(int id) {
         GXSetZMode(false, GX_ALWAYS, false);
 
         // Load identity texture matrix
-        GXLoadTexMtxImm(&identity__Q22ml6CMat34, GX_TEXMTX0, GX_MTX3x4);
+        GXLoadTexMtxImm((const float(*)[4])&identity__Q22ml6CMat34, GX_TEXMTX0, GX_MTX_3x4);
 
         // Setup vertex descriptors
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-        GXLoadPosMtxImm(&identity__Q22ml6CMat34, GX_PNMTX0);
+        GXLoadPosMtxImm((const float(*)[4])&identity__Q22ml6CMat34, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
 
         // Setup vertex format
@@ -681,7 +697,7 @@ void CLibCriMoviePlay::updateMovies() {
         if (entry->mTexBufY == nullptr) {
             // Allocate Y texture buffer
             u32 yBufSize = GXGetTexBufferSize(texWidthScaled, height_raw,
-                                               GX_TF_RGBA8, GX_FALSE, 0);
+                                               GX_TF_RGBA8, GX_FALSE, (u8)0);
             entry->mTexBufYSize = yBufSize;
 
             if (entry->mAction == 0) {
@@ -691,9 +707,9 @@ void CLibCriMoviePlay::updateMovies() {
             } else if (entry->mAction == 3) {
                 MemManager::setOptimalAlloc(true);
                 void* buf = MemManager::allocate_head(
-                    (void*)entry->mAllocHandle2, yBufSize, 0x20);
+                    entry->mAllocHandle2, yBufSize, 0x20);
                 if (buf == nullptr) {
-                    void* mem2 = MemManager::getHandleMEM2();
+                    mtl::ALLOC_HANDLE mem2 = MemManager::getHandleMEM2();
                     buf = MemManager::allocate_head(mem2, yBufSize, 0x20);
                 }
                 entry->mTexBufY = buf;
@@ -709,19 +725,15 @@ void CLibCriMoviePlay::updateMovies() {
             }
 
             // Initialize Y texture object
-            GXInitTexObj(entry->mTexObjY, entry->mTexBufY,
-                        texWidthScaled, height_raw,
-                        GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(entry->mTexObjY,
-                           lbl_eu_8066A4F0, lbl_eu_8066A4F0,
-                           lbl_eu_8066A4F0, 0, 0, 0, 0, 0);
+            GXInitTexObj(&entry->mTexObjY, entry->mTexBufY, texWidthScaled, height_raw, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GXInitTexObjLOD(&entry->mTexObjY, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
         }
 
 skipAlloc:
         if (entry->mTexBufY != nullptr) {
             // Allocate CbCr texture buffer
             u32 cbcrBufSize = GXGetTexBufferSize(texWidth, texHeight,
-                                                  GX_TF_YUV422, GX_FALSE, 0);
+                                                  (GXTexFmt)10 /* GX_TF_YUV422 (not in vendored GXTypes.h) */, GX_FALSE, (u8)0);
             entry->mTexBufCbCrSize = cbcrBufSize;
 
             if (entry->mAction == 0) {
@@ -730,10 +742,9 @@ skipAlloc:
                 entry->mTexBufCbCr = buf;
             } else if (entry->mAction == 3) {
                 MemManager::setOptimalAlloc(true);
-                void* buf = MemManager::allocate_head(
-                    (void*)entry->mAllocHandle2, cbcrBufSize, 0x20);
+                void* buf = MemManager::allocate_head(entry->mAllocHandle2, cbcrBufSize, 0x20);
                 if (buf == nullptr) {
-                    void* mem2 = MemManager::getHandleMEM2();
+                    mtl::ALLOC_HANDLE mem2 = MemManager::getHandleMEM2();
                     buf = MemManager::allocate_head(mem2, cbcrBufSize, 0x20);
                 }
                 entry->mTexBufCbCr = buf;
@@ -748,12 +759,8 @@ skipAlloc:
             }
 
             // Initialize CbCr texture object
-            GXInitTexObj(entry->mTexObjCbCr, entry->mTexBufCbCr,
-                        texWidth, texHeight,
-                        GX_TF_YUV422, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(entry->mTexObjCbCr,
-                           lbl_eu_8066A4F0, lbl_eu_8066A4F0,
-                           lbl_eu_8066A4F0, 0, 0, 0, 0, 0);
+            GXInitTexObj(&entry->mTexObjCbCr, entry->mTexBufCbCr, texWidth, texHeight, (GXTexFmt)10 /* GX_TF_YUV422 (not in vendored GXTypes.h) */, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GXInitTexObjLOD(&entry->mTexObjCbCr, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
         }
 
         // Convert and upload frame data
@@ -1020,7 +1027,7 @@ void CLibCriMoviePlay::viBeginFrame() {
 // ============================================================================
 extern "C" {
     void __ct__CLibCriMoviePlay(const char* name, CWorkThread* parent) {
-        new (nullptr) CLibCriMoviePlay(name, parent);
+        new ((void*)0) CLibCriMoviePlay(name, parent);
     }
 
     void __dt__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int flags) {

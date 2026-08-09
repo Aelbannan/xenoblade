@@ -153,10 +153,10 @@ extern "C" bool func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, f32);
 extern "C" void func_80137E7C(void*, const char*, void*);
 extern "C" void func_80137B44(void*, const char*, int);
 extern "C" void func_80136B4C(void*, const char*, void*, int);
-extern "C" void func_8013639C(void*, const char*, int);
+// func_8013639C: declared with char* return in code_80135FDC.hpp
 extern "C" u16 func_80136254(void*, const char*, int);
 extern "C" u16 func_8013606C(const char*, const char*, int);
-extern "C" void func_80136190(const char*, const char*, int);
+// func_80136190: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" void func_80138078__FUl(u32);
 extern "C" void func_80135898();
 extern "C" void func_80133A08(u32);

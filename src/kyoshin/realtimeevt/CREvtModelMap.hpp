@@ -18,7 +18,7 @@ public:
     /* vtable 0x24 */ virtual int getGuestState();      // func_8018196C
     /* vtable 0x2C */ virtual void setVisible(int r4); // func_801818BC
     /* vtable 0x34 */ virtual void onEvent(int r4);    // func_801815AC
-    /* vtable 0x38 */ virtual void reset();            // func_80180CBC
+    /* vtable 0x38 */ virtual bool reset();            // func_80180CBC (retail returns r3=1)
 
     // Non-virtual helpers
     bool isMapModel();          // func_80180C60
@@ -51,4 +51,5 @@ public:
     /* 0xE8 */ char mModelName[0x100];
     /* 0x1E8 */ s32 mCreatureCount;
     /* 0x1EC */ s32 mCreatureId;
+    /* 0x1F4 */ u32 mPtmf[3]; // ptmf triplet (func/this-adj/vtbl-adj)
 };

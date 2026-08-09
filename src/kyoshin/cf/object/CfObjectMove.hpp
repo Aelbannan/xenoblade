@@ -61,7 +61,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc46();
     void CfObject_UnkVirtualFunc47();
     void CfObject_UnkVirtualFunc49();
-    void CfObject_UnkVirtualFunc64();
+    void CfObject_UnkVirtualFunc64(int flag);
     void CfObject_UnkVirtualFunc65();
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();

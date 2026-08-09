@@ -101,7 +101,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc47() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc49() {}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc64() {}
+void cf::CfObjectMove::CfObject_UnkVirtualFunc64(int flag) {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc65() {}
 
@@ -178,12 +178,12 @@ void CfObjectMove_nullsub_18(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {}
 
-extern "C" void CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(void* self, float v) {
+extern "C" void CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float v) {
     void* o = *(void**)((u8*)self + 0x6c0);
     if (o) *(float*)((u8*)o + 0xd4) = v;
 }
 
-extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(void* self, u16 v) {
+extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u16 v) {
     void* o = *(void**)((u8*)self + 0x6c0);
     if (o) *(u16*)((u8*)o + 0xde) = v;
 }
@@ -260,11 +260,11 @@ void cf::CfObjectMove::setSubFieldE(unsigned short val) {
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
 
-extern "C" void CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(void* self) {
+extern "C" void CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf14();
 }
 
-extern "C" void CfObject_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(void* self) {
+extern "C" void CfObject_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf18();
 }
 
@@ -274,11 +274,11 @@ void cf::CfObjectMove::virtCall10(){
     func(this);
 }
 
-extern "C" void CfObject_UnkVirtualFunc61__Q22cf12CfObjectMoveFv(void* self) {
+extern "C" void CfObject_UnkVirtualFunc61__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf30();
 }
 
-extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(void* self) {
+extern "C" void CfObject_UnkVirtualFunc62__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf34();
 }
 
@@ -294,7 +294,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc66(int) {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc19() {}
 
-extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self) {
+extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf48();
 }
 

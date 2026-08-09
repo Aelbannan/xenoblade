@@ -861,7 +861,7 @@ extern "C" int func_8003ECD8(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
-        ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
+        obj->CfObject_UnkVirtualFunc64(enable ? 0 : 1);
     }
     return 0;
 }
@@ -994,7 +994,7 @@ extern "C" int gravity(VMThread* pThread, int handle) {
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
+    obj->CfObject_UnkVirtualFunc64(enable ? 0 : 1);
     return 0;
 }
 
@@ -1414,8 +1414,8 @@ void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
     *(u32*)((u8*)self + 0x50) = c;
 }
 
-void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
-    u32* field = (u32*)((char*)self + 0x68);
+void cf::CfObject::CfObject_UnkVirtualFunc64(int flag) {
+    u32* field = (u32*)((char*)this + 0x68);
     if (flag) {
         *field |= 0x01000000;
     } else {

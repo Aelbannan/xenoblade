@@ -60,17 +60,8 @@ void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindow
 extern "C" void func_801245E4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
+// CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
+// specializations below emit the retail Move/Draw/dtor symbols.
 class IUIWindow;
 template<> void CTTask<IUIWindow>::Move() {}
 template<> void CTTask<IUIWindow>::Draw() {}

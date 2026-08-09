@@ -19,6 +19,10 @@
 
 extern "C" CScn* lbl_eu_80663E14;
 extern "C" void func_800B9404(void* object);
+// TU-local decl: func_8007EEF0 is a tail-call thunk (addi r3,r3,0x1c; b func_8009D790)
+// that passes r4 through, so the 1-arg form is intentional here. The retail
+// 2-arg form (data + index) is declared in pluginCfs.cpp.
+extern "C" void func_8009D790(CfGameManagerData1C* data);
 
 cf::CfGameManager::~CfGameManager() {
     func_800B9404(unk90);

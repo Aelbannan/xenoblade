@@ -85,18 +85,10 @@ void func_80059C14(){}
 void func_80059C58(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
-class CTaskEnvironment;
+// CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (pulled in via
+// harness_catalog.hpp); the out-of-line specializations below emit the retail
+// Move/Draw/dtor symbols. Do not define a local CTTask here - it would clash
+// with the template from CTaskGameEff.hpp.
 template<> CTTask<CTaskEnvironment>::~CTTask() {}
 template<> void CTTask<CTaskEnvironment>::Move() {}
 template<> void CTTask<CTaskEnvironment>::Draw() {}

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
+#include "monolib/util/FixStr.hpp"
 
 extern "C" {
 extern void* lbl_eu_80526338;
@@ -421,10 +422,10 @@ void setterBit1_ShortPair(){}
 
 void buildVTable() {}
 
-namespace ml {
-template <int N> class FixStr { public: void format(const char*, ...); };
-template <> void FixStr<16>::format(const char*, ...) {}
-}
+// ml::FixStr<N> is defined in monolib/util/FixStr.hpp; emit only the retail
+// specialization owned by this split (format__Q22ml10FixStr<16>FPCce).
+template <>
+void ml::FixStr<16>::format(const char* fmt, ...) {}
 
 extern "C" void func_80053A90() {}
 extern "C" void func_80053F40() {}

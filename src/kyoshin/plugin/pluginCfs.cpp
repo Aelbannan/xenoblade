@@ -1292,7 +1292,7 @@ int setActMapObj(VMThread* vmThread) {
         state = vmArgIntGet(3, arg);
     }
 
-    void* mapObj = func_80186BC8((void*)(mapObjId & 0xFFFF));
+    void* mapObj = func_80186BC8(mapObjId & 0xFFFF);
     if (mapObj != NULL) {
         int* objPtr = (int*)((u8*)mapObj + 0xC4);
         if (*objPtr != 0) {

@@ -440,7 +440,10 @@ extern "C" void func_8016EEB0(u32 object);
 extern "C" void func_800754C0(CfCamEventManager* object);
 extern "C" void* __dt__Q22cf13CfGameManagerFv(
     cf::CfGameManager* self, s32 deleteFlag);
-extern "C" void func_8009D790(CfGameManagerData1C* data);
+// func_8009D790 is declared TU-locally where it is called (CfGameManager.cpp
+// thunk passes 1 arg + r4 passthrough; pluginCfs.cpp declares the full
+// 2-arg retail signature). Kept out of this header to avoid conflicting
+// C-linkage redeclarations across TUs.
 extern "C" void func_800B9340();
 extern "C" void func_800B9364();
 extern "C" void func_80079B34(CfCamEventManager* manager);

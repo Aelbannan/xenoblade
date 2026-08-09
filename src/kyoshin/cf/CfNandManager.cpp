@@ -114,17 +114,8 @@ void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRend
 extern "C" void func_8024060C__Q22cf13CfNandManagerFv(cf::CfNandManager* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
+// CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
+// specializations below emit the retail Move/Draw/dtor symbols.
 namespace cf { class CfNandManager; }
 template<> CTTask<cf::CfNandManager>::~CTTask() {}
 template<> void CTTask<cf::CfNandManager>::Move() {}

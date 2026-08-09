@@ -120,9 +120,30 @@ void func_8003C260(){}
 
 void* cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { return &mPtr10; }
 
-void func_8003C2F4(){}
+extern "C" int func_8003C2F4(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 3;
+    retVal.value.uintVal = *(u16*)((u8*)obj + 0x8C);
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
-void func_8003C354(){}
+extern "C" int func_8003C354(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    if (obj) {
+        retVal.type = 3;
+        retVal.value.uintVal = *(u32*)((u8*)obj + 0x74);
+    } else {
+        retVal.type = 3;
+        retVal.value.uintVal = 0;
+    }
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 void func_8003C3D0(){}
 
@@ -155,7 +176,10 @@ void cf::CfObject::CfObject_UnkVirtualFunc29(float value) { mField4C = value; }
 
 void func_8003C78C(){}
 
-void cf::CObjectParam::CObjectParam_UnkVirtualFunc1(u32, u8) {}
+extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, const char* str) {
+    *(u32*)((u8*)self + 0x30) = strlen(str);
+    strcpy((char*)((u8*)self + 0x10), str);
+}
 
 bool isValid() { return false; }
 
@@ -194,7 +218,16 @@ void func_8003CD6C(){}
 
 int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
 
-void func_8003CDE0(){}
+extern int func_8003BC10(void* obj);
+extern "C" int func_8003CDE0(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    int r = func_8003BC10(obj);
+    VMArg retVal;
+    retVal.type = !r + 1;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 void walkR(){}
 
@@ -279,8 +312,8 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     }
     func_8013D07C(*(void**)((u8*)obj + 0x74), str, 1);
-    if (obj->unk64 & 0x10) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
+    if (obj->unk64 & 0x8) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1)) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
         if (!code80135FDC_getByte_64058()) {
@@ -319,7 +352,7 @@ extern "C" int func_8003DC7C(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    if (obj && (obj->unk64 & 0x10)) {
+    if (obj->unk64 & 0x8) {
         if (boolVal) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(0x10);
         } else {
@@ -358,8 +391,8 @@ extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     func_8013D448(*(void**)((u8*)obj + 0x74), str);
-    if (obj->unk64 & 0x10) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
+    if (obj->unk64 & 0x8) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1)) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
     } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
@@ -435,7 +468,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
         cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
         void* actor = (void*)__dynamic_cast(target, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
         if (actor) {
-            if (((cf::CfObject*)actor)->unk64 & 0x40000000 || ((cf::CfObject*)actor)->unk64 & 0x10) {
+            if (((cf::CfObject*)actor)->unk64 & 0x2 || ((cf::CfObject*)actor)->unk64 & 0x8) {
                 if (*(void**)((u8*)self + 0xC4)) {
                     if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x3C])) {
                         if (snap) {
@@ -949,7 +982,7 @@ extern "C" int func_8003F398(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    obj->CfObject_UnkVirtualFunc66(1);
     return 0;
 }
 
@@ -962,7 +995,7 @@ extern "C" int func_8003F418(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    obj->CfObject_UnkVirtualFunc66(0);
     return 0;
 }
 
@@ -1029,7 +1062,7 @@ extern "C" int func_8003F64C(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    obj->CfObject_UnkVirtualFunc66(1);
     return 0;
 }
 
@@ -1042,7 +1075,7 @@ extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    obj->CfObject_UnkVirtualFunc66(0);
     return 0;
 }
 
@@ -1183,7 +1216,7 @@ extern "C" int func_8003FB18(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    obj->CfObject_UnkVirtualFunc66(1);
     return 0;
 }
 
@@ -1196,7 +1229,7 @@ extern "C" int func_8003FB98(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    obj->CfObject_UnkVirtualFunc66(0);
     return 0;
 }
 

@@ -13,14 +13,14 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | extern "C" (total lines) | 6232 |
 | extern "C" declarations (non-lbl_*, imports) | 1751 |
 | extern "C" definitions (forced names) | 2687 |
-| `self`/register-style params | 4692 |
+| `self`/register-style params | 4698 |
 | `void*` (params + locals) | 4481 |
-| raw pointer offset arithmetic | 3547 |
+| raw pointer offset arithmetic | 3550 |
 | deref-through-cast arithmetic | 1475 |
 | inline asm / `register` | 90 |
 | rN-named params | 341 |
 | goto | 1144 |
-| #pragma | 425 |
+| #pragma | 431 |
 
 ## Top offenders (by cleanable severity)
 
@@ -270,7 +270,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CArtsInfo.cpp | 0 | 0 | 48 | 6 | 7 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CBattery.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CBgTex.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CCol6Invite.cpp | 1 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CCol6Invite.cpp | 1 | 0 | 6 | 1 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCollepedia.cpp | 14 | 46 | 23 | 14 | 26 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCur.cpp | 0 | 45 | 0 | 11 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CEquipChange.cpp | 0 | 4 | 46 | 13 | 31 | 2 | 0 | 1 | 3 |
@@ -333,7 +333,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/action/CActParamData.cpp | 2 | 106 | 102 | 50 | 7 | 7 | 0 | 0 | 0 |
 | src/kyoshin/cf/CActParamAnimGame.cpp | 0 | 1 | 6 | 4 | 2 | 2 | 0 | 1 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 0 | 0 | 4 | 0 | 2 | 1 | 0 | 1 | 0 |
-| src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 9 | 8 | 1 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CArtsSet.cpp | 0 | 2 | 9 | 8 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CBattleManager.cpp | 1 | 2 | 25 | 99 | 121 | 54 | 0 | 8 | 22 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 0 | 6 | 7 | 15 | 5 | 0 | 0 | 0 | 0 |
@@ -1653,6 +1653,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/CCol6Invite.cpp": {
   "extern_c_nonlbl_decl": 1,
   "ptr_arith": 1,
+  "self_params": 6,
   "void_ptr": 1
  },
  "src/kyoshin/CCollepedia.cpp": {
@@ -2045,7 +2046,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/cf/CArtsSet.cpp": {
   "extern_c_nonlbl_def": 2,
-  "ptr_arith": 1,
+  "ptr_arith": 4,
   "self_params": 9,
   "void_ptr": 8
  },

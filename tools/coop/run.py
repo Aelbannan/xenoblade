@@ -230,26 +230,35 @@ def _with_build_lock(region: str, fn) -> int:
             os.close(fd)
 
 
-def cmd_build(project: Project, hint: str) -> int:
-    def _build() -> int:
-        hint_path = Path(hint)
-        if hint_path.suffix in {".c", ".cpp", ".cc", ".cxx"}:
-            obj = project.build_object_for_source(
-                hint_path if hint_path.is_absolute() else project.root / hint_path
-            )
-            _postprocess_mtrand_object(project, obj)
-        else:
-            unit = project.resolve_unit(hint)
-            if not unit.base_path:
-                print(f"ERROR: unit has no compiled base path: {unit.name}", file=sys.stderr)
-                return 1
-            project.ninja_build(str(unit.base_path.relative_to(project.root)))
-            obj = unit.base_path
-            _postprocess_mtrand_object(project, obj)
-        print(obj)
-        return 0
+def _build_unlocked(project: Project, hint: str) -> int:
+    """Build one object WITHOUT acquiring the repo build lock.
 
-    return _with_build_lock(project.config.region, _build)
+    Callers MUST hold the lock (via _with_build_lock) themselves. Used by
+    cmd_build (which adds the lock) and by cmd_cycle's lock-scoped build+read
+    path, where the evaluation's ELF reads must see a freshly-built, stable
+    .o (another session's ninja rewriting it mid-read was the lost-certify
+    race — run 3/4).
+    """
+    hint_path = Path(hint)
+    if hint_path.suffix in {".c", ".cpp", ".cc", ".cxx"}:
+        obj = project.build_object_for_source(
+            hint_path if hint_path.is_absolute() else project.root / hint_path
+        )
+        _postprocess_mtrand_object(project, obj)
+    else:
+        unit = project.resolve_unit(hint)
+        if not unit.base_path:
+            print(f"ERROR: unit has no compiled base path: {unit.name}", file=sys.stderr)
+            return 1
+        project.ninja_build(str(unit.base_path.relative_to(project.root)))
+        obj = unit.base_path
+        _postprocess_mtrand_object(project, obj)
+    print(obj)
+    return 0
+
+
+def cmd_build(project: Project, hint: str) -> int:
+    return _with_build_lock(project.config.region, lambda: _build_unlocked(project, hint))
 
 
 def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:
@@ -477,11 +486,6 @@ def cmd_cycle(
 
     ctx_out = target.source.with_suffix(".ctx.c")
     cmd_ctx(project, target.source.relative_to(project.root), ctx_out)
-    cmd_build(project, target.unit)
-
-    unit = project.resolve_unit(target.unit)
-    if unit.base_path:
-        _postprocess_mtrand_object(project, unit.base_path)
 
     # §2.7.6: honor a declared_return recorded on the target's stored
     # certificate (manual review), so cycle re-proofs replay it.
@@ -500,12 +504,43 @@ def cmd_cycle(
                 break
     except (OSError, ValueError):
         pass
-    evaluation = evaluate_unit_match(
-        project, unit, target.symbol, linked=linked, target_id=target.id,
-        declared_return=_declared_return, contract=contract, run_smt=smt,
-        witness_timeout_ms=witness_timeout_ms,
-        witness_enabled=witness_enabled,
-    )
+
+    unit = project.resolve_unit(target.unit)
+
+    # Lock-scoped build + evaluation (no-z3 configs only). With the witness
+    # disabled and --smt off, the whole evaluation is ELF reads + a byte
+    # comparison (report_unit + certify_unit_symbol byte-identity path) —
+    # milliseconds, no z3. Holding the repo build lock across the build AND
+    # those reads guarantees the .o seen by evaluate_unit_match was just
+    # built from the current source and no other session's ninja can rewrite
+    # it mid-read (the torn-read race that lost byte-identical certifies,
+    # runs 3-4: us-8044bae8 FULL_MATCH evaluated NOT_STARTED; us-801652b0
+    # COMPILES). The lock is deliberately NOT held when the witness is
+    # enabled or --smt runs — those invoke z3, and a z3 simplify under the
+    # lock froze every agent for ~30 min (run30 incident).
+    if not witness_enabled and not smt:
+        def _locked_cycle():
+            _build_unlocked(project, target.unit)
+            if unit.base_path:
+                _postprocess_mtrand_object(project, unit.base_path)
+            return evaluate_unit_match(
+                project, unit, target.symbol, linked=linked, target_id=target.id,
+                declared_return=_declared_return, contract=contract, run_smt=smt,
+                witness_timeout_ms=witness_timeout_ms,
+                witness_enabled=witness_enabled,
+            )
+
+        evaluation = _with_build_lock(project.config.region, _locked_cycle)
+    else:
+        cmd_build(project, target.unit)
+        if unit.base_path:
+            _postprocess_mtrand_object(project, unit.base_path)
+        evaluation = evaluate_unit_match(
+            project, unit, target.symbol, linked=linked, target_id=target.id,
+            declared_return=_declared_return, contract=contract, run_smt=smt,
+            witness_timeout_ms=witness_timeout_ms,
+            witness_enabled=witness_enabled,
+        )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
 

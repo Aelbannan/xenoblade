@@ -11,11 +11,15 @@ from typing import Any, Callable, Dict, List, Optional
 
 PhaseTimer = Callable[[str], AbstractContextManager[Any]]
 
-# Delay before the one-shot objdiff report retry in evaluate_unit_match (s).
-# Sized for the multi-agent build race: a concurrent ninja rebuild of the
-# decomp .o is mid-write for tens of ms; 0.25s lets it settle while keeping
-# the retry cheap (report_unit is an isolated copy + objdiff run).
-_REPORT_RETRY_DELAY_S = 0.25
+# Backoff schedule (s) for the objdiff report retries in evaluate_unit_match.
+# Sized for the multi-agent build race: two sessions' global ninja runs (under
+# different lock schemes) can double-write the same dirty decomp .o, keeping
+# it mid-write for ~0.5-2s. A single 0.25s re-read was not enough (run 3:
+# 0 recoveries, and a byte-identical draft was mis-evaluated NOT_STARTED —
+# the acceptance was lost). Three attempts with growing backoff escape most
+# windows while keeping the retry cheap (report_unit is an isolated objdiff
+# run, ~10-50ms each).
+_REPORT_RETRY_BACKOFF_S = (0.25, 0.75, 1.75)
 
 from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.equivalence_check import (
@@ -251,15 +255,17 @@ def evaluate_unit_match(
         # copy + objdiff run (~10-50ms); only fires when the symbol is missing
         # AND a registry write is pending (target_id + symbol).
         if fn_match is None and target_id and symbol:
-            time.sleep(_REPORT_RETRY_DELAY_S)
-            unit_report = report_unit(project, unit)
-            fn_match = find_function_match(unit_report, symbol)
-            if fn_match is not None:
-                print(
-                    f"objdiff report retry recovered {symbol} "
-                    f"({fn_match.match_percent:.1f}%) — first read raced a concurrent rebuild",
-                    file=sys.stderr,
-                )
+            for _delay in _REPORT_RETRY_BACKOFF_S:
+                time.sleep(_delay)
+                unit_report = report_unit(project, unit)
+                fn_match = find_function_match(unit_report, symbol)
+                if fn_match is not None:
+                    print(
+                        f"objdiff report retry recovered {symbol} "
+                        f"({fn_match.match_percent:.1f}%) — first read raced a concurrent rebuild",
+                        file=sys.stderr,
+                    )
+                    break
     equivalence: Optional[ProofStatus] = None
     detail = ""
     certificate = None

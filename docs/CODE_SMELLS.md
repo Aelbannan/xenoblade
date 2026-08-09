@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6231 |
-| extern "C" declarations (non-lbl_*, imports) | 1750 |
+| extern "C" (total lines) | 6232 |
+| extern "C" declarations (non-lbl_*, imports) | 1751 |
 | extern "C" definitions (forced names) | 2687 |
-| `self`/register-style params | 4691 |
+| `self`/register-style params | 4692 |
 | `void*` (params + locals) | 4481 |
-| raw pointer offset arithmetic | 3546 |
-| deref-through-cast arithmetic | 1474 |
+| raw pointer offset arithmetic | 3547 |
+| deref-through-cast arithmetic | 1475 |
 | inline asm / `register` | 90 |
 | rN-named params | 341 |
 | goto | 1144 |
@@ -56,7 +56,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/core/CProcRoot.cpp | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 1 |
 | libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 8 | 2 | 0 | 0 | 10 |
 | libs/monolib/src/core/CRsrcData.cpp | 9 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 5 |
-| libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 1 | 9 | 13 | 14 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSplitFrame.cpp | 0 | 6 | 6 | 0 | 2 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/core/CToken.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
@@ -504,7 +504,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuKizunagram.cpp | 2 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLandTelop.cpp | 2 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLvUp.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuMapSelect.cpp | 20 | 2 | 14 | 2 | 1 | 1 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuMapSelect.cpp | 21 | 2 | 15 | 2 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelectSC.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/menu/CMenuOption.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 0 | 1 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
@@ -647,7 +647,9 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 6
  },
  "libs/monolib/src/core/CSchedule.cpp": {
+  "deref_arith": 1,
   "extern_c_nonlbl_def": 3,
+  "ptr_arith": 1,
   "self_params": 5
  },
  "libs/monolib/src/core/CScriptCode.cpp": {
@@ -3024,10 +3026,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/menu/CMenuMapSelect.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 20,
+  "extern_c_nonlbl_decl": 21,
   "extern_c_nonlbl_def": 2,
   "ptr_arith": 1,
-  "self_params": 14,
+  "self_params": 15,
   "void_ptr": 2
  },
  "src/kyoshin/menu/CMenuMapSelectSC.cpp": {

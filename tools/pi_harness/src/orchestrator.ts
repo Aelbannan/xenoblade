@@ -989,6 +989,7 @@ function makeVerifyCallback(opts: {
     // stops editing them. Only truly-unmatched targets get hexdiff feedback.
     const matchedTargets: string[] = []; // mismatch:0 in the current state
     const unmatchedTargets: string[] = [];
+    const certifiedThisRound: string[] = [];
     let hexdiffFailedCount = 0;
     const hexdiffFailedIds: string[] = [];
     for (const tid of targetIds) {
@@ -1012,11 +1013,19 @@ function makeVerifyCallback(opts: {
           const certified = await runWitnessCycle(repoRoot, unit, tid, config, { sessionOwnsClaim: true });
           process.stderr.write(`[orchestrator] ${unit}: ${tid} 0-mismatch certify: ${certified ? "ACCEPTED" : "not certified (reloc/witness gate)"}\n`);
           if (certified) {
+            certifiedThisRound.push(tid);
             appendLedger(repoRoot, config.ledgerPath, {
               ts: new Date().toISOString(), event: "batch-accept", tu: unit,
               detail: { batchIndex: 0, attempt: 1, acceptedCount: 1, results: [{ targetId: tid, status: "FULL_MATCH" }], source: "0-mismatch-certify" },
             });
-            return { action: "accept", reason: `${tid} certified at mismatch:0` };
+            // Do NOT return here: other targets in the batch may also be at
+            // mismatch:0 in this same state, and returning after the first
+            // certify ends the session — later 0-mismatch targets then fall
+            // to the next pass where (with singletons/rebatch disabled) they
+            // are dropped as "failed" despite byte-identity (run 3: CFontLayer
+            // us-8044bae8 was FULL_MATCH but never certified). Continue the
+            // loop, certify every 0-mismatch target, return accept once.
+            continue;
           }
           appendLedger(repoRoot, config.ledgerPath, {
             // Distinct event (see certify-request-failed above): a failed
@@ -1177,6 +1186,13 @@ function makeVerifyCallback(opts: {
           `mismatch: 0. There is no \`witness\`/\`certify\` path.`);
     }
     lastFeedback = feedbackParts.join("\n\n");
+    // Any 0-mismatch target certified this round makes the round a success:
+    // return accept ONCE after the loop (the old return-inside-the-loop ended
+    // the session at the first certify and stranded sibling 0-mismatch targets
+    // — CFontLayer us-8044bae8 in run 3).
+    if (certifiedThisRound.length > 0) {
+      return { action: "accept", reason: `${certifiedThisRound.join(", ")} certified at mismatch:0` };
+    }
     return { action: "re-prompt", feedback: lastFeedback };
   };
 

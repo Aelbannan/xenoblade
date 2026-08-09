@@ -311,7 +311,14 @@ void func_8003D32C(){}
 
 void moveTo(){}
 
-void func_8003D570(){}
+extern "C" int func_8003D570(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int arg = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x1F8/4])(obj, arg);
+    return 0;
+}
 
 void func_8003D5DC(){}
 

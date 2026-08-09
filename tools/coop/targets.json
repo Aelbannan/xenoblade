@@ -5290,7 +5290,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -5304,7 +5304,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 99.63,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8003db58",
@@ -5736,7 +5738,7 @@
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800bea98",
@@ -5753,8 +5755,8 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "instruction_match": 90.721,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 95.656,
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {

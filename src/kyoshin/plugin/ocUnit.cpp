@@ -63,6 +63,8 @@ extern "C" {
     extern void* lbl_eu_806618F0;
     extern void* lbl_eu_806618E8;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
+    extern float lbl_eu_80665C30;
+    extern float lbl_eu_8066A20C;
 
     // VM/script helpers
     void func_800BE12C(void* obj, int a, int b, int c, int d);
@@ -104,19 +106,60 @@ int cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return field_6CF; }
 
 void func_8003BD7C(){}
 
-void func_8003C044(){}
+extern "C" int func_8003C044(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 4;
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)obj->CfObject_UnkVirtualFunc23());
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 u32 cf::CfObject::CfObject_UnkVirtualFunc23() { return (u32)&mPos3C; }
 
-void func_8003C0D0(){}
+extern "C" int func_8003C0D0(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 4;
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)((u8*)obj->CfObject_UnkVirtualFunc23() + 4));
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
-void func_8003C154(){}
+extern "C" int func_8003C154(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 4;
+    retVal.value.intVal = (int)(lbl_eu_80665C30 * *(float*)((u8*)obj->CfObject_UnkVirtualFunc23() + 8));
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
-void func_8003C1D8(){}
+extern "C" int func_8003C1D8(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 3;
+    retVal.value.intVal = (int)obj->CfObject_UnkVirtualFunc34();
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 float cf::CfObject::CfObject_UnkVirtualFunc34() { return mField4C * 0.019592438f; }
 
-void func_8003C260(){}
+extern "C" int func_8003C260(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    VMArg retVal;
+    retVal.type = 5;
+    retVal.unk2 = (u16)strlen((const char*)((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc2());
+    retVal.value.pointerVal = ((cf::CObjectParam*)obj)->CObjectParam_UnkVirtualFunc2();
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 void* cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { return &mPtr10; }
 
@@ -1349,6 +1392,7 @@ void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
 }
 
 extern float lbl_eu_8066A20C;
+extern float lbl_eu_80665C30;
 extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x4c) * lbl_eu_8066A20C; }
 
 extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) { reinterpret_cast<CfObjIf*>(self)->vf00C4(); }

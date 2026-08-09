@@ -4089,8 +4089,8 @@
       "size": "0x84",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4103,7 +4103,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003c644",
@@ -4142,8 +4144,8 @@
       "size": "0x84",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4156,7 +4158,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003c6d0",
@@ -4169,8 +4173,8 @@
       "size": "0x84",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4183,7 +4187,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003c754",
@@ -4196,8 +4202,8 @@
       "size": "0x78",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4210,7 +4216,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003c7cc",
@@ -4248,8 +4256,8 @@
       "size": "0x8C",
       "unit": "kyoshin/plugin/ocUnit",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80187748",
@@ -4263,7 +4271,9 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocUnit.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocUnit.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003c868",
@@ -179219,7 +179229,7 @@
       "size": "0x90",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179231,7 +179241,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T04:56:48.975843+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CScrollBar.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801f515c",
@@ -179244,7 +179262,7 @@
       "size": "0x54",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179257,15 +179275,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": false,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:46:10.058043+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CScrollBar.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": false
     },
     {
       "id": "us-801f51b0",
@@ -179278,7 +179288,7 @@
       "size": "0x4C",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179292,15 +179302,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:46:10.058041+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CScrollBar.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-801f51fc",
@@ -179313,7 +179315,7 @@
       "size": "0x70",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179326,7 +179328,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T04:56:48.975840+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CScrollBar.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801f526c",
@@ -179339,7 +179349,7 @@
       "size": "0x2C",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179351,15 +179361,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:46:10.058039+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CScrollBar.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-801f5298",
@@ -179372,7 +179374,7 @@
       "size": "0x84",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179386,7 +179388,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T04:56:48.975842+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CScrollBar.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801f531c",
@@ -179478,8 +179488,8 @@
       "size": "0x20",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -179489,14 +179499,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:46:10.057822+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CScrollBar.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801f5358",
@@ -179509,7 +179513,7 @@
       "size": "0x20",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -179519,15 +179523,7 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-49250",
-        "claimed_at": "2026-08-09T04:46:10.058032+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CScrollBar.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-801f5378",
@@ -179598,7 +179594,7 @@
       "size": "0x64",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179610,7 +179606,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T04:56:48.975837+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CScrollBar.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801f561c",
@@ -179623,7 +179627,7 @@
       "size": "0x54",
       "unit": "kyoshin/CScrollBar",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -179635,7 +179639,15 @@
       "callgraph_source": "build/us/asm/kyoshin/CScrollBar.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/CScrollBar.cpp",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-49250",
+        "claimed_at": "2026-08-09T04:56:48.975618+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CScrollBar.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801f5670",

@@ -5,6 +5,11 @@
 
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
 
+extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
+extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
+
+extern unsigned long lbl_eu_80664268;
+
 namespace cf {
     u32 CTaskREvtSequence::func_8016A354() { return field_0x20; }
 
@@ -40,8 +45,7 @@ extern "C" u32 func_8016846C(void) {
     return (*(u32*)((u8*)g + 0x5c) >> 5) & 1;
 }
 
-bool func_8016847C() { return false; }
-
+extern "C" u32 func_8016847C() { return (u32)lbl_eu_80664268; }
 void func_80168484(){}
 
 void func_801684F4(){}
@@ -148,10 +152,10 @@ void func_8016C720(){}
 
 void func_eu_8016DA48(){}
 
-void func_8016C7D8(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x54)->~CTaskREvtSequence(); }
+void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 
-void func_8016C7E0(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->cbRenderBefore(); }
+void func_8016C7E0(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 
-extern "C" void func_8016C7E8(u8* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->~CTaskREvtSequence(); }
+extern "C" void func_8016C7E8(u8* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 
 // CTTask<cf::CTaskREvtSequence> specializations provided by header

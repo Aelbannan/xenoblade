@@ -4,6 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuQuestLog.hpp"
+
+extern "C" void __dt__13CMenuQuestLogFv(void*, int);
+
 void __ct__CMenuQuestLog(){}
 
 CMenuQuestLog::~CMenuQuestLog() {}
@@ -61,8 +64,8 @@ void func_8011D2E8(void* self) {
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls the destructor.
-void func_8011D2F0(void* self) {
-    reinterpret_cast<CMenuQuestLog*>(static_cast<char*>(self) - 0x58)->~CMenuQuestLog();
+extern "C" void func_8011D2F0(void* self) {
+    ((void(*)(void*))__dt__13CMenuQuestLogFv)((char*)self - 0x58);
 }
 
 void __dt__8011D2F8(){}

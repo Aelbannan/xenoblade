@@ -4,6 +4,9 @@
 #include <types.h>
 #include "kyoshin/cf/CTaskREvent.hpp"
 
+extern "C" void __dt__Q22cf11CTaskREventFv(void*, int);
+extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void*);
+
 namespace cf {}
 using namespace cf;
 
@@ -37,10 +40,12 @@ void func_80164410(){}
 
 void func_80164478(){}
 
-bool func_801644AC() { return false; }
+// retail: lwz r3, lbl_eu_80662380; blr
+extern void* lbl_eu_80662380;
+extern void* lbl_eu_80664240;
+extern "C" u32 func_801644AC() { return (u32)lbl_eu_80662380; }
 
-bool func_801644B4() { return false; }
-
+extern "C" u32 func_801644B4() { return (u32)lbl_eu_80664240; }
 void func_801644BC__FUl(){}
 
 void func_801644D8(void* self){}
@@ -74,8 +79,6 @@ void func_80164ED0(){}
 void func_80164F6C(){}
 
 void func_80164FB4(){}
-
-void* lbl_eu_80664240;
 
 int func_80164FE8(void) {
     int* ptr = (int*)lbl_eu_80664240;
@@ -112,20 +115,20 @@ void viAfterDrawDone__11CDeviceVICbFv() {}
 
 void viBeforeDrawDone__11CDeviceVICbFv() {}
 
-void func_801666C4(void* self) { func_801662E8((char*)self - 0x54); }
+void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
 
-void func_801666CC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x54)->~CTaskREvent(); }
+void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
 
-void func_801666D4(void* self) { func_801644D8((char*)self - 0x58); }
+void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
 
-void func_801666DC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x58)->~CTaskREvent(); }
+void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
 
-void func_801666E4(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->cbRenderBefore(); }
+void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
-extern "C" void func_801666EC(u8* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->~CTaskREvent(); }
+extern "C" void func_801666EC(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
 void cf::CTaskREvent::OnFileEvent() { func_801663A8(this); }
 
-extern "C" void func_801666FC(u8* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x60)->~CTaskREvent(); }
+extern "C" void func_801666FC(u8* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
 
 // CTTask<cf::CTaskREvent> specializations provided by header

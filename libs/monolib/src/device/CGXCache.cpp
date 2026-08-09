@@ -257,9 +257,11 @@ void CGXCache::func_8044BD74() {}
 
 void CGXCache::func_8044BE10(void) {}
 
-void* func_8044BE1C__8CGXCacheFv(void* self) { return &static_cast<CGXCache*>(self)->unk510[0]; }
+// retail: addi r3,r3,0x510 (returns &unk510)
+void* func_8044BE1C__8CGXCacheFv(void* self) { return (u8*)self + 0x510; }
 
-u8 func_8044BE24__8CGXCacheFv(void* self) { return static_cast<CGXCache*>(self)->unk510[8]; }
+// retail: lbz r3,0x518(r3) (unk510[8])
+u8 func_8044BE24__8CGXCacheFv(void* self) { return *(u8*)((u8*)self + 0x518); }
 
 void* CGXCache::func_8044BE2C(void) { return 0; }
 

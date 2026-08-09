@@ -335,3 +335,9 @@ void CModelDispEquip::thunk8_1444() {
 void CModelDispEquip::thunk8_dtor() {
     ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 8);
 }
+// Retail: subi r3,r3,-4; b func_80201298 (extern "C" free thunks, unmangled)
+extern "C" void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 4); }
+extern "C" void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 4); }
+extern "C" void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 4); }
+// Retail: subi r3,r3,-8; b func_80201444
+extern "C" void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 8); }

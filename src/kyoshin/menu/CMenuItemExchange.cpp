@@ -3,6 +3,9 @@
 
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 
+extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
+extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
+
 /**
  * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
  * containing CMenuItemExchange object. The OC system passes a pointer
@@ -60,18 +63,14 @@ void func_801BF70C(){}
  * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the
  * containing CMenuItemExchange and delegates to cbRenderBefore.
  */
-void func_801BF75C(CMenuItemExchangeOC* param) {
-    CMenuItemExchange* self = reinterpret_cast<CMenuItemExchange*>(
-        reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
-    self->cbRenderBefore();
+extern "C" void func_801BF75C(CMenuItemExchangeOC* param) {
+    ((void(*)(void*))cbRenderBefore__17CMenuItemExchangeFv)((char*)param - 0x6c);
 }
 
 /**
  * OC thunk for the destructor. Adjusts the OC wrapper pointer back to the
  * containing CMenuItemExchange and delegates to the real destructor.
  */
-void func_801BF764(CMenuItemExchangeOC* param) {
-    CMenuItemExchange* self = reinterpret_cast<CMenuItemExchange*>(
-        reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
-    self->~CMenuItemExchange();
+extern "C" void func_801BF764(CMenuItemExchangeOC* param) {
+    ((void(*)(void*))__dt__17CMenuItemExchangeFv)((char*)param - 0x6c);
 }

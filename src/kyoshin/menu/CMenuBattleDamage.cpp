@@ -7,6 +7,8 @@
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/scn/IScnRender.hpp"
 
+extern "C" void __dt__17CMenuBattleDamageFv(void*, int);
+
 CMenuBattleDamage::CMenuBattleDamage() {}
 
 CMenuBattleDamage::~CMenuBattleDamage() {}
@@ -93,6 +95,10 @@ extern "C" void func_8010975C() {}
 extern "C" void func_80109784() {}
 extern "C" void func_801098B0() {}
 extern "C" void func_8010A710() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+
+extern "C" void func_8010A68C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+
 extern "C" void func_8010A7A8() {}
 extern "C" void func_8010A848() {}
 extern "C" void func_8010A8E4() {}

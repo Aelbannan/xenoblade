@@ -334,11 +334,15 @@ extern "C" __declspec(noinline) void func_80254040(u8* obj) {
     }
 }
 
-void CCollepedia_decrementWrap(unsigned char* obj) {
+extern "C" void func_8025406C(unsigned char* obj) {
     obj[1] = obj[1] - 1;
     if ((signed char)obj[1] < 0) {
         obj[1] = obj[0] - 1;
     }
+}
+
+void CCollepedia_decrementWrap(unsigned char* obj) {
+    func_8025406C(obj);
 }
 
 extern "C" char* func_80254094(u8* self) {
@@ -1061,7 +1065,6 @@ void func_8025641C(CCollepedia* this_) {
 #pragma pop
 
 // Stubs for functions called by targets
-extern "C" void func_8025406C(u8*){}
 extern "C" u8 __attribute__((noinline)) func_802540DC(u8* self) {
     s8 idx = (s8)self[1];
     return *(u8*)(self + idx * 0x140 + 4);

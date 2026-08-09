@@ -28,9 +28,10 @@ extern "C" void func_80450B44(void* self, u32 arg) {
     func_8044F744__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
+extern "C" void __dt__14CDeviceFileCriFv(void*, int);
+
 extern "C" void func_80450B4C(void* self) {
-    CDeviceFileCri* obj = (CDeviceFileCri*)((char*)self - 0x1C4);
-    obj->~CDeviceFileCri();
+    ((void(*)(void*))__dt__14CDeviceFileCriFv)((char*)self - 0x1C4);
 }
 
 CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity)

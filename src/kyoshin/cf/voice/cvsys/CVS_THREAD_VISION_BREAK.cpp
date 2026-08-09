@@ -199,3 +199,5 @@ void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
         }
     }
 }
+// retail: li r3,0xF; blr
+extern "C" u32 func_802A95FC(void* self) { return 0xF; }

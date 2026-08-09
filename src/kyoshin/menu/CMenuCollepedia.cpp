@@ -5,6 +5,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void cbRenderBefore__15CMenuCollepediaFv(void*);
+
+// member dtor defined below; declare its mangled name for thunk references
+extern "C" void __dt__15CMenuCollepediaFv(void*, int);
+
 void __ct__CMenuCollepedia(){}
 
 CMenuCollepedia::~CMenuCollepedia() {}
@@ -40,8 +45,8 @@ void func_80253128(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__15CMenuCollepediaFv
  */
-void CMenuCollepedia::func_80253188() {
-    cbRenderBefore();
+extern "C" void func_80253188(void* self) {
+    ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58);
 }
 
 /**
@@ -51,8 +56,8 @@ void CMenuCollepedia::func_80253188() {
  *
  * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
  */
-void CMenuCollepedia::func_80253190() {
-    this->~CMenuCollepedia();
+extern "C" void func_80253190(void* self) {
+    ((void(*)(void*))__dt__15CMenuCollepediaFv)((char*)self - 0x58);
 }
 
 extern int lbl_eu_806647D0;

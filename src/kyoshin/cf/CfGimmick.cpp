@@ -146,7 +146,9 @@ void func_80208E98() {
     for (int i = 0; i < 10; i++) lbl_eu_805765B0[i] = -1;
 }
 
-bool func_80208EDC() { return false; }
+// retail: stw r3, lbl_eu_806646B8; blr — store arg to global
+extern unsigned long lbl_eu_806646B8;
+extern "C" void func_80208EDC(u32 value) { lbl_eu_806646B8 = value; }
 
 void func_80208EE4(cf::CfGimmick* self) {
     if (self->field_78) {

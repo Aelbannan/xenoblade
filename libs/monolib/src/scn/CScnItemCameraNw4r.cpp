@@ -106,6 +106,6 @@ void func_80481F9C(CScnItemCameraNw4r* self) {
 // Keep the remaining (unmatched) unit symbols as stubs.
 // ===========================================================================
 void func_80482038(u8* self) {}
-void func_80482040(u8* self) {}
+extern "C" void* func_80482040(u8* self) { return 0; }
 void func_80482048() {}
 void* func_8048204C(u8* self) { return (void*)((u8*)self + 0x10); }

@@ -28,6 +28,6 @@ void func_800CA930() {}
 
 void func_800CA934() {}
 
-void cf::CfObjectImplNpc::func_800CA938() { __dt__Q22cf15CfObjectImplNpcFv(this, 0); }
+extern "C" void func_800CA938(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)((char*)self - 0xc); }
 
-void cf::CfObjectImplNpc::func_800CA940() { __dt__Q22cf15CfObjectImplNpcFv(this, 0); }
+extern "C" void func_800CA940(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)((char*)self - 0x10); }

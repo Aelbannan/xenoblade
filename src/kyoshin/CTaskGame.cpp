@@ -291,7 +291,7 @@ bool CTaskGame_checkUnkD8NotNegOne() {
     unsigned int value = static_cast<unsigned int>(lbl_eu_80663D18->unkD8);
     return value != 0xffffffffu;
 }
-u32 CTaskGame_readU32FromPtr(u32* ptr) { return *ptr; }
+extern "C" u32 func_80043F18(u32* ptr) { return *ptr; }
 void Tail__8CProcessFv() {}
 void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {

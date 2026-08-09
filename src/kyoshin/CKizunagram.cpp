@@ -181,7 +181,7 @@ extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf57D90* self) { re
 
 void func_80259820(){}
 
-void CKizunagram_copyShortString(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
 void func_80259B18(){}
 
@@ -461,7 +461,7 @@ struct CKizunagramState {
     u8 field8C;
 };
 
-u8 CKizunagram_getField8C(CKizunagramState* self) {
+extern "C" u8 func_8025CBC4(CKizunagramState* self) {
     return self->field8C;
 }
 

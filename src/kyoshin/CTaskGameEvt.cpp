@@ -41,12 +41,13 @@ void func_802956A4(void) { func_80165038(); }
 void func_802956A8(void) { func_80164CFC(); }
 
 extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) { (void)self; }
+extern "C" void __dt__12CTaskGameEvtFv(void*, int);
 
 extern "C" int func_80295764(void* self) { (void)self; return 0; }
 
-extern "C" void func_80295870(void* self) { (void)self; }
-extern "C" void func_80295878(void* self) { (void)self; }
-extern "C" void func_80295880(void* self) { (void)self; }
+extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
+extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
+extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
 
 // ---------------------------------------------------------------------------
 // Target members.

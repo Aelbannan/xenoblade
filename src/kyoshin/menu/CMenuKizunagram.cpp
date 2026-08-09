@@ -4,6 +4,9 @@
 #include <types.h>
 #include "kyoshin/menu/CMenuKizunagram.hpp"
 
+extern "C" void __dt__15CMenuKizunagramFv(void*, int);
+extern "C" void cbRenderBefore__15CMenuKizunagramFv(void*);
+
 void __ct__CMenuKizunagram(){}
 
 CMenuKizunagram::~CMenuKizunagram() {}
@@ -45,15 +48,13 @@ void func_80257A2C(){}
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
 // 'this' points to the IScnRender subobject at offset +0x58 within
-// CMenuKizunagram. This thunk adjusts it back and tail-calls the
-// real implementation.
-void CMenuKizunagram::func_80257A7C() {
-    cbRenderBefore();
+extern "C" void func_80257A7C(void* self) {
+    ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable adjustor thunk for ~CMenuKizunagram.
-void CMenuKizunagram::func_80257A84() {
-    this->~CMenuKizunagram();
+extern "C" void func_80257A84(void* self) {
+    ((void(*)(void*))__dt__15CMenuKizunagramFv)((char*)self - 0x58);
 }
 
 extern unsigned long lbl_eu_806647E0;

@@ -3,6 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern unsigned long lbl_eu_806640C0;
+extern unsigned long lbl_eu_806640D0;
+
 void __ct__cf_CfMapItemManager(){}
 
 void __dt__801732F8(){}
@@ -17,9 +20,9 @@ void func_801737D4(){}
 
 void func_80173894(void* self){ func_801733C0(); }
 
-bool func_8017389C() { return false; }
+extern "C" u32 func_8017389C() { return (u32)lbl_eu_806640C0; }
 
-bool func_801738A4() { return false; }
+extern "C" u32 func_801738A4() { return (u32)lbl_eu_806640D0; }
 
 void func_801738AC(){}
 

@@ -652,11 +652,11 @@ void renderQstBase_70(CMenuQstCnt* sub) {
 }
 
 // Retail: subi r3, r3, 0x6c; b __dt__11CMenuQstCntFv
-void dtorQstBase_6C(u8* sub, int flags) {
-    __dt__11CMenuQstCntFv((CMenuQstCnt*)(sub - 0x6C), flags);
+extern "C" void dtorQstBase_6C(u8* sub) {
+    ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x6C);
 }
 
 // Retail: subi r3, r3, 0x70; b __dt__11CMenuQstCntFv
-void dtorQstBase_70(u8* sub, int flags) {
-    __dt__11CMenuQstCntFv((CMenuQstCnt*)(sub - 0x70), flags);
+extern "C" void dtorQstBase_70(u8* sub) {
+    ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x70);
 }

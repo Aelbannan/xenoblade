@@ -206,7 +206,7 @@ void getFloatFieldA(){}
 void getFloatFieldB(){}
 void resetBlockFields(){}
 
-void* getSubObjPtr(void* param) {
+extern "C" void* func_80055EA0(void* param) {
     void* val = *(void**)((u32)param + 0x2F4);
     return val ? (void*)((u32)val + 0x14) : 0;
 }
@@ -319,7 +319,7 @@ struct CActParamDataVTableIf {
 int actParamThunk_3(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 3); }
 int actParamThunk_4(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 4); }
 int actParamThunk_5(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 5); }
-int actParamThunk_6(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 6); }
+extern "C" int func_800562CC(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 6); }
 int actParamThunk_7(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 7); }
 int actParamThunk_8(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 8); }
 int actParamThunk_9(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 9); }
@@ -343,7 +343,7 @@ int actParamThunk_26(void* self, int a) { return ((CActParamDataVTableIf*)self)-
 int actParamThunk_27(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 27); }
 int actParamThunk_28(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 28); }
 int actParamThunk_29(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 29); }
-int actParamThunk_30(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 30); }
+extern "C" int func_800564AC(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 30); }
 int actParamThunk_31(void* self, int a) { return ((CActParamDataVTableIf*)self)->vf7C(a, 31); }
 
 void actParamThunk_32(){}

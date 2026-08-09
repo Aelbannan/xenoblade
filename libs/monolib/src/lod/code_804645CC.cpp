@@ -93,7 +93,7 @@ void LOD::UnkClass_804645CC::func_80465BC0() {}
 // The retail table keeps these entry points under shortened Fv names while
 // passing their real ABI values in the argument registers.  Keep the linker
 // names explicit and model those values as ordinary C++ parameters.
-extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
+void func_80465704(s32 value) {
     lbl_eu_80665814 = value;
     lbl_eu_806657E8 |= 2;
 }

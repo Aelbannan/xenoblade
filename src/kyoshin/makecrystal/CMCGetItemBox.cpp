@@ -393,7 +393,7 @@ void func_802985B4(CMCGetItemBox* self) {
     }
 }
 
-void func_8029860C(void* self) {}
+extern "C" void func_8029860C(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
 
 // Advance the cursor / tab selection in the item box.
 void func_80298614(CMCGetItemBox* self) {

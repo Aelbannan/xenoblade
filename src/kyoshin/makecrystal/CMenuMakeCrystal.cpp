@@ -3,6 +3,9 @@
 
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
+extern "C" void __dt__16CMenuMakeCrystalFv(void*, int);
+extern "C" void cbRenderBefore__16CMenuMakeCrystalFv(void*);
+
 
 void __ct__CMenuMakeCrystal(){}
 
@@ -45,11 +48,11 @@ void func_802124AC(){}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.
-void CMenuMakeCrystal::func_802124F4() {
-    cbRenderBefore();
+extern "C" void func_802124F4(void* self) {
+    ((void(*)(void*))cbRenderBefore__16CMenuMakeCrystalFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable this-adjusting thunk for destructor.
-void CMenuMakeCrystal::func_802124FC() {
-    this->~CMenuMakeCrystal();
+extern "C" void func_802124FC(void* self) {
+    ((void(*)(void*))__dt__16CMenuMakeCrystalFv)((char*)self - 0x58);
 }

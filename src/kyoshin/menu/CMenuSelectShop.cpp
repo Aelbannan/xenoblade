@@ -321,6 +321,7 @@ extern "C" void func_8018A4A0(CMenuSelectShop* self) {
 // embedded shop window and (when a selection is present) the cursor through a
 // stack DrawInfo.
 // ---------------------------------------------------------------------------
+extern "C" void cbRenderBefore__15CMenuSelectShopFv(void*);
 void CMenuSelectShop::cbRenderBefore() {
     CTaskGame::getInstance();
     if (CTaskGame::func_800426F0() != 0) return;
@@ -337,18 +338,18 @@ void CMenuSelectShop::cbRenderBefore() {
     }
 }
 
-bool func_8018A608() { return false; }
+extern "C" u32 func_8018A608() { return (u32)lbl_eu_806642E8; }
 
 // OC/render subobject this-adjusting thunks (not match targets). The IScnRender
 // subobject sits at +0x70, the IWorkEvent/OC subobject at +0x6C.
 void func_8018A610(void* sub) {
-    __dt__15CMenuSelectShopFv((CMenuSelectShop*)((char*)sub - 0x6c), 0);
+    ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x6c);
 }
 
 void func_8018A618(void* sub) {
-    reinterpret_cast<CMenuSelectShop*>((char*)sub - 0x70)->cbRenderBefore();
+    ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)sub - 0x70);
 }
 
 extern "C" void func_8018A620(void* sub) {
-    __dt__15CMenuSelectShopFv((CMenuSelectShop*)((char*)sub - 0x70), 0);
+    ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)sub - 0x70);
 }

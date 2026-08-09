@@ -148,7 +148,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc33(float amount) {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc13() {}
 
-void* cf::CfObjectMove::getUnk54() { return &mSubObj54; }
+extern "C" void* func_800BE0B0(CfObjectMove* self) { return &self->mSubObj54; }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc57() {}
 

@@ -13,4 +13,5 @@ void func_80167A2C(){}
 
 void func_80167C30(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->cbRenderBefore(); }
 
-void func_80167C38(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->~CMenuItem(); }
+extern "C" void __dt__9CMenuItemFv(void*, int);
+void func_80167C38(void* self) { ((void(*)(void*))__dt__9CMenuItemFv)((char*)self - 0x58); }

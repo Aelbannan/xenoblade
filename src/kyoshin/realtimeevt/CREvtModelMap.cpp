@@ -867,11 +867,8 @@ CREvtModelMap::~CREvtModelMap()
 }
 
 // Adjusting thunk: upcasts from IWorkEvent sub-object to full CREvtModelMap
-void func_80181A54(void* self)
-{
-    CREvtModelMap* map = reinterpret_cast<CREvtModelMap*>(
-        static_cast<char*>(self) - 0x38);
-    __ct__80180B00(map, 1);
+extern "C" void func_80181A54(void* self) {
+    ((void(*)(void*))__ct__80180B00)((char*)self - 0x38);
 }
 
 // OnFileEvent adjusting thunk in assembly:

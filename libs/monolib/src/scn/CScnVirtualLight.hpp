@@ -22,10 +22,10 @@ struct CScnVirtualLightData {
     u32 value64;
     u32 value68;
     u8 _6C[0x64];
-    f32 valueD0;
-    f32 valueD4;
     u8 enabled;
-    u8 _D9[0xA7];
+    u8 _D1[0x3];
+    f32 valueD4;
+    u8 _D8[0x3A8];
     u32 value480;
 };
 

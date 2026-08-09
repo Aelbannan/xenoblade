@@ -493,7 +493,7 @@ void func_80234928(){}
 
 void CMenuArtsSet::func_802349F8(u8 val) { mField139 = val; }
 
-void CMenuArtsSet::func_80234A00() { func_80231320(mSubObj148); }
+void CMenuArtsSet::func_80234A00() { ((void(*)(void*))func_80231320)((char*)this + 0x148); }
 
 void func_80234A08(){}
 

@@ -306,6 +306,6 @@ extern "C" f32 func_801443E4() {
 extern "C" void func_80144410(void* self) {}
 
 // Thunks
-extern "C" void dtorThunk_6c(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x6C, -1); }
-extern "C" void renderThunk_70(void* self) { cbRenderBefore__11CMenuUpdateFv((char*)self - 0x70); }
-extern "C" void dtorThunk_70(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x70, -1); }
+extern "C" void dtorThunk_6c(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x6C); }
+extern "C" void renderThunk_70(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuUpdateFv)((char*)self - 0x70); }
+extern "C" void dtorThunk_70(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x70); }

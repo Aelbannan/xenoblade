@@ -4,6 +4,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void __dt__11CMenuGCItemFv(void*, int);
+extern "C" void cbRenderBefore__11CMenuGCItemFv(void*);
+
 void __ct__CMenuGCItem(){}
 
 CMenuGCItem::~CMenuGCItem() {}
@@ -35,8 +38,8 @@ void func_8029BE7C(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */
-void CMenuGCItem::func_802B0F08() {
-    cbRenderBefore();
+extern "C" void func_802B0F08(void* self) {
+    ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58);
 }
 
 /**
@@ -46,8 +49,8 @@ void CMenuGCItem::func_802B0F08() {
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
  */
-void CMenuGCItem::func_802B0F10() {
-    this->~CMenuGCItem();
+extern "C" void func_802B0F10(void* self) {
+    ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58);
 }
 
 extern "C" unsigned long func_802B0D10() {

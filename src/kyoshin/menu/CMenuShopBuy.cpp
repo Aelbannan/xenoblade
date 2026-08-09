@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuShopBuy.hpp"
+
+extern "C" void __dt__12CMenuShopBuyFv(void*, int);
+extern "C" void cbRenderBefore__12CMenuShopBuyFv(void*);
+
 void __ct__CMenuShopBuy(){}
 
 CMenuShopBuy::~CMenuShopBuy() {}
@@ -30,10 +34,10 @@ void func_8018C258(){}
 
 void func_8018C59C(){}
 
-void func_8018C5EC(void* self) {
-    reinterpret_cast<CMenuShopBuy*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
+extern "C" void func_8018C5EC(void* self) {
+    ((void(*)(void*))cbRenderBefore__12CMenuShopBuyFv)((char*)self - 0x58);
 }
 
-void func_8018C5F4(void* self) {
-    reinterpret_cast<CMenuShopBuy*>(static_cast<char*>(self) - 0x58)->~CMenuShopBuy();
+extern "C" void func_8018C5F4(void* self) {
+    ((void(*)(void*))__dt__12CMenuShopBuyFv)((char*)self - 0x58);
 }

@@ -833,6 +833,10 @@ done:
 extern "C" void func_8010EB44() {}
 extern "C" void func_8010ED58() {}
 extern "C" void func_8010EDE4() {}
+
+// retail: lwz r3, lbl_eu_80663F50; blr
+extern unsigned long lbl_eu_80663F50;
+extern "C" u32 func_80110A70() { return (u32)lbl_eu_80663F50; }
 extern "C" void func_801109D8() {}
 extern "C" void func_80110A78() {}
 extern "C" void func_80111C50() {}

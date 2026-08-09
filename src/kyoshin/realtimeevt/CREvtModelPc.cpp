@@ -810,7 +810,7 @@ extern "C" int func_80184A24(void* self, void* event) {
 // OnFileEvent__12CREvtModelPcFP10CEventFile - IWorkEvent override
 // ============================================================================
 extern "C" void OnFileEvent__12CREvtModelPcFP10CEventFile(void* self) {
-    func_80184A24((char*)self - 0x38, self);
+    ((void(*)(void*))func_80184A24)((char*)self - 0x38);
 }
 
 // ============================================================================

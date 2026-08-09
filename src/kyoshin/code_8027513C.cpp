@@ -307,8 +307,10 @@ void func_802753F8(UnkCode8027513C* self, s16 arg) {
 cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
 
-void func_802759B0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0xc))->~CfObjectImplTbox(); }
+extern "C" void __dt__Q22cf16CfObjectImplTboxFv(void*, int);
 
-void func_802759B8(void* self) { func_8027594C((u8*)self - 0x10); }
+void func_802759B0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0xc); }
 
-void func_802759C0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0x10))->~CfObjectImplTbox(); }
+void func_802759B8(void* self) { ((void(*)(void*))func_8027594C)((u8*)self - 0x10); }
+
+void func_802759C0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((u8*)self - 0x10); }

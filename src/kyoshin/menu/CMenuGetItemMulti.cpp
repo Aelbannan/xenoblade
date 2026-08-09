@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
+
+extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
+extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
+
 void __ct__CMenuGetItemMulti(){}
 
 void __dt__801B2754(){}
@@ -63,11 +67,11 @@ void func_801B9C1C(){}
 
 extern "C" void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(void* self) { func_801B45A0((char*)self - 0x6c); }
 
-void func_801BA134(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x6c)->~CMenuGetItemMulti(); }
+void func_801BA134(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 
-void func_801BA13C(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x70)->cbRenderBefore(); }
+void func_801BA13C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 
-void func_801BA144(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x70)->~CMenuGetItemMulti(); }
+void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801B9FC8(){}

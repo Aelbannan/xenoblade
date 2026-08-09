@@ -937,17 +937,19 @@ extern "C" int func_801836E4(void* self) {
 // Thunks
 // ============================================================
 extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) {
-    func_801835D4((char*)self - 0x38, (CEventFile*)((char*)self));
+    ((void(*)(void*))func_801835D4)((char*)self - 0x38);
 }
 
 extern "C" void func_8018370C(void* self) {
-    __ct__80181B74((char*)self - 0x38, *(int*)((char*)self + 0x8)); // pass through r4
+    ((void(*)(void*))__ct__80181B74)((char*)self - 0x38);
 }
 
 extern "C" void func_80183714(void* self) {
-    func_801836CC((char*)self - 0x3C, *(unsigned long*)((char*)self + 0x8));
+    ((void(*)(void*))func_801836CC)((char*)self - 0x3C);
 }
 
 extern "C" void func_8018371C(void* self) {
-    __ct__80181B74((char*)self - 0x3C, *(int*)((char*)self + 0x8));
+    ((void(*)(void*))__ct__80181B74)((char*)self - 0x3C);
 }
+// retail: li r3,1; blr — returns true
+extern "C" bool func_801835BC(void* self) { return true; }

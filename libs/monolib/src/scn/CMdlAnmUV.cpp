@@ -13,4 +13,7 @@ CMdlAnmUV::~CMdlAnmUV() {}
 
 void func_804E72D0() {}
 
+// retail: lwz r3, lbl_eu_80663C74; blr
+extern "C" u32 func_804E6C78() { return (u32)lbl_eu_80663C74; }
+
 void func_804E6C80() {}

@@ -4,6 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
+
+extern "C" void __dt__16CMenuBattleCommuFv(void*, int);
+extern "C" void cbRenderBefore__16CMenuBattleCommuFv(void*);
 void __ct__CMenuBattleCommu(){}
 
 CMenuBattleCommu::~CMenuBattleCommu() {}
@@ -26,8 +29,8 @@ void func_801B0FB0(){}
 
 void func_801B1618(){}
 
-void func_801B18B8(void* self) { reinterpret_cast<CMenuBattleCommu*>((char*)self - 0x58)->~CMenuBattleCommu(); }
+void func_801B18B8(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x58); }
 
-void func_801B18C0(void* self) { reinterpret_cast<CMenuBattleCommu*>((char*)self - 0x5c)->cbRenderBefore(); }
+void func_801B18C0(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuBattleCommuFv)((char*)self - 0x5c); }
 
-void func_801B18C8(void* self) { reinterpret_cast<CMenuBattleCommu*>((char*)self - 0x5c)->~CMenuBattleCommu(); }
+void func_801B18C8(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x5c); }

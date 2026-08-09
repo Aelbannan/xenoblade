@@ -3,6 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern unsigned long lbl_eu_8066430C;
+extern unsigned long lbl_eu_80664308;
+
 #include "kyoshin/cf/CPartsChange.hpp"
 
 using cf::CfPartyInfo;
@@ -57,13 +60,13 @@ void __dt__reslist_cf_CfPartyInfo(){}
 
 void __dt__80193538(){}
 
-bool func_80193670() { return false; }
+extern "C" u32 func_80193670() { return (u32)lbl_eu_8066430C; }
 
 void func_80193678(){}
 
 void func_80193710(){}
 
-bool func_80193804() { return false; }
+extern "C" u32 func_80193804() { return (u32)lbl_eu_80664308; }
 
 void func_8019380C(void){}
 
@@ -162,8 +165,6 @@ void func_80197BA4(){}
 void func_80197C6C(){}
 
 void func_80197DE8(){}
-
-u32 lbl_eu_8066430C;
 void func_80198108(int arg) {
     if (lbl_eu_8066430C == 0) return;
     unsigned char* p = (unsigned char*)lbl_eu_8066430C + 0x10000;

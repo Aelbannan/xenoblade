@@ -5,7 +5,7 @@
 class CPartyState {
 public:
     CPartyState();
-    virtual ~CPartyState();
+    ~CPartyState();
     void OnFileEvent();
     u8 func_801FD17C();
     u8 func_801FD184();

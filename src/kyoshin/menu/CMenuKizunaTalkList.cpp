@@ -3,6 +3,9 @@
 
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
 
+extern "C" void __dt__19CMenuKizunaTalkListFv(void*, int);
+extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
+
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -234,13 +237,13 @@ void func_80272694(){}
 // 'this' points to the IScnRender subobject at offset +0x58 within
 // CMenuKizunaTalkList. This thunk adjusts it back and tail-calls the
 // real implementation.
-void CMenuKizunaTalkList::func_802726E4() {
-    cbRenderBefore();
+extern "C" void func_802726E4(void* self) {
+    ((void(*)(void*))cbRenderBefore__19CMenuKizunaTalkListFv)((char*)self - 0x58);
 }
 
 // IScnRender vtable adjustor thunk for ~CMenuKizunaTalkList.
-void CMenuKizunaTalkList::func_802726EC() {
-    this->~CMenuKizunaTalkList();
+extern "C" void func_802726EC(void* self) {
+    ((void(*)(void*))__dt__19CMenuKizunaTalkListFv)((char*)self - 0x58);
 }
 
 extern unsigned long lbl_eu_806648B0;

@@ -738,10 +738,3 @@ void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6Tim
 void IsDerivedFrom__Q34nw4r3g3d8ScnGroupCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void GetTypeName__Q34nw4r3g3d8ScnGroupCFv(){}
-// Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros
-extern "C" const char* GetTypeName__Q34nw4r3g3d6ScnObjCFv(const void* self) {
-    const void* vtable = *static_cast<const void* const*>(self);
-    const char* (*vfunc)(const void*) = reinterpret_cast<const char* (*)(const void*)>(static_cast<const void* const*>(vtable)[0x14 / sizeof(void*)]);
-    const char* result = vfunc(self);
-    return result + 4;
-}

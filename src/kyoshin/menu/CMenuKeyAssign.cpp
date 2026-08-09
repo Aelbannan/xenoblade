@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
+
+extern "C" void __dt__14CMenuKeyAssignFv(void*, int);
+extern "C" void cbRenderBefore__14CMenuKeyAssignFv(void*);
+
 CMenuKeyAssign::~CMenuKeyAssign() {}
 
 void CMenuKeyAssign::Init() {}
@@ -28,8 +32,8 @@ void func_80115BD8(){}
 
 void func_80115DB0(){}
 
-void func_80115FB8(void* self) { reinterpret_cast<CMenuKeyAssign*>((char*)self - 0x58)->~CMenuKeyAssign(); }
+void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
 
-void func_80115FC0(void* self) { reinterpret_cast<CMenuKeyAssign*>((char*)self - 0x5c)->cbRenderBefore(); }
+void func_80115FC0(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
 
-extern "C" void func_80115FC8(void* self) { reinterpret_cast<CMenuKeyAssign*>((char*)self - 0x5c)->~CMenuKeyAssign(); }
+extern "C" void func_80115FC8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }

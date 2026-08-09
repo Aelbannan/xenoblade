@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuGetItem.hpp"
+
+extern "C" void __dt__12CMenuGetItemFv(void*, int);
+extern "C" void cbRenderBefore__12CMenuGetItemFv(void*);
+
 void __ct__CMenuGetItem(){}
 
 void __ct__80149878(){}
@@ -41,8 +45,8 @@ void func_8014A570(){}
 
 void func_8014A6F8(){}
 
-void func_8014A854(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x58)->~CMenuGetItem(); }
+void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 
-void func_8014A85C(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x5c)->cbRenderBefore(); }
+void func_8014A85C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
 
-void func_8014A864(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x5c)->~CMenuGetItem(); }
+void func_8014A864(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }

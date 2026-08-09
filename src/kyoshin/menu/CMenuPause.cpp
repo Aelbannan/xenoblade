@@ -3,6 +3,9 @@
 
 #include "kyoshin/menu/CMenuPause.hpp"
 
+extern "C" void __dt__10CMenuPauseFv(void*, int);
+extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
+
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/scn/CScn.hpp"
@@ -339,6 +342,6 @@ extern "C" void func_80252564(CMenuPause* p) {
 }
 
 // IScnRender / IWorkEvent adjuster thunks (subobjects embedded in CMenuPause).
-void func_80252628(void* self) { ((CMenuPause*)((char*)self - 0x58))->~CMenuPause(); }
-void func_80252630(void* self) { ((CMenuPause*)((char*)self - 0x5c))->cbRenderBefore(); }
-void func_80252638(void* self) { ((CMenuPause*)((char*)self - 0x5c))->~CMenuPause(); }
+void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
+void func_80252630(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
+void func_80252638(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }

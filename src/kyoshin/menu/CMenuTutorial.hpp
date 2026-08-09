@@ -36,6 +36,8 @@ public:
 private:
     friend void func_8029A764(CMenuTutorial* self);
     friend void func_8029A8D4(CMenuTutorial* self);
+    friend void func_8029A668(CMenuTutorial* self);
+    friend void func_8029A7B4(CMenuTutorial* self);
 
     u8 _pad3C[0x18];              // 0x3C-0x53: vtable PMF data
     u8 field_54;                  // 0x54: writable state byte

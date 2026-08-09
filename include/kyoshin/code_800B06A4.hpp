@@ -6,6 +6,25 @@ struct CfObject { char _pad[4]; };
 struct TboxInfo { char _pad[4]; };
 struct IFactoryEvent { char _pad[4]; };
 }
+
+// Fixed-size pool node used by reslist<cf::IFactoryEvent*> (0xc bytes per entry).
+// node[0]=next, [4]=prev, [8]=data pointer. An empty slot has next == 0.
+struct CFactoryEventPoolNode {
+    CFactoryEventPoolNode* next; // +0x0
+    CFactoryEventPoolNode* prev; // +0x4
+    cf::IFactoryEvent* data;     // +0x8
+};
+
+// Argument to func_800B4A24: an embedded sub-object (parent offset -0x3E9C).
+// First word is a function table (callable entry 0x80 = vtable+0x200), and
+// +0x64 holds status flags (bit 26 = 0x04000000 tested by the caller).
+struct CEvtTypeArg;
+typedef int (*CEvtTypeFn)(CEvtTypeArg*);
+struct CEvtTypeArg {
+    CEvtTypeFn* fnTable;    // +0x0
+    u8 _pad04[0x64 - 0x4];
+    u32 flags;              // +0x64 (bit 26 => 0x04000000)
+};
 namespace ml {
 template <int N>
 struct FixStr {

@@ -4,4 +4,5 @@
 - [ ] Convert possible member functions (symbols.txt)
 - [ ] Convert possible static functions
 - [ ] Get rid of pointer math
+- [ ] Fix fake array accessors
 - [ ] Start renaming functions and labels

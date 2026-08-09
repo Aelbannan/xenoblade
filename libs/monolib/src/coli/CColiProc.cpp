@@ -148,41 +148,41 @@ extern "C" int func_804B25BC(CColiWork* work, u16* outIndex, void** outBuf,
     }
 
     // Pass 2: dispatch each entry's handler and pack its data into buf.
-    lbl_eu_80665950 = -1;
-    CColiEntry* q = (CColiEntry*)((u8*)work->field_0x0 + table->field_0x8);
-    u32 offset = 0;
     u32 cntBit0 = 0;
+    u32 offset = 0;
+    CColiEntry* q = (CColiEntry*)((u8*)work->field_0x0 + table->field_0x8);
+    lbl_eu_80665950 = -1;
     for (u32 i = 0; i < table->field_0xC; i++) {
-        u16 flags = q->field_0x2;
-        if (flags & 1) {
+        if (q->field_0x2 & 1) {
             cntBit0++;
         }
-        if (flags & 0x10) {
+        if (q->field_0x2 & 0x10) {
             work->field_0xC |= 0x40000;
         }
-        u16 type = q->field_0x0;
-        if ((q->field_0x2 & 2) && type != 8) {
+        if ((q->field_0x2 & 2) && q->field_0x0 != 8) {
             u8* dst = buf + offset;
-            lbl_eu_8056F3FC[type](dst, (u32)work->field_0x0 + q->field_0x4,
-                                  work->field_0x4, &q->field_0x10);
-            memcpy(dst + (s32)lbl_eu_8056F3D4[type], dst,
-                   (size_t)lbl_eu_8056F3D4[type]);
-            offset += 2 * lbl_eu_8056F3D4[type] + 0xc0;
+            lbl_eu_8056F3FC[q->field_0x0](
+                dst, (u32)work->field_0x0 + q->field_0x4, work->field_0x4,
+                &q->field_0x10);
+            memcpy(dst + (s32)lbl_eu_8056F3D4[q->field_0x0], dst,
+                   (size_t)lbl_eu_8056F3D4[q->field_0x0]);
+            offset += 2 * lbl_eu_8056F3D4[q->field_0x0] + 0xc0;
         } else {
             u8* dst = buf + offset;
-            lbl_eu_8056F3FC[type](dst, (u32)work->field_0x0 + q->field_0x4,
-                                  work->field_0x4, &q->field_0x10);
-            offset += lbl_eu_8056F3D4[type];
+            lbl_eu_8056F3FC[q->field_0x0](
+                dst, (u32)work->field_0x0 + q->field_0x4, work->field_0x4,
+                &q->field_0x10);
+            offset += lbl_eu_8056F3D4[q->field_0x0];
         }
-        q = (CColiEntry*)((u8*)q + lbl_eu_8056F3C0[type] + 16);
+        q = (CColiEntry*)((u8*)q + lbl_eu_8056F3C0[q->field_0x0] + 16);
     }
 
     *outBuf = buf;
     if (lbl_eu_80665950 == -1) {
         return 0;
     }
-    *outIndex = lbl_eu_80665950;
     s32 sign = -(s32)cntBit0 | (s32)cntBit0;
+    *outIndex = lbl_eu_80665950;
     return (sign >> 31) + 2;
 }
 

@@ -2,45 +2,131 @@
  * @file CfGimmickItem.cpp
  * @brief Translation unit for cf::CfGimmickItem (item gimmick).
  *
- * All functions are currently auto-scaffolded stubs. Only FULL_MATCH
- * symbols have real bodies:
- *   func_80210C1C -- empty virtual override (just blr, 4 bytes)
+ * Functions decompiled from the retail ASM at build/us/asm/kyoshin/cf/.
+ * The class carries a manual vtable + replicated CfGimmick base layout
+ * (no C++ inheritance), so the base destructor is invoked by name and
+ * the retail vtable / PTMF tables are referenced as data symbols.
  */
 
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
 // ---------------------------------------------------------------------------
-// Constructor / Destructor (scaffold - NOT YET DECOMPILED)
+// Constructor / Destructor
 // ---------------------------------------------------------------------------
 
-void __ct__cf_CfGimmickItem(){}
+cf::CfGimmickItem::~CfGimmickItem() {
+    this->vtable = (void*)lbl_eu_80535A98;
+    func_80208EE4((void*)this);
+    func_8020A434(&this->field_7C);
+    __dt__Q22cf9CfGimmickFv((void*)this, 0);
+    // MWCC appends the deleting-dtor prologue (null guard) and epilogue
+    // (delete-flag ? operator delete(this) : skip) automatically.
+}
 
-cf::CfGimmickItem::~CfGimmickItem() {}
+// ---------------------------------------------------------------------------
+// func_80210668 -- PTMF state dispatch + one-frame spawn/cleanup
+// ---------------------------------------------------------------------------
+
+// Field-74 state flag bits (retail rlwinm masks).
+enum {
+    kItemFlagWork = 0x10,   // "working" flag set/cleared during the move step
+    kItemFlagBusy = 0x20,   // actor busy flag (spawned/attached)
+};
+
+void func_80210668(cf::CfGimmickItem* self) {
+    // Dispatch the current state through the 12-byte PTMF table.
+    (self->*lbl_eu_80535A50[self->field_9E])();
+
+    if (self->field_74 & kItemFlagWork) {
+        if (self->field_66 & 1) {
+            // Attach an item object at the placement point while working.
+            func_8020A6B0(&self->field_7C, &self->vvec04, self->field_6A,
+                          lbl_eu_8066844C, 0, 0);
+        }
+        self->field_74 &= ~kItemFlagWork;
+    } else {
+        func_8020A434(&self->field_7C);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80210844 -- busy-flag handled item activation; falls back to state 4
+// ---------------------------------------------------------------------------
+
+void func_80210844(cf::CfGimmickItem* self) {
+    func_80209F2C();
+
+    bool fail;
+    if (self->field_6A == 0) {
+        fail = true;
+    } else if (self->field_74 & kItemFlagBusy) {
+        if (func_8020A5DC() != 0) {
+            fail = false;
+        } else {
+            self->field_74 &= ~kItemFlagBusy;
+            fail = true;
+        }
+    } else {
+        func_8020A484();
+        self->field_74 |= kItemFlagBusy;
+        fail = false;
+    }
+
+    if (fail) {
+        self->field_9E = 4;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80210AD0 -- detect what can be collected and move to the next state
+// ---------------------------------------------------------------------------
+
+void func_80210AD0(cf::CfGimmickItem* self) {
+    for (int i = 0; i < 3; ++i) {
+        if (self->field_84[i] != 0 && (self->field_74 & (1 << i))) {
+            func_80159C04(self->field_84[i], 1);
+        }
+    }
+
+    if (self->field_8A != 0) {
+        func_801586D4(self->field_8A, 1);
+    }
+
+    if (self->field_9C == 3) {
+        self->field_9E = 5;
+    } else if (self->field_9C == 2) {
+        self->field_9E = 5;
+    } else {
+        self->field_9E = 4;
+    }
+
+    if (self->field_64 != 0) {
+        func_8020974C(self->field_64, 1);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80210BAC -- placement dispatch; on miss reset the item state
+// ---------------------------------------------------------------------------
+
+void func_80210BAC(cf::CfGimmickItem* self) {
+    if ((self->field_66 & 1) != 0 ||
+        jumptable_eu_80535830[self->mType](
+            (cf::CfGimmick*)&self->vobj, &lbl_eu_805765A0, &self->vvec04) == 0) {
+        self->field_9E = 0;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Remaining functions (scaffolds - NOT YET DECOMPILED)
 // ---------------------------------------------------------------------------
 
-void func_80210668(){}
-
 void func_802106F8(){}
-
-void func_80210844(){}
 
 void func_802108D8(){}
 
-void func_80210AD0(){}
-
-void func_80210BAC(){}
-
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Virtual function override -- no-op
-//
-// Retail:     blr
-// Address:    0x80212A74
-// Size:       0x4
-// This function overrides a CfGimmick virtual method. The base-class
-// implementation performs some action while the item variant does nothing.
 // ---------------------------------------------------------------------------
 
 extern "C" void func_80210C1C() {}

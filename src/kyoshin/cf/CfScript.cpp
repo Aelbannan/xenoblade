@@ -3,6 +3,7 @@
 
 #include "kyoshin/cf/CfScript.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/util/FixStr.hpp"
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
@@ -11,7 +12,7 @@
 extern "C" {
     void vmInit();
     void vmExec();
-    void vmLink(void* ctx);
+    int vmLink(void* ctx);
     void vmStart(void* ctx);
     void vmUnlink(void* ctx);
     void vmThreadSleepAll(void* ctx);
@@ -26,11 +27,11 @@ extern "C" {
 
     // String constants from data
     extern char lbl_eu_805708D0[];
-    extern char lbl_eu_80661AC0[];
+    extern char* lbl_eu_80661AC0;
     extern char lbl_eu_80661AD0[];
     extern char lbl_eu_804FB3A4[];
     extern char lbl_eu_80570918[];
-    extern u8 lbl_eu_80663D88;
+    extern s8 lbl_eu_80663D88;
 
     // ml namespace functions
     void getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(void* out, const char* path);
@@ -41,21 +42,22 @@ extern "C" {
 namespace cf {
 
 // Forward declarations for functions in this TU
-void func_80068A30(char* dest, const char* src);
-void func_80068B58(CfScriptManager* mgr, const char* name);
+__declspec(noinline) char* func_80068A30(char* dest, const char* src);
+__declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
 void func_80068ECC(CfScript* script, const char* name);
-void func_80068E7C(CfScriptManager* mgr, int index, int mask);
+__declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask);
 
 // func_80068A20 - initializer for path string
 void func_80068A20() {
     func_80068A30(lbl_eu_805708D0, lbl_eu_80661AC0);
 }
 
-// func_80068A30 - copy string with length tracking
-void func_80068A30(char* dest, const char* src) {
+// func_80068A30 - copy string with length tracking; returns dest
+__declspec(noinline) char* func_80068A30(char* dest, const char* src) {
     u32 len = strlen(src);
     *((u32*)(dest + 0x40)) = len;
     strcpy(dest, src);
+    return dest;
 }
 
 // func_80068A80 - get singleton and init
@@ -76,16 +78,15 @@ void func_80068AC8() {
     mgr->func_8006953C();
 }
 
-// func_80068AEC - get singleton and call func_80068B20
+// func_80068AEC - get singleton and load slot 0
 void func_80068AEC(const char* name) {
     CfScriptManager* mgr = CfScriptManager::getInstance();
-    mgr->func_80068B20();
+    mgr->func_80068B20(name);
 }
 
-// CfScriptManager::func_80068B20 - tail call to func_80068ECC
-// mScripts[0] is at offset 0 of CfScriptManager, so this == &mScripts[0]
-void CfScriptManager::func_80068B20() {
-    func_80068ECC(&mScripts[0], nullptr);
+// CfScriptManager::func_80068B20 - forward slot 0 (== this) + name to loader
+__declspec(noinline) void CfScriptManager::func_80068B20(const char* name) {
+    func_80068ECC(&mScripts[0], name);
 }
 
 // func_80068B24 - get singleton and call func_80068B58
@@ -95,7 +96,7 @@ void func_80068B24(const char* name) {
 }
 
 // func_80068B58 - load script into slot 1
-void func_80068B58(CfScriptManager* mgr, const char* name) {
+__declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name) {
     CfScript* script = &mgr->mScripts[1];
     func_80068ECC(script, name);
 }
@@ -107,7 +108,7 @@ void func_80068B60(const char* name) {
 }
 
 // CfScriptManager::func_80068B94 - load script into slot 2
-void CfScriptManager::func_80068B94(const char* name) {
+__declspec(noinline) void CfScriptManager::func_80068B94(const char* name) {
     CfScript* script = &mScripts[2];
     func_80068ECC(script, name);
 }
@@ -243,13 +244,12 @@ void CfScriptManager::func_80068DD0() {
 }
 
 // func_80068E44 - get singleton and call func_80068E7C
-void func_80068E44(int param) {
-    CfScriptManager* mgr = CfScriptManager::getInstance();
-    func_80068E7C(mgr, 2, param);
+void func_80068E44(int mask) {
+    func_80068E7C(CfScriptManager::getInstance(), 2, mask);
 }
 
-// func_80068E7C - check flags with mask
-void func_80068E7C(CfScriptManager* mgr, int index, int mask) {
+// func_80068E7C - check flags with mask (returns nonzero if (flags & mask) != 0)
+__declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask) {
     CfScript& script = mgr->mScripts[index];
     u32 result = script.mFlags & mask;
     u32 neg = (u32)(-(s32)result);
@@ -259,11 +259,13 @@ void func_80068E7C(CfScriptManager* mgr, int index, int mask) {
 }
 
 // func_80068E9C - format or copy string based on condition
+// retail: pure tail calls (b func_80068A30 / b format) - func_80068A30 is noinline
+// so the if-branch collapses to a tail call; format string is base of lbl_eu_804FB3A4.
 void func_80068E9C(char* dest, const char* src1, const char* src2, const char* src3) {
     if (src3 != nullptr) {
         func_80068A30(dest, src3);
     } else {
-        format__Q22ml10FixStr64FPCce(dest, &lbl_eu_804FB3A4[0x1C], src1, src2);
+        format__Q22ml10FixStr64FPCce(dest, lbl_eu_804FB3A4, src1, src2);
     }
 }
 
@@ -373,20 +375,16 @@ void func_80068ECC(CfScript* script, const char* name) {
 
 // CfScript::waitLoad
 void CfScript::waitLoad() {
-    if (!(mFlags & 0x2)) return;
-    if (!(mFlags & 0x4)) return;
-
-    if (!(mFlags & 0x8)) {
-        if (mVmContext != nullptr) {
-            vmLink(mVmContext);
-            if (mVmContext != nullptr) {
+    if ((mFlags & 0x2) && (mFlags & 0x4)) {
+        // If the VM thread is not yet running, link + start it.
+        if (!(mFlags & 0x8)) {
+            if (vmLink(mVmContext) != 0) {
                 vmStart(mVmContext);
                 mFlags |= 0x8;
             }
         }
+        mWaitCount++;
     }
-
-    mWaitCount++;
 }
 
 // CfScript::update
@@ -400,21 +398,12 @@ void CfScript::OnFileEvent() {
 }
 
 // CfScriptManager::getInstance - singleton accessor
-CfScriptManager* CfScriptManager::getInstance() {
-    if (lbl_eu_80663D88 == 0) {
+__declspec(noinline) CfScriptManager* CfScriptManager::getInstance() {
+    if (!lbl_eu_80663D88) {
         CfScriptManager* mgr = (CfScriptManager*)lbl_eu_80570918;
-
-        for (int i = 0; i < 3; i++) {
-            CfScript& script = mgr->mScripts[i];
-            script.mName[0] = '\0';
-            script.mNameLen = 0;
-            script.mFileHandle = nullptr;
-            script.mFlags = 0;
-            script.mVmContext = nullptr;
-            script.mWaitCount = 0;
-            script.mIndex = (u16)i;
-        }
-
+        // Construct the 3-script array in place at the static manager address
+        // (retail emits __construct_array with CfScript ctor/dtor, size 0x58, count 3).
+        new (mgr->mScripts) CfScript[3];
         mgr->init();
         lbl_eu_80663D88 = 1;
     }
@@ -538,17 +527,18 @@ void CfScriptManager::func_8006953C() {
     vmInit();
 }
 
-// ml::FixStr<128>::format
-void ml_format_FixStr128(void* self, const char* fmt, ...) {
+// ml::FixStr<N>::format - vsnprintf into a stack buffer, then copy into the
+// fixed string (mString at 0x00, mLength at 0x80 for FixStr<128>).
+template <>
+void ml::FixStr<128>::format(const char* fmt, ...) {
     char buffer[0x100];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
-    u32 len = strlen(buffer);
-    *((u32*)((char*)self + 0x80)) = len;
-    strcpy((char*)self, buffer);
+    mLength = (int)std::strlen(buffer);
+    std::strcpy(mString, buffer);
 }
 
 // sinit_800696C8 - static initializer

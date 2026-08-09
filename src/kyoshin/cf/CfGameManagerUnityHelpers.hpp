@@ -1138,10 +1138,9 @@ struct FixStr32Storage {
 };
 extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
     const char* name, u32 value, u16 third, u32 fourth) {
-    const char* sourceName = name;
     u32 index = value;
     Unk80EE4Data* result =
-        func_80080E44__Q22cf13CfGameManagerFv(sourceName, index);
+        func_80080E44__Q22cf13CfGameManagerFv(name, index);
     if (result != nullptr) {
         FixStr32Storage text;
         func_8007D794__Q22cf13CfGameManagerFv(
@@ -2799,48 +2798,63 @@ extern "C" u32 lbl_eu_80663E50;
 extern "C" const char* func_8007339C(void* object);
 extern "C" void func_80068B24(const char* name, u32 value);
 extern "C" void func_80068BD0();
+extern "C" bool func_80086D9C__Q22cf13CfGameManagerFv();
+extern "C" void func_80083878__Q22cf13CfGameManagerFv();
 extern "C" void func_8008372C__Q22cf13CfGameManagerFv(
     void* first, void* second, u32 value) {
     if (CfRes_checkFlags_2000400()) {
         return;
     }
-    if (CfRes_getE24Bit18()) {
-        return;
+    if (!CfRes_getE24Bit18()) {
+        goto proceed;
     }
-    if (first == nullptr || second == nullptr) {
-        return;
-    }
-
-    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
-    if (manager->func_80086D9C()) {
-        if (manager->field_0x86 != 1) {
-            func_80084C10__Q22cf13CfGameManagerFv();
-            manager->field_0x86 = 1;
+    goto done;
+proceed:
+    {
+        if (first == nullptr) {
+            return;
         }
-    } else if (!manager->func_80086D9C()) {
-        if (manager->field_0x86 != 2) {
+        if (second == nullptr) {
+            return;
+        }
+
+        cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+        if (func_80086D9C__Q22cf13CfGameManagerFv()) {
+            if (manager->field_0x86 != 1) {
+                func_80084C10__Q22cf13CfGameManagerFv();
+                manager->field_0x86 = 1;
+            }
+        } else if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
+            if (manager->field_0x86 != 2) {
+                func_80084C10__Q22cf13CfGameManagerFv();
+                manager->field_0x86 = 2;
+                first = second;
+            }
+        } else if (value != lbl_eu_80663E50) {
             func_80084C10__Q22cf13CfGameManagerFv();
-            manager->field_0x86 = 2;
+            if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
+                first = second;
+            }
+            if (func_80086D9C__Q22cf13CfGameManagerFv()) {
+                manager->field_0x86 = 1;
+            } else {
+                manager->field_0x86 = 2;
+            }
+        } else if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
             first = second;
         }
-    } else if (value != lbl_eu_80663E50) {
-        func_80084C10__Q22cf13CfGameManagerFv();
-        if (!manager->func_80086D9C()) {
-            first = second;
-        }
-        manager->field_0x86 = manager->func_80086D9C() ? 1 : 2;
-    } else if (!manager->func_80086D9C()) {
-        first = second;
-    }
 
-    if (!manager->func_80086D9C()) {
-        lbl_eu_80663E50 = value;
-        const char* name = func_8007339C(first);
-        func_80068B24(name, lbl_eu_80663E50);
-        func_80068BD0();
-        func_8007C188__Q22cf13CfGameManagerFv(8);
-        manager->func_80083878();
+        if (!func_80086D9C__Q22cf13CfGameManagerFv()) {
+            lbl_eu_80663E50 = value;
+            const char* name = func_8007339C(first);
+            func_80068B24(name, lbl_eu_80663E50);
+            func_80068BD0();
+            func_8007C188__Q22cf13CfGameManagerFv(8);
+            func_80083878__Q22cf13CfGameManagerFv();
+        }
     }
+done:
+    ;
 }
 
 struct Unk83328Object {
@@ -2850,21 +2864,75 @@ struct Unk83328Object {
 extern "C" bool func_800A8DAC();
 extern "C" void func_800A9360();
 extern "C" void CfRes_delegateCleanup(void* object);
-extern "C" void CfRes_initStruct_64994();
+extern "C" void CfRes_initStruct_64994(void* object);
 extern "C" u32 func_800AA2BC(u32 first, u32 second);
 extern "C" void func_800A9444();
 extern "C" void CfRes_clearE28Mask(u32 mask);
 extern "C" void func_80082940__Q22cf13CfGameManagerFv(
     void* object, void* first, void* second);
+struct Unk82C48Vtable {
+    u8 pad_0x0[0x600];
+    void (*vfunc_0x600)(void* object);
+    void (*vfunc_0x604)(void* object);
+};
+struct Unk82C48Object {
+    void (**vtable)(void* object);
+};
+extern "C" void* CfRes_getE14();
+extern "C" void* func_800FE68C();
+extern "C" void func_800FDE4C(void* first, void* second, void* third);
+extern "C" void func_800BE3E8(void* object, u32 value);
+extern "C" void func_800FE694(float value);
+extern "C" void* func_8009E474(void* object, u16 value);
+extern const float lbl_eu_80666558;
+extern "C" void func_80082C48__Q22cf13CfGameManagerFv(
+    cf::CfObjectMove* player) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove** slot =
+        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* previous = *slot;
+    slot = func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    *slot = player;
+
+    Unk82C48Object* object = static_cast<Unk82C48Object*>(
+        func_800BFC68__FPQ22cf12CfObjectMove(player));
+    void* resource = CfRes_getE14();
+    void* system = func_800FE68C();
+    func_800FDE4C(system, object, resource);
+    if (object != nullptr) {
+        lbl_eu_80663E40 = func_8007F8B8__Q22cf13CfGameManagerFv(
+            reinterpret_cast<ItemListSubobject*>(player));
+        func_800BE3E8(reinterpret_cast<u8*>(object) + 0x3E9C, 1);
+        func_800FE68C();
+        func_800FE694(lbl_eu_80666558);
+        void* data = func_8009ECB0();
+        u16 value = func_8007F8B8__Q22cf13CfGameManagerFv(
+            reinterpret_cast<ItemListSubobject*>(
+                reinterpret_cast<u8*>(object) + 0x3E9C));
+        func_8009E474(data, value);
+        object->vtable[0x600 / 4](object);
+        if (previous != nullptr) {
+            Unk82C48Object* previousObject =
+                reinterpret_cast<Unk82C48Object*>(previous);
+            if (previousObject != nullptr) {
+                previousObject = reinterpret_cast<Unk82C48Object*>(
+                    reinterpret_cast<u8*>(previousObject) - 0x3E9C);
+            }
+            previousObject->vtable[0x604 / 4](previousObject);
+        }
+    }
+}
+
 extern "C" void func_80083328__Q22cf13CfGameManagerFv(
     Unk83328Object* object, u32 first, u32 second) {
-    if (func_800A8DAC()) {
-        CfRes_callFunc_67E78(1);
+    bool active = func_800A8DAC();
+    if (active) {
+        CfRes_callFunc_67E78(active);
         func_800620F0();
         func_800A9360();
         Unk866A0Data* data = func_80062F60();
         CfRes_delegateCleanup(data);
-        CfRes_initStruct_64994();
+        CfRes_initStruct_64994(data);
     }
     u32 packed = func_800AA2BC(first, second);
     func_800A9444();
@@ -2875,13 +2943,59 @@ extern "C" void func_80083328__Q22cf13CfGameManagerFv(
     func_8007FC5C__Q22cf13CfGameManagerFv(0x28, first, second, 0, 0);
     func_8007FC5C__Q22cf13CfGameManagerFv(2, first, second, 0, 0);
     object->text_0x6C.format(&lbl_eu_804FB824[0xA8], first, second);
-    u32 lower = func_80083458__Q22cf13CfGameManagerFv();
-    u32 upper = func_80083460__Q22cf13CfGameManagerFv();
+    s32 lower = static_cast<s32>(func_80083458__Q22cf13CfGameManagerFv());
+    s32 upper = static_cast<s32>(func_80083460__Q22cf13CfGameManagerFv());
     func_80082940__Q22cf13CfGameManagerFv(
         object, reinterpret_cast<void*>(first), reinterpret_cast<void*>(second));
-    u32 value = func_80083460__Q22cf13CfGameManagerFv();
+    s32 value = static_cast<s32>(func_80083460__Q22cf13CfGameManagerFv());
     func_80083468__Q22cf13CfGameManagerFv(
         value == lower || value == upper);
     func_8007FC5C__Q22cf13CfGameManagerFv(10, 0, packed, 0, 0);
+}
+
+extern "C" u8 lbl_eu_80570CE0[];
+extern "C" u32 lbl_eu_80663E2C;
+extern "C" float lbl_eu_8057164C[3];
+struct SinitSingleton87470 {
+    u8 pad_0x0[0x40];
+    SinitSingleton87470* self_0x40;
+    u32 field_0x44;
+    u32 field_0x48;
+    u32 field_0x4C;
+};
+extern "C" void func_80087588(Unk87588Data* object);
+extern "C" void __construct_array(void* array, void* ctor, void* dtor,
+                                    u32 size, u32 count);
+extern "C" void sinit_80087470() {
+    u8* base = lbl_eu_80570CE0;
+    SinitSingleton87470* object =
+        reinterpret_cast<SinitSingleton87470*>(base + 0x10);
+    lbl_eu_80663DF8 = 0xFFFFFFFF;
+    object->field_0x4C = 0x20;
+    object->self_0x40 = object;
+    object->field_0x48 = 0;
+    object->field_0x44 = 0;
+    __register_global_object(object, reinterpret_cast<void*>(__dt__8008753C), base);
+
+    BdatTextEntry* entry0 = reinterpret_cast<BdatTextEntry*>(base + 0x948);
+    float* vector = reinterpret_cast<float*>(base + 0x96C);
+    BdatTextEntry* entries = reinterpret_cast<BdatTextEntry*>(base + 0x978);
+    BdatTextEntry* entry1 = reinterpret_cast<BdatTextEntry*>(base + 0xA18);
+    lbl_eu_80663E24 = 0;
+    lbl_eu_80663E28 = 0;
+    lbl_eu_80663E2C = 0;
+    entry0->text[0] = 0;
+    entry0->textLength = 0;
+    vector[0] = lbl_eu_80666498;
+    vector[1] = lbl_eu_80666498;
+    vector[2] = lbl_eu_80666498;
+    __construct_array(entries, reinterpret_cast<void*>(func_80087588),
+                      nullptr, sizeof(BdatTextEntry), 2);
+
+    entry1->text[0] = 0;
+    entry1->textLength = 0;
+    entry1->secondaryText[0] = 0;
+    entry1->secondaryTextLength = 0;
+    entry1->value = lbl_eu_80666548;
 }
 

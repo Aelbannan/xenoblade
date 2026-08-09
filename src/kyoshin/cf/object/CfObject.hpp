@@ -26,7 +26,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
         virtual void CfObject_UnkVirtualFunc13();     //0x84
-        virtual void CfObject_UnkVirtualFunc14();     //0x88
+        virtual void CfObject_UnkVirtualFunc14(float value);     //0x88
         virtual void CfObject_UnkVirtualFunc15();     //0x8C
         virtual void CfObject_UnkVirtualFunc16();     //0x90
         virtual void CfObject_UnkVirtualFunc17();     //0x94
@@ -39,7 +39,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
         virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
-        virtual void CfObject_UnkVirtualFunc27();     //0xBC
+        virtual void CfObject_UnkVirtualFunc27(void* src);     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8

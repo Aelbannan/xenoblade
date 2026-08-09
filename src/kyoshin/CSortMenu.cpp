@@ -5,6 +5,7 @@
 #include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CFileHandle.hpp"
+#include "monolib/work/CEventFile.hpp"
 
 // External symbols
 extern char lbl_eu_8050624C[];  // String table for resource names (non-C-linkage, kept here)
@@ -62,42 +63,32 @@ extern "C" void func_801D3064(CSortMenu* _this) {
         (unsigned long)handle, lbl_eu_8050624C + 0x00, _this, 0, 0);
     setHandleFlag1__11CDeviceFileFP11CFileHandle(_this->mFileHandle);
 
-    // Create a temporary CScrollBar to initialize the scrollbar data fields
-    u8 stackScrollBar[0x48];
-    __ct__CScrollBar(stackScrollBar, 2);
+    // Build a temporary CScrollBar that carries the initial data for the member.
+    CScrollBarData temp;
+    __ct__CScrollBar(&temp, 2);
 
-    // Copy CScrollBar data fields from stack to member
-    // CScrollBar data starts at offset 0x0C within the struct
-    u32* src = (u32*)(stackScrollBar + 0x0C);
-    u32* dst = (u32*)((u8*)_this + 0x30);
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
-    dst[4] = src[4];
-    dst[5] = src[5];
-    dst[6] = src[6];
-    dst[7] = src[7];
-    // u8 fields at 0x2C-0x2F -> 0x50-0x53
-    u8* src8 = (u8*)(stackScrollBar + 0x2C);
-    u8* dst8 = (u8*)_this + 0x50;
-    dst8[0] = src8[0];
-    dst8[1] = src8[1];
-    dst8[2] = src8[2];
-    dst8[3] = src8[3];
-    // f32 fields at 0x30-0x40 -> 0x54-0x64
-    f32* srcf = (f32*)(stackScrollBar + 0x30);
-    f32* dstf = (f32*)((u8*)_this + 0x54);
-    dstf[0] = srcf[0];
-    dstf[1] = srcf[1];
-    dstf[2] = srcf[2];
-    dstf[3] = srcf[3];
-    dstf[4] = srcf[4];
-    // u8 at 0x44 -> 0x68
-    ((u8*)_this)[0x68] = ((u8*)(stackScrollBar + 0x44))[0];
+    // Copy the constructed body into the member (retail omits the vtable at +0x0).
+    _this->mScrollBar.mMemRegion[0] = temp.mMemRegion[0];
+    _this->mScrollBar.mMemRegion[1] = temp.mMemRegion[1];
+    _this->mScrollBar.mMemRegion[2] = temp.mMemRegion[2];
+    _this->mScrollBar.mMemRegion[3] = temp.mMemRegion[3];
+    _this->mScrollBar.mFileHandle = temp.mFileHandle;
+    _this->mScrollBar.mAccessor = temp.mAccessor;
+    _this->mScrollBar.mLayout = temp.mLayout;
+    _this->mScrollBar.mAnimTrans = temp.mAnimTrans;
+    _this->mScrollBar.mReady = temp.mReady;
+    _this->mScrollBar.mVisible = temp.mVisible;
+    _this->mScrollBar.mState = temp.mState;
+    _this->mScrollBar.mActive = temp.mActive;
+    _this->mScrollBar.mAnimOffset = temp.mAnimOffset;
+    _this->mScrollBar.mScrollPosY = temp.mScrollPosY;
+    _this->mScrollBar.mScrollRatio = temp.mScrollRatio;
+    _this->mScrollBar.mThumbHeight = temp.mThumbHeight;
+    _this->mScrollBar.mContentHeight = temp.mContentHeight;
+    _this->mScrollBar.mDirection = temp.mDirection;
 
-    __dt__10CScrollBarFv(stackScrollBar, -1);
-    func_801F34F4((u8*)_this + 0x2C);
+    __dt__10CScrollBarFv(&temp, -1);
+    func_801F34F4(&_this->mScrollBar);
 }
 
 // ============================================================================
@@ -259,16 +250,14 @@ extern "C" void func_801D3518(CSortMenu* _this, int value) {
 extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
     nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
     nw4r::lyt::Pane* pane = rootPane->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
-    f32 height = *(f32*)((u8*)pane + 0x4C);
-    f32 width = *(f32*)((u8*)pane + 0x50);
 
     u8 count = _this->mCount;
-    u8 itemsPerPage = (count < 5) ? count : 5;
+    int itemsPerPage = (count < 5) ? count : 5;
 
-    f32 newWidth = height - (f32)(int)itemsPerPage * 16.0f;
-
-    *(f32*)((u8*)pane + 0x4C) = height;
-    *(f32*)((u8*)pane + 0x50) = newWidth;
+    PaneSizeRegion* size = (PaneSizeRegion*)pane;
+    f32 width = size->width;
+    size->width = width;
+    size->height = 16.0f * (f32)itemsPerPage;
 
     _this->mPage = page;
     _this->mSubPage = 0;
@@ -473,12 +462,14 @@ extern "C" void func_801D39EC(CSortMenu* _this) {
 // func_801D3A3C: Update pane text for all 5 slots
 // ============================================================================
 extern "C" void func_801D3A3C(CSortMenu* _this) {
+    void** strTable = (void**)lbl_eu_805349B8;
+    char* resBase = (char*)lbl_eu_8050624C;
     for (int i = 0; i < 5; i++) {
         int idx = i + (s8)_this->mSubPage;
         if (idx >= (int)_this->mCount) {
-            func_80136B4C(_this->mpLayout, (char*)lbl_eu_805349B8[i], lbl_eu_8050624C + 0x3e, 0);
+            func_80136B4C(_this->mpLayout, (char*)strTable[i], resBase + 0x3e, 0);
         } else {
-            func_80136B4C(_this->mpLayout, (char*)lbl_eu_805349B8[i], (char*)(uintptr_t)_this->mArray[idx], 0);
+            func_80136B4C(_this->mpLayout, (char*)strTable[i], (char*)(uintptr_t)_this->mArray[idx], 0);
         }
     }
     func_801F3850((u8*)_this + 0x2C, (s8)_this->mSubPage);
@@ -488,44 +479,46 @@ extern "C" void func_801D3A3C(CSortMenu* _this) {
 // CSortMenu::OnFileEvent - file load completion callback
 // ============================================================================
 extern "C" int OnFileEvent__9CSortMenuFP10CEventFile(CSortMenu* _this, CEventFile* event) {
-    if (_this->mFileHandle != (CFileHandle*)((u8*)event + 4)) {
-        return 0;
+    if (_this->mFileHandle == event->mFileHandle) {
+        char* s = lbl_eu_8050624C;  // resource-name string table base (r31)
+
+        createRegion__17UnkClass_8045F564FiiPCci(&_this->_04[0],
+                                  (int)getHandleMEM2__Q23mtl10MemManagerFv(),
+                                  0x2000, s + 0x3f, 1);
+
+        u8 sp8[8];  // Class_8045F858 is 8 bytes (UnkClass* + u32)
+        __ct__14Class_8045F858FP17UnkClass_8045F564(sp8, &_this->_04[0]);
+
+        // Save the file data buffer and clear the handle's reference to it.
+        void* fileData = _this->mFileHandle->getData();
+
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        _this->mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
+        _this->mArcResAcc->Attach(fileData, s + 0x49);
+
+        func_80136E84(&_this->mpLayout, _this->mArcResAcc, s + 0x4d);
+        func_80136F08(_this->mpLayout, &_this->mpAnimTrans0, _this->mArcResAcc, s + 0x63);
+        func_80136F08(_this->mpLayout, &_this->mpAnimTrans1, _this->mArcResAcc, s + 0x7c);
+
+        // Root pane sits at Layout + 0x10 (direct field access, not a virtual call).
+        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)_this->mpLayout + 0x10);
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, _this->mpLayout);
+        u32 result = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+        func_8013676C(rootPane, result);
+
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
+        _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
+        _this->mpLayout->Animate(0);
+
+        if (_this->mpLayout != NULL) {
+            _this->field_0x29 = 1;
+        }
+
+        _this->mFileHandle = NULL;
+        func_8045F810__17UnkClass_8045F564Fv(&_this->_04[0]);
+        __dt__14Class_8045F858Fv(sp8, -1);
+
+        return 1;
     }
-
-    void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    createRegion__17UnkClass_8045F564FiiPCci((u8*)_this + 0x04, (int)memHandle, 0x2000, lbl_eu_8050624C + 0x3f, 1);
-
-    u8 fileBuf[0x10];
-    __ct__14Class_8045F858FP17UnkClass_8045F564(fileBuf, (u8*)_this + 0x04);
-
-    void* fileData = _this->mFileHandle->mData;
-    _this->mFileHandle->mData = NULL;
-
-    func_80434A4C__Q23mtl10MemManagerFb(false);
-    _this->mArcResAcc = (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
-    _this->mArcResAcc->Attach(fileData, lbl_eu_8050624C + 0x49);
-
-    func_80136E84(&_this->mpLayout, _this->mArcResAcc, lbl_eu_8050624C + 0x4d);
-    func_80136F08(_this->mpLayout, &_this->mpAnimTrans0, _this->mArcResAcc, lbl_eu_8050624C + 0x63);
-    func_80136F08(_this->mpLayout, &_this->mpAnimTrans1, _this->mArcResAcc, lbl_eu_8050624C + 0x7c);
-
-    nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
-    void* fontHandle = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, _this->mpLayout);
-    void* fontVtable = *(void**)fontHandle;
-    void (*setFontFunc)(void*, void*) = (void (*)(void*, void*))((void**)fontVtable)[9];
-    setFontFunc(fontHandle, rootPane);
-
-    _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans1, false);
-    _this->mpLayout->SetAnimationEnable(_this->mpAnimTrans0, true);
-    _this->mpLayout->Animate(0);
-
-    if (_this->mpLayout != NULL) {
-        _this->field_0x29 = 1;
-    }
-
-    _this->mFileHandle = NULL;
-    func_8045F810__17UnkClass_8045F564Fv((u8*)_this + 0x04);
-    __dt__14Class_8045F858Fv(fileBuf, -1);
-
-    return 1;
+    return 0;
 }

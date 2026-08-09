@@ -37,6 +37,39 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 ## kyoshin leaf-function patterns (US, Wii/1.1)
 
+- **Manual vtable cast → real virtual dispatch (r12 ABI register):** a
+  virtual declared no-arg in the header/symbols.txt (`__…Fv`) but whose
+  overrides actually take an arg forces callers into
+  `((void(*)(void*,int))(*(void***)obj)[0xN/4])(obj, arg)`. MWCC compiles
+  the manual cast to `lwz r4/r5,0(r3); lwz r4,N(r4); mtctr; bctrl` while
+  retail uses real dispatch `lwz r12,0(r3); lwz r12,N(r12); mtctr; bctrl`
+  (r12 is the ABI-fixed dispatch scratch). The witness refuses
+  (ABI registers must be fixed), so the function plateaus at 90–99% with
+  0 structural + N reg_swap and a `lwz r12↔r4/r5` vtable-load swap.
+  Fix per virtual: (1) redeclare the virtual with the real arg type in the
+  base header + every override header, (2) convert extern "C" free-function
+  impls to real members, (3) re-mangle symbols.txt `Fv`→`F<arg>` keeping
+  address/size, (4) replace callers with `obj->Name(arg)`. MWCC then emits
+  r12 dispatch and the caller goes 100%.
+  - **Length compatibility:** `Fv→Fi/Ff` (2-char arg codes) are
+    same-length and safe. `Fv→FPv` is NOT (43→44 chars) — verify with
+    `run.py symbols rename-plan` before committing to a pointer-arg fix;
+    prefer int/float signatures first. Return-type changes do NOT re-mangle
+    (MWCC omits return types from the mangled name), so a virtual that
+    returns `this` can be declared to return `CfObject*` without touching
+    symbols.txt.
+  - **Verify the arg first (don't invent args):** check a *non-trivial*
+    retail override reads r4/f1 in its first instructions (e.g. `stfs
+    f1, N(r4)`, `or r0,r0,r4`). A `blr` or reads-only-r3 override is not
+    evidence — leave that manual cast alone. Example done: `CfObject_
+    UnkVirtualFunc14` Fv→Ff — CfObjectMove override 0x800BEB30 stores f1
+    into sub-objects (+0x388) → callers setAct/func_8003DFE4 converted;
+    func_8003DFE4 now FULL_MATCH. Residual soft-cap: the override body's
+    *last* `lwz` reuses r3 (dead `this`) where retail keeps r4 — a pure
+    3-instr Chaitin swap resistant to 6+ source shapes (temp vars,
+    `this->` inline, assignment-in-condition, array unroll, `!= 0`).
+
+
 - **`x != 0` codegen depends on `-O4,p` vs `-O4,s`:** `-O4,p` emits
   `lwz; neg r0,r3; or r0,r0,r3; srwi r3,r0,31` (5 instr); `-O4,s` emits
   `lwz; subic r0,r3,1; subfe r3,r0,r3; blr` (4 instr). The 11 menu units

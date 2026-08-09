@@ -29,13 +29,48 @@ namespace lyt {
 // IsIncludeAnimationGroupRef: anonymous-namespace helper (retail scope
 // nw4r::lyt::@unnamed@lyt_layout_cpp@). The extern reference keeps MWCC's
 // -ipa file from dead-code-eliminating the unused anon-ns function.
-struct AnimationGroupRef;
+struct AnimationGroupRef {
+    char name[NW4R_LYT_RES_NAME_LEN]; // at 0x0
+    u16 groupNum;                     // at 0x10
+    u8 PADDING_0x12[0x14 - 0x12];     // at 0x12
+};
 
+// IsIncludeAnimationGroupRef: anonymous-namespace helper (retail scope
+// nw4r::lyt::@unnamed@lyt_layout_cpp@). The extern reference keeps MWCC's
+// -ipa file from dead-code-eliminating the unused anon-ns function.
+//
+// Walks each group referenced by pGroupRef[0..groupRefNum) and checks
+// whether pPane (or, when descending, any ancestor of pPane) is a member
+// of that group. Returns true on the first hit.
 namespace {
-void IsIncludeAnimationGroupRef(nw4r::lyt::GroupContainer* a1,
-                                const nw4r::lyt::AnimationGroupRef* a2,
-                                unsigned short a3, bool a4,
-                                nw4r::lyt::Pane* a5) {}
+bool IsIncludeAnimationGroupRef(nw4r::lyt::GroupContainer* pGroupContainer,
+                                const nw4r::lyt::AnimationGroupRef* pGroupRef,
+                                u16 groupRefNum, bool descending,
+                                nw4r::lyt::Pane* pPane) {
+    for (u16 i = 0; i < groupRefNum; i++) {
+        nw4r::lyt::Group* pGroup =
+            pGroupContainer->FindGroupByName(pGroupRef[i].name);
+
+        NW4R_UT_LINKLIST_FOREACH (it, pGroup->GetPaneList(), {
+            nw4r::lyt::Pane* pTargetPane = it->mTarget;
+
+            if (pTargetPane == pPane) {
+                return true;
+            }
+
+            if (descending) {
+                for (nw4r::lyt::Pane* pParent = pPane->GetParent();
+                     pParent != NULL; pParent = pParent->GetParent()) {
+                    if (pTargetPane == pParent) {
+                        return true;
+                    }
+                }
+            }
+        })
+    }
+
+    return false;
+}
 }
 
 extern void* LLMH_force_us_80402184 = (void*)&IsIncludeAnimationGroupRef;
@@ -51,18 +86,20 @@ MEMAllocator* Layout::mspAllocator = NULL;
 Layout::Layout()
     : mpRootPane(NULL),
       mpGroupContainer(NULL),
-      mLayoutSize(0.0f, 0.0f),
-      mOriginType(ORIGINTYPE_TOPLEFT) {}
+      mLayoutSize(0.0f, 0.0f) {}
 
 Layout::~Layout() {
-    if (mpGroupContainer != NULL) {
-        mpGroupContainer->~GroupContainer();
-        FreeMemory(mpGroupContainer);
+    GroupContainer* pGroupContainer = mpGroupContainer;
+    Pane* pRootPane = mpRootPane;
+
+    if (pGroupContainer != NULL) {
+        pGroupContainer->~GroupContainer();
+        FreeMemory(pGroupContainer);
     }
 
-    if (mpRootPane != NULL && !mpRootPane->IsUserAllocated()) {
-        mpRootPane->~Pane();
-        FreeMemory(mpRootPane);
+    if (pRootPane != NULL && !pRootPane->IsUserAllocated()) {
+        pRootPane->~Pane();
+        FreeMemory(pRootPane);
     }
 
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mAnimTransList, {
@@ -70,6 +107,9 @@ Layout::~Layout() {
         it->~AnimTransform();
         Layout::FreeMemory(&*it);
     })
+
+    nw4r::ut::detail::LinkListImpl &rListImpl = mAnimTransList;
+    rListImpl.~LinkListImpl();
 }
 
 bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
@@ -80,12 +120,26 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
         return false;
     }
 
-    ResBlockSet blockSet = {
-        NULL,     // pTextureList
-        NULL,     // pFontList
-        NULL,     // pMaterialList
-        pAccessor // pResAccessor
-    };
+    // Header version must be 0x0008..0x000A (minor byte in [8, 10], major
+    // byte zero), like animation resources. The validity is accumulated into
+    // a flag that is tested once, matching the retail flag-in-r3 shape.
+    u32 version = pHeader->version;
+    u32 versionOk = ((version >> 8) & 0xFF) == 0;
+    if (versionOk) {
+        versionOk = (version & 0xFF) >= 8;
+    }
+    if (versionOk) {
+        versionOk = (version & 0xFF) <= 0xA;
+    }
+    if (!versionOk) {
+        return false;
+    }
+
+    ResBlockSet blockSet;
+    blockSet.pTextureList = NULL;
+    blockSet.pFontList = NULL;
+    blockSet.pMaterialList = NULL;
+    blockSet.pResAccessor = pAccessor;
 
     Pane* pParentPane = NULL;
     Pane* pPrevPane = NULL;
@@ -93,50 +147,50 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
     bool readRootGroup = false;
     int groupDepth = 0;
 
-    const void* pBlockData =
+    const u8* pBlockData =
         static_cast<const u8*>(pLytBinary) + pHeader->headerSize;
 
     for (int i = 0; i < pHeader->dataBlocks; i++) {
         const res::DataBlockHeader* pBlockHeader =
-            static_cast<const res::DataBlockHeader*>(pBlockData);
+            reinterpret_cast<const res::DataBlockHeader*>(pBlockData);
 
-        switch (detail::GetSignatureInt(pBlockHeader->kind)) {
-        case res::Layout::SIGNATURE: {
+        // Signatures are compared as signed values (retail dispatches with
+        // `cmpw`), so cast the u32 FOURCC constants down to s32.
+        s32 kind = detail::GetSignatureInt(pBlockHeader->kind);
+
+        switch (kind) {
+        case static_cast<s32>(res::Layout::SIGNATURE): {
             const res::Layout* pRes =
-                static_cast<const res::Layout*>(pBlockData);
-
-            mOriginType =
-                pRes->originType != 0 ? ORIGINTYPE_CENTER : ORIGINTYPE_TOPLEFT;
+                reinterpret_cast<const res::Layout*>(pBlockData);
 
             mLayoutSize = pRes->layoutSize;
             break;
         }
 
-        case SIGNATURE_TEXTURELIST: {
+        case static_cast<s32>(SIGNATURE_TEXTURELIST): {
             blockSet.pTextureList =
-                static_cast<const res::TextureList*>(pBlockData);
+                reinterpret_cast<const res::TextureList*>(pBlockData);
             break;
         }
 
-        case SIGNATURE_FONTLIST: {
-            blockSet.pFontList = static_cast<const res::FontList*>(pBlockData);
+        case static_cast<s32>(SIGNATURE_FONTLIST): {
+            blockSet.pFontList =
+                reinterpret_cast<const res::FontList*>(pBlockData);
             break;
         }
 
-        case SIGNATURE_MATERIALLIST: {
+        case static_cast<s32>(SIGNATURE_MATERIALLIST): {
             blockSet.pMaterialList =
-                static_cast<const res::MaterialList*>(pBlockData);
+                reinterpret_cast<const res::MaterialList*>(pBlockData);
             break;
         }
 
-        case res::Pane::SIGNATURE:
-        case res::Picture::SIGNATURE:
-        case res::TextBox::SIGNATURE:
-        case res::Window::SIGNATURE:
-        case res::Bounding::SIGNATURE: {
-            Pane* pPane =
-                BuildPaneObj(detail::GetSignatureInt(pBlockHeader->kind),
-                             pBlockData, blockSet);
+        case static_cast<s32>(res::Pane::SIGNATURE):
+        case static_cast<s32>(res::Picture::SIGNATURE):
+        case static_cast<s32>(res::TextBox::SIGNATURE):
+        case static_cast<s32>(res::Window::SIGNATURE):
+        case static_cast<s32>(res::Bounding::SIGNATURE): {
+            Pane* pPane = BuildPaneObj(kind, pBlockData, blockSet);
 
             if (pPane != NULL) {
                 if (mpRootPane == NULL) {
@@ -153,18 +207,18 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
             break;
         }
 
-        case SIGNATURE_PANESTART: {
+        case static_cast<s32>(SIGNATURE_PANESTART): {
             pParentPane = pPrevPane;
             break;
         }
 
-        case SIGNATURE_PANEEND: {
+        case static_cast<s32>(SIGNATURE_PANEEND): {
             pPrevPane = pParentPane;
             pParentPane = pPrevPane->GetParent();
             break;
         }
 
-        case res::Group::SIGNATURE: {
+        case static_cast<s32>(res::Group::SIGNATURE): {
             if (!readRootGroup) {
                 readRootGroup = true;
                 mpGroupContainer = Layout::NewObj<GroupContainer>();
@@ -184,18 +238,18 @@ bool Layout::Build(const void* pLytBinary, ResourceAccessor* pAccessor) {
             break;
         }
 
-        case SIGNATURE_GROUPSTART: {
+        case static_cast<s32>(SIGNATURE_GROUPSTART): {
             groupDepth++;
             break;
         }
 
-        case SIGNATURE_GROUPEND: {
+        case static_cast<s32>(SIGNATURE_GROUPEND): {
             groupDepth--;
             break;
         }
         }
 
-        pBlockData = static_cast<const u8*>(pBlockData) + pBlockHeader->size;
+        pBlockData = pBlockData + pBlockHeader->size;
     }
 
     return true;

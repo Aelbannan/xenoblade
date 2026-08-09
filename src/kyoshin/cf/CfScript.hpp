@@ -30,8 +30,8 @@ public:
     // 0x50: VM context/thread
     void* mVmContext;      // 0x50
 
-    // 0x54: wait counter (u16)
-    u16 mWaitCount;        // 0x54
+    // 0x54: wait counter (s16)
+    s16 mWaitCount;        // 0x54
 
     // 0x56: script index (u16)
     u16 mIndex;            // 0x56
@@ -48,15 +48,17 @@ public:
 // The array is embedded at offset 0. Singleton accessed via getInstance().
 class CfScriptManager {
 public:
-    static CfScriptManager* getInstance();
+    static __declspec(noinline) CfScriptManager* getInstance();
     void init();
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0 (total 0x108)
 
     // Script loading functions for each slot
-    void func_80068B20();           // load slot 0
+    // noinline: these are retail `bl`-thunks (forward this+name to func_80068ECC);
+    // prevents MWCC -inline auto from inlining them into the wrappers (REF §8616).
+    void __declspec(noinline) func_80068B20(const char* name);  // load slot 0 (this == &mScripts[0])
     void func_80068B58(const char* name); // load slot 1 (offset 0x58)
-    void func_80068B94(const char* name); // load slot 2 (offset 0xB0)
+    void __declspec(noinline) func_80068B94(const char* name);  // load slot 2 (offset 0xB0)
 
     // Set "ready" flag on each slot
     void func_80068BC0();  // set flag on slot 0

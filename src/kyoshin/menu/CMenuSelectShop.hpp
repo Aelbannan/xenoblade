@@ -144,6 +144,12 @@ extern "C" void func_8018A248(CMenuSelectShop*);
 extern "C" void func_8018A2C0(CMenuSelectShop*);
 extern "C" void func_8018A4A0(CMenuSelectShop*);
 
+// Shop-window close animation hook + select-shop selection actions (retail
+// unmangled C-ABI symbols; defined in CSelShopWin/CUICfManager TUs).
+extern "C" void func_8022C908(CSelShopWin*);
+extern "C" void func_80134024(u32);
+extern "C" void func_80134100();
+
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;             // cbRenderBefore gate flag (.sbss)
 extern u32 __ptmf_null[3];              // null pointer-to-member-function constant

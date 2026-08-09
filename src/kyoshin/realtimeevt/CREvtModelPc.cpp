@@ -3,7 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelPc.hpp"
-#include "kyoshin/code_800AA008.hpp"
 
 #include <cstring>
 
@@ -67,15 +66,20 @@ extern "C" {
     extern void func_8007E038__Q22cf13CfGameManagerFv(u32 type, int flag);
 
     // Resource helpers
-    extern void func_80062AD8(void* handle, u32* outType);
+    extern void* func_80062AD8(void* handle, u32* outType);
     extern void func_800A9344(void* p, int type);
+    // Packed-token helpers (retail C-symbol names)
+    extern char* func_800AA5C0(void* handle);
+    extern void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+    extern int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+    extern u32 func_800AA2E8(u32 a, u32 b, u32 c);
     // Archive
     extern int func_800A8E6C(u32 value, int enable);
 
     // Model helpers
     extern void* func_80495E8C(void* a, void* b, int c, int d);
     extern void* func_80495FF0(void* arg);
-    extern void func_80484E5C(void* model);
+    extern void func_80484E5C(void* model, f32 val);
     extern void func_804827DC(void* model, int flag);
     extern void func_80485684(void* model, int flag);
     extern void func_804831C4(void* model, void* texName);
@@ -92,31 +96,31 @@ extern "C" {
 // ============================================================================
 // __ct__CREvtModelPc (us-80184b40) - Constructor
 // ============================================================================
-extern "C" void __ct__CREvtModelPc(void* self) {
+extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
     char* s = (char*)self;
     int i;
 
-    // CREvtModel(this, parent, 2)
-    // r4 is whatever was in r4 before (parent pointer, not explicitly set in asm)
-    // The asm only sets r5=2 before the call
-    __ct__CREvtModel(self, 0, 2);
+    // CREvtModel(this, parent, 2) - parent is passed through as r4.
+    __ct__CREvtModel(self, parent, 2);
 
     // Set vtable
     u32* vtable = lbl_eu_805321F0;
+    u32* iwvt = (u32*)((char*)vtable + 0x44);
+    u32 zero = 0;
     FLD(u32*, s, 0x00) = vtable;
-    FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
+    FLD(u32*, s, 0x38) = iwvt;
 
     // Initialize fields
     FLD(f32, s, 0xA8) = lbl_eu_80667918;
-    FLD(u8, s, 0xAC) = 0;
+    FLD(u8, s, 0xAC) = zero;
     FLD(s32, s, 0xB0) = -1;
 
     // Clear all 6 slots
     for (i = 0; i < 6; i++) {
-        FLD(u32, s, 0x3C + i * 4) = 0;
-        FLD(u32, s, 0x54 + i * 4) = 0;
-        FLD(u32, s, 0x6C + i * 4) = 0;
-        FLD(u32, s, 0x84 + i * 4) = 0;
+        FLD(u32, s, 0x3C + i * 4) = zero;
+        FLD(u32, s, 0x54 + i * 4) = zero;
+        FLD(u32, s, 0x6C + i * 4) = zero;
+        FLD(u32, s, 0x84 + i * 4) = zero;
     }
 
     // Copy ptmf from lbl_eu_80532180
@@ -129,8 +133,8 @@ extern "C" void __ct__CREvtModelPc(void* self) {
 
     func_8016BC1C(self);
 
-    u32* parent = FLD(u32*, s, 0x1C);
-    u32 field30 = parent[0x30 / 4];
+    u32* pParent = FLD(u32*, s, 0x1C);
+    u32 field30 = pParent[0x30 / 4];
 
     if (field30 == 0xFFFFFFFF) {
         FLD(u32, s, 0x18) |= 0x50;
@@ -178,26 +182,21 @@ extern "C" void* __ct__8018385C(void* self, int flag) {
 extern "C" int func_801838D8(void* self) {
     char* s = (char*)self;
 
-    s32 counter = FLD(s32, s, 0xB0);
-    int val = func_8016A3C4() + 1;
-    if (counter != val) {
+    // Ready only if the task counter matches the current one.
+    if (FLD(s32, s, 0xB0) != (int)func_8016A3C4() + 1) {
         return 0;
     }
 
-    u32* parent = FLD(u32*, s, 0x1C);
-    u32 field30 = parent[0x30 / 4];
+    int result = 0;
+    u32 field30 = FLD(u32, FLD(void*, s, 0x1C), 0x30);
     if (field30 > 1) {
-        void* ptmf = FLDP(void, s, 0x08);
-        if (__ptmf_cmpr(ptmf, lbl_eu_80532198) == 0) {
-            return 1;
+        // Ready if the callback ptmf is one of the two accepted constants.
+        if (__ptmf_cmpr(FLDP(void, s, 0x08), lbl_eu_80532198) == 0 ||
+            __ptmf_cmpr(FLDP(void, s, 0x08), lbl_eu_805321A4) == 0) {
+            result = 1;
         }
-        if (__ptmf_cmpr(ptmf, lbl_eu_805321A4) != 0) {
-            return 1;
-        }
-        return 1;
     }
-
-    return 0;
+    return result;
 }
 
 // ============================================================================
@@ -206,33 +205,41 @@ extern "C" int func_801838D8(void* self) {
 extern "C" int func_80183978(void* self) {
     char* s = (char*)self;
 
-    if (FLD(u32, s, 0x18) & 0x100) {
+    // Bail out early if the "in use" flag bit is already set.
+    if (FLD(u32, s, 0x18) & 0x80) {
         return 0;
     }
 
     func_801726DC(self);
 
-    int i;
+    u32 i;
+    char* base = s;  // walks per-slot via each slot's status word
     for (i = 0; i < 6; i++) {
-        u32 status = FLD(u32, s, 0x84 + i * 4);
-        void* data = FLD(void*, s, 0x6C + i * 4);
+        int status = FLD(s32, base, 0x84);
 
         if (status == 3) {
+            // Loaded into MEM2 via MemManager: free it.
+            void* data = FLD(void*, base, 0x6C);
             if (data != 0) {
-                func_800A9344(data, 3);
-                FLD(u32, s, 0x6C + i * 4) = 0;
+                if (data != 0) {
+                    mtl::MemManager::deallocate(data);
+                    FLD(u32, base, 0x6C) = 0;
+                }
             }
         } else if (status == 2) {
+            // Archived: release the archive allocation.
+            void* data = FLD(void*, base, 0x6C);
             if (data != 0) {
                 func_800A9344(data, 0);
             }
         }
 
-        void* fileReq = FLD(void*, s, 0x54 + i * 4);
+        void* fileReq = FLD(void*, base, 0x54);
         if (fileReq != 0) {
             CDeviceFile::cancel((CFileHandle*)fileReq);
-            FLD(u32, s, 0x54 + i * 4) = 0;
+            FLD(u32, base, 0x54) = 0;
         }
+        base += 4;
     }
 
     return 1;
@@ -242,68 +249,60 @@ extern "C" int func_80183978(void* self) {
 // func_80183A3C (us-80184e58) - Reset / reinitialize
 // ============================================================================
 extern "C" void func_80183A3C(void* self) {
-    char* s = (char*)self;
     int i;
 
-    u32* parent = FLD(u32*, s, 0x1C);
-    u32 field30 = parent[0x30 / 4];
-
-    if (field30 == 0xFFFFFFFF) {
-        FLD(u32, s, 0x18) |= 0x50;
-        u32* ptmf = lbl_eu_805321B0;
-        FLD(u32, s, 0x08) = ptmf[0];
-        FLD(u32, s, 0x0C) = ptmf[1];
-        FLD(u32, s, 0x10) = ptmf[2];
+    if (FLD(u32, FLD(void*, self, 0x1C), 0x30) == 0xFFFFFFFF) {
+        FLD(u32, self, 0x18) |= 0x50;
+        FLD(u32, self, 0x08) = lbl_eu_805321B0[0];
+        FLD(u32, self, 0x0C) = lbl_eu_805321B0[1];
+        FLD(u32, self, 0x10) = lbl_eu_805321B0[2];
         return;
     }
 
-    // Check all 6 slots for status == 1
-    if (FLD(u32, s, 0x84) == 1) return;
-    if (FLD(u32, s, 0x88) == 1) return;
-    if (FLD(u32, s, 0x8C) == 1) return;
-    if (FLD(u32, s, 0x90) == 1) return;
-    if (FLD(u32, s, 0x94) == 1) return;
-    if (FLD(u32, s, 0x98) == 1) return;
+    // If any slot is still loading (status == 1), or the reset flag is set,
+    // bail out early.
+    if (FLD(u32, self, 0x84) == 1 ||
+        FLD(u32, self, 0x88) == 1 ||
+        FLD(u32, self, 0x8C) == 1 ||
+        FLD(u32, self, 0x90) == 1 ||
+        FLD(u32, self, 0x94) == 1 ||
+        FLD(u32, self, 0x98) == 1) return;
 
-    if (FLD(u32, s, 0x18) & 0x100) return;
-
-    FLD(u32, s, 0x18) |= 0x100;
+    if (FLD(u32, self, 0x18) & 0x100) return;
+    FLD(u32, self, 0x18) |= 0x100;
 
     func_80172768(self);
 
+    // Free any loaded/archived slot data.
     for (i = 0; i < 6; i++) {
-        u32 status = FLD(u32, s, 0x84 + i * 4);
-        void* data = FLD(void*, s, 0x6C + i * 4);
-
+        u32 status = FLD(u32, self, 0x84 + i * 4);
         if (status == 3) {
+            void* data = FLD(void*, self, 0x6C + i * 4);
             if (data != 0) {
-                func_800A9344(data, 3);
-                FLD(u32, s, 0x6C + i * 4) = 0;
+                mtl::MemManager::deallocate(data);
+                FLD(void*, self, 0x6C + i * 4) = 0;
             }
         } else if (status == 2) {
+            void* data = FLD(void*, self, 0x6C + i * 4);
             if (data != 0) {
                 func_800A9344(data, 0);
             }
         }
     }
 
-    {
-        u32* ptmf = lbl_eu_805321BC;
-        FLD(u32, s, 0x08) = ptmf[0];
-        FLD(u32, s, 0x0C) = ptmf[1];
-        FLD(u32, s, 0x10) = ptmf[2];
-    }
+    FLD(u32, self, 0x08) = lbl_eu_805321BC[0];
+    FLD(u32, self, 0x0C) = lbl_eu_805321BC[1];
+    FLD(u32, self, 0x10) = lbl_eu_805321BC[2];
+    FLD(u32, self, 0x18) = (FLD(u32, self, 0x18) | 0x30) & ~0x42;
 
-    FLD(u32, s, 0x18) = (FLD(u32, s, 0x18) | 0x30) & ~0x42;
-
+    // Reinitialize all six slots.
     for (i = 0; i < 6; i++) {
-        FLD(u32, s, 0x3C + i * 4) = 0;
-        FLD(u32, s, 0x54 + i * 4) = 0;
-        FLD(u32, s, 0x6C + i * 4) = 0;
-        FLD(u32, s, 0x84 + i * 4) = 0;
+        FLD(u32, self, 0x3C + i * 4) = 0;
+        FLD(u32, self, 0x54 + i * 4) = 0;
+        FLD(u32, self, 0x6C + i * 4) = 0;
+        FLD(u32, self, 0x84 + i * 4) = 0;
     }
-
-    FLD(u8, s, 0xAC) = 0;
+    FLD(u8, self, 0xAC) = 0;
 }
 
 // ============================================================================
@@ -590,39 +589,45 @@ set_ptmf:
 // ============================================================================
 extern "C" void func_801845F0(void* self) {
     char* s = (char*)self;
-    int i;
+    u32 tmp;
 
-    // Get data for slot 0
-    void* data0 = FLD(void*, s, 0x6C);
-    if (data0 == 0) {
-        u32 type;
-        func_80062AD8(FLD(void*, s, 0x3C), &type);
-        data0 = (void*)type;
+    // Get data for slot 0; func_80062AD8 returns the loaded pointer.
+    void* data0;
+    if (FLD(void*, s, 0x6C) != 0) {
+        data0 = FLD(void*, s, 0x6C);
+    } else {
+        data0 = func_80062AD8(FLD(void*, s, 0x3C), &tmp);
     }
 
-    // Check slots 1-5
+    // Confirm all remaining slots that have been requested are loaded.
+    // Walk slot base (mFileHandle[1] is at s+0x40), offsets folded from s+4.
+    char* base = (char*)s + 4;
     int allLoaded = 1;
-    for (i = 1; i <= 5; i++) {
-        void* handle = FLD(void*, s, 0x3C + i * 4);
-        if (handle == 0) continue;
+    for (u32 i = 1; i <= 5; i++) {
+        void* handle = FLD(void*, base, 0x3C);
+        if (handle == 0) {
+            base += 4;
+            continue;
+        }
 
-        void* data = FLD(void*, s, 0x6C + i * 4);
-        if (data == 0) {
-            u32 type;
-            func_80062AD8(handle, &type);
-            data = (void*)type;
+        void* data;
+        if (FLD(void*, base, 0x6C) != 0) {
+            data = FLD(void*, base, 0x6C);
+        } else {
+            data = func_80062AD8(handle, &tmp);
         }
 
         if (data == 0) {
             allLoaded = 0;
         }
+        base += 4;
     }
 
     if (data0 != 0 && allLoaded) {
         FLD(u32, s, 0x18) |= 0x11;
         u32* ptmf = lbl_eu_805321E0;
-        FLD(u32, s, 0x08) = ptmf[0];
         FLD(u32, s, 0x0C) = ptmf[1];
+        FLD(u32, s, 0x08) = ptmf[0];
         FLD(u32, s, 0x10) = ptmf[2];
     }
 }
@@ -756,28 +761,18 @@ extern "C" void func_801848EC(void* self, int r4, int r5) {
 extern "C" int func_8018497C(void* self) {
     char* s = (char*)self;
 
-    void* parent = FLD(void*, s, 0x1C);
-    u32 parentPacked = FLD(u32, parent, 0x20);
     u32 entryId, param1, param2, param3;
-    u32 objEntryId, objParam1, objParam2, objParam3;
-    func_800AA318(parentPacked, &entryId, &param1, &param2, &param3);
+    func_800AA318(FLD(u32, FLD(void*, s, 0x1C), 0x20), &entryId, &param1, &param2, &param3);
 
-    void* gameMgr = func_80086B04__Q22cf13CfGameManagerFv();
-    void* objList = FLD(void*, gameMgr, 0x04);
-    void* obj = objList;
+    // Walk the circular list of objects; the condition re-fetches the head.
+    void* obj = FLD(void*, FLD(void*, func_80086B04__Q22cf13CfGameManagerFv(), 0x04), 0x00);
+    while (obj != FLD(void*, func_80086B04__Q22cf13CfGameManagerFv(), 0x04)) {
+        u32 objEntryId, objParam1, objParam2, objParam3;
+        func_800AA318(FLD(u32, FLD(void*, obj, 0x08), 0x70), &objEntryId, &objParam1, &objParam2, &objParam3);
 
-    while (obj != 0) {
-        void* objPtr = FLD(void*, obj, 0x08);
-        u32 objPacked = FLD(u32, objPtr, 0x70);
-        func_800AA318(objPacked, &objEntryId, &objParam1, &objParam2, &objParam3);
-
-        if (param1 == objParam1) {
-            // Compare packed tokens (high 22 bits)
-            u32 myPacked = (param3 << 27) | (entryId << 20) | (param2 << 10);
-            u32 otherPacked = (objParam3 << 27) | (objEntryId << 20) | (objParam2 << 10);
-            if (myPacked == otherPacked) {
-                return 1;
-            }
+        // Already loaded if a live character object matches this request.
+        if (param1 == objParam1 && param2 == 1) {
+            return 1;
         }
         obj = FLD(void*, obj, 0x00);
     }
@@ -791,52 +786,21 @@ extern "C" int func_8018497C(void* self) {
 // ============================================================================
 extern "C" int func_80184A24(void* self, void* event) {
     char* s = (char*)self;
-    void* zero = 0;
-    int ctr;
 
-    for (ctr = 0; ctr < 2; ctr++) {
-        u32 eventHandle = FLD(u32, event, 0x04);
-
-        // Check slot 0 (0x54) and slot 3 (0x60)
-        if (FLD(u32, s, 0x54) == eventHandle) {
-            u32 eventType = FLD(u32, event, 0x00);
-            if (eventType == 1) {
+    // For each of the 6 file slots, if the completed request matches the
+    // event's handle, record the loaded data (or drop the handle on error).
+    for (int i = 0; i < 6; i++) {
+        void* eventHandle = FLD(void*, event, 0x04);
+        if (FLD(void*, s, 0x54 + i * 4) == eventHandle) {
+            if (FLD(u32, event, 0x00) == 1) {
                 u32 nextData = FLD(u32, eventHandle, 0x04);
                 FLD(u32, eventHandle, 0x04) = 0;
-                FLD(u32, s, 0x6C) = nextData;
+                FLD(u32, s, 0x6C + i * 4) = nextData;
             } else {
-                FLD(u32, s, 0x3C) = 0;
+                FLD(u32, s, 0x3C + i * 4) = 0;
             }
-            FLD(u32, s, 0x54) = 0;
+            FLD(u32, s, 0x54 + i * 4) = 0;
         }
-
-        // Check slot 1 (0x58) and slot 4 (0x64)
-        if (FLD(u32, s, 0x58) == eventHandle) {
-            u32 eventType = FLD(u32, event, 0x00);
-            if (eventType == 1) {
-                u32 nextData = FLD(u32, eventHandle, 0x04);
-                FLD(u32, eventHandle, 0x04) = 0;
-                FLD(u32, s, 0x70) = nextData;
-            } else {
-                FLD(u32, s, 0x40) = 0;
-            }
-            FLD(u32, s, 0x58) = 0;
-        }
-
-        // Check slot 2 (0x5C) and slot 5 (0x68)
-        if (FLD(u32, s, 0x5C) == eventHandle) {
-            u32 eventType = FLD(u32, event, 0x00);
-            if (eventType == 1) {
-                u32 nextData = FLD(u32, eventHandle, 0x04);
-                FLD(u32, eventHandle, 0x04) = 0;
-                FLD(u32, s, 0x74) = nextData;
-            } else {
-                FLD(u32, s, 0x44) = 0;
-            }
-            FLD(u32, s, 0x5C) = 0;
-        }
-
-        s += 0x0C;
     }
 
     return 0;

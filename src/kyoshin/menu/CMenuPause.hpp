@@ -6,7 +6,7 @@
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
-namespace nw4r { namespace lyt { class Layout; } }
+namespace nw4r { namespace lyt { class Layout; class ArcResourceAccessor; } }
 class CScn;
 
 /*
@@ -73,10 +73,10 @@ extern "C" {
     u32 getWorkMem__17CWorkThreadSystemFv();
     void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
     void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-    u32* __ptmf_null;
-    u32* lbl_eu_8052BF70;
-    char* lbl_eu_805371A0;
-    char* lbl_eu_8050C5C8;
+    u32 __ptmf_null[];
+    u32 lbl_eu_8052BF70[];
+    char lbl_eu_805371A0[];
+    char lbl_eu_8050C5C8[];
     extern const f32 lbl_eu_806687D8;
     extern const f64 lbl_eu_806687D0;
 
@@ -88,4 +88,5 @@ extern "C" {
     void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
     void func_8045F810__17UnkClass_8045F564Fv(void*);
     void addRenderCB__4CScnFP10IScnRenderUlUl(void*, void*, u32, u32);
+    nw4r::lyt::ArcResourceAccessor* func_801355F4();
 }

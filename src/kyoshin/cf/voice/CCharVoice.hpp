@@ -41,6 +41,6 @@ struct CCharVoice {
     void func_802A0B8C(void* owner);
     void func_802A0E08();
     void func_802A0FE8();
-    bool func_802A109C(float volume, int priority, int voiceId);
+    bool func_802A109C(float volume, int voiceId, int priority);
     void func_802A1304();
 };

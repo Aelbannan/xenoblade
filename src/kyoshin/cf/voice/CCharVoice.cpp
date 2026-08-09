@@ -11,7 +11,7 @@ extern "C" {
     extern float lbl_eu_80668C60;
     extern float lbl_eu_80668C64;
 
-    void func_800AA318(u32, u32*, float*, float*, float*);
+    void func_800AA318(u32, float*, u32*, float*, float*);
     s32  func_80189A04(const char*);
     void* func_80496264(void*, s32);
     s32  func_801897A0(const char*, float, s32);
@@ -34,20 +34,18 @@ extern "C" {
 }
 
 // __ct__CCharVoice (0x802A3230)
-extern "C" void __ct__CCharVoice(CCharVoice* self)
+extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 {
-    self->mVtable        = lbl_eu_805398B0;
-    self->mOwner         = nullptr;
-    self->mVoiceId       = -1;
-    self->mPriorityCheck = -1;
-    self->mSoundHandle   = -1;
-
-    char* defName = lbl_eu_805106D4;
-    self->mFileNameLen = strlen(defName);
-    strcpy(self->mFileName, defName);
-
-    self->mField34         = 0;
+    self->mVtable         = lbl_eu_805398B0;
+    self->mOwner          = (void*)0;
+    self->mVoiceId        = -1;
+    self->mPriorityCheck  = -1;
+    self->mSoundHandle    = -1;
+    self->mFileNameLen    = strlen(lbl_eu_805106D4);
+    strcpy(self->mFileName, lbl_eu_805106D4);
+    self->mField34        = 0;
     self->mBattleSndHandle = 0xFFFF;
+    return self;
 }
 
 // func_802A0B8C (0x802A32C0)
@@ -57,13 +55,16 @@ void CCharVoice::func_802A0B8C(void* owner)
 
     u32 flags = *(u32*)((char*)owner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
+    // Normal/battle profile selector: bit0(MSB)=0x80000000, bit30=2, bit29=4.
+    if ((flags & 2) || (flags & 0x80000000)) {
         mOwner = owner;
 
-        u32 posType;
-        float px, py, pz;
+        float py;
+        float px;
+        u32   posType;
+        float pz;
         func_800AA318(*(u32*)((char*)owner + 0x70),
-                      &posType, &px, &py, &pz);
+                      &pz, &posType, &px, &py);
 
         if (posType == 8) posType = 3;
 
@@ -76,14 +77,16 @@ void CCharVoice::func_802A0B8C(void* owner)
         mFileName[0x0F] = '0' + (posType / 10);
         mFileName[0x10] = '0' + (posType % 10);
 
-        mSoundHandle = -1;
         mField34     = 0x12;
+        mSoundHandle = -1;
 
     } else if (flags & 4) {
         mOwner           = owner;
         mBattleSndHandle = 0xFFFF;
     }
 }
+
+typedef void* (*GetPosFn)(void*);
 
 // func_802A0E08 (0x802A353C)
 void CCharVoice::func_802A0E08()
@@ -92,7 +95,7 @@ void CCharVoice::func_802A0E08()
 
     u32 flags = *(u32*)((char*)mOwner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
+    if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle == -1) return;
 
         if (func_80189A04(mFileName) != 0) {
@@ -103,25 +106,22 @@ void CCharVoice::func_802A0E08()
 
         void* ch = func_80496264(lbl_eu_80663E14, -1);
 
-        void** vtab = *(void***)mOwner;
-        VoiceVec3 pos;
-        typedef void* (*GetModelFn)(void*);
-
-        void* model = ((GetModelFn)vtab[0x4A])(mOwner);
-        if (model != nullptr) {
-            float* f = (float*)model;
-            pos.x = f[0x0C / 4];
-            pos.y = f[0x1C / 4];
-            pos.z = f[0x2C / 4];
+        // Model position fetch: getModel(0x128) is called twice by retail
+        // (once for the null test, once in the body) -- mirror that.
+        float pos[3];
+        if (((GetPosFn*)*(void**)mOwner)[0x4A](mOwner) != nullptr) {
+            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x4A](mOwner));
+            pos[0] = p[0x03];
+            pos[1] = p[0x07];
+            pos[2] = p[0x0B];
         } else {
-            void* alt = ((GetModelFn)vtab[0x2B])(mOwner);
-            float* f  = (float*)alt;
-            pos.x = f[0];
-            pos.y = f[1];
-            pos.z = f[2];
+            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x2B](mOwner));
+            pos[0] = p[0];
+            pos[1] = p[1];
+            pos[2] = p[2];
         }
 
-        func_80189C40(mSoundHandle, &pos, ch,
+        func_80189C40(mSoundHandle, pos, ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
@@ -133,25 +133,20 @@ void CCharVoice::func_802A0E08()
             return;
         }
 
-        void** vtab = *(void***)mOwner;
-        VoiceVec3 pos;
-        typedef void* (*GetModelFn)(void*);
-
-        void* model = ((GetModelFn)vtab[0x4A])(mOwner);
-        if (model != nullptr) {
-            float* f = (float*)model;
-            pos.x = f[0x0C / 4];
-            pos.y = f[0x1C / 4];
-            pos.z = f[0x2C / 4];
+        float pos[3];
+        if (((GetPosFn*)*(void**)mOwner)[0x4A](mOwner) != nullptr) {
+            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x4A](mOwner));
+            pos[0] = p[0x03];
+            pos[1] = p[0x07];
+            pos[2] = p[0x0B];
         } else {
-            void* alt = ((GetModelFn)vtab[0x2B])(mOwner);
-            float* f  = (float*)alt;
-            pos.x = f[0];
-            pos.y = f[1];
-            pos.z = f[2];
+            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x2B](mOwner));
+            pos[0] = p[0];
+            pos[1] = p[1];
+            pos[2] = p[2];
         }
 
-        func_801BFAE8(mBattleSndHandle, &pos);
+        func_801BFAE8(mBattleSndHandle, pos);
     }
 }
 
@@ -162,7 +157,7 @@ void CCharVoice::func_802A0FE8()
 
     u32 flags = *(u32*)((char*)mOwner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
+    if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle != -1) {
             func_8018986C(mFileName, lbl_eu_80668C64);
             mVoiceId     = -1;
@@ -180,73 +175,78 @@ void CCharVoice::func_802A0FE8()
 
 // func_802A109C (0x802A37D0)
 bool CCharVoice::func_802A109C(float volume,
-                                int priority, int voiceId)
+                                int voiceId, int priority)
 {
     if (mOwner == nullptr) return false;
     if (mVoiceId < 0) mPriorityCheck = -1;
+    // Gate: reject if the stored check priority is <= the new one (higher
+    // priority = smaller number in this system).  Retail tests the > case
+    // and branches past the reject.
     if (priority >= 0 && mPriorityCheck >= 0
-        && mPriorityCheck > priority)
+        && mPriorityCheck <= priority)
         return false;
 
     mPriorityCheck = priority;
 
-    u32 flags = *(u32*)((char*)mOwner + 0x64);
+    if (mOwner != 0) {
+        u32 flags = *(u32*)((char*)mOwner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
-        if (mSoundHandle != -1) {
-            func_8018986C(mFileName, lbl_eu_80668C64);
-            mVoiceId     = -1;
-            mSoundHandle = -1;
-        }
-    } else if (flags & 4) {
-        if (mBattleSndHandle != 0xFFFF) {
-            void* obj = func_800BF2CC(mOwner);
-            func_801BFED0(obj, mBattleSndHandle, 0);
-            mVoiceId          = -1;
-            mBattleSndHandle  = 0xFFFF;
+        if ((flags & 2) || (flags & 0x80000000)) {
+            if (mSoundHandle != -1) {
+                func_8018986C(mFileName, lbl_eu_80668C64);
+                mVoiceId     = -1;
+                mSoundHandle = -1;
+            }
+        } else if (flags & 4) {
+            u16 bh = mBattleSndHandle;
+            if (bh != 0xFFFF) {
+                void* obj = func_800BF2CC(mOwner);
+                func_801BFED0(obj, bh, 0);
+                mVoiceId          = -1;
+                mBattleSndHandle  = 0xFFFF;
+            }
         }
     }
 
-    flags = *(u32*)((char*)mOwner + 0x64);
+    u32 flags2 = *(u32*)((char*)mOwner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
-        // Format priority into the filename at positions relative to
-        // (this + mField34).  mField34 is always 0x12 after initVoice,
-        // so these writes go to mFileName[0x12..0x16].
-        char* base = (char*)this + mField34;
-        int v100 = priority / 100;
-        int v10  = v100 / 10;
-        int v1   = v100 % 10;
-        int r100 = priority % 100;
-        int r10  = r100 / 10;
-        int r1   = r100 % 10;
-        base[0x10] = '0' + v10;
-        base[0x11] = '0' + v1;
-        base[0x13] = '0' + r10;
-        base[0x14] = '0' + r1;
+    if ((flags2 & 2) || (flags2 & 0x80000000)) {
+        // Format the voice id (0..9999) into the file name as four digits at
+        // indices mField34+{0,1,3,4} (skipping the separator at +2).  Retail
+        // reloads mField34 for each store, so reference the member raw, and
+        // hoists the func_801897A0 volume arg load to the top of the block.
+        float sndLevel = lbl_eu_80668C64;
+        int v100 = voiceId / 100;
+        int a    = (u32)v100 / 10;                       // thousands
+        mFileName[mField34 + 0] = '0' + a;
+        int rem  = voiceId % 100;                        // = voiceId % 100
+        int b    = v100 - a * 10;                        // hundreds
+        mFileName[mField34 + 1] = '0' + b;
+        int c    = (u32)rem / 10;                        // tens
+        mFileName[mField34 + 3] = '0' + c;
+        int d    = rem - c * 10;                         // ones
+        mFileName[mField34 + 4] = '0' + d;
 
-        s32 handle = func_801897A0(mFileName, lbl_eu_80668C64, 1);
-        mSoundHandle = handle;
+        s32 h = func_801897A0(mFileName, sndLevel, 1);
+        mSoundHandle = h;
 
-        if (handle != -1) {
-            mVoiceId = priority;
+        if (h != -1) {
+            mVoiceId = voiceId;
             return true;
         }
         mVoiceId = -1;
         return false;
     }
+    else if (flags2 & 4) {
+        void* man = func_800BF2CC(mOwner);
+        if ((s32)man < 0) return false;
 
-    if (flags & 4) {
-        void* obj = func_800BF2CC(mOwner);
-        if (obj == nullptr) return false;
-        if (*(s32*)obj < 0) return false;
+        u16 h = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+            man, voiceId, 0, 0, volume);
+        mBattleSndHandle = h;
 
-        u16 handle = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
-            mOwner, voiceId, 0, 0, volume);
-        mBattleSndHandle = handle;
-
-        if (handle != 0xFFFF) {
-            mVoiceId = priority;
+        if (h != 0xFFFF) {
+            mVoiceId = voiceId;
             return true;
         }
         mVoiceId = -1;
@@ -263,7 +263,7 @@ void CCharVoice::func_802A1304()
 
     u32 flags = *(u32*)((char*)mOwner + 0x64);
 
-    if ((flags & 2) || (flags & 1)) {
+    if ((flags & 2) || (flags & 0x80000000)) {
         if (mSoundHandle != -1) {
             func_8018986C(mFileName, lbl_eu_80668C64);
             mVoiceId     = -1;
@@ -300,16 +300,14 @@ extern "C" bool func_802A0CB8(char* buffer, int index, int value)
     *(u32*)(buffer + 0x20) = strlen(src);
     strcpy(buffer, src);
 
-    // Write index digits at the two "pcNN" slots.
+    // index digit pair (written at two pc slots), then value 4-wide.
     int idxTens = index / 10;
     int idxOnes = index % 10;
     buffer[0x0A] = '0' + idxTens;
-    buffer[0x0B] = '0' + idxOnes;
     buffer[0x0F] = '0' + idxTens;
+    buffer[0x0B] = '0' + idxOnes;
     buffer[0x10] = '0' + idxOnes;
 
-    // Compute value/100 (hi) and value%100 (lo) using the same
-    // sequence as the retail: /100 first, then split each into digits.
     int hi = value / 100;
     int lo = value % 100;
     int hiTens = (u32)hi / 10;

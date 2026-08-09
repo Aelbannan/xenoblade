@@ -182,6 +182,7 @@ Equivalent standalone CLI: `python tools/symrecover.py <subcommand> …`
 **Rules:**
 
 - Retail `main.dol` is stripped — `symbols.txt` names are decomp annotations; recovered names must still match MWCC mangling for matching.
+- Function names that indicate args/params — e.g. the `_Fv` suffix in `func_80459270__17UnkClass_8043C59CFv` — are **incorrect**: the mangled signature fragment is an uneducated decompiler guess, not recovered evidence. Treat `_Fv` / `_Fi` / `_FUl`-style suffixes as no proof of the real parameter list (or function identity), and never copy them into source as a signature. Recover the true signature from retail usage (`symbols xref`, `hexdiff --asm`) and demangle the symbol before writing the parameter list.
 - Prefer **same-length** renames (`UnkClass_8045F564` → `CLibLayoutRegion`, 17 chars) to avoid re-mangling every symbol. `rename-all` refuses length mismatches unless `--force`.
 - `rename-apply` without `--all` only edits symbol maps; use **`rename-all`** (or `rename-apply --all`) for source and build files.
 - Headers already named semantically (e.g. `CViewRectData.hpp`) are updated in place; only files **named** `UnkClass_<addr>.cpp` are renamed on disk.
@@ -525,7 +526,7 @@ Prefer fixing semantics and types first; only then tune expression order with no
 - missing `-O4,s` or per-unit `extra_cflags` from `configure.py`
 - incorrect virtual or adjusted-this call
 - relocation target wrong — declare globals with retail linker names via `extern "C"` where needed; access them as normal C++ objects/fields
-- ABI quirks — prefer proper C++ parameters and struct layout; split into helpers rather than fake `Fv`/`u32* r4` register parameters
+- ABI quirks — prefer proper C++ parameters and struct layout; split into helpers rather than fake `Fv`/`u32* r4` register parameters; `_Fv`-style arg/param suffixes in decompiler names are uneducated guesses, never signature evidence
 - template functions in headers — MWCC `-inline auto` omits standalone
   bodies. Use `#pragma push` / `#pragma auto_inline off` + explicit
   `template …` instantiation + `#pragma pop` to force emission. Check

@@ -50,7 +50,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc20();
     u32 CfObject_UnkVirtualFunc23();
-    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
     float CfObject_UnkVirtualFunc34();

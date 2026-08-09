@@ -7,6 +7,35 @@ class CFileHandle;
 class CEventFile;
 class CScrollBar;
 
+// Mirror of the CScrollBar layout (0x40 bytes) for raw field access in
+// CSortMenu; the real CScrollBar.hpp cannot be included here (its extern
+// ctor stub conflicts with the member ctor from UnkClass_8045F564.hpp).
+struct CScrollBarData {
+    void* mVtbl;         // +0x00
+    u32 mMemRegion[4];   // +0x04 (UnkClass_8045F564)
+    void* mFileHandle;   // +0x14
+    void* mAccessor;     // +0x18
+    void* mLayout;       // +0x1C
+    void* mAnimTrans;    // +0x20
+    u8 mReady;           // +0x24
+    u8 mVisible;         // +0x25
+    u8 mState;           // +0x26
+    u8 mActive;          // +0x27
+    f32 mAnimOffset;     // +0x28
+    f32 mScrollPosY;     // +0x2C
+    f32 mScrollRatio;    // +0x30
+    f32 mThumbHeight;    // +0x34
+    f32 mContentHeight;  // +0x38
+    u8 mDirection;       // +0x3C
+};
+
+// Mirror of nw4r::lyt::Pane's size fields (mSize @ +0x4C: width, height).
+// nw4r hides these members (protected); used for raw field access in matching.
+struct PaneSizeRegion {
+    f32 width;   // +0x4C
+    f32 height;  // +0x50
+};
+
 class CSortMenu {
 public:
     CSortMenu();
@@ -47,7 +76,7 @@ public:
     u8 field_0x29;              // +0x29
     u8 field_0x2A;              // +0x2A
     u8 field_0x2B;              // +0x2B
-    u8 _2C[0x40];               // +0x2C: CScrollBar
+    CScrollBarData mScrollBar;  // +0x2C: CScrollBar
     s32 mArray[32];             // +0x6C: 32 entries
     u8 mCount;                  // +0xEC
     u8 mPage;                   // +0xED

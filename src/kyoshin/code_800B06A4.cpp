@@ -70,7 +70,7 @@ void __ct__reslist_cf_IFactoryEvent(void* self) {
     base[0] = (u32)&lbl_eu_805290A0;
 }
 // Target 3: us-800b186c - func_800B0FA0
-void func_800B0FA0(UnkClass_805764CC* self) {
+extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
     if (func_800B0FEC(&self->field_0xC80) == 0) {
         func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
     }
@@ -981,7 +981,31 @@ u32 func_800B3D34(u8* self) {
 u32 func_800B3D40(u8* self) {
     return (*(u32*)(self + 0x6C) >> 27) & 1;
 }
-extern "C" void func_800B4A24() {}
+// Target us-800b5320: func_800B4A24
+// Rejects null / non-enabled args, then checks whether the parent container's
+// field_0x15F0 type id lies in {4,5,6,7,8}.
+extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
+    if (arg == 0) {
+        return 0;
+    }
+    int vres = arg->fnTable[0x80](arg);
+    if (vres == 0) {
+        return 0;
+    }
+    if ((arg->flags & 0x04000000) == 0) {
+        return 0;
+    }
+
+    // Recover the enclosing object (arg sits at +0x3E9C within it) and read
+    // its type/state id at +0x15F0.
+    UnkClass_805764CC* container = (UnkClass_805764CC*)((u8*)arg - 0x3E9C);
+    s32 value = (s32)container->field_0x15F0;
+
+    if (value == 4 || value == 5 || value == 6 || value == 7 || value == 8) {
+        return 1;
+    }
+    return 0;
+}
 // Target 4: us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
 void func_800B4F6C(u8* self) {
     *(u32*)(self + 0x6C) = (*(u32*)(self + 0x6C) & ~1u) | 2u;
@@ -1026,7 +1050,66 @@ void func_800B7058(void* obj) {
 extern "C" void func_800B7320() {}
 extern "C" void func_800B7A18() {}
 extern "C" void func_800B87FC() {}
-extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent() {}
+// Target us-800b9120: func_800B8804(self, event)
+// Ensure the reslist pool @ field_0xC80 is set up, then look for an existing
+// node whose data pointer equals `event`; if none, claim the first empty
+// pool slot (entry[0]==0) and insert a new node holding `event` before the
+// sentinel (head).
+extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC* self, cf::IFactoryEvent* event) {
+    // Decl order drives Chaitin coloring: idx=r4, byteOff=r5, count=r6,
+    // sentinel=r7 (retail).  Values are assigned in execution order below.
+    int idx;
+    u32 byteOff;
+    int count;
+    CFactoryEventPoolNode* sentinel;
+    if (event == 0) {
+        return;
+    }
+    func_800B0FA0(self);
+
+    // Walk the node list at field_0xC80; node next/prev/data links.
+    sentinel = (CFactoryEventPoolNode*)(*(u32*)((u8*)self + 0xc84));
+    CFactoryEventPoolNode* node = sentinel->next;
+    while (node != sentinel) {
+        if (node->data == event) {
+            return; // already registered
+        }
+        node = node->next;
+    }
+
+    // Claim the first empty slot in the fixed 0xc-byte-entry pool.  Retail
+    // re-reads the pool base from self->[0xc94] every slot check (aliasing),
+    // and keeps an explicit running byte-offset (r5) alongside the slot index
+    // (r4): `lwzx r0,r3,r5` + `addi r5,r5,12` + `addi r4,r4,1`.
+    count = *(int*)((u8*)self + 0xc98);
+    idx = 0;
+    byteOff = 0;
+    while (idx < count) {
+        if (*(u32*)(*(u8**)((u8*)self + 0xc94) + byteOff) == 0) {
+            break;
+        }
+        byteOff += 0xc;
+        idx++;
+    }
+
+    // Fill the new node and link it in just before the sentinel.  The data
+    // write mirrors reslist::_reslist_node::setItem: the `&data` pointer is
+    // null-checked and wrapped in try/catch, which is what forces retail's
+    // frame pointer (mr r31,r1) + stw-r1 frame-anchor + the addic. null check.
+    CFactoryEventPoolNode* newEntry = (CFactoryEventPoolNode*)(*(u8**)((u8*)self + 0xc94) + idx * 0xc);
+    cf::IFactoryEvent** ptr = &newEntry->data;
+    if (ptr != nullptr) {
+        try {
+            *ptr = event;
+        } catch (...) {
+            throw;
+        }
+    }
+    newEntry->next = sentinel;
+    newEntry->prev = sentinel->prev;
+    sentinel->prev->next = newEntry;
+    sentinel->prev = newEntry;
+}
 // Target 1: us-800b9d54 - func_800B9438
 // Fetch the singleton and forward (singleton, arg) to func_800B4278.
 void func_800B9438(void* arg) {

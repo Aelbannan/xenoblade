@@ -971,7 +971,6 @@ void cf::CfGameManager::func_8007E9CC() {}
 void cf::CfGameManager::func_8007F1FC() {}
 void cf::CfGameManager::func_8007F9C4() {}
 void cf::CfGameManager::func_80080888() {}
-void cf::CfGameManager::func_80082C48() {}
 void cf::CfGameManager::func_8008413C() {}
 void cf::CfGameManager::func_80084654() {}
 void cf::CfGameManager::func_80084F50() {}

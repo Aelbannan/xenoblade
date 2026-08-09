@@ -1,22 +1,16 @@
-// Auto-scaffolded catalog TU for monolib/src/scn/CMdlAnmUV
-// Replace stubs with high-level C/C++ during decomp.
-
+// monolib/src/scn/CMdlAnmUV - UV-animation helper object.
 #include <harness_catalog.h>
+#include "libs/monolib/src/scn/CMdlAnmUV.hpp"
 
-struct CMdlAnmUV {
-    ~CMdlAnmUV();
-};
-
-
-void __ct__CMdlAnmUV(){}
+CMdlAnmUV::CMdlAnmUV() {
+    field_04 = 0;
+    field_38 = 0;
+    field_3c = 0;
+    field_3d = 0;
+}
 
 CMdlAnmUV::~CMdlAnmUV() {}
 
-u32 func_804E6C78(void) {
-    extern u32 lbl_eu_80663C74;
-    return lbl_eu_80663C74;
-}
+void func_804E72D0() {}
 
-void func_804E6C80(){}
-
-void func_804E72D0(){}
+void func_804E6C80() {}

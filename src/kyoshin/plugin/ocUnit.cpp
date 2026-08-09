@@ -495,7 +495,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     func_800BE12C(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
         float f = (float)(s32)fixedParam / 2048.0f;
-        ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
+        obj->CfObject_UnkVirtualFunc14(f);
     }
     return 0;
 }
@@ -508,7 +508,7 @@ extern "C" int func_8003DFE4(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)fixedVal / 2048.0f;
-    ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
+    obj->CfObject_UnkVirtualFunc14(f);
     return 0;
 }
 
@@ -573,7 +573,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
                 }
             }
         } else {
-            void* pos = ((void*(*)(void*))(*(void***)target)[0xBC/4])(target);
+            void* pos = (void*)(uintptr_t)((cf::CfObject*)target)->CfObject_UnkVirtualFunc23();
             ((void(*)(void*, void*))(*(void***)self)[0x1A8/4])(self, pos);
         }
         ((void(*)(void*, int))(*(void***)self)[0x1B4/4])(self, rotate ? 1 : 0);
@@ -979,11 +979,11 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     int rotZ = vmArgFixedGet(4, ptr3);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    float fx = (float)(s32)rotX / 2048.0f * 0.0000958738f;
-    float fy = (float)(s32)rotY / 2048.0f * 0.0000958738f;
-    float fz = (float)(s32)rotZ / 2048.0f * 0.0000958738f;
+    float fx = (float)(s32)rotX / 4096.0f * 0.017453292519943295f;
+    float fy = (float)(s32)rotY / 4096.0f * 0.017453292519943295f;
+    float fz = (float)(s32)rotZ / 4096.0f * 0.017453292519943295f;
     float rot[3] = { fx, fy, fz };
-    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, rot);
+    obj->CfObject_UnkVirtualFunc27(rot);
     return 0;
 }
 
@@ -1220,10 +1220,8 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
                 }
             }
             if (followTarget) {
-                    void** vt = *(void***)followTarget;
-                    void (*vfunc)(void*) = (void (*)(void*))vt[0xAC / 4];
-                    vfunc(followTarget);
-                    child = followTarget;
+                ((cf::CfObject*)followTarget)->CfObject_UnkVirtualFunc22();
+                child = followTarget;
             }
         }
     }
@@ -1264,7 +1262,7 @@ extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
     if (battleMgr) {
         *(u32*)((u8*)battleMgr + 0x94) = 5;
         func_800AC4A8(battleMgr, (u16)param);
-        ((void(*)(void*, int))(*(void***)battleMgr)[0x158/4])(battleMgr, 0);
+        ((cf::CfObject*)battleMgr)->CfObject_UnkVirtualFunc66(0);
     }
     if (!battleMgr) {
         vmOCExceptionThrow(pThread);
@@ -1320,7 +1318,7 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
     float fDistX = (float)(s32)distX / 2048.0f;
     float fDistY = (float)(s32)distY / 2048.0f;
     if (obj) {
-        void* pos = ((void*(*)(void*))(*(void***)obj)[0xBC/4])(obj);
+        void* pos = (void*)(uintptr_t)obj->CfObject_UnkVirtualFunc23();
         float x = *(float*)((u8*)pos + 0);
         float y = *(float*)((u8*)pos + 4);
         float z = *(float*)((u8*)pos + 8);
@@ -1405,13 +1403,13 @@ void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) 
 
 u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
-void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
+void cf::CfObject::CfObject_UnkVirtualFunc27(void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
-    *(u32*)((u8*)self + 0x48) = a;
-    *(u32*)((u8*)self + 0x4C) = b;
-    *(u32*)((u8*)self + 0x50) = c;
+    *(u32*)((u8*)this + 0x48) = a;
+    *(u32*)((u8*)this + 0x4C) = b;
+    *(u32*)((u8*)this + 0x50) = c;
 }
 
 void cf::CfObject::CfObject_UnkVirtualFunc64(int flag) {

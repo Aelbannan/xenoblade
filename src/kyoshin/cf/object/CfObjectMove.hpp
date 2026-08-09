@@ -40,7 +40,9 @@ namespace cf {
         // Field layout starting at offset 0xBE:
         u8 _BE[6];              // 0xBE-0xC3
         void* mTargetC4;         // 0xC4-0xC7
-        u8 _C8[0x544];           // 0xC8-0x60B
+        void* mTargetC8;         // 0xC8-0xCB
+        void* mTargetCC;         // 0xCC-0xCF
+        u8 _D0[0x53C];           // 0xD0-0x60B
         u8 _60C_region[0xB4];   // 0x60C-0x6BF
         void* mTarget6C0;         // 0x6C0-0x6C3
         u8 _6C4[5];              // 0x6C4-0x6C8
@@ -68,14 +70,14 @@ namespace cf {
     void CfObject_UnkVirtualFunc25();
     void CfObject_UnkVirtualFunc26(u32 value, float amount);
     u32 CfObject_UnkVirtualFunc23();
-    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc27(void* src);
     void CfObject_UnkVirtualFunc30();
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57();
     void* CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc14();
+    void CfObject_UnkVirtualFunc14(float value);
     void CfObject_UnkVirtualFunc15();
     void CfObject_UnkVirtualFunc16();
     void CfObject_UnkVirtualFunc17();

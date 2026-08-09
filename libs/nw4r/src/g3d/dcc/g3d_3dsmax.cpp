@@ -10,27 +10,30 @@ namespace {
 
 #pragma dont_inline on
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
-    pMtx->m[0][3] = (lbl_eu_80669CC8 - rSrt.Su) * lbl_eu_80669CC4;
-    pMtx->m[1][3] = (lbl_eu_80669CC8 - rSrt.Sv) * lbl_eu_80669CC4;
-    pMtx->m[0][0] = rSrt.Su;
+    f32 su = rSrt.Su;
+    f32 sv = rSrt.Sv;
+
+    pMtx->m[0][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - su);
+    pMtx->m[1][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - sv);
+    pMtx->m[0][0] = su;
     pMtx->m[0][1] = lbl_eu_80669CC0;
     pMtx->m[0][2] = lbl_eu_80669CC0;
     pMtx->m[1][0] = lbl_eu_80669CC0;
-    pMtx->m[1][1] = rSrt.Sv;
+    pMtx->m[1][1] = sv;
     pMtx->m[1][2] = lbl_eu_80669CC0;
 }
 
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
     f32 sinR, cosR;
+    f32 fidx = rSrt.R * lbl_eu_80669CCC;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    pMtx->m[0][0] = cosR;
-    pMtx->m[0][1] = sinR;
+    pMtx->m[0][0] = sinR;
+    pMtx->m[0][1] = cosR;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CD0 * (cosR + sinR - lbl_eu_80669CC8);
-    pMtx->m[1][0] = -sinR;
-    pMtx->m[1][1] = cosR;
+    pMtx->m[0][3] = lbl_eu_80669CD0 * (sinR + cosR - lbl_eu_80669CC8);
+    pMtx->m[1][0] = -cosR;
+    pMtx->m[1][1] = sinR;
     pMtx->m[1][2] = lbl_eu_80669CC0;
     pMtx->m[1][3] = lbl_eu_80669CD0 * (-cosR + sinR - lbl_eu_80669CC8);
 }
@@ -93,11 +96,11 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[0][0] = su;
     pMtx->m[0][1] = lbl_eu_80669CC0;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - su) - su * tu + lbl_eu_80669CC4;
+    pMtx->m[0][3] = lbl_eu_80669CC4 + (-su) * (lbl_eu_80669CC4 + tu);
     pMtx->m[1][0] = lbl_eu_80669CC0;
     pMtx->m[1][1] = sv;
     pMtx->m[1][2] = lbl_eu_80669CC0;
-    pMtx->m[1][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - sv) + sv * tv + lbl_eu_80669CC4;
+    pMtx->m[1][3] = lbl_eu_80669CC4 + sv * (tv - lbl_eu_80669CC4);
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -222,17 +225,17 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 tu = rSrt.Tu;
     f32 tv = rSrt.Tv;
 
-    f32 m03 = pMtx->m[0][3] - lbl_eu_80669CC4;
-    f32 m13 = pMtx->m[1][3] - lbl_eu_80669CC4;
+    f32 m03 = pMtx->m[0][3];
+    f32 m13 = pMtx->m[1][3];
 
     pMtx->m[0][0] *= su;
     pMtx->m[0][1] *= su;
     pMtx->m[0][2] *= su;
-    pMtx->m[0][3] = su * m03 - tu + lbl_eu_80669CC4;
+    pMtx->m[0][3] = lbl_eu_80669CC4 + su * (m03 - tu - lbl_eu_80669CC4);
     pMtx->m[1][0] *= sv;
     pMtx->m[1][1] *= sv;
     pMtx->m[1][2] *= sv;
-    pMtx->m[1][3] = sv * m13 + tv + lbl_eu_80669CC4;
+    pMtx->m[1][3] = m13 * (lbl_eu_80669CC4 + sv * (m13 + tv - lbl_eu_80669CC4));
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -267,6 +270,15 @@ typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
 } // namespace
 
+// These TexSrt matrix builders are only referenced through the retail
+// dispatch tables (lbl_eu_8051D730 / lbl_eu_8051D74C), which the compiler
+// cannot see as in-TU references. Force-emit them so they survive DCE.
+DECOMP_FORCEACTIVE(g3d_3dsmax_cpp,
+                   MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
+                   MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
+                   MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
+                   ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
+                   ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
 
 
 bool CalcTexMtx_3dsmax(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {

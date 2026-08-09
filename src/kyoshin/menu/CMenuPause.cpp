@@ -16,10 +16,110 @@
 
 extern u32 lbl_eu_80663E28;
 
-// Forward declaration for the pause-exit input handler (defined below).
-void func_80252564(CMenuPause* p);
+// Forward declaration for the pause-exit input handler (defined below). Retail
+// emits this under C linkage (`func_80252564`), so it must stay unmangled.
+extern "C" void func_80252564(CMenuPause* p);
 
-void CMenuPause::Init() {}
+void CMenuPause::Init() {
+    // Scoped MEM2 region guard, then build the layout + animations.
+    mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x2000,
+                            (const char*)lbl_eu_8050C5C8, 0);
+    Class_8045F858 regionGuard(&mMemRegion);
+
+    func_80136E84(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
+    func_80136F08(mLayout,
+                  reinterpret_cast<nw4r::lyt::AnimTransform**>(&mField80),
+                  func_801355F4(), &lbl_eu_8050C5C8[0x24]);
+
+    // Bind the font and hand the loaded font object over to the root pane.
+    nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
+    u8* fontObj = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
+                                                                     mLayout);
+    u32 fontResult =
+        ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    func_8013676C(rootPane, fontResult);
+
+    mLayout->SetAnimationEnable((nw4r::lyt::AnimTransform*)mField80, true);
+    mLayout->Animate(0);
+
+    // Fill the two message-table text fields.
+    func_80136B4C(mLayout, &lbl_eu_8050C5C8[0x50],
+                  func_80136190(&lbl_eu_8050C5C8[0x40], &lbl_eu_8050C5C8[0x4b],
+                                8),
+                  0);
+    func_80136B4C(mLayout, &lbl_eu_8050C5C8[0x70],
+                  func_80136190(&lbl_eu_8050C5C8[0x5d], &lbl_eu_8050C5C8[0x6b],
+                                0x6b),
+                  0);
+
+    // ---- Cursor texture palette variants (classic vs remote pad). ----
+    // Each: pick a message name by pad type, load the "timg" texture resource,
+    // bind it (func_80137E7C) and set its width/height on the Pane material.
+    {
+        const char* visName = &lbl_eu_8050C5C8[0x8f];
+        const char* msgName = cf::CfGameManager::func_80086F9C(-1)
+                                  ? &lbl_eu_8050C5C8[0x7d]
+                                  : &lbl_eu_8050C5C8[0x86];
+        u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6b);
+        char* handle = func_80138F78(msg);
+        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+        void* tex = ((void* (*)(void*, u32, void*, u32))((void**)acc)[0xc / 4])(
+            acc, 0x74696D67 /* 'timg' */, handle, 0);
+        if (tex != NULL) {
+            func_80137E7C(mLayout, (void*)visName, tex);
+            // texture sub-resource carries a 2D dimension header (u16 w,h).
+            void* dims = *(void**)*(void**)((u8*)tex + 0x8);
+            u16 w = *(u16*)((u8*)dims + 0x0);
+            u16 h = *(u16*)((u8*)dims + 0x2);
+            void* res = ((void* (*)(void*, const char*, u32, void*))(
+                (void**)rootPane)[0x3c / 4])(rootPane, visName, 1, dims);
+            if (res != NULL) {
+                *(f32*)((u8*)res + 0x4c) = (f32)w;
+                *(f32*)((u8*)res + 0x50) = (f32)h;
+            }
+        }
+    }
+    {
+        const char* visName = &lbl_eu_8050C5C8[0xa6];
+        const char* msgName = cf::CfGameManager::func_80086F9C(-1)
+                                  ? &lbl_eu_8050C5C8[0x7d]
+                                  : &lbl_eu_8050C5C8[0x86];
+        u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6c);
+        char* handle = func_80138F78(msg);
+        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+        void* tex = ((void* (*)(void*, u32, void*, u32))((void**)acc)[0xc / 4])(
+            acc, 0x74696D67 /* 'timg' */, handle, 0);
+        if (tex != NULL) {
+            func_80137E7C(mLayout, (void*)visName, tex);
+            // texture sub-resource carries a 2D dimension header (u16 w,h).
+            void* dims = *(void**)*(void**)((u8*)tex + 0x8);
+            u16 w = *(u16*)((u8*)dims + 0x0);
+            u16 h = *(u16*)((u8*)dims + 0x2);
+            void* res = ((void* (*)(void*, const char*, u32, void*))(
+                (void**)rootPane)[0x3c / 4])(rootPane, visName, 1, dims);
+            if (res != NULL) {
+                *(f32*)((u8*)res + 0x4c) = (f32)w;
+                *(f32*)((u8*)res + 0x50) = (f32)h;
+            }
+        }
+    }
+
+    mState = 1;
+    func_80138078__FUl(0xd);
+
+    mField74[0] = mField74[1] = mField74[2] = mField74[3] = 0; // field 0x74
+
+    // Register as a scene render callback; IScnRender subobject lives at +0x5c.
+    void* self = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        self = reinterpret_cast<IScnRender*>(&mRenderVtable);
+    }
+    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, self, 0x12, 0);
+
+    mMemRegion.func_8045F810();
+    // regionGuard destructor runs here.
+}
+
 
 void CMenuPause::Term() {
     CDeviceVI::waitForDrawDone();
@@ -44,24 +144,28 @@ void CMenuPause::Term() {
 
 void CMenuPause::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        goto done;
-    }
-    if (lbl_eu_80663E28 & (1u << 21)) {
-        goto done;
-    }
+    if (CTaskGame::func_800426F0()) goto exit;
+    if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto exit;
+    // Branch-over-branch guard: `goto body` with the `exit` label + return
+    // placed BEFORE `body` keeps MWCC from folding the bit test to a single
+    // `bne` -- it emits retail's `beq body; b exit` (docs/MWCC_REFERENCE.md
+    // 5824 / 4707).
+    goto body;
+exit:
+    return;
+body:
     if (!func_8013BE50()) {
-        goto done;
+        goto exit;
     }
     if (mLayout == NULL) {
-        goto done;
+        goto exit;
     }
 
     switch (mState) {
     case 1:
         // Opening animation: tick it forward; when it finishes arms state 2.
         if (func_80137444(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
-                          1.0f) != 0) {
+                          lbl_eu_806687D8) != 0) {
             mState = 2;
         }
         break;
@@ -72,7 +176,7 @@ void CMenuPause::Move() {
     case 3:
         // Closing animation: when it finishes, reset to state 0 / clear flag.
         if (func_80137510(reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80),
-                          1.0f) != 0) {
+                          lbl_eu_806687D8) != 0) {
             mState = 0;
             mBProcess[0x50] = 1; // field 0x54 flag
         }
@@ -80,10 +184,7 @@ void CMenuPause::Move() {
     }
 
     // Pump the layout animation once.
-    void* vtab = *(void**)mLayout;
-    ((void (*)(void*, bool))((void**)vtab)[0x38 / 4])(mLayout, 0);
-done:
-    ;
+    mLayout->Animate(0);
 }
 
 void CMenuPause::cbRenderBefore() {
@@ -150,15 +251,19 @@ extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
 
         u32* ptmf = __ptmf_null;
         char* vtFinal = lbl_eu_805371A0;
+        // Persistent zero used for all the flag/member zero-writes below; keeping
+        // it live across the sub-object ctor makes MWCC allocate a callee-saved
+        // register (retail r31) and matches the 4-register prologue.
+        u8 zero = 0;
 
         u32 ptmf1 = ptmf[1];
         u32 ptmf0 = ptmf[0];
         char* iscnVtbl1 = vtFinal + 0x24;
+        char* iscnVtbl2 = vtFinal + 0xac;
         shim->callbacks[0] = ptmf0;
         shim->callbacks[1] = ptmf1;
 
         u32 ptmf2 = ptmf[2];
-        char* iscnVtbl2 = vtFinal + 0xac;
         shim->callbacks[2] = ptmf2;
 
         ptmf1 = ptmf[1];
@@ -168,8 +273,8 @@ extern "C" CMenuPause* __ct__CMenuPause(CProcess* parent, CProcess* parent2) {
         ptmf2 = ptmf[2];
         shim->callbacks[5] = ptmf2;
 
-        shim->field54 = 0;
-        shim->field55 = 0;
+        shim->field54 = zero;
+        shim->field55 = zero;
 
         shim->vtable = vtFinal;
         shim->iscnVtable1 = iscnVtbl1;
@@ -209,7 +314,7 @@ unsigned long func_80252538() {
     return p->mState != 3;
 }
 
-void func_80252564(CMenuPause* p) {
+extern "C" void func_80252564(CMenuPause* p) {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 first;
     u32 second;

@@ -123,7 +123,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc26(u32 value, float amount) {}
 
 u32 cf::CfObjectMove::CfObject_UnkVirtualFunc23() { return 0; }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc27() {}
+void cf::CfObjectMove::CfObject_UnkVirtualFunc27(void* src) {}
 
 void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(CfObjectModel*);
 void func_8004B4A4(void*, float);
@@ -162,7 +162,20 @@ void CfObjectMove_nullsub_16(){}
 
 void CfObjectMove_nullsub_17(){}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc14() {}
+void cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
+    void* target = this->mTargetC4;
+    if (target != 0) {
+        *(float*)((char*)target + 0x388) = value;
+    }
+    target = this->mTargetC8;
+    if (target != 0) {
+        *(float*)((char*)target + 0x388) = value;
+    }
+    target = this->mTargetCC;
+    if (target != 0) {
+        *(float*)((char*)target + 0x388) = value;
+    }
+}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc15() {}
 

@@ -62,7 +62,7 @@ extern "C" {
 
     // PTG / tension helpers
     void func_8018C8F4(void* self, int ptg);
-    void* func_801862C0(VMThread* pThread);
+    void* func_801862C0();
     void* func_801864DC(void* mgr, int slot);
 
     // Monado arts unlock
@@ -201,7 +201,7 @@ int selectTgt(VMThread* pThread) {
         ocObj = vmArgOCGet(2, vmArgPtrGet(pThread, 1));
     }
     if (ocObj != 0) {
-        void* mgr = func_801862C0(pThread);
+        void* mgr = func_801862C0();
         void* slot = func_801864DC(mgr, *(u32*)((u8*)ocObj + 4));
         if (slot != 0) {
             void* cam = func_800FE68C();

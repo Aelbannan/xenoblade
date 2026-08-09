@@ -24,7 +24,7 @@ u8 lbl_eu_80574090[0x20];
 
 /* One-time init guard: set the SDA flag on first call, then hand out the
    singleton object's address. Sign-extension in retail matches a signed byte. */
-void* func_801862C0(VMThread* pThread) {
+void* func_801862C0(void) {
     if (lbl_eu_806642C8 == 0) {
         lbl_eu_806642C8 = 1;
     }

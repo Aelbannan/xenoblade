@@ -201,7 +201,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
     ml::CVec3 pos(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
-    void* obj = func_801862C0(pThread);
+    void* obj = func_801862C0();
     void* slot = func_801864DC(obj, *(u32*)((u8*)oc + 4));
     cam->vfunc_0x68(slot, &pos, (flags < 0) ? 1 : 0);
     return 0;
@@ -223,7 +223,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
     ml::CVec3 lookat(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
-    void* obj = func_801862C0(pThread);
+    void* obj = func_801862C0();
     void* slot = func_801864DC(obj, *(u32*)((u8*)oc + 4));
     cam->vfunc_0x6C(slot, &lookat, (flags < 0) ? 1 : 0);
     func_8016FD84(0.0f, 1.0f);
@@ -294,7 +294,7 @@ extern "C" int keyBegin(VMThread* pThread) {
     if (vmArgOmitChk(pThread, 5)) {
         oc = nullptr;
     } else {
-        void* obj = func_801862C0(pThread);
+        void* obj = func_801862C0();
         void* ocRaw = vmArgOCGet(2, vmArgPtrGet(pThread, 5));
         oc = func_801864DC(obj, *(u32*)((u8*)ocRaw + 4));
     }

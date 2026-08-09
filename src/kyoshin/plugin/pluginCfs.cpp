@@ -1162,7 +1162,7 @@ int setDispOffArea(VMThread* vmThread) {
         areaId = vmArgFixedGet(3, arg);
     }
 
-    void* obj = func_801864DC(func_801862C0((VMThread*)(s32)areaId), *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         void* box = func_800B07E8__Fv();
@@ -1188,7 +1188,7 @@ int setScheduleType(VMThread* vmThread) {
         enable = vmArgBoolGet(3, arg);
     }
 
-    void* obj = func_801864DC(func_801862C0((VMThread*)(s32)enable), *(int*)((u8*)ocObj + 4));
+    void* obj = func_801864DC(func_801862C0(), *(int*)((u8*)ocObj + 4));
 
     if (obj != NULL) {
         int flags = *(int*)((u8*)obj + 0x64);

@@ -101,7 +101,7 @@ namespace cf {
 
 CfObjectPoint::~CfObjectPoint() {
     if (mFlags68 & 0x40000000) {
-        func_801862C0((VMThread*)this);
+        func_801862C0();
         ((void* (*)(void*, void*))func_80186474)(this, this);
     }
     CfObject_UnkVirtualFunc6();

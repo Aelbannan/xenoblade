@@ -46,8 +46,8 @@ namespace cf {
         u8 _6C4[5];              // 0x6C4-0x6C8
         u8 mFlags6C9;             // 0x6C9
         u8 _6CA[4];             // 0x6CA-0x6CD
-        u8 field_6CE;            // 0x6CE
-        u8 field_6CF;            // 0x6CF
+        s8 field_6CE;            // 0x6CE
+        s8 field_6CF;            // 0x6CF
         u8 _6D0[0x20];           // 0x6D0-0x6EF
         float mMoveSpeed;         // 0x6F0-0x6F3
         u8 _6F4[0x21];           // 0x6F4-0x714

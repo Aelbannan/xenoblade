@@ -40,7 +40,7 @@ struct CChainCombo {
     bool mPending;   // 0x8 - set externally; consumed by func_80293EEC
     u8 pad9[3];
     CChainGauge mGauge; // 0xC - chain gauge pair
-    void* mVtbl;        // 0x14 - lbl_eu_80538994
+    void** mVtbl;       // 0x14 - lbl_eu_80538994
 
     CChainCombo();
     ~CChainCombo();

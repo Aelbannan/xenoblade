@@ -9,30 +9,45 @@ extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
 
 /* Initialize DCT coefficient tables.
  * For each (i,j): val = scale * cos(pi/8 * i * (j + 0.5)).
- * Written to the row-major table and the transposed table.
- * int->double uses the itof reform (bias read from c[3]). */
+ * Written to the row-major table (row, stride 8) and the transposed
+ * table (col, stride 8, byte offset transCol).
+ * int->double conversions use the itof reform (bias read from c[3]). */
 void DCT_AcInit(void) {
+    u32 *b8 = lbl_eu_806046B8;
     const double *c = (const double *)lbl_eu_8051C388;
-    double *tbl_base = (double *)&lbl_eu_806046B8[2];  /* +0x08 */
-    double *tbl_trans = tbl_base + 0x40;               /* +0x208 */
-    double pi8 = c[2];                                 /* pi/8 */
-    double half = c[1];                                /* 0.5 */
-    int i;
+    int i, j;
 
-    lbl_eu_806046B8[0] = (u32)DCT_GetVerStr();
+    b8[0] = (u32)DCT_GetVerStr();
+
+    double *rowBase = (double *)(b8 + 2);             /* +0x08 */
+    double bias = c[3];   /* itof bias const (0x4330000080000000) */
+    double *trans = (double *)((char *)b8 + 0x208);   /* +0x208 */
+    double pi8 = c[2];    /* pi/8 */
+    double half = c[1];   /* 0.5 */
+    u32 transCol = 0;
 
     for (i = 0; i < 8; i++) {
         double scale = (i == 0) ? c[0] : c[1];
-        double *row = tbl_base + i * 8;
-        double *col = tbl_trans + i;
-        int j;
+        double *row = rowBase;
+        double *col = (double *)((char *)trans + transCol);
+        u32 iv = (u32)i;
 
         for (j = 0; j < 8; j++) {
-            double v = cos(pi8 * (double)i * (half + (double)j)) * scale;
+            /* itof: int -> double via 0x4330 magic sweep, bias pulled from c[3]. */
+            union { f64 d; u32 u[2]; } cvt;
+            cvt.u[0] = 0x43300000;
+            cvt.u[1] = iv ^ 0x80000000;
+            double id = cvt.d - bias;
+            cvt.u[0] = 0x43300000;
+            cvt.u[1] = (u32)j ^ 0x80000000;
+            double jd = cvt.d - bias;
+            double v = scale * cos(pi8 * id * (half + jd));
             *row++ = v;
             *col = v;
             col += 8;
         }
+        rowBase += 8;
+        transCol += 8;
     }
 }
 

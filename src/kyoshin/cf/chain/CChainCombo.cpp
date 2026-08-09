@@ -8,6 +8,7 @@ typedef void (*CfObjectModel_UnkVirtualFunc4_t)(cf::CfObjectModel*, int);
 
 namespace cf{
     CChainCombo::CChainCombo(){
+        mVtbl = lbl_eu_80538994;
         func_80294824__FPv(&mGauge);
         mArtsType = 0;
         mComboCount = 0;

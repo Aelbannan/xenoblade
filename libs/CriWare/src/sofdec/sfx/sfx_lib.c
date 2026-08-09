@@ -163,12 +163,12 @@ void SFX_Destroy(SFXHandleState* hn) {
     lbl_eu_80619C10.init_count--;
 }
 
-void SFXLIB_Error(u32 arg, const char* msg) {
+void SFXLIB_Error(void* self, void* stmInf, const char* msg) {
     void (*fn)(u32, const char*) = lbl_eu_80619C10.error_fn;
-    u32 fnArg = lbl_eu_80619C10.error_arg;
+    u32 arg = lbl_eu_80619C10.error_arg;
     lbl_eu_80619C10.error_count++;
     if (fn) {
-        fn(fnArg, msg);
+        fn(arg, msg);
     }
 }
 

@@ -45,7 +45,7 @@ void func_802A85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
 // party-gauge voice (base 0x385) through the sound system.
 int func_802A8628(CVoiceHandle* self) {
     if ((self->field_0x3F00 & 2) == 0) return 0;
-    if (((int (*)(CVoiceHandle*))self->vtable[0x2BC / 4])(self) != 0) return 0;
+    if (((CVoiceVTV*)self)->idle() != 0) return 0;
     if (func_802A330C(0xc8, 1) == NULL) return 0;
 
     CCharVoice* voicePtr = (CCharVoice*)self;

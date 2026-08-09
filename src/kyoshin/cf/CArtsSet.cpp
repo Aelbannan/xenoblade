@@ -18,28 +18,55 @@ namespace cf {
         }
     }
 
+    // Retrieve a 16-bit arts-slot entry at row*0x10 + col*0x2 bytes in.
+    // `this`(r3) accumulates both strides, matching the retail rlwinm/mr pair.
+    // Accumulate the row*0x10 and col*0x2 strides into a running byte pointer
+    // (mirrors func_80153CAC), so MWCC keeps `this`(r3) as the accumulator and
+    // reuses each source register for its own shift.
     void CArtsSet::setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index) {
-        mArtsSlotData[row * 8 + index] = value;
+        u8* p = (u8*)this;
+        p += row * 0x10;
+        p += index * 0x2;
+        *(u16*)(p + 0x4) = value;
     }
 
     unsigned short CArtsSet::getArtsSlotRC(int index, int subindex) {
-        return mArtsSlotData[index * 8 + subindex];
+        u8* p = (u8*)this;
+        p += index * 0x10;
+        p += subindex * 0x2;
+        return *(u16*)(p + 0x4);
     }
 
+    // Decompose the flat index into row/col and store into the slot entry.
     void CArtsSet::setArtsSlotByIdx(unsigned short value, int index) {
-        mArtsSlotData[index] = value;
+        u8* p = (u8*)this;
+        p += (index / 8) * 0x10;
+        p += (index % 8) * 0x2;
+        *(u16*)(p + 0x4) = value;
     }
 
     void* CArtsSet::getArtsParamRC(int index460, int index8c) {
         return &mArtsParams[index460 * 8 + index8c];
     }
 
+    // Return the CArtsParam at row*0x460 + col*0x8c bytes into mArtsParams
+    // (0x38 from the CArtsSet base); array indexing keeps the two mulli
+    // strides separate and reuses the source registers like the retail build.
+    // Accumulate the index1*0x460 and index2*0x8c strides into this(r3), so the
+    // two mullis land in the source registers (r4/r0) like the retail build.
     void* CArtsSet::getArtsParamRC2(int index1, int index2) {
-        return &mArtsParams[index1 * 8 + index2];
+        u8* p = (u8*)this;
+        p += index1 * 0x460;
+        p += index2 * 0x8c;
+        return p + 0x38;
     }
 
+    // Decompose the flat index into row/col and return the CArtsParam entry.
     void* CArtsSet::getArtsParamByIdx(int index) {
-        return &mArtsParams[index];
+        u8* p = (u8*)this;
+        p += (index / 8) * 0x460;
+        p += (index % 8) * 0x8c;
+        return p + 0x38;
     }
 }
 

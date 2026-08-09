@@ -104,15 +104,15 @@ void func_804C0570(CLight* self, f32 angleX, f32 angleY) {
 void func_804C07F0(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-// Toggles a light-enable flag (bit 16 of mFlags) and propagates it
+// Toggles a light-enable flag (bit 16 of unk30) and propagates it
 // to the GX LightObj's enable bit (bit 2 of its internal flag).
 void func_804C08C8(CLight* self, int enable) {
     if (enable)
-        self->mFlags |= 0x10000;
+        self->unk30 |= 0x10000;
     else
-        self->mFlags &= ~0x10000;
+        self->unk30 &= ~0x10000;
 
-    if (self->mFlags & 0x10000)
+    if (self->unk30 & 0x10000)
         self->mpLightObj->Enable();
     else
         self->mpLightObj->Disable();

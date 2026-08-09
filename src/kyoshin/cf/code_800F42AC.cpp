@@ -67,59 +67,58 @@ void func_800F449C(ScMain* self) {
             func_8013F244();
         }
     }
-    self->field_04 = NULL;
-    self->field_00 = NULL;
-    self->field_08 = NULL;
-    self->sub = NULL;
+    self->field_04 = 0;
+    self->field_00 = 0;
+    self->field_08 = 0;
+    self->sub = 0;
     self->field_830 = lbl_eu_80666E90;
     memset(&self->zero_828, 0, 8);
-    self->field_10 = NULL;
-    self->field_14 = NULL;
-    self->field_58 = NULL;
+    self->field_10 = 0;
+    self->field_14 = 0;
+    self->field_58 = 0;
     self->field_5C = -1;
-    self->field_60 = NULL;
+    self->field_60 = 0;
     self->f_64 = lbl_eu_80666E90;
     self->f_68 = lbl_eu_80666E90;
     self->f_6C = lbl_eu_80666E90;
     self->f_70 = lbl_eu_80666E90;
     self->f_74 = lbl_eu_80666E90;
-    self->field_8C = NULL;
-    self->s_90 = NULL;
-    self->field_C8 = NULL;
     self->f_78 = lbl_eu_80666E90;
     self->f_7C = lbl_eu_80666E90;
-    self->s_80 = NULL;
-    self->s_82 = NULL;
+    self->s_80 = 0;
+    self->s_82 = 0;
+    self->field_8C = 0;
+    self->s_90 = 0;
+    self->field_C8 = 0;
     memset(&self->data_18, 0, 0x40);
     memset(&self->data_94, 0, 0x34);
-    self->flags_84 = NULL;
-    self->field_88 = NULL;
-    u8* bp = (u8*)self;
-    for (int i = 0; i < 5; i++, bp += sizeof(ScMain::ScSub)) {
-        ScMain::ScSub* s = (ScMain::ScSub*)(bp + 0xcc);
-        s->field_00 = NULL;
-        s->field_04 = NULL;
-        s->field_48 = NULL;
+    self->flags_84 = 0;
+    self->field_88 = 0;
+    for (int i = 0; i < 5; i++) {
+        ScMain::ScSub* s = &self->subs[i];
+        s->field_00 = 0;
+        s->field_04 = 0;
+        s->field_48 = 0;
         s->field_4C = -1;
-        s->field_50 = NULL;
-        memset(&s->data_08, 0, 0x40);
+        s->field_50 = 0;
         s->f_54 = lbl_eu_80666E90;
         s->f_58 = lbl_eu_80666E90;
         s->f_5C = lbl_eu_80666E90;
         s->f_60 = lbl_eu_80666E90;
         s->f_64 = lbl_eu_80666E90;
-        s->field_7C = NULL;
-        s->s_80 = NULL;
-        s->field_B8 = NULL;
+        s->field_7C = 0;
+        s->s_80 = 0;
+        s->field_B8 = 0;
         s->f_68 = lbl_eu_80666E90;
         s->f_6C = lbl_eu_80666E90;
-        s->s_70 = NULL;
-        s->s_72 = NULL;
+        s->s_70 = 0;
+        s->s_72 = 0;
+        memset(&s->data_08, 0, 0x40);
+        s->field_74 = 0;
+        s->field_78 = 0;
         memset(&s->data_84, 0, 0x34);
-        s->field_74 = NULL;
-        s->field_78 = NULL;
     }
-    self->flags_824 = NULL;
+    self->flags_824 = 0;
 }
 
 /// Applies status-flag priority to a combined size value, rounding to int.

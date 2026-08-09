@@ -37,7 +37,7 @@ public:
     void func_802B9334(void*);
     void func_802B9364();
     void setBatteryLevel(u8 level);
-    void updateBatteryImage();
+    __declspec(noinline) void updateBatteryImage();
     void func_802B94B0();
     bool OnFileEvent(CEventFile* pEventFile);
 

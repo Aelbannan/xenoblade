@@ -175,16 +175,14 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
     if(length < 16){
         //If the length is less than 16, just search for a match with a for loop
         // Access the hash table as u32* for word-by-word comparison (required for matching)
+        //Access the hash table as u32* for word-by-word comparison (required for matching)
         u32* pHashTable = (u32*)&mFileHashTable[startIndex];
-        int i = startIndex;
-        if(i < endIndex){
-            do {
-                if(pHashTable[0] == mHashLowerHalf && pHashTable[1] == mHashUpperHalf){
-                    return i;
-                }
-                i++;
-                pHashTable += 2; // advance by two u32s per entry
-            }while(--length > 0);
+        int i;
+        for(i = startIndex; i < endIndex; i++){
+            if(pHashTable[0] == mHashLowerHalf && pHashTable[1] == mHashUpperHalf){
+                return i;
+            }
+            pHashTable += 2; // advance by two u32s per entry
         }
         
         //If the hash couldn't be found, return -1

@@ -25,16 +25,6 @@ CWorkControl* CWorkControl::getInstance(){
     return spInstance;
 }
 
-bool CWorkControl::setFlowSetup(){
-    CWorkFlowSetup* pFlowSetup = CWorkFlowSetup::getInstance();
-    if(pFlowSetup != nullptr){
-        return true;
-    }
-
-    CWorkFlowSetup::create("CWorkFlowSetup", getInstance());
-    return true;
-}
-
 void CWorkControl::pause(bool paused){
     getInstance()->wkSetEventChild(paused ? EVT_PAUSE : EVT_UNPAUSE);
 }
@@ -66,6 +56,16 @@ bool CWorkControl::hasFlow(){
 bool CWorkControl::wkStandbyLogin(){
     setFlowSetup();
     return CWorkThread::wkStandbyLogin();
+}
+
+bool CWorkControl::setFlowSetup(){
+    CWorkFlowSetup* pFlowSetup = CWorkFlowSetup::getInstance();
+    if(pFlowSetup != nullptr){
+        return true;
+    }
+
+    CWorkFlowSetup::create("CWorkFlowSetup", getInstance());
+    return true;
 }
 
 bool CWorkControl::wkStandbyLogout(){

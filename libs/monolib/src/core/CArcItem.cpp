@@ -4,6 +4,9 @@
 #include <revolution/ARC.h>
 #include <cstring>
 
+// optimize_for_size on: retail prologue saves r30+r31 via stmw, not stw
+// (same pattern as CTaskGameEff / CRsrcData dtor).
+#pragma optimize_for_size on
 CArcItem::CArcItem(const char* pFilename) :
 unk4(),
 unk28(nullptr),
@@ -17,7 +20,11 @@ unk38(nullptr){
     //This line gets included in the DESTROYBASE extab PC action range
     unk4 = string.c_str();
 }
+#pragma optimize_for_size off
 
+// optimize_for_size on: retail __dt__ saves r30+r31 via stmw r30, not stw
+// (same pattern as CTTask/CRsrcData dtors).
+#pragma optimize_for_size on
 CArcItem::~CArcItem(){
     if(unk28 != nullptr){
         CDeviceFile::cancel(unk28);
@@ -25,6 +32,7 @@ CArcItem::~CArcItem(){
 
     DELETE_OBJ(unk38);
 }
+#pragma optimize_for_size off
 
 void CArcItem::func_804DEC30(){
     if(unk2C == 0){
@@ -34,6 +42,8 @@ void CArcItem::func_804DEC30(){
     }
 }
 
+// optimize_for_size on: retail saves r29-r31 via stmw, not stw.
+#pragma optimize_for_size on
 bool CArcItem::func_804DEC6C(const char* pPath, void** pOutStartAddr, u32* pOutLength){
     if(unk38 == 0 || unk30 != 0) return false;
     s32 entryNum = ARCConvertPathToEntrynum(&mArcHandle, pPath);
@@ -50,6 +60,7 @@ bool CArcItem::func_804DEC6C(const char* pPath, void** pOutStartAddr, u32* pOutL
     
     return false;
 }
+#pragma optimize_for_size off
 
 bool CArcItem::OnFileEvent(CEventFile* pEventFile){
     if(pEventFile->mFileHandle == unk28){

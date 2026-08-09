@@ -21,18 +21,23 @@ extern "C" void __ct__CSchedule(CSchedule* self) {
 extern "C" int func_804E3614(CSchedule* self) {
     self->mEntryCount = 0;
     ScheduleEntry* entry = self->mEntries;
-    int count = 0;
+    s16 count = 0;
     while (entry->type != 0xFFFF) {
+        // No more room -> bail out success (converges on the post-loop return 1).
         if (count >= 0x20) break;
         if (entry->flags == 0 || entry->flags >= 0xFFFF) {
             return 0;
         }
         s16 handle = func_804DFA84(self->mEntries, entry, self);
-        if (handle < 0) return 0;
-        self->mHandles[count] = handle;
+        if (handle < 0) {
+            return 0;
+        }
+        // Write through explicit pointer arithmetic with s16 sign-extension and the
+        // array offset last, so MWCC keeps the base+displacement sth (@REF:17).
+        *(s16*)((u8*)self + (u32)(s16)count * 2 + 0x98) = handle;
         count++;
-        self->mEntryCount++;
         entry++;
+        self->mEntryCount++;
     }
     return 1;
 }

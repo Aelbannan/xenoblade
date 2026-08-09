@@ -206,16 +206,22 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
 }
 
 // ================== func_8005A2F0 ==================
-extern "C" void func_8005A2F0(u8* self, CVirtualLightObjPtr item) {
-    // reslist<CVirtualLightObj*> push_back, inlined through the template so the
-    // try/catch setItem materialises the mr r31,r1 / stw r1 frame (retail ABI).
-    // This reproduces the retail text structure exactly (structural=0); the
-    // residual is a pure MWCC-internal register rotation (startNode r7 vs retail
-    // r9). Declaring startNode last would fix the register but breaks the loop's
-    // prologue load hoisting (structural 17), so the template is the best shape.
+// reslist<CVirtualLightObjPtr>::push_back (inlined). Finds the first empty slot
+// (mList[i].mNext == 0), stores the item (setItem try/catch reproduces the
+// retail EH frame), and links the node before the head sentinel.
+extern "C" void func_8005A2F0(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPtr item) {
     reslist<CVirtualLightObjPtr>* base =
         (reslist<CVirtualLightObjPtr>*)((u8*)self + 8);
-    base->push_back((CVirtualLightObjPtr)item);
+
+    _reslist_node<CVirtualLightObjPtr>* startNode = base->mStartNodePtr;
+    int i = base->findFirstEmptySlotIndex();
+    _reslist_node<CVirtualLightObjPtr>* temp = &base->mList[i];
+
+    temp->setItem(item);
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
 }
 
 // ================== func_8005A374 ==================

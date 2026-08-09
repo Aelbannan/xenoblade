@@ -97,7 +97,18 @@ struct ReplaceImageTMRep {
     u32 mMaxLOD;          // at 0x10
     u16 mLODBias;         // at 0x14
     u16 mPaletteEntryNum; // at 0x16
-    u32 mBits;            // at 0x18
+    struct {
+        u32 textureFormat : 4;
+        u32 mipmap : 1;
+        u32 wrapS : 2;
+        u32 wrapT : 2;
+        u32 minFilter : 3;
+        u32 magFilter : 1;
+        u32 biasClampEnable : 1;
+        u32 edgeLODEnable : 1;
+        u32 anisotropy : 2;
+        u32 paletteFormat : 2;
+    } mBits; // at 0x18
 };
 } // namespace
 
@@ -110,30 +121,24 @@ void ReplaceImage__Q34nw4r3lyt6TexMapFP10TPLPaletteUl(
     }
 
     const TPLDescriptor* pDesc = TPLGet(pPalette, id);
-    const TPLHeader& rTexHeader = *pDesc->textureHeader;
+    const TPLHeader* pTexHeader = pDesc->textureHeader;
 
-    // Keep the packed bits in one GPR and fold each field update into it in
-    // place (retail loads bits once, rlwimi's texture-format, stores, then
-    // reuses the SAME register for the palette-format update in the branches).
-    u32 bits = self->mBits;
-    self->mpImage   = rTexHeader.data;
-    u16 w = rTexHeader.width;
-    u16 h = rTexHeader.height;
-    self->mWidth    = w;
-    self->mHeight   = h;
-    bits            = (bits & 0xFFFFFFF0) | (rTexHeader.format & 0xF);
-    self->mBits     = bits;
+    self->mpImage   = pTexHeader->data;
+    // Retail hoists height into a held register (r5) before touching width;
+    // width is transient, stored then height.
+    const u16 height = pTexHeader->height;
+    self->mWidth     = pTexHeader->width;
+    self->mHeight    = height;
+    self->mBits.textureFormat = pTexHeader->format;
 
     const TPLClutHeader* const pClutHeader = pDesc->CLUTHeader;
     if (pClutHeader != NULL) {
-        self->mpPalette = pClutHeader->data;
-        bits            = (bits & 0xFFF9FFFF) | ((pClutHeader->format & 0x3) << 17);
-        self->mBits     = bits;
-        self->mPaletteEntryNum = pClutHeader->numEntries;
+        self->mpPalette           = pClutHeader->data;
+        self->mBits.paletteFormat = pClutHeader->format;
+        self->mPaletteEntryNum    = pClutHeader->numEntries;
     } else {
-        self->mpPalette = NULL;
-        bits            = (bits & 0xFFF9FFFF);
-        self->mBits     = bits;
+        self->mpPalette        = NULL;
+        self->mBits.paletteFormat = GX_TL_IA8;
         self->mPaletteEntryNum = 0;
     }
 }

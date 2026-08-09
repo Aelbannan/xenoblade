@@ -228,7 +228,16 @@ void func_8024309C(CMenuMapSelect* self) {
 
 // ---------------------------------------------------------------------------
 // IScnRender vtable this-adjusting thunk for destructor.
+//
+// Entered with r3 = IScnRender subobject pointer (CMenuMapSelect base + 0x58).
+// Convert back to the CMenuMapSelect base and tail-call the real destructor
+// (retail symbol __dt__14CMenuMapSelectFv).
+//
+// Retail: subi r3, r3, 0x58; b __dt__14CMenuMapSelectFv
 // ---------------------------------------------------------------------------
+extern "C" void __dt__14CMenuMapSelectFv(CMenuMapSelect* self);
 void CMenuMapSelect::func_802430A4() {
-    this->~CMenuMapSelect();
+    // Single-arg call leaves the delete-flag register untouched (retail thunk
+    // does not set r4), producing a plain this-adjusting tail-call.
+    __dt__14CMenuMapSelectFv((CMenuMapSelect*)((u8*)this - 0x58));
 }

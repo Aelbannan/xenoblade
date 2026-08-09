@@ -1,6 +1,7 @@
 // Decompiled code for kyoshin/CCol6Invite
 
 #include "kyoshin/CCol6Invite.hpp"
+#include "kyoshin/CCol6System.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -107,6 +108,41 @@ void CCol6Invite::Init() {}
 void CCol6Invite::Term() {}
 void CCol6Invite::Move() {}
 void CCol6Invite::Draw() {}
+
+// --- this-adjusting thunks over CCol6Hint / CCol6System (defined in the
+// CCol6System TU). Retail "this" lands at an embedded subobject offset; back
+// it off to the CProcess/CCol6Hint/CCol6System base and forward.
+
+// func_801640E0: CCol6Hint dtor at subobject +0x6c.
+void func_801640E0(u8* self) {
+    __dt__9CCol6HintFv(reinterpret_cast<CCol6Hint*>(self - 0x6c));
+}
+
+// func_801640E8: CCol6Hint::cbRenderBefore at subobject +0x70.
+void func_801640E8(u8* self) {
+    reinterpret_cast<CCol6Hint*>(self - 0x70)->cbRenderBefore();
+}
+
+// func_80164100: CCol6System dtor at subobject +0x6c.
+void func_80164100(u8* self) {
+    __dt__11CCol6SystemFv(reinterpret_cast<CCol6System*>(self - 0x6c));
+}
+
+// func_80164108: CCol6System::cbRenderBefore at subobject +0x70.
+void func_80164108(u8* self) {
+    reinterpret_cast<CCol6System*>(self - 0x70)->cbRenderBefore();
+}
+
+// func_80164110: CCol6System dtor at subobject +0x70.
+void func_80164110(u8* self) {
+    __dt__11CCol6SystemFv(reinterpret_cast<CCol6System*>(self - 0x70));
+}
+
+// func_80164118: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
+// CCol6Invite embedded subobject and tail-calls the non-deleting destructor.
+void func_80164118(u8* self) {
+    __dt__11CCol6InviteFv(reinterpret_cast<CCol6Invite*>(self - 0x6c));
+}
 
 // Standalone string formatting helper.
 // Formats a string into buffer, stores length at buffer+0x100.

@@ -40,5 +40,21 @@ public:
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 extern "C" CCol6Invite* lbl_eu_8066423C;
 
+// Forward declarations for the CCol6Hint/CCol6System subobject destructor
+// forwards used by the this-adjusting thunks (func_801640E0 / func_80164100 /
+// func_80164110). These symbols are emitted by the member destructor
+// definitions in the CCol6System TU; declaring them as C-linkage lets the thunk
+// tail-call the single-arg (non-deleting) destructor with only r3 adjusted.
+class CCol6Hint;
+class CCol6System;
+extern "C" void __dt__9CCol6HintFv(CCol6Hint*);
+extern "C" void __dt__11CCol6SystemFv(CCol6System*);
+
+// func_80164118 backs `this` off to the CCol6Invite embedded subobject and
+// tail-calls the non-deleting destructor. Avoids a virtual dispatch so the
+// thunk compiles to `subi r3,#-0x6c; b __dt__11CCol6InviteFv`.
+class CCol6Invite;
+extern "C" void __dt__11CCol6InviteFv(CCol6Invite*);
+
 // Standalone string formatting helper.
 void func_eu_801651A0(char* buffer, const char* format, ...);

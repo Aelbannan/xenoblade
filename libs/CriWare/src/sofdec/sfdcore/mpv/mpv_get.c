@@ -60,13 +60,11 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
         if ((u32)(bitRate - 0x30000) == 0xFFFF) {
             *out_max = (u32)-1;
         } else {
-            /* m starts as frameRate, then *= bitRate; reuse m's register for x (retail add r0,r3,r0) */
-            s32 m = (s32)h->frameRate;
-            m *= (s32)bitRate;
-            s32 hi = __mulhw((s32)0x91A2B3C5, (s32)m);
-            m += hi;                    /* x = hi + m, reusing m */
-            s32 x = m >> 10;            /* x / 1024 (arith shift) */
-            *out_max = (u32)x + ((u32)x >> 31);   /* round toward zero */
+            /* 64-bit fixed-point division by 1024: (frameRate * bitRate * 0x91A2B3C5) >> 42 */
+            s32 m = (s32)h->frameRate * (s32)bitRate;
+            s32 hi = __mulhw((s32)0x91A2B3C5, m);   /* signed high word */
+            s32 x = (hi + m) >> 10;                 /* arith shift */
+            *out_max = (u32)x + ((u32)x >> 31);     /* round toward zero */
         }
     }
     return 0;

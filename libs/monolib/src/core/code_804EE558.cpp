@@ -439,11 +439,11 @@ extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos, ml::CVec3 
 
 // func_804EFB38: clamp the fan to the screen; returns the scale factor.
 extern "C" float func_804EFB38(ml::CVec3* verts) {
-    float fbW = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
-    float fbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
+    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
 
     float scale = lbl_eu_8066B40C;
-    for (s32 i = 1; i < 9; i++) {
+    for (s16 i = 1; i < 9; i++) {
         float t = lbl_eu_8066B40C;
         float dx = ml::math::abs(verts[i].x - verts[0].x);
         if (dx != lbl_eu_8066B408) {
@@ -472,9 +472,7 @@ extern "C" float func_804EFB38(ml::CVec3* verts) {
 
     for (s16 i = 1; i < 10; i++) {
         if (i < 9) {
-            ml::CVec3 d = verts[i] - verts[0];
-            ml::CVec3 scaled = d * scale;
-            verts[i] = verts[0] + scaled;
+            verts[i] = verts[0] + (verts[i] - verts[0]) * scale;
         } else {
             verts[i] = verts[1];
         }
@@ -483,76 +481,74 @@ extern "C" float func_804EFB38(ml::CVec3* verts) {
 }
 
 // func_804EFD78: clamp positions to the screen and drag texcoords/colors along.
-extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, CFanColor* colors) {
-    float fbW = u16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth);
-    float fbH = u16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight);
+extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors) {
+    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
+    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
 
     for (s16 i = 1; i < 10; i++) {
-        if (i >= 9) {
+        if (i < 9) {
+            ml::CVec3 orig = verts[i];
+            bool clamped = false;
+            if (verts[i].x < lbl_eu_8066B408) {
+                verts[i].x = lbl_eu_8066B408;
+                clamped = true;
+            } else if (fbW < verts[i].x) {
+                verts[i].x = fbW;
+                clamped = true;
+            }
+            if (verts[i].y < lbl_eu_8066B408) {
+                verts[i].y = lbl_eu_8066B408;
+                clamped = true;
+            } else if (fbH < verts[i].y) {
+                verts[i].y = fbH;
+                clamped = true;
+            }
+            if (!clamped) {
+                continue;
+            }
+
+            ml::CVec3 d = orig - verts[0];
+            float rx = (d.x == lbl_eu_8066B408)
+                           ? lbl_eu_8066B40C
+                           : ml::math::abs((verts[i].x - verts[0].x) / d.x);
+            float ry = (d.y == lbl_eu_8066B408)
+                           ? lbl_eu_8066B40C
+                           : ml::math::abs((verts[i].y - verts[0].y) / d.y);
+
+            // Drag factor for the z components (0: tex/color z stays put).
+            float zf = lbl_eu_8066B408;
+
+            ml::CVec3 tdiff = tex[i] - tex[0];
+            ml::CVec3 tscaled(tdiff.x * rx, tdiff.y * ry, tdiff.z * zf);
+            tex[i] = tex[0] + tscaled;
+            if (tex[i].x < lbl_eu_8066B408) {
+                tex[i].x = lbl_eu_8066B408;
+            } else if (lbl_eu_8066B40C < tex[i].x) {
+                tex[i].x = lbl_eu_8066B40C;
+            }
+            if (tex[i].y < lbl_eu_8066B408) {
+                tex[i].y = lbl_eu_8066B408;
+            } else if (lbl_eu_8066B40C < tex[i].y) {
+                tex[i].y = lbl_eu_8066B40C;
+            }
+
+            ml::CVec3 cdiff = colors[i] - colors[0];
+            ml::CVec3 cscaled(cdiff.x * rx, cdiff.y * ry, cdiff.z * zf);
+            colors[i] = colors[0] + cscaled;
+            if (colors[i].x < lbl_eu_8066B408) {
+                colors[i].x = lbl_eu_8066B408;
+            } else if (lbl_eu_8066B40C < colors[i].x) {
+                colors[i].x = lbl_eu_8066B40C;
+            }
+            if (colors[i].y < lbl_eu_8066B408) {
+                colors[i].y = lbl_eu_8066B408;
+            } else if (lbl_eu_8066B40C < colors[i].y) {
+                colors[i].y = lbl_eu_8066B40C;
+            }
+        } else {
             verts[i] = verts[1];
             tex[i] = tex[1];
             colors[i] = colors[1];
-            continue;
-        }
-
-        ml::CVec3 orig = verts[i];
-        bool clamped = false;
-        if (verts[i].x < lbl_eu_8066B408) {
-            verts[i].x = lbl_eu_8066B408;
-            clamped = true;
-        } else if (fbW < verts[i].x) {
-            verts[i].x = fbW;
-            clamped = true;
-        }
-        if (verts[i].y < lbl_eu_8066B408) {
-            verts[i].y = lbl_eu_8066B408;
-            clamped = true;
-        } else if (fbH < verts[i].y) {
-            verts[i].y = fbH;
-            clamped = true;
-        }
-        if (!clamped) {
-            continue;
-        }
-
-        ml::CVec3 d = orig - verts[0];
-        float rx = (d.x == lbl_eu_8066B408)
-                       ? lbl_eu_8066B40C
-                       : ml::math::abs((verts[i].x - verts[0].x) / d.x);
-        float ry = (d.y == lbl_eu_8066B408)
-                       ? lbl_eu_8066B40C
-                       : ml::math::abs((verts[i].y - verts[0].y) / d.y);
-
-        ml::CVec3 tdiff = tex[i] - tex[0];
-        tex[i] = tex[0] + ml::CVec3(tdiff.x * rx, tdiff.y * ry,
-                                    tdiff.z * lbl_eu_8066B40C);
-        if (tex[i].x < lbl_eu_8066B408) {
-            tex[i].x = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < tex[i].x) {
-            tex[i].x = lbl_eu_8066B40C;
-        }
-        if (tex[i].y < lbl_eu_8066B408) {
-            tex[i].y = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < tex[i].y) {
-            tex[i].y = lbl_eu_8066B40C;
-        }
-
-        ml::CVec3 ci(colors[i].r, colors[i].g, colors[i].b);
-        ml::CVec3 c0(colors[0].r, colors[0].g, colors[0].b);
-        ml::CVec3 cdiff = ci - c0;
-        ci = c0 + ml::CVec3(cdiff.x * rx, cdiff.y * ry, cdiff.z * lbl_eu_8066B40C);
-        colors[i].r = ci.x;
-        colors[i].g = ci.y;
-        colors[i].b = ci.z;
-        if (colors[i].r < lbl_eu_8066B408) {
-            colors[i].r = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < colors[i].r) {
-            colors[i].r = lbl_eu_8066B40C;
-        }
-        if (colors[i].g < lbl_eu_8066B408) {
-            colors[i].g = lbl_eu_8066B408;
-        } else if (lbl_eu_8066B40C < colors[i].g) {
-            colors[i].g = lbl_eu_8066B40C;
         }
     }
 }
@@ -614,7 +610,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     memcpy(colors, lbl_eu_80661748, 0x78);
 
     if (clampInfo == NULL) {
-        func_804EFD78(verts, tex, colors);
+        func_804EFD78(verts, tex, (ml::CVec3*)colors);
     }
 
     if (alpha > lbl_eu_8066B408) {

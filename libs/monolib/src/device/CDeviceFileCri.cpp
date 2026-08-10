@@ -4,6 +4,37 @@
 #include <revolution/os/OSCache.h>
 #include <string.h>
 
+// Retail singleton pointer (sda21 .sbss) — the decomp's static sInstance member
+// resolves to the same address; referencing this name directly keeps the reloc
+// byte-identical to retail.
+extern CDeviceFileCri* lbl_eu_80665668;
+// Shared rodata string pool: the ".adx" extension marker begins at +6.
+extern const char lbl_eu_80522CA0[];
+
+// Layout view of CFileHandle exposing the u32 at 0x38 (which sits inside the
+// unk18 padding in CFileHandle.hpp) and the flags word at 0x58 — used to read
+// the current sector offset / pending-flag. Layout-identical to CFileHandle's
+// first 0x5C bytes.
+struct CFileHandleLayout {
+    u8 field_0x0[0x4];    //0x0
+    u8* mData;            //0x4
+    u8 field_0x8[0x8];    //0x8
+    int unk10;            //0x10
+    u8 field_0x14[0x24];  //0x14
+    u32 field_0x38;       //0x38 current read offset
+    u32 mLength;          //0x3C
+    u8 field_0x40[0x18];  //0x40
+    u32 field_0x58;       //0x58 flags (bit 3 = allocation/read pending)
+};
+
+// Retail destroy__11CFileHandleFv really takes (handle, size, allocParam,
+// blockSize) — the header declares it with only the handle. Declaring the
+// full signature here (C linkage ignores the namespace for the symbol name)
+// makes the call site emit the same four argument registers as retail.
+namespace {
+extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allocParam, u32 blockSize);
+}
+
 CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
 
 void CDeviceFileCri::func_80450B14(const wchar_t* pData) { lbl_eu_806636C8 = (wchar_t*)pData; }
@@ -102,24 +133,25 @@ bool CDeviceFileCri::func_8044F744() {
     int status = DVDGetDriveStatus();
     
     if (status == -1) {
-        func_80459118__10CExceptionFv("DVD fatal error");
-        return false;
-    }
-    
-    if (status == 6 || status == 11 || status == 4) {
-        bool hasWork = false;
-        if (mFlags & THREAD_FLAG_PAUSE) {
-            hasWork = true;
-        } else if (!mChildren.empty()) {
-            CWorkThread* child = mChildren.front();
-            if (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD) {
-                hasWork = true;
-            }
+        // Fatal DVD error: raise the global exception handler, then fall
+        // through to the shared "keep running" tail below.
+        func_80459118__10CExceptionFv(lbl_eu_80522CA0);
+    } else if (status == 6) {
+        // Recoverable DVD errors: only surface the message when an exception
+        // is not already pending (flag or queued EVT_EXCEPTION), then stay
+        // busy.
+        if (!isException()) {
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636C8, 4);
         }
-        
-        if (!hasWork) {
-            const wchar_t* msg = (status == 11) ? lbl_eu_806636CC : lbl_eu_806636C8;
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, msg, 4);
+        return false;
+    } else if (status == 11) {
+        if (!isException()) {
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636CC, 4);
+        }
+        return false;
+    } else if (status == 4) {
+        if (!isException()) {
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636C8, 4);
         }
         return false;
     }
@@ -139,49 +171,59 @@ void CDeviceFileCri::func_8044F964() {
 int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
     char pathBuf[0x80];
     char nameBuf[0x80];
-    
+    DVDFileInfo fileInfo;
+
+    int pathLen = strlen(pPath);   // retail spills this (dead in the binary)
     strcpy(pathBuf, pPath);
+
     if (arg1 != 0) {
         func_eu_804520D0(pathBuf);
     }
-    
+
+    // Strip a leading '/' from the name; nameLen is the strlen of the SOURCE
+    // (not of the copied buffer) in retail.
+    nameBuf[0] = '\0';
+    int nameLen = 0;
     if (pPath[0] == '/') {
+        nameLen = strlen(pPath + 1);
         strcpy(nameBuf, pPath + 1);
     } else {
+        nameLen = strlen(pPath);
         strcpy(nameBuf, pPath);
     }
-    
-    int nameLen = strlen(nameBuf);
-    const char* dotStr = ".adx";
-    int dotStrLen = strlen(dotStr);
-    
-    int foundIdx = -1;
-    for (int i = 0; i < nameLen; i++) {
-        if (strncmp(&nameBuf[i], dotStr, dotStrLen) == 0) {
-            foundIdx = i;
-            break;
-        }
+
+    // ".adx" extension marker lives at lbl_eu_80522CA0 + 6.
+    const char* ext = lbl_eu_80522CA0 + 6;
+    int extLen = strlen(ext);
+
+    // Find the extension; the scan index becomes -1 when the whole name is
+    // scanned without a match.
+    int i = 0;
+    while (i < nameLen) {
+        if (strncmp(&nameBuf[i], ext, extLen) == 0) break;
+        i++;
     }
-    
-    if (foundIdx != -1 && foundIdx < nameLen) {
-        nameBuf[foundIdx] = '\0';
+    if (i >= nameLen) i = -1;
+
+    if (i != -1 && i < nameLen) {
+        nameBuf[i] = '\0';
+        nameLen = i;
     }
-    
+
     int ret = func_804DDCD4(nameBuf, pPath);
-    if (ret > 0) return ret;
-    
+    if (ret > -1) return ret;
+
     int entrynum = DVDConvertPathToEntrynum(pathBuf);
     if (entrynum < 0) return ret;
-    
-    DVDFileInfo fileInfo;
+
     if (!DVDFastOpen(entrynum, &fileInfo)) return ret;
-    
+
     int size = fileInfo.size;
     int rem = size & 0x7FF;
     if (rem != 0) {
-        size = (size + 0x800) - rem;
+        size = size + 0x800 - rem;
     }
-    
+
     DVDClose(&fileInfo);
     return size;
 }
@@ -202,99 +244,171 @@ bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
 }
 
 void CDeviceFileCri::func_8044FC38() {
-    CDeviceFileCri* inst = sInstance;
-    u32 count = inst->mChildren.size();
+    // Count the singleton's children; the list walk is the size() inline.
+    u32 count = lbl_eu_80665668->mChildren.size();
     if (count == 0) return;
-    
-    CDeviceFileJobReadDvd* job = inst->getFirstCDeviceFileJobReadDvd();
-    
-    if (inst->mADXFHandle != nullptr) {
-        ADXF_Stop(inst->mADXFHandle);
-        ADXF_GetNumReqSct(inst->mADXFHandle);
-        ADXF_Close(inst->mADXFHandle);
-        inst->mADXFHandle = nullptr;
+
+    // Grab the first CDeviceFileJobReadDvd child (mType == 0x44) directly —
+    // the retail inlines this without the empty() guard.
+    CWorkThread* child = lbl_eu_80665668->mChildren.front();
+    CDeviceFileJobReadDvd* job;
+    if (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD) {
+        job = (CDeviceFileJobReadDvd*)child;
+    } else {
+        job = nullptr;
     }
-    
-    removeFileJob__11CDeviceFileFP14CDeviceFileJob(job);
-    inst->mState = 0;
+
+    if (lbl_eu_80665668->mADXFHandle != nullptr) {
+        ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+        ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+        ADXF_Close(lbl_eu_80665668->mADXFHandle);
+        lbl_eu_80665668->mADXFHandle = nullptr;
+    }
+
+    CDeviceFile::removeFileJob(job);
+    lbl_eu_80665668->mState = 0;
 }
 
 bool CDeviceFileCri::func_8044FCFC() {
-    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+    // Inline getFirstCDeviceFileJobReadDvd: retail reads front() directly
+    // (no empty() guard) and validates the child type.
+    CWorkThread* child = mChildren.front();
+    CDeviceFileJobReadDvd* job;
+    if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+        job = nullptr;
+    } else {
+        job = (CDeviceFileJobReadDvd*)child;
+    }
     if (job == nullptr) return false;
-    
+
     CFileHandle* handle = job->mHandle;
-    
+    CFileHandleLayout* layout = (CFileHandleLayout*)handle;
+
     if (!ADXF_IsOpened(mADXFHandle)) {
-        int numReq = ADXF_GetNumReqSct(mADXFHandle);
-        if (numReq == 4) {
+        if (ADXF_GetNumReqSct(mADXFHandle) == 4) {
+            // Abort: cancel the handle, then inline closeADXFAndCleanup
+            // against the singleton (retail re-inlines this block per site).
             call__11CFileHandleF3CBM(handle, 3);
-            closeADXFAndCleanup();
+            u32 count = lbl_eu_80665668->mChildren.size();
+            if (count != 0) {
+                CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+                CDeviceFileJobReadDvd* job2;
+                if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+                    job2 = nullptr;
+                } else {
+                    job2 = (CDeviceFileJobReadDvd*)child2;
+                }
+                if (lbl_eu_80665668->mADXFHandle != nullptr) {
+                    ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+                    ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+                    ADXF_Close(lbl_eu_80665668->mADXFHandle);
+                    lbl_eu_80665668->mADXFHandle = nullptr;
+                }
+                removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
+                lbl_eu_80665668->mState = 0;
+            }
         }
         return false;
     }
-    
+
     int fileSize = ADXF_GetFsizeByte(mADXFHandle);
     int alignedSize = fileSize;
     int rem = fileSize & 0x7FF;
     if (rem != 0) {
         alignedSize = (fileSize + 0x800) - rem;
     }
-    
+
     int readSize = alignedSize;
-    
+    ADXF_GetFsizeSct(mADXFHandle);
+
     if (alignedSize <= 0) {
         call__11CFileHandleF3CBM(handle, 3);
-        closeADXFAndCleanup();
+        u32 count = lbl_eu_80665668->mChildren.size();
+        if (count != 0) {
+            CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+            CDeviceFileJobReadDvd* job2;
+            if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+                job2 = nullptr;
+            } else {
+                job2 = (CDeviceFileJobReadDvd*)child2;
+            }
+            if (lbl_eu_80665668->mADXFHandle != nullptr) {
+                ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+                ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+                ADXF_Close(lbl_eu_80665668->mADXFHandle);
+                lbl_eu_80665668->mADXFHandle = nullptr;
+            }
+            removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
+            lbl_eu_80665668->mState = 0;
+        }
         return false;
     }
-    
-    if (handle->unk10 != 0) {
-        readSize = handle->unk10;
+
+    // Clamp the read size to the file's sector-aligned length.
+    if (layout->mLength != 0) {
+        readSize = layout->mLength;
     }
-    
-    u32 endOff = readSize + handle->unk10;
-    if (endOff > (u32)alignedSize) {
-        readSize -= (endOff - alignedSize);
+    if ((u32)(readSize + layout->field_0x38) > (u32)alignedSize) {
+        readSize -= (readSize + layout->field_0x38) - alignedSize;
     }
-    
-    destroy__11CFileHandleFv(handle);
-    
-    if (handle->unk14 & 0x10) {
+
+    destroy__11CFileHandleFv(handle, readSize, 0x20, 0x800);
+
+    if (layout->field_0x58 & 0x8) {
+        // Allocation failed: cancel the handle and clean up the job.
         call__11CFileHandleF3CBM(handle, 3);
-        closeADXFAndCleanup();
+        u32 count = lbl_eu_80665668->mChildren.size();
+        if (count != 0) {
+            CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+            CDeviceFileJobReadDvd* job2;
+            if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+                job2 = nullptr;
+            } else {
+                job2 = (CDeviceFileJobReadDvd*)child2;
+            }
+            if (lbl_eu_80665668->mADXFHandle != nullptr) {
+                ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+                ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+                ADXF_Close(lbl_eu_80665668->mADXFHandle);
+                lbl_eu_80665668->mADXFHandle = nullptr;
+            }
+            removeFileJob__11CDeviceFileFP14CDeviceFileJob(job2);
+            lbl_eu_80665668->mState = 0;
+        }
         return false;
     }
-    
+
     mTimeoutCounter = 0;
-    if (handle->unk10 != 0) {
+    if (layout->field_0x38 != 0) {
         mState = 2;
         return true;
-    } else {
-        mState = 4;
-        return false;
     }
+    mState = 4;
+    return false;
 }
 
 bool CDeviceFileCri::func_80450058() {
-    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    CFileHandle* handle = job->mHandle;
-    
+    CWorkThread* child = mChildren.front();
+    CDeviceFileJobReadDvd* job =
+        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
+            ? (CDeviceFileJobReadDvd*)child : nullptr;
+
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
-    
+
     if (numReq == 3) {
-        u32 offset = handle->unk10 & 0x7FF;
+        CFileHandleLayout* handle = (CFileHandleLayout*)job->mHandle;
+        // Copy one 0x800-sector chunk starting at the handle's sector offset.
+        u32 offset = handle->field_0x38 & 0x7FF;
         u32 copySize = 0x800 - offset;
         if (copySize > handle->mLength) copySize = handle->mLength;
-        
-        memcpy((char*)mBuffer + offset, (char*)handle->mData + handle->unk10, copySize);
-        DCFlushRangeNoSync((char*)handle->mData + handle->unk10, copySize);
-        
-        func_80451CBC__11CFileHandleFi(handle, copySize);
-        
+
+        memcpy((char*)mBuffer + offset, handle->mData + handle->unk10, copySize);
+        DCFlushRangeNoSync(handle->mData + handle->unk10, copySize);
+
+        func_80451CBC__11CFileHandleFi((CFileHandle*)handle, copySize);
+
         bool complete = (handle->unk10 != 0 && handle->unk10 == handle->mLength);
-        
         if (complete) {
             ADXF_Stop(mADXFHandle);
             ADXF_Close(mADXFHandle);
@@ -302,35 +416,51 @@ bool CDeviceFileCri::func_80450058() {
             mActiveWorkID = job->mWorkID;
             mIdleCounter = 0;
             mState = 8;
-            return true;
-        }
-        
-        if (handle->unk10 == 0) {
+        } else {
             mState = 4;
-            return true;
         }
-        
-        return false;
+        return true;
     }
-    
-    call__11CFileHandleF3CBM(handle, 3);
-    closeADXFAndCleanup();
+
+    // Abort: cancel the read job.
+    call__11CFileHandleF3CBM(job->mHandle, 3);
+    u32 count = lbl_eu_80665668->mChildren.size();
+    if (count != 0) {
+        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+        CDeviceFileJobReadDvd* job2 =
+            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
+                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+
+        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+            ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+            ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+            ADXF_Close(lbl_eu_80665668->mADXFHandle);
+            lbl_eu_80665668->mADXFHandle = nullptr;
+        }
+
+        CDeviceFile::removeFileJob(job2);
+        lbl_eu_80665668->mState = 0;
+    }
     return false;
 }
 
 bool CDeviceFileCri::func_80450260() {
-    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    CFileHandle* handle = job->mHandle;
-    
+    CWorkThread* child = mChildren.front();
+    CDeviceFileJobReadDvd* job =
+        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
+            ? (CDeviceFileJobReadDvd*)child : nullptr;
+
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
-    
+
     if (numReq == 3) {
+        CFileHandle* handle = job->mHandle;
+        // Advance the read position to the next 0x800-sector boundary.
         u32 remaining = handle->mLength - handle->unk10;
         u32 aligned = remaining & ~0x7FFu;
-        
+
         func_80451CBC__11CFileHandleFi(handle, aligned);
-        
+
         bool complete = (handle->unk10 != 0 && handle->unk10 == handle->mLength);
         if (complete) {
             ADXF_Stop(mADXFHandle);
@@ -339,43 +469,83 @@ bool CDeviceFileCri::func_80450260() {
             mActiveWorkID = job->mWorkID;
             mState = 8;
             mIdleCounter = 0;
-            return true;
+        } else {
+            mState = 7;
         }
-        return false;
+        return true;
     }
-    
-    call__11CFileHandleF3CBM(handle, 3);
-    closeADXFAndCleanup();
+
+    // Abort: reset the handle position and cancel the read job.
+    job->mHandle->unk10 = 0;
+    call__11CFileHandleF3CBM(job->mHandle, 3);
+    u32 count = lbl_eu_80665668->mChildren.size();
+    if (count != 0) {
+        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+        CDeviceFileJobReadDvd* job2 =
+            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
+                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+
+        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+            ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+            ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+            ADXF_Close(lbl_eu_80665668->mADXFHandle);
+            lbl_eu_80665668->mADXFHandle = nullptr;
+        }
+
+        CDeviceFile::removeFileJob(job2);
+        lbl_eu_80665668->mState = 0;
+    }
     return false;
 }
 
 bool CDeviceFileCri::func_8045042C() {
-    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    CFileHandle* handle = job->mHandle;
-    
+    CWorkThread* child = mChildren.front();
+    CDeviceFileJobReadDvd* job =
+        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
+            ? (CDeviceFileJobReadDvd*)child : nullptr;
+
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
-    
+
     if (numReq == 3) {
+        CFileHandle* handle = job->mHandle;
+        // Copy the remainder of the pending read into the device buffer.
         int remaining = handle->mLength - handle->unk10;
         if (remaining > 0) {
-            memcpy(mBuffer, (char*)handle->mData + handle->unk10, remaining);
-            DCFlushRange((char*)handle->mData + handle->unk10, remaining);
+            memcpy(mBuffer, handle->mData + handle->unk10, remaining);
+            DCFlushRange(handle->mData + handle->unk10, remaining);
         }
-        
+
         func_80451CBC__11CFileHandleFi(handle, remaining);
-        
+
         ADXF_Stop(mADXFHandle);
         ADXF_Close(mADXFHandle);
         mADXFHandle = nullptr;
         mActiveWorkID = job->mWorkID;
-        mState = 8;
         mIdleCounter = 0;
+        mState = 8;
         return true;
     }
-    
-    call__11CFileHandleF3CBM(handle, 3);
-    closeADXFAndCleanup();
+
+    // numReq != 3: abort the job and clean up the singleton's ADXF state.
+    call__11CFileHandleF3CBM(job->mHandle, 3);
+    u32 count = lbl_eu_80665668->mChildren.size();
+    if (count != 0) {
+        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+        CDeviceFileJobReadDvd* job2 =
+            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
+                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+
+        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+            ADXF_Stop(lbl_eu_80665668->mADXFHandle);
+            ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
+            ADXF_Close(lbl_eu_80665668->mADXFHandle);
+            lbl_eu_80665668->mADXFHandle = nullptr;
+        }
+
+        CDeviceFile::removeFileJob(job2);
+        lbl_eu_80665668->mState = 0;
+    }
     return false;
 }
 

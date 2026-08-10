@@ -1,9 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CPcEffect07
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
 
 #include "kyoshin/cf/CPcEffect07.hpp"
+#include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
 extern "C" void __dt__Q22cf11CPcEffect07Fv(void*, int);
 
@@ -16,8 +17,6 @@ cf::CPcEffect07::~CPcEffect07() {}
 void func_801B19F0(){}
 
 void func_801B1C5C(){}
-
-PcEffectData* lbl_eu_80664398;
 
 int getEffectMax() {
     if (lbl_eu_80664398 == 0) {
@@ -35,28 +34,49 @@ int findActiveEntryID(int index)
 
     if (index < 0)
     {
-        if (lbl_eu_80664398->entry2_active == 1) return lbl_eu_80664398->entry2_id;
-        if (lbl_eu_80664398->entry1_active == 1) return lbl_eu_80664398->entry1_id;
-        if (lbl_eu_80664398->entry0_active == 1) return lbl_eu_80664398->entry0_id;
+        if (lbl_eu_80664398->entries[2].mActive == 1) return lbl_eu_80664398->entries[2].mId;
+        if (lbl_eu_80664398->entries[1].mActive == 1) return lbl_eu_80664398->entries[1].mId;
+        if (lbl_eu_80664398->entries[0].mActive == 1) return lbl_eu_80664398->entries[0].mId;
         return -1;
     }
 
-    if (index == 0) { if (lbl_eu_80664398->entry0_active == 1) return lbl_eu_80664398->entry0_id; }
-    else if (index == 1) { if (lbl_eu_80664398->entry1_active == 1) return lbl_eu_80664398->entry1_id; }
-    else if (index == 2) { if (lbl_eu_80664398->entry2_active == 1) return lbl_eu_80664398->entry2_id; }
+    if (index == 0) { if (lbl_eu_80664398->entries[0].mActive == 1) return lbl_eu_80664398->entries[0].mId; }
+    else if (index == 1) { if (lbl_eu_80664398->entries[1].mActive == 1) return lbl_eu_80664398->entries[1].mId; }
+    else if (index == 2) { if (lbl_eu_80664398->entries[2].mActive == 1) return lbl_eu_80664398->entries[2].mId; }
     return -1;
 }
 
-void func_801B1DCC(){}
+// Counts how many slots match the given id (or, for index 0, how many slots
+// are active - retail walks the pointer backwards with a countdown that never
+// terminates by the counter; reproduced verbatim).
+u32 func_801B1DCC(u32 index) {
+    PcEffectData* data = lbl_eu_80664398;
+    if (data == 0) return 0;
+
+    int count = 0;
+    if (index != 0) {
+        if (data->entries[0].mActive == 1 && index == data->entries[0].mId) count = 1;
+        if (data->entries[1].mActive == 1 && index == data->entries[1].mId) count++;
+        if (data->entries[2].mActive == 1 && index == data->entries[2].mId) count++;
+    } else {
+        int i = 0;
+        while (i < 3) {
+            if (data->entries[0].mActive == 1) count++;
+            data = (PcEffectData*)((u8*)data - 0x18);
+            i--;
+        }
+    }
+    return count;
+}
 
 void func_801B1E74(){}
 
 s32 getFirstFreeSlot() {
     PcEffectData* data = lbl_eu_80664398;
     if (!data) return -1;
-    if (data->entry0_active == 0) return 0;
-    if (data->entry1_active == 0) return 1;
-    if (data->entry2_active == 0) return 2;
+    if (data->entries[0].mActive == 0) return 0;
+    if (data->entries[1].mActive == 0) return 1;
+    if (data->entries[2].mActive == 0) return 2;
     return -1;
 }
 
@@ -64,9 +84,9 @@ int isSlotActive(int index) {
     if (lbl_eu_80664398 == 0) return 0;
     s16 val;
     switch (index) {
-    case 0: val = lbl_eu_80664398->entry0_active; break;
-    case 1: val = lbl_eu_80664398->entry1_active; break;
-    case 2: val = lbl_eu_80664398->entry2_active; break;
+    case 0: val = lbl_eu_80664398->entries[0].mActive; break;
+    case 1: val = lbl_eu_80664398->entries[1].mActive; break;
+    case 2: val = lbl_eu_80664398->entries[2].mActive; break;
     default: return 0;
     }
     return (val == 1) ? 1 : 0;
@@ -75,9 +95,9 @@ int isSlotActive(int index) {
 bool hasAnyActiveSlot() {
     PcEffectData* data = lbl_eu_80664398;
     if (!data) return false;
-    if (data->entry0_active != 0) return true;
-    if (data->entry1_active != 0) return true;
-    if (data->entry2_active != 0) return true;
+    if (data->entries[0].mActive != 0) return true;
+    if (data->entries[1].mActive != 0) return true;
+    if (data->entries[2].mActive != 0) return true;
     return false;
 }
 
@@ -85,23 +105,117 @@ int countActiveSlots() {
     PcEffectData* data = lbl_eu_80664398;
     if (!data) return 0;
     int result = 0;
-    if (data->entry0_active == 1) result = 1;
-    if (data->entry1_active == 1) result++;
-    if (data->entry2_active == 1) result++;
+    if (data->entries[0].mActive == 1) result = 1;
+    if (data->entries[1].mActive == 1) result++;
+    if (data->entries[2].mActive == 1) result++;
     return result;
 }
 
-void func_801B20C8(void* self){}
+// Fetch the schedule holder for a slot: id 0 for the non-negative selector,
+// or the id looked up in the wstring table for negative selectors. When a
+// positive amount is given and a schedule is attached, drive its fixed
+// timestep via func_804E3CDC.
+PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, u32 id, s32 sel, s32 amount) {
+    PcEffectActorView* actor = (PcEffectActorView*)self->mField0C;
+    PcEffectSchedHolder* result;
+    if (sel >= 0) {
+        result = actor->mSub.GetSlot(0);
+    } else {
+        result = actor->mSub.GetSlot(lbl_eu_805049F8[id - 0x700]);
+    }
+    if (amount > 0 && result != 0 && result->mSched != 0) {
+        func_804E3CDC(result->mSched, (float)amount, lbl_eu_80667DF4);
+    }
+    return result;
+}
 
 void func_801B218C(){}
 
 void func_801B21E0(void* self){}
 
-void func_801B2318(void* self){}
+// Per-frame update: for each active slot, push the transform's translation and
+// rotation into the effect object through its SetPos/SetRot virtuals.
+void func_801B2318(CPcEffect07* self) {
+    // Two induction pointers mirror retail: e walks the entry array
+    // (self+0x10+i*0x18), base walks the interleaved mat slots (self+i*0x18
+    // with the CMat34* at +0x18). Mat pointers are re-read (not cached) so
+    // retail's reload after the SetPos call is reproduced.
+    PcEffectEntry* e = self->mEntries;
+    u8* base = (u8*)self;
+    for (int i = 0; i < 3; i++) {
+        if (e->mActive == 1) {
+            ml::CVec3 rot;
+            ml::CVec3 pos(
+                (*(ml::CMat34**)(base + 0x18))->m[0][3],
+                (*(ml::CMat34**)(base + 0x18))->m[1][3],
+                (*(ml::CMat34**)(base + 0x18))->m[2][3]);
+            e->mObj->SetPos(pos);
+            (*(ml::CMat34**)(base + 0x18))->getRotXYZ(rot);
+            e->mObj->SetRot(rot);
+        }
+        e++;
+        base += 0x18;
+    }
+}
 
-void func_801B23D0(){}
+// Release every active slot: clear the effect object's aux field, set its
+// 0x40 flag, then drop the slot (pointer, active flag, aux flag).
+void func_801B23D0(PcEffectData* data) {
+    if (data == 0) data = lbl_eu_80664398;
+    if (data == 0) return;
 
-void func_801B248C(){}
+    if (data->entries[0].mActive != 0) {
+        data->entries[0].mObj->mFieldB0 = 0;
+        data->entries[0].mObj->mFlags68 |= 0x40;
+        data->entries[0].mObj = 0;
+        data->entries[0].mActive = 0;
+        data->entries[0].mField06 = 0;
+    }
+    if (data->entries[1].mActive != 0) {
+        data->entries[1].mObj->mFieldB0 = 0;
+        data->entries[1].mObj->mFlags68 |= 0x40;
+        data->entries[1].mObj = 0;
+        data->entries[1].mActive = 0;
+        data->entries[1].mField06 = 0;
+    }
+    PcEffectData* d2 = (PcEffectData*)((u8*)data + 0x30);
+    if (d2->entries[0].mActive != 0) {
+        d2->entries[0].mObj->mFieldB0 = 0;
+        d2->entries[0].mObj->mFlags68 |= 0x40;
+        d2->entries[0].mObj = 0;
+        d2->entries[0].mActive = 0;
+        d2->entries[0].mField06 = 0;
+    }
+}
+
+// Release every active slot (same as func_801B23D0 but only for slots whose
+// active flag is exactly 1).
+void func_801B248C(PcEffectData* data) {
+    if (data == 0) data = lbl_eu_80664398;
+    if (data == 0) return;
+
+    if (data->entries[0].mActive == 1) {
+        data->entries[0].mObj->mFieldB0 = 0;
+        data->entries[0].mObj->mFlags68 |= 0x40;
+        data->entries[0].mObj = 0;
+        data->entries[0].mActive = 0;
+        data->entries[0].mField06 = 0;
+    }
+    if (data->entries[1].mActive == 1) {
+        data->entries[1].mObj->mFieldB0 = 0;
+        data->entries[1].mObj->mFlags68 |= 0x40;
+        data->entries[1].mObj = 0;
+        data->entries[1].mActive = 0;
+        data->entries[1].mField06 = 0;
+    }
+    if (data->entries[2].mActive == 1) {
+        data->entries[2].mObj->mFieldB0 = 0;
+        data->entries[2].mObj->mFlags68 |= 0x40;
+        data->entries[2].mObj = 0;
+        data->entries[2].mActive = 0;
+        data->entries[2].mField06 = 0;
+    }
+}
 
 void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
 

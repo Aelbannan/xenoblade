@@ -10,6 +10,15 @@
 // Shared string pool (.rodata) used by Init.
 extern char lbl_eu_8050E970[];
 
+// Global data imports (MWCC does not mangle global-scope data names).
+extern u32 lbl_eu_80663E28;            // render-gate mode bitfield (.sbss; bit 21)
+extern u32 __ptmf_null[3];             // null pointer-to-member-function constant
+// CProcess vtable (written at +0x10 first, then overwritten by the
+// CMenuKizunaTalkList composite vtable lbl_eu_80537CB8, whose IScnRender
+// sub-vtable lives at +0x24).
+extern char lbl_eu_8052BF70[];
+extern char lbl_eu_80537CB8[];
+
 /*
  * Kizuna (Friendship) Talk List screen process.
  *
@@ -38,10 +47,18 @@ public:
     void func_802726EC();
 
 private:
+    friend CMenuKizunaTalkList* __ct__CMenuKizunaTalkList(CMenuKizunaTalkList* self,
+                                                         CProcess* parent);
     friend void func_80272560(CMenuKizunaTalkList* self);
+    friend void func_80272510(CMenuKizunaTalkList* self);
+    friend void func_80272694(CMenuKizunaTalkList* self);
+    friend void func_80272498(CMenuKizunaTalkList* self);
 
-    u8 _pad3C[0x18];            // 0x3C-0x53: vtable PMF data
-    u8 _pad54[0x58 - 0x54];     // 0x54-0x57: padding
+    u32 ptmf0[3];               // 0x3C-0x47: vtable pointer-to-member-function data
+    u32 ptmf1[3];               // 0x48-0x53: vtable pointer-to-member-function data
+    u8 mUnknown54;              // 0x54 - phase flag (written by func_80272694)
+    u8 mUnknown55;              // 0x55
+    u8 _pad56[2];               // 0x56-0x57: padding
     IScnRender mIScnRender;     // 0x58
     CProcess* mParentRef;       // 0x5C
     CBgTex mBgTex;              // 0x60

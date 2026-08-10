@@ -24,14 +24,15 @@ void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    pMtx->m[0][0] = sinR;
-    pMtx->m[0][1] = -cosR;
+    // XSI rotation: cos on the diagonal, translation = (sin, 1 - cos)
+    pMtx->m[0][0] = cosR;
+    pMtx->m[0][1] = -sinR;
     pMtx->m[0][2] = lbl_eu_80669CB0;
-    pMtx->m[0][3] = cosR;
-    pMtx->m[1][0] = cosR;
-    pMtx->m[1][1] = sinR;
+    pMtx->m[0][3] = sinR;
+    pMtx->m[1][0] = sinR;
+    pMtx->m[1][1] = cosR;
     pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = lbl_eu_80669CB4 - sinR;
+    pMtx->m[1][3] = lbl_eu_80669CB4 - cosR;
 }
 
 void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -94,7 +95,7 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][0] = lbl_eu_80669CB0;
     pMtx->m[1][1] = sv;
     pMtx->m[1][2] = lbl_eu_80669CB0;
-    pMtx->m[1][3] = sv * (lbl_eu_80669CB4 - tv) + tv;
+    pMtx->m[1][3] = lbl_eu_80669CB4 + sv * (tv - lbl_eu_80669CB4);
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -210,19 +211,20 @@ void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
+    f32 su = rSrt.Su;
+
+    f32 m13 = pMtx->m[1][3];
+    f32 m03 = pMtx->m[0][3];
 
     pMtx->m[0][0] *= su;
     pMtx->m[0][1] *= su;
     pMtx->m[0][2] *= su;
-    pMtx->m[0][3] = pMtx->m[0][3] * su - tu;
+    pMtx->m[0][3] = su * (m03 - rSrt.Tu);
     pMtx->m[1][0] *= sv;
     pMtx->m[1][1] *= sv;
     pMtx->m[1][2] *= sv;
-    pMtx->m[1][3] = pMtx->m[1][3] * sv + sv * (lbl_eu_80669CB4 - tv) + tv - sv;
+    pMtx->m[1][3] = lbl_eu_80669CB4 + sv * (m13 + rSrt.Tv - lbl_eu_80669CB4);
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -257,7 +259,12 @@ typedef void (*TexSrtMtxFunc)(math::MTX34* pMtx, const TexSrt& rSrt);
 
 } // namespace
 
-
+DECOMP_FORCEACTIVE(g3d_xsi_cpp,
+                   MakeTexSrtMtx_S, MakeTexSrtMtx_R, MakeTexSrtMtx_T,
+                   MakeTexSrtMtx_SR, MakeTexSrtMtx_RT, MakeTexSrtMtx_ST,
+                   MakeTexSrtMtx_SRT, ProductTexSrtMtx_S, ProductTexSrtMtx_R,
+                   ProductTexSrtMtx_T, ProductTexSrtMtx_SR, ProductTexSrtMtx_RT,
+                   ProductTexSrtMtx_ST, ProductTexSrtMtx_SRT);
 
 bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
     u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);

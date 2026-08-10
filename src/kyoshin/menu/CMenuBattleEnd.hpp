@@ -12,8 +12,17 @@ class Pane;
 }
 class CScn;
 class CProcess;
-class CTaskGame;
 class IScnRender;
+
+// Minimal CTaskGame decl (retail global-namespace class; symbols
+// getInstance__9CTaskGameFv / func_800426F0__9CTaskGameFv). The real
+// CTaskGame.hpp pulls broken monolib work.hpp-umbrella headers, so the static
+// members are declared here (same scheme as CSystemWindow.hpp).
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool func_800426F0();
+};
 
 // One entry of the internal message/queue array (stride 8).
 struct UnkBattleEntry {
@@ -67,7 +76,7 @@ struct CMenuBattleEnd {
     nw4r::lyt::AnimTransform* mAnim8C;      // 0x8C
     nw4r::lyt::AnimTransform* mAnim90;      // 0x90
     UnkBattleEntry mEntries[4];             // 0x94 (0x20 bytes)
-    u8  mState;                             // 0xB4
+    s8  mState;                             // 0xB4 (retail compares signed)
     u8  mMode;                              // 0xB5
     u8  _padB6[2];
     u32 mParam;                             // 0xB8
@@ -111,10 +120,7 @@ void __dt__17UnkClass_8045F564Fv(void*, int);
 void __dt__8CProcessFv(void*, int);
 void __dl__FPv(void*);
 void waitForDrawDone__9CDeviceVIFv();
-u32 getWorkMem__17CWorkThreadSystemFv();
 void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-CTaskGame* getInstance__9CTaskGameFv();
-u32 func_800426F0__9CTaskGameFv();
 void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 void func_8045F778__17UnkClass_8045F564Fv(void*);

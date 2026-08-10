@@ -411,8 +411,37 @@ void TextBox::SetTextColor(u32 idx, ut::Color color) {
 } // namespace nw4r
 
 void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
-void GetCharStrmReader__Q34nw4r2ut4FontCFv(){}
-void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(){}
+namespace nw4r {
+namespace ut {
+
+// Out-of-line copy of Font::GetCharStrmReader - taking the address forces MWCC
+// to emit the inline header body as a standalone function in this TU (retail
+// emits GetCharStrmReader__Q34nw4r2ut4FontCFv here).
+typedef CharStrmReader (Font::*LLMH_FontGetReaderFn)() const;
+extern LLMH_FontGetReaderFn LLMH_force_us_80404748 = &Font::GetCharStrmReader;
+
+} // namespace ut
+} // namespace nw4r
+// TextBox overrides Pane::LoadMtx in retail (vtable slot 0x70). The override is
+// not declared in lyt_textBox.h, so it is defined here under its mangled name.
+void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(
+    nw4r::lyt::TextBox* self, const nw4r::lyt::DrawInfo& rInfo) {
+    nw4r::math::MTX34 mtx;
+
+    if (rInfo.IsMultipleViewMtxOnDraw()) {
+        PSMTXConcat(rInfo.GetViewMtx(), self->GetGlobalMtx(), mtx);
+    } else {
+        PSMTXCopy(self->GetGlobalMtx(), mtx);
+    }
+
+    // Flip the Y axis (second column) - text is drawn with a Y-down origin.
+    mtx._01 = -mtx._01;
+    mtx._11 = -mtx._11;
+    mtx._21 = -mtx._21;
+
+    GXLoadPosMtxImm(mtx, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+}
 namespace nw4r {
 namespace lyt {
 

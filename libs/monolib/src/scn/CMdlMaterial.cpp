@@ -11,46 +11,10 @@
 #include <revolution/GX.h>
 #include <monolib/util/MemManager.hpp>
 
-// Forward declarations for external C-ABI functions.
-void* func_80488938(void* owner, u32 size);
-void* func_80488954(void* owner, u32 size);
-u32 func_80496018(u32 handle);
-
-// ===========================================================================
-// nw4r g3d ResUserData reconstruction (g3d_resuser_ac.h accessor semantics)
-// ===========================================================================
-
-// One named item: name string, value type, and a relative offset to the value.
-struct ResUserDataItem {
-    u32 field_0x00;      // +0x00
-    s32 dataOffset;      // +0x04: relative offset to the value (0 = null)
-    u32 field_0x08;      // +0x08
-    u32 valueType;       // +0x0C: 0 = S32 (asserted)
-    s32 nameOffset;      // +0x10: relative offset to the name string
-};
-
-// A single 0x10-byte reference slot in the user-data array.
-struct ResUserDataRef {
-    s32 dataOffset;      // +0x00: relative offset (from ud+4) to ResUserDataItem
-    u32 field_0x04;
-    u32 field_0x08;
-    u32 field_0x0C;
-};
-
-// User-data block header + reference array (starts 0x28 bytes in).
-struct ResUserData {
-    u32 field_0x00;
-    u32 field_0x04;
-    u32 numData;             // +0x08: number of reference slots
-    u32 field_0x0C;
-    u32 field_0x10;
-    u32 field_0x14;
-    u32 field_0x18;
-    u32 field_0x1C;
-    u32 field_0x20;
-    u32 field_0x24;
-    ResUserDataRef refs[1];  // +0x28
-};
+// Forward declarations for external C-ABI functions (retail unmangled names).
+extern "C" void* func_80488938(void* owner, u32 size);
+extern "C" void* func_80488954(void* owner, u32 size);
+extern "C" u32 func_80496018(u32 handle);
 
 // Assertion strings emitted by the inlined nw4r ResUserData/ResDict accessors
 // (declared here at global scope; C++ does not mangle global variable names,
@@ -83,6 +47,103 @@ extern const char lbl_eu_80663C4C[];
 extern const char lbl_eu_80663C50[];
 extern const char lbl_eu_80663C54[];
 
+// ===========================================================================
+// nw4r g3d ResUserData reconstruction (g3d_resuser_ac.h accessor semantics)
+// ===========================================================================
+
+// One named item: name string, value type, and relative offsets.
+struct ResUserDataItem {
+    u32 field_0x00;      // +0x00
+    s32 dataOffset;      // +0x04: relative offset to the value (0 = null)
+    u32 field_0x08;      // +0x08
+    u32 valueType;       // +0x0C: 0 = S32 (asserted)
+    s32 nameOffset;      // +0x10: relative offset to the name string
+};
+
+// A single 0x10-byte reference slot in the dic index array.
+struct ResUserDataRef {
+    s32 dataOffset;      // +0x00: relative offset (from the dic base) to ResUserDataItem
+    u32 field_0x04;
+    u32 field_0x08;
+    u32 field_0x0C;
+};
+
+// Dic accessor base: sits 4 bytes into the user-data block (ud + 4).
+// numData at +0x04, index array (0x10-byte refs) at +0x24.
+struct ResUserDataDic {
+    u32 field_0x00;
+    u32 numData;             // +0x04: number of reference slots
+    u32 field_0x08;
+    u32 field_0x0C;
+    u32 field_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u32 field_0x20;
+    ResUserDataRef refs[1];  // +0x24
+};
+
+// ---------------------------------------------------------------------------
+// Inlined nw4r g3d ResUserData accessors (retail debug asserts).
+// The retail g3d_resuser_ac.h / g3d_resdict_ac.h accessors carry assertion
+// panics that were inlined at every use site; reproducing them keeps the
+// panic call sites byte-identical.
+// ---------------------------------------------------------------------------
+
+// GetNumData(): null + alignment asserts, then the item count.
+static inline u32 ResUserDataNumData(const void* ud, ResUserDataDic* dic) {
+    if (ud == NULL) {
+        nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
+                        lbl_eu_80530CF0, lbl_eu_80663C48);
+    }
+    if (reinterpret_cast<u32>(dic) & 3) {
+        nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
+    }
+    return (dic != NULL) ? dic->numData : 0;
+}
+
+// operator[](int): null + bounds asserts, then resolve the item pointer.
+static inline ResUserDataItem* ResUserDataItemAt(const void* ud,
+                                                 ResUserDataDic* dic,
+                                                 s32 idx) {
+    if (ud == NULL) {
+        nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
+                        lbl_eu_80530CF0, lbl_eu_80663C48);
+    }
+    if (reinterpret_cast<u32>(dic) & 3) {
+        nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
+    }
+
+    ResUserDataItem* item = NULL;
+
+    if (dic != NULL) {
+        if (idx >= 0 && idx <= static_cast<s32>(dic->numData) - 1) {
+            item = reinterpret_cast<ResUserDataItem*>(1);  // valid marker
+        }
+        if (item == NULL) {
+            if (dic == NULL) {
+                nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
+                                lbl_eu_80663928, lbl_eu_80663C54);
+            }
+            nw4r::db::Panic(lbl_eu_8056E3D0, 0x2A, lbl_eu_8056E398, idx, 0,
+                            static_cast<s32>(dic->numData) - 1);
+        }
+        if (dic == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E43C, 0x54, lbl_eu_8056E420,
+                            lbl_eu_80663928, lbl_eu_80663C54);
+        }
+        s32 refOff = dic->refs[idx].dataOffset;
+        if (refOff != 0) {
+            item = reinterpret_cast<ResUserDataItem*>(
+                reinterpret_cast<u8*>(dic) + refOff);
+        } else {
+            item = NULL;
+        }
+    }
+
+    return item;
+}
+
 // =============================================================================
 // CMdlMaterial destructor
 // =============================================================================
@@ -105,19 +166,16 @@ void CMdlMaterial::func_804E54B8(void* arg) {
         *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 0x146C)));
 
     // Try to attach to an existing resident buffer first.
-    if (func_80488938(arg, resMdl.GetResMatNumEntries() * sizeof(GXColor) * 4) != NULL) {
-        buffer = func_80488954(arg, resMdl.GetResMatNumEntries() * sizeof(GXColor) * 4);
+    if (func_80488938(arg, resMdl.GetResMatNumEntries() * 16) != NULL) {
+        buffer = func_80488954(arg, resMdl.GetResMatNumEntries() * 16);
         flag_0x10 = 1;
     } else {
         // Fallback: allocate via MemManager (buffer owned by this object).
         u32 handle = func_80496018(
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 4));
         buffer = mtl::MemManager::allocate_array(
-            resMdl.GetResMatNumEntries() * sizeof(GXColor) * 4, handle);
+            resMdl.GetResMatNumEntries() * 16, handle);
     }
-
-    nw4r::g3d::ScnMdl* pScnMdl = reinterpret_cast<nw4r::g3d::ScnMdl*>(
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(arg) + 0x147C));
 
     u32 counter = 0;
 
@@ -129,62 +187,33 @@ void CMdlMaterial::func_804E54B8(void* arg) {
                             lbl_eu_806638E8, lbl_eu_80663C44);
         }
 
-        nw4r::g3d::ScnMdl::CopiedMatAccess access(pScnMdl, resMat.ref().id);
+        nw4r::g3d::ScnMdl::CopiedMatAccess access(
+            *reinterpret_cast<nw4r::g3d::ScnMdl**>(reinterpret_cast<u8*>(arg) + 0x147C),
+            resMat.ref().id);
         nw4r::g3d::ResMatChan chan = access.GetResMatChan(false);
 
-        GXColor* colorBuf = reinterpret_cast<GXColor*>(buffer);
+        // Four ambient channels per material; post-increment writes the next
+        // slot index before the call (matches the retail store ordering).
+        chan.GXGetChanAmbColor((GXChannelID)0,
+                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+        chan.GXGetChanAmbColor((GXChannelID)2,
+                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+        chan.GXGetChanAmbColor((GXChannelID)1,
+                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
+        chan.GXGetChanAmbColor((GXChannelID)3,
+                               &reinterpret_cast<GXColor*>(buffer)[field_0x0C++]);
 
-        chan.GXGetChanAmbColor(static_cast<GXChannelID>(0), &colorBuf[field_0x0C]);
-        field_0x0C++;
-        chan.GXGetChanAmbColor(static_cast<GXChannelID>(2), &colorBuf[field_0x0C]);
-        field_0x0C++;
-        chan.GXGetChanAmbColor(static_cast<GXChannelID>(1), &colorBuf[field_0x0C]);
-        field_0x0C++;
-        chan.GXGetChanAmbColor(static_cast<GXChannelID>(3), &colorBuf[field_0x0C]);
-        field_0x0C++;
-
-        // Scan the material's user-data block for an item matching the target name.
-        ResUserData* ud = reinterpret_cast<ResUserData*>(resMat.GetResUserData());
+        // Scan the material's user-data block for an item matching the target
+        // name; accumulate its S32 value into the 16-bit table.
+        void* ud = resMat.GetResUserData();
 
         if (ud != NULL) {
-            u8* base = reinterpret_cast<u8*>(ud) + 4;
+            ResUserDataDic* dic =
+                reinterpret_cast<ResUserDataDic*>(reinterpret_cast<u8*>(ud) + 4);
 
-            for (u32 i = 0;; i++) {
-                if (ud == NULL) {
-                    nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
-                                    lbl_eu_80530CF0, lbl_eu_80663C48);
-                }
-                if (reinterpret_cast<u32>(base) & 3) {
-                    nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
-                }
-
-                u32 numData = (base != NULL) ? ud->numData : 0;
-                if (i >= numData) {
-                    break;
-                }
-
-                ResUserDataItem* item = NULL;
-
-                if (ud == NULL) {
-                    nw4r::db::Panic(lbl_eu_80530D18, 0x57, lbl_eu_80530CFC,
-                                    lbl_eu_80530CF0, lbl_eu_80663C48);
-                }
-                if (reinterpret_cast<u32>(base) & 3) {
-                    nw4r::db::Panic(lbl_eu_80530F08, 0x54, lbl_eu_80530EE0);
-                }
-
-                if (base != NULL) {
-                    if (static_cast<s32>(i) < 0 || static_cast<s32>(i) > static_cast<s32>(numData) - 1) {
-                        nw4r::db::Panic(lbl_eu_8056E3D0, 0x2A, lbl_eu_8056E398,
-                                        static_cast<int>(i), 0,
-                                        static_cast<int>(numData) - 1);
-                    } else {
-                        s32 refOff = ud->refs[i].dataOffset;
-                        if (refOff != 0) {
-                            item = reinterpret_cast<ResUserDataItem*>(base + refOff);
-                        }
-                    }
-                }
+            for (u32 i = 0; i < ResUserDataNumData(ud, dic); i++) {
+                ResUserDataItem* item =
+                    ResUserDataItemAt(ud, dic, static_cast<s32>(i));
 
                 if (reinterpret_cast<u32>(item) & 3) {
                     nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
@@ -196,10 +225,14 @@ void CMdlMaterial::func_804E54B8(void* arg) {
 
                 const char* name = (item->nameOffset != 0)
                     ? reinterpret_cast<const char*>(
-                          reinterpret_cast<u8*>(item) + item->nameOffset)
+                          reinterpret_cast<const u8*>(item) + item->nameOffset)
                     : NULL;
 
                 if (strcmp(name, lbl_eu_80663C30) == 0) {
+                    if (item == NULL) {
+                        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                        lbl_eu_80530D68, lbl_eu_80663C50);
+                    }
                     if (item->valueType != 0) {
                         nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
                     }

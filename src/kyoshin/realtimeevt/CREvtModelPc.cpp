@@ -181,21 +181,27 @@ extern "C" void* __ct__8018385C(void* self, int flag) {
 // ============================================================================
 extern "C" int func_801838D8(void* self) {
     char* s = (char*)self;
+    int result;
 
     // Ready only if the task counter matches the current one.
-    if (FLD(s32, s, 0xB0) != (int)func_8016A3C4() + 1) {
+    if (FLD(s32, s, 0xB0) != func_8016A3C4() + 1) {
         return 0;
     }
 
-    int result = 0;
-    u32 field30 = FLD(u32, FLD(void*, s, 0x1C), 0x30);
-    if (field30 > 1) {
-        // Ready if the callback ptmf is one of the two accepted constants.
-        if (__ptmf_cmpr(FLDP(void, s, 0x08), lbl_eu_80532198) == 0 ||
-            __ptmf_cmpr(FLDP(void, s, 0x08), lbl_eu_805321A4) == 0) {
+    void* parent = FLD(void*, s, 0x1C);
+
+    // If the parent's scene has more than one chunk, only consider the event
+    // ready when the callback is one of the two accepted ptmf constants.
+    if (FLD(u32, parent, 0x30) <= 1) {
+        result = 0;
+    } else {
+        result = 0;
+        if (__ptmf_cmpr(s + 0x08, lbl_eu_80532198) == 0 ||
+            __ptmf_cmpr(s + 0x08, lbl_eu_805321A4) == 0) {
             result = 1;
         }
     }
+
     return result;
 }
 
@@ -248,52 +254,84 @@ extern "C" int func_80183978(void* self) {
 // ============================================================================
 // func_80183A3C (us-80184e58) - Reset / reinitialize
 // ============================================================================
-extern "C" void func_80183A3C(void* self) {
+void func_80183A3C(void* self) {
     int i;
 
+    // Parent scene counter == -1: no parent scene, install the fixed ptmf
+    // callback and mark flags bit 0x50, then bail out.
     if (FLD(u32, FLD(void*, self, 0x1C), 0x30) == 0xFFFFFFFF) {
         FLD(u32, self, 0x18) |= 0x50;
-        FLD(u32, self, 0x08) = lbl_eu_805321B0[0];
-        FLD(u32, self, 0x0C) = lbl_eu_805321B0[1];
-        FLD(u32, self, 0x10) = lbl_eu_805321B0[2];
+
+        // Post-increment derefs of a local pointer fold the first access into
+        // `lwzu` (single base register, offsets on the rest) and force the
+        // retail load/store order w0,w1 -> +0xC,+0x8,+0x10 (cf. CTaskGameEvt
+        // btm_sco_init lwzu shape).
+        const u32* src = lbl_eu_805321B0;
+        u32 w0 = *src++;
+        u32 w1 = *src++;
+        FLD(u32, self, 0x0C) = w1;
+        FLD(u32, self, 0x08) = w0;
+        u32 w2 = *src++;
+        FLD(u32, self, 0x10) = w2;
         return;
     }
 
     // If any slot is still loading (status == 1), or the reset flag is set,
-    // bail out early.
-    if (FLD(u32, self, 0x84) == 1 ||
-        FLD(u32, self, 0x88) == 1 ||
-        FLD(u32, self, 0x8C) == 1 ||
-        FLD(u32, self, 0x90) == 1 ||
-        FLD(u32, self, 0x94) == 1 ||
-        FLD(u32, self, 0x98) == 1) return;
+    // bail out early. Retail checks the last three statuses via a base of
+    // self+8 (offsets 0x88/0x8C/0x90) instead of self directly.
+    {
+        u32* b = (u32*)((char*)self + 8);
+        if (FLD(s32, self, 0x84) == 1 ||
+            FLD(s32, self, 0x88) == 1 ||
+            FLD(s32, self, 0x8C) == 1 ||
+            (s32)b[0x88 / 4] == 1 ||
+            (s32)b[0x8C / 4] == 1 ||
+            (s32)b[0x90 / 4] == 1) return;
+    }
 
     if (FLD(u32, self, 0x18) & 0x100) return;
     FLD(u32, self, 0x18) |= 0x100;
 
     func_80172768(self);
 
-    // Free any loaded/archived slot data.
-    for (i = 0; i < 6; i++) {
-        u32 status = FLD(u32, self, 0x84 + i * 4);
-        if (status == 3) {
-            void* data = FLD(void*, self, 0x6C + i * 4);
-            if (data != 0) {
-                mtl::MemManager::deallocate(data);
-                FLD(void*, self, 0x6C + i * 4) = 0;
+    // Free any loaded/archived slot data. Status 3 = loaded into MEM2 via
+    // MemManager, status 2 = archived. Retail carries a duplicated null check
+    // in the status-3 path (two consecutive beq), reproduced by the nested if
+    // (same shape as the matched func_80183978).
+    {
+        char* base = (char*)self;
+        for (i = 0; i < 6; i++) {
+            int status = FLD(s32, base, 0x84);
+            if (status == 3) {
+                void* data = FLD(void*, base, 0x6C);
+                if (data != 0) {
+                    if (data != 0) {
+                        mtl::MemManager::deallocate(data);
+                        FLD(u32, base, 0x6C) = 0;
+                    }
+                }
+            } else if (status == 2) {
+                void* data = FLD(void*, base, 0x6C);
+                if (data != 0) {
+                    func_800A9344(data, 0);
+                }
             }
-        } else if (status == 2) {
-            void* data = FLD(void*, self, 0x6C + i * 4);
-            if (data != 0) {
-                func_800A9344(data, 0);
-            }
+            base += 4;
         }
     }
 
-    FLD(u32, self, 0x08) = lbl_eu_805321BC[0];
-    FLD(u32, self, 0x0C) = lbl_eu_805321BC[1];
-    FLD(u32, self, 0x10) = lbl_eu_805321BC[2];
-    FLD(u32, self, 0x18) = (FLD(u32, self, 0x18) | 0x30) & ~0x42;
+    // Install the reset ptmf callback (loads w0,w1 via *src++ then stores
+    // +0xC,+0x8; w2 late) and clear flags bits 0x40/0x01 while setting 0x30.
+    {
+        const u32* src = lbl_eu_805321BC;
+        u32 w0 = *src++;
+        u32 w1 = *src++;
+        FLD(u32, self, 0x0C) = w1;
+        FLD(u32, self, 0x08) = w0;
+        u32 w2 = *src++;
+        FLD(u32, self, 0x10) = w2;
+    }
+    FLD(u32, self, 0x18) = (FLD(u32, self, 0x18) | 0x30) & ~0x41;
 
     // Reinitialize all six slots.
     for (i = 0; i < 6; i++) {
@@ -784,22 +822,40 @@ extern "C" int func_8018497C(void* self) {
 // func_80184A24 (us-80185e64) - OnFileEvent handler
 // this(r3), event(r4)
 // ============================================================================
-extern "C" int func_80184A24(void* self, void* event) {
+extern "C" int func_80184A24(void* self, CEventFile* ev) {
     char* s = (char*)self;
 
     // For each of the 6 file slots, if the completed request matches the
     // event's handle, record the loaded data (or drop the handle on error).
-    for (int i = 0; i < 6; i++) {
-        void* eventHandle = FLD(void*, event, 0x04);
-        if (FLD(void*, s, 0x54 + i * 4) == eventHandle) {
-            if (FLD(u32, event, 0x00) == 1) {
-                u32 nextData = FLD(u32, eventHandle, 0x04);
-                FLD(u32, eventHandle, 0x04) = 0;
-                FLD(u32, s, 0x6C + i * 4) = nextData;
+    for (int i = 0; i < 4; i += 2) {
+        CFileHandle* req = FLD(CFileHandle*, s, 0x54 + i * 6);
+        if (req == ev->mFileHandle) {
+            if (ev->unk0 == 1) {
+                FLD(void*, s, 0x6C + i * 6) = req->getData();
             } else {
-                FLD(u32, s, 0x3C + i * 4) = 0;
+                FLD(CFileHandle*, s, 0x3C + i * 6) = 0;
             }
-            FLD(u32, s, 0x54 + i * 4) = 0;
+            FLD(CFileHandle*, s, 0x54 + i * 6) = 0;
+        }
+
+        req = FLD(CFileHandle*, s, 0x58 + i * 6);
+        if (req == ev->mFileHandle) {
+            if (ev->unk0 == 1) {
+                FLD(void*, s, 0x70 + i * 6) = req->getData();
+            } else {
+                FLD(CFileHandle*, s, 0x40 + i * 6) = 0;
+            }
+            FLD(CFileHandle*, s, 0x58 + i * 6) = 0;
+        }
+
+        req = FLD(CFileHandle*, s, 0x5C + i * 6);
+        if (req == ev->mFileHandle) {
+            if (ev->unk0 == 1) {
+                FLD(void*, s, 0x74 + i * 6) = req->getData();
+            } else {
+                FLD(CFileHandle*, s, 0x44 + i * 6) = 0;
+            }
+            FLD(CFileHandle*, s, 0x5C + i * 6) = 0;
         }
     }
 

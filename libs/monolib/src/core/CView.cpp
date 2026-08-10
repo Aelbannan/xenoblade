@@ -1520,16 +1520,16 @@ void CView::setDisp(bool r4, bool r5) {
 
 // True when this view is neither the root current nor under it (inactive chrome).
 bool CView::hasCurrent() const {
-    int result = 0;
+    bool result = false;
     if (CViewRoot::isCurrent(this)) {
         goto done;
     }
     if (CViewRoot::isCurrentChild(this, CViewRoot::getCurrent())) {
         goto done;
     }
-    result = 1;
+    result = true;
 done:
-    return (bool)result;
+    return result;
 }
 
 // PLAN.md 17.6: whole-function asm. MWCC C++ spills then lwz unk45C; retail

@@ -1,4 +1,5 @@
 #include <types.h>
+#include <nw4r/lyt.h>
 #include "kyoshin/makecrystal/CMCCrystalSupport.hpp"
 
 namespace nw4r {
@@ -29,19 +30,6 @@ void func_80138078__FUl(u32);
 }
 
 namespace {
-struct LayoutEnableIf {
-    virtual void _v008();
-    virtual void _v00C();
-    virtual void _v010();
-    virtual void _v014();
-    virtual void _v018();
-    virtual void _v01C();
-    virtual void _v020();
-    virtual void _v024();
-    virtual void _v028();
-    virtual void setAnimationEnable(void*, int);
-};
-
 struct LayoutAnimateIf {
     virtual void _v008();
     virtual void _v00C();
@@ -99,8 +87,8 @@ extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
         &self->mLayout, self->mAccessor, lbl_eu_8050AA3C);
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mLayout, &self->mAnimTransform, self->mAccessor, lbl_eu_8050AA3C + 0x15);
-    ((LayoutEnableIf*)self->mLayout)->setAnimationEnable(self->mAnimTransform, 1);
-    ((LayoutAnimateIf*)self->mLayout)->animate(0);
+    self->mLayout->SetAnimationEnable(self->mAnimTransform, true);
+    self->mLayout->Animate(0);
     self->mLoaded = 1;
 }
 
@@ -125,7 +113,7 @@ extern "C" void func_8022E9E4(CMCCrystalSupport* self,
 extern "C" void func_8022EA04(CMCCrystalSupport* self) {
     self->mLoaded = 0;
     if (self->mLayout != nullptr) {
-        ((LayoutDestroyIf*)self->mLayout)->destroy(1);
+        delete self->mLayout;
         self->mLayout = nullptr;
     }
 }
@@ -147,7 +135,9 @@ extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
     }
 }
 
-extern "C" void func_8022EB0C(CMCCrystalSupport* self) {
+// noinline: retail calls this via a real `bl` from func_8022E988 (sibling in this
+// TU); without it MWCC inlines the body into the caller and the bl disappears.
+extern "C" __declspec(noinline) void func_8022EB0C(CMCCrystalSupport* self) {
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(
             self->mAnimTransform, lbl_eu_80668634) != 0) {
         self->mState = 0;

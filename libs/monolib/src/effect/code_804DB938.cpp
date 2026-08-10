@@ -34,6 +34,11 @@ extern f32 lbl_eu_8066B274; // 0.0f
 extern f32 lbl_eu_8066B278; // pi/180
 extern f32 lbl_eu_8066A208; // 1e-6f
 
+// 0x4330000080000000 (2^52 + 2^31): MWCC's signed int -> float conversion
+// magic. Kept as a named sdata2 constant so the conversion emits an sda21
+// reference to the retail pool slot instead of a local pool entry.
+static const f64 lbl_eu_8066B268 = 4503601774854144.0;
+
 // Table based sincos: convert radians to degrees, wrap into [0, 360) and
 // interpolate between the two nearest integer-degree table entries.
 static inline void CESinCos(f32 rad, f32& cosV, f32& sinV) {
@@ -46,8 +51,8 @@ static inline void CESinCos(f32 rad, f32& cosV, f32& sinV) {
     }
     const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
     const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    cosV = cosE->value + frac * cosE->delta;
-    sinV = sinE->value + frac * sinE->delta;
+    cosV = frac * cosE->delta + cosE->value;
+    sinV = frac * sinE->delta + sinE->value;
 }
 
 // Build a rotation matrix about a cardinal axis ('x' / 'y' / 'z') from an
@@ -275,13 +280,13 @@ int func_804DD6E8(int val) {
 // ---------------------------------------------------------------------------
 
 void func_804DD754(void) {
+    f32 toRad = lbl_eu_8066B278; // degrees-per-radian scale, hoisted into f31
     f32 prevSin;
     f32 prevCos;
     int i;
     for (i = 0; i < 360; i++) {
-        f32 rad = lbl_eu_8066B278 * (f32)i;
-        lbl_eu_80660038[i].value = (f32)sin(rad);
-        lbl_eu_80660B78[i].value = (f32)cos(rad);
+        lbl_eu_80660038[i].value = (f32)sin(toRad * (f32)i);
+        lbl_eu_80660B78[i].value = (f32)cos(toRad * (f32)i);
         if (i != 0) {
             lbl_eu_80660038[i - 1].delta = lbl_eu_80660038[i].value - prevSin;
             lbl_eu_80660B78[i - 1].delta = lbl_eu_80660B78[i].value - prevCos;
@@ -297,19 +302,21 @@ void func_804DD754(void) {
 // Paired-single vector lerps: out = a + (b - a) * t.
 // ---------------------------------------------------------------------------
 
-// 3-component lerp.
+// 3-component lerp. Written as straight field ops so MWCC's paired-single
+// auto-vectorizer emits the retail load-all-first psq_l/ps_sub/ps_madds0
+// shape (nw4r VEC3Lerp's inline asm interleaves XY and Z instead).
 void func_804DD89C(Vec* out, const Vec* a, const Vec* b, f32 t) {
-    nw4r::math::VEC3Lerp(reinterpret_cast<nw4r::math::VEC3*>(out),
-                         reinterpret_cast<const nw4r::math::VEC3*>(a),
-                         reinterpret_cast<const nw4r::math::VEC3*>(b), t);
+    out->x = a->x + (b->x - a->x) * t;
+    out->y = a->y + (b->y - a->y) * t;
+    out->z = a->z + (b->z - a->z) * t;
 }
 
-// 4-component lerp.
+// 4-component lerp: same shape as the 3-component one, two full pairs.
 void func_804DD8C8(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b,
                    f32 t) {
-    nw4r::math::VEC3Lerp(reinterpret_cast<nw4r::math::VEC3*>(out),
-                         reinterpret_cast<const nw4r::math::VEC3*>(a),
-                         reinterpret_cast<const nw4r::math::VEC3*>(b), t);
+    out->x = a->x + (b->x - a->x) * t;
+    out->y = a->y + (b->y - a->y) * t;
+    out->z = a->z + (b->z - a->z) * t;
     out->w = a->w + (b->w - a->w) * t;
 }
 

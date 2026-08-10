@@ -7,7 +7,6 @@ extern int SFD_Pause(void *, int);
 extern int SFD_RecordFname(void *, const char *);
 extern int MWSFSVM_Error(const char *, ...);
 extern int MWSFLIB_SetErrCode(int);
-extern int mw_sfd_start_ex(void *, void *);
 extern void MWSFD_SetFlowLimit(void *, u32);
 extern int MWSTM_GetStat(void *);
 extern size_t strlen(const char *);
@@ -32,13 +31,28 @@ typedef struct MWSFDPLY {
     void*    field_0x5c;    /* 0x5c STM handle */
     u8   field_0x60[0x4];   /* 0x60..0x63 */
     LscHandle* field_0x64;  /* 0x64 LSC handle */
-    u8   field_0x68[0x2a];  /* 0x68..0x91 */
+    u8   field_0x68[0x20];  /* 0x68..0x87 */
+    s32  field_0x88;        /* 0x88 video switch */
+    s32  field_0x8c;        /* 0x8c audio switch */
+    u8   field_0x90;        /* 0x90 concat-play flag */
+    u8   field_0x91;        /* 0x91 */
     s8   field_0x92;        /* 0x92 pause/seek flag */
     u8   field_0x93;        /* 0x93 */
     s32  field_0x94;        /* 0x94 */
-    u8   field_0x98[0x468]; /* 0x98..0x4ff */
+    u8   field_0x98[0x4];   /* 0x98..0x9b */
+    s32  field_0x9c;        /* 0x9c */
+    s32  field_0xa0;        /* 0xa0 */
+    s32  field_0xa4;        /* 0xa4 */
+    u8   field_0xa8[0x440]; /* 0xa8..0x4e7 */
+    char* field_0x4e8;      /* 0x4e8 fname buffer */
+    s32  field_0x4ec;       /* 0x4ec fname length limit */
+    s32  field_0x4f0;       /* 0x4f0 */
+    s32  field_0x4f4;       /* 0x4f4 */
+    s32  field_0x4f8;       /* 0x4f8 */
+    s32  field_0x4fc;       /* 0x4fc */
     s32  field_0x500;       /* 0x500 */
-    u8   field_0x504[0x10]; /* 0x504..0x513 */
+    s32  field_0x504;       /* 0x504 */
+    u8   field_0x508[0xc];  /* 0x508..0x513 */
     s32  field_0x514;       /* 0x514 */
     s32  field_0x518;       /* 0x518 */
     s32  field_0x51c;       /* 0x51c */
@@ -55,7 +69,9 @@ typedef struct MWSFDPLY {
     u8   field_0x600[0x20]; /* 0x600 stream-set B (SstHn) */
     u8   field_0x620[0x10]; /* 0x620..0x62f */
     s32  field_0x630;       /* 0x630 */
-    u8   field_0x634[0xc];  /* 0x634..0x63f */
+    u8   field_0x634[0x4];  /* 0x634..0x637 */
+    s32  field_0x638;       /* 0x638 */
+    s32  field_0x63c;       /* 0x63c */
     s32  field_0x640;       /* 0x640 */
     s32  field_0x644;       /* 0x644 */
     s32  field_0x648;       /* 0x648 */
@@ -65,6 +81,11 @@ typedef struct MWSFDPLY {
     s32  field_0x664;       /* 0x664 */
     u8   field_0x668[0x10]; /* 0x668..0x677 */
     s32  field_0x678;       /* 0x678 */
+    void* field_0x67c;      /* 0x67c callback arg */
+    void (*field_0x680)(void*); /* 0x680 callback fn */
+    s32  field_0x684;       /* 0x684 */
+    s32  field_0x688;       /* 0x688 */
+    s32  field_0x68c;       /* 0x68c */
 } MWSFDPLY;
 
 /* SVM trace-callback infrastructure: lbl_eu_805FF3A0 is an optional trace
@@ -83,7 +104,9 @@ typedef struct SfdTraceRec {
     u32 entry;          /* 0x04 */
     u32 field_0x08;     /* 0x08 */
     u32 self;           /* 0x0c */
-    u8  pad_0x10[0x5c]; /* 0x10..0x6b */
+    u8  pad_0x10[0x8];  /* 0x10..0x17 */
+    u32 field_0x18;     /* 0x18 */
+    u8  pad_0x1c[0x50]; /* 0x1c..0x6b */
     u32 exit;           /* 0x6c */
 } SfdTraceRec;
 
@@ -113,6 +136,25 @@ extern void MWSFLSC_Pause(void* self, s32 flag);
 extern s32 SFD_GetCond(void* self, u32 idx, s32* out);
 extern s32 MWSFD_GetPauseBdr(void);
 extern void mwPlyLinkStm(void* self, s32 linkStm);
+extern void mw_sfd_start_ex(MWSFDPLY* self);
+extern void mwSfdStopDec(MWSFDPLY* self);
+extern void* MWSFLIB_GetLibWorkPtr(void);
+extern s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self);
+extern void MWSST_Reset(MWSFDPLY* self, s32 idx);
+extern void MWSFTAG_ResetAinfSj(void* self);
+extern s32 MWSFTAG_SetAinfSj(void* self);
+extern void MWSFTAG_InitTagInf(void* self);
+extern void MWSFFRM_InitSfhInfTable(void* self);
+extern s32 SFD_SetConcatPlay(void* h);
+extern s32 SFD_Standby(void* h);
+extern void MWSST_SetLnkSw(void* sst, s32 sw);
+extern void* MWSST_StartSj(void* sst);
+extern void MWSFD_SetAudioSw(void* self, u32 sw);
+extern void MWSFD_SetVideoSw(void* self, u32 sw);
+extern void mwPlySetSeamlessLp(void* self, s32 lpFlag);
+extern void MWSFSEE_StartFnameSub1(void* self, s32 a, s32 b);
+extern void MWSFSEE_StartFnameSub2(void* self, s32 a, s32 b);
+extern SfdTraceRec lbl_eu_80566354;
 
 /* Get SFD handle from player handle (+0x58) */
 static void *sfd(void *h) { return *(void **)((u8 *)h + 0x58); }
@@ -131,33 +173,129 @@ int mwPlyTermSupply(void *h) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
 }
 
-static u32 sfdStartExScratch[32];
+/* Restart the Sofdec decode/play pipeline on the player handle: reset the
+ * SFD core and stream sets, re-arm the tag info, then bring every stream set
+ * out of pause and start its SJ output. Returns nothing (errors are reported
+ * through the SVM error hook). */
+void mw_sfd_start_ex(MWSFDPLY* self) {
+    s8 pause;
 
-/* Stub for the retail 0x298-byte mw_sfd_start_ex (not a move target in this
- * batch). A bulky body keeps MWCC from inlining it into mwPlyStartSj and
- * dropping the `bl` (small stubs get folded away). Computes only into a
- * private static buffer, so it is runtime-safe. */
-int mw_sfd_start_ex(void *a, void *b) {
-    u32 base = (u32)(u32)(long)a;
-    u32 v = (u32)(long)b;
-    u32 acc = v + 0x1234;
-    int i, j;
-    for (i = 0; i < 16; i++) {
-        sfdStartExScratch[i] = acc;
-        acc = acc * 0x1f + (u32)i;
+    MWSFLIB_GetLibWorkPtr();
+    self->field_0x678 = 0;
+    MWSFLSC_Pause(self, 0);
+
+    if (self->field_0x58 != 0) {
+        if (MWSFCRE_ResetSfdHn(self) != 0) {
+            MWSFSVM_Error(lbl_eu_8051B1A0 + 0x88);
+            return;
+        }
+        MWSST_Reset(self, 0);
+        MWSST_Reset(self, 1);
+        MWSFTAG_ResetAinfSj(self);
+        if (MWSFTAG_SetAinfSj(self) != 0) {
+            MWSFSVM_Error(lbl_eu_8051B1A0 + 0xb0);
+            return;
+        }
+        MWSFTAG_InitTagInf(self);
+        MWSFFRM_InitSfhInfTable(self);
     }
-    for (j = 0; j < 16; j++) {
-        u32 t = sfdStartExScratch[j];
-        int k;
-        for (k = 0; k < 4; k++)
-            t = t * 3 + sfdStartExScratch[j];
-        sfdStartExScratch[j] = t;
+
+    if (self->field_0x680 != NULL) {
+        self->field_0x680(self->field_0x67c);
     }
-    return (int)(acc + base + sfdStartExScratch[base & 0xf]);
+
+    self->field_0x684 = -1;
+    self->field_0x688 = -1;
+    self->field_0x68c = -1;
+    self->field_0x9c = 0;
+    self->field_0xa0 = 0;
+
+    if (self->field_0x90 == 1) {
+        if (SFD_SetConcatPlay(self->field_0x58) != 0) {
+            MWSFSVM_Error(lbl_eu_8051B1A0 + 0xdc);
+        }
+        MWSST_SetLnkSw(self->field_0x5d8, 1);
+        MWSST_SetLnkSw(self->field_0x600, 1);
+    }
+
+    if (SFD_Standby(self->field_0x58) != 0) {
+        MWSFLIB_SetErrCode(-0x137);
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x0);
+    }
+
+    /* Re-apply the pause state: while paused, let the decoder sleep and keep
+     * the stream-set clocks in sync with the pause flag. */
+    pause = self->field_0x92;
+    if (pause != 0) {
+        void* sfdH = self->field_0x58;
+        if (MWSFD_GetPauseBdr() == 1 && self->field_0x8 == 1) {
+            s32 cond;
+            if (SFD_GetCond(sfdH, 6, &cond) == 0) {
+                if (cond == 1)
+                    mwlSfdSleepDecSvr(self);
+            } else {
+                mwlSfdSleepDecSvr(self);
+            }
+        }
+        if (SFD_Pause(sfdH, pause) != 0) {
+            MWSFLIB_SetErrCode(-0x136);
+            MWSFSVM_Error(lbl_eu_8051B1A0 + 0x106,
+                          (pause == 1) ? (char*)(lbl_eu_8051B1A0 + 0x129)
+                                       : (char*)(lbl_eu_8051B1A0 + 0x12c));
+        }
+        MWSST_GetTime(self->field_0x5d8, pause);
+        MWSST_GetTime(self->field_0x600, pause);
+        self->field_0x92 = pause;
+    }
+
+    MWSST_GetTime(self->field_0x5d8, 1);
+    MWSST_GetTime(self->field_0x600, 1);
+    MWSST_StartSj(self->field_0x5d8);
+    MWSST_StartSj(self->field_0x600);
+    MWSFD_SetAudioSw(self, self->field_0x8c);
+    MWSFD_SetVideoSw(self, self->field_0x88);
+    self->field_0xa4 = 0;
+    self->field_0x91 = 0;
+    self->field_0x4 = 1;
+    self->field_0x638 = 0;
 }
 
-int mwPlyStartFname(void *h, const char *fname) {
-    return mw_sfd_start_ex(h, (void *)fname);
+/* Start playback of a named movie file: copy the fname into the player's
+ * buffer (honouring the length limit), then arm the SFD/SST pipeline. */
+void mwPlyStartFname(MWSFDPLY* self, const char* fname) {
+    if (lbl_eu_805FF3A0) {
+        lbl_eu_80566354.self = (u32)self;
+        lbl_eu_80566354.field_0x18 = (u32)fname;
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566354.entry);
+    }
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x130);
+    } else if (fname == NULL) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x15d);
+    } else if (self->field_0x8 != 0xa) {
+        MWSFD_SetProhibitServer(1);
+        mwPlySetSeamlessLp(self, 0);
+        mwPlyLinkStm(self, 0);
+        self->field_0x500 = self->field_0x504;
+        mwSfdStopDec(self);
+        mw_sfd_start_ex(self);
+        MWSFD_SetProhibitServer(0);
+        if ((s32)strlen(fname) > self->field_0x4ec) {
+            MWSFSVM_Error(lbl_eu_8051B1A0 + 0x185);
+            strncpy(self->field_0x4e8, fname, (u32)self->field_0x4ec);
+        } else {
+            strcpy(self->field_0x4e8, fname);
+        }
+        self->field_0x4f4 = 0;
+        self->field_0x4f8 = 0;
+        self->field_0x4fc = 0xFFFFF;
+        self->field_0x4f0 = 1;
+        MWSFSEE_StartFnameSub1(self, 0, -1);
+        MWSFSEE_StartFnameSub2(self, 0, -1);
+    }
+    if (lbl_eu_805FF3A0) {
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566354.exit);
+    }
 }
 
 
@@ -240,10 +378,15 @@ void mwPlyStop(MWSFDPLY* self) {
 }
 
 void mwPlyPause(MWSFDPLY* self, s32 pause) {
-    s8 cur = self->field_0x92;
+    s8 cur;
     void* sfdH;
     s32 cond;
 
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x402);
+        return;
+    }
+    cur = self->field_0x92;
     if (cur == 0 && pause == 0)
         return;
     if (cur == 1 && pause == 1)
@@ -289,18 +432,20 @@ int MWSFPLY_RecordFname(void *h, const char *fname) {
 }
 
 void mwPlyStartSj(MWSFDPLY* self, s32 sj) {
+    s32 mode;
     if (MWSFD_IsEnableHndl(self) != 1) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x336);
         return;
     }
     MWSFD_SetProhibitServer(1);
     mwSfdStopDec(self);
+    mode = 2;
     self->field_0x500 = sj;
-    self->field_0x514 = 2;
+    self->field_0x514 = mode;
     self->field_0x518 = 0;
     self->field_0x51c = 0;
     self->field_0x520 = 0;
-    mw_sfd_start_ex(self, (void*)2);
+    mw_sfd_start_ex(self);
     MWSFD_SetProhibitServer(0);
 }
 

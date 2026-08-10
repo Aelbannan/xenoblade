@@ -33,8 +33,9 @@ void DCT_IsrInit(void) {
         for (j = 0; j < 8; j++) {
             double p = row * *pc++;
             *pd++ = p;
-            *ps1++ = (s16)(s32)(s1 * p + bias);
-            *ps2++ = (s16)(s32)(s2 * p + bias);
+            /* floor(x + 0.5): round-to-nearest (MWCC inlines floor) */
+            *ps1++ = (s16)floor(s1 * p + bias);
+            *ps2++ = (s16)floor(s2 * p + bias);
         }
     }
 

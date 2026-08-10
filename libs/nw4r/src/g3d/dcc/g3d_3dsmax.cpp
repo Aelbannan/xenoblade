@@ -50,26 +50,34 @@ void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
+    f32 su = rSrt.Su;
 
-    pMtx->m[0][0] = su * cosR;
-    pMtx->m[0][1] = su * sinR;
+    // Precompute the four scale-rotate products (retail computes them in
+    // this order: Sv*sin, Su*sin, Su*cos, Sv*cos).
+    f32 svs = sv * sinR;
+    f32 sus = su * sinR;
+    f32 suc = su * cosR;
+    f32 svc = sv * cosR;
+
+    pMtx->m[0][0] = suc;
+    pMtx->m[0][1] = sus;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CD0 * (su * cosR + su * sinR - lbl_eu_80669CC8);
-    pMtx->m[1][0] = -(sv * sinR);
-    pMtx->m[1][1] = sv * cosR;
+    pMtx->m[0][3] = lbl_eu_80669CD0 * (suc + sus - lbl_eu_80669CC8);
+    pMtx->m[1][0] = -svs;
+    pMtx->m[1][1] = svc;
     pMtx->m[1][2] = lbl_eu_80669CC0;
-    pMtx->m[1][3] =
-        lbl_eu_80669CD0 * (-(sv * sinR) + sv * cosR - lbl_eu_80669CC8);
+    pMtx->m[1][3] = lbl_eu_80669CD0 * (-svs + svc - lbl_eu_80669CC8);
 }
 
 void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = lbl_eu_80669CCC * rSrt.R;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -102,7 +110,8 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -141,7 +150,8 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -170,7 +180,8 @@ void ProductTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -192,8 +203,8 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 svc = rSrt.Sv * cosR;
 
     // result = TexSrt(SR) * mtx (column-vector convention, translate row first)
-    pMtx->m[0][3] = suc * m03c + sus * m13c + lbl_eu_80669CC4;
-    pMtx->m[1][3] = nsvs * m03c + svc * m13c + lbl_eu_80669CC4;
+    pMtx->m[0][3] = lbl_eu_80669CC4 + (suc * m03c + sus * m13c);
+    pMtx->m[1][3] = lbl_eu_80669CC4 + (nsvs * m03c + svc * m13c);
     pMtx->m[0][0] = suc * m00 + sus * m10;
     pMtx->m[1][0] = nsvs * m00 + svc * m10;
     pMtx->m[0][1] = suc * m01 + sus * m11;
@@ -203,7 +214,8 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CCC;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -252,34 +264,35 @@ void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = lbl_eu_80669CCC * rSrt.R;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 sv = rSrt.Sv;
-    f32 su = rSrt.Su;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
-
-    f32 m03 = pMtx->m[0][3] - tu;
-    f32 m13 = pMtx->m[1][3] + tv;
+    // Written in retail emission order: each load sits where retail loads it,
+    // so MWCC's scheduler has nothing to reorder.
+    f32 s = sinR;
+    f32 svs = rSrt.Sv * s;
+    f32 m03 = pMtx->m[0][3] - rSrt.Tu;
+    f32 c = cosR;
+    f32 sus = rSrt.Su * s;
+    f32 suc = rSrt.Su * c;
+    f32 m13 = pMtx->m[1][3] + rSrt.Tv;
+    f32 nsvs = -svs;
     f32 m00 = pMtx->m[0][0];
+    f32 m03c = m03 - lbl_eu_80669CC4;
     f32 m10 = pMtx->m[1][0];
+    f32 svc = rSrt.Sv * c;
     f32 m01 = pMtx->m[0][1];
     f32 m11 = pMtx->m[1][1];
     f32 m02 = pMtx->m[0][2];
     f32 m12 = pMtx->m[1][2];
-
-    f32 svs = sv * sinR;
-    f32 sus = su * sinR;
-    f32 suc = su * cosR;
-    f32 nsvs = -svs;
-    f32 svc = sv * cosR;
+    f32 m13c = m13 - lbl_eu_80669CC4;
 
     // result = TexSrt(SRT) * mtx (column-vector convention, translate row first)
     pMtx->m[0][0] = suc * m00 + sus * m10;
-    pMtx->m[0][3] = suc * m03 + sus * m13 + lbl_eu_80669CC4;
-    pMtx->m[1][3] = nsvs * m03 + svc * m13 + lbl_eu_80669CC4;
+    pMtx->m[0][3] = lbl_eu_80669CC4 + (suc * m03c + sus * m13c);
+    pMtx->m[1][3] = lbl_eu_80669CC4 + (nsvs * m03c + svc * m13c);
     pMtx->m[1][0] = nsvs * m00 + svc * m10;
     pMtx->m[0][1] = suc * m01 + sus * m11;
     pMtx->m[1][1] = nsvs * m01 + svc * m11;

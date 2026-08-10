@@ -16,6 +16,9 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CWorkUtil.hpp"
+#include "monolib/util/reslist.hpp"
+#include "monolib/core/CProcRoot.hpp"
+#include "monolib/core/CViewRoot.hpp"
 
 // CScriptCode vtable (0x8056B418), name string (0x8052254C) and global
 // singleton pointer (0x806655B0) data labels.
@@ -30,7 +33,9 @@ class CScriptCode {
 public:
     u8 unk_0[0x50];      //0x0: CWorkThread bytes up to mType
     u32 mType;           //0x50: ThreadType
-    u8 unk_54[0x1C4 - 0x54]; //0x54: rest of CWorkThread
+    u8 unk_54[0x5C - 0x54];      //0x54: CWorkThread mAllocHandle/mParent
+    reslist<CWorkThread*> mChildren; //0x5C: child work thread list
+    u8 unk_7C[0x1C4 - 0x7C];      //0x7C: rest of CWorkThread
     void* m_slot0[128];  //0x1C4: primary slot array
     s16 m_cnt0;          //0x3C4: primary count
     s16 pad_0x3C6;       //0x3C6
@@ -107,41 +112,35 @@ extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSi
 
     if (pData == NULL) return;
 
-    while (pData[offset] != 0) {
+    while ((s8)pData[offset] != 0) {
         u8 lineBuf[256];
-        int count = 0;
+        u32 count = 0;
 
-        // Copy a line (bytes >= 0x20 or tabs) into lineBuf, tabs become spaces
-        while (1) {
-            u8 ch = pData[offset];
-            if (ch >= 0x20 || ch == 0x09) {
-                lineBuf[count] = ch;
-                offset++;
-                count++;
-                if (ch == 0x09) {
-                    lineBuf[count - 1] = 0x20;
-                }
-                if (count >= 0xFF || offset >= (int)dataSize) break;
-            } else {
-                break;
+        // Copy bytes >= 0x20 or tabs into lineBuf, converting tabs to spaces
+        while (pData[offset] >= 0x20 || pData[offset] == 0x09) {
+            lineBuf[count] = pData[offset];
+            offset++;
+            count++;
+            if (lineBuf[count - 1] == 0x09) {
+                lineBuf[count - 1] = 0x20;
             }
+            if (count >= 0xFF || offset >= dataSize) break;
         }
 
-        if (offset >= (int)dataSize) return;
+        if (offset >= dataSize) return;
 
-        // Null-terminate and process the line
+        // Null-terminate the line and process it
         lineBuf[count] = 0;
         func_8043A390__11CScriptCodeFv(self, lineBuf, 1);
 
-        // Skip forward past the newline
+        // Skip forward to the end of the line
         while (1) {
-            u8 ch = pData[offset];
-            if (ch == 0x0A) {
+            s8 ch = (s8)pData[offset];
+            if (ch == '\n') {
                 offset++;
                 break;
             }
-            if (offset >= (int)dataSize) break;
-            if (ch == 0) break;
+            if (offset >= dataSize || ch == 0) break;
             offset++;
         }
     }
@@ -152,9 +151,9 @@ extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSi
 // null-terminated. Returns the number of segments (incl. the final one) when
 // the input ends with '\0', or 8 once 8 segments have been filled.
 extern "C" s16 func_8043A2F8__11CScriptCodeFv(void* self, u8* pOut, u8* pIn) {
-    s16 pos = 0;
     int base = 0;
     s16 seg = 0;
+    s16 pos = 0;
     char c;
 
     for (;;) {
@@ -165,10 +164,11 @@ extern "C" s16 func_8043A2F8__11CScriptCodeFv(void* self, u8* pOut, u8* pIn) {
             pos = 0;
             pIn++;
             base += 0x100;
-            if (seg >= 8) return 8;
+            if (seg < 8) continue;
+            return 8;
         } else if (c == 0) {
             pOut[(seg << 8) + pos] = 0;
-            return (short)(seg + 1);
+            return (s16)(seg + 1);
         } else {
             pOut[base + pos] = c;
             pIn++;
@@ -338,8 +338,15 @@ extern "C" void* getInstance__11CScriptCodeFv(void) {
     return lbl_eu_806655B0;
 }
 
-// us-... wkStandbyLogout
-extern "C" int wkStandbyLogout__11CScriptCodeFv(void* self) {
-    (void)self;
-    return 0;
+// us-8043d158: CScriptCode::wkStandbyLogout()
+// Logs out only while the child list is empty and neither the proc root nor
+// the view root has been created yet; otherwise reports failure.
+extern "C" bool wkStandbyLogout__11CScriptCodeFv(void* self) {
+    CScriptCode* ths = (CScriptCode*)self;
+    if (ths->mChildren.empty()
+        && CProcRoot::getInstance() == NULL
+        && CViewRoot::getInstance() == NULL) {
+        return ((CWorkThread*)ths)->CWorkThread::wkStandbyLogout();
+    }
+    return false;
 }

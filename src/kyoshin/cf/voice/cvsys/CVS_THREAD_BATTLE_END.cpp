@@ -11,8 +11,8 @@
 // CCharVoice pointer against the one being freed.
 void func_802A4DC8(CVS_THREAD_BATTLE_END* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
-    CVoiceHandle* handle;
     CCharVoice* vp;
+    CVoiceHandle* handle;
     for (int i = 0; i < self->field_0x34; i++) {
         handle = self->field_0x20[i];
         vp = (CCharVoice*)handle;

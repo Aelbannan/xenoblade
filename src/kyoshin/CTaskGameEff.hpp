@@ -13,6 +13,20 @@ extern "C" void func_804CBB84(void*, void*);
 extern "C" void func_804CBE48(void*);
 extern "C" void func_804CC104(void*);
 extern "C" void func_804CBEE8(void*);
+// Per-frame effect update helpers (func_80045044) and singleton teardown
+// (Term) - retail unmangled C linkage like the others.
+extern "C" void func_804CBB14(void*, f32);
+extern "C" void func_804CBC90(void*);
+extern "C" void func_804CBD14(void*);
+extern "C" void func_804CBDB4(void*);
+extern "C" void func_804CC154(void*);
+
+// Default effect time constant used by func_80044FBC when the caller does not
+// supply an explicit time (retail sdata2 float).
+extern f32 lbl_eu_80665D94;
+
+// Self-allocating factory for the after-task (defined in cf/CTaskGameEffAfter.cpp).
+void* __ct__CTaskGameEffAfter(CProcess* parent);
 
 // Effect-singleton setup helpers (retail unmangled; operate on lbl_eu_8065FC18).
 // func_804CB9F4 queries the effect resource size; func_804CBA00/804CBAA8 bind
@@ -72,9 +86,18 @@ struct EffListNode {
 // owning unit cpp can emit the retail out-of-line Move/Draw/dtor symbols via
 // explicit `template<>` specializations).
 #include "monolib/work/CTTask.hpp"
+#include "monolib/util/reslist.hpp"
 
 class CTaskGameEff : public CTTask<CTaskGameEff> {
 public:
+    // High-priority render callback subobject at 0x70 (prio 1). Its dtor is
+    // the retail __dt__Q212CTaskGameEff18CEffRenderHighPrioFv; declared-only
+    // so the containing dtor emits an out-of-line member-dtor call.
+    class CEffRenderHighPrio : public IScnRender {
+    public:
+        virtual ~CEffRenderHighPrio();
+    };
+
     virtual ~CTaskGameEff();
     void Init();
     void Term();
@@ -87,13 +110,8 @@ public:
     /* 0x64 */ u8 mActive;
     /* 0x68 */ u32 field_0x68;
     /* 0x6C */ f32 field_0x6C;
-    /* 0x70 */ IScnRender field_0x70;    // render callback (prio 1)
-    /* 0x74 */ u32 field_0x74;           // embedded obj vtable slot (interim/final)
-    /* 0x78 */ EffListNode* mSceneList;  // points at mHeaderNode
-    /* 0x7C */ EffListNode mHeaderNode;  // self-linked header node (next,prev,scene)
-    /* 0x88 */ void* mEffArray;
-    /* 0x8C */ u32 mEffCount;
-    /* 0x90 */ u8 field_0x90;
+    /* 0x70 */ CEffRenderHighPrio field_0x70;   // render callback (prio 1)
+    /* 0x74 */ reslist<CScn> mSceneList;        // scene list (vtable lbl_eu_80525C6C)
 }; // size 0x94
 
 // Render-callback / scene helper imports (retail unmangled symbols - keep

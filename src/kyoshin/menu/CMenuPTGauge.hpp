@@ -37,6 +37,22 @@ public:
     void Term();
 };
 
+// Minimal abstract mirror of the font object returned by
+// CDeviceFont::func_80452C10. Its slot 9 sits at vtable offset 0x24 and
+// returns the u32 bound into the gauge's font pane. Never instantiated (no
+// ctor), so no vtable is emitted; declaring the call as a genuine virtual
+// member makes MWCC emit retail's native r12 dispatch sequence.
+struct CMenuPTGaugeFont {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable offset 0x24
+};
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // shared ARC accessor (retail unmangled)
 extern "C" int lbl_eu_806642D8;

@@ -3,13 +3,15 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/core/CViewRoot.hpp"
+#include "monolib/core/CTaskManager.hpp"
 
 extern u32 __ptmf_null[3];
 
 #pragma optimize_for_size on
-CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
+__declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
     __ct__8CProcessFv(pThis);
 
     u32* p = reinterpret_cast<u32*>(pThis);
@@ -39,12 +41,12 @@ CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
     pThis->field_0x6C = 0.0f;       // 0x6C
     p[0x1C] = (u32)lbl_eu_80525C90; // 0x70
     p[0x1D] = (u32)lbl_eu_80525C84; // 0x74 (interim)
-    p[0x22] = 0;                    // 0x88
-    p[0x23] = 0;                    // 0x8C
-    pThis->field_0x90 = 0;          // 0x90
-    p[0x1E] = (u32)&pThis->mHeaderNode;             // 0x78
-    pThis->mHeaderNode.next = &pThis->mHeaderNode;  // 0x7C
-    pThis->mHeaderNode.prev = &pThis->mHeaderNode;  // 0x80
+    p[0x22] = 0;                    // 0x88 mSceneList.mList
+    p[0x23] = 0;                    // 0x8C mSceneList.mCapacity
+    pThis->mSceneList.unk1C = false; // 0x90
+    p[0x1E] = (u32)&pThis->mSceneList.mStartNode;               // 0x78 mStartNodePtr
+    pThis->mSceneList.mStartNode.mNext = &pThis->mSceneList.mStartNode;  // 0x7C
+    pThis->mSceneList.mStartNode.mPrev = &pThis->mSceneList.mStartNode;  // 0x80
     p[0x1D] = (u32)lbl_eu_80525C6C; // 0x74 (final)
 
     return pThis;
@@ -53,23 +55,18 @@ CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn* scene) {
 
 void __dt__80044BB0(){}
 
-void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
+// High-priority render callback dtor (retail __dt__Q212CTaskGameEff18CEffRenderHighPrioFv).
+// Declared-only in the header so the containing dtor emits an out-of-line call.
+CTaskGameEff::CEffRenderHighPrio::~CEffRenderHighPrio() {}
 
-// Base destructor stub (not in batch targets, keep for linking).
-void __dt___reslist_base_CScn() {}
-
-// Forward-declare base destructor with MWCC ABI signature (this, flags).
-// extern "C" so call sites emit the unmangled retail symbol (no inlining: no
-// in-TU body of this signature).
-extern "C" void* __dt___reslist_base_CScn(void* _this, int flags);
-
-// reslist<CScn> destructor - standard MWCC virtual dtor pattern.
-// #pragma optimize_for_size on keeps stmw r30 instead of individual stw
-// (same pattern as CTTask<CTaskGameEff>::~CTTask below).
+// reslist<CScn> destructor - standard MWCC virtual dtor pattern (retail
+// __dt__reslist_CScn; complete-object flavor). The base-list dtor
+// __dt___reslist_base_CScn is emitted by the template instantiation of
+// _reslist_base<CScn>::~_reslist_base() triggered by CTaskGameEff's dtor.
 #pragma optimize_for_size on
 void* __dt__reslist_CScn(void* _this, int flags) {
     if (_this) {
-        __dt___reslist_base_CScn(_this, 0);
+        static_cast<_reslist_base<CScn>*>(_this)->~_reslist_base<CScn>();
         if (flags > 0) {
             operator delete(_this);
         }
@@ -78,7 +75,9 @@ void* __dt__reslist_CScn(void* _this, int flags) {
 }
 #pragma optimize_for_size off
 
+#pragma optimize_for_size on
 CTaskGameEff::~CTaskGameEff() {}
+#pragma optimize_for_size off
 
 // Returns a global word from the sdata2/sdata pool (single lwz+sda21 reloc).
 u32 func_80044DF4() { return (u32)lbl_eu_80663D40; }
@@ -108,32 +107,101 @@ void CTaskGameEff::Init() {
     mScene->addRenderCB(cb0x54, 0xe, 0);
 
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    mEffArray = mtl::MemManager::allocate_array(0x30, mem2);
+    mSceneList.mList = (_reslist_node<CScn>*)mtl::MemManager::allocate_array(0x30, mem2);
 
     // Zero the first word of each of the 4 effect-list slots (stride 0xC).
-    // Access mEffArray directly inside the loop so MWCC reloads it each pass.
+    // Access mSceneList.mList directly inside the loop so MWCC reloads it each pass.
     for (u32 j = 0; j < 4; j++) {
-        reinterpret_cast<u32*>(mEffArray)[j * 3] = 0;
+        reinterpret_cast<u32*>(mSceneList.mList)[j * 3] = 0;
     }
-    mEffCount = 4;
+    mSceneList.mCapacity = 4;
 }
 #pragma optimize_for_size off
 
-void CTaskGameEff::Term() {}
+// func_800450CC: allocate a CTaskGameEff (0x94) from work memory, construct it
+// with `scene`, register it under `parent`, then spin up the after-task factory
+// under the scene root process. Returns the new task (or null if the allocation
+// failed; Regist still runs on the null pointer - retail behaviour, same as the
+// __ct__CTaskGameEffAfter factory).
+// optimize_for_size on: retail saves r29-r31 via stmw, not individual stw.
+#pragma optimize_for_size on
+CTaskGameEff* func_800450CC(CProcess* parent, CScn* scene) {
+    CTaskGameEff* task = (CTaskGameEff*)mtl::MemManager::allocate(0x94, CWorkThreadSystem::getWorkMem());
+    if (task != nullptr) {
+        task = __ct__CTaskGameEff(task, scene);
+    }
+    task->Regist(parent, false);
+    __ct__CTaskGameEffAfter(CTaskManager::GetRootProcScn());
+    return task;
+}
+#pragma optimize_for_size off
+
+void CTaskGameEff::Term() {
+    IScnRender* cb58 = reinterpret_cast<IScnRender*>(this);
+    if (this) cb58 = &field_0x58;
+    mScene->removeRenderCB(cb58);
+
+    IScnRender* cb54 = reinterpret_cast<IScnRender*>(this);
+    if (this) cb54 = &field_0x54;
+    func_80495FDC(mScene, cb54, 8);
+
+    mScene->removeRenderCB(&field_0x70);
+    func_804CC154(&lbl_eu_8065FC18[0]);
+
+    if (mMemAlloc != 0) {
+        mtl::MemManager::deallocate((void*)mMemAlloc);
+        mMemAlloc = 0;
+    }
+    lbl_eu_80663D40 = nullptr;
+}
 
 
 
-void func_80044FBC__FUl(){}
+// func_80044FBC: toggle the effect singleton's visibility. Non-zero `enable`
+// uses the default effect time constant (lbl_eu_80665D94) and sets bit 0x2 of
+// field_0x68; zero uses the per-instance field_0x6C time and clears the bit.
+void func_80044FBC(u32 enable) {
+    CTaskGameEff* gTask = lbl_eu_80663D40;
+    if (gTask == nullptr) return;
+    f32 time;
+    if (enable != 0) {
+        time = lbl_eu_80665D94;
+    } else {
+        time = gTask->field_0x6C;
+    }
+    func_804CBB14(lbl_eu_8065FC18, time);
+    gTask = lbl_eu_80663D40;
+    if (enable != 0) {
+        gTask->field_0x68 |= 0x2;
+    } else {
+        gTask->field_0x68 &= ~0x2;
+    }
+}
 
 void cbRenderBefore__12CTaskGameEffFv() {
     func_804CBB60(lbl_eu_8065FC18);
 }
 
-void func_80045044(){}
+// func_80045044: flush GX state, fold this->mActive into bit 11 (0x800) of the
+// effect-singleton flag word at lbl_eu_8065FC18, run the per-frame effect
+// update pass, then flush GX state again.
+#pragma optimize_for_size on
+void func_80045044(CTaskGameEff* self, void* param) {
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
+    u16 flags = *(u16*)&lbl_eu_8065FC18[0];
+    *(u16*)&lbl_eu_8065FC18[0] = (u16)((flags & 0xF7FF) | ((u16)self->mActive << 11));
+    func_804CBB84(&lbl_eu_8065FC18[0], param);
+    func_804CBC90(&lbl_eu_8065FC18[0]);
+    func_804CBD14(&lbl_eu_8065FC18[0]);
+    func_804CBDB4(&lbl_eu_8065FC18[0]);
+    func_804CC104(&lbl_eu_8065FC18[0]);
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
+}
+#pragma optimize_for_size off
 
 void func_800450C8() {}
-
-void func_800450CC(){}
 
 void func_8004513C(){}
 
@@ -187,10 +255,10 @@ void func_800453EC(CScn* scene) {
     if (gTask == nullptr) return;
     if (scene == nullptr) return;
 
-    EffListNode* header = gTask->mSceneList;
-    EffListNode* node = header->next;
-    while (node != header && node->scene != scene) {
-        node = node->next;
+    _reslist_node<CScn>* header = &gTask->mSceneList.mStartNode;
+    _reslist_node<CScn>* node = header->mNext;
+    while (node != header && &node->mItem != scene) {
+        node = node->mNext;
     }
     if (node == header) return;
 
@@ -198,21 +266,21 @@ void func_800453EC(CScn* scene) {
     CTaskGameEff* gt = lbl_eu_80663D40;
     IScnRender* cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x58;
-    node->scene->removeRenderCB(cb);
+    node->mItem.removeRenderCB(cb);
 
     gt = lbl_eu_80663D40;
     cb = reinterpret_cast<IScnRender*>(gt);
     if (gt != nullptr) cb = &gt->field_0x54;
-    func_80495FDC(node->scene, cb, 8);
+    func_80495FDC(&node->mItem, cb, 8);
 
     gt = lbl_eu_80663D40;
-    node->scene->removeRenderCB(&gt->field_0x70);
+    node->mItem.removeRenderCB(&gt->field_0x70);
 
-    EffListNode* p = node->prev;
-    EffListNode* n = node->next;
-    p->next = n;
-    n->prev = p;
-    node->next = nullptr;
+    _reslist_node<CScn>* p = node->mPrev;
+    _reslist_node<CScn>* n = node->mNext;
+    p->mNext = n;
+    n->mPrev = p;
+    node->mNext = nullptr;
 }
 
 

@@ -26,6 +26,22 @@ mAttachedProc1(nullptr) {
 CViewRoot::~CViewRoot() {
 }
 
+// Retail emits the CViewRootPool destructor at the head of this TU's split
+// (0x80444A1C). It resets the pool ring (mUsed/mList) and frees the object
+// when the delete flag is set; the CViewRoot destructor inlines the same
+// logic, which is why this symbol only appears once as an out-of-line copy.
+extern "C" void* __dt__80442084(CViewRootPool* pThis, int flag) {
+    if (pThis != nullptr) {
+        pThis->mUsed = 0;
+        pThis->mList = 0;
+
+        if (flag > 0) {
+            ::operator delete(pThis);
+        }
+    }
+    return pThis;
+}
+
 CViewRoot* CViewRoot::getInstance() {
     return lbl_eu_806655D0;
 }
@@ -310,9 +326,10 @@ void CViewRoot::func_80442DA8() {
 void CViewRoot::setCurrent(CView* view) {
     u32 length;
     CViewRoot* root;
+    _reslist_node<WORK_ID>* volatile node;
     _reslist_node<WORK_ID>* endNode;
-    _reslist_node<WORK_ID>* volatile endCopy;
     _reslist_node<WORK_ID>* volatile beginSave;
+    _reslist_node<WORK_ID>* volatile endCopy;
     _reslist_node<WORK_ID>* volatile curNode;
     _reslist_node<WORK_ID>* volatile frontNode;
     CProc* proc;
@@ -353,8 +370,11 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
+    // Retail spills the front node twice (sp+8 frontNode, sp+0x1c node) with
+    // the mItem load scheduled between the two volatile stores.
     frontNode = endNode->mNext;
-    proc = CProc::convertToProc(getWorkThread__9CWorkUtilFUl(frontNode->mItem));
+    node = frontNode;
+    proc = CProc::convertToProc(getWorkThread__9CWorkUtilFUl(node->mItem));
     rootProc = pssGetRoot__5CProcFP5CProc(proc);
 
     if (proc == nullptr) {
@@ -779,6 +799,22 @@ wkStandbyLogout_base:
     return CWorkThread::wkStandbyLogout();
 }
 
+
+// Retail emits the out-of-line copy of the header-inline CView::convertToView
+// in this TU (0x804452B0); call sites keep inlining the class-body version.
+extern "C" CView* convertToView__5CViewFP11CWorkThread(CWorkThread* pThread) {
+    if (pThread == nullptr) {
+        return nullptr;
+    }
+
+    int type = pThread->mType;
+
+    // Check if the thread's type is in the CView range.
+    if (CWorkThread::THREAD_CVIEW > type || type >= CWorkThread::THREAD_CVIEW_MAX) {
+        return nullptr;
+    }
+    return static_cast<CView*>(pThread);
+}
 
 // Walk up self's parent chain (retail unrolls the walk 3x then recurses) to
 // find a "root" view that is neither the CViewRoot singleton nor the desktop;

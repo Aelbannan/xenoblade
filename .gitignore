@@ -55,3 +55,4 @@ tools/coop/targets.json.lock
 .pi/workflow-subagents/
 tools/pi_harness/node_modules/
 .envrc
+tools/coop/.targets.json.*.tmp

@@ -37,7 +37,7 @@ void func_802ABAC0(CVS_THREAD_BATTLE_END_SP* self, CCharVoice* voicePtr) {
     CVoiceHandle* handle;
     CCharVoice* biased;
     int i;
-    for (i = 0; i < self->count; i++) {
+    for (i = 0; self->count > i; i++) {
         handle = self->slots[i];
         biased = (CCharVoice*)handle;
         if (handle != NULL) {

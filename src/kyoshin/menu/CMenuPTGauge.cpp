@@ -70,13 +70,12 @@ void CMenuPTGauge::Init() {
 
     // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
     // CDeviceFont::func_80452C10(1, layout) returns an object whose vt+0x24
-    // (no explicit args) yields the u32 passed to func_8013676C. Pass void*
-    // so the call binds the unmangled reloc (not Pane*-mangled from
-    // code_80135FDC.hpp).
+    // (no explicit args) yields the u32 passed to func_8013676C. The virtual
+    // call through CMenuPTGaugeFont makes MWCC emit retail's r12 dispatch.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, mLayout);
-    typedef u32 (*FontVFn)(void*);
-    u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    CMenuPTGaugeFont* fontObj =
+        static_cast<CMenuPTGaugeFont*>(CDeviceFont::func_80452C10(1, mLayout));
+    u32 fontResult = fontObj->sf9();
     func_8013676C(rootPane, fontResult);
 
     mLayout->Animate(0);
@@ -368,7 +367,57 @@ extern "C" void func_80187858(u8* self) {
         }
     }
 }
-void func_80187958(){}
+void func_80187958(CMenuPTGauge* self, s32 partyVal) {
+    // Advance the special animation one frame (result unused).
+    func_80137444(self->mAnimSpecial, lbl_eu_806679EC);
+
+    // Chain gate (shared with Move case 2): when the chain counter is 5,
+    // keep the special animation running and skip the reset below.
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    u8 chain = bm->mChain.unk0[2]; // chain value byte at +0x1aa
+    int flag = 0;
+    if (chain >= 1 && chain <= 0x18) {
+        flag = 1;
+    }
+    if (flag != 0 && chain == 5) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    if (flag != 0) {
+        return;
+    }
+
+    // Reset to the default action and re-bind the gauge animation for the
+    // current party gauge value: >= 300 idle, 200..299 close, < 200 open.
+    self->mActionIdx = 0;
+    self->mAnimSpecial->SetFrame(lbl_eu_806679E0);
+    self->mLayout->Animate(0);
+    self->mGaugeBase = self->mGaugePrev;
+
+    if (partyVal >= 300) {
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimIdle);
+        self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
+        self->mAnimIdle->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+    } else if (partyVal >= 200) {
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimClose);
+        self->mLayout->SetAnimationEnable(self->mAnimClose, true);
+        self->mAnimClose->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+    } else {
+        self->mLayout->Animate(0);
+        self->mLayout->UnbindAllAnimation();
+        self->mLayout->BindAnimation(self->mAnimOpen);
+        self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
+        self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+    }
+}
 void func_80187A88(){}
 void func_80187B70(){}
 void func_80187C90(){}

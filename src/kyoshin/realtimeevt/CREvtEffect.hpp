@@ -18,6 +18,54 @@
 //
 // Total size: 0x144
 
+// ---------------------------------------------------------------------------
+// Opaque helper objects touched by this TU (only the fields used here are
+// declared; the rest of each object is unknown).
+// ---------------------------------------------------------------------------
+
+// Effect instance created by func_804CC1F4. The rotation/scale params at
+// 0x1C-0x4C are raw 32-bit word copies of the CREvtEffect anim fields
+// (retail copies them with lwz/stw, so they are declared s32 here).
+struct CEffectInst {
+    /* 0x00 */ u16 mFlags;         // bit 0x4000 = parent-bound
+    /* 0x02 */ u8 mPad2[0x12];
+    /* 0x14 */ void* mParent;
+    /* 0x18 */ u8 mPad18[0x4];
+    /* 0x1C */ s32 mRot[3];        // rotation params (mAnm2Translate raw copy)
+    /* 0x28 */ s32 mRotScaled[3];  // rotation * frame-rate divisor
+    /* 0x34 */ s32 mScale[3];      // mAnm2Scale raw copy
+    /* 0x40 */ s32 mScale2[3];     // mAnm3Scale raw copy
+    /* 0x4C */ s32 mFloat4C;       // mFloat12C raw copy
+    /* 0x50 */ f32 mPosX;
+    /* 0x54 */ u8 mPad54[0x4];
+    /* 0x58 */ u8 mPriority;
+    /* 0x59 */ u8 mField59;
+    /* 0x5A */ u8 mPad5A[0x2];
+    /* 0x5C */ s32 mMode;
+};
+
+// Minimal view of the layout model object created by func_80489A60
+// (only the fields touched by this TU are declared).
+struct CLibLayoutModel {
+    /* 0x00 */ void* vtable;
+    /* 0x04 */ u8 mPad4[0x7A4];
+    /* 0x7A8 */ u32 mFlags;
+};
+
+// Param block passed to the CREvtEffect constructor (r4).
+struct CREvtParam {
+    /* 0x00 */ u8 mPad0[0x0C];
+    /* 0x0C */ u32 mLangInfo;   // language byte in bits 24..31
+    /* 0x10 */ u32 mBdatId;
+};
+
+// Bdat animation entry (mBdatEntry).
+struct CBdatEntry {
+    /* 0x00 */ u8 mPad0[0x04];
+    /* 0x04 */ s32 mPriority;
+    /* 0x08 */ void* mNameData;
+};
+
 struct CREvtEffect {
     // cf::CREvtObj base at offset 0x00
     /* 0x00 */ void* vtable;
@@ -29,7 +77,7 @@ struct CREvtEffect {
 
     // Effect-specific fields
     /* 0x18 */ void* mPtr18;
-    /* 0x1C */ u32 mParam1C;
+    /* 0x1C */ CREvtParam* mParam1C;
     /* 0x20 */ void* mModel;          // CLibLayoutModel*
     /* 0x24 */ void* mMaterial;
     /* 0x28 */ void* mAnim28;
@@ -108,15 +156,15 @@ extern "C" void* func_80495EAC(void* global, void* bdat, int val);
 extern "C" f32 func_80496288(void* global);
 
 // Device
-extern "C" u8 getLanguage__9CDeviceSCFv();
+extern "C" int getLanguage__9CDeviceSCFv();
 extern "C" bool getStaticFileData__14CLibStaticDataFPCcP16StaticDataHandlePUl(
     const char* name, void* handle, u32* outSize);
 
 // Globals (retail linker symbols)
 extern "C" {
     extern void* lbl_eu_805322D8[];
-    extern u8 lbl_eu_8065FC18;
-    extern u8 lbl_eu_80663E14;
+    extern u32 lbl_eu_8065FC18[];    // effect-singleton manager object (array forces @ha/@l)
+    extern void* lbl_eu_80663E14;    // scene / alloc handle (4-byte pointer, sda21)
     extern const char* lbl_eu_80662470;  // "effTgt"
     extern const char* lbl_eu_80662474;  // "effAtr"
     extern const char* lbl_eu_80662478;  // "eff"

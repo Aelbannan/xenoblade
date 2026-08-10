@@ -68,8 +68,8 @@ typedef struct MPVC_dec {
  * pointers for the 6 MPEG macroblock types.
  */
 int mpvcdec_NintraBlocksInt1(void* self) {
-    MPVC_dec *dec = (MPVC_dec*)self;
     MPVC_Blk *blk = (MPVC_Blk*)((u8*)self + 0x9c4);
+    MPVC_dec *dec = (MPVC_dec*)self;
     u32 results[6];
     s32 r, i;
 

@@ -17,10 +17,6 @@
 
 #include <types.h>
 
-// Opaque parent representation (14 bytes for cf::CREvtObj)
-// Full definition TBD during parent TU decomp.
-#define CREVT_CAMERA_PARENT_SIZE 0x14
-
 // Opaque event-file descriptor (mField88 target; +0x04 is a flag word)
 struct CREvtCamFile {
     u32 field_00;
@@ -34,10 +30,87 @@ struct CREvtCamTaskEvent {
     u32 field_1B8;
 };
 
+// Camera manager returned by cf::CfGameManager::func_800821F8(). Slot names
+// are vtable byte offsets. MWCC puts the Nth declared virtual at vtable
+// offset (N+1)*4 (two leading slots), so declaring vfunc_0x08 first and
+// counting up makes the names match the real offsets.
+class CREvtCamManager {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14(const f32* pos);  // +0x14: set camera position
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C(f32 value);  // +0x3C: set float (fov)
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual f32 vfunc_0x58();            // +0x58: get float
+    u8 field_0x4[0x0C - 0x4];
+    u32 field_0x0C;                      // +0x0C: player object pointer
+};
+
+// Scene model object stored in CREvtCamera::mField1C (created by
+// func_80495E8C). Slot names are vtable byte offsets (see CREvtCamManager).
+class CREvtSceneModel {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual u32 vfunc_0x3C(const char* name);  // +0x3C: get animation handle by name
+    u8 field_0x4[0x7A8 - 0x4];
+    u32 field_0x7A8;
+};
+
+// Camera object returned by func_80496264 (camera state block).
+struct CREvtCamObj {
+    u8 field_0x0[0x1E0];
+    f32 field_0x1E0;
+    u8 field_0x1E4[0x1EC - 0x1E4];
+    f32 field_0x1EC;
+    f32 field_0x1F0;
+};
+
+// Player object reachable via CREvtCamManager::field_0x0C (CfObjectMove).
+struct CREvtPlayerObj {
+    u8 field_0x0[0x1EC];
+    f32 field_0x1EC;
+    f32 field_0x1F0;
+};
+
+namespace nw4r {
+namespace g3d {
+struct ChrAnmResult;
+}
+} // namespace nw4r::g3d
+
 class CREvtCamera {
 public:
     // Inherited from cf::CREvtObj (size 0x14)
-    u8 unk00[CREVT_CAMERA_PARENT_SIZE];  // +0x00 to +0x13
+    /* 0x00 */ u8* vtable;
+    /* 0x04 */ u32 field_04;
+    /* 0x08 */ u32 ptmf[3];
 
     // +0x14: unknown (always 0)
     u32 mField14;
@@ -108,3 +181,21 @@ public:
     int func_801809A8() const { return 1; }
     u32 func_801809B0() const { return mField1C; }
 };
+
+// Retail data symbols referenced by this TU (imports; global-scope externs are
+// unmangled by MWCC, so no extern "C" is needed here).
+extern unsigned long lbl_eu_806642A8;  // CREvtCamera* singleton
+// +0x00: "CamEvent" string pool (offsets used as sub-string names)
+extern const char lbl_eu_805036D8[];
+extern u32 lbl_eu_80663E14;            // global scene/object manager ptr
+// +0x00: "Cam2", +0x04: "Cam" animation names
+// (const char* string pointers)
+extern const char* lbl_eu_80662448;
+extern const char* lbl_eu_8066244C;
+// CREvtCamera vtable (0x80531CE8)
+extern u8 lbl_eu_80531CE8[];
+// Default floats (camera fov / player fields)
+extern f32 lbl_eu_806678A4;
+extern f32 lbl_eu_806678A8;
+extern f32 lbl_eu_806678AC;
+extern f32 lbl_eu_806678B0;

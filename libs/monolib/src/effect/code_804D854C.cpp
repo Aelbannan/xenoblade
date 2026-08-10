@@ -75,7 +75,7 @@ void func_804D8AA4(int p1, int UNUSED_p2) {
 
 // func_804D8C18: release the draw-context texture object and clear the owner.
 void func_804D8C18(CDrawCtx* self) {
-    if (0 != self->field_0x04) {
+    if (self->field_0x04 != 0) {
         func_804902D8(self->field_0x00->field_0x6c);
         self->field_0x04 = 0;
     }
@@ -122,9 +122,9 @@ extern "C" void func_804D8C68(CDrawCtx* draw, GXTexMapID p2, const ml::CVec2* p3
     s32 w = rect.mSize.x;
     s32 h = rect.mSize.y;
     if (p3 != 0) {
-        w = (s32)((f32)rect.mSize.x * p3->x);
+        w = (s32)(p3->x * (f32)rect.mSize.x);
         if (w & 1) w = (s16)(w + 1);
-        h = (s32)((f32)rect.mSize.y * p3->y);
+        h = (s32)(p3->y * (f32)rect.mSize.y);
         if (h & 1) h = (s16)(h + 1);
     }
     GXLoadTexObj((GXTexObj*)draw->field_0x04, p2);

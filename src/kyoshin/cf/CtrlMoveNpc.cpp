@@ -195,7 +195,7 @@ void func_80089694(CCtrlMoveNpc* self, const ml::CVec3* a, f32 f);
 void func_8008962C(CCtrlMoveNpc* self);
 void func_80093618(CNpcBaseData* data, f32 f);
 int  func_800A5038(const ml::CVec3* sub, const ml::CVec3* v, f32 f1, f32 f2);
-void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt);
+void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
 
 // cf::CfGameManager::func_80082354 is declared non-static void in
 // CfGameManager.hpp, but the retail call site passes no instance and uses the
@@ -269,28 +269,32 @@ int func_8019F8E0(CCtrlMoveNpc* self) {
 // ---------------------------------------------------------------------------
 namespace cf {
 void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 paramB) {
-    memcpy(&self->mField58, vec, sizeof(ml::CVec3));
     self->mField64 = 4;
+    self->mField58 = *vec;
     self->mField68 = scale;
     self->mField6C = paramB;
 
-    CNpcBaseData* data = (CNpcBaseData*)self->mBaseData;
-    self->mField74 = *(data->field_0x28->getF78());
+    // The base data pointer is re-loaded for each access in the retail.
+    self->mField74 =
+        *(((CNpcBaseData*)self->mBaseData)->field_0x28->getF78());
     self->mField78 = lbl_eu_80663D90;
     self->mField70 = lbl_eu_80667C58;
-    data->field_0x14 = lbl_eu_80667C5C;
+    ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
 
-    ml::CVec3* pos = data->field_0x28->getPos();
-    float dx = vec->x - pos->x;
-    float dy = vec->y - pos->y;
-    float dz = vec->z - pos->z;
-    float len2 = dx * dx + dz * dz;
+    // PS vector subtraction: delta = target - current position.
+    ml::CVec3* pos = ((CNpcBaseData*)self->mBaseData)->field_0x28->getPos();
+    ml::CVec3 diff = *vec - *pos;
+    float len2 = diff.x * diff.x + diff.z * diff.z;
 
+    if (len2 < lbl_eu_80667C5C) {
+        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    // Normalise the horizontal distance, guarding the epsilon case.
     float sq;
     if (len2 > lbl_eu_80667C5C) {
         sq = len2 * FrSqrt__Q24nw4r4mathFf(len2);
     } else {
-        sq = 0.0f;
+        sq = lbl_eu_80667C5C;
     }
 
     float t = lbl_eu_80667C64 * sq / scale + lbl_eu_80667C60;
@@ -319,36 +323,39 @@ namespace cf {
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
     void* bdat = (void*)lbl_eu_806640B4;
-    u8 b0 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_80503D30[0], idx);
+    // Column values live in address-taken slots (full-word stores after each
+    // call); the u8/u16 casts at each use site lower to lbz/lhz (retail
+    // shape, cf. CfGimmickSaveOff ctor).
+    u32 v0 = getBdatStringColumnValue(bdat, lbl_eu_80503D30, idx);
     u32 f = lbl_eu_80663E24;
-    if ((f & (0x02000000u | 0x400u)) && b0 != 0) {
+    if ((f & (0x02000000u | 0x400u)) && *(u8*)&v0 != 0) {
         return 0;
     }
 
     u16 range0 = (u16)cf::CfGameManager::func_800822F4();
-    u16 val20 = (u16)getBdatStringColumnValue(bdat, p4, idx);
-    u16 val1c = (u16)getBdatStringColumnValue(bdat, p5, idx);
-    u16 val18 = (u16)getBdatStringColumnValue(bdat, p6, idx);
-    u16 val14 = (u16)getBdatStringColumnValue(bdat, p7, idx);
+    u32 v20 = getBdatStringColumnValue(bdat, p4, idx);
+    u32 v1c = getBdatStringColumnValue(bdat, p5, idx);
+    u32 v18 = getBdatStringColumnValue(bdat, p6, idx);
+    u32 v14 = getBdatStringColumnValue(bdat, p7, idx);
     int flag1 = 1;
-    if (val1c != 0 && val20 <= range0 && range0 <= val1c) flag1 = 0;
-    if (val14 != 0 && val18 <= range0 && range0 <= val14) flag1 = 0;
+    if (*(u16*)&v1c != 0 && (u32)*(u16*)&v20 <= (u32)range0 &&
+        (u32)range0 <= (u32)*(u16*)&v1c) flag1 = 0;
+    if (*(u16*)&v14 != 0 && (u32)*(u16*)&v18 <= (u32)range0 &&
+        (u32)range0 <= (u32)*(u16*)&v14) flag1 = 0;
 
-    u16 val10 = (u16)getBdatStringColumnValue(bdat, p1, idx);
+    u32 v10 = getBdatStringColumnValue(bdat, p1, idx);
     int flag2 = 1;
-    if (val10 != 0) {
+    if (*(u16*)&v10 != 0) {
         u16 range1 = func_80082354__Q22cf13CfGameManagerFv();
-        u16 val0c = (u16)getBdatStringColumnValue(bdat, p2, idx);
-        u16 val08 = (u16)getBdatStringColumnValue(bdat, p3, idx);
-        if ((u8)val0c <= range1 && range1 <= (u8)val08) flag2 = 0;
+        u32 v0c = getBdatStringColumnValue(bdat, p2, idx);
+        u32 v08 = getBdatStringColumnValue(bdat, p3, idx);
+        if ((u32)*(u8*)&v0c <= (u32)range1 && (u32)range1 <= (u32)*(u8*)&v08)
+            flag2 = 0;
 
-        if (val1c != 0) {
+        if (*(u16*)&v1c != 0 || *(u16*)&v14 != 0) {
             return (flag1 != 0 || flag2 != 0);
         }
-        if (val14 == 0) {
-            return flag2;
-        }
-        return (flag1 != 0 || flag2 != 0);
+        return flag2;
     }
     return flag1;
 }
@@ -366,17 +373,20 @@ void func_8019FD2C() {
 
     s32 base = (s32)func_8003B41C(bdat);
     s32 end = base + (s32)func_8003B1EC(bdat);
-    const char* str = lbl_eu_80503D30;
     u32* bitmap = lbl_eu_805757E0;
+    const char* str = lbl_eu_80503D30;
 
     for (s32 idx = base; idx < end; idx++) {
-        u8 v = (u8)getBdatStringColumnValue(bdat, &str[0x38], idx);
-        int r = func_8019FB54(idx, &str[0x6], &str[0xe], &str[0x17],
-                              &str[0x20], &str[0x26], &str[0x2c], &str[0x32]);
-        if (r != 0) {
+        // Byte-extract the row value: store the full call result to a stack
+        // slot (address-taken local) and read the low byte back with lbz,
+        // matching the retail shape (see CfGimmickSaveOff ctor pattern).
+        u32 vfull = getBdatStringColumnValue(bdat, &str[0x38], idx);
+        u8 v = *(u8*)&vfull;
+        if (func_8019FB54(idx, &str[0x6], &str[0xe], &str[0x17],
+                          &str[0x20], &str[0x26], &str[0x2c], &str[0x32]) != 0) {
             s32 word = idx >> 5;
-            u32 bit = 1u << (idx & 31);
             u32 w = bitmap[word];
+            u32 bit = 1u << (idx & 31);
             if (w & bit) {
                 bitmap[word] = w & ~bit;
                 func_80462D04__8CTaskLODFv(v);
@@ -384,8 +394,8 @@ void func_8019FD2C() {
             }
         } else {
             s32 word = idx >> 5;
-            u32 bit = 1u << (idx & 31);
             u32 w = bitmap[word];
+            u32 bit = 1u << (idx & 31);
             if (!(w & bit)) {
                 bitmap[word] = w | bit;
                 func_80462D5C__8CTaskLODFv(v);
@@ -412,46 +422,48 @@ void func_8019F93C(CCtrlMoveNpc* self) {
     // PS vector subtraction: delta = target - current position.
     ml::CVec3 diff = self->mField58 - *pos;
     ml::CVec3 v = diff;
-    ml::CVec3 v2;
 
     // Horizontal (XZ) distance squared to the target.
     const f32 len2 = v.x * v.x + v.z * v.z;
 
-    f32 speed;
-    if (len2 <= lbl_eu_80667C6C) {
-        goto idle;
-    }
-
-    speed = self->mField70;
-    if (len2 < lbl_eu_80667C70) {
-        if (len2 < lbl_eu_80667C5C) {
-            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    if (len2 > lbl_eu_80667C6C) {
+        ml::CVec3 v2;
+        f32 speed = self->mField70;
+        if (len2 < lbl_eu_80667C70) {
+            if (len2 < lbl_eu_80667C5C) {
+                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+            }
+            // Norm the horizontal distance, guarding the epsilon case.
+            f32 len;
+            if (len2 > lbl_eu_80667C5C) {
+                len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+            } else {
+                len = lbl_eu_80667C5C;
+            }
+            speed = (self->mField70 - lbl_eu_80667C58) * (len - lbl_eu_80667C60)
+                    * lbl_eu_80667C74 + lbl_eu_80667C58;
         }
-        // Norm the horizontal distance, guarding against the epsilon case.
-        f32 len;
-        if (len2 > lbl_eu_80667C5C) {
-            len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
-        } else {
-            len = lbl_eu_80667C5C;
-        }
-        speed = (self->mField70 - lbl_eu_80667C58) * (len - lbl_eu_80667C60)
-                * lbl_eu_80667C74 + lbl_eu_80667C58;
-    }
 
-    v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
-    func_80088974(self, &v2, &self->mField58, 1, 0);
-    func_80089694(self, &v2, speed);
-    if (func_800A5038(pos, &self->mField58, speed, lbl_eu_80667C60) == 0) {
-        return;
+        v2.set(lbl_eu_80667C5C, lbl_eu_80667C5C, lbl_eu_80667C5C);
+        func_80088974(self, &v2, &self->mField58, 1, 0);
+        func_80089694(self, &v2, speed);
+        if (func_800A5038(pos, &self->mField58, speed, lbl_eu_80667C60) == 0) {
+            return;
+        }
     }
 
 idle:
     ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
     if (self->mField6C < lbl_eu_80667C78) {
-        func_80093618((CNpcBaseData*)self->mBaseData, self->mField6C * lbl_eu_8066A210);
+        func_80093618((CNpcBaseData*)self->mBaseData,
+                      self->mField6C * lbl_eu_8066A210);
+        // Retail duplicates this tail into both arms of the if/else.
+        self->mStateFunc = __ptmf_null;
+        func_8008962C(self);
+    } else {
+        self->mStateFunc = __ptmf_null;
+        func_8008962C(self);
     }
-    self->mStateFunc = __ptmf_null;
-    func_8008962C(self);
 }
 }
 

@@ -17,7 +17,12 @@ extern "C" void func_801D3878(CSortMenu*);
 extern "C" void func_801D390C(CSortMenu*);
 extern "C" void func_801D3958(CSortMenu*);
 extern "C" void func_801D39EC(CSortMenu*);
-extern "C" void func_801D3A3C(CSortMenu*);
+// noinline: retail calls func_801D3A3C via bl from every caller; without it MWCC
+// -inline auto inlines the loop body into each caller and bloats the TU.
+extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu*);
+
+// Retail-named SDA2 constants for func_801D353C's pane resize.
+extern const float lbl_eu_80667FF0;  // 16.0f row height (SDA21)
 
 // ============================================================================
 // CSortMenu constructor
@@ -178,16 +183,17 @@ extern "C" void func_801D3330(CSortMenu* _this) {
     _this->field_0x2B = 0;
     _this->field_0x28 = 1;
 
-    nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* paneTxt1 = rootPane->FindPaneByName(lbl_eu_8050624C + 0x15, true);
-    nw4r::lyt::Pane* paneTxt2 = rootPane->FindPaneByName(lbl_eu_8050624C + 0x1d, true);
+    // Each GetRootPane() is a fresh load (retail reloads mpLayout per use).
+    nw4r::lyt::Pane* paneTxt1 =
+        _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x15, true);
+    f32 textBuf[3];
+    func_80137924(textBuf, paneTxt1,
+                  _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x1d, true),
+                  _this->mpLayout->GetRootPane());
 
-    u8 textBuf[0x28];
-    func_80137924(textBuf, paneTxt1, paneTxt2, _this->mpLayout->GetRootPane());
-
-    func_801F3670((u8*)_this + 0x2C, textBuf);
-    func_801F36BC((u8*)_this + 0x2C, 5, _this->mCount);
-    func_801F367C((u8*)_this + 0x2C);
+    func_801F3670(&_this->mScrollBar, &textBuf);
+    func_801F36BC(&_this->mScrollBar, 5, _this->mCount);
+    func_801F367C(&_this->mScrollBar);
 
     func_801D3A3C(_this);
 }
@@ -248,16 +254,18 @@ extern "C" void func_801D3518(CSortMenu* _this, int value) {
 // func_801D353C: Set page
 // ============================================================================
 extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
-    nw4r::lyt::Pane* rootPane = _this->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane = rootPane->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
+    nw4r::lyt::Pane* pane =
+        _this->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_8050624C + 0x2f, true);
 
-    u8 count = _this->mCount;
-    int itemsPerPage = (count < 5) ? count : 5;
+    // Read the pane size region up front (retail loads width/height before
+    // the count comparison), then resize height and write the region back.
+    PaneSizeRegion size = *(PaneSizeRegion*)pane;
 
-    PaneSizeRegion* size = (PaneSizeRegion*)pane;
-    f32 width = size->width;
-    size->width = width;
-    size->height = 16.0f * (f32)itemsPerPage;
+    u32 count = _this->mCount;
+    u32 itemsPerPage = (count < 5) ? count : 5;
+
+    size.height = lbl_eu_80667FF0 * (f32)itemsPerPage;
+    *(PaneSizeRegion*)pane = size;
 
     _this->mPage = page;
     _this->mSubPage = 0;
@@ -461,7 +469,7 @@ extern "C" void func_801D39EC(CSortMenu* _this) {
 // ============================================================================
 // func_801D3A3C: Update pane text for all 5 slots
 // ============================================================================
-extern "C" void func_801D3A3C(CSortMenu* _this) {
+extern "C" __declspec(noinline) void func_801D3A3C(CSortMenu* _this) {
     void** strTable = (void**)lbl_eu_805349B8;
     char* resBase = (char*)lbl_eu_8050624C;
     for (int i = 0; i < 5; i++) {

@@ -7,6 +7,7 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 
 #include "kyoshin/menu/CMenuBattleEnd.hpp"
 
@@ -23,13 +24,24 @@ extern "C" CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* self, CScn* scen
 
     self->mVtab = (u32)lbl_eu_8052D238;
 
-    u32* ptmf = __ptmf_null;
-    self->mPtMf3C[0] = ptmf[0];
-    self->mPtMf3C[1] = ptmf[1];
-    self->mPtMf3C[2] = ptmf[2];
-    self->mPtMf48[0] = ptmf[0];
-    self->mPtMf48[1] = ptmf[1];
-    self->mPtMf48[2] = ptmf[2];
+    // Post-increment pointer form: MWCC folds the base @l into a single
+    // `lwzu` for the first load and keeps the base register for the rest;
+    // the second triple re-reads the same elements through the folded
+    // negative offsets (retail re-loads ptmf[0..2] after the first stores).
+    const u32* ptmf = __ptmf_null;
+    u32 p0, p1, p2, q0, q1, q2;
+    p0 = *ptmf++;
+    p1 = *ptmf++;
+    self->mPtMf3C[1] = p1;
+    self->mPtMf3C[0] = p0;
+    p2 = *ptmf++;
+    self->mPtMf3C[2] = p2;
+    q0 = ptmf[-3];
+    q1 = ptmf[-2];
+    self->mPtMf48[1] = q1;
+    self->mPtMf48[0] = q0;
+    q2 = ptmf[-1];
+    self->mPtMf48[2] = q2;
 
     self->mLayout = 0;
     self->mField58 = 0;
@@ -40,7 +52,10 @@ extern "C" CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* self, CScn* scen
     self->mField66 = 0;
     self->mActive = 1;
     self->mField68 = 0;
-    // Dispatch handles for the secondary (non-inherited) virtual interfaces.
+    // Retail re-stores +0x10 with the dispatch vtable cluster base after the
+    // class vtable (same double-store scheme as CMenuQstCnt); +0x24/+0xac are
+    // the IWorkEvent / IScnRender dispatch slots inside that cluster.
+    self->mVtab = (u32)lbl_eu_80537AB0;
     self->mWorkEventVt = (u32)lbl_eu_80537AB0 + 0x24;
     self->mScnRenderVt = (u32)lbl_eu_80537AB0 + 0xac;
     self->mScene = scene;
@@ -50,14 +65,27 @@ extern "C" CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* self, CScn* scen
     self->mAnim88 = 0;
     self->mAnim8C = 0;
     self->mAnim90 = 0;
-    for (int i = 0; i < 4; i++) {
-        self->mEntries[i].flag = 0;
-        self->mEntries[i].param = 0;
+    self->mEntries[0].flag = 0;
+    self->mEntries[0].param = 0;
+    // Pointer loop over entries[1..3]: retail computes the trip count from the
+    // end/start addresses and guards with a redundant cmplw/bge pair.
+    for (UnkBattleEntry* p = &self->mEntries[1]; p < &self->mEntries[4]; p++) {
+        p->flag = 0;
+        p->param = 0;
     }
 
     self->mState = 1;
     self->mMode = mode;
     self->mParam = param;
+    // Retail re-clears the whole queue unrolled after setting the state fields.
+    self->mEntries[0].flag = 0;
+    self->mEntries[0].param = 0;
+    self->mEntries[1].flag = 0;
+    self->mEntries[1].param = 0;
+    self->mEntries[2].flag = 0;
+    self->mEntries[2].param = 0;
+    self->mEntries[3].flag = 0;
+    self->mEntries[3].param = 0;
     return self;
 }
 
@@ -141,13 +169,14 @@ void CMenuBattleEnd::Init() {
 
 void CMenuBattleEnd::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    removeRenderCB__4CScnFP10IScnRender(
-        mScene, reinterpret_cast<IScnRender*>(this ? &mScnRenderVt : (u32*)this));
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        cb = reinterpret_cast<IScnRender*>(&mScnRenderVt);
+    }
+    removeRenderCB__4CScnFP10IScnRender(mScene, cb);
     if (mLayout) {
-        if (mLayout) {
-            void* vtab = *(void**)mLayout;
-            ((void (*)(void*, int))((void**)vtab)[0x8 / 4])(mLayout, 1);
-        }
+        // Deleting-dtor dispatch: virtual ~Layout at vtable slot +8 (flag 1).
+        delete mLayout;
         mLayout = 0;
     }
     lbl_eu_80664898 = 0;
@@ -155,23 +184,23 @@ void CMenuBattleEnd::Term() {
 }
 
 void CMenuBattleEnd::Move() {
-    getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv()) return;
-    if (lbl_eu_80663E28 & (1u << 21)) return;
+    // Single short-circuit OR so MWCC emits: func test -> bne exit;
+    // bit test -> beq continue / b exit (CSystemWindow::Move shape).
+    if (CTaskGame::getInstance()->func_800426F0() ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
     if (!func_8013BE50()) return;
     if (mState == 1) {
         func_8026F95C(this);
     }
-    {
-        void* vtab = *(void**)mLayout;
-        ((void (*)(void*, int))((void**)vtab)[0x38 / 4])(mLayout, 0);
-    }
+    mLayout->Animate(0);
 }
 
 void CMenuBattleEnd::cbRenderBefore() {
-    getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv()) return;
-    if (lbl_eu_80663E28 & (1u << 21)) return;
+    // Same single-OR guard shape as Move / CSystemWindow::cbRenderBefore.
+    if (CTaskGame::getInstance()->func_800426F0() ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
     if (!func_8013BE50()) return;
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
@@ -195,10 +224,13 @@ extern "C" CMenuBattleEnd* func_8026F8B0(CProcess* parent, CScn* scene, u8 mode,
         func_8026FB0C(lbl_eu_80664898, mode, param);
         return 0;
     }
-    u32 mem = getWorkMem__17CWorkThreadSystemFv();
-    CMenuBattleEnd* obj = (CMenuBattleEnd*)mtl::MemManager::allocate(0xbc, mem);
+    CMenuBattleEnd* obj = (CMenuBattleEnd*)mtl::MemManager::allocate(
+        0xbc, CWorkThreadSystem::getWorkMem());
     if (obj != 0) {
-        __ct__CMenuBattleEnd(obj, scene, mode, param);
+        // Reassign from the ctor return so obj stays in volatile r3 (retail
+        // never spills it to a callee-saved register; a discarded ctor result
+        // would force a 5th saved register and stmw prologue).
+        obj = __ct__CMenuBattleEnd(obj, scene, mode, param);
     }
     lbl_eu_80664898 = obj;
     Regist__8CProcessFP8CProcessb(obj, parent, 0);
@@ -218,20 +250,21 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
     obj->mAnim90 = 0;
     obj->mState = 1;
 
-    bool queued = false;
-    for (int i = 0; i < 4; i++) {
+    // Retail walks the queue with a u8 counter (clrlslwi 24,3 index math);
+    // applying an entry returns immediately, otherwise the tail clears state.
+    for (u8 i = 0; i < 4; i++) {
         if (obj->mEntries[i].flag == 0) continue;
 
         switch (obj->mEntries[i].flag) {
         case 1:
             obj->mAnim90 = obj->mAnim88;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x68], (u8)obj->mEntries[i].param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x74], (u8)obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x68], obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x74], obj->mEntries[i].param);
             break;
         case 2:
             obj->mAnim90 = obj->mAnim8C;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x80], (u8)obj->mEntries[i].param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x8c], (u8)obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x80], obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x8c], obj->mEntries[i].param);
             break;
         default:
             break;
@@ -244,15 +277,12 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
             obj->mEntries[i].flag = 0;
             obj->mEntries[i].param = 0;
             func_80138078(0x2c);
-            queued = true;
-            break;
+            return;
         }
     }
 
-    if (!queued) {
-        obj->mField64 = 1;
-        obj->mState = 0;
-    }
+    obj->mField64 = 1;
+    obj->mState = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -271,39 +301,25 @@ extern "C" void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param) {
     packed[3].param = 0;
     u8 count = 0;
 
-    if (obj->mEntries[0].flag != 0) {
-        UnkBattleEntry& dst = packed[count];
-        dst.flag = obj->mEntries[0].flag;
-        dst.param = obj->mEntries[0].param;
-        count++;
-    }
-    if (obj->mEntries[1].flag != 0) {
-        UnkBattleEntry& dst = packed[count];
-        dst.flag = obj->mEntries[1].flag;
-        dst.param = obj->mEntries[1].param;
-        count++;
-    }
-    if (obj->mEntries[2].flag != 0) {
-        UnkBattleEntry& dst = packed[count];
-        dst.flag = obj->mEntries[2].flag;
-        dst.param = obj->mEntries[2].param;
-        count++;
-    }
-    if (obj->mEntries[3].flag != 0) {
-        UnkBattleEntry& dst = packed[count];
-        dst.flag = obj->mEntries[3].flag;
-        dst.param = obj->mEntries[3].param;
-        count++;
+    // Retail is this 4-iteration loop unrolled by MWCC: entry[0]'s copy
+    // constant-folds to `packed[0]` / `count = 1` (no clrlslwi index math),
+    // while entries[1..3] use the general computed-index form.
+    for (int i = 0; i < 4; i++) {
+        if (obj->mEntries[i].flag != 0) {
+            packed[count].flag = obj->mEntries[i].flag;
+            packed[count].param = obj->mEntries[i].param;
+            count++;
+        }
     }
 
     if (count < 4) {
         for (u32 i = 0; i < 4; i++) {
-            if (i < count) {
-                obj->mEntries[i].flag = packed[i].flag;
-                obj->mEntries[i].param = packed[i].param;
-            } else {
+            if (i >= count) {
                 obj->mEntries[i].flag = 0;
                 obj->mEntries[i].param = 0;
+            } else {
+                obj->mEntries[i].flag = packed[i].flag;
+                obj->mEntries[i].param = packed[i].param;
             }
         }
         UnkBattleEntry& ap = obj->mEntries[count];

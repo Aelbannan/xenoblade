@@ -3,7 +3,7 @@
 
 extern "C" {
     extern char* lbl_eu_80662C98;       // pointer to default voice path string
-    extern char  lbl_eu_805106D4[];     // empty default name ("")
+    extern const char lbl_eu_805106D4[];  // empty default name ("")
     extern void* lbl_eu_80663E14;       // manager singleton for character lookup
 
     extern float lbl_eu_80668C58;
@@ -18,7 +18,7 @@ extern "C" {
     void func_8018986C(const char*, float);
     void func_80189C40(s32, void*, void*, float, float, float);
     void* func_800BF2CC(void*);
-    u16  func_801BFAE4(u16);
+    s32  func_801BFAE4(u16);
     void func_801BFAE8(u16, void*);
     void func_801BFED0(void*, u16, s32);
 
@@ -37,7 +37,7 @@ extern "C" {
 extern "C" CCharVoice* __ct__CCharVoice(CCharVoice* self)
 {
     self->mVtable         = lbl_eu_805398B0;
-    self->mOwner          = (void*)0;
+    self->mOwner          = 0;
     self->mVoiceId        = -1;
     self->mPriorityCheck  = -1;
     self->mSoundHandle    = -1;
@@ -86,8 +86,6 @@ void CCharVoice::func_802A0B8C(void* owner)
     }
 }
 
-typedef void* (*GetPosFn)(void*);
-
 // func_802A0E08 (0x802A353C)
 void CCharVoice::func_802A0E08()
 {
@@ -106,22 +104,23 @@ void CCharVoice::func_802A0E08()
 
         void* ch = func_80496264(lbl_eu_80663E14, -1);
 
-        // Model position fetch: getModel(0x128) is called twice by retail
+        // Model position fetch: getModelPos is called twice by retail
         // (once for the null test, once in the body) -- mirror that.
-        float pos[3];
-        if (((GetPosFn*)*(void**)mOwner)[0x4A](mOwner) != nullptr) {
-            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x4A](mOwner));
-            pos[0] = p[0x03];
-            pos[1] = p[0x07];
-            pos[2] = p[0x0B];
+        CVoicePos pos;
+        if (((CVoiceOwnerIntf*)mOwner)->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = ((CVoiceOwnerIntf*)mOwner)->getModelPos();
+            float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
+            z = mp->z;       // retail loads z, y, x but stores x, y, z
+            y = mp->y;
+            x = mp->x;
+            pos.f[0] = x;
+            pos.f[1] = y;
+            pos.f[2] = z;
         } else {
-            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x2B](mOwner));
-            pos[0] = p[0];
-            pos[1] = p[1];
-            pos[2] = p[2];
+            pos = *((CVoiceOwnerIntf*)mOwner)->getPosition();
         }
 
-        func_80189C40(mSoundHandle, pos, ch,
+        func_80189C40(mSoundHandle, &pos, ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
@@ -133,20 +132,21 @@ void CCharVoice::func_802A0E08()
             return;
         }
 
-        float pos[3];
-        if (((GetPosFn*)*(void**)mOwner)[0x4A](mOwner) != nullptr) {
-            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x4A](mOwner));
-            pos[0] = p[0x03];
-            pos[1] = p[0x07];
-            pos[2] = p[0x0B];
+        CVoicePos pos;
+        if (((CVoiceOwnerIntf*)mOwner)->getModelPos() != nullptr) {
+            CVoiceModelPos* mp = ((CVoiceOwnerIntf*)mOwner)->getModelPos();
+            float x, y, z;   // decl order fixes FPR homes (x=f0, y=f1, z=f2)
+            z = mp->z;       // retail loads z, y, x but stores x, y, z
+            y = mp->y;
+            x = mp->x;
+            pos.f[0] = x;
+            pos.f[1] = y;
+            pos.f[2] = z;
         } else {
-            float* p = (float*)(((GetPosFn*)*(void**)mOwner)[0x2B](mOwner));
-            pos[0] = p[0];
-            pos[1] = p[1];
-            pos[2] = p[2];
+            pos = *((CVoiceOwnerIntf*)mOwner)->getPosition();
         }
 
-        func_801BFAE8(mBattleSndHandle, pos);
+        func_801BFAE8(mBattleSndHandle, &pos);
     }
 }
 
@@ -164,9 +164,10 @@ void CCharVoice::func_802A0FE8()
             mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        if (mBattleSndHandle != 0xFFFF) {
+        u16 bh = mBattleSndHandle;
+        if (bh != 0xFFFF) {
             void* obj = func_800BF2CC(mOwner);
-            func_801BFED0(obj, mBattleSndHandle, 0);
+            func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;
         }
@@ -217,15 +218,21 @@ bool CCharVoice::func_802A109C(float volume,
         // hoists the func_801897A0 volume arg load to the top of the block.
         float sndLevel = lbl_eu_80668C64;
         int v100 = voiceId / 100;
+        int rem  = voiceId % 100;
         int a    = (u32)v100 / 10;                       // thousands
-        mFileName[mField34 + 0] = '0' + a;
-        int rem  = voiceId % 100;                        // = voiceId % 100
-        int b    = v100 - a * 10;                        // hundreds
-        mFileName[mField34 + 1] = '0' + b;
+        int b    = (u32)v100 % 10;                       // hundreds
         int c    = (u32)rem / 10;                        // tens
-        mFileName[mField34 + 3] = '0' + c;
-        int d    = rem - c * 10;                         // ones
-        mFileName[mField34 + 4] = '0' + d;
+        int d    = (u32)rem % 10;                        // ones
+        mFileName[mField34 + 0] = '0' + a;
+        // Stores b/c/d use integer-domain addressing: adding the loaded
+        // mField34 value to `this` as u32 (not pointer arithmetic) makes
+        // MWCC emit `add rD, r0, r30` (loaded value in rA) exactly like
+        // retail; the pointer+subscript form would emit `add rD, r30, r0`.
+        // The +0x11/+0x13/+0x14 constant is folded into the stb displacement
+        // (= mFileName offset 0x10 + index {1,3,4}).
+        *((char*)((u32)mField34 + (u32)this) + 0x11) = '0' + b;
+        *((char*)((u32)mField34 + (u32)this) + 0x13) = '0' + c;
+        *((char*)((u32)mField34 + (u32)this) + 0x14) = '0' + d;
 
         s32 h = func_801897A0(mFileName, sndLevel, 1);
         mSoundHandle = h;
@@ -270,9 +277,10 @@ void CCharVoice::func_802A1304()
             mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        if (mBattleSndHandle != 0xFFFF) {
+        u16 bh = mBattleSndHandle;
+        if (bh != 0xFFFF) {
             void* obj = func_800BF2CC(mOwner);
-            func_801BFED0(obj, mBattleSndHandle, 0);
+            func_801BFED0(obj, bh, 0);
             mVoiceId          = -1;
             mBattleSndHandle  = 0xFFFF;
         }

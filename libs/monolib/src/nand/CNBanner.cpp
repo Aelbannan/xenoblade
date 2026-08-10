@@ -53,6 +53,20 @@ struct CEventFile {
     const char* field_C;  // 0xC  file path / name string
 };
 
+// Mirror of the NANDBanner block layout as consumed by func_804F53DC. The
+// SDK header declares iconTexture[0x1200][8]; the actual per-icon stride is
+// 0x1200 (8 icons fill the 0xF0A0 block), so this TU uses its own struct.
+struct CNandBannerBlock {
+    u32 magic;                  // 0x000
+    u32 flags;                  // 0x004
+    u16 iconSpeed;              // 0x008
+    u8 padA[0x20 - 0xA];        // 0x00A
+    wchar_t title[32];          // 0x020
+    wchar_t subtitle[32];       // 0x060
+    u8 bannerTexture[0x6000];   // 0x0A0
+    u8 iconTexture[8][0x1200];  // 0x60A0
+};
+
 class CNBanner {
 public:
     CNBanner();
@@ -87,8 +101,10 @@ CNBanner::CNBanner() {
     this->mDesc.clear();
     this->mPath.clear();
     this->mFiles[0].clear();
-    for (int i = 1; i < 8; i++) {
-        this->mFiles[i].clear();
+    // Pointer-walk clears the remaining 7 slots; MWCC keeps it as an mtctr/
+    // bdnz counted loop with a runtime (end - start + 0x43) / 0x44 trip count.
+    for (ml::FixStr<64>* f = &this->mFiles[1]; f < &this->mFiles[8]; f++) {
+        f->clear();
     }
     this->mAlloc0 = 0;
     this->field_8 = 0;
@@ -104,15 +120,24 @@ CNBanner::CNBanner() {
 // --- destructor ----------------------------------------------------------
 
 // us-804f9794: full object destructor (deleting destructor). Frees the dynamic
-// buffer and, when the hidden deleting flag is set, releases the object.
+// buffer and, when the hidden deleting flag is set, releases the object. MWCC
+// emits the deleting-dtor scaffold (null check, r4 flag test + operator delete
+// of the object, `return this`) automatically for the out-of-line member
+// destructor.
 CNBanner::~CNBanner() {
     this->mVtable = (void*)lbl_eu_80570378;
     if (this->mBusy != 0) {
         func_8044F0E4__11CDeviceFileFPCc(this->mPath.c_str());
-        for (ml::FixStr<64>* f = &this->mFiles[0]; f < &this->mFiles[this->mCount]; f++) {
-            if (f->mString[0] != 0) {
-                func_8044F0E4__11CDeviceFileFPCc(f->mString);
+        int i = 0;
+        while (i < this->mCount) {
+            // One shared address per element: retail computes r3 =
+            // &mFiles[i] once (add + lbzu) and reuses it for the check
+            // and the release call.
+            const char* p = this->mFiles[i].mString;
+            if ((s8)p[0] != 0) {
+                func_8044F0E4__11CDeviceFileFPCc(p);
             }
+            i++;
         }
         this->mBusy = 0;
         func_eu_804521BC(this->mKind);
@@ -233,27 +258,49 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
         return 0;
     }
 
-    // Render the UTF-8 title string to UTF-16; on success null-terminate it.
+    // UTF-16 render buffers and their length words. The string pointers are
+    // kept in one reused local so MWCC holds them in a single callee-saved
+    // register (retail reuses r29 for title/desc/files); the success flags
+    // are separate booleans tested after each conversion (retail r4/r5).
     u16 title[0x20];
-    u32 titleLen = 0x20;
-    u32 titleSrcLen = strlen(self->mTitle.c_str()) * 2;
-    if (ENCConvertStringUtf8ToUtf16(title, &titleLen,
-            reinterpret_cast<const u8*>(self->mTitle.c_str()), &titleSrcLen) != 0) {
-        return 0;
-    }
-    title[titleLen] = 0;
-
-    // Same for the subtitle string.
     u16 subtitle[0x20];
-    u32 subtitleLen = 0x20;
-    u32 subtitleSrcLen = strlen(self->mDesc.c_str()) * 2;
-    if (ENCConvertStringUtf8ToUtf16(subtitle, &subtitleLen,
-            reinterpret_cast<const u8*>(self->mDesc.c_str()), &subtitleSrcLen) != 0) {
+    u32 titleLen;
+    u32 titleSrcLen;
+    u32 subtitleLen;
+    u32 subtitleSrcLen;
+    const char* str;
+
+    str = self->mTitle.c_str();
+    titleLen = 0x20;
+    titleSrcLen = strlen(str) * 2;
+    s32 titleOk;
+    if (ENCConvertStringUtf8ToUtf16(title, &titleLen,
+            reinterpret_cast<const u8*>(str), &titleSrcLen) != 0) {
+        titleOk = 0;
+    } else {
+        title[titleLen] = 0;
+        titleOk = 1;
+    }
+    if (titleOk == 0) {
         return 0;
     }
-    subtitle[subtitleLen] = 0;
 
-    memset((NANDBanner*)self->mAlloc0, 0, 0xF0A0);
+    str = self->mDesc.c_str();
+    subtitleLen = 0x20;
+    subtitleSrcLen = strlen(str) * 2;
+    s32 subtitleOk;
+    if (ENCConvertStringUtf8ToUtf16(subtitle, &subtitleLen,
+            reinterpret_cast<const u8*>(str), &subtitleSrcLen) != 0) {
+        subtitleOk = 0;
+    } else {
+        subtitle[subtitleLen] = 0;
+        subtitleOk = 1;
+    }
+    if (subtitleOk == 0) {
+        return 0;
+    }
+
+    memset((CNandBannerBlock*)self->mAlloc0, 0, 0xF0A0);
     NANDInitBanner((NANDBanner*)self->mAlloc0, self->field_C,
                    reinterpret_cast<const wchar_t*>(title),
                    reinterpret_cast<const wchar_t*>(subtitle));
@@ -262,13 +309,13 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
     // slot); the second loop clears the remaining idle slots.
     int i = 0;
     for (; i < self->mCount; i++) {
-        u16 v = ((NANDBanner*)self->mAlloc0)->iconSpeed;
-        ((NANDBanner*)self->mAlloc0)->iconSpeed =
+        u16 v = ((CNandBannerBlock*)self->mAlloc0)->iconSpeed;
+        ((CNandBannerBlock*)self->mAlloc0)->iconSpeed =
             (u16)((v & ~(3 << (2 * i))) | (self->mFileId[i] << (2 * i)));
     }
     for (; i < 8; i++) {
-        u16 v = ((NANDBanner*)self->mAlloc0)->iconSpeed;
-        ((NANDBanner*)self->mAlloc0)->iconSpeed =
+        u16 v = ((CNandBannerBlock*)self->mAlloc0)->iconSpeed;
+        ((CNandBannerBlock*)self->mAlloc0)->iconSpeed =
             (u16)(v & ~(3 << (2 * i)));
     }
 
@@ -276,13 +323,13 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
     self->mBusy = 1;
     self->mCountRef = 0;
     CDeviceFile::readCommonArchiveFile(
-        (mtl::ALLOC_HANDLE)((NANDBanner*)self->mAlloc0)->bannerTexture,
+        (mtl::ALLOC_HANDLE)((CNandBannerBlock*)self->mAlloc0)->bannerTexture,
         self->mPath.c_str(), reinterpret_cast<IWorkEvent*>(self), 0x40, 0x6000);
     self->mCountRef++;
 
     for (int j = 0; j < self->mCount; j++) {
         CDeviceFile::readCommonArchiveFile(
-            (mtl::ALLOC_HANDLE)((NANDBanner*)self->mAlloc0)->iconTexture[j],
+            (mtl::ALLOC_HANDLE)((CNandBannerBlock*)self->mAlloc0)->iconTexture[j],
             self->mFiles[j].c_str(), reinterpret_cast<IWorkEvent*>(self),
             0x40, 0x1200);
         self->mCountRef++;

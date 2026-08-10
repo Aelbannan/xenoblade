@@ -5,9 +5,18 @@
 
 #include "kyoshin/menu/CMenuQuestLog.hpp"
 
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+
 extern "C" void __dt__13CMenuQuestLogFv(void*, int);
 
-void __ct__CMenuQuestLog(){}
+// Retail constructor symbol (unmangled global). Out-of-line stub so the
+// factory (func_8011CCE0) emits a real `bl` to it; returns `this` in r3 like
+// a real constructor (retail relies on it). C linkage inherited from the
+// header declaration.
+__declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2) {
+    return _this;
+}
 
 CMenuQuestLog::~CMenuQuestLog() {}
 
@@ -23,7 +32,26 @@ void CMenuQuestLog::Move() {}
 
 void CMenuQuestLog::cbRenderBefore() {}
 
-void func_8011CCE0(){}
+// ---------------------------------------------------------------------------
+// ---- func_8011CCE0 (us-8011d7bc) ------------------------------------------
+// Factory: lazily allocate + construct the single quest-log menu instance and
+// register it as a child of `self`. Returns the stored singleton (or 0 if it
+// already exists). Regist is called even when the allocation failed, matching
+// retail.
+// ---------------------------------------------------------------------------
+CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
+    if (lbl_eu_80663FC0 != 0) {
+        return 0;
+    }
+    CMenuQuestLog* obj = (CMenuQuestLog*)mtl::MemManager::allocate(
+        0x2288, CWorkThreadSystem::getWorkMem());
+    if (obj != 0) {
+        obj = __ct__CMenuQuestLog(obj, parent, arg2);
+    }
+    lbl_eu_80663FC0 = obj;
+    obj->Regist(self, 0x0);
+    return lbl_eu_80663FC0;
+}
 
 void func_8011CD5C(){}
 
@@ -46,15 +74,57 @@ void func_8011D08C(unsigned char* self)
     }
 }
 
-void func_8011D0FC(){}
+// ---------------------------------------------------------------------------
+// ---- func_8011D0FC (us-8011dbd8) ------------------------------------------
+// When the quest log info is done, set the title-help mode to 0x3d, close the
+// title help, finish the log info and advance to state 6.
+// ---------------------------------------------------------------------------
+void func_8011D0FC(CMenuQuestLog* self) {
+    if (func_802296D0(&self->mQstLogInfo)) {
+        func_801C41E8(&self->mTitleAHelp, 0x3d);
+        func_801C416C(&self->mTitleAHelp);
+        func_802296E0(&self->mQstLogInfo);
+        self->mState = 6;
+    }
+}
 
-void func_8011D158(){}
+// ---------------------------------------------------------------------------
+// ---- func_8011D158 (us-8011dc34) ------------------------------------------
+// When the title help is idle and the quest log info is done, advance to
+// state 7.
+// ---------------------------------------------------------------------------
+void func_8011D158(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_802296D8(&self->mQstLogInfo)) {
+        self->mState = 7;
+    }
+}
 
 void func_8011D1A8(){}
 
-void func_8011D22C(){}
+// ---------------------------------------------------------------------------
+// ---- func_8011D22C (us-8011dd08) ------------------------------------------
+// When the title help is idle and the quest log info is done, set the
+// title-help mode to 0x3c, close the title help, re-sort the list and advance
+// to state 9.
+// ---------------------------------------------------------------------------
+void func_8011D22C(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_802296D8(&self->mQstLogInfo)) {
+        func_801C41E8(&self->mTitleAHelp, 0x3c);
+        func_801C416C(&self->mTitleAHelp);
+        func_80227CDC(&self->mQstLogList);
+        self->mState = 9;
+    }
+}
 
-void func_8011D298(){}
+// ---------------------------------------------------------------------------
+// ---- func_8011D298 (us-8011dd74) ------------------------------------------
+// When the title help is idle and sorting is enabled, advance to state 2.
+// ---------------------------------------------------------------------------
+void func_8011D298(CMenuQuestLog* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) && func_80227CCC(&self->mQstLogList)) {
+        self->mState = 2;
+    }
+}
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls cbRenderBefore.

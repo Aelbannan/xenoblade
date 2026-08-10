@@ -28,11 +28,15 @@ struct CModelDispSub {
     u8 _FD8[0x18];                   // 0xFD8 - padding to 0xFF0
 };
 
+// CModelDisp is not polymorphic in retail: the vtable pointer at +0x00 is a
+// plain data member (lbl_eu_80535390) written by the constructor - the retail
+// dtor performs no vtable reset, so no compiler-generated vtable is wanted.
 class CModelDisp {
 public:
-    CModelDisp(void* initParam);
-    virtual ~CModelDisp();
+    CModelDisp(u8* initParam);
+    ~CModelDisp();
 
+    u32* mVtbl;                  // 0x00 - vtable pointer (lbl_eu_80535390)
     void* mInitParam;            // 0x04 - init parameter
     CModelDispSub mSubs[3];      // 0x08 - three sub-objects
     u8 field_2FD8;               // 0x2FD8
@@ -42,3 +46,18 @@ public:
     u8 field_2FE4;               // 0x2FE4
 };
 
+// --- retail data symbols (imports; global scope keeps names unmangled) ---
+extern u32 lbl_eu_80535390[];     // CModelDisp vtable (.data)
+extern f32 lbl_eu_806681E8;       // .sdata2 float -> field_2FDC
+extern f32 lbl_eu_806681EC;       // .sdata2 float -> field_2FE0
+
+// --- C-linkage runtime helper and sub-object ctor/dtor (retail names) ---
+// The sub-object ctor/dtor are retail-named symbols (func_801FBEB8 /
+// __dt__801FBF0C), not C++ member symbols; C linkage keeps the __construct_array
+// data relocs byte-identical to retail (same pattern as code_801C2C14.cpp).
+extern "C" void __construct_array(CModelDispSub* array,
+                                  void (*ctor)(CModelDispSub*),
+                                  u8* (*dtor)(CModelDispSub*, int),
+                                  int size, int count);
+extern "C" void func_801FBEB8(CModelDispSub* sub);
+extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);

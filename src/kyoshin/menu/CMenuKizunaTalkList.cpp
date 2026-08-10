@@ -8,7 +8,14 @@ extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/CTaskGame.hpp"
+#include "monolib/core/CPadManager.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+
+#include <revolution/GX.h>
 
 // Pad-data view exposing only the flag words this TU reads (CfPadData layout,
 // see kyoshin/cf/CfPadData.hpp): CPad::mPressedButtonFlags at +0x4 and
@@ -27,7 +34,49 @@ extern void func_80273654(CKizunaTalkList* self);
 extern void func_80273710(CKizunaTalkList* self);
 extern void func_802737E0(CKizunaTalkList* self);
 extern void func_8027387C(CKizunaTalkList* self);
-extern void func_802732F4(CKizunaTalkList* self);
+extern "C" void func_802732F4(CKizunaTalkList* self);
+
+// ---------------------------------------------------------------------------
+// Retail-unmangled imports. The widget headers (CBgTex.hpp / CTitleAHelp.hpp /
+// CKizunaTalkList.hpp) declare these as C++ members, which would emit mangled
+// relocs (e.g. func_801C3D9C__6CBgTexFv); retail keeps the bare names for these
+// call sites, so call them through extern "C" declarations with the retail
+// signature. int returns keep the caller's `!= 0` as a plain cmpwi (no u8 mask)
+// like retail.
+// ---------------------------------------------------------------------------
+extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
+extern "C" int func_8027355C(CKizunaTalkList* self);
+extern "C" void func_801C3D9C(CBgTex* self);
+extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void func_8027346C(CKizunaTalkList* self);
+extern "C" int func_801C3E34(CBgTex* self);
+extern "C" int func_801C4114(CTitleAHelp* self);
+extern "C" int func_80273518(CKizunaTalkList* self);
+extern "C" void func_801C412C(CTitleAHelp* self);
+extern "C" void func_80273564(CKizunaTalkList* self);
+
+// Draw/update entry points (retail keeps the bare names at these call sites).
+extern "C" int func_801C3C14(CBgTex* self);
+extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801C3D54(CBgTex* self);
+extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_8027336C(CKizunaTalkList* self);
+
+// Skip-timer helpers used by the cancel handler in Move().
+extern "C" int func_800FEDF8();
+extern "C" void func_800FF914();
+
+// nw4r DrawInfo C-ABI ct/dt (retail emits the direct calls; a C++ local would
+// virtual-dispatch its scope-exit destructor and bloat the body).
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* self);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* self, int dealloc);
+
+// Singleton instance pointer (.sbss; cleared by Term, read/written by the
+// factory func_80272414 and the idle check func_80272488).
+extern unsigned long lbl_eu_806648B0;
 
 // CfGameManager one-arg controller-type query, kept as the retail-mangled C
 // symbol (extern "C" stops C++ `__Fs` param mangling). The inline header
@@ -45,10 +94,49 @@ extern "C" void __dt__6CBgTexFv(void*, int);
 extern "C" void __ct__UnkClass_8011C974(void*, void*);
 extern "C" void __ct__CTitleAHelp(void*, char*, int);
 extern "C" void __dt__11CTitleAHelpFv(void*, int);
-extern "C" void __ct__15CKizunaTalkListFv(void*, int);
+extern "C" void __ct__CKizunaTalkList(void*, int);
 extern "C" void __dt__15CKizunaTalkListFv(void*, int);
+extern "C" void __ct__8CProcessFv(CProcess* self);
 
-void __ct__CMenuKizunaTalkList(){}
+// Retail constructor symbol (unmangled global, takes the parent). Written as
+// an out-of-line free function so the factory (func_80272414) emits a real bl
+// to the bare retail symbol; returns `this` in r3 like retail.
+// The body mirrors the CSysWinSave ctor pattern: base ctor, temp vtable
+// store, null PMF data copy, then the composite vtable + IScnRender
+// sub-vtable, then each embedded widget's ctor and the final state byte.
+extern "C" __declspec(noinline) CMenuKizunaTalkList* __ct__CMenuKizunaTalkList(
+    CMenuKizunaTalkList* self, CProcess* parent) {
+    __ct__8CProcessFv((CProcess*)self);
+
+    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
+    // and the IScnRender sub-vtable at +0x58.
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+    u32* ptmf = __ptmf_null;
+    self->ptmf0[0] = ptmf[0];
+    self->ptmf0[1] = ptmf[1];
+    self->ptmf0[2] = ptmf[2];
+    self->ptmf1[0] = ptmf[0];
+    self->ptmf1[1] = ptmf[1];
+    self->ptmf1[2] = ptmf[2];
+    self->mUnknown54 = 0;
+    self->mUnknown55 = 0;
+
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80537CB8;
+    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80537CB8 + 0x24;
+    self->mParentRef = parent;
+
+    __ct__CBgTex(&self->mBgTex, 0);
+    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
+    __ct__CKizunaTalkList(&self->mKizunaTalkList, 0);
+    self->mState = 0;
+    return self;
+}
+
+// Phase handlers referenced by Move() before their definitions below.
+void func_80272498(CMenuKizunaTalkList* self);
+void func_80272510(CMenuKizunaTalkList* self);
+void func_80272560(CMenuKizunaTalkList* self);
+void func_80272694(CMenuKizunaTalkList* self);
 
 CMenuKizunaTalkList::~CMenuKizunaTalkList() {}
 
@@ -70,7 +158,7 @@ void CMenuKizunaTalkList::Init() {
     *(u8*)((u8*)this + 0x7e)  = *(u8*)(tempBgTex + 0x1e);
     __dt__6CBgTexFv(tempBgTex, -1);
 
-    this->mBgTex.func_801C3C14();
+    func_801C3C14(&mBgTex);
 
     // --- Re-initialise the embedded CTitleAHelp ---
     char* name = func_80136190(lbl_eu_8050E970, lbl_eu_8050E970 + 0xb, 0x11);
@@ -93,11 +181,11 @@ void CMenuKizunaTalkList::Init() {
     *(u8*)((u8*)this + 0xb7)  = *(u8*)(tempTitle + 0x37);
     __dt__11CTitleAHelpFv(tempTitle, -1);
 
-    this->mTitleAHelp.CTitleAHelp_load();
+    CTitleAHelp_load(&mTitleAHelp);
 
     // --- Re-initialise the embedded CKizunaTalkList ---
     u8 tempList[0x1494];
-    __ct__15CKizunaTalkListFv(tempList, 0);
+    __ct__CKizunaTalkList(tempList, 0);
 
     __ct__UnkClass_8011C974((u8*)this + 0xbc, tempList + 0x4);
     *(u32*)((u8*)this + 0xcc) = *(u32*)(tempList + 0x14);
@@ -168,19 +256,133 @@ void CMenuKizunaTalkList::Init() {
     reinterpret_cast<CScn*>(mParentRef)->addRenderCB(cb, 0xd, 0);
 }
 
-void CMenuKizunaTalkList::Term() {}
+// Tear the talk-list screen down: remove the render callback from the parent
+// scene, release each embedded widget, clear the singleton instance and reset
+// the CfGameManager init flag.
+void CMenuKizunaTalkList::Term() {
+    CDeviceVI::waitForDrawDone();
 
-void CMenuKizunaTalkList::Move() {}
+    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        renderCB = &mIScnRender;
+    }
+    reinterpret_cast<CScn*>(mParentRef)->removeRenderCB(renderCB);
 
-void CMenuKizunaTalkList::cbRenderBefore() {}
+    func_801C3D9C(&mBgTex);
+    func_801C40A0(&mTitleAHelp);
+    func_8027346C(&mKizunaTalkList);
 
-void func_80272414(){}
+    lbl_eu_806648B0 = 0;
+    func_8008294C__Q22cf13CfGameManagerFv(0);
+}
+
+// Per-frame update of the kizuna talk-list screen. Gate on the task/busy
+// flags, read the cancel (B) button (classic vs wiimote bit), then drive the
+// 4-state FSM and refresh the bg / help bar / list each frame.
+void CMenuKizunaTalkList::Move() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
+
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    u32 cancel;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        cancel = pad->mPressedButtonFlags & 0x800000;
+    } else {
+        cancel = pad->mPressedButtonFlags & 0x400;
+    }
+
+    if (cancel != 0) {
+        if (func_800FEDF8() != 0) {
+            func_800FF914();
+            func_80138078__FUl(6);
+        }
+        mState = 4;
+        mUnknown54 = 1;
+    }
+
+    switch (mState) {
+    case 0:
+        func_80272498(this);
+        break;
+    case 1:
+        func_80272510(this);
+        break;
+    case 2:
+        func_80272560(this);
+        break;
+    case 3:
+        func_80272694(this);
+        break;
+    }
+
+    func_801C3D54(&mBgTex);
+    func_801C3FF0(&mTitleAHelp);
+    func_8027336C(&mKizunaTalkList);
+}
+
+// Render the kizuna talk-list screen through a stack DrawInfo: gate on the
+// task/busy flags and the scene-active check, then draw bg, talk list and
+// title/help bar in that order.
+void CMenuKizunaTalkList::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0) return;
+
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
+    // (a C++ local would virtual-dispatch its scope-exit destructor).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
+    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_8027340C(&mKizunaTalkList, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
+}
+
+// Factory: lazily allocate + construct the single kizuna talk-list instance
+// and register it under `self`. Returns the stored instance (or 0 if one
+// already exists).
+CMenuKizunaTalkList* func_80272414(CProcess* self, CProcess* parent) {
+    if (lbl_eu_806648B0 != 0) {
+        return 0;
+    }
+    CMenuKizunaTalkList* obj = (CMenuKizunaTalkList*)mtl::MemManager::allocate(
+        0x1550, CWorkThreadSystem::getWorkMem());
+    if (obj != 0) {
+        obj = __ct__CMenuKizunaTalkList(obj, parent);
+    }
+    lbl_eu_806648B0 = (unsigned long)obj;
+    obj->Regist(self, 0);
+    return (CMenuKizunaTalkList*)lbl_eu_806648B0;
+}
 
 void stub_us_8027490c() {}
 
-void func_80272498(){}
+// Advance the talk-list screen (retail func_80272498): once the background,
+// title/help bar and list are all ready, begin showing the list, mark state 1
+// and play the open sound.
+void func_80272498(CMenuKizunaTalkList* self) {
+    if (func_801C3E34(&self->mBgTex) != 0 &&
+        func_801C4114(&self->mTitleAHelp) != 0 &&
+        func_80273518(&self->mKizunaTalkList) != 0) {
+        func_801C412C(&self->mTitleAHelp);
+        func_80273564(&self->mKizunaTalkList);
+        self->mState = 1;
+        func_80138078__FUl(0x6d);
+    }
+}
 
-void func_80272510(){}
+// Advance the talk-list phase (retail func_80272510): once the title/help bar
+// is idle and the list has entries waiting, mark the main state byte as 2.
+void func_80272510(CMenuKizunaTalkList* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        func_8027355C(&self->mKizunaTalkList) != 0) {
+        self->mState = 2;
+    }
+}
 
 // Input handler for the Kizuna talk list. Reads the pad state and dispatches
 // to the list's directional/confirm handlers depending on which control the
@@ -230,7 +432,14 @@ void func_80272560(CMenuKizunaTalkList* self) {
     }
 }
 
-void func_80272694(){}
+// Same idle check as func_80272510, but marks the 0x54 phase flag instead of
+// the main state byte.
+void func_80272694(CMenuKizunaTalkList* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        func_8027355C(&self->mKizunaTalkList) != 0) {
+        self->mUnknown54 = 1;
+    }
+}
 
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
@@ -246,5 +455,4 @@ extern "C" void func_802726EC(void* self) {
     ((void(*)(void*))__dt__19CMenuKizunaTalkListFv)((char*)self - 0x58);
 }
 
-extern unsigned long lbl_eu_806648B0;
 extern "C" unsigned long func_80272488(void) { return lbl_eu_806648B0 != 0; }

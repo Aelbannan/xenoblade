@@ -26,10 +26,15 @@ void mpvumc_OneMakeMb(void* umc, u8* rows, s32 v);
 
 /* MPV UMC context (fields used by InitOutRfb) */
 typedef struct MPVUMC_ {
-    u8 pad0[0xb5c];
+    u8* field_0x0;      /* 0x0   - MC output table */
+    s16* field_0x4;     /* 0x4   - MC index table */
+    u8* field_0x8;      /* 0x8   - MC source (ref 0) */
+    u8* field_0xc;      /* 0xc   - MC source (ref 1) */
+    u8 pad0[0xb5c - 0x10];
     s32 mbw;        /* 0xb5c */
     s32 mbh;        /* 0xb60 */
-    u8 pad1[0xc10 - 0xb64];
+    s32 field_0xb64;    /* 0xb64 - macroblock row width */
+    u8 pad1[0xc10 - 0xb68];
     u32 rf0;        /* 0xc10 */
     u32 rf1;        /* 0xc14 */
     u32 rf2;        /* 0xc18 */
@@ -42,6 +47,15 @@ typedef struct MPVUMC_ {
     u32 t2;         /* 0xc3c */
     s16 t3;         /* 0xc40 */
     s16 t4;         /* 0xc42 */
+    u8 pad3[0xc74 - 0xc44];
+    void (*field_0xc74)(struct MPVUMC_*); /* 0xc74 - skip-MB dispatcher */
+    u8 pad4[0xcd8 - 0xc78];
+    s32 field_0xcd8;    /* 0xcd8 - macroblock counter */
+    s32 field_0xcdc;    /* 0xcdc - current column */
+    s32 field_0xce0;    /* 0xce0 - current row */
+    u8 pad5[0xcec - 0xce4];
+    s32 field_0xcec;    /* 0xcec - MC mode flag */
+    u8 pad6[0x1000 - 0xcf0];
 } MPVUMC;
 
 void mpvumc_InitOneRef(void);
@@ -316,8 +330,109 @@ void mpvumc_OneMakeMb(void* umc, u8* rows, s32 v) {
     }
 }
 
+/* Per-byte bidirectional average: each output byte is (a_i + b_i + 1) >> 1,
+ * computed byte-wise so carries never cross bytes. */
+static inline u32 mpvBiAvg(u32 a, u32 b) {
+    return ((a >> 24) + (b >> 24) + 1) >> 1 << 24
+         | (((a >> 16) & 0xFF) + ((b >> 16) & 0xFF) + 1) >> 1 << 16
+         | (((a >> 8) & 0xFF) + ((b >> 8) & 0xFF) + 1) >> 1 << 8
+         | ((a & 0xFF) + (b & 0xFF) + 1) >> 1;
+}
+
+/* Bidirectional average remapped through the quantiser table: the averaged
+ * byte is used as an offset into tbl, indexed per byte by the s16 values in
+ * ix (ix[0] pairs with the top byte, ix[1] with bits 16-23, ...). */
+static inline u32 mpvBiAvgTbl(u32 a, u32 b, const s16* ix, const u8* tbl) {
+    return (u32)tbl[(((a >> 24) + (b >> 24) + 1) >> 1) + ix[0]] << 24
+         | (u32)tbl[((((a >> 16) & 0xFF) + ((b >> 16) & 0xFF) + 1) >> 1) + ix[1]] << 16
+         | (u32)tbl[((((a >> 8) & 0xFF) + ((b >> 8) & 0xFF) + 1) >> 1) + ix[2]] << 8
+         | (u32)tbl[(((a & 0xFF) + (b & 0xFF) + 1) >> 1) + ix[3]];
+}
+
+/* Bidirectional motion-compensation make: renders one macroblock row into
+ * each of the six 16-byte-row destinations listed in rows[1..12], averaging
+ * the two reference pictures. With v < 0 the averaged pixels are remapped
+ * through the quantiser table. The direct path zeroes the destination cache
+ * line first (dcbz), the table path skips it. */
+void mpvumc_BiMakeMb(MPVUMC* ctx, s32* rows, s32 v) {
+    s16* idx = ctx->field_0x4;
+    u8* src = ctx->field_0x8;
+    u8* src2 = ctx->field_0xc;
+    u8* tbl = ctx->field_0x0;
+    s32* pairs = rows + 1;
+    s32 i;
+    for (i = 0; i < 6; i++) {
+        u8* d = (u8*)pairs[0];
+        s32 stride = pairs[1];
+        pairs += 2;
+        if (((u32)d & 0x1F) == 0) {
+            if (v >= 0) {
+                s32 k;
+                idx += 64;
+                for (k = 0; k < 8; k++) {
+                    u32 a = ((u32*)src)[0];
+                    u32 b = ((u32*)src2)[0];
+                    __dcbz(d, 0);
+                    u32 c = ((u32*)src)[1];
+                    u32 e = ((u32*)src2)[1];
+                    ((u32*)d)[0] = mpvBiAvg(a, b);
+                    ((u32*)d)[1] = mpvBiAvg(c, e);
+                    src += 8;
+                    src2 += 8;
+                    d += stride;
+                }
+            } else {
+                s32 k;
+                for (k = 0; k < 8; k++) {
+                    u32 a = ((u32*)src)[0];
+                    u32 b = ((u32*)src2)[0];
+                    __dcbz(d, 0);
+                    u32 c = ((u32*)src)[1];
+                    u32 e = ((u32*)src2)[1];
+                    ((u32*)d)[0] = mpvBiAvgTbl(a, b, idx, tbl);
+                    ((u32*)d)[1] = mpvBiAvgTbl(c, e, idx + 4, tbl);
+                    src += 8;
+                    src2 += 8;
+                    idx += 8;
+                    d += stride;
+                }
+            }
+        } else {
+            if (v >= 0) {
+                s32 k;
+                idx += 64;
+                for (k = 0; k < 8; k++) {
+                    u32 a = ((u32*)src)[0];
+                    u32 b = ((u32*)src2)[0];
+                    u32 c = ((u32*)src)[1];
+                    u32 e = ((u32*)src2)[1];
+                    ((u32*)d)[0] = mpvBiAvg(a, b);
+                    ((u32*)d)[1] = mpvBiAvg(c, e);
+                    src += 8;
+                    src2 += 8;
+                    d += stride;
+                }
+            } else {
+                s32 k;
+                for (k = 0; k < 8; k++) {
+                    u32 a = ((u32*)src)[0];
+                    u32 b = ((u32*)src2)[0];
+                    u32 c = ((u32*)src)[1];
+                    u32 e = ((u32*)src2)[1];
+                    ((u32*)d)[0] = mpvBiAvgTbl(a, b, idx, tbl);
+                    ((u32*)d)[1] = mpvBiAvgTbl(c, e, idx + 4, tbl);
+                    src += 8;
+                    src2 += 8;
+                    idx += 8;
+                    d += stride;
+                }
+            }
+        }
+        v *= 2;
+    }
+}
+
 void mpvumc_PpicSkipMb(s32* sizes, u8* sub1, u8* sub2);
-void mpvumc_BiMakeMb();
 
 void MPVUMC_PpicSkipped(void* ctx, s32 n) {
     u8* c = (u8*)ctx;
@@ -347,4 +462,26 @@ void MPVUMC_PpicSkipped(void* ctx, s32 n) {
     }
 }
 
-void MPVUMC_BpicSkipped() {}
+/* B-picture skip: rewind the macroblock cursor and replay the skipped
+ * macroblocks through the P-picture skip dispatcher (field_0xc74). */
+void MPVUMC_BpicSkipped(MPVUMC* ctx, s32 n) {
+    s32 nm1 = n - 1;
+    s32 end = ctx->field_0xcd8;
+    s32 v0 = ctx->field_0xce0;
+    ctx->field_0xcec = 0;
+    void (*fn)(MPVUMC*) = ctx->field_0xc74;
+    ctx->field_0xcd8 = end - nm1;
+    ctx->field_0xce0 = v0 - nm1;
+    while (ctx->field_0xce0 < 0) {
+        ctx->field_0xcdc -= 1;
+        ctx->field_0xce0 += ctx->field_0xb64;
+    }
+    while (ctx->field_0xcd8 < end) {
+        fn(ctx);
+        if (++ctx->field_0xce0 >= ctx->field_0xb64) {
+            ctx->field_0xce0 = 0;
+            ctx->field_0xcdc = ctx->field_0xcdc + 1;
+        }
+        ctx->field_0xcd8 = ctx->field_0xcd8 + 1;
+    }
+}

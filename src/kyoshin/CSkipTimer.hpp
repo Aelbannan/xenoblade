@@ -36,8 +36,8 @@ public:
 
 class CSkipTimer2 {
 public:
-    CSkipTimer2(void* parent);
     ~CSkipTimer2();
+    // (ctor is extern "C" __ct__CSkipTimer2 below - retail short-form name)
 
     // --- member fields ---
     /* 0x00 */ void* mVtbl;              // lbl_eu_80539884, set at construction
@@ -94,11 +94,18 @@ extern "C" void* lbl_eu_80539884[];
 extern "C" void* lbl_eu_805397F0[];
 // String pool used by func_8029F440 (pane name + sprintf format).
 extern "C" char lbl_eu_80510568[];
+// CSkipTimer2 ctor: retail symbol is the short form (no length/sig suffix),
+// so it must be a C-linkage function carrying the exact retail name
+// (MWCC_REFERENCE sec. 3824); the dtor keeps the mangled member form.
+extern "C" void __ct__CSkipTimer2(CSkipTimer2* self, void* parent);
 
 // External callees.
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __ct__CSysWin(void*);
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+// Mem-region copy initializer used by the temp-copy widget-rebuild pattern
+// (CMenuSave / CMenuCollepedia convention; retail symbol is unmangled).
+extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 
 extern "C" void func_80138078__FUl(u32);
 extern "C" int CSysWin_getUnk34(void*);
@@ -124,6 +131,25 @@ extern "C" void func_800FF914();
 extern "C" void func_8029F82C(CSkipTimer2* self, u8 arg);
 extern "C" void func_8029F6EC(CSkipTimer2* self);
 extern "C" void func_8029F73C(CSkipTimer2* self);
+// func_8029F168: post-build hook on the sub-controller (body lives in retail).
+extern "C" void func_8029F168(CSkipTimer2* self);
 extern "C" int func_802A04F0(CSkipTimer* self);
 // func_8029F2FC: reset the sub-controller (body lives in retail).
 extern "C" void func_8029F2FC(CSkipTimer2* self);
+
+// Same-unit siblings DEFINED in this TU whose retail callers emit a direct
+// `bl` (retail keeps them out-of-line). The definitions in CSkipTimer.cpp are
+// guarded with #pragma auto_inline off (MWCC_REFERENCE sec. hbm/seq) so
+// -inline auto does not inline them into func_8029F26C / func_802A03AC /
+// func_8029FF24; the extern "C" form binds both the definitions and the call
+// sites to the literal (un)mangled retail names.
+extern "C" void func_8029F504(CSkipTimer2* self);
+extern "C" void func_8029F5CC(CSkipTimer2* self);
+extern "C" void func_802A041C(CSkipTimer* self);
+extern "C" void func_802A05E4(CSkipTimer* self);
+extern "C" void func_802A055C(CSkipTimer* self);
+extern "C" void func_802A03AC(CSkipTimer* self);
+
+// cf::CfGameManager static (retail symbol keeps the Fv suffix from the
+// decompiler guess; the real signature is 3 u32s, see CREvtCamera.cpp).
+extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(u32, u32, u32);

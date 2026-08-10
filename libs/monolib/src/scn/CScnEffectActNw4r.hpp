@@ -3,6 +3,41 @@
 #include <types.h>
 #include "monolib/math/CVec3.hpp"
 
+namespace nw4r {
+namespace g3d {
+struct ResMdlData;
+} // namespace g3d
+} // namespace nw4r
+
+// .sdata2 float constants (effect-range thresholds), retail linker names.
+extern const f32 lbl_eu_8066AB74;
+extern const f32 lbl_eu_8066A208;
+
+// Tag prefix the effect-act node names are matched against (pointer held in
+// .sdata, retail linker name).
+extern const char* lbl_eu_80663A18;
+
+// Panic strings referenced by func_8049BA58's nw4r DB asserts (retail names;
+// global-scope names are not mangled by MWCC).
+extern const char lbl_eu_8056E194[]; // file (node-name assert, line 0x2c)
+extern const char lbl_eu_8056E178[]; // fmt
+extern const char lbl_eu_80663910[8]; // arg (sda2 string; sized so MWCC emits sda21)
+extern const char lbl_eu_80663A34[8]; // arg (sda2 string; sized so MWCC emits sda21)
+extern const char lbl_eu_80529678[]; // file (mtx-id assert, line 0x53)
+extern const char lbl_eu_80529658[]; // fmt
+extern const char lbl_eu_8056E850[]; // file (recursion-entry assert, line 0x2c)
+extern const char lbl_eu_8056E834[]; // fmt
+extern const char lbl_eu_80663A30[8]; // arg (sda2 string; sized so MWCC emits sda21)
+extern const char lbl_eu_8056E820[]; // file (node alignment assert, line 0x2c)
+extern const char lbl_eu_8056E7F8[]; // fmt
+
+// Object reached through the manager at +0x147c: its +0xec field is the base
+// of the per-act table (0x30-byte entries indexed by the node's mtx id).
+struct CScnEffectActMgrActTable {
+    u8 pad_0x00[0xec];
+    u8* field_0xec;
+};
+
 // Virtual dispatch target: v_i sits at vtable offset 8+4*i (MWCC RTTI header).
 // Object identities are not yet recovered; only the virtuals actually
 // dispatched from this TU carry real signatures, the rest are placeholders.
@@ -83,11 +118,21 @@ struct CScnEffectActMgr {
     virtual CScnEffectAct* v13(u32 idx) = 0;
     virtual ~CScnEffectActMgr() {}
 
-    /* 0x04 */ u8 pad_0x4[0x7a0];
+    /* 0x04 */ u8 pad_0x4[0x300];
+    /* 0x304 */ f32 field_0x304;
+    /* 0x308 */ u8 pad_0x308[0x49c];
     /* 0x7a4 */ u32 field_0x7a4;
     /* 0x7a8 */ u8 pad_0x7a8[0x1c];
     /* 0x7c4 */ CScnEffectAct* field_0x7c4;
+    /* 0x7c8 */ u8 pad_0x7c8[0xca4];
+    /* 0x146c */ nw4r::g3d::ResMdlData* field_0x146c;
+    /* 0x1470 */ u8 pad_0x1470[0xc];
+    /* 0x147c */ CScnEffectActMgrActTable* field_0x147c;
 };
+
+// Import from monolib/src/scn/CScnItemModel.cpp: base pointer of the
+// manager's act data (caller applies the slot offset).
+u8* func_8048315C(CScnEffectActMgr* mgr);
 
 class CScnEffectActNw4r {
 public:

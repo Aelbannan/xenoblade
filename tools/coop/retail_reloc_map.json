@@ -1,5 +1,5 @@
 {
-  "count": 2373,
+  "count": 2376,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -22493,7 +22493,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxGrid@15065": {
+    "main/kyoshin/CItemBoxGrid@15066": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22518,6 +22518,20 @@
         "scoped": true,
         "units": [
           "main/kyoshin/CItemBoxInfo"
+        ]
+      }
+    },
+    "main/kyoshin/CMapSel@10131": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_8066873C",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CMapSel"
         ]
       }
     },
@@ -22626,6 +22640,34 @@
         "scoped": true,
         "units": [
           "main/kyoshin/COccCulling"
+        ]
+      }
+    },
+    "main/kyoshin/CSkipTimer@6578": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80668C38",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CSkipTimer"
+        ]
+      }
+    },
+    "main/kyoshin/CSkipTimer@6580": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80668C40",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CSkipTimer"
         ]
       }
     },
@@ -23073,7 +23115,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@11092": {
+    "main/kyoshin/code_80135FDC@11093": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23087,7 +23129,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@11093": {
+    "main/kyoshin/code_80135FDC@11094": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23101,7 +23143,7 @@
         ]
       }
     },
-    "main/kyoshin/code_80135FDC@11149": {
+    "main/kyoshin/code_80135FDC@11150": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -31333,8 +31375,8 @@
       }
     }
   },
-  "function_pairs": 9158,
-  "generated": "2026-08-10T23:26:17.699912",
+  "function_pairs": 9194,
+  "generated": "2026-08-11T02:44:01.034613",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

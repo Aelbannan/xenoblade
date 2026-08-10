@@ -51,36 +51,49 @@ void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CA0 * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
+    f32 su = rSrt.Su;
 
-    pMtx->m[0][0] = su * cosR;
-    pMtx->m[0][1] = su * sinR;
+    f32 sv_cos = sv * cosR;
+    f32 sv_sin = sv * sinR;
+    f32 su_cos = su * cosR;
+    f32 su_sin = su * sinR;
+
+    pMtx->m[0][0] = su_cos;
+    pMtx->m[0][1] = su_sin;
     pMtx->m[0][2] = lbl_eu_80669C98;
-    pMtx->m[0][3] = lbl_eu_80669CA4 * su * (lbl_eu_80669C9C - cosR - sinR);
-    pMtx->m[1][0] = -sv * sinR;
-    pMtx->m[1][1] = sv * cosR;
+    pMtx->m[0][3] = lbl_eu_80669CA8 * (su_sin + su_cos - su);
+    pMtx->m[1][0] = -sv_sin;
+    pMtx->m[1][1] = sv_cos;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = lbl_eu_80669C9C - lbl_eu_80669CA4 * sv * (lbl_eu_80669C9C - cosR + sinR);
+    pMtx->m[1][3] = lbl_eu_80669C9C + lbl_eu_80669CA4 * (sv_sin - sv_cos - sv);
 }
 
 void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CA0 * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
+
+    // base = 0.5*(1-cos) and hs = 0.5*sin are shared by both translation
+    // terms; retail evaluates 0.5*cos/0.5*sin as hoisted products
+    f32 hc = lbl_eu_80669CA4 * cosR;
+    f32 hs = lbl_eu_80669CA4 * sinR;
+    f32 base = lbl_eu_80669CA4 - hc;
 
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = sinR;
     pMtx->m[0][2] = lbl_eu_80669C98;
-    pMtx->m[0][3] = lbl_eu_80669CA4 * (lbl_eu_80669C9C - cosR - sinR) - rSrt.Tu;
+    pMtx->m[0][3] = (base - hs) - rSrt.Tu;
     pMtx->m[1][0] = -sinR;
     pMtx->m[1][1] = cosR;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = rSrt.Tv + lbl_eu_80669CA4 * (lbl_eu_80669C9C - cosR + sinR);
+    pMtx->m[1][3] = rSrt.Tv + (base + hs);
 }
 
 void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -100,7 +113,8 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CA0 * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -109,14 +123,19 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 tu = rSrt.Tu;
     f32 tv = rSrt.Tv;
 
+    // t = 0.5*sin - 0.5, u = -0.5*cos; both rotation-translation terms
+    // (retail evaluates 0.5*sin and -0.5*cos as shared products)
+    f32 t = lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4;
+    f32 u = lbl_eu_80669CA8 * cosR;
+
     pMtx->m[0][0] = su * cosR;
     pMtx->m[0][1] = su * sinR;
     pMtx->m[0][2] = lbl_eu_80669C98;
-    pMtx->m[0][3] = lbl_eu_80669CA4 * su * (lbl_eu_80669C9C - cosR - sinR) - tu;
+    pMtx->m[0][3] = su * ((u - t) - tu);
     pMtx->m[1][0] = -sv * sinR;
     pMtx->m[1][1] = sv * cosR;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = tv - lbl_eu_80669CA4 * sv * (lbl_eu_80669C9C - cosR + sinR);
+    pMtx->m[1][3] = lbl_eu_80669C9C + sv * (tv + (u + t));
 }
 
 void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -140,7 +159,8 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CA0 * r;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
@@ -153,14 +173,19 @@ void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m12 = pMtx->m[1][2];
     f32 m13 = pMtx->m[1][3];
 
-    pMtx->m[0][0] = m00 * cosR - m01 * sinR;
-    pMtx->m[0][1] = m00 * sinR + m01 * cosR;
-    pMtx->m[0][2] = m02;
-    pMtx->m[0][3] = m03;
-    pMtx->m[1][0] = m10 * cosR - m11 * sinR;
-    pMtx->m[1][1] = m10 * sinR + m11 * cosR;
-    pMtx->m[1][2] = m12;
-    pMtx->m[1][3] = m13;
+    // Maya rotation product (transposed convention), with the 0.5*(1-cos-sin)
+    // translation correction added on the last column
+    pMtx->m[0][0] = m00 * cosR + m10 * sinR;
+    pMtx->m[1][0] = -sinR * m00 + cosR * m10;
+    pMtx->m[0][1] = m01 * cosR + m11 * sinR;
+    pMtx->m[1][1] = -sinR * m01 + cosR * m11;
+    pMtx->m[0][2] = m02 * cosR + m12 * sinR;
+    pMtx->m[1][2] = -sinR * m02 + cosR * m12;
+    pMtx->m[0][3] = (lbl_eu_80669CA4 - lbl_eu_80669CA4 * cosR) +
+                    (m03 * cosR + m13 * sinR) - lbl_eu_80669CA4 * sinR;
+    pMtx->m[1][3] = lbl_eu_80669CA4 * sinR +
+                    ((lbl_eu_80669CA4 - lbl_eu_80669CA4 * cosR) +
+                     (-sinR * m03 + cosR * m13));
 }
 
 void ProductTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -187,66 +212,75 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     f32 sv_sin = sv * sinR;
     f32 sv_cos = sv * cosR;
-    f32 sv_half = 0.5f * sv;
-    f32 m13_5 = m13 - 0.5f;
-    f32 m03_5 = m03 - 0.5f;
+    f32 sv_half = lbl_eu_80669CA4 * sv;
+    f32 m13_5 = m13 - lbl_eu_80669CA4;
+    f32 m03_5 = m03 - lbl_eu_80669CA4;
     f32 su_cos = su * cosR;
     f32 su_sin = su * sinR;
 
-    pMtx->m[1][3] = 1.0f + (-sv_sin * m03_5 + sv_cos * m13_5 - sv_half);
+    pMtx->m[1][3] = lbl_eu_80669C9C + (-sv_sin * m03_5 + sv_cos * m13_5 - sv_half);
     pMtx->m[1][0] = -sv_sin * m00 + sv_cos * m10;
     pMtx->m[0][0] = su_cos * m00 + su_sin * m10;
     pMtx->m[0][1] = su_cos * m01 + su_sin * m11;
     pMtx->m[1][1] = -sv_sin * m01 + sv_cos * m11;
     pMtx->m[0][2] = su_cos * m02 + su_sin * m12;
     pMtx->m[1][2] = -sv_sin * m02 + sv_cos * m12;
-    pMtx->m[0][3] = su_sin * m12 + (su_cos * m03_5 + su_sin * m13_5);
+    pMtx->m[0][3] = lbl_eu_80669CA4 * su + (su_cos * m03_5 + su_sin * m13_5);
 }
 
 void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
     f32 sinR, cosR;
-    math::SinCosFIdx(&sinR, &cosR, fidx);
-
-    f32 m00 = pMtx->m[0][0];
-    f32 m01 = pMtx->m[0][1];
-    f32 m02 = pMtx->m[0][2];
-    f32 m03 = pMtx->m[0][3];
-    f32 m10 = pMtx->m[1][0];
-    f32 m11 = pMtx->m[1][1];
-    f32 m12 = pMtx->m[1][2];
-    f32 m13 = pMtx->m[1][3];
+    math::SinCosFIdx(&sinR, &cosR, rSrt.R * lbl_eu_80669CA0);
 
     // pMtx = T(-Tu, Tv) * R_maya * pMtx; R_maya is the transposed Maya
     // rotation (sin/cos swapped rows) with 0.5*(1-cos-sin) translation.
-    pMtx->m[0][0] = sinR * m10 + cosR * m00;
+    // Matrix values are loaded per column-pair (retail interleaves the
+    // loads with the arithmetic instead of hoisting them all up front).
+    f32 m10 = pMtx->m[1][0];
+    f32 m00 = pMtx->m[0][0];
+    pMtx->m[0][0] = cosR * m00 + sinR * m10;
     pMtx->m[1][0] = -sinR * m00 + cosR * m10;
-    pMtx->m[0][1] = sinR * m11 + cosR * m01;
+
+    // Shared translation terms: hcos = -0.5*cosR, base = 0.5*sinR - 0.5
+    f32 hcos = lbl_eu_80669CA8 * cosR;
+    f32 hs = lbl_eu_80669CA4 * sinR;
+    f32 base = hs - lbl_eu_80669CA4;
+
+    f32 m01 = pMtx->m[0][1];
+    f32 m11 = pMtx->m[1][1];
+    pMtx->m[0][1] = cosR * m01 + sinR * m11;
     pMtx->m[1][1] = -sinR * m01 + cosR * m11;
-    pMtx->m[0][2] = sinR * m12 + cosR * m02;
+
+    f32 m02 = pMtx->m[0][2];
+    f32 m12 = pMtx->m[1][2];
+    pMtx->m[0][2] = cosR * m02 + sinR * m12;
     pMtx->m[1][2] = -sinR * m02 + cosR * m12;
-    pMtx->m[0][3] = (lbl_eu_80669CA8 * cosR + (sinR * m13 + cosR * m03) -
-                     (lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4)) -
-                    rSrt.Tu;
-    pMtx->m[1][3] = rSrt.Tv +
-                    ((lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4) +
-                     (lbl_eu_80669CA8 * cosR + (-sinR * m03 + cosR * m13)));
+
+    f32 m03 = pMtx->m[0][3];
+    f32 m13 = pMtx->m[1][3];
+    pMtx->m[0][3] =
+        ((hcos + (sinR * m13 + cosR * m03)) - base) - rSrt.Tu;
+    pMtx->m[1][3] =
+        rSrt.Tv + (base + (hcos + (-sinR * m03 + cosR * m13)));
 }
 
 void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
+    f32 su = rSrt.Su;
+
+    f32 m13 = pMtx->m[1][3];
+    f32 m03 = pMtx->m[0][3];
 
     pMtx->m[0][0] *= su;
     pMtx->m[0][1] *= su;
     pMtx->m[0][2] *= su;
-    pMtx->m[0][3] = pMtx->m[0][3] * su - tu;
+    pMtx->m[0][3] = (m03 - rSrt.Tu) * su;
+
     pMtx->m[1][0] *= sv;
     pMtx->m[1][1] *= sv;
     pMtx->m[1][2] *= sv;
-    pMtx->m[1][3] = pMtx->m[1][3] * sv + tv;
+    pMtx->m[1][3] =
+        (m13 + rSrt.Tv - lbl_eu_80669C9C) * sv + lbl_eu_80669C9C;
 }
 
 void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -267,19 +301,20 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m13 = pMtx->m[1][3];
 
     f32 sv_sin = sv * sinR;
-    f32 m13_5 = m13 - 0.5f;
-    f32 tv_5 = 0.5f - rSrt.Tv;
-    f32 tu_5 = 0.5f - rSrt.Tu;
+    f32 m13_5 = m13 - lbl_eu_80669CA4;
+    f32 tv_5 = lbl_eu_80669CA4 - rSrt.Tv;
+    f32 tu_5 = lbl_eu_80669CA4 - rSrt.Tu;
     f32 sv_cos = sv * cosR;
     f32 su_cos = su * cosR;
-    f32 m03_5 = m03 - 0.5f;
-    f32 m03_p5 = 0.5f + m03;
+    f32 m03_5 = m03 - lbl_eu_80669CA4;
+    f32 m03_p5 = lbl_eu_80669CA4 + m03;
     f32 sv_tv = tv_5 * sv;
     f32 su_sin = su * sinR;
 
     pMtx->m[0][0] = su_cos * m00 + su_sin * m10;
     pMtx->m[1][0] = -sv_sin * m00 + sv_cos * m10;
-    pMtx->m[1][3] = 1.0f + (-sv_sin * m03_p5 + sv_cos * m13_5 - sv_tv);
+    pMtx->m[1][3] =
+        lbl_eu_80669C9C + (-sv_sin * m03_p5 + sv_cos * m13_5 - sv_tv);
     pMtx->m[0][1] = su_cos * m01 + su_sin * m11;
     pMtx->m[0][2] = su_cos * m02 + su_sin * m12;
     pMtx->m[1][1] = -sv_sin * m01 + sv_cos * m11;
@@ -324,8 +359,8 @@ u32 CalcWorldMtx_Maya_SSC_Apply(math::MTX34* pW, math::VEC3* pS, const math::MTX
     u32 flags = pResult->flags;
     u32 newAttr = attr;
 
-    if ((flags & ChrAnmResult::FLAG_ROT_TRANS_ZERO) ||
-        (flags & ChrAnmResult::FLAG_MTX_IDENT)) {
+    if ((flags & ChrAnmResult::FLAG_MTX_IDENT) ||
+        (flags & ChrAnmResult::FLAG_ROT_TRANS_ZERO)) {
         math::MTX34Copy(pW, pW1);
     } else if (flags & ChrAnmResult::FLAG_ROT_ZERO) {
         if (detail::WorldMtxAttr::IsScaleOne(attr)) {
@@ -349,7 +384,7 @@ u32 CalcWorldMtx_Maya_SSC_Apply(math::MTX34* pW, math::VEC3* pS, const math::MTX
 
     if (flags & ChrAnmResult::FLAG_SCALE_ONE) {
         newAttr = detail::WorldMtxAttr::AnmScaleOne(newAttr);
-        pS->x = pS->y = pS->z = 1.0f;
+        pS->x = pS->y = pS->z = lbl_eu_80669C9C;
     } else {
         newAttr = detail::WorldMtxAttr::AnmNotScaleOne(newAttr);
         *pS = pResult->s;

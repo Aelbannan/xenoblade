@@ -793,7 +793,6 @@ def pending_targets(targets: List[Target]) -> List[Target]:
     result = [
         target for target in targets
         if target.buildable
-        and target.extra.get("origin") != "symbols.txt"
         and target.status not in done
         and target.workflow_status not in closed
     ]
@@ -859,8 +858,6 @@ class RecertifyPlan:
 
 def plan_recertify_bottom_up(
     targets: List[Target],
-    *,
-    include_catalog: bool = False,
 ) -> RecertifyPlan:
     """Order accepted targets that lack a current semantic certificate.
 
@@ -880,8 +877,6 @@ def plan_recertify_bottom_up(
         if target.status == "FULL_MATCH":
             continue  # FULL_MATCH is intrinsically certified; no certificate needed
         if not target.buildable:
-            continue
-        if not include_catalog and target.extra.get("origin") == "symbols.txt":
             continue
         cert_error = equivalence_certificate_error(rows_by_id[target.id], rows_by_id)
         if cert_error is None:
@@ -936,7 +931,6 @@ def plan_recertify_bottom_up(
 def recertify_ready_wave(
     targets: List[Target],
     *,
-    include_catalog: bool = False,
     skip_ids: Optional[set[str]] = None,
 ) -> List[Target]:
     """Return accepted targets that can be certified with the current registry."""
@@ -951,8 +945,6 @@ def recertify_ready_wave(
             continue
         if target.status == "FULL_MATCH":
             continue  # FULL_MATCH is intrinsically certified; no certificate needed
-        if not include_catalog and target.extra.get("origin") == "symbols.txt":
-            continue
         if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
             continue
         if _callgraph_blocks_certification(target) is not None:
@@ -968,7 +960,6 @@ def harness_targets(
     targets: List[Target],
     *,
     selection: str,
-    include_catalog: bool = False,
 ) -> List[Target]:
     """Select a safe bottom-up call-graph frontier for the cycle harness."""
     rows_by_id = _target_registry_rows(targets)
@@ -979,7 +970,6 @@ def harness_targets(
         if target.buildable
         and target.status not in ACCEPTED_MATCH_STATUSES
         and target.workflow_status not in {"ACCEPTED", "NOT_REQUIRED", "BLOCKED"}
-        and (include_catalog or target.extra.get("origin") != "symbols.txt")
     ]
     def is_leaf(target: Target) -> bool:
         return (

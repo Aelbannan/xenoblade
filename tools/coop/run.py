@@ -679,18 +679,13 @@ def cmd_queue(
     *,
     dry_run: bool,
     selection: str = "pending",
-    include_catalog: bool = False,
     limit: Optional[int] = None,
 ) -> int:
     all_targets = load_targets(config)
-    if selection == "pending" and not include_catalog:
+    if selection == "pending":
         targets = pending_targets(all_targets)
     else:
-        targets = harness_targets(
-            all_targets,
-            selection=selection,
-            include_catalog=include_catalog,
-        )
+        targets = harness_targets(all_targets, selection=selection)
     if limit is not None:
         targets = targets[:limit]
     if not targets:
@@ -721,11 +716,8 @@ def cmd_targets_list(
     workflow_status: Optional[str],
     match_status: Optional[str],
     kind: Optional[str],
-    include_catalog: bool,
 ) -> int:
     targets = load_targets(config)
-    if not include_catalog:
-        targets = [target for target in targets if target.extra.get("origin") != "symbols.txt"]
     if milestone:
         targets = [t for t in targets if t.milestone == milestone]
     if workflow_status:
@@ -822,10 +814,7 @@ def _filter_target_rows(
     *,
     milestone: Optional[str],
     kind: Optional[str],
-    include_catalog: bool,
 ) -> list[dict]:
-    if not include_catalog:
-        rows = [row for row in rows if not row["catalog"]]
     if milestone:
         rows = [row for row in rows if row["milestone"] == milestone]
     if kind:
@@ -887,13 +876,11 @@ def cmd_targets_status(
     kind: Optional[str],
     output: Optional[Path],
     output_format: str,
-    include_catalog: bool,
 ) -> int:
     rows = _filter_target_rows(
         _resolved_target_rows(config),
         milestone=milestone,
         kind=kind,
-        include_catalog=include_catalog,
     )
     if output_format == "json":
         rendered = json.dumps({"region": config.region, "targets": rows}, indent=2) + "\n"
@@ -1326,7 +1313,6 @@ def cmd_targets_recertify(
     bottom_up: bool,
     dry_run: bool,
     limit: Optional[int],
-    include_catalog: bool,
     linked: bool = False,
 ) -> int:
     """Issue/refresh semantic certificates for accepted targets, leaves first."""
@@ -1335,7 +1321,7 @@ def cmd_targets_recertify(
         return 2
 
     targets = load_targets(config)
-    plan = plan_recertify_bottom_up(targets, include_catalog=include_catalog)
+    plan = plan_recertify_bottom_up(targets)
     queue = plan.ordered if limit is None else plan.ordered[:limit]
     mode = "dry-run" if dry_run else "apply"
     print(
@@ -1365,11 +1351,7 @@ def cmd_targets_recertify(
     failed_ids: set[str] = set()
     while limit is None or attempted < limit:
         live_targets = load_targets(config)
-        wave = recertify_ready_wave(
-            live_targets,
-            include_catalog=include_catalog,
-            skip_ids=failed_ids,
-        )
+        wave = recertify_ready_wave(live_targets, skip_ids=failed_ids)
         if not wave:
             break
         remaining_budget = None if limit is None else max(0, limit - attempted)
@@ -2132,11 +2114,6 @@ def main() -> int:
                 "semantically certified; ready=union of leaf and callees-accepted"
             ),
         )
-        command_parser.add_argument(
-            "--include-catalog",
-            action="store_true",
-            help="Include catalog functions imported from symbols.txt",
-        )
         command_parser.add_argument("--limit", type=int)
         command_parser.add_argument("--dry-run", action="store_true")
 
@@ -2154,11 +2131,6 @@ def main() -> int:
     p_targets_list.add_argument("--workflow-status")
     p_targets_list.add_argument("--match-status")
     p_targets_list.add_argument("--kind")
-    p_targets_list.add_argument(
-        "--include-catalog",
-        action="store_true",
-        help="Include catalog records imported directly from symbols.txt",
-    )
     p_targets_show = p_targets_sub.add_parser("show")
     p_targets_show.add_argument("target_id")
     p_targets_status = p_targets_sub.add_parser(
@@ -2168,11 +2140,6 @@ def main() -> int:
     p_targets_status.add_argument("--kind", default="function")
     p_targets_status.add_argument("--format", choices=["markdown", "json"], default="markdown")
     p_targets_status.add_argument("--output", type=Path)
-    p_targets_status.add_argument(
-        "--include-catalog",
-        action="store_true",
-        help="Include unassigned records imported directly from symbols.txt",
-    )
     p_targets_sub.add_parser("validate", help="Validate registry identities and status vocabularies")
     p_targets_sub.add_parser(
         "sync-attempts",
@@ -2259,11 +2226,6 @@ def main() -> int:
         "--limit",
         type=int,
         help="Maximum number of targets to certify (apply) or list (dry-run)",
-    )
-    p_targets_recertify.add_argument(
-        "--include-catalog",
-        action="store_true",
-        help="Include catalog functions imported from symbols.txt",
     )
     p_targets_recertify.add_argument(
         "--linked",
@@ -2458,7 +2420,6 @@ def main() -> int:
             config,
             dry_run=args.dry_run,
             selection=args.selection,
-            include_catalog=args.include_catalog,
             limit=args.limit,
         )
     if args.command == "harness":
@@ -2467,7 +2428,6 @@ def main() -> int:
             config,
             dry_run=args.dry_run,
             selection=args.selection,
-            include_catalog=args.include_catalog,
             limit=args.limit,
         )
     if args.command == "targets" and args.targets_cmd == "list":
@@ -2477,7 +2437,6 @@ def main() -> int:
             args.workflow_status,
             args.match_status,
             args.kind,
-            args.include_catalog,
         )
     if args.command == "targets" and args.targets_cmd == "show":
         return cmd_targets_show(config, args.target_id)
@@ -2488,7 +2447,6 @@ def main() -> int:
             kind=args.kind,
             output=args.output,
             output_format=args.format,
-            include_catalog=args.include_catalog,
         )
     if args.command == "targets" and args.targets_cmd == "validate":
         return cmd_targets_validate(config)
@@ -2539,7 +2497,6 @@ def main() -> int:
             bottom_up=bool(args.bottom_up),
             dry_run=bool(args.dry_run),
             limit=args.limit,
-            include_catalog=bool(args.include_catalog),
             linked=bool(args.linked),
         )
     if args.command == "targets" and args.targets_cmd == "claim-smallest":

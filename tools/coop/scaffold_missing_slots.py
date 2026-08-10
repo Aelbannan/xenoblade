@@ -1546,9 +1546,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         pool = [
             t
-            for t in harness_targets(
-                raw, selection=args.selection, include_catalog=True
-            )
+            for t in harness_targets(raw, selection=args.selection)
             if t.status == args.status
             and t.symbol
             and t.source is not None

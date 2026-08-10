@@ -779,7 +779,6 @@ class TargetRegistryTests(unittest.TestCase):
         frontier = harness_targets(
             [leaf_certified, caller],
             selection="callees-accepted",
-            include_catalog=True,
         )
         self.assertEqual([item.id for item in frontier], ["caller"])
 

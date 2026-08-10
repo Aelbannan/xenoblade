@@ -21,6 +21,19 @@
 // Full definition TBD during parent TU decomp.
 #define CREVT_CAMERA_PARENT_SIZE 0x14
 
+// Opaque event-file descriptor (mField88 target; +0x04 is a flag word)
+struct CREvtCamFile {
+    u32 field_00;
+    u32 field_04;
+};
+
+// Minimal view of cf::CTaskREvent (instance returned by func_801644B4) --
+// only the 0x1B8 flag word is accessed from this TU.
+struct CREvtCamTaskEvent {
+    u8 pad[0x1B8];
+    u32 field_1B8;
+};
+
 class CREvtCamera {
 public:
     // Inherited from cf::CREvtObj (size 0x14)
@@ -42,8 +55,8 @@ public:
     // +0x58: second 3x4 matrix (MTX34)
     f32 mMatrix58[3][4];
 
-    // +0x88: pointer to something (set in func_80180664)
-    u32 mField88;
+    // +0x88: event-file descriptor pointer (set in func_80180664)
+    CREvtCamFile* mField88;
     // +0x8C: float (default from lbl_eu_806678A4, updated from game manager)
     f32 mField8C;
     // +0x90: scene-item handle (set by func_80180414)

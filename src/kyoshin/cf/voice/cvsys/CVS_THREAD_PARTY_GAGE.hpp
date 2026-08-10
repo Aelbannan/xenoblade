@@ -48,7 +48,7 @@ extern "C" u32 lbl_eu_80539C48[3];
 extern "C" u32 lbl_eu_80539C54[3];
 extern "C" u32 lbl_eu_80539C60[3];
 extern "C" u32 lbl_eu_80539C6C[7];
-extern "C" u32 lbl_eu_80662D18[];
+extern "C" u32 lbl_eu_80662D18[2];
 
 // Phantom vtable view over a CVS_THREAD vtable pointer (stored at +0x1C) so
 // slot-2 (offset 0x08) dispatch is emitted as a real r12-chained virtual

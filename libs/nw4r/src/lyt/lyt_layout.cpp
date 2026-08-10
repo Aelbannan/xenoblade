@@ -90,12 +90,15 @@ Layout::Layout()
 
 Layout::~Layout() {
     GroupContainer* pGroupContainer = mpGroupContainer;
-    Pane* pRootPane = mpRootPane;
 
     if (pGroupContainer != NULL) {
         pGroupContainer->~GroupContainer();
         FreeMemory(pGroupContainer);
     }
+
+    // Loaded only now (retail schedules the mpRootPane load after the
+    // group-container block; hoisting it would add an extra instruction).
+    Pane* pRootPane = mpRootPane;
 
     if (pRootPane != NULL && !pRootPane->IsUserAllocated()) {
         pRootPane->~Pane();

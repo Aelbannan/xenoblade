@@ -50,7 +50,10 @@ struct CREvtMovie {
 
 // String constant: "/ev/realtime/\0.sfd\0" packed together.
 // [0x00 .. 0x0D] = "/ev/realtime/", [0x0E .. ] = ".sfd"
-extern const char lbl_eu_8050FD98[];
+// Declared as a single object (not an array) so that `&lbl + 14` is emitted
+// as runtime pointer arithmetic from a held base pointer rather than being
+// folded into a constant array index (matches retail's `addi rN,rM,14`).
+extern const char lbl_eu_8050FD98;
 
 // Path-building buffer used by CREvtMovie playback functions.
 // Holds the concatenated SFD path in mPath and tracks its length in mLength;

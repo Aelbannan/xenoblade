@@ -23,9 +23,11 @@ void func_80164ED0(const char* path, int flag, void* handle);
 void* func_8016C3DC(void);
 
 // Counter/timing functions
+// func_8016A3C4 is an unsigned tick counter; 8016A378/8016A35C return
+// signed timestamps (compared with a signed `cmpi` in retail).
 u32 func_8016A3C4(void);
-u32 func_8016A378(void);
-u32 func_8016A35C(void);
+int func_8016A378(void);
+int func_8016A35C(void);
 
 // Memory functions
 void* func_80459AD0__7CLibCriFv(void);
@@ -93,17 +95,20 @@ extern "C" void func_80294980(CREvtMovie* self) {
     // Check if already playing or finished
     if (func_80164FE8() != 0) return;
 
-    // Build file path on stack
+    // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
+    const char* dir = &lbl_eu_8050FD98;             // "/ev/realtime/"
     CREvtMoviePathBuf buf;
-    buf.mLength = strlen(lbl_eu_8050FD98);
-    strcpy(buf.mPath, lbl_eu_8050FD98);
+    buf.mLength = strlen(dir);
+    strcpy(buf.mPath, dir);
 
-    u32 sLen = strlen(self->mScriptData->mScriptName);
-    strcat(buf.mPath, self->mScriptData->mScriptName);
+    const char* name = self->mScriptData->mScriptName;
+    u32 sLen = strlen(name);
+    strcat(buf.mPath, name);
     buf.mLength += sLen;
 
-    u32 eLen = strlen(lbl_eu_8050FD98 + 14);        // ".sfd"
-    strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+    const char* ext = dir + 14;                     // ".sfd"
+    u32 eLen = strlen(ext);
+    strcat(buf.mPath, ext);
     buf.mLength += eLen;
 
     func_80164ED0(buf.mPath, 1, func_8016C3DC());
@@ -125,23 +130,26 @@ extern "C" void func_80294A70(CREvtMovie* self) {
 
     // Check memory availability
     u32 criSize = (u32)func_80459AD0__7CLibCriFv();
-    void* memHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    if (getMaxAllocSize__Q23mtl10MemManagerFUl(memHandle) + 0x200 <= criSize) return;
+    if (getMaxAllocSize__Q23mtl10MemManagerFUl(getHandleMEM2__Q23mtl10MemManagerFv()) + 0x200 <= criSize)
+        return;
 
     // Double-check not playing
     if (func_80164FE8() != 0) return;
 
     // Build file path
+    const char* dir = &lbl_eu_8050FD98;             // "/ev/realtime/"
     CREvtMoviePathBuf buf;
-    buf.mLength = strlen(lbl_eu_8050FD98);
-    strcpy(buf.mPath, lbl_eu_8050FD98);
+    buf.mLength = strlen(dir);
+    strcpy(buf.mPath, dir);
 
-    u32 sLen = strlen(self->mScriptData->mScriptName);
-    strcat(buf.mPath, self->mScriptData->mScriptName);
+    const char* name = self->mScriptData->mScriptName;
+    u32 sLen = strlen(name);
+    strcat(buf.mPath, name);
     buf.mLength += sLen;
 
-    u32 eLen = strlen(lbl_eu_8050FD98 + 14);        // ".sfd"
-    strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+    const char* ext = dir + 14;                     // ".sfd"
+    u32 eLen = strlen(ext);
+    strcat(buf.mPath, ext);
     buf.mLength += eLen;
 
     func_80164ED0(buf.mPath, 1, func_8016C3DC());
@@ -161,16 +169,20 @@ extern "C" void func_80294BA4(CREvtMovie* self) {
     }
     // Otherwise if not finished, start playback
     else if (func_80164FE8() == 0) {
+        // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
+        const char* dir = &lbl_eu_8050FD98;         // "/ev/realtime/"
         CREvtMoviePathBuf buf;
-        buf.mLength = strlen(lbl_eu_8050FD98);
-        strcpy(buf.mPath, lbl_eu_8050FD98);
+        buf.mLength = strlen(dir);
+        strcpy(buf.mPath, dir);
 
-        u32 sLen = strlen(self->mScriptData->mScriptName);
-        strcat(buf.mPath, self->mScriptData->mScriptName);
+        const char* name = self->mScriptData->mScriptName;
+        u32 sLen = strlen(name);
+        strcat(buf.mPath, name);
         buf.mLength += sLen;
 
-        u32 eLen = strlen(lbl_eu_8050FD98 + 14);    // ".sfd"
-        strcat(buf.mPath, lbl_eu_8050FD98 + 14);
+        const char* ext = dir + 14;                 // ".sfd"
+        u32 eLen = strlen(ext);
+        strcat(buf.mPath, ext);
         buf.mLength += eLen;
 
         func_80164ED0(buf.mPath, 0, func_8016C3DC());

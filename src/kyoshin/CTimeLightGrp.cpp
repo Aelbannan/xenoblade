@@ -5,8 +5,7 @@
 #include "monolib/util/reslist.hpp"
 #include "kyoshin/CTimeLightGrp.hpp"
 
-// Forward declare the opaque pointer type used in this TU
-class CVirtualLightObj;
+// Element type of the reslist managed by CTimeLightGrp (pre-existing alias).
 typedef void* CVirtualLightObjPtr;
 
 // CTimeLightGrp inherits from _reslist_base<CVirtualLightObjPtr>.
@@ -227,34 +226,35 @@ extern "C" void func_8005A2F0(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPt
 // ================== func_8005A374 ==================
 extern "C" void func_8005A374(CTimeLightGrp_BaseLayout* self) {
     CTimeLightGrp_BaseLayout* p = self;
-    _reslist_base<CVirtualLightObjPtr>* base =
-        (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
-    _reslist_node<CVirtualLightObjPtr>* head;
-    _reslist_node<CVirtualLightObjPtr>* cur;
 
-    // Retail loads mScale first (kept in f3), then mVal2,mVal1,mVal0, computes
-    // muls sz,sy,(sw),sx, and stores the bit reinterprets before the loop.
+    // Scaled components. Retail CSEs mScale into one FPR, computes products
+    // sz, sy, sx (sw loaded in between), then reinterprets them via stack peek
+    // slots (stfs + lwz) in [sx, sy, sz, sw] order before the walk.
     float scale = p->mScale;
     float sz = p->mVal2 * scale;
     float sy = p->mVal1 * scale;
     float sw = p->mVal3;
     float sx = p->mVal0 * scale;
 
-    u32 szBits = *(u32*)&sz;
-    u32 sxBits = *(u32*)&sx;
-    u32 syBits = *(u32*)&sy;
-    u32 swBits = *(u32*)&sw;
+    // Reinterprets live in a 4-word block; MWCC fuses each component's peek
+    // slot with the array element, then hoists the four lwz before the walk
+    // into consecutive GPRs (retail: r7,r6,r5,r4 for sx,sy,sz,sw).
+    u32 bits[4];
+    bits[0] = *(u32*)&sx;
+    bits[1] = *(u32*)&sy;
+    bits[2] = *(u32*)&sz;
+    bits[3] = *(u32*)&sw;
 
-    head = base->mStartNodePtr;
-    cur = head->mNext;
-
-    while (cur != head) {
-        u8* data = (u8*)cur->mItem;
-        if (data[0x19] == 0) {
-            *(u32*)(data + 0x1C) = sxBits;
-            *(u32*)(data + 0x20) = syBits;
-            *(u32*)(data + 0x24) = szBits;
-            *(u32*)(data + 0x28) = swBits;
+    // Re-read mStartNodePtr from self each iteration like retail (reloads
+    // 12(r3) on every back-edge) so `self` stays live in r3.
+    _reslist_node<CVirtualLightObjPtr>* cur = self->mStartNodePtr->mNext;
+    while (cur != self->mStartNodePtr) {
+        CVirtualLightObjFields* obj = (CVirtualLightObjFields*)cur->mItem;
+        if (obj->mByte19 == 0) {
+            *(u32*)&obj->mField1C = bits[0];   // sx
+            *(u32*)&obj->mField20 = bits[1];   // sy
+            *(u32*)&obj->mField24 = bits[2];   // sz
+            *(u32*)&obj->mField28 = bits[3];   // sw
         }
         cur = cur->mNext;
     }

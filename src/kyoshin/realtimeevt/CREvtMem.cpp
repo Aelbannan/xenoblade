@@ -29,19 +29,18 @@ extern f32 lbl_eu_80667650;
 // ============================================================================
 extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
     f32 ps = lbl_eu_80667650;
-    void* v = (void*)lbl_eu_80530A30;
     self->flags = 0;
-    self->vtable = v;
+    self->vtable = (void*)lbl_eu_80530A30;
     self->field_08 = 0;
     self->field_0C = 0;
     self->arenaStart = 0;
     self->arenaEnd = 0;
     self->arenaSize = 0;
     self->currentPos = 0;
-    self->someFloat = ps;
     lbl_eu_80664260 = self;
     self->ptr1 = nullptr;
     self->ptr2 = nullptr;
+    self->someFloat = ps;
 }
 
 // ============================================================================
@@ -215,7 +214,6 @@ extern "C" void func_80167FFC(void* ptr) {
 // func_80168028: Get pointer from indexed slot
 // ============================================================================
 extern "C" void* func_80168028(u32 idx) {
-    cf::CREvtMem* mem = lbl_eu_80664260;
-    u32* arr = (u32*)&mem->ptr1;  // ptr1 is at +0x10, ptr2 at +0x14
-    return (void*)arr[idx + 4];
+    // Reads slot [idx] from the pointer array that begins at ptr1 (+0x10).
+    return ((void**)&lbl_eu_80664260->ptr1)[idx];
 }

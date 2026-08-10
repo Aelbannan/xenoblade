@@ -28,7 +28,7 @@ void func_802A4FA4(CVS_THREAD_BUF* self) {
         goto restart;
     }
     // If the voice is still strongly active, do not push another line.
-    if (((int (*)(CVoiceHandle*))handle->vtable[0x2BC / 4])(handle) != 0) {
+    if (((CVoiceVTV*)handle)->idle() != 0) {
         goto restart;
     }
 
@@ -75,34 +75,13 @@ void func_802A5060(CVS_THREAD_BUF* self) {
 void func_802A50E0(CVS_THREAD_BUF* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    CVoiceHandle* h;
-    CCharVoice* biased;
-
-    h = self->slotHandles[0];
-    biased = (CCharVoice*)h;
-    if (h != NULL) {
-        biased = &h->voice;
-    }
-    if (biased == voicePtr) {
-        self->slotHandles[0] = NULL;
-    }
-
-    h = self->slotHandles[1];
-    biased = (CCharVoice*)h;
-    if (h != NULL) {
-        biased = &h->voice;
-    }
-    if (biased == voicePtr) {
-        self->slotHandles[1] = NULL;
-    }
-
-    h = self->slotHandles[2];
-    biased = (CCharVoice*)h;
-    if (h != NULL) {
-        biased = &h->voice;
-    }
-    if (biased == voicePtr) {
-        self->slotHandles[2] = NULL;
+    for (u32 i = 0; i < 3; i++) {
+        CVoiceHandle* h = self->slotHandles[i];
+        CCharVoice* biased = h != NULL ? &h->voice : (CCharVoice*)h;
+        CVoiceHandle** s = &self->slotHandles[i];
+        if (biased == voicePtr) {
+            *s = NULL;
+        }
     }
 }
 

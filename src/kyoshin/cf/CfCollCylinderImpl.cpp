@@ -2,31 +2,35 @@
 #include "kyoshin/cf/CfCollCylinderImpl.hpp"
 #include "monolib/math/CCol4.hpp"
 
-void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self, void* end, ml::CCol4 color, float radius);
-
 // Debug-render a collision cylinder from its impl, colouring it by collision kind.
+// Colour chosen per collision kind (see retail .sdata2 constants).
 void func_800AB010(void* self, cf::CfCollCylinderImpl* impl) {
     ml::CCol4 col;
 
+    // Case 1 is a standalone `if` (not part of the else-chain below): retail
+    // falls through past it, re-loading mKind for the 6/5/0/2 chain (so a
+    // kind==1 hull ends up coloured by the default else). The else-chain then
+    // binds to case 6, giving each matched body its own branch-to-tail.
     if (impl->mKind == 1) {
-        col.set(0.0f, 1.0f, 1.0f, 0.1f);
-    } else if (impl->mKind == 6) {
-        col.set(0.0f, 0.7f, 0.7f, 0.1f);
+        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_8066692C);
+    }
+    if (impl->mKind == 6) {
+        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666938, lbl_eu_80666938, lbl_eu_8066692C);
     } else if (impl->mKind == 5) {
         if ((impl->mSubKind & 0xFFFF) == 1) {
-            col.set(1.0f, 0.0f, 0.0f, 0.2f);
+            col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666914, lbl_eu_80666914, lbl_eu_8066693C);
         } else {
-            col.set(0.5f, 0.0f, 1.0f, 0.1f);
+            col = ml::CCol4(lbl_eu_80666930, lbl_eu_80666910, lbl_eu_80666914, lbl_eu_8066692C);
         }
     } else if (impl->mKind == 0) {
-        col.set(0.3f, 1.0f, 0.5f, 0.1f);
+        col = ml::CCol4(lbl_eu_80666918, lbl_eu_80666914, lbl_eu_80666930, lbl_eu_8066692C);
     } else if (impl->mKind == 2) {
-        col.set(0.2f, 0.3f, 1.0f, 0.15f);
+        col = ml::CCol4(lbl_eu_8066693C, lbl_eu_80666918, lbl_eu_80666914, lbl_eu_80666934);
     } else {
-        col.set(0.0f, 0.5f, 1.0f, 0.15f);
+        col = ml::CCol4(lbl_eu_80666910, lbl_eu_80666930, lbl_eu_80666914, lbl_eu_80666934);
     }
 
-    renderCylinder__Q22cf18CfDebugDrawManagerFv(&impl->mStart, &impl->mEnd, col, impl->mRadius);
+    renderCylinder__Q22cf18CfDebugDrawManagerFv(&impl->mStart, &impl->mEnd, &col, impl->mRadius);
 }
 
 // Push a cylinder segment (starting at mStart, offset by f1 along its axis) into

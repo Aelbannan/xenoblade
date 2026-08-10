@@ -191,8 +191,7 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
 extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       u8* config) {
     self->mData = 0;
-    UnkCfgHead* head = (UnkCfgHead*)config;
-    if (head->magic == 0x57504F49) {
+    if (*(u32*)config == 0x57504F49) {
         config += 0xc;
         self->mData = config;
         func_8047E110__17UnkClass_8047E110Fv(lbl_eu_80658560);
@@ -334,8 +333,8 @@ extern "C" __declspec(noinline) void func_8047D0F0__17UnkClass_8047CD0CFv(UnkCla
     if (!(self->mFlags & 1)) return;
 
     u32 cap = (u32)src->mData;
-    u32 base = src->mNodeCount * 4 + 0x28;
     u32 shr = cap >> 1;
+    u32 base = ((src->mNodeCount * 2) * 2) + 0x28;
     u32 sel = (cap >= 0x1f4) ? shr : cap;
     u32 grow = (cap + sel * 2) * 2;
     if (grow > base) {

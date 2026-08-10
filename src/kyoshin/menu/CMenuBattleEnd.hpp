@@ -11,6 +11,8 @@ class Pane;
 }
 }
 class CScn;
+class CProcess;
+class CTaskGame;
 class IScnRender;
 
 // One entry of the internal message/queue array (stride 8).
@@ -74,10 +76,21 @@ struct CMenuBattleEnd {
     void Term();
     void Move();
     void cbRenderBefore();
-    void func_8026F8B0();
-    void func_8026F95C();
-    void func_8026FB0C(u8 flag, u32 param);
 };
+
+// The retail symbols for this class's own lifecycle functions are the
+// unmangled C-linkage names below (the ctor/dtor/task entry take an explicit
+// receiver; func_8026F95C / func_8026FB0C are the CProcess run-time hooks and
+// the queue writer). Definitions live in CMenuBattleEnd.cpp.
+extern "C" {
+CMenuBattleEnd* __ct__CMenuBattleEnd(CMenuBattleEnd* obj, CScn* scene, u8 mode,
+                                     u32 param);
+CMenuBattleEnd* __dt__14CMenuBattleEndFv(CMenuBattleEnd* obj, int flags);
+CMenuBattleEnd* func_8026F8B0(CProcess* parent, CScn* scene, u8 mode, u32 param);
+void func_8026F95C(CMenuBattleEnd* obj);
+void func_8026FB0C(CMenuBattleEnd* obj, u8 flag, u32 param);
+void cbRenderBefore__14CMenuBattleEndFv(void* sub);
+}
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // NOTE: addRenderCB / func_801355F4 bypass the broken monolib work.hpp-umbrella
@@ -92,12 +105,26 @@ extern f32 lbl_eu_80668990;         // anim frame target for func_80137444
 extern f32 lbl_eu_80668994;         // anim reset frame for SetFrame
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void addRenderCB__4CScnFP10IScnRenderUlUl(CScn*, IScnRender*, u32, u32);
-void __ct__8CProcessFv(void*);
+void removeRenderCB__4CScnFP10IScnRender(CScn*, IScnRender*);
 void __ct__17UnkClass_8045F564Fv(void*);
-void __dt__14CMenuBattleEndFv(void*);
-void cbRenderBefore__14CMenuBattleEndFv(void*);
+void __dt__17UnkClass_8045F564Fv(void*, int);
+void __dt__8CProcessFv(void*, int);
+void __dl__FPv(void*);
+void waitForDrawDone__9CDeviceVIFv();
+u32 getWorkMem__17CWorkThreadSystemFv();
+void Regist__8CProcessFP8CProcessb(void*, void*, bool);
+CTaskGame* getInstance__9CTaskGameFv();
+u32 func_800426F0__9CTaskGameFv();
+void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
+void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
+void func_8045F778__17UnkClass_8045F564Fv(void*);
 }
 
 // C++-linkage helpers (retail symbols are their Itanium-mangled forms).
 u32 func_801355A0();
 void func_80138078(u32);
+
+// .sbss globals shared with the retail binary (global-scope plain externs keep
+// the unmangled symbol; no extern "C" needed outside a namespace).
+extern u32 lbl_eu_80663E28;
+extern CMenuBattleEnd* lbl_eu_80664898;

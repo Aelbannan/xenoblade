@@ -104,14 +104,16 @@ __attribute__((never_inline)) void func_804D8EC8(CacheList* list) {
 
 // Count the nodes currently in the singleton cache list.
 u32 func_804D8FB4(void) {
-    CacheListNode* end = lbl_eu_806659C8->mCache.mStartNodePtr;
-    CacheListNode* cur = end->mNext;
-    u32 count = 0;
-    while (cur != end) {
-        cur = cur->mNext;
-        count++;
+    CacheListNode* curNode;
+    CacheListNode* endNode;
+    u32 length = 0;
+    endNode = lbl_eu_806659C8->mCache.mStartNodePtr;
+    curNode = endNode->mNext;
+    while (curNode != endNode) {
+        length++;
+        curNode = curNode->mNext;
     }
-    return count;
+    return length;
 }
 
 // Look up the index-th node's item in the singleton cache list and write out

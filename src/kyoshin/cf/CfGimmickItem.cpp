@@ -56,23 +56,28 @@ void func_80210668(cf::CfGimmickItem* self) {
 void func_80210844(cf::CfGimmickItem* self) {
     func_80209F2C();
 
-    bool fail;
-    if (self->field_6A == 0) {
-        fail = true;
-    } else if (self->field_74 & kItemFlagBusy) {
-        if (func_8020A5DC() != 0) {
-            fail = false;
+    // ok stays false (=> state 4) unless an item object can be kept alive:
+    // a busy actor only stays when func_8020A5DC still reports work, and an
+    // idle one is (re)spawned via func_8020A484 + busy bit.
+    int ok;
+    if (self->field_6A != 0) {
+        if (self->field_74 & kItemFlagBusy) {
+            if (func_8020A5DC() != 0) {
+                ok = 1;
+            } else {
+                self->field_74 &= ~kItemFlagBusy;
+                ok = 0;
+            }
         } else {
-            self->field_74 &= ~kItemFlagBusy;
-            fail = true;
+            func_8020A484();
+            self->field_74 |= kItemFlagBusy;
+            ok = 1;
         }
     } else {
-        func_8020A484();
-        self->field_74 |= kItemFlagBusy;
-        fail = false;
+        ok = 0;
     }
 
-    if (fail) {
+    if (ok == 0) {
         self->field_9E = 4;
     }
 }
@@ -118,10 +123,60 @@ void func_80210BAC(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Remaining functions (scaffolds - NOT YET DECOMPILED)
+// func_802106F8 -- working-frame update: range window, respawn gate, spawn
 // ---------------------------------------------------------------------------
 
-void func_802106F8(){}
+void func_802106F8(cf::CfGimmickItem* self) {
+    // Only run while the current sequence counter sits inside the item's
+    // active window [field_6C, field_6E] (either bound non-zero enables it).
+    if (self->field_6C != 0 || self->field_6E != 0) {
+        u32 seq = func_800822F4__Q22cf13CfGameManagerFv();
+        if (self->field_6C > seq || seq > self->field_6E)
+            return;
+    }
+
+    // Respawn-gate: when field_94 is set, the current count must sit inside
+    // the [field_96, field_97] window or the spawn is skipped.
+    if (self->field_94 != 0) {
+        int count = (int)func_80082354__Q22cf13CfGameManagerFv(self->field_94);
+        if (self->field_97 > count || self->field_96 < count)
+            return;
+    }
+
+    self->field_74 |= 0x10;
+    if (func_80209754(self->field_66, &self->vobj, &self->vvec04,
+                      &self->pad10, (u32)self->field_7C.field_00) == 0)
+        return;
+
+    // Every non-empty item slot must be collectible, otherwise abort.
+    int ok = 0;
+    for (int i = 0; i < 3; ++i) {
+        if (self->field_84[i] != 0) {
+            if (func_801587E8(self->field_84[i]) == 0) {
+                ok = 0;
+                break;
+            }
+            ok = 1;
+        }
+    }
+
+    // While toggled-on, fire the per-frame effect at the placement point.
+    if (self->field_66 & 1) {
+        if (self->field_8E != 0) {
+            func_80208C48((void*)(u32)self->field_8E, &self->vvec04);
+        }
+    }
+
+    if (ok) {
+        self->field_9E = 2;
+    } else {
+        self->field_9E = 1;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Remaining functions (scaffolds - NOT YET DECOMPILED)
+// ---------------------------------------------------------------------------
 
 void func_802108D8(){}
 

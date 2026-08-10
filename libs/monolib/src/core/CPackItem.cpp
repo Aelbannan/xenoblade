@@ -167,46 +167,45 @@ bool CPackItem::lookupFile(const char* filename, char** outPkbPath, u32* outEntr
 
 /* Tries to locate the hash of this item in the hash table. If successful,
 returns the corresponding index. If not successful, returns -1.
-   Each hash table entry is two u32s (lower half, upper half) stored
-   consecutively. The table is accessed as a flat u32 array for matching. */
+   Each hash table entry is two 32-bit words (hash lower half, then upper
+   half) packed into one 8-byte slot, so the table is walked as u32 pairs.
+   If the table is small (< 16 entries) a linear scan is used; otherwise a
+   binary search descending from the mid index. */
 int CPackItem::findHashIndex(int startIndex, int endIndex){
     int length = endIndex - startIndex;
 
     if(length < 16){
-        //If the length is less than 16, just search for a match with a for loop
-        // Access the hash table as u32* for word-by-word comparison (required for matching)
-        //Access the hash table as u32* for word-by-word comparison (required for matching)
-        u32* pHashTable = (u32*)&mFileHashTable[startIndex];
+        // Linear scan over the small range.
+        u32* entry = (u32*)(mFileHashTable + startIndex);
         int i;
         for(i = startIndex; i < endIndex; i++){
-            if(pHashTable[0] == mHashLowerHalf && pHashTable[1] == mHashUpperHalf){
+            if(entry[0] == mHashLowerHalf && entry[1] == mHashUpperHalf){
                 return i;
             }
-            pHashTable += 2; // advance by two u32s per entry
+            entry += 2;
         }
-        
+
         //If the hash couldn't be found, return -1
         return -1;
     }
 
-    //If not, use binary search to narrow down the search space
-    int midIndex = (endIndex + startIndex)/2;
-    // Access the hash table as u32* for word-by-word comparison (required for matching)
-    u32* pHashTable = (u32*)&mFileHashTable[midIndex];
+    // Binary search: narrow down the search space toward the mid index.
+    int midIndex = (endIndex + startIndex) / 2;
+    u32* entry = (u32*)(mFileHashTable + midIndex);
 
     /* If the entry at the middle index happens to be the right one, return the index. If not,
-    call the function again, choosing the left portion if any of the two hash values are larger,
+    call the function again, choosing the left portion if the value is larger,
     and the right portion otherwise. */
-    if(pHashTable[1] == mHashUpperHalf){
-        if(pHashTable[0] == mHashLowerHalf){
+    if(entry[1] == mHashUpperHalf){
+        if(entry[0] == mHashLowerHalf){
             //The middle entry matches the values of this item, return the index
             return midIndex;
-        }else if(pHashTable[0] > mHashLowerHalf){
+        }else if(entry[0] > mHashLowerHalf){
             return findHashIndex(startIndex, midIndex);
         }else{
             return findHashIndex(midIndex, endIndex);
         }
-    }else if(pHashTable[1] > mHashUpperHalf){
+    }else if(entry[1] > mHashUpperHalf){
         return findHashIndex(startIndex, midIndex);
     }else{
         return findHashIndex(midIndex, endIndex);
@@ -258,21 +257,22 @@ bool CPackItem::calculatePackFileHash(const char* filename){
     }
 
     u32 hashValTableLength = mPackHeader->mHashValTableLength;
-    
+
     for(u32 i = 0; i < hashValTableLength; i++){
         u8 val = mPackHeader->mHashValTable[i];
-        u32 byteIndex = val / 8;
-        u8 mask = (u8)(1u << (val % 8));
+        u32 byteIndex = val / 8;         // which byte of the filename this bit tests
+        u8 mask = (u8)(1u << (val % 8)); // bit position within that byte
         if((u32)(length - 1) >= byteIndex){
-            bool bit = ((u8)filename[(length - 1) - byteIndex] & mask) != 0;
-            //If the index is more than 32, write to the high 32 bit variable
-            if(i >= 32){
-                mHashUpperHalf |= (1u << (i - 32)) * bit;
-            }else{
+            u8 ch = (u8)filename[(length - 1) - byteIndex];
+            bool bit = (ch & mask) != 0;
+            if(i < 32){
                 mHashLowerHalf |= (1u << i) * bit;
+            }else{
+                //The index is more than 32, write to the high 32 bit variable
+                mHashUpperHalf |= (1u << (i - 32)) * bit;
             }
         }
     }
-    
+
     return true;
 }

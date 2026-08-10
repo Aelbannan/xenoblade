@@ -63,6 +63,9 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
     case WaveFile::FORMAT_PCM8:
         format = SAMPLE_FORMAT_PCM_S8;
         break;
+    case WaveFile::FORMAT_ADPCM:
+        format = SAMPLE_FORMAT_DSP_ADPCM;
+        break;
     default:
         format = SAMPLE_FORMAT_DSP_ADPCM;
         break;
@@ -79,57 +82,72 @@ bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
         NULL, pHeader->loopEnd, static_cast<AxVoice::Format>(format)) +
                      1;
 
-    const u8* pHeaderBytes = reinterpret_cast<const u8*>(pHeader);
     const u32* pInfoOffsetTable = reinterpret_cast<const u32*>(
-        pHeaderBytes + pHeader->channelInfoTableOffset);
+        reinterpret_cast<const u8*>(pHeader) +
+        pHeader->channelInfoTableOffset);
 
     // Fill one channel (2 max) from the channel info table until all channels
     // in the header are accounted for.
-    RuntimeChannelParam* pChannel = &pInfo->channel[0];
-    u32 i = 0;
-    while (i < pHeader->numChannels) {
+    for (u32 i = 0; i < pHeader->numChannels; i++) {
         if (i < CHANNEL_MAX) {
             const WaveChannelInfo* pChannelInfo =
                 reinterpret_cast<const WaveChannelInfo*>(
-                    pHeaderBytes + pInfoOffsetTable[i]);
+                    reinterpret_cast<const u8*>(pHeader) +
+                    pInfoOffsetTable[i]);
 
             if (pChannelInfo->adpcmOffset != 0) {
                 const AdpcmInfo* pAdpcm = reinterpret_cast<const AdpcmInfo*>(
-                    pHeaderBytes + pChannelInfo->adpcmOffset);
+                    reinterpret_cast<const u8*>(pHeader) +
+                    pChannelInfo->adpcmOffset);
 
-                pChannel->adpcmInfo.param.coef[0] = pAdpcm->param.coef[0];
-                pChannel->adpcmInfo.param.coef[1] = pAdpcm->param.coef[1];
-                pChannel->adpcmInfo.param.coef[2] = pAdpcm->param.coef[2];
-                pChannel->adpcmInfo.param.coef[3] = pAdpcm->param.coef[3];
-                pChannel->adpcmInfo.param.coef[4] = pAdpcm->param.coef[4];
-                pChannel->adpcmInfo.param.coef[5] = pAdpcm->param.coef[5];
-                pChannel->adpcmInfo.param.coef[6] = pAdpcm->param.coef[6];
-                pChannel->adpcmInfo.param.coef[7] = pAdpcm->param.coef[7];
-                pChannel->adpcmInfo.param.coef[8] = pAdpcm->param.coef[8];
-                pChannel->adpcmInfo.param.coef[9] = pAdpcm->param.coef[9];
-                pChannel->adpcmInfo.param.coef[10] = pAdpcm->param.coef[10];
-                pChannel->adpcmInfo.param.coef[11] = pAdpcm->param.coef[11];
-                pChannel->adpcmInfo.param.coef[12] = pAdpcm->param.coef[12];
-                pChannel->adpcmInfo.param.coef[13] = pAdpcm->param.coef[13];
-                pChannel->adpcmInfo.param.coef[14] = pAdpcm->param.coef[14];
-                pChannel->adpcmInfo.param.coef[15] = pAdpcm->param.coef[15];
-                pChannel->adpcmInfo.param.gain = pAdpcm->param.gain;
-                pChannel->adpcmInfo.param.pred_scale =
+                pInfo->channel[i].adpcmInfo.param.coef[0] =
+                    pAdpcm->param.coef[0];
+                pInfo->channel[i].adpcmInfo.param.coef[1] =
+                    pAdpcm->param.coef[1];
+                pInfo->channel[i].adpcmInfo.param.coef[2] =
+                    pAdpcm->param.coef[2];
+                pInfo->channel[i].adpcmInfo.param.coef[3] =
+                    pAdpcm->param.coef[3];
+                pInfo->channel[i].adpcmInfo.param.coef[4] =
+                    pAdpcm->param.coef[4];
+                pInfo->channel[i].adpcmInfo.param.coef[5] =
+                    pAdpcm->param.coef[5];
+                pInfo->channel[i].adpcmInfo.param.coef[6] =
+                    pAdpcm->param.coef[6];
+                pInfo->channel[i].adpcmInfo.param.coef[7] =
+                    pAdpcm->param.coef[7];
+                pInfo->channel[i].adpcmInfo.param.coef[8] =
+                    pAdpcm->param.coef[8];
+                pInfo->channel[i].adpcmInfo.param.coef[9] =
+                    pAdpcm->param.coef[9];
+                pInfo->channel[i].adpcmInfo.param.coef[10] =
+                    pAdpcm->param.coef[10];
+                pInfo->channel[i].adpcmInfo.param.coef[11] =
+                    pAdpcm->param.coef[11];
+                pInfo->channel[i].adpcmInfo.param.coef[12] =
+                    pAdpcm->param.coef[12];
+                pInfo->channel[i].adpcmInfo.param.coef[13] =
+                    pAdpcm->param.coef[13];
+                pInfo->channel[i].adpcmInfo.param.coef[14] =
+                    pAdpcm->param.coef[14];
+                pInfo->channel[i].adpcmInfo.param.coef[15] =
+                    pAdpcm->param.coef[15];
+                pInfo->channel[i].adpcmInfo.param.gain = pAdpcm->param.gain;
+                pInfo->channel[i].adpcmInfo.param.pred_scale =
                     pAdpcm->param.pred_scale;
-                pChannel->adpcmInfo.param.yn1 = pAdpcm->param.yn1;
-                pChannel->adpcmInfo.param.yn2 = pAdpcm->param.yn2;
-                pChannel->adpcmInfo.loopParam.loop_pred_scale =
+                pInfo->channel[i].adpcmInfo.param.yn1 = pAdpcm->param.yn1;
+                pInfo->channel[i].adpcmInfo.param.yn2 = pAdpcm->param.yn2;
+                pInfo->channel[i].adpcmInfo.loopParam.loop_pred_scale =
                     pAdpcm->loopParam.loop_pred_scale;
-                pChannel->adpcmInfo.loopParam.loop_yn1 =
+                pInfo->channel[i].adpcmInfo.loopParam.loop_yn1 =
                     pAdpcm->loopParam.loop_yn1;
-                pChannel->adpcmInfo.loopParam.loop_yn2 =
+                pInfo->channel[i].adpcmInfo.loopParam.loop_yn2 =
                     pAdpcm->loopParam.loop_yn2;
             }
 
-            pChannel->dataAddr = GetWaveDataAddress(pChannelInfo, pWaveAddr);
+            pInfo->channel[i].dataAddr =
+                GetWaveDataAddress(pChannelInfo, pWaveAddr);
         }
-        pChannel++;
-        i++;
     }
 
     return true;

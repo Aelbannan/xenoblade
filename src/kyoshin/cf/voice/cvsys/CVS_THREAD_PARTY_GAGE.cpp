@@ -69,21 +69,26 @@ void func_802A82D4(CVS_THREAD_PARTY_GAGE* self) {
     self->unk0 = (u32*)v0;
     self->unk8 = *p;
 
-    if (member != NULL &&
-        ((int (*)(CVoiceHandle*))member->vtable[0x2BC / 4])(member) == 0) {
+    if (member != NULL && ((CVoiceVTV*)member)->idle() == 0) {
         // Choose the voice ID based on the gauge-change threshold level.
         int voiceId = -1;
-        if (self->thresholdLevel == 0) {
+        switch ((s32)self->thresholdLevel) {
+        case 0:
             voiceId = 0x641;
-        } else if (self->thresholdLevel == 1) {
+            break;
+        case 1:
             voiceId = 0x641 + (func_802A7DF8(self->partyMember) == 0);
-        } else if (self->thresholdLevel == 2) {
+            break;
+        case 2:
             voiceId = lbl_eu_80662D18[ml::math::mtRand(2)];
+            break;
         }
 
-        CCharVoice* voicePtr = (CCharVoice*)member;
-        if (member != NULL) {
-            voicePtr = &member->voice;
+        // Retail re-reads self->partyMember here rather than reusing the
+        // cached `member` loaded at the top (both biased to embedded voice).
+        CCharVoice* voicePtr = (CCharVoice*)self->partyMember;
+        if (self->partyMember != NULL) {
+            voicePtr = &self->partyMember->voice;
         }
         if (func_802A3C44(self, voicePtr, voiceId) != 0) return;
     }
@@ -165,7 +170,7 @@ int CVS_THREAD_PARTY_GAGE::blank2() {
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
 // the base constructor, sets vtable/owner fields, and copies init data.
-CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
+CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) try {
     if (owner1 <= owner2) return NULL;
     if (func_802A790C() < 2) return NULL;
 
@@ -188,17 +193,14 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)func_802A34E4(0x2c);
     if (self == NULL) return NULL;
 
+    // Retail emits a redundant re-check (beq past the construct block) here.
     if (self != NULL) {
-        try {
-            __ct__cf_CVS_THREAD();
-            // Set the subclass vtable at offset 0x1C (right after base fields).
-            ((void**)self)[7] = (void*)lbl_eu_80539C6C;
-            self->partyMember = member;
-            self->gaugeData = gauge;
-            self->thresholdLevel = (u32)level;
-        } catch (...) {
-            throw;
-        }
+        __ct__cf_CVS_THREAD();
+        // Set the subclass vtable at offset 0x1C (right after base fields).
+        ((void**)self)[7] = (void*)lbl_eu_80539C6C;
+        self->partyMember = member;
+        self->gaugeData = gauge;
+        self->thresholdLevel = (u32)level;
     }
 
     // Copy init data from the global table.
@@ -207,4 +209,6 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     self->unk4 = base[1];
     self->unk8 = base[2];
     return self;
+} catch (...) {
+    throw;
 }

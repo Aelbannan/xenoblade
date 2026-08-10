@@ -6,6 +6,10 @@ namespace nw4r {
 namespace g3d {
 namespace detail {
 namespace dcc {
+
+// -0.5f (RT translation constant, retail .sdata2 pool symbol)
+extern "C" const float lbl_eu_80669CA8;
+
 namespace {
 
 #pragma dont_inline on
@@ -181,28 +185,28 @@ void ProductTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m12 = pMtx->m[1][2];
     f32 m13 = pMtx->m[1][3];
 
-    f32 cosR_su = cosR * su;
-    f32 sinR_su = sinR * su;
-    f32 cosR_sv = cosR * sv;
-    f32 sinR_sv = sinR * sv;
+    f32 sv_sin = sv * sinR;
+    f32 sv_cos = sv * cosR;
+    f32 sv_half = 0.5f * sv;
+    f32 m13_5 = m13 - 0.5f;
+    f32 m03_5 = m03 - 0.5f;
+    f32 su_cos = su * cosR;
+    f32 su_sin = su * sinR;
 
-    pMtx->m[0][0] = m00 * cosR_su - m01 * sinR_sv;
-    pMtx->m[0][1] = m00 * sinR_su + m01 * cosR_sv;
-    pMtx->m[0][2] = m02;
-    pMtx->m[0][3] = m03;
-    pMtx->m[1][0] = m10 * cosR_su - m11 * sinR_sv;
-    pMtx->m[1][1] = m10 * sinR_su + m11 * cosR_sv;
-    pMtx->m[1][2] = m12;
-    pMtx->m[1][3] = m13;
+    pMtx->m[1][3] = 1.0f + (-sv_sin * m03_5 + sv_cos * m13_5 - sv_half);
+    pMtx->m[1][0] = -sv_sin * m00 + sv_cos * m10;
+    pMtx->m[0][0] = su_cos * m00 + su_sin * m10;
+    pMtx->m[0][1] = su_cos * m01 + su_sin * m11;
+    pMtx->m[1][1] = -sv_sin * m01 + sv_cos * m11;
+    pMtx->m[0][2] = su_cos * m02 + su_sin * m12;
+    pMtx->m[1][2] = -sv_sin * m02 + sv_cos * m12;
+    pMtx->m[0][3] = su_sin * m12 + (su_cos * m03_5 + su_sin * m13_5);
 }
 
 void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 fidx = rSrt.R * lbl_eu_80669CA0;
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
-
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
 
     f32 m00 = pMtx->m[0][0];
     f32 m01 = pMtx->m[0][1];
@@ -213,14 +217,20 @@ void ProductTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m12 = pMtx->m[1][2];
     f32 m13 = pMtx->m[1][3];
 
-    pMtx->m[0][0] = m00 * cosR - m01 * sinR;
-    pMtx->m[0][1] = m00 * sinR + m01 * cosR;
-    pMtx->m[0][2] = m02;
-    pMtx->m[0][3] = m03 - tu;
-    pMtx->m[1][0] = m10 * cosR - m11 * sinR;
-    pMtx->m[1][1] = m10 * sinR + m11 * cosR;
-    pMtx->m[1][2] = m12;
-    pMtx->m[1][3] = m13 + tv;
+    // pMtx = T(-Tu, Tv) * R_maya * pMtx; R_maya is the transposed Maya
+    // rotation (sin/cos swapped rows) with 0.5*(1-cos-sin) translation.
+    pMtx->m[0][0] = sinR * m10 + cosR * m00;
+    pMtx->m[1][0] = -sinR * m00 + cosR * m10;
+    pMtx->m[0][1] = sinR * m11 + cosR * m01;
+    pMtx->m[1][1] = -sinR * m01 + cosR * m11;
+    pMtx->m[0][2] = sinR * m12 + cosR * m02;
+    pMtx->m[1][2] = -sinR * m02 + cosR * m12;
+    pMtx->m[0][3] = (lbl_eu_80669CA8 * cosR + (sinR * m13 + cosR * m03) -
+                     (lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4)) -
+                    rSrt.Tu;
+    pMtx->m[1][3] = rSrt.Tv +
+                    ((lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4) +
+                     (lbl_eu_80669CA8 * cosR + (-sinR * m03 + cosR * m13)));
 }
 
 void ProductTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -246,8 +256,6 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
 
     f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
 
     f32 m00 = pMtx->m[0][0];
     f32 m01 = pMtx->m[0][1];
@@ -258,19 +266,25 @@ void ProductTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 m12 = pMtx->m[1][2];
     f32 m13 = pMtx->m[1][3];
 
-    f32 cosR_su = cosR * su;
-    f32 sinR_su = sinR * su;
-    f32 cosR_sv = cosR * sv;
-    f32 sinR_sv = sinR * sv;
+    f32 sv_sin = sv * sinR;
+    f32 m13_5 = m13 - 0.5f;
+    f32 tv_5 = 0.5f - rSrt.Tv;
+    f32 tu_5 = 0.5f - rSrt.Tu;
+    f32 sv_cos = sv * cosR;
+    f32 su_cos = su * cosR;
+    f32 m03_5 = m03 - 0.5f;
+    f32 m03_p5 = 0.5f + m03;
+    f32 sv_tv = tv_5 * sv;
+    f32 su_sin = su * sinR;
 
-    pMtx->m[0][0] = m00 * cosR_su - m01 * sinR_sv;
-    pMtx->m[0][1] = m00 * sinR_su + m01 * cosR_sv;
-    pMtx->m[0][2] = m02;
-    pMtx->m[0][3] = m03 - tu;
-    pMtx->m[1][0] = m10 * cosR_su - m11 * sinR_sv;
-    pMtx->m[1][1] = m10 * sinR_su + m11 * cosR_sv;
-    pMtx->m[1][2] = m12;
-    pMtx->m[1][3] = m13 + tv;
+    pMtx->m[0][0] = su_cos * m00 + su_sin * m10;
+    pMtx->m[1][0] = -sv_sin * m00 + sv_cos * m10;
+    pMtx->m[1][3] = 1.0f + (-sv_sin * m03_p5 + sv_cos * m13_5 - sv_tv);
+    pMtx->m[0][1] = su_cos * m01 + su_sin * m11;
+    pMtx->m[0][2] = su_cos * m02 + su_sin * m12;
+    pMtx->m[1][1] = -sv_sin * m01 + sv_cos * m11;
+    pMtx->m[1][2] = -sv_sin * m02 + sv_cos * m12;
+    pMtx->m[0][3] = tu_5 * su + (su_cos * m03_5 + su_sin * m13_5);
 }
 #pragma dont_inline reset
 
@@ -310,13 +324,9 @@ u32 CalcWorldMtx_Maya_SSC_Apply(math::MTX34* pW, math::VEC3* pS, const math::MTX
     u32 flags = pResult->flags;
     u32 newAttr = attr;
 
-    if ((flags & ChrAnmResult::FLAG_MTX_IDENT) ||
-        (flags & ChrAnmResult::FLAG_ROT_TRANS_ZERO)) {
-        if (detail::WorldMtxAttr::IsScaleOne(attr)) {
-            math::MTX34Copy(pW, pW1);
-        } else {
-            math::MTX34Scale(pW, pW1, pS1);
-        }
+    if ((flags & ChrAnmResult::FLAG_ROT_TRANS_ZERO) ||
+        (flags & ChrAnmResult::FLAG_MTX_IDENT)) {
+        math::MTX34Copy(pW, pW1);
     } else if (flags & ChrAnmResult::FLAG_ROT_ZERO) {
         if (detail::WorldMtxAttr::IsScaleOne(attr)) {
             math::VEC3 trans(pResult->rt._03, pResult->rt._13, pResult->rt._23);

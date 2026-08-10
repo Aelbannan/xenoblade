@@ -7,6 +7,26 @@ namespace cf {
 // Forward declarations
 class CfScriptManager;
 
+// Minimal CEventFile layout - only the fields CfScript::OnFileEvent consumes.
+// CDeviceFile hands a filled CEventFile to the async IWorkEvent callback.
+class CEventFile {
+public:
+    u32 field_00;          // 0x00 event type
+    void* field_04;        // 0x04 owning CFileHandle*
+    u8 _08[0x0C - 0x08];
+    const char* field_0C;  // 0x0C path string
+    u8 _10[0x14 - 0x10];
+    u32 field_14;          // 0x14 flag
+};
+
+// FixStr<64>-compatible extension buffer WITHOUT a constructor.  Retail does
+// not zero it before getNoPathExtName fills it (a FixStr ctor would emit extra
+// stb/stw init stores in the prologue).
+struct CfScriptNameBuffer {
+    char mString[0x40];   // 0x00
+    u32 mLength;          // 0x40
+};
+
 // CfScript - per-script state, 0x58 bytes each.
 class CfScript {
     friend class CfScriptManager;
@@ -37,7 +57,7 @@ public:
     u16 mIndex;            // 0x56
 
     void waitLoad();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* event);
     void update();
 
     // Reset this script slot

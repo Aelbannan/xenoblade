@@ -46,11 +46,9 @@ bool CWorkControl::hasFlow(){
         return true;
     }
 
-    if(CWorkFlowSetup::getInstance() != nullptr){
-        return true;
-    }
-
-    return false;
+    // Last flow: single getInstance call whose nonzero result is the return
+    // (retail emits the subic/subfe bool-idiom on this one call).
+    return CWorkFlowSetup::getInstance() != nullptr;
 }
 
 bool CWorkControl::wkStandbyLogin(){
@@ -59,12 +57,12 @@ bool CWorkControl::wkStandbyLogin(){
 }
 
 bool CWorkControl::setFlowSetup(){
-    CWorkFlowSetup* pFlowSetup = CWorkFlowSetup::getInstance();
-    if(pFlowSetup != nullptr){
+    if(CWorkFlowSetup::getInstance() != nullptr){
         return true;
     }
 
-    CWorkFlowSetup::create("CWorkFlowSetup", getInstance());
+    CWorkControl* pControl = CWorkControl::getInstance();
+    CWorkFlowSetup::create("CWorkFlowSetup", pControl);
     return true;
 }
 
@@ -77,12 +75,7 @@ bool CWorkControl::wkStandbyLogout(){
 }
 
 CWorkControl* CWorkControl::create(CWorkThread* pParent){
-    return create("CWorkControl", pParent);
-}
-
-DECOMP_INLINE CWorkControl* CWorkControl::create(const char* pName, CWorkThread* pParent){
-    CWorkControl* pWorkControl = new (CWorkThreadSystem::getWorkMem()) CWorkControl(pName, pParent);
-
+    CWorkControl* pWorkControl = new (CWorkThreadSystem::getWorkMem()) CWorkControl("CWorkControl", pParent);
     CWorkUtil::entryWork(pWorkControl, pParent, false);
     return pWorkControl;
 }

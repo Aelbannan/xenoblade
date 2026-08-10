@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/monolib/src/scn/CScnEffectActNw4r.hpp"
 
 extern void func_80495E60();
 void func_8049BEA4(u8* self){ func_80495E60(); }
@@ -30,15 +31,105 @@ void func_8049BF5C(){}
 
 void func_8049BF84(){}
 
-void func_8049BFAC(){}
+// Effect-act lookup: the local id table first, then the manager's chain.
+CScnEffectAct* func_8049C314(CScnEffectActNw4r* self, u32 idx) {
+    if (self->mCount > idx) {
+        return self->mActs[idx];
+    }
+    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    if (chain != 0) {
+        return chain->v40()->v18(idx);
+    }
+    return 0;
+}
 
-void func_8049C060(){}
+// Same lookup as func_8049C314, but gated on the manager's act flag and
+// preferring the manager's direct act slot before falling back to the chain.
+CScnEffectAct* func_8049BFAC(CScnEffectActNw4r* self, u32 idx) {
+    if ((self->mpMgr->field_0x7a4 & 0x40000000) == 0) {
+        return 0;
+    }
+    if (func_80490AF4(self->mpMgr, idx)) {
+        return self->mpMgr->v13(idx);
+    }
+    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    if (chain != 0) {
+        return chain->v40()->v13(idx);
+    }
+    return 0;
+}
 
-void func_8049C18C(){}
+// Id-based lookup that scans the u16 id table before falling back to the
+// manager's chain.
+CScnEffectAct* func_8049C18C(CScnEffectActNw4r* self, u32 idx) {
+    CScnEffectActMgr* mgr = self->mpMgr;
+    if ((mgr->field_0x7a4 & 0x40000000) == 0) {
+        return 0;
+    }
+    for (u32 i = 0; i < self->mCount; i++) {
+        if (self->mIds[i] == idx) {
+            return self->mActs[i];
+        }
+    }
+    CScnEffectAct* chain = mgr->field_0x7c4;
+    if (chain != 0) {
+        return chain->v40()->v15(idx);
+    }
+    return 0;
+}
 
-void func_8049C244(){}
+// Id-based lookup that also copies the act's position triplet into out;
+// returns 1 on success, 0 when the fallback chain reports none.
+u32 func_8049C244(CScnEffectActNw4r* self, u32 idx, ml::CVec3* out) {
+    u32 count = self->mCount;
+    for (u32 i = 0; i < count; i++) {
+        if (self->mIds[i] == idx) {
+            CScnEffectAct* act = self->mActs[i];
+            float z = act->field_0x2c.x;
+            float y = act->field_0x1c.x;
+            float x = act->field_0xc.x;
+            out->x = x;
+            out->y = y;
+            out->z = z;
+            return 1;
+        }
+    }
+    CScnEffectAct* chain = self->mpMgr->field_0x7c4;
+    if (chain != 0) {
+        return chain->v40()->v16(idx, out);
+    }
+    return 0;
+}
 
-void func_8049C314(){}
+// Fills out with the act's position triplet; zero when the effect acts are
+// disabled or absent.
+void func_8049C060(ml::CVec3* out, CScnEffectActNw4r* self, u32 idx) {
+    CScnEffectActMgr* mgr = self->mpMgr;
+    if ((mgr->field_0x7a4 & 0x40000000) == 0) {
+        out->x = ml::CVec3::zero.x;
+        out->y = ml::CVec3::zero.y;
+        out->z = ml::CVec3::zero.z;
+        return;
+    }
+    if (func_80490AF4(mgr, idx)) {
+        CScnEffectAct* act = mgr->v13(idx);
+        out->x = act->field_0xc.x;
+        out->y = act->field_0x1c.x;
+        out->z = act->field_0x2c.x;
+        return;
+    }
+    CScnEffectAct* chain = mgr->field_0x7c4;
+    if (chain != 0) {
+        CScnEffectAct* act = chain->v40()->v13(idx);
+        out->x = act->field_0xc.x;
+        out->y = act->field_0x1c.x;
+        out->z = act->field_0x2c.x;
+        return;
+    }
+    out->x = ml::CVec3::zero.x;
+    out->y = ml::CVec3::zero.y;
+    out->z = ml::CVec3::zero.z;
+}
 
 extern void func_80482AB8();
 void func_8049C394(u8* self){ func_80482AB8(); }

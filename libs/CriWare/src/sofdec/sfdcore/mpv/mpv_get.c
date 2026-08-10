@@ -60,11 +60,10 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
         if ((u32)(bitRate - 0x30000) == 0xFFFF) {
             *out_max = (u32)-1;
         } else {
-            /* 64-bit fixed-point division by 1024: (frameRate * bitRate * 0x91A2B3C5) >> 42 */
+            /* 410 avg bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded */
             s32 m = (s32)h->frameRate * (s32)bitRate;
-            s32 hi = __mulhw((s32)0x91A2B3C5, m);   /* signed high word */
-            s32 x = (hi + m) >> 10;                 /* arith shift */
-            *out_max = (u32)x + ((u32)x >> 31);     /* round toward zero */
+            *out_max = (u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10))
+                     + ((u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10)) >> 31);
         }
     }
     return 0;

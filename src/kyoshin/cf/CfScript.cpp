@@ -44,7 +44,7 @@ namespace cf {
 // Forward declarations for functions in this TU
 __declspec(noinline) char* func_80068A30(char* dest, const char* src);
 __declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
-void func_80068ECC(CfScript* script, const char* name);
+bool func_80068ECC(CfScript* script, const char* name);
 __declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask);
 
 // func_80068A20 - initializer for path string
@@ -270,83 +270,89 @@ void func_80068E9C(char* dest, const char* src1, const char* src2, const char* s
 }
 
 // func_80068ECC - main script loading function
-void func_80068ECC(CfScript* script, const char* name) {
-    char pathBuffer[0x80];
-    char extBuffer[0x44];
-    char tempBuffer[0x80];
-    u32 pathLen = 0;
+bool func_80068ECC(CfScript* script, const char* name) {
+    ml::FixStr<64> extBuffer;    // 0x08
+    char tempBuffer[0x80];       // 0x4C
+    u32 tempLen;                 // 0xCC
+    ml::FixStr<128> pathBuffer;  // 0xD0 (mLength at 0x150)
 
-    if (name == nullptr) {
-        return;
+    // Ignore the two reserved "no-op" script names.
+    if (name != nullptr) {
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0) {
+            return false;
+        }
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+            return false;
+        }
     }
 
-    if (strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
-        strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
-        return;
-    }
+    pathBuffer.mLength = std::strlen(name);
+    std::strcpy(pathBuffer.mString, name);
 
-    pathLen = strlen(name);
-    strcpy(pathBuffer, name);
-
+    // Search backward for the extension separator (lbl_eu_80661AD0).
     int extPos = -1;
-    if (pathLen > 0) {
-        u32 sepLen = strlen(lbl_eu_80661AD0);
-        char* searchStart = pathBuffer + pathLen - 1;
-        char* searchEnd = pathBuffer;
-
-        while (searchStart >= searchEnd) {
-            if (strncmp(searchStart, lbl_eu_80661AD0, sepLen) == 0) {
-                extPos = (int)(searchStart - pathBuffer);
+    if (pathBuffer.mLength > 0) {
+        u32 sepLen = std::strlen(lbl_eu_80661AD0);
+        char* searchPos = pathBuffer.mString + pathBuffer.mLength - 1;
+        char* searchEnd = pathBuffer.mString - 1;
+        while (searchPos != searchEnd) {
+            if (std::strncmp(searchPos, lbl_eu_80661AD0, sepLen) == 0) {
+                extPos = (int)(searchPos - pathBuffer.mString);
                 break;
             }
-            searchStart--;
+            searchPos--;
         }
     }
 
-    if (extPos > 0) {
-        memset(tempBuffer, 0, sizeof(tempBuffer));
-        if (pathLen > 0) {
-            u32 copyLen = (extPos == -1) ? pathLen : (u32)extPos;
-            strncpy(tempBuffer, pathBuffer, copyLen);
-            tempBuffer[copyLen] = '\0';
-            pathLen = strlen(tempBuffer);
-            strcpy(pathBuffer, tempBuffer);
+    // Cut the extension off so only the bare filename remains.
+    if ((u32)(extPos + 1) > 1u) {
+        tempBuffer[0] = '\0';
+        tempLen = 0;
+        if (pathBuffer.mLength > 0) {
+            if (extPos == -1) {
+                extPos = pathBuffer.mLength;
+            }
+            std::strncpy(tempBuffer, pathBuffer.mString, extPos);
+            tempBuffer[extPos] = '\0';
+            tempLen = std::strlen(tempBuffer);
         }
+        pathBuffer.mLength = std::strlen(tempBuffer);
+        std::strcpy(pathBuffer.mString, tempBuffer);
     }
 
-    getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(extBuffer, pathBuffer);
-
-    format__Q22ml10FixStr128FPCce(pathBuffer, &lbl_eu_804FB3A4[0x1C],
-                                   lbl_eu_805708D0, extBuffer);
+    // Build "dir + noext-name" into pathBuffer (format varargs).
+    getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(&extBuffer, pathBuffer.mString);
+    format__Q22ml10FixStr128FPCce(&pathBuffer, &lbl_eu_804FB3A4[0x1C],
+                                  lbl_eu_805708D0, extBuffer.mString);
 
     const char* extStr = &lbl_eu_804FB3A4[0x21];
-    u32 extStrLen = strlen(extStr);
-    strcat(pathBuffer, extStr);
-    pathLen += extStrLen;
+    u32 extStrLen = std::strlen(extStr);
+    std::strcat(pathBuffer.mString, extStr);
+    pathBuffer.mLength += extStrLen;
 
-    if (strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
-        int fileSize = getFileSize__11CDeviceFileFPCc(pathBuffer, 1);
-        if (fileSize < 0) {
-            if (strstr(pathBuffer, &lbl_eu_804FB3A4[0x25]) == nullptr &&
-                strstr(pathBuffer, &lbl_eu_804FB3A4[0x2B]) == nullptr) {
-                return;
+    // If the current directory already matches, sanity-check the file exists.
+    if (std::strcmp(lbl_eu_805708D0, lbl_eu_80661AC0) == 0) {
+        if (getFileSize__11CDeviceFileFPCc(pathBuffer.mString, 1) < 0) {
+            if (std::strstr(pathBuffer.mString, &lbl_eu_804FB3A4[0x25]) == nullptr) {
+                std::strstr(pathBuffer.mString, &lbl_eu_804FB3A4[0x2B]);
             }
+            return false;
         }
     }
 
-    if (script->mNameLen > 0) {
-        if (strcmp(extBuffer, script->mName) == 0) {
-            if (!(script->mFlags & 0x2) && (script->mFlags & 0x1)) {
-                return;
-            }
+    // If the same script is already loaded, leave it alone.
+    if (extBuffer.mLength > 0) {
+        if (std::strcmp(extBuffer.mString, script->mName) == 0 &&
+            !(script->mFlags & 0x2) && (script->mFlags & 0x1)) {
+            return true;
         }
     }
 
+    // Cancel any pending load and unlink a running VM for this slot.
     if (script->mFileHandle != nullptr) {
         cancel__11CDeviceFileFP11CFileHandle(script->mFileHandle);
         script->mFileHandle = nullptr;
     }
-
     if (script->mFlags & 0x8) {
         if (script->mVmContext != nullptr) {
             vmUnlink(script->mVmContext);
@@ -356,21 +362,20 @@ void func_80068ECC(CfScript* script, const char* name) {
     script->mWaitCount = 0;
     script->mName[0] = '\0';
     script->mNameLen = 0;
-
     u32 flags = script->mFlags;
-    flags &= ~0x3C;
-    flags &= ~0x0A;
+    flags &= ~0x3B;
+    flags &= ~0x09;
     script->mFlags = flags;
 
-    void* fileHandle = CfRes_readCommonArchive(script->mVmContext, pathBuffer, script);
-
-    script->mFileHandle = fileHandle;
-    if (fileHandle != nullptr) {
-        u32 nameLen = strlen(extBuffer);
-        script->mNameLen = nameLen;
-        strcpy(script->mName, extBuffer);
+    void* handle = CfRes_readCommonArchive(script->mVmContext, pathBuffer.mString, script);
+    script->mFileHandle = handle;
+    if (handle != nullptr) {
+        script->mNameLen = std::strlen(extBuffer.mString);
+        std::strcpy(script->mName, extBuffer.mString);
         script->mFlags |= 0x1;
     }
+
+    return handle != nullptr;
 }
 
 // CfScript::waitLoad
@@ -392,9 +397,32 @@ void CfScript::update() {
     mFlags |= 0x20;
 }
 
-// CfScript::OnFileEvent
-void CfScript::OnFileEvent() {
-    // Complex function - placeholder implementation
+// CfScript::OnFileEvent - completion of an async file read.
+bool CfScript::OnFileEvent(CEventFile* event) {
+    bool ret = false;
+
+    if (mFileHandle == event->field_04) {
+        if (event->field_00 == 1 && event->field_14 != 0) {
+            // Loaded: remember the extension-less name.
+            mFlags |= 0x2;
+            ml::FixStr<64> tmp;
+            getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(&tmp, event->field_0C);
+            mNameLen = std::strlen(tmp.mString);
+            std::strcpy(mName, tmp.mString);
+        } else {
+            // Failed/other event: look for fallback names, mark "ready".
+            const char* path = event->field_0C;
+            if (std::strstr(path, lbl_eu_80661AC0) != nullptr &&
+                std::strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
+                std::strstr(path, &lbl_eu_804FB3A4[0x2B]);
+            }
+            mFlags |= 0x10;
+        }
+        mFileHandle = nullptr;
+        ret = true;
+    }
+
+    return ret;
 }
 
 // CfScriptManager::getInstance - singleton accessor
@@ -474,7 +502,7 @@ void CfScriptManager::func_800694B0() {
     }
 }
 
-// CfScriptManager::func_8006953C - cleanup all scripts
+// CfScriptManager::func_8006953C - cleanup: reset slots 0 and 1, then re-init VM.
 void CfScriptManager::func_8006953C() {
     // Reset slot 0
     CfScript& s0 = mScripts[0];
@@ -507,22 +535,6 @@ void CfScriptManager::func_8006953C() {
     s1.mFlags = 0;
     s1.mName[0] = '\0';
     s1.mNameLen = 0;
-
-    // Reset slot 2
-    CfScript& s2 = mScripts[2];
-    if (s2.mFileHandle != nullptr) {
-        cancel__11CDeviceFileFP11CFileHandle(s2.mFileHandle);
-        s2.mFileHandle = nullptr;
-    }
-    if (s2.mFlags & 0x8) {
-        if (s2.mVmContext != nullptr) {
-            vmUnlink(s2.mVmContext);
-        }
-    }
-    s2.mWaitCount = 0;
-    s2.mFlags = 0;
-    s2.mName[0] = '\0';
-    s2.mNameLen = 0;
 
     vmInit();
 }

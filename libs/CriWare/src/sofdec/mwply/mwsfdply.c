@@ -175,6 +175,7 @@ void mwSfdStopDec(MWSFDPLY* self) {
     self->field_0x58 = sfdH;
     MWSST_Stop(self->field_0x5d8);
     MWSST_Stop(self->field_0x600);
+    self->field_0x630 = 0;
     if (self->field_0x5c) {
         MWSTM_ReqStop(self->field_0x5c);
     }
@@ -213,8 +214,8 @@ void mwPlyStop(MWSFDPLY* self) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
     } else {
         if (self->field_0x4 != 0 && self->field_0x678 != 1) {
-            /* comma operator keeps each field store before its arg load */
-            SFD_RequestStop((self->field_0x678 = 1, self->field_0x58));
+            self->field_0x678 = 1;
+            SFD_RequestStop(self->field_0x58);
             MWSFD_RequestStopRead(self);
         }
     }
@@ -230,7 +231,8 @@ void mwPlyStop(MWSFDPLY* self) {
     } else {
         mwSfdStopDec(self);
         mwPlyLinkStm(self, 0);
-        LSC_Stop((self->field_0x94 = 0, self->field_0x64));
+        self->field_0x94 = 0;
+        LSC_Stop(self->field_0x64);
     }
     if (lbl_eu_805FF3A0) {
         lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566920.exit);
@@ -294,16 +296,11 @@ void mwPlyStartSj(MWSFDPLY* self, s32 sj) {
     MWSFD_SetProhibitServer(1);
     mwSfdStopDec(self);
     self->field_0x500 = sj;
+    self->field_0x514 = 2;
     self->field_0x518 = 0;
     self->field_0x51c = 0;
     self->field_0x520 = 0;
-    /* code is the mw_sfd_start_ex arg (lives in r4); the field store reads the
-     * same register so MWCC emits a single `li r4, 2` for both. */
-    {
-        void* code = (void*)2;
-        self->field_0x514 = (s32)(long)code;
-        mw_sfd_start_ex(self, code);
-    }
+    mw_sfd_start_ex(self, (void*)2);
     MWSFD_SetProhibitServer(0);
 }
 
@@ -316,8 +313,8 @@ void fn_803A537C(MWSFDPLY* self) {
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x380);
     } else {
         if (self->field_0x4 != 0 && self->field_0x678 != 1) {
-            /* comma operator keeps the field store before the arg load */
-            SFD_RequestStop((self->field_0x678 = 1, self->field_0x58));
+            self->field_0x678 = 1;
+            SFD_RequestStop(self->field_0x58);
             MWSFD_RequestStopRead(self);
         }
     }

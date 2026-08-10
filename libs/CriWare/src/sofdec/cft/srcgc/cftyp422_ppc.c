@@ -26,23 +26,20 @@ void CFT_Ycc420plnToArgb8888Init(void) {
     float *tblG = &lbl_eu_805FDDC0[0x300];
     float *tblB = &lbl_eu_805FDDC0[0x400];
 
+    const float *cf = lbl_eu_805197B0;
     int i;
     for (i = 0; i < 256; i += 2) {
-        float y0 = lbl_eu_805197B0[0] * (float)(i - 16);
+        tblCr[i] = cf[2] * (float)(i - 128);
+        tblCb[i] = cf[3] * (float)(i - 128);
+        tblG[i] = cf[4] * (float)(i - 128);
+        tblB[i] = cf[5] * (float)(i - 128);
+        tblY[i] = cf[1] + cf[0] * (float)(i - 16);
 
-        tblCr[i] = lbl_eu_805197B0[2] * (float)(i - 128);
-        tblCb[i] = lbl_eu_805197B0[3] * (float)(i - 128);
-        tblG[i] = lbl_eu_805197B0[4] * (float)(i - 128);
-        tblB[i] = lbl_eu_805197B0[5] * (float)(i - 128);
-        tblY[i] = lbl_eu_805197B0[1] + y0;
-
-        float y1 = lbl_eu_805197B0[0] * (float)(i - 15);
-
-        tblCr[i + 1] = lbl_eu_805197B0[2] * (float)(i - 127);
-        tblCb[i + 1] = lbl_eu_805197B0[3] * (float)(i - 127);
-        tblG[i + 1] = lbl_eu_805197B0[4] * (float)(i - 127);
-        tblB[i + 1] = lbl_eu_805197B0[5] * (float)(i - 127);
-        tblY[i + 1] = lbl_eu_805197B0[1] + y1;
+        tblCr[i + 1] = cf[2] * (float)(i - 127);
+        tblCb[i + 1] = cf[3] * (float)(i - 127);
+        tblY[i + 1] = cf[1] + cf[0] * (float)(i - 15);
+        tblG[i + 1] = cf[4] * (float)(i - 127);
+        tblB[i + 1] = cf[5] * (float)(i - 127);
     }
 }
 

@@ -134,7 +134,7 @@ void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
             u32 x = cf::CfGameManager::func_800822F4();
             u32 dif = 3u - x;        // subfic r0, x, 3
             u32 mask = 3u | ~x;      // li r4, 3; orc
-            isThird = (mask - (dif >> 1)) >> 31;  // srwi, subf, srwi
+            isThird = (int)((mask - (dif >> 1)) >> 31);  // srwi, subf, srwi
         } else {
             isThird = 0;
         }

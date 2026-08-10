@@ -10,13 +10,13 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6239 |
+| extern "C" (total lines) | 6240 |
 | extern "C" declarations (non-lbl_*, imports) | 1754 |
 | extern "C" definitions (forced names) | 2689 |
-| `self`/register-style params | 4710 |
-| `void*` (params + locals) | 4480 |
-| raw pointer offset arithmetic | 3545 |
-| deref-through-cast arithmetic | 1475 |
+| `self`/register-style params | 4715 |
+| `void*` (params + locals) | 4478 |
+| raw pointer offset arithmetic | 3542 |
+| deref-through-cast arithmetic | 1474 |
 | inline asm / `register` | 90 |
 | rN-named params | 341 |
 | goto | 1144 |
@@ -125,7 +125,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnBlend.cpp | 1 | 2 | 6 | 2 | 2 | 2 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnBloom.cpp | 2 | 14 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnCameraMan.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnEffectActNw4r.cpp | 0 | 8 | 13 | 1 | 9 | 4 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnEffectActNw4r.cpp | 0 | 8 | 18 | 1 | 9 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 0 | 14 | 17 | 39 | 51 | 38 | 0 | 3 | 0 |
 | libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 2 | 4 | 1 | 2 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 1 | 2 | 5 | 4 | 3 | 1 | 0 | 0 | 0 |
@@ -542,7 +542,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/plugin/pluginUi.cpp | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginUnit.cpp | 17 | 6 | 1 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginVoice.cpp | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 |
-| src/kyoshin/realtimeevt/CREvtCamera.cpp | 33 | 13 | 16 | 50 | 21 | 8 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtCamera.cpp | 33 | 13 | 16 | 48 | 18 | 7 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 22 | 18 | 34 | 26 | 0 | 2 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 9 | 6 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 14 | 0 | 0 | 0 | 0 | 0 |
@@ -1036,7 +1036,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "deref_arith": 4,
   "extern_c_nonlbl_def": 8,
   "ptr_arith": 9,
-  "self_params": 13,
+  "self_params": 18,
   "void_ptr": 1
  },
  "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp": {
@@ -3269,12 +3269,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "self_params": 1
  },
  "src/kyoshin/realtimeevt/CREvtCamera.cpp": {
-  "deref_arith": 8,
+  "deref_arith": 7,
   "extern_c_nonlbl_decl": 33,
   "extern_c_nonlbl_def": 13,
-  "ptr_arith": 21,
+  "ptr_arith": 18,
   "self_params": 16,
-  "void_ptr": 50
+  "void_ptr": 48
  },
  "src/kyoshin/realtimeevt/CREvtEffect.cpp": {
   "deref_arith": 26,

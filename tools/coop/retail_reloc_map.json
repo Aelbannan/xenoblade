@@ -1,5 +1,5 @@
 {
-  "count": 2385,
+  "count": 2386,
   "entries": {
     "BackToFront__Q34nw4r3g3d6detailFRCQ54nw4r3g3d6detail7workmem4MdlZRCQ54nw4r3g3d6detail7workmem4MdlZ": {
       "R_PPC_ADDR16_HA": {
@@ -4487,6 +4487,19 @@
         ]
       }
     },
+    "lbl_eu_805197B0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 64,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15616,
+        "retail_symbol": "lbl_eu_805FDDC0",
+        "units": [
+          "main/CriWare/src/sofdec/cft/srcgc/cftyp422_ppc"
+        ]
+      }
+    },
     "lbl_eu_8051C080": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": -32,
@@ -4939,7 +4952,7 @@
         ]
       }
     },
-    "main/CriWare/src/sofdec/mwply/mwsfdply@259": {
+    "main/CriWare/src/sofdec/mwply/mwsfdply@255": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -31491,8 +31504,8 @@
       }
     }
   },
-  "function_pairs": 9029,
-  "generated": "2026-08-10T06:05:00.026300",
+  "function_pairs": 9044,
+  "generated": "2026-08-10T12:41:45.499656",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

@@ -129,7 +129,7 @@ void lsc_StatEnd(struct LSC_Hndl *h) {
     }
 
     if (h->mode3 == 1) {
-        struct LSC_Entry *e = lsc_entry(h);
+        struct LSC_Entry *e = (struct LSC_Entry *)((char *)h + (h->index << 5));
         fname = e->fname;
         offLo = e->offLo;
         offHi = e->offHi;
@@ -140,10 +140,10 @@ void lsc_StatEnd(struct LSC_Hndl *h) {
     idx = h->index + 1;
     rot = idx << 28;
     cnt = h->count - 1;
+    h->count = cnt;
     hb = (u32)idx >> 31;
     rot -= hb;
-    h->count = cnt;
-    h->index = ((u32)rot << 4 | (u32)rot >> 28) + hb;
+    h->index = (((u32)rot << 4) | ((u32)rot >> 28)) + hb;
 
     if (cnt <= 0) {
         LSC_CallStatFunc(h);
@@ -176,14 +176,22 @@ void lsc_ExecHndl(struct LSC_Hndl *h) {
             LSC_CallErrFunc_(&lbl_eu_80518420[0x40]);
         } else {
             stat = ADXSTM_GetStat(h->stream);
-            if (stat == 4) {
-                h->st = 3;
-            } else if (stat == 2) {
-                e->pos = ADXSTM_Tell(h->stream);
-            } else if (stat == 3) {
-                e->pos = h->curpos;
-                e->state = 2;
-            }
+            /* sparse dispatch: linear equality chain with out-of-line bodies */
+            if (stat == 4) goto st_case4;
+            if (stat == 2) goto st_case2;
+            if (stat != 3) goto st_done;  /* last test negated: beq case3; b default */
+            goto st_case3;
+        st_case4:
+            h->st = 3;
+            goto st_done;
+        st_case2:
+            e->pos = ADXSTM_Tell(h->stream);
+            goto st_done;
+        st_case3:
+            e->pos = h->curpos;
+            e->state = 2;
+        st_done:
+            ;
         }
     }
 

@@ -54,7 +54,13 @@ public:
     /* 0x82 */ u8 pad82[2];
     /* 0x84 */ u16 field_84[3];          // per-slot item ids
     /* 0x8A */ u16 field_8A;
-    /* 0x8C */ u8 pad8C[0x10];
+    /* 0x8C */ u8 pad8C[2];
+    /* 0x8E */ u16 field_8E;             // effect id triggered while working (func_80208C48)
+    /* 0x90 */ u8 pad90[4];
+    /* 0x94 */ u16 field_94;             // resource id passed to func_80082354
+    /* 0x96 */ u8 field_96;              // lower bound of the respawn-count window
+    /* 0x97 */ u8 field_97;              // upper bound of the respawn-count window
+    /* 0x98 */ u8 pad98[4];
     /* 0x9C */ u8 field_9C;              // mode byte (2 or 3 => state 5)
     /* 0x9E */ u16 field_9E;             // current state (PTMF table index)
 };
@@ -81,6 +87,12 @@ void func_8020A6B0(void* reg, const CfGimmickVec3* point,
 void func_80159C04(unsigned int a, int b);
 void func_801586D4(unsigned int a, unsigned int b);
 void func_8020974C(unsigned int a, int b);
+int func_80209754(unsigned short flag, void* a, void* b, void* c,
+                  unsigned int d);
+void func_80208C48(void* self, void* arg);
+unsigned int func_800822F4__Q22cf13CfGameManagerFv(void);
+unsigned int func_80082354__Q22cf13CfGameManagerFv(unsigned int a);
+unsigned int func_801587E8(unsigned short id);
 }
 
 // Data symbols (global-scope objects, not mangled by MWCC).

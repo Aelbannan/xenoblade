@@ -34,7 +34,7 @@ extern "C" {
     void func_8016AF4C(void* obj, const char* name, u32* out);
     int func_8016B5A4(void* obj, const char* name, void* out);
     int func_8016B164(void* obj, const char* name, void* out1, void* out2);
-    void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e, int f);
+    void func_804839D4(void* obj, void* param, int a, int b, int c, int d, int e);
     float func_804850A4(void* obj);
     void* getGlobalSda();
     void func_800599E0(void* sda, u32 a, u32 b, u32 c);
@@ -335,72 +335,68 @@ extern "C" void func_801804CC(CREvtCamera* self) {
 // func_80180664 (0x80181A60, size 0x2DC)
 // ============================================================================
 extern "C" void func_80180664(CREvtCamera* self, void* eventData, void* someParam) {
-    // Set fieldA5 based on mField88's low word
+    // Mirror the event-file descriptor's flag word into mFieldA5.
     if (self->mField88) {
-        self->mFieldA5 = (*(u32*)((u8*)self->mField88 + 4) != 0) ? 1 : 0;
+        self->mFieldA5 = (self->mField88->field_04 != 0) ? 1 : 0;
     } else {
         self->mFieldA5 = 0;
     }
+
     self->mTaskCount2A8 = 0;
     self->mTaskCount2AC = 0;
-    if (!self->mField1C) { self->mField88 = (u32)someParam; return; }
-    self->mField98 = 0;
-    self->mField9C = 0;
-    self->mFieldA0 = 0;
-    if (self->mField20) {
-        void* vt = *(void**)self;
-        ((void (*)(CREvtCamera*))*(void**)((u8*)vt + 0x10))(self);
-        self->mField24 = self->mField20;
-        self->mField20 = 0;
-    }
-    if (eventData) {
-        void* taskObj = func_80495EAC((void*)&lbl_eu_80663E14, eventData, 0);
-        self->mField20 = (u32)taskObj;
-        func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 0, 1, -1);
-        self->mField43C = (u32)func_804850A4((void*)self->mField1C);
-        func_8016AF4C(taskObj, lbl_eu_805036D8 + 4, &self->mField98);
-        func_8016AF4C(taskObj, lbl_eu_805036D8 + 15, &self->mField9C);
-        func_8016AF4C(taskObj, lbl_eu_805036D8 + 23, &self->mFieldA0);
-        func_8016AF4C(taskObj, lbl_eu_805036D8 + 30, &self->mField2B0);
-
-        if (!GetCamera()->mFieldA5) {
-            *(u32*)((u8*)func_801644B4() + 0x1B8) = 1;
+    if (self->mField1C) {
+        self->mField98 = 0;
+        self->mField9C = 0;
+        self->mFieldA0 = 0;
+        if (self->mField20) {
+            ((void (*)(CREvtCamera*))(*(void***)self)[4])(self);
+            self->mField24 = self->mField20;
+            self->mField20 = 0;
         }
+        if (eventData) {
+            void* taskObj = func_80495EAC((void*)lbl_eu_80663E14, eventData, 0);
+            self->mField20 = (u32)taskObj;
+            func_804839D4((void*)self->mField1C, taskObj, 0, 0, 0, 1, -1);
+            self->mField43C = (s32)(u32)func_804850A4((void*)self->mField1C);
+            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 4, &self->mField98);
+            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 15, &self->mField9C);
+            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 23, &self->mFieldA0);
+            func_8016AF4C((void*)self->mField20, lbl_eu_805036D8 + 30, &self->mField2B0);
 
-        u32 timeVal;
-        if (func_8016B5A4(taskObj, lbl_eu_805036D8 + 38, &timeVal)) {
-            int val = atoi((const char*)timeVal);
-            u32 v = (u32)val & 0xFFFF;
-            int a = (int)((long long)v * 0x51EC851FLL >> 32);
-            u32 seconds = (u32)(a >> 5);
-            seconds += (u32)((u32)a >> 31);
-            u32 remainder = v - seconds * 100;
-            if (seconds > 99 && remainder > 99) {
-                func_8016841C();
-            } else {
-                func_80086B5C__Q22cf13CfGameManagerFv(seconds, remainder, 0);
-                void* sda = getGlobalSda();
-                func_800599E0(sda, seconds, remainder, 0);
+            if (!GetCamera()->mFieldA5) {
+                ((CREvtCamTaskEvent*)func_801644B4())->field_1B8 = 1;
             }
-        }
 
-        u32 taskCount;
-        u32 taskBuf[128];
-        if (func_8016B164(taskObj, lbl_eu_805036D8 + 43, &taskBuf, &taskCount)) {
-            for (u32 i = 0; i < taskCount; i++) {
-                self->mTaskArrayA6[self->mTaskCount2A8] = (s16)taskBuf[i];
-                self->mTaskCount2A8++;
+            const char* timeStr;
+            if (func_8016B5A4((void*)self->mField20, lbl_eu_805036D8 + 38, &timeStr)) {
+                int val = atoi(timeStr);
+                u16 v = (u16)val;
+                if ((u32)(u16)(v / 100) == 99 && (u32)(u16)(v % 100) == 99) {
+                    func_8016841C();
+                } else {
+                    func_80086B5C__Q22cf13CfGameManagerFv((u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
+                    func_800599E0(getGlobalSda(), (u32)(u16)(v / 100), (u32)(u16)(v % 100), 0);
+                }
             }
-        }
 
-        u32 taskCount2;
-        u32 taskBuf2[128];
-        if (func_8016B164(taskObj, lbl_eu_805036D8 + 51, &taskBuf2, &taskCount2)) {
-            for (u32 i = 0; i < taskCount2; i++) {
-                self->mTaskArray1A6[self->mTaskCount2AC] = (s16)taskBuf2[i];
-                self->mTaskCount2AC++;
+            u32* taskBuf;
+            s32 taskCount;
+            if (func_8016B164((void*)self->mField20, lbl_eu_805036D8 + 43, &taskBuf, &taskCount)) {
+                for (s32 i = 0; i < taskCount; i++) {
+                    self->mTaskArrayA6[self->mTaskCount2A8] = (s16)taskBuf[i];
+                    self->mTaskCount2A8++;
+                }
+            }
+
+            u32* taskBuf2;
+            s32 taskCount2;
+            if (func_8016B164((void*)self->mField20, lbl_eu_805036D8 + 51, &taskBuf2, &taskCount2)) {
+                for (s32 i = 0; i < taskCount2; i++) {
+                    self->mTaskArray1A6[self->mTaskCount2AC] = (s16)taskBuf2[i];
+                    self->mTaskCount2AC++;
+                }
             }
         }
     }
-    self->mField88 = (u32)someParam;
+    self->mField88 = (CREvtCamFile*)someParam;
 }

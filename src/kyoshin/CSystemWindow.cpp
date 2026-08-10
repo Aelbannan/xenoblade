@@ -21,7 +21,7 @@
 // the two __ptmf_null callback slots are copied, then the scalar fields and the
 // embedded CSysWin instance are constructed and the two text strings copied.
 extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
-                                              u8 opt, const char* str1,
+                                              u32 opt, const char* str1,
                                               const char* str2) {
     __ct__8CProcessFv((CProcess*)self);
 
@@ -71,7 +71,13 @@ extern "C" CSystemWindow* __ct__CSystemWindow(CSystemWindow* self, CScn* scene,
 CSystemWindow::~CSystemWindow() {
     // Destroy the embedded CSysWin storage (C-linkage dtor; -1 = delete scalar).
     __dt__7CSysWinFv(&mSysWin[0], -1);
-    // CProcess base is destroyed implicitly here (offset 0).
+    // Destroy the CProcess base at +0. The nested double null-check is an
+    // MWCC artifact of D2-inlined-into-D1 (same shape as ~CSysWinSave).
+    if (this != 0) {
+        if (this != 0) {
+            __dt__8CProcessFv((CProcess*)this, 0);
+        }
+    }
 }
 
 void CSystemWindow::Init() {
@@ -164,18 +170,20 @@ void CSystemWindow::Move() {
 
 
 void CSystemWindow::cbRenderBefore() {
-    CTaskGame* taskGame = CTaskGame::getInstance();
-    if (taskGame->func_800426F0() == 0) {
-        if ((lbl_eu_80663E28 & 0x200000) == 0) {
-            if (func_8013BE50() != 0) {
-                GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-                nw4r::lyt::DrawInfo drawInfo;
-                func_80137250(&drawInfo);
-                func_8022B7C8(&mSysWin[0], &drawInfo);
-                drawInfo.~DrawInfo();
-            }
-        }
-    }
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0)
+        return;
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls to
+    // match the retail direct calls (a C++ local would virtual-dispatch its
+    // scope-exit destructor and bloat the body).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
+    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_8022B7C8(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
 // Creates the singleton CSystemWindow on the work heap and registers it as a
@@ -188,7 +196,7 @@ CSystemWindow* func_80124AEC(CProcess* parent, void* arg1, void* arg2,
     CSystemWindow* obj =
         (CSystemWindow*)mtl::MemManager::allocate(0x2b8, workMem);
     if (obj != 0) {
-        obj = __ct__CSystemWindow(obj, (CScn*)arg1, (u8)(u32)arg2,
+        obj = __ct__CSystemWindow(obj, (CScn*)arg1, (u32)arg2,
                                   (const char*)arg3, (const char*)arg4);
     }
     lbl_eu_80663FD8 = obj;

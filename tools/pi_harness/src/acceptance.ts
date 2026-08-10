@@ -250,13 +250,13 @@ export async function runBatchCycle(
     await execFilePromise(
       python,
       [
-        // batch-cycle.py builds as it cycles; cmd_build now takes the repo
-        // build lock ITSELF (build-only scope, run.py _with_build_lock) so
-        // the witness / equivalence evaluation that follows the build runs
-        // LOCK-FREE — a slow z3 simplify in the witness must not freeze
-        // every other agent's builds (run30 incident: one acceptance held
-        // the lock ~30 min spinning in z3).
-        python,
+        // NOTE: args[0] is the SCRIPT, not python again — a duplicated
+        // `python` here made the subprocess `python python batch-cycle.py`,
+        // which dies instantly (can't open file 'python'); the catch below
+        // swallowed it and readBatchResults read the untouched registry, so
+        // EVERY "runBatchCycle completed (0 accepted)" was a silent no-op
+        // and batch-cycle's evaluations never ran (runs 3-5: all-NOT_STARTED
+        // registry statuses, no attempts logged, near-match routing dead).
         "tools/coop/batch-cycle.py",
         "--default-hypothesis", "pi-harness batch match",
         "--default-next-change", "accept if pass",

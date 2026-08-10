@@ -10,11 +10,11 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6234 |
-| extern "C" declarations (non-lbl_*, imports) | 1751 |
-| extern "C" definitions (forced names) | 2687 |
-| `self`/register-style params | 4697 |
-| `void*` (params + locals) | 4478 |
+| extern "C" (total lines) | 6239 |
+| extern "C" declarations (non-lbl_*, imports) | 1754 |
+| extern "C" definitions (forced names) | 2689 |
+| `self`/register-style params | 4710 |
+| `void*` (params + locals) | 4480 |
 | raw pointer offset arithmetic | 3545 |
 | deref-through-cast arithmetic | 1475 |
 | inline asm / `register` | 90 |
@@ -178,7 +178,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/nw4r/src/g3d/g3d_draw1mat1shp.cpp | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_fog.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 3 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnmdl.cpp | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/g3d/g3d_scnmdlexpand.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/g3d/g3d_scnmdlexpand.cpp | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnobj.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_scnproc.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
@@ -366,7 +366,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfGameManager.cpp | 24 | 55 | 1 | 12 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmick.cpp | 0 | 3 | 26 | 32 | 23 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickElv.cpp | 1 | 14 | 55 | 19 | 13 | 6 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 4 | 0 | 0 | 0 | 1 | 0 | 0 |
+| src/kyoshin/cf/CfGimmickItem.cpp | 0 | 1 | 5 | 0 | 0 | 0 | 1 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickJump.cpp | 30 | 7 | 28 | 42 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickObject.cpp | 0 | 2 | 3 | 1 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmickSaveOff.cpp | 0 | 3 | 9 | 13 | 13 | 5 | 0 | 0 | 0 |
@@ -485,7 +485,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuBattleChain.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 1 | 13 | 2 | 2 | 3 | 3 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuBattleEnd.cpp | 0 | 0 | 6 | 3 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuBattleEnd.cpp | 3 | 2 | 5 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleMode.cpp | 0 | 2 | 6 | 5 | 0 | 0 | 0 | 0 | 1 |
 | src/kyoshin/menu/CMenuBattlePlayerState.cpp | 14 | 3 | 7 | 12 | 0 | 0 | 2 | 0 | 19 |
 | src/kyoshin/menu/CMenuBattlePlayerState_ct.cpp | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
@@ -1330,7 +1330,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 5
  },
  "libs/nw4r/src/g3d/g3d_scnmdlexpand.cpp": {
-  "self_params": 2
+  "self_params": 15
  },
  "libs/nw4r/src/g3d/g3d_scnmdlsmpl.cpp": {
   "void_ptr": 1
@@ -2239,7 +2239,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  "src/kyoshin/cf/CfGimmickItem.cpp": {
   "asm_code": 1,
   "extern_c_nonlbl_def": 1,
-  "self_params": 4
+  "self_params": 5
  },
  "src/kyoshin/cf/CfGimmickJump.cpp": {
   "extern_c_nonlbl_decl": 30,
@@ -2916,8 +2916,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 2
  },
  "src/kyoshin/menu/CMenuBattleEnd.cpp": {
-  "self_params": 6,
-  "void_ptr": 3
+  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_def": 2,
+  "self_params": 5,
+  "void_ptr": 5
  },
  "src/kyoshin/menu/CMenuBattleMode.cpp": {
   "extern_c_nonlbl_def": 2,

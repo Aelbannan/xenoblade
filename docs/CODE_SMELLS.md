@@ -10,12 +10,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 6232 |
+| extern "C" (total lines) | 6234 |
 | extern "C" declarations (non-lbl_*, imports) | 1751 |
 | extern "C" definitions (forced names) | 2687 |
-| `self`/register-style params | 4698 |
-| `void*` (params + locals) | 4481 |
-| raw pointer offset arithmetic | 3550 |
+| `self`/register-style params | 4697 |
+| `void*` (params + locals) | 4478 |
+| raw pointer offset arithmetic | 3545 |
 | deref-through-cast arithmetic | 1475 |
 | inline asm / `register` | 90 |
 | rN-named params | 341 |
@@ -320,7 +320,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CTaskGameEff.cpp | 1 | 0 | 0 | 9 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGameEvt.cpp | 2 | 5 | 7 | 7 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGamePic.cpp | 1 | 5 | 12 | 5 | 1 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CTimeLightGrp.cpp | 0 | 7 | 7 | 9 | 9 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CTimeLightGrp.cpp | 0 | 7 | 7 | 9 | 4 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTitle.cpp | 0 | 1 | 0 | 3 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTitleAHelp.cpp | 0 | 1 | 3 | 4 | 3 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTutorial.cpp | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -361,7 +361,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CfCollAABBImpl.cpp | 0 | 1 | 3 | 3 | 0 | 0 | 0 | 1 | 0 |
 | src/kyoshin/cf/CfCollCapsuleImpl.cpp | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollCircleImpl.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfCollCylinderImpl.cpp | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfCollSphereImpl.cpp | 0 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGameManager.cpp | 24 | 55 | 1 | 12 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfGimmick.cpp | 0 | 3 | 26 | 32 | 23 | 0 | 0 | 0 | 0 |
@@ -545,12 +545,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/realtimeevt/CREvtCamera.cpp | 33 | 13 | 16 | 50 | 21 | 8 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 22 | 18 | 34 | 26 | 0 | 2 | 0 |
 | src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 9 | 6 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 15 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 14 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 34 | 1 | 78 | 74 | 9 | 0 | 0 | 1 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelMap.cpp | 72 | 1 | 27 | 29 | 20 | 12 | 0 | 17 | 3 |
 | src/kyoshin/realtimeevt/CREvtModelObj.cpp | 49 | 19 | 54 | 75 | 15 | 4 | 0 | 10 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelPc.cpp | 36 | 15 | 61 | 76 | 5 | 0 | 0 | 3 | 1 |
-| src/kyoshin/realtimeevt/CREvtMovie.cpp | 15 | 7 | 11 | 7 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtMovie.cpp | 15 | 7 | 11 | 6 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtObj.cpp | 0 | 6 | 4 | 2 | 0 | 0 | 0 | 0 | 0 |
 
 ## Notes
@@ -1959,7 +1959,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CTimeLightGrp.cpp": {
   "extern_c_nonlbl_def": 7,
-  "ptr_arith": 9,
+  "ptr_arith": 4,
   "self_params": 7,
   "void_ptr": 9
  },
@@ -2209,8 +2209,8 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "void_ptr": 3
  },
  "src/kyoshin/cf/CfCollCylinderImpl.cpp": {
-  "self_params": 3,
-  "void_ptr": 3
+  "self_params": 2,
+  "void_ptr": 2
  },
  "src/kyoshin/cf/CfCollSphereImpl.cpp": {
   "extern_c_nonlbl_def": 2,
@@ -3292,7 +3292,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_decl": 7,
   "extern_c_nonlbl_def": 7,
   "self_params": 3,
-  "void_ptr": 15
+  "void_ptr": 14
  },
  "src/kyoshin/realtimeevt/CREvtModel.cpp": {
   "extern_c_nonlbl_decl": 34,
@@ -3334,7 +3334,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_decl": 15,
   "extern_c_nonlbl_def": 7,
   "self_params": 11,
-  "void_ptr": 7
+  "void_ptr": 6
  },
  "src/kyoshin/realtimeevt/CREvtObj.cpp": {
   "extern_c_nonlbl_def": 6,

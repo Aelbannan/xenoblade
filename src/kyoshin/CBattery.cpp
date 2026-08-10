@@ -5,8 +5,6 @@
 
 #include <cstdio>
 
-extern void func_801390E0(CFileHandle**);
-
 // Shared string pool in split1 .rodata (US/EU):
 // +0x00 "/menu/jp/Battery.arc"
 // +0x14 "pic_%02d"
@@ -44,10 +42,10 @@ void CBattery::func_802B92FC() {
 void CBattery::func_802B9334(void* param) {
     if (mDrawn == 0 || mLayoutReady == 0)
         return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
+    func_80137038(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
 }
 
-void CBattery::func_802B9364() {
+__declspec(noinline) void CBattery::func_802B9364() {
     CDeviceVI::waitForDrawDone();
     func_801390E0(&mFileHandle);
     nw4r::lyt::Layout* layout = mLayout;
@@ -68,7 +66,7 @@ void CBattery::setBatteryLevel(u8 level) {
 
 /* Updates the current battery images by going through the individual images
 for each bar, and only showing the ones for the current battery level. */
-void CBattery::updateBatteryImage() {
+void __declspec(noinline) CBattery::updateBatteryImage() {
     if (mLayout != nullptr) {
         // Cap the battery level at 4
         if (mBatteryLevel > 4)
@@ -87,7 +85,7 @@ void CBattery::updateBatteryImage() {
     }
 }
 
-void CBattery::func_802B94B0() {
+__declspec(noinline) void CBattery::func_802B94B0() {
     if (mLayout != nullptr) {
         mDrawn = true;
         mLayoutReady = true;

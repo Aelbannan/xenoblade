@@ -8,13 +8,13 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Shared string pool in split1 .rodata: "/menu/jp/Battery.arc", "pic_%02d"...
-extern "C" char lbl_eu_8051399C[];
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+// lbl_* names at global (non-namespace) scope do not get mangled by C++.
+extern char lbl_eu_8051399C[];
 
 // IWorkEvent vtable for CBattery (split1 .data on US/EU; __vt__8CBattery on JP).
-extern "C" void* lbl_eu_8053B890[];
+// 32-bit function-pointer slots (defined in the split1 unit that owns .data).
+extern u32 lbl_eu_8053B890[];
 
 /* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order). */
 struct CBatteryVtblBase {
@@ -37,7 +37,7 @@ public:
     void func_802B9334(void*);
     void func_802B9364();
     void setBatteryLevel(u8 level);
-    __declspec(noinline) void updateBatteryImage();
+    void updateBatteryImage();
     void func_802B94B0();
     bool OnFileEvent(CEventFile* pEventFile);
 

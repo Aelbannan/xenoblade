@@ -748,7 +748,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_802B8A3C.cpp"),
             Object(Matching, "kyoshin/plugin/pluginVoice.cpp"),
             Object(Matching, "kyoshin/code_802B9064.cpp"),
-            Object(NonMatching, "kyoshin/CBattery.cpp", extra_cflags=["-func_align 16"]),
+            Object(Matching, "kyoshin/CBattery.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
         ],
     },
     {

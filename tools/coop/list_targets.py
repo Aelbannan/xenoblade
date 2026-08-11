@@ -4,8 +4,7 @@
 Produces the same lists used for triage/queueing, one file per tier, each
 sorted by function size (smallest first):
 
-  unmatched-highmatch.txt          unmatched targets at HIGH_MATCH or above
-                                   (HIGH_MATCH / EQUIVALENT_MATCH / FULL_MATCH)
+  unmatched-highmatch.txt          unmatched targets at exactly HIGH_MATCH
   code-match.txt                   all CODE_MATCH targets
   structural-functions.txt         all STRUCTURAL targets
   compiles-behavior-verified.txt   all COMPILES / BEHAVIOR_VERIFIED targets
@@ -45,14 +44,12 @@ from tools.coop.lib.targets import Target, load_targets
 # List definitions
 # ---------------------------------------------------------------------------
 
-ABOVE_HIGH_MATCH = {"HIGH_MATCH", "EQUIVALENT_MATCH", "FULL_MATCH"}
-
 LISTS: Dict[str, Dict[str, object]] = {
     "unmatched-highmatch": {
         "filename": "unmatched-highmatch.txt",
-        "help": "unmatched targets at HIGH_MATCH or above",
+        "help": "unmatched targets at exactly HIGH_MATCH",
         "filter": lambda t: (
-            t.workflow_status != "ACCEPTED" and t.status in ABOVE_HIGH_MATCH
+            t.workflow_status != "ACCEPTED" and t.status == "HIGH_MATCH"
         ),
     },
     "code-match": {

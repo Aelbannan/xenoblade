@@ -5,15 +5,13 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/lib/CLibLayout.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/work/CEventFile.hpp"
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
 void func_80137924(void*, void*, void*, void*);
-u32 func_801392E4(void*);
-u16 func_80139358(u32);
-void* CItem_initItemImplInstances(void*);
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
 void func_8021AF74(CMCCrystalInfo*);
@@ -23,8 +21,12 @@ void func_8021B058(CMCCrystalInfo*);
 void func_8021B0A4(CMCCrystalInfo*);
 void func_8021B0F0(CMCCrystalInfo*);
 void func_8021B13C(CMCCrystalInfo*);
-void func_8021B2E0(CMCCrystalInfo*, u32, void*);
-void func_8021B188(void*, void*, void*, void*);
+
+// Same-TU exports referenced before their definitions; C linkage keeps the
+// call relocs bound to the unmangled retail symbol names.
+extern "C" void func_8021B42C(CMCCrystalInfo*);
+extern "C" void func_8021B2E0(CMCCrystalInfo*, u16, void*);
+extern "C" void func_8021B188(CrystalItemBuf*, CMCCrystalInfo*, u32, void*);
 
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
@@ -69,13 +71,11 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
 
 void func_8021A718(CMCCrystalInfo* self)
 {
-    // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a)
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    self->mFileHandle1 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        handle, &lbl_eu_80508DF8[0], self, 0, 0);
-    handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    self->mFileHandle2 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
+    // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a).
+    u32 handle = (u32)mtl::MemManager::getHandleMEM2();
+    self->mFileHandle1 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0], self, 0, 0);
+    handle = (u32)mtl::MemManager::getHandleMEM2();
+    self->mFileHandle2 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
 }
 
 void func_8021A780(CMCCrystalInfo* self)
@@ -121,12 +121,12 @@ void func_8021A860(CMCCrystalInfo* self)
 {
     func_801390E0((CFileHandle**)&self->mFileHandle1);
     func_801390E0((CFileHandle**)&self->mFileHandle2);
-    void* layout = self->mLayout;
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
     self->mEnabled = 0;
     if (layout != 0) {
-        if (layout != 0) {
-            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
-        }
+        // Deleting dtor: MWCC emits a virtual call to ~Layout (vtable +8)
+        // with the delete flag in r4, guarded by its own null check.
+        delete layout;
         self->mLayout = 0;
     }
     func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mArcResAccessor);
@@ -151,7 +151,7 @@ void func_8021A918(CMCCrystalInfo* self)
     if (self->mState == 3) {
         self->mState = 4;
         self->mField51 = 0;
-        return func_8021B5B4();
+        return func_8021B5B4(self);
     }
 }
 
@@ -160,7 +160,7 @@ void func_8021A93C(CMCCrystalInfo* self)
     if (self->mState == 3) {
         self->mState = 6;
         self->mField51 = 0;
-        return func_8021B6C4();
+        return func_8021B6C4(self);
     }
 }
 
@@ -169,7 +169,7 @@ void func_8021A960(CMCCrystalInfo* self)
     if (self->mState == 3) {
         self->mState = 7;
         self->mField51 = 0;
-        return func_8021B63C();
+        return func_8021B63C(self);
     }
 }
 
@@ -178,18 +178,47 @@ void func_8021A984(CMCCrystalInfo* self)
     if (self->mState == 3) {
         self->mState = 8;
         self->mField51 = 0;
-        return func_8021B63C();
+        return func_8021B63C(self);
     }
 }
 
-void func_8021A9A8(){}
+void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
+{
+    CMCCItemData* p;
+    if (item != 0) {
+        p = item;
+    } else {
+        p = 0;
+    }
+    u32 val;
+    if (p != 0) {
+        val = p->word0 >> 20;
+    } else {
+        val = arg4;
+    }
+    u32 code = func_801392E4(val & 0xFFFF);
+    if (p != 0 && p->word0 != 0) {
+        u32 type = (p->word0 >> 12) & 0xF;
+        u8 flags = p->field07 & 3;
+        u32 cond = 0;
+        if (type == 9 && flags == 2) cond = 1;
+        if (!cond && type == 9 && flags == 3) cond = 1;
+        if (cond) code = 9;
+    }
+    // Type 9 (crystal) with the right flags forces the crystal display
+    // path; otherwise fall back to the plain crystal-info refresh.
+    if ((code & 0xFFFF) == 9) {
+        func_8021B2E0(self, (u16)val, item);
+    } else {
+        func_8021B42C(self);
+    }
+}
 
 void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
 {
     char buf[0x20];
     u32 idx;
     char* msgName;
-    char* msgDesc;
 
     // Crystal name for slot idx, then colour it (colour pair depends on arg7).
     msgName = func_8013639C((void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], arg5);
@@ -209,43 +238,50 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
     // Description string + colour.
     sprintf(buf, &lbl_eu_80508DF8[0x5e], idx);
-    msgDesc = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
-    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgDesc, 0);
+    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf,
+        func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21), 0);
     func_80139A18((nw4r::lyt::Layout*)self->mLayout, buf,
         (GXColorS10*)(arg7 ? &lbl_eu_80664708 : &lbl_eu_806646F8),
         (GXColorS10*)(arg7 ? &lbl_eu_80664710 : &lbl_eu_80664700));
 
     // Pick the crystal picture to show for this slot based on the item code.
-    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
     void* res = 0;
+    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
     switch (code) {
     case 0:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x81], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0x81], 0);
         break;
     case 4:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x97], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0x97], 0);
         break;
     case 5:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xad], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0xad], 0);
         break;
     case 6:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xc3], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0xc3], 0);
         break;
     case 7:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xd9], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0xd9], 0);
         break;
     case 8:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0xef], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0xef], 0);
         break;
     case 9:
-        res = ((void*(*)(void*, u32, const char*, u32))(*(void***)self->mField30)[3])(
-            (void*)self->mField30, 0x74696d67, &lbl_eu_80508DF8[0x105], 0);
+        res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
+            ->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE,
+                          &lbl_eu_80508DF8[0x105], 0);
         break;
     }
 
@@ -290,7 +326,7 @@ void func_8021AF74(CMCCrystalInfo* self)
 {
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 2;
-        return func_8021B5B4();
+        return func_8021B5B4(self);
     }
 }
 
@@ -336,28 +372,90 @@ void func_8021B0F0(CMCCrystalInfo* self)
 
 void func_8021B13C(CMCCrystalInfo* self)
 {
-    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
         self->mField51 = 1;
         self->mState = 3;
     }
 }
 
-void func_8021B188(){}
-
-void func_8021B2E0(){}
-
-void func_8021B42C(CMCCrystalInfo* self)
+// Build the crystal-slot display buffers. noinline: retail calls these as
+// separate functions (bl), so inlining would balloon the caller sizes.
+__declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, void* item)
 {
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
-    func_80136B4C(layout, &lbl_eu_80508DF8[0x15a], &lbl_eu_80508DF8[0x12a], 0);
+    CrystalItemBuf buf;
+    void* item2 = item ? item : 0;
+    func_801392E4(data);
+    func_80139358(data);
+    CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+    u8 count = inst->GetCount(item2);
+    buf.count = count;
+    buf.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
+                                  0x1e - (count - 1));
+    buf.field21 = 0;
+    for (u32 i = 0; i < 4; i++) {
+        CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+        u16 n = inst2->GetName(item2, (u8)i);
+        if (n > 0) {
+            buf.names[buf.field21] = func_8013639C((void*)lbl_eu_806640D8,
+                                                   &lbl_eu_80508DF8[0x36], n);
+            CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
+            buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
+            buf.field21++;
+        }
+    }
+    // Copy the whole result buffer to the caller's slot (9 words, unrolled).
+    u32* dst = (u32*)((u8*)out - 4);
+    u32* src = (u32*)((u8*)&buf - 4);
+    for (int j = 4; j != 0; j--) {
+        *++dst = *++src;
+        *++dst = *++src;
+    }
+    *++dst = *++src;
+}
+
+__declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, void* item)
+{
     char buf[0x20];
+    func_8021B42C(self);
+    CrystalItemBuf bufB;
+    func_8021B188(&bufB, self, arg2, item);
+    CrystalItemBuf bufC;
+    // Copy the filled buffer so the slot values sit at the fixed frame slot
+    // the caller expects, then render each stored crystal entry.
+    u32* dst = (u32*)((u8*)&bufC - 4);
+    u32* src = (u32*)((u8*)&bufB - 4);
+    for (int j = 4; j != 0; j--) {
+        *++dst = *++src;
+        *++dst = *++src;
+    }
+    *++dst = *++src;
+    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
+                  bufC.str, 0);
+    u8 count = bufC.field21;
+    for (u8 i = 0; i < count; i++) {
+        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, bufC.names[i], 0);
+        sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
+        func_80136910((nw4r::lyt::Layout*)self->mLayout, buf, bufC.flags[i]);
+        sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
+        char* s = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
+    }
+}
+
+__declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)
+{
+    char buf[0x20];
+    char* sEmpty = &lbl_eu_80508DF8[0x12a];
+    func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
+                  &lbl_eu_80508DF8[0x12a], 0);
     for (u8 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
     }
 }
 
@@ -372,22 +470,45 @@ extern "C" void func_8021B500(void* this_) {
     }
 }
 
-// Placeholder bodies for unmatched callee stubs. A genuinely empty body lets MWCC
-// fold the call (same-TU definition), so the callers' `b`/`bl` would vanish.
-// The real bodies are separate work items; these must carry a non-foldable effect
-// while matched callers are verified.
-static volatile u32 s_stubSink;
+// Bind the crystal-info intro animation to the layout and start it playing.
+// (Called on state 0->1 and 4->5 transitions.)
+__declspec(noinline) void func_8021B52C(CMCCrystalInfo* self)
+{
+    ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
+    ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform1);
+    ((nw4r::lyt::Layout*)self->mLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform1, true);
+    ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
+}
 
-// noinline forces a real branch call in the matched callers instead of the
-// stub body being inlined into them. extern "C" keeps the retail (unmangled)
-// linker names for the callers' tail branches.
-extern "C" __declspec(noinline) void func_8021B52C(CMCCrystalInfo* self) { s_stubSink = 1; }
+// Bind the crystal-info outro animation to the layout and start it playing.
+// (Called on state 3->4 transitions.)
+__declspec(noinline) void func_8021B5B4(CMCCrystalInfo* self)
+{
+    ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
+    ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform2);
+    ((nw4r::lyt::Layout*)self->mLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform2, true);
+    ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
+}
 
-extern "C" __declspec(noinline) void func_8021B5B4() { s_stubSink = 1; }
+// Bind the crystal-info intro animation variant for the 3rd anim transform
+// (mAnimTransform3) and start it playing. Called on state 3->7/3->8.
+__declspec(noinline) void func_8021B63C(CMCCrystalInfo* self)
+{
+    ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
+    ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform3);
+    ((nw4r::lyt::Layout*)self->mLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform3, true);
+    ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
+}
 
-extern "C" __declspec(noinline) void func_8021B63C() { s_stubSink = 1; }
-
-extern "C" __declspec(noinline) void func_8021B6C4() { s_stubSink = 1; }
+// Bind the crystal-info intro animation variant for the 4th anim transform
+// (mAnimTransform4) and start it playing. Called on state 3->6.
+__declspec(noinline) void func_8021B6C4(CMCCrystalInfo* self)
+{
+    ((nw4r::lyt::Layout*)self->mLayout)->UnbindAllAnimation();
+    ((nw4r::lyt::Layout*)self->mLayout)->BindAnimation((nw4r::lyt::AnimTransform*)self->mAnimTransform4);
+    ((nw4r::lyt::Layout*)self->mLayout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform4, true);
+    ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
+}
 
 bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 {

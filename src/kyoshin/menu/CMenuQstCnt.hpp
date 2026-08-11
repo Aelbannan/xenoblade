@@ -8,6 +8,23 @@ namespace nw4r { namespace lyt {
 }}
 class CScn;
 
+// Mirror of the font object returned by CDeviceFont::func_80452C10. vtable
+// slot 0x24 (index 9) yields the u32 bound into the layout's font pane via
+// func_8013676C. Never instantiated, so no vtable is emitted; a genuine
+// virtual call makes MWCC emit retail's r12 dispatch sequence
+// (CSimpleFontObj / CMenuPTGaugeFont scheme).
+class CMenuQstCntFont {
+public:
+    virtual ~CMenuQstCntFont();   // 0x00 (3 dtor slots)
+    virtual void vf0C();          // 0x0C
+    virtual void vf10();          // 0x10
+    virtual void vf14();          // 0x14
+    virtual void vf18();          // 0x18
+    virtual void vf1C();          // 0x1C
+    virtual void vf20();          // 0x20
+    virtual u32 getFontHandle();  // 0x24
+};
+
 // 8-byte quest entry record (used at 0x94 and 0x194 inside CMenuQstCnt).
 struct QstEntry {
     u16 f0;   // 0x00 quest id
@@ -15,7 +32,6 @@ struct QstEntry {
     u8  f4;   // 0x04
     u8  f5;   // 0x05
     u8  f6;   // 0x06
-    void setQstEntry(short a, short b, u8 c, u8 d, u8 e);
 };
 
 // 8-byte quest-info record (element of the 0x400-element list in QstData).
@@ -79,6 +95,7 @@ struct CMenuQstCnt {
 
 extern "C" int func_80144FF0();
 extern "C" int func_80145030(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void initQstInfo(QstInfo* ptr);
 extern "C" void __dt__80227030();
 extern "C" QstInfo* copyQstInfo(QstInfo* dst, const QstInfo* src);
@@ -91,6 +108,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void __dl__FPv(void*);
 extern "C" void __construct_array(void*, void*, void*, u32, u32);
+extern "C" void __destroy_arr(void*, void*, int, int);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 extern "C" void Regist__8CProcessFP8CProcessb(void*, void*, bool);
@@ -105,6 +123,7 @@ extern "C" char* func_801394D4(u16);
 extern "C" u16 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" u32 __ptmf_null[];
 extern "C" u32 lbl_eu_8052D238[];
 extern "C" u32 lbl_eu_80536128[];

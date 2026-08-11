@@ -20,6 +20,30 @@ void CTTask<CUIBattleManager>::Draw() {
 template<>
 CTTask<CUIBattleManager>::~CTTask() {}
 
+// Retail __dt__34CTTask<Q216CUIBattleManager5CTest>Fv: empty body; MWCC emits
+// the CProcess dtor call + deleting-flag delete (0x58-byte shape).
+template<>
+CTTask<CUIBattleManager::CTest>::~CTTask() {}
+
+// Retail __dt__Q216CUIBattleManager5CTestFv. Empty body; MWCC inlines the
+// CTTask<CTest> dtor above (CProcess dtor + delete), reusing the outer null
+// check's CR0 for the inlined guard -> the retail double-beq shape.
+CUIBattleManager::CTest::~CTest() {}
+
+template<>
+void CTTask<CUIBattleManager::CTest>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUIBattleManager::CTest*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUIBattleManager::CTest>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUIBattleManager::CTest*>(this)->*mDrawFunc)();
+    }
+}
+
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
@@ -628,8 +652,25 @@ mark_remove:
 done:;
 }
 
-void func_8012E6DC(){}
-void func_8012F29C(){}
+int func_8012E6DC() {
+    CUIBattleManager* self = lbl_eu_80664048;
+
+    if (self == NULL) return 0;
+    if (self->mFileArtsElem != NULL) return 1;
+    if (self->mFileArtsSys != NULL) return 1;
+    if (self->mFileArtsPc[0] != NULL) return 1;
+    if (self->mFileFacePc[0] != NULL) return 1;
+    if (self->mFileArtsPc[1] != NULL) return 1;
+    if (self->mFileFacePc[1] != NULL) return 1;
+    if (self->mFileArtsPc[2] != NULL) return 1;
+    if (self->mFileFacePc[2] != NULL) return 1;
+    return 0;
+}
+void CUIBattleManager::func_8012F29C() {
+    // Swap the Move callback to the retail no-op pmf {0, -1, func_8012F2BC}.
+    // (Reached via the pmf installed by __ct__CUIBattleManager.)
+    mMoveFunc = lbl_eu_8052E0B4;
+}
 extern "C" void func_8012F2BC() {}
 extern "C" void func_8012F860() {
     if (lbl_eu_80664048 != 0) {
@@ -649,18 +690,153 @@ extern "C" void func_8012FF6C(void* p) {
     __dt__16CUIBattleManagerFv((char*)p - 0x54);
 }
 
-void __ct__CUIBattleManager(){}
-void func_8012E630(){}
+void __ct__CUIBattleManager(CUIBattleManager* self, CScnNw4r* pScene,
+                             mtl::ALLOC_HANDLE handle) {}
+
+void func_8012E630(CUIBattleManager* self) {
+    int i;
+
+    if (self->mFileArtsElem != NULL) {
+        CDeviceFile::cancel(self->mFileArtsElem);
+        self->mFileArtsElem = NULL;
+    }
+    if (self->mFileArtsSys != NULL) {
+        CDeviceFile::cancel(self->mFileArtsSys);
+        self->mFileArtsSys = NULL;
+    }
+    for (i = 0; i < 3; i++) {
+        if (self->mFileArtsPc[i] != NULL) {
+            CDeviceFile::cancel(self->mFileArtsPc[i]);
+            self->mFileArtsPc[i] = NULL;
+        }
+        if (self->mFileFacePc[i] != NULL) {
+            CDeviceFile::cancel(self->mFileFacePc[i]);
+            self->mFileFacePc[i] = NULL;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// reslist<IUIBattle> deleting destructors (retail __dt___reslist_base_IUIBattle
+// / __dt__reslist_IUIBattle). The retail symbols use the old flat template
+// mangling, so these are plain global functions (MWCC leaves `__`-prefixed
+// names unmangled) over the ResListIUIBattle layout mirror.
+// ---------------------------------------------------------------------------
+void* __dt___reslist_base_IUIBattle(ResListIUIBattle* self, int mode) {
+    if (self != NULL) {
+        self->mVtable = lbl_eu_8052E1B4;
+        {
+            _reslist_node<IUIBattle>* cur = self->mHead->mNext;
+            while (cur != self->mHead) {
+                _reslist_node<IUIBattle>* prev = cur;
+                cur = cur->mNext;
+                prev->mNext = NULL;
+            }
+            self->mHead->mNext = self->mHead;
+            self->mHead->mPrev = self->mHead;
+        }
+        if (self->mOwnsList == 0 && self->mList != NULL) {
+            delete[] self->mList;
+            self->mList = NULL;
+        }
+    }
+    if (mode > 0) {
+        delete self;
+    }
+    return self;
+}
+
+void* __dt__reslist_IUIBattle(ResListIUIBattle* self, int mode) {
+    // Doubled null check mirrors retail: MWCC keeps the dead second beq.
+    if (self != NULL) {
+        if (self != NULL) {
+            self->mVtable = lbl_eu_8052E1B4;
+            {
+                _reslist_node<IUIBattle>* cur = self->mHead->mNext;
+                while (cur != self->mHead) {
+                    _reslist_node<IUIBattle>* prev = cur;
+                    cur = cur->mNext;
+                    prev->mNext = NULL;
+                }
+                self->mHead->mNext = self->mHead;
+                self->mHead->mPrev = self->mHead;
+            }
+            if (self->mOwnsList == 0 && self->mList != NULL) {
+                delete[] self->mList;
+                self->mList = NULL;
+            }
+        }
+    }
+    if (mode > 0) {
+        delete self;
+    }
+    return self;
+}
+
 // Forward declaration - used by OnFileEvent this-adjusting thunk
 void func_8012F2C0(void*, void*);
-void func_8012F558(){}
+CUIBattleManager* func_8012F558(CProcess* pParent, CScnNw4r* pScene,
+                                mtl::ALLOC_HANDLE handle) {
+    CUIBattleManager* mgr;
+
+    if (lbl_eu_80664048 != NULL) {
+        return lbl_eu_80664048;
+    }
+    if (handle == mtl::INVALID_HANDLE) {
+        handle = mtl::MemManager::getHandleMEM2();
+    }
+    mgr = static_cast<CUIBattleManager*>(
+        mtl::MemManager::allocate(sizeof(CUIBattleManager), CWorkThreadSystem::getWorkMem()));
+    if (mgr != NULL) {
+        __ct__CUIBattleManager(mgr, pScene, handle);
+    }
+    lbl_eu_80664048 = mgr;
+    mgr->Regist(pParent, false);
+    return lbl_eu_80664048;
+}
 void func_8012F5F8(){}
 void func_8012F750(){}
 void func_8012FAA8(){}
-void func_8012FC74(){}
-void func_8012FD04(){}
-void func_8012FD60(){}
-void __dt__Q216CUIBattleManager5CTestFv(){}
+// Check the arts-sys arc accessor (0x90) for a named 'timg' texture resource.
+// Returns the resource pointer, or NULL if the accessor is not ready / missing.
+void* func_8012FD04(const char* name) {
+    nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsSysDone;
+    if (acc != NULL) {
+        void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
+        if (result != NULL) {
+            return result;
+        }
+    }
+    return NULL;
+}
+
+// Same as func_8012FD04 but for the arts-elem arc accessor (0x88).
+void* func_8012FD60(const char* name) {
+    nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsElemDone;
+    if (acc != NULL) {
+        void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
+        if (result != NULL) {
+            return result;
+        }
+    }
+    return NULL;
+}
+
+// Search the three per-party arts accessors (0xA0 + i*4) for a named 'timg'
+// texture resource. Returns the first hit, or NULL.
+void* func_8012FC74(const char* name) {
+    u8 i;
+    for (i = 0; i < 3; i++) {
+        nw4r::lyt::ArcResourceAccessor* acc = lbl_eu_80664048->mFileArtsPcBusy[i];
+        if (acc != NULL) {
+            void* result = acc->GetResource(0x74696D67 /* 'timg' */, name, 0);
+            if (result != NULL) {
+                return result;
+            }
+        }
+    }
+    return NULL;
+}
 
 // This-adjusting thunk: subi r3, r3, 0x54; b func_8012F2C0
 // MWCC does not generate this automatically for non-dtor virtual overrides.

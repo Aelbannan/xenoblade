@@ -414,30 +414,27 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
         }
         self->flags |= 2;
         if (self->field_78 != 0) {
-            *(void**)((u8*)self->field_78 + 0xb0) = self;
-            CfGimmickLockSetYFn setY = *(CfGimmickLockSetYFn*)(*(u32*)self->field_78 + 0xc4);
-            setY(self->field_78, self->rotation.y);
+            CfGimmickLockObj* obj = (CfGimmickLockObj*)self->field_78;
+            *(void**)((u8*)obj + 0xb0) = self;
+            obj->setY(self->rotation.y);
             if (self->stateIndex - 3 <= 1) {
+                f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
-                vec[0] = self->extent0 / lbl_eu_806683C4;
-                vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[2] = self->extent3 / lbl_eu_806683C4;
-                CfGimmickLockSetPosFn setPos = *(CfGimmickLockSetPosFn*)(*(u32*)self->field_78 + 0x9c);
-                setPos(self->field_78, vec);
-                func_800ACEF8(self->field_78, vec);
+                vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
+                vec[0] = self->extent0 / lbl_eu_806683C4;
+                obj->setPos(vec);
+                func_800ACEF8(obj, vec);
             } else {
-                CfGimmickLockSetPosFn setPos = *(CfGimmickLockSetPosFn*)(*(u32*)self->field_78 + 0x9c);
-                setPos(self->field_78, &self->position.x);
-                CfGimmickLockSetScaleFn setScale = *(CfGimmickLockSetScaleFn*)(*(u32*)self->field_78 + 0xdc);
-                setScale(self->field_78, self->extent0 / lbl_eu_806683C4);
+                obj->setPos(&self->position.x);
+                obj->setScale(self->extent0 / lbl_eu_806683C4);
             }
             // Touch the target of every fight-list entry.
             CfGimmickList* list = func_800B6BC8();
             CfGimmickListNode* node = list->head->next;
             while (node != list->head) {
-                void* entry = node->object;
-                CfGimmickLockGetTargetFn getTarget = *(CfGimmickLockGetTargetFn*)(*(u32*)entry + 0x110);
-                void* target = getTarget(entry);
+                CfGimmickLockObj* entry = (CfGimmickLockObj*)node->object;
+                void* target = entry->getTarget();
                 if (target != 0) {
                     func_8008B95C((u8*)target + 0x84);
                 }
@@ -445,16 +442,17 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
             }
         }
     } else {
-        if (self->field_78 != 0) {
+        CfGimmickLockObj* obj = (CfGimmickLockObj*)self->field_78;
+        if (obj != 0) {
             if (self->stateIndex - 3 <= 1) {
+                f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
-                vec[0] = self->extent0 / lbl_eu_806683C4;
-                vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[2] = self->extent3 / lbl_eu_806683C4;
-                func_800ACEF8(self->field_78, vec);
+                vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
+                vec[0] = self->extent0 / lbl_eu_806683C4;
+                func_800ACEF8(obj, vec);
             } else if (self->stateIndex - 1 <= 1) {
-                CfGimmickLockSetScaleFn setScale = *(CfGimmickLockSetScaleFn*)(*(u32*)self->field_78 + 0xdc);
-                setScale(self->field_78, self->extent0 / lbl_eu_806683C4);
+                obj->setScale(self->extent0 / lbl_eu_806683C4);
             }
         }
     }

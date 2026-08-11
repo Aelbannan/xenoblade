@@ -97,8 +97,7 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
 
     // For each map id 2..28 (types 10/20/22/26/28 excluded), append the map
     // to the grid when it is a valid map of that type.
-    u8 mapId = 2;
-    while ((mapId & 0xFF) <= 0x1c) {
+    for (s32 mapId = 2; mapId <= 0x1c; mapId++) {
         switch (mapId) {
         case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
         case 8: case 9: case 11: case 12: case 13: case 14: case 15: case 16:
@@ -117,22 +116,21 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
         case 10: case 20: case 22: case 26: case 28:
             ;  // empty: falls to the loop increment
         }
-        mapId++;
     }
 
     // Bubble-sort the grid by BDAT sort key, descending (early exit when a
     // pass makes no swap).
     for (u8 pass = 0; pass < self->mGridData[0x20]; pass++) {
-        bool swapped = false;
-        for (u8 j = 0; j < self->mGridData[0x20] - 1 - pass; j++) {
-            u8 b = self->mGridData[j + 1];
-            u8 a = self->mGridData[j];
+        int swapped = 0;
+        for (u8 k = 0; k < self->mGridData[0x20] - 1 - pass; k++) {
+            u8 b = self->mGridData[k + 1];
+            u8 a = self->mGridData[k];
             u8 keyA = func_801361E8((u32)orderTable, lbl_eu_8050B4A8 + 6, (u32)a);
             if (keyA > func_801361E8((u32)orderTable, lbl_eu_8050B4A8 + 6, (u32)b)) {
-                self->mGridData[j] ^= self->mGridData[j + 1];
-                self->mGridData[j + 1] ^= self->mGridData[j];
-                self->mGridData[j] ^= self->mGridData[j + 1];
-                swapped = true;
+                self->mGridData[k] ^= self->mGridData[k + 1];
+                self->mGridData[k + 1] ^= self->mGridData[k];
+                self->mGridData[k] ^= self->mGridData[k + 1];
+                swapped = 1;
             }
         }
         if (!swapped) break;

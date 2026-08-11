@@ -19,14 +19,6 @@
 
 #include "kyoshin/menu/CMenuQstCnt.hpp"
 
-void QstEntry::setQstEntry(short a, short b, unsigned char c, unsigned char d, unsigned char e) {
-    f0 = a;
-    f2 = b;
-    f4 = c;
-    f5 = d;
-    f6 = e;
-}
-
 struct QstMenuData {
     u8 mPad88[0x88];                            // 0x00
     nw4r::lyt::AnimTransform* mAnim88;          // 0x88
@@ -45,20 +37,49 @@ struct QstData {
     u8  field_2005;                             // 0x2005
 };
 
-// forward declarations for cross-referenced helpers (defined later in this TU)
+// C-linkage (retail symbols are unmangled) declarations for the free
+// functions defined in this TU. Definitions keep the same linkage.
+extern "C" {
+void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e);
 QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src);
-QstEntry* copyQstEntry2(QstEntry* dest, const QstEntry* src);
+QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src);
+void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
+CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e);
+int func_80226B94();
+void invalidateQstFlag();
 void func_80226BBC(QstMenuData* self);
 void func_80226C18(QstMenuData* self);
 void func_80226C5C(QstMenuData* self);
 void func_80226C88(CMenuQstCnt* self);
 void func_80226E54(CMenuQstCnt* self);
 QstData* func_80226FAC(QstData* self);
+void* __dt__80227070(QstData* self, int flags);
 void func_802270CC(QstData* self);
+void func_80227260(QstData* self, u32 kind, u32 filter);
+void func_80227660(QstInfo* dst, const QstInfo* src);
+void func_8022769C(QstInfo* dst, const QstInfo* src);
+unsigned short selectQstIndex(unsigned char* p);
+QstInfo* func_802276F4(QstInfo* base, unsigned short idx);
+void func_80227710();
+}
 
 // --- OOL base/subobject + helper/data imports are declared in CMenuQstCnt.hpp ---
 
 CMenuQstCnt* lbl_eu_80664720;
+
+// Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
+// from every callsite; without the auto_inline guard, MWCC -inline auto
+// inlines them and the 32-iteration loops blow up (MWCC_REFERENCE sec hbm/seq).
+#pragma push
+#pragma auto_inline off
+void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
+    entry->f0 = a;
+    entry->f2 = b;
+    entry->f4 = c;
+    entry->f5 = d;
+    entry->f6 = e;
+}
+#pragma pop
 
 // Constructor (unmangled retail symbol). Runs CProcess's ctor then fills the
 // IUIWindow base region by hand (the IUIWindow base ctor is out-of-line in
@@ -66,14 +87,14 @@ CMenuQstCnt* lbl_eu_80664720;
 void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
     __ct__8CProcessFv(self);
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D238;
+    self->mVtab = (u32)lbl_eu_8052D238;
     u32* ptmf = __ptmf_null;
-    *(u32*)((u8*)self + 0x3C) = ptmf[0];
-    *(u32*)((u8*)self + 0x40) = ptmf[1];
-    *(u32*)((u8*)self + 0x44) = ptmf[2];
-    *(u32*)((u8*)self + 0x48) = ptmf[0];
-    *(u32*)((u8*)self + 0x4C) = ptmf[1];
-    *(u32*)((u8*)self + 0x50) = ptmf[2];
+    self->mPtmfFunc0 = ptmf[0];
+    self->mPtmfThis0 = ptmf[1];
+    self->mPtmfDelta0 = ptmf[2];
+    self->mPtmfFunc1 = ptmf[0];
+    self->mPtmfThis1 = ptmf[1];
+    self->mPtmfDelta1 = ptmf[2];
     self->mLayout = 0;
     self->mField58 = 0;
     self->mField5C = 0;
@@ -84,7 +105,7 @@ void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigne
     self->mField67 = 1;
     self->mField68 = 0;
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80536128;
+    self->mVtab = (u32)lbl_eu_80536128;
     self->mOcc6C = (u32)lbl_eu_80536128 + 0x24;
     self->mOcc70 = (u32)lbl_eu_80536128 + 0xAC;
     self->mScene = scene;
@@ -93,23 +114,29 @@ void __ct__CMenuQstCnt(CMenuQstCnt* self, CScn* scene, short a, short b, unsigne
 
     self->mAnim88 = 0;
     self->mState8C = 0;
-    self->mValue90 = 0.0f;
+    self->mValue90 = lbl_eu_80668568;
 
-    for (int i = 0; i < 32; i++) {
-        self->mEntries[i].setQstEntry(0, 0, 0, 0, 0);
+    u8 i;
+    for (i = 0; i < 32; i++) {
+        setQstEntry(&self->mEntries[i], 0, 0, 0, 0, 0);
     }
-    self->mSelEntry.setQstEntry(0, 0, 0, 0, 0);
+    setQstEntry(&self->mSelEntry, 0, 0, 0, 0, 0);
     self->mField19C = 0;
 
-    QstEntry tmp;
-    for (int i = 0; i < 32; i++) {
-        tmp.setQstEntry(0, 0, 0, 0, 0);
+    for (i = 0; i < 32; i++) {
+        QstEntry tmp;
+        setQstEntry(&tmp, 0, 0, 0, 0, 0);
         copyQstEntry(&self->mEntries[i], &tmp);
     }
-    tmp.setQstEntry(a, b, c, d, e);
-    copyQstEntry(&self->mSelEntry, &tmp);
+    {
+        QstEntry tmp;
+        setQstEntry(&tmp, a, b, c, d, e);
+        copyQstEntry(&self->mSelEntry, &tmp);
+    }
 }
 
+#pragma push
+#pragma auto_inline off
 QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;
@@ -119,14 +146,15 @@ QstEntry* copyQstEntry(QstEntry* dst, const QstEntry* src) {
     return dst;
 }
 
-QstEntry* copyQstEntry2(QstEntry* dest, const QstEntry* src) {
-    dest->f0 = src->f0;
-    dest->f2 = src->f2;
-    dest->f4 = src->f4;
-    dest->f5 = src->f5;
-    dest->f6 = src->f6;
-    return dest;
+QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src) {
+    dst->f0 = src->f0;
+    dst->f2 = src->f2;
+    dst->f4 = src->f4;
+    dst->f5 = src->f5;
+    dst->f6 = src->f6;
+    return dst;
 }
+#pragma pop
 
 extern "C" void __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
     if (self == 0) return;
@@ -140,6 +168,12 @@ extern "C" void __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
 u32 func_801355A0();
 
 void CMenuQstCnt::Init() {
+    // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame);
+    // the -O4,p unit emits individual stw otherwise. optimize_for_size
+    // reproduces the retail prologue/epilogue (MWCC_REFERENCE sec WUD).
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
     // Set up the scoped MEM2 region guard, then build the layout/animations.
     reinterpret_cast<UnkClass_8045F564*>(mMemRegion)
         ->createRegion((int)mtl::MemManager::getHandleMEM2(), 0x4000,
@@ -147,16 +181,16 @@ void CMenuQstCnt::Init() {
     Class_8045F858 regionGuard(
         reinterpret_cast<UnkClass_8045F564*>(mMemRegion));
 
-    func_80136E84(&mLayout, CUICfManager::func_801355F4(),
+    func_80136E84(&mLayout, func_801355F4(),
                   &lbl_eu_80509A10[0xc]);
-    func_80136F08(mLayout, &mAnim88, CUICfManager::func_801355F4(),
+    func_80136F08(mLayout, &mAnim88, func_801355F4(),
                   (char*)&lbl_eu_80509A10[0x25]);
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, mLayout);
     u32 fontResult =
-        ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+        reinterpret_cast<CMenuQstCntFont*>(fontObj)->getFontHandle();
     func_8013676C(rootPane, fontResult);
 
     // First three text fields are filled straight from the message table.
@@ -184,19 +218,29 @@ void CMenuQstCnt::Init() {
     mField67 = 0;
     func_80226E54(this);
 
-    mScene->addRenderCB(reinterpret_cast<IScnRender*>(&mOcc70), 0xa, 0);
+    // Retail guards a dead null-check on this before picking the +0x70
+    // IScnRender subobject (same shape as Term()).
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        cb = reinterpret_cast<IScnRender*>((u8*)this + 0x70);
+    }
+    mScene->addRenderCB(cb, 0xa, 0);
 
     reinterpret_cast<UnkClass_8045F564*>(mMemRegion)->func_8045F810();
     mField19C = 1;
 }
+#pragma pop
 
 void CMenuQstCnt::Term() {
     waitForDrawDone__9CDeviceVIFv();
-    u8* renderPtr = this ? (u8*)this + 0x70 : 0;
-    removeRenderCB__4CScnFP10IScnRender(mScene, renderPtr);
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        cb = reinterpret_cast<IScnRender*>((u8*)this + 0x70);
+    }
+    removeRenderCB__4CScnFP10IScnRender(mScene, cb);
     if (mLayout) {
-        void* vtab = *(void**)mLayout;
-        ((void (*)(void*, bool))((void**)vtab)[0x08 / 4])(mLayout, 1);
+        // Deleting-dtor dispatch: virtual ~Layout at vtable slot +8 (flag 1).
+        delete mLayout;
         mLayout = 0;
     }
     func_8045F778__17UnkClass_8045F564Fv(&mMemRegion[0]);
@@ -205,45 +249,31 @@ void CMenuQstCnt::Term() {
 
 void CMenuQstCnt::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        goto done;
-    }
-    if (lbl_eu_80663E28 & (1u << 21)) {
-        goto done;
-    }
-    if (!func_8013BE50()) {
-        goto done;
-    }
-    if (!(lbl_eu_80663E24 & (1u << 24)) && (lbl_eu_80663E24 & 0xAFE40000u)) {
-        goto done;
-    }
-    if (cf::CfGameManager::func_800829B8()) {
-        goto done;
-    }
-    if (lbl_eu_80663E24 & (1u << 9)) {
-        goto done;
-    }
+    // Single short-circuit OR so MWCC emits: func test -> bne exit;
+    // bit test -> beq continue / b exit (CSystemWindow::Move shape).
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000)) return;
+    if (!func_8013BE50()) return;
+    // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
+    // destroys r0 and the andis needs a second copy. Two adjacent volatile
+    // reads stop MWCC CSE-ing them into one load while keeping both loads
+    // before the branch like retail.
+    u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
+    u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
+    if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
+    if (cf::CfGameManager::func_800829B8()) return;
+    if (lbl_eu_80663E24 & (1u << 9)) return;
     {
         void* cam = func_8049603C(lbl_eu_80663E14);
-        if (lbl_eu_8066856C - *(f32*)((u8*)cam + 0xC) < lbl_eu_8066856C) {
-            goto done;
-        }
+        // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
+        // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
+        f32 camDist = *(f32*)((u8*)cam + 0xC);
+        if (lbl_eu_8066856C - camDist < lbl_eu_8066856C) return;
     }
-    if (func_8011CD5C()) {
-        goto done;
-    }
-    if (func_80293C10()) {
-        goto done;
-    }
-    if (func_8029A658()) {
-        goto done;
-    }
-    if (func_801B481C()) {
-        goto done;
-    }
-    if (func_80124B78()) {
-        goto done;
-    }
+    if (func_8011CD5C()) return;
+    if (func_80293C10()) return;
+    if (func_8029A658()) return;
+    if (func_801B481C()) return;
+    if (func_80124B78()) return;
     switch (mState8C) {
     case 0: func_80226BBC((QstMenuData*)this); break;
     case 1: func_80226C18((QstMenuData*)this); break;
@@ -254,92 +284,82 @@ void CMenuQstCnt::Move() {
         void* vtab = *(void**)mLayout;
         ((void (*)(void*, bool))((void**)vtab)[0x38 / 4])(mLayout, 0);
     }
-done:
-    ;
 }
 
 void CMenuQstCnt::cbRenderBefore() {
-    CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        goto done;
-    }
-    if (lbl_eu_80663E28 & (1u << 21)) {
-        goto done;
-    }
-    if (!func_8013BE50()) {
-        goto done;
-    }
-    if (!(lbl_eu_80663E24 & (1u << 24)) && (lbl_eu_80663E24 & 0xAFE40000u)) {
-        goto done;
-    }
-    if (cf::CfGameManager::func_800829B8()) {
-        goto done;
-    }
+    // Single short-circuit OR so MWCC emits: func test -> bne exit;
+    // bit test -> beq continue / b exit (CSystemWindow::Move shape).
+    if (CTaskGame::getInstance()->func_800426F0() ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0) return;
+    // Retail loads the global twice up front (lwz r0; lwz r3) - the rlwinm
+    // destroys r0 and the andis needs a second copy. Two adjacent volatile
+    // reads stop MWCC CSE-ing them into one load (the missing 4 bytes) while
+    // keeping both loads before the branch like retail.
+    u32 e24a = *(volatile u32*)&lbl_eu_80663E24;
+    u32 e24b = *(volatile u32*)&lbl_eu_80663E24;
+    if (!(e24a & (1u << 24)) && (e24b & 0xAFE40000u)) return;
+    if (cf::CfGameManager::func_800829B8()) return;
     {
         void* cam = func_8049603C(lbl_eu_80663E14);
-        if (lbl_eu_8066856C - *(f32*)((u8*)cam + 0xC) < lbl_eu_8066856C) {
-            goto done;
-        }
+        f32 camDist = *(f32*)((u8*)cam + 0xC);
+        f32 result = lbl_eu_8066856C - camDist;
+        if (result < lbl_eu_8066856C) return;
     }
-    if (func_80293C10()) {
-        goto done;
-    }
-    if (func_8029A658()) {
-        goto done;
-    }
-    if (func_801B481C()) {
-        goto done;
-    }
-    if (func_80124B78()) {
-        goto done;
-    }
-    if (mField64 != 0) {
-        goto done;
-    }
-    {
-        GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
-        func_80137038(mLayout, &drawInfo, 0, 1);
-        __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo, -1);
-    }
-done:
-    ;
+    if (func_80293C10()) return;
+    if (func_8029A658()) return;
+    if (func_801B481C()) return;
+    if (func_80124B78()) return;
+    if (mField64 != 0) return;
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
+    // scope-exit destructor is not virtual-dispatched (CMenuBattleEnd scheme).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
+    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_80137038(mLayout, (nw4r::lyt::DrawInfo*)&drawInfo[0], 0, 1);
+    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
+// Quest-log menu factory/update. When the singleton already exists and is
+// active, only sync the new selection into it (returning 0); otherwise
+// allocate + construct + register a fresh menu (returning the object).
 CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
     CMenuQstCnt* g = lbl_eu_80664720;
-    if (g) {
-        if (g->mField64 == 0) {
-            int changed = (g->mSelEntry.f0 != (u16)a) || (g->mSelEntry.f2 != (u16)b);
-            if (!changed) {
-                switch (g->mState8C) {
-                case 0:
-                    g->mSelEntry.f4 = c;
-                    if (g->mField19C) func_80226E54(g);
-                    break;
-                case 1:
-                    g->mSelEntry.f4 = c;
-                    func_80226E54(g);
-                    break;
-                case 2:
-                    g->mSelEntry.f4 = c;
-                    g->mValue90 = 0.0f;
-                    func_80226E54(g);
-                    break;
-                default:
-                    changed = 1;
-                    break;
-                }
+    if (g != 0 && g->mField64 == 0) {
+        int changed = 0;
+        if (g->mSelEntry.f0 != (u16)a || g->mSelEntry.f2 != (u16)b) {
+            changed = 1;
+        }
+        if (!changed) {
+            switch (g->mState8C) {
+            case 0:
+                g->mSelEntry.f4 = c;
+                if (lbl_eu_80664720->mField19C) func_80226E54(lbl_eu_80664720);
+                break;
+            case 1:
+                g->mSelEntry.f4 = c;
+                func_80226E54(lbl_eu_80664720);
+                break;
+            case 2:
+                g->mSelEntry.f4 = c;
+                lbl_eu_80664720->mValue90 = lbl_eu_80668568;
+                func_80226E54(lbl_eu_80664720);
+                break;
+            default:
+                changed = 1;
+                break;
             }
-            if (changed) {
-                for (int i = 0; i < 0x20; i++) {
-                    if (g->mEntries[i].f0 == 0) {
-                        QstEntry tmp;
-                        tmp.setQstEntry(a, b, c, d, e);
-                        copyQstEntry(&g->mEntries[i], &tmp);
-                        break;
-                    }
+        }
+        if (changed) {
+            u8 i;
+            for (i = 0; i < 0x20; i++) {
+                if (g->mEntries[i].f0 == 0) {
+                    QstEntry tmp;
+                    setQstEntry(&tmp, a, b, c, d, e);
+                    copyQstEntry(&g->mEntries[i], &tmp);
+                    break;
                 }
             }
         }
@@ -392,30 +412,43 @@ void func_80226C5C(QstMenuData* self) {
     }
 }
 
+// Finish the quest-log animation. Pull the head quest into the selection,
+// compact the entry list (keeping only non-zero quest ids), and refresh the
+// displayed quest info.
+// Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector
+// frame); the -O4,p unit emits individual stw. optimize_for_size reproduces
+// the retail -O4,s codegen for this function (MWCC_REFERENCE sec WUD), and
+// dont_inline stops it being folded into Move.
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 void func_80226C88(CMenuQstCnt* self) {
     if (func_80137510(self->mAnim88, lbl_eu_8066856C) == 0) return;
     if (self->mEntries[0].f0 == 0) {
         self->mField64 = 1;
         return;
     }
-    self->mValue90 = 0.0f;
+    self->mValue90 = lbl_eu_80668568;
     self->mState8C = 0;
     QstEntry cur;
     copyQstEntry(&self->mSelEntry, copyQstEntry2(&cur, &self->mEntries[0]));
     QstEntry tmp0;
-    tmp0.setQstEntry(0, 0, 0, 0, 0);
+    setQstEntry(&tmp0, 0, 0, 0, 0, 0);
     copyQstEntry(&self->mEntries[0], &tmp0);
     func_80226E54(self);
 
     QstEntry scratch[32];
-    for (int i = 0; i < 32; i++) scratch[i].setQstEntry(0, 0, 0, 0, 0);
-    for (int i = 0; i < 32; i++) {
+    u8 i, j;
+    for (i = 0; i < 32; i++) {
+        setQstEntry(&scratch[i], 0, 0, 0, 0, 0);
+    }
+    for (i = 0; i < 32; i++) {
         QstEntry t;
-        t.setQstEntry(0, 0, 0, 0, 0);
+        setQstEntry(&t, 0, 0, 0, 0, 0);
         copyQstEntry(&scratch[i], &t);
     }
-    int j = 0;
-    for (int i = 0; i < 32; i++) {
+    j = 0;
+    for (i = 0; i < 32; i++) {
         if (self->mEntries[i].f0 != 0) {
             QstEntry t;
             copyQstEntry2(&t, &self->mEntries[i]);
@@ -429,6 +462,7 @@ void func_80226C88(CMenuQstCnt* self) {
         copyQstEntry(&self->mEntries[j], &t);
     }
 }
+#pragma pop
 
 void func_80226E54(CMenuQstCnt* self) {
     if (self->mSelEntry.f0 == 0) return;
@@ -463,7 +497,7 @@ QstData* func_80226FAC(QstData* self) {
     return self;
 }
 
-extern "C" void initQstInfo(QstInfo* ptr) {
+void initQstInfo(QstInfo* ptr) {
     ptr->f0 = 0;
     ptr->f2 = 0;
     ptr->f3 = 0;
@@ -473,17 +507,31 @@ extern "C" void initQstInfo(QstInfo* ptr) {
     ptr->f7 = 0;
 }
 
-extern "C" void __dt__80227030(){}
+void __dt__80227030(){}
 
-extern "C" void __dt__80227070(){}
+// Destructor (retail __dt__80227070): destroys the 0x400-element QstInfo
+// member array via __destroy_arr, then frees the object if deleting.
+void* __dt__80227070(QstData* self, int flags) {
+    if (self == 0) goto end;
+    __destroy_arr(self, (void*)__dt__80227030, 8, 0x400);
+    if (flags > 0)
+        __dl__FPv(self);
+end:
+    return self;
+}
 
+// Rebuild the 0x400-entry quest-info table from the game's quest catalog.
+// Categories 1..0x1A (ranges from func_801380A0) each contribute their quests;
+// entries whose kind is 0 / 0xC8 are skipped.
 void func_802270CC(QstData* self) {
     self->field_2000 = 0;
-    for (int cat = 1; cat < 0x1B; cat++) {
+    u16 cat;
+    for (cat = 1; cat < 0x1B; cat++) {
         u32 start = func_801380A0(cat);
         if ((start & 0xffff) == 0) continue;
-        u32 end = func_801380A0(cat + 1);
-        for (u32 i = start; i < end; i++) {
+        u16 end = func_801380A0(cat + 1);
+        u16 i = (u16)start;
+        for (; i < end; i++) {
             u8 kind = (u8)func_8009CF8C(i + 0x220);
             if (kind == 0 || kind == 0xC8) continue;
             int r22;
@@ -504,7 +552,7 @@ void func_802270CC(QstData* self) {
             u16 idx = self->field_2000;
             self->field_2000 = idx + 1;
             QstInfo src;
-            src.f0 = (u16)i;
+            src.f0 = i;
             src.f2 = r22;
             src.f3 = cat;
             src.f4 = kind;
@@ -534,11 +582,11 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
     // Pass 1: bubble sort quest entries by quest id (f0) descending.
     for (u16 i = 0; i < self->field_2000 - 1; i++) {
         bool changed = true;
-        QstInfo t1, t2, t3;
         for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
             QstInfo* pa = &self->mList[j];
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f0 > pb->f0) {
+                QstInfo t1, t2, t3;
                 func_80227660(&t1, pa);
                 func_80227660(&t2, pb);
                 copyQstInfo(pa, &t2);
@@ -553,11 +601,11 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
     // Pass 2: bubble sort by flag byte f7 descending.
     for (u16 i = 0; i < self->field_2000 - 1; i++) {
         bool changed = true;
-        QstInfo t1, t2, t3;
         for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
             QstInfo* pa = &self->mList[j];
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f7 > pb->f7) {
+                QstInfo t1, t2, t3;
                 func_80227660(&t1, pa);
                 func_80227660(&t2, pb);
                 copyQstInfo(pa, &t2);
@@ -572,11 +620,11 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
     // Pass 3: bubble sort by f5 ascending.
     for (u16 i = 0; i < self->field_2000 - 1; i++) {
         bool changed = true;
-        QstInfo t1, t2, t3;
         for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
             QstInfo* pa = &self->mList[j];
             QstInfo* pb = &self->mList[j + 1];
             if (pa->f5 < pb->f5) {
+                QstInfo t1, t2, t3;
                 func_80227660(&t1, pa);
                 func_80227660(&t2, pb);
                 copyQstInfo(pa, &t2);
@@ -593,7 +641,6 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
     if (kind != 0) {
         for (u16 i = 0; i < self->field_2000 - 1; i++) {
             bool changed = true;
-            QstInfo t1, t2, t3;
             for (u16 j = 0; j < self->field_2000 - 1 - i; j++) {
                 QstInfo* pa = &self->mList[j];
                 QstInfo* pb = &self->mList[j + 1];
@@ -602,6 +649,7 @@ void func_80227260(QstData* self, u32 kind, u32 filter) {
                 u8 m2 = (kind == 4) ? (pb->f3 == filter)
                                     : (pb->f2 == kind);
                 if (m1 < m2) {
+                    QstInfo t1, t2, t3;
                     func_80227660(&t1, pa);
                     func_80227660(&t2, pb);
                     copyQstInfo(pa, &t2);
@@ -652,11 +700,11 @@ void renderQstBase_70(CMenuQstCnt* sub) {
 }
 
 // Retail: subi r3, r3, 0x6c; b __dt__11CMenuQstCntFv
-extern "C" void dtorQstBase_6C(u8* sub) {
+void dtorQstBase_6C(u8* sub) {
     ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x6C);
 }
 
 // Retail: subi r3, r3, 0x70; b __dt__11CMenuQstCntFv
-extern "C" void dtorQstBase_70(u8* sub) {
+void dtorQstBase_70(u8* sub) {
     ((void(*)(void*))__dt__11CMenuQstCntFv)(sub - 0x70);
 }

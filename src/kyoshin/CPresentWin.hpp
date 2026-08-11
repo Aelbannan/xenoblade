@@ -86,7 +86,7 @@ extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 void func_80124270(nw4r::lyt::Pane*, u32);
 void func_80124288(nw4r::lyt::Pane*, float*);
-extern "C" u32 func_80139358(u32);
+u32 func_80139358(u32);
 int func_801362C0(const char*, const char*, const char*);
 void func_8013A95C(u16, u16, s8);
 }

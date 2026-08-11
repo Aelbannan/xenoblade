@@ -115,6 +115,36 @@ extern char lbl_eu_8052BF70[];
 // CMenuShopSell composite vtable; IScnRender sub-vtable at +0x24.
 extern char lbl_eu_80532650[];
 
+/* Local shim for cf::CfPadData - only the flag words func_8018B470 reads
+ * (CfPadData.hpp owns the full type but pulls CPad/monolib umbrella headers
+ * into this TU). 0x00/0x04 are CPad held/pressed flags, 0x104 turbo flags. */
+struct ShopSellPadData {
+    u32 mHeldFlags;                   // +0x00 (CPad::mHeldButtonFlags)
+    u32 mPressedFlags;                // +0x04 (CPad::mPressedButtonFlags)
+    u8 _pad08[0x104 - 0x08];          // 0x08..0x103
+    u32 mTurboFlags;                  // +0x104 (CfPadData::mTurboPressButtonFlags)
+};
+
+// func_8018B470 pad/flag callees (retail unmangled names). func_801CB0FC is
+// declared int so the caller compares with cmpwi directly; func_801CDFB4 is
+// declared int so the (u8) cast at the tail emits the retail clrlwi.
+extern "C" int func_8029A658();
+extern "C" ShopSellPadData* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" void func_801CCAF0(CItemBoxGrid* self);
+extern "C" int func_801CB0FC(CItemBoxGrid* self);
+extern "C" void func_801CC7B0(CItemBoxGrid* self, u32 arg);
+extern "C" void func_801C414C(CTitleAHelp* self);
+extern "C" void func_801CB38C(CItemBoxGrid* self);
+extern "C" void func_801CB5F0(CItemBoxGrid* self);
+extern "C" void func_801CBA04(CItemBoxGrid* self);
+extern "C" void func_801CBDE8(CItemBoxGrid* self);
+extern "C" void func_801CC0EC(CItemBoxGrid* self);
+extern "C" void func_801CC5DC(CItemBoxGrid* self);
+extern "C" void func_801CDC40(CItemBoxGrid* self);
+extern "C" void func_801CDEE8(CItemBoxGrid* self);
+extern "C" int func_801CDFB4(CItemBoxGrid* self);
+extern "C" void func_801C41E8(CTitleAHelp* self, u8 mode);
+
 // Retail-unmangled callee names (US strips the member manglings for these
 // func_ helpers; GetField61 keeps its bare name too). int returns keep the
 // caller's `!= 0` as a plain cmpwi (no u8 mask), like retail.

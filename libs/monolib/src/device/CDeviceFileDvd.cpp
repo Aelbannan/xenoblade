@@ -1,50 +1,46 @@
-// Auto-scaffolded catalog TU for monolib/src/device/CDeviceFileDvd
-// Replace stubs with high-level C/C++ during decomp.
+#include "libs/monolib/src/device/CDeviceFileDvd.hpp"
 
-#include <harness_catalog.h>
+#include <revolution/DVD.h>
 
-struct CDeviceFileDvd {
-    ~CDeviceFileDvd();
-    void cancel() const;
-    void cancelCurrent();
-    void getFileSize();
-    void isRequestFile();
-    void transState0();
-    void transState3();
-    int wkStandbyExceptionRetry(unsigned long);
-    void wkStandbyLogin();
-    void wkStandbyLogout();
-    void wkUpdate();
-};
+// Retail vtable (rodata) - referenced manually so the ctor's vptr-store relocs
+// are byte-identical to retail (the class is non-virtual; MWCC emits no vtable).
+extern u32 lbl_eu_8056C420[];
+// Retail singleton pointer (sda21 .sbss).
+extern CDeviceFileDvd* lbl_eu_80665670;
 
-struct CFileHandle {
-    ~CFileHandle();
-    void call() const;
-    void checkExistRsrc() const;
-    void destroy() const;
-    void func_80451984(unsigned long);
-    int func_80451CBC(int);
-    void getRsrc() const;
-    void init(int);
-    void setup1() const;
-    void setup2() const;
-};
-
-
-void __ct__CDeviceFileDvd(){}
-
-CDeviceFileDvd::~CDeviceFileDvd() {}
-
-extern "C" u32 getInstance__14CDeviceFileDvdFv(void) {
-    extern u32 lbl_eu_80665670;
-    return lbl_eu_80665670;
+CDeviceFileDvd::CDeviceFileDvd(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 0x100) {
+    *(u32**)this = (u32*)lbl_eu_8056C420;
+    field_0x1C4 = 0;
+    field_0x1C8 = -1;
+    field_0x1CC = 0;
+    field_0x1D0 = 0;
+    field_0x1D4 = 0;
+    lbl_eu_80665670 = this;
 }
 
-void CDeviceFileDvd::getFileSize() {}
+CDeviceFileDvd::~CDeviceFileDvd() {
+    lbl_eu_80665670 = nullptr;
+}
 
-void CDeviceFileDvd::isRequestFile() {}
+CDeviceFileDvd* CDeviceFileDvd::getInstance() { return lbl_eu_80665670; }
 
-void CDeviceFileDvd::cancel() const {}
+int CDeviceFileDvd::getFileSize(const char* pPath) {
+    DVDFileInfo fileInfo;
+
+    int entrynum = DVDConvertPathToEntrynum(pPath);
+    if (entrynum < 0) return -1;
+
+    if (!DVDFastOpen(entrynum, &fileInfo)) return -1;
+
+    int size = fileInfo.size;
+    DVDClose(&fileInfo);
+    return size;
+}
+
+void CDeviceFileDvd::isRequestFile(const char* pPath) {}
+
+void CDeviceFileDvd::cancel(CFileHandle* pHandle) {}
 
 void CDeviceFileDvd::cancelCurrent() {}
 
@@ -54,9 +50,20 @@ void CDeviceFileDvd::transState3() {}
 
 void CDeviceFileDvd::wkUpdate() {}
 
-void CDeviceFileDvd::wkStandbyLogin() {}
+bool CDeviceFileDvd::wkStandbyLogin() {
+    DVDInit();
+    return CWorkThread::wkStandbyLogin();
+}
 
-void CDeviceFileDvd::wkStandbyLogout() {}
+bool CDeviceFileDvd::wkStandbyLogout() {
+    // Log out only when there are no pending file jobs and the work/CLib
+    // systems are already gone.
+    if (mChildren.empty() && CWorkSystem::getInstance() == nullptr &&
+        CLib::getInstance() == nullptr) {
+        return CWorkThread::wkStandbyLogout();
+    }
+    return false;
+}
 
 int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
     if (*(s32*)((u8*)this + 0x1C4) == 3) {
@@ -73,6 +80,19 @@ int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
     }
     return 1;
 }
+
+struct CFileHandle {
+    ~CFileHandle();
+    void call() const;
+    void checkExistRsrc() const;
+    void destroy() const;
+    void func_80451984(unsigned long);
+    int func_80451CBC(int);
+    void getRsrc() const;
+    void init(int);
+    void setup1() const;
+    void setup2() const;
+};
 
 void CFileHandle::setup1() const {}
 

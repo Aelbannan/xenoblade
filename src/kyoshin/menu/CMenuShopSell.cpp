@@ -29,17 +29,22 @@ extern "C" __declspec(noinline) CMenuShopSell* __ct__CMenuShopSell(CMenuShopSell
     // member-function-pointer triple through one base register: retail loads
     // [0] via lwzu (materialising the base), then [1]/[2] at fixed offsets.
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    u32 pmf0_0 = __ptmf_null[0];
-    u32 pmf0_1 = __ptmf_null[1];
+    // Post-increment walk forces MWCC's lwzu fold for the base (btm_sco_init /
+    // CMenuOption pattern). The second group walks a fresh pointer at the array
+    // base so its loads stay at disp 0/4/8 of the same folded base register.
+    u32* src = __ptmf_null;
+    u32 pmf0_0 = *src++;
+    u32 pmf0_1 = *src++;
     self->ptmf0[1] = pmf0_1;
     self->ptmf0[0] = pmf0_0;
-    u32 pmf0_2 = __ptmf_null[2];
+    u32 pmf0_2 = *src++;
     self->ptmf0[2] = pmf0_2;
-    u32 pmf1_0 = __ptmf_null[0];
-    u32 pmf1_1 = __ptmf_null[1];
+    u32* src2 = __ptmf_null;
+    u32 pmf1_0 = *src2++;
+    u32 pmf1_1 = *src2++;
     self->ptmf1[1] = pmf1_1;
     self->ptmf1[0] = pmf1_0;
-    u32 pmf1_2 = __ptmf_null[2];
+    u32 pmf1_2 = *src2++;
     self->ptmf1[2] = pmf1_2;
     self->mField54 = 0;
     self->mField55 = 0;
@@ -228,8 +233,97 @@ extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self) {
     }
 }
 
-// Phase 2 (interaction) - not yet decompiled.
-extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {}
+// Phase 2 (interaction): poll the pad and drive the item-box grid. The two
+// branches differ only in the button-bit layout (pointer-input controller vs
+// plain pad); each handler ends by jumping to the shared focus refresh.
+extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
+    if (func_8029A658() != 0) return;
+
+    ShopSellPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        // Pointer input enabled: materialise the 0/1 flag bools first (retail
+        // andi/rlwinm+rlwimi then subic/subfe normalisation, pressed bits via
+        // extrwi), then dispatch through cmpwi/beq in this order.
+        u32 turbo = pad->mTurboFlags;
+        u32 pressed = pad->mPressedFlags;
+        u32 t8004 = (turbo & 0x8004) != 0;
+        u32 t10008 = ((turbo & 0x10000) != 0) || ((turbo & 0x8) != 0);
+        u32 t2001 = (turbo & 0x2001) != 0;
+        u32 t4002 = (turbo & 0x4002) != 0;
+        u32 p200000 = (pressed & 0x200000) != 0;
+        u32 p400000 = (pressed & 0x400000) != 0;
+        u32 p1000000 = (pressed & 0x1000000) != 0;
+        u32 p200 = (pressed & 0x200) != 0;
+        u32 p400 = (pressed & 0x400) != 0;
+
+        if (p200000) {
+            func_801CCAF0(&self->mItemBoxGrid);
+        } else if (p400000) {
+            if (func_801CB0FC(&self->mItemBoxGrid) != 0) {
+                func_801CC7B0(&self->mItemBoxGrid, 0);
+            } else {
+                func_801C414C(&self->mTitleAHelp);
+                func_801CB38C(&self->mItemBoxGrid);
+                self->mState = 3;
+            }
+        } else if (t8004) {
+            func_801CB5F0(&self->mItemBoxGrid);
+        } else if (t10008) {
+            func_801CBA04(&self->mItemBoxGrid);
+        } else if (t2001) {
+            func_801CBDE8(&self->mItemBoxGrid);
+        } else if (t4002) {
+            func_801CC0EC(&self->mItemBoxGrid);
+        } else if (p1000000) {
+            func_801CC5DC(&self->mItemBoxGrid);
+        } else if (p200) {
+            func_801CDC40(&self->mItemBoxGrid);
+        } else if (p400) {
+            func_801CDEE8(&self->mItemBoxGrid);
+        }
+    } else {
+        // Pointer input disabled: plain pad bits drive the flow.
+        u32 turbo = pad->mTurboFlags;
+        u32 pressed = pad->mPressedFlags;
+        u32 t8004 = (turbo & 0x8004) != 0;
+        u32 t10008 = ((turbo & 0x10000) != 0) || ((turbo & 0x8) != 0);
+        u32 t2001 = (turbo & 0x2001) != 0;
+        u32 t4002 = (turbo & 0x4002) != 0;
+        u32 p10 = (pressed & 0x10) != 0;
+        u32 p20 = (pressed & 0x20) != 0;
+        u32 p800 = (pressed & 0x800) != 0;
+        u32 p200 = (pressed & 0x200) != 0;
+        u32 p40 = (pressed & 0x40) != 0;
+
+        if (p10) {
+            func_801CCAF0(&self->mItemBoxGrid);
+        } else if (p20) {
+            if (func_801CB0FC(&self->mItemBoxGrid) != 0) {
+                func_801CC7B0(&self->mItemBoxGrid, 0);
+            } else {
+                func_801C414C(&self->mTitleAHelp);
+                func_801CB38C(&self->mItemBoxGrid);
+                self->mState = 3;
+            }
+        } else if (t8004) {
+            func_801CB5F0(&self->mItemBoxGrid);
+        } else if (t10008) {
+            func_801CBA04(&self->mItemBoxGrid);
+        } else if (t2001) {
+            func_801CBDE8(&self->mItemBoxGrid);
+        } else if (t4002) {
+            func_801CC0EC(&self->mItemBoxGrid);
+        } else if (p800) {
+            func_801CC5DC(&self->mItemBoxGrid);
+        } else if (p200) {
+            func_801CDC40(&self->mItemBoxGrid);
+        } else if (p40) {
+            func_801CDEE8(&self->mItemBoxGrid);
+        }
+    }
+
+    func_801C41E8(&self->mTitleAHelp, (u8)func_801CDFB4(&self->mItemBoxGrid));
+}
 
 // Phase transition: once the title bar is idle and the item grid is ready,
 // set the closing-state flag at 0x54 (the CMenuGCItem::Move case-3 check,

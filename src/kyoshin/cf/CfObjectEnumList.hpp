@@ -17,7 +17,7 @@ public:
     };
 
     CfObjEnumList();
-    virtual ~CfObjEnumList();
+    ~CfObjEnumList();
 
     void* func_800F6E98(int index);
     void* func_800F6EAC(unsigned long idx);

@@ -1008,11 +1008,11 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
         ctx = func_801862C0();
         cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, ocHandle);
         const char* typeName;
-        if (target->unk64 & 0x01000000) {
+        if (target->unk64 & 0x80) {
             typeName = &lbl_eu_804FA74C[0x50];
         } else if (target->unk64 & 0x4000) {
             typeName = &lbl_eu_804FA74C[0x54];
-        } else if (target->unk64 & 0x04000000) {
+        } else if (target->unk64 & 0x20) {
             typeName = &lbl_eu_804FA74C[0x5A];
         } else if (target->unk64 & 0x8000) {
             typeName = &lbl_eu_804FA74C[0x61];

@@ -11,9 +11,15 @@ void __ct__CKizunaTalkList(){}
 
 CKizunaTalkList::~CKizunaTalkList() {}
 
-// Element destructor of TalkListEntry (used by the array teardown). No-op
-// body: entries are plain PODs, teardown is just a per-element call.
-void __dt__80272774(TalkListEntry* entry) {}
+// Element destructor of TalkListEntry (used by the array teardown). Entries
+// are plain PODs so there is no member teardown; only the backing memory is
+// freed when the delete flag is set (retail __dt__80272774). Returns the
+// pointer itself, as the deleting-destructor ABI requires.
+TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags) {
+    if (entry != 0 && flags > 0)
+        __dl__FPv(entry);
+    return entry;
+}
 
 // Element constructor (defined below; used as the array element ctor).
 void func_8027274C(TalkListEntry* entry);
@@ -66,8 +72,10 @@ void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 void func_8027346C(){}
 
 // Populate a talk-list entry with the given fields (retail func_80272FA8).
-void func_80272FA8(TalkListEntry* entry, u32 a, u32 b, u32 c, u32 d, s8 in12,
-                   s16 in10, u8 in13) {
+// noinline: retail keeps these as out-of-line calls from func_80272810.
+__declspec(noinline) void func_80272FA8(TalkListEntry* entry, u32 a, u32 b,
+                                        u32 c, u32 d, s8 in12, s16 in10,
+                                        u8 in13) {
     entry->field_00 = a;
     entry->field_04 = b;
     entry->field_08 = c;
@@ -78,7 +86,7 @@ void func_80272FA8(TalkListEntry* entry, u32 a, u32 b, u32 c, u32 d, s8 in12,
 }
 
 // Zero-initialise a talk-list entry (retail func_8027274C).
-void func_8027274C(TalkListEntry* entry) {
+__declspec(noinline) void func_8027274C(TalkListEntry* entry) {
     entry->field_00 = 0;
     entry->field_04 = 0;
     entry->field_08 = 0;
@@ -89,7 +97,7 @@ void func_8027274C(TalkListEntry* entry) {
 }
 
 // Copy one talk-list entry into another (retail func_80272FC8).
-void func_80272FC8(TalkListEntry* dst, TalkListEntry* src) {
+__declspec(noinline) void func_80272FC8(TalkListEntry* dst, TalkListEntry* src) {
     dst->field_00 = src->field_00;
     dst->field_04 = src->field_04;
     dst->field_08 = src->field_08;
@@ -100,7 +108,8 @@ void func_80272FC8(TalkListEntry* dst, TalkListEntry* src) {
 }
 
 // Copy one talk-list entry into another (retail func_80273004).
-void func_80273004(TalkListEntry* dst, const TalkListEntry* src) {
+__declspec(noinline) void func_80273004(TalkListEntry* dst,
+                                        const TalkListEntry* src) {
     dst->field_00 = src->field_00;
     dst->field_04 = src->field_04;
     dst->field_08 = src->field_08;
@@ -113,8 +122,9 @@ void func_80273004(TalkListEntry* dst, const TalkListEntry* src) {
 // Whether an icon/texture row exists for the given subtype, by asking the
 // owning layout's shared resource accessor for the "timg" resource (retail
 // func_8027305C). v==0 queries the parent accessor directly; v!=0 re-resolves
-// the icon name through the shared character table first.
-extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v) {
+// the icon name through the shared character table first. noinline keeps
+// func_80272810 emitting a real bl (retail keeps it out-of-line).
+__declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
     if (v == 0) {
         void* iconList = (void*)self->mParent;
         u32 ok = ((u32 (*)(void*, u32, const char*, u32))(((void**)iconList)[3]))(
@@ -132,28 +142,28 @@ extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v) {
 // Build the talk-list entry table from the affinity talk data (retail
 // func_80272810). Reads the shared character database handed off in
 // lbl_eu_806648B8, collects the candidate character IDs that have talk
-// entries, then runs four passes to assemble type-1/type-2/name0 entries and
-// finally bubble-sorts the table by entry subtype (field_13).
-extern "C" void func_80272810(TalkListEntryArray* arr) {
+// entries, then runs four passes to assemble type-1/type-2/type-3/name0
+// entries and finally bubble-sorts the table by entry subtype (field_13).
+void func_80272810(TalkListEntryArray* arr) {
     void* fp = lbl_eu_806648B8;
     u16 charCount = (u16)func_8003B1EC(fp);
-    char* fmt12 = (char*)func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
-    char* fmt13 = (char*)func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13);
+    char* fmt12 = func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x12);
+    func_80136190(&lbl_eu_8050E990[0], &lbl_eu_8050E990[0xb], 0x13); // result unused in retail
 
     arr->mCount = 0;
     u16 collect[0x100];
     memset(collect, 0, 0x200);
     u16 ccount = 0;
-    TalkListEntry tmpB, tmpC, tmpD, tmpSort;
+    TalkListEntry tmpB, tmpC, tmpD, tmpE, tmpSort;
 
     // Pass A: collect IDs of characters that have a talk flag set.
-    for (u16 c = 1; (u16)c <= charCount; c++) {
+    for (u16 c = 1; (u32)(u16)c <= (u32)charCount; c++) {
         if (func_8009CF8C((u32)((u16)c + 0x3440)) != 0)
             collect[ccount++] = c;
     }
 
-    // Pass B: type-1 entries.
-    for (u16 k = 0; k < ccount; k++) {
+    // Pass B: type-1 entries (affinity value below the BDAT threshold).
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
         u16 id = collect[k];
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
@@ -165,14 +175,14 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
         u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
-        if (v >= 0x2a && v < 0x113) {
-            if (m1 == 3) continue;
-            if (m2 == 3) continue;
-        } else if (v >= 0x113) {
-            if (m1 == 3) m1 = 8;
-            if (m2 == 3) m2 = 8;
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
+        } else if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
         }
-        if ((u32)n4 > func_8013A7D0(m1, m2)) continue;
+        if ((u32)n4 > (u32)func_8013A7D0(m1, m2)) continue;
 
         u32 v1 = func_8027305C(arr, m1);
         u32 v2 = func_8027305C(arr, m2);
@@ -180,16 +190,52 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
-        TalkListEntry* e = &tmpB;
-        func_80272FA8(e, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
+        func_80272FA8(&tmpB, (u32)fmt12, (u32)cond, v1, v2, (s8)1, (s16)n4, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        func_80273004(&arr->mEntries[c], e);
+        func_80273004(&arr->mEntries[c], &tmpB);
         collect[k] = 0;
     }
 
-    // Pass C: type-2 entries (same guard/filter logic).
-    for (u16 k = 0; k < ccount; k++) {
+    // Pass C: type-2 entries (same guard/filter logic, no BDAT-threshold
+    // affinity comparison).
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
+        u16 id = collect[k];
+        if (id == 0) continue;
+        if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
+
+        u16 a = func_80136254(fp, &lbl_eu_8050E990[0x10], id);
+        if ((u32)a > func_8009CF8C(0x20)) continue;
+
+        u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
+        u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
+        u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
+        u16 v = (u16)func_8009CF8C(0x20);
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
+        } else if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
+        }
+
+        u32 v1 = func_8027305C(arr, m1);
+        u32 v2 = func_8027305C(arr, m2);
+        u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
+        char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
+        u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
+
+        func_80272FA8(&tmpC, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
+        u8 c = arr->mCount;
+        arr->mCount = c + 1;
+        func_80273004(&arr->mEntries[c], &tmpC);
+        collect[k] = 0;
+    }
+
+    // Pass D: type-3 entries - same guard as B/C but no affinity-value or
+    // icon checks; the icon rows are queried with subtype 0 and the stored
+    // affinity value is -1.
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
         u16 id = collect[k];
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) != 0) continue;
@@ -197,43 +243,39 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
         u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
-        if (v >= 0x2a && v < 0x113) {
-            if (m1 == 3) continue;
-            if (m2 == 3) continue;
-        } else if (v >= 0x113) {
-            if (m1 == 3) m1 = 8;
-            if (m2 == 3) m2 = 8;
+        if ((u32)v >= 0x2a && (u32)v < 0x113) {
+            if ((u32)m1 == 3) continue;
+            if ((u32)m2 == 3) continue;
         }
 
-        u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
-        u32 v1 = func_8027305C(arr, m1);
-        u32 v2 = func_8027305C(arr, m2);
+        u32 v1 = func_8027305C(arr, 0);
+        u32 v2 = func_8027305C(arr, 0);
         u8 x = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x30], id);
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
-        TalkListEntry* e = &tmpC;
-        func_80272FA8(e, (u32)fmt12, (u32)cond, v1, v2, (s8)2, (s16)n4, y);
+        func_80272FA8(&tmpD, (u32)fmt12, (u32)cond, v1, v2, (s8)3, (s16)-1, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        func_80273004(&arr->mEntries[c], e);
+        func_80273004(&arr->mEntries[c], &tmpD);
         collect[k] = 0;
     }
 
-    // Pass D: flagged-character entries (keep only when talk flag is unset).
-    for (u16 k = 0; k < ccount; k++) {
+    // Pass E: flagged-character entries (talk flag set), titled by character
+    // name instead of the shared format string.
+    for (u16 k = 0; (u32)k < (u32)ccount; k++) {
         u16 id = collect[k];
         if (id == 0) continue;
         if (func_8009CF8C((u32)(id + 0x24b0)) == 0) continue;
 
-        char* name0 = func_8013639C(fp, &lbl_eu_8050E990[0x40], (int)id);
+        char* name0 = func_8013639C(fp, &lbl_eu_8050E990[0x40], id);
         u16 n4 = func_80136254(fp, &lbl_eu_8050E990[0x15], id);
         u8 m1 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x1e], id);
         u8 m2 = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x27], id);
         u16 v = (u16)func_8009CF8C(0x20);
-        if (v >= 0x113) {
-            if (m1 == 3) m1 = 8;
-            if (m2 == 3) m2 = 8;
+        if ((u32)v >= 0x113) {
+            if ((u32)m1 == 3) m1 = 8;
+            if ((u32)m2 == 3) m2 = 8;
         }
 
         u32 v1 = func_8027305C(arr, m1);
@@ -242,21 +284,20 @@ extern "C" void func_80272810(TalkListEntryArray* arr) {
         char* cond = func_8013639C((const void*)lbl_eu_806640A8, &lbl_eu_8050E990[0x36], (int)x);
         u8 y = (u8)func_801361E8((u32)fp, &lbl_eu_8050E990[0x3b], id);
 
-        TalkListEntry* e = &tmpD;
-        func_80272FA8(e, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
+        func_80272FA8(&tmpE, (u32)name0, (u32)cond, v1, v2, (s8)0, (s16)n4, y);
         u8 c = arr->mCount;
         arr->mCount = c + 1;
-        func_80273004(&arr->mEntries[c], e);
+        func_80273004(&arr->mEntries[c], &tmpE);
         collect[k] = 0;
     }
 
     // Bubble-sort the assembled table ascending by subtype (field_13).
-    for (u16 outer = 0; outer + 1 < arr->mCount; outer++) {
+    for (u16 outer = 0; (s32)outer < (s32)(arr->mCount - 1); outer++) {
         int swapped = 0;
-        for (u16 inner = 0; inner < arr->mCount - 1 - outer; inner++) {
+        for (u16 inner = 0; (s32)inner < (s32)(arr->mCount - 1 - outer); inner++) {
             TalkListEntry* e1 = &arr->mEntries[inner];
             TalkListEntry* e2 = &arr->mEntries[inner + 1];
-            if (e1->field_13 > e2->field_13) {
+            if ((u32)e1->field_13 > (u32)e2->field_13) {
                 func_8027274C(&tmpSort);
                 func_80272FC8(&tmpSort, e1);
                 func_80272FC8(e1, e2);
@@ -417,7 +458,7 @@ void func_8027387C(CKizunaTalkList* self) {
 void func_80273938(CKizunaTalkList* self) {
     // Advance the entry-show animation; when it completes, step the state
     // machine forward (retail func_80273938).
-    if (func_80137444(self->mpAnim24, 2.0f) != 0) {
+    if (func_80137444(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 2;
         func_80273AD0(self);
     }
@@ -432,14 +473,14 @@ void func_80273984(CKizunaTalkList* self) {
 }
 
 void func_802739D8(CKizunaTalkList* self) {
-    if (func_80137510(self->mpAnim28, 2.0f) != 0) {
+    if (func_80137510(self->mpAnim28, lbl_eu_806689D4) != 0) {
         self->mState85 = 5;
         func_80273A70(self);
     }
 }
 
 void func_80273A24(CKizunaTalkList* self) {
-    if (func_80137510(self->mpAnim24, 2.0f) != 0) {
+    if (func_80137510(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 0;
         self->mNeedsRebuild = 1;
     }

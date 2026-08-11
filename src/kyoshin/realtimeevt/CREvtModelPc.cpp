@@ -151,26 +151,24 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
 // __ct__8018385C (us-80184c78) - Constructor with dealloc flag
 // ============================================================================
 extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
-    if (self == 0) {
-        return self;
-    }
+    if (self != 0) {
+        char* s = (char*)self;
+        u32* vtable = lbl_eu_805321F0;
 
-    char* s = (char*)self;
-    u32* vtable = lbl_eu_805321F0;
+        FLD(u32*, s, 0x00) = vtable;
+        FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
 
-    FLD(u32*, s, 0x00) = vtable;
-    FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
+        // Call vtable[0x3C/4] = vtable[15]
+        {
+            void (*vfunc)(void*) = (void (*)(void*))vtable[0x3C / 4];
+            vfunc(self);
+        }
 
-    // Call vtable[0x3C/4] = vtable[15]
-    {
-        void (*vfunc)(void*) = (void (*)(void*))vtable[0x3C / 4];
-        vfunc(self);
-    }
+        __ct__80172668(self, 0);
 
-    __ct__80172668(self, 0);
-
-    if (flag > 0) {
-        __dt__80185754(self);
+        if (flag > 0) {
+            __dt__80185754(self);
+        }
     }
 
     return self;

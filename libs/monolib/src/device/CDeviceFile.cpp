@@ -124,7 +124,7 @@ public:
     u32 field_0x5C;                  //0x5C (children reslist vtable)
     CWorkThreadListNode* mChildList; //0x60 (children reslist mStartNodePtr)
     u8 field_0x64[0x7C - 0x64];      //0x64..0x7C
-    u32 mFlags;                      //0x7C (ThreadFlags)
+    u32 mThreadFlags;                //0x7C (ThreadFlags; CDeviceBase::mFlags shadows the name at 0x1C4)
     u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (CMsgParam<8> vtable + entries)
     CMsgParamEntry* mMsgArray;       //0x1A4 (CMsgParam::mArrayPtr)
     u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
@@ -349,9 +349,12 @@ u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
 int CDeviceFile::isInitialized() {
     CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
 
-    // Singleton device check.
-    bool hasException1 = (inst->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
-    if (!hasException1) {
+    // Singleton device check: an exception flag or a queued EVT_EXCEPTION
+    // event means the device is not initialized yet.
+    bool hasException1;
+    if (inst->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+        hasException1 = true;
+    } else {
         int found1 = -1;
         for (int i1 = 0; i1 < inst->mMsgSize; i1++) {
             if (inst->mMsgArray[(inst->mMsgFront + i1) % inst->mMsgCapacity].command ==
@@ -375,8 +378,10 @@ int CDeviceFile::isInitialized() {
     CDeviceFile* dvd = CDeviceFileDvd::getInstance();
 
     // DVD device check.
-    bool hasException2 = (dvd->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
-    if (!hasException2) {
+    bool hasException2;
+    if (dvd->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+        hasException2 = true;
+    } else {
         int found2 = -1;
         for (int i2 = 0; i2 < dvd->mMsgSize; i2++) {
             if (dvd->mMsgArray[(dvd->mMsgFront + i2) % dvd->mMsgCapacity].command ==
@@ -400,8 +405,10 @@ int CDeviceFile::isInitialized() {
     CDeviceFile* cri = CDeviceFileCri::getInstance();
 
     // CRI device check (result is the return value).
-    bool hasException3 = (cri->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
-    if (!hasException3) {
+    bool hasException3;
+    if (cri->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+        hasException3 = true;
+    } else {
         int found3 = -1;
         for (int i3 = 0; i3 < cri->mMsgSize; i3++) {
             if (cri->mMsgArray[(cri->mMsgFront + i3) % cri->mMsgCapacity].command ==

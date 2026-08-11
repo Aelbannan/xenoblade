@@ -945,7 +945,7 @@ unk28_done:
 }
 extern "C" int func_800B8B94(int);
 extern "C" int func_8026178C(void*, int);
-extern "C" void* func_8025FB10(void*, int);
+extern "C" int func_8025FB10(void*, int);
 
 struct Func4ItemVt {
     virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
@@ -998,28 +998,28 @@ extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv(cf::CActorPara
         func_800F4A98(list, 32, 1);
 
         if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 31) != 0) {
-            int r = func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 31);
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 31);
             if (r != 0) {
                 s16 delta = (s16)r;
-                for (int i = 0; i < (int)*(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                    void* item = func_800F6EAC(func_8025FB10(func_80043F18(&holder), i), i);
-                    void* obj = reinterpret_cast<Func4ItemVt*>(item)->vf210();
+                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                    void* obj = reinterpret_cast<Func4ItemVt*>(actor)->vf210();
                     *(s16*)((u8*)obj + 0x60) += delta;
-                    obj = reinterpret_cast<Func4ItemVt*>(item)->vf210();
+                    obj = reinterpret_cast<Func4ItemVt*>(actor)->vf210();
                     *(s16*)((u8*)obj + 0x62) += delta;
                 }
             }
         }
 
-        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150) != 0) {
-            int r = func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150);
+        if (func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150);
             if (r != 0 && flag) {
                 s16 delta = (s16)r;
-                for (int i = 0; i < (int)*(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
-                    void* item = func_800F6EAC(func_8025FB10(func_80043F18(&holder), i), i);
-                    void* obj = reinterpret_cast<Func4ItemVt*>(item)->vf214();
+                for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                    void* actor = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                    void* obj = reinterpret_cast<Func4ItemVt*>(actor)->vf214();
                     *(s16*)((u8*)obj + 0x18) += delta;
-                    obj = reinterpret_cast<Func4ItemVt*>(item)->vf214();
+                    obj = reinterpret_cast<Func4ItemVt*>(actor)->vf214();
                     *(s16*)((u8*)obj + 0x1C) += delta;
                 }
             }

@@ -687,24 +687,28 @@ extern "C" void func_8013732C(const char* name) {
     func_801372B4(switchVal);
 }
 
+extern float lbl_eu_806672EC;
+extern float lbl_eu_806672F0;
+extern float lbl_eu_806672E8;
+extern double lbl_eu_806672F8;
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(
     nw4r::lyt::AnimTransform* anim, float delta) {
     float newFrame = delta + anim->GetFrame();
+    u32 result = 0;
     if (CDeviceVI::isTvFormatPal()) {
-        newFrame += 0.2f;
+        newFrame += lbl_eu_806672EC;
     }
     u16 frameSize = anim->GetFrameSize();
     if (newFrame >= static_cast<float>(frameSize)) {
         if (anim->IsLoopData()) {
-            newFrame = 0.0f;
+            newFrame = lbl_eu_806672F0;
         } else {
-            newFrame = static_cast<float>(frameSize) - 1.0f;
+            newFrame = static_cast<float>(anim->GetFrameSize()) - lbl_eu_806672E8;
         }
-        anim->SetFrame(newFrame);
-        return 1;
+        result = 1;
     }
     anim->SetFrame(newFrame);
-    return 0;
+    return result;
 }
 
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float delta) {

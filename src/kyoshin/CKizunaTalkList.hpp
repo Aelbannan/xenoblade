@@ -123,7 +123,7 @@ extern "C" u32 func_8003B1EC(void* fp);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u16 func_80136254(const void* fp, const void* name, int id);
 extern "C" u16 func_8013A7D0(u8 a, u8 b);
-extern "C" u32 func_8027305C(TalkListEntryArray* self, u8 v);
+u32 func_8027305C(TalkListEntryArray* self, u8 v);
 extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table pointer
 
 // data / rodata labels
@@ -138,6 +138,7 @@ extern "C" void* lbl_eu_806648D8;
 extern "C" f32 lbl_eu_806689C8;               // .sdata2 float constants (target 10)
 extern "C" f32 lbl_eu_806689CC;
 extern "C" f32 lbl_eu_806689D0;
+extern "C" const f32 lbl_eu_806689D4;         // 2.0f - anim frame step for entry show/hide
 
 // State-transition helpers for CKizunaTalkList (defined in CKizunaTalkList.cpp;
 // extern "C" + noinline keeps callers emitting real unmangled bl branches -

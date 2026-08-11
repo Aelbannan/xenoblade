@@ -3,6 +3,8 @@
 
 #include "kyoshin/menu/CMenuItemExchange.hpp"
 
+#include "kyoshin/CBgTex.hpp"
+
 extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
 
@@ -20,7 +22,19 @@ CMenuItemExchange::~CMenuItemExchange() {}
 
 void CMenuItemExchange::Init() {}
 
-void func_801BE108(){}
+/* Copy-construct a CBgTex field-by-field from src into dest (retail
+ * func_801BE108): the +0x4 mem region through the shared UnkClass_8011C974
+ * helper, then the file-handle / layout pointers and the three status bytes.
+ * Returns dest (copy-ctor idiom, retail restores r3 to dest before the tail). */
+CBgTex* func_801BE108(CBgTex* dest, CBgTex* src) {
+    __ct__UnkClass_8011C974(&dest->mMemRegion, &src->mMemRegion);
+    dest->mFileHandle = src->mFileHandle;
+    dest->mLayout = src->mLayout;
+    dest->mLayoutReady = src->mLayoutReady;
+    dest->mLoaded = src->mLoaded;
+    dest->mPtmMode = src->mPtmMode;
+    return dest;
+}
 
 void func_801BE16C(){}
 
@@ -44,21 +58,50 @@ u8 func_801BEE6C() { return lbl_eu_8066442C; }
 
 void func_801BEE74(){}
 
-void func_801BEEF4(){}
+/* Exchange-menu phase gate: once the title/help bar is idle and the item-box
+ * line is ready, advance the menu to phase 2 (field_5118). */
+void func_801BEEF4(CMenuItemExchange* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        self->field_5118 = 2;
+    }
+}
 
 void func_801BEF44(){}
 
-void func_801BF2E8(){}
+/* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
+ * advances the menu to phase 1 (field_5118). */
+void func_801BF2E8(CMenuItemExchange* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0 &&
+        GetField61(&self->mItemBoxGrid) != 0) {
+        self->field_64 = 1;
+    }
+}
 
 void func_801BF348(){}
 
-void func_801BF414(){}
+/* Exchange-menu phase gate: idle title/help bar plus ready item-box grid
+ * advances the menu to phase 6 (field_5118). */
+void func_801BF414(CMenuItemExchange* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        GetField61(&self->mItemBoxGrid) != 0) {
+        self->field_5118 = 6;
+    }
+}
 
 void func_801BF464(){}
 
 void func_801BF6A0(){}
 
-void func_801BF70C(){}
+/* Exchange-menu phase gate: twin of func_801BEEF4 (idle help bar + ready
+ * item-box line) advancing the menu to phase 2. */
+void func_801BF70C(CMenuItemExchange* self) {
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        func_801ED800(reinterpret_cast<CItemBoxLine*>(self->mItemBoxLine)) != 0) {
+        self->field_5118 = 2;
+    }
+}
 
 /**
  * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the

@@ -76,11 +76,17 @@ struct CAIActionQuery;
 struct CAIActionEnumHolder;
 
 extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
-extern "C" void func_80043D90(CAIActionEnumHolder*);
-extern "C" void __dt__80043E88(CAIActionEnumHolder*, s32);
+// NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were
+// changed from CAIActionEnumHolder* to void* to match the identical extern
+// "C" declarations already in CVision.hpp (included alongside this header
+// by CBattleManager.hpp). With both typed pointers visible in one TU, MWCC
+// reports (10197) illegal function overloading, breaking every TU that
+// includes both headers. ABI is unchanged (opaque pointer).
+extern "C" void func_80043D90(void*);
+extern "C" void __dt__80043E88(void*, int);
 extern "C" void* func_80150828(cf::CAIAction*, CAIActionQuery*);
 extern "C" void* func_80150618(cf::CAIAction*, CAIActionQuery*);
-extern "C" int func_8014B8BC(cf::CAIAction*, cf::CAIActionSlot*);
+extern "C" int func_8014B8BC(void* a, void* b);
 extern "C" void* func_801522C4(cf::CAIAction*, const void*);
 extern "C" int func_8014CE78(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
 extern "C" int func_8014B344(cf::CAIAction*, u32);

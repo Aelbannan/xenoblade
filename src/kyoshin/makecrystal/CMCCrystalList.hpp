@@ -41,7 +41,7 @@ public:
 };
 
 // Imports whose retail symbols are unmangled (plain global C++ would be
-// mangled by MWCC, e.g. func_801355BC__Fv) — C linkage keeps the call relocs
+// mangled by MWCC, e.g. func_801355BC__Fv) - C linkage keeps the call relocs
 // bound to the retail names.
 extern "C" u32 func_801355BC();
 extern "C" void func_80136FA0(nw4r::lyt::Layout*, nw4r::lyt::AnimResource**, nw4r::lyt::ArcResourceAccessor*, char*);

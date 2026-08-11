@@ -136,33 +136,6 @@ void func_801B5860(CMenuGetItemMulti*, int, int);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
 extern "C" void func_8008294C__Q22cf13CfGameManagerFv(int);
 
-static bool CMenuGetItemMultiUsesSlot(u8 category) {
-    return category == 2 || (category >= 4 && category <= 8);
-}
-
-static bool CMenuGetItemMultiIsSpecial(u8 category, u16 itemId) {
-    if (category == 3 || category == 9) {
-        return true;
-    }
-    if (func_801361E8(lbl_eu_806640EC, &lbl_eu_80504A3C[0x394], itemId) != 0) {
-        return true;
-    }
-    return category == 12;
-}
-
-static bool CMenuGetItemMultiIsHidden(u16 category, u16 itemId) {
-    if (category >= 2 && category <= 9) {
-        return func_80157CD0(category) == 0;
-    }
-    if (category >= 10 && category <= 13) {
-        int y = func_80158068(itemId);
-        if (y < 1) {
-            return func_80157CD0(category) == 0;
-        }
-        return y >= 0x63;
-    }
-    return false;
-}
 
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
@@ -395,13 +368,15 @@ void CMenuGetItemMulti::Init() {
                 case 8: textureName = &lbl_eu_80504A3C[0x2fc]; break;
                 case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
                 case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
-                case 11:
+                case 11: {
+                    u32 fontCheck = lbl_eu_80664108;
                     textureName = &lbl_eu_80504A3C[0x355];
-                    if (func_801361E8(lbl_eu_80664108, &lbl_eu_80504A3C[0x33b],
+                    if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b],
                                      func_80139358((u16)(entry->packed >> 20)))) {
                         textureName = &lbl_eu_80504A3C[0x340];
                     }
                     break;
+                }
                 case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
                 case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
                 }
@@ -422,7 +397,9 @@ void CMenuGetItemMulti::Init() {
                 func_80136B4C(mLayout, itemPaneName, &lbl_eu_80504A3C[0x19f], 0);
                 func_80139A18(mLayout, itemPaneName, &lbl_eu_806643E0, &lbl_eu_806643E8);
 
-                if (CMenuGetItemMultiUsesSlot((entry->packed >> 16) & 0xf)) {
+                if ((((entry->packed >> 16) & 0xf) >= 4 &&
+                     ((entry->packed >> 16) & 0xf) <= 8) ||
+                    ((entry->packed >> 16) & 0xf) == 2) {
                     u8 slotCount = CItem_initItemImplInstances(entry)->hasSlot(entry);
                     if (slotCount != 0) {
                         func_80136B4C(mLayout, itemPaneName, func_eu_802B148C(), 0);
@@ -452,8 +429,14 @@ void CMenuGetItemMulti::Init() {
                                  &lbl_eu_806643E8);
                 }
 
-                if (CMenuGetItemMultiIsSpecial((u8)((entry->packed >> 16) & 0xf),
-                                               (u16)(entry->packed >> 20))) {
+                bool special = false;
+                if (((entry->packed >> 16) & 0xf) != 3 &&
+                    ((entry->packed >> 16) & 0xf) != 9) {
+                    special = func_801361E8(lbl_eu_806640EC,
+                                            &lbl_eu_80504A3C[0x394],
+                                            (u16)(entry->packed >> 20)) != 0;
+                }
+                if ((((entry->packed >> 16) & 0xf) == 12) || special) {
                     mHasSpecialItem = 1;
                 }
                 u16 cat2 = (entry->packed >> 16) & 0xf;
@@ -461,7 +444,22 @@ void CMenuGetItemMulti::Init() {
                     cat2 = func_801392E4((u16)(entry->packed >> 20));
                 }
                 func_80139358((u16)(entry->packed >> 20));
-                if (!CMenuGetItemMultiIsHidden(cat2, (u16)(entry->packed >> 20))) {
+                int special2 = 0;
+                if (cat2 >= 2 && cat2 <= 9) {
+                    if (func_80157CD0(cat2) != 0) {
+                        special2 = 1;
+                    }
+                } else if (cat2 >= 10 && cat2 <= 13) {
+                    int y = func_80158068((u16)(entry->packed >> 20));
+                    if (y < 1) {
+                        if (func_80157CD0(cat2) != 0) {
+                            special2 = 1;
+                        }
+                    } else if (y < 0x63) {
+                        special2 = 1;
+                    }
+                }
+                if (special2 == 0) {
                     mPaneVisible[mVisibleItemCount] = 1;
                 }
                 mVisibleEntries[mVisibleItemCount] = entry;
@@ -483,12 +481,33 @@ void CMenuGetItemMulti::Init() {
                 sprintf(initialTextPaneName, &lbl_eu_80504A3C[0x192],
                         mVisibleItemCount + 1);
                 func_80136B4C(mLayout, initialTextPaneName, func_801394D4(itemId), 0);
-                if (CMenuGetItemMultiIsSpecial(category, itemId)) {
+                bool special = false;
+                if (category != 3 && category != 9) {
+                    special = func_801361E8(lbl_eu_806640EC,
+                                            &lbl_eu_80504A3C[0x394],
+                                            itemId) != 0;
+                }
+                if (category == 12 || special) {
                     mHasSpecialItem = 1;
                 }
                 u16 cat2 = func_801392E4(itemId);
                 func_80139358(itemId);
-                if (!CMenuGetItemMultiIsHidden(cat2, itemId)) {
+                int special2 = 0;
+                if (cat2 >= 2 && cat2 <= 9) {
+                    if (func_80157CD0(cat2) != 0) {
+                        special2 = 1;
+                    }
+                } else if (cat2 >= 10 && cat2 <= 13) {
+                    int y = func_80158068(itemId);
+                    if (y < 1) {
+                        if (func_80157CD0(cat2) != 0) {
+                            special2 = 1;
+                        }
+                    } else if (y < 0x63) {
+                        special2 = 1;
+                    }
+                }
+                if (special2 == 0) {
                     mPaneVisible[mVisibleItemCount] = 1;
                 }
                 mVisibleItemIds[mVisibleItemCount] = itemId;
@@ -514,12 +533,14 @@ void CMenuGetItemMulti::Init() {
             case 8: textureName = &lbl_eu_80504A3C[0x2fc]; break;
             case 9: textureName = &lbl_eu_80504A3C[0x311]; break;
             case 10: textureName = &lbl_eu_80504A3C[0x326]; break;
-            case 11:
+            case 11: {
+                u32 fontCheck = lbl_eu_80664108;
                 textureName = &lbl_eu_80504A3C[0x355];
-                if (func_801361E8(lbl_eu_80664108, &lbl_eu_80504A3C[0x33b], tableId)) {
+                if (func_801361E8(fontCheck, &lbl_eu_80504A3C[0x33b], tableId)) {
                     textureName = &lbl_eu_80504A3C[0x340];
                 }
                 break;
+            }
             case 12: textureName = &lbl_eu_80504A3C[0x36a]; break;
             case 13: textureName = &lbl_eu_80504A3C[0x37f]; break;
             }
@@ -541,7 +562,7 @@ void CMenuGetItemMulti::Init() {
             func_80139A18(mLayout, initialItemPaneName, &lbl_eu_806643E0,
                          &lbl_eu_806643E8);
 
-            if (CMenuGetItemMultiUsesSlot(category)) {
+            if ((category >= 4 && category <= 8) || category == 2) {
                 u8 slotCount = func_801361E8((u32)itemTable, &lbl_eu_80504A3C[0x39e], tableId);
                 if (slotCount != 0) {
                     func_80136B4C(mLayout, initialItemPaneName, func_eu_802B148C(), 0);
@@ -576,9 +597,10 @@ void CMenuGetItemMulti::Init() {
     }
     for (u8 i = 0; i < 4; ++i) {
         sprintf(fullPaneName, &lbl_eu_80504A3C[0x3bc], i + 1);
+        u8 visible = mPaneVisible[i];
         CMenuGetItemPaneView* pane = reinterpret_cast<CMenuGetItemPaneView*>(
             mLayout->GetRootPane()->FindPaneByName(fullPaneName, true));
-        pane->flags = (pane->flags & 0xfe) | mPaneVisible[i];
+        pane->flags = (pane->flags & 0xfe) | visible;
     }
 
     func_801B5860(this, 0, 0);
@@ -595,8 +617,8 @@ void CMenuGetItemMulti::Init() {
     ((void (*)(CBaseCur*))reinterpret_cast<void**>(mCursor.mVtable)[2])(&mCursor);
 
     u8 systemWindowStorage[sizeof(CSysWin)];
-    CSysWin* systemWindowTemp = __ct__CSysWin(
-        reinterpret_cast<CSysWin*>(&systemWindowStorage[0]), 2);
+    CSysWin* systemWindowTemp = reinterpret_cast<CSysWin*>(&systemWindowStorage[0]);
+    __ct__CSysWin(systemWindowTemp, 2);
     mSystemWindow.mMemRegion.unk0 = systemWindowTemp->mMemRegion.unk0;
     mSystemWindow.mMemRegion.unk4 = systemWindowTemp->mMemRegion.unk4;
     mSystemWindow.mMemRegion.unk8 = systemWindowTemp->mMemRegion.unk8;
@@ -646,10 +668,6 @@ extern unsigned long lbl_eu_80664414;
 extern "C" unsigned long func_801B481C() { return lbl_eu_80664414 != 0; }
 
 void func_801B4830(){}
-
-extern "C" void func_801B5630(CMenuGetItemMulti*){}
-
-extern "C" void func_801B5860(CMenuGetItemMulti*, int, int){}
 
 void func_801B59F4(){}
 

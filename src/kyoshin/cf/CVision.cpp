@@ -709,10 +709,14 @@ void func_801A897C(CVision* self, int slot, int r28) {
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x400) != 0) {
+    // Retail passes the func_8006EF04 result in r3 to func_800EA444 (which
+    // dereferences it); capture it so the call compiles with the corrected
+    // (void*) declaration and keeps the retail r3 flow.
+    void* ef04 = (void*)(uintptr_t)func_8006EF04__Fi(0x400);
+    if (ef04 != 0) {
         return;
     }
-    CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444();
+    CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444(ef04);
     if (bs == 0) {
         return;
     }

@@ -219,10 +219,11 @@ int func_800890A8(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
 // ============================================================================
 void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
                    int flag) {
-    ml::CVec3* pos = getPos(self);
+    cf::CCtrlMoveData* data = (cf::CCtrlMoveData*)self->mpDataPtr;
+    ml::CVec3* pos = data->mPosObj->getPosition();
     *dst = *src - *pos;
-    if (dst->x != lbl_eu_806665A0 || dst->y != lbl_eu_806665A0 || dst->z != lbl_eu_806665A0) {
-        if (dst->x * dst->x + dst->y * dst->y + dst->z * dst->z == lbl_eu_806665A0) {
+    if (!(dst->x == 0.0f && dst->y == 0.0f && dst->z == 0.0f)) {
+        if (dst->x * dst->x + dst->y * dst->y + dst->z * dst->z == 0.0f) {
             *dst = ml::CVec3::zero;
         } else {
             PSVECNormalize(*dst, *dst);
@@ -234,8 +235,8 @@ void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
         dst->x = self->mVelocity.x;
         dst->y = self->mVelocity.y;
         dst->z = self->mVelocity.z;
-        if (dst->x != lbl_eu_806665A0 || dst->y != lbl_eu_806665A0 || dst->z != lbl_eu_806665A0) {
-            if (dst->x * dst->x + dst->y * dst->y + dst->z * dst->z == lbl_eu_806665A0) {
+        if (!(dst->x == 0.0f && dst->y == 0.0f && dst->z == 0.0f)) {
+            if (dst->x * dst->x + dst->y * dst->y + dst->z * dst->z == 0.0f) {
                 *dst = ml::CVec3::zero;
             } else {
                 PSVECNormalize(*dst, *dst);

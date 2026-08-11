@@ -68,7 +68,7 @@ extern const char lbl_eu_80530E88[];
 // All functions with C linkage
 extern "C" {
 
-void __ct__CREvtModel(void* self, void* pData, void* pArg) {
+void* __ct__CREvtModel(void* self, void* pData, void* pArg) {
     __ct__cf_CREvtObj(self, 3);
     u32* base = (u32*)self;
     u32* vtable = (u32*)(void*)&lbl_eu_8053167C;
@@ -82,7 +82,8 @@ void __ct__CREvtModel(void* self, void* pData, void* pArg) {
     base[0x2C/4] = 0;
     base[0x30/4] = 0;
     base[0x34/4] = 0;
-    base[0x18/4] = zero | 0x8;
+    base[0x18/4] = base[0x20/4] | 0x8;
+    return self;
 }
 
 void* __ct__80172668(void* self, int deallocFlag) {
@@ -300,9 +301,7 @@ void* func_801730D0(void* self) {
         if (obj != 0) { __ct__CREvtModelMap(obj, self); }
         return obj;
     } else if (type == 2) {
-        u8 b16 = FLD(u8, self, 0x16);
-        u8 b17 = FLD(u8, self, 0x17);
-        if (b16 != 0x30 || b17 != 0x30) {
+        if (FLD(s8, self, 0x16) != 0x30 || FLD(s8, self, 0x17) != 0x30) {
             void* obj = func_80185748(0xB4);
             if (obj != 0) { __ct__CREvtModelPc(obj, self); }
             return obj;

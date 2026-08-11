@@ -8940,3 +8940,21 @@ The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x
 - Retail `__dynamic_cast(target, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0)` —
   the RTTI args are `li r5, sym@l` + SDA21 relocs, NOT zeros; lookAt uses
   lbl_eu_806618E8 (other functions use lbl_eu_806618D8 — check per-function).
+
+## 2026-08 session: CTaskGame unit
+
+- `Draw__9CTaskGameFv` (0x4): tail-call `b func_8004312C` — declaration must be
+  `extern "C"` or the reloc mangles to func_8004312C__Fv (1-line fix, 100%).
+- `__dt__Q22cf13CfObjEnumListFv` (0x54): 100% via (a) `#pragma optimize_for_size`
+  for the retail `stmw r30` prologue, (b) NON-virtual dtor (retail has no
+  vtable store — the virtual dtor adds lis/addi/stw), (c) explicit
+  `if (this) { base_dtor(this, 0); }` — the implicit dtor guard + the explicit
+  check produce the retail's TWO `beq` checks, (d) the reslist base dtor is a
+  separate retail symbol called manually (extern "C" `__dt___reslist_base_cf_CfObject`).
+- `func_80040DE4` partial: unk100++, func_80042784 gate, fps*5 dead mulli +
+  dead lwzu (MWCC keeps both — mirror the func_80040AF4 v0 pattern), vec copy
+  to 0x40/3C/44, func_80294E58(unkCC, 0, func_800407C8(tmp, c, c, c, c)) where
+  c = fabsf(lbl_eu_80665D74). Residuals: the c local forces f31/f30 callee-saved
+  float saves (retail recomputes fabs per call into f1/f2/f3); the 4th float
+  arg f4 passes through unset in the retail (3-arg call) — not expressible with
+  the 4-arg functions.hpp declaration; reloc SDA21 vs REL24 on the const.

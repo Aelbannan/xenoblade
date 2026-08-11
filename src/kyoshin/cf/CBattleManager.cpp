@@ -379,7 +379,7 @@ void* cf::CBattleManager::func_800EA420() {
     return nullptr;
 }
 unsigned int lbl_eu_80663F00;
-void* func_801A8070(void*);
+extern "C" void* func_801A8070(void*);
 void* cf::CBattleManager::func_800EA444() {
     return lbl_eu_80663F00 ? func_801A8070(&mVision) : 0;
 }
@@ -490,13 +490,39 @@ s32 func_800D7D24(void* self) {
 extern f32 lbl_80666DD4; // 1.0f
 
 extern f32 lbl_80666DD8; // 0.001f
-extern int func_80148778(void*, int);
-extern void* func_80149154(void*, unsigned int);
-extern int func_80260264(void*, int, void*);
+// NOTE: retail symbol names for these battle helpers are C-linkage
+// (unmangled), so they must be declared extern "C" for reloc-name matching.
+// func_80148778 / func_80149154 / func_8026178C are already declared in
+// object/CAIAction.hpp / CVision.hpp (included via CBattleManager.hpp).
+extern "C" int func_80260264(void*, int, void*);
+extern "C" void* func_801491F4(void*, u32);
+extern "C" bool func_80145DBC(int);
+extern "C" int func_80145F78(int);
+extern "C" int func_80145BC4(int);
+extern "C" int func_80145C00(int);
+extern "C" int func_80146148(int);
+extern "C" int func_80174C98(void*, int*, int);
+extern "C" int mtRand__Q22ml4mathFi(int n);
+extern "C" f32 lbl_eu_80666DF4;  // 15.0f
+extern "C" f32 lbl_eu_80666DF8;  // 25.0f
+extern "C" f32 lbl_eu_80666E00;  // 100.0f
+extern "C" f32 lbl_eu_80666E18;  // 50.0f
+extern "C" f32 lbl_eu_80666E1C;  // 0.25f
+extern "C" f32 lbl_eu_80666E20;  // 200.0f
+extern "C" f32 lbl_eu_80666E2C;  // -1.0f
+extern "C" f32 lbl_eu_80666E34;  // 10.0f
+extern "C" f32 lbl_eu_80666E54;  // 32.0f
+extern "C" f64 lbl_eu_80666E58;  // 0.5 (f64)
+extern "C" f64 lbl_eu_80666E60;  // -0.5 (f64)
+extern "C" f32 lbl_eu_80666E7C;  // 75.0f
+extern "C" f32 lbl_eu_80666E80;  // 2.5f
+extern "C" f32 lbl_eu_80666E84;  // 0.1f
+extern "C" s16 lbl_eu_804FCA3C[];
+extern "C" void* func_801A8070(void*);
 
 // Calculates accumulated damage/healing value from various status effects.
 // Returns a float clamped to >= 0.
-f32 func_800D7EA0(u8* obj, void* target) {
+extern "C" f32 func_800D7EA0(u8* obj, void* target) {
     if (obj == nullptr || target == nullptr) return 1.0f;
 
     f32 result = 1.0f;
@@ -559,7 +585,7 @@ f32 func_800D7EA0(u8* obj, void* target) {
 extern int func_802799F0(void*, void*);
 
 // Calculates cumulative damage value from various stat sources
-float func_800D81A8(void* obj, void* target, void* source){
+extern "C" float func_800D81A8(void* obj, void* target, void* source){
     float result = 0.0f;
     
     // Get source's linked object pointer at +0x50 (or null if source is null)
@@ -950,7 +976,7 @@ void func_800DBA2C(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObj
 }
 void func_800DBACC(){}
 void func_800DCB54(){}
-void func_800E08E8(){}
+extern "C" void func_800E08E8(){}
 void func_800E1B5C(){}
 void func_800E2594(){}
 void func_800E2A9C(){}
@@ -961,7 +987,7 @@ void func_800E921C(){}
 void func_800E9B54(){}
 
 // Iterates through actor lists and calls virtual functions based on flags.
-void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, void* arg6) {
+extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, void* arg6) {
     cf::CfGameManager::getInstance();
     if (func_8006EF04__Fi(0x400)) return;
 
@@ -1024,7 +1050,7 @@ void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg
 }
 // Iterates through a list of actors based on flags in arg1.
 // For each actor not matching arg1, calls vtable[0x2C8] with arg1->+0x3f10.
-void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) {
+extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) {
     if (arg1 == nullptr) return;
 
     cf::CfGameManager::getInstance();
@@ -1091,7 +1117,7 @@ extern void func_80109734(void* ptr, u32 val);
 // Handles battle event. Sets flags on arg4, checks arg3 conditions,
 // and updates the battle damage display.
 // Returns 0 always (retail: li r3, 0 before blr).
-s32 func_800F3734(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
+extern "C" s32 func_800F3734(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     // arg1 (r3) is unused by the logic but was stored in r31 per retail
 
     if (arg4 != nullptr) {
@@ -1118,7 +1144,7 @@ s32 func_800F3734(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg
 // Similar to func_800F3734 but with additional checks on arg3->+0x2e and arg3->+0x30.
 // Sets flags on arg4, checks conditions, and updates the battle damage display.
 // Returns 0 always.
-s32 func_800F37F8(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
+extern "C" s32 func_800F37F8(void* arg1, BattleObjAccessor* accessor, void* arg3, void* arg4) {
     if (arg4 != nullptr) {
         u32* flags = (u32*)((u8*)arg4 + 0x74);
         *flags = *flags | 0x80000000 | 0x10;

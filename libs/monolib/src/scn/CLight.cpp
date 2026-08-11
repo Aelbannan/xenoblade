@@ -9,21 +9,29 @@ extern const f32 lbl_eu_8066AFA8;
 extern const f32 lbl_eu_8066AFB0;
 extern const f32 lbl_eu_8066AFB8;
 extern const f32 lbl_eu_8066AFBC;
+extern const f32 lbl_eu_8066AFAC;
+extern const f32 lbl_eu_8066AFB4;
 
 CLight::CLight(){
-    u32 r4 = 0;
-    u32 r0 = r4 & 0xF;
-    unk4 = CVec3(0,0,0);
-    unk10 = CVec3(0.5f,0.5f,0.5f);
-    unk1C_x = 1.0f;
-    unk20 = 0.0f;
-    unk24 = 0.0f;
-    unk28 = 1.0f;
-    mpLightObj = nullptr;
-    unk34 = 0;
-    unk38 = 1;
-    unk3C = 10000;
-    mFlags = r0;
+    u8* self = (u8*)this;
+    extern char lbl_eu_8056F950[];
+    *(void**)self = (void*)&lbl_eu_8056F950;
+    *(float*)(self + 0x04) = lbl_eu_8066AFA8;
+    *(float*)(self + 0x08) = lbl_eu_8066AFA8;
+    *(float*)(self + 0x0C) = lbl_eu_8066AFA8;
+    *(float*)(self + 0x10) = lbl_eu_8066AFAC;
+    *(float*)(self + 0x14) = lbl_eu_8066AFAC;
+    *(float*)(self + 0x18) = lbl_eu_8066AFAC;
+    *(float*)(self + 0x1C) = lbl_eu_8066AFB0;
+    *(float*)(self + 0x20) = lbl_eu_8066AFA8;
+    *(float*)(self + 0x24) = lbl_eu_8066AFA8;
+    *(float*)(self + 0x28) = lbl_eu_8066AFB0;
+    void* lp = nullptr;
+    *(u32*)(self + 0x2C) = (u32)lp;
+    *(u32*)(self + 0x30) = (u32)(lp != 0) | 0xF;
+    *(u32*)(self + 0x34) = (u32)lp;
+    *(float*)(self + 0x38) = lbl_eu_8066AFB0;
+    *(float*)(self + 0x3C) = lbl_eu_8066AFB4;
 }
 
 void func_804C02E4(u8* self, int value){

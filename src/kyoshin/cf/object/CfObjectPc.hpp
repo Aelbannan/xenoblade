@@ -46,7 +46,7 @@ extern "C" void __ct__8009F8B8(u8* obj);   // CtrlObjectParam.cpp (arts/param ct
 extern "C" void func_800A03F4(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800A145C(u8* obj);    // CtrlObjectParam.cpp
 extern "C" void func_800CA42C(u8* obj);    // CfObjectImplPc.cpp
-extern "C" void func_80174B4C(u8* obj, u32 flag);       // battle-manager flag setter
+extern "C" void func_80174B4C(void* obj, u32 flag);       // battle-manager flag setter
 extern "C" void func_800A18A4(u8* obj, int value);      // CtrlObjectParam.cpp
 extern "C" UnkStruct_8009D7E4_Ret* func_8009D7E4(u8* obj, int index);  // arts data lookup
 extern "C" void func_8014B7B0(u8* obj);                  // CAIAction.cpp

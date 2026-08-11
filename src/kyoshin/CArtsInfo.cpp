@@ -408,7 +408,8 @@ u32 func_80235F50(CArtsInfo* self) {
 // func_80235F6C - animation state 0
 // .text:0x864, size 0xB4
 void func_80235F6C(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, lbl_eu_80668684) == 0) return;
+    float f = lbl_eu_80668684;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, f) == 0) return;
 
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
@@ -422,7 +423,9 @@ void func_80235F6C(CArtsInfo* self) {
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f) == 0) return;
+    u8* p = (u8*)self;
+    u32 obj = *(u32*)(p + 0x28);
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf((nw4r::lyt::AnimTransform*)obj, f) == 0) return;
 
     self->field_0x44 = 3;
     self->field_0x49 = 1;

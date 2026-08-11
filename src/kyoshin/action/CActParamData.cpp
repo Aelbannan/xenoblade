@@ -6,7 +6,7 @@
 #include "monolib/util/FixStr.hpp"
 
 extern "C" {
-extern void* lbl_eu_80526338;
+extern char lbl_eu_80526338[];
 extern void func_80053B24(void*, void*, void*, void*, void*);
 extern void __dl__FPv(void*);
 }

@@ -70,6 +70,9 @@ extern u8 lbl_eu_804FD0D0[];
 // decompiler guess). Retail table: posX s16[9] @+0x00, posY @+0x14,
 // scale f32[9] @+0x28, selTab s16[5] @+0x4C of lbl_eu_804FD0D0.
 extern "C" int func_8029A658();
+extern "C" int func_8010784C(CMenuArtsSelect*);
+extern "C" int func_801086D0(CMenuArtsSelect*);
+extern "C" int func_801088CC(CMenuArtsSelect*);
 extern "C" void func_80104454(CMenuArtsSelect* self);
 extern "C" void func_80107580(CMenuArtsSelect*);
 extern "C" void func_801072E0(CMenuArtsSelect*);
@@ -85,7 +88,6 @@ extern "C" void func_8010A6F0(void*);
 extern "C" int func_80187710();
 extern "C" void func_80187718();
 extern "C" int* func_8009ECB0();
-extern "C" void* func_800B8B94(int);
 extern "C" char lbl_eu_80661E08[];
 extern "C" u32 lbl_eu_80666F48;  // 4-byte talent table header
 extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
@@ -1324,7 +1326,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
 
     if (self->unk320 != 0) {
         void* sub = actor->mSecondaryVtable;
-        u32 v = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+        int v = *static_cast<int*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
         if (func_80174C98(actor, &v, 31) == 0) self->unk320 = 0;
     }
 
@@ -1333,7 +1335,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
     if (pl1 != NULL) a2 = (BattleActor*)((char*)pl1 - 0x3e9c);
     if (a2 != NULL && self->unk320 == 0) {
         void* sub = a2->mSecondaryVtable;
-        u32 v = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+        int v = *static_cast<int*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
         if (func_80174C98(a2, &v, 0x803) != 0) {
             if (self->unk324 == 4 && self->unk328 == 0) {
                 self->unk328 = 4;
@@ -1404,14 +1406,14 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle2) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                u32 v11 = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+                int v11 = *static_cast<int*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
                 if (func_80174C98(actor, &v11, 11) != 0) {
                     func_80138078__FUl(5);
                     goto end_body;
                 }
                 if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
                     void* sub2 = actor->mSecondaryVtable;
-                    u32 v18 = artsVslot<GetPtrFn>(sub2, 0x30)(sub2)[0];
+                    int v18 = *static_cast<int*>(artsVslot<GetPtrFn>(sub2, 0x30)(sub2));
                     if (func_80174C98(actor, &v18, 18) != 0) {
                         func_80138078__FUl(5);
                         goto end_body;
@@ -1433,7 +1435,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 2;
                     void* sub4 = actor->mSecondaryVtable;
-                    u32 v29 = artsVslot<GetPtrFn>(sub4, 0x30)(sub4)[0];
+                    int v29 = *static_cast<int*>(artsVslot<GetPtrFn>(sub4, 0x30)(sub4));
                     if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 3;
@@ -1516,14 +1518,14 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (!battle3) {
             if (self->unk324 == 4) {
                 void* sub = actor->mSecondaryVtable;
-                u32 v11 = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+                int v11 = *static_cast<int*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
                 if (func_80174C98(actor, &v11, 11) != 0) {
                     func_80138078__FUl(5);
                     goto end_body;
                 }
                 if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
                     void* sub2 = actor->mSecondaryVtable;
-                    u32 v18 = artsVslot<GetPtrFn>(sub2, 0x30)(sub2)[0];
+                    int v18 = *static_cast<int*>(artsVslot<GetPtrFn>(sub2, 0x30)(sub2));
                     if (func_80174C98(actor, &v18, 18) != 0) {
                         func_80138078__FUl(5);
                         goto end_body;
@@ -1545,7 +1547,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 case 4: {
                     self->unk328 = 0;
                     void* sub4 = actor->mSecondaryVtable;
-                    u32 v29 = artsVslot<GetPtrFn>(sub4, 0x30)(sub4)[0];
+                    int v29 = *static_cast<int*>(artsVslot<GetPtrFn>(sub4, 0x30)(sub4));
                     if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
                         func_80174C98(actor, &v29, 29) != 0) {
                         if (self->unk320 == 0) self->unk328 = 1;
@@ -1630,21 +1632,24 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             f32 s = scale[self->unk324];
             pane->SetScale(nw4r::math::VEC2(s, s));
         }
-        if (self->unk328 == 4) {
-            func_801072E0(self);
+        if (self->unk324 == 4) {
+            if (self->unk328 == 4) {
+                func_801072E0(self);
+            } else {
+                s16 v = selTab[self->unk328];
+                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x254, v);
+                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x259, v);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                              reinterpret_cast<u32>(self->unk294));
+            }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
                 ->SetVisible(true);
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(true);
         } else {
-            s16 v = selTab[self->unk328];
-            char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                          lbl_eu_804FD1E0 + 0x254, v);
-            char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                          lbl_eu_804FD1E0 + 0x259, v);
-            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
-                          reinterpret_cast<u32>(self->unk294));
             void* pl = cf::CfGameManager::getPlayer(0);
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
@@ -1697,21 +1702,24 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             f32 s = scale[self->unk324];
             pane->SetScale(nw4r::math::VEC2(s, s));
         }
-        if (self->unk328 == 4) {
-            func_801072E0(self);
+        if (self->unk324 == 4) {
+            if (self->unk328 == 4) {
+                func_801072E0(self);
+            } else {
+                s16 v = selTab[self->unk328];
+                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x254, v);
+                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x259, v);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                              reinterpret_cast<u32>(self->unk294));
+            }
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
                 ->SetVisible(true);
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
                 ->SetVisible(true);
         } else {
-            s16 v = selTab[self->unk328];
-            char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                          lbl_eu_804FD1E0 + 0x254, v);
-            char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
-                                          lbl_eu_804FD1E0 + 0x259, v);
-            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
-            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
-                          reinterpret_cast<u32>(self->unk294));
             void* pl = cf::CfGameManager::getPlayer(0);
             void* adj = pl;
             if (pl != NULL) adj = (char*)pl - 0x3e9c;
@@ -1875,3 +1883,4 @@ void CMenuArtsSelect::func_80108994(){}
 
 extern "C" void func_801041F4() {}
 extern "C" void func_801042F0() {}
+

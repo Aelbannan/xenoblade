@@ -1,4 +1,5 @@
 #include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 
 // --- CTTask<CTaskGame> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -142,6 +143,32 @@ extern "C" void func_80040AF4(CTaskGame* self) {
         *(u32*)((u8*)self + 0x40) = p[1];
         *(u32*)((u8*)self + 0x3C) = v0;
         *(u32*)((u8*)self + 0x44) = p[2];
+    }
+}
+extern "C" void func_80294E58(void* self, u32 index, const u32* src);
+extern "C" u32 func_80042784();
+extern "C" u32 getTargetFramerate__9CDeviceVIFv();
+extern const f32 lbl_eu_80665D74;
+
+extern "C" void func_80040DE4(CTaskGame* self) {
+    self->unk100++;
+    if (func_80042784() == 0) {
+        float fps = (float)getTargetFramerate__9CDeviceVIFv();
+        int fps5 = (int)fps * 5;      // retail keeps the mulli (dead)
+        extern u32 lbl_eu_805255C8[3];
+        u32 v0 = lbl_eu_805255C8[0];  // retail keeps the lwzu (dead)
+        self->unk78 = self->unkCC;
+        *(u32*)((u8*)self + 0x40) = lbl_eu_805255C8[1];
+        *(u32*)((u8*)self + 0x3C) = 0;
+        *(u32*)((u8*)self + 0x44) = lbl_eu_805255C8[2];
+        *(u8*)((u8*)self + 0x8C) = 0;
+        float c = fabsf(lbl_eu_80665D74);
+        func_80294E58((void*)(uintptr_t)self->unkCC, 0,
+                      (const u32*)func_800407C8((func_800407C8_tmp*)((u8*)self + 0x18), c, c, c, c));
+        *(u8*)((u8*)self + 0x8C) = 1;
+        func_800407C8_tmp tmp;
+        func_80294E58((void*)(uintptr_t)self->unkD0, 0,
+                      (const u32*)func_800407C8(&tmp, c, c, c, c));
     }
 }
 void CTaskGame_stub_800419BC(){}
@@ -396,7 +423,7 @@ void CTaskGame_stub_80042784(){}
 void CTaskGame_stub_80042874(){}
 void CTaskGame_stub_8004302C(){}
 // Forward declaration only - body kept in separate TU to prevent MWCC inlining
-void func_8004312C();
+extern "C" void func_8004312C();
 void CTaskGame_stub_8004362C(){}
 #pragma dont_inline on
 s32 CTaskGame_stubReturnZero_800436A8(){ return 0; }
@@ -416,10 +443,22 @@ char* CTaskGame_FixStr_append(ml::FixStr<32>* str, const char* r4_str) {
     return const_cast<char*>(str->c_str());
 }
 
-void func_8004312C(); void Draw__9CTaskGameFv() {
+extern "C" void func_8004312C(); void Draw__9CTaskGameFv() {
     func_8004312C();
 }
 
 extern "C" void func_8004347C() {}
 extern "C" void func_800434AC() {}
 extern "C" void func_800440C4() {}
+
+// Retail __dt__Q22cf13CfObjEnumListFv (0x54) lives in this TU (weak placement).
+// The reslist base dtor is a separate retail symbol; call it explicitly.
+// optimize_for_size gives the retail stmw r30 prologue (like CTTask's dtor).
+#pragma optimize_for_size on
+extern "C" void __dt___reslist_base_cf_CfObject(void* self, int flag);
+cf::CfObjEnumList::~CfObjEnumList() {
+    if (this) {
+        __dt___reslist_base_cf_CfObject(this, 0);
+    }
+}
+#pragma optimize_for_size off

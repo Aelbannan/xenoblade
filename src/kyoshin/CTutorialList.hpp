@@ -15,7 +15,8 @@
    +0x00 vptr | +0x04 UnkClass_8045F564 (0x10) | +0x14 six pointers
    (+0x20 Layout*, +0x24/+0x28 AnimTransform*) | +0x2C CCur (0x18)
    | +0x44 CScrollBar (0x40) | +0x84 CSortMenu sub-object | +0x175 control bytes
-   | +0x177 mInitialized | +0x17E s8 */
+   | +0x177 mInitialized | +0x17E s8 | +0x180 opaque sub-object | +0x280 u16s
+   | +0x288 total size (matches CMenuTutorialList's embedded 0x288 buffer). */
 struct CTutorialListLayout {
     void* mVtbl;            // 0x00
 
@@ -33,10 +34,41 @@ struct CTutorialListLayout {
 
 // Data imports (retail symbol names; global data is not C++-mangled).
 extern const float lbl_eu_80668DE4;  // anim finish frame bound (.sdata2, sda21)
+extern const float lbl_eu_80668DD8;  // scrollbar fade colour set (.sdata2, sda21)
+extern const float lbl_eu_80668DDC;
+extern const float lbl_eu_80668DE0;
 extern char lbl_eu_80510B78[];       // string pool base
 
-// CSortMenu visibility gate (retail unmangled symbol).
+class CTutorialList;
+
+// CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
 extern "C" u32 func_801D32DC(void*);
+extern "C" u8 func_801D3320(void*);
+extern "C" u8 func_801D3328(void*);
+extern "C" void func_801D3064(void*);
+extern "C" void func_801D3160(void*);
+extern "C" void func_801D3408(void*);
+extern "C" void func_801D202C(void*);
+extern "C" void func_801D216C(void*, int);
+// Device/memory helper (retail unmangled C symbol).
+extern "C" int func_800A9D90();
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
+// UI sound: retail symbol is the C++-mangled func_80138078__FUl.
+void func_80138078(u32);
+
+// Same-TU widget helpers. Retail strips the C++ mangling for these (bare
+// func_ names), so they are defined under C linkage and call sites bind the
+// literal retail symbols.
+extern "C" void func_802ADAE8(CTutorialList*);
+extern "C" void func_802ADB3C(CTutorialList*);
+extern "C" void func_802ADB90(CTutorialList*);
+extern "C" void func_802ADBDC(CTutorialList*);
+extern "C" void func_802ADC28(CTutorialList*);
+extern "C" void func_802ADC88(CTutorialList*);
+extern "C" void func_802ADCE8(void*);
+extern "C" void func_802ADFA8(CTutorialList*);
+extern "C" void func_802ADE18(CTutorialList*);
+extern "C" void func_802ACC30(u8*, u16, int);
 
 class CTutorialList {
 public:
@@ -46,14 +78,10 @@ public:
 
     u8 func_802AD300();
     u8 func_802AD984();
-
-    void func_802ADAE8();
-    void func_802ADB3C();
-    void func_802ADBDC();
     u8 func_802AD2A4();
-    void func_802ADFA8();
 
-private:
+    // Fields are public: the retail widget functions are C-linkage free
+    // functions (func_802AD308 etc.) that need raw member access.
     // vptr at +0x00 (implicit from virtual dtor)
     u8 mGap04[0x10];                      // 0x04: UnkClass_8045F564 (0x10)
     void* mField14;                       // 0x14: CFileHandle*
@@ -64,10 +92,18 @@ private:
     nw4r::lyt::AnimTransform* mAnim28;    // 0x28
     u8 mGap2C[0x18];                      // 0x2C: CCur (0x18 bytes)
     CScrollBarData mScrollBar;            // 0x44: CScrollBar (0x40 bytes)
-    u8 mSortMenu84[0xF1];                 // 0x84: CSortMenu sub-object (opaque)
+    u8 mSortMenu84[0xF0];                 // 0x84: CSortMenu sub-object (opaque)
+    u8 mField174;                         // 0x174: run/visible gate byte
     u8 mState175;                         // 0x175: anim/state byte
     u8 mField176;                         // 0x176: visible-selection byte
     u8 mInitialized;                      // 0x177: non-zero after construction
-    u8 mGap178[0x6];                      // 0x178-0x17D
+    s8 mField178;                         // 0x178: sign-extended page byte
+    u16 mField17A;                        // 0x17A: selection id (halfword)
+    u16 mField17C;                        // 0x17C: count/limit (halfword)
     s8 mField17E;                         // 0x17E: sign-extended counter base
+    u8 mSubObj180[0x100];                 // 0x180: opaque sub-object (func_802ACC30)
+    u16 mField280;                        // 0x280: content size (halfword)
+    s16 mField282;                        // 0x282: sign-extended row id
+    s16 mField284;                        // 0x284: sign-extended selection id
+    u8 mGap286[2];                        // 0x286-0x287: pad to 0x288 total size
 };

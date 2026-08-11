@@ -17,7 +17,15 @@ void func_80210E9C(){}
 
 void func_802116D4(){}
 
-void func_80211CB8(){}
+// Copy fields +0x4..+0x14 from src to dst (byte/word/byte copy).
+void func_80211CB8(CMakeCrystalCopyBlock* dst, const CMakeCrystalCopyBlock* src) {
+    dst->field_0x4 = src->field_0x4;
+    dst->field_0x5 = src->field_0x5;
+    dst->field_0x8 = src->field_0x8;
+    dst->field_0xC = src->field_0xC;
+    dst->field_0x10 = src->field_0x10;
+    dst->field_0x14 = src->field_0x14;
+}
 
 void func_80211CEC(){}
 

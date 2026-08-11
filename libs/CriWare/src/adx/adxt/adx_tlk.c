@@ -374,9 +374,9 @@ s32 ADXT_GetTimeReal(void* self) {
     s32 ret;
     ADXCRS_Enter();
     adxt_GetTime(self, &t1, &t2);
-extern float lbl_eu_805162DA;
+extern float lbl_eu_805162F0;
 
-    ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162DA);
+    ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162F0);
     ADXCRS_Leave();
     return ret;
 }

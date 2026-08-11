@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" void __dl__FPv(void*);
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/device/CDeviceGX.hpp"
@@ -53,7 +54,12 @@ __declspec(noinline) CTaskGameEff* __ct__CTaskGameEff(CTaskGameEff* pThis, CScn*
 }
 #pragma optimize_for_size off
 
-void __dt__80044BB0(){}
+void* __dt__80044BB0(void* obj, int mode) {
+    if (obj != 0 && mode > 0) {
+        __dl__FPv(obj);
+    }
+    return obj;
+}
 
 // High-priority render callback dtor (retail __dt__Q212CTaskGameEff18CEffRenderHighPrioFv).
 // Declared-only in the header so the containing dtor emits an out-of-line call.
@@ -75,9 +81,7 @@ void* __dt__reslist_CScn(void* _this, int flags) {
 }
 #pragma optimize_for_size off
 
-#pragma optimize_for_size on
 CTaskGameEff::~CTaskGameEff() {}
-#pragma optimize_for_size off
 
 // Returns a global word from the sdata2/sdata pool (single lwz+sda21 reloc).
 u32 func_80044DF4() { return (u32)lbl_eu_80663D40; }

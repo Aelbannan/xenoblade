@@ -199,7 +199,7 @@ extern "C" int func_8014B8BC(void* a, void* b);
 extern "C" int func_800F4730(void);
 extern "C" void* func_800F4648(void* self);
 extern "C" int func_800F46C0(void* a, void* b);
-extern "C" void* func_800EA444(void);
+extern "C" void* func_800EA444(void* self);
 extern "C" void func_800A26A4(void* a, int b, void* c, int d, int e, int f, int g);
 extern "C" int func_8026178C(void* data, u32 mode);
 extern "C" f32 func_80496288(void*);

@@ -856,26 +856,19 @@ extern "C" void func_801832D4(void* self) {
 // ============================================================
 extern "C" int func_8018351C(void* self) {
     char* s = (char*)self;
-    int result;
 
-    if (FLD(s32, s, 0x74) != func_8016A3C4() + 1) {
-        return 0;
-    }
-
-    void* parent = FLD(void*, s, 0x1C);
-
-    if (FLD(u32, parent, 0x30) > 1) {
-        result = 0;
-        if (__ptmf_cmpr(s + 0x08, lbl_eu_80531F88) == 0) {
-            result = 1;
-        } else if (__ptmf_cmpr(s + 0x08, lbl_eu_80531F94) == 0) {
-            result = 1;
+    if (FLD(s32, s, 0x74) == func_8016A3C4() + 1) {
+        void* parent = FLD(void*, s, 0x1C);
+        int result = 0;
+        if (FLD(u32, parent, 0x30) > 1) {
+            if (__ptmf_cmpr(s + 0x08, lbl_eu_80531F88) == 0 ||
+                __ptmf_cmpr(s + 0x08, lbl_eu_80531F94) == 0) {
+                result = 1;
+            }
         }
-    } else {
-        result = 0;
+        return result;
     }
-
-    return result;
+    return 0;
 }
 
 // ============================================================

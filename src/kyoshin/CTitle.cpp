@@ -4,6 +4,15 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTitle.hpp"
 
+// TU-local plain functions (defined below in address order) called by the
+// state-machine helpers in this file. noinline keeps real bl branches
+// (retail calls them, so the call must survive).
+void __declspec(noinline) func_802B6724(CTitleLogo* self);
+void __declspec(noinline) func_802B6854(CTitleLogo* self);
+void __declspec(noinline) func_802B6F64(CTitleMenu* self);
+void __declspec(noinline) func_802B7094(CTitleMenu* self);
+void __declspec(noinline) func_802B725C(CTitleMenu* self);
+
 void __ct__CTitleLogo(){}
 
 CTitleLogo::~CTitleLogo() {}
@@ -16,9 +25,22 @@ void func_802B64AC(){}
 
 void func_802B64DC(){}
 
-void func_802B6534(){}
+void func_802B6534(CTitleLogo* self) {
+    if (self->field_0x1A == 0) {
+        self->field_0x1A = 1;
+        func_802B6724(self);
+        self->field_0x18 = 1;
+        self->field_0x19 = 0;
+    }
+}
 
-void func_802B6580(){}
+void func_802B6580(CTitleLogo* self) {
+    if (self->field_0x1A == 2) {
+        self->field_0x1A = 3;
+        func_802B6854(self);
+        self->field_0x19 = 0;
+    }
+}
 
 void func_802B65C8(){}
 
@@ -32,11 +54,11 @@ extern "C" void func_802B66B8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTr
 
 void func_802B66C4(){}
 
-void func_802B6724(){}
+void __declspec(noinline) func_802B6724(CTitleLogo* self){}
 
 void func_802B67BC(){}
 
-void func_802B6854(){}
+void __declspec(noinline) func_802B6854(CTitleLogo* self){}
 
 void __ct__CTitleMenu(){}
 
@@ -50,13 +72,32 @@ void func_802B6B08(){}
 
 void func_802B6B38(){}
 
-void func_802B6B90(){}
+void func_802B6B90(CTitleMenu* self) {
+    if (self->field_0x26 == 0) {
+        self->field_0x26 = 1;
+        func_802B6F64(self);
+        self->field_0x24 = 1;
+        self->field_0x25 = 0;
+    }
+}
 
-void func_802B6BDC(){}
+void func_802B6BDC(CTitleMenu* self) {
+    if (self->field_0x26 == 2) {
+        self->field_0x26 = 3;
+        func_802B7094(self);
+        self->field_0x25 = 0;
+    }
+}
 
 void func_802B6C24(){}
 
-void func_802B6C74(){}
+void func_802B6C74(CTitleMenu* self) {
+    if (self->field_0x26 == 5) {
+        self->field_0x26 = 6;
+        func_802B725C(self);
+        self->field_0x25 = 0;
+    }
+}
 
 void func_802B6CBC(){}
 
@@ -76,17 +117,17 @@ extern "C" void func_802B6EF8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTr
 
 void func_802B6F04(){}
 
-void func_802B6F64(){}
+void __declspec(noinline) func_802B6F64(CTitleMenu* self){}
 
 void func_802B6FFC(){}
 
-void func_802B7094(){}
+void __declspec(noinline) func_802B7094(CTitleMenu* self){}
 
 void func_802B712C(){}
 
 void func_802B71C4(){}
 
-void func_802B725C(){}
+void __declspec(noinline) func_802B725C(CTitleMenu* self){}
 
 void __ct__CTitle(){}
 

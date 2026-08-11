@@ -99,8 +99,6 @@ namespace cf {
         virtual void vf38();
         virtual void vf39();
         virtual void vf40();
-        virtual void vf41();
-        virtual void vf42();
         virtual ml::CVec3* getPosition();
     };
 

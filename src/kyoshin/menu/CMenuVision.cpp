@@ -593,7 +593,11 @@ extern "C" void func_801AD504(int flags) {
                     unsigned int i = 0;
                     do {
                         if (previous == ids[(u8)i]) {
-                            menuVisionReplacePaneImage(panic, menuVisionResource(images[(u8)i]));
+                            void* image = menuVisionResource(images[(u8)i]);
+                            if (image != 0) {
+                                func_80137F88(panic, image);
+                                panic->SetVisible(true);
+                            }
                             break;
                         }
                         i++;
@@ -618,7 +622,11 @@ extern "C" void func_801AD504(int flags) {
                     unsigned int i = 0;
                     do {
                         if (current == ids[(u8)i]) {
-                            menuVisionReplacePaneImage(panic, menuVisionResource(images[(u8)i]));
+                            void* image = menuVisionResource(images[(u8)i]);
+                            if (image != 0) {
+                                func_80137F88(panic, image);
+                                panic->SetVisible(true);
+                            }
                             break;
                         }
                         i++;

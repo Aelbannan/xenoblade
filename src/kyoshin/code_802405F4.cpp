@@ -183,7 +183,9 @@ void CMenuMapSelect::Init() {
         func_80241920(&mFloorMap, &floorMap);
     } // floorMap destructor runs here
 
-    mScn->addRenderCB(this, 0xd, 1);
+    char* cb = (char*)this;
+    if (this != 0) cb = (char*)this + 0x58;
+    mScn->addRenderCB((IScnRender*)cb, 0xd, 1);
 }
 
 // Copy helpers for member sub-object initialization (retail calls these from

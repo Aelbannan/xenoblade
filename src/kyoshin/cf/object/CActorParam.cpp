@@ -279,6 +279,12 @@ struct CBattleStateVt {
     virtual void vf20(int);            // 0x20 CBattleState_UnkVirtualFunc7
     virtual void vf24(void*);          // 0x24 CBattleState_UnkVirtualFunc8
     virtual void vf28(int);            // 0x28 CBattleState_UnkVirtualFunc9
+    virtual void _v2C(); virtual void _v30(); virtual void _v34(); virtual void _v38();
+    virtual void _v3C(); virtual void _v40(); virtual void _v44(); virtual void _v48();
+    virtual void _v4C(); virtual void _v50(); virtual void _v54(); virtual void _v58();
+    virtual void _v5C(); virtual void _v60(); virtual void _v64(); virtual void _v68();
+    virtual void _v6C();
+    virtual void* vf70();             // 0x70
 };
 
 struct CBattleMgrVt {
@@ -1176,11 +1182,12 @@ extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv(cf::CActorPara
             int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 114);
             if (r != 0) *(s16*)((u8*)self + 0x177C) += (s16)r;
         }
+        int r45 = 0;
         if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 45) != 0) {
-            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 45);
-            if (r != 0) {
-                float f2 = *(float*)((u8*)self + 0x1808) * (1.0f + (float)r / 100.0f);
-                float f0 = *(float*)((u8*)self + 0x180C) * (1.0f + (float)r / 100.0f);
+            r45 = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 45);
+            if (r45 != 0) {
+                float f2 = *(float*)((u8*)self + 0x1808) * (1.0f + (float)r45 / 100.0f);
+                float f0 = *(float*)((u8*)self + 0x180C) * (1.0f + (float)r45 / 100.0f);
                 *(float*)((u8*)self + 0x1808) = f2;
                 *(float*)((u8*)self + 0x180C) = f0;
                 if (f2 > f0) *(float*)((u8*)self + 0x1808) = f0;
@@ -1233,6 +1240,35 @@ extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv(cf::CActorPara
         *(s16*)((u8*)self + 0x18EC) = *(s16*)((u8*)self + 0x1758);
         *(s16*)((u8*)self + 0x18F0) = *(s16*)((u8*)self + 0x175C);
         *(s16*)((u8*)self + 0x18DA) = *(s16*)((u8*)self + 0x1746);
+
+        s16 t45 = (s16)r45;
+        if ((float)t45 < 0.7f * (float)*(s16*)((u8*)self + 0x166C)) {
+            *(s16*)((u8*)self + 0x1878) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x166C));
+        }
+        if ((float)*(s16*)((u8*)self + 0x187C) < 0.7f * (float)*(s16*)((u8*)self + 0x1670)) {
+            *(s16*)((u8*)self + 0x187C) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x1670));
+        }
+        if ((float)*(s16*)((u8*)self + 0x187A) < 0.7f * (float)*(s16*)((u8*)self + 0x166E)) {
+            *(s16*)((u8*)self + 0x187A) = (int)(0.7f * (float)*(s16*)((u8*)self + 0x166E));
+        }
+        *(s16*)((u8*)self + 0x1894) += *(u8*)((u8*)self + 0x1898);
+
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 48) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 48);
+            if (r != 0) {
+                void* o = reinterpret_cast<CBattleStateVt*>((u8*)self + 8)->vf70();
+                bool ok = (*(u16*)((u8*)o + 4) == 0) && (*(u16*)((u8*)o + 0x14) == 0) &&
+                          (*(u16*)((u8*)o + 0x24) == 0) && (*(u16*)((u8*)o + 0x34) == 0) &&
+                          (*(u16*)((u8*)o + 0x44) == 0) && (*(u16*)((u8*)o + 0x54) == 0) &&
+                          (*(u16*)((u8*)o + 0x64) == 0) && (*(u16*)((u8*)o + 0x74) == 0);
+                if (ok) {
+                    *(s16*)((u8*)self + 0x174C) += (s16)r;
+                    *(s16*)((u8*)self + 0x1750) += (s16)r;
+                    *(s16*)((u8*)self + 0x174E) += (s16)r;
+                    *(s16*)((u8*)self + 0x1746) += (s16)r;
+                }
+            }
+        }
     }
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc174() {}

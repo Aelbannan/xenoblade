@@ -354,16 +354,6 @@ dispatched:
     __dt__80043E88(&holder, -1);
     return result;
 }
-void func_80150828(){}
-
-// ---------------------------------------------------------------------------
-// func_801522C4 — AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
-// Given a 0x20-byte action-query struct, builds a CfObjEnumList of event
-// entries (switch on byte 8 = sel), filters it (switch on byte 7 = op),
-// and returns the selected entry payload (func_800F6E08) or 0.
-// ---------------------------------------------------------------------------
-
-// Object view for indirect vtable calls (slots 0x00..0x328).
 struct CAIVtObj {
     virtual void* v000();
     virtual void* v001();
@@ -419,9 +409,9 @@ struct CAIVtObj {
     virtual void* v033();
     virtual void* v034();
     virtual void* v035();
-    virtual void* v036();
+    virtual s32 v036();
     virtual void* v037();
-    virtual void* v038();
+    virtual s32 v038();
     virtual void* v039();
     virtual void* v03A();
     virtual void* v03B();
@@ -557,9 +547,9 @@ struct CAIVtObj {
     virtual void* v0BD();
     virtual void* v0BE();
     virtual void* v0BF();
-    virtual void* v0C0();
+    virtual s32 v0C0();
     virtual void* v0C1();
-    virtual void* v0C2();
+    virtual s32 v0C2();
     virtual void* v0C3();
     virtual void* v0C4();
     virtual void* v0C5();
@@ -571,7 +561,7 @@ struct CAIVtObj {
     virtual void* v0CB();
 };
 
-// CfObjEnumList fields accessed by this function.
+
 struct CAIEnumList {
     u8 pad0[0x620];
     u32 count;      // 0x620
@@ -595,11 +585,13 @@ static inline void aiListClear(void* list) {
     ((CAIEnumList*)list)->count = 0;
     ((CAIEnumList*)list)->unk3030 = 0;
 }
+static f32 mlAbs(f32 x) { return x < 0.0f ? -x : x; }
+
 // moveBase = unkB14 + 0x3E9C; retail pattern is lwzu on the base+0x3E9C,
 // so the vtable call always targets (base + 0x3E9C) even when base is 0.
 static inline void* aiMoveBaseVt4C(void* partyBase) {
     CAIVtObj* mb = (CAIVtObj*)((u8*)partyBase + 0x3E9C);
-    return mb->v04C();
+    return mb->v011();
 }
 
 extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
@@ -608,8 +600,8 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     s32 op = (s32)((const u8*)c)[7];  // dispatch key A — the "command"
     s32 sel = (s32)((const u8*)c)[8]; // dispatch key B — the "selector"
+    u32 countBefore;
     void* result = 0;
-    u32 countBefore = 0;
 
     func_80043D90(&holder);
 
@@ -620,7 +612,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = func_8016FE34(func_800B708C((int)self->unkB18));
-            if (v && ((CAIVtObj*)v)->v2BC() == 0)
+            if (v && ((CAIVtObj*)v)->v0AD() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
@@ -631,9 +623,9 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 u32 mf = *(u32*)(moveBase + 0x64);
                 if (mf & 0x2) {
                     if (!(*(u32*)((u8*)v + 0x3F00) & 0x2))
-                        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((CAIVtObj*)moveBase)->v4C());
+                        func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((CAIVtObj*)moveBase)->v011());
                 } else if (!(*(u32*)((u8*)v + 0x3F00) & 0x4)) {
-                    func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((CAIVtObj*)moveBase)->v4C());
+                    func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)((CAIVtObj*)moveBase)->v011());
                 }
             }
         }
@@ -658,7 +650,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)o + 0x10));
         } else if (self->unkB18) {
             void* v = func_8016FE34(func_800B708C((int)self->unkB18));
-            if (v && ((CAIVtObj*)v)->v2BC() == 0)
+            if (v && ((CAIVtObj*)v)->v0AD() == 0)
                 func_800F6D50(func_80043F18(&holder), (u32)self->unkB18);
             else
                 self->unkB18 = 0;
@@ -792,7 +784,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         if (!(*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x4))
             filter = 0x20;
         func_800F4A98(func_80043F18(&holder), filter, 0x800);
-        __ct__800FC19C(func_80043F18(&holder), 0x1000, 0);
+        __ct__800FC19C(func_80043F18(&holder), 0x10000000, 0);
         break;
     }
 
@@ -848,7 +840,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
             CAIEnumSlot* slot = (CAIEnumSlot*)func_800F6EC0(func_80043F18(&holder), 0);
             void* obj = slot ? func_8016FE34(slot->unk04) : 0;
             if (!(obj && (*(u32*)((u8*)obj + 0x3F00) & 0x4) &&
-                  ((CAIVtObj*)obj)->vE0() == (s32)(op - 151)))
+                  ((CAIVtObj*)obj)->v036() == (s32)(op - 151)))
                 aiListClear(func_80043F18(&holder));
         }
         break;
@@ -858,19 +850,19 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         void* obj;
         if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(func_80043F18(&holder));
-            obj = ((CAIVtObj*)(u8*)self->unkB14)->v2E8();
+            obj = ((CAIVtObj*)(u8*)self->unkB14)->v0B8();
             if (obj == 0) {
                 obj = aiMoveBaseVt4C((u8*)self->unkB14);
                 void* v = func_8016FE34(func_800B708C((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback1;
-                if (((CAIVtObj*)v)->v2BC() != 0)
+                if (((CAIVtObj*)v)->v0AD() != 0)
                     goto fallback1;
                 if (v != 0)
                     goto done1;
             fallback1:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = ((CAIVtObj*)getPlayer__Q22cf13CfGameManagerFi(0))->v4C();
+                    obj = ((CAIVtObj*)getPlayer__Q22cf13CfGameManagerFi(0))->v011();
             }
         done1:
             func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)obj);
@@ -882,19 +874,19 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         void* obj;
         if (!func_80148778((u8*)self->unkB14 + 8, 0x11)) {
             aiListClear(func_80043F18(&holder));
-            obj = ((CAIVtObj*)(u8*)self->unkB14)->v2EC();
+            obj = ((CAIVtObj*)(u8*)self->unkB14)->v0B9();
             if (obj == 0) {
                 obj = aiMoveBaseVt4C((u8*)self->unkB14);
                 void* v = func_8016FE34(func_800B708C((int)(uintptr_t)obj));
                 if (v == 0)
                     goto fallback2;
-                if (((CAIVtObj*)v)->v2BC() != 0)
+                if (((CAIVtObj*)v)->v0AD() != 0)
                     goto fallback2;
                 if (v != 0)
                     goto done2;
             fallback2:
                 if (*(u32*)((u8*)self->unkB14 + 0x3F00) & 0x2)
-                    obj = ((CAIVtObj*)getPlayer__Q22cf13CfGameManagerFi(0))->v4C();
+                    obj = ((CAIVtObj*)getPlayer__Q22cf13CfGameManagerFi(0))->v011();
             }
         done2:
             func_800F6D50(func_80043F18(&holder), (u32)(uintptr_t)obj);
@@ -961,7 +953,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
 
     case 57: {
         void* moveBase = (u8*)self->unkB14 + 0x3E9C;
-        func_800F6ED0(func_80043F18(&holder), ((CAIVtObj*)moveBase)->vAC());
+        func_800F6ED0(func_80043F18(&holder), ((CAIVtObj*)moveBase)->v029());
         break;
     }
 
@@ -1251,7 +1243,7 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
         for (i = 0; i < aiListCount(func_80043F18(&holder)); i++) {
             CAIEnumSlot* slot = (CAIEnumSlot*)func_800F6EC0(func_80043F18(&holder), i);
             void* obj = slot ? func_8016FE34(slot->unk04) : 0;
-            if (!obj || ((CAIVtObj*)obj)->v2BC() != 0) {
+            if (!obj || ((CAIVtObj*)obj)->v0AD() != 0) {
                 slot->unk18 = slot->unk18 | 0x70;
                 continue;
             }
@@ -1267,23 +1259,23 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
                 goto L175;
             goto next137;
         L174:
-            if (((CAIVtObj*)obj)->v308() <= 3)
+            if (((CAIVtObj*)obj)->v0C0() <= 3)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L137:
-            if (((CAIVtObj*)obj)->v308() <= 2)
+            if (((CAIVtObj*)obj)->v0C0() <= 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L173:
-            if (((CAIVtObj*)obj)->v308() != 2)
+            if (((CAIVtObj*)obj)->v0C0() != 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L138:
-            if (((CAIVtObj*)obj)->v308() >= 2)
+            if (((CAIVtObj*)obj)->v0C0() >= 2)
                 slot->unk18 = slot->unk18 | 0x70;
             goto next137;
         L175:
-            if (((CAIVtObj*)obj)->v308() >= 1)
+            if (((CAIVtObj*)obj)->v0C0() >= 1)
                 slot->unk18 = slot->unk18 | 0x70;
         next137:
             ;
@@ -1337,3 +1329,693 @@ extern "C" void* func_801522C4(cf::CAIAction* self, const void* cmd) {
     __dt__80043E88(&holder, -1);
     return result;
 }
+
+// Base cf object as used here (func_8016FE34 returns obj = movePtr - 0x3E9C).
+struct CfObjBase {
+    void* vtable;          // 0x00
+    u8    pad[0x1530 - 4];
+    u32   unk1530;         // 0x1530 (battle-related state)
+    u8    pad2[0x3374 - 0x1534];
+    u32   unk3374;         // 0x3374 (flag 0x1000 = in-battle?)
+    u8    pad3[0x3E9C - 0x3378];
+    void* moveVtable;      // 0x3E9C embedded move object's vtable
+    u8    pad4[0x64];
+    u32   moveFlags;       // 0x3E9C+0x64 == 0x3F00 (bits 1,2 = move object)
+    u32   unk3F10;         // 0x3F10 battle handle
+};
+
+extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
+    CAIActionEnumHolder it;
+    const u8* qb = (const u8*)q;
+    u8 b5  = qb[5];   // 2nd switch key (0..178)
+    u8 b6  = qb[6];   // 1st switch key
+    u8 b9  = qb[9];
+    u8 b10 = qb[10];
+    u8 b11 = qb[11];
+    u8 b12 = qb[12];
+    u32 result = 0;
+    u32 savedCount = 0;
+
+    func_80043D90(&it);
+
+    // ---- first switch: action class ---------------------------------------
+    if (b6 == 2) {
+        // +0x605C
+        func_800F6D50(func_80043F18(&it), ((CfObjBase*)self->unkB14)->unk3F10);
+    } else if (b6 == 7 || b6 == 9) {
+        // +0x6084
+        u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
+        func_800F4A98(func_80043F18(&it), filter, 0);
+    } else if (b6 == 8) {
+        // +0x60BC : filter, then mark the entry whose object is self, commit.
+        u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
+        void* list = func_80043F18(&it);
+        func_800F4A98(list, filter, 0);
+        for (u32 i = 0; i < aiListCount(list); i++) {
+            CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
+            void* obj = e ? func_8016FE34(e->unk04) : 0;
+            if (obj == 0) continue;
+            if (obj != ((CfObjBase*)self->unkB14)) continue;
+            e->unk18 = e->unk18 | 0x70;
+            break;
+        }
+        __ct__800FD250(func_80043F18(&it));
+    } else if (b6 >= 14 && b6 <= 21) {
+        // +0x6178 : scan singleton node list (reslist at +0xB28) for tag b6-13
+        func_800B07E8();                       // singleton acquire (retail discards result)
+        void* node = func_800B76A4(func_800B07E8());          // &singleton->unkB28
+        while (node != 0) {
+            if (*(u16*)((u8*)node + 0x8C) == (u16)(b6 - 13)) {
+                func_800F6D50(func_80043F18(&it), *(u32*)((u8*)node + 0x74));
+                break;
+            }
+            func_800B07E8();
+            node = func_800B77E4(func_800B07E8(), node);
+        }
+    } else if (b6 == 13) {
+        // +0x61D0 : battle vision object's field +4
+        void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        if (vision != 0 && *(u32*)((u8*)vision + 4) != 0) {
+            func_800F6D50(func_80043F18(&it), *(u32*)((u8*)vision + 4));
+        }
+    } else {
+        // +0x6200 default
+        if (func_80148778((u8*)self->unkB14 + 8, 274)) {
+            void* tag = func_80149154((u8*)self->unkB14 + 8, 274);
+            func_800F6D50(func_80043F18(&it), *(u32*)((u8*)tag + 0x10));
+        } else if (b6 <= 34) {
+            // ---- sub-switch (jumptable_eu_8052F1AC, 35 entries 0..34) ----
+            switch (b6) {
+            case 0: case 2: case 3: case 7: case 8: case 9:
+            case 13: case 14: case 15: case 16: case 17: case 18:
+            case 19: case 20: case 21: case 22: case 23: case 24:
+            case 25: case 26: case 27: case 28: case 29: case 30:
+            case 31: case 32: case 33:
+                break;  // -> +0x66F0 (no-op case)
+
+            case 1:
+            case 10: {
+                // +0x6410
+                if (func_80148778((u8*)self->unkB14 + 8, 17)) {
+                    void* tag = func_80149154((u8*)self->unkB14 + 8, 17);
+                    func_800F6D50(func_80043F18(&it), *(u32*)((u8*)tag + 0x10));
+                    break;
+                }
+                if (self->unkB18 != 0) {
+                    void* obj = func_8016FE34(func_800B708C((int)self->unkB18));
+                    if (obj != 0 && ((CAIVtObj*)obj)->v0AD() == 0) {
+                        func_800F6D50(func_80043F18(&it), self->unkB18);
+                    } else {
+                        self->unkB18 = 0;
+                    }
+                    break;
+                }
+                // +0x64A4
+                {
+                    u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
+                    void* list = func_80043F18(&it);
+                    func_800F4A98(list, filter, 0x800);
+                    if (aiListCount(list) != 0) {
+                        void* id = (void*)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                        func_800F6D50(func_80043F18(&it), (u32)(uintptr_t)id);
+                    }
+                }
+                break;
+            }
+
+            case 4:
+                // +0x6510
+                func_800F4A98(func_80043F18(&it), 16, 0);
+                break;
+
+            case 5: {
+                // +0x6528 : secondary holder; filter; add move target of first
+                //           entry's second word.
+                CAIActionEnumHolder it2;
+                func_80043D90(&it2);
+                void* l2 = func_80043F18(&it2);
+                func_800F4A98(l2, 16, 0);
+                if (aiListCount(l2) != 0) {
+                    void* base = func_800F6EAC(l2, 0);   // entries[0][1]
+                    if (base) base = (u8*)base - 0x3E9C;
+                    u32 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)base + 0x3E9C))->v011();
+                    func_800F6D50(func_80043F18(&it), id);
+                }
+                __dt__80043E88(&it2, -1);
+                break;
+            }
+
+            case 6: {
+                // +0x6260
+                if (func_80148778((u8*)self->unkB14 + 8, 17)) {
+                    void* tag = func_80149154((u8*)self->unkB14 + 8, 17);
+                    func_800F6D50(func_80043F18(&it), *(u32*)((u8*)tag + 0x10));
+                    break;
+                }
+                if (self->unkB18 != 0) {
+                    void* obj = func_8016FE34(func_800B708C((int)self->unkB18));
+                    if (obj != 0 && ((CAIVtObj*)obj)->v0AD() == 0) {
+                        func_800F6D50(func_80043F18(&it), self->unkB18);
+                    } else {
+                        self->unkB18 = 0;
+                    }
+                    break;
+                }
+                // +0x62F4 battle-object dance
+                {
+                    u32 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                    CfObjBase* obj = (CfObjBase*)func_8016FE34(func_800B708C((int)id));
+                    if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
+                        u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
+                        func_800F4A98(func_80043F18(&it), filter, 0x800);
+                        break;
+                    }
+                    if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
+                        if (obj->moveFlags & 0x2) break;
+                        u32 id2 = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                        func_800F6D50(func_80043F18(&it), id2);
+                        break;
+                    }
+                    if (obj->moveFlags & 0x4) break;
+                    u32 id3 = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                    func_800F6D50(func_80043F18(&it), id3);
+                }
+                break;
+            }
+
+            case 11: {
+                // +0x65A8 : filter + add move targets of every list-3 entry
+                CAIActionEnumHolder it3;
+                func_80043D90(&it3);
+                void* l3 = func_80043F18(&it3);
+                u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 0x80000000 : 32;
+                func_800F4A98(l3, filter, 0);
+                u32 id0 = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                func_800F6D50(func_80043F18(&it), id0);
+                for (u32 i = 0; i < aiListCount(l3); i++) {
+                    void* base = func_800F6EAC(l3, i);
+                    if (base) base = (u8*)base - 0x3E9C;
+                    if (base != ((CfObjBase*)self->unkB14)) {
+                        u32 id = (u32)(uintptr_t)((CAIVtObj*)((u8*)base + 0x3E9C))->v011();
+                        func_800F6D50(func_80043F18(&it), id);
+                    }
+                }
+                __dt__80043E88(&it3, -1);
+                break;
+            }
+
+            case 12: {
+                // +0x6680
+                void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+                if (vision != 0 && *(u32*)((u8*)vision + 0) != 0) {
+                    func_800F6D50(func_80043F18(&it), *(u32*)((u8*)vision + 0));
+                }
+                break;
+            }
+
+            case 34:
+                // +0x66B0 : filter + queue "0x1000" action
+                {
+                    u32 filter = (((CfObjBase*)self->unkB14)->moveFlags & 0x4) ? 32 : 0x80000000;
+                    void* list = func_80043F18(&it);
+                    func_800F4A98(list, filter, 0x800);
+                    __ct__800FC19C(func_80043F18(&it), 0x1000, 0);
+                }
+                break;
+            }
+        }
+    }
+
+    // ---- second switch setup (+0x66F0) ------------------------------------
+    {
+        void* list = func_80043F18(&it);
+        if (aiListCount(list) == 0) {
+            __dt__80043E88(&it, -1);
+            return 0;
+        }
+        savedCount = aiListCount(list);   // retail keeps it in r22
+    }
+
+    if (b5 <= 178) {
+        // ---- second switch (jumptable_eu_8052EEE0, 179 entries 0..178) ----
+        switch (b5) {
+        default:
+            break;  // -> +0x7470 (no-op case; includes 0, 3..18, 58, 92, 93,
+                    //    113..115, 122, 140, 143..162)
+
+        case 1: {
+            // +0x6744
+            if (func_80148778((u8*)self->unkB14 + 8, 17)) break;
+            if (self->unkB18 != 0) break;
+            void* list = func_80043F18(&it);
+            ((CAIEnumList*)list)->count = 0;
+            ((CAIEnumList*)list)->unk3030 = 0;
+            void* battleObj = ((CAIVtObj*)((CfObjBase*)self->unkB14))->v0B8();
+            u32 id = 0;
+            if (battleObj != 0) {
+                id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                void* obj = func_8016FE34(func_800B708C((int)id));
+                if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
+                    if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
+                        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+                        id = (u32)(uintptr_t)((CAIVtObj*)player)->v011();
+                    }
+                }
+            }
+            func_800F6D50(func_80043F18(&it), id);
+            break;
+        }
+
+        case 2: {
+            // +0x6828 (same as case 1 but vtable slot 0x2EC)
+            if (func_80148778((u8*)self->unkB14 + 8, 17)) break;
+            if (self->unkB18 != 0) break;
+            void* list = func_80043F18(&it);
+            ((CAIEnumList*)list)->count = 0;
+            ((CAIEnumList*)list)->unk3030 = 0;
+            void* battleObj = ((CAIVtObj*)((CfObjBase*)self->unkB14))->v0B9();
+            u32 id = 0;
+            if (battleObj != 0) {
+                id = (u32)(uintptr_t)((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v011();
+                void* obj = func_8016FE34(func_800B708C((int)id));
+                if (obj == 0 || ((CAIVtObj*)obj)->v0AD() != 0) {
+                    if (((CfObjBase*)self->unkB14)->moveFlags & 0x2) {
+                        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+                        id = (u32)(uintptr_t)((CAIVtObj*)player)->v011();
+                    }
+                }
+            }
+            func_800F6D50(func_80043F18(&it), id);
+            break;
+        }
+
+        case 19: case 20: case 21: case 22: case 23:
+        case 24: case 25: case 26: case 27:
+            // +0x690C
+            __ct__800FC648(func_80043F18(&it), 0, (f32)(b5 - 18) / 10.0f);
+            break;
+
+        case 28: case 29: case 30: case 31: case 32:
+        case 33: case 34: case 35: case 36:
+            // +0x6940
+            __ct__800FC4FC(func_80043F18(&it), 0, (f32)(b5 - 27) / 10.0f);
+            __ct__800FC19C(func_80043F18(&it), 28, 2);
+            break;
+
+        case 37:
+            // +0x6988
+            __ct__800FC648(func_80043F18(&it), 0, 1.0f);
+            break;
+
+        case 38: case 39: case 40: case 41: case 42: case 43:
+        case 44: case 45: case 46:
+            // +0x69A0
+            __ct__800FC8DC(func_80043F18(&it), 0, (f32)(b5 - 37) / 10.0f);
+            break;
+
+        case 47: case 48: case 49: case 50: case 51: case 52:
+        case 53: case 54: case 55:
+            // +0x69D4
+            __ct__800FC790(func_80043F18(&it), 0, (f32)(b5 - 46) / 10.0f);
+            break;
+
+        case 56:
+            // +0x6A08
+            __ct__800FC8DC(func_80043F18(&it), 0, 1.0f);
+            break;
+
+        case 57: {
+            // +0x6A20 : position-based action
+            void* pos = ((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v029();
+            func_800F6ED0(func_80043F18(&it), pos);
+            break;
+        }
+
+        case 59:
+            // +0x6A4C
+            func_800F9AEC(func_80043F18(&it));
+            __ct__800FC4FC(func_80043F18(&it), 0, 0.2f);
+            __ct__800FC19C(func_80043F18(&it), 28, 2);
+            break;
+
+        case 60:
+            // +0x6A84
+            func_800F9AEC(func_80043F18(&it));
+            __ct__800FC19C(func_80043F18(&it), 28, 0);
+            break;
+
+        case 61: __ct__800FCF1C(func_80043F18(&it), 1, 0); break;
+        case 62: __ct__800FCF1C(func_80043F18(&it), 2, 0); break;
+        case 63: __ct__800FCF1C(func_80043F18(&it), 3, 0); break;
+        case 64: __ct__800FCF1C(func_80043F18(&it), 4, 0); break;
+        case 65: __ct__800FCF1C(func_80043F18(&it), 5, 0); break;
+        case 66: __ct__800FCF1C(func_80043F18(&it), 6, 0); break;
+        case 67: __ct__800FCF1C(func_80043F18(&it), 7, 0); break;
+        case 68: __ct__800FCF1C(func_80043F18(&it), 8, 0); break;
+        case 69: __ct__800FCF1C(func_80043F18(&it), 9, 0); break;
+        case 70: __ct__800FCF1C(func_80043F18(&it), 10, 0); break;
+
+        case 71:
+            // +0x6B98
+            __ct__800FC19C(func_80043F18(&it), 2054, 0);
+            break;
+
+        case 72:
+            // +0x6BB0
+            __ct__800FC040(func_80043F18(&it), 15, 9, 0);
+            break;
+
+        case 73:  __ct__800FBF08(func_80043F18(&it), 16, 0);  break;
+        case 74:  __ct__800FBF08(func_80043F18(&it), 306, 0); break;
+        case 75: case 76: case 77: case 78: case 79: case 80:
+            // +0x6C14
+            __ct__800FBF08(func_80043F18(&it), b5 + 238, 0);
+            break;
+        case 81:  __ct__800FBF08(func_80043F18(&it), 305, 0); break;
+        case 82: case 83: case 84: case 85: case 86: case 87:
+            // +0x6C2C
+            __ct__800FBF08(func_80043F18(&it), b5 + 237, 0);
+            break;
+        case 88:  __ct__800FBF08(func_80043F18(&it), 306, 0); break;
+        case 89:  __ct__800FBF08(func_80043F18(&it), 206, 0); break;
+        case 90:
+            // +0x6C5C
+            __ct__800FC040(func_80043F18(&it), 207, 208, 0);
+            break;
+        case 91:  __ct__800FBF08(func_80043F18(&it), 209, 0); break;
+        case 94:  __ct__800FBF08(func_80043F18(&it), 248, 0); break;
+        case 95:  __ct__800FBF08(func_80043F18(&it), 52, 0);  break;
+        case 96:  __ct__800FBF08(func_80043F18(&it), 54, 0);  break;
+        case 97:  __ct__800FBF08(func_80043F18(&it), 51, 0);  break;
+        case 98:  __ct__800FBF08(func_80043F18(&it), 215, 0); break;
+        case 99:  __ct__800FBF08(func_80043F18(&it), 88, 0);  break;
+        case 100: __ct__800FBF08(func_80043F18(&it), 82, 0);  break;
+        case 101: __ct__800FBF08(func_80043F18(&it), 89, 0);  break;
+        case 102: __ct__800FBF08(func_80043F18(&it), 83, 0);  break;
+        case 103: __ct__800FBF08(func_80043F18(&it), 90, 0);  break;
+        case 104: __ct__800FBF08(func_80043F18(&it), 84, 0);  break;
+        case 105: __ct__800FBF08(func_80043F18(&it), 87, 0);  break;
+        case 106: __ct__800FBF08(func_80043F18(&it), 68, 0);  break;
+        case 107: __ct__800FBF08(func_80043F18(&it), 60, 0);  break;
+        case 108: __ct__800FBF08(func_80043F18(&it), 69, 0);  break;
+        case 109: __ct__800FBF08(func_80043F18(&it), 61, 0);  break;
+        case 110: __ct__800FBF08(func_80043F18(&it), 9, 0);   break;
+        case 111: __ct__800FBF08(func_80043F18(&it), 11, 0);  break;
+        case 112: __ct__800FBF08(func_80043F18(&it), 12, 0);  break;
+        case 116: __ct__800FBF08(func_80043F18(&it), 4, 0);   break;
+        case 117: __ct__800FBF08(func_80043F18(&it), 2, 0);   break;
+        case 118: __ct__800FBF08(func_80043F18(&it), 7, 0);   break;
+        case 119: __ct__800FBF08(func_80043F18(&it), 5, 0);   break;
+        case 120: __ct__800FBF08(func_80043F18(&it), 6, 0);   break;
+        case 121: __ct__800FBF08(func_80043F18(&it), 8, 0);   break;
+        case 123: __ct__800FBF08(func_80043F18(&it), 42, 0);  break;
+        case 124: __ct__800FBF08(func_80043F18(&it), 43, 0);  break;
+        case 125: __ct__800FBF08(func_80043F18(&it), 44, 0);  break;
+        case 126: __ct__800FBF08(func_80043F18(&it), 45, 0);  break;
+        case 127: __ct__800FBF08(func_80043F18(&it), 17, 0);  break;
+        case 128: __ct__800FBF08(func_80043F18(&it), 18, 0);  break;
+        case 129: __ct__800FBF08(func_80043F18(&it), 305, 2); break;
+        case 130: __ct__800FBF08(func_80043F18(&it), 306, 2); break;
+        case 131: __ct__800FBF08(func_80043F18(&it), 273, 0); break;
+        case 132: __ct__800FBF08(func_80043F18(&it), 274, 0); break;
+        case 133: __ct__800FBF08(func_80043F18(&it), 273, 2); break;
+        case 134: __ct__800FBF08(func_80043F18(&it), 274, 2); break;
+        case 171: __ct__800FBF08(func_80043F18(&it), 235, 0); break;
+        case 175: __ct__800FBF08(func_80043F18(&it), 279, 2); break;
+
+        case 135: case 136: {
+            // +0x7184 : mark entries by obj->unk1530
+            void* list = func_80043F18(&it);
+            for (u32 i = 0; i < aiListCount(list); i++) {
+                CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
+                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                if (obj == 0) {
+                    if (e) e->unk18 = e->unk18 | 0x70;
+                    continue;
+                }
+                if (b5 == 135) {
+                    if (obj->unk1530 == 0) e->unk18 = e->unk18 | 0x70;
+                } else {  // 136
+                    if (obj->unk1530 != 0) e->unk18 = e->unk18 | 0x70;
+                }
+            }
+            __ct__800FD250(func_80043F18(&it));
+            break;
+        }
+
+        case 137: case 138: case 172: case 173: case 174: {
+            // +0x723C : mark entries by obj state (vt[0x308]) and liveness
+            void* list = func_80043F18(&it);
+            for (u32 i = 0; i < aiListCount(list); i++) {
+                CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
+                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                if (obj == 0 || ((CAIVtObj*)obj)->v0AD() == 0) {
+                    if (e) e->unk18 = e->unk18 | 0x70;
+                    continue;
+                }
+                int state = (int)(uintptr_t)((CAIVtObj*)obj)->v0C0();
+                if (b5 == 174) { if (state <= 3) e->unk18 = e->unk18 | 0x70; }
+                else if (b5 == 137) { if (state <= 2) e->unk18 = e->unk18 | 0x70; }
+                else if (b5 == 173) { if (state != 2) e->unk18 = e->unk18 | 0x70; }
+                else if (b5 == 138) { if (state >= 2) e->unk18 = e->unk18 | 0x70; }
+                else if (b5 == 175) { if (state >= 1) e->unk18 = e->unk18 | 0x70; }
+            }
+            __ct__800FD250(func_80043F18(&it));
+            break;
+        }
+
+        case 139:
+            // +0x73D4
+            __ct__800FCD10(func_80043F18(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            break;
+
+        case 141:
+            // +0x73F0
+            __ct__800FCA24(func_80043F18(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            break;
+
+        case 142:
+            // +0x740C
+            __ct__800FCB80(func_80043F18(&it), (void*)(uintptr_t)((CfObjBase*)self->unkB14)->unk3F10, 0);
+            break;
+
+        case 163: case 164: case 165: case 166: case 167:
+        case 168: case 169: case 170: {
+            // +0x7428
+            CfObjBase* obj = (CfObjBase*)func_800B8B94((int)b5 - 163);
+            if (obj != 0) {
+                __ct__800FCA24(func_80043F18(&it), (void*)(uintptr_t)obj->unk3F10, 0);
+            } else {
+                void* list = func_80043F18(&it);
+                ((CAIEnumList*)list)->count = 0;
+                ((CAIEnumList*)list)->unk3030 = 0;
+            }
+            break;
+        }
+
+        case 176: case 177: case 178: {
+            // +0x7038 : mark entries by tags 279/110..113 and unk3374
+            void* list = func_80043F18(&it);
+            for (u32 i = 0; i < aiListCount(list); i++) {
+                CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
+                CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                if (obj == 0) {
+                    if (e) e->unk18 = e->unk18 | 0x70;
+                    continue;
+                }
+                if (func_80148778((u8*)obj + 8, 279)) { e->unk18 = e->unk18 | 0x70; continue; }
+                if (func_80148778((u8*)obj + 8, 110) &&
+                    func_80148778((u8*)obj + 8, 111) &&
+                    func_80148778((u8*)obj + 8, 112)) {
+                    if (func_80148778((u8*)obj + 8, 113)) { e->unk18 = e->unk18 | 0x70; continue; }
+                }
+                if (b5 == 178) {
+                    if (!(obj->unk3374 & 0x1000)) e->unk18 = e->unk18 | 0x70;
+                } else {  // 176, 177
+                    if (!(obj->unk3374 & 0x1000)) {
+                        e->unk18 = e->unk18 | 0x70;
+                    } else if (func_80148778((u8*)obj + 8, 16)) {
+                        e->unk18 = e->unk18 | 0x70;
+                    }
+                }
+            }
+            __ct__800FD250(func_80043F18(&it));
+            break;
+        }
+        }
+    }
+
+    // ---- common tail (+0x7470) --------------------------------------------
+    {
+        void* vision = func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+        if (vision != 0 && *(u32*)((u8*)vision + 0) != ((CfObjBase*)self->unkB14)->unk3F10) {
+            // Retail packs the four q bytes into two u32 word-pairs in a
+            // stack array {q9,q11} / {q10,q12} and iterates the pair twice:
+            //   pair A: word = q[9]  (b9),  other/threshold = q[10] (b10)
+            //   pair B: word = q[11] (b11), other/threshold = q[12] (b12)
+            void* list = func_80043F18(&it);
+            for (u32 pair = 0; pair < 2; pair++) {
+                u32 word = (pair == 0) ? b9 : b11;
+                u32 other = (pair == 0) ? b10 : b12;
+                if (word == 0) continue;
+                for (u32 i = 0; i < aiListCount(list); i++) {
+                    CAIEnumSlot* e = (CAIEnumSlot*)func_800F6EC0(list, (int)i);
+                    CfObjBase* obj = e ? (CfObjBase*)func_8016FE34(e->unk04) : 0;
+                    if (obj == 0) continue;
+                    if (word - 17 > 60) continue;
+                    switch (word) {  // jumptable_eu_8052EDEC, words 17..77
+                    case 17: case 18: case 19: {
+                        // +0x7528
+                        void* target = (u8*)obj + 0x3E9C;
+                        f32 dist = func_801C37CC((u8*)((CfObjBase*)self->unkB14) + 0x3E9C, target);
+                        if (dist <= (f32)other) {
+                            int st = func_801C3850((u8*)((CfObjBase*)self->unkB14) + 0x3E9C, target);
+                            if (word == 17) { if ((st & 0xFF) != 1) e->unk18 = e->unk18 | 0x70; }
+                            else if (word == 18) { if ((st & 0xFF) != 4) e->unk18 = e->unk18 | 0x70; }
+                            else { if ((st & 0xFF) != 2) e->unk18 = e->unk18 | 0x70; }
+                        } else {
+                            e->unk18 = e->unk18 | 0x70;
+                        }
+                        break;
+                    }
+                    case 20: {
+                        // +0x7620
+                        f32 dist = func_801C37CC((u8*)((CfObjBase*)self->unkB14) + 0x3E9C,
+                                                 (u8*)obj + 0x3E9C);
+                        if (dist < (f32)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 21: {
+                        // +0x75D8
+                        f32 dist = func_801C37CC((u8*)((CfObjBase*)self->unkB14) + 0x3E9C,
+                                                 (u8*)obj + 0x3E9C);
+                        if (dist >= (f32)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 22: {
+                        // +0x7740 (args swapped: state of obj vs self)
+                        int st = func_801C3850((u8*)obj + 0x3E9C,
+                                               (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
+                        if ((st & 0xFF) != 1) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 23: {
+                        int st = func_801C3850((u8*)obj + 0x3E9C,
+                                               (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
+                        if ((st & 0xFF) != 4) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 24: {
+                        int st = func_801C3850((u8*)obj + 0x3E9C,
+                                               (u8*)((CfObjBase*)self->unkB14) + 0x3E9C);
+                        if ((st & 0xFF) != 2) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 25: {
+                        // +0x77DC : vt[0x328] returns struct; u16 flag bits
+                        void* st = ((CAIVtObj*)obj)->v0C8();
+                        if (*(u16*)st & 1) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 26: {
+                        void* st = ((CAIVtObj*)obj)->v0C8();
+                        if (*(u16*)st & 4) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 27: {
+                        void* st = ((CAIVtObj*)obj)->v0C8();
+                        if (*(u16*)st & 2) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 60: {
+                        // +0x786C : vt[0x108] value difference
+                        int mine = (int)(uintptr_t)((CAIVtObj*)((CfObjBase*)self->unkB14))->v040();
+                        int theirs = (int)(uintptr_t)((CAIVtObj*)obj)->v040();
+                        if (theirs - mine < (int)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 61: {
+                        int mine = (int)(uintptr_t)((CAIVtObj*)((CfObjBase*)self->unkB14))->v040();
+                        int theirs = (int)(uintptr_t)((CAIVtObj*)obj)->v040();
+                        if (theirs - mine > (int)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 72: {
+                        // +0x7904 : reversed difference
+                        int mine = (int)(uintptr_t)((CAIVtObj*)((CfObjBase*)self->unkB14))->v040();
+                        int theirs = (int)(uintptr_t)((CAIVtObj*)obj)->v040();
+                        if (mine - theirs < (int)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 73: {
+                        int mine = (int)(uintptr_t)((CAIVtObj*)((CfObjBase*)self->unkB14))->v040();
+                        int theirs = (int)(uintptr_t)((CAIVtObj*)obj)->v040();
+                        if (mine - theirs > (int)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 74: {
+                        // +0x76D4 : |selfVert - objVert| >= threshold
+                        // Retail: fabs(f1,f0); frsp f1,f1  -> fabsf(). Use
+                        // ml::math::abs (NW4R FAbs) per MWCC_REFERENCE
+                        // (fabs+frsp pair), NOT libc fabsf.
+                        void* selfPos = ((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v029();
+                        void* objPos  = ((CAIVtObj*)(u8*)obj + 0x3E9C)->v029();
+                        f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
+                        if (mlAbs(dz) >= (f32)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 75: {
+                        void* selfPos = ((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v029();
+                        void* objPos  = ((CAIVtObj*)(u8*)obj + 0x3E9C)->v029();
+                        f32 dz = *(f32*)((u8*)selfPos + 4) - *(f32*)((u8*)objPos + 4);
+                        if (mlAbs(dz) < (f32)other) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                    case 76:
+                        // +0x799C
+                        if (!(obj->unk3374 & 0x1000)) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    case 77:
+                        if (obj->unk3374 & 0x1000) e->unk18 = e->unk18 | 0x70;
+                        break;
+                    }
+                }
+            }
+            __ct__800FD250(func_80043F18(&it));
+        }
+    }
+
+    // ---- finalization (+0x7A08) -------------------------------------------
+    if (b6 == 9 || b6 == 10) {
+        void* list = func_80043F18(&it);
+        if (savedCount != aiListCount(list)) {
+            __dt__80043E88(&it, -1);
+            return 0;
+        }
+    }
+    {
+        void* list = func_80043F18(&it);
+        if (aiListCount(list) != 0) {
+            result = (u32)(uintptr_t)func_800F6E08(func_80043F18(&it));
+        }
+    }
+    __dt__80043E88(&it, -1);
+    return (void*)result;
+}
+
+
+
+// ---------------------------------------------------------------------------
+// func_801522C4 — AI-action dispatcher (retail 0x80152D08, 0x151C bytes).
+// Given a 0x20-byte action-query struct, builds a CfObjEnumList of event
+// entries (switch on byte 8 = sel), filters it (switch on byte 7 = op),
+// and returns the selected entry payload (func_800F6E08) or 0.
+// ---------------------------------------------------------------------------
+
+// Object view for indirect vtable calls (slots 0x00..0x328).
+
+// CfObjEnumList fields accessed by this function.
+
+
+void func_801537F0(){}
+void func_8015396C(){}

@@ -122,3 +122,5 @@ extern "C" void* func_800EA444(void*);
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
 extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
 extern "C" int rand(void);
+extern "C" f32 func_801C37CC(void*, void*);
+extern "C" int func_801C3850(void*, void*);

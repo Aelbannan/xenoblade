@@ -6,7 +6,6 @@
 
 void ScnMdlSmpl_CalcPosture__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
-void ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ__Q34nw4r3g3d12ScnMdlSimpleFUlPQ34nw4r3g3d13IScnObjGather(){}
 
 void ScnMdlSmpl_G3DPROC_CALC_VIEW__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
@@ -16,9 +15,6 @@ void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6Timi
 
 void G3dProc__Q34nw4r3g3d12ScnMdlSimpleFUlUlPv(){}
 
-void SetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleFUlUl(){}
-
-void GetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleCFUlPUl(){}
 
 void GetScnMtxPos__Q34nw4r3g3d12ScnMdlSimpleCFPQ34nw4r4math5MTX34Q44nw4r3g3d6ScnObj13ScnObjMtxTypeUl(){}
 
@@ -93,10 +89,63 @@ void ScnMdlSimple::EnableScnMdlCallbackTiming(Timing timing) {
     }
 }
 
+void ScnMdlSimple::ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ(
+    u32, IScnObjGather* pCollection) {
+    // Add self to the collection. A set NOT_GATHER_* flag excludes this
+    // object from the matching draw pass.
+    pCollection->Add(this, !TestScnObjFlag(SCNOBJFLAG_NOT_GATHER_DRAW_OPA),
+                     !TestScnObjFlag(SCNOBJFLAG_NOT_GATHER_DRAW_XLU));
+}
+
+bool ScnMdlSimple::SetScnObjOption(u32 option, u32 value) {
+    switch (option) {
+    case OPTID_IGNORE_ANMCHR_TRANS:
+        SetScnObjFlag(SCNOBJFLAG_IGNORE_ANMCHR_TRANS, value);
+        break;
+    default:
+        return ScnLeaf::SetScnObjOption(option, value);
+    }
+    return true;
+}
+
+bool ScnMdlSimple::GetScnObjOption(u32 option, u32* pValue) const {
+    if (pValue == NULL) {
+        return false;
+    }
+
+    switch (option) {
+    case OPTID_IGNORE_ANMCHR_TRANS:
+        *pValue = TestScnObjFlag(SCNOBJFLAG_IGNORE_ANMCHR_TRANS);
+        break;
+    default:
+        return ScnLeaf::GetScnObjOption(option, pValue);
+    }
+    return true;
+}
+
+void ScnMdlSimple::UpdateFrame() {
+    if (mpAnmObjChr != NULL) {
+        mpAnmObjChr->UpdateFrame();
+    }
+    if (mpAnmObjVis != NULL) {
+        mpAnmObjVis->UpdateFrame();
+    }
+    if (mpAnmObjMatClr != NULL) {
+        mpAnmObjMatClr->UpdateFrame();
+    }
+    if (mpAnmObjTexPat != NULL) {
+        mpAnmObjTexPat->UpdateFrame();
+    }
+    if (mpAnmObjTexSrt != NULL) {
+        mpAnmObjTexSrt->UpdateFrame();
+    }
+}
+
+ICalcWorldCallback::~ICalcWorldCallback() {}
+
 } // namespace g3d
 } // namespace nw4r
 
-void UpdateFrame__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
 
 
@@ -104,7 +153,6 @@ void __ct__Q34nw4r3g3d12ScnMdlSimpleFP12MEMAllocatorQ34nw4r3g3d6ResMdlPQ34nw4r4m
 
 void __dt__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv(){}
 
 void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 

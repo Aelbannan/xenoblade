@@ -2,7 +2,43 @@
 
 #include "monolib/lib/CLibCriStreamingPlay.hpp"
 #include "monolib/core/CException.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkControl.hpp"
 #include <cstring>
+
+// 0x94-byte streaming slot; 5 slots live at instance+0x1C8 (stride 0x94).
+// TU-local reconstruction (retail-verified offsets from CLibCriStreamingPlay.s).
+struct StreamEntry {
+    u32 slotId;      // 0x00 (0..4)
+    s32  id;         // 0x04 (-1 = unused)
+    u8*  adxt;       // 0x08
+    u32 field_0x0C;
+    u32 field_0x10;
+    u32 bufSize;     // 0x14
+    u8*  buffer;     // 0x18
+    char name[0x40]; // 0x1C (64-char filename)
+    u32 field_0x5C;
+    u32 field_0x60;
+    f32 field_0x64;  // current volume
+    f32 field_0x68;  // target volume
+    f32 field_0x6C;  // fade start volume
+    f32 field_0x70;  // fade target
+    f32 field_0x74;  // fade timer
+    f32 field_0x78;  // volume multiplier
+    f32 field_0x7C;  // volume multiplier 2
+    u32 field_0x80;  // fade-end action
+    u32 field_0x84;  // playback position
+    u32 field_0x88;  // AFS file id
+    u32 field_0x8C;  // AFS subfile id
+    u32 flags;       // 0x90
+}; // 0x94
+
+// Streaming region tail: the 5 slots plus the instance-level counters.
+struct CLibCriStreamingPlayData {
+    StreamEntry entries[5]; // 0x1C8..0x4AC
+    u32 streamCounter;      // 0x4AC
+    s32 pauseCount;         // 0x4B0
+}; // 0x4B4
 
 extern "C" {
     // ADXT streaming functions
@@ -24,9 +60,6 @@ extern "C" {
     int getFileSize__11CDeviceFileFPCc(const char* filename, int param);
     bool isSoundModeMono__9CDeviceSCFv(void);
     
-    // WorkControl
-    bool hasFlow__12CWorkControlFv(void* thisPtr);
-    
     // Pan calculation
     void func_8049B834(float p1, float p2, float p3, float* o1, float* o2);
     
@@ -34,7 +67,6 @@ extern "C" {
     u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
     void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
     void* allocate_tail__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
-    void deallocate__Q23mtl10MemManagerFPv(void* ptr);
     
     // CRT/OS
     void VIWaitForRetrace(void);
@@ -120,7 +152,7 @@ CLibCriStreamingPlay::~CLibCriStreamingPlay() {
     
     // Free audio buffer
     if (lbl_eu_806656EC) {
-        deallocate__Q23mtl10MemManagerFPv(lbl_eu_806656EC);
+        mtl::MemManager::deallocate(lbl_eu_806656EC);
         lbl_eu_806656EC = nullptr;
     }
     
@@ -202,7 +234,7 @@ int CLibCriStreamingPlay::func_8045B5AC(const char* filename, int param2, bool l
             }
             void* buffer = *(void**)(found + 0x18);
             if (buffer) {
-                deallocate__Q23mtl10MemManagerFPv(buffer);
+                mtl::MemManager::deallocate(buffer);
                 *(void**)(found + 0x18) = nullptr;
             }
             *(u32*)(found + 4) = -1;
@@ -305,67 +337,64 @@ bool CLibCriStreamingPlay::func_8045B970(int id) {
 
 // func_8045BAB0 - Stop a specific stream
 void CLibCriStreamingPlay::func_8045BAB0(int id) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+    StreamEntry* found = NULL;
+
     // Find stream by ID
     for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
+        if (entry->id == id) {
             found = entry;
             break;
         }
-        entry += 0x94;
+        entry++;
     }
-    
-    if (!found) return;
-    
+
+    if (found == NULL) return;
+
     // Destroy ADXT handle
-    void* adxt = *(void**)(found + 8);
-    if (adxt) {
-        if (*(u32*)(found + 0x90) & 0x04) ADXT_DetachAhx(adxt);
-        ADXT_Destroy(adxt);
-        *(void**)(found + 8) = nullptr;
+    if (found->adxt != NULL) {
+        if (found->flags & 0x04) ADXT_DetachAhx(found->adxt);
+        ADXT_Destroy(found->adxt);
+        found->adxt = NULL;
     }
-    
+
     // Free buffer
-    void* buf = *(void**)(found + 0x18);
-    if (buf) {
-        deallocate__Q23mtl10MemManagerFPv(buf);
-        *(void**)(found + 0x18) = nullptr;
+    if (found->buffer != NULL) {
+        mtl::MemManager::deallocate(found->buffer);
+        found->buffer = NULL;
     }
-    
+
     // Mark as unused
-    *(u32*)(found + 4) = -1;
-    *(u32*)(found + 0x90) = 0;
+    found->id = -1;
+    found->flags = 0;
 }
 
 // func_8045BBA0 - Stop all streams
 void CLibCriStreamingPlay::func_8045BBA0() {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    
-    for (int i = 0; i < 5; i++) {
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    for (u32 i = 0; i < 5; i++, entry++) {
+        // Defensive per-entry null guard (retail keeps the check in-loop).
+        if (entry == NULL) continue;
+
         // Destroy ADXT handle
-        void* adxt = *(void**)(entry + 8);
-        if (adxt) {
-            if (*(u32*)(entry + 0x90) & 0x04) ADXT_DetachAhx(adxt);
-            ADXT_Destroy(adxt);
-            *(void**)(entry + 8) = nullptr;
+        if (entry->adxt != NULL) {
+            if (entry->flags & 0x04) ADXT_DetachAhx(entry->adxt);
+            ADXT_Destroy(entry->adxt);
+            entry->adxt = NULL;
         }
-        
+
         // Free buffer
-        void* buf = *(void**)(entry + 0x18);
-        if (buf) {
-            deallocate__Q23mtl10MemManagerFPv(buf);
-            *(void**)(entry + 0x18) = nullptr;
+        if (entry->buffer != NULL) {
+            mtl::MemManager::deallocate(entry->buffer);
+            entry->buffer = NULL;
         }
-        
+
         // Mark unused
-        *(u32*)(entry + 4) = -1;
-        *(u32*)(entry + 0x90) = 0;
-        
-        entry += 0x94;
+        entry->id = -1;
+        entry->flags = 0;
     }
 }
 
@@ -397,7 +426,7 @@ void CLibCriStreamingPlay::func_8045BC4C(int id, bool pause) {
     u32 flags = *(u32*)(found + 0x90);
     int pauseCount = *(int*)(inst + 0x4B0);
     bool isPaused = (flags & 1) || (pauseCount > 0);
-    bool flowActive = hasFlow__12CWorkControlFv(this);
+    bool flowActive = CWorkControl::hasFlow();
     ADXT_Pause(*(void**)(found + 8), (isPaused || flowActive) ? 1 : 0);
     
     // Calculate volume: volume * field78 * field7C
@@ -457,7 +486,7 @@ void CLibCriStreamingPlay::wkUpdate() {
                         *(u32*)(entry + 0x90) |= 2;
                         u32 f = *(u32*)(entry + 0x90);
                         bool p = (f & 1) || (pauseCount > 0);
-                        bool flow = hasFlow__12CWorkControlFv(this);
+                        bool flow = CWorkControl::hasFlow();
                         ADXT_Pause(*(void**)(entry + 8), (p || flow) ? 1 : 0);
                     } else if (action == 2) {
                         // Stop at end of fade
@@ -469,7 +498,7 @@ void CLibCriStreamingPlay::wkUpdate() {
                         }
                         void* b = *(void**)(entry + 0x18);
                         if (b) {
-                            deallocate__Q23mtl10MemManagerFPv(b);
+                            mtl::MemManager::deallocate(b);
                             *(void**)(entry + 0x18) = nullptr;
                         }
                         *(u32*)(entry + 4) = -1;
@@ -490,7 +519,7 @@ void CLibCriStreamingPlay::wkUpdate() {
                         *(u32*)(entry + 0x90) &= ~2;
                         u32 f = *(u32*)(entry + 0x90);
                         bool p = (f & 1) || (pauseCount > 0);
-                        bool flow = hasFlow__12CWorkControlFv(this);
+                        bool flow = CWorkControl::hasFlow();
                         ADXT_Pause(*(void**)(entry + 8), (p || flow) ? 1 : 0);
                     }
                 }
@@ -500,7 +529,7 @@ void CLibCriStreamingPlay::wkUpdate() {
         // Update volume
         {
             float vol = *(float*)(entry + 0x64) * *(float*)(entry + 0x78) * *(float*)(entry + 0x7C);
-            bool flow = hasFlow__12CWorkControlFv(this);
+            bool flow = CWorkControl::hasFlow();
             if (flow) vol = lbl_eu_8066A50C;
             int volDb = (int)(lbl_eu_8066A510 * vol);
             int outVol = lookupVolume(volDb);
@@ -520,7 +549,7 @@ void CLibCriStreamingPlay::wkUpdate() {
                 }
                 void* b = *(void**)(entry + 0x18);
                 if (b) {
-                    deallocate__Q23mtl10MemManagerFPv(b);
+                    mtl::MemManager::deallocate(b);
                     *(void**)(entry + 0x18) = nullptr;
                 }
                 *(u32*)(entry + 4) = -1;
@@ -560,36 +589,37 @@ bool CLibCriStreamingPlay::wkStandbyLogin() {
 
 // wkStandbyLogout - Cleanup all streams on logout
 bool CLibCriStreamingPlay::wkStandbyLogout() {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    
-    // Check work queue
-    void* queue = *(void**)((u8*)this + 0x60);
-    if (*(void**)queue != queue) {
-        return false;
-    }
-    
-    // Stop all streams
-    u8* entry = inst + 0x1C8;
-    for (int i = 0; i < 5; i++) {
-        void* adxt = *(void**)(entry + 8);
-        if (adxt) {
-            if (*(u32*)(entry + 0x90) & 4) ADXT_DetachAhx(adxt);
-            ADXT_Destroy(adxt);
-            *(void**)(entry + 8) = nullptr;
+    // Work queue must be empty (self-referencing list head) before logout.
+    if (mChildren.mStartNodePtr->mNext == mChildren.mStartNodePtr) {
+        u32 i = 0;
+        StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+            reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+        for (; i < 5; i++, entry++) {
+            // Defensive per-entry null guard (retail keeps the check in-loop).
+            if (entry == NULL) continue;
+
+            // Destroy ADXT handle
+            if (entry->adxt != NULL) {
+                if (entry->flags & 0x04) ADXT_DetachAhx(entry->adxt);
+                ADXT_Destroy(entry->adxt);
+                entry->adxt = NULL;
+            }
+
+            // Free buffer
+            if (entry->buffer != NULL) {
+                mtl::MemManager::deallocate(entry->buffer);
+                entry->buffer = NULL;
+            }
+
+            // Mark unused
+            entry->id = -1;
+            entry->flags = 0;
         }
-        void* buf = *(void**)(entry + 0x18);
-        if (buf) {
-            deallocate__Q23mtl10MemManagerFPv(buf);
-            *(void**)(entry + 0x18) = nullptr;
-        }
-        *(u32*)(entry + 4) = -1;
-        *(u32*)(entry + 0x90) = 0;
-        entry += 0x94;
+
+        return CWorkThread::wkStandbyLogout();
     }
-    
-    // Call base logout
-    CWorkThread::wkStandbyLogout();
-    return true;
+    return false;
 }
 
 // OnPauseTrigger - Handle pause/unpause
@@ -613,7 +643,7 @@ void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {
         // Set pause state
         u32 flags = *(u32*)(entry + 0x90);
         bool isPaused = (flags & 1) || (*pauseCounter > 0);
-        bool flowActive = hasFlow__12CWorkControlFv(this);
+        bool flowActive = CWorkControl::hasFlow();
         ADXT_Pause(*(void**)(entry + 8), (isPaused || flowActive) ? 1 : 0);
         
         // Update volume
@@ -672,7 +702,7 @@ void CLibCriStreamingPlay::func_8045C700(int id, float volume) {
     
     // Calculate and set output volume
     float totalVol = vol * *(float*)(found + 0x78) * *(float*)(found + 0x7C);
-    bool flow = hasFlow__12CWorkControlFv(this);
+    bool flow = CWorkControl::hasFlow();
     if (flow) totalVol = lbl_eu_8066A50C;
     int volDb = (int)(lbl_eu_8066A510 * totalVol);
     int outVol = lookupVolume(volDb);
@@ -700,7 +730,7 @@ void CLibCriStreamingPlay::func_8045C8B0(int id, float volume) {
     
     // Calculate and set output volume
     float totalVol = *(float*)(found + 0x64) * *(float*)(found + 0x78) * (float)volume;
-    bool flow = hasFlow__12CWorkControlFv(this);
+    bool flow = CWorkControl::hasFlow();
     if (flow) totalVol = lbl_eu_8066A50C;
     int volDb = (int)(lbl_eu_8066A510 * totalVol);
     int outVol = lookupVolume(volDb);
@@ -734,7 +764,7 @@ void CLibCriStreamingPlay::func_8045CA4C(int id, float volume, float fadeTime, i
         *(float*)(found + 0x74) = lbl_eu_8066A50C;
         
         float totalVol = vol * *(float*)(found + 0x78) * *(float*)(found + 0x7C);
-        bool flow = hasFlow__12CWorkControlFv(this);
+        bool flow = CWorkControl::hasFlow();
         if (flow) totalVol = lbl_eu_8066A50C;
         int volDb = (int)(lbl_eu_8066A510 * totalVol);
         int outVol = lookupVolume(volDb);
@@ -802,7 +832,7 @@ void CLibCriStreamingPlay::func_8045CCFC(int id, float param2, float param3, flo
     *(float*)(found + 0x78) = (float)outVol;
     
     float totalVol = *(float*)(found + 0x64) * (float)outVol * *(float*)(found + 0x7C);
-    bool flow = hasFlow__12CWorkControlFv(this);
+    bool flow = CWorkControl::hasFlow();
     if (flow) totalVol = lbl_eu_8066A50C;
     int volDb = (int)(lbl_eu_8066A510 * totalVol);
     int outVolDb = lookupVolume(volDb);
@@ -825,24 +855,30 @@ void CLibCriStreamingPlay::func_8045CCFC(int id, float param2, float param3, flo
 
 // func_8045CF30 - Stop all streams (alternate entry)
 void CLibCriStreamingPlay::func_8045CF30() {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    
-    for (int i = 0; i < 5; i++) {
-        void* adxt = *(void**)(entry + 8);
-        if (adxt) {
-            if (*(u32*)(entry + 0x90) & 4) ADXT_DetachAhx(adxt);
-            ADXT_Destroy(adxt);
-            *(void**)(entry + 8) = nullptr;
+    u32 i = 0;
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8);
+
+    for (; i < 5; i++, entry++) {
+        // Defensive per-entry null guard (retail keeps the check in-loop).
+        if (entry == NULL) continue;
+
+        // Destroy ADXT handle
+        if (entry->adxt != NULL) {
+            if (entry->flags & 0x04) ADXT_DetachAhx(entry->adxt);
+            ADXT_Destroy(entry->adxt);
+            entry->adxt = NULL;
         }
-        void* buf = *(void**)(entry + 0x18);
-        if (buf) {
-            deallocate__Q23mtl10MemManagerFPv(buf);
-            *(void**)(entry + 0x18) = nullptr;
+
+        // Free buffer
+        if (entry->buffer != NULL) {
+            mtl::MemManager::deallocate(entry->buffer);
+            entry->buffer = NULL;
         }
-        *(u32*)(entry + 4) = -1;
-        *(u32*)(entry + 0x90) = 0;
-        entry += 0x94;
+
+        // Mark unused
+        entry->id = -1;
+        entry->flags = 0;
     }
 }
 
@@ -862,30 +898,34 @@ int CLibCriStreamingPlay::func_8045CFDC(int channels) {
 
 // func_8045D03C - Check if stream is playing/paused
 bool CLibCriStreamingPlay::func_8045D03C(int id) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    if (!inst) return false;
-    
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
+    CLibCriStreamingPlay* inst = lbl_eu_806656E8;
+    if (inst == NULL) return false;
+
+    StreamEntry* entry = reinterpret_cast<StreamEntry*>(
+        reinterpret_cast<u8*>(inst) + 0x1C8);
+    StreamEntry* found = NULL;
+
+    // Find stream by ID
     for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
+        if (entry->id == id) {
             found = entry;
             break;
         }
-        entry += 0x94;
+        entry++;
     }
-    
-    if (!found) return false;
-    if (!*(void**)(found + 8)) return false;
-    
-    // Check if paused or in pause-transition
-    u32 flags = *(u32*)(found + 0x90);
-    int pauseCount = *(int*)(inst + 0x4B0);
-    bool isPaused = (flags & 1) || (pauseCount > 0);
-    bool flowActive = hasFlow__12CWorkControlFv(this);
-    
-    return isPaused || flowActive || (flags & 2);
+
+    if (found == NULL) return false;
+    if (found->adxt == NULL) return false;
+
+    // Paused when: stream pause flag set, global pause counter non-zero,
+    // or the flow is active.
+    u32 flags = found->flags;
+    bool flow = CWorkControl::hasFlow();
+    CLibCriStreamingPlayData* data = reinterpret_cast<CLibCriStreamingPlayData*>(
+        reinterpret_cast<u8*>(inst) + 0x1C8);
+    s32 pauseCount = data->pauseCount;
+
+    return flow || (pauseCount != 0) || (flags & 1) || (flags & 2);
 }
 
 // func_8045D140 - CDeviceVICb thunk: adjust this and call func_8045CF30

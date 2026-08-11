@@ -63,9 +63,10 @@ f32 lbl_eu_80663D70;
 f32 lbl_eu_8066A1F8;
 const char lbl_eu_80526324[];
 const char lbl_eu_80526300[];
+ml::CVec3 zero__Q22ml5CVec3;
 }
 
-struct CActParamAnimGameView {
+struct CActParamAnimGameViewBC14 {
     u8 _00[0x08];
     void* owner;            // 0x08
     u32 flags0C;            // 0x0C
@@ -110,15 +111,15 @@ struct CActParamAnimGameView {
     u16 flags530;           // 0x530
 };
 
-static float callVfn(void* self, u32 off) {
+static float bc14CallVfn(void* self, u32 off) {
     return ((float (*)(void*))(*(void**)((u8*)*(void**)self + off)))(self);
 }
-static int callVfnI(void* self, u32 off) {
+static int bc14CallVfnI(void* self, u32 off) {
     return ((int (*)(void*))(*(void**)((u8*)*(void**)self + off)))(self);
 }
 
 extern "C" void func_8005BC14(void* selfV) {
-    CActParamAnimGameView* self = (CActParamAnimGameView*)selfV;
+    CActParamAnimGameViewBC14* self = (CActParamAnimGameViewBC14*)selfV;
     s32 moved = 0;
     ml::CVec3 pos;
     ml::CVec3 up;
@@ -134,8 +135,8 @@ extern "C" void func_8005BC14(void* selfV) {
     self->flags4EC &= ~0xC0000;
     self->f394 = 1.0f;
     self->f398 = 1.0f;
-    *(ml::CVec3*)((u8*)self + 0x3F0) = ml::CVec3::zero;
-    func_8004B7C0(self, &ml::CVec3::zero);
+    *(ml::CVec3*)((u8*)self + 0x3F0) = zero__Q22ml5CVec3;
+    func_8004B7C0(self, &zero__Q22ml5CVec3);
     func_80051C40(self);
 
     if ((self->flags0C & 0x100) != 0) goto exit;
@@ -147,7 +148,7 @@ extern "C" void func_8005BC14(void* selfV) {
     pos.x = self->posX3A8;
     pos.y = self->posY3AC;
     pos.z = self->posZ3B0;
-    if (((flags >> 2) & 3) == 0) goto mode0;
+    if ((flags & 0xC) == 0) goto mode0;
 
     self->flags530 |= 0x80;
     if ((self->flags530 & 2) == 0) goto bit1clear;
@@ -165,9 +166,12 @@ bit1clear:
     {
         f32 f31v = isTvFormatPal__9CDeviceVIFv() ? 1.2f : 1.0f;
         f32 f29v = func_eu_8048A084();
-        f32 f30v = callVfn(self, 0x14) - f29v;
-        f32 f29b = callVfn(self, 0x0C);
-        if (callVfn(self, 0x10) * f31v + f29b < f30v) self->flags530 |= 2;
+        f32 f30v = bc14CallVfn(self, 0x14) - f29v;
+        f32 f29b = bc14CallVfn(self, 0x0C);
+        if (bc14CallVfn(self, 0x10) * f31v + f29b >= f30v) {
+        } else {
+            self->flags530 |= 2;
+        }
     }
     moved = 0;
     pos.x += 0.1f * (self->f514 - pos.x);
@@ -191,7 +195,7 @@ commit:
     goto next;
 
 mode0:
-    if (((flags >> 4) & 3) != 0) {
+    if ((flags & 0x30) != 0) {
         up2 = pos + ml::CVec3(0.0f, 1.0f, 0.0f);
         dir2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
         ml::CVec3 t3b = up2 + dir2 * 2.0f;
@@ -224,30 +228,33 @@ mode0:
     }
 next:
     if (self->flags530 & 0x200) {
-        if (callVfnI(self->owner, 0x10) != 0 || func_80051BF4(self) != 0) {
+        if (bc14CallVfnI(self->owner, 0x10) != 0 || func_80051BF4(self) != 0) {
             self->flags530 &= 0xFDFF;
         } else {
             if (lbl_eu_80663D64 == 0) { lbl_eu_80663D60 = 60.0f * 0.017453292f; lbl_eu_80663D64 = 1; }
             if (lbl_eu_80663D6C == 0) { lbl_eu_80663D68 = -60.0f * 0.017453292f; lbl_eu_80663D6C = 1; }
             f32 ang = *(f32*)((u8*)self->owner + 0xC);
-            if (ang > lbl_eu_80663D60 || ang <= lbl_eu_80663D68) {
+            if (!(ang <= lbl_eu_80663D60) || ang <= lbl_eu_80663D68) {
                 self->flags530 &= 0xFDFF;
             }
         }
     }
     if (moved == 0) goto exit;
 
+    f32 f28v = 0.0f;
+    f32 f29v;
+    f32 f31v;
+    f32 f30v;
     accel = ml::CVec3(0.0f, 0.0f, 0.0f);
     if ((self->flags530 & 0x200) == 0) {
-        f32 f28v = 0.0f;
-        f32 f29v = *(f32*)((u8*)self->owner + 0x14);
+        f29v = *(f32*)((u8*)self->owner + 0x14);
         if (f29v * self->f430 >= func_80053958()) {
             f28v = *(f32*)((u8*)self->owner + 0x14) * self->f394;
         }
-        f32 f31v = f28v * (1000.0f * func_8004B34C(self) / 3600.0f) * (self->f390 * getSecPerFrame__9CDeviceVIFv());
+        f31v = f28v * (1000.0f * func_8004B34C(self) / 3600.0f) * (self->f390 * getSecPerFrame__9CDeviceVIFv());
         if (self->flags530 & 0x400) {
             f32 a = *(f32*)((u8*)self->owner + 0xC);
-            f32 f30v = fabsf(f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * a));
+            f30v = fabsf(f31v * SinFIdx__Q24nw4r4mathFf(40.743663f * a));
             accel.y = f31v * CosFIdx__Q24nw4r4mathFf(40.743663f * a);
             ml::CVec3 d2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
             ml::CVec3 d3 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440));
@@ -256,11 +263,11 @@ next:
             PSVECCrossProduct((const Vec*)&d2, (const Vec*)&upv, (Vec*)&cross);
             f32 len2 = cross.x * cross.x + cross.y * cross.y + cross.z * cross.z;
             if (len2 == 0.0f) {
-                cross = ml::CVec3::zero;
+                cross = zero__Q22ml5CVec3;
             } else {
                 PSVECNormalize((const Vec*)&cross, (Vec*)&cross);
             }
-            f32 dot = cross.x * d3.x + cross.y * d3.y + cross.z * d3.z;
+            f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&cross, (const nw4r::math::VEC3*)&d3);
             if (dot <= 0.0f) f30v = -f30v;
             accel.x = cross.x * f30v;
             accel.z = cross.z * f30v;
@@ -269,7 +276,7 @@ next:
             accel.z = f31v * CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440);
             ml::CVec3 d4 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
             ml::CVec3 d5 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f440), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f440));
-            f32 dot = d4.x * d5.x + d4.y * d5.y + d4.z * d5.z;
+            f32 dot = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&d4, (const nw4r::math::VEC3*)&d5);
             accel.y = f31v * dot;
             f32 scale = 1.0f - fabsf(dot);
             accel.x *= scale;
@@ -314,19 +321,27 @@ next:
         if (!(len2 >= 0.0f)) {
             Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 627, lbl_eu_80526300);
         }
-        f32 len = 0.0f;
-        if (len2 > 0.0f) len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+        f32 len;
+        if (len2 <= 0.0f) {
+            len = 0.0f;
+        } else {
+            len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+        }
         if (len > 0.001f) {
-            nx = nx / len;
-            nz = nz / len;
-            nx = 0.3f * (nx - dirM.x) + dir.x;
-            nz = 0.3f * (nz - dirM.z) + dir.z;
+            nx *= 1.0f / len;
+            nz *= 1.0f / len;
+            nx = 0.3f * (nx - dirM.x) + dirM.x;
+            nz = 0.3f * (nz - dirM.z) + dirM.z;
             len2 = nx * nx + nz * nz;
             if (!(len2 >= 0.0f)) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 627, lbl_eu_80526300);
             }
-            f32 lenb = 0.0f;
-            if (len2 > 0.0f) lenb = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+            f32 lenb;
+            if (len2 <= 0.0f) {
+                lenb = 0.0f;
+            } else {
+                lenb = len2 * FrSqrt__Q24nw4r4mathFf(len2);
+            }
             if (lenb != 0.0f) {
                 nx = nx / lenb;
                 nz = nz / lenb;
@@ -335,7 +350,7 @@ next:
                 nz = -v.z;
             }
         }
-        f32 f28v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(nx, nz);
+        f28v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(nx, nz);
         func_8004B52C(self, f28v);
         dirM.x = SinFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         dirM.z = CosFIdx__Q24nw4r4mathFf(40.743663f * f28v);
@@ -407,7 +422,7 @@ ground:
                     if (hit2 == 0) {
                         target2 += ml::CVec3(0.01f, 0.01f, 0.01f);
                         ml::CVec3 tmd2 = target2 - dirM;
-                        ml::CVec3 tpd2 = target2 + d2;
+                        ml::CVec3 tpd2 = target2 + dirM * 2.0f;
                         hit2 = func_804BE348(&tmd2, &tpd2, 0, 8192, 0) != 0;
                     }
                     if (hit2 != 0 && v.y <= 0.7071f) {

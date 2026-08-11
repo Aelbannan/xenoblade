@@ -949,6 +949,8 @@ u32 func_801DFD60(void* a, void* b, u32 arg2) {
     return result;
 }
 
+#pragma push
+#pragma auto_inline off
 u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
     u32 result = 0;
     void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
@@ -957,6 +959,7 @@ u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
     }
     return result;
 }
+#pragma pop
 
 u32 func_801E92B8(void* dummy, void* arg1) {
     void* obj = (u8*)func_8009EC9C((u8)(u32)arg1) + 0x3534;
@@ -1305,6 +1308,8 @@ extern "C" void func_801E1930(CItemBoxInfo2* info) {
 }
 #pragma pop
 
+#pragma push
+#pragma auto_inline off
 void func_801E197C(void* out, void* arg2, void* arg3) {
     if (arg3 == 0) return;
     u16 v1 = func_801392E4((void*)(u32)arg3);
@@ -1340,6 +1345,9 @@ void func_801E197C(void* out, void* arg2, void* arg3) {
         func_80139C98(v + 1);
     }
 }
+#pragma pop
+#pragma push
+#pragma auto_inline off
 void func_801E1E0C(void* out, void* arg2, void* arg3) {
     if (arg3 == 0) {
         memset(out, 0, 0x1C);
@@ -1369,6 +1377,7 @@ void func_801E1E0C(void* out, void* arg2, void* arg3) {
         }
     }
 }
+#pragma pop
 void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     if (arg3 == NULL) return;
     u16 v1 = func_801392E4(data);
@@ -1760,6 +1769,20 @@ void func_801E4390(CItemBoxInfo2* info) {
 // NOTE: arg3 (r5) is dead in retail — clobbered by the prologue (lis r5, 0x4330).
 // ============================================================================
 // TU-local stat-object shapes (retail lha/lfs/lbz offsets from func_801E43BC).
+struct E43Quad {           // POD quad color (copy-init must stay memberwise)
+    s16 r, g, b, a;
+};
+struct E43Entry {          // 0x34-byte item-stat entry (func_801E197C/801E1E0C output)
+    u16 w00;
+    u16 _02;
+    u32 w04;                       // +0x04 value (u16 pairs read via lhz at +4/+6)
+    u8 _08[4];
+    u32 _0C;
+    u32 _10;
+    s16 w14;                       // +0x14 (delta-compared)
+    s16 _16;
+    u8 _18[0x34 - 0x18];
+};
 struct E43StatC {          // vtable[0x22C] result — s16 stat block
     u8 _00[6];
     s16 s06;
@@ -1922,10 +1945,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], fmtBuf3.c_str(), 0);
 
             // ---- 20x color application ----
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
             func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
             func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
@@ -1963,10 +1986,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + func_801E9310(info, (void*)(u32)member, 0x21, arg3))));
             s16 d = (s16)(nb - pb);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], nb);
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             if (d < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
@@ -1988,10 +2011,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, arg3))));
             dB = (s16)(nb - pb);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], nb);
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             if (dB < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
@@ -2013,10 +2036,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) * (f32)(dB + func_801E9310(info, (void*)(u32)member, 0x41, arg3))));
             s16 dC = (s16)(nb - pb);
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], nb);
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             if (dC < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
@@ -2043,10 +2066,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
                 func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
             func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             if (dD < 0) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
                 __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
@@ -2063,12 +2086,382 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
             func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
         }
+        // ---- type switch: slot id + item ----
+        s16 slotId = 0;
+        switch (type) {
+            case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
+            case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
+            case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
+            case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
+            case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
+            case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
+        }
+        void* item = func_80157C4C(type, slotId);
+        if (type == 2) {
+            // ---- weapon block (0x801E7300) ----
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            E43Entry e_cur;
+            func_801E197C(&e_cur, info, (void*)(u32)w0);
+            E43Entry c_cur = e_cur;
+            E43Entry e_new;
+            func_801E197C(&e_new, info, arg3);
+            E43Entry c_new = e_new;
+            s32 eq1 = 0;
+            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            s32 eq2 = 0;
+            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
+            s32 atkA = (s32)pb + func_801E9190(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
+            s32 atkB = (s32)nb + func_801E9190(info, (void*)(u32)member, (u16)c_new.w04, arg3);
+            s32 atkC = (s32)atkA + func_801E9224(info, (void*)(u32)member, (u16)(c_cur.w04 >> 16), NULL);
+            s32 atkD = atkB < atkC ? atkB : atkC;
+            s16 dW = (s16)(atkC - atkA);
+            s16 v610, v612, v614, v644, v646, v648;
+            s32 c1 = func_801E9310(info, (void*)(u32)member, 0x31, arg3);
+            v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x51, arg3);
+            v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x51, NULL);
+            v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x54, arg3);
+            v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x54, NULL);
+            v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x54, NULL);
+            v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
+            s16 snap644 = v644;
+            s16 snap646 = v646;
+            s16 d1 = (s16)(v610 - snap644);
+            s16 d2 = (s16)(v612 - snap646);
+            s16 d3 = (s16)(c_new.w14 - c_cur.w14);
+            s16 d4 = (s16)(v614 - v648);
+            if (arg5 == 0) {
+                dW = 0;
+                d1 = 0;
+                d2 = 0;
+                d3 = 0;
+                d4 = 0;
+            }
+            ml::FixStr<32> fmtBuf;
+            fmtBuf.format(&lbl_eu_805063BC[0x254], atkD, func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), atkC);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+            s16 disp1 = v610;
+            s16 disp2 = v612;
+            s16 disp3 = v614;
+            if (arg5 == 0) {
+                disp1 = snap644;
+                disp2 = snap646;
+                disp3 = v648;
+            }
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)disp1);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)disp2);
+            ml::FixStr<32> fmtBuf2;
+            fmtBuf2.format(&lbl_eu_805063BC[0x13E], (s16)disp3, func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], fmtBuf2.c_str(), 0);
+            ml::FixStr<32> fmtBuf3;
+            fmtBuf3.format(&lbl_eu_805063BC[0x13E], (s32)stA->b55 + (s32)d3, func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80));
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], fmtBuf3.c_str(), 0);
+            // delta colors (5 rows)
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (dW < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (dW > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d1 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d1 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d2 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d2 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d4 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d4 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d3 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d3 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            }
+        } else {
+            // ---- armor block (0x801E7DA0) ----
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            E43Entry e_cur;
+            func_801E1E0C(&e_cur, info, (void*)(u32)w0);
+            E43Entry c_cur = e_cur;
+            E43Entry e_new;
+            func_801E1E0C(&e_new, info, arg3);
+            E43Entry c_new = e_new;
+            s32 eq1 = 0;
+            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            s32 eq2 = 0;
+            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
+            u16 v484 = (u16)func_801E9774(info, member, (void*)(u32)w0);
+            u16 v468 = (u16)func_801E9774(info, member, arg3);
+            // arm-type scaling of the entry value pairs
+            u8 arm1 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)w0));
+            if (arm1 == 3) {
+                s32 v = func_801E9690(info, member, 0xD);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+                v = func_801E9690(info, member, 0x24);
+                if (v != 0) {
+                    c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
+                }
+            } else if (arm1 == 2) {
+                s32 v = func_801E9690(info, member, 0xC);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            } else if (arm1 == 1) {
+                s32 v = func_801E9690(info, member, 0xB);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            }
+            u8 arm2 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)(*(u32*)arg3 >> 20)));
+            if (arm2 == 3) {
+                s32 v = func_801E9690(info, member, 0xD);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+                v = func_801E9690(info, member, 0x24);
+                if (v != 0) {
+                    c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
+                }
+            } else if (arm2 == 2) {
+                s32 v = func_801E9690(info, member, 0xC);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            } else if (arm2 == 1) {
+                s32 v = func_801E9690(info, member, 0xB);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            }
+            // weight
+            s32 wv = func_801E9690(info, member, 0x97);
+            if (wv != 0) {
+                s32 t1 = (s32)v484 - wv;
+                if (t1 < 0) t1 = 0;
+                v484 = (u16)t1;
+                s32 t2 = (s32)v468 - wv;
+                if (t2 < 0) t2 = 0;
+                v468 = (u16)t2;
+            }
+            // slot sum
+            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            if (ssum <= -5) {
+                func_801E9690(info, member, 0x1A);
+            }
+            // bars (armor stat pair updates)
+            s32 c1 = func_801E9310(info, (void*)(u32)member, 0x31, arg3);
+            c_new.w14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - (s16)(u16)c_cur.w04) + (c1 + c_new.w14))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x51, NULL);
+            c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - (s16)(u16)c_cur.w04) + (c1 + (s16)(u16)c_new.w04))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x41, NULL);
+            c_cur.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            s16 d1 = (s16)(c_new.w14 - (s16)(u16)c_cur.w14);
+            s16 d2 = (s16)((s16)(u16)c_new.w04 - (s16)(u16)c_cur.w04);
+            s32 c2 = func_801E9310(info, (void*)(u32)member, 0x41, arg3);
+            s16 b27 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq1) * (f32)((stA->s1E - (s16)v484) + c2)));
+            c2 = func_801E9310(info, (void*)(u32)member, 0x41, NULL);
+            s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq2) * (f32)((stA->s1E - (s16)v468) + c2)));
+            if (b27 <= 0) b27 = 1;
+            if (b14 <= 0) b14 = 1;
+            s16 dW = (s16)(b14 - b27);
+            // embedded weapon block
+            void* item2 = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+            if (item2 != NULL && *(u32*)item2 != 0) {
+                E43Entry ew;
+                func_801E197C(&ew, info, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                E43Entry cw = ew;
+                s32 c3 = func_801E9310(info, (void*)(u32)member, 0x1, NULL);
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
+                c3 = func_801E9310(info, (void*)(u32)member, 0x1, NULL);
+                s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
+                s32 wa = (s32)wpb + func_801E9190(info, (void*)(u32)member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + func_801E9224(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + func_801E9190(info, (void*)(u32)member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + func_801E9224(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wmin = wc < wd ? wc : wd;
+                dW = (s16)(wd - wa);
+                ml::FixStr<32> fmtBuf;
+                fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+            }
+            // numbers
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)(u16)c_new.w04);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)c_new.w14);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            // delta colors (4 rows)
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (dW < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (dW > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d2 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d2 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (d1 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d1 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            }
+            {
+                E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+                E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+                E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+                E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
+                if (dW < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (dW > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            }
+        }
+
     }
 
     // ---- equip-detail / simple path (arg5 == 0, type in {2,4,5,6,7,8}) ----
     if (arg5 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
         if (type != 2 && func_801E96F0(info, member, (u32)arg3)) {
-            // ---- equip detail ----
+            // ---- equip detail (0x801E8C88) ----
             s16 slotId = 0;
             switch (type) {
                 case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
@@ -2078,32 +2471,162 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
                 case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
             }
             void* item = func_80157C4C(type, slotId);
-            if (item != NULL && *(u32*)item != 0) {
-                ItemBoxInfoCopy e1;
-                func_801E1E0C(&e1, info, (void*)(u32)((u16)((*(u32*)item >> 20) & 0xFFFF)));
-                ItemBoxInfoCopy e2 = e1;
-                func_801E9774(info, member, NULL);
-                func_801E9774(info, member, NULL);
-                s32 eq1 = 0;
-                if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
-                s32 eq2 = 0;
-                if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
-                u16 cat = func_80139358((u32)(item != NULL && *(u32*)item != 0 ? (*(u32*)item >> 20) : 0));
-                func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], cat);
-                // bars + entries + colors (pattern rows)
-                s16 nb1 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq1) * (f32)(stA->s20 + func_801E9310(info, (void*)(u32)member, 0x21, NULL))));
-                s16 nb2 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, NULL))));
-                func_801E9774(info, member, NULL);
-                func_801E9774(info, member, NULL);
-                func_801E9190(info, (void*)(u32)member, 0, NULL);
-                func_801E9224(info, (void*)(u32)member, 0, NULL);
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            E43Entry e_cur;
+            func_801E1E0C(&e_cur, info, (void*)(u32)w0);
+            E43Entry c_cur = e_cur;
+            E43Entry e_new;
+            func_801E1E0C(&e_new, info, arg3);
+            E43Entry c_new = e_new;
+            u16 v44C = (u16)func_801E9774(info, member, (void*)(u32)w0);
+            u16 v430 = (u16)func_801E9774(info, member, arg3);
+            s32 eq1 = 0;
+            if (func_801E98E4(info, member, NULL)) eq1 = func_801E9690(info, member, 0x30);
+            s32 eq2 = 0;
+            if (func_801E98E4(info, member, arg3)) eq2 = func_801E9690(info, member, 0x30);
+            func_801E9310(info, (void*)(u32)member, 0x21, NULL);
+            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801E9310(info, (void*)(u32)member, 0x21, arg3))));
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
+            func_801E9310(info, (void*)(u32)member, 0x1, NULL);
+            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, arg3))));
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)bB);
+            func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + func_801E9310(info, (void*)(u32)member, 0x11, NULL)));
+            s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801E9310(info, (void*)(u32)member, 0x11, arg3)));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
+            if (nb > 9999) nb = 9999;
+            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+                func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
             }
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            // arm-type scaling of entry value pairs
+            u8 arm1 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)w0));
+            if (arm1 == 3) {
+                s32 v = func_801E9690(info, member, 0xD);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+                v = func_801E9690(info, member, 0x24);
+                if (v != 0) {
+                    c_cur.w14 = (s16)((s32)c_cur.w14 + (s16)v);
+                }
+            } else if (arm1 == 2) {
+                s32 v = func_801E9690(info, member, 0xC);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            } else if (arm1 == 1) {
+                s32 v = func_801E9690(info, member, 0xB);
+                if (v != 0) {
+                    c_cur.w04 = (u32)(s32)((f32)(s32)c_cur.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_cur.w14 = (s16)(s32)((f32)c_cur.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            }
+            u8 arm2 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)(*(u32*)arg3 >> 20)));
+            if (arm2 == 3) {
+                s32 v = func_801E9690(info, member, 0xD);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+                v = func_801E9690(info, member, 0x24);
+                if (v != 0) {
+                    c_new.w14 = (s16)((s32)c_new.w14 + (s16)v);
+                }
+            } else if (arm2 == 2) {
+                s32 v = func_801E9690(info, member, 0xC);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            } else if (arm2 == 1) {
+                s32 v = func_801E9690(info, member, 0xB);
+                if (v != 0) {
+                    c_new.w04 = (u32)(s32)((f32)(s32)c_new.w04 * (0.01f * (100.0f + (f32)v)));
+                    c_new.w14 = (s16)(s32)((f32)c_new.w14 * (0.01f * (100.0f + (f32)v)));
+                }
+            }
+            // weight
+            s32 wv = func_801E9690(info, member, 0x97);
+            if (wv != 0) {
+                s32 t1 = (s32)v44C - wv;
+                if (t1 < 0) t1 = 0;
+                v44C = (u16)t1;
+                s32 t2 = (s32)v430 - wv;
+                if (t2 < 0) t2 = 0;
+                v430 = (u16)t2;
+            }
+            // slot sum
+            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            if (ssum <= -5) {
+                func_801E9690(info, member, 0x1A);
+            }
+            // bars (armor stat pair updates)
+            s32 c1 = func_801E9310(info, (void*)(u32)member, 0x31, arg3);
+            c_new.w14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - (s16)(u16)c_cur.w04) + (c1 + c_new.w14))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x51, arg3);
+            c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x51, NULL);
+            c_new.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - (s16)(u16)c_cur.w04) + (c1 + (s16)(u16)c_new.w04))));
+            c1 = func_801E9310(info, (void*)(u32)member, 0x41, NULL);
+            c_cur.w04 = (u32)(s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            s32 c2 = func_801E9310(info, (void*)(u32)member, 0x41, arg3);
+            s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq2) * (f32)((stA->s1E - (s16)v430) + c2)));
+            if (b14 <= 0) b14 = 1;
+            // embedded weapon block
+            void* item2 = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+            if (item2 != NULL && *(u32*)item2 != 0) {
+                E43Entry ew;
+                func_801E197C(&ew, info, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                E43Entry cw = ew;
+                func_801E9310(info, (void*)(u32)member, 0x1, NULL);
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801E9310(info, (void*)(u32)member, 0x1, arg3))));
+                s32 wa = (s32)wpb + func_801E9190(info, (void*)(u32)member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + func_801E9224(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + func_801E9190(info, (void*)(u32)member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + func_801E9224(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wmin = wc < wd ? wc : wd;
+                ml::FixStr<32> fmtBuf;
+                fmtBuf.format(&lbl_eu_805063BC[0x254], wmin, func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB), wd);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], fmtBuf.c_str(), 0);
+            }
+            // numbers
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)(u16)c_new.w04);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)c_new.w14);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            // 20x color application (selected palette A8/B0/C8/D0)
+            E43Quad q1 = *(E43Quad*)&lbl_eu_806645A8;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+
         }
         // ---- simple path ----
-        CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_806645A8;
-        CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_806645B0;
-        CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_806645C8;
-        CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_806645D0;
+        E43Quad q1 = *(E43Quad*)&lbl_eu_806645A8;
+        E43Quad q2 = *(E43Quad*)&lbl_eu_806645B0;
+        E43Quad q3 = *(E43Quad*)&lbl_eu_806645C8;
+        E43Quad q4 = *(E43Quad*)&lbl_eu_806645D0;
         func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &lbl_eu_805063BC[0x2AA], 0);
         func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &lbl_eu_805063BC[0x2AA], 0);
         func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &lbl_eu_805063BC[0x2AA], 0);
@@ -2467,10 +2990,10 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             if (arg5 == 0) {
                 func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
             }
-            CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;
-            CItemBoxQuadColor q2 = *(CItemBoxQuadColor*)&lbl_eu_80664520;
-            CItemBoxQuadColor q3 = *(CItemBoxQuadColor*)&lbl_eu_80664558;
-            CItemBoxQuadColor q4 = *(CItemBoxQuadColor*)&lbl_eu_80664560;
+            E43Quad q1 = *(E43Quad*)&lbl_eu_80664518;
+            E43Quad q2 = *(E43Quad*)&lbl_eu_80664520;
+            E43Quad q3 = *(E43Quad*)&lbl_eu_80664558;
+            E43Quad q4 = *(E43Quad*)&lbl_eu_80664560;
             u32 cap = func_80136254(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], id);
             if ((u32)val >= cap) {
                 __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664548);
@@ -2503,6 +3026,8 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 
 
 
+#pragma push
+#pragma auto_inline off
 s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
     u32 r31 = func_801E92B8(a, b);
     void* r27 = a;
@@ -2513,7 +3038,10 @@ s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
     s32 sum = (s32)(r3 + r31 + 0x64);
     return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
+#pragma pop
 
+#pragma push
+#pragma auto_inline off
 s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
     u32 r31 = func_801E92B8(a, b);
     void* r27 = a;
@@ -2524,6 +3052,9 @@ s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
     s32 sum = (s32)(r3 + r31 + 0x64);
     return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
+#pragma pop
+#pragma push
+#pragma auto_inline off
 u32 func_801E9310(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C(c);
     u32 max = func_801393CC(lookup);
@@ -2536,6 +3067,9 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
     }
     return 0;
 }
+#pragma pop
+#pragma push
+#pragma auto_inline off
 u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
@@ -2544,6 +3078,9 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     u32 result = func_801361E8((u32)lbl_eu_806640F8, buf, r5);
     return !!(u8)result;
 }
+#pragma pop
+#pragma push
+#pragma auto_inline off
 u32 func_801E9774(void* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
@@ -2575,6 +3112,9 @@ u32 func_801E9774(void* global, u16 arg2, void* arg3) {
     }
     return result;
 }
+#pragma pop
+#pragma push
+#pragma auto_inline off
 bool func_801E98E4(void* a, u16 b, void* c) {
     u16 v1 = func_801392E4(c);
     u16 v2 = func_80139358((u32)c);
@@ -2591,6 +3131,7 @@ bool func_801E98E4(void* a, u16 b, void* c) {
     func_80136254(buf, (char*)&lbl_eu_805063BC[0x1f4], v2);
     return false;
 }
+#pragma pop
 
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
     return false;

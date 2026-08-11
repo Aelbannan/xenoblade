@@ -8973,3 +8973,44 @@ The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x
   CGame weak dtor (+0x40). Mutually exclusive with the current toolchain —
   documented tension; the declaration-only + secondary-call is the lesser
   divergence.
+
+## 2026-08 session: CActorParam Func4/Func177 (US, Wii/1.1 -O4,p) — rlwinm mask bit-numbering + (x & M) == V codegen
+
+Recovering `CActorParam_UnkVirtualFunc4` (0x80179E38) / `Func177` (0x80177EEC)
+decoded several reusable MWCC facts:
+
+- **rlwinm MB/ME count from the MSB.** `rlwinm rD, rA, 0, 21, 25` masks bits
+  21..25 counted from bit 0 = 0x80000000, i.e. **LSB bits 6-10 = 0x7C0**, NOT
+  `0x03E00000`. Reading a retail mask literal requires inverting. The
+  hexdiff/llvm renderings (`rlwinm r3, r3, 0, 0x15, 0x19`) are MB/ME hex, so
+  `(t & 0x7C0) == 448` emits exactly `rlwinm r3, r3, 0, 21, 25; addi r0, r3,
+  -0x1c0; cntlzw r0, r0; srwi rX, r0, 5` — verified by scratch compile with
+  the pinned Wii/1.1 toolchain. `((x >> 21) & 0x1F) == 14` instead emits
+  `rlwinm rX, rX, 0xb, 0x1b, 0x1f` + `-0xe` — do not confuse the two shapes.
+- **`(x & M) == V` with the value left in-place**: MWCC keeps the mask at the
+  source's bit positions and compares with the literal as written (it does not
+  shift V down). If V's significant bits lie outside M's range the result is a
+  dead check (faithful to the original, e.g. `(t & 0x7C0) == 448` has bits 6-8
+  inside 6-10 and is live).
+- **Boolean materialization vs direct branch**: `bool ok = (a && b); if (ok)`
+  materializes via `li r0, 0/1` + `cmpi` only under specific surrounding
+  pressure; the same shape can compile to direct `bne` short-circuits. Compare
+  retail's materialized form before assuming the source used a temp.
+- **Repeated `if (func_8026178C(arts, id)) { int r = func_8025FB10(arts, id);
+  if (r) field += (s16)r; }`** is the retail idiom for ~23 art-stat updates in
+  Func4 (0x3E38-0x4830); the `(s16)` cast emits `extsh` of the second call's
+  result. Byte/s16 variants (`*(u8*)f += (u8)r` → `lbz; rlwinm; add; stb`) and
+  extra guards (`(u32)gm != 4`, `ratio >= 1.0f`, `f26 != 0.0f` where
+  `float f26 = 0.0f; if (c) f26 = 1.0f;`) reproduce retail's per-block
+  conditions (pool consts 0.0/1.0/0.5/100.0/0.7 at 0x806677E4/8, 0x8066782C,
+  0x80667818, 0x80667858).
+
+## kyoshin CItemBoxInfo func_801E43BC — two critical codegen fixes (2026-08, Wii/1.1 -O4,p -func_align 16)
+
+After transcribing all ~5000 instructions, two systematic codegen problems blocked matching:
+
+1. **`-ipa file` inlines tiny helper STUBS into the target function.** The unit's `-ipa file` flag inlines not-yet-matched stub bodies (func_801E9690/9310/9774/98E4/9190/9224/96F0/197C/1E0C, 0x60-0xDC bytes) into func_801E43BC, exploding size from 0x4D04 to 0x6314 and adding ~90 spurious `func_8009EC9C`/`func_80139358` calls (reloc counts: EC9C 96 vs retail 1). **Fix: wrap the stub DEFINITIONS in `#pragma push / #pragma auto_inline off / #pragma pop`** — reloc counts return to retail parity (EC9C 1, 9310 47 vs 49, 9690 30 vs 31). Without this, any large function calling small unmatched stubs in this TU will bloat.
+
+2. **User-constructed quad types make copy-init a ctor call.** `CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;` emits `bl __ct__17CItemBoxQuadColorFRC17CItemBoxQuadColor` (the hpp's type has user ctors). **Fix: TU-local POD `struct E43Quad { s16 r,g,b,a; };`** — copy-init becomes 2×lwz+2×stw (retail's GXColorS10 memberwise copy). Note: with the stub-inlining bug present, the POD change caused register-spill bloat (0x6314); with pragmas fixed it is net-neutral and matches retail's inline quad loads.
+
+Remaining residuals (all register-allocation/scheduling): decomp frame -2720 vs retail -2176; quad loads interleaved load/store instead of retail's 8-lwz-then-8-stw batching; delta-row if/else-if branch layout differs; the 48-byte `li r0,6; mtctr; lwz/stw pair; bdnz` copy loop (party struct + 7-word entry copies) unreproduced from 25+ tested source forms at -O4,p (only ≥96-byte struct copies emit the counted loop; 48-64-byte copies always unroll; -O4,s emits a different lwzx-indexed loop).

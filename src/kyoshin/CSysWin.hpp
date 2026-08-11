@@ -33,7 +33,7 @@ void func_80138078(u32);     // UI sound effect (func_80138078__FUl)
 // C-linkage member-destructor/ctor imports used by the free-function dtor and
 // ctor below (retail emits the unmangled names at the call sites).
 extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int);
-extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
 // CTagProcessor lives in its own TU (kyoshin/CTagProcessor.cpp); its ctor is
 // referenced by its literal retail symbol (unmangled __ct__CTagProcessor).
@@ -46,7 +46,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayo
 // C-linkage layout helpers (defined in code_80135FDC.cpp / retail-unmangled).
 extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
                                nw4r::lyt::Pane*, nw4r::lyt::Pane*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_80124270(void*, u32);
 extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (func_8022B9B4 /

@@ -165,7 +165,7 @@ extern "C" void func_8013D7C0(u32);
 extern "C" void func_80134F2C(u32);
 extern "C" bool func_80122450();
 extern "C" bool func_80226B94();
-extern "C" void func_80124270(void*, bool);
+extern "C" void func_80124270(void*, u32);
 extern "C" void func_80124288(void*, void*);
 extern "C" bool func_8006EF04__Fi(int);
 extern "C" bool func_801BCF38();

@@ -210,7 +210,7 @@ extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene) {
 }
 
 // (lbl_eu_806642F0 != 0)
-extern "C" bool func_8018B398() { extern u32 lbl_eu_806642F0; return lbl_eu_806642F0 != 0; }
+extern "C" bool func_8018B398() { return lbl_eu_806642F0 != 0; }
 
 /* Phase 0 -> 1 (open): once the background, title bar and item grid are all
  * ready, run the open sequence (title bar + item grid) and play the open

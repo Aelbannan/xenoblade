@@ -442,10 +442,10 @@ extern "C" void func_80054D34(void* self) {
 }
 // vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr)
 typedef void (*CActVFn)(void*);
-extern "C" void func_800560A4(void* self) { (*(CActVFn*)(*(void**)self + 0x34))(self); }
-extern "C" void func_800560B4(void* self) { (*(CActVFn*)(*(void**)self + 0x98))(self); }
-extern "C" void func_800560C4(void* self) { (*(CActVFn*)(*(void**)self + 0x88))(self); }
-extern "C" void func_800560D4(void* self) { (*(CActVFn*)(*(void**)self + 0x8C))(self); }
+extern "C" void func_800560A4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x34))(self); }
+extern "C" void func_800560B4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x98))(self); }
+extern "C" void func_800560C4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x88))(self); }
+extern "C" void func_800560D4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x8C))(self); }
 extern "C" void func_800550E8() {}
 extern "C" void func_80055700() {}
 extern "C" void func_80055AC4() {}

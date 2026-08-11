@@ -56,7 +56,7 @@ CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
 }
 
 // (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool func_8011CD5C() { extern u32 lbl_eu_80663FC0; return lbl_eu_80663FC0 != 0; }
+extern "C" bool func_8011CD5C() { return lbl_eu_80663FC0 != 0; }
 
 void func_8011CD6C(){}
 

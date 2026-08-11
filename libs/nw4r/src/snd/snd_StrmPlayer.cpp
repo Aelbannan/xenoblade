@@ -4,6 +4,15 @@
 #include <climits>
 #include <cstring>
 
+// Referenced by AllocVoices below: the retail address of the StrmPlayer
+// static voice callback. StrmPlayer::VoiceCallbackFunc is a private member, so
+// it cannot be named from the global-scope AllocVoices free function; this
+// pre-mangled free-function declaration emits the same symbol when its address
+// is taken. (Definition lives in the member below; no duplicate symbol.)
+void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv(
+    nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
+    void*);
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -38,7 +47,9 @@ struct StrmTrackRetailLayout {
     u8 activeFlag;              // at 0x0
     u8 _pad0x1[3];              // at 0x1
     Voice* voice;               // at 0x4
-    u8 trackInfo[0x28];         // at 0x8 (channelCount at 0xC, table at 0x10)
+    u8 _pad0x8[0xC - 0x8];      // at 0x8
+    int channelCount;           // at 0xC
+    u8 trackInfo[0x30 - 0x10];  // at 0x10
     f32 volume;                 // at 0x30
     f32 field_0x34;             // at 0x34
 };                              // sizeof 0x38
@@ -60,9 +71,19 @@ struct StrmPlayerRetailLayout {
     StrmTrackRetailLayout mTracks[8];             // at 0xB78 (8 * 0x38)
 };                                                // sizeof 0xD38
 
+// Voice pitch-modulation gate byte at retail offset +0xA1 (see snd_Voice.cpp
+// field_0xA1); snd_Voice.h's stale layout lacks the byte at this offset.
+struct VoicePitchGateLayout {
+    u8 _pad0x0[0xA1];
+    u8 field_0xA1; // at 0xA1
+};
+
+} // namespace
+
 // Retail SetTrackVolume(unsigned long, float) is a StrmPlayer member, but the
 // stale header has no declaration for it; define the retail mangled symbol as
-// a free function (same ABI: r3 = this, r4 = track, f1 = volume).
+// a free function (same ABI: r3 = this, r4 = track, f1 = volume). Kept OUT of
+// the anonymous namespace above so the symbol name is emitted verbatim.
 void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(StrmPlayer* pStrmPlayer,
                                                         unsigned long track,
                                                         f32 volume) {
@@ -79,8 +100,6 @@ void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(StrmPlayer* pStrmPlayer,
         track >>= 1;
     }
 }
-
-} // namespace
 
 StrmPlayer::StrmPlayer()
     : mSetupFlag(false), mActiveFlag(false), mFileStream(NULL), mVoice(NULL) {
@@ -988,7 +1007,9 @@ void StrmPlayer::StrmDataLoadTask::Cancel() {
 }
 
 void StrmPlayer::StrmDataLoadTask::OnCancel() {
-    strmPlayer->SetTaskCancelFlag();
+    // mTaskCancelFlag is at retail offset +0x125; see layout-mirror note.
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)->mTaskCancelFlag =
+        true;
 
     if (fileStream != NULL && fileStream->CanCancel()) {
         if (fileStream->CanAsync()) {
@@ -1005,7 +1026,59 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 
 using nw4r::snd::detail::StrmPlayer;
 
-void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int){}
+// Retail AllocVoices(int) is a StrmPlayer member, but the stale header has no
+// declaration for it; define the retail mangled symbol as a free function
+// (same ABI: r3 = this, r4 = voices). Kept OUT of the anonymous namespace so
+// the symbol name is emitted verbatim.
+bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
+                                                   int voices) {
+    nw4r::snd::detail::StrmPlayerRetailLayout* self =
+        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
+            pStrmPlayer);
+
+    u32 level = OSDisableInterrupts();
+
+    nw4r::snd::detail::StrmTrackRetailLayout* pBaseTrack = &self->mTracks[0];
+    nw4r::snd::detail::StrmTrackRetailLayout* pTrack = pBaseTrack;
+    int i = 0;
+
+    for (; i < self->mTrackCount; i++, pTrack++) {
+        if (pTrack->activeFlag == 0) {
+            continue;
+        }
+
+        nw4r::snd::detail::Voice* pVoice =
+            nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
+                pTrack->channelCount, voices, 0xFF,
+                &VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv,
+                pTrack);
+
+        if (pVoice == NULL) {
+            // Allocation failed: free the voices already granted to earlier
+            // tracks and bail out.
+            nw4r::snd::detail::StrmTrackRetailLayout* pFreeTrack =
+                pBaseTrack;
+            for (int j = 0; j < i; j++, pFreeTrack++) {
+                if (pFreeTrack->voice != NULL) {
+                    pFreeTrack->voice->Free();
+                    pFreeTrack->voice = NULL;
+                }
+            }
+
+            OSRestoreInterrupts(level);
+            return false;
+        }
+
+        pTrack->voice = pVoice;
+        // Disable per-voice pitch modulation for streamed voices (see
+        // snd_Voice.cpp field_0xA1 pitch-modulation gate).
+        reinterpret_cast<nw4r::snd::detail::VoicePitchGateLayout*>(pVoice)
+            ->field_0xA1 = 1;
+    }
+
+    OSRestoreInterrupts(level);
+    return true;
+}
 void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}

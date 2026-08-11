@@ -47,7 +47,7 @@ void func_801D8A88(CItemBoxInfo*);
 void func_801D77A4(void*, u32, u16);
 void func_801D80EC(CItemBoxInfo*, u16, void*);
 void func_801D4A2C(void*);
-void func_801D8E34(CItemBoxInfo*, u16, void*, u16);
+extern "C" void func_801D8E34(CItemBoxInfo*, u16, void*, u16);
 u32 func_801C6E90(void*);
 void func_801D5AA0(CItemBoxInfo*, u16, void*);
 void func_801E40E8(CItemBoxInfo2*);
@@ -57,7 +57,7 @@ void func_801E2638(CItemBoxInfo2*, u16, void*);
 void func_801E2928(CItemBoxInfo2*, u16, void*, u16);
 void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
 void func_801E37C4(CItemBoxInfo2*);
-void func_801E43BC(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16);
 void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
 void func_801E3730(CItemBoxInfo2*, u32);
 void func_801E27D0(void*, void*);
@@ -770,7 +770,7 @@ void func_801D8C0C(CItemBoxInfo* info) {
         }
     }
 }
-void func_801D8E34(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
+extern "C" void func_801D8E34(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
     func_8009ECB0();
@@ -1756,7 +1756,7 @@ void func_801E4390(CItemBoxInfo2* info) {
         return;
     }
 }
-void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
+extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     void* layout = *(void**)((u8*)info + 0x34);
     char* base = (char*)&lbl_eu_805063BC;
     func_8009ECB0();

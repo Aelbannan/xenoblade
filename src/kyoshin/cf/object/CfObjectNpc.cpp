@@ -112,7 +112,7 @@ void CfObjectNpc::func_800BF8CC() {
     u16 row = unk8C_3;
     // Read the icon_type column value (return value's low byte holds it).
     const char* v = getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x22], row);
-    mIconType = (u8)(uintptr_t)v;
+    mIconType = *(const u8*)&v;
 }
 
 // 0x800C0368

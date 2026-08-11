@@ -31,10 +31,10 @@ void CMenuMakeCrystal::cbRenderBefore() {}
 
 void func_8021240C(){}
 
-// (lbl_eu_806646C8 != 0)
-extern "C" bool func_80212480() { extern u32 lbl_eu_806646C8; return lbl_eu_806646C8 != 0; }
-
 void* lbl_eu_806646C8;
+
+// (lbl_eu_806646C8 != 0)
+extern "C" bool func_80212480() { return lbl_eu_806646C8 != 0; }
 void* func_80212BE0(void*);
 
 void* func_80212490() {

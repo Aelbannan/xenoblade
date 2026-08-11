@@ -68,7 +68,7 @@ void func_80227710();
 CMenuQstCnt* lbl_eu_80664720;
 
 // (lbl_eu_80664720 != 0) - retail lwz sda21; subic; subfe
-extern "C" bool func_80226B94() { return lbl_eu_80664720 != 0; }
+extern "C" int func_80226B94() { return lbl_eu_80664720 != 0; }
 
 // Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
 // from every callsite; without the auto_inline guard, MWCC -inline auto
@@ -378,10 +378,6 @@ CMenuQstCnt* func_802269D8(CProcess* parent, CScn* scene, short a, short b, unsi
     return lbl_eu_80664720;
 }
 
-int func_80226B94() {
-    // subic/subfe is-zero idiom: returns whether the global menu object is unallocated
-    return lbl_eu_80664720 == 0;
-}
 
 void invalidateQstFlag() {
     if (lbl_eu_80664720 != 0) {

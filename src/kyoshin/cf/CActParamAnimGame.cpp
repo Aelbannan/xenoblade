@@ -56,7 +56,7 @@ bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
 
 void cf::CActParamAnimGame::func_8005DB1C() {}
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc38() { }
+float cf::CActorParam::CActorParam_UnkVirtualFunc38() { return *(float*)((u8*)this + 0x17F4); }
 
 void cf::CActParamAnimGame::func_8005DC30() {}
 

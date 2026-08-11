@@ -360,7 +360,8 @@ extern "C" void* func_80063118(void* self) { return (char*)self + 0x1a8; }
 
 void func_80063120(){}
 
-bool func_80063158(){ return false; }
+extern "C" void __dt__80067670(u8* self);
+extern "C" void func_80063158(u8* self) { __dt__80067670(self + 4); }
 
 void func_80063160(){}
 

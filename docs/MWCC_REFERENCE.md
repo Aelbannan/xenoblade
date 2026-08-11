@@ -8767,3 +8767,30 @@ pool and MWCC schedules its load earlier (immutability lets it hoist past
 the frame stores). One-line change → both functions byte-identical
 FULL_MATCH (us-8022f13c, us-8022f0f0). Check the const-ness of sdata2
 externs before chasing scheduler shapes for lfs-position diffs.
+
+## monolib/work/CWorkSystemCache — unit-size unblock: novtable + null-guard + optimize_for_size
+
+`libs/monolib/src/work/CWorkSystemCache.cpp` (Wii/1.1). The unit was 244 over
+its 0x4E4 split. Fixes (4 targets accepted: us-804dd06c, us-804dcfc0,
+us-804dd0bc, us-804dd284):
+1. **`__declspec(novtable)` on CWorkSystemCache**: the retail dtor/ctor emit
+   NO class-vtable store; without novtable MWCC emitted `lis/addi/stw 0(r3)`
+   (+4 insns) in the dtor.
+2. **Retail dtor guards the reslist destroy with a null-test on `&mCache`**:
+   `addic. r3, r3, 452; beq skip` — reproduced by `CacheList* cache =
+   (CacheList*)&mCache; if (cache != NULL) destroy(cache, 0);` (MWCC cannot
+   fold `this+0x1C4 != 0`).
+3. **`#pragma optimize_for_size` frames**: `~CWorkSystemCache`,
+   `__dt___reslist_base_CCacheItem`, `__dt__reslist_CCacheItem`,
+   `wkStandbyLogout` all need it for the retail `stmw r30`/`lmw r30` frames.
+4. **The ctor's 16-wide unrolled zero-loop** (`li r0,2; mtctr` + 8 stw ×2)
+   collapses to the retail tight loop (`li r0,32; mtctr; stwx; addi 12; bdnz`)
+   ONLY under `#pragma optimize_for_size` — and in this TU the pragma leaks
+   from the preceding `wkStandbyLogout` (unclosed) into the ctor, which is
+   exactly what the retail wants. Under -O4,p or -O4,s alone the loop stays
+   unrolled; identical probe files stay tight under -O4,s, so the real TU's
+   behavior is sensitive to surrounding functions — treat the ctor as needing
+   the scoped pragma, not a flag change. `-O4,s` unit-wide is NOT viable (it
+   regresses accepted `func_804D920C` 100%→0%).
+Residual: `__ct__` (21.3%, 0xa4 < 0xbc — now under-sized), `wkUpdate`
+(13%), `func_804D903C` (50%, 0 structural 5 reg_swap).

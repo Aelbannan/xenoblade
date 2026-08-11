@@ -143,8 +143,11 @@ CMenuKizunaTalk* func_801BCEBC(CProcess* parent, CScn* scene, u32 charId) {
 }
 #pragma optimize_for_size off
 
-// (lbl_eu_80664420 != 0)
-extern "C" bool func_801BCF38() { extern u32 lbl_eu_80664420; return lbl_eu_80664420 != 0; }
+// (lbl_eu_80664420 != 0) - needs the size-optimized subic/subfe form; the
+// preceding `#pragma optimize_for_size off` would revert to -O4,p codegen
+#pragma optimize_for_size on
+extern "C" bool func_801BCF38() { return lbl_eu_80664420 != 0; }
+#pragma optimize_for_size off
 
 void func_801BCF48(){}
 

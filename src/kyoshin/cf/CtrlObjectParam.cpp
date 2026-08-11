@@ -119,9 +119,12 @@ void func_8009E3C0(){}
 
 void func_8009E474(){}
 
-void func_8009E574(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_8009E574(void* a, int b, int c, int d) {}
+#pragma pop
 
-void func_8009E56C(void* self){ func_8009E574(); }
+extern "C" void func_8009E56C(void* a, int b, int c) { func_8009E574(a, b, c, -1); }
 
 void func_8009E740(){}
 

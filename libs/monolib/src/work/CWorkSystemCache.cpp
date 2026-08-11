@@ -67,7 +67,7 @@ struct CacheLoginState {
     u32 field_0x4c;   // 0x4c
 };
 
-class CWorkSystemCache : public CWorkThread {
+class __declspec(novtable) CWorkSystemCache : public CWorkThread {
 public:
     CWorkSystemCache(const char* pName, CWorkThread* pParent);
     virtual ~CWorkSystemCache();
@@ -161,6 +161,7 @@ void func_804D920C(ml::CMat34* out) {
 }
 
 // _reslist_base<CCacheItem>::~_reslist_base(int deleting)
+#pragma optimize_for_size on
 __attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FD3C;
@@ -177,6 +178,7 @@ __attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* se
     }
     return self;
 }
+#pragma optimize_for_size off
 
 // reslist<CCacheItem>::~reslist(int deleting)
 #pragma optimize_for_size on
@@ -197,11 +199,16 @@ bool CWorkSystemCache::wkStandbyLogin() {
     return CWorkThread::wkStandbyLogin();
 }
 
+#pragma optimize_for_size on
 CWorkSystemCache::~CWorkSystemCache() {
     lbl_eu_806659C8 = NULL;
-    __dt___reslist_base_CCacheItem((CacheList*)&mCache, 0);
+    CacheList* cache = (CacheList*)&mCache;
+    if (cache != NULL) {
+        __dt___reslist_base_CCacheItem(cache, 0);
+    }
 }
 
+#pragma optimize_for_size on
 void CWorkSystemCache::wkUpdate() {
     CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
@@ -222,6 +229,7 @@ void CWorkSystemCache::wkUpdate() {
     }
 }
 
+#pragma optimize_for_size on
 bool CWorkSystemCache::wkStandbyLogout() {
     CacheListNode* node = mCache.mStartNodePtr->mNext;
     while (node != mCache.mStartNodePtr) {

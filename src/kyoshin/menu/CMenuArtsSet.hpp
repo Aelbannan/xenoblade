@@ -548,7 +548,7 @@ extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx
 
 extern "C" void func_80230160(SArtsSub8022FA58* self);
 extern "C" void func_802316F8(SArtsSub8022FA58* self);
-extern "C" void func_80124270(void* p);
+extern "C" void func_80124270(void* p, u32 v);
 
 // Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
 // Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).

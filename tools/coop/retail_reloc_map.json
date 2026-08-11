@@ -17820,7 +17820,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/hbm/HBMBase@13848": {
+    "main/RVL_SDK/src/revolution/hbm/HBMBase@13846": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -17846,7 +17846,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/hbm/HBMBase@14697": {
+    "main/RVL_SDK/src/revolution/hbm/HBMBase@14695": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -17872,7 +17872,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/hbm/HBMBase@15586": {
+    "main/RVL_SDK/src/revolution/hbm/HBMBase@15584": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -17898,7 +17898,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/hbm/HBMBase@15784": {
+    "main/RVL_SDK/src/revolution/hbm/HBMBase@15782": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -17924,7 +17924,7 @@
         ]
       }
     },
-    "main/RVL_SDK/src/revolution/hbm/HBMBase@16230": {
+    "main/RVL_SDK/src/revolution/hbm/HBMBase@16228": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22683,7 +22683,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CBattleManager@6128": {
+    "main/kyoshin/cf/CBattleManager@6160": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23450,7 +23450,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuQstCnt@12366": {
+    "main/kyoshin/menu/CMenuQstCnt@13727": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23464,7 +23464,7 @@
         ]
       }
     },
-    "main/kyoshin/menu/CMenuQstCnt@12367": {
+    "main/kyoshin/menu/CMenuQstCnt@13733": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -31364,8 +31364,8 @@
       }
     }
   },
-  "function_pairs": 9512,
-  "generated": "2026-08-11T11:53:46.994472",
+  "function_pairs": 9547,
+  "generated": "2026-08-11T12:09:52.894732",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

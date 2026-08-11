@@ -57,14 +57,25 @@ void func_800A5FE8(){}
 
 void cf::CfDebugDrawManager::renderSphere() {}
 
-void cf::CfDebugDrawManager::renderCylinder() {}
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(cf::CfDebugDrawManager* self, const void* vec, const void* arg3, int mode);
+
+void cf::CfDebugDrawManager::renderCylinder() {
+    const void* vec;   // forwarded dangling r4 (retail: li r6,0; b Fb)
+    const void* arg3;  // forwarded dangling r5
+    renderCylinder__Q22cf18CfDebugDrawManagerFb(this, vec, arg3, 0);
+}
 
 void func_800A7094(){}
 
 void func_800A72E0(){}
 
-void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { static_cast<cf::CfDebugDrawManager*>(self)->renderCylinder(); }
+#pragma push
+#pragma auto_inline off
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(cf::CfDebugDrawManager* self, const void* vec, const void* arg3, int mode) {}
+#pragma pop
 
-extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(cf::CfDebugDrawManager* self, bool b) { self->renderCylinder(); }
-
-void cf::CfDebugDrawManager::renderCapsule() { renderCylinder__Q22cf18CfDebugDrawManagerFb(this, false); }
+void cf::CfDebugDrawManager::renderCapsule() {
+    const void* vec;   // forwarded dangling r4 (retail: li r6,1; b Fb)
+    const void* arg3;  // forwarded dangling r5
+    renderCylinder__Q22cf18CfDebugDrawManagerFb(this, vec, arg3, 1);
+}

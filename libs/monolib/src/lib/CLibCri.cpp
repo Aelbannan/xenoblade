@@ -35,7 +35,7 @@ extern "C" {
 // CWorkSystemPack stubs
 extern "C" {
     int func_804DE010(const char* ext);
-    void func_804DDD54(const char* ext, const char* filename,
+    bool func_804DDD54(const char* ext, const char* filename,
                        int* out1, int* out2, int* out3, int* out4);
 }
 
@@ -121,14 +121,13 @@ int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle
 
     if (func_804DE010(ext) != 0) {
         int out1, out2, out3, out4;
-        func_804DDD54(ext, filename, &out1, &out2, &out3, &out4);
         if (func_804DDD54(ext, filename, &out1, &out2, &out3, &out4) != 0) {
             bool hasPrefix = (strstr(filename, lbl_eu_80522FD8) != nullptr);
             return func_8045B5AC(out1, allocHandle, fileHandle, out2, out3, hasPrefix);
         }
     }
 
-    return func_8045B5AC(filename, allocHandle, fileHandle, -1, -1, false);
+    return func_8045B5AC((int)filename, allocHandle, fileHandle, -1, -1, false);
 }
 
 // ============================================================================

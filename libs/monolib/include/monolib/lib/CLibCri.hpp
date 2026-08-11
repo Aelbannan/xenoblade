@@ -67,7 +67,7 @@ public:
 // CLibCriStreamingPlay factory function (static, 8 args)
 // Called from func_8045997C with various parameters
 extern "C" int func_8045B5AC(
-    const char* filename,
+    int fileIdOrName,
     u32 allocHandle,
     int fileHandle,
     int out2,

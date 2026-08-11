@@ -38,6 +38,37 @@ void func_8049EA98() {}
 // Equivalent to: void CScnItemCamera::vfunc_0C() {}
 void func_8049F9A4() {}
 
+// Camera fields the draft header does not lay out correctly. This
+// overlay re-describes the retail object with the true offsets: the
+// projection matrix occupies 0x154-0x1D4 (0x80 bytes), the viewport
+// fields sit at 0x1D4-0x1E0, 0x1E4 is the cot-of-half-FOV value, and
+// the sub-object arrays are at 0x1F8 / 0x258 (the header's draft
+// layout is 0x44 short). func_8049F168 stores the transform
+// position bits (0x54) as raw u32s.
+struct CScnItemCameraLayout {
+    u8 pad_0x00[0x54];
+    u32 mPosX;                  // 0x54 - mTransform.mPos.x (raw bits)
+    u32 mPosY;                  // 0x58 - mTransform.mPos.y
+    u32 mPosZ;                  // 0x5C - mTransform.mPos.z
+    u8 pad_0x60[0x138 - 0x60];
+    f32 mCamParam0;             // 0x138
+    f32 mCamParam1;             // 0x13C
+    f32 mCamParam2;             // 0x140
+    f32 mDepthNear;             // 0x144
+    f32 mDepthMid;              // 0x148
+    f32 mDepthFarNear;          // 0x14C
+    f32 mDepthFar;              // 0x150
+    u8 pad_0x154[0x1E0 - 0x154];  // projection matrix + viewport fields
+    f32 mFovY;                  // 0x1E0
+    f32 mUnk1E4;                // 0x1E4 - E / tan(half FOV)
+    f32 mAspectRatio;           // 0x1E8
+    f32 mNearZ;                 // 0x1EC
+    f32 mFarZ;                  // 0x1F0
+    f32 mUnk1F4;                // 0x1F4
+    CScnItemCameraSubObj mSubObjArray1[6];  // 0x1F8
+    CScnItemCameraSubObj mSubObjArray2[6];  // 0x258
+};
+
 // ============================================================
 // Destructor for the 0x10-byte sub-objects stored in the two
 // member arrays (retail __dt__8049EA9C, a fragment-anchored
@@ -66,11 +97,12 @@ extern "C" CScnItemCameraSubObj* __dt__8049EA9C(CScnItemCameraSubObj* obj,
 // member dtor of the virtual-declaring header would emit one.
 // ============================================================
 CScnItemCamera* __dt__14CScnItemCameraFv(CScnItemCamera* obj, int deleting) {
+    CScnItemCameraLayout* cam = (CScnItemCameraLayout*)obj;
     if (obj != nullptr) {
-        __destroy_arr(&obj->mSubObjArray2[0],
+        __destroy_arr(&cam->mSubObjArray2[0],
                       reinterpret_cast<ConstructorDestructor*>(&__dt__8049EA9C),
                       0x10, 6);
-        __destroy_arr(&obj->mSubObjArray1[0],
+        __destroy_arr(&cam->mSubObjArray1[0],
                       reinterpret_cast<ConstructorDestructor*>(&__dt__8049EA9C),
                       0x10, 6);
         if (deleting > 0) {
@@ -80,24 +112,21 @@ CScnItemCamera* __dt__14CScnItemCameraFv(CScnItemCamera* obj, int deleting) {
     return obj;
 }
 
-// Camera fields the draft header does not lay out correctly:
-// the transform position at 0x54 is stored as raw u32 bits by
-// func_8049F168, and 0x1E4 (cot of the half FOV) is missing.
-// This overlay re-describes the retail object; the class members
-// above 0x138 already match the header, so only the deltas are
-// spelled out here.
-struct CScnItemCameraLayout {
-    u8 pad_0x00[0x54];
-    u32 mPosX;                  // 0x54 - mTransform.mPos.x (raw bits)
-    u32 mPosY;                  // 0x58 - mTransform.mPos.y
-    u32 mPosZ;                  // 0x5C - mTransform.mPos.z
-    u8 pad_0x60[0x1E0 - 0x60];
-    f32 mFovY;                  // 0x1E0
-    f32 mUnk1E4;                // 0x1E4 - E / tan(half FOV)
-    f32 mAspectRatio;           // 0x1E8
-    f32 mNearZ;                 // 0x1EC
-    f32 mFarZ;                  // 0x1F0
+// vtable layout for CScnItemCamera (lbl_eu_8056ECC0, 10 entries).
+// Only slot 9 (offset 0x24) is used from this TU.
+struct CScnItemCameraVtbl {
+    void (*slot0)(CScnItemCamera*);
+    void (*slot1)(CScnItemCamera*);
+    void (*slot2)(CScnItemCamera*);
+    void (*slot3)(CScnItemCamera*);
+    void (*slot4)(CScnItemCamera*);
+    void (*slot5)(CScnItemCamera*);
+    void (*slot6)(CScnItemCamera*);
+    void (*slot7)(CScnItemCamera*);
+    void (*slot8)(CScnItemCamera*);
+    void (*slot9)(CScnItemCamera*);
 };
+
 
 // ============================================================
 // func_8049EB60 - rebuild the camera depth-range parameters from
@@ -117,26 +146,10 @@ void func_8049EB60(CScnItemCamera* self) {
     f32 near = -cam->mNearZ / inv;
     self->mDepthNear = near;
 
-    f32 negNear = -near;
-    self->mDepthMid = negNear;
+    self->mDepthMid = -near;
     self->mDepthFarNear = near * cam->mAspectRatio;
-    self->mDepthFar = negNear * cam->mAspectRatio;
+    self->mDepthFar = -near * cam->mAspectRatio;
 }
-
-// vtable layout for CScnItemCamera (lbl_eu_8056ECC0, 10 entries).
-// Only slot 9 (offset 0x24) is used from this TU.
-struct CScnItemCameraVtbl {
-    void (*slot0)(CScnItemCamera*);
-    void (*slot1)(CScnItemCamera*);
-    void (*slot2)(CScnItemCamera*);
-    void (*slot3)(CScnItemCamera*);
-    void (*slot4)(CScnItemCamera*);
-    void (*slot5)(CScnItemCamera*);
-    void (*slot6)(CScnItemCamera*);
-    void (*slot7)(CScnItemCamera*);
-    void (*slot8)(CScnItemCamera*);
-    void (*slot9)(CScnItemCamera*);
-};
 
 // ============================================================
 // func_8049F168 - add a world-space offset vector to the camera

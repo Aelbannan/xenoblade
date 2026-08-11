@@ -138,13 +138,75 @@ extern "C" int func_80174C98(void*, int*, int);
 extern "C" void func_80082568__Q22cf13CfGameManagerFv(int, int, int);
 extern "C" int func_8017FD44(void*);
 extern "C" int func_8017FD4C(int);
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void func_8027EEF4(int);
 extern "C" u32 func_8027EE88(int, int);
-extern "C" void func_802811FC(cf::CChainActorList* self);
+extern "C" __declspec(noinline) void func_802811FC(cf::CChainActorList* self);
 extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
 extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
+extern "C" u32 func_8004C5EC(void* battleObj);
+
+// Minimal mirror of the object referenced by a chain actor's unk0 (probed by
+// func_8027BE84 / func_8027CAE0): vtable at +0x0, move sub-object pointer at
+// +0x4, probed address at +0x8.
+class CChainTargetObj {
+public:
+    u32 field_0;  //0x0 vtable
+    u32 field_4;  //0x4 move sub-object pointer
+    u32 field_8;  //0x8
+};
+
+// Tail view of the battle object at a chain actor's unk0: the u16 arts/battle
+// id at +0x3F28 (func_8027C924 accumulates the chain arts pair from these)
+// and the battle-object pointer at +0x3F60 queried by func_8004C5EC.
+class CChainActorObjId {
+public:
+    u8 field_0[0x3F28];  //0x0
+    u16 field_0x3F28;    //0x3F28
+    u8 field_0x3F2A[0x3F60 - 0x3F2A];
+    u32 field_0x3F60;    //0x3F60
+};
+
+// Tail view used by func_8027BC14: an embedded sub-object with a manual
+// vtable sits at +0x3E9C (its vtable slot 19 returns the move sub-object
+// pointer), and +0x3F60 holds a battle-object pointer queried by
+// func_8004C5EC.
+class CChainBattleObjTail {
+public:
+    u8 field_0[0x3E9C];  //0x0
+    u32 field_0x3E9C;    //0x3E9C embedded sub-object (vtable at its +0)
+    u8 field_0x3EA0[0x3F60 - 0x3EA0];
+    u32 field_0x3F60;    //0x3F60
+};
+
+// Interface for the move sub-object's vtable: declared virtual #10 lands at
+// vtable offset +0x30 under -RTTI (retail func_8027BE84 dispatches there and
+// dereferences the returned pointer). Casting the sub-object and calling this
+// virtual makes MWCC emit the r12 dispatch, like CChainActorVtIf. Slot 19
+// (+0x4c) is the move-sub-object getter used by func_8027BC14.
+class CChainSubVtIf {
+public:
+    virtual void v000() = 0;
+    virtual void v001() = 0;
+    virtual void v002() = 0;
+    virtual void v003() = 0;
+    virtual void v004() = 0;
+    virtual void v005() = 0;
+    virtual void v006() = 0;
+    virtual void v007() = 0;
+    virtual void v008() = 0;
+    virtual void v009() = 0;
+    virtual int* v010() = 0;  // slot 12 / +0x30
+    virtual void v011() = 0;
+    virtual void v012() = 0;
+    virtual void v013() = 0;
+    virtual void v014() = 0;
+    virtual void v015() = 0;
+    virtual void v016() = 0;
+    virtual int* v017() = 0;  // slot 19 / +0x4c
+};
 
 // Manual vtable objects stored by the Pc/Ene constructors (retail .data).
 // Declared at their full retail sizes (0x78 / 0x10) so MWCC emits the

@@ -3,6 +3,8 @@
 
 #include <string.h>
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/util/FixStr.hpp"
+#include "monolib/util/MemManager.hpp"
 
 extern "C" {
     extern s32 lbl_eu_80575798[];
@@ -15,6 +17,7 @@ extern "C" {
     extern u16 lbl_eu_806642E0;
     extern float lbl_eu_806642E4;
     extern s32* lbl_eu_80663E60;
+    extern u32 lbl_eu_80663E24;
     extern float lbl_eu_80667A08;
     extern float lbl_eu_80667A0C;
     extern float lbl_eu_80667A10;
@@ -35,6 +38,7 @@ extern "C" void func_80459A94__7CLibCriFv(s32, float);
 extern "C" s32 func_80459A9C__7CLibCriFv(s32, void*, s32, float, float, float);
 extern "C" s32 func_8045997C__7CLibCriFv(const char*, s32, s32);
 extern "C" void getInstance__7CLibCriFv();
+extern "C" s32 func_8008585C__Q22cf13CfGameManagerFv();
 
 struct SoundSlot {
     s32 handle;              // 0x00
@@ -60,22 +64,37 @@ struct SoundSlot {
 // --- SIMPLE HELPERS ---
 static inline SoundSlot* sptr(s32 i) {
     s32* b = lbl_eu_80663E60;
-    if (b == nullptr) return nullptr;
-    return (SoundSlot*)((u8*)b + i * 0xB8);
+    SoundSlot* s;
+    if (b != nullptr) s = (SoundSlot*)((u8*)b + i * 0xB8);
+    else s = nullptr;
+    return s;
 }
 
 static inline s32 isValid(s32 h) { return h != -1; }
+
+// Param block passed to func_80187F14 (the sound-play dispatcher): the
+// formatted sound name, a MEM2 alloc handle, three volumes and two flags.
+struct SoundPlayParams {
+    ml::FixStr<64>* name;   // 0x00
+    u32 handle;             // 0x04
+    float vol1;             // 0x08
+    float vol2;             // 0x0C
+    float vol3;             // 0x10
+    u16 field_0x14;         // 0x14
+    u16 field_0x16;         // 0x16
+};
 
 // --- FORWARD DECLARATIONS ---
 // func_801882AC has an unmangled retail name -> C linkage so call sites
 // emit the same reloc name as retail.
 extern "C" void func_801882AC(SoundSlot*, float, u32);
 extern "C" void func_80188488(SoundSlot*, u32, float, float, float);
-s32 func_801887C8(u32, u32, u32);
-s32 func_80188B80(s32, const char*, float, float, s32);
-void func_801889D0();
-void func_8018986C(s32, float);
-s32 func_80189A04(s32);
+extern "C" s32 func_801887C8(u32, s32, s32);
+extern "C" s32 func_80188B80(s32, s32, float, float, s32);
+void func_801889D0(SoundSlot* base);
+void func_8018986C(const char* name, float vol);
+extern "C" s32 func_80189A04(s32);
+extern "C" s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag);
 
 // ============================================================
 // MATCHED FUNCTIONS
@@ -146,13 +165,23 @@ void func_80188774(SoundSlot* slot) {
 }
 
 void func_80188890(s32 active) {
-    for (s32 i = 0; i < 5; i++) {
-        SoundSlot* s = sptr(i);
-        if (s != nullptr && isValid(s->handle)) {
+    SoundSlot* s;
+    s32 off;
+    s32 i;
+    i = 0;
+    off = 0;
+    while (i < 5) {
+        s32* b = lbl_eu_80663E60;
+        if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
+        else s = nullptr;
+        if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
+            getInstance__7CLibCriFv();
             func_80459A84__7CLibCriFv(s->handle, active);
             if (active != 0) s->status = 5;
             else s->status = 2;
         }
+        i++;
+        off += 0xB8;
     }
 }
 
@@ -225,11 +254,20 @@ void func_801896A8(s32 index, float f1, float f2) {
 void func_80189510(float f1) {
     lbl_eu_80662490 = f1;
     for (s32 i = 0; i <= 1; i++) {
-        float vol;
-        if (i >= 0 && i <= 1) vol = lbl_eu_80662490 * lbl_eu_80662494;
-        else vol = lbl_eu_80662498;
         SoundSlot* s = sptr(i);
-        if (s != nullptr && isValid(s->handle)) func_80188488(s, 0, 0.0f, vol, s->x);
+        if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) {
+            float vol;
+            volatile s32 inRange = 0;
+            if (i >= 0 && i <= 1) {
+                inRange = 1;
+            }
+            if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
+            else vol = lbl_eu_80662498;
+            SoundSlot* s2 = sptr(i);
+            if (s2 != nullptr) {
+                func_80188488(s2, 0, s->x, vol, lbl_eu_80667A08);
+            }
+        }
     }
 }
 
@@ -237,44 +275,50 @@ void func_801895F4(float f1) {
     lbl_eu_80662498 = f1;
     for (s32 i = 2; i <= 4; i++) {
         float vol;
-        if (i >= 0 && i <= 1) vol = lbl_eu_80662490 * lbl_eu_80662494;
+        s32 inRange = 0;
+        if (i >= 0 && i <= 1) inRange = 1;
+        if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
         else vol = lbl_eu_80662498;
-        SoundSlot* s = sptr(i);
-        if (s != nullptr) func_80188488(s, 0, 1.0f, vol, 0.0f);
+        s32* b = lbl_eu_80663E60;
+        SoundSlot* s;
+        if (b != nullptr) s = (SoundSlot*)((u8*)b + i * 0xB8);
+        else s = nullptr;
+        if (s != nullptr) func_80188488(s, 0, lbl_eu_80667A0C, vol, lbl_eu_80667A08);
     }
 }
 
 extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
     getInstance__7CLibCriFv();
-    if (vol == 0.0f) {
-        if (isValid(slot->backupHandle)) {
+    if (lbl_eu_80667A08 == vol) {
+        getInstance__7CLibCriFv();
+        if ((u32)slot->backupHandle != 0xFFFFFFFF) {
             func_80459A7C__7CLibCriFv(slot->backupHandle);
             slot->backupHandle = -1;
             slot->backupU16_1 = 0;
             slot->backupU16_2 = 0;
             slot->backupU16_3 = 0;
-            slot->backupF1 = 0.0f;
+            slot->backupF1 = lbl_eu_80667A08;
         }
     }
-    if (isValid(slot->handle)) {
+    if ((u32)slot->handle != 0xFFFFFFFF) {
         slot->backupHandle = -1;
         slot->backupU16_1 = 0;
         slot->backupU16_2 = 0;
         slot->backupU16_3 = 0;
-        slot->backupF1 = 0.0f;
-        slot->x = 0.0f;
-        if (vol <= 0.0f && type != 1) {
+        slot->backupF1 = lbl_eu_80667A08;
+        slot->x = lbl_eu_80667A08;
+        if (vol <= lbl_eu_80667A08 && type != 1) {
             func_80459A7C__7CLibCriFv(slot->handle);
             slot->handle = -1;
             slot->field_0x54 = 0;
             slot->field_0x56 = 0;
             slot->status = 0;
-            slot->field_0x48 = 0.0f;
+            slot->field_0x48 = lbl_eu_80667A08;
             return;
         }
-        func_80459A88__7CLibCriFv(slot->handle, 0.0f, vol, type);
+        func_80459A88__7CLibCriFv(slot->handle, lbl_eu_80667A08, vol, type);
         if (type == 2) {
-            if (isValid(slot->backupHandle)) func_80459A7C__7CLibCriFv(slot->backupHandle);
+            if ((u32)slot->backupHandle != 0xFFFFFFFF) func_80459A7C__7CLibCriFv(slot->backupHandle);
             slot->backupHandle = slot->handle;
             slot->backupNameLen = strlen(slot->name);
             strcpy(slot->backupName, slot->name);
@@ -288,7 +332,7 @@ extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
             slot->field_0x54 = 0;
             slot->field_0x56 = 0;
             slot->status = 0;
-            slot->field_0x48 = 0.0f;
+            slot->field_0x48 = lbl_eu_80667A08;
         } else if (type == 1) {
             slot->status = 4;
         }
@@ -384,67 +428,205 @@ void* __dt__801886EC(SoundSlot* _this, int flags) {
     return _this;
 }
 
-void func_801889D0() {
-    for (s32 i = 0; i < 5; i++) {
-        SoundSlot* s = sptr(i);
-        if (s == nullptr) continue;
-        if (isValid(s->backupHandle)) {
-            if (func_80459A78__7CLibCriFv(s->backupHandle) != 0) {
-                s->backupHandle = -1;
-                s->backupU16_1 = 0;
-                s->backupU16_2 = 0;
-                s->backupU16_3 = 0;
-                s->backupF1 = 0.0f;
-            }
+// Per-frame cleanup: drop finished sounds from all 5 slots (handles whose
+// CRI voice finished playing), then ramp the master volume toward its
+// target and push the new volume to the two BGM slots (0 and 1).
+void func_801889D0(SoundSlot* base) {
+    float zero = lbl_eu_80667A08;
+    SoundSlot* s = base;
+    u32 i = 0;
+    do {
+        // Clear the backup handle once its voice has finished playing.
+        if ((s->backupHandle == -1)
+                ? 0
+                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(s->backupHandle))) {
+            s->backupHandle = -1;
+            s->backupU16_1 = 0;
+            s->backupU16_2 = 0;
+            s->backupU16_3 = 0;
+            s->backupF1 = zero;
         }
-        if (isValid(s->handle)) {
-            if (func_80459A78__7CLibCriFv(s->handle) != 0) {
-                s->handle = -1;
-                s->field_0x54 = 0;
-                s->field_0x56 = 0;
-                s->status = 0;
-                s->field_0x48 = 0.0f;
-            }
+        // Clear the main handle once its voice has finished playing.
+        if ((s->handle == -1)
+                ? 0
+                : (getInstance__7CLibCriFv(), !func_80459A78__7CLibCriFv(s->handle))) {
+            s->handle = -1;
+            s->field_0x54 = 0;
+            s->field_0x56 = 0;
+            s->status = 0;
+            s->field_0x48 = zero;
         }
-    }
+        i++;
+        s++;
+    } while (i < 5);
+
+    // Ramp the master volume by the per-frame delta, clamped to the
+    // target (lbl_eu_806624A0) and to 1.0.
     float cur = lbl_eu_806642E4;
-    if (cur != 0.0f) {
-        lbl_eu_8066249C = lbl_eu_8066249C + cur;
+    if (cur != zero) {
         float max = lbl_eu_806624A0;
-        if (lbl_eu_8066249C >= max) {
+        float v = lbl_eu_8066249C + cur;
+        lbl_eu_8066249C = v;
+        if (v < max) {
+            v = max;
             lbl_eu_8066249C = max;
-            lbl_eu_806642E4 = 0.0f;
-        } else if (lbl_eu_8066249C >= 1.0f) {
-            lbl_eu_8066249C = 1.0f;
-            lbl_eu_806642E4 = 0.0f;
+            lbl_eu_806642E4 = zero;
+        } else if (v >= lbl_eu_80667A0C) {
+            v = lbl_eu_80667A0C;
+            lbl_eu_8066249C = lbl_eu_80667A0C;
+            lbl_eu_806642E4 = zero;
         }
         SoundSlot* s1 = sptr(1);
-        if (s1 != nullptr && isValid(s1->handle)) func_80459A94__7CLibCriFv(s1->handle, lbl_eu_8066249C);
+        if (s1 != nullptr && (u32)s1->handle != 0xFFFFFFFF) {
+            if ((u32)s1->handle != 0xFFFFFFFF) {
+                func_80459A94__7CLibCriFv(s1->handle, v);
+            }
+        }
         SoundSlot* s0 = sptr(0);
-        if (s0 != nullptr && isValid(s0->handle)) func_80459A94__7CLibCriFv(s0->handle, lbl_eu_8066249C);
+        if (s0 != nullptr && (u32)s0->handle != 0xFFFFFFFF) {
+            if ((u32)s0->handle != 0xFFFFFFFF) {
+                func_80459A94__7CLibCriFv(s0->handle, lbl_eu_8066249C);
+            }
+        }
     }
 }
 
-s32 func_80189A04(s32 index) {
+extern "C" s32 func_80189A04(s32 index) {
     if (index == 0) {
+        // Busy if any SE slot (2..4) still holds a live handle.
         SoundSlot* s2 = sptr(2);
-        if (s2 != nullptr && isValid(s2->handle)) return 0;
+        if (s2 != nullptr && (u32)s2->handle != 0xFFFFFFFF) return 0;
         SoundSlot* s3 = sptr(3);
-        if (s3 != nullptr && isValid(s3->handle)) return 0;
+        if (s3 != nullptr && (u32)s3->handle != 0xFFFFFFFF) return 0;
         SoundSlot* s4 = sptr(4);
-        if (s4 != nullptr && isValid(s4->handle)) return 0;
-        return 1;
+        if (s4 != nullptr && (u32)s4->handle != 0xFFFFFFFF) return 0;
+    } else {
+        // index is really a sound-name string here: format it into a full
+        // path and search the slots for a live match.
+        const char* name = (const char*)index;
+        ml::FixStr<64> str;
+        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
+        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
+        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
+        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
+        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+        s32 i;
+        SoundSlot* cur = (SoundSlot*)lbl_eu_80663E60;
+        if (cur == nullptr) goto notFound;
+        for (i = 0; i <= 4; i++, cur++) {
+            if ((u32)cur->handle == 0xFFFFFFFF) continue;
+            bool matched = (strcmp(cur->name, str.mString) == 0);
+            if (!matched) continue;
+            goto found;
+        }
+    notFound:
+        i = -1;
+    found:
+        if (i != -1) {
+            SoundSlot* s = sptr(i);
+            if ((u32)s->handle != 0xFFFFFFFF) return 0;
+        }
     }
-    return 0;
+    return 1;
 }
 
 // STUBS for complex functions
-void func_80187F14() {}
-s32 func_80188B80(s32 index, const char* name, float f1, float f2, s32 flag) { return 0; }
+s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) { return 0; }
+s32 func_80188B80(s32 index, s32 name, float f1, float f2, s32 flag) {
+    if (index == -1) return 0;
+    const char* strName = (const char*)name;
+    ml::FixStr<64> str;
+    bool hasDot = strstr(strName, &lbl_eu_80503AB0[0x00]) != nullptr;
+    bool hasSlash = strstr(strName, &lbl_eu_80503AB0[0x02]) != nullptr;
+    const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
+    const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
+    str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, strName);
+
+    // Build the play-request param block for func_80187F14.
+    SoundPlayParams params;
+    params.handle = -1;
+    params.vol2 = lbl_eu_80667A0C;
+    params.vol3 = lbl_eu_80667A0C;
+    params.vol1 = lbl_eu_80667A08;
+    params.name = &str;
+    params.field_0x14 = 2;
+    params.field_0x16 = 1;
+    params.handle = mtl::MemManager::getHandleMEM2();
+    params.vol1 = f1;
+    params.vol2 = f2;
+    s32 inRange = 0;
+    if (index >= 0) {
+        if (index <= 1) {
+            inRange = 1;
+        }
+    }
+    if (inRange) params.vol3 = lbl_eu_80662490 * lbl_eu_80662494;
+    else params.vol3 = lbl_eu_80662498;
+
+    s32 result = 0;
+    SoundSlot* s = sptr(index);
+    if (s != nullptr) {
+        result = (func_80187F14(s, &params, flag) != -1) ? 1 : 0;
+    }
+    return result;
+}
 void func_80188D34() {}
 void func_80189034() {}
-void func_8018986C(s32 index, float f1) {}
-s32 func_801887C8(u32 wantId, u32 startIdx, u32 endIdx) { return -1; }
+void func_8018986C(const char* name, float vol) {
+    if (name != nullptr) {
+        // Build the full sound path from the input name.
+        ml::FixStr<64> str;
+        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
+        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
+        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
+        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
+        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+        // Find the slot whose live name matches the formatted path.
+        s32 i;
+        SoundSlot* cur = (SoundSlot*)lbl_eu_80663E60;
+        if (cur == nullptr) goto notFound;
+        for (i = 0; i <= 4; i++, cur++) {
+            if ((u32)cur->handle == 0xFFFFFFFF) continue;
+            bool matched = (strcmp(cur->name, str.mString) == 0);
+            if (!matched) continue;
+            goto found;
+        }
+    notFound:
+        i = -1;
+    found:
+        if (i != -1) {
+            SoundSlot* s = sptr(i);
+            if (s != nullptr) func_801882AC(s, vol, 2);
+        }
+    } else {
+        // No name: stop/clear the three SE slots (2..4).
+        for (s32 i = 2; i <= 4; i++) {
+            SoundSlot* s = sptr(i);
+            if (s != nullptr) func_801882AC(s, vol, 2);
+        }
+    }
+}
+extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
+    s32* b = lbl_eu_80663E60;
+    if (b != nullptr) {
+        // Pass 1: return the first slot in [startIdx..endIdx] whose handle
+        // is free (== -1).
+        for (s32 i = startIdx; i <= endIdx; i++) {
+            SoundSlot* s = (SoundSlot*)((u8*)b + i * 0xB8);
+            if ((u32)s->handle == 0xFFFFFFFF) return i;
+        }
+        // Pass 2: otherwise return the first slot whose priority
+        // (field_0x54) is below wantId, stopping its sound first.
+        for (s32 i = startIdx; i <= endIdx; i++) {
+            SoundSlot* s = (SoundSlot*)((u8*)b + i * 0xB8);
+            if (wantId > s->field_0x54) {
+                func_801882AC(s, lbl_eu_80667A08, 2);
+                return i;
+            }
+        }
+    }
+    return -1;
+}
 // Slot index 0..1 plays the master-volume product, 2..4 use the backup
 // volume. type and the two floats are forwarded from the caller.
 void func_8018896C(s32 index, u32 type, float f1, float f2) {
@@ -467,7 +649,14 @@ void func_8018896C(s32 index, u32 type, float f1, float f2) {
     if (s != nullptr) func_80188488(s, type, f1, vol, f2);
 }
 
-void func_801897A0() {}
+extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
+    if (func_8008585C__Q22cf13CfGameManagerFv()) return 0;
+    if ((lbl_eu_80663E24 & 0x400000) != 0 && (lbl_eu_80663E24 & 0x20000) == 0) return 0;
+    if (func_80189A04(wantId) == 0) return 0;
+    s32 slot = func_801887C8(type, 2, 4);
+    if (func_80188B80(slot, wantId, f1, lbl_eu_80667A0C, 0) != 0) return slot;
+    return -1;
+}
 void func_80189F20() {}
 void func_80189F84() {}
 void func_8018A134() {}
@@ -486,4 +675,29 @@ void func_8018B224() {}
 void func_8018B230() {}
 void func_8018B23C() {}
 
-extern "C" void func_80189450() {}
+extern "C" s32 func_80189450() {
+    // When the flag bit is set, refuse (return 0) if any of the two name
+    // buffers (slot 0 / slot 1) lacks the substring at 80503AB0+0x1A while
+    // its slot still holds a live handle; otherwise clear the flag and allow.
+    if ((lbl_eu_806642E0 & 1) != 0) {
+        s32 i = 0;
+        s32 off = 0;
+        SoundSlot* s;
+        while (i <= 1) {
+            s32* b = lbl_eu_80663E60;
+            if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
+            else s = nullptr;
+            if (s != nullptr) {
+                const char* name = (i != 0) ? (const char*)lbl_eu_805757BC
+                                            : (const char*)lbl_eu_80575798;
+                if (strstr(name, &lbl_eu_80503AB0[0x1a]) != nullptr) goto next;
+                if ((u32)s->handle != 0xFFFFFFFF) return 0;
+            }
+        next:
+            i++;
+            off += 0xB8;
+        }
+        lbl_eu_806642E0 &= 0xFFFE;
+    }
+    return 1;
+}

@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogList.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/work/CEventFile.hpp"
 
 #include <stdio.h>
 
@@ -244,13 +245,13 @@ extern "C" __declspec(noinline) void func_80228544(CQstLogList* self) {
 extern "C" __declspec(noinline) void func_802286F4(CQstLogList* self,
                                                     const char* name,
                                                     int questId, int index,
-                                                    u32 mode, u8 a6, u8 a7) {
+                                                    int mode, u8 a6, u8 a7) {
     char buf[0x20];
     const char* str = func_8013639C(name, &lbl_eu_80509AB4[0x42], questId);
     sprintf(buf, &lbl_eu_80509AB4[0x48], index);
     func_80136B4C(self->mpLayout, buf, (char*)str, 0);
-    u32 color = a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860;
-    func_80137B44(self->mpLayout, buf, color);
+    func_80137B44(self->mpLayout, buf,
+                  a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
     // Detail text: BDAT lookup chain (name -> column A -> column B -> row
     // string) formatted into the second pane.
@@ -260,18 +261,26 @@ extern "C" __declspec(noinline) void func_802286F4(CQstLogList* self,
     const char* str2 = func_8013639C(lbl_eu_806640A8, &lbl_eu_80509AB4[0x76], c);
     sprintf(buf, &lbl_eu_80509AB4[0x7b], index);
     func_80136B4C(self->mpLayout, buf, (char*)str2, 0);
-    func_80137B44(self->mpLayout, buf, color);
+    func_80137B44(self->mpLayout, buf,
+                  a6 != 0 ? 0xC81E1EFFu : lbl_eu_80662860);
 
     sprintf(buf, &lbl_eu_80509AB4[0x87], index);
     nw4r::lyt::Pane* pane1 = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
     const char* str3 = 0;
-    if (mode >= 0xFE && mode <= 0xFF) {
-        str3 = (const char*)self->mArcResAcc->GetResource(
-            0x74696D67u, &lbl_eu_80509AB4[0xa7], 0);
-    } else if (mode == 1) {
-        str3 = (const char*)self->mArcResAcc->GetResource(
-            0x74696D67u, &lbl_eu_80509AB4[0x94], 0);
-    }
+    // Row-state icon: mode 1 = active-row texture, 0xFE/0xFF = unused-row
+    // state. Goto-chain keeps the mode==1 body in the fall-through like
+    // retail (if-else-if emits bne-skips with the wrong block order).
+    if ((u32)(mode - 0xFE) <= 1) goto modeFE;
+    if (mode == 1) goto modeOne;
+    goto iconDone;
+modeOne:
+    str3 = (const char*)self->mArcResAcc->GetResource(
+        0x74696D67u, &lbl_eu_80509AB4[0x94], 0);
+    goto iconDone;
+modeFE:
+    str3 = (const char*)self->mArcResAcc->GetResource(
+        0x74696D67u, &lbl_eu_80509AB4[0xa7], 0);
+iconDone:
     if (str3 != 0) {
         func_80137F88(pane1, str3);
         func_80124270(pane1, 1);
@@ -329,7 +338,7 @@ extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
 extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
     // Quest text table entry selected by the two signed index bytes.
     int off = (self->field_0x17B + self->field_0x17C) * 0x22;
-    s8 e0 = (s8)lbl_eu_80576670[off];
+    s32 e0 = (s8)lbl_eu_80576670[off];
     u8 e1 = lbl_eu_80576670[off + 1];
     func_802289F8(self);
     lbl_eu_8066472C = 0;
@@ -337,9 +346,10 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
 
     // Rebuild the visible rows from the quest-info buffer, starting at the
     // current scroll position; stop after ten rows or the list end.
+    u32 cur;
     int i = 0;
     u16 total = selectQstIndex(&self->mQstData.mList[0]);
-    u32 cur = (u16)self->field_0x17E;
+    cur = (u16)self->field_0x17E;
     for (; (u16)cur < total; i++, cur++) {
         if (i >= 10) break;
         CQstLogListQstInfo* entry = func_802276F4(&self->mQstData.mList[0], (u16)cur);
@@ -355,7 +365,7 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
         }
     }
     lbl_eu_8066472C = total;
-    if (CScrollBar_isVisible(&self->mScrollBar) != 0) {
+    if (CScrollBar_isVisible(&self->mScrollBar)) {
         func_801F36BC(&self->mScrollBar, 10, (u16)lbl_eu_8066472C);
     }
 }
@@ -382,7 +392,7 @@ extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
     }
 }
 
-extern "C" void func_80228C04(CQstLogList* self) {}
+extern "C" __declspec(noinline) void func_80228C04(CQstLogList* self) {}
 
 // Rebuild the quest list display from the sort-menu/quest state: formats the
 // quest text pane name and loads the entry text (func_80136A1C).
@@ -422,6 +432,210 @@ void func_80227A60(CQstLogList* self) {
 }
 
 extern "C" void func_80227AC4() {}
+
+// File-load completion callback: builds the quest-log layout from the
+// freshly-loaded arc, primes the shared quest-text table with the four fixed
+// rows plus every quest type present in the BDAT quest table (sorted by its
+// sort key), then sizes the quest panes from the 'timg' message resource.
+int CQstLogList::OnFileEvent(CEventFile* event) {
+    if (mFileHandle == event->mFileHandle) {
+    // Scratch heap region (RAII Class_8045F858 guard), then detach the file
+    // buffer and attach it to the layout arc resource accessor. The string
+    // pool base is materialized after the handle (retail r30).
+    u8 regionBuf[8];
+    void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
+    char* const s = lbl_eu_80509AB4;
+    createRegion__17UnkClass_8045F564FiiPCci(&mUnk04[0], (int)mem2, 0x10000,
+                                             &s[0x112], 0);
+    __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mUnk04[0]);
+
+    void* fileData = mFileHandle->getData();
+    func_80434A4C__Q23mtl10MemManagerFb(false);
+    mArcResAcc =
+        (nw4r::lyt::ArcResourceAccessor*)createArcResourceAccessor__10CLibLayoutFv();
+    mArcResAcc->Attach(fileData, &s[0x11e]);
+
+    func_80136E84(&mpLayout, mArcResAcc, &s[0x122]);
+    func_80136F08(mpLayout, &mpAnim0, mArcResAcc, &s[0x135]);
+    func_80136F08(mpLayout, &mpAnim1, mArcResAcc, &s[0x14b]);
+
+    // Bind the font handle into the layout's root pane.
+    nw4r::lyt::Pane* rootPane = mpLayout->GetRootPane();
+    void* fontObj =
+        func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mpLayout);
+    u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    func_8013676C(rootPane, fontResult);
+
+    func_802284E4(this);
+    mpLayout->Animate(0);
+
+    // Build the cursor on the stack, copy its body into the member region
+    // (skipping the +0x00 vtable pointer) and destroy the temp.
+    u8 tmpCur[0x18];
+    __ct__CCur18(tmpCur, func_801355F4());
+    CCur18Data* curDst = reinterpret_cast<CCur18Data*>(&mCur18[0]);
+    CCur18Data* curSrc = reinterpret_cast<CCur18Data*>(tmpCur);
+    curDst->field_4 = curSrc->field_4;
+    curDst->field_8 = curSrc->field_8;
+    curDst->field_C = curSrc->field_C;
+    curDst->field_10 = curSrc->field_10;
+    curDst->field_14 = curSrc->field_14;
+    curDst->field_15 = curSrc->field_15;
+    __dt__6CCur18Fv(tmpCur, -1);
+    reinterpret_cast<CCur18View*>(&mCur18[0])->vf02();
+
+    // Prime the four fixed quest-log rows (0xFF/0x00 head bytes + formatted
+    // text), appending each entry to the shared quest-text table. The
+    // buffers are declared in reverse use order so the stack slots land at
+    // the retail offsets (b4 lowest, b0 highest).
+    CQstLogListEntry b4, b3, b2, b1, b0;
+    b0.mField0 = 0xFF;
+    b0.mField1 = 0;
+    sprintf((char*)&b0.mData[0], &s[0x10],
+            func_80136190(&s[0x166], &s[0x76], 0x44));
+    char* const table = lbl_eu_80576670;
+    u32 n0 = lbl_eu_80664728;
+    lbl_eu_80664728 = n0 + 1;
+    func_80227994((CQstLogListEntry*)&table[n0 * 0x22], &b0);
+
+    b1.mField0 = 0xFF;
+    b1.mField1 = 1;
+    sprintf((char*)&b1.mData[0], &s[0x10],
+            func_80136190(&s[0x166], &s[0x76], 0x45));
+    u32 n1 = lbl_eu_80664728;
+    lbl_eu_80664728 = n1 + 1;
+    func_80227994((CQstLogListEntry*)&table[n1 * 0x22], &b1);
+
+    b2.mField0 = 0xFF;
+    b2.mField1 = 2;
+    sprintf((char*)&b2.mData[0], &s[0x10],
+            func_80136190(&s[0x166], &s[0x76], 0x46));
+    u32 n2 = lbl_eu_80664728;
+    lbl_eu_80664728 = n2 + 1;
+    func_80227994((CQstLogListEntry*)&table[n2 * 0x22], &b2);
+
+    b3.mField0 = 0xFF;
+    b3.mField1 = 3;
+    sprintf((char*)&b3.mData[0], &s[0x10],
+            func_80136190(&s[0x166], &s[0x76], 0x47));
+    u32 n3 = lbl_eu_80664728;
+    lbl_eu_80664728 = n3 + 1;
+    func_80227994((CQstLogListEntry*)&table[n3 * 0x22], &b3);
+
+    // Collect every quest type (2..0x1c) that has at least one active,
+    // uncompleted quest in the BDAT quest table. Retail dispatches 6..0x1c
+    // through a jump table; every path runs the same quest scan below, so
+    // the switch is a semantic no-op for all i (2..5 fall straight through).
+    s32 numQuests = (s32)func_8003B1EC(lbl_eu_806640A0);
+    u8 indices[0x3c];
+    u8 count = 0;
+    for (u8 i = 2; i <= 0x1c; i++) {
+        switch (i) {
+        case 6: case 7: case 8: case 9: case 0xA: case 0xB: case 0xC: case 0xD:
+        case 0xE: case 0xF: case 0x10: case 0x11: case 0x12: case 0x13: case 0x14:
+        case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1A: case 0x1B:
+        case 0x1C:
+            break;
+        }
+        for (s32 j = 1; j <= numQuests; j++) {
+            if (func_801361E8((u32)lbl_eu_806640A0, &s[0x70], j) == i &&
+                func_801361E8((u32)lbl_eu_806640A0, &s[0x170], j) == 0 &&
+                func_8009CF8C((u32)(j + 0x20c8)) != 0) {
+                indices[count++] = i;
+                break;
+            }
+        }
+    }
+
+    // Bubble-sort the collected quest types by their BDAT sort key, biggest
+    // key first (the xor-swap idiom is MWCC's byte-register swap pattern).
+    u8 n = count;
+    s8 last = (s8)(n - 1);
+    for (u8 outer = 0; outer < n; outer++) {
+        int swapped = 0;
+        for (s8 inner = 0; inner < (s8)(last - outer); inner++) {
+            u8 a = indices[inner];
+            u8 b = indices[inner + 1];
+            if (func_801361E8((u32)lbl_eu_806640A8, &s[0xa], a) >
+                func_801361E8((u32)lbl_eu_806640A8, &s[0xa], b)) {
+                indices[inner] = b;
+                indices[inner + 1] = a;
+                swapped = 1;
+            }
+        }
+        if (swapped == 0) break;
+    }
+
+    // Append the sorted quest types as rows 5+ (byte1 = 4) with their names.
+    for (u8 k = 0; k < count; k++) {
+        u8 idx = indices[k];
+        char* text = func_8013639C(lbl_eu_806640A8, &s[0x76], idx);
+        b4.mField0 = idx;
+        b4.mField1 = 4;
+        sprintf((char*)&b4.mData[0], &lbl_eu_80509AB4[0x10], text);
+        u32 nk = lbl_eu_80664728;
+        lbl_eu_80664728 = nk + 1;
+        func_80227994((CQstLogListEntry*)&lbl_eu_80576670[nk * 0x22], &b4);
+    }
+
+    // Refresh the sort-menu header text and rebuild the list display.
+    char* t = func_80136190(&s[0x166], &s[0x76], 2);
+    func_80136B4C(mpLayout, &s[0x179], t, 0);
+    func_80228C98(this);
+
+    // Look up the quest-log message texture ('timg') and size the panes from
+    // its row/column counts.
+    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+                          ? &s[0x185]
+                          : &s[0x18e];
+    u16 msgId = func_8013606C(&s[0x197], sel, 0x61);
+    char* texName = func_80138F78((u32)msgId);
+    CQstLogListMsgObj* obj = (CQstLogListMsgObj*)func_801355F4()->GetResource(
+        0x74696D67, texName, 0);
+    if (obj != 0) {
+        func_80137E7C(mpLayout, &s[0x1a5], obj);
+        CQstLogListCoords* coords = obj->chain->pCoords;
+        u16 row = coords->c2;
+        u16 col = coords->c0;
+        nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(
+            &s[0x1a5], true);
+        if (pane != 0) {
+            float src[2];
+            src[0] = (float)row;
+            src[1] = (float)col;
+            reinterpret_cast<PaneSizeRegion*>(pane)->width = src[0];
+            reinterpret_cast<PaneSizeRegion*>(pane)->height = src[1];
+        }
+    }
+
+    // Store the quest text color fetched from the log pane.
+    lbl_eu_80662860 = mpLayout->GetRootPane()
+                          ->FindPaneByName(&s[0x1b1], true)
+                          ->GetVtxColor(0);
+
+    func_802270CC(&mQstData.mList[0]);
+    func_802285A4(this);
+
+    // Position the selection on the quest-log's own list entry.
+    u16 listIdx = func_80227710(&mQstData.mList[0], field_0x180);
+    if (listIdx < 10) {
+        field_0x17D = (s8)listIdx;
+        field_0x17E = 0;
+    } else {
+        field_0x17D = 9;
+        field_0x17E = (s16)(listIdx - 9);
+    }
+
+    func_802285A4(this);
+    field_0x178 = 1;
+    field_0x170 = 1;
+    mFileHandle = 0;
+    func_8045F810__17UnkClass_8045F564Fv(&mUnk04[0]);
+    __dt__14Class_8045F858Fv(regionBuf, -1);
+    return 1;
+    }
+    return 0;
+}
 
 // Draws the layout plus the scroll bar, sort menu and cursor when the
 // quest-log layout is loaded (field_0x170).

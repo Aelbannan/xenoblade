@@ -217,7 +217,7 @@ void func_801C562C(void* dst, void* src) {
     u8 b4 = s[6];
     u8 b5 = s[7];
     u8 b6 = s[8];
-    *(short*)(d + 0) = h;
+    *(volatile short*)(d + 0) = h;
     d[2] = b0;
     d[3] = b1;
     d[4] = b2;

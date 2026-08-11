@@ -5,7 +5,7 @@ namespace snd {
 
 Sound3DActor::Sound3DActor(SoundArchivePlayer& rPlayer,
                            Sound3DManager& rManager)
-    : detail::SoundActor(rPlayer),
+    : SoundActor(rPlayer),
       m3DManager(rManager),
       mSoundArchivePlayer(rPlayer) {}
 

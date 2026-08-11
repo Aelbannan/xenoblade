@@ -658,10 +658,12 @@ int CfObjectModel_UnkVirtualFunc6__Q22cf13CfObjectModelFv(void* self) { return 0
 // CfObject.hpp declares this with (float, float) params but the retail symbol is Fv (no params),
 // so we emit the exact mangled name via extern "C" to match the retail .o symbol table.
 extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(cf::CfObject* self, float a, float b) {
-    // MWCC pairs the constant load with its store and emits stores in FPR
-    // order (f0, f1, f2) - retail stores a, b, c with the constant last.
-    // Documented open item (MWCC_REFERENCE pair-copy register allocation,
-    // func_800BC510): invariant to source store order / locals / helpers.
+    // Open item (MWCC_REFERENCE pair-copy register allocation, func_800BC510):
+    // MWCC emits stores in FPR order c,a,b; retail stores a,b,c (constant
+    // last). Invariant to source store order / locals / volatile / const /
+    // pointer shapes; -ipa off breaks the leaf shape; GC/3.0a5.2 fixes the
+    // order but the TU requires Wii/1.1 (never_inline attr, 22 byte-identical
+    // siblings). Witness rejects (store offsets are non-register bits).
     float c = lbl_eu_80666A68;
     self->mPos3C = a;
     self->mPos44 = b;

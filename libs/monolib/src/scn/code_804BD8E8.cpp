@@ -129,8 +129,20 @@ void func_804BE53C(){}
 extern "C" int func_804BEE54(u32 flags);
 extern "C" int func_804BE5A0(u32 flags) { return func_804BEE54(flags); }
 
-extern "C" void func_804BEEAC();
-extern "C" void func_804BE5A4(void) { func_804BEEAC(); }
+// Flag test: look up the u32 flag word for resource [index] (via the entry's
+// info block u16 table index into the manager's flag table at +0x28) and
+// return whether any of `flags` is set.
+#pragma push
+#pragma auto_inline off
+extern "C" u32 func_804BEEAC(u32 flags, u32 index) {
+    ScnResourceEntry* entry = &((ScnResourceEntry*)lbl_eu_8065F428)[index];
+    u16 tableIndex = entry->field_0x18->field_0x12;
+    u32 mask = ((u32*)((ScnResMgr*)lbl_eu_8065F32C)->field_0x28)[tableIndex];
+    return (flags & mask) != 0;
+}
+#pragma pop
+
+extern "C" u32 func_804BE5A4(u32 flags, u32 index) { return func_804BEEAC(flags, index); }
 
 extern "C" int func_804BEDFC(u32* out, u32 flags, int index, u8* base);
 int func_804BE5A8(u32* a1, u32 a2, int a3, u8* a4) { return func_804BEDFC(a1, a2, a3, a4); }
@@ -153,8 +165,8 @@ int func_804BE604(int index) {
     return entries[index].value != 0;
 }
 
-extern "C" void func_804BF3B4();
-extern "C" void func_804BE628(void) { func_804BF3B4(); }
+extern "C" void func_804BF3B4(int flag);
+extern "C" void func_804BE628(int flag) { func_804BF3B4(flag); }
 
 #pragma push
 #pragma auto_inline off
@@ -195,11 +207,6 @@ int func_804BEE54(u32 flags) {
 }
 #pragma pop
 
-#pragma push
-#pragma auto_inline off
-extern "C" void func_804BEEAC(){}
-#pragma pop
-
 void func_804BEEEC() {
     extern void *lbl_eu_80663AD8;
     ((void (*)())lbl_eu_80663AD8)();
@@ -209,9 +216,23 @@ void func_804BEEF8(){}
 
 void func_804BF274(){}
 
+// Selected scn callback slot + enabled flag (retail sbss globals).
+extern void* lbl_eu_80663AD8;
+extern u8 lbl_eu_8066597F;
+
+// Select the active callback: flag != 0 enables the full-detail path
+// (func_804BEEF8) and flag=0 the reduced one (func_804BF274).
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804BF3B4(){}
+extern "C" void func_804BF3B4(int flag) {
+    if (flag != 0) {
+        lbl_eu_80663AD8 = (void*)func_804BEEF8;
+        lbl_eu_8066597F = 1;
+    } else {
+        lbl_eu_80663AD8 = (void*)func_804BF274;
+        lbl_eu_8066597F = 0;
+    }
+}
 #pragma pop
 
 void func_804BF3EC(){}

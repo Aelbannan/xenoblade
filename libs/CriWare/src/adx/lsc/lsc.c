@@ -6,7 +6,7 @@ extern void LSC_Leave(void);
 extern void LSC_LockCrs(void *);
 extern void LSC_UnlockCrs(void *);
 extern void LSC_CallErrFunc_(const char *, ...);
-extern void LSC_CallStatFunc(void);
+extern void *LSC_CallStatFunc(void *);
 extern void lsc_ExecHndl(u8 *);
 extern int ADXSTM_StopNw(void *);
 extern void ADXSTM_Stop(void *);
@@ -323,13 +323,22 @@ void LSC_SetFlowLimit(void *entry, int limit) {
 
 extern u32 lbl_eu_805EC440[];
 
-void LSC_CallStatFunc(void) {
+// LSC_CallStatFunc: dispatch to the stat hook. The void* return + `return h`
+// null path are REQUIRED for retail codegen: the return-value liveness keeps
+// the address base in r4 (retail lis r4; addi r4; lwz r12,0(r4)), and
+// `#pragma peephole off` blocks MWCC's lwzu fold of the addi+lwz pair
+// (peephole on always emits `lwzu r12, LO(r4)` — 0x24 vs retail 0x28).
+// The final `return fn(a1,a2)` passes the callee's r3 through (retail
+// bctrl; blr with no extra move).
+#pragma peephole off
+void *LSC_CallStatFunc(void *h) {
     u32 *p = (u32 *)lbl_eu_805EC440;
     u32 fn = p[0];
     if (fn == 0)
-        return;
-    ((void (*)(u32, u32))fn)(p[1], p[2]);
+        return h;
+    return ((void *(*)(u32, u32))fn)(p[1], p[2]);
 }
+#pragma peephole on
 
 void LSC_SetLpFlg(void *entry, int flag) {
     LSC_Enter();

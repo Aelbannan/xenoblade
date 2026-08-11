@@ -498,9 +498,13 @@ void SoundArchivePlayer::SetGroupWaveDataAddress(u32 id, const void* pAddr) {
 }
 
 SoundStartable::StartResult SoundArchivePlayer::detail_SetupSound(
-    SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientArgInfo* pArgInfo,
-    detail::ExternalSoundPlayer* pExtPlayer, bool hold,
-    const StartInfo* pStartInfo) {
+    SoundHandle* pHandle, u32 id, bool hold, const StartInfo* pStartInfo) {
+    return detail_SetupSoundImpl(pHandle, id, NULL, NULL, hold, pStartInfo);
+}
+
+SoundStartable::StartResult SoundArchivePlayer::detail_SetupSoundImpl(
+    SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientInfo* pArgInfo,
+    SoundActor* pActor, bool hold, const StartInfo* pStartInfo) {
 
     if (!IsAvailable()) {
         return SoundStartable::START_ERR_NOT_AVAILABLE;
@@ -554,7 +558,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSound(
         }
 
         detail::SeqSound* pSeqSound = rPlayer.detail_AllocSeqSound(
-            playerPriority, playerPriorityStart, pArgInfo, pExtPlayer, id,
+            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
             &mSeqSoundInstanceManager);
 
         if (pSeqSound == NULL) {
@@ -582,7 +586,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSound(
         }
 
         detail::StrmSound* pStrmSound = rPlayer.detail_AllocStrmSound(
-            playerPriority, playerPriorityStart, pArgInfo, pExtPlayer, id,
+            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
             &mStrmSoundInstanceManager);
 
         if (pStrmSound == NULL) {
@@ -610,7 +614,7 @@ SoundStartable::StartResult SoundArchivePlayer::detail_SetupSound(
         }
 
         detail::WaveSound* pWaveSound = rPlayer.detail_AllocWaveSound(
-            playerPriority, playerPriorityStart, pArgInfo, pExtPlayer, id,
+            playerPriority, playerPriorityStart, pArgInfo, pActor, id,
             &mWaveSoundInstanceManager);
 
         if (pWaveSound == NULL) {
@@ -1015,4 +1019,3 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
 } // namespace snd
 } // namespace nw4r
 
-void detail_SetupSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ34nw4r3snd11SoundHandleUlPQ54nw4r3snd6detail10BasicSound11AmbientInfoPQ34nw4r3snd10SoundActorbPCQ44nw4r3snd14SoundStartable9StartInfo(){}

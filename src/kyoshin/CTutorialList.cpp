@@ -259,7 +259,18 @@ extern "C" void func_802AD1F4(CTutorialList* self) {
 }
 
 extern "C" __declspec(noinline) void func_802ACC30(u8* self, u16 a, int b) {}
-extern "C" void func_802ACE04() {}
+// Bounds-checked u16 id lookup over an embedded sub-object: the u16 table
+// sits at +0x00 and its halfword count at +0x100.
+struct CTutorialWindowIds {
+    u16 mIds[0x80]; // 0x00
+    u16 mCount;     // 0x100
+};
+
+extern "C" u16 func_802ACE04(CTutorialWindowIds* self, u16 index) {
+    if (index >= self->mCount)
+        return 0;
+    return self->mIds[index];
+}
 
 u8 CTutorialList::func_802AD2A4() {
     if (CScrollBar_isVisible(&mScrollBar) == 0) return 0;

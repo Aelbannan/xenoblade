@@ -2,7 +2,6 @@
 
 namespace nw4r {
 namespace snd {
-namespace detail {
 
 SoundStartable::StartResult
 SoundActor::detail_SetupSound(SoundHandle* pHandle, u32 id,
@@ -16,6 +15,5 @@ SoundActor::detail_SetupSound(SoundHandle* pHandle, u32 id,
         pHandle, id, NULL, detail_GetActorSoundPlayer(0), hold, pStartInfo);
 }
 
-} // namespace detail
 } // namespace snd
 } // namespace nw4r

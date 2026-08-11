@@ -22,6 +22,7 @@ namespace snd {
 // Forward declarations
 class SoundMemoryAllocatable;
 class SoundPlayer;
+class SoundActor;
 
 namespace detail {
 class SeqTrackAllocator;
@@ -56,10 +57,14 @@ public:
                                     const void* pEnd); // at 0x10
 
     virtual StartResult
-    detail_SetupSound(SoundHandle* pHandle, u32 id,
-                      detail::BasicSound::AmbientArgInfo* pArgInfo,
-                      detail::ExternalSoundPlayer* pPlayer, bool hold,
+    detail_SetupSound(SoundHandle* pHandle, u32 id, bool hold,
                       const StartInfo* pStartInfo); // at 0x28
+
+    StartResult
+    detail_SetupSoundImpl(SoundHandle* pHandle, u32 id,
+                          detail::BasicSound::AmbientInfo* pArgInfo,
+                          SoundActor* pActor, bool hold,
+                          const StartInfo* pStartInfo);
 
     virtual u32 detail_ConvertLabelStringToSoundId(const char* pLabel) {
         return mSoundArchive->ConvertLabelStringToSoundId(pLabel);

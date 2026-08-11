@@ -33,6 +33,7 @@ public:
     virtual const char* GetFontTexture(const char* str, void** texOut,
                                        u32* xOut, u32* yOut,
                                        u32* widthOut); // 0x20
+    virtual void* GetSlot9();                         // 0x24 - dispatch-only
 };
 
 // Draw-command list node (reslist-style: next at 0x0, payload at 0x8).
@@ -70,10 +71,35 @@ struct CDrawGXColorLayout {
 // ---------------------------------------------------------------------------
 // Font layer object.
 // ---------------------------------------------------------------------------
+// reslist node (next@0, prev@4) as embedded in the work-thread base.
+struct CWorkThreadNode {
+    CWorkThreadNode* mNext; // 0x0
+    CWorkThreadNode* mPrev; // 0x4
+};
+
+// reslist<CWorkThread*> view at +0x5C of the work-thread base: a pointer to
+// the embedded start node; the list is empty when the start node's mNext
+// cycles back to the start node itself.
+struct CWorkThreadChildren {
+    void* mVtbl;                     // 0x5C
+    CWorkThreadNode* mStartNodePtr;  // 0x60
+    CWorkThreadNode mStartNode;      // 0x64 (mNext@0x64, mPrev@0x68)
+    void* mList;                     // 0x6C
+    int mCapacity;                   // 0x70
+    bool mUnk1C;                     // 0x74
+    u8 _pad[7];                      // pad to the reslist's 0x20 size
+
+    bool empty() const {
+        return mStartNodePtr->mNext == mStartNodePtr;
+    }
+};
+
 class CDeviceFontLayer {
 public:
     // 0x0-0x1c8: base (vtable / work-thread state)
-    u8 _base[0x1C8];                    // 0x0
+    u8 _base[0x5C];                    // 0x0 (vtable + name + state)
+    CWorkThreadChildren mChildren;     // 0x5C
+    u8 _baseTail[0x1C8 - 0x5C - 0x20]; // 0x7C (rest of work-thread state)
     CDeviceFontLayerCmdNode* mCmdList;  // 0x1c8 (list head: next@0, prev@4)
     u8 pad_1CC[0x1D8 - 0x1CC];
     void* mCmdArray; // 0x1d8 (allocated command array)
@@ -91,6 +117,7 @@ public:
     ml::CCol4 mColor;   // 0x200
     ml::CCol4 mBgColor; // 0x210
     CDrawGX mDrawGX;    // 0x220
+    u8 mFlag2F0;        // 0x2F0 (read by wkUpdate)
 
     // Stub declarations retained for the catalog TU (matched separately).
     void func_80453BB4();
@@ -99,12 +126,11 @@ public:
     void func_804541F8();
     void func_8045438C();
     void func_80454508();
-    void func_80454684();
     void func_80454DE4();
     void func_80454E2C();
     void func_80454E6C();
     u32 func_80454E78();
-    void wkStandbyLogout();
+    bool wkStandbyLogout();
     void wkUpdate();
 };
 
@@ -112,6 +138,23 @@ public:
 // the exact retail name; callers pass only the index (see file header note).
 extern "C" IDeviceFontInfo* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 index);
+
+// Font-info lookup + slot-9 dispatch. The retail symbol carries the
+// decompiler-guessed Fv suffix; the body passes r4 (a font index) through to
+// func_80452C10, so the real signature takes a u32.
+extern "C" void* func_80454684__16CDeviceFontLayerFv(void* self, u32 index) {
+    IDeviceFontInfo* info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        index);
+    if (info == 0)
+        return 0;
+    return info->GetSlot9();
+}
+
+// CWorkThread::wkSetEvent - post an event to this layer's work queue.
+extern "C" void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(void* self, int evt);
+// CWorkThread::wkStandbyLogout - base standby-logout; returns whether the
+// thread may be released (no pending children / events).
+extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
 
 void __ct__CDeviceFontLayer(){}
 
@@ -196,7 +239,7 @@ void CDeviceFontLayer::func_8045438C() {}
 
 void CDeviceFontLayer::func_80454508() {}
 
-void CDeviceFontLayer::func_80454684() {}
+
 
 // ---------------------------------------------------------------------------
 // func_804546C8 (0x804587C4) - render a string as a glyph grid.
@@ -385,15 +428,52 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
     self->mDrawGX.func_8045657C(1);
 }
 
-void CDeviceFontLayer::wkUpdate() {}
+void CDeviceFontLayer::wkUpdate() {
+    if (this->mFlag2F0 == 0)
+        return;
+    wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(this, 0); // EVT_NONE
+}
 
-void CDeviceFontLayer::wkStandbyLogout() {}
+bool CDeviceFontLayer::wkStandbyLogout() {
+    if (mChildren.empty() && this->mFlag2F0 != 0)
+        return wkStandbyLogout__11CWorkThreadFv(this);
+    return false;
+}
 
-void CDeviceFontLayer::func_80454DE4() {}
+// Cross-unit helpers (retail mangled names; not included as C++ here).
+extern "C" int getDevSys1Handle__7CDeviceFv();
+extern "C" void* allocate_array_ex__Q23mtl10MemManagerFUlUli(u32 size,
+                                                              u32 handle,
+                                                              int align);
 
-void CDeviceFontLayer::func_80454E2C() {}
-
+// Lazily allocate the font-layer scratch object once: if the global slot is
+// still null, grab the device heap handle, allocate 0x10000 bytes aligned 16,
+// and reset the adjacent word.
+extern void* lbl_eu_80665690;
 extern u32 lbl_eu_80665694;
+
+void CDeviceFontLayer::func_80454DE4() {
+    if (lbl_eu_80665690 != 0)
+        return;
+    int handle = getDevSys1Handle__7CDeviceFv();
+    lbl_eu_80665690 = allocate_array_ex__Q23mtl10MemManagerFUlUli(0x10000,
+                                                                  handle, 16);
+    lbl_eu_80665694 = 0;
+}
+
+// Font-layer global state: an allocated object pointer plus an adjacent word.
+extern "C" void __dla__FPv(void* p);
+
+void CDeviceFontLayer::func_80454E2C() {
+    if (lbl_eu_80665690 == 0)
+        return;
+    if (lbl_eu_80665690 != 0) {
+        __dla__FPv(lbl_eu_80665690);
+        lbl_eu_80665690 = 0;
+    }
+    lbl_eu_80665694 = 0;
+}
+
 void CDeviceFontLayer::func_80454E6C() { lbl_eu_80665694 = 0; }
 
 u32 CDeviceFontLayer::func_80454E78() { return 0x10000; }

@@ -13,8 +13,6 @@ namespace snd {
 // Forward declarations
 class SoundHandle;
 
-namespace detail {
-
 class SoundActor : public SoundStartable {
 public:
     explicit SoundActor(SoundStartable& rStartable) : mStartable(rStartable) {
@@ -31,7 +29,7 @@ public:
         return mStartable.detail_ConvertLabelStringToSoundId(pLabel);
     } // at 0x10
 
-    ExternalSoundPlayer* detail_GetActorSoundPlayer(int idx) {
+    detail::ExternalSoundPlayer* detail_GetActorSoundPlayer(int idx) {
         if (idx < 0 || idx >= ACTOR_PLAYER_COUNT) {
             return NULL;
         }
@@ -42,7 +40,7 @@ public:
     template <typename TForEachFunc>
     TForEachFunc ForEachSound(TForEachFunc pFunc, bool reverse) {
         int i;
-        ExternalSoundPlayer* pPlayer = detail_GetActorSoundPlayer(0);
+        detail::ExternalSoundPlayer* pPlayer = detail_GetActorSoundPlayer(0);
 
         for (i = 0; i < ACTOR_PLAYER_COUNT; i++) {
             pPlayer->ForEachSound(pFunc, reverse);
@@ -57,10 +55,9 @@ private:
 
 private:
     SoundStartable& mStartable;                           // at 0x4
-    ExternalSoundPlayer mActorPlayer[ACTOR_PLAYER_COUNT]; // at 0x8
+    detail::ExternalSoundPlayer mActorPlayer[ACTOR_PLAYER_COUNT]; // at 0x8
 };
 
-} // namespace detail
 } // namespace snd
 } // namespace nw4r
 

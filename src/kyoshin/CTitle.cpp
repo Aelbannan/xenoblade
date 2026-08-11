@@ -208,7 +208,7 @@ void func_802B6B08(){}
 
 void func_802B6B38(){}
 
-void func_802B6B90(CTitleMenu* self) {
+extern "C" void func_802B6B90(CTitleMenu* self) {
     if (self->field_0x26 == 0) {
         self->field_0x26 = 1;
         func_802B6F64(self);
@@ -217,7 +217,7 @@ void func_802B6B90(CTitleMenu* self) {
     }
 }
 
-void func_802B6BDC(CTitleMenu* self) {
+extern "C" void func_802B6BDC(CTitleMenu* self) {
     if (self->field_0x26 == 2) {
         self->field_0x26 = 3;
         func_802B7094(self);
@@ -336,11 +336,19 @@ void func_802B7564(){}
 
 void func_802B7590(){}
 
-void func_802B75B8(){}
+extern "C" void func_802B75B8(CTitle* self) {
+    if (self->field_0x24 != 0) return;
+    self->field_0x24 = 1;
+    func_802B6B90(&self->mMenu);
+}
 
 void func_802B75D8(){}
 
-void func_802B7630(){}
+extern "C" void func_802B7630(CTitle* self) {
+    if (self->field_0x24 != 2) return;
+    self->field_0x24 = 3;
+    func_802B6BDC(&self->mMenu);
+}
 
 // Selection cursor up: while in the selection phase, step the menu index back
 // (wrapping from -1 to 2), reposition the cursor over the new entry, and cue

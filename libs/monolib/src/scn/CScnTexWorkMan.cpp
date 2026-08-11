@@ -21,11 +21,17 @@ extern char lbl_eu_80663910[8];   // assert va arg 1 (sda string)
 extern char lbl_eu_806639B8[4];   // assert va arg 2 (sda string)
 extern char lbl_eu_8056E820[];    // assert source file (alignment asserts)
 extern char lbl_eu_8056E7F8[];    // assert format ("not aligned" family)
+extern char lbl_eu_8056E194[];    // assert source file (node-null asserts, line 0x2c)
+extern char lbl_eu_8056E178[];    // assert format ("null pointer" family)
+extern char lbl_eu_806639BC[4];   // assert va arg 2 (sda string)
+extern char lbl_eu_8056E1C8[];    // assert source file (node-id asserts, line 0x38)
+extern char lbl_eu_8056E1A8[];    // assert format
 extern char lbl_eu_80529678[];    // assert source file (line 0x53 asserts)
 extern char lbl_eu_80529658[];    // assert format
 extern char lbl_eu_80524020[];    // memory-region name passed to MemManager::create
 
 // Shared .sdata2 float constants used by this unit (retail pool).
+extern const f32 lbl_eu_8066AA00;  // volume sentinel (nodes without volume)
 extern const f32 lbl_eu_8066AA04;  // 1.0f
 extern const f32 lbl_eu_8066AA08;  // 0.0f
 
@@ -49,6 +55,13 @@ struct CScnTexWorkManEntry {
     f32 field_0x1c;  // y-axis bound
     u8 field_0x20[0x2c - 0x20];
     f32 field_0x2c;  // z-axis bound
+};
+
+// Node-id collection list used by the node-tree walk (array at 0x0, count
+// at 0x4).
+struct CScnTexWorkManNodeIdList {
+    u32* array;  // 0x0
+    u32 count;   // 0x4
 };
 
 class CScnTexWorkMan : public CDeviceVICb {
@@ -310,8 +323,466 @@ void func_8049090C(){}
 
 void func_80490AF4(){}
 
-void func_80490B20(){}
+// Resolve a ResNode's next sibling (0x64 offset) - retail helper (stub).
+nw4r::g3d::ResNode func_8049090C(const nw4r::g3d::ResNode* pNode) {
+    return nw4r::g3d::ResNode();
+}
 
-void func_80491158(){}
+// Count every node whose bounding volume (volume_min/volume_max, 0x44..0x58)
+// is not the all-sentinel degenerate box, walking the tree as: node itself,
+// then the node's next sibling and its child. Each component check is guarded
+// by the retail node-null assert, and the six checks share one count tail.
+void func_80490B20(nw4r::g3d::ResNode* pNode, int* pCounter) {
+    if (pNode->ptr() == NULL) {
+        return;
+    }
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_min.x != lbl_eu_8066AA00) goto L_count;
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_min.y != lbl_eu_8066AA00) goto L_count;
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_min.z != lbl_eu_8066AA00) goto L_count;
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_max.x != lbl_eu_8066AA00) goto L_count;
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_max.y != lbl_eu_8066AA00) goto L_count;
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (pNode->ptr()->volume_max.z == lbl_eu_8066AA00) goto L_ok;
+L_count:
+    (*pCounter)++;
+L_ok:
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                        lbl_eu_80663910, lbl_eu_806639B8);
+    }
+    nw4r::g3d::ResNode sib;
+    if (pNode->ptr()->toNextSibling != 0) {
+        sib = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toNextSibling);
+        if (((u32)sib.ptr() & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        sib = nw4r::g3d::ResNode(NULL);
+    }
+    if (sib.ptr() != NULL) {
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_countSib;
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_countSib;
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_countSib;
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_countSib;
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_countSib;
+        if (sib.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+L_countSib:
+        (*pCounter)++;
+L_okSib:
+        nw4r::g3d::ResNode sib2 = func_8049090C(&sib);
+        func_80490B20(&sib2, pCounter);
+        nw4r::g3d::ResNode sib3 = func_804909A8(&sib);
+        func_80490B20(&sib3, pCounter);
+    }
+    if (pNode->ptr() == NULL) {
+        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                        lbl_eu_80663910, lbl_eu_806639B8);
+    }
+    nw4r::g3d::ResNode child;
+    if (pNode->ptr()->toChildNode != 0) {
+        child = nw4r::g3d::ResNode((u8*)pNode->ptr() + pNode->ptr()->toChildNode);
+        if (((u32)child.ptr() & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        child = nw4r::g3d::ResNode(NULL);
+    }
+    if (child.ptr() != NULL) {
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_countChild;
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_countChild;
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_countChild;
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_countChild;
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_countChild;
+        if (child.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+L_countChild:
+        (*pCounter)++;
+L_okChild:
+        nw4r::g3d::ResNode child2 = func_8049090C(&child);
+        func_80490B20(&child2, pCounter);
+        nw4r::g3d::ResNode child3 = func_804909A8(&child);
+        func_80490B20(&child3, pCounter);
+    }
+}
 
-void func_80491764(){}
+// Same tree walk as func_80490B20, but keeps the count in a local and returns
+// it: used for the model root node.
+int func_80491158(nw4r::g3d::ResNode* pNode) {
+    int counter = 0;
+    const nw4r::g3d::ResNodeData* node = pNode->ptr();
+    if (node != NULL) {
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != node->volume_min.x) goto L_count;
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != node->volume_min.y) goto L_count;
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != node->volume_min.z) goto L_count;
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != node->volume_max.x) goto L_count;
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != node->volume_max.y) goto L_count;
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 == node->volume_max.z) goto L_ok;
+L_count:
+        counter++;
+L_ok:
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                            lbl_eu_80663910, lbl_eu_806639B8);
+        }
+        nw4r::g3d::ResNode sib;
+        if (node->toNextSibling != 0) {
+            sib = nw4r::g3d::ResNode((u8*)node + node->toNextSibling);
+            if (((u32)sib.ptr() & 3) != 0) {
+                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+            }
+        } else {
+            sib = nw4r::g3d::ResNode(NULL);
+        }
+        if (sib.ptr() != NULL) {
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_countSib;
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_countSib;
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_countSib;
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_countSib;
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_countSib;
+            if (!sib.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+L_countSib:
+            counter++;
+L_okSib:
+            nw4r::g3d::ResNode sib2 = func_8049090C(&sib);
+            func_80490B20(&sib2, &counter);
+            nw4r::g3d::ResNode sib3 = func_804909A8(&sib);
+            func_80490B20(&sib3, &counter);
+        }
+        if (node == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                            lbl_eu_80663910, lbl_eu_806639B8);
+        }
+        nw4r::g3d::ResNode child;
+        if (node->toChildNode != 0) {
+            child = nw4r::g3d::ResNode((u8*)node + node->toChildNode);
+            if (((u32)child.ptr() & 3) != 0) {
+                nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+            }
+        } else {
+            child = nw4r::g3d::ResNode(NULL);
+        }
+        if (child.ptr() != NULL) {
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_countChild;
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_countChild;
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_countChild;
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_countChild;
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_countChild;
+            if (!child.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_806639BC);
+            }
+            if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+L_countChild:
+            counter++;
+L_okChild:
+            nw4r::g3d::ResNode child2 = func_8049090C(&child);
+            func_80490B20(&child2, &counter);
+            nw4r::g3d::ResNode child3 = func_804909A8(&child);
+            func_80490B20(&child3, &counter);
+        }
+    }
+    return counter;
+}
+
+// Same tree walk as func_80490B20, but non-degenerate nodes are collected by
+// id (node->id at 0xc, or 0 for a null node) into pList instead of counted.
+void func_80491764(nw4r::g3d::ResNode* pNode, CScnTexWorkManNodeIdList* pList) {
+    if (pNode->ptr() == NULL) {
+        return;
+    }
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.x) goto L_mismatch;
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.y) goto L_mismatch;
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 != pNode->ptr()->volume_min.z) goto L_mismatch;
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.x) goto L_mismatch;
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 != pNode->ptr()->volume_max.y) goto L_mismatch;
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                        lbl_eu_80663910, lbl_eu_806639BC);
+    }
+    if (lbl_eu_8066AA00 == pNode->ptr()->volume_max.z) goto L_ok;
+L_mismatch:
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+    }
+    {
+        const nw4r::g3d::ResNodeData* n = pNode->ptr();
+        pList->array[pList->count++] = (n != NULL ? n->id : 0);
+    }
+L_ok:
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                        lbl_eu_80663910, lbl_eu_806639B8);
+    }
+    const nw4r::g3d::ResNodeData* node = pNode->ptr();
+    nw4r::g3d::ResNode sib;
+    if (node->toNextSibling != 0) {
+        sib = nw4r::g3d::ResNode((u8*)node + node->toNextSibling);
+        if (((u32)sib.ptr() & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        sib = nw4r::g3d::ResNode(NULL);
+    }
+    if (sib.ptr() != NULL) {
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.x) goto L_mismatchSib;
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.y) goto L_mismatchSib;
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_min.z) goto L_mismatchSib;
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.x) goto L_mismatchSib;
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != sib.ptr()->volume_max.y) goto L_mismatchSib;
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 == sib.ptr()->volume_max.z) goto L_okSib;
+L_mismatchSib:
+        if (!sib.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+        }
+        {
+            const nw4r::g3d::ResNodeData* n = sib.ptr();
+            pList->array[pList->count++] = (n != NULL ? n->id : 0);
+        }
+L_okSib:
+        nw4r::g3d::ResNode sib2 = func_8049090C(&sib);
+        func_80491764(&sib2, pList);
+        nw4r::g3d::ResNode sib3 = func_804909A8(&sib);
+        func_80491764(&sib3, pList);
+    }
+    if (!pNode->IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E850, 0x2c, lbl_eu_8056E834,
+                        lbl_eu_80663910, lbl_eu_806639B8);
+    }
+    node = pNode->ptr();
+    nw4r::g3d::ResNode child;
+    if (node->toChildNode != 0) {
+        child = nw4r::g3d::ResNode((u8*)node + node->toChildNode);
+        if (((u32)child.ptr() & 3) != 0) {
+            nw4r::db::Panic(lbl_eu_8056E820, 0x2c, lbl_eu_8056E7F8);
+        }
+    } else {
+        child = nw4r::g3d::ResNode(NULL);
+    }
+    if (child.ptr() != NULL) {
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.x) goto L_mismatchChild;
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.y) goto L_mismatchChild;
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_min.z) goto L_mismatchChild;
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_max.x) goto L_mismatchChild;
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 != child.ptr()->volume_max.y) goto L_mismatchChild;
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_806639BC);
+        }
+        if (lbl_eu_8066AA00 == child.ptr()->volume_max.z) goto L_okChild;
+L_mismatchChild:
+        if (!child.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+        }
+        {
+            const nw4r::g3d::ResNodeData* n = child.ptr();
+            pList->array[pList->count++] = (n != NULL ? n->id : 0);
+        }
+L_okChild:
+        nw4r::g3d::ResNode child2 = func_8049090C(&child);
+        func_80491764(&child2, pList);
+        nw4r::g3d::ResNode child3 = func_804909A8(&child);
+        func_80491764(&child3, pList);
+    }
+}

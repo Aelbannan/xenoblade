@@ -128,7 +128,7 @@ namespace cf {
         virtual void* CfObjectModel_UnkVirtualFunc3();  //0x180 (retail returns a pointer)
         virtual void CfObjectModel_UnkVirtualFunc4();  //0x184
         virtual void CfObjectModel_UnkVirtualFunc5();  //0x188
-        virtual void CfObjectModel_UnkVirtualFunc6();  //0x18C
+        virtual void* CfObjectModel_UnkVirtualFunc6();  //0x18C (retail returns a pointer)
         virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
         virtual u32 CfObjectModel_UnkVirtualFunc8();   //0x194 (retail returns a bit value)
         virtual void CfObjectModel_UnkVirtualFunc9();  //0x198

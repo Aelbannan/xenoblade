@@ -7,7 +7,7 @@
 #include "monolib/math/CVec4.hpp"
 void __ct__CTaskEnvironment(){}
 
-void copyWord4(u32* dst, const u32* src) {
+extern "C" void copyWord4(u32* dst, const u32* src) {
     const u32* s = src;
     u32* d = dst;
     d[0] = s[0];
@@ -87,7 +87,7 @@ void func_80059974(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b) {
     out->w = w;
 }
 
-void copyWord4Offset(u32* dst, const u32* src) {
+extern "C" void copyWord4Offset(u32* dst, const u32* src) {
     dst[1] = src[0];
     dst[2] = src[1];
     dst[3] = src[2];

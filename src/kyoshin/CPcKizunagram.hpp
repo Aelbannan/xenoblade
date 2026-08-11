@@ -42,7 +42,22 @@ public:
     f32 mFloat48;                             // 0x48
     CPcKizunagram();
     ~CPcKizunagram();
-    void OnFileEvent();
+    int OnFileEvent(CEventFile* event);
+};
+
+// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// (index 7, no args) yields the u32 bound into the layout's font pane.
+// All-pure so no vtable is emitted; the call keeps the retail r12 dispatch.
+class CDeviceFontVtblView {
+public:
+    virtual void vf0() = 0; // index 0 -> +0x08
+    virtual void vf1() = 0; // index 1 -> +0x0C
+    virtual void vf2() = 0; // index 2 -> +0x10
+    virtual void vf3() = 0; // index 3 -> +0x14
+    virtual void vf4() = 0; // index 4 -> +0x18
+    virtual void vf5() = 0; // index 5 -> +0x1C
+    virtual void vf6() = 0; // index 6 -> +0x20
+    virtual u32 vf7() = 0;  // index 7 -> +0x24
 };
 
 // C-linkage accessors matching retail unmangled symbols.
@@ -69,9 +84,15 @@ public:
     u8 mField15;                              // 0x15
     u8 mField16;                              // 0x16
 
-    CPcKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor);
     ~CPcKizunaCur();
 };
+
+// Retail ctor symbol __ct__CPcKizunaCur is UNMANGLED (no class-length prefix),
+// so it cannot be expressed as a real member ctor (MWCC would mangle the
+// call-site reloc to __ct__12CPcKizunaCurFP...). The C-linkage form below
+// reproduces the retail name and keeps the call site a direct bl.
+extern "C" void __declspec(noinline) __ct__CPcKizunaCur(CPcKizunaCur* self,
+                                                        nw4r::lyt::ArcResourceAccessor* accessor);
 
 // ---------------------------------------------------------------------------
 // Support types for the free functions in this TU (not part of CPcKizunagram).
@@ -88,8 +109,9 @@ struct CPcKizunaSlotEntry {           // 0x20 bytes
     u16 field04;                      // 0x04 - per-entry runtime id (BDAT key)
     u8  field06[2];                   // 0x06 .. 0x07
     u32 field08;                      // 0x08 - runtime word (func_8025EE94)
-    u8  field0C[4];                   // 0x0C .. 0x0F
-    u8  field10[4];                   // 0x10 .. 0x13
+    u16 field0C;                      // 0x0C - runtime halfword (func_8025F2E8)
+    u8  field0E[2];                   // 0x0E .. 0x0F
+    f32 field10;                      // 0x10 - runtime float (func_8025F2E8)
     u8  byte14;                       // 0x14
     u8  field15[3];                   // 0x15 .. 0x17
     CPcKizunaSlotEntry* pField18;     // 0x18 - runtime linked-list next
@@ -127,6 +149,33 @@ struct CPcKizunagramBig {
     u32 field_0x884;                    // 0x884
     u8 data888[0x14];                   // 0x888 .. 0x89C
     int field_0x89C;                    // 0x89C
+};
+
+// Chart object shared by func_8025F2E8/F528/F768/F9AC (starts at work+0x3534).
+// The per-character working slot array at 0x3D4 overlaps the tail of the total
+// slot array (0x000, searched for duplicate ids) and the persistence bitmap
+// (0x870) in the retail object, so the two views are a union.
+struct CPcKizunaChart {
+    union {
+        struct {
+            CPcKizunaSlot searchSlots[0xb];  // 0x000 - total affinity chart
+            u32 field_0x86C;                 // 0x86C
+            u8  data870[0x14];               // 0x870 - persistence bitmap
+        };
+        struct {
+            u8  _pad000[0x3D4];              // 0x000 .. 0x3D3
+            CPcKizunaSlot workSlots[0xb];    // 0x3D4 - current chart entries
+        };
+    };
+};
+
+// Working-copy entry view: for a total-chart position (slot a, sub b-1), the
+// matching working entry sits 0x3D4 bytes past that position. Retail keeps the
+// position as the base register and reads the entry fields as +0x3D4
+// displacements, so field accesses go through this padded view.
+struct CPcKizunaWorkEntryPos {
+    u8 _pad[0x3D4];               // 0x000
+    CPcKizunaSlotEntry entry;     // 0x3D4
 };
 
 // func_8025D6E0: nested pointer chain -> leaf struct holding a Vec3 at 0x2C.
@@ -170,6 +219,7 @@ extern "C" void func_8025E56C(CPcKizunagram* self);
 extern "C" void func_8025E5A8(CPcKizunagram* self);
 extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value);
 extern "C" void func_8025EE94(CPcKizunagramBig* self);
+extern "C" void func_8025F9AC(CPcKizunaChart* self, int a, int b);
 extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val);
 extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id);
 extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id);
@@ -182,8 +232,9 @@ extern "C" void func_80138078__FUl(u32 arg);
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 
-// BDAT table pointer (loaded via sda21 by func_8025EE94).
+// BDAT table pointer (loaded via sda21 by func_8025EE94 / func_8025F2E8).
 extern "C" u32 lbl_eu_8066415C;
+extern "C" u32 lbl_eu_80664158;
 
 // Format-string constants blended into a column-name buffer (func_8025EE94).
 extern "C" u32 lbl_eu_806688A8;
@@ -205,6 +256,12 @@ extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void func_8013676C(void*, u32);
 
+// Scratch region guard (RAII Class_8045F858): explicit buffer + C-ABI ctor/dtor
+// calls so the retail stack slot and the -1 dealloc flag match exactly.
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(Class_8045F858* self,
+                                                            UnkClass_8045F564* base);
+extern "C" void __dt__14Class_8045F858Fv(Class_8045F858* self, int dealloc);
+
 // BDAT / random / pane-text helpers with unmangled retail names.
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" char* func_80136190(const void*, const void*, int);
@@ -213,6 +270,7 @@ extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" int func_801C4648(void);
 extern "C" u16 func_8013606C(const void*, const void*, u32);
 extern "C" u32 func_8009CF8C(u32);
+extern "C" u32 func_801355BC(void);
 extern "C" void func_80137F88(nw4r::lyt::Pane*, void*);
 extern "C" void func_80137C1C(void*, u32);
 extern "C" void func_8013AB0C(u8*, u8*, int);
@@ -228,12 +286,15 @@ extern "C" void func_80124270(void*, u32);
 // Cursor destroy helper (external retail symbol, not in this TU).
 extern "C" void func_8025D688(CPcKizunaCur* cur);
 
-// Fixed 8-entry cursor-row ordering (signed bytes) kept in .sdata2.
+// Fixed 8-entry cursor-row ordering (signed bytes) kept in .sdata2 as two
+// separate u32 words (retail loads lbl_eu_80668888 and lbl_eu_8066888C via
+// @sda21 individually).
 extern "C" void* func_8003AA34(void);
 struct S8Bytes {
     union {
         u32 w[2];   // copied as two words (lwz/stw pair into the local)
-        u8  b[8];   // byte access for the order lookups
+        s8  b[8];   // byte access for the order lookups (retail lbzx sign-extends)
     };
 };
-extern "C" S8Bytes lbl_eu_80668888;
+extern u32 lbl_eu_80668888;
+extern u32 lbl_eu_8066888C;

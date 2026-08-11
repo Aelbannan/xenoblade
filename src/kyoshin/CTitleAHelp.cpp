@@ -101,7 +101,7 @@ u8 CTitleAHelp::func_801C411C() {
 u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c != 0) {
+    if (unk2c == 0) {
         unk2c = 1;
         unk36 = 0;
     }

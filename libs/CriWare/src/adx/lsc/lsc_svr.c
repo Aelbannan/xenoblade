@@ -16,7 +16,7 @@ extern void ADXSTM_Start(void *);
 extern int ADXSTM_GetStat(void *);
 extern int ADXSTM_Tell(void *);
 extern void LSC_CallErrFunc_(const char *, ...);
-extern void LSC_CallStatFunc(void *);
+extern void *LSC_CallStatFunc(void *);
 extern int LSC_EntryFileRange(void *, const char *, s32, s32, s32);
 
 extern char lbl_eu_80518420[];

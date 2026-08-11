@@ -75,10 +75,39 @@ struct CQstLogListSortMenuData {
      +0x80: CSortMenu (0xF0 bytes)
      +0x170: layout-loaded flag
      +0x182: quest-info buffer (8x0x400 array + 6-byte tail, 0x2006 bytes) */
+// Field view of the opaque CCur18 sub-object (CBaseCur layout + padding).
+// Used to copy a stack-constructed CCur18 into the embedded mCur18 region
+// without touching the +0x00 vtable pointer (retail copies +0x04..+0x15).
+struct CCur18Data {
+    void* mVtbl;    // +0x00 - not copied
+    void* field_4;  // +0x04
+    void* field_8;  // +0x08
+    void* field_C;  // +0x0C
+    void* field_10; // +0x10
+    u8 field_14;    // +0x14
+    u8 field_15;    // +0x15
+};
+
+// Overlay structs for the 'timg' message resource consumed by OnFileEvent:
+// the resource object holds a chain whose first field points at the u16
+// row/column pair used to size the quest-log panes.
+struct CQstLogListCoords {
+    u16 c0;  // 0x0 column
+    u16 c2;  // 0x2 row
+};
+struct CQstLogListMsgChain {
+    CQstLogListCoords* pCoords;  // 0x0
+};
+struct CQstLogListMsgObj {
+    u8 gap[0x8];
+    CQstLogListMsgChain* chain;  // 0x8
+};
+
 struct CQstLogList {
     CQstLogList(u16 arg2);   // retail symbol __ct__CQstLogList (unmangled ctor)
     u8 func_80227CCC();
     u8 func_80227CD4();
+    int OnFileEvent(CEventFile* event);   // file-load completion callback
     ~CQstLogList();
 
     u32 mVtable;                     // 0x00..0x03 (vtable pointer)
@@ -112,7 +141,7 @@ extern "C" void func_80228544(CQstLogList* self);
 extern "C" void func_802285A4(CQstLogList* self);
 extern "C" void func_80228B10(CQstLogList* self);
 extern "C" void func_802286F4(CQstLogList* self, const char* name, int questId,
-                              int index, u32 mode, u8 a6, u8 a7);
+                              int index, int mode, u8 a6, u8 a7);
 extern "C" void func_802289F8(CQstLogList* self);
 extern "C" void func_80228C04(CQstLogList* self);
 extern "C" void func_80228C98(CQstLogList* self);
@@ -169,6 +198,15 @@ extern "C" void func_80227260(u8*, u32, u32);
 extern "C" u16 selectQstIndex(const u8*);
 extern "C" CQstLogListQstInfo* func_802276F4(u8*, u16);
 extern "C" u32 func_80138138(u16);
+extern "C" void func_802270CC(u8*);               // QstData refresh
+// Quest-list row count for the given quest-log list id (returns u16).
+extern "C" u16 func_80227710(u8*, u16);
+
+// BDAT helpers / msg-manager imports (C-ABI retail symbols).
+extern "C" u32 func_8003B1EC(void*);              // BDAT row count
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern void* lbl_eu_806640A0;                      // BDAT table pointer (.sbss)
 
 // Layout/text helpers with unmangled retail names (declared here; the
 // code_80135FDC.hpp set is co-included for func_8013639C/func_80136B4C).

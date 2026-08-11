@@ -94,17 +94,15 @@ void func_8018F1FC(){}
 
 void func_8018F2EC(){}
 
-void func_8018F368(){}
+extern "C" __declspec(noinline) void func_8018F368(void*){}
 
-void func_8018F46C(){}
+extern "C" __declspec(noinline) void func_8018F46C(void*){}
 
-void func_8018F510(void* self, unsigned long cond){
-    extern void func_8018F368(void*);
-    extern void func_8018F46C(void*);
-    if (cond == 0)
-        func_8018F46C(self);
-    else
+extern "C" void func_8018F510(void* self, unsigned long cond){
+    if (cond != 0)
         func_8018F368(self);
+    else
+        func_8018F46C(self);
 }
 
 void func_8018F520(){}

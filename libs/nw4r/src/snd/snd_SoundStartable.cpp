@@ -4,13 +4,11 @@ namespace nw4r {
 namespace snd {
 
 SoundStartable::StartResult SoundStartable::detail_StartSound(
-    SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientArgInfo* pArgInfo,
-    detail::ExternalSoundPlayer* pPlayer, const StartInfo* pStartInfo) {
+    SoundHandle* pHandle, u32 id, const StartInfo* pStartInfo) {
 
-    // Retail signature is a slim 3-arg form (no pArgInfo/pPlayer); the
-    // extra params exist here only to match the header's StartSound wiring.
+    // Retail signature is the slim 3-arg form (retail 0x80423324).
     StartResult result =
-        detail_SetupSound(pHandle, id, pArgInfo, pPlayer, false, pStartInfo);
+        detail_SetupSound(pHandle, id, false, pStartInfo);
 
     if (result != START_SUCCESS) {
         return result;
@@ -18,36 +16,6 @@ SoundStartable::StartResult SoundStartable::detail_StartSound(
 
     pHandle->StartPrepared();
     return START_SUCCESS;
-}
-
-SoundStartable::StartResult SoundStartable::detail_HoldSound(
-    SoundHandle* pHandle, u32 id, detail::BasicSound::AmbientArgInfo* pArgInfo,
-    detail::ExternalSoundPlayer* pPlayer, const StartInfo* pStartInfo) {
-
-    if (pHandle->IsAttachedSound() && id == pHandle->GetId()) {
-        pHandle->detail_GetAttachedSound()->SetAutoStopCounter(1);
-        return START_SUCCESS;
-    }
-
-    StartResult result =
-        detail_SetupSound(pHandle, id, pArgInfo, pPlayer, true, pStartInfo);
-
-    if (result != START_SUCCESS) {
-        return result;
-    }
-
-    pHandle->StartPrepared();
-    pHandle->detail_GetAttachedSound()->SetAutoStopCounter(1);
-    return START_SUCCESS;
-}
-
-SoundStartable::StartResult
-SoundStartable::detail_PrepareSound(SoundHandle* handle, u32 targetID,
-                                    detail::BasicSound::AmbientArgInfo* argInfo,
-                                    detail::ExternalSoundPlayer* player,
-                                    const StartInfo* startInfo) {
-    return detail_SetupSound(handle, targetID, argInfo, player, false,
-                             startInfo);
 }
 
 } // namespace snd

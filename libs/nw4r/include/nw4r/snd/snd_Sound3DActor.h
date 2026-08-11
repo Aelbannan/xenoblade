@@ -15,7 +15,7 @@ class Sound3DManager;
 class SoundArchivePlayer;
 class SoundHandle;
 
-class Sound3DActor : public detail::SoundActor,
+class Sound3DActor : public SoundActor,
                      public detail::BasicSound::AmbientArgUpdateCallback {
 public:
     Sound3DActor(SoundArchivePlayer& rPlayer, Sound3DManager& rManager);

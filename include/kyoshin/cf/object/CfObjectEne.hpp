@@ -47,6 +47,7 @@ extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
 extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
 extern "C" void func_800ADDA8__Q22cf11CfObjectEneFv(void* self);
+extern "C" void func_800ADB2C__Q22cf11CfObjectEneFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);

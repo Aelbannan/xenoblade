@@ -17,8 +17,8 @@ int func_80042864() {
     return lbl_eu_80663D1C != 0;
 }
 
-extern u32 lbl_eu_80663F24;
-void func_80122460(){ lbl_eu_80663F24 = 0; }
+extern u32 lbl_eu_80663FD0;
+void func_80122460(){ lbl_eu_80663FD0 = 0; }
 
 void func_80122654(){}
 

@@ -916,8 +916,8 @@ void CLibCriStreamingPlay::func_8045D140() {
     base->func_8045CF30();
 }
 
-// func_8045D148 - CDeviceVICb thunk: adjust this and call destructor
-void CLibCriStreamingPlay::func_8045D148() {
-    CLibCriStreamingPlay* base = (CLibCriStreamingPlay*)((u8*)this - 0x1C4);
-    base->~CLibCriStreamingPlay();
+// func_8045D148 - CDeviceVICb thunk: adjust this and tail-branch to destructor
+// (virtual ~ call would dispatch via vtable; retail tail-branches to __dt__ directly)
+extern "C" void func_8045D148__20CLibCriStreamingPlayFv(void* self) {
+    ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1C4);
 }

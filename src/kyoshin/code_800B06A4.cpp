@@ -436,12 +436,12 @@ UnkClass_800B0AD8* __dt__800B0AF4(UnkClass_800B0AD8* self, int flags) {
 }
 
 // Target 2: us-800b6274 - Store value at array index, increment counter.
+// Single-expression postfix form `arr[(*cnt)++] = *val` is required: it puts
+// the rlwinm addr in r0 and the addi next in r4 (dead param reg) exactly like
+// retail; the two-statement form always emits the swapped colors (r0/r4).
 extern "C" void func_800B5978(UnkClass_805764CC* self, const u32* val) {
-    u32 idx = *(u32*)((u8*)self + 0x380);
-    u32 next = idx + 1;
-    u32 v = *val;
-    ((u32*)self)[idx] = v;
-    *(u32*)((u8*)self + 0x380) = next;
+    u32* cnt = (u32*)((u8*)self + 0x380);
+    ((u32*)self)[(*cnt)++] = *val;
 }
 void init_5994(){}
 void init_6484(){}

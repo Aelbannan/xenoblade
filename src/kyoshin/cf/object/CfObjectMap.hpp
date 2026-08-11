@@ -247,7 +247,7 @@ namespace cf {
         float field_0x2F48;                // 0x2F48
         u8 field_0x2F4C[0x2F50 - 0x2F4C];  // 0x2F4C-0x2F4F
 
-        void func_800B9A70();
+        void* func_800B9A70();
         void func_800B9AB4();
         void func_800B9B78();
         void func_800B9E3C(unsigned long v);

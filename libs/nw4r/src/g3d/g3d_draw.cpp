@@ -163,6 +163,13 @@ template void __sort132<
               const nw4r::g3d::detail::workmem::MdlZ&));
 } // namespace std
 
+// Float constants shared by the loop body. Retail loads these once before the
+// loop and keeps them in f29-f31 (lbl_eu_80669C48 = 0.0f, 80669C4C = -2.0f,
+// 80669C50 = 1.0f); referencing the retail names keeps the SDA21 relocs right.
+extern f32 lbl_eu_80669C48;
+extern f32 lbl_eu_80669C4C;
+extern f32 lbl_eu_80669C50;
+
 namespace nw4r {
 namespace g3d {
 
@@ -199,6 +206,12 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
     G3DState::IndMtxOp& rOp = *G3DState::GetIndMtxOp();
     rOp.Reset();
 
+    // Load the shared constants once (retail keeps them in f29-f31 across the
+    // whole loop: f29 = -2.0f, f30 = 1.0f, f31 = 0.0f).
+    const f32 cNegTwo = lbl_eu_80669C4C;
+    const f32 cOne = lbl_eu_80669C50;
+    const f32 cZero = lbl_eu_80669C48;
+
     for (i = 0; i < GX_ITM_2 - GX_ITM_0 + 1; i++) {
         GXIndTexMtxID id = static_cast<GXIndTexMtxID>(i + 1);
 
@@ -217,15 +230,12 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
                     nrmMtx._00 = pViewNrm->_00;
                     nrmMtx._01 = pViewNrm->_01;
                     nrmMtx._02 = pViewNrm->_02;
-                    nrmMtx._03 = 0.0f;
                     nrmMtx._10 = pViewNrm->_10;
                     nrmMtx._11 = pViewNrm->_11;
                     nrmMtx._12 = pViewNrm->_12;
-                    nrmMtx._13 = 0.0f;
                     nrmMtx._20 = pViewNrm->_20;
                     nrmMtx._21 = pViewNrm->_21;
                     nrmMtx._22 = pViewNrm->_22;
-                    nrmMtx._23 = 0.0f;
                 } else {
                     ResMdl mdl = mat.GetParent();
 
@@ -250,39 +260,46 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
                     viewNrm34._00 = pViewNrm->_00;
                     viewNrm34._01 = pViewNrm->_01;
                     viewNrm34._02 = pViewNrm->_02;
-                    viewNrm34._03 = 0.0f;
+                    viewNrm34._03 = cZero;
                     viewNrm34._10 = pViewNrm->_10;
                     viewNrm34._11 = pViewNrm->_11;
                     viewNrm34._12 = pViewNrm->_12;
-                    viewNrm34._13 = 0.0f;
+                    viewNrm34._13 = cZero;
                     viewNrm34._20 = pViewNrm->_20;
                     viewNrm34._21 = pViewNrm->_21;
                     viewNrm34._22 = pViewNrm->_22;
-                    viewNrm34._23 = 0.0f;
+                    viewNrm34._23 = cZero;
 
                     math::MTX34Mult(&nrmMtx, &viewNrm34, &nrmMtx);
                 }
+
+                // The 4th column is zeroed here so the viewNrm copy path and
+                // the concat path share the same stores; the camera-matrix
+                // path skips the normalization entirely.
+                nrmMtx._03 = cZero;
+                nrmMtx._13 = cZero;
+                nrmMtx._23 = cZero;
+
+                math::VEC3 col0(nrmMtx._00, nrmMtx._10, nrmMtx._20);
+                math::VEC3Normalize(&col0, &col0);
+                nrmMtx._00 = col0.x;
+                nrmMtx._10 = col0.y;
+                nrmMtx._20 = col0.z;
+
+                math::VEC3 col1(nrmMtx._01, nrmMtx._11, nrmMtx._21);
+                math::VEC3Normalize(&col1, &col1);
+                nrmMtx._01 = col1.x;
+                nrmMtx._11 = col1.y;
+                nrmMtx._21 = col1.z;
+
+                math::VEC3 col2(nrmMtx._02, nrmMtx._12, nrmMtx._22);
+                math::VEC3Normalize(&col2, &col2);
+                nrmMtx._02 = col2.x;
+                nrmMtx._12 = col2.y;
+                nrmMtx._22 = col2.z;
             } else {
                 math::MTX34Copy(&nrmMtx, G3DState::GetCameraMtxPtr());
             }
-
-            math::VEC3 col0(nrmMtx._00, nrmMtx._10, nrmMtx._20);
-            math::VEC3Normalize(&col0, &col0);
-            nrmMtx._00 = col0.x;
-            nrmMtx._10 = col0.y;
-            nrmMtx._20 = col0.z;
-
-            math::VEC3 col1(nrmMtx._01, nrmMtx._11, nrmMtx._21);
-            math::VEC3Normalize(&col1, &col1);
-            nrmMtx._01 = col1.x;
-            nrmMtx._11 = col1.y;
-            nrmMtx._21 = col1.z;
-
-            math::VEC3 col2(nrmMtx._02, nrmMtx._12, nrmMtx._22);
-            math::VEC3Normalize(&col2, &col2);
-            nrmMtx._02 = col2.x;
-            nrmMtx._12 = col2.y;
-            nrmMtx._22 = col2.z;
         }
 
         const LightObj* pLight = G3DState::GetLightObj(lightRef[i]);
@@ -293,8 +310,9 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
             if (pLight->IsSpotLight()) {
                 pLight->GetLightDir(&lightVec);
 
-                if (lightVec.x == 0.0f && lightVec.y == 0.0f &&
-                    lightVec.z == 0.0f) {
+                if (lightVec.x == cZero &&
+                    lightVec.y == cZero &&
+                    lightVec.z == cZero) {
                     pLight->GetLightPos(&lightVec);
                     lightVec.x = -lightVec.x;
                     lightVec.y = -lightVec.y;
@@ -310,9 +328,9 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
             } else {
                 math::VEC3 H;
                 pLight->GetLightDir(&H);
-                lightVec.x = -2.0f * H.z * H.x;
-                lightVec.y = -2.0f * H.z * H.y;
-                lightVec.z = -2.0f * H.z * H.z + 1.0f;
+                lightVec.x = cNegTwo * H.z * H.x;
+                lightVec.y = cNegTwo * H.z * H.y;
+                lightVec.z = cNegTwo * H.z * H.z + cOne;
                 math::VEC3Normalize(&lightVec, &lightVec);
             }
 

@@ -62,21 +62,16 @@ CTaskGameCf* CTaskGameCf::getInstance() {
         }
     }
 
-extern const CTaskGameCf::MoveFunc lbl_eu_80525AB8;
+extern "C" const CTaskGameCf::MoveFunc lbl_eu_80525AB8;
+extern "C" const u32 lbl_eu_80525B0C[3];
 
 void CTaskGameCf::func_8004431C() {
     mMoveFunc = lbl_eu_80525AB8;
 }
 
-extern const u32 lbl_eu_80525AC4[3];
-
 void CTaskGameCf::func_8004433C() {
-    u32 v1 = lbl_eu_80525AC4[1];
-    u32 v0 = lbl_eu_80525AC4[0];
-    reinterpret_cast<u32*>(this)[0x40 / 4] = v1;
-    reinterpret_cast<u32*>(this)[0x3C / 4] = v0;
-    u32 v2 = lbl_eu_80525AC4[2];
-    reinterpret_cast<u32*>(this)[0x44 / 4] = v2;
+    typedef void (cf::CTaskGameCf::*Ptmf)();
+    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::startContinue;
 }
 
     #pragma optimize_for_size on
@@ -133,7 +128,7 @@ void cf::CTaskGameCf::func_800444DC(){
     *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
 
-CTaskGameCf::MoveFunc lbl_eu_80525B18;
+extern "C" CTaskGameCf::MoveFunc lbl_eu_80525B18;
 
 void CTaskGameCf::func_800444FC(){
     mMoveFunc = lbl_eu_80525B18;

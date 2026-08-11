@@ -307,8 +307,9 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc66(int) {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc19() {}
 
-extern "C" void CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
+extern "C" void* CfObjectModel_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) {
     reinterpret_cast<ObjVtIf*>(*(void**)((u8*)self + 0xb0))->vf48();
+    return NULL;
 }
 
 int cf::CfObjectMove::nullsub_26() { return 0; }

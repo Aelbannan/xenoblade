@@ -68,20 +68,20 @@ public:
 
     detail::SeqSound* detail_AllocSeqSound(
         int priority, int startPriority,
-        detail::BasicSound::AmbientArgInfo* pArgInfo,
-        detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+        detail::BasicSound::AmbientInfo* pArgInfo,
+        SoundActor* pActor, u32 id,
         detail::SoundInstanceManager<detail::SeqSound>* pManager);
 
     detail::StrmSound* detail_AllocStrmSound(
         int priority, int startPriority,
-        detail::BasicSound::AmbientArgInfo* pArgInfo,
-        detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+        detail::BasicSound::AmbientInfo* pArgInfo,
+        SoundActor* pActor, u32 id,
         detail::SoundInstanceManager<detail::StrmSound>* pManager);
 
     detail::WaveSound* detail_AllocWaveSound(
         int priority, int startPriority,
-        detail::BasicSound::AmbientArgInfo* pArgInfo,
-        detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+        detail::BasicSound::AmbientInfo* pArgInfo,
+        SoundActor* pActor, u32 id,
         detail::SoundInstanceManager<detail::WaveSound>* pManager);
 
     int CalcPriorityReduction(detail::BasicSound::AmbientArgInfo* pArgInfo,

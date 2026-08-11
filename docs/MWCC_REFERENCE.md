@@ -85,6 +85,26 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
   function in `#pragma optimize_for_size on` … `off` (or place it before the
   `off`) to keep `subic/subfe`.
 
+- **Array-push with counter: single-expression postfix form fixes Chaitin
+  colors (`arr[(*cnt)++] = v`):** `func_800B5978` (kyoshin/code_800B06A4.cpp,
+  us-800b6274, 0x1C) plateaued at 93.6% (6 pure reg-swaps, 0 structural) since
+  first attempt. The natural two-statement shape
+  `u32 idx = *cnt; arr[idx] = v; *cnt = idx + 1;` makes Wii/1.1 always emit
+  `lwz r6; lwz r5; rlwinm r4; addi r0; stwx r5,r3,r4; stw r0` (swapped
+  colors: loads r5↔r6, temps r0↔r4) — invariant across ~20 source shapes
+  (decl order, hoisted locals, struct members, signed/unsigned, raw casts,
+  pointer locals, `-ipa on/off`, `-O4,p`/`-O4,s`, GC/3.0a5.2, `-O3`). The
+  witness gate rejects the pure-renaming proof because the permutation maps
+  ABI r4→r0 (`rho perm maps gpr r4 -> r0; ABI registers must be fixed`), so
+  EQUIVALENT_MATCH is unreachable — FULL_MATCH is the only route. The winning
+  shape is the **single-expression postfix increment**
+  `u32* cnt = (u32*)((u8*)self + 0x380); ((u32*)self)[(*cnt)++] = *val;` —
+  the postfix subexpression defines `next = idx+1` before the array-store
+  address in the IR, so MWCC colors `rlwinm addr→r0` and `addi next→r4`
+  (dead param reg) exactly like retail: 100% byte-identical. Mechanism:
+  the two-statement form always computes the address before the increment,
+  while the postfix form lets MWCC common the increment into r4.
+
 - **Double-hop thunks (vptr at obj+0x10, this=obj, r4 must pass through):**
   retail `lwz r3,0xb0(r3); lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctr`.
   The fn-pointer form `((VFn*)*(void**)(obj+0x10))[N](obj)` clobbers r4 (an
@@ -4716,6 +4736,30 @@ rounding: `lpStart = (lpStart + 0x7FF) >> 11; lpStart <<= 11;` folded to
 `s32 rounded = (lpStart + 0x7FF) / 0x800; lpStart = rounded << 11;` — the
 explicit temp stopped MWCC folding the div+shift pair and reproduced
 `addi;srawi;addze;slwi` byte-for-byte (100%).
+
+### CriWare lsc.c `LSC_CallStatFunc` — FULL_MATCH: `#pragma peephole off` + return-pass-through (GC/3.0a5.2, `-O4,p`)
+
+Global-table dispatch `if (tbl[0]==0) return; tbl[0](tbl[1], tbl[2]);`
+(us-80395984, 0x28) was stuck at 10% (8 structural + 1 reg_swap, size
+0x24 vs 0x28 — the decomp was 4 bytes SHORT). Root cause: MWCC fuses the
+lis+addi address materialization with the first load into **`lwzu r12,
+LO(r4)`** (0x24), while retail keeps `lis r4,HA; addi r4,r4,LO; lwz r12,0(r4)`
+(0x28). The fold is unconditional across ~35 source shapes (pointer local,
+direct array refs, struct casts, volatile, `-ipa on/off`, `-O1..-O4,s`,
+Wii/1.1 vs GC/3.0a5.2 — the non-folding `-O1` adds a frame + `beq`, the
+`-O4,p` scheduler either folds or defers the addi into the taken branch).
+Two-lever fix:
+1. **`#pragma peephole off` … `on` around the function** — blocks the lwzu
+   peephole (addi+lwz→lwzu), yielding `lis; addi; lwz` with the address in a
+   register (verified: the ONLY lever that kills the fold at `-O4,p`).
+2. **`void *` return + `return h` null path + `return fn(a1,a2)`** — the
+   return-value liveness keeps the address base in **r4** (retail) instead of
+   r3 (decomp); the final `return fn(a1,a2)` passes the callee's r3 through
+   with no extra move, reproducing retail's `bctrl; blr` tail exactly.
+Result: 100% byte-identical, size 0x28/0x28. The `return h`/`return fn(...)`
+semantics are faithful (retail's null path leaves r3 = h untouched; the call
+path returns the callee's r3). Caller-side externs updated to
+`void *LSC_CallStatFunc(void *);` in lsc.c and lsc_svr.c.
 
 **Struct-typed locals avoid stack-overlap UB.** `adxt_InsertSilence` read the
 vtbl chunk result via `void* data; *(s32*)((u8*)&data + 4)` — MWCC placed

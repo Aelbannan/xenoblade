@@ -20,3 +20,4 @@ NOTES
 - Auto promotion of units that match text/data/size
 - Integrate promotion/diffing/etc into the harness
 - maybe a header prepass?
+- seperate databases for reusable tips vs per target data

@@ -5,14 +5,14 @@
 namespace cf {
 
     // ── Opaque struct for func_8009D764 ─────────────────────────────────────
-    //   6 u16s (set to 0xFFFF) + 192-byte zeroed area.
+    //   6 s16s (set to -1) + 192-byte zeroed area.
     struct CtrlObjectParamInit {
-        u16 field_00;
-        u16 field_02;
-        u16 field_04;
-        u16 field_06;
-        u16 field_08;
-        u16 field_0A;
+        s16 field_00;
+        s16 field_02;
+        s16 field_04;
+        s16 field_06;
+        s16 field_08;
+        s16 field_0A;
         u8  blob[192];
     };
 

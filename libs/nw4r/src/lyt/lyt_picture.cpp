@@ -4,7 +4,9 @@
 namespace nw4r {
 namespace lyt {
 
-NW4R_UT_RTTI_DEF_DERIVED(Picture, Pane);
+// Definition of the Picture RTTI object (extern + initializer = definition),
+// using the retail sbss linker name (see lyt_pane.cpp / lyt_textBox.cpp).
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665480(&lbl_eu_80665470);
 
 // TODO(kiwi) Don't know what this actually looks like...
 Picture::Picture(u8 num) : Pane(NULL) {
@@ -131,9 +133,9 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
                      mGlbAlpha);
 }
 
+const nw4r::ut::detail::RuntimeTypeInfo* Picture::GetRuntimeTypeInfo() const {
+    return &lbl_eu_80665480;
+}
+
 } // namespace lyt
 } // namespace nw4r
-
-const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv(){
-    return &nw4r::lyt::Picture::typeInfo;
-}

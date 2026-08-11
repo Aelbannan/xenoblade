@@ -423,9 +423,10 @@ void func_80235F6C(CArtsInfo* self) {
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    u8* p = (u8*)self;
-    u32 obj = *(u32*)(p + 0x28);
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf((nw4r::lyt::AnimTransform*)obj, f) == 0) return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f) ==
+        0) {
+        return;
+    }
 
     self->field_0x44 = 3;
     self->field_0x49 = 1;

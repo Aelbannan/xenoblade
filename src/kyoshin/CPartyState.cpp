@@ -636,7 +636,18 @@ extern "C" void func_801FCFF4(CPartyState* self) {
 }
 
 extern "C" void func_801FD0A0() {}
-extern "C" void func_801FD194() {}
+
+// One-time member-list setup: skip if the advance/state word is already
+// active; otherwise mark it active, clear the panel flags, and run the shared
+// slot-table refresh.
+extern "C" void func_801FD194(CPartyState* self) {
+    if (self->field_0x2C != 0)
+        return;
+    self->field_0x2C = 1;
+    self->field_0x31 = 0;
+    self->field_0x4E = 0;
+    func_801FDA7C(self);
+}
 
 // Selection advance: if the current member index is within the party range,
 // step forward by one (clamping to 3 once it passes the last member), then

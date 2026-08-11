@@ -2,6 +2,9 @@
 
 #include "monolib/lib/CLibCri.hpp"
 
+// C-linkage thunk target (retail symbol name — keep verbatim)
+extern "C" void __dt__20CLibCriStreamingPlayFv(void* self);
+
 //size: 0x540 (estimated based on CLibCri + streaming fields)
 class CLibCriStreamingPlay : public CLibCri {
 public:

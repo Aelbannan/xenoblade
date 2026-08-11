@@ -172,11 +172,12 @@ private:
     void SetAdpcmLoopContext(int channels, u16* pPredScale);
 
 private:
-    // Retail StrmPlayer reserves 0x68 bytes between its base subobjects and
-    // the stream-specific state. Without this gap every member below is
-    // addressed 0x68 bytes too early (for example mTaskCancelFlag at 0xBD
-    // instead of 0x125).
-    u8 _padding80[0x68];
+    // Retail StrmPlayer: BasicPlayer (0xD4) + SoundThread::PlayerCallback
+    // (0xC) precede the stream-specific state; MWCC's MI layout drops the
+    // callback's linklist node, so pad 8 bytes to land mStrmInfo at 0xE0 and
+    // the flag block at 0x120 (retail offsets, see StrmPlayerRetailLayout in
+    // snd_StrmPlayer.cpp).
+    u8 _padCallback[8];
     StrmInfo mStrmInfo; // at 0xE8
 
     bool mSetupFlag;           // at 0x120

@@ -222,7 +222,9 @@ void GetRBTexCoord(math::VEC2* pTexCoords, const Size& rSize,
 namespace nw4r {
 namespace lyt {
 
-NW4R_UT_RTTI_DEF_DERIVED(Window, Pane);
+// Definition of the Window RTTI object (extern + initializer = definition),
+// using the retail sbss linker name (see lyt_pane.cpp / lyt_textBox.cpp).
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665490(&lbl_eu_80665470);
 
 /******************************************************************************
  *
@@ -667,7 +669,9 @@ Material* Window::GetFrameMaterial(u32 idx) const {
     return mFrames[idx].pMaterial;
 }
 
+const nw4r::ut::detail::RuntimeTypeInfo* Window::GetRuntimeTypeInfo() const {
+    return &lbl_eu_80665490;
+}
+
 } // namespace lyt
 } // namespace nw4r
-
-int GetRuntimeTypeInfo__Q34nw4r3lyt6WindowCFv(){ return 0; }

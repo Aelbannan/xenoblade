@@ -34,6 +34,7 @@ extern void ADXSTM_SetPause(void *, u32);
 extern void ADXSTM_SetSj(void *, void *);
 extern void ADXF_Ocbi(const void *, u32);
 extern void *memset(void *, int, unsigned long);
+extern int memcmp(const void *, const void *, unsigned long);
 
 void ADXT_ExecFsSvr(void);
 void adxt_ExecFsSvr(void);
@@ -89,6 +90,7 @@ struct AdxFsPt {
     s32   sectCnt;       /* 0x08 */
     union {
         u32   field_0C;  /* 0x0C */
+        u16   hw_0C;     /* 0x0C */
         struct {
             u8  b0C;     /* 0x0C */
             u8  b0D;     /* 0x0D */
@@ -119,6 +121,11 @@ struct AdxFsCb {
 };  /* size 0x4 */
 extern s32 lbl_eu_805E0610;
 extern s32 lbl_eu_805E0614;
+extern s32 lbl_eu_805E0618;
+extern struct AdxFsPt *lbl_eu_805E061C;
+extern s32 lbl_eu_805E0620;
+extern u32 lbl_eu_805E0628;
+extern s32 lbl_eu_805E062C;
 
 /* internal stubs */
 int adxf_LoadPtBothNw(s32 p1, int p2, int p3, const char *p4, void *p5, int p6, int p7, void *p8, void *p9, int p10, int p11);
@@ -161,9 +168,522 @@ int ADXF_GetPtStat(int a) {
     return r;
 }
 
+/* 32-bit field read used by the ADX partition table parser (byte 0 of the
+ * field ends up in the low byte of the result, matching retail codegen). */
+#define ADX_RD32(p) ((u32)(p)[0] | ((u32)(p)[1] << 8) | ((u32)(p)[2] << 16) | ((u32)(p)[3] << 24))
+
+/* adxf_GetPtStat - report/refresh the status of the current ADX partition.
+ * ptid must equal the registered partition count (lbl_eu_805E0620). For an
+ * open partition (status==1) this queues a 32-sector-aligned buffered read of
+ * the file table; for a loaded partition (status==3) it (re)builds the
+ * in-memory file table from the read buffer - a word table when the mode flag
+ * at 0x0F is 1, a halfword sector table otherwise. */
 int adxf_GetPtStat(int a) {
-    /* Get partition status (0xE3C bytes in retail - huge!) */
-    return 0;
+    int status;
+    struct AdxFsPt *pt;
+    struct AdxFsReq *req;
+    s32 idx;
+    u16 seq;
+    void *stm;
+    u8 *buf;
+    int st;
+    int cnt;
+    int r;
+    int val;
+    int sct;
+    int nfiles;
+    int i;
+    u32 *wtot = NULL;
+    u32 *wtbl = NULL;
+    u16 *htot = NULL;
+    u16 *htbl = NULL;
+
+    if (a != lbl_eu_805E0620) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x196);
+        return -3;
+    }
+    if (lbl_eu_805E061C == 0 && lbl_eu_805E0620 != -1) {
+        return (int)lbl_eu_805E0624;
+    }
+    pt = lbl_eu_805E061C;
+    if (pt == 0) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x16f);
+        status = -3;
+    } else {
+        status = pt->status;
+    }
+    if (status == 4) {
+        lbl_eu_805E0624 = 4;
+        return 4;
+    }
+
+    pt = lbl_eu_805E061C;
+    ADXCRS_Enter();
+    if (pt == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+        r = 0;
+    } else {
+        r = ADXSTM_IsOpened(pt->fstm);
+    }
+    ADXCRS_Leave();
+    if (r == 0) {
+        return (int)lbl_eu_805E0624;
+    }
+
+    if (status == 1) {
+        /* partition open: issue a buffered read of the file table */
+        {
+            u32 rdsz = (u32)lbl_eu_805E0628;
+            void *rdst = (void *)lbl_eu_805E062C;
+            void *rsrc = (void *)lbl_eu_805E061C;
+            if (rdsz & 0x1F) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x1c9);
+                r = -3;
+            } else {
+                r = adxf_ReadNw32(rsrc, rdst, (int)rdsz);
+            }
+        }
+        if (r < 0) {
+            /* read failed: enqueue a close request for the partition */
+            idx = lbl_eu_805E0610 % 16;
+            pt = lbl_eu_805E061C;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = pt;
+            req->p1 = -1;
+            lbl_eu_805E05F0[3] = seq;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+            if (pt != NULL) {
+                /* wait for the stream to drain, then tear the partition down */
+                while (1) {
+                    int opened;
+                    if (pt == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(pt->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (pt->status == 2) {
+                    adxf_Stop(pt);
+                }
+                if (pt->fstm != NULL) {
+                    pt->flag = 0;
+                    stm = pt->fstm;
+                    pt->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(pt, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+            lbl_eu_805E0624 = 4;
+            return 4;
+        }
+        return (int)lbl_eu_805E0624;
+    }
+
+    /* partition not open: refresh the cached status */
+    lbl_eu_805E0624 = status;
+    if (status != 3) {
+        return status;
+    }
+
+    /* status == 3: (re)build the in-memory file table */
+    pt = (struct AdxFsPt *)lbl_eu_805E00F0[a];
+    if (pt->hdr.b.b0F == 1) {
+        wtot = (u32 *)((char *)pt + 0x118);
+        wtbl = wtot + 1;
+    } else {
+        htot = (u16 *)((char *)pt + 0x118);
+        htbl = htot + 1;
+    }
+    if (pt->sectCnt == 0) {
+        buf = (u8 *)lbl_eu_805E0628;
+        if (memcmp(buf, lbl_eu_805157E0 + 0x1fd, 3) != 0) {
+            ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x201);
+            /* bad header: close the partition and reset */
+            idx = lbl_eu_805E0610 % 16;
+            pt = lbl_eu_805E061C;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = pt;
+            req->p1 = -1;
+            lbl_eu_805E0624 = 4;
+            lbl_eu_805E05F0[3] = seq;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+            if (pt != NULL) {
+                while (1) {
+                    int opened;
+                    if (pt == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(pt->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (pt->status == 2) {
+                    adxf_Stop(pt);
+                }
+                if (pt->fstm != NULL) {
+                    pt->flag = 0;
+                    stm = pt->fstm;
+                    pt->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(pt, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+            lbl_eu_805E061C = 0;
+            lbl_eu_805E0618 = 0;
+            lbl_eu_805E062C = 0;
+            return (int)lbl_eu_805E0624;
+        }
+        nfiles = (int)ADX_RD32(buf + 4);
+        if (nfiles > 0x10000) {
+            ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x238);
+            /* too many files: close the partition and reset */
+            idx = lbl_eu_805E0610 % 16;
+            pt = lbl_eu_805E061C;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = pt;
+            req->p1 = -1;
+            lbl_eu_805E0624 = 4;
+            lbl_eu_805E05F0[3] = seq;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+            if (pt != NULL) {
+                while (1) {
+                    int opened;
+                    if (pt == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(pt->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (pt->status == 2) {
+                    adxf_Stop(pt);
+                }
+                if (pt->fstm != NULL) {
+                    pt->flag = 0;
+                    stm = pt->fstm;
+                    pt->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(pt, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+            lbl_eu_805E061C = 0;
+            lbl_eu_805E0618 = 0;
+            lbl_eu_805E062C = 0;
+            return (int)lbl_eu_805E0624;
+        }
+        pt->hdr.hw_0C = (u16)nfiles;
+        pt->sectCnt = nfiles & 0xFFFF;
+        if (pt->hdr.b.b0F == 1) {
+            pt->fstm = (void *)((((u32)pt->sectCnt + 1) * 4 + 0x11C) & ~3u);
+        } else {
+            pt->fstm = (void *)((((u32)pt->sectCnt + 1) * 2 + 0x11A) & ~3u);
+        }
+        if (pt->hdr.b.b0F == 1) {
+            *wtot = ADX_RD32((u8 *)lbl_eu_805E0628 + 8);
+        } else {
+            *htot = (u16)(((int)ADX_RD32((u8 *)lbl_eu_805E0628 + 8) + 0x400) >> 11);
+        }
+        i = 3;
+    } else {
+        i = 1;
+    }
+
+    cnt = ((lbl_eu_805E062C << 11) + 2) >> 2;
+    idx = lbl_eu_805E0618;
+    for (; i < cnt; i += 2) {
+        if (pt->hdr.b.b0F == 1) {
+            /* word table: one 32-bit length per file */
+            wtbl[idx] = ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
+            idx++;
+            lbl_eu_805E0618 = idx;
+        } else {
+            /* halfword table: 16-bit sector counts */
+            val = (int)ADX_RD32((u8 *)lbl_eu_805E0628 + i * 4);
+            sct = (val + 0x400) >> 11;
+            if (val % 2048 > 0) {
+                sct++;
+            }
+            if ((sct & 0xFFFF0000) != 0) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x26e);
+                /* sector count overflow: close the partition and reset */
+                idx = lbl_eu_805E0610 % 16;
+                pt = lbl_eu_805E061C;
+                req = &lbl_eu_805E04F0[idx];
+                seq = lbl_eu_805E05F0[3] + 1;
+                req->flag = 3;
+                req->status = 0;
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                lbl_eu_805E0624 = 4;
+                lbl_eu_805E05F0[3] = seq;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+                if (pt != NULL) {
+                    while (1) {
+                        int opened;
+                        if (pt == NULL) {
+                            ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                            opened = 0;
+                        } else {
+                            opened = ADXSTM_IsOpened(pt->fstm);
+                        }
+                        if (opened == 1) {
+                            break;
+                        }
+                        if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                            break;
+                        }
+                        ADXT_ExecFsSvr();
+                    }
+                    if (pt->status == 2) {
+                        adxf_Stop(pt);
+                    }
+                    if (pt->fstm != NULL) {
+                        pt->flag = 0;
+                        stm = pt->fstm;
+                        pt->fstm = NULL;
+                        ADXSTM_ReleaseFile(stm);
+                        ADXSTM_Destroy(stm);
+                    }
+                    memset(pt, 0, 0x34);
+
+                    idx = lbl_eu_805E0610 % 16;
+                    req = &lbl_eu_805E04F0[idx];
+                    req->flag = 3;
+                    req->status = 1;
+                    seq = lbl_eu_805E05F0[3];
+                    req->seq = (u16)seq;
+                    req->work = pt;
+                    req->p1 = -1;
+                    req->p2 = -1;
+                    lbl_eu_805E0610 = idx + 1;
+                }
+                lbl_eu_805E061C = 0;
+                lbl_eu_805E0618 = 0;
+                lbl_eu_805E062C = 0;
+                return (int)lbl_eu_805E0624;
+            }
+            htbl[idx] = (u16)sct;
+            idx++;
+            lbl_eu_805E0618 = idx;
+        }
+        if (idx >= pt->sectCnt) {
+            /* table fully copied: close the partition and stop */
+            idx = lbl_eu_805E0610 % 16;
+            pt = lbl_eu_805E061C;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = pt;
+            req->p1 = -1;
+            lbl_eu_805E0624 = 3;
+            lbl_eu_805E05F0[3] = seq;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+            if (pt != NULL) {
+                while (1) {
+                    int opened;
+                    if (pt == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(pt->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (pt->status == 2) {
+                    adxf_Stop(pt);
+                }
+                if (pt->fstm != NULL) {
+                    pt->flag = 0;
+                    stm = pt->fstm;
+                    pt->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(pt, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+            lbl_eu_805E061C = 0;
+            lbl_eu_805E0618 = 0;
+            lbl_eu_805E062C = 0;
+            break;
+        }
+    }
+    {
+        u32 rdsz = (u32)lbl_eu_805E0628;
+        void *rdst = (void *)lbl_eu_805E062C;
+        void *rsrc = (void *)lbl_eu_805E061C;
+        if (i >= cnt) {
+            /* read the next chunk of the file table */
+            if (rdsz & 0x1F) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x1c9);
+                r = -3;
+            } else {
+                r = adxf_ReadNw32(rsrc, rdst, (int)rdsz);
+            }
+            if (r < 0) {
+            /* read failed: close the partition and reset */
+            idx = lbl_eu_805E0610 % 16;
+            pt = lbl_eu_805E061C;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = pt;
+            req->p1 = -1;
+            lbl_eu_805E0624 = 4;
+            lbl_eu_805E05F0[3] = seq;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+            if (pt != NULL) {
+                while (1) {
+                    int opened;
+                    if (pt == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(pt->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(pt->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (pt->status == 2) {
+                    adxf_Stop(pt);
+                }
+                if (pt->fstm != NULL) {
+                    pt->flag = 0;
+                    stm = pt->fstm;
+                    pt->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(pt, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = pt;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+            lbl_eu_805E061C = 0;
+            lbl_eu_805E0618 = 0;
+            lbl_eu_805E062C = 0;
+        } else {
+            if (lbl_eu_805E061C == 0) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x16f);
+                st = -3;
+            } else {
+                st = lbl_eu_805E061C->status;
+            }
+            lbl_eu_805E0624 = st;
+        }
+    }
+    }
+    return (int)lbl_eu_805E0624;
 }
 
 /* adxf_CreateAdxFs - find a free work slot, allocate its stream handle, and

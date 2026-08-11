@@ -11,12 +11,12 @@ void __ct__8009D604(){}
 void __dt__8009D72C(){}
 
 extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
-    p->field_00 = 0xFFFF;
-    p->field_02 = 0xFFFF;
-    p->field_04 = 0xFFFF;
-    p->field_06 = 0xFFFF;
-    p->field_08 = 0xFFFF;
-    p->field_0A = 0xFFFF;
+    p->field_00 = -1;
+    p->field_02 = -1;
+    p->field_04 = -1;
+    p->field_06 = -1;
+    p->field_08 = -1;
+    p->field_0A = -1;
     extern void* memset(void*, int, unsigned long);
     return static_cast<char*>(memset(p->blob, 0, sizeof(p->blob)));
 }

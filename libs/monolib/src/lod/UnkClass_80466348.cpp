@@ -1,5 +1,16 @@
-// Auto-scaffolded catalog TU for monolib/src/lod/UnkClass_80466348
-// Replace stubs with high-level C/C++ during decomp.
+// Decompilation of monolib/src/lod/UnkClass_80466348.
+//
+// LOD material/vertex-format state setters: GX channel/alpha setup, TEV
+// register combiners, vertex-descriptor setup, alpha/blend modes, tex-gen
+// and matrix upload, ambient-color emission, and the TU's .ctors static
+// initializer (sinit_804683E8).
+//
+// The retail names are (shortened) "...Fv" annotations, but these entry
+// points receive their real ABI arguments in the parameter registers (see
+// docs/MWCC_REFERENCE.md "Fv ABI note").  They are written as plain global
+// free functions taking those arguments explicitly (same pattern as
+// code_804645CC / CLODCacheManagerS); only func_804676EC keeps its C-linkage
+// retail name because it calls the sibling-record dispatcher by retail symbol.
 
 #include <harness_catalog.h>
 #include <revolution/GX.h>
@@ -11,8 +22,8 @@ struct UnkClass_80466348 {
     u8 field_0x0;   // ambient color R
     u8 field_0x1;   // ambient color G
     u8 field_0x2;   // ambient color B
-    u8 field_0x3;
-    u32 field_0x4;
+    u8 field_0x3;   // unknown; unused by this TU
+    u32 field_0x4;  // unknown; its address is used as the tex-gen source
     void func_80466348();
     void func_80466390();
     void func_804663D0();
@@ -63,7 +74,7 @@ struct UnkClass_80466348 {
     void func_804679E8();
     void func_80467B04();
     void func_80467BD4();
-    void func_80467CF0() const;
+    void func_80467CF0();
     void func_80467E14();
     void func_80467E94();
     void func_80467FB8();
@@ -80,6 +91,9 @@ using namespace LOD;
 // ---- shared LOD renderer data (.bss, non-small-data access) ----
 extern u32 lbl_eu_80658368[3];
 extern u32 lbl_eu_80658374[3];
+extern f32 lbl_eu_80658348[3]; // per-channel ambient scale LUT
+// per-channel ambient scale LUT (written by sinit)
+extern f32 lbl_eu_80658358[3];
 extern f32 lbl_eu_80658380[12]; // LOD fog/color ramp, written by sinit_804683E8
 extern f32 lbl_eu_806583B0[3][4]; // fixed LOD texture matrix
 
@@ -99,8 +113,9 @@ struct UnkClass_8046368C {
     f32 field_0x1C;  // 0x1C
 };
 
-// LOD record-pair dispatcher (sibling TU). extern "C" keeps the retail mangled
-// name; the extra ABI args are explicit per the MWCC_REFERENCE "Fv ABI note".
+// LOD record-pair dispatcher (defined in CLODCacheManagerS.cpp). Declared
+// with C linkage to keep the retail mangled name; the extra ABI args are
+// explicit per the MWCC_REFERENCE "Fv ABI note".
 extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, u16 index);
 
 void LOD::UnkClass_80466348::func_80466348() {
@@ -187,99 +202,237 @@ void LOD::UnkClass_80466348::func_80466558() {
     }
 }
 
-void LOD::UnkClass_80466348::func_80466590() {}
+// TEV combiner: texel * raster colour and texel * raster alpha, written to
+// the caller-supplied output register with the caller-supplied scale.
+u32 func_80466590(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466638() {}
+// TEV combiner: (const-colour * texel) + texel-alpha colour, alpha = A0,
+// written to the caller-supplied output register/scale.
+u32 func_80466638(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_C0, GX_CC_TEXC, GX_CC_TEXA, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_804666E0() {}
+// TEV combiner: select the constant colour, (texel * KONST) + C0 colour,
+// alpha = A0; output register/scale from the caller.
+u32 func_804666E0(GXTevStageID self, GXTevRegID out_a, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXC, GX_CC_KONST, GX_CC_C0);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466794() {}
+// TEV combiner: select the constant colour, (texel * KONST) - C0 colour
+// (SUB), (texel * KONST) + A0 alpha; output register/scale from the caller.
+u32 func_80466794(GXTevStageID self, GXTevRegID out_a, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXC, GX_CC_KONST, GX_CC_C0);
+    GXSetTevColorOp(self, GX_TEV_SUB, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_TEXA, GX_CA_KONST, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466848() {}
+// TEV combiner: texel * const-colour colour, texel-alpha + A0 alpha;
+// output register/scale from the caller.
+u32 func_80466848(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXC, GX_CC_C0, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_TEXA, GX_CA_A0, GX_CA_ZERO);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_804668F0() {}
+// TEV combiner: texel-alpha * texel colour, alpha = TEXA; output
+// register/scale from the caller.
+u32 func_804668F0(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXA, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466998() {}
+// TEV combiner: select the constant colour, texel * KONST colour,
+// KONST + texel-alpha alpha; output register/scale from the caller.
+u32 func_80466998(GXTevStageID self, GXTevRegID out_a, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_TEXC, GX_CC_KONST, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_KONST, GX_CA_TEXA, GX_CA_ZERO);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466A4C() {}
+// TEV combiner: texel * raster colour/alpha written to TEVREG0; the scale
+// comes from the caller (r4 is a dead slot in the retail ABI).
+u32 func_80466A4C(GXTevStageID self, u32, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVREG0);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVREG0);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466AE8() {}
+// TEV combiner: texel * raster colour to TEVREG1, alpha = A0 to TEVREG0;
+// scale from the caller (r4 is a dead slot in the retail ABI).
+u32 func_80466AE8(GXTevStageID self, u32, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVREG1);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVREG0);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466B84() {}
+// TEV combiner: select the constant colour, C0 * C1 + texel colour,
+// raster-alpha + A0 alpha; output register/scale from the caller.
+u32 func_80466B84(GXTevStageID self, GXTevRegID out_a, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_C0, GX_CC_C1, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466C38() {}
+// TEV combiner: select the constant colour, C0 * C1 + texel-alpha colour,
+// raster-alpha + A0 alpha; output register/scale from the caller.
+u32 func_80466C38(GXTevStageID self, GXTevRegID out_a, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_C0, GX_CC_C1, GX_CC_TEXA, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466CEC() {}
+// TEV combiner: C0 * texel + texel-alpha + C0 colour, alpha = A0; output
+// register/scale from the caller.
+u32 func_80466CEC(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_C0, GX_CC_TEXC, GX_CC_TEXA, GX_CC_C0);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466D94() {}
+// TEV combiner: select the constant colour, KONST * texel colour to TEVREG1,
+// alpha = A0 to TEVREG0; scale from the caller (r4 is a dead ABI slot).
+u32 func_80466D94(GXTevStageID self, u32, GXTevScale scale, GXTevKColorSel sel) {
+    GXSetTevKColorSel(self, sel);
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_KONST, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVREG1);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVREG0);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466E3C() {}
+// TEV combiner: texel * raster + C0 colour, alpha = A0; output
+// register/scale from the caller.
+u32 func_80466E3C(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_C0);
+    GXSetTevColorOp(self, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-void LOD::UnkClass_80466348::func_80466EE4() {}
+// TEV combiner: (texel * raster) - C0 colour (SUB), texel * raster + A0
+// alpha; output register/scale from the caller.
+u32 func_80466EE4(GXTevStageID self, GXTevRegID out_a, GXTevScale scale) {
+    GXSetTevColorIn(self, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_C0);
+    GXSetTevColorOp(self, GX_TEV_SUB, GX_TB_ZERO, scale, GX_TRUE, out_a);
+    GXSetTevAlphaIn(self, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_A0);
+    GXSetTevAlphaOp(self, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, out_a);
+    return 1;
+}
 
-// Retail names are the shortened Fv form, but these entry points receive an
-// extra vertex-attribute count argument in r4 (see MWCC_REFERENCE "Fv ABI
-// note"); the vtx-desc "type" value is the self pointer itself.
-extern "C" void func_80466F8C__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+// Vertex-descriptor setup: clear, enable POS, then `count` texcoords fed
+// directly from this object's attribute data (the vtx-desc type is the self
+// pointer; count arrives in r4 per the retail ...Fv ABI).
+void func_80466F8C(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position + a run of texcoords,
     // all fed directly from this object's attribute data.
     GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-extern "C" void func_80466FF8__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+void func_80466FF8(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position, color0 and a run of
     // texcoords, all fed directly from this object's attribute data.
     GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
-    GXSetVtxDesc(GX_VA_CLR0, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-extern "C" void func_80467070__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+void func_80467070(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position, normal and a run of
     // texcoords, all fed directly from this object's attribute data.
     GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
-    GXSetVtxDesc(GX_VA_NRM, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-// Retail name is the shortened Fv form; the entry point receives an extra
-// vertex-attribute count argument in r4 (see MWCC_REFERENCE "Fv ABI note").
-extern "C" void func_804670E8__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+// Vertex-descriptor setup: clear, enable POS + NRM + CLR0, then `count`
+// texcoords fed directly from this object's attribute data.
+void func_804670E8(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position, normal, color0 and a
     // run of texcoords, all fed directly from this object's attribute data.
     GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
-    GXSetVtxDesc(GX_VA_NRM, (GXAttrType)self);
-    GXSetVtxDesc(GX_VA_CLR0, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-extern "C" void func_8046716C__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+void func_8046716C(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position, normal and a run of
     // texcoords, all fed directly from this object's attribute data.
     GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
-    GXSetVtxDesc(GX_VA_NRM, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-void LOD::UnkClass_80466348::func_804671E4() {}
+// Vertex-descriptor setup: clear, enable POS + NRM + CLR0, then `count`
+// texcoords fed directly from this object's attribute data.
+void func_804671E4(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable position, normal, color0 and a
+    // run of texcoords, all fed directly from this object's attribute data.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
-extern "C" void func_80467268__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+void func_80467268(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable position + color0 with fixed
     // stream types and a run of indexed texcoords.
     GXClearVtxDesc();
@@ -290,68 +443,147 @@ extern "C" void func_80467268__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_8046634
     }
 }
 
-// Retail name is the shortened Fv form; the entry point receives an extra
-// vertex-attribute count argument in r4 (see MWCC_REFERENCE "Fv ABI note").
-extern "C" void func_804672D4__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self, s32 count) {
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS, then `count`
+// texcoords fed directly from this object's attribute data.
+void func_804672D4(GXAttrType self, s32 count) {
     // Clear all vertex descriptors, then enable the position/normal matrix
     // index (direct) plus position and a run of texcoords fed directly from
     // this object's attribute data.
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
-    GXSetVtxDesc(GX_VA_POS, (GXAttrType)self);
+    GXSetVtxDesc(GX_VA_POS, self);
     for (s32 i = 0; i < count; i++) {
-        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), (GXAttrType)self);
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
     }
 }
 
-void LOD::UnkClass_80466348::func_8046734C() {}
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + CLR0, then
+// `count` texcoords fed directly from this object's attribute data.
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + CLR0, then
+// `count` texcoords fed directly from this object's attribute data.
+void func_8046734C(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable the position/normal matrix
+    // index (direct), position + color0 fed directly from this object's
+    // attribute data, and a run of texcoords.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
-void LOD::UnkClass_80466348::func_804673D0() {}
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + NRM, then
+// `count` texcoords fed directly from this object's attribute data.
+void func_804673D0(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable the position/normal matrix
+    // index (direct), position + normal fed directly from this object's
+    // attribute data, and a run of texcoords.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
-void LOD::UnkClass_80466348::func_80467454() {}
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + NRM + CLR0, then
+// `count` texcoords fed directly from this object's attribute data.
+void func_80467454(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable the position/normal matrix
+    // index (direct), position, normal, color0 and a run of texcoords,
+    // all fed directly from this object's attribute data.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
-void LOD::UnkClass_80466348::func_804674E4() {}
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + NRM, then
+// `count` texcoords fed directly from this object's attribute data.
+void func_804674E4(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable the position/normal matrix
+    // index (direct), position + normal fed directly from this object's
+    // attribute data, and a run of texcoords.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
-void LOD::UnkClass_80466348::func_80467568() {}
+// Vertex-descriptor setup: clear, enable PNMTXIDX + POS + NRM + CLR0, then
+// `count` texcoords fed directly from this object's attribute data.
+void func_80467568(GXAttrType self, s32 count) {
+    // Clear all vertex descriptors, then enable the position/normal matrix
+    // index (direct), position, normal, color0 and a run of texcoords, all
+    // fed directly from this object's attribute data.
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_PNMTXIDX, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_POS, self);
+    GXSetVtxDesc(GX_VA_NRM, self);
+    GXSetVtxDesc(GX_VA_CLR0, self);
+    for (s32 i = 0; i < count; i++) {
+        GXSetVtxDesc((GXAttr)(GX_VA_TEX0 + i), self);
+    }
+}
 
 void LOD::UnkClass_80466348::func_804675F8() {
+    // Alpha test: always pass.
     GXSetAlphaCompare(GX_ALWAYS, 0xff, GX_AOP_AND, GX_ALWAYS, 0xff);
 }
 
 void LOD::UnkClass_80466348::func_80467610() {
+    // Alpha test: src alpha >= 0x80 AND <= 0xff.
     GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_AND, GX_LEQUAL, 0xff);
 }
 
 void LOD::UnkClass_80466348::func_80467628() {
+    // Alpha test: src alpha >= 1 AND <= 0xff.
     GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_LEQUAL, 0xff);
 }
 
 void LOD::UnkClass_80466348::func_80467640() {
+    // Blend: disabled (opaque).
     GXSetBlendMode(GX_BM_NONE, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR);
 }
 
 void LOD::UnkClass_80466348::func_80467654() {
+    // Blend: standard alpha blend (src alpha over dst).
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 }
 
 void LOD::UnkClass_80466348::func_80467668() {
+    // Blend: additive (src * srcAlpha + dst).
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
 }
 
 void LOD::UnkClass_80466348::func_8046767C() {
+    // Blend: src colour replaces dst (src * srcColor).
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCCLR, GX_BL_ZERO, GX_LO_NOOP);
 }
 
 void LOD::UnkClass_80466348::func_80467690() {
+    // Blend: subtract (dst - src * srcAlpha).
     GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 }
 
 void LOD::UnkClass_80466348::func_804676A4() {
-    // Pass the tex-gen source as a pointer-derived value (this + 4).
+    // Tex-gen: mtx2x4; the texcoord id is `this` and the source is the
+    // address of field_0x4.
     GXSetTexCoordGen2((GXTexCoordID)this, GX_TG_MTX2x4, (GXTexGenSrc)&this->field_0x4, 0x3C, GX_DISABLE, 0x7D);
 }
 
 void LOD::UnkClass_80466348::func_804676BC() {
+    // Tex-gen: normal source, mtx3x4, normalized (texcoord id in `this`).
     GXSetTexCoordGen2((GXTexCoordID)this, GX_TG_MTX3x4, GX_TG_NRM, 0x1E, GX_ENABLE, 0x40);
 }
 
@@ -361,8 +593,8 @@ void LOD::UnkClass_80466348::func_804676D4() {
     GXSetTexCoordGen2((GXTexCoordID)this, GX_TG_MTX3x4, GX_TG_POS, 0x1E, GX_DISABLE, 0x7D);
 }
 
-// Retail name is the shortened Fv form, but the entry point receives an extra
-// pointer in r4 (see MWCC_REFERENCE "Fv ABI note").
+// Matrix-upload helper: build the LOD pair matrix via the record dispatcher,
+// upload it as tex-mtx 0x21, and bind tex-gen with the caller's texcoord id.
 extern "C" void func_804676EC__Q23LOD17UnkClass_80466348Fv(LOD::UnkClass_80466348* self,
                                                            const UnkClass_8046368C* arg) {
     // Build the LOD matrix in a scratch buffer, upload it, and bind tex-gen.
@@ -383,7 +615,21 @@ void LOD::UnkClass_80466348::func_80467758() {
     GXLoadTexMtxImm(mtx, 30, GX_MTX_3x4);
 }
 
-void LOD::UnkClass_80466348::func_80467798() {}
+// The object's leading bytes are the ambient colour (a GXColor view of the
+// same memory the tex-gen/matrix uploaders use as a matrix); the retail
+// ...Fv entry point receives it in r3 per the MWCC_REFERENCE "Fv ABI note".
+void func_80467798(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its own LUT factor and the
+    // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
+    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * lbl_eu_806657E4);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * lbl_eu_806657E4);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
 void LOD::UnkClass_80466348::func_80467898() {
     // Build the color-and-alpha ambient color from this object's RGB bytes and
@@ -392,15 +638,81 @@ void LOD::UnkClass_80466348::func_80467898() {
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }
 
-void LOD::UnkClass_80466348::func_804678E8() {}
+void func_804678E8(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its own LUT factor and the
+    // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
+    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * lbl_eu_806657E4);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * lbl_eu_806657E4);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_804679E8() {}
+void func_804679E8(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and the shared
+    // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
+    // alpha is the raw latch.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    scale = scale * lbl_eu_806657E4;
+    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * scale);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * scale);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * scale);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_80467B04() {}
+void func_80467B04(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by the alpha latch (converted
+    // through s32->f32) times the shared A630 factor; alpha stays raw.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    GXColor out = {
+        (u8)(s32)((f32)color->r * scale),
+        (u8)(s32)((f32)color->g * scale),
+        (u8)(s32)((f32)color->b * scale),
+        (u8)lbl_eu_80665814,
+    };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_80467BD4() {}
+void func_80467BD4(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and the shared
+    // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
+    // alpha is the raw latch.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    scale = scale * lbl_eu_806657E4;
+    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * scale);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * scale);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * scale);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_80467CF0() const {}
+void func_80467CF0(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
+    // then clamped to 255; alpha is the latch scaled by 80665808.
+    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * lbl_eu_806657E4);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * lbl_eu_806657E4);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = {
+        (u8)r,
+        (u8)g,
+        (u8)b,
+        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
+    };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
 void LOD::UnkClass_80466348::func_80467E14() {
     // Build the ambient color from this object's RGB bytes and a scaled alpha:
@@ -410,18 +722,76 @@ void LOD::UnkClass_80466348::func_80467E14() {
         field_0x0,
         field_0x1,
         field_0x2,
-        (u8)(s32)((f32)((f64)(u32)(lbl_eu_80665814 ^ 0x80000000) - lbl_eu_8066A628) * lbl_eu_80665808),
+        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
     };
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }
 
-void LOD::UnkClass_80466348::func_80467E94() {}
+void func_80467E94(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
+    // then clamped to 255; alpha is the latch scaled by 80665808.
+    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * lbl_eu_806657E4);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * lbl_eu_806657E4);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = {
+        (u8)r,
+        (u8)g,
+        (u8)b,
+        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
+    };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_80467FB8() {}
+void func_80467FB8(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and the shared
+    // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
+    // to 255; alpha is the raw latch.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    scale = scale * lbl_eu_806657E4;
+    scale = lbl_eu_80665808 * scale;
+    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * scale);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * scale);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * scale);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_804680DC() {}
+void func_804680DC(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by the alpha latch (converted
+    // through s32->f32) times the A630 and 80665808 factors; alpha stays raw.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    scale = scale * lbl_eu_80665808;
+    GXColor out = {
+        (u8)(s32)((f32)color->r * scale),
+        (u8)(s32)((f32)color->g * scale),
+        (u8)(s32)((f32)color->b * scale),
+        (u8)lbl_eu_80665814,
+    };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
-void LOD::UnkClass_80466348::func_804681B4() {}
+void func_804681B4(GXColor* color) {
+    // Ambient color: each RGB byte is scaled by its LUT factor and the shared
+    // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
+    // to 255; alpha is the raw latch.
+    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    scale = scale * lbl_eu_806657E4;
+    scale = lbl_eu_80665808 * scale;
+    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * scale);
+    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * scale);
+    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * scale);
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    GXColor out = { (u8)r, (u8)g, (u8)b, (u8)lbl_eu_80665814 };
+    GXSetChanAmbColor(GX_COLOR0A0, out);
+}
 
 void LOD::UnkClass_80466348::func_804682D8() {
     // Identity swap tables: every channel maps to red except alpha.
@@ -447,21 +817,25 @@ void LOD::UnkClass_80466348::func_804683D0() {
     }
 }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// --- static initializer (.ctors) ---
 // .ctors static initializer: fill the LOD fog/color ramp (lbl_eu_80658380)
-// from the shared float constants.
+// from the shared sdata2 float constants.
+//
+// KNOWN CEILING: the retail .o registers sinit_804683E8 in .ctors, but as a
+// plain C-linkage free function MWCC emits no .ctors entry, so the unit's
+// single unmatched data slot (data 99.5%) is deferred (see CNReqtaskCheck).
 extern "C" void sinit_804683E8() {
-    float* t = lbl_eu_80658380;
-    t[0] = lbl_eu_8066A640;
-    t[1] = lbl_eu_8066A620;
-    t[2] = lbl_eu_8066A620;
-    t[3] = lbl_eu_8066A640;
-    t[4] = lbl_eu_8066A620;
-    t[5] = lbl_eu_8066A644;
-    t[6] = lbl_eu_8066A620;
-    t[7] = lbl_eu_8066A640;
-    t[8] = lbl_eu_8066A620;
-    t[9] = lbl_eu_8066A620;
-    t[10] = lbl_eu_8066A620;
-    t[11] = lbl_eu_8066A624;
+    float* ramp = lbl_eu_80658380;
+    ramp[0] = lbl_eu_8066A640;
+    ramp[1] = lbl_eu_8066A620;
+    ramp[2] = lbl_eu_8066A620;
+    ramp[3] = lbl_eu_8066A640;
+    ramp[4] = lbl_eu_8066A620;
+    ramp[5] = lbl_eu_8066A644;
+    ramp[6] = lbl_eu_8066A620;
+    ramp[7] = lbl_eu_8066A640;
+    ramp[8] = lbl_eu_8066A620;
+    ramp[9] = lbl_eu_8066A620;
+    ramp[10] = lbl_eu_8066A620;
+    ramp[11] = lbl_eu_8066A624;
 }

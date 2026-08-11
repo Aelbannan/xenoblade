@@ -130,7 +130,13 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
     return taskGame;
 }
 
-void CTaskGame_stub_800407C8() {}
+extern "C" func_800407C8_tmp* func_800407C8(func_800407C8_tmp* self, f32 f1, f32 f2, f32 f3, f32 f4) {
+    self->unk00[0] = f1;
+    self->unk00[1] = f2;
+    self->unk00[2] = f3;
+    self->unk00[3] = f4;
+    return self;
+}
 extern "C" void func_80040AF4(CTaskGame* self) {
     self->unk100++;
     void* obj = reinterpret_cast<void*>(self->unkCC);

@@ -1006,15 +1006,15 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
     VMArg retVal;
     if (ocHandle) {
         ctx = func_801862C0();
-        cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, ocHandle);
+        obj = (cf::CfObject*)func_801864DC(ctx, ocHandle);
         const char* typeName;
-        if (target->unk64 & 0x80) {
+        if (obj->unk64 & 0x80) {
             typeName = &lbl_eu_804FA74C[0x50];
-        } else if (target->unk64 & 0x4000) {
+        } else if (obj->unk64 & 0x4000) {
             typeName = &lbl_eu_804FA74C[0x54];
-        } else if (target->unk64 & 0x20) {
+        } else if (obj->unk64 & 0x20) {
             typeName = &lbl_eu_804FA74C[0x5A];
-        } else if (target->unk64 & 0x8000) {
+        } else if (obj->unk64 & 0x8000) {
             typeName = &lbl_eu_804FA74C[0x61];
         } else {
             typeName = &lbl_eu_804FA74C[0x66];
@@ -1023,7 +1023,7 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
         retVal.type = type;
         u16 ocId = vmOCSearch(typeName);
         retVal.unk2 = ocId;
-        retVal.value.pointerVal = *(void**)((u8*)target + 0x74);
+        retVal.value.pointerVal = *(void**)((u8*)obj + 0x74);
     } else {
         vmOCExceptionThrow(pThread);
         return 0;

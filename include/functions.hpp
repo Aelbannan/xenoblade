@@ -6,7 +6,7 @@
 struct func_800407C8_tmp {
     f32 unk00[4];
 };
-func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+extern "C" func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
 
 void func_8004302C(int, int);
 bool func_8009CF8C(int);

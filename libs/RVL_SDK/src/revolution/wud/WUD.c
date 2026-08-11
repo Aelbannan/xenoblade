@@ -694,8 +694,8 @@ void WUDiRegisterDevice(BD_ADDR addr) {
         (memcmp(pInfo->conf.devName, pMsg + 0x27C, sizeof(LINK_KEY)) == 0 &&
          _linkedWBC)) {
         tBTA_HH_DEV_DESCR desc;
-        desc.dsc_list = (u8*)pMsg;
         desc.dl_len = sizeof(descriptor);
+        desc.dsc_list = (u8*)pMsg;
 
         DEBUGPrint(pMsg + 0x998);
         BTA_HhAddDev(pInfo->devAddr, pInfo->hhAttrMask, pInfo->subclass,

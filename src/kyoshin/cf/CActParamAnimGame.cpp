@@ -60,6 +60,9 @@ s8 lbl_eu_80663D74;
 f32 lbl_eu_80663D60;
 f32 lbl_eu_80663D68;
 f32 lbl_eu_80663D70;
+f32 lbl_eu_8066A1F8;
+const char lbl_eu_80526324[];
+const char lbl_eu_80526300[];
 }
 
 struct CActParamAnimGameView {
@@ -117,10 +120,18 @@ static int callVfnI(void* self, u32 off) {
 extern "C" void func_8005BC14(void* selfV) {
     CActParamAnimGameView* self = (CActParamAnimGameView*)selfV;
     s32 moved = 0;
+    ml::CVec3 pos;
+    ml::CVec3 up;
+    ml::CVec3 dir;
+    ml::CVec3 up2;
+    ml::CVec3 dir2;
+    ml::CVec3 accel;
+    ml::CVec3 target;
+    ml::CVec3 dirM;
 
     self->flags530 &= 0xFF3F;
     self->state52C = 0;
-    self->flags4EC &= ~0x3000;
+    self->flags4EC &= ~0xC0000;
     self->f394 = 1.0f;
     self->f398 = 1.0f;
     *(ml::CVec3*)((u8*)self + 0x3F0) = ml::CVec3::zero;
@@ -131,7 +142,6 @@ extern "C" void func_8005BC14(void* selfV) {
     if (self->obj3A0 == 0) goto exit;
 
     moved = 1;
-    ml::CVec3 pos;
     u32 flags = self->flags530 | 0x800;
     self->flags530 = (u16)flags;
     pos.x = self->posX3A8;
@@ -163,8 +173,8 @@ bit1clear:
     pos.x += 0.1f * (self->f514 - pos.x);
     pos.z += 0.1f * (self->f51C - pos.z);
     {
-        ml::CVec3 dir = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
-        ml::CVec3 up = pos + ((self->flags530 & 4) ? ml::CVec3(0.0f, 1.0f, 0.0f) : ml::CVec3(0.0f, -1.5f, 0.0f));
+        dir = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        up = pos + ((self->flags530 & 4) ? ml::CVec3(0.0f, 1.0f, 0.0f) : ml::CVec3(0.0f, -1.5f, 0.0f));
         ml::CVec3 t3 = up + dir * 3.0f;
         if (func_804BE348(&up, &t3, self->filter4A8, 0, 0) != 0
             && func_804BE5A4(8192, 0) != 0) {
@@ -182,8 +192,8 @@ commit:
 
 mode0:
     if (((flags >> 4) & 3) != 0) {
-        ml::CVec3 up2 = pos + ml::CVec3(0.0f, 1.0f, 0.0f);
-        ml::CVec3 dir2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        up2 = pos + ml::CVec3(0.0f, 1.0f, 0.0f);
+        dir2 = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
         ml::CVec3 t3b = up2 + dir2 * 2.0f;
         if (func_804BE348(&up2, &t3b, self->filter4A8, 0, 0) != 0
             && func_804BE5A4(8192, 0) != 0) {
@@ -227,7 +237,7 @@ next:
     }
     if (moved == 0) goto exit;
 
-    ml::CVec3 accel = ml::CVec3(0.0f, 0.0f, 0.0f);
+    accel = ml::CVec3(0.0f, 0.0f, 0.0f);
     if ((self->flags530 & 0x200) == 0) {
         f32 f28v = 0.0f;
         f32 f29v = *(f32*)((u8*)self->owner + 0x14);
@@ -267,30 +277,29 @@ next:
         }
     }
     {
-        ml::CVec3 target;
         target.x = self->posX3A8;
         target.y = self->posY3AC;
         target.z = self->posZ3B0;
-        ml::CVec3 dir = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
+        dirM = ml::CVec3(SinFIdx__Q24nw4r4mathFf(40.743663f * self->f444), 0.0f, CosFIdx__Q24nw4r4mathFf(40.743663f * self->f444));
         moved = 1;
         u32 hit;
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) {
-            ml::CVec3 tpd = target + dir * 2.0f;
+            ml::CVec3 tpd = target + dirM * 2.0f;
             hit = func_804BE348(&target, &tpd, 0, 8192, 0) != 0;
         } else {
             ml::CVec3 va = target + accel;
-            ml::CVec3 vb = dir * 3.0f;
-            ml::CVec3 vc = va - dir;
+            ml::CVec3 vb = dirM * 3.0f;
+            ml::CVec3 vc = va - dirM;
             ml::CVec3 vd = vc + vb;
             hit = func_804BE348(&vc, &vd, 0, 8192, 0) != 0;
             if (hit == 0) {
-                ml::CVec3 t2 = target + dir * 2.0f;
+                ml::CVec3 t2 = target + dirM * 2.0f;
                 hit = func_804BE348(&target, &t2, 0, 8192, 0) != 0;
             }
         }
         if (hit == 0) {
             target += ml::CVec3(0.01f, 0.01f, 0.01f);
-            ml::CVec3 tpd = target + dir * 2.0f;
+            ml::CVec3 tpd = target + dirM * 2.0f;
             hit = func_804BE348(&target, &tpd, 0, 8192, 0) != 0;
         }
         if (hit == 0) goto after_hit;
@@ -302,19 +311,19 @@ next:
         nx = -v.x;
         nz = -v.z;
         f32 len2 = nx * nx + nz * nz;
-        if (len2 < 0.0f) {
-            Warning__Q24nw4r2dbFPCciPCce("arithmetic.h", 627, "FSqrt: Input is out of the domain.");
+        if (!(len2 >= 0.0f)) {
+            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 627, lbl_eu_80526300);
         }
         f32 len = 0.0f;
         if (len2 > 0.0f) len = len2 * FrSqrt__Q24nw4r4mathFf(len2);
         if (len > 0.001f) {
             nx = nx / len;
             nz = nz / len;
-            nx = 0.3f * (nx - dir.x) + dir.x;
-            nz = 0.3f * (nz - dir.z) + dir.z;
+            nx = 0.3f * (nx - dirM.x) + dir.x;
+            nz = 0.3f * (nz - dirM.z) + dir.z;
             len2 = nx * nx + nz * nz;
-            if (len2 < 0.0f) {
-                Warning__Q24nw4r2dbFPCciPCce("arithmetic.h", 627, "FSqrt: Input is out of the domain.");
+            if (!(len2 >= 0.0f)) {
+                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 627, lbl_eu_80526300);
             }
             f32 lenb = 0.0f;
             if (len2 > 0.0f) lenb = len2 * FrSqrt__Q24nw4r4mathFf(len2);
@@ -328,20 +337,20 @@ next:
         }
         f32 f28v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(nx, nz);
         func_8004B52C(self, f28v);
-        dir.x = SinFIdx__Q24nw4r4mathFf(40.743663f * f28v);
-        dir.z = CosFIdx__Q24nw4r4mathFf(40.743663f * f28v);
+        dirM.x = SinFIdx__Q24nw4r4mathFf(40.743663f * f28v);
+        dirM.z = CosFIdx__Q24nw4r4mathFf(40.743663f * f28v);
         if (accel.x == 0.0f && accel.y == 0.0f && accel.z == 0.0f) goto ground;
         {
-            f32 f2v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(accel.z * dir.x - accel.x * dir.z, accel.y);
-            if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = 3.1415927f * 0.25f; lbl_eu_80663D74 = 1; }
+            f32 f2v = 0.024543693f * Atan2FIdx__Q24nw4r4mathFff(accel.z * dirM.x - accel.x * dirM.z, accel.y);
+            if (lbl_eu_80663D74 == 0) { lbl_eu_80663D70 = lbl_eu_8066A1F8 * 0.25f; lbl_eu_80663D74 = 1; }
             f32 p4 = lbl_eu_80663D70;
-            if (f2v <= p4 && f2v >= -p4) {
+            if (p4 >= f2v && f2v >= -p4) {
                 self->state52C = 1;
-            } else if (f2v >= 3.0f * p4 || f2v <= -3.0f * p4) {
+            } else if (lbl_eu_8066A1F8 - p4 <= f2v || f2v <= -(lbl_eu_8066A1F8 - p4)) {
                 self->state52C = 2;
-            } else if (f2v > p4 && f2v < 3.0f * p4) {
+            } else if (p4 < f2v && f2v < 3.0f * p4) {
                 self->state52C = 4;
-            } else {
+            } else if (-p4 > f2v && f2v > 3.0f * -p4) {
                 self->state52C = 3;
             }
         }
@@ -391,13 +400,13 @@ ground:
                     target2.y -= 1.4f - (*(f32*)((u8*)e + 0x4) - target2.y);
                 }
                 {
-                    ml::CVec3 d2 = dir * 2.0f;
-                    ml::CVec3 tmd = target2 - dir;
+                    ml::CVec3 d2 = dirM * 2.0f;
+                    ml::CVec3 tmd = target2 - dirM;
                     ml::CVec3 tpd = target2 + d2;
                     u32 hit2 = func_804BE348(&tmd, &tpd, 0, 8192, 0) != 0;
                     if (hit2 == 0) {
                         target2 += ml::CVec3(0.01f, 0.01f, 0.01f);
-                        ml::CVec3 tmd2 = target2 - dir;
+                        ml::CVec3 tmd2 = target2 - dirM;
                         ml::CVec3 tpd2 = target2 + d2;
                         hit2 = func_804BE348(&tmd2, &tpd2, 0, 8192, 0) != 0;
                     }

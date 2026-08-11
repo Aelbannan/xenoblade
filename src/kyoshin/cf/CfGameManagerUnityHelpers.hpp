@@ -1607,7 +1607,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
         byteOffset = 0;
         for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
             s32 value = values[byteOffset >> 2];
-            if (value > 0 && value < 8) {
+            if (value > 0 && value <= 8) {
                     CfResStackObject resource;
                     func_80080F48__Q22cf13CfGameManagerFv(
                         static_cast<u16>(value), &resource, true, true);

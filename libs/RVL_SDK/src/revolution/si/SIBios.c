@@ -420,12 +420,14 @@ static void GetTypeCallback(s32 chan, u32 status, OSContext* ctx) {
         !(type & 0x80000000) || (type & 0x04000000)) {
         OSSetWirelessID(chan, 0);
         type = Type[chan];
-        for (i = 0; i < SI_MAX_TYPE; i++) {
+        i = 0;
+        while (i < SI_MAX_TYPE) {
             SICallback cb = TypeCallback[chan][i];
             if (cb != NULL) {
                 TypeCallback[chan][i] = NULL;
                 cb(chan, type);
             }
+            i++;
         }
         return;
     }

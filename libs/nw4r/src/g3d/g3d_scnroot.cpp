@@ -20,8 +20,21 @@ namespace {
 
 bool LessZSortOpa(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
 bool LessZSortXlu(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
-bool LessByGetValueForSortOpa(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
-bool LessByGetValueForSortXlu(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
+bool LessByGetValueForSortOpa(const nw4r::g3d::ScnObj* pLhs,
+                              const nw4r::g3d::ScnObj* pRhs) {
+    if (pLhs->GetPriorityDrawOpa() == pRhs->GetPriorityDrawOpa()) {
+        return pLhs->GetValueForSortOpa() < pRhs->GetValueForSortOpa();
+    }
+    return pLhs->GetPriorityDrawOpa() < pRhs->GetPriorityDrawOpa();
+}
+
+bool LessByGetValueForSortXlu(const nw4r::g3d::ScnObj* pLhs,
+                              const nw4r::g3d::ScnObj* pRhs) {
+    if (pLhs->GetPriorityDrawXlu() == pRhs->GetPriorityDrawXlu()) {
+        return pLhs->GetValueForSortXlu() < pRhs->GetValueForSortXlu();
+    }
+    return pLhs->GetPriorityDrawXlu() < pRhs->GetPriorityDrawXlu();
+}
 
 } // namespace
 } // namespace g3d
@@ -130,7 +143,11 @@ void ScnRoot::DrawXlu() {
 
 void __ct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPQ34nw4r3g3d13IScnObjGatherPPQ34nw4r3g3d6ScnObjUlUlUlPQ34nw4r3g3d8LightObjPQ34nw4r3g3d11AmbLightObjPQ34nw4r3g3d12LightSetData(){}
 
-void __dt__Q34nw4r3g3d7ScnRootFv(){}
+ScnRoot::~ScnRoot() {
+    if (mpAnmScn != NULL) {
+        mpAnmScn->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DETACH_PARENT, 0, this);
+    }
+}
 
 void Add__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObjbb(){}
 
@@ -151,9 +168,19 @@ void ScnObjGather::Sort(LessThanFunc pOpaFunc, LessThanFunc pXluFunc) {
     std::sort(mpArrayXlu, mpArrayXlu + mNumScnObjXlu, pXluFunc);
 }
 
-void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
+void ScnObjGather::DrawOpa(ResMdlDrawMode* pForceMode) {
+    for (u32 i = 0; i < mNumScnObjOpa; i++) {
+        mpArrayOpa[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_OPA, 0,
+                               pForceMode);
+    }
+}
 
-void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
+void ScnObjGather::DrawXlu(ResMdlDrawMode* pForceMode) {
+    for (u32 i = 0; i < mNumScnObjXlu; i++) {
+        mpArrayXlu[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_XLU, 0,
+                               pForceMode);
+    }
+}
 
 int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
 

@@ -259,6 +259,18 @@ struct CActorParamVt {
     virtual void _v2A4(); virtual void _v2A8(); virtual void _v2AC(); virtual void _v2B0();
     virtual void _v2B4(); virtual void _v2B8();
     virtual int vf2BC();               // 0x2BC CActorParam_UnkVirtualFunc138
+    virtual void _v2C0(); virtual void _v2C4(); virtual void _v2C8(); virtual void _v2CC();
+    virtual void _v2D0(); virtual void _v2D4(); virtual void _v2D8(); virtual void _v2DC();
+    virtual void _v2E0(); virtual void _v2E4(); virtual void _v2E8(); virtual void _v2EC();
+    virtual void _v2F0(); virtual void _v2F4(); virtual void _v2F8(); virtual void _v2FC();
+    virtual void _v300(); virtual void _v304(); virtual void _v308(); virtual void _v30C();
+    virtual void _v310(); virtual void _v314(); virtual void _v318(); virtual void _v31C();
+    virtual void _v320(); virtual void _v324(); virtual void _v328(); virtual void _v32C();
+    virtual void _v330(); virtual void _v334(); virtual void _v338(); virtual void _v33C();
+    virtual void _v340(); virtual void _v344(); virtual void _v348();
+    virtual void vf34C();              // 0x34C CActorParam_UnkVirtualFunc174
+    virtual void _v350(); virtual void _v354();
+    virtual void vf358();              // 0x358 CActorParam_UnkVirtualFunc177
 };
 
 struct CBattleStateVt {
@@ -945,6 +957,7 @@ unk28_done:
 }
 extern "C" int func_800B8B94(int);
 extern "C" int func_8026178C(void*, int);
+extern "C" void* func_8017389C(void*, void*, int);
 extern "C" int func_8025FB10(void*, int);
 
 struct Func4ItemVt {
@@ -1025,6 +1038,201 @@ extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv(cf::CActorPara
             }
         }
         __dt__80043E88(&holder, -1);
+    }
+
+    float v17E8 = *(float*)((u8*)self + 0x17E8);
+    float v17F4 = *(float*)((u8*)self + 0x17F4);
+    float v17EC = *(float*)((u8*)self + 0x17EC);
+    float v17F0 = *(float*)((u8*)self + 0x17F0);
+    self->unk17E4 = self->unk1650;
+    reinterpret_cast<CActorParamVt*>(self)->vf34C();
+    if (reinterpret_cast<CActorParamVt*>(self)->vf290() != NULL) {
+        float ratio = v17E8 / v17F4;
+        void* gm = getInstance__Q22cf13CfGameManagerFv();
+        bool bLT = ratio < 0.5f;
+        (void)bLT;
+        u32 t = *(u32*)(reinterpret_cast<Unk4Vt*>(self->CActorState::unk4)->vf30());
+        bool c = ((t & 0x3F) == 6) || ((t & 0x3F) == 7);
+        if (!c) c = (t & 0x7C0) == 448;
+        if (!c) c = func_8017389C(self, &t, 9) || func_8017389C(self, &t, 10) || func_8017389C(self, &t, 11);
+        if (!c) c = ((t & 0x3F) == 19);
+        if (!c) c = ((t & 0x3F) == 18);
+        if (!c) c = ((t & 0x3F) == 20);
+        if (!c) c = func_8017389C(self, &t, 22) || func_8017389C(self, &t, 23) || func_8017389C(self, &t, 15);
+        if (!c) c = ((t & 0x3F) == 21);
+        if (!c) c = ((t & 0x3F) == 24);
+        if (!c) c = ((t & 0x3F) == 25);
+        if (!c) c = ((t & 0x3F) == 26);
+        if (!c) c = ((t & 0x3F) == 27);
+        if (!c) c = ((t & 0x3F) == 16);
+        if (!c) c = ((t & 0x3F) == 13);
+        if (!c) c = ((t & 0x3F) == 15);
+        if (!c) c = ((t & 0x3F) == 31);
+        float f26 = 0.0f;
+        if (c) f26 = 1.0f;
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 37) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 37);
+            if (r != 0) *(s16*)((u8*)self + 0x1746) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 1) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 1);
+            if (r != 0) *(s16*)((u8*)self + 0x16E4) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 16) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 16);
+            if (r != 0) *(s16*)((u8*)self + 0x16E8) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 20) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 20);
+            if (r != 0) *(s16*)((u8*)self + 0x16E6) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 152) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 152);
+            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x174E) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 34) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 34);
+            if (r != 0) *(s16*)((u8*)self + 0x16F6) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 35) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 35);
+            if (r != 0) *(s16*)((u8*)self + 0x16FA) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 44) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 44);
+            if (r != 0) *(s16*)((u8*)self + 0x181C) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 2) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 2);
+            if (r != 0 && (u32)gm != 4) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 3) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 3);
+            if (r != 0 && (u32)gm == 4) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 4) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 4);
+            if (r != 0 && ratio >= 1.0f && f26 != 0.0f) *(s16*)((u8*)self + 0x174C) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 9) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 9);
+            if (r != 0) *(s16*)((u8*)self + 0x1758) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 10) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 10);
+            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x1758) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 149) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 149);
+            if (r != 0) {
+                *(s16*)((u8*)self + 0x1758) += (s16)r;
+                *(s16*)((u8*)self + 0x175C) += (s16)r;
+            }
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 17) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 17);
+            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x1750) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 21) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 21);
+            if (r != 0) *(s16*)((u8*)self + 0x16FE) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 22) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 22);
+            if (r != 0 && bLT && f26 != 0.0f) *(s16*)((u8*)self + 0x16FE) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 27) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 27);
+            if (r != 0) *(s16*)((u8*)self + 0x16FC) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 30) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 30);
+            if (r != 0) {
+                *(s16*)((u8*)self + 0x1728) += (s16)r;
+                *(s16*)((u8*)self + 0x172A) += (s16)r;
+            }
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 39) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 39);
+            if (r != 0) *(u8*)((u8*)self + 0x171D) += (u8)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 40) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 40);
+            if (r != 0 && bLT && f26 != 0.0f) *(u8*)((u8*)self + 0x171D) += (u8)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 41) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 41);
+            if (r != 0) *(u8*)((u8*)self + 0x171E) += (u8)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 42) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 42);
+            if (r != 0) *(u8*)((u8*)self + 0x171F) += (u8)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 43) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 43);
+            if (r != 0 && bLT && f26 != 0.0f) *(u8*)((u8*)self + 0x171F) += (u8)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 114) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 114);
+            if (r != 0) *(s16*)((u8*)self + 0x177C) += (s16)r;
+        }
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 45) != 0) {
+            int r = func_8025FB10(reinterpret_cast<CActorParamVt*>(self)->vf290(), 45);
+            if (r != 0) {
+                float f2 = *(float*)((u8*)self + 0x1808) * (1.0f + (float)r / 100.0f);
+                float f0 = *(float*)((u8*)self + 0x180C) * (1.0f + (float)r / 100.0f);
+                *(float*)((u8*)self + 0x1808) = f2;
+                *(float*)((u8*)self + 0x180C) = f0;
+                if (f2 > f0) *(float*)((u8*)self + 0x1808) = f0;
+            }
+        }
+
+        *(u32*)((u8*)self + 0x185C) = *(u32*)((u8*)self + 0x17E4) + *(u32*)((u8*)self + 0x16C8);
+        *(s16*)((u8*)self + 0x1878) = *(s16*)((u8*)self + 0x1800) + *(s16*)((u8*)self + 0x16E4);
+        *(s16*)((u8*)self + 0x187A) = *(s16*)((u8*)self + 0x1802) + *(s16*)((u8*)self + 0x16E6);
+        *(s16*)((u8*)self + 0x187C) = *(s16*)((u8*)self + 0x1804) + *(s16*)((u8*)self + 0x16E8);
+        *(float*)((u8*)self + 0x1860) = *(float*)((u8*)self + 0x17E8);
+        *(float*)((u8*)self + 0x1864) = *(float*)((u8*)self + 0x17EC);
+        *(float*)((u8*)self + 0x1868) = *(float*)((u8*)self + 0x17F0);
+        *(float*)((u8*)self + 0x186C) = *(float*)((u8*)self + 0x17F4);
+        *(float*)((u8*)self + 0x1870) = *(float*)((u8*)self + 0x17F8);
+        *(float*)((u8*)self + 0x1874) = *(float*)((u8*)self + 0x17FC);
+        *(float*)((u8*)self + 0x1880) = *(float*)((u8*)self + 0x1808);
+        *(float*)((u8*)self + 0x1884) = *(float*)((u8*)self + 0x180C);
+        *(s16*)((u8*)self + 0x1888) = *(s16*)((u8*)self + 0x1810);
+        *(s16*)((u8*)self + 0x188C) = *(s16*)((u8*)self + 0x1814);
+        *(s16*)((u8*)self + 0x1894) = *(s16*)((u8*)self + 0x181C);
+        *(s16*)((u8*)self + 0x1896) = *(s16*)((u8*)self + 0x181E);
+        *(u8*)((u8*)self + 0x1898) = *(u8*)((u8*)self + 0x1820);
+        *(float*)((u8*)self + 0x189C) = *(float*)((u8*)self + 0x1824);
+        *(float*)((u8*)self + 0x18A0) = *(float*)((u8*)self + 0x1828);
+        *(float*)((u8*)self + 0x18A4) = *(float*)((u8*)self + 0x182C);
+        *(float*)((u8*)self + 0x18A8) = *(float*)((u8*)self + 0x1830);
+        *(float*)((u8*)self + 0x18AC) = *(float*)((u8*)self + 0x1834);
+        *(u8*)((u8*)self + 0x18B0) = *(u8*)((u8*)self + 0x1838);
+        *(u8*)((u8*)self + 0x18B4) = *(u8*)((u8*)self + 0x183C);
+        *(float*)((u8*)self + 0x18B8) = *(float*)((u8*)self + 0x1840);
+        *(u32*)((u8*)self + 0x18BC) = *(u32*)((u8*)self + 0x1844);
+        *(u32*)((u8*)self + 0x18C0) = *(u32*)((u8*)self + 0x1848);
+        *(u32*)((u8*)self + 0x18C4) = *(u32*)((u8*)self + 0x184C);
+        *(u32*)((u8*)self + 0x18C8) = *(u32*)((u8*)self + 0x1850);
+        *(u32*)((u8*)self + 0x18CC) = *(u32*)((u8*)self + 0x1854);
+        *(u32*)((u8*)self + 0x18D0) = *(u32*)((u8*)self + 0x1858);
+        *(s16*)((u8*)self + 0x1890) = *(s16*)((u8*)self + 0x1818) + *(s16*)((u8*)self + 0x16FC);
+        *(s16*)((u8*)self + 0x1892) = *(s16*)((u8*)self + 0x181A) + *(s16*)((u8*)self + 0x16FE);
+        *(u8*)((u8*)self + 0x18B1) = *(u8*)((u8*)self + 0x1839) + *(u8*)((u8*)self + 0x171D);
+        *(s16*)((u8*)self + 0x188A) = *(s16*)((u8*)self + 0x1812) + *(s16*)((u8*)self + 0x16F6);
+        *(s16*)((u8*)self + 0x188E) = *(s16*)((u8*)self + 0x1816) + *(s16*)((u8*)self + 0x16FA);
+        *(u8*)((u8*)self + 0x18B2) = *(u8*)((u8*)self + 0x183A) + *(u8*)((u8*)self + 0x171E);
+        *(u8*)((u8*)self + 0x18B3) = *(u8*)((u8*)self + 0x183B) + *(u8*)((u8*)self + 0x171F);
+        *(s16*)((u8*)self + 0x18BC) += *(s16*)((u8*)self + 0x1728);
+        *(s16*)((u8*)self + 0x18BE) += *(s16*)((u8*)self + 0x172A);
+        *(s16*)((u8*)self + 0x18E0) = *(s16*)((u8*)self + 0x174C);
+        *(s16*)((u8*)self + 0x18E2) = *(s16*)((u8*)self + 0x174E);
+        *(s16*)((u8*)self + 0x18E4) = *(s16*)((u8*)self + 0x1750);
+        *(s16*)((u8*)self + 0x18EC) = *(s16*)((u8*)self + 0x1758);
+        *(s16*)((u8*)self + 0x18F0) = *(s16*)((u8*)self + 0x175C);
+        *(s16*)((u8*)self + 0x18DA) = *(s16*)((u8*)self + 0x1746);
     }
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc174() {}

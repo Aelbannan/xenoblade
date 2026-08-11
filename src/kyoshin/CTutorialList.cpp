@@ -6,6 +6,8 @@
 #include "kyoshin/CSortMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
+#include <stdio.h>
+
 u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
 
 
@@ -69,7 +71,24 @@ extern "C" void func_802AD98C(CTutorialList* self, int arg) {
     }
 }
 
-void func_802ADA0C(){}
+// func_802ADA0C - rebuild the list content once the sort menu finished
+// loading: gate on the sort-menu active/button flags, latch the page byte,
+// seed the sub-object at +0x180, reset the page/selection ids, size the
+// scrollbar to the content and play the confirm sound.
+extern "C" void func_802ADA0C(CTutorialList* self) {
+    if (func_801D3320(&self->mSortMenu84[0]) == 0) return;
+    if (func_801D3328(&self->mSortMenu84[0]) == 0) return;
+    u8 page = (u8)func_801D3808(&self->mSortMenu84[0]);
+    self->mField17E = (s8)page;
+    func_802ACC30(self->mSubObj180, 0, page);
+    self->mField178 = 0;
+    func_801F36BC(&self->mScrollBar, 0xa, self->mField280);
+    self->mField17A = 0;
+    func_801F3850(&self->mScrollBar, self->mField17A);
+    func_802AD98C(self, 1);
+    func_802ADCE8(self);
+    func_80138078(3);
+}
 
 void func_802ADAB8(){}
 
@@ -104,9 +123,38 @@ extern "C" __declspec(noinline) void func_802ADC28(CTutorialList* self) {}
 
 extern "C" __declspec(noinline) void func_802ADC88(CTutorialList* self) {}
 
-extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {}
+// func_802ADE18 - move the cursor onto the current tutorial row: format the
+// page number, resolve the root pane, find the page-name pane and the
+// scrollbar thumb pane, ask func_80137924 for the position between them and
+// feed it to the cursor's Move virtual (vtable +0x10).
+extern "C" __declspec(noinline) void func_802ADE18(CTutorialList* self) {
+    char name[0x2C];
+    nw4r::math::VEC3 pos;
+    sprintf(name, &lbl_eu_80510B78[0x82], (int)self->mField178 + 1);
+    func_801D216C(&self->mGap2C[0], 1);
+    nw4r::lyt::Pane* pagePane =
+        self->mLayout20->GetRootPane()->FindPaneByName(name, true);
+    nw4r::lyt::Pane* barPane =
+        self->mLayout20->GetRootPane()->FindPaneByName(&lbl_eu_80510B78[0x4e], true);
+    func_80137924(&pos, pagePane, barPane, self->mLayout20->GetRootPane());
+    ((CTutorialCurView*)self->mGap2C)->vf2(&pos);
+}
 
-void func_802ADEE4(){}
+// func_802ADEE4 - rebuild the sort menu entries: reset the menu, push the
+// four tutorial-row labels (text ids 0x25-0x28) and select the current page.
+extern "C" void func_802ADEE4(CTutorialList* self) {
+    if (func_801D3320(&self->mSortMenu84[0]) != 0) return;
+    func_801D350C(&self->mSortMenu84[0]);
+    func_801D3518(&self->mSortMenu84[0],
+                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x25));
+    func_801D3518(&self->mSortMenu84[0],
+                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x26));
+    func_801D3518(&self->mSortMenu84[0],
+                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x27));
+    func_801D3518(&self->mSortMenu84[0],
+                  func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], 0x28));
+    func_801D353C(&self->mSortMenu84[0], self->mField17E);
+}
 
 extern "C" void func_802ADFA8(CTutorialList* self) {
     char* text = func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], self->mField17E + 0x25);
@@ -131,7 +179,20 @@ extern "C" void func_802AE004(CTutorialList* self) {
 
 void CTutorialList::OnFileEvent() {}
 
-void func_802AE38C(){}
+// func_802AE38C - play the tutorial voice: gate on the handle's +0x3F00
+// bit-1 flag, the voice-idle virtual (vtable slot 0x2BC), the battle-state
+// mapping and a 0xA0 handle-buffer allocation, then play voice 0xDD2 through
+// the embedded +0x3E9C sub-object. Always returns 0.
+extern "C" int func_802AE38C(CVoiceHandle* self) {
+    if ((self->field_0x3F00 & 0x2) == 0) return 0;
+    if (((CVoiceHandleVTV*)self)->isActive() != 0) return 0;
+    if (func_802A77E8(self) != 5) return 0;
+    if (func_802A330C(0xa0, 1) == 0) return 0;
+    CCharVoice* voice = (CCharVoice*)self;
+    if (self != 0) voice = &self->voice;
+    func_802A3D54(voice, 0xdd2, 0xa0);
+    return 0;
+}
 
 extern "C" void func_802ACBDC(u8* self) {
     *(unsigned short*)(self + 0x100) = 0;
@@ -177,7 +238,25 @@ extern "C" void func_802AD0E0(CTutorialList* self) {
 }
 
 extern "C" void func_802AD188() {}
-extern "C" void func_802AD1F4() {}
+// func_802AD1F4 - release the list widget: free the CBdat index, close the
+// two file handles, release the bound layout and resource accessor, then run
+// the cursor/scrollbar/sort-menu/region teardown helpers.
+extern "C" void func_802AD1F4(CTutorialList* self) {
+    func_8003AA8C__5CBdatFUl(4);
+    func_801390E0((CFileHandle**)&self->mField14);
+    func_801390E0((CFileHandle**)&self->mField18);
+    self->mField174 = 0;
+    if (self->mLayout20 != 0) {
+        delete self->mLayout20;
+        self->mLayout20 = 0;
+    }
+    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mField1C);
+    lbl_eu_80664BF0 = 0;
+    ((CTutorialCurView*)self->mGap2C)->vf1();
+    func_801F35DC(&self->mScrollBar);
+    func_801D3258(&self->mSortMenu84[0]);
+    func_8045F778__17UnkClass_8045F564Fv(&self->mGap04[0]);
+}
 
 extern "C" __declspec(noinline) void func_802ACC30(u8* self, u16 a, int b) {}
 extern "C" void func_802ACE04() {}

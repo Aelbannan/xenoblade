@@ -5,6 +5,7 @@
 
 #include "kyoshin/CSortMenu.hpp"      // CScrollBarData, CScrollBar_isVisible, func_801F367C
 #include "kyoshin/code_80135FDC.hpp"  // func_80137510, func_80137444, func_80136190, func_80136B4C
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"  // CVoiceHandle, CVoiceHandleVTV, func_802A77E8/802A330C/802A3D54
 
 /* CTutorialList -- tutorial list widget.
    Vtable at lbl_eu_8053A2A8 (split1 .data). Layout-compatible with IWorkEvent
@@ -41,6 +42,16 @@ extern char lbl_eu_80510B78[];       // string pool base
 
 class CTutorialList;
 
+// Phantom view over the embedded CCur vtable at +0x2C (MWCC prefixes 2
+// implicit vtable entries, so declared index N lands at offset (N+2)*4).
+// All-pure so no vtable is emitted; only cast + dispatch a slot.
+class CTutorialCurView {
+public:
+    virtual void vf0() = 0;                          // index 0 -> +0x08
+    virtual void vf1() = 0;                          // index 1 -> +0x0C - func_801D20DC
+    virtual void vf2(const nw4r::math::VEC3*) = 0;   // index 2 -> +0x10 - func_801D2144
+};
+
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
 extern "C" u32 func_801D32DC(void*);
 extern "C" u8 func_801D3320(void*);
@@ -55,6 +66,20 @@ extern "C" int func_800A9D90();
 extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 // UI sound: retail symbol is the C++-mangled func_80138078__FUl.
 void func_80138078(u32);
+
+// Sort-menu sub-object helpers (retail unmangled C symbols; same declarations
+// as CItemBoxGrid.hpp / CMCCrystalBox.hpp, declared here to avoid pulling
+// those TUs' headers into this one).
+extern "C" u32 func_801D3808(void*);
+extern "C" void func_801D350C(void*);
+extern "C" void func_801D3518(void*, void*);
+extern "C" void func_801D353C(void*, u8);
+extern "C" void func_801D3258(void*);
+// CBdat index-free helper (retail symbol is the pre-mangled __5CBdatFUl form).
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+
+// Global term/active flag cleared by func_802AD1F4 (.sbss word, sda21).
+extern u32 lbl_eu_80664BF0;
 
 // Same-TU widget helpers. Retail strips the C++ mangling for these (bare
 // func_ names), so they are defined under C linkage and call sites bind the

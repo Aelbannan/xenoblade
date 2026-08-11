@@ -8958,3 +8958,18 @@ The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x
   float saves (retail recomputes fabs per call into f1/f2/f3); the 4th float
   arg f4 passes through unset in the retail (3-arg call) — not expressible with
   the 4-arg functions.hpp declaration; reloc SDA21 vs REL24 on the const.
+
+## 2026-08 session: CTaskGame dtor / IWorkEvent tension
+
+- `func_800407C8` is the retail vec4 setter (4 stfs, 0x14) defined in CTaskGame.o.
+  functions.hpp declared it WITHOUT extern "C" — mangling every call site to
+  `func_800407C8__FP17func_800407C8_tmpffff`. Fix: `extern "C"` in functions.hpp
+  (matches the unmangled retail symbol; CTaskGamePic/CTaskGameCf unaffected).
+- `__dt__9CTaskGameFv` residual: with IWorkEvent::~IWorkEvent declaration-only
+  (required so CGame.o stops emitting the weak 0x40 dtor — split budget), the
+  CTaskGame dtor emits the secondary-base call
+  `__dt__10IWorkEventFv(this+0x54, 0)`; the retail elides it (inline-empty at
+  the retail's compile). The inline-empty restores the elision but regrows the
+  CGame weak dtor (+0x40). Mutually exclusive with the current toolchain —
+  documented tension; the declaration-only + secondary-call is the lesser
+  divergence.

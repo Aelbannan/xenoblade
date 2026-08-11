@@ -200,6 +200,7 @@ struct MiniMapCase2Elem {
     f32 z;                           // 0x08
     u8 pad0C[0x1C - 0x0C];
     u16 m1C;                         // 0x1C id
+    u8 pad1E[0x4C - 0x1E];           // stride 76
 };
 
 // Shared marker-placement tail (inlined twice by retail with distinct locals).
@@ -210,7 +211,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
     MiniMapEnumList* list;
     MiniMapObj* obj;
     f32 clamp;
-    s8 type;
+    u8 type;
     u16 mapId;
     void* gimmickView;
     ml::CVec3 diff1;
@@ -236,7 +237,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
     }
     if (lbl_eu_80663FBC++ > 30) {
         lbl_eu_80663FBC = 0;
-        for (u32 i = 0; lbl_eu_8052C7B8[i] != 0; i++) {
+        for (u8 i = 0; lbl_eu_8052C7B8[i] != 0; i++) {
             MiniMapCleanupList* clist =
                 (MiniMapCleanupList*)self->m0C->m10->v03C((const char*)lbl_eu_8052C7B8[i], 1);
             MiniMapCleanupNode* node = clist->first;
@@ -268,13 +269,14 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 if ((u8)func_801361E8(self->m24, &lbl_eu_804FE1FC[649], row) ==
                     (u8)lbl_eu_80664184) {
                     clamp = lbl_eu_806670A0 * self->m20;
-                    type = (s8)func_801361E8(self->m24, &lbl_eu_804FE1FC[64], row);
+                    type = func_801361E8(self->m24, &lbl_eu_804FE1FC[64], row);
                     mapId = func_80136254((void*)(u32)self->m24, &lbl_eu_804FE1FC[69], row);
                     if (mapId == 0) {
-                        diff1 = ml::CVec3(lbl_eu_80667090, lbl_eu_80667090,
-                                          lbl_eu_80667090);
+                        diff1.x = lbl_eu_80667090;
                         name1[0] = 0;
-                        if (type == 1) {
+                        diff1.y = lbl_eu_80667090;
+                        diff1.z = lbl_eu_80667090;
+                        if ((int)type == 1) {
                             MiniMapList* glist = (MiniMapList*)func_800B6CF8(1);
                             for (MiniMapListNode* node = glist->head->next;
                                  node != glist->head; node = node->next) {
@@ -283,7 +285,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 u8 rowA = 0;
                                 if (cf::CfObjectMove* player =
                                         cf::CfGameManager::getPlayer(0)) {
-                                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3 ppos;
+                                    ppos.x = pposPtr->x;
+                                    ppos.y = pposPtr->y;
+                                    ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
                                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
@@ -345,7 +351,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                     *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                     func_80137C1C(pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) |= 1;
+                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->v03C(
@@ -356,9 +362,10 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             }
                         }
                     } else {
-                        diff2 = ml::CVec3(lbl_eu_80667090, lbl_eu_80667090,
-                                          lbl_eu_80667090);
                         name2[0] = 0;
+                        diff2.x = lbl_eu_80667090;
+                        diff2.y = lbl_eu_80667090;
+                        diff2.z = lbl_eu_80667090;
                         switch (type) {
                         case 2: {
                             MiniMapCase2Elem* arr = (MiniMapCase2Elem*)func_80193804();
@@ -369,7 +376,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 u8 rowA = 0;
                                 if (cf::CfObjectMove* player =
                                         cf::CfGameManager::getPlayer(0)) {
-                                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3 ppos;
+                                    ppos.x = pposPtr->x;
+                                    ppos.y = pposPtr->y;
+                                    ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
                                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
@@ -413,7 +424,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 u8 rowA = 0;
                                 if (cf::CfObjectMove* player =
                                         cf::CfGameManager::getPlayer(0)) {
-                                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3 ppos;
+                                    ppos.x = pposPtr->x;
+                                    ppos.y = pposPtr->y;
+                                    ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
                                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
@@ -454,7 +469,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 u8 rowA = 0;
                                 if (cf::CfObjectMove* player =
                                         cf::CfGameManager::getPlayer(0)) {
-                                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3 ppos;
+                                    ppos.x = pposPtr->x;
+                                    ppos.y = pposPtr->y;
+                                    ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
                                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
@@ -495,7 +514,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 u8 rowA = 0;
                                 if (cf::CfObjectMove* player =
                                         cf::CfGameManager::getPlayer(0)) {
-                                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                                    ml::CVec3 ppos;
+                                    ppos.x = pposPtr->x;
+                                    ppos.y = pposPtr->y;
+                                    ppos.z = pposPtr->z;
                                     f32 playerY = ppos.y;
                                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                                     for (u8 i = 1; i <= count; i++) {
@@ -563,7 +586,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                     *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                     func_80137C1C(pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) |= 1;
+                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->v03C(
@@ -592,7 +615,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     f32 objY = o->GetPos()->y;
                     u8 rowA = 0;
                     if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                        ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                                ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                        ml::CVec3 ppos;
+                        ppos.x = pposPtr->x;
+                        ppos.y = pposPtr->y;
+                        ppos.z = pposPtr->z;
                         f32 playerY = ppos.y;
                         u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
@@ -636,7 +663,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                 *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                 *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                 func_80137C1C(pic, -1);
-                                *(u8*)((u8*)pic + 0xBB) |= 1;
+                                *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                             }
                             if (pic) {
                                 void* parent = self->m0C->m10->v03C(
@@ -666,7 +693,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     f32 objY = o->GetPos()->y;
                     u8 rowA = 0;
                     if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                        ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                                ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                        ml::CVec3 ppos;
+                        ppos.x = pposPtr->x;
+                        ppos.y = pposPtr->y;
+                        ppos.z = pposPtr->z;
                         f32 playerY = ppos.y;
                         u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
@@ -716,7 +747,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                     *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                     func_80137C1C(pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) |= 1;
+                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->v03C(
@@ -742,7 +773,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 f32 objY = o->GetPos()->y;
                 u8 rowA = 0;
                 if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                        ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                    ml::CVec3 ppos;
+                    ppos.x = pposPtr->x;
+                    ppos.y = pposPtr->y;
+                    ppos.z = pposPtr->z;
                     f32 playerY = ppos.y;
                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                     for (u8 i = 1; i <= count; i++) {
@@ -786,7 +821,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             *(f32*)((u8*)pic + 0x30) = (f32)gz;
                             *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                             func_80137C1C(pic, -1);
-                            *(u8*)((u8*)pic + 0xBB) |= 1;
+                            *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                         }
                         if (pic) {
                             void* parent = self->m0C->m10->v03C(
@@ -810,7 +845,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                 f32 objY = o->GetPos()->y;
                 u8 rowA = 0;
                 if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                    ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                        ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                    ml::CVec3 ppos;
+                    ppos.x = pposPtr->x;
+                    ppos.y = pposPtr->y;
+                    ppos.z = pposPtr->z;
                     f32 playerY = ppos.y;
                     u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                     for (u8 i = 1; i <= count; i++) {
@@ -854,7 +893,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                             *(f32*)((u8*)pic + 0x30) = (f32)gz;
                             *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                             func_80137C1C(pic, -1);
-                            *(u8*)((u8*)pic + 0xBB) |= 1;
+                            *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                         }
                         if (pic) {
                             void* parent = self->m0C->m10->v03C(
@@ -877,7 +916,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     f32 objY = o->GetPos()->y;
                     u8 rowA = 0;
                     if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                        ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                                ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                        ml::CVec3 ppos;
+                        ppos.x = pposPtr->x;
+                        ppos.y = pposPtr->y;
+                        ppos.z = pposPtr->z;
                         f32 playerY = ppos.y;
                         u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
@@ -940,7 +983,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                     *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                     func_80137C1C(pic, arg2);
-                                    *(u8*)((u8*)pic + 0xBB) |= 1;
+                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                             }
                             if (pic) {
@@ -963,7 +1006,11 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                     f32 objY = o->GetPos()->y;
                     u8 rowA = 0;
                     if (cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0)) {
-                        ml::CVec3 ppos = *((MiniMapObj*)player)->GetPos();
+                                                ml::CVec3* pposPtr = ((MiniMapObj*)player)->GetPos();
+                        ml::CVec3 ppos;
+                        ppos.x = pposPtr->x;
+                        ppos.y = pposPtr->y;
+                        ppos.z = pposPtr->z;
                         f32 playerY = ppos.y;
                         u8 count = (u8)func_8003B1EC(lbl_eu_80663FB8);
                         for (u8 i = 1; i <= count; i++) {
@@ -1012,7 +1059,7 @@ extern "C" void func_80118854(MiniMapSelf* self) {
                                     *(f32*)((u8*)pic + 0x30) = (f32)gz;
                                     *(f32*)((u8*)pic + 0x34) = lbl_eu_80667090;
                                     func_80137C1C(pic, -1);
-                                    *(u8*)((u8*)pic + 0xBB) |= 1;
+                                    *(u8*)((u8*)pic + 0xBB) = (*(u8*)((u8*)pic + 0xBB) & 0xFE) | 1;
                                 }
                                 if (pic) {
                                     void* parent = self->m0C->m10->v03C(

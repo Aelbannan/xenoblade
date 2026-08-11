@@ -339,28 +339,38 @@ extern "C" int func_80181DDC(void* self) {
 extern "C" void func_80181F28(void* self) {
     char* s = (char*)self;
 
-    if (FLD(u32, s, 0x44) == 1) return;
+    // Bail out if a file load is in progress (state 1), the reset flag is
+    // already set, or the reference count is positive.
+    if (FLD(s32, s, 0x44) == 1) return;
     if (FLD(u32, s, 0x18) & 0x100) return;
     if (FLD(s32, s, 0x4C) > 0) return;
 
-    FLD(u32, s, 0x18) |= 0x100;
+    void* handle = FLD(void*, s, 0x7C);
+    *(volatile u32*)(s + 0x18) |= 0x100;
 
-    if (FLD(u32, s, 0x7C) != 0) {
-        func_804E3CCC((void*)FLD(u32, s, 0x7C));
+    if (handle != 0) {
+        func_804E3CCC(handle);
         FLD(u32, s, 0x7C) = 0;
     }
 
     func_80172768(self);
 
-    u32 fileState = FLD(u32, s, 0x44);
+    // Free the loaded/archived data depending on the file state. The
+    // status-3 path carries the duplicated null check (two consecutive beq)
+    // like the matched func_80183978.
+    s32 fileState = FLD(s32, s, 0x44);
     if (fileState == 3) {
-        if (FLD(u32, s, 0x48) != 0) {
-            mtl::MemManager::deallocate((void*)FLD(u32, s, 0x48));
-            FLD(u32, s, 0x48) = 0;
+        void* data = FLD(void*, s, 0x48);
+        if (data != 0) {
+            if (data != 0) {
+                mtl::MemManager::deallocate(data);
+                FLD(u32, s, 0x48) = 0;
+            }
         }
     } else if (fileState == 2) {
-        if (FLD(u32, s, 0x78) != 0) {
-            func_800A9344((void*)FLD(u32, s, 0x78), 0);
+        void* data = FLD(void*, s, 0x78);
+        if (data != 0) {
+            func_800A9344(data, 0);
             FLD(u32, s, 0x78) = 0;
             FLD(u32, s, 0x48) = 0;
         }
@@ -368,13 +378,16 @@ extern "C" void func_80181F28(void* self) {
         FLD(u32, s, 0x48) = 0;
     }
 
-    if (FLD(u32, s, 0x70) != 0) {
-        mtl::MemManager::deallocate((void*)FLD(u32, s, 0x70));
-        FLD(u32, s, 0x70) = 0;
+    void* data2 = FLD(void*, s, 0x70);
+    if (data2 != 0) {
+        if (data2 != 0) {
+            mtl::MemManager::deallocate(data2);
+            FLD(u32, s, 0x70) = 0;
+        }
     }
 
-    if (FLD(u32, s, 0x54) != 0) {
-        void* parentModel = FLD(void*, s, 0x54);
+    void* parentModel = FLD(void*, s, 0x54);
+    if (parentModel != 0) {
         if (FLD(u32, parentModel, 0x48) != 0) {
             FLD(u32, parentModel, 0x4C) -= 1;
         }
@@ -383,15 +396,17 @@ extern "C" void func_80181F28(void* self) {
 
     FLD(u32, s, 0x68) = 0;
 
-    u32* ptmf = lbl_eu_80531F34;
-    FLD(u32, s, 0x0C) = ptmf[1];
-    FLD(u32, s, 0x08) = ptmf[0];
-    FLD(u32, s, 0x10) = ptmf[2];
-
-    u32 flags = FLD(u32, s, 0x18);
-    flags |= 0x30;
-    flags &= ~0x244;
-    FLD(u32, s, 0x18) = flags;
+    // Install the reset ptmf callback (loads w0,w1 via *src++ then stores
+    // +0xC,+0x8; w2 late) and clear bits 0x243 while setting 0x30.
+    u32 result = (FLD(u32, s, 0x18) | 0x30) & ~0x243;
+    const u32* src = lbl_eu_80531F34;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    FLD(u32, s, 0x0C) = w1;
+    FLD(u32, s, 0x08) = w0;
+    u32 w2 = *src++;
+    FLD(u32, s, 0x10) = w2;
+    FLD(u32, s, 0x18) = result;
 }
 
 // ============================================================

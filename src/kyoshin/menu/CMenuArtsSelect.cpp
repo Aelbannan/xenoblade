@@ -1231,15 +1231,15 @@ void func_801043BC(){}
 // free function; the header's member declaration is kept for Move's call.
 // ---------------------------------------------------------------------------
 extern "C" void func_80104454(CMenuArtsSelect* self) {
-    s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
-    s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
-    f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
-    s16* selTab = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C);
+
+
+
+
     typedef void* (*GetPtrFn)(void*);
     typedef f32 (*GetF32Fn)(void*);
     typedef void* (*AtFn)(void*, s32);
 
-    self->unk308 &= ~8u;
+    self->unk308 &= ~0x10u;
 
     if (func_8029A658() != 0) return;
 
@@ -1263,7 +1263,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             battle = true;
         } else {
             bool b2 = false;
-            u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+            u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
             if (bmv >= 1 && bmv <= 24) b2 = true;
             if (b2) {
                 battle = true;
@@ -1292,8 +1292,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* list = (char*)adj + 8;
-                void* el = artsVslot<AtFn>(list, 0x54)(list, i);
+                void* el = artsVslot<AtFn>((char*)adj + 8, 0x54)((char*)adj + 8, i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1308,8 +1307,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
         if (pl != NULL) adj = (char*)pl - 0x3e9c;
         if (*(u16*)((char*)adj + 0x3F28) == 1) {
             for (s32 i = 0; i < 104; i++) {
-                void* list = (char*)adj + 8;
-                void* el = artsVslot<AtFn>(list, 0x54)(list, i);
+                void* el = artsVslot<AtFn>((char*)adj + 8, 0x54)((char*)adj + 8, i);
                 if (*(u16*)((char*)el + 0xC) == 0xEA) {
                     found = true;
                     break;
@@ -1388,7 +1386,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 battle2 = true;
             } else {
                 bool b22 = false;
-                u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
                 if (bmv >= 1 && bmv <= 24) b22 = true;
                 if (b22) {
                     battle2 = true;
@@ -1449,7 +1447,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 if (self->unk328 == 4) {
                     func_801072E0(self);
                 } else {
-                    s16 v = selTab[self->unk328];
+                    s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                     char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x254, v);
                     char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1467,16 +1465,16 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
             {
                 nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[self->unk324]);
-                trans.y = static_cast<f32>(posY[self->unk324]);
+                trans.x = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00)[self->unk324]);
+                trans.y = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14)[self->unk324]);
                 pane->SetTranslate(trans);
-                f32 s = scale[self->unk324];
+                f32 s = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28)[self->unk324];
                 pane->SetScale(nw4r::math::VEC2(s, s));
             }
             if (self->unk328 == 4) {
                 func_801072E0(self);
             } else {
-                s16 v = selTab[self->unk328];
+                s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                 char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
                 char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1500,7 +1498,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 battle3 = true;
             } else {
                 bool b23 = false;
-                u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                u32 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
                 if (bmv >= 1 && bmv <= 24) b23 = true;
                 if (b23) {
                     battle3 = true;
@@ -1561,7 +1559,7 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 if (self->unk328 == 4) {
                     func_801072E0(self);
                 } else {
-                    s16 v = selTab[self->unk328];
+                    s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                     char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                                   lbl_eu_804FD1E0 + 0x254, v);
                     char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1578,16 +1576,16 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
                 self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
             {
                 nw4r::math::VEC3 trans = pane->GetTranslate();
-                trans.x = static_cast<f32>(posX[self->unk324]);
-                trans.y = static_cast<f32>(posY[self->unk324]);
+                trans.x = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00)[self->unk324]);
+                trans.y = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14)[self->unk324]);
                 pane->SetTranslate(trans);
-                f32 s = scale[self->unk324];
+                f32 s = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28)[self->unk324];
                 pane->SetScale(nw4r::math::VEC2(s, s));
             }
             if (self->unk328 == 4) {
                 func_801072E0(self);
             } else {
-                s16 v = selTab[self->unk328];
+                s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                 char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
                 char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1626,17 +1624,17 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
         {
             nw4r::math::VEC3 trans = pane->GetTranslate();
-            trans.x = static_cast<f32>(posX[self->unk324]);
-            trans.y = static_cast<f32>(posY[self->unk324]);
+            trans.x = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00)[self->unk324]);
+            trans.y = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14)[self->unk324]);
             pane->SetTranslate(trans);
-            f32 s = scale[self->unk324];
+            f32 s = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28)[self->unk324];
             pane->SetScale(nw4r::math::VEC2(s, s));
         }
         if (self->unk324 == 4) {
             if (self->unk328 == 4) {
                 func_801072E0(self);
             } else {
-                s16 v = selTab[self->unk328];
+                s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                 char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
                 char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1696,17 +1694,17 @@ extern "C" void func_80104454(CMenuArtsSelect* self) {
             self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
         {
             nw4r::math::VEC3 trans = pane->GetTranslate();
-            trans.x = static_cast<f32>(posX[self->unk324]);
-            trans.y = static_cast<f32>(posY[self->unk324]);
+            trans.x = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00)[self->unk324]);
+            trans.y = static_cast<f32>(reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14)[self->unk324]);
             pane->SetTranslate(trans);
-            f32 s = scale[self->unk324];
+            f32 s = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28)[self->unk324];
             pane->SetScale(nw4r::math::VEC2(s, s));
         }
         if (self->unk324 == 4) {
             if (self->unk328 == 4) {
                 func_801072E0(self);
             } else {
-                s16 v = selTab[self->unk328];
+                s16 v = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C)[self->unk328];
                 char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                               lbl_eu_804FD1E0 + 0x254, v);
                 char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
@@ -1883,4 +1881,5 @@ void CMenuArtsSelect::func_80108994(){}
 
 extern "C" void func_801041F4() {}
 extern "C" void func_801042F0() {}
+
 

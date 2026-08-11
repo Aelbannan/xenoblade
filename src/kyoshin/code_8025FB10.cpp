@@ -19,13 +19,13 @@ struct GXCacheTextProjection {
 
 #define VALIDATE_NW4R_POINTER(pointer, file, line, message)                    \
     {                                                                         \
-        u32 address = (u32)(pointer);                                          \
         bool validMem1 = true;                                                 \
         bool validMem2 = true;                                                 \
         bool validIo = true;                                                   \
         bool validIo2 = true;                                                  \
         bool validRegs = true;                                                 \
         bool validRegs2 = true;                                                \
+        u32 address = (u32)(pointer);                                          \
         if ((address & 0xFF000000) != 0x80000000 &&                            \
             (address & 0xFF800000) != 0x81000000) {                            \
             validMem1 = false;                                                 \
@@ -173,15 +173,15 @@ static inline void setCursorChecked(WideTextWriter* writer, u32 writerRegion,
     writer->SetCursor(x, y, z);
 }
 
-static inline u32 printCheckedInitial(WideTextWriter* writer,
+static inline void printCheckedInitial(WideTextWriter* writer,
                                       u32 writerRegion,
-                                      const wchar_t* text) {
+                                      const wchar_t* text,
+                                      u32 textRegion) {
     VALIDATE_NW4R_POINTER_FLAG(writer, writerRegion, lbl_eu_80537734, 256,
                           lbl_eu_80537700);
     VALIDATE_NW4R_POINTER(text, lbl_eu_805376EC, 257,
                           lbl_eu_805376B8);
     writer->Print(text, static_cast<int>(wcslen(text)));
-    return (u32)text & 0xFF000000;
 }
 
 static inline void printChecked(WideTextWriter* writer, u32 writerRegion,
@@ -269,8 +269,8 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         f32 renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         s16* rect = func_8044BE1C__8CGXCacheFv(cache);
-        f32 right = static_cast<f32>(cacheWidth) *
-                    (static_cast<f32>(rect[2]) / renderWidth);
+        f32 rectRatio = static_cast<f32>(rect[2]) / renderWidth;
+        f32 right = static_cast<f32>(cacheWidth) * rectRatio;
 
         cache = static_cast<GXCacheTextProjection*>(
             cacheInstance__9CDeviceGX);
@@ -278,15 +278,15 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         rect = func_8044BE1C__8CGXCacheFv(cache);
-        f32 left = static_cast<f32>(cacheWidth) *
-                   (static_cast<f32>(rect[0]) / renderWidth);
+        f32 rectRatioLeft = static_cast<f32>(rect[0]) / renderWidth;
+        f32 left = static_cast<f32>(cacheWidth) * rectRatioLeft;
 
         s16 cacheHeight = cache->height;
         f32 renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         rect = func_8044BE1C__8CGXCacheFv(cache);
-        f32 bottom = static_cast<f32>(cacheHeight) *
-                     (static_cast<f32>(rect[3]) / renderHeight);
+        f32 rectRatioBottom = static_cast<f32>(rect[3]) / renderHeight;
+        f32 bottom = static_cast<f32>(cacheHeight) * rectRatioBottom;
 
         cache = static_cast<GXCacheTextProjection*>(
             cacheInstance__9CDeviceGX);
@@ -294,8 +294,8 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
         renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         rect = func_8044BE1C__8CGXCacheFv(cache);
-        f32 top = static_cast<f32>(cacheHeight) *
-                  (static_cast<f32>(rect[1]) / renderHeight);
+        f32 rectRatioTop = static_cast<f32>(rect[1]) / renderHeight;
+        f32 top = static_cast<f32>(cacheHeight) * rectRatioTop;
 
         C_MTXOrtho(projection, top, bottom, left, right,
                    lbl_eu_806688D0, lbl_eu_806688D4);
@@ -305,8 +305,6 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     WideTextWriter writer;
     writer.SetupGX();
     u32 writerRegion = (u32)&writer & 0xFF000000;
-    u32 padArea[4];
-    padArea[0] = writerRegion;
 
     setTagProcessorChecked(&writer, lbl_eu_8066486C);
     setDrawFlagChecked(&writer, 0x110);
@@ -321,7 +319,8 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
 
     setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
-    u32 textRegion = printCheckedInitial(&writer, writerRegion, text);
+    u32 textRegion = (u32)text & 0xFF000000;
+    printCheckedInitial(&writer, writerRegion, text, textRegion);
     setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
     printChecked(&writer, writerRegion, text, textRegion);

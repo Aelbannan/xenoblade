@@ -3,7 +3,15 @@
 
 #include <harness_catalog.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
+#include <string.h>
 #include "libs/monolib/src/scn/CVirtualLightObj.hpp"
+// The catalog header declares the post-update hook func_804BF940 as (void),
+// which conflicts with the real signature declared in CVirtualLightObj.hpp
+// (the retail call site passes the data pointer in r3). Rename the catalog's
+// declaration out of the way so only the correct one is visible.
+#define func_804BF940 func_804BF940_catalog_unused
+#include "monolib/scn/code_804BF59C.hpp"
+#undef func_804BF940
 
 // Sets byte at offset 0x1174.
 extern "C" void func_804954AC(CVirtualLightObj* self, u8 val) {
@@ -76,7 +84,49 @@ void func_804952C4() {}
 
 // Post-construction light-environment setup (retail 0x190-byte function, not
 // yet matched; kept out-of-line so func_804950F4 emits the retail call).
-extern "C" __declspec(noinline) void func_804954B4(CLightEnv* self) {}
+// ---------------------------------------------------------------------------
+// func_804954B4: post-construction light-environment setup.
+// Initializes the four slot colors (white rgb, 0.5 alpha), wires the slot
+// pointer banks to the four CLight[8] arrays, sets each slot's light count to
+// 8, zeroes the slot field counters, then for every slot selects its lights
+// into the LightSetting's LightObj array: each LightObj is cleared and bound
+// to the slot's CLight, and the slot's ambient light is selected.
+// ---------------------------------------------------------------------------
+extern "C" __declspec(noinline) void func_804954B4(CLightEnv* self) {
+    self->mField1180 = 0;
+    for (int i = 0; i < 4; i++) {
+        self->mSlotColors[i].x = lbl_eu_8066AAA8;
+        self->mSlotColors[i].y = lbl_eu_8066AAA8;
+        self->mSlotColors[i].z = lbl_eu_8066AAA8;
+        self->mSlotColors[i].w = lbl_eu_8066AA98;
+    }
+    self->mSlotPtrs[0] = self->mSlotLights[0];
+    self->mSlotPtrs[1] = self->mSlotLights[1];
+    self->mSlotPtrs[2] = self->mSlotLights[2];
+    self->mSlotPtrs[3] = self->mSlotLights[3];
+    self->mSlotCounts[0] = 8;
+    self->mSlotCounts[1] = 8;
+    self->mSlotCounts[2] = 8;
+    self->mSlotCounts[3] = 8;
+    memset(self->mSlotFields, 0, sizeof(self->mSlotFields));
+
+    CLight* light;
+    int lightIdx = 0;
+    for (int slot = 0; slot < 4; slot++) {
+        nw4r::g3d::LightSet lightSet = self->mLightSetting.GetLightSet(slot);
+        light = self->mSlotPtrs[slot];
+        for (u32 i = 0; i < self->mSlotCounts[slot]; i++) {
+            lightSet.SelectLightObj(i, lightIdx);
+            lightSet.GetLightObj(i)->Clear();
+            func_804C0398(light, lightSet.GetLightObj(i));
+            lightIdx++;
+            light++;
+        }
+        lightSet.SelectAmbLightObj(slot);
+        self->mField117C = -1;
+    }
+}
+
 
 // ---------------------------------------------------------------------------
 // Select light slot `idx` on the environment: reset the slot color, clear
@@ -99,7 +149,7 @@ extern "C" void func_80495644(CLightEnv* self, u32 idx) {
     self->mField117C = idx;
 }
 
-void func_804956F8(void) {}
+extern "C" void func_804956F8(void* self) { *(u32*)((u8*)self + 0x117C) = -1; }
 
 // ---------------------------------------------------------------------------
 // func_80495704: bind the slot's next light, orient it and arm slot 0.
@@ -187,13 +237,195 @@ extern "C" void func_804959E8(CLightEnv* self, int idx) {
     nw4r::g3d::G3DState::SetAmbLightObj(*amb, idx);
 }
 
-void func_80495AF4() {}
+// ---------------------------------------------------------------------------
+// func_80495AF4: push the virtual light environment's slot `slot` into the
+// scene light data object.
+// Clears the data object's light state, copies the slot's ambient color into
+// the data object's ambient color base, then walks the 8 GX lights of the
+// slot's LightSet. For each enabled light, copies color/intensity/direction
+// from the environment's slot light bank into the data object's CLight and
+// enables it. The number of enabled lights is recorded in mActiveLightCount.
+// ---------------------------------------------------------------------------
+extern "C" void func_80495AF4(CLightEnv* env, CScnEnvLgtData* data, int slot) {
+    func_804BF8A8(data);
+    data->mAmbColorBase[0] = env->mSlotColors[slot].x;
+    data->mAmbColorBase[1] = env->mSlotColors[slot].y;
+    data->mAmbColorBase[2] = env->mSlotColors[slot].z;
 
-extern "C" void func_804948F4() {}
-extern "C" void func_80494A64() {}
-extern "C" void func_80494C30() {}
-extern "C" void func_80494D84() {}
-extern "C" void func_80494F10() {}
+    nw4r::g3d::LightSet lightSet = env->mLightSetting.GetLightSet(slot);
+    CLight* dst = data->mLights;
+    int count = 0;
+    for (int i = 0; i < 8; i++) {
+        if (lightSet.GetLightObj(i)->IsEnable()) {
+            func_804C03A0(reinterpret_cast<u8*>(dst), 1);
+            CLight* src = env->mSlotPtrs[slot] + i;
+            func_804C07F0(reinterpret_cast<u8*>(dst), reinterpret_cast<int>(&src->unk10));
+            func_804C0928(dst, src->unk38);
+            func_804C0484(dst, &src->unk20);
+            func_804C08C8(dst, 1);
+            dst++;
+            count++;
+        }
+    }
+    func_804BF940(data);
+    data->mActiveLightCount = count;
+}
+
+// ---------------------------------------------------------------------------
+// func_804948F4: configure the GX vertex description / attribute formats for
+// the given vertex format. Always enables POS and CLR0 as direct data; mode 1
+// additionally enables TEX0, mode 2 additionally enables TEX0 and TEX1.
+// ---------------------------------------------------------------------------
+extern "C" void func_804948F4(GXVtxFmt fmt, int mode) {
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    switch (mode) {
+    case 0:
+        GXSetVtxAttrFmt(fmt, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        break;
+    case 1:
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxAttrFmt(fmt, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        break;
+    case 2:
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
+        GXSetVtxAttrFmt(fmt, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSetVtxAttrFmt(fmt, GX_VA_TEX1, GX_TEX_ST, GX_F32, 0);
+        break;
+    }
+}
+// ---------------------------------------------------------------------------
+// func_80494A64: configure a TEV stage's color combine op and inputs for one
+// of seven blend modes. All modes use ADD with zero bias/scale, clamped; only
+// the color input register combination differs per mode.
+// ---------------------------------------------------------------------------
+extern "C" void func_80494A64(GXTevStageID stage, int mode, GXTevRegID reg) {
+    switch (mode) {
+    case 0:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+        break;
+    case 1:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+        break;
+    case 2:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+        break;
+    case 3:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_RASC, GX_CC_RASA, GX_CC_ZERO);
+        break;
+    case 4:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_RASA, GX_CC_C0, GX_CC_ZERO);
+        break;
+    case 5:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+        break;
+    case 6:
+        GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_CPREV, GX_CC_TEXC, GX_CC_ZERO);
+        break;
+    }
+}
+// ---------------------------------------------------------------------------
+// func_80494C30: configure a TEV stage's alpha combine op and inputs for one
+// of five blend modes. All modes use ADD with zero bias/scale, clamped; only
+// the alpha input register combination differs per mode.
+// ---------------------------------------------------------------------------
+extern "C" void func_80494C30(GXTevStageID stage, int mode, GXTevRegID reg) {
+    switch (mode) {
+    case 0:
+        GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+        break;
+    case 1:
+        GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+        break;
+    case 2:
+        GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
+        break;
+    case 3:
+        GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+        break;
+    case 4:
+        GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, reg);
+        GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
+        break;
+    }
+}
+// ---------------------------------------------------------------------------
+// func_80494D84: draw a flat quad (4 vertices, fmt 0) covering the rect
+// (x, y, w, h) at z = 0, colored with the scaled RGBA color. Position is
+// written as s16 triples and color as 4 u8 bytes into the GX FIFO pipe.
+// ---------------------------------------------------------------------------
+extern "C" void func_80494D84(const ml::CRect16* rect, const ml::CCol4* color) {
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    const f32 scale = lbl_eu_8066AA90;
+    s16 y2 = rect->mPos.y + rect->mSize.y;
+    GXPosition3s16(rect->mPos.x, rect->mPos.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXPosition3s16(rect->mPos.x + rect->mSize.x, rect->mPos.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXPosition3s16(rect->mPos.x + rect->mSize.x, y2, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXPosition3s16(rect->mPos.x, y2, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+}
+// ---------------------------------------------------------------------------
+// func_80494F10: draw a textured quad (4 vertices, fmt 0) covering the rect
+// (x, y, w, h) at z = 0, colored with the scaled RGBA color and UVs taken
+// from the four texture coordinates (u0, v0, u1, v1).
+// ---------------------------------------------------------------------------
+extern "C" void func_80494F10(const ml::CRect16* rect, const ml::CCol4* color, const f32 tex[4]) {
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    const f32 scale = lbl_eu_8066AA90;
+    // Per-vertex texture coordinates: (u0,v0), (u1,v0), (u1,v1), (u0,v1).
+    // MWCC materializes this array on the stack (retail keeps the dead stores)
+    // while writing the FIFO from the register copies.
+    f32 uv[8];
+    uv[0] = tex[0];
+    uv[1] = tex[1];
+    uv[2] = tex[2];
+    uv[3] = tex[1];
+    GXPosition3s16(rect->mPos.x, rect->mPos.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXTexCoord2f32(uv[0], uv[1]);
+    GXPosition3s16(rect->mPos.x + rect->mSize.x, rect->mPos.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXTexCoord2f32(uv[2], uv[3]);
+    uv[4] = tex[2];
+    uv[5] = tex[3];
+    uv[6] = tex[0];
+    uv[7] = tex[3];
+    GXPosition3s16(rect->mPos.x + rect->mSize.x, rect->mPos.y + rect->mSize.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXTexCoord2f32(uv[4], uv[5]);
+    GXPosition3s16(rect->mPos.x, rect->mPos.y + rect->mSize.y, 0);
+    GXColor4u8((u8)(scale * color->r), (u8)(scale * color->g), (u8)(scale * color->b),
+               (u8)(scale * color->a));
+    GXTexCoord2f32(uv[6], uv[7]);
+}
 // ---------------------------------------------------------------------------
 // func_804950F4: light-environment constructor.
 // In-place construction of the 0x20 LightObj array (0x44 each), the

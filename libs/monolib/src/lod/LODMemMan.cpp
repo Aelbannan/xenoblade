@@ -82,7 +82,7 @@ void LOD::LODMemMan::func_8046EF30() {}
 
 void LOD::LODMemMan::func_8046EF7C() {}
 
-void LOD::LODMemMan::func_8046F010(float a, float b) {}
+void LOD::LODMemMan::func_8046F010(float a) { *(float*)((u8*)this + 0x1CC8) = a; *(float*)((u8*)this + 0x7C) = a; }
 
 void LOD::LODMemMan::func_8046F024() {}
 
@@ -169,7 +169,7 @@ void LOD::LODMemMan::func_80471BC8() {}
 
 void LOD::LODMemMan::func_80471BF4() {}
 
-// retail: lwz r3,0xC(r3); b func_804716B8 — delegates to the sub-manager stored at +0xC
+// retail: lwz r3,0xC(r3); b func_804716B8 -- delegates to the sub-manager stored at +0xC
 void LOD::LODMemMan::func_80471CC4() {
     (*(LOD::LODMemMan**)((u8*)this + 0xC))->func_804716B8();
 }

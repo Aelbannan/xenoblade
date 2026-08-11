@@ -4,6 +4,26 @@
 #include <climits>
 #include <cstring>
 
+// ---------------------------------------------------------------------------
+// Retail data-symbol imports. The stale header declares the load buffer and
+// its mutex as C++ static members (mangled names); retail references the
+// plain linker labels, so the functions below use these directly.
+// ---------------------------------------------------------------------------
+extern u8 lbl_eu_8064FE00[0x4000]; // StrmPlayer load buffer (.bss)
+extern OSMutex lbl_eu_80653E00;    // StrmPlayer load-buffer mutex (.bss)
+
+// .sdata2 constant-pool entries referenced by UpdateVoiceParams.
+extern const f32 lbl_eu_8066A060; // 0.0f
+extern const f64 lbl_eu_8066A068; // 2^52 (signed int -> float magic)
+extern const f64 lbl_eu_8066A070; // 2^52 (u8 -> float magic)
+extern const f32 lbl_eu_8066A078; // 1.0f
+extern const f32 lbl_eu_8066A07C; // 100.0f
+extern const f32 lbl_eu_8066A080; // 64.0f
+
+// DvdFileStream RTTI type-info object (.sbss); LoadStreamData walks the
+// runtime type-info chain against it (see ut_RuntimeTypeInfo.h).
+extern const nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665550;
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -34,33 +54,204 @@ bool StrmPlayer::sStaticInitFlag = false;
  ******************************************************************************/
 namespace {
 
+// Retail StrmInfo layout (Xenoblade): u32 format, u8 loopFlag, u32
+// numChannels, ... - the stale header's StrmInfo has a different packed
+// layout, so StrmPlayer stream state is read through this mirror.
+struct StrmInfoRetailLayout {
+    u32 format;                  // at 0x0
+    u8 loopFlag;                 // at 0x4
+    u8 _pad0x5[3];               // at 0x5
+    u32 numChannels;             // at 0x8
+    s32 sampleRate;              // at 0xC
+    u16 blockHeaderOffset;       // at 0x10
+    u16 _pad0x12;                // at 0x12
+    u32 loopStart;               // at 0x14
+    u32 loopEnd;                 // at 0x18
+    u32 dataOffset;              // at 0x1C
+    u32 numBlocks;               // at 0x20
+    u32 blockSize;               // at 0x24
+    u32 blockSamples;            // at 0x28
+    u32 lastBlockSize;           // at 0x2C
+    u32 lastBlockSamples;        // at 0x30
+    u32 lastBlockPaddedSize;     // at 0x34
+    u32 adpcmDataInterval;       // at 0x38
+    u32 adpcmDataSize;           // at 0x3C
+};                               // sizeof 0x40
+
+// nw4r::snd::VoiceOutParam (6 floats, 0x18 bytes). The stale BasicPlayer
+// header stores these as an anonymous mUnk0x6C[24] float array at +0x70.
+struct VoiceOutParamRetail {
+    f32 volume;       // at 0x0
+    f32 pitch;        // at 0x4
+    f32 pan;          // at 0x8
+    f32 surroundPan;  // at 0xC
+    f32 lpfFreq;      // at 0x10
+    f32 remoteFilter; // at 0x14
+};                    // sizeof 0x18
+
+// AdpcmParam + AdpcmLoopParam as one 0x2E-byte block; both StrmChannel and
+// the stream WaveInfo channel params carry it and it is copied in one piece
+// (see Start()).
+struct AdpcmParamSetRetail {
+    AdpcmParam param;         // at 0x0 (0x28)
+    AdpcmLoopParam loopParam; // at 0x28 (0x6)
+};                            // sizeof 0x2E
+
+// Retail StrmChannel: the stale header's bufferSize/adpcmInfo layout differs.
+struct StrmChannelRetail {
+    void* bufferAddress;       // at 0x0
+    AdpcmParamSetRetail adpcm; // at 0x4 (0x2E)
+    u16 mAdpcmLoopPredScale;   // at 0x32 (pred-scale slot used by loads)
+};                             // sizeof 0x34
+
+// StrmFileReader::StrmTrackInfo - the per-track file info block written by
+// ReadStrmTrackInfo (volume/pan/channelCount/channelIndex), at track + 0x8.
+struct StrmTrackFileInfoRetail {
+    u8 volume;             // at 0x0 (track + 0x8)
+    u8 pan;                // at 0x1 (track + 0x9)
+    u8 _pad0x2[2];         // at 0x2
+    int channelCount;      // at 0x4 (track + 0xC)
+    u8 channelIndex[0x20]; // at 0x8 (track + 0x10)
+};                         // sizeof 0x28
+
 struct StrmTrackRetailLayout {
-    u8 activeFlag;              // at 0x0
-    u8 _pad0x1[3];              // at 0x1
-    Voice* voice;               // at 0x4
-    u8 _pad0x8[0xC - 0x8];      // at 0x8
-    int channelCount;           // at 0xC
-    u8 trackInfo[0x30 - 0x10];  // at 0x10
-    f32 volume;                 // at 0x30
-    f32 field_0x34;             // at 0x34
-};                              // sizeof 0x38
+    u8 activeFlag;               // at 0x0
+    u8 _pad0x1[3];               // at 0x1
+    Voice* voice;                // at 0x4
+    StrmTrackFileInfoRetail fileInfo; // at 0x8 (0x28)
+    f32 volume;                  // at 0x30
+    f32 field_0x34;              // at 0x34
+};                               // sizeof 0x38
+
+// SoundThread::mMutex (private in the locked header) at +0x354.
+struct SoundThreadRetailLayout {
+    u8 _pad0x0[0x354];
+    OSMutex mMutex; // at 0x354
+};
+
+inline OSMutex* GetSoundThreadMutex() {
+    return &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+                ->mMutex;
+}
+
+// Mirrors the locked header's RuntimeTypeInfo::IsDerivedFrom inline (early
+// returns); the retail LoadStreamData walks the chain against lbl_eu_80665550
+// instead of the C++ static member symbol.
+inline bool TypeInfoIsDerivedFrom(const ut::detail::RuntimeTypeInfo* pInfo,
+                                  const ut::detail::RuntimeTypeInfo* pTarget) {
+    for (const ut::detail::RuntimeTypeInfo* pIt = pInfo; pIt != NULL;
+         pIt = pIt->mParentTypeInfo) {
+        if (pIt == pTarget) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Byte/int -> float through the shared 2^52 magic doubles, referenced by name
+// so the .sdata2 relocs match retail (see ut_PackedFont.cpp F64Conv pattern).
+inline f32 U8ToF32(u8 value) {
+    union {
+        f64 d;
+        u32 w[2];
+    } conv;
+    conv.w[1] = value;
+    conv.w[0] = 0x43300000;
+    return (f32)(conv.d - lbl_eu_8066A070);
+}
+
+inline f32 S32ToF32(s32 value) {
+    union {
+        f64 d;
+        u32 w[2];
+    } conv;
+    conv.w[0] = 0x43300000;
+    conv.w[1] = (u32)value ^ 0x80000000;
+    return (f32)(conv.d - lbl_eu_8066A068);
+}
+
+// Retail stream WaveInfo (Voice::Setup's parameter): u32 numChannels /
+// sampleRate (the stale header's WaveData layout differs).
+struct WaveChannelParamRetail {
+    void* dataAddr;            // at 0x0
+    AdpcmParamSetRetail adpcm; // at 0x4 (0x2E)
+    u16 _pad0x32;              // at 0x32
+};                             // sizeof 0x34
+
+struct WaveInfoRetailLayout {
+    u32 sampleFormat;                    // at 0x0
+    u8 loopFlag;                         // at 0x4
+    u8 _pad0x5[3];                       // at 0x5
+    u32 numChannels;                     // at 0x8
+    u32 sampleRate;                      // at 0xC
+    u32 loopStart;                       // at 0x10
+    u32 loopEnd;                         // at 0x14
+    WaveChannelParamRetail channelParam[2]; // at 0x18 (2 * 0x34)
+};                                       // sizeof 0x80
 
 struct StrmPlayerRetailLayout {
-    u8 _pad0x0[0x124];                            // 0x000..0x124
-    bool mTaskErrorFlag;                          // at 0x124
-    bool mTaskCancelFlag;                         // at 0x125
-    u8 _pad0x126[0x194 - 0x126];                  // 0x126..0x194
+    // BasicPlayer param block (retail PlayerParamSet at +0x4).
+    u8 _pad0x0[0x4];                       // 0x000..0x004
+    f32 mVolume;                           // at 0x004
+    f32 mPitch;                            // at 0x008
+    f32 mPan;                              // at 0x00C
+    f32 mSurroundPan;                      // at 0x010
+    f32 mLpfFreq;                          // at 0x014
+    f32 mBiquadFilterValue;                // at 0x018
+    u8 mBiquadFilterType;                  // at 0x01C
+    u8 mRemoteFilter;                      // at 0x01D
+    u8 _pad0x1E[2];                        // 0x01E..0x020
+    s32 mOutputLine;                       // at 0x020
+    f32 mMainOutVolume;                    // at 0x024
+    f32 mMainSend;                         // at 0x028
+    u8 _pad0x2C[0x70 - 0x2C];              // 0x02C..0x070
+    VoiceOutParamRetail mVoiceOutParam[4]; // at 0x070 (4 * 0x18)
+    u8 _pad0xD0[0xE0 - 0xD0];              // 0x0D0..0x0E0
+    StrmInfoRetailLayout mStrmInfo;        // at 0x0E0 (0x40)
+    bool mSetupFlag;                       // at 0x120
+    bool mActiveFlag;                      // at 0x121
+    bool mStartedFlag;                     // at 0x122
+    bool mPreparedFlag;                    // at 0x123
+    bool mTaskErrorFlag;                   // at 0x124
+    bool mTaskCancelFlag;                  // at 0x125
+    u8 _pad0x126[0x12A - 0x126];           // 0x126..0x12A
+    bool mNoRealtimeLoadFlag;              // at 0x12A
+    u8 _pad0x12B[0x12C - 0x12B];           // 0x12B..0x12C
+    bool mValidAdpcmLoop;                  // at 0x12C
+    u8 _pad0x12D[0x12E - 0x12D];           // 0x12D..0x12E
+    bool mLoadFinishFlag;                  // at 0x12E
+    bool mBufferAllocFlag;                 // at 0x12F
+    s32 mLoopCounter;                      // at 0x130
+    s32 mPrepareCounter;                   // at 0x134
+    s32 mChangeNumBlocks;                  // at 0x138
+    s32 mDataBlockSize;                    // at 0x13C
+    s32 mBufferBlockCount;                 // at 0x140
+    s32 mBufferBlockCountBase;             // at 0x144
+    s32 mLoadingBufferBlockCount;          // at 0x148
+    s32 mLoadingBufferBlockIndex;          // at 0x14C
+    s32 mLoadingDataBlockIndex;            // at 0x150
+    s32 mPlayingBufferBlockCount;          // at 0x154
+    s32 mPlayingBufferBlockIndex;          // at 0x158
+    s32 mPlayingDataBlockIndex;            // at 0x15C
+    s32 mLoopStartBlockIndex;              // at 0x160
+    s32 mLastBlockIndex;                   // at 0x164
+    u8 _pad0x168[0x194 - 0x168];           // 0x168..0x194
     // StrmPlayer::StrmDataLoadTaskList (private typedef) expanded here; fully
     // qualified because a namespace-scope friend decl shadows the nested type.
     nw4r::ut::LinkList<StrmPlayer::StrmDataLoadTask,
                        offsetof(StrmPlayer::StrmDataLoadTask, node)>
-        mStrmDataLoadTaskList;                     // at 0x194 (0xC)
+        mStrmDataLoadTaskList;              // at 0x194 (0xC)
     InstancePool<StrmPlayer::StrmDataLoadTask> mStrmDataLoadTaskPool; // at 0x1A0 (0x4)
-    u8 _pad0x1A4[0x82C - 0x1A4];                  // 0x1A4..0x82C
-    s32 mTrackCount;                              // at 0x82C
-    u8 _pad0x830[0xB78 - 0x830];                  // 0x830..0xB78
-    StrmTrackRetailLayout mTracks[8];             // at 0xB78 (8 * 0x38)
-};                                                // sizeof 0xD38
+    u8 _pad0x1A4[0x824 - 0x1A4];            // 0x1A4..0x824
+    StrmBufferPool* mBufferPool;            // at 0x824
+    Voice* mVoice;                          // at 0x828
+    s32 mTrackCount;                        // at 0x82C
+    s32 mChannelCount;                      // at 0x830
+    s32 mVoiceOutCount;                     // at 0x834
+    StrmChannelRetail mChannels[16];        // at 0x838 (16 * 0x34 = 0x340)
+    StrmTrackRetailLayout mTracks[8];       // at 0xB78 (8 * 0x38 = 0x1C0)
+};                                          // sizeof 0xD38
 
 // Voice pitch-modulation gate byte at retail offset +0xA1 (see snd_Voice.cpp
 // field_0xA1); snd_Voice.h's stale layout lacks the byte at this offset.
@@ -70,6 +261,39 @@ struct VoicePitchGateLayout {
 };
 
 } // namespace
+
+// ---------------------------------------------------------------------------
+// Retail-symbol stand-ins for signatures the locked header cannot express.
+// The identifiers are already MWCC-mangled (they end in __F<args>); C linkage
+// keeps MWCC from prepending the namespace when the declaration sits inside
+// nw4r::snd::detail (same convention as snd_StrmFile.cpp's entry points).
+// Definitions live in this TU (SetupPlayer, StrmPlayer members) or in
+// snd_StrmFile.cpp (StrmFileLoader reader entry points).
+// ---------------------------------------------------------------------------
+extern "C" bool ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
+    const StrmFileLoader* pLoader, StrmInfoRetailLayout* pStrmInfo);
+extern "C" bool ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
+    const StrmFileLoader* pLoader, StrmTrackFileInfoRetail* pTrackInfo,
+    int trackNo);
+extern "C" int GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(
+    const StrmFileLoader* pLoader);
+extern "C" bool ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
+    const StrmFileLoader* pLoader, AdpcmParam* pParam,
+    AdpcmLoopParam* pLoopParam, int channel);
+extern "C" bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(
+    StrmPlayer* pStrmPlayer);
+extern "C" bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
+    StrmPlayer* pStrmPlayer, int voices);
+extern "C" bool CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
+    StrmPlayer* pStrmPlayer, s32* pBlockIndex, u32* pBlockOffset,
+    s32* pLoopCount);
+extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
+    Voice* pVoice, const WaveInfoRetailLayout& rWaveInfo, u32 offset);
+extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(Voice* pVoice,
+                                                             int type,
+                                                             f32 value);
+extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
+    Voice* pVoice, int index, const VoiceOutParamRetail& rParam);
 
 // Retail SetTrackVolume(unsigned long, float) is a StrmPlayer member, but the
 // stale header has no declaration for it; define the retail mangled symbol as
@@ -177,70 +401,134 @@ bool StrmPlayer::Prepare(ut::FileStream* pFileStream, int voices,
 }
 
 bool StrmPlayer::Start() {
-    SoundThread::AutoLock lock;
+    // Retail re-evaluates SoundThread::GetInstance() + the mutex offset at
+    // every lock/unlock site (the address is not kept in a saved register).
+    OSLockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
 
-    if (!mPreparedFlag) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    if (!self->mPreparedFlag) {
+        OSUnlockMutex(
+            &reinterpret_cast<SoundThreadRetailLayout*>(
+                 &SoundThread::GetInstance())
+                 ->mMutex);
         return false;
     }
 
-    if (!mStartedFlag) {
-        s32 blockIndex = 0;
-        u32 blockOffset = 0;
-        s32 loopCount = 0;
+    if (!self->mStartedFlag) {
+        if (!AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(
+                this, self->mVoiceOutCount)) {
+            for (int i = 0; i < self->mChannelCount; i++) {
+                if (self->mChannels[i].bufferAddress != NULL) {
+                    self->mBufferPool->Free(self->mChannels[i].bufferAddress);
+                    self->mChannels[i].bufferAddress = NULL;
+                }
+            }
 
-        if (!CalcStartOffset(&blockIndex, &blockOffset, &loopCount)) {
+            OSUnlockMutex(
+                &reinterpret_cast<SoundThreadRetailLayout*>(
+                     &SoundThread::GetInstance())
+                     ->mMutex);
             return false;
         }
 
-        mLoopCounter += loopCount;
-
-        WaveData waveData;
-        waveData.sampleFormat = mStrmInfo.format;
-        waveData.loopFlag = true;
-        waveData.numChannels = mChannelCount;
-        waveData.sampleRate = mStrmInfo.sampleRate;
-        waveData.loopStart = 0;
-
-        AxVoice::Format format =
-            WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(
-                mStrmInfo.format);
-
-        waveData.loopEnd = AxVoice::GetSampleByByte(
-            mDataBlockSize * mPlayingBufferBlockCount, format);
-
-        for (int i = 0; i < mChannelCount; i++) {
-            ChannelParam& rParam = waveData.channelParam[i];
-
-            rParam.dataAddr = mChannels[i].bufferAddress;
-            rParam.adpcmInfo = mChannels[i].adpcmInfo;
-
-            // Isn't the scale only the *bottom nibble*?
-            rParam.adpcmInfo.param.pred_scale =
-                *static_cast<u8*>(mChannels[i].bufferAddress);
-
-            rParam.adpcmInfo.param.yn1 = mAdpcmLoopYn1[i];
-            rParam.adpcmInfo.param.yn2 = mAdpcmLoopYn2[i];
+        s32 blockIndex = 0;
+        u32 blockOffset = 0;
+        s32 loopCount = 0;
+        if (!CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
+                this, &blockIndex, &blockOffset, &loopCount)) {
+            OSUnlockMutex(
+                &reinterpret_cast<SoundThreadRetailLayout*>(
+                     &SoundThread::GetInstance())
+                     ->mMutex);
+            return false;
         }
 
-        ut::AutoInterruptLock lock;
+        self->mLoopCounter += loopCount;
 
-        if (mVoice != NULL) {
-            mVoice->Setup(waveData, blockOffset);
-            mVoice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
+        // Loop-end sample count for the wave data: bytes * samples-per-byte
+        // for the stream format (2 = PCM8, 1 = PCM16, 3 = ADPCM).
+        u32 bytes = self->mDataBlockSize * self->mPlayingBufferBlockCount;
+        u32 loopEndSamples;
+        if (self->mStrmInfo.format == 2) {
+            loopEndSamples = bytes;
+        } else if (self->mStrmInfo.format >= 3) {
+            loopEndSamples = (bytes >> 3) * 14;
+            u32 rem = bytes & 7;
+            if (rem != 0) {
+                loopEndSamples += (rem - 1) * 2;
+            }
+        } else if (self->mStrmInfo.format == 1) {
+            loopEndSamples = bytes >> 1;
+        } else {
+            loopEndSamples = 0;
+        }
 
-            if (blockIndex == mStrmInfo.numBlocks - 2) {
-                UpdateDataLoopAddress(1);
-            } else if (blockIndex == mStrmInfo.numBlocks - 1) {
-                UpdateDataLoopAddress(0);
+        for (int i = 0; i < self->mTrackCount; i++) {
+            StrmTrackRetailLayout& rTrack = self->mTracks[i];
+            if (!rTrack.activeFlag) {
+                continue;
             }
 
-            mVoice->Start();
-            UpdatePauseStatus();
+            WaveInfoRetailLayout waveInfo;
+            waveInfo.sampleFormat = self->mStrmInfo.format;
+            waveInfo.loopFlag = true;
+            waveInfo.numChannels = rTrack.fileInfo.channelCount;
+            waveInfo.sampleRate = self->mStrmInfo.sampleRate;
+            waveInfo.loopStart = 0;
+            waveInfo.loopEnd = loopEndSamples;
+
+            for (int ch = 0; ch < rTrack.fileInfo.channelCount; ch++) {
+                StrmChannelRetail* pChannel;
+                if (ch >= 2) {
+                    pChannel = NULL;
+                } else {
+                    u8 channelIndex = rTrack.fileInfo.channelIndex[ch];
+                    if (channelIndex >= 16) {
+                        pChannel = NULL;
+                    } else {
+                        pChannel = &self->mChannels[channelIndex];
+                    }
+                }
+
+                if (pChannel != NULL) {
+                    WaveChannelParamRetail& rParam =
+                        waveInfo.channelParam[ch];
+                    rParam.dataAddr = pChannel->bufferAddress;
+                    rParam.adpcm = pChannel->adpcm;
+                    // Only the first byte of the buffer holds the ADPCM
+                    // pred/scale; store it in the pred_scale slot.
+                    rParam.adpcm.param.pred_scale =
+                        *reinterpret_cast<u8*>(pChannel->bufferAddress);
+                }
+            }
+
+            u32 level = OSDisableInterrupts();
+            if (rTrack.voice != NULL) {
+                Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
+                    rTrack.voice, waveInfo, blockOffset);
+                rTrack.voice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
+                rTrack.voice->Start();
+            }
+            OSRestoreInterrupts(level);
         }
 
-        mStartedFlag = true;
+        if (blockIndex == self->mStrmInfo.numBlocks - 2) {
+            UpdateDataLoopAddress(1);
+        } else if (blockIndex == self->mStrmInfo.numBlocks - 1) {
+            UpdateDataLoopAddress(0);
+        }
+
+        UpdatePauseStatus();
+        self->mStartedFlag = true;
     }
 
+    OSUnlockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
     return true;
 }
 
@@ -322,171 +610,181 @@ void StrmPlayer::InitParam() {
 
 bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
                             StartOffsetType offsetType, int offset) {
-    ut::detail::AutoLock<OSMutex> lock(sLoadBufferMutex);
+    // Retail keeps the mutex address in a saved register for the whole
+    // function (mr r3, r31 / bl OSUnlockMutex at every exit).
+    OSMutex* pMutex = &lbl_eu_80653E00;
+    OSLockMutex(pMutex);
 
     StrmFileLoader loader(*pFileStream);
-    if (!loader.LoadFileHeader(sLoadBuffer,
-                               ut::RoundUp(sizeof(StrmHeader), 64))) {
+    if (!loader.LoadFileHeader(lbl_eu_8064FE00, 0x4000)) {
+        OSUnlockMutex(pMutex);
         return false;
     }
 
-    StrmHeader header;
-    loader.ReadStrmInfo(&header.strmInfo);
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    for (int i = 0; i < header.strmInfo.numChannels; i++) {
-        loader.ReadAdpcmInfo(&header.adpcmInfo[i], i);
+    if (!ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo(
+            &loader, &self->mStrmInfo)) {
+        OSUnlockMutex(pMutex);
+        return false;
     }
 
-    if (header.strmInfo.format == WaveFile::FORMAT_ADPCM) {
-        if (offset == 0) {
-            for (int i = 0; i < header.strmInfo.numChannels; i++) {
-                header.loopYn1[i] = header.adpcmInfo[i].param.yn1;
-                header.loopYn2[i] = header.adpcmInfo[i].param.yn2;
-            }
-        } else {
-            int startSample;
-            if (offsetType == START_OFFSET_TYPE_SAMPLE) {
-                startSample = offset;
-            } else if (offsetType == START_OFFSET_TYPE_MILLISEC) {
-                startSample = offset * header.strmInfo.sampleRate / 1000;
-            }
+    if (self->mChannelCount == 0) {
+        s32 channels =
+            GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv(&loader);
+        if (channels > 16) {
+            channels = 16;
+        }
 
-            s32 block =
-                startSample / static_cast<s32>(header.strmInfo.blockSamples);
+        self->mChannelCount = channels;
+    }
 
-            loader.ReadAdpcBlockData(header.loopYn1, header.loopYn2, block,
-                                     header.strmInfo.numChannels);
+    for (int i = 0; i < self->mTrackCount; i++) {
+        if (!ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi(
+                &loader, &self->mTracks[i].fileInfo, i)) {
+            OSUnlockMutex(pMutex);
+            return false;
         }
     }
 
-    if (!SetupPlayer(&header)) {
+    // ADPCM streams carry per-channel adpcm data and a start-offset block.
+    if (self->mStrmInfo.format == 3) {
+        for (int i = 0; i < self->mChannelCount; i++) {
+            if (!ReadAdpcmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ44nw4r3snd6detail10AdpcmParamPQ44nw4r3snd6detail14AdpcmLoopParami(
+                    &loader, &self->mChannels[i].adpcm.param,
+                    &self->mChannels[i].adpcm.loopParam, i)) {
+                OSUnlockMutex(pMutex);
+                return false;
+            }
+        }
+
+        if (offset != 0) {
+            int startSample = offset;
+            if (offsetType == START_OFFSET_TYPE_SAMPLE) {
+                // Start at the given sample index.
+            } else if (offsetType == START_OFFSET_TYPE_MILLISEC) {
+                startSample = offset * self->mStrmInfo.sampleRate / 1000;
+            }
+
+            s32 block = startSample / self->mStrmInfo.blockSamples;
+            u16 yn1[16];
+            u16 yn2[16];
+
+            if (!loader.ReadAdpcBlockData(yn1, yn2, block,
+                                          self->mStrmInfo.numChannels)) {
+                OSUnlockMutex(pMutex);
+                return false;
+            }
+
+            for (int i = 0; i < self->mStrmInfo.numChannels; i++) {
+                self->mChannels[i].adpcm.param.yn1 = yn1[i];
+                self->mChannels[i].adpcm.param.yn2 = yn2[i];
+            }
+        }
+    }
+
+    if (!SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(this)) {
+        OSUnlockMutex(pMutex);
         return false;
     }
 
-    mPrepareCounter = 0;
-    for (int i = 0; i < mBufferBlockCountBase; i++) {
+    self->mPrepareCounter = 0;
+    for (int i = 0; i < self->mBufferBlockCountBase; i++) {
         UpdateLoadingBlockIndex();
-        mPrepareCounter++;
+        self->mPrepareCounter++;
 
-        if (mLoadFinishFlag) {
+        if (self->mLoadFinishFlag) {
             break;
         }
     }
 
-    if (mStrmInfo.numBlocks <= 2 && !mStrmInfo.loopFlag) {
-        SetLoopEndToZeroBuffer(mStrmInfo.numBlocks - 1);
+    if (self->mStrmInfo.numBlocks <= 2 && !self->mStrmInfo.loopFlag) {
+        SetLoopEndToZeroBuffer(self->mStrmInfo.numBlocks - 1);
     }
 
+    OSUnlockMutex(pMutex);
     return true;
 }
 
 bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
                                 u32 size, u32 blockSize, int blockIndex,
                                 bool needUpdateAdpcmLoop) {
-    ut::DvdFileStream* pDvdStream =
-        ut::DynamicCast<ut::DvdFileStream*>(pFileStream);
+    // Downcast to DvdFileStream by walking the retail runtime type-info chain
+    // (lbl_eu_80665550 is the DvdFileStream type-info object; the locked
+    // header's DynamicCast would reference the C++ static member instead).
+    const ut::detail::RuntimeTypeInfo* pDvdTypeInfo = &lbl_eu_80665550;
+    ut::DvdFileStream* pDvdStream;
+    if (pFileStream != NULL &&
+        TypeInfoIsDerivedFrom(pFileStream->GetRuntimeTypeInfo(),
+                              pDvdTypeInfo)) {
+        pDvdStream = static_cast<ut::DvdFileStream*>(pFileStream);
+    } else {
+        pDvdStream = NULL;
+    }
 
     if (pDvdStream != NULL) {
         pDvdStream->SetPriority(DVD_PRIO_HIGH);
     }
 
-    ut::detail::AutoLock<OSMutex> lock(sLoadBufferMutex);
-    DCInvalidateRange(sLoadBuffer, size);
+    // Retail keeps the mutex address in a saved register (mr r3, r28 / bl
+    // OSUnlockMutex at every exit).
+    OSMutex* pMutex = &lbl_eu_80653E00;
+    OSLockMutex(pMutex);
+    DCInvalidateRange(lbl_eu_8064FE00, 0x4000);
 
-    pFileStream->Seek(offset, ut::FileStream::SEEK_ORIGIN_BEG);
-    s32 bytesRead = pFileStream->Read(sLoadBuffer, size);
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    if (bytesRead != size) {
-        return false;
-    }
+    u16 adpcmPredScale[16];
+    s32 streamOffset = offset + self->mStrmInfo.blockHeaderOffset;
 
-    u16 adpcmPredScale[CHANNEL_MAX];
-    for (int i = 0; i < mChannelCount; i++) {
-        if (needUpdateAdpcmLoop) {
-            adpcmPredScale[i] = sLoadBuffer[i * ut::RoundUp(blockSize, 32) +
-                                            mStrmInfo.blockHeaderOffset];
+    // Loads arrive in groups of up to 2 channels per stream block; each group
+    // is read at streamOffset and fanned out to the channel buffers.
+    for (int block = 0; block < self->mChannelCount;) {
+        s32 blockCount = 2;
+        if (block + 2 > self->mChannelCount) {
+            blockCount = self->mChannelCount - block;
         }
 
-        const void* pSrc =
-            ut::AddOffsetToPtr(sLoadBuffer, i * ut::RoundUp(blockSize, 32) +
-                                                mStrmInfo.blockHeaderOffset);
-
-        void* pDst = ut::AddOffsetToPtr(mChannels[i].bufferAddress,
-                                        mDataBlockSize * blockIndex);
-
-        u32 len = ut::RoundUp(blockSize, 32);
-        std::memcpy(pDst, pSrc, len);
-        DCFlushRange(pDst, len);
-    }
-
-    if (needUpdateAdpcmLoop) {
-        SetAdpcmLoopContext(mChannelCount, adpcmPredScale);
-    }
-
-    if (!mPreparedFlag && --mPrepareCounter == 0) {
-        mPreparedFlag = true;
-    }
-
-    return true;
-}
-
-bool StrmPlayer::SetupPlayer(const StrmHeader* pStrmHeader) {
-    u32 poolBlockSize = mBufferPool->GetBlockSize();
-    mStrmInfo = pStrmHeader->strmInfo;
-
-    s32 blockIndex = 0;
-    u32 blockOffset = 0;
-    s32 loopCount = 0;
-    if (!CalcStartOffset(&blockIndex, &blockOffset, &loopCount)) {
-        return false;
-    }
-
-    if (mStrmInfo.format == WaveFile::FORMAT_ADPCM) {
-        for (int i = 0; i < mStrmInfo.numChannels; i++) {
-            mChannels[i].adpcmInfo = pStrmHeader->adpcmInfo[i];
-            mAdpcmLoopYn1[i] = pStrmHeader->loopYn1[i];
-            mAdpcmLoopYn2[i] = pStrmHeader->loopYn2[i];
+        u32 readSize = blockSize * blockCount;
+        pFileStream->Seek(streamOffset, ut::FileStream::SEEK_ORIGIN_BEG);
+        if (pFileStream->Read(lbl_eu_8064FE00, readSize) != readSize) {
+            OSUnlockMutex(pMutex);
+            return false;
         }
+
+        for (int ch = 0; ch < blockCount; ch++, block++) {
+            if (needUpdateAdpcmLoop) {
+                adpcmPredScale[block + ch] =
+                    lbl_eu_8064FE00[blockSize * ch];
+            }
+
+            u8* pDst = reinterpret_cast<u8*>(
+                           self->mChannels[block + ch].bufferAddress) +
+                       self->mDataBlockSize * blockIndex;
+            u8* pSrc = lbl_eu_8064FE00 + blockSize * ch;
+
+            std::memcpy(pDst, pSrc, blockSize);
+            DCFlushRange(pDst, blockSize);
+        }
+
+        streamOffset += readSize;
     }
 
-    mLoopStartBlockIndex = mStrmInfo.loopStart / mStrmInfo.blockSamples;
-    mLastBlockIndex = mStrmInfo.numBlocks - 1;
+    if (needUpdateAdpcmLoop && self->mStrmInfo.format == 3) {
+        for (int i = 0; i < self->mChannelCount && i < 16; i++) {
+            self->mChannels[i].mAdpcmLoopPredScale = adpcmPredScale[i];
+        }
 
-    mDataBlockSize = mStrmInfo.blockSize;
-    if (mDataBlockSize > DATA_BLOCK_SIZE_MAX) {
-        return false;
+        self->mValidAdpcmLoop = true;
     }
 
-    mBufferBlockCount = poolBlockSize / mDataBlockSize;
-    if (mBufferBlockCount < DATA_BLOCK_COUNT_MIN) {
-        return false;
-    } else if (mBufferBlockCount > DATA_BLOCK_COUNT_MAX) {
-        mBufferBlockCount = DATA_BLOCK_COUNT_MAX;
+    if (!self->mPreparedFlag && --self->mPrepareCounter == 0) {
+        self->mPreparedFlag = true;
     }
 
-    mBufferBlockCountBase = mBufferBlockCount - 1;
-    mChangeNumBlocks = mBufferBlockCountBase;
-
-    mPlayingDataBlockIndex = blockIndex;
-    mLoadingDataBlockIndex = blockIndex;
-
-    mLoadingBufferBlockIndex = 0;
-    mPlayingBufferBlockIndex = 0;
-
-    if (mNoRealtimeLoadFlag) {
-        mLoadingBufferBlockCount = mStrmInfo.numBlocks;
-    } else {
-        mLoadingBufferBlockCount = CalcLoadingBufferBlockCount();
-    }
-
-    mPlayingBufferBlockCount = mLoadingBufferBlockCount;
-
-    ut::AutoInterruptLock lock;
-    mChannelCount = ut::Min<int>(mStrmInfo.numChannels, CHANNEL_MAX);
-    if (!AllocChannels(mChannelCount, mVoiceOutCount)) {
-        return false;
-    }
-
+    OSUnlockMutex(pMutex);
     return true;
 }
 
@@ -1045,7 +1343,7 @@ bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
         if (pTrack->activeFlag) {
             nw4r::snd::detail::Voice* pVoice =
                 nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
-                    pTrack->channelCount, voices, 0xFF,
+                    pTrack->fileInfo.channelCount, voices, 0xFF,
                     &VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv,
                     pTrack);
 
@@ -1076,7 +1374,199 @@ bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
     OSRestoreInterrupts(level);
     return true;
 }
-void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
+// Retail SetupPlayer() (no arguments) is a StrmPlayer member, but the stale
+// header declares a different SetupPlayer(const StrmHeader*); emit the retail
+// symbol as a free function (same ABI: r3 = this). Reads the already-populated
+// mStrmInfo and allocates the channel buffers from the pool.
+bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(StrmPlayer* pStrmPlayer) {
+    nw4r::snd::detail::StrmPlayerRetailLayout* self =
+        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
+            pStrmPlayer);
+
+    u32 poolBlockSize = self->mBufferPool->GetBlockSize();
+
+    s32 blockIndex = 0;
+    u32 blockOffset = 0;
+    s32 loopCount = 0;
+    if (!CalcStartOffset__Q44nw4r3snd6detail10StrmPlayerFPlPUlPl(
+            pStrmPlayer, &blockIndex, &blockOffset, &loopCount)) {
+        return false;
+    }
+
+    self->mLoopStartBlockIndex =
+        self->mStrmInfo.loopStart / self->mStrmInfo.blockSamples;
+    self->mLastBlockIndex = self->mStrmInfo.numBlocks - 1;
+    self->mDataBlockSize = self->mStrmInfo.blockSize;
+
+    if (self->mDataBlockSize > 0x2000) {
+        return false;
+    }
+
+    self->mBufferBlockCount = poolBlockSize / self->mDataBlockSize;
+    if (self->mBufferBlockCount < 4) {
+        return false;
+    }
+    if (self->mBufferBlockCount > 0x20) {
+        self->mBufferBlockCount = 0x20;
+    }
+
+    self->mBufferBlockCountBase = self->mBufferBlockCount - 1;
+    self->mChangeNumBlocks = self->mBufferBlockCountBase;
+
+    self->mPlayingDataBlockIndex = blockIndex;
+    self->mLoadingDataBlockIndex = blockIndex;
+    self->mLoadingBufferBlockIndex = 0;
+    self->mPlayingBufferBlockIndex = 0;
+
+    if (self->mNoRealtimeLoadFlag) {
+        self->mLoadingBufferBlockCount = self->mStrmInfo.numBlocks;
+    } else {
+        s32 restBlocks =
+            (self->mLastBlockIndex - self->mLoadingDataBlockIndex) + 1;
+
+        s32 loadingCount = self->mBufferBlockCountBase;
+        if ((self->mBufferBlockCountBase + 1 - restBlocks) %
+                ((self->mLastBlockIndex - self->mLoopStartBlockIndex) + 1) ==
+            0) {
+            loadingCount = self->mBufferBlockCountBase + 1;
+        }
+
+        self->mLoadingBufferBlockCount = loadingCount;
+    }
+
+    self->mPlayingBufferBlockCount = self->mLoadingBufferBlockCount;
+
+    u32 level = OSDisableInterrupts();
+    if (!self->mBufferAllocFlag) {
+        bool success = true;
+        for (int i = 0; i < self->mChannelCount; i++) {
+            void* pBuffer = self->mBufferPool->Alloc();
+            if (pBuffer == NULL) {
+                for (int j = 0; j < i; j++) {
+                    self->mBufferPool->Free(
+                        self->mChannels[j].bufferAddress);
+                    self->mChannels[j].bufferAddress = NULL;
+                }
+
+                success = false;
+                break;
+            }
+
+            self->mChannels[i].bufferAddress = pBuffer;
+        }
+
+        if (!success) {
+            OSRestoreInterrupts(level);
+            return false;
+        }
+
+        self->mBufferAllocFlag = true;
+    }
+    OSRestoreInterrupts(level);
+    return true;
+}
+
+// Retail UpdateVoiceParams(StrmPlayer::StrmTrack*) is a StrmPlayer member, but
+// the stale header has no declaration for it; emit the retail mangled symbol
+// as a free function (r3 = this, r4 = track).
+void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(
+    StrmPlayer* pStrmPlayer,
+    nw4r::snd::detail::StrmTrackRetailLayout* pTrack) {
+    if (!pTrack->activeFlag) {
+        return;
+    }
+
+    nw4r::snd::detail::StrmPlayerRetailLayout* self =
+        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
+            pStrmPlayer);
+
+    // Per-track mix: player volume * file volume byte / 100 * track volume,
+    // with pan composed from the file pan byte (range -64..63) plus the
+    // track's own pan offset. Byte/int -> float conversions run through the
+    // shared 2^52 magic doubles, referenced by name so the .sdata2 relocs
+    // match retail (see ut_PackedFont.cpp F64Conv pattern).
+    union {
+        f64 d;
+        u32 w[2];
+    } conv;
+
+    conv.w[1] = pTrack->fileInfo.volume;
+    conv.w[0] = 0x43300000;
+    f32 volume = lbl_eu_8066A078 * self->mVolume *
+                 ((f32)(conv.d - lbl_eu_8066A070) / lbl_eu_8066A07C) *
+                 pTrack->volume;
+    f32 pitch = lbl_eu_8066A078 * self->mPitch;
+    f32 pan = lbl_eu_8066A060 + self->mPan;
+    if (pTrack->fileInfo.pan > 1) {
+        conv.w[0] = 0x43300000;
+        conv.w[1] = (u32)(pTrack->fileInfo.pan - 64) ^ 0x80000000;
+        pan += (f32)(conv.d - lbl_eu_8066A068) / lbl_eu_8066A080;
+    } else {
+        conv.w[0] = 0x43300000;
+        conv.w[1] = (u32)(pTrack->fileInfo.pan - 63) ^ 0x80000000;
+        pan += (f32)(conv.d - lbl_eu_8066A068) / lbl_eu_8066A080;
+    }
+    pan += pTrack->field_0x34;
+
+    f32 surroundPan = lbl_eu_8066A060 + self->mSurroundPan;
+    f32 lpfFreq = lbl_eu_8066A078 + self->mLpfFreq;
+    f32 biquadValue = self->mBiquadFilterValue;
+    u8 biquadType = self->mBiquadFilterType;
+    u8 remoteFilter = self->mRemoteFilter;
+    f32 mainSend = lbl_eu_8066A060 + self->mMainSend;
+
+    f32 fxSend[nw4r::snd::AUX_BUS_NUM];
+    for (int i = 0; i < nw4r::snd::AUX_BUS_NUM; i++) {
+        fxSend[i] = lbl_eu_8066A060 +
+                    pStrmPlayer->GetFxSend(static_cast<nw4r::snd::AuxBus>(i));
+    }
+
+    f32 remoteOutVolume[WPAD_MAX_CONTROLLERS];
+    f32 remoteSend[WPAD_MAX_CONTROLLERS];
+    f32 remoteFxSend[WPAD_MAX_CONTROLLERS];
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        remoteOutVolume[i] = pStrmPlayer->GetRemoteOutVolume(i);
+        remoteSend[i] =
+            lbl_eu_8066A060 + pStrmPlayer->GetRemoteSend(i);
+        remoteFxSend[i] =
+            lbl_eu_8066A060 + pStrmPlayer->GetRemoteFxSend(i);
+    }
+
+    u32 level = OSDisableInterrupts();
+    nw4r::snd::detail::Voice* pVoice = pTrack->voice;
+    if (pVoice != NULL) {
+        pVoice->SetVolume(volume);
+        pVoice->SetPitch(pitch);
+        pVoice->SetPan(pan);
+        pVoice->SetSurroundPan(surroundPan);
+        pVoice->SetLpfFreq(lpfFreq);
+        SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(pVoice, biquadType,
+                                                    biquadValue);
+        pVoice->SetRemoteFilter(remoteFilter);
+        pVoice->SetOutputLine(self->mOutputLine);
+        pVoice->SetMainOutVolume(self->mMainOutVolume);
+        pVoice->SetMainSend(mainSend);
+
+        for (int i = 0; i < nw4r::snd::AUX_BUS_NUM; i++) {
+            pVoice->SetFxSend(static_cast<nw4r::snd::AuxBus>(i), fxSend[i]);
+        }
+
+        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+            pVoice->SetRemoteOutVolume(i, remoteOutVolume[i]);
+            pVoice->SetRemoteSend(i, remoteSend[i]);
+            pVoice->SetRemoteFxSend(i, remoteFxSend[i]);
+        }
+
+        const nw4r::snd::detail::VoiceOutParamRetail* pOutParam =
+            self->mVoiceOutParam;
+        for (int i = 0; i < self->mVoiceOutCount; i++) {
+            SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
+                pVoice, i, *pOutParam);
+            pOutParam++;
+        }
+    }
+    OSRestoreInterrupts(level);
+}
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 

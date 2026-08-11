@@ -32,7 +32,7 @@ void mpfsys::UnkClass_80471EC8::func_804723A4(void) {}
 
 void mpfsys::UnkClass_80471EC8::func_804724DC(void) {}
 
-void mpfsys::UnkClass_80471EC8::func_80472864(void) {}
+void mpfsys::UnkClass_80471EC8::func_80472864() { *(u8*)((u8*)this + 0x2E10) = 1; }
 
 void mpfsys::UnkClass_80471EC8::func_80472870(void) {}
 

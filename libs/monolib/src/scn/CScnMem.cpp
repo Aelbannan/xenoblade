@@ -49,7 +49,7 @@ CScnMem::~CScnMem() {
 u32 func_8048ECD0(CScn* self) { return (u32)self->mUnk8C; }
 
 
-void func_8048ECD8(){}
+extern "C" void* func_8048ECD8(void* self) { return *(void**)((u8*)*(void**)((u8*)self + 0x8C) + 0x10); }
 
 void* func_8048ECE4(CScn* self) { return func_8048FDDC(self->mUnk8C); }
 

@@ -166,7 +166,7 @@ extern f32 lbl_eu_80667350;
 extern f32 lbl_eu_80667358;
 extern f32 lbl_eu_80667360;
 extern u32 lbl_eu_8066A208;
-extern u32 lbl_eu_8066A20C;
+extern const float lbl_eu_8066A20C;
 extern u32 lbl_eu_806621F4;
 extern CScn* lbl_eu_80663E14;
 extern u32 lbl_eu_80663E24;

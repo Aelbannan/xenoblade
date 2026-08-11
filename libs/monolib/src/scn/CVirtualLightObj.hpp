@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include "monolib/math/CCol4.hpp"
+#include "monolib/math/CRect16.hpp"
 #include "monolib/scn/CLight.hpp"
 #include <nw4r/g3d/g3d_light.h>
 
@@ -9,6 +10,7 @@
 extern char lbl_eu_8056E8B8[];     // CVirtualLightObj vtable
 extern const f32 lbl_eu_8066AA88;  // default light color components
 extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in func_8049488C
+extern const f32 lbl_eu_8066AA90;  // color scale for quad verts (func_80494D84)
 extern const f32 lbl_eu_8066AA98;  // slot color alpha default (func_80495644)
 extern const f32 lbl_eu_8066AAA8;  // slot color rgb default (func_80495644)
 extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (func_804957E4/804958B8)
@@ -16,12 +18,23 @@ extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (func_8049
 // Cross-TU catalog imports (CLight.cpp). The retail symbols are unmangled
 // free functions, so extern "C" keeps the emitted reloc names byte-identical.
 extern "C" void func_804C03A0(u8* self, int value);
+extern "C" void func_804C0398(CLight* self, nw4r::g3d::LightObj* lightObj);
 extern "C" void func_804C0454(u8* self, int value);
+extern "C" void func_804C0484(CLight* self, const f32* dir);
 extern "C" void func_804C07F0(u8* self, int value);
+extern "C" void func_804C0928(CLight* self, f32 intensity);
 extern "C" void func_804C0570(CLight* self, f32 angleX, f32 angleY);
 extern "C" void func_804C08C8(CLight* self, int enable);
 extern "C" void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn);
 extern "C" void func_804C09E0(u8* self, float a, float b, int c);
+
+// Post-light-update hook on the scene light data. The catalog header
+// (code_804BF59C.hpp) declares it (void), but the retail call site passes the
+// data pointer in r3, so declare the real signature here for correct argument
+// setup.
+class CScnEnvLgtData;
+extern "C" void func_804BF940(CScnEnvLgtData* self);
+extern "C" void func_804BF8A8(CScnEnvLgtData* self);  // clears the data object's light state
 
 // nw4r g3d G3DState::SetLightObj is missing from the (read-only) g3d_state.h;
 // declare it here so calls emit the retail mangled name.

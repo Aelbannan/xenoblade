@@ -26,7 +26,9 @@ void func_802B6660() {}
 
 void func_802B6664(){}
 
-void func_802B66B8(void){}
+extern float lbl_eu_80668FE0;
+extern "C" void func_80137444__FPQ34nw4r3lyt13AnimTransformf(void* a, float f);
+extern "C" void func_802B66B8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 void func_802B66C4(){}
 
@@ -64,13 +66,13 @@ void func_802B6DF4() {}
 
 void func_802B6DF8(){}
 
-void func_802B6E4C(void){}
+extern "C" void func_802B6E4C(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 void func_802B6E58(){}
 
 void func_802B6EA4(){}
 
-void func_802B6EF8(void){}
+extern "C" void func_802B6EF8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
 
 void func_802B6F04(){}
 

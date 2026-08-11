@@ -3,6 +3,7 @@
 
 #include "kyoshin/plugin/ocUnit.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 
 struct CfObjIf {
     virtual void _v0008();
@@ -18,7 +19,7 @@ struct CfObjIf {
     virtual void _v0030();
     virtual void _v0034();
     virtual void _v0038();
-    virtual void _v003C();
+    virtual void _v003C(u32 arg);
     virtual void _v0040();
     virtual void _v0044();
     virtual void _v0048();
@@ -53,6 +54,82 @@ struct CfObjIf {
     virtual void _v00BC();
     virtual void _v00C0();
     virtual void vf00C4();
+    // CfObjectMove tail virtuals (slots 0xC8..0x1F0) for dispatch from this TU.
+    virtual void _v00C8();
+    virtual void _v00CC();
+    virtual void _v00D0();
+    virtual void _v00D4();
+    virtual void _v00D8();
+    virtual void _v00DC();
+    virtual void _v00E0();
+    virtual void _v00E4();
+    virtual void _v00E8();
+    virtual void _v00EC();
+    virtual void _v00F0();
+    virtual void _v00F4();
+    virtual void _v00F8();
+    virtual void _v00FC();
+    virtual void _v0100();
+    virtual void _v0104();
+    virtual void _v0108();
+    virtual void _v010C();
+    virtual void _v0110();
+    virtual void _v0114();
+    virtual void _v0118();
+    virtual void _v011C();
+    virtual void _v0120();
+    virtual void _v0124();
+    virtual void _v0128();
+    virtual void _v012C();
+    virtual void _v0130();
+    virtual void _v0134();
+    virtual void _v0138();
+    virtual void _v013C();
+    virtual void _v0140();
+    virtual void _v0144();
+    virtual void _v0148();
+    virtual void _v014C();
+    virtual void _v0150();
+    virtual void _v0154();
+    virtual void _v0158();
+    virtual void _v015C();
+    virtual void _v0160();
+    virtual void _v0164();
+    virtual void _v0168();
+    virtual void _v016C();
+    virtual void _v0170();
+    virtual void _v0174();
+    virtual void _v0178();
+    virtual void _v017C();
+    virtual void _v0180();
+    virtual void _v0184();
+    virtual void _v0188();
+    virtual void _v018C();
+    virtual void _v0190();
+    virtual void _v0194();
+    virtual void _v0198();
+    virtual void _v019C();
+    virtual void _v01A0();
+    virtual void _v01A4();
+    virtual void _v01A8();
+    virtual void _v01AC();
+    virtual void _v01B0();
+    virtual void _v01B4();
+    virtual void _v01B8();
+    virtual void _v01BC();
+    virtual void _v01C0();
+    virtual void _v01C4();
+    virtual void _v01C8();
+    virtual void _v01CC();
+    virtual void _v01D0();
+    virtual void _v01D4();
+    virtual void _v01D8();
+    virtual void _v01DC();
+    virtual void _v01E0();
+    virtual void _v01E4();
+    virtual int vf01E8();          // 0x1E8: busy/idle check
+    virtual void _v01EC();
+    virtual void vf01F0(int arg); // 0x1F0: time-unit setter
 };
 
 // C-linkage retail symbols referenced by the plugin functions below.
@@ -64,7 +141,6 @@ extern "C" {
     extern void* lbl_eu_806618E8;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
     extern float lbl_eu_80665C30;
-    extern float lbl_eu_8066A20C;
 
     // VM/script helpers
     void func_800BE12C(void* obj, int a, int b, int c, int d);
@@ -194,13 +270,11 @@ float cf::CActorParam::CActorParam_UnkVirtualFunc37() { return *(float*)((u8*)th
 
 void func_8003C480(){}
 
-void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
-    u32 a = *(u32*)((u8*)src + 0);
-    u32 b = *(u32*)((u8*)src + 4);
-    u32 c = *(u32*)((u8*)src + 8);
-    *(u32*)((u8*)self + 0x3C) = a;
-    *(u32*)((u8*)self + 0x40) = b;
-    *(u32*)((u8*)self + 0x44) = c;
+// copy 3 u32 from src to self+0x3C (retail lwz x3; stw x3); const src avoids interleave
+extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, const void* src) {
+    ((u32*)((u8*)self + 0x3C))[0] = *(const u32*)((const u8*)src + 0);
+    ((u32*)((u8*)self + 0x3C))[1] = *(const u32*)((const u8*)src + 4);
+    ((u32*)((u8*)self + 0x3C))[2] = *(const u32*)((const u8*)src + 8);
 }
 
 void func_8003C560(){}
@@ -217,7 +291,14 @@ void cf::CfObject::CfObject_UnkVirtualFunc30() {
 
 void cf::CfObject::CfObject_UnkVirtualFunc29(float value) { mField4C = value; }
 
-void func_8003C78C(){}
+int func_8003C78C(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* prop = vmOCPropertyGet(pThread);
+    // OC property setter: dispatch vtable[0x3C] with the property getter value.
+    ((CfObjIf*)obj)->_v003C(*(u32*)((u8*)prop + 4));
+    return 0;
+}
 
 extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, const char* str) {
     *(u32*)((u8*)self + 0x30) = strlen(str);
@@ -228,7 +309,11 @@ bool isValid() { return false; }
 
 void func_8003C84C(){}
 
-void cf::CfObject::CfObject_UnkVirtualFunc26(u32 value, float amount) {}
+void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self) {
+    // Dispatch the "action start" hook, then mark the object as interacted.
+    self->CfObject_UnkVirtualFunc19();
+    self->mFlags68 |= 0x100;
+}
 
 void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
@@ -299,15 +384,41 @@ extern "C" int func_8003CDE0(VMThread* pThread, int handle) {
 
 void walkR(){}
 
-void func_8003CED0(){}
+int func_8003CED0(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int arg = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // Convert the frame count to time units using the target framerate.
+    ((CfObjIf*)obj)->vf01F0(arg * CDeviceVI::getTargetFramerate());
+    return 0;
+}
 
 void func_8003CF48(){}
 
 void func_8003D060(){}
 
-void func_8003D2B8(){}
+int func_8003D2B8(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    int busy = ((CfObjIf*)obj)->vf01E8();
+    // VM bool retval: type 2 (false) when idle, 1 (true) when busy.
+    VMArg retVal;
+    retVal.type = (u8)((((-busy) | busy) >> 31) + 2);
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
-void func_8003D32C(){}
+int func_8003D32C(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // If the object's "busy" check (vtable[0x1E8]) is false, hold the script.
+    if (((CfObjIf*)obj)->vf01E8() == 0) {
+        vmWaitModeSet(pThread);
+        return 0;
+    }
+    return 0;
+}
 
 void moveTo(){}
 
@@ -1421,7 +1532,7 @@ void cf::CfObject::CfObject_UnkVirtualFunc64(int flag) {
     }
 }
 
-extern float lbl_eu_8066A20C;
+extern const float lbl_eu_8066A20C;
 extern float lbl_eu_80665C30;
 extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) { return *(float*)((u8*)self + 0x4c) * lbl_eu_8066A20C; }
 

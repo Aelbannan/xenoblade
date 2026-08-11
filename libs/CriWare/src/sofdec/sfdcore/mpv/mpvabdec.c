@@ -1388,8 +1388,8 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
+            bits >>= 21;
+            s16 t = ctx->tbl994[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -1415,8 +1415,8 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
+            bits >>= 19;
+            s16 t = ctx->tbl998[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -1446,23 +1446,23 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
                 bits >>= 19;
-                t = ctx->esc1[(bits & ~1u) >> 1];
+                t = ctx->esc1[(bits & ~1u)];
                 } else {
                 bits <<= 8;
                 if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
                     bits = (bits >> 26) & 0x1F;
-                    t = ctx->esc2[(bits & ~1u) >> 1];
+                    t = ctx->esc2[(bits & ~1u)];
                     } else {
                     bits <<= 1;
                     if ((s32)bits < 0) {
                         blk->codelen = 0x10;
                         bits = (bits >> 26) & 0x1F;
-                        t = ctx->esc3[(bits & ~1u) >> 1];
+                        t = ctx->esc3[(bits & ~1u)];
                         } else {
                         blk->codelen = 0x11;
                         bits = (bits >> 25) & 0x1F;
-                        t = ctx->esc4[(bits & ~1u) >> 1];
+                        t = ctx->esc4[(bits & ~1u)];
                         }
                     }
                 }
@@ -3179,8 +3179,8 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
+            bits >>= 21;
+            s16 t = ctx->tbl994[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -3206,8 +3206,8 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
+            bits >>= 19;
+            s16 t = ctx->tbl998[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -3237,23 +3237,23 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
                 bits >>= 19;
-                t = ctx->esc1[(bits & ~1u) >> 1];
+                t = ctx->esc1[(bits & ~1u)];
                 } else {
                 bits <<= 8;
                 if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
                     bits = (bits >> 26) & 0x1F;
-                    t = ctx->esc2[(bits & ~1u) >> 1];
+                    t = ctx->esc2[(bits & ~1u)];
                     } else {
                     bits <<= 1;
                     if ((s32)bits < 0) {
                         blk->codelen = 0x10;
                         bits = (bits >> 26) & 0x1F;
-                        t = ctx->esc3[(bits & ~1u) >> 1];
+                        t = ctx->esc3[(bits & ~1u)];
                         } else {
                         blk->codelen = 0x11;
                         bits = (bits >> 25) & 0x1F;
-                        t = ctx->esc4[(bits & ~1u) >> 1];
+                        t = ctx->esc4[(bits & ~1u)];
                         }
                     }
                 }
@@ -3652,80 +3652,88 @@ s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         blk->f04 = 1;
         blk->f00 = 0;
         blk->codelen = 2;
-    } else {
-        bits <<= 1;
-        u32 v = bits >> 24;
-        s16 t;
-        if ((v - 4) <= 3) {
-            blk->codelen = 0x0B;
-            bits = (bits >> 22) & 0x3FF;
-            t = ctx->tbl994[(bits & ~1u) >> 1];
-            goto nib_table;
-        } else if ((v - 2) <= 1) {
-            blk->codelen = 0x0D;
-            bits = (bits >> 20) & 0xFFF;
-            t = ctx->tbl998[(bits & ~1u) >> 1];
-            goto nib_table;
-        } else if (v == 1) {
-            blk->codelen = 0x0E;
-            bits >>= 19;
-            t = ctx->esc1[(bits & ~1u) >> 1];
-            goto nib_table;
-        } else if (v == 0) {
-            bits <<= 8;
-            if ((s32)bits < 0) {
-                blk->codelen = 0x0F;
-                bits = (bits >> 26) & 0x1F;
-                t = ctx->esc2[(bits & ~1u) >> 1];
-                goto nib_table;
-            } else {
-                bits <<= 1;
-                if ((s32)bits < 0) {
-                    blk->codelen = 0x10;
-                    bits = (bits >> 26) & 0x1F;
-                    t = ctx->esc3[(bits & ~1u) >> 1];
-                    goto nib_table;
-                } else {
-                    blk->codelen = 0x11;
-                    bits = (bits >> 25) & 0x1F;
-                    t = ctx->esc4[(bits & ~1u) >> 1];
-                    goto nib_table;
-                }
-            }
-        } else {
-            u32 t990 = ctx->tbl990[(v << 1) >> 2];
-            blk->f00 = t990 & 0xFF;
-            if (blk->f00 == 0x40) {
-                blk->codelen = 0x14;
-                s32 w = (s32)((bits >> 11) & 0xFFFF) >> 2;
-                blk->f00 = (u32)(s8)(w >> 8);
-                if (((bits >> 13) & 0x7F) != 0) {
-                } else {
-                    blk->codelen = 0x1C;
-                    w = ((s32)(s8)((bits >> 13) & 0xFF) << 1) | (s32)((bits >> 5) & 0xFF);
-                }
-                if (w < 0) {
-                    blk->f08 = 1;
-                    w = -w;
-                } else {
-                    blk->f08 = 0;
-                }
-                blk->f04 = (s32)w;
-            } else {
-                blk->codelen = t990 >> 16;
-                blk->f04 = (s32)(s8)((t990 >> 8) & 0xFF);
-                bits >>= 0x21 - (s32)blk->codelen;
-                blk->f08 = bits & 1;
-            }
-            goto nib_prefix_done;
-        }
-nib_table:
-        blk->f00 = (u32)(t & 0xFF);
-        blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-        blk->f08 = bits & 1;
-nib_prefix_done:
-        ;
+        goto nib_prefix_done;
     }
+
+    bits <<= 1;
+    u32 v = bits >> 24;
+    s16 t;
+    if ((v - 4) <= 3) goto nib_huff11;
+    if ((v - 2) <= 1) goto nib_huff13;
+    if (v == 1) goto nib_esc1;
+    if (v == 0) goto nib_escape_long;
+
+    {
+        u32 t990 = ctx->tbl990[(v << 1) >> 2];
+        blk->f00 = t990 & 0xFF;
+        if (blk->f00 != 0x40) {
+            blk->codelen = t990 >> 16;
+            blk->f04 = (s32)(s8)((t990 >> 8) & 0xFF);
+            bits >>= 0x21 - (s32)blk->codelen;
+            blk->f08 = bits & 1;
+        } else {
+            blk->codelen = 0x14;
+            s32 w = (s32)((bits >> 11) & 0xFFFF) >> 2;
+            blk->f00 = (u32)(s8)(w >> 8);
+            if (((bits >> 13) & 0x7F) == 0) {
+                blk->codelen = 0x1C;
+                w = ((s32)(s8)((bits >> 13) & 0xFF) << 1) | (s32)((bits >> 5) & 0xFF);
+            }
+            if (w < 0) {
+                blk->f08 = 1;
+                w = -w;
+            } else {
+                blk->f08 = 0;
+            }
+            blk->f04 = (s32)w;
+        }
+        goto nib_prefix_done;
+    }
+
+nib_huff11:
+    blk->codelen = 0x0B;
+    bits >>= 22;
+    t = ctx->tbl994[(bits & ~1u)];
+    goto nib_table;
+
+nib_huff13:
+    blk->codelen = 0x0D;
+    bits >>= 20;
+    t = ctx->tbl998[(bits & ~1u)];
+    goto nib_table;
+
+nib_esc1:
+    blk->codelen = 0x0E;
+    bits >>= 19;
+    t = ctx->esc1[(bits & ~1u)];
+    goto nib_table;
+
+nib_escape_long:
+    bits <<= 8;
+    if ((s32)bits < 0) {
+        blk->codelen = 0x0F;
+        bits = (bits >> 1) & 0x1F;
+        t = ctx->esc2[(bits & ~1u)];
+        goto nib_table;
+    }
+    bits <<= 1;
+    if ((s32)bits < 0) {
+        blk->codelen = 0x10;
+        bits = (bits >> 1) & 0x1F;
+        t = ctx->esc3[(bits & ~1u)];
+        goto nib_table;
+    }
+    blk->codelen = 0x11;
+    bits = (bits >> 2) & 0x1F;
+    t = ctx->esc4[(bits & ~1u)];
+
+nib_table:
+    blk->f00 = (u32)(t & 0xFF);
+    blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
+    blk->f08 = bits & 1;
+
+nib_prefix_done:
+    u8 *p = ctx->p9ac;
     bc += (s32)blk->codelen;
     if (bc >= 0x20) {
         bc -= 0x20;
@@ -3735,12 +3743,13 @@ nib_prefix_done:
         hi <<= (s32)blk->codelen;
     }
     s32 *sum = blk->sum;
-    u8 *p = ctx->p9ac + blk->f00;
+    p += blk->f00;
     s32 c = (s8)p[0];
     blk->first = c;
     blk->last = c;
     s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
-    if (blk->f08 != 0) s = -((s - 1) | 1);
+    s = (s - 1) | 1;
+    if (blk->f08 != 0) s = -s;
     blk->block[c] = (s16)((s * (s32)ctx->tblqt[c] + 0x400) >> 11);
 
     for (;;) {
@@ -5049,8 +5058,8 @@ nib_prefix_done:
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            bits = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
+            bits >>= 21;
+            s16 t = ctx->tbl994[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -5076,8 +5085,8 @@ nib_prefix_done:
         }
         case 1: {
             blk->codelen = 0x0D;
-            bits = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
+            bits >>= 19;
+            s16 t = ctx->tbl998[(bits & ~1u)];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
             blk->f08 = bits & 1;
@@ -5107,23 +5116,23 @@ nib_prefix_done:
             if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
                 bits >>= 19;
-                t = ctx->esc1[(bits & ~1u) >> 1];
+                t = ctx->esc1[(bits & ~1u)];
                 } else {
                 bits <<= 8;
                 if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
                     bits = (bits >> 26) & 0x1F;
-                    t = ctx->esc2[(bits & ~1u) >> 1];
+                    t = ctx->esc2[(bits & ~1u)];
                     } else {
                     bits <<= 1;
                     if ((s32)bits < 0) {
                         blk->codelen = 0x10;
                         bits = (bits >> 26) & 0x1F;
-                        t = ctx->esc3[(bits & ~1u) >> 1];
+                        t = ctx->esc3[(bits & ~1u)];
                         } else {
                         blk->codelen = 0x11;
                         bits = (bits >> 25) & 0x1F;
-                        t = ctx->esc4[(bits & ~1u) >> 1];
+                        t = ctx->esc4[(bits & ~1u)];
                         }
                     }
                 }

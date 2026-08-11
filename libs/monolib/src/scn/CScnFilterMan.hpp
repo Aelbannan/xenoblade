@@ -49,6 +49,41 @@ extern u32 lbl_eu_8056EBC4[];  // _reslist_base vtable
 extern u32 lbl_eu_8056EBAC[];  // reslist vtable
 extern u32 lbl_eu_8056EB88[];  // 0x8049CBD4 class vtable
 
+extern u32 lbl_eu_8056EBA0[];  // _reslist_base<_reslist_iterator<...>> vtable
+
+// The item type stored in the iterator reslist's nodes
+// (_reslist_iterator<CScnFilter,CScnFilter,CScnFilter>, retail mItem at
+// node+0x8). The user-declared default ctor makes the node array cookie'd
+// (retail reserve allocates count*12 + 0x10 and runs __construct_new_array);
+// with no user dtor the node dtor stays trivial, so delete[] in the dtor
+// frees the cookie WITHOUT a per-element dtor loop (retail __dt__ shape:
+// subi r3,r3,0x10 before __dla__FPv).
+struct CScnFilterIterNode;  // forward decl for the item's back-pointer
+
+struct CScnFilterIterator {
+    CScnFilterIterNode* mNode;  // 0x0
+    CScnFilterIterator() : mNode(nullptr) {}
+};
+
+// _reslist_node<_reslist_iterator<CScnFilter,CScnFilter,CScnFilter>>: same
+// 0xC layout as CScnFilterListNode, but the item is an iterator object.
+struct CScnFilterIterNode {
+    CScnFilterIterNode* mNext;   // 0x0
+    CScnFilterIterNode* mPrev;   // 0x4
+    CScnFilterIterator mItem;    // 0x8
+};
+
+// _reslist_base<_reslist_iterator<CScnFilter,CScnFilter,CScnFilter>> layout
+// (same offsets as CScnFilterReslist; the nodes hold iterator items).
+struct CScnFilterIteratorReslist {
+    u32* mVtable;                      // 0x00 vtable slot
+    CScnFilterIterNode* mStartNodePtr; // 0x04 sentinel pointer
+    CScnFilterIterNode mStartNode;     // 0x08 sentinel node (0xC bytes)
+    CScnFilterIterNode* mList;         // 0x14 node array
+    int mCapacity;                     // 0x18
+    bool field_0x1C;                   // 0x1C ownership flag
+};
+
 class CScnFilterMan {
 public:
     CScnFilterMan();

@@ -25,7 +25,7 @@ void __ct__CMenuTitle(){}
 // wrapper drops the -1 argument, so it cannot be used here.
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int controllerType);
 
-void func_802B5F0C(){}
+extern "C" void func_802B5F0C(void* self) { *(u8*)((u8*)self + 0xE8) = 1; }
 
 void func_802B5F18(CMenuTitleInput* self) {
     // Opening menu: query the +0x60 sub-menu, flag this menu when it opens.

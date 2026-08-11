@@ -24,4 +24,4 @@ extern "C" void clearWordFlag(u32* self, u32 mask);
 extern "C" void* func_80068494(void*, u32, u32*, u32*, int, int);
 extern "C" bool func_800686E4(void*, bool);
 
-bool testResInfoFlag(u32 flags);
+extern "C" bool testResInfoFlag(u32 flags);

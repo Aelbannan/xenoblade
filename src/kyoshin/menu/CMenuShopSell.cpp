@@ -92,13 +92,13 @@ void CMenuShopSell::Init() {}
 // item-box-line copy passes &cursors[i]).
 void func_8018B0FC(void* dst, void* src) {
     ShopSellCursor18* d = static_cast<ShopSellCursor18*>(dst);
-    const ShopSellCursor18* s = static_cast<const ShopSellCursor18*>(src);
-    u32 v15 = s->field_0x15;
-    u32 v14 = s->field_0x14;
-    u32 v10 = s->field_0x10;
-    u32 vC = s->field_0xC;
-    u32 v8 = s->field_0x8;
+    const volatile ShopSellCursor18* s = static_cast<const volatile ShopSellCursor18*>(src);
     u32 v4 = s->field_0x4;
+    u32 v8 = s->field_0x8;
+    u32 vC = s->field_0xC;
+    u32 v10 = s->field_0x10;
+    u8 v14 = s->field_0x14;
+    u8 v15 = s->field_0x15;
     d->field_0x4 = v4;
     d->field_0x8 = v8;
     d->field_0xC = vC;

@@ -53,10 +53,14 @@ CDeviceFontInfoRom::~CDeviceFontInfoRom(void) {
     lbl_eu_80665688 = NULL;
 }
 
-// ---- func_804536DC (0x80457808) - OSGetFontTexture wrapper ----
-const char* CDeviceFontInfoRom::func_804536DC(const char* str, void** texOut,
-                                              u32* xOut, u32* yOut,
-                                              u32* widthOut) {
+// ---- func_804536DC (0x80457808) - OSGetFontTexture passthrough wrapper ----
+// Retail symbol is func_804536DC__18CDeviceFontInfoRomFv (extern "C" keeps it
+// verbatim). The body shifts r4-r8 up and tail-branches OSGetFontTexture: the
+// leading `this_` param (unused, in r3) forces the register shift since the 5
+// OSGetFontTexture args arrive in r4-r8.
+extern "C" const char* func_804536DC__18CDeviceFontInfoRomFv(
+    void* this_, const char* str, void** texOut, u32* xOut, u32* yOut,
+    u32* widthOut) {
     return OSGetFontTexture(str, texOut, xOut, yOut, widthOut);
 }
 

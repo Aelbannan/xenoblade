@@ -175,7 +175,8 @@ void LOD::UnkClass_80466348::func_804676D4() {}
 
 void LOD::UnkClass_80466348::func_804676EC() {}
 
-void LOD::UnkClass_80466348::func_8046774C() {}
+extern "C" void GXLoadTexMtxImm(const void* mtx, u32 id, u8 pn);
+void LOD::UnkClass_80466348::func_8046774C() { GXLoadTexMtxImm(this, 30, 0); }
 
 void LOD::UnkClass_80466348::func_80467758() {}
 

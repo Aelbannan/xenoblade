@@ -47,11 +47,11 @@ void func_802AB4B8(){}
 
 void func_802AB510(){}
 
-void func_802AB590(){}
+extern "C" void func_802AB590(void* self) { *(u8*)((u8*)self + 4) = 1; }
 
 void func_802AB59C(){}
 
-void func_802AB5E4(){}
+extern "C" void func_802AB5E4(void* self) { *(u8*)((u8*)self + 5) = 1; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802AAF24(){}

@@ -47,7 +47,7 @@ public:
     void func_8046EEE8();
     void func_8046EF30();
     void func_8046EF7C();
-    void func_8046F010(float a, float b);
+    void func_8046F010(float a);
     void func_8046F024();
     void func_8046F090();
     void func_8046F164();

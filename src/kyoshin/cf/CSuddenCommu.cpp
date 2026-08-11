@@ -11,7 +11,7 @@ cf::CSuddenCommu::CSuddenCommu() {}
 
 void func_801BA1DC(){}
 
-void func_801BA250(){}
+extern "C" void func_801BA250(void* self) { *(u32*)((u8*)self + 0x20) = 0; }
 
 void func_801BA25C(){}
 

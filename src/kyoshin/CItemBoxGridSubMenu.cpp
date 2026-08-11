@@ -234,7 +234,8 @@ void func_80208844(){}
 
 void func_80208890(){}
 
-void func_802082D0(u8* self){
+// retail: if (field_20) tail func_80137038(*(self+8), drawInfo passthrough, 0, 1)
+extern "C" void func_802082D0(u8* self, void* drawInfo){
     if (self[0x20] == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), 0, 0, 1);
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(self + 8), drawInfo, 0, 1);
 }

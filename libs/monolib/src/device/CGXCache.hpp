@@ -34,7 +34,7 @@ public:
     void func_8044C1FC();
     void func_8044CE68();
     void func_8044CEF8();
-    void func_8044CF74() const;
+    void func_8044CF74(u32 id);
 
     // TODO: add fields
     void func_8044B294();

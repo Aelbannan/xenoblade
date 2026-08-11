@@ -138,7 +138,7 @@ void func_801276F4(){}
 
 void func_80127764(){}
 
-extern "C" void func_80127BC4(float* dst, float* src) {
+extern "C" void func_80127BC4(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }

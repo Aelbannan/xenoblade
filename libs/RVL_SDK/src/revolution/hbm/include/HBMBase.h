@@ -191,7 +191,7 @@ public:
 private:
     void init_battery(const HBMControllerData* pController);
     void calc_battery(int chan);
-    inline void reset_battery();
+    inline void reset_battery(bool startPair = false);
 
     void init_sound();
     void play_sound(int id);

@@ -80,7 +80,7 @@ void __dt__804DF744() {
 
 void func_804DF7A4(){}
 
-void func_804DF7FC(void){}
+void func_804DF7FC() { lbl_eu_80665A30 = 0; }
 
 void func_804DF808(){}
 

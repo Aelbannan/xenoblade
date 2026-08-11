@@ -45,7 +45,8 @@ u8 CScrollBar::isVisible() { return mVisible; }
 
 u8 CScrollBar::func_801F3668() { return mActive; }
 
-void func_801F3670(void){}
+extern "C" void func_801D2150(void* a);
+extern "C" void func_801F3670(void* self) { func_801D2150(*(void**)((u8*)*(void**)((u8*)self + 0x1C) + 0x10)); }
 
 
 void func_801F3850(CScrollBar* self, u32 count) {

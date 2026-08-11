@@ -1375,13 +1375,11 @@ extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId) {
     return func_8009CF8C(resourceId + 0x220);
 }
 
-// __dl__FPv is the mangled operator delete(void*); declare it as the C++
-// operator so MWCC's builtin resolves it (extern "C" redeclaration conflicts).
-void operator delete(void* object) __attribute__((weak));
+extern "C" void __dl__FPv(void* object);
 #define DEFINE_POD_DTOR(name) \
 extern "C" UnkDestructible* name(UnkDestructible* object, s32 deleteFlag) { \
     UnkDestructible* result = object; \
-    if (object != nullptr && deleteFlag > 0) operator delete(object); \
+    if (object != nullptr && deleteFlag > 0) __dl__FPv(object); \
     return result; \
 }
 DEFINE_POD_DTOR(__dt__80080400)
@@ -1404,7 +1402,7 @@ extern "C" Unk87588TypedData* __dt__8008753C(Unk87588TypedData* object, s32 dele
     if (object != nullptr) {
         object->field_0x48.bits = 0;
         object->field_0x44 = 0;
-        if (deleteFlag > 0) operator delete(object);
+        if (deleteFlag > 0) __dl__FPv(object);
     }
     return result;
 }
@@ -1609,8 +1607,7 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
         byteOffset = 0;
         for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
             s32 value = values[byteOffset >> 2];
-            if (value > 0) {
-                if (value <= 8) {
+            if (value > 0 && value < 8) {
                     CfResStackObject resource;
                     func_80080F48__Q22cf13CfGameManagerFv(
                         static_cast<u16>(value), &resource, true, true);
@@ -1630,7 +1627,6 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
                     }
                 }
             }
-        }
     }
     CfRes_setE28Mask(0x400);
 }
@@ -2101,7 +2097,7 @@ extern "C" cf::CfObjectMove* getPlayer__Q22cf13CfGameManagerFi(s32 index);
 extern "C" void func_800B92FC(cf::CfObjectMove* player, u32 value);
 extern "C" void CfRes_callFunc_68110(u32 value);
 extern "C" float lbl_eu_8066656C;
-extern "C" u32 getUnk80664658();
+extern "C" UnkGimmickGlobalView* getUnk80664658();
 extern "C" void func_801F4CE4();
 extern "C" u32 func_80061870(UnkClass_80085334* object, u32 mode, u32 value,
                                 u32 fourth, u32 fifth, u32 sixth);
@@ -2183,12 +2179,12 @@ extern "C" void func_80083888__Q22cf13CfGameManagerFv(const char* text) {
     }
 }
 
-extern "C" Unk866A0Data* func_80062F60();
-extern "C" void func_80065CA4(Unk866A0Data* child, Unk866A0Data* parent);
+extern "C" UnkRes866A0* func_80062F60();
+extern "C" void func_80065CA4(void* child, void* parent);
 extern "C" void func_800A8E6C(u32 value, bool enable);
 extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E24 |= 0x400;
-    Unk866A0Data* data = func_80062F60();
+    UnkRes866A0* data = func_80062F60();
     func_80065CA4(data->field_0x2C, data);
     data->field_0x4 = 0;
     data->field_0x8 = 0;
@@ -2932,7 +2928,7 @@ extern "C" void func_80083328__Q22cf13CfGameManagerFv(
         CfRes_callFunc_67E78(active);
         func_800620F0();
         func_800A9360();
-        Unk866A0Data* data = func_80062F60();
+        UnkRes866A0* data = func_80062F60();
         CfRes_delegateCleanup(data);
         CfRes_initStruct_64994(data);
     }

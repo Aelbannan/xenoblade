@@ -35,7 +35,7 @@ struct CGXCache {
     void func_8044BFC0();
     void func_8044C034();
     void func_8044C1FC();
-    void func_8044CF74() const;
+    void func_8044CF74(u32 id);
 };
 
 
@@ -243,7 +243,7 @@ found_c:
 
 void CGXCache::func_8044B4B8() {}
 
-void CGXCache::func_8044B5B4(void) {}
+void CGXCache::func_8044B5B4() { reinterpret_cast<CGXCache*>(reinterpret_cast<char*>(this) + 4)->func_8044CF74(2); }
 
 void CGXCache::func_8044B5C0() {}
 
@@ -255,7 +255,7 @@ void CGXCache::func_8044BB20() {}
 
 void CGXCache::func_8044BD74() {}
 
-void CGXCache::func_8044BE10(void) {}
+void CGXCache::func_8044BE10() { reinterpret_cast<CGXCache*>(reinterpret_cast<char*>(this) + 4)->func_8044CF74(11); }
 
 // retail: addi r3,r3,0x510 (returns &unk510)
 void* func_8044BE1C__8CGXCacheFv(void* self) { return (u8*)self + 0x510; }
@@ -718,7 +718,10 @@ found_entry:
         return &ring->mArrayPtr[slot].wid;
     }
 }
-void CGXCache::func_8044CF74() const {}
+#pragma push
+#pragma auto_inline off
+void CGXCache::func_8044CF74(u32 id) {}
+#pragma pop
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 template <int N> class CMsgParam {

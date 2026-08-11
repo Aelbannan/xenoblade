@@ -50,12 +50,12 @@ struct BdatColHdrFlag {
 };
 
 // Name-index table: s32 count at +0x00, then u32 at +0x04, then
-// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
-// to the NameEntry structure). The binary search indexes by `mid`.
+// u32 entry offsets at +0x08 (retail loads each with lwz; the binary
+// search indexes by `mid`). Entry offsets are u32 values from table start.
 struct BdatNameIndexHdr {
     s32 count;       // +0x00
     u32 _pad;        // +0x04
-    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+    u32 offsets[];   // +0x08 (flexible array of u32 entry offsets)
 };
 
 #pragma pack(pop)

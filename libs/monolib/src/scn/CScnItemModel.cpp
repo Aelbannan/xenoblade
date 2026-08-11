@@ -17,6 +17,14 @@ void func_804830E4(){}
 
 void func_8048310C(){}
 
+// retail: cnt=*(self+0x820); *(u32*)(self+cnt*4+0x7F0)=r4; *(self+0x820)=cnt+1
+extern "C" void func_80482AB8(void* self, u32 val) {
+    u32 cnt = *(u32*)((char*)self + 0x820);
+    u32 next = cnt + 1;
+    *(u32*)((char*)self + cnt * 4 + 0x7F0) = val;
+    *(u32*)((char*)self + 0x820) = next;
+}
+
 void func_80483134(){}
 
 void func_8048315C(){}

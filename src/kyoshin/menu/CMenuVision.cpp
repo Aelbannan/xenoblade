@@ -33,6 +33,7 @@ extern f32 func_800F4424(void*);
 
 extern "C" {
 void* func_800B708C__Fi(int);
+void* func_800EA444(cf::CBattleManager*);
 u32 func_800F4784(void*);
 void* func_800F477C(void*);
 int func_800F4648(void*);
@@ -178,95 +179,92 @@ static inline void menuVisionBeginWithoutSecond(CMenuVisionEntry& entry) {
 
 template <typename T>
 static inline void* menuVisionEnemyImage(void* actor, T* battle, int specialOffset) {
-    if (actor == 0 || !(*(u32*)((u8*)actor + 0x64) & 4)) {
-        return 0;
-    }
-
-    actor = (u8*)actor - 0x3E9C;
+    void* image = 0;
+    actor = actor != 0 ? (u8*)actor - 0x3E9C : 0;
     if (battle->flags824 & 0x20000) {
-        return menuVisionResource(lbl_eu_80504268 + specialOffset);
+        image = menuVisionResource(lbl_eu_80504268 + specialOffset);
+        return image;
     }
 
-    u16 id = *(u16*)((u8*)actor + 0x3F28);
     switch (menuVisionActorKind(actor)) {
     case 1:
-        if (id == 0x1A1) {
-            return menuVisionResource(lbl_eu_80504268 + 0x247);
+        if (*(u16*)((u8*)actor + 0x3F28) == 0x1A1) {
+            image = menuVisionResource(lbl_eu_80504268 + 0x247);
+        } else {
+            image = menuVisionResource(lbl_eu_80504268 + 0x25C);
         }
-        return menuVisionResource(lbl_eu_80504268 + 0x25C);
+        break;
     case 2:
-        switch (id) {
+        switch (*(u16*)((u8*)actor + 0x3F28)) {
         case 0x3D: case 0x3E: case 0x4B5:
         case 0x5FF: case 0x600: case 0x601: case 0x961:
-            return menuVisionResource(lbl_eu_80504268 + 0x2B0);
+            image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
         case 0x10C: case 0x1A0: case 0x1A1: case 0x602:
         case 0x835: case 0x8A8: case 0x8AC: case 0x962: case 0x963:
-            return menuVisionResource(lbl_eu_80504268 + 0x247);
+            image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
         case 0x77A: case 0x843: case 0x844: case 0x964:
-            return menuVisionResource(lbl_eu_80504268 + 0x2C5);
+            image = menuVisionResource(lbl_eu_80504268 + 0x2C5); break;
         case 0x656: case 0x84B: case 0x9C5: case 0x9C6: case 0x9C7:
-            return menuVisionResource(lbl_eu_80504268 + 0x2DA);
+            image = menuVisionResource(lbl_eu_80504268 + 0x2DA); break;
         case 0x654: case 0x655:
-            return menuVisionResource(lbl_eu_80504268 + 0x2EF);
+            image = menuVisionResource(lbl_eu_80504268 + 0x2EF); break;
         case 0x59C:
-            return menuVisionResource(lbl_eu_80504268 + 0x304);
+            image = menuVisionResource(lbl_eu_80504268 + 0x304); break;
         case 0x845:
-            return menuVisionResource(lbl_eu_80504268 + 0x319);
+            image = menuVisionResource(lbl_eu_80504268 + 0x319); break;
         }
-        return 0;
+        break;
     case 3: case 4: case 5: case 6: case 8: case 12:
-        return menuVisionResource(lbl_eu_80504268 + 0x232);
+        image = menuVisionResource(lbl_eu_80504268 + 0x232); break;
     case 7:
-        return menuVisionResource(lbl_eu_80504268 + 0x286);
+        image = menuVisionResource(lbl_eu_80504268 + 0x286); break;
     case 9:
-        return menuVisionResource(lbl_eu_80504268 + 0x271);
+        image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
     case 10:
-        return menuVisionResource(lbl_eu_80504268 + 0x29B);
+        image = menuVisionResource(lbl_eu_80504268 + 0x29B); break;
     case 11:
-        switch (id) {
-        case 0x965: return menuVisionResource(lbl_eu_80504268 + 0x271);
-        case 0x961: return menuVisionResource(lbl_eu_80504268 + 0x2B0);
-        case 0x962: case 0x963: return menuVisionResource(lbl_eu_80504268 + 0x247);
-        case 0x964: return menuVisionResource(lbl_eu_80504268 + 0x2C5);
-        case 0x524: case 0x525: return menuVisionResource(lbl_eu_80504268 + 0x32E);
-        case 0x905: return menuVisionResource(lbl_eu_80504268 + 0x343);
-        case 0x9C9: return menuVisionResource(lbl_eu_80504268 + 0x358);
-        case 0x969: case 0x96A: case 0x96C: return menuVisionResource(lbl_eu_80504268 + 0x36D);
-        case 0x96B: return menuVisionResource(lbl_eu_80504268 + 0x382);
-        case 0x967: case 0x968: return menuVisionResource(lbl_eu_80504268 + 0x397);
-        default: return menuVisionResource(lbl_eu_80504268 + 0x3AC);
+        switch (*(u16*)((u8*)actor + 0x3F28)) {
+        case 0x965: image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
+        case 0x961: image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
+        case 0x962: case 0x963: image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
+        case 0x964: image = menuVisionResource(lbl_eu_80504268 + 0x2C5); break;
+        case 0x524: case 0x525: image = menuVisionResource(lbl_eu_80504268 + 0x32E); break;
+        case 0x905: image = menuVisionResource(lbl_eu_80504268 + 0x343); break;
+        case 0x9C9: image = menuVisionResource(lbl_eu_80504268 + 0x358); break;
+        case 0x969: case 0x96A: case 0x96C: image = menuVisionResource(lbl_eu_80504268 + 0x36D); break;
+        case 0x96B: image = menuVisionResource(lbl_eu_80504268 + 0x382); break;
+        case 0x967: case 0x968: image = menuVisionResource(lbl_eu_80504268 + 0x397); break;
+        default: image = menuVisionResource(lbl_eu_80504268 + 0x3AC); break;
         }
+        break;
     }
-    return 0;
+    return image;
 }
 
 template <typename T>
-static inline void* menuVisionTargetImage(void* actor, T* battle) {
-    if (actor == 0) {
-        return 0;
-    }
+static inline void menuVisionTargetImage(void* actor, T* battle, void*& image) {
     u32 flags = *(u32*)((u8*)actor + 0x64);
     if (flags & 4) {
-        return menuVisionEnemyImage(actor, battle, 0x439);
+        image = menuVisionEnemyImage(actor, battle, 0x439);
+        return;
     }
     if (flags & 2) {
-        return 0;
+        return;
     }
-    actor = (u8*)actor - 0x3E9C;
+    actor = actor != 0 ? (u8*)actor - 0x3E9C : 0;
     switch (*(u16*)((u8*)actor + 0x3F28)) {
-    case 1: return menuVisionResource(lbl_eu_80504268 + 0x44E);
-    case 2: return menuVisionResource(lbl_eu_80504268 + 0x462);
-    case 3: return menuVisionResource(lbl_eu_80504268 + 0x476);
-    case 4: return menuVisionResource(lbl_eu_80504268 + 0x48A);
-    case 5: return menuVisionResource(lbl_eu_80504268 + 0x49E);
-    case 6: return menuVisionResource(lbl_eu_80504268 + 0x4B2);
-    case 7: return menuVisionResource(lbl_eu_80504268 + 0x4C6);
-    case 8: return menuVisionResource(lbl_eu_80504268 + 0x4DA);
-    case 9: return menuVisionResource(lbl_eu_80504268 + 0x4EE);
-    case 10: return menuVisionResource(lbl_eu_80504268 + 0x502);
-    case 11: return menuVisionResource(lbl_eu_80504268 + 0x516);
+    case 1: image = menuVisionResource(lbl_eu_80504268 + 0x44E); break;
+    case 2: image = menuVisionResource(lbl_eu_80504268 + 0x462); break;
+    case 3: image = menuVisionResource(lbl_eu_80504268 + 0x476); break;
+    case 4: image = menuVisionResource(lbl_eu_80504268 + 0x48A); break;
+    case 5: image = menuVisionResource(lbl_eu_80504268 + 0x49E); break;
+    case 6: image = menuVisionResource(lbl_eu_80504268 + 0x4B2); break;
+    case 7: image = menuVisionResource(lbl_eu_80504268 + 0x4C6); break;
+    case 8: image = menuVisionResource(lbl_eu_80504268 + 0x4DA); break;
+    case 9: image = menuVisionResource(lbl_eu_80504268 + 0x4EE); break;
+    case 10: image = menuVisionResource(lbl_eu_80504268 + 0x502); break;
+    case 11: image = menuVisionResource(lbl_eu_80504268 + 0x516); break;
     }
-    return 0;
 }
 
 static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image) {
@@ -300,31 +298,95 @@ void func_801ACCE0(){}
 void func_801ACD5C(){}
 
 extern "C" void func_801AD504(int flags) {
-    CMenuVision* menu = lbl_eu_80664388;
-    if (menu == 0) {
+    if (lbl_eu_80664388 == 0) {
         return;
     }
 
-    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(cf::CBattleManager::getInstance()->func_800EA444());
+    MenuVisionBattleData* battle = static_cast<MenuVisionBattleData*>(func_800EA444(cf::CBattleManager::getInstance()));
     if (battle == 0) {
         return;
     }
 
     if (flags & 1) {
+        CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[0];
         if (entry.mState != 0) {
             return;
         }
+        void* actorBase;
+        void* image = 0;
         void* actor = func_800B708C__Fi(battle->actor);
         if (actor == 0) {
             return;
         }
-        void* image = menuVisionEnemyImage(actor, battle, 0x21D);
+        if (*(u32*)((u8*)actor + 0x64) & 4) {
+            void* actorBase = actor;
+            if (actor != 0) {
+                actorBase = (u8*)actor - 0x3E9C;
+            }
+            if (battle->flags824 & 0x20000) {
+                image = menuVisionResource(lbl_eu_80504268 + 0x21D);
+            } else {
+                switch (menuVisionActorKind(actorBase)) {
+                case 1:
+                    if (*(u16*)((u8*)actorBase + 0x3F28) == 0x1A1) {
+                        image = menuVisionResource(lbl_eu_80504268 + 0x247);
+                    } else {
+                        image = menuVisionResource(lbl_eu_80504268 + 0x25C);
+                    }
+                    break;
+                case 2:
+                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    case 0x3D: case 0x3E: case 0x4B5:
+                    case 0x5FF: case 0x600: case 0x601: case 0x961:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
+                    case 0x10C: case 0x1A0: case 0x1A1: case 0x602:
+                    case 0x835: case 0x8A8: case 0x8AC: case 0x962: case 0x963:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
+                    case 0x77A: case 0x843: case 0x844: case 0x964:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x2C5); break;
+                    case 0x656: case 0x84B: case 0x9C5: case 0x9C6: case 0x9C7:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x2DA); break;
+                    case 0x654: case 0x655:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x2EF); break;
+                    case 0x59C:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x304); break;
+                    case 0x845:
+                        image = menuVisionResource(lbl_eu_80504268 + 0x319); break;
+                    }
+                    break;
+                case 3: case 4: case 5: case 6: case 8: case 12:
+                    image = menuVisionResource(lbl_eu_80504268 + 0x232); break;
+                case 7:
+                    image = menuVisionResource(lbl_eu_80504268 + 0x286); break;
+                case 9:
+                    image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
+                case 10:
+                    image = menuVisionResource(lbl_eu_80504268 + 0x29B); break;
+                case 11:
+                    switch (*(u16*)((u8*)actorBase + 0x3F28)) {
+                    case 0x965: image = menuVisionResource(lbl_eu_80504268 + 0x271); break;
+                    case 0x961: image = menuVisionResource(lbl_eu_80504268 + 0x2B0); break;
+                    case 0x962: case 0x963: image = menuVisionResource(lbl_eu_80504268 + 0x247); break;
+                    case 0x964: image = menuVisionResource(lbl_eu_80504268 + 0x2C5); break;
+                    case 0x524: case 0x525: image = menuVisionResource(lbl_eu_80504268 + 0x32E); break;
+                    case 0x905: image = menuVisionResource(lbl_eu_80504268 + 0x343); break;
+                    case 0x9C9: image = menuVisionResource(lbl_eu_80504268 + 0x358); break;
+                    case 0x969: case 0x96A: case 0x96C: image = menuVisionResource(lbl_eu_80504268 + 0x36D); break;
+                    case 0x96B: image = menuVisionResource(lbl_eu_80504268 + 0x382); break;
+                    case 0x967: case 0x968: image = menuVisionResource(lbl_eu_80504268 + 0x397); break;
+                    default: image = menuVisionResource(lbl_eu_80504268 + 0x3AC); break;
+                    }
+                    break;
+                }
+            }
+        }
         menuVisionSetImage(entry.mLayout, lbl_eu_80504268 + 0x3C1, image);
         menuVisionBegin(entry);
     }
 
     if (flags & 2) {
+        CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[1];
         u32 font = func_800F4784(battle);
         func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1AB, (char*)font, 0);
@@ -392,18 +454,21 @@ extern "C" void func_801AD504(int flags) {
     }
 
     if (flags & 4) {
+        CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[2];
         menuVisionSetVisible(entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x42A, true), true);
+        void* image = 0;
         void* actor = func_800B708C__Fi(battle->targetActor);
         if (actor == 0) {
             return;
         }
-        menuVisionSetImage(entry.mLayout, lbl_eu_80504268 + 0x42A,
-                           menuVisionTargetImage(actor, battle));
+        menuVisionTargetImage(actor, battle, image);
+        menuVisionSetImage(entry.mLayout, lbl_eu_80504268 + 0x42A, image);
         menuVisionBegin(entry);
     }
 
     if (flags & 8) {
+        CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[3];
         nw4r::lyt::Pane* status = entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x52A, true);
         nw4r::lyt::Pane* statusAlt = entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x537, true);
@@ -423,17 +488,23 @@ extern "C" void func_801AD504(int flags) {
             if ((battle->flags84 & 1) || (battle->flags88 & 0x100) || func_800F4648(battle) > 0) {
                 func_80136910__FPQ34nw4r3lyt6LayoutPcUc(entry.mLayout, lbl_eu_80504268 + 0x1FB,
                                                        (u8)func_800F4648(battle));
+                nw4r::math::VEC2 scale;
+                scale.x = lbl_eu_80667DD4;
+                scale.y = lbl_eu_80667DD4;
                 PaneScaleAccess* pane = reinterpret_cast<PaneScaleAccess*>(
                     entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true));
-                pane->scaleX = lbl_eu_80667DD4;
-                pane->scaleY = lbl_eu_80667DD4;
+                pane->scaleX = scale.x;
+                pane->scaleY = scale.y;
             } else {
                 char* text = func_80136190(lbl_eu_80504268 + 0x56B, lbl_eu_80504268 + 0x576, 11);
                 func_80136B4C(entry.mLayout, lbl_eu_80504268 + 0x1FB, text, 0);
+                nw4r::math::VEC2 scale;
+                scale.x = lbl_eu_80667DC4;
+                scale.y = lbl_eu_80667DC4;
                 PaneScaleAccess* pane = reinterpret_cast<PaneScaleAccess*>(
                     entry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1FB, true));
-                pane->scaleX = lbl_eu_80667DC4;
-                pane->scaleY = lbl_eu_80667DC4;
+                pane->scaleX = scale.x;
+                pane->scaleY = scale.y;
             }
 
             VisionQuad first = lbl_eu_80664338;
@@ -542,16 +613,19 @@ extern "C" void func_801AD504(int flags) {
         CMenuVisionEntry& barEntry = menu->mEntries[4];
         nw4r::lyt::Pane* bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
         PaneTransAccess* trans = reinterpret_cast<PaneTransAccess*>(bar);
-        f32 y = trans->transY;
-        f32 x = lbl_eu_80667DC8 * func_800F4424(battle);
+        nw4r::math::VEC2 position;
+        position.x = trans->transX;
+        position.y = trans->transY;
+        position.x = lbl_eu_80667DC8 * func_800F4424(battle);
         bar = barEntry.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
         trans = reinterpret_cast<PaneTransAccess*>(bar);
-        trans->transX = x;
-        trans->transY = y;
+        trans->transX = position.x;
+        trans->transY = position.y;
         menuVisionBegin(barEntry);
     }
 
     if (flags & 0x10) {
+        CMenuVision* menu = lbl_eu_80664388;
         CMenuVisionEntry& entry = menu->mEntries[5];
         int value = (int)func_800F42AC(battle);
         if (value > 999) {

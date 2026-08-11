@@ -16,6 +16,10 @@ class ArcResourceAccessor;
 // vtable at lbl_eu_80535F80
 extern "C" void* lbl_eu_80535F80[];
 
+// Anim-completion sentinel float passed to func_80137444/func_80137510
+// (retail .sdata2 constant at 0x80668544).
+extern const float lbl_eu_80668544;
+
 /* Crystal list for the makecrystal UI. Manages available crystals and their
    display state. Inherits from IWorkEvent for file-load callbacks. */
 class CMCCrystalList : public IWorkEvent {

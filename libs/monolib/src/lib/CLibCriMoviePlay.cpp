@@ -790,18 +790,18 @@ next:
 // CLibCriMoviePlay::func_8045B1E0()
 // Calculates required work buffer size for movie playback
 // ============================================================================
-int CLibCriMoviePlay::getWorkSize() {
-    // Set up temporary cprm structure
-    u32 cprm[0x13]; // 0x4C bytes
+int CLibCriMoviePlay::func_8045B1E0() {
+    // Set up temporary cprm structure (0x4C bytes on the stack)
+    u32 cprm[0x13];
     memset(cprm, 0, 0x4C);
 
+    cprm[8] = 0;
     cprm[0] = 1;       // format
-    cprm[1] = 0x55B80; // mode
+    cprm[1] = 0x5B8D80; // mode
     cprm[2] = 0x280;   // width 640
     cprm[3] = 0x1C8;   // height 456
     cprm[4] = 2;       // type
     cprm[5] = 1;       // flags
-    cprm[6] = 0;       // extra
 
     u32 size = mwPlyCalcWorkCprmSfd(cprm);
     return size + 0x100;
@@ -1095,10 +1095,6 @@ extern "C" {
 
     void func_8045B1DC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         // Empty
-    }
-
-    int func_8045B1E0__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        return self->getWorkSize();
     }
 
     void OnPauseTrigger__16CLibCriMoviePlayFb(CLibCriMoviePlay* self, bool pause) {

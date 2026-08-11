@@ -22,7 +22,6 @@ public:
 class Class_8045F858{
 public:
     UnkClass_8045F564* unk0;
-    u32 unk4;
 
     Class_8045F858(UnkClass_8045F564* unkClass);
     ~Class_8045F858();

@@ -398,11 +398,11 @@ u32 func_80235F3C(CArtsInfo* self) {
     return (val == 0) ? 1 : 0;
 }
 
-// func_80235F50 - check if field_0x44 < 6
+// func_80235F50 - signed (field_0x44 >= 6) via subfc/adde idiom
 // .text:0x848, size 0x1C
 u32 func_80235F50(CArtsInfo* self) {
     int state = self->field_0x44;
-    return (state < 6) ? 1 : 0;
+    return (state >= 6) ? 1 : 0;
 }
 
 // func_80235F6C - animation state 0
@@ -421,7 +421,8 @@ void func_80235F6C(CArtsInfo* self) {
 // func_80236020 - animation state 1
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, lbl_eu_80668684) == 0) return;
+    float f = lbl_eu_80668684;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f) == 0) return;
 
     self->field_0x44 = 3;
     self->field_0x49 = 1;

@@ -257,12 +257,18 @@ void CTitleAHelp::func_801C473C(u8 arg) {
     unk28 = arg;
 }
 
-void CTitleAHelp::func_801C4744() {
-    func_80139A18((void*)mLayout, (void*)"txt_tit", (void*)&lbl_80666D58, (void*)&lbl_80666D60);
+// retail: r4 = lbl_eu_805054BC+0x17 (string), r5/r6 = &lbl_eu_80664468/70 (.sbss addrs)
+extern char lbl_eu_805054BC[];
+extern u32 lbl_eu_80664468;
+extern u32 lbl_eu_80664470;
+extern u32 lbl_eu_80664478;
+extern u32 lbl_eu_80664480;
+extern "C" void func_801C4744(CTitleAHelp* self) {
+    func_80139A18(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
-void CTitleAHelp::func_801C4760() {
-    func_80139A18((void*)mLayout, (void*)"txt_tit", (void*)&lbl_80666D68, (void*)&lbl_80666D70);
+extern "C" void func_801C4760(CTitleAHelp* self) {
+    func_80139A18(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
 void CTitleAHelp::func_801C477C() {

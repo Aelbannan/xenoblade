@@ -45,9 +45,9 @@ cf::CInfoCf::~CInfoCf() {
     lbl_eu_80664250 = 0;
 }
 
-void func_8016676C(){}
+extern "C" void* func_8016676C() { return *(void**)((u8*)lbl_eu_80664250 + 0xC); }
 
-void func_80166778(){}
+extern "C" void* func_80166778() { return *(void**)((u8*)lbl_eu_80664250 + 0x10); }
 
 // FULL_MATCH - no-op virtual function (vtable slot 2).  Immediately returns.
 void func_80166784() {

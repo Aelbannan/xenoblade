@@ -8,14 +8,47 @@
 
 // Kept inline (not promoted to ocBdat.hpp): see the NOTE in ocBdat.hpp. This
 // TU is the defining TU; retail signature is u32 (void*, const char*, s32).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
+    void* colEntry = func_8003B4B0(hdr, col);
+    if (colEntry == 0) {
+        return 0;
+    }
+    if (bdat == 0) {
+        return 0;
+    }
+    s32 rowIdx = index - hdr->rowBase;
+    s32 ok;
+    if (hdr->maxRow < rowIdx || rowIdx < 0) {
+        ok = 0;
+    } else {
+        index = rowIdx;
+        ok = 1;
+    }
+    if (ok == 0) {
+        return 0;
+    }
+    u16 colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
+    char* colHdr = base + colRel;
+    if (static_cast<u8>(colHdr[0]) != 1) {
+        return 0;
+    }
+    u16 stride = hdr->stride;
+    u16 dataOff = hdr->dataOff;
+    s32 rowBytes = index * stride;
+    u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
+    u8 elemType = static_cast<u8>(colHdr[1]);
+    char* dataPtr = base + dataOff + rowBytes + colDataOff;
+    return func_8003B6A0(hdr, dataPtr, elemType);
+}
 
 void* func_eu_8003B720(void* p);
-void* CBdat::func_8003AA34() {
+extern "C" void* func_8003AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
     }
-    return &lbl_eu_80663D14;
+    return 0;
 }
 
 void* CBdat::func_8003AA50() {
@@ -48,7 +81,7 @@ void* getFP(const char* pName) {
     s32 hi;
     s32 lo;
     s32 mid;
-    u16 entryOff;
+    u32 entryOff;
     char* entry;
     u16 nameOff;
     const char* entryName;
@@ -139,56 +172,6 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
-    const char* colArg;
-    s32 indexArg;
-    void* colEntry;
-    s32 rowBase;
-    s32 maxRow;
-    s32 rowIdx;
-    u16 colRel;
-    char* colHdr;
-    u16 stride;
-    u16 dataOff;
-    s32 rowBytes;
-    u16 colDataOff;
-    u32 elemType;
-    char* dataPtr;
-
-    if (bdat == 0) {
-        return 0;
-    }
-    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
-    char* base = reinterpret_cast<char*>(hdr);
-    colArg = col;
-    indexArg = index;
-    colEntry = func_8003B4B0(hdr, colArg);
-    if (colEntry == 0) {
-        return 0;
-    }
-    rowBase = hdr->rowBase;
-    maxRow = hdr->maxRow;
-    rowIdx = indexArg - rowBase;
-    if (rowIdx < 0 || maxRow < rowIdx) {
-        return 0;
-    }
-    indexArg = rowIdx;
-    colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
-    colHdr = base + colRel;
-    if (colHdr[0] != 1) {
-        return 0;
-    }
-    stride = hdr->stride;
-    dataOff = hdr->dataOff;
-    rowBytes = indexArg * stride;
-    colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
-    elemType = static_cast<u8>(colHdr[1]);
-    dataPtr = base + dataOff + rowBytes + colDataOff;
-    return func_8003B6A0(hdr, dataPtr, elemType);
-}
-#pragma dont_inline reset
-
-#pragma dont_inline on
 extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
     const char* colArg;
     s32 rowArg;
@@ -210,12 +193,13 @@ extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
     if (colEntry == 0) {
         return 0;
     }
+    if (bdat == 0) {
+        return 0;
+    }
     rowBase = hdr->rowBase;
     maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
-    if (maxRow < rowIdx) {
-        ok = 0;
-    } else if (rowIdx < 0) {
+    if (maxRow < rowIdx || rowIdx < 0) {
         ok = 0;
     } else {
         rowArg = rowIdx;
@@ -244,9 +228,12 @@ extern "C" u32 func_8003AFC0(void* bdat, const char* col) {
     if (colEntry == 0) {
         return 0;
     }
+    if (bdat == 0) {
+        return 0;
+    }
     u16 colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
     colHdr = base + colRel;
-    if (colHdr[0] != 2) {
+    if (static_cast<u8>(colHdr[0]) != 2) {
         return 0;
     }
     return *reinterpret_cast<u16*>(colHdr + 0x4);
@@ -302,7 +289,7 @@ bounds_check:
     }
     colRel = static_cast<BdatColEntry*>(colArg)->colHdrRel;
     colHdr = base + colRel;
-    if (colHdr[0] != 1) {
+    if (static_cast<u8>(colHdr[0]) != 1) {
         return 0;
     }
     stride = hdr->stride;
@@ -331,6 +318,9 @@ extern "C" u32 func_8003B204(void* bdat, const char* col) {
     colArg = col;
     colEntry = func_8003B4B0(hdr, colArg);
     if (colEntry == 0) {
+        return 0;
+    }
+    if (bdat == 0) {
         return 0;
     }
     u16 colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
@@ -374,9 +364,7 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     rowBase = hdr->rowBase;
     maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
-    if (maxRow < rowIdx) {
-        ok = 0;
-    } else if (rowIdx < 0) {
+    if (maxRow < rowIdx || rowIdx < 0) {
         ok = 0;
     } else {
         rowArg = rowIdx;
@@ -398,7 +386,10 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     if (flagHdr->type != 3) {
         return 0;
     }
-    if (static_cast<u16>(reinterpret_cast<uintptr_t>(col1Entry) - reinterpret_cast<uintptr_t>(hdr)) != flagHdr->colEntryRel) {
+    u16 colEntryDiff =
+        static_cast<u16>(reinterpret_cast<uintptr_t>(col1Entry) -
+                         reinterpret_cast<uintptr_t>(hdr));
+    if (colEntryDiff != flagHdr->colEntryRel) {
         return 0;
     }
     val = 0;
@@ -440,8 +431,9 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     dataBase += rowStride;
     dataBase += colDataOff;
-    // Retail: subi/cmplwi then ble to *4; fall-through is the cmpwi switch.
-    if (static_cast<u32>(elemType - 6) > 1) {
+    // Retail: (elemType-6) <= 1 -> the 1/4, 2/5, 3 switch; else *4.
+    // Case 3 and the else share the *4 tail (retail beq to the same block).
+    if (static_cast<u32>(elemType - 6) <= 1) {
         switch (elemType) {
         case 1:
         case 4:
@@ -452,12 +444,12 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
             dataBase += index * 2;
             break;
         case 3:
-            dataBase += index * 4;
-            break;
+            goto scale4;
         default:
             break;
         }
     } else {
+    scale4:
         dataBase += index * 4;
     }
     return func_8003B6A0(table, dataBase, elemType);

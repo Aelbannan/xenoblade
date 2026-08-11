@@ -270,7 +270,7 @@ extern "C" f32   lbl_eu_80666428;
 extern "C" f32   lbl_eu_80666448;
 extern "C" f32   lbl_eu_80666454;
 extern "C" f32   lbl_eu_8066A208;
-extern "C" f32   lbl_eu_8066A210;
+extern const float lbl_eu_8066A210;
 extern "C" void* lbl_eu_806640BC;
 extern "C" u8    lbl_eu_804FB5D0[];
 extern "C" int   func_8003B1EC(void* self);

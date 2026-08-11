@@ -6,7 +6,8 @@ void __dt__11CTalkWindowFv(void* self);
 void cbRenderBefore__11CTalkWindowFv(void* self);
 void Draw__11CTalkWindowFv() {}
 
-void func_8012BDD0(void){}
+extern u32 lbl_eu_80664044;
+extern "C" void func_8012BDD0() { lbl_eu_80664044 = 0; }
 
 void func_8012D3D8(){}
 

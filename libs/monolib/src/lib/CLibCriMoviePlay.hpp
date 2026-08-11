@@ -85,7 +85,7 @@ public:
     bool renderMovie(int id);                          // func_8045A8C8
     void updateMovies();                               // func_8045AE84
     void func_8045B1DC() {}                            // func_8045B1DC (empty)
-    int getWorkSize();                                 // func_8045B1E0
+    int func_8045B1E0();                               // func_8045B1E0
     void OnPauseTrigger(bool pause);                   // OnPauseTrigger
     void setPauseState(bool pause);                    // func_8045B310
 

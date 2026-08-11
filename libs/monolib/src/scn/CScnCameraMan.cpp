@@ -228,7 +228,9 @@ bool CScnCameraMan::WorkEvent1(UNKTYPE* r4, const char* r5) {
     return false;
 }
 
-void func_8049B3FC(void){}
+extern u32 lbl_eu_80663A08;
+extern "C" void func_8043A70C__11CScriptCodeFv(void* a, void* b);
+extern "C" void func_8049B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
 // Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000). Defined in
 // this TU so MWCC's int->float conversion pool can reference the retail label.

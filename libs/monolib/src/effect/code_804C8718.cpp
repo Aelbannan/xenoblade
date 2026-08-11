@@ -6,7 +6,8 @@
 void sinit_804CC2B4(void) {}
 
 
-void func_804C9D24(void){}
+extern "C" void func_804D401C(void* a, float f);
+extern "C" void func_804C9D24(void* self) { func_804D401C((u8*)self + 0x24, *(float*)((u8*)self + 0x14)); }
 
 
 void func_804CB3E4(){}
@@ -19,7 +20,7 @@ void func_804CB560(){}
 
 void func_804CB5FC(){}
 
-void* func_804CB9F4(void){ return 0; }
+void* func_804CB9F4(void){ return (void*)0x2FDA00; }
 
 void func_804CBA00(){}
 

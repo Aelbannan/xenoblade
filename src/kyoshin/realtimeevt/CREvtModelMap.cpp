@@ -803,10 +803,8 @@ extern "C" void func_801818BC(CREvtModelMap* self, int visible)
 // ---------------------------------------------------------------------------
 // 14. func_8018196C - getGuestState (0x80182D74)
 // ---------------------------------------------------------------------------
-int CREvtModelMap::getGuestState()
-{
-    return mIsGuest ? 0 : 3;
-}
+// retail func_8018196C: (mIsGuest != 0) ? 0 : 3 via neg/or/srawi/andc
+extern "C" int func_8018196C(void* self) { return (*(u8*)((char*)self + 0x3D) != 0) ? 0 : 3; }
 
 // ---------------------------------------------------------------------------
 // 15. func_80181988 - handleFileEvent (0x80182D90)

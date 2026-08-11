@@ -970,9 +970,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
         if (!mpGroupAnmController[mSelectAnmNum]->isPlaying() &&
             mSelectAnmNum != res::eGrAnimator_optn_bar_in__close_bar_in) {
 
-            reset_battery();
-            mSelectAnmNum = res::ePairAnm_link_msg_in;
-            (*(mpPairGroupAnmController + mSelectAnmNum))->start();
+            reset_battery(true);
         }
 
         if (--mWaitStopMotorCount <= 0) {
@@ -2856,10 +2854,9 @@ inline void HomeButton::reset_window() {
     mpGroupAnmController[idx]->start();
 }
 
-inline void HomeButton::reset_battery() {
-    typedef const char* PaneName;
-    const PaneName* row = &scBatteryPaneName[0][0];
-    const PaneName* pane;
+inline void HomeButton::reset_battery(bool startPair) {
+    const char* const* row = &scBatteryPaneName[0][0];
+    const char* const* pane;
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         pane = row;
@@ -2872,6 +2869,11 @@ inline void HomeButton::reset_battery() {
         }
 
         row += res::eBatteryPane_Max;
+    }
+
+    if (startPair) {
+        mSelectAnmNum = res::ePairAnm_link_msg_in;
+        mpPairGroupAnmController[mSelectAnmNum]->start();
     }
 }
 

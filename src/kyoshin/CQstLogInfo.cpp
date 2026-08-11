@@ -63,9 +63,10 @@ void func_8022AFF8(){}
 
 void CQstLogInfo::OnFileEvent() {}
 
-void CQstLogInfo::func_80229600(){
-    if (mUnk30 == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mUnk20, 0, 0, 1);
+// retail: if (mUnk30) tail func_80137038(mUnk20, drawInfo passthrough, 0, 1)
+extern "C" void func_80229600(CQstLogInfo* self, void* drawInfo){
+    if (self->mUnk30 == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mUnk20, drawInfo, 0, 1);
 }
 
 extern "C" void func_802294C0() {}

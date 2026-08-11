@@ -335,8 +335,9 @@ void func_804CD9EC(EffectScene* self);
 void func_804CDB2C(EffectScene* self, Vec* p1);
 void func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3);
 void func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3);
-void func_804CE140(EffectScene* self);
+
 void func_804CE160(EffectScene* self, const ml::CVec3& a, const ml::CVec3& b);
+void func_804CE140(EffectScene* self);
 void func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
 void func_804CE388(EffectScene* self, Vec* p);
 void func_804CE3E8(EffectScene* self);

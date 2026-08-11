@@ -701,8 +701,8 @@ u32 cf::CfGameManager::func_80083460() { return lbl_eu_80664184; }
 extern "C" u32 func_80086B1C__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
 extern u32 lbl_eu_8066409C;
 extern "C" u32 func_80086B24__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
-extern u32 lbl_eu_806640A8;
-extern "C" u32 func_80086B2C__Q22cf13CfGameManagerFv() { return lbl_eu_806640A8; }
+extern void* lbl_eu_806640A8;
+extern "C" u32 func_80086B2C__Q22cf13CfGameManagerFv() { return (u32)lbl_eu_806640A8; }
 extern u32 lbl_eu_806640A4;
 extern "C" u32 func_80086B34__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
 extern u32 lbl_eu_806640F4;

@@ -238,9 +238,8 @@ void func_801F3CCC(CGimmickGlobal* self) {
         ok = true;
     } else {
         func_8003AA34();
-        u32 row = func_8003B41C(bdat);
+        s32 row = (s32)func_8003B41C(bdat);
         s32 n = (s32)func_8003B1EC(bdat);
-        ok = true;
         for (s32 i = 0; i < n; i++) {
             CGimmickEntry* obj =
                 (CGimmickEntry*)mtl::MemManager::allocate(0x88, func_80061FFC());
@@ -250,10 +249,13 @@ void func_801F3CCC(CGimmickGlobal* self) {
             self->mGimmickCount++;
             if (self->mGimmickCount >= 0x80) {
                 ok = false;
-                break;
+                goto check;
             }
             row++;
         }
+        ok = true;
+    check:
+        ;
     }
     if (ok)
         func_801F43F8(self);

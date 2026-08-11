@@ -37,7 +37,8 @@ void cf::CfNandManager::Term() {}
 
 void cf::CfNandManager::Move() {}
 
-void func_8023C1B4(){}
+extern char lbl_eu_80576CC0[];
+extern "C" void* func_8023C1B4() { return lbl_eu_80576CC0; }
 
 void func_8023C1C0(){}
 

@@ -9,7 +9,7 @@ void func_80492030(void) {}
 
 void func_80492158(void) {}
 
-void func_8049215C(void){}
+extern "C" void func_8049215C(void* self, void* out) { *(u32*)out = 0; }
 
 extern "C" void func_8049216C(void* self);
 extern "C" void func_80492168(void* self) { func_8049216C(self); }

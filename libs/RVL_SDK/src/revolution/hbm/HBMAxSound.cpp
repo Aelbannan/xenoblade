@@ -267,7 +267,7 @@ static const char PCM_FILENAME[0x14] = "wt\\HomeButtonSe.pcm";
 } // namespace
 
 // Retail .rodata has a 4th float (0.0f) after the generated pool.
-extern const float s_volumeZeroPad = 0.0f;
+extern volatile const float s_volumeZeroPad = 0.0f;
 u8 hbmAxSound_bss_pad[4]; /* retail .bss 0x4 -> 0x8 (align tail) */
 
 namespace homebutton {
@@ -387,16 +387,17 @@ void AxSoundMain() {}
 
 #pragma dont_inline on
 void StopAllSeq() {
-    HBMSEQSEQUENCE* p;
-    int i;
     SeqPool* pool;
 
     if (sWork == NULL) {
         return;
     }
 
-    for (i = 0; i < 4; i++) {
-        p = &sWork->players[i];
+    {
+        int i;
+
+        for (i = 0; i < 4; i++) {
+            HBMSEQSEQUENCE* const p = &sWork->players[i];
         if (p->inUse != 0) {
             if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
                 pool = &sWork->pool[1];
@@ -420,13 +421,17 @@ void StopAllSeq() {
                 p->next->prev = p->prev;
             }
 
-            p->next = NULL;
-            p->prev = NULL;
+                p->next = NULL;
+                p->prev = NULL;
+            }
         }
     }
 
-    for (i = 0; i < 3; i++) {
-        p = &sWork->players[4] + i;
+    {
+        int i;
+
+        for (i = 0; i < 3; i++) {
+            HBMSEQSEQUENCE* const p = &sWork->players[4] + i;
         if (p->inUse != 0) {
             if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
                 pool = &sWork->pool[1];
@@ -450,8 +455,9 @@ void StopAllSeq() {
                 p->next->prev = p->prev;
             }
 
-            p->next = NULL;
-            p->prev = NULL;
+                p->next = NULL;
+                p->prev = NULL;
+            }
         }
     }
 }
@@ -465,7 +471,7 @@ void SetVolumeAllSeq(float volume)
         return;
     }
 
-    if (volume <= 0.0f) {
+    if (volume <= s_volumeZeroPad) {
         vol = -0x388;
     } else {
         vol = (int)(10.0f * (20.0f * (float)log10((double)volume)));

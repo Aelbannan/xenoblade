@@ -242,6 +242,7 @@ void UnkClass_8047BB54::func_8047BD9C(void) { __dt__8047BDA8(this); }
 
 extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(u8* self) {
     ((void(*)(void*))func_80472864__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
+
 }
 
 // --- Target 2: us-8047ffcc ---------------------------------------------------
@@ -297,7 +298,8 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
 }
 
-void* UnkClass_8047BB54::func_8047C034(void) { return 0; }
+extern char lbl_eu_80658500[];
+void* UnkClass_8047BB54::func_8047C034(void) { return lbl_eu_80658500; }
 
 // ---------------------------------------------------------------------------
 // func_8047C040 helpers (retail keeps the Fv mangling but the function

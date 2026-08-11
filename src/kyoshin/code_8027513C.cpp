@@ -291,7 +291,15 @@ void func_80275850(UnkCode8027513C* self) {
     }
 }
 
-void func_8027594C(void* self){}
+// retail: if (self->ptr74 == other) { other->b0 = 0; self->ptr74 = 0; } then tail-call func_800CFFA0
+extern "C" void func_800CFFA0();
+extern "C" void func_8027594C(void* self, void* other) {
+    if ((u32)(uintptr_t)other == *(u32*)((char*)self + 0x74)) {
+        *(u32*)((char*)other + 0xB0) = 0;
+        *(u32*)((char*)self + 0x74) = 0;
+    }
+    func_800CFFA0();
+}
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
 // effect via func_800ACC14 and cache the new value

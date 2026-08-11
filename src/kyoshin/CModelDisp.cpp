@@ -72,6 +72,14 @@ CModelDisp::CModelDisp(u8* initParam) {
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
+// retail: if (field_2FD8 == 2) { field_2FD8 = 3; field_2FE4 = 0; }
+extern "C" void func_801FC13C(CModelDisp* self) {
+    if (self->field_2FD8 == 2) {
+        self->field_2FD8 = 3;
+        self->field_2FE4 = 0;
+    }
+}
+
 // Advances field_2FE0 by 1.0 each call. When it reaches 5.0, decrements
 // field_2FDC by 0.2 (clamped to 0.0) and calls each sub-object's vmethod.
 void func_801FC15C(CModelDisp* self) {

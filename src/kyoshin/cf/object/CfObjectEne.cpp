@@ -150,7 +150,9 @@ extern "C" void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(cf::CActorP
 
 extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x2A80); }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc134() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc134() {
+    *(u8*)((u8*)this + 0x3354) = 0;
+}
 
 extern "C" u8 CActorParam_UnkVirtualFunc133__Q22cf11CActorParamFv(cf::CActorParam* self) { return ((cf::CActorParam*)self)->unk3354; }
 
@@ -182,7 +184,10 @@ extern "C" void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(cf::CActorPa
 
 extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x15fc); }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc103() {}
+extern float lbl_eu_80666968;
+void cf::CActorParam::CActorParam_UnkVirtualFunc103() {
+    *(f32*)((u8*)this + 0x15FC) = lbl_eu_80666968;
+}
 
 extern "C" void* CActorParam_UnkVirtualFunc102__Q22cf11CActorParamFv(cf::CActorParam* self) { return (void*)((u8*)self + 0x18d4); }
 

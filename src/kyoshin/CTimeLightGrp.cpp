@@ -77,9 +77,11 @@ extern "C" void __ct__CTimeLightGrp(CTimeLightGrp_BaseLayout* self, void* parent
 }
 
 // ================== __dt__8005A03C ==================
-extern "C" void __dt__8005A03C(void* obj, int mode) {
-    if (obj == nullptr) return;
-    if (mode > 0) __dl__FPv(obj);
+extern "C" void* __dt__8005A03C(void* obj, int mode) {
+    if (obj != 0 && mode > 0) {
+        __dl__FPv(obj);
+    }
+    return obj;
 }
 
 // ================== __dt___reslist_base_CVirtualLightObj ==================

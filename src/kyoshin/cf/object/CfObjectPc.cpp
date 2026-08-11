@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+#include "kyoshin/CArtsInfo.hpp"   // declares extern "C" func_8009EC9C(u32)
+#include "kyoshin/cf/CfMapMineManager.hpp"  // func_80061FFC + getBdatStringColumnValue
 
 struct PCIf {
     virtual void _v0008();
@@ -66,7 +68,7 @@ struct PCIf {
     virtual void _v00F0();
     virtual void _v00F4();
     virtual void _v00F8();
-    virtual void _v00FC();
+    virtual u32 _v00FC();
     virtual void _v0100();
     virtual void _v0104();
     virtual void _v0108();
@@ -125,7 +127,7 @@ struct PCIf {
     virtual void _v01DC();
     virtual void _v01E0();
     virtual void _v01E4();
-    virtual void _v01E8();
+    virtual u32 _v01E8();
     virtual void _v01EC();
     virtual void _v01F0();
     virtual void _v01F4();
@@ -166,7 +168,7 @@ struct PCIf {
     virtual void _v0280();
     virtual void _v0284();
     virtual void _v0288();
-    virtual void _v028C();
+    virtual u32 _v028C();
     virtual void _v0290();
     virtual void _v0294();
     virtual void _v0298();
@@ -385,11 +387,75 @@ struct PCIf {
     virtual void _v05EC();
     virtual void _v05F0();
     virtual void vf05F4();
+    virtual void vf05F8();
+    virtual void vf05FC();
 };
 
-namespace cf { class CfObjectPoint { public: void func_800C1244(); }; }
+namespace cf {
+// Minimal view of CfObjectPoint for func_800C1244: only the vtable layout
+// matters (retail dispatches slot 0x70 = CfObject_UnkVirtualFunc8). With RTTI
+// on, declared virtual N sits at vtable offset (N+2)*4, so 26 padding slots
+// put the callee at 0x70. The class is never instantiated in this TU, so the
+// padding virtuals need no definitions and no vtable is emitted.
+class CfObjectPoint {
+public:
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void CfObject_UnkVirtualFunc8();  // vtable offset 0x70
+    int func_800C1244();
+};
+}
 
-cf::CfObjectPc::CfObjectPc() {}
+cf::CfObjectPc::CfObjectPc() : CfObjectActor() {
+    // novtable class: write the four retail sub-vtable pointers manually
+    // (base labels 0x0 / +0xC / +0x36C / +0x37C at offsets 0x0 / 0x8 /
+    // 0x3380 / 0x3E9C).
+    *(void**)this = (void*)lbl_eu_80529DA0;
+    *(void**)((u8*)this + 0x8) = (void*)(lbl_eu_80529DA0 + 0xC);
+    *(void**)((u8*)this + 0x3380) = (void*)(lbl_eu_80529DA0 + 0x36C);
+    *(void**)((u8*)this + 0x3E9C) = (void*)(lbl_eu_80529DA0 + 0x37C);
+
+    // Allocate the 0x44-byte CfResPcImpl resource object and construct it in
+    // place, passing the player sub-object (this + 0x3E9C, null-checked). The
+    // ctor returns the object in r3, so no extra callee-saved register is
+    // needed for the final store.
+    u8* res = (u8*)allocate__Q23mtl10MemManagerFUlUl(0x44, func_80061FFC());
+    if (res != NULL) {
+        // Player sub-object (this + 0x3E9C), null-checked like a secondary-
+        // base conversion; the declared base sizes are 8 bytes off retail.
+        u8* parent = (u8*)this;
+        if (this != NULL) {
+            parent += 0x3E9C;
+        }
+        res = (u8*)__ct__cf_CfResPcImpl(res, (cf::CfObjectMove*)parent);
+    }
+    ((CfObjectPcSubFields*)this)->mPtr3F4C = res;
+    reinterpret_cast<PCIf*>(this)->_v05D8();
+}
 
 cf::CfObjectPc::~CfObjectPc() {}
 
@@ -397,9 +463,26 @@ void func_800BFDE0(){}
 
 void cf::CfObjectPc::func_800BFF20() {}
 
-void cf::CfObjectPc::func_800BFFEC() {}
+void cf::CfObjectPc::func_800BFFEC() {
+    reinterpret_cast<PCIf*>(this)->_v00B0();
+    reinterpret_cast<PCIf*>(this)->_v00B8();
+    reinterpret_cast<PCIf*>(this)->_v0314();
+    // Look up the arts data object for this PC's index, then write the
+    // per-entry value at +0x17C from the CActorParam virtual 0x28C result.
+    CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
+        ((CfObjectPcSubFields*)this)->field_0x3F28);
+    func_80175A50(&artsData->field_0x17C,
+        reinterpret_cast<PCIf*>(this)->_v028C());
+}
 
-void cf::CfObjectPc::func_800C0080() {}
+// NOTE: func_800C0080 is defined as the extern "C" wrapper below (not as a
+// member): the adjuster thunks reference the global identifier, and the
+// wrapper also satisfies the vtable slot for the virtual member.
+extern "C" void func_800C0080__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    ((CfObjectPcSubFields*)self)->field_0x4568 = 1;
+    func_80174B4C((u8*)self, 0x00100000);
+    ((CfObjectPcSubFields*)self)->field_0x45C0 = lbl_eu_80666B14;
+}
 
 void cf::CfObjectPc::func_800C00C0() {}
 
@@ -407,56 +490,109 @@ extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C00C0();
 }
 
-extern "C" void func_800C0080__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    static_cast<cf::CfObjectPc*>(self)->func_800C0080();
-}
-
 extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800BFF20();
-}
-
-extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    static_cast<cf::CfObjectPc*>(self)->func_800BFFEC();
 }
 
 extern "C" void func_800C0524__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->func_800C0524();
 }
 
-extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    static_cast<cf::CfObjectPc*>(self)->func_800C11CC();
+// Vtable slot 16 override (CfObjectMove vtable): the adjuster thunk passes the
+// CfObjectMove sub-object, and the vtable caller supplies a second int in r4
+// even though the retail mangled name is arg-less. Small args delegate to the
+// base CfObjectMove implementation; larger ones forward a sub-object pointer
+// to func_800CA42C.
+void func_800C11CC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int arg) {
+    if (arg < 0x2c) {
+        // CfObjectMove sub-object lives at this+0x3E9C (manual offset: the
+        // declared base-class sizes in the headers do not match the retail
+        // layout). Direct (non-virtual) call to the base implementation.
+        u8* subObj = reinterpret_cast<u8*>(self) + 0x3e9c;
+        ((cf::CfObjectMove*)subObj)->CfObjectMove::CfObjectMove_UnkVirtualFunc16();
+    } else {
+        u8* obj = ((CfObjectPcSubFields*)self)->mPtr3ED4;
+        if (obj != NULL) {
+            func_800CA42C(obj);
+        }
+    }
 }
 
 extern "C" void __dt__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
     static_cast<cf::CfObjectPc*>(self)->~CfObjectPc();
 }
 
-extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
-    static_cast<cf::CfObjectPc*>(self)->func_800C02EC();
+// Scans the first six arts-data entries (indices 0..5) for one whose u16
+// flag at +0x1A is non-zero ("occupied"); stops at the first hit.
+void cf::CfObjectPc::func_800C0174() {
+    CfObjectPcArtsData* data = (CfObjectPcArtsData*)func_8009EC9C(
+        ((CfObjectPcSubFields*)this)->field_0x3F28);
+    for (int i = 0; i <= 5; i++) {
+        if (func_8009D7E4(&data->mEntries, i)->field_0x1A != 0) break;
+    }
 }
-
-void cf::CfObjectPc::func_800C0174() {}
 
 void func_800C01D4(){}
 
-void cf::CfObjectPc::CActorParam_UnkVirtualFunc166() {}
-
-void cf::CfObjectPc::CActorParam_UnkVirtualFunc167() {}
-
-void cf::CfObjectPc::func_800C02C4() {}
-
-void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
-    if (param == 0) return;
-    extern void* func_8009EC9C(unsigned short);
-    extern void func_800A18A4(void*, void*);
-    func_800A18A4(func_8009EC9C(*(unsigned short*)((char*)self + 0x3f28)), param);
+// Looks up the data object for the index at +0x3F28, then runs its ctor.
+void CActorParam_UnkVirtualFunc166__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    __ct__8009F8B8((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
 }
 
-void cf::CfObjectPc::func_800C032C() {}
+void CActorParam_UnkVirtualFunc167__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    func_800A03F4((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
+}
+
+void func_800C02C4__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    func_800A145C((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28));
+}
+
+// Adjuster-style override (retail mangled name is arg-less Fv but the vtable
+// caller supplies the parameter in r4): applies the arts data entry identified
+// by the index at +0x3F28, passing the extra value through.
+void func_800C02EC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, int param) {
+    if (param == 0) return;
+    func_800A18A4((u8*)func_8009EC9C(((CfObjectPcSubFields*)self)->field_0x3F28), param);
+}
+
+void cf::CfObjectPc::func_800C032C() {
+    // getPlayer(0) returns the player's CfObjectMove sub-object; compare it
+    // against this object's CfObjectMove base (null-checked pointer adjust)
+    // and dispatch to the matching per-frame handler. Dispatches go through
+    // PCIf (fresh vtable class, retail slot offsets) because the shared base
+    // headers declare four extra virtuals.
+    u8* target = (u8*)this;
+    if (this != NULL) {
+        target += 0x3E9C;
+    }
+    if (target == (u8*)cf::CfGameManager::getPlayer(0)) {
+        reinterpret_cast<PCIf*>(this)->vf05F8();
+    } else {
+        reinterpret_cast<PCIf*>(this)->vf05FC();
+    }
+}
 
 void cf::CfObjectPc::func_800C03A8() {}
 
-void cf::CfObjectPc::func_800C0474() {}
+void cf::CfObjectPc::func_800C0474() {
+    // The three uses of this+0x3380 are written in different syntaxes so MWCC
+    // does not CSE the address into a callee-saved register (retail recomputes
+    // addi r3, r31, 0x3380 at each call site).
+    func_8014B7B0((u8*)this + 0x3380);
+    if (((CfObjectPcSubFields*)this)->field_0x3F28 == 4) {
+        // Arts-count bdat row: enable the art column when the string value's
+        // first byte is '1' (the value is returned packed; read its low byte).
+        CfObjectPcArtsData* artsData = (CfObjectPcArtsData*)func_8009EC9C(
+            ((CfObjectPcSubFields*)this)->field_0x3F28);
+        u32 val = getBdatStringColumnValue(lbl_eu_806640F4,
+            (const char*)lbl_eu_804FC5EC + 0x24, artsData->field_0xC);
+        if (*(s8*)&val == 1) {
+            func_8015396C(&((u8*)this)[0x3380], 0x70, 0xd);
+            return;
+        }
+    }
+    func_8015396C((u8*)((u32)this + 0x3380), 0, 0);
+}
 
 
 
@@ -466,17 +602,34 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {}
 
 void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
 
-void cf::CfObjectPc::CActorParam_UnkVirtualFunc176() {}
+// CActorParam virtual 0x354 override. The retail mangled name is arg-less
+// (Fv) but the dispatcher passes a float in f1; forward it to the base
+// implementation (same naming quirk) after touching the battle singleton.
+void CActorParam_UnkVirtualFunc176__Q22cf10CfObjectPcFv(cf::CfObjectPc* self, float value) {
+    getInstance__Q22cf14CBattleManagerFv();
+    CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv(self, value);
+}
 
-void cf::CfObjectPc::CActorParam_UnkVirtualFunc86() {}
+// Retail symbol CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv (vtable slot
+// 0x1EC override). Written as a global with the mangled name: the base
+// CActorParam override returns u32 in retail but the base header declares it
+// void, so a real member override would fail to compile.
+u32 CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) {
+    // Arts count from the param object (vtable 0xFC); the arts table index is
+    // count+1, capped at 99 entries. Returns 1 when over the cap.
+    void* bdat = lbl_eu_806640DC;
+    u32 idx = reinterpret_cast<PCIf*>(self)->_v00FC() + 1;
+    if (idx > 0x63) return 1;
+    u32 sval = getBdatStringColumnValue(bdat,
+        (const char*)lbl_eu_804FC5EC + 0x34, idx);
+    return sval - reinterpret_cast<PCIf*>(self)->_v01E8();
+}
 
 void cf::CfObjectPc::CActorParam_UnkVirtualFunc88() {}
 
 void cf::CfObjectPc::CActorParam_UnkVirtualFunc178() {}
 
 void func_800C0DD4(){}
-
-void cf::CfObjectPc::func_800C11CC() {}
 
 void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
@@ -486,15 +639,33 @@ void CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*
 
 void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C11CC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
+// Global-scope name for the func_800BFFEC symbol: the member definition below
+// mangles to the same identifier, and the adjuster thunks reference it as a
+// plain global (C linkage keeps the reloc name exact).
+extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(cf::CfObjectPc* self);
+
 void CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFFEC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void func_800C1220__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-void func_800C1228__FPv(){}
+// Returns the object only when its flags word at +0x64 has bit 0x4000 set
+// (the "valid" mark); otherwise returns NULL. The C++ name mangles to the
+// retail symbol func_800C1228__FPv.
+UNKTYPE* func_800C1228(UNKTYPE* r3) {
+    if (r3 != NULL) {
+        if (((FlagsObj800C1228*)r3)->field_0x64 & 0x4000) {
+            return r3;
+        }
+    }
+    return NULL;
+}
 
-void cf::CfObjectPoint::func_800C1244() {}
+int cf::CfObjectPoint::func_800C1244() {
+    CfObject_UnkVirtualFunc8();
+    return 1;
+}
 
 extern "C" void func_800C0504__Q22cf10CfObjectPcFv(cf::CfObjectPc* self) { reinterpret_cast<PCIf*>(self)->vf05F4(); }
 

@@ -589,7 +589,7 @@ void CfObjectEff::func_800AD3A4() {
     }
 }
 int CfObjectEff::func_800AD4A4() {
-    return ((*(u32*)((u8*)this + 0x68) >> 19) & 1);
+    return ((*(u32*)((u8*)this + 0x68) >> 20) & 1);
 }
 } // namespace cf
 

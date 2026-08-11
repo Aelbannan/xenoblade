@@ -45,7 +45,7 @@ namespace cf {
 __declspec(noinline) char* func_80068A30(char* dest, const char* src);
 __declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
 extern "C" bool func_80068ECC(CfScript* script, const char* name);
-__declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask);
+extern "C" u32 func_80068E7C(CfScriptManager* mgr, int index, int mask);
 
 // func_80068A20 - initializer for path string
 void func_80068A20() {
@@ -248,14 +248,11 @@ void func_80068E44(int mask) {
     func_80068E7C(CfScriptManager::getInstance(), 2, mask);
 }
 
-// func_80068E7C - check flags with mask (returns nonzero if (flags & mask) != 0)
-__declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask) {
+// func_80068E7C - check flags with mask (returns (flags & mask) != 0)
+extern "C" u32 func_80068E7C(CfScriptManager* mgr, int index, int mask) {
     CfScript& script = mgr->mScripts[index];
     u32 result = script.mFlags & mask;
-    u32 neg = (u32)(-(s32)result);
-    u32 combined = neg | result;
-    u32 ret = combined >> 31;
-    // Returns ret in r3
+    return result != 0;
 }
 
 // func_80068E9C - format or copy string based on condition

@@ -656,12 +656,18 @@ extern "C" void func_8005274C(void* self, const void* param) {
     PSQUATMultiply(self, param, self);
 }
 
-void func_80052780(void* self, void* src){
-    *(int*)((char*)self + 168) = *(int*)((char*)src + 0);
-    *(int*)((char*)self + 172) = *(int*)((char*)src + 4);
-    *(int*)((char*)self + 176) = *(int*)((char*)src + 8);
-    *(int*)((char*)self + 180) = *(int*)((char*)src + 12);
-    *(int*)((char*)self + 224) |= 4;
+extern "C" void func_80052780(void* self, void* src){
+    int f = *(int*)((char*)self + 224);
+    volatile int* vs = (volatile int*)src;
+    int a = vs[0];
+    int b = vs[1];
+    int c = vs[2];
+    int d = vs[3];
+    *(int*)((char*)self + 168) = a;
+    *(int*)((char*)self + 172) = b;
+    *(int*)((char*)self + 176) = c;
+    *(int*)((char*)self + 180) = d;
+    *(int*)((char*)self + 224) = f | 4;
 }
 
 extern "C" void* func_800527B0(void* self, const void* a, const void* b) {

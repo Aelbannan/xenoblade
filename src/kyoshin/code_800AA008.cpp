@@ -104,19 +104,25 @@ int func_800AA1B4(const char* str, int digitCount, int* out) {
 }
 
 u32 func_800AA2BC(u32 a, u32 b) {
-    return ((a << 20) | 0x08000000) | (b << 10);
+    return (b << 10) | ((a << 20) | 0x08000000);
 }
 
 u32 func_800AA2D0(u32 a, u32 b, u32 c) {
-    return ((a & 0xFFF) << 20) | ((c & 0x3FF) << 10) | 0xE0000000;
+    u32 t = ((a & 0xFFF) << 20) | 0xE0000000;
+    u32 u = c | (b << 10);
+    return u | t;
 }
 
 u32 func_800AA2E8(u32 a, u32 b, u32 c) {
-    return (a << 20) | (b << 10) | c | 0x1000;
+    u32 t = ((a & 0xFFF) << 20) | 0x10000000;
+    u32 u = c | (b << 10);
+    return u | t;
 }
 
 u32 func_800AA300(u32 a, u32 b, u32 c) {
-    return (a << 20) | (b << 10) | c | 0x20000000;
+    u32 t = ((a & 0xFFF) << 20) | 0x20000000;
+    u32 u = c | (b << 10);
+    return u | t;
 }
 
 // Unpack a packed token into entry ID and up to three parameters.

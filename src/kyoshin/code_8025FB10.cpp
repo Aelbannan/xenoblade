@@ -54,7 +54,7 @@ extern "C" {
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 extern void* cacheInstance__9CDeviceGX;
-u8 func_8044BE24__8CGXCacheFv(void*);
+int func_8044BE24__8CGXCacheFv(void*);
 s16* func_8044BE1C__8CGXCacheFv(void*);
 
 extern void* lbl_eu_80664860;
@@ -105,14 +105,14 @@ extern const f32 lbl_eu_806688E0;
         }                                                                      \
     }
 
-#define VALIDATE_NW4R_POINTER_FLAG(pointer, file, line, message)               \
+#define VALIDATE_NW4R_POINTER_FLAG(pointer, region, file, line, message)       \
     {                                                                         \
         u32 address = (u32)(pointer);                                          \
         bool valid = false;                                                    \
-        if ((address & 0xFF000000) == 0x80000000 ||                            \
+        if (region == 0x80000000 ||                                            \
             (address & 0xFF800000) == 0x81000000 ||                            \
             (address & 0xF8000000) == 0x90000000 ||                            \
-            (address & 0xFF000000) == 0xC0000000 ||                            \
+            region == 0xC0000000 ||                                            \
             (address & 0xFF800000) == 0xC1000000 ||                            \
             (address & 0xF8000000) == 0xD0000000 ||                            \
             (address & 0xFFFFC000) == 0xE0000000) {                            \
@@ -163,33 +163,35 @@ static inline void setFontChecked(WideTextWriter* writer,
 }
 
 static inline void setTextColorChecked(WideTextWriter* writer,
-                                       nw4r::ut::Color color) {
+                                       const GXColor& color) {
     VALIDATE_NW4R_POINTER_COMPACT(writer, lbl_eu_8052DCFC, 135,
                           lbl_eu_8052DCC8);
     writer->SetTextColor(color);
 }
 
-static inline void setCursorChecked(WideTextWriter* writer, f32 x, f32 y,
-                                    f32 z) {
-    VALIDATE_NW4R_POINTER_FLAG(writer, lbl_eu_805378A0, 258,
+static inline void setCursorChecked(WideTextWriter* writer, u32 writerRegion,
+                                    f32 x, f32 y, f32 z) {
+    VALIDATE_NW4R_POINTER_FLAG(writer, writerRegion, lbl_eu_805378A0, 258,
                           lbl_eu_8053786C);
     writer->SetCursor(x, y, z);
 }
 
-static inline void printCheckedInitial(WideTextWriter* writer,
-                                const wchar_t* text) {
-    VALIDATE_NW4R_POINTER_FLAG(writer, lbl_eu_80537734, 256,
+static inline u32 printCheckedInitial(WideTextWriter* writer,
+                                      u32 writerRegion,
+                                      const wchar_t* text) {
+    VALIDATE_NW4R_POINTER_FLAG(writer, writerRegion, lbl_eu_80537734, 256,
                           lbl_eu_80537700);
     VALIDATE_NW4R_POINTER(text, lbl_eu_805376EC, 257,
                           lbl_eu_805376B8);
     writer->Print(text, static_cast<int>(wcslen(text)));
+    return (u32)text & 0xFF000000;
 }
 
-static inline void printChecked(WideTextWriter* writer,
-                                const wchar_t* text) {
-    VALIDATE_NW4R_POINTER_FLAG(writer, lbl_eu_80537734, 256,
+static inline void printChecked(WideTextWriter* writer, u32 writerRegion,
+                                const wchar_t* text, u32 textRegion) {
+    VALIDATE_NW4R_POINTER_FLAG(writer, writerRegion, lbl_eu_80537734, 256,
                           lbl_eu_80537700);
-    VALIDATE_NW4R_POINTER_FLAG(text, lbl_eu_805376EC, 257,
+    VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
                           lbl_eu_805376B8);
     writer->Print(text, static_cast<int>(wcslen(text)));
 }
@@ -250,6 +252,8 @@ void func_80261A80(){}
 void __dt__80261B1C(){}
 
 void func_80261B98(const wchar_t* text, f32 x, f32 y) {
+    GXColor shadow;
+    GXColor foreground;
     Mtx identity;
     Mtx44 projection;
 
@@ -257,40 +261,42 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     GXLoadPosMtxImm(identity, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 
-    GXCacheTextProjection* cache =
-        static_cast<GXCacheTextProjection*>(cacheInstance__9CDeviceGX);
-    if (!func_8044BE24__8CGXCacheFv(cache)) {
+    if (!func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX)) {
         f32 width = static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
         f32 height = static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
         C_MTXOrtho(projection, lbl_eu_806688D0, height,
                    lbl_eu_806688D0, width, lbl_eu_806688D0,
                    lbl_eu_806688D4);
     } else {
-        s16 cacheWidth = cache->width;
+        s16 cacheWidth = static_cast<GXCacheTextProjection*>(
+            cacheInstance__9CDeviceGX)->width;
         f32 renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
-        s16* rect = func_8044BE1C__8CGXCacheFv(cache);
+        s16* rect = func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX);
         f32 right = static_cast<f32>(cacheWidth) *
                     (static_cast<f32>(rect[2]) / renderWidth);
 
-        cacheWidth = cache->width;
+        cacheWidth = static_cast<GXCacheTextProjection*>(
+            cacheInstance__9CDeviceGX)->width;
         renderWidth =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->fbWidth);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX);
         f32 left = static_cast<f32>(cacheWidth) *
                    (static_cast<f32>(rect[0]) / renderWidth);
 
-        s16 cacheHeight = cache->height;
+        s16 cacheHeight = static_cast<GXCacheTextProjection*>(
+            cacheInstance__9CDeviceGX)->height;
         f32 renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX);
         f32 bottom = static_cast<f32>(cacheHeight) *
                      (static_cast<f32>(rect[3]) / renderHeight);
 
-        cacheHeight = cache->height;
+        cacheHeight = static_cast<GXCacheTextProjection*>(
+            cacheInstance__9CDeviceGX)->height;
         renderHeight =
             static_cast<f32>(CDeviceVI::getRenderModeObj()->efbHeight);
-        rect = func_8044BE1C__8CGXCacheFv(cache);
+        rect = func_8044BE1C__8CGXCacheFv(cacheInstance__9CDeviceGX);
         f32 top = static_cast<f32>(cacheHeight) *
                   (static_cast<f32>(rect[1]) / renderHeight);
 
@@ -301,6 +307,7 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
 
     WideTextWriter writer;
     writer.SetupGX();
+    u32 writerRegion = (u32)&writer & 0xFF000000;
 
     setTagProcessorChecked(&writer, lbl_eu_8066486C);
     setDrawFlagChecked(&writer, 0x110);
@@ -310,28 +317,36 @@ void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     const nw4r::ut::Font* font = func_80449160__10CFontLayerFv(
         static_cast<u8*>(lbl_eu_80664860) + 0x1c4, 1);
     setFontChecked(&writer, font);
-    setTextColorChecked(&writer, nw4r::ut::Color(0, 0, 0, 255));
+    shadow.r = 0;
+    shadow.g = 0;
+    shadow.b = 0;
+    shadow.a = 255;
+    setTextColorChecked(&writer, shadow);
 
-    setCursorChecked(&writer, x - lbl_eu_806688D8,
+    setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
-    printCheckedInitial(&writer, text);
-    setCursorChecked(&writer, x + lbl_eu_806688D8,
+    u32 textRegion = printCheckedInitial(&writer, writerRegion, text);
+    setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
                      y - lbl_eu_806688D8, lbl_eu_806688E0);
-    printChecked(&writer, text);
-    setCursorChecked(&writer, x - lbl_eu_806688D8,
+    printChecked(&writer, writerRegion, text, textRegion);
+    setCursorChecked(&writer, writerRegion, x - lbl_eu_806688D8,
                      y + lbl_eu_806688D8, lbl_eu_806688E0);
-    printChecked(&writer, text);
-    setCursorChecked(&writer, x + lbl_eu_806688D8,
+    printChecked(&writer, writerRegion, text, textRegion);
+    setCursorChecked(&writer, writerRegion, x + lbl_eu_806688D8,
                      y + lbl_eu_806688D8, lbl_eu_806688E0);
-    printChecked(&writer, text);
+    printChecked(&writer, writerRegion, text, textRegion);
 
-    setTextColorChecked(&writer, nw4r::ut::Color(255, 255, 255, 255));
-    setCursorChecked(&writer, x, y, lbl_eu_806688D0);
-    printChecked(&writer, text);
-    setCursorChecked(&writer, x, y, lbl_eu_806688D0);
-    printChecked(&writer, text);
-    setCursorChecked(&writer, x, y, lbl_eu_806688D0);
-    printChecked(&writer, text);
+    foreground.r = 255;
+    foreground.g = 255;
+    foreground.b = 255;
+    foreground.a = 255;
+    setTextColorChecked(&writer, foreground);
+    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    printChecked(&writer, writerRegion, text, textRegion);
+    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    printChecked(&writer, writerRegion, text, textRegion);
+    setCursorChecked(&writer, writerRegion, x, y, lbl_eu_806688D0);
+    printChecked(&writer, writerRegion, text, textRegion);
 }
 
 #undef VALIDATE_NW4R_POINTER_FLAG

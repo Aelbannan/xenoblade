@@ -25,7 +25,7 @@ in the header -- that pulls weak stubs into every overriding TU and blows split
 budgets (see MWCC_REFERENCE CBattery/CBgTex note). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
+    virtual ~IWorkEvent();
     virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
     virtual bool OnFileEvent(CEventFile* pEventFile);
     virtual bool WorkEvent3(UNKTYPE* r4);

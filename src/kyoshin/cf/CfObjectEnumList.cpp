@@ -161,22 +161,19 @@ public:
     ENUM_DUMMY_VIRTUAL(165); ENUM_DUMMY_VIRTUAL(166); ENUM_DUMMY_VIRTUAL(167);
     ENUM_DUMMY_VIRTUAL(168); ENUM_DUMMY_VIRTUAL(169); ENUM_DUMMY_VIRTUAL(170);
     ENUM_DUMMY_VIRTUAL(171); ENUM_DUMMY_VIRTUAL(172);
-};
+    virtual bool filter() = 0; // primary vtable +0x2BC
 
-class CfEnumActor : public CfEnumActorBase {
-public:
-    virtual bool filter() = 0; // vtable +0x2BC
     u32 field_004;
     u8 tagState;
     u8 _pad_009[0x3374 - 0x009];
     u32 flags3374;
     u8 _pad_3378[0x3E9C - 0x3378];
-    u8 moveObject;
-    u8 _pad_3E9D[0x3F60 - 0x3E9D];
-    CfEnumActorAux* actorAux;
+};
 
+class CfEnumActor : public CfEnumActorBase, public CfEnumObject {
+public:
     CfEnumObject* getMoveObject() {
-        return reinterpret_cast<CfEnumObject*>(&moveObject);
+        return static_cast<CfEnumObject*>(this);
     }
 };
 
@@ -184,7 +181,7 @@ public:
 
 struct CfEnumKind {
     u8 _pad_00[0x91];
-    u8 kind91;
+    s8 kind91;
 };
 
 extern "C" {
@@ -226,9 +223,9 @@ extern const float lbl_eu_80666EBC;
 
 #define ENUM_ADD_OBJECT(info_, object_)                                      \
     do {                                                                     \
-        (info_).objectId = (object_)->objectId;                              \
-        (info_).object = (object_);                                          \
         (info_).field_18 = false;                                            \
+        (info_).object = (object_);                                          \
+        (info_).objectId = (object_)->objectId;                              \
         self->mObjInfo[self->mObjInfoCount++] = (info_);                     \
         self->mPtrArray[self->mPtrCount++] =                                 \
             &self->mObjInfo[self->mObjInfoCount - 1];                        \
@@ -247,24 +244,22 @@ extern const float lbl_eu_80666EBC;
         }                                                                    \
     } while (false)
 
-#define ENUM_ACTOR_CORE_FILTERS(rejected_, object_, options_, zero_, one_) \
-    do {                                                                   \
-        if (!(rejected_) && !((options_) & 1) &&                           \
-            !(object_)->isEnabled()) {                      \
-            (rejected_) = true;                                            \
-        }                                                                  \
-        if (!(rejected_) && ((options_) & 2) &&                            \
-            (!(object_)->filterA() ||                       \
-             (zero_) != (object_)->filterC() ||             \
-             (one_) != (object_)->filterD() ||              \
-             !(object_)->filterB())) {                      \
-            (rejected_) = true;                                            \
-        }                                                                  \
+#define ENUM_ACTOR_CORE_FILTERS(rejected_, object_, actor_, options_, zero_, one_) \
+    do {                                                                           \
+        if (!(rejected_) && !((options_) & 1) && !(object_)->isEnabled()) {        \
+            (rejected_) = true;                                                    \
+        }                                                                          \
+        if (!(rejected_) && ((options_) & 2) &&                                    \
+            (!(actor_)->filterA() || (zero_) != (actor_)->filterC() ||             \
+             (one_) != (actor_)->filterD() || !(actor_)->filterB())) {             \
+            (rejected_) = true;                                                    \
+        }                                                                          \
     } while (false)
 
 #define ENUM_ACTOR_FILTERS(rejected_, object_, actor_, options_, zero_, one_) \
     do {                                                                      \
-        ENUM_ACTOR_CORE_FILTERS(rejected_, object_, options_, zero_, one_);   \
+        ENUM_ACTOR_CORE_FILTERS(                                              \
+            rejected_, object_, actor_, options_, zero_, one_);              \
         if (!(rejected_) && ((options_) & 0x100) &&                           \
             func_80148778(&(actor_)->tagState, 0xE5)) {                       \
             (rejected_) = true;                                               \
@@ -272,8 +267,8 @@ extern const float lbl_eu_80666EBC;
         if (!(rejected_) && ((options_) & 0x200)) {                           \
             if (func_80148778(&(actor_)->tagState, 0xE6)) {                   \
                 (rejected_) = true;                                           \
-            } else if ((actor_)->actorAux == 0 ||                  \
-                       !func_80051B38((actor_)->actorAux)) {        \
+            } else if ((actor_)->actorAux == 0 ||                            \
+                       !func_80051B38((actor_)->actorAux)) {                  \
                 (rejected_) = true;                                           \
             }                                                                 \
         }                                                                     \
@@ -287,7 +282,7 @@ extern const float lbl_eu_80666EBC;
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x1000) &&                          \
             (actor_)->filter() &&                               \
-            (actor_)->actorAux->test(0)) {                          \
+            (actor_)->actorAux->test(0)) {                                    \
             (rejected_) = true;                                               \
         }                                                                     \
         if (!(rejected_) && ((options_) & 0x2000) &&                          \
@@ -316,6 +311,9 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
     cf::CfObjEnumList::sObjInfo info16;
     cf::CfObjEnumList::sObjInfo info17;
     cf::CfObjEnumList::sObjInfo info18;
+    CfEnumObject* object;
+    CfEnumActor* actor;
+    bool rejected;
 
     if (flags == 0) {
         return;
@@ -323,11 +321,11 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
 
     if (flags & 1) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B7034();
+        object = func_800B7034();
         float zero = lbl_eu_80666EB8;
         float one = lbl_eu_80666EBC;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             if (!(options & 1) && !object->isEnabled()) {
                 rejected = true;
             }
@@ -373,16 +371,16 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x40000u;
     } else if (flags & 0x20) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B76A4();
+        object = func_800B76A4();
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
-            ENUM_ACTOR_CORE_FILTERS(rejected, object, options, zero, one);
+            ENUM_ACTOR_CORE_FILTERS(rejected, object, actor, options, zero, one);
             if (!rejected && (options & 0x100) &&
                 func_80148778(&actor->tagState, 0xE5)) {
                 rejected = true;
@@ -431,10 +429,10 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x200000u;
     } else if (flags & 8) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B77BC();
+        object = func_800B77BC();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             if (!(object->flags64 & 0x200)) {
                 rejected = true;
             }
@@ -450,11 +448,11 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~8u;
     } else if (flags & 0x100) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B76CC();
+        object = func_800B76CC();
         float one = lbl_eu_80666EBC;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -467,9 +465,9 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 2) &&
-                (!object->filterA() ||
-                 one != object->filterD() ||
-                 !object->filterB())) {
+                (!actor->filterA() ||
+                 one != actor->filterD() ||
+                 !actor->filterB())) {
                 rejected = true;
             }
             if (!rejected && (options & 0x100) &&
@@ -493,8 +491,7 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 }
             }
             if (!rejected && (options & 0x1000) &&
-                actor->filter() &&
-                actor->actorAux->test(0)) {
+                actor->filter() && actor->actorAux->test(0)) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
@@ -513,11 +510,11 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x100u;
     } else if (flags & 0x400000) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B76CC();
+        object = func_800B76CC();
         float one = lbl_eu_80666EBC;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -530,9 +527,9 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 2) &&
-                (!object->filterA() ||
-                 one != object->filterD() ||
-                 !object->filterB())) {
+                (!actor->filterA() ||
+                 one != actor->filterD() ||
+                 !actor->filterB())) {
                 rejected = true;
             }
             if (!rejected && (options & 0x2000) &&
@@ -551,16 +548,24 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x400000u;
     } else if (flags & 0x200) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B76F4();
+        object = func_800B76F4();
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_800BBC0C(object);
+            rejected = false;
+            actor = func_800BBC0C(object);
             if (!(object->flags64 & 8)) {
                 rejected = true;
             }
-            ENUM_ACTOR_CORE_FILTERS(rejected, object, options, zero, one);
+            if (!rejected && !(options & 1) && !object->isEnabled()) {
+                rejected = true;
+            }
+            CfEnumObject* actorObject = reinterpret_cast<CfEnumObject*>(actor);
+            if (!rejected && (options & 2) &&
+                (!actorObject->filterA() || zero != actorObject->filterC() ||
+                 one != actorObject->filterD() || !actorObject->filterB())) {
+                rejected = true;
+            }
             if (rejected) {
                 func_800B07E8__Fv();
                 object = func_800B7854(object);
@@ -573,10 +578,10 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x200u;
     } else if (flags & 0x400) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B771C();
+        object = func_800B771C();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             if (!(object->flags64 & 0x80)) {
                 rejected = true;
             }
@@ -594,9 +599,10 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         func_800B07E8__Fv();
         object = func_800B76CC();
         float one = lbl_eu_80666EBC;
+        float secondZero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
@@ -607,10 +613,8 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
                 rejected = true;
             }
             if (!rejected && (options & 2) &&
-                (!object->filterA() ||
-                 zero != object->filterC() ||
-                 one != object->filterD() ||
-                 !object->filterB())) {
+                (!actor->filterA() || secondZero != actor->filterC() ||
+                 one != actor->filterD() || !actor->filterB())) {
                 rejected = true;
             }
             if (rejected) {
@@ -625,10 +629,10 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x400u;
     } else if (flags & 0x80000) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B7744();
+        object = func_800B7744();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             if (!(object->flags64 & 0x20)) {
                 rejected = true;
             }
@@ -645,22 +649,26 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x80000u;
     } else if (flags & 0x800) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B776C();
+        object = func_800B776C();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            if (!(object->flags64 & 0xC000)) {
+            rejected = false;
+            if (!(object->flags64 & 0x4000) &&
+                !(object->flags64 & 0x8000)) {
                 rejected = true;
             }
             ENUM_BASIC_FILTERS(rejected, object, options, zero);
             if (!rejected && (options & 0x8000) &&
-                (u16)(object->type8C - 0x12F) <= 1) {
+                (u16)(object->type8C + 0xFED1) <= 1) {
                 rejected = true;
             }
-            if (!rejected && !func_8009CF8C(0x3354)) {
-                CfEnumKind* kind = func_800AB3D0(object);
-                if (kind != 0 && kind->kind91 == 6) {
-                    rejected = true;
+            if (!rejected) {
+                bool unavailable = func_8009CF8C(0x3354) == 0;
+                if (unavailable) {
+                    CfEnumKind* kind = func_800AB3D0(object);
+                    if (kind != 0 && kind->kind91 == 6) {
+                        rejected = true;
+                    }
                 }
             }
             if (rejected) {
@@ -675,10 +683,10 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
         flags &= ~0x800u;
     } else if (flags & 0x1000) {
         func_800B07E8__Fv();
-        CfEnumObject* object = func_800B7794();
+        object = func_800B7794();
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             if (!(object->flags64 & 0x100)) {
                 rejected = true;
             }
@@ -696,34 +704,34 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
     } else if (flags & 0x4000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
         CfEnumActor* source = func_800EA384(manager);
-        CfEnumObject* object = source != 0 ? source->getMoveObject() : 0;
+        object = source;
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             ENUM_ACTOR_FILTERS(rejected, object, actor, options, zero, one);
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
                 source = func_800EA3AC(manager, object);
-                object = source != 0 ? source->getMoveObject() : 0;
+                object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info15, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
             source = func_800EA3AC(manager, object);
-            object = source != 0 ? source->getMoveObject() : 0;
+            object = source;
         }
         flags &= ~0x4000u;
     } else if (flags & 0x8000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
         CfEnumActor* source = func_800EA384(manager);
-        CfEnumObject* object = source != 0 ? source->getMoveObject() : 0;
+        object = source;
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (!(object->flags64 & 2)) {
                 rejected = true;
             }
@@ -731,24 +739,24 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
                 source = func_800EA3AC(manager, object);
-                object = source != 0 ? source->getMoveObject() : 0;
+                object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info16, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
             source = func_800EA3AC(manager, object);
-            object = source != 0 ? source->getMoveObject() : 0;
+            object = source;
         }
         flags &= ~0x8000u;
     } else if (flags & 0x10000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
         CfEnumActor* source = func_800EA384(manager);
-        CfEnumObject* object = source != 0 ? source->getMoveObject() : 0;
+        object = source;
         float one = lbl_eu_80666EBC;
         float zero = lbl_eu_80666EB8;
         while (object != 0) {
-            bool rejected = false;
-            CfEnumActor* actor = func_8016FE34(object);
+            rejected = false;
+            actor = func_8016FE34(object);
             if (object->flags64 & 4) {
                 rejected = true;
             }
@@ -756,21 +764,21 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
                 source = func_800EA3AC(manager, object);
-                object = source != 0 ? source->getMoveObject() : 0;
+                object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info17, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
             source = func_800EA3AC(manager, object);
-            object = source != 0 ? source->getMoveObject() : 0;
+            object = source;
         }
         flags &= ~0x10000u;
     } else if (flags & 0x20000) {
         void* manager = getInstance__Q22cf14CBattleManagerFv();
         CfEnumActor* source = func_800EA384(manager);
-        CfEnumObject* object = source != 0 ? source->getMoveObject() : 0;
+        object = source;
         while (object != 0) {
-            bool rejected = false;
+            rejected = false;
             func_800BBC0C(object);
             if (object->flags64 & 8) {
                 rejected = true;
@@ -781,13 +789,13 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             if (rejected) {
                 manager = getInstance__Q22cf14CBattleManagerFv();
                 source = func_800EA3AC(manager, object);
-                object = source != 0 ? source->getMoveObject() : 0;
+                object = source;
                 continue;
             }
             ENUM_ADD_OBJECT(info18, object);
             manager = getInstance__Q22cf14CBattleManagerFv();
             source = func_800EA3AC(manager, object);
-            object = source != 0 ? source->getMoveObject() : 0;
+            object = source;
         }
         flags &= ~0x20000u;
     } else {
@@ -864,7 +872,7 @@ void func_800FD378(){}
 
 void func_800FD3FC(){}
 
-void func_800FD68C(void* self){}
+extern "C" void* func_800FD68C(void* self, int index) { return (char*)self + index * 4; }
 
 void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
 

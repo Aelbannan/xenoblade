@@ -60,7 +60,16 @@ struct CMIf {
     virtual void vf00D0();
 };
 
-void cf::CfObjectMap::func_800B9A70() {}
+// Calls vtable slot 0x18C (slot 99) when the pointer at +0x70 is set;
+// returns the call's result, or 1 when the pointer is NULL (retail
+// `li r0,1` default + `or r0,r3,r3`/`or r3,r0,r0` return structure).
+extern "C" void* func_800B9A70__Q22cf11CfObjectMapFv(cf::CfObjectMap* self) {
+    void* ret = (void*)1;
+    if (*(void**)((u8*)self + 0x70)) {
+        ret = ((void* (*)(void*))(*(void***)self)[0x18C / 4])(self);
+    }
+    return ret;
+}
 
 void cf::CfObjectMap::func_800B9AB4() {
     this->CfObjectModel_UnkVirtualFunc1();
@@ -350,7 +359,17 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
     }
 }
 
-void cf::CfObjectMap::func_800BA610() {}
+// PTMF dispatch: field_0x8E (u16 index) selects a CfObjectMap method from
+// the 3-entry point-to-member-function table lbl_eu_80529100 (0x28 bytes).
+// MWCC lowers (this->*table[idx])() to mulli/lis/addi + `bl __ptmf_scall`.
+void cf::CfObjectMap::func_800BA610() {
+    typedef void (cf::CfObjectMap::*MapPMF)();
+    extern MapPMF lbl_eu_80529100[3];
+    u16 idx = *(u16*)((u8*)this + 0x8E);
+    if (idx < 3) {
+        (this->*lbl_eu_80529100[idx])();
+    }
+}
 
 extern "C" void func_800BA650__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, float f) {
     extern void func_80484E5C(void*);

@@ -10,7 +10,8 @@ void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 
 void func_800CA540(){}
 
-void func_800CA580(){}
+extern "C" void func_801930A0(void* a, void* b, int c);
+extern "C" void func_800CA580(void* self, void* b) { func_801930A0((char*)self + 0x368, b, 1); }
 
 void func_800CA58C(void) {}
 

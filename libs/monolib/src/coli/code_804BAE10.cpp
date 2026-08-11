@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-void func_804BAE10(void){}
+extern "C" void func_804BAE10(void* self) { *(u32*)self = 0; }
 
 void func_804BAE1C(){}
 
@@ -43,7 +43,7 @@ void func_804BC9B4(int *dest, int offset, int *src) {
     dest[2] = offset + src[3];
 }
 
-void func_804BC9DC(void* self, u32 a, u32 b){}
+extern "C" void func_804BC9DC(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0xC) = a; *(u32*)((u8*)self + 0x10) = b; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_804BC9E8(void) {}

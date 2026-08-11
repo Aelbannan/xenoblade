@@ -11,16 +11,19 @@ namespace {
 #pragma dont_inline on
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 su = rSrt.Su;
+    f32 g8 = lbl_eu_80669CC8;
     f32 sv = rSrt.Sv;
+    f32 g4 = lbl_eu_80669CC4;
+    f32 g0 = lbl_eu_80669CC0;
 
     pMtx->m[0][0] = su;
-    pMtx->m[0][1] = lbl_eu_80669CC0;
-    pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - su);
-    pMtx->m[1][0] = lbl_eu_80669CC0;
+    pMtx->m[0][1] = g0;
+    pMtx->m[0][2] = g0;
+    pMtx->m[0][3] = g4 * (g8 - su);
+    pMtx->m[1][0] = g0;
     pMtx->m[1][1] = sv;
-    pMtx->m[1][2] = lbl_eu_80669CC0;
-    pMtx->m[1][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - sv);
+    pMtx->m[1][2] = g0;
+    pMtx->m[1][3] = g4 * (g8 - sv);
 }
 
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {

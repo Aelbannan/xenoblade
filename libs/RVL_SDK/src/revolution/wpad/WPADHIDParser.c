@@ -1467,18 +1467,22 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             ((WPADFSStatus*)status)->fsStickX = data[3];
             ((WPADFSStatus*)status)->fsStickY = data[4];
 
-            ((WPADFSStatus*)status)->fsAccX =
-                (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((s16)data[8] >> 2) & 3))) -
-                (s16)cb->extConfig.u.fs.accX0g;
-            ((WPADFSStatus*)status)->fsAccY =
-                (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((s16)data[8] >> 4) & 3))) -
-                (s16)cb->extConfig.u.fs.accY0g;
-            ((WPADFSStatus*)status)->fsAccZ =
-                (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)data[8] >> 6))) -
-                (s16)cb->extConfig.u.fs.accZ0g;
+            {
+                WPADCB* cb2 = __rvl_p_wpadcb[chan];
+
+                ((WPADFSStatus*)status)->fsAccX =
+                    (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)((s16)data[8] >> 2) & 3))) -
+                    (s16)cb2->extConfig.u.fs.accX0g;
+                ((WPADFSStatus*)status)->fsAccY =
+                    (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)((s16)data[8] >> 4) & 3))) -
+                    (s16)cb2->extConfig.u.fs.accY0g;
+                ((WPADFSStatus*)status)->fsAccZ =
+                    (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
+                             (s16)((s16)data[8] >> 6))) -
+                    (s16)cb2->extConfig.u.fs.accZ0g;
+            }
 
             ((WPADFSStatus*)status)->button =
                 (u16)((u16)((WPADFSStatus*)status)->button |
@@ -1520,7 +1524,7 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             ((WPADTRStatus*)status)->brake = data[5];
             ((WPADTRStatus*)status)->mascon = data[6];
             ((WPADTRStatus*)status)->trButton =
-                (u16)~(u16)((data[9] << 8) | data[10]);
+                (u16)(0xFFFF ^ (u16)((data[9] << 8) | data[10]));
         }
 
         if (memcmp(_wpadExtRawData, _cExtInvalidData, 8) == 0 && status->err == 0) {

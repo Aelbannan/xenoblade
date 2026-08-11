@@ -488,7 +488,7 @@ void func_80226E54(CMenuQstCnt* self) {
 }
 
 QstData* func_80226FAC(QstData* self) {
-    __construct_array(self, (void*)initQstInfo, (void*)__dt__80227030, 8, 0x400);
+    __construct_array(self, (void*)initQstInfo, (void*)&__dt__80227030, 8, 0x400);
     self->field_2000 = 0;
     self->field_2002 = 0;
     self->field_2004 = 0xff;
@@ -506,13 +506,18 @@ void initQstInfo(QstInfo* ptr) {
     ptr->f7 = 0;
 }
 
-void __dt__80227030(){}
+void* __dt__80227030(void* self, int mode) {
+    if (self != 0 && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 // Destructor (retail __dt__80227070): destroys the 0x400-element QstInfo
 // member array via __destroy_arr, then frees the object if deleting.
 void* __dt__80227070(QstData* self, int flags) {
     if (self == 0) goto end;
-    __destroy_arr(self, (void*)__dt__80227030, 8, 0x400);
+    __destroy_arr(self, (void*)&__dt__80227030, 8, 0x400);
     if (flags > 0)
         __dl__FPv(self);
 end:

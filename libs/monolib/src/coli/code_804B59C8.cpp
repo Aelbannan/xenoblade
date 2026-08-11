@@ -10,7 +10,8 @@ u32 func_804B5A68(void) {
     return lbl_eu_80663AC8;
 }
 
-void* func_804B5A70(void){ return 0; }
+extern char lbl_eu_8065F1A0[];
+extern "C" void* func_804B5A70(void){ return (void*)&lbl_eu_8065F1A0; }
 
 void __dt__804B5A7C(){}
 
@@ -101,7 +102,7 @@ void func_804B7ACC(){}
 
 void func_804B7B6C(){}
 
-u32 lbl_eu_8065F1A0;
+extern char lbl_eu_8065F1A0[];
 void func_804B7D9C(int, int bit_index) {
     if (bit_index > 0x140) bit_index = 0x140;
     int word_idx = bit_index >> 5;

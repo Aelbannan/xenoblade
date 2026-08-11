@@ -4,6 +4,7 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 
 class CScn;
+class CView;
 
 // ---------------------------------------------------------------------------
 // External imports used by CfObjectMap.cpp
@@ -161,8 +162,8 @@ extern "C" {
     void* func_804C1BA0(void* mgr, void* handle, int flag);
     void func_804C1D7C(void* mgr, void* resource);
     void func_804C1F10(void* mgr, u32 value, float amount);
-    float func_80496288(void* ptr);
-    void func_80496294(void* ptr, float value);
+    float func_80496288(CScn* scene);
+    void func_80496294(CScn* scene, float value);
     void* func_80495EB0(void* r3, void* r4, void* r5);
     void* func_80489A60(void* r3, void* r4, u32 r5, u32 r6, u32 r7, u32 r8);
     void func_800BBADC(void* r3, void* r4);
@@ -205,7 +206,7 @@ extern "C" {
 
 // ---- data symbols (global scope: no mangling, plain extern is enough) ----
 extern CScn* lbl_eu_80663E14;      // global scene object
-extern void* lbl_eu_80663E10;      // global scene object (secondary)
+extern CView* lbl_eu_80663E10;     // global scene object (secondary)
 extern u32 lbl_eu_80663E24;        // global flag word
 extern u32 lbl_eu_80663E28;        // global flag word
 extern void* lbl_eu_806640A8;      // bdat table pointer

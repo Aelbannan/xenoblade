@@ -921,7 +921,7 @@ extern "C" void func_800676F8(u8* self) {
 // Named wrappers for -2 targets
 // ============================================================
 
-bool testResInfoFlag(u32 flags) {
+extern "C" bool testResInfoFlag(u32 flags) {
     return (lbl_eu_80663E28 & flags) != 0;
 }
 

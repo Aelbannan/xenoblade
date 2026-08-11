@@ -136,7 +136,12 @@ void func_802580CC(){}
 
 void func_80258F5C(){}
 
-void func_80258F80(){}
+// retail uses psq_l/ps_muls0 paired-single: dst = src * scalar (auto-vectorized by MWCC -O4,s)
+extern "C" void func_80258F80(float* dst, const float* src, float f1) {
+    dst[0] = src[0] * f1;
+    dst[1] = src[1] * f1;
+    dst[2] = src[2] * f1;
+}
 
 void func_80258F9C(){}
 
@@ -467,9 +472,25 @@ extern "C" u8 func_8025CBC4(CKizunagramState* self) {
 
 void func_8025CBCC(){}
 
-void func_8025CC70(){}
+// retail: lfs f0,const; li r0,0; stb 0x34; sth 0x36; stfs 0x38
+extern "C" void func_8025AC04(void* self) {
+    *(u8*)((char*)self + 0x34) = 0;
+    *(u16*)((char*)self + 0x36) = 0;
+    *(float*)((char*)self + 0x38) = lbl_eu_80668828;
+}
 
-void func_8025CC88(){}
+// retail: lbz 0xdd; xori; subic; subfe; stb - toggle (x^1)!=0 under -O4,s
+extern "C" void func_8025CC70(void* self) {
+    *(u8*)((char*)self + 0xDD) = (u8)((*(u8*)((char*)self + 0xDD) ^ 1) != 0);
+}
+
+// retail: if (field_62) { field_39 = 2; tail func_80259228(self+0x68) }
+extern "C" void func_8025CC88(void* self) {
+    if (*(u8*)((char*)self + 0x62) != 0) {
+        *(u8*)((char*)self + 0x39) = 2;
+        func_80259228((UnkKizunaSelf59228*)((char*)self + 0x68));
+    }
+}
 
 void func_8025CCA8(){}
 

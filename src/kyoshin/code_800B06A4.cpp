@@ -21,7 +21,7 @@ extern "C" void func_801F45B4(unsigned long a, void* b);
 extern "C" void func_802074F0(unsigned long a, void* b);
 extern "C" void func_8019397C(unsigned long a, void* b);
 extern "C" void func_80193D48(unsigned long a, void* b);
-extern "C" void func_80195E5C(float);
+extern "C" void func_80195E5C(unsigned long a, float b);
 
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
@@ -168,11 +168,11 @@ void init_1F2C(){}
 extern "C" void func_800B1F2C(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193D48(self->field_0xCA0, obj);}}
 extern "C" void func_800B1F40(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193810(self->field_0xCA0, obj);}}
 
-// Target 1: us-800b2820 - Check field_0xCA0; if nonzero, call func_80195E5C with float constant.
-void func_800B1F54(UnkClass_805764CC* self) {
+// Target 1: us-800b2820 - field_0xCA0; if nonzero tail-call func_80195E5C(field, const)
+extern "C" void func_800B1F54(UnkClass_805764CC* self) {
     if (self->field_0xCA0 == 0) return;
     extern float lbl_eu_80663EC8;
-    func_80195E5C(lbl_eu_80663EC8);
+    func_80195E5C(self->field_0xCA0, lbl_eu_80663EC8);
 }
 void init_1F6C(){}
 void init_1FD8(){}
@@ -436,10 +436,12 @@ UnkClass_800B0AD8* __dt__800B0AF4(UnkClass_800B0AD8* self, int flags) {
 }
 
 // Target 2: us-800b6274 - Store value at array index, increment counter.
-void func_800B5978(UnkClass_805764CC* self, u32* val) {
+extern "C" void func_800B5978(UnkClass_805764CC* self, const u32* val) {
     u32 idx = *(u32*)((u8*)self + 0x380);
-    ((u32*)self)[idx] = *val;
-    *(u32*)((u8*)self + 0x380) = idx + 1;
+    u32 next = idx + 1;
+    u32 v = *val;
+    ((u32*)self)[idx] = v;
+    *(u32*)((u8*)self + 0x380) = next;
 }
 void init_5994(){}
 void init_6484(){}
@@ -470,7 +472,13 @@ void init_66BC(){}
 // Target 3: us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
 extern "C" __declspec(noinline) int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
-    return (val >= 1 && val <= 24) ? 1 : 0;
+    int result = 0;
+    if (val >= 1) {
+        if (val <= 24) {
+            result = 1;
+        }
+    }
+    return result;
 }
 void* UnkClass_805764CC::getPtr_1A8(){return (void*)((u8*)this + 0x1a8);}
 void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}

@@ -66,6 +66,12 @@ CGame::~CGame() {
     spInstance = 0;
 }
 
+void CWorkThread::wkRender() {}
+void CWorkThread::wkRenderAfter() {}
+bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) {
+    return true;
+}
+
 CGame* CGame::getInstance() {
     return spInstance;
 }

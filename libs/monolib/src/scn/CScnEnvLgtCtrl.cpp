@@ -17,7 +17,8 @@ void func_804C1600(){}
 
 void func_804C1674(){}
 
-void func_804C1720(void){}
+extern "C" void func_8048D124(void* a);
+extern "C" void func_804C1720(void* self) { func_8048D124(*(void**)((u8*)*(void**)((u8*)self + 4) + 0x64)); }
 
 void func_804C172C(){}
 

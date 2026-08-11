@@ -324,12 +324,6 @@ void CWorkThread::wkStandby(){
     }
 }
 
-void CWorkThread::wkRender() {}
-void CWorkThread::wkRenderAfter() {}
-bool CWorkThread::wkStandbyExceptionRetry(WORK_ID wid) {
-    return true;
-}
-
 bool CWorkThread::wkStandbyLogin(){
     mState = THREAD_STATE_LOGIN;
     wkTimeoutInit();

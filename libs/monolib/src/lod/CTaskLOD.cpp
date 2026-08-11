@@ -17,7 +17,7 @@ public:
     void func_8046E6DC();
     void func_8046E594(int enable);
     void func_8046E5BC(CTaskLOD* source);
-    void func_8046F010();
+    void func_8046F010(float a);
     void func_8046F088(CTaskLOD* task);
     void func_8046E920(CTaskLOD* task);
     void func_8046EB50(CTaskLOD* task);
@@ -125,7 +125,7 @@ void CTaskLOD::func_80462BE4() {
 
 void CTaskLOD::func_80462BFC() {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046F010();
+        float d; lbl_eu_80665730->mpActiveLOD->func_8046F010(d);
     }
 }
 

@@ -422,7 +422,7 @@ config.libs = [
         "objects": [
             # CGame.cpp code matches (100% functions) but data is 87.5% for US
             # due to section padding differences, so it is NonMatching for US.
-            Object(NonMatching, "kyoshin/CGame.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "kyoshin/CGame.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/main.cpp"),
             Object(Matching, "kyoshin/plugin/pluginDeb.cpp"),
             Object(Matching, "kyoshin/plugin/pluginWait.cpp"),
@@ -643,7 +643,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuCollepedia.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CCollepedia.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuKizunagram.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CKizunagram.cpp"),
+            Object(NonMatching, "kyoshin/CKizunagram.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CPcKizunagram.cpp"),
             Object(NonMatching, "kyoshin/code_8025FB10.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuPassiveSkill.cpp", extra_cflags=["-O4,s"]),

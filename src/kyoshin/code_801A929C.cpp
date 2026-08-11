@@ -42,7 +42,8 @@ void func_801AAAA0(){}
 
 void func_801AAB64(){}
 
-void func_801AAC70(void* self){ func_801AAB64(); }
+extern "C" void func_801AAB64(void* a, void* b, int c);
+extern "C" void func_801AAC70(void* self){ void* d; func_801AAB64(self, d, 1); }
 
 void func_801AAC78(){}
 

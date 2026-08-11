@@ -423,6 +423,9 @@ extern "C" u32 func_800BD638(void* self) { return (*(const u16*)((const char*)se
 extern "C" void func_800BD644() {}
 extern "C" void func_800BE0F8() {}
 extern "C" void func_800BE12C() {}
+
+// retail: lwz r3,0xB0(r3); lhz r3,0xC(r3); blr
+extern "C" u16 func_800BE93C(void* self) { return *(u16*)((u8*)*(void**)((u8*)self + 0xB0) + 0xC); }
 extern "C" void func_800BE1A4() {}
 extern "C" void func_800BE28C() {}
 extern "C" void func_800BE33C() {}

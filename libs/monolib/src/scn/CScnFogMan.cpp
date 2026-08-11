@@ -58,7 +58,7 @@ extern "C" void func_8049DE68(u8* self, u32 val) {
 }
 extern "C" void func_8049DEC4();
 extern "C" void func_8049DE70(void) { func_8049DEC4(); }
-void func_8049E374(u8* self, float a, float b) {}
+void func_8049E374(u8* self, float a, float b) { *(float*)(self + 0x20) = a; *(float*)(self + 0x1C) = b; }
 
 CScnFogMan::~CScnFogMan() {}
 

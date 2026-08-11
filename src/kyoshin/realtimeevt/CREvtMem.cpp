@@ -37,10 +37,10 @@ extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
     self->arenaEnd = 0;
     self->arenaSize = 0;
     self->currentPos = 0;
+    self->someFloat = ps;
     lbl_eu_80664260 = self;
     self->ptr1 = nullptr;
     self->ptr2 = nullptr;
-    self->someFloat = ps;
 }
 
 // ============================================================================

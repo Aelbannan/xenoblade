@@ -73,6 +73,9 @@ public:
     ~CNBanner();
     void func_804F531C(const char** names, int* ids);
     bool OnFileEvent(CEventFile* event);
+    void func_804F52F8(const char* str);
+    void func_804F5304(const char* str);
+    void func_804F5310(const char* str);
 
     void* mVtable;             // 0x000
     void* mAlloc0;             // 0x004
@@ -231,11 +234,11 @@ bool CNBanner::OnFileEvent(CEventFile* event) {
 
 // --- non-target scaffolding (retained from the catalog stub) --------------
 
-void func_804F52F8(void) {}
+void CNBanner::func_804F52F8(const char* str) { mTitle.format(str); }
 
-void func_804F5304(void) {}
+void CNBanner::func_804F5304(const char* str) { mDesc.format(str); }
 
-void func_804F5310(void) {}
+void CNBanner::func_804F5310(const char* str) { mPath.format(str); }
 
 // --- func_804F53DC --------------------------------------------------------
 

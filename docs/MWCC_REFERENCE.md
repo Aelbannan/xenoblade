@@ -8837,3 +8837,39 @@ us-80446268):
    first (all give +0); the FORCEACTIVE stub is the only pool-order lever so
    far. Also residual: create (6.9%, 0x70 vs 0x74 — retail's early r31 name
    materialization + 3-reg frame).
+
+## 2026-08 session: ocBdat / CGame / ocUnit unit fixes
+
+### `-O4,s` resets `-func_align` — flag ORDER matters
+`-O4,s` (the scheduler) resets function alignment to 8/16. If the unit needs
+`-func_align 4`, it must appear AFTER `-O4,s` in the flag list:
+`extra_cflags=["-O4,s", "-func_align 4"]`. Otherwise the unit gains ~0x1C0
+of alignment padding and blows the split budget (CGame: 0xED4 vs 0xD08).
+
+### `-O4,s` enables the retail stmw/lmw prologue
+CGame dtor: `-O4,p` emits `stw r31; stw r30` saves; `-O4,s` emits the retail's
+`stmw r30, 8(sp)`. The scheduler is required for pair saves with 2 registers.
+
+### Weak-virtual stub placement
+`CWorkThread::wkRender/wkRenderAfter/wkStandbyExceptionRetry` are retail-placed
+in CGame.o, NOT CWorkThread.o. Move stub definitions to the TU that emits the
+derived vtable (kyoshin/CGame.cpp) to match. Similarly `IWorkEvent::~IWorkEvent`
+must be declaration-only in the header (a weak 0x40 dtor leaks into every
+overriding TU and breaks split budgets; strong copy stays in CTaskGame.cpp).
+
+### ocBdat pattern family (retail bdat accessor codegen)
+- `colHdr[0] != N` needs `static_cast<u8>(colHdr[0])` → `cmpli` (unsigned);
+  plain `char` compare emits `cmpi` (signed).
+- Several retail bdat accessors contain a REDUNDANT second `if (bdat == 0)
+  return 0;` after the colEntry fetch — include it verbatim.
+- Bounds checks use the OR-form `if (maxRow < rowIdx || rowIdx < 0) { ok = 0; }
+  else { rowArg = rowIdx; ok = 1; } if (ok == 0) return 0;` — the ok-gate
+  produces the retail's shared fail block + register copy (`or r31, r4, r4`).
+- `BdatNameIndexHdr::offsets[]` is `u32[]` (retail `lwz`), not u16.
+- Type dispatch with a shared tail: `if ((u32)(elemType - 6) <= 1) { switch ...
+  case 3: goto scale4; ... } else { scale4: dataBase += index * 4; }` — the
+  goto makes MWCC share the *4 tail between case 3 and the else (retail beq
+  to the same block). `> 1` (instead of `<= 1`) inverts the branch layout.
+- `index * stride` (using the reassigned parameter) forces the `index = rowIdx`
+  register copy the retail has; `rowIdx * stride` coalesces it away.
+- func_8003AA34 is a FREE function (unmangled, returns 0), not a CBdat member.

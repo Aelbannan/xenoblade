@@ -291,7 +291,9 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
     }
 }
 
-extern "C" void func_8021ADC4(CMCCrystalInfo* self)
+// Clears every crystal-slot display buffer. noinline: retail calls these as
+// separate functions (bl), so inlining would balloon the caller sizes.
+extern "C" __declspec(noinline) void func_8021ADC4(CMCCrystalInfo* self)
 {
     char buf[0x20];
     for (u8 i = 1; i <= 8; i++) {
@@ -459,7 +461,9 @@ __declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)
     }
 }
 
-extern "C" void func_8021B500(void* this_) {
+// Sets the ready/active flags once both the layout and its resource accessor
+// are present. noinline: retail calls this as a separate function (bl).
+extern "C" __declspec(noinline) void func_8021B500(void* this_) {
     unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
     unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
     if (*p34 != 0) {
@@ -549,14 +553,33 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
             (nw4r::lyt::AnimTransform**)&mAnimTransform4,
             (nw4r::lyt::ArcResourceAccessor*)mArcResAccessor, &lbl_eu_80508DF8[0x1ff]);
 
-        {
-            nw4r::lyt::Pane* rootPane =
-                ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
-            u32 fontResult = 0;
-            func_8013676C(rootPane, fontResult);
-        }
+        // Bind the loaded font's pane into the layout root.
+        nw4r::lyt::Pane* rootPane =
+            ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
+        void* fontObj = CDeviceFont::func_80452C10(1, (nw4r::lyt::Layout*)mLayout);
+        func_8013676C(rootPane,
+            reinterpret_cast<CMCCrystalInfoFontView*>(fontObj)->vf7());
 
+        // If a character set is loaded, stamp every text pane with it.
         u32 sh = func_801355BC();
+        if (sh != 0) {
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x15a], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x21a], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x226], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x232], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x23e], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x24a], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x255], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x260], sh);
+            func_801368C0((nw4r::lyt::Layout*)mLayout, &lbl_eu_80508DF8[0x26b], sh);
+            char buf[0x20];
+            for (u8 i = 1; i <= 8; i++) {
+                sprintf(buf, &lbl_eu_80508DF8[0x4c], i);
+                func_801368C0((nw4r::lyt::Layout*)mLayout, buf, sh);
+                sprintf(buf, &lbl_eu_80508DF8[0x5e], i);
+                func_801368C0((nw4r::lyt::Layout*)mLayout, buf, sh);
+            }
+        }
 
         func_8021B52C(this);
         ((nw4r::lyt::Layout*)mLayout)->Animate(0);
@@ -569,6 +592,26 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
             (char*)func_80136190(&lbl_eu_80508DF8[0x281], &lbl_eu_80508DF8[0x28d], 0x2d), 0);
 
         func_8021ADC4(this);
+
+        // Pull the two colour pairs off their panes and refresh the alpha
+        // channel of the shared slot colours.
+        nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80508DF8[0x2b1], true);
+        FourShorts fs1a = func_801397AC(pane1, 0);
+        CopyVec4s(lbl_eu_806646D8, (short*)&fs1a);
+        FourShorts fs1b = func_801397AC(pane1, 1);
+        CopyVec4s(lbl_eu_806646E0, (short*)&fs1b);
+        lbl_eu_806646E8[3] = lbl_eu_806646D8[3];
+        lbl_eu_806646F0[3] = lbl_eu_806646E0[3];
+
+        nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Layout*)mLayout)->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80508DF8[0x2c0], true);
+        FourShorts fs2a = func_801397AC(pane2, 0);
+        CopyVec4s(lbl_eu_806646F8, (short*)&fs2a);
+        FourShorts fs2b = func_801397AC(pane2, 1);
+        CopyVec4s(lbl_eu_80664700, (short*)&fs2b);
+        lbl_eu_80664708[3] = lbl_eu_806646F8[3];
+        lbl_eu_80664710[3] = lbl_eu_80664700[3];
 
         func_8021B500(this);
         mFileHandle1 = 0;
@@ -601,12 +644,12 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8021BBC4()
 {
-    func_801D1F9C(&lbl_eu_806646D8, 0);
-    func_801D1F9C(&lbl_eu_806646E0, 0);
-    func_801C4B60(&lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
-    func_801C4B60(&lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
-    func_801D1F9C(&lbl_eu_806646F8, 0);
-    func_801D1F9C(&lbl_eu_80664700, 0);
-    func_801C4B60(&lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
-    func_801C4B60(&lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
+    func_801D1F9C(lbl_eu_806646D8, 0);
+    func_801D1F9C(lbl_eu_806646E0, 0);
+    func_801C4B60(lbl_eu_806646E8, 0xd2, 0x28, 0x14, 0);
+    func_801C4B60(lbl_eu_806646F0, 0xd2, 0x28, 0x14, 0);
+    func_801D1F9C(lbl_eu_806646F8, 0);
+    func_801D1F9C(lbl_eu_80664700, 0);
+    func_801C4B60(lbl_eu_80664708, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(lbl_eu_80664710, 0xd2, 0x28, 0x14, 0);
 }

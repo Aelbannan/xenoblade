@@ -277,6 +277,8 @@ void func_800FDE4C(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
     if (lbl_eu_80663F14 == NULL) return;
 
     u32 zero = 0;
+    u32 v608C = 0x80000004;
+    u32 v6094 = 0x4002;
     obj->field90E4 = zero;
     obj->field90E8 = zero;
     obj->field90EC = zero;
@@ -299,12 +301,12 @@ void func_800FDE4C(cf::CfObjectSelectorData* obj, u32 a4, u32 a5) {
     obj->fieldC178 = NULL;
     obj->fieldC17C = a4;
     obj->field6080 = zero;
-    obj->fieldC180 = zero | 1;
-    obj->field608C = 0x80000004;
-    obj->field6094 = 0x4002;
+    obj->fieldC180 = obj->field6080 | 1;
+    obj->field608C = v608C;
+    obj->field6094 = v6094;
     obj->field6098 = zero;
-    obj->field90E8 = 0x80000004;
-    obj->field90EC = 0x4002;
+    obj->field90E8 = v608C;
+    obj->field90EC = v6094;
 }
 
 // ---------------------------------------------------------------------
@@ -392,25 +394,22 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
 // ---------------------------------------------------------------------
 void func_800FE860(cf::CfObjectSelectorData* obj, u32 arg4) {
     u32 b = obj->fieldC180 & 0x100;
-    if (b != 0) {
-        if (arg4 != 0) return;
-    } else {
-        if (arg4 == 0) return;
-    }
+    if (b != 0 && arg4 != 0) return;
+    if (b == 0 && arg4 == 0) return;
     if (arg4 != 0) {
-        obj->field90E8 |= 0x40;
+        obj->field9108 |= 0x40;
     } else {
-        obj->field90E8 &= ~0x40;
+        obj->field9108 &= ~0x40;
     }
     if (arg4 != 0) {
         obj->fieldC174 |= 0x40;
     } else {
         obj->fieldC174 &= ~0x40;
     }
-    if (arg4 != 0) {
-        obj->fieldC180 |= 0x100;
-    } else {
+    if (arg4 == 0) {
         obj->fieldC180 &= ~0x100;
+    } else {
+        obj->fieldC180 |= 0x100;
     }
 }
 

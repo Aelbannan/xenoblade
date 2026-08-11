@@ -3,6 +3,7 @@
 
 #include <types.h>
 #include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/IUICf.hpp"
 #include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -86,10 +87,12 @@ extern "C" void func_800FEF20(CMainMenu* self) {
     if (self->field_0x74 != 0) {
         return;
     }
-    u32 v0 = lbl_eu_8052BDF4[0];
-    self->field_0x40 = lbl_eu_8052BDF4[1];
+    u32 v0;
+    u32 *p = (u32 *)lbl_eu_8052BDF4;
+    v0 = p[0];
+    self->field_0x40 = p[1];
     self->field_0x3C = v0;
-    self->field_0x44 = lbl_eu_8052BDF4[2];
+    self->field_0x44 = p[2];
 }
 
 void func_800FEF4C(){}

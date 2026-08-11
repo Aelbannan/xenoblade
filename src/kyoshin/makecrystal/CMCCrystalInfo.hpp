@@ -70,6 +70,22 @@ public:
     virtual u8 GetFlag(void* item, u8 idx);  // [25] = 0x64
 };
 
+// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// (declared index 7, no args) yields the u32 passed to func_8013676C.
+// All-pure so no vtable is emitted; a genuine virtual call makes MWCC emit
+// the retail lwz r12 dispatch sequence.
+class __declspec(novtable) CMCCrystalInfoFontView {
+public:
+    virtual void vf0() = 0; // index 0 -> +0x08
+    virtual void vf1() = 0; // index 1 -> +0x0C
+    virtual void vf2() = 0; // index 2 -> +0x10
+    virtual void vf3() = 0; // index 3 -> +0x14
+    virtual void vf4() = 0; // index 4 -> +0x18
+    virtual void vf5() = 0; // index 5 -> +0x1C
+    virtual void vf6() = 0; // index 6 -> +0x20
+    virtual u32 vf7() = 0;  // index 7 -> +0x24
+};
+
 /* Crystal info for the makecrystal UI. Manages crystal information display
    state. Inherits from IWorkEvent for file-load callbacks. */
 class CMCCrystalInfo : public IWorkEvent {
@@ -102,23 +118,31 @@ public:
 // does not mangle global-scope names) binds to the same symbols. The special
 // MWCC ctor/dtor/delete helpers below keep extern "C".
 // ---------------------------------------------------------------------------
-void func_8021B52C(CMCCrystalInfo* self);
-void func_8021B5B4(CMCCrystalInfo* self);
-void func_8021B63C(CMCCrystalInfo* self);
-void func_8021B6C4(CMCCrystalInfo* self);
+// Same-TU helpers; retail symbols are unmangled, so C linkage keeps both the
+// definitions and the call relocs bound to the retail names.
+extern "C" void func_8021B52C(CMCCrystalInfo* self);
+extern "C" void func_8021B5B4(CMCCrystalInfo* self);
+extern "C" void func_8021B63C(CMCCrystalInfo* self);
+extern "C" void func_8021B6C4(CMCCrystalInfo* self);
 extern char lbl_eu_80508DF8[];
 extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
-extern u32 func_801355BC();
-extern FourShorts func_801397AC(void*, u32);
-extern void CopyVec4s(short* dst, const short* src);
-extern "C" void* lbl_eu_806646D8;
-extern "C" void* lbl_eu_806646E0;
-extern "C" void* lbl_eu_806646E8;
-extern "C" void* lbl_eu_806646F0;
-extern "C" void* lbl_eu_806646F8;
-extern "C" void* lbl_eu_80664700;
-extern "C" void* lbl_eu_80664708;
-extern "C" void* lbl_eu_80664710;
+
+// Imports whose retail symbols are unmangled (plain global C++ would be
+// mangled by MWCC, e.g. func_801355BC__Fv) — C linkage keeps the call relocs
+// bound to the retail names.
+extern "C" u32 func_801355BC();
+extern "C" FourShorts func_801397AC(void*, u32);
+extern "C" void CopyVec4s(short* dst, const short* src);
+// GXColorS10-style shared slot colours (4 s16 channels each); the alpha
+// channel is refreshed from the layout panes during file load.
+extern s16 lbl_eu_806646D8[4];
+extern s16 lbl_eu_806646E0[4];
+extern s16 lbl_eu_806646E8[4];
+extern s16 lbl_eu_806646F0[4];
+extern s16 lbl_eu_806646F8[4];
+extern s16 lbl_eu_80664700[4];
+extern s16 lbl_eu_80664708[4];
+extern s16 lbl_eu_80664710[4];
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dl__FPv(void*);

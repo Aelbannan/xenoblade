@@ -290,7 +290,8 @@ extern "C" int cfCam_getBit19_0x0C(void* _this) {
 // r0 = flag; r3 = r0 & mask; r3 = -r3; r0 = r0 | r3; return r0 & 1.
 extern "C" bool func_8006EF04__Fi(s32 mask) {
     unsigned int flag = lbl_eu_80663E24;
-    return ((flag | (unsigned int)-(int)(flag & (unsigned int)mask)) & 1) != 0;
+    unsigned int x = flag & (unsigned int)mask;
+    return ((((unsigned int)-(int)x | x) >> 31) & 1) != 0;
 }
 
 extern "C" int cfCam_getBit6_GlobalE24() {

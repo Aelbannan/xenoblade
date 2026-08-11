@@ -96,9 +96,10 @@ void CMenuKizunaTalk::Term() {
     mScene->removeRenderCB(this);
 
     if (mLayout != 0) {
-        // Layout virtual slot 2 (vtable + 0x8): release with flag 1.
-        u32 fn = (*(u32**)mLayout)[0x08 / 4];
-        ((void (*)(nw4r::lyt::Layout*, int))fn)(mLayout, 1);
+        // Layout virtual slot 2 (vtable + 0x8): release with flag 1. The
+        // inline index keeps MWCC's indirect-call null guard (retail shape).
+        u32* vtab = *(u32**)mLayout;
+        ((void (*)(nw4r::lyt::Layout*, int))(vtab[0x08 / 4]))(mLayout, 1);
         mLayout = 0;
     }
 
@@ -107,9 +108,7 @@ void CMenuKizunaTalk::Term() {
     func_8022B7F4(&mSysWin[0]);
 
     // CCur18 cursor virtual slot 3 (vtable + 0xC): per-frame update.
-    u32 curVt = *(u32*)&mCur[0];
-    u32 curFn = (*(u32**)curVt)[0x0C / 4];
-    ((void (*)(u8*))curFn)(&mCur[0]);
+    reinterpret_cast<CCur18View*>(&mCur[0])->vf03();
 
     lbl_eu_80664424 = 0;
     func_8045F778__17UnkClass_8045F564Fv(&mMemRegion[0]);

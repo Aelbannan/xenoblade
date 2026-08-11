@@ -141,7 +141,7 @@ struct ArchiveFontBase::ConstructContext {
     CachedStreamReader mReader; // at 0x1C
     u32 field_0x38;             // at 0x38
     const char* field_0x3C;     // at 0x3C
-    u16* field_0x40;            // at 0x40
+    u32 field_0x40;             // at 0x40 (code map base, u16 entries)
     u32 field_0x44;             // at 0x44
     u32 field_0x48;             // at 0x48
     u32 field_0x4C;             // at 0x4C
@@ -192,17 +192,21 @@ private:
 
 bool PackedFont::Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
                            const char* pName) {
+    // Total archive byte count to stream (BinaryFileHeader::fileSize). Read
+    // first so it lands in a saved register like retail.
+    u32 fileSize =
+        static_cast<const BinaryFileHeader*>(pArchive)->fileSize;
+
     ConstructContext ctx;
     ctx.mReader.Init();
 
-    u32 bufferEnd = (u32)pBuffer + bufferSize;
-
-    ctx.field_0x38 = (bufferEnd - 0x220) & ~3u;
     ctx.field_0x3C = pName;
-    ctx.field_0x40 = NULL;
+    ctx.field_0x40 = 0;
     ctx.field_0x44 = (u32)pBuffer;
+    u32 bufferEnd = (u32)pBuffer + bufferSize;
     ctx.field_0x48 = bufferEnd;
     ctx.field_0x4C = (u32)pBuffer;
+    ctx.field_0x38 = (bufferEnd - 0x220) & ~3u;
     ctx.field_0x50 = 0xE;
     ctx.field_0x54 = 0;
     ctx.field_0x58 = 1;
@@ -210,17 +214,14 @@ bool PackedFont::Construct(void* pBuffer, u32 bufferSize, const void* pArchive,
     ctx.field_0x60 = 0;
     ctx.field_0x62 = 0;
     ctx.field_0x64 = 0;
+    ctx.field_0x18 = 0;
     ctx.field_0x0 = 0;
     ctx.field_0x4 = 0;
     ctx.field_0x8 = 0;
     ctx.field_0xC = 1;
-    ctx.field_0x18 = 0;
-
-    const BinaryFileHeader* pHeader =
-        static_cast<const BinaryFileHeader*>(pArchive);
 
     // StreamingConstruct returns an op status code; success is exactly 1.
-    return StreamingConstruct(&ctx, pArchive, pHeader->fileSize) == 1;
+    return StreamingConstruct(&ctx, pArchive, fileSize) == 1;
 }
 
 /******************************************************************************
@@ -351,7 +352,7 @@ int PackedFont::ConstructOpPrepairCopyPackedSheet(
 
     // The next sheet's code-map entry decides how its image data is stored:
     // 0xFFFF means "not copied" (the sheet data stays in the archive).
-    if (pCtx->field_0x40[pCtx->field_0x60] != 0xFFFF) {
+    if (reinterpret_cast<const u16*>(pCtx->field_0x40)[pCtx->field_0x60] != 0xFFFF) {
         if (pCtx->field_0x48 - pCtx->field_0x4C < data) {
             return 2;
         }

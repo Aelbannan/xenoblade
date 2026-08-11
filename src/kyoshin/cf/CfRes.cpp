@@ -85,7 +85,10 @@ int CfRes_getInstanceField() {
 }
 
 extern u32 lbl_eu_80663D7C;
-int CfRes_getInstance() { return lbl_eu_80663D7C; }
+#pragma push
+#pragma auto_inline off
+extern "C" int CfRes_getInstance() { return lbl_eu_80663D7C; }
+#pragma pop
 
 extern u32 lbl_eu_80663D7C;
 extern int func_80067E78(int, int);
@@ -393,7 +396,10 @@ void func_800638B4(){}
 
 void func_80063900(){}
 
-void func_8006398C(){}
+#pragma push
+#pragma auto_inline off
+int func_8006398C() { return CfRes_getInstance(); }
+#pragma pop
 
 extern "C" void CfRes_stub_63990() {}
 

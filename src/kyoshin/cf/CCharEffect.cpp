@@ -51,62 +51,40 @@ void func_8015BD24(CCharEffect* self, u32 param) {
 // entries of the 0x2CC list. Each non-NULL slot has its owner back-pointer
 // cleared, its in-use flag (0x40) set, and the slot/twin entries NULLed.
 // The loops walk 4 slots per group (same shape as func_eu_8015D258).
+// func_8015BD94: detach all 44 effect slots (mSlots[1..44]) and the 8
+// entries of the 0x2CC list. Each non-NULL slot has its owner back-pointer
+// cleared, its in-use flag (0x40) set, and the slot/twin entries NULLed.
+// The loops walk 4 slots per group; the step-3 trip counter next to the
+// 4-slot walk (same shape as func_eu_8015D258) is kept by the retail
+// build, so it is kept here too. Slots are re-read from the array for the
+// flag update (retail reloads the pointer after the back-pointer store).
 void func_8015BD94(CCharEffect* self) {
-    for (u32 j = 0; j < 0x2c; j += 4) {
-        CCharEffectSlot* s1 = (CCharEffectSlot*)self->mSlots[j + 1];
-        if (s1 != NULL) {
-            s1->field_B0 = NULL;
-            s1->field_68 |= 0x40;
-            self->mSlots[j + 1] = NULL;
-            self->mSlots2[j] = NULL;
+    void** p = self->mSlots;
+    void** t = self->mSlots2;
+    for (u32 i = 0; i < 0x21; i += 3) {
+        for (u32 k = 0; k < 4; k++) {
+            CCharEffectSlot* s = (CCharEffectSlot*)p[k + 1];
+            if (s != NULL) {
+                s->field_B0 = NULL;
+                ((CCharEffectSlot*)p[k + 1])->field_68 |= 0x40;
+                p[k + 1] = NULL;
+                t[k] = NULL;
+            }
         }
-        CCharEffectSlot* s2 = (CCharEffectSlot*)self->mSlots[j + 2];
-        if (s2 != NULL) {
-            s2->field_B0 = NULL;
-            s2->field_68 |= 0x40;
-            self->mSlots[j + 2] = NULL;
-            self->mSlots2[j + 1] = NULL;
-        }
-        CCharEffectSlot* s3 = (CCharEffectSlot*)self->mSlots[j + 3];
-        if (s3 != NULL) {
-            s3->field_B0 = NULL;
-            s3->field_68 |= 0x40;
-            self->mSlots[j + 3] = NULL;
-            self->mSlots2[j + 2] = NULL;
-        }
-        CCharEffectSlot* s4 = (CCharEffectSlot*)self->mSlots[j + 4];
-        if (s4 != NULL) {
-            s4->field_B0 = NULL;
-            s4->field_68 |= 0x40;
-            self->mSlots[j + 4] = NULL;
-            self->mSlots2[j + 3] = NULL;
-        }
+        p += 4;
+        t += 4;
     }
-    for (u32 j = 0; j < 8; j += 4) {
-        CCharEffectSlot* s1 = (CCharEffectSlot*)self->mSlotList2[j];
-        if (s1 != NULL) {
-            s1->field_B0 = NULL;
-            ((CCharEffectSlot*)self->mSlotList2[j])->field_68 |= 0x40;
-            self->mSlotList2[j] = NULL;
+    void** q = self->mSlotList2;
+    for (u32 i = 0; i < 0x6; i += 3) {
+        for (u32 k = 0; k < 4; k++) {
+            CCharEffectSlot* s = (CCharEffectSlot*)q[k];
+            if (s != NULL) {
+                s->field_B0 = NULL;
+                ((CCharEffectSlot*)q[k])->field_68 |= 0x40;
+                q[k] = NULL;
+            }
         }
-        CCharEffectSlot* s2 = (CCharEffectSlot*)self->mSlotList2[j + 1];
-        if (s2 != NULL) {
-            s2->field_B0 = NULL;
-            ((CCharEffectSlot*)self->mSlotList2[j + 1])->field_68 |= 0x40;
-            self->mSlotList2[j + 1] = NULL;
-        }
-        CCharEffectSlot* s3 = (CCharEffectSlot*)self->mSlotList2[j + 2];
-        if (s3 != NULL) {
-            s3->field_B0 = NULL;
-            ((CCharEffectSlot*)self->mSlotList2[j + 2])->field_68 |= 0x40;
-            self->mSlotList2[j + 2] = NULL;
-        }
-        CCharEffectSlot* s4 = (CCharEffectSlot*)self->mSlotList2[j + 3];
-        if (s4 != NULL) {
-            s4->field_B0 = NULL;
-            ((CCharEffectSlot*)self->mSlotList2[j + 3])->field_68 |= 0x40;
-            self->mSlotList2[j + 3] = NULL;
-        }
+        q += 4;
     }
 }
 

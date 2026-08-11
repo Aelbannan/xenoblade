@@ -96,6 +96,7 @@ public:
     u8 mGridPad[0x4AC4 - 0xBC]; // 0xBC-0x4AC3
     u8 mState;                 // 0x4AC4
     u8 mField4AC5;             // 0x4AC5
+    u8 mField4AC6;             // 0x4AC6 (read by Init for the grid ctor flag)
 };
 
 // C-linkage imports (retail-unmangled symbols: US strips the member
@@ -118,6 +119,17 @@ CMenuItem* __dt__9CMenuItemFv(CMenuItem* self, int flags);
 void __dt__12CItemBoxGridFv(CItemBoxGrid* self, int flags);
 void __dt__11CTitleAHelpFv(CTitleAHelp* self, int flags);
 void __dt__6CBgTexFv(CBgTex* self, int flags);
+// Retail-unmangled ctors/helpers used by CMenuItem::Init (US strips the
+// member manglings; the widget headers' C++ members would mangle the relocs).
+void __ct__CBgTex(CBgTex* self, u8 arg);
+void __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2);
+void __ct__CItemBoxGrid(CItemBoxGrid* self, u32 type, u32 unk, u32 scene, u32 flag);
+int func_801C3C14(CBgTex* self);
+void func_801C3A24(CBgTex* self);
+void CTitleAHelp_load(CTitleAHelp* self);
+void func_801CB480(CItemBoxGrid* self);
+void func_801CAA6C(CItemBoxGrid* self);
+void PushToList(CItemBoxGrid* self, u8 val);
 }
 
 // CInfoCf vtable (retail .data:0x805309B0), the UI-state singleton pointer
@@ -126,6 +138,9 @@ void __dt__6CBgTexFv(CBgTex* self, int flags);
 extern u8 lbl_eu_805309B0[];
 extern cf::CInfoCf* lbl_eu_80664250;
 extern u32 lbl_eu_80664258;
+
+// Title/help name-string base used by CMenuItem::Init (retail rodata).
+extern char lbl_eu_8050303C[];
 
 /*
  * Body-copy view for the C-ABI copy helpers in this TU. Each helper copies a
@@ -370,7 +385,7 @@ struct CInfoCfHeadF80 {
 };
 
 struct CInfoCfMidF80 {
-    // (array at +0xC8 is a separate member copied between head and mid)
+    u64 field_C8[18];   // +0xC8..+0x157 (retail counted loop, li r0, 0x12)
     CInfoCfPair field_158;
     u32 field_160;
     CInfoCfPair field_164;
@@ -383,17 +398,10 @@ struct CInfoCfMidF80 {
 };
 #pragma pack(pop)
 
-// 18-entry u64 table at +0xC8, copied as its own statement so the counted
-// loop's prologue is not scheduled into the head copy's final pair.
-struct CInfoCfArrF80 {
-    u64 q[18];
-};
-
 struct CInfoCfObjF80 {
     void* vtable;         // 0x00 (never copied)
     CInfoCfHeadF80 head;  // 0x04
-    CInfoCfArrF80 arr;    // 0xC8
-    CInfoCfMidF80 mid;    // 0x158
+    CInfoCfMidF80 mid;    // 0xC8
 };
 
 /*
@@ -440,6 +448,100 @@ struct CInfoCfObj368 {
 struct CInfoCfObj4D0 {
     void* vtable;       // 0x00 (copied by the bulk loop in this helper)
     u8 body[0x44C0];    // 0x00..0x44C0 raw packed view
+};
+
+/*
+ * CItemBoxGrid body-copy view used by CMenuItem::Init. The retail Init
+ * constructs a full CItemBoxGrid temporary on the stack, copies it into the
+ * embedded member region-by-region (inline head/tail copies + the func_80166xxx
+ * copy helpers), then destroys the temporary. The view maps the body (+0x04..
+ * +0x4A0B, vtable slot at +0 skipped) onto the helper regions.
+ */
+// Packed tail of the grid head: 2-load/2-reverse-store pair + lone word + bytes.
+#pragma pack(push, 1)
+struct CItemBoxGridHeadTail {
+    CInfoCfPair pair62;  // 0x62..0x69
+    u32 field_6A;        // 0x6A
+    u8 field_6E;         // 0x6E
+    u8 field_6F;         // 0x6F
+};
+#pragma pack(pop)
+
+// Grid head (body +0x04..+0x6F): 20 streamed words, byte, 2 words, 2 bytes,
+// then the 1-aligned packed tail (retail copies it inline).
+struct CItemBoxGridHead {
+    u32 field_04;
+    u32 field_08;
+    u32 field_0C;
+    u32 field_10;
+    u32 field_14;
+    u32 field_18;
+    u32 field_1C;
+    u32 field_20;
+    u32 field_24;
+    u32 field_28;
+    u32 field_2C;
+    u32 field_30;
+    u32 field_34;
+    u32 field_38;
+    u32 field_3C;
+    u32 field_40;
+    u32 field_44;
+    u32 field_48;
+    u32 field_4C;
+    u32 field_50;
+    u8 field_54;
+    u32 field_58;
+    u32 field_5C;
+    u8 field_60;
+    u8 field_61;
+    CItemBoxGridHeadTail tail;  // +0x62 (1-aligned)
+};
+
+// Grid tail region (body +0x524..+0x549): byte/halfword run + pair + word +
+// bytes, copied inline by Init.
+struct CItemBoxGridTail524 {
+    u8 field_524;
+    u8 field_525;
+    u8 field_526;
+    u8 field_527;
+    u8 field_528;
+    u8 field_529;
+    u16 field_52A;
+    u8 field_52C;
+    u8 field_52D;
+    u16 field_52E;
+    u8 field_530;
+    CInfoCfPair pair534;  // +0x534 (4-aligned)
+    u32 field_53C;
+    u8 field_540;
+    u8 field_541;
+    u8 field_542;
+    u8 field_543;
+    u8 field_544;
+    u8 field_545;
+    u8 field_546;
+    u8 field_547;
+    u8 field_548;
+    u8 field_549;
+};
+
+// Whole-body view: head/tail inline regions plus the func_80166xxx helper
+// regions (each helper takes an object view whose +4 body slice it copies).
+struct CItemBoxGridBodyView {
+    CItemBoxGridHead head;        // 0x04..0x6F (inline)
+    u8 _70[0xE8 - 0x70];          // 0x70..0xE7 (not copied directly)
+    CInfoCfObjE48 objE8;          // 0xE8  func_80166E48
+    CInfoCfObjF80 obj1D8;         // 0x1D8 func_80166F80
+    CInfoCfObjD4 obj3E4;          // 0x3E4 func_801671D4
+    CInfoCfObj60 obj418;          // 0x418 func_80167260
+    CInfoCfObjE4 obj440;          // 0x440 func_801672E4
+    CInfoCfObj368 obj468;         // 0x468 func_80167368
+    CInfoCfObjSysWin obj4AC;      // 0x4AC func_8016742C
+    CInfoCfObjSysWin obj4E8;      // 0x4E8 func_8016742C
+    CItemBoxGridTail524 tail524;  // 0x524..0x549 (inline)
+    u8 _54A[0x54C - 0x54A];       // 0x54A..0x54B
+    CInfoCfObj4D0 obj54C;         // 0x54C func_801674D0 (0x44C0 bytes)
 };
 
 // Same-unit import: pad-input/advance helper called from CMenuItem::Move

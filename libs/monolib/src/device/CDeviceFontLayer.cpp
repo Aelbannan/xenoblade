@@ -62,4 +62,4 @@ void CDeviceFontLayer::func_80454E2C() {}
 
 void CDeviceFontLayer::func_80454E6C(void) {}
 
-u32 CDeviceFontLayer::func_80454E78() { return 0; }
+u32 CDeviceFontLayer::func_80454E78() { return 0x10000; }

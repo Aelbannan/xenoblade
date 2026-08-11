@@ -14,6 +14,18 @@
 // Global: UI state flag read by func_80166830.
 extern u32 lbl_eu_80663E24;
 
+// Body-copy helpers defined below in this TU (called by CMenuItem::Init).
+// extern "C": the retail reloc names are unmangled (same convention as
+// func_80167A18 in kyoshin/menu/CMenuItem.cpp).
+extern "C" void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src);
+extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src);
+extern "C" void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
+extern "C" void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src);
+extern "C" void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
+extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src);
+extern "C" void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src);
+extern "C" void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src);
+
 // The retail ctor symbol __ct__cf_CInfoCf is a C-linkage name (no C++ mangling
 // markers), so it is emitted as a global function taking the instance (same
 // convention as __ct__cf_CfTFile / __ct__cf_CREvtMem). It installs the
@@ -99,35 +111,193 @@ extern "C" CMenuItem* __dt__9CMenuItemFv(CMenuItem* _this, int flags) {
     return _this;
 }
 
-void CMenuItem::Init() {}
+void CMenuItem::Init() {
+    // Gate the game-manager handoff until the menu flag is clear (retail
+    // reads mField4AC5 before any widget setup).
+    if (mField4AC5 == 0) {
+        func_8008294C__Q22cf13CfGameManagerFv(1);
+    }
+
+    // --- Re-initialise the embedded CBgTex via a temporary ---
+    u8 tempBgTex[0x20];
+    __ct__CBgTex(reinterpret_cast<CBgTex*>(tempBgTex), 0);
+    CBgTex* tmpBgTex = reinterpret_cast<CBgTex*>(tempBgTex);
+    // Field-by-field body copy (retail copies the UnkClass head inline, not
+    // via its __as__ operator=).
+    mBgTex.mMemRegion.unk0 = tmpBgTex->mMemRegion.unk0;
+    mBgTex.mMemRegion.unk4 = tmpBgTex->mMemRegion.unk4;
+    mBgTex.mMemRegion.unk8 = tmpBgTex->mMemRegion.unk8;
+    mBgTex.mMemRegion.unkC = tmpBgTex->mMemRegion.unkC;
+    mBgTex.mFileHandle = tmpBgTex->mFileHandle;
+    mBgTex.mLayout = tmpBgTex->mLayout;
+    mBgTex.mLayoutReady = tmpBgTex->mLayoutReady;
+    mBgTex.mLoaded = tmpBgTex->mLoaded;
+    mBgTex.mPtmMode = tmpBgTex->mPtmMode;
+    __dt__6CBgTexFv(tmpBgTex, -1);
+
+    if (func_801C3C14(&mBgTex) != 0) {
+        func_801C3A24(&mBgTex);
+    }
+
+    // --- Re-initialise the embedded CTitleAHelp via a temporary ---
+    char* name = func_80136190(lbl_eu_8050303C, lbl_eu_8050303C + 9, 1);
+    u8 tempTitle[0x38];
+    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(tempTitle), name, 1);
+    CTitleAHelp* tmpTitle = reinterpret_cast<CTitleAHelp*>(tempTitle);
+    mTitleAHelp.unk4.unk0 = tmpTitle->unk4.unk0;
+    mTitleAHelp.unk4.unk4 = tmpTitle->unk4.unk4;
+    mTitleAHelp.unk4.unk8 = tmpTitle->unk4.unk8;
+    mTitleAHelp.unk4.unkC = tmpTitle->unk4.unkC;
+    mTitleAHelp.mFileHandle = tmpTitle->mFileHandle;
+    mTitleAHelp.mArcResourceAccessor = tmpTitle->mArcResourceAccessor;
+    mTitleAHelp.mLayout = tmpTitle->mLayout;
+    mTitleAHelp.mAnimTrans20 = tmpTitle->mAnimTrans20;
+    mTitleAHelp.mAnimTrans24 = tmpTitle->mAnimTrans24;
+    mTitleAHelp.unk28 = tmpTitle->unk28;
+    mTitleAHelp.unk2c = tmpTitle->unk2c;
+    mTitleAHelp.mName = tmpTitle->mName;
+    mTitleAHelp.unk34 = tmpTitle->unk34;
+    mTitleAHelp.unk35 = tmpTitle->unk35;
+    mTitleAHelp.unk36 = tmpTitle->unk36;
+    mTitleAHelp.unk37 = tmpTitle->unk37;
+    __dt__11CTitleAHelpFv(tmpTitle, -1);
+
+    CTitleAHelp_load(&mTitleAHelp);
+
+    // --- Re-initialise the embedded CItemBoxGrid via a temporary ---
+    u8 tempGrid[0x4a0c];
+    __ct__CItemBoxGrid(reinterpret_cast<CItemBoxGrid*>(tempGrid),
+                       mField4AC5 ? 3 : 0, 0, (u32)mScene, mField4AC6);
+
+    // Copy the whole temporary into the member, region by region (retail
+    // split schedule: inline head/tail + the func_80166xxx copy helpers).
+    CItemBoxGridBodyView* dstBody =
+        reinterpret_cast<CItemBoxGridBodyView*>(&mItemBoxGrid);
+    const CItemBoxGridBodyView* srcBody =
+        reinterpret_cast<const CItemBoxGridBodyView*>(tempGrid);
+    // Head: 20 streamed words + byte + 2 words + 2 bytes + packed tail
+    // (member-wise so MWCC inlines them; a whole-struct assignment would
+    // emit an __as__ call).
+    CItemBoxGridHead* dh = &dstBody->head;
+    const CItemBoxGridHead* sh = &srcBody->head;
+    dh->field_04 = sh->field_04;
+    dh->field_08 = sh->field_08;
+    dh->field_0C = sh->field_0C;
+    dh->field_10 = sh->field_10;
+    dh->field_14 = sh->field_14;
+    dh->field_18 = sh->field_18;
+    dh->field_1C = sh->field_1C;
+    dh->field_20 = sh->field_20;
+    dh->field_24 = sh->field_24;
+    dh->field_28 = sh->field_28;
+    dh->field_2C = sh->field_2C;
+    dh->field_30 = sh->field_30;
+    dh->field_34 = sh->field_34;
+    dh->field_38 = sh->field_38;
+    dh->field_3C = sh->field_3C;
+    dh->field_40 = sh->field_40;
+    dh->field_44 = sh->field_44;
+    dh->field_48 = sh->field_48;
+    dh->field_4C = sh->field_4C;
+    dh->field_50 = sh->field_50;
+    dh->field_54 = sh->field_54;
+    dh->field_58 = sh->field_58;
+    dh->field_5C = sh->field_5C;
+    dh->field_60 = sh->field_60;
+    dh->field_61 = sh->field_61;
+    dh->tail.pair62 = sh->tail.pair62;
+    dh->tail.field_6A = sh->tail.field_6A;
+    dh->tail.field_6E = sh->tail.field_6E;
+    dh->tail.field_6F = sh->tail.field_6F;
+    func_80166E48(&dstBody->objE8, &srcBody->objE8);
+    func_80166F80(&dstBody->obj1D8, &srcBody->obj1D8);
+    func_801671D4(&dstBody->obj3E4, &srcBody->obj3E4);
+    func_80167260(&dstBody->obj418, &srcBody->obj418);
+    func_801672E4(&dstBody->obj440, &srcBody->obj440);
+    func_80167368(&dstBody->obj468, &srcBody->obj468);
+    func_8016742C(&dstBody->obj4AC, &srcBody->obj4AC);
+    func_8016742C(&dstBody->obj4E8, &srcBody->obj4E8);
+    dstBody->tail524.field_524 = srcBody->tail524.field_524;
+    dstBody->tail524.field_525 = srcBody->tail524.field_525;
+    dstBody->tail524.field_526 = srcBody->tail524.field_526;
+    dstBody->tail524.field_527 = srcBody->tail524.field_527;
+    dstBody->tail524.field_528 = srcBody->tail524.field_528;
+    dstBody->tail524.field_529 = srcBody->tail524.field_529;
+    dstBody->tail524.field_52A = srcBody->tail524.field_52A;
+    dstBody->tail524.field_52C = srcBody->tail524.field_52C;
+    dstBody->tail524.field_52D = srcBody->tail524.field_52D;
+    dstBody->tail524.field_52E = srcBody->tail524.field_52E;
+    dstBody->tail524.field_530 = srcBody->tail524.field_530;
+    dstBody->tail524.pair534 = srcBody->tail524.pair534;
+    dstBody->tail524.field_53C = srcBody->tail524.field_53C;
+    dstBody->tail524.field_540 = srcBody->tail524.field_540;
+    dstBody->tail524.field_541 = srcBody->tail524.field_541;
+    dstBody->tail524.field_542 = srcBody->tail524.field_542;
+    dstBody->tail524.field_543 = srcBody->tail524.field_543;
+    dstBody->tail524.field_544 = srcBody->tail524.field_544;
+    dstBody->tail524.field_545 = srcBody->tail524.field_545;
+    dstBody->tail524.field_546 = srcBody->tail524.field_546;
+    dstBody->tail524.field_547 = srcBody->tail524.field_547;
+    dstBody->tail524.field_548 = srcBody->tail524.field_548;
+    dstBody->tail524.field_549 = srcBody->tail524.field_549;
+    func_801674D0(&dstBody->obj54C, &srcBody->obj54C);
+    __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>(tempGrid), -1);
+
+    func_801CB480(&mItemBoxGrid);
+
+    if (mField4AC5 == 0) {
+        // Single-player item list ordering.
+        PushToList(&mItemBoxGrid, 2);
+        PushToList(&mItemBoxGrid, 4);
+        PushToList(&mItemBoxGrid, 5);
+        PushToList(&mItemBoxGrid, 6);
+        PushToList(&mItemBoxGrid, 7);
+        PushToList(&mItemBoxGrid, 8);
+        PushToList(&mItemBoxGrid, 0xb);
+        PushToList(&mItemBoxGrid, 0xd);
+        PushToList(&mItemBoxGrid, 0xc);
+        PushToList(&mItemBoxGrid, 3);
+        PushToList(&mItemBoxGrid, 9);
+        PushToList(&mItemBoxGrid, 0xa);
+    } else {
+        PushToList(&mItemBoxGrid, mField4AC5);
+    }
+    func_801CAA6C(&mItemBoxGrid);
+
+    // Register the render callback (this or the IScnRender subobject).
+    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        renderCB = &mIScnRender;
+    }
+    mScene->addRenderCB(renderCB, 0xd, 0);
+}
 
 // Copy a 0xEB-byte body slice (+0x04..+0xEF). The 16-entry 8-byte table at
 // +0x6C is copied by a counted lwzu/stwu loop (element base registers walk
 // from 0x68 = 0x6C-4).
-void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
+extern "C" void func_80166E48(CInfoCfObjE48* dst, const CInfoCfObjE48* src) {
     dst->body = src->body;
 }
 
-void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {
+extern "C" void func_80166F80(CInfoCfObjF80* dst, const CInfoCfObjF80* src) {
     dst->head = src->head;
-    dst->arr = src->arr;
     dst->mid = src->mid;
 }
 
 // Copy a 0x21-byte body slice (7 words + 5 bytes at +0x04..+0x24), skipping
 // the member vtable at +0x00. Member struct assignment reproduces the retail
 // load-all-then-store-all shape and register allocation.
-void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src) {
+extern "C" void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src) {
     dst->body = src->body;
 }
 
 // Copy an 8-word + 4-byte body slice (+0x04..+0x27).
-void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src) {
+extern "C" void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src) {
     dst->body = src->body;
 }
 
 // Copy a 10-word + 5-byte body slice (+0x04..+0x30).
-void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
+extern "C" void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
     dst->body = src->body;
 }
 
@@ -135,7 +305,7 @@ void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src) {
 // with one temp per field (22 temps fit the register file); the packed tail
 // words at +0x39/+0x3D (odd offsets) are read with word casts from the raw
 // tail slice.
-void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
+extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
     u32 v04 = src->body.field_04;
     u32 v08 = src->body.field_08;
     u32 v0C = src->body.field_0C;
@@ -185,7 +355,7 @@ void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
 // CSysWin body copy: every field from +0x04..+0x39 except the 0x29-0x2B
 // alignment gap (implicit padding in CInfoCfSysWinBody, not copied by the
 // struct assignment - matching retail).
-void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src) {
+extern "C" void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src) {
     dst->body = src->body;
 }
 
@@ -193,7 +363,7 @@ void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src) {
 // region, mirroring retail's split schedule: u64 tables via counted lwzu/stwu
 // loops (pointer walks keep MWCC from unrolling), then the packed string/data
 // run as word/byte copies.
-void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src) {
+extern "C" void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src) {
     u8* d = (u8*)dst;
     const u8* s = (const u8*)src;
     u64* dq = (u64*)d;

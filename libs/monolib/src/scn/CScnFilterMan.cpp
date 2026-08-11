@@ -2,12 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/monolib/src/scn/CScnFilterMan.hpp"
 
-struct CScnFilterMan {
-    ~CScnFilterMan();
-    void cbRenderBefore();
-    void update();
-};
+// Setter helpers are declared here but defined at the BOTTOM of this file
+// (after every caller) so MWCC's -inline auto cannot fold them into the
+// tail-call wrappers below; retail keeps them as separate functions (same
+// pattern as CGXCache.cpp func_8044BE38).
+void func_8049D274(CScnFilterListIter* self, u32 val);
+void func_8049D64C(CScnFilterListIter* self, u32 val);
 
 
 void func_8049CB6C(void) {}
@@ -54,9 +56,10 @@ void func_8049D1EC(){}
 
 void func_8049D218(){}
 
-void func_8049D274(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
-
-void func_8049D26C(void* self){ func_8049D274(*(void**)((char*)self + 0x4), 0); }
+// iter = list end sentinel (retail: lwz r4,0x4(r4); b func_8049D274)
+void func_8049D26C(CScnFilterListIter* self, CScnFilterList* list) {
+    func_8049D274(self, (u32)list->mStartNodePtr);
+}
 
 void func_8049D27C(){}
 
@@ -74,7 +77,10 @@ extern "C" void func_8049D520(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 extern "C" void* func_8049D530(void* self){ return (void*)((char*)*(void**)self + 8); }
 
-void func_8049D53C(void){}
+// iter = first node (retail: lwz r4,0x4(r4); lwz r4,0x0(r4); b func_8049D274)
+void func_8049D53C(CScnFilterListIter* self, CScnFilterList* list) {
+    func_8049D274(self, (u32)list->mStartNodePtr->mNext);
+}
 
 void func_8049D548(){}
 
@@ -86,9 +92,10 @@ void func_8049D570(){}
 
 void func_8049D5F0(){}
 
-void func_8049D64C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
-
-void func_8049D644(void* self){ func_8049D64C(*(void**)((char*)self + 0x4), 0); }
+// iter = list end sentinel via the D64C setter
+void func_8049D644(CScnFilterListIter* self, CScnFilterList* list) {
+    func_8049D64C(self, (u32)list->mStartNodePtr);
+}
 
 void func_8049D654(){}
 
@@ -106,7 +113,10 @@ void func_8049D8E4(){}
 
 void func_8049D914(){}
 
-void func_8049D948(void){}
+// iter = first node via the D64C setter
+void func_8049D948(CScnFilterListIter* self, CScnFilterList* list) {
+    func_8049D64C(self, (u32)list->mStartNodePtr->mNext);
+}
 
 extern "C" void* func_8049D954(void* self){ return (void*)((char*)*(void**)self + 8); }
 
@@ -133,7 +143,10 @@ u8 func_8049DAF4(void* self) {
     return ((CScnFilterState*)self)->state;
 }
 
-void func_8049DAFC(){}
+// reslist iterator equality: true when both iterators hold the same node.
+s32 func_8049DAFC(CScnFilterListIter* a, CScnFilterListIter* b) {
+    return a->mNode == b->mNode;
+}
 
 void func_8049DB14(){}
 
@@ -142,7 +155,10 @@ void func_8049DB14(){}
 extern "C" { extern void* cacheInstance__9CDeviceGX; }
 extern "C" void* func_8049DBF0(void) { return cacheInstance__9CDeviceGX; }
 
-void func_8049DBF8(void){}
+// True when the filter's mFlags has bit 1 set (flag-test helper tail call).
+s32 func_8049DBF8(CScnFilter* filter) {
+    return func_8004B3D8(&filter->mFlags, 2);
+}
 
 void func_8049DC04(){}
 
@@ -161,3 +177,4 @@ void func_8049DD30(){}
 void CScnFilterMan::cbRenderBefore() {}
 
 extern "C" void func_8049CAF4() {}
+

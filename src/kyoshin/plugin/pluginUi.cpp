@@ -206,9 +206,9 @@ void mesMonadoON(){}
 void mesMonadoOFF(){}
 int ptChangeNotice(){
     extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
-    extern void func_8013E8E0();
+    extern void func_8013E8E0(int);
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
-    func_8013E8E0();
+    func_8013E8E0(0);
     return 0;
 }
 int save() {

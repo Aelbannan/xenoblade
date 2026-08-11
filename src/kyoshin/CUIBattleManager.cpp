@@ -690,8 +690,11 @@ extern "C" void func_8012FF6C(void* p) {
     __dt__16CUIBattleManagerFv((char*)p - 0x54);
 }
 
-void __ct__CUIBattleManager(CUIBattleManager* self, CScnNw4r* pScene,
-                             mtl::ALLOC_HANDLE handle) {}
+// noinline: the retail ctor is a real 0x1FC-byte function; without this the
+// empty same-TU stub is IPA'd away and func_8012F558 loses its ctor call.
+void __declspec(noinline) __ct__CUIBattleManager(CUIBattleManager* self,
+                                                 CScnNw4r* pScene,
+                                                 mtl::ALLOC_HANDLE handle) {}
 
 void func_8012E630(CUIBattleManager* self) {
     int i;

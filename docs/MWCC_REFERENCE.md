@@ -4911,11 +4911,21 @@ disp 0. Ruled out: u32*/u8*/void*/void**/fn-ptr** pointer forms, array/
 struct/cast accesses (those split into a two-base `lis r3; lwz LO(r3)` +
 `addi r4,r3` form that clobbers r3 on the NULL path → provably
 `not_equivalent`), loads-upfront (MWCC hoists the arg loads above the branch),
-`volatile`, `#pragma peephole off`/`#pragma scheduling off`,
+`volatile`, unit-wide `#pragma peephole off`/`#pragma scheduling off`,
 `-opt nopeephole` (fixes the fusion but breaks the other 9 functions),
 `-opt nosched/noloadstore/noccse/noglobal/nocommon/nodeadstore`,
 `-O4,s`, and MWCC GC 3.0a5.2/3.0a5/3.0a3.4/3.0a3 + Wii 1.0/1.0a/1.1/1.7
-(all fuse identically). Keep the single-pointer form — it preserves r3/r4 on
+(all fuse identically). **2026-08 probe:** a *function-scoped*
+`#pragma peephole off` (…`on`) around only this function does NOT break the
+other 9, and emits the full 10-instruction 0x28 form `lis r3,@ha;
+addi r4,r3,@l; lwz r12,0(r4); cmpi; beqlr; lwz r3,4(r4); lwz r4,8(r4);
+mtctr; bctr; blr` — but the lis targets r3 (retail: r4) and clobbers r3 on
+the NULL path, so it is still not byte-identical and stays non-certifiable.
+Verified identical output for `-opt nopeephole`, `-O4,s/-O3/-O2` +
+pragma, struct/volatile/arith/typed-fn shapes; the two-register
+materialization is stable under peephole-off, the in-place `lis r4; addi
+r4,r4,0` retail form is unreachable from high-level C under this compiler.
+Keep the single-pointer form — it preserves r3/r4 on
 the NULL path like retail; SMT EQUIVALENT is additionally blocked by the
 `bctrl` through the runtime callback (needs indirect-target closure). Only a
 tooling change (peephole per-function, or indirect-call closure) can close it.

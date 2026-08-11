@@ -874,6 +874,7 @@ void HomeButton::init_battery(const HBMControllerData* pController) {
 
 void HomeButton::calc(const HBMControllerData* pController) {
     int i;
+    GroupAnmController* pAnim;
 
     mpPaneManager->calc();
 
@@ -971,7 +972,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
             reset_battery();
             mSelectAnmNum = res::ePairAnm_link_msg_in;
-            mpPairGroupAnmController[mSelectAnmNum]->start();
+            (*(mpPairGroupAnmController + mSelectAnmNum))->start();
         }
 
         if (--mWaitStopMotorCount <= 0) {
@@ -1037,12 +1038,16 @@ void HomeButton::calc(const HBMControllerData* pController) {
         }
 
         if (mMsgCount == 0) {
-            for (i = 0; i < 5; i++) {
+            int j;
+            GroupAnmController* animator;
+
+            for (j = 0; j < 5; j++) {
                 int idx = findGroupAnimator(
-                    res::eGrPane_optnBtn_00_inOut + i,
+                    res::eGrPane_optnBtn_00_inOut + j,
                     res::eGrAnim_optn_btn_out);
 
-                mpGroupAnmController[idx]->start();
+                animator = mpGroupAnmController[idx];
+                animator->start();
             }
 
             reset_btn();
@@ -1307,13 +1312,14 @@ void HomeButton::calc(const HBMControllerData* pController) {
     case 16: {
         mAppVolume[3] = 0;
 
-        if (mSequence > 2 ||
-            !mpGroupAnmController[mSelectAnmNum]->isPlaying()) {
+        if (mSequence <= 2) {
+            pAnim = mpGroupAnmController[mSelectAnmNum];
+        }
+
+        if (!pAnim->isPlaying()) {
             mState = 17;
             fadeout_sound(0.0f);
         } else {
-            GroupAnmController* pAnim =
-                mpGroupAnmController[mSelectAnmNum];
             f32 restFrame = pAnim->getMaxFrame() - pAnim->getCurrentFrame();
             fadeout_sound(restFrame / mFadeOutSeTime);
         }
@@ -1345,7 +1351,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
 
         mpRemoteSpk->ClearPcm();
         mpRemoteSpk->Stop();
-        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
             getController(i)->stopMotor();
             mpController[i]->clearCallback();
         }
@@ -1355,7 +1361,7 @@ void HomeButton::calc(const HBMControllerData* pController) {
             mpHBInfo->sound_callback(HBM_SOUND_STOP, 0);
         }
 
-        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        for (i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
             mpGroupAnmController[findGroupAnimator(
                 res::eGrPane_plyr_00 + i, res::eGrAnim_btry_wht)]
                 ->stop();
@@ -2851,12 +2857,21 @@ inline void HomeButton::reset_window() {
 }
 
 inline void HomeButton::reset_battery() {
+    typedef const char* PaneName;
+    const PaneName* row = &scBatteryPaneName[0][0];
+    const PaneName* pane;
+
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        pane = row;
+
         for (int j = 0; j < res::eBatteryPane_Max; j++) {
             mpLayout->GetRootPane()
-                ->FindPaneByName(scBatteryPaneName[i][j], true)
+                ->FindPaneByName(*pane, true)
                 ->SetVisible(false);
+            pane++;
         }
+
+        row += res::eBatteryPane_Max;
     }
 }
 

@@ -381,8 +381,17 @@ def cmd_diff(
 
     print(f"status: {evaluation.status}")
     size_check = _print_object_size(project, config, hint, unit)
+    # Function acceptance is per-function (user policy 2026-08): the unit
+    # split size is informational here (NOTE only) — it gates unit promotion
+    # (TU-final configure.py NonMatching->Matching), not the function verdict.
     if not size_check.ok:
-        return 1
+        print(
+            f"NOTE: unit split size exceeds budget (decomp .text over by "
+            f"{size_check.over_by} bytes) — per-function verdict above "
+            f"stands; the unit cannot be promoted to Matching until the "
+            f"size is fixed",
+            file=sys.stderr,
+        )
     return 0
 
 

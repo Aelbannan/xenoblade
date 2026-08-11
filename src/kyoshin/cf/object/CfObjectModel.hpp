@@ -4,17 +4,22 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail data labels referenced by this unit.
-extern float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant
+extern float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
+extern float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
+extern float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
 extern float lbl_eu_8066A210;   // CfObject_UnkVirtualFunc32 scale factor
+extern float lbl_eu_8066A20C;   // CfObject_UnkVirtualFunc34 scale factor
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_UnkVirtualFunc3 null placeholder (rodata, 8 bytes)
 
 namespace cf {
     // Sub-object at CfObjectModel+0x98: flag words read by func_800BB934
     // (bit 0 of field_7A8) and CfObject_UnkVirtualFunc69 (bit 1 of field_7A4).
     struct CfObjectModelSub98 {
-        u8 _pad00[0x7A4];       // 0x00-0x7A3
-        u32 field_7A4;          // 0x7A4
-        u32 field_7A8;          // 0x7A8
+        u8 _pad00[0x7A4];             // 0x00-0x7A3
+        u32 field_7A4;                // 0x7A4
+        u32 field_7A8;                // 0x7A8
+        u8 _pad7AC[0x14AC - 0x7AC];   // 0x7AC-0x14AB
+        u32 field_14AC;               // 0x14AC (read by CfObject_UnkVirtualFunc54)
     };
     // Vtable-layout proxy for the model sub-object (CfObjectModel+0x98): its
     // retail vtable is cf-chain layout, and slot +0xA8 returns a u32 even
@@ -43,6 +48,15 @@ namespace cf {
     // Vtable proxy for calling a cf-chain vtable slot +0x14C as a
     // u32-returning virtual (retail CfObject_UnkVirtualFunc63 returns a flag
     // word; the base header declares it void). Dummy slots pin the offset.
+    // Vtable proxy for calling a cf-chain vtable slot +0xB4 with hidden
+    // (const float* vec, float scale) args (retail CfObject_UnkVirtualFunc25
+    // takes them; the base header declares it void). Dummy slots pin the
+    // offset (same shape as CfObjectEffMoveIf in CfObjectEff.hpp).
+    class CfObjectVtB4 : public CfObjectModelSub98Vt {
+    public:
+        virtual void mAC(); virtual void mB0();
+        virtual void mB4(const float* vec, float scale);  // vtable +0xB4
+    };
     class CfObjectVt14C : public CfObjectModelSub98Vt {
     public:
         virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
@@ -133,6 +147,22 @@ namespace cf {
     };
 }
 
+// Output vector pair filled by func_80490A44 (monolib scene helper used by
+// CfObject_UnkVirtualFunc56: the two positions' Y difference is returned).
+struct CfObjectModelVec3 {
+    float x;  // 0x00
+    float y;  // 0x04
+    float z;  // 0x08
+};
+
+// Imports (retail uses unmangled names; global scope so MWCC emits them
+// as-is, no extern "C" needed).
+// Releases a sub-object (used by CfObjectModel_UnkVirtualFunc1).
+void func_80495E60(void* ptr);
+// Fills the two output vectors for the model sub-object (used by
+// CfObject_UnkVirtualFunc56).
+void func_80490A44(cf::CfObjectModelSub98* obj, CfObjectModelVec3* outA, CfObjectModelVec3* outB);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
 extern "C" void func_80142428();
@@ -140,4 +170,8 @@ extern "C" void func_80142428();
 // C-linkage import from libs/monolib/src/scn/CScnItemModel.cpp (retail uses
 // the unmangled name); tail-called by func_800BB618 with the model sub-object.
 extern "C" void func_804838DC(cf::CfObjectModelSub98* model, int flag);
+
+// operator delete (retail symbol __dl__FPv is the unmangled C name; declare
+// extern "C" so the bl reloc references exactly __dl__FPv).
+extern "C" void __dl__FPv(u8* object);
 

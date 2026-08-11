@@ -73,7 +73,7 @@ char* func_801C6A44(void* self, u16 idx);
 extern const float lbl_eu_80667F40;
 extern const float lbl_eu_80667F48;
 extern const float lbl_eu_80667F80;
-extern float lbl_eu_80667F78;
+extern const float lbl_eu_80667F78;
 extern const float lbl_eu_80667F30;
 extern const float lbl_eu_80667F34;
 extern const float lbl_eu_80667F38;

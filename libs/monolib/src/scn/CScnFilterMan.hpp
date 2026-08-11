@@ -7,6 +7,10 @@
 // returns (*(u32*)self & flags) != 0. C-linkage (flat retail symbol).
 extern "C" s32 func_8004B3D8(u32* self, u32 flags);
 
+// Placement-new operator (retail flat symbol 0x80497328): returns the
+// placement pointer unchanged. Shared with the CScnVirtualLight unit.
+extern "C" void* func_804932B4(void* self, void* param);
+
 // Minimal layout views for the CScnFilter reslist helpers in this TU
 // (mirror the _reslist_node / _reslist_base offsets from
 // monolib/util/reslist.hpp; only the fields these helpers touch are declared).

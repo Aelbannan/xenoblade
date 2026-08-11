@@ -106,7 +106,7 @@ extern "C" int func_80068A00() { return 0x200; }
 extern "C" int func_80068A08() { return 0x200; }
 extern "C" int func_80068A10() { return 0x200; }
 extern "C" int func_eu_800693E8() { return 0x200; }
-extern "C" int func_8006846C(int a) { return a * 11 + 13; }
+extern "C" int func_8006846C(void* self, int a) { return a * 11 + 13; }
 extern "C" int func_800689AC() { return 0x10004; }
 
 extern "C" void func_800665F4(u8* self) {

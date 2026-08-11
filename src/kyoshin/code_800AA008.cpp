@@ -104,7 +104,7 @@ int func_800AA1B4(const char* str, int digitCount, int* out) {
 }
 
 u32 func_800AA2BC(u32 a, u32 b) {
-    return (a << 20) | (b << 10) | 0x08000000;
+    return ((a << 20) | 0x08000000) | (b << 10);
 }
 
 u32 func_800AA2D0(u32 a, u32 b, u32 c) {

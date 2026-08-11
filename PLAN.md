@@ -1442,7 +1442,7 @@ python3 tools/coop/run.py size <unit>
 python3 tools/coop/run.py size --all
 ```
 
-`coop run diff`, `cycle`, and `behaviour compare` print a `size:` line and exit non-zero when decomp `.text` is larger than the split slice. Behaviour tests may pass while size fails — semantics can be correct before codegen fits the retail slot. Implementation: `tools/coop/lib/object_size.py`.
+`coop run diff`, `cycle`, and `behaviour compare` print a `size:` line but do **not** fail on a unit split-size overrun — function acceptance is per-function (user policy 2026-08). Unit split size gates only **unit promotion**: `run.py size` must PASS before the unit's configure.py `NonMatching` → `Matching` flip (TU-final `sizeOk`). Behaviour tests may pass while size fails — semantics can be correct before codegen fits the retail slot. Implementation: `tools/coop/lib/object_size.py`.
 
 **Source language:** matched functions must be expressed as **high-level C or C++** in `src/**` and `libs/**`, except where the isolated Gekko paired-single backend exception in §17.6 applies. Express recovered semantics — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail. Use asm/disassembly only to recover semantics for readable C++ outside that exception.
 

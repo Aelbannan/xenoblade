@@ -326,8 +326,8 @@ python3 tools/coop/run.py size --all
 
 **Rules:**
 
-- `diff`, `cycle`, and `behaviour compare` print a `size:` line and **exit non-zero** when decomp `.text` exceeds the split budget.
-- Behaviour tests can pass while size fails (semantics ≠ codegen fit) — treat size overflow as a blocker for acceptance and `configure.py` `Matching` promotion.
+- `diff`, `cycle`, and `behaviour compare` print a `size:` line but do **not** exit non-zero on a unit split-size overrun — function acceptance is per-function (user policy 2026-08).
+- Unit split size gates only **unit promotion**: `run.py size` must PASS before the unit's configure.py `NonMatching` → `Matching` flip (TU-final `sizeOk`). Behaviour tests can pass while size fails (semantics ≠ codegen fit) — size overflow blocks promotion, not per-function acceptance.
 - Retail budget = `splits.txt` `.text end - start`; compared against ELF `.text` in `build/<region>/src/...o` vs retail `build/<region>/obj/...o`.
 - Implementation: `tools/coop/lib/object_size.py`.
 

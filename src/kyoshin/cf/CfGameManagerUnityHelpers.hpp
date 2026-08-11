@@ -1375,11 +1375,13 @@ extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId) {
     return func_8009CF8C(resourceId + 0x220);
 }
 
-extern "C" void __dl__FPv(void* object);
+// __dl__FPv is the mangled operator delete(void*); declare it as the C++
+// operator so MWCC's builtin resolves it (extern "C" redeclaration conflicts).
+void operator delete(void* object) __attribute__((weak));
 #define DEFINE_POD_DTOR(name) \
 extern "C" UnkDestructible* name(UnkDestructible* object, s32 deleteFlag) { \
     UnkDestructible* result = object; \
-    if (object != nullptr && deleteFlag > 0) __dl__FPv(object); \
+    if (object != nullptr && deleteFlag > 0) operator delete(object); \
     return result; \
 }
 DEFINE_POD_DTOR(__dt__80080400)
@@ -1402,7 +1404,7 @@ extern "C" Unk87588TypedData* __dt__8008753C(Unk87588TypedData* object, s32 dele
     if (object != nullptr) {
         object->field_0x48.bits = 0;
         object->field_0x44 = 0;
-        if (deleteFlag > 0) __dl__FPv(object);
+        if (deleteFlag > 0) operator delete(object);
     }
     return result;
 }

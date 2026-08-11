@@ -2537,7 +2537,8 @@ extern "C" void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
 extern u8 lbl_eu_80664058;
 extern "C" u8 code80135FDC_getByte_64058() { return lbl_eu_80664058; }
 
-void func_8013BDBC() {
+// retail: li r0,1; stb lbl_eu_80664059; li r3,0; li r4,0; b func_8013EC6C
+extern "C" void func_8013BDBC() {
     extern void func_8013EC6C(u32, u32);
     lbl_eu_80664059 = 1;
     func_8013EC6C(0, 0);

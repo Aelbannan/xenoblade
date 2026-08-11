@@ -154,7 +154,7 @@ CTaskLOD::~CTaskLOD() {}
 void CTaskLOD::Init() {}
 void CTaskLOD::Term() {}
 
-void CTaskLOD::Move() { lbl_eu_80665730->mpActiveLOD->func_8046DBC8(); }
+void CTaskLOD::Move() { mpActiveLOD->func_8046DBC8(); }
 
 void CTaskLOD::Draw() {}
 void CTaskLOD::create() {}

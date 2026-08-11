@@ -78,6 +78,12 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
   configure them `extra_cflags=["-O4,s"]` — `subic/subfe` is otherwise
   unreachable from any `!= 0` source shape under `-O4,p` (probed ~20 shapes).
   `func_80252CD4` etc. are 0x10 (4 instr) only under `-O4,s`.
+  **Pitfall:** `#pragma optimize_for_size off` *reverts subsequent functions to
+  `-O4,p` codegen* even when the unit is compiled with `-O4,s` — a `!= 0`
+  function placed after a `off` in the same TU emits the 5-instr
+  neg/or/srwi form (observed: CMenuKizunaTalk func_801BCF38). Wrap the
+  function in `#pragma optimize_for_size on` … `off` (or place it before the
+  `off`) to keep `subic/subfe`.
 
 - **Double-hop thunks (vptr at obj+0x10, this=obj, r4 must pass through):**
   retail `lwz r3,0xb0(r3); lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctr`.
@@ -969,6 +975,7 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 | WPAD unit split-size FAIL (decomp .text 24 bytes over retail) | The unit carried 4 stub wrappers retail lacks entirely (`WPADStartSimpleSync`, `WPADStartClearDevice`, `WPADSetClearDeviceCallback`, `WPADGetWorkMemorySize` — declared in WPAD.h, referenced nowhere in the DOL) plus the `FORCEACTIVEWPAD_c829` fake function; `FAKE_ALIGNMENT[0x10]` static pads bss so `__rvl_wpadcb` lands at retail's 0x1060 (32-aligned) | Remove the 4 unused wrappers (nothing references them; -0x10) and keep `DECOMP_FORCEACTIVE` two-arg (`_wpadHandle2PortTable, FAKE_ALIGNMENT`) — the arg list order pins the bss symbol order (1-arg reorders bss and breaks `__wpadInitSub`); do NOT use `ALIGN(32)` on `__rvl_wpadcb` (breaks `__wpadInitSub` codegen — it changes the 16-store fill loop into a `mtctr` loop) → unit PASS with 0x28 spare |
 | WPAD data sections (2026 data sweep): `.sbss` 71→**85 bytes exact** (every symbol offset/size/binding matches retail), `.sdata` first 24 bytes byte-exact, `.rodata` 58/58; remaining gaps are `.data` 456/1060 (debug strings + 5 switch jumptables) and `.sdata` 24/70 (6 strings) — all referenced only from the 10 unmatched functions (__wpadManageHandler, __wpadConnectionCallback, __wpadCalc* filters, …) | (a) **MWCC emits .sbss symbols in REVERSE declaration order** (verified empirically: the decomp object layout is exactly the reverse of the source declaration list); `.sdata`/`.data` are forward. Declare the globals in reverse of the retail address order to reproduce the layout. (b) **All retail sbss symbols are GLOBAL** — drop `static` (static emits LOCAL bindings, flagged as data mismatch). (c) **2-byte sbss symbols with byte-width accesses**: `_wpadRegisterShutdownFunc`/`_wpadCheckCnt`/`_wpadSleepTime` are 2-byte symbols but the retail code accesses them with `lbz`/`stb` at offset 0 (big-endian high byte). Declare `u16` and use `*(u8*)&var` at the use sites — same codegen, correct symbol size (a `u8` declaration gives a 1-byte symbol; a `u16` used directly emits `lhz`/`sth` and breaks matched callers like WPADInit). (d) **thresholds are `u16[4]`** = `{6,4,6,0}` / `{30,30,30,0}` (was `u16[2]={6,4}` — 4 bytes short). (e) **`RVL_LIB_VERSION` args must be the retail build stamp** (`"Jun 22 2009", "18:33:21", "0x4302_145"`) — `__WPADVersion` then points at the byte-identical version string. (f) `_scFlush` belongs to WUD.o, not WPAD.o — move the definition. (g) **open item — `__rvl_wpadcb` bss offset 0x1050 vs retail 0x1060**: the 0x10 gap needs `FAKE_ALIGNMENT` pinned between `_wpadHandle2PortTable` (first-use in __wpadInitSub's fill loop) and `__rvl_wpadcb` (first-use later in the same function). bss order = **first-reference order** (not declaration order); only a real .text reference pins it: the non-static `DECOMP_FORCEACTIVE` fake emits +0x18 text (unit over budget), while static fakes / `(void)` refs / data initializers are eliminated before bss layout and don't pin. `ALIGN(32)` on `__rvl_wpadcb` gives the right address but converts the 16-store fill loop into a `mtctr`-counted loop (23 structural, InitSub 100%→70%) — loop-shape variants (cast, pointer base, literal bound, explicit 16× unroll, do-while) don't prevent it. Documented trade-off: leave InitSub at 99.3% (its 1-diff is `addi r29,r31,4192` vs `4176` = the __rvl_wpadcb offset) rather than break the size gate |
 | WPAD witness-acceptance batch (2026): `__wpadCalcRadioQuality` (us-8036bfb0, 3 reg-swaps, callee-free) **ACCEPTED via the register-renaming witness** (EQUIVALENT_MATCH, semantic certificate) — pure reg-swap residuals with no indirect calls AND no call-argument-register conflicts are witness-certifiable even when the static mapping reuses a register. `__wpadCalcRecalibration` (us-8036c9c0) is **NOT witness-certifiable**: its clean r3↔r6 index/dataFormat swap conflicts with call-argument r3 (bl OSDisableInterrupts/_WUDGetDevAddr keep r3=r3 on both sides), so no global rho exists — the one-time batch acceptance ("FULL_MATCH at 99.36%") was spurious and failed re-verification. `WPADiExcludeButton` (us-8036fb80, 17 reg-swaps, clean r5↔r6 bijection, call-free rho) witness **does not converge** (Z3 effect-aware memory projection over its lhz/sth queue ops runs >30 min twice, quiet machine) — the renaming is trivially findable, the post-renaming equivalence check is the bottleneck; record as witness-stall. `__wpadCalcControllerData` (us-8036ca80, 13 reg-swaps) is callee-blocked AND rho-conflicted (retail r26→decomp r27/r29/r30) — needs FULL_MATCH; unblocks when `__wpadIsControllerDataChanged` (its documented 4-structural scheduling stall + 303 reg-swaps) is matched. `__wpadIsBusyStream` (us-803714c0) mapping is forward-conflicted (retail r22→26 and r30→26) — no global rho. Remaining witness-ineligible: `WPADDisconnect` (2 structural: prologue stw/rlwinm order tied to the index register r29 vs r30 — resisted declaration order ×2, explicit index local, initializer form), `__wpadConnectionCallback` (indirect callbacks; pStr/pInfo r31↔r30 color resisted declaration reorder), `__wpadManageHandler` (57 structural, register-count cascade r18→r17), `__wpadInitSub` (indirect + bss gap) |
+| **Supersedes the witness-batch `WPADDisconnect` stall above:** `WPADDisconnect` (us-8036ee50) had 2 prologue structural mismatches plus an r29↔r30/r31 allocation rotation; direct/nested source variants left the shared array index or post-history control block in the wrong saved register | The first interrupt-protected status read and the post-`WUDSetDeviceHistory` status/sleeping workflow were one allocation web. A plain array index kept `chan*4` in r30; even after an explicit byte offset moved it to retail r29, the second `lwzx` coalesced its result into the dead index (r29) instead of the dead array base (retail r31) | Compute `u32 offset = chan * sizeof(WPADCB*)`, use the existing inlined `__wpadGetStatusSafe(chan)` for the first read, and put the complete second fetch → protected status read → sleeping gate/store → `WPADControlLed` sequence in one `static void` helper taking `(chan, offset)`. MWCC inlines the helper: its nested allocation web coalesces the second `lwzx` result into r31 while status stays r30 → **100.0% byte-identical, 0 structural / 0 reg-swaps, exact 0xC0, FULL_MATCH**, split PASS with 0x8 spare. Reusable: when a direct block picks the wrong dead operand for indexed-load coalescing, isolate the whole semantic workflow in one void inline helper rather than returning a pointer/boolean (return forms emitted extra NULL materialization/tests) |
 | `__wpadSetupConnectionCallback` (us-8036dc50) / `__wpadAbortConnectionCallback` (us-8036dd20): 2–4 pure reg-swaps, 0 structural — retail coalesces the interrupt-protected field loads (`st = p->status`, `devHandle = p->devHandle`) **into the refetched pointer's register** (`lwz r29,2236(r29)`, `lbz r29,2243(r29)`) while the inline source form allocates fresh regs (st→r28, devHandle→r31) | MWCC coalesces a load result into the base register only when the read is the **first load in the fetch's live range** (retail Setup's status read uses the entry p — direct `st = p->status` coalesces naturally), and — for a fetch-then-load pair — when the load produces a **conversion-free u8 value**. The refetched devHandle read with `u8 devHandle = p->devHandle;` (s8→u8 implicit conversion) or `(u8)p->devHandle` (cast) creates a conversion vreg that forces a fresh register; `s32`/`u32` locals add `extsb`/`clrlwi`; changing the struct field to `u8` regresses `__wpadClearControlBlock`/`__wpadSendDataSub` (signed `devHandle < 0` check + `-1` store need s8) | **Wrap each protected read in a `static` helper that gets inlined** (`static s32 __wpadGetStatusSafe(s32 chan)` / `static u8 __wpadGetDevHandleSafe(s32 chan)` each doing fetch → `OSDisableInterrupts` → load → `OSRestoreInterrupts` → return), and read the byte field through a **u8 lvalue view**: `u8 devHandle = *(u8*)&p->devHandle;`. The inlined helper's nested-scope locals let MWCC coalesce the load into the refetched p register exactly like retail, and the u8 lvalue gives the plain zero-extended `lbz` (no conversion node, no extsb). Use the helper for the **refetched** reads; keep the direct `st = p->status` form when retail reads from the entry p (Setup) → both **100.0% byte-identical, FULL_MATCH**, semantic-certified on `cycle` |
 
 ### RVL_SDK wpad/WPADHIDParser.c (US, mwcc_43_151 `-O4,p`)
@@ -7322,7 +7329,7 @@ each verified by hexdiff (structural 106→0→0, reg-swaps 285→285 pure→0):
 `MIXUpdateSettings` (same file) is a separate target sharing the sum-rotation
 patterns — operand order levers above should transfer.
 
-### MIXUpdateSettings (us-8034e1c0): delta-computing pb.mix walk needs LOCAL cur/delta temps (162 → 2 structural, 0x1694/0x1694)
+### MIXUpdateSettings (us-8034e1c0) FULL_MATCH: loop-local declaration order + LOCAL cur/delta temps (162 → 0 structural, 0x1694/0x1694)
 
 Transfer verified with one extra twist: the update path **computes** each delta
 (`(tgt - cur) / 96`) instead of storing 0, and tests both stored values for the
@@ -7336,14 +7343,19 @@ registers (`cmpwi` on cur, `clrlwi.` on delta) and keeps the `addi r3,r4,0x3e`
 base. Also: unsigned loop compare `i < (u32)__MIXMaxVoices` (u32 index) for the
 retail `cmplw` loop bound.
 
-Remaining gap (pre-existing, survived 9 source orderings + `-schedule off`
-(105 structural — retail mix is NOT -schedule-off like EXIBios) + `-ipa off`
-(no change) + `-O4,s` (destroys the unit)): loop entry `add r5,r4,r27; lwzx
-r4,r4,r27` (retail) vs `lwzx r4,r27,r0; add r3,r0,r27` (decomp) — MWCC hoists
-the indexed vpb load above the address add; retail reuses r4 for base→vpb so
-no global injective reg bijection exists (same family as the KB reg-swap
-acceptance gap for loop-heavy mixers). Recorded for out-of-band SMT
-(scheduling category); prior probe with 162 structural hit the 4096 path limit.
+The apparent loop-entry scheduling wall was declaration-order codegen, not a
+compiler ceiling. Mirror the FULL_MATCH HBM mixer pattern (KB `066b7d6529`):
+declare loop locals in allocation order `mixChanged`, `veChanged`, `ch`,
+`vpb`, then `ctrl`; assign them in statement order `ch = ...; veChanged = 0;
+vpb = ch->vpb; mixChanged = 0;`, and assign `ctrl = 0` after the null check.
+This emits retail's `add r5,r4,r27; lwzx r4,r4,r27`, gives `ch=r5`,
+`vpb=r4`, `veChanged=r3`, `mixChanged=r0`, `ctrl=r6`, and cuts 1040 register
+swaps plus the last 2 structural differences to 114 expression-order swaps.
+Finally use the byte-matched `MIXInitChannel` sum shapes above, especially
+`fader + vL + vSL` for three terms and `(vSL + vL) + (fader + auxA)` for four
+terms. Result: **100.0% byte-identical**, 0 structural, 0 register swaps,
+function size 0x1694/0x1694, split size PASS (0xC spare),
+`full-instruction-match` certificate.
 
 ## CriWare sfh_local SFHLOCAL_GetNbyteL — rlwimi loop form found (US, GC/3.0a5.2 -O4,p)
 
@@ -8794,3 +8806,34 @@ us-804dd0bc, us-804dd284):
    regresses accepted `func_804D920C` 100%→0%).
 Residual: `__ct__` (21.3%, 0xa4 < 0xbc — now under-sized), `wkUpdate`
 (13%), `func_804D903C` (50%, 0 structural 5 reg_swap).
+
+## monolib/work/CWorkControl — unit unblock: dont_inline ctor + optimize_for_size + func_align 4
+
+`libs/monolib/src/work/CWorkControl.cpp` (Wii/1.1). The unit was 272 over its
+0x2B4 split. Fixes (3 targets accepted: us-804460fc, us-804461f0,
+us-80446268):
+1. **`-func_align 16` → 4** (retail packed): removed 0x4C of padding.
+2. **`#pragma dont_inline on` around the CWorkControl ctor**: -ipa file was
+   inlining the ctor into create() (visible as an extra `li r6, 32` — the base
+   capacity arg); `DECOMP_DONT_INLINE`/`__attribute__((never_inline))` on the
+   ctor DECLARATION fails to compile in MWCC (ctor attribute quirk), but the
+   `#pragma dont_inline on/off` around the definition works (same as OSExec Run).
+3. **`DECOMP_DONT_INLINE` on setFlowSetup's header DECLARATION** (not the
+   definition — definition-only attr doesn't stop -ipa inline): wkStandbyLogin
+   was inlining it; the retail calls it (0x34 vs 0x8c).
+4. **`#pragma optimize_for_size` on dtor/hasFlow/setFlowSetup/wkStandbyLogout/
+   create**: stmw frames + the addic/subfe setnz idiom (hasFlow's final
+   `getInstance() != nullptr`).
+5. **CWorkThread.hpp inline virtuals** (`wkRender(){}`, `wkRenderAfter(){}`,
+   `wkStandbyExceptionRetry`): moved to CWorkThread.cpp definitions — they were
+   emitted as standalone 0x8-0xC functions in every TU with the vtable.
+6. **Removed a 6-arg DECOMP_FORCEACTIVE** (its 0x24 stub); keep only the
+   strings actually needed. **Residual: setFlowSetup (us-8044615c) at 29%**
+   needs `"CWorkFlowTvMode"` in the string pool BEFORE `"CWorkFlowSetup"` so
+   the name arg materializes as `lbl_eu_80522688+16` (retail) — the
+   DECOMP_FORCEACTIVE stub that achieves this costs 0x10 .text, pushing the
+   unit 0xC over its split (create is 0x70, 4 under retail, absorbing 4).
+   Static-const/global-const/function-local string references do NOT pool
+   first (all give +0); the FORCEACTIVE stub is the only pool-order lever so
+   far. Also residual: create (6.9%, 0x70 vs 0x74 — retail's early r31 name
+   materialization + 3-reg frame).

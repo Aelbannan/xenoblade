@@ -11,9 +11,27 @@ extern const f32 lbl_eu_8066AA88;  // default light color components
 extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in func_8049488C
 extern const f32 lbl_eu_8066AA98;  // slot color alpha default (func_80495644)
 extern const f32 lbl_eu_8066AAA8;  // slot color rgb default (func_80495644)
+extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (func_804957E4/804958B8)
 
-// Cross-TU catalog import: stores `value` into CLight::mpLightObj (+0x2C).
+// Cross-TU catalog imports (CLight.cpp). The retail symbols are unmangled
+// free functions, so extern "C" keeps the emitted reloc names byte-identical.
 extern "C" void func_804C03A0(u8* self, int value);
+extern "C" void func_804C0454(u8* self, int value);
+extern "C" void func_804C07F0(u8* self, int value);
+extern "C" void func_804C0570(CLight* self, f32 angleX, f32 angleY);
+extern "C" void func_804C08C8(CLight* self, int enable);
+extern "C" void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn);
+extern "C" void func_804C09E0(u8* self, float a, float b, int c);
+
+// nw4r g3d G3DState::SetLightObj is missing from the (read-only) g3d_state.h;
+// declare it here so calls emit the retail mangled name.
+namespace nw4r {
+namespace g3d {
+namespace G3DState {
+void SetLightObj(const LightObj& rLightObj, int idx);
+}
+}
+}
 
 class CVirtualLightObj {
 public:
@@ -43,14 +61,17 @@ public:
 class CLightEnv {
 public:
     nw4r::g3d::LightObj mGxLights[0x20];          // +0x000..0x880
-    u8 mPad880[0xc0];                             // +0x880..0x940
+    nw4r::g3d::AmbLightObj mAmbLight[0x20];       // +0x880..0x900
+    nw4r::g3d::LightSetData mLightSetData[0x4];   // +0x900..0x930
+    nw4r::g3d::LightSetting mLightSetting;        // +0x930..0x940
     CLight mSlotLights[4][8];                     // +0x940..0x1140
     CLight* mSlotPtrs[4];                         // +0x1140
     u32 mSlotCounts[4];                           // +0x1150
     u32 mSlotFields[4];                           // +0x1160
     s32 mField1170;                               // +0x1170
     u8 mByte1174;                                 // +0x1174
-    u8 mPad1175[0x7];                             // +0x1175
+    u8 mPad1175[3];                               // +0x1175
+    u32 mField1178;                               // +0x1178 (nw4r scene handle, set by func_804950F4)
     u32 mField117C;                               // +0x117C
     u32 mField1180;                               // +0x1180
     struct SLightColor { f32 x, y, z, w; } mSlotColors[4];  // +0x1184

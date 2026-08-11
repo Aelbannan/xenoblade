@@ -40,11 +40,10 @@ void func_801231C4(){}
 
 void func_80124270(){}
 
-void func_80124288(u8* self, float* src){
-    float a = src[0];
-    float b = src[1];
-    *(float*)(self + 0x4C) = a;
-    *(float*)(self + 0x50) = b;
+// retail: lfs f1,0(r4); lfs f0,4(r4); stfs f1,0x4c(r3); stfs f0,0x50(r3)
+extern "C" void func_80124288(u8* self, float* src){
+    ((float*)(self + 0x4C))[0] = src[0];
+    ((float*)(self + 0x4C))[1] = src[1];
 }
 
 void func_8012429C(){}

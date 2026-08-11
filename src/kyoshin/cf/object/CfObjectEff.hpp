@@ -486,7 +486,7 @@ public:
     void func_800ACEAC();
     void func_800ACF50() const;
     void func_800AD3A4();
-    void func_800AD4A4();
+    int func_800AD4A4();
     void func_800AD68C();
     virtual ~CfObjectEff();
     // CfObjectEff-specific vtable slots beyond CfObject's last (0x174).

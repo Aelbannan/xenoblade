@@ -11,7 +11,14 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc2() {}
 
 cf::CfObjectModel::~CfObjectModel() {}
 
-void __dt__800BAA24(){}
+// POD deleting destructor (retail symbol is address-derived, no class name):
+// delete self only when a delete flag is passed, then return self.
+u8* __dt__800BAA24(u8* object, s32 deleteFlag) {
+    if (object != 0 && deleteFlag > 0) {
+        __dl__FPv(object);
+    }
+    return object;
+}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc6() {}
 
@@ -43,7 +50,10 @@ u32 func_800BADF8(cf::CfObject* obj) {
     return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 3) & 1;
 }
 
-void func_800BAE28(){}
+// Call the cf-chain vtable slot +0x14C and return bit 7 of the flag word.
+u32 func_800BAE28(cf::CfObject* obj) {
+    return (reinterpret_cast<cf::CfObjectVt14C*>(obj)->m14C() >> 7) & 1;
+}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc19() {}
 
@@ -53,13 +63,20 @@ void cf::CfObject::CfObject_UnkVirtualFunc25() {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc20() {}
 
-u32 cf::CfObjectModel::CfObject_UnkVirtualFunc23() { return 0; }
+extern "C" void* func_8048315C(void*);
+
+// Return a pointer-typed word: the sub-object's derived value +0xB8, or
+// this +0x3C when there is no sub-object.
+u32 cf::CfObjectModel::CfObject_UnkVirtualFunc23() {
+    if (mSubObj98 != 0) {
+        return static_cast<u32>(reinterpret_cast<uintptr_t>(func_8048315C(mSubObj98)) + 0xB8);
+    }
+    return static_cast<u32>(reinterpret_cast<uintptr_t>(this) + 0x3C);
+}
 
 void* CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv(void* self) { void* p = *(void**)((u8*)self + 0x98); if (p != 0) { return (u8*)p + 0x310; } return (u8*)self + 0x3c; }
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc27(void* src) {}
-
-void* func_8048315C(void*);
 
 void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
     struct Data {
@@ -96,7 +113,11 @@ extern "C" void CfObject_UnkVirtualFunc32__Q22cf13CfObjectModelFv(cf::CfObjectMo
     ((cf::CfObject*)self)->CfObject_UnkVirtualFunc29(f * lbl_eu_8066A210);
 }
 
-float cf::CfObjectModel::CfObject_UnkVirtualFunc34() { return 0.0f; }
+// Scale the CfObject_UnkVirtualFunc31 result by the global scale factor.
+float cf::CfObjectModel::CfObject_UnkVirtualFunc34() {
+    float value = CfObject_UnkVirtualFunc31();
+    return value * lbl_eu_8066A20C;
+}
 
 void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv(void* self, float f) {
     void* p = *(void**)((u8*)self + 0x98);
@@ -128,7 +149,17 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc52() {}
 
 cf::CfObject* cf::CfObjectModel::CfObject_UnkVirtualFunc53() { return 0; }
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc54() {}
+// Return the sub-object's +0x14AC word when a sub-object exists and its
+// +0x7A4 0x40000000 flag is set, else 0. The retail symbol is Fv with a
+// value return, so the exact mangled name is written verbatim.
+u32 CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
+    cf::CfObjectModelSub98* sub = self->mSubObj98;
+    u32 flag = (sub != 0) && ((sub->field_7A4 & 0x40000000) != 0);
+    if (flag != 0) {
+        return sub->field_14AC;
+    }
+    return 0;
+}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc55() {}
 

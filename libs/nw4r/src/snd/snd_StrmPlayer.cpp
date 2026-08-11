@@ -4,15 +4,6 @@
 #include <climits>
 #include <cstring>
 
-// Referenced by AllocVoices below: the retail address of the StrmPlayer
-// static voice callback. StrmPlayer::VoiceCallbackFunc is a private member, so
-// it cannot be named from the global-scope AllocVoices free function; this
-// pre-mangled free-function declaration emits the same symbol when its address
-// is taken. (Definition lives in the member below; no duplicate symbol.)
-void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv(
-    nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
-    void*);
-
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -1026,6 +1017,15 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 
 using nw4r::snd::detail::StrmPlayer;
 
+// Referenced by AllocVoices below: the retail address of the StrmPlayer
+// static voice callback. StrmPlayer::VoiceCallbackFunc is a private member, so
+// it cannot be named from the global-scope AllocVoices free function; C
+// linkage keeps the pre-mangled identifier verbatim (MWCC re-mangles C++
+// free functions). Declaration only — the definition is the member below.
+extern "C" void VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv(
+    nw4r::snd::detail::Voice*, nw4r::snd::detail::Voice::VoiceCallbackStatus,
+    void*);
+
 // Retail AllocVoices(int) is a StrmPlayer member, but the stale header has no
 // declaration for it; define the retail mangled symbol as a free function
 // (same ABI: r3 = this, r4 = voices). Kept OUT of the anonymous namespace so
@@ -1038,42 +1038,39 @@ bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
 
     u32 level = OSDisableInterrupts();
 
-    nw4r::snd::detail::StrmTrackRetailLayout* pBaseTrack = &self->mTracks[0];
+    nw4r::snd::detail::StrmTrackRetailLayout* pBaseTrack = self->mTracks;
     nw4r::snd::detail::StrmTrackRetailLayout* pTrack = pBaseTrack;
-    int i = 0;
 
-    for (; i < self->mTrackCount; i++, pTrack++) {
-        if (pTrack->activeFlag == 0) {
-            continue;
-        }
+    for (int i = 0; i < self->mTrackCount; pTrack++, i++) {
+        if (pTrack->activeFlag) {
+            nw4r::snd::detail::Voice* pVoice =
+                nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
+                    pTrack->channelCount, voices, 0xFF,
+                    &VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv,
+                    pTrack);
 
-        nw4r::snd::detail::Voice* pVoice =
-            nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
-                pTrack->channelCount, voices, 0xFF,
-                &VoiceCallbackFunc__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail5VoiceQ54nw4r3snd6detail5Voice19VoiceCallbackStatusPv,
-                pTrack);
-
-        if (pVoice == NULL) {
-            // Allocation failed: free the voices already granted to earlier
-            // tracks and bail out.
-            nw4r::snd::detail::StrmTrackRetailLayout* pFreeTrack =
-                pBaseTrack;
-            for (int j = 0; j < i; j++, pFreeTrack++) {
-                if (pFreeTrack->voice != NULL) {
-                    pFreeTrack->voice->Free();
-                    pFreeTrack->voice = NULL;
+            if (pVoice == NULL) {
+                // Allocation failed: free the voices already granted to
+                // earlier tracks and bail out.
+                nw4r::snd::detail::StrmTrackRetailLayout* pFreeTrack =
+                    pBaseTrack;
+                for (int j = 0; j < i; pFreeTrack++, j++) {
+                    if (pFreeTrack->voice != NULL) {
+                        pFreeTrack->voice->Free();
+                        pFreeTrack->voice = NULL;
+                    }
                 }
+
+                OSRestoreInterrupts(level);
+                return false;
             }
 
-            OSRestoreInterrupts(level);
-            return false;
+            pTrack->voice = pVoice;
+            // Disable per-voice pitch modulation for streamed voices (see
+            // snd_Voice.cpp field_0xA1 pitch-modulation gate).
+            reinterpret_cast<nw4r::snd::detail::VoicePitchGateLayout*>(pVoice)
+                ->field_0xA1 = 1;
         }
-
-        pTrack->voice = pVoice;
-        // Disable per-voice pitch modulation for streamed voices (see
-        // snd_Voice.cpp field_0xA1 pitch-modulation gate).
-        reinterpret_cast<nw4r::snd::detail::VoicePitchGateLayout*>(pVoice)
-            ->field_0xA1 = 1;
     }
 
     OSRestoreInterrupts(level);

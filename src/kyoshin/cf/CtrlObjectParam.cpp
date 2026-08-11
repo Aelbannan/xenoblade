@@ -33,7 +33,8 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc94() {
     return &unk1650;
 }
 
-void func_8009DB1C(){}
+extern "C" void func_80155CD0(void* a, void* b);
+extern "C" void func_8009DB1C(void* ignored, void* a, void* b) { func_80155CD0(a, b); }
 
 void func_8009DB28(){}
 
@@ -45,9 +46,10 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc33(float val) {
 
 void func_8009DFC8(){}
 
-void func_8009E024(){}
+extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
+extern "C" void func_8009E024(void* a, void* c) { func_8009DBF4(a, 0, c); }
 
-void func_8009E030(){}
+extern "C" void func_8009E030(void* a, void* c) { func_8009DBF4(a, 1, c); }
 
 void cf::CtrlObjectParamData::setArgType2(void* arg) {
     extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);

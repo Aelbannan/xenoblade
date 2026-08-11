@@ -74,7 +74,9 @@ extern "C" void func_804947EC(ml::CCol4* out, CVirtualLightObj* in) {
 
 void func_804952C4() {}
 
-void func_804954B4() {}
+// Post-construction light-environment setup (retail 0x190-byte function, not
+// yet matched; kept out-of-line so func_804950F4 emits the retail call).
+extern "C" __declspec(noinline) void func_804954B4(CLightEnv* self) {}
 
 // ---------------------------------------------------------------------------
 // Select light slot `idx` on the environment: reset the slot color, clear
@@ -99,13 +101,91 @@ extern "C" void func_80495644(CLightEnv* self, u32 idx) {
 
 void func_804956F8(void) {}
 
-void func_80495704() {}
+// ---------------------------------------------------------------------------
+// func_80495704: bind the slot's next light, orient it and arm slot 0.
+// Resets the current slot's next light (func_804C03A0 with 1), binds a
+// color, orients it from two Euler angles, applies the slot enable byte,
+// then (for slot 0 with no armed light) records the light index in
+// mField1170 and bumps the slot's field counter.
+// ---------------------------------------------------------------------------
+extern "C" void func_80495704(CLightEnv* self, u32 a, f32 f1, f32 f2) {
+    u32 n = self->mSlotFields[self->mField117C];
+    CLight* light = self->mSlotPtrs[self->mField117C] + n;
+    func_804C03A0(reinterpret_cast<u8*>(light), 1);
+    func_804C07F0(reinterpret_cast<u8*>(light), a);
+    func_804C0570(light, f1, f2);
+    func_804C08C8(light, self->mByte1174);
+    if (self->mField117C == 0 && self->mField1170 < 0) {
+        self->mField1170 = n;
+    }
+    self->mSlotFields[self->mField117C]++;
+}
 
-void func_804957E4() {}
+// ---------------------------------------------------------------------------
+// func_804957E4: bind the slot's next light, color it and enable it.
+// Resets the light (func_804C03A0 with 3), binds a color, binds a second
+// color, sets distance attenuation with the given brightness, applies the
+// slot enable byte and bumps the slot's field counter.
+// ---------------------------------------------------------------------------
+extern "C" void func_804957E4(CLightEnv* self, u32 a, u32 b, f32 f) {
+    u32 n = self->mSlotFields[self->mField117C];
+    CLight* light = self->mSlotPtrs[self->mField117C] + n;
+    func_804C03A0(reinterpret_cast<u8*>(light), 3);
+    func_804C07F0(reinterpret_cast<u8*>(light), a);
+    func_804C0454(reinterpret_cast<u8*>(light), b);
+    func_804C09E0(reinterpret_cast<u8*>(light), f, lbl_eu_8066AAAC, 2);
+    func_804C08C8(light, self->mByte1174);
+    self->mSlotFields[self->mField117C]++;
+}
 
-void func_804958B8() {}
+// ---------------------------------------------------------------------------
+// func_804958B8: full light setup for the slot's next light: reset, color,
+// direction, second color, distance attenuation, spot cutoff and enable.
+// ---------------------------------------------------------------------------
+extern "C" void func_804958B8(CLightEnv* self, u32 a, u32 b, f32 f1, f32 f2,
+                              f32 f3, f32 f4) {
+    u32 n = self->mSlotFields[self->mField117C];
+    CLight* light = self->mSlotPtrs[self->mField117C] + n;
+    func_804C03A0(reinterpret_cast<u8*>(light), 4);
+    func_804C07F0(reinterpret_cast<u8*>(light), a);
+    func_804C0570(light, f1, f2);
+    func_804C0454(reinterpret_cast<u8*>(light), b);
+    func_804C09E0(reinterpret_cast<u8*>(light), f3, lbl_eu_8066AAAC, 2);
+    func_804C0920(light, f4, (_GXSpotFn)2);
+    func_804C08C8(light, self->mByte1174);
+    self->mSlotFields[self->mField117C]++;
+}
 
-void func_804959E8() {}
+// ---------------------------------------------------------------------------
+// func_804959E8: push this light set's lights into G3DState.
+// The per-slot light range starts at the sum of the slot counts below `idx`
+// (constant-trip loop, unrolled by MWCC into the retail flat beq chain); each
+// light in the range is uploaded with G3DState::SetLightObj, then the ambient
+// light selected by `idx` (via the LightSetting's LightSet) is uploaded with
+// SetAmbLightObj.
+// ---------------------------------------------------------------------------
+extern "C" void func_804959E8(CLightEnv* self, int idx) {
+    nw4r::g3d::LightObj* pLight;
+    u32 bound = self->mSlotCounts[idx];
+    u32 count = 0;
+    for (int k = 0; k < 4; k++) {
+        if (idx == k) {
+            break;
+        }
+        count += self->mSlotCounts[k];
+    }
+    nw4r::g3d::G3DState::Invalidate(0x200);
+    pLight = &self->mGxLights[count];
+    int lightIdx = count;
+    for (int i = 0; i < (int)bound; i++) {
+        nw4r::g3d::G3DState::SetLightObj(*pLight, lightIdx);
+        pLight++;
+        lightIdx++;
+    }
+    nw4r::g3d::LightSet lightSet = self->mLightSetting.GetLightSet(idx);
+    nw4r::g3d::AmbLightObj* amb = lightSet.GetAmbLightObj();
+    nw4r::g3d::G3DState::SetAmbLightObj(*amb, idx);
+}
 
 void func_80495AF4() {}
 
@@ -114,7 +194,52 @@ extern "C" void func_80494A64() {}
 extern "C" void func_80494C30() {}
 extern "C" void func_80494D84() {}
 extern "C" void func_80494F10() {}
-extern "C" void func_804950F4() {}
+// ---------------------------------------------------------------------------
+// func_804950F4: light-environment constructor.
+// In-place construction of the 0x20 LightObj array (0x44 each), the
+// LightSetting over the ambient/light-set-data arrays, and the four CLight[8]
+// banks, then per-slot bookkeeping and func_804954B4 post-init.
+// ---------------------------------------------------------------------------
+extern "C" CLightEnv* func_804950F4(CLightEnv* self, u32 param) {
+    extern void __ct__Q34nw4r3g3d8LightObjFv(void*, int);
+    extern void __dt__Q34nw4r3g3d8LightObjFv(void*, int);
+    extern void __ct__6CLightFv(void*, int);
+    extern void __dt__6CLightFv(void*, int);
+    extern void __ct__Q34nw4r3g3d12LightSettingFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d11AmbLightObjUlPQ34nw4r3g3d12LightSetDataUl(void*, void*, void*, u32, void*, u32);
+
+    __construct_array(self,
+                      reinterpret_cast<ConstructorDestructor>(&__ct__Q34nw4r3g3d8LightObjFv),
+                      reinterpret_cast<ConstructorDestructor>(&__dt__Q34nw4r3g3d8LightObjFv),
+                      0x44, 0x20);
+    // In-place LightSetting over the light / ambient / light-set data arrays
+    // (called via the mangled name: placement new would emit a null check).
+    __ct__Q34nw4r3g3d12LightSettingFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d11AmbLightObjUlPQ34nw4r3g3d12LightSetDataUl(
+        &self->mLightSetting, self->mGxLights, self->mAmbLight, 0x20,
+        self->mLightSetData, 0x4);
+    __construct_array(&self->mSlotLights[0][0],
+                      reinterpret_cast<ConstructorDestructor>(&__ct__6CLightFv),
+                      reinterpret_cast<ConstructorDestructor>(&__dt__6CLightFv),
+                      0x40, 8);
+    __construct_array(&self->mSlotLights[1][0],
+                      reinterpret_cast<ConstructorDestructor>(&__ct__6CLightFv),
+                      reinterpret_cast<ConstructorDestructor>(&__dt__6CLightFv),
+                      0x40, 8);
+    __construct_array(&self->mSlotLights[2][0],
+                      reinterpret_cast<ConstructorDestructor>(&__ct__6CLightFv),
+                      reinterpret_cast<ConstructorDestructor>(&__dt__6CLightFv),
+                      0x40, 8);
+    __construct_array(&self->mSlotLights[3][0],
+                      reinterpret_cast<ConstructorDestructor>(&__ct__6CLightFv),
+                      reinterpret_cast<ConstructorDestructor>(&__dt__6CLightFv),
+                      0x40, 8);
+    self->mField1170 = -1;
+    self->mByte1174 = 0;
+    self->mField1178 = param;
+    self->mField117C = -1;
+    self->mField1180 = 0;
+    func_804954B4(self);
+    return self;
+}
 
 // ---------------------------------------------------------------------------
 // CLightEnv deleting destructor. Destroys the four CLight[8] banks in reverse

@@ -236,13 +236,13 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc137() {}
 typedef void (*CActorFn)(void*);
 
 void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
-void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self) {
+extern "C" void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv)((void*)((char*)self - 8));
 }
 
 // us-80180170
 void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv();
-void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
+extern "C" void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
     ((CActorFn)CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv)((void*)((char*)self - 8));
 }
 

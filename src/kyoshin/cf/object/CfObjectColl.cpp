@@ -217,7 +217,7 @@ extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(cf::CfObject* self) {
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
 int cf::CfObject::CfObject_UnkVirtualFunc11() {
-    return field_0x6C & 1;
+    return *(u32*)((u8*)this + 0x6C) & 1;
 }
 
 void cf::CfObject::CfObject_UnkVirtualFunc10() {

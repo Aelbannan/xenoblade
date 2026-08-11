@@ -59,11 +59,19 @@ def _print_static(test_id: str) -> tuple[bool, float | None]:
     print(f"          decomp: {result.decomp_path}")
     print(f"          symbol: {test.symbol}")
     print(f"          match:  {pct} ({result.status})")
-    size_ok = True
     if result.size_check is not None:
         print(f"          {format_size_check(result.size_check)}")
-        size_ok = result.size_check.ok
-    return size_ok, result.match_percent
+        if not result.size_check.ok:
+            # Function acceptance is per-function (user policy 2026-08): unit
+            # split size gates only unit promotion (configure.py Matching
+            # flip), not this function-level check.
+            over = result.size_check.over_by
+            suffix = f" (over by {over} bytes)" if over else ""
+            print(
+                f"          NOTE: unit split size exceeds budget{suffix} — "
+                f"function verdict stands; unit promotion blocked until size is fixed"
+            )
+    return True, result.match_percent
 
 
 def _print_ppc(test_id: str) -> bool:

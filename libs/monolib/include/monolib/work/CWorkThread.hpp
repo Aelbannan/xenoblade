@@ -107,13 +107,11 @@ public:
     CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
     virtual ~CWorkThread();
     virtual void wkUpdate();                           //0x88
-    virtual void wkRender(){}                          //0x8C
-    virtual void wkRenderAfter(){}                     //0x90
+    virtual void wkRender();                           //0x8C
+    virtual void wkRenderAfter();                      //0x90
     virtual bool wkStandbyLogin();                     //0x94
     virtual bool wkStandbyLogout();                    //0x98
-    virtual bool wkStandbyExceptionRetry(WORK_ID wid){ //0x9C
-        return true;
-    }
+    virtual bool wkStandbyExceptionRetry(WORK_ID wid); //0x9C
 
     void wkReplaceHasChild(int capacity);
     void wkEntryChild(CWorkThread* pChild, bool prepend);

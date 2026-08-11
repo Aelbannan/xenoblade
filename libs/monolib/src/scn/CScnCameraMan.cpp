@@ -234,8 +234,8 @@ void func_8049B3FC(void){}
 // this TU so MWCC's int->float conversion pool can reference the retail label.
 const double lbl_eu_8066AB60 = 4503601774854144.0;
 
-extern void func_8043A57C__11CScriptCodeFv();
-void func_8049B408(u8* self){ func_8043A57C__11CScriptCodeFv(); }
+extern "C" void func_8043A57C__11CScriptCodeFv(void* self);
+extern "C" void func_8049B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
 
 void func_8049B59C(){}
 

@@ -130,16 +130,19 @@ public:
     u32 field_0xCA4;
     u32 field_0xCA8;
     u32 field_0xCAC;
-    ml::FixStr<64> field_0xCB0;
+    // raw 0x44 buffer: retail FixStr<64> is 64 chars + 4-byte length; declared
+    // as bytes so the layout is independent of whichever FixStr template is
+    // visible in a TU (observed 0x40 vs 0x44 discrepancy shifting 0x15F0 to 0x15EC)
+    u8 field_0xCB0[0x44];
     u32 field_0xCF4;
     float field_0xCF8;
     u32 field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;
-    u16 field_0xD0E;
-    u16 field_0xD10;
-    u8 _pad_D12_to_15EF[0x15F0 - 0xD12];
-    u32 field_0x15F0;
+    u16 field_0xD0E;    // lands at 0xD08 (2 bytes)
+    u16 field_0xD10;    // lands at 0xD0A (2 bytes)
+    u8 _pad_D0C_to_15EF[0x15F0 - 0xD0C];   // 0xD0C .. 0x15F0
+    u32 field_0x15F0;   // exactly 0x15F0
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)

@@ -35,7 +35,11 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-void func_8028246C(){}
+// obj+0x48 holds a fn ptr; call with (self, *(arg)) (retail: lwz r12,0x70; lwz r4,0; lwz r12,0x48; mtctr; bctr)
+extern "C" void func_8028246C(void* self, void* arg) {
+    void* obj = *(void**)((char*)self + 0x70);
+    (*(void (**)(void*, void*))((char*)obj + 0x48))(self, *(void**)arg);
+}
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
 }

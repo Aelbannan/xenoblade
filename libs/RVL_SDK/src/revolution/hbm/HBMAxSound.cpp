@@ -264,11 +264,9 @@ void* AudioSoundThreadProc(void* /* arg */) {
 static const char WT_FILENAME[0x14] = "wt\\HomeButtonSe.wt";
 static const char PCM_FILENAME[0x14] = "wt\\HomeButtonSe.pcm";
 
-
 } // namespace
 
-// retail .rodata has a 4th float (0.0f) after the 10.0f/20.0f/0.0f pool.
-// External linkage (not anonymous-namespace) so -ipa file keeps them.
+// Retail .rodata has a 4th float (0.0f) after the generated pool.
 extern const float s_volumeZeroPad = 0.0f;
 u8 hbmAxSound_bss_pad[4]; /* retail .bss 0x4 -> 0x8 (align tail) */
 
@@ -462,7 +460,6 @@ void StopAllSeq() {
 void SetVolumeAllSeq(float volume)
 {
     int vol;
-    int i;
 
     if (sWork == NULL) {
         return;
@@ -481,16 +478,22 @@ void SetVolumeAllSeq(float volume)
         vol = -0x388;
     }
 
-    for (i = 0; i < 4; i++) {
-        HBMSEQSEQUENCE* players = &sWork->players[i];
-        if (players->inUse != 0) {
-            HBMSEQSetVolume(players, vol);
+    {
+        int i;
+        for (i = 0; i < 4; i++) {
+            HBMSEQSEQUENCE* players = &sWork->players[i];
+            if (players->inUse != 0) {
+                HBMSEQSetVolume(players, vol);
+            }
         }
     }
-    for (i = 0; i < 3; i++) {
-        HBMSEQSEQUENCE* players = &sWork->players[4] + i;
-        if (players->inUse != 0) {
-            HBMSEQSetVolume(players, vol);
+    {
+        int i;
+        for (i = 0; i < 3; i++) {
+            HBMSEQSEQUENCE* players = &sWork->players[4] + i;
+            if (players->inUse != 0) {
+                HBMSEQSetVolume(players, vol);
+            }
         }
     }
 }

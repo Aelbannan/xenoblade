@@ -57,6 +57,14 @@ struct CDrawCtx {
 extern "C" void func_8048ECD8(void* r3);
 extern "C" void* GetFog__Q34nw4r3g3d7ScnRootFi(void* self, int idx);
 
+// Retail: lwz r3,0x6C(r3); b func_80490314 / func_8049032C — load the
+// desktop's tex-work pointer at +0x6C and forward it (callee ignores r3).
+extern "C" void func_80490314(void* x);
+extern "C" void func_8049032C(void* x);
+extern "C" void func_804D8B28(void* desktop) { func_80490314(*(void**)((u8*)desktop + 0x6C)); }
+extern "C" void func_804D8B30(void* desktop) { func_8049032C(*(void**)((u8*)desktop + 0x6C)); }
+
+
 // func_804D8AA4: push fog state (or a cleared/default fog).
 void func_804D8AA4(int p1, int UNUSED_p2) {
     if (lbl_eu_80663B3C != 0 && p1 != 0) {

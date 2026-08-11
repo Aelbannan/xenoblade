@@ -125,8 +125,8 @@ void func_80485CE8(){}
 
 void func_80485D64(){}
 
-extern void func_80489A60();
-void func_80486068(u8* self){ func_80489A60(); }
+extern "C" void func_80489A60(void* a, void* b, void* c, void* d, void* e, int f);
+extern "C" void func_80486068(u8* self, void* b, void* c, void* d, void* e) { func_80489A60(self, b, c, d, e, 102); }
 
 extern "C" void func_80489C94(void* self);
 extern "C" void func_80486070(void* self) { func_80489C94(self); }

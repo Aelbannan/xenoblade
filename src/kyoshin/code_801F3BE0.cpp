@@ -101,6 +101,7 @@ extern "C" u32 func_80061FFC();
 extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, u16 row);
 extern "C" void* __ct__cf_CfGimmickElv(CGimmickEntry* self, u16 row);
 extern "C" void* __ct__cf_CfGimmickWarp(CGimmickEntry* self, u16 row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickSaveOff(CGimmickEntry* self, s32 row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
 extern void* lbl_eu_8066412C;
 extern void* lbl_eu_80664130;
@@ -110,6 +111,7 @@ extern void* lbl_eu_80664134;
 extern u8* lbl_eu_80664128;
 extern u8* lbl_eu_80664138;
 extern u8* lbl_eu_8066413C;
+extern u8* lbl_eu_80664140;  // save-off gimmick bdat table (sda21)
 extern u8* lbl_eu_80664144;
 
 // Circular gimmick object list returned by func_800B6BC8 (CfGimmick.hpp
@@ -130,10 +132,10 @@ struct CGimmickList {
 // and their recovered u16 row signatures are not byte-matched yet), so they
 // are declared with C linkage here to keep the call relocs on the retail
 // names. The row is passed untruncated (32-bit) like the retail call sites.
-extern "C" CGimmickEntry* __ct__cf_CfGimmickJump(CGimmickEntry* self, int row);
-extern "C" CGimmickEntry* __ct__cf_CfGimmickItem(CGimmickEntry* self, int row);
-extern "C" CGimmickEntry* __ct__cf_CfGimmickEne(CGimmickEntry* self, int row);
-extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* self, int row,
+extern "C" CGimmickEntry* __ct__cf_CfGimmickJump(CGimmickEntry* obj, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickItem(CGimmickEntry* obj, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickEne(CGimmickEntry* obj, int row);
+extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* obj, int row,
                                                     CGimmickEntry** arr, int idx,
                                                     u8* buf);
 
@@ -142,6 +144,17 @@ extern "C" CGimmickEntry* __ct__cf_CfGimmickObject(CGimmickEntry* self, int row,
 extern "C" void func_80208EDC(u32 value);
 // Gimmick object list accessor (func_80174C98 comes from CChainTimer.hpp).
 extern "C" CGimmickList* func_800B6BC8();
+
+// Sibling spawn / lifecycle functions defined later in this TU (func_801F3CCC
+// sits before their definitions and calls them). C linkage keeps the call
+// relocs on the unmangled retail names (func_801F3E80, ...).
+extern "C" bool func_801F3E80(CGimmickGlobal* self);
+extern "C" bool func_801F3F98(CGimmickGlobal* self);
+extern "C" bool func_801F4078(CGimmickGlobal* self);
+extern "C" bool func_801F4158(CGimmickGlobal* self);
+extern "C" bool func_801F4238(CGimmickGlobal* self);
+extern "C" bool func_801F4318(CGimmickGlobal* self);
+extern "C" bool func_801F43F8(CGimmickGlobal* self);
 
 u32 getUnk80664658(void) {
     extern u32 lbl_eu_80664658;
@@ -185,7 +198,66 @@ CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
     return self;
 }
 
-void func_801F3CCC(){}
+// func_801F3CCC: (re)initialize the gimmick container. Tears down every stored
+// gimmick (dispatch slot 0x08 with 1) and resets the counters/state, then
+// re-spawns the object/lock/elevator/warp/jump/item families from their bdat
+// tables in order, stopping at the first failure. The save-off family is
+// spawned inline from lbl_eu_80664140 (0x88-byte objects); the enemy family
+// (func_801F43F8) runs only when every other family fit in the 0x80 slots.
+void func_801F3CCC(CGimmickGlobal* self) {
+    self->mFlags = 0;
+    self->field_0x200 = 0;
+    self->field_0x21C = lbl_eu_80668158;
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if (g == NULL)
+            continue;
+        if (g)
+            ((CGimmickDispatch*)g)->d0(1);
+        self->mGimmicks[i] = 0;
+    }
+    self->mGimmickCount = 0;
+    self->field_0x218 = 0;
+    self->field_0x210 = 0;
+    func_80208E98();
+    if (!func_801F3E80(self))
+        return;
+    if (!func_801F3F98(self))
+        return;
+    if (!func_801F4078(self))
+        return;
+    if (!func_801F4158(self))
+        return;
+    if (!func_801F4238(self))
+        return;
+    if (!func_801F4318(self))
+        return;
+    bool ok;
+    u8* bdat = lbl_eu_80664140;
+    if (bdat == NULL) {
+        ok = true;
+    } else {
+        func_8003AA34();
+        u32 row = func_8003B41C(bdat);
+        s32 n = (s32)func_8003B1EC(bdat);
+        ok = true;
+        for (s32 i = 0; i < n; i++) {
+            CGimmickEntry* obj =
+                (CGimmickEntry*)mtl::MemManager::allocate(0x88, func_80061FFC());
+            if (obj)
+                obj = __ct__cf_CfGimmickSaveOff(obj, row);
+            self->mGimmicks[self->mGimmickCount] = obj;
+            self->mGimmickCount++;
+            if (self->mGimmickCount >= 0x80) {
+                ok = false;
+                break;
+            }
+            row++;
+        }
+    }
+    if (ok)
+        func_801F43F8(self);
+}
 
 // func_801F3E80: spawn the object gimmicks from the object bdat table. The
 // shared state reset runs first (0 on the empty-table path, row-1 otherwise)
@@ -409,10 +481,11 @@ void func_801F4998(CGimmickGlobal* self, f32 value) {
     if (lbl_eu_80668158 == value) {
         self->mFlags |= 0x20;
     } else {
-        u32 flags = self->mFlags & 0x20;
-        if (flags == 0)
+        if (!(self->mFlags & 0x20))
             return;
-        self->mFlags &= ~0x20;
+        // volatile deref keeps the retail fresh reload (retail reloads mFlags
+        // for the clear instead of reusing the test's value)
+        *(volatile u32*)&self->mFlags &= ~0x20;
     }
     CGimmickList* list = func_800B6BC8();
     cf::CChainBattleObj* obj;

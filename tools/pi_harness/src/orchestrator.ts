@@ -664,8 +664,8 @@ async function releaseBatch(
 
 /** Registry acceptance predicate shared by BOTH branches of runWitnessCycle
  *  (exit-0 and non-zero) and exported for unit tests: a row certifies when its
- *  status is FULL_MATCH, or (witness enabled) EQUIVALENT_MATCH, and it is not
- *  size-gate BACKLOG. With the witness disabled, EQUIVALENT_MATCH is never
+ *  status is FULL_MATCH, or (witness enabled) EQUIVALENT_MATCH. With the
+ *  witness disabled, EQUIVALENT_MATCH is never
  *  accepted — only byte-identical FULL_MATCH counts (adversarial-review H1:
  *  the exit-0 branch previously trusted the exit code unconditionally, so a
  *  --no-witness cycle that minted EQUIVALENT_MATCH via the re-enabled
@@ -690,11 +690,10 @@ export function isCertifiedRow(
  * position-aligned same-mnemonic pairs whose diffs are register-only).
  *
  * The witness is the source of truth: exit 0 means the required level is
- * met, but a non-zero exit can still have flipped the registry (e.g. the
- * unit split-size gate failed after the function itself certified), so
- * targets.json is re-checked either way. Returns true when the target is
- * now FULL_MATCH / EQUIVALENT_MATCH; false -> the caller re-adds it to the
- * LLM batch pool (never dropped).
+ * met, but a non-zero exit can still have flipped the registry (e.g. a
+ * rejected witness), so targets.json is re-checked either way. Returns true
+ * when the target is now FULL_MATCH / EQUIVALENT_MATCH; false -> the caller
+ * re-adds it to the LLM batch pool (never dropped).
  */
 async function runWitnessCycle(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
@@ -756,8 +755,9 @@ async function runWitnessCycle(
       ], { cwd: repoRoot });
       // cycle exit 0 = required level met — but NEVER trust the exit code
       // alone: the registry records actual acceptance (adversarial-review H1).
-      // A size-gate failure records FULL_MATCH with workflow BACKLOG while the
-      // cycle still exits 0, and a --no-witness run can only legitimately
+      // cmd_cycle no longer records BACKLOG for unit-size overruns (user
+      // policy 2026-08); a lingering BACKLOG is a pre-policy artifact and
+      // must not block the function. A --no-witness run can only legitimately
       // produce FULL_MATCH — re-read the row and apply the same predicate as
       // the non-zero branch below.
       const row = targetRowById(repoRoot).get(targetId);
@@ -765,15 +765,15 @@ async function runWitnessCycle(
       if (!certified) {
         process.stderr.write(
           `[pi-harness] ${unit}: witness cycle exited 0 for ${targetId} but the registry does not certify it ` +
-          `(status ${row?.status ?? "UNKNOWN"}${row?.workflowStatus === "BACKLOG" ? ", size-gate BACKLOG" : ""}) — treated as not certified\n`,
+          `(status ${row?.status ?? "UNKNOWN"}${row?.workflowStatus === "BACKLOG" ? ", legacy size-gate BACKLOG" : ""}) — treated as not certified\n`,
         );
       }
     } catch (err) {
-      // Non-zero exit: witness may not have certified, or the unit-level
-      // split size gate failed. The registry records actual acceptance —
-      // re-check instead of trusting the exit code alone. A size-gate
-      // failure records FULL_MATCH but workflow BACKLOG (r5 finding 4):
-      // status alone would falsely accept it.
+      // Non-zero exit: witness may not have certified. The registry records
+      // actual acceptance — re-check instead of trusting the exit code alone.
+      // (Legacy BACKLOG rows from before user policy 2026-08 recorded
+      // FULL_MATCH + BACKLOG for size overruns; isCertifiedRow ignores
+      // workflow status, so they certify.)
       const row = targetRowById(repoRoot).get(targetId);
       const backlogged = row?.workflowStatus === "BACKLOG";
       if (isCertifiedRow(row, witnessEnabled)) {
@@ -804,7 +804,7 @@ async function runWitnessCycle(
         }
         process.stderr.write(
           `[pi-harness] ${unit}: witness did not certify ${targetId} ` +
-            `(status ${row?.status ?? "UNKNOWN"}${backlogged ? ", size-gate BACKLOG" : ""}${gate}) — re-added to batch pool\n`,
+            `(status ${row?.status ?? "UNKNOWN"}${backlogged ? ", legacy size-gate BACKLOG" : ""}${gate}) — re-added to batch pool\n`,
         );
       }
     }
@@ -1088,7 +1088,7 @@ function makeVerifyCallback(opts: {
         `These targets show mismatch:0 in hexdiff, but the acceptance cycle did ` +
         `NOT certify them (this session is still in the re-prompt path = 0 ` +
         `accepted). They are byte-identical but a ` +
-        (config.witnessEnabled ? "witness/reloc/size gate" : "reloc/size gate (witness disabled)") +
+        (config.witnessEnabled ? "witness/reloc gate" : "reloc gate (witness disabled)") +
         ` rejected them. **Do NOT edit the code bytes** — instead investigate ` +
         `the gate with ` +
         (config.witnessEnabled ? "`witness <unit> <symbol>` and " : "") +
@@ -1133,18 +1133,16 @@ function makeVerifyCallback(opts: {
         `hexdiff shows mismatch:0 for all targets (${matchedTargets.length} byte-identical), ` +
         `BUT the acceptance cycle did NOT certify them — otherwise this session ` +
         `would have accepted. A ` +
-        (config.witnessEnabled ? "witness/reloc/size gate" : "reloc/size gate (witness disabled)") +
+        (config.witnessEnabled ? "witness/reloc gate" : "reloc gate (witness disabled)") +
         ` rejected them. ` +
         (config.witnessEnabled
           ? `Investigate with the \`witness\` tool (` +
             `\`witness <unit> <symbol>\`) on each: it reports the exact equivalence ` +
             `status. Likely causes:\n` +
             `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
-            `- unit split-size over budget\n` +
             `- the witness gate (nonvolatile preservation, ABI fixedness)`
           : `Likely causes:\n` +
-            `- reloc drift (decomp has relocs where retail doesn't, or different names)\n` +
-            `- unit split-size over budget`
+            `- reloc drift (decomp has relocs where retail doesn't, or different names)`
         ) +
         `\n\n` +
         `Do NOT stop — find and fix the gate.`,
@@ -2471,9 +2469,10 @@ async function runTuFinal(
         // batch-cycle exits non-zero when ANY target fails — re-check the
         // registry for the actual accepted set.
         const postStatus = new Map(loadUnitTargets(repoRoot, config.region, unit).map((t) => [t.id, t.status]));
-        // A size-gate-failed target records FULL_MATCH but workflow BACKLOG —
-        // treat it as NOT re-certified (same gate as runBatchCycle/runWitnessCycle,
-        // adversarial review H2).
+        // Function acceptance is per-function: BACKLOG no longer records a
+        // unit-size overrun (cmd_cycle, user policy 2026-08); a lingering
+        // BACKLOG is a pre-policy artifact and re-certifies with its status
+        // (the unit split-size gate is the TU-final sizeOk below).
         const notAccepted = unitTargets.filter((t) => {
           const ok = postStatus.get(t.id) === "FULL_MATCH"
             || (config.witnessEnabled && postStatus.get(t.id) === "EQUIVALENT_MATCH")

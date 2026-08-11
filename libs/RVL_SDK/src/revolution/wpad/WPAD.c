@@ -1313,37 +1313,37 @@ void __wpadDisconnectCallback(s32 chan, s32 status) {
     }
 }
 
-void WPADDisconnect(s32 chan) {
-    WPADCB* p;
-    BOOL enabled;
-    s32 status;
-
-    p = __rvl_p_wpadcb[chan];
-    enabled = OSDisableInterrupts();
-    status = p->status;
+static void __wpadDisconnectControl(s32 chan, u32 offset) {
+    WPADCB* p = *(WPADCB**)((u8*)__rvl_p_wpadcb + offset);
+    BOOL enabled = OSDisableInterrupts();
+    s32 status = p->status;
     OSRestoreInterrupts(enabled);
 
     if (status != WPAD_ERR_NO_CONTROLLER) {
-        WUDSetDeviceHistory(chan, NULL);
-
-        p = __rvl_p_wpadcb[chan];
         enabled = OSDisableInterrupts();
-        status = p->status;
-        OSRestoreInterrupts(enabled);
 
-        if (status != WPAD_ERR_NO_CONTROLLER) {
-            enabled = OSDisableInterrupts();
-
-            if (p->sleeping) {
-                OSRestoreInterrupts(enabled);
-                return;
-            }
-
-            p->sleeping = TRUE;
-
+        if (p->sleeping) {
             OSRestoreInterrupts(enabled);
-            WPADControlLed(chan, 0, __wpadDisconnectCallback);
+            return;
         }
+
+        p->sleeping = TRUE;
+
+        OSRestoreInterrupts(enabled);
+        WPADControlLed(chan, 0, __wpadDisconnectCallback);
+    }
+}
+
+void WPADDisconnect(s32 chan) {
+    s32 status;
+    u32 offset;
+
+    offset = chan * sizeof(WPADCB*);
+    status = __wpadGetStatusSafe(chan);
+
+    if (status != WPAD_ERR_NO_CONTROLLER) {
+        WUDSetDeviceHistory(chan, NULL);
+        __wpadDisconnectControl(chan, offset);
     }
 }
 

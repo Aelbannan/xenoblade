@@ -157,9 +157,11 @@ void SFX_Destroy(SFXHandleState* hn) {
     if (hn == NULL)
         return;
 
+    void* zmv = hn->zmv;
+    u32 f30 = hn->field_0x30;
     hn->active = 0;
-    SFXZ_Destroy(hn->zmv);
-    SFXA_Destroy(hn->field_0x30);
+    SFXZ_Destroy(zmv);
+    SFXA_Destroy((void*)f30);
     lbl_eu_80619C10.init_count--;
 }
 

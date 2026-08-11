@@ -15,11 +15,13 @@ void UnkClass_800B0AD8::clearCounters() {
 }
 __declspec(noinline) UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
-extern void func_80193810(u32);
-extern void func_801F3CCC(u32);
-extern void func_801F45B4(u32);
-extern void func_802074F0(u32);
-extern void func_80195E5C(float);
+extern "C" void func_80193810(unsigned long a, void* b);
+extern "C" void func_801F3CCC(unsigned long a, void* b);
+extern "C" void func_801F45B4(unsigned long a, void* b);
+extern "C" void func_802074F0(unsigned long a, void* b);
+extern "C" void func_8019397C(unsigned long a, void* b);
+extern "C" void func_80193D48(unsigned long a, void* b);
+extern "C" void func_80195E5C(float);
 
 // Forward declarations for callees used by my targets
 struct CfMapMineManager;
@@ -157,11 +159,14 @@ s32 func_800B1C40() {
 void init_1C78(){}
 void init_1CDC(){}
 void init_1E18(){}
+// field_0xCA0; if nonzero tail-call with (field, r4-passthrough) (retail lwz;cmpwi;beqlr;b)
+extern "C" void func_800B1E18(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_8019397C(self->field_0xCA0, obj);}}
 void init_1E2C(){}
 void init_1EB8(){}
 void init_1EC8(){}
 void init_1F2C(){}
-void func_800B1F40(UnkClass_805764CC* self){if (self->field_0xCA0){func_80193810(self->field_0xCA0);}}
+extern "C" void func_800B1F2C(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193D48(self->field_0xCA0, obj);}}
+extern "C" void func_800B1F40(UnkClass_805764CC* self, void* obj){if (self->field_0xCA0){func_80193810(self->field_0xCA0, obj);}}
 
 // Target 1: us-800b2820 - Check field_0xCA0; if nonzero, call func_80195E5C with float constant.
 void func_800B1F54(UnkClass_805764CC* self) {
@@ -171,10 +176,10 @@ void func_800B1F54(UnkClass_805764CC* self) {
 }
 void init_1F6C(){}
 void init_1FD8(){}
-void func_800B2034(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC);}}
-void func_800B2048(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC);}}
+extern "C" void func_800B2034(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC, obj);}}
+extern "C" void func_800B2048(UnkClass_805764CC* self, void* obj){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC, obj);}}
 // TEST_FUNC_205C
-void func_800B20A0(UnkClass_805764CC* self){if (self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
+extern "C" void func_800B20A0(UnkClass_805764CC* self, void* obj){if (self->field_0xCAC){func_802074F0(self->field_0xCAC, obj);}}
 void init_20B4(){}
 u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
 // Target 5: us-800b35fc - __dt__800B2D30

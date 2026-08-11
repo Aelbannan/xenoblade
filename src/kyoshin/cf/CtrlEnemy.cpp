@@ -40,7 +40,9 @@ void CtrlEnemy_UnkFunc_80088620(){}
 
 void CtrlEnemy_UnkFunc_80088800(){}
 
-void CtrlEnemy_UnkFunc_8008884C(){}
+extern f32 lbl_eu_80666590;
+extern "C" void func_800899C0(void* a, float f);
+extern "C" void CtrlEnemy_UnkFunc_8008884C(void* self) { func_800899C0((char*)self + 132, lbl_eu_80666590); }
 
 void cf::CtrlEnemy::delegateTo80089B24() { func_80089B24((char*)this + 0x84); }
 

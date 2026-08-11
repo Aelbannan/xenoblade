@@ -140,7 +140,10 @@ void LOD::LODMemMan::func_80471484() {}
 
 void LOD::LODMemMan::func_8047163C() {}
 
+#pragma push
+#pragma auto_inline off
 void LOD::LODMemMan::func_804716B8() {}
+#pragma pop
 
 void LOD::LODMemMan::func_80471718() {}
 
@@ -166,7 +169,10 @@ void LOD::LODMemMan::func_80471BC8() {}
 
 void LOD::LODMemMan::func_80471BF4() {}
 
-void LOD::LODMemMan::func_80471CC4() { LOD::LODMemMan::func_804716B8(); }
+// retail: lwz r3,0xC(r3); b func_804716B8 — delegates to the sub-manager stored at +0xC
+void LOD::LODMemMan::func_80471CC4() {
+    (*(LOD::LODMemMan**)((u8*)this + 0xC))->func_804716B8();
+}
 
 void LOD::LODMemMan::func_80471CCC() {}
 

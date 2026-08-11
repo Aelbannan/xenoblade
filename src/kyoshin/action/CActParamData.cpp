@@ -440,12 +440,51 @@ extern "C" __declspec(noinline) void func_80054D3C(void* self, void* member) {}
 extern "C" void func_80054D34(void* self) {
     func_80054D3C(self, (char*)self + 0x2E0);
 }
-// vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr)
-typedef void (*CActVFn)(void*);
-extern "C" void func_800560A4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x34))(self); }
-extern "C" void func_800560B4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x98))(self); }
-extern "C" void func_800560C4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x88))(self); }
-extern "C" void func_800560D4(void* self) { (*(CActVFn*)((char*)*(void**)self + 0x8C))(self); }
+// vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr).
+// A real C++ virtual call forces MWCC's r12 dispatch (fn-pointer form uses r4).
+struct CActVt34 {
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
+};
+struct CActVt88 {
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
+    virtual void m12(); virtual void m13(); virtual void m14(); virtual void m15();
+    virtual void m16(); virtual void m17(); virtual void m18(); virtual void m19();
+    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
+    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual void m28(); virtual void m29(); virtual void m30(); virtual void m31();
+    virtual void m32();
+};
+struct CActVt8C {
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
+    virtual void m12(); virtual void m13(); virtual void m14(); virtual void m15();
+    virtual void m16(); virtual void m17(); virtual void m18(); virtual void m19();
+    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
+    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual void m28(); virtual void m29(); virtual void m30(); virtual void m31();
+    virtual void m32(); virtual void m33();
+};
+struct CActVt98 {
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
+    virtual void m12(); virtual void m13(); virtual void m14(); virtual void m15();
+    virtual void m16(); virtual void m17(); virtual void m18(); virtual void m19();
+    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
+    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual void m28(); virtual void m29(); virtual void m30(); virtual void m31();
+    virtual void m32(); virtual void m33(); virtual void m34(); virtual void m35();
+    virtual void m36();
+};
+extern "C" void func_800560A4(void* self) { ((CActVt34*)self)->m11(); }
+extern "C" void func_800560B4(void* self) { ((CActVt98*)self)->m36(); }
+extern "C" void func_800560C4(void* self) { ((CActVt88*)self)->m32(); }
+extern "C" void func_800560D4(void* self) { ((CActVt8C*)self)->m33(); }
 extern "C" void func_800550E8() {}
 extern "C" void func_80055700() {}
 extern "C" void func_80055AC4() {}

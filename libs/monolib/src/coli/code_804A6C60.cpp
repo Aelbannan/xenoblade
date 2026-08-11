@@ -262,9 +262,10 @@ void __dt__804B095C(){}
 
 void func_804B09C8(){}
 
-void func_804B0A6C(void){}
+extern "C" void func_804B102C(void* self);
+extern "C" void func_804B0A6C(void* self, u32 val) { *(u32*)((u8*)self + 0) = val; func_804B102C(self); }
 
-void func_804B0A74(void){}
+extern "C" void func_804B0A74(void* self, u32 val) { *(u32*)((u8*)self + 8) = val; func_804B102C(self); }
 
 void func_804B0A7C(){}
 
@@ -282,7 +283,10 @@ void func_804B0DF4(){}
 
 void func_804B0EA0(){}
 
-void func_804B102C(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804B102C(void* self) {}
+#pragma pop
 
 void func_804B1130(){}
 

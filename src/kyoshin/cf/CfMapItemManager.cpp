@@ -98,13 +98,16 @@ void __dt__801732F8(){}
 
 void func_80173338(){}
 
-void func_801733C0(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_801733C0(void* a, void* b, void* c, int d) {}
+#pragma pop
 
 int func_801737CC(void* self) { return 0; }
 
 void func_801737D4(){}
 
-void func_80173894(void* self){ func_801733C0(); }
+extern "C" void func_80173894(void* self, void* b, void* c) { func_801733C0(self, b, c, 0); }
 
 extern "C" u32 func_8017389C() { return (u32)lbl_eu_806640C0; }
 

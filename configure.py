@@ -1769,7 +1769,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CView.cpp"),
             Object(NonMatching, "monolib/src/core/CViewFrame.cpp"),
             Object(NonMatching, "monolib/src/core/CViewRoot.cpp"),
-            Object(NonMatching, "monolib/src/work/CWorkControl.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "monolib/src/work/CWorkControl.cpp", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "monolib/src/work/CWorkFlowSetup.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/work/CWorkFlowShutdownAll.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiMenu.cpp"),

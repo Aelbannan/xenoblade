@@ -6,6 +6,9 @@
 #include "kyoshin/cf/CfRes.hpp"
 extern "C" char* getEntryPtr(char* base, int a, int b);
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
+extern "C" void* func_80495FF0(void* scene);
+extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
+extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 void func_80061870(){}
 
 int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
@@ -55,24 +58,15 @@ int CfRes_getD80Flag() { return lbl_eu_80663D80; }
 extern u32 lbl_eu_80663D80;
 u32 CfRes_setD80Flag(u32 val) { lbl_eu_80663D80 = val; return val; }
 
-void func_80061FE8(){
-    extern u32 lbl_eu_80663D80;
-    extern void func_80495FF0();
-    extern void* getHandleMEM1__Q23mtl10MemManagerFv();
-    if (lbl_eu_80663D80) {
-        func_80495FF0();
-    }
-    getHandleMEM1__Q23mtl10MemManagerFv();
+// retail: lwz r3,lbl; cmpwi; beq; b func_80495FF0 / b getHandleMEM1 (tail calls)
+extern "C" void* func_80061FE8() {
+    if (lbl_eu_80663D80 != 0) { return func_80495FF0((void*)lbl_eu_80663D80); }
+    return (void*)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
-void func_80061FFC(){
-    extern u32 lbl_eu_80663D80;
-    extern void func_80496004();
-    extern void* getHandleMEM1__Q23mtl10MemManagerFv();
-    if (lbl_eu_80663D80) {
-        func_80496004();
-    }
-    getHandleMEM1__Q23mtl10MemManagerFv();
+extern "C" mtl::ALLOC_HANDLE func_80061FFC() {
+    if (lbl_eu_80663D80 != 0) { return func_80496004((void*)lbl_eu_80663D80); }
+    return (mtl::ALLOC_HANDLE)(uintptr_t)getHandleMEM1__Q23mtl10MemManagerFv();
 }
 
 // Use explicit default return to match retail pattern
@@ -616,11 +610,9 @@ extern "C" void CfRes_setE28Mask(u32 bits) {
     lbl_eu_80663E28 |= bits;
 }
 
-void func_800649F4(void* self){
-    void* obj = *(void**)((char*)self + 0x2C);
-    void (*func)(void*) = *(void (**)(void*))((char*)(*(void**)obj) + 0xC);
-    func(obj);
-}
+// vtable+0xC dispatch on *(self+0x2C) (retail: lwz r3,0x2c; lwz r12,0; lwz r12,0xc; mtctr; bctr)
+struct CfResVtC { virtual void m0(); virtual void m1(); };
+extern "C" void func_800649F4(void* self) { ((CfResVtC*)(*(void**)((char*)self + 0x2C)))->m1(); }
 
 extern "C" int CfRes_checkMask_64A08(u8* self, u32 mask) {
     u32 val = *(u32*)self;

@@ -87,6 +87,8 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         if (bc != 0) bits |= lo >> (32 - bc);
         u32 idx = bits >> 24;
         switch (idx) {
+        default:
+            goto exit;
         case 252: case 253: case 255: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
@@ -1033,7 +1035,12 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             bits <<= 1;
             u32 t = ctx->tbl990[(bits >> 25) & 0x7F];
             blk->f00 = t & 0xFF;
-            if (blk->f00 == 0x40) {
+            if (blk->f00 != 0x40) {
+                blk->codelen = t >> 16;
+                blk->f04 = (s32)(s8)(t >> 8);
+                bits >>= 0x21 - (s32)blk->codelen;
+                blk->f08 = bits & 1;
+                } else {
                 blk->codelen = 0x14;
                 s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
                 blk->f00 = (u32)(s8)(v >> 8);
@@ -1049,11 +1056,6 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                     blk->f08 = 0;
                     }
                 blk->f04 = (s32)v;
-                } else {
-                blk->codelen = t >> 16;
-                blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-                bits >>= 0x21 - (s32)blk->codelen;
-                blk->f08 = bits & 1;
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -1386,11 +1388,11 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            u32 e = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(e & ~1u)];
+            bits = (bits >> 21) & 0x3FF;
+            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 11;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1413,11 +1415,11 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 1: {
             blk->codelen = 0x0D;
-            u32 e = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(e & ~1u)];
+            bits = (bits >> 19) & 0xFFF;
+            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1439,35 +1441,34 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             continue;
         }
         case 0: {
-            u32 x = bits << 1;
+            bits <<= 1;
             s16 t;
-            u32 e;
-            if ((x >> 24) != 0) {
+            if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
-                e = x >> 19;
-                t = ctx->esc1[(e & ~1u)];
+                bits >>= 19;
+                t = ctx->esc1[(bits & ~1u) >> 1];
                 } else {
-                x <<= 8;
-                if ((s32)x < 0) {
+                bits <<= 8;
+                if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
-                    e = (x >> 26) & 0x1F;
-                    t = ctx->esc2[(e & ~1u)];
+                    bits = (bits >> 26) & 0x1F;
+                    t = ctx->esc2[(bits & ~1u) >> 1];
                     } else {
-                    x <<= 1;
-                    if ((s32)x < 0) {
+                    bits <<= 1;
+                    if ((s32)bits < 0) {
                         blk->codelen = 0x10;
-                        e = (x >> 26) & 0x1F;
-                        t = ctx->esc3[(e & ~1u)];
+                        bits = (bits >> 26) & 0x1F;
+                        t = ctx->esc3[(bits & ~1u) >> 1];
                         } else {
                         blk->codelen = 0x11;
-                        e = (x >> 25) & 0x1F;
-                        t = ctx->esc4[(e & ~1u)];
+                        bits = (bits >> 25) & 0x1F;
+                        t = ctx->esc4[(bits & ~1u) >> 1];
                         }
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = x & 1;
+            blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1489,12 +1490,17 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             continue;
         }
         case 254: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = -((sc2 - 1) | 1);
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1503,15 +1509,20 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 250: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1520,7 +1531,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247: {
             p += 1;
@@ -1537,15 +1548,20 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 222: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1554,15 +1570,20 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 218: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -1571,7 +1592,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215: {
             p += 1;
@@ -1588,7 +1609,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 128: case 129: case 130: case 131: case 132: case 133: case 134: case 135: case 136: case 137: case 138: case 139: case 140: case 141: case 142: case 143: case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151: case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159: case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167: case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175: case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183: case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191: {
             bc += 2;
@@ -1599,7 +1620,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 2;
                 }
-            continue;
+            goto exit;
         }
         case 120: case 121: case 122: case 123: {
             p += 2;
@@ -1616,7 +1637,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 104: case 105: case 106: case 107: {
             p += 2;
@@ -1633,7 +1654,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 92: case 93: {
             p += 3;
@@ -1650,7 +1671,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 84: case 85: {
             p += 3;
@@ -1667,7 +1688,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 76: case 77: {
             p += 1;
@@ -1684,7 +1705,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 68: case 69: {
             p += 1;
@@ -1701,7 +1722,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 62: {
             p += 4;
@@ -1718,7 +1739,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 58: {
             p += 4;
@@ -1735,7 +1756,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 54: {
             p += 5;
@@ -1752,7 +1773,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 50: {
             p += 5;
@@ -1769,7 +1790,7 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 46: {
             p += 1;
@@ -1786,14 +1807,14 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 42: {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
             s32 sc1 = ((6 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -1808,7 +1829,9 @@ s32 mpvabdec_IntraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
     }
 exit:
-    if (blk->last == blk->first) blk->last = -blk->last;
+    s32 last = blk->last;
+    if (last != blk->first) last = -last;
+    blk->last = last;
     ctx->hi = hi;
     ctx->lo = lo;
     ctx->bc = bc;
@@ -1855,6 +1878,8 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         if (bc != 0) bits |= lo >> (32 - bc);
         u32 idx = bits >> 24;
         switch (idx) {
+        default:
+            goto exit;
         case 252: case 253: case 255: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
@@ -2801,7 +2826,12 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             bits <<= 1;
             u32 t = ctx->tbl990[(bits >> 25) & 0x7F];
             blk->f00 = t & 0xFF;
-            if (blk->f00 == 0x40) {
+            if (blk->f00 != 0x40) {
+                blk->codelen = t >> 16;
+                blk->f04 = (s32)(s8)(t >> 8);
+                bits >>= 0x21 - (s32)blk->codelen;
+                blk->f08 = bits & 1;
+                } else {
                 blk->codelen = 0x14;
                 s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
                 blk->f00 = (u32)(s8)(v >> 8);
@@ -2817,11 +2847,6 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                     blk->f08 = 0;
                     }
                 blk->f04 = (s32)v;
-                } else {
-                blk->codelen = t >> 16;
-                blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-                bits >>= 0x21 - (s32)blk->codelen;
-                blk->f08 = bits & 1;
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -3154,11 +3179,11 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            u32 e = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(e & ~1u)];
+            bits = (bits >> 21) & 0x3FF;
+            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 11;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3181,11 +3206,11 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
         case 1: {
             blk->codelen = 0x0D;
-            u32 e = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(e & ~1u)];
+            bits = (bits >> 19) & 0xFFF;
+            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3207,35 +3232,34 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             continue;
         }
         case 0: {
-            u32 x = bits << 1;
+            bits <<= 1;
             s16 t;
-            u32 e;
-            if ((x >> 24) != 0) {
+            if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
-                e = x >> 19;
-                t = ctx->esc1[(e & ~1u)];
+                bits >>= 19;
+                t = ctx->esc1[(bits & ~1u) >> 1];
                 } else {
-                x <<= 8;
-                if ((s32)x < 0) {
+                bits <<= 8;
+                if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
-                    e = (x >> 26) & 0x1F;
-                    t = ctx->esc2[(e & ~1u)];
+                    bits = (bits >> 26) & 0x1F;
+                    t = ctx->esc2[(bits & ~1u) >> 1];
                     } else {
-                    x <<= 1;
-                    if ((s32)x < 0) {
+                    bits <<= 1;
+                    if ((s32)bits < 0) {
                         blk->codelen = 0x10;
-                        e = (x >> 26) & 0x1F;
-                        t = ctx->esc3[(e & ~1u)];
+                        bits = (bits >> 26) & 0x1F;
+                        t = ctx->esc3[(bits & ~1u) >> 1];
                         } else {
                         blk->codelen = 0x11;
-                        e = (x >> 25) & 0x1F;
-                        t = ctx->esc4[(e & ~1u)];
+                        bits = (bits >> 25) & 0x1F;
+                        t = ctx->esc4[(bits & ~1u) >> 1];
                         }
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = x & 1;
+            blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3257,12 +3281,17 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
             continue;
         }
         case 254: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = -((sc2 - 1) | 1);
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3271,15 +3300,20 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 250: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3288,7 +3322,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247: {
             p += 1;
@@ -3305,15 +3339,20 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 222: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3322,15 +3361,20 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 218: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((2 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((2 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -3339,7 +3383,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215: {
             p += 1;
@@ -3356,7 +3400,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 128: case 129: case 130: case 131: case 132: case 133: case 134: case 135: case 136: case 137: case 138: case 139: case 140: case 141: case 142: case 143: case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151: case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159: case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167: case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175: case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183: case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191: {
             bc += 2;
@@ -3367,7 +3411,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 2;
                 }
-            continue;
+            goto exit;
         }
         case 120: case 121: case 122: case 123: {
             p += 2;
@@ -3384,7 +3428,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 104: case 105: case 106: case 107: {
             p += 2;
@@ -3401,7 +3445,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 92: case 93: {
             p += 3;
@@ -3418,7 +3462,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 84: case 85: {
             p += 3;
@@ -3435,7 +3479,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 76: case 77: {
             p += 1;
@@ -3452,7 +3496,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 68: case 69: {
             p += 1;
@@ -3469,7 +3513,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 62: {
             p += 4;
@@ -3486,7 +3530,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 58: {
             p += 4;
@@ -3503,7 +3547,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 54: {
             p += 5;
@@ -3520,7 +3564,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 50: {
             p += 5;
@@ -3537,7 +3581,7 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 46: {
             p += 1;
@@ -3554,14 +3598,14 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 42: {
             p += 1;
             s32 c1 = (s8)p[0];
             blk->last = c1;
             s32 sc1 = ((6 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -3576,7 +3620,9 @@ s32 mpvabdec_IntraBlockDc11_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         }
     }
 exit:
-    if (blk->last == blk->first) blk->last = -blk->last;
+    s32 last = blk->last;
+    if (last != blk->first) last = -last;
+    blk->last = last;
     ctx->hi = hi;
     ctx->lo = lo;
     ctx->bc = bc;
@@ -3612,37 +3658,37 @@ s32 mpvabdec_NintraBlock_Isr(MPVABDEC_CTX *ctx, MPVABDEC_BLK *blk) {
         s16 t;
         if ((v - 4) <= 3) {
             blk->codelen = 0x0B;
-            bits >>= 22;
-            t = ctx->tbl994[(bits & ~1u)];
+            bits = (bits >> 22) & 0x3FF;
+            t = ctx->tbl994[(bits & ~1u) >> 1];
             goto nib_table;
         } else if ((v - 2) <= 1) {
             blk->codelen = 0x0D;
-            bits >>= 20;
-            t = ctx->tbl998[(bits & ~1u)];
+            bits = (bits >> 20) & 0xFFF;
+            t = ctx->tbl998[(bits & ~1u) >> 1];
             goto nib_table;
         } else if (v == 1) {
             blk->codelen = 0x0E;
             bits >>= 19;
-            t = ctx->esc1[(bits & ~1u)];
+            t = ctx->esc1[(bits & ~1u) >> 1];
             goto nib_table;
         } else if (v == 0) {
             bits <<= 8;
             if ((s32)bits < 0) {
                 blk->codelen = 0x0F;
-                bits = (bits >> 1) & 0x1F;
-                t = ctx->esc2[(bits & ~1u)];
+                bits = (bits >> 26) & 0x1F;
+                t = ctx->esc2[(bits & ~1u) >> 1];
                 goto nib_table;
             } else {
                 bits <<= 1;
                 if ((s32)bits < 0) {
                     blk->codelen = 0x10;
-                    bits = (bits >> 1) & 0x1F;
-                    t = ctx->esc3[(bits & ~1u)];
+                    bits = (bits >> 26) & 0x1F;
+                    t = ctx->esc3[(bits & ~1u) >> 1];
                     goto nib_table;
                 } else {
                     blk->codelen = 0x11;
-                    bits = (bits >> 2) & 0x1F;
-                    t = ctx->esc4[(bits & ~1u)];
+                    bits = (bits >> 25) & 0x1F;
+                    t = ctx->esc4[(bits & ~1u) >> 1];
                     goto nib_table;
                 }
             }
@@ -3702,6 +3748,8 @@ nib_prefix_done:
         if (bc != 0) bits |= lo >> (32 - bc);
         u32 idx = bits >> 24;
         switch (idx) {
+        default:
+            goto exit;
         case 252: case 253: case 255: {
             s32 c1 = (s8)p[1];
             blk->last = c1;
@@ -4648,7 +4696,12 @@ nib_prefix_done:
             bits <<= 1;
             u32 t = ctx->tbl990[(bits >> 25) & 0x7F];
             blk->f00 = t & 0xFF;
-            if (blk->f00 == 0x40) {
+            if (blk->f00 != 0x40) {
+                blk->codelen = t >> 16;
+                blk->f04 = (s32)(s8)(t >> 8);
+                bits >>= 0x21 - (s32)blk->codelen;
+                blk->f08 = bits & 1;
+                } else {
                 blk->codelen = 0x14;
                 s32 v = (s32)((bits >> 11) & 0xFFFF) >> 2;
                 blk->f00 = (u32)(s8)(v >> 8);
@@ -4664,11 +4717,6 @@ nib_prefix_done:
                     blk->f08 = 0;
                     }
                 blk->f04 = (s32)v;
-                } else {
-                blk->codelen = t >> 16;
-                blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-                bits >>= 0x21 - (s32)blk->codelen;
-                blk->f08 = bits & 1;
                 }
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
@@ -5001,11 +5049,11 @@ nib_prefix_done:
         }
         case 2: case 3: {
             blk->codelen = 0x0B;
-            u32 e = (bits >> 21) & 0x3FF;
-            s16 t = ctx->tbl994[(e & ~1u)];
+            bits = (bits >> 21) & 0x3FF;
+            s16 t = ctx->tbl994[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 11;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5028,11 +5076,11 @@ nib_prefix_done:
         }
         case 1: {
             blk->codelen = 0x0D;
-            u32 e = (bits >> 19) & 0xFFF;
-            s16 t = ctx->tbl998[(e & ~1u)];
+            bits = (bits >> 19) & 0xFFF;
+            s16 t = ctx->tbl998[(bits & ~1u) >> 1];
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = e & 1;
+            blk->f08 = bits & 1;
             bc += 13;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5054,35 +5102,34 @@ nib_prefix_done:
             continue;
         }
         case 0: {
-            u32 x = bits << 1;
+            bits <<= 1;
             s16 t;
-            u32 e;
-            if ((x >> 24) != 0) {
+            if ((bits >> 24) != 0) {
                 blk->codelen = 0x0E;
-                e = x >> 19;
-                t = ctx->esc1[(e & ~1u)];
+                bits >>= 19;
+                t = ctx->esc1[(bits & ~1u) >> 1];
                 } else {
-                x <<= 8;
-                if ((s32)x < 0) {
+                bits <<= 8;
+                if ((s32)bits < 0) {
                     blk->codelen = 0x0F;
-                    e = (x >> 26) & 0x1F;
-                    t = ctx->esc2[(e & ~1u)];
+                    bits = (bits >> 26) & 0x1F;
+                    t = ctx->esc2[(bits & ~1u) >> 1];
                     } else {
-                    x <<= 1;
-                    if ((s32)x < 0) {
+                    bits <<= 1;
+                    if ((s32)bits < 0) {
                         blk->codelen = 0x10;
-                        e = (x >> 26) & 0x1F;
-                        t = ctx->esc3[(e & ~1u)];
+                        bits = (bits >> 26) & 0x1F;
+                        t = ctx->esc3[(bits & ~1u) >> 1];
                         } else {
                         blk->codelen = 0x11;
-                        e = (x >> 25) & 0x1F;
-                        t = ctx->esc4[(e & ~1u)];
+                        bits = (bits >> 25) & 0x1F;
+                        t = ctx->esc4[(bits & ~1u) >> 1];
                         }
                     }
                 }
             blk->f00 = (u32)(t & 0xFF);
             blk->f04 = (s32)(s8)((t >> 8) & 0xFF);
-            blk->f08 = x & 1;
+            blk->f08 = bits & 1;
             bc += (s32)blk->codelen;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5104,12 +5151,17 @@ nib_prefix_done:
             continue;
         }
         case 254: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = -((sc2 - 1) | 1);
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5118,15 +5170,20 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 250: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5135,7 +5192,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247: {
             p += 1;
@@ -5152,15 +5209,20 @@ nib_prefix_done:
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 222: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = -((sc1 - 1) | 1);
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5169,15 +5231,20 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 218: {
-            p += 1;
-            s32 c1 = (s8)p[0];
+            s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
+            p += 2;
+            s32 c2 = (s8)p[0];
+            blk->last = c2;
+            s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
+            sc2 = (sc2 - 1) | 1;
+            blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
                 bc -= 0x20;
@@ -5186,7 +5253,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215: {
             p += 1;
@@ -5203,7 +5270,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 5;
                 }
-            continue;
+            goto exit;
         }
         case 128: case 129: case 130: case 131: case 132: case 133: case 134: case 135: case 136: case 137: case 138: case 139: case 140: case 141: case 142: case 143: case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151: case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159: case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167: case 168: case 169: case 170: case 171: case 172: case 173: case 174: case 175: case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183: case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191: {
             bc += 2;
@@ -5214,7 +5281,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 2;
                 }
-            continue;
+            goto exit;
         }
         case 120: case 121: case 122: case 123: {
             p += 2;
@@ -5231,7 +5298,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 104: case 105: case 106: case 107: {
             p += 2;
@@ -5248,7 +5315,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 6;
                 }
-            continue;
+            goto exit;
         }
         case 92: case 93: {
             p += 3;
@@ -5265,7 +5332,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 84: case 85: {
             p += 3;
@@ -5282,7 +5349,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 76: case 77: {
             p += 1;
@@ -5299,7 +5366,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 68: case 69: {
             p += 1;
@@ -5316,7 +5383,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 7;
                 }
-            continue;
+            goto exit;
         }
         case 62: {
             p += 4;
@@ -5333,7 +5400,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 58: {
             p += 4;
@@ -5350,7 +5417,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 54: {
             p += 5;
@@ -5367,7 +5434,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 50: {
             p += 5;
@@ -5384,7 +5451,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 46: {
             p += 1;
@@ -5401,7 +5468,7 @@ nib_prefix_done:
                 } else {
                 hi <<= 8;
                 }
-            continue;
+            goto exit;
         }
         case 42: {
             p += 1;
@@ -5423,7 +5490,9 @@ nib_prefix_done:
         }
     }
 exit:
-    if (blk->last == blk->first) blk->last = -blk->last;
+    s32 last = blk->last;
+    if (last != blk->first) last = -last;
+    blk->last = last;
     ctx->hi = hi;
     ctx->lo = lo;
     ctx->bc = bc;

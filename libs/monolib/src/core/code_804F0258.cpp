@@ -46,8 +46,8 @@ void func_804F42A0(){}
 void func_804F45EC(){}
 
 extern void GXSetProjection(void*, int);
-void func_804F4620(void* self){ GXSetProjection((void*)(intptr_t)0x0, 0); }
+void func_804F4620(void* mtx){ GXSetProjection(mtx, 0); }
 
 void func_804F4628(){}
 
-void func_804F4D74(void* self){ GXSetProjection((void*)(intptr_t)0x1, 0); }
+void func_804F4D74(void* mtx){ GXSetProjection(mtx, 1); }

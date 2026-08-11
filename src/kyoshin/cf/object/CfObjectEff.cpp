@@ -588,7 +588,9 @@ void CfObjectEff::func_800AD3A4() {
         }
     }
 }
-void CfObjectEff::func_800AD4A4() {}
+int CfObjectEff::func_800AD4A4() {
+    return ((*(u32*)((u8*)this + 0x68) >> 19) & 1);
+}
 } // namespace cf
 
 // Chain node/mgr views for func_800AD558: the manager returned by

@@ -1141,9 +1141,9 @@ void func_801359AC(){}
 void func_80135D04(){}
 void __dt__Q212CUICfManager5CTestFv(){}
 
-void OnFileEvent__12CUICfManagerFv();
 void CUICfManager::func_80135FBC() {
-    OnFileEvent__12CUICfManagerFv();
+    // retail: subi r3,r3,0x54; b OnFileEvent__12CUICfManagerFv — secondary-subobject thunk
+    reinterpret_cast<CUICfManager*>(reinterpret_cast<char*>(this) - 0x54)->OnFileEvent();
 }
 
 extern "C" void func_801355BC() {}

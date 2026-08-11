@@ -16,6 +16,10 @@ void func_8049D218(CScnFilterReslist* list, u32* val);
 void func_8049DD28(void* self, u32 val);
 extern "C" void func_8049D994(int* dst, int* src);
 extern "C" void func_8049D9A0(u32* self);
+extern "C" void func_8049CAF4();
+extern "C" CScnFilterListNode* func_8049DD30(CScnFilterList* list);
+extern "C" CScnFilterListNode* func_8049DCF4(CScnFilterList* list);
+extern "C" void func_8049DC5C(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out);
 
 // Flattened template ctors defined below; forward-declared so the derived
 // ctors above them emit bl calls instead of inlining the base init.
@@ -93,7 +97,9 @@ CScnFilterMan* func_8049CC70(CScnFilterMan* self) {
     return self;
 }
 
-void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(){}
+// Iterator base dtor stub (retail has the full clearList body); kept out of
+// line so the derived dtor below emits a real call.
+extern "C" __declspec(noinline) void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterListIter* self, int mode) {}
 
 #pragma push
 #pragma auto_inline off
@@ -104,7 +110,19 @@ void func_8049CDAC(void) {}
 
 extern "C" void func_8049CDB0(void* unused, void* out) { *(u32*)out = 0; }
 
-void __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(){}
+// reslist<CScnFilter*>::iterator deleting destructor (retail
+// __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter): destroy
+// the (empty) iterator base, then free the object when mode > 0. Same shape
+// as __dt__reslist_CScnFilter.
+CScnFilterListIter* __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(CScnFilterListIter* self, int mode) {
+    if (self != NULL) {
+        __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(self, 0);
+        if (mode > 0) {
+            delete self;
+        }
+    }
+    return self;
+}
 
 extern "C" void func_8049CE18();
 extern "C" void func_8049CE14(void) { func_8049CE18(); }
@@ -124,13 +142,21 @@ extern "C" void func_8049CF48(){}
 
 CScnFilterMan::~CScnFilterMan() {}
 
-extern "C" void __dt__8049D130();
-extern "C" void func_8049D12C(void) { __dt__8049D130(); }
+extern "C" void __dt__8049D130(CScnFilterReslist* self);
+extern "C" void func_8049D12C(void* self) { __dt__8049D130((CScnFilterReslist*)self); }
 
-#pragma push
-#pragma auto_inline off
-extern "C" void __dt__8049D130(){}
-#pragma pop
+// destroyList for the filter reslist member: clear the ring, free the node
+// array unless it is externally owned (field_0x1C), and reset the capacity.
+extern "C" __declspec(noinline) void __dt__8049D130(CScnFilterReslist* self) {
+    func_8049CAF4();
+    if (self->field_0x1C == false) {
+        if (self->mList != NULL) {
+            delete[] self->mList;
+            self->mList = NULL;
+        }
+    }
+    self->mCapacity = 0;
+}
 
 extern "C" void __dt__8049D18C();
 extern "C" void func_8049D188(void) { __dt__8049D18C(); }
@@ -170,7 +196,19 @@ CScnFilterListNode* func_8049D2F0(CScnFilterReslist* list, u32 val) {
     return node;
 }
 
-extern "C" __declspec(noinline) void func_8049D338(CScnFilter** item, u32 val) {}
+// setItem for the filter reslist: construct a CScnFilter* cell at *item via
+// the placement-new operator (func_804932B4), then copy *val into it. The
+// try/catch is the retail setItem shape (forces MWCC's frame-pointer prologue).
+extern "C" __declspec(noinline) void func_8049D338(CScnFilter** item, u32 val) {
+    CScnFilter** p = (CScnFilter**)func_804932B4((void*)4, (void*)item);
+    if (p != NULL) {
+        try {
+            *p = *(CScnFilter**)val;
+        } catch (...) {
+            throw;
+        }
+    }
+}
 
 // Find the first free slot (mNext == 0) in the node array and return its
 // address. Retail uses the counted-loop form (mtctr/bdnz) with a byte
@@ -201,7 +239,7 @@ void func_8049D53C(CScnFilterListIter* self, CScnFilterList* list) {
 
 void func_8049D548(){}
 
-extern "C" void func_8049D564(int* dst, int* src){
+extern "C" __declspec(noinline) void func_8049D564(int* dst, int* src){
     *dst = *src;
 }
 
@@ -232,7 +270,18 @@ CScnFilterListNode* func_8049D6C8(CScnFilterReslist* list, u32 val) {
     return node;
 }
 
-extern "C" __declspec(noinline) void func_8049D710(CScnFilter** item, u32 val) {}
+// setItem for the second filter list: same placement-new shape as
+// func_8049D338, but the value copy goes through func_8049D564.
+extern "C" __declspec(noinline) void func_8049D710(CScnFilter** item, u32 val) {
+    CScnFilter** p = (CScnFilter**)func_804932B4((void*)4, (void*)item);
+    if (p != NULL) {
+        try {
+            func_8049D564((int*)p, (int*)val);
+        } catch (...) {
+            throw;
+        }
+    }
+}
 
 // Same free-slot search as func_8049D394 (retail bodies are identical).
 extern "C" __declspec(noinline) CScnFilterListNode* func_8049D76C(CScnFilterReslist* list) {
@@ -317,9 +366,19 @@ s32 func_8049DBF8(CScnFilter* filter) {
     return func_8004B3D8(&filter->mFlags, 2);
 }
 
-void func_8049DC04(){}
+// reslist size(): count the nodes from the first node to the end sentinel.
+// The walk itself lives in func_8049DC5C (split out by the original source).
+u32 func_8049DC04(CScnFilterReslist* list) {
+    u32 length = 0;
+    CScnFilterListNode* curNode;
+    CScnFilterListNode* endNode;
+    endNode = func_8049DD30((CScnFilterList*)list);
+    curNode = func_8049DCF4((CScnFilterList*)list);
+    func_8049DC5C(&curNode, &endNode, &length);
+    return length;
+}
 
-void func_8049DC5C(){}
+extern "C" __declspec(noinline) void func_8049DC5C(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out) {}
 
 extern "C" void func_8049DCC8(u32* self) { *self = *(u32*)(*(u32**)self); }
 
@@ -327,7 +386,7 @@ __declspec(noinline) u32 func_8049DCD8(u32* a, u32* b) { return *a != *b; }
 
 // Round-trip the first node's mNext through a stack slot via func_8049DD28
 // and return it (one more deref than func_8049DD30).
-CScnFilterListNode* func_8049DCF4(CScnFilterList* list) {
+extern "C" __declspec(noinline) CScnFilterListNode* func_8049DCF4(CScnFilterList* list) {
     CScnFilterListNode* node;
     func_8049DD28(&node, (u32)list->mStartNodePtr->mNext);
     return node;
@@ -338,7 +397,7 @@ __declspec(noinline) void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self
 // Getter that round-trips the list's sentinel pointer through the node
 // setter: retail reads the pointer at self+4, stores it via func_8049DD28
 // into a local, and returns that local.
-CScnFilterListNode* func_8049DD30(CScnFilterList* list) {
+extern "C" __declspec(noinline) CScnFilterListNode* func_8049DD30(CScnFilterList* list) {
     CScnFilterListNode* node;
     func_8049DD28(&node, (u32)list->mStartNodePtr);
     return node;
@@ -351,5 +410,5 @@ void CScnFilterMan::cbRenderBefore() {
     CViewRoot::func_80442DA8();
 }
 
-extern "C" void func_8049CAF4() {}
+extern "C" __declspec(noinline) void func_8049CAF4() {}
 

@@ -122,14 +122,13 @@ int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle
     if (func_804DE010(ext) != 0) {
         int out1, out2, out3, out4;
         func_804DDD54(ext, filename, &out1, &out2, &out3, &out4);
-        if (out1 != 0) {
+        if (func_804DDD54(ext, filename, &out1, &out2, &out3, &out4) != 0) {
             bool hasPrefix = (strstr(filename, lbl_eu_80522FD8) != nullptr);
-            return func_8045B5AC(filename, allocHandle, fileHandle,
-                                out2, out3, hasPrefix, out4, 0);
+            return func_8045B5AC(out1, allocHandle, fileHandle, out2, out3, hasPrefix);
         }
     }
 
-    return func_8045B5AC(filename, allocHandle, fileHandle, -1, -1, false, 0, 0);
+    return func_8045B5AC(filename, allocHandle, fileHandle, -1, -1, false);
 }
 
 // ============================================================================

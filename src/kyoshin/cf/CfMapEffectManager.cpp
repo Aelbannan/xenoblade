@@ -135,7 +135,8 @@ int func_8016EFD8(int unused, int index) {
     return 0;
 }
 
-void func_8016F140(void){}
+extern "C" void func_8016F9D4(CfMapEffectManager* pSelf);
+extern "C" void func_8016F140(CfMapEffectManager* self) { func_8016F9D4(self); }
 
 // retail: func_8016F144 (0x801704F8) - scene-attached effect manager. When
 // the chapter/event counters change, release the current scene handle and
@@ -391,7 +392,7 @@ extern "C" void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
 }
 
 // retail: func_8016F9D4 (0x80170DD0)
-void func_8016F9D4(CfMapEffectManager* pSelf) {
+extern "C" void func_8016F9D4(CfMapEffectManager* pSelf) {
     u8* bdat = lbl_eu_806640AC;
     u32 v = cf::CfGameManager::func_80086DBC();
     u16 a = (u16)cf::CfGameManager::func_80086DA0();

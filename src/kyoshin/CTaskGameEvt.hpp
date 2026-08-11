@@ -53,7 +53,11 @@ public:
 
     // 0x0-0x54: CTTask<CTaskGameEvt>
     u32 field_54;          // 0x54
-    IScnRender mRenderCB;  // 0x58 render callback subobject
+    // 0x58 render callback subobject. Stored as raw bytes, not a typed
+    // IScnRender member: a typed member makes MWCC emit a standalone
+    // `__dt__10IScnRenderFv` strong copy (0x40) in every TU with an
+    // out-of-line dtor (retail keeps it only in CTaskGame.o).
+    u8 mRenderCB[4];     // 0x58
     CScn* mScene;          // 0x5C
     u32 mFlags;            // 0x60
 }; // size: 0x64

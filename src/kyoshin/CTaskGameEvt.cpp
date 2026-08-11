@@ -33,7 +33,7 @@ void CTTask<CTaskGameEvt>::Draw() {
 
 extern "C" int func_80295764(void* self);
 
-void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
+extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 
 // Tail-call wrappers into the cf event-task helper calls.
 void func_802956A4(void) { func_80165038(); }
@@ -60,7 +60,7 @@ extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEv
 // a free function (not a C++ member ctor) so no `__ct__12CTaskGameEvtFi`
 // symbol is emitted and the interim CTTask vtable write can be reproduced.
 #pragma optimize_for_size on
-CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
+__declspec(noinline) CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
     __ct__8CProcessFv(pThis);
 
     // Final CTaskGameEvt vtable base + its two sub-vtable pointers (kept as the
@@ -113,13 +113,13 @@ CTaskGameEvt::~CTaskGameEvt() {}
 
 void CTaskGameEvt::Init() {
     IScnRender* rp = reinterpret_cast<IScnRender*>(this); // default: null-this -> this(0)
-    if (this) rp = &mRenderCB;                            // override: this + 0x58
+    if (this) rp = reinterpret_cast<IScnRender*>(&mRenderCB); // override: this + 0x58
     mScene->addRenderCB(rp, 11, 0);
 }
 
 void CTaskGameEvt::Term() {
     IScnRender* rp = reinterpret_cast<IScnRender*>(this); // default: null-this -> this(0)
-    if (this) rp = &mRenderCB;                            // override: this + 0x58
+    if (this) rp = reinterpret_cast<IScnRender*>(&mRenderCB); // override: this + 0x58
     mScene->removeRenderCB(rp);
 }
 
@@ -136,6 +136,7 @@ void CTaskGameEvt::Move() {
     }
 }
 
+#pragma optimize_for_size on
 CTaskGameEvt* CTaskGameEvt::create(CProcess* pParent, int arg) {
     u32 handle = CWorkThreadSystem::getWorkMem();
     CTaskGameEvt* obj = (CTaskGameEvt*)mtl::MemManager::allocate(0x64, handle);
@@ -145,3 +146,4 @@ CTaskGameEvt* CTaskGameEvt::create(CProcess* pParent, int arg) {
     obj->Regist(pParent, false);
     return obj;
 }
+#pragma optimize_for_size off

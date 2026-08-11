@@ -39,7 +39,8 @@ void func_804CBDB4(){}
 
 void func_804CBE48(){}
 
-void func_804CBEE8(void){}
+extern "C" void func_804C8688();
+extern "C" void func_804CBEE8(void) { func_804C8688(); }
 
 void func_804CBEEC(){}
 
@@ -53,7 +54,8 @@ void func_804CC1D8(){}
 
 void func_804CC1F4(){}
 
-void func_804CC2B0(void){}
+extern "C" void __ct__804E4F9C();
+extern "C" void func_804CC2B0(void) { __ct__804E4F9C(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 

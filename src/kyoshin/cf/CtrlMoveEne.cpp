@@ -14,7 +14,9 @@ void* CActorParam_UnkVirtualFunc132__Q22cf11CActorParamFv(void* self) { return (
 
 void func_8008B580(){}
 
-void func_8008B930(void){}
+struct CCtrlMoveNpc;
+extern "C" void func_8008962C(CCtrlMoveNpc* self);
+extern "C" void func_8008B930(CCtrlMoveNpc* self) { func_8008962C(self); }
 
 void func_8008B934(){}
 

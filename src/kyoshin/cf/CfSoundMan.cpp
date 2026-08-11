@@ -20,7 +20,8 @@ void func_801BFA88(){}
 
 void func_801BFABC(){}
 
-void func_801BFAE4(void){}
+extern "C" void func_801C087C(u32 id);
+extern "C" void func_801BFAE4(u32 id) { func_801C087C(id); }
 
 void func_801BFAE8(){}
 
@@ -52,7 +53,8 @@ void func_801C0014__Fv(){}
 
 void func_801C0094(){}
 
-void func_801C0118(void){}
+extern "C" void func_801C07F8(CfSoundMan* self);
+extern "C" void func_801C0118(CfSoundMan* self) { func_801C07F8(self); }
 
 void func_801C011C(){}
 
@@ -70,9 +72,11 @@ void func_801C03C8(){}
 
 void func_801C055C(){}
 
-void func_801C07F8(){}
-
-void func_801C087C(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_801C07F8(CfSoundMan* self){}
+extern "C" void func_801C087C(u32 id){}
+#pragma pop
 
 void func_801C08BC(){}
 

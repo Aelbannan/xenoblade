@@ -61,6 +61,15 @@ struct CUIBattleInitProcess {
     u32 callbacks[6];
 };
 
+// 3-word null-pmf constant mirror (retail __ptmf_null). Struct access keeps
+// MWCC on a single materialised base register instead of folding the offset-0
+// word into `lwz @l(r5)` (which would add a reloc retail lacks).
+struct CUIBattlePtmfWords {
+    u32 w0; // 0x0
+    u32 w1; // 0x4
+    u32 w2; // 0x8
+};
+
 void func_8012F5F8();
 extern "C" {
 CUIBattleManager* lbl_eu_80664048;
@@ -105,7 +114,8 @@ static IWorkEvent* battleWorkEvent(CUIBattleManager* self) {
 
 void CUIBattleManager::Init() {
     CUIBattleInitProcess* process;
-    char* vtFinal;
+    u32 vtFinal;
+    const CUIBattlePtmfWords* ptmf;
     u32 ptmfWord1;
     u32 ptmfWord0;
     u32 ptmfWord2;
@@ -115,20 +125,21 @@ void CUIBattleManager::Init() {
     if (process != NULL) {
         __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
         process->vtable = lbl_eu_8052E208;
-        ptmfWord1 = __ptmf_null[1];
-        vtFinal = lbl_eu_8052E1C0;
-        ptmfWord0 = __ptmf_null[0];
+        ptmf = reinterpret_cast<const CUIBattlePtmfWords*>(__ptmf_null);
+        ptmfWord1 = ptmf->w1;
+        vtFinal = reinterpret_cast<u32>(lbl_eu_8052E1C0);
+        ptmfWord0 = ptmf->w0;
         process->callbacks[0] = ptmfWord0;
         process->callbacks[1] = ptmfWord1;
-        ptmfWord2 = __ptmf_null[2];
+        ptmfWord2 = ptmf->w2;
         process->callbacks[2] = ptmfWord2;
-        ptmfWord1 = __ptmf_null[1];
-        ptmfWord0 = __ptmf_null[0];
+        ptmfWord1 = ptmf->w1;
+        ptmfWord0 = ptmf->w0;
         process->callbacks[3] = ptmfWord0;
         process->callbacks[4] = ptmfWord1;
-        ptmfWord2 = __ptmf_null[2];
+        ptmfWord2 = ptmf->w2;
         process->callbacks[5] = ptmfWord2;
-        process->vtable = vtFinal;
+        process->vtable = reinterpret_cast<void*>(vtFinal);
     }
     unk7C = reinterpret_cast<CProcess*>(process);
     reinterpret_cast<CProcess*>(process)->Regist(lbl_eu_80664048, false);

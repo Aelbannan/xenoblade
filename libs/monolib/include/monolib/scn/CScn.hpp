@@ -34,6 +34,7 @@ class CScn : public CTTask<CScn>, public IWorkEvent{
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
     void removeRenderCB(IScnRender* cb);
+    virtual void Init();
     virtual void Draw();
 
     //0x000: vtable 1 (CTTask)

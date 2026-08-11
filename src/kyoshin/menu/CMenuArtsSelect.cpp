@@ -55,7 +55,6 @@ int func_8012FA5C();
 void func_80138078__FUl(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int func_80174C98(void* actor, int* outVal, int flags);
-ArtsParamInfo* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 
@@ -848,7 +847,7 @@ after_ce48:
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
                             artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
-                        ArtsParamInfo* infoRaw = getArtsParamAtCnt(skill, i);
+                        ArtsParamInfo* infoRaw = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(skill, i));
                         if (ready == 0) {
                             ArtsParamInfo* info = infoRaw;
                             if (info->mCheckFlag != 0) {
@@ -1174,9 +1173,9 @@ extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(&lbl_eu_80663F20->unk7C); }
 extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 void __dt__15CMenuArtsSelectFv(void*);
-bool func_80108C30(void* self){
+// IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__)
+extern "C" void func_80108C30(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
-    return false;
 }
 extern "C" void CMenuArtsSelect_workEventDraw(void* self) {
     ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore();

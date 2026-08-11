@@ -100,7 +100,7 @@ void func_eu_802B14BC() {
 
 void* func_eu_802B14D4(void) { return (void*)lbl_eu_8053A438; }
 
-void* func_eu_802B14E0(void) { return (void*)lbl_eu_8053A458; }
+extern "C" void* func_eu_802B14E0(void) { return (void*)lbl_eu_8053A458; }
 
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 

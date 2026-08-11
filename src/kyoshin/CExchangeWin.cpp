@@ -16,7 +16,7 @@
 extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
-extern float lbl_eu_80668610;
+extern const float lbl_eu_80668610;
 
 
 
@@ -66,7 +66,7 @@ extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     }
 }
 
-extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {
+extern "C" void func_8022D244(CExchangeWin* self) {
     float f = lbl_eu_80668610;
     if (func_80137510(self->mAnimTransform, f)) {
         self->_26 = 0;

@@ -13,6 +13,75 @@ OSMutex StrmPlayer::sLoadBufferMutex;
 
 bool StrmPlayer::sStaticInitFlag = false;
 
+/******************************************************************************
+ * Retail-layout mirror
+ *
+ * The shared header (snd_StrmPlayer.h) currently defines a STALE StrmPlayer
+ * layout vs retail main.dol: mPlayerTracks at +0x910 instead of +0xB78, task
+ * flags at +0x184/+0x185 instead of +0x124/+0x125, the data-load task
+ * list/pool at +0x1F0/+0x1FC instead of +0x194/+0x1A0, and no track count at
+ * +0x82C. The header is outside this session's writable scope, so the
+ * functions below express the RETAIL field offsets through this mirror struct
+ * instead. When the header layout is corrected, drop the mirror and use the
+ * real members again.
+ *
+ * Offsets verified against build/us/asm/nw4r/src/snd/snd_StrmPlayer.s:
+ *   StrmTrack volume at +0x30 (stfs at +0xBA8 in SetTrackVolume),
+ *   mTaskErrorFlag at +0x124 / mTaskCancelFlag at +0x125 (stb in task
+ *   Execute/OnCancel), track count at +0x82C (lwz in SetTrackVolume),
+ *   mStrmDataLoadTaskList at +0x194 / pool at +0x1A0 (Erase/FreeImpl in
+ *   StrmDataLoadTask::Cancel), mPlayerTracks at +0xB78 (GetPlayerTrack).
+ ******************************************************************************/
+namespace {
+
+struct StrmTrackRetailLayout {
+    u8 activeFlag;              // at 0x0
+    u8 _pad0x1[3];              // at 0x1
+    Voice* voice;               // at 0x4
+    u8 trackInfo[0x28];         // at 0x8 (channelCount at 0xC, table at 0x10)
+    f32 volume;                 // at 0x30
+    f32 field_0x34;             // at 0x34
+};                              // sizeof 0x38
+
+struct StrmPlayerRetailLayout {
+    u8 _pad0x0[0x124];                            // 0x000..0x124
+    bool mTaskErrorFlag;                          // at 0x124
+    bool mTaskCancelFlag;                         // at 0x125
+    u8 _pad0x126[0x194 - 0x126];                  // 0x126..0x194
+    // StrmPlayer::StrmDataLoadTaskList (private typedef) expanded here; fully
+    // qualified because a namespace-scope friend decl shadows the nested type.
+    nw4r::ut::LinkList<StrmPlayer::StrmDataLoadTask,
+                       offsetof(StrmPlayer::StrmDataLoadTask, node)>
+        mStrmDataLoadTaskList;                     // at 0x194 (0xC)
+    InstancePool<StrmPlayer::StrmDataLoadTask> mStrmDataLoadTaskPool; // at 0x1A0 (0x4)
+    u8 _pad0x1A4[0x82C - 0x1A4];                  // 0x1A4..0x82C
+    s32 mTrackCount;                              // at 0x82C
+    u8 _pad0x830[0xB78 - 0x830];                  // 0x830..0xB78
+    StrmTrackRetailLayout mTracks[8];             // at 0xB78 (8 * 0x38)
+};                                                // sizeof 0xD38
+
+// Retail SetTrackVolume(unsigned long, float) is a StrmPlayer member, but the
+// stale header has no declaration for it; define the retail mangled symbol as
+// a free function (same ABI: r3 = this, r4 = track, f1 = volume).
+void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(StrmPlayer* pStrmPlayer,
+                                                        unsigned long track,
+                                                        f32 volume) {
+    ut::AutoInterruptLock lock;
+
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(pStrmPlayer);
+
+    for (int i = 0; i < self->mTrackCount && track != 0; i++) {
+        if (track & 1) {
+            self->mTracks[i].volume = volume;
+        }
+
+        track >>= 1;
+    }
+}
+
+} // namespace
+
 StrmPlayer::StrmPlayer()
     : mSetupFlag(false), mActiveFlag(false), mFileStream(NULL), mVoice(NULL) {
 
@@ -30,7 +99,14 @@ StrmPlayer::~StrmPlayer() {
 }
 
 StrmPlayer::PlayerTrack* StrmPlayer::GetPlayerTrack(int index) {
-    return &mPlayerTracks[index];
+    if (index > 7) {
+        return NULL;
+    }
+
+    // mPlayerTracks is at retail offset +0xB78; see layout-mirror note above.
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+    return reinterpret_cast<PlayerTrack*>(&self->mTracks[index]);
 }
 
 bool StrmPlayer::Setup(StrmBufferPool* pBufferPool) {
@@ -857,14 +933,18 @@ StrmPlayer::StrmHeaderLoadTask::StrmHeaderLoadTask()
 
 void StrmPlayer::StrmHeaderLoadTask::Execute() {
     if (!strmPlayer->LoadHeader(fileStream, startOffsetType, startOffset)) {
-        strmPlayer->SetTaskErrorFlag();
+        // mTaskErrorFlag is at retail offset +0x124; see layout-mirror note.
+        reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)->mTaskErrorFlag =
+            true;
     }
 }
 
 void StrmPlayer::StrmHeaderLoadTask::Cancel() {}
 
 void StrmPlayer::StrmHeaderLoadTask::OnCancel() {
-    strmPlayer->SetTaskCancelFlag();
+    // mTaskCancelFlag is at retail offset +0x125; see layout-mirror note.
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)->mTaskCancelFlag =
+        true;
 
     if (fileStream != NULL && fileStream->CanCancel()) {
         if (fileStream->CanAsync()) {
@@ -897,8 +977,14 @@ void StrmPlayer::StrmDataLoadTask::Execute() {
 
 void StrmPlayer::StrmDataLoadTask::Cancel() {
     ut::AutoInterruptLock lock;
-    strmPlayer->mStrmDataLoadTaskList.Erase(this);
-    strmPlayer->mStrmDataLoadTaskPool.Free(this);
+
+    // List at +0x194 / pool at +0x1A0 are retail offsets; see layout-mirror
+    // note. Two separate strmPlayer reads so the member is reloaded after the
+    // Erase call, matching retail.
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)
+        ->mStrmDataLoadTaskList.Erase(this);
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)
+        ->mStrmDataLoadTaskPool.Free(this);
 }
 
 void StrmPlayer::StrmDataLoadTask::OnCancel() {
@@ -921,11 +1007,6 @@ using nw4r::snd::detail::StrmPlayer;
 
 void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int){}
 void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
-void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(){}
-extern "C" void* GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* self, int index) {
-    if (index > 7) return nullptr;
-    return self->GetPlayerTrack(index);
-}
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 

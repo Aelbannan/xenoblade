@@ -365,7 +365,8 @@ CMenuMapSelectSC* func_802514D4(CProcess* parent, CProcess* arg) {
     return (CMenuMapSelectSC*)lbl_eu_806647C0;
 }
 
-void func_80251550(){}
+// (lbl_eu_806647C0 != 0)
+extern "C" bool func_80251550() { extern u32 lbl_eu_806647C0; return lbl_eu_806647C0 != 0; }
 
 // World-map phase 0: wait for the title/help bar and fade to be ready, then
 // start the fade-in animation and advance to phase 1.

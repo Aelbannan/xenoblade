@@ -178,7 +178,7 @@ void func_80044FBC(u32 enable) {
     }
 }
 
-void cbRenderBefore__12CTaskGameEffFv() {
+extern "C" __declspec(noinline) void cbRenderBefore__12CTaskGameEffFv(void* self) {
     func_804CBB60(lbl_eu_8065FC18);
 }
 
@@ -186,7 +186,7 @@ void cbRenderBefore__12CTaskGameEffFv() {
 // effect-singleton flag word at lbl_eu_8065FC18, run the per-frame effect
 // update pass, then flush GX state again.
 #pragma optimize_for_size on
-void func_80045044(CTaskGameEff* self, void* param) {
+extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* param) {
     CDeviceGX::getCacheInstance()->func_8044BE38();
     CViewRoot::func_80442DA8();
     u16 flags = *(u16*)&lbl_eu_8065FC18[0];
@@ -285,13 +285,24 @@ void func_800453EC(CScn* scene) {
 
 
 
-bool func_80045540(){ return false; }
+// IWorkEvent/IScnRender vtable this-adjusting thunks (retail func_80045540..
+// 80045558): subi the subobject pointer, tail-branch to the real impl.
+void __dt__12CTaskGameEffFv(void*, int);
+extern "C" void func_80045540(void* self) {
+    cbRenderBefore__12CTaskGameEffFv((char*)self - 0x54);
+}
 
-bool func_80045548(){ return false; }
+extern "C" void func_80045548(void* self, int flags) {
+    __dt__12CTaskGameEffFv((char*)self - 0x54, flags);
+}
 
-bool func_80045550(){ return false; }
+extern "C" void func_80045550(CTaskGameEff* self, void* param) {
+    func_80045044(reinterpret_cast<CTaskGameEff*>(reinterpret_cast<char*>(self) - 0x58), param);
+}
 
-bool func_80045558(){ return false; }
+extern "C" void func_80045558(void* self, int flags) {
+    __dt__12CTaskGameEffFv((char*)self - 0x58, flags);
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CTTask<CTaskGameEff> is declared in kyoshin/CTaskGameEff.hpp; the out-of-line

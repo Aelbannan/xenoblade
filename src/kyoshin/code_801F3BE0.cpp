@@ -3,6 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+// CChainBattleObj / CChainSub4: virtual-dispatch mirrors of the battle objects
+// reached from the gimmick list (-0x3E9C) in func_801F4998. Never instantiated
+// (all pure virtuals), so no vtable emits into this TU.
+#include "kyoshin/cf/chain/CChainTimer.hpp"
+
 // ---------------------------------------------------------------------------
 // Singleton gimmick container (the object getUnk80664658() returns; see
 // cf/CfGimmick.hpp for the shared CfGimmickGlobal subset used by other TUs).
@@ -27,8 +32,22 @@ struct CGimmickEntry {
     CGimmickVec3 pos;         // 0x04 - base position
     u8 gap[0x64 - 0x10];      // 0x10
     u16 bdatRowId;            // 0x64
-    u8 gap2[0x82 - 0x66];     // 0x66
+    u16 field_66;             // 0x66 - state flags (bit 15 = eligible/active)
+    u8 gap2[0x82 - 0x68];     // 0x68
     u16 typeId;               // 0x82
+};
+
+// Cast-only dispatch interface over the gimmick objects stored in the
+// container. RTTI-on vtable layout: declared slot N dispatches at (N+2)*4,
+// so slots 3/4/5 reach the retail offsets 0x14/0x18/0x1C. Never instantiated
+// (no vtable is emitted into this TU).
+struct CGimmickDispatch {
+    virtual void d0(int);  // dispatched at vtable + 0x08 (teardown slot)
+    virtual void d1();
+    virtual void d2();
+    virtual void vf14();   // dispatched at vtable + 0x14
+    virtual void vf18();   // dispatched at vtable + 0x18
+    virtual void vf1C();   // dispatched at vtable + 0x1C
 };
 
 // Singleton gimmick container (ctor __ct__801F3BE8, accessor getUnk80664658).
@@ -49,19 +68,81 @@ struct CGimmickGlobal {
 extern u32 lbl_eu_80664658;
 
 // Shared 0.0f float-pool constant (retail .sdata2). Referenced by name so the
-// reloc lands on lbl_eu_80668158 instead of MWCC's auto pool label.
-extern f32 lbl_eu_80668158;
+// reloc lands on lbl_eu_80668158 instead of MWCC's auto pool label; const lets
+// MWCC hoist the load like a literal (CScrollBar.hpp pattern).
+extern const f32 lbl_eu_80668158;
 
 // Cross-TU callees (defined in the cf/ gimmick units; no header declares them).
+// Declared with C linkage so the call relocs keep the retail names
+// (func_8020B264's own definition is extern "C").
 struct CfGimmickElvData;
 namespace cf {
 class CfGimmickLock;
 class CfGimmickEne;
 struct CfGimmickEneActor;
 }
-void func_8020B264(CfGimmickElvData* self, int show);
-void func_8020CAAC(cf::CfGimmickLock* self);
-void func_8026E5C0(cf::CfGimmickEne* self, cf::CfGimmickEneActor* actor);
+extern "C" void func_8020B264(CfGimmickElvData* self, int show);
+extern "C" void func_8020CAAC(cf::CfGimmickLock* self);
+extern "C" void func_8026E5C0(cf::CfGimmickEne* self, cf::CfGimmickEneActor* actor);
+extern "C" void func_8026E678(cf::CfGimmickEne* self, cf::CfGimmickEneActor* actor);
+extern "C" int func_8020D368(cf::CfGimmickLock* self, void* target);
+
+// Teardown / spawn helpers used by the lifecycle functions below.
+// func_80208E98 resets the shared CfGimmick state globals (CfGimmick.cpp).
+extern "C" void func_80208E98();
+// CBdat table helpers: prepare table, first row index, row count.
+extern "C" void* func_8003AA34();
+extern "C" u32 func_8003B41C(void* bdat);
+extern "C" u32 func_8003B1EC(void* bdat);
+// Heap-handle query used as the allocation region for spawned gimmicks.
+extern "C" u32 func_80061FFC();
+// Concrete gimmick constructors (cf/ units). The stored object is a
+// CGimmickEntry (shared CfGimmick base); the ctor fills the derived fields.
+extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, u16 row);
+extern "C" void* __ct__cf_CfGimmickElv(CGimmickEntry* self, u16 row);
+extern "C" void* __ct__cf_CfGimmickWarp(CGimmickEntry* self, u16 row);
+// Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
+extern void* lbl_eu_8066412C;
+extern void* lbl_eu_80664130;
+extern void* lbl_eu_80664134;
+// Bdat table pointers for the object / jump / item / enemy tables.
+extern void* lbl_eu_80664128;
+extern void* lbl_eu_80664138;
+extern void* lbl_eu_8066413C;
+extern void* lbl_eu_80664144;
+
+// Circular gimmick object list returned by func_800B6BC8 (CfGimmick.hpp
+// layout): +0x00 opaque, +0x04 head node, nodes link through +0x00 and carry
+// the object at +0x08.
+struct CGimmickListNode {
+    CGimmickListNode* next;  // 0x00
+    u8 gap04[4];             // 0x04
+    void* object;            // 0x08
+};
+struct CGimmickList {
+    void* field_00;          // 0x00
+    CGimmickListNode* head;  // 0x04
+};
+
+// CfGimmick ctors for the remaining gimmick types. The retail call sites pass
+// the row untruncated (32-bit), so these imports take int row; the defining
+// TUs' recovered u16 signatures are not byte-matched yet and their headers
+// would force an rlwinm narrowing at the call site. Global-scope names are
+// not mangled by MWCC, so no extern "C" is needed.
+extern void* __ct__cf_CfGimmickJump(void* self, u16 row);
+extern void* __ct__cf_CfGimmickItem(void* self, u16 row);
+extern void* __ct__cf_CfGimmickEne(void* self, u16 row);
+extern void* __ct__cf_CfGimmickObject(void* self, int row,
+                                      CGimmickEntry** arr, int idx, void* buf);
+
+// CfGimmick shared bdat-row reset (CfGimmick.cpp): stores the row into a
+// global state slot.
+extern void func_80208EDC(u32 value);
+// Actor-state flag query (cf/chain C-linkage helper).
+extern int func_80174C98(void* actor, int* outVal, int flags);
+// Gimmick object list accessor and per-index player accessor.
+extern CGimmickList* func_800B6BC8();
+extern void* getPlayer__Q22cf13CfGameManagerFi(int index);
 
 u32 getUnk80664658(void) {
     extern u32 lbl_eu_80664658;
@@ -78,50 +159,322 @@ CGimmickGlobal* __ct__801F3BE8(CGimmickGlobal* self) {
     return self;
 }
 
-void __dt__801F3C08(){}
+// Destructor (address-derived name __dt__801F3C08): same teardown as
+// func_801F4504, then unregisters the singleton and frees the container when
+// the delete flag (flags > 0) is set.
+CGimmickGlobal* __dt__801F3C08(CGimmickGlobal* self, int flags) {
+    if (self) {
+        self->mFlags = 0;
+        self->field_0x200 = 0;
+        self->field_0x21C = lbl_eu_80668158;
+        for (s32 i = 0; i < self->mGimmickCount; i++) {
+            CGimmickEntry* g = self->mGimmicks[i];
+            if (g == NULL)
+                continue;
+            if (g)
+                ((CGimmickDispatch*)g)->d0(1);
+            self->mGimmicks[i] = 0;
+        }
+        self->mGimmickCount = 0;
+        self->field_0x218 = 0;
+        self->field_0x210 = 0;
+        func_80208E98();
+        lbl_eu_80664658 = 0;
+        if (flags > 0)
+            delete self;
+    }
+    return self;
+}
 
 void func_801F3CCC(){}
 
-void func_801F3E80(){}
+// func_801F3E80: spawn the object gimmicks from the object bdat table. The
+// shared state reset runs first (0 on the empty-table path, row-1 otherwise)
+// and the ctor registers each object into the tail of the container via the
+// (row, &mGimmicks[count0], count-count0, column-buf) argument bundle.
+bool func_801F3E80(CGimmickGlobal* self) {
+    self->field_0x208 = 0;
+    void* bdat = lbl_eu_80664128;
+    if (bdat == NULL) {
+        func_80208EDC(0);
+        return true;
+    }
+    self->mFlags |= 0x100;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    u8 buf[0x20];
+    memset(buf, 0, 0x20);
+    func_80208EDC(row - 1);
+    s32 count0 = self->mGimmickCount;
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0x19c, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickObject((CGimmickEntry*)obj, row,
+                                           &self->mGimmicks[count0],
+                                           self->mGimmickCount - count0, buf);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80) {
+            self->field_0x208 = self->mGimmickCount;
+            return false;
+        }
+        row++;
+    }
+    self->field_0x208 = self->mGimmickCount;
+    return true;
+}
 
-void func_801F3F98(){}
+// func_801F3F98: spawn the lock gimmicks from the lock bdat table. Returns
+// false if the 0x80-slot container fills up mid-spawn.
+bool func_801F3F98(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_8066412C;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x200;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0x1fc, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickLock((CGimmickEntry*)obj, (u16)row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80)
+            return false;
+        row++;
+    }
+    return true;
+}
 
-void func_801F4078(){}
+// func_801F4078: spawn the elevator gimmicks from the elevator bdat table;
+// same shape as func_801F3F98 with the 0x400 flag and 0x1d8-byte objects.
+bool func_801F4078(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_80664130;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x400;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0x1d8, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickElv((CGimmickEntry*)obj, (u16)row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80)
+            return false;
+        row++;
+    }
+    return true;
+}
 
-void func_801F4158(){}
+// func_801F4158: spawn the warp gimmicks from the warp bdat table; same shape
+// as func_801F3F98 with the 0x800 flag and 0x10c-byte objects.
+bool func_801F4158(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_80664134;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x800;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0x10c, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickWarp((CGimmickEntry*)obj, (u16)row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80)
+            return false;
+        row++;
+    }
+    return true;
+}
 
-void func_801F4238(){}
+// func_801F4238: spawn the jump gimmicks from the jump bdat table; same
+// shape as func_801F3F98 with the 0x1000 flag and 0x170-byte objects.
+bool func_801F4238(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_80664138;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x1000;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0x170, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickJump((CGimmickEntry*)obj, row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80)
+            return false;
+        row++;
+    }
+    return true;
+}
 
-void func_801F4318(){}
+// func_801F4318: spawn the item gimmicks from the item bdat table; same shape
+// as func_801F3F98 with the 0x2000 flag and 0xa4-byte objects.
+bool func_801F4318(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_8066413C;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x2000;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0xa4, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickItem((CGimmickEntry*)obj, row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80)
+            return false;
+        row++;
+    }
+    return true;
+}
 
-void func_801F43F8(){}
+// func_801F43F8: spawn the enemy gimmicks from the enemy bdat table. When the
+// table is non-empty the enemy run window [0x200, 0x204) is opened at the
+// current count; it is re-closed at the final count on both exit paths.
+bool func_801F43F8(CGimmickGlobal* self) {
+    void* bdat = lbl_eu_80664144;
+    if (bdat == NULL)
+        return true;
+    self->mFlags |= 0x4000;
+    func_8003AA34();
+    u32 row = func_8003B41C(bdat);
+    s32 n = (s32)func_8003B1EC(bdat);
+    if (n != 0) {
+        self->mFlags |= 0x4;
+        self->field_0x200 = self->mGimmickCount;
+        self->field_0x204 = self->mGimmickCount;
+    }
+    for (s32 i = 0; i < n; i++) {
+        void* obj = mtl::MemManager::allocate(0xc0, func_80061FFC());
+        if (obj)
+            obj = __ct__cf_CfGimmickEne((CGimmickEntry*)obj, row);
+        self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
+        self->mGimmickCount++;
+        if (self->mGimmickCount >= 0x80) {
+            self->field_0x204 = self->mGimmickCount;
+            return false;
+        }
+        row++;
+    }
+    self->field_0x204 = self->mGimmickCount;
+    return true;
+}
 
-void func_801F4504(){}
+// func_801F4504: teardown the gimmick container. Flags and the iteration
+// window are reset first, then every stored gimmick's teardown slot (retail
+// vtable + 0x08) is invoked with 1 and the slot cleared, then the shared
+// state reset helper runs.
+void func_801F4504(CGimmickGlobal* self) {
+    self->mFlags = 0;
+    self->field_0x200 = 0;
+    self->field_0x21C = lbl_eu_80668158;
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if (g == NULL)
+            continue;
+        if (g)
+            ((CGimmickDispatch*)g)->d0(1);
+        self->mGimmicks[i] = 0;
+    }
+    self->mGimmickCount = 0;
+    self->field_0x218 = 0;
+    self->field_0x210 = 0;
+    func_80208E98();
+}
 
 void func_801F45B4(){}
 
 void func_801F4994(void) {}
 
-void func_801F4998(){}
+// func_801F4998: enable/disable the vision-fusion resume distance. Passing
+// 0.0f sets the 0x20 flag; any other value clears it (and is a no-op when the
+// flag is already clear). While enabled, every gimmick-list battle object and
+// every player gets the value pushed into its vtable slot 0x5C4, gated on the
+// func_80174C98 actor-id check (flag 3).
+void func_801F4998(CGimmickGlobal* self, f32 value) {
+    if (value == lbl_eu_80668158) {
+        self->mFlags |= 0x20;
+    } else {
+        if (!(self->mFlags & 0x20))
+            return;
+        self->mFlags &= ~0x20;
+    }
+    CGimmickList* list = func_800B6BC8();
+    CGimmickListNode* node = list->head->next;
+    while (node != list->head) {
+        cf::CChainBattleObj* obj = (cf::CChainBattleObj*)node->object;
+        if (obj)
+            obj = (cf::CChainBattleObj*)((u8*)obj - 0x3E9C);
+        u32 local = *(u32*)obj->field_04->f30();
+        if (func_80174C98(obj, (int*)&local, 3) == 0)
+            obj->v367(value);
+        node = node->next;
+    }
+    for (s32 i = 0; i < 3; i++) {
+        cf::CChainBattleObj* player =
+            (cf::CChainBattleObj*)getPlayer__Q22cf13CfGameManagerFi(i);
+        if (player)
+            player = (cf::CChainBattleObj*)((u8*)player - 0x3E9C);
+        if (player)
+            player->v367(value);
+    }
+}
 
-void func_801F4AD4(){}
+// Dispatch slot 0x14 on every eligible (state bit 15) gimmick whose bdat row
+// id matches.
+void func_801F4AD4(CGimmickGlobal* self, s32 id) {
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if ((g->field_66 & 0x8000) && id == g->bdatRowId)
+            ((CGimmickDispatch*)g)->vf14();
+    }
+}
 
 void func_801F4B64(void) {}
 
-void func_801F4B68(){}
+// Dispatch slot 0x18 on every eligible (state bit 15) gimmick whose bdat row
+// id matches.
+void func_801F4B68(CGimmickGlobal* self, s32 id) {
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if ((g->field_66 & 0x8000) && id == g->bdatRowId)
+            ((CGimmickDispatch*)g)->vf18();
+    }
+}
 
 void func_801F4BF8(void) {}
 
-void func_801F4BFC(){}
+// Dispatch slot 0x1C on the type-1 gimmick whose bdat row id matches.
+void func_801F4BFC(CGimmickGlobal* self, s32 id) {
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if (g->typeId == 1 && id == g->bdatRowId)
+            ((CGimmickDispatch*)g)->vf1C();
+    }
+}
 
 void func_801F4C8C(void) {}
 
 // Look up the type-3 (elevator) gimmick with the given bdat row id and toggle
 // its LOD visibility (tail-call into func_8020B264).
-void func_801F4C90(CGimmickGlobal* self, u32 id, int show) {
-    for (s32 i = 0; i < self->mGimmickCount; i++) {
-        CGimmickEntry* g = self->mGimmicks[i];
-        if (g->typeId == 3 && g->bdatRowId == id) {
+void func_801F4C90(CGimmickGlobal* self, s32 id, int show) {
+    CGimmickEntry* g;
+    s32 i;
+    for (i = 0; i < self->mGimmickCount; i++) {
+        g = self->mGimmicks[i];
+        if (g->typeId == 3 && id == g->bdatRowId) {
             return func_8020B264((CfGimmickElvData*)self->mGimmicks[i], show);
         }
     }
@@ -149,15 +502,26 @@ void func_801F4D50(CGimmickGlobal* self, cf::CfGimmickEneActor* actor) {
     }
 }
 
-void func_801F4DDC(){}
+// Unbind the actor from the enemy (type-7) gimmicks starting at field_0x200;
+// iteration stops at the first non-enemy gimmick.
+void func_801F4DDC(CGimmickGlobal* self, cf::CfGimmickEneActor* actor) {
+    if (self->mFlags & 0x4) {
+        for (s32 i = self->field_0x200; i < self->mGimmickCount; i++) {
+            CGimmickEntry* g = self->mGimmicks[i];
+            if (g->typeId != 7)
+                break;
+            func_8026E678((cf::CfGimmickEne*)g, actor);
+        }
+    }
+}
 
 // Find the gimmick whose bdat row id matches and return its base position;
 // falls back to a zero vector.
-CGimmickVec3* func_801F4E68(CGimmickGlobal* self, u32 id) {
+CGimmickVec3* func_801F4E68(const CGimmickGlobal* self, s32 id) {
     if (self->mFlags & 0x100) {
         for (s32 i = 0; i < self->field_0x208; i++) {
             CGimmickEntry* g = self->mGimmicks[i];
-            if (g->bdatRowId == id)
+            if (id == g->bdatRowId)
                 return &self->mGimmicks[i]->pos;
         }
     }
@@ -165,4 +529,12 @@ CGimmickVec3* func_801F4E68(CGimmickGlobal* self, u32 id) {
     return &zero;
 }
 
-void func_801F4ED8(){}
+// Probe every type-2 (lock) gimmick; return 1 as soon as one accepts the id.
+int func_801F4ED8(CGimmickGlobal* self, s32 id) {
+    for (s32 i = 0; i < self->mGimmickCount; i++) {
+        CGimmickEntry* g = self->mGimmicks[i];
+        if (g->typeId == 2 && func_8020D368((cf::CfGimmickLock*)g, (void*)id))
+            return 1;
+    }
+    return 0;
+}

@@ -67,6 +67,9 @@ void func_80227710();
 
 CMenuQstCnt* lbl_eu_80664720;
 
+// (lbl_eu_80664720 != 0) - retail lwz sda21; subic; subfe
+extern "C" bool func_80226B94() { return lbl_eu_80664720 != 0; }
+
 // Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
 // from every callsite; without the auto_inline guard, MWCC -inline auto
 // inlines them and the 32-iteration loops blow up (MWCC_REFERENCE sec hbm/seq).

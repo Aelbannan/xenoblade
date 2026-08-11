@@ -97,6 +97,9 @@ void CScn::removeRenderCB(IScnRender* cb) {
     }
 }
 
+// CScn::Init() = empty (retail blr)
+void CScn::Init() {}
+
 void CScn::Draw() {
     if (func_8049AF80(mCamWork) != 0) {
         UnkScn68* cam = mCamWork;
@@ -210,7 +213,8 @@ extern "C" void func_80496294() {}
 extern "C" void func_804962A0(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }
-bool func_804962A8(){ return false; }
+// retail: stb r4,0x3e6(r3); blr
+extern "C" void func_804962A8(u8* self, u8 v) { self[0x3E6] = v; }
 extern "C" void func_8049695C(u8* self) {
     VTarget* obj = (VTarget*)*(void**)((u8*)self + 104);
     obj->v3();
@@ -225,8 +229,10 @@ extern "C" void func_80496984(u32 value) {
 extern "C" int func_8049698C() {
     return (int)lbl_eu_80665908;
 }
-void func_80496994__Fv(void){}
-void func_80496998__Fv(void){}
+extern "C" void func_8049B3FC();
+extern "C" void func_8049B408();
+void func_80496994__Fv(void) { func_8049B3FC(); }
+void func_80496998__Fv(void) { func_8049B408(); }
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 
 

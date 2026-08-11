@@ -97,6 +97,14 @@ extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(cf::CfObjec
 
 
 extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv() {}
+// cf::CfObjectActor vtable thunks (retail: this-adjust + tail-branch)
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
+    CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv((char*)self + 0x3e9c);
+}
+extern "C" void func_801725DC__Q22cf13CfObjectActorFv(void* self) {
+    __dt__Q22cf13CfObjectActorFv((char*)self - 0x3e9c);
+}
+extern "C" void CActorParam_UnkVirtualFunc167__Q22cf11CActorParamFv() {}
 extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc33__Q22cf13CfObjectActorFv() {}

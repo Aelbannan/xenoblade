@@ -237,7 +237,8 @@ extern "C" void func_8047BD94__17UnkClass_8047BB54Fv(u8* self) {
     ((void(*)(void*))func_80472370__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);
 }
 
-void UnkClass_8047BB54::func_8047BD9C(void) {}
+extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj);
+void UnkClass_8047BB54::func_8047BD9C(void) { __dt__8047BDA8(this); }
 
 extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(u8* self) {
     ((void(*)(void*))func_80472864__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24);

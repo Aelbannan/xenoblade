@@ -24,7 +24,11 @@ void func_802AD728(){}
 
 void func_802AD838(){}
 
-void func_802AD854(void){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_802ADCE8(void* self){}
+#pragma pop
+extern "C" void func_802AD854(void* self) { func_802ADCE8(self); }
 
 void func_802AD858(){}
 

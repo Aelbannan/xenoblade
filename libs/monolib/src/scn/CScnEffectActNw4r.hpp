@@ -132,7 +132,7 @@ struct CScnEffectActMgr {
 
 // Import from monolib/src/scn/CScnItemModel.cpp: base pointer of the
 // manager's act data (caller applies the slot offset).
-u8* func_8048315C(CScnEffectActMgr* mgr);
+extern "C" u8* func_8048315C(CScnEffectActMgr* mgr);
 
 class CScnEffectActNw4r {
 public:

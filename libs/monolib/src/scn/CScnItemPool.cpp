@@ -197,6 +197,7 @@ public:
     CScnItemBig* mSlotsD8;     // 0xD8
 
     void func_8048CEDC();
+    void func_8048CF58();
     void update();
 };
 
@@ -579,8 +580,13 @@ extern "C" void __dt__8048C378(CScnItemPoolListData* self) {
     }
     self->field_0x18 = 0;
 }
+// func_8048CF58: 4-byte tail-call wrapper to func_8048CF5C (retail: b func_8048CF5C)
+extern "C" void func_8048CF5C(CScnItemPool* self);
+void CScnItemPool::func_8048CF58() { func_8048CF5C(this); }
 // func_8048CF5C: drains the sub-pool at 0xAC, unlinking each node and calling
 // the item's vtable slot at 0x08 with argument 1 (non-null items only).
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8048CF5C(CScnItemPool* self) {
     _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)&self->mListAC;
     _reslist_node<CScnItem*>* itemNode;  // sp+0x18
@@ -602,3 +608,4 @@ extern "C" void func_8048CF5C(CScnItemPool* self) {
         }
     }
 }
+#pragma pop

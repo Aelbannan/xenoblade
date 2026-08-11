@@ -89,7 +89,8 @@ int func_80164FE8(void) {
 
 void func_80165014(){}
 
-void func_80165038(void){}
+extern "C" void func_8016C2E4();
+extern "C" void func_80165038() { func_8016C2E4(); }
 
 void cf::CTaskREvent::Term() {}
 

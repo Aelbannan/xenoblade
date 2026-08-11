@@ -119,5 +119,8 @@ void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
 }
 void func_804C0928(){}
 extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
-void func_804C09E0(u8* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
+// retail: lwz r3,0x2c(r3); b InitLightDistAttn__... (args pass through)
+extern "C" void func_804C09E0(u8* self, float a, float b, int c) {
+    InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), a, b, c);
+}
 void func_804C09E8(){}

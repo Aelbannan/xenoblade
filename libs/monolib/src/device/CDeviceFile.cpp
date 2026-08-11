@@ -6,7 +6,10 @@
 // Forward declarations: only names are needed for MWCC mangling; bodies use
 // raw offsets via the retail labels (catalog TU style).
 class CWorkThread;
-class CFileHandle;
+class CFileHandle {
+public:
+    void func_80451984(unsigned long);
+};
 
 struct CDeviceFile {
     CDeviceFile(const char* name, void* parent);
@@ -17,7 +20,7 @@ struct CDeviceFile {
     void func_8044F0E4();
     void func_8044F154() const;
     void func_8044F1B8() const;
-    void func_8044F400() const;
+    static void func_8044F400(CFileHandle* pHandle, unsigned long param);
     void getFileSize();
     int isInitialized();
     void readCommonArchiveFile();
@@ -75,7 +78,9 @@ void CDeviceFile::func_8044F154() const {}
 
 void CDeviceFile::func_8044F1B8() const {}
 
-void CDeviceFile::func_8044F400(void) const {}
+void CDeviceFile::func_8044F400(CFileHandle* pHandle, unsigned long param) {
+    pHandle->func_80451984(param);
+}
 
 void CDeviceFile::setHandleFlag1(CFileHandle* pFileHandle) {
     *(u32*)((char*)pFileHandle + 0x58) |= 2;

@@ -65,6 +65,7 @@ typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
 
 extern "C" void Term__Q216CUIWindowManager5CTestFv(){}
+extern "C" void Move__Q216CUIWindowManager5CTestFv(){}
 
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
@@ -213,7 +214,8 @@ void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void func_8013F23C(CUIWindowManager* p) {
     __dt__16CUIWindowManagerFv((CUIWindowManager*)((char*)p - 0x54));
 }
-void func_8013F3EC(void){}
+extern "C" void func_8013F2A0(CUIWindowManager* self);
+extern "C" void func_8013F3EC(CUIWindowManager* self) { func_8013F2A0(self); }
 extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 
 void __ct__CUIWindowManager(){}

@@ -15,13 +15,13 @@ void copyWord4(u32* dst, const u32* src) {
     d[3] = s[3];
 }
 
-bool func_8005870C(){ return false; }
+extern "C" void* func_8005870C(void* self) { return (char*)self + 0x64; }
 
 u32 getSubField78(void* self) { return *(u32*)((u8*)self + 0x78); }
 
-bool func_8005871C(){ return false; }
+extern "C" float func_8005871C(void* self) { return *(float*)((char*)self + 0x54); }
 
-bool func_80058724(){ return false; }
+extern "C" float func_80058724(void* self) { return *(float*)((char*)self + 0x58); }
 
 CTaskEnvironment::~CTaskEnvironment() {}
 

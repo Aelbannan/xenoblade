@@ -68,9 +68,13 @@ void func_80193710(){}
 
 extern "C" u32 func_80193804() { return (u32)lbl_eu_80664308; }
 
-void func_8019380C(void){}
+extern "C" void func_80193810(u32 self);
+extern "C" void func_8019380C(u32 self) { func_80193810(self); }
 
-void func_80193810(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_80193810(u32 self){}
+#pragma pop
 
 void func_8019397C(){}
 

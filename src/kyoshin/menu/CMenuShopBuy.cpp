@@ -383,7 +383,8 @@ extern "C" CMenuShopBuy* func_8018C104(CProcess* parent, CScn* scene, u32 arg) {
     return (CMenuShopBuy*)lbl_eu_806642F8;
 }
 
-void func_8018C180(){}
+// (lbl_eu_806642F8 != 0)
+extern "C" bool func_8018C180() { extern u32 lbl_eu_806642F8; return lbl_eu_806642F8 != 0; }
 
 // Phase 0 -> 1 (open): once the background, title bar and item box line are
 // all ready, run the open sequence (title bar + item box line) and play the

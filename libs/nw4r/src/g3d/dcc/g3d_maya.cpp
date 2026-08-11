@@ -97,10 +97,10 @@ void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
+    f32 tv = rSrt.Tv;
     f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
     f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
 
     pMtx->m[0][0] = su;
     pMtx->m[0][1] = lbl_eu_80669C98;
@@ -109,7 +109,7 @@ void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][0] = lbl_eu_80669C98;
     pMtx->m[1][1] = sv;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = tv + sv * (lbl_eu_80669C9C - tv);
+    pMtx->m[1][3] = lbl_eu_80669C9C + sv * (tv - lbl_eu_80669C9C);
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {

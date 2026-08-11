@@ -1154,9 +1154,9 @@ void func_8010EA4C(void* _this) {
     __dt__22CMenuBattlePlayerStateFv((char*)_this - 0x58);
 }
 }
-bool func_8010EA54(){
-    cbRenderBefore__22CMenuBattlePlayerStateFv();
-    return false;
+// IScnRender cbRenderBefore this-adjusting thunk (retail: subi r3,-0x5c; b cbRenderBefore__22CMenuBattlePlayerStateFv)
+extern "C" void func_8010EA54(void* self) {
+    reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c)->cbRenderBefore();
 }
 extern "C" void func_8010EA5C(void* self) {
     __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));

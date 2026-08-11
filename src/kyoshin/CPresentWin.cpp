@@ -129,7 +129,7 @@ tail:
 
 void func_8022E204(){}
 
-void func_8022E254(){}
+extern "C" __declspec(noinline) void func_8022E254(CPresentWin* self) {}
 
 // Advance the present-window frame counter. mField31 selects which counter
 // advances; mField32/mField33 wrap around at mDataCount. If the two counters
@@ -151,7 +151,8 @@ void func_8022E2F8(CPresentWin* self) {
     }
 }
 
-void func_8022E3A8(void){}
+// retail: tail-branch to func_8022E254 (passes `this` through in r3)
+extern "C" void func_8022E3A8(CPresentWin* self) { func_8022E254(self); }
 
 // Toggle mField31 (which animation path is active). When toggling ON, skip the
 // frame if the secondary counter would collide; when OFF, repaint the label
@@ -179,9 +180,11 @@ u8 func_8022E490(CPresentWin* self) { return self->mField36; }
 
 void func_8022E498(){}
 
-u8 func_8022E4FC(CPresentWin* self){ return self->mField32; }
+// retail: lbz r4,0x32(r3); b func_8022E868
+extern "C" u8 func_8022E4FC(CPresentWin* self) { return func_8022E868(self, self->mField32); }
 
-u8 func_8022E504(CPresentWin* self){ return self->mField33; }
+// retail: lbz r4,0x33(r3); b func_8022E868
+extern "C" u8 func_8022E504(CPresentWin* self) { return func_8022E868(self, self->mField33); }
 
 void func_8022E50C(){}
 

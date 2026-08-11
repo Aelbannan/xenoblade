@@ -154,7 +154,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc57() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc4() {}
 
-void* cf::CfObjectMove::CObjectParam_UnkVirtualFunc2() { return 0; }
+void* cf::CfObjectMove::CObjectParam_UnkVirtualFunc2() { return cf::CfObjectModel::CObjectParam_UnkVirtualFunc2(); }
 
 void CfObjectMove_nullsub_15(){}
 
@@ -418,6 +418,8 @@ extern "C" void func_800BC8D8() {}
 extern "C" void func_800BC9EC() {}
 extern "C" void func_800BCD04() {}
 extern "C" void func_800BCFA0() {}
+// retail: lhz r0,0x1678(r3); extrwi r3,r0,1,28 = ((u16 at +0x1678)>>3)&1
+extern "C" u32 func_800BD638(void* self) { return (*(const u16*)((const char*)self + 0x1678) >> 3) & 1; }
 extern "C" void func_800BD644() {}
 extern "C" void func_800BE0F8() {}
 extern "C" void func_800BE12C() {}

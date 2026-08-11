@@ -44,7 +44,7 @@ namespace cf {
 // Forward declarations for functions in this TU
 __declspec(noinline) char* func_80068A30(char* dest, const char* src);
 __declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
-bool func_80068ECC(CfScript* script, const char* name);
+extern "C" bool func_80068ECC(CfScript* script, const char* name);
 __declspec(noinline) void func_80068E7C(CfScriptManager* mgr, int index, int mask);
 
 // func_80068A20 - initializer for path string
@@ -120,7 +120,7 @@ void func_80068B9C() {
 }
 
 // CfScriptManager::func_80068BC0 - set flag bit 2 on slot 0
-void CfScriptManager::func_80068BC0() {
+__declspec(noinline) void CfScriptManager::func_80068BC0() {
     mScripts[0].mFlags |= 0x4;
 }
 
@@ -131,7 +131,7 @@ void func_80068BD0() {
 }
 
 // CfScriptManager::func_80068BF4 - set flag bit 2 on slot 1
-void CfScriptManager::func_80068BF4() {
+__declspec(noinline) void CfScriptManager::func_80068BF4() {
     mScripts[1].mFlags |= 0x4;
 }
 
@@ -142,7 +142,7 @@ void func_80068C04() {
 }
 
 // CfScriptManager::func_80068C28 - set flag bit 2 on slot 2
-void CfScriptManager::func_80068C28() {
+__declspec(noinline) void CfScriptManager::func_80068C28() {
     mScripts[2].mFlags |= 0x4;
 }
 
@@ -153,7 +153,7 @@ void func_80068C38() {
 }
 
 // CfScriptManager::func_80068C5C - sleep VM thread for slot 2 if flag set
-void CfScriptManager::func_80068C5C() {
+__declspec(noinline) void CfScriptManager::func_80068C5C() {
     CfScript& script = mScripts[2];
     if (script.mFlags & 0x20) {
         if (script.mVmContext != nullptr) {
@@ -169,7 +169,7 @@ void func_80068C7C() {
 }
 
 // CfScriptManager::func_80068CA0 - reset/cleanup slot 0
-void CfScriptManager::func_80068CA0() {
+__declspec(noinline) void CfScriptManager::func_80068CA0() {
     CfScript& script = mScripts[0];
 
     if (script.mFileHandle != nullptr) {
@@ -196,7 +196,7 @@ void func_80068D14() {
 }
 
 // CfScriptManager::func_80068D38 - reset/cleanup slot 1
-void CfScriptManager::func_80068D38() {
+__declspec(noinline) void CfScriptManager::func_80068D38() {
     CfScript& script = mScripts[1];
 
     if (script.mFileHandle != nullptr) {
@@ -223,7 +223,7 @@ void func_80068DAC() {
 }
 
 // CfScriptManager::func_80068DD0 - reset/cleanup slot 2
-void CfScriptManager::func_80068DD0() {
+__declspec(noinline) void CfScriptManager::func_80068DD0() {
     CfScript& script = mScripts[2];
 
     if (script.mFileHandle != nullptr) {
@@ -270,7 +270,7 @@ void func_80068E9C(char* dest, const char* src1, const char* src2, const char* s
 }
 
 // func_80068ECC - main script loading function
-bool func_80068ECC(CfScript* script, const char* name) {
+extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     ml::FixStr<64> extBuffer;    // 0x08
     char tempBuffer[0x80];       // 0x4C
     u32 tempLen;                 // 0xCC
@@ -488,7 +488,7 @@ void CfScriptManager::init() {
 }
 
 // CfScriptManager::func_800694B0 - main update loop
-void CfScriptManager::func_800694B0() {
+__declspec(noinline) void CfScriptManager::func_800694B0() {
     for (int i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 

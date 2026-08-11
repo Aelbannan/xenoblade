@@ -210,22 +210,25 @@ check:
     return 1;
 }
 
-void func_804BCC10(){}
+// tail calls with &lbl_eu_8065F32C (retail: lis;addi;b callee); callees are
+// extern "C" in monolib/scn/code_804BC9EC.hpp
+extern "C" void func_804BCC10() { func_804BC9A0(&lbl_eu_8065F32C); }
 
 void func_804BCC1C(void* p) {
     *(u32*)p = 0;
     func_804B7804(&lbl_eu_8065F32C);
 }
 
-void func_804BCC30(){}
+extern "C" void func_804BCC30(void* unused, int a) { func_804B7D9C((int)(uintptr_t)&lbl_eu_8065F32C, a); }
 
-void func_804BCC3C(){}
+extern "C" void func_804BCC3C() { func_804B7DD4(&lbl_eu_8065F32C); }
 
-void func_804BCC48(){}
+extern "C" void func_804B7E0C(ScnResData* res);
+extern "C" void func_804BCC48() { func_804B7E0C(&lbl_eu_8065F32C); }
 
-void func_804BCC54(){}
+extern "C" void func_804BCC54(void* unused, int a) { func_804B80A4(&lbl_eu_8065F32C, a); }
 
-void func_804BCC60(){}
+extern "C" void func_804BCC60(void* unused, int a) { func_804B8078(&lbl_eu_8065F32C, a); }
 
 void func_804BCC6C() {
     func_804B80CC(&lbl_eu_8065F32C);

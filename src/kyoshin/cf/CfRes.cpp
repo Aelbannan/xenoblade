@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfRes.hpp"
+extern "C" char* getEntryPtr(char* base, int a, int b);
+extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 void func_80061870(){}
 
 int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
@@ -191,9 +193,9 @@ void func_80062430(){}
 
 void func_800624A8(){}
 
-u32 func_8006251C(void* self){ return ((u32)(uintptr_t)self >> 16) & 0x1F; }
+u32 func_8006251C(void* self){ return ((u32)(uintptr_t)self >> 20) & 0x7F; }
 
-u32 func_80062524(void* self){ return ((u32)(uintptr_t)self >> 16) & 0x1F; }
+u32 func_80062524(void* self){ return ((u32)(uintptr_t)self >> 10) & 0x3FF; }
 
 void func_8006252C(){}
 
@@ -262,7 +264,10 @@ extern "C" void CfRes_readCommonArchive(unsigned long a, const char* b, void* c)
 
 void func_80062C28(){}
 
-bool func_80062C80(){ return false; }
+// retail: addi r3,r3,4; b getEntryPtrGrid (3-arg tail call)
+extern "C" char* func_80062C80(char* self, int a, int b) {
+    return getEntryPtrGrid(self + 4, a, b);
+}
 
 void func_80062C88(){}
 
@@ -302,53 +307,56 @@ extern "C" void* CfRes_getArrayElem20(u8* self, int idx) {
 
 void func_80062EC4(){}
 
-bool func_80062F10(){ return false; }
+// retail: addi r3,r3,4; b getEntryPtr (3-arg tail call)
+extern "C" char* func_80062F10(char* self, int a, int b) {
+    return getEntryPtr(self + 4, a, b);
+}
 
 void func_80062F18(){}
 
-bool func_80062F50(){ return false; }
+extern "C" void* func_80062F50(void* self) { return (char*)self + 0x80; }
 
-bool func_80062F58(){ return false; }
+extern "C" void* func_80062F58(void* self) { return (char*)self + 0x7c; }
 
 void func_80062F60(){}
 
-bool func_80062F98(){ return false; }
+extern "C" void* func_80062F98(void* self) { return (char*)self + 0xbc; }
 
-bool func_80062FA0(){ return false; }
+extern "C" void* func_80062FA0(void* self) { return (char*)self + 0xb8; }
 
 void func_80062FA8(){}
 
-bool func_80062FE0(){ return false; }
+extern "C" void* func_80062FE0(void* self) { return (char*)self + 0xf8; }
 
-bool func_80062FE8(){ return false; }
+extern "C" void* func_80062FE8(void* self) { return (char*)self + 0xf4; }
 
 void func_80062FF0(){}
 
-bool func_80063028(){ return false; }
+extern "C" void* func_80063028(void* self) { return (char*)self + 0x134; }
 
-bool func_80063030(){ return false; }
+extern "C" void* func_80063030(void* self) { return (char*)self + 0x130; }
 
 void func_80063038(){}
 
-bool func_80063070(){ return false; }
+extern "C" void* func_80063070(void* self) { return (char*)self + 0x170; }
 
-bool func_80063078(){ return false; }
+extern "C" void* func_80063078(void* self) { return (char*)self + 0x16c; }
 
 void func_80063080(){}
 
-bool func_800630B8(){ return false; }
+extern "C" void* func_800630B8(void* self) { return (char*)self + 0x29c; }
 
-bool func_800630C0(){ return false; }
+extern "C" void* func_800630C0(void* self) { return (char*)self + 0x298; }
 
 void func_800630C8(){}
 
-bool func_80063100(){ return false; }
+extern "C" void* func_80063100(void* self) { return (char*)self + 0x224; }
 
-bool func_80063108(){ return false; }
+extern "C" void* func_80063108(void* self) { return (char*)self + 0x220; }
 
-bool func_80063110(){ return false; }
+extern "C" void* func_80063110(void* self) { return (char*)self + 0x25c; }
 
-bool func_80063118(){ return false; }
+extern "C" void* func_80063118(void* self) { return (char*)self + 0x1a8; }
 
 void func_80063120(){}
 
@@ -681,7 +689,7 @@ void func_80065314(){}
 
 void func_eu_80065C7C(){}
 
-bool func_eu_80065D60(){ return false; }
+extern "C" void* func_eu_80065D60(void* self) { return (char*)self + 0x1e4; }
 
 void func_800653E4(){}
 
@@ -747,11 +755,16 @@ extern "C" int CfRes_cmpField4Eq(void* unused, const void* obj, u32 val) {
 
 void func_80065CA4(){}
 
-void func_80065D00(){}
-
-void func_80065D04(){}
-
-void func_80065D08(){}
+extern "C" int func_800A7EFC();
+extern "C" int func_800A7FBC();
+extern "C" int func_800A813C();
+extern "C" int func_800A8CD4();
+extern "C" int func_800A99D0();
+extern "C" int func_800A9A90();
+extern "C" int func_800A807C();
+int func_80065D00() { return func_800A813C(); }
+int func_80065D04() { return func_800A7EFC(); }
+int func_80065D08() { return func_800A7EFC(); }
 
 void func_80065D0C(){}
 
@@ -762,17 +775,18 @@ extern "C" void CfRes_vcall16(u8* self) {
     ((CfResVtabClass*)self)->m16();
 }
 
-void func_80065D74(){}
+int func_80065D74() { return func_800A8CD4(); }
 
 extern "C" void CfRes_stub_65D78() {}
 
 extern "C" void CfRes_stub_65D7C() {}
 
-void func_80065D80(){}
+// tail branches to lazily-initialised globals (retail: b func_800Axxxx)
+int func_80065D80() { return func_800A813C(); }
 
-void func_80065D84(){}
+int func_80065D84() { return func_800A7FBC(); }
 
-void func_80065D88(){}
+int func_80065D88() { return func_800A99D0(); }
 
 extern "C" void CfRes_stub_65D8C() {}
 
@@ -806,9 +820,9 @@ extern "C" int CfRes_dispatchTypeB(u8* self, void* param) {
 
 void func_80065E54(){}
 
-void func_80065F18(){}
+int func_80065F18() { return func_800A9A90(); }
 
-void func_80065F1C(){}
+int func_80065F1C() { return func_800A807C(); }
 
 extern "C" void CfRes_stub_65F20() {}
 

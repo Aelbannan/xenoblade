@@ -235,7 +235,8 @@ bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
 
 void func_80277154(){}
 void func_80277A7C(){}
-void func_80277B34(void){}
+extern "C" void func_8027711C(void* self);
+extern "C" void func_80277B34(void* self) { func_8027711C(self); }
 extern "C" void CChain_noop_78E00() {}
 extern "C" void func_80278F5C(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf0050(); }
 extern "C" void func_80278F70(u8* self) { reinterpret_cast<ChIf*>((u8*)*(void**)self + 0x3e9c)->vf004C(); }
@@ -249,7 +250,10 @@ void func_80276C30(){}
 void func_80276C58(){}
 void func_80276CAC(){}
 void func_80276D30(){}
-void func_8027711C(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_8027711C(void* self){}
+#pragma pop
 void func_8027728C(){}
 void func_8027732C(){}
 void func_802773EC(){}

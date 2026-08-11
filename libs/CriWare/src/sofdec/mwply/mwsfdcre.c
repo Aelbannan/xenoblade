@@ -98,6 +98,31 @@ typedef struct MWSFCRE_Para {
     void* pool;             /* 0x30 */
 } MWSFCRE_Para;
 
+/* SFD_SetMpvParaTbl argument block sub-table: 10 default condition/value
+ * pairs copied from the mode-specific template in .data. */
+typedef struct SfdCondTbl {
+    u32 field_0x00;  /* 0x00 */
+    u32 field_0x04;  /* 0x04 */
+    u32 field_0x08;  /* 0x08 */
+    u32 field_0x0c;  /* 0x0c */
+    u32 field_0x10;  /* 0x10 */
+    u32 field_0x14;  /* 0x14 */
+    u32 field_0x18;  /* 0x18 */
+    u32 field_0x1c;  /* 0x1c */
+    u32 field_0x20;  /* 0x20 */
+    u32 field_0x24;  /* 0x24 */
+    u32 field_0x28;  /* 0x28 */
+    u32 field_0x2c;  /* 0x2c */
+    u32 field_0x30;  /* 0x30 */
+    u32 field_0x34;  /* 0x34 */
+    u32 field_0x38;  /* 0x38 */
+    u32 field_0x3c;  /* 0x3c */
+    u32 field_0x40;  /* 0x40 */
+    u32 field_0x44;  /* 0x44 */
+    u32 field_0x48;  /* 0x48 */
+    u32 field_0x4c;  /* 0x4c */
+} SfdCondTbl;
+
 /* SFD_SetSupplySj argument block. */
 typedef struct MWSFCRE_SjArg {
     u32 a;                  /* 0x00 */
@@ -114,6 +139,13 @@ extern TraceCb* lbl_eu_805FF3A0;
 extern TraceRec lbl_eu_805661AC;
 extern TraceRec lbl_eu_80566280;
 extern const char lbl_eu_8051A3CC[];
+
+extern u32 lbl_eu_805FF2E4;
+extern u32 lbl_eu_805FF2E8;
+extern u32 lbl_eu_805660D0;
+extern const SfdCondTbl lbl_eu_80567168;
+extern const SfdCondTbl lbl_eu_805671B8;
+extern const SfdCondTbl lbl_eu_80567208;
 
 extern void MWSFSVM_Error(const char* message, ...);
 extern s32 MWSFLIB_SetErrCode(s32 code);
@@ -499,7 +531,44 @@ void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
 
 void mwPlyCalcWorkCprmSfd() {}
 
-void criware_eu_803A29E0() {}
+void criware_eu_803A29E0(s32 mode, u32 unused, SfdCondTbl* dest, MWSFDPLY* self) {
+    /* Sparse mode dispatch: equality chain, case bodies appended after. */
+    if (mode == 1) goto case1;
+    if (mode == 2) goto case2;
+    if (mode == 3) goto case3;
+    if (mode == 8) goto case8;
+    if (mode == 9) goto case9;
+    if (mode == 0xb) goto case0xb;
+    return;
+case1:
+    /* Copy the default SFD condition table and set the rbf supply params. */
+    *dest = lbl_eu_80567168;
+    self->field_0x508 = lbl_eu_805FF2E4;
+    self->field_0x50c = lbl_eu_805FF2E8 - lbl_eu_805660D0;
+    self->field_0x510 = lbl_eu_805660D0;
+    return;
+case2:
+    *dest = lbl_eu_805671B8;
+    self->field_0x508 = lbl_eu_805FF2E4;
+    self->field_0x50c = lbl_eu_805FF2E8 - 0x800;
+    self->field_0x510 = 0x800;
+    return;
+case3:
+    *dest = lbl_eu_80567208;
+    self->field_0x508 = lbl_eu_805FF2E4;
+    self->field_0x50c = lbl_eu_805FF2E8 - lbl_eu_805660D0;
+    self->field_0x510 = lbl_eu_805660D0;
+    return;
+case8:
+    MWSFSVM_Error(lbl_eu_8051A3CC + 0x13c);
+    return;
+case9:
+    MWSFSVM_Error(lbl_eu_8051A3CC + 0x164);
+    return;
+case0xb:
+    MWSFSVM_Error(lbl_eu_8051A3CC + 0x18c);
+    return;
+}
 
 void mwsfcre_CreateSfd() {}
 

@@ -553,10 +553,9 @@ void CLibCriStreamingPlay::wkUpdate() {
     }
 }
 
-// wkStandbyLogin - Just calls base class
+// wkStandbyLogin - Just calls base class (tail call)
 bool CLibCriStreamingPlay::wkStandbyLogin() {
-    CWorkThread::wkStandbyLogin();
-    return true;
+    return CWorkThread::wkStandbyLogin();
 }
 
 // wkStandbyLogout - Cleanup all streams on logout

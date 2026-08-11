@@ -56,6 +56,9 @@ void func_801541B0(){}
 void func_80154280(){}
 void func_801554DC(){}
 
+// cf::CActorParam base virtual (retail: li r3,0; blr)
+extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv(void* self) { return 0; }
+
 void cf::CArtsParam::vtableFunc3(u8 val) {
     u8* o = *(u8**)((u8*)this + 0x88);
     if (o) *(u8*)((u8*)o + 0) = val;

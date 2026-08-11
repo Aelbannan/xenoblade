@@ -412,6 +412,11 @@ void func_80074CEC(){}
 extern "C" int CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
+// cf::CfObject base virtuals (retail: li r3,0; blr / li r3,1; blr)
+extern "C" u32 CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv(void* self) { return 0; }
+extern "C" u32 CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv(void* self) { return 1; }
+// cf::CActorParam base virtual (retail: lwz r3,0x15e4(r3); blr)
+extern "C" u32 CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
 
 extern "C" bool func_8006B6C0() { return false; }
 extern "C" void func_8006BF08() {}

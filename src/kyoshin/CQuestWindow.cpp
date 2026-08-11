@@ -8,6 +8,9 @@ u32 func_80122448(void) {
     return lbl_eu_80663FD0;
 }
 
+// (lbl_eu_80663FD0 != 0) - retail lwz sda21; subic; subfe
+extern "C" bool func_80122450() { extern u32 lbl_eu_80663FD0; return lbl_eu_80663FD0 != 0; }
+
 int lbl_eu_80663D1C;
 
 int func_80042864() {

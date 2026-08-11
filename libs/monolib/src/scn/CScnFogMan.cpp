@@ -56,7 +56,8 @@ extern "C" void __ct__CScnFogMan(CScnFogMan* self, u32 param) {
 extern "C" void func_8049DE68(u8* self, u32 val) {
     ((CScnFogMan*)self)->value08 = val;
 }
-void func_8049DE70(void) {}
+extern "C" void func_8049DEC4();
+extern "C" void func_8049DE70(void) { func_8049DEC4(); }
 void func_8049E374(u8* self, float a, float b) {}
 
 CScnFogMan::~CScnFogMan() {}
@@ -91,4 +92,7 @@ extern "C" void func_8049DE74(CScnFogMan* self, u32 value, const SWordVec* src,
     self->field_0x20 = p0;
 }
 
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8049DEC4() {}
+#pragma pop

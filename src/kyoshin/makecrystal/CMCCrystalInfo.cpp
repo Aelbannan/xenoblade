@@ -556,9 +556,10 @@ bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile)
         // Bind the loaded font's pane into the layout root.
         nw4r::lyt::Pane* rootPane =
             ((nw4r::lyt::Layout*)mLayout)->GetRootPane();
-        void* fontObj = CDeviceFont::func_80452C10(1, (nw4r::lyt::Layout*)mLayout);
         func_8013676C(rootPane,
-            reinterpret_cast<CMCCrystalInfoFontView*>(fontObj)->vf7());
+            reinterpret_cast<CMCCrystalInfoFontView*>(
+                CDeviceFont::func_80452C10(1, (nw4r::lyt::Layout*)mLayout))
+                ->vf7());
 
         // If a character set is loaded, stamp every text pane with it.
         u32 sh = func_801355BC();

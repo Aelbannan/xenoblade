@@ -203,7 +203,7 @@ void func_80069EA8(int param) {
     }
 }
 
-void func_80069EE0(void){}
+bool func_80069EE0() { return CDeviceVI::isTvFormatPal(); }
 
 // Returns the play time, converting the u16 frame counter through the
 // shared float state (seconds vs frame-count split).

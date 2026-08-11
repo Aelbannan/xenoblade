@@ -174,7 +174,8 @@ void func_804C678C(){}
 
 void func_804C6A70(){}
 
-u32 func_804C6ADC(u32 val){ return (val >> 16) & 0xFF; }
+// retail: lwz r0,0x4(r3); extrwi r3,r0,1,2 = (x>>29)&1
+extern "C" u32 func_804C6ADC(void* self) { return (*(u32*)((char*)self + 4) >> 29) & 1; }
 
 int func_804C6AE8(unsigned int* arg0) {
     return (arg0[1] >> 28) & 1;

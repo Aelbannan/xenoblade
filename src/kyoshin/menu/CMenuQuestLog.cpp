@@ -30,7 +30,7 @@ void CMenuQuestLog::Term() {}
 
 void CMenuQuestLog::Move() {}
 
-void CMenuQuestLog::cbRenderBefore() {}
+__declspec(noinline) void CMenuQuestLog::cbRenderBefore() {}
 
 // ---------------------------------------------------------------------------
 // ---- func_8011CCE0 (us-8011d7bc) ------------------------------------------
@@ -39,6 +39,8 @@ void CMenuQuestLog::cbRenderBefore() {}
 // already exists). Regist is called even when the allocation failed, matching
 // retail.
 // ---------------------------------------------------------------------------
+extern "C" void Regist__8CProcessFP8CProcessb(void* self, CProcess* parent, bool b);
+
 CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
     if (lbl_eu_80663FC0 != 0) {
         return 0;
@@ -49,11 +51,12 @@ CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
         obj = __ct__CMenuQuestLog(obj, parent, arg2);
     }
     lbl_eu_80663FC0 = obj;
-    obj->Regist(self, 0x0);
+    Regist__8CProcessFP8CProcessb(obj, self, false);
     return lbl_eu_80663FC0;
 }
 
-void func_8011CD5C(){}
+// (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
+extern "C" bool func_8011CD5C() { extern u32 lbl_eu_80663FC0; return lbl_eu_80663FC0 != 0; }
 
 void func_8011CD6C(){}
 
@@ -128,7 +131,7 @@ void func_8011D298(CMenuQuestLog* self) {
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls cbRenderBefore.
-void func_8011D2E8(void* self) {
+extern "C" void func_8011D2E8(void* self) {
     reinterpret_cast<CMenuQuestLog*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 

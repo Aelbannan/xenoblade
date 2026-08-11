@@ -67,6 +67,7 @@ class CCur18View {
 public:
     virtual void vf02() = 0;           // vtable + 0x8
     virtual void vf03() = 0;           // vtable + 0xC - per-frame update
+    virtual void vf04(void* arg) = 0;  // vtable + 0x10 - cursor selection update
 };
 
 /*
@@ -126,11 +127,60 @@ extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 extern "C" void __ct__8CProcessFv(void*);
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 
+// Flat cf pad-data view for the kizuna talk input handling (offsets match
+// retail, same as CSysPadData / KizunaPadData views elsewhere).
+struct KizunaTalkPadData {
+    u8 _00[0x4];
+    u32 mPressedFlags;          // +0x04 CPad::mPressedButtonFlags
+    u8 _08[0x104 - 0x8];
+    u32 mTurboFlags;            // +0x104 CfPadData::mTurboPressButtonFlags
+};
+
+// C-ABI helper imports for the kizuna talk input / file-event handlers. The
+// retail symbols are unmangled, so they must stay C-linkage (the C++-linkage
+// declarations in CSysWinSelect.hpp/CSysWinSave.hpp would mangle them).
+extern "C" KizunaTalkPadData* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" void func_8022C1B4(void* out, void* syswin, u8 sel);
+extern "C" u16 func_8013A7D0(u8 a, u8 b);
+extern "C" int func_8006A6D0();
+extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+extern "C" void* func_8003AA34();
+
+// CItemBoxGrid.hpp declares the BDAT byte-column reader with a u8 return,
+// which makes MWCC emit an rlwinm byte mask at every call site. The retail
+// callee already zero-extends (lbz) and callers keep the raw result (mr),
+// masking only at use, so the header's u8 declaration is renamed out of the
+// way and the import is redeclared with a wide return (same ABI).
+#define func_801361E8 kizunaTalkBdatByteUnused
+#include "kyoshin/CItemBoxGrid.hpp"
+#undef func_801361E8
+extern "C" u32 func_801361E8(u32 fp, const char* col, u32 id);
+
+// u32-word pair / f64 view used for MWCC's 0x43300000 int->float conversion
+// (subtracts the retail .sdata2 magic double lbl_eu_80667E70).
+union KizunaF64Conv {
+    u32 w[2];
+    f64 d;
+};
+
+// Minimal nw4r texture view returned by the arc accessor's texture lookup:
+// +0x08 points at the texture header (u16 height/width pair).
+struct KizunaTexHeader {
+    u16 mHeight;   // 0x00
+    u16 mWidth;    // 0x02
+};
+struct KizunaTextureView {
+    u8 _00[0x8];
+    KizunaTexHeader* mHeader;   // 0x08
+};
+
 // Global data imports (MWCC does not mangle global-scope data names).
 extern char lbl_eu_80505118[];            // shared-archive path string (.rodata)
 extern CMenuKizunaTalk* lbl_eu_80664420;  // singleton instance pointer (.sbss)
 extern u8* lbl_eu_80664424;               // BDAT character table pointer (.sbss)
 extern const f32 lbl_eu_80667E68;         // .sdata2 float (anim check)
+extern const f32 lbl_eu_80667E6C;         // .sdata2 float (anim frame reset 0.0f)
+extern const f64 lbl_eu_80667E70;         // .sdata2 double (0x43300000 int->float magic)
 extern char lbl_eu_8052D238[];            // CTTask_IUIWindow vtable (.data)
 extern char lbl_eu_80533A98[];            // CMenuKizunaTalk composite vtable (.data)
 extern u32 __ptmf_null[3];                // null pointer-to-member-function

@@ -41,16 +41,13 @@ CTTask<cf::CTaskGameCf>::~CTTask() {}
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 
-    CTaskGameCf::CTaskGameCf(CProcess* pParent, BOOL arg2)
-        : pTaskGame((CTaskGame*)pParent), unk_54(0), unk_5C(1), unk_5E(1), unk_60(16), unk_62(0){
-        if(arg2){
-            unk_54 |= 8;
-        } else {
-            unk_54 = 0;
-        }
-    }
-
+    // Retail has no mangled ctor: the class ctor is the extern "C" __ct__cf_CTaskGameCf
+    // wrapper below (0xc8). The C++ ctor definition was removed to eliminate the extra
+    // 0xd8 function that inflated the unit past its split budget.
+    // optimize_for_size emits the retail stmw/lmw r30 frame (0x54, not 0x5c).
+    #pragma optimize_for_size on
     CTaskGameCf::~CTaskGameCf(){}
+    #pragma optimize_for_size off
 
 cf::CTaskGameCf* lbl_eu_80663D38;
 
@@ -82,6 +79,7 @@ void CTaskGameCf::func_8004433C() {
     reinterpret_cast<u32*>(this)[0x44 / 4] = v2;
 }
 
+    #pragma optimize_for_size on
     void CTaskGameCf::startMission(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
         unk_5C = arg1;
         unk_5E = arg2;
@@ -91,6 +89,7 @@ void CTaskGameCf::func_8004433C() {
         unk_88 = arg4;
         mMoveFunc = &CTaskGameCf::func_800444DC;
     }
+    #pragma optimize_for_size off
 
 void CTaskGameCf::Init() {
     lbl_eu_80663D38 = this;
@@ -140,6 +139,7 @@ void CTaskGameCf::func_800444FC(){
     mMoveFunc = lbl_eu_80525B18;
 }
 
+    #pragma optimize_for_size on
     void CTaskGameCf::func_8004451C(){
         if(!(unk_54 & 8)){
             func_800407C8_tmp tmp;
@@ -198,6 +198,7 @@ void CTaskGameCf::func_800444FC(){
         func_8004302C(1, 0);
         mMoveFunc = &CTaskGameCf::func_800447B4;
     }
+    #pragma optimize_for_size off
 
     void CTaskGameCf::func_800447B4(){
         if(Class_80296898::getInstance()->mFrameCount == 0){
@@ -310,6 +311,7 @@ zero_case:
     return pThis;
 }
 
+#pragma optimize_for_size on
 extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2) {
     u32 handle = getWorkMem__17CWorkThreadSystemFv();
     cf::CTaskGameCf* task = (cf::CTaskGameCf*)allocate__Q23mtl10MemManagerFUlUl(0x90, handle);
@@ -321,3 +323,4 @@ extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int 
     Regist__8CProcessFP8CProcessb(task, pParent, false);
     return task;
 }
+#pragma optimize_for_size off

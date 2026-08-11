@@ -179,6 +179,7 @@ __attribute__((never_inline)) void* __dt___reslist_base_CCacheItem(CacheList* se
 }
 
 // reslist<CCacheItem>::~reslist(int deleting)
+#pragma optimize_for_size on
 void* __dt__reslist_CCacheItem(CacheList* self, int deleting) {
     if (self != 0) {
         __dt___reslist_base_CCacheItem(self, 0);
@@ -188,6 +189,7 @@ void* __dt__reslist_CCacheItem(CacheList* self, int deleting) {
     }
     return self;
 }
+#pragma optimize_for_size off
 
 } // extern "C"
 

@@ -324,9 +324,9 @@ extern "C" int func_80187710() {
     return lbl_eu_806642D8;
 }
 void __dt__12CMenuPTGaugeFv(void*);
-bool func_80187EFC(void* self){
+// IWorkEvent dtor this-adjusting thunk (retail: subi r3,-0x58; b __dt__12CMenuPTGaugeFv)
+extern "C" void func_80187EFC(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
-    return false;
 }
 extern "C" void func_80187F04(void* self) {
     extern void cbRenderBefore__12CMenuPTGaugeFv(void*);

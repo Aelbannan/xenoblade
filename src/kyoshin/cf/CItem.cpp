@@ -46,7 +46,8 @@ void func_80155AA0(){}
 
 void CItem_initItemImplInstances(){}
 
-void func_80155CB4(){}
+// retail: lwz r0,0x0(r4); extrwi r3,r0,3,27 = (x>>2)&7
+extern "C" u32 func_80155CB4(void* self, const void* p) { return (*(const u32*)p >> 2) & 7; }
 
 void func_80155CC0(CItemData*, unsigned long* ptr, unsigned long val) {
     unsigned long v = *ptr;
@@ -433,7 +434,8 @@ int CItemData_isFalse3(CItemData*) { return 0; }
 
 extern "C" void func_8015B404(void* u, u8* p, u32 val) { ((ItemWord8*)(p + 8))->f7 = val; }
 
-void func_8015B414(){}
+// retail: lwz r0,0x8(r4); clrlwi r3,r0,25 = (x>>8) & 0x7F... = *(u32*)(p+8) & 0x7F
+extern "C" u32 func_8015B414(void* self, const void* p) { return *(const u32*)((const char*)p + 8) & 0x7F; }
 
 extern "C" void func_8015B420(void* u, u8* p, u32 val) { ((ItemWord8*)(p + 8))->f11 = val; }
 

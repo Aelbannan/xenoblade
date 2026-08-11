@@ -221,7 +221,7 @@ void func_800D02D4(cf::CfObjectImplEneObj* self) {
         func_80043D90(holder);
         func_800F4A98(func_80043F18(holder), 0x80000000, 0);
         for (u32 i = 0; i < ((cf::CfEnumList*)func_80043F18(holder))->field_620; i++) {
-            void* obj = func_8016FE34((int)func_800F6EAC(func_80043F18(holder), i));
+            void* obj = func_8016FE34(func_800F6EAC(func_80043F18(holder), i));
             if (obj != 0) {
                 ((cf::CfImplEneBattleObj*)obj)->bg18(lbl_eu_80666CE4);
             }
@@ -252,9 +252,10 @@ void func_800D0A60(cf::CfObjectImplEneObj* self, u32 id, u32 kind, u32 p4, u32 p
     }
 }
 
-void func_800D0AFC(void){}
-
-void func_800D0B00(void){}
+extern "C" void func_800CE544(void* self);
+extern "C" void func_800CEA34(void* self);
+extern "C" void func_800D0AFC(void* self) { func_800CE544(self); }
+extern "C" void func_800D0B00(void* self) { func_800CEA34(self); }
 
 // Scans the battle actor's up-to-16 timeline entries; for each entry not
 // already tracked by the battle manager, applies the shared action from
@@ -268,7 +269,7 @@ int func_800D0B04(cf::CfObjectImplEneObj* self) {
     int count = 0;
     if (actor != 0 && (actor->field_A0 & 1) != 0) {
         void* v = ((cf::CfImplEneBattleObj*)self->field_18)->mSub.sf4C();
-        void* src = func_8016FE34((int)func_800B708C((int)v));
+        void* src = func_8016FE34(func_800B708C((int)v));
         for (int i = 0; i < 0x10; i++) {
             cf::CfImplEneBattleObj* p =
                 (cf::CfImplEneBattleObj*)func_800AD860((void*)func_800B708C((int)func_801984E4(actor, i)));
@@ -298,7 +299,7 @@ int func_800D0C2C(cf::CfObjectImplEneObj* self, int flag) {
     if (func_800DA06C(cf::CBattleManager::getInstance(), (unsigned int)battleObj) == 0) goto fail;
 
     cf::CfImplEneBattleObj* enemy = (cf::CfImplEneBattleObj*)func_8016FE34(
-        (int)func_800B708C((int)battleObj->mSub.sf4C()));
+        func_800B708C((int)battleObj->mSub.sf4C()));
     if (enemy == 0) goto fail;
     if (enemy->field_3F34 == 0) goto fail;
     cf::CfObjectImplEne14* self14 = (cf::CfObjectImplEne14*)self->field_14;

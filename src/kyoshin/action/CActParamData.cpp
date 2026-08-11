@@ -435,7 +435,17 @@ extern "C" void func_80054438() {}
 extern "C" void func_80054614() {}
 extern "C" void func_80054980() {}
 extern "C" void func_80054A94() {}
-extern "C" void func_80054D3C() {}
+extern "C" __declspec(noinline) void func_80054D3C(void* self, void* member) {}
+// func_80054D34: r4 = this+0x2E0, tail-branch to func_80054D3C (retail addi r4,r3,0x2e0; b)
+extern "C" void func_80054D34(void* self) {
+    func_80054D3C(self, (char*)self + 0x2E0);
+}
+// vtable-dispatch wrappers (retail: lwz r12,0(r3); lwz r12,N(r12); mtctr; bctr)
+typedef void (*CActVFn)(void*);
+extern "C" void func_800560A4(void* self) { (*(CActVFn*)(*(void**)self + 0x34))(self); }
+extern "C" void func_800560B4(void* self) { (*(CActVFn*)(*(void**)self + 0x98))(self); }
+extern "C" void func_800560C4(void* self) { (*(CActVFn*)(*(void**)self + 0x88))(self); }
+extern "C" void func_800560D4(void* self) { (*(CActVFn*)(*(void**)self + 0x8C))(self); }
 extern "C" void func_800550E8() {}
 extern "C" void func_80055700() {}
 extern "C" void func_80055AC4() {}

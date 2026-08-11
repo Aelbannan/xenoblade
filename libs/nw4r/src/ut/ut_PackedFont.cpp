@@ -7,11 +7,33 @@
 // width pointer, then the PackedFont buffer/link fields.
 
 #include <harness_catalog.h>
+#include <string.h>
 
 #include <nw4r/ut/ut_binaryFileFormat.h>
 
+#include <revolution/GX.h>
+#include <revolution/OS.h>
+
 void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*);
 extern unsigned char lbl_eu_8056B084[];
+extern const double lbl_eu_8066A138;  // 2^52 magic double for the int->float conversion
+
+// CX stream decompression. revolution/CX.h pulls in CXUncompression.h, whose
+// public header is missing its own API declarations in this tree (and is
+// outside this session's writable scope), so declare them with C linkage
+// here - they are genuine C-ABI SDK functions.
+extern "C" {
+u32 CXGetUncompressedSize(const u8* src);
+void CXUncompressHuffman(const u8* src, u8* dst);
+}
+
+// Rebuild a double from its two 32-bit halves; reproduces the retail int->float
+// conversion (bit pattern + the named sdata2 2^52 constant) so the pool reloc
+// keeps the retail label instead of an MWCC-synthesised entry.
+union F64Conv {
+    u32 w[2];
+    double d;
+};
 
 
 void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*, int);
@@ -29,6 +51,14 @@ void* __dt__Q34nw4r2ut10PackedFontFv(void* self, int freeFlag)
 namespace nw4r {
 namespace ut {
 
+enum FontEncoding {
+    FONT_ENCODING_UTF8,
+    FONT_ENCODING_UTF16,
+    FONT_ENCODING_SJIS,
+    FONT_ENCODING_CP1252,
+    FONT_ENCODING_MAX
+};
+
 struct CharWidths {
     s8 left;        // at 0x0
     u8 glyphWidth;  // at 0x1
@@ -44,6 +74,18 @@ struct Glyph {
     u16 texHeight;      // at 0xE
     u16 cellX;          // at 0x10
     u16 cellY;          // at 0x12
+};
+
+// Local flattened mirror of nw4r::ut::Font: vptr at +0x0, CharStrmReader
+// function pointer at +0x4. Only the member this TU calls is declared
+// (InitReaderFunc is defined in ut_Font.cpp).
+class Font {
+public:
+    void InitReaderFunc(FontEncoding encode);
+
+protected:
+    u32 field_0x0;  // vtable (at 0x0)
+    u32 field_0x4;  // CharStrmReader read func (at 0x4)
 };
 
 namespace detail {
@@ -79,13 +121,12 @@ struct FontInformation {
 
 // Base font object: vtable at 0x0, CharStrmReader func at 0x4, then the
 // ResFontBase resource state (mResource/mFontInfo at 0x10/0x14).
-class ResFontBase {
+class ResFontBase : public Font {
 public:
     const CharWidths& GetCharWidthsFromIndex(u16 index) const;
+    u16 GetGlyphIndex(u16 ch) const;
 
 protected:
-    u32 field_0x0;               // vtable (at 0x0)
-    u32 field_0x4;               // read func (at 0x4)
     u32 field_0x8;               // at 0x8
     u32 field_0xC;               // at 0xC
     u32 mResource;               // at 0x10
@@ -98,6 +139,7 @@ class ArchiveFontBase : public ResFontBase {
 public:
     class CachedStreamReader;
     struct ConstructContext;
+    struct FontGlyphGroupsAcs;
 
     // Declared static so construct-op calls pass (ctx, reader, size) straight
     // through r3/r4/r5. The retail definition in ut_ArchiveFontBase.cpp is a
@@ -106,6 +148,31 @@ public:
     static int RequestData(ConstructContext* pCtx, CachedStreamReader* pReader,
                            u32 size);
     void* RemoveResourceBuffer();
+
+    u16 AdjustIndex(u16 index) const;
+    static bool IsValidResource(const void* pResource, u32 size);
+    void SetResourceBuffer(void* pBuffer, FontInformation* pInfo, u16* pWidth);
+
+    static bool IncludeName(const char* pName, const char* pSheet);
+
+    static int ConstructOpDispatch(ConstructContext* pCtx,
+                                   CachedStreamReader* pReader);
+    static int ConstructOpAnalyzeFileHeader(ConstructContext* pCtx,
+                                            CachedStreamReader* pReader);
+    static int ConstructOpAnalyzeFINF(ConstructContext* pCtx,
+                                      CachedStreamReader* pReader);
+    static int ConstructOpAnalyzeCMAP(ConstructContext* pCtx,
+                                      CachedStreamReader* pReader);
+    static int ConstructOpAnalyzeCWDH(ConstructContext* pCtx,
+                                      CachedStreamReader* pReader);
+    static int ConstructOpCopy(ConstructContext* pCtx,
+                               CachedStreamReader* pReader);
+    static int ConstructOpSkip(ConstructContext* pCtx,
+                               CachedStreamReader* pReader);
+    static int ConstructOpFatalError(ConstructContext* pCtx,
+                                     CachedStreamReader* pReader);
+    static int ConstructOpAnalyzeTGLP(ConstructContext* pCtx,
+                                      CachedStreamReader* pReader);
 
 protected:
     u32 mWidth; // at 0x1C
@@ -154,7 +221,40 @@ struct ArchiveFontBase::ConstructContext {
     u16 field_0x64;             // at 0x64
 };
 
+// Summary of the packed glyph-group tables laid out in the resource. The
+// pointer fields are resource-relative addresses, the stride fields are the
+// per-group sheet-mask strides in bytes (see GetRequireBufferSize).
+struct ArchiveFontBase::FontGlyphGroupsAcs {
+    const u8* field_0x0;   // at 0x00: resource base
+    const u8* field_0x4;   // at 0x04: resource + 0x10 (info/block data)
+    u32 field_0x8;         // at 0x08
+    const u32* field_0xC;  // at 0x0C: B-group glyph size table
+    const u32* field_0x10; // at 0x10: C-group glyph size table
+    const u32* field_0x14; // at 0x14: D-group glyph size table
+    const u8* field_0x18;  // at 0x18: B-group sheet mask table
+    const u8* field_0x1C;  // at 0x1C: C-group sheet mask table
+    const u8* field_0x20;  // at 0x20: D-group sheet mask table
+    u32 field_0x24;        // at 0x24: B mask stride
+    u32 field_0x28;        // at 0x28: C mask stride
+    u32 field_0x2C;        // at 0x2C: D mask stride
+};
+
 } // namespace detail
+
+// Layout of the packed-font archive resource (RFNA file: BinaryFileHeader at
+// +0x0, then the GLGR block with the glyph-group tables).
+struct PackedFontResource {
+    u8 field_0x0[0x10];  // BinaryFileHeader (u16 dataBlocks at 0xE)
+    u32 field_0x10;      // 'GLGR' block kind
+    u32 field_0x14;      // GLGR block size
+    u32 field_0x18;      // sheet image size
+    u16 field_0x1C;      // extra count (glyph-map skip step)
+    u16 field_0x1E;      // glyphs per group
+    u16 field_0x20;      // total glyphs (B)
+    u16 field_0x22;      // C-group count
+    u16 field_0x24;      // D-group count
+    u16 field_0x26[];    // per-glyph sheet-name indices
+};
 
 class PackedFont : public detail::ArchiveFontBase {
 public:
@@ -167,6 +267,16 @@ public:
 
     int StreamingConstruct(detail::ArchiveFontBase::ConstructContext* pCtx,
                            const void* pArchive, u32 size);
+    int ConstructOpAnalyzeGLGRPacked(
+        detail::ArchiveFontBase::ConstructContext* pCtx,
+        detail::ArchiveFontBase::CachedStreamReader* pReader);
+
+    static u32 GetRequireBufferSize(const void* pResource, const char* pName,
+                                    float scale);
+    static u32 CalcCopySize(
+        const detail::ArchiveFontBase::FontGlyphGroupsAcs& rGroups,
+        const char* pName, int* pResult);
+    void GetGlyph(Glyph* pGlyph, u16 charCode) const;
 
     static int ConstructOpPrepairCopyPackedSheet(
         detail::ArchiveFontBase::ConstructContext* pCtx,
@@ -239,13 +349,364 @@ void PackedFont::Destroy() {
     RemoveResourceBuffer();
 }
 
-void GetRequireBufferSize__Q34nw4r2ut10PackedFontFPCvPCcf(){}
+/******************************************************************************
+ *
+ * GetRequireBufferSize
+ *
+ ******************************************************************************/
 
-void StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl(){}
+u32 PackedFont::GetRequireBufferSize(const void* pResource, const char* pName,
+                                     float scale) {
+    if (!IsValidResource(pResource, 0x4000)) {
+        return 0;
+    }
 
-void GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs(){}
+    const u8* p = reinterpret_cast<const u8*>(pResource);
 
-void CalcCopySize__Q34nw4r2ut10PackedFontFRCQ54nw4r2ut6detail15ArchiveFontBase18FontGlyphGroupsAcsPCcPi(){}
+    // Lay the glyph-group tables out over the resource and record the group
+    // strides, mirroring the offsets ConstructOpAnalyzeGLGRPacked computes.
+    int A = *(const u16*)(p + 0x1E);  // glyphs per group
+    int B = *(const u16*)(p + 0x20);  // total glyphs
+    int C = *(const u16*)(p + 0x22);  // C-group count
+    int D = *(const u16*)(p + 0x24);  // D-group count
+
+    u32 off1 = (A * 2 + 0x29) & ~3u;
+    u32 cB4 = ((B + 31) / 32) * 4;
+    u32 off2 = (off1 + B * 4 + 3) & ~3u;
+    u32 cC4 = ((C + 31) / 32) * 4;
+    u32 off3 = (off2 + C * 4 + 3) & ~3u;
+    u32 off4 = (off3 + D * 4 + 3) & ~3u;
+    u32 cD4 = ((D + 31) / 32) * 4;
+    u32 off5 = (off4 + cB4 * A + 3) & ~3u;
+    u32 off6 = (off5 + cC4 * A + 3) & ~3u;
+
+    FontGlyphGroupsAcs groups;
+    groups.field_0x0 = p;
+    groups.field_0x4 = p + 0x10;
+    groups.field_0xC = reinterpret_cast<const u32*>(p + off1);
+    groups.field_0x24 = cB4;
+    groups.field_0x14 = reinterpret_cast<const u32*>(p + off3);
+    groups.field_0x18 = p + off4;
+    groups.field_0x28 = cC4;
+    groups.field_0x2C = cD4;
+    groups.field_0x10 = reinterpret_cast<const u32*>(p + off2);
+    groups.field_0x1C = p + off5;
+    groups.field_0x20 = p + off6;
+
+    int count;
+    u32 base = CalcCopySize(groups, pName, &count);
+
+    // Reserve space for `scale`-scaled glyph count (clamped to [1, B]) plus
+    // the per-glyph tables. B and the sheet image size are re-read through the
+    // groups struct (retail keeps only pName/p live across the call).
+    F64Conv conv;
+    conv.w[0] = 0x43300000;
+    conv.w[1] = (u32)count ^ 0x80000000;
+    int n = (int)((float)(conv.d - lbl_eu_8066A138) * scale);
+    int glyphTotal = *(const u16*)(groups.field_0x4 + 0x10);
+    if (n > glyphTotal) {
+        n = glyphTotal;
+    } else if (n < 1) {
+        n = 1;
+    }
+
+    u32 w = (u32)n;
+    u32 s0 = ((w + 1) * 4 + 3) & ~3u;
+    u32 s2 = (glyphTotal * 4 + s0 + 1) & ~1u;
+    u32 s4 = (glyphTotal * 4 + s2 + 1) & ~1u;
+    u32 s6 = (w * 2 + s4 + 31) & ~31u;
+    u32 s8 = (*(const u32*)(groups.field_0x4 + 0x8) * w + s6 + 3) & ~3u;
+    return base + s8;
+}
+
+/******************************************************************************
+ *
+ * StreamingConstruct
+ *
+ ******************************************************************************/
+
+// The streaming construct machine: the context holds the stream reader and the
+// next op code; each ConstructOp* step either returns a status (1 = done,
+// 2 = error, 3 = continue) or requests more data.
+int PackedFont::StreamingConstruct(ConstructContext* pCtx, const void* pArchive,
+                                   u32 size) {
+    if (mFontInfo != 0) {
+        // Already constructed: succeed if the stream was fully consumed.
+        int result = 1;
+        if (pCtx->field_0x5C < pCtx->field_0x58) {
+            result = 2;
+        }
+        return result;
+    }
+
+    CachedStreamReader* pReader = &pCtx->mReader;
+    pReader->Attach(pArchive, size);
+    int status = 3;
+
+    do {
+        switch (pCtx->field_0xC) {
+        case 0:
+            status = ConstructOpDispatch(pCtx, pReader);
+            break;
+        case 1:
+            status = ConstructOpAnalyzeFileHeader(pCtx, pReader);
+            break;
+        case 2:
+            status = ConstructOpAnalyzeGLGRPacked(pCtx, pReader);
+            break;
+        case 3:
+            status = ConstructOpAnalyzeFINF(pCtx, pReader);
+            break;
+        case 4:
+            status = ConstructOpAnalyzeCMAP(pCtx, pReader);
+            break;
+        case 5:
+            status = ConstructOpAnalyzeCWDH(pCtx, pReader);
+            break;
+        case 6:
+            status = ConstructOpCopy(pCtx, pReader);
+            break;
+        case 7:
+            status = ConstructOpSkip(pCtx, pReader);
+            break;
+        case 8:
+            status = ConstructOpFatalError(pCtx, pReader);
+            break;
+        case 9:
+            status = ConstructOpAnalyzeTGLP(pCtx, pReader);
+            break;
+        case 10:
+            status = ConstructOpPrepairCopyPackedSheet(pCtx, pReader);
+            if (pCtx->field_0xC == 9) {
+                reinterpret_cast<u32*>(field_0x34)[field_0x28] =
+                    pCtx->field_0x4C;
+                field_0x28++;
+            }
+            break;
+        case 11:
+        case 12:
+        default:
+            pCtx->field_0xC = 0xC;
+            return 2;
+        }
+    } while (status == 3);
+
+    // Construction finished: flush the built font image, install the resource
+    // buffer and reset the per-glyph index tables.
+    if (status == 1 && mFontInfo == 0) {
+        DCFlushRange(reinterpret_cast<void*>(pCtx->field_0x44),
+                     pCtx->field_0x48 - pCtx->field_0x44);
+        SetResourceBuffer(reinterpret_cast<void*>(pCtx->field_0x44),
+                          reinterpret_cast<detail::FontInformation*>(
+                              pCtx->field_0x0),
+                          reinterpret_cast<u16*>(pCtx->field_0x40));
+
+        if (AdjustIndex(mFontInfo->alterCharIndex) == 0xFFFF) {
+            mFontInfo->alterCharIndex = 0;
+        }
+
+        u16* pMap = reinterpret_cast<u16*>(field_0x2C);
+        for (int i = 0; i < field_0x28; i++) {
+            pMap[i] = 0xFFFF;
+        }
+        u16* pTable = reinterpret_cast<u16*>(field_0x30);
+        for (int i = 0; i < field_0x2A; i++) {
+            pTable[i] = 0xFFFF;
+        }
+
+        // Virtual GetEncoding() dispatch through the retail vtable (slot 22).
+        typedef FontEncoding (*ReadEncodingFunc)(const void*);
+        ReadEncodingFunc pReadEncoding =
+            *(ReadEncodingFunc*)(*(const u32*)this + 0x58);
+        InitReaderFunc(pReadEncoding(this));
+    }
+    return status;
+}
+
+/******************************************************************************
+ *
+ * GetGlyph
+ *
+ ******************************************************************************/
+
+void PackedFont::GetGlyph(Glyph* pGlyph, u16 charCode) const {
+    // Resolve the char code to a packed glyph index; if the sheet it maps to
+    // is not resident yet, fall back to the alternate char's index.
+    u16 index = GetGlyphIndex(charCode);
+    u16 adjusted = AdjustIndex(index);
+    if (adjusted == 0xFFFF) {
+        index = mFontInfo->alterCharIndex;
+        adjusted = AdjustIndex(index);
+    }
+
+    int sheet =
+        adjusted / (mFontInfo->pGlyph->sheetRow * mFontInfo->pGlyph->sheetLine);
+    u16 slot = reinterpret_cast<u16*>(field_0x2C)[sheet];
+
+    // The requested sheet is not resident: take the head of the free list,
+    // decompress its image into the slot and update both index tables.
+    if (slot == 0xFFFF) {
+        slot = reinterpret_cast<u16*>(mBuffer)[mSheetCount * 2];
+        u16 oldSheet = reinterpret_cast<u16*>(field_0x30)[slot];
+        const u8* pCompressed = reinterpret_cast<const u8*>(
+            reinterpret_cast<const u32*>(field_0x34)[sheet]);
+        u8* pImage = reinterpret_cast<u8*>(
+            field_0x38 + slot * mFontInfo->pGlyph->sheetSize);
+
+        if (oldSheet != 0xFFFF) {
+            GXDrawDone();
+            u16 oldSlot = reinterpret_cast<u16*>(field_0x2C)[oldSheet];
+            reinterpret_cast<u16*>(field_0x2C)[oldSheet] = 0xFFFF;
+            reinterpret_cast<u16*>(field_0x30)[oldSlot] = 0xFFFF;
+        }
+
+        CXUncompressHuffman(pCompressed, pImage);
+        reinterpret_cast<u16*>(field_0x2C)[sheet] = slot;
+        reinterpret_cast<u16*>(field_0x30)[slot] = (u16)sheet;
+        GXInvalidateTexAll();
+        DCFlushRange(pImage, CXGetUncompressedSize(pCompressed));
+    }
+
+    // Rotate the consumed slot to the tail of the sheet list (round-robin).
+    u16 next = reinterpret_cast<u16*>(mBuffer)[slot * 2];
+    if (next != 0xFFFF) {
+        u16 prev = reinterpret_cast<u16*>(mBuffer)[slot * 2 + 1];
+        reinterpret_cast<u16*>(mBuffer)[next * 2 + 1] = prev;
+        reinterpret_cast<u16*>(mBuffer)[prev * 2] = next;
+        u16 tail = reinterpret_cast<u16*>(mBuffer)[mSheetCount * 2 + 1];
+        reinterpret_cast<u16*>(mBuffer)[slot * 2 + 1] = tail;
+        reinterpret_cast<u16*>(mBuffer)[slot * 2] =
+            reinterpret_cast<u16*>(mBuffer)[tail * 2];
+        reinterpret_cast<u16*>(mBuffer)[mSheetCount * 2 + 1] = slot;
+        reinterpret_cast<u16*>(mBuffer)[tail * 2] = slot;
+    }
+
+    MakeGlyph(pGlyph, index, slot);
+}
+
+/******************************************************************************
+ *
+ * CalcCopySize
+ *
+ ******************************************************************************/
+
+u32 PackedFont::CalcCopySize(const FontGlyphGroupsAcs& rGroups,
+                             const char* pName, int* pResult) {
+    u32 size1 = 0;  // B-group sizes
+    u32 size2 = 0;  // C-group sizes
+    u32 size3 = 0;  // D-group sizes
+    u32 count = 0;  // included glyph count
+
+    // B groups: add the per-glyph size of every sheet that is included.
+    {
+        u32 offSize = 0, offMask = 0;
+        for (int g = 0;
+             g < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                     ->field_0x20;
+             g += 0x20) {
+            u32 mask = 0;
+            for (int i = 0;
+                 i < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                         ->field_0x1E;
+                 i++) {
+                const char* pSheet = reinterpret_cast<const char*>(
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                        ->field_0x26[i]);
+                if (*pName == 0 || IncludeName(pName, pSheet)) {
+                    mask |= *(const u32*)(rGroups.field_0x18 + offMask +
+                                          ((i * rGroups.field_0x24) & ~3));
+                }
+            }
+            for (int b = 0; b < 32; b++) {
+                if (mask & (1 << b)) {
+                    count++;
+                    size1 += *(const u32*)((const u8*)rGroups.field_0xC + offSize +
+                                           b * 4);
+                }
+            }
+            offSize += 0x80;
+            offMask += 4;
+        }
+    }
+
+    // C groups: each included glyph shares its 8-byte header with the sheet.
+    {
+        u32 offSize = 0, offMask = 0;
+        for (int g = 0;
+             g < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                     ->field_0x22;
+             g += 0x20) {
+            u32 mask = 0;
+            for (int i = 0;
+                 i < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                         ->field_0x1E;
+                 i++) {
+                const char* pSheet = reinterpret_cast<const char*>(
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                        ->field_0x26[i]);
+                if (*pName == 0 || IncludeName(pName, pSheet)) {
+                    mask |= *(const u32*)(rGroups.field_0x1C + offMask +
+                                          ((i * rGroups.field_0x28) & ~3));
+                }
+            }
+            for (int b = 0; b < 32; b++) {
+                if (mask & (1 << b)) {
+                    size2 += *(const u32*)((const u8*)rGroups.field_0x10 + offSize +
+                                           b * 4) -
+                             8;
+                }
+            }
+            offSize += 0x80;
+            offMask += 4;
+        }
+    }
+
+    // D groups: same header sharing as the C pass.
+    {
+        u32 offSize = 0, offMask = 0;
+        for (int g = 0;
+             g < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                     ->field_0x24;
+             g += 0x20) {
+            u32 mask = 0;
+            for (int i = 0;
+                 i < reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                         ->field_0x1E;
+                 i++) {
+                const char* pSheet = reinterpret_cast<const char*>(
+                    rGroups.field_0x0 +
+                    reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                        ->field_0x26[i]);
+                if (*pName == 0 || IncludeName(pName, pSheet)) {
+                    mask |= *(const u32*)(rGroups.field_0x20 + offMask +
+                                          ((i * rGroups.field_0x2C) & ~3));
+                }
+            }
+            for (int b = 0; b < 32; b++) {
+                if (mask & (1 << b)) {
+                    size3 += *(const u32*)((const u8*)rGroups.field_0x14 + offSize +
+                                           b * 4) -
+                             8;
+                }
+            }
+            offSize += 0x80;
+            offMask += 4;
+        }
+    }
+
+    if (pResult != 0) {
+        *pResult = (int)count;
+    }
+
+    u32 total = size1 + size2 + size3 + 0x40;
+    u32 min = (reinterpret_cast<const PackedFontResource*>(rGroups.field_0x4)
+                   ->field_0x14 +
+               0x10) *
+              2;
+    return total >= min ? total : min;
+}
 
 /******************************************************************************
  *
@@ -328,7 +789,133 @@ void PackedFont::MakeGlyph(Glyph* pGlyph, u16 charCode, int charIndex) const {
     pGlyph->cellY = (u16)(row * (pSheet->cellHeight + 1) + 1);
 }
 
-void ConstructOpAnalyzeGLGRPacked__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+/******************************************************************************
+ *
+ * ConstructOpAnalyzeGLGRPacked
+ *
+ ******************************************************************************/
+
+// GLGR block analysis for packed fonts: validates the block, builds the
+// glyph-group summary, marks the glyphs belonging to included sheets, then
+// AssignMemory lays out the resident glyph map and sheet images.
+int PackedFont::ConstructOpAnalyzeGLGRPacked(ConstructContext* pCtx,
+                                             CachedStreamReader* pReader) {
+    u8* pCursor = reinterpret_cast<u8*>(pCtx->field_0x4C);
+    u32 need = pCtx->field_0x14 - 8;
+
+    if (*reinterpret_cast<const u32*>(pCursor) != 0x52464E41 /* 'RFNA' */) {
+        return 2;
+    }
+
+    if (pReader->GetRemain() < need) {
+        return RequestData(pCtx, pReader, need);
+    }
+
+    if (pCtx->field_0x48 - pCtx->field_0x4C < pCtx->field_0x14 + 0x10) {
+        return 2;
+    }
+
+    memcpy(pCursor + 0x10, &pCtx->field_0x10, 8);
+    pReader->CopyTo(pCursor + 0x18, need);
+    if (!IsValidResource(pCursor, pCtx->field_0x14 + 0x10)) {
+        return 2;
+    }
+
+    // Summarise the glyph-group tables (same layout GetRequireBufferSize
+    // computes): glyphs per group (A) and the three group counts B/C/D.
+    u16 A = *(const u16*)(pCursor + 0x1E);
+    u16 B = *(const u16*)(pCursor + 0x20);
+    u16 C = *(const u16*)(pCursor + 0x22);
+    u16 D = *(const u16*)(pCursor + 0x24);
+
+    FontGlyphGroupsAcs groups;
+    groups.field_0x0 = pCursor;
+    groups.field_0x4 = pCursor + 0x10;
+    groups.field_0x24 = ((B + 31) / 32) * 4;
+    groups.field_0x28 = ((C + 31) / 32) * 4;
+    groups.field_0x2C = ((D + 31) / 32) * 4;
+
+    u32 off1 = (A * 2 + 0x29) & ~3u;
+    u32 off2 = (off1 + B * 4 + 3) & ~3u;
+    u32 off3 = (off2 + C * 4 + 3) & ~3u;
+    u32 off4 = (off3 + D * 4 + 3) & ~3u;
+    u32 off5 = (off4 + ((B + 31) / 32) * 4 * A + 3) & ~3u;
+    u32 off6 = (off5 + ((C + 31) / 32) * 4 * A + 3) & ~3u;
+
+    groups.field_0xC = reinterpret_cast<const u32*>(pCursor + off1);
+    groups.field_0x10 = reinterpret_cast<const u32*>(pCursor + off2);
+    groups.field_0x14 = reinterpret_cast<const u32*>(pCursor + off3);
+    groups.field_0x18 = pCursor + off4;
+    groups.field_0x1C = pCursor + off5;
+    groups.field_0x20 = pCursor + off6;
+
+    u32 avail = pCtx->field_0x48 - pCtx->field_0x4C;
+    if (avail < (B * 2 & ~3u) + pCtx->field_0x14 + 0x10) {
+        return 2;
+    }
+
+    // Zero the glyph->sheet map (B u16 entries) above the streamed data.
+    u16* pGlyphMap = reinterpret_cast<u16*>(
+        (pCtx->field_0x48 - (B * 2 & ~3u)) & ~1u);
+    for (int i = 0; i < B; i++) {
+        pGlyphMap[i] = 0;
+    }
+
+    // Mark every glyph whose sheet is included by name.
+    const char* pName = reinterpret_cast<const char*>(pCtx->field_0x3C);
+    const u16* pNames = reinterpret_cast<const u16*>(
+        reinterpret_cast<const u8*>(pGlyphMap) + B * 2 + 0x16);
+    u32 count = 0;
+    for (int g = 0; g < A; g++) {
+        const char* pSheet =
+            reinterpret_cast<const char*>(pCursor + pNames[g]);
+        if (*pName == 0 || IncludeName(pName, pSheet)) {
+            for (int b = 0; b < B; b++) {
+                u32 bitPos = b + g * groups.field_0x24 * 8;
+                u32 word =
+                    *(const u32*)(groups.field_0x18 + ((bitPos >> 3) & ~7u));
+                if (word & (1 << (bitPos & 31))) {
+                    pGlyphMap[b] = 1;
+                }
+            }
+        }
+    }
+
+    // Assign sequential indices to the used glyphs; unused runs are skipped
+    // by the extra count stored in the resource.
+    u16 nextIndex = 0;
+    for (int i = 0; i < B; i++) {
+        if (pGlyphMap[i] == 1) {
+            pGlyphMap[i] = nextIndex;
+            count++;
+        } else {
+            pGlyphMap[i] = 0xFFFF;
+            nextIndex += *(const u16*)(groups.field_0x4 + 0xC);
+        }
+    }
+
+    u32 copySize = CalcCopySize(groups, pName, NULL);
+    if (copySize >= avail) {
+        return 2;
+    }
+    u32 remain = (avail - copySize) & ~3u;
+
+    u8* pAssigned = AssignMemory(pCursor, remain, B, count,
+                                 *(const u32*)(pCursor + 0x18));
+    if (pAssigned == 0) {
+        return 2;
+    }
+
+    memmove(pAssigned, pGlyphMap, B * 2);
+
+    pCtx->field_0x40 = reinterpret_cast<u32>(pAssigned);
+    pCtx->field_0x4C += remain;
+    pCtx->field_0x62 = B;
+    pCtx->field_0x64 = *(const u16*)(pCursor + 0x1C);
+    pCtx->field_0x58 = *(const u16*)(pCursor + 0xE);
+    pCtx->field_0xC = 0;
+    return 3;
+}
 
 /******************************************************************************
  *

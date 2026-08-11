@@ -36,7 +36,8 @@ void CMenuItemExchange::cbRenderBefore() {}
 
 void func_801BEDE0(){}
 
-void func_801BEE5C(){}
+// (lbl_eu_80664428 != 0)
+extern "C" bool func_801BEE5C() { extern u32 lbl_eu_80664428; return lbl_eu_80664428 != 0; }
 
 extern u8 lbl_eu_8066442C;
 u8 func_801BEE6C() { return lbl_eu_8066442C; }

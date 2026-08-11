@@ -37,11 +37,14 @@ void __dt__8046A584(){}
 
 void LOD::UnkClass_8046A530::func_8046A5C4() {}
 
-void LOD::UnkClass_8046A530::func_8046AAD8() {}
+void LOD::UnkClass_8046A530::func_8046AAD8() { func_8046AB54(); }
 
 void LOD::UnkClass_8046A530::func_8046AADC() {}
 
+#pragma push
+#pragma auto_inline off
 void LOD::UnkClass_8046A530::func_8046AB54() {}
+#pragma pop
 
 void LOD::UnkClass_8046A530::func_8046AD2C() {}
 

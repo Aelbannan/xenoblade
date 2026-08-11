@@ -7917,6 +7917,23 @@ across `SFAOAP_Create` (89.5%), `ADX_ScanInfoCode` (93.3%), `SFPL2_Standby`
 0 reg_swap. No tested source form has moved it (named ret local, pointer local,
 store via cast/array, return-first). A general MWCC scheduler tie-break.
 
+**2026-08 — `SFPL2_Standby` (us-803cb87c) CLOSED at FULL_MATCH** with a
+function-scoped `#pragma scheduling off` … `#pragma scheduling on` around only
+that function: `-O4,p`'s scheduler hoists the return `li r3,0` above the final
+`stw`; disabling scheduling for the single function restores retail's
+`li r0,3; stw r0,88(r31); li r3,0` order and byte-identical 0x38 body. The
+pragma works ONLY when the rest of the function has no other scheduling
+sensitive spots (straight-line body, epilogue restore order `lwz r31; lwz r0`
+coincides with retail). Unit-wide `-opt noschedule` is NOT viable: it broke the
+accepted `SFD_SetSpeedRational` (100%→66.7%) and `SFPL2_Pause` (31%→23%).
+`SFD_Standby` (us-803cb820) REMAINS OPEN at 91.3%: the same pragma fixes the
+store but flips the error-path `lis r4; li r3` order (retail interleaves
+`lis r4; li r3; addi r4`) and the epilogue restore order (retail
+`lwz r0; lwz r31`), net 82.6% — reverted. Same test for `sfmps_pesfn`,
+`SFAOAP_Create`, `ADX_ScanInfoCode`: apply the pragma only if their epilogues
+restore `lwz r31; lwz r0` and there is no multi-instruction arg materialization
+in the path.
+
 ### CriWare adx_baif ADX_DecodeInfoAiff — 10-arg AIFF info wrapper (89.1%, 4 structural)
 `ADX_DecodeInfoAiff(src, size, outA, outB, outE, outD, outF, outG, outH, outC)`
 — the out-param ORDER differs from the naive reading: outC (the final `= 1`)
@@ -8693,3 +8710,60 @@ Verify with `.scratch/` probes (compile a tiny TU with the unit's exact flags) b
 ## Byte-identical rename path to FULL_MATCH
 
 For a target whose decomp body exists under another name: find the byte-identical counterpart (compare `FunctionBytes.code` across the decomp unit), rename source to the retail symbol (linkage per the rule above), rebuild, hexdiff 100%, cycle → FULL_MATCH. Worked on: `isUnk68Bit13Set`→`func_800404F0`, `actCallVt90/94/30`→`func_800560E4/F4/118`, `callStubReturnZero_800436A8`→`func_8004368C`, plus symbols.txt mangling fixes (`UnkVirtualFunc29 Fv→Ff`, `getRsrc Fv→CFv`).
+
+## monolib CNReqtaskSave — the addic/subfe setnz idiom is the -O4,s signature (Wii/1.1)
+
+`libs/monolib/src/nand/CNReqtaskSave.cpp` — **unit-level flag fix**: the unit
+was configured `-O4,p`, but every retail `v != 0` bool-return in the unit uses
+the **addic/subfe** setnz idiom (`addic r0,rX,-1; subfe r3,r0,rX`), which is
+MWCC **`-O4,s`** codegen; `-O4,p`/`-O3`/`-O2`/`-O1` all emit the
+**neg/or/rlwinm** sign-bit idiom instead. Flipping the Object to
+`extra_cflags=["-O4,s"]` (matching the sibling
+`CNReqtaskSaveBanner.cpp`, which already had `-O4,s`) took 12 listed targets
+from HIGH_MATCH to byte-identical FULL_MATCH in one build: `func_804DAB80/
+DABBC/DABF8/DAC34/DAC70/DACAC` + `func_eu_804DEF20` (0x3C cluster) and
+`func_804DA70C/DA76C/DA7CC/DA91C` + `func_eu_804DEB4C` (0x60 cluster), plus
+`func_804DA628`/`func_804DA898`. Lesson: when a whole unit shows a consistent
+2-3 structural idiom mismatch, verify the opt level before touching source —
+probe the idiom (`v != 0` under `-O4,s` vs `-O4,p`) rather than shaping
+expressions. Residual in the unit: `func_804DAAF8` (97.1%, 1 reg_swap),
+`func_804DAD38` (86.2%).
+
+## kyoshin/cf/CTaskGameCf — unit-size unblock: -func_align 16→4 + optimize_for_size frames + extra-ctor removal
+
+`src/kyoshin/cf/CTaskGameCf.cpp` (Wii/1.1). The unit was 0x178 over its 0x954
+split, blocking the byte-identical `__dt__26CTTask<...>` (us-800447cc). Three
+independent causes, all fixed:
+1. **`-func_align 16` was wrong**: the retail object is packed (0 padding,
+   .text == Σ function sizes). Switching the Object to `-func_align 4`
+   eliminated 0x74 of inter-function padding without changing any instruction.
+2. **An extra C++ ctor**: the class's mangled ctor
+   `__ct__Q22cf11CTaskGameCfFP8CProcessi` (0xd8) does not exist in retail —
+   retail's only ctor is the extern "C" `__ct__cf_CTaskGameCf` (0xc8) wrapper.
+   Removing the unused C++ ctor definition (declaration stays in the header)
+   removed 0xd8. (Retail ctor symbol is the manual wrapper; the class is
+   constructed only via `create__...` which calls the wrapper.)
+3. **`stmw`/`_savegpr` frames need `#pragma optimize_for_size`**: with -O4,p
+   MWCC emits individual stw/lwz pairs (+1 instr per register); the retail uses
+   `stmw r30`/`lmw r30` (2-reg) and `_savegpr_29`/`_restgpr_29` (3-reg helper
+   call, big-frame functions). Wrapping `~CTTask`, the class dtor, `create`,
+   `startMission`, and `func_8004451C` in `#pragma optimize_for_size on/off`
+   produced the retail frames: dtor 0x5c→0x54, create 0x7c→0x6c, startMission
+   0x90→0x80, func_8004451C 0x2a0→0x298. Accepted: us-800447cc, us-8004481c,
+   us-80044f5c as FULL_MATCH. `startMission` is byte-identical but its retail
+   signature mangles `FsT2Q33ml6FixStr<32>_s` (3 params) vs the decomp's
+   `FssRQ22ml10FixStr<32>s` (4 params) — symbol pairing needs the signature
+   corrected before cycle can certify it.
+
+## kyoshin/CExchangeWin — const float sdata2 pool: lfs-hoist scheduling fix
+
+`src/kyoshin/CExchangeWin.cpp` (Wii/1.1). Two functions (`func_8022D244`,
+`func_8022D1F8`) were stuck at ~80% with the identical residual: retail
+hoists the `lfs f1, sdata2(const)` ABOVE the frame stores (position 2, right
+after `mfspr r0,19`), decomp emitted it after `or r31,r3,r3`. Fix: declare
+the constant **`extern const float lbl_eu_80668610;`** (was plain `extern
+float`). The `const` qualifier routes the symbol into the readonly sdata2
+pool and MWCC schedules its load earlier (immutability lets it hoist past
+the frame stores). One-line change → both functions byte-identical
+FULL_MATCH (us-8022f13c, us-8022f0f0). Check the const-ness of sdata2
+externs before chasing scheduler shapes for lfs-position diffs.

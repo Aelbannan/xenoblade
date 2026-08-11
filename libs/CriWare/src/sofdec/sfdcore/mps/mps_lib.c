@@ -168,10 +168,18 @@ void *MPS_Create(void) {
     int i;
 
     for (i = 0; i < count; i++, entry += MPS_ENTRY_SIZE / 4) {
-        if (((s32 *)entry)[0] == 1)
-            return mpslib_InitHn(entry);
+        if (((s32 *)entry)[0] != 1) {
+        } else {
+            goto found;
+        }
     }
-    return NULL;
+    entry = NULL;
+found:
+    if (entry == NULL) {
+        return NULL;
+    }
+    for (;;) {
+    }
 }
 
 void *mpslib_InitHn(u32 *entry) {

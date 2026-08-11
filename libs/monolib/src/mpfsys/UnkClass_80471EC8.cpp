@@ -16,7 +16,7 @@ extern "C" {
 
 void mpfsys::UnkClass_80471EC8::func_80471EC8(void) {}
 
-void mpfsys::UnkClass_80471EC8::func_80471FC8(void) {}
+void mpfsys::UnkClass_80471EC8::func_80471FC8(void) { func_80473394(); }
 
 void mpfsys::UnkClass_80471EC8::func_80471FCC(void) {}
 
@@ -38,7 +38,10 @@ void mpfsys::UnkClass_80471EC8::func_80472870(void) {}
 
 void mpfsys::UnkClass_80471EC8::func_804728E8() {}
 
+#pragma push
+#pragma auto_inline off
 void mpfsys::UnkClass_80471EC8::func_80473394() {}
+#pragma pop
 
 void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
     return (u8*)this + layerIndex * 0x1680;

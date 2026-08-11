@@ -37,7 +37,8 @@ extern "C" void* func_804EA270(u8* self) { return (char*)*(void**)self + (*(u32*
 
 void func_804EA284(){}
 
-void func_804EAA10(void){}
+extern "C" void PSMTXInverse(const void* src, void* inv);
+extern "C" void func_804EAA10(const void* a, void* b) { PSMTXInverse(a, b); }
 
 void func_804EAA14(void) {}
 
@@ -172,7 +173,8 @@ extern "C" void func_804EC3FC(u8* self, const void* src) {
 
 void func_804EC418(){}
 
-void func_804EC478(void){}
+extern "C" void PSMTXQuat(void* dst, const void* q);
+extern "C" void func_804EC478(void* a, const void* b) { PSMTXQuat(a, b); }
 
 void func_804EC47C(){}
 

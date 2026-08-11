@@ -4,6 +4,36 @@
 namespace nw4r {
 namespace snd {
 
+namespace {
+
+// Retail-verified field layout for the manager/allocator/buffer tail of
+// SoundArchivePlayer (the class header's member order is stale: the sound
+// instance managers actually sit at 0x44/0x6C/0x94, the MmlSeqTrackAllocator
+// at 0xBC and the setup-buffer bookkeeping at 0xE4/0xE8).  Accessed through a
+// typed struct (never raw offset arithmetic); only SetupMram uses it.
+struct SoundArchivePlayerLayout {
+    u8 field_0x00[0x44]; // 0x00..0x44 (bases, archive/table/file pointers,
+                         // callbacks, player list)
+
+    detail::SoundInstanceManager<detail::SeqSound>
+        mSeqSoundInstanceManager; // at 0x44
+
+    detail::SoundInstanceManager<detail::StrmSound>
+        mStrmSoundInstanceManager; // at 0x6C
+
+    detail::SoundInstanceManager<detail::WaveSound>
+        mWaveSoundInstanceManager; // at 0x94
+
+    detail::MmlSeqTrackAllocator mMmlSeqTrackAllocator; // at 0xBC
+
+    u8 field_0xC8[0xE4 - 0xC8]; // at 0xC8 (StrmBufferPool, MmlParser)
+
+    void* mSetupBufferAddress; // at 0xE4
+    u32 mSetupBufferSize;      // at 0xE8
+};
+
+} // namespace
+
 SoundArchivePlayer::SoundArchivePlayer()
     : mSoundArchive(NULL),
       mGroupTable(NULL),
@@ -124,39 +154,105 @@ u32 SoundArchivePlayer::GetRequiredStrmBufferSize(
 
 bool SoundArchivePlayer::SetupMram(const SoundArchive* pArchive, void* pBuffer,
                                    u32 bufferSize) {
-    void* pEndPtr = static_cast<u8*>(pBuffer) + bufferSize;
-    void* pPtr = pBuffer;
+    SoundArchivePlayerLayout* self =
+        reinterpret_cast<SoundArchivePlayerLayout*>(this);
 
-    if (!SetupSoundPlayer(pArchive, &pPtr, pEndPtr)) {
+    u8* pEnd = static_cast<u8*>(ut::AddOffsetToPtr(pBuffer, bufferSize));
+    u8* pPtr = static_cast<u8*>(pBuffer);
+
+    if (!SetupSoundPlayer(pArchive, reinterpret_cast<void**>(&pPtr), pEnd)) {
         return false;
     }
 
-    if (!CreateGroupAddressTable(pArchive, &pPtr, pEndPtr)) {
+    // Group address table: count + 8-byte { address, waveDataAddress } items.
+    u32 requireSize = pArchive->GetGroupCount() * sizeof(Group) +
+                      (sizeof(GroupTable) - sizeof(Group));
+
+    void* pTableEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, requireSize), 4);
+
+    if (ut::ComparePtr(pTableEnd, pEnd) > 0) {
         return false;
+    }
+
+    mGroupTable = reinterpret_cast<GroupTable*>(pPtr);
+    pPtr = static_cast<u8*>(pTableEnd);
+
+    mGroupTable->count = pArchive->GetGroupCount();
+
+    for (int i = 0; i < mGroupTable->count; i++) {
+        mGroupTable->items[i].address = NULL;
+        mGroupTable->items[i].waveDataAddress = NULL;
+    }
+
+    // File address table (same shape as the group table, stored at 0x18).
+    requireSize = pArchive->detail_GetFileCount() * sizeof(Group) +
+                  (sizeof(GroupTable) - sizeof(Group));
+
+    pTableEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, requireSize), 4);
+
+    if (ut::ComparePtr(pTableEnd, pEnd) > 0) {
+        return false;
+    }
+
+    mFileManager = reinterpret_cast<SoundArchivePlayer_FileManager*>(pPtr);
+    pPtr = static_cast<u8*>(pTableEnd);
+
+    reinterpret_cast<GroupTable*>(mFileManager)->count =
+        pArchive->detail_GetFileCount();
+
+    for (int i = 0; i < reinterpret_cast<GroupTable*>(mFileManager)->count;
+         i++) {
+        reinterpret_cast<GroupTable*>(mFileManager)->items[i].address = NULL;
+        reinterpret_cast<GroupTable*>(mFileManager)->items[i].waveDataAddress =
+            NULL;
     }
 
     SoundArchive::SoundArchivePlayerInfo info;
     if (pArchive->ReadSoundArchivePlayerInfo(&info)) {
-        if (!SetupSeqSound(pArchive, info.seqSoundCount, &pPtr, pEndPtr)) {
+        u32 seqSize = info.seqSoundCount * sizeof(detail::SeqSound);
+        void* pPoolEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, seqSize), 4);
+
+        if (ut::ComparePtr(pPoolEnd, pEnd) > 0) {
             return false;
         }
 
-        if (!SetupStrmSound(pArchive, info.strmSoundCount, &pPtr, pEndPtr)) {
+        self->mSeqSoundInstanceManager.Create(pPtr, seqSize);
+        pPtr = static_cast<u8*>(pPoolEnd);
+
+        u32 strmSize = info.strmSoundCount * sizeof(detail::StrmSound);
+        pPoolEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, strmSize), 4);
+
+        if (ut::ComparePtr(pPoolEnd, pEnd) > 0) {
             return false;
         }
 
-        if (!SetupWaveSound(pArchive, info.waveSoundCount, &pPtr, pEndPtr)) {
+        self->mStrmSoundInstanceManager.Create(pPtr, strmSize);
+        pPtr = static_cast<u8*>(pPoolEnd);
+
+        u32 waveSize = info.waveSoundCount * sizeof(detail::WaveSound);
+        pPoolEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, waveSize), 4);
+
+        if (ut::ComparePtr(pPoolEnd, pEnd) > 0) {
             return false;
         }
 
-        if (!SetupSeqTrack(pArchive, info.seqTrackCount, &pPtr, pEndPtr)) {
+        self->mWaveSoundInstanceManager.Create(pPtr, waveSize);
+        pPtr = static_cast<u8*>(pPoolEnd);
+
+        u32 trackSize = info.seqTrackCount * sizeof(detail::MmlSeqTrack);
+        pPoolEnd = ut::RoundUp(ut::AddOffsetToPtr(pPtr, trackSize), 4);
+
+        if (ut::ComparePtr(pPoolEnd, pEnd) > 0) {
             return false;
         }
+
+        self->mMmlSeqTrackAllocator.Create(pPtr, trackSize);
+        pPtr = static_cast<u8*>(pPoolEnd);
     }
 
     mSoundArchive = pArchive;
-    mSetupBufferAddress = pBuffer;
-    mSetupBufferSize = bufferSize;
+    self->mSetupBufferAddress = pBuffer;
+    self->mSetupBufferSize = bufferSize;
 
     return true;
 }
@@ -232,92 +328,6 @@ bool SoundArchivePlayer::SetupSoundPlayer(const SoundArchive* pArchive,
             pPlayer->detail_AppendPlayerHeap(pHeap);
         }
     }
-
-    return true;
-}
-
-bool SoundArchivePlayer::CreateGroupAddressTable(const SoundArchive* pArchive,
-                                                 void** ppBuffer, void* pEnd) {
-    // clang-format off
-    u32 requireSize = 
-        pArchive->GetGroupCount() * sizeof(Group) + (sizeof(GroupTable) - sizeof(Group));
-    // clang-format on
-
-    void* pTableEnd =
-        ut::RoundUp(ut::AddOffsetToPtr(*ppBuffer, requireSize), 4);
-
-    if (ut::ComparePtr(pTableEnd, pEnd) > 0) {
-        return false;
-    }
-
-    mGroupTable = static_cast<GroupTable*>(*ppBuffer);
-    *ppBuffer = pTableEnd;
-
-    mGroupTable->count = pArchive->GetGroupCount();
-
-    for (int i = 0; i < mGroupTable->count; i++) {
-        mGroupTable->items[i].address = NULL;
-        mGroupTable->items[i].waveDataAddress = NULL;
-    }
-
-    return true;
-}
-
-bool SoundArchivePlayer::SetupSeqSound(const SoundArchive* pArchive, int sounds,
-                                       void** ppBuffer, void* pEnd) {
-#pragma unused(pArchive)
-
-    u32 requireSize = sounds * sizeof(detail::SeqSound);
-
-    void* pSoundEnd =
-        ut::RoundUp(ut::AddOffsetToPtr(*ppBuffer, requireSize), 4);
-
-    if (ut::ComparePtr(pSoundEnd, pEnd) > 0) {
-        return false;
-    }
-
-    mSeqSoundInstanceManager.Create(*ppBuffer, requireSize);
-    *ppBuffer = pSoundEnd;
-
-    return true;
-}
-
-bool SoundArchivePlayer::SetupWaveSound(const SoundArchive* pArchive,
-                                        int sounds, void** ppBuffer,
-                                        void* pEnd) {
-#pragma unused(pArchive)
-
-    u32 requireSize = sounds * sizeof(detail::WaveSound);
-
-    void* pSoundEnd =
-        ut::RoundUp(ut::AddOffsetToPtr(*ppBuffer, requireSize), 4);
-
-    if (ut::ComparePtr(pSoundEnd, pEnd) > 0) {
-        return false;
-    }
-
-    mWaveSoundInstanceManager.Create(*ppBuffer, requireSize);
-    *ppBuffer = pSoundEnd;
-
-    return true;
-}
-
-bool SoundArchivePlayer::SetupStrmSound(const SoundArchive* pArchive,
-                                        int sounds, void** ppBuffer,
-                                        void* pEnd) {
-#pragma unused(pArchive)
-
-    u32 requireSize = sounds * sizeof(detail::StrmSound);
-
-    void* pSoundEnd =
-        ut::RoundUp(ut::AddOffsetToPtr(*ppBuffer, requireSize), 4);
-
-    if (ut::ComparePtr(pSoundEnd, pEnd) > 0) {
-        return false;
-    }
-
-    mStrmSoundInstanceManager.Create(*ppBuffer, requireSize);
-    *ppBuffer = pSoundEnd;
 
     return true;
 }

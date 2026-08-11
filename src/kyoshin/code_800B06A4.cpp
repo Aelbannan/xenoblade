@@ -78,9 +78,11 @@ extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
 
 void init_0FA0(){}
 u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this + 0x18);}
-void init_0FF4(){}
+// func_800B0A90: zero the u32 at self (retail: li r0,0; stw r0,0x0(r3))
+extern "C" void func_800B0A90(void* self) { *(u32*)self = 0; }
 void init_dispatchTarget_1(){}
-void __ct__cf_CfValueItemManager(){}
+// func_800B1808: zero the global flag word (retail: li r0,0; stw r0,lbl_eu_80663EE0@sda21)
+extern "C" void func_800B1808() { extern u32 lbl_eu_80663EE0; lbl_eu_80663EE0 = 0; }
 void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0 |= flags;}
 void FactoryEvent3__Q22cf13IFactoryEventFv(){}
 void init_137C(){}
@@ -142,7 +144,8 @@ void init_1AD8(){}
 void init_1AF4(){}
 void init_dispatchTarget_6(){}
 void init_1BBC(){}
-unsigned long gflag_getBit25(){extern unsigned long lbl_eu_80663EE0;return (lbl_eu_80663EE0 >> 25) & 1;}
+// func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
+extern "C" u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
 void init_1C0C(){}
 void init_1C24(){}
 s32 func_800B1C40() {
@@ -469,7 +472,7 @@ void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
 void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
-extern "C" void func_800B6BA0(){}
+extern "C" UnkClass_805764CC* func_800B6BA0() { return func_800B07E8(); }
 void* sub_getReslist_B28(){return &UnkClass_805764CC::func_800B07E8()->field_0xB28;}
 void* sub_getReslist_B48(){return &UnkClass_805764CC::func_800B07E8()->field_0xB48;}
 void* sub_getReslist_B68(){return &UnkClass_805764CC::func_800B07E8()->field_0xB68;}

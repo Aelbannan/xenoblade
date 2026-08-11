@@ -38,10 +38,11 @@ void func_8018D00C(){}
 
 void func_8018D0C4(){}
 
-void func_8018D154(u32 a, u32 b){ volatile int _x = 0; (void)_x; (void)a; (void)b; }
+extern "C" __declspec(noinline) void func_8018D154(u32 a, u32 b, u32 c){ volatile int _x = 0; (void)_x; (void)a; (void)b; (void)c; }
 
-void func_8018D288(void){
-    func_8018D154(0, 0);
+// retail: clrlwi r5, r4, 22; b func_8018D154 (r5 = arg2 & 0x3FF)
+extern "C" void func_8018D288(void* self, u32 a, u32 b){
+    func_8018D154((u32)self, a, a & 0x3FF);
 }
 
 void func_8018D290(){}

@@ -26,7 +26,8 @@ void func_80228280(){}
 
 void func_802282F8(){}
 
-u32 func_80228394(u32 val){ return val & 0xFFFFFF; }
+// retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
+extern "C" u32 func_80228394() { extern u32 lbl_eu_80664730; return lbl_eu_80664730 & 0xFFFF; }
 
 void func_802283A0(){}
 

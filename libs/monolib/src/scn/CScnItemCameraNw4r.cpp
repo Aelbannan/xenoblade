@@ -105,7 +105,11 @@ void func_80481F9C(CScnItemCameraNw4r* self) {
 // ===========================================================================
 // Keep the remaining (unmatched) unit symbols as stubs.
 // ===========================================================================
-void func_80482038(u8* self) {}
+// retail: addi r3,r3,0x2b8; b IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE
+extern "C" bool IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(void* frustum, const void* sphere);
+extern "C" bool func_80482038(u8* self, const void* sphere) {
+    return IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(self + 0x2b8, sphere);
+}
 extern "C" void* func_80482040(u8* self) { return 0; }
 void func_80482048() {}
 void* func_8048204C(u8* self) { return (void*)((u8*)self + 0x10); }

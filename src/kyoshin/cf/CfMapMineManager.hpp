@@ -16,7 +16,7 @@ extern "C" u32 getBdatStringColumnValue(void* file,
                                                 const char* column, s32 index);
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
-extern "C" u32 CfRes_getD80Flag();
+extern "C" int CfRes_getD80Flag();
 extern "C" f32 func_80496288(void*);
 extern "C" u32 func_80061FFC();
 extern "C" const f32 lbl_eu_806682B0;

@@ -12,16 +12,19 @@ CScnEffectActNw4r::CScnEffectActNw4r() : mCount(0) {}
 
 CScnEffectActNw4r::~CScnEffectActNw4r() {}
 
-extern void func_80495E60();
-void func_8049BEA4(u8* self){ func_80495E60(); }
+// vtable stub thunks (retail: lwz r3,0x4(r3); b callee) - callees declared
+// extern "C" so the relocs carry the retail unmangled names.
+extern "C" bool func_80495E60(u8* self);
+extern "C" void func_80484E5C(u8* self);
+extern "C" void func_804838DC(u8* self);
+extern "C" void func_80482AB8(u8* self);
+extern "C" void func_8049BEA4(u8* self) { func_80495E60(*(u8**)(self + 4)); }
 
-extern void func_80484E5C();
-void func_8049BEAC(u8* self){ func_80484E5C(); }
+extern "C" void func_8049BEAC(u8* self) { func_80484E5C(*(u8**)(self + 4)); }
 
-extern void func_804838DC();
-void func_8049BEB4(u8* self){ func_804838DC(); }
+extern "C" void func_8049BEB4(u8* self) { func_804838DC(*(u8**)(self + 4)); }
 
-u8* func_8049BEE4(CScnEffectActNw4r* self) { return func_8048315C(self->mpMgr); }
+extern "C" u8* func_8049BEE4(CScnEffectActNw4r* self) { return func_8048315C(self->mpMgr); }
 
 extern "C" void func_8049BEEC(u8* self, const void* other) {
     u8* dst = *(u8**)((u8*)self + 4);
@@ -162,8 +165,7 @@ void func_8049C060(ml::CVec3* out, const CScnEffectActNw4r* self, u32 idx) {
     out->z = ml::CVec3::zero.z;
 }
 
-extern void func_80482AB8();
-void func_8049C394(u8* self){ func_80482AB8(); }
+extern "C" void func_8049C394(u8* self) { func_80482AB8(*(u8**)(self + 4)); }
 
 extern void func_80482AD4(CScnEffectActMgr* mgr);
 void func_8049C39C(CScnEffectActNw4r* self) {

@@ -3,7 +3,60 @@
 #include <types.h>
 #include "kyoshin/cf/object/CfObject.hpp"
 
+// Retail data labels referenced by this unit.
+extern float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant
+extern float lbl_eu_8066A210;   // CfObject_UnkVirtualFunc32 scale factor
+extern u8 lbl_eu_804FC548[];   // CfObjectModel_UnkVirtualFunc3 null placeholder (rodata, 8 bytes)
+
 namespace cf {
+    // Sub-object at CfObjectModel+0x98: flag words read by func_800BB934
+    // (bit 0 of field_7A8) and CfObject_UnkVirtualFunc69 (bit 1 of field_7A4).
+    struct CfObjectModelSub98 {
+        u8 _pad00[0x7A4];       // 0x00-0x7A3
+        u32 field_7A4;          // 0x7A4
+        u32 field_7A8;          // 0x7A8
+    };
+    // Vtable-layout proxy for the model sub-object (CfObjectModel+0x98): its
+    // retail vtable is cf-chain layout, and slot +0xA8 returns a u32 even
+    // though the equivalent CfObject slot is declared void in the base
+    // header. The inherited CObjectParam base occupies +0x00..+0x50, so the
+    // 22nd new virtual lands at +0xA8 (dummy slots pin the offsets).
+    class CfObjectModelSub98Vt : public CObjectParam {
+    public:
+        virtual void m54(); virtual void m58(); virtual void m5C(); virtual void m60();
+        virtual void m64(); virtual void m68(); virtual void m6C(); virtual void m70();
+        virtual void m74(); virtual void m78(); virtual void m7C(); virtual void m80();
+        virtual void m84(); virtual void m88(); virtual void m8C(); virtual void m90();
+        virtual void m94(); virtual void m98(); virtual void m9C(); virtual void mA0();
+        virtual void mA4();
+        virtual u32 mA8();  // vtable +0xA8 (returns a value in retail)
+    };
+    // Vtable proxy for the model sub-object's vtable slot +0x18: the retail
+    // sub-object vtable is cf-chain layout, and slot +0x18 returns a pointer
+    // even though the base CObjectState slot is declared void. Dummy slots
+    // pin the offset.
+    class CfObjectModelSub98Vt18 {
+    public:
+        virtual void m08(); virtual void m0C(); virtual void m10(); virtual void m14();
+        virtual void* m18();  // vtable +0x18 (returns a value in retail)
+    };
+    // Vtable proxy for calling a cf-chain vtable slot +0x14C as a
+    // u32-returning virtual (retail CfObject_UnkVirtualFunc63 returns a flag
+    // word; the base header declares it void). Dummy slots pin the offset.
+    class CfObjectVt14C : public CfObjectModelSub98Vt {
+    public:
+        virtual void mAC(); virtual void mB0(); virtual void mB4(); virtual void mB8();
+        virtual void mBC(); virtual void mC0(); virtual void mC4(); virtual void mC8();
+        virtual void mCC(); virtual void mD0(); virtual void mD4(); virtual void mD8();
+        virtual void mDC(); virtual void mE0(); virtual void mE4(); virtual void mE8();
+        virtual void mEC(); virtual void mF0(); virtual void mF4(); virtual void mF8();
+        virtual void mFC(); virtual void m100(); virtual void m104(); virtual void m108();
+        virtual void m10C(); virtual void m110(); virtual void m114(); virtual void m118();
+        virtual void m11C(); virtual void m120(); virtual void m124(); virtual void m128();
+        virtual void m12C(); virtual void m130(); virtual void m134(); virtual void m138();
+        virtual void m13C(); virtual void m140(); virtual void m144(); virtual void m148();
+        virtual u32 m14C();  // vtable +0x14C (returns a flag word in retail)
+    };
     //min size: 0xbe
     class CfObjectModel : public CfObject {
     public:
@@ -12,12 +65,12 @@ namespace cf {
         //vtable 1 (CfObjectModel)
         virtual void CfObjectModel_UnkVirtualFunc1();  //0x178
         virtual void CfObjectModel_UnkVirtualFunc2();  //0x17C
-        virtual void CfObjectModel_UnkVirtualFunc3();  //0x180
+        virtual void* CfObjectModel_UnkVirtualFunc3();  //0x180 (retail returns a pointer)
         virtual void CfObjectModel_UnkVirtualFunc4();  //0x184
         virtual void CfObjectModel_UnkVirtualFunc5();  //0x188
         virtual void CfObjectModel_UnkVirtualFunc6();  //0x18C
         virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
-        virtual void CfObjectModel_UnkVirtualFunc8();  //0x194
+        virtual u32 CfObjectModel_UnkVirtualFunc8();   //0x194 (retail returns a bit value)
         virtual void CfObjectModel_UnkVirtualFunc9();  //0x198
         virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
         virtual void CfObjectModel_UnkVirtualFunc11(); //0x1A0
@@ -36,7 +89,11 @@ namespace cf {
         u8 field_0x70[0x1C];
         u16 unk8C_3;
         u16 field_0x8E;
-        u8 field_0x90[0x20]; // 0x90-0xAF
+        u8 field_0x90[0x8];          // 0x90-0x97
+        CfObjectModelSub98* mSubObj98; // 0x98-0x9B
+        u8 field_0x9C[0x4];           // 0x9C-0x9F
+        float field_A0;               // 0xA0-0xA3
+        u8 field_0xA4[0xC];           // 0xA4-0xAF
         void* mSubObjB0;      // 0xB0-0xB3
         u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
         u8 field_BC;          // 0xBC
@@ -79,4 +136,8 @@ namespace cf {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Function is defined in CfBdat.cpp with C linkage (retail uses unmangled name)
 extern "C" void func_80142428();
+
+// C-linkage import from libs/monolib/src/scn/CScnItemModel.cpp (retail uses
+// the unmangled name); tail-called by func_800BB618 with the model sub-object.
+extern "C" void func_804838DC(cf::CfObjectModelSub98* model, int flag);
 

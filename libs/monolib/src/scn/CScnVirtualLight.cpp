@@ -11,27 +11,31 @@ void func_80492158(void) {}
 
 void func_8049215C(void){}
 
-void func_80492168(void){}
+extern "C" void func_8049216C(void* self);
+extern "C" void func_80492168(void* self) { func_8049216C(self); }
 
 
-void func_8049239C(void){}
+extern "C" void __dt__804923A0(void* self);
+extern "C" void func_8049239C(void* self) { __dt__804923A0(self); }
 
 
 void func_804929C0(){}
 
 void func_80492A50(void){}
 
-void func_80492A5C(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
+extern "C" __declspec(noinline) void func_80492A5C(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
 
 extern "C" void* func_80492A64(void* self){ return (void*)((char*)*(void**)self + 8); }
 
 extern "C" void func_80492A70(u32* self) { *self = *(u32*)(*(u32**)self); }
 
-void func_80492A80(void* self){ func_80492A5C(*(void**)((char*)self + 0x4), 0); }
+// retail: lwz r4,0x4(r4); b func_80492A5C (r3 passes through)
+extern "C" void func_80492A80(void* self, void* src) { func_80492A5C(self, *(u32*)((char*)src + 4)); }
 
 void func_80492A88(){}
 
-void func_80492AA4(void){}
+extern "C" void func_804920E0(void* self);
+extern "C" void func_80492AA4(void* self) { func_804920E0(self); }
 
 extern "C" void func_80492AA8(int* dst, int* src){
     *dst = *src;
@@ -174,6 +178,9 @@ void func_804942BC(){}
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80494300(){}
 
-extern "C" void func_804920E0() {}
-extern "C" void func_8049216C() {}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804920E0(void* self) {}
+extern "C" void func_8049216C(void* self) {}
+#pragma pop
 extern "C" void func_804923F8() {}

@@ -712,7 +712,7 @@ void func_800CD5DC(void* self, u32 id, u32 kind, u32 x, u32 y, u32 z);
 void func_8015BB3C(void* a, void* b, void* c);
 void func_802A0B8C(void* self, void* owner);
 void* func_800B8A64(void* self);
-void* func_8016FE34(int id);
+void* func_8016FE34(void* src);
 void* func_801984E4(void* self, unsigned long idx);
 int func_800DA06C(void* self, unsigned int value);
 void func_800D9978(void* mgr, void* obj);

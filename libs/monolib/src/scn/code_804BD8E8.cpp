@@ -49,15 +49,19 @@ void* func_804BE520(int index) {
     return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
 }
 
-void func_804BE538(void){}
+extern "C" void func_804BE62C();
+extern "C" void func_804BE538(void) { func_804BE62C(); }
 
 void func_804BE53C(){}
 
-void func_804BE5A0(void){}
+extern "C" void func_804BEE54();
+extern "C" void func_804BE5A0(void) { func_804BEE54(); }
 
-void func_804BE5A4(void){}
+extern "C" void func_804BEEAC();
+extern "C" void func_804BE5A4(void) { func_804BEEAC(); }
 
-void func_804BE5A8(void){}
+extern "C" void func_804BEDFC();
+extern "C" void func_804BE5A8(void) { func_804BEDFC(); }
 
 void func_804BE5AC(){}
 
@@ -75,15 +79,28 @@ int func_804BE604(int index) {
     return entries[index].value != 0;
 }
 
-void func_804BE628(void){}
+extern "C" void func_804BF3B4();
+extern "C" void func_804BE628(void) { func_804BF3B4(); }
 
-void func_804BE62C(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804BE62C(){}
+#pragma pop
 
-void func_804BEDFC(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804BEDFC(){}
+#pragma pop
 
-void func_804BEE54(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804BEE54(){}
+#pragma pop
 
-void func_804BEEAC(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804BEEAC(){}
+#pragma pop
 
 void func_804BEEEC() {
     extern void *lbl_eu_80663AD8;
@@ -94,7 +111,10 @@ void func_804BEEF8(){}
 
 void func_804BF274(){}
 
-void func_804BF3B4(){}
+#pragma push
+#pragma auto_inline off
+extern "C" void func_804BF3B4(){}
+#pragma pop
 
 void func_804BF3EC(){}
 

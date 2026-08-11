@@ -150,7 +150,7 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
 // ============================================================================
 // __ct__8018385C (us-80184c78) - Constructor with dealloc flag
 // ============================================================================
-extern "C" void* __ct__8018385C(void* self, int flag) {
+extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
     if (self == 0) {
         return self;
     }
@@ -872,6 +872,6 @@ extern "C" void OnFileEvent__12CREvtModelPcFP10CEventFile(void* self) {
 // ============================================================================
 // func_80184B0C - Thunk to __ct__8018385C
 // ============================================================================
-extern "C" void func_80184B0C(void* self) {
-    __ct__8018385C((char*)self - 0x38, 0);
+extern "C" void func_80184B0C(void* self, int flags) {
+    __ct__8018385C((char*)self - 0x38, flags);
 }

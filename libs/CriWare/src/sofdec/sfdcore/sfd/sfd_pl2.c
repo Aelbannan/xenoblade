@@ -16,11 +16,13 @@ extern int fn_803CD484(void *);
 #define P_PAUSECT  0x60
 
 /* Put the player on standby (sub-state 3). */
+#pragma scheduling off
 int SFPL2_Standby(void *handle) {
     fn_803CD484(handle);
     *(u32 *)((u8 *)handle + P_SUBSTATE) = 3;
     return 0;
 }
+#pragma scheduling on
 
 int SFD_Standby(void *handle) {
     if (SFLIB_CheckHn(handle))

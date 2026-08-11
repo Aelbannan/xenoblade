@@ -12,11 +12,12 @@ cf::CtrlRemote::~CtrlRemote() {}
 
 void func_80096974(){}
 
-void func_80096EE8(){}
+// bit extracts from word at +0x2C (retail: lwz r0,0x2c(r3); extrwi r3,r0,1,b -> (x>>(32-1-b))&1)
+extern "C" u32 func_80096EE8(void* self) { return (*(u32*)((char*)self + 0x2C) >> 23) & 1; }
 
-void func_80096EF4(){}
+extern "C" u32 func_80096EF4(void* self) { return (*(u32*)((char*)self + 0x2C) >> 22) & 1; }
 
-void func_80096F00(){}
+extern "C" u32 func_80096F00(void* self) { return (*(u32*)((char*)self + 0x2C) >> 21) & 1; }
 
 u32 cf::CtrlPc::testBit20() { return (mPadFlags >> 20) & 0x1u; }
 u32 cf::CtrlPc::testBit19() { return (mPadFlags >> 19) & 0x1u; }

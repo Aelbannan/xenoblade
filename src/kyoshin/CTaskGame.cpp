@@ -136,10 +136,12 @@ extern "C" void func_80040AF4(CTaskGame* self) {
     if (*(u32*)((u8*)obj + 0x64) != 0) {
         self->unk78 = 1;
         extern u32 lbl_eu_80525580[3];
-        u32* dst = reinterpret_cast<u32*>((u8*)self + 0x3C);
-        dst[0] = lbl_eu_80525580[0];
-        dst[1] = lbl_eu_80525580[1];
-        dst[2] = lbl_eu_80525580[2];
+        u32 v0;
+        u32* p = reinterpret_cast<u32*>(lbl_eu_80525580);
+        v0 = p[0];
+        *(u32*)((u8*)self + 0x40) = p[1];
+        *(u32*)((u8*)self + 0x3C) = v0;
+        *(u32*)((u8*)self + 0x44) = p[2];
     }
 }
 void CTaskGame_stub_800419BC(){}
@@ -157,7 +159,9 @@ int CTaskGame_checkLbl80663D1C() {
     return lbl_eu_80663D1C != 0;
 }
 void CTaskGame_stub_80042FBC(){}
-int CTaskGame_stubReturnZero_80043024(void* self) { return 0x0; }
+// retail func_80043024 = `li r3,0; blr` (returns 0); called by the
+// IWorkEvent OnFileEvent adjusting thunk below
+extern "C" __declspec(noinline) int func_80043024(void* self) { return 0; }
 void CTaskGame_stub_80043310(){}
 void CTaskGame_stub_8004335C(){}
 bool CTaskGame_stubReturnTrue_800433A8() { return true; }
@@ -292,12 +296,20 @@ bool CTaskGame_checkUnkD8NotNegOne() {
     return value != 0xffffffffu;
 }
 extern "C" u32 func_80043F18(u32* ptr) { return *ptr; }
+// IScnRender::func_80043F20() = empty render-callback base impl (retail: blr)
+void IScnRender::func_80043F20() {}
 void Tail__8CProcessFv() {}
 void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {
     __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IWorkEvent*>(self)));
 }
 void cbRenderBefore__9CTaskGameFv(void*);
+// IWorkEvent::OnFileEvent(CEventFile*) override: retail emits a this-adjusting
+// thunk (subi r3,-0x54; b func_80043024) named OnFileEvent__9CTaskGameFP10CEventFile.
+class CEventFile;
+extern "C" void OnFileEvent__9CTaskGameFP10CEventFile(CEventFile* ev) {
+    func_80043024(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(ev) - 0x54));
+}
 void CTaskGame_thunk_IScnRender_cbRenderBefore(void* self) { cbRenderBefore__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(self))); }
 void CTaskGame_thunk_IScnRender_dtor(void* p) {
     __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(p)));

@@ -1,10 +1,57 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/cf/chain/UnkClass_8027AD70.hpp"
+#include "kyoshin/cf/chain/CChainActor.hpp"
 #include "monolib/util.hpp"
 
 namespace cf {
+    // Standalone mirror of the chain-actor layout (0x80 bytes, manual vtable at
+    // +0x70, non-standard ABI). Deliberately NOT derived from CChainActor:
+    // retail Pc/Ene dtors are plain empty+delete with no base/member dtor
+    // calls, which requires these classes to have no non-trivial base or
+    // dtor-ful members.
+    class CChainActorPc {
+    public:
+        u32 unk0;          //0x0
+        u8 field_4[0x60];  //0x4 CChainTemp-ish buffer
+        u8 field_64;       //0x64
+        u8 _pad65[3];
+        u32 field_68;      //0x68 sub-object vtable
+        u16 unk6C;         //0x6C
+        u8 _pad6E[2];
+        u32 mVTable;       //0x70 manual vtable
+        u8 field_74[0xC];  //0x74 CChainEffect region (no dtor)
+
+        CChainActorPc();
+        ~CChainActorPc();
+    };
+
+    class CChainActorEne {
+    public:
+        u32 unk0;          //0x0
+        u8 field_4[0x60];  //0x4 CChainTemp-ish buffer
+        u8 field_64;       //0x64
+        u8 _pad65[3];
+        u32 field_68;      //0x68 sub-object vtable
+        u16 unk6C;         //0x6C
+        u8 _pad6E[2];
+        u32 mVTable;       //0x70 manual vtable
+        u8 field_74[0xC];  //0x74 CChainEffect region (no dtor)
+
+        CChainActorEne();
+        ~CChainActorEne();
+    };
+
+    //size: 0x1d80
+    class UnkClass_8027AD70 {
+    public:
+        CChainActorPc mPlayerActors[3]; //0x0
+        CChainActorEne mEnemyActors[56]; //0x180
+
+        UnkClass_8027AD70(){}
+        ~UnkClass_8027AD70(){}
+    };
+
     //size: 0x1DB0
     class CChainActorList {
     public:
@@ -25,6 +72,22 @@ namespace cf {
         CChainActor* mActors[0x38]; //0x0
         u32 mCount;                 //0xE0
         u8 mFlag;                   //0xE4
+    };
+
+    // Mirror of CChainChance with signed 16-bit fields: func_8027C0B0 reads the
+    // 0x0/0x8/0xA fields sign-extended (lha), while CChainChance.hpp declares
+    // them u16. Layout-twin (same offsets/sizes) so the free function's param
+    // can force signed loads without touching CChainChance.hpp.
+    class CChainChanceS {
+    public:
+        s16 mChainCount; //0x0
+        u8 unk2[2];      //0x2
+        u32 unk4;        //0x4
+        s16 mField08;    //0x8
+        s16 mField0A;    //0xA
+        u8 mField0C;     //0xC
+        u8 _pad0D[3];    //0xD
+        //0x10: vtable
     };
 
     // Minimal object manipulated by func_8027C154 (u16 field at 0x0).
@@ -68,6 +131,7 @@ extern "C" void func_802A07F4(int, void*);
 extern "C" u32 func_8013C54C();
 extern "C" void func_8013E800(int);
 extern "C" int lbl_eu_80662A80;
+extern "C" float lbl_eu_8050EDE0[4];
 extern "C" int func_800B8920(void* addr);
 extern "C" int func_80148778(void*, int);
 extern "C" int func_80174C98(void*, int*, int);
@@ -78,3 +142,27 @@ extern "C" int getArtsSlotRC(const void* arts, short index, short subindex);
 extern "C" void* getArtsParamRC2(const void* arts, int index, int subindex);
 extern "C" void func_8027EEF4(int);
 extern "C" u32 func_8027EE88(int, int);
+extern "C" void func_802811FC(cf::CChainActorList* self);
+extern "C" cf::CChainActor* func_8028120C(cf::CChainActorList* self);
+extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor);
+
+// Manual vtable objects stored by the Pc/Ene constructors (retail .data).
+// Declared at their full retail sizes (0x78 / 0x10) so MWCC emits the
+// lis/addi HA-LO address form; a small (<8B) extern type would otherwise
+// use sda21 addressing and break the reloc match (MWCC_REFERENCE §833).
+struct CChainVtblActor {
+    u8 bytes[0x78];
+};
+struct CChainVtblSub {
+    u8 bytes[0x10];
+};
+extern CChainVtblActor lbl_eu_80538290;
+extern CChainVtblActor lbl_eu_805384E0;
+extern CChainVtblActor lbl_eu_80538458;
+extern CChainVtblSub lbl_eu_80538338;
+
+// Explicit call target for the CChainEffect ctor: retail calls it at the END
+// of the CChainActorPc/Ene ctor bodies, and MWCC rejects explicit ctor-call
+// syntax (10409), so the call is made through this free-function alias. The
+// extern "C" keeps the reloc name unmangled (hexdiff reloc-drift fix).
+extern "C" void __ct__Q22cf12CChainEffectFv(cf::CChainEffect* p);

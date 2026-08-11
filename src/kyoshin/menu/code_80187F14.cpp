@@ -23,16 +23,18 @@ extern "C" {
     extern char lbl_eu_80503AB0[];
 }
 
-extern s32 func_80459A78__7CLibCriFv(s32);
-extern s32 func_80459A7C__7CLibCriFv(s32);
-extern void func_80459A84__7CLibCriFv(s32, s32);
-extern void func_80459A88__7CLibCriFv(s32, float, float, s32);
-extern void func_80459A8C__7CLibCriFv(s32);
-extern void func_80459A90__7CLibCriFv(s32);
-extern void func_80459A94__7CLibCriFv(s32, float);
-extern s32 func_80459A9C__7CLibCriFv(s32);
-extern s32 func_8045997C__7CLibCriFv(const char*, s32, s32);
-extern void getInstance__7CLibCriFv();
+// CLibCri wrappers: retail reloc names are unmangled (C ABI), so C linkage
+// is required for the call-site reloc names to match.
+extern "C" s32 func_80459A78__7CLibCriFv(s32);
+extern "C" s32 func_80459A7C__7CLibCriFv(s32);
+extern "C" void func_80459A84__7CLibCriFv(s32, s32);
+extern "C" void func_80459A88__7CLibCriFv(s32, float, float, s32);
+extern "C" void func_80459A8C__7CLibCriFv(s32);
+extern "C" void func_80459A90__7CLibCriFv(s32);
+extern "C" void func_80459A94__7CLibCriFv(s32, float);
+extern "C" s32 func_80459A9C__7CLibCriFv(s32, void*, s32, float, float, float);
+extern "C" s32 func_8045997C__7CLibCriFv(const char*, s32, s32);
+extern "C" void getInstance__7CLibCriFv();
 
 struct SoundSlot {
     s32 handle;              // 0x00
@@ -65,8 +67,10 @@ static inline SoundSlot* sptr(s32 i) {
 static inline s32 isValid(s32 h) { return h != -1; }
 
 // --- FORWARD DECLARATIONS ---
-void func_801882AC(SoundSlot*, float, u32);
-void func_80188488(SoundSlot*, u32, float, float, float);
+// func_801882AC has an unmangled retail name -> C linkage so call sites
+// emit the same reloc name as retail.
+extern "C" void func_801882AC(SoundSlot*, float, u32);
+extern "C" void func_80188488(SoundSlot*, u32, float, float, float);
 s32 func_801887C8(u32, u32, u32);
 s32 func_80188B80(s32, const char*, float, float, s32);
 void func_801889D0();
@@ -90,10 +94,11 @@ s32 func_80189BF4(s32 index) {
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
     else s = nullptr;
-    if (s == nullptr) return 1;
-    s32 h = s->handle;
-    if (h == -1) return 1;
-    return 0;
+    if (s != nullptr) {
+        // Boolean-ize (handle == -1) so MWCC emits the addi/cntlzw/srwi idiom.
+        return (s->handle == -1) ? 1 : 0;
+    }
+    return 1;
 }
 
 s32 func_8018892C(s32 index) {
@@ -101,33 +106,42 @@ s32 func_8018892C(s32 index) {
     SoundSlot* s;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
     else s = nullptr;
-    if (s == nullptr) return 0;
-    s32 h = s->handle;
-    if (h == -1) return 0;
-    return 1;
+    s32 result = 0;
+    // (u32) compare: 0xFFFFFFFF cannot fit a signed 16-bit immediate, so MWCC
+    // emits the addis+cmplwi test the retail uses.
+    if (s != nullptr && (u32)s->handle != 0xFFFFFFFF) result = 1;
+    return result;
 }
 
-s32 func_80189C40(s32 index) {
-    s32* b = lbl_eu_80663E60;
+// Callers pass a position pointer (r4), a value (r5) and three floats; they
+// are forwarded unchanged to func_80459A9C, so the extra params stay live in
+// r4/r5/f1-f3 and the slot base lands in r6 (retail allocation).
+s32 func_80189C40(s32 index, f32* pos, s32 val, float f1, float f2, float f3) {
     SoundSlot* s;
+    s32* b = lbl_eu_80663E60;
     if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
     else s = nullptr;
-    if (s == nullptr) return 0;
-    return func_80459A9C__7CLibCriFv(s->handle);
+    if (s == nullptr) return (s32)s;  // 0 - reuse the register so MWCC folds beq+{blr} into beqlr
+    return func_80459A9C__7CLibCriFv(s->handle, pos, val, f1, f2, f3);
 }
 
-void func_80189424() {
+// vol arrives in f1 from the caller and is passed straight through to
+// func_801882AC - retail never reloads it (no lfs in the body).
+void func_80189424(float vol) {
     s32* b = lbl_eu_80663E60;
     SoundSlot* s;
-    if (b != nullptr) s = (SoundSlot*)((u8*)b + 1 * 0xB8);
+    if (b != nullptr) s = (SoundSlot*)((u8*)b + 0xB8);
     else s = nullptr;
-    if (s != nullptr) func_801882AC(s, 0.0f, 2);
+    if (s != nullptr) func_801882AC(s, vol, 2);
 }
 
 void func_80188774(SoundSlot* slot) {
-    for (s32 i = 0; i < 5; i++) {
-        func_801882AC(slot, 0.0f, 2);
-        slot = (SoundSlot*)((u8*)slot + 0xB8);
+    SoundSlot* s = slot;  // local copy declared before the counter -> r31, counter -> r30 (retail order)
+    for (s32 i = 0; i < 5u; i++) {
+        // Volume is the global (reloaded every iteration - the call may
+        // clobber it, which is why retail keeps the lfs inside the loop).
+        func_801882AC(s, lbl_eu_80667A08, 2);
+        s = (SoundSlot*)((u8*)s + 0xB8);
     }
 }
 
@@ -142,9 +156,14 @@ void func_80188890(s32 active) {
     }
 }
 
-void func_80189318(s32 clearName) {
-    SoundSlot* s0 = sptr(0);
-    if (s0 != nullptr) func_801882AC(s0, 0.0f, 2);
+// vol arrives in f1 from the caller and is passed straight through to
+// func_801882AC - retail never reloads it (no lfs before the call).
+void func_80189318(s32 clearName, float vol) {
+    s32* b = lbl_eu_80663E60;
+    SoundSlot* s;
+    if (b != nullptr) s = (SoundSlot*)b;
+    else s = nullptr;
+    if (s != nullptr) func_801882AC(s, vol, 2);
     if (clearName != 0) {
         if (lbl_eu_80575798[8] != 0) {
             ((char*)lbl_eu_80575798)[0] = '\0';
@@ -154,8 +173,11 @@ void func_80189318(s32 clearName) {
 }
 
 void func_80189390(const char* name) {
-    SoundSlot* s0 = sptr(0);
-    if (s0 != nullptr) func_801882AC(s0, 0.0f, 2);
+    s32* b = lbl_eu_80663E60;
+    SoundSlot* s;
+    if (b != nullptr) s = (SoundSlot*)b;
+    else s = nullptr;
+    if (s != nullptr) func_801882AC(s, lbl_eu_80667A08, 2);
     if (name != nullptr) {
         lbl_eu_80575798[8] = strlen(name);
         strcpy((char*)lbl_eu_80575798, name);
@@ -165,7 +187,7 @@ void func_80189390(const char* name) {
     }
 }
 
-void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, float f3) {
+extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, float f3) {
     if (!isValid(slot->handle)) return;
     u16 st = slot->status;
     if (st == 4) return;
@@ -222,7 +244,7 @@ void func_801895F4(float f1) {
     }
 }
 
-void func_801882AC(SoundSlot* slot, float vol, u32 type) {
+extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
     getInstance__7CLibCriFv();
     if (vol == 0.0f) {
         if (isValid(slot->backupHandle)) {
@@ -346,6 +368,22 @@ extern "C" void func_80188584(SoundSlot* slot) {
     }
 }
 
+// Deleting destructor for the 5-slot sound object (retail symbol is
+// address-named, so this is a plain free function rather than a member dtor).
+void* __dt__801886EC(SoundSlot* _this, int flags) {
+    if (_this != nullptr) {
+        SoundSlot* s = _this;
+        for (s32 i = 0; i < 5u; i++) {
+            func_801882AC(s, lbl_eu_80667A08, 2);
+            s = (SoundSlot*)((u8*)s + 0xB8);
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
 void func_801889D0() {
     for (s32 i = 0; i < 5; i++) {
         SoundSlot* s = sptr(i);
@@ -407,15 +445,34 @@ void func_80188D34() {}
 void func_80189034() {}
 void func_8018986C(s32 index, float f1) {}
 s32 func_801887C8(u32 wantId, u32 startIdx, u32 endIdx) { return -1; }
-void func_8018896C() {}
+// Slot index 0..1 plays the master-volume product, 2..4 use the backup
+// volume. type and the two floats are forwarded from the caller.
+void func_8018896C(s32 index, u32 type, float f1, float f2) {
+    float vol;
+    // Materialize the range test into a flag via two separate signed checks.
+    // A bare `index >= 0 && index <= 1` collapses into a single unsigned
+    // cmpli, but retail keeps both signed cmpwi (li r0,0 default + li r0,1).
+    s32 inRange = 0;
+    if (index >= 0) {
+        if (index <= 1) {
+            inRange = 1;
+        }
+    }
+    if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
+    else vol = lbl_eu_80662498;
+    s32* b = lbl_eu_80663E60;
+    SoundSlot* s;
+    if (b != nullptr) s = (SoundSlot*)((u8*)b + index * 0xB8);
+    else s = nullptr;
+    if (s != nullptr) func_80188488(s, type, f1, vol, f2);
+}
+
 void func_801897A0() {}
 void func_80189F20() {}
 void func_80189F84() {}
 void func_8018A134() {}
 void func_8018A2E8() {}
 void func_8018A5E8() {}
-void func_8018A8CC() {}
-void func_8018A944() {}
 void func_8018A9D8() {}
 void func_8018AA04() {}
 void func_8018AAC4() {}
@@ -428,6 +485,5 @@ void func_8018B1F4() {}
 void func_8018B224() {}
 void func_8018B230() {}
 void func_8018B23C() {}
-void func_8018B31C() {}
 
 extern "C" void func_80189450() {}

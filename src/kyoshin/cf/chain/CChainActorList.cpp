@@ -1,14 +1,20 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
 #include "kyoshin/cf/chain/CChainChance.hpp"
+#include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
+#include <new>
 #include <cstring>
 
 // C-linkage pseudo-imports for this TU now live in the "C-linkage imports"
 // section of kyoshin/cf/chain/CChainActorList.hpp (real imports).
 
 bool func_8027C1A8();
+// Call-site overload (s32) so func_8027CBE8 emits a real bl instead of
+// inlining the u32 definition below (retail keeps the call; the definition's
+// u32 overload is what matches retail func_8027BFE0's bytes).
+void func_8027BFE0(s32 param);
 void func_8027C45C(cf::CChainList* self);
 float lbl_eu_80668A80;
 
@@ -190,7 +196,7 @@ public:
     virtual void v002() = 0; // slot 4  / +16
     virtual void v003() = 0; // slot 5  / +20  (dead-actor destroy/remove)
     virtual void v004() = 0; // slot 6  / +24  (chain-combo advance)
-    virtual void v005() = 0;
+    virtual void v005(int) = 0; // slot 7  / +28  (activate-with-flag)
     virtual void v006() = 0;
     virtual void v007() = 0;
     virtual void v008() = 0;
@@ -205,7 +211,7 @@ public:
     virtual void v017() = 0;
     virtual void v018() = 0;
     virtual void v019() = 0;
-    virtual void v020() = 0;
+    virtual int  v020() = 0; // slot 22 / +88 (actor value query)
     virtual int  v021() = 0; // slot 23 / +92  (chainable check)
     virtual void v022() = 0;
     virtual void v023() = 0;
@@ -224,6 +230,36 @@ typedef int (*CChainActorChkFn2)(cf::CChainActor*, cf::CChainActor*);
 typedef void (*CChainActorChainFn)(cf::CChainActor*, int, cf::CChainActor*, int);
 
 namespace cf {
+    // Retail ctor stores the manual vtables, zeroes the CChainTemp-ish buffer
+    // and its flag byte. The dtor is the plain empty+delete shape (no base or
+    // member dtor calls), matching retail's 0x40-byte body.
+    CChainActorPc::CChainActorPc() {
+        this->mVTable = (u32)&lbl_eu_80538290; // +0x70 actor vtable (temp)
+        this->field_68 = (u32)&lbl_eu_80538338; // +0x68 sub-object vtable
+        std::memset(this->field_4, 0, 0x60);
+        this->field_64 = 0;
+        this->unk6C = 0;
+        this->unk0 = 0;
+        this->mVTable = (u32)&lbl_eu_805384E0; // final vtable
+        // Retail constructs the CChainEffect region at the END of the ctor
+        // body (no dtor is ever emitted for it); call the ctor via its alias.
+        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
+    }
+    CChainActorPc::~CChainActorPc() {}
+
+    CChainActorEne::CChainActorEne() {
+        this->mVTable = (u32)&lbl_eu_80538290; // +0x70 actor vtable (temp)
+        this->field_68 = (u32)&lbl_eu_80538338; // +0x68 sub-object vtable
+        std::memset(this->field_4, 0, 0x60);
+        this->field_64 = 0;
+        this->unk6C = 0;
+        this->unk0 = 0;
+        this->mVTable = (u32)&lbl_eu_80538458; // final vtable
+        // See CChainActorPc ctor comment: ctor alias call keeps the dtor empty.
+        __ct__Q22cf12CChainEffectFv((CChainEffect*)this->field_74);
+    }
+    CChainActorEne::~CChainActorEne() {}
+
     CChainActorList::CChainActorList(){
 
     }
@@ -247,7 +283,29 @@ cf::CChainActor* func_8027CA98(cf::CChainList* self, u32 key) {
     return 0;
 }
 
-void func_8027B164(){}
+void func_8027B164(cf::CChainActorList* self){
+    // Pass 1: call the vtable[5] (destroy/remove) hook on every actor.
+    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mStartNodePtr->mNext;
+    while (node != self->mChainActorList.mStartNodePtr) {
+        cf::CChainActor* actor = node->mItem;
+        ((CChainActorVtIf*)actor)->v003();
+        node = node->mNext;
+    }
+    // Pass 2: detach every node (marking each slot free via mNext = 0).
+    _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
+    node = head->mNext;
+    while (node != head) {
+        _reslist_node<cf::CChainActor*>* cur = node;
+        node = cur->mNext;
+        _reslist_node<cf::CChainActor*>* prev = cur->mPrev;
+        prev->mNext = node;
+        node->mPrev = prev;
+        cur->mNext = 0;
+    }
+    func_802811FC(self);
+    self->unk1DA8[0] = 0;
+}
 // Removes every reslist actor whose referenced object is dead.
 void func_8027B200(cf::CChainActorList* self){
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
@@ -374,13 +432,36 @@ void func_8027B2CC(cf::CChainActorList* self){
         node = cur;
     }
 }
-void func_8027B770(){}
-void func_8027B814(){}
-// Inserts @p actor into $self's reslist at the position ordered by
+cf::CChainActor* func_8027B770(cf::CChainActorList* self, u32 key){
+    _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
+    _reslist_node<cf::CChainActor*>* node = head->mNext;
+    cf::CChainActor* result = 0;
+    // Search for an actor whose unk0 matches the key. The candidate is
+    // assigned every iteration so retail's actor value lives in r3 (the
+    // return register) with no copy, and the zero init sinks to loop exit.
+    while (node != head) {
+        result = node->mItem;
+        if (key == result->unk0) {
+            break;
+        } else {
+            node = node->mNext;
+        }
+    }
+    if (result != 0) return result;
+    // None found: create a new actor, insert it, and activate it when flagged.
+    // (No return on this path - retail leaves r3 as the last call's result.)
+    cf::CChainActor* newActor = func_8028120C(self);
+    func_8027B8C8(self, newActor);
+    if (self->unk1DA8[0]) {
+        ((CChainActorVtIf*)newActor)->v005(1);
+    }
+}
+void func_8027B814(){}// Inserts @p actor into $self's reslist at the position ordered by
 // vtable slot 21 (a priority/arts value), before the first actor that is
 // chainable (slot 17) and strictly larger. Uses an empty node slot from the
-// preallocated node array, as reslist::insert does.
-void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor) {
+// preallocated node array, as reslist::insert does. Retail's symbol is the
+// unmangled C-ABI name func_8027B8C8 (call sites must reference it unmangled).
+extern "C" void func_8027B8C8(cf::CChainActorList* self, cf::CChainActor* actor) {
     int myVal = ((CChainActorIVFn*)actor->mVTable)[21](actor);
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
     _reslist_node<cf::CChainActor*>* pre = head->mNext;
@@ -504,17 +585,6 @@ void func_8027BF58(cf::CChainFlag* self) {
     }
 }
 
-void func_8027BFE0(unsigned int param) {
-    if (param >= 0xBB8) {
-        func_8027EEF4(0x33);
-    }
-    if (param >= 0x7530) {
-        func_8027EEF4(0x34);
-    }
-    if (param >= 0x186A0) {
-        func_8027EEF4(0x35);
-    }
-}
 void func_8027C040(cf::CChainFlag* self) {
     if (self->field_0x3F00 & 2) {
         lbl_eu_80662A80++;
@@ -526,7 +596,24 @@ void func_8027C040(cf::CChainFlag* self) {
         }
     }
 }
-void func_8027C0B0(){}
+// Decrements the chain count; when it hits zero, plays the indexed chain
+// sound and advances the step counters (field_8 / field_A wraps at 4).
+void func_8027C0B0(cf::CChainChanceS* self) {
+    s16 count = self->mChainCount;
+    int flag;
+    if (count < 1) {
+        flag = 0;
+    } else {
+        self->mChainCount = count - 1;
+        flag = ((s16)(count - 1) <= 0);
+    }
+    if (flag != 0) {
+        func_80133F48(3, lbl_eu_8050EDE0[(s16)self->mField0A]);
+        self->mField0A = self->mField0A + 1;
+        self->mField08 = self->mField08 + 1;
+        if ((s16)self->mField0A >= 4) self->mField0A = 3;
+    }
+}
 // Starts a chain message; writes 0xa to the message id on success.
 int func_8027C154(cf::CChainMsg* self) {
     if (func_8027C1A8() != 0) {
@@ -536,7 +623,21 @@ int func_8027C154(cf::CChainMsg* self) {
     }
     return 0;
 }
-bool func_8027C1A8() {}
+// Emits chain-tally threshold events based on the accumulated counter.
+// func_8027CBE8 calls the s32 overload declared above (a different mangled
+// symbol), so this u32 definition is never inlined there and stays a
+// byte-identical match.
+void func_8027BFE0(unsigned int param) {
+    if (param >= 0xBB8) {
+        func_8027EEF4(0x33);
+    }
+    if (param >= 0x7530) {
+        func_8027EEF4(0x34);
+    }
+    if (param >= 0x186A0) {
+        func_8027EEF4(0x35);
+    }
+}
 // Reads the current pad press. If a chain-trigger button is held, performs the
 // action selected by func_8017FD4C; writes result to *out and returns 1.
 int func_8027C33C(cf::CChainAction* self, u8* out){
@@ -575,11 +676,12 @@ void func_8027C49C(cf::CChainList* self){
     }
 }
 
-// Calls vtable[4] on every actor in the list.
+// Calls vtable[4] on every actor in the list (r12 bidirectional dispatch via
+// the manual vtable at +0x70).
 void func_8027C560(cf::CChainList* self) {
     for (int i = 0; i < (int)self->mCount; i++) {
         cf::CChainActor* a = self->mActors[i];
-        ((CChainActorVFn*)a->mVTable)[4](a);
+        ((CChainActorVtIf*)a)->v002();
     }
 }
 // Removes the actor whose unk0 matches @p key (if any); returns whether found.
@@ -618,7 +720,15 @@ void func_8027C924(cf::CChainList* self, int target){
         }
     }
 }
-void func_8027CA0C(){}
+// Returns 1 if any resident actor's vtable[22] (+0x58) value matches @p key.
+int func_8027CA0C(cf::CChainList* self, int key) {
+    for (int i = 0; i < (int)self->mCount; i++) {
+        cf::CChainActor* actor = self->mActors[i];
+        if (((CChainActorVtIf*)actor)->v020() == key)
+            return 1;
+    }
+    return 0;
+}
 // Checks (via func_80174C98) whether the resident actors satisfy @p condition;
 // the polarity of the result depends on @p check.
 int func_8027CAE0(cf::CChainList* self, int target, int check){

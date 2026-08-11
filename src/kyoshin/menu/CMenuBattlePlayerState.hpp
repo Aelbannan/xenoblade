@@ -15,10 +15,33 @@ struct MenuBpsActorFields {
     u16 unk3f28;  // +0x3f28: low byte snapshotted into CMenuBattlePlayerStateSlot::unk204
 };
 
+// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
+// Declared here (not in CfObjectPc.hpp) so this TU avoids that header's
+// `extern void* lbl_eu_806640F4` clashing with code_80135FDC.hpp's u32 form.
+void* func_800B708C(int id);
+
 // Layout for handle returned by func_800B708C
 struct Func800B708C_Ret {
     u8 pad_00[0x64];
     u32 unk64;    // +0x64: bit flags read by Move()
+};
+
+// Target of CMenuBattlePlayerStateSlot::unk208 (actor vf290 result): party
+// state table with 0xC4-strided per-index rows.
+struct MenuBpsPartyEntry {
+    u32 unk00;            // +0x00: nonzero = occupied
+    u8 pad_04[0x20 - 0x04];
+};
+struct MenuBpsPartyRow {
+    MenuBpsPartyEntry entries[6]; // stride 0x20; func_8010CF68 scans [1..5]
+    u8 pad_C0[0xC4 - 0xC0];       // row stride 0xC4
+};
+struct MenuBpsActorState {
+    MenuBpsPartyRow rows[4]; // +0x00: rows[idx], stride 0xC4
+    u8 pad_310[0x888 - 0x310];
+    s32 unk888[4];        // +0x888: per-index values (read as s32 in func_8010CF68)
+    u8 pad_898[0x89C - 0x898];
+    u32 unk89C;           // +0x89C: low byte is the row index / party count
 };
 
 // Per-party slot (stride 0x270). Exception table: member array at 0x74, count 3.
@@ -133,5 +156,6 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
+extern "C" u32 func_8013600C(void*, const char*, u32);
 extern "C" void __dt__22CMenuBattlePlayerStateFv(void*);
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();

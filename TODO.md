@@ -19,3 +19,4 @@ NOTES
 - Generic agents that tackle specific subsets of targets + ordering (EG. CODE_MATCH, smallest to largest)
 - Auto promotion of units that match text/data/size
 - Integrate promotion/diffing/etc into the harness
+- maybe a header prepass?

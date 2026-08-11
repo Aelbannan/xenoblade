@@ -24,6 +24,7 @@ extern void ADXSTM_ReleaseFile(void *);
 extern s32 ADXSTM_GetStat(void *);
 extern int ADXSTM_Seek(void *, int);
 extern s32 ADXSTM_Tell(void *);
+extern u32 ADXSTM_GetFileSct(void *);
 extern s32 ADXSTM_Start2(void *, u32);
 extern void ADXSTM_Stop(void *);
 extern void ADXSTM_SetEos(void *, s32);
@@ -73,6 +74,49 @@ struct AdxFsReq {
 
 extern struct AdxFsReq lbl_eu_805E04F0[16];
 extern u16 lbl_eu_805E05F0[8];
+
+/* ADX partition (pointed to by lbl_eu_805E00F0[ptid]). Shares the 0x10-byte
+ * header with AdxFsWork; the partition name and file table follow. The file
+ * table tail at 0x118 is read either as a 32-bit total length + per-file u32
+ * lengths (word mode, field_0F==1) or as a u16 length + per-file u16 sector
+ * offsets (halfword mode), depending on the flag at 0x0F. */
+struct AdxFsPt {
+    s8    flag;          /* 0x00 */
+    s8    status;        /* 0x01 */
+    s8    b2;            /* 0x02 */
+    s8    b3;            /* 0x03 */
+    void* fstm;          /* 0x04 */
+    s32   sectCnt;       /* 0x08 */
+    union {
+        u32   field_0C;  /* 0x0C */
+        struct {
+            u8  b0C;     /* 0x0C */
+            u8  b0D;     /* 0x0D */
+            s8  b0E;     /* 0x0E */
+            s8  b0F;     /* 0x0F */
+        } b;
+    } hdr;               /* 0x0C */
+    char  name[0x100];   /* 0x10 */
+    u32   field_110;     /* 0x110 */
+    u32   field_114;     /* 0x114 */
+    union {
+        s32   total;     /* 0x118 word-mode total length */
+        struct {
+            u16   len;   /* 0x118 */
+            u16   offs[1]; /* 0x11A */
+        } hw;             /* halfword mode */
+    } file;              /* 0x118 */
+    s32   field_11C[1];  /* 0x11C word-mode per-file lengths */
+};
+
+extern char *CRICRW_Strncpy(char *dst, void *ignored, const char *src, size_t n);
+
+/* Sector-cache flush callback: the object pointer is stashed in work->sectCnt
+ * while a read is pending; the release method is the 4th vtable slot
+ * (offset 0xC). */
+struct AdxFsCb {
+    void (**vt)(void *);   /* 0x00 pointer to vtable (4 method slots) */
+};  /* size 0x4 */
 extern s32 lbl_eu_805E0610;
 extern s32 lbl_eu_805E0614;
 
@@ -82,9 +126,9 @@ int adxf_GetPtStat(int a);
 void *adxf_CreateAdxFs(void);
 int adxf_ReadNw32(void *a, void *b, int c);
 int adxf_Stop(void *a);
-int adxf_ExecOne(void *a);
+void adxf_ExecOne(struct AdxFsWork *work);
 int adxf_Seek(void *a, int b, int c);
-int adxf_GetFnameRangeEx(const char *a, int b, void *c, u32 *d, u32 *e, u32 *f, u32 *g);
+int adxf_GetFnameRangeEx(const char *fname, int flags, char *namebuf, u32 *a, u32 *b, u32 *c, u32 *d);
 
 /* ADXF_LoadPartitionNw - external wrapper */
 s32 ADXF_LoadPartitionNw(s32 ptid, const char *fname, void *ptinfo, void *nfile) {
@@ -490,10 +534,74 @@ int adxf_Stop(void *adxf) {
 }
 #pragma pop
 
-int adxf_ExecOne(void *a);
+/* adxf_ExecOne - service one busy work item: flush the sector-cache callback
+ * when the stream errors out (stat==4), run end-of-file / position
+ * bookkeeping while reading (status==2), and rearm after a finished
+ * sequential read (b3 set once the last block was queued). */
 #pragma push
 #pragma auto_inline off
-int adxf_ExecOne(void *a) { return 0; }
+void adxf_ExecOne(struct AdxFsWork *work) {
+    struct AdxFsCb *cb;
+    if (ADXSTM_GetStat(work->fstm) == 4) {
+        if (work->sectCnt != 0 && work->b2 == 0) {
+            if (lbl_eu_805E0614 == 1) {
+                ADXF_Ocbi((const void *)work->field_20, work->field_24);
+            }
+            cb = (struct AdxFsCb *)work->sectCnt;
+            work->sectCnt = 0;
+            cb->vt[3](cb);
+        }
+        work->status = 4;
+        return;
+    }
+    if (work->status == 2) {
+        if (work->field_0C == 0xFFFFFu && ADXSTM_IsOpened(work->fstm) != 0 &&
+            (s32)ADXSTM_GetFileSct(work->fstm) <= (s32)work->field_14) {
+            work->status = 3;
+            if (work->sectCnt != 0 && work->b2 == 0) {
+                if (lbl_eu_805E0614 == 1) {
+                    ADXF_Ocbi((const void *)work->field_20, work->field_24);
+                }
+                cb = (struct AdxFsCb *)work->sectCnt;
+                work->sectCnt = 0;
+                cb->vt[3](cb);
+            }
+            return;
+        }
+        work->status = ADXSTM_GetStat(work->fstm);
+        work->field_1C = ADXSTM_Tell(work->fstm) - work->field_10;
+        if ((u8)((u8)work->status - 3) > 1) {
+            goto l70skip;
+        }
+        work->field_10 = work->field_10 + work->field_1C;
+        if (work->sectCnt != 0 && work->b2 == 0) {
+            if (lbl_eu_805E0614 == 1) {
+                ADXF_Ocbi((const void *)work->field_20, work->field_24);
+            }
+            cb = (struct AdxFsCb *)work->sectCnt;
+            work->sectCnt = 0;
+            cb->vt[3](cb);
+        }
+    l70skip:;
+    }
+    if (work->b3 == 1) {
+        if (ADXSTM_GetStat(work->fstm) == 1) {
+            s32 tell = ADXSTM_Tell(work->fstm);
+            u32 sct = work->sectCnt;
+            work->field_1C = tell - work->field_10;
+            if (sct != 0 && work->b2 == 0) {
+                if (lbl_eu_805E0614 == 1) {
+                    ADXF_Ocbi((const void *)work->field_20, work->field_24);
+                }
+                cb = (struct AdxFsCb *)work->sectCnt;
+                work->sectCnt = 0;
+                cb->vt[3](cb);
+            }
+            work->status = 1;
+            work->b3 = 0;
+        }
+    }
+}
 #pragma pop
 
 void ADXF_ExecServer(void) {
@@ -651,7 +759,50 @@ int ADXF_GetFnameRangeEx(const char *fname, int flags, void *namebuf, u32 *a, u3
     return r;
 }
 
-int adxf_GetFnameRangeEx(const char *a, int b, void *c, u32 *d, u32 *e, u32 *f, u32 *g) { return 0; }
+/* adxf_GetFnameRangeEx - report the byte range of one file inside a loaded
+ * partition. The partition's file table is either a word table (field_0F==1:
+ * u32 total length at 0x118, per-file u32 lengths at 0x11C) or a halfword
+ * table (u16 length at 0x118, per-file u16 sector offsets at 0x11A). */
+int adxf_GetFnameRangeEx(const char *fname, int flags, char *namebuf, u32 *a, u32 *b, u32 *c, u32 *d) {
+    struct AdxFsPt *pt;
+    u32 sum;
+    int i;
+    int r = adxf_ChkPrmGfr((int)fname, flags);
+    if (r < 0) {
+        if (namebuf != NULL) {
+            *namebuf = 0;
+        }
+        *a = 0;
+        *b = -1;
+        *c = -1;
+        *d = -1;
+        return r;
+    }
+    pt = (struct AdxFsPt *)lbl_eu_805E00F0[(int)fname];
+    if (pt->hdr.b.b0F == 1) {
+        /* word table: lengths in bytes, rounded up to sectors */
+        sum = (pt->file.total + 0x7FF) >> 11;
+        for (i = 0; i < flags; i++) {
+            sum += (pt->field_11C[i] + 0x7FF) >> 11;
+        }
+        *c = (pt->field_11C[flags] + 0x7FF) >> 11;
+        *d = pt->field_11C[flags];
+    } else {
+        /* halfword table: sector offsets */
+        sum = pt->file.hw.len;
+        for (i = 0; i < flags; i++) {
+            sum += pt->file.hw.offs[i];
+        }
+        *c = pt->file.hw.offs[flags];
+        *d = (u32)pt->file.hw.offs[flags] << 11;
+    }
+    if (namebuf != NULL) {
+        CRICRW_Strncpy(namebuf, (void *)0x100, pt->name, 0x100);
+    }
+    *a = pt->field_110;
+    *b = pt->field_114 + sum;
+    return r;
+}
 
 char *ADXF_GetFnameFromPt(int idx) {
     char *p;

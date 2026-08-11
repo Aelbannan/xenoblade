@@ -11,11 +11,13 @@
    and destructor are defined in the CCur unit (__ct__CCur22 / __dt__6CCur22Fv);
    CPartyState's destructor calls __dt__6CCur22Fv explicitly. */
 
+class CEventFile;
+
 class CPartyState {
 public:
     CPartyState();
     ~CPartyState();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* pEventFile);
     u8 func_801FD17C();
     u8 func_801FD184();
     u8 func_801FD18C();
@@ -40,15 +42,82 @@ public:
     u8 field_0x4C;                              // 0x4C
     s8 field_0x4D;                              // 0x4D
     u8 field_0x4E;                              // 0x4E
-    u8 field_0x4F[0x57 - 0x4F];                 // 0x4F - per-member slot byte (pane-name index)
+    u8 field_0x4F[0x56 - 0x4F];                 // 0x4F - 7 per-member slot bytes (pane-name index)
+    u8 field_0x56;                              // 0x56 - slot-write counter (func_801FDA7C)
     u8 field_0x57;                              // 0x57
 };
 
+// Vtable view of the party-slot stats sub-object embedded at +0x17C of the
+// func_8009EC9C result. Only the dispatch slots used by this TU are reached
+// (0x26/0x42/0x4A/0x4B/0x7A/0x7C); the table is fn-pointer indexed so the
+// call sites reproduce the retail two-step vtable dispatch.
+struct CPartySlotStats;
+typedef int (*CPartySlotFn)(CPartySlotStats*);
+typedef float (*CPartySlotFnF)(CPartySlotStats*);
+struct CPartySlotStatsVtbl {
+    CPartySlotFn fn[0x7D];
+};
+struct CPartySlotStats {
+    CPartySlotStatsVtbl* mVtbl;   // 0x00
+};
+
+// 0x20-byte slot entry; func_801FE20C probes word at +i*0x20 for i = 1..5.
+struct CPartySlotEntry {
+    u32 word;                    // 0x00
+    u8 _pad04[0x20 - 0x04];
+};
+
+// 0xC4-byte slot record: 6 entries (0x00..0xC0) + pad.
+struct CPartySlotRecord {
+    CPartySlotEntry entries[6];  // 0x00
+    u8 _padC0[0xC4 - 0xC0];
+};
+
+// Slot-record blob at +0x3534 of the char data: 7 records, then a
+// slot-indexed u32 array at +0x888, then the level word at +0x89C.
+struct CPartySlotArea {
+    CPartySlotRecord records[7];  // 0x00
+    u8 _pad55C[0x888 - 7 * 0xC4]; // 0x55C..0x887
+    u32 arr2[5];                  // 0x888 (slot-indexed u32 array, 0x888..0x89C)
+    u32 field_0x3DD0;             // 0x89C (absolute 0x3DD0: level word)
+};
+
 // Character/party-slot object returned by func_8009EC9C. +0x176C holds a
-// state word that is 1 when the slot's character is busy (cannot be swapped).
+// state word that is 1 when the slot's character is busy (cannot be swapped);
+// +0x17C embeds the stats sub-object; +0x3534 the slot-record blob.
 struct CPartyCharData {
-    u8 _pad[0x176C];
-    s32 field_0x176C;
+    u8 _pad[0x17C];
+    CPartySlotStats stats;               // 0x17C
+    u8 _pad180[0x176C - 0x180];
+    s32 field_0x176C;                    // 0x176C busy flag
+    u8 _pad1770[0x3534 - 0x1770];
+    CPartySlotArea slotArea;             // 0x3534
+};
+
+// Abstract view of the object returned by CDeviceFont::func_80452C10; the
+// 8th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
+// All-pure, never constructed directly.
+class FontHelper {
+public:
+    virtual void v0() = 0;
+    virtual void v1() = 0;
+    virtual void v2() = 0;
+    virtual void v3() = 0;
+    virtual void v4() = 0;
+    virtual void v5() = 0;
+    virtual void v6() = 0;
+    virtual u32 v7() = 0;  // vtable offset 0x24
+};
+
+// 7-byte seed blob copied from .sdata2 constants (word + halfword + byte),
+// mixed into the slot table by func_801FDA7C.
+union PartyStateSeed {
+    u8 bytes[7];
+    struct {
+        u32 w;  // 0x0
+        u16 h;  // 0x4
+        u8 b;   // 0x6
+    } f;
 };
 
 /* Vtable-dispatch view of the embedded cursor. MWCC puts two implicit dtor
@@ -88,6 +157,40 @@ extern "C" u8 code80135FDC_getByte_64077();
 // Party-select helpers (unmangled retail symbols).
 extern "C" int* func_8009ECB0();
 extern "C" void func_8009E168(int*, u8, u8);
+extern "C" u8 func_801392C8(u32);
+extern "C" u32 func_8009CF8C(u32);
+extern "C" u16 func_80136254(const char*, const char*, int);
+extern "C" char* func_80138F78(u32);
+
+// Party-slot data-table pointers (.sdata).
+extern char* lbl_eu_80664090;
+extern char* lbl_eu_80664098;
+
+// Character stats getters (unmangled retail symbols).
+extern "C" u32 func_801355BC();
+extern "C" u32 func_801355D8();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" char* func_801571FC();
+
+// BDAT string/value lookups (unmangled retail symbols).
+extern "C" u8 func_8013600C(const char*, const char*, u32);
+
+// Layout text/pane binding helpers (unmangled retail symbols; the canonical
+// code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
+// CEquipItemBox.hpp in this TU).
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+
+// Layout + anim builders (retail symbols are the C++ mangled names).
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
+
+// Slot-pane byte counter getter (unmangled retail symbol).
+extern "C" u8 code80135FDC_getByte_6407E();
 
 // cf::CfGameManager helper. US retail keeps the no-arg Fv suffix but the call
 // site passes two arguments; declare the retail symbol verbatim under C
@@ -108,9 +211,11 @@ extern "C" u32 func_80495FF0(CScn*);
 // Party-state layout arc path pointer (.sdata).
 extern char* lbl_eu_80662728;
 
-// Unit-local helpers (defined/stubbed in this TU; unmangled retail symbols).
+// Unit-local helpers (defined in this TU; unmangled retail symbols).
 extern "C" void func_801FE154(CPartyState*);
 extern "C" void func_801FD848(CPartyState*);
+extern "C" void func_801FE0C8(CPartyState*);
+extern "C" void func_801FE20C(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
 extern "C" void func_801D202C(CBaseCur*);
@@ -158,9 +263,15 @@ extern float lbl_eu_80507D20[];
 
 // Party-state panel math constants (.sdata2).
 extern const float lbl_eu_80668230;
+extern const float lbl_eu_80668234;
 extern const float lbl_eu_80668240;
 extern const float lbl_eu_80668244;
 extern const float lbl_eu_80668248;
+
+// Party-state seed blob constants (.sdata2).
+extern const u16 lbl_eu_8066821C;
+extern const u8 lbl_eu_8066821E;
+extern const u32 lbl_eu_80668220;
 
 // CPartyState vtable (.data) - stored at +0 by the constructor. Declared as
 // an array so MWCC uses full 32-bit (lis/addi) addressing like the retail.

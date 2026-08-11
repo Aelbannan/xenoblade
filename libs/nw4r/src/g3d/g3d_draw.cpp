@@ -6,50 +6,167 @@
 
 #include <algorithm>
 
-// MWCC's <algorithm> doesn't declare std::sort
+// MWCC's <algorithm> doesn't declare std::sort. The retail nw4r build
+// instantiated the MSL implementation in this TU (sort<...> and the
+// __sort132 median-of-3 helper), so define the templates here to get the
+// same instantiated symbols (sort<PQ54...MdlZ, ...> and __sort132<...>).
 namespace std {
-template <typename T, typename Compare>
-void sort(T* first, T* last, Compare comp);
+
+// Median-of-3 over the pivot candidates *_F, *_P, *_L (retail __sort132
+// body: the pivot slot *_P ends up holding the median).
+template <typename _Pr, typename _RI>
+void __sort132(_RI _F, _RI _L, _RI _P, _Pr _C) {
+    bool cPF = _C(*_P, *_F);
+    bool cLP = _C(*_L, *_P);
+
+    if (cPF && cLP) {
+        swap(*_F, *_L);
+    } else if (cPF || cLP) {
+        if (_C(*_L, *_F)) {
+            swap(*_F, *_L);
+        }
+        if (cPF) {
+            swap(*_F, *_P);
+        } else {
+            swap(*_L, *_P);
+        }
+    }
 }
+
+template <typename _RI, typename _Pr>
+void sort(_RI _F, _RI _L, _Pr _P) {
+    static int shuffle = 0;
+
+    for (;;) {
+        int count = _L - _F;
+        if (count <= 1) {
+            return;
+        }
+
+        if (count <= 20) {
+            // Selection sort for small ranges.
+            for (_RI i = _F; i != _L - 1; ++i) {
+                _RI min = i;
+                for (_RI j = i + 1; j != _L; ++j) {
+                    if (_P(*j, *min)) {
+                        min = j;
+                    }
+                }
+                if (min != i) {
+                    swap(*min, *i);
+                }
+            }
+            return;
+        }
+
+        // Quicksort for larger ranges; the pivot is picked from two
+        // pseudo-random positions near the 1/4 and 3/4 marks (a static
+        // rotating counter avoids repeated sorts of similar data hitting
+        // the same pivot).
+        {
+            int c = shuffle;
+            int c1 = c + 1;
+            _RI p1 = _F + (count / 4 + c % 5);
+            if (c1 >= 5) {
+                c1 = -4;
+            }
+            shuffle = c1 + 1;
+            _RI p2 = _F + (count * 3 / 4 + c1 % 5);
+            if (shuffle >= 5) {
+                shuffle = -4;
+            }
+
+            // The reference-comparator instantiation is the one retail emits.
+            __sort132<_Pr&, _RI>(p1, p2, _L - 1, _P);
+
+            // Partition [_F, _L) around the pivot kept at _L - 1.
+            _RI pivot = _L - 1;
+            _RI i = _F;
+            _RI j = _L - 1;
+            while (_P(*i, *pivot)) {
+                ++i;
+            }
+            do {
+                --j;
+                if (i == j) {
+                    break;
+                }
+            } while (!_P(*j, *pivot));
+            while (i < j) {
+                swap(*i, *j);
+                ++i;
+                while (_P(*i, *pivot)) {
+                    ++i;
+                }
+                do {
+                    --j;
+                } while (!_P(*j, *pivot));
+            }
+
+            if (i == _F) {
+                // The pivot is the smallest element: move it to the front and
+                // partition the remainder with the comparisons reversed.
+                swap(*i, *pivot);
+                ++i;
+                j = _L - 1;
+                if (!_P(*_F, *(_L - 1))) {
+                    while (i != _L && !_P(*_F, *i)) {
+                        ++i;
+                    }
+                    if (i < j) {
+                        swap(*i, *j);
+                    }
+                }
+                while (i < j) {
+                    while (!_P(*_F, *i)) {
+                        ++i;
+                    }
+                    do {
+                        --j;
+                    } while (_P(*_F, *j));
+                    if (i >= j) {
+                        break;
+                    }
+                    swap(*i, *j);
+                    ++i;
+                }
+                _F = i;
+            } else {
+                // Recurse on the smaller side, loop on the larger side.
+                // The recursion always uses the reference comparator form.
+                int left = i - _F;
+                int right = _L - i;
+                if (left < right) {
+                    sort<_RI, _Pr&>(_F, i, _P);
+                    _F = i;
+                } else {
+                    sort<_RI, _Pr&>(i, _L, _P);
+                    _L = i;
+                }
+            }
+        }
+    }
+}
+
+} // namespace std
+
+// Explicitly instantiate the median-of-3 helper so it is emitted as its own
+// symbol (retail __sort132<...>); MWCC otherwise auto-inlines it into sort.
+namespace std {
+template void __sort132<
+    bool (*&)(const nw4r::g3d::detail::workmem::MdlZ&,
+              const nw4r::g3d::detail::workmem::MdlZ&),
+    nw4r::g3d::detail::workmem::MdlZ*>(
+    nw4r::g3d::detail::workmem::MdlZ*, nw4r::g3d::detail::workmem::MdlZ*,
+    nw4r::g3d::detail::workmem::MdlZ*,
+    bool (*&)(const nw4r::g3d::detail::workmem::MdlZ&,
+              const nw4r::g3d::detail::workmem::MdlZ&));
+} // namespace std
 
 namespace nw4r {
 namespace g3d {
 
 namespace detail {
-
-bool FrontToBack(const workmem::MdlZ& rA,
-                 const workmem::MdlZ& rB) {
-    if (rA.priority < rB.priority) {
-        return true;
-    }
-
-    if (rA.priority > rB.priority) {
-        return false;
-    }
-
-    return rA.Z > rB.Z;
-}
-
-bool BackToFront(const workmem::MdlZ& rA,
-                 const workmem::MdlZ& rB) {
-    if (rA.priority < rB.priority) {
-        return true;
-    }
-
-    if (rA.priority > rB.priority) {
-        return false;
-    }
-
-    if (rA.Z < rB.Z) {
-        return true;
-    }
-
-    if (rA.Z == rB.Z) {
-        return rA.matID < rB.matID;
-    }
-
-    return false;
-}
 
 G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
     if (!mat.IsValid() || !shp.IsValid()) {
@@ -212,80 +329,148 @@ G3DState::IndMtxOp* GetIndMtxOp(ResMat mat, ResNode node, ResShp shp) {
 
 namespace {
 
+// Sort comparators for the MdlZ work-memory arrays. Retail places these in
+// the anonymous namespace (mangled @unnamed@g3d_draw_cpp@), matching the
+// DrawResMdlLoop helpers below.
+bool FrontToBack(const detail::workmem::MdlZ& rA,
+                 const detail::workmem::MdlZ& rB) {
+    if (rA.priority < rB.priority) {
+        return true;
+    }
+
+    if (rA.priority > rB.priority) {
+        return false;
+    }
+
+    return rA.Z > rB.Z;
+}
+
+bool BackToFront(const detail::workmem::MdlZ& rA,
+                 const detail::workmem::MdlZ& rB) {
+    if (rA.priority < rB.priority) {
+        return true;
+    }
+
+    if (rA.priority > rB.priority) {
+        return false;
+    }
+
+    if (rA.Z < rB.Z) {
+        return true;
+    }
+
+    if (rA.Z == rB.Z && rA.matID < rB.matID) {
+        return true;
+    }
+
+    return false;
+}
+
+// Retail DrawResMdlReplacement has a leading u32 flag (bit0 = "drop vtx
+// tables") before visArray; g3d_draw.h is missing it, so mirror the retail
+// layout here to get the correct field offsets.
+struct DrawResMdlReplacementLayout {
+    u32 flag;                                    // at 0x0
+    u8* visArray;                                // at 0x4
+    ResTexObjData* texObjDataArray;              // at 0x8
+    ResTlutObjData* tlutObjDataArray;            // at 0xC
+    ResTexSrtData* texSrtDataArray;              // at 0x10
+    ResChanData* chanDataArray;                  // at 0x14
+    ResGenModeData* genModeDataArray;            // at 0x18
+    ResMatMiscData* matMiscDataArray;            // at 0x1C
+    ResPixDL* pixDLArray;                        // at 0x20
+    ResTevColorDL* tevColorDLArray;              // at 0x24
+    ResIndMtxAndScaleDL* indMtxAndScaleDLArray;  // at 0x28
+    ResTexCoordGenDL* texCoordGenDLArray;        // at 0x2C
+    ResTevData* tevDataArray;                    // at 0x30
+    ResVtxPosData** vtxPosTable;                 // at 0x34
+    ResVtxNrmData** vtxNrmTable;                 // at 0x38
+    ResVtxClrData** vtxClrTable;                 // at 0x3C
+};
+
 void SetupDraw1Mat1ShpSwap(Draw1Mat1ShpSwap* pSwap,
                            DrawResMdlReplacement* pReplacement, u32 id) {
 
-    if (pReplacement->texObjDataArray != NULL) {
-        pSwap->texObj = ResTexObj(&pReplacement->texObjDataArray[id]);
+    const DrawResMdlReplacementLayout* pRepl =
+        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
+
+    if (pRepl->texObjDataArray != NULL) {
+        pSwap->texObj = ResTexObj(&pRepl->texObjDataArray[id]);
     } else {
         pSwap->texObj = ResTexObj(NULL);
     }
 
-    if (pReplacement->tlutObjDataArray != NULL) {
-        pSwap->tlutObj = ResTlutObj(&pReplacement->tlutObjDataArray[id]);
+    if (pRepl->tlutObjDataArray != NULL) {
+        pSwap->tlutObj = ResTlutObj(&pRepl->tlutObjDataArray[id]);
     } else {
         pSwap->tlutObj = ResTlutObj(NULL);
     }
 
-    if (pReplacement->texSrtDataArray != NULL) {
-        pSwap->texSrt = ResTexSrt(&pReplacement->texSrtDataArray[id]);
+    if (pRepl->texSrtDataArray != NULL) {
+        pSwap->texSrt = ResTexSrt(&pRepl->texSrtDataArray[id]);
     } else {
         pSwap->texSrt = ResTexSrt(NULL);
     }
 
-    if (pReplacement->chanDataArray != NULL) {
-        pSwap->chan = ResMatChan(&pReplacement->chanDataArray[id]);
+    if (pRepl->chanDataArray != NULL) {
+        pSwap->chan = ResMatChan(&pRepl->chanDataArray[id]);
     } else {
         pSwap->chan = ResMatChan(NULL);
     }
 
-    if (pReplacement->genModeDataArray != NULL) {
-        pSwap->genMode = ResGenMode(&pReplacement->genModeDataArray[id]);
+    if (pRepl->genModeDataArray != NULL) {
+        pSwap->genMode = ResGenMode(&pRepl->genModeDataArray[id]);
     } else {
         pSwap->genMode = ResGenMode(NULL);
     }
 
-    if (pReplacement->matMiscDataArray != NULL) {
-        pSwap->misc = ResMatMisc(&pReplacement->matMiscDataArray[id]);
+    if (pRepl->matMiscDataArray != NULL) {
+        pSwap->misc = ResMatMisc(&pRepl->matMiscDataArray[id]);
     } else {
         pSwap->misc = ResMatMisc(NULL);
     }
 
-    if (pReplacement->pixDLArray != NULL) {
-        pSwap->pix = ResMatPix(&pReplacement->pixDLArray[id]);
+    if (pRepl->pixDLArray != NULL) {
+        pSwap->pix = ResMatPix(&pRepl->pixDLArray[id]);
     } else {
         pSwap->pix = ResMatPix(NULL);
     }
 
-    if (pReplacement->tevColorDLArray != NULL) {
-        pSwap->tevColor = ResMatTevColor(&pReplacement->tevColorDLArray[id]);
+    if (pRepl->tevColorDLArray != NULL) {
+        pSwap->tevColor = ResMatTevColor(&pRepl->tevColorDLArray[id]);
     } else {
         pSwap->tevColor = ResMatTevColor(NULL);
     }
 
-    if (pReplacement->indMtxAndScaleDLArray != NULL) {
+    if (pRepl->indMtxAndScaleDLArray != NULL) {
         pSwap->indMtxAndScale =
-            ResMatIndMtxAndScale(&pReplacement->indMtxAndScaleDLArray[id]);
+            ResMatIndMtxAndScale(&pRepl->indMtxAndScaleDLArray[id]);
     } else {
         pSwap->indMtxAndScale = ResMatIndMtxAndScale(NULL);
     }
 
-    if (pReplacement->texCoordGenDLArray != NULL) {
+    if (pRepl->texCoordGenDLArray != NULL) {
         pSwap->texCoordGen =
-            ResMatTexCoordGen(&pReplacement->texCoordGenDLArray[id]);
+            ResMatTexCoordGen(&pRepl->texCoordGenDLArray[id]);
     } else {
         pSwap->texCoordGen = ResMatTexCoordGen(NULL);
     }
 
-    if (pReplacement->tevDataArray != NULL) {
-        pSwap->tev = ResTev(&pReplacement->tevDataArray[id]);
+    if (pRepl->tevDataArray != NULL) {
+        pSwap->tev = ResTev(&pRepl->tevDataArray[id]);
     } else {
         pSwap->tev = ResTev(NULL);
     }
 
-    pSwap->vtxPosTable = pReplacement->vtxPosTable;
-    pSwap->vtxNrmTable = pReplacement->vtxNrmTable;
-    pSwap->vtxClrTable = pReplacement->vtxClrTable;
+    if (pRepl->flag & 1) {
+        pSwap->vtxPosTable = NULL;
+        pSwap->vtxNrmTable = NULL;
+        pSwap->vtxClrTable = NULL;
+    } else {
+        pSwap->vtxPosTable = pRepl->vtxPosTable;
+        pSwap->vtxNrmTable = pRepl->vtxNrmTable;
+        pSwap->vtxClrTable = pRepl->vtxClrTable;
+    }
 }
 
 void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode, u32 drawMode) {
@@ -295,31 +480,40 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode, u32 drawMode) {
     u8 c;
 
     ResMat mat;
-    ResMat prevMat;
-
     ResShp shp;
     ResNode node;
+    ResMat prevMat;
 
-    bool ignoreMat = (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL);
+    // ctrl bit 4 = "skip material state" (material already active / ignored)
     u32 ctrl = DRAW1MAT1SHP_CTRL_NOPPCSYNC;
 
     if (drawMode & RESMDL_DRAWMODE_FORCE_LIGHTOFF) {
         ctrl |= DRAW1MAT1SHP_CTRL_FORCE_LIGHTOFF;
     }
 
+    if (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL) {
+        ctrl |= 0x10;
+    }
+
     for (; (c = *pByteCode) != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {
 
         node = mdl.GetResNode(pDrawCmd->nodeIdHi << 8 | pDrawCmd->nodeIdLo);
+        shp = mdl.GetResShp(pDrawCmd->shpIdHi << 8 | pDrawCmd->shpIdLo);
+
         if (!node.IsVisible()) {
             continue;
         }
 
-        mat = mdl.GetResMat(pDrawCmd->matIdHi << 8 | pDrawCmd->matIdLo);
-        shp = mdl.GetResShp(pDrawCmd->shpIdHi << 8 | pDrawCmd->shpIdLo);
+        if (shp.ptr()->flag & ResShpData::FLAG_INVISIBLE) {
+            continue;
+        }
 
-        Draw1Mat1ShpDirectly(ignoreMat || mat == prevMat ? ResMat(NULL) : mat,
-                             shp, NULL, NULL, ctrl, NULL,
+        mat = mdl.GetResMat(pDrawCmd->matIdHi << 8 | pDrawCmd->matIdLo);
+
+        u32 matReuseCtrl = ctrl | 0x10;
+        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL,
+                             mat == prevMat ? matReuseCtrl : ctrl, NULL,
                              detail::GetIndMtxOp(mat, node, shp));
 
         prevMat = mat;
@@ -341,23 +535,49 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode,
     ResShp shp;
     ResNode node;
 
-    Draw1Mat1ShpSwap swap;
+    const DrawResMdlReplacementLayout* pRepl =
+        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
 
-    bool ignoreMat = (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL);
+    Draw1Mat1ShpSwap swap;
+    // Retail zeroes the whole swap struct up front (the header ctor only
+    // clears the vtx tables), so clear every field explicitly.
+    swap.texObj = ResTexObj(NULL);
+    swap.tlutObj = ResTlutObj(NULL);
+    swap.genMode = ResGenMode(NULL);
+    swap.tev = ResTev(NULL);
+    swap.pix = ResMatPix(NULL);
+    swap.tevColor = ResMatTevColor(NULL);
+    swap.indMtxAndScale = ResMatIndMtxAndScale(NULL);
+    swap.chan = ResMatChan(NULL);
+    swap.texCoordGen = ResMatTexCoordGen(NULL);
+    swap.misc = ResMatMisc(NULL);
+    swap.texSrt = ResTexSrt(NULL);
+    swap.vtxPosTable = NULL;
+    swap.vtxNrmTable = NULL;
+    swap.vtxClrTable = NULL;
+
+    // ctrl bit 4 = "skip material state" (material already active / ignored)
     u32 ctrl = DRAW1MAT1SHP_CTRL_NOPPCSYNC;
 
     if (drawMode & RESMDL_DRAWMODE_FORCE_LIGHTOFF) {
         ctrl |= DRAW1MAT1SHP_CTRL_FORCE_LIGHTOFF;
     }
 
+    if (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL) {
+        ctrl |= 0x10;
+    }
+
+    u32 matReuseCtrl = ctrl | 0x10;
+
     for (; (c = *pByteCode) != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {
 
         node = mdl.GetResNode(pDrawCmd->nodeIdHi << 8 | pDrawCmd->nodeIdLo);
+        shp = mdl.GetResShp(pDrawCmd->shpIdHi << 8 | pDrawCmd->shpIdLo);
 
         bool visible;
-        if (pReplacement->visArray != NULL) {
-            visible = pReplacement->visArray[node.GetID()] != 0;
+        if (pRepl->visArray != NULL) {
+            visible = pRepl->visArray[node.GetID()] != 0;
         } else {
             visible = node.IsVisible();
         }
@@ -366,13 +586,16 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode,
             continue;
         }
 
+        if (shp.ptr()->flag & ResShpData::FLAG_INVISIBLE) {
+            continue;
+        }
+
         mat = mdl.GetResMat(pDrawCmd->matIdHi << 8 | pDrawCmd->matIdLo);
-        shp = mdl.GetResShp(pDrawCmd->shpIdHi << 8 | pDrawCmd->shpIdLo);
 
         SetupDraw1Mat1ShpSwap(&swap, pReplacement, mat.GetID());
 
-        Draw1Mat1ShpDirectly(ignoreMat || mat == prevMat ? ResMat(NULL) : mat,
-                             shp, NULL, NULL, ctrl, &swap,
+        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL,
+                             mat == prevMat ? matReuseCtrl : ctrl, &swap,
                              detail::GetIndMtxOp(mat, node, shp));
 
         prevMat = mat;
@@ -383,35 +606,40 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode,
 
 void DrawResMdlLoop(const ResMdl mdl, const detail::workmem::MdlZ* pMdlZArray,
                     u32 numMdlZ, u32 drawMode) {
-    u32 i;
-
     ResMat mat;
     ResMat prevMat;
 
     ResShp shp;
     ResNode node;
 
-    bool ignoreMat = (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL);
+    u32 matReuseCtrl;
+    u32 i;
+    // ctrl bit 4 = "skip material state" (material already active / ignored)
     u32 ctrl = DRAW1MAT1SHP_CTRL_NOPPCSYNC;
 
     if (drawMode & RESMDL_DRAWMODE_FORCE_LIGHTOFF) {
         ctrl |= DRAW1MAT1SHP_CTRL_FORCE_LIGHTOFF;
     }
 
-    for (i = 0; i < numMdlZ; i++) {
-        const detail::workmem::MdlZ& rMdlZ = pMdlZArray[i];
+    if (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL) {
+        ctrl |= 0x10;
+    }
 
-        shp = mdl.GetResShp(rMdlZ.shpID);
+    matReuseCtrl = ctrl | 0x10;
+
+    for (i = 0; i < numMdlZ; i++) {
+
+        shp = mdl.GetResShp(pMdlZArray[i].shpID);
 
         if (shp.ptr()->flag & ResShpData::FLAG_INVISIBLE) {
             continue;
         }
 
-        mat = mdl.GetResMat(rMdlZ.matID);
-        node = mdl.GetResNode(rMdlZ.nodeID);
+        mat = mdl.GetResMat(pMdlZArray[i].matID);
+        node = mdl.GetResNode(pMdlZArray[i].nodeID);
 
-        Draw1Mat1ShpDirectly(ignoreMat || mat == prevMat ? ResMat(NULL) : mat,
-                             shp, NULL, NULL, ctrl, NULL,
+        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL,
+                             mat == prevMat ? matReuseCtrl : ctrl, NULL,
                              detail::GetIndMtxOp(mat, node, shp));
 
         prevMat = mat;
@@ -431,12 +659,18 @@ void DrawResMdlLoop(const ResMdl mdl, const detail::workmem::MdlZ* pMdlZArray,
 
     Draw1Mat1ShpSwap swap;
 
-    bool ignoreMat = (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL);
+    // ctrl bit 4 = "skip material state" (material already active / ignored)
     u32 ctrl = DRAW1MAT1SHP_CTRL_NOPPCSYNC;
 
     if (drawMode & RESMDL_DRAWMODE_FORCE_LIGHTOFF) {
         ctrl |= DRAW1MAT1SHP_CTRL_FORCE_LIGHTOFF;
     }
+
+    if (drawMode & RESMDL_DRAWMODE_IGNORE_MATERIAL) {
+        ctrl |= 0x10;
+    }
+
+    u32 matReuseCtrl = ctrl | 0x10;
 
     for (i = 0; i < numMdlZ; i++) {
         const detail::workmem::MdlZ& rMdlZ = pMdlZArray[i];
@@ -452,8 +686,12 @@ void DrawResMdlLoop(const ResMdl mdl, const detail::workmem::MdlZ* pMdlZArray,
 
         SetupDraw1Mat1ShpSwap(&swap, pReplacement, mat.GetID());
 
-        Draw1Mat1ShpDirectly(ignoreMat || mat == prevMat ? ResMat(NULL) : mat,
-                             shp, NULL, NULL, ctrl, &swap,
+        u32 drawCtrl = ctrl;
+        if (mat == prevMat) {
+            drawCtrl = matReuseCtrl;
+        }
+
+        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL, drawCtrl, &swap,
                              detail::GetIndMtxOp(mat, node, shp));
 
         prevMat = mat;
@@ -476,6 +714,9 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
     u32 viewMtxNum = mdl.GetResMdlInfo().GetNumViewMtx();
     detail::workmem::MdlZ* pMdlZArray = detail::workmem::GetMdlZTemporary();
 
+    const DrawResMdlReplacementLayout* pRepl =
+        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
+
     for (; (c = *pByteCode) != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {
 
@@ -483,10 +724,10 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
         node = mdl.GetResNode(nodeID);
 
         bool visible;
-        if (pReplacement == NULL || pReplacement->visArray == NULL) {
+        if (pReplacement == NULL || pRepl->visArray == NULL) {
             visible = node.IsVisible();
         } else {
-            visible = pReplacement->visArray[node.GetID()] != 0;
+            visible = pRepl->visArray[node.GetID()] != 0;
         }
 
         if (!visible) {
@@ -500,7 +741,12 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
         rMdlZ.shpID = pDrawCmd->shpIdHi << 8 | pDrawCmd->shpIdLo;
 
         mtxID = node.GetMtxID();
-        rMdlZ.Z = pViewPosMtxArray[mtxID]._23;
+
+        if (mtxID < viewMtxNum) {
+            rMdlZ.Z = pViewPosMtxArray[mtxID]._23;
+        } else {
+            rMdlZ.Z = 1.0f;
+        }
 
         rMdlZ.priority = pDrawCmd->priority;
 
@@ -535,7 +781,7 @@ void DrawResMdlDirectly(const ResMdl mdl, const math::MTX34* pViewPosMtxArray,
             detail::workmem::MdlZ* pMdlZArray = SetUpMdlZ(
                 &numMdlZ, mdl, pViewPosMtxArray, pByteCodeOpa, pReplacement);
 
-            std::sort(pMdlZArray, pMdlZArray + numMdlZ, detail::FrontToBack);
+            std::sort(pMdlZArray, pMdlZArray + numMdlZ, FrontToBack);
 
             if (pReplacement != NULL) {
                 DrawResMdlLoop(mdl, pMdlZArray, numMdlZ, pReplacement,
@@ -556,7 +802,7 @@ void DrawResMdlDirectly(const ResMdl mdl, const math::MTX34* pViewPosMtxArray,
             detail::workmem::MdlZ* pMdlZArray = SetUpMdlZ(
                 &numMdlZ, mdl, pViewPosMtxArray, pByteCodeXlu, pReplacement);
 
-            std::sort(pMdlZArray, pMdlZArray + numMdlZ, detail::BackToFront);
+            std::sort(pMdlZArray, pMdlZArray + numMdlZ, BackToFront);
 
             if (pReplacement != NULL) {
                 DrawResMdlLoop(mdl, pMdlZArray, numMdlZ, pReplacement,

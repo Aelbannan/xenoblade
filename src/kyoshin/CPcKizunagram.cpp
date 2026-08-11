@@ -7,11 +7,8 @@
 #include "monolib/util/MemManager.hpp"
 
 // Forward declarations of intra-TU callees (free unmangled functions).
-void func_8025E56C(CPcKizunagram* self);
-void func_8025E5A8(CPcKizunagram* self);
-void func_8025E5E4(CPcKizunagram* self, u32 value);
-void func_8025EE94(CPcKizunagramBig* self);
 void func_8025E0D8(CPcKizunagram* self);
+void func_8025D688(CPcKizunaCur* self);
 
 // Layout animation helpers from code_80135FDC (retail unmangled func_80137510).
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -88,6 +85,16 @@ extern "C" void func_8025D8C4(CPcKizunagram* self) {
     func_8025D610((CPcKizunaCur*)self->mKizunaCur);
 }
 
+// Destroy the cursor's layout: delete it through its vtable (deleting dtor,
+// slot 2) and null out the pointer. The double null-check is MWCC's `delete`
+// lowering for this class (same shape as func_8025D9C4's mLayout delete).
+extern "C" void __declspec(noinline) func_8025D688(CPcKizunaCur* self) {
+    if (self->mpLayout != 0) {
+        delete self->mpLayout;
+        self->mpLayout = 0;
+    }
+}
+
 // Draw the main layout and, if present, the embedded cursor layout.
 void func_8025D954(CPcKizunagram* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mStateByte1 == 0) return;
@@ -129,6 +136,12 @@ CPcKizunaCur::CPcKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor) {
 
 CPcKizunaCur::~CPcKizunaCur() {}
 
+// CPcKizunagram destructor. MWCC auto-generates the member destruction
+// (mMemRegion has a non-trivial dtor; the cursor's is trivial and elided) and
+// the delete-flag handling (r4 > 0 -> operator delete) for the
+// complete-object destructor.
+CPcKizunagram::~CPcKizunagram() {}
+
 // CPcKizunagram constructor. Base class stores the manual vtable pointer,
 // then the embedded UnkClass_8045F564 is default-constructed, then the
 // remaining fields and the placeholder-constructed cursor are initialised.
@@ -147,7 +160,7 @@ CPcKizunagram::CPcKizunagram() {
     mFloat48 = lbl_eu_80668880;
 }
 
-extern "C" void func_8025D6E0(CPcKizunaTreeRoot* self, const CPcKizunaVec3* src) {
+extern "C" void func_8025D6E0(CPcKizunaTreeRoot* self, CPcKizunaVec3* src) {
     CPcKizunaTreeLeaf* leaf = self->field8->field10;
     leaf->x = src->x;
     leaf->y = src->y;
@@ -203,10 +216,13 @@ extern "C" void __declspec(noinline) func_8025DC08(CPcKizunagram* self) {
 
 // Dispatch on the state byte at +0x44; each branch is a tail call.
 extern "C" void __declspec(noinline) func_8025DC8C(CPcKizunagram* self) {
-    if (self->mByte44 == 0) {
+    switch (self->mByte44) {
+    case 0:
         func_8025E56C(self);
-    } else if (self->mByte44 == 1) {
+        break;
+    case 1:
         func_8025E5A8(self);
+        break;
     }
 }
 
@@ -430,7 +446,7 @@ extern "C" void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
     func_8025D6E0((CPcKizunaTreeRoot*)self->mKizunaCur, &tmp);
 }
 
-void func_8025E56C(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) func_8025E56C(CPcKizunagram* self) {
     self->mFloat48 += lbl_eu_8066887C;
     if (self->mFloat48 >= lbl_eu_80668890) {
         self->mByte44 = 1;
@@ -439,7 +455,7 @@ void func_8025E56C(CPcKizunagram* self) {
     }
 }
 
-void func_8025E5A8(CPcKizunagram* self) {
+extern "C" void __declspec(noinline) func_8025E5A8(CPcKizunagram* self) {
     self->mFloat48 += lbl_eu_8066887C;
     if (self->mFloat48 >= lbl_eu_80668894) {
         self->mByte44 = 0;
@@ -448,7 +464,7 @@ void func_8025E5A8(CPcKizunagram* self) {
     }
 }
 
-void func_8025E5E4(CPcKizunagram* self, u32 value) {
+extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     u8 count = (u8)func_8003B1EC((void*)table);
     for (u8 i = 0; i < count; i++) {
@@ -526,7 +542,8 @@ extern "C" int func_8025E904(CPcKizunagram* self, const void* table, int val) {
 }
 
 // BDAT range check: random row must fall between two bounded column values.
-extern "C" int func_8025E960(CPcKizunagram* self, const void* table, int id) {
+// noinline: retail callers emit a real bl (func_8025E904 etc).
+extern "C" int __declspec(noinline) func_8025E960(CPcKizunagram* self, const void* table, int id) {
     u16 v1 = (u16)func_80136254(table, lbl_eu_8050D868 + 0xdd, id);
     u16 v2 = (u16)func_80136254(table, lbl_eu_8050D868 + 0x256, id);
     u32 check = func_8009CF8C(0x20) & 0xFFFF;
@@ -622,7 +639,7 @@ void func_8025EE7C(CPcKizunagramBig* self, int r4) {
     }
 }
 
-void func_8025EE94(CPcKizunagramBig* self) {
+extern "C" void func_8025EE94(CPcKizunagramBig* self) {
     // Outer pass: for each of the first 5 slots, unlink its data00 entry from
     // the doubly-linked list, re-zero it (keeping only the low bit of byte14)
     // and clear the id bit from the persistence bitmap when the id isn't
@@ -709,7 +726,23 @@ void func_8025EE94(CPcKizunagramBig* self) {
 
 void func_8025F114(){}
 
-void func_8025F290(){}
+// Walk the prev-pointer (0x1C) chain toward the list head, returning the node
+// whose prev is null. Retail unrolls 5 levels then tail-calls itself; the
+// tail call needs -O4,s codegen (this unit is -O4,p which converts
+// self-recursion to a loop, losing the reloc'd `b`).
+extern "C" CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p) {
+    CPcKizunaSlotEntry* n1 = p->pField1C;
+    if (n1 == 0) return p;
+    CPcKizunaSlotEntry* n2 = n1->pField1C;
+    if (n2 == 0) return n1;
+    CPcKizunaSlotEntry* n3 = n2->pField1C;
+    if (n3 == 0) return n2;
+    CPcKizunaSlotEntry* n4 = n3->pField1C;
+    if (n4 == 0) return n3;
+    CPcKizunaSlotEntry* n5 = n4->pField1C;
+    if (n5 == 0) return n4;
+    return func_8025F290(n5);
+}
 
 void func_8025F2E8(){}
 

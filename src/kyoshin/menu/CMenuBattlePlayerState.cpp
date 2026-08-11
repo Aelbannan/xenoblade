@@ -4,7 +4,6 @@
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -42,8 +41,8 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
 
 void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
-// Unmangled retail name; int (not u8) avoids clrlwi before cmpwi.
-void* func_800B8B94(int id);
+// func_800B8B94 is declared (extern "C", s32) by CAIAction.hpp, included
+// transitively via CfObjectActor.hpp -> CBattleManager.hpp.
 void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
                    CMenuBattlePlayerStateSlot* slot);
 void func_8010D4B0(CMenuBattlePlayerState* self,
@@ -60,6 +59,7 @@ extern const f32 lbl_eu_80666FA0; // -178.0f
 extern const f32 lbl_eu_80666FB0; // -1.0f
 extern const f32 lbl_eu_80666FC0; // 100.0f
 extern const f32 lbl_eu_80666FC4; // 360.0f
+extern const f32 lbl_eu_80666FC8; // HP gauge width multiplier
 }
 
 extern "C" {
@@ -1164,8 +1164,70 @@ extern "C" void func_8010EA5C(void* self) {
 
 void func_8010CDCC(){}
 void func_8010CE50(){}
-void func_8010CF68(){}
 void func_8010D0D4(){}
+
+// Battle-party-slot per-frame update: finds the first free arts slot, derives
+// an HP-gauge width ratio from a BDAT lookup, and writes it into the
+// "N_HpGauge_Max" pane size.
+extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
+                              CMenuBattlePlayerStateSlot* slot) {
+    // state load first: retail keeps it in r5 (result takes r6).
+    MenuBpsActorState* state =
+        reinterpret_cast<MenuBpsActorState*>(slot->unk208);
+    u32 result = 0;
+    // u32 (not u8) so the found-branch idx*4 keeps the 30-bit slwi mask;
+    // the u8 range is re-derived at the unk888 index site.
+    u32 idx = state->unk89C & 0xFF;
+    MenuBpsPartyRow* row = &state->rows[idx];
+
+    for (u32 i = 1; i < 6; i++) {
+        // Named offset keeps the (i&0xFF)<<5 temp in its own register
+        // (retail r5) instead of coalescing it with the lwzx dest r0.
+        u32 off = (i & 0xFF) * 0x20;
+        if (row->entries[off >> 5].unk00 != 0) {
+            continue;
+        }
+        u8 c = slot->unk204;
+        if (c <= 8) {
+            result = static_cast<u8>(func_8013600C(
+                         (void*)(lbl_eu_804FD720 + 0x415),
+                         (const char*)(lbl_eu_804FD720 + 0x422),
+                         static_cast<u8>(idx * 4 + idx + i + (c - 1) * 25))) *
+                     100;
+        }
+        break;
+    }
+
+    s32 maxHp = reinterpret_cast<MenuBpsActorState*>(slot->unk208)
+                    ->unk888[static_cast<u8>(idx)];
+    u32 ok = 0;
+    f32 hpF = (f32)maxHp;
+    f32 resF = (f32)result;
+    f32 ratio;
+    // Named-lbl zero/one so the SDA21 relocs keep the retail labels
+    // (literals would fold into the TU-local float pool @N).
+    if (hpF != lbl_eu_80666F94 && resF != lbl_eu_80666F94) {
+        ok = 1;
+    }
+    if (ok) {
+        ratio = hpF / resF;
+    } else {
+        ratio = lbl_eu_80666F94;
+    }
+
+    if (ratio > lbl_eu_80666F90) {
+        ratio = lbl_eu_80666F90;
+    }
+    if (slot->unk204 > 8) {
+        ratio = lbl_eu_80666F94;
+    }
+
+    nw4r::lyt::Pane* pane = slot->unk54;
+    if (pane != NULL) {
+        pane->SetSize(nw4r::lyt::Size(lbl_eu_80666FC8 * ratio,
+                                      pane->GetSize().height));
+    }
+}
 // Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
 extern "C" void harness_stub_us_8010dc90(CMenuBattlePlayerState* self,
                                          void* actor,

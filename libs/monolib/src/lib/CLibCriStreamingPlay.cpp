@@ -60,8 +60,8 @@ extern "C" {
     int getFileSize__11CDeviceFileFPCc(const char* filename, int param);
     bool isSoundModeMono__9CDeviceSCFv(void);
     
-    // Pan calculation
-    void func_8049B834(float p1, float p2, float p3, float* o1, float* o2);
+    // Pan calculation: (float a, float b, float* out1, float* out2, in1, in2)
+    void func_8049B834(float a, float b, float* out1, float* out2, const u8* in1, const u8* in2);
     
     // Memory management
     u32 getHandleMEM2__Q23mtl10MemManagerFv(void);
@@ -87,23 +87,47 @@ extern "C" {
     extern const char lbl_eu_805230B8[];
 }
 
-// Volume lookup helper - searches table for volume dB value
+// Volume lookup helper - searches table for volume dB value.
+// Inlined by MWCC into every caller (retail inlines the loop).
 static int lookupVolume(int volDb) {
-    u32* table = lbl_eu_80523050;
-    while (1) {
-        int entry = *(int*)table;
-        if (entry < 0) return -960;
-        if (volDb >= entry) return *(int*)(table + 1);
-        int next = *(int*)(table + 2);
+    int* table = reinterpret_cast<int*>(lbl_eu_80523050);
+    while (true) {
+        int entryVal = table[0];
+        if (entryVal < 0) return -960;
+        if (volDb >= entryVal) return table[1];
+        int next = table[2];
         if (volDb > next) {
-            int val1 = *(int*)(table + 1);
-            int val2 = *(int*)(table + 3);
-            // Linear interpolation
-            float result = (float)(val1 - val2) * (float)(volDb - next) / (float)(entry - next);
-            return val2 + (int)result;
+            int val1 = table[1];
+            int val2 = table[3];
+            return val2 + (int)((float)(volDb - next) * (float)(val1 - val2) /
+                                (float)(entryVal - next));
         }
         table += 2;
     }
+}
+
+// Find a stream slot by id (inlined by MWCC; returns the slot pointer or NULL).
+static StreamEntry* findStreamSlot(u32 id) {
+    u8* entry = reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8;
+    for (int i = 0; i < 5; i++) {
+        if (*(u32*)(entry + 4) == id) {
+            return reinterpret_cast<StreamEntry*>(entry);
+        }
+        entry += 0x94;
+    }
+    return NULL;
+}
+
+// Find a free (unused) stream slot; NULL if all five are in use.
+static StreamEntry* findFreeSlot() {
+    u8* entry = reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x1C8;
+    for (int i = 0; i < 5; i++) {
+        if (*(u32*)(entry + 4) + 0x10000 == 0xFFFF) {
+            return reinterpret_cast<StreamEntry*>(entry);
+        }
+        entry += 0x94;
+    }
+    return NULL;
 }
 
 // Constructor - initializes streaming audio manager
@@ -163,158 +187,141 @@ CLibCriStreamingPlay::~CLibCriStreamingPlay() {
     CWorkThread::~CWorkThread();
 }
 
-// func_8045B5AC - Start streaming playback
-// Returns stream ID on success, -1 on failure
-int CLibCriStreamingPlay::func_8045B5AC(const char* filename, int param2, bool loopFlag, int afsId, int afsSubId, bool forceAhx) {
-    u8* base = (u8*)this;
-    
-    // Check file exists
-    int fileSize = getFileSize__11CDeviceFileFPCc(filename, 0);
-    if (fileSize < 0) return -1;
-    
-    // Find free stream slot
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        u32 slotId = *(u32*)(entry + 4);
-        if ((slotId + 0x10000) == 0xFFFF) { // unused marker
-            found = entry;
-            break;
-        }
-        entry += 0x94;
-    }
-    
-    if (!found) return -1;
-    
-    // Clear flags
-    *(u32*)(found + 0x90) = 0;
-    
-    // Check mono mode
-    if (isSoundModeMono__9CDeviceSCFv()) {
-        *(u32*)(found + 0x90) |= 0x40;
-    } else {
-        *(u32*)(found + 0x90) &= ~0x40;
-    }
-    
-    // Copy filename
-    strncpy((char*)(found + 0x1C), filename, 64);
-    
-    // Check for .ahx extension or forced AHX mode
-    bool useAhx = (strstr(filename, lbl_eu_806637A4) != nullptr) || forceAhx;
-    if (useAhx) {
-        *(u32*)(found + 0x90) |= 0x04;
-    } else {
-        *(u32*)(found + 0x90) &= ~0x04;
-    }
-    
-    // Store source parameter
-    *(u32*)(found + 0x0C) = param2;
-    
-    // Calculate buffer size
-    u32 rate = lbl_eu_806637A0;
-    int channels = (*(u32*)(found + 0x90) & 0x04) ? 2 : 2;
-    u32 bufSize = (rate / 10000) * 6 * 0x800 + channels * 0x60C0 + 100;
-    *(u32*)(found + 0x14) = bufSize;
-    
-    // Allocate streaming buffer
-    u32 mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-    void* buf = allocate_tail__Q23mtl10MemManagerFUlUli(mem2, bufSize, 4);
-    *(void**)(found + 0x18) = buf;
-    
-    if (!buf) {
-        // Cleanup on allocation failure
-        if (found) {
-            void* adxt = *(void**)(found + 8);
-            if (adxt) {
-                if (*(u32*)(found + 0x90) & 0x04) ADXT_DetachAhx(adxt);
-                ADXT_Destroy(adxt);
-                *(void**)(found + 8) = nullptr;
-            }
-            void* buffer = *(void**)(found + 0x18);
-            if (buffer) {
-                mtl::MemManager::deallocate(buffer);
-                *(void**)(found + 0x18) = nullptr;
-            }
-            *(u32*)(found + 4) = -1;
-            *(u32*)(found + 0x90) = 0;
-        }
+// func_8045B5AC - Start streaming playback.
+// Retail has no `this`: r3 = filename, r4 = alloc handle, r5 = loop flag,
+// r6 = AFS file id, r7 = AFS subfile id, r8 = force-AHX flag.
+// Returns the stream id, or -1 on failure.
+int func_8045B5AC(const char* filename, int param2, bool loopFlag,
+                  int afsId, int afsSubId, bool forceAhx) {
+    if (getFileSize__11CDeviceFileFPCc(filename, 0) < 0) {
         return -1;
     }
-    
-    // Generate unique stream ID
-    u32 counter = *(u32*)(inst + 0x4AC);
-    u32 slotIdx = *(u32*)(found);
-    u32 streamId = ((slotIdx + 1) & 0xFF) | ((counter & 0xFF) << 8);
-    *(u32*)(inst + 0x4AC) = counter + 1;
-    *(u32*)(found + 4) = streamId;
-    
-    // Initialize playback state
-    *(u32*)(found + 0x5C) = 0;
-    *(u32*)(found + 0x60) = 0;
-    *(float*)(found + 0x64) = lbl_eu_8066A508; // 0.0
-    *(float*)(found + 0x7C) = lbl_eu_8066A508;
-    *(float*)(found + 0x68) = lbl_eu_8066A508;
-    *(float*)(found + 0x6C) = lbl_eu_8066A508;
-    *(float*)(found + 0x70) = lbl_eu_8066A50C; // 1.0
-    *(float*)(found + 0x74) = lbl_eu_8066A50C;
-    *(u32*)(found + 0x80) = 0;
-    *(u32*)(found + 0x84) = 0;
-    *(float*)(found + 0x78) = lbl_eu_8066A508;
-    
-    // Set loop flag
-    if (loopFlag) {
-        *(u32*)(found + 0x90) |= 0x20;
-    } else {
-        *(u32*)(found + 0x90) &= ~0x20;
+
+    StreamEntry* slot = findFreeSlot();
+    if (slot == NULL) {
+        return -1;
     }
-    
-    // Store AFS parameters
-    *(u32*)(found + 0x88) = afsId;
-    *(u32*)(found + 0x8C) = afsSubId;
-    
-    // Check if not in preload-only mode
-    if (!(*(u32*)(found + 0x90) & 0x08)) {
-        int ch = (*(u32*)(found + 0x90) & 0x04) ? 2 : 2;
-        void* adxt = ADXT_Create(ch, *(void**)(found + 0x18), *(u32*)(found + 0x14));
-        *(void**)(found + 8) = adxt;
-        
-        // Attach AHX data if needed
-        if (*(u32*)(found + 0x90) & 0x04) {
-            u32 idx = *(u32*)(found);
-            void* ahxData = (u8*)lbl_eu_806656EC + (idx << 13);
-            ADXT_AttachAhx(adxt, ahxData, 0x2000);
-            ADXT_SetSvrFreq(adxt, 30000);
+
+    slot->flags = 0;
+    if (isSoundModeMono__9CDeviceSCFv()) {
+        slot->flags |= 0x40;
+    } else {
+        slot->flags &= ~0x40;
+    }
+
+    strncpy(slot->name, filename, 0x40);
+
+    // .ahx extension or forced AHX mode selects the AHX decoder.
+    if (strstr(filename, lbl_eu_806637A4) != NULL || forceAhx) {
+        slot->flags |= 0x04;
+    } else {
+        slot->flags &= ~0x04;
+    }
+
+    slot->field_0x0C = (u32)param2;
+
+    // Streaming buffer size (ch = 2 for stereo, 1 for mono-AHX):
+    //   (rate/10000 >> 6) * ch*25000 * 0xBA2F8BA3 >> 32 >> 5 * 6,
+    // rounded up to 0x800, plus ch*24768 + 100.
+    u32 rate = lbl_eu_806637A0;
+    int bit = (int)((slot->flags >> 2) & 1);
+    int ch1 = 2 - bit;
+    u32 a = (rate / 10000) >> 6;
+    u32 b = a * (u32)(ch1 * 25000);
+    int negb = -bit;
+    int signb = (negb | bit) >> 31;
+    u32 c = (u32)(((u64)b * 0xBA2F8BA3u) >> 32);
+    u32 d = (c >> 5) * 6;
+    slot->bufSize = ((d + 0x800) & ~0x7FF) + (u32)((signb + 2) * 24768) + 100;
+
+    slot->buffer = reinterpret_cast<u8*>(allocate_tail__Q23mtl10MemManagerFUlUli(
+        (u32)param2, slot->bufSize, 0x20));
+    if (slot->buffer == NULL) {
+        if (slot->adxt != NULL) {
+            if (slot->flags & 0x04) {
+                ADXT_DetachAhx(slot->adxt);
+            }
+            ADXT_Destroy(slot->adxt);
+            slot->adxt = NULL;
         }
-        
-        // Start playback
+        if (slot->buffer != NULL) {
+            mtl::MemManager::deallocate(slot->buffer);
+            slot->buffer = NULL;
+        }
+        slot->id = -1;
+        slot->flags = 0;
+        return -1;
+    }
+
+    // Generate a unique stream id: (slotIdx+1 & 0xFF) | (counter & 0xFF) << 8.
+    u32* counterPtr = reinterpret_cast<u32*>(
+        reinterpret_cast<u8*>(lbl_eu_806656E8) + 0x4AC);
+    u32 counter = *counterPtr;
+    slot->id = ((slot->slotId + 1) & 0xFF) | ((counter & 0xFF) << 8);
+    *counterPtr = counter + 1;
+
+    // Initialise playback state.
+    slot->field_0x5C = 0;
+    slot->field_0x60 = 0;
+    slot->field_0x64 = lbl_eu_8066A508;
+    slot->field_0x7C = lbl_eu_8066A508;
+    slot->field_0x68 = lbl_eu_8066A508;
+    slot->field_0x6C = lbl_eu_8066A508;
+    slot->field_0x70 = lbl_eu_8066A50C;
+    slot->field_0x74 = lbl_eu_8066A50C;
+    slot->field_0x80 = 0;
+    slot->field_0x84 = 0;
+    slot->field_0x78 = lbl_eu_8066A508;
+
+    if (loopFlag) {
+        slot->flags |= 0x20;
+    } else {
+        slot->flags &= ~0x20;
+    }
+
+    slot->field_0x88 = (u32)afsId;
+    slot->field_0x8C = (u32)afsSubId;
+
+    // Create the ADX decoder unless this is a preload-only request (0x10).
+    if (!(slot->flags & 0x10)) {
+        int ch2 = 2 - (int)((slot->flags >> 2) & 1);
+        slot->adxt = reinterpret_cast<u8*>(ADXT_Create(ch2, slot->buffer, slot->bufSize));
+
+        if (slot->flags & 0x04) {
+            u32 idx = slot->slotId << 13;
+            ADXT_AttachAhx(slot->adxt, reinterpret_cast<u8*>(lbl_eu_806656EC) + idx, 0x2000);
+            ADXT_SetSvrFreq(slot->adxt, 0x1e);
+        }
+
         if (afsId >= 0) {
-            ADXT_StartAfs(*(void**)(found + 8), afsId, afsSubId);
+            ADXT_StartAfs(slot->adxt, afsId, afsSubId);
         } else {
-            ADXT_StartFnameRange(*(void**)(found + 8), filename);
+            ADXT_StartFnameRange(slot->adxt, filename);
         }
-        
-        // Set mono pan if needed
-        u32 f = *(u32*)(found + 0x90);
-        if ((f & 0x20) && !(f & 0x04)) {
-            ADXT_SetOutPan(*(void**)(found + 8), 1, 0);
-            ADXT_SetOutPan(*(void**)(found + 8), 0, 0);
+
+        // Mono streams get a centered pan.
+        if ((slot->flags & 0x40) && !(slot->flags & 0x04)) {
+            ADXT_SetOutPan(slot->adxt, 1, 0);
+            ADXT_SetOutPan(slot->adxt, 0, 0);
         }
-        
-        // Wait for playback to start if blocking
+
+        // Block until playback actually starts when requested.
         if (loopFlag) {
             int waitCount = 100;
-            while (waitCount > 0) {
+            while (true) {
+                if (ADXT_GetStat(slot->adxt) == 3) {
+                    break;
+                }
+                if (--waitCount <= 0) {
+                    break;
+                }
                 ADXM_ExecMain();
                 VIWaitForRetrace();
-                if (ADXT_GetStat(*(void**)(found + 8)) == 3) break;
-                waitCount--;
             }
         }
     }
-    
-    return *(int*)(found + 4);
+
+    return slot->id;
 }
 
 // func_8045B970 - Check if stream ID is active
@@ -737,119 +744,94 @@ void CLibCriStreamingPlay::func_8045C8B0(int id, float volume) {
     ADXT_SetOutVol(*(void**)(found + 8), outVol);
 }
 
-// func_8045CA4C - Start volume fade
-void CLibCriStreamingPlay::func_8045CA4C(int id, float volume, float fadeTime, int action) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    
-    // If fadeTime <= 0, apply immediately
+// func_8045CA4C - Start a volume fade.
+// Retail has no `this`: r3 = stream id, r4 = fade-end action, f1 = volume,
+// f2 = fade time (see the CLibCri forwarding trampoline func_80459A88).
+void func_8045CA4C(int id, int action, float volume, float fadeTime) {
+    // Immediate volume change when the fade time is <= 0.
     if (fadeTime <= lbl_eu_8066A50C) {
-        u8* entry = inst + 0x1C8;
-        u8* found = nullptr;
-        
-        for (int i = 0; i < 5; i++) {
-            if (*(u32*)(entry + 4) == (u32)id) {
-                found = entry;
-                break;
+        StreamEntry* slot = findStreamSlot((u32)id);
+        if (slot != NULL) {
+            slot->field_0x64 = volume;
+            float level = volume;
+            slot->field_0x68 = volume;
+            slot->field_0x6C = level;
+            float zero = lbl_eu_8066A50C;
+            slot->field_0x70 = zero;
+            slot->field_0x74 = zero;
+
+            // Total output volume: level * 0x78 * 0x7C (0 during a flow).
+            float totalVol = level * slot->field_0x78 * slot->field_0x7C;
+            if (CWorkControl::hasFlow()) {
+                totalVol = lbl_eu_8066A50C;
             }
-            entry += 0x94;
+            int volDb = (int)(lbl_eu_8066A510 * totalVol);
+            ADXT_SetOutVol(slot->adxt, lookupVolume(volDb));
         }
-        
-        if (!found) return;
-        
-        *(float*)(found + 0x64) = volume;
-        float vol = (float)volume;
-        *(float*)(found + 0x68) = volume;
-        *(float*)(found + 0x6C) = vol;
-        *(float*)(found + 0x70) = lbl_eu_8066A50C;
-        *(float*)(found + 0x74) = lbl_eu_8066A50C;
-        
-        float totalVol = vol * *(float*)(found + 0x78) * *(float*)(found + 0x7C);
-        bool flow = CWorkControl::hasFlow();
-        if (flow) totalVol = lbl_eu_8066A50C;
-        int volDb = (int)(lbl_eu_8066A510 * totalVol);
-        int outVol = lookupVolume(volDb);
-        ADXT_SetOutVol(*(void**)(found + 8), outVol);
     }
-    
-    // Find entry and set up fade parameters
-    u8* entry2 = inst + 0x1C8;
-    u8* found2 = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry2 + 4) == (u32)id) {
-            found2 = entry2;
-            break;
+
+    // Always (re)set the fade parameters on the target entry.
+    StreamEntry* slot = findStreamSlot((u32)id);
+    if (slot != NULL) {
+        slot->field_0x68 = volume;
+        float zero = lbl_eu_8066A50C;
+        slot->field_0x6C = slot->field_0x64;
+        if (volume == zero) {
+            slot->field_0x80 = action;
         }
-        entry2 += 0x94;
-    }
-    
-    if (!found2) return;
-    
-    // Set fade parameters
-    *(float*)(found2 + 0x68) = volume;
-    float curVol = *(float*)(found2 + 0x64);
-    *(float*)(found2 + 0x6C) = curVol;
-    
-    if (volume == lbl_eu_8066A50C) {
-        *(int*)(found2 + 0x80) = action;
-    }
-    
-    *(float*)(found2 + 0x70) = fadeTime;
-    *(float*)(found2 + 0x74) = lbl_eu_8066A50C; // 0.0
-    
-    // Clamp fade target to >= 0
-    if (*(float*)(found2 + 0x70) <= lbl_eu_8066A50C) {
-        *(float*)(found2 + 0x70) = lbl_eu_8066A50C;
+        slot->field_0x70 = fadeTime;
+        slot->field_0x74 = zero;
+        if (slot->field_0x70 <= zero) {
+            slot->field_0x70 = zero;
+        }
     }
 }
 
-// func_8045CCFC - Set pan and volume
-void CLibCriStreamingPlay::func_8045CCFC(int id, float param2, float param3, float param4) {
-    u8* inst = (u8*)lbl_eu_806656E8;
-    u8* entry = inst + 0x1C8;
-    u8* found = nullptr;
-    
-    for (int i = 0; i < 5; i++) {
-        if (*(u32*)(entry + 4) == (u32)id) {
-            found = entry;
-            break;
-        }
-        entry += 0x94;
+// func_8045CCFC - Set pan/volume from a 3D position pair.
+// Retail has no `this`: r3 = stream id, r4/r5 = position pointers,
+// f1/f2/f3 = the pan/volume parameters (see func_8049B834).
+void func_8045CCFC(int id, const u8* in2, const u8* in1,
+                   float a, float b, float c) {
+    StreamEntry* slot = findStreamSlot((u32)id);
+    if (slot == NULL) return;
+
+    // Compute base volume/pan from the two 3D positions.
+    float pan, vol;
+    func_8049B834(a, b, &pan, &vol, in1, in2);
+
+    // Clamp the volume to the caller's minimum level.
+    if (vol < c) {
+        vol = c;
     }
-    
-    if (!found) return;
-    
-    // Calculate pan/volume from parameters
-    float outVol, outPan;
-    func_8049B834(param2, param3, param4, &outVol, &outPan);
-    
-    // Clamp volume
-    if (outVol < (float)param4) {
-        outVol = (float)param4;
+    float level = vol;
+    slot->field_0x78 = level;
+
+    // Total output volume: current * level * multiplier (0 during a flow).
+    float totalVol = slot->field_0x64 * level * slot->field_0x7C;
+    if (CWorkControl::hasFlow()) {
+        totalVol = lbl_eu_8066A50C;
     }
-    
-    // Store and apply volume
-    *(float*)(found + 0x78) = (float)outVol;
-    
-    float totalVol = *(float*)(found + 0x64) * (float)outVol * *(float*)(found + 0x7C);
-    bool flow = CWorkControl::hasFlow();
-    if (flow) totalVol = lbl_eu_8066A50C;
+
+    // Convert to ADX output-volume units via the 100.0 percent scale, then
+    // look up (with linear interpolation) the ADX volume from the dB table.
     int volDb = (int)(lbl_eu_8066A510 * totalVol);
-    int outVolDb = lookupVolume(volDb);
-    ADXT_SetOutVol(*(void**)(found + 8), outVolDb);
-    
-    // Set pan if not in stereo mode
-    u32 flags = *(u32*)(found + 0x90);
-    if (!(flags & 0x20)) {
-        float panF = lbl_eu_8066A524 * outPan; // 30.0 * pan
-        int pan = (int)panF;
-        if (pan < -15) pan = -15;
-        if (pan > 15) pan = 15;
-        
-        if (!(flags & 0x04)) {
-            ADXT_SetOutPan(*(void**)(found + 8), 1, pan);
+    int outVol = lookupVolume(volDb);
+    ADXT_SetOutVol(slot->adxt, outVol);
+
+    // Set pan unless the stream is mono (flag 0x40).
+    u32 flags = slot->flags;
+    if (!(flags & 0x40)) {
+        int panVal = (int)(lbl_eu_8066A524 * pan);
+        if (panVal < -15) {
+            panVal = -15;
         }
-        ADXT_SetOutPan(*(void**)(found + 8), 0, pan);
+        if (panVal > 15) {
+            panVal = 15;
+        }
+        if (!(flags & 0x04)) {
+            ADXT_SetOutPan(slot->adxt, 1, panVal);
+        }
+        ADXT_SetOutPan(slot->adxt, 0, panVal);
     }
 }
 

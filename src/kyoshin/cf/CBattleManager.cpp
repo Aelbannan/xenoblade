@@ -554,7 +554,7 @@ struct SubAccessor {
     virtual void vf18(void* ev);
     virtual void vf1C();
     virtual void vf20(u32 id);
-    virtual void vf24();
+    virtual void vf24(void* item);
     virtual void vf28();
     virtual void vf2C();
     virtual void vf30();
@@ -566,10 +566,10 @@ struct SubAccessor {
     virtual void vf48();
     virtual void vf4C();
     virtual void vf50();
-    virtual void vf54();
-    virtual void vf58();
-    virtual void vf5C();
-    virtual void vf60();
+    virtual void* vf54(u32 i);
+    virtual void* vf58(u32 i);
+    virtual void* vf5C(u32 i);
+    virtual void* vf60(u32 i);
     virtual void vf64();
     virtual void vf68();
     virtual void vf6C();
@@ -590,7 +590,9 @@ struct EC918_BattleObjAccessor {
     u32 field_1530;
     u8 _pad_1534[0x15E4 - 0x1534];
     u32 field_15E4;
-    u8 _pad_15E8[0x3374 - 0x15E8];
+    u8 _pad_15E8[0x15F0 - 0x15E8];
+    u32 field_15F0;
+    u8 _pad_15F4[0x3374 - 0x15F4];
     u32 field_3374;
     u8 _pad_3378[0x3E9C - 0x3378];
     u8 field_3E9C;
@@ -598,6 +600,8 @@ struct EC918_BattleObjAccessor {
     void* field_3ED4;
     u8 _pad_3ED8[0x3F00 - 0x3ED8];
     u32 field_3F00;
+    u8 _pad_3F04[0x3F28 - 0x3F04];
+    u16 field_3F28;
     u32 field_3F10;
     u8 _pad_3F14[0x456C - 0x3F14];
     u16 field_456C;
@@ -610,6 +614,108 @@ static inline s32 mod100(s32 x) {
     div += (s32)((u32)div >> 31);  // sign correction
     return x - div * 100;
 }
+
+// ================================================================
+// vcall helpers + constants + externs for func_800EC918 switch cases
+// ================================================================
+static inline s32 vcall_i(void* o, u32 slot) { void* vt = *(void**)o; return ((s32(*)(void*))(*(void**)((u8*)vt + slot)))(o); }
+static inline void* vcall_p(void* o, u32 slot) { void* vt = *(void**)o; return ((void*(*)(void*))(*(void**)((u8*)vt + slot)))(o); }
+static inline f32 vcall_f(void* o, u32 slot) { void* vt = *(void**)o; return ((f32(*)(void*))(*(void**)((u8*)vt + slot)))(o); }
+static inline void* vcall_p1(void* o, u32 slot, u32 a) { void* vt = *(void**)o; return ((void*(*)(void*, u32))(*(void**)((u8*)vt + slot)))(o, a); }
+static inline void vcall_v1(void* o, u32 slot, u32 a) { void* vt = *(void**)o; return ((void(*)(void*, u32))(*(void**)((u8*)vt + slot)))(o, a); }
+static inline void vcall_f1(void* o, u32 slot, f32 a) { void* vt = *(void**)o; return ((void(*)(void*, f32))(*(void**)((u8*)vt + slot)))(o, a); }
+static inline void vcall_d1(void* o, u32 slot, double d) { void* vt = *(void**)o; return ((void(*)(void*, double))(*(void**)((u8*)vt + slot)))(o, d); }
+static inline void vcall_v3f(void* o, u32 slot, void* a, f32 x, f32 y, f32 z) { void* vt = *(void**)o; return ((void(*)(void*, void*, f32, f32, f32))(*(void**)((u8*)vt + slot)))(o, a, x, y, z); }
+
+extern "C" int mtRand__Q22ml4mathFii(int a, int b);
+extern "C" s32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
+extern "C" void* getFP__FPCc(const char* str);
+extern "C" u8 lbl_eu_80573EEC[];
+extern "C" void func_8003AA34(void);
+extern "C" void func_80135380(u8 v);
+extern "C" void* func_80149330(void*, u32, u32, u32, u32);
+extern "C" s32 func_8015B130(s32 a, u16 b);
+extern "C" s32 func_801B1C5C(void);
+extern "C" void func_802A30DC(void* pc, s32 v);
+extern void func_800BFC68(void* moveObj);   // C++ linkage -> func_800BFC68__FPQ22cf12CfObjectMove
+
+static const f32 k0_0f = 0.0f;     // lbl_eu_80666DDC
+static const f32 k0_01f = 0.01f;   // lbl_eu_80666DD8
+static const f32 k0_25f = 0.25f;   // lbl_eu_80666E1C
+static const f32 k0_5 = 0.5;       // lbl_eu_80666E58 (f64)
+static const f32 kM0_5 = -0.5;     // lbl_eu_80666E60 (f64)
+static const f32 k1_0f = 1.0f;     // lbl_eu_80666DD4
+static const f32 k1_25f = 1.25f;   // lbl_eu_80666E40
+static const f32 k2_0f = 2.0f;     // lbl_eu_80666DFC
+static const f32 k2_5f = 2.5f;     // lbl_eu_80666E80
+static const f32 k5_0f = 5.0f;     // lbl_eu_80666E6C
+static const f32 k10_0f = 10.0f;   // lbl_eu_80666E34
+static const f32 k15_0f = 15.0f;   // lbl_eu_80666DF4
+static const f32 k25_0f = 25.0f;   // lbl_eu_80666DF8
+static const f32 k50_0f = 50.0f;   // lbl_eu_80666E18
+static const f32 k75_0f = 75.0f;   // lbl_eu_80666E7C
+static const f32 k99_0f = 99.0f;   // lbl_eu_80666E88
+static const f32 k100_0f = 100.0f; // lbl_eu_80666E00
+struct EnumListHolder {
+    void* list;
+    u32 handle;
+};
+
+extern "C" void* __ct__800FB044(void* list, f32 f, void* obj, int kind);
+extern "C" float func_800D81A8(void* obj, void* target, void* source);
+
+
+
+static inline s32 vf0C(void* o) { void* vt = *(void**)o; return ((s32(*)(void*))(*(void**)((u8*)vt + 0x0C)))(o); }
+static inline void vf20(void* o, u32 a) { void* vt = *(void**)o; return ((void(*)(void*, u32))(*(void**)((u8*)vt + 0x20)))(o, a); }
+static inline void vf24(void* o, void* a) { void* vt = *(void**)o; return ((void(*)(void*, void*))(*(void**)((u8*)vt + 0x24)))(o, a); }
+static inline void* vf30(void* o) { void* vt = *(void**)o; return ((void*(*)(void*))(*(void**)((u8*)vt + 0x30)))(o); }
+static inline u32 vf4C(void* o) { void* vt = *(void**)o; return ((u32(*)(void*))(*(void**)((u8*)vt + 0x4C)))(o); }
+static inline void* vf5C(void* o, u32 a) { void* vt = *(void**)o; return ((void*(*)(void*, u32))(*(void**)((u8*)vt + 0x5C)))(o, a); }
+static inline void vf70(void* o, u32 a) { void* vt = *(void**)o; return ((void(*)(void*, u32))(*(void**)((u8*)vt + 0x70)))(o, a); }
+static inline void* vfAC(void* o) { void* vt = *(void**)o; return ((void*(*)(void*))(*(void**)((u8*)vt + 0xAC)))(o); }
+static inline s32 vfE0(void* o) { void* vt = *(void**)o; return ((s32(*)(void*))(*(void**)((u8*)vt + 0xE0)))(o); }
+static inline s32 vf108(void* o) { void* vt = *(void**)o; return ((s32(*)(void*))(*(void**)((u8*)vt + 0x108)))(o); }
+static inline void vf150(void* o, f32 a) { void* vt = *(void**)o; return ((void(*)(void*, f32))(*(void**)((u8*)vt + 0x150)))(o, a); }
+static inline void vf154(void* o, f32 a) { void* vt = *(void**)o; return ((void(*)(void*, f32))(*(void**)((u8*)vt + 0x154)))(o, a); }
+static inline f32 vf158(void* o) { void* vt = *(void**)o; return ((f32(*)(void*))(*(void**)((u8*)vt + 0x158)))(o); }
+static inline void* vf224(void* o) { void* vt = *(void**)o; return ((void*(*)(void*))(*(void**)((u8*)vt + 0x224)))(o); }
+static inline void* vf290(void* o) { void* vt = *(void**)o; return ((void*(*)(void*))(*(void**)((u8*)vt + 0x290)))(o); }
+static inline s32 vf2BC(void* o) { void* vt = *(void**)o; return ((s32(*)(void*))(*(void**)((u8*)vt + 0x2BC)))(o); }
+static inline void vf2C4(void* o, void* a, f32 x, f32 y, f32 z) { void* vt = *(void**)o; return ((void(*)(void*, void*, f32, f32, f32))(*(void**)((u8*)vt + 0x2C4)))(o, a, x, y, z); }
+static inline void* vf2D4(void* o, u32 a) { void* vt = *(void**)o; return ((void*(*)(void*, u32))(*(void**)((u8*)vt + 0x2D4)))(o, a); }
+static inline void vf5B0(void* o, f32 a, u32 b) { void* vt = *(void**)o; return ((void(*)(void*, f32, u32))(*(void**)((u8*)vt + 0x5B0)))(o, a, b); }
+
+// VF* vtable slot constants used by the EC918 switch cases
+#define SLOT_VF0C 0x0C
+#define SLOT_VF108 0x108
+#define SLOT_VF118 0x118
+#define SLOT_VF11C 0x11C
+#define SLOT_VF128 0x128
+#define SLOT_VF12C 0x12C
+#define SLOT_VF150 0x150
+#define SLOT_VF154 0x154
+#define SLOT_VF15C 0x15C
+#define SLOT_VF1E8 0x1E8
+#define SLOT_VF20 0x20
+#define SLOT_VF200 0x200
+#define SLOT_VF20C 0x20C
+#define SLOT_VF24 0x24
+#define SLOT_VF27C 0x27C
+#define SLOT_VF290 0x290
+#define SLOT_VF298 0x298
+#define SLOT_VF2BC 0x2BC
+#define SLOT_VF2C4 0x2C4
+#define SLOT_VF2D4 0x2D4
+#define SLOT_VF2F8 0x2F8
+#define SLOT_VF308 0x308
+#define SLOT_VF320 0x320
+#define SLOT_VF324 0x324
+#define SLOT_VF4C 0x4C
+#define SLOT_VF58 0x58
+#define SLOT_VF5B0 0x5B0
+#define SLOT_VF5C 0x5C
+#define SLOT_VFAC 0xAC
 
 // ---- The function ----
 
@@ -1017,134 +1123,30 @@ extern "C" s32 func_800EC918(
 
     switch (evt->eventType) {
 
-    // ---- Type 4 ----
     case 4: {
-        if (func_80148778(acc->subAcc, 0x22)) {
-            if (acc != (EC918_BattleObjAccessor*)pc) {
-                void* entry22 = func_80149154(acc->subAcc, 0x22);
-                if (entry22 != nullptr) {
-                    s32 rollVal;
-                    if (tgt != nullptr) {
-                        rollVal = (s32)tgt->field_B4;
-                    } else {
-                        rollVal = mtRand__Q22ml4mathFi(100);
-                    }
-                    s32 rate = *(s32*)((u8*)entry22 + 0x10);
-                    if (rollVal < rate) {
-                        func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                        return 0;
-                    }
-                }
-            }
-        }
-
-        if (func_80148778(acc->subAcc, 0x11)) {
-            typedef void (*VF20)(SubAccessor*, u32);
-            VF20 vf20 = (VF20)(*(void**)((u8*)acc->subAcc + 0x20));
-            vf20(acc->subAcc, 0x11);
-        }
-
-        if (evt->field_10 != 0) break;
-        if (evt->field_14 != 0) break;
-
-        // Copy event, field_10 = pc->field_3F10
-        evCopy = *evt;
-        evCopy.field_10 = *(s32*)((u8*)pc + 0x3F10);
-
-        if (tgt != nullptr && (tgt->field_78 & 1)) {
-            evCopy.field_14 = 1;
-        }
-
-        s32 subResult = func_800EC918(self, pc, acc, &evCopy, tgt);
-        if (!subResult) {
-            func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-            return 0;
-        }
-
-        void* obj3ED4 = *(void**)((u8*)acc + 0x3ED4);
-        if (obj3ED4 != nullptr) {
-            void* v3ED4 = *(void**)obj3ED4;
-            typedef void (*VF70)(void*, u32);
-            VF70 vf70 = (VF70)(*(void**)((u8*)v3ED4 + 0x70));
-            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
-        }
-
-        void* subIdent = (void*)((u8*)acc + 0x3E9C);
-        if (subIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
-            func_800FE68C();
-            func_800FE96C(*(u32*)((u8*)pc + 0x3F10));
-        }
-
-        if (tgt == nullptr || !(tgt->field_78 & 1)) {
-            evCopy.eventType = 0x11;
-            evCopy.field_30 |= 0x800;
-            evCopy.field_10 = *(u32*)((u8*)acc + 0x3F10);
-
-            func_800EC918(self, pc, acc, &evCopy, tgt);
-
-            void* pc3ED4 = *(void**)((u8*)pc + 0x3ED4);
-            if (pc3ED4 != nullptr) {
-                void* vPC3ED4 = *(void**)pc3ED4;
-                typedef void (*VF70)(void*, u32);
-                VF70 vf70 = (VF70)(*(void**)((u8*)vPC3ED4 + 0x70));
-                vf70(pc3ED4, *(u32*)((u8*)acc + 0x3F10));
-            }
-
-            void* pcSubIdent = (void*)((u8*)pc + 0x3E9C);
-            if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
-                func_800FE68C();
-                func_800FE96C(*(u32*)((u8*)acc + 0x3F10));
-            }
-        }
-
-        return 1;
-    }
-
-    // ---- Type 5 ----
-    case 5: {
         if (func_80148778(acc->subAcc, 0x15)) {
             void* entry15 = func_80149154(acc->subAcc, 0x15);
             if (entry15 != nullptr) {
                 s32 rollVal;
-                if (tgt != nullptr) {
-                    rollVal = (s32)tgt->field_B4;
-                } else {
-                    rollVal = mtRand__Q22ml4mathFi(100);
-                }
-                s32 rate = *(s32*)((u8*)entry15 + 0x10);
-                if (rollVal < rate) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
-                }
-            }
-        }
-        evt->prevEventType = evt->eventType;
-        evCopy = *evt;
-        evCopy.eventType = 5;
-        evCopy.field_30 |= 2;
-        func_800EC918(self, pc, acc, &evCopy, tgt);
-        break;
-    }
-
-    // ---- Type 6 ----
-    case 6: {
-        if (func_80148778(acc->subAcc, 0x1A)) {
-            void* entry1A = func_80149154(acc->subAcc, 0x1A);
-            if (entry1A != nullptr) {
-                s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
-                if (rollVal < *(s32*)((u8*)entry1A + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                s32 rate = *(s32*)((u8*)entry15 + 0x10);
+                if (rollVal < rate) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE1F8
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        // .L_800EE200
+        evt->prevEventType = evt->eventType;      // lhz r3,0xc(r25); sth r3,0x2e(r25)
+        evCopy = *evt;                           // 13-word copy @stack 0x7CC (field_30 = pre-|2 value)
+        evt->field_30 |= 2;                      // ori r8,r8,2; stw r8,0x30(r25)  (retail: on evt, not evCopy)
+        evCopy.eventType = 5;                   // sth r0(5), 0x7d8(r1)
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 7 ----
-    case 7: {
+    case 6: {
         if (func_80148778(acc->subAcc, 0x17)) {
             void* entry17 = func_80149154(acc->subAcc, 0x17);
             if (entry17 != nullptr) {
@@ -1152,16 +1154,15 @@ extern "C" s32 func_800EC918(
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
                 if (rollVal < *(s32*)((u8*)entry17 + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE354
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 8 ----
-    case 8: {
+    case 7: {
         if (func_80148778(acc->subAcc, 0x18)) {
             void* entry18 = func_80149154(acc->subAcc, 0x18);
             if (entry18 != nullptr) {
@@ -1169,33 +1170,31 @@ extern "C" s32 func_800EC918(
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
                 if (rollVal < *(s32*)((u8*)entry18 + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE3B4
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 9 ----
     case 9: {
-        if (func_80148778(acc->subAcc, 0x24)) {
-            void* entry24 = func_80149154(acc->subAcc, 0x24);
-            if (entry24 != nullptr) {
+        if (func_80148778(acc->subAcc, 0x1A)) {
+            void* entry1A = func_80149154(acc->subAcc, 0x1A);
+            if (entry1A != nullptr) {
                 s32 rollVal;
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
-                if (rollVal < *(s32*)((u8*)entry24 + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                if (rollVal < *(s32*)((u8*)entry1A + 0x10)) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE2F4
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 10 ----
-    case 10: {
+    case 11: {
         if (func_80148778(acc->subAcc, 0x1C)) {
             void* entry1C = func_80149154(acc->subAcc, 0x1C);
             if (entry1C != nullptr) {
@@ -1203,16 +1202,15 @@ extern "C" s32 func_800EC918(
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
                 if (rollVal < *(s32*)((u8*)entry1C + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE474
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 11 ----
-    case 11: {
+    case 12: {
         if (func_80148778(acc->subAcc, 0x1D)) {
             void* entry1D = func_80149154(acc->subAcc, 0x1D);
             if (entry1D != nullptr) {
@@ -1220,49 +1218,2375 @@ extern "C" s32 func_800EC918(
                 if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
                 else rollVal = mtRand__Q22ml4mathFi(100);
                 if (rollVal < *(s32*)((u8*)entry1D + 0x10)) {
-                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
-                    return 0;
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE4D4
+                    return 0;                   // b .L_800F41D4
                 }
             }
         }
-        break;
+        break;                                  // b .L_800F4000
     }
 
-    // ---- Type 12 ----
-    case 12: {
-        if (evt->field_20 == 0.0f) {
-            evt->field_20 = 5.0f;
+    case 15: {
+        int val;
+        {
+            void* obj4 = *(void**)((u8*)acc + 4);
+            void* v4 = *(void**)obj4;
+            typedef void* (*VF30)(void*);
+            VF30 vf30 = (VF30)(*(void**)((u8*)v4 + 0x30));
+            val = *(u32*)vf30(obj4);
         }
-        break;
-    }
-
-    // ---- Type 13 ----
-    case 13: {
-        u32 fmt = (*(u16*)((u8*)acc + 0x456C)) >> 4;
-        u16 artsId = (u16)evt->field_10;
-        func_80195BD4(fmt, artsId);
-        break;
-    }
-
-    // ---- Type 14 ----
-    case 14: {
-        extern void* getInstance__Q22cf13CfGameManagerFv();
-        getInstance__Q22cf13CfGameManagerFv();
-        if (!func_8006EF04__Fi(0x400)) {
-            func_8016DF4C(evt->field_10);
+        if (func_80174C98((void*)acc, &val, 0xA)) {       // beq .L_800EEC94
+            void* accStat = vcall_p(acc, SLOT_VF298);
+            if (*(u32*)((u8*)accStat + 0x78) & 0x08000000) {
+                return 0;                               // li r3,0; b .L_800F41D4
+            }
         }
-        break;
+
+        if (acc->field_3F00 & 0x2) {               // rlwinm. 0,0,30,30; beq .L_800EECD0
+            void* head = *(void**)((u8*)(uintptr_t)self + 0x48);
+            s32 count = 0;
+            void* node = *(void**)head;
+            while (node != head) {
+                node = *(void**)node;
+                count++;
+            }
+            if (count == 0) {
+                return 0;                               // li r3,0; b .L_800F41D4
+            }
+        }
+
+        // .L_800EECD0 -- pc != nullptr main branch
+        if (pc != nullptr) {
+            void* r14;
+            if (tgt != nullptr) r14 = (void*)tgt; // mr r14, r26
+            else r14 = vcall_p(pc, SLOT_VF298);              // pc->vf298()
+
+            if ((*(u32*)((u8*)r14 + 0x74) & 0x4) ||     // rlwinm. 0,3,29,29; bne .L_800EEF2C
+                (*(u32*)((u8*)r14 + 0x74) & 0x2)) {     // rlwinm. 0,3,30,30; bne .L_800EEF2C
+                return 0;                               // .L_800EEF2C: li r3,0
+            }
+
+            // field_30 & 0x80 -> skip everything, clear + tail (.L_800EF0A4)
+            if (!(evt->field_30 & 0x80)) {               // rlwinm. 0,0,24,24; bne .L_800EF0A4
+                if (!(evt->field_10 & 0x4)) {            // rlwinm. 0,0,29,29; bne .L_800EEDA4
+                    // Menu gate: vf320()[0] & 0x8, status 0x3B, status 0x32
+                    s32 menuFlag = 0;                   // li r15, 0
+                    if (*(u16*)vcall_p(acc, SLOT_VF320) & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
+                    if (func_80148778(acc->subAcc, 0x3B)) menuFlag = 1;
+                    if (func_80148778(acc->subAcc, 0x32)) menuFlag = 1;
+                    if (menuFlag) {                     // cmpwi r15,0; beq .L_800EEDA4
+                        func_800F3734(self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);  // mr r6,r14
+                        return 0;                       // b .L_800F41D4
+                    }
+                }
+
+                // .L_800EEDA4 -- roll gate (runs even when field_10 & 0x4)
+                s32 rollFlag = 0;                       // li r15, 0
+                if (!(evt->field_10 & 0x5)) {            // andi. r0, r0, 0x5; bne .L_800EEE1C
+                    if (func_80148778(acc->subAcc, 0x20)) {
+                        void* entry20 = func_80149154(acc->subAcc, 0x20);
+                        if (entry20 != nullptr) {
+                            s32 rollVal;
+                            if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                            else rollVal = mtRand__Q22ml4mathFi(100);
+                            if (rollVal < *(s32*)((u8*)entry20 + 0x10)) rollFlag = 1;
+                        }
+                    }
+                    if ((acc->field_3374 & 0x80) &&      // .L_800EEE00
+                        !(*(u32*)((u8*)r14 + 0x74) & 0x4000)) {
+                        rollFlag = 1;
+                    }
+                }
+                if (!(evt->field_10 & 0x6)) {            // rlwinm. 0,0,29,30; bne .L_800EEE7C
+                    if (!func_80148778(acc->subAcc, 0x10)) {
+                        if (acc->field_3F00 & 0x4) rollFlag = 1;
+                    }
+                }
+                if (rollFlag) {                         // cmpwi r15,0; beq .L_800EEE7C
+                    *(u32*)((u8*)r14 + 0x74) |= 0x80000010;  // oris 0x8000; ori 0x10
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // mr r6,r26
+                    return 0;                           // b .L_800F41D4
+                }
+
+                // .L_800EEE7C -- pc skills 0x9A (multiply) / 0x9B (divide)
+                if (func_80148778((u8*)pc + 8, 0x9A)) {
+                    void* entry9A = func_80149154((u8*)pc + 8, 0x9A);
+                    evt->field_20 *= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9A + 0x10)) / k100_0f;
+                } else if (func_80148778((u8*)pc + 8, 0x9B)) {
+                    void* entry9B = func_80149154((u8*)pc + 8, 0x9B);
+                    evt->field_20 /= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9B + 0x10)) / k100_0f;
+                }
+            }
+        } else {
+            // .L_800EEF34 -- pc == nullptr branch
+            if (func_80148778(acc->subAcc, 0x32)) {
+                return 0;                               // bne .L_800EF09C
+            }
+            if (!(evt->field_30 & 0x80)) {               // rlwinm. 0,0,24,24; bne .L_800EF0A4
+                if (!(evt->field_10 & 0x4)) {            // rlwinm. 0,0,29,29; bne .L_800EEFD8
+                    s32 menuFlag = 0;                   // li r14, 0
+                    if (*(u16*)vcall_p(acc, SLOT_VF320) & 0x8) menuFlag = 1;
+                    if (func_80148778(acc->subAcc, 0x3B)) menuFlag = 1;
+                    if (func_80148778(acc->subAcc, 0x32)) menuFlag = 1;
+                    if (menuFlag) {                     // cmpwi r14,0; beq .L_800EEFD8
+                        func_800F3734(self, (BattleObjAccessor*)acc, evt, tgt);  // mr r6,r26
+                        return 0;                       // b .L_800F41D4
+                    }
+                }
+
+                // .L_800EEFD8 -- roll gate (no 0x3374 check)
+                s32 rollFlag = 0;                       // li r15, 0
+                if (!(evt->field_10 & 0x5)) {            // andi. r0, r0, 0x5; bne .L_800EF034
+                    if (func_80148778(acc->subAcc, 0x20)) {
+                        void* entry20 = func_80149154(acc->subAcc, 0x20);
+                        if (entry20 != nullptr) {
+                            s32 rollVal;
+                            if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                            else rollVal = mtRand__Q22ml4mathFi(100);
+                            if (rollVal < *(s32*)((u8*)entry20 + 0x10)) rollFlag = 1;
+                        }
+                    }
+                }
+                if (!(evt->field_10 & 0x6)) {            // rlwinm. 0,0,29,30; bne .L_800EF0A4
+                    if (!func_80148778(acc->subAcc, 0x10)) {
+                        if (acc->field_3F00 & 0x4) rollFlag = 1;
+                    }
+                }
+                if (rollFlag) {                         // cmpwi r15,0; beq .L_800EF0A4
+                    if (tgt != nullptr) {            // cmpwi r26,0; beq .L_800EF084
+                        tgt->field_74 |= 0x80000010;  // oris 0x8000; ori 0x10; stw
+                    }
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // .L_800EF084
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+        }
+
+        // .L_800EF0A4 -- clear event head, fall to shared tail
+        evt->field_04 = 0;                               // li r0,0; stw 0x4(r25)
+        evt->field_00 = 0;                               // stw r0, 0x0(r25)
+        break;                                          // b .L_800F4000
     }
 
-    // ---- Types 15-17: complex AI/spirit handler (partial) ----
-    case 15:
-    case 16:
+    case 16: {
+        // obj4 = acc->+0x4; val = obj4->vf30()[0]; func_80174C98((void*)acc, &val, 0xA)
+        int val;
+        {
+            void* obj4 = *(void**)((u8*)acc + 4);
+            void* v4 = *(void**)obj4;
+            typedef void* (*VF30)(void*);
+            VF30 vf30 = (VF30)(*(void**)((u8*)v4 + 0x30));
+            val = *(u32*)vf30(obj4);
+        }
+        if (func_80174C98((void*)acc, &val, 0xA)) {       // beq .L_800EE84C
+            void* accStat = vcall_p(acc, SLOT_VF298);   // acc->vf298()
+            if (*(u32*)((u8*)accStat + 0x78) & 0x08000000) {  // rlwinm. 0,0,4,4
+                return 0;                               // li r3,0; b .L_800F41D4
+            }
+        }
+
+        // acc->field_3F00 & 0x2 -> walk self->0x48 list; empty -> return 0
+        if (acc->field_3F00 & 0x2) {               // rlwinm. 0,0,30,30; beq
+            void* head = *(void**)((u8*)(uintptr_t)self + 0x48);   // lwz r5, 0x48(r22)
+            s32 count = 0;                              // li r4, 0
+            void* node = *(void**)head;                 // lwz r3, 0(r5)
+            while (node != head) {                      // .L_800EE868/.L_800EE870
+                node = *(void**)node;                   // lwz r3, 0(r3)
+                count++;                                // addi r4, r4, 1
+            }
+            if (count == 0) {                           // cmpwi r4,0; bne
+                return 0;                               // li r3,0; b .L_800F41D4
+            }
+        }
+
+        // .L_800EE888 -- pc != nullptr main branch; r14 = tgt ? tgt : pc->vf298()
+        if (pc != nullptr) {
+            void* r14;
+            if (tgt != nullptr) r14 = (void*)tgt; // mr r14, r26
+            else r14 = vcall_p(pc, SLOT_VF298);              // pc->vf298()
+
+            if ((*(u32*)((u8*)r14 + 0x74) & 0x4) ||     // rlwinm. 0,3,29,29; bne .L_800EEADC
+                (*(u32*)((u8*)r14 + 0x74) & 0x2)) {     // rlwinm. 0,3,30,30; bne .L_800EEADC
+                return 0;                               // .L_800EEADC: li r3,0
+            }
+
+            if (!(evt->field_10 & 0x4)) {                // rlwinm. 0,0,29,29; bne .L_800EE950
+                // Menu gate: vf324()[0] & 0x8, status 0x3A, status 0x32
+                s32 menuFlag = 0;                       // li r15, 0
+                if (*(u16*)vcall_p(acc, SLOT_VF324) & 0x8) menuFlag = 1;  // rlwinm. 0,0,28,28
+                if (func_80148778(acc->subAcc, 0x3A)) menuFlag = 1;
+                if (func_80148778(acc->subAcc, 0x32)) menuFlag = 1;
+                if (menuFlag) {                         // cmpwi r15,0; beq .L_800EE950
+                    func_800F3734(self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);  // mr r6,r14
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+
+            // .L_800EE950 -- roll gate (runs even when field_10 & 0x4)
+            s32 rollFlag = 0;                           // li r15, 0
+            if (!(evt->field_10 & 0x5)) {                // andi. r0, r0, 0x5; bne .L_800EE9C8
+                if (func_80148778(acc->subAcc, 0x21)) {
+                    void* entry21 = func_80149154(acc->subAcc, 0x21);
+                    if (entry21 != nullptr) {
+                        s32 rollVal;
+                        if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                        else rollVal = mtRand__Q22ml4mathFi(100);
+                        if (rollVal < *(s32*)((u8*)entry21 + 0x10)) rollFlag = 1;
+                    }
+                }
+                if ((acc->field_3374 & 0x80) &&    // rlwinm. 0,0,24,24; beq
+                    !(*(u32*)((u8*)r14 + 0x74) & 0x4000)) {  // rlwinm. 0,0,17,17; bne
+                    rollFlag = 1;
+                }
+            }
+            if (!(evt->field_10 & 0x6)) {                // rlwinm. 0,0,29,30; bne .L_800EEA2C
+                if (!func_80148778(acc->subAcc, 0x12) &&
+                    !func_80148778(acc->subAcc, 0x10)) {
+                    if (acc->field_3F00 & 0x4) rollFlag = 1;  // rlwinm. 0,0,29,29
+                }
+            }
+            if (rollFlag) {                             // cmpwi r15,0; beq .L_800EEA2C
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, (BattleTargetData*)r14);  // mr r6,r14
+                return 0;                               // b .L_800F41D4
+            }
+
+            // .L_800EEA2C -- pc skills 0x9C (multiply) / 0x9D (divide)
+            if (func_80148778((u8*)pc + 8, 0x9C)) {
+                void* entry9C = func_80149154((u8*)pc + 8, 0x9C);
+                evt->field_20 *= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9C + 0x10)) / k100_0f;
+            } else if (func_80148778((u8*)pc + 8, 0x9D)) {
+                void* entry9D = func_80149154((u8*)pc + 8, 0x9D);
+                evt->field_20 /= 1.0f + (f32)(s32)(*(s32*)((u8*)entry9D + 0x10)) / k100_0f;
+            }
+        } else {
+            // .L_800EEAE4 -- pc == nullptr branch
+            if (!(evt->field_10 & 0x4)) {                // rlwinm. 0,0,29,29; bne .L_800EEB68
+                s32 menuFlag = 0;                       // li r14, 0
+                if (*(u16*)vcall_p(acc, SLOT_VF324) & 0x8) menuFlag = 1;
+                if (func_80148778(acc->subAcc, 0x3A)) menuFlag = 1;
+                if (func_80148778(acc->subAcc, 0x32)) menuFlag = 1;
+                if (menuFlag) {                         // cmpwi r14,0; beq .L_800EEB68
+                    func_800F3734(self, (BattleObjAccessor*)acc, evt, tgt);  // mr r6,r26
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+
+            // .L_800EEB68 -- roll gate (no 0x3374 check here)
+            s32 rollFlag = 0;                           // li r15, 0
+            if (!(evt->field_10 & 0x5)) {                // andi. r0, r0, 0x5; bne .L_800EEBC4
+                if (func_80148778(acc->subAcc, 0x21)) {
+                    void* entry21 = func_80149154(acc->subAcc, 0x21);
+                    if (entry21 != nullptr) {
+                        s32 rollVal;
+                        if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                        else rollVal = mtRand__Q22ml4mathFi(100);
+                        if (rollVal < *(s32*)((u8*)entry21 + 0x10)) rollFlag = 1;
+                    }
+                }
+            }
+            if (!(evt->field_10 & 0x6)) {                // rlwinm. 0,0,29,30; bne .L_800EEC28
+                if (!func_80148778(acc->subAcc, 0x12) &&
+                    !func_80148778(acc->subAcc, 0x10)) {
+                    if (acc->field_3F00 & 0x4) rollFlag = 1;
+                }
+            }
+            if (rollFlag) {                             // cmpwi r15,0; beq .L_800EEC28
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // mr r6,r26
+                return 0;                               // b .L_800F41D4
+            }
+        }
+
+        // .L_800EEC28 -- clear event head, fall to shared tail
+        evt->field_04 = 0;                               // li r0,0; stw 0x4(r25)
+        evt->field_00 = 0;                               // stw r0, 0x0(r25)
+        break;                                          // b .L_800F4000
+    }
+
     case 17: {
-        // Full transcription deferred -- see notes for offsets
-        break;
+        // Skill roll: status 0x22 (resist/evade gate)
+        if (func_80148778(acc->subAcc, 0x22)) {
+            if (acc != (EC918_BattleObjAccessor*)pc) {  // cmplw r24,r23; beq
+                void* entry22 = func_80149154(acc->subAcc, 0x22);
+                if (entry22 != nullptr) {   // retail: no null check (r14 used directly)
+                    s32 rollVal;
+                    if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                    else rollVal = mtRand__Q22ml4mathFi(100);
+                    s32 rate = *(s32*)((u8*)entry22 + 0x10);
+                    if (rollVal < rate) {
+                        func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EDFC0
+                        return 0;   // b .L_800F41D4 (r3 = func_800F37F8 result)
+                    }
+                }
+            }
+        }
+
+        // Clear status 0x11 through the sub-acc
+        if (func_80148778(acc->subAcc, 0x11)) {
+            acc->subAcc->vf20(0x11);   // lwz r12,8(r24); lwz r12,0x20(r12); bctrl
+        }
+
+        if (evt->field_10 != 0) break;       // bne .L_800F4000
+        if (evt->field_14 != 0) break;       // bne .L_800F4000
+
+        // Copy event; retail copies 13 words to stack 0x800, then patches
+        // evt->field_10/field_14 DIRECTLY and recurses with evt.  The port
+        // uses evCopy (same content: field_10 = pc->3F10, field_14 maybe 1).
+        evCopy = *evt;
+        evCopy.field_10 = *(s32*)((u8*)pc + 0x3F10);   // stw r0, 0x10(r25)
+
+        if (tgt != nullptr && (tgt->field_78 & 1)) {  // clrlwi. 0,0,31
+            evCopy.field_14 = 1;                            // sth r0(1), 0x14(r25)
+        }
+
+        s32 subResult = func_800EC918(self, pc, acc, &evCopy, tgt);
+        if (!subResult) {                       // beq 0x800EE0B4
+            func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE0B8
+            return 0;                           // b .L_800F41D4
+        }
+
+        // acc->3ED4 vf70(pc->3F10)
+        void* obj3ED4 = acc->field_3ED4;
+        if (obj3ED4 != nullptr) {               // retail: no null check
+            void* v3ED4 = *(void**)obj3ED4;
+            typedef void (*VF70)(void*, u32);
+            VF70 vf70 = (VF70)(*(void**)((u8*)v3ED4 + 0x70));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
+        }
+
+        // If the acc's sub-identifier object == player 0 -> HUD refresh
+        void* subIdent = (acc != nullptr) ? (void*)((u8*)acc + 0x3E9C)
+                                               : nullptr;  // cmpwi r24,0; beq
+        if (subIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
+            func_800FE68C();
+            func_800FE96C(*(u32*)((u8*)pc + 0x3F10));
+        }
+
+        // Second half: only when the tgt lacks bit0 of field_78
+        if (tgt == nullptr || !(tgt->field_78 & 1)) {
+            evCopy.eventType = 0x11;             // sth r0(0x11), 0x80c(r1)
+            evCopy.field_30 |= 0x800;            // ori r0,r0,0x800; stw 0x830(r1)
+            evCopy.field_10 = *(u32*)((u8*)acc + 0x3F10);  // lwz r5,0x3f10(r24); stw 0x810(r1)
+
+            func_800EC918(self, pc, pc, &evCopy, tgt);  // retail r5 = r23 (pc!), not acc
+
+            // pc->3ED4 vf70(acc->3F10)
+            void* pc3ED4 = *(void**)((u8*)pc + 0x3ED4);
+            if (pc3ED4 != nullptr) {            // retail: no null check
+                void* vPC3ED4 = *(void**)pc3ED4;
+                typedef void (*VF70)(void*, u32);
+                VF70 vf70 = (VF70)(*(void**)((u8*)vPC3ED4 + 0x70));
+                vf70(pc3ED4, *(u32*)((u8*)acc + 0x3F10));
+            }
+
+            void* pcSubIdent = (pc != nullptr) ? (void*)((u8*)pc + 0x3E9C)
+                                               : nullptr;  // cmpwi r23,0; beq
+            if (pcSubIdent == getPlayer__Q22cf13CfGameManagerFi(0)) {
+                func_800FE68C();
+                func_800FE96C(*(u32*)((u8*)acc + 0x3F10));
+            }
+        }
+        return 1;                               // li r3,1; b .L_800F41D4
     }
 
-    // ---- Types 18+ : many more status-check roll patterns ----
+    case 19: {
+        if (func_80148778(acc->subAcc, 0x24)) {
+            void* entry24 = func_80149154(acc->subAcc, 0x24);
+            if (entry24 != nullptr) {
+                s32 rollVal;
+                if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                else rollVal = mtRand__Q22ml4mathFi(100);
+                if (rollVal < *(s32*)((u8*)entry24 + 0x10)) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EE414
+                    return 0;                   // b .L_800F41D4
+                }
+            }
+        }
+        break;                                  // b .L_800F4000
+    }
+
+    case 50: {
+        if (pc != nullptr) {
+            if ((*(u32*)((u8*)pc + 0x3F00) & 0x2) && (*(u16*)((u8*)pc + 0x3F28) == 0x2)) {
+                if (func_80148778((u8*)pc + 8, 0x32)) {
+                    ((SubAccessor*)((u8*)pc + 8))->vf20(0x32);
+                    return 0;   // li r3,0 ; b .L_800F41D4
+                }
+            }
+        }
+        break;   // beq .L_800F4000 -> shared tail
+    }
+
+    case 51: {
+        if (artsData != nullptr) {                    // cmpwi r16,0; beq .L_800EF880
+            // (chunk 0) s32 artsLevel = vf0C(artsData);
+            void* artsVTbl = *(void**)((u8*)artsData + 0x84);
+            typedef s32 (*ArtsVf0C)(void*);
+            ArtsVf0C vf0C = (ArtsVf0C)(*(void**)((u8*)artsVTbl + 0x0C));
+            s32 artsLevel = vf0C(artsData);
+
+            // 0x800EF860..0x800EF87C (chunk 1):
+            //   lbz r4, 0x6f(r16); subi r3, r3, 1; lha r0, 0x4a(r16)
+            //   mullw r3, r4, r3; add r0, r0, r3; mulli r0, r0, 0xa
+            //   sth r0, 0x14(r25); b .L_800F4000
+            evt->field_14 = (s16)((*(s16*)((u8*)artsData + 0x4A) +
+                                  (s32)(*(u8*)((u8*)artsData + 0x6F)) *
+                                      (artsLevel - 1)) * 10);
+        } else {
+            // .L_800EF880: acc->vf12C() float scale -> field_14
+            //   f1 = vf12C(acc); (f32)(s32)field_10 / 100.0f * f1; fctiwz
+            evt->field_14 = (s16)((f32)(s32)evt->field_10 / k100_0f *
+                                 vcall_f(acc, SLOT_VF12C));
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 54: {
+        if (artsData != nullptr) {                  // beq .L_800F4000
+            void* artsVTbl = *(void**)((u8*)artsData + 0x84);
+            typedef s32 (*ArtsVf0C)(void*);
+            ArtsVf0C vf0C = (ArtsVf0C)(*(void**)((u8*)artsVTbl + 0x0C));
+            // subi r3, r3, 1; lha r0, 0x14(r25); extsh; add; sth
+            evt->field_14 = (s16)((s32)evt->field_14 + (vf0C(artsData) - 1));
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 60:
+
+    case 61: {
+        if (vcall_p(acc, SLOT_VF290) != nullptr) {  // beq .L_800F4000
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x66)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 82: {
+        if (vcall_p(acc, SLOT_VF290) != nullptr) {  // beq .L_800F4000
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x7B)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x66)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 83:
+
+    case 84: {
+        if (vcall_p(acc, SLOT_VF290) != nullptr) {  // beq .L_800F4000
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x7D)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x66)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 87: {
+        if (vcall_p(acc, SLOT_VF290) != nullptr) {  // beq .L_800F4000
+            if (func_8026178C(vcall_p(acc, SLOT_VF290), 0x66)) {
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 102: {
+        if (func_80148778(acc->subAcc, 0x86)) {
+            void* entry86 = func_80149154(acc->subAcc, 0x86);
+            if (entry86 != nullptr) {
+                if (*(s32*)((u8*)entry86 + 0x10) >= 0x64) {   // cmpwi r0,0x64; blt skip
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EF0F0
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+        }
+
+        // .L_800EF0F8 -- field_10 = (s32)((f64)field_10 * round(sum)/100)
+        if (evt->field_08 != 0x8000 && tgt != nullptr) {  // cmplwi 0x8000; beq / cmpwi r26; beq
+            f32 sum = tgt->field_5C + tgt->field_60;  // fadds f1, f2, f1
+            s32 roundVal;
+            if (sum < 0.0f || (tgt->field_74 & 0x80)) {  // bge cr1 / rlwinm. 0,0,24,24
+                roundVal = 0;                               // li r0, 0
+            } else {
+                roundVal = (s32)sum;  // fctiwz with +/-0.5 rounding (80666E58/80666E60)
+            }
+            evt->field_10 = (s32)((f32)(s32)evt->field_10 *
+                                 ((f32)(s32)roundVal / k100_0f));  // fsubs+fdivs+fmuls+fctiwz
+        }
+
+        // .L_800EF1A4 -- pc skill 0x85: field_10 += field_10/100 * entry
+        if (pc != nullptr && func_80148778((u8*)pc + 8, 0x85)) {
+            void* entry85 = func_80149154((u8*)pc + 8, 0x85);
+            s32 entryVal = *(s32*)((u8*)entry85 + 0x10);
+            evt->field_10 = (s32)(((f32)(s32)evt->field_10 / k100_0f) *
+                                 (f32)(s32)entryVal + (f32)(s32)evt->field_10);  // fmadds + fctiwz
+        }
+        break;                                          // b .L_800F4000
+    }
+
+    case 103: {
+        if (func_80148778(acc->subAcc, 0x88)) {
+            void* entry88 = func_80149154(acc->subAcc, 0x88);
+            if (entry88 != nullptr) {
+                if (*(s32*)((u8*)entry88 + 0x10) >= 0x64) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EF260
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+        }
+
+        if (evt->field_08 != 0x8000 && tgt != nullptr) {
+            f32 sum = tgt->field_5C + tgt->field_60;
+            s32 roundVal;
+            if (sum < 0.0f || (tgt->field_74 & 0x80)) {
+                roundVal = 0;
+            } else {
+                roundVal = (s32)sum;
+            }
+            evt->field_10 = (s32)((f32)(s32)evt->field_10 *
+                                 ((f32)(s32)roundVal / k100_0f));  // fsubs+fdivs+fmuls+fctiwz
+        }
+
+        if (pc != nullptr && func_80148778((u8*)pc + 8, 0x87)) {
+            void* entry87 = func_80149154((u8*)pc + 8, 0x87);
+            s32 entryVal = *(s32*)((u8*)entry87 + 0x10);
+            evt->field_10 = (s32)(((f32)(s32)evt->field_10 / k100_0f) *
+                                 (f32)(s32)entryVal + (f32)(s32)evt->field_10);
+        }
+        break;                                          // b .L_800F4000
+    }
+
+    case 104: {
+        if (func_80148778(acc->subAcc, 0x8A)) {
+            void* entry8A = func_80149154(acc->subAcc, 0x8A);
+            if (entry8A != nullptr) {
+                if (*(s32*)((u8*)entry8A + 0x10) >= 0x64) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EF440
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+        }
+
+        if (evt->field_08 != 0x8000 && tgt != nullptr) {
+            f32 sum = tgt->field_5C + tgt->field_60;
+            s32 roundVal;
+            if (sum < 0.0f || (tgt->field_74 & 0x80)) {
+                roundVal = 0;
+            } else {
+                roundVal = (s32)sum;
+            }
+            evt->field_10 = (s32)((f32)(s32)evt->field_10 *
+                                 ((f32)(s32)roundVal / k100_0f));  // fsubs+fdivs+fmuls+fctiwz
+        }
+
+        if (pc != nullptr && func_80148778((u8*)pc + 8, 0x89)) {
+            void* entry89 = func_80149154((u8*)pc + 8, 0x89);
+            s32 entryVal = *(s32*)((u8*)entry89 + 0x10);
+            evt->field_10 = (s32)(((f32)(s32)evt->field_10 / k100_0f) *
+                                 (f32)(s32)entryVal + (f32)(s32)evt->field_10);
+        }
+        break;                                          // b .L_800F4000
+    }
+
+    case 105: {
+        if (func_80148778(acc->subAcc, 0x8C)) {
+            void* entry8C = func_80149154(acc->subAcc, 0x8C);
+            if (entry8C != nullptr) {
+                if (*(s32*)((u8*)entry8C + 0x10) >= 0x64) {
+                    func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);  // 0x800EF620
+                    return 0;                           // b .L_800F41D4
+                }
+            }
+        }
+
+        if (evt->field_08 != 0x8000 && tgt != nullptr) {
+            f32 sum = tgt->field_5C + tgt->field_60;
+            s32 roundVal;
+            if (sum < 0.0f || (tgt->field_74 & 0x80)) {
+                roundVal = 0;
+            } else {
+                roundVal = (s32)sum;
+            }
+            evt->field_10 = (s32)((f32)(s32)evt->field_10 *
+                                 ((f32)(s32)roundVal / k100_0f));  // fsubs+fdivs+fmuls+fctiwz
+        }
+
+        if (pc != nullptr && func_80148778((u8*)pc + 8, 0x8B)) {
+            void* entry8B = func_80149154((u8*)pc + 8, 0x8B);
+            s32 entryVal = *(s32*)((u8*)entry8B + 0x10);
+            evt->field_10 = (s32)(((f32)(s32)evt->field_10 / k100_0f) *
+                                 (f32)(s32)entryVal + (f32)(s32)evt->field_10);
+        }
+        break;                                          // b .L_800F4000
+    }
+
+    case 106: {
+        if (pc != nullptr && func_80148778((u8*)pc + 8, 0x4E)) {
+            void* entry4E = func_80149154((u8*)pc + 8, 0x4E);
+            s32 entryVal = *(s32*)((u8*)entry4E + 0x10);
+            evt->field_10 = (s32)(((f32)(s32)evt->field_10 / k100_0f) *
+                                 (f32)(s32)entryVal + (f32)(s32)evt->field_10);  // fmadds + fctiwz
+        }
+        break;                                          // b .L_800F4000
+    }
+
+    case 147: {
+        if (evt->field_20 == k0_0f) {            // fcmpu cr0, f1(0.0), f0; bne tail
+            evt->field_20 = k5_0f;               // lfs f0, 80666E6C; stfs 0x20(r25)
+        }
+        break;                                  // b .L_800F4000
+    }
+
+    case 153: {
+        // acc->vf154((f32)evt->field_10)
+        {
+            void* vtbl = *(void**)acc;
+            typedef void (*VF154)(void*, f32);
+            VF154 vf154 = (VF154)(*(void**)((u8*)vtbl + 0x154));
+            vf154(acc, (f32)evt->field_10);
+        }
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 193: {
+        evt->field_20 = k5_0f;                    // stfs f0(5.0f), 0x20(r25)
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 197: {
+        if (acc != nullptr &&                  // cmpwi r24,0; beq tail
+            vcall_i(acc, SLOT_VF2BC) == 0) {        // bne tail
+            f32 factor = k100_0f * func_800D7EA0((u8*)pc, tgt);  // fmuls f4, f0(100), f1
+            // fctiwz((f64)(s32)field * factor) for each field
+            evt->field_10 = (s32)((f32)(s32)evt->field_10 * factor);  // stw
+            evt->field_14 = (s16)((f32)(s32)evt->field_14 * factor);  // sth
+            evt->field_16 = (s16)((f32)(s32)evt->field_16 * factor);  // sth
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 198: {
+        f32 factor = k100_0f * func_800D7EA0((u8*)pc, tgt);
+        evt->field_10 = (s32)((f32)(s32)evt->field_10 * factor);
+        evt->field_14 = (s16)((f32)(s32)evt->field_14 * factor);
+        evt->field_16 = (s16)((f32)(s32)evt->field_16 * factor);
+        break;                                      // b .L_800F4000
+    }
+
+    case 206: {
+        if (evt->field_10 != 0) break;               // bne .L_800F4000
+        if (artsData != nullptr) {                  // beq .L_800F4000
+            void* artsVTbl = *(void**)((u8*)artsData + 0x84);
+            typedef s32 (*ArtsVf0C)(void*);
+            ArtsVf0C vf0C = (ArtsVf0C)(*(void**)((u8*)artsVTbl + 0x0C));
+            evt->field_10 = vf0C(artsData);          // stw r3, 0x10(r25)
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 212: {
+        if (evt->field_10 != 0) {                    // beq .L_800EFD60
+            // field_10 != 0 path (0x800EFC60..0x800EFD5C)
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            func_800F4A98(func_80043F18(&holder), 0x80000000, 0);  // lis r4,0x8000
+            for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                // vf2D4(actorAcc, acc->3F10) -> hit result (or 0)
+                void* res = vcall_p1(actorAcc, SLOT_VF2D4, acc->field_3F10);
+                if (res != nullptr) {               // beq .L_800EFD38
+                    // k = 1.0f - (f32)(s32)field_10 / 100.0f; scale +0x10,+0x0,+0x4
+                    f32 k = k1_0f - (f32)(s32)evt->field_10 / k100_0f;
+                    *(f32*)((u8*)res + 0x10) = *(f32*)((u8*)res + 0x10) * k;
+                    *(f32*)((u8*)res + 0x00) = *(f32*)((u8*)res + 0x00) * k;
+                    *(f32*)((u8*)res + 0x04) = *(f32*)((u8*)res + 0x04) * k;
+                }
+            }
+            __dt__80043E88(&holder, -1);            // li r4,-1; bl __dt__80043E88
+        } else {
+            // .L_800EFD60: field_10 == 0 path
+            func_800EA2A4((cf::CBattleManager*)self, (BattleObjAccessor*)pc);                // mr r3,r22; mr r4,r23; bl
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 213:
+
+    case 214: {
+        if (vcall_i(acc, SLOT_VF2BC) != 0) {        // beq .L_800F4000 (body runs when != 0)
+            // r4 = acc != 0 ? acc + 0x3E9C : acc(0); func_800451D8(0x4C, r4)
+            void* obj = (acc != nullptr) ? (void*)((u8*)acc + 0x3E9C)
+                                              : (void*)acc;
+            func_800451D8(0x4C, (int)(obj));
+
+            s32 r14 = (s32)vcall_f(acc, SLOT_VF12C);  // fctiwz; lwz 0x85c(r1)
+            vcall_p1(acc, SLOT_VFAC, 0);            // vfAC(acc, 0)
+
+            func_8010975C(3);                       // li r3,3; bl
+            func_80109770(0);                       // li r3,0; bl
+            func_80109734((void*)(uintptr_t)acc->field_3F10, (u32)r14);  // lwz 3f10; mr r4,r14; bl
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 215: {
+        if (vcall_i(acc, SLOT_VF2BC) != 0) break;   // bne .L_800F4000
+
+        evt->prevEventType = evt->eventType;          // lhz + sth 0x2e
+        evCopy = *evt;                               // 13-word copy @stack 0x764
+        evt->field_30 |= 2;                          // ori r0,r0,2; stw 0x30(r25)
+
+        for (u32 i = 0; i < 0x20; i++) {            // li r14,0; cmpwi r14,0x20; blt
+            void* evt2 = vcall_p1(acc->subAcc, SLOT_VF5C, i);  // slot 0x5C
+            // prevEventType classifier 0 AND (field_08 & 0x7000) == 0
+            if (func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0 &&
+                (*(u32*)((u8*)evt2 + 0x08) & 0x7000) == 0) {   // rlwinm 17-19
+                vcall_v1(acc->subAcc, SLOT_VF24, (u32)(uintptr_t)evt2);   // slot 0x24
+            }
+        }
+
+        evCopy.eventType = 0x27;                    // li r3,0x27; sth 0x770(r1)
+        evCopy.field_10 = 0x64;                     // li r0,0x64; stw 0x774(r1)
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break;                                      // b .L_800F4000
+    }
+
+    case 216: {
+        if (vcall_i(acc, SLOT_VF2BC) != 0) break;   // bne .L_800F4000
+
+        s32 f10 = evt->field_10;                     // lwz r4, 0x10(r25)
+        if (f10 == -1) {                            // cmpwi r4,-1; bne .L_800F019C
+            // r15 = rand() & 31 via slwi/srwi/subf/rotlwi mod-32 idiom
+            u32 start = (u32)rand() & 31;
+            for (u32 i = 0; i < 0x20; i++) {        // cmpwi r14,0x20; blt
+                void* evt2 = vcall_p1(acc->subAcc, SLOT_VF58, (start + i) & 31);
+                if (*(u16*)((u8*)evt2 + 0x0C) != 0 &&
+                    (*(u16*)((u8*)evt2 + 0x2E) == 0 ||
+                     func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0) &&
+                    (*(u32*)((u8*)evt2 + 0x08) & 0x7000) == 0) {
+                    vcall_v1(acc->subAcc, SLOT_VF24, (u32)(uintptr_t)evt2);   // slot 0x24
+                    if (evt->field_14 != 0) {        // lha 0x14; beq tail
+                        // vf154(pc, (f32)(s32)field_14 * (vf15C(pc)/100))
+                        f32 f = vcall_f(pc, SLOT_VF15C) / k100_0f;
+                        vcall_f1(pc, SLOT_VF154, (f32)(s32)evt->field_14 * f);
+                    }
+                    break;   // retail: b .L_800F4000 (success exits the case)
+                }
+            }
+        } else if (f10 == 0) {                     // cmpwi r4,0; bne .L_800F0274
+            for (u32 i = 0; i < 0x20; i++) {
+                void* evt2 = vcall_p1(acc->subAcc, SLOT_VF58, i);
+                if (*(u16*)((u8*)evt2 + 0x0C) != 0 &&
+                    (*(u16*)((u8*)evt2 + 0x2E) == 0 ||
+                     func_80145C00(*(u16*)((u8*)evt2 + 0x2E)) == 0) &&
+                    (*(u32*)((u8*)evt2 + 0x08) & 0x7000) == 0) {
+                    if (evt->field_14 != 0) {        // lha 0x14; beq .L_800F024C
+                        f32 f = vcall_f(pc, SLOT_VF15C) / k100_0f;
+                        vcall_f1(pc, SLOT_VF154, (f32)(s32)evt->field_14 * f);
+                    }
+                    vcall_v1(acc->subAcc, SLOT_VF24, (u32)(uintptr_t)evt2);   // slot 0x24
+                }
+            }
+        } else {
+            // .L_800F0274: vf20(sub, field_10) -- clear that status id
+            vcall_v1(acc->subAcc, SLOT_VF20, (u32)f10);  // slot 0x20
+            if (evt->field_14 != 0) {                // lha 0x14; beq tail
+                f32 f = vcall_f(pc, SLOT_VF15C) / k100_0f;
+                vcall_f1(pc, SLOT_VF154, (f32)(s32)evt->field_14 * f);
+            }
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 217: {
+        if (vcall_i(acc, SLOT_VF2BC) != 0) break;   // bne .L_800F4000
+        acc->subAcc->vf20(0x111);              // slot 0x20, li r4,0x111
+        acc->subAcc->vf20(0x112);
+        acc->subAcc->vf20(0x113);
+        acc->subAcc->vf20(0x114);
+        acc->subAcc->vf20(0x115);
+        break;                                      // b .L_800F4000
+    }
+
+    case 218: {
+        void* r14 = func_8016FE34(func_800B708C(evt->field_00));  // bl 800B708C; bl 8016FE34
+        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1
+        s32 level = vcall_i(pc, SLOT_VF108);             // addi r4, r3, 0xe
+        s32 product = evt->field_10 * (level + 14);  // mullw
+        // vf2C4(acc, r14, 0.0f, f28 * (f32)(s32)product, 0.0f)
+        vcall_v3f(acc, SLOT_VF2C4, r14, k0_0f,
+                  f28 * (f32)(s32)product, k0_0f);
+        break;                                      // b .L_800F4000
+    }
+
+    case 219: {
+        void* r14 = func_8016FE34(func_800B708C(evt->field_00));
+        s32 level = vcall_i(pc, SLOT_VF108);
+        // r17 = field_10 * 100 + (level - 1) * 120   (mulli 0x64 / mulli 0x78)
+        s32 r17 = evt->field_10 * 100 + (level - 1) * 120;
+
+        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1
+        if (pc != nullptr) {                        // cmpwi r23,0; beq .L_800F051C
+            if (vcall_p(pc, SLOT_VF290) != nullptr) {    // beq .L_800F051C
+                s32 sv;
+                // func_80260264(vf290(pc), 0x67, &sv) -> f28 += sv/100
+                if (func_80260264(vcall_p(pc, SLOT_VF290), 0x67, &sv)) {
+                    f28 += (f32)(s32)sv / k100_0f;
+                }
+                // .L_800F04B0: 0x68 bonus only when acc->3E9C vf4C() != pc->3F10
+                if (func_80260264(vcall_p(pc, SLOT_VF290), 0x68, &sv)) {
+                    void* subVtbl = *(void**)((u8*)acc + 0x3E9C);
+                    typedef u32 (*Vf4C)(void*);
+                    Vf4C vf4C = (Vf4C)(*(void**)((u8*)subVtbl + 0x4C));
+                    if (vf4C((u8*)acc + 0x3E9C) != *(u32*)((u8*)pc + 0x3F10)) {
+                        f28 += (f32)(s32)sv / k100_0f;
+                    }
+                }
+            }
+            // .L_800F051C: status 0xEE on pc -> +0.25
+            if (func_80148778((SubAccessor*)((u8*)pc + 8), 0xEE)) {
+                f28 += k0_25f;                      // lfs 80666E1C; fadds
+            }
+        }
+
+        // .L_800F0538: r15 = (s32)((f32)(s32)r17 * f28)
+        s32 r15 = (s32)((f32)(s32)r17 * f28);
+
+        if (func_80148778((SubAccessor*)((u8*)pc + 8), 0xED)) {
+            // .L_800F0570: status 0xED path -- AOE via filtered actor list
+            f32 f28b = (artsData != nullptr) ? *(f32*)((u8*)artsData + 0x60)
+                                             : k0_0f;
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            func_800F4A98(func_80043F18(&holder), 0x100, 0);  // li r4,0x100; li r5,0
+
+            void* subVtbl = *(void**)((u8*)pc + 0x3E9C);
+            typedef void* (*VfAC)(void*);
+            VfAC vfAC = (VfAC)(*(void**)((u8*)subVtbl + 0xAC));
+            void* idObj = vfAC((u8*)pc + 0x3E9C);   // slot 0xAC
+
+            // __ct__800FB044(list, f28b, idObj, 8)
+            __ct__800FB044(func_80043F18(&holder), f28b, idObj, 8);
+
+            for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                // vf2C4(actorAcc, pc, 0.0f, 0.0f, (f32)(s32)r15)
+                vcall_v3f(actorAcc, SLOT_VF2C4, pc, k0_0f, k0_0f, (f32)(s32)r15);
+            }
+            __dt__80043E88(&holder, -1);
+        } else {
+            // .L_800F0644: vf2C4(acc, r14, 0.0f, 0.0f, (f32)(s32)r15)
+            vcall_v3f(acc, SLOT_VF2C4, r14, k0_0f, k0_0f, (f32)(s32)r15);
+        }
+
+        // .L_800F0678: vf150(pc, 0.0f)
+        vcall_f1(pc, SLOT_VF150, k0_0f);
+        break;                                      // b .L_800F4000
+    }
+
+    case 220: {
+        // Skill roll: status 0x26
+        if (func_80148778(acc->subAcc, 0x26)) {
+            void* entry26 = func_80149154(acc->subAcc, 0x26);
+            s32 rollVal;
+            if (tgt != nullptr) rollVal = (s32)tgt->field_B4;  // cmpwi r26,0
+            else rollVal = mtRand__Q22ml4mathFi(100);
+            if (rollVal < *(s32*)((u8*)entry26 + 0x10)) {  // cmpw; bge skip
+                func_800F37F8(self, (BattleObjAccessor*)acc, evt, tgt);
+                return 0;                           // b .L_800F41D4
+            }
+        }
+
+        // .L_800F06F4: tgt != 0 path
+        if (tgt != nullptr) {
+            // r5 = field_B0; 0x51EB851F fixed-point -> (s32)(field_B0 % 100)
+            if ((s32)(tgt->field_B0 % 100) >= evt->field_10) {  // cmpw; blt .L_800F0734
+                return 0;                           // li r3,0; b .L_800F41D4
+            }
+            // .L_800F0734
+            if (artsData != nullptr && *(u16*)((u8*)artsData + 0x3C) == 3) {
+                if (pc != acc) {               // cmplw r23,r24; beq .L_800F0780
+                    // vf11C(acc, -vf12C(acc))
+                    vcall_f1(acc, SLOT_VF11C, -vcall_f(acc, SLOT_VF12C));
+                } else {
+                    vcall_f1(acc, SLOT_VF118, k0_0f);  // lfs 0.0; slot 0x118
+                }
+            } else {
+                // .L_800F079C
+                if (pc != acc) {               // beq .L_800F07E4
+                    if (evt->field_30 & 0x20000) {   // rlwinm 0,14,14; beq .L_800F084C
+                        // vf5B0(acc, -vf12C(acc), 0x90000000)
+                        void* vt = *(void**)acc;
+                        typedef void (*Vf5B0)(void*, f32, u32);
+                        Vf5B0 vf5B0 = (Vf5B0)(*(void**)((u8*)vt + 0x5B0));
+                        vf5B0(acc, -vcall_f(acc, SLOT_VF12C), 0x90000000);
+                    }
+                } else {
+                    vcall_f1(acc, SLOT_VF118, k0_0f);
+                }
+            }
+        } else {
+            // .L_800F0800: tgt == 0 path -- plain rand(100) gate
+            if (mtRand__Q22ml4mathFi(100) >= evt->field_10) {
+                return 0;                           // li r3,0; b .L_800F41D4
+            }
+            // .L_800F081C: vf5B0(acc, -vf128(acc), 0x90000000)
+            void* vt = *(void**)acc;
+            typedef void (*Vf5B0)(void*, f32, u32);
+            Vf5B0 vf5B0 = (Vf5B0)(*(void**)((u8*)vt + 0x5B0));
+            vf5B0(acc, -vcall_f(acc, SLOT_VF128), 0x90000000);
+        }
+
+        // .L_800F084C: status 0x33 clear
+        if (func_80148778(acc->subAcc, 0x33)) {
+            acc->subAcc->vf20(0x33);           // slot 0x20
+        }
+        if (tgt != nullptr) {
+            tgt->field_74 |= 0x90000000;         // oris r0,r0,0x9000; stw 0x74
+            func_80148778(acc->subAcc, 0xFC);  // results unused
+            func_80148778(acc->subAcc, 0x100);
+        }
+        // .L_800F08A4: when acc == pc, flag 0x04000000 + event bit 0x800
+        if (acc == pc) {                       // cmplw r24,r23; bne tail
+            acc->field_3374 |= 0x04000000;     // oris 0x400
+            evt->field_30 |= 0x800;                  // ori 0x800
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 221: {
+        if (pc == nullptr) break;                   // beq .L_800F4000
+
+        // f28 = tgt->field_58 + func_800D81A8(pc, acc, tgt)
+        f32 f28 = tgt->field_58 + func_800D81A8(pc, acc, tgt);
+
+        // r17 = (s32)((f32)(s32)field_10 * vf12C(pc) / 100)
+        s32 r17 = (s32)((f32)(s32)evt->field_10 * vcall_f(pc, SLOT_VF12C) / k100_0f);
+        // r14 = (s32)((f32)(s32)field_14 * vf12C(pc) / 100)  (vf12C called again)
+        s32 r14 = (s32)((f32)(s32)evt->field_14 * vcall_f(pc, SLOT_VF12C) / k100_0f);
+        // retail 0x800F097C: r17 is re-scaled by f28 (fmuls f0, f0, f28; fctiwz)
+        r17 = (s32)((f32)(s32)r17 * f28);
+
+        vcall_f1(acc, SLOT_VF11C, (f32)(s32)r17);   // slot 0x11C on acc
+        vcall_f1(pc, SLOT_VF11C, (f32)(s32)(-r14));      // neg r0,r14 on pc
+
+        f32 dmg = func_800D7EA0((u8*)pc, tgt);        // fmr f28, f1 (overwrites f28)
+        if (pc != nullptr) {                        // cmpwi r23,0; beq tail
+            u32 r14b = acc->field_3F10;        // lwz r14, 0x3f10(r24)
+            f32 prod = k0_0f;
+            if (artsData != nullptr) {              // beq .L_800F0A40
+                u16 artsId = *(u16*)((u8*)artsData + 0x46);  // lhz r15, 0x46(r16)
+                s32 level = vcall_i(pc, SLOT_VF108);
+                prod = dmg * (f32)(s32)((s32)artsId * (level + 14));
+            }
+            s32 r6 = (s32)prod;                     // fctiwz; lwz 0x854(r1)
+            s32 r5 = (s32)(k1_25f * (f32)(s32)r17 * dmg);
+            func_800E9FE4((void*)(uintptr_t)self, pc, r5, r6, 0, 1,
+                          (void*)(uintptr_t)r14b);
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 222: {
+        // fmuls f1, f2(field_14), f1(vf12C); fdivs /100; fneg
+        vcall_f1(acc, SLOT_VF11C,
+                 -((f32)(s32)evt->field_14 * vcall_f(acc, SLOT_VF12C) / k100_0f));
+        vcall_f1(acc, SLOT_VF154, (f32)(s32)evt->field_10);
+        break;                                      // b .L_800F4000
+    }
+
+    case 223: {
+        if (pc != nullptr && tgt != nullptr) {   // beq .L_800F0CD0
+            if (evt->field_08 == 0x8000) {           // cmplwi r0,0x8000; bne .L_800F0C98
+                // r14 = field_10 + rand() % (field_14 - field_10 + 1)
+                s32 r14 = evt->field_10 + (rand() % (evt->field_14 - evt->field_10 + 1));
+                vcall_f1(acc, SLOT_VF11C, (f32)(s32)(-r14));  // neg r0,r14
+                f32 f = func_800D81A8(pc, pc, tgt);
+                r14 = (s32)((f32)(s32)r14 * f);    // fctiwz
+                vcall_f1(pc, SLOT_VF11C, (f32)(s32)r14);
+            } else {
+                // .L_800F0C98: vf11C(pc, field_64); vf11C(acc, -field_60)
+                vcall_f1(pc, SLOT_VF11C, tgt->field_64);   // lfs f1, 0x64(r26)
+                vcall_f1(acc, SLOT_VF11C, -tgt->field_60);  // fneg f1, f0
+            }
+        } else {
+            // .L_800F0CD0 (pc==0 or tgt==0): rand range + field_58 add
+            s32 r14 = evt->field_10 + (rand() % (evt->field_14 - evt->field_10 + 1));
+            vcall_f1(acc, SLOT_VF11C, (f32)(s32)(-r14));
+            f32 f = func_800D81A8(pc, pc, tgt);
+            // r14 = (s32)((f32)(s32)r14 * (tgt->field_58 + f))
+            r14 = (s32)((f32)(s32)r14 * (tgt->field_58 + f));
+            vcall_f1(pc, SLOT_VF11C, (f32)(s32)r14);
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 224: {
+        if (pc != nullptr && tgt != nullptr) {   // beq .L_800F0DCC
+            vcall_f1(pc, SLOT_VF11C, tgt->field_64);
+            vcall_f1(acc, SLOT_VF11C, -tgt->field_60);
+        } else {
+            // .L_800F0DCC: r14 = (s32)(0.01f * (f32)(s32)field_10 * vf12C(acc))
+            s32 r14 = (s32)(k0_01f * (f32)(s32)evt->field_10 *
+                           vcall_f(acc, SLOT_VF12C));
+            vcall_f1(acc, SLOT_VF11C, (f32)(s32)(-r14));
+            f32 f = func_800D81A8(pc, pc, tgt);
+            r14 = (s32)((f32)(s32)r14 * (tgt->field_58 + f));
+            vcall_f1(pc, SLOT_VF11C, (f32)(s32)r14);
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 225: {
+        if (tgt != nullptr) {                    // beq .L_800F4000
+            // f1 = 0.01f * field_5C * (f32)(s32)field_10
+            f32 v = k0_01f * tgt->field_5C * (f32)(s32)evt->field_10;
+            // fcmpo vs 0.0; fadd +/-0.5 (f64); fctiwz -- round to nearest
+            s32 r14 = (s32)((f64)v + ((v > k0_0f) ? k0_5 : kM0_5));
+            f32 f = func_800D81A8(pc, pc, tgt);
+            s32 r14b = (s32)((f32)(s32)r14 * f);
+            vcall_f1(pc, SLOT_VF11C, (f32)(s32)r14b);
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 226: {
+        if (pc == nullptr) break;                   // beq .L_800F4000
+        if (acc == pc) break;                  // cmplw r24,r23; beq tail
+        s32 r14;
+        if (tgt != nullptr) {                    // cmpwi r26,0; beq .L_800F0F90
+            // divw remainder: r14 = field_10 + (field_B0 % (field_14-field_10+1))
+            r14 = evt->field_10 +
+                  ((s32)tgt->field_B0 % (evt->field_14 - evt->field_10 + 1));
+        } else {
+            r14 = evt->field_10 + (rand() % (evt->field_14 - evt->field_10 + 1));
+        }
+        // .L_800F0FB4
+        vcall_f1(acc, SLOT_VF154, (f32)(s32)(-r14));  // neg r0,r14; slot 0x154
+        vcall_f1(pc, SLOT_VF154, (f32)(s32)r14);
+        break;                                      // b .L_800F4000
+    }
+
+    case 227: {
+        if (pc == nullptr) break;               // cmpwi r23,0; beq .L_800F4000
+
+        // r15 = pc->vf298() (stat object); r16 = flag
+        void* pcStat = vcall_p(pc, SLOT_VF298);      // 0x800EE538
+        s32 flag = 0;                           // li r16, 0
+
+        // acc->vf324()[0] == 7 (u16)
+        if (*(u16*)vcall_p(acc, SLOT_VF324) == 7) flag = 1;  // lhz + cmplwi 7
+
+        // acc->vf108() - pc->vf108() > 10
+        if ((vcall_i(acc, SLOT_VF108) - vcall_i(pc, SLOT_VF108)) > 10) flag = 1;  // subf + cmpwi 0xa
+
+        if (!flag) {
+            // Gate: obj4 = acc->+0x4; val = obj4->vf30()[0]
+            int val;
+            {
+                void* obj4 = *(void**)((u8*)acc + 4);
+                void* v4 = *(void**)obj4;
+                typedef void* (*VF30)(void*);
+                VF30 vf30 = (VF30)(*(void**)((u8*)v4 + 0x30));
+                val = *(u32*)vf30(obj4);
+            }
+            if (func_80174C98((void*)acc, &val, 0x802) == 0 &&   // bl func_80174C98; cmpwi; bne skip
+                !func_80148778(acc->subAcc, 0x32)) {      // has 0x32 -> skip gate
+                // f28 base by acc->field_15E4 (0 -> 0.0, 6+ -> 0.0)
+                f32 f28;
+                switch (acc->field_15E4) {
+                case 1: f28 = k75_0f; break;    // 80666E7C
+                case 2: f28 = k50_0f; break;    // 80666E18
+                case 3: f28 = k25_0f; break;    // 80666DF8
+                case 4: f28 = k15_0f; break;    // 80666DF4
+                case 5: f28 = k10_0f; break;    // 80666E34
+                default: f28 = k0_0f; break;    // 80666DDC (incl. 0 and 6)
+                }
+                // pcStat->+0x50 artsData: f28 += 2.5 * (f32)artsLevel
+                void* pcArts = *(void**)((u8*)pcStat + 0x50);   // lwz r3, 0x50(r15)
+                if (pcArts != nullptr) {
+                    void* artsVTbl = *(void**)((u8*)pcArts + 0x84);
+                    typedef s32 (*VF0C)(void*);
+                    VF0C vf0C = (VF0C)(*(void**)((u8*)artsVTbl + 0x0C));
+                    f28 += k2_5f * (f32)vf0C(pcArts);   // fmadds f28, f0(2.5), f1, f28
+                }
+                s32 rollVal;
+                if (tgt != nullptr) rollVal = (s32)tgt->field_B4;
+                else rollVal = mtRand__Q22ml4mathFi(100);
+                if ((s32)f28 <= rollVal) flag = 1;      // fctiwz; cmpw; bgt skip; li r16,1
+            } else {
+                flag = 1;                               // .L_800EE6CC
+            }
+        }
+
+        // .L_800EE6D0 -- build evCopy @stack 0x798
+        evCopy = *evt;                           // 13-word copy; field_30 = pre-mod value
+        evCopy.eventType = 0x10;                // sth r4(0x10), 0x7a4(r1)
+        evCopy.field_20 = (f32)(s32)evt->field_10;   // xoris+0x4330 -> stfs 0x7b8(r1)
+        evCopy.field_10 = 3;                    // stw r0(3), 0x7a8(r1)
+
+        if (flag) {                             // cmpwi r16,0; beq .L_800EE798
+            evCopy.eventType = 6;               // li r0,6; sth 0x7a4(r1)
+            if (!func_800EC918(self, pc, acc, &evCopy, tgt)) {
+                return 0;                       // li r3,0; b .L_800F41D4
+            }
+            break;                              // bne .L_800F4000
+        }
+
+        // .L_800EE798 -- flag == 0 path
+        evCopy.field_30 |= 0x2000;              // ori r0,r0,0x2000; stw 0x7c8(r1)
+        if (!func_800EC918(self, pc, acc, &evCopy, tgt)) {
+            return 0;
+        }
+        evCopy.eventType = 6;                   // li r0,6; sth 0x7a4(r1)
+        if (!func_800EC918(self, pc, acc, &evCopy, tgt)) {
+            return 0;
+        }
+        return 0;                               // li r3,0; b .L_800F41D4
+    }
+
+    case 234: {
+        evt->prevEventType = evt->eventType;          // sth r4, 0x2e(r25)  (r4 = eventType)
+        evt->field_30 |= 2;                          // ori r0,r0,2; stw 0x30(r25)
+        void* res = vcall_p(acc, SLOT_VF27C);       // slot 0x27C
+        *(u16*)res = 1;                             // li r0,1; sth r0, 0x0(r3)
+        break;                                      // b .L_800F4000
+    }
+
+    case 235: {
+        if (func_80148778(acc->subAcc, 0xEB)) {
+            acc->subAcc->vf20(0xEB);           // slot 0x20
+            return 0;                               // li r3,0; b .L_800F41D4
+        }
+        // .L_800F1070
+        evt->prevEventType = evt->eventType;          // lhz + sth 0x2e
+        evCopy = *evt;                               // 13-word copy @stack 0x730
+        evt->field_30 |= 2;                          // ori r9,r9,2; stw 0x30(r25)
+        evCopy.eventType = 0x32;                    // li r8,0x32; sth 0x73c(r1)
+        evCopy.field_10 = 0;                        // li r0,0; stw 0x740(r1)
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break;                                      // b .L_800F4000
+    }
+
+    case 236: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x44;
+        evCopy.field_30 |= 0x800;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x45;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 237: {
+        // (chunk 1) evt->prevEventType = evt->eventType;
+        // (chunk 1) evCopy = *evt;            (field_30 = pre-|2 value)
+        // (chunk 2) evt->field_30 |= 2;
+        evt->field_30 |= 2;
+
+        evCopy.eventType = 0x58;                 // sth r0(0x58), +0x0C
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x95;                 // li r3,0x95
+        evCopy.field_10 = 0x78;                  // li r0,0x78
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x3C;                 // li r3,0x3C
+        evCopy.field_10 = 0x19;                  // li r0,0x19
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 238: {
+        if (pc == nullptr) {
+            break; // cmpwi r23,0; beq .L_800F4000
+        }
+        evt->prevEventType = evt->eventType;
+
+        // evB (stack 0x6C8): plain copy; field_30 keeps the pre-|2 value.
+        BattleEvent evB = *evt;
+        evt->field_30 |= 2;
+
+        // evA (stack 0x694): copy with field_30 |= 2, eventType 0x11,
+        // field_10 = pc->field_3F10.
+        BattleEvent evA = *evt;
+        evA.eventType = 0x11;                    // li r14,0x11
+        evA.field_10 = *(s32*)((u8*)pc + 0x3F10);
+        if (!func_800EC918(self, pc, acc, &evA, tgt)) {
+            return 0; // cmpwi r3,0; beq -> li r3,0; b .L_800F41D4
+        }
+
+        // acc->field_3ED4 vfunc 0x70 called TWICE with pc->field_3F10
+        // (retail has no null check here).
+        void* obj3ED4 = *(void**)((u8*)acc + 0x3ED4);
+        {
+            void* vtbl = *(void**)obj3ED4;
+            typedef void (*VF70)(void*, u32);
+            VF70 vf70 = (VF70)(*(void**)((u8*)vtbl + 0x70));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
+        }
+
+        // eventType 0xEE recursion with pc=0 and acc=pc (!).
+        evB.eventType = 0xEE;                    // li r0,0xEE
+        func_800EC918(self, 0, (EC918_BattleObjAccessor*)pc, &evB, tgt);
+
+        // eventType 0x11 recursion with field_10 = acc->field_3F10,
+        // field_30 |= 0x800; acc=pc again.
+        evB.eventType = 0x11;                    // sth r14, +0x0C
+        evB.field_10 = *(s32*)((u8*)acc + 0x3F10);
+        evB.field_30 |= 0x800;                   // ori r0,r0,0x800
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evB, tgt);
+        return 1; // li r3,1; b .L_800F41D4
+    }
+
+    case 239: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x2D;                 // li r0,0x2D
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xCA;                 // li r0,0xCA
+        evCopy.field_10 = 0;                     // li r14,0x0
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xCD;                 // li r0,0xCD
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 240: {
+        // Status 0xF1 gate: if the actor has this status, reject the event.
+        if (func_80148778(acc->subAcc, 0xF1)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+
+        // amount = 0x23 / ((0x64 - stat[0x83]) / 100.0f), single precision
+        s32 amount = 0x23;                       // li r14,0x23
+        {
+            void* vtbl = *(void**)acc;
+            typedef void* (*VF290)(EC918_BattleObjAccessor*);
+            VF290 vf290 = (VF290)(*(void**)((u8*)vtbl + 0x290));
+            void* statObj = vf290(acc);
+            if (statObj != nullptr) {
+                s32 sv;
+                if (func_80260264(statObj, 0x83, &sv)) {
+                    f32 num = (f32)0x23;               // xoris 0x23
+                    f32 den = (f32)(0x64 - sv) / k100_0f; // subfic + fdivs
+                    amount = (s32)(num / den);         // fdivs + fctiwz
+                }
+            }
+        }
+
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x94;                 // li r8,0x94
+        evCopy.field_10 = amount;                // stw r14, +0x10
+        evCopy.field_14 = 0xF0;                  // li r0,0xF0
+        evCopy.field_24 = k1_0f;                 // stfs f0, +0x24
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x34;                 // li r3,0x34
+        evCopy.field_10 = 0;                     // li r14,0x0
+        evCopy.field_14 = 3;                     // li r0,0x3
+        evCopy.field_24 = k1_0f;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x2E;                 // li r0,0x2E
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 241: {
+        if (func_80148778(acc->subAcc, 0xF1)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+
+        // amount = 0x0F / ((0x64 - stat[0x83]) / 100.0f), single precision
+        s32 amount = 0x0F;                       // li r14,0x0F
+        {
+            void* vtbl = *(void**)acc;
+            typedef void* (*VF290)(EC918_BattleObjAccessor*);
+            VF290 vf290 = (VF290)(*(void**)((u8*)vtbl + 0x290));
+            void* statObj = vf290(acc);
+            if (statObj != nullptr) {
+                s32 sv;
+                if (func_80260264(statObj, 0x83, &sv)) {
+                    f32 num = (f32)0x0F;
+                    f32 den = (f32)(0x64 - sv) / k100_0f;
+                    amount = (s32)(num / den);
+                }
+            }
+        }
+
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x94;                 // li r3,0x94
+        evCopy.field_10 = amount;
+        evCopy.field_14 = 0xF1;                  // li r0,0xF1
+        evCopy.field_24 = k1_0f;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x34;                 // li r3,0x34
+        evCopy.field_10 = 0;
+        evCopy.field_14 = 3;                     // li r0,0x3
+        evCopy.field_24 = k1_0f;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x2E;                 // li r0,0x2E
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xCB;                 // li r0,0xCB
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xCC;                 // li r0,0xCC
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 242: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0xD4;                 // li r0,0xD4
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xC7;                 // li r3,0xC7
+        evCopy.field_10 = 0;                     // li r0,0x0
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 243: {
+        // f28 = artsData ? artsData->+0x60 : 0.0f   (r16 = artsData)
+        // r14 = artsData ? artsData->+0x46 : 0      (arts id)
+        f32 f28;
+        u32 artsId;
+        void* artsData = (tgt != nullptr) ? tgt->artsData : nullptr;
+        if (artsData != nullptr) {
+            f28 = *(f32*)((u8*)artsData + 0x60);
+            artsId = *(u16*)((u8*)artsData + 0x46);
+        } else {
+            f28 = k0_0f;
+            artsId = 0;
+        }
+
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x58;                 // li r0,0x58
+
+        // Single enum-list holder reused by all three passes (retail r1+0x58);
+        // destructor once at the end.
+        EnumListHolder holder;
+        func_80043D90(&holder);
+
+        // Pass 1 (0x800F14B4-0x800F15C0): filter (0x20, 0x800) then
+        // __ct__800FB044(list, f28, pc->subIdent->vfAC(), 0);
+        // apply event 0x58 to every listed actor via recursion.
+        {
+            void* list = func_80043F18(&holder);
+            func_800F4A98(list, 0x20, 0x800);
+
+            void* subVtbl = *(void**)((u8*)pc + 0x3E9C);
+            typedef void* (*VFAC)(void*);
+            VFAC vfAC = (VFAC)(*(void**)((u8*)subVtbl + 0xAC));
+            void* idObj = vfAC((u8*)pc + 0x3E9C);
+
+            list = func_80043F18(&holder);
+            __ct__800FB044(list, f28, idObj, 0);
+
+            for (u32 i = 0;; i++) {
+                void* l = func_80043F18(&holder);
+                u32 count = *(u32*)((u8*)l + 0x620);
+                if (i >= count) break;
+                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                func_800EC918(self, pc, (EC918_BattleObjAccessor*)actorAcc,
+                              &evCopy, tgt);
+            }
+        }
+
+        // Pass 2 (0x800F15C4-0x800F1610): same list, subAcc->vf20(0x0B) on
+        // every actor except the acc itself.
+        {
+            for (u32 i = 0;; i++) {
+                void* l = func_80043F18(&holder);
+                u32 count = *(u32*)((u8*)l + 0x620);
+                if (i >= count) break;
+                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                if (actorAcc == acc) continue; // cmplw r3,r24; beq
+                void* subVtbl = *(void**)((u8*)actorAcc + 0x08);
+                typedef void (*VF20)(void*, u32);
+                VF20 vf20 = (VF20)(*(void**)((u8*)subVtbl + 0x20));
+                vf20((u8*)actorAcc + 0x08, 0x0B);
+            }
+        }
+
+        // Damage factor: f29 = func_800D7EA0((u8*)pc, tgt).
+        f32 f29 = func_800D7EA0((u8*)pc, tgt);
+
+        // Pass 3 (0x800F1624-0x800F1714): refilter (0x100, 0) then
+        // __ct__800FB044(list, f28, pc->subIdent->vfAC(), 8);
+        // apply scaled arts damage to each listed actor.
+        {
+            void* list = func_80043F18(&holder);
+            func_800F4A98(list, 0x100, 0);
+
+            void* subVtbl = *(void**)((u8*)pc + 0x3E9C);
+            typedef void* (*VFAC)(void*);
+            VFAC vfAC = (VFAC)(*(void**)((u8*)subVtbl + 0xAC));
+            void* idObj = vfAC((u8*)pc + 0x3E9C);
+
+            list = func_80043F18(&holder);
+            __ct__800FB044(list, f28, idObj, 8);
+
+            for (u32 i = 0;; i++) {
+                void* l = func_80043F18(&holder);
+                u32 count = *(u32*)((u8*)l + 0x620);
+                if (i >= count) break;
+                void* actorAcc = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                if (actorAcc == acc) continue; // cmplw r3,r24; beq .L_800F1700
+
+                // skip actors whose subIdent->vf4C() == pc->field_3F10
+                {
+                    void* subVtbl = *(void**)((u8*)actorAcc + 0x3E9C);
+                    typedef u32 (*VF4C)(void*);
+                    VF4C vf4C = (VF4C)(*(void**)((u8*)subVtbl + 0x4C));
+                    u32 pcId = *(u32*)((u8*)pc + 0x3F10);
+                    if (vf4C((u8*)actorAcc + 0x3E9C) == pcId) continue; // beq .L_800F1700
+
+                    // level = pc->vf108(); product = artsId * (level + 14)
+                    void* pcVtbl = *(void**)pc;
+                    typedef s32 (*VF108)(void*);
+                    VF108 vf108 = (VF108)(*(void**)((u8*)pcVtbl + 0x108));
+                    s32 level = vf108(pc);
+                    s32 product = (s32)artsId * (level + 14); // mullw r0,r14,r0
+
+                    // actor->vf2C4(pc, 0.0f, f29 * product, 0.0f)
+                    void* actorVtbl = *(void**)actorAcc;
+                    typedef void (*VF2C4)(void*, void*, f32, f32, f32);
+                    VF2C4 vf2C4 = (VF2C4)(*(void**)((u8*)actorVtbl + 0x2C4));
+                    vf2C4(actorAcc, pc, k0_0f, f29 * (f32)product, k0_0f);
+                }
+            }
+        }
+        __dt__80043E88(&holder, -1); // destructor before tail (retail order)
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 244: {
+        if (pc == nullptr) {
+            break; // cmpwi r23,0; beq .L_800F4000
+        }
+        evt->prevEventType = evt->eventType;
+
+        BattleEvent evB = *evt;
+        evt->field_30 |= 2;
+
+        BattleEvent evA = *evt;
+        evA.eventType = 0x11;                    // li r14,0x11
+        evA.field_10 = *(s32*)((u8*)pc + 0x3F10);
+        if (!func_800EC918(self, pc, acc, &evA, tgt)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+
+        // acc->field_3ED4 vfunc 0x70 called ONCE with pc->field_3F10.
+        void* obj3ED4 = *(void**)((u8*)acc + 0x3ED4);
+        {
+            void* vtbl = *(void**)obj3ED4;
+            typedef void (*VF70)(void*, u32);
+            VF70 vf70 = (VF70)(*(void**)((u8*)vtbl + 0x70));
+            vf70(obj3ED4, *(u32*)((u8*)pc + 0x3F10));
+        }
+
+        // eventType 0x60 recursion with pc=0, acc=pc.
+        evB.eventType = 0x60;                    // li r3,0x60
+        evB.field_10 = 0x19;                     // li r0,0x19
+        func_800EC918(self, 0, (EC918_BattleObjAccessor*)pc, &evB, tgt);
+
+        // eventType 0xF4 recursion with pc=0, acc=pc.
+        evB.eventType = 0xF4;                    // li r0,0xF4
+        func_800EC918(self, 0, (EC918_BattleObjAccessor*)pc, &evB, tgt);
+
+        // eventType 0x11 recursion: field_10 = acc->field_3F10,
+        // field_30 |= 0x800, acc=pc.
+        evB.eventType = 0x11;                    // sth r14, +0x0C
+        evB.field_10 = *(s32*)((u8*)acc + 0x3F10);
+        evB.field_30 |= 0x800;                   // ori r0,r0,0x800
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evB, tgt);
+        return 1; // li r3,1; b .L_800F41D4
+    }
+
+    case 246: {
+        // rnd = mtRand(evt->field_14, evt->field_10)  [lha +0x14 / lwz +0x10]
+        s32 rnd = mtRand__Q22ml4mathFii(evt->field_14, evt->field_10);
+
+        // acc->vf154((f32)(-rnd));  pc->vf154((f32)rnd);
+        {
+            void* vtbl = *(void**)acc;
+            typedef void (*VF154)(void*, f32);
+            VF154 vf154 = (VF154)(*(void**)((u8*)vtbl + 0x154));
+            vf154(acc, (f32)(-rnd));
+        }
+        {
+            void* vtbl = *(void**)pc;
+            typedef void (*VF154)(void*, f32);
+            VF154 vf154 = (VF154)(*(void**)((u8*)vtbl + 0x154));
+            vf154(pc, (f32)rnd);
+        }
+
+        // cap: if (pc->vf158() > 99.0f) pc->vf150(99.0f);
+        {
+            void* vtbl = *(void**)pc;
+            typedef f32 (*VF158)(void*);
+            VF158 vf158 = (VF158)(*(void**)((u8*)vtbl + 0x158));
+            if (vf158(pc) > k99_0f) {
+                typedef void (*VF150)(void*, f32);
+                VF150 vf150 = (VF150)(*(void**)((u8*)vtbl + 0x150));
+                vf150(pc, k99_0f);
+            }
+        }
+
+        evt->prevEventType = evt->eventType;
+        evt->field_20 = (f32)rnd;                 // stfs f0, 0x20(r25)
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0xC3;                 // li r0,0xC3
+        evCopy.field_10 = 0;                     // li r14,0x0
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x120;                // li r0,0x120
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 247: {
+        evt->field_10 = 0;                        // li r0,0; stw r0, 0x10(r25)
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 249: {
+        evt->prevEventType = evt->eventType;      // sth r4, 0x2e(r25)
+        BattleEvent evCopy = *evt;               // 13-word copy @stack 0x320
+        evt->field_30 |= 0x2;                    // ori r0,r0,0x2 ; stw r0,0x30(r25)
+        if (pc == acc) {                   // cmplw r23,r24 ; bne .L_800F2E58
+            static const u16 tbl[5] = { 0x58, 0x59, 0x5A, 0x5B, 0x5C };  // @0x804FCB04
+            evCopy.eventType = tbl[mtRand__Q22ml4mathFi(5)];
+            func_800EC918(self, pc, acc, &evCopy, tgt);
+        }
+        // .L_800F2E58
+        evCopy.eventType = 0xBF;
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        if (pc == acc) {
+            break;                              // beq .L_800F4000 -> shared tail
+        }
+        return 1;                               // li r3,1 ; b .L_800F41D4
+    }
+
+    case 250: {
+        for (s32 i = 0; i < 0x20; i++) {        // li r14,0 ; cmpwi 0x20 ; blt
+            void* item = acc->subAcc->vf5C(i);
+            if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
+                if (!(*(u32*)((u8*)item + 0x08) & 0xE000)) {   // rlwinm 0,17,19
+                    acc->subAcc->vf24(item);
+                }
+            }
+        }
+        evt->prevEventType = evt->eventType;      // lhz r3,0xc(r25) ; sth r3,0x2e(r25)
+        BattleEvent evE = *evt;                  // copy @stack 0x21C
+        evt->field_30 |= 0x2;
+        evE.eventType = 0x34;                   // sth r0(0x34), 0x228(r1)
+        func_800EC918(self, pc, acc, &evE, tgt);
+        break;                                  // b .L_800F4000
+    }
+
+    case 251: {
+        evt->prevEventType = evt->eventType;
+        BattleEvent evF = *evt;                  // copy @stack 0x1E8
+        evt->field_30 |= 0x2;
+        evF.eventType = 2;
+        func_800EC918(self, pc, acc, &evF, tgt);
+        evF.eventType = 0x60;
+        evF.field_10 = 25;                      // li r14,0x19 ; stw r14,0x1f8
+        func_800EC918(self, pc, acc, &evF, tgt);
+        evF.eventType = 0x3C;
+        evF.field_10 = 25;
+        func_800EC918(self, pc, acc, &evF, tgt);
+        break;                                  // b .L_800F4000
+    }
+
+    case 253: {
+        evt->prevEventType = evt->eventType;
+        s16 savedField16 = evt->field_16;         // lha r14, 0x16(r25)
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x44;                 // li r0,0x44
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        // eventType 0x6F with field_10 = pcStat->+0x30 (s16) * 2
+        evCopy.eventType = 0x6F;                 // li r0,0x6F
+        {
+            void* vtbl = *(void**)pc;
+            typedef void* (*VF224)(void*);
+            VF224 vf224 = (VF224)(*(void**)((u8*)vtbl + 0x224));
+            void* pcStat = vf224(pc);
+            evCopy.field_10 = (s32)(*(s16*)((u8*)pcStat + 0x30)) * 2; // lha+slwi
+        }
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        // eventType 0x97 with field_10=0x14, field_14=2,
+        // field_16=original field_16, field_24=1.0f
+        evCopy.eventType = 0x97;                 // li r3,0x97
+        evCopy.field_10 = 0x14;                  // li r6,0x14
+        evCopy.field_14 = 2;                     // li r0,0x2
+        evCopy.field_16 = savedField16;          // sth r14, +0x16
+        evCopy.field_24 = k1_0f;                 // stfs f0(1.0f), +0x24
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 254: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x28;                 // li r0,0x28
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x29;                 // li r0,0x29
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0xC6;                 // li r3,0xC6
+        evCopy.field_10 = 2;                     // li r6,0x2
+        evCopy.field_14 = 0;                     // li r0,0x0
+        evCopy.field_24 = k1_0f;                 // stfs f0, +0x24
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 255: {
+        return 1; // li r3,1; b .L_800F41D4
+    }
+
+    case 257: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0xD4;                 // li r8,0xD4
+        evCopy.field_10 = 0;                     // li r0,0x0
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x62;                 // li r3,0x62
+        evCopy.field_10 = 0x64;                  // li r0,0x64
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 258: {
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x02;                 // li r0,0x2
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        // sweep slots 0..31: purge events that are not class-0x45C00 and
+        // whose field_08 lacks the 0x1C00 bits.
+        for (s32 i = 0; i < 0x20; i++) {
+            void* subVtbl = *(void**)((u8*)acc + 0x08);
+            typedef void* (*VF5C)(void*, u32);
+            VF5C vf5C = (VF5C)(*(void**)((u8*)subVtbl + 0x5C));
+            void* r = vf5C((u8*)acc + 0x08, (u32)i);
+
+            if (func_80145C00(*(u16*)((u8*)r + 0x2E))) continue; // bne
+            if (*(u32*)((u8*)r + 0x08) & 0x1C00) continue;       // rlwinm 17-19
+
+            typedef void (*VF24)(void*, void*);
+            VF24 vf24 = (VF24)(*(void**)((u8*)subVtbl + 0x24));
+            vf24((u8*)acc + 0x08, r);
+        }
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 259: {
+        if (pc == nullptr) {
+            return 0; // beq .L_800F29CC
+        }
+        if (*(u32*)((u8*)pc + 0x1530) == 0) {
+            return 0; // lwz r0, 0x1530(r23); cmpwi r0,0; beq .L_800F29CC
+        }
+        evCopy = *evt;                            // (no prevEventType, no |2)
+        evCopy.eventType = 0x0F;                 // li r8,0x0F
+        evCopy.field_10 = 0x03;                  // li r0,0x3
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        return 1; // .L_800F29D4: li r3,1; b .L_800F41D4
+    }
+
+    case 260: {
+        s32 roll = mtRand__Q22ml4mathFi(100);          // r16
+        s32 chosen = 0;                                // r15
+        s32 i = 3;                                     // r17 start index
+        u32 f15F0 = acc->field_15F0;              // lwz r0,0x15f0(r24)
+        if ((f15F0 == 0 || f15F0 == 2) && *(u32*)(lbl_eu_80573EEC + 0xD0) < 4) {
+            i = 0;                                     // blt .L_800F2F04
+        }
+        s32 diff = vcall_i(acc, SLOT_VF108) - vcall_i(pc, SLOT_VF108);  // subf r0,r3,r14
+        if (diff > 10) i = 5;                          // cmpwi 0xa ; ble skip
+        static const s32 weights[6] = { 2, 5, 40, 25, 25, 100 };   // @0x804FCB18
+        for (; i < 6; i++) {                           // mtctr(6-i) ; bdnz
+            roll -= weights[i];                        // subf. r16,r0,r16
+            if (roll < 0) { chosen = i; break; }       // bge next ; mr r15,r17
+        }
+        s32 r27 = 0;                                   // arts id
+        s32 r28 = -1;                                  // chain result
+        s32 r29 = 0;                                   // chain level
+    reselect:                                          // .L_800F2FAC
+        switch (chosen) {
+        case 0: r29 = 3; r27 = 0; break;               // .L_800F2FEC
+        case 1: r29 = 2; r27 = 1; break;               // .L_800F2FF8
+        case 2: r29 = 1; r27 = 2; break;               // .L_800F3004
+        case 3: {                                      // .L_800F3010 arts radar
+            if (pc != nullptr) {
+                void* statObj = vcall_p(pc, SLOT_VF290);
+                if (statObj != nullptr) {
+                    statObj = vcall_p(pc, SLOT_VF290);      // retail calls vf290 twice
+                    if (func_8026178C(statObj, 0x78)) {
+                        for (s32 n = 1; n <= 8; n++) { // li r16,1 ; ble 8
+                            void* obj = func_8009EC9C((u16)n);
+                            func_800A26A4(obj, (u32)vcall_i(acc, SLOT_VF1E8) >> 1, 0,
+                                          vcall_i(acc, SLOT_VF108), 0, 1, 0);
+                        }
+                        r28 = 1; r27 = 3;
+                        break;
+                    }
+                }
+            }
+            chosen = 5;                                // .L_800F30CC: li r15,5
+            goto reselect;                             // b .L_800F2FAC
+        }
+        case 4: {                                      // .L_800F30D4 arts radar (2)
+            if (pc != nullptr) {
+                void* statObj = vcall_p(pc, SLOT_VF290);
+                if (statObj != nullptr) {
+                    statObj = vcall_p(pc, SLOT_VF290);
+                    if (func_8026178C(statObj, 0x79)) {
+                        for (s32 n = 1; n <= 8; n++) {
+                            void* obj = func_8009EC9C((u16)n);
+                            func_800A26A4(obj, 0, (void*)(uintptr_t)((u32)vcall_i(acc, SLOT_VF200) >> 1),
+                                          vcall_i(acc, SLOT_VF108), 0, 1, 0);
+                        }
+                        r28 = 2; r27 = 4;
+                        break;
+                    }
+                }
+            }
+            chosen = 5;                                // .L_800F3190: li r15,5
+            goto reselect;
+        }
+        case 5: {                                      // .L_800F3198
+            // ---- build evA (stack 0x2EC) and evB (stack 0x2B8) ----
+            BattleEvent evA = *evt;                     // 13-word copy @0x2EC
+            evA.eventType = 0;                         // sth r30(0), 0x2f8
+            evA.field_10 = 0;                          // stw r30(0), 0x2fc
+            evA.field_20 = 0.0f;                       // stfs f29(0.0), 0x30c
+            evA.field_08 = 0x10000;                    // stw r31(0x10000), 0x2f4
+            evA.field_30 |= 0x500;                     // stw r6(evt->30|0x500), 0x31c
+            BattleEvent evB = *evt;                     // built from saved regs
+            evB.eventType = 0;                         // word @+0x0C = (0<<16)|evt->pad
+            evB.field_10 = 0;
+            evB.field_20 = 0.0f;
+            evB.field_08 = 0x10000;
+            evB.field_30 |= 0x504;                     // stw r0(evt->30|0x504), 0x2e8
+            func_800BFC68(pc != nullptr ? (void*)((u8*)pc + 0x3E9C) : (void*)pc);
+            switch (rand() % 4) {                      // bl rand ; %4 idiom
+            case 0: {                                  // .L_800F32A0 knockback
+                s32 k = (s32)(0.5f * vcall_f(pc, SLOT_VF12C));  // f30 = 0.5 (80666DE8)
+                vcall_d1(acc, SLOT_VF11C, (f64)(s32)(-k));  // neg r0,r15
+                f32 d = func_800D81A8(pc, pc, tgt);
+                vcall_d1(acc, SLOT_VF11C, (f64)(s32)((s32)((f32)(s32)k * d)));
+                r28 = 3; r27 = 8;
+                break;
+            }
+            case 1: {                                  // .L_800F334C
+                evA.eventType = 0x52;                  // r17 = 0x52
+                evA.field_10 = 10;                     // r18 = 0xa
+                evB.eventType = 0x58;                  // r19 = 0x58
+                evB.field_18 = 50;                     // r21 = 0x32
+                {
+                    void* accArts = vcall_p(acc, SLOT_VF20C);
+                    s32 v1 = *(s16*)((u8*)accArts + 0x1C);
+                    f32 t = 0.1f * (f32)(s32)v1;       // f28 = 0.1 (80666E84)
+                    s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));  // E58/E60
+                    void* pcArts = vcall_p(pc, SLOT_VF20C);
+                    s32 v2 = *(s16*)((u8*)pcArts + 0x1C);
+                    evB.field_10 = pct * 100 / v2;     // mulli 0x64 ; divw
+                }
+                r28 = 4; r27 = 5;
+                break;
+            }
+            case 2: {                                  // .L_800F33DC
+                evA.eventType = 0x53;                  // r20 = 0x53
+                evA.field_10 = 10;
+                evB.eventType = 0x59;                  // r14 = 0x59
+                evB.field_18 = 50;
+                {
+                    void* accArts = vcall_p(acc, SLOT_VF20C);
+                    s32 v1 = *(s16*)((u8*)accArts + 0x1E);
+                    f32 t = 0.1f * (f32)(s32)v1;
+                    s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));
+                    void* pcArts = vcall_p(pc, SLOT_VF20C);
+                    s32 v2 = *(s16*)((u8*)pcArts + 0x1E);
+                    evB.field_10 = pct * 100 / v2;
+                }
+                r28 = 5; r27 = 7;
+                break;
+            }
+            case 3: {                                  // .L_800F346C
+                evA.eventType = 0x54;
+                evA.field_10 = 10;
+                evB.eventType = 0x5A;
+                evB.field_18 = 50;
+                {
+                    void* accArts = vcall_p(acc, SLOT_VF20C);
+                    s32 v1 = *(s16*)((u8*)accArts + 0x20);
+                    f32 t = 0.1f * (f32)(s32)v1;
+                    s32 pct = (s32)((f64)t + (t > 0.0f ? 0.5 : -0.5));
+                    void* pcArts = vcall_p(pc, SLOT_VF20C);
+                    s32 v2 = *(s16*)((u8*)pcArts + 0x20);
+                    evB.field_10 = pct * 100 / v2;
+                }
+                r28 = 6; r27 = 6;
+                break;
+            }
+            }
+            // .L_800F3500
+            if (evA.eventType != 0) {                  // lhz r0,0x2f8 ; beq .L_800F355C
+                if (!func_800EC918(self, pc, acc, &evA, tgt)) return 0;
+                if (!func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evB, tgt)) return 0;  // acc=pc
+            }
+            break;
+        }
+        }
+        // .L_800F355C
+        if (r29 != 0) {
+            if (!func_8015B130(r29, acc->field_3F28)) {
+                chosen = 5;                            // li r15,5 ; b .L_800F2FAC
+                goto reselect;
+            }
+            r28 = 0;
+        }
+        func_80135380((u8)r28);
+        func_802A30DC(pc, r27);
+        return 1;                                      // li r3,1 ; b .L_800F41D4
+    }
+
+    case 261: {
+        evt->prevEventType = evt->eventType;
+        evt->field_30 |= 0x2;
+        if (func_80148778(acc->subAcc, 0x112)) {
+            void* artsData = *(void**)((u8*)tgt + 0x50);
+            s32 artsVal;
+            {
+                void* artsVtbl = *(void**)((u8*)artsData + 0x84);
+                artsVal = ((s32(*)(void*))(*(void**)((u8*)artsVtbl + 0x0C)))(artsData);
+            }
+            s32 rate = artsVal * 5 + 50;               // slwi 2 ; add ; addi 0x32
+            if (vcall_i(pc, SLOT_VF308) == 1) rate -= 25;   // subi r14,r14,0x19
+            if (vcall_i(pc, SLOT_VF308) == 0) rate = 0;     // li r14,0
+            if (mtRand__Q22ml4mathFi(100) < rate) {    // cmpw ; bge skip
+                acc->subAcc->vf20(0x112);         // vfunc 0x20: clear status
+            }
+        }
+        BattleEvent evC = *evt;                         // copy @stack 0x284
+        evC.eventType = 7;                             // sth r0(7), 0x290
+        evC.field_10 = *(s32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x294
+        if (!func_800EC918(self, pc, acc, &evC, tgt)) return 0;
+        break;                                         // b .L_800F4000
+    }
+
+    case 263: {
+        if (vcall_i(acc, SLOT_VF2BC) != 0) break;   // bne .L_800F4000
+        if (func_80148778(acc->subAcc, 0x120)) break;  // bne .L_800F4000
+
+        s32 r17 = evt->field_10;                     // lwz r17, 0x10(r25)
+        if (evt->field_08 == 0x8000) {               // cmplwi r0,0x8000; bne .L_800EFDE4
+            // func_800D81A8(pc, acc, tgt); r17 = (s32)((f32)(s32)field_10 * f1)
+            r17 = (s32)((f32)(s32)evt->field_10 * func_800D81A8(pc, acc, tgt));
+        }
+
+        f32 f28 = func_800D7EA0((u8*)pc, tgt);        // .L_800EFDE4: fmr f28, f1
+        if (pc != nullptr) {                        // cmpwi r23,0; beq .L_800EFE98
+            u32 r14 = acc->field_3F10;         // lwz r14, 0x3f10(r24)
+            f32 prod = k0_0f;
+            if (artsData != nullptr) {              // beq .L_800EFE44
+                // lhz r15, 0x46(r16); vf108(pc); addi +0xe; mullw
+                u16 artsId = *(u16*)((u8*)artsData + 0x46);
+                s32 level = vcall_i(pc, SLOT_VF108);
+                prod = f28 * (f32)(s32)((s32)artsId * (level + 14));
+            }
+            // .L_800EFE44: prod = 0.0f (when artsData == null)
+            s32 r6 = (s32)prod;                     // fctiwz; lwz 0x854(r1)
+            // r5 = (s32)(1.25f * (f32)(s32)r17 * f28)
+            s32 r5 = (s32)(k1_25f * (f32)(s32)r17 * f28);
+            // func_800E9FE4(self, pc, r5, r6, 0, 1, acc->3F10)
+            func_800E9FE4((void*)(uintptr_t)self, pc, r5, r6, 0, 1,
+                          (void*)(uintptr_t)r14);
+        }
+
+        // .L_800EFE98: vf5B0(acc, (f32)(s32)r17, tgt->field_74)
+        {
+            void* vt = *(void**)acc;
+            typedef void (*Vf5B0)(void*, f32, u32);
+            Vf5B0 vf5B0 = (Vf5B0)(*(void**)((u8*)vt + 0x5B0));
+            vf5B0(acc, (f32)(s32)r17, tgt->field_74);  // lwz r4, 0x74(r26)
+        }
+        break;                                      // b .L_800F4000
+    }
+
+    case 264: {
+        for (s32 i = 0; i < 0x20; i++) {
+            void* item = acc->subAcc->vf5C(i);
+            if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
+                if (!(*(u32*)((u8*)item + 0x08) & 0xE000)) {   // rlwinm 0,17,19
+                    acc->subAcc->vf24(item);
+                }
+            }
+        }
+        break;                                         // b .L_800F4000
+    }
+
+    case 267: {
+        evt->prevEventType = evt->eventType;
+        BattleEvent evG = *evt;                         // copy @stack 0x1B4
+        evt->field_30 |= 0x2;
+        BattleEvent evH = evG;                         // copy @stack 0x180
+        evH.eventType = 0x11;                          // sth r14(0x11), 0x18c
+        evH.field_10 = *(s32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x190
+        if (!func_800EC918(self, pc, acc, &evH, tgt)) return 0;
+        // .L_800F3BC0
+        vcall_v1(acc->field_3ED4, 0x70, *(u32*)((u8*)pc + 0x3F10));
+        evG.eventType = 0x62;                          // sth r3(0x62), 0x1c0
+        evG.field_10 = 0x32;                           // stw r0(0x32), 0x1c4
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evG, tgt);     // acc arg = pc
+        evG.eventType = 0x121;
+        evG.field_10 = 5;
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evG, tgt);
+        evG.eventType = 0x11;
+        evG.field_10 = *(s32*)((u8*)acc + 0x3F10);  // ORIGINAL acc
+        evG.field_30 |= 0x800;                         // ori 0x800, 0x1e4
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evG, tgt);
+        acc = (EC918_BattleObjAccessor*)pc;       // mr r24,r23
+        break;                                         // b .L_800F4000
+    }
+
+    case 269: {
+        vcall_f1(acc, SLOT_VF11C,
+                 -((f32)(s32)evt->field_14 * vcall_f(acc, SLOT_VF128) / k100_0f));
+        vcall_f1(acc, SLOT_VF154, (f32)(s32)evt->field_10);
+        break;                                      // b .L_800F4000
+    }
+
+    case 273: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        evt->prevEventType = evt->eventType;
+        evt->field_30 |= 2;
+
+        // level = acc->vf108(); pick a count from level bands.
+        {
+            void* vtbl = *(void**)acc;
+            typedef s32 (*VF108)(void*);
+            VF108 vf108 = (VF108)(*(void**)((u8*)vtbl + 0x108));
+            s32 level = vf108(acc);
+            s32 count;
+            if (level < 0x0A) {
+                count = 0;                       // .L_800F2318
+            } else if (level < 0x14) {
+                count = (rand() & 1) + 1;        // .L_800F2320 (srwi/clrlwi/xor)
+            } else if (level < 0x32) {
+                count = (rand() & 1) + 2;        // .L_800F233C/358/374
+            } else {
+                count = rand() % 3 + 2;          // .L_800F2390.. (mulhw 0x55555556)
+            }
+
+            if (count != 0) {
+                // if (acc->vfE0() == 5) --count;
+                {
+                    void* v2 = *(void**)acc;
+                    typedef s32 (*VFE0)(void*);
+                    VFE0 vfE0 = (VFE0)(*(void**)((u8*)v2 + 0xE0));
+                    if (vfE0(acc) == 5) {
+                        count--;
+                    }
+                }
+
+                func_8003AA34();
+                void* file = getFP__FPCc((const char*)((u8*)acc + 0x3F14));
+                u16 colId = *(u16*)((u8*)acc + 0x3F28);
+
+                // bdat columns: "Lv_up_str" (+0x00), "Lv_up_agi" (+0x0A),
+                // "Lv_up_eth" (+0x14); values used as u16.
+                u16 c0 = (u16)getBdatStringColumnValue(file, "Lv_up_str", colId);
+                u16 c1 = (u16)getBdatStringColumnValue(file, "Lv_up_agi", colId);
+                u16 c2 = (u16)getBdatStringColumnValue(file, "Lv_up_eth", colId);
+
+                evt->field_10 = count;
+                evt->field_14 = (s16)(count * c0);  // mullw + sth
+                evt->field_16 = (s16)(count * c1);
+                evt->field_18 = (s16)(count * c2);
+            }
+        }
+
+        // acc->vf150(0.0f)
+        {
+            void* vtbl = *(void**)acc;
+            typedef void (*VF150)(void*, f32);
+            VF150 vf150 = (VF150)(*(void**)((u8*)vtbl + 0x150));
+            vf150(acc, k0_0f);
+        }
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 274: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x58;                 // li r8,0x58
+        evCopy.field_10 = 0x19;                  // li r0,0x19
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x02;                 // li r3,0x2
+        evCopy.field_10 = 0x32;                  // li r0,0x32
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x3B;                 // li r0,0x3B
+        evCopy.field_10 = 0;                     // li r14,0x0
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x3A;                 // li r0,0x3A
+        evCopy.field_10 = 0;
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        evCopy.eventType = 0x15;                 // li r3,0x15
+        evCopy.field_10 = 0x64;                  // li r0,0x64
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+
+        // acc->vf150(0.0f)
+        {
+            void* vtbl = *(void**)acc;
+            typedef void (*VF150)(void*, f32);
+            VF150 vf150 = (VF150)(*(void**)((u8*)vtbl + 0x150));
+            vf150(acc, k0_0f);
+        }
+
+        // Target the actor owning the accessory/unit id; if unavailable,
+        // pick a random actor from the party list.
+        {
+            void* subVtbl = *(void**)((u8*)acc + 0x3E9C);
+            typedef u32 (*VF4C)(void*);
+            VF4C vf4C = (VF4C)(*(void**)((u8*)subVtbl + 0x4C));
+            void* obj = func_800B708C(vf4C((u8*)acc + 0x3E9C));
+            void* acc = func_8016FE34(obj);
+            if (acc != nullptr) {
+                void* accVtbl = *(void**)acc;
+                typedef s32 (*VF2BC)(void*);
+                VF2BC vf2BC = (VF2BC)(*(void**)((u8*)accVtbl + 0x2BC));
+                if (vf2BC(acc) == 0) {
+                    evt->field_10 = *(u32*)((u8*)acc + 0x3F10);
+                    break; // b .L_800F4000 (shared tail)
+                }
+            }
+        }
+
+        // fallback: random party member from enum list
+        {
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            void* list = func_80043F18(&holder);
+            func_800F4A98(list, 0x20, 0x800);
+
+            void* l = func_80043F18(&holder);
+            s32 count = *(s32*)((u8*)l + 0x620);
+            if (count > 0) {
+                s32 idx = rand() % count;        // divwu/mullw/subf
+                void* item = func_800F6EAC(func_80043F18(&holder), (u32)idx);
+                evt->field_10 = *(u32*)((u8*)item + 0x74);
+            }
+            __dt__80043E88(&holder, -1);
+        }
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 275: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        evt->prevEventType = evt->eventType;
+        evCopy = *evt;  // field_30 = pre-modification value (retail order)
+        evt->field_30 |= 2;
+        evCopy.eventType = 0x34;                 // li r9,0x34
+        evCopy.field_10 = 0;                     // li r8,0x0
+        evCopy.field_14 = 4;                     // li r0,0x4
+        evCopy.field_24 = k2_0f;                 // stfs f0(2.0f), +0x24
+        func_800EC918(self, pc, acc, &evCopy, tgt);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 276: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        break; // beq .L_800F4000 (shared tail)
+    }
+
+    case 277: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        evt->prevEventType = evt->eventType;
+        evt->field_30 |= 2;
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 278: {
+        if (func_80148778(acc->subAcc, 0x117)) {
+            return 0; // li r3,0; b .L_800F41D4
+        }
+        break; // beq .L_800F4000 (shared tail)
+    }
+
+    case 280: {
+        u32 fmt = (*(u16*)((u8*)acc + 0x456C)) >> 4;   // lhz + srawi r3,r3,4
+        u16 artsId = (u16)evt->field_10;                     // clrlwi r4, r0, 16
+        func_80195BD4(fmt, artsId);
+        break;                                  // b .L_800F4000
+    }
+
+    case 281: {
+        func_8018C820((void*)((u8*)self + 0x194), evt->field_10);
+        break; // b .L_800F4000 (shared tail)
+    }
+
+    case 282: {
+        if (pc == nullptr) break;                   // beq .L_800F4000
+        vcall_f1(acc, SLOT_VF154, (f32)(s32)evt->field_10);  // slot 0x154
+        break;                                      // b .L_800F4000
+    }
+
+    case 283: {
+        u8 wbuf[0x80];
+        func_80043D90(wbuf);                           // walker ctor @stack 0x48
+        func_800F4A98(func_80043F18(wbuf), 0x80000000, 0);  // lis r4,0x8000 ; li r5,0
+        for (s32 i = 0; i < *(s32*)((u8*)func_80043F18(wbuf) + 0x620); i++) {
+            void* actor = func_8016FE34(func_800F6EAC(func_80043F18(wbuf), i));
+            void* result = vcall_p1(actor, SLOT_VF2D4, *(u32*)((u8*)acc + 0x3F10));
+            if (result != nullptr) {
+                f32 ratio = (f32)(s32)evt->field_10 / 100.0f;   // fdivs f30(100.0)
+                vcall_v3f(actor, SLOT_VF2C4, pc,
+                          *(f32*)((u8*)result + 0x10) * ratio,
+                          *(f32*)((u8*)result + 0x00) * ratio,
+                          *(f32*)((u8*)result + 0x04) * ratio);
+                *(f32*)((u8*)result + 0x10) *= 1.0f - ratio;   // f28 = 1.0
+                *(f32*)((u8*)result + 0x00) *= 1.0f - ratio;
+                *(f32*)((u8*)result + 0x04) *= 1.0f - ratio;
+            }
+        }
+        __dt__80043E88(wbuf, -1);                      // walker dtor
+        break;                                         // b .L_800F4000
+    }
+
+    case 284: {
+        if (acc->field_1530 != 0) {               // lwz r4,0x1530 ; beq tail
+            void* entry = func_80149154(acc->subAcc, acc->field_1530);
+            u16 prevType = *(u16*)((u8*)entry + 0x2E); // lhz r15, 0x2e
+            if (prevType != 0) {
+                for (s32 i = 0; i < 0x68; i++) {      // cmpwi 0x68
+                    void* item = acc->subAcc->vf54(i);
+                    if (*(u16*)((u8*)item + 0x2E) == prevType) {
+                        if (*(f32*)((u8*)item + 0x20) > 0.0f) {   // fcmpo vs 0.0
+                            *(f32*)((u8*)item + 0x20) += evt->field_20;
+                            if (*(u16*)((u8*)item + 0x0C) == 0x11) {  // cmplwi 0x11
+                                void* actor = func_8016FE34(
+                                    func_800B708C(*(s32*)((u8*)item + 0x10)));
+                                if (actor != nullptr &&
+                                    func_80148778((u8*)actor + 8, 0x11)) {
+                                    void* entry2 = func_80149154((u8*)actor + 8, 0x11);
+                                    if (entry2 != nullptr) {
+                                        *(f32*)((u8*)entry2 + 0x20) += evt->field_20;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (*(f32*)((u8*)entry + 0x20) > 0.0f) {
+                    *(f32*)((u8*)entry + 0x20) += evt->field_20;
+                }
+            }
+            // actor-list walker, filter (0x20, 0x800)
+            u8 wbuf[0x80];
+            func_80043D90(wbuf);
+            func_800F4A98(func_80043F18(wbuf), 0x20, 0x800);
+            for (s32 i = 0; i < *(s32*)((u8*)func_80043F18(wbuf) + 0x620); i++) {
+                void* actor = func_8016FE34(func_800F6EAC(func_80043F18(wbuf), i));
+                if (actor != nullptr && actor != acc) {   // cmplw r3,r24 ; beq
+                    SubAccessor* sub = (SubAccessor*)((u8*)actor + 8);
+                    for (s32 j = 0; j < 0x20; j++) {  // vfunc 0x58 list
+                        void* item = sub->vf58(j);    // retail calls vf58 twice
+                        if (*(u16*)((u8*)item + 0x2E) == prevType) {
+                            *(f32*)((u8*)item + 0x20) += evt->field_20;
+                        }
+                    }
+                    for (s32 j = 0; j < 0x20; j++) {  // vfunc 0x60 list
+                        void* item = sub->vf60(j);    // retail calls vf60 twice
+                        if (*(u16*)((u8*)item + 0x2E) == prevType) {
+                            *(f32*)((u8*)item + 0x20) += evt->field_20;
+                        }
+                    }
+                }
+            }
+            __dt__80043E88(wbuf, -1);
+        }
+        break;                                         // b .L_800F4000
+    }
+
+    case 285: {
+        vcall_v1(acc, SLOT_VF2F8, (u32)evt->field_10);
+        break;                                         // b .L_800F4000
+    }
+
+    case 287: {
+        s32 artsNo = func_801B1C5C();                  // bl func_801B1C5C
+        if (artsNo < 0) return 0;                      // bge .L_800F3768 ; li r3,0
+        if (mtRand__Q22ml4mathFi(100) < evt->field_10) {
+            func_801B1C5C();                           // bl again; return ignored
+        }
+        static const s32 tbl1[6] = { 6, 4, 7, 8, 9, 5 };   // @0x804FCB30
+        static const u16 tbl2[6] = { 0x125, 0x126, 0x127, 0x128, 0x129, 0x12A };  // @0x804FCB48
+        BattleEvent evD;                               // @stack 0x250
+        memset(&evD, 0, sizeof(evD));                  // memset(0x250, 0, 0x34)
+        evD.field_00 = *(u32*)((u8*)pc + 0x3F10);      // stw pc->3F10, 0x250
+        for (s32 i = 0; i < 6; i++) {                  // mtctr 6 ; bdnz
+            if (artsNo != tbl1[i]) continue;           // cmpw r14,r0 ; bne .L_800F38EC
+            if (func_80148778((u8*)pc + 8, tbl2[i])) break;   // bne -> return 1
+            for (s32 idx = 0; idx <= 1; idx++) {       // r17=0 ; cmpwi 1 ; ble
+                for (s32 slot = 0; slot < 8; slot++) { // r18=0 ; cmpwi 8 ; blt
+                    void* artsParam = getArtsParamRC2(vcall_p(pc, SLOT_VF27C), idx, slot);
+                    if (*(u16*)((u8*)artsParam + 0x3C) == 4 &&
+                        *(u16*)((u8*)artsParam + 0x40) == (u16)artsNo) {
+                        evD.eventType = tbl2[i];       // lwzx ; sth 0x25c
+                        {
+                            void* artsVtbl = *(void**)((u8*)artsParam + 0x84);
+                            s32 vf = ((s32(*)(void*))(*(void**)((u8*)artsVtbl + 0x0C)))(artsParam);
+                            evD.field_10 = (s32)*(s16*)((u8*)artsParam + 0x4A)
+                                         + (s32)*(u8*)((u8*)artsParam + 0x6F) * (vf - 1);
+                        }
+                        evD.field_14 = *(s16*)((u8*)artsParam + 0x4C);   // sth 0x264
+                        func_800EC918((void*)(uintptr_t)lbl_eu_80663F00, pc, acc, &evD, nullptr);
+                        break;                         // b .L_800F38DC (outer cont.)
+                    }
+                }
+            }
+            break;                                     // b .L_800F38F8 (return 1)
+        }
+        return 1;                                      // li r3,1 ; b .L_800F41D4
+    }
+
+    case 290: {
+        evt->prevEventType = evt->eventType;
+        BattleEvent evI = *evt;                         // copy @stack 0x14C
+        evt->field_30 |= 0x2;
+        evI.eventType = 0x54;                          // sth r0(0x54), 0x158
+        evI.field_30 |= 0x400;                         // ori 0x400, 0x17c
+        if (!func_800EC918(self, pc, acc, &evI, tgt)) return 0;
+        // .L_800F3D10
+        evI.eventType = 0x5A;
+        void* entry = func_80149330((u8*)pc + 8, 0x5A, evt->field_00, evt->field_04, 0);
+        if (entry != nullptr) {
+            *(s32*)((u8*)entry + 0x10) += 5;           // addi r0,r4,0x5
+            *(f32*)((u8*)entry + 0x20) = evt->field_20; // stfs evt->20
+            break;                                     // b .L_800F4000
+        }
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evI, tgt);     // acc arg = pc
+        break;                                         // b .L_800F4000
+    }
+
+    case 291: {
+        evt->prevEventType = evt->eventType;
+        BattleEvent evJ = *evt;                         // copy @stack 0x118
+        evt->field_30 |= 0x2;
+        evJ.eventType = 0x52;                          // sth r0(0x52), 0x124
+        evJ.field_30 |= 0x400;                         // ori 0x400, 0x148
+        if (!func_800EC918(self, pc, acc, &evJ, tgt)) return 0;
+        // .L_800F3E1C
+        evJ.eventType = 0x58;
+        void* entry = func_80149330((u8*)pc + 8, 0x58, evt->field_00, evt->field_04, 0);
+        if (entry != nullptr) {
+            *(s32*)((u8*)entry + 0x10) += 5;
+            *(f32*)((u8*)entry + 0x20) = evt->field_20;
+            break;                                     // b .L_800F4000
+        }
+        func_800EC918(self, pc, (EC918_BattleObjAccessor*)pc, &evJ, tgt);     // acc arg = pc
+        break;                                         // b .L_800F4000
+    }
+
+    case 292: {
+        for (s32 i = 0; i < 0x20; i++) {               // vfunc 0x58 list
+            void* item = acc->subAcc->vf58(i);
+            if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
+                if (tgt != nullptr && *(u16*)((u8*)item + 0x2C) == tgt->field_80) {
+                    continue;                          // beq .L_800F3F04
+                }
+                acc->subAcc->vf20(*(u16*)((u8*)item + 0x0C));
+            }
+        }
+        for (s32 i = 0; i < 0x20; i++) {               // vfunc 0x5C list
+            void* item = acc->subAcc->vf5C(i);
+            if (!func_80145C00(*(u16*)((u8*)item + 0x2E))) {
+                if (tgt != nullptr && *(u16*)((u8*)item + 0x2C) == tgt->field_80) {
+                    continue;                          // beq .L_800F3F9C
+                }
+                acc->subAcc->vf20(*(u16*)((u8*)item + 0x0C));
+            }
+        }
+        break;                                         // b .L_800F4000
+    }
+
+    case 299: {
+        getInstance__Q22cf13CfGameManagerFv();  // bl (result unused in this case)
+        if (!func_8006EF04__Fi(0x04000000)) {   // lis r3, 0x400  (0x04000000)
+            func_8016DF4C(evt->field_10);        // lwz r3,0x10(r25); bl func_8016DF4C
+        }
+        break;                                  // b .L_800F4000
+    }
+
     default:
         break;
     }
@@ -1987,13 +4311,13 @@ typedef BattleVec* (*VFnAC)(void*);    // +0x3E9C secondary vtable slot 0xAC
 typedef void* (*VFn54)(void*, u32);    // (+8 object) vtable slot 0x54
 typedef void* (*VFn5C)(void*, u32);    // (+8 object) vtable slot 0x5C
 
-static inline void* vf290(void* obj) {
+static inline void* d_vf290(void* obj) {
     return ((VFn290)(*(void***)obj)[0x290 / 4])(obj);
 }
-static inline s32 subVf0C(BattleMoveSubData* sub) {
+static inline s32 d_subVf0C(BattleMoveSubData* sub) {
     return ((VSubFn0C)sub->field_84[0x0C / 4])(sub);
 }
-static inline BattleVec* vfAC(void* obj) {
+static inline BattleVec* d_vfAC(void* obj) {
     return ((VFnAC)(*(void***)((u8*)obj + 0x3E9C))[0xAC / 4])((u8*)obj + 0x3E9C);
 }
 
@@ -2084,7 +4408,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
             // --- guard path: move->field_78 bit21 (0x200) ---
             if (move->field_78 & 0x200) {
                 // 0x800DEAC0: variance computation
-                s32 vf = subVf0C(sub);
+                s32 vf = d_subVf0C(sub);
                 s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
                 if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
                     f32 f2 = atkParam->field_24;
@@ -2118,9 +4442,9 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                     r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
                 }
                 // three sub-vtable calls (0x800DECCC)
-                s32 v1 = subVf0C(sub);
-                s32 v2 = subVf0C(sub);
-                s32 v3 = subVf0C(sub);
+                s32 v1 = d_subVf0C(sub);
+                s32 v2 = d_subVf0C(sub);
+                s32 v3 = d_subVf0C(sub);
                 s32 r18 = sub->field_38 + (s32)sub->field_6C * (v1 - 1);
                 s32 r19 = sub->field_3A + (s32)sub->field_6D * (v2 - 1);
                 s32 r20 = (s32)move->field_94;
@@ -2173,18 +4497,18 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 }
 
                 // 0x800DEF20: attacker vf0x290 skill values (0x4E/0x55/0x56)
-                if (vf290(attacker) != 0) {
+                if (d_vf290(attacker) != 0) {
                     u32 sv;
-                    if (func_80260264(vf290(attacker), 0x4E, &sv)) {
+                    if (func_80260264(d_vf290(attacker), 0x4E, &sv)) {
                         move->field_58 += (f32)(s32)sv / 100.0f;
                     }
                     if (sub->field_40 == 6) {
-                        if (func_80260264(vf290(attacker), 0x55, &sv)) {
+                        if (func_80260264(d_vf290(attacker), 0x55, &sv)) {
                             move->field_58 += (f32)(s32)sv / 100.0f;
                         }
                     }
                     if (sub->field_40 == 8) {
-                        if (func_80260264(vf290(attacker), 0x56, &sv)) {
+                        if (func_80260264(d_vf290(attacker), 0x56, &sv)) {
                             move->field_58 += (f32)(s32)sv / 100.0f;
                         }
                     }
@@ -2400,7 +4724,7 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
 
         // --- guard path: move->field_78 bit21 (0x200) ---
         if (move->field_78 & 0x200) {
-            s32 vf = subVf0C(sub);
+            s32 vf = d_subVf0C(sub);
             s32 r5 = sub->field_38 + (s32)sub->field_6C * (vf - 1);
             if (((BattleObjAccessor*)attacker)->field_3f00 & 0x2) {
                 f32 f2 = atkParam->field_24;
@@ -2433,9 +4757,9 @@ extern "C" void func_800DCB54(void* self, void* attacker, void* target,
                 r25 = (s32)((f32)(s32)r25 + f2) + (s32)(r4 % (u32)d);
             }
             // three sub-vtable calls (0x800DDB20)
-            s32 v1 = subVf0C(sub);
-            s32 v2 = subVf0C(sub);
-            s32 v3 = subVf0C(sub);
+            s32 v1 = d_subVf0C(sub);
+            s32 v2 = d_subVf0C(sub);
+            s32 v3 = d_subVf0C(sub);
             s32 r18 = sub->field_38 + (s32)sub->field_6C * (v1 - 1);
             s32 r19 = sub->field_3A + (s32)sub->field_6D * (v2 - 1);
             s32 r20 = (s32)move->field_94;
@@ -2623,8 +4947,8 @@ post_dispatch:;
     // ================================================================
     // --- 0x800DE590: attacker/target chain-pos diff -> field_58 ---
     if (*(u32*)((u8*)target + 0x3374) & 0x20000) {
-        BattleVec* vT = vfAC(target);
-        BattleVec* vA = vfAC(attacker);
+        BattleVec* vT = d_vfAC(target);
+        BattleVec* vA = d_vfAC(attacker);
         f32 d = vA->y - vT->y;
         if (d < 0.0f) d = -d;
         if (d <= 10.0f) move->field_58 += 2.0f;         // 0x800DE5E8
@@ -2634,7 +4958,7 @@ post_dispatch:;
     if (func_80148778((u8*)target + 8, 0xCE)) {
         if (move->field_78 & 0x800) {
             void* entry = func_801491F4((u8*)target + 8, 0xCE);
-            if ((s32)*(u32*)((u8*)entry + 0x10) >= subVf0C(sub)) {
+            if ((s32)*(u32*)((u8*)entry + 0x10) >= d_subVf0C(sub)) {
                 move->field_54 = 1.0f;
                 move->field_74 |= 0x80002000;
             }
@@ -2667,12 +4991,12 @@ post_dispatch:;
         if (sub->field_78 & 0x2) {
             r20 = 100;
         }
-        if (vf290(attacker) != 0) {
-            if (func_8026178C(vf290(attacker), 0x59) &&
+        if (d_vf290(attacker) != 0) {
+            if (func_8026178C(d_vf290(attacker), 0x59) &&
                 (move->field_78 & 0x2000000)) {
                 r20 = 100;
             }
-            if (func_8026178C(vf290(attacker), 0x5A) &&
+            if (func_8026178C(d_vf290(attacker), 0x5A) &&
                 (move->field_78 & 0x1000000)) {
                 r20 = 100;
             }
@@ -2689,9 +5013,9 @@ post_dispatch:;
                 f26 += 0.25f;                            // 0.5 total
             }
             if (r22f) f26 += 0.25f;
-            if (vf290(attacker) != 0) {
+            if (d_vf290(attacker) != 0) {
                 u32 sv;
-                if (func_80260264(vf290(attacker), 0x51, &sv)) {
+                if (func_80260264(d_vf290(attacker), 0x51, &sv)) {
                     f26 += (f32)(s32)sv / 100.0f;
                 }
             }
@@ -2757,12 +5081,12 @@ post_dispatch:;
                 move->field_58 +=
                     (f32)(s32)*(u32*)((u8*)entry + 0x10) / 100.0f;
             }
-            if (vf290(attacker) != 0) {
+            if (d_vf290(attacker) != 0) {
                 u32 sv;
-                if (func_80260264(vf290(attacker), 0x52, &sv)) {
+                if (func_80260264(d_vf290(attacker), 0x52, &sv)) {
                     move->field_58 += (f32)(s32)sv / 100.0f;
                 }
-                if (func_80260264(vf290(attacker), 0x53, &sv) &&
+                if (func_80260264(d_vf290(attacker), 0x53, &sv) &&
                     *(u32*)((u8*)attacker + 0x1530) != 0 &&
                     ((VFnE0)(*(void***)target)[0xE0 / 4])(target) == 9) {
                     move->field_58 += (f32)(s32)sv / 100.0f;
@@ -2776,9 +5100,9 @@ post_dispatch:;
             }
             if (func_80148778((u8*)target + 8, 0x9)) {
                 move->field_58 += 0.5f;
-                if (vf290(attacker) != 0) {
+                if (d_vf290(attacker) != 0) {
                     u32 sv;
-                    if (func_80260264(vf290(attacker), 0x58, &sv)) {
+                    if (func_80260264(d_vf290(attacker), 0x58, &sv)) {
                         move->field_58 += (f32)(s32)sv / 100.0f;
                     }
                 }
@@ -2811,25 +5135,25 @@ post_dispatch:;
     // ================================================================
     // 0x800E0144: target vf0x290 damage-resist skills
     // ================================================================
-    if (vf290(target) != 0) {
+    if (d_vf290(target) != 0) {
         u32 sv;
         if (move->field_78 & 0x400) {
-            if (func_80260264(vf290(target), 0x4E, &sv) && sub->field_40 == 6) {
+            if (func_80260264(d_vf290(target), 0x4E, &sv) && sub->field_40 == 6) {
                 move->field_58 += (f32)(s32)sv / 100.0f;
             }
-            if (func_80260264(vf290(target), 0x4E, &sv) && sub->field_40 == 8) {
+            if (func_80260264(d_vf290(target), 0x4E, &sv) && sub->field_40 == 8) {
                 move->field_58 += (f32)(s32)sv / 100.0f;
             }
         }
         if (sub->type_3C == 1 || sub->type_3C == 5) {
-            if (func_80260264(vf290(target), 0x4F, &sv)) {
+            if (func_80260264(d_vf290(target), 0x4F, &sv)) {
                 move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
             }
         } else {
-            if (func_80260264(vf290(target), 0x50, &sv)) {
+            if (func_80260264(d_vf290(target), 0x50, &sv)) {
                 move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
             }
-            if (func_80260264(vf290(target), 0x54, &sv) && sub->field_5E != 0) {
+            if (func_80260264(d_vf290(target), 0x54, &sv) && sub->field_5E != 0) {
                 move->field_58 *= 1.0f - (f32)(s32)sv / 100.0f;
             }
         }
@@ -3012,8 +5336,8 @@ post_dispatch:;
             // step selection (0x800E0A58..0x800E0B30)
             s32 rem = (s32)(move->field_B0 % 100);
             s32 steps[3];
-            steps[0] = subVf0C(sub) / 2 + 3;
-            steps[1] = subVf0C(sub) + 0xA;
+            steps[0] = d_subVf0C(sub) / 2 + 3;
+            steps[1] = d_subVf0C(sub) + 0xA;
             steps[2] = 100;
             f32 mult = 1.0f;
             s32 acc = rem;
@@ -3021,9 +5345,9 @@ post_dispatch:;
                 acc -= steps[i];
                 if (acc < 0) { mult = sTable_28C[i]; break; }
             }
-            if (vf290(target) != 0) {
+            if (d_vf290(target) != 0) {
                 u32 sv;
-                if (func_80260264(vf290(target), 0x5B, &sv)) {
+                if (func_80260264(d_vf290(target), 0x5B, &sv)) {
                     mult *= 1.0f + (f32)(s32)sv / 100.0f;
                 }
             }
@@ -3073,8 +5397,8 @@ post_dispatch:;
 
         // distance check via PSVECMag (0x800E0DE0..0x800E0E68)
         {
-            BattleVec* vT = vfAC(target);
-            BattleVec* vA = vfAC(attacker);
+            BattleVec* vT = d_vfAC(target);
+            BattleVec* vA = d_vfAC(attacker);
             f32 delta[3] = { vA->x - vT->x, vA->y - vT->y, vA->z - vT->z };
             if (PSVECMag((const struct Vec*)delta) > (f32)(s32)*(s16*)((u8*)entry + 0x14)) {
                 skillId = 0;
@@ -3087,11 +5411,11 @@ post_dispatch:;
             (BattleParamData*)((VFn224)(*(void***)attacker)[0x224 / 4])(attacker);
         s32 val = (s32)*(u32*)((u8*)entry + 0x10);
         f32 f27 = 1.0f;
-        if (vf290(target) != 0) {
+        if (d_vf290(target) != 0) {
             if (func_80149154((u8*)target + 8, 0x6F) != 0 ||
                 func_80149154((u8*)target + 8, 0x79) != 0) {
                 u32 sv;
-                if (func_80260264(vf290(target), 0x5B, &sv)) {
+                if (func_80260264(d_vf290(target), 0x5B, &sv)) {
                     val = (s32)((f32)(s32)val *
                                 (1.0f + (f32)(s32)sv / 100.0f));
                 }
@@ -3102,9 +5426,9 @@ post_dispatch:;
             void* e = func_80149154((u8*)attacker + 8, 0x8D);
             f27 = 1.0f - 0.01f * (f32)(s32)*(u32*)((u8*)e + 0x10);
         }
-        if (vf290(attacker) != 0) {
+        if (d_vf290(attacker) != 0) {
             u32 sv;
-            if (func_80260264(vf290(attacker), 0x57, &sv)) {
+            if (func_80260264(d_vf290(attacker), 0x57, &sv)) {
                 f27 = 1.0f - 0.01f * (f32)(s32)sv;
             }
         }

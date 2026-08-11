@@ -156,18 +156,17 @@ extern "C" int CfRes_callFunc_68254() {
     return ret;
 }
 
-u32 func_800620F0(){
+extern "C" void func_800620F0(){
     extern u32 lbl_eu_80663D7C;
-    extern u32 func_80067FE0(u32);
+    extern void func_80067FE0(u32);
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
         ret = val + 4;
     }
-    if (ret == 0) {
-        return 0;
+    if (ret != 0) {
+        func_80067FE0(ret);
     }
-    return func_80067FE0(ret);
 }
 
 void func_80062114(){}

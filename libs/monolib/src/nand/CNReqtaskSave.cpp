@@ -9,6 +9,7 @@
 // PLAN.md §17.6). Everything that is meaningful C++ (the CNRequest layout,
 // sub-task parameter blocks) lives in CNReqtaskSave.hpp.
 #include <types.h>
+#include <string.h>
 #include <revolution/NAND.h>
 #include "libs/monolib/src/nand/CNReqtaskSave.hpp"
 
@@ -381,12 +382,21 @@ int func_804DACAC(CNRequest* req, u32 a1, u8 a2) {
     return v != 0;
 }
 
-// Save sub-task config (stub). Retail func_804DACE8 takes 6 arguments
-// (data, path, write args, flags) and returns &lbl_eu_806659E0; the in-TU
-// 1-arg declaration reproduces func_804DABBC's retail call bytes. noinline:
-// retail func_804DABBC emits `bl func_804DACE8`; without it MWCC inlines this
-// placeholder and changes the caller.
-__declspec(noinline) CNReqtaskSaveVtbl** func_804DACE8(CNReqtaskSaveData* data) {
+// Save sub-task config. Retail func_804DACE8 takes 6 arguments
+// (data, path, write args, flags): strcpy(data, path), stores the four
+// write/flags args at +0x10..0x19, zeroes +0x1A, returns &lbl_eu_806659E0.
+// The in-TU 1-arg declaration reproduces func_804DABBC's retail call bytes
+// (r4-r8 are caller leftovers in retail too). noinline keeps the caller's
+// `bl func_804DACE8` from being inlined.
+__declspec(noinline) CNReqtaskSaveVtbl** func_804DACE8(
+    CNReqtaskSaveData* data, void* path, u32 a, u32 b, u32 c, u32 d) {
+    char* dst = (char*)data;
+    strcpy(dst, (const char*)path);
+    *(u32*)(dst + 0x10) = a;
+    *(u32*)(dst + 0x14) = b;
+    *(u8*)(dst + 0x18) = (u8)c;
+    *(u8*)(dst + 0x19) = (u8)d;
+    *(u8*)(dst + 0x1A) = 0;
     return &lbl_eu_806659E0;
 }
 

@@ -1,10 +1,17 @@
 #pragma once
 
 #include <types.h>
+#include <revolution/GX.h>
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/device/CDeviceVICb.hpp"
 
+// Singleton instance pointer (retail .sbss: lbl_eu_806656E0).
+// Declared at global scope so MWCC emits the unmangled retail name.
+class CLibCriMoviePlay;
+extern CLibCriMoviePlay* lbl_eu_806656E0;
+
 // Forward declarations for CRI movie player API
+struct MovieEntry;
 extern "C" {
     u32 mwPlyCalcWorkCprmSfd(void* cprm);
     void mwPlyStartFname(void* ply, const char* filename);
@@ -22,6 +29,11 @@ extern "C" {
     void criware_803A09B4(void* ply);
     void ADXM_ExecMain(void);
     void VIWaitForRetrace(void);
+
+    // Retail-named entry-release helper (defined in CLibCriMoviePlay.cpp).
+    // C-linkage so the mangled retail name is emitted; kept outlined (large
+    // body) so callers reference the symbol directly.
+    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
 }
 
 // Movie playback entry (0x124 bytes)
@@ -40,8 +52,8 @@ struct MovieEntry {
     u32 mTexBufYSize;        // 0xA8 - Y texture buffer size
     void* mTexBufCbCr;       // 0xAC - CbCr texture buffer pointer
     u32 mTexBufCbCrSize;     // 0xB0 - CbCr texture buffer size
-    u8 mTexObjY[0x20];       // 0xB4 - GX texture object for Y plane
-    u8 mTexObjCbCr[0x20];    // 0xD4 - GX texture object for CbCr plane
+    GXTexObj mTexObjY;       // 0xB4 - GX texture object for Y plane
+    GXTexObj mTexObjCbCr;    // 0xD4 - GX texture object for CbCr plane
     u16 mTexWidth;           // 0xF4 - texture width
     u16 mTexHeight;          // 0xF6 - texture height
     u32 mAction;             // 0xF8 - movie action/state machine
@@ -58,7 +70,7 @@ struct MovieEntry {
 // Size check: 0x124 = 292 bytes
 // static_assert(sizeof(MovieEntry) == 0x124, "MovieEntry must be 0x124 bytes");
 
-class CLibCriMoviePlay : public CWorkThread, public CDeviceVICb {
+class __declspec(novtable) CLibCriMoviePlay : public CWorkThread, public CDeviceVICb {
 public:
     CLibCriMoviePlay(const char* pName, CWorkThread* pParent);
     virtual ~CLibCriMoviePlay();
@@ -73,12 +85,10 @@ public:
 
     // Movie player methods
     void setupGXState();                              // func_80459DEC
-    static MovieEntry* findFreeEntry();               // func_8045A1B0
+    static MovieEntry* func_8045A1B0();               // func_8045A1B0
     int startMovie(const char* filename, u32 allocHandle,
                    u32 allocHandle2, bool waitForStart,
                    bool useAlternateBuf);              // func_8045A260
-    void stopMovieById(int id);                        // func_8045A48C
-    void releaseEntry(MovieEntry* entry);              // func_8045A54C
     bool isMoviePlaying(int id);                       // func_8045A644
     void unsetPauseFlag(int id);                       // func_8045A708
     bool hasActiveMovie(int id);                       // func_8045A7F8
@@ -89,10 +99,10 @@ public:
     void OnPauseTrigger(bool pause);                   // OnPauseTrigger
     void setPauseState(bool pause);                    // func_8045B310
 
-    static CLibCriMoviePlay* getInstance() { return sInstance; }
+    static CLibCriMoviePlay* getInstance() { return lbl_eu_806656E0; }
 
-private:
-    static CLibCriMoviePlay* sInstance;    // lbl_eu_806656E0
+    // Fields kept public (retail-verified offsets); the retail-name wrappers
+    // below are free functions and need direct access.
     MovieEntry mEntries[4];                // 0x1C8 - four movie playback slots
     u32 mStreamIdCounter;                  // 0x658 - stream ID counter
     bool mPlaybackState;                   // 0x65C - has active playback

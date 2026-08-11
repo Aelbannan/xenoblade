@@ -67,7 +67,7 @@ void func_80068A80() {
 }
 
 // func_80068AA4 - get singleton and call func_800694B0
-void func_80068AA4() {
+extern "C" void func_80068AA4() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_800694B0();
 }
@@ -114,7 +114,7 @@ __declspec(noinline) void CfScriptManager::func_80068B94(const char* name) {
 }
 
 // func_80068B9C - get singleton and call func_80068BC0
-void func_80068B9C() {
+extern "C" void func_80068B9C() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068BC0();
 }
@@ -125,7 +125,7 @@ __declspec(noinline) void CfScriptManager::func_80068BC0() {
 }
 
 // func_80068BD0 - get singleton and call func_80068BF4
-void func_80068BD0() {
+extern "C" void func_80068BD0() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068BF4();
 }
@@ -136,7 +136,7 @@ __declspec(noinline) void CfScriptManager::func_80068BF4() {
 }
 
 // func_80068C04 - get singleton and call func_80068C28
-void func_80068C04() {
+extern "C" void func_80068C04() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068C28();
 }
@@ -147,7 +147,7 @@ __declspec(noinline) void CfScriptManager::func_80068C28() {
 }
 
 // func_80068C38 - get singleton and call func_80068C5C
-void func_80068C38() {
+extern "C" void func_80068C38() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068C5C();
 }
@@ -163,7 +163,7 @@ __declspec(noinline) void CfScriptManager::func_80068C5C() {
 }
 
 // func_80068C7C - get singleton and call func_80068CA0
-void func_80068C7C() {
+extern "C" void func_80068C7C() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068CA0();
 }
@@ -190,7 +190,7 @@ __declspec(noinline) void CfScriptManager::func_80068CA0() {
 }
 
 // func_80068D14 - get singleton and call func_80068D38
-void func_80068D14() {
+extern "C" void func_80068D14() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068D38();
 }
@@ -217,7 +217,7 @@ __declspec(noinline) void CfScriptManager::func_80068D38() {
 }
 
 // func_80068DAC - get singleton and call func_80068DD0
-void func_80068DAC() {
+extern "C" void func_80068DAC() {
     CfScriptManager* mgr = CfScriptManager::getInstance();
     mgr->func_80068DD0();
 }

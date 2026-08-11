@@ -390,7 +390,8 @@ extern "C" void CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv(cf::CActorPa
     bool flag = true;
     if (*(s16*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x20C8) == 0) {
         u8 b = *(u8*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1AA);
-        if (!(b >= 1 && b <= 0x18)) flag = false;
+        bool ok = (b >= 1 && b <= 0x18);
+        if (!ok) flag = false;
     }
     func_802804F8(self);
 
@@ -428,7 +429,7 @@ unk28_done:
             switch (e->unk0C) {
             case 0x35: {
                 if (reinterpret_cast<CActorParamVt*>(self)->vf2BC()) break;
-                if (reinterpret_cast<CActorParamVt*>(self)->vf128() == reinterpret_cast<CActorParamVt*>(self)->vf12C()) break;
+                if (reinterpret_cast<CActorParamVt*>(self)->vf12C() == reinterpret_cast<CActorParamVt*>(self)->vf128()) break;
                 int a = (int)(0.05f * reinterpret_cast<CActorParamVt*>(self)->vf12C());
                 int b = (int)((float)e->unk14 / 100.0f * reinterpret_cast<CActorParamVt*>(self)->vf12C());
                 if (func_80148778((u8*)self + 8, 0xE7)) {
@@ -942,7 +943,90 @@ unk28_done:
         }
     }
 }
-void cf::CActorParam::CActorParam_UnkVirtualFunc4() {}
+extern "C" int func_800B8B94(int);
+extern "C" int func_8026178C(void*, int);
+extern "C" void* func_8025FB10(void*, int);
+
+struct Func4ItemVt {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
+    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
+    virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
+    virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
+    virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
+    virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
+    virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
+    virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
+    virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
+    virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
+    virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
+    virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
+    virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
+    virtual void _v178(); virtual void _v17C(); virtual void _v180(); virtual void _v184();
+    virtual void _v188(); virtual void _v18C(); virtual void _v190(); virtual void _v194();
+    virtual void _v198(); virtual void _v19C(); virtual void _v1A0(); virtual void _v1A4();
+    virtual void _v1A8(); virtual void _v1AC(); virtual void _v1B0(); virtual void _v1B4();
+    virtual void _v1B8(); virtual void _v1BC(); virtual void _v1C0(); virtual void _v1C4();
+    virtual void _v1C8(); virtual void _v1CC(); virtual void _v1D0(); virtual void _v1D4();
+    virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0(); virtual void _v1E4();
+    virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0(); virtual void _v1F4();
+    virtual void _v1F8(); virtual void _v1FC(); virtual void _v200(); virtual void _v204();
+    virtual void _v208(); virtual void _v20C();
+    virtual void* vf210();             // 0x210
+    virtual void* vf214();             // 0x214
+};
+
+extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv(cf::CActorParam* self, void* arts) {
+    bool flag = false;
+    if (arts != NULL) {
+        if (func_800B8B94(*(u16*)arts)) flag = true;
+    }
+    if (reinterpret_cast<CActorParamVt*>(self)->vf9C()) flag = true;
+    if (reinterpret_cast<CActorParamVt*>(self)->vf290() != NULL) {
+        EnumListHolder holder;
+        func_80043D90(&holder);
+        void* list = func_80043F18(&holder);
+        func_800F4A98(list, 32, 1);
+
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 31) != 0) {
+            int r = func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 31);
+            if (r != 0) {
+                s16 delta = (s16)r;
+                for (int i = 0; i < (int)*(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                    void* item = func_800F6EAC(func_8025FB10(func_80043F18(&holder), i), i);
+                    void* obj = reinterpret_cast<Func4ItemVt*>(item)->vf210();
+                    *(s16*)((u8*)obj + 0x60) += delta;
+                    obj = reinterpret_cast<Func4ItemVt*>(item)->vf210();
+                    *(s16*)((u8*)obj + 0x62) += delta;
+                }
+            }
+        }
+
+        if (func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150) != 0) {
+            int r = func_8026178C(reinterpret_cast<CActorParamVt*>(self)->vf290(), 150);
+            if (r != 0 && flag) {
+                s16 delta = (s16)r;
+                for (int i = 0; i < (int)*(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+                    void* item = func_800F6EAC(func_8025FB10(func_80043F18(&holder), i), i);
+                    void* obj = reinterpret_cast<Func4ItemVt*>(item)->vf214();
+                    *(s16*)((u8*)obj + 0x18) += delta;
+                    obj = reinterpret_cast<Func4ItemVt*>(item)->vf214();
+                    *(s16*)((u8*)obj + 0x1C) += delta;
+                }
+            }
+        }
+        __dt__80043E88(&holder, -1);
+    }
+}
 void cf::CActorParam::CActorParam_UnkVirtualFunc174() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc175() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc176() {}

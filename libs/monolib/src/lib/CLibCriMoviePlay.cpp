@@ -1,7 +1,9 @@
 // CLibCriMoviePlay - CRI movie playback manager
 // Inherits from CWorkThread (0x1C4) + CDeviceVICb (0x4)
 
-#include "monolib/lib/CLibCriMoviePlay.hpp"
+// Same-directory header (retail-verified layout); the include-dir copy under
+// libs/monolib/include/ is a stale reconstruction and must not be used here.
+#include "libs/monolib/src/lib/CLibCriMoviePlay.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkControl.hpp"
 #include "monolib/device/CDeviceGX.hpp"
@@ -14,27 +16,12 @@
 using namespace mtl;
 using namespace ml;
 
-// CRI Sofdec player API (mwPly*) - declared locally; not in vendored headers.
-extern "C" {
-u32 mwPlyCalcWorkCprmSfd(u32* cprm);
-void mwPlyStartFname(void* handle, const char* filename);
-void mwPlyPause(void* handle, int pause);
-int mwPlyGetStat(void* handle);
-void mwPlyStop(void* handle);
-void mwPlyGetCurFrm(void* handle, u32* frameData);
-void mwPlyFxSetOutBufPitchHeight(void* handle, u16 width, u16 height);
-void mwPlyFxCnvFrmY84C44(void* handle, u32* frameData, void* texBufY, void* texBufCbCr);
-void mwPlyRelCurFrm(void* handle);
-int mwPlyGetOutVol(void* handle);
-void mwPlySetOutVol(void* handle, int vol);
-void mwPlyInitSfdFx(u32* fxData);
-void* criware_8039FF34(u32* cprm);
-void criware_803A09B4(void* handle);
-void ADXM_ExecMain(void);
-}
+// CRI Sofdec player API (mwPly*) declarations live in CLibCriMoviePlay.hpp.
 
-// Singleton instance pointer (sda21: lbl_eu_806656E0)
-CLibCriMoviePlay* CLibCriMoviePlay::sInstance = nullptr;
+// Singleton instance pointer (sbss: lbl_eu_806656E0). Alias keeps the human
+// name in source while MWCC emits the retail linker symbol.
+#define sInstance lbl_eu_806656E0
+CLibCriMoviePlay* lbl_eu_806656E0 = nullptr;
 
 // External globals from sdata2
 extern "C" {
@@ -121,19 +108,11 @@ CLibCriMoviePlay::CLibCriMoviePlay(const char* pName, CWorkThread* pParent)
 // CLibCriMoviePlay::~CLibCriMoviePlay()
 // ============================================================================
 CLibCriMoviePlay::~CLibCriMoviePlay() {
-    if (this == nullptr) return;
-
     // Clear singleton
     sInstance = nullptr;
 
-    // Destroy CDeviceVICb sub-object
-    CDeviceVICb::~CDeviceVICb();
-
-    // Call base class destructor
-    CWorkThread::~CWorkThread();
-
-    // Free memory if delete flag set
-    // (handled by compiler-generated dtor wrapper)
+    // Base sub-object destructors run automatically in reverse declaration
+    // order: CDeviceVICb (at 0x1C4) first, then CWorkThread.
 }
 
 // ============================================================================
@@ -240,7 +219,7 @@ void CLibCriMoviePlay::setupGXState() {
 // CLibCriMoviePlay::func_8045A1B0()
 // Returns pointer to first free movie entry, or NULL if none available
 // ============================================================================
-MovieEntry* CLibCriMoviePlay::findFreeEntry() {
+MovieEntry* CLibCriMoviePlay::func_8045A1B0() {
     if (sInstance == nullptr) return nullptr;
 
     MovieEntry* entry = &sInstance->mEntries[0];
@@ -249,17 +228,14 @@ MovieEntry* CLibCriMoviePlay::findFreeEntry() {
         entry++;
     }
 
-    // All entries are free - return first entry
+    // Find the first entry with no active handle
     entry = &sInstance->mEntries[0];
-    if (entry->mPlyHandle != nullptr) return nullptr;
-    entry++;
-    if (entry->mPlyHandle != nullptr) return nullptr;
-    entry++;
-    if (entry->mPlyHandle != nullptr) return nullptr;
-    entry++;
-    if (entry->mPlyHandle != nullptr) return nullptr;
+    for (int i = 0; i < 4; i++) {
+        if (entry->mPlyHandle == nullptr) return entry;
+        entry++;
+    }
 
-    return &sInstance->mEntries[0];
+    return nullptr;
 }
 
 // ============================================================================
@@ -273,7 +249,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
                                   bool useAlternateBuf) {
     if (sInstance == nullptr) return -1;
 
-    MovieEntry* entry = findFreeEntry();
+    MovieEntry* entry = func_8045A1B0();
     if (entry == nullptr) return -1;
 
     // Initialize entry state
@@ -298,7 +274,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
     entry->mTexBufCbCr = workBuf;  // reuse field for work buffer
 
     if (workBuf == nullptr) {
-        releaseEntry(nullptr);
+        func_8045A54C__16CLibCriMoviePlayFv(nullptr, 0);
         return -1;
     }
 
@@ -311,7 +287,7 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
     strcpy(entry->mFilename, filename);
 
     // Store allocation handles
-    entry->mAllocHandle = allocHandle;
+    entry->mAllocHandle = (void*)allocHandle;
     entry->mAllocHandle2 = allocHandle2;
 
     // Generate unique stream ID
@@ -379,78 +355,11 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
 }
 
 // ============================================================================
-// stopMovieById (us-8045e4a4)
-// CLibCriMoviePlay::func_8045A48C()
-// Stops movie playback by stream ID
-// ============================================================================
-void CLibCriMoviePlay::stopMovieById(int id) {
-    if (sInstance == nullptr) return;
-
-    MovieEntry* entry = nullptr;
-
-    // Search for entry with matching ID
-    MovieEntry* cur = &sInstance->mEntries[0];
-    for (int i = 0; i < 4; i++) {
-        if (cur->mPlyHandle != nullptr) {
-            if (cur->mStreamId == (u32)id ||
-                ((cur->mStreamId + 0x10000) & 0xFFFF) == ((u32)id & 0xFFFF)) {
-                entry = cur;
-                break;
-            }
-        }
-        cur++;
-    }
-
-    if (entry != nullptr) {
-        mwPlyStop(entry->mPlyHandle);
-        releaseEntry(nullptr);
-    }
-}
-
-// ============================================================================
 // releaseEntry (us-8045e564)
 // CLibCriMoviePlay::func_8045A54C()
-// Cleans up and releases movie entries
-// ============================================================================
-void CLibCriMoviePlay::releaseEntry(MovieEntry* entry) {
-    if (sInstance == nullptr) return;
-
-    // Lock memory manager
-    MemManager::setOptimalAlloc(false);
-
-    MovieEntry* cur = &sInstance->mEntries[0];
-    for (int i = 0; i < 4; i++) {
-        if (entry == nullptr || entry == cur) {
-            // Destroy CRI player handle
-            if (cur->mPlyHandle != nullptr) {
-                criware_803A09B4(cur->mPlyHandle);
-                cur->mPlyHandle = nullptr;
-            }
-
-            // Handle different action states
-            if (cur->mAction == 0 || cur->mAction == 3) {
-                // Free work buffer and save texture state
-                if (cur->mTexBufCbCr != nullptr) {
-                    MemManager::deallocate(cur->mTexBufCbCr);
-                    cur->mTexBufCbCr = nullptr;
-                }
-                cur->mSavedTexBufY = cur->mTexBufY;
-                cur->mSavedTexBufCbCr = cur->mTexBufCbCr;
-            } else if (cur->mAction == 2) {
-                // Free alternate buffer
-                if (cur->mTexBufCbCr != nullptr) {
-                    MemManager::deallocate(cur->mTexBufCbCr);
-                    cur->mTexBufCbCr = nullptr;
-                }
-            }
-        }
-        cur++;
-    }
-
-    // Unlock memory manager
-    MemManager::setOptimalAlloc(true);
-}
-
+// Cleans up and releases movie entries. Body lives in the retail-named
+// wrapper func_8045A54C__16CLibCriMoviePlayFv (see below) so MWCC keeps it
+// outlined (large body) and other functions call it directly.
 // ============================================================================
 // isMoviePlaying (us-8045e65c)
 // CLibCriMoviePlay::func_8045A644()
@@ -702,7 +611,7 @@ void CLibCriMoviePlay::updateMovies() {
 
             if (entry->mAction == 0) {
                 void* buf = MemManager::allocate_tail(
-                    entry->mAllocHandle, yBufSize, 0x20);
+                    (u32)entry->mAllocHandle, yBufSize, 0x20);
                 entry->mTexBufY = buf;
             } else if (entry->mAction == 3) {
                 MemManager::setOptimalAlloc(true);
@@ -738,7 +647,7 @@ skipAlloc:
 
             if (entry->mAction == 0) {
                 void* buf = MemManager::allocate_tail(
-                    entry->mAllocHandle, cbcrBufSize, 0x20);
+                    (u32)entry->mAllocHandle, cbcrBufSize, 0x20);
                 entry->mTexBufCbCr = buf;
             } else if (entry->mAction == 3) {
                 MemManager::setOptimalAlloc(true);
@@ -900,7 +809,7 @@ void CLibCriMoviePlay::wkUpdate() {
 
         if (stat == 3 || stat == 4 || stat == 0) {
             // Playback ended or error - release entry
-            releaseEntry(entry);
+            func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
             continue;
         }
 
@@ -955,14 +864,14 @@ void CLibCriMoviePlay::wkUpdate() {
 // CLibCriMoviePlay::wkStandbyLogin()
 // ============================================================================
 bool CLibCriMoviePlay::wkStandbyLogin() {
-    // Initialize SFD effects with frame rate
+    // Initialize SFD effects with the TV-format frame rate
     u32 fxData[8];
     memset(fxData, 0, 0x20);
 
-    float frameRate = isTvFormatPal__9CDeviceVIFv()
+    float frameRate = CDeviceVI::isTvFormatPal()
                       ? lbl_eu_8066A4F8 : lbl_eu_8066A4FC;
     *(float*)fxData = frameRate;
-    fxData[5] = 1;
+    fxData[3] = 1;
 
     mwPlyInitSfdFx(fxData);
 
@@ -1026,23 +935,15 @@ void CLibCriMoviePlay::viBeginFrame() {
 // External linkage wrappers (called from CLibCri forwarding stubs)
 // ============================================================================
 extern "C" {
+    // Forward declarations (definitions below, in retail order)
+    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags);
+
     void __ct__CLibCriMoviePlay(const char* name, CWorkThread* parent) {
         new ((void*)0) CLibCriMoviePlay(name, parent);
     }
 
-    void __dt__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int flags) {
-        self->~CLibCriMoviePlay();
-        if (flags > 0) {
-            __dl__FPv(self);
-        }
-    }
-
     void func_80459DEC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         self->setupGXState();
-    }
-
-    MovieEntry* func_8045A1B0__16CLibCriMoviePlayFv() {
-        return CLibCriMoviePlay::findFreeEntry();
     }
 
     int func_8045A260__16CLibCriMoviePlayFv(CLibCriMoviePlay* self,
@@ -1052,13 +953,77 @@ extern "C" {
                                waitForStart, useAlternateBuf);
     }
 
-    void func_8045A48C__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
-        self->stopMovieById(id);
+    void func_8045A48C__16CLibCriMoviePlayFv(int id) {
+        MovieEntry* entry = nullptr;
+        if (sInstance != nullptr) {
+            if ((u32)id + 0x10000 == 0xFFFF) {
+                entry = nullptr;
+            } else {
+                MovieEntry* cur = &sInstance->mEntries[0];
+                if (cur->mPlayerId == (u32)id) {
+                    entry = cur;
+                } else {
+                    cur++;
+                    if (cur->mPlayerId == (u32)id) {
+                        entry = cur;
+                    } else {
+                        cur++;
+                        if (cur->mPlayerId == (u32)id) {
+                            entry = cur;
+                        } else {
+                            cur++;
+                            if (cur->mPlayerId == (u32)id) {
+                                entry = cur;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (entry != nullptr) {
+            mwPlyStop(entry->mPlyHandle);
+            func_8045A54C__16CLibCriMoviePlayFv(entry, 0);
+        }
     }
 
-    void func_8045A54C__16CLibCriMoviePlayFv(CLibCriMoviePlay* self,
-                                              MovieEntry* entry) {
-        self->releaseEntry(entry);
+    void func_8045A54C__16CLibCriMoviePlayFv(MovieEntry* entry, int flags) {
+        if (sInstance == nullptr) return;
+
+        // Lock memory manager
+        MemManager::setOptimalAlloc(false);
+
+        MovieEntry* cur = &sInstance->mEntries[0];
+        for (int i = 0; i < 4; i++) {
+            if (entry == nullptr || entry == cur) {
+                // Destroy CRI player handle
+                if (cur->mPlyHandle != nullptr) {
+                    criware_803A09B4(cur->mPlyHandle);
+                    cur->mPlyHandle = nullptr;
+                }
+
+                // Handle different action states
+                if (cur->mAction == 0 || cur->mAction == 3) {
+                    // Free work buffer and save texture state
+                    if (cur->mTexBufCbCr != nullptr) {
+                        MemManager::deallocate(cur->mTexBufCbCr);
+                        cur->mTexBufCbCr = nullptr;
+                    }
+                    cur->mSavedTexBufY = cur->mTexBufY;
+                    cur->mSavedTexBufCbCr = cur->mTexBufCbCr;
+                } else if (cur->mAction == 2) {
+                    // Free alternate buffer
+                    if (cur->mTexBufCbCr != nullptr) {
+                        MemManager::deallocate(cur->mTexBufCbCr);
+                        cur->mTexBufCbCr = nullptr;
+                    }
+                }
+            }
+            cur++;
+        }
+
+        // Unlock memory manager
+        MemManager::setOptimalAlloc(true);
     }
 
     bool func_8045A644__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
@@ -1079,10 +1044,6 @@ extern "C" {
 
     void wkUpdate__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
         self->wkUpdate();
-    }
-
-    bool wkStandbyLogin__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        return self->wkStandbyLogin();
     }
 
     bool wkStandbyLogout__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {

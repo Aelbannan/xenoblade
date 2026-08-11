@@ -407,13 +407,15 @@ extern "C" void func_80182084(void* self) {
     int result = func_8016BDA8(self, s + 0x74);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
-            FLD(u32, s, 0x18) &= ~0x100;
+            *(volatile u32*)(s + 0x18) &= ~0x100;
         }
 
-        u32* ptmf = lbl_eu_80531F40;
-        FLD(u32, s, 0x0C) = ptmf[1];
-        FLD(u32, s, 0x08) = ptmf[0];
-        FLD(u32, s, 0x10) = ptmf[2];
+        u32 v0;
+        u32* p = (u32*)lbl_eu_80531F40;
+        v0 = p[0];
+        FLD(u32, s, 0x0C) = p[1];
+        FLD(u32, s, 0x08) = v0;
+        FLD(u32, s, 0x10) = p[2];
     }
 }
 
@@ -744,7 +746,8 @@ extern "C" void func_80183268(void* self) {
 
     if (FLD(u32, s, 0x20) != 0) {
         int val = func_8016A35C(self);
-        func_80484F80(FLD(void*, s, 0x20), (float)val);
+        float ft = (float)val;
+        func_80484F80(FLD(void*, s, 0x20), ft);
     }
 
     func_80168514(self);

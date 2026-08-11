@@ -93,7 +93,8 @@ class CfEnumObject : public CfEnumObjectBase {
 public:
     u8 _pad_004[0x64 - 0x04];
     u32 flags64;
-    u8 _pad_068[0x74 - 0x68];
+    u32 field68;            // 0x68 (mFlags68)
+    u8 _pad_06C[0x74 - 0x6C];
     u32 objectId;
     u8 _pad_078[0x8C - 0x78];
     u16 type8C;
@@ -223,9 +224,9 @@ extern const float lbl_eu_80666EBC;
 
 #define ENUM_ADD_OBJECT(info_, object_)                                      \
     do {                                                                     \
-        (info_).field_18 = false;                                            \
-        (info_).object = (object_);                                          \
         (info_).objectId = (object_)->objectId;                              \
+        (info_).object = (object_);                                          \
+        (info_).field_18 = false;                                            \
         self->mObjInfo[self->mObjInfoCount++] = (info_);                     \
         self->mPtrArray[self->mPtrCount++] =                                 \
             &self->mObjInfo[self->mObjInfoCount - 1];                        \
@@ -311,9 +312,9 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
     cf::CfObjEnumList::sObjInfo info16;
     cf::CfObjEnumList::sObjInfo info17;
     cf::CfObjEnumList::sObjInfo info18;
+    bool rejected;
     CfEnumObject* object;
     CfEnumActor* actor;
-    bool rejected;
 
     if (flags == 0) {
         return;
@@ -336,7 +337,7 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (!rejected && flags == 0x200 &&
                 (object->filterD() < one ||
-                 (object->flags64 & 0x4800))) {
+                 (object->field68 & 0x4800))) {
                 rejected = true;
             }
             if (rejected) {
@@ -461,7 +462,7 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (!rejected && !(options & 1) &&
                 (!object->isEnabled() ||
-                 !(actor->flags3374 & 0x08000000))) {
+                 (actor->flags3374 & 0x08000000))) {
                 rejected = true;
             }
             if (!rejected && (options & 2) &&
@@ -523,7 +524,7 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             }
             if (!rejected && !(options & 1) &&
                 (!object->isEnabled() ||
-                 !(actor->flags3374 & 0x08000000))) {
+                 (actor->flags3374 & 0x08000000))) {
                 rejected = true;
             }
             if (!rejected && (options & 2) &&
@@ -606,7 +607,7 @@ void func_800F4B5C(cf::CfObjEnumList* self, int flags, u32 options) {
             if (!(object->flags64 & 4)) {
                 rejected = true;
             }
-            if (!rejected && (actor->flags3374 & 0x2000)) {
+            if (!rejected && !(actor->flags3374 & 0x2000)) {
                 rejected = true;
             }
             if (!rejected && !(options & 1) && !object->isEnabled()) {

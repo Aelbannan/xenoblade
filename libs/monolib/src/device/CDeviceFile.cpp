@@ -2,8 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <string.h>
 
 extern u32 lbl_eu_80665660; // CDeviceFile singleton pointer (sdata2)
+extern int lbl_eu_80665664; // filename-substitution table entry count (.sbss)
+extern void* lbl_eu_80657580[]; // filename-substitution table (array of string-array ptrs)
+extern u8 lbl_eu_806636AA[6];  // language override byte (sdata2, [0] = -1 = unset)
 
 // Retail data imports (rodata / sbss) referenced by the functions below.
 extern u32 lbl_eu_8056C324[];  // reslist<CFileHandle> vtable
@@ -45,6 +49,11 @@ public:
     static bool isColdStartReady();
 };
 
+class CDeviceSC {
+public:
+    static u8 getLanguage();
+};
+
 // CDeviceFileDvd/CDeviceFileCri ctors are old-MWCC-mangled (no arg suffix),
 // so they must be called through C-linkage declarations with the exact
 // retail names.
@@ -61,8 +70,25 @@ enum CBM {
     CBM_5
 };
 
+// CMsgParam message-queue slot (0x24 bytes each; command at +0).
+struct CMsgParamEntry {
+    u32 command; //0x0 (message id / EVT value)
+    u32 wid;     //0x4
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
+};
+
 class CWorkThread {
 public:
+    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
+    ~CWorkThread();
     enum EVT {
         EVT_NONE,
         EVT_1,
@@ -78,15 +104,33 @@ public:
         EVT_APPEXCEPTION_OFF,
     };
 
+    enum ThreadFlags {
+        THREAD_FLAG_EXCEPTION = (1 << 4),
+    };
+
+    enum ThreadState {
+        THREAD_STATE_LOGIN = 2,
+        THREAD_STATE_RUN = 3,
+    };
+
     bool wkStandbyLogin();
     bool wkStandbyLogout();
     void wkSetEvent(EVT evt);
 
     //0x0..0x1C4: CWorkThread base (name/state/id/type/alloc/parent)
-    u8 field_0x0[0x5C];              //0x0
+    u8 field_0x0[0x48];              //0x0
+    int mState;                      //0x48 (ThreadState)
+    u8 field_0x4C[0x5C - 0x4C];      //0x4C
     u32 field_0x5C;                  //0x5C (children reslist vtable)
     CWorkThreadListNode* mChildList; //0x60 (children reslist mStartNodePtr)
-    u8 field_0x64[0x1C4 - 0x64];     //0x64..0x1C4
+    u8 field_0x64[0x7C - 0x64];      //0x64..0x7C
+    u32 mFlags;                      //0x7C (ThreadFlags)
+    u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (CMsgParam<8> vtable + entries)
+    CMsgParamEntry* mMsgArray;       //0x1A4 (CMsgParam::mArrayPtr)
+    u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
+    u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
+    u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
+    u8 field_0x1B4[0x1C4 - 0x1B4];   //0x1B4..0x1C4
 };
 
 class CFileHandle {
@@ -168,7 +212,16 @@ public:
     CFileHandle* mHandle;  //0x1C4 (current job's file handle)
 };
 
-class CDeviceFile : public CWorkThread {
+class CDeviceBase : public CWorkThread {
+public:
+    CDeviceBase(const char* pName, CWorkThread* pParent, int capacity)
+        : CWorkThread(pName, pParent, capacity) {}
+    ~CDeviceBase() {}
+
+    u32 mFlags; //0x1C4
+};
+
+class CDeviceFile : public CDeviceBase {
 public:
     CDeviceFile(const char* name, void* parent);
     ~CDeviceFile();
@@ -189,11 +242,10 @@ public:
     bool wkStandbyLogin();
     bool wkStandbyLogout();
 
-    //0x1C4..0x1C8: CDeviceBase tail
-    u8 field_0x1C4[4];             //0x1C4
-    CWorkThread* field_0x1C8;      //0x1C8 (standby state field)
-    u8 field_0x1CC[0x1D0 - 0x1CC];
-    CFileHandleListNode* mJobList; //0x1D0 (reslist<CFileHandle*> mStartNodePtr)
+    //0x1C8..0x1F0: CDeviceFile tail
+    CWorkThread* field_0x1C8;     //0x1C8 (standby state field)
+    CFileHandleReslist mFileList; //0x1CC (reslist<CFileHandle>)
+    u8 field_0x1EC[0x1F0 - 0x1EC]; //0x1EC
 };
 
 struct CEventFile {
@@ -211,7 +263,8 @@ struct CEventFile {
 };
 
 
-CDeviceFile::CDeviceFile(const char* name, void* parent) {}
+CDeviceFile::CDeviceFile(const char* name, void* parent)
+    : CDeviceBase(name, (CWorkThread*)parent, 8) {}
 
 // reslist<CFileHandle> deleting destructors. Retail emits these under old
 // (unmangled) template names, so they are written as C-linkage free functions.
@@ -269,10 +322,105 @@ CFileHandleReslist* __dt__reslist_CFileHandle(CFileHandleReslist* t, int deletin
 
 }
 
-CDeviceFile::~CDeviceFile() {}
+CDeviceFile::~CDeviceFile() {
+    CFileHandleReslist* list = &mFileList;
+    lbl_eu_80665660 = 0;
+    if (list != 0) {
+        if (list != 0) {
+            list->m_vtable = lbl_eu_8056C324;
+            CFileHandleReslistNode* node = list->mStartNodePtr->mNext;
+            while (node != list->mStartNodePtr) {
+                CFileHandleReslistNode* prev = node;
+                node = node->mNext;
+                prev->mNext = 0;
+            }
+            list->mStartNodePtr->mNext = list->mStartNodePtr;
+            list->mStartNodePtr->mPrev = list->mStartNodePtr;
+            if (list->field_0x1C == 0 && list->mList != 0) {
+                delete[] list->mList;
+                list->mList = 0;
+            }
+        }
+    }
+}
 
 u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
-int CDeviceFile::isInitialized() { return 0; }
+
+int CDeviceFile::isInitialized() {
+    CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
+
+    // Singleton device check.
+    bool hasException1 = (inst->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
+    if (!hasException1) {
+        int found1 = -1;
+        for (int i1 = 0; i1 < inst->mMsgSize; i1++) {
+            if (inst->mMsgArray[(inst->mMsgFront + i1) % inst->mMsgCapacity].command ==
+                CWorkThread::EVT_EXCEPTION) {
+                found1 = i1;
+                break;
+            }
+        }
+        hasException1 = found1 >= 0;
+    }
+    int ok1 = 0;
+    if (!hasException1) {
+        if (inst->mState == CWorkThread::THREAD_STATE_LOGIN ||
+            inst->mState == CWorkThread::THREAD_STATE_RUN) {
+            ok1 = 1;
+        }
+    }
+    if (!ok1) return 0;
+
+    if (CDeviceFileDvd::getInstance() == NULL) return 0;
+    CDeviceFile* dvd = CDeviceFileDvd::getInstance();
+
+    // DVD device check.
+    bool hasException2 = (dvd->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
+    if (!hasException2) {
+        int found2 = -1;
+        for (int i2 = 0; i2 < dvd->mMsgSize; i2++) {
+            if (dvd->mMsgArray[(dvd->mMsgFront + i2) % dvd->mMsgCapacity].command ==
+                CWorkThread::EVT_EXCEPTION) {
+                found2 = i2;
+                break;
+            }
+        }
+        hasException2 = found2 >= 0;
+    }
+    int ok2 = 0;
+    if (!hasException2) {
+        if (dvd->mState == CWorkThread::THREAD_STATE_LOGIN ||
+            dvd->mState == CWorkThread::THREAD_STATE_RUN) {
+            ok2 = 1;
+        }
+    }
+    if (!ok2) return 0;
+
+    if (CDeviceFileCri::getInstance() == NULL) return 0;
+    CDeviceFile* cri = CDeviceFileCri::getInstance();
+
+    // CRI device check (result is the return value).
+    bool hasException3 = (cri->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION) != 0;
+    if (!hasException3) {
+        int found3 = -1;
+        for (int i3 = 0; i3 < cri->mMsgSize; i3++) {
+            if (cri->mMsgArray[(cri->mMsgFront + i3) % cri->mMsgCapacity].command ==
+                CWorkThread::EVT_EXCEPTION) {
+                found3 = i3;
+                break;
+            }
+        }
+        hasException3 = found3 >= 0;
+    }
+    int ok3 = 0;
+    if (!hasException3) {
+        if (cri->mState == CWorkThread::THREAD_STATE_LOGIN ||
+            cri->mState == CWorkThread::THREAD_STATE_RUN) {
+            ok3 = 1;
+        }
+    }
+    return ok3;
+}
 
 extern u8 lbl_eu_806636A8;
 extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
@@ -299,7 +447,7 @@ bool CDeviceFile::removeFileJob(CDeviceFileJob* job) {
     bool result;
     if (job->mHandle != NULL) {
         CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
-        CFileHandleListNode* head = inst->mJobList;
+        CFileHandleListNode* head = (CFileHandleListNode*)inst->mFileList.mStartNodePtr;
         CFileHandleListNode* node = head->mNext;
         while (node != head) {
             CFileHandleListNode* next = node->mNext;
@@ -425,20 +573,52 @@ bool CDeviceFile::wkStandbyLogout() {
 }
 
 extern "C" void func_eu_804520B0(void* r3) {
-    extern int lbl_eu_80665664;
-    extern void* lbl_eu_80657580[];
-    int idx = lbl_eu_80665664;
+    int idx = (int)lbl_eu_80665664;
     lbl_eu_80657580[idx] = r3;
     lbl_eu_80665664 = idx + 1;
 }
 
-void func_eu_804520D0(){}
+// Language-aware filename substitution. Walks the registered filename table
+// (fed by func_eu_804520B0 / func_eu_804521A8) and, when the path contains a
+// table entry's search string, overwrites that substring in place with the
+// language-specific variant (each entry is a NULL-terminated string array
+// where [0] is the search text and [lang] the replacement).
+void func_eu_804520D0(char* pPath) {
+    char* found;
+    const char* const** pTable;
+    int count;
+    u8 lang;
+    int i;
+    const char* search;
+
+    lang = CDeviceSC::getLanguage();
+    u8 langOverride = lbl_eu_806636AA[0];
+    if ((s8)langOverride >= 0) {
+        lang = langOverride;
+    }
+    if (lang == 0) return;
+
+    if (CDeviceSC::getLanguage() > 5) {
+        lang = 1;
+    }
+
+    count = lbl_eu_80665664;
+    pTable = (const char* const**)lbl_eu_80657580;
+    for (i = 0; i < count; i++) {
+        search = pTable[0][0];
+        found = strstr(pPath, search);
+        if (found != NULL) {
+            memcpy(found, ((const char* const*)lbl_eu_80657580[i])[lang + 1], strlen(search));
+            return;
+        }
+        pTable++;
+    }
+}
 
 // These two retail data symbols are also declared in the "C-linkage imports"
 // section of monolib/device/CDeviceFile.hpp. They stay declared here too
 // because this catalog TU defines a local `struct CDeviceFile` that conflicts
 // with the class in that header, so this TU cannot include it.
-extern "C" u8 lbl_eu_806636AA[6];
 extern "C" void func_eu_804521A8(s8 val) {
     lbl_eu_806636AA[0] = val;
 }

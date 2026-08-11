@@ -5,7 +5,6 @@
 
 #include "kyoshin/menu/CMenuGameClear.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
@@ -42,18 +41,18 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
         // the composite vtable and the IScnRender sub-vtable at +0x58.
         obj->mVtable10 = (u32)lbl_eu_8052BF70;
         u32* src = __ptmf_null;
-        u32 pmf0_1 = src[1];
-        u32 pmf0_0 = src[0];
-        obj->mPtMf3C[0] = pmf0_0;
-        obj->mPtMf3C[1] = pmf0_1;
-        u32 pmf0_2 = src[2];
-        obj->mPtMf3C[2] = pmf0_2;
-        u32 pmf1_1 = src[1];
-        u32 pmf1_0 = src[0];
-        obj->mPtMf48[0] = pmf1_0;
-        obj->mPtMf48[1] = pmf1_1;
-        u32 pmf1_2 = src[2];
-        obj->mPtMf48[2] = pmf1_2;
+        u32 ptmf1 = src[1];
+        u32 ptmf0 = src[0];
+        u32 ptmf2 = src[2];
+        obj->mPtMf3C[0] = ptmf0;
+        obj->mPtMf3C[1] = ptmf1;
+        obj->mPtMf3C[2] = ptmf2;
+        ptmf1 = src[1];
+        ptmf0 = src[0];
+        ptmf2 = src[2];
+        obj->mPtMf48[0] = ptmf0;
+        obj->mPtMf48[1] = ptmf1;
+        obj->mPtMf48[2] = ptmf2;
 
         obj->mField54 = 0;
         obj->mField55 = 0;
@@ -65,13 +64,13 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
         __ct__17UnkClass_8045F564Fv(
             reinterpret_cast<UnkClass_8045F564*>(&obj->mMemRegion));
         obj->mField70 = 0;
-        __ct__CSysWin(&obj->mSysWin, 0);
         obj->mField71 = 0;
+        __ct__CSysWin(&obj->mSysWin, 0);
         __ct__CCur18(&obj->mCursor, 0);
 
         // Initialize the 14 CtrlObjectParam entries (0xCC stride each).
+        cf::CtrlObjectParamInit* end = &obj->mParams[14];
         cf::CtrlObjectParamInit* p = &obj->mParams[0];
-        cf::CtrlObjectParamInit* end = p + 14;
         do {
             func_8009D764(p);
             p++;
@@ -92,7 +91,8 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
 CMenuGameClear::~CMenuGameClear() {
     __dt__6CCur18Fv(&mCursor, -1);
     __dt__7CSysWinFv(&mSysWin, -1);
-    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->~UnkClass_8045F564();
+    __dt__17UnkClass_8045F564Fv(
+        reinterpret_cast<UnkClass_8045F564*>(&mMemRegion), -1);
     if (this) {
         if (this) {
             __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
@@ -137,17 +137,30 @@ void CMenuGameClear::Move() {}
  */
 void CMenuGameClear::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) {
-        // task busy: skip render
-    } else if (lbl_eu_80663E28 & 0x200000) {
-        // global gate bit set: skip render
-    } else if (func_8013BE50() != 0) {
+    // Gate: skip when the task is busy or the global mode bit (0x200000) is
+    // set. The `if (A && B) goto body; goto end; end: return; body:` chain
+    // (exit label BEFORE the body label) keeps the body off the fallthrough
+    // so MWCC emits retail's branch-over-branch: `bne end` for the first
+    // disjunct, `beq body; b end` for the second (MWCC_REFERENCE
+    // §&&-gate branch-over-branch).
+    if (CTaskGame::func_800426F0() == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
+    }
+    goto end;
+end:
+    return;
+body:
+    if (func_8013BE50() != 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
-        func_8022B7C8(&mSysWin, &drawInfo);
-        func_801D20B0(&mCursor, &drawInfo);
-        drawInfo.~DrawInfo();
+        // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
+        // calls (a C++ local would virtual-dispatch its scope-exit dtor).
+        u8 drawInfo[0x54];
+        __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        func_8022B7C8(&mSysWin[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+        __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
     }
 }
 

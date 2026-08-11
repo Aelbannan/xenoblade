@@ -14,7 +14,7 @@ namespace cf {
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
         virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
         virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
-        virtual void CObjectState_UnkVirtualFunc9();  //0x28
+        virtual int CObjectState_UnkVirtualFunc9();  //0x28
         virtual int CObjectState_UnkVirtualFunc10(void* arg, int arg2); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
         virtual void* CObjectState_UnkVirtualFunc12(); //0x34

@@ -84,6 +84,18 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 // under the unit's -O4,p flags (see MWCC_REFERENCE #16).
 #pragma push
 #pragma optimize_for_size on
+extern "C" void func_80138078__FUl(u32);
+// retail: if (field_35 == 2) { field_35 = 3; field_36 = 0; tail func_80138078(0xE) }
+extern "C" void func_8022B8E4(void* self) {
+    if (*(u8*)((char*)self + 0x35) == 2) {
+        *(u8*)((char*)self + 0x35) = 3;
+        *(u8*)((char*)self + 0x36) = 0;
+        func_80138078__FUl(0xE);
+    }
+}
+
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_8022BF6C(CSysWin* self, char* a, char* b) {
     func_80136B4C(self->mLayout, lbl_eu_8050A478 + 0x77, a, 0);
     func_80136B4C(self->mLayout, lbl_eu_8050A478 + 0x82, b, 0);

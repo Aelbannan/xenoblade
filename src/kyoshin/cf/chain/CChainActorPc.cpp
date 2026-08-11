@@ -9,7 +9,11 @@ cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
 
-void func_80282020(){}
+// retail: func_802A0950(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
+extern "C" void func_80282020(void* self, void* a, void* b, int c, int d) {
+    func_802A0950((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)b,
+                  (c != 0) ? 0x5F : 0, (int)self);
+}
 int func_802A0804(int, int);
 
 int func_80282048(int arg) {
@@ -47,7 +51,11 @@ void func_80277154();
 void func_8028248C() {
     func_80277154();
 }
-void func_80282490(){}
+// retail: func_80276CAC(a, *(self), b ? *b : 0)
+extern "C" void func_80276CAC(void* a, void* b, void* c);
+extern "C" void func_80282490(void* self, void* a, void* b) {
+    func_80276CAC(a, *(void**)self, b ? *(void**)b : 0);
+}
 
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void func_80281924(cf::CChainActorPc* self, int val) {

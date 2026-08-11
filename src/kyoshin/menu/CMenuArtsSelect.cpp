@@ -21,7 +21,9 @@ extern "C" {
 
 // Arts parameter info layout (case 10 in Move).
 struct ArtsParamInfo {
-    u8 _pad00[0x74];
+    u8 _pad00[0x24];
+    void* mNamePtr;  // +0x24: arts name string
+    u8 _pad28[0x74 - 0x28];
     u16 mCheckFlag;  // +0x74: non-zero when skill has gauge
     u8 _pad76[0x80 - 0x76];
     f32 mRatioNum;   // +0x80: current gauge value
@@ -41,6 +43,8 @@ struct BattleActor {
     void* mSecondaryVtable;  // +0x04: secondary MI vtable
     u8 _pad08[0x3e9c - 0x08];
     u8 mMoveStart;           // +0x3e9c: CfObjectMove starts here
+    u8 _pad3e9d[0x3f28 - 0x3e9d];
+    u16 mField3F28;          // +0x3f28: same u16 as CfObjectMove+0x8C
 };
 
 extern u32 lbl_eu_80663E24;
@@ -62,6 +66,31 @@ int func_8010A840(void*);
 extern char lbl_eu_804FD1E0[];
 extern u8 lbl_eu_804FD0D0[];
 
+// func_80104454 (retail symbol is UNMANGLED; header member decl is a
+// decompiler guess). Retail table: posX s16[9] @+0x00, posY @+0x14,
+// scale f32[9] @+0x28, selTab s16[5] @+0x4C of lbl_eu_804FD0D0.
+extern "C" int func_8029A658();
+extern "C" void func_80104454(CMenuArtsSelect* self);
+extern "C" void func_80107580(CMenuArtsSelect*);
+extern "C" void func_801072E0(CMenuArtsSelect*);
+extern "C" int func_80107970(CMenuArtsSelect*, s32);
+extern "C" int func_80107C54(CMenuArtsSelect*, s32);
+extern "C" int func_80154168(const u8*);
+extern "C" int func_8015419C(u8*);
+extern "C" int func_800DA06C(void*, void*);
+extern "C" void func_8010EDDC(void*, u8);
+extern "C" void func_8010ED18(void*);
+extern "C" void func_8010A848(void*, u8);
+extern "C" void func_8010A6F0(void*);
+extern "C" int func_80187710();
+extern "C" void func_80187718();
+extern "C" int* func_8009ECB0();
+extern "C" void* func_800B8B94(int);
+extern "C" char lbl_eu_80661E08[];
+extern "C" u32 lbl_eu_80666F48;  // 4-byte talent table header
+extern "C" u8 lbl_eu_80666F4C;   // 5th byte of talent table
+// (lbl_eu_80666F50 is 100.0f -- declared below with the other floats)
+
 // Init-only declarations
 u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
@@ -74,6 +103,7 @@ extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
 extern const f32 lbl_eu_80666F44; // -1.0f
+extern const f32 lbl_eu_80666F50; // 100.0f (talent-gauge gate)
 
 // Process + MI vtable / PTMF labels for ctor (retail __ct__CMenuArtsSelect).
 char lbl_eu_8052C1C0[];
@@ -1193,7 +1223,638 @@ extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
 void func_80104210(){}
 void func_8010433C(){}
 void func_801043BC(){}
-void CMenuArtsSelect::func_80104454(){}
+// ---------------------------------------------------------------------------
+// func_80104454 (us-80104f3c) -- arts-select main per-frame update.
+// Called from Move() case 2 (unk298 == 2). Retail symbol is the UNMANGLED
+// free function; the header's member declaration is kept for Move's call.
+// ---------------------------------------------------------------------------
+extern "C" void func_80104454(CMenuArtsSelect* self) {
+    s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+    s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+    f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+    s16* selTab = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x4C);
+    typedef void* (*GetPtrFn)(void*);
+    typedef f32 (*GetF32Fn)(void*);
+    typedef void* (*AtFn)(void*, s32);
+
+    self->unk308 &= ~8u;
+
+    if (func_8029A658() != 0) return;
+
+    if (func_8010784C(self) != 0) {
+        self->unk80->SetAnimationEnable(self->unk84, false);
+        self->unk80->SetAnimationEnable(self->unk88, true);
+        self->unk8C->GetRootPane()->SetVisible(false);
+        func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
+        func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, NULL,
+                      reinterpret_cast<u32>(self->unk294));
+        func_80138078__FUl(67);
+        self->unk298 = 3;
+    }
+
+    // battleCheck copy 1: (s16)+0x20C8 != 0, or (u8)+0x1AA in [1,24], or
+    // player-0 gauge <= 0.0f. Retail has three full copies (do not factor).
+    bool battle = false;
+    {
+        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+        if (*(s16*)((char*)bm + 0x20C8) != 0) {
+            battle = true;
+        } else {
+            bool b2 = false;
+            u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+            if (bmv >= 1 && bmv <= 24) b2 = true;
+            if (b2) {
+                battle = true;
+            } else {
+                void* pl = cf::CfGameManager::getPlayer(0);
+                void* adj = pl;
+                if (pl != NULL) adj = (char*)pl - 0x3e9c;
+                if (adj != NULL) {
+                    f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                    if (g <= lbl_eu_80666F28) battle = true;
+                }
+            }
+        }
+    }
+    if (battle) {
+        self->unk328 = 4;
+        func_80107580(self);
+        if (self->unk324 == 4) func_801072E0(self);
+    }
+
+    // unk335 latch -- talent art (id 0xEA) presence, duplicated per retail.
+    if (self->unk335 == 0) {
+        bool found = false;
+        void* pl = cf::CfGameManager::getPlayer(0);
+        void* adj = pl;
+        if (pl != NULL) adj = (char*)pl - 0x3e9c;
+        if (*(u16*)((char*)adj + 0x3F28) == 1) {
+            for (s32 i = 0; i < 104; i++) {
+                void* list = (char*)adj + 8;
+                void* el = artsVslot<AtFn>(list, 0x54)(list, i);
+                if (*(u16*)((char*)el + 0xC) == 0xEA) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (found) self->unk335 = 1;
+    } else {
+        bool found = false;
+        void* pl = cf::CfGameManager::getPlayer(0);
+        void* adj = pl;
+        if (pl != NULL) adj = (char*)pl - 0x3e9c;
+        if (*(u16*)((char*)adj + 0x3F28) == 1) {
+            for (s32 i = 0; i < 104; i++) {
+                void* list = (char*)adj + 8;
+                void* el = artsVslot<AtFn>(list, 0x54)(list, i);
+                if (*(u16*)((char*)el + 0xC) == 0xEA) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) self->unk335 = 0;
+    }
+
+    cf::CfObjectMove* pl0 = cf::CfGameManager::getPlayer(0);
+    BattleActor* actor = reinterpret_cast<BattleActor*>(pl0);
+    if (pl0 != NULL) actor = (BattleActor*)((char*)pl0 - 0x3e9c);
+    if (actor == NULL) return;
+
+    if (self->unk320 != 0) {
+        void* sub = actor->mSecondaryVtable;
+        u32 v = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+        if (func_80174C98(actor, &v, 31) == 0) self->unk320 = 0;
+    }
+
+    cf::CfObjectMove* pl1 = cf::CfGameManager::getPlayer(0);
+    BattleActor* a2 = reinterpret_cast<BattleActor*>(pl1);
+    if (pl1 != NULL) a2 = (BattleActor*)((char*)pl1 - 0x3e9c);
+    if (a2 != NULL && self->unk320 == 0) {
+        void* sub = a2->mSecondaryVtable;
+        u32 v = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+        if (func_80174C98(a2, &v, 0x803) != 0) {
+            if (self->unk324 == 4 && self->unk328 == 0) {
+                self->unk328 = 4;
+                func_80107580(self);
+                func_801072E0(self);
+            } else if (self->unk328 == 2) {
+                self->unk328 = 4;
+                func_80107580(self);
+                func_801072E0(self);
+            }
+        }
+    }
+
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    bool b1;
+    bool b2;
+    bool b31;
+    bool b0;
+    bool bX;
+    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+        u32 held = pad->mHeldButtonFlags;
+        if ((held & (1u << 27)) != 0) return;
+        if ((held & (1u << 28)) != 0) return;
+        if ((held & (1u << 25)) != 0) return;
+        if ((held & (1u << 26)) == 0) return;
+        b1 = (pad->mTurboPressButtonFlags >> 1) & 1;
+        b2 = (pad->mTurboPressButtonFlags >> 2) & 1;
+        b31 = (pad->mTurboPressButtonFlags >> 31) & 1;
+        b0 = pad->mTurboPressButtonFlags & 1;
+        bX = (pad->mHeldButtonFlags & (1u << 22)) ?
+                 ((pad->mPressedButtonFlags >> 20) & 1) : 0;
+    } else {
+        u32 held = pad->mHeldButtonFlags;
+        if ((held & (1u << 11)) != 0) return;
+        if ((held & (1u << 12)) == 0) return;
+        b1 = (pad->mTurboPressButtonFlags >> 1) & 1;
+        b2 = (pad->mTurboPressButtonFlags >> 2) & 1;
+        b31 = (pad->mTurboPressButtonFlags >> 31) & 1;
+        b0 = pad->mTurboPressButtonFlags & 1;
+        bX = (pad->mHeldButtonFlags & (1u << 5)) ?
+                 ((pad->mPressedButtonFlags >> 3) & 1) : 0;
+    }
+
+    if (b1) {
+        // battleCheck copy 2
+        bool battle2 = false;
+        {
+            cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+            if (*(s16*)((char*)bm + 0x20C8) != 0) {
+                battle2 = true;
+            } else {
+                bool b22 = false;
+                u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                if (bmv >= 1 && bmv <= 24) b22 = true;
+                if (b22) {
+                    battle2 = true;
+                } else {
+                    void* pl = cf::CfGameManager::getPlayer(0);
+                    void* adj = pl;
+                    if (pl != NULL) adj = (char*)pl - 0x3e9c;
+                    if (adj != NULL) {
+                        f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                        if (g <= lbl_eu_80666F28) battle2 = true;
+                    }
+                }
+            }
+        }
+        if (!battle2) {
+            if (self->unk324 == 4) {
+                void* sub = actor->mSecondaryVtable;
+                u32 v11 = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+                if (func_80174C98(actor, &v11, 11) != 0) {
+                    func_80138078__FUl(5);
+                    goto end_body;
+                }
+                if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
+                    void* sub2 = actor->mSecondaryVtable;
+                    u32 v18 = artsVslot<GetPtrFn>(sub2, 0x30)(sub2)[0];
+                    if (func_80174C98(actor, &v18, 18) != 0) {
+                        func_80138078__FUl(5);
+                        goto end_body;
+                    }
+                }
+                switch (self->unk328) {
+                case 0:
+                    self->unk328 = 4;
+                    break;
+                case 1:
+                    self->unk328 = 4;
+                    break;
+                case 2:
+                    self->unk328 = 0;
+                    break;
+                case 3:
+                    self->unk328 = 1;
+                    break;
+                case 4: {
+                    self->unk328 = 2;
+                    void* sub4 = actor->mSecondaryVtable;
+                    u32 v29 = artsVslot<GetPtrFn>(sub4, 0x30)(sub4)[0];
+                    if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                        func_80174C98(actor, &v29, 29) != 0) {
+                        if (self->unk320 == 0) self->unk328 = 3;
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+                func_80107580(self);
+                if (self->unk328 == 4) {
+                    func_801072E0(self);
+                } else {
+                    s16 v = selTab[self->unk328];
+                    char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                                  lbl_eu_804FD1E0 + 0x254, v);
+                    char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                                  lbl_eu_804FD1E0 + 0x259, v);
+                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                                  reinterpret_cast<u32>(self->unk294));
+                }
+                func_80138078__FUl(85);
+                goto end_body;
+            }
+            // adopt slot 4
+            self->unk324 = 4;
+            nw4r::lyt::Pane* pane =
+                self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[self->unk324]);
+                trans.y = static_cast<f32>(posY[self->unk324]);
+                pane->SetTranslate(trans);
+                f32 s = scale[self->unk324];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+            if (self->unk328 == 4) {
+                func_801072E0(self);
+            } else {
+                s16 v = selTab[self->unk328];
+                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x254, v);
+                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x259, v);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                              reinterpret_cast<u32>(self->unk294));
+            }
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(true);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(true);
+            goto end_body;
+        }
+    } else if (b2) {
+        // battleCheck copy 3
+        bool battle3 = false;
+        {
+            cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+            if (*(s16*)((char*)bm + 0x20C8) != 0) {
+                battle3 = true;
+            } else {
+                bool b23 = false;
+                u8 bmv = *(u8*)((char*)cf::CBattleManager::getInstance() + 0x1AA);
+                if (bmv >= 1 && bmv <= 24) b23 = true;
+                if (b23) {
+                    battle3 = true;
+                } else {
+                    void* pl = cf::CfGameManager::getPlayer(0);
+                    void* adj = pl;
+                    if (pl != NULL) adj = (char*)pl - 0x3e9c;
+                    if (adj != NULL) {
+                        f32 g = artsVslot<GetF32Fn>(adj, 0x128)(adj);
+                        if (g <= lbl_eu_80666F28) battle3 = true;
+                    }
+                }
+            }
+        }
+        if (!battle3) {
+            if (self->unk324 == 4) {
+                void* sub = actor->mSecondaryVtable;
+                u32 v11 = artsVslot<GetPtrFn>(sub, 0x30)(sub)[0];
+                if (func_80174C98(actor, &v11, 11) != 0) {
+                    func_80138078__FUl(5);
+                    goto end_body;
+                }
+                if (func_800DA06C(cf::CBattleManager::getInstance(), actor) == 0) {
+                    void* sub2 = actor->mSecondaryVtable;
+                    u32 v18 = artsVslot<GetPtrFn>(sub2, 0x30)(sub2)[0];
+                    if (func_80174C98(actor, &v18, 18) != 0) {
+                        func_80138078__FUl(5);
+                        goto end_body;
+                    }
+                }
+                switch (self->unk328) {
+                case 0:
+                    self->unk328 = 2;
+                    break;
+                case 1:
+                    self->unk328 = 3;
+                    break;
+                case 2:
+                    self->unk328 = 4;
+                    break;
+                case 3:
+                    self->unk328 = 4;
+                    break;
+                case 4: {
+                    self->unk328 = 0;
+                    void* sub4 = actor->mSecondaryVtable;
+                    u32 v29 = artsVslot<GetPtrFn>(sub4, 0x30)(sub4)[0];
+                    if (func_800DA06C(cf::CBattleManager::getInstance(), actor) != 0 ||
+                        func_80174C98(actor, &v29, 29) != 0) {
+                        if (self->unk320 == 0) self->unk328 = 1;
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+                func_80107580(self);
+                if (self->unk328 == 4) {
+                    func_801072E0(self);
+                } else {
+                    s16 v = selTab[self->unk328];
+                    char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                                  lbl_eu_804FD1E0 + 0x254, v);
+                    char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                                  lbl_eu_804FD1E0 + 0x259, v);
+                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                    func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                                  reinterpret_cast<u32>(self->unk294));
+                }
+                func_80138078__FUl(85);
+                goto end_body;
+            }
+            self->unk324 = 4;
+            nw4r::lyt::Pane* pane =
+                self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[self->unk324]);
+                trans.y = static_cast<f32>(posY[self->unk324]);
+                pane->SetTranslate(trans);
+                f32 s = scale[self->unk324];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+            if (self->unk328 == 4) {
+                func_801072E0(self);
+            } else {
+                s16 v = selTab[self->unk328];
+                char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x254, v);
+                char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                              lbl_eu_804FD1E0 + 0x259, v);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                              reinterpret_cast<u32>(self->unk294));
+            }
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(true);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(true);
+            goto end_body;
+        }
+    } else if (b31) {
+        // prev-art scan
+        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        s8 idx = (s8)(self->unk324 - 1);
+        while ((s8)idx != self->unk324) {
+            if (idx < 0) idx = 8;
+            if (idx == 4) {
+                self->unk324 = 4;
+                break;
+            }
+            s32 q = idx;
+            if (q >= 0) q--;
+            ArtsParamInfo* p =
+                reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, q));
+            if (p->mCheckFlag != 0) {
+                self->unk324 = (s8)idx;
+                break;
+            }
+            idx--;
+        }
+        nw4r::lyt::Pane* pane =
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = static_cast<f32>(posX[self->unk324]);
+            trans.y = static_cast<f32>(posY[self->unk324]);
+            pane->SetTranslate(trans);
+            f32 s = scale[self->unk324];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+        if (self->unk328 == 4) {
+            func_801072E0(self);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(true);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(true);
+        } else {
+            s16 v = selTab[self->unk328];
+            char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                          lbl_eu_804FD1E0 + 0x254, v);
+            char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                          lbl_eu_804FD1E0 + 0x259, v);
+            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                          reinterpret_cast<u32>(self->unk294));
+            void* pl = cf::CfGameManager::getPlayer(0);
+            void* adj = pl;
+            if (pl != NULL) adj = (char*)pl - 0x3e9c;
+            if (adj != NULL) {
+                void* arts2 = artsVslot<GetPtrFn>(adj, 0x278)(adj);
+                s32 q = self->unk324;
+                if (q > 4) q--;
+                ArtsParamInfo* p =
+                    reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts2, q));
+                char* name = (char*)p->mNamePtr;
+                if (name == NULL) name = lbl_eu_80661E08;
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                              reinterpret_cast<u32>(self->unk294));
+            }
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(false);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(false);
+        }
+        func_80138078__FUl(84);
+        goto end_body;
+    } else if (b0) {
+        // next-art scan
+        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        s8 idx = (s8)(self->unk324 + 1);
+        while ((s8)idx != self->unk324) {
+            if (idx > 8) idx = 0;
+            if (idx == 4) {
+                self->unk324 = 4;
+                break;
+            }
+            s32 q = idx;
+            if (q >= 0) q--;
+            ArtsParamInfo* p =
+                reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, q));
+            if (p->mCheckFlag != 0) {
+                self->unk324 = (s8)idx;
+                break;
+            }
+            idx++;
+        }
+        nw4r::lyt::Pane* pane =
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xC7, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = static_cast<f32>(posX[self->unk324]);
+            trans.y = static_cast<f32>(posY[self->unk324]);
+            pane->SetTranslate(trans);
+            f32 s = scale[self->unk324];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+        if (self->unk328 == 4) {
+            func_801072E0(self);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(true);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(true);
+        } else {
+            s16 v = selTab[self->unk328];
+            char* nameStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                          lbl_eu_804FD1E0 + 0x254, v);
+            char* helpStr = func_80136190(lbl_eu_804FD1E0 + 0x249,
+                                          lbl_eu_804FD1E0 + 0x259, v);
+            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, nameStr, 0);
+            func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, helpStr,
+                          reinterpret_cast<u32>(self->unk294));
+            void* pl = cf::CfGameManager::getPlayer(0);
+            void* adj = pl;
+            if (pl != NULL) adj = (char*)pl - 0x3e9c;
+            if (adj != NULL) {
+                void* arts2 = artsVslot<GetPtrFn>(adj, 0x278)(adj);
+                s32 q = self->unk324;
+                if (q > 4) q--;
+                ArtsParamInfo* p =
+                    reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts2, q));
+                char* name = (char*)p->mNamePtr;
+                if (name == NULL) name = lbl_eu_80661E08;
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x69, (char*)p, 0);
+                func_80136B4C(self->unk80, lbl_eu_804FD1E0 + 0x5c, name,
+                              reinterpret_cast<u32>(self->unk294));
+            }
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x25E, true)
+                ->SetVisible(false);
+            self->unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x26C, true)
+                ->SetVisible(false);
+        }
+        func_80138078__FUl(84);
+        goto end_body;
+    } else if (bX) {
+        // use/confirm flow
+        s32 listIdx = self->unk324;
+        if (listIdx == 4) {
+            listIdx = 8;
+        } else if (listIdx >= 4) {
+            listIdx--;
+        }
+        if (func_80107970(self, listIdx) != 0) goto useFail;
+        if (func_80107C54(self, listIdx) != 0) goto useFail;
+        if (func_801086D0(self) != 0) goto useFail;
+
+        if (self->unk324 == 4 && self->unk328 == 4) {
+            void* pl = cf::CfGameManager::getPlayer(0);
+            if (pl != NULL) {
+                u8 v = (u8)(*(u16*)((char*)pl + 0x8C));
+                if (v == 5 || v == 7) {
+                    /* ok */
+                } else {
+                    void* mgr = func_8009EC9C(v);
+                    void* sub = (char*)mgr + 0x17C;
+                    f32 val = artsVslot<GetF32Fn>(sub, 0x158)(sub);
+                    if (val == lbl_eu_80666F50) {
+                        /* ok */
+                    } else {
+                        goto useFail;
+                    }
+                }
+            } else {
+                goto useFail;
+            }
+        }
+        if (func_801088CC(self) != 0) goto useFail;
+
+        void* arts = artsVslot<GetPtrFn>(actor, 0x278)(actor);
+        s32 q3 = self->unk324;
+        if (q3 > 4) q3--;
+        ArtsParamInfo* p =
+            reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, q3));
+        if (self->unk324 != 4 && func_80154168((const u8*)p) != 0) {
+            self->unk330 = 0;
+            if (func_8015419C((u8*)p) != 0) {
+                int* cfg = func_8009ECB0();
+                for (s32 i = 0; i < 3; i++) {
+                    if (cfg[i + 1] == (s32)actor->mField3F28) continue;
+                    void* obj = func_800B8B94(cfg[i + 1]);
+                    if (artsVslot<GetF32Fn>(obj, 0x128)(obj) > lbl_eu_80666F28) {
+                        self->unk330 = i;
+                        break;
+                    }
+                }
+            }
+            self->unk8C->GetRootPane()->SetVisible(false);
+            func_80138078__FUl(95);
+            self->unk298 = 5;
+            if (func_80110A70() != NULL) {
+                func_8010EDDC((u8*)func_80110A70() + 0x7E4, (u8)self->unk330);
+                func_8010ED18((u8*)func_80110A70() + 0x7E4);
+            }
+            if (func_8010CE48() != NULL) {
+                func_8010A848((u8*)func_8010CE48() + 0x7CC, (u8)self->unk330);
+                func_8010A6F0((u8*)func_8010CE48() + 0x7CC);
+            }
+            goto end_body;
+        }
+
+        if (self->unk324 == 4) {
+            u8 t[5];
+            *(u32*)&t[0] = lbl_eu_80666F48;
+            t[4] = lbl_eu_80666F4C;
+            s8 sv = (s8)t[self->unk328];
+            self->unk7C = 0;
+            self->unk7D = sv;
+            self->unk7E = -1;
+            self->unk320 = 0;
+            if (sv == 6) {
+                if (func_80187710() != 0) func_80187718();
+            }
+            if (self->unk328 == 2) self->unk348 = 1;
+            if (self->unk328 == 4) {
+                bool atEnd = true;
+                if (lbl_eu_80663F20 != NULL) {
+                    for (s32 i = 0; i < 9; i++) {
+                        nw4r::lyt::AnimTransform* a = lbl_eu_80663F20->unk1DC[i];
+                        if (a->GetFrame() !=
+                            (f32)(u16)a->GetFrameSize() - 1.0f) {
+                            atEnd = false;
+                            break;
+                        }
+                    }
+                }
+                if (!atEnd) {
+                    for (s32 i = 0; i < 9; i++) {
+                        nw4r::lyt::AnimTransform* a = lbl_eu_80663F20->unk1DC[i];
+                        a->SetFrame((f32)(u16)a->GetFrameSize() - 1.0f);
+                    }
+                }
+            }
+        } else {
+            s32 q4 = self->unk324;
+            if (q4 > 4) q4--;
+            self->unk7C = 1;
+            self->unk7D = (s8)q4;
+            self->unk7E = -1;
+        }
+        func_80138078__FUl(95);
+        self->unk298 = 4;
+        self->unk8C->SetAnimationEnable(self->unk94, false);
+        self->unk8C->SetAnimationEnable(self->unk90, true);
+        self->unk90->SetFrame(lbl_eu_80666F28);
+        self->unk8C->Animate(0);
+        goto end_body;
+    }
+    goto end_body;
+
+useFail:
+    func_80138078__FUl(5);
+end_body:
+    func_80137444(self->unk94, lbl_eu_80666F2C);
+}
+
 void CMenuArtsSelect::func_80105A34(){}
 void CMenuArtsSelect::func_80105D54(){}
 void CMenuArtsSelect::func_80106450(){}

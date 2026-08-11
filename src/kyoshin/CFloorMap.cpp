@@ -827,7 +827,7 @@ void func_8024F5C4(void* self, u32 arg2) {
     *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
 }
 
-unsigned char func_8024F630(void) {
+extern "C" unsigned char func_8024F630(void) {
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
 }
 

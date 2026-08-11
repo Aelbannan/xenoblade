@@ -521,7 +521,8 @@ extern "C" u8 func_80288948(CEquipItemBox* self) {
 
 // Play the entry animation at 0x3C; when it completes mark the cursors active.
 extern "C" void func_802889C0(CEquipItemBox* self) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->field_3C, lbl_eu_80668B28) != 0) {
+    float f = lbl_eu_80668B28;
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->field_3C, f) != 0) {
         self->unk_41 = 2;
         self->unk_43 = 1;
         self->unk_58 = 1;

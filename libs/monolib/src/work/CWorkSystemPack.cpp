@@ -86,7 +86,7 @@ struct CWorkSystemPack {
     static bool func_804DDDF4(const char* pName, void* pOut, u32* pFileId);
     static bool func_804DDFBC(int pExcept);
     static bool func_804DE08C();
-    void func_804DE100();
+    static bool func_804DE100();
     bool wkStandbyLogin();
     bool wkStandbyLogout();
     void wkUpdate();
@@ -407,7 +407,18 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
     return -1;
 }
 
-void CWorkSystemPack::func_804DE100() {}
+// Login gate: walk the circular pack-item list (head at +0x1E8, nodes link
+// via +0, data pointer at +8) and require every item's field_0x2C == 2.
+bool CWorkSystemPack::func_804DE100() {
+    CWorkSystemPack* sys = lbl_eu_80665A10;
+    if (sys == 0) return false;
+    u8* head = *(u8**)((u8*)sys + 0x1E8);
+    u8* n = *(u8**)head;
+    for (; n != head; n = *(u8**)n) {
+        if (*(s32*)(*(u8**)(n + 8) + 0x2C) != 2) return false;
+    }
+    return true;
+}
 
 // Login gate: every arc item must be in load-state 2 (ready); if one isn't,
 // try to advance it (func_804DEC30) and abort the login. Then ensure the pack

@@ -70,11 +70,49 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
-extern UNKTYPE* func_800B708C(BOOL);
-extern UNKTYPE* func_8016FE34();
+extern void* func_800B708C(int);        // C++ linkage -> func_800B708C__Fi
 
 struct CAIActionQuery;
 struct CAIActionEnumHolder;
-void func_80043D90(CAIActionEnumHolder*);
-void __dt__80043E88(CAIActionEnumHolder*, s32);
-void* func_80150828(cf::CAIAction*, CAIActionQuery*);
+
+extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
+extern "C" void func_80043D90(CAIActionEnumHolder*);
+extern "C" void __dt__80043E88(CAIActionEnumHolder*, s32);
+extern "C" void* func_80150828(cf::CAIAction*, CAIActionQuery*);
+extern "C" void* func_80150618(cf::CAIAction*, CAIActionQuery*);
+extern "C" int func_8014B8BC(cf::CAIAction*, cf::CAIActionSlot*);
+extern "C" void* func_801522C4(cf::CAIAction*, const void*);
+extern "C" int func_8014CE78(cf::CAIAction*, const u8*, cf::CAIActionSlot*);
+extern "C" int func_8014B344(cf::CAIAction*, u32);
+
+// CfObjEnumList helper family (retail names unmangled -> extern "C").
+extern "C" void* func_80043F18(void*);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void func_800F6D50(void*, u32);
+extern "C" void* func_800F6E08(void*);
+extern "C" void* func_800F6EAC(void*, u32);
+extern "C" void* func_800F6EC0(void*, u32);
+extern "C" void func_800F6ED0(void*, void*);
+extern "C" void func_800F9AEC(void*);
+extern "C" void __ct__800FBF08(void*, u32, u32);
+extern "C" void __ct__800FC040(void*, u32, u32, u32);
+extern "C" void __ct__800FC19C(void*, u32, u32);
+extern "C" void __ct__800FC4FC(void*, u32, f32);
+extern "C" void __ct__800FC648(void*, u32, f32);
+extern "C" void __ct__800FC790(void*, u32, f32);
+extern "C" void __ct__800FC8DC(void*, u32, f32);
+extern "C" void __ct__800FCA24(void*, void*, u32);
+extern "C" void __ct__800FCB80(void*, void*, u32);
+extern "C" void __ct__800FCD10(void*, void*, u32);
+extern "C" void __ct__800FCF1C(void*, u32, u32);
+extern "C" void __ct__800FD250(void*);
+extern "C" void* func_800B76A4(void*);
+extern "C" void* func_800B77E4(void*, void*);
+extern "C" void* func_800B8B94(s32);
+extern void* func_800B07E8();   // C++ linkage -> func_800B07E8__Fv
+extern "C" int func_80148778(void*, int);
+extern "C" void* func_80149154(void*, u32);
+extern "C" void* func_800EA444(void*);
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int);
+extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
+extern "C" int rand(void);

@@ -22,7 +22,13 @@ CMenuQuestLog::~CMenuQuestLog() {}
 
 void CMenuQuestLog::Init() {}
 
-void __ct__UnkClass_8011C974(){}
+// retail: lwz x4 from r4; stw x4 to r3 (4-word copy, const src avoids interleave)
+extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src) {
+    ((u32*)self)[0] = src[0];
+    ((u32*)self)[1] = src[1];
+    ((u32*)self)[2] = src[2];
+    ((u32*)self)[3] = src[3];
+}
 
 void func_8011C998(){}
 

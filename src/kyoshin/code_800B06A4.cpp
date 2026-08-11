@@ -36,7 +36,7 @@ void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
 
 // Target 4: us-800b0f70 - Store float and its square to several globals.
-void func_800B06A4(float a) {
+extern "C" void func_800B06A4(float a) {
     extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     float sq = (float)a;
@@ -107,7 +107,7 @@ void __dt__800B183C(){}
 void __dt__800B18CC(){}
 void init_dispatchTarget_5(){}
 // Target 1: func_800B93AC
-void func_800B93AC() {
+extern "C" void func_800B93AC() {
     func_800B1B2C(func_800B07E8());
 }
 
@@ -537,7 +537,7 @@ extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E4
 void init_75EC(){}
 
 // Target 5: us-800b7f9c - Count nodes in a circular linked list.
-int func_800B7680(void* self) {
+extern "C" int func_800B7680(void* self) {
     void* head = *(void**)((u8*)self + 4);
     void* cur = *(void**)head;
     int count = 0;

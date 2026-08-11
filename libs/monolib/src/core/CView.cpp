@@ -1682,4 +1682,17 @@ void CView::CView_UnkVirtualFunc4() {}
 int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 
-void sinit_8043FB70(){}
+// Static init: copy CCol4::white into lbl_8065A0C8 (u32 struct copy) and
+// set sFrameColor from four float constants.
+extern float lbl_eu_8066A2E0;
+extern float lbl_eu_8066A2E4;
+extern float lbl_eu_8066A2D4;
+extern float lbl_eu_8066A2D0;
+extern "C" void sinit_8043FB70() {
+    float r = lbl_eu_8066A2E0;
+    float g = lbl_eu_8066A2E4;
+    float b = lbl_eu_8066A2D4;
+    float a = lbl_eu_8066A2D0;
+    CView::sFrameColor.set(lbl_eu_8066A2E0, lbl_eu_8066A2E4, lbl_eu_8066A2D4, lbl_eu_8066A2D0);
+    lbl_8065A0C8 = ml::CCol4::white;
+}

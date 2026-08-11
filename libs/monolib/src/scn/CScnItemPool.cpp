@@ -456,7 +456,7 @@ void func_8048C4F8(u32 unused, u32 arg1, u32 arg2) {
     func_8048C524(arg1, &slot);
 }
 // func_8048C60C: node count of the reslist at self (sentinel walk).
-__declspec(noinline) u32 func_8048C60C(u8* self) {
+extern "C" u32 func_8048C60C(u8* self) {
     CScnItemPoolState* pool = (CScnItemPoolState*)self;
     CScnItemPoolLink* end = pool->field_0x04;
     CScnItemPoolLink* cur = end->field_0x00;

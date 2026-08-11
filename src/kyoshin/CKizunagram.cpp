@@ -44,7 +44,14 @@ void func_80138078(u32 number);
 // func_8025CE00 is target 5 (takes the display self); the tail calls pass the
 // same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
 static void func_8025CE78();
-static void func_8025CF1C();
+extern "C" void func_80257F9C(UnkKizunaSelf57D90* self, u32 a);
+extern "C" void func_8025CF1C(void* self) {
+    if (*(u8*)((char*)self + 0x8C) != 0) {
+        func_80257F9C((UnkKizunaSelf57D90*)((char*)self + 0xAC), 1);
+    } else {
+        func_80257F9C((UnkKizunaSelf57D90*)((char*)self + 0xAC), 0);
+    }
+}
 
 // Object with a dispatch byte at 0x3A - drives display state in CKizunagram
 struct UnkKizunaDisp {
@@ -229,7 +236,15 @@ CKizunaCur::CKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor) {
 
 void func_8025AA38(){}
 
-void func_8025AAE0(){}
+// retail: if (field26) { field34=1; field36=field26; field38=const }
+extern "C" void func_8025AAE0(void* self) {
+    u16 v = *(u16*)((char*)self + 0x26);
+    if (v != 0) {
+        *(u8*)((char*)self + 0x34) = 1;
+        *(u16*)((char*)self + 0x36) = v;
+        *(float*)((char*)self + 0x38) = lbl_eu_80668828;
+    }
+}
 
 void func_8025AB04(UnkKizunaSelfAB* self) {
     f32 f = self->field38 + lbl_eu_80668834;
@@ -437,7 +452,7 @@ void func_8025CAB4(UnkKizunaDisp* self) {
         return func_8025CE78();
     }
     if (self->field_0x3A == 2) {
-        return func_8025CF1C();
+        return func_8025CF1C(self);
     }
 }
 

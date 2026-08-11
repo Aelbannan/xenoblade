@@ -53,7 +53,7 @@ extern "C" {
     extern int func_8016A3C4();
     extern int func_8016A35C();
     extern void func_8016BC1C(void* self);
-    extern int func_8016BDA8(void* self);
+    extern int func_8016BDA8(void* self, void* pId);
     extern void* func_8016C300(void* self);
     extern void func_80168514(void* self);
     extern int func_801683FC();
@@ -351,16 +351,18 @@ extern "C" void func_80183C1C(void* self) {
 
     FLD(s32, s, 0xB0) = -1;
 
-    int result = func_8016BDA8(FLDP(void, s, 0xB0));
+    int result = func_8016BDA8(self, s + 0xB0);
     if (result != 0) {
         if (FLD(u32, s, 0x18) & 0x100) {
-            FLD(u32, s, 0x18) &= ~0x200;
+            *(volatile u32*)(s + 0x18) &= ~0x100;
         }
 
-        u32* ptmf = lbl_eu_805321C8;
-        FLD(u32, s, 0x08) = ptmf[0];
-        FLD(u32, s, 0x0C) = ptmf[1];
-        FLD(u32, s, 0x10) = ptmf[2];
+        u32 v0;
+        u32* p = (u32*)lbl_eu_805321C8;
+        v0 = p[0];
+        FLD(u32, s, 0x0C) = p[1];
+        FLD(u32, s, 0x08) = v0;
+        FLD(u32, s, 0x10) = p[2];
     }
 }
 
@@ -676,14 +678,13 @@ extern "C" void func_801845F0(void* self) {
 extern "C" void func_801846C4(void* self) {
     char* s = (char*)self;
 
-    void* model = FLD(void*, s, 0x20);
-    if (model != 0) {
+    if (FLD(void*, s, 0x20) != 0) {
         int time = func_8016A35C();
-        f32 fTime = (f32)(s32)time;
-        func_80484F80(model, fTime);
+        float ft = (float)time;
+        func_80484F80(FLD(void*, s, 0x20), ft);
     }
 
-    if (FLD(u32, s, 0x18) & 0x1000) {
+    if (FLD(u32, s, 0x18) & 0x800) {
         func_80168514(self);
     }
 }

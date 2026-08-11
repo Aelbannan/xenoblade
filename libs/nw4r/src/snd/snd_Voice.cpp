@@ -498,13 +498,12 @@ void Voice::Setup(const WaveData& rData, u32 offset) {
     }
 
     for (int i = 0; i < mVoiceOutCount; i++) {
-        mVoiceOutParam[i].volume = 1.0f;
-        mVoiceOutParam[i].pitch = 1.0f;
-        mVoiceOutParam[i].pan = 0.0f;
-        mVoiceOutParam[i].surroundPan = 0.0f;
-        mVoiceOutParam[i].fxSend = 0.0f;
-        mVoiceOutParam[i].lpf = 0.0f;
-        mVoiceOutParam[i].priority = 0;
+        mVoiceOutParam[i][0] = 1.0f;
+        mVoiceOutParam[i][1] = 1.0f;
+        mVoiceOutParam[i][2] = 0.0f;
+        mVoiceOutParam[i][3] = 0.0f;
+        mVoiceOutParam[i][4] = 0.0f;
+        mVoiceOutParam[i][5] = 0.0f;
     }
 
     mIsPause = false;

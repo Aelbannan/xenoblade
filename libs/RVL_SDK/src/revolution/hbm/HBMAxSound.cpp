@@ -105,11 +105,46 @@ extern "C" const char* SOUND_FILENAME[] = {
 
 // seq.c exports are declared in revolution/hbm/HBMAxSound.hpp (C-linkage imports).
 
+static SeqPool* GetUsePlayerListFromSeqNum(int num)
+{
+    switch (num) {
+    case 4:       // HBM_SOUND_FOCUS
+    case 0x17:    // HBM_SOUND_MANUAL_FOCUS
+    case 0x19:    // HBM_SOUND_MANUAL_SCROLL
+        return &sWork->pool[1];
+    default:
+        return &sWork->pool[0];
+    }
+}
+
+static void StopSeq(HBMSEQSEQUENCE* p)
+{
+    SeqPool* pool = GetUsePlayerListFromSeqNum(p->seqId);
+
+    HBMSEQSetState(p, 0);
+    HBMSEQRemoveSequence(p);
+    p->inUse = 0;
+
+    if (p->prev == NULL) {
+        pool->first = p->next;
+    } else {
+        p->prev->next = p->next;
+    }
+
+    if (p->next == NULL) {
+        pool->last = p->prev;
+    } else {
+        p->next->prev = p->prev;
+    }
+
+    p->next = NULL;
+    p->prev = NULL;
+}
+
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;
-    HBMSEQSEQUENCE* p;
-    SeqPool* pool;
     int count;
+    HBMSEQSEQUENCE* p;
     int i;
 
     if (soundId == 4 || soundId == 0x17 || soundId == 0x19) {
@@ -130,35 +165,9 @@ HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     }
 
     if (p == NULL) {
-        if (soundId == 4 || soundId == 0x17 || soundId == 0x19) {
-            pool = &sWork->pool[1];
-        } else {
-            pool = &sWork->pool[0];
-        }
+        SeqPool* pool = GetUsePlayerListFromSeqNum(soundId);
         p = pool->first;
-
-        if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
-            pool = &sWork->pool[1];
-        } else {
-            pool = &sWork->pool[0];
-        }
-
-        HBMSEQSetState(p, 0);
-        HBMSEQRemoveSequence(p);
-        p->inUse = 0;
-
-        if (p->prev == NULL)
-            pool->first = p->next;
-        else
-            p->prev->next = p->next;
-
-        if (p->next == NULL)
-            pool->last = p->prev;
-        else
-            p->next->prev = p->prev;
-
-        p->next = NULL;
-        p->prev = NULL;
+        StopSeq(pool->first);
         p->inUse = 1;
     }
 
@@ -385,10 +394,7 @@ void ShutdownAxSound() {
 
 void AxSoundMain() {}
 
-#pragma dont_inline on
 void StopAllSeq() {
-    SeqPool* pool;
-
     if (sWork == NULL) {
         return;
     }
@@ -398,31 +404,8 @@ void StopAllSeq() {
 
         for (i = 0; i < 4; i++) {
             HBMSEQSEQUENCE* const p = &sWork->players[i];
-        if (p->inUse != 0) {
-            if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
-                pool = &sWork->pool[1];
-            } else {
-                pool = &sWork->pool[0];
-            }
-
-            HBMSEQSetState(p, 0);
-            HBMSEQRemoveSequence(p);
-            p->inUse = 0;
-
-            if (p->prev == NULL) {
-                pool->first = p->next;
-            } else {
-                p->prev->next = p->next;
-            }
-
-            if (p->next == NULL) {
-                pool->last = p->prev;
-            } else {
-                p->next->prev = p->prev;
-            }
-
-                p->next = NULL;
-                p->prev = NULL;
+            if (p->inUse != 0) {
+                StopSeq(p);
             }
         }
     }
@@ -432,36 +415,12 @@ void StopAllSeq() {
 
         for (i = 0; i < 3; i++) {
             HBMSEQSEQUENCE* const p = &sWork->players[4] + i;
-        if (p->inUse != 0) {
-            if (p->seqId == 4 || p->seqId == 0x17 || p->seqId == 0x19) {
-                pool = &sWork->pool[1];
-            } else {
-                pool = &sWork->pool[0];
-            }
-
-            HBMSEQSetState(p, 0);
-            HBMSEQRemoveSequence(p);
-            p->inUse = 0;
-
-            if (p->prev == NULL) {
-                pool->first = p->next;
-            } else {
-                p->prev->next = p->next;
-            }
-
-            if (p->next == NULL) {
-                pool->last = p->prev;
-            } else {
-                p->next->prev = p->prev;
-            }
-
-                p->next = NULL;
-                p->prev = NULL;
+            if (p->inUse != 0) {
+                StopSeq(p);
             }
         }
     }
 }
-#pragma dont_inline reset
 
 void SetVolumeAllSeq(float volume)
 {

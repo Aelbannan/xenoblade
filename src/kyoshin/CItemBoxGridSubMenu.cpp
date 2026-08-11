@@ -233,6 +233,14 @@ void func_80208838(CItemBoxGridSubMenu* self) {
 void func_80208844(){}
 
 void func_80208890(){}
+// retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail func_80138078(0xE) }
+extern "C" void func_802083A4(void* self) {
+    if (*(u8*)((char*)self + 0x22) == 2) {
+        *(u8*)((char*)self + 0x22) = 3;
+        *(u8*)((char*)self + 0x21) = 0;
+        func_80138078__FUl(0xE);
+    }
+}
 
 // retail: if (field_20) tail func_80137038(*(self+8), drawInfo passthrough, 0, 1)
 extern "C" void func_802082D0(u8* self, void* drawInfo){

@@ -56,7 +56,7 @@ public:
     u8 mField70;                    // 0x70
     u8 mField71;                    // 0x71
     u8 _72[0x74 - 0x72];            // 0x72..0x73
-    CSysWin mSysWin;                // 0x74 (0x3C bytes -> 0x74..0xB0)
+    u8 mSysWin[0x3C];               // 0x74: CSysWin storage (0x3C bytes)
     u8 mCursor[0x18];               // 0xB0: CCur18 cursor storage (0x18 bytes)
     u8 _C8[0x12338 - 0xC8];         // 0xC8..0x12337: uninitialized region
     cf::CtrlObjectParamInit mParams[14];  // 0x12338, 14 x 0xCC = 0xB28
@@ -97,6 +97,8 @@ void* func_8009D764(cf::CtrlObjectParamInit* p);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
+void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
 int func_8013BE50();
 void func_8008294C__Q22cf13CfGameManagerFv(int enable);
 }

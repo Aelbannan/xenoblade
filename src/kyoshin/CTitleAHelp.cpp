@@ -129,9 +129,10 @@ void CTitleAHelp::func_801C4198() {
     }
 }
 
-void CTitleAHelp::func_801C41C0(char* arg) {
-    if(mLayout == nullptr) return;
-    func_80136B4C(mLayout, (char*)"txt_tit", arg, 0);
+extern char lbl_eu_805054BC[];
+extern "C" void func_801C41C0(CTitleAHelp* self, char* arg) {
+    if(self->mLayout == nullptr) return;
+    func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x17, arg, 0);
 }
 
 void CTitleAHelp::func_801C41E8(u8 arg) {
@@ -242,9 +243,9 @@ void CTitleAHelp::func_801C4654(u32 arg) {
     func_80124270(pane, arg);
 }
 
-void CTitleAHelp::func_801C46B4(char* arg) {
-    if(mLayout == nullptr) return;
-    func_80136B4C(mLayout, "txt_caution", arg, 0);
+extern "C" void func_801C46B4(CTitleAHelp* self, char* arg) {
+    if(self->mLayout == nullptr) return;
+    func_80136B4C(self->mLayout, lbl_eu_805054BC + 0x64, arg, 0);
 }
 
 void CTitleAHelp::func_801C46DC(u32 arg) {

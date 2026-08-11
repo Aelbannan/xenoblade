@@ -1083,6 +1083,19 @@ if ((use != WPAD_DEV_CLASSIC || dev != WPAD_DEV_CLASSIC) &&
 
 Also notable: the pre-SMT register-renaming witness cannot certify this pair even at 0 structural — the retail reuses r5 (encSize in the loop AND `pcmBuffer` at the WENCGetEncodeData call) so no single global rho exists; FULL_MATCH via declaration-order regalloc was the clean path (SMT would additionally have required the WPAD callee frontier `__wpadIsBusyStream`/`WPADSendStreamData`, which was mid-edit by another agent).
 
+### RVL_SDK hbm/HBMAxSound.cpp — 10/10 FULL_MATCH: reconstruct the ORIGINAL Nintendo helper structure; `#pragma dont_inline` BLOCKS helper inlining into the marked function (Wii/1.1 `-O4,p`)
+
+`StopAllSeq` (us-803250d0, 85%→100%) and `GetFreePlayer` (us-803248a0, 69.6%→100%) were stuck for two sessions on pure callee-saved reg-swaps (r28↔r29 / r30↔r31) that the register-renaming witness cannot certify (HBMSEQSetState/HBMSEQRemoveSequence are FULL_MATCH callees with INTERNAL calls, so `_full_match_callee_body_fits_narrow` fails closed → opaque `reads="*"` → gate 5 fixes every lane at the call sites, including r28/r29). ~15 inline-source variants (declaration permutations, ternary, switch, De Morgan, body-local refs, inlined addresses) never moved the strength-reduced offset induction temp off the top user register.
+
+The fix came from the **original Nintendo source shape**, recovered from the pik2wii (projectPiki) HBM donor (`src/homebuttonLib/HBMAxSound.cpp` @ commit 54e5cf56e2 — same library family, byte-identical HBMWork layout: SeqPlayer stride 0x2E2C, player pools at 0x14334/0x1433C):
+
+1. **Factor the pool selection into a static helper** `GetUsePlayerListFromSeqNum(int num)` — a `switch` on `case 4: case 0x17: case 0x19:` (HBM_SOUND_FOCUS / MANUAL_FOCUS / MANUAL_SCROLL) returning `&sWork->pool[1]`, default `&sWork->pool[0]`. MWCC compiles the switch to exactly the retail `cmpwi 4; beq; cmpwi 23; beq; cmpwi 25; bne` chain (same as the if/else, but the helper's own locals enter the allocation web).
+2. **Factor the removal into a static `StopSeq(p)` helper** (pool re-select via the helper + HBMSEQSetState/RemoveSequence + list unlink), called from the loops; MWCC inlines it at `-inline auto`.
+3. **The trap:** a stale `#pragma dont_inline on` around `StopAllSeq` (left over from an earlier session's attempt to control inlining) made MWCC emit a 0xb0 wrapper that CALLED the helpers (4.4% / 100 structural). Removing the pragma lets the helpers inline and the coloring collapses to retail byte-for-byte.
+4. In `GetFreePlayer`, declare `(players, count, p, i)` — the pik2wii order — and write the reclaim path as `SeqPool* pool = GetUsePlayerListFromSeqNum(soundId); p = pool->first; StopSeq(pool->first); p->inUse = 1;`.
+
+Both functions now 100% static / 0 structural / 0 reg-swap; the whole HBMAxSound unit is 10/10 FULL_MATCH. Reusable: when a function's callee-saved coloring resists every declaration/expression lever, try factoring the loop body into static helpers (the inlining expansion reorders the IR web) and audit any `#pragma dont_inline` for whether it is actually blocking the helpers you want inlined.
+
 ## RVL_SDK hbm/nw4hbm lyt_textBox — TextBox ctor FULL_MATCH; CalcLineRectImpl 99.9% (pure reg-swaps); GXColor CharWriter members kill implicit-dtor bloat (Wii/1.1 `-O4,p`)
 
 `TextBox::TextBox` (us-80335760, 0x2B4) FULL_MATCH 100% and `CalcLineRectImpl<w>` (us-80336370, 0x444) at 99.9% static / 0 structural / 5 pure reg-swaps. Two repo-wide lessons:
@@ -8873,3 +8886,57 @@ overriding TU and breaks split budgets; strong copy stays in CTaskGame.cpp).
 - `index * stride` (using the reassigned parameter) forces the `index = rowIdx`
   register copy the retail has; `rowIdx * stride` coalesces it away.
 - func_8003AA34 is a FREE function (unmangled, returns 0), not a CBdat member.
+
+## 2026-08 session: ocUnit stubs written from retail
+
+- `func_8003C84C` (0xc8): full body reconstructed — vt[43] pos-pointer -> 3-float
+  stack struct, vt[46](obj, &vec, float-const), flag-gated func_800BDB4C
+  (0xAFA40000 + unk64&8), obj==getPlayer(0) + 0x00400000 gate for
+  func_80085878. 0 structural.
+- `CObjectState_UnkVirtualFunc10` (0xcc): two vt-dispatch branches with INVERTED
+  tests per arg2 (vt[10] then vt[9](self,arg)); the `result = 0` init must be
+  duplicated inside EACH branch (retail `li r31, 0` at both) — a single pre-init
+  gets elided to one store.
+- `CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv` — the raw mangled identifier in
+  C++ source gets the param suffix appended (`...Fv__FPQ22cf8CfObject`); the
+  retail has no param suffix. Fix: `extern "C"` on the definition -> symbol is
+  the identifier verbatim -> 100%.
+- `func_8003C6E8`: the retail's u32->float uses the SIGNED 2^52 path (`xoris
+  r0, r4, 0x8000` + 0x4330000080000000 constant). Source needs
+  `(float)(s32)value`, not `(float)value` (u32) — the u32 path omits the xoris
+  and folds 0x8000 into the constant (1 structural).
+- `func_8003BC10` residuals: (a) `u32 r29 = -(s32)bit | bit; & 1` reproduces the
+  retail neg/or but with rlwinm SH=0 (retail SH=1) — 1-instruction residual;
+  (b) v2-flag two-compare form (cmpi 1; beq set; cmpi 2) vs the merged
+  `(u32)(v2-1) <= 1`; (c) `else if (!(cond)) goto done` + single result=0 merged
+  site reproduces the retail's 0x110 double-test gate.
+- `func_8003D9C4`: retail if/else `type = 1/2` is BRANCHY (cmpi; beq; li; stb x2)
+  with the exception path KEEPING its dead `retVal.type = 2` store; MWCC's
+  branchless select (`neg/or/srawi/addi 2`) + dead-store elision are
+  unreproducible from any tested shape (soft-cap family).
+
+## kyoshin CItemBoxInfo — func_801E43BC / func_801D8E34 sibling monsters (US, Wii/1.1 -O4,p -func_align 16)
+
+The ItemBox2/ItemBox1 info-panel renderers (retail 0x801E5FB8 size 0x4DA8 and 0x801DA9A0 size 0x6680 — among the largest functions in the game). Recovered structure (verified against retail disassembly, 2026-08):
+
+- **Signatures:** `func_801E43BC(CItemBoxInfo2*, u16 arg2, void* arg3, u16 arg4, u32 arg5)` — **arg3 (r5) is DEAD** (clobbered by `lis r5, 0x4330` in the prologue; keep the parameter for ABI, never read it). `func_801D8E34(CItemBoxInfo*, u32 arg2, void* arg3, u32 arg4)` — arg2 is a **bitfield**: `& 0xF` = slot index, `(>>16)&0xFF` = party index (→ `func_801392B4`), `(>>24)&0xF` = item type (2=weapon, 4..8=armor), overridden by `(arg3->w0>>12)&0xF` when slot==0.
+- **Stat objects:** `charObj = func_8009EC9C(member)`; `stats = charObj + 0x17C` (embedded vtable object). vtable slots (word offsets): `0x4A`/`0x4B` = HP floats (fctiwz, clamp 9999), `0x42`/`0x79` = name-string bytes, `0x8A`/`0x83`/`0x8B` = stat blocks (statA: s16 @0x1C/0x1E/0x20/0x2E/0x32/0x38 + f32 @0x10 + byte @0x55; statB: f32 @0x10; statC: s16 @0x06/0x0C/0x0E/0x10/0x18/0x1C/0x22).
+- **Bar formula** (repeated ~20×, reproduces MWCC's xoris/0x4330 s32→double path): `(s16)(s32)(0.01f * ((100.0f + (f32)s16A) * (f32)(s16B + count)))` where count = `func_801E9310(info, member, cat, item)`. The `(f32)(s16A)` and `(f32)(s16B + count)` casts must be written explicitly — MWCC needs the s32→f32 conversion (xoris) which the u32 path omits. Variant: `func_801C6158(0.01f * statB->f10 * (f32)(s16 + count))` (round-to-nearest helper: `s32 func_801C6158(float)`).
+- **Delta-color rows:** per row compute `pb` (4th arg of 9310 = NULL), `nb` (4th arg = arg3), `d = (s16)(nb - pb)`, display `func_80136C98(pane, nb)`, then 4 local `GXColorS10` quads loaded from `.sbss` (`80664518/20` = q1/q2, `80664558/60` = q3/q4 — note the interleaving), conditional `__as__11_GXColorS10FRC11_GXColorS10` overwrites (d<0 → 80664538/40/78/80, d>0 → 80664528/30/68/70), then `func_80139AC8(pane, &q3, &q4)` + `func_80139AC8(pane+4, &q1, &q2)`. The quads MUST be declared as 8-byte local objects copied via `*(CItemBoxQuadColor*)&lbl_eu_806645XX` (memberwise 2×lwz/stw) with the __as__ calls direct.
+- **Call-count inventory** (0x4DA8 body): 120× __as__GXColorS10, 87× func_80139AC8, 49× func_801E9310, 31× func_801E9690, 24× func_80136C98, 20× func_80136D74, 16× setItemBoxCopy, 13× copyItemBoxCopy.
+- **Helper signatures (retail-verified):** `func_80157C4C(u32 index, s16 value)` (2-arg); `func_801E98E4(void*, u16, void*) -> bool`; `func_801E197C(void* out, void* info, void* item)` / `func_801E1E0C` same (3rd arg is a POINTER, checked `cmpwi r5,0`; entry is 0x34 bytes, callers copy 7 words); `func_801E9310(void*, void*, u32, void*) -> u32`; `func_80136C98(void*, u32)`; `func_80136D74(void*, const char*, u32)`; `func_80139AC8(void*, void*, void*)`; `func_8009ECB0() -> void*`; `func_801C6158(float) -> s32`.
+- **Open item:** the prologue's 48-byte party-struct copy loop (`li r0,6; mtctr; lwz r4,4(r3); lwzu r0,8(r3); stw r4,4(r5); stwu r0,8(r5); bdnz`) is NOT reproducible from ~12 tested source forms at -O4,p (48-byte struct copy, u64[6], E8[6], memcpy, pointer sentinels all unroll or call). Only a 96-byte struct copy emits this counted-loop shape (`li r0,0xc`). The exact source form remains open — try a larger PartyData struct (≥96B) with the loop covering the first 48, or a pragma'd helper.
+
+## 2026-08 session: lookAt argNum soft-cap
+
+- Retail lookAt (0x358) keeps the VM arg-number in a callee-saved register
+  (r28): `li r28, 2` then `addi r28, r28, 1` between blocks; OmitChk uses the
+  register, ptrGet uses pre-increment, BoolGet/OCGet use post-increment.
+  MWCC 1.1 constant-folds the 2/3/4 chain to `li` at every site regardless of
+  source shape (plain local, register qualifier, volatile — volatile forces
+  memory and bloats 0x358->0x370). ~45-instruction cascade = the whole
+  arg-parsing block; rest of the 214-instruction function matches. Documented
+  soft-cap (same family as the lwzu fusion).
+- Retail `__dynamic_cast(target, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0)` —
+  the RTTI args are `li r5, sym@l` + SDA21 relocs, NOT zeros; lookAt uses
+  lbl_eu_806618E8 (other functions use lbl_eu_806618D8 — check per-function).

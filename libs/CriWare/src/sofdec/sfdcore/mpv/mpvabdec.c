@@ -3956,13 +3956,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 6;
             if (bc >= 0x20) {
@@ -4000,13 +4000,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 3;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 7;
             if (bc >= 0x20) {
@@ -4024,7 +4024,7 @@ nib_prefix_done:
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 3;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -4044,13 +4044,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -4068,7 +4068,7 @@ nib_prefix_done:
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
             sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
-            p += 2;
+            p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
@@ -4088,13 +4088,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -4254,13 +4254,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[2];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 3;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 7;
             if (bc >= 0x20) {
@@ -4298,13 +4298,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[2];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -4420,13 +4420,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[3];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 4;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -4542,13 +4542,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -4738,7 +4738,7 @@ nib_prefix_done:
             p += blk->f00;
             s32 c = (s8)*++p;
             blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
+            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
             if (blk->f08 != 0) {
                 s = -((s - 1) | 1);
                 } else {
@@ -5039,7 +5039,7 @@ nib_prefix_done:
             p += blk->f00;
             s32 c = (s8)*++p;
             blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
+            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
             if (blk->f08 != 0) {
                 s = -((s - 1) | 1);
                 } else {
@@ -5074,7 +5074,7 @@ nib_prefix_done:
             p += blk->f00;
             s32 c = (s8)*++p;
             blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
+            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
             if (blk->f08 != 0) {
                 s = -((s - 1) | 1);
                 } else {
@@ -5101,7 +5101,7 @@ nib_prefix_done:
             p += blk->f00;
             s32 c = (s8)*++p;
             blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
+            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
             if (blk->f08 != 0) {
                 s = -((s - 1) | 1);
                 } else {
@@ -5150,7 +5150,7 @@ nib_prefix_done:
             p += blk->f00;
             s32 c = (s8)*++p;
             blk->last = c;
-            s32 s = ((2 * (s32)blk->f04 * (s32)blk->quant) * (s32)blk->clip[c]) >> 4;
+            s32 s = ((2 * (s32)blk->f04 + 1) * (s32)blk->quant * (s32)blk->clip[c]) >> 4;
             if (blk->f08 != 0) {
                 s = -((s - 1) | 1);
                 } else {
@@ -5224,13 +5224,13 @@ nib_prefix_done:
             s32 c1 = (s8)p[1];
             blk->last = c1;
             s32 sc1 = ((3 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             p += 2;
             s32 c2 = (s8)p[0];
             blk->last = c2;
             s32 sc2 = ((3 * (s32)blk->quant) * (s32)blk->clip[c2]) >> 4;
-            sc2 = (sc2 - 1) | 1;
+            sc2 = -((sc2 - 1) | 1);
             blk->block[c2] = (s16)((sc2 * (s32)ctx->tblqt[c2] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {
@@ -5484,7 +5484,7 @@ nib_prefix_done:
             s32 c1 = (s8)p[0];
             blk->last = c1;
             s32 sc1 = ((7 * (s32)blk->quant) * (s32)blk->clip[c1]) >> 4;
-            sc1 = -((sc1 - 1) | 1);
+            sc1 = (sc1 - 1) | 1;
             blk->block[c1] = (s16)((sc1 * (s32)ctx->tblqt[c1] + 0x400) >> 11);
             bc += 8;
             if (bc >= 0x20) {

@@ -5,6 +5,13 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
+// .sdata2 pool plant (GXTexture.c convention): the retail magic double at
+// 0x80665C38 (2^52 + 2^31) is referenced by MWCC's direct u32->float
+// conversion idiom. Planting it with the retail name makes MWCC's literal
+// pool unify the conversion's lfd reloc to this symbol instead of a
+// synthesized @N entry, so the reloc name matches retail.
+static const f64 lbl_eu_80665C38 = 4503601774854144.0;
+
 struct CfObjIf {
     virtual void _v0008();
     virtual void _v000C();
@@ -135,6 +142,12 @@ struct CfObjIf {
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
     extern u32 lbl_eu_80663E24;
+    extern u32 lbl_eu_80663E28;
+    extern u16 lbl_eu_80663E42;
+    extern u16 lbl_eu_80663E44;
+    extern float lbl_eu_80665C40;
+    void func_800BDB4C(void* obj);
+    void func_80085878__Q22cf13CfGameManagerFv();
     extern char lbl_eu_804FA74C[];
     extern void* lbl_eu_806618D8;
     extern void* lbl_eu_806618F0;
@@ -174,7 +187,45 @@ extern "C" {
     void* func_8008187C__Q22cf13CfGameManagerFv(int index);
 }
 
-void func_8003BC10(){}
+extern "C" int func_8003BC10(void* obj) {
+    s32 result = 1;
+    void* a = func_800BBC0C();
+    if (a == 0) {
+        goto done;
+    }
+    if (lbl_eu_80663E28 & 0x04000000) {
+        goto done;
+    }
+    u32 bit = *(u8*)((u8*)a + 0x6C9) & 1;
+    u32 r29 = (u32)(-(s32)bit | (s32)bit) & 1;
+    func_800BF314(a, 0);
+    if (lbl_eu_80663E24 & 0x00400000) {
+        goto done;
+    }
+    if (!(*(u32*)((u8*)a + 0x64) & 8)) {
+        goto done;
+    }
+    s32 v1 = ((s32(*)(void*))(*(void***)a)[70])(a);
+    s32 v2 = ((s32(*)(void*))(*(void***)a)[71])(a);
+    s32 ok = 0;
+    if (lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1) {
+        ok = 1;
+    }
+    if (ok == 0) {
+        r29 = 0;
+    }
+    s32 is12 = (v2 == 1 || v2 == 2) ? 1 : 0;
+    if (is12) {
+        if (v1 == 4 || v1 == 5 || (r29 != 0 && v1 == 3)) {
+            return 1;
+        }
+    } else if (!(v2 == 3 && v1 > 2)) {
+        goto done;
+    }
+    result = 0;
+done:
+    return result;
+}
 
 int cf::CfObjectMove::CfObject_UnkVirtualFunc50() { return field_6CE; }
 
@@ -264,7 +315,23 @@ extern "C" int func_8003C354(VMThread* pThread, int handle) {
     return 1;
 }
 
-void func_8003C3D0(){}
+int func_8003C3D0(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // Cast to CfObjectActor; if it is one, read the float at vtable slot
+    // 0x128 and return it truncated to int, else return 0.
+    void* actor = __dynamic_cast(obj, 0, (void*)&__RTTI__Q22cf13CfObjectActor, (void*)&lbl_eu_806618F0, 0);
+    VMArg retVal;
+    if (actor) {
+        retVal.type = 3;
+        retVal.value.intVal = (int)(*(CfObjVt_128**)actor)->fn((cf::CfObject*)actor);
+    } else {
+        retVal.type = 3;
+        retVal.value.intVal = 0;
+    }
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
 
 float cf::CActorParam::CActorParam_UnkVirtualFunc37() { return *(float*)((u8*)this + 0x17E8); }
 
@@ -281,7 +348,17 @@ void func_8003C560(){}
 
 void func_8003C624(){}
 
-void func_8003C6E8(){}
+int func_8003C6E8(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // OC property value (u32) -> float via MWCC's direct 2^52 conversion
+    // (fsubs, no frsp), scaled by the degrees-to-radians constant, then
+    // dispatched to vtable slot 0xC8.
+    VMArg* prop = (VMArg*)vmOCPropertyGet(pThread);
+    float f = (float)(s32)prop->value.uintVal * lbl_eu_8066A210;
+    (*(CfObjVt_C8**)obj)->fn(obj, f);
+    return 0;
+}
 
 void cf::CfObject::CfObject_UnkVirtualFunc30() {
     void** vtable = *(void***)this;
@@ -307,9 +384,30 @@ extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv(void* self, 
 
 bool isValid() { return false; }
 
-void func_8003C84C(){}
+extern "C" int func_8003C84C(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float* p = (float*)((s32(*)(void*))(*(void***)obj)[43])(obj);
+    struct {
+        float x;
+        float y;
+        float z;
+    } vec;
+    vec.x = p[0];
+    vec.y = p[1];
+    vec.z = p[2];
+    ((void(*)(void*, void*, float))(*(void***)obj)[46])(obj, &vec, lbl_eu_80665C40);
+    if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
+        func_800BDB4C(obj);
+    }
+    if (obj != 0 && obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0) &&
+        (lbl_eu_80663E24 & 0x00400000)) {
+        func_80085878__Q22cf13CfGameManagerFv();
+    }
+    return 0;
+}
 
-void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self) {
+extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv(cf::CfObject* self) {
     // Dispatch the "action start" hook, then mark the object as interacted.
     self->CfObject_UnkVirtualFunc19();
     self->mFlags68 |= 0x100;
@@ -324,9 +422,56 @@ void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
     *(u32*)((u8*)self + 0x44) = c;
 }
 
-void dispOn(){}
+int dispOn(VMThread* pThread, int handle) {
+    int flag;
+    if (vmArgOmitChk(pThread, 1)) {
+        flag = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        flag = vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // flag == 0: show via vtable slot 0x158; otherwise route through the
+    // external display helper.
+    if (flag == 0) {
+        obj->CfObject_UnkVirtualFunc66(1);
+    } else {
+        func_800BC3F0(obj);
+    }
+    return 0;
+}
 
-void dispOff(){}
+extern void func_800BC458(void* obj);
+
+int dispOff(VMThread* pThread, int handle) {
+    int flag;
+    if (vmArgOmitChk(pThread, 1)) {
+        flag = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        flag = vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // If the current display object still accepts display-off, bail out
+    // before hiding this object.
+    cf::CfObject* disp = (cf::CfObject*)func_800BF324(obj);
+    if (disp != 0 && !(disp->unk64 & 0x10000)) {
+        if (((cf::CObjectState*)disp)->CObjectState_UnkVirtualFunc8(1) != 0 ||
+            ((cf::CObjectState*)disp)->CObjectState_UnkVirtualFunc2(1) != 0) {
+            return 0;
+        }
+    }
+    // flag == 0: hide via vtable slot 0x158; otherwise route through the
+    // external display helper.
+    if (flag == 0) {
+        obj->CfObject_UnkVirtualFunc66(0);
+    } else {
+        func_800BC458(obj);
+    }
+    return 0;
+}
 
 // CObjectState_UnkVirtualFunc8 defined below as extern "C" free function
 
@@ -334,7 +479,6 @@ int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
 }
 
-extern void func_800BC458(void* obj);
 extern "C" int func_8003CB70(VMThread* pThread, int handle) {
     int arg;
     if (vmArgOmitChk(pThread, 1)) {
@@ -353,9 +497,36 @@ extern "C" int func_8003CB70(VMThread* pThread, int handle) {
     return 0;
 }
 
-void func_8003CC0C(){}
+int func_8003CC0C(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int b = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // Cast the OC object to a CfObjectActor and forward the booleanized
+    // flag to vtable slot 0x1C0.
+    void* actor = __dynamic_cast(obj, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+    if (actor) {
+        (*(CfObjVt_1C0**)actor)->fn((cf::CfObject*)actor, (u32)(-b | b) >> 31);
+    }
+    return 0;
+}
 
-void func_8003CC9C(){}
+int func_8003CC9C(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int index = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // Copy the 6-entry event-arg table into a local buffer, then dispatch
+    // the selected entry through vtable slot 0x114.
+    u32 args[6];
+    memcpy(args, &lbl_eu_804FA4C0, sizeof(args));
+    if ((u32)index < 6) {
+        (*(CfObjVt_114**)obj)->fn(obj, args[index]);
+    } else {
+        vmOCExceptionThrow(pThread);
+    }
+    return 0;
+}
 
 void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
@@ -382,7 +553,17 @@ extern "C" int func_8003CDE0(VMThread* pThread, int handle) {
     return 1;
 }
 
-void walkR(){}
+int walkR(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int fixed = vmArgFixedGet(2, ptr);
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    // Fixed-point walk rate (u32) -> float via MWCC's direct 2^52 conversion,
+    // then divided by the fixed-point scale and dispatched to vtable slot 0x1EC.
+    float f = (float)(u32)fixed / lbl_eu_80665C30;
+    (*(CfObjVt_1EC**)obj)->fn(obj, f);
+    return 0;
+}
 
 int func_8003CED0(VMThread* pThread, int handle) {
     VMArg* ptr = vmArgPtrGet(pThread, 1);
@@ -433,18 +614,98 @@ extern "C" int func_8003D570(VMThread* pThread, int handle) {
 
 void func_8003D5DC(){}
 
-void isTalk(){}
+int isTalk(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    u32 flags = obj->unk64;
+    u32 val;
+    u8 ret;
+    if ((flags & 0x4) || (flags & 0x2)) {
+        // Embedded move-object pointer: obj sits at +0x3E9C inside it.
+        u8* base = (u8*)obj;
+        if (obj != 0) {
+            base -= 0x3E9C;
+        }
+        // Read the talk state through the sub-object's vtable slot 0x30.
+        void* sub = *(void**)(base + 4);
+        val = *(u32*)((*(CfObjVt_30**)sub)->fn(sub));
+        if (func_80174C98(base, &val, 1)) {
+            ret = 1;
+        } else {
+            ret = 2;
+        }
+        vmRetValSet(pThread, (VMArg*)&ret);
+        return 1;
+    } else if (flags & 0x8) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1)) {
+            ret = 1;
+        } else {
+            ret = 2;
+        }
+        vmRetValSet(pThread, (VMArg*)&ret);
+        return 1;
+    } else {
+        ret = 2;
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+}
 
 extern "C" void* CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv(void* self) {
     return (void*)((u8*)self + 8);
 }
 
-void onEvent(){}
+int onEvent(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0();
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    u32 flags = obj->unk64;
+    u8 ret;
+    if ((flags & 0x8) || (flags & 0x2) || (flags & 0x4000) || (flags & 0x8000)) {
+        // Talkable / event object: ask the state machine which talk mode is
+        // active and report it as TRUE/FALSE to the VM.
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1) != 0 ||
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)2, 1) != 0) {
+            if (lbl_eu_80663E24 & 0x8) {
+                ret = 2;
+            } else {
+                ret = 1;
+            }
+        } else {
+            ret = 2;
+        }
+        vmRetValSet(pThread, (VMArg*)&ret);
+        return 1;
+    } else {
+        ret = 2;
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+}
 
-// CObjectState_UnkVirtualFunc10: deferred (needs virtual-dispatch reconstruction)
 extern "C" int CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv(void* self, void* arg, int arg2) {
-    (void)self; (void)arg; (void)arg2;
-    return 0;
+    cf::CObjectState* st = (cf::CObjectState*)self;
+    s32 result;
+    if (arg2 != 0) {
+        result = 0;
+        if ((*(CfObjVt_28**)st)->fn(st) != 0) {
+            goto done;
+        }
+        if (st->CObjectState_UnkVirtualFunc8((int)arg) == 0) {
+            goto done;
+        }
+        result = 1;
+    } else {
+        result = 0;
+        if ((*(CfObjVt_28**)st)->fn(st) == 0) {
+            goto done;
+        }
+        if (st->CObjectState_UnkVirtualFunc8((int)arg) != 0) {
+            goto done;
+        }
+        result = 1;
+    }
+done:
+    return result;
 }
 
 extern "C" int CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv(void* self, int mask) {
@@ -472,7 +733,7 @@ extern "C" int func_8003D9C4(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj->unk64 & 0x8) {
         VMArg retVal;
-        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x2000, 1)) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x2000, 1) != 0) {
             retVal.type = 1;
         } else {
             retVal.type = 2;
@@ -652,7 +913,7 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     if (targetOC) {
         ctx = func_801862C0();
         cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
-        void* actor = (void*)__dynamic_cast(target, 0, (void*)&lbl_eu_806618D8, (void*)&lbl_eu_806618F0, 0);
+        void* actor = (void*)__dynamic_cast(target, 0, (void*)&lbl_eu_806618E8, (void*)&lbl_eu_806618F0, 0);
         if (actor) {
             if (((cf::CfObject*)actor)->unk64 & 0x2 || ((cf::CfObject*)actor)->unk64 & 0x8) {
                 if (*(void**)((u8*)self + 0xC4)) {
@@ -701,8 +962,8 @@ extern "C" int turn(VMThread* pThread, int handle) {
     int angle = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    float f = (float)(s32)angle / 2048.0f * 0.0000958738f;
-    ((void(*)(void*, float))(*(void***)obj)[0xCC/4])(obj, f);
+    float f = (float)(s32)angle * 4.68133871e-08f;
+    ((void(*)(void*, float))(*(void***)obj)[0xC4/4])(obj, f);
     func_800BE12C(obj, 3, 0, -1, 1);
     return 0;
 }
@@ -742,6 +1003,7 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
             ocHandle = *(u32*)((u8*)ocHandle + 0x10000 - 0x6F1C);
         }
     }
+    VMArg retVal;
     if (ocHandle) {
         ctx = func_801862C0();
         cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, ocHandle);
@@ -758,17 +1020,16 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
             typeName = &lbl_eu_804FA74C[0x66];
         }
         u8 type = 9;
-        u16 ocId = vmOCSearch(typeName);
-        VMArg retVal;
         retVal.type = type;
+        u16 ocId = vmOCSearch(typeName);
         retVal.unk2 = ocId;
         retVal.value.pointerVal = *(void**)((u8*)target + 0x74);
-        vmRetValSet(pThread, &retVal);
-        return 1;
     } else {
         vmOCExceptionThrow(pThread);
         return 0;
     }
+    vmRetValSet(pThread, &retVal);
+    return 1;
 }
 
 // us-8003ebe8: func_8003E66C
@@ -1498,7 +1759,19 @@ extern "C" int func_8003FFF4(VMThread* pThread, int handle) {
 
 // us-80040664: ocUnitRegist
 // Registers all OC unit plugin functions
-extern "C" void ocUnitRegist() {}
+// Register the OC unit: init contexts then vmOCRegist each of the five
+// OCData sub-objects in the shared plugin area (lbl_eu_80524E50).
+extern char lbl_eu_80524E50[];
+extern "C" int vmOCRegist(void* pOC);
+extern "C" void ocUnitRegist() {
+    void* base = (void*)&lbl_eu_80524E50;
+    func_801862E0(func_801862C0());
+    vmOCRegist((char*)base + 0x2D0);
+    vmOCRegist((char*)base + 0x398);
+    vmOCRegist((char*)base + 0x488);
+    vmOCRegist((char*)base + 0x560);
+    vmOCRegist((char*)base + 0x638);
+}
 
 void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
     *(unsigned long*)((char*)self + 4) |= bits;

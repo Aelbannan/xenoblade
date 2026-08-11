@@ -164,40 +164,43 @@ private:
     void StopAllAxVoice();
 
 private:
-    AxVoice* mAxVoice[CHANNEL_MAX][VOICES_MAX]; // at 0xC
-    SoundParam mVoiceOutParam[VOICES_MAX];      // at 0x2C
-    int mChannelCount;                          // at 0x9C
-    int mVoiceOutCount;                         // at 0xA0
+    AxVoice* mAxVoice[CHANNEL_MAX][VOICES_MAX]; // at 0xC (2x4 ptrs = 0x20)
+    // retail mVoiceOutParam is 6 f32 per slot (not SoundParam's 8-field 0x20)
+    f32 mVoiceOutParam[VOICES_MAX][6];          // at 0x2C (4x0x18 = 0x60)
+    int mChannelCount;                          // at 0x8C
+    int mVoiceOutCount;                         // at 0x90
 
-    VoiceCallback mCallback; // at 0xA4
-    void* mCallbackArg;      // at 0xA8
+    VoiceCallback mCallback; // at 0x94
+    void* mCallbackArg;      // at 0x98
 
-    bool mIsActive;   // at 0xAC
-    bool mIsStarting; // at 0xAD
-    bool mIsStarted;  // at 0xAE
-    bool mIsPause;    // at 0xAF
-    bool mIsPausing;  // at 0xB0
+    bool mIsActive;   // at 0x9C
+    bool mIsStarting; // at 0x9D
+    bool mIsStarted;  // at 0x9E
+    bool mIsPause;    // at 0x9F
+    bool mIsPausing;  // at 0xA0
+    u8 field_0xA1;    // at 0xA1
 
-    u16 mSyncFlag;                              // at 0xB2
-    u8 mRemoteFilter;                           // at 0xB4
-    u8 mBiquadType;                             // at 0xB5
-    int mPriority;                              // at 0xB4
-    f32 mPan;                                   // at 0xB8
-    f32 mSurroundPan;                           // at 0xBC
-    f32 mLpfFreq;                               // at 0xC0
-    int mOutputLineFlag;                        // at 0xC4
-    f32 mMainOutVolume;                         // at 0xC8
-    f32 mMainSend;                              // at 0xCC
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0xD0
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xDC
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0xEC
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0xFC
-    f32 mPitch;                                 // at 0x10C
-    f32 mVolume;                                // at 0x110
-    f32 mVeInitVolume;                          // at 0x114
-    f32 mVeTargetVolume;                        // at 0x118
-    PanMode mPanMode;                           // at 0x11C
-    PanCurve mPanCurve;                         // at 0x120
+    u16 mSyncFlag;                              // at 0xA2
+    u8 mRemoteFilter;                           // at 0xA4
+    u8 mBiquadType;                             // at 0xA5
+    int mPriority;                              // at 0xA8
+    f32 mPan;                                   // at 0xAC
+    f32 mSurroundPan;                           // at 0xB0
+    f32 mLpfFreq;                               // at 0xB4
+    f32 mBiquadFreq;                            // at 0xB8
+    int mOutputLineFlag;                        // at 0xBC
+    f32 mMainOutVolume;                         // at 0xC0
+    f32 mMainSend;                              // at 0xC4
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0xC8
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xD4
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0xE4
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0xF4
+    f32 mPitch;                                 // at 0x104
+    f32 mVolume;                                // at 0x108
+    f32 mVeInitVolume;                          // at 0x10C
+    f32 mVeTargetVolume;                        // at 0x110
+    PanMode mPanMode;                           // at 0x114
+    PanCurve mPanCurve;                         // at 0x118
 
 public:
     NW4R_UT_LINKLIST_NODE_DECL(); // at 0x124

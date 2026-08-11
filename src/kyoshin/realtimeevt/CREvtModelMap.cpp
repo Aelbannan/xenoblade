@@ -258,10 +258,10 @@ extern "C" CREvtModelMap* __ct__80180B00(CREvtModelMap* self, int dealloc)
 // ---------------------------------------------------------------------------
 // 3. func_80180C60 - isMapModel (0x8018205C)
 // ---------------------------------------------------------------------------
-bool CREvtModelMap::isMapModel()
-{
-    CREvtModelMapNameInfo* info = (CREvtModelMapNameInfo*)mPtr1C;
-    return info->mName[0] == 'm' && info->mName[1] == 'a';
+// retail func_80180C60: (field_1C->b10 == 'm' && b11 == 'a')
+extern "C" int func_80180C60(void* self) {
+    s8* info = *(s8**)((char*)self + 0x1C);
+    return (info[0x10] == 0x6D && info[0x11] == 0x61) ? 1 : 0;
 }
 
 // ---------------------------------------------------------------------------

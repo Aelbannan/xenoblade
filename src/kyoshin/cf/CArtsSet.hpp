@@ -55,7 +55,7 @@ namespace cf {
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){
+        virtual void __declspec(noinline) CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;

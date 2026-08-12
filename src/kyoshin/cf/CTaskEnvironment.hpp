@@ -16,6 +16,12 @@ struct CTaskEnvScene {
     CTaskEnvLgtCtrlAccess* mEnvLgtCtrl;   // +0x7C
 };
 
+// Object pointed to by CTaskEnvironment +0xE0/+0xE4 (Term calls its vtable
+// slot-1 method with 1; retail r12 indirect dispatch).
+struct CTaskEnvUnk {
+    virtual void vfUnk1(int x);
+};
+
 // Global environment manager (retail lbl_eu_80663D58). Recovered layout:
 // +0x68 record index, +0x6C record array (60-byte records).
 struct CTaskEnvGlobal {
@@ -47,4 +53,7 @@ public:
     void Draw();
 
     /* 0x54 */ CTaskEnvScene* mScene;
+    /* 0x58 */ u8 mPad58[0xE0 - 0x58];
+    /* 0xE0 */ void* mUnkE0;   // object with vtable slot 1 method (Term calls it)
+    /* 0xE4 */ void* mUnkE4;   // object with vtable slot 1 method (Term calls it)
 };

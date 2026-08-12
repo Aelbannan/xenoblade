@@ -20,7 +20,7 @@ namespace LOD {
  */
 class UnkClass_8046A530 {
 public:
-    /* 8046E500 */ void func_8046A530();
+    /* 8046E500 */ UnkClass_8046A530* func_8046A530();
     /* 8046E594 */ void func_8046A5C4();
     /* 8046EAA8 */ void func_8046AAD8();
     /* 8046EAAC */ void func_8046AADC();

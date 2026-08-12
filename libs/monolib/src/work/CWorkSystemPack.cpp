@@ -46,6 +46,18 @@ struct CArcItem {
     int unk2C;                        // 0x2C - CArcItem load state (2 = ready)
 };
 
+// Cast-only destroy-hook interface: the retail vtable+8 slot is a destroy
+// hook. Under -RTTI on the FIRST declared virtual lands at +8 (two hidden
+// RTTI slots precede it), so this minimal one-virtual interface reproduces
+// the retail `lwz r12, 8(r12)` dispatch that CPackItem/CArcItem's own
+// {dtor, func_0x4, func_0x8} layout would push to +16.
+struct CPackItemDestroyHook {
+    virtual bool destroy(int flag);    // vtable+8
+};
+struct CArcItemDestroyHook {
+    virtual bool destroy(int flag);    // vtable+8
+};
+
 // POD mirror of _reslist_node<CPackItem*>.
 struct PackItemListNode {
     PackItemListNode* mNext; // 0x0
@@ -507,7 +519,7 @@ bool CWorkSystemPack::wkStandbyLogout() {
         CPackItem* item = node->mItem;
         if (item != 0) {
             if (item != 0) {
-                item->func_0x8(1);
+                ((CPackItemDestroyHook*)item)->destroy(1);
             }
             node->mItem = 0;
         }
@@ -519,7 +531,7 @@ bool CWorkSystemPack::wkStandbyLogout() {
         CArcItem* aitem = anode->mItem;
         if (aitem != 0) {
             if (aitem != 0) {
-                aitem->func_0x8(1);
+                ((CArcItemDestroyHook*)aitem)->destroy(1);
             }
             anode->mItem = 0;
         }
@@ -590,7 +602,7 @@ void func_eu_804E2340(const char* pName) {
         // the call.
         if (node->mItem != 0) {
             if (node->mItem != 0) {
-                node->mItem->func_0x8(1);
+                ((CPackItemDestroyHook*)node->mItem)->destroy(1);
             }
             node->mItem = 0;
         }

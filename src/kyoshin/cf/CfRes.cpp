@@ -88,7 +88,7 @@ extern "C" int CfRes_getInstance() { return lbl_eu_80663D7C; }
 
 extern u32 lbl_eu_80663D7C;
 extern int func_80067E78(int, int);
-int CfRes_callFunc_67E78() {
+extern "C" __declspec(noinline) int CfRes_callFunc_67E78() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
@@ -156,7 +156,7 @@ extern "C" int CfRes_callFunc_68254() {
     return ret;
 }
 
-extern "C" void func_800620F0(){
+extern "C" __declspec(noinline) void func_800620F0(){
     extern u32 lbl_eu_80663D7C;
     extern void func_80067FE0(u32);
     u32 val = lbl_eu_80663D7C;
@@ -171,7 +171,16 @@ extern "C" void func_800620F0(){
 
 void func_80062114(){}
 
-void func_800621A0(){}
+// func_800621A0: return the +4 count of a string-keyed record when its
+// inline key matches the global name key (lbl_eu_80661A24), else 0.
+int func_800621A0(CfResNameRec* rec) {
+    if (rec != 0) {
+        if (strcmp(lbl_eu_80661A24, rec->mKey) == 0) {
+            return rec->mCount;
+        }
+    }
+    return 0;
+}
 
 void func_800621F4(){}
 
@@ -180,7 +189,16 @@ extern "C" void CfRes_delegateOp2(void* a, void* b, void* c) {
     func_8009CE14(a, b, 2, c);
 }
 
-void func_800623DC(){}
+// func_800623DC: resolve a resource via the CfRes manager; returns the
+// resolved size/state or -1 when the manager is unavailable.
+int func_800623DC(u8* res) {
+    int ret = -1;
+    if (CfRes_getInstance() != 0) {
+        CfRes_getInstance();
+        ret = func_80063A60(res);
+    }
+    return ret;
+}
 
 void func_80062430(){}
 
@@ -194,15 +212,25 @@ void func_8006252C(){}
 
 void func_800625A0(){}
 
-void func_80062600(){}
+// func_80062600: run the update pipeline only while neither busy flag is set
+extern "C" int CfRes_checkFlags_48000();
+extern "C" int CfRes_checkFlags_2000400();
+void func_80062600() {
+    if (CfRes_checkFlags_48000() == 0 && CfRes_checkFlags_2000400() == 0) {
+        func_800A9068();
+        CfRes_callFunc_67E78();
+        func_800620F0();
+        func_800A9134();
+    }
+}
 
 extern u32 lbl_eu_80663E24;
-extern "C" int CfRes_checkFlags_48000() {
+extern "C" __declspec(noinline) int CfRes_checkFlags_48000() {
     return (lbl_eu_80663E24 & 0x00048000) != 0 ? 1 : 0;
 }
 
 extern u32 lbl_eu_80663E24;
-extern "C" int CfRes_checkFlags_2000400() {
+extern "C" __declspec(noinline) int CfRes_checkFlags_2000400() {
     return (lbl_eu_80663E24 & 0x02000400) != 0 ? 1 : 0;
 }
 
@@ -214,7 +242,13 @@ void func_eu_80062E58(){}
 
 void func_80062758(){}
 
-void func_800627BC(){}
+// func_800627BC: register the resource with the CfRes manager if it exists
+extern "C" void func_80065254(int inst, u8* arg);
+void func_800627BC(u8* arg) {
+    if (CfRes_getInstance() != 0) {
+        func_80065254(CfRes_getInstance(), arg);
+    }
+}
 
 void func_800627FC(){}
 
@@ -228,7 +262,13 @@ extern "C" u32 CfRes_getField18(u8* self) { return *(u32*)((u8*)self + 0x18); }
 
 void func_80062998(){}
 
-void func_eu_80063174(){}
+// func_eu_80063174: forward a (index, ptr) pair into the manager's resolver
+// when the CfRes manager exists.
+void func_eu_80063174(int index, u8* ptr) {
+    if (CfRes_getInstance() != 0) {
+        func_eu_80065590(CfRes_getInstance(), index, ptr);
+    }
+}
 
 void func_80062A00(){}
 
@@ -262,88 +302,217 @@ extern "C" char* func_80062C80(char* self, int a, int b) {
     return getEntryPtrGrid(self + 4, a, b);
 }
 
-void func_80062C88(){}
+// func_80062C88: return the manager's array-elem-12 slot if the manager exists
+extern "C" void* CfRes_getArrayElem12(u8* self, int idx);
+void* func_80062C88(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem12((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem12(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 12) * 60 + 8);
 }
+#pragma pop
 
-void func_80062CE4(){}
+// func_80062CE4: return the manager's array-elem-21 slot if the manager exists
+extern "C" void* CfRes_getArrayElem21(u8* self, int idx);
+void* func_80062CE4(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem21((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem21(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 21) * 60 + 8);
 }
+#pragma pop
 
-void func_80062D44(){}
+// func_80062D44: return the manager's array-elem-22 slot if the manager exists
+extern "C" void* CfRes_getArrayElem22(u8* self, int idx);
+void* func_80062D44(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem22((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem22(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 22) * 60 + 8);
 }
+#pragma pop
 
-void func_80062DA4(){}
+// func_80062DA4: return the manager's array-elem-18 slot if the manager exists
+extern "C" void* CfRes_getArrayElem18(u8* self, int idx);
+void* func_80062DA4(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem18((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem18(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 18) * 60 + 8);
 }
+#pragma pop
 
-void func_80062E04(){}
+// func_80062E04: return the manager's array-elem-19 slot if the manager exists
+extern "C" void* CfRes_getArrayElem19(u8* self, int idx);
+void* func_80062E04(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem19((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem19(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 19) * 60 + 8);
 }
+#pragma pop
 
-void func_80062E64(){}
+// func_80062E64: return the manager's array-elem-20 slot if the manager exists
+extern "C" void* CfRes_getArrayElem20(u8* self, int idx);
+void* func_80062E64(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return CfRes_getArrayElem20((u8*)CfRes_getInstance(), arg);
+    }
+    return 0;
+}
 
+#pragma push
+#pragma auto_inline off
 extern "C" void* CfRes_getArrayElem20(u8* self, int idx) {
     return (void*)((u8*)self + (idx * 11 + 20) * 60 + 8);
 }
+#pragma pop
 
-void func_80062EC4(){}
+// func_80062EC4: return func_80062F10(instance, arg, 0) if the manager exists
+extern "C" char* func_80062F10(char* self, int a, int b);
+char* func_80062EC4(int arg) {
+    if (CfRes_getInstance() != 0) {
+        return func_80062F10((char*)CfRes_getInstance(), arg, 0);
+    }
+    return 0;
+}
 
 // retail: addi r3,r3,4; b getEntryPtr (3-arg tail call)
+#pragma push
+#pragma auto_inline off
 extern "C" char* func_80062F10(char* self, int a, int b) {
     return getEntryPtr(self + 4, a, b);
 }
+#pragma pop
 
-void func_80062F18(){}
-
+#pragma push
+#pragma auto_inline off
 extern "C" void* func_80062F50(void* self) { return (char*)self + 0x80; }
+#pragma pop
+
+// func_80062F18: return the manager's +0x80 region if the CfRes manager exists
+char* func_80062F18() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80062F50((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
 extern "C" void* func_80062F58(void* self) { return (char*)self + 0x7c; }
 
-void func_80062F60(){}
-
+#pragma push
+#pragma auto_inline off
 extern "C" void* func_80062F98(void* self) { return (char*)self + 0xbc; }
+#pragma pop
+
+// func_80062F60: return the manager's +0xbc region if the CfRes manager exists
+char* func_80062F60() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80062F98((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
 extern "C" void* func_80062FA0(void* self) { return (char*)self + 0xb8; }
 
-void func_80062FA8(){}
-
+#pragma push
+#pragma auto_inline off
 extern "C" void* func_80062FE0(void* self) { return (char*)self + 0xf8; }
+#pragma pop
+
+// func_80062FA8: return the manager's +0xf8 region if the CfRes manager exists
+char* func_80062FA8() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80062FE0((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
 extern "C" void* func_80062FE8(void* self) { return (char*)self + 0xf4; }
 
-void func_80062FF0(){}
-
+#pragma push
+#pragma auto_inline off
 extern "C" void* func_80063028(void* self) { return (char*)self + 0x134; }
+#pragma pop
+
+// func_80062FF0: return the manager's +0x134 region if the CfRes manager exists
+char* func_80062FF0() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80063028((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
 extern "C" void* func_80063030(void* self) { return (char*)self + 0x130; }
 
-void func_80063038(){}
-
+#pragma push
+#pragma auto_inline off
 extern "C" void* func_80063070(void* self) { return (char*)self + 0x170; }
+#pragma pop
+
+// func_80063038: return the manager's +0x170 region if the CfRes manager exists
+char* func_80063038() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80063070((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
 extern "C" void* func_80063078(void* self) { return (char*)self + 0x16c; }
 
-void func_80063080(){}
+// func_80063080: return the manager's +0x29c region if the CfRes manager exists
+extern "C" void* func_800630B8(void* self);
+char* func_80063080() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_800630B8((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
-extern "C" void* func_800630B8(void* self) { return (char*)self + 0x29c; }
+extern "C" __declspec(noinline) void* func_800630B8(void* self) { return (char*)self + 0x29c; }
 
 extern "C" void* func_800630C0(void* self) { return (char*)self + 0x298; }
 
-void func_800630C8(){}
+// func_800630C8: return the manager's +0x224 region if the CfRes manager exists
+extern "C" void* func_80063100(void* self);
+char* func_800630C8() {
+    if (CfRes_getInstance() != 0) {
+        return (char*)func_80063100((char*)CfRes_getInstance());
+    }
+    return 0;
+}
 
-extern "C" void* func_80063100(void* self) { return (char*)self + 0x224; }
+extern "C" __declspec(noinline) void* func_80063100(void* self) { return (char*)self + 0x224; }
 
 extern "C" void* func_80063108(void* self) { return (char*)self + 0x220; }
 
@@ -351,12 +520,24 @@ extern "C" void* func_80063110(void* self) { return (char*)self + 0x25c; }
 
 extern "C" void* func_80063118(void* self) { return (char*)self + 0x1a8; }
 
-void func_80063120(){}
+// func_80063120: stash the archive id, init the embedded subobject, and
+// register it into both lookup tables with a -1 id
+extern "C" void func_80063160(int arg);
+extern "C" void func_800631FC(int arg);
+void func_80063120(u8* self, int arg) {
+    lbl_eu_80663D80 = arg;
+    func_800676F8(self + 4);
+    func_80063160(-1);
+    func_800631FC(-1);
+}
 
 extern "C" void __dt__80067670(u8* self);
+#pragma push
+#pragma auto_inline off
 extern "C" void func_80063158(u8* self) { __dt__80067670(self + 4); }
+#pragma pop
 
-void func_80063160(){}
+extern "C" __declspec(noinline) void func_80063160(int arg){}
 
 extern "C" void CfResEntry_init(u8* self) {
     *(int*)((char*)self + 0) = 0;
@@ -366,9 +547,9 @@ extern "C" void CfResEntry_init(u8* self) {
 
 extern "C" void* CfRes_getResEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
-void func_800631FC(){}
+extern "C" __declspec(noinline) void func_800631FC(int arg){}
 
-extern "C" void* CfRes_getTblEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
+extern "C" __declspec(noinline) void* CfRes_getTblEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
 extern "C" u32 CfResEntry_getHandle(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
@@ -394,7 +575,14 @@ void func_80063560(){}
 
 extern "C" void CfRes_clearField4(u8* self) { *(u32*)((u8*)self + 4) = 0; }
 
-void func_800638B4(){}
+// func_800638B4: decrement the refcount of the manager's table entry for a
+// non-negative index (entry table lives at manager + 0x1ed8).
+void func_800638B4(int idx) {
+    int inst = CfRes_getInstance();
+    if (inst != 0 && idx >= 0) {
+        CfResEntry_decRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), idx));
+    }
+}
 
 void func_80063900(){}
 
@@ -414,7 +602,7 @@ int func_80063A34(void* self){
     return sz;
 }
 
-void func_80063A60(){}
+int __declspec(noinline) func_80063A60(u8* res) { return 0; }
 
 extern "C" void CfRes_stub_63ACC() {}
 
@@ -510,7 +698,7 @@ void func_80063F1C(){}
 
 void func_80063FA8(){}
 
-void func_80064014(){}
+void __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, u32 field) {}
 
 void func_800640F4(){}
 
@@ -619,9 +807,14 @@ extern "C" int CfRes_checkMask_64A08(u8* self, u32 mask) {
     return (val & mask) != 0 ? 1 : 0;
 }
 
-void cf::CfRes::OnFileEvent() {}
+// CfRes::OnFileEvent - async file-read completion for the resource manager:
+// pass the event and its owning-handle field into the per-event handler.
+extern "C" u32 CfRes_getField4_64A6C(u8* self);
+void ::CfRes::OnFileEvent(CEventFile* ev) {
+    func_80064014(this, ev, CfRes_getField4_64A6C((u8*)ev));
+}
 
-extern "C" u32 CfRes_getField4_64A6C(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 CfRes_getField4_64A6C(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
 void func_80064A74(){}
 
@@ -644,7 +837,7 @@ extern "C" void CfRes_vcall17(u8* self, void* arg) {
 
 void func_80064CD8(){}
 
-void func_eu_80065590(){}
+void __declspec(noinline) func_eu_80065590(int inst, int index, u8* ptr) {}
 
 extern "C" u32 func_eu_80065640(u32 a, u32 b, u32 c, u32 d) {
     u32 t0 = (c << 10) & 0xFFFFFC00;
@@ -672,7 +865,7 @@ void func_80065050(){}
 
 void func_80065158(){}
 
-void func_80065254(){}
+extern "C" __declspec(noinline) void func_80065254(int inst, u8* arg){}
 
 extern "C" unsigned long CfRes_packThreeFields(unsigned long a, unsigned long b, unsigned long c) {
     return ((a & 0x1F) << 27) | ((b & 0xFFF) << 20) | ((c & 0x3FFFFF) << 10);
@@ -711,9 +904,21 @@ cf::CfRes::~CfRes() {}
 
 cf::CfResTask::~CfResTask() {}
 
-extern "C" void Init__Q22cf9CfResTaskFv() {}
+void cf::CfResTask::Init() {}
 
-void cf::CfResTask::Term() {}
+void cf::CfResTask::Move() {}
+
+void cf::CfResTask::Draw() {}
+
+// Term: tear down the embedded resource storage and clear the global
+// manager-singleton state.
+void cf::CfResTask::Term() {
+    func_80067D38(mEntries);
+    func_80063158(mField54);
+    lbl_eu_80663D80 = 0;
+    lbl_eu_80663D78 = 0;
+    lbl_eu_80663D7C = 0;
+}
 
 
 cf::CfRes::CfRes() {}
@@ -820,12 +1025,30 @@ int func_80065F1C() { return func_800A807C(); }
 extern "C" void CfRes_stub_65F20() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// CTTask<T> is declared in kyoshin/CTaskGameEff.hpp (via harness_catalog.hpp);
-// specializations below emit the retail Move/Draw/dtor symbols.
-namespace cf { class CfResTask; }
-template<> CTTask<cf::CfResTask>::~CTTask() {}
-template<> void CTTask<cf::CfResTask>::Move() {}
-template<> void CTTask<cf::CfResTask>::Draw() {}
+// CTTask<CfResTask> is declared in kyoshin/cf/CfRes.hpp; the out-of-line
+// specializations below emit the retail Move/Draw/dtor symbols. Move/Draw
+// dispatch the +0x3C/+0x48 ptmf hooks through __ptmf_test/__ptmf_scall.
+
+// CTTask<cf::CfResTask>::Move - test PTMF at +0x3C, call if non-null
+template<>
+void CTTask<cf::CfResTask>::Move() {
+    if (__ptmf_test(&mMoveFunc)) {
+        (static_cast<cf::CfResTask*>(this)->*mMoveFunc)();
+    }
+}
+
+// CTTask<cf::CfResTask>::Draw - test PTMF at +0x48, call if non-null
+template<>
+void CTTask<cf::CfResTask>::Draw() {
+    if (__ptmf_test(&mDrawFunc)) {
+        (static_cast<cf::CfResTask*>(this)->*mDrawFunc)();
+    }
+}
+
+// CTTask<cf::CfResTask> destructor - base dtor body is empty (the deleting
+// CfResTask dtor drives the CProcess teardown).
+template<>
+CTTask<cf::CfResTask>::~CTTask() {}
 
 extern "C" void func_80062BA0() {}
 extern "C" void func_80062CD0() {}

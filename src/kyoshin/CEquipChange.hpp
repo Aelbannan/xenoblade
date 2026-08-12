@@ -7,6 +7,7 @@
 namespace nw4r {
 namespace lyt {
     class AnimTransform;
+    class DrawInfo;
 }
 }
 class CBaseCur;
@@ -36,7 +37,6 @@ public:
     u8 func_802023C0();
     void func_802023C8();
     void func_8020247C();
-    int func_80203138();
     void func_8020397C();
     void func_80203984();
     void func_8020398C();
@@ -74,6 +74,50 @@ public:
     CEquipItemBox mEquipItemBox;  // 0x2B0
 };
 
+// Retail symbols are unmangled free functions (not class members); MWCC would
+// mangle plain C++ declarations, so they carry C linkage to emit the exact
+// retail symbols.
+extern "C" int func_80203138(CEquipChange* self);
+extern "C" int func_802031A0(CEquipChange* self);
+
+// C++ linkage so MWCC mangles to the retail symbol func_80137444__FPQ34nw4r3lyt13AnimTransformf.
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+
+// Cast-only view of the layout object at field_34 (vtable slot 11 = +0x2C,
+// method (arg, mode)). A real virtual call makes MWCC load the vtable into
+// r12 (retail's `lwz r12,0(r3); lwz r12,0x2c(r12); bctrl`), where a
+// function-pointer temp would allocate it to a scratch register. MWCC reserves
+// 2 leading vtable slots, so v9 lands at +0x2C.
+struct CLayoutVtbl11 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9(void* arg, int mode);
+};
+
+// Cast-only view of the sub-cursor at self+0x80 (vtable slot 4 = +0x10,
+// method (arg)). Real virtual call emits the retail r12 dispatch chain;
+// MWCC reserves 2 leading vtable slots, so v2 lands at +0x10.
+struct CSubCurVtblView {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2(void* arg);
+};
+
+// Color/sound palette entries initialised by sinit_802059E8 (sdata2).
+extern void* lbl_eu_80664668;
+extern void* lbl_eu_80664670;
+extern void* lbl_eu_80664678;
+extern void* lbl_eu_80664680;
+extern void* lbl_eu_80664688;
+extern void* lbl_eu_80664690;
+
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
@@ -82,6 +126,10 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" int func_801D2ED8(CBaseCur*);
 extern "C" int func_802865A0(CEquipItemBox* box);
 extern "C" int func_802865A8(CEquipItemBox* box);
+extern "C" int func_802865B0(CEquipItemBox* box);
+extern "C" void func_80286740(CEquipItemBox* box);
+extern "C" void func_80287250(CEquipItemBox* box, int arg);
+extern "C" void func_801D4B3C(void*, CItemBoxInfo*, u32);
 extern "C" int func_80286650(CEquipItemBox* box);
 extern "C" int func_80286698(CEquipItemBox* box);
 extern "C" int func_802866A0(CEquipItemBox* box);
@@ -95,6 +143,14 @@ extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_802042C0(CEquipChange* self);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void* func_80157C4C(u32 index, s16 value);
+extern "C" void func_80287EFC(CEquipItemBox* box, u32 val);
+extern "C" void func_80287DB4(CEquipItemBox* box, u16 packed, void* arg3, u16 arg4);
+extern "C" void func_802866E8(CEquipItemBox* box);
+extern "C" int func_8028876C(CEquipItemBox* box);
+extern "C" void func_80286340(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void* func_802052A8(CEquipChange* self);
+extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // Sub-object destructors referenced by ~CEquipChange. Defined in CCur.cpp /
 // CItemBoxInfo.cpp / CEquipItemBox.cpp.

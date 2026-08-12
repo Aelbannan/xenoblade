@@ -42,6 +42,26 @@ struct MenuEnemyPanel {
     u32 unk48;                     // +0x48
 };
 
+// 4 packed shorts returned in r3:r4 by func_801397AC.
+struct FourShorts { s16 a, b, c, d; };
+
+// Abstract view of the object returned by CDeviceFont::func_80452C10; the
+// 10th user virtual (vtable+0x24) yields the u32 bound by func_8013676C.
+// All-pure, never constructed directly (no vtable is emitted).
+class MenuFontView {
+public:
+    virtual void m00() = 0;   // 0x00
+    virtual void m04() = 0;   // 0x04
+    virtual void m08() = 0;   // 0x08
+    virtual void m0C() = 0;   // 0x0C
+    virtual void m10() = 0;   // 0x10
+    virtual void m14() = 0;   // 0x14
+    virtual void m18() = 0;   // 0x18
+    virtual void m1C() = 0;   // 0x1C
+    virtual void m20() = 0;   // 0x20
+    virtual u32 m24() = 0;    // 0x24  (font-handle getter)
+};
+
 // CPcSelectCursor lives at offset 0x7E4 and is 0x48 bytes.
 // Several fields alias into CMenuEnemyState (unk800..unk828).
 // Declared here so the source can name the sub-fields.
@@ -187,16 +207,38 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" void* func_8016FE34(void* r3);
+// Shared-arc text value (unmangled retail symbol); feeds func_801368C0.
+extern "C" u32 func_801355D8();
+// 4-short colour pairs read off a pane (unmangled retail symbol).
+extern "C" FourShorts func_801397AC(void*, u32);
 extern "C" void* __dt__15CMenuEnemyStateFv(CMenuEnemyState* self, int flags);
 extern "C" void* __ct__CMenuEnemyState(void* self, void* scn);
 extern "C" void* func_801355F4();
 extern "C" void __dt__8CProcessFv(void* self, int flags);
-extern "C" void func_80110A78(u32 existing, void* arg3);
+extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId);
 // Layout sound effect helper (retail symbol is unmangled).
 extern "C" void func_80137B44(nw4r::lyt::Layout* layout, const char* name,
                               u32 value);
 // Apply a loaded texture to a pane (retail symbol is unmangled).
 extern "C" void func_80137F88(void* a, void* palette);
+// Enemy-menu resource helpers (retail symbols unmangled). func_80138F78 is
+// declared C++ in code_80135FDC.hpp; the C-linkage-first decl here makes the
+// later plain redeclaration inherit it (same signature).
+extern "C" u16 func_80136254(const void* a, const char* b, int c);
+extern "C" char* func_80138F78(u32 id);
+// Enemy-menu helpers used by the panel/cursor functions (retail unmangled).
+// (func_8009ECB0 is declared in include/functions.hpp as `extern "C" int*`.)
+extern "C" void* func_800B8B94(s32 a);
+extern "C" void* func_800EA444(void);
+extern "C" void func_8049B59C(void* out, void* pose, const void* in);
+extern "C" void func_80137DB8(void* a, u32 b, u32 c);
+extern "C" char* func_80138DA4(const char* s);
+extern "C" void* func_801984F0(void* a, u32 idx);
+extern "C" void func_80139AC8(void* a, void* b, void* c);
+extern "C" void* func_800B8A64(void);
+int sprintf(char*, const char*, ...);
+// func_800AD860__FPv: C++ linkage (MWCC re-derives the retail mangled name).
+void* func_800AD860(void* obj);
 
 // Retail .sdata singleton (created by func_801109D8, cleared by Term).
 extern u32 lbl_eu_80663F50;
@@ -213,5 +255,31 @@ extern const f32 lbl_eu_80667048;
 extern const f32 lbl_eu_8066704C;
 extern const f32 lbl_eu_80667050;
 extern const f32 lbl_eu_80667054;
+extern const f32 lbl_eu_80667038;
+// Enemy-data table pointer (sdata) used by the highlight-scan helpers.
+extern u8* lbl_eu_806640E0;
 // Texture-index table for the panel-highlight search (func_801132A8).
 extern u32 lbl_eu_804FDBC8[];
+// sdata colour/scale quads + s16 pairs used by func_80110A78's pane setup.
+// Declared as 4-element s16 arrays so direct element access keeps the retail
+// sda21 addressing (li lbl@sda21 + halfword ops).
+extern s16 lbl_eu_80663F58[4];
+extern s16 lbl_eu_80663F60[4];
+extern s16 lbl_eu_80663F68[4];
+extern s16 lbl_eu_80663F70[4];
+extern s16 lbl_eu_80663F78[4];
+extern s16 lbl_eu_80663F80[4];
+extern s16 lbl_eu_80663F88[4];
+extern s16 lbl_eu_80663F90[4];
+extern u32 lbl_eu_806640CC;
+// sdata2 constants used by the position-marker helpers.
+extern const f32 lbl_eu_80666FF0;
+extern const f32 lbl_eu_80666FF4;
+extern const f32 lbl_eu_80666FF8;
+extern const f32 lbl_eu_80666FFC;
+extern const f32 lbl_eu_80667000;
+extern const f32 lbl_eu_80667018;
+extern const f32 lbl_eu_8066701C;
+extern const f32 lbl_eu_80667020;
+extern const f32 lbl_eu_80667024;
+extern const f32 lbl_eu_80667028;

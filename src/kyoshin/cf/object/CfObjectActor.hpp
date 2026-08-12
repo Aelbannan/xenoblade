@@ -14,7 +14,7 @@ extern float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf
 
 extern float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
 
-extern u32 lbl_eu_80663E24;     // event/presentation bitfield (.sbss; bit 0x10000000 gates the 33 path)
+extern volatile u32 lbl_eu_80663E24;     // event/presentation bitfield (.sbss; bit 0x10000000 gates the 33 path); volatile to match CfObjectMove.hpp decl
 
 extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
 

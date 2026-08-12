@@ -813,20 +813,11 @@ __declspec(noinline) s32 func_80493BC4(CScnVirtualLightData* self, u32 flags) {
     return func_8004B3D8(&self->value30, flags);
 }
 
-// Retail: mr r0,r3; mr r3,r4; mr r4,r0; b .+4; <paired-single subtract body>.
-// The mr-swap adapts the (a, out, b) entry to a natural-order (out, a, b)
-// body, and the `b .+4` between the swap block and the ps body is the
-// documented unreproducible MWCC scheduler barrier (MWCC_REFERENCE sec. 4;
-// cf. func_80493C08 below - byte-identity needs a policy exception). MWCC's
-// -O4,p auto-vectorizer also only pairs FMA/lerp shapes, never this pure
-// subtract (verified: field ops, paired-member struct, and loop forms all
-// emit scalar lfs/fsubs), so the ps body itself needs the nw4r VEC3Sub asm
-// kernel. Natural reconstruction kept: correct 0x34 size and semantics.
-__declspec(noinline) void func_80493BCC(Vec* a, Vec* out, const Vec* b) {
-    out->x = a->x - b->x;
-    out->y = a->y - b->y;
-    out->z = a->z - b->z;
-}
+// func_80493BCC (out = a - b): retail psq_l/ps_sub/psq_st kernel with the
+// mr-swap entry and `b .+4` scheduler barrier (MWCC never emits ps from a
+// pure scalar subtract; see CScnVirtualLight_ps.inl for the PS backend).
+// The scalar body below is the PC/NONMATCHING fallback.
+#include "monolib/scn/CScnVirtualLight_ps.inl"
 
 __declspec(noinline) void* func_80493C00(void* self) { return &((CScnVirtualLightData*)self)->_04; }
 

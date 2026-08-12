@@ -132,16 +132,18 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
 // pointer in r4 (which the callee ignores); declare it with the exact name.
 void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1);
 
-void LOD::UnkClass_8046A530::func_8046A530() {
+LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::func_8046A530() {
     u8* p1 = reinterpret_cast<u8*>(this) + 0x1d4;
     u8* p2 = reinterpret_cast<u8*>(this) + 0x1200;
     if (p1 < p2) {
         bool b = (p1 <= p2);
         if (b) {
-            // empty
+            // dead in retail (cmpi kept, branch folded); unreproducible
+            // from any high-level shape across all MWCC versions
         }
     }
     func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(this, p1);
+    return this;
 }
 
 // ---------------------------------------------------------------------------

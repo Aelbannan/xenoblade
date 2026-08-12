@@ -161,7 +161,9 @@ struct EffObject {
     s16 field_0x20;          // 0x20
     u8 field_0x22;           // 0x22
     u8 field_0x23;           // 0x23
-    u8 renderArg[0x24];      // 0x24
+    u8 renderArg[0x0a];      // 0x24
+    s16 field_0x2e;          // 0x2e
+    u8 pad_0x30[0x40 - 0x30];
     u32 field_0x40;          // 0x40
     u32 field_0x44;          // 0x44
     u32 field_0x48;          // 0x48
@@ -179,6 +181,15 @@ struct EffObject {
     f32 sub_0x194[12];       // 0x194..0x1c4 (func_804E1D50/E2088 target)
     f32 sub_0x1c4[16];       // 0x1c4..0x204 (func_804E214C/E24A8 target)
     f32 sub_0x204[8];        // 0x204..0x224 (func_804E26D8/E2A5C target)
+};
+
+// Tail-state view used by func_804C8D90 (0x180..0x18c, inside the 0x17c
+// sub-region range).
+struct EffFrameTail {
+    u8 field_0x180;          // 0x180
+    u8 pad_0x181[0x188 - 0x181];
+    u16 field_0x188;         // 0x188
+    u16 field_0x18a;         // 0x18a
 };
 
 // Cross-TU imports for the targets below (the shared headers are read-only
@@ -207,6 +218,7 @@ extern f32 lbl_eu_8066B0C0;
 extern f32 lbl_eu_8066B0C4;
 extern u32 lbl_eu_8066B0D0;
 extern const f64 lbl_eu_8066B0C8;   // 0x4330000000000000 (u->f magic)
+extern const f64 lbl_eu_8066B0B0;   // 0x4330000000000000 (s16->f magic)
 
 // u16 -> float through the shared 0x4330000000000000 magic double. The
 // explicit extern reference pins the sdata2 reloc to the retail constant
@@ -221,6 +233,18 @@ inline f32 u16ToF_b0c8(u16 v) {
     return (f32)(c.d - lbl_eu_8066B0C8);
 }
 
+// Signed value -> float through the 0x4330000080000000 magic
+// (lbl_eu_8066B0B0). The xor folds the sign into the low word.
+inline f32 s32ToF_b0b0(u32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[1] = v ^ 0x80000000u;
+    c.w[0] = 0x43300000u;
+    return (f32)(c.d - lbl_eu_8066B0B0);
+}
+
 // Cross-TU imports + in-TU C-linkage declarations (retail symbol names -
 // extern "C" keeps the unmangled reloc names; the definitions further down
 // inherit this linkage so their symbols match the retail names).
@@ -228,7 +252,7 @@ extern "C" {
 void func_804DF7FC(void);
 void __dt__804DF744(void);
 void func_804E4D58(u32 x);
-void func_804DF4BC(int x);
+u32 func_804DF4BC(void* key);
 void func_804C868C(void);
 void func_804C8684(void* scene);
 u32 func_804DFE9C(void);
@@ -284,14 +308,21 @@ void func_804D4010(void* self, const void* a, void* b);
 // Scene-list iteration helpers (defined in code_804CC2B8.cpp).
 void func_804CCF84(void* self);
 void* func_804D5DAC(void* self);
+void func_804D4144(void* self);
 void func_804D5E10(void* self, s32 index);
 void func_804CC808(void* self, const void* src);
 
 // Scene/resource helpers (defined in code_804BD8E8.cpp).
 int func_804BE398(Vec* v, u32 a, u32 b, u32 c, f32 f1, f32 f2);
 void func_804BE4B4(void* dst, int index);
+CEffectObj* func_804DFEAC(s16 handle);
 void func_804CB274(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
                    const ml::CVec3* in, const ml::CVec3* r8);
+s32 func_804CAAD4(EffectRoot* self, void* scene, void* node);
+struct EffSceneRef;
+struct EffMtx;
+void func_804CAC08(EffObject* obj, EffSceneRef* scene, const Mtx* m1,
+                   const Mtx* m2, const EffMtx* m3, const EffMtx* m4);
 
 // Effect-node view used by func_804CAC08: a float at +0x10.
 struct EffNode10 {
@@ -519,7 +550,14 @@ void func_804CBAA8(EffectRoot* self, void* scene, u32 arg) {
 
 void func_804CBB14(){}
 
-void func_804CBB60(){}
+// func_804CBB60: no-arg per-frame hook - restore the fog state, then advance
+// the two global schedule lists (retail: two bare bl's in a 16-byte frame).
+extern "C" void func_804D83D0(void);
+extern "C" void func_804E4E38(void);
+void func_804CBB60() {
+    func_804D83D0();
+    func_804E4E38();
+}
 
 // func_804CBB84: on the 0x800 flag (with 0x2000 or 0x1000 also set), rebind
 // the active scene: hand it to both schedule lists, refresh the fog-enable
@@ -703,9 +741,24 @@ void func_804CC154(EffectRoot* self) {
     }
 }
 
-void func_804CC1BC(){}
+// func_804CC1BC/804CC1D8: when the 0x8000 (bit 15) schedule flag is set,
+// forward the key to the matching schedule-list lookup and tail-return its
+// result; otherwise 0. The retail halfword is read once (lhz) and the flag
+// extracted with rlwinm. r0,r0,17,31,31 ((flags0 >> 15) & 1).
+extern "C" u32 func_804DF3D0(void* key);
+u32 func_804CC1BC(EffectRoot* self, void* key) {
+    if ((self->flags0 >> 15) & 1) {
+        return func_804DF3D0(key);
+    }
+    return 0;
+}
 
-void func_804CC1D8(){}
+u32 func_804CC1D8(EffectRoot* self, void* key) {
+    if ((self->flags0 >> 15) & 1) {
+        return func_804DF4BC(key);
+    }
+    return 0;
+}
 
 // func_804CC1F4: add a schedule request. When either the 0x2000 or 0x1000
 // flag is set, resolve an entry range via func_804DF5F8 and forward it to the
@@ -853,9 +906,201 @@ s32 func_804C8830(EffObject* self, const u8* base, const EffInitBlob* data,
     return 1;
 }
 
-extern "C" void func_804C8D90() {}
-extern "C" void func_804C9D30() {}
-extern "C" void func_804CAA94() {}
+// func_804C8D90: per-frame effect-object update. Refreshes the six bound
+// sub-regions with the current lifetime value (delta), clears stale flags
+// based on the field_0x08 bitmask / parent handle / lifetime, then when the
+// 0x4000 flag is set runs the spawn loop: computes the remaining-duration
+// count, spawns nodes via func_804D5E10, refreshes the 0x17c region and the
+// per-node alpha position, advancing through func_804D5DAC.
+void func_804C8D90(EffObject* obj, f32 delta) {
+    if (obj->field_0x0c <= lbl_eu_8066B0A4) {
+        func_804CAAD4((EffectRoot*)obj, (void*)1, 0);
+    }
+    obj->field_0x14 = delta;
+    if (delta <= lbl_eu_8066B0A0) return;
+    EffFrameTail* ft = (EffFrameTail*)&obj->sub_0x17c[1];
+
+    if (obj->flags1 & 0x4000) {
+        if ((obj->field_0x08->field_0x00 >> 6) & 1) {
+            obj->flags1 = (u16)(obj->flags1 & ~0x4000);
+        }
+        if (!(obj->flags1 & 0x1000)) {
+            if (obj->field_0x12 > 0) {
+                f32 t = s32ToF_b0b0((u32)(s32)obj->field_0x12);
+                if (t < obj->field_0x0c) {
+                    obj->flags1 = (u16)(obj->flags1 & ~0x4000);
+                }
+            }
+            if ((ft->field_0x180 >> 4) & 1) {
+                if (ft->field_0x18a == 0) {
+                    obj->flags1 = (u16)(obj->flags1 & ~0x4000);
+                }
+            }
+        } else {
+            CEffectObj* p = func_804DFEAC(obj->field_0x20);
+            if (p != 0 && !(p->mFlags1C & 0x8000)) {
+                obj->flags1 = (u16)(obj->flags1 & ~0x4000);
+            }
+        }
+    }
+    if (!(obj->flags1 & 0x4000)) {
+        if (obj->field_0x2e <= 0) {
+            obj->flags1 = (u16)(obj->flags1 & ~0x8000);
+        }
+    }
+
+    if (!(obj->flags1 & 0x1000)) {
+        // Refresh the six bound sub-regions with the current lifetime.
+        if (obj->field_0x10 > 0 && (f32)obj->field_0x10 < obj->field_0x0c) {
+            obj->sub_0x11c[0] = obj->field_0x14;
+            func_804E06B4(obj->sub_0x11c, (const void*)obj->field_0xdc[2], (const void*)obj->field_0x08, obj->field_0x14);
+            obj->sub_0x14c[0] = obj->field_0x14;
+            func_804E08BC(obj->sub_0x14c, (const void*)obj->field_0xdc[4], (const void*)obj->field_0x08, obj->field_0x14);
+            obj->sub_0x17c[0] = obj->field_0x14;
+            func_804E0B94(obj->sub_0x17c, (const void*)obj->field_0xdc[5], (const void*)obj->field_0x08, obj->field_0x14);
+            if (obj->field_0xdc[13] ? *(const u8*)((const u8*)obj->field_0xdc[13] - 0x1c) : 0) {
+                obj->sub_0x194[0] = obj->field_0x14;
+                func_804E2088(obj->sub_0x194, (const void*)obj->field_0xdc[13], (const void*)obj->field_0x08, obj->field_0x14);
+            }
+            if (obj->field_0xdc[12] ? *(const u8*)((const u8*)obj->field_0xdc[12] - 0x19) : 0) {
+                obj->sub_0x1c4[0] = obj->field_0x14;
+                func_804E24A8(obj->sub_0x1c4, (const void*)obj->field_0xdc[12], (const void*)obj->field_0x08, obj->field_0x14);
+            }
+            if (obj->field_0xdc[14] ? *(const u8*)((const u8*)obj->field_0xdc[14] - 0x18) : 0) {
+                obj->sub_0x204[0] = obj->field_0x14;
+                func_804E2A5C(obj->sub_0x204, (const void*)obj->field_0xdc[14], (const void*)obj->field_0x08, obj->field_0x14);
+            }
+        }
+        if (obj->flags1 & 0x4000) {
+            if (obj->field_0x10 > 0 && (f32)obj->field_0x10 < obj->field_0x0c) {
+                if (obj->field_0x12 <= 0 || (f32)obj->field_0x12 >= obj->field_0x0c) {
+                } else if (obj->field_0x18 > lbl_eu_8066B0A0) {
+                    obj->field_0x18 = obj->field_0x18 - obj->field_0x14;
+                    if (obj->field_0x18 > lbl_eu_8066B0A0) {
+                        func_804CAAD4((EffectRoot*)obj, 0, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    // Spawn loop: refresh the 0x17c region, then walk the node chain.
+    func_804E0CF0(obj->sub_0x17c, (const void*)obj->field_0xdc[5]);
+    s32 count = (s32)(s32ToF_b0b0((u32)ft->field_0x188) * delta);
+    u32 mode = obj->field_0xdc[2] ? *(const u8*)((const u8*)obj->field_0xdc[2] - 0xe) : 0;
+    u32 isB = (mode == 7);
+    u32 i = 0;
+    while (i < (u32)count) {
+        struct SpawnArg {
+            void* scene;
+            EffObject* obj;
+            u16 type;
+            u8 b0;
+        };
+        SpawnArg arg;
+        arg.scene = obj->field_0x08;
+        arg.obj = obj;
+        arg.type = (u16)obj->field_0x00;
+        arg.b0 = (u8)obj->field_0x23;
+        func_804D5E10((void*)((u8*)obj + 0x24), (s32)(u32)&arg);
+        if (isB) {
+            arg.b0 = (u8)obj->field_0x22;
+            func_804D5E10((void*)((u8*)obj + 0x24), (s32)(u32)&arg);
+        }
+        i++;
+    }
+    EffectNode* n = (EffectNode*)func_804D5DAC((u8*)obj + 0x24);
+    while (n != 0) {
+        n = (EffectNode*)func_804D5DAC((u8*)obj + 0x24);
+    }
+}
+// Frame-update view of the effect object used by func_804C9D30: the 0x64/0xac
+// emission matrices, the 0x128 position and the 0x140/0x170 anchor columns.
+struct EffFrameObj {
+    u8 pad_0x00[0x0c];
+    f32 field_0x0c;          // 0x0c
+    u8 pad_0x10[0x1c - 0x10];
+    u16 flags1;              // 0x1c
+    u8 pad_0x1e[0x2e - 0x1e];
+    s16 field_0x2e;          // 0x2e lifetime
+    u8 pad_0x30[0x48 - 0x30];
+    u32 field_0x48;          // 0x48
+    u8 pad_0x4c[0x64 - 0x4c];
+    ml::CMat34 mtx;          // 0x64
+    u8 pad_0x94[0xac - 0x94];
+    ml::CMat34 mtx2;         // 0xac
+    u32 field_0xdc[16];      // 0xdc
+    u8 pad_0x11c[0x128 - 0x11c];
+    ml::CVec3 pos;           // 0x128
+    f32 field_0x134[9];      // 0x134..0x158
+    f32 field_0x158[8];      // 0x158..0x178
+    f32 field_0x170[8];      // 0x170..0x190
+    u8 pad_0x190[0x204 - 0x190];
+    f32 field_0x204[8];      // 0x204
+};
+
+// func_804C9D30: per-frame effect-object update. When the lifetime (0x2e) is
+// positive and the 0x1000 flag is clear, rebuilds the two emission transforms
+// (matrix + negated anchor columns via func_804DB980, position added, then
+// PSMTXConcat), then walks the per-object node chain (func_804D5DAC)
+// invoking func_804CAC08 per node and folding the results back into the node.
+void func_804C9D30(EffFrameObj* obj) {
+    if (obj->field_0x2e <= 0) return;
+    s32 loopFlag = 0;
+    if (!(obj->flags1 & 0x1000)) {
+        if (func_804CAAD4((EffectRoot*)obj, (void*)(u32)(obj->field_0x0c <= lbl_eu_8066B0A4), 0) != 0) {
+            // emission transform 1: negated anchor 0x140 -> func_804DB980 ->
+            // position 0x128 added -> concat with the 0x64 matrix.
+            Mtx m0;
+            Vec neg;
+            neg.x = -obj->field_0x134[3];
+            neg.y = -obj->field_0x134[4];
+            neg.z = -obj->field_0x134[5];
+            func_804DB980(&m0, &neg, obj->field_0x48);
+            Mtx m1;
+            for (u32 i = 0; i < 12; i++) ((u32*)&m1)[i] = ((const u32*)&m0)[i];
+            m1[0][3] += obj->pos.x;
+            m1[1][3] += obj->pos.y;
+            m1[2][3] += obj->pos.z;
+            Mtx m2;
+            PSMTXConcat(obj->mtx.mtx, m1, m2);
+
+            // emission transform 2: same for the 0x170 anchor and 0xac matrix.
+            Mtx n0;
+            neg.x = -obj->field_0x170[0];
+            neg.y = -obj->field_0x170[1];
+            neg.z = -obj->field_0x170[2];
+            func_804DB980(&n0, &neg, obj->field_0x48);
+            Mtx n1;
+            for (u32 i = 0; i < 12; i++) ((u32*)&n1)[i] = ((const u32*)&n0)[i];
+            n1[0][3] += obj->field_0x158[0];
+            n1[1][3] += obj->field_0x158[1];
+            n1[2][3] += obj->field_0x158[2];
+            Mtx n2;
+            PSMTXConcat(obj->mtx2.mtx, n1, n2);
+            loopFlag = 1;
+        }
+    }
+    EffectNode* node = (EffectNode*)func_804D5DAC((u8*)obj + 0x24);
+    while (node != 0) {
+        if (loopFlag != 0) {
+            if (!(node->field_0x06 & 0x800)) {
+                Mtx m1;
+                Mtx m2;
+                Mtx m3;
+                Mtx m4;
+                func_804CAC08((EffObject*)obj, (EffSceneRef*)node, &m1, &m2,
+                              (const EffMtx*)&m3, (const EffMtx*)&m4);
+            }
+        }
+        func_804CCF84(node);
+        node = (EffectNode*)func_804D5DAC((u8*)obj + 0x24);
+    }
+}
+extern "C" void func_804CAA94(EffObject* self) {
+    func_804D4144((EffectNode*)self->renderArg);
+    self->field_0x0c += self->field_0x14;
+}
 // func_804CAC08: effect-object emission update. When the scene node index is
 // valid, refreshes the six bound sub-regions with (nodeTime - 1.0), then
 // emits two emission vectors (mode/scale from the 0xdc tail block), builds a

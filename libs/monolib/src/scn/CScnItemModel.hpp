@@ -177,6 +177,8 @@ extern "C" void func_8049771C(u8* self, float val);
 extern "C" void func_80497AA8(u8* self);
 extern "C" u32 func_804972E8(u8* self, CScnItemAnimResFile* anim, int index,
                               u32 c, s32 f);
+extern "C" u32 func_80497190(u8* self, CScnItemAnimResFile* anim, int index,
+                              u32 c, s32 f, u32 g, u32 h);
 extern "C" u32 func_804978B8(u8* self);
 
 // Cross-TU query: returns the model owned by the given scene owner's pool

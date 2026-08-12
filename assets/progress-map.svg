@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="7200" height="2220" viewBox="0 0 7200 2220" font-family="ui-sans-serif, system-ui, sans-serif">
 <rect x="0" y="0" width="7200" height="2220" fill="#ffffff"/>
 <text x="96" y="252" font-size="144" font-weight="700" fill="#24292f">Xenoblade Chronicles (Wii) — code section progress</text>
-<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">12377/19300 accepted (64.1%)</text>
+<text x="7104" y="252" font-size="114" fill="#57606a" text-anchor="end">12466/19300 accepted (64.6%)</text>
 <rect x="0" y="450" width="7200" height="1260" fill="#ffffff" stroke="#57606a" stroke-width="6"/>
 <rect x="0.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="12.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -197,9 +197,9 @@
 <rect x="909.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="912.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="915.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
-<rect x="918.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="918.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="921.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="924.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="924.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="927.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="930.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="933.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -351,8 +351,8 @@
 <rect x="1524.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="1527.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="1530.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
-<rect x="1533.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
-<rect x="1536.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="1533.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
+<rect x="1536.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="1539.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="1542.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="1545.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -725,7 +725,7 @@
 <rect x="2826.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2829.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2832.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="2835.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="2835.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="2838.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2841.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2844.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -751,7 +751,7 @@
 <rect x="2904.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2907.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2910.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="2913.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="2913.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="2919.0" y="450" width="3.0" height="1260" fill="#0969da"/>
 <rect x="2922.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="2925.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -865,7 +865,7 @@
 <rect x="3255.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3258.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3261.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="3264.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
+<rect x="3264.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3267.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3270.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3273.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -873,8 +873,8 @@
 <rect x="3279.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3282.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="3285.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
-<rect x="3288.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
-<rect x="3291.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
+<rect x="3288.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
+<rect x="3291.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="3294.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
 <rect x="3300.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="3303.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
@@ -1174,7 +1174,7 @@
 <rect x="4224.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="4227.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="4230.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
-<rect x="4233.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
+<rect x="4233.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="4236.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="4239.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="4242.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -1887,7 +1887,7 @@
 <rect x="6477.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
 <rect x="6483.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
 <rect x="6486.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
-<rect x="6489.0" y="450" width="3.0" height="1260" fill="#6e7681"/>
+<rect x="6489.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="6492.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6495.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6498.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -1902,7 +1902,7 @@
 <rect x="6525.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="6528.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
 <rect x="6531.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
-<rect x="6534.0" y="450" width="3.0" height="1260" fill="#d4a72c"/>
+<rect x="6534.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6537.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6540.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
 <rect x="6543.0" y="450" width="3.0" height="1260" fill="#1f883d"/>
@@ -2123,11 +2123,11 @@
 <text x="5782.799999999999" y="1860" font-size="78" fill="#57606a" text-anchor="middle">0x80400000</text>
 <text x="7104" y="1860" font-size="78" fill="#57606a" text-anchor="end">0x804F9FA4</text>
 <rect x="96" y="1980" width="120" height="120" rx="18" fill="#1f883d"/>
-<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 12134</text>
+<text x="252" y="2061" font-size="108" fill="#24292f">FULL_MATCH · 12223</text>
 <rect x="1560" y="1980" width="120" height="120" rx="18" fill="#0969da"/>
 <text x="1716" y="2061" font-size="108" fill="#24292f">EQUIVALENT_MATCH · 243</text>
 <rect x="3274" y="1980" width="120" height="120" rx="18" fill="#d4a72c"/>
-<text x="3430" y="2061" font-size="108" fill="#24292f">in progress · 2969</text>
+<text x="3430" y="2061" font-size="108" fill="#24292f">in progress · 2958</text>
 <rect x="4738" y="1980" width="120" height="120" rx="18" fill="#6e7681"/>
-<text x="4894" y="2061" font-size="108" fill="#24292f">not started · 3954</text>
+<text x="4894" y="2061" font-size="108" fill="#24292f">not started · 3876</text>
 </svg>

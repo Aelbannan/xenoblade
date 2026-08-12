@@ -141,7 +141,7 @@ struct CfObjIf {
 
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
-    extern u32 lbl_eu_80663E24;
+    extern volatile u32 lbl_eu_80663E24;  // volatile: header CfObjectMove.hpp declares it volatile
     extern u32 lbl_eu_80663E28;
     extern u16 lbl_eu_80663E42;
     extern u16 lbl_eu_80663E44;
@@ -154,9 +154,6 @@ extern "C" {
     extern void* lbl_eu_806618E8;
     extern "C" void* __RTTI__Q22cf13CfObjectActor;
     extern float lbl_eu_80665C30;
-
-    // VM/script helpers
-    void func_800BE12C(void* obj, int a, int b, int c, int d);
     void func_800BE824(void* obj, int flag);
     void func_800BE0F8(void* obj, int target);
     void func_800BE33C(void* obj, int flag);
@@ -864,7 +861,9 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    func_800BE12C(obj, actionId, 0, -1, 1);
+    // func_800BE12C is header-declared as the 4-arg form; retail call sites
+    // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.
+    ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
         float f = (float)(s32)fixedParam / 2048.0f;
         obj->CfObject_UnkVirtualFunc14(f);
@@ -964,7 +963,9 @@ extern "C" int turn(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)angle * 4.68133871e-08f;
     ((void(*)(void*, float))(*(void***)obj)[0xC4/4])(obj, f);
-    func_800BE12C(obj, 3, 0, -1, 1);
+    // func_800BE12C is header-declared as the 4-arg form; retail call sites
+    // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.
+    ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, 3, 0, -1, 1);
     return 0;
 }
 
@@ -1787,34 +1788,21 @@ void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) 
 
 u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
-#pragma optimize_for_size on
-#pragma peephole off
-#pragma scheduling off
-#pragma optimize_for_size on
-struct CfObjRot48b { u8 _pad[0x48]; ml::CVec3 mRot48; };
-struct CfObjRot48c { u8 _pad[0x48]; ml::CVec3 mRot48; };
-// Open item (us-8003f6d8): 12-byte copy src -> this+0x48. Best shape found:
-// u64-extract (a,b) + separate c load — MWCC emits loads (0,4,8) and stores
-// (72,76,80) in EXACT retail order; residual is pure register colors
-// (r0,r5,r4 vs retail r6,r5,r0 — a: r0↔r6, c: r4↔r0). The witness rejects the
-// r4→r0 renaming (r4 is an ABI arg reg), so FULL_MATCH is the only route.
-// 56+ shapes probed (3-local, struct copy, CVec3 assign, u64 splits, pairs,
-// pragmas): 3-independent-load shapes rotate loads [s1,s2,s0]; leaf CVec3
-// copy emits pair (a,b)->(b,a) + single; decl/store-order permutations give
-// retail's allocation but reverse/rotate the emission orders.
-void cf::CfObject::CfObject_UnkVirtualFunc27(void* src) {
-    u64 ab = *(const u64*)src;
-    u32 a = (u32)(ab >> 32);
-    u32 b = (u32)ab;
-    u32 c = *(const u32*)((u8*)src + 8);
-    *(u32*)((u8*)this + 0x48) = a;
-    *(u32*)((u8*)this + 0x4C) = b;
-    *(u32*)((u8*)this + 0x50) = c;
+// us-8003f6d8: 12-byte word copy src -> this+0x48. Retail symbol is
+// Fv-mangled but the body consumes a pointer in r4 (decompiler-name guess,
+// same scheme as CfObjectModel's CfObject_UnkVirtualFunc27). A TYPED source
+// pointer is required for MWCC's grouped load-all/store-all 3-word copy
+// (lwz r6/r5/r0 + stw 0x48/0x4C/0x50); a void* param emits interleaved
+// load-store pairs. Defined as a global whose name IS the retail mangled
+// name so the vtable slot 0xBC and the virtual call sites resolve.
+struct CfObjCopy12 { u32 a; u32 b; u32 c; };
+struct CfObjVec48View {
+    u8 _pad[0x48];
+    CfObjCopy12 vec48;
+};
+extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv(CfObjVec48View* self, const CfObjCopy12* src) {
+    self->vec48 = *src;
 }
-#pragma optimize_for_size off
-#pragma scheduling on
-#pragma peephole on
-#pragma optimize_for_size off
 
 void cf::CfObject::CfObject_UnkVirtualFunc64(int flag) {
     u32* field = (u32*)((char*)this + 0x68);

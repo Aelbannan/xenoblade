@@ -1674,7 +1674,34 @@ CView::CView(const char* pName, CWorkThread* pParent)
     mFrame.mColor28 = lbl_8065A0C8;
 }
 
-void CView::CView_UnkVirtualFunc7() {}
+// us-8044bfc0: walks the work-event list at +0x60 (head node stored at
+// +0x60, nodes are {next; +8 = item}; circular - terminates when the walk
+// returns to the head); for each node calls vtable+0xC4 on the item when its
+// +0x50 code is in [48,53), otherwise on NULL (retail keeps the call for the
+// NULL/invalid case - genuine low-memory read on Wii).
+// OPEN ITEM: retail's range check is [cmpi 48; blt; cmpi 53; blt] with ONE
+// merged li r3,0 (|| layout without the -O4 range fold); MWCC either folds
+// (subi/cmpli) or emits two li's (else-if, chosen below). ~30 shapes probed.
+void CView::CView_UnkVirtualFunc7() {
+    u8* head = *reinterpret_cast<u8**>((u8*)this + 0x60);
+    u8* node = *reinterpret_cast<u8**>(head);
+    while (node != *reinterpret_cast<u8**>((u8*)this + 0x60)) {
+        void* obj = *reinterpret_cast<void**>(node + 8);
+        if (obj == 0) {
+            obj = 0;
+        } else {
+            s32 code = *reinterpret_cast<s32*>((u8*)obj + 0x50);
+            if (code < 48) {
+                obj = 0;
+            } else if (code >= 53) {
+                obj = 0;
+            }
+        }
+        void (*fn)(void*) = *reinterpret_cast<void (**)(void*)>((u8*)*reinterpret_cast<void**>(obj) + 0xC4);
+        fn(obj);
+        node = *reinterpret_cast<u8**>(node);
+    }
+}
 void CView::CView_UnkVirtualFunc3() {}
 void CView::CView_UnkVirtualFunc4() {}
 

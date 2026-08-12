@@ -2,6 +2,16 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
+#include "kyoshin/CBgTex.hpp"
+#include "revolution/gx/GXPixel.h"
+#include <nw4r/lyt/lyt_drawInfo.h>
+
+// CTaskGame::func_800426F0 (declared here to avoid pulling CScn headers).
+extern "C" void CTaskGame_getInstance();
+extern "C" int func_800426F0__9CTaskGameFv();
+extern "C" int func_8013BE50();
+extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
+extern u32 lbl_eu_80663E28;
 
 extern "C" void cbRenderBefore__16CMenuMakeCrystalFv(void*);
 extern "C" void* __dt__15CMakeCrystalWinFv(void*, int);
@@ -78,7 +88,20 @@ void CMenuMakeCrystal::Term() {
 
 void CMenuMakeCrystal::Move() {}
 
-void CMenuMakeCrystal::cbRenderBefore() {}
+void CMenuMakeCrystal::cbRenderBefore() {
+    CTaskGame_getInstance();
+    if (func_800426F0__9CTaskGameFv() == 0) {
+        if ((lbl_eu_80663E28 & 0x200000) == 0) {
+            if (func_8013BE50() == 0) {
+                return;
+            }
+            GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
+            nw4r::lyt::DrawInfo drawInfo;
+            func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+            reinterpret_cast<CBgTex*>((u8*)this + 0x60)->func_801C3D7C(&drawInfo);
+        }
+    }
+}
 
 void func_8021240C(){}
 

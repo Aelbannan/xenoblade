@@ -1,12 +1,37 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 
 #include "kyoshin/cf/CArtsParam.hpp"
-#include "kyoshin/cf/chain/CChainTimer.hpp"
-#include "kyoshin/cfsys/CfObjectImplEne.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
 #include <nw4r/math/math_triangular.h>
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/db/db_assert.h>
+
+// Minimal local view of cf::CBattleManager. The full CBattleManager.hpp pulls
+// in the chain sub-object headers (CChain.hpp etc.), which are currently
+// mid-refactor and do not parse in this TU. Only the members used by
+// func_80154280 are declared; offsets match the full header layout
+// (vtable at +0, unk20C8 at +0x20C8). getInstance() resolves to the real
+// mangled symbol getInstance__Q22cf14CBattleManagerFv at link time.
+namespace cf {
+class CBattleManager {
+public:
+    static CBattleManager* getInstance();
+    u8 _pad20C8[0x20C8];  // 0x00-0x20C7
+    u32 unk20C8;          // 0x20C8
+};
+}
+
+// Free-function imports previously supplied by the trimmed chain headers
+// (CChainTimer.hpp / CfObjectImplEne.hpp / CBattleManager.hpp). extern "C"
+// keeps the call-site relocs at the retail unmangled names.
+extern "C" int func_80154280(void* param, void* actor, int flags);
+extern "C" int func_80148778(void* obj, int id);
+extern "C" int func_80174C98(void* obj, int* out, int key);
+extern "C" void func_80043D90(void* holder);
+extern "C" void* func_80043F18(void* holder);
+extern "C" void __dt__80043E88(void* holder, int tags);
+extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void* func_800F6EAC(void* list, u32 idx);
+extern "C" void* func_8016FE34(void* src);
 
 // float constants (retail .sdata2 pool) used by the effect-dispatch paths
 extern const float lbl_eu_80667460;
@@ -57,10 +82,13 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 }
 
 extern "C" int func_8015403C(int x) {
-    if ((unsigned)(x - 4) >= 6) {
-        return 1;
+    int ret;
+    if ((unsigned)(x - 4) > 5) {
+        ret = 1;
+    } else {
+        ret = 2;
     }
-    return 2;
+    return ret;
 }
 float func_80154058(const u8* this_) { unsigned short raw = *(const unsigned short*)(this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
 void func_8015408C(){}
@@ -79,6 +107,19 @@ bool func_8015419C(u8* self) {
 }
 
 void func_801540C0(){}
+
+// func_8015408C: clamp the u16 at +0x5a to [0,5] (retail keeps the dead
+// signed <0 test: lhz + cmpi/bge), then index the arts table.
+extern "C" float func_8015408C(const u8* self) {
+    int value = *(const u16*)(self + 0x5a);
+    if (value < 0) {
+        value = 0;
+    } else if (value > 5) {
+        value = 5;
+    }
+    extern const float lbl_eu_80501990[];
+    return lbl_eu_80501990[value];
+}
 
 // ---------------------------------------------------------------------------
 // func_801541B0 - arts usability gate.

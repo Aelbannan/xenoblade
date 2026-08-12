@@ -455,8 +455,10 @@ void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     inf.kind = stream_kind;
     inf.args[1] = arg4;
     inf.args[0] = arg3;
-    inf.stm_info[1] = *(s32*)((u8*)self + 0x9a4);
-    inf.stm_info[0] = *(s32*)((u8*)self + 0x9a0);
+    s32 st0 = *(s32*)((u8*)self + 0x9a0);
+    s32 st1 = *(s32*)((u8*)self + 0x9a4);
+    inf.stm_info[0] = st0;
+    inf.stm_info[1] = st1;
     cb(*(s32*)((u8*)self + 0xd60), &inf, *(s32*)((u8*)self + 0x9a4), arg4);
 }
 

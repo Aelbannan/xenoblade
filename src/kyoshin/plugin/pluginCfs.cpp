@@ -1201,7 +1201,7 @@ int setScheduleType(VMThread* vmThread) {
 }
 
 // --- setWeather (us-8004ad78) ---
-int setWeather(VMThread* vmThread) {
+extern "C" int setWeather(VMThread* vmThread) {
     int weatherId;
 
     {

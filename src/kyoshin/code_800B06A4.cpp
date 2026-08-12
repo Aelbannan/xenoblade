@@ -60,19 +60,37 @@ void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
 // (flattened: base init with the _reslist_base vtable, then the derived
 // vtable install overwrites +0). Array-typed externs force absolute lis/addi
 // addressing; the base vtable store is volatile so MWCC keeps both stores.
+// Local reslist view (mirror of the _reslist_base layout: vtable@0,
+// mStartNodePtr@4, sentinel node@8 (mNext/mPrev/mItem, 0xC stride), mList@0x14,
+// mCapacity@0x18, ownership flag@0x1C). The struct-typed sentinel access
+// reproduces the retail scheduling (MWCC keeps li r0 first + the v2 lis/addi
+// pair adjacent).
+struct CfReslistNode {
+    void* mNext;  // 0x0
+    void* mPrev;  // 0x4
+    void* mItem;  // 0x8 (node stride 0xC)
+};
+struct CfReslistLayout {
+    void* mVtable;           // 0x00
+    CfReslistNode* mStartNodePtr;  // 0x04
+    CfReslistNode mStartNode;      // 0x08 (0xC bytes)
+    void* mList;             // 0x14
+    int mCapacity;           // 0x18
+    bool field_0x1C;         // 0x1C
+};
+
 void __ct__reslist_cf_IFactoryEvent(void* self) {
     extern void* lbl_eu_805290B8[];
     extern void* lbl_eu_805290A0[];
-    u32* base = (u32*)self;
-    u32 sentinelAddr = (u32)((u8*)self + 8);
+    CfReslistLayout* obj = (CfReslistLayout*)self;
     *(volatile u32*)((u8*)self) = (u32)lbl_eu_805290B8;
-    base[5] = 0;
-    base[6] = 0;
-    ((u8*)self)[0x1c] = 0;
-    base[1] = sentinelAddr;
-    *(u32*)sentinelAddr = sentinelAddr;
-    *(u32*)(sentinelAddr + 4) = sentinelAddr;
-    base[0] = (u32)lbl_eu_805290A0;
+    obj->mList = 0;
+    obj->mCapacity = 0;
+    obj->field_0x1C = false;
+    obj->mStartNodePtr = &obj->mStartNode;
+    obj->mStartNodePtr->mNext = &obj->mStartNode;
+    obj->mStartNodePtr->mPrev = &obj->mStartNode;
+    obj->mVtable = (void*)lbl_eu_805290A0;
 }
 
 // Target 1: us-800b1368 - reslist<cf::CfObject*>::reslist() constructor
@@ -84,16 +102,15 @@ void __ct__reslist_cf_IFactoryEvent(void* self) {
 void __ct__reslist_cf_CfObject(void* self) {
     extern void* lbl_eu_8052585C[];
     extern void* lbl_eu_805290E8[];
-    u32* base = (u32*)self;
-    u32 sentinelAddr = (u32)((u8*)self + 8);
+    CfReslistLayout* obj = (CfReslistLayout*)self;
     *(volatile u32*)((u8*)self) = (u32)lbl_eu_8052585C;
-    base[5] = 0;
-    base[6] = 0;
-    ((u8*)self)[0x1c] = 0;
-    base[1] = sentinelAddr;
-    *(u32*)sentinelAddr = sentinelAddr;
-    *(u32*)(sentinelAddr + 4) = sentinelAddr;
-    base[0] = (u32)lbl_eu_805290E8;
+    obj->mList = 0;
+    obj->mCapacity = 0;
+    obj->field_0x1C = false;
+    obj->mStartNodePtr = &obj->mStartNode;
+    obj->mStartNodePtr->mNext = &obj->mStartNode;
+    obj->mStartNodePtr->mPrev = &obj->mStartNode;
+    obj->mVtable = (void*)lbl_eu_805290E8;
 }
 // Target 3: us-800b186c - func_800B0FA0
 extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
@@ -673,13 +690,16 @@ void init_dispatchTarget_3(){}
 void init_dispatchTarget_4(){}
 void init_8804(){}
 // Target 4: us-800b91fc - func_800B88E0
-// Remove nodes matching a given ID from a linked list at offset 0xC84
+// Remove nodes matching a given ID from a linked list at offset 0xC84.
+// `next` is declared before `node` so MWCC colors node=r7/next=r6 like
+// retail (the reverse declaration order swaps the registers).
 void func_800B88E0(u8* self, u32 targetId) {
     u32* head = *(u32**)(self + 0xC84);
     u32* sentinel = head;
+    u32* next;
     u32* node = (u32*)*head;
     while (node != sentinel) {
-        u32* next = (u32*)*node;
+        next = (u32*)*node;
         if (node[2] == targetId) {
             u32* prev = (u32*)node[1];
             *prev = (u32)next;

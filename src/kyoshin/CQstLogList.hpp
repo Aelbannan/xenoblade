@@ -145,7 +145,7 @@ extern "C" void func_802286F4(CQstLogList* self, const char* name, int questId,
 extern "C" void func_802289F8(CQstLogList* self);
 extern "C" void func_80228C04(CQstLogList* self);
 extern "C" void func_80228C98(CQstLogList* self);
-extern "C" void func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
+extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc);
 
 // Abstract view into the embedded CCur18 cursor vtable (sibling copies live
 // in CMapSel.hpp / CTitle.hpp). MWCC prefixes the vtable with offset-to-top +
@@ -188,7 +188,7 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void __ct__CCur18(u8*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void __ct__CScrollBar(void*, int);
 extern "C" void __ct__CSortMenu(CQstLogListSortMenuData*);
-extern "C" void __ct__UnkClass_8011C974(u8*, const u8*);   // 4-word mem-region copy
+extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src);   // 4-word mem-region copy
 extern "C" void func_8011C998(CScrollBarData*, const CScrollBarData*);  // CScrollBar copy
 
 // Quest-info buffer helpers (defined in CMenuQstCnt.cpp).

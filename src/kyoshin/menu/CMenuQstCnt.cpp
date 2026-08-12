@@ -57,11 +57,11 @@ void* __dt__80227070(QstData* self, int flags);
 void func_802270CC(QstData* self);
 void func_80227260(QstData* self, u32 kind, u32 filter);
 // Retail emits the -O3 copy shape (load r0; store r0; per-field, no load
-// hoisting) while the unit is -O4,s (sibling func_8022769C matches the -O4
-// separate-register shape, so the retail unit mixed per-function settings
-// that a -O3/-O4,s flip cannot reproduce; per-function optimization_level
-// pragma does not re-enable the -O4 scheduler bundle). Field-by-field is the
-// closest -O4,s-compatible form.
+// hoisting) while the unit is -O4,s. `#pragma scheduling off` reproduces the
+// interleaved single-register copy exactly (verified Wii/1.1 -O4,s); the
+// optimization_level pragma alone cannot (MWCC_REFERENCE §1302).
+#pragma push
+#pragma scheduling off
 void func_80227660(QstInfo* dst, const QstInfo* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;
@@ -71,6 +71,7 @@ void func_80227660(QstInfo* dst, const QstInfo* src) {
     dst->f6 = src->f6;
     dst->f7 = src->f7;
 }
+#pragma pop
 void func_8022769C(QstInfo* dst, const QstInfo* src) {
     dst->f0 = src->f0;
     dst->f2 = src->f2;

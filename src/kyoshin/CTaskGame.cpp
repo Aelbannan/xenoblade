@@ -108,9 +108,22 @@ CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
     lbl_80666634 = 0;
 }
 
+// Retail dtor saves r30/r31 as stmw/lmw (size-mode prologue) and destroys
+// ONLY the CProcess base. The IWorkEvent base-dtor call is elided because
+// the strong empty copy below is in this TU (MWCC empty-function call
+// elimination); the redundant this-guard branch retail shows stays.
+#pragma push
+#pragma optimize_for_size on
 CTaskGame::~CTaskGame(){
     lbl_eu_80663D18 = nullptr;
 }
+#pragma pop
+
+// Strong empty dtor for retail symbol placement (0x80040858 lives in this
+// split). Declaration-only in the header (key function) so the IWorkEvent
+// vtable is emitted here and no weak copies leak into other TUs; the empty
+// body lets MWCC elide the base-dtor call in this TU's derived dtor.
+IWorkEvent::~IWorkEvent() {}
 
 CTaskGame* CTaskGame::getInstance(){
     return lbl_eu_80663D18;
@@ -2032,10 +2045,26 @@ extern "C" void func_8004312C(); void Draw__9CTaskGameFv() {
     func_8004312C();
 }
 
-extern "C" void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c) {}
+extern "C" void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c) {
+    inst->unk68 &= ~0x00000100;
+    if (a != 0) {
+        inst->unk68 |= 0x00080000;
+    } else {
+        inst->unk68 &= ~0x00080000;
+    }
+    inst->unkFC = c;
+}
 // __declspec(noinline): retail func_80043564 tail-calls these out of line;
 // without it MWCC inlines the stub bodies into the dispatcher.
-extern "C" __declspec(noinline) void func_800434AC(CTaskGame* inst, u32 a, u32 b, u32 c) {}
+extern "C" __declspec(noinline) void func_800434AC(CTaskGame* inst, u32 a, u32 b, u32 c) {
+    inst->unk68 &= ~0x00000100;
+    if (a != 0) {
+        inst->unk68 |= 0x00000800;
+    } else {
+        inst->unk68 &= ~0x00000800;
+    }
+    inst->unkFC = c;
+}
 // Target us-80044660: identical body to func_80044070 (second retail symbol).
 #pragma optimize_for_size on
 extern "C" char* func_800440C4(ml::FixStr<32>* str, const char* s) {

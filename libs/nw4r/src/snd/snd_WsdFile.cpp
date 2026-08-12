@@ -58,7 +58,7 @@ bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
             return false;
         }
 
-        WaveFileReader reader(static_cast<const FileHeader*>(waveFile));
+        WaveFileReader reader(static_cast<const WaveFile::FileHeader*>(waveFile));
         return reader.ReadWaveInfo(pWaveInfo, NULL);
     }
 

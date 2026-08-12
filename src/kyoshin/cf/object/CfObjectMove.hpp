@@ -290,7 +290,7 @@ extern "C" void func_8004B9D4(void* self, u32 a, u32 b, u32 c);
 // func_8004C5EC returns the C4 target's page id.
 extern "C" void func_8005A594(void* self);
 extern "C" void func_8004B624(void* self, void* object, void* state, u32 param);
-extern "C" void* func_8004C5EC(void* self);
+extern "C" u32 func_8004C5EC(void* self);
 // Heap query + MemManager allocate used by func_800BD644's +0xC8 target
 // construction (defined in CfRes.cpp / monolib; same declarations as
 // CfCamEvent.hpp, which is not included here).
@@ -312,11 +312,11 @@ extern "C" void func_8004B6BC(void* self, void* obj);
 // CActParamAnim field setter (defined in kyoshin/action/CActParamAnim.cpp,
 // retail unmangled name; the retail body is stw r4,0x8(r3); blr). C
 // linkage keeps the call-site reloc at the plain retail name.
-extern "C" void func_8004B730(void* self, void* value);// Battle-status setter (retail unmangled C symbol; CtrlNpc.hpp declares a
-// 5-arg call form, this 4-arg definition reproduces the retail body, which
-// only consumes r3-r6). Declared here so the CfObjectMove.cpp definition
-// inherits C linkage without a local extern "C".
-extern "C" void func_800BE12C(cf::CfObjectMove* self, u32 a, u32 b, u8 c);
+extern "C" void func_8004B730(void* self, void* value);// Battle-status setter (retail unmangled C symbol; canonical 5-arg form
+// matching CfObjectActor.hpp / CtrlNpc.hpp / all call sites; the retail
+// body only consumes r3-r6). Declared here so the CfObjectMove.cpp
+// definition inherits C linkage without a local extern "C".
+extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 // Base +0x9C / +0x64 forced-name implementations (defined in
 // CfObjectModel.cpp as plain globals). extern "C" keeps the call-site
 // relocs at the unmangled retail names (a plain C++ declaration makes MWCC

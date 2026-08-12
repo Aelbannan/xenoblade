@@ -147,4 +147,10 @@ extern "C" void func_8011D2F0(void* self) {
     ((void(*)(void*))__dt__13CMenuQuestLogFv)((char*)self - 0x58);
 }
 
-void __dt__8011D2F8(){}
+// __dt__8011D2F8: deleting destructor - free self when mode > 0, return self.
+extern "C" void* __dt__8011D2F8(void* self, int mode) {
+    if (self != 0 && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}

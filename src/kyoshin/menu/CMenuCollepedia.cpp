@@ -16,6 +16,13 @@ extern "C" void __dt__15CMenuCollepediaFv(void*, int);
 // relocs bare (retail keeps the unmangled names at these call sites).
 extern "C" void func_802530BC(CMenuCollepedia* self);
 extern "C" void func_80253128(CMenuCollepedia* self);
+extern "C" void func_80252CE4(CMenuCollepedia* self);
+extern "C" void func_80252D88(CMenuCollepedia* self);
+extern "C" void func_80252DD8(CMenuCollepedia* self);
+extern "C" void func_8025306C(CMenuCollepedia* self);
+extern "C" void func_80254A20(CCollepedia* self);
+extern "C" void func_801C3D54(CBgTex* self);
+extern "C" void func_801C3FF0(CTitleAHelp* self);
 
 // Retail constructor symbol (unmangled global in US). Written as a free
 // function so the factory emits a real bl to the bare retail symbol; returns
@@ -207,7 +214,27 @@ void CMenuCollepedia::Term() {
     func_8008294C__Q22cf13CfGameManagerFv(0);
 }
 
-void CMenuCollepedia::Move() {}
+void CMenuCollepedia::Move() {
+    switch (mState) {
+    case 0:
+        func_80252CE4(this);
+        break;
+    case 1:
+        func_80252D88(this);
+        break;
+    case 2:
+        func_80252DD8(this);
+        break;
+    case 3:
+        func_8025306C(this);
+        break;
+    default:
+        break;
+    }
+    func_801C3D54(&mBgTex);
+    func_801C3FF0(&mTitleAHelp);
+    func_80254A20(&mCollepedia);
+}
 
 void CMenuCollepedia::cbRenderBefore() {}
 

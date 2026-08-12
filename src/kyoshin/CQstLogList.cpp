@@ -11,21 +11,14 @@
 u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 
 // Copies a 0x22-byte quest-log entry: 2 head bytes + 4x8-byte word loop.
-// Retail emits an mtctr/bdnz counted loop; optimize_for_size suppresses the
-// -O4,p unroll (MWCC_REFERENCE line 226) and yields the counted-loop shape.
+// Struct assignment reproduces retail exactly (MWCC emits the counted loop
+// with lwzu/stwu update addressing); optimize_for_size suppresses the
+// -O4,p unroll (MWCC_REFERENCE line 226).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
-    pDst->mField0 = pSrc->mField0;
-    pDst->mField1 = pSrc->mField1;
-    u32* dstWords = (u32*)pDst->mData;
-    const u32* srcWords = (const u32*)pSrc->mData;
-    for (u32 i = 0; i < 4; i++) {
-        dstWords[0] = srcWords[0];
-        dstWords[1] = srcWords[1];
-        dstWords += 2;
-        srcWords += 2;
-    }
+extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {
+    *pDst = *pSrc;
+    return pDst;
 }
 #pragma pop
 

@@ -133,10 +133,10 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
             ((cf::CfObjectMoveVt1AC*)this)->m1AC(b4, ((cf::CfObjectMoveB4View*)this)->field_B8);
         }
     }
+    int r30 = 0;
     int cond = 0;
     int r28 = 0;
     int r27 = 0;
-    int r30 = 0;
     if (mSubObj38 != 0) {
         // Global-mode gate: the two flag reads are kept separate so MWCC
         // emits the retail double lwz of lbl_eu_80663E24 (r0 for the mode
@@ -484,7 +484,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc64(int flag) {
     if (flag != 0) {
         mFlags68 |= 0x01000000;
     } else {
-        mFlags68 &= 0xFFFFFF00;
+        mFlags68 &= ~0x01000000u;
     }
     void* target = mTargetC4;
     if (target != 0) {
@@ -492,7 +492,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc64(int flag) {
         if (flag != 0) {
             view->flags |= 0x40;
         } else {
-            view->flags &= 0xFC000000;
+            view->flags &= ~0x40u;
         }
     }
 }
@@ -782,21 +782,16 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {
 // Retail symbol is Fv and the body genuinely returns int (1, or the CtrlNpc
 // action-advance query result). The header declares the vtable slot with the
 // int return so the member definition carries the real signature.
+#pragma scheduling off
 int cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {
-    // Volatile-qualified view load: the scheduler cannot reorder a volatile
-    // read, so the lwz stays at its source position (first) above the frame
-    // store, matching retail's [lwz, stw, li] entry block.
-    struct CfObjectMoveV {
-        u8 _pad[0x6C0];
-        void* volatile vTarget;
-    };
-    cf::CtrlNpc* target = (cf::CtrlNpc*)((CfObjectMoveV*)this)->vTarget;
+    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
     int result = 1;
     if (target != 0) {
         result = func_80094D1C(target);
     }
     return result;
 }
+#pragma scheduling on
 
 void CfObjectMove_nullsub_19(){}
 
@@ -1351,13 +1346,12 @@ extern "C" void CfObject_UnkVirtualFunc33__Q22cf12CfObjectMoveFv(cf::CfObjectMov
 
 extern "C" void func_800BC3B0(cf::CfObjectMove* self, float value) {
     // Busy flag (bit 28 of mFlags68) gates the speed set; otherwise clear
-    // bit 20 and set bits 20+10 (0x00100400).
-    u32 flags = self->mFlags68;
-    if ((flags & 0x10000000) != 0) {
+    // bit 0x800 and set bits 0x100000+0x400.
+    if ((self->mFlags68 & 0x10000000) != 0) {
         return;
     }
     self->mMoveSpeed = value;
-    self->mFlags68 = (self->mFlags68 & ~0x00100000u) | 0x00100400u;
+    self->mFlags68 = (*(volatile u32*)&self->mFlags68 & ~0x800u) | 0x100400u;
 }
 extern "C" void func_800BC3F0(cf::CfObjectMove* self) {
     // Set bits 20+13 of mFlags68 (clearing bit 14 first), then notify
@@ -1529,7 +1523,7 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
     // re-sync the position region against the model sub-object's movement
     // query. Without the model sub-object the +0x6C0 movement target drives
     // the position difference instead.
-    if (self->mSubObj98 != 0 && ((cf::CfObjectMove94View*)self)->field_9C != 0 && (self->unk64 & 0x4) != 0) {
+    if (self->mSubObj98 != 0 && ((cf::CfObjectMove94View*)self)->field_9C != 0 && (self->mFlags68 & 0x4) != 0) {
         cf::CfObjectMoveTargetC4* c4 = (cf::CfObjectMoveTargetC4*)self->mTargetC4;
         ml::CVec3 targetPos;
         targetPos.x = c4->field_3A8;
@@ -1549,13 +1543,14 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
         if (((cf::CfObjectMoveVt160*)self)->m160() != 0) {
             func_8004CF00(self->mTargetC4);
             // Copy the C4 position into the move position (integer copy) and
-            // store the difference against the snapshot into the +0x54 area.
+            // store the difference against the snapshot into the +0x54 area
+            // (PS sub via the nw4r inline helper, then the float->int bridge).
             *reinterpret_cast<ml::CVec3*>(&self->mPos3C) =
                 *reinterpret_cast<const ml::CVec3*>(&c4->field_3A8);
             ml::CVec3 diff;
-            diff.x = self->mPos3C - targetPos.x;
-            diff.y = self->mPos40 - targetPos.y;
-            diff.z = self->mPos44 - targetPos.z;
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                                (const nw4r::math::VEC3*)&self->mPos3C,
+                                (const nw4r::math::VEC3*)&targetPos);
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
             self->mField4C = c4->field_444;
         } else {
@@ -1583,9 +1578,9 @@ done_flags:
             saved.z = self->mPos44;
             func_800BC9EC(self);
             ml::CVec3 diff;
-            diff.x = self->mPos3C - saved.x;
-            diff.y = self->mPos40 - saved.y;
-            diff.z = self->mPos44 - saved.z;
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                                (const nw4r::math::VEC3*)&self->mPos3C,
+                                (const nw4r::math::VEC3*)&saved);
             *reinterpret_cast<ml::CVec3*>(&((cf::CfObjectMove54View*)self)->field_54) = diff;
             self->mField4C = ((cf::CfObjectMove6C0View*)self->mTarget6C0)->field_C;
         } else {
@@ -1622,7 +1617,7 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
             force = 1;
         }
     }
-    if (force == 0 && (self->unk64 & 0x8) != 0 && self->field_6CE == 3) {
+    if (force == 0 && ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0 && self->field_6CE == 3) {
         force = 1;
     }
     if (ml::math::abs(rate) > lbl_eu_8066A208 || force != 0) {
@@ -1641,16 +1636,16 @@ extern "C" void func_800BC9EC(cf::CfObjectMove* self) {
         step.x += tmp.x;
         step.y += tmp.y;
         step.z += tmp.z;
-        if ((self->unk64 & 0x08000000) == 0) {
+        if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) == 0) {
             step.y -= lbl_eu_80666AA4;
         }
         u32 id = 0x44A09;
-        if ((self->unk64 & 0x2) != 0) {
+        if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x2) >> 5) >> 5) != 0) {
             id = 0x44A05;
-        } else if ((self->unk64 & 0x4) != 0) {
+        } else if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x4) >> 5) >> 5) != 0) {
             id = 0x44A11;
         }
-        float f3 = (self->unk64 & 0x08000000) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
+        float f3 = ((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x08000000) >> 5) >> 5) != 0 ? lbl_eu_80666A88 : lbl_eu_80666AC0;
         func_804BD94C(&self->mPos3C, &step, id, 0, 0, 0,
                       lbl_eu_80666AA8, lbl_eu_80666AA0, f3, lbl_eu_8066AF20, lbl_eu_80666AC4);
     }
@@ -1868,7 +1863,7 @@ void func_800BD644(cf::CfObjectMove* self) {
         u32 anim = (u32)reinterpret_cast<cf::CfObjectMoveVt18C*>(self)->m188();
         func_8004B624(t, slot, self->mField6D8, anim);
         if (self->mTargetC4 != 0) {
-            void* page = func_8004C5EC(self->mTargetC4);
+            void* page = (void*)func_8004C5EC(self->mTargetC4);
             ((void (*)(void*, void*, int, int, int))func_8004B9D4)(t, page, 0, -1, 0);
         }
     }
@@ -1883,14 +1878,18 @@ extern "C" void func_800BE0F8(cf::CfObjectMove* self, u32 value) {
     u32 flags = __rlwimi(self->mFlags6C9, value, 1, 27, 30);
     self->mFlags6C9 = (u8)flags;
     if (target != 0) {
-        ((cf::CfObjectMoveSub98Vt64*)target)->m64((flags >> 27) & 0xF);
+        // Retail: rlwinm r4,r0,31,28,31 = (flags >> 1) & 0xF — the flag-word
+        // nibble at bits 1-4 (untouched by the 27-30 insertion), NOT the
+        // inserted field nibble ((flags >> 27) & 0xF is a different value).
+        ((cf::CfObjectMoveSub98Vt64*)target)->m64((flags >> 1) & 0xF);
     }
 }
-void func_800BE12C(cf::CfObjectMove* self, u32 a, u32 b, u8 c) {
+void func_800BE12C(u8* obj, int a, int b, int c, int d) {
     // Store the two 6C4/6C8 fields and merge `b` into the top bits of
     // mFlags6C9 (rlwimi), then when a C4 target exists forward the incoming
     // args to the CActParamAnim reset helper and, unless the +0x64 flag bit
     // 3 is set, reset 6C4/6C8 to 1/-1 and clear the merged bits.
+    cf::CfObjectMove* self = (cf::CfObjectMove*)obj;
     void* target = self->mTargetC4;
     self->mField6C4 = a;
     self->mField6C8 = c;

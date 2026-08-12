@@ -536,9 +536,9 @@ void func_801010B8(CMainMenu* self) {
             if (player != 0) {
                 player = (CMainMenuPlayer*)((char*)player - 0x3E9C);
             }
-            if (player != 0 && player->field_0x3F60 != 0) {
+            if (player != 0 && player->spot.field_0xC4 != 0) {
                 ((CMainMenuSpotVt*)&player->spot)
-                    ->vfn_0x9C(player->field_0x3F60->field_0x3B4);
+                    ->vfn_0x9C(player->spot.field_0xC4->field_0x3B4);
             }
         }
         func_80138078__FUl(0x6b);
@@ -668,7 +668,7 @@ int func_80101A88() {
     if (player != 0) {
         float hp = ((CMainMenuPlayerVt*)player)->vf128();
         if (lbl_eu_80666F1C == hp) return 1;
-        CMainMenuPlayerSub* sub = player->field_0x3F60;
+        CMainMenuPlayerSub* sub = player->spot.field_0xC4;
         if (sub != 0) {
             int cond = (sub->field_4EC >> 15) & 1;
             if (func_800829B8__Q22cf13CfGameManagerFv() != 0) cond = 1;

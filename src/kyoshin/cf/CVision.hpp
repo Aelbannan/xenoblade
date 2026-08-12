@@ -182,7 +182,7 @@ extern "C" void* func_80043F18(void* list);
 extern "C" void __dt__80043E88(void* list, int tags);
 extern "C" u8* getGlobalSda(void);
 extern "C" void func_8006E2FC(int id);
-extern "C" u32 lbl_eu_80663E24;
+extern "C" volatile u32 lbl_eu_80663E24;
 extern "C" u8 lbl_eu_80663DA0;
 extern "C" void* __dynamic_cast(void* src, long offset, const void* src_type,
                                 const void* dst_type, void* src2dst);

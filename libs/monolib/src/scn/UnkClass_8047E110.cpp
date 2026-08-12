@@ -1035,7 +1035,9 @@ crossingAccepted:
 }
 
 // func_80480EF0 -- scan a node's neighbour list for `value` (direct edge test).
-extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, u16 value) {
+// Retail compares SIGNED (cmp, not cmpl): the u16 neighbor and the value are
+// compared as promoted ints, so negative-represented words (>= 0x8000) match.
+extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, int value) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const ScnWalkNode& node = m.nodes[nodeIndex];
     u16 edgeCount = m.edges[node.edgeOffset];
@@ -1053,15 +1055,15 @@ void UnkClass_8047E110::func_80480F48() {}
 // Either way, advance the accumulated distance by `c`.
 extern "C" void func_80481014__17UnkClass_8047E110Fv(UnkClass_8047E110* self, f32 a, f32 b, const ScnVecWords* v, f32 c) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    if (a == lbl_eu_8066A8AC && b == lbl_eu_8066A8AC) {
-        m.field_0x38 &= ~1;
-    } else {
-        m.field_0x38 |= 1;
+    if (a != lbl_eu_8066A8AC || b != lbl_eu_8066A8AC) {
         m.field_0x24[0] = b;
         m.field_0x24[1] = a;
         m.field_0x2C = v->field_0x0;
         m.field_0x30 = v->field_0x4;
         m.field_0x34 = v->field_0x8;
+        m.field_0x38 |= 1;
+    } else {
+        m.field_0x38 &= ~1;
     }
     m.field_0x20 = m.field_0x1C + c;
 }
@@ -1097,15 +1099,22 @@ void UnkClass_8047E110::func_804814DC() {}
 // 0x9C from the data global.
 extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* v) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    f32 c = lbl_eu_8066A890;
     m.field_0x90 = 0;
     m.boxMin.y = v->y;
     m.boxMax.y = v->y;
+    f32 c = lbl_eu_8066A890;
     m.boxMin.x = v->x - c;
     m.boxMin.z = v->z - c;
     m.boxMax.x = v->x + c;
     m.boxMax.z = v->z + c;
-    m.field_0x9C = lbl_eu_8056DC74;
+    // Reference block copy: pointer-increment form lets MWCC fold the address
+    // addi into the first load (retail lwzu); load/store order follows retail.
+    u32 v0;
+    const u32* src = &lbl_eu_8056DC74.field_0x0;
+    v0 = *src++;
+    m.field_0x9C.field_0x4 = *src++;
+    m.field_0x9C.field_0x0 = v0;
+    m.field_0x9C.field_0x8 = *src;
 }
 
 // func_8048169C -- build the walk box from two corner points (min/max), then

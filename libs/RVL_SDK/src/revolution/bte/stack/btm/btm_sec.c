@@ -877,9 +877,15 @@ UINT8 btm_sec_l2cap_access_req(BD_ADDR bd_addr, UINT16 psm, UINT16 handle,
     }
 
     /* If not originator of the connection, or the device's service record
-       is not set, set it */
-    if (is_originator == FALSE || is_originator == FALSE || p_dev_rec->p_cur_service == NULL)
-        p_dev_rec->p_cur_service = p_srec;
+       is not set, set it. Goto-chain reproduces retail's branch layout:
+       the duplicated `is_originator == FALSE` test emits a second beq whose
+       target is the skip (dead branch kept by MWCC), not the body. */
+    if (is_originator == FALSE) goto set_service;
+    if (is_originator == FALSE) goto service_done;
+    if (p_dev_rec->p_cur_service != NULL) goto service_done;
+set_service:
+    p_dev_rec->p_cur_service = p_srec;
+service_done:
 
     security_required = p_srec->security_flags;
 

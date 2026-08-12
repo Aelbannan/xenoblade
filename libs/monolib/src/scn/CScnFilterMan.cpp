@@ -60,13 +60,12 @@ CScnFilterReslist* __ct__8049CBD4(CScnFilterReslist* obj) {
 // "flattened constructor" pattern, cf. CVirtualLightAmb).
 __declspec(noinline) void __ct___reslist_base_CScnFilter(CScnFilterReslist* obj) {
     obj->mVtable = lbl_eu_8056EBC4;
-    CScnFilterListNode* head = &obj->mStartNode;
     obj->mList = nullptr;
     obj->mCapacity = 0;
     obj->field_0x1C = false;
-    obj->mStartNodePtr = head;
-    head->mNext = head;
-    head->mPrev = head;
+    obj->mStartNodePtr = &obj->mStartNode;
+    obj->mStartNodePtr->mNext = &obj->mStartNode;
+    obj->mStartNodePtr->mPrev = &obj->mStartNode;
 }
 
 // reslist<CScnFilter*> deleting destructor (retail __dt__reslist_CScnFilter):

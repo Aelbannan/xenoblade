@@ -74,14 +74,17 @@ body:
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
 extern "C" void func_802B64AC(void* self, void* drawInfo) {
-    void* layout = *(void**)((u8*)self + 8);
-    if (layout == 0) return;
-    if (((u8*)self)[0x18] != 0) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(layout, drawInfo, 0, 1);
+    CTitleLogo* logo = (CTitleLogo*)self;
+    if (logo->mLayout != 0 && logo->field_0x18 != 0) {
+        goto call;
     }
+    return;
+call:
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+        logo->mLayout, drawInfo, 0, 1);
 }
 
-// Target: us-802b8d9c — CTitleLogo ctor: implicit vptr (retail
+// Target: us-802b8d9c - CTitleLogo ctor: implicit vptr (retail
 // lbl_eu_8053B368), nulled pointers, phase flag 1.
 CTitleLogo::CTitleLogo() {
     mAccessor = nullptr;
@@ -226,11 +229,14 @@ body:
 }
 
 extern "C" void func_802B6B08(void* self, void* drawInfo) {
-    void* layout = *(void**)((u8*)self + 8);
-    if (layout == 0) return;
-    if (((u8*)self)[0x24] != 0) {
-        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(layout, drawInfo, 0, 1);
+    CTitleMenu* menu = (CTitleMenu*)self;
+    if (menu->mLayout != 0 && menu->field_0x24 != 0) {
+        goto call;
     }
+    return;
+call:
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
+        menu->mLayout, drawInfo, 0, 1);
 }
 
 void func_802B6B38(){}
@@ -458,7 +464,7 @@ int func_802B775C(CTitle* self) {
     return self->field_0x25 == 0;
 }
 
-// Target: us-802ba270 — init the embedded +0x2C and +0x48 sub-objects.
+// Target: us-802ba270 - init the embedded +0x2C and +0x48 sub-objects.
 extern "C" void func_802B7800(void* self) {
     func_802B65C8((CTitleLogo*)((u8*)self + 0x2C));
     func_802B6D5C((CTitleMenu*)((u8*)self + 0x48));

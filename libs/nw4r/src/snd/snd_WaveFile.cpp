@@ -248,15 +248,23 @@ WaveArchiveReader::WaveArchiveReader(const void* pData) {
 
     const u8* bytes = reinterpret_cast<const u8*>(pData);
 
-    // OPEN ITEM: retail booleanizes the version check ARITHMETICALLY
-    // (subfic/orc/rlwinm/subf/rlwinm materializing version>=0x100 into r0
-    // after the bge) and merges both guards through one r0 flag
-    // (magic beq / li r0,0 fail / shared cmpi r0,0; beqlr); every high-level
-    // form probed (&& with bool/u32 ok, nested ifs, bitwise &, signed vs
-    // unsigned compares, u16/u32 locals) makes MWCC emit branch-based checks
-    // with `li rX,1` for the ok flag (best 0x50 vs retail 0x74).
-    u32 ok = (*(reinterpret_cast<const u32*>(bytes)) == 0x52574152) &&
-             (*(reinterpret_cast<const u16*>(bytes + 6)) >= 0x100);
+    // OPEN ITEM (improved 2026-08): retail booleanizes the version check
+    // ARITHMETICALLY into r0 after the bge guard, merging both guards
+    // through one r0 flag. The if/else-if/else chain with a redundant
+    // `ok = (version >= 0x100)` in the else keeps the arithmetic idiom AND
+    // the retail's out-of-line block layout (magic beq / fail li r0,0 / b
+    // shared cmpi; bge / fail / shared cmpi) under GC/3.0a5.2. Residual:
+    // the retail's idiom is subfic(256-v)/orc(256|~v)/rlwinm(31,1,31)/subf/
+    // rlwinm(1,31,31) while MWCC emits addi(v-256)/orc(v|~256)/srwi(1)/
+    // subf/srwi(31) for every probed comparison form (~25 shapes).
+    u32 ok;
+    if (*(reinterpret_cast<const u32*>(bytes)) != 0x52574152) {
+        ok = 0;
+    } else if (*(reinterpret_cast<const u16*>(bytes + 6)) < 0x100) {
+        ok = 0;
+    } else {
+        ok = (*(reinterpret_cast<const u16*>(bytes + 6)) >= 0x100);
+    }
     if (!ok) {
         return;
     }

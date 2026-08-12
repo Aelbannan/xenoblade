@@ -49,7 +49,7 @@ public:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" void __dt__11CMenuVisionFv(void*);
+extern "C" void* __dt__11CMenuVisionFv(void*, int);
 extern "C" void cbRenderBefore__11CMenuVisionFv(void*);
 extern "C" void __dt__8CProcessFv(CProcess* self, int flags);          // CProcess base dtor (C-ABI import)
 extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop); // CProcess::Regist (C-ABI import)

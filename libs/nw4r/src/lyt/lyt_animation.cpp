@@ -370,7 +370,7 @@ void AnimTransformBasic::Bind(Pane* pPane, bool recursive) {
     }
 }
 
-void AnimTransformBasic::Bind(Material* pMaterial) {
+void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
     const u32* const pContentOffsetTbl =
         detail::ConvertOffsToPtr<u32>(mpRes, mpRes->animContOffsetsOffset);
 

@@ -299,25 +299,12 @@ void func_804DD754(void) {
 }
 
 // ---------------------------------------------------------------------------
-// Paired-single vector lerps: out = a + (b - a) * t.
+// Paired-single vector lerps: out = a + (b - a) * t.  The retail bodies are
+// psq_l/ps_sub/ps_madds0 kernels that MWCC cannot emit from scalar C++ (the
+// auto-vectorizer keeps lfs/fsubs/fmadds), so the Wii/MWCC build ships the
+// retail kernel via the isolated PS backend; the scalar lerp below is the
+// PC/NONMATCHING fallback.
 // ---------------------------------------------------------------------------
-
-// 3-component lerp. Written as straight field ops so MWCC's paired-single
-// auto-vectorizer emits the retail load-all-first psq_l/ps_sub/ps_madds0
-// shape (nw4r VEC3Lerp's inline asm interleaves XY and Z instead).
-void func_804DD89C(Vec* out, const Vec* a, const Vec* b, f32 t) {
-    out->x = a->x + (b->x - a->x) * t;
-    out->y = a->y + (b->y - a->y) * t;
-    out->z = a->z + (b->z - a->z) * t;
-}
-
-// 4-component lerp: same shape as the 3-component one, two full pairs.
-void func_804DD8C8(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b,
-                   f32 t) {
-    out->x = a->x + (b->x - a->x) * t;
-    out->y = a->y + (b->y - a->y) * t;
-    out->z = a->z + (b->z - a->z) * t;
-    out->w = a->w + (b->w - a->w) * t;
-}
+#include "monolib/effect/code_804DB938_ps.inl"
 
 } // extern "C"

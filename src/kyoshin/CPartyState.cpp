@@ -298,10 +298,12 @@ extern "C" void func_801FD220(CPartyState* self) {
     u8 cur = self->field_0x4C;
     s8 s = (s8)cur;
     u8 next = (u8)(memberCount - 1);
-    if ((u32)(s - 4) <= 2u) {
+    if ((u32)(s - 4) > 2u) {
+        if (s == 3) {
+            self->field_0x4C = next;
+        }
+    } else {
         self->field_0x4C = (u8)(cur - 1);
-    } else if (s == 3) {
-        self->field_0x4C = next;
     }
     func_801FD8F8((CPartyState*)self);
     func_80138078(1);

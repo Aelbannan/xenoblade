@@ -14,6 +14,7 @@
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
+#include "kyoshin/cf/CtrlMovePC.hpp"  // CCtrlMovePC (embedded at CfGimmickMoveSub +0x8C)
 #include "types.h"
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
@@ -40,6 +41,37 @@ struct CfGimmickLodFrame {
     /* 0x0C */ u16 field_0C;  // frame count converted to f32 for func_80462FD8
 };
 
+// 16-byte per-step entry at +0xA4 (indexed by field_188 in func_801F6780).
+// The +0x05/+0x06/+0x0C bytes double as the CfGimmickLodFrame layout handed
+// to func_801F6B98 (retail passes the step pointer through unchanged).
+struct CfGimmickObjectStep {
+    /* 0x00 */ u16 field_00;   // activation frames (seeds field_170)
+    /* 0x02 */ u16 field_02;   // camera-event id passed to func_8007B0C8
+    /* 0x04 */ u8 field_04;    // map-object status id (func_800BE12C)
+    /* 0x05 */ u8 field_05;    // LOD flags (CfGimmickLodFrame alias)
+    /* 0x06 */ u8 field_06;    // LOD id byte (CfGimmickLodFrame alias)
+    /* 0x07 */ u8 field_07;    // area-manager id (func_800817BC)
+    /* 0x08 */ u16 field_08;   // effect/flag bitmask
+    /* 0x0A */ u16 field_0A;   // sound id (func_80208C60 / func_80208C48)
+    /* 0x0C */ u8 gap_0C[2];   // frame count (CfGimmickLodFrame alias)
+    /* 0x0E */ u8 field_0E;    // sound flag byte
+    /* 0x0F */ u8 gap_0F;
+};
+
+// CfGameManager area object (func_800817BC result) stored in field_78. Only
+// vtable slots 0x9C / 0xC4 and the +0xB0 back-pointer are used by this TU.
+struct CfGimmickObjectMgr {
+    void** vtable;              // +0x00
+    u8 gap_B0[0xB0 - 0x04];
+    void* field_B0;             // +0xB0: owning gimmick
+};
+
+// Sound-slot entry returned by func_801BFAE4; +0x1C holds the volume scale.
+struct CfGimmickSoundSlot {
+    u8 gap[0x1C];
+    f32 field_1C;   // +0x1C
+};
+
 namespace cf {
 
 class CfGimmickObject {
@@ -59,12 +91,12 @@ public:
     /* 0x6E */ u16 field_6E;
     /* 0x70 */ u8 field_70[4];         // per-LOD CTaskLOD ids (loop uses [0]/[1])
     /* 0x74 */ u32 field_74;           // state flag word
-    /* 0x78 */ u32 field_78;
+    /* 0x78 */ CfGimmickObjectMgr* field_78;  // area manager (func_800817BC)
     /* 0x7C */ CfGimmickReg field_7C;  // gimmick-object registration slot
     /* 0x80 */ u16 field_80;
     /* 0x82 */ u8 gap_82[0x84 - 0x82];
     /* 0x84 */ CfGimmickObjectArea field_84[2];  // 2 x 0x10-byte gimmick-area tables
-    /* 0xA4 */ u8 gap_A4[0xC4 - 0xA4];
+    /* 0xA4 */ CfGimmickObjectStep field_A4[2];  // 2 x 0x10 per-step entries
     /* 0xC4 */ u16 field_C4;
     /* 0xC6 */ u8 gap_C6[0xF4 - 0xC6];
     /* 0xF4 */ u8 field_F4[0x30];      // collider B 3x4 matrix dest (func_802089BC)
@@ -79,24 +111,32 @@ public:
     /* 0x154 */ u8 gap_154[0x156 - 0x154];
     /* 0x156 */ u16 field_156;
     /* 0x158 */ u16 field_158;         // gimmick id passed to func_80208C48
-    /* 0x15A */ u8 gap_15A[0x15E - 0x15A];
+    /* 0x15A */ u16 field_15A;
+    /* 0x15C */ u16 field_15C;         // countdown seed (func_801F879C)
     /* 0x15E */ u8 field_15E;          // mode byte (1 = active) checked by func_801F8BB8
     /* 0x15F */ u8 field_15F;
     /* 0x160 */ u8 field_160;
     /* 0x161 */ u8 field_161;          // flag byte (bit 7) tested by func_801F8BB8
     /* 0x162 */ u8 field_162;
-    /* 0x163 */ u8 gap_163;
+    /* 0x163 */ u8 field_163;          // LOD refresh id (func_801F879C)
     /* 0x164 */ u8 field_164;          // mode byte (1 = active) checked by func_801F8BB8
     /* 0x165 */ u8 gap_165[0x170 - 0x165];
     /* 0x170 */ f32 field_170;         // countdown timer (func_801F75CC)
     /* 0x174 */ f32 field_174;
     /* 0x178 */ f32 field_178;         // LOD timer diff (func_801F627C)
     /* 0x17C */ f32 field_17C;
-    /* 0x180 */ u8 gap_180[0x188 - 0x180];
+    /* 0x180 */ f32 field_180;         // effect timer (func_801F76A8 / func_801F6780)
+    /* 0x184 */ u32 field_184;         // player bitmask (func_801F72A4)
     /* 0x188 */ s16 field_188;         // step counter (clamped to 0..6)
-    /* 0x18A */ u8 gap_18A[0x194 - 0x18A];
+    /* 0x18A */ u8 gap_18A[0x18C - 0x18A];
+    /* 0x18C */ s16 field_18C;         // +0x14A table scan index (func_801F72A4)
+    /* 0x18E */ s16 field_18E;         // countdown frames (func_801F89B8)
+    /* 0x190 */ u16 field_190;         // sound id (func_801F6780 / func_801F76A8)
+    /* 0x192 */ u16 field_192;         // sound kind selector
     /* 0x194 */ u16 field_194;
-    /* 0x196 */ u8 gap_196[0x60C - 0x196];
+    /* 0x196 */ s16 field_196;         // remaining target count (func_801F72A4)
+    /* 0x198 */ s16 field_198;
+    /* 0x19A */ u8 gap_19A[0x60C - 0x19A];
     /* 0x60C */ u8 field_60C[0x20];    // chain/attach data (func_804B1DC0)
 };
 
@@ -138,6 +178,11 @@ int func_801F634C(cf::CfGimmickObject* self);
 void func_801F76A8(cf::CfGimmickObject* self);
 void func_801F6E60(cf::CfGimmickObject* self, u8 arg);
 void func_801F5C2C(cf::CfGimmickObject* self, int a, int b);
+void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
+                   const CfGimmickLodFrame* frame);
+// Same-TU per-frame updates (raw retail names).
+int func_801F879C(cf::CfGimmickObject* self);
+int func_801F89B8(cf::CfGimmickObject* self);
 // Same-TU matched functions (raw retail names).
 int func_801F75CC(cf::CfGimmickObject* self);
 int func_801F6D8C(cf::CfGimmickObject* self);
@@ -175,6 +220,24 @@ u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
 f32 func_80496288(void* ptr);
 u16 func_80208C48(u16 id, f32* vec);
 void func_80193678(u16 id);
+// Step-table / sound helpers (func_801F6780 / func_801F76A8).
+void func_80140E00(u32 a, u32 b, u32 c);
+void func_8015B25C(u16 id);
+void func_8020A6B0(void* reg, const CfGimmickVec3* point, u16 c, f32 d,
+                  int e, int g);
+void func_800ACC64(void* obj, const void* src);
+int func_801BFABC(int a);
+u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c,
+                                                u32 d, f32 f);
+u16 func_80208C60(u16 id, f32* pos, f32 d);
+void func_801BFF78(int a, u16 b, int c);
+CfGimmickSoundSlot* func_801BFAE4(u16 handle);
+int func_80195B04(int id);
+void func_8007B0C8(int idx);
+void func_8020A0F8();
+CfGimmickObjectMgr* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
+void* getPlayer__Q22cf13CfGameManagerFi(int index);
+void func_800BE12C(u8* obj, int a, int b, int c, int d);
 }
 
 // ---------------------------------------------------------------------------
@@ -188,3 +251,46 @@ extern f32 lbl_eu_806681B8;
 // .sdata2 LOD constants (func_801F6B98).
 extern f32 lbl_eu_806681A4;
 extern f32 lbl_eu_806681B4;
+// .sdata2 2^52 magic double for the u16/u32 -> f32 conversions
+// (func_801F8658 / func_801F6B98; CfTFile.cpp convention).
+extern f64 lbl_eu_806681C0;
+// .sdata2 sound-distance / spawn constants (func_801F6780 / func_801F76A8).
+extern f32 lbl_eu_806681BC;
+extern f32 lbl_eu_806681C8;
+
+// ---------------------------------------------------------------------------
+// Cast-only helper layouts (CfGimmickObject.cpp func_801F6780 / func_801F72A4).
+// ---------------------------------------------------------------------------
+
+// Cast-only view of CfObjectMove (getPlayer result): vtable slot 0x110
+// returns the move sub-object.
+struct CfGimmickObjectMoveIf {
+    void** vtable;   // +0x00
+};
+
+// Sub-object returned by CfGimmickObjectMoveIf slot 0x110; a CCtrlMovePC is
+// embedded at +0x8C (address passed to func_80199678).
+struct CfGimmickMoveSub {
+    u8 gap_8C[0x8C];
+    cf::CCtrlMovePC ctrl;   // +0x8C
+};
+
+// Base of a CfObjectMove player (func_800B6BC8 nodes point at base+0x3E9C);
+// +0x456C holds the u16 id/bit byte scanned by func_801F72A4.
+struct CfGimmickPlayerBase {
+    void** vtable;           // +0x00
+    u8 gap_456C[0x456C - 0x04];
+    u16 field_456C;          // +0x456C
+};
+
+// Circular object list returned by func_800B6BC8 (mirror of
+// CfGimmickList/CfGimmickListNode in CfGimmick.hpp with a typed node).
+struct CfGimmickObjectListNode {
+    CfGimmickObjectListNode* next;  // +0x00
+    u8 gap_04[4];
+    void* object;                   // +0x08
+};
+struct CfGimmickObjectList {
+    void* field_00;                 // +0x00
+    CfGimmickObjectListNode* head;  // +0x04
+};

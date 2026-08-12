@@ -21,6 +21,9 @@ namespace cf {
         }
         ~CChainActor();
 
-        CChainEffect mChainEffect; //0x74
+        //0x74: raw storage at retail — the retail dtor never calls a
+        // CChainEffect dtor here (region is unmanaged; keep as bytes so
+        // MWCC does not emit the member-destroy call).
+        u8 mChainEffectRaw[0xC];
     };
 }

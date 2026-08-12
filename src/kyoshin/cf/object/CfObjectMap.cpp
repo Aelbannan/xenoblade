@@ -82,6 +82,7 @@ struct CMIf {
 // ~16 shapes (decl order, if/else, early-return, ternary, pointer local,
 // named member, -O4,s, volatile); the order diffs at +8/+0xc and +0x30/+0x34
 // are consequences of the r0-vs-r4 choice.
+#pragma scheduling off
 void* cf::CfObjectMap::func_800B9A70() {
     void* ret = (void*)1;
     if (this->mTarget70) {
@@ -89,6 +90,7 @@ void* cf::CfObjectMap::func_800B9A70() {
     }
     return ret;
 }
+#pragma scheduling on
 
 void cf::CfObjectMap::func_800B9AB4() {
     this->CfObjectModel_UnkVirtualFunc1();

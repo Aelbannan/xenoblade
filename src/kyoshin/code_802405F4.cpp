@@ -41,6 +41,16 @@ extern "C" {
 extern char lbl_eu_8050B498[];
 // CfGameManager unity helpers bridge
 extern void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+
+// Term-time helpers (declared here; retail unmangled call relocs).
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void func_804962A0(CScn* scn, int flag);
+extern "C" void func_801C3D9C(CBgTex* self);
+extern "C" void func_801C40A0(CTitleAHelp* self);
+extern "C" void func_802435CC(CMapSel* self);
+extern "C" void func_8024448C(CFade* self);
+extern "C" void func_8024CB94(CFloorMap* self);
+extern u32 lbl_eu_80664790;
 }
 
 // Entry within an array of map landmark positions (stride 0x188, 8 entries)
@@ -200,7 +210,25 @@ void func_8024189C(CFade* dest, CFade* src){}
 void func_80241920(CFloorMap* dest, CFloorMap* src){}
 #pragma pop
 
-void CMenuMapSelect::Term() {}
+void CMenuMapSelect::Term() {
+    waitForDrawDone__9CDeviceVIFv();
+    func_804962A0(mScn, 1);
+
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        cb = reinterpret_cast<IScnRender*>((char*)this + 0x58);
+    }
+    mScn->removeRenderCB(cb);
+
+    func_801C3D9C(&mBgTex);
+    func_801C40A0(&mTitleHelp);
+    func_802435CC(&mMapSel);
+    func_8024448C(&mFade);
+    func_8024CB94(&mFloorMap);
+
+    lbl_eu_80664790 = 0;
+    func_8008294C__Q22cf13CfGameManagerFv(0);
+}
 
 void CMenuMapSelect::Move() {}
 

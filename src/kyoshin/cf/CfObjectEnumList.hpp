@@ -23,9 +23,13 @@ public:
     void* func_800F6EAC(unsigned long idx);
     void* func_800F6EC0(int index);
 
-    // reslist base: vtable, sentinel, backing storage, and ownership flag.
-    u8 _pad_04[0x20 - 0x04];
-    sObjInfo* mPtrArray[384];  // 0x0020
+    // reslist base: vtable pointer (0x00), sentinel, backing storage, and
+    // ownership flag. The methods below are plain (direct-call) methods, but
+    // the OBJECT carries a reslist vtable pointer at +0x00, so the array and
+    // count sit at +0x20 / +0x620 (retail __ct__cf_CfObjEnumList stw r7,0x620).
+    void* m_vtable;                // 0x00
+    u8 _pad_04[0x20 - 0x04];       // 0x04..0x20
+    sObjInfo* mPtrArray[384];      // 0x0020
     u32 mPtrCount;             // 0x0620
     void* mSortVtableA;        // 0x0624
     void* mSortVtableB;        // 0x0628

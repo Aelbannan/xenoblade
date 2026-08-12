@@ -89,16 +89,25 @@ void func_804888B4(){}
 
 void func_80488938(){}
 
+// Buffer sub-allocation from the +0x860 counter: check amount < 0xC00 - used,
+// return a pointer into the +0x864 region, bump the counter.
+struct CScnItemModelNw4rAlloc {
+    u8 _pad[0x860];
+    volatile u32 used;    // 0x860
+    u8 data[0x864];       // buffer base 0x864 (1-byte member to anchor offset)
+};
+
 extern "C" void* func_80488954(void* self, u32 amount) {
+    CScnItemModelNw4rAlloc* buf = (CScnItemModelNw4rAlloc*)self;
     // The +0x860 counter is read again inside the success path (retail
     // reloads it: the check and the update are separate volatile reads).
-    volatile u32* f = (volatile u32*)((u8*)self + 0x860);
-    if (amount < 0xC00u - *f) goto success;
+    if (amount < 0xC00u - buf->used) goto success;
     return 0;
 success:
-    u32 field = *f;
-    *f = field + amount;
-    return (u8*)self + field + 0x864;
+    u32 used = buf->used;
+    u8* p = &buf->data[used];
+    buf->used = used + amount;
+    return p;
 }
 
 void func_80488984(){}

@@ -424,6 +424,28 @@ function-level and does not depend on the pad bytes.
 
 ## Isolated Gekko paired-single backends — worked results (nw4r g3d + math)
 
+### monolib effect code_804DB938 — func_804DD89C / func_804DD8C8 lerp kernels (Wii/1.1)
+
+Two 3/4-component vector lerps (out = a + (b - a) * t) are retail
+`psq_l/ps_sub/ps_madds0/psq_st` kernels in the load-all-first schedule
+(psq_l a.xy + b.xy, then a.z/b.z as W=1 singles, ps_sub both, ps_madds0
+both with the scalar t from f1, psq_st both halves).
+
+- **MWCC's -O4,p auto-vectorizer does NOT emit this from scalar field ops**
+  (keeps lfs/fsubs/fmadds/stfs, ~0x40 vs retail 0x2c) — the previous
+  "straight field ops trigger the vectorizer" comment was wrong.
+- **nw4r VEC3Lerp's inline asm interleaves XY-then-Z** (load-sub-madd-store
+  per pair) and does NOT match the load-all-first retail schedule.
+- The whole retail kernel was shipped as an `asm void` body with `nofralloc`
+  in `libs/monolib/include/monolib/effect/code_804DB938_ps.inl`
+  (PLAN §17.6, __MWERKS__ && !NONMATCHING guard, scalar fallback in the
+  same .inl) → both **100.0% FULL_MATCH** (0x2c/0x2c), unit split PASS.
+- `psq_l fD, d(rA), W, I` syntax: W=0 = 64-bit pair, W=1 = 32-bit single;
+  the retail uses qr0 (I=0) throughout. The asm bodies reference explicit
+  ABI registers (r3=out, r4=a, r5=b, f1=t) and need an explicit `blr`.
+
+---
+
 Four nw4r PS kernels reached byte-exact match by shipping the **retail SDK's own
 whole `asm` function bodies** in designated PS backend `.inl` files, instead of
 register-operand `ASM()` blocks. Findings that transfer to any PS target:
@@ -9295,9 +9317,24 @@ CGame dtor: `-O4,p` emits `stw r31; stw r30` saves; `-O4,s` emits the retail's
 ### Weak-virtual stub placement
 `CWorkThread::wkRender/wkRenderAfter/wkStandbyExceptionRetry` are retail-placed
 in CGame.o, NOT CWorkThread.o. Move stub definitions to the TU that emits the
-derived vtable (kyoshin/CGame.cpp) to match. Similarly `IWorkEvent::~IWorkEvent`
-must be declaration-only in the header (a weak 0x40 dtor leaks into every
-overriding TU and breaks split budgets; strong copy stays in CTaskGame.cpp).
+derived vtable (kyoshin/CGame.cpp) to match.
+
+### Interface-dtor elision without weak-copy spread (IWorkEvent pattern, 2026-08)
+Retail classes that derive from `IWorkEvent` (CTaskGame etc.) do NOT call
+`__dt__10IWorkEventFv` from their dtors, yet the retail CTaskGame.o holds the
+STRONG 0x40 dtor symbol + vtable-2 slot + extab references. Two wrong models:
+(1) inline-empty `virtual ~IWorkEvent(){}` in the header elides the derived
+call but makes MWCC emit a weak 0x40 copy into EVERY TU emitting the vtable
+(CGame.o etc.) — pushes unit splits over budget (CGame +0x40 exactly);
+(2) declaration-only header makes derived dtors CALL the dtor (retail doesn't).
+**Correct model:** declaration-only header (dtor = key function → vtable
+emitted in the TU defining it, no weak copies elsewhere) + STRONG empty copy
+`IWorkEvent::~IWorkEvent() {}` written in the SAME TU as the derived dtor
+(CTaskGame.cpp). MWCC empty-function call elimination removes the
+base-dtor call from the derived dtor in that TU (retail's redundant
+this-guard branch stays), and the strong copy places the 0x80040858 symbol.
+Other TUs whose dtors still call it are a separate per-TU matching problem;
+never use the inline-empty form (weak-copy budget spread).
 
 ### ocBdat pattern family (retail bdat accessor codegen)
 - `colHdr[0] != N` needs `static_cast<u8>(colHdr[0])` → `cmpli` (unsigned);
@@ -9519,3 +9556,176 @@ Verified with the repo's MWCC Wii/1.1 (`build/compilers/Wii/1.1/mwcceppc.exe`):
    class/typedef types stay per-TU (listed in the exclusions) — forcing one type
    would change instruction selection (struct-vs-pointer: `lbl.f` is one `lwz`,
    `lbl->f` is two).
+
+## 3-word struct copy: typed source pointer required for grouped load-all/store-all (kyoshin cf, FULL_MATCH)
+
+`cf::CfObject::CfObject_UnkVirtualFunc27(void*)` (us-8003f6d8, ocUnit.cpp) is a
+7-instruction leaf: `lwz r6,0(r4); lwz r5,4(r4); lwz r0,8(r4); stw r6,0x48(r3);
+stw r5,0x4c(r3); stw r0,0x50(r3); blr`. 56+ prior shapes (3 u32 locals, u64
+extract, CVec3 assign, u64 direct store, struct temp, store-order permutations,
+pragma combos) all failed on register colors or spilled. Root causes:
+
+1. **Grouped 3-word copy needs a TYPED source pointer parameter.** A `void*`
+   param (even cast to a typed local) makes MWCC emit interleaved
+   `lwz r0,N(r4); stw r0,N(r3)` pairs reusing r0. Declaring the param as
+   `const struct { u32 a,b,c; }*` (or `const ml::CVec3*`) emits the retail
+   batched loads `lwz r6/r5/r0` + in-order stores. Verified with direct
+   `mwcceppc` probes (.scratch/copy12_probe{3,4,5}.cpp, Wii/1.1 -O4,p):
+   `void*` src ⇒ interleaved; typed src ⇒ grouped; dest-side cast irrelevant.
+2. **The retail `...FPv` name is a decompiler guess.** The mangled symbol
+   `CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv` claims `void*` but retail
+   codegen proves the original source had a typed pointer (same scheme as
+   CfObjectEff's `func_800ACDA0__Q22cf11CfObjectEffFv` and CfObjectModel's
+   `CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFPv`, both FULL_MATCH).
+   Define the function as `extern "C" void <mangled-name>(...)` with typed
+   params — `extern "C"` emits the name VERBATIM (no `__FP<params>` re-mangle);
+   a plain global with the mangled-looking name gets re-mangled.
+3. **Stale `#pragma optimize_for_size on / peephole off / scheduling off`
+   blocks poison nearby leaves.** Func27 sat inside one (left over from another
+   function's experiment): with the pragmas active, the struct-member copy
+   emitted the grouped loads + an unnecessary `stwu sp,-32` temp spill; after
+   removing the stale block the spill vanished. When a leaf refuses to match,
+   check the pragma state above it before probing shapes.
+4. **Working shape** (FULL_MATCH, ocUnit.cpp):
+   ```cpp
+   struct CfObjCopy12 { u32 a; u32 b; u32 c; };
+   struct CfObjVec48View { u8 _pad[0x48]; CfObjCopy12 vec48; };
+   extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFPv(CfObjVec48View* self, const CfObjCopy12* src) {
+       self->vec48 = *src;
+   }
+   ```
+   The vtable slot reloc resolves because the C symbol name equals the retail
+   mangled name. Do NOT use a function-pointer cast at call sites to work
+   around a conflicting 4-arg declaration: `((void(*)(void*,int,int,int,int))&f)(...)`
+   emits byte-identical code to a direct call (probe-verified) but is less
+   readable — prefer the direct call with the correct declaration.
+
+## ABI-boundary register-reuse class: arg register reused for a VALUE — witness has no bijection
+
+Several kyoshin/CriWare leaves share a class where MWCC reuses an incoming
+ARGUMENT register (r3 this/self, r4 src, r5 idx) for a computed value once the
+arg dies, while retail keeps the value in the *other* freed register. The
+register-renaming witness rejects all of them ("rho | no consistent bijection
+in region [lo, hi)") because the arg register maps to both itself (entry) and
+the value register (after reuse) — a non-injective register mapping. FULL_MATCH
+is the only route; probe every compiler version first (GC 2.7/3.0a5.2, Wii
+1.0/1.1/1.5 all behave identically for these shapes).
+
+Members (all recorded open items, witness-gate rho):
+- `func_801CB9D8` (us-801cd42c, CItemBoxGrid): 12-byte-stride entry copy; retail
+  base in r5 (reused idx reg), MWCC always bases in r4 (reused src reg).
+  Invariant: decl-order, word-indexed, inline-offset, struct-typed, 5 MWCC
+  versions.
+- `func_8018B130` (us-8018c6e4, CMenuShopSell): 0x800-byte struct-copy loop;
+  retail saves `or r6=src` before `or r7=dst`, MWCC reverses. Invariant:
+  local/order variants, memcpy form (emits a call).
+- `CfObjectMove::CfObject_UnkVirtualFunc14/16` (us-800beb30/800beb80): three
+  null-checked `stfs` to +0x388/+0x38C of the C4/C8/CC targets; the LAST
+  block's value reuses r3 (this) in MWCC vs retail's r4 (this dies at the
+  third load). Invariant: separated locals, inline helper, `(void)this`,
+  `#pragma optimize_for_size on`.
+
+Approved policy note: do NOT "fix" these with register/stack tricks — record
+the open item with the exact region and invariant shapes, keep the source
+natural, and move on. Any future tooling improvement (witness v2 with
+per-value mapping, or a decomp.me scratch with a different MWCC build) should
+revisit this class.
+
+## Dead-branch goto-chain reproduces retail's duplicated-condition beq target (btm_sec, FULL_MATCH)
+
+`btm_sec_l2cap_access_req` (us-802eed3c, btm_sec.c, 0x464 bytes) had one residual:
+a 4-byte branch-distance diff on a DEAD branch. Retail emits
+`cmpi is_originator,0; beq L_body; beq L_skip; lwz cur; cmpi cur; bne L_skip;
+L_body: stw` — a duplicated `is_originator == FALSE` test whose SECOND beq
+targets the SKIP (dead: the first beq already takes the body path on the same
+condition). The `||` form `if (A || A || B) S` makes MWCC emit the second beq
+to the BODY. Fix: a goto-chain with the exact retail layout:
+
+```c
+if (is_originator == FALSE) goto set_service;          // beq L_body
+if (is_originator == FALSE) goto service_done;         // beq L_skip (dead, kept)
+if (p_dev_rec->p_cur_service != NULL) goto service_done; // lwz; cmpi; bne L_skip
+set_service:
+    p_dev_rec->p_cur_service = p_srec;
+service_done:
+```
+
+Result: 99.6% → 100% (FULL_MATCH). Lesson: when a duplicated/merged condition
+shows a branch-TARGET diff on a provably-dead branch, the original source was
+a goto-chain with the dead branch explicitly targeting the join label — the
+`||` form silently retargets it to the body.
+
+## Struct member-size mismatch shifts a field (CMainMenu, FULL_MATCH)
+
+`func_80101A88` (us-80102570, CMainMenu) read `player->field_0x3F60` at
+compiled offset 0x4024 (retail: 0x3F60). Cause: the embedded
+`CMainMenuPlayerSpot` member is 0xC8 bytes (vtable + 0xC0 pad + field_0xC4),
+but the parent padded `_3EA0[0x3F60 - 0x3EA0]` assuming a 4-byte spot —
+the pad math `0x3F60 - 0x3EA0` silently absorbed the 0xC4-byte overflow,
+pushing field_0x3F60 to 0x4024. Fix: drop the parent's duplicated
+field_0x3F60 (it aliases `spot.field_0xC4` == player+0x3F60) and the bogus
+pad; access the sub-object via `player->spot.field_0xC4`. Rule: when a
+member-typed field's compiled offset disagrees with its name, verify the
+EMBEDDED struct's sizeof — a size mismatch in the embedded type shifts every
+following field even when the pad arithmetic looks self-consistent.
+
+## -RTTI on pushes the first declared virtual to vtable+8 — use minimal cast-only interfaces (FULL_MATCH)
+
+`CWorkSystemPack::wkStandbyLogout` (us-804e26bc, CWorkSystemPack.cpp) called a
+vtable+8 destroy hook: retail `lwz r12,0(r3); lwz r12,8(r12); li r4,1; bcctrl`,
+but the local mirror class `{virtual ~CPackItem(); virtual func_0x4();
+virtual func_0x8(int);}` emitted slot 16. Cause: with `-RTTI on` (game flags),
+MWCC inserts TWO hidden RTTI slots before the first declared virtual, so the
+3rd declared virtual lands at +16. The retail slot +8 is a destroy hook, not
+the class's own vtable layout. Fix: a minimal cast-only interface with the
+hook as its ONLY virtual (lands at +8):
+
+```cpp
+struct CPackItemDestroyHook {
+    virtual bool destroy(int flag);    // vtable+8 (first virtual under -RTTI on)
+};
+// call site:
+((CPackItemDestroyHook*)item)->destroy(1);
+```
+
+Do NOT drop the dtor/func_0x4 declarations from the mirror class itself —
+other functions in the TU call `delete` on it and regress (ctor/reslist dtors
+depend on the full layout). Rule: when a virtual dispatch's slot offset is
+wrong, compute the offset as `8 + 4*(declared-virtual-index)` under -RTTI on
+(hidden RTTI pair at 0/4) and use a dedicated one-virtual interface for the
+target slot instead of reordering the shared class.
+
+## reslist-style objects carry a vtable POINTER at +0x00 even when methods are non-virtual (FULL_MATCH)
+
+`func_801BC590` (us-801bde88, CSuddenCommu.cpp) read the enum list's
+`mPtrCount` at compiled offset 0x61C vs retail 0x620. The `cf::CfObjEnumList`
+class declares its methods as plain (non-virtual) members — retail calls
+`func_800F6EAC` DIRECTLY (reloc confirmed) — yet the retail layout has
+`mPtrArray` at +0x20 / `mPtrCount` at +0x620. Cause: the reslist BASE object
+carries a vtable POINTER field at +0x00 (set by the reslist ctor), so the
+padding after it is `[0x20 - 0x04]` starting at 0x04. The header had dropped
+the vtable pointer, making the array start at 0x1C and the count at 0x61C.
+Fix: add `void* m_vtable; // 0x00` and KEEP the `u8 _pad_04[0x20 - 0x04]`
+length (0x1C bytes — do not "fix" it to `0x20 - 0x08`; 0x04+0x18=0x1C ≠ 0x20).
+Verified: retail ctor `__ct__cf_CfObjEnumList` does `stw r7, 0x620(r3)` and the
+sudden-commu loop reads `lwz r0, 1568(r3)` — both 0x620. Rule: when a
+member-typed offset is 4 bytes low, check for a dropped vtable/pointer field
+at the object base, and verify pad arithmetic against the target offset
+(offset + pad-length must equal the next field's offset).
+
+## `-ipa off` reverses the TU function/pool emission order — pooled-string immediates shift (FULL_MATCH)
+
+`rfc_port_closed` (us-80305588, rfc_utils.c) was 96.5% with 3 offset diffs:
+`addi r4, r31, 0x68/0x54/0x10` (retail) vs `0x18/0x28/0x3c` (decomp). The string
+REFERENCES were correct (each side points at its own "rfc_port_closed" etc.) —
+the .data layout differed because the STRING EMISSION ORDER follows the
+FUNCTION EMISSION ORDER, and with `-ipa off` MWCC emits the TU's functions in
+REVERSE source order (object table verified: check_send_cmd@0x0 ... calc_fcs
+last). Retail emits forward. Fix: `-ipa file` (extra_cflags) restores the
+forward emission order — rfc_port_closed 96.5% → 100%, zero unit regressions
+(13/13 functions stay 100%), split exact. configure.py's port_rfc.c note
+already documented the same fix ("-ipa off reversed the TU function/pool
+emission order ... unit needs -ipa file (forward pool)"). Rule: when pooled
+string/constant immediates differ by whole-pool layout, check the unit's
+`-ipa` setting and the TU's function emission order in the .o (`list_text_functions`
+order) before touching per-function source.

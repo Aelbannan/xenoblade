@@ -11,6 +11,9 @@
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
 
+extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* di);
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* di, int a, int b);
+
 // forward declarations for scaffold thunk references
 void __dt__16CMenuBattleChainFv(void*);
 void cbRenderBefore__16CMenuBattleChainFv(void*);
@@ -240,7 +243,21 @@ void CMenuBattleChain::Move() {
     mLayout->Animate(0);
 }
 
-void CMenuBattleChain::cbRenderBefore() {}
+void CMenuBattleChain::cbRenderBefore() {
+    if (CTaskGame::getInstance()->func_800426F0()) {
+        return;
+    }
+    if (lbl_eu_80663E28 & 0x200000) {
+        return;
+    }
+    if (func_8013BE50() == 0) {
+        return;
+    }
+    GXSetZMode(GX_DISABLE, GX_NEVER, GX_DISABLE);
+    nw4r::lyt::DrawInfo drawInfo;
+    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, &drawInfo, 0, 1);
+}
 
 void func_802AA2A0(){}
 

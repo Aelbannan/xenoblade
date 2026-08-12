@@ -1163,7 +1163,7 @@ void mpfsys::UnkClass_80471EC8::func_80474D50() {
     GXColor color;
     *(u32*)&color = alpha;
     color.r = (u8)((rgb565 >> 8) & 0xF8);
-    color.g = (rgb565 >> 3) & 0x1F8;
+    color.g = (u8)((rgb565 >> 3) & 0xFC);
     color.b = (u8)((rgb565 & 0x1F) << 3);
     GXSetTevColor(GX_TEVREG0, color);
 }

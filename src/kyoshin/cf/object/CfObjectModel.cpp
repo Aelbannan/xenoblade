@@ -685,18 +685,24 @@ const char* func_800BBC08(u16 index) {
 }
 
 // Return the object when any of the +0x64 flag bits (2, 4, 8, 0x80, 0x100)
-// is set, else 0 (retail reads cf::CfObject::unk64). A single `result`
-// return lets MWCC share one return-0 block between the null check and the
-// last flag check (retail: both `beq` target the same tail).
+// is set, else 0 (retail reads cf::CfObject::unk64). The null check and the
+// last flag check share the retail return-0 tail (both beq the same block).
+// Return the object when any of the +0x64 flag bits (2, 4, 8, 0x80, 0x100)
+// is set, else 0 (retail reads cf::CfObject::unk64). Goto-gate shape: the
+// null check and the last flag test both branch to the shared return-0 tail
+// (retail: two beq to the same block; plain early returns give bclr/duplicated
+// tails).
 cf::CfObject* func_800BBC0C(cf::CfObject* self) {
-    cf::CfObject* result = 0;
-    if (self != 0) {
-        u32 flags = self->unk64;
-        if ((flags & 0x2) != 0) return self;
-        if ((flags & 0x4) != 0) return self;
-        if ((flags & 0x8) != 0) return self;
-        if ((flags & 0x80) != 0) return self;
-        if ((flags & 0x100) != 0) return self;
-    }
-    return result;
+    if (self == 0) goto ret0;
+    u32 flags = self->unk64;
+    if ((flags & 0x2) != 0) goto found;
+    if ((flags & 0x4) != 0) goto found;
+    if ((flags & 0x8) != 0) goto found;
+    if ((flags & 0x80) != 0) goto found;
+    if ((flags & 0x100) != 0) goto found;
+    goto ret0;
+found:
+    return self;
+ret0:
+    return 0;
 }

@@ -75,7 +75,21 @@ void CTaskEnvironment::Init() {
     mScene->mEnvLgtCtrl->field_0 |= 0x80;
 }
 
-void CTaskEnvironment::Term() {}
+void CTaskEnvironment::Term() {
+    func_804C1094(mScene->mEnvLgtCtrl, 0);
+    if (mUnkE4 != 0) {
+        if (mUnkE4 != 0) {
+            static_cast<CTaskEnvUnk*>(mUnkE4)->vfUnk1(1);
+        }
+        mUnkE4 = 0;
+    }
+    if (mUnkE0 != 0) {
+        if (mUnkE0 != 0) {
+            static_cast<CTaskEnvUnk*>(mUnkE0)->vfUnk1(1);
+        }
+        mUnkE0 = 0;
+    }
+}
 
 void CTaskEnvironment::Move() {}
 

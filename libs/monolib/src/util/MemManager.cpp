@@ -737,21 +737,22 @@ void* MemManager::allocate_head(ALLOC_HANDLE handle, u32 size, int align) {
 Allocates memory from the tail (or end) of the region indicated by 'handle'.
 The buffer's size and alignment can be configured.
 */
-#pragma optimize_for_size on
 void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
-    MemRegion* region = getRegion(handle);
     void* buffer = nullptr;
+    MemRegion* region = getRegion(handle);
 
-    //Allocate a tail-aligned buffer
+    // Allocate a tail-aligned buffer; the null path is an explicit
+    // li r3,0 return (retail), so keep the early-return shape.
+    // OPEN ITEM: retail keeps buffer's zero in VOLATILE r6 (scheduled
+    // early) with 3 saved regs (r29-r31); MWCC allocates it to r31 and
+    // needs a 4th saved reg (r28) for size - instruction count +4.
     if (MemManager::getTailBuffer(region, size, align, &buffer) == nullptr) {
-        //TODO: This nullptr gets optimized out
         return nullptr;
     }
 
-    //Setup the block header in this custom buffer
+    // Setup the block header in this custom buffer.
     return region->allocate(buffer, size, align);
 }
-#pragma optimize_for_size reset
 
 DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
     if (p == nullptr) {

@@ -69,6 +69,11 @@ class CView;
  extern const float lbl_eu_80666820;
 // 0.25f (lbl_eu_806667FC) - sphere radius offset
  extern const float lbl_eu_806667FC;
+// -1.0f (lbl_eu_80666800) - box face-direction constant
+ extern const float lbl_eu_80666800;
+// Box-face offset table {1.0f, 1.7f, 0.1f, 0.0f} (split1 .data) - Y raise
+// offsets probed by the segment-vs-capsule helper func_800A4C48.
+ extern float lbl_eu_80528178[4];
 
 // Collision-probe object behind lbl_eu_80665958; only the +0x60..+0x68
 // height-reference vector is read here.
@@ -360,7 +365,7 @@ void func_800A41BC(ml::CVec3* out, const ml::CVec3& p0, const ml::CVec3& p1,
     *out = sum3;
 }
 
-void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans) {
+extern "C" void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans) {
     // Build a facing matrix whose Z axis is the (normalized) src direction:
     // X/Y bases are derived from cross products with a reference direction.
     ml::CVec3 xAxis;
@@ -370,6 +375,37 @@ void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans
     ml::CVec3 copyB;
     ml::CVec3 copyC;
     ml::CVec3 copyD;
+    norm.set(*src);
+    bool result = false;
+    bool temp = false;
+    if (ml::math::abs(norm.x) <= lbl_eu_8066A208 && ml::math::abs(norm.y) <= lbl_eu_8066A208) {
+        temp = true;
+    }
+    if (temp && ml::math::abs(norm.z) <= lbl_eu_8066A208) {
+        result = true;
+    }
+    if (!result) {
+        if (norm.x * norm.x + norm.y * norm.y + norm.z * norm.z == lbl_eu_806667D8) {
+            norm = ml::CVec3::zero;
+        } else {
+            PSVECNormalize(norm, norm);
+        }
+    }
+
+    // Lazily initialize the reference directions (0,1,0) and (1,0,1).
+    if (lbl_eu_80663E92 == 0) {
+        lbl_eu_80572AB0.x = lbl_eu_806667D8;
+        lbl_eu_80572AB0.y = lbl_eu_806667E8;
+        lbl_eu_80572AB0.z = lbl_eu_806667D8;
+        lbl_eu_80663E92 = 1;
+    }
+    if (lbl_eu_80663E93 == 0) {
+        lbl_eu_80572ABC.x = lbl_eu_806667E8;
+        lbl_eu_80572ABC.y = lbl_eu_806667D8;
+        lbl_eu_80572ABC.z = lbl_eu_806667E8;
+        lbl_eu_80663E93 = 1;
+    }
+
     if (ml::math::abs(lbl_eu_806667E8 - ml::math::abs(norm.y)) <= lbl_eu_8066A208) {
         // Near-vertical direction: derive from (1, 0, 1).
         ml::CVec3::cross(copyA, norm, lbl_eu_80572ABC);
@@ -378,7 +414,7 @@ void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans
         xAxis = copyB;
     } else {
         // Use world up (0, 1, 0).
-        ml::CVec3::cross(copyC, norm, lbl_eu_80572AB0);
+        ml::CVec3::cross(copyC, lbl_eu_80572AB0, norm);
         xAxis = copyC;
         ml::CVec3::cross(copyD, norm, xAxis);
         axis = copyD;
@@ -398,10 +434,11 @@ void func_800A44CC(ml::CMat34* out, const ml::CVec3* src, const ml::CVec3* trans
     out->m[2][3] = trans->z;
 }
 
-float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c,
-                    float* outT, ml::CVec3* out) {
+extern "C" float func_800A47C8(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c,
+                                float* outT, ml::CVec3* out) {
     // Closest-point-on-segment helper: returns the squared distance from c to
     // the segment ab, writing the closest point and its parameter value.
+    // NOTE: retail prologue hoists the segment loads before the frame setup.
     ml::CVec3 ab, ac, cb;
     ml::CVec3 sum, scaled;
     ml::CVec3 t1, t2, t3, t4, t5;
@@ -489,7 +526,80 @@ float func_800A4B5C(const ml::CVec3& a, const ml::CVec3& b, const ml::CVec3& c) 
     return t;
 }
 
-void func_800A4C48(){}
+int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out,
+                  float radius) {
+    // Segment-vs-sphere probe: raise the object position's Y by each of three
+    // table offsets (1.0/1.7/0.1) and test the closest point on segment ab
+    // against the sphere radius; on a hit push the closest point out to the
+    // sphere surface and write it to out. Returns whether any offset hit.
+    ml::CVec3 d;       // raised center (0x78)
+    ml::CVec3 closest; // closest point on ab from func_800A47C8 (0x6c)
+    ml::CVec3 dir;     // d - closest (0x60)
+    ml::CVec3 d2;      // pos - mRef (0x54)
+    ml::CVec3 d3;      // d2 - closest (0x48)
+    ml::CVec3 outTmp;  // 0x3c
+    ml::CVec3 dirTmp;  // 0x30
+    ml::CVec3 d2Tmp;   // 0x24
+    ml::CVec3 d3Tmp;   // 0x18
+    ml::CVec3 tAdd;    // 0xc
+    d.set(*self->_v0AC());
+    if (out != 0) *out = d;
+    float R = lbl_eu_806667FC + radius;
+    float R2 = R * R;
+    float baseY = d.y;
+    bool cond = false;
+    float t;
+    for (u32 i = 0; i < 3; i++) {
+        d.y = baseY + lbl_eu_80528178[i];
+        float dist2 = func_800A47C8(a, b, d, &t, &closest);
+        cond = dist2 <= R2;
+        if (cond) break;
+    }
+    if (cond && out != 0) {
+        nw4r::math::VEC3Sub(dirTmp, d, closest);
+        dir.set(dirTmp);
+        bool zero = false;
+        bool zeroTmp = false;
+        if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            zeroTmp = true;
+        }
+        if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            zero = true;
+        }
+        if (zero) {
+            // Coincident centers: retry from the object's reference point.
+            ml::CVec3* pos = self->_v0AC();
+            nw4r::math::VEC3Sub(d2Tmp, *pos, self->mRef);
+            d2.set(d2Tmp);
+            nw4r::math::VEC3Sub(d3Tmp, d2, closest);
+            d3.set(d3Tmp);
+            dir = d3;
+            bool zero2 = false;
+            bool zero2Tmp = false;
+            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+                zero2Tmp = true;
+            }
+            if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+                zero2 = true;
+            }
+            if (zero2) return 1;
+        }
+        // Normalize the direction (exact-zero shortcut, then PSVECNormalize).
+        if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == lbl_eu_806667D8) {
+            dir = ml::CVec3::zero;
+        } else {
+            PSVECNormalize(dir, dir);
+        }
+        float R2b = lbl_eu_806667FC + radius;
+        d.x = dir.x * R2b;
+        d.z = dir.z * R2b;
+        d.y = self->_v0AC()->y - closest.y;
+        nw4r::math::VEC3Add(tAdd, d, closest);
+        outTmp.set(tAdd);
+        *out = outTmp;
+    }
+    return cond;
+}
 
 bool func_800A5038(const nw4r::math::VEC3& a, const nw4r::math::VEC3& b, float r1, float r2) {
     // Circle-vs-circle overlap test on the XZ plane: true when the squared
@@ -523,9 +633,11 @@ int func_800A50AC(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
     if (out != 0) *out = d;
     d.y += lbl_eu_806667E8;
     nw4r::math::VEC3Sub(dvTmp, d, *point);
-    dv.set(dvTmp);
+    dv.x = dvTmp.x;
+    dv.y = lbl_eu_806667D8;  // XZ-plane distance
+    dv.z = dvTmp.z;
     float R = lbl_eu_806667FC + radius;
-    bool cond = nw4r::math::VEC3Dot(dv, dv) <= R * R;
+    bool cond = nw4r::math::VEC3LenSq(dv) <= R * R;
     if (cond && out != 0) {
         nw4r::math::VEC3Sub(dirTmp, d, *point);
         dir.set(dirTmp);
@@ -544,7 +656,8 @@ int func_800A50AC(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
             nw4r::math::VEC3Sub(d2Tmp, *pos, self->mRef);
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, *point);
-            dir.set(d3Tmp);
+            d3.set(d3Tmp);
+            dir = d3;
             dir.y = lbl_eu_806667D8;
             bool zero2 = false;
             bool zero2Tmp = false;
@@ -633,11 +746,156 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
     return overlap;
 }
 
-void func_800A5738(){}
+int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out) {
+    // Push point out to the surface of the object's collision sphere (center
+    // d = pos + (0,1,0), radius 0.25 + radius) when it is inside, writing the
+    // pushed position to out. Returns whether the point was inside the sphere.
+    // Full-3D variant of func_800A50AC (no XZ flattening).
+    ml::CVec3 d;
+    ml::CVec3 dir;
+    ml::CVec3 d2;
+    ml::CVec3 d3;
+    ml::CVec3 outTmp;
+    nw4r::math::VEC3 dvTmp;
+    nw4r::math::VEC3 dv;
+    ml::CVec3 dirTmp;
+    ml::CVec3 d2Tmp;
+    ml::CVec3 d3Tmp;
+    ml::CVec3 tAdd;
+    d.set(*self->_v0AC());
+    if (out != 0) *out = d;
+    d.y += lbl_eu_806667E8;
+    nw4r::math::VEC3Sub(&dvTmp, *point, d);
+    dv = dvTmp;
+    bool cond = nw4r::math::VEC3Dot(&dv, &dv) <= (radius + lbl_eu_806667FC) * (radius + lbl_eu_806667FC);
+    if (cond && out != 0) {
+        nw4r::math::VEC3Sub(dirTmp, d, *point);
+        dir.set(dirTmp);
+        bool zero = false;
+        bool zeroTmp = false;
+        if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+            zeroTmp = true;
+        }
+        if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+            zero = true;
+        }
+        if (zero) {
+            // Coincident centers: retry from the object's reference point.
+            nw4r::math::VEC3Sub(d2Tmp, *self->_v0AC(), self->mRef);
+            d2.set(d2Tmp);
+            nw4r::math::VEC3Sub(d3Tmp, d2, *point);
+            d3.set(d3Tmp);
+            dir = d3;
+            bool zero2 = false;
+            bool zero2Tmp = false;
+            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+                zero2Tmp = true;
+            }
+            if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+                zero2 = true;
+            }
+            if (zero2) return 1;
+        }
+        // Normalize the direction (exact-zero shortcut, then PSVECNormalize).
+        if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == lbl_eu_806667D8) {
+            dir = ml::CVec3::zero;
+        } else {
+            PSVECNormalize(dir, dir);
+        }
+        float R2 = lbl_eu_806667FC + radius;
+        d.x = dir.x * R2;
+        d.z = dir.z * R2;
+        d.y = self->_v0AC()->y - point->y;
+        nw4r::math::VEC3Add(tAdd, d, *point);
+        outTmp.set(tAdd);
+        *out = outTmp;
+    }
+    return cond;
+}
 
-void func_800A5B18(){}
+int func_800A5B18(ColObjIf* self, const ml::CVec3& point, ml::CVec3* out, float radius,
+                  float h) {
+    // Cylinder test: true when the raised center (pos + (0,1,0)) is within the
+    // horizontal radius of point's XZ position AND point's Y is within h of the
+    // raised center. On a hit the point is pushed out of the cylinder side and
+    // written to out.
+    bool cond2;
+    bool cond1;
+    ml::CVec3 d;
+    ml::CVec3 dir;
+    ml::CVec3 d2;
+    ml::CVec3 d3;
+    ml::CVec3 outTmp;
+    ml::CVec3 dvTmp;
+    ml::CVec3 dv;
+    ml::CVec3 dirTmp;
+    ml::CVec3 d2Tmp;
+    ml::CVec3 d3Tmp;
+    ml::CVec3 tAdd;
+    d.set(*self->_v0AC());
+    if (out != 0) *out = d;
+    d.y += lbl_eu_806667E8;
+    nw4r::math::VEC3Sub(dvTmp, d, point);
+    dv.x = dvTmp.x;
+    dv.y = lbl_eu_806667D8;  // XZ-plane distance
+    dv.z = dvTmp.z;
+    float R = lbl_eu_806667FC + radius;
+    cond1 = nw4r::math::VEC3LenSq(dv) <= R * R;
+    cond2 = point.y <= d.y && d.y <= point.y + h;
+    if (cond1) {
+        if (cond2 && out != 0) {
+            if (cond1) {
+            nw4r::math::VEC3Sub(dirTmp, d, point);
+            dir.x = dirTmp.x;
+            dir.y = lbl_eu_806667D8;  // XZ-plane direction
+            dir.z = dirTmp.z;
+            bool zero = false;
+            bool zeroTmp = false;
+            if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+                zeroTmp = true;
+            }
+            if (zeroTmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+                zero = true;
+            }
+            if (zero) {
+                // Coincident centers: retry from the object's reference point.
+                ml::CVec3* pos = self->_v0AC();
+                nw4r::math::VEC3Sub(d2Tmp, *pos, self->mRef);
+                d2.set(d2Tmp);
+                nw4r::math::VEC3Sub(d3Tmp, d2, point);
+                d3.set(d3Tmp);
+                dir = d3;
+                dir.y = lbl_eu_806667D8;
+                bool zero2 = false;
+                bool zero2Tmp = false;
+                if (ml::math::abs(dir.x) <= lbl_eu_8066A208 && ml::math::abs(dir.y) <= lbl_eu_8066A208) {
+                    zero2Tmp = true;
+                }
+                if (zero2Tmp && ml::math::abs(dir.z) <= lbl_eu_8066A208) {
+                    zero2 = true;
+                }
+                if (zero2) return 1;
+            }
+            // Normalize the XZ direction (exact-zero shortcut, then PSVECNormalize).
+            if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == lbl_eu_806667D8) {
+                dir = ml::CVec3::zero;
+            } else {
+                PSVECNormalize(dir, dir);
+            }
+            float R2 = lbl_eu_806667FC + radius;
+            d.x = dir.x * R2;
+            d.z = dir.z * R2;
+            d.y = self->_v0AC()->y - point.y;
+            }
+            nw4r::math::VEC3Add(tAdd, d, point);
+            outTmp.set(tAdd);
+            *out = outTmp;
+        }
+    }
+    return cond1 && cond2;
+}
 
-void func_800A5F54(const ml::CVec3* src, const ml::CVec3* min, const ml::CVec3* max, ml::CVec3* dst) {
+extern "C" void func_800A5F54(const ml::CVec3* src, const ml::CVec3* min, const ml::CVec3* max, ml::CVec3* dst) {
     // Clamp a copy of src component-wise into the [min, max] AABB.
     *dst = *src;
     if (dst->x < min->x) {
@@ -657,7 +915,85 @@ void func_800A5F54(const ml::CVec3* src, const ml::CVec3* min, const ml::CVec3* 
     }
 }
 
-void func_800A5FE8(){}
+int func_800A5FE8(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, const Mtx mat,
+                  ml::CVec3* out) {
+    // AABB test: the raised center d = pos + (0,1,0) (optionally transformed by
+    // mat) is clamped into the box [a-0.5, b+0.5]; if the clamp moved it, the
+    // point was inside and is pushed out onto the face plane facing the object's
+    // reference direction (chosen by which face the reference direction
+    // exceeds), then written to out with its Y replaced by the object's Y.
+    ml::CVec3 clamped; // 0x100 - clamp result
+    ml::CVec3 d;       // 0xf4 - raised center
+    ml::CVec3 min;     // 0xe8
+    ml::CVec3 max;     // 0xdc
+    ml::CVec3 v0;      // 0xd0 - face normal
+    ml::CVec3 v1;      // 0xc4 - face point (min/max corner)
+    ml::CVec3 dir;     // 0xb8 - pos - mRef
+    float dot;         // 0xb4
+    ml::CVec3 tmp;     // 0xa8 - v0 copy
+    ml::CVec3 outTmp;  // 0x5c
+    ml::CVec3 tA;      // 0x50 - PSMTXMultVec result
+    ml::CVec3 tB;      // 0x44 - distance diff temp
+    ml::CVec3 diff;    // 0x38 - clamped - d
+    ml::CVec3 dirTmp;  // 0x2c - pos - mRef sub result
+    ml::CVec3 diff2;   // 0x20 - clamped - proj
+    ml::CVec3 tC;      // 0x14 - VEC3Scale result
+    ml::CVec3 proj;    // 0x8 - scaled direction
+    d.set(*self->_v0AC());
+    if (out != 0) *out = d;
+    min.x = a.x - lbl_eu_806667F4;
+    min.y = a.y - lbl_eu_806667F4;
+    min.z = a.z - lbl_eu_806667F4;
+    max.x = b.x + lbl_eu_806667F4;
+    max.y = b.y + lbl_eu_806667F4;
+    max.z = b.z + lbl_eu_806667F4;
+    d.y += lbl_eu_806667E8;
+    if (mat != 0) {
+        PSMTXMultVec(mat, d, tA);
+        d = tA;
+    }
+    func_800A5F54(&d, &min, &max, &clamped);
+    // Inside the box iff the clamp left d unchanged (squared distance 0).
+    nw4r::math::VEC3Sub(tB, clamped, d);
+    diff.x = tB.x;
+    diff.y = tB.y;
+    diff.z = tB.z;
+    float R = lbl_eu_806667D8;
+    bool cond = nw4r::math::VEC3Dot(diff, diff) <= R * R;
+    if (cond && out != 0) {
+        nw4r::math::VEC3Sub(dirTmp, *self->_v0AC(), self->mRef);
+        dir.x = dirTmp.x;
+        dir.y = dirTmp.y;
+        dir.z = dirTmp.z;
+        // Pick the face the reference direction points at.
+        if (dir.z <= min.z) {
+            v0 = ml::CVec3(lbl_eu_806667D8, lbl_eu_806667D8, lbl_eu_80666800);
+            v1 = min;
+        } else if (dir.z >= max.z) {
+            v0 = ml::CVec3(lbl_eu_806667D8, lbl_eu_806667D8, lbl_eu_806667E8);
+            v1 = max;
+        } else if (dir.x <= min.x) {
+            v0 = ml::CVec3(lbl_eu_80666800, lbl_eu_806667D8, lbl_eu_806667D8);
+            v1 = min;
+        } else if (dir.x >= max.x) {
+            v0 = ml::CVec3(lbl_eu_806667E8, lbl_eu_806667D8, lbl_eu_806667D8);
+            v1 = max;
+        } else {
+            return cond;
+        }
+        // Project clamped onto the plane v0.x = v0.v1.
+        dot = nw4r::math::VEC3Dot(v0, v1);
+        tmp = v0;
+        float t = nw4r::math::VEC3Dot(tmp, clamped) - dot;
+        nw4r::math::VEC3Scale(tC, tmp, t);
+        proj.set(tC);
+        nw4r::math::VEC3Sub(diff2, clamped, proj);
+        outTmp.set(diff2);
+        *out = outTmp;
+        out->y = self->_v0AC()->y;
+    }
+    return cond;
+}
 
 extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager* self, float radius) {
     CDrawGX draw;

@@ -106,12 +106,15 @@ u32 func_804BE4AC(void) {
 // Copy the 12-byte header of resource entry [index] into dst.
 void func_804BE4B4(ScnResHead* dst, int index) {
     extern unsigned char lbl_eu_8065F428[];
-    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
-    u32 v0 = entries[index].head.field_0x00;
-    u32 v1 = entries[index].head.field_0x04;
+    const ScnResourceEntry* entries = (const ScnResourceEntry*)lbl_eu_8065F428;
+    const ScnResourceEntry* e = entries + index;
+    // First word read via the raw base+offset (retail lwzx keeps base+r0;
+    // reading through e fuses the add into an lwzux).
+    u32 v0 = *(const u32*)((const u8*)entries + (u32)index * 0x24);
+    u32 v1 = e->head.field_0x04;
     dst->field_0x04 = v1;
     dst->field_0x00 = v0;
-    dst->field_0x08 = entries[index].head.field_0x08;
+    dst->field_0x08 = e->head.field_0x08;
 }
 
 // Copy the 12-byte info block (entry +0x0C) into dst.

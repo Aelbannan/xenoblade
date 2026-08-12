@@ -207,19 +207,26 @@ extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
     return self;
 }
 
-// Complete-object destructor: destroy the layout-memory region member
-// (deleting flag -1), then the CProcess base guarded by the nested double
-// null-check (an MWCC D2-inlined-into-D1 artifact); the conditional operator
-// delete is auto-emitted from the dtor's deleting flag.
-CMenuVision::~CMenuVision() {
-    if (this != NULL) {
-        mLayoutMem.~UnkClass_8045F564();
-        if (this != 0) {
-            if (this != 0) {
-                __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
+// Complete-object destructor, forced-name form: the retail body behaves like
+// a plain function (no vptr reset, single member-dtor call) - as a real C++
+// virtual dtor MWCC adds the vptr store and double-destroys mLayoutMem.
+// The nested null-check reproduces retail's guard pair; the conditional
+// operator delete follows the deleting flag.
+extern "C" void __dl__FPv(void*);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void* __dt__11CMenuVisionFv(void* self, int flag) {
+    if (self != 0) {
+        __dt__17UnkClass_8045F564Fv((char*)self + 0x64, -1);
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
             }
         }
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
     }
+    return self;
 }
 
 extern "C" unsigned long func_801AC088() {

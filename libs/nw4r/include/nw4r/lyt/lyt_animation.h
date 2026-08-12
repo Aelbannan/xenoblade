@@ -140,7 +140,7 @@ public:
                              u16 animNum) = 0; // at 0x10
 
     virtual void Bind(Pane* pPane, bool recursive) = 0; // at 0x14
-    virtual void Bind(Material* pMaterial) = 0;         // at 0x18
+    virtual void Bind(Material* pMaterial, bool param) = 0; // at 0x18 (retail mangling ...8Materialb)
 
     virtual void Animate(u32 idx, Pane* pPane) = 0;         // at 0x1C
     virtual void Animate(u32 idx, Material* pMaterial) = 0; // at 0x20
@@ -191,7 +191,7 @@ public:
                              u16 animNum); // at 0x10
 
     virtual void Bind(Pane* pPane, bool recursive); // at 0x14
-    virtual void Bind(Material* pMaterial);         // at 0x18
+    virtual void Bind(Material* pMaterial, bool param); // at 0x18 (retail mangling ...8Materialb)
 
     virtual void Animate(u32 idx, Pane* pPane);         // at 0x1C
     virtual void Animate(u32 idx, Material* pMaterial); // at 0x20

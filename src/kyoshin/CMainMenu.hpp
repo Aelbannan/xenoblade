@@ -272,9 +272,7 @@ struct CMainMenuPlayerSpot {
 struct CMainMenuPlayer {
     void** vtable;              // 0x00 - slot 0x128 yields HP (float)
     u8 _04[0x3E9C - 0x04];
-    CMainMenuPlayerSpot spot;   // 0x3E9C
-    u8 _3EA0[0x3F60 - 0x3EA0];
-    CMainMenuPlayerSub* field_0x3F60;  // 0x3F60 - battle-state sub-object
+    CMainMenuPlayerSpot spot;   // 0x3E9C (0xC8 bytes; field_0xC4 == player+0x3F60)
 };
 
 // Cast-only iface for the player vtable: MWCC virtual dispatch emits the

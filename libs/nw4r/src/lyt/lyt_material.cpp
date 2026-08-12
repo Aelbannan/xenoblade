@@ -1192,7 +1192,7 @@ bool Material::SetupGX(bool modulate, u8 alpha) {
 }
 
 void Material::BindAnimation(AnimTransform* pAnimTrans) {
-    pAnimTrans->Bind(this);
+    pAnimTrans->Bind(this, false);
 }
 
 void Material::UnbindAnimation(AnimTransform* pAnimTrans)

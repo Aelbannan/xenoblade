@@ -29,6 +29,7 @@ extern "C" float func_80484EB0(CScnItemModel* self);
 extern "C" void func_80484E5C(CScnItemModel* self, float value);
 extern "C" void func_80485684(CScnItemModel* self, u32 param);
 extern "C" void func_80482B3C(CScnItemModel* self, u32 param);
+extern "C" u32 func_804842B0(CScnItemModel* node);
 
 // __ct__CScnItemModel: CScnItemModel constructor (retail symbol
 // __ct__CScnItemModel). Fragment-function form like __dt__13CScnItemModelFv:
@@ -531,7 +532,334 @@ extern "C" void func_804838DC(CScnItemModel* self, u32 param) {
     }
 }
 
-void func_804839D4(){}
+// func_804839D4: bind the chr animation resource to the model tree. After an
+// entry guard on the resFile's chr-entry count vs `index`, walks the 7C4
+// chain re-checking the count at each of the first 3 nodes (a failed check
+// clears the result to 0 but still runs the trailing 0x80 flag on self).
+// Deeper than 3 the function recurses on the next node. When the chain ends
+// at n1/n2 the node is bound directly: func_804842B0 finds the leaf (the
+// deep walk), func_80497190 binds the resource on the node's 0xC sub-object,
+// and the 0x200 flag is set iff the first leaf is null but the re-walk finds
+// a leaf. When self has no 7C4 child, the deep walk runs from the 7C4 / 7C8
+// / self chain (func_804842B0 shape inlined twice) and self gets the same
+// 0x200 treatment, then self's 0x80 flag is set and the resource result is
+// returned. extern "C" keeps the call reloc names verbatim.
+extern "C" u32 func_804839D4(CScnItemModel* self, CScnItemAnimResFile* resFile,
+                             int index, u32 c, s32 f, u32 g, u32 h) {
+    if ((int)resFile->resFile.GetResAnmChrNumEntries() <= index || index < 0) {
+        return 0;
+    }
+    u32 result;
+    CScnItemModel* n1 = self->field_0x7C4;
+    if (n1 != 0) {
+        if ((int)resFile->resFile.GetResAnmChrNumEntries() <= index || index < 0) {
+            result = 0;
+        } else {
+            CScnItemModel* n2 = n1->field_0x7C4;
+            if (n2 != 0) {
+                if ((int)resFile->resFile.GetResAnmChrNumEntries() <= index || index < 0) {
+                    result = 0;
+                } else {
+                    CScnItemModel* n3 = n2->field_0x7C4;
+                    if (n3 != 0) {
+                        result = func_804839D4(n3, resFile, index, c, f, g, h);
+                    } else {
+                        u32 leaf = func_804842B0(n2);
+                        result = func_80497190(n2->field_0xC, resFile, index, c, f, g, h);
+                        if (leaf == 0 && func_804842B0(n2) != 0) {
+                            n2->flags7A4 |= 0x200;
+                        } else {
+                            n2->flags7A4 &= ~0x200;
+                        }
+                    }
+                    n2->flags7A4 |= 0x80;
+                }
+            } else {
+                u32 leaf = func_804842B0(n1);
+                result = func_80497190(n1->field_0xC, resFile, index, c, f, g, h);
+                if (leaf == 0 && func_804842B0(n1) != 0) {
+                    n1->flags7A4 |= 0x200;
+                } else {
+                    n1->flags7A4 &= ~0x200;
+                }
+            }
+            n1->flags7A4 |= 0x80;
+        }
+    } else {
+        // deep walk #1: leaf of the tree below self. E(base, 3) descent
+        // (func_804842B0 shape, one level shallower than the helper: the
+        // depth-3 handle calls func_804842B0 itself; H budgets 0..2).
+        u32 r22;
+        CScnItemModel* base = self->field_0x7C4;
+        if (base != 0) {
+            CScnItemModel* e1 = base->field_0x7C4;
+            if (e1 != 0) {
+                CScnItemModel* e2 = e1->field_0x7C4;
+                if (e2 != 0) {
+                    CScnItemModel* e3 = e2->field_0x7C4;
+                    if (e3 != 0) {
+                        r22 = func_804842B0(e3);
+                    } else if (e2->field_0x7C8 != 0) {
+                        r22 = func_804842B0(e2->field_0x7C8);
+                    } else {
+                        r22 = func_804978B8(e2->field_0xC);
+                    }
+                } else {
+                    CScnItemModel* m1 = e1->field_0x7C8;
+                    if (m1 != 0) {
+                        CScnItemModel* d1 = m1->field_0x7C4;
+                        if (d1 != 0) {
+                            r22 = func_804842B0(d1);
+                        } else if (m1->field_0x7C8 != 0) {
+                            r22 = func_804842B0(m1->field_0x7C8);
+                        } else {
+                            r22 = func_804978B8(m1->field_0xC);
+                        }
+                    } else {
+                        r22 = func_804978B8(e1->field_0xC);
+                    }
+                }
+            } else {
+                CScnItemModel* m1 = base->field_0x7C8;
+                if (m1 != 0) {
+                    CScnItemModel* d1 = m1->field_0x7C4;
+                    if (d1 != 0) {
+                        CScnItemModel* d2 = d1->field_0x7C4;
+                        if (d2 != 0) {
+                            r22 = func_804842B0(d2);
+                        } else if (d1->field_0x7C8 != 0) {
+                            r22 = func_804842B0(d1->field_0x7C8);
+                        } else {
+                            r22 = func_804978B8(d1->field_0xC);
+                        }
+                    } else {
+                        CScnItemModel* m2 = m1->field_0x7C8;
+                        if (m2 != 0) {
+                            CScnItemModel* e1b = m2->field_0x7C4;
+                            if (e1b != 0) {
+                                r22 = func_804842B0(e1b);
+                            } else if (m2->field_0x7C8 != 0) {
+                                r22 = func_804842B0(m2->field_0x7C8);
+                            } else {
+                                r22 = func_804978B8(m2->field_0xC);
+                            }
+                        } else {
+                            r22 = func_804978B8(m1->field_0xC);
+                        }
+                    }
+                } else {
+                    r22 = func_804978B8(base->field_0xC);
+                }
+            }
+        } else {
+            CScnItemModel* base2 = self->field_0x7C8;
+            if (base2 != 0) {
+                CScnItemModel* e1 = base2->field_0x7C4;
+                if (e1 != 0) {
+                    CScnItemModel* e2 = e1->field_0x7C4;
+                    if (e2 != 0) {
+                        CScnItemModel* e3 = e2->field_0x7C4;
+                        if (e3 != 0) {
+                            r22 = func_804842B0(e3);
+                        } else if (e2->field_0x7C8 != 0) {
+                            r22 = func_804842B0(e2->field_0x7C8);
+                        } else {
+                            r22 = func_804978B8(e2->field_0xC);
+                        }
+                    } else {
+                        CScnItemModel* m1 = e1->field_0x7C8;
+                        if (m1 != 0) {
+                            CScnItemModel* d1 = m1->field_0x7C4;
+                            if (d1 != 0) {
+                                r22 = func_804842B0(d1);
+                            } else if (m1->field_0x7C8 != 0) {
+                                r22 = func_804842B0(m1->field_0x7C8);
+                            } else {
+                                r22 = func_804978B8(m1->field_0xC);
+                            }
+                        } else {
+                            r22 = func_804978B8(e1->field_0xC);
+                        }
+                    }
+                } else {
+                    CScnItemModel* m1 = base2->field_0x7C8;
+                    if (m1 != 0) {
+                        CScnItemModel* d1 = m1->field_0x7C4;
+                        if (d1 != 0) {
+                            CScnItemModel* d2 = d1->field_0x7C4;
+                            if (d2 != 0) {
+                                r22 = func_804842B0(d2);
+                            } else if (d1->field_0x7C8 != 0) {
+                                r22 = func_804842B0(d1->field_0x7C8);
+                            } else {
+                                r22 = func_804978B8(d1->field_0xC);
+                            }
+                        } else {
+                            CScnItemModel* m2 = m1->field_0x7C8;
+                            if (m2 != 0) {
+                                CScnItemModel* e1b = m2->field_0x7C4;
+                                if (e1b != 0) {
+                                    r22 = func_804842B0(e1b);
+                                } else if (m2->field_0x7C8 != 0) {
+                                    r22 = func_804842B0(m2->field_0x7C8);
+                                } else {
+                                    r22 = func_804978B8(m2->field_0xC);
+                                }
+                            } else {
+                                r22 = func_804978B8(m1->field_0xC);
+                            }
+                        }
+                    } else {
+                        r22 = func_804978B8(base2->field_0xC);
+                    }
+                }
+            } else {
+                r22 = func_804978B8(self->field_0xC);
+            }
+        }
+        result = func_80497190(self->field_0xC, resFile, index, c, f, g, h);
+        if (r22 == 0) {
+            // deep walk #2: re-walk when the first leaf was null.
+            u32 w2;
+            CScnItemModel* base = self->field_0x7C4;
+            if (base != 0) {
+                CScnItemModel* e1 = base->field_0x7C4;
+                if (e1 != 0) {
+                    CScnItemModel* e2 = e1->field_0x7C4;
+                    if (e2 != 0) {
+                        CScnItemModel* e3 = e2->field_0x7C4;
+                        if (e3 != 0) {
+                            w2 = func_804842B0(e3);
+                        } else if (e2->field_0x7C8 != 0) {
+                            w2 = func_804842B0(e2->field_0x7C8);
+                        } else {
+                            w2 = func_804978B8(e2->field_0xC);
+                        }
+                    } else {
+                        CScnItemModel* m1 = e1->field_0x7C8;
+                        if (m1 != 0) {
+                            CScnItemModel* d1 = m1->field_0x7C4;
+                            if (d1 != 0) {
+                                w2 = func_804842B0(d1);
+                            } else if (m1->field_0x7C8 != 0) {
+                                w2 = func_804842B0(m1->field_0x7C8);
+                            } else {
+                                w2 = func_804978B8(m1->field_0xC);
+                            }
+                        } else {
+                            w2 = func_804978B8(e1->field_0xC);
+                        }
+                    }
+                } else {
+                    CScnItemModel* m1 = base->field_0x7C8;
+                    if (m1 != 0) {
+                        CScnItemModel* d1 = m1->field_0x7C4;
+                        if (d1 != 0) {
+                            CScnItemModel* d2 = d1->field_0x7C4;
+                            if (d2 != 0) {
+                                w2 = func_804842B0(d2);
+                            } else if (d1->field_0x7C8 != 0) {
+                                w2 = func_804842B0(d1->field_0x7C8);
+                            } else {
+                                w2 = func_804978B8(d1->field_0xC);
+                            }
+                        } else {
+                            CScnItemModel* m2 = m1->field_0x7C8;
+                            if (m2 != 0) {
+                                CScnItemModel* e1b = m2->field_0x7C4;
+                                if (e1b != 0) {
+                                    w2 = func_804842B0(e1b);
+                                } else if (m2->field_0x7C8 != 0) {
+                                    w2 = func_804842B0(m2->field_0x7C8);
+                                } else {
+                                    w2 = func_804978B8(m2->field_0xC);
+                                }
+                            } else {
+                                w2 = func_804978B8(m1->field_0xC);
+                            }
+                        }
+                    } else {
+                        w2 = func_804978B8(base->field_0xC);
+                    }
+                }
+            } else {
+                CScnItemModel* base2 = self->field_0x7C8;
+                if (base2 != 0) {
+                    CScnItemModel* e1 = base2->field_0x7C4;
+                    if (e1 != 0) {
+                        CScnItemModel* e2 = e1->field_0x7C4;
+                        if (e2 != 0) {
+                            CScnItemModel* e3 = e2->field_0x7C4;
+                            if (e3 != 0) {
+                                w2 = func_804842B0(e3);
+                            } else if (e2->field_0x7C8 != 0) {
+                                w2 = func_804842B0(e2->field_0x7C8);
+                            } else {
+                                w2 = func_804978B8(e2->field_0xC);
+                            }
+                        } else {
+                            CScnItemModel* m1 = e1->field_0x7C8;
+                            if (m1 != 0) {
+                                CScnItemModel* d1 = m1->field_0x7C4;
+                                if (d1 != 0) {
+                                    w2 = func_804842B0(d1);
+                                } else if (m1->field_0x7C8 != 0) {
+                                    w2 = func_804842B0(m1->field_0x7C8);
+                                } else {
+                                    w2 = func_804978B8(m1->field_0xC);
+                                }
+                            } else {
+                                w2 = func_804978B8(e1->field_0xC);
+                            }
+                        }
+                    } else {
+                        CScnItemModel* m1 = base2->field_0x7C8;
+                        if (m1 != 0) {
+                            CScnItemModel* d1 = m1->field_0x7C4;
+                            if (d1 != 0) {
+                                CScnItemModel* d2 = d1->field_0x7C4;
+                                if (d2 != 0) {
+                                    w2 = func_804842B0(d2);
+                                } else if (d1->field_0x7C8 != 0) {
+                                    w2 = func_804842B0(d1->field_0x7C8);
+                                } else {
+                                    w2 = func_804978B8(d1->field_0xC);
+                                }
+                            } else {
+                                CScnItemModel* m2 = m1->field_0x7C8;
+                                if (m2 != 0) {
+                                    CScnItemModel* e1b = m2->field_0x7C4;
+                                    if (e1b != 0) {
+                                        w2 = func_804842B0(e1b);
+                                    } else if (m2->field_0x7C8 != 0) {
+                                        w2 = func_804842B0(m2->field_0x7C8);
+                                    } else {
+                                        w2 = func_804978B8(m2->field_0xC);
+                                    }
+                                } else {
+                                    w2 = func_804978B8(m1->field_0xC);
+                                }
+                            }
+                        } else {
+                            w2 = func_804978B8(base2->field_0xC);
+                        }
+                    }
+                } else {
+                    w2 = func_804978B8(self->field_0xC);
+                }
+            }
+            if (w2 != 0) {
+                self->flags7A4 |= 0x200;
+            } else {
+                self->flags7A4 &= ~0x200;
+            }
+        } else {
+            self->flags7A4 &= ~0x200;
+        }
+    }
+    self->flags7A4 |= 0x80;
+    return result;
+}
 
 // func_80484164: walk the field_0x7C4 chain binding the chr animation
 // resource. At each of the first 4 nodes (self..n3) the resFile's entry

@@ -2,6 +2,13 @@
 
 #include <types.h>
 
+// bdat string lookup + column-name string block used by func_80145BC4
+// (same imports as CMenuLandTelop). getBdatStringColumnValue is a genuine
+// C-ABI SDK helper (declared extern "C" in CfBdat.hpp / CfObjectPoint.hpp).
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
+extern u8* lbl_eu_806640E0;    // bdat file pointer (.sbss/.sdata)
+extern char lbl_eu_805018A8[]; // bdat column-name string block (.rodata)
+
 namespace cf {
     class UnkClass_CActorParam15E0;
     struct CBattleStateSrcEntry;
@@ -26,6 +33,14 @@ namespace cf {
         u16 unk2C; // 0x2C
         u16 unk2E; // 0x2E
         u32 unk30; // 0x30
+    };
+
+    // View of the 0x68-slot status-entry array at object+0x8 (stride 0x34),
+    // used by func_80149154 / func_801491A4 (retail keeps the entry offsets
+    // as load/return displacements instead of materializing a base pointer).
+    struct CBattleStateEntryArray {
+        u8 pad8[0x8]; // +0x0..+0x7
+        CBattleStateEntry entries[0x68]; // +0x8
     };
 
     // size: 0x15DC

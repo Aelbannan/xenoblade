@@ -186,9 +186,34 @@ extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(cf::CfObjec
     if (o) *(u16*)((u8*)o + 0xde) = v;
 }
 
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc12() {}
+void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc7() {
+    // Dispatch to the NPC movement-target handler (tail call, r3 only).
+    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
+    if (target != 0) {
+        func_800948F8(target);
+    }
+}
 
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc13() {}
+void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc8() {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
+    if (target != 0) {
+        func_80094CE8(target);
+    }
+}
+
+void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc12() {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
+    if (target != 0) {
+        func_80094DF4(target);
+    }
+}
+
+void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc13() {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
+    if (target != 0) {
+        func_80094E44(target);
+    }
+}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {}
 
@@ -413,7 +438,12 @@ extern "C" void func_800BE12C() {}
 // retail: lwz r3,0xB0(r3); lhz r3,0xC(r3); blr
 extern "C" u16 func_800BE93C(void* self) { return *(u16*)((u8*)*(void**)((u8*)self + 0xB0) + 0xC); }
 extern "C" void func_800BE1A4() {}
-extern "C" void func_800BE28C() {}
+void func_800BE28C(cf::CfObjectMove* self) {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
+    if (target != 0) {
+        func_80094FC8(target);
+    }
+}
 extern "C" void func_800BE33C() {}
 extern "C" void func_800BE3E8() {}
 extern "C" void func_800BE824() {}

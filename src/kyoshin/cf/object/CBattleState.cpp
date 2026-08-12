@@ -1,7 +1,9 @@
 #include "kyoshin/cf/object/CBattleState.hpp"
 
-void* memset(void* dest, int val, size_t count);
-void* memcpy(void* dest, const void* src, size_t count);
+// C-ABI runtime helpers: extern "C" so MWCC emits the plain `memset`/`memcpy`
+// reloc names (retail `bl memset`; C++ mangling would give memset__FPviUl).
+extern "C" void* memset(void* dest, int val, size_t count);
+extern "C" void* memcpy(void* dest, const void* src, size_t count);
 
 // sdata2 float constants used by CBattleState_UnkVirtualFunc5
 extern const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
@@ -13,6 +15,7 @@ extern u8 lbl_eu_80662248[8];      // .sdata object; CBattleState_UnkVirtualFunc
 
 void func_80109784(void* ptr, u32 id, int arg);
 void func_8013DB6C(int a, u32 id, int b, int c);
+extern "C" int func_80148778(cf::CBattleState* self, u32 id);
 
 namespace cf {
 
@@ -122,15 +125,16 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
     int n;
     u32 one;
     u32 bit;
+    u32 id;
 
     // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
     // offset = (id >> 3) & ~3, bit position = id & 0x1F).
+    id = arg->unk0C;
     one = 1;
     entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
-    p = entries;
-    bit = one << (arg->unk0C & 0x1F);
-    *(u32*)(unk15AC + (((u32)arg->unk0C >> 3) & ~3u)) |= bit;
-    for (n = 8; n != 0; n--, p++) {
+    bit = one << (id & 0x1F);
+    *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= bit;
+    for (p = entries, n = 8; n != 0; n--, p++) {
         if (p->unk0C == arg->unk0C) {
             if (p->unk10 < arg->unk10) {
                 p->unk10 = arg->unk10;
@@ -237,6 +241,31 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
     return (unk6 & mask) != 0;
 }
 
+// Cast-only SI iface for the vt+0x4C tail-call (UnkVirtualFunc18; same
+// RTTI-omit pattern as BattleStateV6If). Virtual dispatch emits retail
+// lwz r12,0(this) / lwz r12,0x4c(r12) / bctr instead of coloring the
+// vptr as r5 like a function-pointer vslot load.
+struct BattleStateV11If {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
+};
+
 // Batch 2026-07-14h: battlestate-vfunc11 owns CBattleState_UnkVirtualFunc11
 // exclusively. Do not touch the ctor / vfunc6 / other vfuncs above.
 //
@@ -250,56 +279,55 @@ int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
 void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
-    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
     int i;
     cf::CBattleStateEntry* entry;
 
     entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
-    for (i = 0; i < 0x68; i++, entry++) {
+    i = 0;
+    do {
         u32 id;
         int stillActive;
 
-        if ((entry->unk30 & mask) == 0) {
-            continue;
-        }
+        if ((entry->unk30 & mask) != 0) {
+            reinterpret_cast<BattleStateV11If*>(this)->vf4C(entry);
+            id = entry->unk0C;
+            memset(entry, 0, 0x34);
 
-        ((Vfunc18Fn)(*(void***)this)[19])(this, entry);
-        id = entry->unk0C;
-        memset(entry, 0, 0x34);
+            if (id >= 0x12f) {
+                stillActive = 0;
+            } else {
+                // Retail: scan base recomputed from `this` into volatile r4
+                // (mr r4, r29) with entry offsets folded (0x14/0x48/...) and a
+                // dead +7 trip counter -- MWCC's auto-unroll of the linear 0x68
+                // scan into a 13x8 mtctr/bdnz loop (same shape as the matched
+                // func_801490A0 / vfunc29). Indexing v->entries[g] keeps the
+                // base `this` so no separate this+8 value needs a callee-saved
+                // reg; the post-loop stillActive=0 + goto mirrors the retail
+                // `li r0,0` fall-through so the merge coalesces to one register.
+                cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)this;
+                int g;
 
-        if (id >= 0x12f) {
-            stillActive = 0;
-        } else {
-            // Soft-cap (CODE_MATCH ~96.2%): retail keeps a dead trip counter in
-            // r3 (li 0 / addi +7 / unused after bdnz) alongside found in r0 and
-            // scan base in r4. MWCC coalesces found into r3 and DSE's any dead
-            // trip (`trip&0`, `trip^trip`, comma) or blows the shape with
-            // volatile / `trip>1000` boolify. Instruction shapes, layout, and
-            // the rlwinm bit clear otherwise match -- remaining gap is Chaitin
-            // register coloring only (see MWCC_REFERENCE).
-            cf::CBattleStateEntry* p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
-            int g;
+                stillActive = 0;
+                for (g = 0; g < 0x68; g++) {
+                    if (id == v->entries[g].unk0C) {
+                        stillActive = 1;
+                        goto scan_done;
+                    }
+                }
+                stillActive = 0;
+            scan_done:
+                ;
+            }
 
-            stillActive = 0;
-            for (g = 13; g != 0; g--) {
-                if (id == p[0].unk0C) { stillActive = 1; break; }
-                if (id == p[1].unk0C) { stillActive = 1; break; }
-                if (id == p[2].unk0C) { stillActive = 1; break; }
-                if (id == p[3].unk0C) { stillActive = 1; break; }
-                if (id == p[4].unk0C) { stillActive = 1; break; }
-                if (id == p[5].unk0C) { stillActive = 1; break; }
-                if (id == p[6].unk0C) { stillActive = 1; break; }
-                if (id == p[7].unk0C) { stillActive = 1; break; }
-                p += 8;
+            if (!stillActive) {
+                u8* wordPtr = this->unk15AC + ((id >> 3) & ~3u);
+                *(u32*)wordPtr &= ~(1u << (id & 0x1F));
             }
         }
 
-        if (!stillActive) {
-            u8* wordPtr = this->unk15AC + ((id >> 3) & ~3u);
-            *(u32*)wordPtr &= ~(1u << (id & 0x1F));
-        }
-    }
+        i++;
+        entry++;
+    } while (i < 0x68);
 }
 
 // Batch 2026-07-14h: battlestate-vfunc31 owns CBattleState_UnkVirtualFunc31
@@ -1897,7 +1925,168 @@ F_slot_done:
     ;
 }
 
-void func_80145C00(){}
+// func_80145C00: r3 = status id. Classifies the id through the same
+// cmpwi/beq/bge decision tree as CBattleState_UnkVirtualFunc8 (kind 0/1/2/3)
+// and returns (kind == 3) via the branchless subi/cntlzw/srwi boolify.
+// Flat if+goto mirrors retail's tree 1:1; shared kind leaves keep the
+// single merge at the end (retail 0x801467B0).
+extern "C" bool func_80145C00(int value) {
+    int kind;
+
+    if (value >= 0xd4)
+        goto L_E8;
+    if (value >= 0x3e)
+        goto L_80;
+    if (value >= 0x2c)
+        goto L_54;
+    if (value == 0x27)
+        goto kind0;
+    if (value >= 0x27)
+        goto L_48;
+    if (value >= 4)
+        goto L_3C;
+    if (value >= 2)
+        goto kind0;
+    goto kind2;
+
+L_3C:
+    if (value >= 0x14)
+        goto kind2;
+    goto kind1;
+
+L_48:
+    if (value >= 0x2a)
+        goto kind1;
+    goto kind2;
+
+L_54:
+    if (value == 0x36)
+        goto kind0;
+    if (value >= 0x36)
+        goto L_74;
+    if (value >= 0x35)
+        goto kind2;
+    if (value >= 0x33)
+        goto kind0;
+    goto kind2;
+
+L_74:
+    if (value >= 0x3c)
+        goto kind1;
+    goto kind2;
+
+L_80:
+    if (value == 0x5f)
+        goto kind0;
+    if (value >= 0x5f)
+        goto L_BC;
+    if (value >= 0x52)
+        goto L_A8;
+    if (value >= 0x46)
+        goto kind2;
+    if (value >= 0x44)
+        goto kind0;
+    goto kind2;
+
+L_A8:
+    if (value >= 0x5d)
+        goto kind2;
+    if (value >= 0x58)
+        goto kind0;
+    goto kind1;
+
+L_BC:
+    if (value == 0x93)
+        goto kind0;
+    if (value >= 0x93)
+        goto L_DC;
+    if (value >= 0x6a)
+        goto kind2;
+    if (value >= 0x65)
+        goto kind1;
+    goto kind2;
+
+L_DC:
+    if (value >= 0xce)
+        goto kind0;
+    goto kind2;
+
+L_E8:
+    if (value >= 0x103)
+        goto L_48b;
+    if (value == 0xeb)
+        goto kind2;
+    if (value >= 0xeb)
+        goto L_24;
+    if (value >= 0xdf)
+        goto L_10;
+    if (value == 0xdc)
+        goto kind1;
+    goto kind2;
+
+L_10:
+    if (value >= 0xea)
+        goto kind3;
+    if (value >= 0xe3)
+        goto kind2;
+    goto kind1;
+
+L_24:
+    if (value == 0xf7)
+        goto kind0;
+    if (value >= 0xf7)
+        goto L_3Cb;
+    if (value >= 0xed)
+        goto kind3;
+    goto kind0;
+
+L_3Cb:
+    if (value == 0xff)
+        goto kind2;
+    goto kind3;
+
+L_48b:
+    if (value == 0x117)
+        goto kind1;
+    if (value >= 0x117)
+        goto L_7C;
+    if (value >= 0x109)
+        goto L_68;
+    if (value == 0x106)
+        goto kind3;
+    goto kind2;
+
+L_68:
+    if (value >= 0x111)
+        goto kind3;
+    if (value >= 0x10d)
+        goto kind2;
+    goto kind3;
+
+L_7C:
+    if (value == 0x12d)
+        goto kind0;
+    if (value >= 0x12d)
+        goto kind2;
+    if (value == 0x11e)
+        goto kind0;
+    goto kind2;
+
+kind0:
+    kind = 0;
+    goto kind_done;
+kind1:
+    kind = 1;
+    goto kind_done;
+kind3:
+    kind = 3;
+    goto kind_done;
+kind2:
+    kind = 2;
+kind_done:
+
+    return kind == 3;
+}
 extern "C" bool func_80145DBC(int value) { int result; switch (value) { case 2: case 3: case 39: case 51: case 52: case 54: case 68: case 69: case 88: case 89: case 90: case 91: case 92: case 95: case 147: case 206: case 207: case 208: case 209: case 210: case 211: case 236: case 247: case 286: case 301: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 42: case 43: case 60: case 61: case 82: case 83: case 84: case 85: case 86: case 87: case 101: case 102: case 103: case 104: case 105: case 220: case 223: case 224: case 225: case 226: case 279: result = 1; break; case 234: case 237: case 238: case 239: case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 256: case 257: case 258: case 262: case 265: case 266: case 267: case 268: case 273: case 274: case 275: case 276: case 277: case 278: result = 3; break; default: result = 2; break; } return result == 1; }
 void func_80145F78(){}
 extern "C" bool func_80146148(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
@@ -1906,7 +2095,29 @@ extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
 extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0; }
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
 extern "C" void CBattleState_UnkVirtualFunc18__Q22cf12CBattleStateFv() {}
-void cf::CBattleState::CBattleState_UnkVirtualFunc12() {}
+
+// Batch 2026-08: battlestate-vfunc12 owns CBattleState_UnkVirtualFunc12
+// exclusively. Retail symbol mangles Fv but the caller leaves the status id
+// in r4 (fake-Fv ABI, same as UnkVirtualFunc6/7/9). extern "C" + explicit
+// self/id params emits the exact Fv symbol (MWCC_REFERENCE §3908). Walks the
+// 8-entry array at self+0x1388 (stride 0x34); on an id match, clears the
+// whole slot via a tail-call to memset (retail `b memset`).
+extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {
+    if (id >= 0x12f) {
+        return;
+    }
+    if (id == 0) {
+        return;
+    }
+
+    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)self + 0x1388);
+    for (u32 i = 0; i < 8; i++, entry++) {
+        if (entry->unk0C == id) {
+            memset(entry, 0, 0x34);
+            return;
+        }
+    }
+}
 void* cf::CBattleState::CBattleState_UnkVirtualFunc13(int index) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)this + 0x8))[index];
 }
@@ -1920,42 +2131,115 @@ extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(cf::CBattl
 extern "C" void* CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(void* self, int idx) {
     return (char*)self + idx * 0x34 + 0xd08;
 }
-void func_801490A0(){}
-extern "C" void* func_80149154(void* self, unsigned int id) {
-    if (id >= 0x12Fu)
-        return 0;
+// func_801490A0: r3 = self, r4 = id. Counts the 0x68 status slots at
+// self+0x8 (stride 0x34) whose unk0C halfword equals id; ids >= 0x12f
+// return 0 immediately. Retail keeps the count as a 13x8 unrolled
+// mtctr/bdnz loop with a dead +7 trip counter.
+int func_801490A0(cf::CBattleState* self, u32 id) {
+    int count;
 
-    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)self + 0x8);
-    for (unsigned int i = 0; i < 0x68u; ++i) {
-        if (id == entry->unk0C)
-            return (unsigned char*)entry;
-        ++entry;
+    if (id >= 0x12f) {
+        return 0;
+    }
+
+    count = 0;
+    {
+        cf::CBattleStateEntry* p = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+        int i;
+
+        for (i = 0; i < 0x68; i++, p++) {
+            if (p->unk0C == id) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+// Batch 2026-08: battlestate-idx-find owns func_80149154 / func_801491A4
+// (byte-identical siblings). Bare retail symbols -> extern "C" free
+// functions. The caller leaves the status id in r4; this scans the 0x68
+// entry slots at self+8 (stride 0x34) and returns &slot whose unk0C id
+// matches, else 0. Retail keeps a compact mtctr/bdnz loop with the return
+// recomputed from the index (`mulli`/`add`/`addi`), so the body indexes
+// base[i] rather than walking a pointer.
+extern "C" cf::CBattleStateEntry* func_80149154(cf::CBattleState* self, unsigned int id) {
+    if (id >= 0x12f) {
+        return 0;
+    }
+
+    cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
+    for (unsigned int i = 0; i < 0x68; i++) {
+        if (v->entries[i].unk0C == id) {
+            return &v->entries[i];
+        }
     }
     return 0;
 }
-extern "C" void* func_801491A4(void* self, unsigned int id) {
-    if (id >= 0x12f) return 0;
-    cf::CBattleStateEntry* entry = (cf::CBattleStateEntry*)((u8*)self + 0x8);
-    for (unsigned int i = 0; i < 0x68; ++i) {
-        if (id == entry->unk0C)
-            return (unsigned char*)entry;
-        ++entry;
+extern "C" cf::CBattleStateEntry* func_801491A4(cf::CBattleState* self, unsigned int id) {
+    if (id >= 0x12f) {
+        return 0;
+    }
+
+    cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
+    for (unsigned int i = 0; i < 0x68; i++) {
+        if (v->entries[i].unk0C == id) {
+            return &v->entries[i];
+        }
     }
     return 0;
 }
-void func_801491F4(){}
-extern "C" void* func_80149330(void* base, u32 a, u32 b, u32 c, u32 d) {
-    if (a >= 0x12f) return 0;
-    for (int i = 0; i < 0x1a; i++) {
-        u8* e = (u8*)base + i * 0xd0;
-        if (*(u16*)(e + 0x14) == a && *(u32*)(e + 0x8) == b && *(u32*)(e + 0xc) == c && (d == 0 || *(u32*)(e + 0x10) == d))
-            return (u8*)base + (i * 4 + 0) * 0x34 + 8;
-        if (*(u16*)(e + 0x48) == a && *(u32*)(e + 0x3c) == b && *(u32*)(e + 0x40) == c && (d == 0 || *(u32*)(e + 0x44) == d))
-            return (u8*)base + (i * 4 + 1) * 0x34 + 8;
-        if (*(u16*)(e + 0x7c) == a && *(u32*)(e + 0x70) == b && *(u32*)(e + 0x74) == c && (d == 0 || *(u32*)(e + 0x78) == d))
-            return (u8*)base + (i * 4 + 2) * 0x34 + 8;
-        if (*(u16*)(e + 0xb0) == a && *(u32*)(e + 0xa4) == b && *(u32*)(e + 0xa8) == c && (d == 0 || *(u32*)(e + 0xac) == d))
-            return (u8*)base + (i * 4 + 3) * 0x34 + 8;
+// func_801491F4: r3 = self, r4 = id. Walks the 0x68 status slots at
+// self+0x8 (stride 0x34) and returns the slot whose unk0C halfword equals
+// id with the MAXIMUM unk10 (s32). ids >= 0x12f return 0 immediately;
+// no match also returns 0. Retail keeps the scan as an mtctr/bdnz loop
+// (26 groups x 4 entries) with the return recomputed from the running
+// index (mulli/add/addi -- same convention as func_80149154).
+extern "C" cf::CBattleStateEntry* func_801491F4(cf::CBattleState* self, unsigned int id) {
+    int best;
+    unsigned int i;
+
+    if (id >= 0x12f) {
+        return 0;
+    }
+
+    best = -1;
+    cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
+    for (i = 0; i < 0x68; i++) {
+        if (v->entries[i].unk0C == id) {
+            if (best >= 0) {
+                if (v->entries[i].unk10 > v->entries[best].unk10) {
+                    best = i;
+                }
+            } else {
+                best = i;
+            }
+        }
+    }
+
+    if (best >= 0) {
+        return &v->entries[best];
+    }
+    return 0;
+}
+// func_80149330: r3 = self, r4 = id, r5 = a, r6 = b, r7 = c. Scans the
+// 0x68 status slots at self+0x8 (stride 0x34) for the first slot whose
+// unk0C == id, unk00 == a, unk04 == b and (c == 0 || unk08 == c); returns
+// &slot or 0. ids >= 0x12f return 0. Retail keeps an mtctr/bdnz loop
+// (26 groups x 4 entries) with a running entry index recomputed via
+// mulli/add/addi on success.
+extern "C" cf::CBattleStateEntry* func_80149330(cf::CBattleState* self, unsigned int id, unsigned int a, unsigned int b, unsigned int c) {
+    unsigned int i;
+
+    if (id >= 0x12f) {
+        return 0;
+    }
+
+    cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
+    for (i = 0; i < 0x68; i++) {
+        if (v->entries[i].unk0C == id && v->entries[i].unk00 == a && v->entries[i].unk04 == b && (c == 0 || v->entries[i].unk08 == c)) {
+            return &v->entries[i];
+        }
     }
     return 0;
 }
@@ -1968,9 +2252,121 @@ extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv(cf::CBattle
 int cf::CBattleState::CBattleState_UnkVirtualFunc3() { return (int)&lbl_eu_80662248; }
 extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0; }
 
-void func_80145BC4(){}
-void func_80146300(){}
-void cf::CBattleState::CBattleState_UnkVirtualFunc4() {}
-void cf::CBattleState::CBattleState_UnkVirtualFunc9() {}
-void cf::CBattleState::CBattleState_UnkVirtualFunc7() {}
-void func_80148778(){}
+// Batch 2026-08: battlestate-vfunc4 owns CBattleState_UnkVirtualFunc4
+// exclusively. Retail symbol mangles Fv but the caller leaves the status id
+// in r4 (fake-Fv ABI). Builds a zeroed CBattleStateEntry on the stack with
+// unk0C = id and unk30 bit 0 set, then dispatches through vt+0x18
+// (UnkVirtualFunc5) to enter the new status.
+extern "C" u8 func_80145BC4(int index) {
+    // Low-byte of the bdat column value: retail truncates via stw/lbz (a
+    // memory round-trip), which MWCC only emits for a union member read -
+    // a plain (u8) cast compiles to rlwinm instead.
+    union {
+        u32 w;
+        u8 b;
+    } u;
+    u.w = getBdatStringColumnValue(lbl_eu_806640E0, &lbl_eu_805018A8[0xf], index);
+    return u.b;
+}
+extern "C" void CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {
+    if (id >= 0x12f) {
+        return;
+    }
+    if (id == 0) {
+        return;
+    }
+
+    cf::CBattleStateEntry entry;
+    memset(&entry, 0, sizeof(entry));
+    entry.unk0C = (u16)id;
+    entry.unk30 |= 1;
+    self->CBattleState_UnkVirtualFunc5(&entry);
+}
+// func_80146300: r3 = id, r4 = flag. When flag != 0 the three always-on ids
+// 0xd5/0x107/0xdd return true. When flag == 0, ids in [0xd5, 0x107] are
+// checked against a 64-bit bitmask: (1ULL << (id - 0xd5)) must land on bit
+// 0, 8, 10, 11, 12 or 50 (mask 0x0004000000001D01 -- lo word andi 0x1D01,
+// hi word bit 18 folded into retail's rlwimi r0,r3,0,13,13). Two separate
+// result locals so the no-call path stays in r0 while the __shl2i path
+// uses r31 (live across bl).
+int func_80146300(u32 id, u32 flag) {
+    if (flag != 0) {
+        int r = 0;
+
+        if (id == 0xd5 || id == 0x107 || id == 0xdd) {
+            r = 1;
+        }
+        return r;
+    } else {
+        int r = 0;
+
+        if (id - 0xd5 <= 0x32) {
+            if ((1ULL << (id - 0xd5)) & 0x0004000000001D01ULL) {
+                r = 1;
+            }
+        }
+        return r;
+    }
+}
+
+// Batch 2026-08: battlestate-vfunc9 owns CBattleState_UnkVirtualFunc9
+// exclusively. Retail symbol mangles Fv but the caller leaves the slot
+// index in r4 (fake-Fv ABI, same as UnkVirtualFunc7/12). Copies the
+// 0x34-byte status slot at self + 0x8 + id*0x34 to a stack entry
+// (13-word copy) and dispatches it through vt+0x24 (UnkVirtualFunc8).
+// No bounds check on id in retail. extern "C" + explicit self/id params
+// emits the exact Fv symbol (vfunc12 precedent). The retail copy is a raw
+// 13-word block (lwz/stw pairs): struct assignment would emit per-field
+// widths (lhz/lha) and memcpy would call out -- explicit u32-pair copies
+// reproduce the word copy (same convention as vfunc8/10).
+extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, u32 id) {
+    // Pure-u32 block view: a struct copy of this shape makes MWCC's block
+    // copy backend emit the paired lwz/stw schedule with retail's r5/r0
+    // allocation (a struct copy of CBattleStateEntry itself would emit
+    // per-field-width lhz/lha copies instead).
+    struct WordBlock {
+        u32 w[13];
+    };
+    cf::CBattleStateEntry entry;
+    WordBlock* dst = (WordBlock*)&entry;
+    const WordBlock* src =
+        (const WordBlock*)&((cf::CBattleStateEntryArray*)self)->entries[id];
+
+    *dst = *src;
+    self->CBattleState_UnkVirtualFunc8(&entry);
+}
+
+// Batch 2026-08: battlestate-vfunc7 owns CBattleState_UnkVirtualFunc7
+// exclusively. Retail symbol mangles Fv but the caller leaves the status id
+// in r4 (fake-Fv ABI, same as UnkVirtualFunc9/12). Guards: id >= 0x12f,
+// id == 0, and func_80148778(self, id) == 0 all bail early. Otherwise
+// builds a zeroed CBattleStateEntry (unk0C = id, unk30 |= 0x200,
+// unk2E = id) and dispatches it through vt+0x24 (UnkVirtualFunc8).
+extern "C" void CBattleState_UnkVirtualFunc7__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, u32 id) {
+    cf::CBattleStateEntry entry;
+
+    if (id >= 0x12f) {
+        return;
+    }
+    if (id == 0) {
+        return;
+    }
+    if (func_80148778(self, id) == 0) {
+        return;
+    }
+
+    memset(&entry, 0, sizeof(entry));
+    entry.unk0C = id;
+    entry.unk30 |= 0x200;
+    entry.unk2E = id;
+    self->CBattleState_UnkVirtualFunc8(&entry);
+}
+
+// func_80148778 stays DECLARED but undefined in this TU (retail 0x928B,
+// not yet matched): MWCC would inline any same-TU stub body into vfunc7's
+// call site and drop the retail `bl func_80148778` reloc (MWCC_REFERENCE
+// §bta_hh_start_sdp / cview-render-view leaf recovery: keep callee
+// undefined). The object builds with the undefined reference; the unit is
+// NonMatching so the .o is never linked.

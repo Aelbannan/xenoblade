@@ -43,6 +43,13 @@ void func_802983E4(CMCGetItemBox*);
 
 // Initialise a CMCItemBoxSub: clear the offset table to 0xFFFF, zero the
 // counters and index fields, then reset the whole table again.
+void* __dt__80296BB0(CMCGetItemBox* _this, int flags) {
+    if (_this != NULL && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
+
 void func_80296B44(CMCItemBoxSub* x) {
     for (int i = 0; i < 0x80; i++) x->table[i] = -1;
     x->count = 0;
@@ -57,8 +64,6 @@ void func_80296B44(CMCItemBoxSub* x) {
     x->field_1D4 = 0;
     for (int i = 0; i < 0x80; i++) x->table[i] = -1;
 }
-
-void __dt__80296BB0(){}
 
 void func_80296BF0(CMCItemBoxSub* x) {}
 
@@ -89,17 +94,6 @@ u32 func_80296D54(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* p = base + off;
     if (!p) return 0;
     return p->field_00 >> 20;
-}
-
-// Look up the entry at `index` in the offset table and return its pointer.
-CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
-    CMCItemBoxEntry* base = x->listBase;
-    if (base == 0) return 0;
-    u32 idx = (u16)(index + (s8)x->counter * 30);
-    if (idx >= x->count) return 0;
-    s16 off = x->table[idx];
-    CMCItemBoxEntry* p = base + off;
-    return p;
 }
 
 s8 func_80296E00(CMCItemBoxSub* x, u32 index) {
@@ -388,9 +382,22 @@ u32 func_80298540(CMCGetItemBox* self) {
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
 void func_802985B4(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
-    for (u32 i = 0; (u16)i < x->count; i++) {
+    for (u32 i = 0; (u32)(u16)i < x->count; i++) {
         func_801599D4(func_80296DB0(x, (u16)i), 0);
     }
+}
+
+// Look up the entry at `index` in the offset table and return its pointer.
+CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
+    CMCItemBoxEntry* base = x->listBase;
+    if (base == 0) return 0;
+    u32 idx = (u16)(index + (s8)x->counter * 30);
+    if (idx < x->count) {
+        s16 off = x->table[(u16)idx];
+        CMCItemBoxEntry* p = base + off;
+        if (p != 0) return p;
+    }
+    return 0;
 }
 
 extern "C" void func_8029860C(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
@@ -454,8 +461,30 @@ void func_802989A4(CMCGetItemBox* self) {
     }
 }
 
-void func_80298A20(){}
-void func_80298A78(){}
+// Rewind the first layout animation; when it has finished, rearm the
+// state bytes and reattach the cursor sub-object.
+void func_80298A20(CMCGetItemBox* self) {
+    if (func_80137510(self->animTrans1, lbl_eu_80668BF0) != 0) {
+        self->mField55 = 1;
+        self->field_4D = 0;
+        func_801D216C(&self->subObj_58, 0);
+    }
+}
+
+// Guard: the item box only accepts input once the layout, the second arc
+// accessor and its three state words are all present.
+void func_80298A78(CMCGetItemBox* self) {
+    if (self->layout40 == 0) return;
+    if (self->arcAcc2 == 0) return;
+    if (lbl_eu_80664A18 == 0) return;
+    if (lbl_eu_80664A1C == 0) return;
+    if (lbl_eu_80664A20 != 0) {
+        self->field_54 = 1;
+        self->field_4C = 1;
+    } else {
+        return;
+    }
+}
 
 // nw4r ArcResourceAccessor virtual GetResource at vtable[3] (offset 0x0C).
 struct AccessorGetRes3 {

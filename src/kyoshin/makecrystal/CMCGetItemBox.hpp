@@ -136,7 +136,10 @@ extern "C" void* lbl_eu_806640D8;  // declared void* in CMCEffStart.hpp/CItemBox
 extern "C" void* lbl_eu_80664100;  // unused address anchor - kept void*
 extern "C" void* lbl_eu_80664A18;  // unused address anchor - kept void*
 extern "C" void* lbl_eu_80664A1C;  // unused address anchor - kept void*
-extern "C" float lbl_eu_80668BF0;
+extern "C" void* lbl_eu_80664A20;  // unused address anchor - kept void*
+extern "C" const float lbl_eu_80668BF0;
 extern "C" void func_802999B0(CMCGetItemBox*);
 extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
+extern "C" void __dl__FPv(void*);
+extern "C" CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u32);

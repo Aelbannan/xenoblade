@@ -60,7 +60,10 @@ namespace cf {
     // active; each slot embeds an nw4r SoundArchivePlayer at +0x17C.
     struct CfSoundRecord {
         /* 0x00 */ u16 mFlag;
-        u8 field_0x02[0x0E];
+        u8 field_0x02[0x02];
+        /* 0x04 */ u32 field_0x04; // sound-data buffer base (passed to mArchive.Setup)
+        /* 0x08 */ u32 field_0x08; // aligned data size
+        /* 0x0C */ u32 field_0x0C; // work-buffer size
         /* 0x10 */ u32 field_0x10;
         /* 0x14 */ void* field_0x14; // sound-data buffer; freed by func_801C0A14
         /* 0x18 */ u32 field_0x18;
@@ -96,7 +99,9 @@ namespace cf {
         /* 0x14 */ u32 mSoundId;
         /* 0x18 */ f32 field_0x18;
         /* 0x1C */ f32 field_0x1C;
-        u8 field_0x20[0x0A];
+        /* 0x20 */ u32 field_0x20;
+        /* 0x24 */ u32 field_0x24;
+        /* 0x28 */ u16 field_0x28;
         /* 0x2A */ u16 field_0x2A;
         /* 0x2C */ u16 field_0x2C;
         /* 0x2E */ s16 field_0x2E;
@@ -116,6 +121,74 @@ namespace cf {
         /* 0x00 */ nw4r::snd::SoundHandle mHandle;
     };
 
+    // 12-byte position block returned by CfSoundActorSrc::getPosition
+    // (vtable +0xAC). Copied word-wise into CfSoundSlot::field_0x08..0x10 by
+    // the sound-slot starters (func_801C10C0 / func_801C03C8).
+    struct CfSoundActorPos {
+        /* 0x00 */ u32 field_0x00;
+        /* 0x04 */ u32 field_0x04;
+        /* 0x08 */ u32 field_0x08;
+    };
+
+    // func_800B708C(id) result view ("voice source"): the sound-slot starters
+    // call the vtable+0xAC slot (getPosition) and the vtable+0x12C slot
+    // (vf73, position query) to fetch the actor's position blocks. 74
+    // virtuals so getPosition lands at 0x8 + 41*4 = 0xAC and vf73 at
+    // 0x8 + 73*4 = 0x12C (MWCC reserves vtable[0]=offset-to-top,
+    // vtable[1]=typeinfo).
+    class CfSoundActorSrc {
+    public:
+        virtual void vf00();  virtual void vf01();  virtual void vf02();
+        virtual void vf03();  virtual void vf04();  virtual void vf05();
+        virtual void vf06();  virtual void vf07();  virtual void vf08();
+        virtual void vf09();  virtual void vf10();  virtual void vf11();
+        virtual void vf12();  virtual void vf13();  virtual void vf14();
+        virtual void vf15();  virtual void vf16();  virtual void vf17();
+        virtual void vf18();  virtual void vf19();  virtual void vf20();
+        virtual void vf21();  virtual void vf22();  virtual void vf23();
+        virtual void vf24();  virtual void vf25();  virtual void vf26();
+        virtual void vf27();  virtual void vf28();  virtual void vf29();
+        virtual void vf30();  virtual void vf31();  virtual void vf32();
+        virtual void vf33();  virtual void vf34();  virtual void vf35();
+        virtual void vf36();  virtual void vf37();  virtual void vf38();
+        virtual void vf39();  virtual void vf40();
+        virtual CfSoundActorPos* getPosition();   // vtable +0xAC
+        virtual void vf42();  virtual void vf43();  virtual void vf44();
+        virtual void vf45();  virtual void vf46();  virtual void vf47();
+        virtual void vf48();  virtual void vf49();  virtual void vf50();
+        virtual void vf51();  virtual void vf52();  virtual void vf53();
+        virtual void vf54();  virtual void vf55();  virtual void vf56();
+        virtual void vf57();  virtual void vf58();  virtual void vf59();
+        virtual void vf60();  virtual void vf61();  virtual void vf62();
+        virtual void vf63();  virtual void vf64();  virtual void vf65();
+        virtual void vf66();  virtual void vf67();  virtual void vf68();
+        virtual void vf69();  virtual void vf70();  virtual void vf71();
+        virtual void vf72();
+        virtual void* vf73(u16 id);                 // vtable +0x12C
+        u8 field_0x04[0x98 - 0x04];
+        /* 0x98 */ void* field_0x98;              // sub-position object
+    };
+
+    // vf73 (vtable +0x12C) result view: floats at +0x0C/+0x1C/+0x2C read by
+    // func_801C03C8 (position block).
+    struct CfSoundActorPos3 {
+        u8 field_0x00[0x0C];
+        /* 0x0C */ f32 field_0x0C;
+        u8 field_0x10[0x1C - 0x10];
+        /* 0x1C */ f32 field_0x1C;
+        u8 field_0x20[0x2C - 0x20];
+        /* 0x2C */ f32 field_0x2C;
+    };
+
+    // obj->field_0x98 sub-object: floats at +0x2DC/+0x2E0/+0x2E4 read by
+    // func_801C03C8 (position block).
+    struct CfSoundActorSub98 {
+        u8 field_0x00[0x2DC];
+        /* 0x2DC */ f32 field_0x2DC;
+        /* 0x2E0 */ f32 field_0x2E0;
+        /* 0x2E4 */ f32 field_0x2E4;
+    };
+
     // Sound-pause request parameters read by func_801C15C0 (retail .bss,
     // 0x10 bytes). field_0x00 is the target sound id (-1 = all sounds),
     // field_0x04 the fade frames, field_0x08 the pause flag.
@@ -130,6 +203,9 @@ namespace cf {
 
 // 64-entry sound-slot table (retail .bss, 0xC00 bytes).
 extern cf::CfSoundSlot lbl_eu_80575928[64];
+
+// C++-mangled retail helper func_800B708C__Fi (actor id -> voice source).
+void* func_800B708C(int id);
 
 // Global-object registration link cell for the sound-slot table (retail .bss,
 // sits 0x10 bytes before the table; passed by address to __register_global_object).
@@ -165,6 +241,23 @@ extern const float lbl_eu_80667E8C;
 
 // Retail sound-manager pointer (unmangled at global scope).
 extern cf::CfSoundManGlobal* lbl_eu_80664430;
+
+// Global event/presentation flag words (.sbss). lbl_eu_80663E24 bit 9 / bit 11
+// and lbl_eu_80663E28 bit 7 gate the func_801BFB34 sound-start dispatch.
+extern u32 lbl_eu_80663E24;
+extern u32 lbl_eu_80663E28;
+
+// Sound-start gate helpers (defined in other TUs; C ABI so the call relocs
+// bind to the retail-unmangled names).
+extern "C" bool func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" u32 func_80294624();
+extern "C" u32 func_8028E440();
+extern "C" u32 func_802B22E0();
+extern "C" bool isInitialized__10CMenuPauseFv();
+
+// Sound-id counter for freshly allocated slots (retail .sdata u16; read and
+// written by func_801C0DC4 when a new slot id is assigned).
+extern u16 lbl_eu_80664438;
 
 // Sound-system-init flag byte (retail .sbss, one byte; cleared by the
 // manager ctor before the first InitSoundSystem call).

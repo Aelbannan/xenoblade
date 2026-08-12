@@ -256,7 +256,8 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
     u32 id = *idPtr;
     if (func_80174C98(self, &id, 0x802) != 0) {
         cf::CfActorParamVt168* vt = reinterpret_cast<cf::CfActorParamVt168*>(self);
-        if (vt->m178() == vt->m174()) {
+        // MWCC evaluates == right-to-left: retail calls 0x178 first, 0x174 second.
+        if (vt->m174() == vt->m178()) {
             vt->m168(vt->m178() - 1);
         }
     }
@@ -269,8 +270,7 @@ extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv(cf::CfObjec
 // ends by calling the +0x3ED4 sub-object's vtable slot +0x88 with the arg.
 extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
     CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(self, arg);
-    int v = reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC;
-    switch (v) {
+    switch (reinterpret_cast<cf::CfActorParamArg*>(arg)->field_0xC) {
     case 0xE5:
         ((cf::CfObjectMove*)((u8*)self + 0x3E9C))->CfObject_UnkVirtualFunc70(lbl_eu_8066773C);
         break;
@@ -281,13 +281,13 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
             std::memset(&buf, 0, 0x34);
             buf.field_0x00 = reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10;
             buf.field_0x04 = 0;
-            buf.field_0x14 = (u16)f->field_0x1634;
-            buf.field_0x18 = f->field_0x163C;
-            buf.field_0x1C = (u16)f->field_0x1638;
-            buf.field_0x1E = (u16)f->field_0x1640;
-            buf.field_0x20 = (u16)f->field_0x1644;
-            buf.field_0x28 = lbl_eu_80667738;
-            buf.field_0x38 = 0x10001;
+            buf.field_0x0C = (u16)f->field_0x1634;
+            buf.field_0x10 = f->field_0x163C;
+            buf.field_0x14 = (u16)f->field_0x1638;
+            buf.field_0x16 = (u16)f->field_0x1640;
+            buf.field_0x18 = (u16)f->field_0x1644;
+            buf.field_0x20 = lbl_eu_80667738;
+            buf.field_0x30 = 0x10001;
             reinterpret_cast<cf::CfBattleVt18*>((u8*)self + 8)->m18(&buf);
         }
         break;
@@ -303,12 +303,13 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv(cf::CfObje
 // actor-id probe succeeds the update is applied a second time (the retail
 // re-reads the fields), then if the gauge is at max (vf190 == vf18C) it is
 // decremented via the vf180 slot.
-extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, s16 delta) {
+extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, int delta) {
     cf::CfActorParamFields* f = reinterpret_cast<cf::CfActorParamFields*>(self);
-    int d = (int)delta;
     s16 cur = f->field_0x1614;
     s16 max = f->field_0x1616;
-    int sum = cur + d;
+    // Explicit (s16) truncation of the int param -> retail's extsh r0, r4
+    // (an s16-typed param lets MWCC fold the sign-extension into the add).
+    int sum = cur + (s16)delta;
     f->field_0x1614 = (u16)sum;
     if ((s16)sum < 0) {
         f->field_0x1614 = 0;
@@ -318,10 +319,9 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
     u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(self)->field_0x04)->vf30();
     u32 id = *idPtr;
     if (func_80174C98(self, &id, 0x802) != 0) {
-        int d2 = (int)delta;
         s16 cur2 = f->field_0x1614;
         s16 max2 = f->field_0x1616;
-        int sum2 = cur2 + d2;
+        int sum2 = cur2 + (s16)delta;
         f->field_0x1614 = (u16)sum2;
         if ((s16)sum2 < 0) {
             f->field_0x1614 = 0;
@@ -329,7 +329,8 @@ extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv(cf::CfObjec
             f->field_0x1614 = (u16)max2;
         }
         cf::CfActorParamVt168* vt = reinterpret_cast<cf::CfActorParamVt168*>(self);
-        if (vt->m190() == vt->m18C()) {
+        // MWCC evaluates == right-to-left: retail calls 0x190 first, 0x18C second.
+        if (vt->m18C() == vt->m190()) {
             vt->m180(vt->m190() - 1);
         }
     }
@@ -344,7 +345,191 @@ extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv(cf::CfObjec
         reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 3, 0, 0);
     }
 }
-extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv() {}
+// Retail symbol is Fv; the real ABI passes (self, value, a, b, c). Slot
+// +0x120 (CActorParam_UnkVirtualFunc35): applies the rounded float delta to
+// the 0x17E8 gauge and dispatches status-driven follow-ups (33/120/C3/92/
+// FC/100) on the +8 sub-object plus battle-manager effects.
+extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int a, int b, int c) {
+    float f = (float)(int)value;   // f31: rounded gauge delta
+    if ((lbl_eu_80663E24 & 0x10000000) != 0) return;
+    if ((lbl_eu_80663E28 & 0x800) != 0) return;
+    int v27 = 0;
+    getInstance__Q22cf13CfGameManagerFv();
+    if (func_8006EF04__Fi(0x04000000) != 0) {
+        cf::CfPtmf3 ptmf;
+        ptmf.field_0 = lbl_eu_80531090[0];
+        ptmf.field_4 = lbl_eu_80531090[1];
+        ptmf.field_8 = lbl_eu_80531090[2];
+        if (__ptmf_cmpr((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x28354, &ptmf) == 0) {
+            v27 = 1;
+        }
+    }
+    if (v27 != 0) return;
+
+    c &= ~3;   // low 2 flag bits are cleared in place (retail clrlwi r31, r31, 2)
+    if (f > lbl_eu_80667738) {
+        func_8010989C((c & (0x80000000 | 0x200)) != 0);
+        func_80109888(0);
+        func_80109874(0);
+    } else {
+        func_8010989C((c & (0x80000000 | 0x100)) != 0);
+        func_80109888((c & (0x80000000 | 0x400)) != 0);
+        if ((c & 0x80500000) != 0) {
+            func_80109874(1);
+        } else if ((c & 0x80A00000) != 0) {
+            func_80109874(2);
+        } else {
+            func_80109874(0);
+        }
+    }
+    if (f < lbl_eu_80667738 && func_80148778((u8*)self + 8, 1) != 0) {
+        f = lbl_eu_80667738;
+    }
+    // Status 0x33: adjust the gauge value inside the status entry. `ep` is
+    // one register reused across every status block (retail keeps the entry
+    // pointers in a single callee-saved register).
+    cf::CfStatusEntry* ep = 0;
+    if (func_80148778((u8*)self + 8, 0x33) != 0) {
+        if ((c & 0x90000000) == 0) {
+            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x33);
+            if (ep != 0) {
+                if ((c & (0x80000000 | 0x8000)) != 0) {
+                    func_80109784((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
+                    if (f > lbl_eu_80667738) {
+                        ep->field_0x14 = (s16)(s32)f;
+                        func_801A891C(self, 0);
+                        return;
+                    }
+                    reinterpret_cast<cf::CfBattleVt24*>((u8*)self + 8)->m24(ep);
+                    if (lbl_eu_80667738 == f) return;
+                } else {
+                    if (f <= lbl_eu_80667738) {
+                        ep->field_0x14 = (s16)((float)(s16)ep->field_0x14 + f);
+                        func_80109784((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, 3, 0x10);
+                        if ((s16)ep->field_0x14 > 0) {
+                            func_801A891C(self, 0);
+                            return;
+                        }
+                        f = (float)(s16)ep->field_0x14;
+                        reinterpret_cast<cf::CfBattleVt24*>((u8*)self + 8)->m24(ep);
+                        if (lbl_eu_80667738 == f) return;
+                    }
+                }
+            }
+        }
+    }
+    if (f > lbl_eu_80667738 && func_80148778((u8*)self + 8, 0x120) != 0) return;
+    // Round the gauge to the nearest int (half away from zero), then clamp.
+    float v = reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 + f;
+    reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = v;
+    double round;
+    if (v > lbl_eu_80667738) {
+        round = lbl_eu_80667750;
+    } else {
+        round = lbl_eu_80667758;
+    }
+    v = (float)(s32)((double)v + round);
+    reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = v;
+    if (v < lbl_eu_80667740) {
+        reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = lbl_eu_80667738;
+    }
+    v = reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8;
+    if (v < lbl_eu_80667738) {
+        reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = lbl_eu_80667738;
+    } else if (v > reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17F4) {
+        reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17E8 = reinterpret_cast<cf::CfActorParamFields*>(self)->field_0x17F4;
+    }
+    func_8010975C((u8)a);
+    func_80109770((u8)b);
+    if (f <= lbl_eu_80667738) {
+        func_80109734((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)-f);
+        func_80277A7C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self, -f);
+    } else {
+        func_80109734((void*)reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10, (u32)(s32)f);
+    }
+    if (f <= lbl_eu_80667738) {
+        // Status 0xC3: scale a ratio from the entry value.
+        if (func_80148778((u8*)self + 8, 0xC3) != 0) {
+            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xC3);
+            if (ep != 0) {
+                f = lbl_eu_80667740;
+                if (ep->field_0x10 != 0) {
+                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                    f = (float)(s32)ep->field_0x10 * (g / lbl_eu_80667760);
+                }
+                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < f) {
+                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(f);
+                }
+            }
+        }
+        // Status 0x92: party-list length gated proc.
+        if (func_80148778((u8*)self + 8, 0x92) != 0) {
+            void* bm = getInstance__Q22cf14CBattleManagerFv();
+            u8* base = *(u8**)((u8*)bm + 8);
+            u8* node = *(u8**)base;
+            int count = 0;
+            while (node != base) {
+                node = *(u8**)node;
+                count++;
+            }
+            if (count != 0) {
+                int v27b = 0;
+                if (func_80148778((u8*)self + 8, 0xA1) != 0) {
+                    v27b = ((cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xA1))->field_0x10;
+                }
+                ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x92);
+                if (ep != 0) {
+                    if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+                        s32 val = ep->field_0x10;
+                        if (ep->field_0x8 == 0x2000) val += v27b;
+                        if ((c & 0xA0000000) != 0) {
+                            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+                        } else if (rand() % 100 < val) {
+                            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+                        }
+                    }
+                }
+            }
+        }
+        // Status 0xFC: gauge drain block.
+        if (func_80148778((u8*)self + 8, 0xFC) != 0) {
+            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0xFC);
+            if (ep != 0) {
+                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                    f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
+                    getInstance__Q22cf14CBattleManagerFv();
+                    f *= func_800D81A8(0, self, 0);
+                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m11C(f);
+                    reinterpret_cast<cf::CfBattleVt20*>((u8*)self + 8)->m20(0xFC);
+                    func_8018C820((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x32);
+                }
+            }
+        }
+        // Status 0x100: same drain block plus a decay add and flag.
+        if (func_80148778((u8*)self + 8, 0x100) != 0) {
+            ep = (cf::CfStatusEntry*)func_80149154((u8*)self + 8, 0x100);
+            if (ep != 0) {
+                if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+                    float g = reinterpret_cast<cf::CfActorParamVt118*>(self)->m12C();
+                    f = lbl_eu_80667764 * ((float)(s32)ep->field_0x10 * g);
+                    getInstance__Q22cf14CBattleManagerFv();
+                    f *= func_800D81A8(0, self, 0);
+                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m11C(f);
+                    reinterpret_cast<cf::CfBattleVt20*>((u8*)self + 8)->m20(0x100);
+                    reinterpret_cast<cf::CfActorParamVt118*>(self)->m154(lbl_eu_80667768);
+                    func_800F38E0(getInstance__Q22cf14CBattleManagerFv(), self, 0x93);
+                }
+            }
+        }
+    }
+    if (reinterpret_cast<cf::CfActorParamVt118*>(self)->m128() < lbl_eu_80667740) {
+        if (func_8027990C((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x1A8, self) != 0) {
+            reinterpret_cast<cf::CfActorParamVt118*>(self)->m118(lbl_eu_80667740);
+        }
+    }
+    func_801A891C(self, 0);
+}
 
 // CfObjectActor's override of the CActorParam virtual (slot 0xA4): queries
 // the +0x04 sub-object's vtable slot +0x30 for the actor-id word, then pokes

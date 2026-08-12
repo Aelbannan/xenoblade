@@ -4,6 +4,20 @@
 #include "kyoshin/cf/object/CfObjectModel.hpp"
 
 namespace cf {
+class CtrlNpc;
+}
+
+// Cross-TU dispatch targets for the CfObjectMove mTarget6C0 wrappers (defined
+// in kyoshin/cf/CtrlNpc.cpp, retail func_800948F8 family). extern "C" keeps
+// the call relocs unmangled - plain C++ global decls get __F-suffix mangled
+// at call sites (same scheme as CtrlNpc.hpp's func_800BE12C declarations).
+extern "C" void func_800948F8(cf::CtrlNpc* self);
+extern "C" void func_80094CE8(cf::CtrlNpc* self);
+extern "C" void func_80094DF4(cf::CtrlNpc* self);
+extern "C" void func_80094E44(cf::CtrlNpc* self);
+extern "C" void func_80094FC8(cf::CtrlNpc* self);
+
+namespace cf {
     //min size: 0x715
     class CfObjectMove : public CfObjectModel {
     public:

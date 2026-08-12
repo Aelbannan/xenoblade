@@ -9196,3 +9196,34 @@ addic/subfe setnz attribution from the CNReqtaskSave section with a twist:
 4. Unit `.text` remains 12.8 KB over its split budget (many unmatched stub
    bodies still emit) — per-function acceptance is unaffected (user policy
    2026-08), but a size-trim pass is pending for unit promotion.
+
+## `extern "C"` is redundant on global-scope data labels — centralize with `tools/coop/lbls_gen.py`
+
+Verified with the repo's MWCC Wii/1.1 (`build/compilers/Wii/1.1/mwcceppc.exe`):
+
+1. **MWCC never mangles global-scope *data* names.** Plain `extern u32 lbl_eu_8065FC18;`
+   emits the exact retail reloc (`R_PPC_EMB_SDA21` / `ADDR16_HA/LO` + `lbl_eu_XXXX`),
+   byte-identical to `extern "C"` — for declarations *and* definitions. The `extern "C"`
+   on lbl data is only semantically required inside `namespace { }` blocks (plain
+   extern mangles there: `lbl_ns_plain__Q24[...]`). Mixed-linkage decl/definition
+   (header C++-linkage decl + TU `extern "C"` definition inside a namespace) compiles
+   and links cleanly on MWCC.
+2. **`extern` declarations are inert.** A TU compiled with per-TU decls vs an
+   equivalent header include produces byte-identical `.text` and zero data/bss —
+   verified object-level across the whole build (2,337 objects) after a full
+   codemod: only concurrently-agent-edited files differed.
+3. **Bare declarations are definitions.** `CProcess* lbl_eu_80664054;` (no `extern`)
+   inside `extern "C" { }` emits a `B`-symbol (TU's own `.bss` storage) — do NOT
+   centralize those; only explicit-`extern` decl lines are inert.
+4. **Workflow** (`tools/coop/lbls_gen.py`, per-area headers `include/lbls_<area>.hpp`):
+   `generate` (pristine tree; writes headers + `lbls_manifest.json` +
+   `lbls_exclusions.json`) → `apply` (strips per-TU decls, adds includes; **never
+   rewrites the headers** — regenerating from the post-strip corpus silently shrinks
+   them; skips git-dirty files so it never collides with concurrent agents) → `check`
+   (CI gate: header/manifest freshness, no stray decls for centralized addresses,
+   every remaining decl listed in the exclusions) → verify with
+   `tools/coop/snapshot_objects.py` before/after a `ninja` build (compare `.text`
+   sha + section sizes + relocs). Addresses with type conflicts across TUs or
+   class/typedef types stay per-TU (listed in the exclusions) — forcing one type
+   would change instruction selection (struct-vs-pointer: `lbl.f` is one `lwz`,
+   `lbl->f` is two).

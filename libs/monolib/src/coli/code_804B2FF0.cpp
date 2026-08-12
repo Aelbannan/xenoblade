@@ -14,31 +14,65 @@
 #define lbl_eu_8065D138 lbl_eu_8065D138_hdr
 #define lbl_eu_8056F4F0 lbl_eu_8056F4F0_hdr
 #define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
+#define lbl_eu_8066AEB0 lbl_eu_8066AEB0_hdr
+#define lbl_eu_8066AEC4 lbl_eu_8066AEC4_hdr
+#define lbl_eu_8066AEC8 lbl_eu_8066AEC8_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
 #undef lbl_eu_8065D138
 #undef lbl_eu_8056F4F0
 #undef lbl_eu_8066AEC0
+#undef lbl_eu_8066AEB0
+#undef lbl_eu_8066AEC4
+#undef lbl_eu_8066AEC8
 #include "monolib/work/CTTask.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/MTX.h>
 #include <nw4r/math.h>
+#include <nw4r/g3d/res/g3d_resmdl.h>
+#include <nw4r/g3d/res/g3d_resnode.h>
+#include <nw4r/db/db_assert.h>
 
 // Full-size externs (retail: walk-state object at 0x8065D138, target table at
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
 extern CColiWalkState lbl_eu_8065D138;
 extern u32 lbl_eu_8056F4F0[4];
-extern const f32 lbl_eu_8066AEC0;
+extern f32 lbl_eu_8066AEC0;
 extern const f32 lbl_eu_8066AEA8;
-extern f32 lbl_eu_8066AEC4;
-extern f32 lbl_eu_8066AEC8;
+extern const f32 lbl_eu_8066AEB0;
+extern const f32 lbl_eu_8066AEC4;
+extern const f32 lbl_eu_8066AEC8;
+extern const f32 lbl_eu_8066AEB8;
 
 // C-linkage retail import (declared at global scope so MWCC emits the name
 // unmangled; the definition lives in the sibling coli unit).
 extern "C" void func_804A7ED0(void* self);
+// Segment-query helpers imported from the sibling coli unit (stubs there).
+extern "C" void func_804A7878(void*, const void*, int);
+extern "C" void func_804B07F0(void*, const void*);
+extern "C" int func_804B236C(const void*, const void*, const void*);
+extern "C" void func_804A790C(void*, const Vec*, void*, f32);
+extern "C" void func_804B06FC(void*, const Vec*, f32);
+extern "C" int func_804B204C(const CColiQueryNode*, const void*, int);
 // CProcess is abstract (pure virtuals), so the base ctor is invoked via its
 // pre-mangled retail symbol like the sibling sinit helpers do.
 extern "C" void __ct__8CProcessFv(CProcess* self);
+
+// Panic file/format strings and va-arg node-name needles used by the nw4r
+// node-lookup helpers below (global-scope C-linkage data names; the unsized
+// arrays get 32-bit lis/addi addressing, the small ones sda21).
+extern char lbl_eu_8056E194[];   // Panic file (node-null assert, line 0x2c)
+extern char lbl_eu_8056E178[];   // Panic fmt
+extern char lbl_eu_80529678[];   // Panic file (line 0x53 asserts)
+extern char lbl_eu_80529658[];   // Panic fmt
+extern char lbl_eu_80663910[8];  // assert va arg 1 (sda string)
+extern char lbl_eu_80663AA8[8];  // assert va arg 2 (sda string)
+
+// Model resource holder: nw4r ResMdl handle at +0x146C (node-table source).
+struct CModelRes {
+    char pad[0x146C];
+    void* resMdl; //0x146C
+};
 
 // ---------------------------------------------------------------------------
 // func_804B2FF0: move a collision-source position through a bone matrix twice,
@@ -82,23 +116,79 @@ void func_804B2FF0(CColiMover* self) {
         func_804A7ED0(self->target);
     }
 
+    // Block 2: retail materialises the off base into r4 (addi r31,0x24) for
+    // the two off reads, so pass it through a named pointer local.
+    const nw4r::math::VEC3* offp = (const nw4r::math::VEC3*)&self->off;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
-                        (nw4r::math::VEC3*)&self->acc,
-                        (const nw4r::math::VEC3*)&self->off);
+                        (nw4r::math::VEC3*)&self->acc, offp);
     func_804A7ED0(self->target);
 }
 
-void func_804B30CC(){}
+// Dual-index collision node: primary index + flags at 0x0/0x2 and a secondary
+// index at 0x30 (both written by func_804B31EC).
+struct CDualIndexNode {
+    s16 index;      //0x0
+    u16 flags;      //0x2
+    char pad[0x2C]; //0x4
+    s16 index2;     //0x30
+};
 
-void func_804B31EC(){}
+// Second-name reference: a byte offset (+0x4) into the shared node-name table.
+struct CNameRef {
+    char pad[0x4];
+    s32 offset; //0x4
+};
 
-void func_804B33C8(){}
+// Shared node-name table base (retail loads the pointer via sda21).
+extern char* lbl_eu_80665940;
 
-void func_804B34F4(){}
-
-void func_804B3B18(){}
-
-void func_804B4854(){}
+// ---------------------------------------------------------------------------
+// func_804B31EC: scan the model's node table for up to two node names - the
+// caller's `name` and a second name taken from the shared name table - and
+// record each match's matrix id into self->index / self->index2. Both found
+// (flags == 3) exits early; unmatched indices fall back to 0 / 1.
+// ---------------------------------------------------------------------------
+void func_804B31EC(CDualIndexNode* self, const char* name,
+                   const CModelRes* model, const CNameRef* ref) {
+    const char* name2 = lbl_eu_80665940 + ref->offset;
+    int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
+    u32 flags = 0;
+    self->flags = (u16)flags;
+    for (int i = 0; i < num; i++) {
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(model->resMdl).GetResNode(i);
+        if (!(flags & 1)) {
+            if (!node.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_80663AA8);
+            }
+            if (strcmp(name, node.ofs_to_ptr<char>(node.ref().name)) == 0) {
+                if (!node.IsValid()) {
+                    nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+                }
+                self->index = (s16)node.GetMtxID();
+                flags |= 1;
+                if (flags == 3) return;
+            }
+        }
+        if (!(flags & 2)) {
+            if (!node.IsValid()) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                                lbl_eu_80663910, lbl_eu_80663AA8);
+            }
+            if (strcmp(name2, node.ofs_to_ptr<char>(node.ref().name)) == 0) {
+                if (!node.IsValid()) {
+                    nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+                }
+                self->index2 = (s16)node.GetMtxID();
+                flags |= 2;
+                if (flags == 3) return;
+            }
+        }
+    }
+    if (!(flags & 1)) self->index = 0;
+    if (!(flags & 2)) self->index2 = 1;
+}
 
 void func_804B4E10(){}
 
@@ -422,6 +512,78 @@ struct CColiSphereOb {
     f32 radius;   //0x10
 };
 
+// ---------------------------------------------------------------------------
+// func_804B30CC: scan the model's node table for the node named `name` and
+// store its matrix id as the collision node's bone index. On failure, clear
+// the index and set flag bit 1 so the matrix-source selectors fall back to
+// the root matrix.
+// ---------------------------------------------------------------------------
+void func_804B30CC(CColiHead* self, const char* name, const CModelRes* model) {
+    self->flags = 0;
+    int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
+    for (int i = 0; i < num; i++) {
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(model->resMdl).GetResNode(i);
+        if (!node.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_80663AA8);
+        }
+        if (strcmp(name, node.ofs_to_ptr<char>(node.ref().name)) == 0) {
+            if (!node.IsValid()) {
+                nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            }
+            self->index = (s16)node.GetMtxID();
+            return;
+        }
+    }
+    self->index = 0;
+    self->flags |= 2;
+}
+
+// ---------------------------------------------------------------------------
+// func_804B34F4: copy the source matrix's translation column into the
+// sphere's position, derive the sphere radius from the transformed
+// (x, 0, 0) normal, and expand the global AABB around the new position.
+// ---------------------------------------------------------------------------
+void func_804B34F4(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
+    f32 (*src)[4];
+    if (self->hd.flags & 2) {
+        src = mgr->mesh->rootMtx;
+    } else {
+        src = mgr->mesh->boneTable[self->hd.index];
+    }
+
+    const f32 pz = src[2][3];
+    const f32 py = src[1][3];
+    const f32 px = src[0][3];
+    self->pos[0] = px;
+    self->pos[1] = py;
+    self->pos[2] = pz;
+
+    nw4r::math::VEC3 n;
+    n.x = other->x;
+    n.y = lbl_eu_8066AEB0;
+    n.z = lbl_eu_8066AEB0;
+    nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
+    f32 mag = PSVECMag((const Vec*)&n);
+
+    self->radius = mag;
+    self->hd.flags |= 1;
+
+    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radius)
+        lbl_eu_80665944->max[0] = self->pos[0] + self->radius;
+    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radius)
+        lbl_eu_80665944->min[0] = self->pos[0] - self->radius;
+    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radius)
+        lbl_eu_80665944->max[1] = self->pos[1] + self->radius;
+    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radius)
+        lbl_eu_80665944->min[1] = self->pos[1] - self->radius;
+    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radius)
+        lbl_eu_80665944->max[2] = self->pos[2] + self->radius;
+    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radius)
+        lbl_eu_80665944->min[2] = self->pos[2] - self->radius;
+}
+
 void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
                    const CColiSphereOb* other) {
     // Select the matrix source: the flagged root (identity/bind) matrix, or
@@ -454,20 +616,40 @@ void func_804B4020(CColiMtxNode* self, const CColiMgr* mgr,
     self->radius = mag;
     self->hd.flags |= 1;
 
-    // Expand the global box around each translation-column axis by the radius.
-    CColiBounds* b = lbl_eu_80665944;
-    if (b->max[0] < self->mtxW.m[0][3] + self->radius)
-        b->max[0] = self->mtxW.m[0][3] + self->radius;
-    if (b->min[0] > self->mtxW.m[0][3] - self->radius)
-        b->min[0] = self->mtxW.m[0][3] - self->radius;
-    if (b->max[1] < self->mtxW.m[1][3] + self->radius)
-        b->max[1] = self->mtxW.m[1][3] + self->radius;
-    if (b->min[1] > self->mtxW.m[1][3] - self->radius)
-        b->min[1] = self->mtxW.m[1][3] - self->radius;
-    if (b->max[2] < self->mtxW.m[2][3] + self->radius)
-        b->max[2] = self->mtxW.m[2][3] + self->radius;
-    if (b->min[2] > self->mtxW.m[2][3] - self->radius)
-        b->min[2] = self->mtxW.m[2][3] - self->radius;
+    // Expand the global box around each translation-column axis by the radius;
+    // every check re-reads the shared bounds pointer and the radius through a
+    // per-check local (retail reloads both per check; the first check's local
+    // is store-forwarded to the live magnitude via frsp).
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[0] < self->mtxW.m[0][3] + r)
+            lbl_eu_80665944->max[0] = self->mtxW.m[0][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[0] > self->mtxW.m[0][3] - r)
+            lbl_eu_80665944->min[0] = self->mtxW.m[0][3] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[1] < self->mtxW.m[1][3] + r)
+            lbl_eu_80665944->max[1] = self->mtxW.m[1][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[1] > self->mtxW.m[1][3] - r)
+            lbl_eu_80665944->min[1] = self->mtxW.m[1][3] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[2] < self->mtxW.m[2][3] + r)
+            lbl_eu_80665944->max[2] = self->mtxW.m[2][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[2] > self->mtxW.m[2][3] - r)
+            lbl_eu_80665944->min[2] = self->mtxW.m[2][3] - r;
+    }
 }
 
 // Ellipsoid-shaped collision object (func_804B37E4 / func_804B3970).
@@ -486,14 +668,56 @@ struct CColiPosVec {
     Vec v;   //0xC
 };
 
-// Matrix output object (func_804B49B8): world + inverse matrix, then the
-// same two matrices shifted up by 0x60.
-struct CColiMtxOut {
-    Mtx m0; //0x0
-    Mtx m1; //0x30
-    Mtx m2; //0x60
-    Mtx m3; //0x90
+// ---------------------------------------------------------------------------
+// func_804B33C8: node-lookup sibling of func_804B30CC - records the matched
+// node's matrix id into the shared master-node index and folds a source
+// vector's x/y/z into the shared half-extent (ay = y - z).
+// ---------------------------------------------------------------------------
+void func_804B33C8(CColiHead* self, const char* name, const CModelRes* model,
+                   const CColiPosVec* v) {
+    int num = (int)nw4r::g3d::ResMdl(model->resMdl).GetResNodeNumEntries();
+    for (int i = 0; i < num; i++) {
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(model->resMdl).GetResNode(i);
+        if (!node.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178,
+                            lbl_eu_80663910, lbl_eu_80663AA8);
+        }
+        if (strcmp(name, node.ofs_to_ptr<char>(node.ref().name)) == 0) {
+            if (!node.IsValid()) {
+                nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+            }
+            lbl_eu_80665950 = (s16)node.GetMtxID();
+            lbl_eu_8066594C->ax = v->v.x;
+            lbl_eu_8066594C->ay = v->v.y - v->v.z;
+            return;
+        }
+    }
+}
+
+// Matrix output object (func_804B4854 / func_804B49B8): a matrix pair at
+// +0x0 (m0 + inverse m1), duplicated up by one pair into the history slots
+// at +0x60. CObjMtx members keep the copies as word loads/stores.
+struct CColiMtxPair {
+    CObjMtx m0; //0x0
+    CObjMtx m1; //0x30
 };
+
+struct CColiMtxOut {
+    CColiMtxPair cur; //0x0
+    CColiMtxPair old; //0x60
+};
+
+// ---------------------------------------------------------------------------
+// func_804B4854: shift the previous matrix pair up into the history slots,
+// then copy the bone matrix into m0 and derive its inverse into m1.
+// ---------------------------------------------------------------------------
+void func_804B4854(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+    dst->old = dst->cur;
+    const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[hd->index];
+    dst->cur.m0 = *src;
+    PSMTXInverse(dst->cur.m0.m, dst->cur.m1.m);
+}
 
 // Capsule collision node (func_804B3D1C): two endpoint positions, the
 // segment direction, a uniform radius and the squared direction length.
@@ -508,14 +732,79 @@ struct CColiCapsuleNode {
 };
 
 // ---------------------------------------------------------------------------
+// func_804B3B18: update a capsule collision node. Concat the source (root or
+// bone) matrix with the rigid reference, transform the (0,1,0) axis by the
+// result to get the endpoints A = T + v / B = T - v, derive the segment
+// direction + squared length via the nw4r PS helpers, scale the transformed
+// (1,0,0) axis magnitude into the radius, then expand the global AABB around
+// both endpoints swept by the radius.
+// ---------------------------------------------------------------------------
+void func_804B3B18(CColiCapsuleNode* self, const CColiMgr* mgr,
+                   const CColiRigid* other) {
+    const f32 (*src)[4];
+    if (self->hd.flags & 2) {
+        src = mgr->mesh->rootMtx;
+    } else {
+        src = mgr->mesh->boneTable[self->hd.index];
+    }
+
+    Mtx tmp;
+    PSMTXConcat(src, other->mtx, tmp);
+
+    Vec v;
+    v.x = lbl_eu_8066AEB0;
+    v.y = lbl_eu_8066AEB8;
+    v.z = lbl_eu_8066AEB0;
+    nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
+                                    (const nw4r::math::MTX34*)tmp,
+                                    (const nw4r::math::VEC3*)&v);
+
+    self->posA[2] = tmp[2][3] + v.z;
+    self->posA[1] = tmp[1][3] + v.y;
+    self->posA[0] = tmp[0][3] + v.x;
+    self->posB[2] = tmp[2][3] - v.z;
+    self->posB[1] = tmp[1][3] - v.y;
+    self->posB[0] = tmp[0][3] - v.x;
+
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&self->dir,
+                        (const nw4r::math::VEC3*)&self->posB,
+                        (const nw4r::math::VEC3*)&self->posA);
+    self->lenSq = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&self->dir,
+                                      (const nw4r::math::VEC3*)&self->dir);
+
+    v.x = lbl_eu_8066AEB4;
+    v.y = lbl_eu_8066AEB0;
+    v.z = lbl_eu_8066AEB0;
+    nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&v,
+                                    (const nw4r::math::MTX34*)tmp,
+                                    (const nw4r::math::VEC3*)&v);
+    self->radius = lbl_eu_8066AEB8 * PSVECMag((const Vec*)&v);
+    self->hd.flags |= 1;
+
+    // Expand the global AABB around both endpoints swept by the radius, one
+    // axis per counted-loop iteration (retail reloads the bounds pointer for
+    // every check, so dereference the global directly).
+    for (int i = 0; i < 3; i++) {
+        if (lbl_eu_80665944->max[i] < self->posA[i] + self->radius)
+            lbl_eu_80665944->max[i] = self->posA[i] + self->radius;
+        if (lbl_eu_80665944->min[i] > self->posA[i] - self->radius)
+            lbl_eu_80665944->min[i] = self->posA[i] - self->radius;
+        if (lbl_eu_80665944->max[i] < self->posB[i] + self->radius)
+            lbl_eu_80665944->max[i] = self->posB[i] + self->radius;
+        if (lbl_eu_80665944->min[i] > self->posB[i] - self->radius)
+            lbl_eu_80665944->min[i] = self->posB[i] - self->radius;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // func_804B41FC: transform a position by the fixed bone matrix, derive an
 // ellipsoid-ish half-extent into the shared Qx/Hx globals, and fold them
 // into the global AABB.
 // ---------------------------------------------------------------------------
 void func_804B41FC(const CColiNode* unused, const CColiMgr* mgr,
                    const CColiPosVec* other) {
-    const Mtx* table = mgr->mesh->boneTable;
-    const f32 (*src)[4] = table[lbl_eu_80665950];
+    const s16 idx = lbl_eu_80665950;
+    const f32 (*src)[4] = mgr->mesh->boneTable[idx];
 
     PSMTXMultVec(src, &other->pos, (Vec*)lbl_eu_80665948);
 
@@ -536,10 +825,10 @@ void func_804B41FC(const CColiNode* unused, const CColiMgr* mgr,
         lbl_eu_80665944->max[0] = lbl_eu_80665948->qx + lbl_eu_8066594C->ax;
     if (lbl_eu_80665944->min[0] > lbl_eu_80665948->qx - lbl_eu_8066594C->ax)
         lbl_eu_80665944->min[0] = lbl_eu_80665948->qx - lbl_eu_8066594C->ax;
-    if (lbl_eu_80665944->max[2] < lbl_eu_80665948->qz + lbl_eu_8066594C->ax)
-        lbl_eu_80665944->max[2] = lbl_eu_80665948->qz + lbl_eu_8066594C->ax;
-    if (lbl_eu_80665944->min[2] > lbl_eu_80665948->qz - lbl_eu_8066594C->ax)
-        lbl_eu_80665944->min[2] = lbl_eu_80665948->qz - lbl_eu_8066594C->ax;
+    if (lbl_eu_80665944->max[2] < lbl_eu_80665948->qz + lbl_eu_8066594C->ay)
+        lbl_eu_80665944->max[2] = lbl_eu_80665948->qz + lbl_eu_8066594C->ay;
+    if (lbl_eu_80665944->min[2] > lbl_eu_80665948->qz - lbl_eu_8066594C->ay)
+        lbl_eu_80665944->min[2] = lbl_eu_80665948->qz - lbl_eu_8066594C->ay;
     if (lbl_eu_80665944->max[1] < lbl_eu_80665948->qy + lbl_eu_8066594C->ay)
         lbl_eu_80665944->max[1] = lbl_eu_80665948->qy + lbl_eu_8066594C->ay;
     if (lbl_eu_80665944->min[1] > lbl_eu_80665948->qy)
@@ -582,25 +871,57 @@ void func_804B3EA8(CColiNode* self, const CColiMgr* mgr, const CColiRigid* other
     PSMTXConcat(src, other->mtx, self->mtxW);
     PSMTXInverse(self->mtxW, self->invW);
 
-    self->vec[0] = other->pos[0];
-    self->vec[1] = other->pos[1];
-    self->vec[2] = other->pos[2];
+    // Retail loads the other-space position back-to-front (z, y, x) while
+    // allocating registers in forward declaration order, so declare the
+    // components forward and let MWCC emit the loads reversed.
+    const f32 px = other->pos[0];
+    const f32 py = other->pos[1];
+    const f32 pz = other->pos[2];
+    self->vec[0] = px;
+    self->vec[1] = py;
+    self->vec[2] = pz;
 
     nw4r::math::VEC3 n;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)self->mtxW,
                                     (const nw4r::math::VEC3*)self->vec);
-    f32 mag = PSVECMag((const Vec*)&n);
 
-    self->radius = mag;
+    self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
-    CColiBounds* b = lbl_eu_80665944;
-    if (b->max[0] < self->mtxW[0][3] + self->radius) b->max[0] = self->mtxW[0][3] + self->radius;
-    if (b->min[0] > self->mtxW[0][3] - self->radius) b->min[0] = self->mtxW[0][3] - self->radius;
-    if (b->max[1] < self->mtxW[1][3] + self->radius) b->max[1] = self->mtxW[1][3] + self->radius;
-    if (b->min[1] > self->mtxW[1][3] - self->radius) b->min[1] = self->mtxW[1][3] - self->radius;
-    if (b->max[2] < self->mtxW[2][3] + self->radius) b->max[2] = self->mtxW[2][3] + self->radius;
-    if (b->min[2] > self->mtxW[2][3] - self->radius) b->min[2] = self->mtxW[2][3] - self->radius;
+    // Expand the shared AABB around the world matrix translation column;
+    // every check re-dereferences the shared bounds pointer and re-reads the
+    // radius through a per-check local (retail reloads both per check; the
+    // first check's local is store-forwarded to the live magnitude via frsp).
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[0] < self->mtxW[0][3] + r)
+            lbl_eu_80665944->max[0] = self->mtxW[0][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[0] > self->mtxW[0][3] - r)
+            lbl_eu_80665944->min[0] = self->mtxW[0][3] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[1] < self->mtxW[1][3] + r)
+            lbl_eu_80665944->max[1] = self->mtxW[1][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[1] > self->mtxW[1][3] - r)
+            lbl_eu_80665944->min[1] = self->mtxW[1][3] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[2] < self->mtxW[2][3] + r)
+            lbl_eu_80665944->max[2] = self->mtxW[2][3] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[2] > self->mtxW[2][3] - r)
+            lbl_eu_80665944->min[2] = self->mtxW[2][3] - r;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -618,27 +939,58 @@ void func_804B3658(CColiSphereOb* self, const CColiMgr* mgr, const Vec* other) {
 
     Vec outv;
     PSMTXMultVec(src, other, &outv);
-    self->pos[0] = outv.x;
-    self->pos[1] = outv.y;
-    self->pos[2] = outv.z;
+    // Retail emits the loads back-to-front (z, y, x); declare them reversed
+    // so MWCC emits them in that order.
+    const f32 pz = outv.z;
+    const f32 py = outv.y;
+    const f32 px = outv.x;
+    self->pos[0] = px;
+    self->pos[1] = py;
+    self->pos[2] = pz;
 
     nw4r::math::VEC3 n;
     n.x = other->z;
     n.y = lbl_eu_8066AEB0;
     n.z = lbl_eu_8066AEB0;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
-    f32 mag = PSVECMag((const Vec*)&n);
 
-    self->radius = mag;
+    self->radius = PSVECMag((const Vec*)&n);
     self->hd.flags |= 1;
 
-    CColiBounds* b = lbl_eu_80665944;
-    if (b->max[0] < self->pos[0] + self->radius) b->max[0] = self->pos[0] + self->radius;
-    if (b->min[0] > self->pos[0] - self->radius) b->min[0] = self->pos[0] - self->radius;
-    if (b->max[1] < self->pos[1] + self->radius) b->max[1] = self->pos[1] + self->radius;
-    if (b->min[1] > self->pos[1] - self->radius) b->min[1] = self->pos[1] - self->radius;
-    if (b->max[2] < self->pos[2] + self->radius) b->max[2] = self->pos[2] + self->radius;
-    if (b->min[2] > self->pos[2] - self->radius) b->min[2] = self->pos[2] - self->radius;
+    // Expand the shared AABB around the new position; every check
+    // re-dereferences the shared bounds pointer and re-reads the radius
+    // through a per-check local (retail reloads both per check; the first
+    // check's local is store-forwarded to the live magnitude via frsp).
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
+            lbl_eu_80665944->max[0] = self->pos[0] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
+            lbl_eu_80665944->min[0] = self->pos[0] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
+            lbl_eu_80665944->max[1] = self->pos[1] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
+            lbl_eu_80665944->min[1] = self->pos[1] - r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
+            lbl_eu_80665944->max[2] = self->pos[2] + r;
+    }
+    {
+        f32 r = self->radius;
+        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
+            lbl_eu_80665944->min[2] = self->pos[2] - r;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -654,29 +1006,61 @@ void func_804B37E4(CColiEllipsoidOb* self, const CColiMgr* mgr, const Vec* other
         src = mgr->mesh->boneTable[self->hd.index];
     }
 
-    self->pos[0] = src[0][3];
-    self->pos[1] = src[1][3];
-    self->pos[2] = src[2][3];
+    // Retail loads the source translation back-to-front (z, y, x) while
+    // storing forward, so pass the components through z/y/x locals.
+    const f32 pz = src[2][3];
+    const f32 py = src[1][3];
+    const f32 px = src[0][3];
+    self->pos[0] = px;
+    self->pos[1] = py;
+    self->pos[2] = pz;
 
     nw4r::math::VEC3 n;
     n.x = lbl_eu_8066AEB4;
     n.y = lbl_eu_8066AEB0;
     n.z = lbl_eu_8066AEB0;
     nw4r::math::VEC3TransformNormal(&n, (const nw4r::math::MTX34*)src, &n);
-    f32 mag = PSVECMag((const Vec*)&n);
 
+    double mag = PSVECMag((const Vec*)&n);
     self->f18 = other->z * mag;
     self->radiusY = other->y * mag;
     self->radiusXZ = other->x * mag;
     self->hd.flags |= 1;
 
-    CColiBounds* b = lbl_eu_80665944;
-    if (b->max[0] < self->pos[0] + self->radiusXZ) b->max[0] = self->pos[0] + self->radiusXZ;
-    if (b->min[0] > self->pos[0] - self->radiusXZ) b->min[0] = self->pos[0] - self->radiusXZ;
-    if (b->max[2] < self->pos[2] + self->radiusXZ) b->max[2] = self->pos[2] + self->radiusXZ;
-    if (b->min[2] > self->pos[2] - self->radiusXZ) b->min[2] = self->pos[2] - self->radiusXZ;
-    if (b->max[1] < self->pos[1] + self->radiusY) b->max[1] = self->pos[1] + self->radiusY;
-    if (b->min[1] > self->pos[1] - self->radiusY) b->min[1] = self->pos[1] - self->radiusY;
+    // Expand the shared AABB with the horizontal (XZ) and vertical (Y)
+    // radii; every check re-dereferences the shared bounds pointer and
+    // re-reads the radius through a per-check local (retail reloads after
+    // the first check, which reuses the live scaled value).
+    {
+        f32 r = self->radiusXZ;
+        if (lbl_eu_80665944->max[0] < self->pos[0] + r)
+            lbl_eu_80665944->max[0] = self->pos[0] + r;
+    }
+    {
+        f32 r = self->radiusXZ;
+        if (lbl_eu_80665944->min[0] > self->pos[0] - r)
+            lbl_eu_80665944->min[0] = self->pos[0] - r;
+    }
+    {
+        f32 r = self->radiusXZ;
+        if (lbl_eu_80665944->max[2] < self->pos[2] + r)
+            lbl_eu_80665944->max[2] = self->pos[2] + r;
+    }
+    {
+        f32 r = self->radiusXZ;
+        if (lbl_eu_80665944->min[2] > self->pos[2] - r)
+            lbl_eu_80665944->min[2] = self->pos[2] - r;
+    }
+    {
+        f32 r = self->radiusY;
+        if (lbl_eu_80665944->max[1] < self->pos[1] + r)
+            lbl_eu_80665944->max[1] = self->pos[1] + r;
+    }
+    {
+        f32 r = self->radiusY;
+        if (lbl_eu_80665944->min[1] > self->pos[1] - r)
+            lbl_eu_80665944->min[1] = self->pos[1] - r;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -693,9 +1077,14 @@ void func_804B3970(CColiEllipsoidOb* self, const CColiMgr* mgr, const CColiPosVe
 
     Vec outv;
     PSMTXMultVec(src, &other->pos, &outv);
-    self->pos[0] = outv.x;
-    self->pos[1] = outv.y;
-    self->pos[2] = outv.z;
+    // Retail emits the loads back-to-front (z, y, x); declare them reversed
+    // so MWCC emits them in that order.
+    const f32 pz = outv.z;
+    const f32 py = outv.y;
+    const f32 px = outv.x;
+    self->pos[0] = px;
+    self->pos[1] = py;
+    self->pos[2] = pz;
 
     nw4r::math::VEC3 n;
     n.x = lbl_eu_8066AEB4;
@@ -709,13 +1098,20 @@ void func_804B3970(CColiEllipsoidOb* self, const CColiMgr* mgr, const CColiPosVe
     self->radiusXZ = other->v.x * mag;
     self->hd.flags |= 1;
 
-    CColiBounds* b = lbl_eu_80665944;
-    if (b->max[0] < self->pos[0] + self->radiusXZ) b->max[0] = self->pos[0] + self->radiusXZ;
-    if (b->min[0] > self->pos[0] - self->radiusXZ) b->min[0] = self->pos[0] - self->radiusXZ;
-    if (b->max[2] < self->pos[2] + self->radiusXZ) b->max[2] = self->pos[2] + self->radiusXZ;
-    if (b->min[2] > self->pos[2] - self->radiusXZ) b->min[2] = self->pos[2] - self->radiusXZ;
-    if (b->max[1] < self->pos[1] + self->radiusY) b->max[1] = self->pos[1] + self->radiusY;
-    if (b->min[1] > self->pos[1] - self->radiusY) b->min[1] = self->pos[1] - self->radiusY;
+    // Every check re-reads the shared bounds pointer and the self fields
+    // (retail reloads both per check).
+    if (lbl_eu_80665944->max[0] < self->pos[0] + self->radiusXZ)
+        lbl_eu_80665944->max[0] = self->pos[0] + self->radiusXZ;
+    if (lbl_eu_80665944->min[0] > self->pos[0] - self->radiusXZ)
+        lbl_eu_80665944->min[0] = self->pos[0] - self->radiusXZ;
+    if (lbl_eu_80665944->max[2] < self->pos[2] + self->radiusXZ)
+        lbl_eu_80665944->max[2] = self->pos[2] + self->radiusXZ;
+    if (lbl_eu_80665944->min[2] > self->pos[2] - self->radiusXZ)
+        lbl_eu_80665944->min[2] = self->pos[2] - self->radiusXZ;
+    if (lbl_eu_80665944->max[1] < self->pos[1] + self->radiusY)
+        lbl_eu_80665944->max[1] = self->pos[1] + self->radiusY;
+    if (lbl_eu_80665944->min[1] > self->pos[1] - self->radiusY)
+        lbl_eu_80665944->min[1] = self->pos[1] - self->radiusY;
 }
 
 // ---------------------------------------------------------------------------
@@ -761,52 +1157,16 @@ void func_804B3D1C(CColiCapsuleNode* self, const CColiMgr* mgr, const Vec* other
 }
 
 // ---------------------------------------------------------------------------
-// func_804B49B8: copy a bone matrix from the manager table, store its
-// inverse, then duplicate both matrices up by one slot in the output node.
+// func_804B49B8: copy the bone matrix from the manager table into m0,
+// derive its inverse into m1, then duplicate both up by one pair into the
+// history slots.
 // ---------------------------------------------------------------------------
-void func_804B49B8(const CColiHead* hd, CColiMtxOut* dst, const CColiMgr* mgr) {
-    const Mtx* table = mgr->mesh->boneTable;
-    const f32* f = table[hd->index][0];
-    dst->m0[0][0] = f[0];
-    dst->m0[0][1] = f[1];
-    dst->m0[0][2] = f[2];
-    dst->m0[0][3] = f[3];
-    dst->m0[1][0] = f[4];
-    dst->m0[1][1] = f[5];
-    dst->m0[1][2] = f[6];
-    dst->m0[1][3] = f[7];
-    dst->m0[2][0] = f[8];
-    dst->m0[2][1] = f[9];
-    dst->m0[2][2] = f[10];
-    dst->m0[2][3] = f[11];
-
-    PSMTXInverse(dst->m0, dst->m1);
-
-    dst->m2[0][0] = dst->m0[0][0];
-    dst->m2[0][1] = dst->m0[0][1];
-    dst->m2[0][2] = dst->m0[0][2];
-    dst->m2[0][3] = dst->m0[0][3];
-    dst->m2[1][0] = dst->m0[1][0];
-    dst->m2[1][1] = dst->m0[1][1];
-    dst->m2[1][2] = dst->m0[1][2];
-    dst->m2[1][3] = dst->m0[1][3];
-    dst->m2[2][0] = dst->m0[2][0];
-    dst->m2[2][1] = dst->m0[2][1];
-    dst->m2[2][2] = dst->m0[2][2];
-    dst->m2[2][3] = dst->m0[2][3];
-
-    dst->m3[0][0] = dst->m1[0][0];
-    dst->m3[0][1] = dst->m1[0][1];
-    dst->m3[0][2] = dst->m1[0][2];
-    dst->m3[0][3] = dst->m1[0][3];
-    dst->m3[1][0] = dst->m1[1][0];
-    dst->m3[1][1] = dst->m1[1][1];
-    dst->m3[1][2] = dst->m1[1][2];
-    dst->m3[1][3] = dst->m1[1][3];
-    dst->m3[2][0] = dst->m1[2][0];
-    dst->m3[2][1] = dst->m1[2][1];
-    dst->m3[2][2] = dst->m1[2][2];
-    dst->m3[2][3] = dst->m1[2][3];
+void func_804B49B8(CColiHead* hd, CColiMtxOut* dst, CColiMgr* mgr) {
+    const s16 idx = hd->index;
+    const CObjMtx* src = (const CObjMtx*)mgr->mesh->boneTable[idx];
+    dst->cur.m0 = *src;
+    PSMTXInverse(dst->cur.m0.m, dst->cur.m1.m);
+    dst->old = dst->cur;
 }
 
 // Doubly-linked list used by the coli tasks: head pointer stored on the
@@ -870,12 +1230,13 @@ void func_804B4C7C(CColiList* self, CColiListItem* findNode) {
     // loop variable: retail keeps cur in r4 with prev/next sharing r3.
     CColiListItem* prev;
     CColiListItem* next;
+    CColiListItem* cur;
     // `head` stays loop-invariant (r0) for the final branch's comparison;
     // the middle branches re-read self->head because the relink stores may
     // alias it. `cur` is assigned after the pre-check like retail.
     CColiListItem* head = self->head;
     if (head == 0) goto done;
-    CColiListItem* cur = head;
+    cur = head;
     goto cond;
 body:
     if (findNode == cur) {
@@ -904,13 +1265,23 @@ done:
 }
 
 // Shared per-sector query structures used by the walk funcs below.
-// Node in a spatially-split list: forward link at +0x9C, a 32-bit filter
-// mask at +0xAC.
+// Node in a spatially-split list: an x-sweep bound pair at +0xC/+0x18, a
+// forward link at +0x9C, a backward link at +0xA0, a scalar at +0xA4,
+// status flags at +0xA8, a 32-bit filter mask at +0xAC and a level index
+// at +0xB2.
 struct CColiQueryNode {
-    char pad0[0x9C];
-    CColiQueryNode* next; //0x9C
-    char pad1[0x8];       //0xA0
-    u32 filter;           //0xAC
+    char padA[0xC];        //0x0
+    f32 minX;              //0xC
+    char padB[0x8];        //0x10
+    f32 maxX;              //0x18
+    char padC[0x80];       //0x1C
+    CColiQueryNode* next;  //0x9C
+    CColiQueryNode* prev;  //0xA0
+    f32 f_a4;              //0xA4
+    u32 flags;             //0xA8
+    u32 filter;            //0xAC
+    u16 field_0xB0;        //0xB0
+    u16 level;             //0xB2
 };
 
 // Output/Self for the walk funcs: an AABB pair (bbMin at +0x60, bbMax at
@@ -925,11 +1296,16 @@ struct CColiQueryResult {
 // Shared walk state (lbl_eu_8065D138): accumulated AABB (bbMin +0x38,
 // bbMax +0x44), the queried source segment (+0x50), a scalar at +0x5C and
 // a flag at +0x60.
+// 3-word raw snapshot (u32 members force lwz/stw word copies like retail).
+struct CColiSrcVec {
+    u32 x, y, z;
+};
+
 struct CColiWalkState {
     char pad0[0x38];
     f32 bbMin[3];  //0x38
     f32 bbMax[3];  //0x44
-    f32 src[3];    //0x50
+    CColiSrcVec src; //0x50
     f32 f5c;       //0x5C
     u8 flag;       //0x60
 };
@@ -957,36 +1333,43 @@ extern "C" void sinit_804B598C() {
 // the segment build + node query and expand the result AABB.
 int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
                    u32 filter, int isFirst) {
-    if (a->x == b->x && a->y == b->y && a->z == b->z) return 0;
+    // Materialized boolean: retail keeps the && chain result in a temp
+    // (li r0,0 / li r0,1 / cmpwi r0,0) instead of short-circuiting straight
+    // to the return.
+    int eq = a->x == b->x && a->y == b->y && a->z == b->z;
+    if (eq) return 0;
 
+    // Walk state arg: retail reuses the incoming isFirst register (r7) for
+    // the pointer, so a non-first call passes the raw isFirst value through.
+    CColiWalkState* st = (CColiWalkState*)(u32)isFirst;
     int init = 0;
     if (isFirst == 0) {
-        lbl_eu_8065D138.flag = 0;
+        st = &lbl_eu_8065D138;
+        st->flag = 0;
         init = 1;
-        lbl_eu_8065D138.src[0] = a->x;
-        lbl_eu_8065D138.src[1] = a->y;
-        lbl_eu_8065D138.src[2] = a->z;
-        lbl_eu_8065D138.bbMax[2] = lbl_eu_8066AEC4;
-        lbl_eu_8065D138.f5c = lbl_eu_8066AEC8;
-        lbl_eu_8065D138.bbMin[0] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138.bbMin[1] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138.bbMin[2] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138.bbMax[0] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138.bbMax[1] = lbl_eu_8066AEC0;
-        self->bbMin[0] = lbl_eu_8066AEC0;
-        self->bbMin[1] = lbl_eu_8066AEC0;
-        self->bbMin[2] = lbl_eu_8066AEC0;
-        self->bbMax[0] = lbl_eu_8066AEC0;
-        self->bbMax[1] = lbl_eu_8066AEC0;
-        self->bbMax[2] = lbl_eu_8066AEC0;
+        st->src = *(const CColiSrcVec*)a;
+        st->bbMax[2] = lbl_eu_8066AEC4;
+        st->f5c = lbl_eu_8066AEC8;
+        f32 zero = lbl_eu_8066AEC0;
+        st->bbMin[0] = zero;
+        st->bbMin[1] = zero;
+        st->bbMin[2] = zero;
+        st->bbMax[0] = zero;
+        st->bbMax[1] = zero;
+        self->bbMin[0] = zero;
+        self->bbMin[1] = zero;
+        self->bbMin[2] = zero;
+        self->bbMax[0] = zero;
+        self->bbMax[1] = zero;
+        self->bbMax[2] = zero;
     }
 
-    char seg[0x18];
+    char seg[0x310];
     char query[0x18];
-    func_804A7ACC(seg, a, b, &lbl_eu_8065D138);
+    func_804A7ACC(seg, a, b, st);
+    int found = 0;
     func_804B077C(query, a, b);
 
-    int found = 0;
     CColiQueryNode* n = self->head;
     while (n != 0) {
         if (!(filter & n->filter)) {
@@ -1001,12 +1384,12 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
     if (!init) return found;
     if (!found) return 0;
     if (!lbl_eu_8065D138.flag) return 0;
-    self->bbMin[0] = lbl_eu_8065D138.bbMin[0];
-    self->bbMin[1] = lbl_eu_8065D138.bbMin[1];
-    self->bbMin[2] = lbl_eu_8065D138.bbMin[2];
-    self->bbMax[0] = lbl_eu_8065D138.bbMax[0];
-    self->bbMax[1] = lbl_eu_8065D138.bbMax[1];
-    self->bbMax[2] = lbl_eu_8065D138.bbMax[2];
+    // Word copies (lwz/stw) of the accumulated AABB, like the src snapshot:
+    // 3-word struct copies keep the retail store order (y before x).
+    *(CColiSrcVec*)&self->bbMin[0] =
+        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMin[0];
+    *(CColiSrcVec*)&self->bbMax[0] =
+        *(const CColiSrcVec*)&lbl_eu_8065D138.bbMax[0];
     return 1;
 }
 // CRTP task base — canonical monolib template (declared-only members so the
@@ -1083,9 +1466,108 @@ CTaskColiManager::~CTaskColiManager() {
     lbl_eu_80665958 = 0;
 }
 
-void func_804B54D4(){}
+// Segment source (two endpoints) fed to the query builders.
+struct CColiSeg {
+    Vec a; //0x0
+    Vec b; //0xC
+};
 
-void func_804B5658(){}
+// Sweep a query segment over the node list: walk forward from self->next
+// while the segment start is past each node's max bound, then backward from
+// self->prev while the segment end is before each node's min bound. A node
+// that survives the filter/bounds/level checks and both query tests wins.
+int func_804B54D4(u32 unused, CColiQueryNode* self, const CColiSeg* src,
+                  u32 mask, void* arg) {
+    if (!(self->flags & 4) || !(self->flags & 2)) return 0;
+
+    u8 big[0x320];
+    Vec query[2];
+
+    func_804A7878(big, src, 0);
+    func_804B07F0(query, src);
+
+    for (CColiQueryNode* n = self->next; n != 0; n = n->next) {
+        if (mask & n->filter) continue;
+        // Only nodes whose max bound is at/below the segment start qualify.
+        if (query[0].x >= n->maxX) {
+            if ((int)self->level > (int)n->level) continue;
+            if (func_804B0818((const void*)query, n) == 0) continue;
+            if (func_804B236C(n, big, arg) == 0) continue;
+            return 1;
+        }
+    }
+
+    for (CColiQueryNode* n = self->prev; n != 0; n = n->prev) {
+        if (mask & n->filter) continue;
+        if (query[1].x <= n->minX) {
+            if ((int)self->level > (int)n->level) continue;
+            if (func_804B0818((const void*)query, n) == 0) continue;
+            if (func_804B236C(n, big, arg) == 0) continue;
+            return 1;
+        }
+        // Sweep stop: past the node's tail, abandon the search (falls out of
+        // the loop to the shared return 0, like retail).
+        if (query[1].x > n->f_a4) break;
+    }
+    return 0;
+}
+
+// Owner of a segment walk: node-list head at +0x5C and a control flags word
+// at +0x78 (bit 1 gates the walk).
+struct CColiWalkOwner {
+    char pad0[0x5C];
+    CColiQueryNode* head; //0x5C
+    char pad1[0x18];      //0x60
+    u32 flags;            //0x78
+};
+
+// ---------------------------------------------------------------------------
+// func_804B5658: gate on the owner's walk-enable flag, reject degenerate
+// (equal) vectors, then run the shared segment query over the node list and
+// report the accumulated AABB through out1 (min) / out2 (max).
+// ---------------------------------------------------------------------------
+int func_804B5658(CColiWalkOwner* self, Vec* out1, Vec* out2,
+                  Vec* a, Vec* b) {
+    if (self->flags & 2) {
+        int eq = a->x == b->x && a->y == b->y && a->z == b->z;
+        if (eq) return 0;
+
+        char seg[0x310];
+        char query[0x18];
+        CColiWalkState* st = &lbl_eu_8065D138;
+        st->flag = 0;
+        // Word-typed POD snapshot: the struct copy emits the retail lwz/stw
+        // word copy for the source-vector snapshot.
+        st->src = *(const CColiSrcVec*)a;
+        st->bbMin[0] = lbl_eu_8066AEC0;
+        st->bbMin[1] = lbl_eu_8066AEC0;
+        st->bbMin[2] = lbl_eu_8066AEC0;
+        st->bbMax[0] = lbl_eu_8066AEC0;
+        st->bbMax[1] = lbl_eu_8066AEC0;
+        st->bbMax[2] = lbl_eu_8066AEC4;
+        st->f5c = lbl_eu_8066AEC8;
+        func_804A7ACC(seg, a, b, st);
+        func_804B077C(query, a, b);
+
+        for (CColiQueryNode* n = self->head; n != 0; n = n->next) {
+            if (n->flags & 0x2000) {
+                if (func_804B0818(query, n) != 0) {
+                    func_804B21A8(n, seg, 1);
+                }
+            }
+        }
+
+        if (!lbl_eu_8065D138.flag) return 0;
+        out1->x = lbl_eu_8065D138.bbMin[0];
+        out1->y = lbl_eu_8065D138.bbMin[1];
+        out1->z = lbl_eu_8065D138.bbMin[2];
+        out2->x = lbl_eu_8065D138.bbMax[0];
+        out2->y = lbl_eu_8065D138.bbMax[1];
+        out2->z = lbl_eu_8065D138.bbMax[2];
+        return 1;
+    }
+    return 0;
+}
 
 // ---------------------------------------------------------------------------
 // CTaskColiManager::create — the retail symbol is Fv but the body reads three
@@ -1126,14 +1608,24 @@ extern "C" CTaskColiManager* create__16CTaskColiManagerFv(CProcess* parent,
         __ct__8CProcessFv((CProcess*)mem);
         CTaskColiManagerInit* init = (CTaskColiManagerInit*)mem;
         // CTTask ctor body (inlined): CProcess vtable, null member funcs,
-        // then the CTaskColiManager vtable.
+        // then the CTaskColiManager vtable. The retail loads each null-ptmf
+        // word pair with word1 first, so the loads are written into locals in
+        // that order and stored back word0-first.
         init->vtable = (u32)lbl_eu_8056F4B0;
-        init->ptmf[0] = __ptmf_null[0];
-        init->ptmf[1] = __ptmf_null[1];
-        init->ptmf[2] = __ptmf_null[2];
-        init->ptmf[3] = __ptmf_null[0];
-        init->ptmf[4] = __ptmf_null[1];
-        init->ptmf[5] = __ptmf_null[2];
+        {
+            u32 w1 = __ptmf_null[1];
+            u32 w0 = __ptmf_null[0];
+            init->ptmf[0] = w0;
+            init->ptmf[1] = w1;
+            init->ptmf[2] = __ptmf_null[2];
+        }
+        {
+            u32 w1 = __ptmf_null[1];
+            u32 w0 = __ptmf_null[0];
+            init->ptmf[3] = w0;
+            init->ptmf[4] = w1;
+            init->ptmf[5] = __ptmf_null[2];
+        }
         init->vtable = (u32)lbl_eu_8056F468;
         init->field_0x54 = (u32)a;
         init->field_0x58 = (u32)b;

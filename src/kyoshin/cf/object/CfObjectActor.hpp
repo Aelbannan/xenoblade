@@ -20,6 +20,20 @@ extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 
 
 extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_UnkVirtualFunc7 s16 -> float)
 
+extern const double lbl_eu_80667750;  // +0.5 rounding add (CActorParam_UnkVirtualFunc35 gauge)
+
+extern const double lbl_eu_80667758;  // -0.5 rounding add (CActorParam_UnkVirtualFunc35 gauge)
+
+extern float lbl_eu_80667760;         // CActorParam_UnkVirtualFunc35 0xC3 ratio divisor
+
+extern float lbl_eu_80667764;         // CActorParam_UnkVirtualFunc35 0xFC/0x100 gauge scale
+
+extern float lbl_eu_80667768;         // CActorParam_UnkVirtualFunc35 0x100 decay add
+
+// ptmf constant (3 words: this-offset / fn / this) compared against
+// CBattleManager+0x28354 by CActorParam_UnkVirtualFunc35.
+extern u32 lbl_eu_80531090[3];
+
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value helper
 extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);  // status add/remove
@@ -38,6 +52,34 @@ extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorPa
 extern "C" void func_801A891C(void* obj, int arg);   // vision slot release
 
 extern "C" int func_8027990C(void* battleSub, void* actor);  // battle sub-object query
+
+extern "C" void func_8010975C(u8);
+
+extern "C" void func_80109770(u8);
+
+extern "C" void func_80109734(void* obj, u32 value);
+
+extern "C" void func_80109784(void* obj, u32 a, int b);
+
+extern "C" void func_8010989C(u8);
+
+extern "C" void func_80109888(u8);
+
+extern "C" void func_80109874(u8);
+
+extern "C" bool func_8006EF04__Fi(int mask);
+
+extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+
+extern "C" float func_800D81A8(void* obj, void* target, void* source);
+
+extern "C" void func_8018C820(void* obj, int value);   // party-gauge add
+
+extern "C" void func_800F38E0(void* battleMgr, void* actor, int flag);
+
+extern "C" void func_80277A7C(void* battleSub, void* actor, float value);
+
+extern "C" int __ptmf_cmpr(void* a, void* b);
 
 namespace cf {
     //min size: 0x45BC
@@ -79,6 +121,69 @@ namespace cf {
     void CActorParam_UnkVirtualFunc21();
     void CActorParam_UnkVirtualFunc23();
     void func_801725DC();
+    };
+
+    // Vtable proxy for CfObjectActor's primary vtable (offset 0x00), slots
+    // +0x118/+0x11C/+0x128/+0x12C/+0x154 (CActorParam_UnkVirtualFunc46/47/
+    // 50/51/85: retail passes/returns floats through the slots even though
+    // the base header declares them no-arg). See CActorParam_UnkVirtualFunc35.
+    class CfActorParamVt118 {
+    public:
+        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
+        virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
+        virtual void _d028(); virtual void _d02C(); virtual void _d030(); virtual void _d034();
+        virtual void _d038(); virtual void _d03C(); virtual void _d040(); virtual void _d044();
+        virtual void _d048(); virtual void _d04C(); virtual void _d050(); virtual void _d054();
+        virtual void _d058(); virtual void _d05C(); virtual void _d060(); virtual void _d064();
+        virtual void _d068(); virtual void _d06C(); virtual void _d070(); virtual void _d074();
+        virtual void _d078(); virtual void _d07C(); virtual void _d080(); virtual void _d084();
+        virtual void _d088(); virtual void _d08C(); virtual void _d090(); virtual void _d094();
+        virtual void _d098(); virtual void _d09C(); virtual void _d0A0(); virtual void _d0A4();
+        virtual void _d0A8(); virtual void _d0AC(); virtual void _d0B0(); virtual void _d0B4();
+        virtual void _d0B8(); virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4();
+        virtual void _d0C8(); virtual void _d0CC(); virtual void _d0D0(); virtual void _d0D4();
+        virtual void _d0D8(); virtual void _d0DC(); virtual void _d0E0(); virtual void _d0E4();
+        virtual void _d0E8(); virtual void _d0EC(); virtual void _d0F0(); virtual void _d0F4();
+        virtual void _d0F8(); virtual void _d0FC(); virtual void _d100(); virtual void _d104();
+        virtual void _d108(); virtual void _d10C(); virtual void _d110(); virtual void _d114();
+        virtual void m118(float val);  // vtable +0x118 (setter)
+        virtual void m11C(float val);  // vtable +0x11C (setter)
+        virtual void _d120(); virtual void _d124();
+        virtual float m128();          // vtable +0x128 (getter)
+        virtual float m12C();          // vtable +0x12C (getter)
+        virtual void _d130(); virtual void _d134(); virtual void _d138(); virtual void _d13C();
+        virtual void _d140(); virtual void _d144(); virtual void _d148(); virtual void _d14C();
+        virtual void _d150();
+        virtual void m154(float val);  // vtable +0x154
+    };
+
+    // Vtable proxy for the CBattleState subobject vtable (this+0x8), slot
+    // +0x24 (retail passes a pointer through the slot). See
+    // CActorParam_UnkVirtualFunc35.
+    class CfBattleVt24 {
+    public:
+        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
+        virtual void _d018(); virtual void _d01C(); virtual void _d020();
+        virtual void m24(void* arg);  // vtable +0x24
+    };
+
+    // Status-entry view for the func_80149154 results used by
+    // CActorParam_UnkVirtualFunc35: u32 marker at +0x8, s32 value at +0x10,
+    // s16 gauge at +0x14.
+    struct CfStatusEntry {
+        u8 _pad[0x8];
+        u32 field_0x8;   // 0x8
+        u8 _pad0C[0x4];  // 0xC
+        s32 field_0x10;  // 0x10
+        s16 field_0x14;  // 0x14
+    };
+
+    // 12-byte ptmf copy built by CActorParam_UnkVirtualFunc35 from
+    // lbl_eu_80531090 and compared against CBattleManager+0x28354.
+    struct CfPtmf3 {
+        u32 field_0;  // 0x0
+        u32 field_4;  // 0x4
+        u32 field_8;  // 0x8
     };
 
     // Vtable proxy for CfObjectActor vtable 1 slot +0x120
@@ -259,25 +364,28 @@ namespace cf {
         u32 field_0x1644;  // 0x1644
         u8 _pad1648[0x17E8 - 0x1648];
         f32 field_0x17E8;  // 0x17E8
-        u8 _pad17EC[0x3374 - 0x17EC];
+        u8 _pad17EC[0x17F4 - 0x17EC];
+        f32 field_0x17F4;  // 0x17F4 (gauge max)
+        u8 _pad17F8[0x3374 - 0x17F8];
         u32 field_0x3374;  // 0x3374 (flags, bit 0x40000 gates the battle-state path)
     };
 
     // Stack buffer built by CActorParam_UnkVirtualFunc179 and passed to the
-    // CBattleState subobject vtable slot +0x18.
+    // CBattleState subobject vtable slot +0x18 (exactly 0x34 bytes, matching
+    // the memset size).
     struct CfActor179Buf {
         u32 field_0x00;       // 0x00
         u32 field_0x04;       // 0x04
-        u8  field_0x08[0xC];  // 0x08
+        u8  field_0x08[4];    // 0x08
+        u16 field_0x0C;       // 0x0C
+        u32 field_0x10;       // 0x10
         u16 field_0x14;       // 0x14
-        u32 field_0x18;       // 0x18
-        u16 field_0x1C;       // 0x1C
-        u16 field_0x1E;       // 0x1E
-        u16 field_0x20;       // 0x20
-        u8  field_0x22[6];    // 0x22
-        f32 field_0x28;       // 0x28
-        u8  field_0x2C[0xC];  // 0x2C
-        u32 field_0x38;       // 0x38
+        u16 field_0x16;       // 0x16
+        u16 field_0x18;       // 0x18
+        u8  field_0x1C[4];    // 0x1C
+        f32 field_0x20;       // 0x20
+        u8  field_0x24[0xC];  // 0x24
+        u32 field_0x30;       // 0x30
     };
 
     // CfObjectActor's pointer at absolute offset 0x3ED4 (CfObjectMove+0x38
